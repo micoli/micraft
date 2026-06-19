@@ -100,7 +100,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                 localPlayerId = msg.playerId
             }
             is ServerMessage.ChunkData -> {
-                renderChunk(msg.chunk)
+                renderChunk(Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks))
             }
             is ServerMessage.PlayerUpdate -> {
                 val s = msg.state

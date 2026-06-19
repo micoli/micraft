@@ -5,7 +5,7 @@ import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockType
-import org.micoli.micraft.world.Chunk
+import org.micoli.micraft.world.ChunkPos
 
 @Serializable
 sealed class ServerMessage {
@@ -13,7 +13,11 @@ sealed class ServerMessage {
     data class Welcome(val playerId: String, val spawnPos: Vec3) : ServerMessage()
 
     @Serializable
-    data class ChunkData(val chunk: Chunk) : ServerMessage()
+    data class ChunkData(
+        val pos: ChunkPos,
+        val topY: Int,
+        val wireBlocks: ByteArray,
+    ) : ServerMessage()
 
     @Serializable
     data class PlayerUpdate(val state: PlayerState) : ServerMessage()

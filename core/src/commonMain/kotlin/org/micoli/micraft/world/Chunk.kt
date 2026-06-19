@@ -24,10 +24,46 @@ data class Chunk(val pos: ChunkPos, val blocks: ByteArray) {
                         blocks[index(x, y, z)] = filler(x, y, z).ordinal.toByte()
             return Chunk(pos, blocks)
         }
+
+        /** Decode a y-major wire buffer (produced by encodeWire) back into a full Chunk. */
+        fun decodeWire(pos: ChunkPos, topY: Int, wire: ByteArray): Chunk {
+            val blocks = ByteArray(TOTAL)   // AIR = 0 by default
+            for (y in 0..topY)
+                for (x in 0 until SIZE_X)
+                    for (z in 0 until SIZE_Z)
+                        blocks[index(x, y, z)] =
+                            wire[y * SIZE_X * SIZE_Z + x * SIZE_Z + z]
+            return Chunk(pos, blocks)
+        }
     }
 
     fun getBlock(x: Int, y: Int, z: Int): BlockType =
         BlockType.entries[blocks[index(x, y, z)].toInt()]
+
+    /** Highest Y level containing any non-AIR block. */
+    fun topY(): Int {
+        var top = 0
+        for (x in 0 until SIZE_X)
+            for (z in 0 until SIZE_Z)
+                for (y in SIZE_Y - 1 downTo 0) {
+                    if (getBlock(x, y, z) != BlockType.AIR) {
+                        if (y > top) top = y
+                        break
+                    }
+                }
+        return top
+    }
+
+    /** Encode blocks in y-major order, only y=0..topY (88% smaller than full chunk). */
+    fun encodeWire(): ByteArray {
+        val top = topY()
+        val wire = ByteArray((top + 1) * SIZE_X * SIZE_Z)
+        for (y in 0..top)
+            for (x in 0 until SIZE_X)
+                for (z in 0 until SIZE_Z)
+                    wire[y * SIZE_X * SIZE_Z + x * SIZE_Z + z] = blocks[index(x, y, z)]
+        return wire
+    }
 
     fun withBlock(x: Int, y: Int, z: Int, type: BlockType): Chunk {
         val newBlocks = blocks.copyOf()

@@ -19,6 +19,7 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.PlayerConstants
+import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldState
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -33,7 +34,6 @@ private const val SPAWN_Y      = 200f
 private const val SPAWN_Z      = 8f
 private const val GRAVITY      = -20f
 private const val JUMP_SPEED   = 8.5f   // blocks/s upward — reaches ~1.8 blocks height
-private const val CHUNK_RADIUS = 2
 
 class GameLoop(private val world: WorldState) {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
@@ -114,7 +114,33 @@ class GameLoop(private val world: WorldState) {
                 val update = ServerMessage.PlayerUpdate(session.state)
                 sessions.values.forEach { it.send(update) }
             }
+
+            // Stream new chunks if the player crossed a chunk boundary
+            val newCp = ChunkPos(
+                Math.floorDiv(session.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE),
+                Math.floorDiv(session.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE),
+            )
+            if (newCp != session.lastChunkPos) {
+                session.lastChunkPos = newCp
+                sendChunksAround(session, newCp.cx, newCp.cz)
+            }
         }
+    }
+
+    private suspend fun sendChunksAround(session: PlayerSession, cx: Int, cz: Int) {
+        val r = WorldConstants.VIEW_RADIUS
+        var sent = 0
+        for (dx in -r..r) {
+            for (dz in -r..r) {
+                val cp = ChunkPos(cx + dx, cz + dz)
+                if (session.loadedChunks.add(cp)) {
+                    val chunk = world.getOrGenerate(cp)
+                    session.send(ServerMessage.ChunkData(chunk.pos, chunk.topY(), chunk.encodeWire()))
+                    sent++
+                }
+            }
+        }
+        if (sent > 0) log.debug("{} new chunks sent to {}", sent, session.id.take(8))
     }
 
     private fun applyGravity(session: PlayerSession, cx: Float, cy: Float, cz: Float, h: Float): Float {
@@ -148,14 +174,13 @@ class GameLoop(private val world: WorldState) {
 
         session.send(ServerMessage.Welcome(id, spawn))
 
-        var chunkCount = 0
-        for (cx in -CHUNK_RADIUS..CHUNK_RADIUS) {
-            for (cz in -CHUNK_RADIUS..CHUNK_RADIUS) {
-                session.send(ServerMessage.ChunkData(world.getOrGenerate(ChunkPos(cx, cz))))
-                chunkCount++
-            }
-        }
-        log.info("{} chunks sent to {}", chunkCount, id.take(8))
+        val spawnCp = ChunkPos(
+            Math.floorDiv(spawn.x.toInt(), WorldConstants.CHUNK_SIZE),
+            Math.floorDiv(spawn.z.toInt(), WorldConstants.CHUNK_SIZE),
+        )
+        session.lastChunkPos = spawnCp
+        sendChunksAround(session, spawnCp.cx, spawnCp.cz)
+        log.info("{} chunks sent to {}", session.loadedChunks.size, id.take(8))
 
         sessions.values.filter { it.id != id }.forEach { other ->
             session.send(ServerMessage.PlayerUpdate(other.state))

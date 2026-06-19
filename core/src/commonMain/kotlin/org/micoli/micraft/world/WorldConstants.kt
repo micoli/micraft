@@ -4,6 +4,7 @@ object WorldConstants {
     const val WORLD_MIN_Y = 0
     const val WORLD_MAX_Y = 1024
     const val CHUNK_SIZE = 16
+    const val VIEW_RADIUS = 4   // 9×9 = 81 chunks autour du joueur
 }
 
 object PlayerConstants {
