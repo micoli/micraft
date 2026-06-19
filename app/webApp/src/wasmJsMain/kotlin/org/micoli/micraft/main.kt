@@ -16,13 +16,17 @@ fun main() {
     val camera = jsCreateCamera("camera", 8.0, 10.0, -10.0, scene)
     jsCameraSetTarget(camera, 8.0, 8.0, 8.0)
     jsCameraAttachControl(camera)
+    jsDisableCameraKeyboard(camera)
+    jsSetupKeyboard()
     jsLog("camera ready")
 
     jsCreateHUD()
 
     val client = GameClient(scene, camera)
-    jsLog("connecting to ws://localhost:8080/ws …")
-    client.connect("localhost", 8080)
+    val host = jsGetPageHost()
+    val port = jsGetPagePort()
+    jsLog("connecting to ws://$host:$port/game …")
+    client.connect(host, port)
 
     jsEngineRunRenderLoop(engine, scene)
     jsSetupResize(engine)

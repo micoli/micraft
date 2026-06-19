@@ -8,8 +8,43 @@ fun jsError(msg: String): Unit = js("console.error('[MiCraft]', msg)")
 // The canvas is accessed directly inside js() to avoid Kotlin/Wasm externref
 // wrapping issues when passing JsAny parameters through __externalAdapters.
 
-fun jsCreateEngine(): JsAny =
-    js("new BABYLON.Engine(document.getElementById('renderCanvas'), false)")
+fun jsCreateEngine(): JsAny = js("""
+(function(){
+  // 1. Dispose any previous engine (HMR / multiple reloads exhaust WebGL context limit)
+  if (window.__mcEngine) {
+    try { window.__mcEngine.dispose(); } catch(e) {}
+    window.__mcEngine = null;
+  }
+
+  var canvas = document.getElementById('renderCanvas');
+  if (!canvas) throw new Error('[MiCraft] Canvas #renderCanvas not found');
+
+  // 2. Diagnose WebGL availability before letting BabylonJS throw an opaque error
+  var probe = document.createElement('canvas');
+  var gl = probe.getContext('webgl2') || probe.getContext('webgl');
+  if (!gl) {
+    console.error('[MiCraft] WebGL unavailable. Open chrome://gpu and check that ' +
+      '"WebGL" and "Hardware-accelerated" are enabled. ' +
+      'You can also try: chrome://settings/system → enable hardware acceleration.');
+    throw new Error('[MiCraft] WebGL not supported by this browser / GPU configuration');
+  }
+  gl = null;
+
+  // 3. Create engine — try WebGL2, fall back to WebGL1
+  var engine;
+  try {
+    engine = new BABYLON.Engine(canvas, false, { disableWebGL2Support: false, preserveDrawingBuffer: false });
+  } catch(e) {
+    console.warn('[MiCraft] WebGL2 failed (' + e.message + '), retrying with WebGL1');
+    engine = new BABYLON.Engine(canvas, false, { disableWebGL2Support: true });
+  }
+
+  window.__mcEngine = engine;
+  window.addEventListener('beforeunload', function(){ engine.dispose(); }, { once: true });
+  console.log('[MiCraft] Engine created: ' + (engine.webGLVersion === 2 ? 'WebGL2' : 'WebGL1'));
+  return engine;
+})()
+""")
 
 fun jsCreateScene(engine: JsAny): JsAny = js("new BABYLON.Scene(engine)")
 
@@ -58,6 +93,50 @@ fun jsSetMaterialColor(mat: JsAny, r: Double, g: Double, b: Double): Unit =
 fun jsSetMeshMaterial(mesh: JsAny, mat: JsAny): Unit =
     js("mesh.material = mat")
 
+// ── Input ─────────────────────────────────────────────────────────────────────
+
+fun jsSetupKeyboard(): Unit = js("""
+(function(){
+  window.__mc = window.__mc || { keys: {} };
+  window.addEventListener('keydown', function(e){
+    window.__mc.keys[e.code] = true;
+    if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
+        'ShiftLeft','ControlLeft','Space'].includes(e.code))
+      e.preventDefault();
+  });
+  window.addEventListener('keyup', function(e){
+    window.__mc.keys[e.code] = false;
+  });
+})()
+""")
+
+fun jsIsKeyDown(code: String): Boolean = js("!!(window.__mc && window.__mc.keys[code])")
+
+fun jsDisableCameraKeyboard(camera: JsAny): Unit =
+    js("camera.inputs.removeByType('FreeCameraKeyboardMoveInput')")
+
+fun jsGetCameraForwardX(camera: JsAny): Double = js("""
+(function(){
+  var d = camera.getForwardRay(1).direction;
+  var l = Math.sqrt(d.x*d.x + d.z*d.z) || 1;
+  return d.x / l;
+})()
+""")
+
+fun jsGetCameraForwardZ(camera: JsAny): Double = js("""
+(function(){
+  var d = camera.getForwardRay(1).direction;
+  var l = Math.sqrt(d.x*d.x + d.z*d.z) || 1;
+  return d.z / l;
+})()
+""")
+
+fun jsGetCameraRotationY(camera: JsAny): Double = js("camera.rotation.y")
+fun jsGetCameraRotationX(camera: JsAny): Double = js("camera.rotation.x")
+
+fun jsGetPageHost(): String     = js("window.location.hostname")
+fun jsGetPagePort(): Int        = js("parseInt(window.location.port) || (window.location.protocol === 'https:' ? 443 : 80)")
+
 // ── HUD ───────────────────────────────────────────────────────────────────────
 
 fun jsCreateHUD(): Unit = js("""
@@ -69,7 +148,7 @@ fun jsCreateHUD(): Unit = js("""
 })()
 """)
 
-fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double): Unit = js("""
+fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, stance: String): Unit = js("""
 (function(){
   var d = document.getElementById('hud');
   if(d) d.textContent =
@@ -77,6 +156,7 @@ fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double): Un
     'Y  ' + y.toFixed(2) + '\n' +
     'Z  ' + z.toFixed(2) + '\n' +
     'Yaw   ' + yaw.toFixed(1) + '°\n' +
-    'Pitch ' + pitch.toFixed(1) + '°';
+    'Pitch ' + pitch.toFixed(1) + '°\n' +
+    stance;
 })()
 """)

@@ -14,4 +14,5 @@ data class PlayerState(
     val name: String,
     val pos: Vec3,
     val orientation: Orientation,
+    val stance: PlayerStance = PlayerStance.STANDING,
 )

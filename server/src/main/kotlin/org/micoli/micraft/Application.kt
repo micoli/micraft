@@ -3,6 +3,7 @@ package org.micoli.micraft
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import org.micoli.micraft.world.ProceduralChunkGenerator
@@ -25,7 +26,10 @@ fun Application.module() {
     gameLoop.start(this)
 
     routing {
-        webSocket("/ws") {
+        get("/") {
+            call.respondRedirect("http://localhost:8081/", permanent = false)
+        }
+        webSocket("/game") {
             gameLoop.onConnect(this)
         }
     }

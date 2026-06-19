@@ -8,6 +8,8 @@ import kotlinx.coroutines.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.babylon.*
+import org.micoli.micraft.player.PlayerStance
+import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.world.BlockType
@@ -15,9 +17,9 @@ import org.micoli.micraft.world.Chunk
 import org.micoli.micraft.world.WorldConstants
 
 class GameClient(private val scene: JsAny, private val camera: JsAny) {
-    private val blockMeshes = mutableMapOf<String, JsAny>()
+    private val blockMeshes  = mutableMapOf<String, JsAny>()
     private val playerMeshes = mutableMapOf<String, JsAny>()
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope        = CoroutineScope(Dispatchers.Default)
     private var localPlayerId: String? = null
 
     private val grassMat   = jsCreateMaterial("grass",   scene).also { jsSetMaterialColor(it, 0.3,  0.7,  0.2)  }
@@ -27,33 +29,32 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private val playerMat  = jsCreateMaterial("player",  scene).also { jsSetMaterialColor(it, 0.8,  0.2,  0.2)  }
 
     fun connect(host: String, port: Int) {
-        jsLog("connect() called → ws://$host:$port/ws")
         scope.launch {
             try {
-                jsLog("HttpClient creating…")
                 val client = HttpClient(Js) { install(WebSockets) }
-                jsLog("HttpClient created, opening WebSocket…")
-                client.webSocket(host = host, port = port, path = "/ws") {
-                    jsLog("WebSocket opened, sending Connect message")
+                client.webSocket(host = host, port = port, path = "/game") {
                     send(Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect("Player"))))
-                    jsLog("Connect sent, waiting for messages…")
-                    var msgCount = 0
+
+                    // Send movement intents at server tick rate
+                    val inputJob = launch {
+                        while (isActive) {
+                            delay(50)
+                            val intent = buildMoveIntent()
+                            send(Frame.Text(Json.encodeToString<ClientMessage>(intent)))
+                        }
+                    }
+
                     for (frame in incoming) {
                         if (frame is Frame.Text) {
-                            val text = frame.readText()
-                            msgCount++
-                            if (msgCount <= 5 || msgCount % 50 == 0) {
-                                jsLog("frame #$msgCount (${text.length} chars): ${text.take(80)}")
-                            }
                             val msg = runCatching {
-                                Json.decodeFromString<ServerMessage>(text)
+                                Json.decodeFromString<ServerMessage>(frame.readText())
                             }.onFailure { e ->
-                                jsError("JSON parse error: ${e.message} — raw: ${text.take(120)}")
+                                jsError("JSON parse error: ${e.message}")
                             }.getOrNull() ?: continue
                             handleMessage(msg)
                         }
                     }
-                    jsLog("WebSocket incoming channel closed after $msgCount messages")
+                    inputJob.cancel()
                 }
             } catch (e: Throwable) {
                 jsError("WebSocket error: ${e::class.simpleName}: ${e.message}")
@@ -61,23 +62,60 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         }
     }
 
+    private fun buildMoveIntent(): ClientMessage.MoveIntent {
+        val fwdX  = jsGetCameraForwardX(camera).toFloat()
+        val fwdZ  = jsGetCameraForwardZ(camera).toFloat()
+        val rightX = fwdZ    // perpendicular in XZ plane
+        val rightZ = -fwdX
+
+        var dx = 0f; var dz = 0f
+        if (jsIsKeyDown("KeyW")     || jsIsKeyDown("ArrowUp"))    { dx += fwdX;   dz += fwdZ   }
+        if (jsIsKeyDown("KeyS")     || jsIsKeyDown("ArrowDown"))  { dx -= fwdX;   dz -= fwdZ   }
+        if (jsIsKeyDown("KeyD")     || jsIsKeyDown("ArrowRight")) { dx += rightX; dz += rightZ }
+        if (jsIsKeyDown("KeyA")     || jsIsKeyDown("ArrowLeft"))  { dx -= rightX; dz -= rightZ }
+
+        // Normalize diagonal to avoid speed boost
+        val len = kotlin.math.sqrt((dx * dx + dz * dz).toDouble()).toFloat()
+        if (len > 1f) { dx /= len; dz /= len }
+
+        val stance = when {
+            jsIsKeyDown("ControlLeft") -> PlayerStance.CRAWLING
+            jsIsKeyDown("ShiftLeft")   -> PlayerStance.SNEAKING
+            else                       -> PlayerStance.STANDING
+        }
+
+        return ClientMessage.MoveIntent(
+            dx     = dx,
+            dz     = dz,
+            yaw    = jsGetCameraRotationY(camera).toFloat(),
+            pitch  = jsGetCameraRotationX(camera).toFloat(),
+            stance = stance,
+            jump   = jsIsKeyDown("Space"),
+        )
+    }
+
     private fun handleMessage(msg: ServerMessage) {
         when (msg) {
-            is ServerMessage.Welcome     -> {
+            is ServerMessage.Welcome -> {
                 localPlayerId = msg.playerId
-                jsLog("Welcome: playerId=${msg.playerId} spawn=${msg.spawnPos}")
             }
-            is ServerMessage.ChunkData   -> {
-                jsLog("ChunkData: chunk=${msg.chunk.pos}")
+            is ServerMessage.ChunkData -> {
                 renderChunk(msg.chunk)
-                jsLog("ChunkData rendered: total blocks=${blockMeshes.size}")
             }
             is ServerMessage.PlayerUpdate -> {
                 val s = msg.state
                 if (s.id == localPlayerId) {
-                    jsCameraSetPosition(camera, s.pos.x.toDouble(), (s.pos.y + 1.62).toDouble(), s.pos.z.toDouble())
-                    jsUpdateHUD(s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble(),
-                        s.orientation.yaw.toDouble(), s.orientation.pitch.toDouble())
+                    jsCameraSetPosition(camera,
+                        s.pos.x.toDouble(),
+                        (s.pos.y + s.stance.eyeOffset).toDouble(),
+                        s.pos.z.toDouble())
+                    val toDeg = 180.0 / kotlin.math.PI
+                    jsUpdateHUD(
+                        s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble(),
+                        jsGetCameraRotationY(camera) * toDeg,
+                        jsGetCameraRotationX(camera) * toDeg,
+                        s.stance.name,
+                    )
                 } else {
                     updatePlayerMesh(s.id, s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble())
                 }
@@ -94,31 +132,27 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private fun renderChunk(chunk: Chunk) {
         val ox = chunk.pos.cx * WorldConstants.CHUNK_SIZE
         val oz = chunk.pos.cz * WorldConstants.CHUNK_SIZE
-        var added = 0
-        var skipped = 0
         for (x in 0 until WorldConstants.CHUNK_SIZE) {
             for (z in 0 until WorldConstants.CHUNK_SIZE) {
                 for (y in 0..WorldConstants.WORLD_MAX_Y) {
                     val block = chunk.getBlock(x, y, z)
                     if (block == BlockType.AIR) continue
-                    if (isHidden(chunk, x, y, z)) { skipped++; continue }
+                    if (isHidden(chunk, x, y, z)) continue
                     addBlock(ox + x, y, oz + z, block)
-                    added++
                 }
             }
         }
-        jsLog("  chunk ${chunk.pos}: +$added meshes, $skipped hidden")
     }
 
     private fun isHidden(chunk: Chunk, x: Int, y: Int, z: Int): Boolean {
         val maxY = WorldConstants.WORLD_MAX_Y
-        val s = WorldConstants.CHUNK_SIZE
+        val s    = WorldConstants.CHUNK_SIZE
         if (y < maxY && chunk.getBlock(x, y + 1, z) == BlockType.AIR) return false
         if (y > 0    && chunk.getBlock(x, y - 1, z) == BlockType.AIR) return false
-        if (x > 0       && chunk.getBlock(x - 1, y, z) == BlockType.AIR) return false
-        if (x < s - 1   && chunk.getBlock(x + 1, y, z) == BlockType.AIR) return false
-        if (z > 0       && chunk.getBlock(x, y, z - 1) == BlockType.AIR) return false
-        if (z < s - 1   && chunk.getBlock(x, y, z + 1) == BlockType.AIR) return false
+        if (x > 0    && chunk.getBlock(x - 1, y, z) == BlockType.AIR) return false
+        if (x < s - 1 && chunk.getBlock(x + 1, y, z) == BlockType.AIR) return false
+        if (z > 0    && chunk.getBlock(x, y, z - 1) == BlockType.AIR) return false
+        if (z < s - 1 && chunk.getBlock(x, y, z + 1) == BlockType.AIR) return false
         return true
     }
 
@@ -140,16 +174,12 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
 
     private fun updatePlayerMesh(id: String, x: Double, y: Double, z: Double) {
         val mesh = playerMeshes.getOrPut(id) {
-            jsLog("new player mesh: $id")
-            val m = jsCreateBox("p_$id", 0.6, scene)
-            jsSetMeshMaterial(m, playerMat)
-            m
+            jsCreateBox("p_$id", 0.6, scene).also { jsSetMeshMaterial(it, playerMat) }
         }
         jsSetMeshPosition(mesh, x, y, z)
     }
 
     private fun removePlayer(id: String) {
-        jsLog("player left: $id")
         playerMeshes.remove(id)?.let(::jsDisposeMesh)
     }
 }

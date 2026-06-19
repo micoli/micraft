@@ -6,14 +6,19 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.json.Json
+import org.micoli.micraft.physics.AabbCollider
 import org.micoli.micraft.player.Orientation
+import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.player.height
+import org.micoli.micraft.player.speed
+import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
-import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChunkPos
+import org.micoli.micraft.world.PlayerConstants
 import org.micoli.micraft.world.WorldState
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -21,13 +26,13 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val log = LoggerFactory.getLogger("GameLoop")
 
-private const val TICK_MS = 50L
+private const val TICK_MS      = 50L
 private const val TICK_SECONDS = TICK_MS / 1000f
-private const val SPAWN_X = 8f
-private const val SPAWN_Y = 200f
-private const val SPAWN_Z = 8f
-private const val MOVE_SPEED = 5f * TICK_SECONDS
-private const val GRAVITY = -20f
+private const val SPAWN_X      = 8f
+private const val SPAWN_Y      = 200f
+private const val SPAWN_Z      = 8f
+private const val GRAVITY      = -20f
+private const val JUMP_SPEED   = 8.5f   // blocks/s upward — reaches ~1.8 blocks height
 private const val CHUNK_RADIUS = 2
 
 class GameLoop(private val world: WorldState) {
@@ -45,35 +50,66 @@ class GameLoop(private val world: WorldState) {
 
     private suspend fun tick() {
         sessions.values.forEach { session ->
-            var pendingYaw = session.state.orientation.yaw
+            var pendingYaw   = session.state.orientation.yaw
             var pendingPitch = session.state.orientation.pitch
-            var dx = 0f
-            var dz = 0f
+            var localDx      = 0f
+            var localDz      = 0f
+            var requestedStance = session.state.stance
 
+            var jumpRequested = false
             while (true) {
                 val intent = session.intents.tryReceive().getOrNull() ?: break
-                when (intent) {
-                    is ClientMessage.MoveIntent -> {
-                        dx += intent.dx
-                        dz += intent.dz
-                        pendingYaw = intent.yaw
-                        pendingPitch = intent.pitch
-                    }
-                    else -> {}
+                if (intent is ClientMessage.MoveIntent) {
+                    localDx += intent.dx
+                    localDz += intent.dz
+                    pendingYaw      = intent.yaw
+                    pendingPitch    = intent.pitch
+                    requestedStance = intent.stance
+                    if (intent.jump) jumpRequested = true
                 }
             }
 
             val old = session.state
-            val newX = old.pos.x + dx * MOVE_SPEED
-            val newZ = old.pos.z + dz * MOVE_SPEED
-            val newY = applyGravity(session, old.pos.y)
+            val w   = PlayerConstants.WIDTH
+            val pos = old.pos
 
-            val changed = newX != old.pos.x || newY != old.pos.y || newZ != old.pos.z
-                    || pendingYaw != old.orientation.yaw || pendingPitch != old.orientation.pitch
+            // Stance transition: only allow growing if there's headroom
+            var newStance = if (AabbCollider.canAdoptStance(world, pos.x, pos.y, pos.z, w, requestedStance.height, old.stance.height))
+                requestedStance else old.stance
+
+            val h     = newStance.height
+            val speed = newStance.speed * TICK_SECONDS
+
+            // Normalize diagonal movement to avoid diagonal speed boost
+            val len = kotlin.math.sqrt((localDx * localDx + localDz * localDz).toDouble()).toFloat()
+            val nx = if (len > 0f) localDx / len else 0f
+            val nz = if (len > 0f) localDz / len else 0f
+
+            val attemptDx = nx * speed
+            val attemptDz = nz * speed
+
+            // Resolve each axis independently (standard AABB sweep order: X → Z → Y)
+            // Jump: only when grounded, cancels sneak/crawl
+            if (jumpRequested && session.vy == 0f && AabbCollider.isGrounded(world, pos.x, pos.y, pos.z, w)) {
+                session.vy = JUMP_SPEED
+                if (newStance != PlayerStance.STANDING) newStance = PlayerStance.STANDING
+            }
+
+            val resolvedDx = AabbCollider.resolveX(world, pos.x, pos.y, pos.z, w, h, attemptDx)
+            val midX = pos.x + resolvedDx
+            val resolvedDz = AabbCollider.resolveZ(world, midX, pos.y, pos.z, w, h, attemptDz)
+            val newX = midX
+            val newZ = pos.z + resolvedDz
+            val newY = applyGravity(session, newX, pos.y, newZ, newStance.height)
+
+            val changed = newX != pos.x || newY != pos.y || newZ != pos.z
+                       || pendingYaw != old.orientation.yaw || pendingPitch != old.orientation.pitch
+                       || newStance != old.stance
             if (changed) {
                 session.state = old.copy(
-                    pos = Vec3(newX, newY, newZ),
+                    pos         = Vec3(newX, newY, newZ),
                     orientation = Orientation(pendingYaw, pendingPitch),
+                    stance      = newStance,
                 )
                 val update = ServerMessage.PlayerUpdate(session.state)
                 sessions.values.forEach { it.send(update) }
@@ -81,37 +117,29 @@ class GameLoop(private val world: WorldState) {
         }
     }
 
-    private fun applyGravity(session: PlayerSession, currentY: Float): Float {
-        val blockX = kotlin.math.floor(session.state.pos.x.toDouble()).toInt()
-        val blockZ = kotlin.math.floor(session.state.pos.z.toDouble()).toInt()
+    private fun applyGravity(session: PlayerSession, cx: Float, cy: Float, cz: Float, h: Float): Float {
+        val w = PlayerConstants.WIDTH
 
-        // Already grounded: skip gravity to avoid accumulation spam.
-        val blockBelowY = kotlin.math.floor(currentY.toDouble() - 0.001).toInt()
-        if (session.vy <= 0f && world.getBlock(blockX, blockBelowY, blockZ) != BlockType.AIR) {
+        // Already grounded: no need to simulate gravity
+        if (session.vy <= 0f && AabbCollider.isGrounded(world, cx, cy, cz, w)) {
             session.vy = 0f
-            return (blockBelowY + 1).toFloat()
+            return cy
         }
 
         session.vy += GRAVITY * TICK_SECONDS
-        val proposedY = currentY + session.vy * TICK_SECONDS
+        val dy = session.vy * TICK_SECONDS
+        val resolvedDy = AabbCollider.resolveY(world, cx, cy, cz, w, h, dy)
 
-        if (session.vy > 0f) return proposedY
-
-        // Sweep to prevent tunneling at high fall speed.
-        val fromBlock = kotlin.math.floor(currentY.toDouble() - 0.001).toInt()
-        val toBlock   = kotlin.math.floor(proposedY.toDouble() - 0.001).toInt()
-        for (by in fromBlock downTo toBlock) {
-            if (world.getBlock(blockX, by, blockZ) != BlockType.AIR) {
-                log.debug("player {} landed at y={}", session.id.take(8), by + 1)
-                session.vy = 0f
-                return (by + 1).toFloat()
-            }
+        if (resolvedDy != dy) {
+            if (session.vy < 0f) log.debug("player {} landed at y={}", session.id.take(8), cy + resolvedDy)
+            session.vy = 0f
         }
-        return proposedY.coerceAtLeast(0f)
+
+        return (cy + resolvedDy).coerceAtLeast(0f)
     }
 
     suspend fun onConnect(socket: DefaultWebSocketSession) {
-        val id = UUID.randomUUID().toString()
+        val id    = UUID.randomUUID().toString()
         val spawn = Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z)
         val state = PlayerState(id, "Player", spawn, Orientation(0f, 0f))
         val session = PlayerSession(id, socket, state)
@@ -119,21 +147,17 @@ class GameLoop(private val world: WorldState) {
         log.info("player connected: {} (total={})", id.take(8), sessions.size)
 
         session.send(ServerMessage.Welcome(id, spawn))
-        log.info("Welcome sent to {}", id.take(8))
 
         var chunkCount = 0
         for (cx in -CHUNK_RADIUS..CHUNK_RADIUS) {
             for (cz in -CHUNK_RADIUS..CHUNK_RADIUS) {
-                val chunk = world.getOrGenerate(ChunkPos(cx, cz))
-                session.send(ServerMessage.ChunkData(chunk))
+                session.send(ServerMessage.ChunkData(world.getOrGenerate(ChunkPos(cx, cz))))
                 chunkCount++
-                log.debug("  chunk ({},{}) sent to {}", cx, cz, id.take(8))
             }
         }
         log.info("{} chunks sent to {}", chunkCount, id.take(8))
 
-        val existingPlayers = sessions.values.filter { it.id != id }
-        existingPlayers.forEach { other ->
+        sessions.values.filter { it.id != id }.forEach { other ->
             session.send(ServerMessage.PlayerUpdate(other.state))
             other.send(ServerMessage.PlayerUpdate(state))
         }
@@ -141,16 +165,13 @@ class GameLoop(private val world: WorldState) {
         try {
             socket.incoming.consumeEach { frame ->
                 if (frame is Frame.Text) {
-                    val msg = runCatching {
-                        Json.decodeFromString<ClientMessage>(frame.readText())
-                    }.onFailure { e ->
-                        log.warn("bad frame from {}: {}", id.take(8), e.message)
-                    }.getOrNull() ?: return@consumeEach
-
-                    when (msg) {
-                        is ClientMessage.Disconnect -> return@consumeEach
-                        else -> session.intents.trySend(msg)
-                    }
+                    runCatching { Json.decodeFromString<ClientMessage>(frame.readText()) }
+                        .onFailure { log.warn("bad frame from {}: {}", id.take(8), it.message) }
+                        .getOrNull()
+                        ?.let { msg ->
+                            if (msg is ClientMessage.Disconnect) return@consumeEach
+                            session.intents.trySend(msg)
+                        }
                 }
             }
         } finally {

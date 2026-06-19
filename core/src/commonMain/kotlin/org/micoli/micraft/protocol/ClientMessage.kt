@@ -1,6 +1,7 @@
 package org.micoli.micraft.protocol
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.player.PlayerStance
 
 @Serializable
 sealed class ClientMessage {
@@ -13,6 +14,8 @@ sealed class ClientMessage {
         val dz: Float,
         val yaw: Float,
         val pitch: Float,
+        val stance: PlayerStance = PlayerStance.STANDING,
+        val jump: Boolean = false,
     ) : ClientMessage()
 
     @Serializable

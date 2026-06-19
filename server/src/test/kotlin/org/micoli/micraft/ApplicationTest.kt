@@ -19,7 +19,7 @@ class ApplicationTest {
         val wsClient = createClient {
             install(io.ktor.client.plugins.websocket.WebSockets)
         }
-        wsClient.webSocket("/ws") {
+        wsClient.webSocket("/game") {
             send(Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect("TestPlayer"))))
             val frame = incoming.receive()
             assertIs<Frame.Text>(frame)
