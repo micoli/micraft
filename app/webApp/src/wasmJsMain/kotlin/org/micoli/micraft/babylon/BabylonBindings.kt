@@ -97,9 +97,17 @@ fun jsSetMeshMaterial(mesh: JsAny, mat: JsAny): Unit =
 
 fun jsSetupKeyboard(): Unit = js("""
 (function(){
-  window.__mc = window.__mc || { keys: {} };
+  window.__mc = window.__mc || { keys: {}, flyToggle: false, lastSpaceTime: 0 };
   window.addEventListener('keydown', function(e){
+    if (e.repeat) return;
     window.__mc.keys[e.code] = true;
+    if (e.code === 'Space') {
+      var now = Date.now();
+      if (now - window.__mc.lastSpaceTime < 300) {
+        window.__mc.flyToggle = true;
+      }
+      window.__mc.lastSpaceTime = now;
+    }
     if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
         'ShiftLeft','ControlLeft','Space'].includes(e.code))
       e.preventDefault();
@@ -133,6 +141,17 @@ fun jsGetCameraForwardZ(camera: JsAny): Double = js("""
 
 fun jsGetCameraRotationY(camera: JsAny): Double = js("camera.rotation.y")
 fun jsGetCameraRotationX(camera: JsAny): Double = js("camera.rotation.x")
+
+fun jsGetCameraForwardY(camera: JsAny): Double = js("camera.getForwardRay(1).direction.y")
+
+fun jsConsumeFlyToggle(): Boolean = js("""
+(function(){
+  if (!window.__mc) return false;
+  var v = window.__mc.flyToggle;
+  window.__mc.flyToggle = false;
+  return v;
+})()
+""")
 
 fun jsGetPageHost(): String     = js("window.location.hostname")
 fun jsGetPagePort(): Int        = js("parseInt(window.location.port) || (window.location.protocol === 'https:' ? 443 : 80)")

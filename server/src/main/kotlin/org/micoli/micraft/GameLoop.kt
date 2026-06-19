@@ -32,8 +32,9 @@ private const val TICK_SECONDS = TICK_MS / 1000f
 private const val SPAWN_X      = 8f
 private const val SPAWN_Y      = 200f
 private const val SPAWN_Z      = 8f
-private const val GRAVITY      = -20f
-private const val JUMP_SPEED   = 8.5f   // blocks/s upward — reaches ~1.8 blocks height
+private const val GRAVITY            = -20f
+private const val JUMP_SPEED        = 8.5f   // blocks/s upward — reaches ~1.8 blocks height
+private const val FLY_VERTICAL_SPEED = 8f    // blocks/s up/down in fly mode
 
 class GameLoop(private val world: WorldState) {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
@@ -50,22 +51,26 @@ class GameLoop(private val world: WorldState) {
 
     private suspend fun tick() {
         sessions.values.forEach { session ->
-            var pendingYaw   = session.state.orientation.yaw
-            var pendingPitch = session.state.orientation.pitch
-            var localDx      = 0f
-            var localDz      = 0f
+            var pendingYaw      = session.state.orientation.yaw
+            var pendingPitch    = session.state.orientation.pitch
+            var localDx         = 0f
+            var localDz         = 0f
+            var localDy         = 0f
             var requestedStance = session.state.stance
+            var jumpRequested   = false
+            var flyToggleRequested = false
 
-            var jumpRequested = false
             while (true) {
                 val intent = session.intents.tryReceive().getOrNull() ?: break
                 if (intent is ClientMessage.MoveIntent) {
                     localDx += intent.dx
                     localDz += intent.dz
+                    localDy += intent.dy
                     pendingYaw      = intent.yaw
                     pendingPitch    = intent.pitch
                     requestedStance = intent.stance
                     if (intent.jump) jumpRequested = true
+                    if (intent.flyToggle) flyToggleRequested = true
                 }
             }
 
@@ -73,8 +78,12 @@ class GameLoop(private val world: WorldState) {
             val w   = PlayerConstants.WIDTH
             val pos = old.pos
 
-            // Stance transition: only allow growing if there's headroom
-            var newStance = if (AabbCollider.canAdoptStance(world, pos.x, pos.y, pos.z, w, requestedStance.height, old.stance.height))
+            // Fly toggle: double-tap space on client
+            val newFlying = if (flyToggleRequested) !old.flying else old.flying
+            if (flyToggleRequested && newFlying) session.vy = 0f   // stop falling when entering fly
+
+            // Stance: disabled in fly mode
+            var newStance = if (!newFlying && AabbCollider.canAdoptStance(world, pos.x, pos.y, pos.z, w, requestedStance.height, old.stance.height))
                 requestedStance else old.stance
 
             val h     = newStance.height
@@ -88,9 +97,8 @@ class GameLoop(private val world: WorldState) {
             val attemptDx = nx * speed
             val attemptDz = nz * speed
 
-            // Resolve each axis independently (standard AABB sweep order: X → Z → Y)
-            // Jump: only when grounded, cancels sneak/crawl
-            if (jumpRequested && session.vy == 0f && AabbCollider.isGrounded(world, pos.x, pos.y, pos.z, w)) {
+            // Jump: only when grounded and not flying
+            if (!newFlying && jumpRequested && session.vy == 0f && AabbCollider.isGrounded(world, pos.x, pos.y, pos.z, w)) {
                 session.vy = JUMP_SPEED
                 if (newStance != PlayerStance.STANDING) newStance = PlayerStance.STANDING
             }
@@ -100,16 +108,24 @@ class GameLoop(private val world: WorldState) {
             val resolvedDz = AabbCollider.resolveZ(world, midX, pos.y, pos.z, w, h, attemptDz)
             val newX = midX
             val newZ = pos.z + resolvedDz
-            val newY = applyGravity(session, newX, pos.y, newZ, newStance.height)
+
+            val newY = if (newFlying) {
+                val flyDy = localDy * FLY_VERTICAL_SPEED * TICK_SECONDS
+                val resolvedDy = AabbCollider.resolveY(world, newX, pos.y, newZ, w, h, flyDy)
+                (pos.y + resolvedDy).coerceIn(0f, WorldConstants.WORLD_MAX_Y.toFloat())
+            } else {
+                applyGravity(session, newX, pos.y, newZ, newStance.height)
+            }
 
             val changed = newX != pos.x || newY != pos.y || newZ != pos.z
                        || pendingYaw != old.orientation.yaw || pendingPitch != old.orientation.pitch
-                       || newStance != old.stance
+                       || newStance != old.stance || newFlying != old.flying
             if (changed) {
                 session.state = old.copy(
                     pos         = Vec3(newX, newY, newZ),
                     orientation = Orientation(pendingYaw, pendingPitch),
                     stance      = newStance,
+                    flying      = newFlying,
                 )
                 val update = ServerMessage.PlayerUpdate(session.state)
                 sessions.values.forEach { it.send(update) }
@@ -194,8 +210,14 @@ class GameLoop(private val world: WorldState) {
                         .onFailure { log.warn("bad frame from {}: {}", id.take(8), it.message) }
                         .getOrNull()
                         ?.let { msg ->
-                            if (msg is ClientMessage.Disconnect) return@consumeEach
-                            session.intents.trySend(msg)
+                            when (msg) {
+                                is ClientMessage.Disconnect -> return@consumeEach
+                                is ClientMessage.ChunkUnload -> {
+                                    msg.positions.forEach { session.loadedChunks.remove(it) }
+                                    log.debug("{} chunks unloaded by {}", msg.positions.size, session.id.take(8))
+                                }
+                                else -> session.intents.trySend(msg)
+                            }
                         }
                 }
             }

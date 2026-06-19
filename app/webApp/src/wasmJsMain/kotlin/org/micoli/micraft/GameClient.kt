@@ -14,13 +14,19 @@ import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.Chunk
+import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.WorldConstants
 
 class GameClient(private val scene: JsAny, private val camera: JsAny) {
-    private val blockMeshes  = mutableMapOf<String, JsAny>()
-    private val playerMeshes = mutableMapOf<String, JsAny>()
-    private val scope        = CoroutineScope(Dispatchers.Default)
+    private val blockMeshes    = mutableMapOf<String, JsAny>()
+    private val playerMeshes   = mutableMapOf<String, JsAny>()
+    private val chunkBlockKeys = mutableMapOf<ChunkPos, MutableList<String>>()
+    private val scope          = CoroutineScope(Dispatchers.Default)
     private var localPlayerId: String? = null
+    private var localFlying  = false
+    private var lastPlayerCx = Int.MIN_VALUE
+    private var lastPlayerCz = Int.MIN_VALUE
+    private val pendingUnloads = mutableListOf<ChunkPos>()
 
     private val grassMat   = jsCreateMaterial("grass",   scene).also { jsSetMaterialColor(it, 0.3,  0.7,  0.2)  }
     private val stoneMat   = jsCreateMaterial("stone",   scene).also { jsSetMaterialColor(it, 0.5,  0.5,  0.5)  }
@@ -35,12 +41,19 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                 client.webSocket(host = host, port = port, path = "/game") {
                     send(Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect("Player"))))
 
-                    // Send movement intents at server tick rate
+                    // Send movement intents at server tick rate + pending chunk unloads
                     val inputJob = launch {
                         while (isActive) {
                             delay(50)
                             val intent = buildMoveIntent()
                             send(Frame.Text(Json.encodeToString<ClientMessage>(intent)))
+                            if (pendingUnloads.isNotEmpty()) {
+                                val batch = pendingUnloads.toList()
+                                pendingUnloads.clear()
+                                send(Frame.Text(Json.encodeToString<ClientMessage>(
+                                    ClientMessage.ChunkUnload(batch)
+                                )))
+                            }
                         }
                     }
 
@@ -78,20 +91,43 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         val len = kotlin.math.sqrt((dx * dx + dz * dz).toDouble()).toFloat()
         if (len > 1f) { dx /= len; dz /= len }
 
-        val stance = when {
-            jsIsKeyDown("ControlLeft") -> PlayerStance.CRAWLING
-            jsIsKeyDown("ShiftLeft")   -> PlayerStance.SNEAKING
-            else                       -> PlayerStance.STANDING
-        }
+        val flyToggle = jsConsumeFlyToggle()
 
-        return ClientMessage.MoveIntent(
-            dx     = dx,
-            dz     = dz,
-            yaw    = jsGetCameraRotationY(camera).toFloat(),
-            pitch  = jsGetCameraRotationX(camera).toFloat(),
-            stance = stance,
-            jump   = jsIsKeyDown("Space"),
-        )
+        return if (localFlying) {
+            // In fly mode: Space = go up, W/S pitch-follows camera vertical component
+            val dy = when {
+                jsIsKeyDown("Space") -> 1f
+                else -> {
+                    val fwdY = jsGetCameraForwardY(camera).toFloat()
+                    var d = 0f
+                    if (jsIsKeyDown("KeyW")    || jsIsKeyDown("ArrowUp"))   d += fwdY
+                    if (jsIsKeyDown("KeyS")    || jsIsKeyDown("ArrowDown")) d -= fwdY
+                    d
+                }
+            }
+            ClientMessage.MoveIntent(
+                dx = dx, dz = dz, dy = dy,
+                yaw = jsGetCameraRotationY(camera).toFloat(),
+                pitch = jsGetCameraRotationX(camera).toFloat(),
+                stance = PlayerStance.STANDING,
+                jump = false,
+                flyToggle = flyToggle,
+            )
+        } else {
+            val stance = when {
+                jsIsKeyDown("ControlLeft") -> PlayerStance.CRAWLING
+                jsIsKeyDown("ShiftLeft")   -> PlayerStance.SNEAKING
+                else                       -> PlayerStance.STANDING
+            }
+            ClientMessage.MoveIntent(
+                dx = dx, dz = dz,
+                yaw = jsGetCameraRotationY(camera).toFloat(),
+                pitch = jsGetCameraRotationX(camera).toFloat(),
+                stance = stance,
+                jump = jsIsKeyDown("Space"),
+                flyToggle = flyToggle,
+            )
+        }
     }
 
     private fun handleMessage(msg: ServerMessage) {
@@ -105,6 +141,13 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
             is ServerMessage.PlayerUpdate -> {
                 val s = msg.state
                 if (s.id == localPlayerId) {
+                    localFlying = s.flying
+                    val cx = s.pos.x.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
+                    val cz = s.pos.z.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
+                    if (cx != lastPlayerCx || cz != lastPlayerCz) {
+                        lastPlayerCx = cx; lastPlayerCz = cz
+                        unloadDistantChunks(cx, cz)
+                    }
                     jsCameraSetPosition(camera,
                         s.pos.x.toDouble(),
                         (s.pos.y + s.stance.eyeOffset).toDouble(),
@@ -114,7 +157,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                         s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble(),
                         jsGetCameraRotationY(camera) * toDeg,
                         jsGetCameraRotationX(camera) * toDeg,
-                        s.stance.name,
+                        if (s.flying) "FLYING" else s.stance.name,
                     )
                 } else {
                     updatePlayerMesh(s.id, s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble())
@@ -125,11 +168,17 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                 val key = "${change.pos.x},${change.pos.y},${change.pos.z}"
                 blockMeshes.remove(key)?.let(::jsDisposeMesh)
                 if (change.type != BlockType.AIR) addBlock(change.pos.x, change.pos.y, change.pos.z, change.type)
+                // Note: WorldUpdate blocks are not tracked in chunkBlockKeys (rare individual changes)
             }
         }
     }
 
     private fun renderChunk(chunk: Chunk) {
+        // Dispose any existing meshes for this chunk (handles re-render after unload)
+        chunkBlockKeys.remove(chunk.pos)?.forEach { key ->
+            blockMeshes.remove(key)?.let(::jsDisposeMesh)
+        }
+        val keys = mutableListOf<String>()
         val ox = chunk.pos.cx * WorldConstants.CHUNK_SIZE
         val oz = chunk.pos.cz * WorldConstants.CHUNK_SIZE
         for (x in 0 until WorldConstants.CHUNK_SIZE) {
@@ -138,10 +187,26 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                     val block = chunk.getBlock(x, y, z)
                     if (block == BlockType.AIR) continue
                     if (isHidden(chunk, x, y, z)) continue
-                    addBlock(ox + x, y, oz + z, block)
+                    val key = addBlock(ox + x, y, oz + z, block)
+                    if (key != null) keys.add(key)
                 }
             }
         }
+        chunkBlockKeys[chunk.pos] = keys
+    }
+
+    private fun unloadDistantChunks(playerCx: Int, playerCz: Int) {
+        val r = WorldConstants.CLIENT_VIEW_RADIUS
+        val toUnload = chunkBlockKeys.keys.filter { cp ->
+            kotlin.math.abs(cp.cx - playerCx) > r || kotlin.math.abs(cp.cz - playerCz) > r
+        }
+        if (toUnload.isEmpty()) return
+        toUnload.forEach { cp ->
+            chunkBlockKeys.remove(cp)?.forEach { key ->
+                blockMeshes.remove(key)?.let(::jsDisposeMesh)
+            }
+        }
+        pendingUnloads.addAll(toUnload)
     }
 
     private fun isHidden(chunk: Chunk, x: Int, y: Int, z: Int): Boolean {
@@ -156,20 +221,21 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         return true
     }
 
-    private fun addBlock(wx: Int, wy: Int, wz: Int, type: BlockType) {
+    private fun addBlock(wx: Int, wy: Int, wz: Int, type: BlockType): String? {
         val key = "$wx,$wy,$wz"
-        if (blockMeshes.containsKey(key)) return
+        if (blockMeshes.containsKey(key)) return null
         val mat = when (type) {
             BlockType.GRASS   -> grassMat
             BlockType.STONE   -> stoneMat
             BlockType.DIRT    -> dirtMat
             BlockType.BEDROCK -> bedrockMat
-            BlockType.AIR     -> return
+            BlockType.AIR     -> return null
         }
         val mesh = jsCreateBox("b_$key", 1.0, scene)
         jsSetMeshPosition(mesh, wx.toDouble(), wy.toDouble(), wz.toDouble())
         jsSetMeshMaterial(mesh, mat)
         blockMeshes[key] = mesh
+        return key
     }
 
     private fun updatePlayerMesh(id: String, x: Double, y: Double, z: Double) {

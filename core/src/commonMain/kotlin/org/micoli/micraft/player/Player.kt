@@ -15,4 +15,5 @@ data class PlayerState(
     val pos: Vec3,
     val orientation: Orientation,
     val stance: PlayerStance = PlayerStance.STANDING,
+    val flying: Boolean = false,
 )
