@@ -18,7 +18,9 @@ fun main() {
     jsCameraAttachControl(camera)
     jsLog("camera ready")
 
-    val client = GameClient(scene)
+    jsCreateHUD()
+
+    val client = GameClient(scene, camera)
     jsLog("connecting to ws://localhost:8080/ws …")
     client.connect("localhost", 8080)
 

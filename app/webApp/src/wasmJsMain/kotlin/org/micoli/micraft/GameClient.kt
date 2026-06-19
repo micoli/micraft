@@ -14,10 +14,11 @@ import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.Chunk
 import org.micoli.micraft.world.WorldConstants
 
-class GameClient(private val scene: JsAny) {
+class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private val blockMeshes = mutableMapOf<String, JsAny>()
     private val playerMeshes = mutableMapOf<String, JsAny>()
     private val scope = CoroutineScope(Dispatchers.Default)
+    private var localPlayerId: String? = null
 
     private val grassMat   = jsCreateMaterial("grass",   scene).also { jsSetMaterialColor(it, 0.3,  0.7,  0.2)  }
     private val stoneMat   = jsCreateMaterial("stone",   scene).also { jsSetMaterialColor(it, 0.5,  0.5,  0.5)  }
@@ -62,7 +63,10 @@ class GameClient(private val scene: JsAny) {
 
     private fun handleMessage(msg: ServerMessage) {
         when (msg) {
-            is ServerMessage.Welcome     -> jsLog("Welcome: playerId=${msg.playerId} spawn=${msg.spawnPos}")
+            is ServerMessage.Welcome     -> {
+                localPlayerId = msg.playerId
+                jsLog("Welcome: playerId=${msg.playerId} spawn=${msg.spawnPos}")
+            }
             is ServerMessage.ChunkData   -> {
                 jsLog("ChunkData: chunk=${msg.chunk.pos}")
                 renderChunk(msg.chunk)
@@ -70,7 +74,13 @@ class GameClient(private val scene: JsAny) {
             }
             is ServerMessage.PlayerUpdate -> {
                 val s = msg.state
-                updatePlayerMesh(s.id, s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble())
+                if (s.id == localPlayerId) {
+                    jsCameraSetPosition(camera, s.pos.x.toDouble(), (s.pos.y + 1.62).toDouble(), s.pos.z.toDouble())
+                    jsUpdateHUD(s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble(),
+                        s.orientation.yaw.toDouble(), s.orientation.pitch.toDouble())
+                } else {
+                    updatePlayerMesh(s.id, s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble())
+                }
             }
             is ServerMessage.PlayerLeft  -> removePlayer(msg.playerId)
             is ServerMessage.WorldUpdate -> msg.changes.forEach { change ->

@@ -82,21 +82,29 @@ class GameLoop(private val world: WorldState) {
     }
 
     private fun applyGravity(session: PlayerSession, currentY: Float): Float {
-        session.vy += GRAVITY * TICK_SECONDS
-        val proposedY = currentY + session.vy * TICK_SECONDS
         val blockX = kotlin.math.floor(session.state.pos.x.toDouble()).toInt()
         val blockZ = kotlin.math.floor(session.state.pos.z.toDouble()).toInt()
 
+        // Already grounded: skip gravity to avoid accumulation spam.
+        val blockBelowY = kotlin.math.floor(currentY.toDouble() - 0.001).toInt()
+        if (session.vy <= 0f && world.getBlock(blockX, blockBelowY, blockZ) != BlockType.AIR) {
+            session.vy = 0f
+            return (blockBelowY + 1).toFloat()
+        }
+
+        session.vy += GRAVITY * TICK_SECONDS
+        val proposedY = currentY + session.vy * TICK_SECONDS
+
         if (session.vy > 0f) return proposedY
 
+        // Sweep to prevent tunneling at high fall speed.
         val fromBlock = kotlin.math.floor(currentY.toDouble() - 0.001).toInt()
         val toBlock   = kotlin.math.floor(proposedY.toDouble() - 0.001).toInt()
         for (by in fromBlock downTo toBlock) {
             if (world.getBlock(blockX, by, blockZ) != BlockType.AIR) {
+                log.debug("player {} landed at y={}", session.id.take(8), by + 1)
                 session.vy = 0f
-                val landedY = (by + 1).toFloat()
-                log.debug("player {} landed at y={} (block y={})", session.id.take(8), landedY, by)
-                return landedY
+                return (by + 1).toFloat()
             }
         }
         return proposedY.coerceAtLeast(0f)

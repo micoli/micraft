@@ -34,6 +34,9 @@ fun jsCameraSetTarget(camera: JsAny, x: Double, y: Double, z: Double): Unit =
 fun jsCameraAttachControl(camera: JsAny): Unit =
     js("camera.attachControl(document.getElementById('renderCanvas'), true)")
 
+fun jsCameraSetPosition(camera: JsAny, x: Double, y: Double, z: Double): Unit =
+    js("camera.position = new BABYLON.Vector3(x, y, z)")
+
 // ── Meshes ────────────────────────────────────────────────────────────────────
 
 fun jsCreateBox(name: String, size: Double, scene: JsAny): JsAny =
@@ -54,3 +57,26 @@ fun jsSetMaterialColor(mat: JsAny, r: Double, g: Double, b: Double): Unit =
 
 fun jsSetMeshMaterial(mesh: JsAny, mat: JsAny): Unit =
     js("mesh.material = mat")
+
+// ── HUD ───────────────────────────────────────────────────────────────────────
+
+fun jsCreateHUD(): Unit = js("""
+(function(){
+  var d = document.createElement('div');
+  d.id = 'hud';
+  d.style.cssText = 'position:fixed;top:12px;right:12px;background:rgba(0,0,0,0.55);color:#fff;font:13px/1.6 monospace;padding:8px 12px;border-radius:6px;pointer-events:none;z-index:999;white-space:pre';
+  document.body.appendChild(d);
+})()
+""")
+
+fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double): Unit = js("""
+(function(){
+  var d = document.getElementById('hud');
+  if(d) d.textContent =
+    'X  ' + x.toFixed(2) + '\n' +
+    'Y  ' + y.toFixed(2) + '\n' +
+    'Z  ' + z.toFixed(2) + '\n' +
+    'Yaw   ' + yaw.toFixed(1) + '°\n' +
+    'Pitch ' + pitch.toFixed(1) + '°';
+})()
+""")
