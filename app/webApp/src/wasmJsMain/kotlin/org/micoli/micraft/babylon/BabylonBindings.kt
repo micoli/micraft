@@ -56,8 +56,13 @@ fun jsSetupResize(engine: JsAny): Unit =
 
 // ── Lights / Camera ───────────────────────────────────────────────────────────
 
-fun jsCreateHemisphericLight(name: String, scene: JsAny): JsAny =
-    js("new BABYLON.HemisphericLight(name, new BABYLON.Vector3(0,1,0), scene)")
+fun jsCreateHemisphericLight(name: String, scene: JsAny): JsAny = js("""
+(function(){
+  var l = new BABYLON.HemisphericLight(name, new BABYLON.Vector3(0,1,0), scene);
+  l.groundColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+  return l;
+})()
+""")
 
 fun jsCreateCamera(name: String, x: Double, y: Double, z: Double, scene: JsAny): JsAny =
     js("new BABYLON.UniversalCamera(name, new BABYLON.Vector3(x,y,z), scene)")
@@ -129,13 +134,14 @@ fun jsCreateGrassMaterial(scene: JsAny): JsAny = js("""
     return m;
   };
   var top    = texMat('grass_top',    '/textures/blocks/grass_top.png');
-  top.diffuseColor = new BABYLON.Color3(0.47, 0.75, 0.35); // plains biome grass tint
-  var side   = texMat('grass_side',   '/textures/blocks/grass_side.png', Math.PI / 2);
-  var sideX  = texMat('grass_side_x', '/textures/blocks/grass_side.png', Math.PI / 2);
+  top.diffuseColor = new BABYLON.Color3(0.47, 0.75, 0.35);
+  var sideFr = texMat('grass_side_fr', '/textures/blocks/grass_side.png');              // +Z: wAng=0
+  var sideBk = texMat('grass_side_bk', '/textures/blocks/grass_side.png', Math.PI);    // -Z: wAng=π
+  var sideX  = texMat('grass_side_x',  '/textures/blocks/grass_side.png', Math.PI/2);  // ±X: wAng=π/2
   var bottom = texMat('grass_bot',    '/textures/blocks/dirt.png');
   var multi = new BABYLON.MultiMaterial('grass', scene);
   // BabylonJS CreateBox: 0=front(+Z), 1=back(-Z), 2=right(+X), 3=left(-X), 4=top(+Y), 5=bottom(-Y)
-  multi.subMaterials = [side, side, sideX, sideX, top, bottom];
+  multi.subMaterials = [sideFr, sideBk, sideX, sideX, top, bottom];
   return multi;
 })()
 """)
