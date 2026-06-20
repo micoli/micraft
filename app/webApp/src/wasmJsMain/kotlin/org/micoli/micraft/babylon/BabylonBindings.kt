@@ -39,6 +39,21 @@ fun jsCameraSetPosition(camera: JsAny, x: Double, y: Double, z: Double): Unit =
 fun jsCreateBox(name: String, size: Double, scene: JsAny): JsAny =
     js("mcCreateBox(name, size, scene)")
 
+fun jsCreateSimpleBox(name: String, size: Double, scene: JsAny): JsAny =
+    js("mcCreateSimpleBox(name, size, scene)")
+
+fun jsFreezeMesh(mesh: JsAny): Unit = js("mcFreezeMesh(mesh)")
+
+fun jsOptimizeScene(scene: JsAny): Unit = js("mcOptimizeScene(scene)")
+
+// ── Chunk geometry builder ────────────────────────────────────────────────────
+
+fun jsChunkBegin(cx: Int, cz: Int): Unit = js("mcChunkBegin(cx, cz)")
+fun jsChunkFace(wx: Int, wy: Int, wz: Int, faceMat: Int): Unit = js("mcChunkFace(wx, wy, wz, faceMat)")
+fun jsChunkEnd(scene: JsAny, gm: JsAny, sm: JsAny, dm: JsAny, bm: JsAny): Unit =
+    js("mcChunkEnd(scene, gm, sm, dm, bm)")
+fun jsDisposeChunk(key: String): Unit = js("mcDisposeChunk(key)")
+
 fun jsSetMeshPosition(mesh: JsAny, x: Double, y: Double, z: Double): Unit =
     js("mesh.position = new BABYLON.Vector3(x,y,z)")
 

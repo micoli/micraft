@@ -23,10 +23,10 @@ private const val FLY_VERTICAL_SPEED = 8f   // must match server GameLoop consta
 private const val SNAP_THRESHOLD = 2.0      // blocks: snap if prediction diverges beyond this
 
 class GameClient(private val scene: JsAny, private val camera: JsAny) {
-    private val blockMeshes    = mutableMapOf<String, JsAny>()
-    private val playerMeshes   = mutableMapOf<String, JsAny>()
-    private val chunkBlockKeys = mutableMapOf<ChunkPos, MutableList<String>>()
-    private val scope          = CoroutineScope(Dispatchers.Default)
+    private val playerMeshes = mutableMapOf<String, JsAny>()
+    private val loadedChunks = mutableSetOf<ChunkPos>()
+    private val chunkData    = mutableMapOf<ChunkPos, Pair<Chunk, Int>>()
+    private val scope        = CoroutineScope(Dispatchers.Default)
     private var localPlayerId: String? = null
     private var localFlying      = false
     private var localStance      = PlayerStance.STANDING
@@ -55,6 +55,8 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     // Last server HUD data (updated on PlayerUpdate, displayed in prediction loop)
     private var hudX = 0.0; private var hudY = 0.0; private var hudZ = 0.0
     private var hudStance = "STANDING"; private var hudSpeed = 1.0
+
+    init { jsOptimizeScene(scene) }
 
     private val grassMat   = jsCreateGrassMaterial(scene)
     private val stoneMat   = jsCreateTextureMaterial("stone",   "/textures/blocks/stone.png",   scene)
@@ -136,8 +138,9 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         pendingUnloads.clear()
         playerMeshes.values.forEach(::jsDisposeMesh)
         playerMeshes.clear()
-        chunkBlockKeys.values.forEach { keys -> keys.forEach { key -> blockMeshes.remove(key)?.let(::jsDisposeMesh) } }
-        chunkBlockKeys.clear()
+        loadedChunks.forEach { cp -> jsDisposeChunk("${cp.cx},${cp.cz}") }
+        loadedChunks.clear()
+        chunkData.clear()
     }
 
     private fun applyLocalPrediction() {
@@ -316,77 +319,63 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
             }
             is ServerMessage.PlayerLeft  -> removePlayer(msg.playerId)
             is ServerMessage.WorldUpdate -> msg.changes.forEach { change ->
-                val key = "${change.pos.x},${change.pos.y},${change.pos.z}"
-                blockMeshes.remove(key)?.let(::jsDisposeMesh)
-                if (change.type != BlockType.AIR) addBlock(change.pos.x, change.pos.y, change.pos.z, change.type)
-                // Note: WorldUpdate blocks are not tracked in chunkBlockKeys (rare individual changes)
+                val cx = change.pos.x.floorDiv(WorldConstants.CHUNK_SIZE)
+                val cz = change.pos.z.floorDiv(WorldConstants.CHUNK_SIZE)
+                val cp = ChunkPos(cx, cz)
+                val (existing, existingTopY) = chunkData[cp] ?: return@forEach
+                val lx = change.pos.x - cx * WorldConstants.CHUNK_SIZE
+                val lz = change.pos.z - cz * WorldConstants.CHUNK_SIZE
+                val updated = existing.withBlock(lx, change.pos.y, lz, change.type)
+                val newTopY = if (change.type != BlockType.AIR) maxOf(existingTopY, change.pos.y) else existingTopY
+                renderChunk(updated, newTopY)
             }
         }
     }
 
     private fun renderChunk(chunk: Chunk, topY: Int) {
-        // Dispose any existing meshes for this chunk (handles re-render after unload)
-        chunkBlockKeys.remove(chunk.pos)?.forEach { key ->
-            blockMeshes.remove(key)?.let(::jsDisposeMesh)
-        }
-        val keys = mutableListOf<String>()
+        val chunkKey = "${chunk.pos.cx},${chunk.pos.cz}"
+        jsDisposeChunk(chunkKey)
+        chunkData[chunk.pos] = Pair(chunk, topY)
+
         val ox = chunk.pos.cx * WorldConstants.CHUNK_SIZE
         val oz = chunk.pos.cz * WorldConstants.CHUNK_SIZE
-        for (x in 0 until WorldConstants.CHUNK_SIZE) {
-            for (z in 0 until WorldConstants.CHUNK_SIZE) {
+        val s  = WorldConstants.CHUNK_SIZE
+
+        jsChunkBegin(chunk.pos.cx, chunk.pos.cz)
+        for (x in 0 until s) {
+            for (z in 0 until s) {
                 for (y in 0..topY) {
                     val block = chunk.getBlock(x, y, z)
                     if (block == BlockType.AIR) continue
-                    if (isHidden(chunk, x, y, z)) continue
-                    val key = addBlock(ox + x, y, oz + z, block)
-                    if (key != null) keys.add(key)
+                    val t  = block.ordinal * 6
+                    val wx = ox + x
+                    val wz2 = oz + z
+                    // Emit only exposed faces; chunk-edge faces are always exposed.
+                    if (y >= WorldConstants.WORLD_MAX_Y || chunk.getBlock(x, y + 1, z) == BlockType.AIR) jsChunkFace(wx, y, wz2, t + 4)
+                    if (y <= 0 || chunk.getBlock(x, y - 1, z) == BlockType.AIR)                          jsChunkFace(wx, y, wz2, t + 5)
+                    if (z == s - 1 || chunk.getBlock(x, y, z + 1) == BlockType.AIR)                      jsChunkFace(wx, y, wz2, t + 0)
+                    if (z == 0     || chunk.getBlock(x, y, z - 1) == BlockType.AIR)                      jsChunkFace(wx, y, wz2, t + 1)
+                    if (x == s - 1 || chunk.getBlock(x + 1, y, z) == BlockType.AIR)                      jsChunkFace(wx, y, wz2, t + 2)
+                    if (x == 0     || chunk.getBlock(x - 1, y, z) == BlockType.AIR)                      jsChunkFace(wx, y, wz2, t + 3)
                 }
             }
         }
-        chunkBlockKeys[chunk.pos] = keys
+        jsChunkEnd(scene, grassMat, stoneMat, dirtMat, bedrockMat)
+        loadedChunks.add(chunk.pos)
     }
 
     private fun unloadDistantChunks(playerCx: Int, playerCz: Int) {
         val r = WorldConstants.CLIENT_VIEW_RADIUS
-        val toUnload = chunkBlockKeys.keys.filter { cp ->
+        val toUnload = loadedChunks.filter { cp ->
             kotlin.math.abs(cp.cx - playerCx) > r || kotlin.math.abs(cp.cz - playerCz) > r
         }
         if (toUnload.isEmpty()) return
         toUnload.forEach { cp ->
-            chunkBlockKeys.remove(cp)?.forEach { key ->
-                blockMeshes.remove(key)?.let(::jsDisposeMesh)
-            }
+            jsDisposeChunk("${cp.cx},${cp.cz}")
+            loadedChunks.remove(cp)
+            chunkData.remove(cp)
         }
         pendingUnloads.addAll(toUnload)
-    }
-
-    private fun isHidden(chunk: Chunk, x: Int, y: Int, z: Int): Boolean {
-        val maxY = WorldConstants.WORLD_MAX_Y
-        val s    = WorldConstants.CHUNK_SIZE
-        if (y < maxY && chunk.getBlock(x, y + 1, z) == BlockType.AIR) return false
-        if (y > 0    && chunk.getBlock(x, y - 1, z) == BlockType.AIR) return false
-        if (x > 0    && chunk.getBlock(x - 1, y, z) == BlockType.AIR) return false
-        if (x < s - 1 && chunk.getBlock(x + 1, y, z) == BlockType.AIR) return false
-        if (z > 0    && chunk.getBlock(x, y, z - 1) == BlockType.AIR) return false
-        if (z < s - 1 && chunk.getBlock(x, y, z + 1) == BlockType.AIR) return false
-        return true
-    }
-
-    private fun addBlock(wx: Int, wy: Int, wz: Int, type: BlockType): String? {
-        val key = "$wx,$wy,$wz"
-        if (blockMeshes.containsKey(key)) return null
-        val mat = when (type) {
-            BlockType.GRASS   -> grassMat
-            BlockType.STONE   -> stoneMat
-            BlockType.DIRT    -> dirtMat
-            BlockType.BEDROCK -> bedrockMat
-            BlockType.AIR     -> return null
-        }
-        val mesh = jsCreateBox("b_$key", 1.0, scene)
-        jsSetMeshPosition(mesh, wx.toDouble(), wy.toDouble(), wz.toDouble())
-        jsSetMeshMaterial(mesh, mat)
-        blockMeshes[key] = mesh
-        return key
     }
 
     private fun updatePlayerMesh(id: String, x: Double, y: Double, z: Double) {
