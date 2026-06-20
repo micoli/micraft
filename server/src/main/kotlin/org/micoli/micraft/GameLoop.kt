@@ -34,7 +34,7 @@ class GameLoop(
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
     private var saveTickCounter = 0
 
-    private val commandContext = CommandContext(world, persistence)
+    private val commandContext = CommandContext(world, persistence) { msg -> sessions.values.forEach { it.send(msg) } }
     private val commands: Map<String, CommandHandler> =
         java.util.ServiceLoader.load(CommandHandler::class.java).associateBy { it.command }
 

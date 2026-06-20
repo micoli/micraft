@@ -28,6 +28,7 @@ private enum class ViewMode { FIRST_PERSON, THIRD_PERSON }
 
 class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private val playerModels = mutableMapOf<String, JsAny>()
+    private val playerPrevPos = mutableMapOf<String, Triple<Double, Double, Double>>()
     private val loadedChunks = mutableSetOf<ChunkPos>()
     private val chunkData    = mutableMapOf<ChunkPos, Pair<Chunk, Int>>()
     private val scope        = CoroutineScope(Dispatchers.Default)
@@ -165,6 +166,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         jsHideTargetOutline()
         playerModels.values.forEach(::jsDisposePlayerModel)
         playerModels.clear()
+        playerPrevPos.clear()
         localPlayerModel?.let { jsDisposePlayerModel(it) }
         localPlayerModel = null
         loadedChunks.forEach { cp -> jsDisposeChunk("${cp.cx},${cp.cz}") }
@@ -188,6 +190,8 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         if (jsIsKeyDown("KeyS")     || jsIsKeyDown("ArrowDown"))  { dx -= fwdX;   dz -= fwdZ   }
         if (jsIsKeyDown("KeyD")     || jsIsKeyDown("ArrowRight")) { dx += rightX; dz += rightZ }
         if (jsIsKeyDown("KeyA")     || jsIsKeyDown("ArrowLeft"))  { dx -= rightX; dz -= rightZ }
+
+        val isMovingXZ = dx != 0f || dz != 0f
 
         val len = kotlin.math.sqrt((dx * dx + dz * dz).toDouble()).toFloat()
         if (len > 1f) { dx /= len; dz /= len }
@@ -243,7 +247,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
             val camZ = predZ - kotlin.math.cos(yaw) * dist
             jsCameraSetPosition(camera, camX, camY, camZ)
             localPlayerModel?.let {
-                jsSetPlayerTransform(it, predX, predY, predZ, yaw.toFloat(), pitch.toFloat())
+                jsSetPlayerTransform(it, predX, predY, predZ, yaw.toFloat(), pitch.toFloat(), isMovingXZ)
                 jsSetPlayerVisible(it, true)
             }
         } else {
@@ -491,11 +495,18 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private fun updatePlayerMesh(id: String, x: Double, y: Double, z: Double, yaw: Float, pitch: Float) {
         if (!jsIsPlayerBbmodelReady()) return
         val model = playerModels.getOrPut(id) { jsCreatePlayerModelNow(scene) }
-        jsSetPlayerTransform(model, x, y, z, yaw, pitch)
+        val prev = playerPrevPos[id]
+        val isWalking = prev != null && (
+            kotlin.math.abs(x - prev.first) > 0.001 ||
+            kotlin.math.abs(z - prev.third) > 0.001
+        )
+        playerPrevPos[id] = Triple(x, y, z)
+        jsSetPlayerTransform(model, x, y, z, yaw, pitch, isWalking)
     }
 
     private fun removePlayer(id: String) {
         playerModels.remove(id)?.let(::jsDisposePlayerModel)
+        playerPrevPos.remove(id)
     }
 
     private fun getBlockAtWorld(wx: Int, wy: Int, wz: Int): BlockType {

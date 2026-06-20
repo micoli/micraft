@@ -155,8 +155,8 @@ fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, sta
 fun jsInitPlayerModel(): Unit = js("mcInitPlayerModel()")
 fun jsIsPlayerBbmodelReady(): Boolean = js("mcIsPlayerBbmodelReady()")
 fun jsCreatePlayerModelNow(scene: JsAny): JsAny = js("mcCreatePlayerModelNow(scene)")
-fun jsSetPlayerTransform(model: JsAny, x: Double, y: Double, z: Double, yaw: Float, pitch: Float): Unit =
-    js("mcSetPlayerTransform(model, x, y, z, yaw, pitch)")
+fun jsSetPlayerTransform(model: JsAny, x: Double, y: Double, z: Double, yaw: Float, pitch: Float, isWalking: Boolean): Unit =
+    js("mcSetPlayerTransform(model, x, y, z, yaw, pitch, isWalking)")
 fun jsSetPlayerVisible(model: JsAny, visible: Boolean): Unit = js("mcSetPlayerVisible(model, visible)")
 fun jsSetPlayerAlpha(model: JsAny, alpha: Double): Unit = js("mcSetPlayerAlpha(model, alpha)")
 fun jsDisposePlayerModel(model: JsAny): Unit = js("mcDisposePlayerModel(model)")

@@ -53,6 +53,9 @@ touch run.lock
 
 The `./gradlew dev` watchdog detects the modification and kills/restarts the Ktor process automatically. The web client reconnects on its own (it shows a "DISCONNECTED" overlay while waiting). **Always use `touch run.lock` instead of manually restarting the server or asking the user to do it.**
 
+## Entities models and animation are defined in bbmodel format (blockbench)
+the format is bbmodel (https://raw.githubusercontent.com/JannisX11/blockbench/refs/heads/master/js/formats/bbmodel.js), there is no json schema strictly speaking. There is an example in @resources/player.bbmodel 
+
 ## Debug texture mode
 
 To inspect block textures face by face, use the `devDebug` task:
