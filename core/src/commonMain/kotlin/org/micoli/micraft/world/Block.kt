@@ -4,6 +4,14 @@ import kotlinx.serialization.Serializable
 
 enum class BlockType { AIR, BEDROCK, STONE, DIRT, GRASS }
 
+val BlockType.hardness: Int get() = when (this) {
+    BlockType.AIR     -> 0
+    BlockType.BEDROCK -> Int.MAX_VALUE
+    BlockType.STONE   -> 5
+    BlockType.DIRT    -> 3
+    BlockType.GRASS   -> 3
+}
+
 @Serializable
 data class BlockPos(val x: Int, val y: Int, val z: Int) {
     init {

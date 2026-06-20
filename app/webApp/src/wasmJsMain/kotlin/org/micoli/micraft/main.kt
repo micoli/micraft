@@ -18,6 +18,8 @@ fun main() {
     jsCameraAttachControl(camera)
     jsDisableCameraKeyboard(camera)
     jsSetupKeyboard()
+    jsSetupMouse()
+    jsCreateCrosshair()
     jsLog("camera ready")
 
     jsCreateHUD()

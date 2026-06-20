@@ -11,8 +11,10 @@ import org.micoli.micraft.babylon.*
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.player.speed
+import kotlinx.coroutines.channels.Channel
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.Chunk
 import org.micoli.micraft.world.ChunkPos
@@ -55,6 +57,11 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     // Last server HUD data (updated on PlayerUpdate, displayed in prediction loop)
     private var hudX = 0.0; private var hudY = 0.0; private var hudZ = 0.0
     private var hudStance = "STANDING"; private var hudSpeed = 1.0
+
+    // Block breaking state
+    private var breakTarget: BlockPos? = null
+    private var hoverTarget: BlockPos? = null
+    private val outMessages = Channel<ClientMessage>(Channel.BUFFERED)
 
     init { jsOptimizeScene(scene) }
 
@@ -101,6 +108,15 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                             }
                         }
 
+                        // Forward block-break messages from prediction loop
+                        val breakJob = launch {
+                            for (msg in outMessages) {
+                                val text = Json.encodeToString<ClientMessage>(msg)
+                                send(Frame.Text(text))
+                                netBytesOut += text.length
+                            }
+                        }
+
                         for (frame in incoming) {
                             if (frame is Frame.Text) {
                                 val text = frame.readText()
@@ -114,6 +130,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                             }
                         }
                         inputJob.cancel()
+                        breakJob.cancel()
                     }
                 } catch (e: Throwable) {
                     jsError("WebSocket error: ${e::class.simpleName}: ${e.message}")
@@ -136,6 +153,10 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         serverX = 0.0; serverZ = 0.0
         lastPlayerCx = Int.MIN_VALUE; lastPlayerCz = Int.MIN_VALUE
         pendingUnloads.clear()
+        breakTarget = null
+        hoverTarget = null
+        jsHideBreakOverlay()
+        jsHideTargetOutline()
         playerMeshes.values.forEach(::jsDisposeMesh)
         playerMeshes.clear()
         loadedChunks.forEach { cp -> jsDisposeChunk("${cp.cx},${cp.cz}") }
@@ -189,6 +210,34 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         }
 
         jsCameraSetPosition(camera, predX, predY + localStance.eyeOffset.toDouble(), predZ)
+
+        // Raycast once per frame — used for both hover outline and break logic
+        val target = raycastBlock()
+
+        // Hover outline: update only when target changes
+        if (target != hoverTarget) {
+            hoverTarget = target
+            if (target != null) {
+                val breakable = getBlockAtWorld(target.x, target.y, target.z) != BlockType.BEDROCK
+                jsShowTargetOutline(scene, target.x, target.y, target.z, breakable)
+            } else {
+                jsHideTargetOutline()
+            }
+        }
+
+        // Block breaking: only when left button held AND mouse stationary (not rotating)
+        val isBreaking = jsIsBreaking()
+        if (isBreaking && target != null) {
+            if (target != breakTarget) {
+                breakTarget = target
+                jsShowBreakOverlay(scene, target.x, target.y, target.z, 1.0)
+                outMessages.trySend(ClientMessage.BlockBreakStart(target))
+            }
+        } else if (breakTarget != null) {
+            breakTarget = null
+            jsHideBreakOverlay()
+            outMessages.trySend(ClientMessage.BlockBreakStop)
+        }
 
         // FPS + network rates: update once per second
         fpsFrameCount++
@@ -318,6 +367,10 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                 }
             }
             is ServerMessage.PlayerLeft  -> removePlayer(msg.playerId)
+            is ServerMessage.BlockBreakProgress -> {
+                val alpha = 1.0 - msg.progress.toDouble() / msg.hardness.toDouble()
+                jsShowBreakOverlay(scene, msg.pos.x, msg.pos.y, msg.pos.z, alpha)
+            }
             is ServerMessage.WorldUpdate -> msg.changes.forEach { change ->
                 val cx = change.pos.x.floorDiv(WorldConstants.CHUNK_SIZE)
                 val cz = change.pos.z.floorDiv(WorldConstants.CHUNK_SIZE)
@@ -328,6 +381,16 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                 val updated = existing.withBlock(lx, change.pos.y, lz, change.type)
                 val newTopY = if (change.type != BlockType.AIR) maxOf(existingTopY, change.pos.y) else existingTopY
                 renderChunk(updated, newTopY)
+                if (change.type == BlockType.AIR) {
+                    if (change.pos == breakTarget) {
+                        breakTarget = null
+                        jsHideBreakOverlay()
+                    }
+                    if (change.pos == hoverTarget) {
+                        hoverTarget = null
+                        jsHideTargetOutline()
+                    }
+                }
             }
         }
     }
@@ -387,5 +450,58 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
 
     private fun removePlayer(id: String) {
         playerMeshes.remove(id)?.let(::jsDisposeMesh)
+    }
+
+    private fun getBlockAtWorld(wx: Int, wy: Int, wz: Int): BlockType {
+        if (wy < 0 || wy > WorldConstants.WORLD_MAX_Y) return BlockType.AIR
+        val cx = wx.floorDiv(WorldConstants.CHUNK_SIZE)
+        val cz = wz.floorDiv(WorldConstants.CHUNK_SIZE)
+        val (chunk, _) = chunkData[ChunkPos(cx, cz)] ?: return BlockType.AIR
+        val lx = wx - cx * WorldConstants.CHUNK_SIZE
+        val lz = wz - cz * WorldConstants.CHUNK_SIZE
+        return chunk.getBlock(lx, wy, lz)
+    }
+
+    private fun raycastBlock(maxDist: Float = 5f): BlockPos? {
+        val ox = jsGetCameraPositionX(camera)
+        val oy = jsGetCameraPositionY(camera)
+        val oz = jsGetCameraPositionZ(camera)
+        val dx = jsGetCameraDir3DX(camera).toFloat()
+        val dy = jsGetCameraDir3DY(camera).toFloat()
+        val dz = jsGetCameraDir3DZ(camera).toFloat()
+
+        // BabylonJS blocks are centred at integer coords (vertex offsets ±0.5),
+        // so the block containing position p is round(p), not floor(p).
+        var bx = kotlin.math.round(ox).toInt()
+        var by = kotlin.math.round(oy).toInt()
+        var bz = kotlin.math.round(oz).toInt()
+
+        val sx = if (dx > 0) 1 else if (dx < 0) -1 else 0
+        val sy = if (dy > 0) 1 else if (dy < 0) -1 else 0
+        val sz = if (dz > 0) 1 else if (dz < 0) -1 else 0
+
+        val tDeltaX = if (dx != 0f) kotlin.math.abs(1f / dx) else Float.MAX_VALUE
+        val tDeltaY = if (dy != 0f) kotlin.math.abs(1f / dy) else Float.MAX_VALUE
+        val tDeltaZ = if (dz != 0f) kotlin.math.abs(1f / dz) else Float.MAX_VALUE
+
+        // Face distances from camera to the next ±0.5 boundary (block edge at n ± 0.5)
+        var tMaxX = if (dx > 0) ((bx + 0.5 - ox) / dx).toFloat() else if (dx < 0) ((bx - 0.5 - ox) / dx).toFloat() else Float.MAX_VALUE
+        var tMaxY = if (dy > 0) ((by + 0.5 - oy) / dy).toFloat() else if (dy < 0) ((by - 0.5 - oy) / dy).toFloat() else Float.MAX_VALUE
+        var tMaxZ = if (dz > 0) ((bz + 0.5 - oz) / dz).toFloat() else if (dz < 0) ((bz - 0.5 - oz) / dz).toFloat() else Float.MAX_VALUE
+
+        while (true) {
+            val t = minOf(tMaxX, tMaxY, tMaxZ)
+            if (t > maxDist) break
+            if (getBlockAtWorld(bx, by, bz) != BlockType.AIR) {
+                if (by < 0 || by > WorldConstants.WORLD_MAX_Y) return null
+                return BlockPos(bx, by, bz)
+            }
+            when {
+                tMaxX < tMaxY && tMaxX < tMaxZ -> { bx += sx; tMaxX += tDeltaX }
+                tMaxY < tMaxZ                  -> { by += sy; tMaxY += tDeltaY }
+                else                           -> { bz += sz; tMaxZ += tDeltaZ }
+            }
+        }
+        return null
     }
 }

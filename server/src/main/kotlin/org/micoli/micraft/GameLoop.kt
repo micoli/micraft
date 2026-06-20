@@ -14,13 +14,16 @@ import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.height
 import org.micoli.micraft.player.speed
 import org.micoli.micraft.player.eyeOffset
+import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
+import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.PlayerConstants
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldState
+import org.micoli.micraft.world.hardness
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -65,17 +68,60 @@ class GameLoop(private val world: WorldState) {
 
             while (true) {
                 val intent = session.intents.tryReceive().getOrNull() ?: break
-                if (intent is ClientMessage.MoveIntent) {
-                    localDx += intent.dx
-                    localDz += intent.dz
-                    localDy += intent.dy
-                    pendingYaw      = intent.yaw
-                    pendingPitch    = intent.pitch
-                    requestedStance = intent.stance
-                    if (intent.jump)      jumpRequested      = true
-                    if (intent.flyToggle) flyToggleRequested = true
-                    if (intent.speedUp)   speedUpRequested   = true
-                    if (intent.speedDown) speedDownRequested = true
+                when (intent) {
+                    is ClientMessage.MoveIntent -> {
+                        localDx += intent.dx
+                        localDz += intent.dz
+                        localDy += intent.dy
+                        pendingYaw      = intent.yaw
+                        pendingPitch    = intent.pitch
+                        requestedStance = intent.stance
+                        if (intent.jump)      jumpRequested      = true
+                        if (intent.flyToggle) flyToggleRequested = true
+                        if (intent.speedUp)   speedUpRequested   = true
+                        if (intent.speedDown) speedDownRequested = true
+                    }
+                    is ClientMessage.BlockBreakStart -> {
+                        val bp = intent.pos
+                        val block = world.getBlock(bp.x, bp.y, bp.z)
+                        val eyeY = session.state.pos.y + session.state.stance.eyeOffset
+                        val dist = kotlin.math.sqrt(
+                            ((bp.x + 0.5f - session.state.pos.x) * (bp.x + 0.5f - session.state.pos.x) +
+                             (bp.y + 0.5f - eyeY) * (bp.y + 0.5f - eyeY) +
+                             (bp.z + 0.5f - session.state.pos.z) * (bp.z + 0.5f - session.state.pos.z)).toDouble()
+                        )
+                        log.debug("BlockBreakStart pos=$bp block=$block dist=${"%.2f".format(dist)}")
+                        if (dist <= 6.0 && block != BlockType.AIR && block != BlockType.BEDROCK) {
+                            session.breakTarget = bp
+                            session.breakProgress = 0
+                        }
+                    }
+                    is ClientMessage.BlockBreakStop -> {
+                        session.breakTarget = null
+                        session.breakProgress = 0
+                    }
+                    else -> {}
+                }
+            }
+
+            // Progress block breaking each tick
+            val bt = session.breakTarget
+            if (bt != null) {
+                val block = world.getBlock(bt.x, bt.y, bt.z)
+                if (block == BlockType.AIR || block == BlockType.BEDROCK) {
+                    session.breakTarget = null
+                    session.breakProgress = 0
+                } else {
+                    session.breakProgress++
+                    if (session.breakProgress >= block.hardness) {
+                        val change = BlockChange(bt, BlockType.AIR)
+                        world.applyChange(change)
+                        sessions.values.forEach { it.send(ServerMessage.WorldUpdate(listOf(change))) }
+                        session.breakTarget = null
+                        session.breakProgress = 0
+                    } else {
+                        session.send(ServerMessage.BlockBreakProgress(bt, session.breakProgress, block.hardness))
+                    }
                 }
             }
 

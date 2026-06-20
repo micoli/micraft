@@ -27,6 +27,9 @@ sealed class ServerMessage {
 
     @Serializable
     data class PlayerLeft(val playerId: String) : ServerMessage()
+
+    @Serializable
+    data class BlockBreakProgress(val pos: BlockPos, val progress: Int, val hardness: Int) : ServerMessage()
 }
 
 @Serializable

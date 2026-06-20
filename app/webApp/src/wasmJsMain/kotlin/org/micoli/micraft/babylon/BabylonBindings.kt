@@ -79,6 +79,19 @@ fun jsCreateGrassMaterial(scene: JsAny): JsAny =
 // ── Input ─────────────────────────────────────────────────────────────────────
 
 fun jsSetupKeyboard(): Unit = js("mcSetupKeyboard()")
+fun jsSetupMouse(): Unit = js("mcSetupMouse()")
+fun jsIsBreaking(): Boolean = js("mcIsBreaking()")
+fun jsCreateCrosshair(): Unit = js("mcCreateCrosshair()")
+fun jsGetCameraPositionX(camera: JsAny): Double = js("mcGetCameraPositionX(camera)")
+fun jsGetCameraPositionY(camera: JsAny): Double = js("mcGetCameraPositionY(camera)")
+fun jsGetCameraPositionZ(camera: JsAny): Double = js("mcGetCameraPositionZ(camera)")
+fun jsGetCameraDir3DX(camera: JsAny): Double = js("mcGetCameraDir3DX(camera)")
+fun jsGetCameraDir3DY(camera: JsAny): Double = js("mcGetCameraDir3DY(camera)")
+fun jsGetCameraDir3DZ(camera: JsAny): Double = js("mcGetCameraDir3DZ(camera)")
+fun jsShowTargetOutline(scene: JsAny, x: Int, y: Int, z: Int, breakable: Boolean): Unit = js("mcShowTargetOutline(scene, x, y, z, breakable)")
+fun jsHideTargetOutline(): Unit = js("mcHideTargetOutline()")
+fun jsShowBreakOverlay(scene: JsAny, x: Int, y: Int, z: Int, progress: Double): Unit = js("mcShowBreakOverlay(scene, x, y, z, progress)")
+fun jsHideBreakOverlay(): Unit = js("mcHideBreakOverlay()")
 
 fun jsIsKeyDown(code: String): Boolean = js("!!(window.__mc && window.__mc.keys[code])")
 
