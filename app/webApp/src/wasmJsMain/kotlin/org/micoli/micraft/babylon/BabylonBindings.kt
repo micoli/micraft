@@ -155,6 +155,7 @@ fun jsConsumeFlyToggle(): Boolean = js("""
 
 fun jsGetPageHost(): String     = js("window.location.hostname")
 fun jsGetPagePort(): Int        = js("parseInt(window.location.port) || (window.location.protocol === 'https:' ? 443 : 80)")
+fun jsNow(): Double             = js("Date.now()")
 
 // ── HUD ───────────────────────────────────────────────────────────────────────
 
@@ -167,16 +168,18 @@ fun jsCreateHUD(): Unit = js("""
 })()
 """)
 
-fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, stance: String, speed: Double): Unit = js("""
+fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, stance: String, speed: Double, fps: Int, kbIn: Double, kbOut: Double): Unit = js("""
 (function(){
   var d = document.getElementById('hud');
   if(d) d.textContent =
+    'FPS   ' + fps + '\n' +
     'X  ' + x.toFixed(2) + '\n' +
     'Y  ' + y.toFixed(2) + '\n' +
     'Z  ' + z.toFixed(2) + '\n' +
     'Yaw   ' + yaw.toFixed(1) + '°\n' +
     'Pitch ' + pitch.toFixed(1) + '°\n' +
     stance + '\n' +
-    'Speed ×' + speed.toFixed(1);
+    'Speed ×' + speed.toFixed(1) + '\n' +
+    '↓ ' + kbIn.toFixed(1) + ' KB/s  ↑ ' + kbOut.toFixed(1) + ' KB/s';
 })()
 """)
