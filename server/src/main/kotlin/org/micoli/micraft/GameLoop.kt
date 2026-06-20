@@ -6,41 +6,26 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.json.Json
-import org.micoli.micraft.physics.AabbCollider
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
-import org.micoli.micraft.player.height
-import org.micoli.micraft.player.speed
-import org.micoli.micraft.player.eyeOffset
-import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
-import org.micoli.micraft.world.BlockType
+import org.micoli.micraft.tick.BlockBreaker
+import org.micoli.micraft.tick.ChunkStreamer
+import org.micoli.micraft.tick.IntentCollector
+import org.micoli.micraft.tick.MovementProcessor
 import org.micoli.micraft.world.ChunkPos
-import org.micoli.micraft.world.PlayerConstants
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
-import org.micoli.micraft.world.hardness
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 private val log = LoggerFactory.getLogger("GameLoop")
-
-private const val TICK_MS      = 50L
-private const val TICK_SECONDS = TICK_MS / 1000f
-private val   DEBUG_WORLD      = System.getenv("MICRAFT_DEBUG_WORLD") == "1"
-private const val SPAWN_X      = 8f
-private val   SPAWN_Y: Float   = if (DEBUG_WORLD) 1f   else 200f
-private val   SPAWN_Z: Float   = if (DEBUG_WORLD) 14f  else 8f
-private const val GRAVITY            = -20f
-private const val JUMP_SPEED        = 8.5f   // blocks/s upward — reaches ~1.8 blocks height
-private const val FLY_VERTICAL_SPEED = 8f    // blocks/s up/down in fly mode
-private const val SAVE_INTERVAL_TICKS = (30_000L / TICK_MS).toInt()
 
 class GameLoop(
     private val world: WorldState,
@@ -52,6 +37,11 @@ class GameLoop(
     private val commandContext = CommandContext(world, persistence)
     private val commands: Map<String, CommandHandler> =
         java.util.ServiceLoader.load(CommandHandler::class.java).associateBy { it.command }
+
+    private val blockBreaker = BlockBreaker(world) { msg -> sessions.values.forEach { it.send(msg) } }
+    private val intentCollector = IntentCollector(blockBreaker, ::handleCommand)
+    private val movementProcessor = MovementProcessor(world)
+    private val chunkStreamer = ChunkStreamer(world)
 
     fun start(app: Application) {
         log.info("GameLoop starting (tick=${TICK_MS}ms, gravity=$GRAVITY)")
@@ -78,152 +68,15 @@ class GameLoop(
 
     private suspend fun tick() {
         sessions.values.forEach { session ->
-            var pendingYaw      = session.state.orientation.yaw
-            var pendingPitch    = session.state.orientation.pitch
-            var localDx         = 0f
-            var localDz         = 0f
-            var localDy         = 0f
-            var requestedStance = session.state.stance
-            var jumpRequested      = false
-            var flyToggleRequested = false
-            var speedUpRequested   = false
-            var speedDownRequested = false
-
-            while (true) {
-                val intent = session.intents.tryReceive().getOrNull() ?: break
-                when (intent) {
-                    is ClientMessage.MoveIntent -> {
-                        localDx += intent.dx
-                        localDz += intent.dz
-                        localDy += intent.dy
-                        pendingYaw      = intent.yaw
-                        pendingPitch    = intent.pitch
-                        requestedStance = intent.stance
-                        if (intent.jump)      jumpRequested      = true
-                        if (intent.flyToggle) flyToggleRequested = true
-                        if (intent.speedUp)   speedUpRequested   = true
-                        if (intent.speedDown) speedDownRequested = true
-                    }
-                    is ClientMessage.BlockBreakStart -> {
-                        val bp = intent.pos
-                        val block = world.getBlock(bp.x, bp.y, bp.z)
-                        val eyeY = session.state.pos.y + session.state.stance.eyeOffset
-                        val dist = kotlin.math.sqrt(
-                            ((bp.x + 0.5f - session.state.pos.x) * (bp.x + 0.5f - session.state.pos.x) +
-                             (bp.y + 0.5f - eyeY) * (bp.y + 0.5f - eyeY) +
-                             (bp.z + 0.5f - session.state.pos.z) * (bp.z + 0.5f - session.state.pos.z)).toDouble()
-                        )
-                        log.debug("BlockBreakStart pos=$bp block=$block dist=${"%.2f".format(dist)}")
-                        if (dist <= 6.0 && block != BlockType.AIR && block != BlockType.BEDROCK) {
-                            session.breakTarget = bp
-                            session.breakProgress = 0
-                        }
-                    }
-                    is ClientMessage.BlockBreakStop -> {
-                        session.breakTarget = null
-                        session.breakProgress = 0
-                    }
-                    is ClientMessage.Command -> handleCommand(session, intent.text)
-                    else -> {}
-                }
-            }
-
-            // Progress block breaking each tick
-            val bt = session.breakTarget
-            if (bt != null) {
-                val block = world.getBlock(bt.x, bt.y, bt.z)
-                if (block == BlockType.AIR || block == BlockType.BEDROCK) {
-                    session.breakTarget = null
-                    session.breakProgress = 0
-                } else {
-                    session.breakProgress++
-                    if (session.breakProgress >= block.hardness) {
-                        val change = BlockChange(bt, BlockType.AIR)
-                        world.applyChange(change)
-                        sessions.values.forEach { it.send(ServerMessage.WorldUpdate(listOf(change))) }
-                        session.breakTarget = null
-                        session.breakProgress = 0
-                    } else {
-                        session.send(ServerMessage.BlockBreakProgress(bt, session.breakProgress, block.hardness))
-                    }
-                }
-            }
-
-            val old = session.state
-            val w   = PlayerConstants.WIDTH
-            val pos = old.pos
-
-            // Speed multiplier: P = +0.5x, O = -0.5x, clamped [0.5, 5.0]
-            val newSpeedMult = when {
-                speedUpRequested   -> (old.speedMultiplier + 0.5f).coerceAtMost(5.0f)
-                speedDownRequested -> (old.speedMultiplier - 0.5f).coerceAtLeast(0.5f)
-                else               -> old.speedMultiplier
-            }
-
-            // Fly toggle: double-tap space on client
-            val newFlying = if (flyToggleRequested) !old.flying else old.flying
-            if (flyToggleRequested && newFlying) session.vy = 0f   // stop falling when entering fly
-
-            // Stance: disabled in fly mode
-            var newStance = if (!newFlying && AabbCollider.canAdoptStance(world, pos.x, pos.y, pos.z, w, requestedStance.height, old.stance.height))
-                requestedStance else old.stance
-
-            val h     = newStance.height
-            val speed = newStance.speed * newSpeedMult * TICK_SECONDS
-
-            // Normalize diagonal movement to avoid diagonal speed boost
-            val len = kotlin.math.sqrt((localDx * localDx + localDz * localDz).toDouble()).toFloat()
-            val nx = if (len > 0f) localDx / len else 0f
-            val nz = if (len > 0f) localDz / len else 0f
-
-            val attemptDx = nx * speed
-            val attemptDz = nz * speed
-
-            // Jump: only when grounded and not flying
-            if (!newFlying && jumpRequested && session.vy == 0f && AabbCollider.isGrounded(world, pos.x, pos.y, pos.z, w)) {
-                session.vy = JUMP_SPEED
-                if (newStance != PlayerStance.STANDING) newStance = PlayerStance.STANDING
-            }
-
-            val resolvedDx = AabbCollider.resolveX(world, pos.x, pos.y, pos.z, w, h, attemptDx)
-            val midX = pos.x + resolvedDx
-            val resolvedDz = AabbCollider.resolveZ(world, midX, pos.y, pos.z, w, h, attemptDz)
-            val newX = midX
-            val newZ = pos.z + resolvedDz
-
-            val newY = if (newFlying) {
-                val flyDy = localDy * FLY_VERTICAL_SPEED * newSpeedMult * TICK_SECONDS
-                val resolvedDy = AabbCollider.resolveY(world, newX, pos.y, newZ, w, h, flyDy)
-                (pos.y + resolvedDy).coerceIn(0f, WorldConstants.WORLD_MAX_Y.toFloat())
-            } else {
-                applyGravity(session, newX, pos.y, newZ, newStance.height)
-            }
-
-            val changed = newX != pos.x || newY != pos.y || newZ != pos.z
-                       || pendingYaw != old.orientation.yaw || pendingPitch != old.orientation.pitch
-                       || newStance != old.stance || newFlying != old.flying
-                       || newSpeedMult != old.speedMultiplier
-            if (changed) {
-                session.state = old.copy(
-                    pos             = Vec3(newX, newY, newZ),
-                    orientation     = Orientation(pendingYaw, pendingPitch),
-                    stance          = newStance,
-                    flying          = newFlying,
-                    speedMultiplier = newSpeedMult,
-                )
-                val update = ServerMessage.PlayerUpdate(session.state)
+            val input = intentCollector.collect(session)
+            blockBreaker.tick(session)
+            val newState = movementProcessor.process(session, input)
+            if (newState != session.state) {
+                session.state = newState
+                val update = ServerMessage.PlayerUpdate(newState)
                 sessions.values.forEach { it.send(update) }
             }
-
-            // Stream new chunks if the player crossed a chunk boundary
-            val newCp = ChunkPos(
-                Math.floorDiv(session.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE),
-                Math.floorDiv(session.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE),
-            )
-            if (newCp != session.lastChunkPos) {
-                session.lastChunkPos = newCp
-                sendChunksAround(session, newCp.cx, newCp.cz)
-            }
+            chunkStreamer.checkAndStream(session)
         }
     }
 
@@ -236,47 +89,9 @@ class GameLoop(
         else session.send(ServerMessage.Notification("Unknown command: $trimmed"))
     }
 
-    private suspend fun sendChunksAround(session: PlayerSession, cx: Int, cz: Int) {
-        val r = WorldConstants.VIEW_RADIUS
-        var sent = 0
-        for (dx in -r..r) {
-            for (dz in -r..r) {
-                val cp = ChunkPos(cx + dx, cz + dz)
-                if (session.loadedChunks.add(cp)) {
-                    val chunk = world.getOrGenerate(cp)
-                    session.send(ServerMessage.ChunkData(chunk.pos, chunk.topY(), chunk.encodeWire()))
-                    sent++
-                }
-            }
-        }
-        if (sent > 0) log.debug("{} new chunks sent to {}", sent, session.id.take(8))
-    }
-
-    private fun applyGravity(session: PlayerSession, cx: Float, cy: Float, cz: Float, h: Float): Float {
-        val w = PlayerConstants.WIDTH
-
-        // Already grounded: no need to simulate gravity
-        if (session.vy <= 0f && AabbCollider.isGrounded(world, cx, cy, cz, w)) {
-            session.vy = 0f
-            return cy
-        }
-
-        session.vy += GRAVITY * TICK_SECONDS
-        val dy = session.vy * TICK_SECONDS
-        val resolvedDy = AabbCollider.resolveY(world, cx, cy, cz, w, h, dy)
-
-        if (resolvedDy != dy) {
-            if (session.vy < 0f) log.debug("player {} landed at y={}", session.id.take(8), cy + resolvedDy)
-            session.vy = 0f
-        }
-
-        return (cy + resolvedDy).coerceAtLeast(0f)
-    }
-
     suspend fun onConnect(socket: DefaultWebSocketSession) {
         val id = UUID.randomUUID().toString()
 
-        // Receive the Connect handshake to get the player name before sending Welcome
         val playerName = runCatching {
             val firstFrame = socket.incoming.receive()
             if (firstFrame is Frame.Text) {
@@ -307,7 +122,7 @@ class GameLoop(
             Math.floorDiv(spawn.z.toInt(), WorldConstants.CHUNK_SIZE),
         )
         session.lastChunkPos = spawnCp
-        sendChunksAround(session, spawnCp.cx, spawnCp.cz)
+        chunkStreamer.streamAround(session, spawnCp.cx, spawnCp.cz)
         log.info("{} chunks sent to {}", session.loadedChunks.size, id.take(8))
 
         sessions.values.filter { it.id != id }.forEach { other ->
