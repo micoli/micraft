@@ -119,6 +119,7 @@ class GameLoop(
                         session.breakTarget = null
                         session.breakProgress = 0
                     }
+                    is ClientMessage.Command -> handleCommand(session, intent.text)
                     else -> {}
                 }
             }
@@ -222,6 +223,18 @@ class GameLoop(
         }
     }
 
+    private suspend fun handleCommand(session: PlayerSession, text: String) {
+        when (text.trim().lowercase()) {
+            "/save" -> {
+                world.flushDirty()
+                persistence?.savePlayerState(session.state.name, session.state)
+                session.send(ServerMessage.Notification("World saved."))
+                log.info("Manual /save by {}", session.state.name)
+            }
+            else -> session.send(ServerMessage.Notification("Unknown command: $text"))
+        }
+    }
+
     private suspend fun sendChunksAround(session: PlayerSession, cx: Int, cz: Int) {
         val r = WorldConstants.VIEW_RADIUS
         var sent = 0
@@ -286,7 +299,7 @@ class GameLoop(
         sessions[id] = session
         log.info("player connected: {} name={} (total={})", id.take(8), playerName, sessions.size)
 
-        session.send(ServerMessage.Welcome(id, spawn))
+        session.send(ServerMessage.Welcome(id, playerName, spawn))
 
         val spawnCp = ChunkPos(
             Math.floorDiv(spawn.x.toInt(), WorldConstants.CHUNK_SIZE),

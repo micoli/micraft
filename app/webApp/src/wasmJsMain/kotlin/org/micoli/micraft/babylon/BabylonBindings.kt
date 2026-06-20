@@ -135,9 +135,29 @@ fun jsGetUrlParam(name: String): String = js("mcGetUrlParam(name)")
 fun jsSetupDebugCameraKeys(camera: JsAny, scene: JsAny, bx: Double, by: Double, bz: Double): Unit =
     js("mcSetupDebugCameraKeys(camera, scene, bx, by, bz)")
 
+// ── Console ───────────────────────────────────────────────────────────────────
+
+fun jsCreateConsole(): Unit    = js("mcCreateConsole()")
+fun jsConsoleSetPlayer(name: String): Unit = js("mcConsoleSetPlayer(name)")
+fun jsIsConsoleOpen(): Boolean = js("mcIsConsoleOpen()")
+fun jsConsumeConsoleInput(): String = js("mcConsumeConsoleInput()")
+fun jsShowNotification(message: String): Unit = js("mcShowNotification(message)")
+
 // ── HUD ───────────────────────────────────────────────────────────────────────
 
 fun jsCreateHUD(): Unit = js("mcCreateHUD()")
 
 fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, stance: String, speed: Double, fps: Int, kbIn: Double, kbOut: Double): Unit =
     js("mcUpdateHUD(x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut)")
+
+// ── Player model ──────────────────────────────────────────────────────────────
+
+fun jsInitPlayerModel(): Unit = js("mcInitPlayerModel()")
+fun jsIsPlayerBbmodelReady(): Boolean = js("mcIsPlayerBbmodelReady()")
+fun jsCreatePlayerModelNow(scene: JsAny): JsAny = js("mcCreatePlayerModelNow(scene)")
+fun jsSetPlayerTransform(model: JsAny, x: Double, y: Double, z: Double, yaw: Float, pitch: Float): Unit =
+    js("mcSetPlayerTransform(model, x, y, z, yaw, pitch)")
+fun jsSetPlayerVisible(model: JsAny, visible: Boolean): Unit = js("mcSetPlayerVisible(model, visible)")
+fun jsSetPlayerAlpha(model: JsAny, alpha: Double): Unit = js("mcSetPlayerAlpha(model, alpha)")
+fun jsDisposePlayerModel(model: JsAny): Unit = js("mcDisposePlayerModel(model)")
+fun jsConsumeViewToggle(): Boolean = js("mcConsumeViewToggle()")

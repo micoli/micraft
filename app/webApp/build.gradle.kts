@@ -5,6 +5,15 @@ plugins {
     alias(libs.plugins.kotlinxSerialization)
 }
 
+val copyBbmodels by tasks.registering(Copy::class) {
+    from(rootProject.file("resources")) { include("*.bbmodel") }
+    into("src/wasmJsMain/resources/models")
+}
+
+tasks.matching { it.name == "wasmJsProcessResources" }.configureEach {
+    dependsOn(copyBbmodels)
+}
+
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {

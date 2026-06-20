@@ -34,5 +34,8 @@ sealed class ClientMessage {
     object BlockBreakStop : ClientMessage()
 
     @Serializable
+    data class Command(val text: String) : ClientMessage()
+
+    @Serializable
     data class Disconnect(val reason: String = "") : ClientMessage()
 }

@@ -23,6 +23,7 @@ fun main() {
     jsLog("camera ready")
 
     jsCreateHUD()
+    jsCreateConsole()
 
     // Debug mode: ?debug[&bx=8&by=2&bz=8] — keys 1-6 orbit camera around a block face
     if (jsHasUrlParam("debug")) {

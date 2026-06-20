@@ -10,7 +10,7 @@ import org.micoli.micraft.world.ChunkPos
 @Serializable
 sealed class ServerMessage {
     @Serializable
-    data class Welcome(val playerId: String, val spawnPos: Vec3) : ServerMessage()
+    data class Welcome(val playerId: String, val playerName: String, val spawnPos: Vec3) : ServerMessage()
 
     @Serializable
     data class ChunkData(
@@ -30,6 +30,9 @@ sealed class ServerMessage {
 
     @Serializable
     data class BlockBreakProgress(val pos: BlockPos, val progress: Int, val hardness: Int) : ServerMessage()
+
+    @Serializable
+    data class Notification(val message: String) : ServerMessage()
 }
 
 @Serializable

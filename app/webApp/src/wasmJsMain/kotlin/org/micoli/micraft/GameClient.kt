@@ -24,8 +24,10 @@ private const val PRED_DT = 16.0 / 1000.0  // seconds per prediction frame (~60f
 private const val FLY_VERTICAL_SPEED = 8f   // must match server GameLoop constant
 private const val SNAP_THRESHOLD = 2.0      // blocks: snap if prediction diverges beyond this
 
+private enum class ViewMode { FIRST_PERSON, THIRD_PERSON }
+
 class GameClient(private val scene: JsAny, private val camera: JsAny) {
-    private val playerMeshes = mutableMapOf<String, JsAny>()
+    private val playerModels = mutableMapOf<String, JsAny>()
     private val loadedChunks = mutableSetOf<ChunkPos>()
     private val chunkData    = mutableMapOf<ChunkPos, Pair<Chunk, Int>>()
     private val scope        = CoroutineScope(Dispatchers.Default)
@@ -36,6 +38,8 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private var lastPlayerCx     = Int.MIN_VALUE
     private var lastPlayerCz     = Int.MIN_VALUE
     private val pendingUnloads   = mutableListOf<ChunkPos>()
+    private var viewMode         = ViewMode.FIRST_PERSON
+    private var localPlayerModel: JsAny? = null
 
     // Client-side prediction state
     private var predX = 0.0
@@ -63,13 +67,15 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private var hoverTarget: BlockPos? = null
     private val outMessages = Channel<ClientMessage>(Channel.BUFFERED)
 
-    init { jsOptimizeScene(scene) }
+    init {
+        jsOptimizeScene(scene)
+        jsInitPlayerModel()
+    }
 
     private val grassMat   = jsCreateGrassMaterial(scene)
     private val stoneMat   = jsCreateTextureMaterial("stone",   "/textures/blocks/stone.png",   scene)
     private val dirtMat    = jsCreateTextureMaterial("dirt",    "/textures/blocks/dirt.png",    scene)
     private val bedrockMat = jsCreateTextureMaterial("bedrock", "/textures/blocks/bedrock.png", scene)
-    private val playerMat  = jsCreateMaterial("player",  scene).also { jsSetMaterialColor(it, 0.8,  0.2,  0.2)  }
 
     fun connect(host: String, port: Int) {
         // Prediction loop: runs at ~60fps, moves camera immediately without waiting for server
@@ -157,14 +163,21 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         hoverTarget = null
         jsHideBreakOverlay()
         jsHideTargetOutline()
-        playerMeshes.values.forEach(::jsDisposeMesh)
-        playerMeshes.clear()
+        playerModels.values.forEach(::jsDisposePlayerModel)
+        playerModels.clear()
+        localPlayerModel?.let { jsDisposePlayerModel(it) }
+        localPlayerModel = null
         loadedChunks.forEach { cp -> jsDisposeChunk("${cp.cx},${cp.cz}") }
         loadedChunks.clear()
         chunkData.clear()
     }
 
     private fun applyLocalPrediction() {
+        // Console: forward submitted command, skip movement while open
+        val consoleInput = jsConsumeConsoleInput()
+        if (consoleInput.isNotEmpty()) outMessages.trySend(ClientMessage.Command(consoleInput))
+        if (jsIsConsoleOpen()) return
+
         val fwdX  = jsGetCameraForwardX(camera).toFloat()
         val fwdZ  = jsGetCameraForwardZ(camera).toFloat()
         val rightX = fwdZ
@@ -209,10 +222,42 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
             predZ += diffZ * 0.08
         }
 
-        jsCameraSetPosition(camera, predX, predY + localStance.eyeOffset.toDouble(), predZ)
+        // View mode toggle (F key)
+        if (jsConsumeViewToggle()) {
+            viewMode = if (viewMode == ViewMode.FIRST_PERSON) ViewMode.THIRD_PERSON else ViewMode.FIRST_PERSON
+        }
+
+        // Lazy-create local player model when bbmodel is ready
+        if (localPlayerModel == null && jsIsPlayerBbmodelReady()) {
+            localPlayerModel = jsCreatePlayerModelNow(scene)
+            jsSetPlayerVisible(localPlayerModel!!, false)
+        }
+
+        val yaw = jsGetCameraRotationY(camera)
+        val pitch = jsGetCameraRotationX(camera)
+
+        if (viewMode == ViewMode.THIRD_PERSON) {
+            val dist = 3.0
+            val camX = predX - kotlin.math.sin(yaw) * dist
+            val camY = predY + localStance.eyeOffset.toDouble() + 0.3
+            val camZ = predZ - kotlin.math.cos(yaw) * dist
+            jsCameraSetPosition(camera, camX, camY, camZ)
+            localPlayerModel?.let {
+                jsSetPlayerTransform(it, predX, predY, predZ, yaw.toFloat(), pitch.toFloat())
+                jsSetPlayerVisible(it, true)
+            }
+        } else {
+            jsCameraSetPosition(camera, predX, predY + localStance.eyeOffset.toDouble(), predZ)
+            localPlayerModel?.let { jsSetPlayerVisible(it, false) }
+        }
 
         // Raycast once per frame — used for both hover outline and break logic
         val target = raycastBlock()
+
+        // In third-person: ghost the local model when a block is targeted so the outline is visible
+        if (viewMode == ViewMode.THIRD_PERSON) {
+            localPlayerModel?.let { jsSetPlayerAlpha(it, if (target != null) 0.35 else 1.0) }
+        }
 
         // Hover outline: update only when target changes
         if (target != hoverTarget) {
@@ -327,6 +372,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         when (msg) {
             is ServerMessage.Welcome -> {
                 localPlayerId = msg.playerId
+                jsConsoleSetPlayer(msg.playerName)
             }
             is ServerMessage.ChunkData -> {
                 renderChunk(Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
@@ -363,10 +409,11 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                     hudStance = if (s.flying) "FLYING" else s.stance.name
                     hudSpeed  = s.speedMultiplier.toDouble()
                 } else {
-                    updatePlayerMesh(s.id, s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble())
+                    updatePlayerMesh(s.id, s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble(), s.orientation.yaw, s.orientation.pitch)
                 }
             }
             is ServerMessage.PlayerLeft  -> removePlayer(msg.playerId)
+            is ServerMessage.Notification -> jsShowNotification(msg.message)
             is ServerMessage.BlockBreakProgress -> {
                 val alpha = 1.0 - msg.progress.toDouble() / msg.hardness.toDouble()
                 jsShowBreakOverlay(scene, msg.pos.x, msg.pos.y, msg.pos.z, alpha)
@@ -441,15 +488,14 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         pendingUnloads.addAll(toUnload)
     }
 
-    private fun updatePlayerMesh(id: String, x: Double, y: Double, z: Double) {
-        val mesh = playerMeshes.getOrPut(id) {
-            jsCreateBox("p_$id", 0.6, scene).also { jsSetMeshMaterial(it, playerMat) }
-        }
-        jsSetMeshPosition(mesh, x, y, z)
+    private fun updatePlayerMesh(id: String, x: Double, y: Double, z: Double, yaw: Float, pitch: Float) {
+        if (!jsIsPlayerBbmodelReady()) return
+        val model = playerModels.getOrPut(id) { jsCreatePlayerModelNow(scene) }
+        jsSetPlayerTransform(model, x, y, z, yaw, pitch)
     }
 
     private fun removePlayer(id: String) {
-        playerMeshes.remove(id)?.let(::jsDisposeMesh)
+        playerModels.remove(id)?.let(::jsDisposePlayerModel)
     }
 
     private fun getBlockAtWorld(wx: Int, wy: Int, wz: Int): BlockType {
