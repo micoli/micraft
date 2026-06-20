@@ -22,6 +22,7 @@ import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.PlayerConstants
 import org.micoli.micraft.world.WorldConstants
+import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
 import org.micoli.micraft.world.hardness
 import org.slf4j.LoggerFactory
@@ -39,9 +40,14 @@ private val   SPAWN_Z: Float   = if (DEBUG_WORLD) 14f  else 8f
 private const val GRAVITY            = -20f
 private const val JUMP_SPEED        = 8.5f   // blocks/s upward — reaches ~1.8 blocks height
 private const val FLY_VERTICAL_SPEED = 8f    // blocks/s up/down in fly mode
+private const val SAVE_INTERVAL_TICKS = (30_000L / TICK_MS).toInt()
 
-class GameLoop(private val world: WorldState) {
+class GameLoop(
+    private val world: WorldState,
+    private val persistence: WorldPersistence? = null,
+) {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
+    private var saveTickCounter = 0
 
     fun start(app: Application) {
         log.info("GameLoop starting (tick=${TICK_MS}ms, gravity=$GRAVITY)")
@@ -49,8 +55,21 @@ class GameLoop(private val world: WorldState) {
             while (isActive) {
                 delay(TICK_MS)
                 tick()
+                saveTickCounter++
+                if (saveTickCounter >= SAVE_INTERVAL_TICKS) {
+                    saveTickCounter = 0
+                    world.flushDirty()
+                }
             }
         }
+    }
+
+    fun shutdown() {
+        world.flushDirty()
+        sessions.values.forEach { session ->
+            persistence?.savePlayerState(session.state.name, session.state)
+        }
+        log.info("World saved on shutdown")
     }
 
     private suspend fun tick() {
@@ -241,12 +260,31 @@ class GameLoop(private val world: WorldState) {
     }
 
     suspend fun onConnect(socket: DefaultWebSocketSession) {
-        val id    = UUID.randomUUID().toString()
-        val spawn = Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z)
-        val state = PlayerState(id, "Player", spawn, Orientation(0f, 0f), flying = DEBUG_WORLD)
+        val id = UUID.randomUUID().toString()
+
+        // Receive the Connect handshake to get the player name before sending Welcome
+        val playerName = runCatching {
+            val firstFrame = socket.incoming.receive()
+            if (firstFrame is Frame.Text) {
+                val msg = Json.decodeFromString<ClientMessage>(firstFrame.readText())
+                if (msg is ClientMessage.Connect) msg.playerName else "Player"
+            } else "Player"
+        }.getOrDefault("Player")
+
+        val saved = persistence?.loadPlayerState(playerName)
+        val spawn = saved?.pos ?: Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z)
+        val state = PlayerState(
+            id = id,
+            name = playerName,
+            pos = spawn,
+            orientation = saved?.orientation ?: Orientation(0f, 0f),
+            stance = saved?.stance ?: PlayerStance.STANDING,
+            flying = saved?.flying ?: DEBUG_WORLD,
+            speedMultiplier = saved?.speedMultiplier ?: 1f,
+        )
         val session = PlayerSession(id, socket, state)
         sessions[id] = session
-        log.info("player connected: {} (total={})", id.take(8), sessions.size)
+        log.info("player connected: {} name={} (total={})", id.take(8), playerName, sessions.size)
 
         session.send(ServerMessage.Welcome(id, spawn))
 
@@ -283,7 +321,8 @@ class GameLoop(private val world: WorldState) {
             }
         } finally {
             sessions.remove(id)
-            log.info("player disconnected: {} (total={})", id.take(8), sessions.size)
+            persistence?.savePlayerState(session.state.name, session.state)
+            log.info("player disconnected: {} name={} (total={})", id.take(8), session.state.name, sessions.size)
             val left = ServerMessage.PlayerLeft(id)
             sessions.values.forEach { it.send(left) }
         }
