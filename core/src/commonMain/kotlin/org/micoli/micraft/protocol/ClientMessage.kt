@@ -19,6 +19,8 @@ sealed class ClientMessage {
         val jump: Boolean = false,
         val dy: Float = 0f,
         val flyToggle: Boolean = false,
+        val speedUp: Boolean = false,
+        val speedDown: Boolean = false,
     ) : ClientMessage()
 
     @Serializable

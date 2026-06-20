@@ -92,6 +92,8 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         if (len > 1f) { dx /= len; dz /= len }
 
         val flyToggle = jsConsumeFlyToggle()
+        val speedUp   = jsIsKeyDown("KeyP")
+        val speedDown = jsIsKeyDown("KeyO")
 
         return if (localFlying) {
             // In fly mode: Space = go up, W/S pitch-follows camera vertical component
@@ -112,6 +114,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                 stance = PlayerStance.STANDING,
                 jump = false,
                 flyToggle = flyToggle,
+                speedUp = speedUp, speedDown = speedDown,
             )
         } else {
             val stance = when {
@@ -126,6 +129,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                 stance = stance,
                 jump = jsIsKeyDown("Space"),
                 flyToggle = flyToggle,
+                speedUp = speedUp, speedDown = speedDown,
             )
         }
     }
@@ -158,6 +162,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                         jsGetCameraRotationY(camera) * toDeg,
                         jsGetCameraRotationX(camera) * toDeg,
                         if (s.flying) "FLYING" else s.stance.name,
+                        s.speedMultiplier.toDouble(),
                     )
                 } else {
                     updatePlayerMesh(s.id, s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble())

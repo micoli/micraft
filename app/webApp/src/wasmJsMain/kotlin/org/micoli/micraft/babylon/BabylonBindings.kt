@@ -109,7 +109,7 @@ fun jsSetupKeyboard(): Unit = js("""
       window.__mc.lastSpaceTime = now;
     }
     if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
-        'ShiftLeft','ControlLeft','Space'].includes(e.code))
+        'ShiftLeft','ControlLeft','Space','KeyP','KeyO'].includes(e.code))
       e.preventDefault();
   });
   window.addEventListener('keyup', function(e){
@@ -167,7 +167,7 @@ fun jsCreateHUD(): Unit = js("""
 })()
 """)
 
-fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, stance: String): Unit = js("""
+fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, stance: String, speed: Double): Unit = js("""
 (function(){
   var d = document.getElementById('hud');
   if(d) d.textContent =
@@ -176,6 +176,7 @@ fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, sta
     'Z  ' + z.toFixed(2) + '\n' +
     'Yaw   ' + yaw.toFixed(1) + '°\n' +
     'Pitch ' + pitch.toFixed(1) + '°\n' +
-    stance;
+    stance + '\n' +
+    'Speed ×' + speed.toFixed(1);
 })()
 """)

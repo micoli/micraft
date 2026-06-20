@@ -16,4 +16,5 @@ data class PlayerState(
     val orientation: Orientation,
     val stance: PlayerStance = PlayerStance.STANDING,
     val flying: Boolean = false,
+    val speedMultiplier: Float = 1f,
 )

@@ -57,8 +57,10 @@ class GameLoop(private val world: WorldState) {
             var localDz         = 0f
             var localDy         = 0f
             var requestedStance = session.state.stance
-            var jumpRequested   = false
+            var jumpRequested      = false
             var flyToggleRequested = false
+            var speedUpRequested   = false
+            var speedDownRequested = false
 
             while (true) {
                 val intent = session.intents.tryReceive().getOrNull() ?: break
@@ -69,14 +71,23 @@ class GameLoop(private val world: WorldState) {
                     pendingYaw      = intent.yaw
                     pendingPitch    = intent.pitch
                     requestedStance = intent.stance
-                    if (intent.jump) jumpRequested = true
+                    if (intent.jump)      jumpRequested      = true
                     if (intent.flyToggle) flyToggleRequested = true
+                    if (intent.speedUp)   speedUpRequested   = true
+                    if (intent.speedDown) speedDownRequested = true
                 }
             }
 
             val old = session.state
             val w   = PlayerConstants.WIDTH
             val pos = old.pos
+
+            // Speed multiplier: P = +0.5x, O = -0.5x, clamped [0.5, 5.0]
+            val newSpeedMult = when {
+                speedUpRequested   -> (old.speedMultiplier + 0.5f).coerceAtMost(5.0f)
+                speedDownRequested -> (old.speedMultiplier - 0.5f).coerceAtLeast(0.5f)
+                else               -> old.speedMultiplier
+            }
 
             // Fly toggle: double-tap space on client
             val newFlying = if (flyToggleRequested) !old.flying else old.flying
@@ -87,7 +98,7 @@ class GameLoop(private val world: WorldState) {
                 requestedStance else old.stance
 
             val h     = newStance.height
-            val speed = newStance.speed * TICK_SECONDS
+            val speed = newStance.speed * newSpeedMult * TICK_SECONDS
 
             // Normalize diagonal movement to avoid diagonal speed boost
             val len = kotlin.math.sqrt((localDx * localDx + localDz * localDz).toDouble()).toFloat()
@@ -110,7 +121,7 @@ class GameLoop(private val world: WorldState) {
             val newZ = pos.z + resolvedDz
 
             val newY = if (newFlying) {
-                val flyDy = localDy * FLY_VERTICAL_SPEED * TICK_SECONDS
+                val flyDy = localDy * FLY_VERTICAL_SPEED * newSpeedMult * TICK_SECONDS
                 val resolvedDy = AabbCollider.resolveY(world, newX, pos.y, newZ, w, h, flyDy)
                 (pos.y + resolvedDy).coerceIn(0f, WorldConstants.WORLD_MAX_Y.toFloat())
             } else {
@@ -120,12 +131,14 @@ class GameLoop(private val world: WorldState) {
             val changed = newX != pos.x || newY != pos.y || newZ != pos.z
                        || pendingYaw != old.orientation.yaw || pendingPitch != old.orientation.pitch
                        || newStance != old.stance || newFlying != old.flying
+                       || newSpeedMult != old.speedMultiplier
             if (changed) {
                 session.state = old.copy(
-                    pos         = Vec3(newX, newY, newZ),
-                    orientation = Orientation(pendingYaw, pendingPitch),
-                    stance      = newStance,
-                    flying      = newFlying,
+                    pos             = Vec3(newX, newY, newZ),
+                    orientation     = Orientation(pendingYaw, pendingPitch),
+                    stance          = newStance,
+                    flying          = newFlying,
+                    speedMultiplier = newSpeedMult,
                 )
                 val update = ServerMessage.PlayerUpdate(session.state)
                 sessions.values.forEach { it.send(update) }
