@@ -49,6 +49,10 @@ class GameLoop(
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
     private var saveTickCounter = 0
 
+    private val commandContext = CommandContext(world, persistence)
+    private val commands: Map<String, CommandHandler> =
+        java.util.ServiceLoader.load(CommandHandler::class.java).associateBy { it.command }
+
     fun start(app: Application) {
         log.info("GameLoop starting (tick=${TICK_MS}ms, gravity=$GRAVITY)")
         app.launch {
@@ -224,15 +228,12 @@ class GameLoop(
     }
 
     private suspend fun handleCommand(session: PlayerSession, text: String) {
-        when (text.trim().lowercase()) {
-            "/save" -> {
-                world.flushDirty()
-                persistence?.savePlayerState(session.state.name, session.state)
-                session.send(ServerMessage.Notification("World saved."))
-                log.info("Manual /save by {}", session.state.name)
-            }
-            else -> session.send(ServerMessage.Notification("Unknown command: $text"))
-        }
+        val trimmed = text.trim()
+        val name = trimmed.substringBefore(' ').lowercase()
+        val args = trimmed.substringAfter(' ', "")
+        val handler = commands[name]
+        if (handler != null) handler.execute(session, args, commandContext)
+        else session.send(ServerMessage.Notification("Unknown command: $trimmed"))
     }
 
     private suspend fun sendChunksAround(session: PlayerSession, cx: Int, cz: Int) {

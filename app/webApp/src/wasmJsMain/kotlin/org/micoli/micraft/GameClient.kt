@@ -509,9 +509,10 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     }
 
     private fun raycastBlock(maxDist: Float = 5f): BlockPos? {
-        val ox = jsGetCameraPositionX(camera)
-        val oy = jsGetCameraPositionY(camera)
-        val oz = jsGetCameraPositionZ(camera)
+        // Always ray-cast from the player's eye, not the camera (which is offset in third-person).
+        val ox = predX
+        val oy = predY + localStance.eyeOffset.toDouble()
+        val oz = predZ
         val dx = jsGetCameraDir3DX(camera).toFloat()
         val dy = jsGetCameraDir3DY(camera).toFloat()
         val dz = jsGetCameraDir3DZ(camera).toFloat()
