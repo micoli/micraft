@@ -23,12 +23,25 @@ tasks.register("dev") {
     group = "micraft"
     description = "Build and start the game server (:8080) and the webpack dev server (:8081)"
 
-    dependsOn(":server:installDist", ":app:webApp:wasmJsBrowserDevelopmentWebpack")
-
     doLast {
         val gradle   = "${rootProject.projectDir}/gradlew"
         val lockFile = rootProject.projectDir.resolve("run.lock")
         val serverBin = rootProject.file("server/build/install/server/bin/server")
+
+        // Force full build of server and client on every dev start
+        println("[dev] building server…")
+        ProcessBuilder(gradle, ":server:installDist", "--rerun-tasks")
+            .directory(rootProject.projectDir)
+            .inheritIO()
+            .start()
+            .waitFor()
+
+        println("[dev] building client…")
+        ProcessBuilder(gradle, ":app:webApp:wasmJsDevelopmentExecutableCompileSync", "--rerun-tasks")
+            .directory(rootProject.projectDir)
+            .inheritIO()
+            .start()
+            .waitFor()
 
         // Kill a process AND all its JVM children (avoids gradle-wrapper orphan problem)
         fun killTree(p: Process) {

@@ -238,6 +238,62 @@ fun jsHideDisconnectedOverlay(): Unit = js("""
 })()
 """)
 
+// ── Debug camera ─────────────────────────────────────────────────────────────
+
+/** Returns true if the URL query param is present (even without a value, e.g. ?debug). */
+fun jsHasUrlParam(name: String): Boolean = js("(new URLSearchParams(window.location.search).has(name))")
+
+/** Returns the URL query param value, or "" if absent. */
+fun jsGetUrlParam(name: String): String = js("""
+(function(){
+  var v = new URLSearchParams(window.location.search).get(name);
+  return v === null ? '' : v;
+})()
+""")
+
+/**
+ * Binds keys 1-6 to camera positions facing each face of the block at (bx,by,bz).
+ * Uses onBeforeRenderObservable to override client-side prediction camera updates.
+ * Escape releases the lock and restores free camera.
+ * Face mapping: 1=+Z, 2=-Z, 3=+X, 4=-X, 5=+Y, 6=-Y  (BabylonJS CreateBox order)
+ */
+fun jsSetupDebugCameraKeys(camera: JsAny, scene: JsAny, bx: Double, by: Double, bz: Double): Unit = js("""
+(function(){
+  var dist = 5;
+  var faces = [
+    [bx,      by,      bz+dist],
+    [bx,      by,      bz-dist],
+    [bx+dist, by,      bz     ],
+    [bx-dist, by,      bz     ],
+    [bx,      by+dist, bz     ],
+    [bx,      by-dist, bz     ],
+  ];
+  var lock = (px, py, pz) => {
+    if (window.__debugCamObserver) scene.onBeforeRenderObservable.remove(window.__debugCamObserver);
+    window.__debugCamObserver = scene.onBeforeRenderObservable.add(() => {
+      camera.position = new BABYLON.Vector3(px, py, pz);
+      camera.setTarget(new BABYLON.Vector3(bx, by, bz));
+    });
+  };
+  // Lock immediately on face 1 (+Z front) so the prediction loop never hides the block
+  lock(faces[0][0], faces[0][1], faces[0][2]);
+  document.addEventListener('keydown', (e) => {
+    var idx = parseInt(e.key) - 1;
+    if (idx >= 0 && idx < 6) {
+      e.preventDefault();
+      var f = faces[idx];
+      lock(f[0], f[1], f[2]);
+    }
+    if (e.key === 'Escape') {
+      if (window.__debugCamObserver) {
+        scene.onBeforeRenderObservable.remove(window.__debugCamObserver);
+        window.__debugCamObserver = null;
+      }
+    }
+  });
+})()
+""")
+
 // ── HUD ───────────────────────────────────────────────────────────────────────
 
 fun jsCreateHUD(): Unit = js("""

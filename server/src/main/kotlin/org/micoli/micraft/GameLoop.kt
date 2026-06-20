@@ -30,8 +30,8 @@ private val log = LoggerFactory.getLogger("GameLoop")
 private const val TICK_MS      = 50L
 private const val TICK_SECONDS = TICK_MS / 1000f
 private const val SPAWN_X      = 8f
-private const val SPAWN_Y      = 200f
-private const val SPAWN_Z      = 8f
+private const val SPAWN_Y      = 1f
+private const val SPAWN_Z      = 14f
 private const val GRAVITY            = -20f
 private const val JUMP_SPEED        = 8.5f   // blocks/s upward — reaches ~1.8 blocks height
 private const val FLY_VERTICAL_SPEED = 8f    // blocks/s up/down in fly mode
@@ -196,7 +196,7 @@ class GameLoop(private val world: WorldState) {
     suspend fun onConnect(socket: DefaultWebSocketSession) {
         val id    = UUID.randomUUID().toString()
         val spawn = Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z)
-        val state = PlayerState(id, "Player", spawn, Orientation(0f, 0f))
+        val state = PlayerState(id, "Player", spawn, Orientation(0f, 0f), flying = true)
         val session = PlayerSession(id, socket, state)
         sessions[id] = session
         log.info("player connected: {} (total={})", id.take(8), sessions.size)
