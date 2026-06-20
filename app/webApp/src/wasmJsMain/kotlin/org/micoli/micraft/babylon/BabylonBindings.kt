@@ -74,8 +74,21 @@ fun jsCameraSetPosition(camera: JsAny, x: Double, y: Double, z: Double): Unit =
 
 // ── Meshes ────────────────────────────────────────────────────────────────────
 
-fun jsCreateBox(name: String, size: Double, scene: JsAny): JsAny =
-    js("BABYLON.MeshBuilder.CreateBox(name, { size: size }, scene)")
+fun jsCreateBox(name: String, size: Double, scene: JsAny): JsAny = js("""
+(function(){
+  var uv = () => new BABYLON.Vector4(0, 1, 1, 0);
+  var box = BABYLON.MeshBuilder.CreateBox(name, {
+    size: size,
+    faceUV: [uv(), uv(), uv(), uv(), uv(), uv()]
+  }, scene);
+  box.subMeshes = [];
+  var vc = box.getTotalVertices();
+  for (var i = 0; i < 6; i++) {
+    new BABYLON.SubMesh(i, 0, vc, i * 6, 6, box);
+  }
+  return box;
+})()
+""")
 
 fun jsSetMeshPosition(mesh: JsAny, x: Double, y: Double, z: Double): Unit =
     js("mesh.position = new BABYLON.Vector3(x,y,z)")
@@ -92,6 +105,36 @@ fun jsSetMaterialColor(mat: JsAny, r: Double, g: Double, b: Double): Unit =
 
 fun jsSetMeshMaterial(mesh: JsAny, mat: JsAny): Unit =
     js("mesh.material = mat")
+
+fun jsCreateTextureMaterial(name: String, url: String, scene: JsAny): JsAny = js("""
+(function(){
+  var mat = new BABYLON.StandardMaterial(name, scene);
+  mat.diffuseTexture = new BABYLON.Texture(url, scene);
+  mat.diffuseTexture.hasAlpha = false;
+  mat.specularColor = new BABYLON.Color3(0, 0, 0);
+  mat.backFaceCulling = false;
+  return mat;
+})()
+""")
+
+fun jsCreateGrassMaterial(scene: JsAny): JsAny = js("""
+(function(){
+  var texMat = (n, u) => {
+    var m = new BABYLON.StandardMaterial(n, scene);
+    m.diffuseTexture = new BABYLON.Texture(u, scene);
+    m.diffuseTexture.hasAlpha = false;
+    m.specularColor = new BABYLON.Color3(0, 0, 0);
+    m.backFaceCulling = false;
+    return m;
+  };
+  var top    = texMat('grass_top',  '/textures/blocks/grass_top.png');
+  var side   = texMat('grass_side', '/textures/blocks/grass_side.png');
+  var bottom = texMat('grass_bot',  '/textures/blocks/dirt.png');
+  var multi = new BABYLON.MultiMaterial('grass', scene);
+  multi.subMaterials = [side, side, top, bottom, side, side];
+  return multi;
+})()
+""")
 
 // ── Input ─────────────────────────────────────────────────────────────────────
 
@@ -156,6 +199,34 @@ fun jsConsumeFlyToggle(): Boolean = js("""
 fun jsGetPageHost(): String     = js("window.location.hostname")
 fun jsGetPagePort(): Int        = js("parseInt(window.location.port) || (window.location.protocol === 'https:' ? 443 : 80)")
 fun jsNow(): Double             = js("Date.now()")
+
+// ── Disconnect overlay ────────────────────────────────────────────────────────
+
+fun jsShowDisconnectedOverlay(message: String): Unit = js("""
+(function(){
+  var d = document.getElementById('mc-disconnect');
+  if (!d) {
+    d = document.createElement('div');
+    d.id = 'mc-disconnect';
+    d.style.cssText = [
+      'position:fixed;inset:0;display:flex;flex-direction:column',
+      'align-items:center;justify-content:center',
+      'background:rgba(0,0,0,0.72);color:#fff',
+      'font:bold 22px/2 monospace;z-index:1000;text-align:center'
+    ].join(';');
+    document.body.appendChild(d);
+  }
+  d.style.display = 'flex';
+  d.innerHTML = '⚠️ DISCONNECTED<br><span style="font-size:15px;font-weight:normal">' + message + '</span>';
+})()
+""")
+
+fun jsHideDisconnectedOverlay(): Unit = js("""
+(function(){
+  var d = document.getElementById('mc-disconnect');
+  if (d) d.style.display = 'none';
+})()
+""")
 
 // ── HUD ───────────────────────────────────────────────────────────────────────
 

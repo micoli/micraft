@@ -56,10 +56,10 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private var hudX = 0.0; private var hudY = 0.0; private var hudZ = 0.0
     private var hudStance = "STANDING"; private var hudSpeed = 1.0
 
-    private val grassMat   = jsCreateMaterial("grass",   scene).also { jsSetMaterialColor(it, 0.3,  0.7,  0.2)  }
-    private val stoneMat   = jsCreateMaterial("stone",   scene).also { jsSetMaterialColor(it, 0.5,  0.5,  0.5)  }
-    private val dirtMat    = jsCreateMaterial("dirt",    scene).also { jsSetMaterialColor(it, 0.55, 0.35, 0.15) }
-    private val bedrockMat = jsCreateMaterial("bedrock", scene).also { jsSetMaterialColor(it, 0.1,  0.1,  0.1)  }
+    private val grassMat   = jsCreateGrassMaterial(scene)
+    private val stoneMat   = jsCreateTextureMaterial("stone",   "/textures/blocks/stone.png",   scene)
+    private val dirtMat    = jsCreateTextureMaterial("dirt",    "/textures/blocks/dirt.png",    scene)
+    private val bedrockMat = jsCreateTextureMaterial("bedrock", "/textures/blocks/bedrock.png", scene)
     private val playerMat  = jsCreateMaterial("player",  scene).also { jsSetMaterialColor(it, 0.8,  0.2,  0.2)  }
 
     fun connect(host: String, port: Int) {
@@ -72,46 +72,72 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         }
 
         scope.launch {
-            try {
-                val client = HttpClient(Js) { install(WebSockets) }
-                client.webSocket(host = host, port = port, path = "/game") {
-                    send(Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect("Player"))))
+            var retryDelay = 1000L
+            while (isActive) {
+                try {
+                    jsHideDisconnectedOverlay()
+                    val client = HttpClient(Js) { install(WebSockets) }
+                    client.webSocket(host = host, port = port, path = "/game") {
+                        retryDelay = 1000L
 
-                    // Send movement intents at server tick rate + pending chunk unloads
-                    val inputJob = launch {
-                        while (isActive) {
-                            delay(50)
-                            val intentText = Json.encodeToString<ClientMessage>(buildMoveIntent())
-                            send(Frame.Text(intentText))
-                            netBytesOut += intentText.length
-                            if (pendingUnloads.isNotEmpty()) {
-                                val batch = pendingUnloads.toList()
-                                pendingUnloads.clear()
-                                val unloadText = Json.encodeToString<ClientMessage>(ClientMessage.ChunkUnload(batch))
-                                send(Frame.Text(unloadText))
-                                netBytesOut += unloadText.length
+                        send(Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect("Player"))))
+
+                        // Send movement intents at server tick rate + pending chunk unloads
+                        val inputJob = launch {
+                            while (isActive) {
+                                delay(50)
+                                val intentText = Json.encodeToString<ClientMessage>(buildMoveIntent())
+                                send(Frame.Text(intentText))
+                                netBytesOut += intentText.length
+                                if (pendingUnloads.isNotEmpty()) {
+                                    val batch = pendingUnloads.toList()
+                                    pendingUnloads.clear()
+                                    val unloadText = Json.encodeToString<ClientMessage>(ClientMessage.ChunkUnload(batch))
+                                    send(Frame.Text(unloadText))
+                                    netBytesOut += unloadText.length
+                                }
                             }
                         }
-                    }
 
-                    for (frame in incoming) {
-                        if (frame is Frame.Text) {
-                            val text = frame.readText()
-                            netBytesIn += text.length
-                            val msg = runCatching {
-                                Json.decodeFromString<ServerMessage>(text)
-                            }.onFailure { e ->
-                                jsError("JSON parse error: ${e.message}")
-                            }.getOrNull() ?: continue
-                            handleMessage(msg)
+                        for (frame in incoming) {
+                            if (frame is Frame.Text) {
+                                val text = frame.readText()
+                                netBytesIn += text.length
+                                val msg = runCatching {
+                                    Json.decodeFromString<ServerMessage>(text)
+                                }.onFailure { e ->
+                                    jsError("JSON parse error: ${e.message}")
+                                }.getOrNull() ?: continue
+                                handleMessage(msg)
+                            }
                         }
+                        inputJob.cancel()
                     }
-                    inputJob.cancel()
+                } catch (e: Throwable) {
+                    jsError("WebSocket error: ${e::class.simpleName}: ${e.message}")
                 }
-            } catch (e: Throwable) {
-                jsError("WebSocket error: ${e::class.simpleName}: ${e.message}")
+
+                if (!isActive) break
+                resetForReconnect()
+                val retrySec = retryDelay / 1000
+                jsShowDisconnectedOverlay("Reconnecting in ${retrySec}s…")
+                delay(retryDelay)
+                retryDelay = minOf(retryDelay * 2, 8000L)
             }
         }
+    }
+
+    private fun resetForReconnect() {
+        localPlayerId  = null
+        hasPrediction  = false
+        predX = 0.0; predY = 0.0; predZ = 0.0
+        serverX = 0.0; serverZ = 0.0
+        lastPlayerCx = Int.MIN_VALUE; lastPlayerCz = Int.MIN_VALUE
+        pendingUnloads.clear()
+        playerMeshes.values.forEach(::jsDisposeMesh)
+        playerMeshes.clear()
+        chunkBlockKeys.values.forEach { keys -> keys.forEach { key -> blockMeshes.remove(key)?.let(::jsDisposeMesh) } }
+        chunkBlockKeys.clear()
     }
 
     private fun applyLocalPrediction() {

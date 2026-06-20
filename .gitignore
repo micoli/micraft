@@ -9,5 +9,6 @@ core/build
 app/desktopApp/build
 app/shared/build
 app/webApp/build
+resources/
 TODO.md
 plans

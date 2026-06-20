@@ -34,16 +34,30 @@ Minecraft client/server clone in **Kotlin Multiplatform** — multiplayer voxel 
 
 Eye offset (first-person camera): standing 1.62 b · sneaking 1.27 b · crawling 0.4 b.
 
+## Textures
+  [textures.md](.claude/textures.md)
+
 ## Code conventions
 
 - Prefer immutable types (`data class`, `value class`) for positions, orientations, and network messages.
 - Centralise gameplay constants in `core` (`WorldConstants`, `PlayerConstants`).
 - Never duplicate constants between client and server.
 
+## Testing / triggering a server restart
+
+After every server-side code change, touch `run.lock` to restart the server:
+
+```bash[comment une texture est appliquée sur un bloc (ori.md](../../Downloads/comment%20une%20texture%20est%20appliqu%C3%A9e%20sur%20un%20bloc%20%28ori.md)
+touch run.lock
+```
+
+The `./gradlew dev` watchdog detects the modification and kills/restarts the Ktor process automatically. The web client reconnects on its own (it shows a "DISCONNECTED" overlay while waiting). **Always use `touch run.lock` instead of manually restarting the server or asking the user to do it.**
+
 ## Commands
 
 ```bash
 # Development: starts server (:8080) + webpack dev server (:8081) in parallel
+# Watches run.lock — touch it to restart the server on the fly
 ./gradlew dev
 
 # Full build
