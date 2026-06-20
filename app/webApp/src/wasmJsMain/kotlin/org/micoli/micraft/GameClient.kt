@@ -277,7 +277,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                 localPlayerId = msg.playerId
             }
             is ServerMessage.ChunkData -> {
-                renderChunk(Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks))
+                renderChunk(Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
             }
             is ServerMessage.PlayerUpdate -> {
                 val s = msg.state
@@ -324,7 +324,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         }
     }
 
-    private fun renderChunk(chunk: Chunk) {
+    private fun renderChunk(chunk: Chunk, topY: Int) {
         // Dispose any existing meshes for this chunk (handles re-render after unload)
         chunkBlockKeys.remove(chunk.pos)?.forEach { key ->
             blockMeshes.remove(key)?.let(::jsDisposeMesh)
@@ -334,7 +334,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         val oz = chunk.pos.cz * WorldConstants.CHUNK_SIZE
         for (x in 0 until WorldConstants.CHUNK_SIZE) {
             for (z in 0 until WorldConstants.CHUNK_SIZE) {
-                for (y in 0..WorldConstants.WORLD_MAX_Y) {
+                for (y in 0..topY) {
                     val block = chunk.getBlock(x, y, z)
                     if (block == BlockType.AIR) continue
                     if (isHidden(chunk, x, y, z)) continue

@@ -4,8 +4,8 @@ object WorldConstants {
     const val WORLD_MIN_Y = 0
     const val WORLD_MAX_Y = 1024
     const val CHUNK_SIZE = 16
-    const val VIEW_RADIUS = 4         // server streams chunks within this radius (9×9 = 81)
-    const val CLIENT_VIEW_RADIUS = 4  // client unloads meshes beyond this radius
+    const val VIEW_RADIUS = 2         // server streams chunks within this radius (5×5 = 25)
+    const val CLIENT_VIEW_RADIUS = 2  // client unloads meshes beyond this radius
 }
 
 object PlayerConstants {
