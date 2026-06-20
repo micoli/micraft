@@ -53,12 +53,42 @@ touch run.lock
 
 The `./gradlew dev` watchdog detects the modification and kills/restarts the Ktor process automatically. The web client reconnects on its own (it shows a "DISCONNECTED" overlay while waiting). **Always use `touch run.lock` instead of manually restarting the server or asking the user to do it.**
 
+## Debug texture mode
+
+To inspect block textures face by face, use the `devDebug` task:
+
+```bash
+./gradlew devDebug
+```
+
+This starts the server with `MICRAFT_DEBUG_WORLD=1`:
+- Single GRASS block at world (8, 2, 8) — all other positions are AIR
+- Player spawns at (8, 1, 14) in fly mode, facing the block
+
+Then open: **`http://localhost:8081/?debug&bx=8&by=2&bz=8`**
+
+| Key | Camera position |
+|-----|----------------|
+| 1 | Face +Z (front) |
+| 2 | Face -Z (back) |
+| 3 | Face +X (right) |
+| 4 | Face -X (left) |
+| 5 | Face +Y (top) |
+| 6 | Face -Y (bottom) |
+| Échap | Libère le verrou caméra |
+
+`run.lock` continue de fonctionner normalement (redémarre le serveur en conservant le mode debug).
+To target a different block, change `bx`, `by`, `bz` in the URL.
+
 ## Commands
 
 ```bash
 # Development: starts server (:8080) + webpack dev server (:8081) in parallel
 # Watches run.lock — touch it to restart the server on the fly
 ./gradlew dev
+
+# Debug texture mode (single block world + keys 1-6)
+./gradlew devDebug   # then open http://localhost:8081/?debug&bx=8&by=2&bz=8
 
 # Full build
 rtk ./gradlew build

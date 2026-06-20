@@ -7,6 +7,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import org.micoli.micraft.world.DebugChunkGenerator
+import org.micoli.micraft.world.ProceduralChunkGenerator
 import org.micoli.micraft.world.WorldState
 import kotlin.time.Duration.Companion.seconds
 
@@ -21,7 +22,10 @@ fun Application.module() {
         timeout = 15.seconds
     }
 
-    val world = WorldState(DebugChunkGenerator())
+    val world = WorldState(
+        if (System.getenv("MICRAFT_DEBUG_WORLD") == "1") DebugChunkGenerator()
+        else ProceduralChunkGenerator(seed = 42L)
+    )
     val gameLoop = GameLoop(world)
     gameLoop.start(this)
 
