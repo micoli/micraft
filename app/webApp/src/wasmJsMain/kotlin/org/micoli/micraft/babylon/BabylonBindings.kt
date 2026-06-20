@@ -119,19 +119,23 @@ fun jsCreateTextureMaterial(name: String, url: String, scene: JsAny): JsAny = js
 
 fun jsCreateGrassMaterial(scene: JsAny): JsAny = js("""
 (function(){
-  var texMat = (n, u) => {
+  var texMat = (n, u, ang) => {
     var m = new BABYLON.StandardMaterial(n, scene);
     m.diffuseTexture = new BABYLON.Texture(u, scene);
+    if (ang !== undefined) m.diffuseTexture.wAng = ang;
     m.diffuseTexture.hasAlpha = false;
     m.specularColor = new BABYLON.Color3(0, 0, 0);
     m.backFaceCulling = false;
     return m;
   };
-  var top    = texMat('grass_top',  '/textures/blocks/grass_top.png');
-  var side   = texMat('grass_side', '/textures/blocks/grass_side.png');
-  var bottom = texMat('grass_bot',  '/textures/blocks/dirt.png');
+  var top    = texMat('grass_top',    '/textures/blocks/grass_top.png');
+  top.diffuseColor = new BABYLON.Color3(0.47, 0.75, 0.35); // plains biome grass tint
+  var side   = texMat('grass_side',   '/textures/blocks/grass_side.png', Math.PI / 2);
+  var sideX  = texMat('grass_side_x', '/textures/blocks/grass_side.png', Math.PI / 2);
+  var bottom = texMat('grass_bot',    '/textures/blocks/dirt.png');
   var multi = new BABYLON.MultiMaterial('grass', scene);
-  multi.subMaterials = [side, side, top, bottom, side, side];
+  // BabylonJS CreateBox: 0=front(+Z), 1=back(-Z), 2=right(+X), 3=left(-X), 4=top(+Y), 5=bottom(-Y)
+  multi.subMaterials = [side, side, sideX, sideX, top, bottom];
   return multi;
 })()
 """)
