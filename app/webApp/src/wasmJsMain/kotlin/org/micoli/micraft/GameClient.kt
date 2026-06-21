@@ -198,11 +198,16 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         // Console: forward submitted command, skip movement while open
         val consoleInput = jsConsumeConsoleInput()
         if (consoleInput.isNotEmpty()) {
-            if (consoleInput.trim() == "/keyreload") {
-                jsLoadBindings(serverHost, serverPort)
-                jsShowNotification("Keybindings reloaded")
-            } else {
-                outMessages.trySend(ClientMessage.Command(consoleInput))
+            when (consoleInput.trim()) {
+                "/keyreload" -> {
+                    jsLoadBindings(serverHost, serverPort)
+                    jsShowNotification("Keybindings reloaded")
+                }
+                "/disconnect" -> {
+                    outMessages.trySend(ClientMessage.Disconnect())
+                    jsReload()
+                }
+                else -> outMessages.trySend(ClientMessage.Command(consoleInput))
             }
         }
         if (jsIsConsoleOpen()) return

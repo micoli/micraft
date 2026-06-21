@@ -145,6 +145,8 @@ fun jsShowLoginOverlay(): Unit = js("mcShowLoginOverlay()")
 
 fun jsConsumeLoginResult(): String = js("mcConsumeLoginResult()")
 
+fun jsReload(): Unit = js("mcReload()")
+
 // ── Autocomplete ──────────────────────────────────────────────────────────────
 
 fun jsSetConnectedPlayers(namesJson: String): Unit = js("mcSetConnectedPlayers(namesJson)")
