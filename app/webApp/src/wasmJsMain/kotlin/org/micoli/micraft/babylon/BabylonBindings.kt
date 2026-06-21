@@ -128,6 +128,7 @@ fun jsRotateCameraYaw(camera: JsAny, delta: Float): Unit = js("camera.rotation.y
 fun jsGetCameraForwardY(camera: JsAny): Double = js("camera.getForwardRay(1).direction.y")
 
 fun jsConsumeFlyToggle(): Boolean = js("mcConsumeFlyToggle()")
+fun jsConsumeUndoAction(): Boolean = js("mcConsumeUndoAction()")
 
 fun jsGetPageHost(): String = js("window.location.hostname")
 fun jsGetPagePort(): Int    = js("parseInt(window.location.port) || (window.location.protocol === 'https:' ? 443 : 80)")

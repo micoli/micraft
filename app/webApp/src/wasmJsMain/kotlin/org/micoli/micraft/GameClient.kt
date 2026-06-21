@@ -271,6 +271,9 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         // Inventory toggle (I key)
         if (jsConsumeInventoryToggle()) jsToggleHotbar()
 
+        // Undo last block break (Z key)
+        if (jsConsumeUndoAction()) outMessages.trySend(ClientMessage.Command("/undo 1"))
+
         // Lazy-create local player model and first-person arms when bbmodel is ready
         if (jsIsPlayerBbmodelReady()) {
             if (localPlayerModel == null) {

@@ -2,6 +2,7 @@ package org.micoli.micraft
 
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
+import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
 
@@ -14,4 +15,5 @@ data class CommandContext(
     val reloadConfig: (suspend () -> String)? = null,
     val commands: () -> Collection<CommandHandler> = { emptyList() },
     val savePlayer: (PlayerSession) -> Unit = {},
+    val worldItems: WorldItemManager? = null,
 )

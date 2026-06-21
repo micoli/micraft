@@ -39,6 +39,16 @@ class GameLoop(
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
     private var saveTickCounter = 0
 
+    private val commands: Map<String, CommandHandler> =
+        java.util.ServiceLoader.load(CommandHandler::class.java).associateBy { it.command }
+
+    private val dropConfig = DropConfig(Path.of("data/drops/drops.yaml"))
+    private val worldItems = WorldItemManager(
+        dropConfig,
+        broadcast = { msg -> sessions.values.forEach { it.send(msg) } },
+        savePlayer = ::savePlayer,
+    )
+
     private val commandContext = CommandContext(
         world = world,
         persistence = persistence,
@@ -51,15 +61,7 @@ class GameLoop(
         reloadConfig = ::reload,
         commands = { commands.values },
         savePlayer = ::savePlayer,
-    )
-    private val commands: Map<String, CommandHandler> =
-        java.util.ServiceLoader.load(CommandHandler::class.java).associateBy { it.command }
-
-    private val dropConfig = DropConfig(Path.of("data/drops/drops.yaml"))
-    private val worldItems = WorldItemManager(
-        dropConfig,
-        broadcast = { msg -> sessions.values.forEach { it.send(msg) } },
-        savePlayer = ::savePlayer,
+        worldItems = worldItems,
     )
     private val blockBreaker = BlockBreaker(world, { msg -> sessions.values.forEach { it.send(msg) } }, worldItems)
     private val intentCollector = IntentCollector(blockBreaker, ::handleCommand)

@@ -4,6 +4,7 @@ import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.session.BreakRecord
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.WorldItemManager
@@ -12,6 +13,7 @@ import org.micoli.micraft.world.hardness
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(BlockBreaker::class.java)
+private const val MAX_UNDO_HISTORY = 20
 
 class BlockBreaker(
     private val world: WorldState,
@@ -52,7 +54,9 @@ class BlockBreaker(
             val change = BlockChange(bt, BlockType.AIR)
             world.applyChange(change)
             broadcast(ServerMessage.WorldUpdate(listOf(change)))
-            worldItems.spawnDrops(bt, block)
+            val spawned = worldItems.spawnDrops(bt, block)
+            session.breakHistory.addLast(BreakRecord(bt, block, spawned))
+            if (session.breakHistory.size > MAX_UNDO_HISTORY) session.breakHistory.removeFirst()
             session.breakTarget = null
             session.breakProgress = 0
         } else {

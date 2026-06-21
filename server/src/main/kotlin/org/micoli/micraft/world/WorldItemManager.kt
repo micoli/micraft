@@ -17,9 +17,9 @@ class WorldItemManager(
 ) {
     private val items = ConcurrentHashMap<String, WorldItem>()
 
-    suspend fun spawnDrops(blockPos: BlockPos, blockType: BlockType) {
+    suspend fun spawnDrops(blockPos: BlockPos, blockType: BlockType): List<WorldItem> {
         val drops = dropConfig.rollDrops(blockType)
-        if (drops.isEmpty()) return
+        if (drops.isEmpty()) return emptyList()
         val center = Vec3(blockPos.x + 0.5f, blockPos.y + 0.5f, blockPos.z + 0.5f)
         val spawned = drops.map { (itemType, count) ->
             WorldItem(UUID.randomUUID().toString(), center, itemType, count).also {
@@ -28,6 +28,15 @@ class WorldItemManager(
             }
         }
         broadcast(ServerMessage.ItemsSpawned(spawned))
+        return spawned
+    }
+
+    fun hasItem(id: String): Boolean = items.containsKey(id)
+
+    suspend fun despawnItem(id: String) {
+        if (items.remove(id) != null) {
+            broadcast(ServerMessage.ItemDespawned(id))
+        }
     }
 
     suspend fun tickCollection(sessions: Collection<PlayerSession>) {
