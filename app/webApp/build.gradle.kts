@@ -10,8 +10,16 @@ val copyBbmodels by tasks.registering(Copy::class) {
     into("src/wasmJsMain/resources/models")
 }
 
+val tsBuild by tasks.registering(Exec::class) {
+    workingDir = file("ts-src")
+    inputs.dir("ts-src")
+    outputs.file("src/wasmJsMain/resources/mc_bindings.js")
+    commandLine("sh", "-c", "npm install && npm run build")
+}
+
 tasks.matching { it.name == "wasmJsProcessResources" }.configureEach {
     dependsOn(copyBbmodels)
+    dependsOn(tsBuild)
 }
 
 kotlin {

@@ -1,0 +1,14 @@
+{
+  "name": "mc-bindings",
+  "private": true,
+  "scripts": {
+    "build": "esbuild index.ts --bundle --platform=browser --target=es2017 --format=iife --outfile=../src/wasmJsMain/resources/mc_bindings.js",
+    "typecheck": "tsc --noEmit",
+    "watch": "esbuild index.ts --bundle --platform=browser --target=es2017 --format=iife --outfile=../src/wasmJsMain/resources/mc_bindings.js --watch"
+  },
+  "devDependencies": {
+    "esbuild": "0.21.5",
+    "typescript": "5.4.5",
+    "@babylonjs/core": "7.48.0"
+  }
+}

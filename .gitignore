@@ -1,5 +1,7 @@
 run.lock
 app/webApp/src/wasmJsMain/resources/models/
+app/webApp/src/wasmJsMain/resources/mc_bindings.js
+app/webApp/ts-src/node_modules/
 .kotlin
 .gradle
 build

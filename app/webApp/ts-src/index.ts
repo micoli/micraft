@@ -1,77 +1,13 @@
+// @ts-nocheck
 // mc_bindings.js — BabylonJS host functions called from Kotlin/Wasm via js()
 // Must be loaded AFTER babylon.js and BEFORE webApp.js.
+// Phase 1: modules migrated so far → utils, engine
+import { registerUtils } from './utils/utils';
+import { registerEngine } from './engine/engine';
+registerUtils();
+registerEngine();
 
-window.mcCreateEngine = function () {
-  if (window.__mcEngine) {
-    try { window.__mcEngine.dispose(); } catch (e) {}
-    window.__mcEngine = null;
-  }
-
-  var canvas = document.getElementById('renderCanvas');
-  if (!canvas) throw new Error('[MiCraft] Canvas #renderCanvas not found');
-
-  var probe = document.createElement('canvas');
-  var gl = probe.getContext('webgl2') || probe.getContext('webgl');
-  if (!gl) {
-    console.error('[MiCraft] WebGL unavailable. Open chrome://gpu and check that ' +
-      '"WebGL" and "Hardware-accelerated" are enabled. ' +
-      'You can also try: chrome://settings/system → enable hardware acceleration.');
-    throw new Error('[MiCraft] WebGL not supported by this browser / GPU configuration');
-  }
-  gl = null;
-
-  var engine;
-  try {
-    engine = new BABYLON.Engine(canvas, false, { disableWebGL2Support: false, preserveDrawingBuffer: false });
-  } catch (e) {
-    console.warn('[MiCraft] WebGL2 failed (' + e.message + '), retrying with WebGL1');
-    engine = new BABYLON.Engine(canvas, false, { disableWebGL2Support: true });
-  }
-
-  window.__mcEngine = engine;
-  window.addEventListener('beforeunload', function () { engine.dispose(); }, { once: true });
-  console.log('[MiCraft] Engine created: ' + (engine.webGLVersion === 2 ? 'WebGL2' : 'WebGL1'));
-  return engine;
-};
-
-window.mcCreateHemisphericLight = function (name, scene) {
-  var l = new BABYLON.HemisphericLight(name, new BABYLON.Vector3(0, 1, 0), scene);
-  l.groundColor = new BABYLON.Color3(0.4, 0.4, 0.4);
-  return l;
-};
-
-// Multi-face box for GRASS (6 SubMeshes → MultiMaterial with per-face texture).
-window.mcCreateBox = function (name, size, scene) {
-  var uv = function () { return new BABYLON.Vector4(0, 1, 1, 0); };
-  var box = BABYLON.MeshBuilder.CreateBox(name, {
-    size: size,
-    faceUV: [uv(), uv(), uv(), uv(), uv(), uv()]
-  }, scene);
-  box.subMeshes = [];
-  var vc = box.getTotalVertices();
-  for (var i = 0; i < 6; i++) {
-    new BABYLON.SubMesh(i, 0, vc, i * 6, 6, box);
-  }
-  return box;
-};
-
-// Simple box for uniform-material blocks (STONE, DIRT, BEDROCK): 1 draw call vs 6.
-window.mcCreateSimpleBox = function (name, size, scene) {
-  return BABYLON.MeshBuilder.CreateBox(name, { size: size }, scene);
-};
-
-// Freeze world matrix (static block never moves) and disable picking.
-window.mcFreezeMesh = function (mesh) {
-  mesh.freezeWorldMatrix();
-  mesh.isPickable = false;
-  mesh.doNotSyncBoundingInfo = true;
-};
-
-// One-time scene tweaks: skip per-frame pointer picking and material dirty checks.
-window.mcOptimizeScene = function (scene) {
-  scene.skipPointerMovePicking = true;
-  scene.blockMaterialDirtyMechanism = true;
-};
+// ── Remaining modules (not yet migrated) ─────────────────────────────────────
 
 window.mcCreateTextureMaterial = function (name, url, scene) {
   var mat = new BABYLON.StandardMaterial(name, scene);
@@ -622,17 +558,8 @@ window.mcConsumeLoginResult = function () {
   return v;
 };
 
-window.mcReload = function () { window.location.reload(); };
+// mcReload + mcGetUrlParam → utils/utils.ts
 
-window.mcGetUrlParam = function (name) {
-  var v = new URLSearchParams(window.location.search).get(name);
-  return v === null ? '' : v;
-};
-
-/**
- * Binds keys 1-6 to camera positions facing each face of the block at (bx,by,bz).
- * Face mapping: 1=+Z, 2=-Z, 3=+X, 4=-X, 5=+Y, 6=-Y  (BabylonJS CreateBox order)
- */
 window.mcSetupDebugCameraKeys = function (camera, scene, bx, by, bz) {
   var dist = 5;
   var faces = [
@@ -668,46 +595,34 @@ window.mcSetupDebugCameraKeys = function (camera, scene, bx, by, bz) {
 };
 
 // ── Chunk geometry builder ────────────────────────────────────────────────────
-// Builds one mesh per material group per chunk instead of one mesh per block.
-// Reduces draw calls from O(blocks) to O(chunks × materials) ≈ 200 vs 30 000.
 
-window.__mcChunks = {};  // chunkKey → [mesh, ...]
-var __mcBuf = null;      // accumulator between mcChunkBegin and mcChunkEnd
+window.__mcChunks = {};
+var __mcBuf = null;
 
-// Vertex offsets for each face direction (4 vertices per face, CCW winding)
 var MC_VERTS = [
-  // 0: Front +Z — normal (0,0,1)
   [[-0.5,-0.5, 0.5],[0.5,-0.5, 0.5],[0.5, 0.5, 0.5],[-0.5, 0.5, 0.5]],
-  // 1: Back  -Z — normal (0,0,-1)
   [[ 0.5,-0.5,-0.5],[-0.5,-0.5,-0.5],[-0.5, 0.5,-0.5],[ 0.5, 0.5,-0.5]],
-  // 2: Right +X — normal (1,0,0)
   [[ 0.5,-0.5, 0.5],[ 0.5,-0.5,-0.5],[ 0.5, 0.5,-0.5],[ 0.5, 0.5, 0.5]],
-  // 3: Left  -X — normal (-1,0,0)
   [[-0.5,-0.5,-0.5],[-0.5,-0.5, 0.5],[-0.5, 0.5, 0.5],[-0.5, 0.5,-0.5]],
-  // 4: Top   +Y — normal (0,1,0)
   [[-0.5, 0.5, 0.5],[ 0.5, 0.5, 0.5],[ 0.5, 0.5,-0.5],[-0.5, 0.5,-0.5]],
-  // 5: Bottom-Y — normal (0,-1,0)
   [[-0.5,-0.5,-0.5],[ 0.5,-0.5,-0.5],[ 0.5,-0.5, 0.5],[-0.5,-0.5, 0.5]],
 ];
 var MC_NORMS = [[0,0,1],[0,0,-1],[1,0,0],[-1,0,0],[0,1,0],[0,-1,0]];
-var MC_UV    = [0,1, 1,1, 1,0, 0,0];  // full texture per face
+var MC_UV    = [0,1, 1,1, 1,0, 0,0];
 
-// BlockType ordinals must match the Kotlin enum order:
-// AIR=0, BEDROCK=1, STONE=2, DIRT=3, GRASS=4, SAND=5, SANDSTONE=6, GRAVEL=7, SNOW=8
-// faceMat = blockOrdinal * 6 + faceDir (0=+Z,1=-Z,2=+X,3=-X,4=+Y,5=-Y)
 function mcMatGroup(faceMat) {
   var faceDir = faceMat % 6;
   var typeOrd = (faceMat - faceDir) / 6;
-  if (typeOrd === 4) {  // GRASS — per-face material
+  if (typeOrd === 4) {
     return faceDir === 4 ? 'gt' : faceDir === 5 ? 'gb' : faceDir === 0 ? 'gf' : faceDir === 1 ? 'gbk' : 'gx';
   }
-  if (typeOrd === 2) return 's';   // STONE
-  if (typeOrd === 3) return 'd';   // DIRT
-  if (typeOrd === 5) return 'sa';  // SAND
-  if (typeOrd === 6) return 'ss';  // SANDSTONE
-  if (typeOrd === 7) return 'gr';  // GRAVEL
-  if (typeOrd === 8) return 'sn';  // SNOW
-  return 'b';                      // BEDROCK (and fallback)
+  if (typeOrd === 2) return 's';
+  if (typeOrd === 3) return 'd';
+  if (typeOrd === 5) return 'sa';
+  if (typeOrd === 6) return 'ss';
+  if (typeOrd === 7) return 'gr';
+  if (typeOrd === 8) return 'sn';
+  return 'b';
 }
 
 window.mcChunkBegin = function (cx, cz) {
@@ -730,12 +645,11 @@ window.mcChunkFace = function (wx, wy, wz, faceMat) {
   var b = g.v; g.i.push(b, b+1, b+2, b, b+2, b+3); g.v += 4;
 };
 
-// grassMat is a BABYLON.MultiMaterial; subMaterials = [sideFr, sideBk, sideX, sideX, top, bottom]
 window.mcChunkEnd = function (scene, grassMat, stoneMat, dirtMat, bedrockMat,
                                sandMat, sandstoneMat, gravelMat, snowMat) {
   var buf = __mcBuf; __mcBuf = null;
   var key = buf.key;
-  mcDisposeChunk(key);
+  window.mcDisposeChunk(key);
   var gsm = (grassMat && grassMat.subMaterials) ? grassMat.subMaterials : [];
   var matMap = { s: stoneMat, d: dirtMat, b: bedrockMat,
                  gt: gsm[4], gb: gsm[5], gf: gsm[0], gbk: gsm[1], gx: gsm[2],
@@ -762,30 +676,9 @@ window.mcDisposeChunk = function (key) {
   if (meshes) { meshes.forEach(function (m) { m.dispose(); }); delete window.__mcChunks[key]; }
 };
 
-// ── Console ───────────────────────────────────────────────────────────────────
-
 // ── Command autocomplete registry ─────────────────────────────────────────────
 
-window.__mcConnectedPlayers = [];
-window.__mcCommandCompleters = {};
-window.__mcKnownCommands = [];
-
-window.mcRegisterCompleter = function (cmd, fn) {
-  window.__mcCommandCompleters[cmd] = fn;
-  if (!window.__mcKnownCommands.includes(cmd)) window.__mcKnownCommands.push(cmd);
-};
-
-window.mcSetConnectedPlayers = function (namesJson) {
-  try { window.__mcConnectedPlayers = JSON.parse(namesJson); } catch (e) {}
-};
-
-// Built-in registrations (argument completers)
-window.mcRegisterCompleter('/keyreload', function () { return []; });
-window.mcRegisterCompleter('/kick',  function (p) { return (window.__mcConnectedPlayers || []).filter(function (n) { return n.startsWith(p); }); });
-window.mcRegisterCompleter('/save',  function ()  { return []; });
-window.mcRegisterCompleter('/who',   function ()  { return []; });
-window.mcRegisterCompleter('/yield',      function ()  { return []; });
-window.mcRegisterCompleter('/disconnect', function ()  { return []; });
+// Command autocomplete registry + mcSetConnectedPlayers + mcRegisterCompleter → utils/utils.ts
 
 // ── Console ───────────────────────────────────────────────────────────────────
 
@@ -827,9 +720,9 @@ window.mcCreateConsole = function () {
         if (h.length === 0 || h[h.length - 1] !== text) h.push(text);
         try { localStorage.setItem('mc_history_' + c.playerName, JSON.stringify(h.slice(-50))); } catch (ex) {}
       }
-      mcHideConsole();
+      window.mcHideConsole();
     } else if (e.key === 'Escape') {
-      mcHideConsole();
+      window.mcHideConsole();
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (h.length > 0) {
@@ -886,10 +779,10 @@ window.mcCreateConsole = function () {
     if (loginEl && loginEl.style.display !== 'none') return;
     if (e.key === '/' && !window.__mcConsole.open) {
       e.preventDefault();
-      mcShowConsole();
+      window.mcShowConsole();
     } else if (e.key === 'Enter' && !window.__mcConsole.open) {
       e.preventDefault();
-      mcShowConsole();
+      window.mcShowConsole();
       document.getElementById('mc-console-input').value = '';
     }
   });
@@ -925,7 +818,7 @@ window.mcConsumeConsoleInput = function () {
   return v;
 };
 
-// ── Server log (history above slash input) ────────────────────────────────────
+// ── Server log ────────────────────────────────────────────────────────────────
 
 var __mcServerLog = [];
 var MC_LOG_MAX = 10;
@@ -1057,7 +950,6 @@ window.mcUpdateHotbar = function (inventoryJson) {
     d.appendChild(empty);
   }
 
-  // Auto-show when first items are received
   if (hasItems && d.style.display === 'none') d.style.display = 'flex';
 };
 
@@ -1109,9 +1001,6 @@ window.mcCreatePlayerModelNow = function (scene) {
   return window.mcCreatePlayerModelFromBbmodel(window.__mc.playerBbmodel, scene);
 };
 
-// ── Shared skin UV helpers ────────────────────────────────────────────────────
-// Pixel coords [x0,y0,x1,y1] → BabylonJS Vector4(uMin,vMin,uMax,vMax).
-// BabylonJS loads textures with invertY so pixel y=0 maps to v=1.
 window.__mcSkinUV = function (face, W, H) {
   if (!face || !face.uv) return new BABYLON.Vector4(0, 0, 0, 0);
   var x0 = face.uv[0], y0 = face.uv[1], x1 = face.uv[2], y1 = face.uv[3];
@@ -1120,8 +1009,7 @@ window.__mcSkinUV = function (face, W, H) {
     Math.max(x0, x1) / W, 1 - Math.min(y0, y1) / H
   );
 };
-// BabylonJS CreateBox face order: 0=front(+Z/south), 1=back(-Z/north),
-// 2=right(+X/east), 3=left(-X/west), 4=top(+Y), 5=bottom(-Y)
+
 window.__mcSkinFaceUV = function (faces, W, H) {
   var uv = window.__mcSkinUV;
   return [uv(faces.south,W,H), uv(faces.north,W,H), uv(faces.east,W,H),
@@ -1129,9 +1017,8 @@ window.__mcSkinFaceUV = function (faces, W, H) {
 };
 
 window.mcCreatePlayerModelFromBbmodel = function (bbmodel, scene) {
-  // Shared material (one per page load, reused for every player instance)
   if (!window.__mcPlayerMat) {
-    var src = bbmodel.textures[0].source;  // data:image/png;base64,...
+    var src = bbmodel.textures[0].source;
     var tex = new BABYLON.Texture(src, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
     tex.hasAlpha = false;
     tex.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
@@ -1143,18 +1030,15 @@ window.mcCreatePlayerModelFromBbmodel = function (bbmodel, scene) {
   }
   var mat = window.__mcPlayerMat;
 
-  var W = bbmodel.resolution.width;   // 64
-  var H = bbmodel.resolution.height;  // 64
+  var W = bbmodel.resolution.width;
+  var H = bbmodel.resolution.height;
   var SCALE = 1 / 16;
 
-  // Build uuid→group map
   var groupMap = {};
   bbmodel.groups.forEach(function (g) { groupMap[g.uuid] = g; });
 
-  // Groups that need animated pivot nodes (head=pitch+bob, limbs=walk swing)
   var ANIM_GROUPS = ['head', 'rightArm', 'leftArm', 'rightLeg', 'leftLeg'];
 
-  // Walk the outliner to map each element UUID to its nearest animated ancestor group
   var elToGroup = {};
   function walkOutliner(nodes, animAncestor) {
     if (!nodes) return;
@@ -1173,7 +1057,6 @@ window.mcCreatePlayerModelFromBbmodel = function (bbmodel, scene) {
 
   var root = new BABYLON.TransformNode('playerRoot', scene);
 
-  // Create one pivot TransformNode per animated group, parented to root
   var pivotNodes = {};
   ANIM_GROUPS.forEach(function (gname) {
     var g = bbmodel.groups.find(function (gr) { return gr.name === gname; });
@@ -1223,19 +1106,13 @@ window.mcCreatePlayerModelFromBbmodel = function (bbmodel, scene) {
     }
   });
 
-  // Parse the walk animation keyframes from the bbmodel so mcSetPlayerTransform
-  // interpolates the actual authored values rather than hard-coded constants.
-  // Result: { boneName: { channel: [ {time, x, y, z}, … ] } }
   var walkAnim = {};
-  // Prefer an animation whose name contains 'walk'; fall back to the first animation
-  // that has leg or arm keyframes (the main locomotion animation regardless of name).
   var walkAnimDef = bbmodel.animations && (
     bbmodel.animations.find(function (a) { return a.name && a.name.toLowerCase().indexOf('walk') >= 0; }) ||
     bbmodel.animations.find(function (a) { return a.animators && Object.keys(a.animators).length > 1; })
   );
   if (walkAnimDef) {
     var animLength = walkAnimDef.length || 1;
-    // Build a name→uuid map from bbmodel.groups
     var nameToUuid = {};
     bbmodel.groups.forEach(function (g) { nameToUuid[g.name] = g.uuid; });
 
@@ -1244,7 +1121,6 @@ window.mcCreatePlayerModelFromBbmodel = function (bbmodel, scene) {
       if (!uuid) return;
       var animator = walkAnimDef.animators[uuid];
       if (!animator) return;
-      // Collect rotation keyframes, sorted by time
       var kfs = (animator.keyframes || []).filter(function (k) { return k.channel === 'rotation'; });
       kfs.sort(function (a, b) { return a.time - b.time; });
       if (kfs.length === 0) return;
@@ -1260,11 +1136,9 @@ window.mcCreatePlayerModelFromBbmodel = function (bbmodel, scene) {
   };
 };
 
-// Linear interpolation between two bbmodel keyframes at normalised time t ∈ [0,1].
 function mcInterpAxis(keyframes, t, axis) {
   if (!keyframes || keyframes.length === 0) return 0;
   if (keyframes.length === 1) return parseFloat(keyframes[0].data_points[0][axis] || 0);
-  // Find surrounding keyframes
   var prev = keyframes[0], next = keyframes[keyframes.length - 1];
   for (var i = 0; i < keyframes.length - 1; i++) {
     if (t >= keyframes[i].time && t <= keyframes[i + 1].time) {
@@ -1279,8 +1153,6 @@ function mcInterpAxis(keyframes, t, axis) {
   return v0 + (v1 - v0) * f;
 }
 
-// x,y,z = player feet in world space; yaw from camera.rotation.y; headPitch from camera.rotation.x
-// isWalking = true triggers the walk animation driven by the bbmodel keyframes.
 window.mcSetPlayerTransform = function (model, x, y, z, yaw, headPitch, isWalking) {
   model.root.position.x = x;
   model.root.position.y = y;
@@ -1342,8 +1214,6 @@ window.mcDisposePlayerModel = function (model) {
 };
 
 // ── First-person arm view model ───────────────────────────────────────────────
-// Arm pivots are parented directly to the camera so BabylonJS handles the
-// camera-local transform automatically. Local +Z = camera forward in BabylonJS.
 
 window.mcCreateFPArms = function (scene, camera) {
   var bbmodel = window.__mc && window.__mc.playerBbmodel;
@@ -1357,7 +1227,6 @@ window.mcCreateFPArms = function (scene, camera) {
   var H = bbmodel.resolution.height;
   var SCALE = 1 / 16;
 
-  // Build group map to derive arm pivot positions from the bbmodel skeleton
   var groupMap = {};
   bbmodel.groups.forEach(function (g) { groupMap[g.name] = g; });
   var headGroup = groupMap['head'];
@@ -1374,10 +1243,6 @@ window.mcCreateFPArms = function (scene, camera) {
     var el = armEls[name];
     if (!el) { console.warn('[MiCraft] FP arms: missing element', name); return; }
 
-    // Pivot position in camera-local space (+X=right, +Y=up, +Z=forward).
-    // X and Y are derived from the arm group origin relative to the head center
-    // in the bbmodel, so changing the skeleton propagates here automatically.
-    // Z (forward depth) stays a fixed constant — the bbmodel has no meaningful Z offset.
     var armGroup = groupMap[name];
     var px, py;
     if (armGroup && headGroup) {
@@ -1404,16 +1269,14 @@ window.mcCreateFPArms = function (scene, camera) {
     }, scene);
     mesh.material = mat;
     mesh.isPickable = false;
-    mesh.alwaysSelectAsActiveMesh = true;  // bypass frustum culling for camera-parented mesh
+    mesh.alwaysSelectAsActiveMesh = true;
     mesh.parent = pivot;
-    // Arm hangs below the shoulder pivot (half arm height = 6 units = 0.375)
     mesh.position = new BABYLON.Vector3(0, -0.375, 0);
 
     pivots.push({ node: pivot, name: name });
     meshes.push(mesh);
   });
 
-  // Extract walk animation keyframes for the arms from the bbmodel
   var walkAnim = {};
   var walkAnimDef = bbmodel.animations && (
     bbmodel.animations.find(function (a) { return a.name && a.name.toLowerCase().indexOf('walk') >= 0; }) ||
@@ -1434,7 +1297,6 @@ window.mcCreateFPArms = function (scene, camera) {
     });
   }
 
-  // Start visible so they appear immediately on first render
   meshes.forEach(function (m) { m.isVisible = true; });
   console.log('[MiCraft] FP arms created (' + pivots.length + ' arms)');
   var result = { pivots: pivots, meshes: meshes, walkAnim: walkAnim };
@@ -1471,13 +1333,6 @@ window.mcDisposeFPArms = function (fpArms) {
   if (window.__mcCurrentFPArms === fpArms) window.__mcCurrentFPArms = null;
 };
 
-// ── Debug helper (browser console) ───────────────────────────────────────────
-// Adjust first-person arm pivot positions live:
-//   mcDebugFPArms(x, y, z)
-//     x  = horizontal offset from camera centre (right arm = +x, left = -x)
-//     y  = vertical offset from camera centre   (positive = above centre)
-//     z  = forward distance                      (positive = in front)
-// Example: mcDebugFPArms(0.25, 0.0, 0.45)
 window.mcDebugFPArms = function (x, y, z) {
   var fa = window.__mcCurrentFPArms;
   if (!fa) { console.warn('[MiCraft] No FP arms active'); return; }
