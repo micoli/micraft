@@ -65,6 +65,9 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private var hudX = 0.0; private var hudY = 0.0; private var hudZ = 0.0
     private var hudStance = "STANDING"; private var hudSpeed = 1.0; private var hudBiome = ""
 
+    private var serverHost = ""
+    private var serverPort = 0
+
     // Block breaking state
     private var breakTarget: BlockPos? = null
     private var hoverTarget: BlockPos? = null
@@ -85,6 +88,8 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private val snowMat      = jsCreateTextureMaterial("snow",       "/textures/blocks/snow.png",       scene)
 
     fun connect(host: String, port: Int, username: String, playerName: String) {
+        serverHost = host
+        serverPort = port
         // Prediction loop: runs at ~60fps, moves camera immediately without waiting for server
         scope.launch {
             while (isActive) {
@@ -192,7 +197,14 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private fun applyLocalPrediction() {
         // Console: forward submitted command, skip movement while open
         val consoleInput = jsConsumeConsoleInput()
-        if (consoleInput.isNotEmpty()) outMessages.trySend(ClientMessage.Command(consoleInput))
+        if (consoleInput.isNotEmpty()) {
+            if (consoleInput.trim() == "/keyreload") {
+                jsLoadBindings(serverHost, serverPort)
+                jsShowNotification("Keybindings reloaded")
+            } else {
+                outMessages.trySend(ClientMessage.Command(consoleInput))
+            }
+        }
         if (jsIsConsoleOpen()) return
 
         val fwdX  = jsGetCameraForwardX(camera).toFloat()
@@ -201,14 +213,14 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         val rightZ = -fwdX
 
         val turnSpeed = (2.5f * PRED_DT).toFloat()
-        if (jsIsKeyDown("KeyQ")) jsRotateCameraYaw(camera, -turnSpeed)
-        if (jsIsKeyDown("KeyE")) jsRotateCameraYaw(camera,  turnSpeed)
+        if (jsIsActionDown("rotate_left"))  jsRotateCameraYaw(camera, -turnSpeed)
+        if (jsIsActionDown("rotate_right")) jsRotateCameraYaw(camera,  turnSpeed)
 
         var dx = 0f; var dz = 0f
-        if (jsIsKeyDown("KeyW")     || jsIsKeyDown("ArrowUp"))    { dx += fwdX;   dz += fwdZ   }
-        if (jsIsKeyDown("KeyS")     || jsIsKeyDown("ArrowDown"))  { dx -= fwdX;   dz -= fwdZ   }
-        if (jsIsKeyDown("KeyD")     || jsIsKeyDown("ArrowRight")) { dx += rightX; dz += rightZ }
-        if (jsIsKeyDown("KeyA")     || jsIsKeyDown("ArrowLeft"))  { dx -= rightX; dz -= rightZ }
+        if (jsIsActionDown("forward"))      { dx += fwdX;   dz += fwdZ   }
+        if (jsIsActionDown("backward"))     { dx -= fwdX;   dz -= fwdZ   }
+        if (jsIsActionDown("strafe_right")) { dx += rightX; dz += rightZ }
+        if (jsIsActionDown("strafe_left"))  { dx -= rightX; dz -= rightZ }
 
         val isMovingXZ = dx != 0f || dz != 0f
 
@@ -216,9 +228,9 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         if (len > 1f) { dx /= len; dz /= len }
 
         val stance = when {
-            !localFlying && jsIsKeyDown("ControlLeft") -> PlayerStance.CRAWLING
-            !localFlying && jsIsKeyDown("ShiftLeft")   -> PlayerStance.SNEAKING
-            else                                       -> PlayerStance.STANDING
+            !localFlying && jsIsActionDown("crawl") -> PlayerStance.CRAWLING
+            !localFlying && jsIsActionDown("sneak") -> PlayerStance.SNEAKING
+            else                                    -> PlayerStance.STANDING
         }
         val speed = stance.speed * localSpeedMult * PRED_DT.toFloat()
         predX += (dx * speed).toDouble()
@@ -227,11 +239,11 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         if (localFlying) {
             val fwdY = jsGetCameraForwardY(camera).toFloat()
             var dy = 0f
-            if (jsIsKeyDown("Space"))          dy = 1f
-            else if (jsIsKeyDown("ShiftLeft")) dy = -1f
+            if (jsIsActionDown("ascend"))       dy = 1f
+            else if (jsIsActionDown("descend")) dy = -1f
             else {
-                if (jsIsKeyDown("KeyW") || jsIsKeyDown("ArrowUp"))   dy += fwdY
-                if (jsIsKeyDown("KeyS") || jsIsKeyDown("ArrowDown")) dy -= fwdY
+                if (jsIsActionDown("forward"))  dy += fwdY
+                if (jsIsActionDown("backward")) dy -= fwdY
             }
             predY += (dy * FLY_VERTICAL_SPEED * localSpeedMult * PRED_DT).toDouble()
         }
@@ -353,29 +365,29 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         val rightZ = -fwdX
 
         var dx = 0f; var dz = 0f
-        if (jsIsKeyDown("KeyW")     || jsIsKeyDown("ArrowUp"))    { dx += fwdX;   dz += fwdZ   }
-        if (jsIsKeyDown("KeyS")     || jsIsKeyDown("ArrowDown"))  { dx -= fwdX;   dz -= fwdZ   }
-        if (jsIsKeyDown("KeyD")     || jsIsKeyDown("ArrowRight")) { dx += rightX; dz += rightZ }
-        if (jsIsKeyDown("KeyA")     || jsIsKeyDown("ArrowLeft"))  { dx -= rightX; dz -= rightZ }
+        if (jsIsActionDown("forward"))      { dx += fwdX;   dz += fwdZ   }
+        if (jsIsActionDown("backward"))     { dx -= fwdX;   dz -= fwdZ   }
+        if (jsIsActionDown("strafe_right")) { dx += rightX; dz += rightZ }
+        if (jsIsActionDown("strafe_left"))  { dx -= rightX; dz -= rightZ }
 
         // Normalize diagonal to avoid speed boost
         val len = kotlin.math.sqrt((dx * dx + dz * dz).toDouble()).toFloat()
         if (len > 1f) { dx /= len; dz /= len }
 
         val flyToggle = jsConsumeFlyToggle()
-        val speedUp   = jsIsKeyDown("KeyP")
-        val speedDown = jsIsKeyDown("KeyO")
+        val speedUp   = jsIsActionDown("speed_up")
+        val speedDown = jsIsActionDown("speed_down")
 
         return if (localFlying) {
-            // In fly mode: Space = go up, W/S pitch-follows camera vertical component
+            // In fly mode: ascend = go up, forward/backward pitch-follows camera vertical component
             val dy = when {
-                jsIsKeyDown("Space")     -> 1f
-                jsIsKeyDown("ShiftLeft") -> -1f
+                jsIsActionDown("ascend")  -> 1f
+                jsIsActionDown("descend") -> -1f
                 else -> {
                     val fwdY = jsGetCameraForwardY(camera).toFloat()
                     var d = 0f
-                    if (jsIsKeyDown("KeyW")    || jsIsKeyDown("ArrowUp"))   d += fwdY
-                    if (jsIsKeyDown("KeyS")    || jsIsKeyDown("ArrowDown")) d -= fwdY
+                    if (jsIsActionDown("forward"))  d += fwdY
+                    if (jsIsActionDown("backward")) d -= fwdY
                     d
                 }
             }
@@ -390,16 +402,16 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
             )
         } else {
             val stance = when {
-                jsIsKeyDown("ControlLeft") -> PlayerStance.CRAWLING
-                jsIsKeyDown("ShiftLeft")   -> PlayerStance.SNEAKING
-                else                       -> PlayerStance.STANDING
+                jsIsActionDown("crawl") -> PlayerStance.CRAWLING
+                jsIsActionDown("sneak") -> PlayerStance.SNEAKING
+                else                    -> PlayerStance.STANDING
             }
             ClientMessage.MoveIntent(
                 dx = dx, dz = dz,
                 yaw = jsGetCameraRotationY(camera).toFloat(),
                 pitch = jsGetCameraRotationX(camera).toFloat(),
                 stance = stance,
-                jump = jsIsKeyDown("Space"),
+                jump = jsIsActionDown("ascend"),
                 flyToggle = flyToggle,
                 speedUp = speedUp, speedDown = speedDown,
             )

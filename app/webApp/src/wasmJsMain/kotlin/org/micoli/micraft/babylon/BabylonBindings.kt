@@ -96,6 +96,8 @@ fun jsShowBreakOverlay(scene: JsAny, x: Int, y: Int, z: Int, progress: Double): 
 fun jsHideBreakOverlay(): Unit = js("mcHideBreakOverlay()")
 
 fun jsIsKeyDown(code: String): Boolean = js("!!(window.__mc && window.__mc.keys[code])")
+fun jsIsActionDown(action: String): Boolean = js("mcIsActionDown(action)")
+fun jsLoadBindings(host: String, port: Int): Unit = js("mcLoadBindings(host, port)")
 
 fun jsDisableCameraKeyboard(camera: JsAny): Unit =
     js("""(function(c){

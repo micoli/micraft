@@ -9,4 +9,9 @@ config.devServer.proxy = [
         ws: true,
         changeOrigin: true,
     },
+    {
+        context: ["/api"],
+        target: "http://localhost:8080",
+        changeOrigin: true,
+    },
 ];

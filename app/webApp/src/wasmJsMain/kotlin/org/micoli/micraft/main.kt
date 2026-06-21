@@ -43,6 +43,7 @@ fun main() {
     val client = GameClient(scene, camera)
     val host = jsGetPageHost()
     val port = jsGetPagePort()
+    jsLoadBindings(host, port)
 
     jsShowLoginOverlay()
     jsLog("waiting for login …")

@@ -3,12 +3,17 @@ package org.micoli.micraft
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.world.BiomeConfig
 import org.micoli.micraft.world.BiomeRegistry
+import org.micoli.micraft.world.loadKeyBindings
 import org.micoli.micraft.world.ChunkGenerator
 import org.slf4j.LoggerFactory
 import org.micoli.micraft.world.DebugChunkGenerator
@@ -99,6 +104,11 @@ fun Application.module() {
     routing {
         get("/") {
             call.respondRedirect("http://localhost:8081/", permanent = false)
+        }
+        get("/api/keybindings") {
+            val bindings = loadKeyBindings(Path.of("data/personal/keybindings.yaml"))
+            val serializer = MapSerializer(String.serializer(), ListSerializer(String.serializer()))
+            call.respondText(Json.encodeToString(serializer, bindings), ContentType.Application.Json)
         }
         webSocket("/game") {
             gameLoop.onConnect(this)

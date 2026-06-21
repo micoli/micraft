@@ -1,0 +1,28 @@
+# MicCraft key bindings
+# Keys use Web KeyboardEvent.code values (https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code)
+# All values must be lists (use [Key] for single-key bindings).
+
+movement:
+  forward:      [KeyW, ArrowUp]
+  backward:     [KeyS, ArrowDown]
+  strafe_right: [KeyD, ArrowRight]
+  strafe_left:  [KeyA, ArrowLeft]
+  rotate_left:  [KeyQ]
+  rotate_right: [KeyE]
+
+stance:
+  sneak: [ShiftLeft]
+  crawl: [ControlLeft]
+
+flight:
+  fly_toggle: [Space]    # double-tap to toggle flying
+  ascend:     [Space]    # hold while flying (also = jump on ground)
+  descend:    [ShiftLeft]
+  speed_up:   [KeyP]
+  speed_down: [KeyO]
+
+camera:
+  view_toggle: [KeyF]
+
+ui:
+  inventory: [KeyI]
