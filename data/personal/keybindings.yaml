@@ -26,4 +26,4 @@ camera:
 
 ui:
   inventory: [KeyI]
-  undo:      [KeyZ]
+  undo:      [Ctrl+KeyZ, Cmd+KeyZ]

@@ -36,8 +36,6 @@ fun main() {
 
 fun Application.module() {
     install(WebSockets) {
-        pingPeriod = 15.seconds
-        timeout = 15.seconds
     }
 
     val debugWorld = System.getenv("MICRAFT_DEBUG_WORLD") == "1"
