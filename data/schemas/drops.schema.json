@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DropConfig",
+  "type": "object",
+  "propertyNames": { "$ref": "#/$defs/blockType" },
+  "additionalProperties": {
+    "type": "array",
+    "items": { "$ref": "#/$defs/dropEntry" }
+  },
+  "$defs": {
+    "blockType": {
+      "type": "string",
+      "enum": ["AIR", "BEDROCK", "STONE", "DIRT", "GRASS", "SAND", "SANDSTONE", "GRAVEL", "SNOW"]
+    },
+    "itemType": {
+      "type": "string",
+      "enum": ["COBBLESTONE", "DIRT", "SAND", "GRAVEL", "SANDSTONE", "SNOWBALL", "FLINT"]
+    },
+    "dropEntry": {
+      "type": "object",
+      "required": ["item"],
+      "additionalProperties": false,
+      "properties": {
+        "item": { "$ref": "#/$defs/itemType" },
+        "dropRate": { "type": "integer", "minimum": 0, "maximum": 100, "default": 100 },
+        "minCount": { "type": "integer", "minimum": 0, "default": 1 },
+        "maxCount": { "type": "integer", "minimum": 0, "default": 1 }
+      }
+    }
+  }
+}

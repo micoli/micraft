@@ -79,7 +79,8 @@ Hardness: BEDROCK=∞, STONE=5, SANDSTONE=4, DIRT/GRASS/GRAVEL=3, SAND=2, SNOW=1
 ```
 data/
   drops/drops.yaml          # block → item drop table
-  biomes/biomes.json        # biome definitions
+  biomes/biomes.yaml        # biome definitions
+  schemas/                  # JSON Schemas for YAML config files (VS Code validation)
   world/default_world/
     world.json              # world metadata
     players/Player.json     # persisted player states
@@ -135,3 +136,15 @@ rtk ./gradlew ktlintCheck
 - Never start the server or web client — the user runs these themselves.
 - Do not read `data/world/default_world/chunks/` — binary compressed files, useless to read.
 - Commits must respect Conventional Commits standard and Semantic Commit Messages standard, body must not exceed 10 lines
+
+## Schema maintenance
+
+JSON Schemas for YAML configs live in `data/schemas/`. Keep them in sync with Kotlin data classes:
+
+| Modified file | Update schema |
+|---|---|
+| `core/.../world/BiomeDefinition.kt`, `Block.kt` | `data/schemas/biomes.schema.json` |
+| `server/.../world/DropConfig.kt`, `core/.../world/ItemType.kt` | `data/schemas/drops.schema.json` |
+| `server/.../world/KeyBindingsConfig.kt` | `data/schemas/keybindings.schema.json` |
+
+Whenever you add/remove/rename a field or enum value in these data classes, update the corresponding schema in the same commit.
