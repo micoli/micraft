@@ -14,6 +14,8 @@ import org.micoli.micraft.player.speed
 import kotlinx.coroutines.channels.Channel
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.ui.HudData
+import org.micoli.micraft.ui.McUiState
 import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.Chunk
@@ -26,7 +28,7 @@ private const val SNAP_THRESHOLD = 2.0      // blocks: snap if prediction diverg
 
 private enum class ViewMode { FIRST_PERSON, THIRD_PERSON }
 
-class GameClient(private val scene: JsAny, private val camera: JsAny) {
+class GameClient(private val scene: JsAny, private val camera: JsAny, private val uiState: McUiState) {
     private val playerModels = mutableMapOf<String, JsAny>()
     private val playerPrevPos = mutableMapOf<String, Triple<Double, Double, Double>>()
     private val playerNames = mutableMapOf<String, String>()  // id → name, for autocomplete
@@ -102,7 +104,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
             var retryDelay = 1000L
             while (isActive) {
                 try {
-                    jsHideDisconnectedOverlay()
+                    uiState.disconnectMessage = null
                     val client = HttpClient(Js) { install(WebSockets) }
                     client.webSocket(host = host, port = port, path = "/game") {
                         retryDelay = 1000L
@@ -157,7 +159,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                 if (!isActive) break
                 resetForReconnect()
                 val retrySec = retryDelay / 1000
-                jsShowDisconnectedOverlay("Reconnecting in ${retrySec}s…")
+                uiState.disconnectMessage = "Reconnecting in ${retrySec}s…"
                 delay(retryDelay)
                 retryDelay = minOf(retryDelay * 2, 8000L)
             }
@@ -165,6 +167,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     }
 
     private fun resetForReconnect() {
+        uiState.inventory = emptyMap()
         localPlayerId  = null
         hasPrediction  = false
         predX = 0.0; predY = 0.0; predZ = 0.0
@@ -358,13 +361,13 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
 
         val toDeg = 180.0 / kotlin.math.PI
         val targetBlockName = target?.let { getBlockAtWorld(it.x, it.y, it.z).name } ?: ""
-        jsUpdateHUD(
-            hudX, hudY, hudZ,
-            jsGetCameraRotationY(camera) * toDeg,
-            jsGetCameraRotationX(camera) * toDeg,
-            hudStance, hudSpeed, currentFps,
-            currentKbIn, currentKbOut, hudBiome,
-            targetBlockName,
+        uiState.hud = HudData(
+            x = hudX, y = hudY, z = hudZ,
+            yaw = jsGetCameraRotationY(camera) * toDeg,
+            pitch = jsGetCameraRotationX(camera) * toDeg,
+            stance = hudStance, speed = hudSpeed,
+            fps = currentFps, kbIn = currentKbIn, kbOut = currentKbOut,
+            biome = hudBiome, targetBlock = targetBlockName,
         )
     }
 
@@ -432,7 +435,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         when (msg) {
             is ServerMessage.Welcome -> {
                 localPlayerId = msg.playerId
-                jsConsoleSetPlayer(msg.playerName)
+                uiState.consolePlayerName = msg.playerName
             }
             is ServerMessage.ChunkData -> {
                 renderChunk(Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
@@ -481,14 +484,14 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                 removePlayer(msg.playerId)
             }
             is ServerMessage.Notification -> {
-                jsShowNotification(msg.message)
-                jsAddServerLog(msg.message)
+                uiState.pushNotification(msg.message)
+                uiState.pushLog(msg.message)
             }
             is ServerMessage.BlockBreakProgress -> {
                 val alpha = 1.0 - msg.progress.toDouble() / msg.hardness.toDouble()
                 jsShowBreakOverlay(scene, msg.pos.x, msg.pos.y, msg.pos.z, alpha)
             }
-            is ServerMessage.InventoryUpdate -> jsUpdateHotbar(Json.encodeToString(msg.inventory))
+            is ServerMessage.InventoryUpdate -> { uiState.inventory = msg.inventory }
             is ServerMessage.ItemsSpawned -> Unit
             is ServerMessage.ItemDespawned -> Unit
             is ServerMessage.WorldUpdate -> msg.changes.forEach { change ->

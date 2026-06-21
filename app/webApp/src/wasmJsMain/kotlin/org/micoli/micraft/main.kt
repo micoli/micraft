@@ -43,7 +43,10 @@ fun main() {
         jsLog("debug mode: 1-6 keys orbit block ($bx,$by,$bz), Escape unlocks")
     }
 
-    val client = GameClient(scene, camera)
+    val scope = CoroutineScope(Dispatchers.Default)
+    WebUiBridge(uiState, scope).start()
+
+    val client = GameClient(scene, camera, uiState)
     val host = jsGetPageHost()
     val port = jsGetPagePort()
     jsLoadBindings(host, port)
@@ -51,7 +54,7 @@ fun main() {
     jsShowLoginOverlay()
     jsLog("waiting for login …")
 
-    CoroutineScope(Dispatchers.Default).launch {
+    scope.launch {
         var result = ""
         while (result.isEmpty()) {
             delay(100)
