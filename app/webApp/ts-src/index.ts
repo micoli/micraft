@@ -565,9 +565,7 @@ window.mcUpdateHUD = function (x, y, z, yaw, pitch, stance, speed, fps, kbIn, kb
   var d = document.getElementById('hud');
   if (d) d.textContent =
     'FPS   ' + fps + '\n' +
-    'X  ' + x.toFixed(2) + '\n' +
-    'Y  ' + y.toFixed(2) + '\n' +
-    'Z  ' + z.toFixed(2) + '\n' +
+    'Pos:  ' + x.toFixed(1) + ',' + y.toFixed(1) + ',' + z.toFixed(1) + '\n' +
     'Yaw   ' + yaw.toFixed(1) + '°\n' +
     'Pitch ' + pitch.toFixed(1) + '°\n' +
     stance + '\n' +

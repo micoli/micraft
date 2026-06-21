@@ -1,8 +1,7 @@
 package org.micoli.micraft.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.micoli.micraft.world.ItemType
 
 data class HudData(
@@ -21,18 +20,39 @@ data class HudData(
 )
 
 class McUiState {
-    var hud by mutableStateOf(HudData())
-    var inventory by mutableStateOf(mapOf<ItemType, Int>())
-    var notification by mutableStateOf<Pair<String, Int>?>(null)
-        private set
-    var latestLog by mutableStateOf<Pair<String, Int>?>(null)
-        private set
-    var disconnectMessage by mutableStateOf<String?>(null)
-    var consolePlayerName by mutableStateOf("")
+    private val _hud = MutableStateFlow(HudData())
+    val hudFlow: StateFlow<HudData> = _hud
+    var hud: HudData
+        get() = _hud.value
+        set(value) { _hud.value = value }
+
+    private val _inventory = MutableStateFlow(mapOf<ItemType, Int>())
+    val inventoryFlow: StateFlow<Map<ItemType, Int>> = _inventory
+    var inventory: Map<ItemType, Int>
+        get() = _inventory.value
+        set(value) { _inventory.value = value }
+
+    private val _notification = MutableStateFlow<Pair<String, Int>?>(null)
+    val notificationFlow: StateFlow<Pair<String, Int>?> = _notification
+
+    private val _latestLog = MutableStateFlow<Pair<String, Int>?>(null)
+    val latestLogFlow: StateFlow<Pair<String, Int>?> = _latestLog
+
+    private val _disconnectMessage = MutableStateFlow<String?>(null)
+    val disconnectMessageFlow: StateFlow<String?> = _disconnectMessage
+    var disconnectMessage: String?
+        get() = _disconnectMessage.value
+        set(value) { _disconnectMessage.value = value }
+
+    private val _consolePlayerName = MutableStateFlow("")
+    val consolePlayerNameFlow: StateFlow<String> = _consolePlayerName
+    var consolePlayerName: String
+        get() = _consolePlayerName.value
+        set(value) { _consolePlayerName.value = value }
 
     private var notifSeq = 0
     private var logSeq = 0
 
-    fun pushNotification(msg: String) { notification = msg to ++notifSeq }
-    fun pushLog(msg: String) { latestLog = msg to ++logSeq }
+    fun pushNotification(msg: String) { _notification.value = msg to ++notifSeq }
+    fun pushLog(msg: String) { _latestLog.value = msg to ++logSeq }
 }

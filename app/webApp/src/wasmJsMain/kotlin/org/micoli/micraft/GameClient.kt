@@ -361,10 +361,11 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
 
         val toDeg = 180.0 / kotlin.math.PI
         val targetBlockName = target?.let { getBlockAtWorld(it.x, it.y, it.z).name } ?: ""
+        jsUpdateHUD(hudX, hudY, hudZ, yaw * toDeg, pitch * toDeg, hudStance, hudSpeed,
+            currentFps, currentKbIn, currentKbOut, hudBiome, targetBlockName)
         uiState.hud = HudData(
             x = hudX, y = hudY, z = hudZ,
-            yaw = jsGetCameraRotationY(camera) * toDeg,
-            pitch = jsGetCameraRotationX(camera) * toDeg,
+            yaw = yaw * toDeg, pitch = pitch * toDeg,
             stance = hudStance, speed = hudSpeed,
             fps = currentFps, kbIn = currentKbIn, kbOut = currentKbOut,
             biome = hudBiome, targetBlock = targetBlockName,
