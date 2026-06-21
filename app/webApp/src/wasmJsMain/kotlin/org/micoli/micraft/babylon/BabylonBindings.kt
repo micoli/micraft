@@ -186,8 +186,8 @@ fun jsToggleHotbar(): Unit = js("mcToggleHotbar()")
 
 fun jsCreateHUD(): Unit = js("mcCreateHUD()")
 
-fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, stance: String, speed: Double, fps: Int, kbIn: Double, kbOut: Double, biome: String): Unit =
-    js("mcUpdateHUD(x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome)")
+fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, stance: String, speed: Double, fps: Int, kbIn: Double, kbOut: Double, biome: String, targetBlock: String): Unit =
+    js("mcUpdateHUD(x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock)")
 
 // ── Player model ──────────────────────────────────────────────────────────────
 

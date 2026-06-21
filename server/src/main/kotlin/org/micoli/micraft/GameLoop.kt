@@ -50,12 +50,17 @@ class GameLoop(
         },
         reloadConfig = ::reload,
         commands = { commands.values },
+        savePlayer = ::savePlayer,
     )
     private val commands: Map<String, CommandHandler> =
         java.util.ServiceLoader.load(CommandHandler::class.java).associateBy { it.command }
 
     private val dropConfig = DropConfig(Path.of("data/drops/drops.yaml"))
-    private val worldItems = WorldItemManager(dropConfig) { msg -> sessions.values.forEach { it.send(msg) } }
+    private val worldItems = WorldItemManager(
+        dropConfig,
+        broadcast = { msg -> sessions.values.forEach { it.send(msg) } },
+        savePlayer = ::savePlayer,
+    )
     private val blockBreaker = BlockBreaker(world, { msg -> sessions.values.forEach { it.send(msg) } }, worldItems)
     private val intentCollector = IntentCollector(blockBreaker, ::handleCommand)
     private val movementProcessor = MovementProcessor(world)
@@ -89,10 +94,15 @@ class GameLoop(
 
     fun shutdown() {
         world.flushDirty()
-        sessions.values.forEach { session ->
-            persistence?.savePlayerState(session.state.name, session.state)
-        }
+        sessions.values.forEach { session -> savePlayer(session) }
         log.info("World saved on shutdown")
+    }
+
+    private fun savePlayer(session: PlayerSession) {
+        persistence?.savePlayerState(
+            session.state.name,
+            session.state.copy(inventory = session.inventory.toMap()),
+        )
     }
 
     private suspend fun tick() {
@@ -144,6 +154,7 @@ class GameLoop(
             speedMultiplier = saved?.speedMultiplier ?: 1f,
         )
         val session = PlayerSession(id, userName, socket, state)
+        saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
         sessions[id] = session
         log.info("player connected: {} name={} user={} (total={})", id.take(8), playerName, userName, sessions.size)
 
@@ -183,7 +194,7 @@ class GameLoop(
             }
         } finally {
             sessions.remove(id)
-            persistence?.savePlayerState(session.state.name, session.state)
+            savePlayer(session)
             log.info("player disconnected: {} name={} (total={})", id.take(8), session.state.name, sessions.size)
             val left = ServerMessage.PlayerLeft(id)
             sessions.values.forEach { it.send(left) }

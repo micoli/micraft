@@ -14,7 +14,7 @@ class SaveCommand : CommandHandler {
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         context.world.flushDirty()
-        context.persistence?.savePlayerState(session.state.name, session.state)
+        context.savePlayer(session)
         session.send(ServerMessage.Notification("World saved."))
         log.info("Manual /save by {}", session.state.name)
     }

@@ -134,3 +134,4 @@ rtk ./gradlew ktlintCheck
 - Read only necessary files.
 - Never start the server or web client — the user runs these themselves.
 - Do not read `data/world/default_world/chunks/` — binary compressed files, useless to read.
+- Commits must respect Conventional Commits standard and Semantic Commit Messages standard, body must not exceed 10 lines

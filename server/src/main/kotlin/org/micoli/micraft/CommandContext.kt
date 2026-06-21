@@ -13,4 +13,5 @@ data class CommandContext(
     val kickSession: suspend (String) -> Unit = {},
     val reloadConfig: (suspend () -> String)? = null,
     val commands: () -> Collection<CommandHandler> = { emptyList() },
+    val savePlayer: (PlayerSession) -> Unit = {},
 )

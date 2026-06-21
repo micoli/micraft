@@ -13,6 +13,7 @@ private const val COLLECTION_RADIUS_SQ = 1.5f * 1.5f
 class WorldItemManager(
     private val dropConfig: DropConfig,
     private val broadcast: suspend (ServerMessage) -> Unit,
+    private val savePlayer: (PlayerSession) -> Unit = {},
 ) {
     private val items = ConcurrentHashMap<String, WorldItem>()
 
@@ -45,6 +46,7 @@ class WorldItemManager(
                     log.info("Item collected: {}x {} by {} (total: {})", item.count, item.type, session.state.name, total)
                     broadcast(ServerMessage.ItemDespawned(item.id))
                     session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
+                    savePlayer(session)
                     val label = item.type.name.lowercase().replaceFirstChar { it.uppercase() }
                     session.send(ServerMessage.Notification("+${item.count} $label"))
                 }
