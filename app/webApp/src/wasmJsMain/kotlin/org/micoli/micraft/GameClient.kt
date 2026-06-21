@@ -41,6 +41,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private val pendingUnloads   = mutableListOf<ChunkPos>()
     private var viewMode         = ViewMode.FIRST_PERSON
     private var localPlayerModel: JsAny? = null
+    private var fpArms: JsAny? = null
 
     // Client-side prediction state
     private var predX = 0.0
@@ -169,6 +170,8 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         playerPrevPos.clear()
         localPlayerModel?.let { jsDisposePlayerModel(it) }
         localPlayerModel = null
+        fpArms?.let { jsDisposeFPArms(it) }
+        fpArms = null
         loadedChunks.forEach { cp -> jsDisposeChunk("${cp.cx},${cp.cz}") }
         loadedChunks.clear()
         chunkData.clear()
@@ -231,10 +234,15 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
             viewMode = if (viewMode == ViewMode.FIRST_PERSON) ViewMode.THIRD_PERSON else ViewMode.FIRST_PERSON
         }
 
-        // Lazy-create local player model when bbmodel is ready
-        if (localPlayerModel == null && jsIsPlayerBbmodelReady()) {
-            localPlayerModel = jsCreatePlayerModelNow(scene)
-            jsSetPlayerVisible(localPlayerModel!!, false)
+        // Lazy-create local player model and first-person arms when bbmodel is ready
+        if (jsIsPlayerBbmodelReady()) {
+            if (localPlayerModel == null) {
+                localPlayerModel = jsCreatePlayerModelNow(scene)
+                jsSetPlayerVisible(localPlayerModel!!, false)
+            }
+            if (fpArms == null) {
+                fpArms = jsCreateFPArms(camera, scene)
+            }
         }
 
         val yaw = jsGetCameraRotationY(camera)
@@ -250,9 +258,14 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                 jsSetPlayerTransform(it, predX, predY, predZ, yaw.toFloat(), pitch.toFloat(), isMovingXZ)
                 jsSetPlayerVisible(it, true)
             }
+            fpArms?.let { jsSetFPArmsVisible(it, false) }
         } else {
             jsCameraSetPosition(camera, predX, predY + localStance.eyeOffset.toDouble(), predZ)
             localPlayerModel?.let { jsSetPlayerVisible(it, false) }
+            fpArms?.let {
+                jsUpdateFPArms(it, isMovingXZ)
+                jsSetFPArmsVisible(it, true)
+            }
         }
 
         // Raycast once per frame — used for both hover outline and break logic

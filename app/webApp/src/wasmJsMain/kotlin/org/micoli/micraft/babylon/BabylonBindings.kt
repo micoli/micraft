@@ -96,7 +96,7 @@ fun jsHideBreakOverlay(): Unit = js("mcHideBreakOverlay()")
 fun jsIsKeyDown(code: String): Boolean = js("!!(window.__mc && window.__mc.keys[code])")
 
 fun jsDisableCameraKeyboard(camera: JsAny): Unit =
-    js("camera.inputs.removeByType('FreeCameraKeyboardMoveInput')")
+    js("(function(c){c.inputs.removeByType('FreeCameraKeyboardMoveInput');c.inputs.removeByType('FreeCameraGamepadInput');c.inertia=0;})(camera)")
 
 fun jsGetCameraForwardX(camera: JsAny): Double = js("mcGetCameraForwardX(camera)")
 
@@ -161,3 +161,10 @@ fun jsSetPlayerVisible(model: JsAny, visible: Boolean): Unit = js("mcSetPlayerVi
 fun jsSetPlayerAlpha(model: JsAny, alpha: Double): Unit = js("mcSetPlayerAlpha(model, alpha)")
 fun jsDisposePlayerModel(model: JsAny): Unit = js("mcDisposePlayerModel(model)")
 fun jsConsumeViewToggle(): Boolean = js("mcConsumeViewToggle()")
+
+// ── First-person arm view model ───────────────────────────────────────────────
+
+fun jsCreateFPArms(camera: JsAny, scene: JsAny): JsAny? = js("mcCreateFPArms(scene, camera)")
+fun jsUpdateFPArms(fpArms: JsAny, isWalking: Boolean): Unit = js("mcUpdateFPArms(fpArms, isWalking)")
+fun jsSetFPArmsVisible(fpArms: JsAny, visible: Boolean): Unit = js("mcSetFPArmsVisible(fpArms, visible)")
+fun jsDisposeFPArms(fpArms: JsAny): Unit = js("mcDisposeFPArms(fpArms)")
