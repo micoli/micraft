@@ -192,6 +192,10 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         val rightX = fwdZ
         val rightZ = -fwdX
 
+        val turnSpeed = (2.5f * PRED_DT).toFloat()
+        if (jsIsKeyDown("KeyQ")) jsRotateCameraYaw(camera, -turnSpeed)
+        if (jsIsKeyDown("KeyE")) jsRotateCameraYaw(camera,  turnSpeed)
+
         var dx = 0f; var dz = 0f
         if (jsIsKeyDown("KeyW")     || jsIsKeyDown("ArrowUp"))    { dx += fwdX;   dz += fwdZ   }
         if (jsIsKeyDown("KeyS")     || jsIsKeyDown("ArrowDown"))  { dx -= fwdX;   dz -= fwdZ   }

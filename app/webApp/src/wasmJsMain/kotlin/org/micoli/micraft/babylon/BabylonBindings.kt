@@ -106,6 +106,7 @@ fun jsGetCameraForwardZ(camera: JsAny): Double = js("mcGetCameraForwardZ(camera)
 
 fun jsGetCameraRotationY(camera: JsAny): Double = js("camera.rotation.y")
 fun jsGetCameraRotationX(camera: JsAny): Double = js("camera.rotation.x")
+fun jsRotateCameraYaw(camera: JsAny, delta: Float): Unit = js("camera.rotation.y += delta")
 
 fun jsGetCameraForwardY(camera: JsAny): Double = js("camera.getForwardRay(1).direction.y")
 
