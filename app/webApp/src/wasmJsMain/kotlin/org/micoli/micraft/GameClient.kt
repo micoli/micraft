@@ -62,7 +62,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
 
     // Last server HUD data (updated on PlayerUpdate, displayed in prediction loop)
     private var hudX = 0.0; private var hudY = 0.0; private var hudZ = 0.0
-    private var hudStance = "STANDING"; private var hudSpeed = 1.0
+    private var hudStance = "STANDING"; private var hudSpeed = 1.0; private var hudBiome = ""
 
     // Block breaking state
     private var breakTarget: BlockPos? = null
@@ -77,7 +77,11 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private val grassMat   = jsCreateGrassMaterial(scene)
     private val stoneMat   = jsCreateTextureMaterial("stone",   "/textures/blocks/stone.png",   scene)
     private val dirtMat    = jsCreateTextureMaterial("dirt",    "/textures/blocks/dirt.png",    scene)
-    private val bedrockMat = jsCreateTextureMaterial("bedrock", "/textures/blocks/bedrock.png", scene)
+    private val bedrockMat   = jsCreateTextureMaterial("bedrock",    "/textures/blocks/bedrock.png",    scene)
+    private val sandMat      = jsCreateTextureMaterial("sand",       "/textures/blocks/sand.png",       scene)
+    private val sandstoneMat = jsCreateTextureMaterial("sandstone",  "/textures/blocks/sandstone.png",  scene)
+    private val gravelMat    = jsCreateTextureMaterial("gravel",     "/textures/blocks/gravel.png",     scene)
+    private val snowMat      = jsCreateTextureMaterial("snow",       "/textures/blocks/snow.png",       scene)
 
     fun connect(host: String, port: Int) {
         // Prediction loop: runs at ~60fps, moves camera immediately without waiting for server
@@ -322,7 +326,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
             jsGetCameraRotationY(camera) * toDeg,
             jsGetCameraRotationX(camera) * toDeg,
             hudStance, hudSpeed, currentFps,
-            currentKbIn, currentKbOut,
+            currentKbIn, currentKbOut, hudBiome,
         )
     }
 
@@ -425,6 +429,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                     hudZ = s.pos.z.toDouble()
                     hudStance = if (s.flying) "FLYING" else s.stance.name
                     hudSpeed  = s.speedMultiplier.toDouble()
+                    hudBiome  = s.biome
                 } else {
                     updatePlayerMesh(s.id, s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble(), s.orientation.yaw, s.orientation.pitch)
                 }
@@ -487,7 +492,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                 }
             }
         }
-        jsChunkEnd(scene, grassMat, stoneMat, dirtMat, bedrockMat)
+        jsChunkEnd(scene, grassMat, stoneMat, dirtMat, bedrockMat, sandMat, sandstoneMat, gravelMat, snowMat)
         loadedChunks.add(chunk.pos)
     }
 

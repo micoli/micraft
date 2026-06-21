@@ -2,14 +2,19 @@ package org.micoli.micraft.world
 
 import kotlinx.serialization.Serializable
 
-enum class BlockType { AIR, BEDROCK, STONE, DIRT, GRASS }
+@Serializable
+enum class BlockType { AIR, BEDROCK, STONE, DIRT, GRASS, SAND, SANDSTONE, GRAVEL, SNOW }
 
 val BlockType.hardness: Int get() = when (this) {
-    BlockType.AIR     -> 0
-    BlockType.BEDROCK -> Int.MAX_VALUE
-    BlockType.STONE   -> 5
-    BlockType.DIRT    -> 3
-    BlockType.GRASS   -> 3
+    BlockType.AIR       -> 0
+    BlockType.BEDROCK   -> Int.MAX_VALUE
+    BlockType.STONE     -> 5
+    BlockType.DIRT      -> 3
+    BlockType.GRASS     -> 3
+    BlockType.SAND      -> 2
+    BlockType.SANDSTONE -> 4
+    BlockType.GRAVEL    -> 3
+    BlockType.SNOW      -> 1
 }
 
 @Serializable

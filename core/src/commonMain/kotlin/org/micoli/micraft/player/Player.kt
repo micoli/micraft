@@ -17,4 +17,5 @@ data class PlayerState(
     val stance: PlayerStance = PlayerStance.STANDING,
     val flying: Boolean = false,
     val speedMultiplier: Float = 1f,
+    val biome: String = "",
 )

@@ -50,8 +50,10 @@ fun jsOptimizeScene(scene: JsAny): Unit = js("mcOptimizeScene(scene)")
 
 fun jsChunkBegin(cx: Int, cz: Int): Unit = js("mcChunkBegin(cx, cz)")
 fun jsChunkFace(wx: Int, wy: Int, wz: Int, faceMat: Int): Unit = js("mcChunkFace(wx, wy, wz, faceMat)")
-fun jsChunkEnd(scene: JsAny, gm: JsAny, sm: JsAny, dm: JsAny, bm: JsAny): Unit =
-    js("mcChunkEnd(scene, gm, sm, dm, bm)")
+fun jsChunkEnd(
+    scene: JsAny, gm: JsAny, sm: JsAny, dm: JsAny, bm: JsAny,
+    sandMat: JsAny, sandstoneMat: JsAny, gravelMat: JsAny, snowMat: JsAny,
+): Unit = js("mcChunkEnd(scene, gm, sm, dm, bm, sandMat, sandstoneMat, gravelMat, snowMat)")
 fun jsDisposeChunk(key: String): Unit = js("mcDisposeChunk(key)")
 
 fun jsSetMeshPosition(mesh: JsAny, x: Double, y: Double, z: Double): Unit =
@@ -147,8 +149,8 @@ fun jsShowNotification(message: String): Unit = js("mcShowNotification(message)"
 
 fun jsCreateHUD(): Unit = js("mcCreateHUD()")
 
-fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, stance: String, speed: Double, fps: Int, kbIn: Double, kbOut: Double): Unit =
-    js("mcUpdateHUD(x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut)")
+fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, stance: String, speed: Double, fps: Int, kbIn: Double, kbOut: Double, biome: String): Unit =
+    js("mcUpdateHUD(x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome)")
 
 // ── Player model ──────────────────────────────────────────────────────────────
 

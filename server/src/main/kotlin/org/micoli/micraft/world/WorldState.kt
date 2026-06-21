@@ -1,5 +1,6 @@
 package org.micoli.micraft.world
 
+import org.slf4j.LoggerFactory
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
@@ -9,13 +10,23 @@ class WorldState(
 ) {
     private val chunks = ConcurrentHashMap<ChunkPos, Chunk>()
     private val dirtyChunks: MutableSet<ChunkPos> = Collections.newSetFromMap(ConcurrentHashMap())
+    private val log = LoggerFactory.getLogger("WorldState")
 
     fun getOrGenerate(pos: ChunkPos): Chunk =
         chunks.getOrPut(pos) {
-            (persistence?.loadChunk(pos) ?: generator.generate(pos)).also {
-                dirtyChunks.add(pos)
-            }
+            val loaded = persistence?.loadChunk(pos)
+            if (loaded != null) {
+                log.debug("Loaded chunk {} from disk", pos)
+                loaded
+            } else {
+                val t0 = System.currentTimeMillis()
+                val chunk = generator.generate(pos)
+                log.info("Generated chunk {} in {}ms", pos, System.currentTimeMillis() - t0)
+                chunk
+            }.also { dirtyChunks.add(pos) }
         }
+
+    fun biomeAt(wx: Int, wz: Int): String = generator.biomeAt(wx, wz)
 
     fun getBlock(wx: Int, wy: Int, wz: Int): BlockType {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return BlockType.AIR
@@ -49,7 +60,6 @@ class WorldState(
                 saved++
             }
         }
-        if (saved > 0) org.slf4j.LoggerFactory.getLogger("WorldState")
-            .info("Flushed {} dirty chunks to disk", saved)
+        if (saved > 0) log.info("Flushed {} dirty chunks to disk", saved)
     }
 }

@@ -69,6 +69,7 @@ class MovementProcessor(private val world: WorldState) {
             stance          = newStance,
             flying          = newFlying,
             speedMultiplier = newSpeedMult,
+            biome           = world.biomeAt(newX.toInt(), newZ.toInt()),
         )
     }
 
