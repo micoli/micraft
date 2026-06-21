@@ -1,5 +1,4 @@
 run.lock
-resources/Mizunos-16-Craft-1.12-m8
 app/webApp/src/wasmJsMain/resources/models/
 .kotlin
 .gradle
@@ -9,6 +8,5 @@ core/build
 app/desktopApp/build
 app/shared/build
 app/webApp/build
-resources/
 TODO.md
 plans

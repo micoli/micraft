@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiCraft</title>
+    <style>
+        * { margin: 0; padding: 0; }
+        body { overflow: hidden; background: #87ceeb; }
+        #renderCanvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas" width="1280" height="720"></canvas>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="mc_bindings.js"></script>
+    <script src="webApp.js"></script>
+</body>
+</html>
