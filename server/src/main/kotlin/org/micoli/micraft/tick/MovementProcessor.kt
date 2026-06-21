@@ -77,7 +77,9 @@ class MovementProcessor(private val world: WorldState) {
         val w = PlayerConstants.WIDTH
         if (session.vy <= 0f && AabbCollider.isGrounded(world, cx, cy, cz, w)) {
             session.vy = 0f
-            return cy
+            // Snap to ground surface in case the player partially sank into a block
+            val snapDy = AabbCollider.resolveY(world, cx, cy, cz, w, h, -1f)
+            return (cy + snapDy).coerceAtLeast(0f)
         }
         session.vy += GRAVITY * TICK_SECONDS
         val dy = session.vy * TICK_SECONDS

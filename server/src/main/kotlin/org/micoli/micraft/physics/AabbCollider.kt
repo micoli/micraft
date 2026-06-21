@@ -24,37 +24,61 @@ object AabbCollider {
         return false
     }
 
-    /** Resolve X movement against the world. Returns the allowed dx (may be clamped). */
+    /** Resolve X movement against the world. Sweeps all intermediate columns to prevent tunneling at high speed. */
     fun resolveX(world: WorldState, cx: Float, cy: Float, cz: Float, w: Float, h: Float, dx: Float): Float {
         if (dx == 0f) return 0f
         val hw = w / 2f
         val newCx = cx + dx
-        val faceX = if (dx > 0) floor((newCx + hw).toDouble()).toInt()
-                    else        floor((newCx - hw).toDouble()).toInt()
-        for (by in blocks(cy, cy + h))
-            for (bz in blocks(cz - hw, cz + hw))
-                if (solid(world, faceX, by, bz)) {
-                    val snap = if (dx > 0) faceX.toFloat() - hw
-                               else       (faceX + 1).toFloat() + hw
-                    return (snap - cx).coerceIn(minOf(0f, dx), maxOf(0f, dx))
-                }
+        val ys = blocks(cy, cy + h)
+        val zs = blocks(cz - hw, cz + hw)
+        if (dx > 0) {
+            val from = floor((cx + hw).toDouble()).toInt()
+            val to   = floor((newCx + hw).toDouble()).toInt()
+            for (bx in from..to)
+                for (by in ys) for (bz in zs)
+                    if (solid(world, bx, by, bz)) {
+                        val snap = bx.toFloat() - hw
+                        return (snap - cx).coerceIn(0f, dx)
+                    }
+        } else {
+            val from = floor((cx - hw).toDouble()).toInt()
+            val to   = floor((newCx - hw).toDouble()).toInt()
+            for (bx in from downTo to)
+                for (by in ys) for (bz in zs)
+                    if (solid(world, bx, by, bz)) {
+                        val snap = (bx + 1).toFloat() + hw
+                        return (snap - cx).coerceIn(dx, 0f)
+                    }
+        }
         return dx
     }
 
-    /** Resolve Z movement against the world. Returns the allowed dz. */
+    /** Resolve Z movement against the world. Sweeps all intermediate columns to prevent tunneling at high speed. */
     fun resolveZ(world: WorldState, cx: Float, cy: Float, cz: Float, w: Float, h: Float, dz: Float): Float {
         if (dz == 0f) return 0f
         val hw = w / 2f
         val newCz = cz + dz
-        val faceZ = if (dz > 0) floor((newCz + hw).toDouble()).toInt()
-                    else        floor((newCz - hw).toDouble()).toInt()
-        for (by in blocks(cy, cy + h))
-            for (bx in blocks(cx - hw, cx + hw))
-                if (solid(world, bx, by, faceZ)) {
-                    val snap = if (dz > 0) faceZ.toFloat() - hw
-                               else       (faceZ + 1).toFloat() + hw
-                    return (snap - cz).coerceIn(minOf(0f, dz), maxOf(0f, dz))
-                }
+        val ys = blocks(cy, cy + h)
+        val xs = blocks(cx - hw, cx + hw)
+        if (dz > 0) {
+            val from = floor((cz + hw).toDouble()).toInt()
+            val to   = floor((newCz + hw).toDouble()).toInt()
+            for (bz in from..to)
+                for (by in ys) for (bx in xs)
+                    if (solid(world, bx, by, bz)) {
+                        val snap = bz.toFloat() - hw
+                        return (snap - cz).coerceIn(0f, dz)
+                    }
+        } else {
+            val from = floor((cz - hw).toDouble()).toInt()
+            val to   = floor((newCz - hw).toDouble()).toInt()
+            for (bz in from downTo to)
+                for (by in ys) for (bx in xs)
+                    if (solid(world, bx, by, bz)) {
+                        val snap = (bz + 1).toFloat() + hw
+                        return (snap - cz).coerceIn(dz, 0f)
+                    }
+        }
         return dz
     }
 
