@@ -29,6 +29,7 @@ private enum class ViewMode { FIRST_PERSON, THIRD_PERSON }
 class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private val playerModels = mutableMapOf<String, JsAny>()
     private val playerPrevPos = mutableMapOf<String, Triple<Double, Double, Double>>()
+    private val playerNames = mutableMapOf<String, String>()  // id → name, for autocomplete
     private val loadedChunks = mutableSetOf<ChunkPos>()
     private val chunkData    = mutableMapOf<ChunkPos, Pair<Chunk, Int>>()
     private val scope        = CoroutineScope(Dispatchers.Default)
@@ -83,7 +84,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
     private val gravelMat    = jsCreateTextureMaterial("gravel",     "/textures/blocks/gravel.png",     scene)
     private val snowMat      = jsCreateTextureMaterial("snow",       "/textures/blocks/snow.png",       scene)
 
-    fun connect(host: String, port: Int) {
+    fun connect(host: String, port: Int, username: String, playerName: String) {
         // Prediction loop: runs at ~60fps, moves camera immediately without waiting for server
         scope.launch {
             while (isActive) {
@@ -101,7 +102,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                     client.webSocket(host = host, port = port, path = "/game") {
                         retryDelay = 1000L
 
-                        send(Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect("Player"))))
+                        send(Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect(playerName = playerName, userName = username))))
 
                         // Send movement intents at server tick rate + pending chunk unloads
                         val inputJob = launch {
@@ -172,6 +173,8 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         playerModels.values.forEach(::jsDisposePlayerModel)
         playerModels.clear()
         playerPrevPos.clear()
+        playerNames.clear()
+        jsSetConnectedPlayers("[]")
         localPlayerModel?.let { jsDisposePlayerModel(it) }
         localPlayerModel = null
         fpArms?.let { jsDisposeFPArms(it) }
@@ -179,6 +182,11 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         loadedChunks.forEach { cp -> jsDisposeChunk("${cp.cx},${cp.cz}") }
         loadedChunks.clear()
         chunkData.clear()
+    }
+
+    private fun updateConnectedPlayersAutocomplete() {
+        val json = "[" + playerNames.values.joinToString(",") { "\"$it\"" } + "]"
+        jsSetConnectedPlayers(json)
     }
 
     private fun applyLocalPrediction() {
@@ -440,10 +448,16 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                     hudSpeed  = s.speedMultiplier.toDouble()
                     hudBiome  = s.biome
                 } else {
+                    playerNames[s.id] = s.name
+                    updateConnectedPlayersAutocomplete()
                     updatePlayerMesh(s.id, s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble(), s.orientation.yaw, s.orientation.pitch)
                 }
             }
-            is ServerMessage.PlayerLeft  -> removePlayer(msg.playerId)
+            is ServerMessage.PlayerLeft  -> {
+                playerNames.remove(msg.playerId)
+                updateConnectedPlayersAutocomplete()
+                removePlayer(msg.playerId)
+            }
             is ServerMessage.Notification -> {
                 jsShowNotification(msg.message)
                 jsAddServerLog(msg.message)

@@ -122,6 +122,16 @@ fun jsShowDisconnectedOverlay(message: String): Unit = js("mcShowDisconnectedOve
 
 fun jsHideDisconnectedOverlay(): Unit = js("mcHideDisconnectedOverlay()")
 
+// ── Login overlay ─────────────────────────────────────────────────────────────
+
+fun jsShowLoginOverlay(): Unit = js("mcShowLoginOverlay()")
+
+fun jsConsumeLoginResult(): String = js("mcConsumeLoginResult()")
+
+// ── Autocomplete ──────────────────────────────────────────────────────────────
+
+fun jsSetConnectedPlayers(namesJson: String): Unit = js("mcSetConnectedPlayers(namesJson)")
+
 // ── Debug camera ─────────────────────────────────────────────────────────────
 
 fun jsHasUrlParam(name: String): Boolean =

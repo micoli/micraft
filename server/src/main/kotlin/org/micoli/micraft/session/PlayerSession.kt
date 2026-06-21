@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class PlayerSession(
     val id: String,
+    val userName: String,
     val socket: DefaultWebSocketSession,
     @Volatile var state: PlayerState,
     @Volatile var vy: Float = 0f,

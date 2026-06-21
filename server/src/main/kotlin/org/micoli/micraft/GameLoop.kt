@@ -37,7 +37,16 @@ class GameLoop(
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
     private var saveTickCounter = 0
 
-    private val commandContext = CommandContext(world, persistence) { msg -> sessions.values.forEach { it.send(msg) } }
+    private val commandContext = CommandContext(
+        world = world,
+        persistence = persistence,
+        broadcast = { msg -> sessions.values.forEach { it.send(msg) } },
+        sessions = { sessions.values },
+        kickSession = { playerName ->
+            sessions.values.find { it.state.name == playerName }
+                ?.socket?.close(CloseReason(CloseReason.Codes.NORMAL, "Kicked by server"))
+        },
+    )
     private val commands: Map<String, CommandHandler> =
         java.util.ServiceLoader.load(CommandHandler::class.java).associateBy { it.command }
 
@@ -98,13 +107,15 @@ class GameLoop(
     suspend fun onConnect(socket: DefaultWebSocketSession) {
         val id = UUID.randomUUID().toString()
 
-        val playerName = runCatching {
+        val connectMsg = runCatching {
             val firstFrame = socket.incoming.receive()
             if (firstFrame is Frame.Text) {
                 val msg = Json.decodeFromString<ClientMessage>(firstFrame.readText())
-                if (msg is ClientMessage.Connect) msg.playerName else "Player"
-            } else "Player"
-        }.getOrDefault("Player")
+                if (msg is ClientMessage.Connect) msg else null
+            } else null
+        }.getOrNull()
+        val playerName = connectMsg?.playerName ?: "Player"
+        val userName = connectMsg?.userName ?: playerName
 
         val saved = persistence?.loadPlayerState(playerName)
         val spawn = saved?.pos ?: Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z)
@@ -117,9 +128,9 @@ class GameLoop(
             flying = saved?.flying ?: DEBUG_WORLD,
             speedMultiplier = saved?.speedMultiplier ?: 1f,
         )
-        val session = PlayerSession(id, socket, state)
+        val session = PlayerSession(id, userName, socket, state)
         sessions[id] = session
-        log.info("player connected: {} name={} (total={})", id.take(8), playerName, sessions.size)
+        log.info("player connected: {} name={} user={} (total={})", id.take(8), playerName, userName, sessions.size)
 
         session.send(ServerMessage.Welcome(id, playerName, spawn))
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))

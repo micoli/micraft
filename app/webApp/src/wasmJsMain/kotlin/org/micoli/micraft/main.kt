@@ -1,5 +1,9 @@
 package org.micoli.micraft
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.micoli.micraft.babylon.*
 
 fun main() {
@@ -39,8 +43,22 @@ fun main() {
     val client = GameClient(scene, camera)
     val host = jsGetPageHost()
     val port = jsGetPagePort()
-    jsLog("connecting to ws://$host:$port/game …")
-    client.connect(host, port)
+
+    jsShowLoginOverlay()
+    jsLog("waiting for login …")
+
+    CoroutineScope(Dispatchers.Default).launch {
+        var result = ""
+        while (result.isEmpty()) {
+            delay(100)
+            result = jsConsumeLoginResult()
+        }
+        val parts = result.split("\t")
+        val username = parts[0]
+        val playerName = if (parts.size > 1) parts[1] else parts[0]
+        jsLog("login: user=$username player=$playerName — connecting to ws://$host:$port/game …")
+        client.connect(host, port, username, playerName)
+    }
 
     jsEngineRunRenderLoop(engine, scene)
     jsSetupResize(engine)
