@@ -98,7 +98,22 @@ fun jsHideBreakOverlay(): Unit = js("mcHideBreakOverlay()")
 fun jsIsKeyDown(code: String): Boolean = js("!!(window.__mc && window.__mc.keys[code])")
 
 fun jsDisableCameraKeyboard(camera: JsAny): Unit =
-    js("(function(c){c.inputs.removeByType('FreeCameraKeyboardMoveInput');c.inputs.removeByType('FreeCameraGamepadInput');c.inertia=0;})(camera)")
+    js("""(function(c){
+      c.inputs.removeByType('FreeCameraKeyboardMoveInput');
+      c.inputs.removeByType('FreeCameraGamepadInput');
+      c.inputs.removeByType('FreeCameraMouseInput');
+      c.inertia = 0;
+      var canvas = document.getElementById('renderCanvas');
+      canvas.addEventListener('click', function() {
+        if (!document.pointerLockElement) canvas.requestPointerLock();
+      });
+      document.addEventListener('pointermove', function(e) {
+        if (document.pointerLockElement !== canvas) return;
+        c.rotation.y += e.movementX * 0.002;
+        c.rotation.x += e.movementY * 0.002;
+        c.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, c.rotation.x));
+      });
+    })(camera)""")
 
 fun jsGetCameraForwardX(camera: JsAny): Double = js("mcGetCameraForwardX(camera)")
 
