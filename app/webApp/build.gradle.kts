@@ -3,6 +3,8 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinxSerialization)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.composeCompiler)
 }
 
 val copyBbmodels by tasks.registering(Copy::class) {
@@ -37,6 +39,8 @@ kotlin {
         val wasmJsMain by getting {
             dependencies {
                 implementation(projects.core)
+                implementation(projects.app.shared)
+                implementation(libs.compose.ui)
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.websockets)
                 implementation(libs.ktor.client.js)
