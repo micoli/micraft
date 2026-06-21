@@ -10,7 +10,7 @@ import io.ktor.server.websocket.*
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
+import com.charleskorn.kaml.Yaml
 import org.micoli.micraft.world.BiomeConfig
 import org.micoli.micraft.world.BiomeRegistry
 import org.micoli.micraft.world.loadKeyBindings
@@ -55,11 +55,11 @@ fun Application.module() {
     } else null
 
     fun loadBiomeRegistry(): BiomeRegistry {
-        val biomeFile = Path.of("data/biomes/biomes.json")
+        val biomeFile = Path.of("data/biomes/biomes.yaml")
         return if (biomeFile.exists()) {
             log.info("Loading biomes from {}", biomeFile.toAbsolutePath())
             runCatching {
-                val config = Json.decodeFromString<BiomeConfig>(biomeFile.readText())
+                val config = Yaml.default.decodeFromString(BiomeConfig.serializer(), biomeFile.readText())
                 val registry = BiomeRegistry.from(config)
                 log.info(
                     "Biomes loaded: [{}] | voronoiCellSize={} blendRadius={}",
@@ -69,11 +69,11 @@ fun Application.module() {
                 )
                 registry
             }.getOrElse { e ->
-                log.warn("Failed to load biomes.json ({}), using default", e.message)
+                log.warn("Failed to load biomes.yaml ({}), using default", e.message)
                 BiomeRegistry.default()
             }
         } else {
-            log.warn("No biomes.json found at {} — using default (plains only)", biomeFile.toAbsolutePath())
+            log.warn("No biomes.yaml found at {} — using default (plains only)", biomeFile.toAbsolutePath())
             BiomeRegistry.default()
         }
     }
