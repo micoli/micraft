@@ -10,6 +10,8 @@ private val log = LoggerFactory.getLogger(KickCommand::class.java)
 
 class KickCommand : CommandHandler {
     override val command = "/kick"
+    override val description = "Expulse un joueur connecté."
+    override val usage = "/kick <playerName>"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val target = args.trim()

@@ -7,6 +7,7 @@ import org.micoli.micraft.session.PlayerSession
 
 class WhoCommand : CommandHandler {
     override val command = "/who"
+    override val description = "Liste les joueurs connectés avec leur position."
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val connected: List<PlayerSession> = context.sessions().toList()

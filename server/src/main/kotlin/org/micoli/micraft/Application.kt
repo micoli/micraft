@@ -9,6 +9,7 @@ import io.ktor.server.websocket.*
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.world.BiomeConfig
 import org.micoli.micraft.world.BiomeRegistry
+import org.micoli.micraft.world.ChunkGenerator
 import org.slf4j.LoggerFactory
 import org.micoli.micraft.world.DebugChunkGenerator
 import org.micoli.micraft.world.ProceduralChunkGenerator
@@ -50,9 +51,9 @@ fun Application.module() {
         }
     } else null
 
-    val biomeRegistry = if (!debugWorld) {
+    fun loadBiomeRegistry(): BiomeRegistry {
         val biomeFile = Path.of("data/biomes/biomes.json")
-        if (biomeFile.exists()) {
+        return if (biomeFile.exists()) {
             log.info("Loading biomes from {}", biomeFile.toAbsolutePath())
             runCatching {
                 val config = Json.decodeFromString<BiomeConfig>(biomeFile.readText())
@@ -72,7 +73,9 @@ fun Application.module() {
             log.warn("No biomes.json found at {} — using default (plains only)", biomeFile.toAbsolutePath())
             BiomeRegistry.default()
         }
-    } else {
+    }
+
+    val biomeRegistry = if (!debugWorld) loadBiomeRegistry() else {
         log.info("Debug world mode — biomes disabled")
         BiomeRegistry.default()
     }
@@ -81,8 +84,12 @@ fun Application.module() {
                     else ProceduralChunkGenerator(seed = 42L, biomeRegistry = biomeRegistry)
     log.info("World: {} | generator={} | seed=42", worldName, generator::class.simpleName)
 
+    val reloadBiomes: (() -> ChunkGenerator)? = if (!debugWorld) {
+        { ProceduralChunkGenerator(seed = 42L, biomeRegistry = loadBiomeRegistry()) }
+    } else null
+
     val world = WorldState(generator = generator, persistence = persistence)
-    val gameLoop = GameLoop(world, persistence)
+    val gameLoop = GameLoop(world, persistence, reloadBiomes)
     gameLoop.start(this)
 
     Runtime.getRuntime().addShutdownHook(Thread {

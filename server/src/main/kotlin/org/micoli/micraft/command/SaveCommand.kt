@@ -10,6 +10,7 @@ private val log = LoggerFactory.getLogger(SaveCommand::class.java)
 
 class SaveCommand : CommandHandler {
     override val command = "/save"
+    override val description = "Sauvegarde le monde et l'état du joueur sur disque."
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         context.world.flushDirty()

@@ -37,8 +37,8 @@ private val DEFAULT_DROPS: Map<String, List<DropEntry>> = mapOf(
 
 private val DROP_TABLE_SERIALIZER = MapSerializer(String.serializer(), kotlinx.serialization.builtins.ListSerializer(DropEntry.serializer()))
 
-class DropConfig(path: Path) {
-    private val table: Map<BlockType, List<DropEntry>>
+class DropConfig(private val path: Path) {
+    @Volatile private var table: Map<BlockType, List<DropEntry>>
 
     init {
         if (!path.exists()) {
@@ -47,16 +47,26 @@ class DropConfig(path: Path) {
             path.writeText(yaml)
             log.info("Generated default drop config at {}", path.toAbsolutePath())
         }
+        table = parseTable()
+        log.info("Drop table loaded: {} block types configured", table.size)
+    }
+
+    private fun parseTable(): Map<BlockType, List<DropEntry>> {
         val raw = runCatching {
             Yaml.default.decodeFromString(DROP_TABLE_SERIALIZER, path.readText())
         }.getOrElse { e ->
             log.warn("Failed to load drops.yaml ({}), using defaults", e.message)
             DEFAULT_DROPS
         }
-        table = raw.entries.mapNotNull { (key, entries) ->
+        return raw.entries.mapNotNull { (key, entries) ->
             runCatching { BlockType.valueOf(key) to entries }.getOrNull()
         }.toMap()
-        log.info("Drop table loaded: {} block types configured", table.size)
+    }
+
+    fun reload(): Int {
+        table = parseTable()
+        log.info("Drop table reloaded: {} block types configured", table.size)
+        return table.size
     }
 
     fun rollDrops(blockType: BlockType): List<Pair<ItemType, Int>> {

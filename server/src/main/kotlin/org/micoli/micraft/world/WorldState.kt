@@ -5,7 +5,7 @@ import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
 class WorldState(
-    private val generator: ChunkGenerator,
+    @Volatile var generator: ChunkGenerator,
     val persistence: WorldPersistence? = null,
 ) {
     private val chunks = ConcurrentHashMap<ChunkPos, Chunk>()

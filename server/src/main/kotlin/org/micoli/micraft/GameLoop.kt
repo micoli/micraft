@@ -17,6 +17,7 @@ import org.micoli.micraft.tick.BlockBreaker
 import org.micoli.micraft.tick.ChunkStreamer
 import org.micoli.micraft.tick.IntentCollector
 import org.micoli.micraft.tick.MovementProcessor
+import org.micoli.micraft.world.ChunkGenerator
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.DropConfig
 import org.micoli.micraft.world.WorldConstants
@@ -33,6 +34,7 @@ private val log = LoggerFactory.getLogger("GameLoop")
 class GameLoop(
     private val world: WorldState,
     private val persistence: WorldPersistence? = null,
+    private val reloadBiomes: (() -> ChunkGenerator)? = null,
 ) {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
     private var saveTickCounter = 0
@@ -46,6 +48,8 @@ class GameLoop(
             sessions.values.find { it.state.name == playerName }
                 ?.socket?.close(CloseReason(CloseReason.Codes.NORMAL, "Kicked by server"))
         },
+        reloadConfig = ::reload,
+        commands = { commands.values },
     )
     private val commands: Map<String, CommandHandler> =
         java.util.ServiceLoader.load(CommandHandler::class.java).associateBy { it.command }
@@ -56,6 +60,17 @@ class GameLoop(
     private val intentCollector = IntentCollector(blockBreaker, ::handleCommand)
     private val movementProcessor = MovementProcessor(world)
     private val chunkStreamer = ChunkStreamer(world)
+
+    private suspend fun reload(): String {
+        val lines = mutableListOf<String>()
+        val dropCount = dropConfig.reload()
+        lines += "Drops: $dropCount block types"
+        if (reloadBiomes != null) {
+            world.generator = reloadBiomes.invoke()
+            lines += "Biomes reloaded"
+        }
+        return lines.joinToString(", ")
+    }
 
     fun start(app: Application) {
         log.info("GameLoop starting (tick=${TICK_MS}ms, gravity=$GRAVITY)")
