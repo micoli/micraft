@@ -215,7 +215,8 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         if (localFlying) {
             val fwdY = jsGetCameraForwardY(camera).toFloat()
             var dy = 0f
-            if (jsIsKeyDown("Space"))                                dy = 1f
+            if (jsIsKeyDown("Space"))          dy = 1f
+            else if (jsIsKeyDown("ShiftLeft")) dy = -1f
             else {
                 if (jsIsKeyDown("KeyW") || jsIsKeyDown("ArrowUp"))   dy += fwdY
                 if (jsIsKeyDown("KeyS") || jsIsKeyDown("ArrowDown")) dy -= fwdY
@@ -353,7 +354,8 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
         return if (localFlying) {
             // In fly mode: Space = go up, W/S pitch-follows camera vertical component
             val dy = when {
-                jsIsKeyDown("Space") -> 1f
+                jsIsKeyDown("Space")     -> 1f
+                jsIsKeyDown("ShiftLeft") -> -1f
                 else -> {
                     val fwdY = jsGetCameraForwardY(camera).toFloat()
                     var d = 0f
