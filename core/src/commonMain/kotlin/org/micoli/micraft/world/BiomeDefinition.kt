@@ -24,6 +24,8 @@ data class BiomeDefinition(
     val subsurfaceDepth: Int = 3,
     val filler: BlockType = BlockType.STONE,
     val vegetation: List<VegetationEntry> = emptyList(),
+    val elevationMin: Int = 40,
+    val elevationMax: Int = 120,
 )
 
 @Serializable

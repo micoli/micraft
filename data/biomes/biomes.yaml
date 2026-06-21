@@ -10,6 +10,8 @@ biomes:
     subsurfaceDepth: 4
     filler: STONE
     vegetation: []
+    elevationMin: 40
+    elevationMax: 65
 
   - id: plains
     zones:
@@ -20,6 +22,8 @@ biomes:
     subsurfaceDepth: 3
     filler: STONE
     vegetation: []
+    elevationMin: 48
+    elevationMax: 78
 
   - id: forest
     zones:
@@ -32,6 +36,8 @@ biomes:
     vegetation:
       - type: oak_tree
         density: 0.1
+    elevationMin: 55
+    elevationMax: 95
 
   - id: mountains
     zones:
@@ -44,6 +50,8 @@ biomes:
     subsurfaceDepth: 2
     filler: STONE
     vegetation: []
+    elevationMin: 80
+    elevationMax: 110
 
   - id: tundra
     zones:
@@ -56,3 +64,5 @@ biomes:
     subsurfaceDepth: 3
     filler: STONE
     vegetation: []
+    elevationMin: 90
+    elevationMax: 120

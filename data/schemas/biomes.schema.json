@@ -60,7 +60,9 @@
         "vegetation": {
           "type": "array",
           "items": { "$ref": "#/$defs/vegetationEntry" }
-        }
+        },
+        "elevationMin": { "type": "integer", "default": 40 },
+        "elevationMax": { "type": "integer", "default": 120 }
       }
     }
   }

@@ -59,8 +59,7 @@ class VoronoiBiomeZones(
 
     data class ColumnBlocks(val surface: BlockType, val subsurface: BlockType, val subsurfaceDepth: Int)
 
-    fun selectColumn(wx: Int, wz: Int, surfaceY: Int): ColumnBlocks {
-        val col      = sample(wx, wz)
+    fun selectColumn(wx: Int, wz: Int, surfaceY: Int, col: ColumnSample = sample(wx, wz)): ColumnBlocks {
         val moisture = moistureAt(wx, wz)
         val override = registry.altitudeOverride(surfaceY, moisture)
         return if (override != null) {

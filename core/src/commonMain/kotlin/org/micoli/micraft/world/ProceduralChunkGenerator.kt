@@ -8,9 +8,12 @@ class ProceduralChunkGenerator(
     private val moistureNoise  = PerlinNoise(seed + 1L)
     private val voronoi        = VoronoiBiomeZones(seed, biomeRegistry, moistureNoise)
 
-    fun surfaceHeight(wx: Int, wz: Int): Int {
+    fun surfaceHeight(wx: Int, wz: Int, sample: VoronoiBiomeZones.ColumnSample): Int {
         val n = elevationNoise.octaveNoise(wx / 64.0, wz / 64.0, octaves = 6, persistence = 0.5)
-        return ((n + 1.0) / 2.0 * 80.0 + 40.0).toInt()
+        val t = (n + 1.0) / 2.0
+        val eMin = sample.primary.elevationMin + sample.blendFactor * (sample.secondary.elevationMin - sample.primary.elevationMin)
+        val eMax = sample.primary.elevationMax + sample.blendFactor * (sample.secondary.elevationMax - sample.primary.elevationMax)
+        return (eMin + t * (eMax - eMin)).toInt()
             .coerceIn(4, WorldConstants.WORLD_MAX_Y - 1)
     }
 
@@ -23,8 +26,9 @@ class ProceduralChunkGenerator(
         val cols = Array(s) { x ->
             Array(s) { z ->
                 val wx = ox + x; val wz = oz + z
-                val h = surfaceHeight(wx, wz)
-                ColumnData(h, voronoi.selectColumn(wx, wz, h))
+                val sample = voronoi.sample(wx, wz)
+                val h = surfaceHeight(wx, wz, sample)
+                ColumnData(h, voronoi.selectColumn(wx, wz, h, sample))
             }
         }
 
