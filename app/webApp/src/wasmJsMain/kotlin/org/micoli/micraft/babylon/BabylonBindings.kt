@@ -211,11 +211,3 @@ fun jsUpdateFPArms(fpArms: JsAny, isWalking: Boolean): Unit = js("mcUpdateFPArms
 fun jsSetFPArmsVisible(fpArms: JsAny, visible: Boolean): Unit = js("mcSetFPArmsVisible(fpArms, visible)")
 fun jsDisposeFPArms(fpArms: JsAny): Unit = js("mcDisposeFPArms(fpArms)")
 
-// ── Compose overlay ───────────────────────────────────────────────────────────
-
-fun jsCreateUiOverlay(): Unit = js("""
-    var d = document.createElement('div');
-    d.id = 'mc-ui';
-    d.style.cssText = 'position:fixed;inset:0;z-index:900;pointer-events:none';
-    document.body.appendChild(d);
-""")

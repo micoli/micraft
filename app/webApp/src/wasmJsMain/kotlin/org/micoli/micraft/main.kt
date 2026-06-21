@@ -1,14 +1,10 @@
-@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-
 package org.micoli.micraft
 
-import androidx.compose.ui.window.ComposeViewport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.micoli.micraft.babylon.*
-import org.micoli.micraft.ui.McGameUI
 import org.micoli.micraft.ui.McUiState
 
 val uiState = McUiState()
@@ -46,10 +42,6 @@ fun main() {
         jsSetupDebugCameraKeys(camera, scene, bx, by, bz)
         jsLog("debug mode: 1-6 keys orbit block ($bx,$by,$bz), Escape unlocks")
     }
-
-    // Compose overlay — rendered on top of BabylonJS canvas, pointer-events none by default
-    jsCreateUiOverlay()
-    ComposeViewport("mc-ui") { McGameUI(uiState) }
 
     val client = GameClient(scene, camera)
     val host = jsGetPageHost()
