@@ -26,28 +26,45 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
         p.waitFor()
     }
 
+    // Pipe stdout+stderr of a process through Gradle's logger so they appear in the console
+    // even when Gradle runs in rich/interactive mode (which wraps System.out).
+    fun Process.pipeOutput(prefix: String): List<Thread> = listOf(
+        Thread { inputStream.bufferedReader().forEachLine { println("$prefix$it") } }.also { it.isDaemon = true; it.start() },
+        Thread { errorStream.bufferedReader().forEachLine  { System.err.println("$prefix$it") } }.also { it.isDaemon = true; it.start() },
+    )
+
+    fun runGradle(vararg args: String): Int {
+        val p = ProcessBuilder(gradle, *args, "--console=plain")
+            .directory(rootDir)
+            .redirectErrorStream(false)
+            .start()
+        p.pipeOutput("")
+        return p.waitFor()
+    }
+
     fun startServer(): Process {
         val tag = if (debugWorld) " [DEBUG WORLD]" else ""
         println("[dev] starting server$tag (${java.time.LocalTime.now().let { "%02d:%02d:%02d".format(it.hour, it.minute, it.second) }})")
         val pb = ProcessBuilder(serverBin.absolutePath)
             .directory(rootDir)
-            .inheritIO()
         if (debugWorld) pb.environment()["MICRAFT_DEBUG_WORLD"] = "1"
-        return pb.start()
+        val p = pb.start()
+        p.pipeOutput("[server] ")
+        return p
     }
 
     // Force full build of server and client on every start
     println("[dev] building server…")
-    ProcessBuilder(gradle, ":server:installDist", "--rerun-tasks")
-        .directory(rootDir).inheritIO().start().waitFor()
+    runGradle(":server:installDist", "--rerun-tasks")
 
     println("[dev] building client…")
-    ProcessBuilder(gradle, ":app:webApp:wasmJsDevelopmentExecutableCompileSync", "--rerun-tasks")
-        .directory(rootDir).inheritIO().start().waitFor()
+    runGradle(":app:webApp:wasmJsDevelopmentExecutableCompileSync", "--rerun-tasks")
 
     val serverRef  = java.util.concurrent.atomic.AtomicReference(startServer())
-    val clientProc = ProcessBuilder(gradle, ":app:webApp:wasmJsBrowserDevelopmentRun", "--continuous")
-        .directory(rootDir).inheritIO().start()
+    val clientProc = ProcessBuilder(gradle, ":app:webApp:wasmJsBrowserDevelopmentRun", "--continuous", "--console=plain")
+        .directory(rootDir)
+        .start()
+    clientProc.pipeOutput("[webpack] ")
 
     Runtime.getRuntime().addShutdownHook(Thread {
         killTree(serverRef.get())
