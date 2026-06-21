@@ -243,6 +243,9 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
             viewMode = if (viewMode == ViewMode.FIRST_PERSON) ViewMode.THIRD_PERSON else ViewMode.FIRST_PERSON
         }
 
+        // Inventory toggle (I key)
+        if (jsConsumeInventoryToggle()) jsToggleHotbar()
+
         // Lazy-create local player model and first-person arms when bbmodel is ready
         if (jsIsPlayerBbmodelReady()) {
             if (localPlayerModel == null) {
@@ -441,11 +444,17 @@ class GameClient(private val scene: JsAny, private val camera: JsAny) {
                 }
             }
             is ServerMessage.PlayerLeft  -> removePlayer(msg.playerId)
-            is ServerMessage.Notification -> jsShowNotification(msg.message)
+            is ServerMessage.Notification -> {
+                jsShowNotification(msg.message)
+                jsAddServerLog(msg.message)
+            }
             is ServerMessage.BlockBreakProgress -> {
                 val alpha = 1.0 - msg.progress.toDouble() / msg.hardness.toDouble()
                 jsShowBreakOverlay(scene, msg.pos.x, msg.pos.y, msg.pos.z, alpha)
             }
+            is ServerMessage.InventoryUpdate -> jsUpdateHotbar(Json.encodeToString(msg.inventory))
+            is ServerMessage.ItemsSpawned -> Unit
+            is ServerMessage.ItemDespawned -> Unit
             is ServerMessage.WorldUpdate -> msg.changes.forEach { change ->
                 val cx = change.pos.x.floorDiv(WorldConstants.CHUNK_SIZE)
                 val cz = change.pos.z.floorDiv(WorldConstants.CHUNK_SIZE)

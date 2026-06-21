@@ -17,6 +17,7 @@ dependencies {
     implementation(libs.ktor.serverNetty)
     implementation(libs.ktor.server.websockets)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kaml)
     testImplementation(libs.ktor.serverTestHost)
     testImplementation(libs.kotlin.testJunit)
 }

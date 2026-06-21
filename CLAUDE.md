@@ -6,118 +6,131 @@ Minecraft client/server clone in **Kotlin Multiplatform** — multiplayer voxel 
 
 | Module | Path | Role |
 |--------|------|------|
-| `core` | `core/src/commonMain` | Domain model, network protocol, physics, chunk generation — shared across all targets |
+| `core` | `core/src/commonMain` | Domain model, protocol, physics, chunk generation — shared across all targets |
 | `server` | `server/src/main/kotlin` | Ktor WebSocket, game loop, persistence |
 | `app/webApp` | `app/webApp/src/wasmJsMain` | Web client (Kotlin/Wasm + BabylonJS) |
 | `app/desktopApp` | `app/desktopApp/src/main` | Desktop client (JVM) |
 | `app/shared` | `app/shared/src/commonMain` | Shared Compose code for desktop/web |
 
+## Key source files
+
+| File | Purpose |
+|------|---------|
+| `core/.../protocol/ClientMessage.kt` | All client→server messages (sealed class) |
+| `core/.../protocol/ServerMessage.kt` | All server→client messages (sealed class) |
+| `core/.../world/Block.kt` | `BlockType` enum + hardness + `BlockPos` |
+| `core/.../world/WorldConstants.kt` | `WorldConstants`, `PlayerConstants` |
+| `core/.../player/Player.kt` | `Vec3`, `Orientation`, `PlayerState` |
+| `core/.../world/ItemType.kt` | `ItemType` enum |
+| `core/.../world/WorldItem.kt` | `WorldItem(id, pos, type, count)` |
+| `server/.../GameLoop.kt` | Tick driver, coordinates all tick processors |
+| `server/.../session/PlayerSession.kt` | Per-player WebSocket session |
+| `server/.../tick/BlockBreaker.kt` | Block-break progress + drop spawning |
+| `server/.../world/DropConfig.kt` | YAML-driven drop table loader |
+| `server/.../world/WorldItemManager.kt` | Tracks live world items |
+| `app/webApp/.../GameClient.kt` | Client-side prediction + server reconciliation |
+| `app/webApp/.../babylon/BabylonBindings.kt` | BabylonJS interop |
+| `app/webApp/.../resources/mc_bindings.js` | JS-side BabylonJS binding glue |
+
+## Protocol messages
+
+**Client → Server** (`ClientMessage`):
+- `Connect(playerName)` — join
+- `MoveIntent(dx, dz, yaw, pitch, stance, jump, dy, flyToggle, speedUp, speedDown)`
+- `ChunkUnload(positions)` — client unloaded these chunks
+- `BlockBreakStart(pos)` / `BlockBreakStop`
+- `Command(text)` — slash command
+- `Disconnect(reason)`
+
+**Server → Client** (`ServerMessage`):
+- `Welcome(playerId, playerName, spawnPos)`
+- `ChunkData(pos, topY, wireBlocks: ByteArray)`
+- `PlayerUpdate(state: PlayerState)`
+- `WorldUpdate(changes: List<BlockChange>)`
+- `PlayerLeft(playerId)`
+- `BlockBreakProgress(pos, progress, hardness)`
+- `Notification(message)`
+- `ItemsSpawned(items: List<WorldItem>)`
+- `ItemDespawned(id)`
+- `InventoryUpdate(inventory: Map<ItemType, Int>)`
+
+## Domain types
+
+**Block types**: `AIR BEDROCK STONE DIRT GRASS SAND SANDSTONE GRAVEL SNOW`
+Hardness: BEDROCK=∞, STONE=5, SANDSTONE=4, DIRT/GRASS/GRAVEL=3, SAND=2, SNOW=1
+
+**Item types**: `COBBLESTONE DIRT SAND GRAVEL SANDSTONE SNOWBALL FLINT`
+
+**Drop config**: `data/drops/drops.yaml` — maps `BlockType → List<(ItemType, weight, minCount, maxCount)>`
+
+**WorldConstants**: `CHUNK_SIZE=16`, `VIEW_RADIUS=2` (5×5 chunks), `Y ∈ [0, 1024]`
+
+**PlayerConstants**: standing h=1.8/eye=1.62/speed=4.5 · sneaking h=1.5/eye=1.27/speed=1.3 · crawling h=0.6/eye=0.4/speed=1.0 · width=0.6
+
 ## Architecture
 
-- **Server authoritative**: the client sends `MoveIntent`, the server validates and replies with `PlayerUpdate`.
-- **Client-side prediction**: `GameClient` predicts XZ position locally at ~60 fps and soft-corrects toward the server position. Y (gravity) is always server-authoritative.
-- All simulation logic (AABB physics, chunk generation) lives in `core` to keep client prediction and server authority consistent.
+- **Server authoritative**: client sends `MoveIntent`, server validates and replies with `PlayerUpdate`.
+- **Client-side prediction**: `GameClient` predicts XZ locally at ~60 fps, soft-corrects toward server. Y (gravity) is always server-authoritative.
+- All simulation logic (AABB physics, chunk gen) lives in `core` to keep client prediction and server consistent.
+- **Chunk rendering**: `VertexData` buffers per chunk (~200 draw calls). `WorldUpdate` triggers re-mesh of affected chunk.
 
-## World rules
+## Data directory
 
-- Base unit: **1 block** (voxel).
-- Elevation: **Y ∈ [0, 1024]** — enforce these bounds in all generation, collision, and position logic.
-- Procedural generation: no static map.
-
-## Players
-
-| Stance  | Height | Width |
-|---------|--------|-------|
-| Standing | 1.8 b | 0.6 b |
-| Sneaking | 1.5 b | 0.6 b |
-| Crawling | 0.6 b | 0.6 b |
-
-Eye offset (first-person camera): standing 1.62 b · sneaking 1.27 b · crawling 0.4 b.
+```
+data/
+  drops/drops.yaml          # block → item drop table
+  biomes/biomes.json        # biome definitions
+  world/default_world/
+    world.json              # world metadata
+    players/Player.json     # persisted player states
+    chunks/*.mcc.gz         # binary chunk files (DO NOT READ)
+```
 
 ## Textures
-  [textures.md](.claude/textures.md)
+[textures.md](.claude/textures.md)
+
+## Entities / animations
+Models use **bbmodel** (Blockbench) format. Example: `resources/player.bbmodel`
 
 ## Code conventions
 
 - Prefer immutable types (`data class`, `value class`) for positions, orientations, and network messages.
-- Centralise gameplay constants in `core` (`WorldConstants`, `PlayerConstants`).
-- Never duplicate constants between client and server.
+- Centralise constants in `core` (`WorldConstants`, `PlayerConstants`). Never duplicate between client and server.
+- All packages under `org.micoli.micraft.*`
 
-## Testing / triggering a server restart
+## Server restart
 
-After every server-side code change, touch `run.lock` to restart the server:
-
-```bash[comment une texture est appliquée sur un bloc (ori.md](../../Downloads/comment%20une%20texture%20est%20appliqu%C3%A9e%20sur%20un%20bloc%20%28ori.md)
+After every server-side code change:
+```bash
 touch run.lock
 ```
-
-The `./gradlew dev` watchdog detects the modification and kills/restarts the Ktor process automatically. The web client reconnects on its own (it shows a "DISCONNECTED" overlay while waiting). **Always use `touch run.lock` instead of manually restarting the server or asking the user to do it.**
-
-## Entities models and animation are defined in bbmodel format (blockbench)
-the format is bbmodel (https://raw.githubusercontent.com/JannisX11/blockbench/refs/heads/master/js/formats/bbmodel.js), there is no json schema strictly speaking. There is an example in @resources/player.bbmodel 
+The `./gradlew dev` watchdog kills/restarts the Ktor process. The web client reconnects automatically. **Always use `touch run.lock` — never ask the user to restart manually.**
 
 ## Debug texture mode
 
-To inspect block textures face by face, use the `devDebug` task:
-
 ```bash
-./gradlew devDebug
+./gradlew devDebug   # then open http://localhost:8081/?debug&bx=8&by=2&bz=8
 ```
-
-This starts the server with `MICRAFT_DEBUG_WORLD=1`:
-- Single GRASS block at world (8, 2, 8) — all other positions are AIR
-- Player spawns at (8, 1, 14) in fly mode, facing the block
-
-Then open: **`http://localhost:8081/?debug&bx=8&by=2&bz=8`**
-
-| Key | Camera position |
-|-----|----------------|
-| 1 | Face +Z (front) |
-| 2 | Face -Z (back) |
-| 3 | Face +X (right) |
-| 4 | Face -X (left) |
-| 5 | Face +Y (top) |
-| 6 | Face -Y (bottom) |
-| Échap | Libère le verrou caméra |
-
-`run.lock` continue de fonctionner normalement (redémarre le serveur en conservant le mode debug).
-To target a different block, change `bx`, `by`, `bz` in the URL.
+Single GRASS block at (8, 2, 8), player spawns at (8, 1, 14) in fly mode.
+Keys 1–6 position the camera on each face (+Z, -Z, +X, -X, +Y, -Y).
 
 ## Commands
 
 ```bash
-# Development: starts server (:8080) + webpack dev server (:8081) in parallel
-# Watches run.lock — touch it to restart the server on the fly
-./gradlew dev
-
-# Debug texture mode (single block world + keys 1-6)
-./gradlew devDebug   # then open http://localhost:8081/?debug&bx=8&by=2&bz=8
-
-# Full build
-rtk ./gradlew build
-
-# Server only
-./gradlew :server:run
-
-# Web client only (Wasm)
-./gradlew :app:webApp:wasmJsBrowserDevelopmentRun
-
-# Desktop client
-./gradlew :app:desktopApp:run
-
-# Tests
-rtk ./gradlew test
+./gradlew dev                                      # server :8080 + webpack dev :8081
+./gradlew devDebug                                 # debug texture mode
+rtk ./gradlew build                                # full build
+rtk ./gradlew test                                 # all tests
 rtk ./gradlew :server:test
 rtk ./gradlew :app:shared:jvmTest
-
-# Lint
 rtk ./gradlew ktlintCheck
 ```
 
 ## Rules
 
 - Always prefer `./gradlew` (never `gradle` directly).
-- Use `rtk` in front of verbose commands (build, test, diff, status).
+- Use `rtk` before verbose commands (build, test, diff, status, find).
 - Do not run unfiltered `find`, `ls -R`, `git diff`, or `gradlew test` without `rtk`.
-- Read only necessary files; ask for more targeted output if a result is too long.
-- Never start the server or web client (`./gradlew dev`, `:server:run`, `wasmJsBrowserDevelopmentRun`) — the user runs these themselves.
+- Read only necessary files.
+- Never start the server or web client — the user runs these themselves.
+- Do not read `data/world/default_world/chunks/` — binary compressed files, useless to read.

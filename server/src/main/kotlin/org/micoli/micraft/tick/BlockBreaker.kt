@@ -6,6 +6,7 @@ import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.world.BlockType
+import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldState
 import org.micoli.micraft.world.hardness
 import org.slf4j.LoggerFactory
@@ -15,6 +16,7 @@ private val log = LoggerFactory.getLogger(BlockBreaker::class.java)
 class BlockBreaker(
     private val world: WorldState,
     private val broadcast: suspend (ServerMessage) -> Unit,
+    private val worldItems: WorldItemManager,
 ) {
     fun handleStart(session: PlayerSession, intent: ClientMessage.BlockBreakStart) {
         val bp = intent.pos
@@ -50,6 +52,7 @@ class BlockBreaker(
             val change = BlockChange(bt, BlockType.AIR)
             world.applyChange(change)
             broadcast(ServerMessage.WorldUpdate(listOf(change)))
+            worldItems.spawnDrops(bt, block)
             session.breakTarget = null
             session.breakProgress = 0
         } else {

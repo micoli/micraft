@@ -18,9 +18,12 @@ import org.micoli.micraft.tick.ChunkStreamer
 import org.micoli.micraft.tick.IntentCollector
 import org.micoli.micraft.tick.MovementProcessor
 import org.micoli.micraft.world.ChunkPos
+import org.micoli.micraft.world.DropConfig
 import org.micoli.micraft.world.WorldConstants
+import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
+import java.nio.file.Path
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -38,7 +41,9 @@ class GameLoop(
     private val commands: Map<String, CommandHandler> =
         java.util.ServiceLoader.load(CommandHandler::class.java).associateBy { it.command }
 
-    private val blockBreaker = BlockBreaker(world) { msg -> sessions.values.forEach { it.send(msg) } }
+    private val dropConfig = DropConfig(Path.of("data/drops/drops.yaml"))
+    private val worldItems = WorldItemManager(dropConfig) { msg -> sessions.values.forEach { it.send(msg) } }
+    private val blockBreaker = BlockBreaker(world, { msg -> sessions.values.forEach { it.send(msg) } }, worldItems)
     private val intentCollector = IntentCollector(blockBreaker, ::handleCommand)
     private val movementProcessor = MovementProcessor(world)
     private val chunkStreamer = ChunkStreamer(world)
@@ -78,6 +83,7 @@ class GameLoop(
             }
             chunkStreamer.checkAndStream(session)
         }
+        worldItems.tickCollection(sessions.values)
     }
 
     private suspend fun handleCommand(session: PlayerSession, text: String) {
@@ -116,6 +122,7 @@ class GameLoop(
         log.info("player connected: {} name={} (total={})", id.take(8), playerName, sessions.size)
 
         session.send(ServerMessage.Welcome(id, playerName, spawn))
+        session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
 
         val spawnCp = ChunkPos(
             Math.floorDiv(spawn.x.toInt(), WorldConstants.CHUNK_SIZE),

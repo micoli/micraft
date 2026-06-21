@@ -1,0 +1,31 @@
+# Build outputs
+build/
+server/build/
+core/build/
+app/desktopApp/build/
+app/shared/build/
+app/webApp/build/
+
+# Gradle internals
+.gradle/
+gradle/wrapper/gradle-wrapper.jar
+
+# Kotlin/IDE metadata
+.kotlin/
+.idea/
+.DS_Store
+
+# Binary world chunks — hundreds of compressed files, not readable
+data/world/default_world/chunks/
+
+# Texture pack assets — large binary images
+resources/Mizunos-16-Craft-1.12-m8/
+
+# JS/Wasm build store
+kotlin-js-store/
+
+# Generated 3D models (large, not source)
+app/webApp/src/wasmJsMain/resources/models/
+
+# Planning docs (not needed during coding)
+plans/

@@ -141,10 +141,19 @@ fun jsSetupDebugCameraKeys(camera: JsAny, scene: JsAny, bx: Double, by: Double, 
 // ── Console ───────────────────────────────────────────────────────────────────
 
 fun jsCreateConsole(): Unit    = js("mcCreateConsole()")
+fun jsCreateServerLog(): Unit  = js("mcCreateServerLog()")
+fun jsAddServerLog(message: String): Unit = js("mcAddServerLog(message)")
 fun jsConsoleSetPlayer(name: String): Unit = js("mcConsoleSetPlayer(name)")
 fun jsIsConsoleOpen(): Boolean = js("mcIsConsoleOpen()")
 fun jsConsumeConsoleInput(): String = js("mcConsumeConsoleInput()")
 fun jsShowNotification(message: String): Unit = js("mcShowNotification(message)")
+
+// ── Hotbar ────────────────────────────────────────────────────────────────────
+
+fun jsCreateHotbar(): Unit = js("mcCreateHotbar()")
+fun jsUpdateHotbar(inventoryJson: String): Unit = js("mcUpdateHotbar(inventoryJson)")
+fun jsConsumeInventoryToggle(): Boolean = js("mcConsumeInventoryToggle()")
+fun jsToggleHotbar(): Unit = js("mcToggleHotbar()")
 
 // ── HUD ───────────────────────────────────────────────────────────────────────
 

@@ -6,6 +6,8 @@ import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChunkPos
+import org.micoli.micraft.world.ItemType
+import org.micoli.micraft.world.WorldItem
 
 @Serializable
 sealed class ServerMessage {
@@ -33,6 +35,15 @@ sealed class ServerMessage {
 
     @Serializable
     data class Notification(val message: String) : ServerMessage()
+
+    @Serializable
+    data class ItemsSpawned(val items: List<WorldItem>) : ServerMessage()
+
+    @Serializable
+    data class ItemDespawned(val id: String) : ServerMessage()
+
+    @Serializable
+    data class InventoryUpdate(val inventory: Map<ItemType, Int>) : ServerMessage()
 }
 
 @Serializable
