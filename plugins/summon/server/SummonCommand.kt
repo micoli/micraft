@@ -1,7 +1,8 @@
-package org.micoli.micraft.command
+package org.micoli.micraft.plugins.summon
 
 import org.micoli.micraft.CommandContext
 import org.micoli.micraft.CommandHandler
+import org.micoli.micraft.plugins.teleport.safeTeleportPos
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 

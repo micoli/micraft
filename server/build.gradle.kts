@@ -8,8 +8,24 @@ sourceSets {
     main {
         kotlin {
             srcDir("${rootProject.projectDir}/plugins")
+            exclude("**/test/**")
         }
     }
+    test {
+        kotlin {
+            val pluginsDir = rootProject.projectDir.resolve("plugins")
+            if (pluginsDir.exists()) {
+                pluginsDir.listFiles { f -> f.isDirectory }?.forEach { pluginDir ->
+                    val testDir = pluginDir.resolve("test")
+                    if (testDir.exists()) srcDir(testDir)
+                }
+            }
+        }
+    }
+}
+
+tasks.test {
+    systemProperty("projectDir", rootProject.projectDir.absolutePath)
 }
 
 group = "org.micoli.micraft"

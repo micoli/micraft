@@ -1,4 +1,4 @@
-package org.micoli.micraft.command
+package org.micoli.micraft.plugins.kick
 
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.protocol.ServerMessage

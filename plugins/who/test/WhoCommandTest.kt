@@ -1,8 +1,7 @@
-package org.micoli.micraft.command
+package org.micoli.micraft.plugins.who
 
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.player.Vec3
-import org.micoli.micraft.plugins.who.WhoCommand
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession

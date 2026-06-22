@@ -1,4 +1,4 @@
-package org.micoli.micraft.command
+package org.micoli.micraft.plugins.yield
 
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.protocol.ServerMessage
@@ -35,7 +35,6 @@ class YieldCommandTest {
         val broadcasts = mutableListOf<ServerMessage>()
         val session = testSession()
         cmd.execute(session, "test", testContext(broadcast = { broadcasts.add(it) }))
-        // broadcast is called, not session.send directly
         assertEquals(0, session.sent.size)
         assertEquals(1, broadcasts.size)
     }

@@ -1,4 +1,4 @@
-package org.micoli.micraft.command
+package org.micoli.micraft.plugins.summon
 
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.player.Vec3
@@ -51,10 +51,8 @@ class SummonCommandTest {
         val caller = testSession(pos = Vec3(100f, 10f, 200f))
         val target = testSession(id = "bob-id", name = "Bob")
         cmd.execute(caller, "Bob", testContext(sessions = listOf(caller, target)))
-        // Target gets PlayerUpdate and summoned notification
         assertTrue(target.sent.any { it is ServerMessage.PlayerUpdate })
         assertTrue(target.sent.filterIsInstance<ServerMessage.Notification>().any { it.message.contains("summoned") || it.message.contains("Alice") })
-        // Caller gets done notification
         assertTrue(caller.sent.filterIsInstance<ServerMessage.Notification>().any { it.message.contains("Bob") })
     }
 }

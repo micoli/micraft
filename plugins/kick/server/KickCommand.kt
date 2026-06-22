@@ -1,4 +1,4 @@
-package org.micoli.micraft.command
+package org.micoli.micraft.plugins.kick
 
 import org.micoli.micraft.CommandContext
 import org.micoli.micraft.CommandHandler

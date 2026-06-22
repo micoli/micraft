@@ -11,6 +11,7 @@ import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldState
+import java.nio.file.Path
 import java.nio.file.Paths
 
 fun testPlayerState(
@@ -45,7 +46,18 @@ fun testWorld(vararg solid: Triple<Int, Int, Int>): WorldState =
 fun testI18n(): I18nConfig {
     val url = object {}.javaClass.classLoader.getResource("i18n")
         ?: error("test i18n resource not found")
-    return I18nConfig(Paths.get(url.toURI()))
+    val corePath = Paths.get(url.toURI())
+    val pluginDirs = System.getProperty("projectDir")
+        ?.let { Path.of(it).resolve("plugins") }
+        ?.takeIf { it.toFile().exists() }
+        ?.let { pluginsRoot ->
+            pluginsRoot.toFile().listFiles { f -> f.isDirectory }
+                ?.map { pluginsRoot.resolve(it.name).resolve("data/i18n") }
+                ?.filter { it.toFile().exists() }
+                ?: emptyList()
+        }
+        ?: emptyList()
+    return I18nConfig(listOf(corePath) + pluginDirs)
 }
 
 fun testContext(

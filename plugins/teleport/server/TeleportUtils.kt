@@ -1,4 +1,4 @@
-package org.micoli.micraft.command
+package org.micoli.micraft.plugins.teleport
 
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.world.BlockType

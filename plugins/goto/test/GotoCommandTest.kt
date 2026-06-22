@@ -1,4 +1,4 @@
-package org.micoli.micraft.command
+package org.micoli.micraft.plugins.goto
 
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.player.Vec3

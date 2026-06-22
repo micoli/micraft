@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../data/schemas/i18n.schema.json
+teleport:
+  server:
+    usage: "Usage : /teleport <x> <y> <z>  ou  /teleport <nomJoueur>"
+    done: "Téléporté en ({0}, {1}, {2})."
+    not_found: "Joueur introuvable : {0}"

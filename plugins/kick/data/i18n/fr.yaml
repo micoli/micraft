@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../data/schemas/i18n.schema.json
+kick:
+  server:
+    usage: "Usage : /kick <nomJoueur>"
+    not_found: "Joueur introuvable : {0}"
+    kicked_you: "Vous avez été expulsé par {0}."
+    kicked_broadcast: "{0} a expulsé {1}."

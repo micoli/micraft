@@ -1,8 +1,11 @@
-package org.micoli.micraft.command
+package org.micoli.micraft.plugins.teleport
 
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.support.MapChunkGenerator
 import org.micoli.micraft.support.testWorld
+import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.WorldConstants
+import org.micoli.micraft.world.WorldState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -18,7 +21,6 @@ class TeleportUtilsTest {
 
     @Test
     fun scansUpward_whenTargetBlockIsSolid() {
-        // solid at y=10, air at y=11 and y=12
         val world = testWorld(Triple(8, 10, 8))
         val target = Vec3(8f, 10f, 8f)
         val result = safeTeleportPos(world, target)
@@ -27,7 +29,6 @@ class TeleportUtilsTest {
 
     @Test
     fun scansUpward_multipleConsecutiveSolid() {
-        // solid at y=5,6,7; air at y=8,9
         val world = testWorld(Triple(4, 5, 4), Triple(4, 6, 4), Triple(4, 7, 4))
         val target = Vec3(4f, 5f, 4f)
         val result = safeTeleportPos(world, target)
@@ -36,9 +37,8 @@ class TeleportUtilsTest {
 
     @Test
     fun returnsMaxY_whenNoSafeSpotExists() {
-        // Fill a column with stone — build a fully-solid generator
-        val blocks = (0 until WorldConstants.WORLD_MAX_Y).associate { Triple(0, it, 0) to org.micoli.micraft.world.BlockType.STONE }
-        val world = org.micoli.micraft.world.WorldState(org.micoli.micraft.support.MapChunkGenerator(blocks))
+        val blocks = (0 until WorldConstants.WORLD_MAX_Y).associate { Triple(0, it, 0) to BlockType.STONE }
+        val world = WorldState(MapChunkGenerator(blocks))
         val target = Vec3(0f, 0f, 0f)
         val result = safeTeleportPos(world, target)
         assertEquals((WorldConstants.WORLD_MAX_Y - 2).toFloat(), result.y)

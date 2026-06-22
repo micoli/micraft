@@ -1,4 +1,4 @@
-package org.micoli.micraft.command
+package org.micoli.micraft.plugins.teleport
 
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.player.Vec3
@@ -50,7 +50,6 @@ class TeleportCommandTest {
     @Test
     fun badArgs_sendsUsageError() = runBlocking {
         val session = testSession()
-        // Not a player name (no sessions) and not parseable coords
         cmd.execute(session, "notanumber", testContext(sessions = emptyList()))
         val notif = session.sent.filterIsInstance<ServerMessage.Notification>()
         assertTrue(notif.any { it.message.contains("Usage") || it.message.contains("not found") || it.message.contains("teleport") })

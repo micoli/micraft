@@ -15,16 +15,6 @@ help:
     option_item: "    • {0}"
     available_header: "Available commands:"
     details_hint: "Type /help <command> for details."
-kick:
-  server:
-    usage: "Usage: /kick <playerName>"
-    not_found: "Player not found: {0}"
-    kicked_you: "You have been kicked by {0}."
-    kicked_broadcast: "{0} kicked {1}."
-who:
-  server:
-    empty: "No players connected."
-    online: "Online ({0}):\n{1}"
 reload:
   server:
     unavailable: "Reload not available in this mode."
@@ -34,9 +24,6 @@ undo:
     nothing: "Nothing to undo."
     done_one: "Undid {0} block break."
     done_many: "Undid {0} block breaks."
-yield:
-  server:
-    usage: "Usage: /yield <message>"
 lang:
   server:
     available: "Available languages: {0}"
@@ -45,22 +32,6 @@ lang:
     unknown: "Unknown locale: {0}. Available: {1}"
   client:
     label: "Language"
-teleport:
-  server:
-    usage: "Usage: /teleport <x> <y> <z>  or  /teleport <playerName>"
-    done: "Teleported to ({0}, {1}, {2})."
-    not_found: "Player not found: {0}"
-summon:
-  server:
-    usage: "Usage: /summon <playerName>"
-    not_found: "Player not found: {0}"
-    summoned_you: "You were summoned by {0}."
-    done: "Summoned {0} to your location."
-goto:
-  server:
-    usage: "Usage: /goto <playerName>"
-    not_found: "Player not found: {0}"
-    done: "Teleported to {0}."
 inventory:
   server:
     item_picked_up: "+{0} {1}"
