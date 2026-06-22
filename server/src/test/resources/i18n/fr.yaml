@@ -1,0 +1,68 @@
+lang:
+  server:
+    available: "Langues disponibles: {0}"
+    set: "Langue définie à {0}."
+    already: "La langue est déjà {0}."
+    unknown: "Langue inconnue: {0}. Disponibles: {1}"
+  client:
+    label: "Langue"
+save:
+  server:
+    done: "Monde sauvegardé."
+teleport:
+  server:
+    usage: "Utilisation: /teleport <x> <y> <z>  ou  /teleport <joueur>"
+    done: "Téléporté à ({0}, {1}, {2})."
+    not_found: "Joueur introuvable: {0}"
+goto:
+  server:
+    usage: "Utilisation: /goto <joueur>"
+    not_found: "Joueur introuvable: {0}"
+    done: "Téléporté à {0}."
+who:
+  server:
+    empty: "Aucun joueur connecté."
+    online: "En ligne ({0}):\n{1}"
+help:
+  server:
+    unknown_cmd: "Commande inconnue: {0}"
+    no_description: "(pas de description)"
+    usage_line: "  Utilisation: {0}"
+    options_header: "  Options:"
+    option_item: "    • {0}"
+    available_header: "Commandes disponibles:"
+    details_hint: "Tapez /help <commande> pour les détails."
+kick:
+  server:
+    usage: "Utilisation: /kick <joueur>"
+    not_found: "Joueur introuvable: {0}"
+    kicked_you: "Vous avez été expulsé par {0}."
+    kicked_broadcast: "{0} a expulsé {1}."
+reload:
+  server:
+    unavailable: "Rechargement non disponible."
+    done: "Config rechargée — {0}"
+undo:
+  server:
+    nothing: "Rien à annuler."
+    done_one: "Annulé {0} cassage de bloc."
+    done_many: "Annulé {0} cassages de blocs."
+yield:
+  server:
+    usage: "Utilisation: /yield <message>"
+summon:
+  server:
+    usage: "Utilisation: /summon <joueur>"
+    not_found: "Joueur introuvable: {0}"
+    summoned_you: "Vous avez été convoqué par {0}."
+    done: "{0} convoqué à votre position."
+commands:
+  server:
+    unknown: "Commande inconnue: {0}"
+  client:
+    hint: "Tapez / pour ouvrir les commandes"
+inventory:
+  server:
+    item_picked_up: "+{0} {1}"
+  client:
+    empty: "Vide"

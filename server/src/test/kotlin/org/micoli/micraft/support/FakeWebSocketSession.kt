@@ -1,0 +1,34 @@
+package org.micoli.micraft.support
+
+import io.ktor.utils.io.InternalAPI
+import io.ktor.websocket.CloseReason
+import io.ktor.websocket.DefaultWebSocketSession
+import io.ktor.websocket.Frame
+import io.ktor.websocket.WebSocketExtension
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
+import kotlin.coroutines.CoroutineContext
+
+@Suppress("OVERRIDE_DEPRECATION")
+@OptIn(InternalAPI::class)
+class FakeWebSocketSession : DefaultWebSocketSession {
+    override val coroutineContext: CoroutineContext = Dispatchers.Unconfined + Job()
+    override var masking: Boolean = false
+    override var maxFrameSize: Long = Long.MAX_VALUE
+    override val outgoing: SendChannel<Frame> = Channel(Channel.UNLIMITED)
+    override val incoming: ReceiveChannel<Frame> = Channel(Channel.UNLIMITED)
+    override val extensions: List<WebSocketExtension<*>> = emptyList()
+    override var pingIntervalMillis: Long = 0L
+    override var timeoutMillis: Long = 15_000L
+    override val closeReason: Deferred<CloseReason?> = CompletableDeferred(null)
+
+    override suspend fun flush() {}
+    override fun terminate() {}
+
+    override fun start(negotiatedExtensions: List<WebSocketExtension<*>>) {}
+}

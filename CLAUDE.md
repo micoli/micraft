@@ -136,6 +136,7 @@ rtk ./gradlew ktlintCheck
 - Never start the server or web client — the user runs these themselves.
 - Do not read `data/world/default_world/chunks/` — binary compressed files, useless to read.
 - Commits must respect Conventional Commits standard and Semantic Commit Messages standard, body must not exceed 10 lines
+- Every server-side change (`server/src/main/`) must be accompanied by a new or updated test in `server/src/test/`. Run `rtk ./gradlew :server:test` to verify before committing.
 
 ## Schema maintenance
 

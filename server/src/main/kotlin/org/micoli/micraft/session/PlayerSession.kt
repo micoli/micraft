@@ -15,7 +15,7 @@ import org.micoli.micraft.world.WorldItem
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
-class PlayerSession(
+open class PlayerSession(
     val id: String,
     val userName: String,
     val socket: DefaultWebSocketSession,
@@ -30,7 +30,7 @@ class PlayerSession(
     val inventory: MutableMap<ItemType, Int> = ConcurrentHashMap()
     val breakHistory: ArrayDeque<BreakRecord> = ArrayDeque()
 
-    suspend fun send(msg: ServerMessage) {
+    open suspend fun send(msg: ServerMessage) {
         socket.send(Frame.Text(Json.encodeToString(msg)))
     }
 }
