@@ -32,17 +32,48 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val log = LoggerFactory.getLogger("GameLoop")
 
+fun discoverCommandHandlers(): Map<String, CommandHandler> =
+    io.github.classgraph.ClassGraph()
+        .enableClassInfo()
+        .acceptPackages("org.micoli.micraft")
+        .scan()
+        .use { result ->
+            result.getClassesImplementing(CommandHandler::class.java)
+                .filter { !it.isAbstract && !it.isInterface }
+                .mapNotNull { info ->
+                    runCatching {
+                        @Suppress("UNCHECKED_CAST")
+                        (info.loadClass() as Class<CommandHandler>)
+                            .getDeclaredConstructor()
+                            .newInstance()
+                    }.onFailure { e ->
+                        log.warn("Failed to load command handler {}: {}", info.name, e.message)
+                    }.getOrNull()
+                }
+                .associateBy { it.command }
+        }
+
+fun buildI18nDirs(base: Path = Path.of("data/i18n")): List<Path> {
+    val pluginsRoot = Path.of("plugins")
+    val pluginDirs = if (pluginsRoot.toFile().exists())
+        pluginsRoot.toFile().listFiles { f -> f.isDirectory }
+            ?.map { pluginsRoot.resolve(it.name).resolve("data/i18n") }
+            ?.filter { it.toFile().exists() }
+            ?: emptyList()
+    else emptyList()
+    return listOf(base) + pluginDirs
+}
+
 class GameLoop(
     private val world: WorldState,
     private val persistence: WorldPersistence? = null,
     private val reloadBiomes: (() -> ChunkGenerator)? = null,
-    val i18n: I18nConfig = I18nConfig(Path.of("data/i18n")),
+    val i18n: I18nConfig = I18nConfig(buildI18nDirs()),
 ) {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
     private var saveTickCounter = 0
 
-    private val commands: Map<String, CommandHandler> =
-        java.util.ServiceLoader.load(CommandHandler::class.java).associateBy { it.command }
+    private val commands: Map<String, CommandHandler> = discoverCommandHandlers()
 
     private val dropConfig = DropConfig(Path.of("data/drops/drops.yaml"))
     private val worldItems = WorldItemManager(

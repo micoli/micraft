@@ -17,7 +17,9 @@ private val NESTED_MAP_SERIALIZER = MapSerializer(
     MapSerializer(String.serializer(), MapSerializer(String.serializer(), String.serializer())),
 )
 
-class I18nConfig(private val dir: Path) {
+class I18nConfig(private val dirs: List<Path>) {
+    constructor(dir: Path) : this(listOf(dir))
+
     // locale → flat "feature:scope:key" → translation
     @Volatile private var tables: Map<String, Map<String, String>> = emptyMap()
 
@@ -26,28 +28,30 @@ class I18nConfig(private val dir: Path) {
     init { reload() }
 
     fun reload() {
-        if (!dir.exists()) {
-            log.warn("i18n directory not found at {}, no translations loaded", dir.toAbsolutePath())
-            tables = mapOf("en" to emptyMap())
-            return
-        }
-        val loaded = mutableMapOf<String, Map<String, String>>()
-        dir.listDirectoryEntries("*.yaml").forEach { file ->
-            val locale = file.nameWithoutExtension
-            runCatching {
-                val raw = Yaml.default.decodeFromString(NESTED_MAP_SERIALIZER, file.readText())
-                loaded[locale] = raw.flatMap { (feature, scopes) ->
-                    scopes.flatMap { (scope, keys) ->
-                        keys.map { (key, value) -> "$feature:$scope:$key" to value }
-                    }
-                }.toMap()
-                log.info("i18n loaded: {} ({} keys)", locale, loaded[locale]!!.size)
-            }.onFailure { e ->
-                log.warn("Failed to load i18n/{}.yaml: {}", locale, e.message)
+        val merged = mutableMapOf<String, MutableMap<String, String>>()
+        for (dir in dirs) {
+            if (!dir.exists()) {
+                log.warn("i18n directory not found at {}, skipping", dir.toAbsolutePath())
+                continue
+            }
+            dir.listDirectoryEntries("*.yaml").forEach { file ->
+                val locale = file.nameWithoutExtension
+                runCatching {
+                    val raw = Yaml.default.decodeFromString(NESTED_MAP_SERIALIZER, file.readText())
+                    val flat = raw.flatMap { (feature, scopes) ->
+                        scopes.flatMap { (scope, keys) ->
+                            keys.map { (key, value) -> "$feature:$scope:$key" to value }
+                        }
+                    }.toMap()
+                    merged.getOrPut(locale) { mutableMapOf() }.putAll(flat)
+                    log.info("i18n merged: {} from {} ({} keys)", locale, dir, flat.size)
+                }.onFailure { e ->
+                    log.warn("Failed to load i18n from {}/{}.yaml: {}", dir, locale, e.message)
+                }
             }
         }
-        if ("en" !in loaded) loaded["en"] = emptyMap()
-        tables = loaded
+        if ("en" !in merged) merged["en"] = mutableMapOf()
+        tables = merged
     }
 
     fun t(locale: String, key: String, vararg args: Any): String {

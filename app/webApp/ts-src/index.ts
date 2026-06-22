@@ -1,5 +1,6 @@
 // mc_bindings.js — BabylonJS host functions called from Kotlin/Wasm via js()
 // Must be loaded AFTER babylon.js and BEFORE webApp.js.
+import { registerAllPlugins } from '@plugins/index';
 import { registerUtils } from './utils/utils';
 import { registerEngine } from './engine/engine';
 import { registerMaterials } from './materials/materials';
@@ -28,6 +29,7 @@ registerChunks();
 registerPlayerModel();
 registerFPArms();
 registerMinimap();
+registerAllPlugins();
 
 // ── Biome colors ──────────────────────────────────────────────────────────────
 

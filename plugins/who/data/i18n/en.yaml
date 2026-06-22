@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../../../../data/schemas/i18n.schema.json
+who:
+  server:
+    empty: "No players connected."
+    online: "Online ({0}):\n{1}"

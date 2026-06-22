@@ -22,10 +22,6 @@ kick:
     not_found: "Player not found: {0}"
     kicked_you: "You have been kicked by {0}."
     kicked_broadcast: "{0} kicked {1}."
-who:
-  server:
-    empty: "No players connected."
-    online: "Online ({0}):\n{1}"
 reload:
   server:
     unavailable: "Reload not available in this mode."

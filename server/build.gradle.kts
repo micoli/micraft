@@ -4,6 +4,14 @@ plugins {
     alias(libs.plugins.kotlinxSerialization)
 }
 
+sourceSets {
+    main {
+        kotlin {
+            srcDir("${rootProject.projectDir}/plugins")
+        }
+    }
+}
+
 group = "org.micoli.micraft"
 version = "1.0.0"
 application {
@@ -12,6 +20,7 @@ application {
 
 dependencies {
     api(projects.core)
+    implementation(libs.classgraph)
     implementation(libs.logback)
     implementation(libs.ktor.serverCore)
     implementation(libs.ktor.serverNetty)
