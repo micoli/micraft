@@ -1,4 +1,4 @@
-import type { Scene, StandardMaterial, MultiMaterial } from "@babylonjs/core";
+import type { Scene, StandardMaterial } from "@babylonjs/core";
 
 export function registerMaterials(): void {
   window.mcCreateTextureMaterial = (name: string, url: string, scene: Scene): StandardMaterial => {
@@ -31,28 +31,50 @@ export function registerMaterials(): void {
     return mat;
   };
 
-  window.mcCreateGrassMaterial = (scene: Scene): MultiMaterial => {
-    const texMat = (n: string, u: string, ang?: number): StandardMaterial => {
-      const m = new BABYLON.StandardMaterial(n, scene);
-      m.diffuseTexture = new BABYLON.Texture(u, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
-      if (ang !== undefined) (m.diffuseTexture as any).wAng = ang;
-      m.diffuseTexture.hasAlpha = false;
-      m.specularColor = new BABYLON.Color3(0, 0, 0);
-      m.backFaceCulling = false;
-      return m;
+  // Creates a StandardMaterial for each block texture defined in blocks.bbmodel.
+  // Returns a Record<matKey, Material> used by mcChunkEnd.
+  // The special key "<name>:biome_tint" is created for biome-tinted faces (e.g. grass_top).
+  window.mcCreateBlockMaterials = (scene: any): Record<string, StandardMaterial> => {
+    const textures: McBlockTextureDef[] = window.mcGetBlockTextures();
+    const mats: Record<string, StandardMaterial> = {};
+
+    for (const t of textures) {
+      const mat = new BABYLON.StandardMaterial(t.name, scene);
+      mat.diffuseTexture = new BABYLON.Texture(t.url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
+      mat.specularColor = new BABYLON.Color3(0, 0, 0);
+      mat.backFaceCulling = false;
+
+      if (t.hasAlpha) {
+        (mat.diffuseTexture as any).hasAlpha = true;
+        (mat as any).useAlphaFromDiffuseTexture = true;
+      }
+
+      if (t.tint) {
+        mat.diffuseColor = new BABYLON.Color3(t.tint[0], t.tint[1], t.tint[2]);
+      }
+
+      mats[t.name] = mat;
+
+      if (t.biomeTint) {
+        // Separate material instance for biome-tinted variant; color updated via mcSetGrassTint
+        const tinted = new BABYLON.StandardMaterial(t.name + ':biome_tint', scene);
+        tinted.diffuseTexture = new BABYLON.Texture(t.url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
+        tinted.specularColor = new BABYLON.Color3(0, 0, 0);
+        tinted.backFaceCulling = false;
+        tinted.diffuseColor = new BABYLON.Color3(0.47, 0.75, 0.35); // default plains tint
+        mats[t.name + ':biome_tint'] = tinted;
+      }
+    }
+
+    // Register grass tint updater — updates diffuseColor on all biomeTint materials
+    window.mcSetGrassTint = (r: number, g: number, b: number) => {
+      for (const key of Object.keys(mats)) {
+        if (key.endsWith(':biome_tint')) {
+          (mats[key] as any).diffuseColor = new BABYLON.Color3(r, g, b);
+        }
+      }
     };
 
-    const top = texMat('grass_top', '/textures/blocks/grass_top.png');
-    top.diffuseColor = new BABYLON.Color3(0.47, 0.75, 0.35);
-    const sideFr = texMat('grass_side_fr', '/textures/blocks/grass_side.png', Math.PI);
-    const sideBk = texMat('grass_side_bk', '/textures/blocks/grass_side.png', Math.PI);
-    const sideX  = texMat('grass_side_x',  '/textures/blocks/grass_side.png', Math.PI / 2);
-    const sideX2 = texMat('grass_side_x2', '/textures/blocks/grass_side.png', Math.PI);
-    const bottom = texMat('grass_bot',    '/textures/blocks/dirt.png');
-
-    const multi = new BABYLON.MultiMaterial('grass', scene);
-    // BabylonJS CreateBox face order: 0=front(+Z), 1=back(-Z), 2=right(+X), 3=left(-X), 4=top(+Y), 5=bottom(-Y)
-    multi.subMaterials = [sideFr, sideBk, sideX2, sideX, top, bottom];
-    return multi;
+    return mats;
   };
 }

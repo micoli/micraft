@@ -3,6 +3,7 @@
 import { registerUtils } from './utils/utils';
 import { registerEngine } from './engine/engine';
 import { registerMaterials } from './materials/materials';
+import { registerBlockDefs } from './blocks/blockDefs';
 import { registerKeyboard } from './input/keyboard';
 import { registerMouse } from './input/mouse';
 import { registerCamera } from './camera/camera';
@@ -18,6 +19,7 @@ import { GameUI } from './ui/GameUI';
 registerUtils();
 registerEngine();
 registerMaterials();
+registerBlockDefs();
 registerKeyboard();
 registerMouse();
 registerCamera();

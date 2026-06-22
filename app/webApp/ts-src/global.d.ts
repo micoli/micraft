@@ -55,6 +55,46 @@ declare global {
     animations?: BbModelAnimation[];
   }
 
+  // ── Block model types (blocks.bbmodel) ───────────────────────────────────────
+
+  interface BlocksBbModelFace {
+    texture: number;
+    uv?: [number, number, number, number];
+    biome_tint?: boolean;
+  }
+
+  interface BlocksBbModelElement {
+    uuid: string;
+    name: string;
+    render_type?: string;
+    tint?: [number, number, number];
+    from: [number, number, number];
+    to: [number, number, number];
+    faces: {
+      north?: BlocksBbModelFace;
+      south?: BlocksBbModelFace;
+      east?: BlocksBbModelFace;
+      west?: BlocksBbModelFace;
+      up?: BlocksBbModelFace;
+      down?: BlocksBbModelFace;
+    };
+  }
+
+  interface BlocksBbModelTexture {
+    id: number;
+    name: string;
+    path: string;
+    source: string;
+    mc_alpha?: boolean;
+    mc_tint?: [number, number, number];
+  }
+
+  interface BlocksBbModel {
+    resolution?: { width: number; height: number };
+    elements: BlocksBbModelElement[];
+    textures: BlocksBbModelTexture[];
+  }
+
   // ── Game object types ─────────────────────────────────────────────────────────
 
   interface McInputState {
@@ -66,6 +106,25 @@ declare global {
     lastMouseMove: number;
     bindings: Record<string, string[]>;
     playerBbmodel: BbModel | null;
+  }
+
+  interface McBlockFaceInfo {
+    matKey: string;
+    uv: number[]; // 8 floats: [u0,v0, u1,v1, u2,v2, u3,v3]
+  }
+
+  interface McBlockDef {
+    name: string;
+    renderType: 'solid' | 'leaves' | 'cross_sprite';
+    faces: (McBlockFaceInfo | null)[];
+  }
+
+  interface McBlockTextureDef {
+    name: string;
+    url: string;
+    hasAlpha: boolean;
+    tint?: [number, number, number];
+    biomeTint?: boolean;
   }
 
   interface McPlayerModel {
@@ -111,6 +170,13 @@ declare global {
     __debugCamObserver: unknown;
     __mcSkinUV: (face: BbModelFace | undefined, W: number, H: number) => unknown;
     __mcSkinFaceUV: (faces: BbModelElement['faces'], W: number, H: number) => unknown[];
+    // Block defs
+    mcInitBlockDefs: () => void;
+    mcIsBlockDefsReady: () => boolean;
+    mcGetBlockDef: (ordinal: number) => McBlockDef | null;
+    mcGetBlockTextures: () => McBlockTextureDef[];
+    mcCreateBlockMaterials: (scene: any) => Record<string, any>;
+    mcSetGrassTint: (r: number, g: number, b: number) => void;
     [key: string]: unknown;
   }
 }

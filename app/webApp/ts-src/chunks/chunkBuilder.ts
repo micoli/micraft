@@ -2,13 +2,13 @@ import type { Scene, Mesh, Material } from "@babylonjs/core";
 
 // Vertex offsets for each face direction (4 vertices per face, CCW winding)
 const MC_VERTS: [number, number, number][][] = [
-  // 0: Front +Z
+  // 0: Front +Z / south
   [[-0.5,-0.5, 0.5], [ 0.5,-0.5, 0.5], [ 0.5, 0.5, 0.5], [-0.5, 0.5, 0.5]],
-  // 1: Back  -Z
+  // 1: Back  -Z / north
   [[ 0.5,-0.5,-0.5], [-0.5,-0.5,-0.5], [-0.5, 0.5,-0.5], [ 0.5, 0.5,-0.5]],
-  // 2: Right +X
+  // 2: Right +X / east
   [[ 0.5,-0.5, 0.5], [ 0.5,-0.5,-0.5], [ 0.5, 0.5,-0.5], [ 0.5, 0.5, 0.5]],
-  // 3: Left  -X
+  // 3: Left  -X / west
   [[-0.5,-0.5,-0.5], [-0.5,-0.5, 0.5], [-0.5, 0.5, 0.5], [-0.5, 0.5,-0.5]],
   // 4: Top   +Y
   [[-0.5, 0.5, 0.5], [ 0.5, 0.5, 0.5], [ 0.5, 0.5,-0.5], [-0.5, 0.5,-0.5]],
@@ -18,7 +18,6 @@ const MC_VERTS: [number, number, number][][] = [
 const MC_NORMS: [number, number, number][] = [
   [0,0,1], [0,0,-1], [1,0,0], [-1,0,0], [0,1,0], [0,-1,0],
 ];
-const MC_UV = [0,1, 1,1, 1,0, 0,0]; // full texture per face
 
 interface FaceGroup {
   p: number[]; n: number[]; u: number[]; i: number[]; v: number;
@@ -30,36 +29,7 @@ interface ChunkBuf {
 
 let __mcBuf: ChunkBuf | null = null;
 
-// BlockType ordinals: AIR=0, BEDROCK=1, STONE=2, DIRT=3, GRASS=4, SAND=5, SANDSTONE=6, GRAVEL=7, SNOW=8,
-//   OAK_LOG=9, OAK_LEAVES=10, PINE_LOG=11, PINE_LEAVES=12, PINE_LEAVES_SNOW=13, FLOWER=14, WEED=15
-// faceMat = blockOrdinal * 6 + faceDir (0=+Z,1=-Z,2=+X,3=-X,4=+Y,5=-Y)
-function matGroup(faceMat: number): string {
-  const faceDir = faceMat % 6;
-  const typeOrd = (faceMat - faceDir) / 6;
-  if (typeOrd === 4) {
-    if (faceDir === 4) return 'gt';   // grass top
-    if (faceDir === 5) return 'gb';   // grass bottom
-    if (faceDir === 0) return 'gf';   // grass front
-    if (faceDir === 1) return 'gbk';  // grass back
-    return 'gx';                       // grass side
-  }
-  if (typeOrd === 2) return 's';   // STONE
-  if (typeOrd === 3) return 'd';   // DIRT
-  if (typeOrd === 5) return 'sa';  // SAND
-  if (typeOrd === 6) return 'ss';  // SANDSTONE
-  if (typeOrd === 7) return 'gr';  // GRAVEL
-  if (typeOrd === 8) return 'sn';  // SNOW
-  if (typeOrd === 9)  return (faceDir === 4 || faceDir === 5) ? 'olt' : 'ol';  // OAK_LOG
-  if (typeOrd === 10) return 'ole';   // OAK_LEAVES
-  if (typeOrd === 11) return (faceDir === 4 || faceDir === 5) ? 'plt' : 'pl';  // PINE_LOG
-  if (typeOrd === 12) return 'ple';   // PINE_LEAVES
-  if (typeOrd === 13) return 'ples';  // PINE_LEAVES_SNOW
-  if (typeOrd === 14) return 'fl';    // FLOWER (cross-sprite)
-  if (typeOrd === 15) return 'wd';    // WEED (cross-sprite)
-  return 'b';                         // BEDROCK (and fallback)
-}
-
-function emitCrossSprite(wx: number, wy: number, wz: number, mk: string, grp: Record<string, FaceGroup>): void {
+function emitCrossSprite(wx: number, wy: number, wz: number, mk: string, grp: Record<string, FaceGroup>, uv: number[]): void {
   if (!grp[mk]) grp[mk] = { p: [], n: [], u: [], i: [], v: 0 };
   const g = grp[mk];
   const QUADS: [number, number, number][][] = [
@@ -70,7 +40,7 @@ function emitCrossSprite(wx: number, wy: number, wz: number, mk: string, grp: Re
     for (let k = 0; k < 4; k++) {
       g.p.push(wx + q[k][0], wy + q[k][1], wz + q[k][2]);
       g.n.push(0, 1, 0);
-      g.u.push(MC_UV[k * 2], MC_UV[k * 2 + 1]);
+      g.u.push(uv[k * 2], uv[k * 2 + 1]);
     }
     const b = g.v; g.i.push(b, b + 1, b + 2, b, b + 2, b + 3); g.v += 4;
   }
@@ -90,18 +60,26 @@ export function registerChunks(): void {
   };
 
   window.mcChunkFace = (wx: number, wy: number, wz: number, faceMat: number): void => {
-    const mk     = matGroup(faceMat);
-    const fd     = faceMat % 6;
+    if (!__mcBuf) return;
+    const fd      = faceMat % 6;
     const typeOrd = (faceMat - fd) / 6;
-    const grp    = __mcBuf!.groups;
+    const grp     = __mcBuf.groups;
 
-    // Cross-sprite blocks: emit geometry only on first call (faceDir=0) per block
-    if (typeOrd === 14 || typeOrd === 15) {
+    const blockDef = window.mcGetBlockDef(typeOrd);
+    if (!blockDef) return;
+
+    if (blockDef.renderType === 'cross_sprite') {
       if (fd !== 0) return;
-      emitCrossSprite(wx, wy, wz, mk, grp);
+      const faceInfo = blockDef.faces[0]; // cross-sprite uses the "south" face definition
+      if (!faceInfo) return;
+      emitCrossSprite(wx, wy, wz, faceInfo.matKey, grp, faceInfo.uv);
       return;
     }
 
+    const faceInfo = blockDef.faces[fd];
+    if (!faceInfo) return;
+
+    const mk = faceInfo.matKey;
     if (!grp[mk]) grp[mk] = { p: [], n: [], u: [], i: [], v: 0 };
     const g  = grp[mk];
     const vt = MC_VERTS[fd];
@@ -109,35 +87,15 @@ export function registerChunks(): void {
     for (let k = 0; k < 4; k++) {
       g.p.push(wx + vt[k][0], wy + vt[k][1], wz + vt[k][2]);
       g.n.push(nm[0], nm[1], nm[2]);
-      g.u.push(MC_UV[k * 2], MC_UV[k * 2 + 1]);
+      g.u.push(faceInfo.uv[k * 2], faceInfo.uv[k * 2 + 1]);
     }
     const b = g.v; g.i.push(b, b+1, b+2, b, b+2, b+3); g.v += 4;
   };
 
-  // grassMat is a BABYLON.MultiMaterial;
-  // subMaterials = [sideFr(0), sideBk(1), sideX2(2), sideX(3), top(4), bottom(5)]
-  window.mcChunkEnd = (
-    scene: Scene,
-    grassMat: any, stoneMat: Material, dirtMat: Material, bedrockMat: Material,
-    sandMat: Material, sandstoneMat: Material, gravelMat: Material, snowMat: Material,
-    oakLogMat: Material, oakLogTopMat: Material, oakLeavesMat: Material,
-    pineLogMat: Material, pineLogTopMat: Material, pineLeavesMat: Material, pineLeavesSnowMat: Material,
-    flowerMat: Material, weedMat: Material,
-  ): void => {
+  window.mcChunkEnd = (scene: Scene, materials: Record<string, Material>): void => {
     const buf = __mcBuf!; __mcBuf = null;
     const key = buf.key;
     disposeChunk(key);
-
-    const gsm: Material[] = (grassMat?.subMaterials) ?? [];
-    const matMap: Record<string, Material | null> = {
-      s: stoneMat, d: dirtMat, b: bedrockMat,
-      gt: gsm[4] ?? null, gb: gsm[5] ?? null,
-      gf: gsm[0] ?? null, gbk: gsm[1] ?? null, gx: gsm[2] ?? null,
-      sa: sandMat, ss: sandstoneMat, gr: gravelMat, sn: snowMat,
-      ol: oakLogMat, olt: oakLogTopMat, ole: oakLeavesMat,
-      pl: pineLogMat, plt: pineLogTopMat, ple: pineLeavesMat, ples: pineLeavesSnowMat,
-      fl: flowerMat, wd: weedMat,
-    };
 
     const meshes: Mesh[] = [];
     for (const mk of Object.keys(buf.groups)) {
@@ -147,7 +105,7 @@ export function registerChunks(): void {
       const vd   = new BABYLON.VertexData();
       vd.positions = g.p; vd.normals = g.n; vd.uvs = g.u; vd.indices = g.i;
       vd.applyToMesh(mesh, false);
-      mesh.material = matMap[mk] ?? null;
+      mesh.material = materials[mk] ?? null;
       mesh.freezeWorldMatrix();
       mesh.isPickable = false;
       mesh.doNotSyncBoundingInfo = true;
@@ -155,5 +113,4 @@ export function registerChunks(): void {
     }
     window.__mcChunks[key] = meshes;
   };
-
 }

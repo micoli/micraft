@@ -77,28 +77,29 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
     private var hoverTarget: BlockPos? = null
     private val outMessages = Channel<ClientMessage>(Channel.BUFFERED)
 
+    private var blockMaterials: JsAny? = null
+
     init {
         jsOptimizeScene(scene)
         jsInitPlayerModel()
+        jsInitBlockDefs()
     }
 
-    private val grassMat   = jsCreateGrassMaterial(scene)
-    private val stoneMat   = jsCreateTextureMaterial("stone",   "/textures/blocks/stone.png",   scene)
-    private val dirtMat    = jsCreateTextureMaterial("dirt",    "/textures/blocks/dirt.png",    scene)
-    private val bedrockMat   = jsCreateTextureMaterial("bedrock",    "/textures/blocks/bedrock.png",    scene)
-    private val sandMat      = jsCreateTextureMaterial("sand",       "/textures/blocks/sand.png",       scene)
-    private val sandstoneMat = jsCreateTextureMaterial("sandstone",  "/textures/blocks/sandstone.png",  scene)
-    private val gravelMat    = jsCreateTextureMaterial("gravel",     "/textures/blocks/gravel.png",     scene)
-    private val snowMat          = jsCreateTextureMaterial("snow",            "/textures/blocks/snow.png",             scene)
-    private val oakLogMat        = jsCreateTextureMaterial("oak_log",         "/textures/blocks/log_oak.png",          scene)
-    private val oakLogTopMat     = jsCreateTextureMaterial("oak_log_top",     "/textures/blocks/log_oak_top.png",      scene)
-    private val oakLeavesMat     = jsCreateLeavesMaterial("oak_leaves",       "/textures/blocks/leaves_oak.png",       scene)
-    private val pineLogMat       = jsCreateTextureMaterial("pine_log",        "/textures/blocks/log_spruce.png",       scene)
-    private val pineLogTopMat    = jsCreateTextureMaterial("pine_log_top",    "/textures/blocks/log_spruce_top.png",   scene)
-    private val pineLeavesMat    = jsCreateLeavesMaterial("pine_leaves",      "/textures/blocks/leaves_spruce.png",    scene)
-    private val pineLeavesSnowMat = jsCreateLeavesMaterialTinted("pine_leaves_snow", "/textures/blocks/leaves_spruce.png", scene, 0.9, 0.95, 1.0)
-    private val flowerMat        = jsCreateCrossSpriteMaterial("flower",      "/textures/blocks/flower_dandelion.png", scene)
-    private val weedMat          = jsCreateCrossSpriteMaterial("weed",        "/textures/blocks/tallgrass.png",        scene)
+    private fun getBlockMaterials(): JsAny? {
+        if (blockMaterials == null && jsIsBlockDefsReady()) {
+            blockMaterials = jsCreateBlockMaterials(scene)
+        }
+        return blockMaterials
+    }
+
+    // Grass color per biome — defaults to plains green; extend as new biomes are added
+    private fun biomeGrassColor(biome: String): Triple<Double, Double, Double> = when (biome) {
+        "forest"    -> Triple(0.35, 0.60, 0.20)
+        "mountains" -> Triple(0.42, 0.62, 0.28)
+        "tundra"    -> Triple(0.55, 0.65, 0.50)
+        "desert"    -> Triple(0.65, 0.70, 0.30)
+        else        -> Triple(0.47, 0.75, 0.35) // plains default
+    }
 
     fun connect(host: String, port: Int, username: String, playerName: String, preferredLanguage: String = "en") {
         serverHost = host
@@ -488,6 +489,10 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                     hudStance = if (s.flying) "FLYING" else s.stance.name
                     hudSpeed  = s.speedMultiplier.toDouble()
                     hudBiome  = s.biome
+                    if (blockMaterials != null) {
+                        val (gr, gg, gb) = biomeGrassColor(s.biome)
+                        jsSetGrassTint(gr, gg, gb)
+                    }
                 } else {
                     playerNames[s.id] = s.name
                     updateConnectedPlayersAutocomplete()
@@ -535,6 +540,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
     }
 
     private fun renderChunk(chunk: Chunk, topY: Int) {
+        val mats = getBlockMaterials() ?: return // block defs not yet loaded
         val chunkKey = "${chunk.pos.cx},${chunk.pos.cz}"
         jsDisposeChunk(chunkKey)
         chunkData[chunk.pos] = Pair(chunk, topY)
@@ -562,12 +568,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                 }
             }
         }
-        jsChunkEnd(
-            scene, grassMat, stoneMat, dirtMat, bedrockMat, sandMat, sandstoneMat, gravelMat, snowMat,
-            oakLogMat, oakLogTopMat, oakLeavesMat,
-            pineLogMat, pineLogTopMat, pineLeavesMat, pineLeavesSnowMat,
-            flowerMat, weedMat,
-        )
+        jsChunkEnd(scene, mats)
         loadedChunks.add(chunk.pos)
         pushMinimapChunk(chunk, topY)
     }

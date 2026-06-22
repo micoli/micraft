@@ -50,13 +50,7 @@ fun jsOptimizeScene(scene: JsAny): Unit = js("mcOptimizeScene(scene)")
 
 fun jsChunkBegin(cx: Int, cz: Int): Unit = js("mcChunkBegin(cx, cz)")
 fun jsChunkFace(wx: Int, wy: Int, wz: Int, faceMat: Int): Unit = js("mcChunkFace(wx, wy, wz, faceMat)")
-fun jsChunkEnd(
-    scene: JsAny, gm: JsAny, sm: JsAny, dm: JsAny, bm: JsAny,
-    sandMat: JsAny, sandstoneMat: JsAny, gravelMat: JsAny, snowMat: JsAny,
-    oakLogMat: JsAny, oakLogTopMat: JsAny, oakLeavesMat: JsAny,
-    pineLogMat: JsAny, pineLogTopMat: JsAny, pineLeavesMat: JsAny, pineLeavesSnowMat: JsAny,
-    flowerMat: JsAny, weedMat: JsAny,
-): Unit = js("mcChunkEnd(scene, gm, sm, dm, bm, sandMat, sandstoneMat, gravelMat, snowMat, oakLogMat, oakLogTopMat, oakLeavesMat, pineLogMat, pineLogTopMat, pineLeavesMat, pineLeavesSnowMat, flowerMat, weedMat)")
+fun jsChunkEnd(scene: JsAny, materials: JsAny): Unit = js("mcChunkEnd(scene, materials)")
 fun jsDisposeChunk(key: String): Unit = js("mcDisposeChunk(key)")
 
 fun jsSetMeshPosition(mesh: JsAny, x: Double, y: Double, z: Double): Unit =
@@ -75,20 +69,12 @@ fun jsSetMaterialColor(mat: JsAny, r: Double, g: Double, b: Double): Unit =
 fun jsSetMeshMaterial(mesh: JsAny, mat: JsAny): Unit =
     js("mesh.material = mat")
 
-fun jsCreateTextureMaterial(name: String, url: String, scene: JsAny): JsAny =
-    js("mcCreateTextureMaterial(name, url, scene)")
+// ── Block definitions (bbmodel-driven) ───────────────────────────────────────
 
-fun jsCreateLeavesMaterial(name: String, url: String, scene: JsAny): JsAny =
-    js("mcCreateLeavesMaterial(name, url, scene)")
-
-fun jsCreateLeavesMaterialTinted(name: String, url: String, scene: JsAny, r: Double, g: Double, b: Double): JsAny =
-    js("mcCreateLeavesMaterial(name, url, scene, r, g, b)")
-
-fun jsCreateCrossSpriteMaterial(name: String, url: String, scene: JsAny): JsAny =
-    js("mcCreateCrossSpriteMaterial(name, url, scene)")
-
-fun jsCreateGrassMaterial(scene: JsAny): JsAny =
-    js("mcCreateGrassMaterial(scene)")
+fun jsInitBlockDefs(): Unit = js("mcInitBlockDefs()")
+fun jsIsBlockDefsReady(): Boolean = js("mcIsBlockDefsReady()")
+fun jsCreateBlockMaterials(scene: JsAny): JsAny = js("mcCreateBlockMaterials(scene)")
+fun jsSetGrassTint(r: Double, g: Double, b: Double): Unit = js("mcSetGrassTint(r, g, b)")
 
 // ── Input ─────────────────────────────────────────────────────────────────────
 
