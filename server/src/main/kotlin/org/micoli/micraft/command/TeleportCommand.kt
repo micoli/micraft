@@ -9,12 +9,25 @@ import org.micoli.micraft.session.PlayerSession
 class TeleportCommand : CommandHandler {
     override val command = "/teleport"
     override val description = "Teleports you to the given coordinates."
-    override val usage = "/teleport <x> <y> <z>"
+    override val usage = "/teleport <x> <y> <z>  |  /teleport <playerName>"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
         val i18n = context.i18n
         val parts = args.trim().split(Regex("\\s+|,"))
+        if (parts.size == 1 && parts[0].isNotEmpty() && parts[0].toFloatOrNull() == null) {
+            val target = context.sessions().find { it.state.name == parts[0] }
+            if (target == null) {
+                session.send(ServerMessage.Notification(i18n.t(lang, "teleport:server:not_found", parts[0])))
+                return
+            }
+            val dest = safeTeleportPos(context.world, target.state.pos)
+            session.state = session.state.copy(pos = dest)
+            session.vy = 0f
+            session.send(ServerMessage.PlayerUpdate(session.state))
+            session.send(ServerMessage.Notification(i18n.t(lang, "teleport:server:done", dest.x.toInt(), dest.y.toInt(), dest.z.toInt())))
+            return
+        }
         val x = parts.getOrNull(0)?.toFloatOrNull()
         val y = parts.getOrNull(1)?.toFloatOrNull()
         val z = parts.getOrNull(2)?.toFloatOrNull()

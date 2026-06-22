@@ -48,8 +48,9 @@ lang:
     label: "Language"
 teleport:
   server:
-    usage: "Usage: /teleport <x> <y> <z>"
+    usage: "Usage: /teleport <x> <y> <z>  or  /teleport <playerName>"
     done: "Teleported to ({0}, {1}, {2})."
+    not_found: "Player not found: {0}"
 summon:
   server:
     usage: "Usage: /summon <playerName>"
