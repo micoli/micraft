@@ -29,6 +29,22 @@ registerPlayerModel();
 registerFPArms();
 registerMinimap();
 
+// ── Biome colors ──────────────────────────────────────────────────────────────
+
+let _biomeColors: Record<string, [number, number, number]> = {};
+
+(window as any).mcFetchBiomeColors = () => {
+  fetch('/api/biomes')
+    .then(r => r.json())
+    .then((data: Record<string, [number, number, number]>) => { _biomeColors = data; })
+    .catch(() => {});
+};
+
+(window as any).mcApplyBiomeGrassTint = (biome: string) => {
+  const [r, g, b] = _biomeColors[biome] ?? [0.47, 0.75, 0.35];
+  (window as any).mcSetGrassTint(r, g, b);
+};
+
 // ── i18n ─────────────────────────────────────────────────────────────────────
 
 let _i18nTable: Record<string, string> = {};

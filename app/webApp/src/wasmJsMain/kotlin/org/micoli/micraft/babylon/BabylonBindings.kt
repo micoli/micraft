@@ -167,6 +167,11 @@ fun jsGetUrlParam(name: String): String = js("mcGetUrlParam(name)")
 fun jsSetupDebugCameraKeys(camera: JsAny, scene: JsAny, bx: Double, by: Double, bz: Double): Unit =
     js("mcSetupDebugCameraKeys(camera, scene, bx, by, bz)")
 
+// ── Biome colors ──────────────────────────────────────────────────────────────
+
+fun jsFetchBiomeColors(): Unit = js("mcFetchBiomeColors()")
+fun jsApplyBiomeGrassTint(biome: String): Unit = js("mcApplyBiomeGrassTint(biome)")
+
 // ── i18n ─────────────────────────────────────────────────────────────────────
 
 fun jsFetchI18n(locale: String): Unit = js("mcFetchI18n(locale)")

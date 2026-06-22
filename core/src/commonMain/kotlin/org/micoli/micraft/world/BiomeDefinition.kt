@@ -26,6 +26,7 @@ data class BiomeDefinition(
     val vegetation: List<VegetationEntry> = emptyList(),
     val elevationMin: Int = 40,
     val elevationMax: Int = 120,
+    val grassColor: List<Double>? = null,
 )
 
 @Serializable

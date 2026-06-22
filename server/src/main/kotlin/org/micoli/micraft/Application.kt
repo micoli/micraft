@@ -115,6 +115,13 @@ fun Application.module() {
             val serializer = MapSerializer(String.serializer(), String.serializer())
             call.respondText(Json.encodeToString(serializer, keys), ContentType.Application.Json)
         }
+        get("/api/biomes") {
+            val colors = biomeRegistry.biomes.associate { b ->
+                b.id to (b.grassColor ?: listOf(0.47, 0.75, 0.35))
+            }
+            val serializer = MapSerializer(String.serializer(), ListSerializer(Double.serializer()))
+            call.respondText(Json.encodeToString(serializer, colors), ContentType.Application.Json)
+        }
         webSocket("/game") {
             gameLoop.onConnect(this)
         }

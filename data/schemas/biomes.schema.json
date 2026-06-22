@@ -63,7 +63,14 @@
           "items": { "$ref": "#/$defs/vegetationEntry" }
         },
         "elevationMin": { "type": "integer", "default": 40 },
-        "elevationMax": { "type": "integer", "default": 120 }
+        "elevationMax": { "type": "integer", "default": 120 },
+        "grassColor": {
+          "type": "array",
+          "items": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "RGB grass tint [r, g, b] in [0, 1] range. Omit to use the client default."
+        }
       }
     }
   }

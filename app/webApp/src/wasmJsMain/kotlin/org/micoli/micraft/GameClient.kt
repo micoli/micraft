@@ -92,15 +92,6 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
         return blockMaterials
     }
 
-    // Grass color per biome — defaults to plains green; extend as new biomes are added
-    private fun biomeGrassColor(biome: String): Triple<Double, Double, Double> = when (biome) {
-        "forest"    -> Triple(0.35, 0.60, 0.20)
-        "mountains" -> Triple(0.42, 0.62, 0.28)
-        "tundra"    -> Triple(0.55, 0.65, 0.50)
-        "desert"    -> Triple(0.65, 0.70, 0.30)
-        else        -> Triple(0.47, 0.75, 0.35) // plains default
-    }
-
     fun connect(host: String, port: Int, username: String, playerName: String, preferredLanguage: String = "en") {
         serverHost = host
         serverPort = port
@@ -453,6 +444,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                 uiState.consolePlayerName = msg.playerName
                 // Re-fetch with server's authoritative language (may differ from login preference for returning players)
                 jsFetchI18n(msg.language)
+                jsFetchBiomeColors()
             }
             is ServerMessage.ChunkData -> {
                 renderChunk(Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
@@ -490,8 +482,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                     hudSpeed  = s.speedMultiplier.toDouble()
                     hudBiome  = s.biome
                     if (blockMaterials != null) {
-                        val (gr, gg, gb) = biomeGrassColor(s.biome)
-                        jsSetGrassTint(gr, gg, gb)
+                        jsApplyBiomeGrassTint(s.biome)
                     }
                 } else {
                     playerNames[s.id] = s.name
