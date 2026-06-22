@@ -14,6 +14,7 @@ import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.world.PlayerConstants
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldState
+import org.micoli.micraft.world.isSolid
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(MovementProcessor::class.java)
@@ -24,6 +25,7 @@ class MovementProcessor(private val world: WorldState) {
         val old = session.state
         val w   = PlayerConstants.WIDTH
         val pos = old.pos
+        val solid = { bx: Int, by: Int, bz: Int -> world.getBlock(bx, by, bz).isSolid }
 
         val newSpeedMult = when {
             input.speedUpRequested   -> (old.speedMultiplier + 0.5f).coerceAtMost(5.0f)
@@ -34,7 +36,7 @@ class MovementProcessor(private val world: WorldState) {
         val newFlying = if (input.flyToggleRequested) !old.flying else old.flying
         if (input.flyToggleRequested && newFlying) session.vy = 0f
 
-        var newStance = if (!newFlying && AabbCollider.canAdoptStance(world, pos.x, pos.y, pos.z, w, input.stance.height, old.stance.height))
+        var newStance = if (!newFlying && AabbCollider.canAdoptStance(solid, pos.x, pos.y, pos.z, w, input.stance.height, old.stance.height))
             input.stance else old.stance
 
         val h     = newStance.height
@@ -44,20 +46,20 @@ class MovementProcessor(private val world: WorldState) {
         val nx = if (len > 0f) input.dx / len else 0f
         val nz = if (len > 0f) input.dz / len else 0f
 
-        if (!newFlying && input.jumpRequested && session.vy == 0f && AabbCollider.isGrounded(world, pos.x, pos.y, pos.z, w)) {
+        if (!newFlying && input.jumpRequested && session.vy == 0f && AabbCollider.isGrounded(solid, pos.x, pos.y, pos.z, w)) {
             session.vy = JUMP_SPEED
             if (newStance != PlayerStance.STANDING) newStance = PlayerStance.STANDING
         }
 
-        val resolvedDx = AabbCollider.resolveX(world, pos.x, pos.y, pos.z, w, h, nx * speed)
+        val resolvedDx = AabbCollider.resolveX(solid, pos.x, pos.y, pos.z, w, h, nx * speed)
         val midX = pos.x + resolvedDx
-        val resolvedDz = AabbCollider.resolveZ(world, midX, pos.y, pos.z, w, h, nz * speed)
+        val resolvedDz = AabbCollider.resolveZ(solid, midX, pos.y, pos.z, w, h, nz * speed)
         val newX = midX
         val newZ = pos.z + resolvedDz
 
         val newY = if (newFlying) {
             val flyDy = input.dy * FLY_VERTICAL_SPEED * newSpeedMult * TICK_SECONDS
-            val resolvedDy = AabbCollider.resolveY(world, newX, pos.y, newZ, w, h, flyDy)
+            val resolvedDy = AabbCollider.resolveY(solid, newX, pos.y, newZ, w, h, flyDy)
             (pos.y + resolvedDy).coerceIn(0f, WorldConstants.WORLD_MAX_Y.toFloat())
         } else {
             applyGravity(session, newX, pos.y, newZ, h)
@@ -75,15 +77,16 @@ class MovementProcessor(private val world: WorldState) {
 
     private fun applyGravity(session: PlayerSession, cx: Float, cy: Float, cz: Float, h: Float): Float {
         val w = PlayerConstants.WIDTH
-        if (session.vy <= 0f && AabbCollider.isGrounded(world, cx, cy, cz, w)) {
+        val solid = { bx: Int, by: Int, bz: Int -> world.getBlock(bx, by, bz).isSolid }
+        if (session.vy <= 0f && AabbCollider.isGrounded(solid, cx, cy, cz, w)) {
             session.vy = 0f
             // Snap to ground surface in case the player partially sank into a block
-            val snapDy = AabbCollider.resolveY(world, cx, cy, cz, w, h, -1f)
+            val snapDy = AabbCollider.resolveY(solid, cx, cy, cz, w, h, -1f)
             return (cy + snapDy).coerceAtLeast(0f)
         }
         session.vy += GRAVITY * TICK_SECONDS
         val dy = session.vy * TICK_SECONDS
-        val resolvedDy = AabbCollider.resolveY(world, cx, cy, cz, w, h, dy)
+        val resolvedDy = AabbCollider.resolveY(solid, cx, cy, cz, w, h, dy)
         if (resolvedDy != dy) {
             if (session.vy < 0f) log.debug("player {} landed at y={}", session.id.take(8), cy + resolvedDy)
             session.vy = 0f

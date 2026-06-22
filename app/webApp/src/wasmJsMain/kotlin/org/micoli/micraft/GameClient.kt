@@ -8,8 +8,10 @@ import kotlinx.coroutines.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.babylon.*
+import org.micoli.micraft.physics.AabbCollider
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.eyeOffset
+import org.micoli.micraft.player.height
 import org.micoli.micraft.player.speed
 import kotlinx.coroutines.channels.Channel
 import org.micoli.micraft.protocol.ClientMessage
@@ -20,6 +22,7 @@ import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.Chunk
 import org.micoli.micraft.world.ChunkPos
+import org.micoli.micraft.world.PlayerConstants
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.isSolid
 
@@ -313,8 +316,14 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
             else                                    -> PlayerStance.STANDING
         }
         val speed = stance.speed * localSpeedMult * PRED_DT.toFloat()
-        predX += (dx * speed).toDouble()
-        predZ += (dz * speed).toDouble()
+        val solid = { bx: Int, by: Int, bz: Int -> getBlockAtWorld(bx, by, bz).isSolid }
+        val h = stance.height
+        val desiredDx = dx * speed
+        val resolvedDx = AabbCollider.resolveX(solid, predX.toFloat(), predY.toFloat(), predZ.toFloat(), PlayerConstants.WIDTH, h, desiredDx)
+        predX += resolvedDx.toDouble()
+        val desiredDz = dz * speed
+        val resolvedDz = AabbCollider.resolveZ(solid, predX.toFloat(), predY.toFloat(), predZ.toFloat(), PlayerConstants.WIDTH, h, desiredDz)
+        predZ += resolvedDz.toDouble()
 
         if (localFlying) {
             val fwdY = jsGetCameraForwardY(camera).toFloat()
