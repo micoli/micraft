@@ -5,6 +5,7 @@ class ProceduralChunkGenerator(
     private val biomeRegistry: BiomeRegistry = BiomeRegistry.default(),
 ) : ChunkGenerator {
     private val elevationNoise = PerlinNoise(seed)
+    private val mountainNoise  = PerlinNoise(seed + 2L)
     private val moistureNoise  = PerlinNoise(seed + 1L)
     private val voronoi        = VoronoiBiomeZones(seed, biomeRegistry, moistureNoise)
 
@@ -13,7 +14,15 @@ class ProceduralChunkGenerator(
         val t = (n + 1.0) / 2.0
         val eMin = sample.primary.elevationMin + sample.blendFactor * (sample.secondary.elevationMin - sample.primary.elevationMin)
         val eMax = sample.primary.elevationMax + sample.blendFactor * (sample.secondary.elevationMax - sample.primary.elevationMax)
-        return (eMin + t * (eMax - eMin)).toInt()
+        val baseY = eMin + t * (eMax - eMin)
+
+        // Independent large-scale ridge noise (~400-block ranges) that lifts terrain
+        // beyond the moisture biome's elevationMax, enabling altitude-constrained biomes
+        // (mountains, tundra) to trigger in any moisture zone.
+        val m = mountainNoise.octaveNoise(wx / 400.0, wz / 400.0, octaves = 4, persistence = 0.5)
+        val mountainBoost = maxOf(0.0, m) * 60.0
+
+        return (baseY + mountainBoost).toInt()
             .coerceIn(4, WorldConstants.WORLD_MAX_Y - 1)
     }
 
