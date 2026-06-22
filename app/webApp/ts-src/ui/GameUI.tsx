@@ -8,10 +8,10 @@ import { Notifications } from './Notifications';
 import { LoginOverlay } from './LoginOverlay';
 import { DisconnectOverlay } from './DisconnectOverlay';
 
-const MC_LOG_MAX = 10;
+const MC_LOG_MAX = 100;
 
 const initial: UiState = {
-  hud: null, notif: null, logs: [], inventory: {},
+  hud: null, notif: null, logs: [], logVisible: false, logKey: 0, inventory: {},
   hotbarVisible: false, consoleOpen: false,
   loginVisible: false, disconnectMsg: null,
 };
@@ -27,8 +27,9 @@ function reducer(state: UiState, action: UiAction): UiState {
       const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
       const entry: LogEntry = { time, msg: action.msg };
       const logs = [...state.logs, entry].slice(-MC_LOG_MAX);
-      return { ...state, logs };
+      return { ...state, logs, logVisible: true, logKey: state.logKey + 1 };
     }
+    case 'log_hide': return { ...state, logVisible: false };
     case 'inventory':    return { ...state, inventory: action.data };
     case 'hotbar_toggle': return { ...state, hotbarVisible: !state.hotbarVisible };
     case 'console_show': return { ...state, consoleOpen: true };
@@ -44,6 +45,7 @@ export function GameUI() {
   const [state, dispatch] = useReducer(reducer, initial);
 
   // Refs for synchronous reads by Kotlin
+  const logTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const consoleOpenRef = useRef(false);
   const consoleStateRef = useRef({ history: [] as string[], histIdx: -1, playerName: '', tabIdx: -1, tabMatches: [] as string[] });
   const consoleSubmittedRef = useRef<string | null>(null);
@@ -52,6 +54,14 @@ export function GameUI() {
 
   // Keep consoleOpenRef in sync
   useEffect(() => { consoleOpenRef.current = state.consoleOpen; }, [state.consoleOpen]);
+
+  // Auto-hide server log after 5s of no new messages
+  useEffect(() => {
+    if (!state.logVisible) return;
+    if (logTimerRef.current) clearTimeout(logTimerRef.current);
+    logTimerRef.current = setTimeout(() => dispatch({ type: 'log_hide' }), 5000);
+    return () => { if (logTimerRef.current) clearTimeout(logTimerRef.current); };
+  }, [state.logKey]);
 
   // Auto-dismiss notifications
   useEffect(() => {
@@ -129,7 +139,7 @@ export function GameUI() {
     <>
       <HUD data={state.hud} />
       <Hotbar inventory={state.inventory} visible={state.hotbarVisible} />
-      <ServerLog logs={state.logs} />
+      <ServerLog logs={state.logs} visible={state.logVisible} />
       <Notifications notif={state.notif?.msg ? state.notif : null} />
       <Console
         open={state.consoleOpen}

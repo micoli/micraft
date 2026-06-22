@@ -15,6 +15,8 @@ export interface UiState {
   hud: HudData | null;
   notif: { msg: string; key: number } | null;
   logs: LogEntry[];
+  logVisible: boolean;
+  logKey: number;
   inventory: Record<string, number>;
   hotbarVisible: boolean;
   consoleOpen: boolean;
@@ -33,4 +35,5 @@ export type UiAction =
   | { type: 'login_show' }
   | { type: 'login_hide' }
   | { type: 'disconnect_show'; message: string }
-  | { type: 'disconnect_hide' };
+  | { type: 'disconnect_hide' }
+  | { type: 'log_hide' };
