@@ -22,6 +22,7 @@ import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.Chunk
 import org.micoli.micraft.world.ChunkPos
+import org.micoli.micraft.world.ItemType
 import org.micoli.micraft.world.PlayerConstants
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.isSolid
@@ -84,6 +85,8 @@ private val AO_NEIGHBORS: Array<Array<Array<IntArray>>> = arrayOf(
 
 private enum class ViewMode { FIRST_PERSON, THIRD_PERSON }
 
+private data class RaycastResult(val target: BlockPos, val adjacent: BlockPos)
+
 class GameClient(private val scene: JsAny, private val camera: JsAny, private val uiState: McUiState) {
     private val playerModels = mutableMapOf<String, JsAny>()
     private val playerPrevPos = mutableMapOf<String, Triple<Double, Double, Double>>()
@@ -127,9 +130,14 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
     private var serverHost = ""
     private var serverPort = 0
 
-    // Block breaking state
+    // Block breaking / placing state
     private var breakTarget: BlockPos? = null
     private var hoverTarget: BlockPos? = null
+
+    // ShortcutBar: slot 0 = hand (always null), slots 1–9 = buildable items
+    private var selectedSlot: Int = 0
+    private val shortcutBar: Array<ItemType?> = arrayOfNulls(10)
+    private var hasPlacedThisClick = false
     private val outMessages = Channel<ClientMessage>(Channel.BUFFERED)
 
     private var blockMaterials: JsAny? = null
@@ -267,6 +275,25 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
         chunkData.clear()
     }
 
+    private fun syncShortcutBarToUi() {
+        val slots = shortcutBar.map { it?.name }
+        val json = "{\"slots\":[${slots.joinToString(",") { if (it == null) "null" else "\"$it\"" }}],\"selected\":$selectedSlot}"
+        jsUpdateShortcutBar(json)
+        jsSetSelectedSlot(selectedSlot)
+    }
+
+    private fun selectSlot(index: Int) {
+        selectedSlot = index
+        hasPlacedThisClick = false
+        syncShortcutBarToUi()
+        // Leaving build mode: stop any pending break
+        if (breakTarget != null) {
+            breakTarget = null
+            jsHideBreakOverlay()
+            outMessages.trySend(ClientMessage.BlockBreakStop)
+        }
+    }
+
     private fun updateConnectedPlayersAutocomplete() {
         val json = "[" + playerNames.values.joinToString(",") { "\"$it\"" } + "]"
         jsSetConnectedPlayers(json)
@@ -355,6 +382,31 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                 "inventory"   -> jsToggleHotbar()
                 "undo"        -> outMessages.trySend(ClientMessage.Command("/undo 1"))
                 "fly_toggle"  -> pendingFlyToggle = true
+                "slot_1"  -> selectSlot(0)
+                "slot_2"  -> selectSlot(1)
+                "slot_3"  -> selectSlot(2)
+                "slot_4"  -> selectSlot(3)
+                "slot_5"  -> selectSlot(4)
+                "slot_6"  -> selectSlot(5)
+                "slot_7"  -> selectSlot(6)
+                "slot_8"  -> selectSlot(7)
+                "slot_9"  -> selectSlot(8)
+                "slot_10" -> selectSlot(9)
+            }
+        }
+
+        // Consume slot update from drag-drop UI (json: {"slot":N,"itemType":"TYPE"|null})
+        val slotUpdateJson = jsConsumeSlotUpdate()
+        if (slotUpdateJson.isNotEmpty()) {
+            runCatching {
+                val slotMatch = Regex("\"slot\":(\\d+)").find(slotUpdateJson)?.groupValues?.get(1)?.toInt()
+                val typeMatch = Regex("\"itemType\":\"([A-Z_]+)\"").find(slotUpdateJson)?.groupValues?.get(1)
+                if (slotMatch != null && slotMatch in 1..9) {
+                    val itemType = typeMatch?.let { name -> ItemType.entries.find { it.name == name } }
+                    shortcutBar[slotMatch] = itemType
+                    syncShortcutBarToUi()
+                    outMessages.trySend(ClientMessage.ShortcutBarSet(slotMatch, itemType))
+                }
             }
         }
 
@@ -392,8 +444,9 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
             }
         }
 
-        // Raycast once per frame — used for both hover outline and break logic
-        val target = raycastBlock()
+        // Raycast once per frame — used for both hover outline and break/place logic
+        val rayResult = raycastBlock()
+        val target = rayResult?.target
 
         // In third-person: ghost the local model when a block is targeted so the outline is visible
         if (viewMode == ViewMode.THIRD_PERSON) {
@@ -411,18 +464,35 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
             }
         }
 
-        // Block breaking: only when left button held AND mouse stationary (not rotating)
+        // Block breaking / placing: only when left button held AND mouse stationary
         val isBreaking = jsIsBreaking()
-        if (isBreaking && target != null) {
-            if (target != breakTarget) {
-                breakTarget = target
-                jsShowBreakOverlay(scene, target.x, target.y, target.z, 1.0)
-                outMessages.trySend(ClientMessage.BlockBreakStart(target))
+        val selectedItem = if (selectedSlot > 0) shortcutBar[selectedSlot] else null
+        val isPlaceMode = selectedItem != null && selectedItem.buildable
+
+        if (isPlaceMode) {
+            // Place mode: send BlockPlace exactly once per click (one block per mouse press)
+            val adjacent = rayResult?.adjacent
+            if (isBreaking && adjacent != null && !hasPlacedThisClick) {
+                hasPlacedThisClick = true
+                breakTarget = adjacent
+                outMessages.trySend(ClientMessage.BlockPlace(adjacent, selectedItem!!))
+            } else if (!isBreaking) {
+                breakTarget = null
+                hasPlacedThisClick = false
             }
-        } else if (breakTarget != null) {
-            breakTarget = null
-            jsHideBreakOverlay()
-            outMessages.trySend(ClientMessage.BlockBreakStop)
+        } else {
+            // Break mode (slot 0 = hand, or slot with non-buildable / empty)
+            if (isBreaking && target != null) {
+                if (target != breakTarget) {
+                    breakTarget = target
+                    jsShowBreakOverlay(scene, target.x, target.y, target.z, 1.0)
+                    outMessages.trySend(ClientMessage.BlockBreakStart(target))
+                }
+            } else if (breakTarget != null) {
+                breakTarget = null
+                jsHideBreakOverlay()
+                outMessages.trySend(ClientMessage.BlockBreakStop)
+            }
         }
 
         // FPS + network rates: update once per second
@@ -600,6 +670,10 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                 jsShowBreakOverlay(scene, msg.pos.x, msg.pos.y, msg.pos.z, alpha)
             }
             is ServerMessage.InventoryUpdate -> { uiState.inventory = msg.inventory }
+            is ServerMessage.ShortcutBarUpdate -> {
+                msg.slots.forEachIndexed { i, item -> if (i in 0..9) shortcutBar[i] = item }
+                syncShortcutBarToUi()
+            }
             is ServerMessage.TimeUpdate -> { currentGameTicks = msg.gameTicks }
             is ServerMessage.ItemsSpawned -> Unit
             is ServerMessage.ItemDespawned -> Unit
@@ -744,7 +818,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
         return chunk.getBlock(lx, wy, lz)
     }
 
-    private fun raycastBlock(maxDist: Float = 5f): BlockPos? {
+    private fun raycastBlock(maxDist: Float = 5f): RaycastResult? {
         // Always ray-cast from the player's eye, not the camera (which is offset in third-person).
         val ox = predX
         val oy = predY + localStance.eyeOffset.toDouble()
@@ -758,6 +832,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
         var bx = kotlin.math.round(ox).toInt()
         var by = kotlin.math.round(oy).toInt()
         var bz = kotlin.math.round(oz).toInt()
+        var prevBx = bx; var prevBy = by; var prevBz = bz
 
         val sx = if (dx > 0) 1 else if (dx < 0) -1 else 0
         val sy = if (dy > 0) 1 else if (dy < 0) -1 else 0
@@ -777,8 +852,10 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
             if (t > maxDist) break
             if (getBlockAtWorld(bx, by, bz) != BlockType.AIR) {
                 if (by < 0 || by > WorldConstants.WORLD_MAX_Y) return null
-                return BlockPos(bx, by, bz)
+                val adjY = prevBy.coerceIn(0, WorldConstants.WORLD_MAX_Y)
+                return RaycastResult(BlockPos(bx, by, bz), BlockPos(prevBx, adjY, prevBz))
             }
+            prevBx = bx; prevBy = by; prevBz = bz
             when {
                 tMaxX < tMaxY && tMaxX < tMaxZ -> { bx += sx; tMaxX += tDeltaX }
                 tMaxY < tMaxZ                  -> { by += sy; tMaxY += tDeltaY }

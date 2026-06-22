@@ -50,6 +50,9 @@ sealed class ServerMessage {
 
     @Serializable
     data class TimeUpdate(val gameTicks: Long) : ServerMessage()
+
+    @Serializable
+    data class ShortcutBarUpdate(val slots: List<ItemType?>) : ServerMessage()
 }
 
 @Serializable

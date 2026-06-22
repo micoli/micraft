@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.ChunkPos
+import org.micoli.micraft.world.ItemType
 
 @Serializable
 sealed class ClientMessage {
@@ -35,6 +36,12 @@ sealed class ClientMessage {
 
     @Serializable
     data class Command(val text: String) : ClientMessage()
+
+    @Serializable
+    data class BlockPlace(val pos: BlockPos, val itemType: ItemType) : ClientMessage()
+
+    @Serializable
+    data class ShortcutBarSet(val slot: Int, val itemType: ItemType?) : ClientMessage()
 
     @Serializable
     data class Disconnect(val reason: String = "") : ClientMessage()

@@ -189,11 +189,14 @@ fun jsIsConsoleOpen(): Boolean = js("mcIsConsoleOpen()")
 fun jsConsumeConsoleInput(): String = js("mcConsumeConsoleInput()")
 fun jsShowNotification(message: String): Unit = js("mcShowNotification(message)")
 
-// ── Hotbar ────────────────────────────────────────────────────────────────────
+// ── Hotbar / ShortcutBar ──────────────────────────────────────────────────────
 
 fun jsCreateHotbar(): Unit = js("mcCreateHotbar()")
 fun jsUpdateHotbar(inventoryJson: String): Unit = js("mcUpdateHotbar(inventoryJson)")
 fun jsToggleHotbar(): Unit = js("mcToggleHotbar()")
+fun jsUpdateShortcutBar(json: String): Unit = js("mcUpdateShortcutBar(json)")
+fun jsSetSelectedSlot(slot: Int): Unit = js("mcSetSelectedSlot(slot)")
+fun jsConsumeSlotUpdate(): String = js("mcConsumeSlotUpdate()")
 
 // ── HUD ───────────────────────────────────────────────────────────────────────
 

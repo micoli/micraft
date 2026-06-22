@@ -21,6 +21,8 @@ export function registerUtils(): void {
 
   window.mcRegisterCompleter = registerCompleter;
 
+  const itemTypes = ['cobblestone', 'dirt', 'sand', 'gravel', 'sandstone', 'snowball', 'flint'];
+  registerCompleter('/give', (p) => itemTypes.filter(t => t.startsWith(p.toLowerCase())));
   registerCompleter('/keyreload', () => []);
   registerCompleter('/kick', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
   registerCompleter('/shaders', (p) => ['on', 'off'].filter(o => o.startsWith(p)));

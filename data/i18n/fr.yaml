@@ -23,8 +23,14 @@ reload:
 undo:
   server:
     nothing: "Rien à annuler."
-    done_one: "Annulation de {0} destruction de bloc."
-    done_many: "Annulation de {0} destructions de blocs."
+    done_one: "Annulation de {0} action."
+    done_many: "Annulation de {0} actions."
+build:
+  server:
+    placed: "Bloc posé."
+    no_item: "Aucun élément constructible dans l'emplacement sélectionné."
+    blocked: "Impossible de placer : position occupée."
+    out_of_range: "Impossible de placer : trop loin."
 lang:
   server:
     available: "Langues disponibles : {0}"
@@ -48,3 +54,8 @@ time:
     current: "Heure : {0}"
     set: "Heure définie sur {0}."
     usage: "Usage : /time [0-23]"
+give:
+  server:
+    done: "{0}x {1} accordé(s)."
+    unknown: "Objet inconnu : {0}. Disponibles : {1}"
+    usage: "Usage : /give <itemType> [N]. Disponibles : {0}"

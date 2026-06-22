@@ -153,8 +153,10 @@ class BlockBreakerTest {
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.breakTarget = BlockPos(8, 5, 8)
         breaker.tick(session)
-        assertEquals(1, session.breakHistory.size)
-        assertEquals(BlockType.SNOW, session.breakHistory.last().blockType)
+        assertEquals(1, session.actionHistory.size)
+        val record = session.actionHistory.last()
+        require(record is org.micoli.micraft.session.WorldActionRecord.Break)
+        assertEquals(BlockType.SNOW, record.blockType)
     }
 
     @Test
@@ -172,6 +174,6 @@ class BlockBreakerTest {
             session.breakProgress = 0
             breaker.tick(session)
         }
-        assertTrue(session.breakHistory.size <= 20)
+        assertTrue(session.actionHistory.size <= 20)
     }
 }

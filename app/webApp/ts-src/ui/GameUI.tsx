@@ -1,7 +1,8 @@
 import { useEffect, useRef, useReducer } from 'react';
 import { UiState, UiAction, LogEntry } from './types';
 import { HUD } from './HUD';
-import { Hotbar } from './Hotbar';
+import { Inventory } from './Inventory';
+import { ShortcutBar } from './ShortcutBar';
 import { Console } from './Console';
 import { ServerLog } from './ServerLog';
 import { Notifications } from './Notifications';
@@ -12,7 +13,10 @@ const MC_LOG_MAX = 100;
 
 const initial: UiState = {
   hud: null, notif: null, logs: [], logVisible: false, logKey: 0, inventory: {},
-  hotbarVisible: false, consoleOpen: false,
+  hotbarVisible: false,
+  shortcutBar: Array(10).fill(null),
+  selectedSlot: 0,
+  consoleOpen: false,
   loginVisible: false, disconnectMsg: null,
 };
 
@@ -32,6 +36,8 @@ function reducer(state: UiState, action: UiAction): UiState {
     case 'log_hide': return { ...state, logVisible: false };
     case 'inventory':    return { ...state, inventory: action.data };
     case 'hotbar_toggle': return { ...state, hotbarVisible: !state.hotbarVisible };
+    case 'shortcut_bar_update': return { ...state, shortcutBar: action.data.slots, selectedSlot: action.data.selected };
+    case 'slot_select': return { ...state, selectedSlot: action.slot };
     case 'console_show': return { ...state, consoleOpen: true };
     case 'console_hide': return { ...state, consoleOpen: false };
     case 'login_show':   return { ...state, loginVisible: true };
@@ -47,6 +53,7 @@ export function GameUI() {
   // Refs for synchronous reads by Kotlin
   const logTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const consoleOpenRef = useRef(false);
+  const pendingSlotUpdateRef = useRef<string>('');
   const consoleStateRef = useRef({ history: [] as string[], histIdx: -1, playerName: '', tabIdx: -1, tabMatches: [] as string[] });
   const consoleSubmittedRef = useRef<string | null>(null);
   const consoleInitialValueRef = useRef('');
@@ -81,6 +88,13 @@ export function GameUI() {
     (window as any).mcAddServerLog     = (msg: string) => dispatch({ type: 'log', msg });
     (window as any).mcUpdateHotbar     = (json: string) => dispatch({ type: 'inventory', data: JSON.parse(json) });
     (window as any).mcToggleHotbar     = () => dispatch({ type: 'hotbar_toggle' });
+    (window as any).mcUpdateShortcutBar = (json: string) => dispatch({ type: 'shortcut_bar_update', data: JSON.parse(json) });
+    (window as any).mcSetSelectedSlot   = (slot: number) => dispatch({ type: 'slot_select', slot });
+    (window as any).mcConsumeSlotUpdate = () => {
+      const v = pendingSlotUpdateRef.current;
+      pendingSlotUpdateRef.current = '';
+      return v;
+    };
 
     (window as any).mcShowLoginOverlay     = () => dispatch({ type: 'login_show' });
     (window as any).mcHideLoginOverlay     = () => dispatch({ type: 'login_hide' });
@@ -141,7 +155,15 @@ export function GameUI() {
   return (
     <>
       <HUD data={state.hud} />
-      <Hotbar inventory={state.inventory} visible={state.hotbarVisible} />
+      <ShortcutBar
+        inventory={state.inventory}
+        slots={state.shortcutBar}
+        selectedSlot={state.selectedSlot}
+        onSlotDrop={(slot, itemType) => {
+          pendingSlotUpdateRef.current = JSON.stringify({ slot, itemType: itemType ?? null });
+        }}
+      />
+      <Inventory inventory={state.inventory} visible={state.hotbarVisible} />
       <ServerLog logs={state.logs} visible={state.logVisible} />
       <Notifications notif={state.notif?.msg ? state.notif : null} />
       <Console

@@ -22,4 +22,5 @@ data class PlayerState(
     val inventory: Map<ItemType, Int> = emptyMap(),
     val language: String = "en",
     val shadersEnabled: Boolean = true,
+    val shortcutBar: List<ItemType?> = List(10) { null },
 )

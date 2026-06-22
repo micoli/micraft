@@ -22,8 +22,14 @@ reload:
 undo:
   server:
     nothing: "Nothing to undo."
-    done_one: "Undid {0} block break."
-    done_many: "Undid {0} block breaks."
+    done_one: "Undid {0} action."
+    done_many: "Undid {0} actions."
+build:
+  server:
+    placed: "Block placed."
+    no_item: "No buildable item in selected slot."
+    blocked: "Cannot place: position occupied."
+    out_of_range: "Cannot place: too far away."
 lang:
   server:
     available: "Available languages: {0}"
@@ -42,3 +48,8 @@ time:
     current: "Time: {0}"
     set: "Time set to {0}."
     usage: "Usage: /time [0-23]"
+give:
+  server:
+    done: "Given {0}x {1}."
+    unknown: "Unknown item: {0}. Available: {1}"
+    usage: "Usage: /give <itemType> [N]. Available: {0}"

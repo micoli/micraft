@@ -20,6 +20,8 @@ export interface UiState {
   logKey: number;
   inventory: Record<string, number>;
   hotbarVisible: boolean;
+  shortcutBar: (string | null)[];
+  selectedSlot: number;
   consoleOpen: boolean;
   loginVisible: boolean;
   disconnectMsg: string | null;
@@ -31,6 +33,8 @@ export type UiAction =
   | { type: 'log'; msg: string }
   | { type: 'inventory'; data: Record<string, number> }
   | { type: 'hotbar_toggle' }
+  | { type: 'shortcut_bar_update'; data: { slots: (string | null)[]; selected: number } }
+  | { type: 'slot_select'; slot: number }
   | { type: 'console_show' }
   | { type: 'console_hide' }
   | { type: 'login_show' }

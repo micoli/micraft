@@ -5,6 +5,7 @@ import org.micoli.micraft.session.PlayerSession
 
 class IntentCollector(
     private val blockBreaker: BlockBreaker,
+    private val blockPlacer: BlockPlacer,
     private val onCommand: suspend (PlayerSession, String) -> Unit,
 ) {
     suspend fun collect(session: PlayerSession): TickInput {
@@ -30,6 +31,8 @@ class IntentCollector(
                 }
                 is ClientMessage.BlockBreakStart -> blockBreaker.handleStart(session, intent)
                 is ClientMessage.BlockBreakStop  -> blockBreaker.handleStop(session)
+                is ClientMessage.BlockPlace      -> blockPlacer.handlePlace(session, intent)
+                is ClientMessage.ShortcutBarSet  -> blockPlacer.handleShortcutBarSet(session, intent)
                 is ClientMessage.Command         -> onCommand(session, intent.text)
                 else -> {}
             }

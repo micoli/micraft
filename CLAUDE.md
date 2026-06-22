@@ -87,9 +87,10 @@ data/
     chunks/*.mcc.gz         # binary chunk files (DO NOT READ)
 ```
 
-## Textures
-[textures.md](.claude/textures.md)
-
+## Slash command
+ - each in game actions (except movement) can have a slash command, each slashcommand can be binded to a key though keybinding
+ - when a command has an argument, arguments will have an autocompletion method attached
+ 
 ## Entities / animations
 Models use **bbmodel** (Blockbench) format. Example: `resources/player.bbmodel`
 

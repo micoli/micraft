@@ -25,8 +25,14 @@ reload:
 undo:
   server:
     nothing: "Rien à annuler."
-    done_one: "Annulé {0} cassage de bloc."
-    done_many: "Annulé {0} cassages de blocs."
+    done_one: "Annulé {0} action."
+    done_many: "Annulé {0} actions."
+build:
+  server:
+    placed: "Bloc posé."
+    no_item: "Aucun élément constructible dans l'emplacement sélectionné."
+    blocked: "Impossible de placer: position occupée."
+    out_of_range: "Impossible de placer: trop loin."
 commands:
   server:
     unknown: "Commande inconnue: {0}"
@@ -37,3 +43,8 @@ inventory:
     item_picked_up: "+{0} {1}"
   client:
     empty: "Vide"
+give:
+  server:
+    done: "{0}x {1} accordé(s)."
+    unknown: "Objet inconnu : {0}. Disponibles : {1}"
+    usage: "Usage : /give <itemType> [N]. Disponibles : {0}"

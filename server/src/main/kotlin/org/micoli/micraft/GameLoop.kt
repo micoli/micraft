@@ -14,6 +14,7 @@ import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.tick.BlockBreaker
+import org.micoli.micraft.tick.BlockPlacer
 import org.micoli.micraft.tick.ChunkStreamer
 import org.micoli.micraft.tick.IntentCollector
 import org.micoli.micraft.tick.MovementProcessor
@@ -106,7 +107,8 @@ class GameLoop(
         setGameTime = { gameTicks = it },
     )
     private val blockBreaker = BlockBreaker(world, { msg -> sessions.values.forEach { it.send(msg) } }, worldItems)
-    private val intentCollector = IntentCollector(blockBreaker, ::handleCommand)
+    private val blockPlacer = BlockPlacer(world, { msg -> sessions.values.forEach { it.send(msg) } }, ::savePlayer)
+    private val intentCollector = IntentCollector(blockBreaker, blockPlacer, ::handleCommand)
     private val movementProcessor = MovementProcessor(world)
     private val chunkStreamer = ChunkStreamer(world)
 
@@ -149,7 +151,10 @@ class GameLoop(
     private fun savePlayer(session: PlayerSession) {
         persistence?.savePlayerState(
             session.state.name,
-            session.state.copy(inventory = session.inventory.toMap()),
+            session.state.copy(
+                inventory = session.inventory.toMap(),
+                shortcutBar = session.shortcutBar.toList(),
+            ),
         )
     }
 
@@ -216,11 +221,13 @@ class GameLoop(
         )
         val session = PlayerSession(id, userName, socket, state)
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
+        saved?.shortcutBar?.forEachIndexed { i, item -> if (i in 0..9) session.shortcutBar[i] = item }
         sessions[id] = session
         log.info("player connected: {} name={} user={} (total={})", id.take(8), playerName, userName, sessions.size)
 
         session.send(ServerMessage.Welcome(id, playerName, spawn, language, shadersEnabled))
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
+        session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toList()))
         session.send(ServerMessage.TimeUpdate(gameTicks))
 
         val spawnCp = ChunkPos(

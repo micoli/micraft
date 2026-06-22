@@ -4,8 +4,8 @@ import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.session.BreakRecord
 import org.micoli.micraft.session.PlayerSession
+import org.micoli.micraft.session.WorldActionRecord
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldState
@@ -55,8 +55,8 @@ class BlockBreaker(
             world.applyChange(change)
             broadcast(ServerMessage.WorldUpdate(listOf(change)))
             val spawned = worldItems.spawnDrops(bt, block)
-            session.breakHistory.addLast(BreakRecord(bt, block, spawned))
-            if (session.breakHistory.size > MAX_UNDO_HISTORY) session.breakHistory.removeFirst()
+            session.actionHistory.addLast(WorldActionRecord.Break(bt, block, spawned))
+            if (session.actionHistory.size > MAX_UNDO_HISTORY) session.actionHistory.removeFirst()
             session.breakTarget = null
             session.breakProgress = 0
         } else {

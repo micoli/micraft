@@ -22,6 +22,16 @@ const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   undo:             ['Ctrl+KeyZ', 'Cmd+KeyZ'],
   minimap_zoom_in:  ['l'],
   minimap_zoom_out: ['m'],
+  slot_1:  ['Digit1'],
+  slot_2:  ['Digit2'],
+  slot_3:  ['Digit3'],
+  slot_4:  ['Digit4'],
+  slot_5:  ['Digit5'],
+  slot_6:  ['Digit6'],
+  slot_7:  ['Digit7'],
+  slot_8:  ['Digit8'],
+  slot_9:  ['Digit9'],
+  slot_10: ['Digit0'],
 };
 
 // Parse "Ctrl+Shift+KeyZ" → { mods: {ctrl,shift,alt,meta}, key: "KeyZ" }
@@ -113,6 +123,10 @@ export function registerKeyboard(): void {
       if (b.undo?.some(k         => matchesEvent(k, e))) window.__mc.events.push('undo');
       if (b.minimap_zoom_in?.some(k  => matchesEvent(k, e))) (window as any).mcMinimapZoomIn?.();
       if (b.minimap_zoom_out?.some(k => matchesEvent(k, e))) (window as any).mcMinimapZoomOut?.();
+      for (let s = 1; s <= 10; s++) {
+        const key = `slot_${s}` as string;
+        if (b[key]?.some((k: string) => matchesEvent(k, e))) window.__mc.events.push(key);
+      }
       if (Object.values(b).some(keys => keys.some(k => matchesEvent(k, e)))) e.preventDefault();
     });
 

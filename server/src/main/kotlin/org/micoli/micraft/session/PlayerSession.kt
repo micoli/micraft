@@ -11,7 +11,6 @@ import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.ItemType
-import org.micoli.micraft.world.WorldItem
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
@@ -28,7 +27,8 @@ open class PlayerSession(
     @Volatile var breakTarget: BlockPos? = null
     @Volatile var breakProgress: Int = 0
     val inventory: MutableMap<ItemType, Int> = ConcurrentHashMap()
-    val breakHistory: ArrayDeque<BreakRecord> = ArrayDeque()
+    val actionHistory: ArrayDeque<WorldActionRecord> = ArrayDeque()
+    val shortcutBar: MutableList<ItemType?> = MutableList(10) { null }
 
     open suspend fun send(msg: ServerMessage) {
         socket.send(Frame.Text(Json.encodeToString(msg)))
