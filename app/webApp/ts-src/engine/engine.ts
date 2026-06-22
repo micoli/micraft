@@ -38,6 +38,7 @@ export function registerEngine(): void {
   window.mcCreateHemisphericLight = (name: string, scene: Scene): HemisphericLight => {
     const l = new BABYLON.HemisphericLight(name, new BABYLON.Vector3(0, 1, 0), scene);
     l.groundColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+    window.__mcHemiLight = l;
     return l;
   };
 

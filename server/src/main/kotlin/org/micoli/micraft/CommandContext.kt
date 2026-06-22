@@ -18,4 +18,6 @@ data class CommandContext(
     val commands: () -> Collection<CommandHandler> = { emptyList() },
     val savePlayer: (PlayerSession) -> Unit = {},
     val worldItems: WorldItemManager? = null,
+    val getGameTime: () -> Long = { 0L },
+    val setGameTime: (Long) -> Unit = {},
 )

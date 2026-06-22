@@ -148,6 +148,8 @@ declare global {
   interface Window {
     __mc: McInputState;
     __mcEngine: InstanceType<typeof BABYLON.Engine> | null;
+    __mcHemiLight: InstanceType<typeof BABYLON.HemisphericLight> | null;
+    mcUpdateSkyTime: (scene: any, t: number) => void;
     __mcTargetMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     __mcBreakMesh: (InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string }) | null;
     __mcChunks: Record<string, InstanceType<typeof BABYLON.AbstractMesh>[]>;

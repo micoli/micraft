@@ -43,3 +43,8 @@ inventory:
     item_picked_up: "+{0} {1}"
   client:
     empty: "Vide"
+time:
+  server:
+    current: "Heure : {0}"
+    set: "Heure définie sur {0}."
+    usage: "Usage : /time [0-23]"

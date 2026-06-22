@@ -159,7 +159,9 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
 tasks.register("dev") {
     group = "micraft"
     description = "Build and start the game server (:8080) and the webpack dev server (:8081)"
-    doLast { startDevMode(rootProject.projectDir, debugWorld = false) }
+    notCompatibleWithConfigurationCache("Launches external processes via script-level function")
+    val rootDir = rootProject.projectDir
+    doLast { startDevMode(rootDir, debugWorld = false) }
 }
 
 /**
@@ -177,5 +179,7 @@ tasks.register("dev") {
 tasks.register("devDebug") {
     group = "micraft"
     description = "Same as dev but with a single-block debug world for texture inspection"
-    doLast { startDevMode(rootProject.projectDir, debugWorld = true) }
+    notCompatibleWithConfigurationCache("Launches external processes via script-level function")
+    val rootDir = rootProject.projectDir
+    doLast { startDevMode(rootDir, debugWorld = true) }
 }

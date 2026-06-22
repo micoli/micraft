@@ -72,6 +72,8 @@ fun testContext(
     savePlayer: (PlayerSession) -> Unit = {},
     worldItems: WorldItemManager? = null,
     i18n: I18nConfig = testI18n(),
+    getGameTime: () -> Long = { 0L },
+    setGameTime: (Long) -> Unit = {},
 ) = CommandContext(
     world = world,
     persistence = null,
@@ -82,4 +84,6 @@ fun testContext(
     reloadConfig = reloadConfig,
     savePlayer = savePlayer,
     worldItems = worldItems,
+    getGameTime = getGameTime,
+    setGameTime = setGameTime,
 )

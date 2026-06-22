@@ -4,6 +4,7 @@ export interface HudData {
   stance: string; speed: number;
   fps: number; kbIn: number; kbOut: number;
   biome: string; targetBlock: string;
+  gameTime: string;
 }
 
 export interface LogEntry {

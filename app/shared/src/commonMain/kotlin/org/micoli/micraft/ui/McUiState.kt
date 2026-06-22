@@ -17,6 +17,7 @@ data class HudData(
     val kbOut: Double = 0.0,
     val biome: String = "",
     val targetBlock: String = "",
+    val gameTime: String = "",
 )
 
 class McUiState {

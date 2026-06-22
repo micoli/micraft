@@ -23,6 +23,7 @@ import org.micoli.micraft.world.DropConfig
 import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldItemManager
+import org.micoli.micraft.world.WorldMetadata
 import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
 import java.nio.file.Path
@@ -72,6 +73,10 @@ class GameLoop(
 ) {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
     private var saveTickCounter = 0
+    private var timeBroadcastCounter = 0
+
+    private var worldMeta: WorldMetadata? = persistence?.loadMetadata()
+    private var gameTicks: Long = worldMeta?.gameTicks ?: 18_000L
 
     private val commands: Map<String, CommandHandler> = discoverCommandHandlers()
 
@@ -97,6 +102,8 @@ class GameLoop(
         commands = { commands.values },
         savePlayer = ::savePlayer,
         worldItems = worldItems,
+        getGameTime = { gameTicks },
+        setGameTime = { gameTicks = it },
     )
     private val blockBreaker = BlockBreaker(world, { msg -> sessions.values.forEach { it.send(msg) } }, worldItems)
     private val intentCollector = IntentCollector(blockBreaker, ::handleCommand)
@@ -126,6 +133,7 @@ class GameLoop(
                 if (saveTickCounter >= SAVE_INTERVAL_TICKS) {
                     saveTickCounter = 0
                     world.flushDirty()
+                    worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
                 }
             }
         }
@@ -133,6 +141,7 @@ class GameLoop(
 
     fun shutdown() {
         world.flushDirty()
+        worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
         sessions.values.forEach { session -> savePlayer(session) }
         log.info("World saved on shutdown")
     }
@@ -145,6 +154,14 @@ class GameLoop(
     }
 
     private suspend fun tick() {
+        gameTicks++
+        timeBroadcastCounter++
+        if (timeBroadcastCounter >= TIME_BROADCAST_TICKS) {
+            timeBroadcastCounter = 0
+            val timeMsg = ServerMessage.TimeUpdate(gameTicks)
+            sessions.values.forEach { it.send(timeMsg) }
+        }
+
         sessions.values.forEach { session ->
             val input = intentCollector.collect(session)
             blockBreaker.tick(session)
@@ -204,6 +221,7 @@ class GameLoop(
 
         session.send(ServerMessage.Welcome(id, playerName, spawn, language, shadersEnabled))
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
+        session.send(ServerMessage.TimeUpdate(gameTicks))
 
         val spawnCp = ChunkPos(
             Math.floorDiv(spawn.x.toInt(), WorldConstants.CHUNK_SIZE),

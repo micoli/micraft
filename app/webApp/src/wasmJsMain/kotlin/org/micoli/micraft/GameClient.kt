@@ -132,6 +132,10 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
     private var blockMaterials: JsAny? = null
     private var shadersEnabled: Boolean = true
 
+    // In-game time (ticks received from server)
+    private var currentGameTicks = 0L
+    private val TICKS_PER_DAY_CLIENT = 72_000L  // must match server GameConstants.TICKS_PER_DAY
+
     init {
         jsOptimizeScene(scene)
         jsSetupFog(scene, SKY_R, SKY_G, SKY_B)
@@ -427,19 +431,31 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
             fpsWindowStart = now
         }
 
+        val normalizedTime = (currentGameTicks % TICKS_PER_DAY_CLIENT).toDouble() / TICKS_PER_DAY_CLIENT
+        jsUpdateSkyTime(scene, normalizedTime)
+
         jsDrawMinimap(predX, predZ)
 
         val toDeg = 180.0 / kotlin.math.PI
         val targetBlockName = target?.let { getBlockAtWorld(it.x, it.y, it.z).name } ?: ""
+        val gameTimeDisplay = ticksToHHMM(currentGameTicks)
         jsUpdateHUD(hudX, hudY, hudZ, yaw * toDeg, pitch * toDeg, hudStance, hudSpeed,
-            currentFps, currentKbIn, currentKbOut, hudBiome, targetBlockName)
+            currentFps, currentKbIn, currentKbOut, hudBiome, targetBlockName, gameTimeDisplay)
         uiState.hud = HudData(
             x = hudX, y = hudY, z = hudZ,
             yaw = yaw * toDeg, pitch = pitch * toDeg,
             stance = hudStance, speed = hudSpeed,
             fps = currentFps, kbIn = currentKbIn, kbOut = currentKbOut,
             biome = hudBiome, targetBlock = targetBlockName,
+            gameTime = gameTimeDisplay,
         )
+    }
+
+    private fun ticksToHHMM(ticks: Long): String {
+        val day = ticks % TICKS_PER_DAY_CLIENT
+        val h = (day * 24 / TICKS_PER_DAY_CLIENT).toInt()
+        val m = ((day * 24 * 60 / TICKS_PER_DAY_CLIENT) % 60).toInt()
+        return h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0')
     }
 
     private fun buildMoveIntent(): ClientMessage.MoveIntent {
@@ -575,6 +591,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                 jsShowBreakOverlay(scene, msg.pos.x, msg.pos.y, msg.pos.z, alpha)
             }
             is ServerMessage.InventoryUpdate -> { uiState.inventory = msg.inventory }
+            is ServerMessage.TimeUpdate -> { currentGameTicks = msg.gameTicks }
             is ServerMessage.ItemsSpawned -> Unit
             is ServerMessage.ItemDespawned -> Unit
             is ServerMessage.WorldUpdate -> msg.changes.forEach { change ->

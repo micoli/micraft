@@ -74,8 +74,8 @@ export function GameUI() {
 
   useEffect(() => {
     // Wire Kotlin-callable window functions to React dispatch
-    (window as any).mcUpdateHUD = (x: number, y: number, z: number, yaw: number, pitch: number, stance: string, speed: number, fps: number, kbIn: number, kbOut: number, biome: string, targetBlock: string) =>
-      dispatch({ type: 'hud', data: { x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock } });
+    (window as any).mcUpdateHUD = (x: number, y: number, z: number, yaw: number, pitch: number, stance: string, speed: number, fps: number, kbIn: number, kbOut: number, biome: string, targetBlock: string, gameTime: string) =>
+      dispatch({ type: 'hud', data: { x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime } });
 
     (window as any).mcShowNotification = (msg: string) => dispatch({ type: 'notification', msg });
     (window as any).mcAddServerLog     = (msg: string) => dispatch({ type: 'log', msg });

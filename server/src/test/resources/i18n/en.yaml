@@ -37,3 +37,8 @@ inventory:
     item_picked_up: "+{0} {1}"
   client:
     empty: "Empty"
+time:
+  server:
+    current: "Time: {0}"
+    set: "Time set to {0}."
+    usage: "Usage: /time [0-23]"

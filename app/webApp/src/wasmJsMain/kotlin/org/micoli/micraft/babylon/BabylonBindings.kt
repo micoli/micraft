@@ -47,6 +47,7 @@ fun jsFreezeMesh(mesh: JsAny): Unit = js("mcFreezeMesh(mesh)")
 fun jsOptimizeScene(scene: JsAny): Unit = js("mcOptimizeScene(scene)")
 fun jsSetupFog(scene: JsAny, r: Double, g: Double, b: Double): Unit = js("mcSetupFog(scene, r, g, b)")
 fun jsSetShadersEnabled(scene: JsAny, enabled: Boolean): Unit = js("mcSetShadersEnabled(scene, enabled)")
+fun jsUpdateSkyTime(scene: JsAny, t: Double): Unit = js("mcUpdateSkyTime(scene, t)")
 
 // ── Chunk geometry builder ────────────────────────────────────────────────────
 
@@ -198,8 +199,8 @@ fun jsToggleHotbar(): Unit = js("mcToggleHotbar()")
 
 fun jsCreateHUD(): Unit = js("mcCreateHUD()")
 
-fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, stance: String, speed: Double, fps: Int, kbIn: Double, kbOut: Double, biome: String, targetBlock: String): Unit =
-    js("mcUpdateHUD(x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock)")
+fun jsUpdateHUD(x: Double, y: Double, z: Double, yaw: Double, pitch: Double, stance: String, speed: Double, fps: Int, kbIn: Double, kbOut: Double, biome: String, targetBlock: String, gameTime: String): Unit =
+    js("mcUpdateHUD(x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime)")
 
 // ── Player model ──────────────────────────────────────────────────────────────
 

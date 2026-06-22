@@ -47,6 +47,9 @@ sealed class ServerMessage {
 
     @Serializable
     data class InventoryUpdate(val inventory: Map<ItemType, Int>) : ServerMessage()
+
+    @Serializable
+    data class TimeUpdate(val gameTicks: Long) : ServerMessage()
 }
 
 @Serializable

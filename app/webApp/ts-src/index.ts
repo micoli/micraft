@@ -13,6 +13,7 @@ import { registerChunks } from './chunks/chunkBuilder';
 import { registerPlayerModel } from './player/playerModel';
 import { registerFPArms } from './player/fpArms';
 import { registerMinimap } from './minimap/minimap';
+import { registerSky } from './sky/sky';
 import { createRoot } from 'react-dom/client';
 import { createElement } from 'react';
 import { GameUI } from './ui/GameUI';
@@ -29,6 +30,7 @@ registerChunks();
 registerPlayerModel();
 registerFPArms();
 registerMinimap();
+registerSky();
 registerAllPlugins();
 
 // ── Biome colors ──────────────────────────────────────────────────────────────

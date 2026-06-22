@@ -10,7 +10,7 @@ const style: React.CSSProperties = {
 
 export function HUD({ data }: { data: HudData | null }) {
   if (!data) return null;
-  const { x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock } = data;
+  const { x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime } = data;
   const lines = [
     `FPS: ${fps}`,
     `Pos: ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`,
@@ -20,6 +20,7 @@ export function HUD({ data }: { data: HudData | null }) {
     `↓ ${kbIn.toFixed(1)} KB/s  ↑ ${kbOut.toFixed(1)} KB/s`,
     ...(biome ? [`Biome ${biome}`] : []),
     ...(targetBlock ? [`Block ${targetBlock}`] : []),
+    ...(gameTime ? [`Time: ${gameTime}`] : []),
   ];
   return <div style={style}>{lines.join('\n')}</div>;
 }

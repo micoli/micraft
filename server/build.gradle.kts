@@ -24,8 +24,9 @@ sourceSets {
     }
 }
 
+val rootDirPath: String = rootProject.projectDir.absolutePath
 tasks.test {
-    systemProperty("projectDir", rootProject.projectDir.absolutePath)
+    systemProperty("projectDir", rootDirPath)
 }
 
 group = "org.micoli.micraft"
