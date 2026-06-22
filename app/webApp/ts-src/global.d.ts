@@ -60,10 +60,7 @@ declare global {
   interface McInputState {
     keys: Record<string, boolean>;
     modifiers: { ctrl: boolean; shift: boolean; alt: boolean; meta: boolean };
-    flyToggle: boolean;
-    viewToggle: boolean;
-    inventoryToggle: boolean;
-    undoToggle: boolean;
+    events: string[];
     lastSpaceTime: number;
     mouseLeft: boolean;
     lastMouseMove: number;

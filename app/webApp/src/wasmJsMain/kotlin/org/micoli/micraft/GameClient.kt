@@ -43,6 +43,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
     private var lastPlayerCz     = Int.MIN_VALUE
     private val pendingUnloads   = mutableListOf<ChunkPos>()
     private var viewMode         = ViewMode.FIRST_PERSON
+    private var pendingFlyToggle = false
     private var localPlayerModel: JsAny? = null
     private var fpArms: JsAny? = null
 
@@ -266,16 +267,16 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
             predZ += diffZ * 0.08
         }
 
-        // View mode toggle (F key)
-        if (jsConsumeViewToggle()) {
-            viewMode = if (viewMode == ViewMode.FIRST_PERSON) ViewMode.THIRD_PERSON else ViewMode.FIRST_PERSON
+        // Drain one-shot events pushed by JS keyboard handler
+        val events = jsConsumeEvents()
+        repeat(jsEventsLength(events)) { i ->
+            when (jsEventsGet(events, i)) {
+                "view_toggle" -> viewMode = if (viewMode == ViewMode.FIRST_PERSON) ViewMode.THIRD_PERSON else ViewMode.FIRST_PERSON
+                "inventory"   -> jsToggleHotbar()
+                "undo"        -> outMessages.trySend(ClientMessage.Command("/undo 1"))
+                "fly_toggle"  -> pendingFlyToggle = true
+            }
         }
-
-        // Inventory toggle (I key)
-        if (jsConsumeInventoryToggle()) jsToggleHotbar()
-
-        // Undo last block break (Z key)
-        if (jsConsumeUndoAction()) outMessages.trySend(ClientMessage.Command("/undo 1"))
 
         // Lazy-create local player model and first-person arms when bbmodel is ready
         if (jsIsPlayerBbmodelReady()) {
@@ -390,7 +391,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
         val len = kotlin.math.sqrt((dx * dx + dz * dz).toDouble()).toFloat()
         if (len > 1f) { dx /= len; dz /= len }
 
-        val flyToggle = jsConsumeFlyToggle()
+        val flyToggle = pendingFlyToggle.also { pendingFlyToggle = false }
         val speedUp   = jsIsActionDown("speed_up")
         val speedDown = jsIsActionDown("speed_down")
 

@@ -127,8 +127,9 @@ fun jsRotateCameraYaw(camera: JsAny, delta: Float): Unit = js("camera.rotation.y
 
 fun jsGetCameraForwardY(camera: JsAny): Double = js("camera.getForwardRay(1).direction.y")
 
-fun jsConsumeFlyToggle(): Boolean = js("mcConsumeFlyToggle()")
-fun jsConsumeUndoAction(): Boolean = js("mcConsumeUndoAction()")
+fun jsConsumeEvents(): JsAny = js("mcConsumeEvents()")
+fun jsEventsLength(arr: JsAny): Int = js("arr.length")
+fun jsEventsGet(arr: JsAny, i: Int): String = js("arr[i]")
 
 fun jsGetPageHost(): String = js("window.location.hostname")
 fun jsGetPagePort(): Int    = js("parseInt(window.location.port) || (window.location.protocol === 'https:' ? 443 : 80)")
@@ -182,7 +183,6 @@ fun jsShowNotification(message: String): Unit = js("mcShowNotification(message)"
 
 fun jsCreateHotbar(): Unit = js("mcCreateHotbar()")
 fun jsUpdateHotbar(inventoryJson: String): Unit = js("mcUpdateHotbar(inventoryJson)")
-fun jsConsumeInventoryToggle(): Boolean = js("mcConsumeInventoryToggle()")
 fun jsToggleHotbar(): Unit = js("mcToggleHotbar()")
 
 // ── HUD ───────────────────────────────────────────────────────────────────────
@@ -202,7 +202,6 @@ fun jsSetPlayerTransform(model: JsAny, x: Double, y: Double, z: Double, yaw: Flo
 fun jsSetPlayerVisible(model: JsAny, visible: Boolean): Unit = js("mcSetPlayerVisible(model, visible)")
 fun jsSetPlayerAlpha(model: JsAny, alpha: Double): Unit = js("mcSetPlayerAlpha(model, alpha)")
 fun jsDisposePlayerModel(model: JsAny): Unit = js("mcDisposePlayerModel(model)")
-fun jsConsumeViewToggle(): Boolean = js("mcConsumeViewToggle()")
 
 // ── First-person arm view model ───────────────────────────────────────────────
 

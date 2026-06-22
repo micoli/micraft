@@ -91,7 +91,7 @@ export function registerKeyboard(): void {
   window.mcSetupKeyboard = (): void => {
     window.__mc = window.__mc || {
       keys: {}, modifiers: { ctrl: false, shift: false, alt: false, meta: false },
-      flyToggle: false, viewToggle: false, inventoryToggle: false, undoToggle: false,
+      events: [],
       lastSpaceTime: 0, mouseLeft: false, lastMouseMove: 0, bindings: {}, playerBbmodel: null,
     };
     window.__mc.bindings = MC_DEFAULT_BINDINGS;
@@ -105,12 +105,12 @@ export function registerKeyboard(): void {
       const b = window.__mc.bindings;
       if (b.fly_toggle?.some(k => matchesEvent(k, e))) {
         const now = Date.now();
-        if (now - window.__mc.lastSpaceTime < 300) window.__mc.flyToggle = true;
+        if (now - window.__mc.lastSpaceTime < 300) window.__mc.events.push('fly_toggle');
         window.__mc.lastSpaceTime = now;
       }
-      if (b.view_toggle?.some(k  => matchesEvent(k, e))) window.__mc.viewToggle = true;
-      if (b.inventory?.some(k    => matchesEvent(k, e))) window.__mc.inventoryToggle = true;
-      if (b.undo?.some(k         => matchesEvent(k, e))) window.__mc.undoToggle = true;
+      if (b.view_toggle?.some(k  => matchesEvent(k, e))) window.__mc.events.push('view_toggle');
+      if (b.inventory?.some(k    => matchesEvent(k, e))) window.__mc.events.push('inventory');
+      if (b.undo?.some(k         => matchesEvent(k, e))) window.__mc.events.push('undo');
       if (b.minimap_zoom_in?.some(k  => matchesEvent(k, e))) (window as any).mcMinimapZoomIn?.();
       if (b.minimap_zoom_out?.some(k => matchesEvent(k, e))) (window as any).mcMinimapZoomOut?.();
       if (Object.values(b).some(keys => keys.some(k => matchesEvent(k, e)))) e.preventDefault();
@@ -137,39 +137,11 @@ export function registerKeyboard(): void {
     });
   };
 
-  window.mcConsumeViewToggle = (): boolean => {
-    if (!window.__mc) return false;
-    const v = window.__mc.viewToggle;
-    window.__mc.viewToggle = false;
-    return v;
-  };
-
-  window.mcConsumeInventoryToggle = (): boolean => {
-    if (!window.__mc) return false;
-    const v = window.__mc.inventoryToggle;
-    window.__mc.inventoryToggle = false;
-    return v;
-  };
-
-  window.mcConsumeUndoAction = (): boolean => {
-    if (!window.__mc) return false;
-    const v = window.__mc.undoToggle;
-    window.__mc.undoToggle = false;
-    return v;
-  };
-
-  window.mcConsumeFlyToggle = (): boolean => {
-    if (!window.__mc) return false;
-    const v = window.__mc.flyToggle;
-    window.__mc.flyToggle = false;
-    return v;
-  };
-
-  // mcToggleHotbar stays here until Phase 3 moves it to Compose
-  window.mcToggleHotbar = (): void => {
-    const d = document.getElementById('mc-hotbar');
-    if (!d) return;
-    d.style.display = d.style.display === 'none' ? 'flex' : 'none';
+  window.mcConsumeEvents = (): string[] => {
+    if (!window.__mc) return [];
+    const e = window.__mc.events;
+    window.__mc.events = [];
+    return e;
   };
 
 }
