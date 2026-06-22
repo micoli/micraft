@@ -109,6 +109,12 @@ fun Application.module() {
             val serializer = MapSerializer(String.serializer(), ListSerializer(String.serializer()))
             call.respondText(Json.encodeToString(serializer, bindings), ContentType.Application.Json)
         }
+        get("/api/i18n/{locale}") {
+            val locale = call.parameters["locale"] ?: "en"
+            val keys = gameLoop.i18n.clientKeys(locale)
+            val serializer = MapSerializer(String.serializer(), String.serializer())
+            call.respondText(Json.encodeToString(serializer, keys), ContentType.Application.Json)
+        }
         webSocket("/game") {
             gameLoop.onConnect(this)
         }

@@ -100,7 +100,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
     private val flowerMat        = jsCreateCrossSpriteMaterial("flower",      "/textures/blocks/flower_dandelion.png", scene)
     private val weedMat          = jsCreateCrossSpriteMaterial("weed",        "/textures/blocks/tallgrass.png",        scene)
 
-    fun connect(host: String, port: Int, username: String, playerName: String) {
+    fun connect(host: String, port: Int, username: String, playerName: String, preferredLanguage: String = "en") {
         serverHost = host
         serverPort = port
         // Prediction loop: runs at ~60fps, moves camera immediately without waiting for server
@@ -120,7 +120,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                     client.webSocket(host = host, port = port, path = "/game") {
                         retryDelay = 1000L
 
-                        send(Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect(playerName = playerName, userName = username))))
+                        send(Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect(playerName = playerName, userName = username, preferredLanguage = preferredLanguage))))
 
                         // Send movement intents at server tick rate + pending chunk unloads
                         val inputJob = launch {
@@ -450,6 +450,8 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
             is ServerMessage.Welcome -> {
                 localPlayerId = msg.playerId
                 uiState.consolePlayerName = msg.playerName
+                // Re-fetch with server's authoritative language (may differ from login preference for returning players)
+                jsFetchI18n(msg.language)
             }
             is ServerMessage.ChunkData -> {
                 renderChunk(Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)

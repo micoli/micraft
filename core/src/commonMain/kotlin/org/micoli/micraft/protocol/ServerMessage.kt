@@ -12,7 +12,7 @@ import org.micoli.micraft.world.WorldItem
 @Serializable
 sealed class ServerMessage {
     @Serializable
-    data class Welcome(val playerId: String, val playerName: String, val spawnPos: Vec3) : ServerMessage()
+    data class Welcome(val playerId: String, val playerName: String, val spawnPos: Vec3, val language: String = "en") : ServerMessage()
 
     @Serializable
     data class ChunkData(

@@ -20,6 +20,7 @@ import org.micoli.micraft.tick.MovementProcessor
 import org.micoli.micraft.world.ChunkGenerator
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.DropConfig
+import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldPersistence
@@ -35,6 +36,7 @@ class GameLoop(
     private val world: WorldState,
     private val persistence: WorldPersistence? = null,
     private val reloadBiomes: (() -> ChunkGenerator)? = null,
+    val i18n: I18nConfig = I18nConfig(Path.of("data/i18n")),
 ) {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
     private var saveTickCounter = 0
@@ -47,11 +49,13 @@ class GameLoop(
         dropConfig,
         broadcast = { msg -> sessions.values.forEach { it.send(msg) } },
         savePlayer = ::savePlayer,
+        i18n = i18n,
     )
 
     private val commandContext = CommandContext(
         world = world,
         persistence = persistence,
+        i18n = i18n,
         broadcast = { msg -> sessions.values.forEach { it.send(msg) } },
         sessions = { sessions.values },
         kickSession = { playerName ->
@@ -76,6 +80,8 @@ class GameLoop(
             world.generator = reloadBiomes.invoke()
             lines += "Biomes reloaded"
         }
+        i18n.reload()
+        lines += "i18n: ${i18n.locales.size} locales"
         return lines.joinToString(", ")
     }
 
@@ -128,7 +134,7 @@ class GameLoop(
         val args = trimmed.substringAfter(' ', "")
         val handler = commands[name]
         if (handler != null) handler.execute(session, args, commandContext)
-        else session.send(ServerMessage.Notification("Unknown command: $trimmed"))
+        else session.send(ServerMessage.Notification(i18n.t(session.state.language, "commands:server:unknown", trimmed)))
     }
 
     suspend fun onConnect(socket: DefaultWebSocketSession) {
@@ -143,9 +149,11 @@ class GameLoop(
         }.getOrNull()
         val playerName = connectMsg?.playerName ?: "Player"
         val userName = connectMsg?.userName ?: playerName
+        val preferredLanguage = connectMsg?.preferredLanguage?.let { if (it in i18n.locales) it else "en" } ?: "en"
 
         val saved = persistence?.loadPlayerState(playerName)
         val spawn = saved?.pos ?: Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z)
+        val language = saved?.language?.let { if (it in i18n.locales) it else "en" } ?: preferredLanguage
         val state = PlayerState(
             id = id,
             name = playerName,
@@ -154,13 +162,14 @@ class GameLoop(
             stance = saved?.stance ?: PlayerStance.STANDING,
             flying = saved?.flying ?: DEBUG_WORLD,
             speedMultiplier = saved?.speedMultiplier ?: 1f,
+            language = language,
         )
         val session = PlayerSession(id, userName, socket, state)
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
         sessions[id] = session
         log.info("player connected: {} name={} user={} (total={})", id.take(8), playerName, userName, sessions.size)
 
-        session.send(ServerMessage.Welcome(id, playerName, spawn))
+        session.send(ServerMessage.Welcome(id, playerName, spawn, language))
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
 
         val spawnCp = ChunkPos(

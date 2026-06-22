@@ -12,10 +12,11 @@ class UndoCommand : CommandHandler {
     override val usage = "/undo [N]"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
+        val lang = session.state.language
         val n = args.trim().toIntOrNull()?.coerceAtLeast(1) ?: 1
         val history = session.breakHistory
         if (history.isEmpty()) {
-            session.send(ServerMessage.Notification("Nothing to undo."))
+            session.send(ServerMessage.Notification(context.i18n.t(lang, "undo:server:nothing")))
             return
         }
         val count = minOf(n, history.size)
@@ -38,6 +39,7 @@ class UndoCommand : CommandHandler {
         }
         context.savePlayer(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
-        session.send(ServerMessage.Notification("Undid $count block break${if (count > 1) "s" else ""}."))
+        val doneKey = if (count == 1) "undo:server:done_one" else "undo:server:done_many"
+        session.send(ServerMessage.Notification(context.i18n.t(lang, doneKey, count)))
     }
 }

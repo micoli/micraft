@@ -64,8 +64,10 @@ fun main() {
         val parts = result.split("\t")
         val username = parts[0]
         val playerName = if (parts.size > 1) parts[1] else parts[0]
-        jsLog("login: user=$username player=$playerName — connecting to ws://$host:$port/game …")
-        client.connect(host, port, username, playerName)
+        val lang = if (parts.size > 2) parts[2] else "en"
+        jsFetchI18n(lang)
+        jsLog("login: user=$username player=$playerName lang=$lang — connecting to ws://$host:$port/game …")
+        client.connect(host, port, username, playerName, lang)
     }
 
     jsEngineRunRenderLoop(engine, scene)

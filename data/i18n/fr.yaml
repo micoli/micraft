@@ -1,0 +1,53 @@
+# yaml-language-server: $schema=../schemas/i18n.schema.json
+commands:
+  server:
+    unknown: "Commande inconnue : {0}"
+  client:
+    hint: "Tapez / pour ouvrir les commandes"
+save:
+  server:
+    done: "Monde sauvegardé."
+help:
+  server:
+    unknown_cmd: "Commande inconnue : {0}"
+    no_description: "(pas de description)"
+    usage_line: "  Usage : {0}"
+    options_header: "  Options :"
+    option_item: "    • {0}"
+    available_header: "Commandes disponibles :"
+    details_hint: "Tapez /help <commande> pour plus de détails."
+kick:
+  server:
+    usage: "Usage : /kick <nomJoueur>"
+    not_found: "Joueur introuvable : {0}"
+    kicked_you: "Vous avez été expulsé par {0}."
+    kicked_broadcast: "{0} a expulsé {1}."
+who:
+  server:
+    empty: "Aucun joueur connecté."
+    online: "En ligne ({0}) :\n{1}"
+reload:
+  server:
+    unavailable: "Rechargement non disponible dans ce mode."
+    done: "Configuration rechargée — {0}"
+undo:
+  server:
+    nothing: "Rien à annuler."
+    done_one: "Annulation de {0} destruction de bloc."
+    done_many: "Annulation de {0} destructions de blocs."
+yield:
+  server:
+    usage: "Usage : /yield <message>"
+lang:
+  server:
+    available: "Langues disponibles : {0}"
+    set: "Langue définie sur {0}."
+    already: "La langue est déjà {0}."
+    unknown: "Langue inconnue : {0}. Disponibles : {1}"
+  client:
+    label: "Langue"
+inventory:
+  server:
+    item_picked_up: "+{0} {1}"
+  client:
+    empty: "Vide"

@@ -12,6 +12,17 @@ function getLastPlayer(username: string): string {
 function saveLastPlayer(username: string, playerName: string) {
   try { localStorage.setItem('micraft_last_player_' + username, playerName); } catch {}
 }
+function getLastLang(): string {
+  try { return localStorage.getItem('micraft_last_lang') || 'en'; } catch { return 'en'; }
+}
+function saveLastLang(lang: string) {
+  try { localStorage.setItem('micraft_last_lang', lang); } catch {}
+}
+
+const SUPPORTED_LANGS: { code: string; label: string }[] = [
+  { code: 'en', label: 'English' },
+  { code: 'fr', label: 'Français' },
+];
 
 const inputStyle: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box', padding: '8px 10px',
@@ -38,6 +49,7 @@ interface Props {
 export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
   const [step, setStep] = useState<1 | 2>(1);
   const [username, setUsername] = useState('');
+  const [lang, setLang] = useState('en');
   const [chars, setChars] = useState<string[]>([]);
   const [selected, setSelected] = useState('');
   const [newChar, setNewChar] = useState('');
@@ -49,6 +61,7 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
       const last = localStorage.getItem('micraft_last_user') || '';
       if (last) setUsername(last);
     } catch {}
+    setLang(getLastLang());
   }, []);
 
   useEffect(() => {
@@ -87,7 +100,8 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
       playerName = selected;
     }
     saveLastPlayer(user, playerName);
-    loginResultRef.current = user + '\t' + playerName;
+    saveLastLang(lang);
+    loginResultRef.current = user + '\t' + playerName + '\t' + lang;
     onHide();
   }
 
@@ -118,6 +132,18 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
               onChange={e => setUsername(e.target.value)}
               onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') goStep2(); }}
             />
+            <div style={{ marginTop: 14 }}>
+              <label style={{ display: 'block', fontSize: 13, color: '#aaa', marginBottom: 6 }}>Language</label>
+              <select
+                value={lang}
+                onChange={e => setLang(e.target.value)}
+                style={{ ...inputStyle, cursor: 'pointer' }}
+              >
+                {SUPPORTED_LANGS.map(l => (
+                  <option key={l.code} value={l.code}>{l.label}</option>
+                ))}
+              </select>
+            </div>
             <button style={btnPrimary} onClick={goStep2}>Continue</button>
           </div>
         )}

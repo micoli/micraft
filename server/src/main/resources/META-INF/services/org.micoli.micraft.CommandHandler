@@ -1,6 +1,7 @@
 org.micoli.micraft.command.DisconnectCommand
 org.micoli.micraft.command.HelpCommand
 org.micoli.micraft.command.KickCommand
+org.micoli.micraft.command.LangCommand
 org.micoli.micraft.command.ReloadCommand
 org.micoli.micraft.command.SaveCommand
 org.micoli.micraft.command.UndoCommand

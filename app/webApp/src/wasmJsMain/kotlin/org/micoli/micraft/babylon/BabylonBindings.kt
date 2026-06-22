@@ -181,6 +181,10 @@ fun jsGetUrlParam(name: String): String = js("mcGetUrlParam(name)")
 fun jsSetupDebugCameraKeys(camera: JsAny, scene: JsAny, bx: Double, by: Double, bz: Double): Unit =
     js("mcSetupDebugCameraKeys(camera, scene, bx, by, bz)")
 
+// ── i18n ─────────────────────────────────────────────────────────────────────
+
+fun jsFetchI18n(locale: String): Unit = js("mcFetchI18n(locale)")
+
 // ── Console ───────────────────────────────────────────────────────────────────
 
 fun jsCreateConsole(): Unit    = js("mcCreateConsole()")

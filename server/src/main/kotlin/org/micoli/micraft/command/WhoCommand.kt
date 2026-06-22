@@ -7,12 +7,13 @@ import org.micoli.micraft.session.PlayerSession
 
 class WhoCommand : CommandHandler {
     override val command = "/who"
-    override val description = "Liste les joueurs connectés avec leur position."
+    override val description = "Lists connected players with their position."
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
+        val lang = session.state.language
         val connected: List<PlayerSession> = context.sessions().toList()
         if (connected.isEmpty()) {
-            session.send(ServerMessage.Notification("No players connected."))
+            session.send(ServerMessage.Notification(context.i18n.t(lang, "who:server:empty")))
             return
         }
         val lines = connected.joinToString("\n") { s ->
@@ -20,6 +21,6 @@ class WhoCommand : CommandHandler {
             val suffix = if (s.userName != s.state.name) " (user: ${s.userName})" else ""
             "  ${s.state.name}$suffix at (${p.x.toInt()}, ${p.y.toInt()}, ${p.z.toInt()})"
         }
-        session.send(ServerMessage.Notification("Online (${connected.size}):\n$lines"))
+        session.send(ServerMessage.Notification(context.i18n.t(lang, "who:server:online", connected.size, lines)))
     }
 }

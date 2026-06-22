@@ -27,6 +27,26 @@ registerPlayerModel();
 registerFPArms();
 registerMinimap();
 
+// ── i18n ─────────────────────────────────────────────────────────────────────
+
+let _i18nTable: Record<string, string> = {};
+
+(window as any).mcFetchI18n = (locale: string) => {
+  fetch(`/api/i18n/${locale}`)
+    .then(r => r.json())
+    .then((data: Record<string, string>) => {
+      _i18nTable = data;
+      (window as any).__mcI18nLocale = locale;
+    })
+    .catch(() => {});
+};
+
+(window as any).mcT = (key: string, ...args: (string | number)[]): string => {
+  let s = _i18nTable[key] ?? key;
+  args.forEach((a, i) => { s = s.replace(`{${i}}`, String(a)); });
+  return s;
+};
+
 // Mount React UI root
 const uiRoot = document.getElementById('mc-ui');
 if (uiRoot) createRoot(uiRoot).render(createElement(GameUI));

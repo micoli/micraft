@@ -8,7 +8,7 @@ import org.micoli.micraft.world.ChunkPos
 @Serializable
 sealed class ClientMessage {
     @Serializable
-    data class Connect(val playerName: String, val userName: String = playerName) : ClientMessage()
+    data class Connect(val playerName: String, val userName: String = playerName, val preferredLanguage: String = "en") : ClientMessage()
 
     @Serializable
     data class MoveIntent(

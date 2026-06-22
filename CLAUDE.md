@@ -146,5 +146,23 @@ JSON Schemas for YAML configs live in `data/schemas/`. Keep them in sync with Ko
 | `core/.../world/BiomeDefinition.kt`, `Block.kt` | `data/schemas/biomes.schema.json` |
 | `server/.../world/DropConfig.kt`, `core/.../world/ItemType.kt` | `data/schemas/drops.schema.json` |
 | `server/.../world/KeyBindingsConfig.kt` | `data/schemas/keybindings.schema.json` |
+| `server/.../world/I18nConfig.kt` | `data/schemas/i18n.schema.json` |
 
 Whenever you add/remove/rename a field or enum value in these data classes, update the corresponding schema in the same commit.
+
+## i18n (translations)
+
+Translation YAML files live in `data/i18n/{locale}.yaml` (e.g. `en.yaml`, `fr.yaml`).
+
+Key format: `feature:scope:key` where scope is `server` or `client`.
+
+- **Server notifications** (sent via `ServerMessage.Notification`) → always go through `context.i18n.t(session.state.language, "feature:server:key", ...args)`.
+- **Client UI strings** → served via `GET /api/i18n/{locale}` and accessed in TypeScript via `window.mcT("feature:client:key")`.
+- `I18nConfig` is instantiated once in `GameLoop` and reloaded with `/reload`.
+- Player language is stored in `PlayerState.language` and persisted to `players/*.json`.
+- Language is changed with `/lang <locale>` or the language selector in the login overlay.
+
+**When adding new user-visible strings:**
+1. Add the key to **both** `data/i18n/en.yaml` and `data/i18n/fr.yaml`.
+2. Use `context.i18n.t(session.state.language, "feature:server:key", ...args)` server-side.
+3. Use `window.mcT("feature:client:key")` client-side (TypeScript).

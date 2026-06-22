@@ -20,4 +20,5 @@ data class PlayerState(
     val speedMultiplier: Float = 1f,
     val biome: String = "",
     val inventory: Map<ItemType, Int> = emptyMap(),
+    val language: String = "en",
 )
