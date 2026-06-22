@@ -49,6 +49,7 @@ export function GameUI() {
   const consoleOpenRef = useRef(false);
   const consoleStateRef = useRef({ history: [] as string[], histIdx: -1, playerName: '', tabIdx: -1, tabMatches: [] as string[] });
   const consoleSubmittedRef = useRef<string | null>(null);
+  const consoleInitialValueRef = useRef('');
   const loginResultRef = useRef('');
   const notifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -125,9 +126,11 @@ export function GameUI() {
       if (loginEl && (loginEl as HTMLElement).dataset.visible === 'true') return;
       if (ke.key === '/' && !consoleOpenRef.current) {
         ke.preventDefault();
+        consoleInitialValueRef.current = '/';
         dispatch({ type: 'console_show' });
       } else if (ke.key === 'Enter' && !consoleOpenRef.current) {
         ke.preventDefault();
+        consoleInitialValueRef.current = '';
         dispatch({ type: 'console_show' });
       }
     }
@@ -146,6 +149,7 @@ export function GameUI() {
         onClose={() => dispatch({ type: 'console_hide' })}
         submittedRef={consoleSubmittedRef}
         stateRef={consoleStateRef}
+        initialValueRef={consoleInitialValueRef}
       />
       <div id="mc-login-root" data-visible={String(state.loginVisible)}>
         <LoginOverlay visible={state.loginVisible} loginResultRef={loginResultRef} onHide={() => dispatch({ type: 'login_hide' })} />

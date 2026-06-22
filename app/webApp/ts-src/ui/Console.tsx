@@ -13,6 +13,7 @@ interface Props {
   onClose: () => void;
   submittedRef: MutableRefObject<string | null>;
   stateRef: MutableRefObject<ConsoleState>;
+  initialValueRef: MutableRefObject<string>;
 }
 
 function computeSuggestions(val: string): string[] {
@@ -28,7 +29,7 @@ function computeSuggestions(val: string): string[] {
   return completers[cmd] ? completers[cmd](partial) : [];
 }
 
-export function Console({ open, onClose, submittedRef, stateRef }: Props) {
+export function Console({ open, onClose, submittedRef, stateRef, initialValueRef }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [selIdx, setSelIdx] = useState(-1);
@@ -37,7 +38,8 @@ export function Console({ open, onClose, submittedRef, stateRef }: Props) {
     if (open) {
       const el = inputRef.current;
       if (!el) return;
-      el.value = '';
+      el.value = initialValueRef.current;
+      initialValueRef.current = '';
       submittedRef.current = null;
       stateRef.current.histIdx = -1;
       if (document.pointerLockElement) document.exitPointerLock();
