@@ -7,3 +7,6 @@ org.micoli.micraft.command.SaveCommand
 org.micoli.micraft.command.UndoCommand
 org.micoli.micraft.command.WhoCommand
 org.micoli.micraft.command.YieldCommand
+org.micoli.micraft.command.TeleportCommand
+org.micoli.micraft.command.SummonCommand
+org.micoli.micraft.command.GotoCommand

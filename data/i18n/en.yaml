@@ -46,6 +46,21 @@ lang:
     unknown: "Unknown locale: {0}. Available: {1}"
   client:
     label: "Language"
+teleport:
+  server:
+    usage: "Usage: /teleport <x> <y> <z>"
+    done: "Teleported to ({0}, {1}, {2})."
+summon:
+  server:
+    usage: "Usage: /summon <playerName>"
+    not_found: "Player not found: {0}"
+    summoned_you: "You were summoned by {0}."
+    done: "Summoned {0} to your location."
+goto:
+  server:
+    usage: "Usage: /goto <playerName>"
+    not_found: "Player not found: {0}"
+    done: "Teleported to {0}."
 inventory:
   server:
     item_picked_up: "+{0} {1}"

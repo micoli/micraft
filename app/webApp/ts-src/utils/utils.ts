@@ -27,4 +27,7 @@ export function registerUtils(): void {
   registerCompleter('/who', () => []);
   registerCompleter('/yield', () => []);
   registerCompleter('/disconnect', () => []);
+  registerCompleter('/teleport', () => []);
+  registerCompleter('/summon', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
+  registerCompleter('/goto', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
 }

@@ -1,0 +1,32 @@
+package org.micoli.micraft.command
+
+import org.micoli.micraft.CommandContext
+import org.micoli.micraft.CommandHandler
+import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.session.PlayerSession
+
+class SummonCommand : CommandHandler {
+    override val command = "/summon"
+    override val description = "Teleports another player to your location."
+    override val usage = "/summon <playerName>"
+
+    override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
+        val lang = session.state.language
+        val i18n = context.i18n
+        val target = args.trim()
+        if (target.isBlank()) {
+            session.send(ServerMessage.Notification(i18n.t(lang, "summon:server:usage")))
+            return
+        }
+        val targetSession: PlayerSession? = context.sessions().find { it.state.name == target }
+        if (targetSession == null) {
+            session.send(ServerMessage.Notification(i18n.t(lang, "summon:server:not_found", target)))
+            return
+        }
+        targetSession.state = targetSession.state.copy(pos = safeTeleportPos(context.world, session.state.pos))
+        targetSession.vy = 0f
+        targetSession.send(ServerMessage.PlayerUpdate(targetSession.state))
+        targetSession.send(ServerMessage.Notification(i18n.t(targetSession.state.language, "summon:server:summoned_you", session.state.name)))
+        session.send(ServerMessage.Notification(i18n.t(lang, "summon:server:done", target)))
+    }
+}
