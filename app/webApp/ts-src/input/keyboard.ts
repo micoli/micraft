@@ -17,9 +17,11 @@ const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   descend:      ['ShiftLeft'],
   speed_up:     ['KeyP'],
   speed_down:   ['KeyO'],
-  view_toggle:  ['KeyF'],
-  inventory:    ['KeyI'],
-  undo:         ['Ctrl+KeyZ', 'Cmd+KeyZ'],
+  view_toggle:      ['KeyF'],
+  inventory:        ['KeyI'],
+  undo:             ['Ctrl+KeyZ', 'Cmd+KeyZ'],
+  minimap_zoom_in:  ['l'],
+  minimap_zoom_out: ['m'],
 };
 
 // Parse "Ctrl+Shift+KeyZ" → { mods: {ctrl,shift,alt,meta}, key: "KeyZ" }
@@ -40,9 +42,15 @@ function parseBoundKey(str: string): ParsedKey {
 // One-shot check against a KeyboardEvent.
 // Bare-key bindings match regardless of current modifiers;
 // modifier-qualified bindings require exact modifier state.
+// Key names starting with an uppercase letter (KeyW, Space, ShiftLeft…) match e.code (physical
+// position, layout-independent). Lowercase names (m, l…) match e.key (produced character,
+// layout-aware — works correctly on AZERTY, Dvorak, etc.).
 function matchesEvent(str: string, e: KeyboardEvent): boolean {
   const parsed = parseBoundKey(str);
-  if (e.code !== parsed.key) return false;
+  const keyMatch = /^[A-Z]/.test(parsed.key)
+    ? e.code === parsed.key
+    : e.key.toLowerCase() === parsed.key.toLowerCase();
+  if (!keyMatch) return false;
   const hasModPrefix = parsed.mods.ctrl || parsed.mods.shift || parsed.mods.alt || parsed.mods.meta;
   if (!hasModPrefix) return true;
   return parsed.mods.ctrl  === e.ctrlKey  &&
@@ -56,6 +64,8 @@ function isComboDown(str: string): boolean {
   const mc = window.__mc;
   const parsed = parseBoundKey(str);
   if (!mc.keys[parsed.key]) return false;
+  const hasModPrefix = parsed.mods.ctrl || parsed.mods.shift || parsed.mods.alt || parsed.mods.meta;
+  if (!hasModPrefix) return true;
   const mods = mc.modifiers;
   return parsed.mods.ctrl  === mods.ctrl  &&
          parsed.mods.shift === mods.shift &&
@@ -98,9 +108,11 @@ export function registerKeyboard(): void {
         if (now - window.__mc.lastSpaceTime < 300) window.__mc.flyToggle = true;
         window.__mc.lastSpaceTime = now;
       }
-      if (b.view_toggle?.some(k => matchesEvent(k, e))) window.__mc.viewToggle = true;
-      if (b.inventory?.some(k  => matchesEvent(k, e))) window.__mc.inventoryToggle = true;
-      if (b.undo?.some(k       => matchesEvent(k, e))) window.__mc.undoToggle = true;
+      if (b.view_toggle?.some(k  => matchesEvent(k, e))) window.__mc.viewToggle = true;
+      if (b.inventory?.some(k    => matchesEvent(k, e))) window.__mc.inventoryToggle = true;
+      if (b.undo?.some(k         => matchesEvent(k, e))) window.__mc.undoToggle = true;
+      if (b.minimap_zoom_in?.some(k  => matchesEvent(k, e))) (window as any).mcMinimapZoomIn?.();
+      if (b.minimap_zoom_out?.some(k => matchesEvent(k, e))) (window as any).mcMinimapZoomOut?.();
       if (Object.values(b).some(keys => keys.some(k => matchesEvent(k, e)))) e.preventDefault();
     });
 
@@ -159,4 +171,5 @@ export function registerKeyboard(): void {
     if (!d) return;
     d.style.display = d.style.display === 'none' ? 'flex' : 'none';
   };
+
 }

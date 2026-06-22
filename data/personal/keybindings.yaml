@@ -1,5 +1,6 @@
+# yaml-language-server: $schema=../schemas/keybindings.schema.json
 # MicCraft key bindings
-# Keys use Web KeyboardEvent.code values (https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code)
+# Keys: PascalCase = e.code (physical position, e.g. KeyW, Space) — lowercase = e.key character (layout-aware, e.g. m, l)
 # All values must be lists (use [Key] for single-key bindings).
 
 movement:
@@ -27,3 +28,7 @@ camera:
 ui:
   inventory: [KeyI]
   undo:      [Ctrl+KeyZ, Cmd+KeyZ]
+
+minimap:
+  minimap_zoom_in:  [l]
+  minimap_zoom_out: [m]

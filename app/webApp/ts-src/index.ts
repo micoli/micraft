@@ -11,6 +11,7 @@ import { registerTargeting } from './targeting/targeting';
 import { registerChunks } from './chunks/chunkBuilder';
 import { registerPlayerModel } from './player/playerModel';
 import { registerFPArms } from './player/fpArms';
+import { registerMinimap } from './minimap/minimap';
 
 registerUtils();
 registerEngine();
@@ -22,6 +23,7 @@ registerTargeting();
 registerChunks();
 registerPlayerModel();
 registerFPArms();
+registerMinimap();
 
 // ── UI overlays (Phase 3: will move to Kotlin/Compose) ────────────────────────
 

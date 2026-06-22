@@ -30,6 +30,7 @@ fun main() {
     jsLog("camera ready")
 
     jsCreateHUD()
+    jsCreateMinimap()
     jsCreateHotbar()
     jsCreateConsole()
     jsCreateServerLog()

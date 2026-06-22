@@ -359,6 +359,8 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
             fpsWindowStart = now
         }
 
+        jsDrawMinimap(predX, predZ)
+
         val toDeg = 180.0 / kotlin.math.PI
         val targetBlockName = target?.let { getBlockAtWorld(it.x, it.y, it.z).name } ?: ""
         jsUpdateHUD(hudX, hudY, hudZ, yaw * toDeg, pitch * toDeg, hudStance, hudSpeed,
@@ -549,6 +551,30 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
         }
         jsChunkEnd(scene, grassMat, stoneMat, dirtMat, bedrockMat, sandMat, sandstoneMat, gravelMat, snowMat)
         loadedChunks.add(chunk.pos)
+        pushMinimapChunk(chunk, topY)
+    }
+
+    private fun pushMinimapChunk(chunk: Chunk, topY: Int) {
+        val topYParts = IntArray(WorldConstants.CHUNK_SIZE * WorldConstants.CHUNK_SIZE)
+        val topBlockParts = IntArray(WorldConstants.CHUNK_SIZE * WorldConstants.CHUNK_SIZE)
+        for (lx in 0 until WorldConstants.CHUNK_SIZE) {
+            for (lz in 0 until WorldConstants.CHUNK_SIZE) {
+                val idx = lx * WorldConstants.CHUNK_SIZE + lz
+                for (y in topY downTo 0) {
+                    val block = chunk.getBlock(lx, y, lz)
+                    if (block != BlockType.AIR) {
+                        topYParts[idx] = y
+                        topBlockParts[idx] = block.ordinal
+                        break
+                    }
+                }
+            }
+        }
+        jsSetMinimapChunk(
+            chunk.pos.cx, chunk.pos.cz,
+            "[${topYParts.joinToString(",")}]",
+            "[${topBlockParts.joinToString(",")}]",
+        )
     }
 
     private fun unloadDistantChunks(playerCx: Int, playerCz: Int) {
@@ -559,6 +585,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
         if (toUnload.isEmpty()) return
         toUnload.forEach { cp ->
             jsDisposeChunk("${cp.cx},${cp.cz}")
+            jsClearMinimapChunk(cp.cx, cp.cz)
             loadedChunks.remove(cp)
             chunkData.remove(cp)
         }
