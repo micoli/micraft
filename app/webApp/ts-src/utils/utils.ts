@@ -23,6 +23,7 @@ export function registerUtils(): void {
 
   registerCompleter('/keyreload', () => []);
   registerCompleter('/kick', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
+  registerCompleter('/shaders', (p) => ['on', 'off'].filter(o => o.startsWith(p)));
   registerCompleter('/save', () => []);
   registerCompleter('/who', () => []);
   registerCompleter('/yield', () => []);

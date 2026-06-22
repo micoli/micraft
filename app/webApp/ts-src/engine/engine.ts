@@ -72,4 +72,25 @@ export function registerEngine(): void {
     (scene as any).skipPointerMovePicking = true;
     (scene as any).blockMaterialDirtyMechanism = true;
   };
+
+  window.mcSetupFog = (scene: Scene, r: number, g: number, b: number): void => {
+    (scene as any).fogMode  = BABYLON.Scene.FOGMODE_LINEAR;
+    (scene as any).fogStart = 24;
+    (scene as any).fogEnd   = 40;
+    (scene as any).fogColor   = new BABYLON.Color3(r, g, b);
+    (scene as any).clearColor = new BABYLON.Color4(r, g, b, 1.0);
+  };
+
+  window.mcSetShadersEnabled = (scene: Scene, enabled: boolean): void => {
+    (scene as any).fogMode = enabled ? BABYLON.Scene.FOGMODE_LINEAR : BABYLON.Scene.FOGMODE_NONE;
+    const mats = (window as any).__mcBlockMaterials as Record<string, any> | undefined;
+    if (mats) {
+      (scene as any).blockMaterialDirtyMechanism = false;
+      for (const mat of Object.values(mats)) {
+        mat.useVertexColors = enabled;
+        mat.markAsDirty(BABYLON.Material.AttributesDirtyFlag);
+      }
+      (scene as any).blockMaterialDirtyMechanism = true;
+    }
+  };
 }

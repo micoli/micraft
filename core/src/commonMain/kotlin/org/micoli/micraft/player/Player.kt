@@ -21,4 +21,5 @@ data class PlayerState(
     val biome: String = "",
     val inventory: Map<ItemType, Int> = emptyMap(),
     val language: String = "en",
+    val shadersEnabled: Boolean = true,
 )

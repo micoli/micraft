@@ -33,6 +33,11 @@ lang:
     unknown: "Langue inconnue : {0}. Disponibles : {1}"
   client:
     label: "Langue"
+shaders:
+  server:
+    enabled: "Shaders activés."
+    disabled: "Shaders désactivés."
+    usage: "Usage : /shaders [on|off]"
 inventory:
   server:
     item_picked_up: "+{0} {1}"

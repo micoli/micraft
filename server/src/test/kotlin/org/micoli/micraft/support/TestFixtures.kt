@@ -22,6 +22,7 @@ fun testPlayerState(
     flying: Boolean = false,
     stance: PlayerStance = PlayerStance.STANDING,
     speedMultiplier: Float = 1f,
+    shadersEnabled: Boolean = true,
 ) = PlayerState(
     id = id,
     name = name,
@@ -31,6 +32,7 @@ fun testPlayerState(
     flying = flying,
     speedMultiplier = speedMultiplier,
     language = language,
+    shadersEnabled = shadersEnabled,
 )
 
 fun testSession(
@@ -38,7 +40,8 @@ fun testSession(
     name: String = "Alice",
     pos: Vec3 = Vec3(8f, 8f, 8f),
     language: String = "en",
-) = FakePlayerSession(id, name, testPlayerState(id = id, name = name, pos = pos, language = language))
+    shadersEnabled: Boolean = true,
+) = FakePlayerSession(id, name, testPlayerState(id = id, name = name, pos = pos, language = language, shadersEnabled = shadersEnabled))
 
 fun testWorld(vararg solid: Triple<Int, Int, Int>): WorldState =
     WorldState(MapChunkGenerator(solid.associateWith { BlockType.STONE }))

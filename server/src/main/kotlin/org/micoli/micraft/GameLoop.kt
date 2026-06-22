@@ -185,6 +185,7 @@ class GameLoop(
         val saved = persistence?.loadPlayerState(playerName)
         val spawn = saved?.pos ?: Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z)
         val language = saved?.language?.let { if (it in i18n.locales) it else "en" } ?: preferredLanguage
+        val shadersEnabled = saved?.shadersEnabled ?: true
         val state = PlayerState(
             id = id,
             name = playerName,
@@ -194,13 +195,14 @@ class GameLoop(
             flying = saved?.flying ?: DEBUG_WORLD,
             speedMultiplier = saved?.speedMultiplier ?: 1f,
             language = language,
+            shadersEnabled = shadersEnabled,
         )
         val session = PlayerSession(id, userName, socket, state)
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
         sessions[id] = session
         log.info("player connected: {} name={} user={} (total={})", id.take(8), playerName, userName, sessions.size)
 
-        session.send(ServerMessage.Welcome(id, playerName, spawn, language))
+        session.send(ServerMessage.Welcome(id, playerName, spawn, language, shadersEnabled))
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
 
         val spawnCp = ChunkPos(

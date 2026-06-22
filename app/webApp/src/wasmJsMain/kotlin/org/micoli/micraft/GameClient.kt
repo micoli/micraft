@@ -27,6 +27,58 @@ private const val PRED_DT = 16.0 / 1000.0  // seconds per prediction frame (~60f
 private const val FLY_VERTICAL_SPEED = 8f   // must match server GameLoop constant
 private const val SNAP_THRESHOLD = 2.0      // blocks: snap if prediction diverges beyond this
 
+// Sky color (matches fog and clearColor)
+private const val SKY_R = 0.53
+private const val SKY_G = 0.81
+private const val SKY_B = 0.98
+
+// AO neighbor offsets: [face][vertex][neighbor(s1,s2,corner)][axis(dx,dy,dz)]
+// For each exposed face vertex, these offsets point to the 3 blocks that could occlude it.
+private val AO_NEIGHBORS: Array<Array<Array<IntArray>>> = arrayOf(
+    // fd=0: +Z (south)
+    arrayOf(
+        arrayOf(intArrayOf(-1,0,1), intArrayOf(0,-1,1), intArrayOf(-1,-1,1)),
+        arrayOf(intArrayOf(1,0,1),  intArrayOf(0,-1,1), intArrayOf(1,-1,1)),
+        arrayOf(intArrayOf(1,0,1),  intArrayOf(0,1,1),  intArrayOf(1,1,1)),
+        arrayOf(intArrayOf(-1,0,1), intArrayOf(0,1,1),  intArrayOf(-1,1,1)),
+    ),
+    // fd=1: -Z (north)
+    arrayOf(
+        arrayOf(intArrayOf(1,0,-1),  intArrayOf(0,-1,-1), intArrayOf(1,-1,-1)),
+        arrayOf(intArrayOf(-1,0,-1), intArrayOf(0,-1,-1), intArrayOf(-1,-1,-1)),
+        arrayOf(intArrayOf(-1,0,-1), intArrayOf(0,1,-1),  intArrayOf(-1,1,-1)),
+        arrayOf(intArrayOf(1,0,-1),  intArrayOf(0,1,-1),  intArrayOf(1,1,-1)),
+    ),
+    // fd=2: +X (east)
+    arrayOf(
+        arrayOf(intArrayOf(1,0,1),  intArrayOf(1,-1,0), intArrayOf(1,-1,1)),
+        arrayOf(intArrayOf(1,0,-1), intArrayOf(1,-1,0), intArrayOf(1,-1,-1)),
+        arrayOf(intArrayOf(1,0,-1), intArrayOf(1,1,0),  intArrayOf(1,1,-1)),
+        arrayOf(intArrayOf(1,0,1),  intArrayOf(1,1,0),  intArrayOf(1,1,1)),
+    ),
+    // fd=3: -X (west)
+    arrayOf(
+        arrayOf(intArrayOf(-1,0,-1), intArrayOf(-1,-1,0), intArrayOf(-1,-1,-1)),
+        arrayOf(intArrayOf(-1,0,1),  intArrayOf(-1,-1,0), intArrayOf(-1,-1,1)),
+        arrayOf(intArrayOf(-1,0,1),  intArrayOf(-1,1,0),  intArrayOf(-1,1,1)),
+        arrayOf(intArrayOf(-1,0,-1), intArrayOf(-1,1,0),  intArrayOf(-1,1,-1)),
+    ),
+    // fd=4: +Y (top)
+    arrayOf(
+        arrayOf(intArrayOf(-1,1,0), intArrayOf(0,1,1),  intArrayOf(-1,1,1)),
+        arrayOf(intArrayOf(1,1,0),  intArrayOf(0,1,1),  intArrayOf(1,1,1)),
+        arrayOf(intArrayOf(1,1,0),  intArrayOf(0,1,-1), intArrayOf(1,1,-1)),
+        arrayOf(intArrayOf(-1,1,0), intArrayOf(0,1,-1), intArrayOf(-1,1,-1)),
+    ),
+    // fd=5: -Y (bottom)
+    arrayOf(
+        arrayOf(intArrayOf(-1,-1,0), intArrayOf(0,-1,-1), intArrayOf(-1,-1,-1)),
+        arrayOf(intArrayOf(1,-1,0),  intArrayOf(0,-1,-1), intArrayOf(1,-1,-1)),
+        arrayOf(intArrayOf(1,-1,0),  intArrayOf(0,-1,1),  intArrayOf(1,-1,1)),
+        arrayOf(intArrayOf(-1,-1,0), intArrayOf(0,-1,1),  intArrayOf(-1,-1,1)),
+    ),
+)
+
 private enum class ViewMode { FIRST_PERSON, THIRD_PERSON }
 
 class GameClient(private val scene: JsAny, private val camera: JsAny, private val uiState: McUiState) {
@@ -78,9 +130,11 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
     private val outMessages = Channel<ClientMessage>(Channel.BUFFERED)
 
     private var blockMaterials: JsAny? = null
+    private var shadersEnabled: Boolean = true
 
     init {
         jsOptimizeScene(scene)
+        jsSetupFog(scene, SKY_R, SKY_G, SKY_B)
         jsInitPlayerModel()
         jsInitBlockDefs()
     }
@@ -88,6 +142,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
     private fun getBlockMaterials(): JsAny? {
         if (blockMaterials == null && jsIsBlockDefsReady()) {
             blockMaterials = jsCreateBlockMaterials(scene)
+            jsSetShadersEnabled(scene, shadersEnabled)
         }
         return blockMaterials
     }
@@ -108,9 +163,11 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
             while (isActive) {
                 try {
                     uiState.disconnectMessage = null
+                    jsLog("WS connecting to ws://$host:$port/game")
                     val client = HttpClient(Js) { install(WebSockets) }
                     client.webSocket(host = host, port = port, path = "/game") {
                         retryDelay = 1000L
+                        jsLog("WS connected, sending Connect(playerName=$playerName, userName=$username)")
 
                         send(Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect(playerName = playerName, userName = username, preferredLanguage = preferredLanguage))))
 
@@ -140,26 +197,34 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                             }
                         }
 
+                        var frameCount = 0
                         for (frame in incoming) {
                             if (frame is Frame.Text) {
                                 val text = frame.readText()
                                 netBytesIn += text.length
+                                frameCount++
+                                if (frameCount <= 3) jsLog("WS frame #$frameCount (${text.length}B): ${text.take(200)}")
                                 val msg = runCatching {
                                     Json.decodeFromString<ServerMessage>(text)
                                 }.onFailure { e ->
-                                    jsError("JSON parse error: ${e.message}")
+                                    jsError("JSON parse error on frame #$frameCount: ${e.message} | raw=${text.take(300)}")
                                 }.getOrNull() ?: continue
                                 handleMessage(msg)
+                            } else {
+                                jsLog("WS non-text frame: ${frame::class.simpleName}")
                             }
                         }
+                        jsLog("WS incoming loop ended after $frameCount frames (closeReason=${closeReason.await()})")
                         inputJob.cancel()
                         breakJob.cancel()
                     }
+                    jsLog("WS session closed normally")
                 } catch (e: Throwable) {
-                    jsError("WebSocket error: ${e::class.simpleName}: ${e.message}")
+                    jsError("WS error: ${e::class.simpleName}: ${e.message}")
                 }
 
                 if (!isActive) break
+                jsLog("WS resetForReconnect, retryDelay=${retryDelay}ms")
                 resetForReconnect()
                 val retrySec = retryDelay / 1000
                 uiState.disconnectMessage = "Reconnecting in ${retrySec}s…"
@@ -445,6 +510,12 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                 // Re-fetch with server's authoritative language (may differ from login preference for returning players)
                 jsFetchI18n(msg.language)
                 jsFetchBiomeColors()
+                shadersEnabled = msg.shadersEnabled
+                jsSetShadersEnabled(scene, msg.shadersEnabled)
+            }
+            is ServerMessage.ShadersUpdate -> {
+                shadersEnabled = msg.enabled
+                jsSetShadersEnabled(scene, msg.enabled)
             }
             is ServerMessage.ChunkData -> {
                 renderChunk(Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
@@ -530,6 +601,24 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
         }
     }
 
+    private fun computeFaceAO(chunk: Chunk, lx: Int, ly: Int, lz: Int, fd: Int): Int {
+        val nbrs = AO_NEIGHBORS[fd]
+        val s = WorldConstants.CHUNK_SIZE
+        var packed = 0
+        for (v in 0..3) {
+            var solid = 0
+            for (n in 0..2) {
+                val off = nbrs[v][n]
+                val nx = lx + off[0]; val ny = ly + off[1]; val nz = lz + off[2]
+                if (nx < 0 || nx >= s || nz < 0 || nz >= s) continue
+                if (ny < 0 || ny > WorldConstants.WORLD_MAX_Y) continue
+                if (chunk.getBlock(nx, ny, nz).isSolid) solid++
+            }
+            packed = packed or ((solid * 5).coerceAtMost(15) shl (v * 4))
+        }
+        return packed
+    }
+
     private fun renderChunk(chunk: Chunk, topY: Int) {
         val mats = getBlockMaterials() ?: return // block defs not yet loaded
         val chunkKey = "${chunk.pos.cx},${chunk.pos.cz}"
@@ -550,12 +639,12 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                     val wx = ox + x
                     val wz2 = oz + z
                     // Emit only exposed faces; chunk-edge faces are always exposed.
-                    if (y >= WorldConstants.WORLD_MAX_Y || !chunk.getBlock(x, y + 1, z).isSolid) jsChunkFace(wx, y, wz2, t + 4)
-                    if (y <= 0 || !chunk.getBlock(x, y - 1, z).isSolid)                          jsChunkFace(wx, y, wz2, t + 5)
-                    if (z == s - 1 || !chunk.getBlock(x, y, z + 1).isSolid)                      jsChunkFace(wx, y, wz2, t + 0)
-                    if (z == 0     || !chunk.getBlock(x, y, z - 1).isSolid)                      jsChunkFace(wx, y, wz2, t + 1)
-                    if (x == s - 1 || !chunk.getBlock(x + 1, y, z).isSolid)                      jsChunkFace(wx, y, wz2, t + 2)
-                    if (x == 0     || !chunk.getBlock(x - 1, y, z).isSolid)                      jsChunkFace(wx, y, wz2, t + 3)
+                    if (y >= WorldConstants.WORLD_MAX_Y || !chunk.getBlock(x, y + 1, z).isSolid) jsChunkFace(wx, y, wz2, t + 4, computeFaceAO(chunk, x, y, z, 4))
+                    if (y <= 0 || !chunk.getBlock(x, y - 1, z).isSolid)                          jsChunkFace(wx, y, wz2, t + 5, computeFaceAO(chunk, x, y, z, 5))
+                    if (z == s - 1 || !chunk.getBlock(x, y, z + 1).isSolid)                      jsChunkFace(wx, y, wz2, t + 0, computeFaceAO(chunk, x, y, z, 0))
+                    if (z == 0     || !chunk.getBlock(x, y, z - 1).isSolid)                      jsChunkFace(wx, y, wz2, t + 1, computeFaceAO(chunk, x, y, z, 1))
+                    if (x == s - 1 || !chunk.getBlock(x + 1, y, z).isSolid)                      jsChunkFace(wx, y, wz2, t + 2, computeFaceAO(chunk, x, y, z, 2))
+                    if (x == 0     || !chunk.getBlock(x - 1, y, z).isSolid)                      jsChunkFace(wx, y, wz2, t + 3, computeFaceAO(chunk, x, y, z, 3))
                 }
             }
         }

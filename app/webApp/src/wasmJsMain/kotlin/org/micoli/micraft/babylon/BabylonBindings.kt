@@ -45,11 +45,13 @@ fun jsCreateSimpleBox(name: String, size: Double, scene: JsAny): JsAny =
 fun jsFreezeMesh(mesh: JsAny): Unit = js("mcFreezeMesh(mesh)")
 
 fun jsOptimizeScene(scene: JsAny): Unit = js("mcOptimizeScene(scene)")
+fun jsSetupFog(scene: JsAny, r: Double, g: Double, b: Double): Unit = js("mcSetupFog(scene, r, g, b)")
+fun jsSetShadersEnabled(scene: JsAny, enabled: Boolean): Unit = js("mcSetShadersEnabled(scene, enabled)")
 
 // ── Chunk geometry builder ────────────────────────────────────────────────────
 
 fun jsChunkBegin(cx: Int, cz: Int): Unit = js("mcChunkBegin(cx, cz)")
-fun jsChunkFace(wx: Int, wy: Int, wz: Int, faceMat: Int): Unit = js("mcChunkFace(wx, wy, wz, faceMat)")
+fun jsChunkFace(wx: Int, wy: Int, wz: Int, faceMat: Int, ao: Int): Unit = js("mcChunkFace(wx, wy, wz, faceMat, ao)")
 fun jsChunkEnd(scene: JsAny, materials: JsAny): Unit = js("mcChunkEnd(scene, materials)")
 fun jsDisposeChunk(key: String): Unit = js("mcDisposeChunk(key)")
 

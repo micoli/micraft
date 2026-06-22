@@ -7,6 +7,7 @@ export function registerMaterials(): void {
     mat.diffuseTexture.hasAlpha = false;
     mat.specularColor = new BABYLON.Color3(0, 0, 0);
     mat.backFaceCulling = false;
+    (mat as any).useVertexColors = true;
     return mat;
   };
 
@@ -18,6 +19,7 @@ export function registerMaterials(): void {
     mat.backFaceCulling = false;
     mat.specularColor = new BABYLON.Color3(0, 0, 0);
     if (r !== undefined) mat.diffuseColor = new BABYLON.Color3(r, g!, b!);
+    (mat as any).useVertexColors = true;
     return mat;
   };
 
@@ -28,6 +30,7 @@ export function registerMaterials(): void {
     (mat as any).useAlphaFromDiffuseTexture = true;
     mat.backFaceCulling = false;
     mat.specularColor = new BABYLON.Color3(0, 0, 0);
+    (mat as any).useVertexColors = true;
     return mat;
   };
 
@@ -43,6 +46,7 @@ export function registerMaterials(): void {
       mat.diffuseTexture = new BABYLON.Texture(t.url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
       mat.specularColor = new BABYLON.Color3(0, 0, 0);
       mat.backFaceCulling = false;
+      (mat as any).useVertexColors = true;
 
       if (t.hasAlpha) {
         (mat.diffuseTexture as any).hasAlpha = true;
@@ -62,6 +66,7 @@ export function registerMaterials(): void {
         tinted.specularColor = new BABYLON.Color3(0, 0, 0);
         tinted.backFaceCulling = false;
         tinted.diffuseColor = new BABYLON.Color3(0.47, 0.75, 0.35); // default plains tint
+        (tinted as any).useVertexColors = true;
         mats[t.name + ':biome_tint'] = tinted;
       }
     }
@@ -75,6 +80,7 @@ export function registerMaterials(): void {
       }
     };
 
+    (window as any).__mcBlockMaterials = mats;
     return mats;
   };
 }
