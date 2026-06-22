@@ -10,6 +10,27 @@ export function registerMaterials(): void {
     return mat;
   };
 
+  window.mcCreateLeavesMaterial = (name: string, url: string, scene: Scene, r?: number, g?: number, b?: number): StandardMaterial => {
+    const mat = new BABYLON.StandardMaterial(name, scene);
+    mat.diffuseTexture = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
+    (mat.diffuseTexture as any).hasAlpha = true;
+    (mat as any).useAlphaFromDiffuseTexture = true;
+    mat.backFaceCulling = false;
+    mat.specularColor = new BABYLON.Color3(0, 0, 0);
+    if (r !== undefined) mat.diffuseColor = new BABYLON.Color3(r, g!, b!);
+    return mat;
+  };
+
+  window.mcCreateCrossSpriteMaterial = (name: string, url: string, scene: Scene): StandardMaterial => {
+    const mat = new BABYLON.StandardMaterial(name, scene);
+    mat.diffuseTexture = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
+    (mat.diffuseTexture as any).hasAlpha = true;
+    (mat as any).useAlphaFromDiffuseTexture = true;
+    mat.backFaceCulling = false;
+    mat.specularColor = new BABYLON.Color3(0, 0, 0);
+    return mat;
+  };
+
   window.mcCreateGrassMaterial = (scene: Scene): MultiMaterial => {
     const texMat = (n: string, u: string, ang?: number): StandardMaterial => {
       const m = new BABYLON.StandardMaterial(n, scene);

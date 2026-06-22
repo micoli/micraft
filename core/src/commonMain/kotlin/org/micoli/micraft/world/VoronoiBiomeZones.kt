@@ -59,6 +59,11 @@ class VoronoiBiomeZones(
 
     data class ColumnBlocks(val surface: BlockType, val subsurface: BlockType, val subsurfaceDepth: Int)
 
+    fun effectiveBiome(wx: Int, wz: Int, surfaceY: Int, col: ColumnSample = sample(wx, wz)): BiomeDefinition {
+        val moisture = ((moistureNoise.octaveNoise(wx / 200.0, wz / 200.0, octaves = 3) + 1.0) / 2.0).coerceIn(0.0, 0.9999)
+        return registry.altitudeOverride(surfaceY, moisture) ?: col.primary
+    }
+
     fun selectColumn(wx: Int, wz: Int, surfaceY: Int, col: ColumnSample = sample(wx, wz)): ColumnBlocks {
         val moisture = moistureAt(wx, wz)
         val override = registry.altitudeOverride(surfaceY, moisture)

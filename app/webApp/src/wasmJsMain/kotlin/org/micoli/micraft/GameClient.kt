@@ -21,6 +21,7 @@ import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.Chunk
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.WorldConstants
+import org.micoli.micraft.world.isSolid
 
 private const val PRED_DT = 16.0 / 1000.0  // seconds per prediction frame (~60fps)
 private const val FLY_VERTICAL_SPEED = 8f   // must match server GameLoop constant
@@ -88,7 +89,16 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
     private val sandMat      = jsCreateTextureMaterial("sand",       "/textures/blocks/sand.png",       scene)
     private val sandstoneMat = jsCreateTextureMaterial("sandstone",  "/textures/blocks/sandstone.png",  scene)
     private val gravelMat    = jsCreateTextureMaterial("gravel",     "/textures/blocks/gravel.png",     scene)
-    private val snowMat      = jsCreateTextureMaterial("snow",       "/textures/blocks/snow.png",       scene)
+    private val snowMat          = jsCreateTextureMaterial("snow",            "/textures/blocks/snow.png",             scene)
+    private val oakLogMat        = jsCreateTextureMaterial("oak_log",         "/textures/blocks/log_oak.png",          scene)
+    private val oakLogTopMat     = jsCreateTextureMaterial("oak_log_top",     "/textures/blocks/log_oak_top.png",      scene)
+    private val oakLeavesMat     = jsCreateLeavesMaterial("oak_leaves",       "/textures/blocks/leaves_oak.png",       scene)
+    private val pineLogMat       = jsCreateTextureMaterial("pine_log",        "/textures/blocks/log_spruce.png",       scene)
+    private val pineLogTopMat    = jsCreateTextureMaterial("pine_log_top",    "/textures/blocks/log_spruce_top.png",   scene)
+    private val pineLeavesMat    = jsCreateLeavesMaterial("pine_leaves",      "/textures/blocks/leaves_spruce.png",    scene)
+    private val pineLeavesSnowMat = jsCreateLeavesMaterialTinted("pine_leaves_snow", "/textures/blocks/leaves_spruce.png", scene, 0.9, 0.95, 1.0)
+    private val flowerMat        = jsCreateCrossSpriteMaterial("flower",      "/textures/blocks/flower_dandelion.png", scene)
+    private val weedMat          = jsCreateCrossSpriteMaterial("weed",        "/textures/blocks/tallgrass.png",        scene)
 
     fun connect(host: String, port: Int, username: String, playerName: String) {
         serverHost = host
@@ -541,16 +551,21 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                     val wx = ox + x
                     val wz2 = oz + z
                     // Emit only exposed faces; chunk-edge faces are always exposed.
-                    if (y >= WorldConstants.WORLD_MAX_Y || chunk.getBlock(x, y + 1, z) == BlockType.AIR) jsChunkFace(wx, y, wz2, t + 4)
-                    if (y <= 0 || chunk.getBlock(x, y - 1, z) == BlockType.AIR)                          jsChunkFace(wx, y, wz2, t + 5)
-                    if (z == s - 1 || chunk.getBlock(x, y, z + 1) == BlockType.AIR)                      jsChunkFace(wx, y, wz2, t + 0)
-                    if (z == 0     || chunk.getBlock(x, y, z - 1) == BlockType.AIR)                      jsChunkFace(wx, y, wz2, t + 1)
-                    if (x == s - 1 || chunk.getBlock(x + 1, y, z) == BlockType.AIR)                      jsChunkFace(wx, y, wz2, t + 2)
-                    if (x == 0     || chunk.getBlock(x - 1, y, z) == BlockType.AIR)                      jsChunkFace(wx, y, wz2, t + 3)
+                    if (y >= WorldConstants.WORLD_MAX_Y || !chunk.getBlock(x, y + 1, z).isSolid) jsChunkFace(wx, y, wz2, t + 4)
+                    if (y <= 0 || !chunk.getBlock(x, y - 1, z).isSolid)                          jsChunkFace(wx, y, wz2, t + 5)
+                    if (z == s - 1 || !chunk.getBlock(x, y, z + 1).isSolid)                      jsChunkFace(wx, y, wz2, t + 0)
+                    if (z == 0     || !chunk.getBlock(x, y, z - 1).isSolid)                      jsChunkFace(wx, y, wz2, t + 1)
+                    if (x == s - 1 || !chunk.getBlock(x + 1, y, z).isSolid)                      jsChunkFace(wx, y, wz2, t + 2)
+                    if (x == 0     || !chunk.getBlock(x - 1, y, z).isSolid)                      jsChunkFace(wx, y, wz2, t + 3)
                 }
             }
         }
-        jsChunkEnd(scene, grassMat, stoneMat, dirtMat, bedrockMat, sandMat, sandstoneMat, gravelMat, snowMat)
+        jsChunkEnd(
+            scene, grassMat, stoneMat, dirtMat, bedrockMat, sandMat, sandstoneMat, gravelMat, snowMat,
+            oakLogMat, oakLogTopMat, oakLeavesMat,
+            pineLogMat, pineLogTopMat, pineLeavesMat, pineLeavesSnowMat,
+            flowerMat, weedMat,
+        )
         loadedChunks.add(chunk.pos)
         pushMinimapChunk(chunk, topY)
     }

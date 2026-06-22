@@ -2,12 +2,13 @@ package org.micoli.micraft.physics
 
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.WorldState
+import org.micoli.micraft.world.isSolid
 import kotlin.math.floor
 
 object AabbCollider {
 
     private fun solid(world: WorldState, bx: Int, by: Int, bz: Int) =
-        world.getBlock(bx, by, bz) != BlockType.AIR
+        world.getBlock(bx, by, bz).isSolid
 
     /** Int range covering blocks between [min, max). The -0.001 avoids counting a
      *  block when the AABB face sits exactly on its boundary (touching ≠ inside). */

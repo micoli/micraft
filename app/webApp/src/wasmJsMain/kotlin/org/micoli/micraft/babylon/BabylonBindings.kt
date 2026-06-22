@@ -53,7 +53,10 @@ fun jsChunkFace(wx: Int, wy: Int, wz: Int, faceMat: Int): Unit = js("mcChunkFace
 fun jsChunkEnd(
     scene: JsAny, gm: JsAny, sm: JsAny, dm: JsAny, bm: JsAny,
     sandMat: JsAny, sandstoneMat: JsAny, gravelMat: JsAny, snowMat: JsAny,
-): Unit = js("mcChunkEnd(scene, gm, sm, dm, bm, sandMat, sandstoneMat, gravelMat, snowMat)")
+    oakLogMat: JsAny, oakLogTopMat: JsAny, oakLeavesMat: JsAny,
+    pineLogMat: JsAny, pineLogTopMat: JsAny, pineLeavesMat: JsAny, pineLeavesSnowMat: JsAny,
+    flowerMat: JsAny, weedMat: JsAny,
+): Unit = js("mcChunkEnd(scene, gm, sm, dm, bm, sandMat, sandstoneMat, gravelMat, snowMat, oakLogMat, oakLogTopMat, oakLeavesMat, pineLogMat, pineLogTopMat, pineLeavesMat, pineLeavesSnowMat, flowerMat, weedMat)")
 fun jsDisposeChunk(key: String): Unit = js("mcDisposeChunk(key)")
 
 fun jsSetMeshPosition(mesh: JsAny, x: Double, y: Double, z: Double): Unit =
@@ -74,6 +77,15 @@ fun jsSetMeshMaterial(mesh: JsAny, mat: JsAny): Unit =
 
 fun jsCreateTextureMaterial(name: String, url: String, scene: JsAny): JsAny =
     js("mcCreateTextureMaterial(name, url, scene)")
+
+fun jsCreateLeavesMaterial(name: String, url: String, scene: JsAny): JsAny =
+    js("mcCreateLeavesMaterial(name, url, scene)")
+
+fun jsCreateLeavesMaterialTinted(name: String, url: String, scene: JsAny, r: Double, g: Double, b: Double): JsAny =
+    js("mcCreateLeavesMaterial(name, url, scene, r, g, b)")
+
+fun jsCreateCrossSpriteMaterial(name: String, url: String, scene: JsAny): JsAny =
+    js("mcCreateCrossSpriteMaterial(name, url, scene)")
 
 fun jsCreateGrassMaterial(scene: JsAny): JsAny =
     js("mcCreateGrassMaterial(scene)")

@@ -13,6 +13,13 @@ const MINIMAP_COLOR_RGB: [number, number, number][] = [
   [200, 160, 87],    // SANDSTONE
   [128, 128, 128],   // GRAVEL
   [240, 240, 240],   // SNOW
+  [101, 67, 33],     // OAK_LOG
+  [60, 100, 30],     // OAK_LEAVES
+  [80, 50, 25],      // PINE_LOG
+  [40, 90, 60],      // PINE_LEAVES
+  [200, 215, 220],   // PINE_LEAVES_SNOW
+  [230, 200, 50],    // FLOWER
+  [70, 130, 40],     // WEED
 ];
 
 let zoomIndex = 1;

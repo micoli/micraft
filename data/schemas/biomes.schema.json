@@ -21,7 +21,8 @@
   "$defs": {
     "blockType": {
       "type": "string",
-      "enum": ["AIR", "BEDROCK", "STONE", "DIRT", "GRASS", "SAND", "SANDSTONE", "GRAVEL", "SNOW"]
+      "enum": ["AIR", "BEDROCK", "STONE", "DIRT", "GRASS", "SAND", "SANDSTONE", "GRAVEL", "SNOW",
+               "OAK_LOG", "OAK_LEAVES", "PINE_LOG", "PINE_LEAVES", "PINE_LEAVES_SNOW", "FLOWER", "WEED"]
     },
     "biomeZone": {
       "type": "object",

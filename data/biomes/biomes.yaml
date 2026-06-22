@@ -22,7 +22,11 @@ biomes:
     subsurface: DIRT
     subsurfaceDepth: 3
     filler: STONE
-    vegetation: []
+    vegetation:
+      - type: flower
+        density: 0.02
+      - type: weed
+        density: 0.05
     elevationMin: 48
     elevationMax: 78
 
@@ -37,6 +41,8 @@ biomes:
     vegetation:
       - type: oak_tree
         density: 0.1
+      - type: weed
+        density: 0.08
     elevationMin: 55
     elevationMax: 95
 
@@ -50,7 +56,9 @@ biomes:
     subsurface: STONE
     subsurfaceDepth: 2
     filler: STONE
-    vegetation: []
+    vegetation:
+      - type: pine_tree
+        density: 0.04
     elevationMin: 80
     elevationMax: 110
 
@@ -64,6 +72,8 @@ biomes:
     subsurface: DIRT
     subsurfaceDepth: 3
     filler: STONE
-    vegetation: []
+    vegetation:
+      - type: pine_tree_snow
+        density: 0.03
     elevationMin: 90
     elevationMax: 120
