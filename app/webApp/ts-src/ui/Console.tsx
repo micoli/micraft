@@ -136,13 +136,18 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
   if (!open) return null;
 
   const containerStyle: React.CSSProperties = layoutStyle && Object.keys(layoutStyle).length > 0
-    ? { background: 'rgba(0,0,0,0.72)', borderRadius: 4, zIndex: 1002, boxSizing: 'border-box', ...layoutStyle, height: undefined }
+    ? { position: 'relative', background: 'rgba(0,0,0,0.72)', borderRadius: 4, zIndex: 1002, boxSizing: 'border-box', ...layoutStyle, height: undefined }
     : { position: 'fixed', bottom: 60, left: '50%', transform: 'translateX(-50%)', width: '60%', background: 'rgba(0,0,0,0.72)', borderRadius: 4, zIndex: 1002, boxSizing: 'border-box' };
 
   return (
     <div style={containerStyle}>
       {suggestions.length > 0 && (
-        <div style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+        <div style={{
+          position: 'absolute', bottom: '100%', left: 0, right: 0,
+          background: 'rgba(0,0,0,0.85)', borderRadius: '4px 4px 0 0',
+          borderBottom: '1px solid rgba(255,255,255,0.15)',
+          maxHeight: '40vh', overflowY: 'auto',
+        }}>
           {suggestions.map((s, i) => (
             <div
               key={s}
