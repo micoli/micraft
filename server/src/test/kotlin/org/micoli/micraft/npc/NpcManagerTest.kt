@@ -145,6 +145,40 @@ class NpcManagerTest {
     }
 
     @Test
+    fun tick_npcUpdate_positionRoundedTo2Decimals() = runBlocking {
+        val world = testWorld()
+        val nearby = testSession(pos = Vec3(8.5f, 50f, 8.5f))
+        val (m, _) = testNpcManager(mapOf("SELLER" to staticDef()), nearbySession = nearby)
+        m.spawnNpc("Bob", "SELLER", Vec3(8.5f, 50f, 8.5f))
+        nearby.sent.clear()
+        m.tick(world)
+        val update = nearby.sent.filterIsInstance<ServerMessage.NpcUpdate>().firstOrNull()
+        if (update != null) {
+            val pos = update.npc.pos
+            assertEquals(Math.round(pos.x * 100) / 100f, pos.x)
+            assertEquals(Math.round(pos.y * 100) / 100f, pos.y)
+            assertEquals(Math.round(pos.z * 100) / 100f, pos.z)
+        }
+    }
+
+    @Test
+    fun tick_npcUpdate_notSentWhenRoundedPositionUnchanged() = runBlocking {
+        val world = testWorld()
+        val nearby = testSession(pos = Vec3(8.5f, 50f, 8.5f))
+        val (m, _) = testNpcManager(mapOf("SELLER" to staticDef()), nearbySession = nearby)
+        val instance = m.spawnNpc("Bob", "SELLER", Vec3(8.5f, 50f, 8.5f))
+        nearby.sent.clear()
+        m.tick(world)
+        val countAfterFirstTick = nearby.sent.filterIsInstance<ServerMessage.NpcUpdate>().size
+        nearby.sent.clear()
+        // Force a tiny sub-centimeter change that should not produce a new update
+        instance.state = instance.state.copy(pos = instance.state.pos.copy(y = instance.state.pos.y + 0.001f))
+        m.tick(world)
+        val countAfterSecondTick = nearby.sent.filterIsInstance<ServerMessage.NpcUpdate>().size
+        assertTrue(countAfterSecondTick <= countAfterFirstTick, "Sub-centimeter change should not produce extra NpcUpdate")
+    }
+
+    @Test
     fun tick_npcUpdate_notSentToDistantSession() = runBlocking {
         val world = testWorld()
         val far = testSession(pos = Vec3(500f, 50f, 500f))

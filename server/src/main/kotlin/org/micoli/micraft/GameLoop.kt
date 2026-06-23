@@ -347,6 +347,7 @@ class GameLoop(
             }
         } finally {
             sessions.remove(id)
+            npcManager.clearPlayer(id)
             savePlayer(session)
             log.info("player disconnected: {} name={} (total={})", id.take(8), session.state.name, sessions.size)
             val left = ServerMessage.PlayerLeft(id)

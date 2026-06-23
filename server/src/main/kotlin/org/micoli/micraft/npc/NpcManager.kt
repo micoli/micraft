@@ -19,12 +19,19 @@ import kotlin.io.path.writeText
 
 private val log = LoggerFactory.getLogger(NpcManager::class.java)
 
+private fun Float.round2() = (Math.round(this * 100) / 100f)
+private fun NpcState.round2() = copy(
+    pos = pos.copy(x = pos.x.round2(), y = pos.y.round2(), z = pos.z.round2()),
+    yaw = yaw.round2(),
+)
+
 class NpcManager(
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val getSessions: () -> Collection<PlayerSession> = { emptyList() },
 ) {
     private val npcs = ConcurrentHashMap<String, NpcInstance>()
     @Volatile private var definitions: Map<String, NpcDefinition> = emptyMap()
+    private val lastSentToPlayer = ConcurrentHashMap<String, ConcurrentHashMap<String, NpcState>>()
 
     fun loadDefinitions(defs: Map<String, NpcDefinition>) {
         definitions = defs
@@ -97,15 +104,25 @@ class NpcManager(
             val before = instance.state
             val changed = instance.definition.behavior.tick(instance, world)
             if (changed && instance.state != before) {
-                val msg = ServerMessage.NpcUpdate(instance.state)
-                val pos = instance.state.pos
+                val roundedState = instance.state.round2()
+                val pos = roundedState.pos
                 for (session in sessions) {
                     val dx = session.state.pos.x - pos.x
                     val dz = session.state.pos.z - pos.z
-                    if (dx * dx + dz * dz <= rangesq) session.send(msg)
+                    if (dx * dx + dz * dz <= rangesq) {
+                        val playerStates = lastSentToPlayer.getOrPut(session.id) { ConcurrentHashMap() }
+                        if (playerStates[instance.state.id] != roundedState) {
+                            playerStates[instance.state.id] = roundedState
+                            session.send(ServerMessage.NpcUpdate(roundedState))
+                        }
+                    }
                 }
             }
         }
+    }
+
+    fun clearPlayer(sessionId: String) {
+        lastSentToPlayer.remove(sessionId)
     }
 
     suspend fun handleInteract(session: PlayerSession, npcId: String) {
@@ -114,8 +131,11 @@ class NpcManager(
     }
 
     suspend fun sendAllTo(session: PlayerSession) {
+        val playerStates = lastSentToPlayer.getOrPut(session.id) { ConcurrentHashMap() }
         for (instance in npcs.values) {
-            session.send(ServerMessage.NpcSpawned(instance.state))
+            val roundedState = instance.state.round2()
+            playerStates[instance.state.id] = roundedState
+            session.send(ServerMessage.NpcSpawned(roundedState))
         }
     }
 
