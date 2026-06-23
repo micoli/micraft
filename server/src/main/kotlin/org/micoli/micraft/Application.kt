@@ -145,5 +145,8 @@ fun Application.module() {
         webSocket("/game") {
             gameLoop.onConnect(this)
         }
+        webSocket("/chunks") {
+            gameLoop.onChunkConnect(this)
+        }
     }
 }

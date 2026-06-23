@@ -127,10 +127,11 @@ class GameLoop(
         setGameTime = { gameTicks = it },
         refetchChunks = { session ->
             session.loadedChunks.clear()
+            session.inFlightChunks.clear()
             session.lastChunkPos = null
             val cx = Math.floorDiv(session.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE)
             val cz = Math.floorDiv(session.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE)
-            chunkStreamer.streamAround(session, cx, cz)
+            chunkStreamer.requestAround(session, cx, cz)
         },
     )
     private val blockBreaker = BlockBreaker(world, { msg -> sessions.values.forEach { it.send(msg) } }, worldItems)
@@ -248,7 +249,8 @@ class GameLoop(
                 val update = ServerMessage.PlayerUpdate(newState)
                 sessions.values.forEach { it.send(update) }
             }
-            chunkStreamer.checkAndStream(session)
+            chunkStreamer.checkAndRequest(session)
+            chunkStreamer.deliverReady(session)
         }
         worldItems.tickCollection(sessions.values)
         npcManager.tick(world)
@@ -316,8 +318,8 @@ class GameLoop(
             Math.floorDiv(spawn.z.toInt(), WorldConstants.CHUNK_SIZE),
         )
         session.lastChunkPos = spawnCp
-        chunkStreamer.streamAround(session, spawnCp.cx, spawnCp.cz)
-        log.info("{} chunks sent to {}", session.loadedChunks.size, id.take(8))
+        chunkStreamer.requestAround(session, spawnCp.cx, spawnCp.cz)
+        log.info("chunk requests queued for {}", id.take(8))
 
         sessions.values.filter { it.id != id }.forEach { other ->
             session.send(ServerMessage.PlayerUpdate(other.state))
@@ -347,11 +349,28 @@ class GameLoop(
             }
         } finally {
             sessions.remove(id)
+            chunkStreamer.cleanupSession(id)
             npcManager.clearPlayer(id)
             savePlayer(session)
             log.info("player disconnected: {} name={} (total={})", id.take(8), session.state.name, sessions.size)
             val left = ServerMessage.PlayerLeft(id)
             sessions.values.forEach { it.send(left) }
+        }
+    }
+
+    suspend fun onChunkConnect(socket: DefaultWebSocketSession) {
+        val playerId = runCatching {
+            val frame = socket.incoming.receive()
+            if (frame is Frame.Text) frame.readText().trim() else null
+        }.getOrNull() ?: return
+        val session = sessions[playerId] ?: return
+        session.chunkSocket = socket
+        log.info("chunk socket attached for {}", playerId.take(8))
+        try {
+            for (frame in socket.incoming) { /* client sends nothing on chunk socket */ }
+        } finally {
+            session.chunkSocket = null
+            log.info("chunk socket detached for {}", playerId.take(8))
         }
     }
 }

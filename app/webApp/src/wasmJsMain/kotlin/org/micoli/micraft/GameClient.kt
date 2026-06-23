@@ -36,7 +36,9 @@ import org.micoli.micraft.npc.NpcState
 
 private const val PRED_DT = 16.0 / 1000.0  // seconds per prediction frame (~60fps)
 private const val FLY_VERTICAL_SPEED = 8f   // must match server GameLoop constant
-private const val SNAP_THRESHOLD = 2.0      // blocks: snap if prediction diverges beyond this
+private const val SNAP_THRESHOLD = 0.5      // blocks: snap if prediction diverges beyond this
+private const val CLIENT_GRAVITY     = -20.0 // must match server GameConstants.GRAVITY
+private const val CLIENT_JUMP_SPEED  = 8.5  // must match server GameConstants.JUMP_SPEED
 
 // Sky color (matches fog and clearColor)
 private const val SKY_R = 0.53
@@ -97,7 +99,13 @@ private data class RaycastResult(val target: BlockPos, val adjacent: BlockPos)
 class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private val scene: JsAny, private val camera: JsAny, private val uiState: McUiState) {
     @OptIn(ExperimentalWasmJsInterop::class)
     private val playerModels = mutableMapOf<String, JsAny>()
-    private val playerPrevPos = mutableMapOf<String, Triple<Double, Double, Double>>()
+    private val playerPrevPos    = mutableMapOf<String, Triple<Double, Double, Double>>()
+    private val playerCurrentPos = mutableMapOf<String, Triple<Double, Double, Double>>()
+    private val playerTargetPos  = mutableMapOf<String, Triple<Double, Double, Double>>()
+    private val playerCurrentYaw = mutableMapOf<String, Float>()
+    private val playerTargetYaw  = mutableMapOf<String, Float>()
+    private val playerTargetPitch = mutableMapOf<String, Float>()
+    private val playerLerpT      = mutableMapOf<String, Double>()
     @OptIn(ExperimentalWasmJsInterop::class)
     private val npcModels = mutableMapOf<String, JsAny>()
     private val npcPrevPos = mutableMapOf<String, Triple<Double, Double, Double>>()
@@ -107,6 +115,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
     private val chunkData    = mutableMapOf<ChunkPos, Pair<Chunk, Int>>()
     private val scope        = CoroutineScope(Dispatchers.Default)
     private var localPlayerId: String? = null
+    private var playerIdReady = CompletableDeferred<String>()
     private var localFlying      = false
     private var localStance      = PlayerStance.STANDING
     private var localSpeedMult   = 1f
@@ -124,7 +133,9 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
     private var predX = 0.0
     private var predY = 0.0
     private var predZ = 0.0
+    private var predVy = 0.0   // vertical velocity for client-side gravity
     private var serverX = 0.0
+    private var serverY = 0.0
     private var serverZ = 0.0
     private var hasPrediction = false
 
@@ -187,6 +198,32 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                 if (hasPrediction) applyLocalPrediction()
                 drainPendingChunks()
                 drainPendingNpcs()
+            }
+        }
+
+        scope.launch {
+            var chunkRetryDelay = 1000L
+            while (isActive) {
+                try {
+                    val pid = playerIdReady.await()
+                    val chunkClient = HttpClient(Js) { install(WebSockets) }
+                    chunkClient.webSocket(host = host, port = port, path = "/chunks") {
+                        send(Frame.Text(pid))
+                        for (frame in incoming) {
+                            if (frame !is Frame.Text) continue
+                            val text = frame.readText()
+                            netBytesIn += text.length
+                            val msg = runCatching { Json.decodeFromString<ServerMessage>(text) }.getOrNull() ?: continue
+                            if (msg is ServerMessage.ChunkData) {
+                                pendingChunks.add(Pair(Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY))
+                            }
+                        }
+                    }
+                    chunkRetryDelay = 1000L
+                } catch (_: Throwable) {}
+                if (!isActive) break
+                delay(chunkRetryDelay)
+                chunkRetryDelay = minOf(chunkRetryDelay * 2, 8000L)
             }
         }
 
@@ -275,9 +312,10 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
     private fun resetForReconnect() {
         uiState.inventory = emptyMap()
         localPlayerId  = null
+        playerIdReady  = CompletableDeferred()
         hasPrediction  = false
-        predX = 0.0; predY = 0.0; predZ = 0.0
-        serverX = 0.0; serverZ = 0.0
+        predX = 0.0; predY = 0.0; predZ = 0.0; predVy = 0.0
+        serverX = 0.0; serverY = 0.0; serverZ = 0.0
         lastPlayerCx = Int.MIN_VALUE; lastPlayerCz = Int.MIN_VALUE
         pendingUnloads.clear()
         breakTarget = null
@@ -287,6 +325,9 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
         playerModels.values.forEach(::jsDisposePlayerModel)
         playerModels.clear()
         playerPrevPos.clear()
+        playerCurrentPos.clear(); playerTargetPos.clear()
+        playerCurrentYaw.clear(); playerTargetYaw.clear()
+        playerTargetPitch.clear(); playerLerpT.clear()
         playerNames.clear()
         jsSetConnectedPlayers("[]")
         localPlayerModel?.let { jsDisposePlayerModel(it) }
@@ -391,6 +432,20 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                 if (jsIsActionDown("backward")) dy -= fwdY
             }
             predY += dy * FLY_VERTICAL_SPEED * localSpeedMult * PRED_DT
+            predVy = 0.0
+        } else {
+            val solid = { bx: Int, by: Int, bz: Int -> getBlockAtWorld(bx, by, bz).isSolid }
+            val h = localStance.height
+            val grounded = AabbCollider.isGrounded(solid, predX.toFloat(), predY.toFloat(), predZ.toFloat(), PlayerConstants.WIDTH)
+            if (grounded && predVy <= 0.0) {
+                predVy = if (jsIsActionDown("ascend")) CLIENT_JUMP_SPEED else 0.0
+            } else {
+                predVy += CLIENT_GRAVITY * PRED_DT
+                val dy = (predVy * PRED_DT).toFloat()
+                val resolvedDy = AabbCollider.resolveY(solid, predX.toFloat(), predY.toFloat(), predZ.toFloat(), PlayerConstants.WIDTH, h, dy)
+                if (resolvedDy != dy) predVy = 0.0
+                predY = (predY + resolvedDy).coerceAtLeast(0.0)
+            }
         }
 
         // Soft correction toward server-authoritative XZ position
@@ -399,8 +454,8 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
         if (kotlin.math.abs(diffX) > SNAP_THRESHOLD || kotlin.math.abs(diffZ) > SNAP_THRESHOLD) {
             predX = serverX; predZ = serverZ
         } else {
-            predX += diffX * 0.08
-            predZ += diffZ * 0.08
+            predX += diffX * 0.3
+            predZ += diffZ * 0.3
         }
 
         // Drain one-shot events pushed by JS keyboard handler
@@ -551,6 +606,8 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
         val normalizedTime = (currentGameTicks % TICKS_PER_DAY_CLIENT).toDouble() / TICKS_PER_DAY_CLIENT
         jsUpdateSkyTime(scene, normalizedTime)
 
+        tickRemotePlayers()
+
         jsDrawMinimap(predX, predZ)
 
         val toDeg = 180.0 / kotlin.math.PI
@@ -639,6 +696,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
         when (msg) {
             is ServerMessage.Welcome -> {
                 localPlayerId = msg.playerId
+                playerIdReady.complete(msg.playerId)
                 uiState.consolePlayerName = msg.playerName
                 // Re-fetch with server's authoritative language (may differ from login preference for returning players)
                 jsFetchI18n(msg.language)
@@ -661,16 +719,19 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                     localStance    = s.stance
                     localSpeedMult = s.speedMultiplier
 
-                    // Server is authoritative for Y (gravity/collision) and XZ correction
-                    predY   = s.pos.y.toDouble()
                     serverX = s.pos.x.toDouble()
+                    serverY = s.pos.y.toDouble()
                     serverZ = s.pos.z.toDouble()
 
                     if (!hasPrediction) {
-                        // First update: initialise prediction from server position
-                        predX = serverX
-                        predZ = serverZ
+                        predX = serverX; predZ = serverZ
+                        predY = serverY; predVy = 0.0
                         hasPrediction = true
+                    } else {
+                        // Y soft-correction: server is authority, but blend gently to avoid snaps
+                        val diffY = serverY - predY
+                        if (kotlin.math.abs(diffY) > 1.0) { predY = serverY; predVy = 0.0 }
+                        else predY += diffY * 0.2
                     }
 
                     val cx = s.pos.x.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
@@ -692,7 +753,13 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                 } else {
                     playerNames[s.id] = s.name
                     updateConnectedPlayersAutocomplete()
-                    updatePlayerMesh(s.id, s.pos.x.toDouble(), s.pos.y.toDouble(), s.pos.z.toDouble(), s.orientation.yaw, s.orientation.pitch)
+                    val nx = s.pos.x.toDouble(); val ny = s.pos.y.toDouble(); val nz = s.pos.z.toDouble()
+                    playerCurrentPos[s.id] = playerTargetPos[s.id] ?: Triple(nx, ny, nz)
+                    playerCurrentYaw[s.id] = playerTargetYaw[s.id] ?: s.orientation.yaw
+                    playerTargetPos[s.id]  = Triple(nx, ny, nz)
+                    playerTargetYaw[s.id]  = s.orientation.yaw
+                    playerTargetPitch[s.id] = s.orientation.pitch
+                    playerLerpT[s.id]      = 0.0
                 }
             }
             is ServerMessage.PlayerLeft  -> {
@@ -875,6 +942,28 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
         jsSetPlayerTransform(model, x, y, z, yaw, pitch, isWalking)
     }
 
+    private fun tickRemotePlayers() {
+        if (!jsIsPlayerBbmodelReady()) return
+        for (id in playerTargetPos.keys.toList()) {
+            val cur = playerCurrentPos[id] ?: continue
+            val tgt = playerTargetPos[id]  ?: continue
+            val t   = ((playerLerpT[id] ?: 0.0) + PRED_DT / 0.050).coerceAtMost(1.0)
+            playerLerpT[id] = t
+            val x = cur.first  + (tgt.first  - cur.first)  * t
+            val y = cur.second + (tgt.second - cur.second) * t
+            val z = cur.third  + (tgt.third  - cur.third)  * t
+            val curYaw = playerCurrentYaw[id] ?: 0f
+            val tgtYaw = playerTargetYaw[id]  ?: 0f
+            val yaw = curYaw + (tgtYaw - curYaw) * t.toFloat()
+            val pitch = playerTargetPitch[id] ?: 0f
+            val model = playerModels.getOrPut(id) { jsCreatePlayerModelNow(scene) }
+            val prev = playerPrevPos[id]
+            val walking = prev != null && (kotlin.math.abs(x - prev.first) > 0.001 || kotlin.math.abs(z - prev.third) > 0.001)
+            playerPrevPos[id] = Triple(x, y, z)
+            jsSetPlayerTransform(model, x, y, z, yaw, pitch, walking)
+        }
+    }
+
     @OptIn(ExperimentalWasmJsInterop::class)
     private fun handleNpcSpawned(npc: NpcState) {
         jsSetNpcOnMinimap(npc.id, npc.pos.x, npc.pos.z)
@@ -924,9 +1013,9 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
     @OptIn(ExperimentalWasmJsInterop::class)
     private fun drainPendingChunks() {
         if (getBlockMaterials() == null || pendingChunks.isEmpty()) return
-        val snapshot = pendingChunks.toList()
-        pendingChunks.clear()
-        snapshot.forEach { (chunk, topY) -> renderChunk(chunk, topY) }
+        // Process one chunk per frame to avoid stalling the prediction loop
+        val (chunk, topY) = pendingChunks.removeAt(0)
+        renderChunk(chunk, topY)
     }
 
     private fun drainPendingNpcs() {
@@ -939,6 +1028,12 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
     private fun removePlayer(id: String) {
         playerModels.remove(id)?.let(::jsDisposePlayerModel)
         playerPrevPos.remove(id)
+        playerCurrentPos.remove(id)
+        playerTargetPos.remove(id)
+        playerCurrentYaw.remove(id)
+        playerTargetYaw.remove(id)
+        playerTargetPitch.remove(id)
+        playerLerpT.remove(id)
     }
 
     private fun getBlockAtWorld(wx: Int, wy: Int, wz: Int): BlockType {

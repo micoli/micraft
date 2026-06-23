@@ -23,6 +23,7 @@ open class PlayerSession(
 ) {
     val intents = Channel<ClientMessage>(capacity = Channel.UNLIMITED)
     val loadedChunks: MutableSet<ChunkPos> = Collections.newSetFromMap(ConcurrentHashMap())
+    val inFlightChunks: MutableSet<ChunkPos> = Collections.newSetFromMap(ConcurrentHashMap())
     @Volatile var lastChunkPos: ChunkPos? = null
     @Volatile var breakTarget: BlockPos? = null
     @Volatile var breakProgress: Int = 0
@@ -30,7 +31,15 @@ open class PlayerSession(
     val actionHistory: ArrayDeque<WorldActionRecord> = ArrayDeque()
     val shortcutBar: MutableList<ItemType?> = MutableList(10) { null }
 
+    @Volatile var chunkSocket: DefaultWebSocketSession? = null
+
     open suspend fun send(msg: ServerMessage) {
         socket.send(Frame.Text(Json.encodeToString(msg)))
+    }
+
+    open suspend fun sendChunk(msg: ServerMessage.ChunkData) {
+        val cs = chunkSocket
+        if (cs != null) cs.send(Frame.Text(Json.encodeToString<ServerMessage>(msg)))
+        else send(msg)  // fallback: chunk socket not yet connected
     }
 }
