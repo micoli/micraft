@@ -1,6 +1,9 @@
 package org.micoli.micraft.world
 
 import com.charleskorn.kaml.Yaml
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.DEBUG_WORLD
 import org.slf4j.LoggerFactory
@@ -12,46 +15,50 @@ import kotlin.io.path.writeText
 
 private val log = LoggerFactory.getLogger("ServerConfigLoader")
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class WorldSection(
-    val worldMinY: Int = 0,
-    val worldMaxY: Int = 1024,
-    val chunkSize: Int = 16,
-    val viewRadius: Int = 3,
-    val forwardViewRadius: Int = 7,
+    @EncodeDefault(ALWAYS) val worldMinY: Int = 0,
+    @EncodeDefault(ALWAYS) val worldMaxY: Int = 1024,
+    @EncodeDefault(ALWAYS) val chunkSize: Int = 16,
+    @EncodeDefault(ALWAYS) val viewRadius: Int = 3,
+    @EncodeDefault(ALWAYS) val forwardViewRadius: Int = 7,
 )
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class PlayerSection(
-    val heightStanding: Float = 1.8f,
-    val heightSneaking: Float = 1.5f,
-    val heightCrawling: Float = 0.6f,
-    val width: Float = 0.6f,
-    val eyeOffsetStanding: Float = 1.62f,
-    val eyeOffsetSneaking: Float = 1.27f,
-    val eyeOffsetCrawling: Float = 0.4f,
-    val speedStanding: Float = 4.5f,
-    val speedSneaking: Float = 1.3f,
-    val speedCrawling: Float = 1.0f,
+    @EncodeDefault(ALWAYS) val heightStanding: Float = 1.8f,
+    @EncodeDefault(ALWAYS) val heightSneaking: Float = 1.5f,
+    @EncodeDefault(ALWAYS) val heightCrawling: Float = 0.6f,
+    @EncodeDefault(ALWAYS) val width: Float = 0.6f,
+    @EncodeDefault(ALWAYS) val eyeOffsetStanding: Float = 1.62f,
+    @EncodeDefault(ALWAYS) val eyeOffsetSneaking: Float = 1.27f,
+    @EncodeDefault(ALWAYS) val eyeOffsetCrawling: Float = 0.4f,
+    @EncodeDefault(ALWAYS) val speedStanding: Float = 4.5f,
+    @EncodeDefault(ALWAYS) val speedSneaking: Float = 1.3f,
+    @EncodeDefault(ALWAYS) val speedCrawling: Float = 1.0f,
 )
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class GameplaySection(
-    val tickMs: Long = 50L,
-    val gravity: Float = -20f,
-    val jumpSpeed: Float = 8.5f,
-    val flyVerticalSpeed: Float = 8f,
-    val saveIntervalSeconds: Int = 30,
-    val spawnX: Float = 8f,
-    val spawnY: Float = 200f,
-    val spawnZ: Float = 8f,
+    @EncodeDefault(ALWAYS) val tickMs: Long = 50L,
+    @EncodeDefault(ALWAYS) val gravity: Float = -20f,
+    @EncodeDefault(ALWAYS) val jumpSpeed: Float = 8.5f,
+    @EncodeDefault(ALWAYS) val flyVerticalSpeed: Float = 8f,
+    @EncodeDefault(ALWAYS) val saveIntervalSeconds: Int = 30,
+    @EncodeDefault(ALWAYS) val spawnX: Float = 8f,
+    @EncodeDefault(ALWAYS) val spawnY: Float = 200f,
+    @EncodeDefault(ALWAYS) val spawnZ: Float = 8f,
 )
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class ServerConfig(
-    val world: WorldSection = WorldSection(),
-    val player: PlayerSection = PlayerSection(),
-    val gameplay: GameplaySection = GameplaySection(),
+    @EncodeDefault(ALWAYS) val world: WorldSection = WorldSection(),
+    @EncodeDefault(ALWAYS) val player: PlayerSection = PlayerSection(),
+    @EncodeDefault(ALWAYS) val gameplay: GameplaySection = GameplaySection(),
 )
 
 fun loadServerConfig(path: Path): ServerConfig {
