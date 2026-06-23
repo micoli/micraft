@@ -230,12 +230,12 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
         scope.launch {
             var retryDelay = 1000L
             while (isActive) {
+                var sessionWelcomed = false
                 try {
                     uiState.disconnectMessage = null
                     jsLog("WS connecting to ws://$host:$port/game")
                     val client = HttpClient(Js) { install(WebSockets) }
                     client.webSocket(host = host, port = port, path = "/game") {
-                        retryDelay = 1000L
                         jsLog("WS connected, sending Connect(playerName=$playerName, userName=$username)")
 
                         send(Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect(playerName = playerName, userName = username, preferredLanguage = preferredLanguage))))
@@ -284,6 +284,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                                 }.onFailure { e ->
                                     jsError("JSON parse error on frame #$frameCount: ${e.message} | raw=${text.take(300)}")
                                 }.getOrNull() ?: continue
+                                if (msg is ServerMessage.Welcome) sessionWelcomed = true
                                 handleMessage(msg)
                             } else {
                                 jsLog("WS non-text frame: ${frame::class.simpleName}")
@@ -299,6 +300,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                 }
 
                 if (!isActive) break
+                if (sessionWelcomed) retryDelay = 1000L
                 jsLog("WS resetForReconnect, retryDelay=${retryDelay}ms")
                 resetForReconnect()
                 val retrySec = retryDelay / 1000
