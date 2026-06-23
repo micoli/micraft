@@ -233,7 +233,7 @@ export function GameUI() {
         layoutStyle={widgetStyle(activeLayout, 'SHORTCUT_BAR')}
       />
       <Inventory inventory={state.inventory} visible={state.hotbarVisible} />
-      <ServerLog logs={state.logs} visible={state.logVisible} layoutStyle={widgetStyle(activeLayout, 'CHAT_HISTORY')} />
+      <ServerLog logs={state.logs} visible={state.logVisible || state.consoleOpen} layoutStyle={widgetStyle(activeLayout, 'CHAT_HISTORY')} />
       <Notifications notif={state.notif?.msg ? state.notif : null} />
       <Console
         open={state.consoleOpen}
