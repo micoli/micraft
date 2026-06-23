@@ -22,4 +22,5 @@ data class CommandContext(
     val npcManager: NpcManager? = null,
     val getGameTime: () -> Long = { 0L },
     val setGameTime: (Long) -> Unit = {},
+    val refetchChunks: (suspend (PlayerSession) -> Unit)? = null,
 )

@@ -35,6 +35,7 @@ export function registerUtils(): void {
   registerCompleter('/summon', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
   registerCompleter('/goto', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
   registerCompleter('/layouts', () => []);
+  registerCompleter('/refetch', () => []);
   // /layout completer is overwritten by GameUI when layouts are synced
   registerCompleter('/layout', () => []);
 }

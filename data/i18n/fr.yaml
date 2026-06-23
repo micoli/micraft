@@ -75,3 +75,7 @@ layout:
     widget_shortcut_bar: "Barre de raccourcis"
     widget_chat_history: "Historique du chat"
     widget_input_box: "Zone de saisie"
+refetch:
+  server:
+    done: "Chunks rechargés."
+    unavailable: "Rechargement des chunks non disponible."

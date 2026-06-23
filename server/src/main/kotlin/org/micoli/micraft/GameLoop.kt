@@ -125,6 +125,13 @@ class GameLoop(
         npcManager = npcManager,
         getGameTime = { gameTicks },
         setGameTime = { gameTicks = it },
+        refetchChunks = { session ->
+            session.loadedChunks.clear()
+            session.lastChunkPos = null
+            val cx = Math.floorDiv(session.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE)
+            val cz = Math.floorDiv(session.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE)
+            chunkStreamer.streamAround(session, cx, cz)
+        },
     )
     private val blockBreaker = BlockBreaker(world, { msg -> sessions.values.forEach { it.send(msg) } }, worldItems)
     private val blockPlacer = BlockPlacer(world, { msg -> sessions.values.forEach { it.send(msg) } }, ::savePlayer)

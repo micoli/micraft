@@ -75,3 +75,7 @@ layout:
     widget_shortcut_bar: "Shortcut Bar"
     widget_chat_history: "Chat History"
     widget_input_box: "Input Box"
+refetch:
+  server:
+    done: "Chunks reloaded."
+    unavailable: "Chunk reload not available."

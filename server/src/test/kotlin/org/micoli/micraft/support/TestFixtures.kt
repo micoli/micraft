@@ -84,6 +84,7 @@ fun testContext(
     i18n: I18nConfig = testI18n(),
     getGameTime: () -> Long = { 0L },
     setGameTime: (Long) -> Unit = {},
+    refetchChunks: (suspend (org.micoli.micraft.session.PlayerSession) -> Unit)? = null,
 ) = CommandContext(
     world = world,
     persistence = null,
@@ -97,4 +98,5 @@ fun testContext(
     npcManager = npcManager,
     getGameTime = getGameTime,
     setGameTime = setGameTime,
+    refetchChunks = refetchChunks,
 )
