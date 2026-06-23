@@ -247,6 +247,8 @@ fun jsCreateMinimap(): Unit = js("mcCreateMinimap()")
 fun jsSetMinimapChunk(cx: Int, cz: Int, topYJson: String, topBlockJson: String): Unit = js("mcSetMinimapChunk(cx, cz, topYJson, topBlockJson)")
 fun jsClearMinimapChunk(cx: Int, cz: Int): Unit = js("mcClearMinimapChunk(cx, cz)")
 fun jsDrawMinimap(playerX: Double, playerZ: Double): Unit = js("mcDrawMinimap(playerX, playerZ)")
+fun jsSetNpcOnMinimap(id: String, x: Float, z: Float): Unit = js("mcSetNpcOnMinimap(id, x, z)")
+fun jsRemoveNpcFromMinimap(id: String): Unit = js("mcRemoveNpcFromMinimap(id)")
 
 // ── Block/Item registry ───────────────────────────────────────────────────────
 

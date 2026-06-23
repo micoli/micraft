@@ -869,6 +869,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
 
     @OptIn(ExperimentalWasmJsInterop::class)
     private fun handleNpcSpawned(npc: NpcState) {
+        jsSetNpcOnMinimap(npc.id, npc.pos.x, npc.pos.z)
         if (!jsIsNpcModelsReady()) {
             pendingNpcs.add(npc)
             return
@@ -878,6 +879,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
 
     @OptIn(ExperimentalWasmJsInterop::class)
     private fun handleNpcUpdate(npc: NpcState) {
+        jsSetNpcOnMinimap(npc.id, npc.pos.x, npc.pos.z)
         if (!jsIsNpcModelsReady()) {
             pendingNpcs.removeAll { it.id == npc.id }
             pendingNpcs.add(npc)
@@ -888,6 +890,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
 
     @OptIn(ExperimentalWasmJsInterop::class)
     private fun handleNpcDespawned(id: String) {
+        jsRemoveNpcFromMinimap(id)
         pendingNpcs.removeAll { it.id == id }
         npcModels.remove(id)?.let(::jsDisposeNpcModel)
         npcPrevPos.remove(id)

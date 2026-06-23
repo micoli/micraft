@@ -7,6 +7,7 @@ let minimapColors: [number, number, number][] = [];
 
 let zoomIndex = 1;
 const chunkSurfaces: Record<string, { topY: number[]; topBlock: number[] }> = {};
+const npcPositions: Map<string, { x: number; z: number }> = new Map();
 let frameCount = 0;
 
 export function setMinimapColors(blocks: { minimapColor: [number, number, number] }[]): void {
@@ -51,6 +52,14 @@ export function registerMinimap(): void {
 
   window.mcMinimapZoomOut = (): void => {
     if (zoomIndex < ZOOM_RADII.length - 1) zoomIndex++;
+  };
+
+  window.mcSetNpcOnMinimap = (id: string, x: number, z: number): void => {
+    npcPositions.set(id, { x, z });
+  };
+
+  window.mcRemoveNpcFromMinimap = (id: string): void => {
+    npcPositions.delete(id);
   };
 
 
@@ -115,6 +124,22 @@ export function registerMinimap(): void {
     }
 
     ctx.putImageData(imgData, 0, 0);
+
+    // NPC dots
+    for (const [, npc] of npcPositions) {
+      const bx = npc.x - playerX + halfBlocks;
+      const bz = npc.z - playerZ + halfBlocks;
+      const px = bx * pixPerBlock;
+      const pz = bz * pixPerBlock;
+      if (px < -4 || px > MINIMAP_SIZE + 4 || pz < -4 || pz > MINIMAP_SIZE + 4) continue;
+      ctx.fillStyle = '#ffaa00';
+      ctx.beginPath();
+      ctx.arc(px, pz, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
 
     // Player dot at center
     ctx.fillStyle = '#ff3333';
