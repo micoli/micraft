@@ -23,6 +23,7 @@ const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   undo:             ['Ctrl+KeyZ', 'Cmd+KeyZ'],
   minimap_zoom_in:  ['l'],
   minimap_zoom_out: ['m'],
+  layout_editor:    ['KeyG'],
   slot_1:  ['Digit1'],
   slot_2:  ['Digit2'],
   slot_3:  ['Digit3'],
@@ -123,6 +124,7 @@ export function registerKeyboard(): void {
       if (b.hud_mode_cycle?.some(k => matchesEvent(k, e))) (window as any).mcCycleHudMode?.();
       if (b.inventory?.some(k    => matchesEvent(k, e))) window.__mc.events.push('inventory');
       if (b.undo?.some(k         => matchesEvent(k, e))) window.__mc.events.push('undo');
+      if (b.layout_editor?.some(k => matchesEvent(k, e))) (window as any).mcShowLayoutEditor?.();
       if (b.minimap_zoom_in?.some(k  => matchesEvent(k, e))) (window as any).mcMinimapZoomIn?.();
       if (b.minimap_zoom_out?.some(k => matchesEvent(k, e))) (window as any).mcMinimapZoomOut?.();
       for (let s = 1; s <= 10; s++) {

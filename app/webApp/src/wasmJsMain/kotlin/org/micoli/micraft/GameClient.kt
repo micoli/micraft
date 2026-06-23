@@ -17,6 +17,7 @@ import kotlinx.coroutines.channels.Channel
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.ui.HudData
+import org.micoli.micraft.ui.LayoutSyncPayload
 import org.micoli.micraft.ui.McUiState
 import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockType
@@ -395,6 +396,15 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
             }
         }
 
+        // Consume layout update from editor UI (json: {"layouts":[...],"activeLayout":"name"})
+        val layoutUpdateJson = jsConsumeLayoutUpdate()
+        if (layoutUpdateJson.isNotEmpty()) {
+            runCatching {
+                val msg = Json.decodeFromString<ClientMessage.LayoutUpdate>(layoutUpdateJson)
+                outMessages.trySend(msg)
+            }
+        }
+
         // Consume slot update from drag-drop UI (json: {"slot":N,"itemType":"TYPE"|null})
         val slotUpdateJson = jsConsumeSlotUpdate()
         if (slotUpdateJson.isNotEmpty()) {
@@ -607,6 +617,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                 jsFetchBiomeColors()
                 shadersEnabled = msg.shadersEnabled
                 jsSetShadersEnabled(scene, msg.shadersEnabled)
+                jsSyncLayouts(Json.encodeToString(LayoutSyncPayload(msg.layouts, msg.activeLayout)))
             }
             is ServerMessage.ShadersUpdate -> {
                 shadersEnabled = msg.enabled
@@ -675,6 +686,10 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                 syncShortcutBarToUi()
             }
             is ServerMessage.TimeUpdate -> { currentGameTicks = msg.gameTicks }
+            is ServerMessage.LayoutsSync -> {
+                jsSyncLayouts(Json.encodeToString(LayoutSyncPayload(msg.layouts, msg.activeLayout)))
+            }
+            is ServerMessage.OpenLayoutEditor -> jsShowLayoutEditor()
             is ServerMessage.ItemsSpawned -> Unit
             is ServerMessage.ItemDespawned -> Unit
             is ServerMessage.WorldUpdate -> msg.changes.forEach { change ->

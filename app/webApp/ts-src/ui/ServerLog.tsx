@@ -5,7 +5,7 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-export function ServerLog({ logs, visible }: { logs: LogEntry[]; visible: boolean }) {
+export function ServerLog({ logs, visible, layoutStyle }: { logs: LogEntry[]; visible: boolean; layoutStyle?: React.CSSProperties }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const userScrolledRef = useRef(false);
 
@@ -30,13 +30,12 @@ export function ServerLog({ logs, visible }: { logs: LogEntry[]; visible: boolea
     userScrolledRef.current = !atBottom;
   }
 
+  const style: React.CSSProperties = layoutStyle
+    ? { maxHeight: '100%', background: 'rgba(0,0,0,0.55)', borderRadius: '4px 4px 0 0', padding: '4px 8px', zIndex: 1002, boxSizing: 'border-box', overflowY: 'auto', ...layoutStyle }
+    : { position: 'fixed', bottom: 94, left: '50%', transform: 'translateX(-50%)', width: '60%', maxHeight: 200, background: 'rgba(0,0,0,0.55)', borderRadius: '4px 4px 0 0', padding: '4px 8px', zIndex: 1002, boxSizing: 'border-box', overflowY: 'auto' };
+
   return (
-    <div style={{
-      position: 'fixed', bottom: 94, left: '50%', transform: 'translateX(-50%)',
-      width: '60%', maxHeight: 200, background: 'rgba(0,0,0,0.55)',
-      borderRadius: '4px 4px 0 0', padding: '4px 8px', zIndex: 1002,
-      boxSizing: 'border-box', overflowY: 'auto',
-    }}
+    <div style={style}
       ref={scrollRef}
       onScroll={onScroll}
     >

@@ -60,6 +60,13 @@ export function registerMinimap(): void {
     if (zoomIndex < ZOOM_RADII.length - 1) zoomIndex++;
   };
 
+  window.mcUpdateMinimapLayout = (left: string, top: string): void => {
+    const canvas = document.getElementById('mc-minimap') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    canvas.style.left = left;
+    canvas.style.top = top;
+  };
+
   window.mcDrawMinimap = (playerX: number, playerZ: number): void => {
     frameCount++;
     if (frameCount % 4 !== 0) return;

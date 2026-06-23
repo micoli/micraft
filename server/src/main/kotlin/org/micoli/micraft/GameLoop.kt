@@ -18,6 +18,7 @@ import org.micoli.micraft.tick.BlockPlacer
 import org.micoli.micraft.tick.ChunkStreamer
 import org.micoli.micraft.tick.IntentCollector
 import org.micoli.micraft.tick.MovementProcessor
+import org.micoli.micraft.ui.validateLayouts
 import org.micoli.micraft.world.ChunkGenerator
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.DropConfig
@@ -158,6 +159,16 @@ class GameLoop(
         )
     }
 
+    private suspend fun handleLayoutUpdate(session: PlayerSession, msg: ClientMessage.LayoutUpdate) {
+        val error = validateLayouts(msg.layouts, msg.activeLayout)
+        if (error != null) {
+            session.send(ServerMessage.Notification(error))
+            return
+        }
+        session.state = session.state.copy(layouts = msg.layouts, activeLayout = msg.activeLayout)
+        savePlayer(session)
+    }
+
     private suspend fun tick() {
         gameTicks++
         timeBroadcastCounter++
@@ -218,6 +229,8 @@ class GameLoop(
             speedMultiplier = saved?.speedMultiplier ?: 1f,
             language = language,
             shadersEnabled = shadersEnabled,
+            layouts = saved?.layouts ?: listOf(org.micoli.micraft.ui.defaultLayout()),
+            activeLayout = saved?.activeLayout ?: "default",
         )
         val session = PlayerSession(id, userName, socket, state)
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
@@ -225,7 +238,7 @@ class GameLoop(
         sessions[id] = session
         log.info("player connected: {} name={} user={} (total={})", id.take(8), playerName, userName, sessions.size)
 
-        session.send(ServerMessage.Welcome(id, playerName, spawn, language, shadersEnabled))
+        session.send(ServerMessage.Welcome(id, playerName, spawn, language, shadersEnabled, session.state.layouts, session.state.activeLayout))
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toList()))
         session.send(ServerMessage.TimeUpdate(gameTicks))
@@ -256,6 +269,7 @@ class GameLoop(
                                     msg.positions.forEach { session.loadedChunks.remove(it) }
                                     log.debug("{} chunks unloaded by {}", msg.positions.size, session.id.take(8))
                                 }
+                                is ClientMessage.LayoutUpdate -> handleLayoutUpdate(session, msg)
                                 else -> session.intents.trySend(msg)
                             }
                         }

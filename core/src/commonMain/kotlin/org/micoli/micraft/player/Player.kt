@@ -1,6 +1,8 @@
 package org.micoli.micraft.player
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.ui.GameLayout
+import org.micoli.micraft.ui.defaultLayout
 import org.micoli.micraft.world.ItemType
 
 @Serializable
@@ -23,4 +25,6 @@ data class PlayerState(
     val language: String = "en",
     val shadersEnabled: Boolean = true,
     val shortcutBar: List<ItemType?> = List(10) { null },
+    val layouts: List<GameLayout> = listOf(defaultLayout()),
+    val activeLayout: String = "default",
 )

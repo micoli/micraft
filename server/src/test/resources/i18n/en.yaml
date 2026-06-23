@@ -53,3 +53,8 @@ give:
     done: "Given {0}x {1}."
     unknown: "Unknown item: {0}. Available: {1}"
     usage: "Usage: /give <itemType> [N]. Available: {0}"
+layout:
+  server:
+    switched: "Layout switched to {0}."
+    not_found: "Layout '{0}' not found."
+    usage: "Usage: /layout <name>"

@@ -48,3 +48,8 @@ give:
     done: "{0}x {1} accordé(s)."
     unknown: "Objet inconnu : {0}. Disponibles : {1}"
     usage: "Usage : /give <itemType> [N]. Disponibles : {0}"
+layout:
+  server:
+    switched: "Mise en page changée vers {0}."
+    not_found: "Mise en page '{0}' introuvable."
+    usage: "Usage : /layout <nom>"

@@ -223,6 +223,12 @@ fun jsUpdateFPArms(fpArms: JsAny, isWalking: Boolean): Unit = js("mcUpdateFPArms
 fun jsSetFPArmsVisible(fpArms: JsAny, visible: Boolean): Unit = js("mcSetFPArmsVisible(fpArms, visible)")
 fun jsDisposeFPArms(fpArms: JsAny): Unit = js("mcDisposeFPArms(fpArms)")
 
+// ── Layout ────────────────────────────────────────────────────────────────────
+
+fun jsSyncLayouts(json: String): Unit = js("mcSyncLayouts(json)")
+fun jsShowLayoutEditor(): Unit = js("mcShowLayoutEditor()")
+fun jsConsumeLayoutUpdate(): String = js("mcConsumeLayoutUpdate()")
+
 // ── Minimap ───────────────────────────────────────────────────────────────────
 
 fun jsCreateMinimap(): Unit = js("mcCreateMinimap()")

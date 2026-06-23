@@ -59,3 +59,19 @@ give:
     done: "{0}x {1} accordé(s)."
     unknown: "Objet inconnu : {0}. Disponibles : {1}"
     usage: "Usage : /give <itemType> [N]. Disponibles : {0}"
+layout:
+  server:
+    switched: "Mise en page changée vers {0}."
+    not_found: "Mise en page '{0}' introuvable."
+    usage: "Usage : /layout <nom>"
+  client:
+    editor_title: "Éditeur de mise en page"
+    save: "Enregistrer"
+    reset: "Réinitialiser"
+    new_layout: "Nouvelle mise en page"
+    layout_name: "Nom de la mise en page"
+    widget_minimap: "Minimap"
+    widget_hud: "HUD"
+    widget_shortcut_bar: "Barre de raccourcis"
+    widget_chat_history: "Historique du chat"
+    widget_input_box: "Zone de saisie"

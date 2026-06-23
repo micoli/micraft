@@ -15,9 +15,10 @@ interface Props {
   slots: (string | null)[];
   selectedSlot: number;
   onSlotDrop: (slot: number, itemType: string | null) => void;
+  layoutStyle?: React.CSSProperties;
 }
 
-export function ShortcutBar({ inventory, slots, selectedSlot, onSlotDrop }: Props) {
+export function ShortcutBar({ inventory, slots, selectedSlot, onSlotDrop, layoutStyle }: Props) {
   const [dragOver, setDragOver] = useState<number | null>(null);
   const draggingSlot = useRef<number | null>(null);
 
@@ -56,13 +57,12 @@ export function ShortcutBar({ inventory, slots, selectedSlot, onSlotDrop }: Prop
     onSlotDrop(slotIdx, null);
   };
 
+  const containerStyle: React.CSSProperties = layoutStyle
+    ? { display: 'flex', gap: 4, pointerEvents: 'all', zIndex: 999, background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, padding: '6px 10px', alignItems: 'center', justifyContent: 'center', ...layoutStyle }
+    : { position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 4, pointerEvents: 'all', zIndex: 999, background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, padding: '6px 10px' };
+
   return (
-    <div style={{
-      position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
-      display: 'flex', gap: 4, pointerEvents: 'all', zIndex: 999,
-      background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)',
-      borderRadius: 6, padding: '6px 10px',
-    }}>
+    <div style={containerStyle}>
       {slots.map((itemType, idx) => {
         const isSelected = idx === selectedSlot;
         const isHand = idx === 0;

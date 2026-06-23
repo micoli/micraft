@@ -14,6 +14,19 @@ export interface LogEntry {
 
 export type HudMode = 'simple' | 'medium' | 'complete';
 
+export interface LayoutWidget {
+  type: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface GameLayout {
+  name: string;
+  widgets: LayoutWidget[];
+}
+
 export interface UiState {
   hud: HudData | null;
   hudMode: HudMode;
@@ -28,6 +41,9 @@ export interface UiState {
   consoleOpen: boolean;
   loginVisible: boolean;
   disconnectMsg: string | null;
+  layouts: GameLayout[];
+  activeLayout: string;
+  layoutEditorOpen: boolean;
 }
 
 export type UiAction =
@@ -45,4 +61,8 @@ export type UiAction =
   | { type: 'login_hide' }
   | { type: 'disconnect_show'; message: string }
   | { type: 'disconnect_hide' }
-  | { type: 'log_hide' };
+  | { type: 'log_hide' }
+  | { type: 'layouts_sync'; layouts: GameLayout[]; activeLayout: string }
+  | { type: 'layout_editor_show' }
+  | { type: 'layout_editor_hide' }
+  | { type: 'layout_editor_save'; layouts: GameLayout[]; activeLayout: string };

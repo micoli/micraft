@@ -3,6 +3,8 @@ package org.micoli.micraft.protocol
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.ui.GameLayout
+import org.micoli.micraft.ui.defaultLayout
 import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChunkPos
@@ -12,7 +14,15 @@ import org.micoli.micraft.world.WorldItem
 @Serializable
 sealed class ServerMessage {
     @Serializable
-    data class Welcome(val playerId: String, val playerName: String, val spawnPos: Vec3, val language: String = "en", val shadersEnabled: Boolean = true) : ServerMessage()
+    data class Welcome(
+        val playerId: String,
+        val playerName: String,
+        val spawnPos: Vec3,
+        val language: String = "en",
+        val shadersEnabled: Boolean = true,
+        val layouts: List<GameLayout> = listOf(defaultLayout()),
+        val activeLayout: String = "default",
+    ) : ServerMessage()
 
     @Serializable
     data class ShadersUpdate(val enabled: Boolean) : ServerMessage()
@@ -53,6 +63,12 @@ sealed class ServerMessage {
 
     @Serializable
     data class ShortcutBarUpdate(val slots: List<ItemType?>) : ServerMessage()
+
+    @Serializable
+    data class LayoutsSync(val layouts: List<GameLayout>, val activeLayout: String) : ServerMessage()
+
+    @Serializable
+    object OpenLayoutEditor : ServerMessage()
 }
 
 @Serializable

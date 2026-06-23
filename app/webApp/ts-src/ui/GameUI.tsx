@@ -1,5 +1,5 @@
 import { useEffect, useRef, useReducer } from 'react';
-import { UiState, UiAction, LogEntry, HudMode } from './types';
+import { UiState, UiAction, LogEntry, HudMode, GameLayout } from './types';
 import { HUD } from './HUD';
 import { Inventory } from './Inventory';
 import { ShortcutBar } from './ShortcutBar';
@@ -8,6 +8,8 @@ import { ServerLog } from './ServerLog';
 import { Notifications } from './Notifications';
 import { LoginOverlay } from './LoginOverlay';
 import { DisconnectOverlay } from './DisconnectOverlay';
+import { LayoutEditor } from './LayoutEditor';
+import { defaultLayout, resolveActiveLayout, widgetStyle } from './LayoutEngine';
 
 const MC_LOG_MAX = 100;
 
@@ -28,6 +30,9 @@ const initial: UiState = {
   selectedSlot: 0,
   consoleOpen: false,
   loginVisible: false, disconnectMsg: null,
+  layouts: [defaultLayout()],
+  activeLayout: 'default',
+  layoutEditorOpen: false,
 };
 
 let notifKey = 0;
@@ -59,6 +64,10 @@ function reducer(state: UiState, action: UiAction): UiState {
     case 'login_hide':   return { ...state, loginVisible: false };
     case 'disconnect_show': return { ...state, disconnectMsg: action.message };
     case 'disconnect_hide': return { ...state, disconnectMsg: null };
+    case 'layouts_sync': return { ...state, layouts: action.layouts, activeLayout: action.activeLayout };
+    case 'layout_editor_show': return { ...state, layoutEditorOpen: true };
+    case 'layout_editor_hide': return { ...state, layoutEditorOpen: false };
+    case 'layout_editor_save': return { ...state, layouts: action.layouts, activeLayout: action.activeLayout, layoutEditorOpen: false };
   }
 }
 
@@ -74,6 +83,7 @@ export function GameUI() {
   const consoleInitialValueRef = useRef('');
   const loginResultRef = useRef('');
   const notifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingLayoutUpdateRef = useRef<string>('');
 
   // Keep consoleOpenRef in sync
   useEffect(() => { consoleOpenRef.current = state.consoleOpen; }, [state.consoleOpen]);
@@ -93,6 +103,20 @@ export function GameUI() {
     notifTimerRef.current = setTimeout(() => dispatch({ type: 'notification', msg: '' }), 3000);
     return () => { if (notifTimerRef.current) clearTimeout(notifTimerRef.current); };
   }, [state.notif?.key]);
+
+  // Apply minimap layout position when layout changes
+  useEffect(() => {
+    const layout = resolveActiveLayout(state.layouts, state.activeLayout);
+    const s = widgetStyle(layout, 'MINIMAP');
+    const mcUpdateMinimapLayout = (window as any).mcUpdateMinimapLayout;
+    if (typeof mcUpdateMinimapLayout === 'function') {
+      mcUpdateMinimapLayout(s.left ?? '12px', s.top ?? '12px');
+    }
+    // Update layout completer for /layout command autocomplete
+    (window as any).__mcCommandCompleters = (window as any).__mcCommandCompleters ?? {};
+    (window as any).__mcCommandCompleters['/layout'] = (partial: string) =>
+      state.layouts.map(l => l.name).filter(n => n.startsWith(partial));
+  }, [state.layouts, state.activeLayout]);
 
   useEffect(() => {
     // Wire Kotlin-callable window functions to React dispatch
@@ -142,6 +166,20 @@ export function GameUI() {
 
     (window as any).mcCycleHudMode = () => dispatch({ type: 'hud_mode_cycle' });
 
+    (window as any).mcSyncLayouts = (json: string) => {
+      const data: { layouts: GameLayout[]; activeLayout: string } = JSON.parse(json);
+      dispatch({ type: 'layouts_sync', layouts: data.layouts, activeLayout: data.activeLayout });
+    };
+
+    (window as any).mcShowLayoutEditor = () => dispatch({ type: 'layout_editor_show' });
+    (window as any).mcHideLayoutEditor = () => dispatch({ type: 'layout_editor_hide' });
+
+    (window as any).mcConsumeLayoutUpdate = () => {
+      const v = pendingLayoutUpdateRef.current;
+      pendingLayoutUpdateRef.current = '';
+      return v;
+    };
+
     // no-ops: React handles creation
     (window as any).mcCreateHUD       = () => {};
     (window as any).mcCreateHotbar    = () => {};
@@ -169,9 +207,16 @@ export function GameUI() {
     return () => document.removeEventListener('keydown', onGlobalKeydown);
   }, []);
 
+  const activeLayout = resolveActiveLayout(state.layouts, state.activeLayout);
+
+  const handleLayoutSave = (layouts: GameLayout[], activeLayout: string) => {
+    dispatch({ type: 'layout_editor_save', layouts, activeLayout });
+    pendingLayoutUpdateRef.current = JSON.stringify({ layouts, activeLayout });
+  };
+
   return (
     <>
-      <HUD data={state.hud} mode={state.hudMode} />
+      <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, 'HUD')} />
       <ShortcutBar
         inventory={state.inventory}
         slots={state.shortcutBar}
@@ -179,9 +224,10 @@ export function GameUI() {
         onSlotDrop={(slot, itemType) => {
           pendingSlotUpdateRef.current = JSON.stringify({ slot, itemType: itemType ?? null });
         }}
+        layoutStyle={widgetStyle(activeLayout, 'SHORTCUT_BAR')}
       />
-      <Inventory inventory={state.inventory} visible={state.hotbarVisible} />
-      <ServerLog logs={state.logs} visible={state.logVisible} />
+      <Inventory inventory={state.inventory} visible={state.hotbarVisible} layoutStyle={widgetStyle(activeLayout, 'INPUT_BOX')} />
+      <ServerLog logs={state.logs} visible={state.logVisible} layoutStyle={widgetStyle(activeLayout, 'CHAT_HISTORY')} />
       <Notifications notif={state.notif?.msg ? state.notif : null} />
       <Console
         open={state.consoleOpen}
@@ -194,6 +240,13 @@ export function GameUI() {
         <LoginOverlay visible={state.loginVisible} loginResultRef={loginResultRef} onHide={() => dispatch({ type: 'login_hide' })} />
       </div>
       <DisconnectOverlay message={state.disconnectMsg} />
+      <LayoutEditor
+        open={state.layoutEditorOpen}
+        layouts={state.layouts}
+        activeLayout={state.activeLayout}
+        onSave={handleLayoutSave}
+        onClose={() => dispatch({ type: 'layout_editor_hide' })}
+      />
     </>
   );
 }

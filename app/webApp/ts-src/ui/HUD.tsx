@@ -1,6 +1,6 @@
 import { HudData, HudMode } from './types';
 
-const style: React.CSSProperties = {
+const defaultStyle: React.CSSProperties = {
   position: 'fixed', top: 12, right: 12,
   background: 'rgba(0,0,0,0.55)', color: '#fff',
   font: '13px/1.6 monospace', padding: '8px 12px',
@@ -8,7 +8,7 @@ const style: React.CSSProperties = {
   whiteSpace: 'pre',
 };
 
-export function HUD({ data, mode }: { data: HudData | null; mode: HudMode }) {
+export function HUD({ data, mode, layoutStyle }: { data: HudData | null; mode: HudMode; layoutStyle?: React.CSSProperties }) {
   if (!data) return null;
   const { x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime } = data;
 
@@ -41,5 +41,8 @@ export function HUD({ data, mode }: { data: HudData | null; mode: HudMode }) {
     ];
   }
 
+  const style = layoutStyle
+    ? { ...defaultStyle, top: undefined, right: undefined, ...layoutStyle, whiteSpace: 'pre' as const }
+    : defaultStyle;
   return <div style={style}>{lines.join('\n')}</div>;
 }

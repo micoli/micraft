@@ -34,4 +34,7 @@ export function registerUtils(): void {
   registerCompleter('/teleport', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
   registerCompleter('/summon', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
   registerCompleter('/goto', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
+  registerCompleter('/layouts', () => []);
+  // /layout completer is overwritten by GameUI when layouts are synced
+  registerCompleter('/layout', () => []);
 }

@@ -2,6 +2,7 @@ package org.micoli.micraft.protocol
 
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.player.PlayerStance
+import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.ItemType
@@ -42,6 +43,12 @@ sealed class ClientMessage {
 
     @Serializable
     data class ShortcutBarSet(val slot: Int, val itemType: ItemType?) : ClientMessage()
+
+    @Serializable
+    data class LayoutUpdate(
+        val layouts: List<GameLayout>,
+        val activeLayout: String,
+    ) : ClientMessage()
 
     @Serializable
     data class Disconnect(val reason: String = "") : ClientMessage()
