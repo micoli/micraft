@@ -18,6 +18,7 @@ const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   speed_up:     ['KeyP'],
   speed_down:   ['KeyO'],
   view_toggle:      ['KeyF'],
+  hud_mode_cycle:   ['KeyH'],
   inventory:        ['KeyI'],
   undo:             ['Ctrl+KeyZ', 'Cmd+KeyZ'],
   minimap_zoom_in:  ['l'],
@@ -119,6 +120,7 @@ export function registerKeyboard(): void {
         window.__mc.lastSpaceTime = now;
       }
       if (b.view_toggle?.some(k  => matchesEvent(k, e))) window.__mc.events.push('view_toggle');
+      if (b.hud_mode_cycle?.some(k => matchesEvent(k, e))) (window as any).mcCycleHudMode?.();
       if (b.inventory?.some(k    => matchesEvent(k, e))) window.__mc.events.push('inventory');
       if (b.undo?.some(k         => matchesEvent(k, e))) window.__mc.events.push('undo');
       if (b.minimap_zoom_in?.some(k  => matchesEvent(k, e))) (window as any).mcMinimapZoomIn?.();

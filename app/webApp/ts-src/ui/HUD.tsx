@@ -1,4 +1,4 @@
-import { HudData } from './types';
+import { HudData, HudMode } from './types';
 
 const style: React.CSSProperties = {
   position: 'fixed', top: 12, right: 12,
@@ -8,19 +8,38 @@ const style: React.CSSProperties = {
   whiteSpace: 'pre',
 };
 
-export function HUD({ data }: { data: HudData | null }) {
+export function HUD({ data, mode }: { data: HudData | null; mode: HudMode }) {
   if (!data) return null;
   const { x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime } = data;
-  const lines = [
-    `FPS: ${fps}`,
-    `Pos: ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`,
-    `Orientation: Y:${yaw.toFixed(1)}°, P:${pitch.toFixed(1)}°`,
-    stance,
-    `Speed: ×${speed.toFixed(1)}`,
-    `↓ ${kbIn.toFixed(1)} KB/s  ↑ ${kbOut.toFixed(1)} KB/s`,
-    ...(biome ? [`Biome ${biome}`] : []),
-    ...(targetBlock ? [`Block ${targetBlock}`] : []),
-    ...(gameTime ? [`Time: ${gameTime}`] : []),
-  ];
+
+  let lines: string[];
+  if (mode === 'simple') {
+    lines = [
+      `Pos: ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`,
+      `Speed: ×${speed.toFixed(1)}`,
+      ...(gameTime ? [`Time: ${gameTime}`] : []),
+    ];
+  } else if (mode === 'medium') {
+    lines = [
+      `Pos: ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`,
+      `Orientation: Y:${yaw.toFixed(1)}°, P:${pitch.toFixed(1)}°`,
+      stance,
+      `Speed: ×${speed.toFixed(1)}`,
+      ...(gameTime ? [`Time: ${gameTime}`] : []),
+    ];
+  } else {
+    lines = [
+      `FPS: ${fps}`,
+      `Pos: ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`,
+      `Orientation: Y:${yaw.toFixed(1)}°, P:${pitch.toFixed(1)}°`,
+      stance,
+      `Speed: ×${speed.toFixed(1)}`,
+      `↓ ${kbIn.toFixed(1)} KB/s  ↑ ${kbOut.toFixed(1)} KB/s`,
+      ...(biome ? [`Biome ${biome}`] : []),
+      ...(targetBlock ? [`Block ${targetBlock}`] : []),
+      ...(gameTime ? [`Time: ${gameTime}`] : []),
+    ];
+  }
+
   return <div style={style}>{lines.join('\n')}</div>;
 }

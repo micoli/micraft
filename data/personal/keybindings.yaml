@@ -26,6 +26,7 @@ camera:
   view_toggle: [KeyF]
 
 ui:
+  hud_mode_cycle: [h]
   inventory: [KeyI]
   undo:      [Ctrl+KeyZ, Cmd+KeyZ]
 

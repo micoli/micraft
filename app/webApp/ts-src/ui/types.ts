@@ -12,8 +12,11 @@ export interface LogEntry {
   msg: string;
 }
 
+export type HudMode = 'simple' | 'medium' | 'complete';
+
 export interface UiState {
   hud: HudData | null;
+  hudMode: HudMode;
   notif: { msg: string; key: number } | null;
   logs: LogEntry[];
   logVisible: boolean;
@@ -29,6 +32,7 @@ export interface UiState {
 
 export type UiAction =
   | { type: 'hud'; data: HudData }
+  | { type: 'hud_mode_cycle' }
   | { type: 'notification'; msg: string }
   | { type: 'log'; msg: string }
   | { type: 'inventory'; data: Record<string, number> }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useReducer } from 'react';
-import { UiState, UiAction, LogEntry } from './types';
+import { UiState, UiAction, LogEntry, HudMode } from './types';
 import { HUD } from './HUD';
 import { Inventory } from './Inventory';
 import { ShortcutBar } from './ShortcutBar';
@@ -11,8 +11,18 @@ import { DisconnectOverlay } from './DisconnectOverlay';
 
 const MC_LOG_MAX = 100;
 
+const HUD_MODES: HudMode[] = ['simple', 'medium', 'complete'];
+
+function loadHudMode(): HudMode {
+  try {
+    const stored = localStorage.getItem('mc_hud_mode');
+    if (stored === 'simple' || stored === 'medium' || stored === 'complete') return stored;
+  } catch { /* ignore */ }
+  return 'complete';
+}
+
 const initial: UiState = {
-  hud: null, notif: null, logs: [], logVisible: false, logKey: 0, inventory: {},
+  hud: null, hudMode: loadHudMode(), notif: null, logs: [], logVisible: false, logKey: 0, inventory: {},
   hotbarVisible: false,
   shortcutBar: Array(10).fill(null),
   selectedSlot: 0,
@@ -25,6 +35,11 @@ let notifKey = 0;
 function reducer(state: UiState, action: UiAction): UiState {
   switch (action.type) {
     case 'hud':         return { ...state, hud: action.data };
+    case 'hud_mode_cycle': {
+      const next = HUD_MODES[(HUD_MODES.indexOf(state.hudMode) + 1) % HUD_MODES.length];
+      try { localStorage.setItem('mc_hud_mode', next); } catch { /* ignore */ }
+      return { ...state, hudMode: next };
+    }
     case 'notification': return { ...state, notif: { msg: action.msg, key: ++notifKey } };
     case 'log': {
       const now = new Date();
@@ -125,6 +140,8 @@ export function GameUI() {
       } catch { consoleStateRef.current.history = []; }
     };
 
+    (window as any).mcCycleHudMode = () => dispatch({ type: 'hud_mode_cycle' });
+
     // no-ops: React handles creation
     (window as any).mcCreateHUD       = () => {};
     (window as any).mcCreateHotbar    = () => {};
@@ -154,7 +171,7 @@ export function GameUI() {
 
   return (
     <>
-      <HUD data={state.hud} />
+      <HUD data={state.hud} mode={state.hudMode} />
       <ShortcutBar
         inventory={state.inventory}
         slots={state.shortcutBar}
