@@ -57,6 +57,15 @@ class RandomMovableNpcBehavior : NpcBehavior {
         val newZ = pos.z + resolvedDz
 
         if (resolvedDx == 0f && resolvedDz == 0f) {
+            if (instance.vy == 0f && AabbCollider.isGrounded(solid, pos.x, pos.y, pos.z, def.width)) {
+                val rdxAbove = AabbCollider.resolveX(solid, pos.x, pos.y + 1f, pos.z, def.width, def.height, nx * speed)
+                val rdzAbove = AabbCollider.resolveZ(solid, pos.x + rdxAbove, pos.y + 1f, pos.z, def.width, def.height, nz * speed)
+                if (rdxAbove != 0f || rdzAbove != 0f) {
+                    instance.vy = NpcConstants.JUMP_VELOCITY
+                    instance.wanderStepTicks--
+                    return true
+                }
+            }
             pickNewTarget(instance)
             instance.wanderStepTicks--
             return false

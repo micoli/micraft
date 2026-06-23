@@ -12,4 +12,6 @@ object NpcConstants {
     const val UPDATE_RANGE = 96f  // ~6 chunks; clients beyond this don't receive NpcUpdate
     const val SPAWN_CHECK_INTERVAL_TICKS = 200
     const val MAX_SPAWN_ATTEMPTS_PER_TICK = 3
+    // v = sqrt(2 * |GRAVITY| * h), h ≈ 1.05 blocks for reliable 1-block clearance
+    const val JUMP_VELOCITY = 6.5f
 }

@@ -96,7 +96,7 @@ class NpcManagerTest {
 
     @Test
     fun tick_gravityApplied_npcFalls() = runBlocking {
-        val world = testWorld()
+        val world = testWorld(Triple(8, 0, 8)) // pre-generates chunk (0,0) so NPC physics tick runs
         val nearby = testSession(pos = Vec3(8.5f, 50f, 8.5f))
         val (m, _) = testNpcManager(mapOf("SELLER" to staticDef()), nearbySession = nearby)
         val instance = m.spawnNpc("Bob", "SELLER", Vec3(8.5f, 50f, 8.5f))
@@ -142,6 +142,58 @@ class NpcManagerTest {
         val moved = kotlin.math.abs(instance.state.pos.x - startX) > 0.01f ||
             kotlin.math.abs(instance.state.pos.z - startZ) > 0.01f
         assertTrue(moved, "Expected wandering NPC to move from start position")
+    }
+
+    @Test
+    fun tick_wanderNpc_jumpsOver1BlockObstacle() = runBlocking {
+        val floorY = 4
+        val chunkSize = WorldConstants.CHUNK_SIZE
+        // Floor across 3 chunks
+        val floor = buildList {
+            for (x in 0 until chunkSize * 3) for (z in 0 until chunkSize * 3) add(Triple(x, floorY, z))
+        }
+        // 1-block wall at z=12 for a strip of x values
+        val wall = buildList {
+            for (x in 0 until chunkSize * 3) add(Triple(x, floorY + 1, 12))
+        }
+        val world = testWorld(*(floor + wall).toTypedArray())
+        val (m, _) = testNpcManager(mapOf("GOAT" to wanderDef()))
+        val instance = m.spawnNpc("Billy", "GOAT", Vec3(8.5f, (floorY + 1).toFloat(), 8.5f))
+        instance.vy = 0f
+        instance.wanderStepTicks = 60
+        instance.wanderTargetX = 8.5f
+        instance.wanderTargetZ = 20f
+        val startY = instance.state.pos.y
+        repeat(30) { m.tick(world) }
+        // NPC should have initiated a jump (vy set positive at some point), so y should have risen above start
+        val maxY = instance.state.pos.y
+        assertTrue(maxY > startY || instance.vy > 0f, "Expected NPC to jump over 1-block wall")
+    }
+
+    @Test
+    fun tick_wanderNpc_doesNotJumpOver2BlockObstacle() = runBlocking {
+        val floorY = 4
+        val chunkSize = WorldConstants.CHUNK_SIZE
+        val floor = buildList {
+            for (x in 0 until chunkSize * 3) for (z in 0 until chunkSize * 3) add(Triple(x, floorY, z))
+        }
+        // 2-block wall at z=12 — too high to jump
+        val wall = buildList {
+            for (x in 0 until chunkSize * 3) {
+                add(Triple(x, floorY + 1, 12))
+                add(Triple(x, floorY + 2, 12))
+            }
+        }
+        val world = testWorld(*(floor + wall).toTypedArray())
+        val (m, _) = testNpcManager(mapOf("GOAT" to wanderDef()))
+        val instance = m.spawnNpc("Billy", "GOAT", Vec3(8.5f, (floorY + 1).toFloat(), 8.5f))
+        instance.vy = 0f
+        instance.wanderStepTicks = 60
+        instance.wanderTargetX = 8.5f
+        instance.wanderTargetZ = 20f
+        repeat(5) { m.tick(world) }
+        // NPC should pick a new target rather than jumping — vy stays 0
+        assertTrue(instance.vy == 0f, "NPC should not jump over a 2-block wall")
     }
 
     @Test

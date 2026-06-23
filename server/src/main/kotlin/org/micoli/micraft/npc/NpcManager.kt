@@ -19,10 +19,10 @@ import kotlin.io.path.writeText
 
 private val log = LoggerFactory.getLogger(NpcManager::class.java)
 
-private fun Float.round2() = (Math.round(this * 100) / 100f)
-private fun NpcState.round2() = copy(
-    pos = pos.copy(x = pos.x.round2(), y = pos.y.round2(), z = pos.z.round2()),
-    yaw = yaw.round2(),
+private fun Float.round1() = (Math.round(this * 1) / 1f)
+private fun NpcState.round1() = copy(
+    pos = pos.copy(x = pos.x.round1(), y = pos.y.round1(), z = pos.z.round1()),
+    yaw = yaw.round1(),
 )
 
 class NpcManager(
@@ -101,10 +101,16 @@ class NpcManager(
         val sessions = getSessions()
         val rangesq = NpcConstants.UPDATE_RANGE * NpcConstants.UPDATE_RANGE
         for (instance in npcs.values) {
+            val pos = instance.state.pos
+            val chunkPos = ChunkPos(
+                Math.floorDiv(pos.x.toInt(), WorldConstants.CHUNK_SIZE),
+                Math.floorDiv(pos.z.toInt(), WorldConstants.CHUNK_SIZE),
+            )
+            if (world.getChunkIfDiscovered(chunkPos) == null) continue
             val before = instance.state
             val changed = instance.definition.behavior.tick(instance, world)
             if (changed && instance.state != before) {
-                val roundedState = instance.state.round2()
+                val roundedState = instance.state.round1()
                 val pos = roundedState.pos
                 for (session in sessions) {
                     val dx = session.state.pos.x - pos.x
@@ -133,7 +139,7 @@ class NpcManager(
     suspend fun sendAllTo(session: PlayerSession) {
         val playerStates = lastSentToPlayer.getOrPut(session.id) { ConcurrentHashMap() }
         for (instance in npcs.values) {
-            val roundedState = instance.state.round2()
+            val roundedState = instance.state.round1()
             playerStates[instance.state.id] = roundedState
             session.send(ServerMessage.NpcSpawned(roundedState))
         }
