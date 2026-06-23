@@ -33,7 +33,12 @@ Minecraft client/server clone in **Kotlin Multiplatform** — multiplayer voxel 
 | `core/.../world/ItemRegistry.kt` | Singleton holding `ItemDefinition` per `ItemType` |
 | `server/.../world/WorldItemManager.kt` | Tracks live world items |
 | `app/webApp/.../GameClient.kt` | Client-side prediction + server reconciliation |
-| `app/webApp/.../babylon/BabylonBindings.kt` | BabylonJS interop |
+| `app/webApp/.../babylon/BabylonBindingsScene.kt` | BabylonJS interop — engine, scene, camera, lights |
+| `app/webApp/.../babylon/BabylonBindingsWorld.kt` | BabylonJS interop — meshes, materials, chunk geometry, block defs, fog/sky |
+| `app/webApp/.../babylon/BabylonBindingsInput.kt` | BabylonJS interop — keyboard, mouse, camera controls, target/break overlays, event queue |
+| `app/webApp/.../babylon/BabylonBindingsUI.kt` | BabylonJS interop — overlays, console, hotbar, HUD, layout, minimap, autocomplete |
+| `app/webApp/.../babylon/BabylonBindingsModels.kt` | BabylonJS interop — player model, NPC models, FP arms |
+| `app/webApp/.../babylon/BabylonBindingsUtil.kt` | BabylonJS interop — logging, URL/page utils, i18n, biome colors, block registry, debug camera |
 | `app/webApp/.../resources/mc_bindings.js` | JS-side BabylonJS binding glue |
 
 ## Protocol messages
