@@ -5,7 +5,7 @@ import { registerAutoUpdate } from './update/autoUpdate';
 import { registerUtils } from './utils/utils';
 import { registerEngine } from './engine/engine';
 import { registerMaterials } from './materials/materials';
-import { registerBlockDefs } from './blocks/blockDefs';
+import { registerBlockDefs, setRegistryBlocks } from './blocks/blockDefs';
 import { registerKeyboard } from './input/keyboard';
 import { registerMouse } from './input/mouse';
 import { registerCamera } from './camera/camera';
@@ -13,7 +13,7 @@ import { registerTargeting } from './targeting/targeting';
 import { registerChunks } from './chunks/chunkBuilder';
 import { registerPlayerModel } from './player/playerModel';
 import { registerFPArms } from './player/fpArms';
-import { registerMinimap } from './minimap/minimap';
+import { registerMinimap, setMinimapColors } from './minimap/minimap';
 import { registerSky } from './sky/sky';
 import { createRoot } from 'react-dom/client';
 import { createElement } from 'react';
@@ -34,6 +34,15 @@ registerMinimap();
 registerSky();
 registerAllPlugins();
 registerAutoUpdate();
+
+// ── Block/Item registry ───────────────────────────────────────────────────────
+
+(window as any).mcSetBlockRegistry = (json: string) => {
+  const blocks: { name: string; modelElement: string; minimapColor: [number, number, number] }[] = JSON.parse(json);
+  setMinimapColors(blocks);
+  setRegistryBlocks(blocks);
+  (window as any).mcInitBlockDefs();
+};
 
 // ── Biome colors ──────────────────────────────────────────────────────────────
 

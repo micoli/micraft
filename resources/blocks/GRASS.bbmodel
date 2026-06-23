@@ -1,0 +1,105 @@
+{
+  "meta": {
+    "format_version": "4.0",
+    "model_format": "free"
+  },
+  "name": "GRASS",
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
+  "elements": [
+    {
+      "uuid": "bb000004-0000-0000-0000-000000000004",
+      "name": "GRASS",
+      "render_type": "solid",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": 2,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": 2,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": 2,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": 2,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": 1,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "biome_tint": true
+        },
+        "down": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ],
+  "textures": [
+    {
+      "id": 2,
+      "name": "dirt",
+      "path": "textures/blocks/dirt.png",
+      "source": ""
+    },
+    {
+      "id": 3,
+      "name": "grass_top",
+      "path": "textures/blocks/grass_top.png",
+      "source": ""
+    },
+    {
+      "id": 4,
+      "name": "grass_side",
+      "path": "textures/blocks/grass_side.png",
+      "source": ""
+    }
+  ]
+}

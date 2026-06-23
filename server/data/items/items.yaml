@@ -1,0 +1,21 @@
+"COBBLESTONE":
+  buildable: true
+  placesBlock: "STONE"
+"DIRT":
+  buildable: true
+  placesBlock: "DIRT"
+"SAND":
+  buildable: true
+  placesBlock: "SAND"
+"GRAVEL":
+  buildable: true
+  placesBlock: "GRAVEL"
+"SANDSTONE":
+  buildable: true
+  placesBlock: "SANDSTONE"
+"SNOWBALL":
+  buildable: false
+  placesBlock: null
+"FLINT":
+  buildable: false
+  placesBlock: null

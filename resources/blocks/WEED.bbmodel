@@ -1,0 +1,48 @@
+{
+  "meta": {
+    "format_version": "4.0",
+    "model_format": "free"
+  },
+  "name": "WEED",
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
+  "elements": [
+    {
+      "uuid": "bb00000f-0000-0000-0000-00000000000f",
+      "name": "WEED",
+      "render_type": "cross_sprite",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ],
+  "textures": [
+    {
+      "id": 17,
+      "name": "tallgrass",
+      "path": "textures/blocks/tallgrass.png",
+      "source": "",
+      "mc_alpha": true
+    }
+  ]
+}

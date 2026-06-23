@@ -2,29 +2,16 @@
 const MINIMAP_SIZE = 180;
 const ZOOM_RADII = [0, 1, 2, 3]; // chunk radius: 1x1, 3x3 (default), 5x5, 7x7
 
-// RGB base colors per BlockType ordinal
-const MINIMAP_COLOR_RGB: [number, number, number][] = [
-  [10, 10, 30],      // AIR (shouldn't appear)
-  [58, 58, 58],      // BEDROCK
-  [136, 136, 136],   // STONE
-  [122, 92, 46],     // DIRT
-  [74, 122, 40],     // GRASS
-  [212, 200, 122],   // SAND
-  [200, 160, 87],    // SANDSTONE
-  [128, 128, 128],   // GRAVEL
-  [240, 240, 240],   // SNOW
-  [101, 67, 33],     // OAK_LOG
-  [60, 100, 30],     // OAK_LEAVES
-  [80, 50, 25],      // PINE_LOG
-  [40, 90, 60],      // PINE_LEAVES
-  [200, 215, 220],   // PINE_LEAVES_SNOW
-  [230, 200, 50],    // FLOWER
-  [70, 130, 40],     // WEED
-];
+// RGB base colors per BlockType ordinal — populated from RegistrySync
+let minimapColors: [number, number, number][] = [];
 
 let zoomIndex = 1;
 const chunkSurfaces: Record<string, { topY: number[]; topBlock: number[] }> = {};
 let frameCount = 0;
+
+export function setMinimapColors(blocks: { minimapColor: [number, number, number] }[]): void {
+  minimapColors = blocks.map(b => b.minimapColor ?? [128, 128, 128]);
+}
 
 export function registerMinimap(): void {
   window.mcCreateMinimap = (): void => {
@@ -109,7 +96,7 @@ export function registerMinimap(): void {
             const idx = lx * 16 + lz;
             const topY = chunk.topY[idx];
             const bt = chunk.topBlock[idx];
-            const color = MINIMAP_COLOR_RGB[bt] ?? [128, 128, 128];
+            const color = minimapColors[bt] ?? [128, 128, 128];
             const shade = 0.6 + 0.4 * Math.min(topY / 96, 1);
             const contour = topY % 8 === 0 ? 0.6 : 1.0;
             const r = Math.round(color[0] * shade * contour);

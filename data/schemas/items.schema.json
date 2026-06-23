@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ItemRegistry",
+  "description": "Per-item property definitions. Keys are ItemType enum names.",
+  "type": "object",
+  "propertyNames": { "$ref": "#/$defs/itemType" },
+  "additionalProperties": { "$ref": "#/$defs/itemEntry" },
+  "$defs": {
+    "itemType": {
+      "type": "string",
+      "enum": ["COBBLESTONE", "DIRT", "SAND", "GRAVEL", "SANDSTONE", "SNOWBALL", "FLINT"]
+    },
+    "blockType": {
+      "type": "string",
+      "enum": [
+        "AIR", "BEDROCK", "STONE", "DIRT", "GRASS", "SAND", "SANDSTONE",
+        "GRAVEL", "SNOW", "OAK_LOG", "OAK_LEAVES", "PINE_LOG",
+        "PINE_LEAVES", "PINE_LEAVES_SNOW", "FLOWER", "WEED"
+      ]
+    },
+    "itemEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "buildable": {
+          "type": "boolean",
+          "description": "Whether this item can be placed as a block in the world."
+        },
+        "placesBlock": {
+          "$ref": "#/$defs/blockType",
+          "description": "Which block type this item places when used. Required when buildable is true."
+        }
+      }
+    }
+  }
+}

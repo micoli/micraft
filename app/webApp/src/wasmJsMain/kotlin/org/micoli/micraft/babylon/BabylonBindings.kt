@@ -236,3 +236,7 @@ fun jsSetMinimapChunk(cx: Int, cz: Int, topYJson: String, topBlockJson: String):
 fun jsClearMinimapChunk(cx: Int, cz: Int): Unit = js("mcClearMinimapChunk(cx, cz)")
 fun jsDrawMinimap(playerX: Double, playerZ: Double): Unit = js("mcDrawMinimap(playerX, playerZ)")
 
+// ── Block/Item registry ───────────────────────────────────────────────────────
+
+fun jsSetBlockRegistry(json: String): Unit = js("mcSetBlockRegistry(json)")
+

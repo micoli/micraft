@@ -19,10 +19,16 @@ import org.micoli.micraft.tick.ChunkStreamer
 import org.micoli.micraft.tick.IntentCollector
 import org.micoli.micraft.tick.MovementProcessor
 import org.micoli.micraft.ui.validateLayouts
+import org.micoli.micraft.protocol.BlockInfo
+import org.micoli.micraft.protocol.ItemInfo
+import org.micoli.micraft.world.BlockRegistry
+import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChunkGenerator
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.DropConfig
 import org.micoli.micraft.world.I18nConfig
+import org.micoli.micraft.world.ItemRegistry
+import org.micoli.micraft.world.ItemType
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldMetadata
@@ -71,6 +77,7 @@ class GameLoop(
     private val world: WorldState,
     private val persistence: WorldPersistence? = null,
     private val reloadBiomes: (() -> ChunkGenerator)? = null,
+    private val reloadRegistries: (() -> Unit)? = null,
     val i18n: I18nConfig = I18nConfig(buildI18nDirs()),
 ) {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
@@ -113,6 +120,25 @@ class GameLoop(
     private val movementProcessor = MovementProcessor(world)
     private val chunkStreamer = ChunkStreamer(world)
 
+    private fun buildRegistrySync(): ServerMessage.RegistrySync {
+        val blocks = BlockRegistry.orderedList().mapIndexed { i, def ->
+            val name = BlockType.entries[i].name
+            BlockInfo(
+                name = name,
+                hardness = def.hardness,
+                solid = def.solid,
+                transparent = def.transparent,
+                minimapColor = def.minimapColor,
+                modelElement = def.modelElement,
+            )
+        }
+        val items = ItemType.entries.associate { type ->
+            val def = ItemRegistry.get(type)
+            type.name to ItemInfo(buildable = def.buildable, placesBlock = def.placesBlock?.name)
+        }
+        return ServerMessage.RegistrySync(blocks, items)
+    }
+
     private suspend fun reload(): String {
         val lines = mutableListOf<String>()
         val dropCount = dropConfig.reload()
@@ -120,6 +146,12 @@ class GameLoop(
         if (reloadBiomes != null) {
             world.generator = reloadBiomes.invoke()
             lines += "Biomes reloaded"
+        }
+        if (reloadRegistries != null) {
+            reloadRegistries.invoke()
+            val registrySync = buildRegistrySync()
+            sessions.values.forEach { it.send(registrySync) }
+            lines += "Block/item registry reloaded"
         }
         i18n.reload()
         lines += "i18n: ${i18n.locales.size} locales"
@@ -239,6 +271,7 @@ class GameLoop(
         log.info("player connected: {} name={} user={} (total={})", id.take(8), playerName, userName, sessions.size)
 
         session.send(ServerMessage.Welcome(id, playerName, spawn, language, shadersEnabled, session.state.layouts, session.state.activeLayout))
+        session.send(buildRegistrySync())
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toList()))
         session.send(ServerMessage.TimeUpdate(gameTicks))

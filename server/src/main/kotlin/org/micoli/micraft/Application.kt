@@ -14,6 +14,10 @@ import kotlinx.serialization.json.Json
 import com.charleskorn.kaml.Yaml
 import org.micoli.micraft.world.BiomeConfig
 import org.micoli.micraft.world.BiomeRegistry
+import org.micoli.micraft.world.BlockRegistry
+import org.micoli.micraft.world.BlockRegistryLoader
+import org.micoli.micraft.world.ItemRegistry
+import org.micoli.micraft.world.ItemRegistryLoader
 import org.micoli.micraft.world.loadKeyBindings
 import org.micoli.micraft.world.ChunkGenerator
 import org.slf4j.LoggerFactory
@@ -58,6 +62,11 @@ fun Application.module() {
         }
     } else null
 
+    val blockRegistryLoader = BlockRegistryLoader(Path.of("data/blocks/blocks.yaml"))
+    val itemRegistryLoader = ItemRegistryLoader(Path.of("data/items/items.yaml"))
+    BlockRegistry.load(blockRegistryLoader.load())
+    ItemRegistry.load(itemRegistryLoader.load())
+
     fun loadBiomeRegistry(): BiomeRegistry {
         val biomeFile = Path.of("data/biomes/biomes.yaml")
         return if (biomeFile.exists()) {
@@ -95,8 +104,13 @@ fun Application.module() {
         { ProceduralChunkGenerator(seed = 42L, biomeRegistry = loadBiomeRegistry()) }
     } else null
 
+    val reloadRegistries: () -> Unit = {
+        BlockRegistry.load(blockRegistryLoader.reload())
+        ItemRegistry.load(itemRegistryLoader.reload())
+    }
+
     val world = WorldState(generator = generator, persistence = persistence)
-    val gameLoop = GameLoop(world, persistence, reloadBiomes)
+    val gameLoop = GameLoop(world, persistence, reloadBiomes, reloadRegistries = reloadRegistries)
     gameLoop.start(this)
 
     Runtime.getRuntime().addShutdownHook(Thread {

@@ -1,0 +1,144 @@
+"AIR":
+  hardness: 0
+  solid: false
+  transparent: true
+  minimapColor:
+  - 10
+  - 10
+  - 30
+  modelElement: ""
+"BEDROCK":
+  hardness: -1
+  solid: true
+  transparent: false
+  minimapColor:
+  - 58
+  - 58
+  - 58
+  modelElement: ""
+"STONE":
+  hardness: 5
+  solid: true
+  transparent: false
+  minimapColor:
+  - 136
+  - 136
+  - 136
+  modelElement: ""
+"DIRT":
+  hardness: 3
+  solid: true
+  transparent: false
+  minimapColor:
+  - 122
+  - 92
+  - 46
+  modelElement: ""
+"GRASS":
+  hardness: 3
+  solid: true
+  transparent: false
+  minimapColor:
+  - 74
+  - 122
+  - 40
+  modelElement: ""
+"SAND":
+  hardness: 2
+  solid: true
+  transparent: false
+  minimapColor:
+  - 212
+  - 200
+  - 122
+  modelElement: ""
+"SANDSTONE":
+  hardness: 4
+  solid: true
+  transparent: false
+  minimapColor:
+  - 200
+  - 160
+  - 87
+  modelElement: ""
+"GRAVEL":
+  hardness: 3
+  solid: true
+  transparent: false
+  minimapColor:
+  - 128
+  - 128
+  - 128
+  modelElement: ""
+"SNOW":
+  hardness: 1
+  solid: true
+  transparent: false
+  minimapColor:
+  - 240
+  - 240
+  - 240
+  modelElement: ""
+"OAK_LOG":
+  hardness: 3
+  solid: true
+  transparent: false
+  minimapColor:
+  - 101
+  - 67
+  - 33
+  modelElement: ""
+"OAK_LEAVES":
+  hardness: 1
+  solid: true
+  transparent: true
+  minimapColor:
+  - 60
+  - 100
+  - 30
+  modelElement: ""
+"PINE_LOG":
+  hardness: 3
+  solid: true
+  transparent: false
+  minimapColor:
+  - 80
+  - 50
+  - 25
+  modelElement: ""
+"PINE_LEAVES":
+  hardness: 1
+  solid: true
+  transparent: true
+  minimapColor:
+  - 40
+  - 90
+  - 60
+  modelElement: ""
+"PINE_LEAVES_SNOW":
+  hardness: 1
+  solid: true
+  transparent: true
+  minimapColor:
+  - 200
+  - 215
+  - 220
+  modelElement: ""
+"FLOWER":
+  hardness: 1
+  solid: false
+  transparent: true
+  minimapColor:
+  - 230
+  - 200
+  - 50
+  modelElement: ""
+"WEED":
+  hardness: 1
+  solid: false
+  transparent: true
+  minimapColor:
+  - 70
+  - 130
+  - 40
+  modelElement: ""

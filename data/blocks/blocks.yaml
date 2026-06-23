@@ -1,0 +1,70 @@
+AIR:
+  hardness: 0
+  solid: false
+  transparent: true
+  minimapColor: [10, 10, 30]
+BEDROCK:
+  hardness: -1
+  solid: true
+  minimapColor: [58, 58, 58]
+STONE:
+  hardness: 5
+  solid: true
+  minimapColor: [136, 136, 136]
+DIRT:
+  hardness: 3
+  solid: true
+  minimapColor: [122, 92, 46]
+GRASS:
+  hardness: 3
+  solid: true
+  minimapColor: [74, 122, 40]
+SAND:
+  hardness: 2
+  solid: true
+  minimapColor: [212, 200, 122]
+SANDSTONE:
+  hardness: 4
+  solid: true
+  minimapColor: [200, 160, 87]
+GRAVEL:
+  hardness: 3
+  solid: true
+  minimapColor: [128, 128, 128]
+SNOW:
+  hardness: 1
+  solid: true
+  minimapColor: [240, 240, 240]
+OAK_LOG:
+  hardness: 3
+  solid: true
+  minimapColor: [101, 67, 33]
+OAK_LEAVES:
+  hardness: 1
+  solid: true
+  transparent: true
+  minimapColor: [60, 100, 30]
+PINE_LOG:
+  hardness: 3
+  solid: true
+  minimapColor: [80, 50, 25]
+PINE_LEAVES:
+  hardness: 1
+  solid: true
+  transparent: true
+  minimapColor: [40, 90, 60]
+PINE_LEAVES_SNOW:
+  hardness: 1
+  solid: true
+  transparent: true
+  minimapColor: [200, 215, 220]
+FLOWER:
+  hardness: 1
+  solid: false
+  transparent: true
+  minimapColor: [230, 200, 50]
+WEED:
+  hardness: 1
+  solid: false
+  transparent: true
+  minimapColor: [70, 130, 40]

@@ -69,7 +69,29 @@ sealed class ServerMessage {
 
     @Serializable
     object OpenLayoutEditor : ServerMessage()
+
+    @Serializable
+    data class RegistrySync(
+        val blocks: List<BlockInfo>,
+        val items: Map<String, ItemInfo>,
+    ) : ServerMessage()
 }
+
+@Serializable
+data class BlockInfo(
+    val name: String,
+    val hardness: Int,
+    val solid: Boolean,
+    val transparent: Boolean,
+    val minimapColor: List<Int>,
+    val modelElement: String,
+)
+
+@Serializable
+data class ItemInfo(
+    val buildable: Boolean,
+    val placesBlock: String? = null,
+)
 
 @Serializable
 data class BlockChange(val pos: BlockPos, val type: BlockType)

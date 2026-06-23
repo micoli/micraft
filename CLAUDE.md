@@ -27,6 +27,10 @@ Minecraft client/server clone in **Kotlin Multiplatform** — multiplayer voxel 
 | `server/.../session/PlayerSession.kt` | Per-player WebSocket session |
 | `server/.../tick/BlockBreaker.kt` | Block-break progress + drop spawning |
 | `server/.../world/DropConfig.kt` | YAML-driven drop table loader |
+| `server/.../world/BlockRegistryLoader.kt` | Loads `data/blocks/blocks.yaml` → `BlockRegistry` |
+| `server/.../world/ItemRegistryLoader.kt` | Loads `data/items/items.yaml` → `ItemRegistry` |
+| `core/.../world/BlockRegistry.kt` | Singleton holding `BlockDefinition` per `BlockType` |
+| `core/.../world/ItemRegistry.kt` | Singleton holding `ItemDefinition` per `ItemType` |
 | `server/.../world/WorldItemManager.kt` | Tracks live world items |
 | `app/webApp/.../GameClient.kt` | Client-side prediction + server reconciliation |
 | `app/webApp/.../babylon/BabylonBindings.kt` | BabylonJS interop |
@@ -53,13 +57,15 @@ Minecraft client/server clone in **Kotlin Multiplatform** — multiplayer voxel 
 - `ItemsSpawned(items: List<WorldItem>)`
 - `ItemDespawned(id)`
 - `InventoryUpdate(inventory: Map<ItemType, Int>)`
+- `RegistrySync(blocks: List<BlockInfo>, items: Map<String, ItemInfo>)` — sent on connect and `/reload`; client uses for AO, minimap colors
 
 ## Domain types
 
-**Block types**: `AIR BEDROCK STONE DIRT GRASS SAND SANDSTONE GRAVEL SNOW`
-Hardness: BEDROCK=∞, STONE=5, SANDSTONE=4, DIRT/GRASS/GRAVEL=3, SAND=2, SNOW=1
+**Block types**: `AIR BEDROCK STONE DIRT GRASS SAND SANDSTONE GRAVEL SNOW OAK_LOG OAK_LEAVES PINE_LOG PINE_LEAVES PINE_LEAVES_SNOW FLOWER WEED`
+Properties (hardness, solid, minimapColor, modelElement) are in `data/blocks/blocks.yaml`. `hardness: -1` = unbreakable.
 
 **Item types**: `COBBLESTONE DIRT SAND GRAVEL SANDSTONE SNOWBALL FLINT`
+Properties (buildable, placesBlock) are in `data/items/items.yaml`.
 
 **Drop config**: `data/drops/drops.yaml` — maps `BlockType → List<(ItemType, weight, minCount, maxCount)>`
 
@@ -78,6 +84,8 @@ Hardness: BEDROCK=∞, STONE=5, SANDSTONE=4, DIRT/GRASS/GRAVEL=3, SAND=2, SNOW=1
 
 ```
 data/
+  blocks/blocks.yaml        # block properties (hardness, solid, minimapColor, modelElement)
+  items/items.yaml          # item properties (buildable, placesBlock)
   drops/drops.yaml          # block → item drop table
   biomes/biomes.yaml        # biome definitions
   schemas/                  # JSON Schemas for YAML config files (VS Code validation)
@@ -179,6 +187,8 @@ JSON Schemas for YAML configs live in `data/schemas/`. Keep them in sync with Ko
 |---|---|
 | `core/.../world/BiomeDefinition.kt`, `Block.kt` | `data/schemas/biomes.schema.json` |
 | `server/.../world/DropConfig.kt`, `core/.../world/ItemType.kt` | `data/schemas/drops.schema.json` |
+| `server/.../world/BlockRegistryLoader.kt`, `core/.../world/BlockDefinition.kt`, `Block.kt` | `data/schemas/blocks.schema.json` |
+| `server/.../world/ItemRegistryLoader.kt`, `core/.../world/ItemDefinition.kt`, `Block.kt` | `data/schemas/items.schema.json` |
 | `server/.../world/KeyBindingsConfig.kt` | `data/schemas/keybindings.schema.json` |
 | `server/.../world/I18nConfig.kt` | `data/schemas/i18n.schema.json` |
 

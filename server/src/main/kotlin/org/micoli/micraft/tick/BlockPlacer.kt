@@ -8,6 +8,8 @@ import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.session.WorldActionRecord
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.WorldState
+import org.micoli.micraft.world.buildable
+import org.micoli.micraft.world.placesBlock
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(BlockPlacer::class.java)

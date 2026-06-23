@@ -8,8 +8,12 @@ plugins {
 }
 
 val copyBbmodels by tasks.registering(Copy::class) {
-    from(rootProject.file("resources")) { include("*.bbmodel") }
     into("src/wasmJsMain/resources/models")
+    from(rootProject.file("resources")) { include("*.bbmodel") }
+    from(rootProject.file("resources/blocks")) {
+        include("*.bbmodel")
+        into("blocks")
+    }
 }
 
 val tsBuild by tasks.registering(Exec::class) {

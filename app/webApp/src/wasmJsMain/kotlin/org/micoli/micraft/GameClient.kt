@@ -20,12 +20,17 @@ import org.micoli.micraft.ui.HudData
 import org.micoli.micraft.ui.LayoutSyncPayload
 import org.micoli.micraft.ui.McUiState
 import org.micoli.micraft.world.BlockPos
+import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.Chunk
 import org.micoli.micraft.world.ChunkPos
+import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemType
 import org.micoli.micraft.world.PlayerConstants
 import org.micoli.micraft.world.WorldConstants
+import org.micoli.micraft.world.BlockDefinition
+import org.micoli.micraft.world.ItemDefinition
+import org.micoli.micraft.world.buildable
 import org.micoli.micraft.world.isSolid
 
 private const val PRED_DT = 16.0 / 1000.0  // seconds per prediction frame (~60fps)
@@ -690,6 +695,28 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                 jsSyncLayouts(Json.encodeToString(LayoutSyncPayload(msg.layouts, msg.activeLayout)))
             }
             is ServerMessage.OpenLayoutEditor -> jsShowLayoutEditor()
+            is ServerMessage.RegistrySync -> {
+                val blockDefs = msg.blocks.mapIndexed { i, info ->
+                    BlockType.entries[i] to BlockDefinition(
+                        hardness = info.hardness,
+                        solid = info.solid,
+                        transparent = info.transparent,
+                        minimapColor = info.minimapColor,
+                        modelElement = info.modelElement,
+                    )
+                }.toMap()
+                BlockRegistry.load(blockDefs)
+                val itemDefs = msg.items.entries.mapNotNull { (key, info) ->
+                    runCatching {
+                        ItemType.valueOf(key) to ItemDefinition(
+                            buildable = info.buildable,
+                            placesBlock = info.placesBlock?.let { runCatching { BlockType.valueOf(it) }.getOrNull() },
+                        )
+                    }.getOrNull()
+                }.toMap()
+                ItemRegistry.load(itemDefs)
+                jsSetBlockRegistry(Json.encodeToString(msg.blocks))
+            }
             is ServerMessage.ItemsSpawned -> Unit
             is ServerMessage.ItemDespawned -> Unit
             is ServerMessage.WorldUpdate -> msg.changes.forEach { change ->

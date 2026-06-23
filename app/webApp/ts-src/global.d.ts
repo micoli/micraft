@@ -179,6 +179,7 @@ declare global {
     mcGetBlockTextures: () => McBlockTextureDef[];
     mcCreateBlockMaterials: (scene: any) => Record<string, any>;
     mcSetGrassTint: (r: number, g: number, b: number) => void;
+    mcSetBlockRegistry: (json: string) => void;
     [key: string]: unknown;
   }
 }
