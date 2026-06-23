@@ -24,6 +24,7 @@ import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
 import java.nio.file.Path
 import java.time.Instant
+import java.util.UUID
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.seconds
@@ -34,6 +35,8 @@ fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
         .start(wait = true)
 }
+
+private val SERVER_ID: String = UUID.randomUUID().toString()
 
 fun Application.module() {
     install(WebSockets) {
@@ -103,6 +106,9 @@ fun Application.module() {
     routing {
         get("/") {
             call.respondRedirect("http://localhost:8081/", permanent = false)
+        }
+        get("/api/version") {
+            call.respondText("""{"server":"$SERVER_ID"}""", ContentType.Application.Json)
         }
         get("/api/keybindings") {
             val bindings = loadKeyBindings(Path.of("data/personal/keybindings.yaml"))
