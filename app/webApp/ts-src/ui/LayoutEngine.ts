@@ -17,6 +17,7 @@ export const DEFAULT_WIDGETS: LayoutWidget[] = [
   { type: 'CHAT_HISTORY',  x: 0,  y: 36, w: 20, h: 9  },
   { type: 'INPUT_BOX',     x: 0,  y: 45, w: 20, h: 3  },
   { type: 'SHORTCUT_BAR',  x: 15, y: 45, w: 18, h: 3  },
+  { type: 'INVENTORY',     x: 16, y: 33, w: 16, h: 12 },
 ];
 
 export const MIN_WIDGET_SIZE: Record<string, { w: number; h: number }> = {
@@ -25,10 +26,18 @@ export const MIN_WIDGET_SIZE: Record<string, { w: number; h: number }> = {
   CHAT_HISTORY: { w: 8, h: 3  },
   INPUT_BOX:    { w: 8, h: 2  },
   SHORTCUT_BAR: { w: 8, h: 2  },
+  INVENTORY:    { w: 6, h: 4  },
 };
 
 export function defaultLayout(): GameLayout {
   return { name: 'default', widgets: [...DEFAULT_WIDGETS] };
+}
+
+export function fillMissingWidgets(layout: GameLayout): GameLayout {
+  const existing = new Set(layout.widgets.map(w => w.type));
+  const missing = DEFAULT_WIDGETS.filter(d => !existing.has(d.type));
+  if (missing.length === 0) return layout;
+  return { ...layout, widgets: [...layout.widgets, ...missing] };
 }
 
 export function resolveActiveLayout(layouts: GameLayout[], activeLayout: string): GameLayout {
@@ -52,7 +61,7 @@ export function gridToStyle(x: number, y: number, w: number, h: number): React.C
 }
 
 export function widgetStyle(layout: GameLayout, type: string): React.CSSProperties {
-  const w = getWidget(layout, type);
+  const w = getWidget(layout, type) ?? DEFAULT_WIDGETS.find(d => d.type === type);
   if (!w) return {};
   return gridToStyle(w.x, w.y, w.w, w.h);
 }

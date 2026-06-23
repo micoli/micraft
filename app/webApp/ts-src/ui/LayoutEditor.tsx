@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { GameLayout, LayoutWidget } from './types';
-import { DEFAULT_WIDGETS, MIN_WIDGET_SIZE, defaultLayout, resolveActiveLayout } from './LayoutEngine';
+import { DEFAULT_WIDGETS, MIN_WIDGET_SIZE, defaultLayout, resolveActiveLayout, fillMissingWidgets } from './LayoutEngine';
 
 const WIDGET_LABELS: Record<string, string> = {
   MINIMAP:      'Minimap',
@@ -8,6 +8,7 @@ const WIDGET_LABELS: Record<string, string> = {
   SHORTCUT_BAR: 'Shortcut Bar',
   CHAT_HISTORY: 'Chat History',
   INPUT_BOX:    'Input Box',
+  INVENTORY:    'Inventory',
 };
 
 const WIDGET_COLORS: Record<string, string> = {
@@ -16,6 +17,7 @@ const WIDGET_COLORS: Record<string, string> = {
   SHORTCUT_BAR: 'rgba(60,160,80,0.75)',
   CHAT_HISTORY: 'rgba(140,60,200,0.75)',
   INPUT_BOX:    'rgba(200,60,100,0.75)',
+  INVENTORY:    'rgba(180,160,40,0.75)',
 };
 
 interface Props {
@@ -46,7 +48,7 @@ export function LayoutEditor({ open, layouts, activeLayout, onSave, onClose }: P
 
   useEffect(() => {
     if (open) {
-      const copy = layouts.map(l => ({ ...l, widgets: [...l.widgets] }));
+      const copy = layouts.map(l => fillMissingWidgets({ ...l, widgets: [...l.widgets] }));
       setLocalLayouts(copy);
       setLocalActive(activeLayout);
       setNameInput(activeLayout);
