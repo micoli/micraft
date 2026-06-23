@@ -87,6 +87,38 @@ data/
     chunks/*.mcc.gz         # binary chunk files (DO NOT READ)
 ```
 
+## UI (TypeScript / React)
+
+Source lives in `app/webApp/ts-src/ui/`.
+
+| File | Purpose |
+|------|---------|
+| `LayoutEngine.ts` | Grid math (`DEFAULT_WIDGETS`, `MIN_WIDGET_SIZE`, `widgetStyle`, `fillMissingWidgets`) |
+| `types.ts` | `UiState`, `UiAction`, `GameLayout`, `LayoutWidget` |
+| `GameUI.tsx` | Central coordinator: state reducer, window-function bridge, widget render tree |
+| `Inventory.tsx` | Draggable inventory bag (shown when `hotbarVisible`) |
+| `ShortcutBar.tsx` | 10-slot bar with drag-drop from Inventory |
+| `HUD.tsx` | Player stats overlay |
+| `LayoutEditor.tsx` | Interactive layout editor (move/resize on 48×48 grid) |
+| `ServerLog.tsx` | Chat/server log |
+| `Console.tsx` | Command input box |
+| `Notifications.tsx` | Toast notifications |
+
+**Grid system**: 48×48 units mapped to viewport (`calc(n / 48 * 100vw/vh)`).
+
+**Kotlin → JS bridge** (data flow for any new state):
+1. Add field to `McUiState` (Kotlin) → expose as `StateFlow`
+2. Collect in `WebUiBridge` → call `BabylonBindings.jsXxx(json)`
+3. `BabylonBindings`: `fun jsXxx(v: String) = js("mcXxx(v)")`
+4. `GameUI.tsx`: `(window as any).mcXxx = (v) => dispatch({ type: 'xxx', data: ... })`
+5. Add case to `reducer` in `GameUI.tsx`
+
+**Adding a new layout widget** (checklist):
+1. `LayoutEngine.ts` — add entry to `DEFAULT_WIDGETS` and `MIN_WIDGET_SIZE`
+2. `LayoutEditor.tsx` — add label to `WIDGET_LABELS` and color to `WIDGET_COLORS`
+3. `GameUI.tsx` — pass `layoutStyle={widgetStyle(activeLayout, 'WIDGET_TYPE')}` to the component
+4. `fillMissingWidgets` is called when the editor opens — existing persisted layouts get the new widget at its default position automatically (no migration needed)
+
 ## Slash command
  - each in game actions (except movement) can have a slash command, each slashcommand can be binded to a key though keybinding
  - when a command has an argument, arguments will have an autocompletion method attached
