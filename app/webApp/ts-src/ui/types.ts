@@ -27,6 +27,11 @@ export interface GameLayout {
   widgets: LayoutWidget[];
 }
 
+export interface NpcDialogData {
+  type: string;
+  name: string;
+}
+
 export interface UiState {
   hud: HudData | null;
   hudMode: HudMode;
@@ -44,6 +49,7 @@ export interface UiState {
   layouts: GameLayout[];
   activeLayout: string;
   layoutEditorOpen: boolean;
+  npcDialog: NpcDialogData | null;
 }
 
 export type UiAction =
@@ -65,4 +71,6 @@ export type UiAction =
   | { type: 'layouts_sync'; layouts: GameLayout[]; activeLayout: string }
   | { type: 'layout_editor_show' }
   | { type: 'layout_editor_hide' }
-  | { type: 'layout_editor_save'; layouts: GameLayout[]; activeLayout: string };
+  | { type: 'layout_editor_save'; layouts: GameLayout[]; activeLayout: string }
+  | { type: 'npc_dialog_open'; payload: NpcDialogData }
+  | { type: 'npc_dialog_close' };

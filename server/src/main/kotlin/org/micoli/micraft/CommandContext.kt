@@ -1,5 +1,6 @@
 package org.micoli.micraft
 
+import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.world.I18nConfig
@@ -18,6 +19,7 @@ data class CommandContext(
     val commands: () -> Collection<CommandHandler> = { emptyList() },
     val savePlayer: (PlayerSession) -> Unit = {},
     val worldItems: WorldItemManager? = null,
+    val npcManager: NpcManager? = null,
     val getGameTime: () -> Long = { 0L },
     val setGameTime: (Long) -> Unit = {},
 )

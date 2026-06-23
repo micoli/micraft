@@ -218,6 +218,16 @@ fun jsSetPlayerVisible(model: JsAny, visible: Boolean): Unit = js("mcSetPlayerVi
 fun jsSetPlayerAlpha(model: JsAny, alpha: Double): Unit = js("mcSetPlayerAlpha(model, alpha)")
 fun jsDisposePlayerModel(model: JsAny): Unit = js("mcDisposePlayerModel(model)")
 
+// ── NPC models ───────────────────────────────────────────────────────────────
+
+fun jsInitNpcModels(npcTypesJson: String): Unit = js("mcInitNpcModels(npcTypesJson)")
+fun jsIsNpcModelsReady(): Boolean = js("mcIsNpcModelsReady()")
+fun jsCreateNpcModel(scene: JsAny, npcType: String): JsAny? = js("mcCreateNpcModel(scene, npcType)")
+fun jsSetNpcTransform(model: JsAny, x: Double, y: Double, z: Double, yaw: Float, isWalking: Boolean): Unit =
+    js("mcSetNpcTransform(model, x, y, z, yaw, isWalking)")
+fun jsDisposeNpcModel(model: JsAny): Unit = js("mcDisposeNpcModel(model)")
+fun jsOpenNpcDialog(json: String): Unit = js("mcOpenNpcDialog(json)")
+
 // ── First-person arm view model ───────────────────────────────────────────────
 
 fun jsCreateFPArms(camera: JsAny, scene: JsAny): JsAny? = js("mcCreateFPArms(scene, camera)")

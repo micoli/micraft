@@ -19,6 +19,8 @@ import org.micoli.micraft.tick.ChunkStreamer
 import org.micoli.micraft.tick.IntentCollector
 import org.micoli.micraft.tick.MovementProcessor
 import org.micoli.micraft.ui.validateLayouts
+import org.micoli.micraft.npc.NpcManager
+import org.micoli.micraft.npc.NpcSpawner
 import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.world.BlockRegistry
@@ -29,6 +31,7 @@ import org.micoli.micraft.world.DropConfig
 import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemType
+import org.micoli.micraft.world.NpcRegistryLoader
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldMetadata
@@ -97,6 +100,14 @@ class GameLoop(
         i18n = i18n,
     )
 
+    private val npcRegistryLoader = NpcRegistryLoader(Path.of("data/npcs/npcs.yaml"))
+    private val npcManager = NpcManager(
+        broadcast = { msg -> sessions.values.forEach { it.send(msg) } },
+        getSessions = { sessions.values },
+    )
+    private val npcSpawner = NpcSpawner()
+    private var npcSpawnTickCounter = 0
+
     private val commandContext = CommandContext(
         world = world,
         persistence = persistence,
@@ -111,6 +122,7 @@ class GameLoop(
         commands = { commands.values },
         savePlayer = ::savePlayer,
         worldItems = worldItems,
+        npcManager = npcManager,
         getGameTime = { gameTicks },
         setGameTime = { gameTicks = it },
     )
@@ -136,7 +148,8 @@ class GameLoop(
             val def = ItemRegistry.get(type)
             type.name to ItemInfo(buildable = def.buildable, placesBlock = def.placesBlock?.name)
         }
-        return ServerMessage.RegistrySync(blocks, items)
+        val npcs = npcManager.getDefinitions().map { (key, def) -> key to def.bbmodelFile }.toMap()
+        return ServerMessage.RegistrySync(blocks, items, npcs)
     }
 
     private suspend fun reload(): String {
@@ -153,6 +166,8 @@ class GameLoop(
             sessions.values.forEach { it.send(registrySync) }
             lines += "Block/item registry reloaded"
         }
+        npcManager.reloadDefinitions(npcRegistryLoader.reload())
+        lines += "NPC registry reloaded"
         i18n.reload()
         lines += "i18n: ${i18n.locales.size} locales"
         return lines.joinToString(", ")
@@ -160,7 +175,11 @@ class GameLoop(
 
     fun start(app: Application) {
         log.info("GameLoop starting (tick=${TICK_MS}ms, gravity=$GRAVITY)")
+        npcManager.loadDefinitions(npcRegistryLoader.load())
+        val npcSavePath = persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/npcs/spawns.json")
+        npcManager.load(npcSavePath)
         app.launch {
+            val npcSavePath = persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/npcs/spawns.json")
             while (isActive) {
                 delay(TICK_MS)
                 tick()
@@ -169,6 +188,7 @@ class GameLoop(
                     saveTickCounter = 0
                     world.flushDirty()
                     worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
+                    npcManager.save(npcSavePath)
                 }
             }
         }
@@ -178,6 +198,8 @@ class GameLoop(
         world.flushDirty()
         worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
         sessions.values.forEach { session -> savePlayer(session) }
+        val npcSavePath = persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/npcs/spawns.json")
+        npcManager.save(npcSavePath)
         log.info("World saved on shutdown")
     }
 
@@ -222,6 +244,12 @@ class GameLoop(
             chunkStreamer.checkAndStream(session)
         }
         worldItems.tickCollection(sessions.values)
+        npcManager.tick(world)
+        npcSpawnTickCounter++
+        if (npcSpawnTickCounter >= org.micoli.micraft.npc.NpcConstants.SPAWN_CHECK_INTERVAL_TICKS) {
+            npcSpawnTickCounter = 0
+            npcSpawner.trySpawn(world, npcManager, npcManager.getDefinitions(), world.discoveredChunks())
+        }
     }
 
     private suspend fun handleCommand(session: PlayerSession, text: String) {
@@ -288,6 +316,7 @@ class GameLoop(
             session.send(ServerMessage.PlayerUpdate(other.state))
             other.send(ServerMessage.PlayerUpdate(state))
         }
+        npcManager.sendAllTo(session)
 
         try {
             socket.incoming.consumeEach { frame ->
@@ -303,6 +332,7 @@ class GameLoop(
                                     log.debug("{} chunks unloaded by {}", msg.positions.size, session.id.take(8))
                                 }
                                 is ClientMessage.LayoutUpdate -> handleLayoutUpdate(session, msg)
+                                is ClientMessage.NpcInteract -> npcManager.handleInteract(session, msg.npcId)
                                 else -> session.intents.trySend(msg)
                             }
                         }

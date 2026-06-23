@@ -1,6 +1,7 @@
 package org.micoli.micraft.support
 
 import org.micoli.micraft.CommandContext
+import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.PlayerStance
@@ -8,7 +9,9 @@ import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.world.BlockType
+import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.I18nConfig
+import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldState
 import java.nio.file.Path
@@ -43,8 +46,14 @@ fun testSession(
     shadersEnabled: Boolean = true,
 ) = FakePlayerSession(id, name, testPlayerState(id = id, name = name, pos = pos, language = language, shadersEnabled = shadersEnabled))
 
-fun testWorld(vararg solid: Triple<Int, Int, Int>): WorldState =
-    WorldState(MapChunkGenerator(solid.associateWith { BlockType.STONE }))
+fun testWorld(vararg solid: Triple<Int, Int, Int>): WorldState {
+    val world = WorldState(MapChunkGenerator(solid.associateWith { BlockType.STONE }))
+    // Pre-generate referenced chunks so getBlockIfLoaded works in NPC physics tests
+    solid.map { (x, _, z) ->
+        ChunkPos(Math.floorDiv(x, WorldConstants.CHUNK_SIZE), Math.floorDiv(z, WorldConstants.CHUNK_SIZE))
+    }.toSet().forEach { world.getOrGenerate(it) }
+    return world
+}
 
 fun testI18n(): I18nConfig {
     val url = object {}.javaClass.classLoader.getResource("i18n")
@@ -71,6 +80,7 @@ fun testContext(
     reloadConfig: (suspend () -> String)? = null,
     savePlayer: (PlayerSession) -> Unit = {},
     worldItems: WorldItemManager? = null,
+    npcManager: NpcManager? = null,
     i18n: I18nConfig = testI18n(),
     getGameTime: () -> Long = { 0L },
     setGameTime: (Long) -> Unit = {},
@@ -84,6 +94,7 @@ fun testContext(
     reloadConfig = reloadConfig,
     savePlayer = savePlayer,
     worldItems = worldItems,
+    npcManager = npcManager,
     getGameTime = getGameTime,
     setGameTime = setGameTime,
 )

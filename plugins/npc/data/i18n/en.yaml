@@ -1,0 +1,9 @@
+npc:
+  server:
+    usage: "Usage: /npc <spawn <type> [name] | list | remove <id|name> | tp <id|name>>"
+    spawned: "Spawned {0} ({1}) at {2}."
+    removed: "Removed NPC {0}."
+    not_found: "NPC '{0}' not found."
+    listed: "{0} NPC(s) in world."
+    tp_done: "Moved NPC {0} to your position."
+    unknown_type: "Unknown NPC type: {0}. Available: {1}"

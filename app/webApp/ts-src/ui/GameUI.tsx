@@ -1,5 +1,6 @@
 import { useEffect, useRef, useReducer } from 'react';
-import { UiState, UiAction, LogEntry, HudMode, GameLayout } from './types';
+import { UiState, UiAction, LogEntry, HudMode, GameLayout, NpcDialogData } from './types';
+import { NpcDialog } from '../npc/NpcDialog';
 import { HUD } from './HUD';
 import { Inventory } from './Inventory';
 import { ShortcutBar } from './ShortcutBar';
@@ -33,6 +34,7 @@ const initial: UiState = {
   layouts: [defaultLayout()],
   activeLayout: 'default',
   layoutEditorOpen: false,
+  npcDialog: null,
 };
 
 let notifKey = 0;
@@ -68,6 +70,8 @@ function reducer(state: UiState, action: UiAction): UiState {
     case 'layout_editor_show': return { ...state, layoutEditorOpen: true };
     case 'layout_editor_hide': return { ...state, layoutEditorOpen: false };
     case 'layout_editor_save': return { ...state, layouts: action.layouts, activeLayout: action.activeLayout, layoutEditorOpen: false };
+    case 'npc_dialog_open':  return { ...state, npcDialog: action.payload };
+    case 'npc_dialog_close': return { ...state, npcDialog: null };
   }
 }
 
@@ -167,6 +171,11 @@ export function GameUI() {
     (window as any).mcShowLayoutEditor = () => dispatch({ type: 'layout_editor_show' });
     (window as any).mcHideLayoutEditor = () => dispatch({ type: 'layout_editor_hide' });
 
+    (window as any).__mcDispatch = dispatch;
+    (window as any).mcOpenNpcDialog = (json: string) => {
+      try { dispatch({ type: 'npc_dialog_open', payload: JSON.parse(json) as NpcDialogData }); } catch { /* ignore */ }
+    };
+
     (window as any).mcConsumeLayoutUpdate = () => {
       const v = pendingLayoutUpdateRef.current;
       pendingLayoutUpdateRef.current = '';
@@ -254,6 +263,7 @@ export function GameUI() {
         onSave={handleLayoutSave}
         onClose={() => dispatch({ type: 'layout_editor_hide' })}
       />
+      <NpcDialog data={state.npcDialog} onClose={() => dispatch({ type: 'npc_dialog_close' })} />
     </>
   );
 }

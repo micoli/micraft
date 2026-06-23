@@ -37,6 +37,22 @@ class WorldState(
         return getOrGenerate(ChunkPos(chunkX, chunkZ)).getBlock(localX, wy, localZ)
     }
 
+    /** All chunk positions that have ever been generated or loaded (i.e. discovered by a player). */
+    fun discoveredChunks(): Set<ChunkPos> = chunks.keys.toSet()
+
+    /** Returns a chunk only if it was already generated — never triggers generation. */
+    fun getChunkIfDiscovered(pos: ChunkPos): Chunk? = chunks[pos]
+
+    /** Returns the block type without generating the chunk if absent — returns AIR for ungenerated chunks. */
+    fun getBlockIfLoaded(wx: Int, wy: Int, wz: Int): BlockType {
+        if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return BlockType.AIR
+        val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
+        val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
+        val localX = Math.floorMod(wx, WorldConstants.CHUNK_SIZE)
+        val localZ = Math.floorMod(wz, WorldConstants.CHUNK_SIZE)
+        return chunks[ChunkPos(chunkX, chunkZ)]?.getBlock(localX, wy, localZ) ?: BlockType.AIR
+    }
+
     fun applyChange(change: org.micoli.micraft.protocol.BlockChange) {
         val chunkX = Math.floorDiv(change.pos.x, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(change.pos.z, WorldConstants.CHUNK_SIZE)

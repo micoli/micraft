@@ -32,6 +32,7 @@ import org.micoli.micraft.world.BlockDefinition
 import org.micoli.micraft.world.ItemDefinition
 import org.micoli.micraft.world.buildable
 import org.micoli.micraft.world.isSolid
+import org.micoli.micraft.npc.NpcState
 
 private const val PRED_DT = 16.0 / 1000.0  // seconds per prediction frame (~60fps)
 private const val FLY_VERTICAL_SPEED = 8f   // must match server GameLoop constant
@@ -97,6 +98,10 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
     @OptIn(ExperimentalWasmJsInterop::class)
     private val playerModels = mutableMapOf<String, JsAny>()
     private val playerPrevPos = mutableMapOf<String, Triple<Double, Double, Double>>()
+    @OptIn(ExperimentalWasmJsInterop::class)
+    private val npcModels = mutableMapOf<String, JsAny>()
+    private val npcPrevPos = mutableMapOf<String, Triple<Double, Double, Double>>()
+    private val pendingNpcs = mutableListOf<NpcState>()
     private val playerNames = mutableMapOf<String, String>()  // id → name, for autocomplete
     private val loadedChunks = mutableSetOf<ChunkPos>()
     private val chunkData    = mutableMapOf<ChunkPos, Pair<Chunk, Int>>()
@@ -159,6 +164,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
         jsSetupFog(scene, SKY_R, SKY_G, SKY_B)
         jsInitPlayerModel()
         jsInitBlockDefs()
+        // NPC models are initialized when RegistrySync is received (contains type→bbmodel map)
     }
 
     private fun getBlockMaterials(): JsAny? {
@@ -177,6 +183,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
             while (isActive) {
                 delay(16)
                 if (hasPrediction) applyLocalPrediction()
+                drainPendingNpcs()
             }
         }
 
@@ -280,6 +287,10 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
         loadedChunks.forEach { cp -> jsDisposeChunk("${cp.cx},${cp.cz}") }
         loadedChunks.clear()
         chunkData.clear()
+        npcModels.values.forEach(::jsDisposeNpcModel)
+        npcModels.clear()
+        npcPrevPos.clear()
+        pendingNpcs.clear()
     }
 
     private fun syncShortcutBarToUi() {
@@ -717,9 +728,16 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                 }.toMap()
                 ItemRegistry.load(itemDefs)
                 jsSetBlockRegistry(Json.encodeToString(msg.blocks))
+                if (msg.npcs.isNotEmpty()) {
+                    jsInitNpcModels(Json.encodeToString(msg.npcs))
+                }
             }
             is ServerMessage.ItemsSpawned -> Unit
             is ServerMessage.ItemDespawned -> Unit
+            is ServerMessage.NpcSpawned -> handleNpcSpawned(msg.npc)
+            is ServerMessage.NpcUpdate -> handleNpcUpdate(msg.npc)
+            is ServerMessage.NpcDespawned -> handleNpcDespawned(msg.id)
+            is ServerMessage.NpcInteractResult -> jsOpenNpcDialog(msg.payload)
             is ServerMessage.WorldUpdate -> msg.changes.forEach { change ->
                 val cx = change.pos.x.floorDiv(WorldConstants.CHUNK_SIZE)
                 val cz = change.pos.z.floorDiv(WorldConstants.CHUNK_SIZE)
@@ -844,6 +862,57 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
         )
         playerPrevPos[id] = Triple(x, y, z)
         jsSetPlayerTransform(model, x, y, z, yaw, pitch, isWalking)
+    }
+
+    @OptIn(ExperimentalWasmJsInterop::class)
+    private fun handleNpcSpawned(npc: NpcState) {
+        if (!jsIsNpcModelsReady()) {
+            pendingNpcs.add(npc)
+            return
+        }
+        createOrUpdateNpcMesh(npc)
+    }
+
+    @OptIn(ExperimentalWasmJsInterop::class)
+    private fun handleNpcUpdate(npc: NpcState) {
+        if (!jsIsNpcModelsReady()) {
+            pendingNpcs.removeAll { it.id == npc.id }
+            pendingNpcs.add(npc)
+            return
+        }
+        createOrUpdateNpcMesh(npc)
+    }
+
+    @OptIn(ExperimentalWasmJsInterop::class)
+    private fun handleNpcDespawned(id: String) {
+        pendingNpcs.removeAll { it.id == id }
+        npcModels.remove(id)?.let(::jsDisposeNpcModel)
+        npcPrevPos.remove(id)
+    }
+
+    @OptIn(ExperimentalWasmJsInterop::class)
+    private fun createOrUpdateNpcMesh(npc: NpcState) {
+        val model = npcModels.getOrPut(npc.id) {
+            jsCreateNpcModel(scene, npc.type) ?: return
+        }
+        val prev = npcPrevPos[npc.id]
+        val x = npc.pos.x.toDouble()
+        val y = npc.pos.y.toDouble()
+        val z = npc.pos.z.toDouble()
+        val isWalking = prev != null && (
+            kotlin.math.abs(x - prev.first) > 0.001 ||
+            kotlin.math.abs(z - prev.third) > 0.001
+        )
+        npcPrevPos[npc.id] = Triple(x, y, z)
+        jsSetNpcTransform(model, x, y, z, npc.yaw, isWalking)
+    }
+
+    @OptIn(ExperimentalWasmJsInterop::class)
+    private fun drainPendingNpcs() {
+        if (!jsIsNpcModelsReady() || pendingNpcs.isEmpty()) return
+        val snapshot = pendingNpcs.toList()
+        pendingNpcs.clear()
+        snapshot.forEach { createOrUpdateNpcMesh(it) }
     }
 
     private fun removePlayer(id: String) {

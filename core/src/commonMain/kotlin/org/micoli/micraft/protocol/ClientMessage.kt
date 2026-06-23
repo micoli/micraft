@@ -52,4 +52,7 @@ sealed class ClientMessage {
 
     @Serializable
     data class Disconnect(val reason: String = "") : ClientMessage()
+
+    @Serializable
+    data class NpcInteract(val npcId: String) : ClientMessage()
 }

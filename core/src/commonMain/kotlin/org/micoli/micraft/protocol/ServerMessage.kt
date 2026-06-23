@@ -1,6 +1,7 @@
 package org.micoli.micraft.protocol
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.ui.GameLayout
@@ -74,7 +75,20 @@ sealed class ServerMessage {
     data class RegistrySync(
         val blocks: List<BlockInfo>,
         val items: Map<String, ItemInfo>,
+        val npcs: Map<String, String> = emptyMap(),
     ) : ServerMessage()
+
+    @Serializable
+    data class NpcSpawned(val npc: NpcState) : ServerMessage()
+
+    @Serializable
+    data class NpcDespawned(val id: String) : ServerMessage()
+
+    @Serializable
+    data class NpcUpdate(val npc: NpcState) : ServerMessage()
+
+    @Serializable
+    data class NpcInteractResult(val npcId: String, val payload: String) : ServerMessage()
 }
 
 @Serializable
