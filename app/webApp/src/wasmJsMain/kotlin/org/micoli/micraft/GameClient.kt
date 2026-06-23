@@ -93,7 +93,8 @@ private enum class ViewMode { FIRST_PERSON, THIRD_PERSON }
 
 private data class RaycastResult(val target: BlockPos, val adjacent: BlockPos)
 
-class GameClient(private val scene: JsAny, private val camera: JsAny, private val uiState: McUiState) {
+class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private val scene: JsAny, private val camera: JsAny, private val uiState: McUiState) {
+    @OptIn(ExperimentalWasmJsInterop::class)
     private val playerModels = mutableMapOf<String, JsAny>()
     private val playerPrevPos = mutableMapOf<String, Triple<Double, Double, Double>>()
     private val playerNames = mutableMapOf<String, String>()  // id → name, for autocomplete
@@ -367,7 +368,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
                 if (jsIsActionDown("forward"))  dy += fwdY
                 if (jsIsActionDown("backward")) dy -= fwdY
             }
-            predY += (dy * FLY_VERTICAL_SPEED * localSpeedMult * PRED_DT).toDouble()
+            predY += dy * FLY_VERTICAL_SPEED * localSpeedMult * PRED_DT
         }
 
         // Soft correction toward server-authoritative XZ position
@@ -490,7 +491,7 @@ class GameClient(private val scene: JsAny, private val camera: JsAny, private va
             if (isBreaking && adjacent != null && !hasPlacedThisClick) {
                 hasPlacedThisClick = true
                 breakTarget = adjacent
-                outMessages.trySend(ClientMessage.BlockPlace(adjacent, selectedItem!!))
+                outMessages.trySend(ClientMessage.BlockPlace(adjacent, selectedItem))
             } else if (!isBreaking) {
                 breakTarget = null
                 hasPlacedThisClick = false

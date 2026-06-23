@@ -31,6 +31,9 @@ tasks.matching { it.name == "wasmJsProcessResources" }.configureEach {
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
+        compilerOptions {
+            optIn.add("kotlin.js.ExperimentalWasmJsInterop")
+        }
         browser {
             commonWebpackConfig {
                 devServer = devServer?.copy(open = false) ?: org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.DevServer(open = false)

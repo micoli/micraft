@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
 package org.micoli.micraft
 
 import kotlinx.coroutines.CoroutineScope

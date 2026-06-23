@@ -7,12 +7,12 @@ object AabbCollider {
     /** Int range covering blocks between [min, max). The -0.001 avoids counting a
      *  block when the AABB face sits exactly on its boundary (touching ≠ inside). */
     private fun blocks(min: Float, max: Float): IntRange =
-        floor(min.toDouble()).toInt()..floor((max - 0.001).toDouble()).toInt()
+        floor(min).toInt()..floor((max - 0.001f)).toInt()
 
     /** True if any block under the full footprint is solid (player is on ground). */
     fun isGrounded(isSolid: (Int, Int, Int) -> Boolean, cx: Float, cy: Float, cz: Float, w: Float): Boolean {
         val hw = w / 2f
-        val by = floor((cy - 0.001).toDouble()).toInt()
+        val by = floor(cy - 0.001f).toInt()
         for (bx in blocks(cx - hw, cx + hw))
             for (bz in blocks(cz - hw, cz + hw))
                 if (isSolid(bx, by, bz)) return true
@@ -85,8 +85,8 @@ object AabbCollider {
         val zs = blocks(cz - hw, cz + hw)
 
         if (dy < 0) {
-            val from = floor((cy - 0.001).toDouble()).toInt()
-            val to   = floor((cy + dy - 0.001).toDouble()).toInt()
+            val from = floor(cy - 0.001f).toInt()
+            val to   = floor(cy + dy - 0.001f).toInt()
             for (by in from downTo to)
                 for (bx in xs) for (bz in zs)
                     if (isSolid(bx, by, bz))
@@ -107,7 +107,7 @@ object AabbCollider {
         if (newH <= currentH) return true
         val hw = w / 2f
         val from = floor((cy + currentH).toDouble()).toInt()
-        val to   = floor((cy + newH - 0.001).toDouble()).toInt()
+        val to   = floor(cy + newH - 0.001f).toInt()
         for (by in from..to)
             for (bx in blocks(cx - hw, cx + hw))
                 for (bz in blocks(cz - hw, cz + hw))

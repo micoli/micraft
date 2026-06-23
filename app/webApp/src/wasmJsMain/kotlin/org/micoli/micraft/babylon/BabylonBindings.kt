@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
 package org.micoli.micraft.babylon
 
 fun jsLog(msg: String): Unit  = js("console.log('[MiCraft]', msg)")
