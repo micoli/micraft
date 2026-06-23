@@ -113,6 +113,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
     private var lastPlayerCx     = Int.MIN_VALUE
     private var lastPlayerCz     = Int.MIN_VALUE
     private val pendingUnloads   = mutableListOf<ChunkPos>()
+    private val pendingChunks    = mutableListOf<Pair<Chunk, Int>>() // queued while block defs load
     private var viewMode         = ViewMode.FIRST_PERSON
     private var pendingFlyToggle = false
     private var localPlayerModel: JsAny? = null
@@ -183,6 +184,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
             while (isActive) {
                 delay(16)
                 if (hasPrediction) applyLocalPrediction()
+                drainPendingChunks()
                 drainPendingNpcs()
             }
         }
@@ -291,6 +293,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
         npcModels.clear()
         npcPrevPos.clear()
         pendingNpcs.clear()
+        pendingChunks.clear()
     }
 
     private fun syncShortcutBarToUi() {
@@ -781,7 +784,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
     }
 
     private fun renderChunk(chunk: Chunk, topY: Int) {
-        val mats = getBlockMaterials() ?: return // block defs not yet loaded
+        val mats = getBlockMaterials() ?: run { pendingChunks.add(Pair(chunk, topY)); return }
         val chunkKey = "${chunk.pos.cx},${chunk.pos.cz}"
         jsDisposeChunk(chunkKey)
         chunkData[chunk.pos] = Pair(chunk, topY)
@@ -908,6 +911,13 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
     }
 
     @OptIn(ExperimentalWasmJsInterop::class)
+    private fun drainPendingChunks() {
+        if (getBlockMaterials() == null || pendingChunks.isEmpty()) return
+        val snapshot = pendingChunks.toList()
+        pendingChunks.clear()
+        snapshot.forEach { (chunk, topY) -> renderChunk(chunk, topY) }
+    }
+
     private fun drainPendingNpcs() {
         if (!jsIsNpcModelsReady() || pendingNpcs.isEmpty()) return
         val snapshot = pendingNpcs.toList()
