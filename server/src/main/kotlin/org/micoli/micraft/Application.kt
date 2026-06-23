@@ -18,7 +18,9 @@ import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockRegistryLoader
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemRegistryLoader
+import org.micoli.micraft.world.applyServerConfig
 import org.micoli.micraft.world.loadKeyBindings
+import org.micoli.micraft.world.loadServerConfig
 import org.micoli.micraft.http.mapRoutes
 import org.micoli.micraft.world.ChunkGenerator
 import org.slf4j.LoggerFactory
@@ -45,6 +47,8 @@ private val SERVER_ID: String = UUID.randomUUID().toString()
 fun Application.module() {
     install(WebSockets) {
     }
+
+    applyServerConfig(loadServerConfig(java.nio.file.Path.of("data/server.yaml")))
 
     val debugWorld = System.getenv("MICRAFT_DEBUG_WORLD") == "1"
     val worldName = System.getenv("MICRAFT_WORLD_NAME")?.takeIf { it.isNotBlank() } ?: "default_world"

@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ServerConfig",
+  "description": "Server configuration loaded from data/server.yaml at startup.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "world": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "worldMinY":        { "type": "integer", "description": "Minimum world Y coordinate.", "default": 0 },
+        "worldMaxY":        { "type": "integer", "description": "Maximum world Y coordinate.", "default": 1024 },
+        "chunkSize":        { "type": "integer", "description": "Chunk width/depth in blocks. Changing this invalidates existing chunk files.", "default": 16 },
+        "viewRadius":       { "type": "integer", "description": "Radius in chunks streamed to each player.", "default": 3 },
+        "forwardViewRadius":{ "type": "integer", "description": "Extra lookahead radius streamed in the player's forward direction.", "default": 7 }
+      }
+    },
+    "player": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "heightStanding":    { "type": "number", "description": "Hitbox height while standing (blocks).", "default": 1.8 },
+        "heightSneaking":    { "type": "number", "description": "Hitbox height while sneaking (blocks).", "default": 1.5 },
+        "heightCrawling":    { "type": "number", "description": "Hitbox height while crawling (blocks).", "default": 0.6 },
+        "width":             { "type": "number", "description": "Hitbox width (blocks).", "default": 0.6 },
+        "eyeOffsetStanding": { "type": "number", "description": "Eye height from feet while standing (blocks).", "default": 1.62 },
+        "eyeOffsetSneaking": { "type": "number", "description": "Eye height from feet while sneaking (blocks).", "default": 1.27 },
+        "eyeOffsetCrawling": { "type": "number", "description": "Eye height from feet while crawling (blocks).", "default": 0.4 },
+        "speedStanding":     { "type": "number", "description": "Movement speed while standing (blocks/s).", "default": 4.5 },
+        "speedSneaking":     { "type": "number", "description": "Movement speed while sneaking (blocks/s).", "default": 1.3 },
+        "speedCrawling":     { "type": "number", "description": "Movement speed while crawling (blocks/s).", "default": 1.0 }
+      }
+    },
+    "gameplay": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tickMs":             { "type": "integer", "description": "Server tick interval in milliseconds.", "default": 50 },
+        "gravity":            { "type": "number",  "description": "Gravitational acceleration (blocks/s²), negative = downward.", "default": -20.0 },
+        "jumpSpeed":          { "type": "number",  "description": "Initial vertical speed when jumping (blocks/s).", "default": 8.5 },
+        "flyVerticalSpeed":   { "type": "number",  "description": "Vertical speed when flying (blocks/s).", "default": 8.0 },
+        "saveIntervalSeconds":{ "type": "integer", "description": "World auto-save interval in seconds.", "default": 30 },
+        "spawnX":             { "type": "number",  "description": "Default spawn X coordinate for new players.", "default": 8.0 },
+        "spawnY":             { "type": "number",  "description": "Default spawn Y coordinate for new players.", "default": 200.0 },
+        "spawnZ":             { "type": "number",  "description": "Default spawn Z coordinate for new players.", "default": 8.0 }
+      }
+    }
+  }
+}
