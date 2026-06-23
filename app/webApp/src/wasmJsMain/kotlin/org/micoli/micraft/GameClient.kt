@@ -116,6 +116,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
     private val pendingChunks    = mutableListOf<Pair<Chunk, Int>>() // queued while block defs load
     private var viewMode         = ViewMode.FIRST_PERSON
     private var pendingFlyToggle = false
+    private var lastSentIntent: ClientMessage.MoveIntent? = null
     private var localPlayerModel: JsAny? = null
     private var fpArms: JsAny? = null
 
@@ -206,9 +207,15 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                         val inputJob = launch {
                             while (isActive) {
                                 delay(50)
-                                val intentText = Json.encodeToString<ClientMessage>(buildMoveIntent())
-                                send(Frame.Text(intentText))
-                                netBytesOut += intentText.length
+                                val intent = buildMoveIntent()
+                                val idle = intent.dx == 0f && intent.dz == 0f && intent.dy == 0f &&
+                                    !intent.jump && !intent.flyToggle && !intent.speedUp && !intent.speedDown
+                                if (!idle || intent != lastSentIntent) {
+                                    lastSentIntent = intent
+                                    val intentText = Json.encodeToString<ClientMessage>(intent)
+                                    send(Frame.Text(intentText))
+                                    netBytesOut += intentText.length
+                                }
                                 if (pendingUnloads.isNotEmpty()) {
                                     val batch = pendingUnloads.toList()
                                     pendingUnloads.clear()
@@ -284,6 +291,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
         jsSetConnectedPlayers("[]")
         localPlayerModel?.let { jsDisposePlayerModel(it) }
         localPlayerModel = null
+        lastSentIntent = null
         fpArms?.let { jsDisposeFPArms(it) }
         fpArms = null
         loadedChunks.forEach { cp -> jsDisposeChunk("${cp.cx},${cp.cz}") }
