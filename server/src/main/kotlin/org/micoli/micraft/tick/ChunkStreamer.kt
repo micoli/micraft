@@ -35,8 +35,9 @@ class ChunkStreamer(private val world: WorldState) {
             Math.floorDiv(session.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE),
             Math.floorDiv(session.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE),
         )
-        if (newCp == session.lastChunkPos) return
-        session.lastChunkPos = newCp
+        val posChanged = newCp != session.lastChunkPos
+        if (!posChanged && session.inFlightChunks.size >= MAX_IN_FLIGHT) return
+        if (posChanged) session.lastChunkPos = newCp
         requestAround(session, newCp.cx, newCp.cz)
     }
 
