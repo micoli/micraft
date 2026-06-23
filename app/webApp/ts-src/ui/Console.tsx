@@ -14,6 +14,7 @@ interface Props {
   submittedRef: MutableRefObject<string | null>;
   stateRef: MutableRefObject<ConsoleState>;
   initialValueRef: MutableRefObject<string>;
+  layoutStyle?: React.CSSProperties;
 }
 
 function computeSuggestions(val: string): string[] {
@@ -29,7 +30,7 @@ function computeSuggestions(val: string): string[] {
   return completers[cmd] ? completers[cmd](partial) : [];
 }
 
-export function Console({ open, onClose, submittedRef, stateRef, initialValueRef }: Props) {
+export function Console({ open, onClose, submittedRef, stateRef, initialValueRef, layoutStyle }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [selIdx, setSelIdx] = useState(-1);
@@ -134,12 +135,12 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
 
   if (!open) return null;
 
+  const containerStyle: React.CSSProperties = layoutStyle && Object.keys(layoutStyle).length > 0
+    ? { background: 'rgba(0,0,0,0.72)', borderRadius: 4, zIndex: 1002, boxSizing: 'border-box', ...layoutStyle, height: undefined }
+    : { position: 'fixed', bottom: 60, left: '50%', transform: 'translateX(-50%)', width: '60%', background: 'rgba(0,0,0,0.72)', borderRadius: 4, zIndex: 1002, boxSizing: 'border-box' };
+
   return (
-    <div style={{
-      position: 'fixed', bottom: 60, left: '50%', transform: 'translateX(-50%)',
-      width: '60%', background: 'rgba(0,0,0,0.72)', borderRadius: 4,
-      zIndex: 1002, boxSizing: 'border-box',
-    }}>
+    <div style={containerStyle}>
       {suggestions.length > 0 && (
         <div style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
           {suggestions.map((s, i) => (

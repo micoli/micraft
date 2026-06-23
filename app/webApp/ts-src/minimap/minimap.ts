@@ -32,13 +32,19 @@ export function registerMinimap(): void {
     c.id = 'mc-minimap';
     (c as HTMLCanvasElement).width = MINIMAP_SIZE;
     (c as HTMLCanvasElement).height = MINIMAP_SIZE;
-    c.style.cssText = [
-      'position:fixed;top:12px;left:12px',
-      'border-radius:6px;pointer-events:none;z-index:999',
-      'border:2px solid rgba(255,255,255,0.25)',
-      'box-shadow:0 2px 8px rgba(0,0,0,0.5)',
-    ].join(';');
-    document.body.appendChild(c);
+    const host = document.getElementById('mc-minimap-host');
+    if (host) {
+      c.style.cssText = 'width:100%;height:100%;display:block;border-radius:6px;pointer-events:none';
+      host.appendChild(c);
+    } else {
+      c.style.cssText = [
+        'position:fixed;top:12px;left:12px',
+        'border-radius:6px;pointer-events:none;z-index:999',
+        'border:2px solid rgba(255,255,255,0.25)',
+        'box-shadow:0 2px 8px rgba(0,0,0,0.5)',
+      ].join(';');
+      document.body.appendChild(c);
+    }
   };
 
   window.mcSetMinimapChunk = (cx: number, cz: number, topYJson: string, topBlockJson: string): void => {
@@ -60,12 +66,6 @@ export function registerMinimap(): void {
     if (zoomIndex < ZOOM_RADII.length - 1) zoomIndex++;
   };
 
-  window.mcUpdateMinimapLayout = (left: string, top: string): void => {
-    const canvas = document.getElementById('mc-minimap') as HTMLCanvasElement | null;
-    if (!canvas) return;
-    canvas.style.left = left;
-    canvas.style.top = top;
-  };
 
   window.mcDrawMinimap = (playerX: number, playerZ: number): void => {
     frameCount++;

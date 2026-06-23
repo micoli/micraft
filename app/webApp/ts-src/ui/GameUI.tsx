@@ -104,19 +104,12 @@ export function GameUI() {
     return () => { if (notifTimerRef.current) clearTimeout(notifTimerRef.current); };
   }, [state.notif?.key]);
 
-  // Apply minimap layout position when layout changes
+  // Update /layout autocomplete completer whenever layouts change
   useEffect(() => {
-    const layout = resolveActiveLayout(state.layouts, state.activeLayout);
-    const s = widgetStyle(layout, 'MINIMAP');
-    const mcUpdateMinimapLayout = (window as any).mcUpdateMinimapLayout;
-    if (typeof mcUpdateMinimapLayout === 'function') {
-      mcUpdateMinimapLayout(s.left ?? '12px', s.top ?? '12px');
-    }
-    // Update layout completer for /layout command autocomplete
     (window as any).__mcCommandCompleters = (window as any).__mcCommandCompleters ?? {};
     (window as any).__mcCommandCompleters['/layout'] = (partial: string) =>
-      state.layouts.map(l => l.name).filter(n => n.startsWith(partial));
-  }, [state.layouts, state.activeLayout]);
+      state.layouts.map((l: GameLayout) => l.name).filter((n: string) => n.startsWith(partial));
+  }, [state.layouts]);
 
   useEffect(() => {
     // Wire Kotlin-callable window functions to React dispatch
@@ -209,13 +202,26 @@ export function GameUI() {
 
   const activeLayout = resolveActiveLayout(state.layouts, state.activeLayout);
 
-  const handleLayoutSave = (layouts: GameLayout[], activeLayout: string) => {
-    dispatch({ type: 'layout_editor_save', layouts, activeLayout });
-    pendingLayoutUpdateRef.current = JSON.stringify({ layouts, activeLayout });
+  const handleLayoutSave = (layouts: GameLayout[], newActiveLayout: string) => {
+    dispatch({ type: 'layout_editor_save', layouts, activeLayout: newActiveLayout });
+    pendingLayoutUpdateRef.current = JSON.stringify({ layouts, activeLayout: newActiveLayout });
+  };
+
+  const minimapStyle: React.CSSProperties = {
+    ...widgetStyle(activeLayout, 'MINIMAP'),
+    zIndex: 999,
+    pointerEvents: 'none',
+    border: '2px solid rgba(255,255,255,0.25)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+    borderRadius: 6,
+    overflow: 'hidden',
   };
 
   return (
     <>
+      {/* Minimap host: React manages position; Kotlin appends the canvas here */}
+      <div id="mc-minimap-host" style={minimapStyle} />
+
       <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, 'HUD')} />
       <ShortcutBar
         inventory={state.inventory}
@@ -226,7 +232,7 @@ export function GameUI() {
         }}
         layoutStyle={widgetStyle(activeLayout, 'SHORTCUT_BAR')}
       />
-      <Inventory inventory={state.inventory} visible={state.hotbarVisible} layoutStyle={widgetStyle(activeLayout, 'INPUT_BOX')} />
+      <Inventory inventory={state.inventory} visible={state.hotbarVisible} />
       <ServerLog logs={state.logs} visible={state.logVisible} layoutStyle={widgetStyle(activeLayout, 'CHAT_HISTORY')} />
       <Notifications notif={state.notif?.msg ? state.notif : null} />
       <Console
@@ -235,6 +241,7 @@ export function GameUI() {
         submittedRef={consoleSubmittedRef}
         stateRef={consoleStateRef}
         initialValueRef={consoleInitialValueRef}
+        layoutStyle={widgetStyle(activeLayout, 'INPUT_BOX')}
       />
       <div id="mc-login-root" data-visible={String(state.loginVisible)}>
         <LoginOverlay visible={state.loginVisible} loginResultRef={loginResultRef} onHide={() => dispatch({ type: 'login_hide' })} />
