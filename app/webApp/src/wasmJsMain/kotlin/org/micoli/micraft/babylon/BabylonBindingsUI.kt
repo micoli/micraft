@@ -10,6 +10,7 @@ fun jsHideDisconnectedOverlay(): Unit = js("mcHideDisconnectedOverlay()")
 // ── Login overlay ─────────────────────────────────────────────────────────────
 
 fun jsShowLoginOverlay(): Unit = js("mcShowLoginOverlay()")
+fun jsHideLoginOverlay(): Unit = js("mcHideLoginOverlay()")
 fun jsConsumeLoginResult(): String = js("mcConsumeLoginResult()")
 
 // ── Console / Server log ──────────────────────────────────────────────────────

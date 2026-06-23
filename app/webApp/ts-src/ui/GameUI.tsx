@@ -108,6 +108,12 @@ export function GameUI() {
     return () => { if (notifTimerRef.current) clearTimeout(notifTimerRef.current); };
   }, [state.notif?.key]);
 
+  useEffect(() => {
+    const canvas = document.getElementById('renderCanvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    canvas.style.visibility = state.loginVisible ? 'hidden' : 'visible';
+  }, [state.loginVisible]);
+
   // Update /layout autocomplete completer whenever layouts change
   useEffect(() => {
     (window as any).__mcCommandCompleters = (window as any).__mcCommandCompleters ?? {};
@@ -228,42 +234,47 @@ export function GameUI() {
 
   return (
     <>
-      {/* Minimap host: React manages position; Kotlin appends the canvas here */}
-      <div id="mc-minimap-host" style={minimapStyle} />
+      {/* Minimap host: always in DOM (Kotlin appends canvas here at startup); hidden during login */}
+      <div id="mc-minimap-host" style={{ ...minimapStyle, display: state.loginVisible ? 'none' : undefined }} />
 
-      <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, 'HUD')} />
-      <ShortcutBar
-        inventory={state.inventory}
-        slots={state.shortcutBar}
-        selectedSlot={state.selectedSlot}
-        onSlotDrop={(slot, itemType) => {
-          pendingSlotUpdateRef.current = JSON.stringify({ slot, itemType: itemType ?? null });
-        }}
-        layoutStyle={widgetStyle(activeLayout, 'SHORTCUT_BAR')}
-      />
-      <Inventory inventory={state.inventory} visible={state.hotbarVisible} layoutStyle={widgetStyle(activeLayout, 'INVENTORY')} />
-      <ServerLog logs={state.logs} visible={state.logVisible || state.consoleOpen} layoutStyle={widgetStyle(activeLayout, 'CHAT_HISTORY')} />
-      <Notifications notif={state.notif?.msg ? state.notif : null} />
-      <Console
-        open={state.consoleOpen}
-        onClose={() => dispatch({ type: 'console_hide' })}
-        submittedRef={consoleSubmittedRef}
-        stateRef={consoleStateRef}
-        initialValueRef={consoleInitialValueRef}
-        layoutStyle={widgetStyle(activeLayout, 'INPUT_BOX')}
-      />
+      {!state.loginVisible && (
+        <>
+
+          <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, 'HUD')} />
+          <ShortcutBar
+            inventory={state.inventory}
+            slots={state.shortcutBar}
+            selectedSlot={state.selectedSlot}
+            onSlotDrop={(slot, itemType) => {
+              pendingSlotUpdateRef.current = JSON.stringify({ slot, itemType: itemType ?? null });
+            }}
+            layoutStyle={widgetStyle(activeLayout, 'SHORTCUT_BAR')}
+          />
+          <Inventory inventory={state.inventory} visible={state.hotbarVisible} layoutStyle={widgetStyle(activeLayout, 'INVENTORY')} />
+          <ServerLog logs={state.logs} visible={state.logVisible || state.consoleOpen} layoutStyle={widgetStyle(activeLayout, 'CHAT_HISTORY')} />
+          <Notifications notif={state.notif?.msg ? state.notif : null} />
+          <Console
+            open={state.consoleOpen}
+            onClose={() => dispatch({ type: 'console_hide' })}
+            submittedRef={consoleSubmittedRef}
+            stateRef={consoleStateRef}
+            initialValueRef={consoleInitialValueRef}
+            layoutStyle={widgetStyle(activeLayout, 'INPUT_BOX')}
+          />
+          <LayoutEditor
+            open={state.layoutEditorOpen}
+            layouts={state.layouts}
+            activeLayout={state.activeLayout}
+            onSave={handleLayoutSave}
+            onClose={() => dispatch({ type: 'layout_editor_hide' })}
+          />
+          <NpcDialog data={state.npcDialog} onClose={() => dispatch({ type: 'npc_dialog_close' })} />
+        </>
+      )}
       <div id="mc-login-root" data-visible={String(state.loginVisible)}>
         <LoginOverlay visible={state.loginVisible} loginResultRef={loginResultRef} onHide={() => dispatch({ type: 'login_hide' })} />
       </div>
       <DisconnectOverlay message={state.disconnectMsg} />
-      <LayoutEditor
-        open={state.layoutEditorOpen}
-        layouts={state.layouts}
-        activeLayout={state.activeLayout}
-        onSave={handleLayoutSave}
-        onClose={() => dispatch({ type: 'layout_editor_hide' })}
-      />
-      <NpcDialog data={state.npcDialog} onClose={() => dispatch({ type: 'npc_dialog_close' })} />
     </>
   );
 }

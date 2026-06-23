@@ -69,10 +69,10 @@ fun main() {
         val lang = if (parts.size > 2) parts[2] else "en"
         jsFetchI18n(lang)
         jsLog("login: user=$username player=$playerName lang=$lang — connecting to ws://$host:$port/game …")
+        jsHideLoginOverlay()
+        jsEngineRunRenderLoop(engine, scene)
+        jsSetupResize(engine)
+        jsLog("render loop started")
         client.connect(host, port, username, playerName, lang)
     }
-
-    jsEngineRunRenderLoop(engine, scene)
-    jsSetupResize(engine)
-    jsLog("render loop started")
 }
