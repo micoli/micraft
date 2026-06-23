@@ -1,16 +1,16 @@
 # MicCraft
 
-Minecraft client/server clone in **Kotlin Multiplatform** — multiplayer voxel game with procedural generation and a persistent server-side world.
+Minecraft client/server clone in **Kotlin Multiplatform** — multiplayer voxel game, procedural generation, persistent server-side world.
 
 ## Modules
 
 | Module | Path | Role |
 |--------|------|------|
-| `core` | `core/src/commonMain` | Domain model, protocol, physics, chunk generation — shared across all targets |
+| `core` | `core/src/commonMain` | Domain model, protocol, physics, chunk generation — shared all targets |
 | `server` | `server/src/main/kotlin` | Ktor WebSocket, game loop, persistence |
 | `app/webApp` | `app/webApp/src/wasmJsMain` | Web client (Kotlin/Wasm + BabylonJS) |
 | `app/desktopApp` | `app/desktopApp/src/main` | Desktop client (JVM) |
-| `app/shared` | `app/shared/src/commonMain` | Shared Compose code for desktop/web |
+| `app/shared` | `app/shared/src/commonMain` | Shared Compose code desktop/web |
 
 ## Key source files
 
@@ -67,10 +67,10 @@ Minecraft client/server clone in **Kotlin Multiplatform** — multiplayer voxel 
 ## Domain types
 
 **Block types**: `AIR BEDROCK STONE DIRT GRASS SAND SANDSTONE GRAVEL SNOW OAK_LOG OAK_LEAVES PINE_LOG PINE_LEAVES PINE_LEAVES_SNOW FLOWER WEED`
-Properties (hardness, solid, minimapColor, modelElement) are in `data/blocks/blocks.yaml`. `hardness: -1` = unbreakable.
+Properties (hardness, solid, minimapColor, modelElement) in `data/blocks/blocks.yaml`. `hardness: -1` = unbreakable.
 
 **Item types**: `COBBLESTONE DIRT SAND GRAVEL SANDSTONE SNOWBALL FLINT`
-Properties (buildable, placesBlock) are in `data/items/items.yaml`.
+Properties (buildable, placesBlock) in `data/items/items.yaml`.
 
 **Drop config**: `data/drops/drops.yaml` — maps `BlockType → List<(ItemType, weight, minCount, maxCount)>`
 
@@ -80,9 +80,9 @@ Properties (buildable, placesBlock) are in `data/items/items.yaml`.
 
 ## Architecture
 
-- **Server authoritative**: client sends `MoveIntent`, server validates and replies with `PlayerUpdate`.
-- **Client-side prediction**: `GameClient` predicts XZ locally at ~60 fps, soft-corrects toward server. Y (gravity) is always server-authoritative.
-- All simulation logic (AABB physics, chunk gen) lives in `core` to keep client prediction and server consistent.
+- **Server authoritative**: client sends `MoveIntent`, server validates, replies `PlayerUpdate`.
+- **Client-side prediction**: `GameClient` predicts XZ locally ~60 fps, soft-corrects toward server. Y (gravity) always server-authoritative.
+- All simulation logic (AABB physics, chunk gen) in `core` — keeps client prediction and server consistent.
 - **Chunk rendering**: `VertexData` buffers per chunk (~200 draw calls). `WorldUpdate` triggers re-mesh of affected chunk.
 
 ## Data directory
@@ -102,7 +102,7 @@ data/
 
 ## UI (TypeScript / React)
 
-Source lives in `app/webApp/ts-src/ui/`.
+Source in `app/webApp/ts-src/ui/`.
 
 | File | Purpose |
 |------|---------|
@@ -119,29 +119,33 @@ Source lives in `app/webApp/ts-src/ui/`.
 
 **Grid system**: 48×48 units mapped to viewport (`calc(n / 48 * 100vw/vh)`).
 
-**Kotlin → JS bridge** (data flow for any new state):
+**Kotlin → JS bridge** (data flow for new state):
 1. Add field to `McUiState` (Kotlin) → expose as `StateFlow`
 2. Collect in `WebUiBridge` → call `BabylonBindings.jsXxx(json)`
 3. `BabylonBindings`: `fun jsXxx(v: String) = js("mcXxx(v)")`
 4. `GameUI.tsx`: `(window as any).mcXxx = (v) => dispatch({ type: 'xxx', data: ... })`
 5. Add case to `reducer` in `GameUI.tsx`
 
-**Adding a new layout widget** (checklist):
+**Adding new layout widget** (checklist):
 1. `LayoutEngine.ts` — add entry to `DEFAULT_WIDGETS` and `MIN_WIDGET_SIZE`
 2. `LayoutEditor.tsx` — add label to `WIDGET_LABELS` and color to `WIDGET_COLORS`
-3. `GameUI.tsx` — pass `layoutStyle={widgetStyle(activeLayout, 'WIDGET_TYPE')}` to the component
-4. `fillMissingWidgets` is called when the editor opens — existing persisted layouts get the new widget at its default position automatically (no migration needed)
+3. `GameUI.tsx` — pass `layoutStyle={widgetStyle(activeLayout, 'WIDGET_TYPE')}` to component
+4. `fillMissingWidgets` called when editor opens — existing persisted layouts get new widget at default position automatically (no migration needed)
 
 ## Slash command
- - each in game actions (except movement) can have a slash command, each slashcommand can be binded to a key though keybinding
- - when a command has an argument, arguments will have an autocompletion method attached
- 
+ - Each in-game action (except movement) can have slash command; each slash command bindable to key via keybinding
+ - When command has argument, arguments get autocompletion method attached
+
 ## Entities / animations
 Models use **bbmodel** (Blockbench) format. Example: `resources/player.bbmodel`
 
+```
+node scripts/export_skin_presets.mjs ./resources/blockbench-export/.
+```
+
 ## Code conventions
 
-- Prefer immutable types (`data class`, `value class`) for positions, orientations, and network messages.
+- Prefer immutable types (`data class`, `value class`) for positions, orientations, network messages.
 - Centralise constants in `core` (`WorldConstants`, `PlayerConstants`). Never duplicate between client and server.
 - All packages under `org.micoli.micraft.*`
 
@@ -151,7 +155,7 @@ After every server-side code change:
 ```bash
 touch run.lock
 ```
-The `./gradlew dev` watchdog kills/restarts the Ktor process. The web client reconnects automatically. **Always use `touch run.lock` — never ask the user to restart manually.**
+`./gradlew dev` watchdog kills/restarts Ktor process. Web client reconnects automatically. **Always use `touch run.lock` — never ask user to restart manually.**
 
 ## Debug texture mode
 
@@ -159,7 +163,7 @@ The `./gradlew dev` watchdog kills/restarts the Ktor process. The web client rec
 ./gradlew devDebug   # then open http://localhost:8081/?debug&bx=8&by=2&bz=8
 ```
 Single GRASS block at (8, 2, 8), player spawns at (8, 1, 14) in fly mode.
-Keys 1–6 position the camera on each face (+Z, -Z, +X, -X, +Y, -Y).
+Keys 1–6 position camera on each face (+Z, -Z, +X, -X, +Y, -Y).
 
 ## Commands
 
@@ -177,16 +181,16 @@ rtk ./gradlew ktlintCheck
 
 - Always prefer `./gradlew` (never `gradle` directly).
 - Use `rtk` before verbose commands (build, test, diff, status, find).
-- Do not run unfiltered `find`, `ls -R`, `git diff`, or `gradlew test` without `rtk`.
+- Never run unfiltered `find`, `ls -R`, `git diff`, or `gradlew test` without `rtk`.
 - Read only necessary files.
-- Never start the server or web client — the user runs these themselves.
-- Do not read `data/world/default_world/chunks/` — binary compressed files, useless to read.
-- Commits must respect Conventional Commits standard and Semantic Commit Messages standard, body must not exceed 10 lines
-- Every server-side change (`server/src/main/`) must be accompanied by a new or updated test in `server/src/test/`. Run `rtk ./gradlew :server:test` to verify before committing.
+- Never start server or web client — user runs these.
+- Never read `data/world/default_world/chunks/` — binary compressed, useless.
+- Commits must respect Conventional Commits + Semantic Commit Messages standard; body ≤10 lines.
+- Every server-side change (`server/src/main/`) needs new or updated test in `server/src/test/`. Run `rtk ./gradlew :server:test` before committing.
 
 ## Schema maintenance
 
-JSON Schemas for YAML configs live in `data/schemas/`. Keep them in sync with Kotlin data classes:
+JSON Schemas for YAML configs in `data/schemas/`. Keep in sync with Kotlin data classes:
 
 | Modified file | Update schema |
 |---|---|
@@ -197,21 +201,21 @@ JSON Schemas for YAML configs live in `data/schemas/`. Keep them in sync with Ko
 | `server/.../world/KeyBindingsConfig.kt` | `data/schemas/keybindings.schema.json` |
 | `server/.../world/I18nConfig.kt` | `data/schemas/i18n.schema.json` |
 
-Whenever you add/remove/rename a field or enum value in these data classes, update the corresponding schema in the same commit.
+When adding/removing/renaming field or enum value in these data classes, update corresponding schema in same commit.
 
 ## i18n (translations)
 
-Translation YAML files live in `data/i18n/{locale}.yaml` (e.g. `en.yaml`, `fr.yaml`).
+Translation YAML files in `data/i18n/{locale}.yaml` (e.g. `en.yaml`, `fr.yaml`).
 
 Key format: `feature:scope:key` where scope is `server` or `client`.
 
-- **Server notifications** (sent via `ServerMessage.Notification`) → always go through `context.i18n.t(session.state.language, "feature:server:key", ...args)`.
-- **Client UI strings** → served via `GET /api/i18n/{locale}` and accessed in TypeScript via `window.mcT("feature:client:key")`.
-- `I18nConfig` is instantiated once in `GameLoop` and reloaded with `/reload`.
-- Player language is stored in `PlayerState.language` and persisted to `players/*.json`.
-- Language is changed with `/lang <locale>` or the language selector in the login overlay.
+- **Server notifications** (sent via `ServerMessage.Notification`) → always use `context.i18n.t(session.state.language, "feature:server:key", ...args)`.
+- **Client UI strings** → served via `GET /api/i18n/{locale}`, accessed in TypeScript via `window.mcT("feature:client:key")`.
+- `I18nConfig` instantiated once in `GameLoop`, reloaded with `/reload`.
+- Player language stored in `PlayerState.language`, persisted to `players/*.json`.
+- Language changed with `/lang <locale>` or language selector in login overlay.
 
-**When adding new user-visible strings:**
-1. Add the key to **both** `data/i18n/en.yaml` and `data/i18n/fr.yaml`.
-2. Use `context.i18n.t(session.state.language, "feature:server:key", ...args)` server-side.
-3. Use `window.mcT("feature:client:key")` client-side (TypeScript).
+**Adding new user-visible strings:**
+1. Add key to **both** `data/i18n/en.yaml` and `data/i18n/fr.yaml`.
+2. Server-side: `context.i18n.t(session.state.language, "feature:server:key", ...args)`.
+3. Client-side (TypeScript): `window.mcT("feature:client:key")`.
