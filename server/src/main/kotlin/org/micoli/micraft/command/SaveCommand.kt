@@ -13,7 +13,7 @@ class SaveCommand : CommandHandler {
     override val description = "Saves the world and player state to disk."
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
-        context.world.flushDirty()
+        context.flushWorld?.invoke() ?: context.world.flushDirty()
         context.savePlayer(session)
         session.send(ServerMessage.Notification(context.i18n.t(session.state.language, "save:server:done")))
         log.info("Manual /save by {}", session.state.name)

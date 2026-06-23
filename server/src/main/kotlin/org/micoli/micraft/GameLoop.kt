@@ -2,6 +2,9 @@ package org.micoli.micraft
 
 import io.ktor.server.application.*
 import io.ktor.server.websocket.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.micoli.micraft.http.TerrainCache
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
@@ -133,12 +136,40 @@ class GameLoop(
             val cz = Math.floorDiv(session.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE)
             chunkStreamer.requestAround(session, cx, cz)
         },
+        flushWorld = ::flushWorld,
     )
     private val blockBreaker = BlockBreaker(world, { msg -> sessions.values.forEach { it.send(msg) } }, worldItems)
     private val blockPlacer = BlockPlacer(world, { msg -> sessions.values.forEach { it.send(msg) } }, ::savePlayer)
     private val intentCollector = IntentCollector(blockBreaker, blockPlacer, ::handleCommand)
     private val movementProcessor = MovementProcessor(world)
     private val chunkStreamer = ChunkStreamer(world)
+
+    val terrainCache = TerrainCache()
+    @Volatile private var appScope: Application? = null
+
+    fun getPlayerStates(): List<PlayerState> = sessions.values.map { it.state }
+    fun getNpcStates(): List<org.micoli.micraft.npc.NpcState> = npcManager.getAll().map { it.state }
+    fun getGameTicks(): Long = gameTicks
+
+    private fun flushWorld() {
+        world.flushDirty()
+        launchTerrainRebuild()
+    }
+
+    private fun launchTerrainRebuild() {
+        val scope = appScope ?: return
+        val chunks = world.discoveredChunks().mapNotNull { world.getChunkIfDiscovered(it) }
+        scope.launch(Dispatchers.IO) {
+            terrainCache.rebuild(chunks)
+            persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache.json")) }
+        }
+    }
+
+    private fun rebuildTerrainSync() {
+        val chunks = world.discoveredChunks().mapNotNull { world.getChunkIfDiscovered(it) }
+        terrainCache.rebuild(chunks)
+        persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache.json")) }
+    }
 
     private fun buildRegistrySync(): ServerMessage.RegistrySync {
         val blocks = BlockRegistry.orderedList().mapIndexed { i, def ->
@@ -182,10 +213,17 @@ class GameLoop(
     }
 
     fun start(app: Application) {
+        appScope = app
         log.info("GameLoop starting (tick=${TICK_MS}ms, gravity=$GRAVITY)")
         npcManager.loadDefinitions(npcRegistryLoader.load())
         val npcSavePath = persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/npcs/spawns.json")
         npcManager.load(npcSavePath)
+        persistence?.let {
+            terrainCache.prewarm(
+                chunksDir = it.worldDir.resolve("chunks"),
+                cacheFile = it.worldDir.resolve("terrain_cache.json"),
+            )
+        }
         app.launch {
             val npcSavePath = persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/npcs/spawns.json")
             while (isActive) {
@@ -194,7 +232,7 @@ class GameLoop(
                 saveTickCounter++
                 if (saveTickCounter >= SAVE_INTERVAL_TICKS) {
                     saveTickCounter = 0
-                    world.flushDirty()
+                    flushWorld()
                     worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
                     npcManager.save(npcSavePath)
                 }
@@ -204,6 +242,7 @@ class GameLoop(
 
     fun shutdown() {
         world.flushDirty()
+        rebuildTerrainSync()
         worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
         sessions.values.forEach { session -> savePlayer(session) }
         val npcSavePath = persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/npcs/spawns.json")

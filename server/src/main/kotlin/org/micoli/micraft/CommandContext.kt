@@ -23,4 +23,5 @@ data class CommandContext(
     val getGameTime: () -> Long = { 0L },
     val setGameTime: (Long) -> Unit = {},
     val refetchChunks: (suspend (PlayerSession) -> Unit)? = null,
+    val flushWorld: (() -> Unit)? = null,
 )

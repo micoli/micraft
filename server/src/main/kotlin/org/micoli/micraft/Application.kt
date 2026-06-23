@@ -19,6 +19,7 @@ import org.micoli.micraft.world.BlockRegistryLoader
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemRegistryLoader
 import org.micoli.micraft.world.loadKeyBindings
+import org.micoli.micraft.http.mapRoutes
 import org.micoli.micraft.world.ChunkGenerator
 import org.slf4j.LoggerFactory
 import org.micoli.micraft.world.DebugChunkGenerator
@@ -31,7 +32,6 @@ import java.time.Instant
 import java.util.UUID
 import kotlin.io.path.exists
 import kotlin.io.path.readText
-import kotlin.time.Duration.Companion.seconds
 
 private val log = LoggerFactory.getLogger("Application")
 
@@ -142,6 +142,7 @@ fun Application.module() {
             val serializer = MapSerializer(String.serializer(), ListSerializer(Double.serializer()))
             call.respondText(Json.encodeToString(serializer, colors), ContentType.Application.Json)
         }
+        if (System.getenv("MICRAFT_MAP_ENABLED") != "0") mapRoutes(gameLoop)
         webSocket("/game") {
             gameLoop.onConnect(this)
         }
