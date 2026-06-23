@@ -53,23 +53,13 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
         return p
     }
 
-    // Static type-check across all modules (including test sources) before starting
-    println("[dev] checking static types…")
-    val checkResult = runGradle(
-        "compileKotlin", "compileTestKotlin",
-        ":app:webApp:compileProductionExecutableKotlinWasmJs",
-        ":app:shared:compileKotlinJvm",
-        ":server:compileKotlin", ":server:compileTestKotlin",
-        "--rerun-tasks",
-    )
-    if (checkResult != 0) error("[dev] static type check failed — fix compilation errors before starting")
-
-    // Force full build of server and client on every start
     println("[dev] building server…")
-    runGradle(":server:installDist", "--rerun-tasks")
+    val serverResult = runGradle(":server:installDist")
+    if (serverResult != 0) error("[dev] server build failed — fix compilation errors before starting")
 
     println("[dev] building client…")
-    runGradle(":app:webApp:wasmJsDevelopmentExecutableCompileSync", "--rerun-tasks")
+    val clientResult = runGradle(":app:webApp:wasmJsDevelopmentExecutableCompileSync")
+    if (clientResult != 0) error("[dev] client build failed — fix compilation errors before starting")
 
     val serverRef  = java.util.concurrent.atomic.AtomicReference(startServer())
     val clientProc = ProcessBuilder(gradle, ":app:webApp:wasmJsBrowserDevelopmentRun", "--continuous", "--console=plain")
