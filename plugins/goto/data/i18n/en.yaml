@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../../../../data/schemas/i18n.schema.json
 goto:
   server:
-    usage: "Usage: /goto <playerName>"
-    not_found: "Player not found: {0}"
+    usage: "Usage: /goto <playerName|npcName>"
+    not_found: "Not found: {0}"
     done: "Teleported to {0}."

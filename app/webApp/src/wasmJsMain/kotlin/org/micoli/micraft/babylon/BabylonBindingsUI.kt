@@ -56,3 +56,4 @@ fun jsRemoveNpcFromMinimap(id: String): Unit = js("mcRemoveNpcFromMinimap(id)")
 // ── Autocomplete ──────────────────────────────────────────────────────────────
 
 fun jsSetConnectedPlayers(namesJson: String): Unit = js("mcSetConnectedPlayers(namesJson)")
+fun jsSetNpcNames(namesJson: String): Unit = js("mcSetNpcNames(namesJson)")

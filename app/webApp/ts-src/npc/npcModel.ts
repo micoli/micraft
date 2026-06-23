@@ -18,7 +18,7 @@ export function registerNpcModel(): void {
 
     Promise.all(
       entries.map(([type, file]) =>
-        fetch(`/models/npcs/${file}`)
+        fetch(`/models/${file}`)
           .then(r => r.json())
           .then((data: BbModel) => { (window.__mc.npcBbmodels as NpcBbmodels)[type] = data; })
           .catch(e => { console.error(`[MiCraft] Failed to load NPC model ${file}`, e); }),

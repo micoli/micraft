@@ -14,3 +14,7 @@ app/webApp/build
 TODO.md
 plans
 data/world/default_world/players/
+resources/blockbench-export/
+
+server/data/world/
+data/world/

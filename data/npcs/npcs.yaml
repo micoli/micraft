@@ -25,7 +25,7 @@ BLACK_SMITH:
     spawnBiomes: []
 
 GOAT:
-  bbmodelFile: npc_goat.bbmodel
+  bbmodelFile: goat.bbmodel
   behavior: random_movable
   width: 0.5
   height: 0.9

@@ -111,6 +111,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
     private val npcPrevPos = mutableMapOf<String, Triple<Double, Double, Double>>()
     private val pendingNpcs = mutableListOf<NpcState>()
     private val playerNames = mutableMapOf<String, String>()  // id → name, for autocomplete
+    private val npcNames = mutableMapOf<String, String>()    // id → name, for autocomplete
     private val loadedChunks = mutableSetOf<ChunkPos>()
     private val chunkData    = mutableMapOf<ChunkPos, Pair<Chunk, Int>>()
     private val scope        = CoroutineScope(Dispatchers.Default)
@@ -344,6 +345,8 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
         npcModels.clear()
         npcPrevPos.clear()
         pendingNpcs.clear()
+        npcNames.clear()
+        jsSetNpcNames("[]")
         pendingChunks.clear()
     }
 
@@ -369,6 +372,11 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
     private fun updateConnectedPlayersAutocomplete() {
         val json = "[" + playerNames.values.joinToString(",") { "\"$it\"" } + "]"
         jsSetConnectedPlayers(json)
+    }
+
+    private fun updateNpcNamesAutocomplete() {
+        val json = "[" + npcNames.values.joinToString(",") { "\"$it\"" } + "]"
+        jsSetNpcNames(json)
     }
 
     private fun applyLocalPrediction() {
@@ -968,6 +976,8 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
 
     @OptIn(ExperimentalWasmJsInterop::class)
     private fun handleNpcSpawned(npc: NpcState) {
+        npcNames[npc.id] = npc.name
+        updateNpcNamesAutocomplete()
         jsSetNpcOnMinimap(npc.id, npc.pos.x, npc.pos.z)
         if (!jsIsNpcModelsReady()) {
             pendingNpcs.add(npc)
@@ -989,6 +999,8 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
 
     @OptIn(ExperimentalWasmJsInterop::class)
     private fun handleNpcDespawned(id: String) {
+        npcNames.remove(id)
+        updateNpcNamesAutocomplete()
         jsRemoveNpcFromMinimap(id)
         pendingNpcs.removeAll { it.id == id }
         npcModels.remove(id)?.let(::jsDisposeNpcModel)

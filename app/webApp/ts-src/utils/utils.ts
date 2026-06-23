@@ -5,6 +5,7 @@ function registerCompleter(cmd: string, fn: (partial: string) => string[]): void
 
 export function registerUtils(): void {
   window.__mcConnectedPlayers = [];
+  (window as any).__mcNpcNames = [];
   window.__mcCommandCompleters = {};
   window.__mcKnownCommands = [];
 
@@ -17,6 +18,10 @@ export function registerUtils(): void {
 
   window.mcSetConnectedPlayers = (namesJson: string): void => {
     try { window.__mcConnectedPlayers = JSON.parse(namesJson); } catch (_e) { /* keep empty */ }
+  };
+
+  (window as any).mcSetNpcNames = (namesJson: string): void => {
+    try { (window as any).__mcNpcNames = JSON.parse(namesJson); } catch (_e) { /* keep empty */ }
   };
 
   window.mcRegisterCompleter = registerCompleter;
@@ -33,7 +38,11 @@ export function registerUtils(): void {
   registerCompleter('/disconnect', () => []);
   registerCompleter('/teleport', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
   registerCompleter('/summon', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
-  registerCompleter('/goto', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
+  registerCompleter('/goto', (p) => {
+    const players: string[] = (window.__mcConnectedPlayers || []).filter((n: string) => n.startsWith(p));
+    const npcs: string[] = ((window as any).__mcNpcNames || []).filter((n: string) => n.startsWith(p));
+    return [...players, ...npcs];
+  });
   registerCompleter('/layouts', () => []);
   registerCompleter('/refetch', () => []);
   // /layout completer is overwritten by GameUI when layouts are synced

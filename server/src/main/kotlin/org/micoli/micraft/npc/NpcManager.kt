@@ -137,12 +137,14 @@ class NpcManager(
     }
 
     suspend fun sendAllTo(session: PlayerSession) {
+        log.info("sendAllTo {}: {} NPCs in memory", session.id.take(8), npcs.size)
         val playerStates = lastSentToPlayer.getOrPut(session.id) { ConcurrentHashMap() }
         for (instance in npcs.values) {
             val roundedState = instance.state.round1()
             playerStates[instance.state.id] = roundedState
             session.send(ServerMessage.NpcSpawned(roundedState))
         }
+        log.info("sendAllTo {}: done", session.id.take(8))
     }
 
     fun getAll(): Collection<NpcInstance> = npcs.values

@@ -21,9 +21,13 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     val serverBin = rootDir.resolve("server/build/install/server/bin/server")
 
     fun killTree(p: Process) {
-        p.descendants().forEach { it.destroyForcibly() }
-        p.destroyForcibly()
-        p.waitFor()
+        p.descendants().forEach { it.destroy() }
+        p.destroy()
+        if (!p.waitFor(4, java.util.concurrent.TimeUnit.SECONDS)) {
+            p.descendants().forEach { it.destroyForcibly() }
+            p.destroyForcibly()
+            p.waitFor()
+        }
     }
 
     // Pipe stdout+stderr of a process through Gradle's logger so they appear in the console
@@ -104,22 +108,26 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     )
     println("[dev] watching ${bbmodelSrcDir.absolutePath} for *.bbmodel changes")
     val bbmodelThread = Thread {
-        fun bbmodels() = bbmodelSrcDir.listFiles()?.filter { it.name.endsWith(".bbmodel") } ?: emptyList()
+        data class BbmodelEntry(val src: java.io.File, val subdir: String)
+        fun bbmodels(): List<BbmodelEntry> =
+            (bbmodelSrcDir.listFiles()?.filter { it.name.endsWith(".bbmodel") }?.map { BbmodelEntry(it, "") } ?: emptyList())
         val lastSeen = mutableMapOf<String, Long>()
-        bbmodels().forEach { f -> lastSeen[f.name] = f.lastModified() }
+        bbmodels().forEach { (f, _) -> lastSeen[f.absolutePath] = f.lastModified() }
         while (!Thread.currentThread().isInterrupted) {
             try { Thread.sleep(500) } catch (_: InterruptedException) { break }
-            bbmodels().forEach { src ->
-                val prev = lastSeen[src.name] ?: 0L
+            bbmodels().forEach { (src, subdir) ->
+                val prev = lastSeen[src.absolutePath] ?: 0L
                 val cur  = src.lastModified()
                 if (cur != prev) {
-                    lastSeen[src.name] = cur
+                    lastSeen[src.absolutePath] = cur
                     bbmodelDstDirs.forEach { dstDir ->
-                        if (dstDir.exists()) {
-                            src.copyTo(dstDir.resolve(src.name), overwrite = true)
+                        val targetDir = if (subdir.isEmpty()) dstDir else dstDir.resolve(subdir)
+                        if (targetDir.exists() || targetDir.mkdirs()) {
+                            src.copyTo(targetDir.resolve(src.name), overwrite = true)
                         }
                     }
-                    println("[dev] ${src.name} updated in ${bbmodelDstDirs.count { it.exists() }} output dirs")
+                    val label = if (subdir.isEmpty()) src.name else "$subdir/${src.name}"
+                    println("[dev] $label updated in ${bbmodelDstDirs.count { it.exists() }} output dirs")
                 }
             }
         }
