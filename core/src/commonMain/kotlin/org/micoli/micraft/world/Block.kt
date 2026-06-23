@@ -3,6 +3,17 @@ package org.micoli.micraft.world
 import kotlinx.serialization.Serializable
 
 @Serializable
+enum class ItemType(val buildable: Boolean, val placesBlock: BlockType?) {
+    COBBLESTONE(true,  BlockType.STONE),
+    DIRT       (true,  BlockType.DIRT),
+    SAND       (true,  BlockType.SAND),
+    GRAVEL     (true,  BlockType.GRAVEL),
+    SANDSTONE  (true,  BlockType.SANDSTONE),
+    SNOWBALL   (false, null),
+    FLINT      (false, null),
+}
+
+@Serializable
 enum class BlockType {
     AIR, BEDROCK, STONE, DIRT, GRASS, SAND, SANDSTONE, GRAVEL, SNOW,
     OAK_LOG, OAK_LEAVES, PINE_LOG, PINE_LEAVES, PINE_LEAVES_SNOW, FLOWER, WEED,
