@@ -106,6 +106,8 @@ declare global {
     lastMouseMove: number;
     bindings: Record<string, string[]>;
     playerBbmodel: BbModel | null;
+    npcBbmodels: Record<string, BbModel>;
+    npcModelsReady: boolean;
   }
 
   interface McBlockFaceInfo {
@@ -184,6 +186,7 @@ declare global {
     mcCreateBlockMaterials: (scene: any) => Record<string, any>;
     mcSetGrassTint: (r: number, g: number, b: number) => void;
     mcSetBlockRegistry: (json: string) => void;
+    mcCreatePlayerModelFromBbmodel: (bbmodel: BbModel, scene: any) => McPlayerModel;
     [key: string]: unknown;
   }
 }
