@@ -30,7 +30,7 @@ class BlockBreaker(
                         (bp.y + 0.5f - eyeY) * (bp.y + 0.5f - eyeY) +
                         (bp.z + 0.5f - session.state.pos.z) * (bp.z + 0.5f - session.state.pos.z))
                     .toDouble())
-        log.debug("BlockBreakStart pos=$bp block=$block dist=${"%.2f".format(dist)}")
+        log.debug("BlockBreakStart pos={} block={} dist={}", bp, block, "%.2f".format(dist))
         if (dist <= 6.0 && block != BlockType.AIR && block != BlockType.BEDROCK) {
             session.breakTarget = bp
             session.breakProgress = 0

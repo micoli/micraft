@@ -32,7 +32,27 @@ sealed class ServerMessage {
         val pos: ChunkPos,
         val topY: Int,
         val wireBlocks: ByteArray,
-    ) : ServerMessage()
+    ) : ServerMessage() {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other == null || this::class != other::class) return false
+
+            other as ChunkData
+
+            if (topY != other.topY) return false
+            if (pos != other.pos) return false
+            if (!wireBlocks.contentEquals(other.wireBlocks)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = topY
+            result = 31 * result + pos.hashCode()
+            result = 31 * result + wireBlocks.contentHashCode()
+            return result
+        }
+    }
 
     @Serializable data class PlayerUpdate(val state: PlayerState) : ServerMessage()
 

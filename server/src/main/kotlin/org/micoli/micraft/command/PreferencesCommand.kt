@@ -7,7 +7,7 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 
 class PreferencesCommand : CommandHandler {
-    override val id = UUID.fromString("e3c4f5a6-b7d8-4e9f-a0b1-c2d3e4f5a6b7")
+    override val id: UUID = UUID.fromString("e3c4f5a6-b7d8-4e9f-a0b1-c2d3e4f5a6b7")
     override val command = "/preferences"
     override val description = "Opens the preferences panel."
     override val usage = "/preferences"

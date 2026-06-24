@@ -7,7 +7,7 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 
 class HelpCommand : CommandHandler {
-    override val id = UUID.fromString("a458fe30-07ab-42dc-b47c-9e7ed09253bd")
+    override val id: UUID = UUID.fromString("a458fe30-07ab-42dc-b47c-9e7ed09253bd")
     override val command = "/help"
     override val description = "Lists available commands."
     override val usage = "/help [command]"

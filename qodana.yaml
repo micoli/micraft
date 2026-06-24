@@ -1,0 +1,26 @@
+version: "1.0"
+
+profile:
+  name: qodana.starter
+
+#include:
+#  - name: All
+#    paths:
+#      - app/desktopApp
+#      - app/shared
+#      - app/webApp
+#      - core/src
+#      - server/src
+
+exclude:
+  - name: All
+    paths:
+      - build
+      - .gradle
+      - .idea
+      - "**/build"
+      - "**/generated"
+      - "**/.gradle"
+
+projectJDK: "21" #(Applied in CI/CD pipeline)
+linter: jetbrains/qodana-jvm:2025.3

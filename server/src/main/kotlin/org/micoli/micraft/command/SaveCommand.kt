@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger(SaveCommand::class.java)
 
 class SaveCommand : CommandHandler {
-    override val id = UUID.fromString("c4111a06-2ab9-4622-a6a1-7613f995f5ac")
+    override val id: UUID = UUID.fromString("c4111a06-2ab9-4622-a6a1-7613f995f5ac")
     override val command = "/save"
     override val description = "Saves the world and player state to disk."
 

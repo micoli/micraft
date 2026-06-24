@@ -7,7 +7,7 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 
 class RefetchCommand : CommandHandler {
-    override val id = UUID.fromString("fb0f42fe-5bba-4318-b49e-1272534eceae")
+    override val id: UUID = UUID.fromString("fb0f42fe-5bba-4318-b49e-1272534eceae")
     override val command = "/refetch"
     override val description = "Reloads all chunks around the player."
 

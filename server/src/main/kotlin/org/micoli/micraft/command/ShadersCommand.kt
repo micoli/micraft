@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger(ShadersCommand::class.java)
 
 class ShadersCommand : CommandHandler {
-    override val id = UUID.fromString("b2a1d2bb-1912-4ca2-8b60-8b2012b2ab30")
+    override val id: UUID = UUID.fromString("b2a1d2bb-1912-4ca2-8b60-8b2012b2ab30")
     override val command = "/shaders"
     override val description =
         "Toggles visual shaders (ambient occlusion, directional shading, fog)."

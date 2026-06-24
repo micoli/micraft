@@ -7,7 +7,7 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 
 class JoinCommand : CommandHandler {
-    override val id = UUID.fromString("c09ab770-6432-4caa-a672-51f3aa51f6d3")
+    override val id: UUID = UUID.fromString("c09ab770-6432-4caa-a672-51f3aa51f6d3")
     override val command = "/join"
     override val description = "Join a chat channel."
     override val usage = "/join <channelName>"

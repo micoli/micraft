@@ -7,7 +7,7 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 
 class LayoutCommand : CommandHandler {
-    override val id = UUID.fromString("5adafecc-76ca-44dd-9e06-8d492ec28bce")
+    override val id: UUID = UUID.fromString("5adafecc-76ca-44dd-9e06-8d492ec28bce")
     override val command = "/layout"
     override val description = "Switches to a named layout."
     override val usage = "/layout <name>"
