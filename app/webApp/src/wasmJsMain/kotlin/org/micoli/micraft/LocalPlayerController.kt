@@ -248,7 +248,9 @@ class LocalPlayerController(
                 if (jsIsActionDown("forward")) dy += fwdY
                 if (jsIsActionDown("backward")) dy -= fwdY
             }
-            predY += dy * FLY_VERTICAL_SPEED * localSpeedMult * PRED_DT
+            val flyDy = (dy * FLY_VERTICAL_SPEED * localSpeedMult * PRED_DT).toFloat()
+            val resolvedFlyDy = AabbCollider.resolveY(solid, predX.toFloat(), predY.toFloat(), predZ.toFloat(), PlayerConstants.WIDTH, h, flyDy)
+            predY = (predY + resolvedFlyDy).coerceIn(0.0, WorldConstants.WORLD_MAX_Y.toDouble())
             predVy = 0.0
         } else {
             val solid2 = { bx: Int, by: Int, bz: Int ->
