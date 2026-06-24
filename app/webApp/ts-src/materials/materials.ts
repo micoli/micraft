@@ -11,7 +11,14 @@ export function registerMaterials(): void {
     return mat;
   };
 
-  window.mcCreateLeavesMaterial = (name: string, url: string, scene: Scene, r?: number, g?: number, b?: number): StandardMaterial => {
+  window.mcCreateLeavesMaterial = (
+    name: string,
+    url: string,
+    scene: Scene,
+    r?: number,
+    g?: number,
+    b?: number,
+  ): StandardMaterial => {
     const mat = new BABYLON.StandardMaterial(name, scene);
     mat.diffuseTexture = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
     (mat.diffuseTexture as any).hasAlpha = true;
@@ -61,20 +68,20 @@ export function registerMaterials(): void {
 
       if (t.biomeTint) {
         // Separate material instance for biome-tinted variant; color updated via mcSetGrassTint
-        const tinted = new BABYLON.StandardMaterial(t.name + ':biome_tint', scene);
+        const tinted = new BABYLON.StandardMaterial(t.name + ":biome_tint", scene);
         tinted.diffuseTexture = new BABYLON.Texture(t.url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
         tinted.specularColor = new BABYLON.Color3(0, 0, 0);
         tinted.backFaceCulling = false;
         tinted.diffuseColor = new BABYLON.Color3(0.47, 0.75, 0.35); // default plains tint
         (tinted as any).useVertexColors = true;
-        mats[t.name + ':biome_tint'] = tinted;
+        mats[t.name + ":biome_tint"] = tinted;
       }
     }
 
     // Register grass tint updater — updates diffuseColor on all biomeTint materials
     window.mcSetGrassTint = (r: number, g: number, b: number) => {
       for (const key of Object.keys(mats)) {
-        if (key.endsWith(':biome_tint')) {
+        if (key.endsWith(":biome_tint")) {
           (mats[key] as any).diffuseColor = new BABYLON.Color3(r, g, b);
         }
       }

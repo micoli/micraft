@@ -115,7 +115,7 @@ declare global {
 
   interface McBlockDef {
     name: string;
-    renderType: 'solid' | 'leaves' | 'cross_sprite';
+    renderType: "solid" | "leaves" | "cross_sprite";
     faces: (McBlockFaceInfo | null)[];
   }
 
@@ -130,10 +130,13 @@ declare global {
   interface McPlayerModel {
     root: InstanceType<typeof BABYLON.TransformNode>;
     headNode: InstanceType<typeof BABYLON.TransformNode> | null;
-    pivotNodes: Record<string, {
-      node: InstanceType<typeof BABYLON.TransformNode>;
-      origin: [number, number, number];
-    }>;
+    pivotNodes: Record<
+      string,
+      {
+        node: InstanceType<typeof BABYLON.TransformNode>;
+        origin: [number, number, number];
+      }
+    >;
     walkAnim: Record<string, { keyframes: BbModelKeyframe[]; length: number }>;
   }
 
@@ -171,7 +174,7 @@ declare global {
     };
     __debugCamObserver: unknown;
     __mcSkinUV: (face: BbModelFace | undefined, W: number, H: number) => unknown;
-    __mcSkinFaceUV: (faces: BbModelElement['faces'], W: number, H: number) => unknown[];
+    __mcSkinFaceUV: (faces: BbModelElement["faces"], W: number, H: number) => unknown[];
     // Block defs
     mcInitBlockDefs: () => void;
     mcIsBlockDefsReady: () => boolean;

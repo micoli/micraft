@@ -1,13 +1,13 @@
-import { useState, useRef } from 'react';
+import { useState, useRef } from "react";
 
 const ITEM_META: Record<string, { label: string; bg: string }> = {
-  COBBLESTONE: { label: 'COB', bg: '#7A7A7A' },
-  DIRT:        { label: 'DRT', bg: '#8B5A2B' },
-  SAND:        { label: 'SND', bg: '#D5C89A' },
-  GRAVEL:      { label: 'GRV', bg: '#9A9A9A' },
-  SANDSTONE:   { label: 'SST', bg: '#C8B46C' },
-  SNOWBALL:    { label: 'SNW', bg: '#DCE8F5' },
-  FLINT:       { label: 'FLT', bg: '#4A4A52' },
+  COBBLESTONE: { label: "COB", bg: "#7A7A7A" },
+  DIRT: { label: "DRT", bg: "#8B5A2B" },
+  SAND: { label: "SND", bg: "#D5C89A" },
+  GRAVEL: { label: "GRV", bg: "#9A9A9A" },
+  SANDSTONE: { label: "SST", bg: "#C8B46C" },
+  SNOWBALL: { label: "SNW", bg: "#DCE8F5" },
+  FLINT: { label: "FLT", bg: "#4A4A52" },
 };
 
 interface Props {
@@ -24,12 +24,12 @@ export function ShortcutBar({ inventory, slots, selectedSlot, onSlotDrop, layout
 
   const handleSlotDragStart = (e: React.DragEvent, slotIdx: number, itemType: string) => {
     draggingSlot.current = slotIdx;
-    e.dataTransfer.setData('text/plain', itemType);
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData("text/plain", itemType);
+    e.dataTransfer.effectAllowed = "move";
   };
 
   const handleSlotDragEnd = (e: React.DragEvent) => {
-    if (e.dataTransfer.dropEffect === 'none' && draggingSlot.current !== null) {
+    if (e.dataTransfer.dropEffect === "none" && draggingSlot.current !== null) {
       onSlotDrop(draggingSlot.current, null);
     }
     draggingSlot.current = null;
@@ -47,7 +47,7 @@ export function ShortcutBar({ inventory, slots, selectedSlot, onSlotDrop, layout
     if (slotIdx === 0) return;
     e.preventDefault();
     setDragOver(null);
-    const itemType = e.dataTransfer.getData('text/plain');
+    const itemType = e.dataTransfer.getData("text/plain");
     onSlotDrop(slotIdx, itemType || null);
   };
 
@@ -58,8 +58,33 @@ export function ShortcutBar({ inventory, slots, selectedSlot, onSlotDrop, layout
   };
 
   const containerStyle: React.CSSProperties = layoutStyle
-    ? { display: 'flex', gap: 4, pointerEvents: 'all', zIndex: 999, background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, padding: '6px 10px', alignItems: 'center', justifyContent: 'center', ...layoutStyle }
-    : { position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 4, pointerEvents: 'all', zIndex: 999, background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, padding: '6px 10px' };
+    ? {
+        display: "flex",
+        gap: 4,
+        pointerEvents: "all",
+        zIndex: 999,
+        background: "rgba(0,0,0,0.6)",
+        border: "1px solid rgba(255,255,255,0.2)",
+        borderRadius: 6,
+        padding: "6px 10px",
+        alignItems: "center",
+        justifyContent: "center",
+        ...layoutStyle,
+      }
+    : {
+        position: "fixed",
+        bottom: 20,
+        left: "50%",
+        transform: "translateX(-50%)",
+        display: "flex",
+        gap: 4,
+        pointerEvents: "all",
+        zIndex: 999,
+        background: "rgba(0,0,0,0.6)",
+        border: "1px solid rgba(255,255,255,0.2)",
+        borderRadius: 6,
+        padding: "6px 10px",
+      };
 
   return (
     <div style={containerStyle}>
@@ -81,38 +106,67 @@ export function ShortcutBar({ inventory, slots, selectedSlot, onSlotDrop, layout
             onDrop={(e) => handleDrop(e, idx)}
             onContextMenu={(e) => handleContextMenu(e, idx)}
             style={{
-              width: 52, height: 52,
-              background: isDropTarget ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.72)',
-              border: isSelected
-                ? '2px solid rgba(255,215,0,0.9)'
-                : '2px solid rgba(255,255,255,0.35)',
+              width: 52,
+              height: 52,
+              background: isDropTarget ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.72)",
+              border: isSelected ? "2px solid rgba(255,215,0,0.9)" : "2px solid rgba(255,255,255,0.35)",
               borderRadius: 4,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              position: 'relative', cursor: isHand ? 'default' : itemType ? 'grab' : 'pointer',
-              boxShadow: isSelected ? '0 0 6px rgba(255,215,0,0.5)' : 'none',
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+              cursor: isHand ? "default" : itemType ? "grab" : "pointer",
+              boxShadow: isSelected ? "0 0 6px rgba(255,215,0,0.5)" : "none",
             }}
           >
             {/* Slot number label */}
-            <div style={{
-              position: 'absolute', top: 1, left: 3,
-              color: 'rgba(255,255,255,0.45)', font: '8px monospace',
-            }}>
-              {idx === 9 ? '0' : String(idx + 1)}
+            <div
+              style={{
+                position: "absolute",
+                top: 1,
+                left: 3,
+                color: "rgba(255,255,255,0.45)",
+                font: "8px monospace",
+              }}
+            >
+              {idx === 9 ? "0" : String(idx + 1)}
             </div>
 
             {isHand ? (
-              <div style={{ color: 'rgba(255,255,255,0.6)', font: '16px monospace' }}>✋</div>
+              <div style={{ color: "rgba(255,255,255,0.6)", font: "16px monospace" }}>✋</div>
             ) : meta ? (
               <>
-                <div style={{
-                  width: 26, height: 26, borderRadius: 3, background: meta.bg,
-                  boxShadow: 'inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)',
-                }} />
-                <div style={{ color: 'rgba(255,255,255,0.7)', font: '8px monospace', marginTop: 2, letterSpacing: '0.5px' }}>
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 3,
+                    background: meta.bg,
+                    boxShadow: "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
+                  }}
+                />
+                <div
+                  style={{
+                    color: "rgba(255,255,255,0.7)",
+                    font: "8px monospace",
+                    marginTop: 2,
+                    letterSpacing: "0.5px",
+                  }}
+                >
                   {meta.label}
                 </div>
                 {count > 0 && (
-                  <div style={{ position: 'absolute', bottom: 2, right: 4, color: '#fff', font: 'bold 9px monospace', textShadow: '1px 1px 0 #000' }}>
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 2,
+                      right: 4,
+                      color: "#fff",
+                      font: "bold 9px monospace",
+                      textShadow: "1px 1px 0 #000",
+                    }}
+                  >
                     {count}
                   </div>
                 )}

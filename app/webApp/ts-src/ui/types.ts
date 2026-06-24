@@ -1,9 +1,16 @@
 export interface HudData {
-  x: number; y: number; z: number;
-  yaw: number; pitch: number;
-  stance: string; speed: number;
-  fps: number; kbIn: number; kbOut: number;
-  biome: string; targetBlock: string;
+  x: number;
+  y: number;
+  z: number;
+  yaw: number;
+  pitch: number;
+  stance: string;
+  speed: number;
+  fps: number;
+  kbIn: number;
+  kbOut: number;
+  biome: string;
+  targetBlock: string;
   gameTime: string;
 }
 
@@ -14,7 +21,7 @@ export interface LogEntry {
   sender?: string;
 }
 
-export type HudMode = 'simple' | 'medium' | 'complete';
+export type HudMode = "simple" | "medium" | "complete";
 
 export interface LayoutWidget {
   type: string;
@@ -75,31 +82,31 @@ export interface UiState {
 }
 
 export type UiAction =
-  | { type: 'hud'; data: HudData }
-  | { type: 'hud_mode_cycle' }
-  | { type: 'notification'; msg: string }
-  | { type: 'log'; msg: string; channel: string }
-  | { type: 'chat_message'; channel: string; sender: string; msg: string }
-  | { type: 'channels_sync'; subscribed: string[]; known: string[] }
-  | { type: 'active_channel_select'; channel: string }
-  | { type: 'inventory'; data: Record<string, number> }
-  | { type: 'hotbar_toggle' }
-  | { type: 'shortcut_bar_update'; data: { slots: (string | null)[]; selected: number } }
-  | { type: 'slot_select'; slot: number }
-  | { type: 'console_show' }
-  | { type: 'console_hide' }
-  | { type: 'login_show' }
-  | { type: 'login_hide' }
-  | { type: 'disconnect_show'; message: string }
-  | { type: 'disconnect_hide' }
-  | { type: 'log_hide' }
-  | { type: 'layouts_sync'; layouts: GameLayout[]; activeLayout: string }
-  | { type: 'layout_editor_show' }
-  | { type: 'layout_editor_hide' }
-  | { type: 'layout_editor_save'; layouts: GameLayout[]; activeLayout: string }
-  | { type: 'npc_dialog_open'; payload: NpcDialogData }
-  | { type: 'npc_dialog_close' }
-  | { type: 'preferences_sync'; data: PreferencesData }
-  | { type: 'preferences_show' }
-  | { type: 'preferences_hide' }
-  | { type: 'preferences_save'; subscribedChannels: string[]; disabledCommands: string[]; shadersEnabled: boolean };
+  | { type: "hud"; data: HudData }
+  | { type: "hud_mode_cycle" }
+  | { type: "notification"; msg: string }
+  | { type: "log"; msg: string; channel: string }
+  | { type: "chat_message"; channel: string; sender: string; msg: string }
+  | { type: "channels_sync"; subscribed: string[]; known: string[] }
+  | { type: "active_channel_select"; channel: string }
+  | { type: "inventory"; data: Record<string, number> }
+  | { type: "hotbar_toggle" }
+  | { type: "shortcut_bar_update"; data: { slots: (string | null)[]; selected: number } }
+  | { type: "slot_select"; slot: number }
+  | { type: "console_show" }
+  | { type: "console_hide" }
+  | { type: "login_show" }
+  | { type: "login_hide" }
+  | { type: "disconnect_show"; message: string }
+  | { type: "disconnect_hide" }
+  | { type: "log_hide" }
+  | { type: "layouts_sync"; layouts: GameLayout[]; activeLayout: string }
+  | { type: "layout_editor_show" }
+  | { type: "layout_editor_hide" }
+  | { type: "layout_editor_save"; layouts: GameLayout[]; activeLayout: string }
+  | { type: "npc_dialog_open"; payload: NpcDialogData }
+  | { type: "npc_dialog_close" }
+  | { type: "preferences_sync"; data: PreferencesData }
+  | { type: "preferences_show" }
+  | { type: "preferences_hide" }
+  | { type: "preferences_save"; subscribedChannels: string[]; disabledCommands: string[]; shadersEnabled: boolean };

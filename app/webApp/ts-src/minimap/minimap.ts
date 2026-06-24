@@ -11,26 +11,26 @@ const npcPositions: Map<string, { x: number; z: number }> = new Map();
 let frameCount = 0;
 
 export function setMinimapColors(blocks: { minimapColor: [number, number, number] }[]): void {
-  minimapColors = blocks.map(b => b.minimapColor ?? [128, 128, 128]);
+  minimapColors = blocks.map((b) => b.minimapColor ?? [128, 128, 128]);
 }
 
 export function registerMinimap(): void {
   window.mcCreateMinimap = (): void => {
-    const c = document.createElement('canvas');
-    c.id = 'mc-minimap';
+    const c = document.createElement("canvas");
+    c.id = "mc-minimap";
     (c as HTMLCanvasElement).width = MINIMAP_SIZE;
     (c as HTMLCanvasElement).height = MINIMAP_SIZE;
-    const host = document.getElementById('mc-minimap-host');
+    const host = document.getElementById("mc-minimap-host");
     if (host) {
-      c.style.cssText = 'width:100%;height:100%;display:block;border-radius:6px;pointer-events:none';
+      c.style.cssText = "width:100%;height:100%;display:block;border-radius:6px;pointer-events:none";
       host.appendChild(c);
     } else {
       c.style.cssText = [
-        'position:fixed;top:12px;left:12px',
-        'border-radius:6px;pointer-events:none;z-index:999',
-        'border:2px solid rgba(255,255,255,0.25)',
-        'box-shadow:0 2px 8px rgba(0,0,0,0.5)',
-      ].join(';');
+        "position:fixed;top:12px;left:12px",
+        "border-radius:6px;pointer-events:none;z-index:999",
+        "border:2px solid rgba(255,255,255,0.25)",
+        "box-shadow:0 2px 8px rgba(0,0,0,0.5)",
+      ].join(";");
       document.body.appendChild(c);
     }
   };
@@ -62,14 +62,13 @@ export function registerMinimap(): void {
     npcPositions.delete(id);
   };
 
-
   window.mcDrawMinimap = (playerX: number, playerZ: number): void => {
     frameCount++;
     if (frameCount % 4 !== 0) return;
 
-    const canvas = document.getElementById('mc-minimap') as HTMLCanvasElement | null;
+    const canvas = document.getElementById("mc-minimap") as HTMLCanvasElement | null;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext("2d")!;
 
     const radius = ZOOM_RADII[zoomIndex];
     const totalBlocks = (radius * 2 + 1) * 16;
@@ -81,7 +80,10 @@ export function registerMinimap(): void {
     const imgData = ctx.createImageData(MINIMAP_SIZE, MINIMAP_SIZE);
     const data = imgData.data;
     for (let i = 0; i < data.length; i += 4) {
-      data[i] = 10; data[i + 1] = 10; data[i + 2] = 20; data[i + 3] = 180;
+      data[i] = 10;
+      data[i + 1] = 10;
+      data[i + 2] = 20;
+      data[i + 3] = 180;
     }
 
     for (let dcx = -(radius + 1); dcx <= radius + 1; dcx++) {
@@ -115,7 +117,10 @@ export function registerMinimap(): void {
             for (let px = Math.max(0, px0); px < Math.min(MINIMAP_SIZE, px1); px++) {
               for (let pz = Math.max(0, pz0); pz < Math.min(MINIMAP_SIZE, pz1); pz++) {
                 const i = (pz * MINIMAP_SIZE + px) * 4;
-                data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = 255;
+                data[i] = r;
+                data[i + 1] = g;
+                data[i + 2] = b;
+                data[i + 3] = 255;
               }
             }
           }
@@ -132,21 +137,21 @@ export function registerMinimap(): void {
       const px = bx * pixPerBlock;
       const pz = bz * pixPerBlock;
       if (px < -4 || px > MINIMAP_SIZE + 4 || pz < -4 || pz > MINIMAP_SIZE + 4) continue;
-      ctx.fillStyle = '#ffaa00';
+      ctx.fillStyle = "#ffaa00";
       ctx.beginPath();
       ctx.arc(px, pz, 2, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#000000';
+      ctx.strokeStyle = "#000000";
       ctx.lineWidth = 0.5;
       ctx.stroke();
     }
 
     // Player dot at center
-    ctx.fillStyle = '#ff3333';
+    ctx.fillStyle = "#ff3333";
     ctx.beginPath();
     ctx.arc(MINIMAP_SIZE / 2, MINIMAP_SIZE / 2, 3, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 1;
     ctx.stroke();
   };

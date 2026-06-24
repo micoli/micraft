@@ -22,11 +22,11 @@ export function registerCamera(): void {
   };
 
   window.mcCreateCrosshair = (): void => {
-    const s = document.createElement('div');
-    s.id = 'mc-crosshair';
+    const s = document.createElement("div");
+    s.id = "mc-crosshair";
     s.style.cssText =
-      'position:fixed;top:50%;left:50%;width:20px;height:20px;' +
-      'transform:translate(-50%,-50%);pointer-events:none;z-index:100';
+      "position:fixed;top:50%;left:50%;width:20px;height:20px;" +
+      "transform:translate(-50%,-50%);pointer-events:none;z-index:100";
     s.innerHTML =
       '<div style="position:absolute;left:50%;top:0;width:2px;height:100%;' +
       'background:#fff;opacity:0.8;transform:translateX(-50%)"></div>' +
@@ -42,12 +42,12 @@ export function registerCamera(): void {
   window.mcSetupDebugCameraKeys = (camera: Camera, scene: Scene, bx: number, by: number, bz: number): void => {
     const dist = 5;
     const faces: [number, number, number][] = [
-      [bx,        by,        bz + dist],
-      [bx,        by,        bz - dist],
-      [bx + dist, by,        bz       ],
-      [bx - dist, by,        bz       ],
-      [bx,        by + dist, bz       ],
-      [bx,        by - dist, bz       ],
+      [bx, by, bz + dist],
+      [bx, by, bz - dist],
+      [bx + dist, by, bz],
+      [bx - dist, by, bz],
+      [bx, by + dist, bz],
+      [bx, by - dist, bz],
     ];
 
     const lock = (px: number, py: number, pz: number): void => {
@@ -60,13 +60,13 @@ export function registerCamera(): void {
 
     lock(...faces[0]);
 
-    document.addEventListener('keydown', (e: KeyboardEvent) => {
+    document.addEventListener("keydown", (e: KeyboardEvent) => {
       const idx = parseInt(e.key) - 1;
       if (idx >= 0 && idx < 6) {
         e.preventDefault();
         lock(...faces[idx]);
       }
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         if (window.__debugCamObserver) {
           (scene as any).onBeforeRenderObservable.remove(window.__debugCamObserver);
           window.__debugCamObserver = null;

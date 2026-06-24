@@ -3,14 +3,16 @@ export function registerAutoUpdate(): void {
 
   async function checkServerVersion() {
     try {
-      const r = await fetch('/api/version', { cache: 'no-cache' });
-      const { server } = await r.json() as { server: string };
+      const r = await fetch("/api/version", { cache: "no-cache" });
+      const { server } = (await r.json()) as { server: string };
       if (serverVersion === null) {
         serverVersion = server;
       } else if (serverVersion !== server) {
         window.location.reload();
       }
-    } catch { /* server offline, skip */ }
+    } catch {
+      /* server offline, skip */
+    }
   }
 
   setInterval(checkServerVersion, 5000);
@@ -26,17 +28,23 @@ export function registerAutoUpdate(): void {
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data as string) as { type: string; data?: string };
-        if (msg.type === 'hash') {
+        if (msg.type === "hash") {
           if (initialHash === null) {
             initialHash = msg.data ?? null;
           } else {
             pendingHash = msg.data ?? null;
           }
-        } else if ((msg.type === 'ok' || msg.type === 'warnings') && pendingHash !== null) {
+        } else if ((msg.type === "ok" || msg.type === "warnings") && pendingHash !== null) {
           window.location.reload();
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     };
-    ws.onerror = () => { /* webpack HMR not available in this environment */ };
-  } catch { /* ignore */ }
+    ws.onerror = () => {
+      /* webpack HMR not available in this environment */
+    };
+  } catch {
+    /* ignore */
+  }
 }

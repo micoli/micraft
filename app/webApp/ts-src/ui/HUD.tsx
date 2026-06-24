@@ -1,25 +1,39 @@
-import { HudData, HudMode } from './types';
+import { HudData, HudMode } from "./types";
 
 const defaultStyle: React.CSSProperties = {
-  position: 'fixed', top: 12, right: 12,
-  background: 'rgba(0,0,0,0.55)', color: '#fff',
-  font: '13px/1.6 monospace', padding: '8px 12px',
-  borderRadius: 6, pointerEvents: 'none', zIndex: 999,
-  whiteSpace: 'pre',
+  position: "fixed",
+  top: 12,
+  right: 12,
+  background: "rgba(0,0,0,0.55)",
+  color: "#fff",
+  font: "13px/1.6 monospace",
+  padding: "8px 12px",
+  borderRadius: 6,
+  pointerEvents: "none",
+  zIndex: 999,
+  whiteSpace: "pre",
 };
 
-export function HUD({ data, mode, layoutStyle }: { data: HudData | null; mode: HudMode; layoutStyle?: React.CSSProperties }) {
+export function HUD({
+  data,
+  mode,
+  layoutStyle,
+}: {
+  data: HudData | null;
+  mode: HudMode;
+  layoutStyle?: React.CSSProperties;
+}) {
   if (!data) return null;
   const { x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime } = data;
 
   let lines: string[];
-  if (mode === 'simple') {
+  if (mode === "simple") {
     lines = [
       `Pos: ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`,
       `Speed: ×${speed.toFixed(1)}`,
       ...(gameTime ? [`Time: ${gameTime}`] : []),
     ];
-  } else if (mode === 'medium') {
+  } else if (mode === "medium") {
     lines = [
       `Pos: ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`,
       `Orientation: Y:${yaw.toFixed(1)}°, P:${pitch.toFixed(1)}°`,
@@ -42,7 +56,7 @@ export function HUD({ data, mode, layoutStyle }: { data: HudData | null; mode: H
   }
 
   const style = layoutStyle
-    ? { ...defaultStyle, top: undefined, right: undefined, ...layoutStyle, whiteSpace: 'pre' as const }
+    ? { ...defaultStyle, top: undefined, right: undefined, ...layoutStyle, whiteSpace: "pre" as const }
     : defaultStyle;
-  return <div style={style}>{lines.join('\n')}</div>;
+  return <div style={style}>{lines.join("\n")}</div>;
 }

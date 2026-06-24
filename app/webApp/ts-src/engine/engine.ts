@@ -3,35 +3,39 @@ import type { Engine, Scene, HemisphericLight, Mesh } from "@babylonjs/core";
 export function registerEngine(): void {
   window.mcCreateEngine = (): Engine => {
     if (window.__mcEngine) {
-      try { (window.__mcEngine as Engine).dispose(); } catch (_e) { /* ignore */ }
+      try {
+        (window.__mcEngine as Engine).dispose();
+      } catch (_e) {
+        /* ignore */
+      }
       window.__mcEngine = null;
     }
 
-    const canvas = document.getElementById('renderCanvas') as HTMLCanvasElement | null;
-    if (!canvas) throw new Error('[MiCraft] Canvas #renderCanvas not found');
+    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
+    if (!canvas) throw new Error("[MiCraft] Canvas #renderCanvas not found");
 
-    const probe = document.createElement('canvas');
-    const gl = probe.getContext('webgl2') || probe.getContext('webgl');
+    const probe = document.createElement("canvas");
+    const gl = probe.getContext("webgl2") || probe.getContext("webgl");
     if (!gl) {
       console.error(
-        '[MiCraft] WebGL unavailable. Open chrome://gpu and check that ' +
-        '"WebGL" and "Hardware-accelerated" are enabled. ' +
-        'You can also try: chrome://settings/system → enable hardware acceleration.'
+        "[MiCraft] WebGL unavailable. Open chrome://gpu and check that " +
+          '"WebGL" and "Hardware-accelerated" are enabled. ' +
+          "You can also try: chrome://settings/system → enable hardware acceleration.",
       );
-      throw new Error('[MiCraft] WebGL not supported by this browser / GPU configuration');
+      throw new Error("[MiCraft] WebGL not supported by this browser / GPU configuration");
     }
 
     let engine: Engine;
     try {
       engine = new BABYLON.Engine(canvas, false, { disableWebGL2Support: false, preserveDrawingBuffer: false });
     } catch (e) {
-      console.warn('[MiCraft] WebGL2 failed (' + (e as Error).message + '), retrying with WebGL1');
+      console.warn("[MiCraft] WebGL2 failed (" + (e as Error).message + "), retrying with WebGL1");
       engine = new BABYLON.Engine(canvas, false, { disableWebGL2Support: true });
     }
 
     window.__mcEngine = engine;
-    window.addEventListener('beforeunload', () => engine.dispose(), { once: true });
-    console.log('[MiCraft] Engine created: ' + (engine.webGLVersion === 2 ? 'WebGL2' : 'WebGL1'));
+    window.addEventListener("beforeunload", () => engine.dispose(), { once: true });
+    console.log("[MiCraft] Engine created: " + (engine.webGLVersion === 2 ? "WebGL2" : "WebGL1"));
     return engine;
   };
 
@@ -45,10 +49,14 @@ export function registerEngine(): void {
   // Multi-face box for GRASS (6 SubMeshes → MultiMaterial with per-face texture).
   window.mcCreateBox = (name: string, size: number, scene: Scene): Mesh => {
     const uv = () => new BABYLON.Vector4(0, 1, 1, 0);
-    const box = BABYLON.MeshBuilder.CreateBox(name, {
-      size,
-      faceUV: [uv(), uv(), uv(), uv(), uv(), uv()],
-    }, scene);
+    const box = BABYLON.MeshBuilder.CreateBox(
+      name,
+      {
+        size,
+        faceUV: [uv(), uv(), uv(), uv(), uv(), uv()],
+      },
+      scene,
+    );
     box.subMeshes = [];
     const vc = box.getTotalVertices();
     for (let i = 0; i < 6; i++) {
@@ -75,10 +83,10 @@ export function registerEngine(): void {
   };
 
   window.mcSetupFog = (scene: Scene, r: number, g: number, b: number): void => {
-    (scene as any).fogMode  = BABYLON.Scene.FOGMODE_LINEAR;
+    (scene as any).fogMode = BABYLON.Scene.FOGMODE_LINEAR;
     (scene as any).fogStart = 24;
-    (scene as any).fogEnd   = 40;
-    (scene as any).fogColor   = new BABYLON.Color3(r, g, b);
+    (scene as any).fogEnd = 40;
+    (scene as any).fogColor = new BABYLON.Color3(r, g, b);
     (scene as any).clearColor = new BABYLON.Color4(r, g, b, 1.0);
   };
 

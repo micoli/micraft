@@ -1,41 +1,52 @@
-import { useEffect, useRef, useReducer } from 'react';
-import { UiState, UiAction, LogEntry, HudMode, GameLayout, NpcDialogData, PreferencesData } from './types';
-import { NpcDialog } from '../npc/NpcDialog';
-import { Preferences } from './Preferences';
-import { HUD } from './HUD';
-import { Inventory } from './Inventory';
-import { ShortcutBar } from './ShortcutBar';
-import { Console } from './Console';
-import { ServerLog } from './ServerLog';
-import { Notifications } from './Notifications';
-import { LoginOverlay } from './LoginOverlay';
-import { DisconnectOverlay } from './DisconnectOverlay';
-import { LayoutEditor } from './LayoutEditor';
-import { defaultLayout, resolveActiveLayout, widgetStyle } from './LayoutEngine';
+import { useEffect, useRef, useReducer } from "react";
+import { UiState, UiAction, LogEntry, HudMode, GameLayout, NpcDialogData, PreferencesData } from "./types";
+import { NpcDialog } from "../npc/NpcDialog";
+import { Preferences } from "./Preferences";
+import { HUD } from "./HUD";
+import { Inventory } from "./Inventory";
+import { ShortcutBar } from "./ShortcutBar";
+import { Console } from "./Console";
+import { ServerLog } from "./ServerLog";
+import { Notifications } from "./Notifications";
+import { LoginOverlay } from "./LoginOverlay";
+import { DisconnectOverlay } from "./DisconnectOverlay";
+import { LayoutEditor } from "./layout/LayoutEditor";
+import { defaultLayout, resolveActiveLayout, widgetStyle } from "./layout/LayoutEngine";
 
 const MC_LOG_MAX = 100;
 
-const HUD_MODES: HudMode[] = ['simple', 'medium', 'complete'];
+const HUD_MODES: HudMode[] = ["simple", "medium", "complete"];
 
 function loadHudMode(): HudMode {
   try {
-    const stored = localStorage.getItem('mc_hud_mode');
-    if (stored === 'simple' || stored === 'medium' || stored === 'complete') return stored;
-  } catch { /* ignore */ }
-  return 'complete';
+    const stored = localStorage.getItem("mc_hud_mode");
+    if (stored === "simple" || stored === "medium" || stored === "complete") return stored;
+  } catch {
+    /* ignore */
+  }
+  return "complete";
 }
 
 const initial: UiState = {
-  hud: null, hudMode: loadHudMode(), notif: null, logs: [], logVisible: false, logKey: 0,
-  subscribedChannels: ['world', 'system', 'game'], knownChannels: [], activeChannel: 'world', unreadChannels: [],
+  hud: null,
+  hudMode: loadHudMode(),
+  notif: null,
+  logs: [],
+  logVisible: false,
+  logKey: 0,
+  subscribedChannels: ["world", "system", "game"],
+  knownChannels: [],
+  activeChannel: "world",
+  unreadChannels: [],
   inventory: {},
   hotbarVisible: false,
   shortcutBar: Array(10).fill(null),
   selectedSlot: 0,
   consoleOpen: false,
-  loginVisible: false, disconnectMsg: null,
+  loginVisible: false,
+  disconnectMsg: null,
   layouts: [defaultLayout()],
-  activeLayout: 'default',
+  activeLayout: "default",
   layoutEditorOpen: false,
   npcDialog: null,
   preferencesOpen: false,
@@ -46,60 +57,97 @@ let notifKey = 0;
 
 function reducer(state: UiState, action: UiAction): UiState {
   switch (action.type) {
-    case 'hud':         return { ...state, hud: action.data };
-    case 'hud_mode_cycle': {
+    case "hud":
+      return { ...state, hud: action.data };
+    case "hud_mode_cycle": {
       const next = HUD_MODES[(HUD_MODES.indexOf(state.hudMode) + 1) % HUD_MODES.length];
-      try { localStorage.setItem('mc_hud_mode', next); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("mc_hud_mode", next);
+      } catch {
+        /* ignore */
+      }
       return { ...state, hudMode: next };
     }
-    case 'notification': return { ...state, notif: { msg: action.msg, key: ++notifKey } };
-    case 'log': {
+    case "notification":
+      return { ...state, notif: { msg: action.msg, key: ++notifKey } };
+    case "log": {
       const now = new Date();
-      const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+      const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
       const entry: LogEntry = { time, msg: action.msg, channel: action.channel };
       const logs = [...state.logs, entry].slice(-MC_LOG_MAX);
-      const unreadChannels = action.channel !== state.activeChannel && !state.unreadChannels.includes(action.channel)
-        ? [...state.unreadChannels, action.channel]
-        : state.unreadChannels;
+      const unreadChannels =
+        action.channel !== state.activeChannel && !state.unreadChannels.includes(action.channel)
+          ? [...state.unreadChannels, action.channel]
+          : state.unreadChannels;
       return { ...state, logs, logVisible: true, logKey: state.logKey + 1, unreadChannels };
     }
-    case 'chat_message': {
+    case "chat_message": {
       const now = new Date();
-      const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+      const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
       const entry: LogEntry = { time, msg: action.msg, channel: action.channel, sender: action.sender };
       const logs = [...state.logs, entry].slice(-MC_LOG_MAX);
-      const unreadChannels = action.channel !== state.activeChannel && !state.unreadChannels.includes(action.channel)
-        ? [...state.unreadChannels, action.channel]
-        : state.unreadChannels;
+      const unreadChannels =
+        action.channel !== state.activeChannel && !state.unreadChannels.includes(action.channel)
+          ? [...state.unreadChannels, action.channel]
+          : state.unreadChannels;
       return { ...state, logs, logVisible: true, logKey: state.logKey + 1, unreadChannels };
     }
-    case 'channels_sync':
+    case "channels_sync":
       return { ...state, subscribedChannels: action.subscribed, knownChannels: action.known };
-    case 'active_channel_select':
-      return { ...state, activeChannel: action.channel, unreadChannels: state.unreadChannels.filter(c => c !== action.channel) };
-    case 'log_hide': return { ...state, logVisible: false };
-    case 'inventory':    return { ...state, inventory: action.data };
-    case 'hotbar_toggle': return { ...state, hotbarVisible: !state.hotbarVisible };
-    case 'shortcut_bar_update': return { ...state, shortcutBar: action.data.slots, selectedSlot: action.data.selected };
-    case 'slot_select': return { ...state, selectedSlot: action.slot };
-    case 'console_show': return { ...state, consoleOpen: true };
-    case 'console_hide': return { ...state, consoleOpen: false };
-    case 'login_show':   return { ...state, loginVisible: true };
-    case 'login_hide':   return { ...state, loginVisible: false };
-    case 'disconnect_show': return { ...state, disconnectMsg: action.message };
-    case 'disconnect_hide': return { ...state, disconnectMsg: null };
-    case 'layouts_sync': return { ...state, layouts: action.layouts, activeLayout: action.activeLayout };
-    case 'layout_editor_show': return { ...state, layoutEditorOpen: true };
-    case 'layout_editor_hide': return { ...state, layoutEditorOpen: false };
-    case 'layout_editor_save': return { ...state, layouts: action.layouts, activeLayout: action.activeLayout, layoutEditorOpen: false };
-    case 'npc_dialog_open':  return { ...state, npcDialog: action.payload };
-    case 'npc_dialog_close': return { ...state, npcDialog: null };
-    case 'preferences_sync': return { ...state, preferences: action.data };
-    case 'preferences_show': return { ...state, preferencesOpen: true };
-    case 'preferences_hide': return { ...state, preferencesOpen: false };
-    case 'preferences_save': {
+    case "active_channel_select":
+      return {
+        ...state,
+        activeChannel: action.channel,
+        unreadChannels: state.unreadChannels.filter((c) => c !== action.channel),
+      };
+    case "log_hide":
+      return { ...state, logVisible: false };
+    case "inventory":
+      return { ...state, inventory: action.data };
+    case "hotbar_toggle":
+      return { ...state, hotbarVisible: !state.hotbarVisible };
+    case "shortcut_bar_update":
+      return { ...state, shortcutBar: action.data.slots, selectedSlot: action.data.selected };
+    case "slot_select":
+      return { ...state, selectedSlot: action.slot };
+    case "console_show":
+      return { ...state, consoleOpen: true };
+    case "console_hide":
+      return { ...state, consoleOpen: false };
+    case "login_show":
+      return { ...state, loginVisible: true };
+    case "login_hide":
+      return { ...state, loginVisible: false };
+    case "disconnect_show":
+      return { ...state, disconnectMsg: action.message };
+    case "disconnect_hide":
+      return { ...state, disconnectMsg: null };
+    case "layouts_sync":
+      return { ...state, layouts: action.layouts, activeLayout: action.activeLayout };
+    case "layout_editor_show":
+      return { ...state, layoutEditorOpen: true };
+    case "layout_editor_hide":
+      return { ...state, layoutEditorOpen: false };
+    case "layout_editor_save":
+      return { ...state, layouts: action.layouts, activeLayout: action.activeLayout, layoutEditorOpen: false };
+    case "npc_dialog_open":
+      return { ...state, npcDialog: action.payload };
+    case "npc_dialog_close":
+      return { ...state, npcDialog: null };
+    case "preferences_sync":
+      return { ...state, preferences: action.data };
+    case "preferences_show":
+      return { ...state, preferencesOpen: true };
+    case "preferences_hide":
+      return { ...state, preferencesOpen: false };
+    case "preferences_save": {
       const prefs = state.preferences
-        ? { ...state.preferences, subscribedChannels: action.subscribedChannels, disabledCommands: action.disabledCommands, shadersEnabled: action.shadersEnabled }
+        ? {
+            ...state.preferences,
+            subscribedChannels: action.subscribedChannels,
+            disabledCommands: action.disabledCommands,
+            shadersEnabled: action.shadersEnabled,
+          }
         : state.preferences;
       return { ...state, preferences: prefs, preferencesOpen: false };
     }
@@ -112,44 +160,56 @@ export function GameUI() {
   // Refs for synchronous reads by Kotlin
   const logTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const consoleOpenRef = useRef(false);
-  const pendingSlotUpdateRef = useRef<string>('');
-  const consoleStateRef = useRef({ history: [] as string[], histIdx: -1, playerName: '', tabIdx: -1, tabMatches: [] as string[] });
+  const pendingSlotUpdateRef = useRef<string>("");
+  const consoleStateRef = useRef({
+    history: [] as string[],
+    histIdx: -1,
+    playerName: "",
+    tabIdx: -1,
+    tabMatches: [] as string[],
+  });
   const consoleSubmittedRef = useRef<string | null>(null);
-  const consoleInitialValueRef = useRef('');
-  const loginResultRef = useRef('');
+  const consoleInitialValueRef = useRef("");
+  const loginResultRef = useRef("");
   const notifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingLayoutUpdateRef = useRef<string>('');
-  const pendingPreferencesUpdateRef = useRef<string>('');
+  const pendingLayoutUpdateRef = useRef<string>("");
+  const pendingPreferencesUpdateRef = useRef<string>("");
 
   // Keep consoleOpenRef in sync
-  useEffect(() => { consoleOpenRef.current = state.consoleOpen; }, [state.consoleOpen]);
+  useEffect(() => {
+    consoleOpenRef.current = state.consoleOpen;
+  }, [state.consoleOpen]);
 
   // Auto-hide server log after 15s of no new messages
   useEffect(() => {
     if (!state.logVisible) return;
     if (logTimerRef.current) clearTimeout(logTimerRef.current);
-    logTimerRef.current = setTimeout(() => dispatch({ type: 'log_hide' }), 15000);
-    return () => { if (logTimerRef.current) clearTimeout(logTimerRef.current); };
+    logTimerRef.current = setTimeout(() => dispatch({ type: "log_hide" }), 15000);
+    return () => {
+      if (logTimerRef.current) clearTimeout(logTimerRef.current);
+    };
   }, [state.logKey]);
 
   // Auto-dismiss notifications
   useEffect(() => {
     if (!state.notif) return;
     if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
-    notifTimerRef.current = setTimeout(() => dispatch({ type: 'notification', msg: '' }), 3000);
-    return () => { if (notifTimerRef.current) clearTimeout(notifTimerRef.current); };
+    notifTimerRef.current = setTimeout(() => dispatch({ type: "notification", msg: "" }), 3000);
+    return () => {
+      if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
+    };
   }, [state.notif?.key]);
 
   useEffect(() => {
-    const canvas = document.getElementById('renderCanvas') as HTMLCanvasElement | null;
+    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
     if (!canvas) return;
-    canvas.style.visibility = state.loginVisible ? 'hidden' : 'visible';
+    canvas.style.visibility = state.loginVisible ? "hidden" : "visible";
   }, [state.loginVisible]);
 
   // Update /layout autocomplete completer whenever layouts change
   useEffect(() => {
     (window as any).__mcCommandCompleters = (window as any).__mcCommandCompleters ?? {};
-    (window as any).__mcCommandCompleters['/layout'] = (partial: string) =>
+    (window as any).__mcCommandCompleters["/layout"] = (partial: string) =>
       state.layouts.map((l: GameLayout) => l.name).filter((n: string) => n.startsWith(partial));
   }, [state.layouts]);
 
@@ -161,152 +221,184 @@ export function GameUI() {
 
   useEffect(() => {
     // Wire Kotlin-callable window functions to React dispatch
-    (window as any).mcUpdateHUD = (x: number, y: number, z: number, yaw: number, pitch: number, stance: string, speed: number, fps: number, kbIn: number, kbOut: number, biome: string, targetBlock: string, gameTime: string) =>
-      dispatch({ type: 'hud', data: { x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime } });
+    (window as any).mcUpdateHUD = (
+      x: number,
+      y: number,
+      z: number,
+      yaw: number,
+      pitch: number,
+      stance: string,
+      speed: number,
+      fps: number,
+      kbIn: number,
+      kbOut: number,
+      biome: string,
+      targetBlock: string,
+      gameTime: string,
+    ) =>
+      dispatch({
+        type: "hud",
+        data: { x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime },
+      });
 
-    (window as any).mcShowNotification = (msg: string) => dispatch({ type: 'notification', msg });
-    (window as any).mcAddServerLog     = (channel: string, msg: string) => dispatch({ type: 'log', channel, msg });
-    (window as any).mcAddChatMessage   = (channel: string, sender: string, msg: string) => dispatch({ type: 'chat_message', channel, sender, msg });
-    (window as any).mcChannelsSync     = (subscribedJson: string, knownJson: string) => {
+    (window as any).mcShowNotification = (msg: string) => dispatch({ type: "notification", msg });
+    (window as any).mcAddServerLog = (channel: string, msg: string) => dispatch({ type: "log", channel, msg });
+    (window as any).mcAddChatMessage = (channel: string, sender: string, msg: string) =>
+      dispatch({ type: "chat_message", channel, sender, msg });
+    (window as any).mcChannelsSync = (subscribedJson: string, knownJson: string) => {
       try {
         const subscribed: string[] = JSON.parse(subscribedJson);
         const known: string[] = JSON.parse(knownJson);
-        dispatch({ type: 'channels_sync', subscribed, known });
-      } catch { /* ignore */ }
+        dispatch({ type: "channels_sync", subscribed, known });
+      } catch {
+        /* ignore */
+      }
     };
-    (window as any).mcUpdateHotbar     = (json: string) => dispatch({ type: 'inventory', data: JSON.parse(json) });
-    (window as any).mcToggleHotbar     = () => dispatch({ type: 'hotbar_toggle' });
-    (window as any).mcUpdateShortcutBar = (json: string) => dispatch({ type: 'shortcut_bar_update', data: JSON.parse(json) });
-    (window as any).mcSetSelectedSlot   = (slot: number) => dispatch({ type: 'slot_select', slot });
+    (window as any).mcUpdateHotbar = (json: string) => dispatch({ type: "inventory", data: JSON.parse(json) });
+    (window as any).mcToggleHotbar = () => dispatch({ type: "hotbar_toggle" });
+    (window as any).mcUpdateShortcutBar = (json: string) =>
+      dispatch({ type: "shortcut_bar_update", data: JSON.parse(json) });
+    (window as any).mcSetSelectedSlot = (slot: number) => dispatch({ type: "slot_select", slot });
     (window as any).mcConsumeSlotUpdate = () => {
       const v = pendingSlotUpdateRef.current;
-      pendingSlotUpdateRef.current = '';
+      pendingSlotUpdateRef.current = "";
       return v;
     };
 
-    (window as any).mcShowLoginOverlay     = () => dispatch({ type: 'login_show' });
-    (window as any).mcHideLoginOverlay     = () => dispatch({ type: 'login_hide' });
-    (window as any).mcShowDisconnectedOverlay = (msg: string) => dispatch({ type: 'disconnect_show', message: msg });
-    (window as any).mcHideDisconnectedOverlay = () => dispatch({ type: 'disconnect_hide' });
+    (window as any).mcShowLoginOverlay = () => dispatch({ type: "login_show" });
+    (window as any).mcHideLoginOverlay = () => dispatch({ type: "login_hide" });
+    (window as any).mcShowDisconnectedOverlay = (msg: string) => dispatch({ type: "disconnect_show", message: msg });
+    (window as any).mcHideDisconnectedOverlay = () => dispatch({ type: "disconnect_hide" });
 
-    (window as any).mcShowConsole = () => dispatch({ type: 'console_show' });
-    (window as any).mcHideConsole = () => dispatch({ type: 'console_hide' });
+    (window as any).mcShowConsole = () => dispatch({ type: "console_show" });
+    (window as any).mcHideConsole = () => dispatch({ type: "console_hide" });
     (window as any).mcIsConsoleOpen = () => consoleOpenRef.current;
 
     (window as any).mcConsumeConsoleInput = () => {
-      const v = consoleSubmittedRef.current || '';
+      const v = consoleSubmittedRef.current || "";
       consoleSubmittedRef.current = null;
       return v;
     };
 
     (window as any).mcConsumeLoginResult = () => {
       const v = loginResultRef.current;
-      loginResultRef.current = '';
+      loginResultRef.current = "";
       return v;
     };
 
     (window as any).mcConsoleSetPlayer = (name: string) => {
       consoleStateRef.current.playerName = name;
       try {
-        const stored = localStorage.getItem('mc_history_' + name);
+        const stored = localStorage.getItem("mc_history_" + name);
         consoleStateRef.current.history = stored ? JSON.parse(stored) : [];
-      } catch { consoleStateRef.current.history = []; }
+      } catch {
+        consoleStateRef.current.history = [];
+      }
     };
 
-    (window as any).mcCycleHudMode = () => dispatch({ type: 'hud_mode_cycle' });
+    (window as any).mcCycleHudMode = () => dispatch({ type: "hud_mode_cycle" });
 
     (window as any).mcSyncLayouts = (json: string) => {
       const data: { layouts: GameLayout[]; activeLayout: string } = JSON.parse(json);
-      dispatch({ type: 'layouts_sync', layouts: data.layouts, activeLayout: data.activeLayout });
+      dispatch({ type: "layouts_sync", layouts: data.layouts, activeLayout: data.activeLayout });
     };
 
-    (window as any).mcShowLayoutEditor = () => dispatch({ type: 'layout_editor_show' });
-    (window as any).mcHideLayoutEditor = () => dispatch({ type: 'layout_editor_hide' });
+    (window as any).mcShowLayoutEditor = () => dispatch({ type: "layout_editor_show" });
+    (window as any).mcHideLayoutEditor = () => dispatch({ type: "layout_editor_hide" });
 
     (window as any).__mcDispatch = dispatch;
     (window as any).mcOpenNpcDialog = (json: string) => {
-      try { dispatch({ type: 'npc_dialog_open', payload: JSON.parse(json) as NpcDialogData }); } catch { /* ignore */ }
+      try {
+        dispatch({ type: "npc_dialog_open", payload: JSON.parse(json) as NpcDialogData });
+      } catch {
+        /* ignore */
+      }
     };
 
     (window as any).mcConsumeLayoutUpdate = () => {
       const v = pendingLayoutUpdateRef.current;
-      pendingLayoutUpdateRef.current = '';
+      pendingLayoutUpdateRef.current = "";
       return v;
     };
 
     (window as any).mcPreferencesSync = (json: string) => {
       try {
         const data: PreferencesData = JSON.parse(json);
-        dispatch({ type: 'preferences_sync', data });
-      } catch { /* ignore */ }
+        dispatch({ type: "preferences_sync", data });
+      } catch {
+        /* ignore */
+      }
     };
 
     (window as any).mcConsumePreferencesUpdate = () => {
       const v = pendingPreferencesUpdateRef.current;
-      pendingPreferencesUpdateRef.current = '';
+      pendingPreferencesUpdateRef.current = "";
       return v;
     };
 
-    (window as any).mcShowPreferences = () => dispatch({ type: 'preferences_show' });
+    (window as any).mcShowPreferences = () => dispatch({ type: "preferences_show" });
 
     // no-ops: React handles creation
-    (window as any).mcCreateHUD       = () => {};
-    (window as any).mcCreateHotbar    = () => {};
-    (window as any).mcCreateConsole   = () => {};
+    (window as any).mcCreateHUD = () => {};
+    (window as any).mcCreateHotbar = () => {};
+    (window as any).mcCreateConsole = () => {};
     (window as any).mcCreateServerLog = () => {};
 
     // Global keydown: open console via '/' or Enter (when not already open and no modal)
     function onGlobalKeydown(e: Event) {
       const ke = e as globalThis.KeyboardEvent;
       const tag = (document.activeElement as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-      const loginEl = document.getElementById('mc-login-root');
-      if (loginEl && (loginEl as HTMLElement).dataset.visible === 'true') return;
-      if (ke.key === '/' && !consoleOpenRef.current) {
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      const loginEl = document.getElementById("mc-login-root");
+      if (loginEl && (loginEl as HTMLElement).dataset.visible === "true") return;
+      if (ke.key === "/" && !consoleOpenRef.current) {
         ke.preventDefault();
-        consoleInitialValueRef.current = '/';
-        dispatch({ type: 'console_show' });
-      } else if (ke.key === 'Enter' && !consoleOpenRef.current) {
+        consoleInitialValueRef.current = "/";
+        dispatch({ type: "console_show" });
+      } else if (ke.key === "Enter" && !consoleOpenRef.current) {
         ke.preventDefault();
-        consoleInitialValueRef.current = '';
-        dispatch({ type: 'console_show' });
+        consoleInitialValueRef.current = "";
+        dispatch({ type: "console_show" });
       }
     }
-    document.addEventListener('keydown', onGlobalKeydown);
-    return () => document.removeEventListener('keydown', onGlobalKeydown);
+    document.addEventListener("keydown", onGlobalKeydown);
+    return () => document.removeEventListener("keydown", onGlobalKeydown);
   }, []);
 
   const activeLayout = resolveActiveLayout(state.layouts, state.activeLayout);
 
-  const handlePreferencesSave = (payload: { subscribedChannels: string[]; disabledCommands: string[]; shadersEnabled: boolean }) => {
-    dispatch({ type: 'preferences_save', ...payload });
+  const handlePreferencesSave = (payload: {
+    subscribedChannels: string[];
+    disabledCommands: string[];
+    shadersEnabled: boolean;
+  }) => {
+    dispatch({ type: "preferences_save", ...payload });
     pendingPreferencesUpdateRef.current = JSON.stringify(payload);
   };
 
   const handleLayoutSave = (layouts: GameLayout[], newActiveLayout: string) => {
-    dispatch({ type: 'layout_editor_save', layouts, activeLayout: newActiveLayout });
+    dispatch({ type: "layout_editor_save", layouts, activeLayout: newActiveLayout });
     pendingLayoutUpdateRef.current = JSON.stringify({ layouts, activeLayout: newActiveLayout });
   };
 
   const minimapStyle: React.CSSProperties = {
-    ...widgetStyle(activeLayout, 'MINIMAP'),
+    ...widgetStyle(activeLayout, "MINIMAP"),
     zIndex: 999,
-    pointerEvents: 'none',
-    border: '2px solid rgba(255,255,255,0.25)',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+    pointerEvents: "none",
+    border: "2px solid rgba(255,255,255,0.25)",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
     borderRadius: 6,
-    overflow: 'hidden',
+    overflow: "hidden",
   };
 
   return (
     <>
       {/* Minimap host: always in DOM (Kotlin appends canvas here at startup); hidden during login */}
-      <div id="mc-minimap-host" style={{ ...minimapStyle, display: state.loginVisible ? 'none' : undefined }} />
+      <div id="mc-minimap-host" style={{ ...minimapStyle, display: state.loginVisible ? "none" : undefined }} />
 
       {!state.loginVisible && (
         <>
-
-          <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, 'HUD')} />
+          <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, "HUD")} />
           <ShortcutBar
             inventory={state.inventory}
             slots={state.shortcutBar}
@@ -314,9 +406,13 @@ export function GameUI() {
             onSlotDrop={(slot, itemType) => {
               pendingSlotUpdateRef.current = JSON.stringify({ slot, itemType: itemType ?? null });
             }}
-            layoutStyle={widgetStyle(activeLayout, 'SHORTCUT_BAR')}
+            layoutStyle={widgetStyle(activeLayout, "SHORTCUT_BAR")}
           />
-          <Inventory inventory={state.inventory} visible={state.hotbarVisible} layoutStyle={widgetStyle(activeLayout, 'INVENTORY')} />
+          <Inventory
+            inventory={state.inventory}
+            visible={state.hotbarVisible}
+            layoutStyle={widgetStyle(activeLayout, "INVENTORY")}
+          />
           <ServerLog
             logs={state.logs}
             visible={state.logVisible || state.consoleOpen}
@@ -324,38 +420,42 @@ export function GameUI() {
             activeChannel={state.activeChannel}
             unreadChannels={state.unreadChannels}
             onChannelSelect={(ch) => {
-              dispatch({ type: 'active_channel_select', channel: ch });
+              dispatch({ type: "active_channel_select", channel: ch });
               (window as any).__mcActiveChannel = ch;
             }}
-            layoutStyle={widgetStyle(activeLayout, 'CHAT_HISTORY')}
+            layoutStyle={widgetStyle(activeLayout, "CHAT_HISTORY")}
           />
           <Notifications notif={state.notif?.msg ? state.notif : null} />
           <Console
             open={state.consoleOpen}
-            onClose={() => dispatch({ type: 'console_hide' })}
+            onClose={() => dispatch({ type: "console_hide" })}
             submittedRef={consoleSubmittedRef}
             stateRef={consoleStateRef}
             initialValueRef={consoleInitialValueRef}
-            layoutStyle={widgetStyle(activeLayout, 'INPUT_BOX')}
+            layoutStyle={widgetStyle(activeLayout, "INPUT_BOX")}
           />
           <LayoutEditor
             open={state.layoutEditorOpen}
             layouts={state.layouts}
             activeLayout={state.activeLayout}
             onSave={handleLayoutSave}
-            onClose={() => dispatch({ type: 'layout_editor_hide' })}
+            onClose={() => dispatch({ type: "layout_editor_hide" })}
           />
-          <NpcDialog data={state.npcDialog} onClose={() => dispatch({ type: 'npc_dialog_close' })} />
+          <NpcDialog data={state.npcDialog} onClose={() => dispatch({ type: "npc_dialog_close" })} />
           <Preferences
             open={state.preferencesOpen}
             preferences={state.preferences}
             onSave={handlePreferencesSave}
-            onClose={() => dispatch({ type: 'preferences_hide' })}
+            onClose={() => dispatch({ type: "preferences_hide" })}
           />
         </>
       )}
       <div id="mc-login-root" data-visible={String(state.loginVisible)}>
-        <LoginOverlay visible={state.loginVisible} loginResultRef={loginResultRef} onHide={() => dispatch({ type: 'login_hide' })} />
+        <LoginOverlay
+          visible={state.loginVisible}
+          loginResultRef={loginResultRef}
+          onHide={() => dispatch({ type: "login_hide" })}
+        />
       </div>
       <DisconnectOverlay message={state.disconnectMsg} />
     </>
