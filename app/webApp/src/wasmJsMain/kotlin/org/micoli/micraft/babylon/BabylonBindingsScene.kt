@@ -31,3 +31,6 @@ fun jsCameraAttachControl(camera: JsAny): Unit =
 
 fun jsCameraSetPosition(camera: JsAny, x: Double, y: Double, z: Double): Unit =
     js("camera.position = new BABYLON.Vector3(x, y, z)")
+
+fun jsSetupRenderPipeline(scene: JsAny, camera: JsAny): Unit =
+    js("mcSetupRenderPipeline(scene, camera)")

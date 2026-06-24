@@ -88,18 +88,37 @@ export function registerEngine(): void {
     (scene as any).fogEnd = 40;
     (scene as any).fogColor = new BABYLON.Color3(r, g, b);
     (scene as any).clearColor = new BABYLON.Color4(r, g, b, 1.0);
+    // Sync fog color to block shader materials (created after this call)
+    const mats = (window as any).__mcBlockMaterials as Record<string, any> | undefined;
+    if (mats) {
+      const fv = new BABYLON.Vector3(r, g, b);
+      for (const mat of Object.values(mats)) mat.setVector3("fogColor", fv);
+    }
   };
 
   window.mcSetShadersEnabled = (scene: Scene, enabled: boolean): void => {
-    (scene as any).fogMode = enabled ? BABYLON.Scene.FOGMODE_LINEAR : BABYLON.Scene.FOGMODE_NONE;
     const mats = (window as any).__mcBlockMaterials as Record<string, any> | undefined;
     if (mats) {
-      (scene as any).blockMaterialDirtyMechanism = false;
-      for (const mat of Object.values(mats)) {
-        mat.useVertexColors = enabled;
-        mat.markAsDirty(BABYLON.Material.AttributesDirtyFlag);
-      }
-      (scene as any).blockMaterialDirtyMechanism = true;
+      const v = enabled ? 1.0 : 0.0;
+      for (const mat of Object.values(mats)) mat.setFloat("shadersEnabled", v);
     }
+  };
+
+  window.mcSetupRenderPipeline = (scene: Scene, camera: any): void => {
+    const pipeline = new BABYLON.DefaultRenderingPipeline("mcPipeline", true, scene, [camera]);
+
+    pipeline.imageProcessingEnabled = false;
+
+    // FXAA — anti-aliasing des bords de géométrie
+    pipeline.fxaaEnabled = true;
+
+    // Bloom très subtil sur les zones lumineuses (ciel, surfaces claires)
+    pipeline.bloomEnabled = true;
+    pipeline.bloomWeight = 0.05;
+    pipeline.bloomThreshold = 0.78;
+    pipeline.bloomScale = 0.5;
+    pipeline.bloomKernel = 32;
+
+    (window as any).__mcRenderPipeline = pipeline;
   };
 }

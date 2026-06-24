@@ -55,8 +55,7 @@ const MC_NORMS: [number, number, number][] = [
 ];
 
 // Directional face shading multipliers (fd 0-5: +Z,-Z,+X,-X,+Y,-Y)
-// Applied on top of the hemispheric light, so values stay close to 1.0 (subtle contrast)
-const FACE_SHADES = [0.95, 0.95, 0.85, 0.85, 1.0, 0.8];
+const FACE_SHADES = [0.88, 0.88, 0.75, 0.75, 1.0, 0.65];
 
 interface FaceGroup {
   p: number[];
@@ -105,7 +104,7 @@ function emitCrossSprite(
       g.n.push(0, 1, 0);
       g.u.push(uv[k * 2], uv[k * 2 + 1]);
       const aoV = (ao >> (k * 4)) & 0xf;
-      const brightness = shade * (1.0 - (aoV / 15.0) * 0.4);
+      const brightness = shade * (1.0 - (aoV / 15.0) * 0.5);
       g.c.push(brightness, brightness, brightness, 1.0);
     }
     const b = g.v;
@@ -161,7 +160,7 @@ export function registerChunks(): void {
       g.n.push(nm[0], nm[1], nm[2]);
       g.u.push(faceInfo.uv[k * 2], faceInfo.uv[k * 2 + 1]);
       const aoV = (ao >> (k * 4)) & 0xf;
-      const brightness = shade * (1.0 - (aoV / 15.0) * 0.4);
+      const brightness = shade * (1.0 - (aoV / 15.0) * 0.5);
       g.c.push(brightness, brightness, brightness, 1.0);
     }
     const b = g.v;
