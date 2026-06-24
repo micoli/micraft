@@ -79,3 +79,26 @@ refetch:
   server:
     done: "Chunks reloaded."
     unavailable: "Chunk reload not available."
+talk:
+  server:
+    usage: "Usage: /talk <playerName>"
+    not_found: "Player '{0}' not found."
+    opened: "DM channel opened with {0}."
+join:
+  server:
+    usage: "Usage: /join <channelName>"
+    not_found: "Channel '{0}' does not exist."
+    already_member: "You are already in channel '{0}'."
+    joined: "Joined channel '{0}'."
+leave:
+  server:
+    usage: "Usage: /leave <channelName>"
+    cannot_leave: "Cannot leave protected channel '{0}'."
+    not_member: "You are not in channel '{0}'."
+    left: "Left channel '{0}'."
+createChat:
+  server:
+    usage: "Usage: /createChat <channelName>"
+    reserved: "Cannot create reserved channel '{0}'."
+    exists: "Channel '{0}' already exists."
+    created: "Channel '{0}' created."

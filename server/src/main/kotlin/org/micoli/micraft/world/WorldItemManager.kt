@@ -60,7 +60,7 @@ class WorldItemManager(
                     val label = item.type.name.lowercase().replaceFirstChar { it.uppercase() }
                     val msg = i18n?.t(session.state.language, "inventory:server:item_picked_up", item.count, label)
                         ?: "+${item.count} $label"
-                    session.send(ServerMessage.Notification(msg))
+                    session.send(ServerMessage.Notification(msg, "game"))
                 }
             }
         }

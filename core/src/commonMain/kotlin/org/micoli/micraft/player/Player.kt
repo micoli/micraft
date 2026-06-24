@@ -27,4 +27,5 @@ data class PlayerState(
     val shortcutBar: List<ItemType?> = List(10) { null },
     val layouts: List<GameLayout> = listOf(defaultLayout()),
     val activeLayout: String = "default",
+    val subscribedChannels: List<String> = listOf("world", "system", "game"),
 )

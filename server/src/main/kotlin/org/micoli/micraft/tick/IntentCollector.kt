@@ -7,6 +7,7 @@ class IntentCollector(
     private val blockBreaker: BlockBreaker,
     private val blockPlacer: BlockPlacer,
     private val onCommand: suspend (PlayerSession, String) -> Unit,
+    private val onChatSend: suspend (PlayerSession, String, String) -> Unit = { _, _, _ -> },
 ) {
     suspend fun collect(session: PlayerSession): TickInput {
         var dx = 0f; var dz = 0f; var dy = 0f
@@ -34,6 +35,7 @@ class IntentCollector(
                 is ClientMessage.BlockPlace      -> blockPlacer.handlePlace(session, intent)
                 is ClientMessage.ShortcutBarSet  -> blockPlacer.handleShortcutBarSet(session, intent)
                 is ClientMessage.Command         -> onCommand(session, intent.text)
+                is ClientMessage.ChatSend        -> onChatSend(session, intent.channel, intent.text)
                 else -> {}
             }
         }

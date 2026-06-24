@@ -392,7 +392,11 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                     outMessages.trySend(ClientMessage.Disconnect())
                     jsReload()
                 }
-                else -> outMessages.trySend(ClientMessage.Command(consoleInput))
+                else -> if (consoleInput.startsWith("/")) {
+                    outMessages.trySend(ClientMessage.Command(consoleInput))
+                } else {
+                    outMessages.trySend(ClientMessage.ChatSend(jsGetActiveChannel(), consoleInput))
+                }
             }
         }
         if (jsIsConsoleOpen()) return
@@ -779,7 +783,13 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
             }
             is ServerMessage.Notification -> {
                 uiState.pushNotification(msg.message)
-                uiState.pushLog(msg.message)
+                uiState.pushLog(msg.message, msg.channel)
+            }
+            is ServerMessage.ChatMessage -> {
+                uiState.pushChatMessage(msg.channel, msg.sender, msg.message)
+            }
+            is ServerMessage.ChannelsSync -> {
+                uiState.setChannelsSync(msg.subscribedChannels, msg.knownChannels)
             }
             is ServerMessage.BlockBreakProgress -> {
                 val alpha = 1.0 - msg.progress.toDouble() / msg.hardness.toDouble()

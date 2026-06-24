@@ -48,7 +48,13 @@ sealed class ServerMessage {
     data class BlockBreakProgress(val pos: BlockPos, val progress: Int, val hardness: Int) : ServerMessage()
 
     @Serializable
-    data class Notification(val message: String) : ServerMessage()
+    data class Notification(val message: String, val channel: String = "system") : ServerMessage()
+
+    @Serializable
+    data class ChatMessage(val channel: String, val sender: String, val message: String) : ServerMessage()
+
+    @Serializable
+    data class ChannelsSync(val subscribedChannels: List<String>, val knownChannels: List<String>) : ServerMessage()
 
     @Serializable
     data class ItemsSpawned(val items: List<WorldItem>) : ServerMessage()

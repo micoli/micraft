@@ -1,0 +1,28 @@
+package org.micoli.micraft.command
+
+import org.micoli.micraft.CommandContext
+import org.micoli.micraft.CommandHandler
+import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.session.PlayerSession
+
+class TalkCommand : CommandHandler {
+    override val command = "/talk"
+    override val description = "Open a private chat with a player."
+    override val usage = "/talk <playerName>"
+
+    override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
+        val i18n = context.i18n
+        val targetName = args.trim()
+        if (targetName.isBlank()) {
+            session.send(ServerMessage.Notification(i18n.t(session.state.language, "talk:server:usage"), "system"))
+            return
+        }
+        val target = context.sessions().find { it.state.name == targetName }
+        if (target == null) {
+            session.send(ServerMessage.Notification(i18n.t(session.state.language, "talk:server:not_found", targetName), "system"))
+            return
+        }
+        context.chatService!!.openDm(session, target)
+        session.send(ServerMessage.Notification(i18n.t(session.state.language, "talk:server:opened", targetName), "system"))
+    }
+}

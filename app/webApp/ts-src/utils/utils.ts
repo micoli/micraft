@@ -8,6 +8,9 @@ export function registerUtils(): void {
   (window as any).__mcNpcNames = [];
   window.__mcCommandCompleters = {};
   window.__mcKnownCommands = [];
+  (window as any).__mcActiveChannel = 'world';
+  (window as any).__mcSubscribedChannels = ['world', 'system', 'game'];
+  (window as any).__mcKnownChannels = [];
 
   window.mcGetUrlParam = (name: string): string => {
     const v = new URLSearchParams(window.location.search).get(name);
@@ -47,4 +50,8 @@ export function registerUtils(): void {
   registerCompleter('/refetch', () => []);
   // /layout completer is overwritten by GameUI when layouts are synced
   registerCompleter('/layout', () => []);
+  registerCompleter('/talk', (p) => (window.__mcConnectedPlayers || []).filter((n: string) => n.startsWith(p)));
+  registerCompleter('/join', (p) => ((window as any).__mcKnownChannels || []).filter((c: string) => c.startsWith(p)));
+  registerCompleter('/leave', (p) => ((window as any).__mcSubscribedChannels || []).filter((c: string) => c.startsWith(p)));
+  registerCompleter('/createchat', () => []);
 }

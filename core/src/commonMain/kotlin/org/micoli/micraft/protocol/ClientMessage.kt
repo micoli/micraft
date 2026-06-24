@@ -55,4 +55,7 @@ sealed class ClientMessage {
 
     @Serializable
     data class NpcInteract(val npcId: String) : ClientMessage()
+
+    @Serializable
+    data class ChatSend(val channel: String, val text: String) : ClientMessage()
 }

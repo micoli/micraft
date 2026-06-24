@@ -25,7 +25,9 @@ function loadHudMode(): HudMode {
 }
 
 const initial: UiState = {
-  hud: null, hudMode: loadHudMode(), notif: null, logs: [], logVisible: false, logKey: 0, inventory: {},
+  hud: null, hudMode: loadHudMode(), notif: null, logs: [], logVisible: false, logKey: 0,
+  subscribedChannels: ['world', 'system', 'game'], knownChannels: [], activeChannel: 'world', unreadChannels: [],
+  inventory: {},
   hotbarVisible: false,
   shortcutBar: Array(10).fill(null),
   selectedSlot: 0,
@@ -51,10 +53,27 @@ function reducer(state: UiState, action: UiAction): UiState {
     case 'log': {
       const now = new Date();
       const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-      const entry: LogEntry = { time, msg: action.msg };
+      const entry: LogEntry = { time, msg: action.msg, channel: action.channel };
       const logs = [...state.logs, entry].slice(-MC_LOG_MAX);
-      return { ...state, logs, logVisible: true, logKey: state.logKey + 1 };
+      const unreadChannels = action.channel !== state.activeChannel && !state.unreadChannels.includes(action.channel)
+        ? [...state.unreadChannels, action.channel]
+        : state.unreadChannels;
+      return { ...state, logs, logVisible: true, logKey: state.logKey + 1, unreadChannels };
     }
+    case 'chat_message': {
+      const now = new Date();
+      const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+      const entry: LogEntry = { time, msg: action.msg, channel: action.channel, sender: action.sender };
+      const logs = [...state.logs, entry].slice(-MC_LOG_MAX);
+      const unreadChannels = action.channel !== state.activeChannel && !state.unreadChannels.includes(action.channel)
+        ? [...state.unreadChannels, action.channel]
+        : state.unreadChannels;
+      return { ...state, logs, logVisible: true, logKey: state.logKey + 1, unreadChannels };
+    }
+    case 'channels_sync':
+      return { ...state, subscribedChannels: action.subscribed, knownChannels: action.known };
+    case 'active_channel_select':
+      return { ...state, activeChannel: action.channel, unreadChannels: state.unreadChannels.filter(c => c !== action.channel) };
     case 'log_hide': return { ...state, logVisible: false };
     case 'inventory':    return { ...state, inventory: action.data };
     case 'hotbar_toggle': return { ...state, hotbarVisible: !state.hotbarVisible };
@@ -92,11 +111,11 @@ export function GameUI() {
   // Keep consoleOpenRef in sync
   useEffect(() => { consoleOpenRef.current = state.consoleOpen; }, [state.consoleOpen]);
 
-  // Auto-hide server log after 5s of no new messages
+  // Auto-hide server log after 15s of no new messages
   useEffect(() => {
     if (!state.logVisible) return;
     if (logTimerRef.current) clearTimeout(logTimerRef.current);
-    logTimerRef.current = setTimeout(() => dispatch({ type: 'log_hide' }), 5000);
+    logTimerRef.current = setTimeout(() => dispatch({ type: 'log_hide' }), 15000);
     return () => { if (logTimerRef.current) clearTimeout(logTimerRef.current); };
   }, [state.logKey]);
 
@@ -121,13 +140,27 @@ export function GameUI() {
       state.layouts.map((l: GameLayout) => l.name).filter((n: string) => n.startsWith(partial));
   }, [state.layouts]);
 
+  // Sync channel completers when subscribed/known channels change
+  useEffect(() => {
+    (window as any).__mcSubscribedChannels = state.subscribedChannels;
+    (window as any).__mcKnownChannels = state.knownChannels;
+  }, [state.subscribedChannels, state.knownChannels]);
+
   useEffect(() => {
     // Wire Kotlin-callable window functions to React dispatch
     (window as any).mcUpdateHUD = (x: number, y: number, z: number, yaw: number, pitch: number, stance: string, speed: number, fps: number, kbIn: number, kbOut: number, biome: string, targetBlock: string, gameTime: string) =>
       dispatch({ type: 'hud', data: { x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime } });
 
     (window as any).mcShowNotification = (msg: string) => dispatch({ type: 'notification', msg });
-    (window as any).mcAddServerLog     = (msg: string) => dispatch({ type: 'log', msg });
+    (window as any).mcAddServerLog     = (channel: string, msg: string) => dispatch({ type: 'log', channel, msg });
+    (window as any).mcAddChatMessage   = (channel: string, sender: string, msg: string) => dispatch({ type: 'chat_message', channel, sender, msg });
+    (window as any).mcChannelsSync     = (subscribedJson: string, knownJson: string) => {
+      try {
+        const subscribed: string[] = JSON.parse(subscribedJson);
+        const known: string[] = JSON.parse(knownJson);
+        dispatch({ type: 'channels_sync', subscribed, known });
+      } catch { /* ignore */ }
+    };
     (window as any).mcUpdateHotbar     = (json: string) => dispatch({ type: 'inventory', data: JSON.parse(json) });
     (window as any).mcToggleHotbar     = () => dispatch({ type: 'hotbar_toggle' });
     (window as any).mcUpdateShortcutBar = (json: string) => dispatch({ type: 'shortcut_bar_update', data: JSON.parse(json) });
@@ -251,7 +284,18 @@ export function GameUI() {
             layoutStyle={widgetStyle(activeLayout, 'SHORTCUT_BAR')}
           />
           <Inventory inventory={state.inventory} visible={state.hotbarVisible} layoutStyle={widgetStyle(activeLayout, 'INVENTORY')} />
-          <ServerLog logs={state.logs} visible={state.logVisible || state.consoleOpen} layoutStyle={widgetStyle(activeLayout, 'CHAT_HISTORY')} />
+          <ServerLog
+            logs={state.logs}
+            visible={state.logVisible || state.consoleOpen}
+            subscribedChannels={state.subscribedChannels}
+            activeChannel={state.activeChannel}
+            unreadChannels={state.unreadChannels}
+            onChannelSelect={(ch) => {
+              dispatch({ type: 'active_channel_select', channel: ch });
+              (window as any).__mcActiveChannel = ch;
+            }}
+            layoutStyle={widgetStyle(activeLayout, 'CHAT_HISTORY')}
+          />
           <Notifications notif={state.notif?.msg ? state.notif : null} />
           <Console
             open={state.consoleOpen}

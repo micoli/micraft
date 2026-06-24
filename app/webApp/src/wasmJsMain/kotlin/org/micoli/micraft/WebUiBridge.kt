@@ -4,7 +4,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.micoli.micraft.babylon.jsAddChatMessage
 import org.micoli.micraft.babylon.jsAddServerLog
+import org.micoli.micraft.babylon.jsChannelsSync
 import org.micoli.micraft.babylon.jsConsoleSetPlayer
 import org.micoli.micraft.babylon.jsHideDisconnectedOverlay
 import org.micoli.micraft.babylon.jsShowDisconnectedOverlay
@@ -27,7 +29,20 @@ class WebUiBridge(private val state: McUiState, private val scope: CoroutineScop
         }
         scope.launch {
             state.latestLogFlow.collect { entry ->
-                if (entry != null) jsAddServerLog(entry.first)
+                if (entry != null) jsAddServerLog(entry.first, entry.second)
+            }
+        }
+        scope.launch {
+            state.latestChatMessageFlow.collect { entry ->
+                if (entry != null) jsAddChatMessage(entry.first, entry.second, entry.third)
+            }
+        }
+        scope.launch {
+            state.channelsSyncFlow.collect { sync ->
+                if (sync != null) {
+                    fun List<String>.toJson() = "[${joinToString(",") { "\"$it\"" }}]"
+                    jsChannelsSync(sync.first.toJson(), sync.second.toJson())
+                }
             }
         }
         scope.launch {

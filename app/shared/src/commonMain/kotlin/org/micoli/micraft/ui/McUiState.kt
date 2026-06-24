@@ -36,8 +36,9 @@ class McUiState {
     private val _notification = MutableStateFlow<Pair<String, Int>?>(null)
     val notificationFlow: StateFlow<Pair<String, Int>?> = _notification
 
-    private val _latestLog = MutableStateFlow<Pair<String, Int>?>(null)
-    val latestLogFlow: StateFlow<Pair<String, Int>?> = _latestLog
+    // Triple: (channel, message, seq)
+    private val _latestLog = MutableStateFlow<Triple<String, String, Int>?>(null)
+    val latestLogFlow: StateFlow<Triple<String, String, Int>?> = _latestLog
 
     private val _disconnectMessage = MutableStateFlow<String?>(null)
     val disconnectMessageFlow: StateFlow<String?> = _disconnectMessage
@@ -51,9 +52,23 @@ class McUiState {
         get() = _consolePlayerName.value
         set(value) { _consolePlayerName.value = value }
 
+    // Pair: (subscribedChannels, knownChannels)
+    private val _channelsSync = MutableStateFlow<Pair<List<String>, List<String>>?>(null)
+    val channelsSyncFlow: StateFlow<Pair<List<String>, List<String>>?> = _channelsSync
+
+    // Triple: (channel, sender, message)
+    private val _latestChatMessage = MutableStateFlow<Triple<String, String, String>?>(null)
+    val latestChatMessageFlow: StateFlow<Triple<String, String, String>?> = _latestChatMessage
+
     private var notifSeq = 0
     private var logSeq = 0
+    private var chatSeq = 0
 
     fun pushNotification(msg: String) { _notification.value = msg to ++notifSeq }
-    fun pushLog(msg: String) { _latestLog.value = msg to ++logSeq }
+    fun pushLog(msg: String, channel: String = "system") { _latestLog.value = Triple(channel, msg, ++logSeq) }
+    fun pushChatMessage(channel: String, sender: String, msg: String) {
+        _latestChatMessage.value = Triple(channel, sender, msg)
+        chatSeq++
+    }
+    fun setChannelsSync(subscribed: List<String>, known: List<String>) { _channelsSync.value = subscribed to known }
 }

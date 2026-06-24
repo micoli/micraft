@@ -17,7 +17,6 @@ fun jsConsumeLoginResult(): String = js("mcConsumeLoginResult()")
 
 fun jsCreateConsole(): Unit    = js("mcCreateConsole()")
 fun jsCreateServerLog(): Unit  = js("mcCreateServerLog()")
-fun jsAddServerLog(message: String): Unit = js("mcAddServerLog(message)")
 fun jsConsoleSetPlayer(name: String): Unit = js("mcConsoleSetPlayer(name)")
 fun jsIsConsoleOpen(): Boolean = js("mcIsConsoleOpen()")
 fun jsConsumeConsoleInput(): String = js("mcConsumeConsoleInput()")
@@ -53,6 +52,13 @@ fun jsClearMinimapChunk(cx: Int, cz: Int): Unit = js("mcClearMinimapChunk(cx, cz
 fun jsDrawMinimap(playerX: Double, playerZ: Double): Unit = js("mcDrawMinimap(playerX, playerZ)")
 fun jsSetNpcOnMinimap(id: String, x: Float, z: Float): Unit = js("mcSetNpcOnMinimap(id, x, z)")
 fun jsRemoveNpcFromMinimap(id: String): Unit = js("mcRemoveNpcFromMinimap(id)")
+
+// ── Chat channels ─────────────────────────────────────────────────────────────
+
+fun jsAddServerLog(channel: String, message: String): Unit = js("mcAddServerLog(channel, message)")
+fun jsAddChatMessage(channel: String, sender: String, message: String): Unit = js("mcAddChatMessage(channel, sender, message)")
+fun jsChannelsSync(subscribedJson: String, knownJson: String): Unit = js("mcChannelsSync(subscribedJson, knownJson)")
+fun jsGetActiveChannel(): String = js("(window.__mcActiveChannel) || 'world'")
 
 // ── Autocomplete ──────────────────────────────────────────────────────────────
 

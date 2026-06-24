@@ -10,6 +10,8 @@ export interface HudData {
 export interface LogEntry {
   time: string;
   msg: string;
+  channel: string;
+  sender?: string;
 }
 
 export type HudMode = 'simple' | 'medium' | 'complete';
@@ -39,6 +41,10 @@ export interface UiState {
   logs: LogEntry[];
   logVisible: boolean;
   logKey: number;
+  subscribedChannels: string[];
+  knownChannels: string[];
+  activeChannel: string;
+  unreadChannels: string[];
   inventory: Record<string, number>;
   hotbarVisible: boolean;
   shortcutBar: (string | null)[];
@@ -56,7 +62,10 @@ export type UiAction =
   | { type: 'hud'; data: HudData }
   | { type: 'hud_mode_cycle' }
   | { type: 'notification'; msg: string }
-  | { type: 'log'; msg: string }
+  | { type: 'log'; msg: string; channel: string }
+  | { type: 'chat_message'; channel: string; sender: string; msg: string }
+  | { type: 'channels_sync'; subscribed: string[]; known: string[] }
+  | { type: 'active_channel_select'; channel: string }
   | { type: 'inventory'; data: Record<string, number> }
   | { type: 'hotbar_toggle' }
   | { type: 'shortcut_bar_update'; data: { slots: (string | null)[]; selected: number } }

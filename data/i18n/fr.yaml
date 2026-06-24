@@ -79,3 +79,26 @@ refetch:
   server:
     done: "Chunks rechargés."
     unavailable: "Rechargement des chunks non disponible."
+talk:
+  server:
+    usage: "Usage : /talk <nomJoueur>"
+    not_found: "Joueur '{0}' introuvable."
+    opened: "Canal privé ouvert avec {0}."
+join:
+  server:
+    usage: "Usage : /join <nomCanal>"
+    not_found: "Le canal '{0}' n'existe pas."
+    already_member: "Vous êtes déjà dans le canal '{0}'."
+    joined: "Canal '{0}' rejoint."
+leave:
+  server:
+    usage: "Usage : /leave <nomCanal>"
+    cannot_leave: "Impossible de quitter le canal protégé '{0}'."
+    not_member: "Vous n'êtes pas dans le canal '{0}'."
+    left: "Canal '{0}' quitté."
+createChat:
+  server:
+    usage: "Usage : /createChat <nomCanal>"
+    reserved: "Impossible de créer le canal réservé '{0}'."
+    exists: "Le canal '{0}' existe déjà."
+    created: "Canal '{0}' créé."

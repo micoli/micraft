@@ -3,6 +3,8 @@ package org.micoli.micraft
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
+import org.micoli.micraft.world.ChatChannelManager
+import org.micoli.micraft.world.ChatService
 import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldPersistence
@@ -24,4 +26,6 @@ data class CommandContext(
     val setGameTime: (Long) -> Unit = {},
     val refetchChunks: (suspend (PlayerSession) -> Unit)? = null,
     val flushWorld: (() -> Unit)? = null,
+    val chatService: ChatService? = null,
+    val chatChannelManager: ChatChannelManager? = null,
 )

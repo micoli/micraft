@@ -35,6 +35,8 @@ import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemType
 import org.micoli.micraft.world.NpcRegistryLoader
+import org.micoli.micraft.world.ChatChannelManager
+import org.micoli.micraft.world.ChatService
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldMetadata
@@ -95,6 +97,9 @@ class GameLoop(
 
     private val commands: Map<String, CommandHandler> = discoverCommandHandlers()
 
+    private val chatChannelManager = ChatChannelManager()
+    private val chatService = ChatService(chatChannelManager, ::savePlayer, { sessions.values })
+
     private val dropConfig = DropConfig(Path.of("data/drops/drops.yaml"))
     private val worldItems = WorldItemManager(
         dropConfig,
@@ -137,10 +142,15 @@ class GameLoop(
             chunkStreamer.requestAround(session, cx, cz)
         },
         flushWorld = ::flushWorld,
+        chatService = chatService,
+        chatChannelManager = chatChannelManager,
     )
     private val blockBreaker = BlockBreaker(world, { msg -> sessions.values.forEach { it.send(msg) } }, worldItems)
     private val blockPlacer = BlockPlacer(world, { msg -> sessions.values.forEach { it.send(msg) } }, ::savePlayer)
-    private val intentCollector = IntentCollector(blockBreaker, blockPlacer, ::handleCommand)
+    private val intentCollector = IntentCollector(
+        blockBreaker, blockPlacer, ::handleCommand,
+        onChatSend = { session, channel, text -> chatService.routeMessage(session, channel, text) },
+    )
     private val movementProcessor = MovementProcessor(world)
     private val chunkStreamer = ChunkStreamer(world)
 
@@ -339,6 +349,7 @@ class GameLoop(
             shadersEnabled = shadersEnabled,
             layouts = saved?.layouts ?: listOf(org.micoli.micraft.ui.defaultLayout()),
             activeLayout = saved?.activeLayout ?: "default",
+            subscribedChannels = saved?.subscribedChannels ?: listOf("world", "system", "game"),
         )
         val session = PlayerSession(id, userName, socket, state)
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
@@ -348,6 +359,7 @@ class GameLoop(
 
         session.send(ServerMessage.Welcome(id, playerName, spawn, language, shadersEnabled, session.state.layouts, session.state.activeLayout))
         session.send(buildRegistrySync())
+        chatService.onPlayerConnect(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toList()))
         session.send(ServerMessage.TimeUpdate(gameTicks))
