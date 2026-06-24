@@ -25,13 +25,17 @@ class McUiState {
     val hudFlow: StateFlow<HudData> = _hud
     var hud: HudData
         get() = _hud.value
-        set(value) { _hud.value = value }
+        set(value) {
+            _hud.value = value
+        }
 
     private val _inventory = MutableStateFlow(mapOf<ItemType, Int>())
     val inventoryFlow: StateFlow<Map<ItemType, Int>> = _inventory
     var inventory: Map<ItemType, Int>
         get() = _inventory.value
-        set(value) { _inventory.value = value }
+        set(value) {
+            _inventory.value = value
+        }
 
     private val _notification = MutableStateFlow<Pair<String, Int>?>(null)
     val notificationFlow: StateFlow<Pair<String, Int>?> = _notification
@@ -44,13 +48,17 @@ class McUiState {
     val disconnectMessageFlow: StateFlow<String?> = _disconnectMessage
     var disconnectMessage: String?
         get() = _disconnectMessage.value
-        set(value) { _disconnectMessage.value = value }
+        set(value) {
+            _disconnectMessage.value = value
+        }
 
     private val _consolePlayerName = MutableStateFlow("")
     val consolePlayerNameFlow: StateFlow<String> = _consolePlayerName
     var consolePlayerName: String
         get() = _consolePlayerName.value
-        set(value) { _consolePlayerName.value = value }
+        set(value) {
+            _consolePlayerName.value = value
+        }
 
     // Pair: (subscribedChannels, knownChannels)
     private val _channelsSync = MutableStateFlow<Pair<List<String>, List<String>>?>(null)
@@ -64,15 +72,27 @@ class McUiState {
     private var logSeq = 0
     private var chatSeq = 0
 
-    fun pushNotification(msg: String) { _notification.value = msg to ++notifSeq }
-    fun pushLog(msg: String, channel: String = "system") { _latestLog.value = Triple(channel, msg, ++logSeq) }
+    fun pushNotification(msg: String) {
+        _notification.value = msg to ++notifSeq
+    }
+
+    fun pushLog(msg: String, channel: String = "system") {
+        _latestLog.value = Triple(channel, msg, ++logSeq)
+    }
+
     fun pushChatMessage(channel: String, sender: String, msg: String) {
         _latestChatMessage.value = Triple(channel, sender, msg)
         chatSeq++
     }
-    fun setChannelsSync(subscribed: List<String>, known: List<String>) { _channelsSync.value = subscribed to known }
+
+    fun setChannelsSync(subscribed: List<String>, known: List<String>) {
+        _channelsSync.value = subscribed to known
+    }
 
     private val _preferencesSync = MutableStateFlow<String?>(null)
     val preferencesSyncFlow: StateFlow<String?> = _preferencesSync
-    fun setPreferencesSync(json: String) { _preferencesSync.value = json }
+
+    fun setPreferencesSync(json: String) {
+        _preferencesSync.value = json
+    }
 }

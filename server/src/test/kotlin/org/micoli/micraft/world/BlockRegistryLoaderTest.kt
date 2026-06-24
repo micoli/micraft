@@ -18,8 +18,9 @@ class BlockRegistryLoaderTest {
 
     @Test
     fun validYaml_loadsAllBlocks() {
-        val loader = loaderWith(
-            """
+        val loader =
+            loaderWith(
+                """
             STONE:
               hardness: 5
               solid: true
@@ -28,8 +29,8 @@ class BlockRegistryLoaderTest {
               hardness: 3
               solid: true
               minimapColor: [122, 92, 46]
-            """.trimIndent()
-        )
+            """
+                    .trimIndent())
         val result = loader.load()
         assertEquals(2, result.size)
         assertEquals(5, result[BlockType.STONE]?.hardness)
@@ -38,7 +39,8 @@ class BlockRegistryLoaderTest {
 
     @Test
     fun bedrock_hardnessMinusOne_isUnbreakable() {
-        val loader = loaderWith("BEDROCK:\n  hardness: -1\n  solid: true\n  minimapColor: [0, 0, 0]\n")
+        val loader =
+            loaderWith("BEDROCK:\n  hardness: -1\n  solid: true\n  minimapColor: [0, 0, 0]\n")
         val result = loader.load()
         val def = result[BlockType.BEDROCK]!!
         assertEquals(-1, def.hardness)
@@ -49,7 +51,8 @@ class BlockRegistryLoaderTest {
 
     @Test
     fun unknownBlockKey_isSkipped() {
-        val loader = loaderWith("NOT_A_BLOCK:\n  hardness: 1\n  solid: true\n  minimapColor: [0, 0, 0]\n")
+        val loader =
+            loaderWith("NOT_A_BLOCK:\n  hardness: 1\n  solid: true\n  minimapColor: [0, 0, 0]\n")
         val result = loader.load()
         assertTrue(result.isEmpty())
     }
@@ -80,7 +83,9 @@ class BlockRegistryLoaderTest {
 
     @Test
     fun modelElement_customValue_loaded() {
-        val loader = loaderWith("STONE:\n  hardness: 5\n  solid: true\n  minimapColor: [0, 0, 0]\n  modelElement: GRANITE\n")
+        val loader =
+            loaderWith(
+                "STONE:\n  hardness: 5\n  solid: true\n  minimapColor: [0, 0, 0]\n  modelElement: GRANITE\n")
         val result = loader.load()
         assertEquals("GRANITE", result[BlockType.STONE]?.modelElement)
     }

@@ -24,11 +24,12 @@ class BlockBreaker(
         val bp = intent.pos
         val block = world.getBlock(bp.x, bp.y, bp.z)
         val eyeY = session.state.pos.y + session.state.stance.eyeOffset
-        val dist = kotlin.math.sqrt(
-            ((bp.x + 0.5f - session.state.pos.x) * (bp.x + 0.5f - session.state.pos.x) +
-             (bp.y + 0.5f - eyeY) * (bp.y + 0.5f - eyeY) +
-             (bp.z + 0.5f - session.state.pos.z) * (bp.z + 0.5f - session.state.pos.z)).toDouble()
-        )
+        val dist =
+            kotlin.math.sqrt(
+                ((bp.x + 0.5f - session.state.pos.x) * (bp.x + 0.5f - session.state.pos.x) +
+                        (bp.y + 0.5f - eyeY) * (bp.y + 0.5f - eyeY) +
+                        (bp.z + 0.5f - session.state.pos.z) * (bp.z + 0.5f - session.state.pos.z))
+                    .toDouble())
         log.debug("BlockBreakStart pos=$bp block=$block dist=${"%.2f".format(dist)}")
         if (dist <= 6.0 && block != BlockType.AIR && block != BlockType.BEDROCK) {
             session.breakTarget = bp
@@ -60,7 +61,8 @@ class BlockBreaker(
             session.breakTarget = null
             session.breakProgress = 0
         } else {
-            session.send(ServerMessage.BlockBreakProgress(bt, session.breakProgress, block.hardness))
+            session.send(
+                ServerMessage.BlockBreakProgress(bt, session.breakProgress, block.hardness))
         }
     }
 }

@@ -2,8 +2,7 @@ package org.micoli.micraft.world
 
 import kotlinx.serialization.Serializable
 
-@Serializable
-data class ChunkPos(val cx: Int, val cz: Int)
+@Serializable data class ChunkPos(val cx: Int, val cz: Int)
 
 @Serializable
 data class Chunk(val pos: ChunkPos, val blocks: ByteArray) {
@@ -14,25 +13,21 @@ data class Chunk(val pos: ChunkPos, val blocks: ByteArray) {
         val TOTAL = SIZE_X * SIZE_Y * SIZE_Z
 
         fun index(x: Int, y: Int, z: Int) = (x * SIZE_Y * SIZE_Z) + (y * SIZE_Z) + z
+
         fun empty(pos: ChunkPos) = Chunk(pos, ByteArray(TOTAL) { BlockType.AIR.ordinal.toByte() })
 
         fun build(pos: ChunkPos, filler: (x: Int, y: Int, z: Int) -> BlockType): Chunk {
             val blocks = ByteArray(TOTAL)
-            for (x in 0 until SIZE_X)
-                for (y in 0 until SIZE_Y)
-                    for (z in 0 until SIZE_Z)
-                        blocks[index(x, y, z)] = filler(x, y, z).ordinal.toByte()
+            for (x in 0 until SIZE_X) for (y in 0 until SIZE_Y) for (z in 0 until SIZE_Z) blocks[
+                index(x, y, z)] = filler(x, y, z).ordinal.toByte()
             return Chunk(pos, blocks)
         }
 
         /** Decode a y-major wire buffer (produced by encodeWire) back into a full Chunk. */
         fun decodeWire(pos: ChunkPos, topY: Int, wire: ByteArray): Chunk {
-            val blocks = ByteArray(TOTAL)   // AIR = 0 by default
-            for (y in 0..topY)
-                for (x in 0 until SIZE_X)
-                    for (z in 0 until SIZE_Z)
-                        blocks[index(x, y, z)] =
-                            wire[y * SIZE_X * SIZE_Z + x * SIZE_Z + z]
+            val blocks = ByteArray(TOTAL) // AIR = 0 by default
+            for (y in 0..topY) for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) blocks[
+                index(x, y, z)] = wire[y * SIZE_X * SIZE_Z + x * SIZE_Z + z]
             return Chunk(pos, blocks)
         }
     }
@@ -43,14 +38,12 @@ data class Chunk(val pos: ChunkPos, val blocks: ByteArray) {
     /** Highest Y level containing any non-AIR block. */
     fun topY(): Int {
         var top = 0
-        for (x in 0 until SIZE_X)
-            for (z in 0 until SIZE_Z)
-                for (y in SIZE_Y - 1 downTo 0) {
-                    if (getBlock(x, y, z) != BlockType.AIR) {
-                        if (y > top) top = y
-                        break
-                    }
-                }
+        for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) for (y in SIZE_Y - 1 downTo 0) {
+            if (getBlock(x, y, z) != BlockType.AIR) {
+                if (y > top) top = y
+                break
+            }
+        }
         return top
     }
 
@@ -58,10 +51,8 @@ data class Chunk(val pos: ChunkPos, val blocks: ByteArray) {
     fun encodeWire(): ByteArray {
         val top = topY()
         val wire = ByteArray((top + 1) * SIZE_X * SIZE_Z)
-        for (y in 0..top)
-            for (x in 0 until SIZE_X)
-                for (z in 0 until SIZE_Z)
-                    wire[y * SIZE_X * SIZE_Z + x * SIZE_Z + z] = blocks[index(x, y, z)]
+        for (y in 0..top) for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) wire[
+            y * SIZE_X * SIZE_Z + x * SIZE_Z + z] = blocks[index(x, y, z)]
         return wire
     }
 

@@ -1,5 +1,6 @@
 package org.micoli.micraft.command
 
+import java.util.UUID
 import org.micoli.micraft.CommandContext
 import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.BlockChange
@@ -7,12 +8,12 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.session.WorldActionRecord
 import org.micoli.micraft.world.BlockType
-import java.util.UUID
 
 class UndoCommand : CommandHandler {
     override val id = UUID.fromString("efe56d66-b31e-4e09-9898-1735149e6adf")
     override val command = "/undo"
-    override val description = "Undo the last N block breaks, restoring blocks and reversing item collection."
+    override val description =
+        "Undo the last N block breaks, restoring blocks and reversing item collection."
     override val usage = "/undo [N]"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
@@ -31,10 +32,14 @@ class UndoCommand : CommandHandler {
                     context.world.applyChange(change)
                     context.broadcast(ServerMessage.WorldUpdate(listOf(change)))
                     for (item in record.spawnedItems) {
-                        val stillInWorld = context.worldItems?.let { wim ->
-                            val found = wim.hasItem(item.id)
-                            if (found) { wim.despawnItem(item.id); true } else false
-                        } ?: false
+                        val stillInWorld =
+                            context.worldItems?.let { wim ->
+                                val found = wim.hasItem(item.id)
+                                if (found) {
+                                    wim.despawnItem(item.id)
+                                    true
+                                } else false
+                            } ?: false
                         if (!stillInWorld) {
                             val remaining = (session.inventory[item.type] ?: 0) - item.count
                             if (remaining <= 0) session.inventory.remove(item.type)

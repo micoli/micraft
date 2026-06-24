@@ -1,13 +1,13 @@
 package org.micoli.micraft.command
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 import org.micoli.micraft.world.ItemType
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class GiveCommandTest {
     private val cmd = GiveCommand()
@@ -17,7 +17,11 @@ class GiveCommandTest {
         val session = testSession()
         cmd.execute(session, "", testContext())
         val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
-        assertTrue(notifs.any { it.message.contains("give", ignoreCase = true) || it.message.contains("Usage", ignoreCase = true) })
+        assertTrue(
+            notifs.any {
+                it.message.contains("give", ignoreCase = true) ||
+                    it.message.contains("Usage", ignoreCase = true)
+            })
     }
 
     @Test
@@ -62,7 +66,10 @@ class GiveCommandTest {
         val session = testSession()
         cmd.execute(session, "snowball 3", testContext())
         val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
-        assertTrue(notifs.any { it.message.contains("3") && it.message.contains("snowball", ignoreCase = true) })
+        assertTrue(
+            notifs.any {
+                it.message.contains("3") && it.message.contains("snowball", ignoreCase = true)
+            })
     }
 
     @Test

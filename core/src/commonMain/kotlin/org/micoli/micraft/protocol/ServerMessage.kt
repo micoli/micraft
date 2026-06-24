@@ -25,8 +25,7 @@ sealed class ServerMessage {
         val activeLayout: String = "default",
     ) : ServerMessage()
 
-    @Serializable
-    data class ShadersUpdate(val enabled: Boolean) : ServerMessage()
+    @Serializable data class ShadersUpdate(val enabled: Boolean) : ServerMessage()
 
     @Serializable
     data class ChunkData(
@@ -35,50 +34,44 @@ sealed class ServerMessage {
         val wireBlocks: ByteArray,
     ) : ServerMessage()
 
-    @Serializable
-    data class PlayerUpdate(val state: PlayerState) : ServerMessage()
+    @Serializable data class PlayerUpdate(val state: PlayerState) : ServerMessage()
+
+    @Serializable data class WorldUpdate(val changes: List<BlockChange>) : ServerMessage()
+
+    @Serializable data class PlayerLeft(val playerId: String) : ServerMessage()
 
     @Serializable
-    data class WorldUpdate(val changes: List<BlockChange>) : ServerMessage()
-
-    @Serializable
-    data class PlayerLeft(val playerId: String) : ServerMessage()
-
-    @Serializable
-    data class BlockBreakProgress(val pos: BlockPos, val progress: Int, val hardness: Int) : ServerMessage()
+    data class BlockBreakProgress(val pos: BlockPos, val progress: Int, val hardness: Int) :
+        ServerMessage()
 
     @Serializable
     data class Notification(val message: String, val channel: String = "system") : ServerMessage()
 
     @Serializable
-    data class ChatMessage(val channel: String, val sender: String, val message: String) : ServerMessage()
+    data class ChatMessage(val channel: String, val sender: String, val message: String) :
+        ServerMessage()
 
     @Serializable
-    data class ChannelsSync(val subscribedChannels: List<String>, val knownChannels: List<String>) : ServerMessage()
+    data class ChannelsSync(val subscribedChannels: List<String>, val knownChannels: List<String>) :
+        ServerMessage()
+
+    @Serializable data class ItemsSpawned(val items: List<WorldItem>) : ServerMessage()
+
+    @Serializable data class ItemDespawned(val id: String) : ServerMessage()
+
+    @Serializable data class InventoryUpdate(val inventory: Map<ItemType, Int>) : ServerMessage()
+
+    @Serializable data class TimeUpdate(val gameTicks: Long) : ServerMessage()
+
+    @Serializable data class ShortcutBarUpdate(val slots: List<ItemType?>) : ServerMessage()
 
     @Serializable
-    data class ItemsSpawned(val items: List<WorldItem>) : ServerMessage()
+    data class LayoutsSync(val layouts: List<GameLayout>, val activeLayout: String) :
+        ServerMessage()
 
-    @Serializable
-    data class ItemDespawned(val id: String) : ServerMessage()
+    @Serializable object OpenLayoutEditor : ServerMessage()
 
-    @Serializable
-    data class InventoryUpdate(val inventory: Map<ItemType, Int>) : ServerMessage()
-
-    @Serializable
-    data class TimeUpdate(val gameTicks: Long) : ServerMessage()
-
-    @Serializable
-    data class ShortcutBarUpdate(val slots: List<ItemType?>) : ServerMessage()
-
-    @Serializable
-    data class LayoutsSync(val layouts: List<GameLayout>, val activeLayout: String) : ServerMessage()
-
-    @Serializable
-    object OpenLayoutEditor : ServerMessage()
-
-    @Serializable
-    object OpenPreferences : ServerMessage()
+    @Serializable object OpenPreferences : ServerMessage()
 
     @Serializable
     data class RegistrySync(
@@ -87,14 +80,11 @@ sealed class ServerMessage {
         val npcs: Map<String, String> = emptyMap(),
     ) : ServerMessage()
 
-    @Serializable
-    data class NpcSpawned(val npc: NpcState) : ServerMessage()
+    @Serializable data class NpcSpawned(val npc: NpcState) : ServerMessage()
 
-    @Serializable
-    data class NpcDespawned(val id: String) : ServerMessage()
+    @Serializable data class NpcDespawned(val id: String) : ServerMessage()
 
-    @Serializable
-    data class NpcUpdate(val npc: NpcState) : ServerMessage()
+    @Serializable data class NpcUpdate(val npc: NpcState) : ServerMessage()
 
     @Serializable
     data class NpcInteractResult(val npcId: String, val payload: String) : ServerMessage()
@@ -125,8 +115,12 @@ data class ItemInfo(
     val placesBlock: String? = null,
 )
 
-@Serializable
-data class BlockChange(val pos: BlockPos, val type: BlockType)
+@Serializable data class BlockChange(val pos: BlockPos, val type: BlockType)
 
 @Serializable
-data class CommandInfo(val id: String, val command: String, val description: String, val autocompleteArgs: List<Int> = emptyList())
+data class CommandInfo(
+    val id: String,
+    val command: String,
+    val description: String,
+    val autocompleteArgs: List<Int> = emptyList()
+)

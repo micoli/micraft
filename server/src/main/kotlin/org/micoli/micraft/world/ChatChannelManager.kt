@@ -8,11 +8,15 @@ class ChatChannelManager {
         val PROTECTED = setOf("system", "game")
     }
 
-    fun channelExists(name: String): Boolean = name in BUILTIN || name in customChannels || name.startsWith("dm:")
+    fun channelExists(name: String): Boolean =
+        name in BUILTIN || name in customChannels || name.startsWith("dm:")
 
-    fun registerChannel(name: String) { customChannels.add(name) }
+    fun registerChannel(name: String) {
+        customChannels.add(name)
+    }
 
     fun listKnownChannels(): List<String> = (BUILTIN + customChannels).sorted()
 
-    fun dmChannelName(a: String, b: String): String = "dm:${listOf(a, b).sorted().joinToString(":")}"
+    fun dmChannelName(a: String, b: String): String =
+        "dm:${listOf(a, b).sorted().joinToString(":")}"
 }

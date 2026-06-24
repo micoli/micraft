@@ -9,11 +9,11 @@ data class BiomeZone(
     val altitudeMin: Int = 0,
     val altitudeMax: Int = 0,
 ) {
-    val altitudeConstrained: Boolean get() = altitudeMin != 0 || altitudeMax != 0
+    val altitudeConstrained: Boolean
+        get() = altitudeMin != 0 || altitudeMax != 0
 }
 
-@Serializable
-data class VegetationEntry(val type: String, val density: Double = 0.0)
+@Serializable data class VegetationEntry(val type: String, val density: Double = 0.0)
 
 @Serializable
 data class BiomeDefinition(

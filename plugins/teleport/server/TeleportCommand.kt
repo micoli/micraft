@@ -1,11 +1,11 @@
 package org.micoli.micraft.plugins.teleport
 
+import java.util.UUID
 import org.micoli.micraft.CommandContext
 import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
-import java.util.UUID
 
 class TeleportCommand : CommandHandler {
     override val id = UUID.fromString("c43cd2ee-eed0-478e-a87d-72db5ef9ffe6")
@@ -15,8 +15,16 @@ class TeleportCommand : CommandHandler {
 
     override val autocompleteArgs = listOf(0)
 
-    override suspend fun completeArg(argIndex: Int, partial: String, session: PlayerSession?, context: CommandContext): List<String> =
-        context.sessions().map { it.state.name }.filter { it.startsWith(partial, ignoreCase = true) }
+    override suspend fun completeArg(
+        argIndex: Int,
+        partial: String,
+        session: PlayerSession?,
+        context: CommandContext
+    ): List<String> =
+        context
+            .sessions()
+            .map { it.state.name }
+            .filter { it.startsWith(partial, ignoreCase = true) }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
@@ -25,14 +33,22 @@ class TeleportCommand : CommandHandler {
         if (parts.size == 1 && parts[0].isNotEmpty() && parts[0].toFloatOrNull() == null) {
             val target = context.sessions().find { it.state.name == parts[0] }
             if (target == null) {
-                session.send(ServerMessage.Notification(i18n.t(lang, "teleport:server:not_found", parts[0])))
+                session.send(
+                    ServerMessage.Notification(i18n.t(lang, "teleport:server:not_found", parts[0])))
                 return
             }
             val dest = safeTeleportPos(context.world, target.state.pos)
             session.state = session.state.copy(pos = dest)
             session.vy = 0f
             session.send(ServerMessage.PlayerUpdate(session.state))
-            session.send(ServerMessage.Notification(i18n.t(lang, "teleport:server:done", dest.x.toInt(), dest.y.toInt(), dest.z.toInt())))
+            session.send(
+                ServerMessage.Notification(
+                    i18n.t(
+                        lang,
+                        "teleport:server:done",
+                        dest.x.toInt(),
+                        dest.y.toInt(),
+                        dest.z.toInt())))
             return
         }
         val x = parts.getOrNull(0)?.toFloatOrNull()
@@ -46,6 +62,9 @@ class TeleportCommand : CommandHandler {
         session.state = session.state.copy(pos = dest)
         session.vy = 0f
         session.send(ServerMessage.PlayerUpdate(session.state))
-        session.send(ServerMessage.Notification(i18n.t(lang, "teleport:server:done", dest.x.toInt(), dest.y.toInt(), dest.z.toInt())))
+        session.send(
+            ServerMessage.Notification(
+                i18n.t(
+                    lang, "teleport:server:done", dest.x.toInt(), dest.y.toInt(), dest.z.toInt())))
     }
 }

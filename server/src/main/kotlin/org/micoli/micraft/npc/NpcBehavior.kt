@@ -6,5 +6,10 @@ import org.micoli.micraft.world.WorldState
 
 interface NpcBehavior {
     fun tick(instance: NpcInstance, world: WorldState): Boolean
-    suspend fun onInteract(instance: NpcInstance, session: PlayerSession, send: suspend (ServerMessage) -> Unit) {}
+
+    suspend fun onInteract(
+        instance: NpcInstance,
+        session: PlayerSession,
+        send: suspend (ServerMessage) -> Unit
+    ) {}
 }

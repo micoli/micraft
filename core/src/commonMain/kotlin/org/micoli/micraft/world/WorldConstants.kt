@@ -6,7 +6,8 @@ object WorldConstants {
     var CHUNK_SIZE = 16
     var VIEW_RADIUS = 3
     var FORWARD_VIEW_RADIUS = 7
-    val CLIENT_VIEW_RADIUS get() = FORWARD_VIEW_RADIUS
+    val CLIENT_VIEW_RADIUS
+        get() = FORWARD_VIEW_RADIUS
 }
 
 object PlayerConstants {

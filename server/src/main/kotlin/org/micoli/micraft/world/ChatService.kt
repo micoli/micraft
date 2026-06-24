@@ -2,7 +2,6 @@ package org.micoli.micraft.world
 
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
-import kotlin.math.sqrt
 
 private const val AROUND_RADIUS_SQ = 64f * 64f
 
@@ -13,7 +12,8 @@ class ChatService(
 ) {
     suspend fun subscribe(session: PlayerSession, channel: String): Boolean {
         if (channel in session.state.subscribedChannels) return false
-        session.state = session.state.copy(subscribedChannels = session.state.subscribedChannels + channel)
+        session.state =
+            session.state.copy(subscribedChannels = session.state.subscribedChannels + channel)
         savePlayer(session)
         return true
     }
@@ -21,7 +21,8 @@ class ChatService(
     suspend fun unsubscribe(session: PlayerSession, channel: String): Boolean {
         if (channel in ChatChannelManager.PROTECTED) return false
         if (channel !in session.state.subscribedChannels) return false
-        session.state = session.state.copy(subscribedChannels = session.state.subscribedChannels - channel)
+        session.state =
+            session.state.copy(subscribedChannels = session.state.subscribedChannels - channel)
         savePlayer(session)
         return true
     }
@@ -38,7 +39,8 @@ class ChatService(
         val msg = ServerMessage.ChatMessage(channel, sender.state.name, text)
         val all = getSessions()
         when {
-            channel == "world" -> all.filter { "world" in it.state.subscribedChannels }.forEach { it.send(msg) }
+            channel == "world" ->
+                all.filter { "world" in it.state.subscribedChannels }.forEach { it.send(msg) }
             channel == "around" -> {
                 val sp = sender.state.pos
                 all.filter { "around" in it.state.subscribedChannels }
@@ -59,8 +61,7 @@ class ChatService(
             ServerMessage.ChannelsSync(
                 subscribedChannels = session.state.subscribedChannels,
                 knownChannels = channelManager.listKnownChannels(),
-            )
-        )
+            ))
     }
 
     suspend fun onPlayerConnect(session: PlayerSession) = syncChannels(session)

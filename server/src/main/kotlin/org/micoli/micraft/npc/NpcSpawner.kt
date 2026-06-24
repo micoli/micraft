@@ -1,5 +1,6 @@
 package org.micoli.micraft.npc
 
+import kotlin.random.Random
 import org.micoli.micraft.physics.AabbCollider
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.world.ChunkPos
@@ -7,7 +8,6 @@ import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldState
 import org.micoli.micraft.world.isSolid
 import org.slf4j.LoggerFactory
-import kotlin.random.Random
 
 private val log = LoggerFactory.getLogger(NpcSpawner::class.java)
 
@@ -32,8 +32,12 @@ class NpcSpawner {
                 if (attempts >= NpcConstants.MAX_SPAWN_ATTEMPTS_PER_TICK) break
                 if (npcManager.countByTypeInChunk(type, chunkPos) >= spawn.maxPerChunk) continue
 
-                val wx = chunkPos.cx * WorldConstants.CHUNK_SIZE + Random.nextInt(WorldConstants.CHUNK_SIZE)
-                val wz = chunkPos.cz * WorldConstants.CHUNK_SIZE + Random.nextInt(WorldConstants.CHUNK_SIZE)
+                val wx =
+                    chunkPos.cx * WorldConstants.CHUNK_SIZE +
+                        Random.nextInt(WorldConstants.CHUNK_SIZE)
+                val wz =
+                    chunkPos.cz * WorldConstants.CHUNK_SIZE +
+                        Random.nextInt(WorldConstants.CHUNK_SIZE)
 
                 if (spawn.spawnBiomes.isNotEmpty()) {
                     val biome = world.biomeAt(wx, wz)
@@ -43,12 +47,19 @@ class NpcSpawner {
                 val surfaceY = findSurfaceY(world, wx, wz) ?: continue
                 val spawnPos = Vec3(wx + 0.5f, surfaceY.toFloat(), wz + 0.5f)
 
-                val solid = { bx: Int, by: Int, bz: Int -> world.getBlockIfLoaded(bx, by, bz).isSolid }
-                val clearX = AabbCollider.resolveX(solid, spawnPos.x, spawnPos.y, spawnPos.z, def.width, def.height, 0f)
-                val clearZ = AabbCollider.resolveZ(solid, spawnPos.x, spawnPos.y, spawnPos.z, def.width, def.height, 0f)
+                val solid = { bx: Int, by: Int, bz: Int ->
+                    world.getBlockIfLoaded(bx, by, bz).isSolid
+                }
+                val clearX =
+                    AabbCollider.resolveX(
+                        solid, spawnPos.x, spawnPos.y, spawnPos.z, def.width, def.height, 0f)
+                val clearZ =
+                    AabbCollider.resolveZ(
+                        solid, spawnPos.x, spawnPos.y, spawnPos.z, def.width, def.height, 0f)
                 if (clearX != 0f || clearZ != 0f) continue
 
-                val name = "${type.lowercase().replaceFirstChar { it.uppercase() }} #${java.util.UUID.randomUUID().toString().take(4)}"
+                val name =
+                    "${type.lowercase().replaceFirstChar { it.uppercase() }} #${java.util.UUID.randomUUID().toString().take(4)}"
                 npcManager.spawnNpc(name, type, spawnPos)
                 log.debug("Auto-spawned {} at ({},{},{})", type, wx, surfaceY, wz)
                 attempts++

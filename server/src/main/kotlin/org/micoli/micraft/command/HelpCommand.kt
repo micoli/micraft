@@ -1,10 +1,10 @@
 package org.micoli.micraft.command
 
+import java.util.UUID
 import org.micoli.micraft.CommandContext
 import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
-import java.util.UUID
 
 class HelpCommand : CommandHandler {
     override val id = UUID.fromString("a458fe30-07ab-42dc-b47c-9e7ed09253bd")
@@ -21,7 +21,8 @@ class HelpCommand : CommandHandler {
         if (target != null) {
             val cmd = all.find { it.command == target || it.command == "/$target" }
             if (cmd == null) {
-                session.send(ServerMessage.Notification(i18n.t(lang, "help:server:unknown_cmd", target)))
+                session.send(
+                    ServerMessage.Notification(i18n.t(lang, "help:server:unknown_cmd", target)))
                 return
             }
             val sb = StringBuilder()

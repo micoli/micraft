@@ -1,13 +1,13 @@
 package org.micoli.micraft.plugins.teleport
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.support.MapChunkGenerator
 import org.micoli.micraft.support.testWorld
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldState
-import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class TeleportUtilsTest {
 
@@ -37,7 +37,8 @@ class TeleportUtilsTest {
 
     @Test
     fun returnsMaxY_whenNoSafeSpotExists() {
-        val blocks = (0 until WorldConstants.WORLD_MAX_Y).associate { Triple(0, it, 0) to BlockType.STONE }
+        val blocks =
+            (0 until WorldConstants.WORLD_MAX_Y).associate { Triple(0, it, 0) to BlockType.STONE }
         val world = WorldState(MapChunkGenerator(blocks))
         val target = Vec3(0f, 0f, 0f)
         val result = safeTeleportPos(world, target)

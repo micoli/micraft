@@ -1,12 +1,5 @@
 package org.micoli.micraft.http
 
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import org.micoli.micraft.world.BlockRegistry
-import org.micoli.micraft.world.BlockType
-import org.micoli.micraft.world.Chunk
-import org.micoli.micraft.world.ChunkPos
-import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.GZIPInputStream
@@ -14,29 +7,40 @@ import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import org.micoli.micraft.world.BlockRegistry
+import org.micoli.micraft.world.BlockType
+import org.micoli.micraft.world.Chunk
+import org.micoli.micraft.world.ChunkPos
+import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("TerrainCache")
 
 class TerrainCache {
     private val cache = ConcurrentHashMap<ChunkPos, List<String?>>()
-    @Volatile var cachedJson: String = "[]"
+    @Volatile
+    var cachedJson: String = "[]"
         private set
 
     /**
-     * Load from [cacheFile] then recompute any chunk in [chunksDir] whose file is
-     * newer than the cache file — so on startup the map is fully prewarmed.
+     * Load from [cacheFile] then recompute any chunk in [chunksDir] whose file is newer than the
+     * cache file — so on startup the map is fully prewarmed.
      */
     fun prewarm(chunksDir: Path, cacheFile: Path) {
-        val cacheTime = if (cacheFile.exists()) {
-            try {
-                Json.decodeFromString<List<ChunkTerrainInfo>>(cacheFile.readText())
-                    .forEach { info -> cache[ChunkPos(info.cx, info.cz)] = info.colors }
-                cacheFile.getLastModifiedTime().toMillis()
-            } catch (e: Exception) {
-                log.warn("Failed to load terrain cache: {}", e.message)
-                0L
-            }
-        } else 0L
+        val cacheTime =
+            if (cacheFile.exists()) {
+                try {
+                    Json.decodeFromString<List<ChunkTerrainInfo>>(cacheFile.readText()).forEach {
+                        info ->
+                        cache[ChunkPos(info.cx, info.cz)] = info.colors
+                    }
+                    cacheFile.getLastModifiedTime().toMillis()
+                } catch (e: Exception) {
+                    log.warn("Failed to load terrain cache: {}", e.message)
+                    0L
+                }
+            } else 0L
 
         val chunkFiles = chunksDir.toFile().listFiles { f -> f.name.endsWith(".mcc.gz") } ?: return
         var recomputed = 0
@@ -54,7 +58,10 @@ class TerrainCache {
                 log.warn("Failed to read chunk {} for terrain prewarm: {}", pos, e.message)
             }
         }
-        log.info("Terrain cache prewarmed: {} from file, {} recomputed", cache.size - recomputed, recomputed)
+        log.info(
+            "Terrain cache prewarmed: {} from file, {} recomputed",
+            cache.size - recomputed,
+            recomputed)
         cachedJson = Json.encodeToString(getAll())
     }
 
@@ -73,15 +80,12 @@ class TerrainCache {
 
     fun update(chunk: Chunk) {
         val colors = ArrayList<String?>(256)
-        for (lx in 0 until 16)
-            for (lz in 0 until 16)
-                colors += topBlockColor(chunk, lx, lz)
+        for (lx in 0 until 16) for (lz in 0 until 16) colors += topBlockColor(chunk, lx, lz)
         cache[chunk.pos] = colors
     }
 
-    fun getAll(): List<ChunkTerrainInfo> = cache.entries.map { (pos, colors) ->
-        ChunkTerrainInfo(pos.cx, pos.cz, colors)
-    }
+    fun getAll(): List<ChunkTerrainInfo> =
+        cache.entries.map { (pos, colors) -> ChunkTerrainInfo(pos.cx, pos.cz, colors) }
 }
 
 /** Parses "{cx}_{cz}" (supports negative values). */

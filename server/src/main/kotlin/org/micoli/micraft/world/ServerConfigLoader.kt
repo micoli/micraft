@@ -1,17 +1,17 @@
 package org.micoli.micraft.world
 
 import com.charleskorn.kaml.Yaml
+import java.nio.file.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.DEBUG_WORLD
 import org.slf4j.LoggerFactory
-import java.nio.file.Path
-import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
-import kotlin.io.path.readText
-import kotlin.io.path.writeText
 
 private val log = LoggerFactory.getLogger("ServerConfigLoader")
 
@@ -62,16 +62,19 @@ data class ServerConfig(
 )
 
 fun loadServerConfig(path: Path): ServerConfig {
-    val config = if (path.exists()) {
-        runCatching { Yaml.default.decodeFromString(ServerConfig.serializer(), path.readText()) }
-            .getOrElse { e ->
-                log.warn("Failed to parse server.yaml ({}), using defaults", e.message)
-                ServerConfig()
-            }
-    } else {
-        log.info("No server.yaml at {}, creating with defaults", path.toAbsolutePath())
-        ServerConfig()
-    }
+    val config =
+        if (path.exists()) {
+            runCatching {
+                    Yaml.default.decodeFromString(ServerConfig.serializer(), path.readText())
+                }
+                .getOrElse { e ->
+                    log.warn("Failed to parse server.yaml ({}), using defaults", e.message)
+                    ServerConfig()
+                }
+        } else {
+            log.info("No server.yaml at {}, creating with defaults", path.toAbsolutePath())
+            ServerConfig()
+        }
     path.parent?.createDirectories()
     path.writeText(Yaml.default.encodeToString(ServerConfig.serializer(), config))
     return config
@@ -111,6 +114,8 @@ fun applyServerConfig(config: ServerConfig) {
     }
     log.info(
         "Server config applied: world={}, player={}, gameplay={}",
-        config.world, config.player, config.gameplay,
+        config.world,
+        config.player,
+        config.gameplay,
     )
 }

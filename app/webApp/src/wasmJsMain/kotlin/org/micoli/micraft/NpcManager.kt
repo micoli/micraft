@@ -4,8 +4,7 @@ import org.micoli.micraft.babylon.*
 import org.micoli.micraft.npc.NpcState
 
 class NpcManager(private val scene: JsAny) {
-    @OptIn(ExperimentalWasmJsInterop::class)
-    private val npcModels = mutableMapOf<String, JsAny>()
+    @OptIn(ExperimentalWasmJsInterop::class) private val npcModels = mutableMapOf<String, JsAny>()
     private val npcPrevPos = mutableMapOf<String, Triple<Double, Double, Double>>()
     private val pendingNpcs = mutableListOf<NpcState>()
     private val npcNames = mutableMapOf<String, String>()
@@ -14,7 +13,10 @@ class NpcManager(private val scene: JsAny) {
         npcNames[npc.id] = npc.name
         updateAutocomplete()
         jsSetNpcOnMinimap(npc.id, npc.pos.x, npc.pos.z)
-        if (!jsIsNpcModelsReady()) { pendingNpcs.add(npc); return }
+        if (!jsIsNpcModelsReady()) {
+            pendingNpcs.add(npc)
+            return
+        }
         createOrUpdateMesh(npc)
     }
 
@@ -55,17 +57,14 @@ class NpcManager(private val scene: JsAny) {
 
     @OptIn(ExperimentalWasmJsInterop::class)
     private fun createOrUpdateMesh(npc: NpcState) {
-        val model = npcModels.getOrPut(npc.id) {
-            jsCreateNpcModel(scene, npc.type) ?: return
-        }
+        val model = npcModels.getOrPut(npc.id) { jsCreateNpcModel(scene, npc.type) ?: return }
         val prev = npcPrevPos[npc.id]
         val x = npc.pos.x.toDouble()
         val y = npc.pos.y.toDouble()
         val z = npc.pos.z.toDouble()
-        val isWalking = prev != null && (
-            kotlin.math.abs(x - prev.first) > 0.001 ||
-            kotlin.math.abs(z - prev.third) > 0.001
-        )
+        val isWalking =
+            prev != null &&
+                (kotlin.math.abs(x - prev.first) > 0.001 || kotlin.math.abs(z - prev.third) > 0.001)
         npcPrevPos[npc.id] = Triple(x, y, z)
         jsSetNpcTransform(model, x, y, z, npc.yaw, isWalking)
     }

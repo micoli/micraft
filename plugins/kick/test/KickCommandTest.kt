@@ -1,12 +1,12 @@
 package org.micoli.micraft.plugins.kick
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class KickCommandTest {
     private val cmd = KickCommand()
@@ -32,10 +32,11 @@ class KickCommandTest {
         val kicked = mutableListOf<String>()
         val target = testSession(id = "target-id", name = "Bob")
         val session = testSession()
-        val ctx = testContext(
-            sessions = listOf(session, target),
-            kickSession = { kicked.add(it) },
-        )
+        val ctx =
+            testContext(
+                sessions = listOf(session, target),
+                kickSession = { kicked.add(it) },
+            )
         cmd.execute(session, "Bob", ctx)
         assertEquals(listOf("Bob"), kicked)
     }
@@ -46,7 +47,10 @@ class KickCommandTest {
         val session = testSession()
         val ctx = testContext(sessions = listOf(session, target))
         cmd.execute(session, "Bob", ctx)
-        assertTrue(target.sent.filterIsInstance<ServerMessage.Notification>().any { it.message.contains("kicked") })
+        assertTrue(
+            target.sent.filterIsInstance<ServerMessage.Notification>().any {
+                it.message.contains("kicked")
+            })
     }
 
     @Test
@@ -56,6 +60,9 @@ class KickCommandTest {
         val session = testSession()
         val ctx = testContext(sessions = listOf(session, target, bystander))
         cmd.execute(session, "Bob", ctx)
-        assertTrue(bystander.sent.filterIsInstance<ServerMessage.Notification>().any { it.message.contains("Bob") })
+        assertTrue(
+            bystander.sent.filterIsInstance<ServerMessage.Notification>().any {
+                it.message.contains("Bob")
+            })
     }
 }

@@ -1,21 +1,22 @@
 package org.micoli.micraft.world
 
 import com.charleskorn.kaml.Yaml
-import kotlinx.serialization.builtins.MapSerializer
-import kotlinx.serialization.builtins.serializer
-import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readText
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
+import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("I18nConfig")
 
-private val NESTED_MAP_SERIALIZER = MapSerializer(
-    String.serializer(),
-    MapSerializer(String.serializer(), MapSerializer(String.serializer(), String.serializer())),
-)
+private val NESTED_MAP_SERIALIZER =
+    MapSerializer(
+        String.serializer(),
+        MapSerializer(String.serializer(), MapSerializer(String.serializer(), String.serializer())),
+    )
 
 class I18nConfig(private val dirs: List<Path>) {
     constructor(dir: Path) : this(listOf(dir))
@@ -23,9 +24,12 @@ class I18nConfig(private val dirs: List<Path>) {
     // locale → flat "feature:scope:key" → translation
     @Volatile private var tables: Map<String, Map<String, String>> = emptyMap()
 
-    val locales: Set<String> get() = tables.keys
+    val locales: Set<String>
+        get() = tables.keys
 
-    init { reload() }
+    init {
+        reload()
+    }
 
     fun reload() {
         val merged = mutableMapOf<String, MutableMap<String, String>>()
@@ -37,17 +41,21 @@ class I18nConfig(private val dirs: List<Path>) {
             dir.listDirectoryEntries("*.yaml").forEach { file ->
                 val locale = file.nameWithoutExtension
                 runCatching {
-                    val raw = Yaml.default.decodeFromString(NESTED_MAP_SERIALIZER, file.readText())
-                    val flat = raw.flatMap { (feature, scopes) ->
-                        scopes.flatMap { (scope, keys) ->
-                            keys.map { (key, value) -> "$feature:$scope:$key" to value }
-                        }
-                    }.toMap()
-                    merged.getOrPut(locale) { mutableMapOf() }.putAll(flat)
-                    log.debug("i18n merged: {} from {} ({} keys)", locale, dir, flat.size)
-                }.onFailure { e ->
-                    log.warn("Failed to load i18n from {}/{}.yaml: {}", dir, locale, e.message)
-                }
+                        val raw =
+                            Yaml.default.decodeFromString(NESTED_MAP_SERIALIZER, file.readText())
+                        val flat =
+                            raw.flatMap { (feature, scopes) ->
+                                    scopes.flatMap { (scope, keys) ->
+                                        keys.map { (key, value) -> "$feature:$scope:$key" to value }
+                                    }
+                                }
+                                .toMap()
+                        merged.getOrPut(locale) { mutableMapOf() }.putAll(flat)
+                        log.debug("i18n merged: {} from {} ({} keys)", locale, dir, flat.size)
+                    }
+                    .onFailure { e ->
+                        log.warn("Failed to load i18n from {}/{}.yaml: {}", dir, locale, e.message)
+                    }
             }
         }
         if ("en" !in merged) merged["en"] = mutableMapOf()

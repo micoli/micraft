@@ -1,5 +1,8 @@
 package org.micoli.micraft.tick
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
@@ -8,9 +11,6 @@ import org.micoli.micraft.support.testSession
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.ui.defaultLayout
 import org.micoli.micraft.ui.validateLayouts
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class LayoutUpdateTest {
 
@@ -19,7 +19,8 @@ class LayoutUpdateTest {
         if (error != null) {
             session.send(ServerMessage.Notification(error))
         } else {
-            session.state = session.state.copy(layouts = msg.layouts, activeLayout = msg.activeLayout)
+            session.state =
+                session.state.copy(layouts = msg.layouts, activeLayout = msg.activeLayout)
         }
     }
 

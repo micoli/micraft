@@ -1,5 +1,8 @@
 package org.micoli.micraft.plugins.goto
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.npc.NpcDefinition
 import org.micoli.micraft.npc.NpcManager
@@ -8,9 +11,6 @@ import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 private fun testNpcManager(vararg defs: Pair<String, NpcDefinition>): NpcManager {
     val m = NpcManager(broadcast = {})
@@ -18,10 +18,16 @@ private fun testNpcManager(vararg defs: Pair<String, NpcDefinition>): NpcManager
     return m
 }
 
-private fun staticDef(type: String = "SELLER") = NpcDefinition(
-    type = type, behavior = StaticNpcBehavior(), bbmodelFile = "npc.bbmodel",
-    width = 0.6f, height = 1.8f, wanderSpeed = 0f, wanderRadius = 0f,
-)
+private fun staticDef(type: String = "SELLER") =
+    NpcDefinition(
+        type = type,
+        behavior = StaticNpcBehavior(),
+        bbmodelFile = "npc.bbmodel",
+        width = 0.6f,
+        height = 1.8f,
+        wanderSpeed = 0f,
+        wanderRadius = 0f,
+    )
 
 class GotoCommandTest {
     private val cmd = GotoCommand()
@@ -66,7 +72,10 @@ class GotoCommandTest {
         val session = testSession()
         cmd.execute(session, "Bob", testContext(sessions = listOf(session, target)))
         assertTrue(session.sent.any { it is ServerMessage.PlayerUpdate })
-        assertTrue(session.sent.filterIsInstance<ServerMessage.Notification>().any { it.message.contains("Bob") })
+        assertTrue(
+            session.sent.filterIsInstance<ServerMessage.Notification>().any {
+                it.message.contains("Bob")
+            })
     }
 
     @Test
@@ -85,7 +94,10 @@ class GotoCommandTest {
         npcManager.spawnNpc("Bob", "SELLER", Vec3(999f, 10f, 999f))
         val target = testSession(id = "target-id", name = "Bob", pos = Vec3(100f, 10f, 200f))
         val session = testSession()
-        cmd.execute(session, "Bob", testContext(sessions = listOf(session, target), npcManager = npcManager))
+        cmd.execute(
+            session,
+            "Bob",
+            testContext(sessions = listOf(session, target), npcManager = npcManager))
         assertEquals(100f, session.state.pos.x)
         assertEquals(200f, session.state.pos.z)
     }

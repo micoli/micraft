@@ -1,5 +1,9 @@
 package org.micoli.micraft.command
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.plugins.goto.GotoCommand
 import org.micoli.micraft.plugins.kick.KickCommand
@@ -7,10 +11,6 @@ import org.micoli.micraft.plugins.summon.SummonCommand
 import org.micoli.micraft.plugins.teleport.TeleportCommand
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class AutocompleteTest {
 
@@ -42,7 +42,9 @@ class AutocompleteTest {
         val all = cmd.completeArg(0, "", null, testContext())
         assertEquals(24, all.size)
         val filtered = cmd.completeArg(0, "1", null, testContext())
-        assertTrue(filtered.containsAll(listOf("1", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19")))
+        assertTrue(
+            filtered.containsAll(
+                listOf("1", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19")))
     }
 
     @Test

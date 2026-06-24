@@ -15,25 +15,26 @@ sourceSets {
         kotlin {
             val pluginsDir = rootProject.projectDir.resolve("plugins")
             if (pluginsDir.exists()) {
-                pluginsDir.listFiles { f -> f.isDirectory }?.forEach { pluginDir ->
-                    val testDir = pluginDir.resolve("test")
-                    if (testDir.exists()) srcDir(testDir)
-                }
+                pluginsDir
+                    .listFiles { f -> f.isDirectory }
+                    ?.forEach { pluginDir ->
+                        val testDir = pluginDir.resolve("test")
+                        if (testDir.exists()) srcDir(testDir)
+                    }
             }
         }
     }
 }
 
 val rootDirPath: String = rootProject.projectDir.absolutePath
-tasks.test {
-    systemProperty("projectDir", rootDirPath)
-}
+
+tasks.test { systemProperty("projectDir", rootDirPath) }
 
 group = "org.micoli.micraft"
+
 version = "1.0.0"
-application {
-    mainClass = "org.micoli.micraft.ApplicationKt"
-}
+
+application { mainClass = "org.micoli.micraft.ApplicationKt" }
 
 dependencies {
     api(projects.core)

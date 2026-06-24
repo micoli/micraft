@@ -1,6 +1,8 @@
 package org.micoli.micraft.session
 
 import io.ktor.websocket.*
+import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -8,11 +10,8 @@ import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.world.BlockPos
-import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.ItemType
-import java.util.Collections
-import java.util.concurrent.ConcurrentHashMap
 
 open class PlayerSession(
     val id: String,
@@ -40,6 +39,6 @@ open class PlayerSession(
     open suspend fun sendChunk(msg: ServerMessage.ChunkData) {
         val cs = chunkSocket
         if (cs != null) cs.send(Frame.Text(Json.encodeToString<ServerMessage>(msg)))
-        else send(msg)  // fallback: chunk socket not yet connected
+        else send(msg) // fallback: chunk socket not yet connected
     }
 }

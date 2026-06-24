@@ -8,17 +8,11 @@ plugins {
 
 kotlin {
     jvm()
-    
-    js {
-        browser()
-    }
-    
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser()
-    }
-    
-    
+
+    js { browser() }
+
+    @OptIn(ExperimentalWasmDsl::class) wasmJs { browser() }
+
     sourceSets {
         commonMain.dependencies {
             api(projects.core)
@@ -31,11 +25,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
         }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-        }
-        jsMain.dependencies {
-            implementation(libs.wrappers.browser)
-        }
+        commonTest.dependencies { implementation(libs.kotlin.test) }
+        jsMain.dependencies { implementation(libs.wrappers.browser) }
     }
 }

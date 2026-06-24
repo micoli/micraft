@@ -1,11 +1,11 @@
 package org.micoli.micraft.plugins.goto
 
+import java.util.UUID
 import org.micoli.micraft.CommandContext
 import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.plugins.teleport.safeTeleportPos
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
-import java.util.UUID
 
 class GotoCommand : CommandHandler {
     override val id = UUID.fromString("85eb4de8-3283-46ea-84fe-da559b905e33")
@@ -15,7 +15,12 @@ class GotoCommand : CommandHandler {
 
     override val autocompleteArgs = listOf(0)
 
-    override suspend fun completeArg(argIndex: Int, partial: String, session: PlayerSession?, context: CommandContext): List<String> {
+    override suspend fun completeArg(
+        argIndex: Int,
+        partial: String,
+        session: PlayerSession?,
+        context: CommandContext
+    ): List<String> {
         val players = context.sessions().map { it.state.name }
         val npcs = context.npcManager?.getAll()?.map { it.state.name } ?: emptyList()
         return (players + npcs).filter { it.startsWith(partial, ignoreCase = true) }
@@ -29,8 +34,9 @@ class GotoCommand : CommandHandler {
             session.send(ServerMessage.Notification(i18n.t(lang, "goto:server:usage")))
             return
         }
-        val targetPos = context.sessions().find { it.state.name == target }?.state?.pos
-            ?: context.npcManager?.findByNameOrId(target)?.state?.pos
+        val targetPos =
+            context.sessions().find { it.state.name == target }?.state?.pos
+                ?: context.npcManager?.findByNameOrId(target)?.state?.pos
         if (targetPos == null) {
             session.send(ServerMessage.Notification(i18n.t(lang, "goto:server:not_found", target)))
             return

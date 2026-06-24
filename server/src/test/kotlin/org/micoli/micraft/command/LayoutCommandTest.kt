@@ -1,5 +1,8 @@
 package org.micoli.micraft.command
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
@@ -7,10 +10,6 @@ import org.micoli.micraft.support.FakePlayerSession
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 import org.micoli.micraft.ui.GameLayout
-import org.micoli.micraft.ui.defaultLayout
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class LayoutCommandTest {
     private val cmd = LayoutCommand()
@@ -58,7 +57,12 @@ class LayoutCommandTest {
         val session = sessionWithLayouts("default")
         cmd.execute(session, "nonexistent", testContext())
         val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
-        assertTrue(notifs.any { it.message.contains("nonexistent") || it.message.contains("not found") || it.message.contains("introuvable") })
+        assertTrue(
+            notifs.any {
+                it.message.contains("nonexistent") ||
+                    it.message.contains("not found") ||
+                    it.message.contains("introuvable")
+            })
     }
 
     @Test

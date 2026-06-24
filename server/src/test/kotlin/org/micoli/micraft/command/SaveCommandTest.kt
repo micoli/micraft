@@ -1,14 +1,14 @@
 package org.micoli.micraft.command
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 import org.micoli.micraft.support.testWorld
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class SaveCommandTest {
     private val cmd = SaveCommand()

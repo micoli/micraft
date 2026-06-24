@@ -1,5 +1,7 @@
 package org.micoli.micraft.npc
 
+import kotlin.test.Test
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.npc.behaviors.RandomMovableNpcBehavior
 import org.micoli.micraft.npc.behaviors.StaticNpcBehavior
@@ -8,8 +10,6 @@ import org.micoli.micraft.support.testWorld
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldState
-import kotlin.test.Test
-import kotlin.test.assertTrue
 
 private fun wanderDef(
     type: String = "GOAT",
@@ -17,22 +17,41 @@ private fun wanderDef(
     maxTotal: Int = 10,
     maxPerChunk: Int = 2,
     spawnBiomes: List<String> = emptyList(),
-): NpcDefinition = NpcDefinition(
-    type = type, behavior = RandomMovableNpcBehavior(), bbmodelFile = "npc.bbmodel",
-    width = 0.5f, height = 0.9f, wanderSpeed = 2f, wanderRadius = 8f,
-    spawn = NpcSpawnConfig(autoSpawn = autoSpawn, maxTotal = maxTotal, maxPerChunk = maxPerChunk, spawnBiomes = spawnBiomes),
-)
+): NpcDefinition =
+    NpcDefinition(
+        type = type,
+        behavior = RandomMovableNpcBehavior(),
+        bbmodelFile = "npc.bbmodel",
+        width = 0.5f,
+        height = 0.9f,
+        wanderSpeed = 2f,
+        wanderRadius = 8f,
+        spawn =
+            NpcSpawnConfig(
+                autoSpawn = autoSpawn,
+                maxTotal = maxTotal,
+                maxPerChunk = maxPerChunk,
+                spawnBiomes = spawnBiomes),
+    )
 
 private fun staticDef(
     type: String = "SELLER",
     autoSpawn: Boolean = false,
-): NpcDefinition = NpcDefinition(
-    type = type, behavior = StaticNpcBehavior(), bbmodelFile = "npc.bbmodel",
-    width = 0.6f, height = 1.8f, wanderSpeed = 0f, wanderRadius = 0f,
-    spawn = NpcSpawnConfig(autoSpawn = autoSpawn),
-)
+): NpcDefinition =
+    NpcDefinition(
+        type = type,
+        behavior = StaticNpcBehavior(),
+        bbmodelFile = "npc.bbmodel",
+        width = 0.6f,
+        height = 1.8f,
+        wanderSpeed = 0f,
+        wanderRadius = 0f,
+        spawn = NpcSpawnConfig(autoSpawn = autoSpawn),
+    )
 
-private fun testManager(defs: Map<String, NpcDefinition>): Pair<NpcManager, MutableList<ServerMessage>> {
+private fun testManager(
+    defs: Map<String, NpcDefinition>
+): Pair<NpcManager, MutableList<ServerMessage>> {
     val broadcasts = mutableListOf<ServerMessage>()
     val m = NpcManager(broadcast = { broadcasts.add(it) })
     m.loadDefinitions(defs)
@@ -60,9 +79,7 @@ class NpcSpawnerTest {
     fun trySpawn_autoSpawnFalse_neverSpawns() = runBlocking {
         val world = solidFloorWorld()
         val (m, broadcasts) = testManager(mapOf("SELLER" to staticDef(autoSpawn = false)))
-        repeat(5) {
-            NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks())
-        }
+        repeat(5) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
         assertTrue(broadcasts.none { it is ServerMessage.NpcSpawned })
     }
 
@@ -70,9 +87,7 @@ class NpcSpawnerTest {
     fun trySpawn_respectsMaxTotal() = runBlocking {
         val world = solidFloorWorld()
         val (m, _) = testManager(mapOf("GOAT" to wanderDef(maxTotal = 2, maxPerChunk = 10)))
-        repeat(20) {
-            NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks())
-        }
+        repeat(20) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
         assertTrue(m.countByType("GOAT") <= 2, "Expected ≤2 GOATs, got ${m.countByType("GOAT")}")
     }
 
@@ -81,9 +96,7 @@ class NpcSpawnerTest {
         val world = solidFloorWorld()
         val (m, _) = testManager(mapOf("GOAT" to wanderDef(maxTotal = 100, maxPerChunk = 1)))
         val chunk = ChunkPos(0, 0)
-        repeat(10) {
-            NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks())
-        }
+        repeat(10) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
         assertTrue(
             m.countByTypeInChunk("GOAT", chunk) <= 1,
             "Expected ≤1 GOAT in chunk, got ${m.countByTypeInChunk("GOAT", chunk)}",
@@ -101,10 +114,9 @@ class NpcSpawnerTest {
     @Test
     fun trySpawn_biomeFilterNoMatch_doesNotSpawn() = runBlocking {
         val world = solidFloorWorld()
-        val (m, broadcasts) = testManager(mapOf("GOAT" to wanderDef(spawnBiomes = listOf("nonexistent_biome"))))
-        repeat(5) {
-            NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks())
-        }
+        val (m, broadcasts) =
+            testManager(mapOf("GOAT" to wanderDef(spawnBiomes = listOf("nonexistent_biome"))))
+        repeat(5) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
         assertTrue(broadcasts.none { it is ServerMessage.NpcSpawned })
     }
 

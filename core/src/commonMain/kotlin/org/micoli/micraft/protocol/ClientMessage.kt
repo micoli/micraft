@@ -10,7 +10,11 @@ import org.micoli.micraft.world.ItemType
 @Serializable
 sealed class ClientMessage {
     @Serializable
-    data class Connect(val playerName: String, val userName: String = playerName, val preferredLanguage: String = "en") : ClientMessage()
+    data class Connect(
+        val playerName: String,
+        val userName: String = playerName,
+        val preferredLanguage: String = "en"
+    ) : ClientMessage()
 
     @Serializable
     data class MoveIntent(
@@ -26,17 +30,13 @@ sealed class ClientMessage {
         val speedDown: Boolean = false,
     ) : ClientMessage()
 
-    @Serializable
-    data class ChunkUnload(val positions: List<ChunkPos>) : ClientMessage()
+    @Serializable data class ChunkUnload(val positions: List<ChunkPos>) : ClientMessage()
 
-    @Serializable
-    data class BlockBreakStart(val pos: BlockPos) : ClientMessage()
+    @Serializable data class BlockBreakStart(val pos: BlockPos) : ClientMessage()
 
-    @Serializable
-    object BlockBreakStop : ClientMessage()
+    @Serializable object BlockBreakStop : ClientMessage()
 
-    @Serializable
-    data class Command(val text: String) : ClientMessage()
+    @Serializable data class Command(val text: String) : ClientMessage()
 
     @Serializable
     data class BlockPlace(val pos: BlockPos, val itemType: ItemType) : ClientMessage()
@@ -50,14 +50,11 @@ sealed class ClientMessage {
         val activeLayout: String,
     ) : ClientMessage()
 
-    @Serializable
-    data class Disconnect(val reason: String = "") : ClientMessage()
+    @Serializable data class Disconnect(val reason: String = "") : ClientMessage()
 
-    @Serializable
-    data class NpcInteract(val npcId: String) : ClientMessage()
+    @Serializable data class NpcInteract(val npcId: String) : ClientMessage()
 
-    @Serializable
-    data class ChatSend(val channel: String, val text: String) : ClientMessage()
+    @Serializable data class ChatSend(val channel: String, val text: String) : ClientMessage()
 
     @Serializable
     data class PreferencesUpdate(

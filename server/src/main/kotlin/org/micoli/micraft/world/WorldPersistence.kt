@@ -1,14 +1,14 @@
 package org.micoli.micraft.world
 
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import org.micoli.micraft.player.PlayerState
-import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.Path
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import kotlin.io.path.*
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import org.micoli.micraft.player.PlayerState
+import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("WorldPersistence")
 
@@ -29,7 +29,11 @@ class WorldPersistence(val worldDir: Path) {
         return try {
             val bytes = GZIPInputStream(file.inputStream()).use { it.readBytes() }
             if (bytes.size != Chunk.TOTAL) {
-                log.warn("Corrupt chunk file for {}: expected {} bytes, got {}", pos, Chunk.TOTAL, bytes.size)
+                log.warn(
+                    "Corrupt chunk file for {}: expected {} bytes, got {}",
+                    pos,
+                    Chunk.TOTAL,
+                    bytes.size)
                 return null
             }
             Chunk(pos, bytes)

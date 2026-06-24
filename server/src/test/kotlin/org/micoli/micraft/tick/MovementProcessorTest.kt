@@ -1,13 +1,13 @@
 package org.micoli.micraft.tick
 
-import org.micoli.micraft.player.PlayerStance
-import org.micoli.micraft.player.Vec3
-import org.micoli.micraft.support.testSession
-import org.micoli.micraft.support.testWorld
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import org.micoli.micraft.player.PlayerStance
+import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.support.testSession
+import org.micoli.micraft.support.testWorld
 
 class MovementProcessorTest {
 
@@ -22,15 +22,19 @@ class MovementProcessorTest {
         speedDown: Boolean = false,
         yaw: Float = 0f,
         pitch: Float = 0f,
-    ) = TickInput(
-        dx = dx, dz = dz, dy = dy,
-        yaw = yaw, pitch = pitch,
-        stance = stance,
-        jumpRequested = jump,
-        flyToggleRequested = flyToggle,
-        speedUpRequested = speedUp,
-        speedDownRequested = speedDown,
-    )
+    ) =
+        TickInput(
+            dx = dx,
+            dz = dz,
+            dy = dy,
+            yaw = yaw,
+            pitch = pitch,
+            stance = stance,
+            jumpRequested = jump,
+            flyToggleRequested = flyToggle,
+            speedUpRequested = speedUp,
+            speedDownRequested = speedDown,
+        )
 
     @Test
     fun noInput_playerStaysAtXZ_whenGrounded() {
@@ -60,7 +64,8 @@ class MovementProcessorTest {
         val processor = MovementProcessor(world)
         val session = testSession(pos = Vec3(9.2f, 5f, 8.5f))
         val result = processor.process(session, noInput(dx = 1f))
-        assertTrue(result.pos.x < 10f, "Expected player to be blocked before x=10, got ${result.pos.x}")
+        assertTrue(
+            result.pos.x < 10f, "Expected player to be blocked before x=10, got ${result.pos.x}")
     }
 
     @Test

@@ -1,12 +1,12 @@
 package org.micoli.micraft.command
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class ReloadCommandTest {
     private val cmd = ReloadCommand()
@@ -16,14 +16,24 @@ class ReloadCommandTest {
         val session = testSession()
         cmd.execute(session, "", testContext(reloadConfig = null))
         val notif = session.sent.filterIsInstance<ServerMessage.Notification>()
-        assertTrue(notif.any { it.message.contains("not available") || it.message.contains("unavailable") || it.message.contains("Reload") })
+        assertTrue(
+            notif.any {
+                it.message.contains("not available") ||
+                    it.message.contains("unavailable") ||
+                    it.message.contains("Reload")
+            })
     }
 
     @Test
     fun withReloadConfig_invokesCallback() = runBlocking {
         var callCount = 0
         val session = testSession()
-        val ctx = testContext(reloadConfig = { callCount++; "3 types reloaded" })
+        val ctx =
+            testContext(
+                reloadConfig = {
+                    callCount++
+                    "3 types reloaded"
+                })
         cmd.execute(session, "", ctx)
         assertEquals(1, callCount)
     }

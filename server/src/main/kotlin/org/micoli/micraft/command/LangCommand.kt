@@ -1,11 +1,11 @@
 package org.micoli.micraft.command
 
+import java.util.UUID
 import org.micoli.micraft.CommandContext
 import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 private val log = LoggerFactory.getLogger(LangCommand::class.java)
 
@@ -21,13 +21,17 @@ class LangCommand : CommandHandler {
 
         if (locale.isBlank()) {
             val available = i18n.locales.sorted().joinToString(", ")
-            session.send(ServerMessage.Notification(i18n.t(session.state.language, "lang:server:available", available)))
+            session.send(
+                ServerMessage.Notification(
+                    i18n.t(session.state.language, "lang:server:available", available)))
             return
         }
 
         if (locale !in i18n.locales) {
             val available = i18n.locales.sorted().joinToString(", ")
-            session.send(ServerMessage.Notification(i18n.t(session.state.language, "lang:server:unknown", locale, available)))
+            session.send(
+                ServerMessage.Notification(
+                    i18n.t(session.state.language, "lang:server:unknown", locale, available)))
             return
         }
 

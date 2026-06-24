@@ -1,12 +1,12 @@
 package org.micoli.micraft.physics
 
+import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import org.micoli.micraft.support.testWorld
 import org.micoli.micraft.world.PlayerConstants
 import org.micoli.micraft.world.WorldState
 import org.micoli.micraft.world.isSolid
-import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 private fun WorldState.solid() = { bx: Int, by: Int, bz: Int -> getBlock(bx, by, bz).isSolid }
 
@@ -147,14 +147,18 @@ class AabbColliderTest {
     @Test
     fun canAdoptStance_shrinking_alwaysTrue() {
         val world = testWorld(Triple(8, 7, 8)) // obstacle nearby
-        val result = AabbCollider.canAdoptStance(world.solid(), 8.5f, 5f, 8.5f, w, newH = 1.5f, currentH = 1.8f)
+        val result =
+            AabbCollider.canAdoptStance(
+                world.solid(), 8.5f, 5f, 8.5f, w, newH = 1.5f, currentH = 1.8f)
         assertTrue(result)
     }
 
     @Test
     fun canAdoptStance_growing_clearSpace_returnsTrue() {
         val world = testWorld()
-        val result = AabbCollider.canAdoptStance(world.solid(), 8.5f, 5f, 8.5f, w, newH = 1.8f, currentH = 1.5f)
+        val result =
+            AabbCollider.canAdoptStance(
+                world.solid(), 8.5f, 5f, 8.5f, w, newH = 1.8f, currentH = 1.5f)
         assertTrue(result)
     }
 
@@ -162,7 +166,9 @@ class AabbColliderTest {
     fun canAdoptStance_growing_blocked_returnsFalse() {
         // Block at y=6 blocks expansion from height 1.5 (top at 6.5) to 1.8 (top at 6.8)
         val world = testWorld(Triple(8, 6, 8))
-        val result = AabbCollider.canAdoptStance(world.solid(), 8.5f, 5f, 8.5f, w, newH = 1.8f, currentH = 1.5f)
+        val result =
+            AabbCollider.canAdoptStance(
+                world.solid(), 8.5f, 5f, 8.5f, w, newH = 1.8f, currentH = 1.5f)
         assertFalse(result)
     }
 }

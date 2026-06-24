@@ -1,11 +1,11 @@
 package org.micoli.micraft.command
 
+import java.util.UUID
 import org.micoli.micraft.CommandContext
 import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.TICKS_PER_DAY
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
-import java.util.UUID
 
 class TimeCommand : CommandHandler {
     override val id = UUID.fromString("48666b02-7c6d-4a88-b162-26c3ff56bd9a")
@@ -21,9 +21,8 @@ class TimeCommand : CommandHandler {
         if (trimmed.isEmpty()) {
             session.send(
                 ServerMessage.Notification(
-                    context.i18n.t(lang, "time:server:current", ticksToDisplay(context.getGameTime()))
-                )
-            )
+                    context.i18n.t(
+                        lang, "time:server:current", ticksToDisplay(context.getGameTime()))))
             return
         }
 
@@ -38,9 +37,7 @@ class TimeCommand : CommandHandler {
         context.broadcast(ServerMessage.TimeUpdate(newTicks))
         session.send(
             ServerMessage.Notification(
-                context.i18n.t(lang, "time:server:set", ticksToDisplay(newTicks))
-            )
-        )
+                context.i18n.t(lang, "time:server:set", ticksToDisplay(newTicks))))
     }
 
     private fun ticksToDisplay(ticks: Long): String {

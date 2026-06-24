@@ -9,7 +9,7 @@ object NpcConstants {
     const val WANDER_PAUSE_TICKS_MAX = 120
     const val WANDER_STEP_TICKS_MAX = 60
     const val INTERACTION_RANGE = 4f
-    const val UPDATE_RANGE = 96f  // ~6 chunks; clients beyond this don't receive NpcUpdate
+    const val UPDATE_RANGE = 96f // ~6 chunks; clients beyond this don't receive NpcUpdate
     const val SPAWN_CHECK_INTERVAL_TICKS = 200
     const val MAX_SPAWN_ATTEMPTS_PER_TICK = 3
     // v = sqrt(2 * |GRAVITY| * h), h ≈ 1.05 blocks for reliable 1-block clearance

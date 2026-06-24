@@ -1,8 +1,8 @@
 package org.micoli.micraft.world
 
-import org.slf4j.LoggerFactory
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
+import org.slf4j.LoggerFactory
 
 class WorldState(
     @Volatile var generator: ChunkGenerator,
@@ -16,14 +16,15 @@ class WorldState(
         chunks.getOrPut(pos) {
             val loaded = persistence?.loadChunk(pos)
             if (loaded != null) {
-                log.debug("Loaded chunk {} from disk", pos)
-                loaded
-            } else {
-                val t0 = System.currentTimeMillis()
-                val chunk = generator.generate(pos)
-                log.info("Generated chunk {} in {}ms", pos, System.currentTimeMillis() - t0)
-                chunk
-            }.also { dirtyChunks.add(pos) }
+                    log.debug("Loaded chunk {} from disk", pos)
+                    loaded
+                } else {
+                    val t0 = System.currentTimeMillis()
+                    val chunk = generator.generate(pos)
+                    log.info("Generated chunk {} in {}ms", pos, System.currentTimeMillis() - t0)
+                    chunk
+                }
+                .also { dirtyChunks.add(pos) }
         }
 
     fun biomeAt(wx: Int, wz: Int): String = generator.biomeAt(wx, wz)
@@ -37,13 +38,18 @@ class WorldState(
         return getOrGenerate(ChunkPos(chunkX, chunkZ)).getBlock(localX, wy, localZ)
     }
 
-    /** All chunk positions that have ever been generated or loaded (i.e. discovered by a player). */
+    /**
+     * All chunk positions that have ever been generated or loaded (i.e. discovered by a player).
+     */
     fun discoveredChunks(): Set<ChunkPos> = chunks.keys.toSet()
 
     /** Returns a chunk only if it was already generated — never triggers generation. */
     fun getChunkIfDiscovered(pos: ChunkPos): Chunk? = chunks[pos]
 
-    /** Returns the block type without generating the chunk if absent — returns AIR for ungenerated chunks. */
+    /**
+     * Returns the block type without generating the chunk if absent — returns AIR for ungenerated
+     * chunks.
+     */
     fun getBlockIfLoaded(wx: Int, wy: Int, wz: Int): BlockType {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return BlockType.AIR
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)

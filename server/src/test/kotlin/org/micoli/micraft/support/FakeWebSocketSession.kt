@@ -5,6 +5,7 @@ import io.ktor.websocket.CloseReason
 import io.ktor.websocket.DefaultWebSocketSession
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketExtension
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +13,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import kotlin.coroutines.CoroutineContext
 
 @Suppress("OVERRIDE_DEPRECATION")
 @OptIn(InternalAPI::class)
@@ -28,6 +28,7 @@ class FakeWebSocketSession : DefaultWebSocketSession {
     override val closeReason: Deferred<CloseReason?> = CompletableDeferred(null)
 
     override suspend fun flush() {}
+
     override fun terminate() {}
 
     override fun start(negotiatedExtensions: List<WebSocketExtension<*>>) {}

@@ -1,29 +1,40 @@
 package org.micoli.micraft.plugins.npc
 
+import kotlin.test.Test
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.npc.NpcDefinition
 import org.micoli.micraft.npc.NpcManager
-import org.micoli.micraft.npc.NpcSpawnConfig
 import org.micoli.micraft.npc.behaviors.InteractionableNpcBehavior
 import org.micoli.micraft.npc.behaviors.RandomMovableNpcBehavior
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
-import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
-private fun testDefs(): Map<String, NpcDefinition> = mapOf(
-    "SELLER" to NpcDefinition(
-        type = "SELLER", behavior = InteractionableNpcBehavior(), bbmodelFile = "npc.bbmodel",
-        width = 0.6f, height = 1.8f, wanderSpeed = 0f, wanderRadius = 0f,
-    ),
-    "GOAT" to NpcDefinition(
-        type = "GOAT", behavior = RandomMovableNpcBehavior(), bbmodelFile = "npc.bbmodel",
-        width = 0.5f, height = 0.9f, wanderSpeed = 2f, wanderRadius = 8f,
-    ),
-)
+private fun testDefs(): Map<String, NpcDefinition> =
+    mapOf(
+        "SELLER" to
+            NpcDefinition(
+                type = "SELLER",
+                behavior = InteractionableNpcBehavior(),
+                bbmodelFile = "npc.bbmodel",
+                width = 0.6f,
+                height = 1.8f,
+                wanderSpeed = 0f,
+                wanderRadius = 0f,
+            ),
+        "GOAT" to
+            NpcDefinition(
+                type = "GOAT",
+                behavior = RandomMovableNpcBehavior(),
+                bbmodelFile = "npc.bbmodel",
+                width = 0.5f,
+                height = 0.9f,
+                wanderSpeed = 2f,
+                wanderRadius = 8f,
+            ),
+    )
 
 private fun testNpcManager(): Pair<NpcManager, MutableList<ServerMessage>> {
     val broadcasts = mutableListOf<ServerMessage>()
@@ -50,7 +61,12 @@ class NpcCommandTest {
         val session = testSession()
         cmd.execute(session, "spawn UNICORN Sparky", testContext(npcManager = m))
         val notif = session.sent.filterIsInstance<ServerMessage.Notification>()
-        assertTrue(notif.any { it.message.contains("UNICORN") || it.message.contains("Unknown") || it.message.contains("unknown") })
+        assertTrue(
+            notif.any {
+                it.message.contains("UNICORN") ||
+                    it.message.contains("Unknown") ||
+                    it.message.contains("unknown")
+            })
     }
 
     @Test
@@ -87,7 +103,12 @@ class NpcCommandTest {
         val session = testSession()
         cmd.execute(session, "remove nonexistent-id-xyz", testContext(npcManager = m))
         val notif = session.sent.filterIsInstance<ServerMessage.Notification>()
-        assertTrue(notif.any { it.message.contains("not found") || it.message.contains("Not found") || it.message.contains("introuvable") })
+        assertTrue(
+            notif.any {
+                it.message.contains("not found") ||
+                    it.message.contains("Not found") ||
+                    it.message.contains("introuvable")
+            })
     }
 
     @Test

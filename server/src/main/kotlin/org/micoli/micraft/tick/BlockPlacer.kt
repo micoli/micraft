@@ -38,11 +38,12 @@ class BlockPlacer(
         }
 
         val eyeY = session.state.pos.y + session.state.stance.eyeOffset
-        val dist = kotlin.math.sqrt(
-            ((pos.x + 0.5f - session.state.pos.x) * (pos.x + 0.5f - session.state.pos.x) +
-             (pos.y + 0.5f - eyeY) * (pos.y + 0.5f - eyeY) +
-             (pos.z + 0.5f - session.state.pos.z) * (pos.z + 0.5f - session.state.pos.z)).toDouble()
-        )
+        val dist =
+            kotlin.math.sqrt(
+                ((pos.x + 0.5f - session.state.pos.x) * (pos.x + 0.5f - session.state.pos.x) +
+                        (pos.y + 0.5f - eyeY) * (pos.y + 0.5f - eyeY) +
+                        (pos.z + 0.5f - session.state.pos.z) * (pos.z + 0.5f - session.state.pos.z))
+                    .toDouble())
         if (dist > MAX_PLACE_DISTANCE) {
             log.debug("BlockPlace rejected: dist={} > {}", "%.2f".format(dist), MAX_PLACE_DISTANCE)
             return

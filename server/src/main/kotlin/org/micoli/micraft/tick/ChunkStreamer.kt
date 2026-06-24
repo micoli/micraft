@@ -1,5 +1,6 @@
 package org.micoli.micraft.tick
 
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +15,6 @@ import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldState
 import org.slf4j.LoggerFactory
-import java.util.concurrent.ConcurrentHashMap
 
 private val log = LoggerFactory.getLogger(ChunkStreamer::class.java)
 
@@ -31,10 +31,11 @@ class ChunkStreamer(private val world: WorldState) {
     }
 
     fun checkAndRequest(session: PlayerSession) {
-        val newCp = ChunkPos(
-            Math.floorDiv(session.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE),
-            Math.floorDiv(session.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE),
-        )
+        val newCp =
+            ChunkPos(
+                Math.floorDiv(session.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE),
+                Math.floorDiv(session.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE),
+            )
         val posChanged = newCp != session.lastChunkPos
         if (!posChanged && session.inFlightChunks.size >= MAX_IN_FLIGHT) return
         if (posChanged) session.lastChunkPos = newCp
@@ -74,7 +75,8 @@ class ChunkStreamer(private val world: WorldState) {
         val fwdZ = cos(yaw)
         val r = WorldConstants.VIEW_RADIUS
         val fwdR = WorldConstants.FORWARD_VIEW_RADIUS
-        return (-fwdR..fwdR).flatMap { dx -> (-fwdR..fwdR).map { dz -> dx to dz } }
+        return (-fwdR..fwdR)
+            .flatMap { dx -> (-fwdR..fwdR).map { dz -> dx to dz } }
             .filter { (dx, dz) ->
                 val chebyshev = maxOf(abs(dx), abs(dz))
                 if (chebyshev <= r) true

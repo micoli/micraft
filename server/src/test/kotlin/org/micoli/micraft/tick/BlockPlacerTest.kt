@@ -1,5 +1,9 @@
 package org.micoli.micraft.tick
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ClientMessage
@@ -10,10 +14,6 @@ import org.micoli.micraft.support.testWorld
 import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ItemType
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.test.assertTrue
 
 class BlockPlacerTest {
 
@@ -29,7 +29,8 @@ class BlockPlacerTest {
         val placer = placer(world = world)
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.inventory[ItemType.COBBLESTONE] = 3
-        placer.handlePlace(session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
         assertEquals(BlockType.STONE, world.getBlock(8, 7, 8))
     }
 
@@ -39,7 +40,8 @@ class BlockPlacerTest {
         val placer = placer(world = world)
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.inventory[ItemType.COBBLESTONE] = 3
-        placer.handlePlace(session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
         assertEquals(2, session.inventory[ItemType.COBBLESTONE])
     }
 
@@ -49,8 +51,11 @@ class BlockPlacerTest {
         val placer = placer(world = world)
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.inventory[ItemType.COBBLESTONE] = 1
-        placer.handlePlace(session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
-        assertTrue(session.inventory[ItemType.COBBLESTONE] == null || session.inventory[ItemType.COBBLESTONE] == 0)
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
+        assertTrue(
+            session.inventory[ItemType.COBBLESTONE] == null ||
+                session.inventory[ItemType.COBBLESTONE] == 0)
     }
 
     @Test
@@ -59,7 +64,8 @@ class BlockPlacerTest {
         val placer = placer(world = world)
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.inventory[ItemType.COBBLESTONE] = 2
-        placer.handlePlace(session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
         assertTrue(session.sent.any { it is ServerMessage.InventoryUpdate })
     }
 
@@ -70,7 +76,8 @@ class BlockPlacerTest {
         val placer = placer(broadcasts = broadcasts, world = world)
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.inventory[ItemType.COBBLESTONE] = 1
-        placer.handlePlace(session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
         assertTrue(broadcasts.any { it is ServerMessage.WorldUpdate })
     }
 
@@ -80,7 +87,8 @@ class BlockPlacerTest {
         val placer = placer(world = world)
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.inventory[ItemType.COBBLESTONE] = 1
-        placer.handlePlace(session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
         assertEquals(1, session.actionHistory.size)
         val record = session.actionHistory.last()
         assertIs<WorldActionRecord.Place>(record)
@@ -94,7 +102,8 @@ class BlockPlacerTest {
         val placer = placer(world = world)
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         // no COBBLESTONE in inventory
-        placer.handlePlace(session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
         assertEquals(BlockType.AIR, world.getBlock(8, 7, 8))
         assertTrue(session.actionHistory.isEmpty())
     }
@@ -116,7 +125,8 @@ class BlockPlacerTest {
         val placer = placer(world = world)
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.inventory[ItemType.COBBLESTONE] = 1
-        placer.handlePlace(session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType.COBBLESTONE))
         // STONE already at (8,7,8) from testWorld → stays STONE (not replaced)
         assertEquals(BlockType.STONE, world.getBlock(8, 7, 8))
         assertTrue(session.actionHistory.isEmpty())
@@ -129,7 +139,8 @@ class BlockPlacerTest {
         val session = testSession(pos = Vec3(8.5f, 20f, 8.5f))
         session.inventory[ItemType.COBBLESTONE] = 1
         // target at y=5, player at y=20 → dist ~14.5 > 6
-        placer.handlePlace(session, ClientMessage.BlockPlace(BlockPos(8, 5, 8), ItemType.COBBLESTONE))
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 5, 8), ItemType.COBBLESTONE))
         assertEquals(BlockType.AIR, world.getBlock(8, 5, 8))
         assertTrue(session.actionHistory.isEmpty())
     }

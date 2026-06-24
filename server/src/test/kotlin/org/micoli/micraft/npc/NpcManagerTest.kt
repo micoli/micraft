@@ -1,5 +1,10 @@
 package org.micoli.micraft.npc
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFails
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.npc.behaviors.InteractionableNpcBehavior
 import org.micoli.micraft.npc.behaviors.RandomMovableNpcBehavior
@@ -10,11 +15,6 @@ import org.micoli.micraft.support.testSession
 import org.micoli.micraft.support.testWorld
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.WorldConstants
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 private fun testNpcManager(
     defs: Map<String, NpcDefinition> = emptyMap(),
@@ -27,20 +27,38 @@ private fun testNpcManager(
     return m to broadcasts
 }
 
-private fun staticDef(type: String = "SELLER"): NpcDefinition = NpcDefinition(
-    type = type, behavior = StaticNpcBehavior(), bbmodelFile = "npc.bbmodel",
-    width = 0.6f, height = 1.8f, wanderSpeed = 0f, wanderRadius = 0f,
-)
+private fun staticDef(type: String = "SELLER"): NpcDefinition =
+    NpcDefinition(
+        type = type,
+        behavior = StaticNpcBehavior(),
+        bbmodelFile = "npc.bbmodel",
+        width = 0.6f,
+        height = 1.8f,
+        wanderSpeed = 0f,
+        wanderRadius = 0f,
+    )
 
-private fun wanderDef(type: String = "GOAT"): NpcDefinition = NpcDefinition(
-    type = type, behavior = RandomMovableNpcBehavior(), bbmodelFile = "npc.bbmodel",
-    width = 0.5f, height = 0.9f, wanderSpeed = 3f, wanderRadius = 12f,
-)
+private fun wanderDef(type: String = "GOAT"): NpcDefinition =
+    NpcDefinition(
+        type = type,
+        behavior = RandomMovableNpcBehavior(),
+        bbmodelFile = "npc.bbmodel",
+        width = 0.5f,
+        height = 0.9f,
+        wanderSpeed = 3f,
+        wanderRadius = 12f,
+    )
 
-private fun interactDef(type: String = "SELLER"): NpcDefinition = NpcDefinition(
-    type = type, behavior = InteractionableNpcBehavior(), bbmodelFile = "npc.bbmodel",
-    width = 0.6f, height = 1.8f, wanderSpeed = 0f, wanderRadius = 0f,
-)
+private fun interactDef(type: String = "SELLER"): NpcDefinition =
+    NpcDefinition(
+        type = type,
+        behavior = InteractionableNpcBehavior(),
+        bbmodelFile = "npc.bbmodel",
+        width = 0.6f,
+        height = 1.8f,
+        wanderSpeed = 0f,
+        wanderRadius = 0f,
+    )
 
 class NpcManagerTest {
     @Test
@@ -110,10 +128,13 @@ class NpcManagerTest {
     @Test
     fun tick_npcLandsOnGround_stopsGravity() = runBlocking {
         val floorY = 4
-        val world = testWorld(
-            Triple(8, floorY, 8), Triple(9, floorY, 8),
-            Triple(8, floorY, 9), Triple(9, floorY, 9),
-        )
+        val world =
+            testWorld(
+                Triple(8, floorY, 8),
+                Triple(9, floorY, 8),
+                Triple(8, floorY, 9),
+                Triple(9, floorY, 9),
+            )
         val (m, _) = testNpcManager(mapOf("SELLER" to staticDef()))
         val instance = m.spawnNpc("Bob", "SELLER", Vec3(8.5f, 10f, 8.5f))
         repeat(100) { m.tick(world) }
@@ -126,7 +147,8 @@ class NpcManagerTest {
         val floorY = 4
         val chunkSize = WorldConstants.CHUNK_SIZE
         val blocks = buildList {
-            for (x in 0 until chunkSize * 3) for (z in 0 until chunkSize * 3) add(Triple(x, floorY, z))
+            for (x in 0 until chunkSize * 3) for (z in 0 until chunkSize * 3) add(
+                Triple(x, floorY, z))
         }
         val world = testWorld(*blocks.toTypedArray())
         val nearby = testSession(pos = Vec3(8.5f, 5f, 8.5f))
@@ -139,8 +161,9 @@ class NpcManagerTest {
         val startX = instance.state.pos.x
         val startZ = instance.state.pos.z
         repeat(40) { m.tick(world) }
-        val moved = kotlin.math.abs(instance.state.pos.x - startX) > 0.01f ||
-            kotlin.math.abs(instance.state.pos.z - startZ) > 0.01f
+        val moved =
+            kotlin.math.abs(instance.state.pos.x - startX) > 0.01f ||
+                kotlin.math.abs(instance.state.pos.z - startZ) > 0.01f
         assertTrue(moved, "Expected wandering NPC to move from start position")
     }
 
@@ -150,12 +173,11 @@ class NpcManagerTest {
         val chunkSize = WorldConstants.CHUNK_SIZE
         // Floor across 3 chunks
         val floor = buildList {
-            for (x in 0 until chunkSize * 3) for (z in 0 until chunkSize * 3) add(Triple(x, floorY, z))
+            for (x in 0 until chunkSize * 3) for (z in 0 until chunkSize * 3) add(
+                Triple(x, floorY, z))
         }
         // 1-block wall at z=12 for a strip of x values
-        val wall = buildList {
-            for (x in 0 until chunkSize * 3) add(Triple(x, floorY + 1, 12))
-        }
+        val wall = buildList { for (x in 0 until chunkSize * 3) add(Triple(x, floorY + 1, 12)) }
         val world = testWorld(*(floor + wall).toTypedArray())
         val (m, _) = testNpcManager(mapOf("GOAT" to wanderDef()))
         val instance = m.spawnNpc("Billy", "GOAT", Vec3(8.5f, (floorY + 1).toFloat(), 8.5f))
@@ -165,7 +187,8 @@ class NpcManagerTest {
         instance.wanderTargetZ = 20f
         val startY = instance.state.pos.y
         repeat(30) { m.tick(world) }
-        // NPC should have initiated a jump (vy set positive at some point), so y should have risen above start
+        // NPC should have initiated a jump (vy set positive at some point), so y should have risen
+        // above start
         val maxY = instance.state.pos.y
         assertTrue(maxY > startY || instance.vy > 0f, "Expected NPC to jump over 1-block wall")
     }
@@ -175,7 +198,8 @@ class NpcManagerTest {
         val floorY = 4
         val chunkSize = WorldConstants.CHUNK_SIZE
         val floor = buildList {
-            for (x in 0 until chunkSize * 3) for (z in 0 until chunkSize * 3) add(Triple(x, floorY, z))
+            for (x in 0 until chunkSize * 3) for (z in 0 until chunkSize * 3) add(
+                Triple(x, floorY, z))
         }
         // 2-block wall at z=12 — too high to jump
         val wall = buildList {
@@ -224,10 +248,13 @@ class NpcManagerTest {
         val countAfterFirstTick = nearby.sent.filterIsInstance<ServerMessage.NpcUpdate>().size
         nearby.sent.clear()
         // Force a tiny sub-centimeter change that should not produce a new update
-        instance.state = instance.state.copy(pos = instance.state.pos.copy(y = instance.state.pos.y + 0.001f))
+        instance.state =
+            instance.state.copy(pos = instance.state.pos.copy(y = instance.state.pos.y + 0.001f))
         m.tick(world)
         val countAfterSecondTick = nearby.sent.filterIsInstance<ServerMessage.NpcUpdate>().size
-        assertTrue(countAfterSecondTick <= countAfterFirstTick, "Sub-centimeter change should not produce extra NpcUpdate")
+        assertTrue(
+            countAfterSecondTick <= countAfterFirstTick,
+            "Sub-centimeter change should not produce extra NpcUpdate")
     }
 
     @Test

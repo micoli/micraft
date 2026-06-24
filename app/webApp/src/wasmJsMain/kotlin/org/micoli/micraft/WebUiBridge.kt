@@ -24,9 +24,7 @@ class WebUiBridge(private val state: McUiState, private val scope: CoroutineScop
             }
         }
         scope.launch {
-            state.notificationFlow.collect { n ->
-                if (n != null) jsShowNotification(n.first)
-            }
+            state.notificationFlow.collect { n -> if (n != null) jsShowNotification(n.first) }
         }
         scope.launch {
             state.latestLogFlow.collect { entry ->
@@ -48,8 +46,7 @@ class WebUiBridge(private val state: McUiState, private val scope: CoroutineScop
         }
         scope.launch {
             state.disconnectMessageFlow.collect { msg ->
-                if (msg != null) jsShowDisconnectedOverlay(msg)
-                else jsHideDisconnectedOverlay()
+                if (msg != null) jsShowDisconnectedOverlay(msg) else jsHideDisconnectedOverlay()
             }
         }
         scope.launch {
@@ -58,9 +55,7 @@ class WebUiBridge(private val state: McUiState, private val scope: CoroutineScop
             }
         }
         scope.launch {
-            state.preferencesSyncFlow.collect { json ->
-                if (json != null) jsPreferencesSync(json)
-            }
+            state.preferencesSyncFlow.collect { json -> if (json != null) jsPreferencesSync(json) }
         }
     }
 }

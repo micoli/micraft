@@ -1,14 +1,14 @@
 package org.micoli.micraft.world
 
-import org.micoli.micraft.npc.behaviors.InteractionableNpcBehavior
-import org.micoli.micraft.npc.behaviors.RandomMovableNpcBehavior
 import kotlin.io.path.createTempFile
-import kotlin.io.path.writeText
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import org.micoli.micraft.npc.behaviors.InteractionableNpcBehavior
+import org.micoli.micraft.npc.behaviors.RandomMovableNpcBehavior
 
 class NpcRegistryLoaderTest {
 
@@ -21,7 +21,9 @@ class NpcRegistryLoaderTest {
 
     @Test
     fun load_parsesYamlCorrectly() {
-        val loader = loaderWithYaml("""
+        val loader =
+            loaderWithYaml(
+                """
             SELLER:
               bbmodelFile: npc_seller.bbmodel
               behavior: interactionable
@@ -46,7 +48,8 @@ class NpcRegistryLoaderTest {
                 maxTotal: 30
                 maxPerChunk: 3
                 spawnBiomes: [plains]
-        """.trimIndent())
+        """
+                    .trimIndent())
         val defs = loader.load()
         assertEquals(2, defs.size)
         val seller = defs["SELLER"]
@@ -67,7 +70,9 @@ class NpcRegistryLoaderTest {
 
     @Test
     fun load_missingSpawnSection_usesDefaults() {
-        val loader = loaderWithYaml("""
+        val loader =
+            loaderWithYaml(
+                """
             DUCK:
               bbmodelFile: npc_duck.bbmodel
               behavior: static
@@ -75,7 +80,8 @@ class NpcRegistryLoaderTest {
               height: 0.5
               wanderSpeed: 0.0
               wanderRadius: 0.0
-        """.trimIndent())
+        """
+                    .trimIndent())
         val defs = loader.load()
         val duck = defs["DUCK"]
         assertNotNull(duck)
@@ -87,7 +93,9 @@ class NpcRegistryLoaderTest {
 
     @Test
     fun load_unknownBehaviorKey_skipsEntry() {
-        val loader = loaderWithYaml("""
+        val loader =
+            loaderWithYaml(
+                """
             SELLER:
               bbmodelFile: npc_seller.bbmodel
               behavior: interactionable
@@ -102,7 +110,8 @@ class NpcRegistryLoaderTest {
               height: 1.8
               wanderSpeed: 0.0
               wanderRadius: 0.0
-        """.trimIndent())
+        """
+                    .trimIndent())
         val defs = loader.load()
         // SELLER should load, UNKNOWN_NPC should be skipped
         assertTrue(defs.containsKey("SELLER"))

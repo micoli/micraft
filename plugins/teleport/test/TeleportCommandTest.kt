@@ -1,15 +1,14 @@
 package org.micoli.micraft.plugins.teleport
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
-import org.micoli.micraft.support.testWorld
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.test.assertTrue
 
 class TeleportCommandTest {
     private val cmd = TeleportCommand()
@@ -34,7 +33,8 @@ class TeleportCommandTest {
     fun byCoords_sendsPlayerUpdateAndNotification() = runBlocking {
         val session = testSession()
         cmd.execute(session, "10 20 30", testContext())
-        assertIs<ServerMessage.PlayerUpdate>(session.sent.first { it is ServerMessage.PlayerUpdate })
+        assertIs<ServerMessage.PlayerUpdate>(
+            session.sent.first { it is ServerMessage.PlayerUpdate })
         val notif = session.sent.filterIsInstance<ServerMessage.Notification>()
         assertTrue(notif.any { it.message.contains("Teleported") })
     }
@@ -52,7 +52,12 @@ class TeleportCommandTest {
         val session = testSession()
         cmd.execute(session, "notanumber", testContext(sessions = emptyList()))
         val notif = session.sent.filterIsInstance<ServerMessage.Notification>()
-        assertTrue(notif.any { it.message.contains("Usage") || it.message.contains("not found") || it.message.contains("teleport") })
+        assertTrue(
+            notif.any {
+                it.message.contains("Usage") ||
+                    it.message.contains("not found") ||
+                    it.message.contains("teleport")
+            })
     }
 
     @Test

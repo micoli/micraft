@@ -1,17 +1,17 @@
 package org.micoli.micraft.npc.behaviors
 
+import kotlin.math.atan2
+import kotlin.math.sqrt
+import kotlin.random.Random
 import org.micoli.micraft.TICK_SECONDS
 import org.micoli.micraft.npc.NpcBehavior
 import org.micoli.micraft.npc.NpcConstants
 import org.micoli.micraft.npc.NpcInstance
 import org.micoli.micraft.npc.NpcPhysics
+import org.micoli.micraft.physics.AabbCollider
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.world.WorldState
 import org.micoli.micraft.world.isSolid
-import org.micoli.micraft.physics.AabbCollider
-import kotlin.math.atan2
-import kotlin.math.sqrt
-import kotlin.random.Random
 
 class RandomMovableNpcBehavior : NpcBehavior {
 
@@ -41,7 +41,9 @@ class RandomMovableNpcBehavior : NpcBehavior {
 
         if (dist < 0.2f) {
             instance.wanderStepTicks = 0
-            instance.wanderPauseTicks = Random.nextInt(NpcConstants.WANDER_PAUSE_TICKS_MIN, NpcConstants.WANDER_PAUSE_TICKS_MAX + 1)
+            instance.wanderPauseTicks =
+                Random.nextInt(
+                    NpcConstants.WANDER_PAUSE_TICKS_MIN, NpcConstants.WANDER_PAUSE_TICKS_MAX + 1)
             return false
         }
 
@@ -50,16 +52,29 @@ class RandomMovableNpcBehavior : NpcBehavior {
         val nz = dz / dist
         val solid = { bx: Int, by: Int, bz: Int -> world.getBlockIfLoaded(bx, by, bz).isSolid }
 
-        val resolvedDx = AabbCollider.resolveX(solid, pos.x, pos.y, pos.z, def.width, def.height, nx * speed)
+        val resolvedDx =
+            AabbCollider.resolveX(solid, pos.x, pos.y, pos.z, def.width, def.height, nx * speed)
         val midX = pos.x + resolvedDx
-        val resolvedDz = AabbCollider.resolveZ(solid, midX, pos.y, pos.z, def.width, def.height, nz * speed)
+        val resolvedDz =
+            AabbCollider.resolveZ(solid, midX, pos.y, pos.z, def.width, def.height, nz * speed)
         val newX = midX
         val newZ = pos.z + resolvedDz
 
         if (resolvedDx == 0f && resolvedDz == 0f) {
-            if (instance.vy == 0f && AabbCollider.isGrounded(solid, pos.x, pos.y, pos.z, def.width)) {
-                val rdxAbove = AabbCollider.resolveX(solid, pos.x, pos.y + 1f, pos.z, def.width, def.height, nx * speed)
-                val rdzAbove = AabbCollider.resolveZ(solid, pos.x + rdxAbove, pos.y + 1f, pos.z, def.width, def.height, nz * speed)
+            if (instance.vy == 0f &&
+                AabbCollider.isGrounded(solid, pos.x, pos.y, pos.z, def.width)) {
+                val rdxAbove =
+                    AabbCollider.resolveX(
+                        solid, pos.x, pos.y + 1f, pos.z, def.width, def.height, nx * speed)
+                val rdzAbove =
+                    AabbCollider.resolveZ(
+                        solid,
+                        pos.x + rdxAbove,
+                        pos.y + 1f,
+                        pos.z,
+                        def.width,
+                        def.height,
+                        nz * speed)
                 if (rdxAbove != 0f || rdzAbove != 0f) {
                     instance.vy = NpcConstants.JUMP_VELOCITY
                     instance.wanderStepTicks--

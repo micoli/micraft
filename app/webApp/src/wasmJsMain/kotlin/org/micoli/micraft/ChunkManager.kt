@@ -4,50 +4,51 @@ import org.micoli.micraft.babylon.*
 import org.micoli.micraft.world.*
 
 // AO neighbor offsets: [face][vertex][neighbor(s1,s2,corner)][axis(dx,dy,dz)]
-private val AO_NEIGHBORS: Array<Array<Array<IntArray>>> = arrayOf(
-    // fd=0: +Z (south)
+private val AO_NEIGHBORS: Array<Array<Array<IntArray>>> =
     arrayOf(
-        arrayOf(intArrayOf(-1,0,1), intArrayOf(0,-1,1), intArrayOf(-1,-1,1)),
-        arrayOf(intArrayOf(1,0,1),  intArrayOf(0,-1,1), intArrayOf(1,-1,1)),
-        arrayOf(intArrayOf(1,0,1),  intArrayOf(0,1,1),  intArrayOf(1,1,1)),
-        arrayOf(intArrayOf(-1,0,1), intArrayOf(0,1,1),  intArrayOf(-1,1,1)),
-    ),
-    // fd=1: -Z (north)
-    arrayOf(
-        arrayOf(intArrayOf(1,0,-1),  intArrayOf(0,-1,-1), intArrayOf(1,-1,-1)),
-        arrayOf(intArrayOf(-1,0,-1), intArrayOf(0,-1,-1), intArrayOf(-1,-1,-1)),
-        arrayOf(intArrayOf(-1,0,-1), intArrayOf(0,1,-1),  intArrayOf(-1,1,-1)),
-        arrayOf(intArrayOf(1,0,-1),  intArrayOf(0,1,-1),  intArrayOf(1,1,-1)),
-    ),
-    // fd=2: +X (east)
-    arrayOf(
-        arrayOf(intArrayOf(1,0,1),  intArrayOf(1,-1,0), intArrayOf(1,-1,1)),
-        arrayOf(intArrayOf(1,0,-1), intArrayOf(1,-1,0), intArrayOf(1,-1,-1)),
-        arrayOf(intArrayOf(1,0,-1), intArrayOf(1,1,0),  intArrayOf(1,1,-1)),
-        arrayOf(intArrayOf(1,0,1),  intArrayOf(1,1,0),  intArrayOf(1,1,1)),
-    ),
-    // fd=3: -X (west)
-    arrayOf(
-        arrayOf(intArrayOf(-1,0,-1), intArrayOf(-1,-1,0), intArrayOf(-1,-1,-1)),
-        arrayOf(intArrayOf(-1,0,1),  intArrayOf(-1,-1,0), intArrayOf(-1,-1,1)),
-        arrayOf(intArrayOf(-1,0,1),  intArrayOf(-1,1,0),  intArrayOf(-1,1,1)),
-        arrayOf(intArrayOf(-1,0,-1), intArrayOf(-1,1,0),  intArrayOf(-1,1,-1)),
-    ),
-    // fd=4: +Y (top)
-    arrayOf(
-        arrayOf(intArrayOf(-1,1,0), intArrayOf(0,1,1),  intArrayOf(-1,1,1)),
-        arrayOf(intArrayOf(1,1,0),  intArrayOf(0,1,1),  intArrayOf(1,1,1)),
-        arrayOf(intArrayOf(1,1,0),  intArrayOf(0,1,-1), intArrayOf(1,1,-1)),
-        arrayOf(intArrayOf(-1,1,0), intArrayOf(0,1,-1), intArrayOf(-1,1,-1)),
-    ),
-    // fd=5: -Y (bottom)
-    arrayOf(
-        arrayOf(intArrayOf(-1,-1,0), intArrayOf(0,-1,-1), intArrayOf(-1,-1,-1)),
-        arrayOf(intArrayOf(1,-1,0),  intArrayOf(0,-1,-1), intArrayOf(1,-1,-1)),
-        arrayOf(intArrayOf(1,-1,0),  intArrayOf(0,-1,1),  intArrayOf(1,-1,1)),
-        arrayOf(intArrayOf(-1,-1,0), intArrayOf(0,-1,1),  intArrayOf(-1,-1,1)),
-    ),
-)
+        // fd=0: +Z (south)
+        arrayOf(
+            arrayOf(intArrayOf(-1, 0, 1), intArrayOf(0, -1, 1), intArrayOf(-1, -1, 1)),
+            arrayOf(intArrayOf(1, 0, 1), intArrayOf(0, -1, 1), intArrayOf(1, -1, 1)),
+            arrayOf(intArrayOf(1, 0, 1), intArrayOf(0, 1, 1), intArrayOf(1, 1, 1)),
+            arrayOf(intArrayOf(-1, 0, 1), intArrayOf(0, 1, 1), intArrayOf(-1, 1, 1)),
+        ),
+        // fd=1: -Z (north)
+        arrayOf(
+            arrayOf(intArrayOf(1, 0, -1), intArrayOf(0, -1, -1), intArrayOf(1, -1, -1)),
+            arrayOf(intArrayOf(-1, 0, -1), intArrayOf(0, -1, -1), intArrayOf(-1, -1, -1)),
+            arrayOf(intArrayOf(-1, 0, -1), intArrayOf(0, 1, -1), intArrayOf(-1, 1, -1)),
+            arrayOf(intArrayOf(1, 0, -1), intArrayOf(0, 1, -1), intArrayOf(1, 1, -1)),
+        ),
+        // fd=2: +X (east)
+        arrayOf(
+            arrayOf(intArrayOf(1, 0, 1), intArrayOf(1, -1, 0), intArrayOf(1, -1, 1)),
+            arrayOf(intArrayOf(1, 0, -1), intArrayOf(1, -1, 0), intArrayOf(1, -1, -1)),
+            arrayOf(intArrayOf(1, 0, -1), intArrayOf(1, 1, 0), intArrayOf(1, 1, -1)),
+            arrayOf(intArrayOf(1, 0, 1), intArrayOf(1, 1, 0), intArrayOf(1, 1, 1)),
+        ),
+        // fd=3: -X (west)
+        arrayOf(
+            arrayOf(intArrayOf(-1, 0, -1), intArrayOf(-1, -1, 0), intArrayOf(-1, -1, -1)),
+            arrayOf(intArrayOf(-1, 0, 1), intArrayOf(-1, -1, 0), intArrayOf(-1, -1, 1)),
+            arrayOf(intArrayOf(-1, 0, 1), intArrayOf(-1, 1, 0), intArrayOf(-1, 1, 1)),
+            arrayOf(intArrayOf(-1, 0, -1), intArrayOf(-1, 1, 0), intArrayOf(-1, 1, -1)),
+        ),
+        // fd=4: +Y (top)
+        arrayOf(
+            arrayOf(intArrayOf(-1, 1, 0), intArrayOf(0, 1, 1), intArrayOf(-1, 1, 1)),
+            arrayOf(intArrayOf(1, 1, 0), intArrayOf(0, 1, 1), intArrayOf(1, 1, 1)),
+            arrayOf(intArrayOf(1, 1, 0), intArrayOf(0, 1, -1), intArrayOf(1, 1, -1)),
+            arrayOf(intArrayOf(-1, 1, 0), intArrayOf(0, 1, -1), intArrayOf(-1, 1, -1)),
+        ),
+        // fd=5: -Y (bottom)
+        arrayOf(
+            arrayOf(intArrayOf(-1, -1, 0), intArrayOf(0, -1, -1), intArrayOf(-1, -1, -1)),
+            arrayOf(intArrayOf(1, -1, 0), intArrayOf(0, -1, -1), intArrayOf(1, -1, -1)),
+            arrayOf(intArrayOf(1, -1, 0), intArrayOf(0, -1, 1), intArrayOf(1, -1, 1)),
+            arrayOf(intArrayOf(-1, -1, 0), intArrayOf(0, -1, 1), intArrayOf(-1, -1, 1)),
+        ),
+    )
 
 class ChunkManager(private val scene: JsAny) {
     val loadedChunks = mutableSetOf<ChunkPos>()
@@ -101,14 +102,19 @@ class ChunkManager(private val scene: JsAny) {
     }
 
     fun renderChunk(chunk: Chunk, topY: Int) {
-        val mats = getBlockMaterials() ?: run { pendingChunks.add(Pair(chunk, topY)); return }
+        val mats =
+            getBlockMaterials()
+                ?: run {
+                    pendingChunks.add(Pair(chunk, topY))
+                    return
+                }
         val chunkKey = "${chunk.pos.cx},${chunk.pos.cz}"
         jsDisposeChunk(chunkKey)
         chunkData[chunk.pos] = Pair(chunk, topY)
 
         val ox = chunk.pos.cx * WorldConstants.CHUNK_SIZE
         val oz = chunk.pos.cz * WorldConstants.CHUNK_SIZE
-        val s  = WorldConstants.CHUNK_SIZE
+        val s = WorldConstants.CHUNK_SIZE
 
         jsChunkBegin(chunk.pos.cx, chunk.pos.cz)
         for (x in 0 until s) {
@@ -116,15 +122,21 @@ class ChunkManager(private val scene: JsAny) {
                 for (y in 0..topY) {
                     val block = chunk.getBlock(x, y, z)
                     if (block == BlockType.AIR) continue
-                    val t  = block.ordinal * 6
+                    val t = block.ordinal * 6
                     val wx = ox + x
                     val wz2 = oz + z
-                    if (y >= WorldConstants.WORLD_MAX_Y || !chunk.getBlock(x, y + 1, z).isSolid) jsChunkFace(wx, y, wz2, t + 4, computeFaceAO(chunk, x, y, z, 4))
-                    if (y <= 0 || !chunk.getBlock(x, y - 1, z).isSolid)                          jsChunkFace(wx, y, wz2, t + 5, computeFaceAO(chunk, x, y, z, 5))
-                    if (z == s - 1 || !chunk.getBlock(x, y, z + 1).isSolid)                      jsChunkFace(wx, y, wz2, t + 0, computeFaceAO(chunk, x, y, z, 0))
-                    if (z == 0     || !chunk.getBlock(x, y, z - 1).isSolid)                      jsChunkFace(wx, y, wz2, t + 1, computeFaceAO(chunk, x, y, z, 1))
-                    if (x == s - 1 || !chunk.getBlock(x + 1, y, z).isSolid)                      jsChunkFace(wx, y, wz2, t + 2, computeFaceAO(chunk, x, y, z, 2))
-                    if (x == 0     || !chunk.getBlock(x - 1, y, z).isSolid)                      jsChunkFace(wx, y, wz2, t + 3, computeFaceAO(chunk, x, y, z, 3))
+                    if (y >= WorldConstants.WORLD_MAX_Y || !chunk.getBlock(x, y + 1, z).isSolid)
+                        jsChunkFace(wx, y, wz2, t + 4, computeFaceAO(chunk, x, y, z, 4))
+                    if (y <= 0 || !chunk.getBlock(x, y - 1, z).isSolid)
+                        jsChunkFace(wx, y, wz2, t + 5, computeFaceAO(chunk, x, y, z, 5))
+                    if (z == s - 1 || !chunk.getBlock(x, y, z + 1).isSolid)
+                        jsChunkFace(wx, y, wz2, t + 0, computeFaceAO(chunk, x, y, z, 0))
+                    if (z == 0 || !chunk.getBlock(x, y, z - 1).isSolid)
+                        jsChunkFace(wx, y, wz2, t + 1, computeFaceAO(chunk, x, y, z, 1))
+                    if (x == s - 1 || !chunk.getBlock(x + 1, y, z).isSolid)
+                        jsChunkFace(wx, y, wz2, t + 2, computeFaceAO(chunk, x, y, z, 2))
+                    if (x == 0 || !chunk.getBlock(x - 1, y, z).isSolid)
+                        jsChunkFace(wx, y, wz2, t + 3, computeFaceAO(chunk, x, y, z, 3))
                 }
             }
         }
@@ -135,9 +147,10 @@ class ChunkManager(private val scene: JsAny) {
 
     fun unloadDistantChunks(playerCx: Int, playerCz: Int) {
         val r = WorldConstants.CLIENT_VIEW_RADIUS
-        val toUnload = loadedChunks.filter { cp ->
-            kotlin.math.abs(cp.cx - playerCx) > r || kotlin.math.abs(cp.cz - playerCz) > r
-        }
+        val toUnload =
+            loadedChunks.filter { cp ->
+                kotlin.math.abs(cp.cx - playerCx) > r || kotlin.math.abs(cp.cz - playerCz) > r
+            }
         if (toUnload.isEmpty()) return
         toUnload.forEach { cp ->
             jsDisposeChunk("${cp.cx},${cp.cz}")
@@ -172,7 +185,8 @@ class ChunkManager(private val scene: JsAny) {
             }
         }
         jsSetMinimapChunk(
-            chunk.pos.cx, chunk.pos.cz,
+            chunk.pos.cx,
+            chunk.pos.cz,
             "[${topYParts.joinToString(",")}]",
             "[${topBlockParts.joinToString(",")}]",
         )
@@ -186,7 +200,9 @@ class ChunkManager(private val scene: JsAny) {
             var solid = 0
             for (n in 0..2) {
                 val off = nbrs[v][n]
-                val nx = lx + off[0]; val ny = ly + off[1]; val nz = lz + off[2]
+                val nx = lx + off[0]
+                val ny = ly + off[1]
+                val nz = lz + off[2]
                 if (nx < 0 || nx >= s || nz < 0 || nz >= s) continue
                 if (ny < 0 || ny > WorldConstants.WORLD_MAX_Y) continue
                 if (chunk.getBlock(nx, ny, nz).isSolid) solid++

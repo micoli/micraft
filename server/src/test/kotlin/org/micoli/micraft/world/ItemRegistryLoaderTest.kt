@@ -19,15 +19,16 @@ class ItemRegistryLoaderTest {
 
     @Test
     fun validYaml_loadsItems() {
-        val loader = loaderWith(
-            """
+        val loader =
+            loaderWith(
+                """
             COBBLESTONE:
               buildable: true
               placesBlock: STONE
             SNOWBALL:
               buildable: false
-            """.trimIndent()
-        )
+            """
+                    .trimIndent())
         val result = loader.load()
         assertEquals(2, result.size)
         assertEquals(true, result[ItemType.COBBLESTONE]?.buildable)

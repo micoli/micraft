@@ -13,9 +13,11 @@ internal object NpcPhysics {
         val pos = instance.state.pos
         val solid = { bx: Int, by: Int, bz: Int -> world.getBlockIfLoaded(bx, by, bz).isSolid }
 
-        return if (instance.vy <= 0f && AabbCollider.isGrounded(solid, pos.x, pos.y, pos.z, def.width)) {
+        return if (instance.vy <= 0f &&
+            AabbCollider.isGrounded(solid, pos.x, pos.y, pos.z, def.width)) {
             instance.vy = 0f
-            val snapDy = AabbCollider.resolveY(solid, pos.x, pos.y, pos.z, def.width, def.height, -1f)
+            val snapDy =
+                AabbCollider.resolveY(solid, pos.x, pos.y, pos.z, def.width, def.height, -1f)
             val newY = (pos.y + snapDy).coerceAtLeast(0f)
             if (newY != pos.y) {
                 instance.state = instance.state.copy(pos = Vec3(pos.x, newY, pos.z))
@@ -24,7 +26,8 @@ internal object NpcPhysics {
         } else {
             instance.vy += GRAVITY * TICK_SECONDS
             val dy = instance.vy * TICK_SECONDS
-            val resolvedDy = AabbCollider.resolveY(solid, pos.x, pos.y, pos.z, def.width, def.height, dy)
+            val resolvedDy =
+                AabbCollider.resolveY(solid, pos.x, pos.y, pos.z, def.width, def.height, dy)
             if (resolvedDy != dy) instance.vy = 0f
             val newY = (pos.y + resolvedDy).coerceAtLeast(0f)
             instance.state = instance.state.copy(pos = Vec3(pos.x, newY, pos.z))

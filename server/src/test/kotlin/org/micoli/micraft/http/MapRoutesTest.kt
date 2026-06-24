@@ -4,15 +4,15 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.module
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 class MapRoutesTest {
 
@@ -37,9 +37,12 @@ class MapRoutesTest {
         val body = client.get("/api/map/state").bodyAsText()
         val json = Json.parseToJsonElement(body).jsonObject
         assertNotNull(json["gameTicks"], "gameTicks field must be present")
-        assertTrue(json["gameTicks"]!!.jsonPrimitive.content.toLong() >= 0, "gameTicks must be non-negative")
+        assertTrue(
+            json["gameTicks"]!!.jsonPrimitive.content.toLong() >= 0,
+            "gameTicks must be non-negative")
         assertNotNull(json["players"], "players field must be present")
-        assertTrue(json["players"]!!.jsonArray.isEmpty() || json["players"]!!.jsonArray.isNotEmpty())
+        assertTrue(
+            json["players"]!!.jsonArray.isEmpty() || json["players"]!!.jsonArray.isNotEmpty())
         assertNotNull(json["npcs"], "npcs field must be present")
         assertTrue(json["npcs"]!!.jsonArray.isEmpty() || json["npcs"]!!.jsonArray.isNotEmpty())
     }
@@ -62,7 +65,9 @@ class MapRoutesTest {
         assertEquals(1f, info.x)
         assertEquals(90f, info.yaw)
 
-        val npc = NpcMapInfo(id = "xyz", name = "Zombie", type = "zombie", x = 10f, y = 64f, z = 20f, yaw = 0f)
+        val npc =
+            NpcMapInfo(
+                id = "xyz", name = "Zombie", type = "zombie", x = 10f, y = 64f, z = 20f, yaw = 0f)
         assertEquals("zombie", npc.type)
         assertEquals(10f, npc.x)
     }

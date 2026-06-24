@@ -1,13 +1,13 @@
 package org.micoli.micraft.plugins.summon
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class SummonCommandTest {
     private val cmd = SummonCommand()
@@ -52,7 +52,13 @@ class SummonCommandTest {
         val target = testSession(id = "bob-id", name = "Bob")
         cmd.execute(caller, "Bob", testContext(sessions = listOf(caller, target)))
         assertTrue(target.sent.any { it is ServerMessage.PlayerUpdate })
-        assertTrue(target.sent.filterIsInstance<ServerMessage.Notification>().any { it.message.contains("summoned") || it.message.contains("Alice") })
-        assertTrue(caller.sent.filterIsInstance<ServerMessage.Notification>().any { it.message.contains("Bob") })
+        assertTrue(
+            target.sent.filterIsInstance<ServerMessage.Notification>().any {
+                it.message.contains("summoned") || it.message.contains("Alice")
+            })
+        assertTrue(
+            caller.sent.filterIsInstance<ServerMessage.Notification>().any {
+                it.message.contains("Bob")
+            })
     }
 }

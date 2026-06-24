@@ -1,5 +1,12 @@
 package org.micoli.micraft.tick
 
+import kotlin.io.path.createTempFile
+import kotlin.io.path.writeText
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ClientMessage
@@ -9,27 +16,21 @@ import org.micoli.micraft.support.testWorld
 import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.DropConfig
-import org.micoli.micraft.world.WorldItem
 import org.micoli.micraft.world.WorldItemManager
-import kotlin.io.path.createTempFile
-import kotlin.io.path.writeText
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class BlockBreakerTest {
 
     private fun createDropConfig(): DropConfig {
         val tmp = createTempFile(suffix = ".yaml")
         tmp.toFile().deleteOnExit()
-        tmp.writeText("STONE:\n  - item: COBBLESTONE\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\n")
+        tmp.writeText(
+            "STONE:\n  - item: COBBLESTONE\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\n")
         return DropConfig(tmp)
     }
 
-    private fun noopWim(broadcasts: MutableList<ServerMessage> = mutableListOf()): WorldItemManager =
-        WorldItemManager(createDropConfig(), { broadcasts.add(it) })
+    private fun noopWim(
+        broadcasts: MutableList<ServerMessage> = mutableListOf()
+    ): WorldItemManager = WorldItemManager(createDropConfig(), { broadcasts.add(it) })
 
     @Test
     fun handleStart_validBlock_setsBreakTarget() {
@@ -58,9 +59,9 @@ class BlockBreakerTest {
     fun handleStart_bedrockBlock_ignores() {
         // Place BEDROCK manually via MapChunkGenerator
         val blocks = mapOf(Triple(8, 5, 8) to BlockType.BEDROCK)
-        val world = org.micoli.micraft.world.WorldState(
-            org.micoli.micraft.support.MapChunkGenerator(blocks)
-        )
+        val world =
+            org.micoli.micraft.world.WorldState(
+                org.micoli.micraft.support.MapChunkGenerator(blocks))
         val breaker = BlockBreaker(world, {}, noopWim())
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         breaker.handleStart(session, ClientMessage.BlockBreakStart(BlockPos(8, 5, 8)))
@@ -117,9 +118,9 @@ class BlockBreakerTest {
     fun tick_completesBreak_setsAirInWorld() = runBlocking {
         // SNOW has hardness=1 → breaks on first tick
         val blocks = mapOf(Triple(8, 5, 8) to BlockType.SNOW)
-        val world = org.micoli.micraft.world.WorldState(
-            org.micoli.micraft.support.MapChunkGenerator(blocks)
-        )
+        val world =
+            org.micoli.micraft.world.WorldState(
+                org.micoli.micraft.support.MapChunkGenerator(blocks))
         val breaker = BlockBreaker(world, {}, noopWim())
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.breakTarget = BlockPos(8, 5, 8)
@@ -133,9 +134,9 @@ class BlockBreakerTest {
     fun tick_completesBreak_broadcastsWorldUpdate() = runBlocking {
         val broadcasts = mutableListOf<ServerMessage>()
         val blocks = mapOf(Triple(8, 5, 8) to BlockType.SNOW)
-        val world = org.micoli.micraft.world.WorldState(
-            org.micoli.micraft.support.MapChunkGenerator(blocks)
-        )
+        val world =
+            org.micoli.micraft.world.WorldState(
+                org.micoli.micraft.support.MapChunkGenerator(blocks))
         val breaker = BlockBreaker(world, { broadcasts.add(it) }, noopWim())
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.breakTarget = BlockPos(8, 5, 8)
@@ -146,9 +147,9 @@ class BlockBreakerTest {
     @Test
     fun tick_completesBreak_addsToHistory() = runBlocking {
         val blocks = mapOf(Triple(8, 5, 8) to BlockType.SNOW)
-        val world = org.micoli.micraft.world.WorldState(
-            org.micoli.micraft.support.MapChunkGenerator(blocks)
-        )
+        val world =
+            org.micoli.micraft.world.WorldState(
+                org.micoli.micraft.support.MapChunkGenerator(blocks))
         val breaker = BlockBreaker(world, {}, noopWim())
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.breakTarget = BlockPos(8, 5, 8)
@@ -164,9 +165,9 @@ class BlockBreakerTest {
         // Break 21 snow blocks (hardness=1) to exceed MAX_UNDO_HISTORY=20
         var xOff = 0
         val blocks = (0..20).associate { Triple(8 + it, 5, 8) to BlockType.SNOW }
-        val world = org.micoli.micraft.world.WorldState(
-            org.micoli.micraft.support.MapChunkGenerator(blocks)
-        )
+        val world =
+            org.micoli.micraft.world.WorldState(
+                org.micoli.micraft.support.MapChunkGenerator(blocks))
         val breaker = BlockBreaker(world, {}, noopWim())
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         for (x in 8..28) {

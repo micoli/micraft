@@ -5,10 +5,10 @@ import io.ktor.client.engine.js.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.babylon.*
-import kotlinx.coroutines.channels.Channel
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.ui.LayoutSyncPayload
@@ -19,22 +19,25 @@ private const val SKY_R = 0.53
 private const val SKY_G = 0.81
 private const val SKY_B = 0.98
 
-class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private val scene: JsAny, private val camera: JsAny, private val uiState: McUiState) {
+class GameClient
+@OptIn(ExperimentalWasmJsInterop::class)
+constructor(private val scene: JsAny, private val camera: JsAny, private val uiState: McUiState) {
     private val outMessages = Channel<ClientMessage>(Channel.BUFFERED)
     private val networkStats = NetworkStats()
     private val chunkManager = ChunkManager(scene)
     private val remotePlayerManager = RemotePlayerManager(scene)
     private val npcManager = NpcManager(scene)
-    private val localController = LocalPlayerController(
-        scene = scene,
-        camera = camera,
-        outMessages = outMessages,
-        chunkManager = chunkManager,
-        uiState = uiState,
-        networkStats = networkStats,
-        serverHost = { serverHost },
-        serverPort = { serverPort },
-    )
+    private val localController =
+        LocalPlayerController(
+            scene = scene,
+            camera = camera,
+            outMessages = outMessages,
+            chunkManager = chunkManager,
+            uiState = uiState,
+            networkStats = networkStats,
+            serverHost = { serverHost },
+            serverPort = { serverPort },
+        )
 
     private val scope = CoroutineScope(Dispatchers.Default)
     private var localPlayerId: String? = null
@@ -49,7 +52,13 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
         jsInitBlockDefs()
     }
 
-    fun connect(host: String, port: Int, username: String, playerName: String, preferredLanguage: String = "en") {
+    fun connect(
+        host: String,
+        port: Int,
+        username: String,
+        playerName: String,
+        preferredLanguage: String = "en"
+    ) {
         serverHost = host
         serverPort = port
 
@@ -75,9 +84,12 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                             if (frame !is Frame.Text) continue
                             val text = frame.readText()
                             networkStats.bytesIn += text.length
-                            val msg = runCatching { Json.decodeFromString<ServerMessage>(text) }.getOrNull() ?: continue
+                            val msg =
+                                runCatching { Json.decodeFromString<ServerMessage>(text) }
+                                    .getOrNull() ?: continue
                             if (msg is ServerMessage.ChunkData) {
-                                chunkManager.enqueueChunk(Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
+                                chunkManager.enqueueChunk(
+                                    Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
                             }
                         }
                     }
@@ -98,15 +110,28 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                     jsLog("WS connecting to ws://$host:$port/game")
                     val client = HttpClient(Js) { install(WebSockets) }
                     client.webSocket(host = host, port = port, path = "/game") {
-                        jsLog("WS connected, sending Connect(playerName=$playerName, userName=$username)")
-                        send(Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect(playerName = playerName, userName = username, preferredLanguage = preferredLanguage))))
+                        jsLog(
+                            "WS connected, sending Connect(playerName=$playerName, userName=$username)")
+                        send(
+                            Frame.Text(
+                                Json.encodeToString<ClientMessage>(
+                                    ClientMessage.Connect(
+                                        playerName = playerName,
+                                        userName = username,
+                                        preferredLanguage = preferredLanguage))))
 
                         val inputJob = launch {
                             while (isActive) {
                                 delay(50)
                                 val intent = localController.buildMoveIntent()
-                                val idle = intent.dx == 0f && intent.dz == 0f && intent.dy == 0f &&
-                                    !intent.jump && !intent.flyToggle && !intent.speedUp && !intent.speedDown
+                                val idle =
+                                    intent.dx == 0f &&
+                                        intent.dz == 0f &&
+                                        intent.dy == 0f &&
+                                        !intent.jump &&
+                                        !intent.flyToggle &&
+                                        !intent.speedUp &&
+                                        !intent.speedDown
                                 if (!idle || intent != localController.lastSentIntent) {
                                     localController.lastSentIntent = intent
                                     val intentText = Json.encodeToString<ClientMessage>(intent)
@@ -115,7 +140,9 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                                 }
                                 val unloads = chunkManager.collectAndClearUnloads()
                                 if (unloads.isNotEmpty()) {
-                                    val unloadText = Json.encodeToString<ClientMessage>(ClientMessage.ChunkUnload(unloads))
+                                    val unloadText =
+                                        Json.encodeToString<ClientMessage>(
+                                            ClientMessage.ChunkUnload(unloads))
                                     send(Frame.Text(unloadText))
                                     networkStats.bytesOut += unloadText.length
                                 }
@@ -136,19 +163,24 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                                 val text = frame.readText()
                                 networkStats.bytesIn += text.length
                                 frameCount++
-                                if (frameCount <= 3) jsLog("WS frame #$frameCount (${text.length}B): ${text.take(200)}")
-                                val msg = runCatching {
-                                    Json.decodeFromString<ServerMessage>(text)
-                                }.onFailure { e ->
-                                    jsError("JSON parse error on frame #$frameCount: ${e.message} | raw=${text.take(300)}")
-                                }.getOrNull() ?: continue
+                                if (frameCount <= 3)
+                                    jsLog(
+                                        "WS frame #$frameCount (${text.length}B): ${text.take(200)}")
+                                val msg =
+                                    runCatching { Json.decodeFromString<ServerMessage>(text) }
+                                        .onFailure { e ->
+                                            jsError(
+                                                "JSON parse error on frame #$frameCount: ${e.message} | raw=${text.take(300)}")
+                                        }
+                                        .getOrNull() ?: continue
                                 if (msg is ServerMessage.Welcome) sessionWelcomed = true
                                 handleMessage(msg)
                             } else {
                                 jsLog("WS non-text frame: ${frame::class.simpleName}")
                             }
                         }
-                        jsLog("WS incoming loop ended after $frameCount frames (closeReason=${closeReason.await()})")
+                        jsLog(
+                            "WS incoming loop ended after $frameCount frames (closeReason=${closeReason.await()})")
                         inputJob.cancel()
                         breakJob.cancel()
                     }
@@ -191,11 +223,15 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                 jsSyncLayouts(Json.encodeToString(LayoutSyncPayload(msg.layouts, msg.activeLayout)))
             }
             is ServerMessage.ShadersUpdate -> chunkManager.setShadersEnabled(msg.enabled)
-            is ServerMessage.ChunkData -> chunkManager.renderChunk(Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
+            is ServerMessage.ChunkData ->
+                chunkManager.renderChunk(
+                    Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
             is ServerMessage.PlayerUpdate -> {
                 val s = msg.state
                 if (s.id == localPlayerId) {
-                    localController.updateFromServer(s) { cx, cz -> chunkManager.unloadDistantChunks(cx, cz) }
+                    localController.updateFromServer(s) { cx, cz ->
+                        chunkManager.unloadDistantChunks(cx, cz)
+                    }
                 } else {
                     remotePlayerManager.updateFromServer(s)
                 }
@@ -205,40 +241,58 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
                 uiState.pushNotification(msg.message)
                 uiState.pushLog(msg.message, msg.channel)
             }
-            is ServerMessage.ChatMessage -> uiState.pushChatMessage(msg.channel, msg.sender, msg.message)
-            is ServerMessage.ChannelsSync -> uiState.setChannelsSync(msg.subscribedChannels, msg.knownChannels)
+            is ServerMessage.ChatMessage ->
+                uiState.pushChatMessage(msg.channel, msg.sender, msg.message)
+            is ServerMessage.ChannelsSync ->
+                uiState.setChannelsSync(msg.subscribedChannels, msg.knownChannels)
             is ServerMessage.BlockBreakProgress -> {
                 val alpha = 1.0 - msg.progress.toDouble() / msg.hardness.toDouble()
                 jsShowBreakOverlay(scene, msg.pos.x, msg.pos.y, msg.pos.z, alpha)
             }
             is ServerMessage.InventoryUpdate -> uiState.inventory = msg.inventory
             is ServerMessage.ShortcutBarUpdate -> {
-                msg.slots.forEachIndexed { i, item -> if (i in 0..9) localController.shortcutBar[i] = item }
+                msg.slots.forEachIndexed { i, item ->
+                    if (i in 0..9) localController.shortcutBar[i] = item
+                }
                 localController.syncShortcutBarToUi()
             }
             is ServerMessage.TimeUpdate -> localController.currentGameTicks = msg.gameTicks
-            is ServerMessage.LayoutsSync -> jsSyncLayouts(Json.encodeToString(LayoutSyncPayload(msg.layouts, msg.activeLayout)))
+            is ServerMessage.LayoutsSync ->
+                jsSyncLayouts(Json.encodeToString(LayoutSyncPayload(msg.layouts, msg.activeLayout)))
             is ServerMessage.OpenLayoutEditor -> jsShowLayoutEditor()
             is ServerMessage.OpenPreferences -> jsShowPreferences()
             is ServerMessage.RegistrySync -> {
-                val blockDefs = msg.blocks.mapIndexed { i, info ->
-                    BlockType.entries[i] to BlockDefinition(
-                        hardness = info.hardness,
-                        solid = info.solid,
-                        transparent = info.transparent,
-                        minimapColor = info.minimapColor,
-                        modelElement = info.modelElement,
-                    )
-                }.toMap()
+                val blockDefs =
+                    msg.blocks
+                        .mapIndexed { i, info ->
+                            BlockType.entries[i] to
+                                BlockDefinition(
+                                    hardness = info.hardness,
+                                    solid = info.solid,
+                                    transparent = info.transparent,
+                                    minimapColor = info.minimapColor,
+                                    modelElement = info.modelElement,
+                                )
+                        }
+                        .toMap()
                 BlockRegistry.load(blockDefs)
-                val itemDefs = msg.items.entries.mapNotNull { (key, info) ->
-                    runCatching {
-                        ItemType.valueOf(key) to ItemDefinition(
-                            buildable = info.buildable,
-                            placesBlock = info.placesBlock?.let { runCatching { BlockType.valueOf(it) }.getOrNull() },
-                        )
-                    }.getOrNull()
-                }.toMap()
+                val itemDefs =
+                    msg.items.entries
+                        .mapNotNull { (key, info) ->
+                            runCatching {
+                                    ItemType.valueOf(key) to
+                                        ItemDefinition(
+                                            buildable = info.buildable,
+                                            placesBlock =
+                                                info.placesBlock?.let {
+                                                    runCatching { BlockType.valueOf(it) }
+                                                        .getOrNull()
+                                                },
+                                        )
+                                }
+                                .getOrNull()
+                        }
+                        .toMap()
                 ItemRegistry.load(itemDefs)
                 jsSetBlockRegistry(Json.encodeToString(msg.blocks))
                 if (msg.npcs.isNotEmpty()) jsInitNpcModels(Json.encodeToString(msg.npcs))
@@ -249,19 +303,23 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
             is ServerMessage.NpcUpdate -> npcManager.handleUpdate(msg.npc)
             is ServerMessage.NpcDespawned -> npcManager.handleDespawned(msg.id)
             is ServerMessage.NpcInteractResult -> jsOpenNpcDialog(msg.payload)
-            is ServerMessage.PreferencesSync -> uiState.setPreferencesSync(Json.encodeToString<ServerMessage.PreferencesSync>(msg))
-            is ServerMessage.WorldUpdate -> msg.changes.forEach { change ->
-                val cx = change.pos.x.floorDiv(WorldConstants.CHUNK_SIZE)
-                val cz = change.pos.z.floorDiv(WorldConstants.CHUNK_SIZE)
-                val cp = ChunkPos(cx, cz)
-                val (existing, existingTopY) = chunkManager.chunkData[cp] ?: return@forEach
-                val lx = change.pos.x - cx * WorldConstants.CHUNK_SIZE
-                val lz = change.pos.z - cz * WorldConstants.CHUNK_SIZE
-                val updated = existing.withBlock(lx, change.pos.y, lz, change.type)
-                val newTopY = if (change.type != BlockType.AIR) maxOf(existingTopY, change.pos.y) else existingTopY
-                chunkManager.renderChunk(updated, newTopY)
-                if (change.type == BlockType.AIR) localController.onBlockBroken(change.pos)
-            }
+            is ServerMessage.PreferencesSync ->
+                uiState.setPreferencesSync(Json.encodeToString<ServerMessage.PreferencesSync>(msg))
+            is ServerMessage.WorldUpdate ->
+                msg.changes.forEach { change ->
+                    val cx = change.pos.x.floorDiv(WorldConstants.CHUNK_SIZE)
+                    val cz = change.pos.z.floorDiv(WorldConstants.CHUNK_SIZE)
+                    val cp = ChunkPos(cx, cz)
+                    val (existing, existingTopY) = chunkManager.chunkData[cp] ?: return@forEach
+                    val lx = change.pos.x - cx * WorldConstants.CHUNK_SIZE
+                    val lz = change.pos.z - cz * WorldConstants.CHUNK_SIZE
+                    val updated = existing.withBlock(lx, change.pos.y, lz, change.type)
+                    val newTopY =
+                        if (change.type != BlockType.AIR) maxOf(existingTopY, change.pos.y)
+                        else existingTopY
+                    chunkManager.renderChunk(updated, newTopY)
+                    if (change.type == BlockType.AIR) localController.onBlockBroken(change.pos)
+                }
         }
     }
 }

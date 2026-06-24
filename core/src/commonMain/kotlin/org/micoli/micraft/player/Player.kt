@@ -5,11 +5,9 @@ import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.ui.defaultLayout
 import org.micoli.micraft.world.ItemType
 
-@Serializable
-data class Vec3(val x: Float, val y: Float, val z: Float)
+@Serializable data class Vec3(val x: Float, val y: Float, val z: Float)
 
-@Serializable
-data class Orientation(val yaw: Float, val pitch: Float)
+@Serializable data class Orientation(val yaw: Float, val pitch: Float)
 
 @Serializable
 data class PlayerState(

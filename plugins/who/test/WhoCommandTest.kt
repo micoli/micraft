@@ -1,12 +1,12 @@
 package org.micoli.micraft.plugins.who
 
+import kotlin.test.Test
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
-import kotlin.test.Test
-import kotlin.test.assertTrue
 
 class WhoCommandTest {
     private val cmd = WhoCommand()

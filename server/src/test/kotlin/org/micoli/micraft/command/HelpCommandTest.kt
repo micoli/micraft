@@ -1,33 +1,43 @@
 package org.micoli.micraft.command
 
-import kotlinx.coroutines.runBlocking
-import org.micoli.micraft.CommandHandler
-import org.micoli.micraft.CommandContext
 import java.util.UUID
+import kotlin.test.Test
+import kotlin.test.assertTrue
+import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.CommandContext
+import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
-import kotlin.test.Test
-import kotlin.test.assertTrue
 
 class HelpCommandTest {
     private val cmd = HelpCommand()
 
-    private fun fakeHandler(name: String, desc: String = "", opts: List<String> = emptyList()): CommandHandler =
+    private fun fakeHandler(
+        name: String,
+        desc: String = "",
+        opts: List<String> = emptyList()
+    ): CommandHandler =
         object : CommandHandler {
             override val id: UUID = UUID.randomUUID()
             override val command = name
             override val description = desc
             override val usage = name
             override val options = opts
-            override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {}
+
+            override suspend fun execute(
+                session: PlayerSession,
+                args: String,
+                context: CommandContext
+            ) {}
         }
 
     @Test
     fun noArgs_listsAllCommands() = runBlocking {
         val session = testSession()
-        val handlers = listOf(fakeHandler("/foo", "Foo command"), fakeHandler("/bar", "Bar command"))
+        val handlers =
+            listOf(fakeHandler("/foo", "Foo command"), fakeHandler("/bar", "Bar command"))
         val ctx = testContext(sessions = listOf(session)).copy(commands = { handlers })
         cmd.execute(session, "", ctx)
         val notif = session.sent.filterIsInstance<ServerMessage.Notification>().first()

@@ -11,7 +11,5 @@ import org.micoli.micraft.ui.McUiState
 @Preview
 fun App() {
     val state = remember { McUiState() }
-    MaterialTheme {
-        McGameUI(state)
-    }
+    MaterialTheme { McGameUI(state) }
 }

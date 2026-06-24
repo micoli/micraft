@@ -1,11 +1,11 @@
 package org.micoli.micraft.command
 
+import java.util.UUID
 import org.micoli.micraft.CommandContext
 import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 private val log = LoggerFactory.getLogger(SaveCommand::class.java)
 
@@ -17,7 +17,8 @@ class SaveCommand : CommandHandler {
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         context.flushWorld?.invoke() ?: context.world.flushDirty()
         context.savePlayer(session)
-        session.send(ServerMessage.Notification(context.i18n.t(session.state.language, "save:server:done")))
+        session.send(
+            ServerMessage.Notification(context.i18n.t(session.state.language, "save:server:done")))
         log.info("Manual /save by {}", session.state.name)
     }
 }

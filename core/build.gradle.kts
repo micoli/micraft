@@ -7,23 +7,13 @@ plugins {
 
 kotlin {
     jvm()
-    
-    js {
-        browser()
-    }
-    
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser()
-    }
-    
-    
+
+    js { browser() }
+
+    @OptIn(ExperimentalWasmDsl::class) wasmJs { browser() }
+
     sourceSets {
-        commonMain.dependencies {
-            api(libs.kotlinx.serialization.json)
-        }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-        }
+        commonMain.dependencies { api(libs.kotlinx.serialization.json) }
+        commonTest.dependencies { implementation(libs.kotlin.test) }
     }
 }

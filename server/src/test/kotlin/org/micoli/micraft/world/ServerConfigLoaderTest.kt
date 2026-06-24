@@ -32,8 +32,8 @@ class ServerConfigLoaderTest {
             gameplay:
               gravity: -25.0
               spawnY: 64.0
-            """.trimIndent()
-        )
+            """
+                .trimIndent())
         val config = loadServerConfig(path)
         assertEquals(5, config.world.viewRadius)
         assertEquals(10, config.world.forwardViewRadius)
@@ -50,7 +50,8 @@ class ServerConfigLoaderTest {
         loadServerConfig(path)
         val written = path.readText()
         assertTrue(written.contains("worldMaxY"), "Missing keys must be written back to file")
-        assertTrue(written.contains("speedStanding"), "Missing sections must be written back to file")
+        assertTrue(
+            written.contains("speedStanding"), "Missing sections must be written back to file")
     }
 
     @Test
@@ -64,11 +65,19 @@ class ServerConfigLoaderTest {
 
     @Test
     fun applyServerConfig_setsWorldConstants() {
-        val config = ServerConfig(
-            world = WorldSection(viewRadius = 5, forwardViewRadius = 9, worldMaxY = 512),
-            player = PlayerSection(speedStanding = 6.0f, width = 0.8f),
-            gameplay = GameplaySection(gravity = -15f, tickMs = 100L, saveIntervalSeconds = 60, spawnX = 16f, spawnY = 64f, spawnZ = 16f),
-        )
+        val config =
+            ServerConfig(
+                world = WorldSection(viewRadius = 5, forwardViewRadius = 9, worldMaxY = 512),
+                player = PlayerSection(speedStanding = 6.0f, width = 0.8f),
+                gameplay =
+                    GameplaySection(
+                        gravity = -15f,
+                        tickMs = 100L,
+                        saveIntervalSeconds = 60,
+                        spawnX = 16f,
+                        spawnY = 64f,
+                        spawnZ = 16f),
+            )
         applyServerConfig(config)
         assertEquals(5, WorldConstants.VIEW_RADIUS)
         assertEquals(9, WorldConstants.FORWARD_VIEW_RADIUS)

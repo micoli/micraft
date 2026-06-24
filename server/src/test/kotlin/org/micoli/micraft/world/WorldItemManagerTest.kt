@@ -1,23 +1,24 @@
 package org.micoli.micraft.world
 
-import kotlinx.coroutines.runBlocking
-import org.micoli.micraft.player.Vec3
-import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.session.PlayerSession
-import org.micoli.micraft.support.testSession
 import kotlin.io.path.createTempFile
 import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.session.PlayerSession
+import org.micoli.micraft.support.testSession
 
 class WorldItemManagerTest {
 
     private fun dropConfigWith100PctStone(): DropConfig {
         val tmp = createTempFile(suffix = ".yaml")
         tmp.toFile().deleteOnExit()
-        tmp.writeText("STONE:\n  - item: COBBLESTONE\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\n")
+        tmp.writeText(
+            "STONE:\n  - item: COBBLESTONE\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\n")
         return DropConfig(tmp)
     }
 
@@ -77,7 +78,8 @@ class WorldItemManagerTest {
     fun tickCollection_playerFar_doesNotCollect() = runBlocking {
         val broadcasts = mutableListOf<ServerMessage>()
         val saved = mutableListOf<PlayerSession>()
-        val wim = WorldItemManager(dropConfigWith100PctStone(), { broadcasts.add(it) }, { saved.add(it) })
+        val wim =
+            WorldItemManager(dropConfigWith100PctStone(), { broadcasts.add(it) }, { saved.add(it) })
         val spawned = wim.spawnDrops(BlockPos(8, 5, 8), BlockType.STONE)
         broadcasts.clear()
         // Player far from drop (at 0,0,0)

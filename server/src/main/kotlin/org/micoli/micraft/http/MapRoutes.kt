@@ -46,12 +46,14 @@ data class ChunkTerrainInfo(
 
 fun Route.mapRoutes(gameLoop: GameLoop) {
     get("/api/map/state") {
-        val players = gameLoop.getPlayerStates().map { s ->
-            PlayerMapInfo(s.id, s.name, s.pos.x, s.pos.y, s.pos.z, s.orientation.yaw)
-        }
-        val npcs = gameLoop.getNpcStates().map { n ->
-            NpcMapInfo(n.id, n.name, n.type, n.pos.x, n.pos.y, n.pos.z, n.yaw)
-        }
+        val players =
+            gameLoop.getPlayerStates().map { s ->
+                PlayerMapInfo(s.id, s.name, s.pos.x, s.pos.y, s.pos.z, s.orientation.yaw)
+            }
+        val npcs =
+            gameLoop.getNpcStates().map { n ->
+                NpcMapInfo(n.id, n.name, n.type, n.pos.x, n.pos.y, n.pos.z, n.yaw)
+            }
         val response = MapStateResponse(gameLoop.getGameTicks(), players, npcs)
         call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
         call.respondText(Json.encodeToString(response), ContentType.Application.Json)
@@ -62,12 +64,11 @@ fun Route.mapRoutes(gameLoop: GameLoop) {
         call.respondText(gameLoop.terrainCache.cachedJson, ContentType.Application.Json)
     }
 
-    get("/map") {
-        call.respondText(MAP_HTML, ContentType.Text.Html)
-    }
+    get("/map") { call.respondText(MAP_HTML, ContentType.Text.Html) }
 }
 
-private val MAP_HTML = """
+private val MAP_HTML =
+    """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -306,4 +307,5 @@ setInterval(pollTerrain, 5000);
 </script>
 </body>
 </html>
-""".trimIndent()
+"""
+        .trimIndent()

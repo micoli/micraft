@@ -1,27 +1,30 @@
 package org.micoli.micraft.tick
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.support.testSession
 import org.micoli.micraft.world.ChatChannelManager
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class PreferencesUpdateTest {
 
     private suspend fun handle(session: PlayerSession, msg: ClientMessage.PreferencesUpdate) {
         val knownChannels = ChatChannelManager.BUILTIN.sorted()
-        val newSubscribed = (msg.subscribedChannels.filter { it in knownChannels } + ChatChannelManager.PROTECTED).distinct()
+        val newSubscribed =
+            (msg.subscribedChannels.filter { it in knownChannels } + ChatChannelManager.PROTECTED)
+                .distinct()
         val shadersChanged = session.state.shadersEnabled != msg.shadersEnabled
-        session.state = session.state.copy(
-            subscribedChannels = newSubscribed,
-            disabledCommands = msg.disabledCommands,
-            shadersEnabled = msg.shadersEnabled,
-        )
+        session.state =
+            session.state.copy(
+                subscribedChannels = newSubscribed,
+                disabledCommands = msg.disabledCommands,
+                shadersEnabled = msg.shadersEnabled,
+            )
         session.send(ServerMessage.ChannelsSync(newSubscribed, knownChannels))
         if (shadersChanged) session.send(ServerMessage.ShadersUpdate(msg.shadersEnabled))
     }
@@ -29,7 +32,8 @@ class PreferencesUpdateTest {
     @Test
     fun updatesSubscribedChannels() = runBlocking {
         val session = testSession()
-        handle(session, ClientMessage.PreferencesUpdate(listOf("world", "around"), emptySet(), true))
+        handle(
+            session, ClientMessage.PreferencesUpdate(listOf("world", "around"), emptySet(), true))
         assertTrue("world" in session.state.subscribedChannels)
         assertTrue("around" in session.state.subscribedChannels)
     }
@@ -45,7 +49,8 @@ class PreferencesUpdateTest {
     @Test
     fun unknownChannelIgnored() = runBlocking {
         val session = testSession()
-        handle(session, ClientMessage.PreferencesUpdate(listOf("unknown_channel"), emptySet(), true))
+        handle(
+            session, ClientMessage.PreferencesUpdate(listOf("unknown_channel"), emptySet(), true))
         assertFalse("unknown_channel" in session.state.subscribedChannels)
     }
 

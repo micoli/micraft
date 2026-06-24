@@ -187,6 +187,7 @@ rtk ./gradlew ktlintCheck
 - Never read `data/world/default_world/chunks/` — binary compressed, useless.
 - Commits must respect Conventional Commits + Semantic Commit Messages standard; body ≤10 lines.
 - Every server-side change (`server/src/main/`) needs new or updated test in `server/src/test/`. Run `rtk ./gradlew :server:test` before committing.
+- Before any commit use `./gradlew :spotlessApply`,  `npm run format` (in app/webApp/ts-src/)
 
 ## Schema maintenance
 
