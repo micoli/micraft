@@ -13,6 +13,14 @@ class GotoCommand : CommandHandler {
     override val description = "Teleports you to a player or NPC."
     override val usage = "/goto <playerName|npcName>"
 
+    override val autocompleteArgs = listOf(0)
+
+    override suspend fun completeArg(argIndex: Int, partial: String, session: PlayerSession?, context: CommandContext): List<String> {
+        val players = context.sessions().map { it.state.name }
+        val npcs = context.npcManager?.getAll()?.map { it.state.name } ?: emptyList()
+        return (players + npcs).filter { it.startsWith(partial, ignoreCase = true) }
+    }
+
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
         val i18n = context.i18n

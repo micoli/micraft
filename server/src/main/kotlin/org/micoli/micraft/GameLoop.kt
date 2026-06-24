@@ -226,7 +226,7 @@ class GameLoop(
 
     private fun buildPreferencesSync(session: PlayerSession): ServerMessage.PreferencesSync {
         val knownChannels = chatChannelManager.listKnownChannels()
-        val commandList = commands.values.map { CommandInfo(it.id.toString(), it.command, it.description) }
+        val commandList = commands.values.map { CommandInfo(it.id.toString(), it.command, it.description, it.autocompleteArgs) }
         return ServerMessage.PreferencesSync(
             subscribedChannels = session.state.subscribedChannels,
             knownChannels = knownChannels,
@@ -392,6 +392,13 @@ class GameLoop(
             }
             handler.execute(session, args, commandContext)
         } else session.send(ServerMessage.Notification(i18n.t(session.state.language, "commands:server:unknown", trimmed)))
+    }
+
+    suspend fun autocomplete(commandId: String, argIndex: Int, partial: String, playerName: String): List<String> {
+        val handler = commands.values.find { it.id.toString() == commandId } ?: return emptyList()
+        if (argIndex !in handler.autocompleteArgs) return emptyList()
+        val session = sessions.values.find { it.state.name == playerName }
+        return handler.completeArg(argIndex, partial, session, commandContext)
     }
 
     suspend fun onConnect(socket: DefaultWebSocketSession) {

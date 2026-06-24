@@ -161,7 +161,8 @@ declare global {
     __mcLoginResult: string;
     __mcNotifTimeout: ReturnType<typeof setTimeout>;
     __mcConnectedPlayers: string[];
-    __mcCommandCompleters: Record<string, (partial: string) => string[]>;
+    __mcCommandCompleters: Record<string, (partial: string) => string[] | Promise<string[]>>;
+    __mcPlayerName: string;
     __mcKnownCommands: string[];
     __mcConsole: {
       open: boolean;

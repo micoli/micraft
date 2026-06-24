@@ -12,6 +12,11 @@ class JoinCommand : CommandHandler {
     override val description = "Join a chat channel."
     override val usage = "/join <channelName>"
 
+    override val autocompleteArgs = listOf(0)
+
+    override suspend fun completeArg(argIndex: Int, partial: String, session: PlayerSession?, context: CommandContext): List<String> =
+        context.chatChannelManager!!.listKnownChannels().filter { it.startsWith(partial, ignoreCase = true) }
+
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val i18n = context.i18n
         val channel = args.trim()

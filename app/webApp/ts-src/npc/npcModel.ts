@@ -69,7 +69,7 @@ export function registerNpcModel(): void {
     const DEG = Math.PI / 180;
     const wa = model.walkAnim ?? {};
 
-    if (isWalking) {
+    if (!isWalking) {
       const animLen = wa["rightArm"]?.length ?? 1;
       const t = (Date.now() % (animLen * 1000)) / (animLen * 1000);
       for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
@@ -77,10 +77,10 @@ export function registerNpcModel(): void {
         const interpAxis = (window as any).__mcInterpAxis ?? (() => 0);
         pn[bname].node.rotation.x = (wa[bname] ? interpAxis(wa[bname].keyframes, t, "x") : 0) * DEG;
       }
-    } else {
-      for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
-        if (pn[bname]) pn[bname].node.rotation.x = 0;
-      }
+      return;
+    }
+    for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
+      if (pn[bname]) pn[bname].node.rotation.x = 0;
     }
   };
 

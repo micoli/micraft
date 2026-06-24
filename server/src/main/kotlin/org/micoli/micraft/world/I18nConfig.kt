@@ -44,7 +44,7 @@ class I18nConfig(private val dirs: List<Path>) {
                         }
                     }.toMap()
                     merged.getOrPut(locale) { mutableMapOf() }.putAll(flat)
-                    log.info("i18n merged: {} from {} ({} keys)", locale, dir, flat.size)
+                    log.debug("i18n merged: {} from {} ({} keys)", locale, dir, flat.size)
                 }.onFailure { e ->
                     log.warn("Failed to load i18n from {}/{}.yaml: {}", dir, locale, e.message)
                 }

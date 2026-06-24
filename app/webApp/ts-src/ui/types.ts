@@ -45,6 +45,7 @@ export interface CommandInfo {
   id: string;
   command: string;
   description: string;
+  autocompleteArgs?: number[];
 }
 
 export interface PreferencesData {

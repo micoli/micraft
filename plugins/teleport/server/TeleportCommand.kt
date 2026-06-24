@@ -13,6 +13,11 @@ class TeleportCommand : CommandHandler {
     override val description = "Teleports you to the given coordinates."
     override val usage = "/teleport <x> <y> <z>  |  /teleport <playerName>"
 
+    override val autocompleteArgs = listOf(0)
+
+    override suspend fun completeArg(argIndex: Int, partial: String, session: PlayerSession?, context: CommandContext): List<String> =
+        context.sessions().map { it.state.name }.filter { it.startsWith(partial, ignoreCase = true) }
+
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
         val i18n = context.i18n

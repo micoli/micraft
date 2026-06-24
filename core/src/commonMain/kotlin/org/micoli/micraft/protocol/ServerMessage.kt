@@ -129,4 +129,4 @@ data class ItemInfo(
 data class BlockChange(val pos: BlockPos, val type: BlockType)
 
 @Serializable
-data class CommandInfo(val id: String, val command: String, val description: String)
+data class CommandInfo(val id: String, val command: String, val description: String, val autocompleteArgs: List<Int> = emptyList())

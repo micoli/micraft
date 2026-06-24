@@ -184,6 +184,7 @@ export function GameUI() {
 
     (window as any).mcConsoleSetPlayer = (name: string) => {
       consoleStateRef.current.playerName = name;
+      (window as any).__mcPlayerName = name;
       try {
         const stored = localStorage.getItem("mc_history_" + name);
         consoleStateRef.current.history = stored ? JSON.parse(stored) : [];
@@ -220,6 +221,9 @@ export function GameUI() {
     (window as any).mcPreferencesSync = (json: string) => {
       try {
         const data: PreferencesData = JSON.parse(json);
+        if (data.commands?.length && (window as any).mcRegisterServerCompleters) {
+          (window as any).mcRegisterServerCompleters(data.commands);
+        }
         dispatch({ type: "preferences_sync", data });
       } catch {
         /* ignore */

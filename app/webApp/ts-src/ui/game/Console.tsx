@@ -17,23 +17,31 @@ interface Props {
   layoutStyle?: React.CSSProperties;
 }
 
-function computeSuggestions(val: string): string[] {
+async function computeSuggestions(val: string): Promise<string[]> {
   if (!val.startsWith("/")) return [];
   const knownCommands: string[] = ((window as any).__mcKnownCommands || []).sort();
-  const completers: Record<string, (p: string) => string[]> = (window as any).__mcCommandCompleters || {};
+  const completers: Record<string, (p: string) => string[] | Promise<string[]>> =
+    (window as any).__mcCommandCompleters || {};
   const spaceIdx = val.indexOf(" ");
   if (spaceIdx === -1) {
     return knownCommands.filter((cmd) => cmd.startsWith(val));
   }
   const cmd = val.slice(0, spaceIdx);
   const partial = val.slice(spaceIdx + 1);
-  return completers[cmd] ? completers[cmd](partial) : [];
+  return completers[cmd] ? await completers[cmd](partial) : [];
 }
 
 export function Console({ open, onClose, submittedRef, stateRef, initialValueRef, layoutStyle }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [selIdx, setSelIdx] = useState(-1);
+  const completionSeqRef = useRef(0);
+
+  async function updateSuggestions(val: string) {
+    const seq = ++completionSeqRef.current;
+    const sug = await computeSuggestions(val);
+    if (seq === completionSeqRef.current) setSuggestions(sug);
+  }
 
   useEffect(() => {
     if (!open) {
@@ -50,7 +58,7 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
     if (document.pointerLockElement) document.exitPointerLock();
     setTimeout(() => {
       el.focus();
-      setSuggestions(computeSuggestions(el.value));
+      updateSuggestions(el.value);
       setSelIdx(-1);
     }, 10);
   }, [open]);
@@ -63,8 +71,7 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
     } else {
       el.value = val.slice(0, spaceIdx + 1) + match;
     }
-    const newSuggestions = computeSuggestions(el.value);
-    setSuggestions(newSuggestions);
+    updateSuggestions(el.value);
     setSelIdx(-1);
   }
 
@@ -100,7 +107,7 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
         } else if (h.length > 0) {
           c.histIdx = Math.min(c.histIdx + 1, h.length - 1);
           el.value = h[h.length - 1 - c.histIdx];
-          setSuggestions(computeSuggestions(el.value));
+          updateSuggestions(el.value);
           setTimeout(() => el.setSelectionRange(el.value.length, el.value.length), 0);
         }
         break;
@@ -111,7 +118,7 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
         } else {
           c.histIdx = Math.max(c.histIdx - 1, -1);
           el.value = c.histIdx === -1 ? "/" : h[h.length - 1 - c.histIdx];
-          setSuggestions(computeSuggestions(el.value));
+          updateSuggestions(el.value);
           setTimeout(() => el.setSelectionRange(el.value.length, el.value.length), 0);
         }
         break;
@@ -135,7 +142,7 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
 
   function handleInput() {
     const el = inputRef.current!;
-    setSuggestions(computeSuggestions(el.value));
+    updateSuggestions(el.value);
     setSelIdx(-1);
     stateRef.current.tabIdx = -1;
     stateRef.current.tabMatches = [];

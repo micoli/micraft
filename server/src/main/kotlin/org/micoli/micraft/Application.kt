@@ -133,6 +133,14 @@ fun Application.module() {
             val serializer = MapSerializer(String.serializer(), ListSerializer(String.serializer()))
             call.respondText(Json.encodeToString(serializer, bindings), ContentType.Application.Json)
         }
+        get("/api/autocomplete/{commandId}/{argIndex}") {
+            val commandId = call.parameters["commandId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val argIndex = call.parameters["argIndex"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val partial = call.request.queryParameters["partial"] ?: ""
+            val player = call.request.queryParameters["player"] ?: ""
+            val results = gameLoop.autocomplete(commandId, argIndex, partial, player)
+            call.respondText(Json.encodeToString(ListSerializer(String.serializer()), results), ContentType.Application.Json)
+        }
         get("/api/i18n/{locale}") {
             val locale = call.parameters["locale"] ?: "en"
             val keys = gameLoop.i18n.clientKeys(locale)

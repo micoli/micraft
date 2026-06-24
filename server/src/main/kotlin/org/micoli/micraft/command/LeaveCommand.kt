@@ -13,6 +13,11 @@ class LeaveCommand : CommandHandler {
     override val description = "Leave a chat channel."
     override val usage = "/leave <channelName>"
 
+    override val autocompleteArgs = listOf(0)
+
+    override suspend fun completeArg(argIndex: Int, partial: String, session: PlayerSession?, context: CommandContext): List<String> =
+        (session?.state?.subscribedChannels ?: emptyList()).filter { it.startsWith(partial, ignoreCase = true) }
+
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val i18n = context.i18n
         val channel = args.trim()

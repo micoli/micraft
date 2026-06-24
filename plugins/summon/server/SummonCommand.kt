@@ -13,6 +13,11 @@ class SummonCommand : CommandHandler {
     override val description = "Teleports another player to your location."
     override val usage = "/summon <playerName>"
 
+    override val autocompleteArgs = listOf(0)
+
+    override suspend fun completeArg(argIndex: Int, partial: String, session: PlayerSession?, context: CommandContext): List<String> =
+        context.sessions().map { it.state.name }.filter { it.startsWith(partial, ignoreCase = true) }
+
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
         val i18n = context.i18n

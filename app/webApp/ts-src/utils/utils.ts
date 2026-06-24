@@ -1,6 +1,24 @@
-function registerCompleter(cmd: string, fn: (partial: string) => string[]): void {
+function registerCompleter(cmd: string, fn: (partial: string) => string[] | Promise<string[]>): void {
   window.__mcCommandCompleters[cmd] = fn;
   if (!window.__mcKnownCommands.includes(cmd)) window.__mcKnownCommands.push(cmd);
+}
+
+function registerServerCompleters(commands: Array<{ id: string; command: string; autocompleteArgs?: number[] }>): void {
+  for (const cmd of commands) {
+    if (!cmd.autocompleteArgs?.length) continue;
+    registerCompleter(`/${cmd.command}`, async (partial: string) => {
+      const player = (window as any).__mcPlayerName ?? "";
+      try {
+        const r = await fetch(
+          `/api/autocomplete/${cmd.id}/0?partial=${encodeURIComponent(partial)}&player=${encodeURIComponent(player)}`,
+        );
+        if (!r.ok) return [];
+        return (await r.json()) as string[];
+      } catch {
+        return [];
+      }
+    });
+  }
 }
 
 export function registerUtils(): void {
@@ -38,6 +56,7 @@ export function registerUtils(): void {
   };
 
   window.mcRegisterCompleter = registerCompleter;
+  (window as any).mcRegisterServerCompleters = registerServerCompleters;
 
   const itemTypes = ["cobblestone", "dirt", "sand", "gravel", "sandstone", "snowball", "flint"];
   registerCompleter("/give", (p) => itemTypes.filter((t) => t.startsWith(p.toLowerCase())));
