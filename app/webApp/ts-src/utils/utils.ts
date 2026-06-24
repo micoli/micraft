@@ -6,7 +6,7 @@ function registerCompleter(cmd: string, fn: (partial: string) => string[] | Prom
 function registerServerCompleters(commands: Array<{ id: string; command: string; autocompleteArgs?: number[] }>): void {
   for (const cmd of commands) {
     if (cmd.autocompleteArgs?.length) {
-      registerCompleter(`/${cmd.command}`, async (partial: string) => {
+      registerCompleter(cmd.command, async (partial: string) => {
         const player = (window as any).__mcPlayerName ?? "";
         try {
           const r = await fetch(
@@ -19,7 +19,7 @@ function registerServerCompleters(commands: Array<{ id: string; command: string;
         }
       });
     } else {
-      registerCompleter(`/${cmd.command}`, () => []);
+      registerCompleter(cmd.command, () => []);
     }
   }
 }

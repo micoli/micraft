@@ -285,6 +285,7 @@ class GameLoop(
                 shadersEnabled = msg.shadersEnabled,
             )
         savePlayer(session)
+        session.send(buildPreferencesSync(session))
         session.send(ServerMessage.ChannelsSync(newSubscribed, knownChannels))
         if (shadersChanged) session.send(ServerMessage.ShadersUpdate(msg.shadersEnabled))
     }

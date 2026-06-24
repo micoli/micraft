@@ -222,7 +222,19 @@ export function GameUI() {
       try {
         const data: PreferencesData = JSON.parse(json);
         if (data.commands?.length && (window as any).mcRegisterServerCompleters) {
-          (window as any).mcRegisterServerCompleters(data.commands);
+          const disabledIds = new Set<string>(data.disabledCommands || []);
+          const enabledCmds = data.commands.filter((c) => !disabledIds.has(c.id));
+          (window as any).mcRegisterServerCompleters(enabledCmds);
+          for (const cmd of data.commands) {
+            if (disabledIds.has(cmd.id)) {
+              const known: string[] = (window as any).__mcKnownCommands;
+              if (known) {
+                const idx = known.indexOf(cmd.command);
+                if (idx >= 0) known.splice(idx, 1);
+              }
+              delete (window as any).__mcCommandCompleters?.[cmd.command];
+            }
+          }
         }
         dispatch({ type: "preferences_sync", data });
       } catch {

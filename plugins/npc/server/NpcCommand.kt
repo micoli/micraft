@@ -2,12 +2,13 @@ package org.micoli.micraft.plugins.npc
 
 import java.util.UUID
 import org.micoli.micraft.CommandContext
-import org.micoli.micraft.CommandHandler
+import org.micoli.micraft.PluginCommand
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 
-class NpcCommand : CommandHandler {
-    override val id = UUID.fromString("432ab72b-0cb2-4609-a75d-2093798d5869")
+class NpcCommand : PluginCommand {
+    override val id = UUID.fromString("1818ec75-b26c-42b8-b9dd-cb72e9612fbd")
+    override val name = "npc"
     override val command = "/npc"
     override val description = "Manage NPCs in the world."
     override val usage = "/npc <spawn|list|remove|tp> [args]"

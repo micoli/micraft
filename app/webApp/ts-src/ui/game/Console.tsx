@@ -87,6 +87,10 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
           applyCompletion(el.value, suggestions[selIdx]);
           return;
         }
+        if (suggestions.length === 1) {
+          applyCompletion(el.value, suggestions[0]);
+          return;
+        }
         const text = el.value.trim();
         if (text) {
           submittedRef.current = text;

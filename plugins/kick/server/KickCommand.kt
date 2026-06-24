@@ -2,15 +2,16 @@ package org.micoli.micraft.plugins.kick
 
 import java.util.UUID
 import org.micoli.micraft.CommandContext
-import org.micoli.micraft.CommandHandler
+import org.micoli.micraft.PluginCommand
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(KickCommand::class.java)
 
-class KickCommand : CommandHandler {
-    override val id = UUID.fromString("dcc635a0-2fb4-4b67-bd6f-b5b0b29b39bb")
+class KickCommand : PluginCommand {
+    override val id = UUID.fromString("13660f30-90bd-46a2-91b0-e2091813128c")
+    override val name = "kick"
     override val command = "/kick"
     override val description = "Kicks a connected player."
     override val usage = "/kick <playerName>"
