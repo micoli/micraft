@@ -7,8 +7,15 @@ plugins {
 sourceSets {
     main {
         kotlin {
-            srcDir("${rootProject.projectDir}/plugins")
-            exclude("**/test/**")
+            val pluginsDir = rootProject.projectDir.resolve("plugins")
+            if (pluginsDir.exists()) {
+                pluginsDir
+                    .listFiles { f -> f.isDirectory }
+                    ?.forEach { pluginDir ->
+                        val serverDir = pluginDir.resolve("server")
+                        if (serverDir.exists()) srcDir(serverDir)
+                    }
+            }
         }
     }
     test {
