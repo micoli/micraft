@@ -16,6 +16,7 @@ import { registerFPArms } from "./player/fpArms";
 import { registerNpcModel } from "./npc/npcModel";
 import { registerMinimap, setMinimapColors } from "./minimap/minimap";
 import { registerSky } from "./sky/sky";
+import { registerWeather } from "./weather/weather";
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import { GameUI } from "./ui/GameUI";
@@ -34,6 +35,7 @@ registerFPArms();
 registerNpcModel();
 registerMinimap();
 registerSky();
+registerWeather();
 registerAllPlugins();
 registerAutoUpdate();
 

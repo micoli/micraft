@@ -5,19 +5,22 @@ function registerCompleter(cmd: string, fn: (partial: string) => string[] | Prom
 
 function registerServerCompleters(commands: Array<{ id: string; command: string; autocompleteArgs?: number[] }>): void {
   for (const cmd of commands) {
-    if (!cmd.autocompleteArgs?.length) continue;
-    registerCompleter(`/${cmd.command}`, async (partial: string) => {
-      const player = (window as any).__mcPlayerName ?? "";
-      try {
-        const r = await fetch(
-          `/api/autocomplete/${cmd.id}/0?partial=${encodeURIComponent(partial)}&player=${encodeURIComponent(player)}`,
-        );
-        if (!r.ok) return [];
-        return (await r.json()) as string[];
-      } catch {
-        return [];
-      }
-    });
+    if (cmd.autocompleteArgs?.length) {
+      registerCompleter(`/${cmd.command}`, async (partial: string) => {
+        const player = (window as any).__mcPlayerName ?? "";
+        try {
+          const r = await fetch(
+            `/api/autocomplete/${cmd.id}/0?partial=${encodeURIComponent(partial)}&player=${encodeURIComponent(player)}`,
+          );
+          if (!r.ok) return [];
+          return (await r.json()) as string[];
+        } catch {
+          return [];
+        }
+      });
+    } else {
+      registerCompleter(`/${cmd.command}`, () => []);
+    }
   }
 }
 

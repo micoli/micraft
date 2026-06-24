@@ -41,6 +41,8 @@ import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemType
 import org.micoli.micraft.world.NpcRegistryLoader
+import org.micoli.micraft.world.WeatherConfig
+import org.micoli.micraft.world.WeatherManager
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldMetadata
@@ -160,6 +162,9 @@ class GameLoop(
             i18n = i18n,
         )
 
+    private val weatherConfig = WeatherConfig()
+    private val weatherManager = WeatherManager(weatherConfig)
+
     private val npcRegistryLoader = NpcRegistryLoader(Path.of("data/npcs/npcs.yaml"))
     private val npcManager =
         NpcManager(
@@ -200,6 +205,7 @@ class GameLoop(
             flushWorld = ::flushWorld,
             chatService = chatService,
             chatChannelManager = chatChannelManager,
+            weatherManager = weatherManager,
         )
     private val blockBreaker =
         BlockBreaker(world, { msg -> sessions.values.forEach { it.send(msg) } }, worldItems)
@@ -225,6 +231,8 @@ class GameLoop(
     fun getNpcStates(): List<org.micoli.micraft.npc.NpcState> = npcManager.getAll().map { it.state }
 
     fun getGameTicks(): Long = gameTicks
+
+    fun getWeatherZones() = weatherManager.getZones()
 
     private fun flushWorld() {
         world.flushDirty()
@@ -322,6 +330,9 @@ class GameLoop(
         lines += "NPC registry reloaded"
         i18n.reload()
         lines += "i18n: ${i18n.locales.size} locales"
+        val newWeatherConfig = WeatherConfig()
+        weatherManager.reload(newWeatherConfig)
+        lines += "Weather: ${newWeatherConfig.data.weatherTypes.size} types"
         return lines.joinToString(", ")
     }
 
@@ -413,6 +424,7 @@ class GameLoop(
         }
         worldItems.tickCollection(sessions.values)
         npcManager.tick(world)
+        weatherManager.tick(world) { msg -> sessions.values.forEach { it.send(msg) } }
         npcSpawnTickCounter++
         if (npcSpawnTickCounter >= org.micoli.micraft.npc.NpcConstants.SPAWN_CHECK_INTERVAL_TICKS) {
             npcSpawnTickCounter = 0

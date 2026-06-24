@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WeatherConfig",
+  "type": "object",
+  "required": ["weatherTypes"],
+  "additionalProperties": false,
+  "properties": {
+    "weatherTypes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "biomes"],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["RAIN", "STORM", "SNOW", "FOG"]
+          },
+          "biomes": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "spawnRatePerBiomeTick": { "type": "number", "minimum": 0, "maximum": 1 },
+          "minDurationTicks": { "type": "integer", "minimum": 1 },
+          "maxDurationTicks": { "type": "integer", "minimum": 1 },
+          "minRadius": { "type": "number", "minimum": 1 },
+          "maxRadius": { "type": "number", "minimum": 1 },
+          "driftSpeed": { "type": "number", "minimum": 0 }
+        }
+      }
+    }
+  }
+}

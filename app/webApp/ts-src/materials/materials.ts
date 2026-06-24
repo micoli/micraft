@@ -60,7 +60,16 @@ export function registerMaterials(): void {
         { vertexSource: BLOCK_VERT, fragmentSource: BLOCK_FRAG },
         {
           attributes: ["position", "normal", "uv", "color"],
-          uniforms: ["worldViewProjection", "view", "world", "fogColor", "fogStart", "fogEnd", "tint", "shadersEnabled"],
+          uniforms: [
+            "worldViewProjection",
+            "view",
+            "world",
+            "fogColor",
+            "fogStart",
+            "fogEnd",
+            "tint",
+            "shadersEnabled",
+          ],
           samplers: ["textureSampler"],
         },
       );

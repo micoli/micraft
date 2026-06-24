@@ -445,6 +445,7 @@ class LocalPlayerController(
         val normalizedTime =
             (currentGameTicks % TICKS_PER_DAY_CLIENT).toDouble() / TICKS_PER_DAY_CLIENT
         jsUpdateSkyTime(scene, normalizedTime)
+        jsUpdateWeather(scene, predX, predY, predZ)
 
         jsDrawMinimap(predX, predZ)
 

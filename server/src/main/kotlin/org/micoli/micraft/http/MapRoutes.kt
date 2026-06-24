@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.GameLoop
+import org.micoli.micraft.world.WeatherZoneInfo
 
 @Serializable
 data class PlayerMapInfo(
@@ -34,6 +35,7 @@ data class MapStateResponse(
     val gameTicks: Long,
     val players: List<PlayerMapInfo>,
     val npcs: List<NpcMapInfo>,
+    val weatherZones: List<WeatherZoneInfo> = emptyList(),
 )
 
 @Serializable
@@ -54,7 +56,8 @@ fun Route.mapRoutes(gameLoop: GameLoop) {
             gameLoop.getNpcStates().map { n ->
                 NpcMapInfo(n.id, n.name, n.type, n.pos.x, n.pos.y, n.pos.z, n.yaw)
             }
-        val response = MapStateResponse(gameLoop.getGameTicks(), players, npcs)
+        val response =
+            MapStateResponse(gameLoop.getGameTicks(), players, npcs, gameLoop.getWeatherZones())
         call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
         call.respondText(Json.encodeToString(response), ContentType.Application.Json)
     }
@@ -347,6 +350,19 @@ function draw() {
     const [, cz] = worldToCanvas(0, gz);
     ctx.beginPath(); ctx.moveTo(0, cz); ctx.lineTo(W, cz); ctx.stroke();
     ctx.fillText(String(Math.round(gz)), 2, cz - 2);
+  }
+
+  // Weather zones
+  const WEATHER_COLORS = { RAIN: 'rgba(80,120,255,0.18)', STORM: 'rgba(100,0,200,0.22)', SNOW: 'rgba(200,230,255,0.2)', FOG: 'rgba(150,150,150,0.18)' };
+  const WEATHER_STROKE = { RAIN: 'rgba(80,120,255,0.55)', STORM: 'rgba(100,0,200,0.55)', SNOW: 'rgba(200,230,255,0.6)', FOG: 'rgba(140,140,140,0.5)' };
+  for (const z of (state.weatherZones || [])) {
+    const [wcx, wcz] = worldToCanvas(z.cx, z.cz);
+    const rPx = z.radius * camera.pxPerBlock;
+    ctx.beginPath(); ctx.arc(wcx, wcz, rPx, 0, Math.PI * 2);
+    ctx.fillStyle = WEATHER_COLORS[z.type] || 'rgba(128,128,128,0.15)'; ctx.fill();
+    ctx.strokeStyle = WEATHER_STROKE[z.type] || 'rgba(128,128,128,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = '#ccc'; ctx.font = '10px monospace';
+    ctx.fillText(z.type, wcx - 12, wcz + 3);
   }
 
   // NPCs

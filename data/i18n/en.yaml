@@ -102,6 +102,16 @@ createChat:
     reserved: "Cannot create reserved channel '{0}'."
     exists: "Channel '{0}' already exists."
     created: "Channel '{0}' created."
+weather:
+  server:
+    unavailable: "Weather system not available."
+    no_zones: "No active weather zones."
+    zone_list: "Active weather: {0}"
+    forced: "Weather zone {0} created at your position."
+    cleared: "All weather zones cleared."
+    usage: "Usage: /weather [rain|storm|snow|fog|none]"
+    forecast_header: "Weather forecast:"
+    forecast_zone: "  {0} at ({1},{2}) r={3} — {4}m away"
 preferences:
   server:
     command_disabled: "This command is disabled in your preferences."

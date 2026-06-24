@@ -6,6 +6,7 @@ import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.world.ChatChannelManager
 import org.micoli.micraft.world.ChatService
 import org.micoli.micraft.world.I18nConfig
+import org.micoli.micraft.world.WeatherManager
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
@@ -28,4 +29,5 @@ data class CommandContext(
     val flushWorld: (() -> Unit)? = null,
     val chatService: ChatService? = null,
     val chatChannelManager: ChatChannelManager? = null,
+    val weatherManager: WeatherManager? = null,
 )

@@ -10,6 +10,35 @@ const chunkSurfaces: Record<string, { topY: number[]; topBlock: number[] }> = {}
 const npcPositions: Map<string, { x: number; z: number }> = new Map();
 let frameCount = 0;
 
+interface MinimapWeatherZone {
+  id: string;
+  type: string;
+  cx: number;
+  cz: number;
+  radius: number;
+  intensity: number;
+}
+let weatherZones: MinimapWeatherZone[] = [];
+
+const WEATHER_COLORS: Record<string, string> = {
+  RAIN: "rgba(80,120,255,0.25)",
+  STORM: "rgba(80,0,160,0.3)",
+  SNOW: "rgba(220,240,255,0.3)",
+  FOG: "rgba(160,160,160,0.25)",
+};
+const WEATHER_STROKE: Record<string, string> = {
+  RAIN: "rgba(80,120,255,0.7)",
+  STORM: "rgba(80,0,160,0.7)",
+  SNOW: "rgba(200,230,255,0.7)",
+  FOG: "rgba(140,140,140,0.7)",
+};
+const WEATHER_LABELS: Record<string, string> = {
+  RAIN: "🌧",
+  STORM: "⛈",
+  SNOW: "❄",
+  FOG: "🌫",
+};
+
 export function setMinimapColors(blocks: { minimapColor: [number, number, number] }[]): void {
   minimapColors = blocks.map((b) => b.minimapColor ?? [128, 128, 128]);
 }
@@ -60,6 +89,14 @@ export function registerMinimap(): void {
 
   window.mcRemoveNpcFromMinimap = (id: string): void => {
     npcPositions.delete(id);
+  };
+
+  window.mcSetMinimapWeather = (json: string): void => {
+    try {
+      weatherZones = JSON.parse(json);
+    } catch {
+      weatherZones = [];
+    }
   };
 
   window.mcDrawMinimap = (playerX: number, playerZ: number): void => {
@@ -129,6 +166,35 @@ export function registerMinimap(): void {
     }
 
     ctx.putImageData(imgData, 0, 0);
+
+    // Weather zone overlays
+    for (const zone of weatherZones) {
+      const bx = zone.cx - playerX + halfBlocks;
+      const bz = zone.cz - playerZ + halfBlocks;
+      const px = bx * pixPerBlock;
+      const pz = bz * pixPerBlock;
+      const rPx = zone.radius * pixPerBlock;
+      if (px + rPx < -4 || px - rPx > MINIMAP_SIZE + 4 || pz + rPx < -4 || pz - rPx > MINIMAP_SIZE + 4) continue;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(px, pz, rPx, 0, Math.PI * 2);
+      ctx.fillStyle = WEATHER_COLORS[zone.type] ?? "rgba(128,128,128,0.2)";
+      ctx.fill();
+      ctx.strokeStyle = WEATHER_STROKE[zone.type] ?? "rgba(128,128,128,0.7)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+
+      if (rPx > 6) {
+        ctx.font = "11px serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(WEATHER_LABELS[zone.type] ?? zone.type.charAt(0), px, pz);
+        ctx.textAlign = "start";
+        ctx.textBaseline = "alphabetic";
+      }
+    }
 
     // NPC dots
     for (const [, npc] of npcPositions) {
