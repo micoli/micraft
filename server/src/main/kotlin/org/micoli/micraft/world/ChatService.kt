@@ -52,6 +52,17 @@ class ChatService(
                     }
                     .forEach { it.send(msg) }
             }
+            channel.startsWith("dm:") -> {
+                val parts = channel.removePrefix("dm:").split(":")
+                val recipients = all.filter { it.state.name in parts }
+                recipients.forEach { session ->
+                    if (channel !in session.state.subscribedChannels) {
+                        subscribe(session, channel)
+                        syncChannels(session)
+                    }
+                    session.send(msg)
+                }
+            }
             else -> all.filter { channel in it.state.subscribedChannels }.forEach { it.send(msg) }
         }
     }
