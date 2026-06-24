@@ -2,25 +2,11 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { GameLayout, LayoutWidget } from "../types";
 import {
   DEFAULT_WIDGETS,
-  MIN_WIDGET_SIZE,
+  WIDGET_REGISTRY,
   defaultLayout,
   resolveActiveLayout,
   fillMissingWidgets,
 } from "./LayoutEngine";
-
-interface EditorWidget {
-  editorLabel: string;
-  editorColor: string;
-}
-
-const WIDGETS: Record<string, EditorWidget> = {
-  MINIMAP: { editorLabel: "Minimap", editorColor: "rgba(60,120,200,0.75)" },
-  HUD: { editorLabel: "HUD", editorColor: "rgba(200,120,40,0.75)" },
-  SHORTCUT_BAR: { editorLabel: "Shortcut Bar", editorColor: "rgba(60,160,80,0.75)" },
-  CHAT_HISTORY: { editorLabel: "Chat History", editorColor: "rgba(140,60,200,0.75)" },
-  INPUT_BOX: { editorLabel: "Input Box", editorColor: "rgba(200,60,100,0.75)" },
-  INVENTORY: { editorLabel: "Inventory", editorColor: "rgba(180,160,40,0.75)" },
-};
 
 interface Props {
   open: boolean;
@@ -91,7 +77,8 @@ export function LayoutEditor({ open, layouts, activeLayout, onSave, onClose }: P
     const cellH = rect.height / 48;
     const dx = Math.round((e.clientX - startMouseX) / cellW);
     const dy = Math.round((e.clientY - startMouseY) / cellH);
-    const min = MIN_WIDGET_SIZE[type] ?? { w: 2, h: 2 };
+    const def = WIDGET_REGISTRY.find((d) => d.type === type);
+    const min = { w: def?.minW ?? 2, h: def?.minH ?? 2 };
 
     updateWidgets((ws) =>
       ws.map((w) => {
@@ -269,7 +256,7 @@ export function LayoutEditor({ open, layouts, activeLayout, onSave, onClose }: P
               top: `calc(${w.y} / 48 * 100%)`,
               width: `calc(${w.w} / 48 * 100%)`,
               height: `calc(${w.h} / 48 * 100%)`,
-              background: WIDGETS[w.type]?.editorColor ?? "rgba(100,100,100,0.7)",
+              background: WIDGET_REGISTRY.find((d) => d.type === w.type)?.editorColor ?? "rgba(100,100,100,0.7)",
               border: "2px solid rgba(255,255,255,0.4)",
               borderRadius: 4,
               cursor: "grab",
@@ -291,7 +278,7 @@ export function LayoutEditor({ open, layouts, activeLayout, onSave, onClose }: P
                 textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
               }}
             >
-              {WIDGETS[w.type]?.editorLabel ?? w.type}
+              {WIDGET_REGISTRY.find((d) => d.type === w.type)?.editorLabel ?? w.type}
               <br />
               <span style={{ font: "9px monospace", opacity: 0.7 }}>
                 {w.x},{w.y} {w.w}×{w.h}

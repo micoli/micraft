@@ -1,4 +1,4 @@
-import { HudData, HudMode } from "./types";
+import { HudData, HudMode } from "../types";
 
 const defaultStyle: React.CSSProperties = {
   position: "fixed",

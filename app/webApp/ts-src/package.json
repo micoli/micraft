@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@babylonjs/core": "7.48.0",
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "esbuild": "0.21.5",

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { PreferencesData, CommandInfo } from "./types";
+import { PreferencesData, CommandInfo } from "../types";
 
 const PROTECTED_CHANNELS = new Set(["system", "game"]);
 
