@@ -242,6 +242,14 @@ class LocalPlayerController(
             }
         }
 
+        val preferencesUpdateJson = jsConsumePreferencesUpdate()
+        if (preferencesUpdateJson.isNotEmpty()) {
+            runCatching {
+                val msg = Json.decodeFromString<ClientMessage.PreferencesUpdate>(preferencesUpdateJson)
+                outMessages.trySend(msg)
+            }
+        }
+
         val slotUpdateJson = jsConsumeSlotUpdate()
         if (slotUpdateJson.isNotEmpty()) {
             runCatching {

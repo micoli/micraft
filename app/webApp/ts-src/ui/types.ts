@@ -34,6 +34,20 @@ export interface NpcDialogData {
   name: string;
 }
 
+export interface CommandInfo {
+  id: string;
+  command: string;
+  description: string;
+}
+
+export interface PreferencesData {
+  subscribedChannels: string[];
+  knownChannels: string[];
+  disabledCommands: string[];
+  shadersEnabled: boolean;
+  commands: CommandInfo[];
+}
+
 export interface UiState {
   hud: HudData | null;
   hudMode: HudMode;
@@ -56,6 +70,8 @@ export interface UiState {
   activeLayout: string;
   layoutEditorOpen: boolean;
   npcDialog: NpcDialogData | null;
+  preferencesOpen: boolean;
+  preferences: PreferencesData | null;
 }
 
 export type UiAction =
@@ -82,4 +98,8 @@ export type UiAction =
   | { type: 'layout_editor_hide' }
   | { type: 'layout_editor_save'; layouts: GameLayout[]; activeLayout: string }
   | { type: 'npc_dialog_open'; payload: NpcDialogData }
-  | { type: 'npc_dialog_close' };
+  | { type: 'npc_dialog_close' }
+  | { type: 'preferences_sync'; data: PreferencesData }
+  | { type: 'preferences_show' }
+  | { type: 'preferences_hide' }
+  | { type: 'preferences_save'; subscribedChannels: string[]; disabledCommands: string[]; shadersEnabled: boolean };

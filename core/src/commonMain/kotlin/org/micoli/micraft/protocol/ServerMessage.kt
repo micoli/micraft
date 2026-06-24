@@ -78,6 +78,9 @@ sealed class ServerMessage {
     object OpenLayoutEditor : ServerMessage()
 
     @Serializable
+    object OpenPreferences : ServerMessage()
+
+    @Serializable
     data class RegistrySync(
         val blocks: List<BlockInfo>,
         val items: Map<String, ItemInfo>,
@@ -95,6 +98,15 @@ sealed class ServerMessage {
 
     @Serializable
     data class NpcInteractResult(val npcId: String, val payload: String) : ServerMessage()
+
+    @Serializable
+    data class PreferencesSync(
+        val subscribedChannels: List<String>,
+        val knownChannels: List<String>,
+        val disabledCommands: Set<String>,
+        val shadersEnabled: Boolean,
+        val commands: List<CommandInfo>,
+    ) : ServerMessage()
 }
 
 @Serializable
@@ -115,3 +127,6 @@ data class ItemInfo(
 
 @Serializable
 data class BlockChange(val pos: BlockPos, val type: BlockType)
+
+@Serializable
+data class CommandInfo(val id: String, val command: String, val description: String)

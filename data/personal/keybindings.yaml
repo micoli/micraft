@@ -30,6 +30,7 @@ ui:
   inventory: [KeyI]
   undo:      [Ctrl+KeyZ, Cmd+KeyZ]
   layout_editor: [KeyG]
+  preferences:   [KeyK]
 
 minimap:
   minimap_zoom_in:  [l]

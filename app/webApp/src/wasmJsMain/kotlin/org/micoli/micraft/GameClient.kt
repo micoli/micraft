@@ -219,6 +219,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
             is ServerMessage.TimeUpdate -> localController.currentGameTicks = msg.gameTicks
             is ServerMessage.LayoutsSync -> jsSyncLayouts(Json.encodeToString(LayoutSyncPayload(msg.layouts, msg.activeLayout)))
             is ServerMessage.OpenLayoutEditor -> jsShowLayoutEditor()
+            is ServerMessage.OpenPreferences -> jsShowPreferences()
             is ServerMessage.RegistrySync -> {
                 val blockDefs = msg.blocks.mapIndexed { i, info ->
                     BlockType.entries[i] to BlockDefinition(
@@ -248,6 +249,7 @@ class GameClient @OptIn(ExperimentalWasmJsInterop::class) constructor(private va
             is ServerMessage.NpcUpdate -> npcManager.handleUpdate(msg.npc)
             is ServerMessage.NpcDespawned -> npcManager.handleDespawned(msg.id)
             is ServerMessage.NpcInteractResult -> jsOpenNpcDialog(msg.payload)
+            is ServerMessage.PreferencesSync -> uiState.setPreferencesSync(Json.encodeToString<ServerMessage.PreferencesSync>(msg))
             is ServerMessage.WorldUpdate -> msg.changes.forEach { change ->
                 val cx = change.pos.x.floorDiv(WorldConstants.CHUNK_SIZE)
                 val cz = change.pos.z.floorDiv(WorldConstants.CHUNK_SIZE)

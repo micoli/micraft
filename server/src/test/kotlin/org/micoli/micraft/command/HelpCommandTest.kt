@@ -3,6 +3,7 @@ package org.micoli.micraft.command
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.CommandContext
+import java.util.UUID
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.support.testContext
@@ -15,6 +16,7 @@ class HelpCommandTest {
 
     private fun fakeHandler(name: String, desc: String = "", opts: List<String> = emptyList()): CommandHandler =
         object : CommandHandler {
+            override val id: UUID = UUID.randomUUID()
             override val command = name
             override val description = desc
             override val usage = name

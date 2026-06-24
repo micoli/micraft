@@ -9,6 +9,7 @@ import org.micoli.micraft.babylon.jsAddServerLog
 import org.micoli.micraft.babylon.jsChannelsSync
 import org.micoli.micraft.babylon.jsConsoleSetPlayer
 import org.micoli.micraft.babylon.jsHideDisconnectedOverlay
+import org.micoli.micraft.babylon.jsPreferencesSync
 import org.micoli.micraft.babylon.jsShowDisconnectedOverlay
 import org.micoli.micraft.babylon.jsShowNotification
 import org.micoli.micraft.babylon.jsUpdateHotbar
@@ -54,6 +55,11 @@ class WebUiBridge(private val state: McUiState, private val scope: CoroutineScop
         scope.launch {
             state.consolePlayerNameFlow.collect { name ->
                 if (name.isNotEmpty()) jsConsoleSetPlayer(name)
+            }
+        }
+        scope.launch {
+            state.preferencesSyncFlow.collect { json ->
+                if (json != null) jsPreferencesSync(json)
             }
         }
     }

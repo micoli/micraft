@@ -102,3 +102,16 @@ createChat:
     reserved: "Cannot create reserved channel '{0}'."
     exists: "Channel '{0}' already exists."
     created: "Channel '{0}' created."
+preferences:
+  server:
+    command_disabled: "This command is disabled in your preferences."
+  client:
+    title: "Preferences"
+    tab_chat: "Chat"
+    tab_commands: "Commands"
+    tab_graphics: "Graphics"
+    save: "Save"
+    cancel: "Cancel"
+    channel_protected: "(protected)"
+    shaders_label: "Shaders (ambient occlusion, directional shading, fog)"
+    command_enabled: "Enable"

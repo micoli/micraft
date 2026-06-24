@@ -71,4 +71,8 @@ class McUiState {
         chatSeq++
     }
     fun setChannelsSync(subscribed: List<String>, known: List<String>) { _channelsSync.value = subscribed to known }
+
+    private val _preferencesSync = MutableStateFlow<String?>(null)
+    val preferencesSyncFlow: StateFlow<String?> = _preferencesSync
+    fun setPreferencesSync(json: String) { _preferencesSync.value = json }
 }

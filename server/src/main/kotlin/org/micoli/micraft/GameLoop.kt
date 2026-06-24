@@ -25,6 +25,7 @@ import org.micoli.micraft.ui.validateLayouts
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.npc.NpcSpawner
 import org.micoli.micraft.protocol.BlockInfo
+import org.micoli.micraft.protocol.CommandInfo
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockType
@@ -223,6 +224,32 @@ class GameLoop(
         persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache.json")) }
     }
 
+    private fun buildPreferencesSync(session: PlayerSession): ServerMessage.PreferencesSync {
+        val knownChannels = chatChannelManager.listKnownChannels()
+        val commandList = commands.values.map { CommandInfo(it.id.toString(), it.command, it.description) }
+        return ServerMessage.PreferencesSync(
+            subscribedChannels = session.state.subscribedChannels,
+            knownChannels = knownChannels,
+            disabledCommands = session.state.disabledCommands,
+            shadersEnabled = session.state.shadersEnabled,
+            commands = commandList,
+        )
+    }
+
+    private suspend fun handlePreferencesUpdate(session: PlayerSession, msg: ClientMessage.PreferencesUpdate) {
+        val knownChannels = chatChannelManager.listKnownChannels()
+        val newSubscribed = (msg.subscribedChannels.filter { it in knownChannels } + ChatChannelManager.PROTECTED).distinct()
+        val shadersChanged = session.state.shadersEnabled != msg.shadersEnabled
+        session.state = session.state.copy(
+            subscribedChannels = newSubscribed,
+            disabledCommands = msg.disabledCommands,
+            shadersEnabled = msg.shadersEnabled,
+        )
+        savePlayer(session)
+        session.send(ServerMessage.ChannelsSync(newSubscribed, knownChannels))
+        if (shadersChanged) session.send(ServerMessage.ShadersUpdate(msg.shadersEnabled))
+    }
+
     private fun buildRegistrySync(): ServerMessage.RegistrySync {
         val blocks = BlockRegistry.orderedList().mapIndexed { i, def ->
             val name = BlockType.entries[i].name
@@ -358,8 +385,13 @@ class GameLoop(
         val name = trimmed.substringBefore(' ').lowercase()
         val args = trimmed.substringAfter(' ', "")
         val handler = commands[name]
-        if (handler != null) handler.execute(session, args, commandContext)
-        else session.send(ServerMessage.Notification(i18n.t(session.state.language, "commands:server:unknown", trimmed)))
+        if (handler != null) {
+            if (handler.id.toString() in session.state.disabledCommands) {
+                session.send(ServerMessage.Notification(i18n.t(session.state.language, "preferences:server:command_disabled")))
+                return
+            }
+            handler.execute(session, args, commandContext)
+        } else session.send(ServerMessage.Notification(i18n.t(session.state.language, "commands:server:unknown", trimmed)))
     }
 
     suspend fun onConnect(socket: DefaultWebSocketSession) {
@@ -393,6 +425,7 @@ class GameLoop(
             layouts = saved?.layouts ?: listOf(org.micoli.micraft.ui.defaultLayout()),
             activeLayout = saved?.activeLayout ?: "default",
             subscribedChannels = saved?.subscribedChannels ?: listOf("world", "system", "game"),
+            disabledCommands = saved?.disabledCommands ?: emptySet(),
         )
         val session = PlayerSession(id, userName, socket, state)
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
@@ -402,6 +435,7 @@ class GameLoop(
 
         session.send(ServerMessage.Welcome(id, playerName, spawn, language, shadersEnabled, session.state.layouts, session.state.activeLayout))
         session.send(buildRegistrySync())
+        session.send(buildPreferencesSync(session))
         chatService.onPlayerConnect(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toList()))
@@ -435,6 +469,7 @@ class GameLoop(
                                     log.debug("{} chunks unloaded by {}", msg.positions.size, session.id.take(8))
                                 }
                                 is ClientMessage.LayoutUpdate -> handleLayoutUpdate(session, msg)
+                                is ClientMessage.PreferencesUpdate -> handlePreferencesUpdate(session, msg)
                                 is ClientMessage.NpcInteract -> npcManager.handleInteract(session, msg.npcId)
                                 else -> session.intents.trySend(msg)
                             }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useReducer } from 'react';
-import { UiState, UiAction, LogEntry, HudMode, GameLayout, NpcDialogData } from './types';
+import { UiState, UiAction, LogEntry, HudMode, GameLayout, NpcDialogData, PreferencesData } from './types';
 import { NpcDialog } from '../npc/NpcDialog';
+import { Preferences } from './Preferences';
 import { HUD } from './HUD';
 import { Inventory } from './Inventory';
 import { ShortcutBar } from './ShortcutBar';
@@ -37,6 +38,8 @@ const initial: UiState = {
   activeLayout: 'default',
   layoutEditorOpen: false,
   npcDialog: null,
+  preferencesOpen: false,
+  preferences: null,
 };
 
 let notifKey = 0;
@@ -91,6 +94,15 @@ function reducer(state: UiState, action: UiAction): UiState {
     case 'layout_editor_save': return { ...state, layouts: action.layouts, activeLayout: action.activeLayout, layoutEditorOpen: false };
     case 'npc_dialog_open':  return { ...state, npcDialog: action.payload };
     case 'npc_dialog_close': return { ...state, npcDialog: null };
+    case 'preferences_sync': return { ...state, preferences: action.data };
+    case 'preferences_show': return { ...state, preferencesOpen: true };
+    case 'preferences_hide': return { ...state, preferencesOpen: false };
+    case 'preferences_save': {
+      const prefs = state.preferences
+        ? { ...state.preferences, subscribedChannels: action.subscribedChannels, disabledCommands: action.disabledCommands, shadersEnabled: action.shadersEnabled }
+        : state.preferences;
+      return { ...state, preferences: prefs, preferencesOpen: false };
+    }
   }
 }
 
@@ -107,6 +119,7 @@ export function GameUI() {
   const loginResultRef = useRef('');
   const notifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingLayoutUpdateRef = useRef<string>('');
+  const pendingPreferencesUpdateRef = useRef<string>('');
 
   // Keep consoleOpenRef in sync
   useEffect(() => { consoleOpenRef.current = state.consoleOpen; }, [state.consoleOpen]);
@@ -221,6 +234,21 @@ export function GameUI() {
       return v;
     };
 
+    (window as any).mcPreferencesSync = (json: string) => {
+      try {
+        const data: PreferencesData = JSON.parse(json);
+        dispatch({ type: 'preferences_sync', data });
+      } catch { /* ignore */ }
+    };
+
+    (window as any).mcConsumePreferencesUpdate = () => {
+      const v = pendingPreferencesUpdateRef.current;
+      pendingPreferencesUpdateRef.current = '';
+      return v;
+    };
+
+    (window as any).mcShowPreferences = () => dispatch({ type: 'preferences_show' });
+
     // no-ops: React handles creation
     (window as any).mcCreateHUD       = () => {};
     (window as any).mcCreateHotbar    = () => {};
@@ -249,6 +277,11 @@ export function GameUI() {
   }, []);
 
   const activeLayout = resolveActiveLayout(state.layouts, state.activeLayout);
+
+  const handlePreferencesSave = (payload: { subscribedChannels: string[]; disabledCommands: string[]; shadersEnabled: boolean }) => {
+    dispatch({ type: 'preferences_save', ...payload });
+    pendingPreferencesUpdateRef.current = JSON.stringify(payload);
+  };
 
   const handleLayoutSave = (layouts: GameLayout[], newActiveLayout: string) => {
     dispatch({ type: 'layout_editor_save', layouts, activeLayout: newActiveLayout });
@@ -313,6 +346,12 @@ export function GameUI() {
             onClose={() => dispatch({ type: 'layout_editor_hide' })}
           />
           <NpcDialog data={state.npcDialog} onClose={() => dispatch({ type: 'npc_dialog_close' })} />
+          <Preferences
+            open={state.preferencesOpen}
+            preferences={state.preferences}
+            onSave={handlePreferencesSave}
+            onClose={() => dispatch({ type: 'preferences_hide' })}
+          />
         </>
       )}
       <div id="mc-login-root" data-visible={String(state.loginVisible)}>

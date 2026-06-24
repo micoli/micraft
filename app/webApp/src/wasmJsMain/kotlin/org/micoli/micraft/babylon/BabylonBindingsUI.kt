@@ -64,3 +64,9 @@ fun jsGetActiveChannel(): String = js("(window.__mcActiveChannel) || 'world'")
 
 fun jsSetConnectedPlayers(namesJson: String): Unit = js("mcSetConnectedPlayers(namesJson)")
 fun jsSetNpcNames(namesJson: String): Unit = js("mcSetNpcNames(namesJson)")
+
+// ── Preferences ───────────────────────────────────────────────────────────────
+
+fun jsPreferencesSync(json: String): Unit = js("mcPreferencesSync(json)")
+fun jsConsumePreferencesUpdate(): String = js("mcConsumePreferencesUpdate()")
+fun jsShowPreferences(): Unit = js("mcShowPreferences()")

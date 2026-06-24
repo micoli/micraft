@@ -58,4 +58,11 @@ sealed class ClientMessage {
 
     @Serializable
     data class ChatSend(val channel: String, val text: String) : ClientMessage()
+
+    @Serializable
+    data class PreferencesUpdate(
+        val subscribedChannels: List<String>,
+        val disabledCommands: Set<String>,
+        val shadersEnabled: Boolean,
+    ) : ClientMessage()
 }

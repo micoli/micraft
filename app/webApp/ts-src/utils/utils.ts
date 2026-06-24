@@ -38,6 +38,7 @@ export function registerUtils(): void {
   registerCompleter('/save', () => []);
   registerCompleter('/who', () => []);
   registerCompleter('/yield', () => []);
+  registerCompleter('/preferences', () => []);
   registerCompleter('/disconnect', () => []);
   registerCompleter('/teleport', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
   registerCompleter('/summon', (p) => (window.__mcConnectedPlayers || []).filter(n => n.startsWith(p)));
