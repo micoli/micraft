@@ -5,10 +5,12 @@ import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.slf4j.LoggerFactory
+import java.util.UUID
 
 private val log = LoggerFactory.getLogger(KickCommand::class.java)
 
 class KickCommand : CommandHandler {
+    override val id = UUID.fromString("dcc635a0-2fb4-4b67-bd6f-b5b0b29b39bb")
     override val command = "/kick"
     override val description = "Kicks a connected player."
     override val usage = "/kick <playerName>"

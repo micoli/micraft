@@ -5,10 +5,12 @@ import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.slf4j.LoggerFactory
+import java.util.UUID
 
 private val log = LoggerFactory.getLogger(LangCommand::class.java)
 
 class LangCommand : CommandHandler {
+    override val id = UUID.fromString("062ef1bc-100c-4a80-aab0-a160bda112b1")
     override val command = "/lang"
     override val description = "Changes your language preference."
     override val usage = "/lang [locale]"

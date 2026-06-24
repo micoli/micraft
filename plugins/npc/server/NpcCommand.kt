@@ -5,8 +5,10 @@ import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.world.WorldConstants
+import java.util.UUID
 
 class NpcCommand : CommandHandler {
+    override val id = UUID.fromString("432ab72b-0cb2-4609-a75d-2093798d5869")
     override val command = "/npc"
     override val description = "Manage NPCs in the world."
     override val usage = "/npc <spawn|list|remove|tp> [args]"

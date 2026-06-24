@@ -70,6 +70,48 @@ fun discoverCommandHandlers(): Map<String, CommandHandler> =
                 .associateBy { it.command }
         }
 
+fun discoverPlugins(): List<Plugin> =
+    io.github.classgraph.ClassGraph()
+        .enableClassInfo()
+        .acceptPackages("org.micoli.micraft")
+        .scan()
+        .use { result ->
+            result.getClassesImplementing(Plugin::class.java)
+                .filter { !it.isAbstract && !it.isInterface }
+                .mapNotNull { info ->
+                    runCatching {
+                        @Suppress("UNCHECKED_CAST")
+                        (info.loadClass() as Class<Plugin>)
+                            .getDeclaredConstructor()
+                            .newInstance()
+                    }.onFailure { e ->
+                        log.warn("Failed to load plugin {}: {}", info.name, e.message)
+                    }.getOrNull()
+                }
+        }
+
+fun validatePluginSystemIds(commands: Map<String, CommandHandler>, plugins: List<Plugin>) {
+    val commandDupes = commands.values
+        .groupBy { it.id }
+        .filter { it.value.size > 1 }
+    if (commandDupes.isNotEmpty()) {
+        val detail = commandDupes.entries.joinToString("; ") { (id, cmds) ->
+            "$id → ${cmds.joinToString(", ") { it.command }}"
+        }
+        error("Duplicate command UUIDs detected: $detail")
+    }
+
+    val pluginDupes = plugins
+        .groupBy { it.id }
+        .filter { it.value.size > 1 }
+    if (pluginDupes.isNotEmpty()) {
+        val detail = pluginDupes.entries.joinToString("; ") { (id, ps) ->
+            "$id → ${ps.joinToString(", ") { it.name }}"
+        }
+        error("Duplicate plugin UUIDs detected: $detail")
+    }
+}
+
 fun buildI18nDirs(base: Path = Path.of("data/i18n")): List<Path> {
     val pluginsRoot = Path.of("plugins")
     val pluginDirs = if (pluginsRoot.toFile().exists())
@@ -225,6 +267,7 @@ class GameLoop(
     fun start(app: Application) {
         appScope = app
         log.info("GameLoop starting (tick=${TICK_MS}ms, gravity=$GRAVITY)")
+        validatePluginSystemIds(commands, discoverPlugins())
         npcManager.loadDefinitions(npcRegistryLoader.load())
         val npcSavePath = persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/npcs/spawns.json")
         npcManager.load(npcSavePath)

@@ -5,10 +5,12 @@ import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.slf4j.LoggerFactory
+import java.util.UUID
 
 private val log = LoggerFactory.getLogger(ShadersCommand::class.java)
 
 class ShadersCommand : CommandHandler {
+    override val id = UUID.fromString("b2a1d2bb-1912-4ca2-8b60-8b2012b2ab30")
     override val command = "/shaders"
     override val description = "Toggles visual shaders (ambient occlusion, directional shading, fog)."
     override val usage = "/shaders [on|off]"

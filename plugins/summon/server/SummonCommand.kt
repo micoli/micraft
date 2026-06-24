@@ -5,8 +5,10 @@ import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.plugins.teleport.safeTeleportPos
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
+import java.util.UUID
 
 class SummonCommand : CommandHandler {
+    override val id = UUID.fromString("57e22c48-1f2f-486e-abca-aa8c711f8edf")
     override val command = "/summon"
     override val description = "Teleports another player to your location."
     override val usage = "/summon <playerName>"

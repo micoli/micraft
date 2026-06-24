@@ -4,8 +4,10 @@ import org.micoli.micraft.CommandContext
 import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
+import java.util.UUID
 
 class TalkCommand : CommandHandler {
+    override val id = UUID.fromString("f9ab78d3-d0da-4b6d-a418-2823ce4e47fa")
     override val command = "/talk"
     override val description = "Open a private chat with a player."
     override val usage = "/talk <playerName>"

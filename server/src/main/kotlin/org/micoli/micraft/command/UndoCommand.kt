@@ -7,8 +7,10 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.session.WorldActionRecord
 import org.micoli.micraft.world.BlockType
+import java.util.UUID
 
 class UndoCommand : CommandHandler {
+    override val id = UUID.fromString("efe56d66-b31e-4e09-9898-1735149e6adf")
     override val command = "/undo"
     override val description = "Undo the last N block breaks, restoring blocks and reversing item collection."
     override val usage = "/undo [N]"

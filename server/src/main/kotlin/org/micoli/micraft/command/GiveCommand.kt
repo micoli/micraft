@@ -5,8 +5,10 @@ import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.world.ItemType
+import java.util.UUID
 
 class GiveCommand : CommandHandler {
+    override val id = UUID.fromString("84b05d3d-19c7-4cee-bb3d-469d053c9b07")
     override val command = "/give"
     override val description = "Give items to yourself."
     override val usage = "/give <itemType> [N]"

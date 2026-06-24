@@ -5,10 +5,12 @@ import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.slf4j.LoggerFactory
+import java.util.UUID
 
 private val log = LoggerFactory.getLogger(ReloadCommand::class.java)
 
 class ReloadCommand : CommandHandler {
+    override val id = UUID.fromString("ca8872ff-542c-4581-bf05-0cc68ea01f60")
     override val command = "/reload"
     override val description = "Reloads configuration files without restarting the server."
     override val options = listOf("drops.yaml — block drop table", "biomes.yaml — biome definitions", "i18n/*.yaml — translations")

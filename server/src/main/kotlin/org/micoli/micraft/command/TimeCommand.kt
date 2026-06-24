@@ -5,8 +5,10 @@ import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.TICKS_PER_DAY
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
+import java.util.UUID
 
 class TimeCommand : CommandHandler {
+    override val id = UUID.fromString("48666b02-7c6d-4a88-b162-26c3ff56bd9a")
     override val command = "/time"
     override val description = "Shows or sets the in-game time."
     override val usage = "/time [0-23]"

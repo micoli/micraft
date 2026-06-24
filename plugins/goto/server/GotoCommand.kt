@@ -5,8 +5,10 @@ import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.plugins.teleport.safeTeleportPos
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
+import java.util.UUID
 
 class GotoCommand : CommandHandler {
+    override val id = UUID.fromString("85eb4de8-3283-46ea-84fe-da559b905e33")
     override val command = "/goto"
     override val description = "Teleports you to a player or NPC."
     override val usage = "/goto <playerName|npcName>"

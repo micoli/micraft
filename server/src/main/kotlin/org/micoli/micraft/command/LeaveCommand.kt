@@ -5,8 +5,10 @@ import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.world.ChatChannelManager
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
+import java.util.UUID
 
 class LeaveCommand : CommandHandler {
+    override val id = UUID.fromString("84c30ce7-f68a-411f-b457-87ae56738241")
     override val command = "/leave"
     override val description = "Leave a chat channel."
     override val usage = "/leave <channelName>"

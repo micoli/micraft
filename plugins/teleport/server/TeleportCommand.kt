@@ -5,8 +5,10 @@ import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
+import java.util.UUID
 
 class TeleportCommand : CommandHandler {
+    override val id = UUID.fromString("c43cd2ee-eed0-478e-a87d-72db5ef9ffe6")
     override val command = "/teleport"
     override val description = "Teleports you to the given coordinates."
     override val usage = "/teleport <x> <y> <z>  |  /teleport <playerName>"
