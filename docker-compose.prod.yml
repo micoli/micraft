@@ -1,0 +1,31 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      target: server
+    volumes:
+      - ./data:/app/data
+      - world-data:/app/data/world
+    restart: unless-stopped
+    networks:
+      - internal
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      target: web
+    ports:
+      - "8080:8080"
+    depends_on:
+      - server
+    restart: unless-stopped
+    networks:
+      - internal
+
+networks:
+  internal:
+
+volumes:
+  world-data:

@@ -1,0 +1,15 @@
+build/
+.gradle/
+app/desktopApp/build/
+app/shared/build/
+app/webApp/build/
+core/build/
+server/build/
+**/node_modules/
+app/webApp/src/wasmJsMain/resources/mc_bindings.js
+data/world/
+.idea/
+*.iml
+.DS_Store
+.git/
+run.lock

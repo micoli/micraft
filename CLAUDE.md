@@ -198,30 +198,60 @@ touch run.lock
 Single GRASS block at (8, 2, 8), player spawns at (8, 1, 14) in fly mode.
 Keys 1–6 position camera on each face (+Z, -Z, +X, -X, +Y, -Y).
 
+## Docker execution
+
+**All build/test/lint/run commands execute inside the dev container — never directly on the host.**
+
+The dev container must be running (`make dev-up` in a separate terminal, or start it detached).
+
+```bash
+# Run any command inside the container
+make dc CMD="./gradlew :server:test"
+make dc CMD="./gradlew :spotlessApply"
+make dc CMD="npm run format"          # runs in /workspace/app/webApp/ts-src
+
+# Open a shell
+make shell
+
+# Direct form (equivalent)
+docker compose -f docker-compose.dev.yml exec micraft ./gradlew :server:test
+```
+
+`rtk` runs on the host as a hook proxy — it wraps the `docker compose exec` command automatically. Do not add `rtk` inside the container command; it is injected by the hook at the host level.
+
+Restart server after server-side change (file is in mounted volume, works from host or container):
+```bash
+touch run.lock   # from host — still valid
+# or:
+make dc CMD="touch run.lock"
+```
+
 ## Commands
 
 ```bash
-./gradlew dev                                      # server :8080 + webpack dev :8081
-./gradlew devDebug                                 # debug texture mode
-rtk ./gradlew build                                # full build
-rtk ./gradlew test                                 # all tests
-rtk ./gradlew :server:test
-rtk ./gradlew :app:shared:jvmTest
-rtk ./gradlew ktlintCheck
-./gradlew :server:addUser -Pargs="email pass [name]"  # add local auth user
+make dev-up                                          # start dev container (foreground)
+make dc CMD="./gradlew dev"                          # server :8080 + webpack dev :8081
+make dc CMD="./gradlew devDebug"                     # debug texture mode
+make dc CMD="./gradlew build"                        # full build
+make dc CMD="./gradlew test"                         # all tests
+make dc CMD="./gradlew :server:test"                 # server tests only
+make dc CMD="./gradlew :app:shared:jvmTest"
+make dc CMD="./gradlew ktlintCheck"
+make dc CMD="./gradlew :server:addUser -Pargs='email pass [name]'"
 ```
 
 ## Rules
 
+- **Never run `./gradlew`, `npm`, `node`, or `gradle` directly on the host.** Use `make dc CMD="..."`.
 - Always prefer `./gradlew` (never `gradle` directly).
-- Use `rtk` before verbose commands (build, test, diff, status, find).
+- Use `rtk` before verbose host-level commands (git diff, git status, find). For in-container commands via `make dc`, rtk is applied automatically by the hook.
 - Never run unfiltered `find`, `ls -R`, `git diff`, or `gradlew test` without `rtk`.
 - Read only necessary files.
 - Never start server or web client — user runs these.
 - Never read `data/world/default_world/chunks/` — binary compressed, useless.
 - Commits must respect Conventional Commits + Semantic Commit Messages standard; body ≤10 lines.
-- Every server-side change (`server/src/main/`) needs new or updated test in `server/src/test/`. Run `rtk ./gradlew :server:test` before committing.
-- Before any commit use `./gradlew :spotlessApply`,  `npm run format` (in app/webApp/ts-src/)
+- Every server-side change (`server/src/main/`) needs new or updated test in `server/src/test/`. Run `make dc CMD="./gradlew :server:test"` before committing.
+- Before any commit use `make dc CMD="./gradlew :spotlessApply"` and `make dc CMD="npm run format"` (ts-src working dir handled by Makefile target).
 
 ## Schema maintenance
 

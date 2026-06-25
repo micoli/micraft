@@ -1,0 +1,31 @@
+services:
+  micraft:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/workspace
+      - core-build:/workspace/core/build
+      - server-build:/workspace/server/build
+      - app-desktop-build:/workspace/app/desktopApp/build
+      - app-shared-build:/workspace/app/shared/build
+      - app-webapp-build:/workspace/app/webApp/build
+      - app-webapp-node-modules:/workspace/app/webApp/ts-src/node_modules
+      - gradle-home:/root/.gradle
+      - gradle-build:/workspace/.gradle
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+
+volumes:
+  core-build:
+  server-build:
+  app-desktop-build:
+  app-shared-build:
+  app-webapp-build:
+  app-webapp-node-modules:
+  gradle-home:
+  gradle-build:
