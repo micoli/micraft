@@ -83,7 +83,7 @@ fun jsSetMinimapChunk(cx: Int, cz: Int, topYJson: String, topBlockJson: String):
 
 fun jsClearMinimapChunk(cx: Int, cz: Int): Unit = js("mcClearMinimapChunk(cx, cz)")
 
-fun jsDrawMinimap(playerX: Double, playerZ: Double): Unit = js("mcDrawMinimap(playerX, playerZ)")
+fun jsDrawMinimap(playerX: Double, playerZ: Double, playerYaw: Double): Unit = js("mcDrawMinimap(playerX, playerZ, playerYaw)")
 
 fun jsSetNpcOnMinimap(id: String, x: Float, z: Float): Unit = js("mcSetNpcOnMinimap(id, x, z)")
 

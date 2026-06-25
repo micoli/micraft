@@ -99,7 +99,7 @@ export function registerMinimap(): void {
     }
   };
 
-  window.mcDrawMinimap = (playerX: number, playerZ: number): void => {
+  window.mcDrawMinimap = (playerX: number, playerZ: number, playerYaw: number): void => {
     frameCount++;
     if (frameCount % 4 !== 0) return;
 
@@ -134,7 +134,7 @@ export function registerMinimap(): void {
             const wx = cx * 16 + lx;
             const wz = cz * 16 + lz;
             const bx = wx - playerX + halfBlocks;
-            const bz = wz - playerZ + halfBlocks;
+            const bz = playerZ - wz + halfBlocks; // Z flipped: +Z = haut de la minimap
             const px0 = Math.round(bx * pixPerBlock);
             const pz0 = Math.round(bz * pixPerBlock);
             const px1 = Math.round((bx + 1) * pixPerBlock);
@@ -170,7 +170,7 @@ export function registerMinimap(): void {
     // Weather zone overlays
     for (const zone of weatherZones) {
       const bx = zone.cx - playerX + halfBlocks;
-      const bz = zone.cz - playerZ + halfBlocks;
+      const bz = playerZ - zone.cz + halfBlocks; // Z flipped
       const px = bx * pixPerBlock;
       const pz = bz * pixPerBlock;
       const rPx = zone.radius * pixPerBlock;
@@ -199,7 +199,7 @@ export function registerMinimap(): void {
     // NPC dots
     for (const [, npc] of npcPositions) {
       const bx = npc.x - playerX + halfBlocks;
-      const bz = npc.z - playerZ + halfBlocks;
+      const bz = playerZ - npc.z + halfBlocks; // Z flipped
       const px = bx * pixPerBlock;
       const pz = bz * pixPerBlock;
       if (px < -4 || px > MINIMAP_SIZE + 4 || pz < -4 || pz > MINIMAP_SIZE + 4) continue;
@@ -212,10 +212,30 @@ export function registerMinimap(): void {
       ctx.stroke();
     }
 
-    // Player dot at center
+    // Player direction arrow at center
+    const cx = MINIMAP_SIZE / 2;
+    const cy = MINIMAP_SIZE / 2;
+    const arrowLen = 9;
+    const arrowWidth = 4;
+    // canvas: left=+X, up=+Z → arrow direction
+    const yaw = playerYaw + Math.PI;
+    const adx = -Math.sin(yaw);
+    const ady = Math.cos(yaw);
+    const perpX = -ady;
+    const perpY = adx;
+    const tipX = cx + adx * arrowLen;
+    const tipY = cy + ady * arrowLen;
+    const b1x = cx - adx * arrowLen * 0.4 + perpX * arrowWidth;
+    const b1y = cy - ady * arrowLen * 0.4 + perpY * arrowWidth;
+    const b2x = cx - adx * arrowLen * 0.4 - perpX * arrowWidth;
+    const b2y = cy - ady * arrowLen * 0.4 - perpY * arrowWidth;
+
     ctx.fillStyle = "#ff3333";
     ctx.beginPath();
-    ctx.arc(MINIMAP_SIZE / 2, MINIMAP_SIZE / 2, 3, 0, Math.PI * 2);
+    ctx.moveTo(tipX, tipY);
+    ctx.lineTo(b1x, b1y);
+    ctx.lineTo(b2x, b2y);
+    ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 1;

@@ -457,7 +457,7 @@ class LocalPlayerController(
         jsUpdateSkyTime(scene, normalizedTime)
         jsUpdateWeather(scene, predX, predY, predZ)
 
-        jsDrawMinimap(predX, predZ)
+        jsDrawMinimap(predX, predZ, yaw)
 
         val toDeg = 180.0 / kotlin.math.PI
         val targetBlockName =
