@@ -15,6 +15,7 @@ private val log = LoggerFactory.getLogger("WeatherConfig")
 data class WeatherTypeConfig(
     val type: String,
     val biomes: List<String>,
+    val enabled: Boolean = true,
     val spawnRatePerBiomeTick: Double = 0.0002,
     val minDurationTicks: Long = 1200,
     val maxDurationTicks: Long = 12000,
@@ -23,14 +24,20 @@ data class WeatherTypeConfig(
     val driftSpeed: Float = 0.1f,
 )
 
-@Serializable data class WeatherConfigData(val weatherTypes: List<WeatherTypeConfig> = emptyList())
+@Serializable
+data class WeatherConfigData(
+    val enabled: Boolean = true,
+    val weatherTypes: List<WeatherTypeConfig> = emptyList(),
+)
 
 private val DEFAULT_YAML =
     """
 # yaml-language-server: ${'$'}schema=../schemas/weather.schema.json
+enabled: true
 weatherTypes:
   - type: RAIN
     biomes: [plains, forest]
+    enabled: true
     spawnRatePerBiomeTick: 0.0002
     minDurationTicks: 1200
     maxDurationTicks: 12000
@@ -39,6 +46,7 @@ weatherTypes:
     driftSpeed: 0.1
   - type: STORM
     biomes: [plains, forest, mountains]
+    enabled: true
     spawnRatePerBiomeTick: 0.00005
     minDurationTicks: 600
     maxDurationTicks: 3600
@@ -47,6 +55,7 @@ weatherTypes:
     driftSpeed: 0.15
   - type: SNOW
     biomes: [tundra, mountains]
+    enabled: true
     spawnRatePerBiomeTick: 0.0003
     minDurationTicks: 2400
     maxDurationTicks: 24000
@@ -55,6 +64,7 @@ weatherTypes:
     driftSpeed: 0.05
   - type: FOG
     biomes: [forest, plains, mountains]
+    enabled: true
     spawnRatePerBiomeTick: 0.0001
     minDurationTicks: 3000
     maxDurationTicks: 18000

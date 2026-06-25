@@ -5,6 +5,7 @@
   "required": ["weatherTypes"],
   "additionalProperties": false,
   "properties": {
+    "enabled": { "type": "boolean", "default": true },
     "weatherTypes": {
       "type": "array",
       "items": {
@@ -20,6 +21,7 @@
             "type": "array",
             "items": { "type": "string" }
           },
+          "enabled": { "type": "boolean", "default": true },
           "spawnRatePerBiomeTick": { "type": "number", "minimum": 0, "maximum": 1 },
           "minDurationTicks": { "type": "integer", "minimum": 1 },
           "maxDurationTicks": { "type": "integer", "minimum": 1 },

@@ -47,10 +47,12 @@ class WeatherManager(private var config: WeatherConfig) {
         }
 
         // Try spawning new zones every 20 ticks
-        spawnCheckCounter++
-        if (spawnCheckCounter >= 20) {
-            spawnCheckCounter = 0
-            if (trySpawn(world)) changed = true
+        if (config.data.enabled) {
+            spawnCheckCounter++
+            if (spawnCheckCounter >= 20) {
+                spawnCheckCounter = 0
+                if (trySpawn(world)) changed = true
+            }
         }
 
         broadcastCounter++
@@ -75,6 +77,7 @@ class WeatherManager(private var config: WeatherConfig) {
 
         var spawned = false
         for (typeConfig in config.data.weatherTypes) {
+            if (!typeConfig.enabled) continue
             val matchingChunks =
                 typeConfig.biomes.flatMap { biome -> byBiome[biome] ?: emptyList() }
             if (matchingChunks.isEmpty()) continue
