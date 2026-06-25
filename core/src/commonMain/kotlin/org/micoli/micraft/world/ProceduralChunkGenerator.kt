@@ -6,6 +6,7 @@ class ProceduralChunkGenerator(
     private val seed: Long = 42L,
     private val biomeRegistry: BiomeRegistry = BiomeRegistry.default(),
     private val roadConfig: RoadConfig? = null,
+    private val houseConfig: HouseConfig? = null,
 ) : ChunkGenerator {
     private val elevationNoise = PerlinNoise(seed)
     private val mountainNoise = PerlinNoise(seed + 2L)
@@ -14,6 +15,15 @@ class ProceduralChunkGenerator(
     private val roadVoronoi =
         roadConfig?.let {
             RoadVoronoiZones(seed, it) { wx, wz -> voronoi.sample(wx, wz).primary.id }
+        }
+    private val houseZones =
+        houseConfig?.let { cfg ->
+            HouseZones(
+                seed,
+                cfg,
+                biomeAt = { wx, wz -> voronoi.sample(wx, wz).primary.id },
+                surfaceY = { wx, wz -> surfaceHeight(wx, wz, voronoi.sample(wx, wz)) },
+            )
         }
 
     fun surfaceHeight(wx: Int, wz: Int, sample: VoronoiBiomeZones.ColumnSample): Int {
@@ -82,11 +92,16 @@ class ProceduralChunkGenerator(
         }
 
         placeVegetation(blocks, ox, oz)
+        placeHouses(blocks, ox, oz)
 
         return Chunk(pos, blocks)
     }
 
     override fun biomeAt(wx: Int, wz: Int): String = voronoi.sample(wx, wz).primary.id
+
+    private fun placeHouses(blocks: ByteArray, ox: Int, oz: Int) {
+        houseZones?.housesNear(ox, oz)?.forEach { house -> house.renderIntoChunk(blocks, ox, oz) }
+    }
 
     // ── Vegetation ────────────────────────────────────────────────────────────
 

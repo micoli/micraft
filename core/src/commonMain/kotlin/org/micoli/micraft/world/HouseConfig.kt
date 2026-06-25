@@ -1,0 +1,43 @@
+package org.micoli.micraft.world
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class HouseTypeConfig(
+    val id: String,
+    val widthMin: Int,
+    val widthMax: Int,
+    val depthMin: Int,
+    val depthMax: Int,
+    val floorsMin: Int,
+    val floorsMax: Int,
+    val roofTypes: List<String>,
+    val roomsMin: Int,
+    val roomsMax: Int,
+    val doorsMin: Int,
+    val doorsMax: Int,
+)
+
+@Serializable
+data class HouseBiomeConfig(
+    val wallBlock: BlockType = BlockType.STONE,
+    val roofBlock: BlockType = BlockType.STONE,
+    val floorBlock: BlockType = BlockType.STONE,
+    val houseProbability: Double = 0.0,
+    val clusterBonus: Double = 0.0,
+    val allowedTypes: List<String> = emptyList(),
+)
+
+@Serializable
+data class HouseConfig(
+    val enabled: Boolean = true,
+    val gridCellSize: Int = 48,
+    val clusterCheckRadius: Int = 2,
+    val floorHeight: Int = 4,
+    val maxHouseSize: Int = 20,
+    val houseTypes: List<HouseTypeConfig> = emptyList(),
+    val defaultBiome: HouseBiomeConfig = HouseBiomeConfig(),
+    val biomes: Map<String, HouseBiomeConfig> = emptyMap(),
+) {
+    fun configFor(biomeId: String): HouseBiomeConfig = biomes[biomeId] ?: defaultBiome
+}

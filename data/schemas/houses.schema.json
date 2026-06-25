@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HouseConfig",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable or disable house generation globally"
+    },
+    "gridCellSize": {
+      "type": "integer",
+      "minimum": 16,
+      "default": 48,
+      "description": "Size of house placement grid cells in blocks"
+    },
+    "clusterCheckRadius": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 2,
+      "description": "Number of neighbouring grid cells to check for clustering bonus"
+    },
+    "floorHeight": {
+      "type": "integer",
+      "minimum": 3,
+      "default": 4,
+      "description": "Height in blocks per floor"
+    },
+    "maxHouseSize": {
+      "type": "integer",
+      "minimum": 5,
+      "default": 20,
+      "description": "Maximum house dimension (width or depth) used for chunk overlap checks"
+    },
+    "houseTypes": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/HouseTypeConfig" },
+      "description": "List of available house type definitions"
+    },
+    "defaultBiome": {
+      "$ref": "#/definitions/HouseBiomeConfig",
+      "description": "Default biome house config for biomes not listed in biomes map"
+    },
+    "biomes": {
+      "type": "object",
+      "description": "Per-biome house config overrides keyed by biome id",
+      "additionalProperties": { "$ref": "#/definitions/HouseBiomeConfig" }
+    }
+  },
+  "definitions": {
+    "blockType": {
+      "type": "string",
+      "enum": [
+        "AIR", "BEDROCK", "STONE", "DIRT", "GRASS", "SAND", "SANDSTONE",
+        "GRAVEL", "SNOW", "OAK_LOG", "OAK_LEAVES", "PINE_LOG",
+        "PINE_LEAVES", "PINE_LEAVES_SNOW", "FLOWER", "WEED"
+      ]
+    },
+    "HouseTypeConfig": {
+      "type": "object",
+      "required": ["id", "widthMin", "widthMax", "depthMin", "depthMax", "floorsMin", "floorsMax", "roofTypes", "roomsMin", "roomsMax", "doorsMin", "doorsMax"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "Unique house type identifier" },
+        "widthMin": { "type": "integer", "minimum": 3 },
+        "widthMax": { "type": "integer", "minimum": 3 },
+        "depthMin": { "type": "integer", "minimum": 3 },
+        "depthMax": { "type": "integer", "minimum": 3 },
+        "floorsMin": { "type": "integer", "minimum": 1 },
+        "floorsMax": { "type": "integer", "minimum": 1 },
+        "roofTypes": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["flat", "gabled"] },
+          "minItems": 1
+        },
+        "roomsMin": { "type": "integer", "minimum": 1 },
+        "roomsMax": { "type": "integer", "minimum": 1 },
+        "doorsMin": { "type": "integer", "minimum": 1 },
+        "doorsMax": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "HouseBiomeConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "wallBlock": { "$ref": "#/definitions/blockType" },
+        "roofBlock": { "$ref": "#/definitions/blockType" },
+        "floorBlock": { "$ref": "#/definitions/blockType" },
+        "houseProbability": {
+          "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.0,
+          "description": "Base probability [0,1] that a grid cell contains a house"
+        },
+        "clusterBonus": {
+          "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.0,
+          "description": "Extra probability added per neighbouring cell that has a house"
+        },
+        "allowedTypes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of house type ids allowed in this biome"
+        }
+      }
+    }
+  }
+}

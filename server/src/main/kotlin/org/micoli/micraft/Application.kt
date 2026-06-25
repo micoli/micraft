@@ -38,6 +38,7 @@ import org.micoli.micraft.world.WorldMetadata
 import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
 import org.micoli.micraft.world.applyServerConfig
+import org.micoli.micraft.world.loadHouseConfig
 import org.micoli.micraft.world.loadKeyBindings
 import org.micoli.micraft.world.loadRoadConfig
 import org.micoli.micraft.world.loadServerConfig
@@ -121,11 +122,18 @@ fun Application.module() {
     val roadConfigPath = Path.of("data/roads/roads.yaml")
     val roadConfig = if (!debugWorld) loadRoadConfig(roadConfigPath) else null
 
+    val houseConfigPath = Path.of("data/houses/houses.yaml")
+    val houseConfig = if (!debugWorld) loadHouseConfig(houseConfigPath) else null
+
     val generator =
         if (debugWorld) DebugChunkGenerator()
         else
             ProceduralChunkGenerator(
-                seed = 42L, biomeRegistry = biomeRegistry, roadConfig = roadConfig)
+                seed = 42L,
+                biomeRegistry = biomeRegistry,
+                roadConfig = roadConfig,
+                houseConfig = houseConfig,
+            )
     log.info("World: {} | generator={} | seed=42", worldName, generator::class.simpleName)
 
     val reloadBiomes: (() -> ChunkGenerator)? =
@@ -135,6 +143,7 @@ fun Application.module() {
                     seed = 42L,
                     biomeRegistry = loadBiomeRegistry(),
                     roadConfig = loadRoadConfig(roadConfigPath),
+                    houseConfig = loadHouseConfig(houseConfigPath),
                 )
             }
         } else null
