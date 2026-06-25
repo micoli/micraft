@@ -13,7 +13,7 @@ houseTypes:
     depthMax: 8
     floorsMin: 1
     floorsMax: 1
-    roofTypes: [gabled]
+    roofTypes: [extended_gabled]
     roomsMin: 2
     roomsMax: 4
     doorsMin: 1
@@ -26,7 +26,7 @@ houseTypes:
     depthMax: 12
     floorsMin: 1
     floorsMax: 2
-    roofTypes: [flat, gabled]
+    roofTypes: [flat, gabled, extended_gabled]
     roomsMin: 3
     roomsMax: 6
     doorsMin: 1
@@ -47,7 +47,7 @@ houseTypes:
 
 defaultBiome:
   wallBlock: STONE
-  roofBlock: STONE
+  roofBlock: GRAVEL
   floorBlock: STONE
   houseProbability: 0.0
   clusterBonus: 0.0
@@ -56,21 +56,21 @@ defaultBiome:
 biomes:
   plains:
     wallBlock: OAK_LOG
-    roofBlock: OAK_LOG
+    roofBlock: OAK_LEAVES
     floorBlock: DIRT
     houseProbability: 0.15
     clusterBonus: 0.25
     allowedTypes: [cabin, house, townhouse]
   desert:
     wallBlock: SANDSTONE
-    roofBlock: SANDSTONE
+    roofBlock: SAND
     floorBlock: SANDSTONE
     houseProbability: 0.08
     clusterBonus: 0.10
     allowedTypes: [cabin, house]
   forest:
     wallBlock: OAK_LOG
-    roofBlock: OAK_LOG
+    roofBlock: OAK_LEAVES
     floorBlock: DIRT
     houseProbability: 0.04
     clusterBonus: 0.05
@@ -84,7 +84,7 @@ biomes:
     allowedTypes: [cabin]
   mountains:
     wallBlock: STONE
-    roofBlock: STONE
+    roofBlock: GRAVEL
     floorBlock: STONE
     houseProbability: 0.0
     clusterBonus: 0.0

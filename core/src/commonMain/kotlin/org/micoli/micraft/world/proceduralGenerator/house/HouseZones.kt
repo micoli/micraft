@@ -121,7 +121,7 @@ class HouseZones(
         return PlacedHouse(
             anchorX = ax,
             anchorZ = az,
-            anchorY = groundY,
+            anchorY = groundY - 1,
             width = width,
             depth = depth,
             floors = floors,
