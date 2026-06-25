@@ -2,6 +2,7 @@
   "yaml.schemas": {
     "./data/schemas/biomes.schema.json": ["data/biomes/biomes.yaml"],
     "./data/schemas/drops.schema.json": ["data/drops/drops.yaml", "server/data/drops/drops.yaml"],
-    "./data/schemas/keybindings.schema.json": ["data/personal/keybindings.yaml"]
+    "./data/schemas/keybindings.schema.json": ["data/personal/keybindings.yaml"],
+    "./data/schemas/auth-users.schema.json": ["data/auth/users.yaml"]
   }
 }

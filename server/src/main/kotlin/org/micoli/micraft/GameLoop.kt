@@ -11,6 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import org.micoli.micraft.auth.AuthProvider
+import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.npc.NpcSpawner
@@ -140,6 +142,8 @@ class GameLoop(
     private val reloadBiomes: (() -> ChunkGenerator)? = null,
     private val reloadRegistries: (() -> Unit)? = null,
     val i18n: I18nConfig = I18nConfig(buildI18nDirs()),
+    private val tokenStore: TokenStore? = null,
+    private val authProvider: AuthProvider? = null,
 ) {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
     private var saveTickCounter = 0
@@ -206,6 +210,7 @@ class GameLoop(
             chatService = chatService,
             chatChannelManager = chatChannelManager,
             weatherManager = weatherManager,
+            authProvider = authProvider,
         )
     private val blockBreaker =
         BlockBreaker(world, { msg -> sessions.values.forEach { it.send(msg) } }, worldItems)
@@ -477,6 +482,14 @@ class GameLoop(
                     } else null
                 }
                 .getOrNull()
+        if (tokenStore != null) {
+            val token = connectMsg?.token ?: ""
+            if (tokenStore.validate(token) == null) {
+                socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "invalid token"))
+                return
+            }
+        }
+
         val playerName = connectMsg?.playerName ?: "Player"
         val userName = connectMsg?.userName ?: playerName
         val preferredLanguage =

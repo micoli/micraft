@@ -58,7 +58,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         port: Int,
         username: String,
         playerName: String,
-        preferredLanguage: String = "en"
+        preferredLanguage: String = "en",
+        token: String = "",
     ) {
         serverHost = host
         serverPort = port
@@ -119,7 +120,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                     ClientMessage.Connect(
                                         playerName = playerName,
                                         userName = username,
-                                        preferredLanguage = preferredLanguage))))
+                                        preferredLanguage = preferredLanguage,
+                                        token = token))))
 
                         val inputJob = launch {
                             while (isActive) {

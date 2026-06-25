@@ -13,10 +13,17 @@ import java.time.Instant
 import java.util.UUID
 import kotlin.io.path.exists
 import kotlin.io.path.readText
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import org.micoli.micraft.auth.AuthProvider
+import org.micoli.micraft.auth.LocalAuthProvider
+import org.micoli.micraft.auth.OAuthProvider
+import org.micoli.micraft.auth.TokenStore
+import org.micoli.micraft.auth.installAuthRoutes
 import org.micoli.micraft.http.mapRoutes
 import org.micoli.micraft.world.BiomeConfig
 import org.micoli.micraft.world.BiomeRegistry
@@ -47,7 +54,8 @@ private val SERVER_ID: String = UUID.randomUUID().toString()
 fun Application.module() {
     install(WebSockets) {}
 
-    applyServerConfig(loadServerConfig(java.nio.file.Path.of("data/server.yaml")))
+    val serverConfig = loadServerConfig(java.nio.file.Path.of("data/server.yaml"))
+    applyServerConfig(serverConfig)
 
     val debugWorld = System.getenv("MICRAFT_DEBUG_WORLD") == "1"
     val worldName =
@@ -124,9 +132,34 @@ fun Application.module() {
         ItemRegistry.load(itemRegistryLoader.reload())
     }
 
+    val authConfig = serverConfig.auth
+    val authScope = CoroutineScope(Dispatchers.Default)
+    val (authProvider, tokenStore) =
+        when (authConfig.provider) {
+            "local" -> {
+                val provider = LocalAuthProvider(Path.of(authConfig.local.usersFile))
+                Pair<AuthProvider, TokenStore>(provider, TokenStore(authScope))
+            }
+            "oauth" -> {
+                val oauthCfg =
+                    authConfig.oauth ?: error("auth.oauth config required when provider=oauth")
+                Pair<AuthProvider, TokenStore>(OAuthProvider(oauthCfg), TokenStore(authScope))
+            }
+            else -> Pair<AuthProvider?, TokenStore?>(null, null)
+        }
+
     val world = WorldState(generator = generator, persistence = persistence)
-    val gameLoop = GameLoop(world, persistence, reloadBiomes, reloadRegistries = reloadRegistries)
+    val gameLoop =
+        GameLoop(
+            world,
+            persistence,
+            reloadBiomes,
+            reloadRegistries = reloadRegistries,
+            tokenStore = tokenStore,
+            authProvider = authProvider,
+        )
     gameLoop.start(this)
+    installAuthRoutes(authConfig.provider, authProvider, tokenStore)
 
     Runtime.getRuntime().addShutdownHook(Thread { gameLoop.shutdown() })
 

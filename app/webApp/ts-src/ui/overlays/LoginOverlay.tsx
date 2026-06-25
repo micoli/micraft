@@ -36,6 +36,24 @@ function saveLastLang(lang: string) {
     localStorage.setItem("micraft_last_lang", lang);
   } catch {}
 }
+function getStoredToken(): string {
+  try {
+    return sessionStorage.getItem("micraft_auth_token") || "";
+  } catch {
+    return "";
+  }
+}
+function storeToken(token: string) {
+  try {
+    sessionStorage.setItem("micraft_auth_token", token);
+  } catch {}
+}
+function clearStoredToken() {
+  try {
+    sessionStorage.removeItem("micraft_auth_token");
+    sessionStorage.removeItem("micraft_auth_display");
+  } catch {}
+}
 
 const SUPPORTED_LANGS: { code: string; label: string }[] = [
   { code: "en", label: "English" },
@@ -75,6 +93,21 @@ const btnSecondary: React.CSSProperties = {
   font: "14px monospace",
   cursor: "pointer",
 };
+const btnGoogle: React.CSSProperties = {
+  marginTop: 16,
+  width: "100%",
+  padding: 10,
+  background: "#fff",
+  border: "1px solid #ccc",
+  borderRadius: 4,
+  color: "#333",
+  font: "bold 15px monospace",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+};
 
 interface Props {
   visible: boolean;
@@ -82,50 +115,159 @@ interface Props {
   onHide: () => void;
 }
 
+type AuthMode = "none" | "local" | "oauth" | "loading";
+
 export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
-  const [step, setStep] = useState<1 | 2>(1);
+  const [authMode, setAuthMode] = useState<AuthMode>("loading");
+  const [step, setStep] = useState<"auth" | "chars">("auth");
   const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [token, setToken] = useState("");
   const [lang, setLang] = useState("en");
   const [chars, setChars] = useState<string[]>([]);
   const [selected, setSelected] = useState("");
   const [newChar, setNewChar] = useState("");
   const usernameInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const newCharInputRef = useRef<HTMLInputElement>(null);
 
+  // Fetch auth config once on mount
   useEffect(() => {
-    try {
-      const last = localStorage.getItem("micraft_last_user") || "";
-      if (last) setUsername(last);
-    } catch {}
-    setLang(getLastLang());
+    fetch("/api/auth/config")
+      .then((r) => r.json())
+      .then((d: { provider: string }) => {
+        setAuthMode((d.provider as AuthMode) || "none");
+      })
+      .catch(() => setAuthMode("none"));
   }, []);
 
+  // Check for OAuth callback token in URL fragment
   useEffect(() => {
-    if (visible && step === 1) {
-      setTimeout(() => usernameInputRef.current?.focus(), 50);
+    if (authMode === "loading") return;
+    const hash = window.location.hash;
+    if (hash.includes("auth_token=")) {
+      const params = new URLSearchParams(hash.replace(/^#/, ""));
+      const oauthToken = params.get("auth_token") || "";
+      const oauthName = decodeURIComponent(params.get("auth_name") || "");
+      if (oauthToken) {
+        storeToken(oauthToken);
+        try {
+          sessionStorage.setItem("micraft_auth_display", oauthName);
+        } catch {}
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        setToken(oauthToken);
+        setUsername(oauthName || "player");
+        goChars(oauthName || "player");
+        return;
+      }
     }
-  }, [visible, step]);
-
-  function goStep2() {
-    if (!username.trim()) {
-      usernameInputRef.current?.focus();
+    // Restore persisted token from session
+    const saved = getStoredToken();
+    if (saved && (authMode === "local" || authMode === "oauth")) {
+      setToken(saved);
+      try {
+        const savedName =
+          sessionStorage.getItem("micraft_auth_display") || localStorage.getItem("micraft_last_user") || "";
+        if (savedName) {
+          setUsername(savedName);
+          goChars(savedName);
+        } else {
+          // No cached name — verify token and fetch identity
+          fetch("/auth/me", { headers: { Authorization: `Bearer ${saved}` } })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d: { displayName: string } | null) => {
+              const name = d?.displayName || "";
+              if (name) {
+                try {
+                  sessionStorage.setItem("micraft_auth_display", name);
+                } catch {}
+                setUsername(name);
+                goChars(name);
+              } else {
+                // Token invalid or no identity — back to auth step
+                clearStoredToken();
+              }
+            })
+            .catch(() => {
+              clearStoredToken();
+            });
+        }
+      } catch {
+        clearStoredToken();
+      }
       return;
     }
+    // none mode: restore last user directly to chars, or stay on auth step for name entry
+    if (authMode === "none") {
+      try {
+        const last = localStorage.getItem("micraft_last_user") || "";
+        if (last) {
+          goChars(last);
+          return;
+        }
+      } catch {}
+      setLang(getLastLang());
+      setTimeout(() => usernameInputRef.current?.focus(), 50);
+    }
+  }, [authMode]);
+
+  useEffect(() => {
+    if (visible && step === "auth" && authMode !== "loading") {
+      setTimeout(() => usernameInputRef.current?.focus(), 50);
+    }
+  }, [visible, step, authMode]);
+
+  function goChars(user: string) {
     try {
-      localStorage.setItem("micraft_last_user", username.trim());
+      localStorage.setItem("micraft_last_user", user.trim());
     } catch {}
     const users = getUsers();
-    const playerChars = users[username.trim()] || [];
-    const lastPlayer = getLastPlayer(username.trim());
+    const playerChars = users[user.trim()] || [];
+    const lastPlayer = getLastPlayer(user.trim());
     setChars(playerChars);
-    setNewChar(playerChars.length === 0 ? username.trim() : "");
+    setNewChar(playerChars.length === 0 ? user.trim() : "");
     setSelected(lastPlayer || (playerChars[0] ?? "__new__"));
-    setStep(2);
-    setTimeout(() => {
-      const first = document.querySelector<HTMLInputElement>('input[name="mc-char"]:checked');
-      if (first) first.focus();
-      else newCharInputRef.current?.focus();
-    }, 50);
+    setLang(getLastLang());
+    setStep("chars");
+  }
+
+  async function doLocalLogin() {
+    const user = username.trim();
+    if (!user || !password) return;
+    setAuthLoading(true);
+    setAuthError("");
+    try {
+      const r = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user, password }),
+      });
+      if (!r.ok) {
+        setAuthError("Invalid email or password.");
+        setAuthLoading(false);
+        passwordInputRef.current?.focus();
+        return;
+      }
+      const data: { token: string; displayName: string } = await r.json();
+      storeToken(data.token);
+      try {
+        sessionStorage.setItem("micraft_auth_display", data.displayName);
+      } catch {}
+      setToken(data.token);
+      setUsername(data.displayName || user);
+      setAuthLoading(false);
+      goChars(data.displayName || user);
+    } catch {
+      setAuthError("Connection error. Is the server running?");
+      setAuthLoading(false);
+    }
+  }
+
+  function doOAuthLogin() {
+    const returnUrl = window.location.origin + window.location.pathname;
+    window.location.href = `/auth/oauth/start?returnUrl=${encodeURIComponent(returnUrl)}`;
   }
 
   function doPlay() {
@@ -146,8 +288,16 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
     }
     saveLastPlayer(user, playerName);
     saveLastLang(lang);
-    loginResultRef.current = user + "\t" + playerName + "\t" + lang;
+    loginResultRef.current = user + "\t" + playerName + "\t" + lang + "\t" + token;
     onHide();
+  }
+
+  function doLogout() {
+    clearStoredToken();
+    setToken("");
+    setUsername("");
+    setPassword("");
+    setStep("auth");
   }
 
   if (!visible) return null;
@@ -179,7 +329,59 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
           MiCraft
         </div>
 
-        {step === 1 && (
+        {authMode === "loading" && (
+          <div style={{ textAlign: "center", color: "#888", padding: "20px 0" }}>Loading…</div>
+        )}
+
+        {/* Local auth step */}
+        {authMode === "local" && step === "auth" && (
+          <div>
+            <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 6 }}>Email</label>
+            <input
+              ref={usernameInputRef}
+              style={inputStyle}
+              type="email"
+              placeholder="your@email.com"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                if (e.key === "Enter") passwordInputRef.current?.focus();
+              }}
+            />
+            <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 6, marginTop: 12 }}>
+              Password
+            </label>
+            <input
+              ref={passwordInputRef}
+              style={inputStyle}
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                if (e.key === "Enter") doLocalLogin();
+              }}
+            />
+            {authError && <div style={{ marginTop: 8, color: "#f66", fontSize: 13 }}>{authError}</div>}
+            <button style={btnPrimary} onClick={doLocalLogin} disabled={authLoading}>
+              {authLoading ? "Logging in…" : "Login"}
+            </button>
+          </div>
+        )}
+
+        {/* OAuth auth step */}
+        {authMode === "oauth" && step === "auth" && (
+          <div>
+            <div style={{ textAlign: "center", color: "#aaa", fontSize: 14, marginBottom: 20 }}>Sign in to play</div>
+            <button style={btnGoogle} onClick={doOAuthLogin}>
+              <span>G</span>
+              Continue with Google
+            </button>
+          </div>
+        )}
+
+        {/* None mode — username + lang directly */}
+        {authMode === "none" && step === "auth" && (
           <div>
             <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 6 }}>Username</label>
             <input
@@ -190,7 +392,9 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === "Enter") goStep2();
+                if (e.key === "Enter") {
+                  if (username.trim()) goChars(username.trim());
+                }
               }}
             />
             <div style={{ marginTop: 14 }}>
@@ -207,13 +411,19 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
                 ))}
               </select>
             </div>
-            <button style={btnPrimary} onClick={goStep2}>
+            <button
+              style={btnPrimary}
+              onClick={() => {
+                if (username.trim()) goChars(username.trim());
+              }}
+            >
               Continue
             </button>
           </div>
         )}
 
-        {step === 2 && (
+        {/* Character selection step */}
+        {step === "chars" && (
           <div
             onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
               if (e.key === "Enter" && selected !== "__new__") {
@@ -225,7 +435,23 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
             <div style={{ fontSize: 14, color: "#aaa", marginBottom: 14 }}>
               Welcome, {username}! Choose your character:
             </div>
-            <div style={{ marginBottom: 12 }}>
+            {(authMode === "local" || authMode === "oauth") && (
+              <div style={{ marginTop: 14 }}>
+                <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 6 }}>Language</label>
+                <select
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value)}
+                  style={{ ...inputStyle, cursor: "pointer" }}
+                >
+                  {SUPPORTED_LANGS.map((l) => (
+                    <option key={l.code} value={l.code}>
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div style={{ marginBottom: 12, marginTop: 14 }}>
               {chars.map((name, i) => (
                 <div key={name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
                   <input
@@ -282,15 +508,21 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
             <button style={btnPrimary} onClick={doPlay}>
               Play
             </button>
-            <button
-              style={btnSecondary}
-              onClick={() => {
-                setStep(1);
-                setTimeout(() => usernameInputRef.current?.focus(), 50);
-              }}
-            >
-              ← Back
-            </button>
+            {authMode === "local" || authMode === "oauth" ? (
+              <button style={btnSecondary} onClick={doLogout}>
+                ← Log out
+              </button>
+            ) : (
+              <button
+                style={btnSecondary}
+                onClick={() => {
+                  setStep("auth");
+                  setTimeout(() => usernameInputRef.current?.focus(), 50);
+                }}
+              >
+                ← Back
+              </button>
+            )}
           </div>
         )}
       </div>

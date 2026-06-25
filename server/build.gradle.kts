@@ -37,6 +37,17 @@ val rootDirPath: String = rootProject.projectDir.absolutePath
 
 tasks.test { systemProperty("projectDir", rootDirPath) }
 
+tasks.register<JavaExec>("addUser") {
+    group = "application"
+    description = "Add a local auth user. Args: <email> <password> [displayName]"
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.auth.AddUserCliKt")
+    workingDir = rootProject.projectDir
+    if (project.hasProperty("args")) {
+        args = (project.property("args") as String).split(" ")
+    }
+}
+
 group = "org.micoli.micraft"
 
 version = "1.0.0"
@@ -45,8 +56,10 @@ application { mainClass = "org.micoli.micraft.ApplicationKt" }
 
 dependencies {
     api(projects.core)
+    implementation(libs.bcrypt)
     implementation(libs.classgraph)
     implementation(libs.logback)
+    implementation(libs.ktor.client.cio)
     implementation(libs.ktor.serverCore)
     implementation(libs.ktor.serverNetty)
     implementation(libs.ktor.server.websockets)

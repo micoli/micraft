@@ -45,6 +45,49 @@
         "spawnY":             { "type": "number",  "description": "Default spawn Y coordinate for new players.", "default": 200.0 },
         "spawnZ":             { "type": "number",  "description": "Default spawn Z coordinate for new players.", "default": 8.0 }
       }
+    },
+    "auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Authentication provider configuration.",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": ["none", "local", "oauth"],
+          "default": "none",
+          "description": "Active auth provider. 'none' = no auth required. 'local' = email+bcrypt via users.yaml. 'oauth' = Authorization Code flow (Google)."
+        },
+        "local": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Settings for provider=local.",
+          "properties": {
+            "usersFile": {
+              "type": "string",
+              "default": "data/auth/users.yaml",
+              "description": "Path to the YAML file containing local user accounts."
+            }
+          }
+        },
+        "oauth": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["clientId", "clientSecret"],
+              "description": "Settings for provider=oauth.",
+              "properties": {
+                "type":         { "type": "string", "enum": ["google"], "default": "google", "description": "OAuth provider type." },
+                "clientId":     { "type": "string", "description": "OAuth application client ID." },
+                "clientSecret": { "type": "string", "description": "OAuth application client secret." },
+                "redirectUri":  { "type": "string", "format": "uri", "default": "http://localhost:8080/auth/callback", "description": "Redirect URI registered in the OAuth app console." },
+                "scopes":       { "type": "array", "items": { "type": "string" }, "default": ["openid", "email", "profile"], "description": "OAuth scopes to request." }
+              }
+            }
+          ]
+        }
+      }
     }
   }
 }

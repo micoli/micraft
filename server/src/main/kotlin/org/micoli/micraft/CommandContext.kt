@@ -1,5 +1,6 @@
 package org.micoli.micraft
 
+import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
@@ -30,4 +31,5 @@ data class CommandContext(
     val chatService: ChatService? = null,
     val chatChannelManager: ChatChannelManager? = null,
     val weatherManager: WeatherManager? = null,
+    val authProvider: AuthProvider? = null,
 )

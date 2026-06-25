@@ -13,7 +13,8 @@ sealed class ClientMessage {
     data class Connect(
         val playerName: String,
         val userName: String = playerName,
-        val preferredLanguage: String = "en"
+        val preferredLanguage: String = "en",
+        val token: String = "",
     ) : ClientMessage()
 
     @Serializable

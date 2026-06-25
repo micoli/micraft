@@ -55,10 +55,35 @@ data class GameplaySection(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
+data class LocalAuthConfig(
+    @EncodeDefault(ALWAYS) val usersFile: String = "data/auth/users.yaml",
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class OAuthConfig(
+    @EncodeDefault(ALWAYS) val type: String = "google",
+    @EncodeDefault(ALWAYS) val clientId: String = "",
+    @EncodeDefault(ALWAYS) val clientSecret: String = "",
+    @EncodeDefault(ALWAYS) val redirectUri: String = "http://localhost:8080/auth/callback",
+    @EncodeDefault(ALWAYS) val scopes: List<String> = listOf("openid", "email", "profile"),
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class AuthSection(
+    @EncodeDefault(ALWAYS) val provider: String = "none",
+    @EncodeDefault(ALWAYS) val local: LocalAuthConfig = LocalAuthConfig(),
+    val oauth: OAuthConfig? = null,
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
 data class ServerConfig(
     @EncodeDefault(ALWAYS) val world: WorldSection = WorldSection(),
     @EncodeDefault(ALWAYS) val player: PlayerSection = PlayerSection(),
     @EncodeDefault(ALWAYS) val gameplay: GameplaySection = GameplaySection(),
+    @EncodeDefault(ALWAYS) val auth: AuthSection = AuthSection(),
 )
 
 fun loadServerConfig(path: Path): ServerConfig {

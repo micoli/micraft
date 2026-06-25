@@ -32,6 +32,13 @@ Minecraft client/server clone in **Kotlin Multiplatform** — multiplayer voxel 
 | `core/.../world/BlockRegistry.kt` | Singleton holding `BlockDefinition` per `BlockType` |
 | `core/.../world/ItemRegistry.kt` | Singleton holding `ItemDefinition` per `ItemType` |
 | `server/.../world/WorldItemManager.kt` | Tracks live world items |
+| `server/.../auth/AuthProvider.kt` | `AuthProvider` interface + `AuthResult(playerId, displayName, token)` |
+| `server/.../auth/TokenStore.kt` | UUID→AuthResult in-memory store, TTL 10 min |
+| `server/.../auth/LocalAuthProvider.kt` | bcrypt login; re-reads `data/auth/users.yaml` on every call |
+| `server/.../auth/OAuthProvider.kt` | Google Authorization Code flow |
+| `server/.../auth/AuthRoutes.kt` | HTTP auth routes (see Auth section below) |
+| `server/.../auth/AddUserCommand.kt` | In-game `/adduser <email> <password> [displayName]` |
+| `server/.../auth/AddUserCli.kt` | CLI entry point — run via `./gradlew :server:addUser` |
 | `app/webApp/.../GameClient.kt` | Client-side prediction + server reconciliation |
 | `app/webApp/.../babylon/BabylonBindingsScene.kt` | BabylonJS interop — engine, scene, camera, lights |
 | `app/webApp/.../babylon/BabylonBindingsWorld.kt` | BabylonJS interop — meshes, materials, chunk geometry, block defs, fog/sky |
@@ -44,7 +51,7 @@ Minecraft client/server clone in **Kotlin Multiplatform** — multiplayer voxel 
 ## Protocol messages
 
 **Client → Server** (`ClientMessage`):
-- `Connect(playerName)` — join
+- `Connect(playerName, userName, preferredLanguage, token)` — join; `token` required when server auth enabled
 - `MoveIntent(dx, dz, yaw, pitch, stance, jump, dy, flyToggle, speedUp, speedDown)`
 - `ChunkUnload(positions)` — client unloaded these chunks
 - `BlockBreakStart(pos)` / `BlockBreakStop`
@@ -93,6 +100,7 @@ data/
   items/items.yaml          # item properties (buildable, placesBlock)
   drops/drops.yaml          # block → item drop table
   biomes/biomes.yaml        # biome definitions
+  auth/users.yaml           # local auth users (email, passwordHash, displayName)
   schemas/                  # JSON Schemas for YAML config files (VS Code validation)
   world/default_world/
     world.json              # world metadata
@@ -131,6 +139,31 @@ Source in `app/webApp/ts-src/ui/`.
 2. `LayoutEditor.tsx` — add label to `WIDGET_LABELS` and color to `WIDGET_COLORS`
 3. `GameUI.tsx` — pass `layoutStyle={widgetStyle(activeLayout, 'WIDGET_TYPE')}` to component
 4. `fillMissingWidgets` called when editor opens — existing persisted layouts get new widget at default position automatically (no migration needed)
+
+## Auth system
+
+Provider selected via `data/server.yaml` → `auth.provider` (`none` | `local` | `oauth`). Default `none` = no auth.
+
+**Flow**: client fetches `GET /api/auth/config` → login overlay shows matching UI → `POST /auth/login` or OAuth redirect → `TokenStore` issues UUID token (10-min TTL) → token sent in `ClientMessage.Connect` → `GameLoop.onConnect()` validates before creating session.
+
+**HTTP routes** (all proxied through webpack dev server via `/auth` context):
+| Route | Purpose |
+|-------|---------|
+| `GET /api/auth/config` | Returns `{"provider":"local\|oauth\|none"}` |
+| `POST /auth/login` | `{email, password}` → `{token, displayName, playerId}` |
+| `GET /auth/oauth/start?returnUrl=` | Redirect to Google |
+| `GET /auth/callback?code=&state=` | Exchange code → redirect to `returnUrl#auth_token=&auth_name=` |
+| `GET /auth/me` | `Authorization: Bearer <token>` → `{playerId, displayName}` |
+
+**Adding a local user**:
+```bash
+./gradlew :server:addUser -Pargs="email@example.com password [DisplayName]"
+# or in-game: /adduser email@example.com password [DisplayName]
+```
+
+**Extending auth**: implement `AuthProvider` interface (`login`, `oauthStartUrl`, `oauthCallback`, `oauthReturnUrl`) and add a branch in `Application.module()`. Commands needing auth access `context.authProvider`.
+
+**Login overlay** (`LoginOverlay.tsx`): fetches `/api/auth/config` on mount. Token stored in `sessionStorage`. OAuth token arrives in URL fragment `#auth_token=`. Result written to `loginResultRef.current` as `user\tplayerName\tlang\ttoken` — tab-separated, parsed in `main.kt`.
 
 ## Slash command
  - Each in-game action (except movement) can have slash command; each slash command bindable to key via keybinding
@@ -175,6 +208,7 @@ rtk ./gradlew test                                 # all tests
 rtk ./gradlew :server:test
 rtk ./gradlew :app:shared:jvmTest
 rtk ./gradlew ktlintCheck
+./gradlew :server:addUser -Pargs="email pass [name]"  # add local auth user
 ```
 
 ## Rules
@@ -201,6 +235,8 @@ JSON Schemas for YAML configs in `data/schemas/`. Keep in sync with Kotlin data 
 | `server/.../world/ItemRegistryLoader.kt`, `core/.../world/ItemDefinition.kt`, `Block.kt` | `data/schemas/items.schema.json` |
 | `server/.../world/KeyBindingsConfig.kt` | `data/schemas/keybindings.schema.json` |
 | `server/.../world/I18nConfig.kt` | `data/schemas/i18n.schema.json` |
+| `server/.../world/ServerConfigLoader.kt` (`AuthSection`, `OAuthConfig`, `LocalAuthConfig`) | `data/schemas/server.schema.json` |
+| `server/.../auth/LocalAuthProvider.kt` (`UserEntry`, `UsersConfig`) | `data/schemas/auth-users.schema.json` |
 
 When adding/removing/renaming field or enum value in these data classes, update corresponding schema in same commit.
 
