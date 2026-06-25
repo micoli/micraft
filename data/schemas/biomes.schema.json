@@ -40,7 +40,7 @@
       "required": ["type"],
       "additionalProperties": false,
       "properties": {
-        "type": { "type": "string" },
+        "type": { "type": "string", "enum": ["oak_tree", "pine_tree", "pine_tree_snow", "flower", "weed"] },
         "density": { "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.0 }
       }
     },

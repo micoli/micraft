@@ -3,6 +3,7 @@ package org.micoli.micraft.world.proceduralGenerator.vegetation
 import kotlin.math.abs
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.Chunk
+import org.micoli.micraft.world.VegetationType
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.proceduralGenerator.ProceduralChunkGenerator
 
@@ -60,23 +61,23 @@ private fun placeVegetationStructure(
     wz: Int,
     surfaceY: Int,
     surfaceBlock: BlockType,
-    type: String,
+    type: VegetationType,
 ) {
     when (type) {
-        "oak_tree" ->
+        VegetationType.OAK_TREE ->
             if (surfaceBlock != BlockType.SAND && surfaceBlock != BlockType.SANDSTONE)
                 placeOakTree(generator, blocks, ox, oz, wx, wz, surfaceY)
-        "pine_tree" ->
+        VegetationType.PINE_TREE ->
             if (surfaceBlock != BlockType.SAND && surfaceBlock != BlockType.SANDSTONE)
                 placePineTree(generator, blocks, ox, oz, wx, wz, surfaceY, BlockType.PINE_LEAVES)
-        "pine_tree_snow" ->
+        VegetationType.PINE_TREE_SNOW ->
             if (surfaceBlock != BlockType.SAND && surfaceBlock != BlockType.SANDSTONE)
                 placePineTree(
                     generator, blocks, ox, oz, wx, wz, surfaceY, BlockType.PINE_LEAVES_SNOW)
-        "flower" ->
+        VegetationType.FLOWER ->
             if (surfaceBlock == BlockType.GRASS)
                 setVeg(blocks, ox, oz, wx, surfaceY + 1, wz, BlockType.FLOWER)
-        "weed" ->
+        VegetationType.WEED ->
             if (surfaceBlock == BlockType.GRASS)
                 setVeg(blocks, ox, oz, wx, surfaceY + 1, wz, BlockType.WEED)
     }

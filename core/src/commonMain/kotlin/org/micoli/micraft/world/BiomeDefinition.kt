@@ -13,7 +13,7 @@ data class BiomeZone(
         get() = altitudeMin != 0 || altitudeMax != 0
 }
 
-@Serializable data class VegetationEntry(val type: String, val density: Double = 0.0)
+@Serializable data class VegetationEntry(val type: VegetationType, val density: Double = 0.0)
 
 @Serializable
 data class BiomeDefinition(
