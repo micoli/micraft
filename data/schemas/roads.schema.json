@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RoadConfig",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable or disable road generation globally"
+    },
+    "vegetationAllowedOnRoad": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether vegetation can grow on road surface blocks"
+    },
+    "minVegetationDistanceFromRoad": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Minimum distance in blocks between road edge and vegetation"
+    },
+    "voronoiCellSize": {
+      "type": "integer",
+      "minimum": 16,
+      "default": 128,
+      "description": "Spacing between road waypoints in blocks (controls road network density)"
+    },
+    "displacementScale": {
+      "type": "number",
+      "minimum": 0,
+      "default": 20.0,
+      "description": "Max displacement in blocks for road curvature (0 = perfectly straight)"
+    },
+    "displacementFrequency": {
+      "type": "number",
+      "minimum": 0,
+      "default": 0.02,
+      "description": "Noise frequency for road curvature (higher = more wiggly)"
+    },
+    "defaultRoad": {
+      "$ref": "#/definitions/RoadBiomeConfig",
+      "description": "Default road config used for biomes not listed in biomes map"
+    },
+    "biomes": {
+      "type": "object",
+      "description": "Per-biome road config overrides keyed by biome id",
+      "additionalProperties": {
+        "$ref": "#/definitions/RoadBiomeConfig"
+      }
+    }
+  },
+  "definitions": {
+    "RoadBiomeConfig": {
+      "type": "object",
+      "required": ["width", "surface"],
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Road width in blocks"
+        },
+        "surface": {
+          "type": "string",
+          "enum": [
+            "AIR", "BEDROCK", "STONE", "DIRT", "GRASS", "SAND", "SANDSTONE",
+            "GRAVEL", "SNOW", "OAK_LOG", "OAK_LEAVES", "PINE_LOG",
+            "PINE_LEAVES", "PINE_LEAVES_SNOW", "FLOWER", "WEED"
+          ],
+          "description": "Block type used as road surface"
+        },
+        "roadProbability": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 1.0,
+          "description": "Probability [0,1] that a Voronoi edge becomes a road in this biome (checked at edge center). 1.0 = always, 0.0 = never."
+        }
+      }
+    }
+  }
+}

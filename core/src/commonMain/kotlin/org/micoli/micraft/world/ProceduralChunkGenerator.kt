@@ -5,11 +5,16 @@ import kotlin.math.abs
 class ProceduralChunkGenerator(
     private val seed: Long = 42L,
     private val biomeRegistry: BiomeRegistry = BiomeRegistry.default(),
+    private val roadConfig: RoadConfig? = null,
 ) : ChunkGenerator {
     private val elevationNoise = PerlinNoise(seed)
     private val mountainNoise = PerlinNoise(seed + 2L)
     private val moistureNoise = PerlinNoise(seed + 1L)
     private val voronoi = VoronoiBiomeZones(seed, biomeRegistry, moistureNoise)
+    private val roadVoronoi =
+        roadConfig?.let {
+            RoadVoronoiZones(seed, it) { wx, wz -> voronoi.sample(wx, wz).primary.id }
+        }
 
     fun surfaceHeight(wx: Int, wz: Int, sample: VoronoiBiomeZones.ColumnSample): Int {
         val n = elevationNoise.octaveNoise(wx / 64.0, wz / 64.0, octaves = 6, persistence = 0.5)
@@ -36,7 +41,7 @@ class ProceduralChunkGenerator(
         val b = col.blocks
         return when {
             y == 0 -> BlockType.BEDROCK
-            y == h -> b.surface
+            y == h -> col.roadSurface ?: b.surface
             y > h - b.subsurfaceDepth && y < h -> b.subsurface
             y < h -> BlockType.STONE
             else -> BlockType.AIR
@@ -56,7 +61,12 @@ class ProceduralChunkGenerator(
                     val wz = oz + z
                     val sample = voronoi.sample(wx, wz)
                     val h = surfaceHeight(wx, wz, sample)
-                    ColumnData(h, voronoi.selectColumn(wx, wz, h, sample))
+                    val onRoad = roadVoronoi?.isOnRoad(sample.primary.id, wx, wz) == true
+                    ColumnData(
+                        h,
+                        voronoi.selectColumn(wx, wz, h, sample),
+                        if (onRoad) roadConfig!!.surfaceFor(sample.primary.id) else null,
+                    )
                 }
             }
 
@@ -104,6 +114,8 @@ class ProceduralChunkGenerator(
                 val surfaceY = surfaceHeight(wx, wz, sample)
                 val biome = voronoi.effectiveBiome(wx, wz, surfaceY, sample)
                 val surfaceBlock = voronoi.selectColumn(wx, wz, surfaceY, sample).surface
+
+                if (roadVoronoi?.shouldBlockVegetation(sample.primary.id, wx, wz) == true) continue
 
                 for ((idx, entry) in biome.vegetation.withIndex()) {
                     if (vegetationHash(wx, wz, idx) < entry.density) {
@@ -225,5 +237,9 @@ class ProceduralChunkGenerator(
         }
     }
 
-    private data class ColumnData(val h: Int, val blocks: VoronoiBiomeZones.ColumnBlocks)
+    private data class ColumnData(
+        val h: Int,
+        val blocks: VoronoiBiomeZones.ColumnBlocks,
+        val roadSurface: BlockType? = null,
+    )
 }

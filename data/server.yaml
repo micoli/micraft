@@ -25,7 +25,7 @@ gameplay:
   spawnY: 200.0
   spawnZ: 8.0
 auth:
-  provider: none
+  provider: "none"
   local:
     usersFile: "data/auth/users.yaml"
   oauth: null

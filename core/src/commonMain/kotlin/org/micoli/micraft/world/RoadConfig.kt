@@ -1,0 +1,26 @@
+package org.micoli.micraft.world
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class RoadBiomeConfig(
+    val width: Int,
+    val surface: BlockType,
+    val roadProbability: Double = 1.0,
+)
+
+@Serializable
+data class RoadConfig(
+    val enabled: Boolean = true,
+    val vegetationAllowedOnRoad: Boolean = false,
+    val minVegetationDistanceFromRoad: Int = 0,
+    val voronoiCellSize: Int = 128,
+    val displacementScale: Double = 20.0,
+    val displacementFrequency: Double = 0.02,
+    val defaultRoad: RoadBiomeConfig = RoadBiomeConfig(3, BlockType.GRAVEL),
+    val biomes: Map<String, RoadBiomeConfig> = emptyMap(),
+) {
+    fun configFor(biomeId: String) = biomes[biomeId] ?: defaultRoad
+
+    fun surfaceFor(biomeId: String) = configFor(biomeId).surface
+}
