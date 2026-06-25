@@ -11,6 +11,7 @@ import { ServerLog } from "./game/ServerLog";
 import { Notifications } from "./game/Notifications";
 import { LoginOverlay } from "./overlays/LoginOverlay";
 import { DisconnectOverlay } from "./overlays/DisconnectOverlay";
+import { PauseMenu } from "./overlays/PauseMenu";
 import { LayoutEditor } from "./layout/LayoutEditor";
 import { defaultLayout, resolveActiveLayout, widgetStyle } from "./layout/LayoutEngine";
 
@@ -48,6 +49,7 @@ const initial: UiState = {
   npcDialog: null,
   preferencesOpen: false,
   preferences: null,
+  pauseMenuOpen: false,
 };
 
 export function GameUI() {
@@ -71,10 +73,16 @@ export function GameUI() {
   const pendingLayoutUpdateRef = useRef<string>("");
   const pendingPreferencesUpdateRef = useRef<string>("");
 
+  const pauseMenuOpenRef = useRef(false);
+
   // Keep consoleOpenRef in sync
   useEffect(() => {
     consoleOpenRef.current = state.consoleOpen;
   }, [state.consoleOpen]);
+
+  useEffect(() => {
+    pauseMenuOpenRef.current = state.pauseMenuOpen;
+  }, [state.pauseMenuOpen]);
 
   // Auto-hide server log after 15s of no new messages
   useEffect(() => {
@@ -263,6 +271,11 @@ export function GameUI() {
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       const loginEl = document.getElementById("mc-login-root");
       if (loginEl && (loginEl as HTMLElement).dataset.visible === "true") return;
+      if (ke.key === "Escape" && !consoleOpenRef.current) {
+        dispatch({ type: pauseMenuOpenRef.current ? "pause_menu_hide" : "pause_menu_show" });
+        return;
+      }
+      if (pauseMenuOpenRef.current) return;
       if (ke.key === "/" && !consoleOpenRef.current) {
         ke.preventDefault();
         consoleInitialValueRef.current = "/";
@@ -359,6 +372,18 @@ export function GameUI() {
             preferences={state.preferences}
             onSave={handlePreferencesSave}
             onClose={() => dispatch({ type: "preferences_hide" })}
+          />
+          <PauseMenu
+            open={state.pauseMenuOpen}
+            onClose={() => dispatch({ type: "pause_menu_hide" })}
+            onPreferences={() => {
+              dispatch({ type: "pause_menu_hide" });
+              dispatch({ type: "preferences_show" });
+            }}
+            onDisconnect={() => {
+              consoleSubmittedRef.current = "/disconnect";
+              dispatch({ type: "pause_menu_hide" });
+            }}
           />
         </>
       )}

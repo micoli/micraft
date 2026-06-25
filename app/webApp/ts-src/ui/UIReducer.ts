@@ -24,6 +24,7 @@ export interface UiState {
   npcDialog: NpcDialogData | null;
   preferencesOpen: boolean;
   preferences: PreferencesData | null;
+  pauseMenuOpen: boolean;
 }
 
 export type UiAction =
@@ -54,7 +55,9 @@ export type UiAction =
   | { type: "preferences_sync"; data: PreferencesData }
   | { type: "preferences_show" }
   | { type: "preferences_hide" }
-  | { type: "preferences_save"; subscribedChannels: string[]; disabledCommands: string[]; shadersEnabled: boolean };
+  | { type: "preferences_save"; subscribedChannels: string[]; disabledCommands: string[]; shadersEnabled: boolean }
+  | { type: "pause_menu_show" }
+  | { type: "pause_menu_hide" };
 
 const HUD_MODES: HudMode[] = ["simple", "medium", "complete"];
 let notifKey = 0;
@@ -156,5 +159,9 @@ export function reducer(state: UiState, action: UiAction): UiState {
         : state.preferences;
       return { ...state, preferences: prefs, preferencesOpen: false };
     }
+    case "pause_menu_show":
+      return { ...state, pauseMenuOpen: true };
+    case "pause_menu_hide":
+      return { ...state, pauseMenuOpen: false };
   }
 }
