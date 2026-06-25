@@ -19,12 +19,13 @@ class ProceduralChunkGenerator(
     fun surfaceHeight(wx: Int, wz: Int, sample: VoronoiBiomeZones.ColumnSample): Int {
         val n = elevationNoise.octaveNoise(wx / 64.0, wz / 64.0, octaves = 6, persistence = 0.5)
         val t = (n + 1.0) / 2.0
+        val s = sample.blendFactor.let { it * it * (3 - 2 * it) }
         val eMin =
-            sample.primary.elevationMin +
-                sample.blendFactor * (sample.secondary.elevationMin - sample.primary.elevationMin)
+            sample.secondary.elevationMin +
+                s * (sample.primary.elevationMin - sample.secondary.elevationMin)
         val eMax =
-            sample.primary.elevationMax +
-                sample.blendFactor * (sample.secondary.elevationMax - sample.primary.elevationMax)
+            sample.secondary.elevationMax +
+                s * (sample.primary.elevationMax - sample.secondary.elevationMax)
         val baseY = eMin + t * (eMax - eMin)
 
         // Independent large-scale ridge noise (~400-block ranges) that lifts terrain

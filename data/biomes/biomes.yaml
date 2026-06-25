@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../schemas/biomes.schema.json
 voronoiCellSize: 256
-voronoiBlendRadius: 20
+voronoiBlendRadius: 48
 biomes:
   - id: desert
     zones:
