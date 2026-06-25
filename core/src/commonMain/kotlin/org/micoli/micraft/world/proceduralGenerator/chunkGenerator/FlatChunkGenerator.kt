@@ -1,8 +1,12 @@
-package org.micoli.micraft.world
+package org.micoli.micraft.world.proceduralGenerator.chunkGenerator
+
+import org.micoli.micraft.world.BlockType
+import org.micoli.micraft.world.Chunk
+import org.micoli.micraft.world.ChunkPos
 
 class FlatChunkGenerator : ChunkGenerator {
     override fun generate(pos: ChunkPos): Chunk =
-        Chunk.build(pos) { _, y, _ ->
+        Chunk.Companion.build(pos) { _, y, _ ->
             when (y) {
                 0 -> BlockType.BEDROCK
                 in 1..4 -> BlockType.STONE

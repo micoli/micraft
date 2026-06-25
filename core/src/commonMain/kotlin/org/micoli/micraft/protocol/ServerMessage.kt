@@ -10,8 +10,8 @@ import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.ItemType
-import org.micoli.micraft.world.WeatherZoneInfo
 import org.micoli.micraft.world.WorldItem
+import org.micoli.micraft.world.proceduralGenerator.weather.WeatherZoneInfo
 
 @Serializable
 sealed class ServerMessage {

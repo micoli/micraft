@@ -29,11 +29,8 @@ import org.micoli.micraft.world.BiomeConfig
 import org.micoli.micraft.world.BiomeRegistry
 import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockRegistryLoader
-import org.micoli.micraft.world.ChunkGenerator
-import org.micoli.micraft.world.DebugChunkGenerator
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemRegistryLoader
-import org.micoli.micraft.world.ProceduralChunkGenerator
 import org.micoli.micraft.world.WorldMetadata
 import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
@@ -42,6 +39,9 @@ import org.micoli.micraft.world.loadHouseConfig
 import org.micoli.micraft.world.loadKeyBindings
 import org.micoli.micraft.world.loadRoadConfig
 import org.micoli.micraft.world.loadServerConfig
+import org.micoli.micraft.world.proceduralGenerator.ProceduralChunkGenerator
+import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.DebugChunkGenerator
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("Application")

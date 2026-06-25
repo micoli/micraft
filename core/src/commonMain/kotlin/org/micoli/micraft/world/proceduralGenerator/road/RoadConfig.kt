@@ -1,6 +1,7 @@
-package org.micoli.micraft.world
+package org.micoli.micraft.world.proceduralGenerator.road
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.world.BlockType
 
 @Serializable
 data class RoadBiomeConfig(

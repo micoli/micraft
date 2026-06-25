@@ -1,7 +1,6 @@
 package org.micoli.micraft
 
 import io.ktor.server.application.*
-import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import java.nio.file.Path
 import java.util.UUID
@@ -36,7 +35,6 @@ import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChatChannelManager
 import org.micoli.micraft.world.ChatService
-import org.micoli.micraft.world.ChunkGenerator
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.DropConfig
 import org.micoli.micraft.world.I18nConfig
@@ -50,6 +48,7 @@ import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldMetadata
 import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
+import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("GameLoop")

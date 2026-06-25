@@ -1,7 +1,8 @@
-package org.micoli.micraft.world
+package org.micoli.micraft.world.proceduralGenerator.road
 
 import kotlin.math.floor
 import kotlin.math.sqrt
+import org.micoli.micraft.world.proceduralGenerator.PerlinNoise
 
 class RoadVoronoiZones(
     private val seed: Long,

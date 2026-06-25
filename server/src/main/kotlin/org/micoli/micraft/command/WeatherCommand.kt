@@ -5,7 +5,7 @@ import org.micoli.micraft.CommandContext
 import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
-import org.micoli.micraft.world.WeatherType
+import org.micoli.micraft.world.proceduralGenerator.weather.WeatherType
 
 class WeatherCommand : CommandHandler {
     override val id: UUID = UUID.fromString("b3e7f2d1-4a8c-4e9b-b5f6-7c1d2e3a4b5c")

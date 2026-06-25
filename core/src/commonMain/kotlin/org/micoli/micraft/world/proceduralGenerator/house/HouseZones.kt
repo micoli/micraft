@@ -1,6 +1,7 @@
-package org.micoli.micraft.world
+package org.micoli.micraft.world.proceduralGenerator.house
 
 import kotlin.math.floor
+import org.micoli.micraft.world.WorldConstants
 
 class HouseZones(
     private val seed: Long,

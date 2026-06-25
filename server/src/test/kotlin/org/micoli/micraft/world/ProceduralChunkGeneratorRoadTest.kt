@@ -3,6 +3,9 @@ package org.micoli.micraft.world
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import org.micoli.micraft.world.proceduralGenerator.ProceduralChunkGenerator
+import org.micoli.micraft.world.proceduralGenerator.road.RoadBiomeConfig
+import org.micoli.micraft.world.proceduralGenerator.road.RoadConfig
 
 class ProceduralChunkGeneratorRoadTest {
 

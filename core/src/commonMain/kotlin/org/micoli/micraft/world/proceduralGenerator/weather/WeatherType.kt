@@ -1,4 +1,4 @@
-package org.micoli.micraft.world
+package org.micoli.micraft.world.proceduralGenerator.weather
 
 enum class WeatherType {
     NONE,

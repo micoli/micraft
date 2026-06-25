@@ -4,10 +4,9 @@ import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.GameLoop
-import org.micoli.micraft.world.WeatherZoneInfo
+import org.micoli.micraft.world.proceduralGenerator.weather.WeatherZoneInfo
 
 @Serializable
 data class PlayerMapInfo(

@@ -6,6 +6,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.world.proceduralGenerator.weather.WeatherType
 
 private fun minimalConfig(): WeatherConfig {
     val tmp = createTempFile(suffix = ".yaml")

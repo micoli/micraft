@@ -1,7 +1,10 @@
-package org.micoli.micraft.world
+package org.micoli.micraft.world.proceduralGenerator
 
 import kotlin.math.floor
 import kotlin.math.sqrt
+import org.micoli.micraft.world.BiomeDefinition
+import org.micoli.micraft.world.BiomeRegistry
+import org.micoli.micraft.world.BlockType
 
 class VoronoiBiomeZones(
     private val seed: Long,

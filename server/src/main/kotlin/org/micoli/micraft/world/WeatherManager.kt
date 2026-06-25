@@ -4,6 +4,8 @@ import java.util.UUID
 import kotlin.math.sqrt
 import kotlin.random.Random
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.world.proceduralGenerator.weather.WeatherType
+import org.micoli.micraft.world.proceduralGenerator.weather.WeatherZoneInfo
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("WeatherManager")

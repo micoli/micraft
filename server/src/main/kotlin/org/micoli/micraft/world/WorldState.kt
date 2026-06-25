@@ -2,6 +2,7 @@ package org.micoli.micraft.world
 
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
+import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.slf4j.LoggerFactory
 
 class WorldState(

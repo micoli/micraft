@@ -1,7 +1,10 @@
-package org.micoli.micraft.world
+package org.micoli.micraft.world.proceduralGenerator.house
 
 import kotlin.math.ceil
 import kotlin.math.sqrt
+import org.micoli.micraft.world.BlockType
+import org.micoli.micraft.world.Chunk
+import org.micoli.micraft.world.WorldConstants
 
 data class PlacedHouse(
     val anchorX: Int,
@@ -171,8 +174,8 @@ private fun setHouseBlock(
     val lz = wz - oz
     if (lx !in 0 until WorldConstants.CHUNK_SIZE) return
     if (lz !in 0 until WorldConstants.CHUNK_SIZE) return
-    if (wy !in 0 until Chunk.SIZE_Y) return
-    blocks[Chunk.index(lx, wy, lz)] = type.ordinal.toByte()
+    if (wy !in 0 until Chunk.Companion.SIZE_Y) return
+    blocks[Chunk.Companion.index(lx, wy, lz)] = type.ordinal.toByte()
 }
 
 internal fun houseHash(seed: Long, a: Int, b: Int, c: Int): Double {

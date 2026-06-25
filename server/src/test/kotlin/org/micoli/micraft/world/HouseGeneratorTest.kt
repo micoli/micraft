@@ -3,6 +3,11 @@ package org.micoli.micraft.world
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import org.micoli.micraft.world.proceduralGenerator.ProceduralChunkGenerator
+import org.micoli.micraft.world.proceduralGenerator.house.HouseBiomeConfig
+import org.micoli.micraft.world.proceduralGenerator.house.HouseConfig
+import org.micoli.micraft.world.proceduralGenerator.house.HouseTypeConfig
+import org.micoli.micraft.world.proceduralGenerator.house.HouseZones
 
 class HouseGeneratorTest {
 

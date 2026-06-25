@@ -6,6 +6,7 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import org.micoli.micraft.world.proceduralGenerator.road.RoadConfig
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("RoadConfigLoader")
