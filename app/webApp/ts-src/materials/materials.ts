@@ -104,6 +104,13 @@ export function registerMaterials(): void {
       }
     };
 
+    const waterMat = new BABYLON.StandardMaterial("water", scene);
+    waterMat.diffuseColor = new BABYLON.Color3(0.2, 0.47, 0.78);
+    waterMat.alpha = 0.7;
+    waterMat.backFaceCulling = false;
+    waterMat.specularColor = new BABYLON.Color3(0.1, 0.1, 0.2);
+    mats["water"] = waterMat;
+
     (window as any).__mcBlockMaterials = mats;
     return mats;
   };

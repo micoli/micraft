@@ -9,4 +9,6 @@ data class BlockDefinition(
     val transparent: Boolean = false,
     val minimapColor: List<Int> = listOf(128, 128, 128),
     val modelElement: String = "",
+    val liquid: Boolean = false,
+    val viscosity: Int = 0,
 )

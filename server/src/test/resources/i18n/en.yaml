@@ -58,3 +58,16 @@ layout:
     switched: "Layout switched to {0}."
     not_found: "Layout '{0}' not found."
     usage: "Usage: /layout <name>"
+water:
+  server:
+    placed: "Water source placed at ({0}, {1}, {2})."
+    unavailable: "Liquid manager not available."
+    usage: "Usage: /water [x y z]"
+    out_of_bounds: "Position out of world bounds."
+    not_air: "Target block is not air."
+    no_solid_below: "Cannot place water: no solid block directly below."
+    no_solid_target: "No solid block in sight to place water on (look at a solid block within 6 blocks)."
+pump:
+  server:
+    no_target: "No liquid block in sight (look at water within 6 blocks)."
+    done: "Pumped {0} block(s)."

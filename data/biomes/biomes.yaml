@@ -14,6 +14,7 @@ biomes:
     elevationMin: 40
     elevationMax: 65
     grassColor: [0.65, 0.70, 0.30]
+    waterSourceRate: 0.0
 
   - id: plains
     zones:
@@ -31,6 +32,7 @@ biomes:
     elevationMin: 48
     elevationMax: 78
     grassColor: [0.47, 0.75, 0.35]
+    waterSourceRate: 0.03
 
   - id: forest
     zones:
@@ -48,6 +50,7 @@ biomes:
     elevationMin: 55
     elevationMax: 95
     grassColor: [0.35, 0.60, 0.20]
+    waterSourceRate: 0.05
 
   - id: mountains
     zones:
@@ -65,6 +68,7 @@ biomes:
     elevationMin: 80
     elevationMax: 110
     grassColor: [0.42, 0.62, 0.28]
+    waterSourceRate: 0.03
 
   - id: tundra
     zones:
@@ -82,3 +86,4 @@ biomes:
     elevationMin: 90
     elevationMax: 120
     grassColor: [0.55, 0.65, 0.50]
+    waterSourceRate: 0.03

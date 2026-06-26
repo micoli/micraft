@@ -4,6 +4,7 @@ import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
+import org.micoli.micraft.tick.LiquidManager
 import org.micoli.micraft.world.ChatChannelManager
 import org.micoli.micraft.world.ChatService
 import org.micoli.micraft.world.I18nConfig
@@ -32,4 +33,5 @@ data class CommandContext(
     val chatChannelManager: ChatChannelManager? = null,
     val weatherManager: WeatherManager? = null,
     val authProvider: AuthProvider? = null,
+    val liquidManager: LiquidManager? = null,
 )

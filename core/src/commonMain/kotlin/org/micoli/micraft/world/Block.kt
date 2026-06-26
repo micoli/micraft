@@ -31,6 +31,7 @@ enum class BlockType {
     PINE_LEAVES_SNOW,
     FLOWER,
     WEED,
+    WATER,
 }
 
 val BlockType.hardness: Int
@@ -38,6 +39,12 @@ val BlockType.hardness: Int
 
 val BlockType.isSolid: Boolean
     get() = BlockRegistry.get(this).solid
+
+val BlockType.isLiquid: Boolean
+    get() = BlockRegistry.get(this).liquid
+
+val BlockType.viscosity: Int
+    get() = BlockRegistry.get(this).viscosity
 
 val ItemType.buildable: Boolean
     get() = ItemRegistry.get(this).buildable

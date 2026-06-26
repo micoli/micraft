@@ -10,6 +10,7 @@ import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
+import org.micoli.micraft.tick.LiquidManager
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.I18nConfig
@@ -21,6 +22,7 @@ fun testPlayerState(
     id: String = "test-id",
     name: String = "Alice",
     pos: Vec3 = Vec3(8f, 8f, 8f),
+    orientation: Orientation = Orientation(0f, 0f),
     language: String = "en",
     flying: Boolean = false,
     stance: PlayerStance = PlayerStance.STANDING,
@@ -31,7 +33,7 @@ fun testPlayerState(
         id = id,
         name = name,
         pos = pos,
-        orientation = Orientation(0f, 0f),
+        orientation = orientation,
         stance = stance,
         flying = flying,
         speedMultiplier = speedMultiplier,
@@ -43,6 +45,7 @@ fun testSession(
     id: String = "test-id",
     name: String = "Alice",
     pos: Vec3 = Vec3(8f, 8f, 8f),
+    orientation: Orientation = Orientation(0f, 0f),
     language: String = "en",
     shadersEnabled: Boolean = true,
 ) =
@@ -50,7 +53,13 @@ fun testSession(
         id,
         name,
         testPlayerState(
-            id = id, name = name, pos = pos, language = language, shadersEnabled = shadersEnabled))
+            id = id,
+            name = name,
+            pos = pos,
+            orientation = orientation,
+            language = language,
+            shadersEnabled = shadersEnabled,
+        ))
 
 fun testWorld(vararg solid: Triple<Int, Int, Int>): WorldState {
     val world = WorldState(MapChunkGenerator(solid.associateWith { BlockType.STONE }))
@@ -97,6 +106,7 @@ fun testContext(
     getGameTime: () -> Long = { 0L },
     setGameTime: (Long) -> Unit = {},
     refetchChunks: (suspend (org.micoli.micraft.session.PlayerSession) -> Unit)? = null,
+    liquidManager: LiquidManager? = null,
 ) =
     CommandContext(
         world = world,
@@ -112,4 +122,5 @@ fun testContext(
         getGameTime = getGameTime,
         setGameTime = setGameTime,
         refetchChunks = refetchChunks,
+        liquidManager = liquidManager,
     )

@@ -7,9 +7,11 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.session.WorldActionRecord
 import org.micoli.micraft.world.BlockType
+import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldState
 import org.micoli.micraft.world.hardness
+import org.micoli.micraft.world.isLiquid
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(BlockBreaker::class.java)
@@ -19,6 +21,7 @@ class BlockBreaker(
     private val world: WorldState,
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val worldItems: WorldItemManager,
+    private val liquidManager: LiquidManager? = null,
 ) {
     fun handleStart(session: PlayerSession, intent: ClientMessage.BlockBreakStart) {
         val bp = intent.pos
@@ -42,6 +45,27 @@ class BlockBreaker(
         session.breakProgress = 0
     }
 
+    private fun activateAdjacentLiquids(pos: org.micoli.micraft.world.BlockPos) {
+        val lm = liquidManager ?: return
+        val neighbors =
+            listOf(
+                Triple(pos.x + 1, pos.y, pos.z),
+                Triple(pos.x - 1, pos.y, pos.z),
+                Triple(pos.x, pos.y, pos.z + 1),
+                Triple(pos.x, pos.y, pos.z - 1),
+                Triple(pos.x, pos.y + 1, pos.z),
+                Triple(pos.x, pos.y - 1, pos.z),
+            )
+        for ((nx, ny, nz) in neighbors) {
+            if (ny < WorldConstants.WORLD_MIN_Y || ny > WorldConstants.WORLD_MAX_Y) continue
+            val neighbor = world.getBlock(nx, ny, nz)
+            if (neighbor.isLiquid) {
+                val neighborPos = org.micoli.micraft.world.BlockPos(nx, ny, nz)
+                lm.activate(neighborPos, lm.getFlowDistance(neighborPos))
+            }
+        }
+    }
+
     suspend fun tick(session: PlayerSession) {
         val bt = session.breakTarget ?: return
         val block = world.getBlock(bt.x, bt.y, bt.z)
@@ -55,6 +79,7 @@ class BlockBreaker(
             val change = BlockChange(bt, BlockType.AIR)
             world.applyChange(change)
             broadcast(ServerMessage.WorldUpdate(listOf(change)))
+            activateAdjacentLiquids(bt)
             val spawned = worldItems.spawnDrops(bt, block)
             session.actionHistory.addLast(WorldActionRecord.Break(bt, block, spawned))
             if (session.actionHistory.size > MAX_UNDO_HISTORY) session.actionHistory.removeFirst()

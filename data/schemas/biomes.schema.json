@@ -22,7 +22,7 @@
     "blockType": {
       "type": "string",
       "enum": ["AIR", "BEDROCK", "STONE", "DIRT", "GRASS", "SAND", "SANDSTONE", "GRAVEL", "SNOW",
-               "OAK_LOG", "OAK_LEAVES", "PINE_LOG", "PINE_LEAVES", "PINE_LEAVES_SNOW", "FLOWER", "WEED"]
+               "OAK_LOG", "OAK_LEAVES", "PINE_LOG", "PINE_LEAVES", "PINE_LEAVES_SNOW", "FLOWER", "WEED", "WATER"]
     },
     "biomeZone": {
       "type": "object",
@@ -70,6 +70,13 @@
           "minItems": 3,
           "maxItems": 3,
           "description": "RGB grass tint [r, g, b] in [0, 1] range. Omit to use the client default."
+        },
+        "waterSourceRate": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.0,
+          "description": "Probability (0–1) that a surface column below WATER_LEVEL generates a water source block."
         }
       }
     }

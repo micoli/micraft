@@ -319,7 +319,10 @@ export function GameUI() {
   return (
     <>
       {/* Minimap host: always in DOM (Kotlin appends canvas here at startup); hidden during login */}
-      <div id="mc-minimap-host" style={{ ...minimapStyle, display: state.loginVisible || state.disconnectMsg ? "none" : undefined }} />
+      <div
+        id="mc-minimap-host"
+        style={{ ...minimapStyle, display: state.loginVisible || state.disconnectMsg ? "none" : undefined }}
+      />
 
       {!state.loginVisible && !state.disconnectMsg && (
         <>

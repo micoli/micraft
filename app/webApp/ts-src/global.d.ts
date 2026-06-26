@@ -117,7 +117,7 @@ declare global {
 
   interface McBlockDef {
     name: string;
-    renderType: "solid" | "leaves" | "cross_sprite";
+    renderType: "solid" | "leaves" | "cross_sprite" | "liquid";
     faces: (McBlockFaceInfo | null)[];
   }
 

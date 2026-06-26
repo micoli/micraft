@@ -130,6 +130,8 @@ data class BlockInfo(
     val transparent: Boolean,
     val minimapColor: List<Int>,
     val modelElement: String,
+    val liquid: Boolean = false,
+    val viscosity: Int = 0,
 )
 
 @Serializable

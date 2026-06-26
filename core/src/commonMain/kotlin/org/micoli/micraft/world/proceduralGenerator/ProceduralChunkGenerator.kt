@@ -13,6 +13,8 @@ import org.micoli.micraft.world.proceduralGenerator.road.RoadConfig
 import org.micoli.micraft.world.proceduralGenerator.road.RoadVoronoiZones
 import org.micoli.micraft.world.proceduralGenerator.vegetation.placeVegetation
 
+private const val WATER_LEVEL = 65
+
 class ProceduralChunkGenerator(
     public val seed: Long = 42L,
     private val biomeRegistry: BiomeRegistry = BiomeRegistry.Companion.default(),
@@ -22,6 +24,7 @@ class ProceduralChunkGenerator(
     private val elevationNoise = PerlinNoise(seed)
     private val mountainNoise = PerlinNoise(seed + 2L)
     private val moistureNoise = PerlinNoise(seed + 1L)
+    private val waterNoise = PerlinNoise(seed + 3L)
     val voronoi = VoronoiBiomeZones(seed, biomeRegistry, moistureNoise)
     val roadVoronoi =
         roadConfig?.let {
@@ -66,6 +69,7 @@ class ProceduralChunkGenerator(
             y == h -> col.roadSurface ?: b.surface
             y > h - b.subsurfaceDepth && y < h -> b.subsurface
             y < h -> BlockType.STONE
+            y > h && y <= WATER_LEVEL && col.isWaterColumn -> BlockType.WATER
             else -> BlockType.AIR
         }
     }
@@ -84,10 +88,18 @@ class ProceduralChunkGenerator(
                     val sample = voronoi.sample(wx, wz)
                     val h = surfaceHeight(wx, wz, sample)
                     val onRoad = roadVoronoi?.isOnRoad(sample.primary.id, wx, wz) == true
+                    val rate = sample.primary.waterSourceRate
+                    val isWater =
+                        rate > 0.0 &&
+                            h < WATER_LEVEL &&
+                            waterNoise.octaveNoise(
+                                wx / 32.0, wz / 32.0, octaves = 2, persistence = 0.5) >
+                                (1.0 - rate * 2.0)
                     ColumnData(
                         h,
                         voronoi.selectColumn(wx, wz, h, sample),
                         if (onRoad) roadConfig!!.surfaceFor(sample.primary.id) else null,
+                        isWater,
                     )
                 }
             }
@@ -121,5 +133,6 @@ class ProceduralChunkGenerator(
         val h: Int,
         val blocks: VoronoiBiomeZones.ColumnBlocks,
         val roadSurface: BlockType? = null,
+        val isWaterColumn: Boolean = false,
     )
 }

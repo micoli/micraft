@@ -20,6 +20,8 @@ private data class BlockYamlEntry(
     val transparent: Boolean = false,
     val minimapColor: List<Int> = listOf(128, 128, 128),
     val modelElement: String = "",
+    val liquid: Boolean = false,
+    val viscosity: Int = 0,
 )
 
 private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), BlockYamlEntry.serializer())
@@ -65,6 +67,14 @@ private val DEFAULT_YAML: Map<String, BlockYamlEntry> =
                 solid = false,
                 transparent = true,
                 minimapColor = listOf(70, 130, 40)),
+        "WATER" to
+            BlockYamlEntry(
+                hardness = -1,
+                solid = false,
+                transparent = true,
+                minimapColor = listOf(50, 120, 200),
+                liquid = true,
+                viscosity = 3),
     )
 
 class BlockRegistryLoader(private val path: Path) {
@@ -94,6 +104,8 @@ class BlockRegistryLoader(private val path: Path) {
                                     transparent = entry.transparent,
                                     minimapColor = entry.minimapColor,
                                     modelElement = entry.modelElement,
+                                    liquid = entry.liquid,
+                                    viscosity = entry.viscosity,
                                 )
                         }
                         .onFailure {

@@ -125,7 +125,10 @@ class ChunkManager(private val scene: JsAny) {
                     val t = block.ordinal * 6
                     val wx = ox + x
                     val wz2 = oz + z
-                    if (y >= WorldConstants.WORLD_MAX_Y || !chunk.getBlock(x, y + 1, z).isSolid)
+                    val blockAbove =
+                        if (y >= WorldConstants.WORLD_MAX_Y) BlockType.AIR
+                        else chunk.getBlock(x, y + 1, z)
+                    if (!blockAbove.isSolid && !(block.isLiquid && blockAbove.isLiquid))
                         jsChunkFace(wx, y, wz2, t + 4, computeFaceAO(chunk, x, y, z, 4))
                     if (y <= 0 || !chunk.getBlock(x, y - 1, z).isSolid)
                         jsChunkFace(wx, y, wz2, t + 5, computeFaceAO(chunk, x, y, z, 5))

@@ -68,3 +68,10 @@ WEED:
   solid: false
   transparent: true
   minimapColor: [70, 130, 40]
+WATER:
+  hardness: -1
+  solid: false
+  transparent: true
+  liquid: true
+  viscosity: 3
+  minimapColor: [50, 120, 200]

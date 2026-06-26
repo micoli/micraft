@@ -14,7 +14,9 @@ import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.world.PlayerConstants
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldState
+import org.micoli.micraft.world.isLiquid
 import org.micoli.micraft.world.isSolid
+import org.micoli.micraft.world.viscosity
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(MovementProcessor::class.java)
@@ -45,7 +47,14 @@ class MovementProcessor(private val world: WorldState) {
             else old.stance
 
         val h = newStance.height
-        val speed = newStance.speed * newSpeedMult * TICK_SECONDS
+        val feetBlock =
+            world.getBlock(
+                Math.floor(pos.x.toDouble()).toInt(),
+                Math.floor(pos.y.toDouble()).toInt(),
+                Math.floor(pos.z.toDouble()).toInt(),
+            )
+        val liquidSlowdown = if (feetBlock.isLiquid) 1f / (1f + feetBlock.viscosity * 0.15f) else 1f
+        val speed = newStance.speed * newSpeedMult * TICK_SECONDS * liquidSlowdown
 
         val len = kotlin.math.sqrt((input.dx * input.dx + input.dz * input.dz).toDouble()).toFloat()
         val nx = if (len > 0f) input.dx / len else 0f
@@ -71,7 +80,7 @@ class MovementProcessor(private val world: WorldState) {
                 val resolvedDy = AabbCollider.resolveY(solid, newX, pos.y, newZ, w, h, flyDy)
                 (pos.y + resolvedDy).coerceIn(0f, WorldConstants.WORLD_MAX_Y.toFloat())
             } else {
-                applyGravity(session, newX, pos.y, newZ, h)
+                applyGravity(session, newX, pos.y, newZ, h, feetBlock.isLiquid)
             }
 
         return old.copy(
@@ -89,7 +98,8 @@ class MovementProcessor(private val world: WorldState) {
         cx: Float,
         cy: Float,
         cz: Float,
-        h: Float
+        h: Float,
+        inLiquid: Boolean = false,
     ): Float {
         val w = PlayerConstants.WIDTH
         val solid = { bx: Int, by: Int, bz: Int -> world.getBlock(bx, by, bz).isSolid }
@@ -99,7 +109,9 @@ class MovementProcessor(private val world: WorldState) {
             val snapDy = AabbCollider.resolveY(solid, cx, cy, cz, w, h, -1f)
             return (cy + snapDy).coerceAtLeast(0f)
         }
-        session.vy += GRAVITY * TICK_SECONDS
+        val effectiveGravity = if (inLiquid) GRAVITY * 0.2f else GRAVITY
+        session.vy += effectiveGravity * TICK_SECONDS
+        if (inLiquid) session.vy = session.vy.coerceAtLeast(-2f)
         val dy = session.vy * TICK_SECONDS
         val resolvedDy = AabbCollider.resolveY(solid, cx, cy, cz, w, h, dy)
         if (resolvedDy != dy) {

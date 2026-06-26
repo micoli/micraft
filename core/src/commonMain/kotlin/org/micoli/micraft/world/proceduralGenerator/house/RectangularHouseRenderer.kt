@@ -14,7 +14,8 @@ internal fun PlacedHouse.renderRectangular(blocks: ByteArray, ox: Int, oz: Int) 
         val floorY = anchorY + houseFloorBaseOffset(floor, floorH)
         for (dx in 0 until width) {
             for (dz in 0 until depth) {
-                setHouseBlock(blocks, ox, oz, anchorX + dx, floorY, anchorZ + dz, materials.floorBlock)
+                setHouseBlock(
+                    blocks, ox, oz, anchorX + dx, floorY, anchorZ + dz, materials.floorBlock)
             }
         }
     }
@@ -153,11 +154,13 @@ private fun PlacedHouse.placeFlatRoof(blocks: ByteArray, ox: Int, oz: Int, topY:
     }
     for (dx in 0 until width) {
         setHouseBlock(blocks, ox, oz, anchorX + dx, topY + 1, anchorZ, materials.roofBlock)
-        setHouseBlock(blocks, ox, oz, anchorX + dx, topY + 1, anchorZ + depth - 1, materials.roofBlock)
+        setHouseBlock(
+            blocks, ox, oz, anchorX + dx, topY + 1, anchorZ + depth - 1, materials.roofBlock)
     }
     for (dz in 1 until depth - 1) {
         setHouseBlock(blocks, ox, oz, anchorX, topY + 1, anchorZ + dz, materials.roofBlock)
-        setHouseBlock(blocks, ox, oz, anchorX + width - 1, topY + 1, anchorZ + dz, materials.roofBlock)
+        setHouseBlock(
+            blocks, ox, oz, anchorX + width - 1, topY + 1, anchorZ + dz, materials.roofBlock)
     }
 }
 
@@ -186,10 +189,12 @@ private fun PlacedHouse.placeGabledRoof(
         if (rise > 0) {
             for (fillY in baseY until y) {
                 setHouseBlock(blocks, ox, oz, xStart, fillY, anchorZ, materials.wallBlock)
-                setHouseBlock(blocks, ox, oz, xStart, fillY, anchorZ + depth - 1, materials.wallBlock)
+                setHouseBlock(
+                    blocks, ox, oz, xStart, fillY, anchorZ + depth - 1, materials.wallBlock)
                 if (xStart != xEnd) {
                     setHouseBlock(blocks, ox, oz, xEnd, fillY, anchorZ, materials.wallBlock)
-                    setHouseBlock(blocks, ox, oz, xEnd, fillY, anchorZ + depth - 1, materials.wallBlock)
+                    setHouseBlock(
+                        blocks, ox, oz, xEnd, fillY, anchorZ + depth - 1, materials.wallBlock)
                 }
             }
         }

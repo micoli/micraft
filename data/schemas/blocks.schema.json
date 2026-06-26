@@ -11,7 +11,7 @@
       "enum": [
         "AIR", "BEDROCK", "STONE", "DIRT", "GRASS", "SAND", "SANDSTONE",
         "GRAVEL", "SNOW", "OAK_LOG", "OAK_LEAVES", "PINE_LOG",
-        "PINE_LEAVES", "PINE_LEAVES_SNOW", "FLOWER", "WEED"
+        "PINE_LEAVES", "PINE_LEAVES_SNOW", "FLOWER", "WEED", "WATER"
       ]
     },
     "blockEntry": {
@@ -42,6 +42,17 @@
         "modelElement": {
           "type": "string",
           "description": "bbmodel element name to use for rendering. Defaults to the block's own name when empty."
+        },
+        "liquid": {
+          "type": "boolean",
+          "description": "Whether the block is a liquid (propagates, slows players).",
+          "default": false
+        },
+        "viscosity": {
+          "type": "integer",
+          "description": "Liquid viscosity: ticks delay between propagation steps and player speed factor. 0 = not a liquid.",
+          "minimum": 0,
+          "default": 0
         }
       }
     }

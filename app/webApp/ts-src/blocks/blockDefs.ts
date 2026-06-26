@@ -54,11 +54,14 @@ function parseSingleBlockBbmodel(bbmodel: BlocksBbModel): { def: McBlockDef | nu
   return { def: { name: el.name, renderType, faces }, textures };
 }
 
+const WATER_MAT_KEY = "water";
+const LIQUID_UV = [0, 0, 1, 0, 1, 1, 0, 1];
+
 let _blockDefs: (McBlockDef | null)[] | null = null;
 let _blockTextures: McBlockTextureDef[] | null = null;
 
 // Loaded from RegistrySync — ordinal-indexed list of block infos
-let _registryBlocks: { name: string; modelElement: string }[] | null = null;
+let _registryBlocks: { name: string; modelElement: string; liquid?: boolean }[] | null = null;
 
 export function registerBlockDefs(): void {
   window.mcInitBlockDefs = () => {
@@ -69,6 +72,11 @@ export function registerBlockDefs(): void {
 
     const fetches = _registryBlocks.map((info, ordinal) => {
       if (info.name === "AIR") return Promise.resolve();
+      if (info.liquid) {
+        const faces: McBlockFaceInfo[] = Array.from({ length: 6 }, () => ({ matKey: WATER_MAT_KEY, uv: LIQUID_UV }));
+        defs[ordinal] = { name: info.name, renderType: "liquid", faces };
+        return Promise.resolve();
+      }
       const fileName = info.modelElement || info.name;
       return fetch(`/models/blocks/${fileName}.bbmodel`)
         .then((r) => r.json())
@@ -97,6 +105,6 @@ export function registerBlockDefs(): void {
 }
 
 // Called from mcSetBlockRegistry (set up in minimap.ts) before mcInitBlockDefs
-export function setRegistryBlocks(blocks: { name: string; modelElement: string }[]): void {
+export function setRegistryBlocks(blocks: { name: string; modelElement: string; liquid?: boolean }[]): void {
   _registryBlocks = blocks;
 }

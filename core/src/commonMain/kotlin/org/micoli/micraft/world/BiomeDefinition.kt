@@ -27,6 +27,7 @@ data class BiomeDefinition(
     val elevationMin: Int = 40,
     val elevationMax: Int = 120,
     val grassColor: List<Double>? = null,
+    val waterSourceRate: Double = 0.0,
 )
 
 @Serializable

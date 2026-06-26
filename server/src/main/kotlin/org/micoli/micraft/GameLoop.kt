@@ -29,6 +29,7 @@ import org.micoli.micraft.tick.BlockBreaker
 import org.micoli.micraft.tick.BlockPlacer
 import org.micoli.micraft.tick.ChunkStreamer
 import org.micoli.micraft.tick.IntentCollector
+import org.micoli.micraft.tick.LiquidManager
 import org.micoli.micraft.tick.MovementProcessor
 import org.micoli.micraft.ui.validateLayouts
 import org.micoli.micraft.world.BlockRegistry
@@ -168,6 +169,8 @@ class GameLoop(
     private val weatherConfig = WeatherConfig()
     private val weatherManager = WeatherManager(weatherConfig)
 
+    private val liquidManager = LiquidManager(world)
+
     private val npcRegistryLoader = NpcRegistryLoader(Path.of("data/npcs/npcs.yaml"))
     private val npcManager =
         NpcManager(
@@ -210,9 +213,15 @@ class GameLoop(
             chatChannelManager = chatChannelManager,
             weatherManager = weatherManager,
             authProvider = authProvider,
+            liquidManager = liquidManager,
         )
     private val blockBreaker =
-        BlockBreaker(world, { msg -> sessions.values.forEach { it.send(msg) } }, worldItems)
+        BlockBreaker(
+            world,
+            { msg -> sessions.values.forEach { it.send(msg) } },
+            worldItems,
+            liquidManager,
+        )
     private val blockPlacer =
         BlockPlacer(world, { msg -> sessions.values.forEach { it.send(msg) } }, ::savePlayer)
     private val intentCollector =
@@ -305,6 +314,8 @@ class GameLoop(
                     transparent = def.transparent,
                     minimapColor = def.minimapColor,
                     modelElement = def.modelElement,
+                    liquid = def.liquid,
+                    viscosity = def.viscosity,
                 )
             }
         val items =
@@ -430,6 +441,7 @@ class GameLoop(
         worldItems.tickCollection(sessions.values)
         npcManager.tick(world)
         weatherManager.tick(world) { msg -> sessions.values.forEach { it.send(msg) } }
+        liquidManager.tick { msg -> sessions.values.forEach { it.send(msg) } }
         npcSpawnTickCounter++
         if (npcSpawnTickCounter >= org.micoli.micraft.npc.NpcConstants.SPAWN_CHECK_INTERVAL_TICKS) {
             npcSpawnTickCounter = 0

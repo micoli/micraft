@@ -59,6 +59,14 @@ object BlockRegistry {
                     solid = false,
                     transparent = true,
                     minimapColor = listOf(70, 130, 40)),
+            BlockType.WATER to
+                BlockDefinition(
+                    hardness = -1,
+                    solid = false,
+                    transparent = true,
+                    minimapColor = listOf(50, 120, 200),
+                    liquid = true,
+                    viscosity = 3),
         )
 
     private val defs: MutableMap<BlockType, BlockDefinition> = defaults.toMutableMap()

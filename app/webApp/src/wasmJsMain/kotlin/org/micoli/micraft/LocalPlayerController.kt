@@ -162,7 +162,7 @@ class LocalPlayerController(
                 }
                 else ->
                     if (consoleInput.startsWith("/")) {
-                        outMessages.trySend(ClientMessage.Command(consoleInput))
+                        outMessages.trySend(ClientMessage.Command(enrichCommand(consoleInput)))
                     } else {
                         outMessages.trySend(
                             ClientMessage.ChatSend(jsGetActiveChannel(), consoleInput))
@@ -659,6 +659,23 @@ class LocalPlayerController(
             }
         }
         return null
+    }
+
+    private fun enrichCommand(cmd: String): String {
+        val trimmed = cmd.trim()
+        val parts = trimmed.split(Regex("\\s+"))
+        if (parts.size != 1) return cmd
+        return when (parts[0]) {
+            "/water" -> {
+                val t = hoverTarget
+                if (t != null) "/water ${t.x} ${t.y + 1} ${t.z}" else cmd
+            }
+            "/pump" -> {
+                val t = hoverTarget
+                if (t != null) "/pump ${t.x} ${t.y} ${t.z}" else cmd
+            }
+            else -> cmd
+        }
     }
 
     private fun ticksToHHMM(ticks: Long): String {

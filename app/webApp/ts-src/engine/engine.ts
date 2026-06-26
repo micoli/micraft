@@ -92,7 +92,7 @@ export function registerEngine(): void {
     const mats = (window as any).__mcBlockMaterials as Record<string, any> | undefined;
     if (mats) {
       const fv = new BABYLON.Vector3(r, g, b);
-      for (const mat of Object.values(mats)) mat.setVector3("fogColor", fv);
+      for (const mat of Object.values(mats)) if (typeof mat.setVector3 === "function") mat.setVector3("fogColor", fv);
     }
   };
 
@@ -100,7 +100,7 @@ export function registerEngine(): void {
     const mats = (window as any).__mcBlockMaterials as Record<string, any> | undefined;
     if (mats) {
       const v = enabled ? 1.0 : 0.0;
-      for (const mat of Object.values(mats)) mat.setFloat("shadersEnabled", v);
+      for (const mat of Object.values(mats)) if (typeof mat.setFloat === "function") mat.setFloat("shadersEnabled", v);
     }
   };
 
