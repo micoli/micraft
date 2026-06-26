@@ -13,8 +13,6 @@ import org.micoli.micraft.world.proceduralGenerator.road.RoadConfig
 import org.micoli.micraft.world.proceduralGenerator.road.RoadVoronoiZones
 import org.micoli.micraft.world.proceduralGenerator.vegetation.placeVegetation
 
-private const val WATER_LEVEL = 65
-
 class ProceduralChunkGenerator(
     public val seed: Long = 42L,
     private val biomeRegistry: BiomeRegistry = BiomeRegistry.Companion.default(),
@@ -69,7 +67,7 @@ class ProceduralChunkGenerator(
             y == h -> col.roadSurface ?: b.surface
             y > h - b.subsurfaceDepth && y < h -> b.subsurface
             y < h -> BlockType.STONE
-            y > h && y <= WATER_LEVEL && col.isWaterColumn -> BlockType.WATER
+            y > h && y <= WorldConstants.WATER_LEVEL && col.isWaterColumn -> BlockType.WATER
             else -> BlockType.AIR
         }
     }
@@ -91,7 +89,7 @@ class ProceduralChunkGenerator(
                     val rate = sample.primary.waterSourceRate
                     val isWater =
                         rate > 0.0 &&
-                            h < WATER_LEVEL &&
+                            h < WorldConstants.WATER_LEVEL &&
                             waterNoise.octaveNoise(
                                 wx / 32.0, wz / 32.0, octaves = 2, persistence = 0.5) >
                                 (1.0 - rate * 2.0)

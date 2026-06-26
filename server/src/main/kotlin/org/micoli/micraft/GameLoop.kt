@@ -13,6 +13,7 @@ import kotlinx.serialization.json.Json
 import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.http.TerrainCache
+import org.micoli.micraft.npc.NpcConfigLoader
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.npc.NpcSpawner
 import org.micoli.micraft.player.Orientation
@@ -171,6 +172,7 @@ class GameLoop(
 
     private val liquidManager = LiquidManager(world)
 
+    private val npcConfigLoader = NpcConfigLoader(Path.of("data/npc/npc.yaml"))
     private val npcRegistryLoader = NpcRegistryLoader(Path.of("data/npcs/npcs.yaml"))
     private val npcManager =
         NpcManager(
@@ -342,8 +344,9 @@ class GameLoop(
             sessions.values.forEach { it.send(registrySync) }
             lines += "Block/item registry reloaded"
         }
+        npcConfigLoader.reload()
         npcManager.reloadDefinitions(npcRegistryLoader.reload())
-        lines += "NPC registry reloaded"
+        lines += "NPC config + registry reloaded"
         i18n.reload()
         lines += "i18n: ${i18n.locales.size} locales"
         val newWeatherConfig = WeatherConfig()
@@ -356,6 +359,7 @@ class GameLoop(
         appScope = app
         log.info("GameLoop starting (tick=${TICK_MS}ms, gravity=$GRAVITY)")
         validatePluginSystemIds(commands, discoverPlugins())
+        npcConfigLoader.load()
         npcManager.loadDefinitions(npcRegistryLoader.load())
         val npcSavePath =
             persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/npcs/spawns.json")

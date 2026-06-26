@@ -13,7 +13,8 @@
         "worldMaxY":        { "type": "integer", "description": "Maximum world Y coordinate.", "default": 1024 },
         "chunkSize":        { "type": "integer", "description": "Chunk width/depth in blocks. Changing this invalidates existing chunk files.", "default": 16 },
         "viewRadius":       { "type": "integer", "description": "Radius in chunks streamed to each player.", "default": 3 },
-        "forwardViewRadius":{ "type": "integer", "description": "Extra lookahead radius streamed in the player's forward direction.", "default": 7 }
+        "forwardViewRadius":{ "type": "integer", "description": "Extra lookahead radius streamed in the player's forward direction.", "default": 7 },
+        "waterLevel":       { "type": "integer", "description": "Y coordinate at or below which water fills ocean columns.", "default": 65 }
       }
     },
     "player": {
@@ -43,7 +44,9 @@
         "saveIntervalSeconds":{ "type": "integer", "description": "World auto-save interval in seconds.", "default": 30 },
         "spawnX":             { "type": "number",  "description": "Default spawn X coordinate for new players.", "default": 8.0 },
         "spawnY":             { "type": "number",  "description": "Default spawn Y coordinate for new players.", "default": 200.0 },
-        "spawnZ":             { "type": "number",  "description": "Default spawn Z coordinate for new players.", "default": 8.0 }
+        "spawnZ":             { "type": "number",  "description": "Default spawn Z coordinate for new players.", "default": 8.0 },
+        "ticksPerDay":        { "type": "integer", "description": "Number of ticks in one in-game day.", "default": 72000 },
+        "timeBroadcastTicks": { "type": "integer", "description": "Ticks between game-time broadcasts to clients.", "default": 20 }
       }
     },
     "auth": {

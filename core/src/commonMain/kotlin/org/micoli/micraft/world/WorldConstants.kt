@@ -8,6 +8,8 @@ object WorldConstants {
     var FORWARD_VIEW_RADIUS = 7
     val CLIENT_VIEW_RADIUS
         get() = FORWARD_VIEW_RADIUS
+
+    var WATER_LEVEL = 65
 }
 
 object PlayerConstants {

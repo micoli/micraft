@@ -23,6 +23,7 @@ data class WorldSection(
     @EncodeDefault(ALWAYS) val chunkSize: Int = 16,
     @EncodeDefault(ALWAYS) val viewRadius: Int = 3,
     @EncodeDefault(ALWAYS) val forwardViewRadius: Int = 7,
+    @EncodeDefault(ALWAYS) val waterLevel: Int = 65,
 )
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -51,6 +52,8 @@ data class GameplaySection(
     @EncodeDefault(ALWAYS) val spawnX: Float = 8f,
     @EncodeDefault(ALWAYS) val spawnY: Float = 200f,
     @EncodeDefault(ALWAYS) val spawnZ: Float = 8f,
+    @EncodeDefault(ALWAYS) val ticksPerDay: Long = 72_000L,
+    @EncodeDefault(ALWAYS) val timeBroadcastTicks: Int = 20,
 )
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -112,6 +115,7 @@ fun applyServerConfig(config: ServerConfig) {
         WorldConstants.CHUNK_SIZE = chunkSize
         WorldConstants.VIEW_RADIUS = viewRadius
         WorldConstants.FORWARD_VIEW_RADIUS = forwardViewRadius
+        WorldConstants.WATER_LEVEL = waterLevel
     }
     with(config.player) {
         PlayerConstants.HEIGHT_STANDING = heightStanding
@@ -131,6 +135,8 @@ fun applyServerConfig(config: ServerConfig) {
         org.micoli.micraft.JUMP_SPEED = jumpSpeed
         org.micoli.micraft.FLY_VERTICAL_SPEED = flyVerticalSpeed
         org.micoli.micraft.SAVE_INTERVAL_TICKS = (saveIntervalSeconds * 1000L / tickMs).toInt()
+        org.micoli.micraft.TICKS_PER_DAY = ticksPerDay
+        org.micoli.micraft.TIME_BROADCAST_TICKS = timeBroadcastTicks
         org.micoli.micraft.SPAWN_X = spawnX
         if (!DEBUG_WORLD) {
             org.micoli.micraft.SPAWN_Y = spawnY

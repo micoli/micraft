@@ -4,6 +4,7 @@ world:
   chunkSize: 16
   viewRadius: 3
   forwardViewRadius: 7
+  waterLevel: 65
 player:
   heightStanding: 1.8
   heightSneaking: 1.5
@@ -24,6 +25,8 @@ gameplay:
   spawnX: 8.0
   spawnY: 200.0
   spawnZ: 8.0
+  ticksPerDay: 72000
+  timeBroadcastTicks: 20
 auth:
   provider: "none"
   local:

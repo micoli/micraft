@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../schemas/npc.schema.json
+wanderPauseTicksMin: 40
+wanderPauseTicksMax: 120
+wanderStepTicksMax: 60
+interactionRange: 4.0
+updateRange: 96.0
+spawnCheckIntervalTicks: 200
+maxSpawnAttemptsPerTick: 3
+jumpVelocity: 6.5
