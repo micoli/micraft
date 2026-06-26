@@ -45,11 +45,11 @@ class ItemRegistryLoaderTest {
     }
 
     @Test
-    fun unknownPlacesBlock_yieldNullPlacesBlock() {
+    fun unknownPlacesBlock_isAccepted() {
         val loader = loaderWith("COBBLESTONE:\n  buildable: true\n  placesBlock: UNKNOWN_BLOCK\n")
         val result = loader.load()
         assertEquals(1, result.size)
-        assertNull(result[ItemType.COBBLESTONE]?.placesBlock)
+        assertEquals(BlockType("UNKNOWN_BLOCK"), result[ItemType.COBBLESTONE]?.placesBlock)
     }
 
     @Test

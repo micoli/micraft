@@ -34,7 +34,6 @@ import org.micoli.micraft.tick.LiquidManager
 import org.micoli.micraft.tick.MovementProcessor
 import org.micoli.micraft.ui.validateLayouts
 import org.micoli.micraft.world.BlockRegistry
-import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChatChannelManager
 import org.micoli.micraft.world.ChatService
 import org.micoli.micraft.world.ChunkPos
@@ -308,7 +307,7 @@ class GameLoop(
     private fun buildRegistrySync(): ServerMessage.RegistrySync {
         val blocks =
             BlockRegistry.orderedList().mapIndexed { i, def ->
-                val name = BlockType.entries[i].name
+                val name = BlockRegistry.all()[i].id
                 BlockInfo(
                     name = name,
                     hardness = def.hardness,
@@ -323,8 +322,7 @@ class GameLoop(
         val items =
             ItemType.entries.associate { type ->
                 val def = ItemRegistry.get(type)
-                type.name to
-                    ItemInfo(buildable = def.buildable, placesBlock = def.placesBlock?.name)
+                type.name to ItemInfo(buildable = def.buildable, placesBlock = def.placesBlock?.id)
             }
         val npcs = npcManager.getDefinitions().map { (key, def) -> key to def.bbmodelFile }.toMap()
         return ServerMessage.RegistrySync(blocks, items, npcs)

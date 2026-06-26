@@ -14,12 +14,12 @@ data class Chunk(val pos: ChunkPos, val blocks: ByteArray) {
 
         fun index(x: Int, y: Int, z: Int) = (x * SIZE_Y * SIZE_Z) + (y * SIZE_Z) + z
 
-        fun empty(pos: ChunkPos) = Chunk(pos, ByteArray(TOTAL) { BlockType.AIR.ordinal.toByte() })
+        fun empty(pos: ChunkPos) = Chunk(pos, ByteArray(TOTAL))
 
         fun build(pos: ChunkPos, filler: (x: Int, y: Int, z: Int) -> BlockType): Chunk {
             val blocks = ByteArray(TOTAL)
             for (x in 0 until SIZE_X) for (y in 0 until SIZE_Y) for (z in 0 until SIZE_Z) blocks[
-                index(x, y, z)] = filler(x, y, z).ordinal.toByte()
+                index(x, y, z)] = BlockRegistry.wireIndex(filler(x, y, z)).toByte()
             return Chunk(pos, blocks)
         }
 
@@ -33,7 +33,7 @@ data class Chunk(val pos: ChunkPos, val blocks: ByteArray) {
     }
 
     fun getBlock(x: Int, y: Int, z: Int): BlockType =
-        BlockType.entries[blocks[index(x, y, z)].toInt()]
+        BlockRegistry.byWireIndex(blocks[index(x, y, z)].toInt() and 0xFF)
 
     /** Highest Y level containing any non-AIR block. */
     fun topY(): Int {
@@ -58,7 +58,7 @@ data class Chunk(val pos: ChunkPos, val blocks: ByteArray) {
 
     fun withBlock(x: Int, y: Int, z: Int, type: BlockType): Chunk {
         val newBlocks = blocks.copyOf()
-        newBlocks[index(x, y, z)] = type.ordinal.toByte()
+        newBlocks[index(x, y, z)] = BlockRegistry.wireIndex(type).toByte()
         return copy(blocks = newBlocks)
     }
 

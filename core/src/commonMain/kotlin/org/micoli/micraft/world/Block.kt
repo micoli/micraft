@@ -1,6 +1,12 @@
 package org.micoli.micraft.world
 
+import kotlin.jvm.JvmInline
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 enum class ItemType {
@@ -13,25 +19,38 @@ enum class ItemType {
     FLINT,
 }
 
-@Serializable
-enum class BlockType {
-    AIR,
-    BEDROCK,
-    STONE,
-    DIRT,
-    GRASS,
-    SAND,
-    SANDSTONE,
-    GRAVEL,
-    SNOW,
-    OAK_LOG,
-    OAK_LEAVES,
-    PINE_LOG,
-    PINE_LEAVES,
-    PINE_LEAVES_SNOW,
-    FLOWER,
-    WEED,
-    WATER,
+@JvmInline
+@Serializable(with = BlockTypeSerializer::class)
+value class BlockType(val id: String) {
+    companion object {
+        val AIR = BlockType("AIR")
+        val BEDROCK = BlockType("BEDROCK")
+        val STONE = BlockType("STONE")
+        val DIRT = BlockType("DIRT")
+        val GRASS = BlockType("GRASS")
+        val SAND = BlockType("SAND")
+        val SANDSTONE = BlockType("SANDSTONE")
+        val GRAVEL = BlockType("GRAVEL")
+        val SNOW = BlockType("SNOW")
+        val OAK_LOG = BlockType("OAK_LOG")
+        val OAK_LEAVES = BlockType("OAK_LEAVES")
+        val PINE_LOG = BlockType("PINE_LOG")
+        val PINE_LEAVES = BlockType("PINE_LEAVES")
+        val PINE_LEAVES_SNOW = BlockType("PINE_LEAVES_SNOW")
+        val FLOWER = BlockType("FLOWER")
+        val WEED = BlockType("WEED")
+        val WATER = BlockType("WATER")
+    }
+
+    override fun toString(): String = id
+}
+
+object BlockTypeSerializer : KSerializer<BlockType> {
+    override val descriptor = PrimitiveSerialDescriptor("BlockType", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: BlockType) = encoder.encodeString(value.id)
+
+    override fun deserialize(decoder: Decoder) = BlockType(decoder.decodeString())
 }
 
 val BlockType.hardness: Int
@@ -45,6 +64,15 @@ val BlockType.isLiquid: Boolean
 
 val BlockType.viscosity: Int
     get() = BlockRegistry.get(this).viscosity
+
+val BlockType.isReplaceable: Boolean
+    get() = BlockRegistry.get(this).replaceable
+
+val BlockType.isVegetationHost: Boolean
+    get() = BlockRegistry.get(this).vegetationHost
+
+val BlockType.treeAllowed: Boolean
+    get() = BlockRegistry.get(this).treeAllowed
 
 val ItemType.buildable: Boolean
     get() = ItemRegistry.get(this).buildable

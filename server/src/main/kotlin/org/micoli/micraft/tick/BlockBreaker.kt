@@ -34,7 +34,7 @@ class BlockBreaker(
                         (bp.z + 0.5f - session.state.pos.z) * (bp.z + 0.5f - session.state.pos.z))
                     .toDouble())
         log.debug("BlockBreakStart pos={} block={} dist={}", bp, block, "%.2f".format(dist))
-        if (dist <= 6.0 && block != BlockType.AIR && block != BlockType.BEDROCK) {
+        if (dist <= 6.0 && block.hardness > 0 && block.hardness != Int.MAX_VALUE) {
             session.breakTarget = bp
             session.breakProgress = 0
         }
@@ -69,7 +69,7 @@ class BlockBreaker(
     suspend fun tick(session: PlayerSession) {
         val bt = session.breakTarget ?: return
         val block = world.getBlock(bt.x, bt.y, bt.z)
-        if (block == BlockType.AIR || block == BlockType.BEDROCK) {
+        if (block.hardness == 0 || block.hardness == Int.MAX_VALUE) {
             session.breakTarget = null
             session.breakProgress = 0
             return

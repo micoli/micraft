@@ -50,11 +50,12 @@ class BlockRegistryLoaderTest {
     }
 
     @Test
-    fun unknownBlockKey_isSkipped() {
+    fun unknownBlockKey_isLoaded() {
         val loader =
             loaderWith("NOT_A_BLOCK:\n  hardness: 1\n  solid: true\n  minimapColor: [0, 0, 0]\n")
         val result = loader.load()
-        assertTrue(result.isEmpty())
+        assertEquals(1, result.size)
+        assertEquals(1, result[BlockType("NOT_A_BLOCK")]?.hardness)
     }
 
     @Test
@@ -88,5 +89,44 @@ class BlockRegistryLoaderTest {
                 "STONE:\n  hardness: 5\n  solid: true\n  minimapColor: [0, 0, 0]\n  modelElement: GRANITE\n")
         val result = loader.load()
         assertEquals("GRANITE", result[BlockType.STONE]?.modelElement)
+    }
+
+    @Test
+    fun newFields_defaultValues() {
+        val loader = loaderWith("STONE:\n  hardness: 5\n  solid: true\n  minimapColor: [0, 0, 0]\n")
+        val result = loader.load()
+        val def = result[BlockType.STONE]!!
+        assertEquals(false, def.replaceable)
+        assertEquals(false, def.vegetationHost)
+        assertEquals(true, def.treeAllowed)
+    }
+
+    @Test
+    fun newFields_explicitValues() {
+        val loader =
+            loaderWith(
+                """
+            GRASS:
+              hardness: 3
+              solid: true
+              minimapColor: [74, 122, 40]
+              vegetationHost: true
+            SAND:
+              hardness: 2
+              solid: true
+              minimapColor: [212, 200, 122]
+              treeAllowed: false
+            AIR:
+              hardness: 0
+              solid: false
+              transparent: true
+              minimapColor: [10, 10, 30]
+              replaceable: true
+            """
+                    .trimIndent())
+        val result = loader.load()
+        assertEquals(true, result[BlockType.GRASS]?.vegetationHost)
+        assertEquals(false, result[BlockType.SAND]?.treeAllowed)
+        assertEquals(true, result[BlockType.AIR]?.replaceable)
     }
 }

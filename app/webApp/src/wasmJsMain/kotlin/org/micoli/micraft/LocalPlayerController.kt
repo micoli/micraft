@@ -479,7 +479,7 @@ class LocalPlayerController(
 
         val toDeg = 180.0 / kotlin.math.PI
         val targetBlockName =
-            target?.let { chunkManager.getBlockAtWorld(it.x, it.y, it.z).name } ?: ""
+            target?.let { chunkManager.getBlockAtWorld(it.x, it.y, it.z).id } ?: ""
         val gameTimeDisplay = ticksToHHMM(currentGameTicks)
         jsUpdateHUD(
             hudX,

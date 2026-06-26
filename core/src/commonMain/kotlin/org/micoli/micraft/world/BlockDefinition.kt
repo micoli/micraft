@@ -11,4 +11,7 @@ data class BlockDefinition(
     val modelElement: String = "",
     val liquid: Boolean = false,
     val viscosity: Int = 0,
+    val replaceable: Boolean = false,
+    val vegetationHost: Boolean = false,
+    val treeAllowed: Boolean = true,
 )

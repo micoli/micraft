@@ -53,6 +53,21 @@
           "description": "Liquid viscosity: ticks delay between propagation steps and player speed factor. 0 = not a liquid.",
           "minimum": 0,
           "default": 0
+        },
+        "replaceable": {
+          "type": "boolean",
+          "description": "Whether a player can place a block here (overwriting this block). True for AIR, WATER, FLOWER, WEED.",
+          "default": false
+        },
+        "vegetationHost": {
+          "type": "boolean",
+          "description": "Whether flowers and weeds can grow on top of this block. True for GRASS.",
+          "default": false
+        },
+        "treeAllowed": {
+          "type": "boolean",
+          "description": "Whether trees can grow on top of this block. False for SAND, SANDSTONE.",
+          "default": true
         }
       }
     }

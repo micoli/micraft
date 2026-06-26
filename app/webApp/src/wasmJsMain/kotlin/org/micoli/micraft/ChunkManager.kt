@@ -122,7 +122,7 @@ class ChunkManager(private val scene: JsAny) {
                 for (y in 0..topY) {
                     val block = chunk.getBlock(x, y, z)
                     if (block == BlockType.AIR) continue
-                    val t = block.ordinal * 6
+                    val t = BlockRegistry.wireIndex(block) * 6
                     val wx = ox + x
                     val wz2 = oz + z
                     val blockAbove =
@@ -181,7 +181,7 @@ class ChunkManager(private val scene: JsAny) {
                     val block = chunk.getBlock(lx, y, lz)
                     if (block != BlockType.AIR) {
                         topYParts[idx] = y
-                        topBlockParts[idx] = block.ordinal
+                        topBlockParts[idx] = BlockRegistry.wireIndex(block)
                         break
                     }
                 }

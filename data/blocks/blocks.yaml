@@ -3,6 +3,7 @@ AIR:
   solid: false
   transparent: true
   minimapColor: [10, 10, 30]
+  replaceable: true
 BEDROCK:
   hardness: -1
   solid: true
@@ -19,14 +20,17 @@ GRASS:
   hardness: 3
   solid: true
   minimapColor: [74, 122, 40]
+  vegetationHost: true
 SAND:
   hardness: 2
   solid: true
   minimapColor: [212, 200, 122]
+  treeAllowed: false
 SANDSTONE:
   hardness: 4
   solid: true
   minimapColor: [200, 160, 87]
+  treeAllowed: false
 GRAVEL:
   hardness: 3
   solid: true
@@ -63,11 +67,13 @@ FLOWER:
   solid: false
   transparent: true
   minimapColor: [230, 200, 50]
+  replaceable: true
 WEED:
   hardness: 1
   solid: false
   transparent: true
   minimapColor: [70, 130, 40]
+  replaceable: true
 WATER:
   hardness: -1
   solid: false
@@ -75,3 +81,4 @@ WATER:
   liquid: true
   viscosity: 3
   minimapColor: [50, 120, 200]
+  replaceable: true

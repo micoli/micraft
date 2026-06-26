@@ -1,5 +1,6 @@
 package org.micoli.micraft.world.proceduralGenerator.house
 
+import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.Chunk
 import org.micoli.micraft.world.WorldConstants
@@ -38,7 +39,7 @@ internal fun setHouseBlock(
     if (lx !in 0 until WorldConstants.CHUNK_SIZE) return
     if (lz !in 0 until WorldConstants.CHUNK_SIZE) return
     if (wy !in 0 until Chunk.Companion.SIZE_Y) return
-    blocks[Chunk.Companion.index(lx, wy, lz)] = type.ordinal.toByte()
+    blocks[Chunk.Companion.index(lx, wy, lz)] = BlockRegistry.wireIndex(type).toByte()
 }
 
 // baseY offset of floor n: sum of heights of floors 0..n-1 = n*floorH + n*(n-1)/2

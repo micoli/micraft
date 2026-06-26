@@ -1,6 +1,7 @@
 package org.micoli.micraft.world.proceduralGenerator
 
 import org.micoli.micraft.world.BiomeRegistry
+import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.Chunk
 import org.micoli.micraft.world.ChunkPos
@@ -107,7 +108,7 @@ class ProceduralChunkGenerator(
             for (ly in 0 until Chunk.Companion.SIZE_Y) {
                 for (lz in 0 until s) {
                     blocks[Chunk.Companion.index(lx, ly, lz)] =
-                        terrainBlock(ly, cols[lx][lz]).ordinal.toByte()
+                        BlockRegistry.wireIndex(terrainBlock(ly, cols[lx][lz])).toByte()
                 }
             }
         }

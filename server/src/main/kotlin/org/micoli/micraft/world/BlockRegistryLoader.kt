@@ -22,6 +22,9 @@ private data class BlockYamlEntry(
     val modelElement: String = "",
     val liquid: Boolean = false,
     val viscosity: Int = 0,
+    val replaceable: Boolean = false,
+    val vegetationHost: Boolean = false,
+    val treeAllowed: Boolean = true,
 )
 
 private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), BlockYamlEntry.serializer())
@@ -30,14 +33,32 @@ private val DEFAULT_YAML: Map<String, BlockYamlEntry> =
     mapOf(
         "AIR" to
             BlockYamlEntry(
-                hardness = 0, solid = false, transparent = true, minimapColor = listOf(10, 10, 30)),
+                hardness = 0,
+                solid = false,
+                transparent = true,
+                minimapColor = listOf(10, 10, 30),
+                replaceable = true),
         "BEDROCK" to BlockYamlEntry(hardness = -1, solid = true, minimapColor = listOf(58, 58, 58)),
         "STONE" to BlockYamlEntry(hardness = 5, solid = true, minimapColor = listOf(136, 136, 136)),
         "DIRT" to BlockYamlEntry(hardness = 3, solid = true, minimapColor = listOf(122, 92, 46)),
-        "GRASS" to BlockYamlEntry(hardness = 3, solid = true, minimapColor = listOf(74, 122, 40)),
-        "SAND" to BlockYamlEntry(hardness = 2, solid = true, minimapColor = listOf(212, 200, 122)),
+        "GRASS" to
+            BlockYamlEntry(
+                hardness = 3,
+                solid = true,
+                minimapColor = listOf(74, 122, 40),
+                vegetationHost = true),
+        "SAND" to
+            BlockYamlEntry(
+                hardness = 2,
+                solid = true,
+                minimapColor = listOf(212, 200, 122),
+                treeAllowed = false),
         "SANDSTONE" to
-            BlockYamlEntry(hardness = 4, solid = true, minimapColor = listOf(200, 160, 87)),
+            BlockYamlEntry(
+                hardness = 4,
+                solid = true,
+                minimapColor = listOf(200, 160, 87),
+                treeAllowed = false),
         "GRAVEL" to
             BlockYamlEntry(hardness = 3, solid = true, minimapColor = listOf(128, 128, 128)),
         "SNOW" to BlockYamlEntry(hardness = 1, solid = true, minimapColor = listOf(240, 240, 240)),
@@ -60,13 +81,15 @@ private val DEFAULT_YAML: Map<String, BlockYamlEntry> =
                 hardness = 1,
                 solid = false,
                 transparent = true,
-                minimapColor = listOf(230, 200, 50)),
+                minimapColor = listOf(230, 200, 50),
+                replaceable = true),
         "WEED" to
             BlockYamlEntry(
                 hardness = 1,
                 solid = false,
                 transparent = true,
-                minimapColor = listOf(70, 130, 40)),
+                minimapColor = listOf(70, 130, 40),
+                replaceable = true),
         "WATER" to
             BlockYamlEntry(
                 hardness = -1,
@@ -74,7 +97,8 @@ private val DEFAULT_YAML: Map<String, BlockYamlEntry> =
                 transparent = true,
                 minimapColor = listOf(50, 120, 200),
                 liquid = true,
-                viscosity = 3),
+                viscosity = 3,
+                replaceable = true),
     )
 
 class BlockRegistryLoader(private val path: Path) {
@@ -97,7 +121,7 @@ class BlockRegistryLoader(private val path: Path) {
             raw.entries
                 .mapNotNull { (key, entry) ->
                     runCatching {
-                            BlockType.valueOf(key) to
+                            BlockType(key) to
                                 BlockDefinition(
                                     hardness = entry.hardness,
                                     solid = entry.solid,
@@ -106,6 +130,9 @@ class BlockRegistryLoader(private val path: Path) {
                                     modelElement = entry.modelElement,
                                     liquid = entry.liquid,
                                     viscosity = entry.viscosity,
+                                    replaceable = entry.replaceable,
+                                    vegetationHost = entry.vegetationHost,
+                                    treeAllowed = entry.treeAllowed,
                                 )
                         }
                         .onFailure {

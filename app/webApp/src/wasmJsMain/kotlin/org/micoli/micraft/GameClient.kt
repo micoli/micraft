@@ -268,8 +268,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             is ServerMessage.RegistrySync -> {
                 val blockDefs =
                     msg.blocks
-                        .mapIndexed { i, info ->
-                            BlockType.entries[i] to
+                        .mapIndexed { _, info ->
+                            BlockType(info.name) to
                                 BlockDefinition(
                                     hardness = info.hardness,
                                     solid = info.solid,
@@ -291,8 +291,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                             buildable = info.buildable,
                                             placesBlock =
                                                 info.placesBlock?.let {
-                                                    runCatching { BlockType.valueOf(it) }
-                                                        .getOrNull()
+                                                    runCatching { BlockType(it) }.getOrNull()
                                                 },
                                         )
                                 }

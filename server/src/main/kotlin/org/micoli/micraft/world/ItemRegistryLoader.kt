@@ -52,17 +52,7 @@ class ItemRegistryLoader(private val path: Path) {
             raw.entries
                 .mapNotNull { (key, entry) ->
                     runCatching {
-                            val placesBlock =
-                                entry.placesBlock?.let {
-                                    runCatching { BlockType.valueOf(it) }
-                                        .onFailure {
-                                            log.warn(
-                                                "Unknown block type '{}' for item '{}' in items.yaml",
-                                                it,
-                                                key)
-                                        }
-                                        .getOrNull()
-                                }
+                            val placesBlock = entry.placesBlock?.let { BlockType(it) }
                             ItemType.valueOf(key) to
                                 ItemDefinition(
                                     buildable = entry.buildable, placesBlock = placesBlock)

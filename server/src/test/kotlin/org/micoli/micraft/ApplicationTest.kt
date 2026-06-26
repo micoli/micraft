@@ -78,13 +78,6 @@ class ApplicationTest {
                 registryMsg.blocks.isNotEmpty(), "RegistrySync must contain block definitions")
             assertTrue(registryMsg.items.isNotEmpty(), "RegistrySync must contain item definitions")
 
-            // Verify ordinal count matches BlockType entries
-            val blockTypeCount = org.micoli.micraft.world.BlockType.entries.size
-            assertEquals(
-                blockTypeCount,
-                registryMsg.blocks.size,
-                "Block list size must match BlockType enum count")
-
             // Verify first block is AIR
             assertEquals("AIR", registryMsg.blocks[0].name)
             assertEquals(0, registryMsg.blocks[0].hardness)

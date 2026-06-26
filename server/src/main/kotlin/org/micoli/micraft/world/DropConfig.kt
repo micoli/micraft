@@ -63,9 +63,7 @@ class DropConfig(private val path: Path) {
                     DEFAULT_DROPS
                 }
         return raw.entries
-            .mapNotNull { (key, entries) ->
-                runCatching { BlockType.valueOf(key) to entries }.getOrNull()
-            }
+            .mapNotNull { (key, entries) -> runCatching { BlockType(key) to entries }.getOrNull() }
             .toMap()
     }
 

@@ -1,11 +1,14 @@
 package org.micoli.micraft.world.proceduralGenerator.vegetation
 
 import kotlin.math.abs
+import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.Chunk
 import org.micoli.micraft.world.VegetationType
 import org.micoli.micraft.world.WorldConstants
+import org.micoli.micraft.world.isVegetationHost
 import org.micoli.micraft.world.proceduralGenerator.ProceduralChunkGenerator
+import org.micoli.micraft.world.treeAllowed
 
 private fun vegetationHash(
     generator: ProceduralChunkGenerator,
@@ -65,20 +68,19 @@ private fun placeVegetationStructure(
 ) {
     when (type) {
         VegetationType.OAK_TREE ->
-            if (surfaceBlock != BlockType.SAND && surfaceBlock != BlockType.SANDSTONE)
-                placeOakTree(generator, blocks, ox, oz, wx, wz, surfaceY)
+            if (surfaceBlock.treeAllowed) placeOakTree(generator, blocks, ox, oz, wx, wz, surfaceY)
         VegetationType.PINE_TREE ->
-            if (surfaceBlock != BlockType.SAND && surfaceBlock != BlockType.SANDSTONE)
+            if (surfaceBlock.treeAllowed)
                 placePineTree(generator, blocks, ox, oz, wx, wz, surfaceY, BlockType.PINE_LEAVES)
         VegetationType.PINE_TREE_SNOW ->
-            if (surfaceBlock != BlockType.SAND && surfaceBlock != BlockType.SANDSTONE)
+            if (surfaceBlock.treeAllowed)
                 placePineTree(
                     generator, blocks, ox, oz, wx, wz, surfaceY, BlockType.PINE_LEAVES_SNOW)
         VegetationType.FLOWER ->
-            if (surfaceBlock == BlockType.GRASS)
+            if (surfaceBlock.isVegetationHost)
                 setVeg(blocks, ox, oz, wx, surfaceY + 1, wz, BlockType.FLOWER)
         VegetationType.WEED ->
-            if (surfaceBlock == BlockType.GRASS)
+            if (surfaceBlock.isVegetationHost)
                 setVeg(blocks, ox, oz, wx, surfaceY + 1, wz, BlockType.WEED)
     }
 }
@@ -168,7 +170,7 @@ private fun setVeg(
     if (lz !in 0 until WorldConstants.CHUNK_SIZE) return
     if (wy !in 1 until Chunk.Companion.SIZE_Y) return
     val idx = Chunk.Companion.index(lx, wy, lz)
-    if (blocks[idx] == BlockType.AIR.ordinal.toByte()) {
-        blocks[idx] = type.ordinal.toByte()
+    if (blocks[idx] == BlockRegistry.wireIndex(BlockType.AIR).toByte()) {
+        blocks[idx] = BlockRegistry.wireIndex(type).toByte()
     }
 }

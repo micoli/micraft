@@ -6,9 +6,9 @@ import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.session.WorldActionRecord
-import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.WorldState
 import org.micoli.micraft.world.buildable
+import org.micoli.micraft.world.isReplaceable
 import org.micoli.micraft.world.placesBlock
 import org.slf4j.LoggerFactory
 
@@ -50,7 +50,7 @@ class BlockPlacer(
         }
 
         val existing = world.getBlock(pos.x, pos.y, pos.z)
-        if (existing != BlockType.AIR) {
+        if (!existing.isReplaceable) {
             log.debug("BlockPlace rejected: pos={} is {}", pos, existing)
             return
         }

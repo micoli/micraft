@@ -1,6 +1,15 @@
 package org.micoli.micraft.world
 
 object BlockRegistry {
+    private val wireIds = mutableMapOf<BlockType, Int>()
+    private val byWireId = mutableListOf<BlockType>()
+
+    fun wireIndex(type: BlockType): Int = wireIds[type] ?: 0
+
+    fun byWireIndex(idx: Int): BlockType = byWireId.getOrElse(idx) { BlockType.AIR }
+
+    fun all(): List<BlockType> = byWireId.toList()
+
     private val defaults: Map<BlockType, BlockDefinition> =
         mapOf(
             BlockType.AIR to
@@ -8,7 +17,8 @@ object BlockRegistry {
                     hardness = 0,
                     solid = false,
                     transparent = true,
-                    minimapColor = listOf(10, 10, 30)),
+                    minimapColor = listOf(10, 10, 30),
+                    replaceable = true),
             BlockType.BEDROCK to
                 BlockDefinition(hardness = -1, solid = true, minimapColor = listOf(58, 58, 58)),
             BlockType.STONE to
@@ -16,11 +26,23 @@ object BlockRegistry {
             BlockType.DIRT to
                 BlockDefinition(hardness = 3, solid = true, minimapColor = listOf(122, 92, 46)),
             BlockType.GRASS to
-                BlockDefinition(hardness = 3, solid = true, minimapColor = listOf(74, 122, 40)),
+                BlockDefinition(
+                    hardness = 3,
+                    solid = true,
+                    minimapColor = listOf(74, 122, 40),
+                    vegetationHost = true),
             BlockType.SAND to
-                BlockDefinition(hardness = 2, solid = true, minimapColor = listOf(212, 200, 122)),
+                BlockDefinition(
+                    hardness = 2,
+                    solid = true,
+                    minimapColor = listOf(212, 200, 122),
+                    treeAllowed = false),
             BlockType.SANDSTONE to
-                BlockDefinition(hardness = 4, solid = true, minimapColor = listOf(200, 160, 87)),
+                BlockDefinition(
+                    hardness = 4,
+                    solid = true,
+                    minimapColor = listOf(200, 160, 87),
+                    treeAllowed = false),
             BlockType.GRAVEL to
                 BlockDefinition(hardness = 3, solid = true, minimapColor = listOf(128, 128, 128)),
             BlockType.SNOW to
@@ -52,13 +74,15 @@ object BlockRegistry {
                     hardness = 1,
                     solid = false,
                     transparent = true,
-                    minimapColor = listOf(230, 200, 50)),
+                    minimapColor = listOf(230, 200, 50),
+                    replaceable = true),
             BlockType.WEED to
                 BlockDefinition(
                     hardness = 1,
                     solid = false,
                     transparent = true,
-                    minimapColor = listOf(70, 130, 40)),
+                    minimapColor = listOf(70, 130, 40),
+                    replaceable = true),
             BlockType.WATER to
                 BlockDefinition(
                     hardness = -1,
@@ -66,18 +90,34 @@ object BlockRegistry {
                     transparent = true,
                     minimapColor = listOf(50, 120, 200),
                     liquid = true,
-                    viscosity = 3),
+                    viscosity = 3,
+                    replaceable = true),
         )
 
     private val defs: MutableMap<BlockType, BlockDefinition> = defaults.toMutableMap()
+
+    init {
+        rebuildWireIds(defs.keys)
+    }
 
     fun load(incoming: Map<BlockType, BlockDefinition>) {
         defs.clear()
         defs.putAll(defaults)
         defs.putAll(incoming)
+        rebuildWireIds(defs.keys)
+    }
+
+    private fun rebuildWireIds(keys: Set<BlockType>) {
+        wireIds.clear()
+        byWireId.clear()
+        val ordered = listOf(BlockType.AIR) + (keys - BlockType.AIR)
+        ordered.forEachIndexed { idx, type ->
+            wireIds[type] = idx
+            byWireId.add(type)
+        }
     }
 
     fun get(type: BlockType): BlockDefinition = defs[type] ?: BlockDefinition()
 
-    fun orderedList(): List<BlockDefinition> = BlockType.entries.map { get(it) }
+    fun orderedList(): List<BlockDefinition> = byWireId.map { get(it) }
 }
