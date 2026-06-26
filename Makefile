@@ -3,7 +3,7 @@ DC_PROD = docker compose -f docker-compose.prod.yml
 
 .PHONY: dev-up dev-down dev-restart dev-clean-wasm dev-logs dc shell npm-format \
         prod-up prod-down prod-restart prod-logs prod-build \
-        help
+        docs help
 
 # ── Dev ───────────────────────────────────────────────────────────────────────
 
@@ -73,6 +73,11 @@ kt-test:
 web-test:
 	$(DC_DEV) exec micraft bash -c "./gradlew :app:shared:wasmJsTest"
 	$(DC_DEV) exec micraft bash -c "./gradlew :app:shared:jsTest"
+# ── Docs ──────────────────────────────────────────────────────────────────────
+
+docs:
+	$(DC_DEV) exec micraft node scripts/generate_commands_docs.mjs
+
 # ── Help ──────────────────────────────────────────────────────────────────────
 
 help:
