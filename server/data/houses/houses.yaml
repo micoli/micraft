@@ -50,7 +50,7 @@ defaultBiome:
   floorBlock: STONE
   houseProbability: 0.0
   clusterBonus: 0.0
-  allowedTypes: []
+  typeRates: {}
 
 biomes:
   plains:
@@ -59,32 +59,39 @@ biomes:
     floorBlock: DIRT
     houseProbability: 0.15
     clusterBonus: 0.25
-    allowedTypes: [cabin, house, townhouse]
+    typeRates:
+      cabin: 0.3
+      house: 0.5
+      townhouse: 0.2
   desert:
     wallBlock: SANDSTONE
     roofBlock: SAND
     floorBlock: SANDSTONE
     houseProbability: 0.08
     clusterBonus: 0.10
-    allowedTypes: [cabin, house]
+    typeRates:
+      cabin: 0.6
+      house: 0.4
   forest:
     wallBlock: OAK_LOG
     roofBlock: OAK_LEAVES
     floorBlock: DIRT
     houseProbability: 0.04
     clusterBonus: 0.05
-    allowedTypes: [cabin]
+    typeRates:
+      cabin: 1.0
   tundra:
     wallBlock: STONE
     roofBlock: SNOW
     floorBlock: STONE
     houseProbability: 0.05
     clusterBonus: 0.10
-    allowedTypes: [cabin]
+    typeRates:
+      cabin: 1.0
   mountains:
     wallBlock: STONE
     roofBlock: GRAVEL
     floorBlock: STONE
     houseProbability: 0.0
     clusterBonus: 0.0
-    allowedTypes: []
+    typeRates: {}

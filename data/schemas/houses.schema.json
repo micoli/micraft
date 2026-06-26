@@ -70,7 +70,7 @@
         "floorsMax": { "type": "integer", "minimum": 1 },
         "roofTypes": {
           "type": "array",
-          "items": { "type": "string", "enum": ["flat", "gabled"] },
+          "items": { "type": "string", "enum": ["flat", "gabled", "extended_gabled"] },
           "minItems": 1
         },
         "roomsMin": { "type": "integer", "minimum": 1 },
@@ -94,10 +94,13 @@
           "type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.0,
           "description": "Extra probability added per neighbouring cell that has a house"
         },
-        "allowedTypes": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "List of house type ids allowed in this biome"
+        "typeRates": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0.0
+          },
+          "description": "Per-type spawn weight in this biome (house type id → weight). Types with weight 0 or absent are excluded. Weights are relative (e.g. cabin: 0.3, house: 0.5 means house spawns ~62.5% of the time)."
         }
       }
     }

@@ -34,7 +34,7 @@ class HouseGeneratorTest {
             floorBlock = BlockType.DIRT,
             houseProbability = 1.0,
             clusterBonus = 0.0,
-            allowedTypes = listOf("cabin"),
+            typeRates = mapOf("cabin" to 1.0),
         )
 
     private val config =

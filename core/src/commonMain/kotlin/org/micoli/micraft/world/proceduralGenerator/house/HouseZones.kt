@@ -98,11 +98,19 @@ class HouseZones(
         if (biomeCfg.allowedTypes.isEmpty()) return null
 
         val houseSeed = seed xor (cx.toLong() * 374761393L) xor (cz.toLong() * 1234567891L)
-        val typeIdx =
-            (cellHash(cx, cz, 3) * biomeCfg.allowedTypes.size)
-                .toInt()
-                .coerceIn(0, biomeCfg.allowedTypes.size - 1)
-        val typeId = biomeCfg.allowedTypes[typeIdx]
+        val weightedTypes = biomeCfg.typeRates.entries.filter { it.value > 0 }
+        val totalWeight = weightedTypes.sumOf { it.value }
+        val typeId = if (totalWeight <= 0.0) {
+            return null
+        } else {
+            var r = cellHash(cx, cz, 3) * totalWeight
+            var selected = weightedTypes.last().key
+            for ((id, weight) in weightedTypes) {
+                r -= weight
+                if (r <= 0) { selected = id; break }
+            }
+            selected
+        }
         val typeCfg = config.houseTypes.find { it.id == typeId } ?: return null
 
         fun pick(min: Int, max: Int, salt: Int) =
