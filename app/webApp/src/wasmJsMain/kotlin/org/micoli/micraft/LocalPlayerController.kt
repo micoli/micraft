@@ -320,7 +320,7 @@ class LocalPlayerController(
                 "inventory" -> jsToggleHotbar()
                 "undo" -> outMessages.trySend(ClientMessage.Command("/undo 1"))
                 "fly_toggle" -> pendingFlyToggle = true
-                "auto_advance_toggle" -> autoAdvance = !autoAdvance
+                "auto_forward" -> autoAdvance = !autoAdvance
                 "slot_1" -> selectSlot(0)
                 "slot_2" -> selectSlot(1)
                 "slot_3" -> selectSlot(2)

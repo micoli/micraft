@@ -4,12 +4,13 @@
 # All values must be lists (use [Key] for single-key bindings).
 
 movement:
-  forward:      [KeyW, ArrowUp]
-  backward:     [KeyS, ArrowDown]
-  strafe_right: [KeyD, ArrowRight]
-  strafe_left:  [KeyA, ArrowLeft]
-  rotate_left:  [KeyQ]
-  rotate_right: [KeyE]
+  forward:       [KeyW, ArrowUp]
+  backward:      [KeyS, ArrowDown]
+  strafe_right:  [KeyD, ArrowRight]
+  strafe_left:   [KeyA, ArrowLeft]
+  rotate_left:   [KeyQ]
+  rotate_right:  [KeyE]
+  auto_forward:  [KeyW+KeyW, ArrowUp+ArrowUp]
 
 stance:
   sneak: [ShiftLeft]

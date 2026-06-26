@@ -21,6 +21,7 @@ const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   hud_mode_cycle: ["KeyH"],
   inventory: ["KeyI"],
   undo: ["Ctrl+KeyZ", "Cmd+KeyZ"],
+  auto_forward: ["KeyW+KeyW", "ArrowUp+ArrowUp"],
   minimap_zoom_in: ["l"],
   minimap_zoom_out: ["m"],
   layout_editor: ["KeyG"],
@@ -35,6 +36,16 @@ const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   slot_9: ["Digit9"],
   slot_10: ["Digit0"],
 };
+
+const MODIFIERS = new Set(["ctrl", "control", "shift", "alt", "option", "cmd", "command", "meta"]);
+
+// Returns true if any non-last part is not a known modifier — i.e. it's a key sequence, not a combo.
+// "Ctrl+KeyZ" → false (combo), "KeyW+KeyW" → true (sequence), "KeyA+KeyS" → true (sequence).
+function isSequenceBinding(str: string): boolean {
+  const parts = str.split("+");
+  if (parts.length < 2) return false;
+  return parts.slice(0, -1).some((p) => !MODIFIERS.has(p.toLowerCase()));
+}
 
 // Parse "Ctrl+Shift+KeyZ" → { mods: {ctrl,shift,alt,meta}, key: "KeyZ" }
 function parseBoundKey(str: string): ParsedKey {
@@ -58,6 +69,7 @@ function parseBoundKey(str: string): ParsedKey {
 // position, layout-independent). Lowercase names (m, l…) match e.key (produced character,
 // layout-aware — works correctly on AZERTY, Dvorak, etc.).
 function matchesEvent(str: string, e: KeyboardEvent): boolean {
+  if (isSequenceBinding(str)) return false;
   const parsed = parseBoundKey(str);
   const keyMatch = /^[A-Z]/.test(parsed.key) ? e.code === parsed.key : e.key.toLowerCase() === parsed.key.toLowerCase();
   if (!keyMatch) return false;
@@ -71,8 +83,23 @@ function matchesEvent(str: string, e: KeyboardEvent): boolean {
   );
 }
 
+// Checks whether a 2-key sequence binding matches: last key = current event, previous key pressed
+// within 300 ms. Only supports 2-key sequences.
+function matchesSequence(str: string, e: KeyboardEvent): boolean {
+  const parts = str.split("+");
+  if (parts.length !== 2) return false;
+  const [prev, last] = parts;
+  const lastMatch = /^[A-Z]/.test(last) ? e.code === last : e.key.toLowerCase() === last.toLowerCase();
+  if (!lastMatch) return false;
+  const lkp = window.__mc.lastKeyPress;
+  if (!lkp) return false;
+  const prevMatch = /^[A-Z]/.test(prev) ? lkp.code === prev : lkp.key?.toLowerCase() === prev.toLowerCase();
+  return prevMatch && Date.now() - lkp.time < 300;
+}
+
 // Continuous held-state check (called per-frame via mcIsActionDown).
 function isComboDown(str: string): boolean {
+  if (isSequenceBinding(str)) return false;
   const mc = window.__mc;
   const parsed = parseBoundKey(str);
   if (!mc.keys[parsed.key]) return false;
@@ -112,7 +139,7 @@ export function registerKeyboard(): void {
       modifiers: { ctrl: false, shift: false, alt: false, meta: false },
       events: [],
       lastSpaceTime: 0,
-      lastForwardTime: 0,
+      lastKeyPress: null,
       mouseLeft: false,
       lastMouseMove: 0,
       bindings: {},
@@ -128,15 +155,20 @@ export function registerKeyboard(): void {
       window.__mc.keys[e.code] = true;
       if (e.repeat) return;
       const b = window.__mc.bindings;
+
+      // Sequence bindings: check before updating lastKeyPress so prevKey is the truly previous press.
+      for (const [action, keys] of Object.entries(b)) {
+        if (keys.some((k) => isSequenceBinding(k) && matchesSequence(k, e))) {
+          window.__mc.events.push(action);
+        }
+      }
+
+      window.__mc.lastKeyPress = { code: e.code, key: e.key, time: Date.now() };
+
       if (b.fly_toggle?.some((k) => matchesEvent(k, e))) {
         const now = Date.now();
         if (now - window.__mc.lastSpaceTime < 300) window.__mc.events.push("fly_toggle");
         window.__mc.lastSpaceTime = now;
-      }
-      if (b.forward?.some((k) => matchesEvent(k, e))) {
-        const now = Date.now();
-        if (now - window.__mc.lastForwardTime < 300) window.__mc.events.push("auto_advance_toggle");
-        window.__mc.lastForwardTime = now;
       }
       if (b.view_toggle?.some((k) => matchesEvent(k, e))) window.__mc.events.push("view_toggle");
       if (b.hud_mode_cycle?.some((k) => matchesEvent(k, e))) (window as any).mcCycleHudMode?.();
