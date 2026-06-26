@@ -10,6 +10,11 @@ import kotlinx.serialization.json.Json
 import org.micoli.micraft.player.PlayerState
 import org.slf4j.LoggerFactory
 
+private val playerJson = Json {
+    encodeDefaults = true
+    prettyPrint = true
+}
+
 private val log = LoggerFactory.getLogger("WorldPersistence")
 
 class WorldPersistence(val worldDir: Path) {
@@ -56,7 +61,7 @@ class WorldPersistence(val worldDir: Path) {
         val file = playersDir.resolve("${name.sanitize()}.json")
         if (!file.exists()) return null
         return try {
-            Json.decodeFromString<PlayerState>(file.readText())
+            playerJson.decodeFromString<PlayerState>(file.readText())
         } catch (e: Exception) {
             log.warn("Failed to load player {}: {}", name, e.message)
             null
@@ -66,7 +71,7 @@ class WorldPersistence(val worldDir: Path) {
     fun savePlayerState(name: String, state: PlayerState) {
         val file = playersDir.resolve("${name.sanitize()}.json")
         try {
-            file.writeText(Json.encodeToString(state))
+            file.writeText(playerJson.encodeToString(state))
         } catch (e: IOException) {
             log.warn("Failed to save player {}: {}", name, e.message)
         }
