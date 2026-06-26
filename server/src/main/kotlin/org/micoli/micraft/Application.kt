@@ -42,6 +42,7 @@ import org.micoli.micraft.world.loadServerConfig
 import org.micoli.micraft.world.proceduralGenerator.ProceduralChunkGenerator
 import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.DebugChunkGenerator
+import org.micoli.micraft.world.validateAllYamlConfigs
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("Application")
@@ -55,6 +56,8 @@ private val SERVER_ID: String = UUID.randomUUID().toString()
 
 fun Application.module() {
     install(WebSockets) {}
+
+    validateAllYamlConfigs()
 
     val serverConfig = loadServerConfig(java.nio.file.Path.of("data/server.yaml"))
     applyServerConfig(serverConfig)

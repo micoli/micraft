@@ -153,7 +153,8 @@ private fun PlacedHouse.placeWindows(blocks: ByteArray, ox: Int, oz: Int) {
         val windowY = anchorY + houseFloorBaseOffset(floor, floorH) + 2
 
         // faces avant et arrière (Z) : 1-3 fenêtres réparties
-        val numZWin = 1 + (houseHash(houseSeed, floor, 20, 0) * 3).toInt().coerceIn(0, (width - 3) / 2)
+        val numZWin =
+            1 + (houseHash(houseSeed, floor, 20, 0) * 3).toInt().coerceIn(0, (width - 3) / 2)
         val zSpacing = (width - 2) / (numZWin + 1)
         for (i in 1..numZWin) {
             val wx = anchorX + (zSpacing * i).coerceIn(1, width - 2)
@@ -162,7 +163,8 @@ private fun PlacedHouse.placeWindows(blocks: ByteArray, ox: Int, oz: Int) {
         }
 
         // faces latérales (X) : fenêtre centrale
-        val numXWin = 1 + (houseHash(houseSeed, floor, 21, 0) * 2).toInt().coerceIn(0, (depth - 3) / 2)
+        val numXWin =
+            1 + (houseHash(houseSeed, floor, 21, 0) * 2).toInt().coerceIn(0, (depth - 3) / 2)
         val xSpacing = (depth - 2) / (numXWin + 1)
         for (i in 1..numXWin) {
             val wz = anchorZ + (xSpacing * i).coerceIn(1, depth - 2)
@@ -191,7 +193,13 @@ private fun PlacedHouse.placeFlatRoof(blocks: ByteArray, ox: Int, oz: Int, topY:
     }
 }
 
-private fun PlacedHouse.placeGabledRoof(blocks: ByteArray, ox: Int, oz: Int, baseY: Int, overhang: Boolean) {
+private fun PlacedHouse.placeGabledRoof(
+    blocks: ByteArray,
+    ox: Int,
+    oz: Int,
+    baseY: Int,
+    overhang: Boolean
+) {
     val hasOverhang = overhang
     val dzMin = if (hasOverhang) -1 else 0
     val dzMax = if (hasOverhang) depth else depth - 1
@@ -212,10 +220,12 @@ private fun PlacedHouse.placeGabledRoof(blocks: ByteArray, ox: Int, oz: Int, bas
         if (rise > 0) {
             for (fillY in baseY until y) {
                 setHouseBlock(blocks, ox, oz, xStart, fillY, anchorZ, materials.wallBlock)
-                setHouseBlock(blocks, ox, oz, xStart, fillY, anchorZ + depth - 1, materials.wallBlock)
+                setHouseBlock(
+                    blocks, ox, oz, xStart, fillY, anchorZ + depth - 1, materials.wallBlock)
                 if (xStart != xEnd) {
                     setHouseBlock(blocks, ox, oz, xEnd, fillY, anchorZ, materials.wallBlock)
-                    setHouseBlock(blocks, ox, oz, xEnd, fillY, anchorZ + depth - 1, materials.wallBlock)
+                    setHouseBlock(
+                        blocks, ox, oz, xEnd, fillY, anchorZ + depth - 1, materials.wallBlock)
                 }
             }
         }
@@ -248,7 +258,8 @@ private fun setHouseBlock(
 }
 
 // baseY offset of floor n: sum of heights of floors 0..n-1 = n*floorH + n*(n-1)/2
-internal fun houseFloorBaseOffset(floor: Int, floorH: Int) = floor * floorH + floor * (floor - 1) / 2
+internal fun houseFloorBaseOffset(floor: Int, floorH: Int) =
+    floor * floorH + floor * (floor - 1) / 2
 
 // height of floor n = floorH + n (ground = floorH, first = floorH+1, …)
 internal fun houseFloorHeight(floor: Int, floorH: Int) = floorH + floor

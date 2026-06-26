@@ -65,6 +65,8 @@ dependencies {
     implementation(libs.ktor.server.websockets)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kaml)
+    implementation(libs.jackson.dataformat.yaml)
+    implementation(libs.json.schema.validator)
     testImplementation(libs.ktor.serverTestHost)
     testImplementation(libs.kotlin.testJunit)
 }

@@ -28,7 +28,8 @@ data class HouseBiomeConfig(
     val clusterBonus: Double = 0.0,
     val typeRates: Map<String, Double> = emptyMap(),
 ) {
-    val allowedTypes: List<String> get() = typeRates.filter { it.value > 0 }.keys.toList()
+    val allowedTypes: List<String>
+        get() = typeRates.filter { it.value > 0 }.keys.toList()
 }
 
 @Serializable

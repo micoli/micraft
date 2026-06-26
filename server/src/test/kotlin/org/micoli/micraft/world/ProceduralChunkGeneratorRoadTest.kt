@@ -107,7 +107,10 @@ class ProceduralChunkGeneratorRoadTest {
                 subsurface = BlockType.DIRT,
                 elevationMin = 48,
                 elevationMax = 78,
-                vegetation = listOf(VegetationEntry(VegetationType.FLOWER, 1.0), VegetationEntry(VegetationType.WEED, 1.0)),
+                vegetation =
+                    listOf(
+                        VegetationEntry(VegetationType.FLOWER, 1.0),
+                        VegetationEntry(VegetationType.WEED, 1.0)),
             )
         val registry =
             BiomeRegistry.from(
