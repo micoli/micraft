@@ -36,7 +36,7 @@ shell:
 
 # Format TypeScript sources (runs npm run format in ts-src)
 npm-format:
-	$(DC_DEV) bash -c "cd app/webApp/ts-src && npm run format"
+	$(DC_DEV) exec micraft bash -c "cd app/webApp/ts-src && npm run format"
 
 # ── Prod ──────────────────────────────────────────────────────────────────────
 

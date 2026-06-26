@@ -53,7 +53,9 @@ interface PauseMenuProps {
 
 export function PauseMenu({ open, onClose, onDisconnect, onPreferences }: PauseMenuProps) {
   const prefsButtonRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => { if (open) setTimeout(() => prefsButtonRef.current?.focus(), 50); }, [open]);
+  useEffect(() => {
+    if (open) setTimeout(() => prefsButtonRef.current?.focus(), 50);
+  }, [open]);
   if (!open) return null;
   return (
     <div style={overlayStyle} onClick={onClose}>
