@@ -12,7 +12,7 @@ const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   rotate_right: ["KeyE"],
   sneak: ["ShiftLeft"],
   crawl: ["ControlLeft"],
-  fly_toggle: ["Space"],
+  fly_toggle: ["Space+Space"],
   ascend: ["Space"],
   descend: ["ShiftLeft"],
   speed_up: ["KeyP"],
@@ -138,7 +138,6 @@ export function registerKeyboard(): void {
       keys: {},
       modifiers: { ctrl: false, shift: false, alt: false, meta: false },
       events: [],
-      lastSpaceTime: 0,
       lastKeyPress: null,
       mouseLeft: false,
       lastMouseMove: 0,
@@ -165,11 +164,6 @@ export function registerKeyboard(): void {
 
       window.__mc.lastKeyPress = { code: e.code, key: e.key, time: Date.now() };
 
-      if (b.fly_toggle?.some((k) => matchesEvent(k, e))) {
-        const now = Date.now();
-        if (now - window.__mc.lastSpaceTime < 300) window.__mc.events.push("fly_toggle");
-        window.__mc.lastSpaceTime = now;
-      }
       if (b.view_toggle?.some((k) => matchesEvent(k, e))) window.__mc.events.push("view_toggle");
       if (b.hud_mode_cycle?.some((k) => matchesEvent(k, e))) (window as any).mcCycleHudMode?.();
       if (b.inventory?.some((k) => matchesEvent(k, e))) window.__mc.events.push("inventory");

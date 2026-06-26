@@ -17,7 +17,7 @@ stance:
   crawl: [ControlLeft]
 
 flight:
-  fly_toggle: [Space]    # double-tap to toggle flying
+  fly_toggle: [Space+Space]
   ascend:     [Space]    # hold while flying (also = jump on ground)
   descend:    [ShiftLeft]
   speed_up:   [KeyP]
