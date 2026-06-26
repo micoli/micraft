@@ -319,9 +319,9 @@ export function GameUI() {
   return (
     <>
       {/* Minimap host: always in DOM (Kotlin appends canvas here at startup); hidden during login */}
-      <div id="mc-minimap-host" style={{ ...minimapStyle, display: state.loginVisible ? "none" : undefined }} />
+      <div id="mc-minimap-host" style={{ ...minimapStyle, display: state.loginVisible || state.disconnectMsg ? "none" : undefined }} />
 
-      {!state.loginVisible && (
+      {!state.loginVisible && !state.disconnectMsg && (
         <>
           <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, "HUD")} />
           <ShortcutBar
