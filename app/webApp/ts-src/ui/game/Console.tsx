@@ -102,7 +102,12 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
         onClose();
         break;
       case "Escape":
+        e.preventDefault();
         onClose();
+        setTimeout(() => {
+          const canvas = document.getElementById("renderCanvas");
+          if (canvas && !document.pointerLockElement) canvas.requestPointerLock();
+        }, 50);
         break;
       case "ArrowUp":
         e.preventDefault();
