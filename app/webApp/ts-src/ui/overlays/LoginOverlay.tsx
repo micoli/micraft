@@ -132,6 +132,7 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
   const usernameInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const newCharInputRef = useRef<HTMLInputElement>(null);
+  const playButtonRef = useRef<HTMLButtonElement>(null);
 
   // Fetch auth config once on mount
   useEffect(() => {
@@ -218,6 +219,12 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
       setTimeout(() => usernameInputRef.current?.focus(), 50);
     }
   }, [visible, step, authMode]);
+
+  useEffect(() => {
+    if (visible && step === "chars" && selected !== "__new__") {
+      setTimeout(() => playButtonRef.current?.focus(), 50);
+    }
+  }, [visible, step, selected]);
 
   function goChars(user: string) {
     try {
@@ -505,7 +512,7 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
                 />
               </div>
             </div>
-            <button style={btnPrimary} onClick={doPlay}>
+            <button ref={playButtonRef} style={btnPrimary} onClick={doPlay}>
               Play
             </button>
             {authMode === "local" || authMode === "oauth" ? (
