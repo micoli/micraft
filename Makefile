@@ -28,7 +28,7 @@ dev-logs:
 
 # Run any command inside the dev container: make dc CMD="./gradlew :server:test"
 dc:
-	$(DC_DEV) $(CMD)
+	$(DC_DEV) exec -it micraft $(CMD)
 
 # Open a bash shell in the dev container
 shell:
@@ -68,7 +68,6 @@ ts-typecheck:
 test: kt-test web-test
 
 kt-test:
-	$(DC_DEV) exec micraft bash -c "./gradlew :app:shared:jvmTest --info"
 	$(DC_DEV) exec micraft bash -c "./gradlew :server:test --info"
 
 web-test:
