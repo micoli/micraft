@@ -15,3 +15,5 @@ internal val DEBUG_WORLD = System.getenv("MICRAFT_DEBUG_WORLD") == "1"
 internal var SPAWN_X = 8f
 internal var SPAWN_Y = if (DEBUG_WORLD) 1f else 200f
 internal var SPAWN_Z = if (DEBUG_WORLD) 14f else 8f
+
+internal var MAX_INTERACTION_DISTANCE = 7.0

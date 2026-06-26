@@ -27,6 +27,7 @@ gameplay:
   spawnZ: 8.0
   ticksPerDay: 72000
   timeBroadcastTicks: 20
+  maxInteractionDistance: 6.0
 auth:
   provider: "none"
   local:

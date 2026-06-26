@@ -34,7 +34,9 @@ class BlockBreaker(
                         (bp.z + 0.5f - session.state.pos.z) * (bp.z + 0.5f - session.state.pos.z))
                     .toDouble())
         log.debug("BlockBreakStart pos={} block={} dist={}", bp, block, "%.2f".format(dist))
-        if (dist <= 6.0 && block.hardness > 0 && block.hardness != Int.MAX_VALUE) {
+        if (dist <= org.micoli.micraft.MAX_INTERACTION_DISTANCE &&
+            block.hardness > 0 &&
+            block.hardness != Int.MAX_VALUE) {
             session.breakTarget = bp
             session.breakProgress = 0
         }

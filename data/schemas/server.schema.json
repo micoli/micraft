@@ -45,8 +45,9 @@
         "spawnX":             { "type": "number",  "description": "Default spawn X coordinate for new players.", "default": 8.0 },
         "spawnY":             { "type": "number",  "description": "Default spawn Y coordinate for new players.", "default": 200.0 },
         "spawnZ":             { "type": "number",  "description": "Default spawn Z coordinate for new players.", "default": 8.0 },
-        "ticksPerDay":        { "type": "integer", "description": "Number of ticks in one in-game day.", "default": 72000 },
-        "timeBroadcastTicks": { "type": "integer", "description": "Ticks between game-time broadcasts to clients.", "default": 20 }
+        "ticksPerDay":             { "type": "integer", "description": "Number of ticks in one in-game day.", "default": 72000 },
+        "timeBroadcastTicks":      { "type": "integer", "description": "Ticks between game-time broadcasts to clients.", "default": 20 },
+        "maxInteractionDistance":  { "type": "number",  "description": "Maximum reach distance for block break/place (blocks).", "default": 6.0 }
       }
     },
     "auth": {

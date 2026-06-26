@@ -13,7 +13,6 @@ import org.micoli.micraft.world.placesBlock
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(BlockPlacer::class.java)
-private const val MAX_PLACE_DISTANCE = 6.0
 private const val MAX_ACTION_HISTORY = 20
 
 class BlockPlacer(
@@ -44,8 +43,11 @@ class BlockPlacer(
                         (pos.y + 0.5f - eyeY) * (pos.y + 0.5f - eyeY) +
                         (pos.z + 0.5f - session.state.pos.z) * (pos.z + 0.5f - session.state.pos.z))
                     .toDouble())
-        if (dist > MAX_PLACE_DISTANCE) {
-            log.debug("BlockPlace rejected: dist={} > {}", "%.2f".format(dist), MAX_PLACE_DISTANCE)
+        if (dist > org.micoli.micraft.MAX_INTERACTION_DISTANCE) {
+            log.debug(
+                "BlockPlace rejected: dist={} > {}",
+                "%.2f".format(dist),
+                org.micoli.micraft.MAX_INTERACTION_DISTANCE)
             return
         }
 

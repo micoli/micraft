@@ -54,6 +54,7 @@ data class GameplaySection(
     @EncodeDefault(ALWAYS) val spawnZ: Float = 8f,
     @EncodeDefault(ALWAYS) val ticksPerDay: Long = 72_000L,
     @EncodeDefault(ALWAYS) val timeBroadcastTicks: Int = 20,
+    @EncodeDefault(ALWAYS) val maxInteractionDistance: Double = 6.0,
 )
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -137,6 +138,7 @@ fun applyServerConfig(config: ServerConfig) {
         org.micoli.micraft.SAVE_INTERVAL_TICKS = (saveIntervalSeconds * 1000L / tickMs).toInt()
         org.micoli.micraft.TICKS_PER_DAY = ticksPerDay
         org.micoli.micraft.TIME_BROADCAST_TICKS = timeBroadcastTicks
+        org.micoli.micraft.MAX_INTERACTION_DISTANCE = maxInteractionDistance
         org.micoli.micraft.SPAWN_X = spawnX
         if (!DEBUG_WORLD) {
             org.micoli.micraft.SPAWN_Y = spawnY
