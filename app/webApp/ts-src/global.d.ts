@@ -108,6 +108,7 @@ declare global {
     playerBbmodel: BbModel | null;
     npcBbmodels: Record<string, BbModel>;
     npcModelsReady: boolean;
+    modalOpen: boolean;
   }
 
   interface McBlockFaceInfo {

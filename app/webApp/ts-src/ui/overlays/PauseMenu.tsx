@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 
 const overlayStyle: React.CSSProperties = {
   position: "fixed",
@@ -52,12 +52,14 @@ interface PauseMenuProps {
 }
 
 export function PauseMenu({ open, onClose, onDisconnect, onPreferences }: PauseMenuProps) {
+  const prefsButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (open) setTimeout(() => prefsButtonRef.current?.focus(), 50); }, [open]);
   if (!open) return null;
   return (
     <div style={overlayStyle} onClick={onClose}>
       <div style={cardStyle} onClick={(e) => e.stopPropagation()}>
         <div style={titleStyle}>PAUSE</div>
-        <button style={btnStyle} onClick={onPreferences}>
+        <button ref={prefsButtonRef} style={btnStyle} onClick={onPreferences}>
           Preferences
         </button>
         <button style={{ ...btnStyle, color: "#f88" }} onClick={onDisconnect}>

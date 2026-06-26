@@ -74,6 +74,7 @@ export function GameUI() {
   const pendingPreferencesUpdateRef = useRef<string>("");
 
   const pauseMenuOpenRef = useRef(false);
+  const preferencesOpenRef = useRef(false);
 
   // Keep consoleOpenRef in sync
   useEffect(() => {
@@ -83,6 +84,11 @@ export function GameUI() {
   useEffect(() => {
     pauseMenuOpenRef.current = state.pauseMenuOpen;
   }, [state.pauseMenuOpen]);
+
+  useEffect(() => {
+    preferencesOpenRef.current = state.preferencesOpen;
+    if (window.__mc) window.__mc.modalOpen = state.preferencesOpen;
+  }, [state.preferencesOpen]);
 
   // Auto-hide server log after 15s of no new messages
   useEffect(() => {
@@ -272,10 +278,15 @@ export function GameUI() {
       const loginEl = document.getElementById("mc-login-root");
       if (loginEl && (loginEl as HTMLElement).dataset.visible === "true") return;
       if (ke.key === "Escape" && !consoleOpenRef.current) {
+        if (preferencesOpenRef.current) {
+          dispatch({ type: "preferences_hide" });
+          return;
+        }
         dispatch({ type: pauseMenuOpenRef.current ? "pause_menu_hide" : "pause_menu_show" });
         return;
       }
       if (pauseMenuOpenRef.current) return;
+      if (preferencesOpenRef.current) return;
       if (ke.key === "/" && !consoleOpenRef.current) {
         ke.preventDefault();
         consoleInitialValueRef.current = "/";

@@ -122,6 +122,7 @@ export function registerKeyboard(): void {
     window.addEventListener("keydown", (e: KeyboardEvent) => {
       const tag = document.activeElement?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT") return;
+      if (window.__mc.modalOpen) return;
       window.__mc.modifiers = { ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey };
       window.__mc.keys[e.code] = true;
       if (e.repeat) return;
@@ -155,6 +156,7 @@ export function registerKeyboard(): void {
       }
       const tag = document.activeElement?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT") return;
+      if (window.__mc.modalOpen) return;
       window.__mc.modifiers = { ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey };
       window.__mc.keys[e.code] = false;
     });
