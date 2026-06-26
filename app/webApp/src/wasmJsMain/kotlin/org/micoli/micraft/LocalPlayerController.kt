@@ -23,7 +23,10 @@ private const val TICKS_PER_DAY_CLIENT = 72_000L
 
 private enum class ViewMode {
     FIRST_PERSON,
-    THIRD_PERSON
+    THIRD_PERSON,
+    FIRST_PERSON_NO_ARMS;
+
+    fun next(): ViewMode = entries[(ordinal + 1) % entries.size]
 }
 
 private data class RaycastResult(val target: BlockPos, val adjacent: BlockPos)
@@ -51,7 +54,7 @@ class LocalPlayerController(
     var localSpeedMult = 1f
     var lastPlayerCx = Int.MIN_VALUE
     var lastPlayerCz = Int.MIN_VALUE
-    private var viewMode = ViewMode.FIRST_PERSON
+    private var viewMode: ViewMode = ViewMode.FIRST_PERSON
     var pendingFlyToggle = false
     var autoAdvance = false
     var lastSentIntent: ClientMessage.MoveIntent? = null
@@ -78,6 +81,10 @@ class LocalPlayerController(
     private var currentFps = 0
     private var currentKbIn = 0.0
     private var currentKbOut = 0.0
+
+    fun setViewMode(mode: String) {
+        viewMode = ViewMode.entries.firstOrNull { it.name == mode } ?: ViewMode.FIRST_PERSON
+    }
 
     fun updateFromServer(state: PlayerState, onChunkChanged: (Int, Int) -> Unit) {
         localFlying = state.flying
@@ -313,10 +320,10 @@ class LocalPlayerController(
         val events = jsConsumeEvents()
         repeat(jsEventsLength(events)) { i ->
             when (jsEventsGet(events, i)) {
-                "view_toggle" ->
-                    viewMode =
-                        if (viewMode == ViewMode.FIRST_PERSON) ViewMode.THIRD_PERSON
-                        else ViewMode.FIRST_PERSON
+                "view_toggle" -> {
+                    viewMode = viewMode.next()
+                    outMessages.trySend(ClientMessage.ViewModeUpdate(viewMode.name))
+                }
                 "inventory" -> jsToggleHotbar()
                 "undo" -> outMessages.trySend(ClientMessage.Command("/undo 1"))
                 "fly_toggle" -> pendingFlyToggle = true
@@ -396,9 +403,10 @@ class LocalPlayerController(
         } else {
             jsCameraSetPosition(camera, predX, predY + localStance.eyeOffset.toDouble(), predZ)
             localPlayerModel?.let { jsSetPlayerVisible(it, false) }
+            val showArms = viewMode == ViewMode.FIRST_PERSON
             fpArms?.let {
-                jsUpdateFPArms(it, isMovingXZ)
-                jsSetFPArmsVisible(it, true)
+                if (showArms) jsUpdateFPArms(it, isMovingXZ)
+                jsSetFPArmsVisible(it, showArms)
             }
         }
 

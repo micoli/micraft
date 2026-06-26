@@ -224,6 +224,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 jsFetchBiomeColors()
                 chunkManager.setShadersEnabled(msg.shadersEnabled)
                 jsSyncLayouts(Json.encodeToString(LayoutSyncPayload(msg.layouts, msg.activeLayout)))
+                localController.setViewMode(msg.viewMode)
             }
             is ServerMessage.ShadersUpdate -> chunkManager.setShadersEnabled(msg.enabled)
             is ServerMessage.ChunkData ->

@@ -24,6 +24,7 @@ sealed class ServerMessage {
         val shadersEnabled: Boolean = true,
         val layouts: List<GameLayout> = listOf(defaultLayout()),
         val activeLayout: String = "default",
+        val viewMode: String = "FIRST_PERSON",
     ) : ServerMessage()
 
     @Serializable data class ShadersUpdate(val enabled: Boolean) : ServerMessage()

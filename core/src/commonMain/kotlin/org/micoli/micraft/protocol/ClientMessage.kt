@@ -63,4 +63,6 @@ sealed class ClientMessage {
         val disabledCommands: Set<String>,
         val shadersEnabled: Boolean,
     ) : ClientMessage()
+
+    @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()
 }

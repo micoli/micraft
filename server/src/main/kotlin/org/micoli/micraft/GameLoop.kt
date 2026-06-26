@@ -526,6 +526,7 @@ class GameLoop(
                 activeLayout = saved?.activeLayout ?: "default",
                 subscribedChannels = saved?.subscribedChannels ?: listOf("world", "system", "game"),
                 disabledCommands = saved?.disabledCommands ?: emptySet(),
+                viewMode = saved?.viewMode ?: "FIRST_PERSON",
             )
         val session = PlayerSession(id, userName, socket, state)
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
@@ -548,7 +549,8 @@ class GameLoop(
                 language,
                 shadersEnabled,
                 session.state.layouts,
-                session.state.activeLayout))
+                session.state.activeLayout,
+                session.state.viewMode))
         session.send(buildRegistrySync())
         session.send(buildPreferencesSync(session))
         chatService.onPlayerConnect(session)
@@ -592,6 +594,10 @@ class GameLoop(
                                 is ClientMessage.LayoutUpdate -> handleLayoutUpdate(session, msg)
                                 is ClientMessage.PreferencesUpdate ->
                                     handlePreferencesUpdate(session, msg)
+                                is ClientMessage.ViewModeUpdate -> {
+                                    session.state = session.state.copy(viewMode = msg.viewMode)
+                                    savePlayer(session)
+                                }
                                 is ClientMessage.NpcInteract ->
                                     npcManager.handleInteract(session, msg.npcId)
                                 else -> session.intents.trySend(msg)

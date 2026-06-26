@@ -20,7 +20,8 @@ fun jsCreateHemisphericLight(name: String, scene: JsAny): JsAny =
     js("mcCreateHemisphericLight(name, scene)")
 
 fun jsCreateCamera(name: String, x: Double, y: Double, z: Double, scene: JsAny): JsAny =
-    js("new BABYLON.UniversalCamera(name, new BABYLON.Vector3(x,y,z), scene)")
+    js(
+        "(function(){ var c = new BABYLON.UniversalCamera(name, new BABYLON.Vector3(x,y,z), scene); c.minZ = 0.05; return c; })()")
 
 fun jsCameraSetTarget(camera: JsAny, x: Double, y: Double, z: Double): Unit =
     js("camera.setTarget(new BABYLON.Vector3(x,y,z))")
