@@ -70,7 +70,7 @@
         "floorsMax": { "type": "integer", "minimum": 1 },
         "roofTypes": {
           "type": "array",
-          "items": { "type": "string", "enum": ["flat", "gabled", "extended_gabled"] },
+          "items": { "type": "string", "enum": ["flat", "gabled", "extended_gabled", "cone", "cone_overhang"] },
           "minItems": 1
         },
         "roomsMin": { "type": "integer", "minimum": 1 },

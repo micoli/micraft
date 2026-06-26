@@ -44,6 +44,19 @@ houseTypes:
     doorsMin: 1
     doorsMax: 1
 
+  - id: circular_temple
+    widthMin: 10
+    widthMax: 18
+    depthMin: 10
+    depthMax: 18
+    floorsMin: 1
+    floorsMax: 2
+    roofTypes: [cone, cone_overhang]
+    roomsMin: 1
+    roomsMax: 1
+    doorsMin: 1
+    doorsMax: 1
+
 defaultBiome:
   wallBlock: STONE
   roofBlock: GRAVEL
@@ -62,7 +75,8 @@ biomes:
     typeRates:
       cabin: 0.3
       house: 0.5
-      townhouse: 0.2
+      townhouse: 0.15
+      circular_temple: 0.05
   desert:
     wallBlock: SANDSTONE
     roofBlock: SAND
@@ -70,8 +84,9 @@ biomes:
     houseProbability: 0.08
     clusterBonus: 0.10
     typeRates:
-      cabin: 0.6
-      house: 0.4
+      cabin: 0.5
+      house: 0.3
+      circular_temple: 0.2
   forest:
     wallBlock: OAK_LOG
     roofBlock: OAK_LEAVES
