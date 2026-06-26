@@ -53,6 +53,7 @@ class LocalPlayerController(
     var lastPlayerCz = Int.MIN_VALUE
     private var viewMode = ViewMode.FIRST_PERSON
     var pendingFlyToggle = false
+    var autoAdvance = false
     var lastSentIntent: ClientMessage.MoveIntent? = null
 
     @OptIn(ExperimentalWasmJsInterop::class) var localPlayerModel: JsAny? = null
@@ -180,9 +181,11 @@ class LocalPlayerController(
         if (jsIsActionDown("rotate_left")) jsRotateCameraYaw(camera, -turnSpeed)
         if (jsIsActionDown("rotate_right")) jsRotateCameraYaw(camera, turnSpeed)
 
+        if (jsIsActionDown("backward")) autoAdvance = false
+
         var dx = 0f
         var dz = 0f
-        if (jsIsActionDown("forward")) {
+        if (jsIsActionDown("forward") || autoAdvance) {
             dx += fwdX
             dz += fwdZ
         }
@@ -239,13 +242,19 @@ class LocalPlayerController(
                 dz * speed)
         predZ += resolvedDz.toDouble()
 
+        if (autoAdvance && (dx != 0f || dz != 0f)) {
+            val intendedSq = (dx * speed) * (dx * speed) + (dz * speed) * (dz * speed)
+            val resolvedSq = resolvedDx * resolvedDx + resolvedDz * resolvedDz
+            if (resolvedSq < intendedSq * 0.01f) autoAdvance = false
+        }
+
         if (localFlying) {
             val fwdY = jsGetCameraForwardY(camera).toFloat()
             var dy = 0f
             if (jsIsActionDown("ascend")) dy = 1f
             else if (jsIsActionDown("descend")) dy = -1f
             else {
-                if (jsIsActionDown("forward")) dy += fwdY
+                if (jsIsActionDown("forward") || autoAdvance) dy += fwdY
                 if (jsIsActionDown("backward")) dy -= fwdY
             }
             val flyDy = (dy * FLY_VERTICAL_SPEED * localSpeedMult * PRED_DT).toFloat()
@@ -311,6 +320,7 @@ class LocalPlayerController(
                 "inventory" -> jsToggleHotbar()
                 "undo" -> outMessages.trySend(ClientMessage.Command("/undo 1"))
                 "fly_toggle" -> pendingFlyToggle = true
+                "auto_advance_toggle" -> autoAdvance = !autoAdvance
                 "slot_1" -> selectSlot(0)
                 "slot_2" -> selectSlot(1)
                 "slot_3" -> selectSlot(2)
@@ -503,7 +513,7 @@ class LocalPlayerController(
 
         var dx = 0f
         var dz = 0f
-        if (jsIsActionDown("forward")) {
+        if (jsIsActionDown("forward") || autoAdvance) {
             dx += fwdX
             dz += fwdZ
         }
@@ -538,7 +548,7 @@ class LocalPlayerController(
                     else -> {
                         val fwdY = jsGetCameraForwardY(camera).toFloat()
                         var d = 0f
-                        if (jsIsActionDown("forward")) d += fwdY
+                        if (jsIsActionDown("forward") || autoAdvance) d += fwdY
                         if (jsIsActionDown("backward")) d -= fwdY
                         d
                     }

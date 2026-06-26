@@ -112,6 +112,7 @@ export function registerKeyboard(): void {
       modifiers: { ctrl: false, shift: false, alt: false, meta: false },
       events: [],
       lastSpaceTime: 0,
+      lastForwardTime: 0,
       mouseLeft: false,
       lastMouseMove: 0,
       bindings: {},
@@ -131,6 +132,11 @@ export function registerKeyboard(): void {
         const now = Date.now();
         if (now - window.__mc.lastSpaceTime < 300) window.__mc.events.push("fly_toggle");
         window.__mc.lastSpaceTime = now;
+      }
+      if (b.forward?.some((k) => matchesEvent(k, e))) {
+        const now = Date.now();
+        if (now - window.__mc.lastForwardTime < 300) window.__mc.events.push("auto_advance_toggle");
+        window.__mc.lastForwardTime = now;
       }
       if (b.view_toggle?.some((k) => matchesEvent(k, e))) window.__mc.events.push("view_toggle");
       if (b.hud_mode_cycle?.some((k) => matchesEvent(k, e))) (window as any).mcCycleHudMode?.();
