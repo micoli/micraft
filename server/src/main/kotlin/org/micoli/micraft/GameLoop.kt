@@ -284,6 +284,7 @@ class GameLoop(
             }
         val keybindings =
             persistence?.loadPlayerKeyBindings(session.state.name) ?: defaultKeyBindings()
+        val customCommands = persistence?.loadPlayerCustomCommands(session.state.name) ?: emptyMap()
         return ServerMessage.PreferencesSync(
             subscribedChannels = session.state.subscribedChannels,
             knownChannels = knownChannels,
@@ -291,6 +292,7 @@ class GameLoop(
             shadersEnabled = session.state.shadersEnabled,
             commands = commandList,
             keybindings = keybindings,
+            customCommands = customCommands,
         )
     }
 
@@ -312,6 +314,7 @@ class GameLoop(
         if (msg.keybindings.isNotEmpty()) {
             persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
         }
+        persistence?.savePlayerCustomCommands(session.state.name, msg.customCommands)
         savePlayer(session)
         session.send(buildPreferencesSync(session))
         session.send(ServerMessage.ChannelsSync(newSubscribed, knownChannels))

@@ -272,6 +272,9 @@ export function GameUI() {
         if (data.keybindings && (window as any).__mc) {
           (window as any).__mc.bindings = data.keybindings;
         }
+        if ((window as any).__mc) {
+          (window as any).__mc.customCommands = data.customCommands || {};
+        }
         if (data.commands?.length && (window as any).mcRegisterServerCompleters) {
           const disabledIds = new Set<string>(data.disabledCommands || []);
           const enabledCmds = data.commands.filter((c) => !disabledIds.has(c.id));
@@ -350,9 +353,13 @@ export function GameUI() {
     disabledCommands: string[];
     shadersEnabled: boolean;
     keybindings: Record<string, string[]>;
+    customCommands: Record<string, string[]>;
   }) => {
     dispatch({ type: "preferences_save", ...payload });
-    if (window.__mc) window.__mc.bindings = payload.keybindings;
+    if (window.__mc) {
+      window.__mc.bindings = payload.keybindings;
+      window.__mc.customCommands = payload.customCommands;
+    }
     pendingPreferencesUpdateRef.current = JSON.stringify(payload);
   };
 

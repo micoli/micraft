@@ -10,6 +10,12 @@ interface SavePayload {
   disabledCommands: string[];
   shadersEnabled: boolean;
   keybindings: Record<string, string[]>;
+  customCommands: Record<string, string[]>;
+}
+
+interface CustomCmdEntry {
+  text: string;
+  keys: string[];
 }
 
 interface Props {
@@ -144,6 +150,7 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
   const [localDisabled, setLocalDisabled] = useState<Set<string>>(new Set());
   const [localShaders, setLocalShaders] = useState(true);
   const [localBindings, setLocalBindings] = useState<Record<string, string[]>>({});
+  const [localCustomCmds, setLocalCustomCmds] = useState<CustomCmdEntry[]>([]);
   const [recording, setRecording] = useState<{ action: string; index: number } | null>(null);
   const [waitingDoubleTap, setWaitingDoubleTap] = useState(false);
   const recordingRef = useRef<{ action: string; index: number } | null>(null);
@@ -160,6 +167,7 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
       setLocalDisabled(new Set(preferences.disabledCommands));
       setLocalShaders(preferences.shadersEnabled);
       setLocalBindings(preferences.keybindings ? { ...preferences.keybindings } : {});
+      setLocalCustomCmds(Object.entries(preferences.customCommands || {}).map(([text, keys]) => ({ text, keys })));
       setRecording(null);
       setWaitingDoubleTap(false);
       pendingKeyRef.current = null;
@@ -171,12 +179,26 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
   const commitKey = (key: string) => {
     const rec = recordingRef.current;
     if (!rec) return;
-    setLocalBindings((prev) => {
-      const keys = [...(prev[rec.action] ?? [])];
-      if (rec.index === keys.length) keys.push(key);
-      else keys[rec.index] = key;
-      return { ...prev, [rec.action]: keys };
-    });
+    if (rec.action.startsWith("$$cmd:")) {
+      const cmdIdx = parseInt(rec.action.slice(6), 10);
+      setLocalCustomCmds((prev) => {
+        const next = prev.map((e, i) => {
+          if (i !== cmdIdx) return e;
+          const keys = [...e.keys];
+          if (rec.index === keys.length) keys.push(key);
+          else keys[rec.index] = key;
+          return { ...e, keys };
+        });
+        return next;
+      });
+    } else {
+      setLocalBindings((prev) => {
+        const keys = [...(prev[rec.action] ?? [])];
+        if (rec.index === keys.length) keys.push(key);
+        else keys[rec.index] = key;
+        return { ...prev, [rec.action]: keys };
+      });
+    }
     setRecording(null);
     setWaitingDoubleTap(false);
     pendingKeyRef.current = null;
@@ -248,12 +270,37 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
     });
   };
 
+  const addCustomCmd = () => {
+    setLocalCustomCmds((prev) => [...prev, { text: "", keys: [] }]);
+  };
+
+  const removeCustomCmd = (cmdIdx: number) => {
+    setLocalCustomCmds((prev) => prev.filter((_, i) => i !== cmdIdx));
+  };
+
+  const removeCustomCmdKey = (cmdIdx: number, keyIdx: number) => {
+    setLocalCustomCmds((prev) =>
+      prev.map((e, i) => (i !== cmdIdx ? e : { ...e, keys: e.keys.filter((_, ki) => ki !== keyIdx) })),
+    );
+  };
+
+  const updateCustomCmdText = (cmdIdx: number, text: string) => {
+    setLocalCustomCmds((prev) => prev.map((e, i) => (i !== cmdIdx ? e : { ...e, text })));
+  };
+
   const handleSave = () => {
+    const customCommands: Record<string, string[]> = {};
+    for (const entry of localCustomCmds) {
+      if (entry.text.trim() && entry.keys.length > 0) {
+        customCommands[entry.text.trim()] = entry.keys;
+      }
+    }
     onSave({
       subscribedChannels: Array.from(localSubscribed),
       disabledCommands: Array.from(localDisabled),
       shadersEnabled: localShaders,
       keybindings: localBindings,
+      customCommands,
     });
   };
 
@@ -440,6 +487,87 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                     ))}
                 </div>
               ))}
+
+              <div style={{ marginTop: 12 }}>
+                <div
+                  style={{
+                    color: "#888",
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    padding: "6px 0 2px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <span>Slash Commands</span>
+                  <button style={{ ...ADD_BTN, fontSize: 12, padding: "1px 8px" }} onClick={addCustomCmd}>
+                    +
+                  </button>
+                </div>
+                {localCustomCmds.map((entry, cmdIdx) => (
+                  <div key={cmdIdx} style={{ ...ROW, alignItems: "center", flexWrap: "wrap", gap: 4 }}>
+                    <input
+                      type="text"
+                      value={entry.text}
+                      placeholder="/command or text"
+                      onChange={(e) => updateCustomCmdText(cmdIdx, e.target.value)}
+                      style={{
+                        background: "#2a2a2a",
+                        border: "1px solid #555",
+                        borderRadius: 3,
+                        color: "#7ec8e3",
+                        fontSize: 12,
+                        padding: "2px 6px",
+                        width: 160,
+                        fontFamily: "monospace",
+                      }}
+                    />
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, flex: 1 }}>
+                      {entry.keys.map((k, keyIdx) => {
+                        const recAction = `$$cmd:${cmdIdx}`;
+                        const isRec = recording?.action === recAction && recording?.index === keyIdx;
+                        return (
+                          <span
+                            key={keyIdx}
+                            style={KEY_BADGE(isRec)}
+                            onClick={() => setRecording({ action: recAction, index: keyIdx })}
+                          >
+                            {isRec ? "…" : k}
+                            <span
+                              style={{ marginLeft: 3, color: "#666", fontSize: 10 }}
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                removeCustomCmdKey(cmdIdx, keyIdx);
+                              }}
+                            >
+                              ×
+                            </span>
+                          </span>
+                        );
+                      })}
+                      <button
+                        style={ADD_BTN}
+                        onClick={() => setRecording({ action: `$$cmd:${cmdIdx}`, index: entry.keys.length })}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      style={{ ...ADD_BTN, borderColor: "#7a2a2a", color: "#c88", padding: "2px 6px" }}
+                      onClick={() => removeCustomCmd(cmdIdx)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {localCustomCmds.length === 0 && (
+                  <div style={{ color: "#555", fontSize: 11, padding: "4px 0" }}>
+                    No custom command bindings. Click + to add one.
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>

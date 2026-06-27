@@ -57,4 +57,5 @@ export interface PreferencesData {
   shadersEnabled: boolean;
   commands: CommandInfo[];
   keybindings: Record<string, string[]>;
+  customCommands: Record<string, string[]>;
 }

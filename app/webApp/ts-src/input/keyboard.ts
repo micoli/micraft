@@ -145,6 +145,7 @@ export function registerKeyboard(): void {
       mouseLeft: false,
       lastMouseMove: 0,
       bindings: {},
+      customCommands: {},
       playerBbmodel: null,
     };
     window.__mc.bindings = MC_DEFAULT_BINDINGS;
@@ -180,6 +181,13 @@ export function registerKeyboard(): void {
         if (b[key]?.some((k: string) => matchesEvent(k, e))) window.__mc.events.push(key);
       }
       if (Object.values(b).some((keys) => keys.some((k) => matchesEvent(k, e)))) e.preventDefault();
+
+      for (const [cmdText, keys] of Object.entries(window.__mc.customCommands || {})) {
+        if (keys.some((k) => (isSequenceBinding(k) ? matchesSequence(k, e) : matchesEvent(k, e)))) {
+          window.__mc.events.push("cmd:" + cmdText);
+          e.preventDefault();
+        }
+      }
     });
 
     window.addEventListener("keyup", (e: KeyboardEvent) => {

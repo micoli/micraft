@@ -63,6 +63,7 @@ sealed class ClientMessage {
         val disabledCommands: Set<String>,
         val shadersEnabled: Boolean,
         val keybindings: Map<String, List<String>> = emptyMap(),
+        val customCommands: Map<String, List<String>> = emptyMap(),
     ) : ClientMessage()
 
     @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()

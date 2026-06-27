@@ -375,25 +375,28 @@ class LocalPlayerController(
 
         val events = jsConsumeEvents()
         repeat(jsEventsLength(events)) { i ->
-            when (jsEventsGet(events, i)) {
-                "view_toggle" -> {
+            val event = jsEventsGet(events, i)
+            when {
+                event == "view_toggle" -> {
                     viewMode = viewMode.next()
                     outMessages.trySend(ClientMessage.ViewModeUpdate(viewMode.name))
                 }
-                "inventory" -> jsToggleHotbar()
-                "undo" -> outMessages.trySend(ClientMessage.Command("/undo 1"))
-                "fly_toggle" -> pendingFlyToggle = true
-                "auto_forward" -> autoAdvance = !autoAdvance
-                "slot_1" -> selectSlot(0)
-                "slot_2" -> selectSlot(1)
-                "slot_3" -> selectSlot(2)
-                "slot_4" -> selectSlot(3)
-                "slot_5" -> selectSlot(4)
-                "slot_6" -> selectSlot(5)
-                "slot_7" -> selectSlot(6)
-                "slot_8" -> selectSlot(7)
-                "slot_9" -> selectSlot(8)
-                "slot_10" -> selectSlot(9)
+                event == "inventory" -> jsToggleHotbar()
+                event == "undo" -> outMessages.trySend(ClientMessage.Command("/undo 1"))
+                event == "fly_toggle" -> pendingFlyToggle = true
+                event == "auto_forward" -> autoAdvance = !autoAdvance
+                event == "slot_1" -> selectSlot(0)
+                event == "slot_2" -> selectSlot(1)
+                event == "slot_3" -> selectSlot(2)
+                event == "slot_4" -> selectSlot(3)
+                event == "slot_5" -> selectSlot(4)
+                event == "slot_6" -> selectSlot(5)
+                event == "slot_7" -> selectSlot(6)
+                event == "slot_8" -> selectSlot(7)
+                event == "slot_9" -> selectSlot(8)
+                event == "slot_10" -> selectSlot(9)
+                event.startsWith("cmd:") ->
+                    outMessages.trySend(ClientMessage.Command(event.removePrefix("cmd:")))
             }
         }
 

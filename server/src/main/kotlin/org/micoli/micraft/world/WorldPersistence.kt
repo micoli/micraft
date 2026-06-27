@@ -107,6 +107,26 @@ class WorldPersistence(val worldDir: Path) {
         }
     }
 
+    fun loadPlayerCustomCommands(name: String): Map<String, List<String>> {
+        val file = playersDir.resolve("${name.sanitize()}-custom-commands.json")
+        if (!file.exists()) return emptyMap()
+        return try {
+            playerJson.decodeFromString(keybindingsSerializer, file.readText())
+        } catch (e: Exception) {
+            log.warn("Failed to load custom commands for {}: {}", name, e.message)
+            emptyMap()
+        }
+    }
+
+    fun savePlayerCustomCommands(name: String, commands: Map<String, List<String>>) {
+        val file = playersDir.resolve("${name.sanitize()}-custom-commands.json")
+        try {
+            file.writeText(playerJson.encodeToString(keybindingsSerializer, commands))
+        } catch (e: IOException) {
+            log.warn("Failed to save custom commands for {}: {}", name, e.message)
+        }
+    }
+
     fun loadMetadata(): WorldMetadata? {
         if (!metaFile.exists()) return null
         return try {

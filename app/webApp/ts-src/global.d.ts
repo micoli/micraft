@@ -106,6 +106,7 @@ declare global {
     mouseLeft: boolean;
     lastMouseMove: number;
     bindings: Record<string, string[]>;
+    customCommands: Record<string, string[]>;
     playerBbmodel: BbModel | null;
     npcBbmodels: Record<string, BbModel>;
     npcModelsReady: boolean;
