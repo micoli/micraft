@@ -6,6 +6,7 @@ import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.session.WorldActionRecord
+import org.micoli.micraft.session.toSlotMap
 import org.micoli.micraft.world.WorldState
 import org.micoli.micraft.world.buildable
 import org.micoli.micraft.world.isReplaceable
@@ -89,6 +90,6 @@ class BlockPlacer(
 
         session.shortcutBar[slot] = itemType
         savePlayer(session)
-        session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toList()))
+        session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toSlotMap()))
     }
 }

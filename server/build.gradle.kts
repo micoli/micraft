@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.ktor.serverNetty)
     implementation(libs.ktor.server.websockets)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.serialization.protobuf)
     implementation(libs.kaml)
     implementation(libs.jackson.dataformat.yaml)
     implementation(libs.json.schema.validator)

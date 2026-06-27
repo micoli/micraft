@@ -10,7 +10,9 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.babylon.*
 import org.micoli.micraft.protocol.ClientMessage
+import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.protocol.ServerMessageCodec
 import org.micoli.micraft.ui.LayoutSyncPayload
 import org.micoli.micraft.ui.McUiState
 import org.micoli.micraft.world.*
@@ -86,12 +88,12 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     chunkClient.webSocket(host = host, port = port, path = "/chunks") {
                         send(Frame.Text(pid))
                         for (frame in incoming) {
-                            if (frame !is Frame.Text) continue
-                            val text = frame.readText()
-                            networkStats.bytesIn += text.length
+                            if (frame !is Frame.Binary) continue
+                            val data = frame.readBytes()
+                            networkStats.bytesIn += data.size
                             val msg =
-                                runCatching { Json.decodeFromString<ServerMessage>(text) }
-                                    .getOrNull() ?: continue
+                                runCatching { ServerMessageCodec.decode(data) }.getOrNull()
+                                    ?: continue
                             if (msg is ServerMessage.ChunkData) {
                                 chunkManager.enqueueChunk(
                                     Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
@@ -118,8 +120,9 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         jsLog(
                             "WS connected, sending Connect(playerName=$playerName, userName=$username)")
                         send(
-                            Frame.Text(
-                                Json.encodeToString<ClientMessage>(
+                            Frame.Binary(
+                                true,
+                                ClientMessageCodec.encode(
                                     ClientMessage.Connect(
                                         playerName = playerName,
                                         userName = username,
@@ -140,49 +143,46 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         !intent.speedDown
                                 if (!idle || intent != localController.lastSentIntent) {
                                     localController.lastSentIntent = intent
-                                    val intentText = Json.encodeToString<ClientMessage>(intent)
-                                    send(Frame.Text(intentText))
-                                    networkStats.bytesOut += intentText.length
+                                    val intentBytes = ClientMessageCodec.encode(intent)
+                                    send(Frame.Binary(true, intentBytes))
+                                    networkStats.bytesOut += intentBytes.size
                                 }
                                 val unloads = chunkManager.collectAndClearUnloads()
                                 if (unloads.isNotEmpty()) {
-                                    val unloadText =
-                                        Json.encodeToString<ClientMessage>(
+                                    val unloadBytes =
+                                        ClientMessageCodec.encode(
                                             ClientMessage.ChunkUnload(unloads))
-                                    send(Frame.Text(unloadText))
-                                    networkStats.bytesOut += unloadText.length
+                                    send(Frame.Binary(true, unloadBytes))
+                                    networkStats.bytesOut += unloadBytes.size
                                 }
                             }
                         }
 
                         val breakJob = launch {
                             for (msg in outMessages) {
-                                val text = Json.encodeToString<ClientMessage>(msg)
-                                send(Frame.Text(text))
-                                networkStats.bytesOut += text.length
+                                val bytes = ClientMessageCodec.encode(msg)
+                                send(Frame.Binary(true, bytes))
+                                networkStats.bytesOut += bytes.size
                             }
                         }
 
                         var frameCount = 0
                         for (frame in incoming) {
-                            if (frame is Frame.Text) {
-                                val text = frame.readText()
-                                networkStats.bytesIn += text.length
+                            if (frame is Frame.Binary) {
+                                val data = frame.readBytes()
+                                networkStats.bytesIn += data.size
                                 frameCount++
-                                if (frameCount <= 3)
-                                    jsLog(
-                                        "WS frame #$frameCount (${text.length}B): ${text.take(200)}")
                                 val msg =
-                                    runCatching { Json.decodeFromString<ServerMessage>(text) }
+                                    runCatching { ServerMessageCodec.decode(data) }
                                         .onFailure { e ->
                                             jsError(
-                                                "JSON parse error on frame #$frameCount: ${e.message} | raw=${text.take(300)}")
+                                                "Protobuf decode error on frame #$frameCount: ${e.message}")
                                         }
                                         .getOrNull() ?: continue
                                 if (msg is ServerMessage.Welcome) sessionWelcomed = true
                                 handleMessage(msg)
                             } else {
-                                jsLog("WS non-text frame: ${frame::class.simpleName}")
+                                jsLog("WS non-binary frame: ${frame::class.simpleName}")
                             }
                         }
                         jsLog(
@@ -260,7 +260,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             }
             is ServerMessage.InventoryUpdate -> uiState.inventory = msg.inventory
             is ServerMessage.ShortcutBarUpdate -> {
-                msg.slots.forEachIndexed { i, item ->
+                for (i in 0..9) localController.shortcutBar[i] = null
+                msg.slots.forEach { (i, item) ->
                     if (i in 0..9) localController.shortcutBar[i] = item
                 }
                 localController.syncShortcutBarToUi()

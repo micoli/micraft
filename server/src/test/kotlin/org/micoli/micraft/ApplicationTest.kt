@@ -11,12 +11,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.protocol.ClientMessage
+import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.protocol.ServerMessageCodec
 
 class ApplicationTest {
 
@@ -44,11 +45,10 @@ class ApplicationTest {
         application { module() }
         val wsClient = createClient { install(io.ktor.client.plugins.websocket.WebSockets) }
         wsClient.webSocket("/game") {
-            send(
-                Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect("TestPlayer"))))
+            send(Frame.Binary(true, ClientMessageCodec.encode(ClientMessage.Connect("TestPlayer"))))
             val frame = incoming.receive()
-            assertIs<Frame.Text>(frame)
-            val msg = Json.decodeFromString<ServerMessage>(frame.readText())
+            assertIs<Frame.Binary>(frame)
+            val msg = ServerMessageCodec.decode(frame.readBytes())
             assertIs<ServerMessage.Welcome>(msg)
             assertNotNull(msg.playerId)
         }
@@ -59,19 +59,18 @@ class ApplicationTest {
         application { module() }
         val wsClient = createClient { install(io.ktor.client.plugins.websocket.WebSockets) }
         wsClient.webSocket("/game") {
-            send(
-                Frame.Text(Json.encodeToString<ClientMessage>(ClientMessage.Connect("TestPlayer"))))
+            send(Frame.Binary(true, ClientMessageCodec.encode(ClientMessage.Connect("TestPlayer"))))
 
             // First message: Welcome
             val welcomeFrame = incoming.receive()
-            assertIs<Frame.Text>(welcomeFrame)
-            val welcomeMsg = Json.decodeFromString<ServerMessage>(welcomeFrame.readText())
+            assertIs<Frame.Binary>(welcomeFrame)
+            val welcomeMsg = ServerMessageCodec.decode(welcomeFrame.readBytes())
             assertIs<ServerMessage.Welcome>(welcomeMsg)
 
             // Second message: RegistrySync
             val registryFrame = incoming.receive()
-            assertIs<Frame.Text>(registryFrame)
-            val registryMsg = Json.decodeFromString<ServerMessage>(registryFrame.readText())
+            assertIs<Frame.Binary>(registryFrame)
+            val registryMsg = ServerMessageCodec.decode(registryFrame.readBytes())
             assertIs<ServerMessage.RegistrySync>(registryMsg)
 
             assertTrue(

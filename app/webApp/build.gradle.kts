@@ -52,6 +52,7 @@ kotlin {
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.websockets)
                 implementation(libs.ktor.client.js)
+                implementation(libs.kotlinx.serialization.protobuf)
             }
         }
     }

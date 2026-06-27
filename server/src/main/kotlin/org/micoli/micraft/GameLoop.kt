@@ -9,7 +9,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.http.TerrainCache
@@ -22,11 +21,13 @@ import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.ClientMessage
+import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.CommandInfo
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
+import org.micoli.micraft.session.toSlotMap
 import org.micoli.micraft.tick.BlockBreaker
 import org.micoli.micraft.tick.BlockPlacer
 import org.micoli.micraft.tick.ChunkStreamer
@@ -527,8 +528,8 @@ class GameLoop(
         val connectMsg =
             runCatching {
                     val firstFrame = socket.incoming.receive()
-                    if (firstFrame is Frame.Text) {
-                        val msg = Json.decodeFromString<ClientMessage>(firstFrame.readText())
+                    if (firstFrame is Frame.Binary) {
+                        val msg = ClientMessageCodec.decode(firstFrame.readBytes())
                         if (msg is ClientMessage.Connect) msg else null
                     } else null
                 }
@@ -596,7 +597,7 @@ class GameLoop(
         session.send(buildPreferencesSync(session))
         chatService.onPlayerConnect(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
-        session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toList()))
+        session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toSlotMap()))
         session.send(ServerMessage.TimeUpdate(gameTicks))
 
         val spawnCp =
@@ -619,8 +620,8 @@ class GameLoop(
 
         try {
             socket.incoming.consumeEach { frame ->
-                if (frame is Frame.Text) {
-                    runCatching { Json.decodeFromString<ClientMessage>(frame.readText()) }
+                if (frame is Frame.Binary) {
+                    runCatching { ClientMessageCodec.decode(frame.readBytes()) }
                         .onFailure { log.warn("bad frame from {}: {}", id.take(8), it.message) }
                         .getOrNull()
                         ?.let { msg ->

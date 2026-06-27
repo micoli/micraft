@@ -87,7 +87,8 @@ sealed class ServerMessage {
 
     @Serializable data class TimeUpdate(val gameTicks: Long) : ServerMessage()
 
-    @Serializable data class ShortcutBarUpdate(val slots: List<ItemType?>) : ServerMessage()
+    @Serializable
+    data class ShortcutBarUpdate(val slots: Map<Int, ItemType> = emptyMap()) : ServerMessage()
 
     @Serializable
     data class LayoutsSync(val layouts: List<GameLayout>, val activeLayout: String) :

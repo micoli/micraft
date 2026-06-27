@@ -4,14 +4,16 @@ import io.ktor.websocket.*
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.channels.Channel
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.protocol.ServerMessageCodec
 import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.ItemType
+
+fun List<ItemType?>.toSlotMap(): Map<Int, ItemType> =
+    mapIndexedNotNull { i, t -> t?.let { i to it } }.toMap()
 
 open class PlayerSession(
     val id: String,
@@ -33,12 +35,11 @@ open class PlayerSession(
     @Volatile var chunkSocket: DefaultWebSocketSession? = null
 
     open suspend fun send(msg: ServerMessage) {
-        socket.send(Frame.Text(Json.encodeToString(msg)))
+        socket.send(Frame.Binary(true, ServerMessageCodec.encode(msg)))
     }
 
     open suspend fun sendChunk(msg: ServerMessage.ChunkData) {
         val cs = chunkSocket
-        if (cs != null) cs.send(Frame.Text(Json.encodeToString<ServerMessage>(msg)))
-        else send(msg) // fallback: chunk socket not yet connected
+        if (cs != null) cs.send(Frame.Binary(true, ServerMessageCodec.encode(msg))) else send(msg)
     }
 }
