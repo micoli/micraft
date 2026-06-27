@@ -188,6 +188,12 @@ declare global {
     mcCreateBlockMaterials: (scene: any) => Record<string, any>;
     mcSetGrassTint: (r: number, g: number, b: number) => void;
     mcSetBlockRegistry: (json: string) => void;
+    mcSetItemRegistry: (json: string) => void;
+    mcSetNpcDefinitions: (json: string) => void;
+    mcOpenCodex: () => void;
+    __mcCodexBlocks: unknown[];
+    __mcCodexItems: Record<string, unknown>;
+    __mcCodexNpcs: Record<string, unknown>;
     mcSetupRenderPipeline: (scene: any, camera: any) => void;
     mcCreatePlayerModelFromBbmodel: (bbmodel: BbModel, scene: any) => McPlayerModel;
     [key: string]: unknown;

@@ -97,11 +97,14 @@ sealed class ServerMessage {
 
     @Serializable object OpenPreferences : ServerMessage()
 
+    @Serializable object OpenCodex : ServerMessage()
+
     @Serializable
     data class RegistrySync(
         val blocks: List<BlockInfo>,
         val items: Map<String, ItemInfo>,
         val npcs: Map<String, String> = emptyMap(),
+        val npcDefinitions: Map<String, NpcCodexInfo> = emptyMap(),
     ) : ServerMessage()
 
     @Serializable data class NpcSpawned(val npc: NpcState) : ServerMessage()
@@ -142,6 +145,16 @@ data class BlockInfo(
 data class ItemInfo(
     val buildable: Boolean,
     val placesBlock: String? = null,
+)
+
+@Serializable
+data class NpcCodexInfo(
+    val bbmodelFile: String,
+    val behaviorKey: String,
+    val width: Float,
+    val height: Float,
+    val wanderSpeed: Float,
+    val autoSpawn: Boolean,
 )
 
 @Serializable data class BlockChange(val pos: BlockPos, val type: BlockType)

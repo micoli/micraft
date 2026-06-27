@@ -270,6 +270,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 jsSyncLayouts(Json.encodeToString(LayoutSyncPayload(msg.layouts, msg.activeLayout)))
             is ServerMessage.OpenLayoutEditor -> jsShowLayoutEditor()
             is ServerMessage.OpenPreferences -> jsShowPreferences()
+            is ServerMessage.OpenCodex -> jsOpenCodex()
             is ServerMessage.RegistrySync -> {
                 val blockDefs =
                     msg.blocks
@@ -305,7 +306,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         .toMap()
                 ItemRegistry.load(itemDefs)
                 jsSetBlockRegistry(Json.encodeToString(msg.blocks))
+                jsSetItemRegistry(Json.encodeToString(msg.items))
                 if (msg.npcs.isNotEmpty()) jsInitNpcModels(Json.encodeToString(msg.npcs))
+                if (msg.npcDefinitions.isNotEmpty())
+                    jsSetNpcDefinitions(Json.encodeToString(msg.npcDefinitions))
             }
             is ServerMessage.ItemsSpawned -> Unit
             is ServerMessage.ItemDespawned -> Unit

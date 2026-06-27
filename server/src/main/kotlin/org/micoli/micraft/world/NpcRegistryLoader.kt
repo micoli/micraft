@@ -100,6 +100,7 @@ class NpcRegistryLoader(private val path: Path) {
                                 NpcDefinition(
                                     type = key,
                                     behavior = behavior,
+                                    behaviorKey = entry.behavior,
                                     bbmodelFile = entry.bbmodelFile,
                                     width = entry.width,
                                     height = entry.height,

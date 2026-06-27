@@ -45,7 +45,16 @@ registerAutoUpdate();
   const blocks: { name: string; modelElement: string; minimapColor: [number, number, number] }[] = JSON.parse(json);
   setMinimapColors(blocks);
   setRegistryBlocks(blocks);
+  (window as any).__mcCodexBlocks = blocks;
   (window as any).mcInitBlockDefs();
+};
+
+(window as any).mcSetItemRegistry = (json: string) => {
+  (window as any).__mcCodexItems = JSON.parse(json);
+};
+
+(window as any).mcSetNpcDefinitions = (json: string) => {
+  (window as any).__mcCodexNpcs = JSON.parse(json);
 };
 
 // ── Biome colors ──────────────────────────────────────────────────────────────

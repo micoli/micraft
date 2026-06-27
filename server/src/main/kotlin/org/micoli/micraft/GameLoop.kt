@@ -24,6 +24,7 @@ import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.CommandInfo
 import org.micoli.micraft.protocol.ItemInfo
+import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.tick.BlockBreaker
@@ -351,7 +352,22 @@ class GameLoop(
                 type.name to ItemInfo(buildable = def.buildable, placesBlock = def.placesBlock?.id)
             }
         val npcs = npcManager.getDefinitions().map { (key, def) -> key to def.bbmodelFile }.toMap()
-        return ServerMessage.RegistrySync(blocks, items, npcs)
+        val npcDefinitions =
+            npcManager
+                .getDefinitions()
+                .map { (key, def) ->
+                    key to
+                        NpcCodexInfo(
+                            bbmodelFile = def.bbmodelFile,
+                            behaviorKey = def.behaviorKey,
+                            width = def.width,
+                            height = def.height,
+                            wanderSpeed = def.wanderSpeed,
+                            autoSpawn = def.spawn.autoSpawn,
+                        )
+                }
+                .toMap()
+        return ServerMessage.RegistrySync(blocks, items, npcs, npcDefinitions)
     }
 
     private suspend fun reload(): String {

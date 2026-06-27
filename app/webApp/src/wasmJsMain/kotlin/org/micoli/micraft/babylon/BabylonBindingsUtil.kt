@@ -40,6 +40,10 @@ fun jsApplyBiomeGrassTint(biome: String): Unit = js("mcApplyBiomeGrassTint(biome
 
 fun jsSetBlockRegistry(json: String): Unit = js("mcSetBlockRegistry(json)")
 
+fun jsSetItemRegistry(json: String): Unit = js("mcSetItemRegistry(json)")
+
+fun jsSetNpcDefinitions(json: String): Unit = js("mcSetNpcDefinitions(json)")
+
 // ── LocalStorage ─────────────────────────────────────────────────────────────
 
 fun jsLocalStorageGet(key: String): String = js("localStorage.getItem(key) || ''")

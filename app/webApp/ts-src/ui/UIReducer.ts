@@ -22,6 +22,7 @@ export interface UiState {
   activeLayout: string;
   layoutEditorOpen: boolean;
   npcDialog: NpcDialogData | null;
+  codexOpen: boolean;
   preferencesOpen: boolean;
   preferences: PreferencesData | null;
   pauseMenuOpen: boolean;
@@ -52,6 +53,8 @@ export type UiAction =
   | { type: "layout_editor_save"; layouts: GameLayout[]; activeLayout: string }
   | { type: "npc_dialog_open"; payload: NpcDialogData }
   | { type: "npc_dialog_close" }
+  | { type: "codex_open" }
+  | { type: "codex_close" }
   | { type: "preferences_sync"; data: PreferencesData }
   | { type: "preferences_show" }
   | { type: "preferences_hide" }
@@ -148,6 +151,10 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, npcDialog: action.payload };
     case "npc_dialog_close":
       return { ...state, npcDialog: null };
+    case "codex_open":
+      return { ...state, codexOpen: true };
+    case "codex_close":
+      return { ...state, codexOpen: false };
     case "preferences_sync":
       return { ...state, preferences: action.data };
     case "preferences_show":

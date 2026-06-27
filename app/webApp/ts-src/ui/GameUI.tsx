@@ -14,6 +14,7 @@ import { DisconnectOverlay } from "./overlays/DisconnectOverlay";
 import { PauseMenu } from "./overlays/PauseMenu";
 import { LayoutEditor } from "./layout/LayoutEditor";
 import { defaultLayout, resolveActiveLayout, widgetStyle } from "./layout/LayoutEngine";
+import { CodexModal } from "../codex/CodexModal";
 
 function loadHudMode(): HudMode {
   try {
@@ -47,6 +48,7 @@ const initial: UiState = {
   activeLayout: "default",
   layoutEditorOpen: false,
   npcDialog: null,
+  codexOpen: false,
   preferencesOpen: false,
   preferences: null,
   pauseMenuOpen: false,
@@ -75,6 +77,7 @@ export function GameUI() {
 
   const pauseMenuOpenRef = useRef(false);
   const preferencesOpenRef = useRef(false);
+  const codexOpenRef = useRef(false);
 
   // Keep consoleOpenRef in sync
   useEffect(() => {
@@ -89,6 +92,11 @@ export function GameUI() {
     preferencesOpenRef.current = state.preferencesOpen;
     if (window.__mc) window.__mc.modalOpen = state.preferencesOpen;
   }, [state.preferencesOpen]);
+
+  useEffect(() => {
+    codexOpenRef.current = state.codexOpen;
+    if (window.__mc) window.__mc.modalOpen = state.codexOpen || state.preferencesOpen;
+  }, [state.codexOpen, state.preferencesOpen]);
 
   // Auto-hide server log after 15s of no new messages
   useEffect(() => {
@@ -284,6 +292,7 @@ export function GameUI() {
     };
 
     (window as any).mcShowPreferences = () => dispatch({ type: "preferences_show" });
+    (window as any).mcOpenCodex = () => dispatch({ type: "codex_open" });
 
     // no-ops: React handles creation
     (window as any).mcCreateHUD = () => {};
@@ -299,6 +308,10 @@ export function GameUI() {
       const loginEl = document.getElementById("mc-login-root");
       if (loginEl && (loginEl as HTMLElement).dataset.visible === "true") return;
       if (ke.key === "Escape" && !consoleOpenRef.current) {
+        if (codexOpenRef.current) {
+          dispatch({ type: "codex_close" });
+          return;
+        }
         if (preferencesOpenRef.current) {
           dispatch({ type: "preferences_hide" });
           return;
@@ -404,6 +417,7 @@ export function GameUI() {
             onClose={() => dispatch({ type: "layout_editor_hide" })}
           />
           <NpcDialog data={state.npcDialog} onClose={() => dispatch({ type: "npc_dialog_close" })} />
+          <CodexModal open={state.codexOpen} onClose={() => dispatch({ type: "codex_close" })} />
           <Preferences
             open={state.preferencesOpen}
             preferences={state.preferences}

@@ -117,3 +117,7 @@ fun jsPreferencesSync(json: String): Unit = js("mcPreferencesSync(json)")
 fun jsConsumePreferencesUpdate(): String = js("mcConsumePreferencesUpdate()")
 
 fun jsShowPreferences(): Unit = js("mcShowPreferences()")
+
+// ── Codex ─────────────────────────────────────────────────────────────────────
+
+fun jsOpenCodex(): Unit = js("mcOpenCodex()")

@@ -10,6 +10,7 @@ data class NpcSpawnConfig(
 data class NpcDefinition(
     val type: String,
     val behavior: NpcBehavior,
+    val behaviorKey: String = "static",
     val bbmodelFile: String,
     val width: Float,
     val height: Float,
