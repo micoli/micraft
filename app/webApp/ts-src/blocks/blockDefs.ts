@@ -4,12 +4,12 @@ type FaceKey = (typeof FACEKEY_BY_DIR)[number];
 
 // Convert bbmodel face uv [x0,y0,x1,y1] (pixel coords) to per-vertex UV array.
 // Winding order matches MC_VERTS: k=0 bottom-left, k=1 bottom-right, k=2 top-right, k=3 top-left.
-// v = y/H directly (BabylonJS invertY=true makes v=0 the top of the image, matching bbmodel y=0).
+// V is flipped (1 - y/H) because ShaderMaterial + invertY=true: v=0 = bottom of image, not top.
 function toVertexUV(uv: [number, number, number, number], W: number, H: number): number[] {
   const uMin = uv[0] / W,
     uMax = uv[2] / W;
-  const vTop = uv[1] / H,
-    vBot = uv[3] / H;
+  const vTop = 1 - uv[1] / H,
+    vBot = 1 - uv[3] / H;
   return [uMin, vBot, uMax, vBot, uMax, vTop, uMin, vTop];
 }
 
