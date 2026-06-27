@@ -535,13 +535,12 @@ class GameLoop(
         saved?.shortcutBar?.forEachIndexed { i, item ->
             if (i in 0..9) session.shortcutBar[i] = item
         }
-        sessions[id] = session
         log.info(
             "player connected: {} name={} user={} (total={})",
             id.take(8),
             playerName,
             userName,
-            sessions.size)
+            sessions.size + 1)
 
         session.send(
             ServerMessage.Welcome(
@@ -576,6 +575,7 @@ class GameLoop(
                 other.send(ServerMessage.PlayerUpdate(state))
             }
         npcManager.sendAllTo(session)
+        sessions[id] = session
 
         try {
             socket.incoming.consumeEach { frame ->
