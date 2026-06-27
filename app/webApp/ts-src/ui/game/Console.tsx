@@ -89,8 +89,12 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
           return;
         }
         if (suggestions.length === 1) {
-          applyCompletion(el.value, suggestions[0]);
-          return;
+          const sp = el.value.lastIndexOf(" ");
+          const currentToken = sp === -1 ? el.value : el.value.slice(sp + 1);
+          if (currentToken !== suggestions[0]) {
+            applyCompletion(el.value, suggestions[0]);
+            return;
+          }
         }
         const text = el.value.trim();
         if (text) {

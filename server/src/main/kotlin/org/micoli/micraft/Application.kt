@@ -67,6 +67,8 @@ fun Application.module() {
     val gameConfig = loadGameConfig(java.nio.file.Path.of("data/config/game.yaml"))
     applyGameConfig(gameConfig)
 
+    loadKeyBindings(java.nio.file.Path.of("data/config/personal/keybindings.yaml"))
+
     val debugWorld = gameConfig.debugWorld
     val worldName =
         System.getenv("MICRAFT_WORLD_NAME")?.takeIf { it.isNotBlank() } ?: "default_world"
