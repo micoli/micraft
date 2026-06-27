@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=../../../../data/schemas/i18n.schema.json
 teleport:
   server:
     usage: "Usage : /teleport <x> <y> <z>  ou  /teleport <nomJoueur>"

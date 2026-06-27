@@ -1,7 +1,6 @@
 package org.micoli.micraft.support
 
 import java.nio.file.Path
-import java.nio.file.Paths
 import org.micoli.micraft.CommandContext
 import org.micoli.micraft.ConfigRegistry
 import org.micoli.micraft.npc.NpcManager
@@ -76,23 +75,10 @@ fun testWorld(vararg solid: Triple<Int, Int, Int>): WorldState {
     return world
 }
 
-fun testI18n(): I18nConfig {
-    val url =
-        object {}.javaClass.classLoader.getResource("i18n") ?: error("test i18n resource not found")
-    val corePath = Paths.get(url.toURI())
-    val pluginDirs =
-        System.getProperty("projectDir")
-            ?.let { Path.of(it).resolve("plugins") }
-            ?.takeIf { it.toFile().exists() }
-            ?.let { pluginsRoot ->
-                pluginsRoot
-                    .toFile()
-                    .listFiles { f -> f.isDirectory }
-                    ?.map { pluginsRoot.resolve(it.name).resolve("data/i18n") }
-                    ?.filter { it.toFile().exists() } ?: emptyList()
-            } ?: emptyList()
-    return I18nConfig(listOf(corePath) + pluginDirs)
-}
+private val testProjectRoot: Path = Path.of(System.getProperty("projectDir", ".."))
+
+fun testI18n(): I18nConfig =
+    I18nConfig.fromClasspath(pluginsRoot = testProjectRoot.resolve("plugins"))
 
 fun testContext(
     world: WorldState = testWorld(),

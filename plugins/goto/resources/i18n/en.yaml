@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=../../../../data/schemas/i18n.schema.json
 goto:
   server:
     usage: "Usage: /goto <playerName|npcName>"

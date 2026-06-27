@@ -47,19 +47,20 @@ class I18nCoverageTest {
         return byLocale
     }
 
-    // data/config/ is gitignored (runtime config). Use versioned test fixtures as the canonical
-    // translation set, plus plugin data/i18n/ dirs which are versioned.
     private fun i18nDirs(): List<Path> {
-        val dirs = mutableListOf<Path>()
-        val res = javaClass.classLoader.getResource("i18n")
-        if (res != null) dirs.add(Path.of(res.toURI()))
+        val dirs =
+            javaClass.classLoader
+                .getResources("i18n")
+                .toList()
+                .mapNotNull { runCatching { Path.of(it.toURI()) }.getOrNull() }
+                .toMutableList()
         val pluginsRoot = projectRoot.resolve("plugins")
         if (pluginsRoot.exists()) {
             pluginsRoot
                 .toFile()
                 .listFiles { f -> f.isDirectory }
                 ?.forEach { plugin ->
-                    val d = pluginsRoot.resolve(plugin.name).resolve("data/i18n")
+                    val d = pluginsRoot.resolve(plugin.name).resolve("resources/i18n")
                     if (d.exists()) dirs.add(d)
                 }
         }

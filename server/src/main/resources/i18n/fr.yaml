@@ -1,26 +1,23 @@
-lang:
+commands:
   server:
-    available: "Langues disponibles: {0}"
-    set: "Langue définie à {0}."
-    already: "La langue est déjà {0}."
-    unknown: "Langue inconnue: {0}. Disponibles: {1}"
+    unknown: "Commande inconnue : {0}"
   client:
-    label: "Langue"
+    hint: "Tapez / pour ouvrir les commandes"
 save:
   server:
     done: "Monde sauvegardé."
 help:
   server:
-    unknown_cmd: "Commande inconnue: {0}"
+    unknown_cmd: "Commande inconnue : {0}"
     no_description: "(pas de description)"
-    usage_line: "  Utilisation: {0}"
-    options_header: "  Options:"
+    usage_line: "  Utilisation : {0}"
+    options_header: "  Options :"
     option_item: "    • {0}"
-    available_header: "Commandes disponibles:"
+    available_header: "Commandes disponibles :"
     details_hint: "Tapez /help <commande> pour les détails."
 reload:
   server:
-    unavailable: "Rechargement non disponible."
+    unavailable: "Rechargement non disponible dans ce mode."
     done: "Config rechargée — {0}"
 undo:
   server:
@@ -56,11 +53,14 @@ talk:
     usage: "Usage : /talk <nomJoueur>"
     not_found: "Joueur introuvable : {0}"
     opened: "Chat privé ouvert avec {0}."
-commands:
+lang:
   server:
-    unknown: "Commande inconnue: {0}"
+    available: "Langues disponibles : {0}"
+    set: "Langue définie à {0}."
+    already: "La langue est déjà {0}."
+    unknown: "Langue inconnue : {0}. Disponibles : {1}"
   client:
-    hint: "Tapez / pour ouvrir les commandes"
+    label: "Langue"
 inventory:
   server:
     item_picked_up: "+{0} {1}"
@@ -112,5 +112,5 @@ config:
     unknown_key: "Clé de config inconnue : {0}"
     read_only: "Clé de config en lecture seule : {0}"
     get_result: "{0} = {1}"
-    set_ok: "Config mise à jour : {0} = {1}"
+    set_ok: "Config mis à jour : {0} = {1}"
     set_invalid: "Valeur invalide pour {0} : {1}"

@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=../../../../data/schemas/i18n.schema.json
 summon:
   server:
     usage: "Usage : /summon <nomJoueur>"

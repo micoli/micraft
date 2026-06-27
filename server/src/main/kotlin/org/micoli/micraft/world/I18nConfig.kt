@@ -21,6 +21,29 @@ private val NESTED_MAP_SERIALIZER =
 class I18nConfig(private val dirs: List<Path>) {
     constructor(dir: Path) : this(listOf(dir))
 
+    companion object {
+        fun fromClasspath(
+            classLoader: ClassLoader = Thread.currentThread().contextClassLoader,
+            pluginsRoot: Path? = null,
+        ): I18nConfig {
+            val dirs =
+                classLoader
+                    .getResources("i18n")
+                    .toList()
+                    .mapNotNull { runCatching { Path.of(it.toURI()) }.getOrNull() }
+                    .toMutableList()
+            pluginsRoot
+                ?.takeIf { it.toFile().exists() }
+                ?.toFile()
+                ?.listFiles { f -> f.isDirectory }
+                ?.forEach { plugin ->
+                    val d = pluginsRoot.resolve(plugin.name).resolve("resources/i18n")
+                    if (d.toFile().exists()) dirs.add(d)
+                }
+            return I18nConfig(dirs)
+        }
+    }
+
     // locale → flat "feature:scope:key" → translation
     @Volatile private var tables: Map<String, Map<String, String>> = emptyMap()
 

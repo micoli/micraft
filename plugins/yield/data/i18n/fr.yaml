@@ -1,4 +1,0 @@
-# yaml-language-server: $schema=../../../../data/schemas/i18n.schema.json
-yield:
-  server:
-    usage: "Usage : /yield <message>"

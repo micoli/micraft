@@ -127,25 +127,12 @@ fun validatePluginSystemIds(commands: Map<String, CommandHandler>, plugins: List
     }
 }
 
-fun buildI18nDirs(base: Path = Path.of("data/config/i18n")): List<Path> {
-    val pluginsRoot = Path.of("plugins")
-    val pluginDirs =
-        if (pluginsRoot.toFile().exists())
-            pluginsRoot
-                .toFile()
-                .listFiles { f -> f.isDirectory }
-                ?.map { pluginsRoot.resolve(it.name).resolve("data/i18n") }
-                ?.filter { it.toFile().exists() } ?: emptyList()
-        else emptyList()
-    return listOf(base) + pluginDirs
-}
-
 class GameLoop(
     private val world: WorldState,
     private val persistence: WorldPersistence? = null,
     private val reloadBiomes: (() -> ChunkGenerator)? = null,
     private val reloadRegistries: (() -> Unit)? = null,
-    val i18n: I18nConfig = I18nConfig(buildI18nDirs()),
+    val i18n: I18nConfig = I18nConfig.fromClasspath(pluginsRoot = Path.of("plugins")),
     private val tokenStore: TokenStore? = null,
     private val authProvider: AuthProvider? = null,
 ) {
