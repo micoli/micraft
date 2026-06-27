@@ -1,26 +1,16 @@
-const ITEM_META: Record<string, { label: string; bg: string }> = {
-  COBBLESTONE: { label: "COB", bg: "#7A7A7A" },
-  DIRT: { label: "DRT", bg: "#8B5A2B" },
-  SAND: { label: "SND", bg: "#D5C89A" },
-  GRAVEL: { label: "GRV", bg: "#9A9A9A" },
-  SANDSTONE: { label: "SST", bg: "#C8B46C" },
-  SNOWBALL: { label: "SNW", bg: "#DCE8F5" },
-  FLINT: { label: "FLT", bg: "#4A4A52" },
-  SEED: { label: "SED", bg: "#C8A050" },
-};
-
 interface Props {
   inventory: Record<string, number>;
+  itemMeta: Record<string, { label: string; bg: string }>;
   visible: boolean;
   layoutStyle?: React.CSSProperties;
 }
 
-export function Inventory({ inventory, visible, layoutStyle }: Props) {
+export function Inventory({ inventory, itemMeta, visible, layoutStyle }: Props) {
   if (!visible) return null;
 
-  const items = Object.keys(ITEM_META)
-    .filter((type) => (inventory[type] ?? 0) > 0)
-    .map((type) => ({ type, count: inventory[type], meta: ITEM_META[type] }));
+  const items = Object.keys(inventory)
+    .filter((type) => (inventory[type] ?? 0) > 0 && itemMeta[type] !== undefined)
+    .map((type) => ({ type, count: inventory[type], meta: itemMeta[type] }));
 
   const containerStyle: React.CSSProperties = layoutStyle
     ? {

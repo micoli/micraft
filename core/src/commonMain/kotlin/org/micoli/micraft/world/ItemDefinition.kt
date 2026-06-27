@@ -6,4 +6,6 @@ import kotlinx.serialization.Serializable
 data class ItemDefinition(
     val buildable: Boolean = false,
     val placesBlock: BlockType? = null,
+    val label: String = "",
+    val bg: String = "",
 )

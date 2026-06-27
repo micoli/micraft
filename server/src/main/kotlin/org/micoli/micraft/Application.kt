@@ -31,6 +31,7 @@ import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockRegistryLoader
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemRegistryLoader
+import org.micoli.micraft.world.ItemType
 import org.micoli.micraft.world.WorldMetadata
 import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
@@ -229,6 +230,17 @@ fun Application.module() {
             val keys = gameLoop.i18n.clientKeys(locale)
             val serializer = MapSerializer(String.serializer(), String.serializer())
             call.respondText(Json.encodeToString(serializer, keys), ContentType.Application.Json)
+        }
+        get("/api/items/meta") {
+            val serializer =
+                MapSerializer(
+                    String.serializer(), MapSerializer(String.serializer(), String.serializer()))
+            val meta =
+                ItemType.entries.associate { type ->
+                    val def = ItemRegistry.get(type)
+                    type.name to mapOf("label" to def.label, "bg" to def.bg)
+                }
+            call.respondText(Json.encodeToString(serializer, meta), ContentType.Application.Json)
         }
         get("/api/biomes") {
             val colors =

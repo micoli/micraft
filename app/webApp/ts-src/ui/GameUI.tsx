@@ -38,6 +38,7 @@ const initial: UiState = {
   activeChannel: "world",
   unreadChannels: [],
   inventory: {},
+  itemMeta: {},
   hotbarVisible: false,
   shortcutBar: Array(10).fill(null),
   selectedSlot: 0,
@@ -78,6 +79,13 @@ export function GameUI() {
   const pauseMenuOpenRef = useRef(false);
   const preferencesOpenRef = useRef(false);
   const codexOpenRef = useRef(false);
+
+  useEffect(() => {
+    fetch("/api/items/meta")
+      .then((r) => r.json())
+      .then((data) => dispatch({ type: "item_meta_loaded", data }))
+      .catch(() => {});
+  }, []);
 
   // Keep consoleOpenRef in sync
   useEffect(() => {
@@ -376,6 +384,7 @@ export function GameUI() {
           <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, "HUD")} />
           <ShortcutBar
             inventory={state.inventory}
+            itemMeta={state.itemMeta}
             slots={state.shortcutBar}
             selectedSlot={state.selectedSlot}
             onSlotDrop={(slot, itemType) => {
@@ -385,6 +394,7 @@ export function GameUI() {
           />
           <Inventory
             inventory={state.inventory}
+            itemMeta={state.itemMeta}
             visible={state.hotbarVisible}
             layoutStyle={widgetStyle(activeLayout, "INVENTORY")}
           />

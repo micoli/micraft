@@ -12,6 +12,7 @@ export interface UiState {
   activeChannel: string;
   unreadChannels: string[];
   inventory: Record<string, number>;
+  itemMeta: Record<string, { label: string; bg: string }>;
   hotbarVisible: boolean;
   shortcutBar: (string | null)[];
   selectedSlot: number;
@@ -37,6 +38,7 @@ export type UiAction =
   | { type: "channels_sync"; subscribed: string[]; known: string[] }
   | { type: "active_channel_select"; channel: string }
   | { type: "inventory"; data: Record<string, number> }
+  | { type: "item_meta_loaded"; data: Record<string, { label: string; bg: string }> }
   | { type: "hotbar_toggle" }
   | { type: "shortcut_bar_update"; data: { slots: (string | null)[]; selected: number } }
   | { type: "slot_select"; slot: number }
@@ -121,6 +123,8 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, logVisible: false };
     case "inventory":
       return { ...state, inventory: action.data };
+    case "item_meta_loaded":
+      return { ...state, itemMeta: action.data };
     case "hotbar_toggle":
       return { ...state, hotbarVisible: !state.hotbarVisible };
     case "shortcut_bar_update":

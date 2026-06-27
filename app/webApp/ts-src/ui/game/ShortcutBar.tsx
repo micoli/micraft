@@ -1,25 +1,15 @@
 import { useState, useRef } from "react";
 
-const ITEM_META: Record<string, { label: string; bg: string }> = {
-  COBBLESTONE: { label: "COB", bg: "#7A7A7A" },
-  DIRT: { label: "DRT", bg: "#8B5A2B" },
-  SAND: { label: "SND", bg: "#D5C89A" },
-  GRAVEL: { label: "GRV", bg: "#9A9A9A" },
-  SANDSTONE: { label: "SST", bg: "#C8B46C" },
-  SNOWBALL: { label: "SNW", bg: "#DCE8F5" },
-  FLINT: { label: "FLT", bg: "#4A4A52" },
-  SEED: { label: "SED", bg: "#C8A050" },
-};
-
 interface Props {
   inventory: Record<string, number>;
+  itemMeta: Record<string, { label: string; bg: string }>;
   slots: (string | null)[];
   selectedSlot: number;
   onSlotDrop: (slot: number, itemType: string | null) => void;
   layoutStyle?: React.CSSProperties;
 }
 
-export function ShortcutBar({ inventory, slots, selectedSlot, onSlotDrop, layoutStyle }: Props) {
+export function ShortcutBar({ inventory, itemMeta, slots, selectedSlot, onSlotDrop, layoutStyle }: Props) {
   const [dragOver, setDragOver] = useState<number | null>(null);
   const draggingSlot = useRef<number | null>(null);
 
@@ -92,7 +82,7 @@ export function ShortcutBar({ inventory, slots, selectedSlot, onSlotDrop, layout
       {slots.map((itemType, idx) => {
         const isSelected = idx === selectedSlot;
         const isHand = idx === 0;
-        const meta = itemType ? ITEM_META[itemType] : null;
+        const meta = itemType ? itemMeta[itemType] : null;
         const count = itemType ? (inventory[itemType] ?? 0) : 0;
         const isDropTarget = dragOver === idx;
 
