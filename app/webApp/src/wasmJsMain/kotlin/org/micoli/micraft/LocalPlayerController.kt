@@ -40,6 +40,7 @@ class LocalPlayerController(
     private val networkStats: NetworkStats,
     private val serverHost: () -> String,
     private val serverPort: () -> Int,
+    private val playerName: () -> String,
 ) {
     var predX = 0.0
     var predY = 0.0
@@ -161,7 +162,7 @@ class LocalPlayerController(
         if (consoleInput.isNotEmpty()) {
             when (consoleInput.trim()) {
                 "/keyreload" -> {
-                    jsLoadBindings(serverHost(), serverPort())
+                    jsLoadBindings(serverHost(), serverPort(), playerName())
                     jsShowNotification("Keybindings reloaded")
                 }
                 "/disconnect" -> {

@@ -102,6 +102,7 @@ declare global {
     modifiers: { ctrl: boolean; shift: boolean; alt: boolean; meta: boolean };
     events: string[];
     lastSpaceTime: number;
+    lastKeyPress: { code: string; key: string; time: number } | null;
     mouseLeft: boolean;
     lastMouseMove: number;
     bindings: Record<string, string[]>;

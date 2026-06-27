@@ -49,6 +49,7 @@ import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldMetadata
 import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
+import org.micoli.micraft.world.defaultKeyBindings
 import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.slf4j.LoggerFactory
 
@@ -276,12 +277,15 @@ class GameLoop(
             commands.values.map {
                 CommandInfo(it.id.toString(), it.command, it.description, it.autocompleteArgs)
             }
+        val keybindings =
+            persistence?.loadPlayerKeyBindings(session.state.name) ?: defaultKeyBindings()
         return ServerMessage.PreferencesSync(
             subscribedChannels = session.state.subscribedChannels,
             knownChannels = knownChannels,
             disabledCommands = session.state.disabledCommands,
             shadersEnabled = session.state.shadersEnabled,
             commands = commandList,
+            keybindings = keybindings,
         )
     }
 
@@ -300,6 +304,9 @@ class GameLoop(
                 disabledCommands = msg.disabledCommands,
                 shadersEnabled = msg.shadersEnabled,
             )
+        if (msg.keybindings.isNotEmpty()) {
+            persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
+        }
         savePlayer(session)
         session.send(buildPreferencesSync(session))
         session.send(ServerMessage.ChannelsSync(newSubscribed, knownChannels))

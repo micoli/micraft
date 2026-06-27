@@ -27,6 +27,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private val chunkManager = ChunkManager(scene)
     private val remotePlayerManager = RemotePlayerManager(scene)
     private val npcManager = NpcManager(scene)
+    private var currentPlayerName = ""
     private val localController =
         LocalPlayerController(
             scene = scene,
@@ -37,6 +38,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             networkStats = networkStats,
             serverHost = { serverHost },
             serverPort = { serverPort },
+            playerName = { currentPlayerName },
         )
 
     private val scope = CoroutineScope(Dispatchers.Default)
@@ -63,6 +65,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     ) {
         serverHost = host
         serverPort = port
+        currentPlayerName = playerName
 
         scope.launch {
             while (isActive) {

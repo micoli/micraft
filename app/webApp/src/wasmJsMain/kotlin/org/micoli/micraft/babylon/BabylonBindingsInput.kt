@@ -16,7 +16,8 @@ fun jsIsKeyDown(code: String): Boolean = js("!!(window.__mc && window.__mc.keys[
 
 fun jsIsActionDown(action: String): Boolean = js("mcIsActionDown(action)")
 
-fun jsLoadBindings(host: String, port: Int): Unit = js("mcLoadBindings(host, port)")
+fun jsLoadBindings(host: String, port: Int, player: String): Unit =
+    js("mcLoadBindings(host, port, player)")
 
 // ── Camera read-back ──────────────────────────────────────────────────────────
 

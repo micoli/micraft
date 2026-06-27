@@ -62,6 +62,7 @@ sealed class ClientMessage {
         val subscribedChannels: List<String>,
         val disabledCommands: Set<String>,
         val shadersEnabled: Boolean,
+        val keybindings: Map<String, List<String>> = emptyMap(),
     ) : ClientMessage()
 
     @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()

@@ -5,6 +5,9 @@ import java.nio.file.Path
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import kotlin.io.path.*
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.player.PlayerState
@@ -74,6 +77,33 @@ class WorldPersistence(val worldDir: Path) {
             file.writeText(playerJson.encodeToString(state))
         } catch (e: IOException) {
             log.warn("Failed to save player {}: {}", name, e.message)
+        }
+    }
+
+    private val keybindingsSerializer =
+        MapSerializer(String.serializer(), ListSerializer(String.serializer()))
+
+    fun loadPlayerKeyBindings(name: String): Map<String, List<String>> {
+        val file = playersDir.resolve("${name.sanitize()}-keybindings.json")
+        if (!file.exists()) {
+            val defaults = defaultKeyBindings()
+            savePlayerKeyBindings(name, defaults)
+            return defaults
+        }
+        return try {
+            playerJson.decodeFromString(keybindingsSerializer, file.readText())
+        } catch (e: Exception) {
+            log.warn("Failed to load keybindings for {}: {}", name, e.message)
+            defaultKeyBindings()
+        }
+    }
+
+    fun savePlayerKeyBindings(name: String, bindings: Map<String, List<String>>) {
+        val file = playersDir.resolve("${name.sanitize()}-keybindings.json")
+        try {
+            file.writeText(playerJson.encodeToString(keybindingsSerializer, bindings))
+        } catch (e: IOException) {
+            log.warn("Failed to save keybindings for {}: {}", name, e.message)
         }
     }
 

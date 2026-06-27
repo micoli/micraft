@@ -61,6 +61,11 @@ hotbar:
 """
         .trimIndent()
 
+fun defaultKeyBindings(): Map<String, List<String>> = buildMap {
+    for ((_, actions) in Yaml.default.decodeFromString(SECTION_SERIALIZER, DEFAULT_YAML)) putAll(
+        actions)
+}
+
 fun loadKeyBindings(path: Path): Map<String, List<String>> {
     if (!path.exists()) {
         log.info("No keybindings.yaml at {}, creating with defaults", path.toAbsolutePath())

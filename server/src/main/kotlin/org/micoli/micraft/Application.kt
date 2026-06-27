@@ -200,7 +200,13 @@ fun Application.module() {
             call.respondText("""{"server":"$SERVER_ID"}""", ContentType.Application.Json)
         }
         get("/api/keybindings") {
-            val bindings = loadKeyBindings(Path.of("data/config/personal/keybindings.yaml"))
+            val player = call.request.queryParameters["player"]
+            val bindings =
+                if (player != null && persistence != null) {
+                    persistence.loadPlayerKeyBindings(player)
+                } else {
+                    loadKeyBindings(Path.of("data/config/personal/keybindings.yaml"))
+                }
             val serializer = MapSerializer(String.serializer(), ListSerializer(String.serializer()))
             call.respondText(
                 Json.encodeToString(serializer, bindings), ContentType.Application.Json)

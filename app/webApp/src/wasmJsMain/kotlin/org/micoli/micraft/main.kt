@@ -52,7 +52,6 @@ fun main() {
     val client = GameClient(scene, camera, uiState)
     val host = jsGetPageHost()
     val port = jsGetPagePort()
-    jsLoadBindings(host, port)
 
     jsShowLoginOverlay()
     jsLog("waiting for login …")
@@ -68,6 +67,7 @@ fun main() {
         val playerName = if (parts.size > 1) parts[1] else parts[0]
         val lang = if (parts.size > 2) parts[2] else "en"
         val token = if (parts.size > 3) parts[3] else ""
+        jsLoadBindings(host, port, playerName)
         jsFetchI18n(lang)
         jsLog(
             "login: user=$username player=$playerName lang=$lang — connecting to ws://$host:$port/game …")

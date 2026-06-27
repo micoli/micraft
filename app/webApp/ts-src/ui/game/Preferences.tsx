@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PreferencesData, CommandInfo } from "../types";
 
 const PROTECTED_CHANNELS = new Set(["system", "game"]);
 
-type Tab = "chat" | "commands" | "graphics";
+type Tab = "chat" | "commands" | "graphics" | "keybindings";
 
 interface SavePayload {
   subscribedChannels: string[];
   disabledCommands: string[];
   shadersEnabled: boolean;
+  keybindings: Record<string, string[]>;
 }
 
 interface Props {
@@ -93,19 +94,135 @@ const BTN = (primary: boolean): React.CSSProperties => ({
   border: primary ? "1px solid #4a9a4a" : "1px solid #555",
 });
 
+const ACTION_GROUPS: Record<string, string[]> = {
+  movement: [
+    "forward",
+    "backward",
+    "strafe_left",
+    "strafe_right",
+    "rotate_left",
+    "rotate_right",
+    "sneak",
+    "crawl",
+    "auto_forward",
+  ],
+  flight: ["fly_toggle", "ascend", "descend", "speed_up", "speed_down"],
+  ui: ["view_toggle", "hud_mode_cycle", "inventory", "undo", "minimap_zoom_in", "minimap_zoom_out", "layout_editor"],
+  hotbar: ["slot_1", "slot_2", "slot_3", "slot_4", "slot_5", "slot_6", "slot_7", "slot_8", "slot_9", "slot_10"],
+};
+
+function groupActions(keybindings: Record<string, string[]>): Array<{ group: string; action: string; keys: string[] }> {
+  const grouped: Array<{ group: string; action: string; keys: string[] }> = [];
+  const placed = new Set<string>();
+  for (const [group, actions] of Object.entries(ACTION_GROUPS)) {
+    for (const action of actions) {
+      if (action in keybindings) {
+        grouped.push({ group, action, keys: keybindings[action] });
+        placed.add(action);
+      }
+    }
+  }
+  for (const [action, keys] of Object.entries(keybindings)) {
+    if (!placed.has(action)) grouped.push({ group: "other", action, keys });
+  }
+  return grouped;
+}
+
+function captureKey(e: KeyboardEvent): string {
+  const mods: string[] = [];
+  if (e.ctrlKey) mods.push("Ctrl");
+  if (e.altKey) mods.push("Alt");
+  if (e.metaKey) mods.push("Meta");
+  if (e.shiftKey && e.code !== "ShiftLeft" && e.code !== "ShiftRight") mods.push("Shift");
+  const base = e.code;
+  return mods.length ? `${mods.join("+")}+${base}` : base;
+}
+
 export function Preferences({ open, preferences, onSave, onClose }: Props) {
   const [tab, setTab] = useState<Tab>("chat");
   const [localSubscribed, setLocalSubscribed] = useState<Set<string>>(new Set());
   const [localDisabled, setLocalDisabled] = useState<Set<string>>(new Set());
   const [localShaders, setLocalShaders] = useState(true);
+  const [localBindings, setLocalBindings] = useState<Record<string, string[]>>({});
+  const [recording, setRecording] = useState<{ action: string; index: number } | null>(null);
+  const [waitingDoubleTap, setWaitingDoubleTap] = useState(false);
+  const recordingRef = useRef<{ action: string; index: number } | null>(null);
+  const pendingKeyRef = useRef<string | null>(null);
+  const doubleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    recordingRef.current = recording;
+  }, [recording]);
 
   useEffect(() => {
     if (open && preferences) {
       setLocalSubscribed(new Set(preferences.subscribedChannels));
       setLocalDisabled(new Set(preferences.disabledCommands));
       setLocalShaders(preferences.shadersEnabled);
+      setLocalBindings(preferences.keybindings ? { ...preferences.keybindings } : {});
+      setRecording(null);
+      setWaitingDoubleTap(false);
+      pendingKeyRef.current = null;
+      if (doubleTapTimerRef.current) clearTimeout(doubleTapTimerRef.current);
       setTab("chat");
     }
+  }, [open]);
+
+  const commitKey = (key: string) => {
+    const rec = recordingRef.current;
+    if (!rec) return;
+    setLocalBindings((prev) => {
+      const keys = [...(prev[rec.action] ?? [])];
+      if (rec.index === keys.length) keys.push(key);
+      else keys[rec.index] = key;
+      return { ...prev, [rec.action]: keys };
+    });
+    setRecording(null);
+    setWaitingDoubleTap(false);
+    pendingKeyRef.current = null;
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (!recordingRef.current) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === "Escape") {
+        if (doubleTapTimerRef.current) clearTimeout(doubleTapTimerRef.current);
+        pendingKeyRef.current = null;
+        setWaitingDoubleTap(false);
+        setRecording(null);
+        return;
+      }
+      const key = captureKey(e);
+      if (pendingKeyRef.current !== null) {
+        // second keypress — double-tap if same key, otherwise replace pending
+        if (doubleTapTimerRef.current) clearTimeout(doubleTapTimerRef.current);
+        if (pendingKeyRef.current === key) {
+          commitKey(`${key}+${key}`);
+        } else {
+          // different key: start a new pending for this key
+          pendingKeyRef.current = key;
+          setWaitingDoubleTap(true);
+          doubleTapTimerRef.current = setTimeout(() => {
+            commitKey(key);
+          }, 400);
+        }
+      } else {
+        // first keypress: wait to see if double-tap follows
+        pendingKeyRef.current = key;
+        setWaitingDoubleTap(true);
+        doubleTapTimerRef.current = setTimeout(() => {
+          commitKey(key);
+        }, 400);
+      }
+    };
+    window.addEventListener("keydown", handler, true);
+    return () => {
+      window.removeEventListener("keydown", handler, true);
+      if (doubleTapTimerRef.current) clearTimeout(doubleTapTimerRef.current);
+    };
   }, [open]);
 
   if (!open || !preferences) return null;
@@ -124,30 +241,111 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
     setLocalDisabled(next);
   };
 
+  const removeKey = (action: string, index: number) => {
+    setLocalBindings((prev) => {
+      const keys = (prev[action] ?? []).filter((_, i) => i !== index);
+      return { ...prev, [action]: keys };
+    });
+  };
+
   const handleSave = () => {
     onSave({
       subscribedChannels: Array.from(localSubscribed),
       disabledCommands: Array.from(localDisabled),
       shadersEnabled: localShaders,
+      keybindings: localBindings,
     });
   };
 
   const sortedCommands = [...preferences.commands].sort((a, b) => a.command.localeCompare(b.command));
+  const groupedBindings = groupActions(localBindings);
+  const groups = [...new Set(groupedBindings.map((r) => r.group))];
+
+  const KEY_BADGE = (isRecording: boolean): React.CSSProperties => ({
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 3,
+    background: isRecording ? "#5a3a00" : "#2a2a2a",
+    border: `1px solid ${isRecording ? "#f0a020" : "#555"}`,
+    borderRadius: 3,
+    padding: "2px 6px",
+    fontSize: 11,
+    cursor: "pointer",
+    color: isRecording ? "#f0a020" : "#ccc",
+    marginRight: 4,
+    userSelect: "none",
+  });
+
+  const ADD_BTN: React.CSSProperties = {
+    background: "transparent",
+    border: "1px dashed #555",
+    borderRadius: 3,
+    color: "#888",
+    cursor: "pointer",
+    fontSize: 11,
+    padding: "2px 6px",
+  };
 
   return (
     <div
       style={OVERLAY}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) {
+          setRecording(null);
+          onClose();
+        }
       }}
     >
-      <div style={DIALOG}>
+      <div style={{ ...DIALOG, minWidth: 520, position: "relative" }}>
+        {recording && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 10,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(0,0,0,0.75)",
+              borderRadius: 8,
+              gap: 12,
+            }}
+            onClick={() => {
+              if (doubleTapTimerRef.current) clearTimeout(doubleTapTimerRef.current);
+              pendingKeyRef.current = null;
+              setWaitingDoubleTap(false);
+              setRecording(null);
+            }}
+          >
+            {waitingDoubleTap ? (
+              <>
+                <div style={{ fontSize: 15, color: "#f0a020", fontFamily: "monospace" }}>
+                  Press again for double-tap…
+                </div>
+                <div style={{ fontSize: 12, color: "#888", fontFamily: "monospace" }}>
+                  or wait to confirm single key
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 15, color: "#fff", fontFamily: "monospace" }}>Press a key to assign</div>
+            )}
+            <div style={{ fontSize: 11, color: "#666", fontFamily: "monospace" }}>Escape or click to cancel</div>
+          </div>
+        )}
         <h3 style={{ margin: "0 0 12px", fontSize: 16, color: "#fff" }}>Preferences</h3>
 
         <div style={TABS}>
-          {(["chat", "commands", "graphics"] as Tab[]).map((t) => (
-            <button key={t} style={TAB_BTN(tab === t)} onClick={() => setTab(t)}>
-              {t === "chat" ? "Chat" : t === "commands" ? "Commands" : "Graphics"}
+          {(["chat", "commands", "graphics", "keybindings"] as Tab[]).map((t) => (
+            <button
+              key={t}
+              style={TAB_BTN(tab === t)}
+              onClick={() => {
+                setRecording(null);
+                setTab(t);
+              }}
+            >
+              {t === "chat" ? "Chat" : t === "commands" ? "Commands" : t === "graphics" ? "Graphics" : "Keybindings"}
             </button>
           ))}
         </div>
@@ -195,10 +393,65 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
               <span>Shaders (ambient occlusion, directional shading, fog)</span>
             </div>
           )}
+
+          {tab === "keybindings" && (
+            <>
+              {groups.map((group) => (
+                <div key={group} style={{ marginBottom: 8 }}>
+                  <div
+                    style={{
+                      color: "#888",
+                      fontSize: 11,
+                      textTransform: "uppercase",
+                      letterSpacing: 1,
+                      padding: "6px 0 2px",
+                    }}
+                  >
+                    {group}
+                  </div>
+                  {groupedBindings
+                    .filter((r) => r.group === group)
+                    .map(({ action, keys }) => (
+                      <div key={action} style={{ ...ROW, alignItems: "center", flexWrap: "wrap", gap: 4 }}>
+                        <span style={{ minWidth: 140, fontSize: 12, color: "#ccc" }}>{action.replace(/_/g, " ")}</span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, flex: 1 }}>
+                          {keys.map((k, i) => {
+                            const isRec = recording?.action === action && recording?.index === i;
+                            return (
+                              <span key={i} style={KEY_BADGE(isRec)} onClick={() => setRecording({ action, index: i })}>
+                                {isRec ? "…" : k}
+                                <span
+                                  style={{ marginLeft: 3, color: "#666", fontSize: 10 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeKey(action, i);
+                                  }}
+                                >
+                                  ×
+                                </span>
+                              </span>
+                            );
+                          })}
+                          <button style={ADD_BTN} onClick={() => setRecording({ action, index: keys.length })}>
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ))}
+            </>
+          )}
         </div>
 
         <div style={FOOTER}>
-          <button style={BTN(false)} onClick={onClose}>
+          <button
+            style={BTN(false)}
+            onClick={() => {
+              setRecording(null);
+              onClose();
+            }}
+          >
             Cancel
           </button>
           <button style={BTN(true)} onClick={handleSave}>

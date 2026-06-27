@@ -54,4 +54,5 @@ export interface PreferencesData {
   disabledCommands: string[];
   shadersEnabled: boolean;
   commands: CommandInfo[];
+  keybindings: Record<string, string[]>;
 }

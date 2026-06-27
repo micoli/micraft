@@ -55,7 +55,13 @@ export type UiAction =
   | { type: "preferences_sync"; data: PreferencesData }
   | { type: "preferences_show" }
   | { type: "preferences_hide" }
-  | { type: "preferences_save"; subscribedChannels: string[]; disabledCommands: string[]; shadersEnabled: boolean }
+  | {
+      type: "preferences_save";
+      subscribedChannels: string[];
+      disabledCommands: string[];
+      shadersEnabled: boolean;
+      keybindings: Record<string, string[]>;
+    }
   | { type: "pause_menu_show" }
   | { type: "pause_menu_hide" };
 
@@ -155,6 +161,7 @@ export function reducer(state: UiState, action: UiAction): UiState {
             subscribedChannels: action.subscribedChannels,
             disabledCommands: action.disabledCommands,
             shadersEnabled: action.shadersEnabled,
+            keybindings: action.keybindings,
           }
         : state.preferences;
       return { ...state, preferences: prefs, preferencesOpen: false };

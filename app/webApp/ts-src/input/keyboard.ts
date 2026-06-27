@@ -115,8 +115,11 @@ function isComboDown(str: string): boolean {
 }
 
 export function registerKeyboard(): void {
-  window.mcLoadBindings = (host: string, port: number): void => {
-    fetch(`http://${host}:${port}/api/keybindings`)
+  window.mcLoadBindings = (host: string, port: number, player: string): void => {
+    const url = player
+      ? `http://${host}:${port}/api/keybindings?player=${encodeURIComponent(player)}`
+      : `http://${host}:${port}/api/keybindings`;
+    fetch(url)
       .then((r) => r.json())
       .then((data) => {
         if (window.__mc) window.__mc.bindings = data;
