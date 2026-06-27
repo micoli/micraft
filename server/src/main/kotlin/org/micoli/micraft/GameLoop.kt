@@ -32,6 +32,7 @@ import org.micoli.micraft.tick.ChunkStreamer
 import org.micoli.micraft.tick.IntentCollector
 import org.micoli.micraft.tick.LiquidManager
 import org.micoli.micraft.tick.MovementProcessor
+import org.micoli.micraft.tick.VegetationManager
 import org.micoli.micraft.ui.validateLayouts
 import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.ChatChannelManager
@@ -42,6 +43,7 @@ import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemType
 import org.micoli.micraft.world.NpcRegistryLoader
+import org.micoli.micraft.world.VegetationConfig
 import org.micoli.micraft.world.WeatherConfig
 import org.micoli.micraft.world.WeatherManager
 import org.micoli.micraft.world.WorldConstants
@@ -173,6 +175,16 @@ class GameLoop(
 
     private val liquidManager = LiquidManager(world)
 
+    private val vegetationConfig = VegetationConfig(Path.of("data/config/vegetation.yaml"))
+    private val vegetationManager =
+        VegetationManager(
+            world,
+            vegetationConfig,
+            savePath =
+                persistence?.worldDir?.resolve("vegetation_state.json")
+                    ?: Path.of("data/world/default_world/vegetation_state.json"),
+        )
+
     private val npcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml"))
     private val npcRegistryLoader = NpcRegistryLoader(Path.of("data/config/npcs.yaml"))
     private val npcManager =
@@ -227,7 +239,12 @@ class GameLoop(
             liquidManager,
         )
     private val blockPlacer =
-        BlockPlacer(world, { msg -> sessions.values.forEach { it.send(msg) } }, ::savePlayer)
+        BlockPlacer(
+            world,
+            { msg -> sessions.values.forEach { it.send(msg) } },
+            ::savePlayer,
+            vegetationManager,
+        )
     private val intentCollector =
         IntentCollector(
             blockBreaker,
@@ -359,6 +376,9 @@ class GameLoop(
         val newWeatherConfig = WeatherConfig()
         weatherManager.reload(newWeatherConfig)
         lines += "Weather: ${newWeatherConfig.data.weatherTypes.size} types"
+        val newVegetationConfig = VegetationConfig(Path.of("data/config/vegetation.yaml"))
+        vegetationManager.reload(newVegetationConfig)
+        lines += "Vegetation: ${newVegetationConfig.data.chains.size} chains"
         return lines.joinToString(", ")
     }
 
@@ -371,6 +391,7 @@ class GameLoop(
         val npcSavePath =
             persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/config/spawns.json")
         npcManager.load(npcSavePath)
+        vegetationManager.load()
         persistence?.let {
             terrainCache.prewarm(
                 chunksDir = it.worldDir.resolve("chunks"),
@@ -402,6 +423,7 @@ class GameLoop(
         val npcSavePath =
             persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/config/spawns.json")
         npcManager.save(npcSavePath)
+        vegetationManager.save()
         log.info("World saved on shutdown")
     }
 
@@ -453,6 +475,7 @@ class GameLoop(
         npcManager.tick(world)
         weatherManager.tick(world) { msg -> sessions.values.forEach { it.send(msg) } }
         liquidManager.tick { msg -> sessions.values.forEach { it.send(msg) } }
+        vegetationManager.tick { msg -> sessions.values.forEach { it.send(msg) } }
         npcSpawnTickCounter++
         if (npcSpawnTickCounter >= org.micoli.micraft.npc.NpcConstants.SPAWN_CHECK_INTERVAL_TICKS) {
             npcSpawnTickCounter = 0

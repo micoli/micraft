@@ -99,6 +99,27 @@ private val DEFAULT_YAML: Map<String, BlockYamlEntry> =
                 liquid = true,
                 viscosity = 3,
                 replaceable = true),
+        "SEED" to
+            BlockYamlEntry(
+                hardness = 0,
+                solid = false,
+                transparent = true,
+                minimapColor = listOf(180, 140, 60),
+                replaceable = true),
+        "SPROUT" to
+            BlockYamlEntry(
+                hardness = 0,
+                solid = false,
+                transparent = true,
+                minimapColor = listOf(100, 160, 50),
+                replaceable = true),
+        "SAPLING" to
+            BlockYamlEntry(
+                hardness = 1,
+                solid = false,
+                transparent = true,
+                minimapColor = listOf(60, 120, 40),
+                replaceable = true),
     )
 
 class BlockRegistryLoader(private val path: Path) {

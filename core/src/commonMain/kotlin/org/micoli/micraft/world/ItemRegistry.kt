@@ -11,6 +11,7 @@ object ItemRegistry {
                 ItemDefinition(buildable = true, placesBlock = BlockType.SANDSTONE),
             ItemType.SNOWBALL to ItemDefinition(buildable = false),
             ItemType.FLINT to ItemDefinition(buildable = false),
+            ItemType.SEED to ItemDefinition(buildable = true, placesBlock = BlockType.SEED),
         )
 
     private val defs: MutableMap<ItemType, ItemDefinition> = defaults.toMutableMap()

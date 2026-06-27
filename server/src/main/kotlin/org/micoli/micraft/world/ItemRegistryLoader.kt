@@ -30,6 +30,7 @@ private val DEFAULT_YAML: Map<String, ItemYamlEntry> =
         "SANDSTONE" to ItemYamlEntry(buildable = true, placesBlock = "SANDSTONE"),
         "SNOWBALL" to ItemYamlEntry(buildable = false),
         "FLINT" to ItemYamlEntry(buildable = false),
+        "SEED" to ItemYamlEntry(buildable = true, placesBlock = "SEED"),
     )
 
 class ItemRegistryLoader(private val path: Path) {

@@ -92,6 +92,27 @@ object BlockRegistry {
                     liquid = true,
                     viscosity = 3,
                     replaceable = true),
+            BlockType.SEED to
+                BlockDefinition(
+                    hardness = 0,
+                    solid = false,
+                    transparent = true,
+                    minimapColor = listOf(180, 140, 60),
+                    replaceable = true),
+            BlockType.SPROUT to
+                BlockDefinition(
+                    hardness = 0,
+                    solid = false,
+                    transparent = true,
+                    minimapColor = listOf(100, 160, 50),
+                    replaceable = true),
+            BlockType.SAPLING to
+                BlockDefinition(
+                    hardness = 1,
+                    solid = false,
+                    transparent = true,
+                    minimapColor = listOf(60, 120, 40),
+                    replaceable = true),
         )
 
     private val defs: MutableMap<BlockType, BlockDefinition> = defaults.toMutableMap()

@@ -19,6 +19,7 @@ class BlockPlacer(
     private val world: WorldState,
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val savePlayer: (PlayerSession) -> Unit,
+    private val vegetationManager: VegetationManager? = null,
 ) {
     suspend fun handlePlace(session: PlayerSession, intent: ClientMessage.BlockPlace) {
         val pos = intent.pos
@@ -60,6 +61,7 @@ class BlockPlacer(
         val change = BlockChange(pos, blockType)
         world.applyChange(change)
         broadcast(ServerMessage.WorldUpdate(listOf(change)))
+        vegetationManager?.tryActivate(pos, blockType)
 
         val remaining = count - 1
         if (remaining <= 0) session.inventory.remove(itemType)

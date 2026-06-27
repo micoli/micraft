@@ -6,6 +6,7 @@ const ITEM_META: Record<string, { label: string; bg: string }> = {
   SANDSTONE: { label: "SST", bg: "#C8B46C" },
   SNOWBALL: { label: "SNW", bg: "#DCE8F5" },
   FLINT: { label: "FLT", bg: "#4A4A52" },
+  SEED: { label: "SED", bg: "#C8A050" },
 };
 
 interface Props {

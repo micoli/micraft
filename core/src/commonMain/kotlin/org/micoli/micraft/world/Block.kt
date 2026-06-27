@@ -17,6 +17,7 @@ enum class ItemType {
     SANDSTONE,
     SNOWBALL,
     FLINT,
+    SEED,
 }
 
 @JvmInline
@@ -40,6 +41,9 @@ value class BlockType(val id: String) {
         val FLOWER = BlockType("FLOWER")
         val WEED = BlockType("WEED")
         val WATER = BlockType("WATER")
+        val SEED = BlockType("SEED")
+        val SPROUT = BlockType("SPROUT")
+        val SAPLING = BlockType("SAPLING")
     }
 
     override fun toString(): String = id

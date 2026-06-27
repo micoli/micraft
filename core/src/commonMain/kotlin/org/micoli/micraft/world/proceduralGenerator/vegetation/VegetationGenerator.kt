@@ -1,6 +1,7 @@
 package org.micoli.micraft.world.proceduralGenerator.vegetation
 
 import kotlin.math.abs
+import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.Chunk
@@ -83,6 +84,74 @@ private fun placeVegetationStructure(
             if (surfaceBlock.isVegetationHost)
                 setVeg(blocks, ox, oz, wx, surfaceY + 1, wz, BlockType.WEED)
     }
+}
+
+private fun positionSeed(wx: Int, wz: Int): Double {
+    var h = (wx.toLong() * 2654435761L) xor (wz.toLong() * 2246822519L)
+    h = h xor (h ushr 33)
+    h *= -49064778989728563L
+    h = h xor (h ushr 33)
+    h *= -4265267296055464877L
+    h = h xor (h ushr 33)
+    return (h and 0x7FFFFFFFFFFFFFFFL).toDouble() / Long.MAX_VALUE.toDouble()
+}
+
+fun oakTreeBlocks(wx: Int, wz: Int, surfaceY: Int): List<Pair<BlockPos, BlockType>> {
+    val trunkH = 4 + (positionSeed(wx, wz) * 2).toInt()
+    val trunkBase = surfaceY + 1
+    val trunkTop = trunkBase + trunkH - 1
+    val result = mutableListOf<Pair<BlockPos, BlockType>>()
+
+    fun add(x: Int, y: Int, z: Int, type: BlockType) {
+        if (y in WorldConstants.WORLD_MIN_Y..WorldConstants.WORLD_MAX_Y) {
+            result += Pair(BlockPos(x, y, z), type)
+        }
+    }
+
+    for (y in trunkBase..trunkTop) add(wx, y, wz, BlockType.OAK_LOG)
+    for (dy in -1..0) {
+        for (dx in -2..2) for (dz in -2..2) {
+            if (dx == 0 && dz == 0) continue
+            if (abs(dx) == 2 && abs(dz) == 2) continue
+            add(wx + dx, trunkTop + dy, wz + dz, BlockType.OAK_LEAVES)
+        }
+    }
+    for (dx in -1..1) for (dz in -1..1) add(wx + dx, trunkTop + 1, wz + dz, BlockType.OAK_LEAVES)
+    add(wx, trunkTop + 2, wz, BlockType.OAK_LEAVES)
+    add(wx + 1, trunkTop + 2, wz, BlockType.OAK_LEAVES)
+    add(wx - 1, trunkTop + 2, wz, BlockType.OAK_LEAVES)
+    add(wx, trunkTop + 2, wz + 1, BlockType.OAK_LEAVES)
+    add(wx, trunkTop + 2, wz - 1, BlockType.OAK_LEAVES)
+    return result
+}
+
+fun pineTreeBlocks(
+    wx: Int,
+    wz: Int,
+    surfaceY: Int,
+    leavesType: BlockType
+): List<Pair<BlockPos, BlockType>> {
+    val trunkH = 7 + (positionSeed(wx, wz) * 3).toInt()
+    val trunkBase = surfaceY + 1
+    val trunkTop = trunkBase + trunkH - 1
+    val result = mutableListOf<Pair<BlockPos, BlockType>>()
+
+    fun add(x: Int, y: Int, z: Int, type: BlockType) {
+        if (y in WorldConstants.WORLD_MIN_Y..WorldConstants.WORLD_MAX_Y) {
+            result += Pair(BlockPos(x, y, z), type)
+        }
+    }
+
+    for (y in trunkBase..trunkTop) add(wx, y, wz, BlockType.PINE_LOG)
+    add(wx, trunkTop, wz, leavesType)
+    for (dx in -1..1) for (dz in -1..1) add(wx + dx, trunkTop - 1, wz + dz, leavesType)
+    for (dy in -3..-2) {
+        for (dx in -2..2) for (dz in -2..2) {
+            if (abs(dx) == 2 && abs(dz) == 2) continue
+            add(wx + dx, trunkTop + dy, wz + dz, leavesType)
+        }
+    }
+    return result
 }
 
 private fun placeOakTree(

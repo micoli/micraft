@@ -7,6 +7,7 @@
 ## Table of Contents
 
 - [Features](#features)
+- [Architecture](#architecture)
 - [Slash Commands](#slash-commands)
 - [Development](#development)
 - [Running the Apps](#running-the-apps)
@@ -21,8 +22,9 @@
 
 - **Procedural generation** — Perlin noise terrain, Voronoi roads, vegetation, houses (rectangular and circular temple)
 - **Biomes** — 5 biome types (desert, plains, forest, mountains, tundra) via Voronoi cells with moisture/altitude gradients and blend zones
-- **Blocks** — 17 types: stone, dirt, grass, sand, sandstone, gravel, snow, oak/pine logs and leaves, flower, weed, water
+- **Blocks** — 20 types: stone, dirt, grass, sand, sandstone, gravel, snow, oak/pine logs and leaves, flower, weed, water, seed, sprout, sapling
 - **Liquid physics** — water source blocks flow with configurable viscosity; biome lakes generated at world creation
+- **Vegetation growth** — seed → sprout → sapling → tree; configurable per-stage tick durations in `vegetation.yaml`
 
 ### Gameplay
 
@@ -49,6 +51,113 @@
 - **UI layout editor** — move/resize widgets on a 48×48 grid, persisted per player
 - **Shaders** — ambient occlusion, directional shading, fog toggle via `/shaders`
 - **World persistence** — chunks saved as gzip binary, players as JSON
+
+---
+
+## Architecture
+
+### World Generation Pipeline
+
+Chunks are generated on demand: `ChunkStreamer` requests a chunk → `WorldState.getOrGenerate()` checks the in-memory cache, then disk, then runs the generator.
+
+```mermaid
+flowchart LR
+    REQ["ChunkStreamer\n(player moves)"]
+    REQ --> WS
+
+    subgraph WS ["WorldState.getOrGenerate()"]
+        direction TB
+        CACHE{"in cache?"}
+        DISK["WorldPersistence\n.mcc.gz"]
+    end
+
+    CACHE -->|yes| OUT
+    CACHE -->|no - disk?| DISK
+    DISK -->|yes| OUT
+    DISK -->|no| GEN
+
+    subgraph GEN ["ProceduralChunkGenerator"]
+        direction TB
+        BIO["VoronoiBiomeSelector\ndesert · plains · forest\nmountains · tundra\n(moisture × altitude grid)"]
+        TRN["Terrain\nPerlin noise elevation\n+ mountain boost"]
+        VEG["VegetationGenerator\noak tree · pine tree\nflower · weed\n(density hash per column)"]
+        HSE["HouseGenerator\nrectangular · circular temple\n(Voronoi cell centres)"]
+        RD["RoadVoronoi\nroads between cells"]
+        BIO --> TRN
+        TRN --> VEG
+        TRN --> HSE
+        TRN --> RD
+    end
+
+    GEN --> OUT["Chunk\n(ByteArray wire-encoded)"]
+    OUT -->|ChunkData msg| CLIENT["Client"]
+    OUT -->|mark dirty| SAVE["flushDirty → disk\n(every 600 ticks)"]
+```
+
+### Game Loop — Tick Sequence
+
+The server runs at **20 tps (50 ms/tick)**. Each tick drives player input, physics, automatic world managers, and periodic housekeeping.
+
+```mermaid
+flowchart TD
+    GL(["GameLoop.tick()\n50 ms · 20 tps"])
+
+    GL --> SESS
+
+    subgraph SESS ["Per connected player"]
+        direction LR
+        IC["IntentCollector\nMoveIntent · BlockBreak\nBlockPlace · Command"]
+        BRK["BlockBreaker\nbreak progress + drops"]
+        MOV["MovementProcessor\nAABB physics · gravity\nclient-side prediction"]
+        STR["ChunkStreamer\ndeliver ready chunks"]
+        IC --> BRK --> MOV --> STR
+    end
+
+    SESS --> WIT["WorldItemManager\nitem proximity pickup"]
+    WIT --> NPC["NpcManager\nwander · pathfind · interact"]
+    NPC --> WEA["WeatherManager\nzone drift · expiry"]
+
+    WEA --> LIQ
+    LIQ --> VEG_M
+
+    subgraph AUTO ["Automatic world managers — broadcast WorldUpdate on change"]
+        direction TB
+        LIQ["💧 LiquidManager\n─────────────────────────\nevery tick\n① check activeLiquids set\n② flow ↓ (gravity)\n③ spread → horizontal (max 7)\n─────────────────────────\nactivated: WATER placed\nor adjacent block removed"]
+
+        VEG_M["🌱 VegetationManager\n─────────────────────────\nevery 40 ticks\n① verify block still present\n   (player break → deactivate)\n② accumulate ticks\n③ SEED → SPROUT → SAPLING\n④ final stage → place tree\n─────────────────────────\nactivated: SEED item placed\non vegetationHost block"]
+    end
+
+    GL -->|"every 20 ticks"| T1["⏱ TimeUpdate broadcast"]
+    GL -->|"every 200 ticks"| T2["🐾 NpcSpawner.trySpawn"]
+    GL -->|"every 600 ticks"| T3["💾 flushDirty chunks\nplayer · NPC · vegetation state"]
+```
+
+### Automatic Manager State Machine
+
+Both `LiquidManager` and `VegetationManager` follow the same pattern: an in-memory set of active positions is mutated by world events, consumed by the tick, and produces `WorldUpdate` broadcasts to all clients.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+
+    state "💧 LiquidManager" as LIQ {
+        [*] --> active : WATER placed / adjacent block removed\n(activate)
+        active --> flowing : tick — can flow
+        flowing --> active : spread continues
+        flowing --> settled : no AIR neighbor\n(remove from set)
+        settled --> [*]
+    }
+
+    state "🌱 VegetationManager" as VEG {
+        [*] --> tracking : SEED placed on vegetationHost\n(tryActivate → random chain)
+        tracking --> tracking : ticks < ticksRequired\n(accumulate every 40 ticks)
+        tracking --> next_stage : ticks ≥ ticksRequired\napplyChange(SEED→SPROUT→SAPLING)
+        next_stage --> tracking : stageIndex++\nnew random ticksRequired
+        next_stage --> spawning : last stage reached
+        spawning --> [*] : oakTreeBlocks / pineTreeBlocks\napplyChange batch → WorldUpdate
+        tracking --> [*] : block missing\n(player broke it)
+    }
+```
 
 ---
 
