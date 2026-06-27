@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../schemas/weather.schema.json
+# yaml-language-server: $schema=./schemas/weather.schema.json
 enabled: true
 weatherTypes:
   - type: RAIN

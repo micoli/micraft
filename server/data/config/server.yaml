@@ -19,5 +19,5 @@ player:
 auth:
   provider: "none"
   local:
-    usersFile: "data/auth/users.yaml"
+    usersFile: "data/config/auth/users.yaml"
   oauth: null

@@ -61,10 +61,10 @@ fun Application.module() {
 
     validateAllYamlConfigs()
 
-    val serverConfig = loadServerConfig(java.nio.file.Path.of("data/server.yaml"))
+    val serverConfig = loadServerConfig(java.nio.file.Path.of("data/config/server.yaml"))
     applyServerConfig(serverConfig)
 
-    val gameConfig = loadGameConfig(java.nio.file.Path.of("data/game.yaml"))
+    val gameConfig = loadGameConfig(java.nio.file.Path.of("data/config/game.yaml"))
     applyGameConfig(gameConfig)
 
     val debugWorld = gameConfig.debugWorld
@@ -86,13 +86,13 @@ fun Application.module() {
             }
         } else null
 
-    val blockRegistryLoader = BlockRegistryLoader(Path.of("data/blocks/blocks.yaml"))
-    val itemRegistryLoader = ItemRegistryLoader(Path.of("data/items/items.yaml"))
+    val blockRegistryLoader = BlockRegistryLoader(Path.of("data/config/blocks.yaml"))
+    val itemRegistryLoader = ItemRegistryLoader(Path.of("data/config/items.yaml"))
     BlockRegistry.load(blockRegistryLoader.load())
     ItemRegistry.load(itemRegistryLoader.load())
 
     fun loadBiomeRegistry(): BiomeRegistry {
-        val biomeFile = Path.of("data/biomes/biomes.yaml")
+        val biomeFile = Path.of("data/config/biomes.yaml")
         return if (biomeFile.exists()) {
             log.info("Loading biomes from {}", biomeFile.toAbsolutePath())
             runCatching {
@@ -127,10 +127,10 @@ fun Application.module() {
             BiomeRegistry.default()
         }
 
-    val roadConfigPath = Path.of("data/roads/roads.yaml")
+    val roadConfigPath = Path.of("data/config/roads.yaml")
     val roadConfig = if (!debugWorld) loadRoadConfig(roadConfigPath) else null
 
-    val houseConfigPath = Path.of("data/houses/houses.yaml")
+    val houseConfigPath = Path.of("data/config/houses.yaml")
     val houseConfig = if (!debugWorld) loadHouseConfig(houseConfigPath) else null
 
     val generator =
@@ -198,7 +198,7 @@ fun Application.module() {
             call.respondText("""{"server":"$SERVER_ID"}""", ContentType.Application.Json)
         }
         get("/api/keybindings") {
-            val bindings = loadKeyBindings(Path.of("data/personal/keybindings.yaml"))
+            val bindings = loadKeyBindings(Path.of("data/config/personal/keybindings.yaml"))
             val serializer = MapSerializer(String.serializer(), ListSerializer(String.serializer()))
             call.respondText(
                 Json.encodeToString(serializer, bindings), ContentType.Application.Json)

@@ -1,39 +1,39 @@
 "STONE":
 - item: "COBBLESTONE"
-  dropRate: 1.0
+  dropRate: 100
   minCount: 1
   maxCount: 1
 "DIRT":
 - item: "DIRT"
-  dropRate: 1.0
+  dropRate: 100
   minCount: 1
   maxCount: 1
 "GRASS":
 - item: "DIRT"
-  dropRate: 1.0
+  dropRate: 100
   minCount: 1
   maxCount: 1
 "SAND":
 - item: "SAND"
-  dropRate: 1.0
+  dropRate: 100
   minCount: 1
   maxCount: 1
 "SANDSTONE":
 - item: "SANDSTONE"
-  dropRate: 1.0
+  dropRate: 100
   minCount: 1
   maxCount: 1
 "GRAVEL":
 - item: "GRAVEL"
-  dropRate: 0.9
+  dropRate: 90
   minCount: 1
   maxCount: 1
 - item: "FLINT"
-  dropRate: 0.1
+  dropRate: 10
   minCount: 1
   maxCount: 1
 "SNOW":
 - item: "SNOWBALL"
-  dropRate: 1.0
+  dropRate: 100
   minCount: 1
   maxCount: 4

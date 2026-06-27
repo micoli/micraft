@@ -74,7 +74,7 @@ weatherTypes:
 """
         .trimIndent()
 
-class WeatherConfig(private val path: Path = Path.of("data/weather/weather.yaml")) {
+class WeatherConfig(private val path: Path = Path.of("data/config/weather.yaml")) {
     @Volatile
     var data: WeatherConfigData = WeatherConfigData()
         private set

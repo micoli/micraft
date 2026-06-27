@@ -123,7 +123,7 @@ fun validatePluginSystemIds(commands: Map<String, CommandHandler>, plugins: List
     }
 }
 
-fun buildI18nDirs(base: Path = Path.of("data/i18n")): List<Path> {
+fun buildI18nDirs(base: Path = Path.of("data/config/i18n")): List<Path> {
     val pluginsRoot = Path.of("plugins")
     val pluginDirs =
         if (pluginsRoot.toFile().exists())
@@ -157,7 +157,7 @@ class GameLoop(
     private val chatChannelManager = ChatChannelManager()
     private val chatService = ChatService(chatChannelManager, ::savePlayer, { sessions.values })
 
-    private val dropConfig = DropConfig(Path.of("data/drops/drops.yaml"))
+    private val dropConfig = DropConfig(Path.of("data/config/drops.yaml"))
     private val worldItems =
         WorldItemManager(
             dropConfig,
@@ -171,8 +171,8 @@ class GameLoop(
 
     private val liquidManager = LiquidManager(world)
 
-    private val npcConfigLoader = NpcConfigLoader(Path.of("data/npc/npc.yaml"))
-    private val npcRegistryLoader = NpcRegistryLoader(Path.of("data/npcs/npcs.yaml"))
+    private val npcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml"))
+    private val npcRegistryLoader = NpcRegistryLoader(Path.of("data/config/npcs.yaml"))
     private val npcManager =
         NpcManager(
             broadcast = { msg -> sessions.values.forEach { it.send(msg) } },
@@ -360,7 +360,7 @@ class GameLoop(
         npcConfigLoader.load()
         npcManager.loadDefinitions(npcRegistryLoader.load())
         val npcSavePath =
-            persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/npcs/spawns.json")
+            persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/config/spawns.json")
         npcManager.load(npcSavePath)
         persistence?.let {
             terrainCache.prewarm(
@@ -370,7 +370,7 @@ class GameLoop(
         }
         app.launch {
             val npcSavePath =
-                persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/npcs/spawns.json")
+                persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/config/spawns.json")
             while (isActive) {
                 delay(TICK_MS)
                 tick()
@@ -391,7 +391,7 @@ class GameLoop(
         worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
         sessions.values.forEach { session -> savePlayer(session) }
         val npcSavePath =
-            persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/npcs/spawns.json")
+            persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/config/spawns.json")
         npcManager.save(npcSavePath)
         log.info("World saved on shutdown")
     }

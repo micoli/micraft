@@ -15,7 +15,7 @@ fun main(args: Array<String>) {
     val password = args[1]
     val displayName = if (args.size >= 3) args[2] else email
 
-    val usersFile = Path.of("data/auth/users.yaml")
+    val usersFile = Path.of("data/config/auth/users.yaml")
     val provider = LocalAuthProvider(usersFile)
     runCatching { provider.addUser(email, password, displayName) }
         .onSuccess { println("User added: $email (displayName=$displayName)") }

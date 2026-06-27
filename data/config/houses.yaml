@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=./schemas/houses.schema.json
 enabled: true
 gridCellSize: 48
 clusterCheckRadius: 2

@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../schemas/drops.schema.json
+# yaml-language-server: $schema=./schemas/drops.schema.json
 "STONE":
 - item: "COBBLESTONE"
   dropRate: 100

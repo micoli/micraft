@@ -23,7 +23,7 @@
     maxPerChunk: 1
     spawnBiomes: []
 "GOAT":
-  bbmodelFile: "goat.bbmodel"
+  bbmodelFile: "npc_goat.bbmodel"
   behavior: "random_movable"
   width: 0.5
   height: 0.9

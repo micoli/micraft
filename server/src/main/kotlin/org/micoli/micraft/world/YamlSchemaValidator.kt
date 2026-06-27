@@ -28,27 +28,27 @@ fun validateYaml(yamlPath: Path, schemaPath: Path) {
     log.debug("OK {}", yamlPath)
 }
 
-fun validateAllYamlConfigs(dataDir: Path = Path.of("data")) {
-    val schemasDir = dataDir.resolve("schemas")
+fun validateAllYamlConfigs(configDir: Path = Path.of("data/config")) {
+    val schemasDir = configDir.resolve("schemas")
     val staticPairs =
         listOf(
-            dataDir.resolve("blocks/blocks.yaml") to schemasDir.resolve("blocks.schema.json"),
-            dataDir.resolve("items/items.yaml") to schemasDir.resolve("items.schema.json"),
-            dataDir.resolve("drops/drops.yaml") to schemasDir.resolve("drops.schema.json"),
-            dataDir.resolve("biomes/biomes.yaml") to schemasDir.resolve("biomes.schema.json"),
-            dataDir.resolve("server.yaml") to schemasDir.resolve("server.schema.json"),
-            dataDir.resolve("game.yaml") to schemasDir.resolve("game.schema.json"),
-            dataDir.resolve("auth/users.yaml") to schemasDir.resolve("auth-users.schema.json"),
-            dataDir.resolve("personal/keybindings.yaml") to
+            configDir.resolve("blocks.yaml") to schemasDir.resolve("blocks.schema.json"),
+            configDir.resolve("items.yaml") to schemasDir.resolve("items.schema.json"),
+            configDir.resolve("drops.yaml") to schemasDir.resolve("drops.schema.json"),
+            configDir.resolve("biomes.yaml") to schemasDir.resolve("biomes.schema.json"),
+            configDir.resolve("server.yaml") to schemasDir.resolve("server.schema.json"),
+            configDir.resolve("game.yaml") to schemasDir.resolve("game.schema.json"),
+            configDir.resolve("auth/users.yaml") to schemasDir.resolve("auth-users.schema.json"),
+            configDir.resolve("personal/keybindings.yaml") to
                 schemasDir.resolve("keybindings.schema.json"),
-            dataDir.resolve("roads/roads.yaml") to schemasDir.resolve("roads.schema.json"),
-            dataDir.resolve("houses/houses.yaml") to schemasDir.resolve("houses.schema.json"),
-            dataDir.resolve("weather/weather.yaml") to schemasDir.resolve("weather.schema.json"),
+            configDir.resolve("roads.yaml") to schemasDir.resolve("roads.schema.json"),
+            configDir.resolve("houses.yaml") to schemasDir.resolve("houses.schema.json"),
+            configDir.resolve("weather.yaml") to schemasDir.resolve("weather.schema.json"),
         )
 
     val i18nSchema = schemasDir.resolve("i18n.schema.json")
     val i18nPairs =
-        dataDir
+        configDir
             .resolve("i18n")
             .takeIf { it.exists() }
             ?.listDirectoryEntries("*.yaml")

@@ -27,14 +27,14 @@ Minecraft client/server clone in **Kotlin Multiplatform** — multiplayer voxel 
 | `server/.../session/PlayerSession.kt` | Per-player WebSocket session |
 | `server/.../tick/BlockBreaker.kt` | Block-break progress + drop spawning |
 | `server/.../world/DropConfig.kt` | YAML-driven drop table loader |
-| `server/.../world/BlockRegistryLoader.kt` | Loads `data/blocks/blocks.yaml` → `BlockRegistry` |
-| `server/.../world/ItemRegistryLoader.kt` | Loads `data/items/items.yaml` → `ItemRegistry` |
+| `server/.../world/BlockRegistryLoader.kt` | Loads `data/config/blocks.yaml` → `BlockRegistry` |
+| `server/.../world/ItemRegistryLoader.kt` | Loads `data/config/items.yaml` → `ItemRegistry` |
 | `core/.../world/BlockRegistry.kt` | Singleton holding `BlockDefinition` per `BlockType` |
 | `core/.../world/ItemRegistry.kt` | Singleton holding `ItemDefinition` per `ItemType` |
 | `server/.../world/WorldItemManager.kt` | Tracks live world items |
 | `server/.../auth/AuthProvider.kt` | `AuthProvider` interface + `AuthResult(playerId, displayName, token)` |
 | `server/.../auth/TokenStore.kt` | UUID→AuthResult in-memory store, TTL 10 min |
-| `server/.../auth/LocalAuthProvider.kt` | bcrypt login; re-reads `data/auth/users.yaml` on every call |
+| `server/.../auth/LocalAuthProvider.kt` | bcrypt login; re-reads `data/config/auth/users.yaml` on every call |
 | `server/.../auth/OAuthProvider.kt` | Google Authorization Code flow |
 | `server/.../auth/AuthRoutes.kt` | HTTP auth routes (see Auth section below) |
 | `server/.../auth/AddUserCommand.kt` | In-game `/adduser <email> <password> [displayName]` |
@@ -74,12 +74,12 @@ Minecraft client/server clone in **Kotlin Multiplatform** — multiplayer voxel 
 ## Domain types
 
 **Block types**: `AIR BEDROCK STONE DIRT GRASS SAND SANDSTONE GRAVEL SNOW OAK_LOG OAK_LEAVES PINE_LOG PINE_LEAVES PINE_LEAVES_SNOW FLOWER WEED`
-Properties (hardness, solid, minimapColor, modelElement) in `data/blocks/blocks.yaml`. `hardness: -1` = unbreakable.
+Properties (hardness, solid, minimapColor, modelElement) in `data/config/blocks.yaml`. `hardness: -1` = unbreakable.
 
 **Item types**: `COBBLESTONE DIRT SAND GRAVEL SANDSTONE SNOWBALL FLINT`
-Properties (buildable, placesBlock) in `data/items/items.yaml`.
+Properties (buildable, placesBlock) in `data/config/items.yaml`.
 
-**Drop config**: `data/drops/drops.yaml` — maps `BlockType → List<(ItemType, weight, minCount, maxCount)>`
+**Drop config**: `data/config/drops.yaml` — maps `BlockType → List<(ItemType, weight, minCount, maxCount)>`
 
 **WorldConstants**: `CHUNK_SIZE=16`, `VIEW_RADIUS=2` (5×5 chunks), `Y ∈ [0, 1024]`
 
@@ -96,12 +96,24 @@ Properties (buildable, placesBlock) in `data/items/items.yaml`.
 
 ```
 data/
-  blocks/blocks.yaml        # block properties (hardness, solid, minimapColor, modelElement)
-  items/items.yaml          # item properties (buildable, placesBlock)
-  drops/drops.yaml          # block → item drop table
-  biomes/biomes.yaml        # biome definitions
-  auth/users.yaml           # local auth users (email, passwordHash, displayName)
-  schemas/                  # JSON Schemas for YAML config files (VS Code validation)
+  config/
+    blocks.yaml             # block properties (hardness, solid, minimapColor, modelElement)
+    items.yaml              # item properties (buildable, placesBlock)
+    drops.yaml              # block → item drop table
+    biomes.yaml             # biome definitions
+    server.yaml             # server config (auth provider, world, physics)
+    game.yaml               # gameplay constants (tick rate, gravity, etc.)
+    npc.yaml                # NPC behavior constants
+    npcs.yaml               # NPC definitions
+    roads.yaml              # road generation config
+    houses.yaml             # house generation config
+    weather.yaml            # weather config
+    spawns.json             # NPC spawn state (runtime)
+    auth/users.yaml         # local auth users (email, passwordHash, displayName)
+    personal/keybindings.yaml
+    i18n/en.yaml
+    i18n/fr.yaml
+    schemas/                # JSON Schemas for YAML config files (VS Code validation)
   world/default_world/
     world.json              # world metadata
     players/Player.json     # persisted player states
@@ -142,7 +154,7 @@ Source in `app/webApp/ts-src/ui/`.
 
 ## Auth system
 
-Provider selected via `data/server.yaml` → `auth.provider` (`none` | `local` | `oauth`). Default `none` = no auth.
+Provider selected via `data/config/server.yaml` → `auth.provider` (`none` | `local` | `oauth`). Default `none` = no auth.
 
 **Flow**: client fetches `GET /api/auth/config` → login overlay shows matching UI → `POST /auth/login` or OAuth redirect → `TokenStore` issues UUID token (10-min TTL) → token sent in `ClientMessage.Connect` → `GameLoop.onConnect()` validates before creating session.
 
@@ -255,24 +267,24 @@ make dc CMD="./gradlew :server:addUser -Pargs='email pass [name]'"
 
 ## Schema maintenance
 
-JSON Schemas for YAML configs in `data/schemas/`. Keep in sync with Kotlin data classes:
+JSON Schemas for YAML configs in `data/config/schemas/`. Keep in sync with Kotlin data classes:
 
 | Modified file | Update schema |
 |---|---|
-| `core/.../world/BiomeDefinition.kt`, `Block.kt` | `data/schemas/biomes.schema.json` |
-| `server/.../world/DropConfig.kt`, `core/.../world/ItemType.kt` | `data/schemas/drops.schema.json` |
-| `server/.../world/BlockRegistryLoader.kt`, `core/.../world/BlockDefinition.kt`, `Block.kt` | `data/schemas/blocks.schema.json` |
-| `server/.../world/ItemRegistryLoader.kt`, `core/.../world/ItemDefinition.kt`, `Block.kt` | `data/schemas/items.schema.json` |
-| `server/.../world/KeyBindingsConfig.kt` | `data/schemas/keybindings.schema.json` |
-| `server/.../world/I18nConfig.kt` | `data/schemas/i18n.schema.json` |
-| `server/.../world/ServerConfigLoader.kt` (`AuthSection`, `OAuthConfig`, `LocalAuthConfig`) | `data/schemas/server.schema.json` |
-| `server/.../auth/LocalAuthProvider.kt` (`UserEntry`, `UsersConfig`) | `data/schemas/auth-users.schema.json` |
+| `core/.../world/BiomeDefinition.kt`, `Block.kt` | `data/config/schemas/biomes.schema.json` |
+| `server/.../world/DropConfig.kt`, `core/.../world/ItemType.kt` | `data/config/schemas/drops.schema.json` |
+| `server/.../world/BlockRegistryLoader.kt`, `core/.../world/BlockDefinition.kt`, `Block.kt` | `data/config/schemas/blocks.schema.json` |
+| `server/.../world/ItemRegistryLoader.kt`, `core/.../world/ItemDefinition.kt`, `Block.kt` | `data/config/schemas/items.schema.json` |
+| `server/.../world/KeyBindingsConfig.kt` | `data/config/schemas/keybindings.schema.json` |
+| `server/.../world/I18nConfig.kt` | `data/config/schemas/i18n.schema.json` |
+| `server/.../world/ServerConfigLoader.kt` (`AuthSection`, `OAuthConfig`, `LocalAuthConfig`) | `data/config/schemas/server.schema.json` |
+| `server/.../auth/LocalAuthProvider.kt` (`UserEntry`, `UsersConfig`) | `data/config/schemas/auth-users.schema.json` |
 
 When adding/removing/renaming field or enum value in these data classes, update corresponding schema in same commit.
 
 ## i18n (translations)
 
-Translation YAML files in `data/i18n/{locale}.yaml` (e.g. `en.yaml`, `fr.yaml`).
+Translation YAML files in `data/config/i18n/{locale}.yaml` (e.g. `en.yaml`, `fr.yaml`).
 
 Key format: `feature:scope:key` where scope is `server` or `client`.
 
@@ -283,6 +295,6 @@ Key format: `feature:scope:key` where scope is `server` or `client`.
 - Language changed with `/lang <locale>` or language selector in login overlay.
 
 **Adding new user-visible strings:**
-1. Add key to **both** `data/i18n/en.yaml` and `data/i18n/fr.yaml`.
+1. Add key to **both** `data/config/i18n/en.yaml` and `data/config/i18n/fr.yaml`.
 2. Server-side: `context.i18n.t(session.state.language, "feature:server:key", ...args)`.
 3. Client-side (TypeScript): `window.mcT("feature:client:key")`.

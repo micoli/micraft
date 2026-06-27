@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "ServerConfig",
-  "description": "Server configuration loaded from data/server.yaml at startup.",
+  "description": "Server configuration loaded from data/config/server.yaml at startup.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -51,7 +51,7 @@
           "properties": {
             "usersFile": {
               "type": "string",
-              "default": "data/auth/users.yaml",
+              "default": "data/config/auth/users.yaml",
               "description": "Path to the YAML file containing local user accounts."
             }
           }

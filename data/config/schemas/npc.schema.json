@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "NpcConfig",
-  "description": "NPC behavior constants loaded from data/npc/npc.yaml at startup.",
+  "description": "NPC behavior constants loaded from data/config/npc.yaml at startup.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
