@@ -69,7 +69,7 @@ function buildTable(commands) {
     .map((c) => {
       const opts = c.options.length ? c.options.join(', ') : '—';
       const desc = c.description.replace(/\n/g, ' ');
-      return `| \`${c.command}\` | \`${c.usage}\` | ${desc} | ${opts} |`;
+      return `| \`${c.command.replaceAll('|','\\|')}\` | \`${c.usage.replaceAll('|','\\|')}\` | ${desc.replaceAll('|','\\|')} | ${opts.replaceAll('|','\\|')} |`;
     });
   return [
     '| Command | Usage | Description | Options / Autocomplete |',

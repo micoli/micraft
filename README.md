@@ -170,6 +170,8 @@ stateDiagram-v2
 | Command | Usage | Description | Options / Autocomplete |
 |---------|-------|-------------|------------------------|
 | `/adduser` | `/adduser <email> <password> [displayName]` | Add a local auth user. Usage: /adduser <email> <password> [displayName] | — |
+| `/codex` | `/codex` | Opens the codex (blocks, items, bestiary). | — |
+| `/config` | `/config <get\|set> <key> [value]` | Get or set a runtime config value. | — |
 | `/createchat` | `/createChat <channelName>` | Create a new chat channel. | — |
 | `/disconnect` | `/disconnect` | Déconnecte le joueur courant. | — |
 | `/give` | `/give <itemType> [N]` | Give items to yourself. | dynamic |
@@ -184,23 +186,23 @@ stateDiagram-v2
 | `/refetch` | `/refetch` | Reloads all chunks around the player. | — |
 | `/reload` | `/reload` | Reloads configuration files without restarting the server. | drops.yaml — block drop table, biomes.yaml — biome definitions, i18n/*.yaml — translations |
 | `/save` | `/save` | Saves the world and player state to disk. | — |
-| `/shaders` | `/shaders [on|off]` | Toggles visual shaders (ambient occlusion, directional shading, fog). | on, off |
+| `/shaders` | `/shaders [on\|off]` | Toggles visual shaders (ambient occlusion, directional shading, fog). | on, off |
 | `/talk` | `/talk <playerName>` | Open a private chat with a player. | — |
 | `/time` | `/time [0-23]` | Shows or sets the in-game time. | dynamic |
 | `/undo` | `/undo [N]` | Undo the last N block breaks, restoring blocks and reversing item collection. | — |
 | `/water` | `/water [x y z]` | Place a water source on the solid block you are looking at (or x y z). (admin) | dynamic |
-| `/weather` | `/weather [rain|storm|snow|fog|none]` | Force a weather zone at your position or clear all zones. (admin) | rain, storm, snow, fog, none |
+| `/weather` | `/weather [rain\|storm\|snow\|fog\|none]` | Force a weather zone at your position or clear all zones. (admin) | rain, storm, snow, fog, none |
 | `/weather-forecast` | `/weather-forecast` | Shows active weather zones and their location. | — |
 
 ### Plugin commands
 
 | Command | Usage | Description | Options / Autocomplete |
 |---------|-------|-------------|------------------------|
-| `/goto` | `/goto <playerName|npcName>` | Teleports you to a player or NPC. | — |
+| `/goto` | `/goto <playerName\|npcName>` | Teleports you to a player or NPC. | — |
 | `/kick` | `/kick <playerName>` | Kicks a connected player. | — |
-| `/npc` | `/npc <spawn|list|remove|tp> [args]` | Manage NPCs in the world. | — |
+| `/npc` | `/npc <spawn\|list\|remove\|tp> [args]` | Manage NPCs in the world. | — |
 | `/summon` | `/summon <playerName>` | Teleports another player to your location. | — |
-| `/teleport` | `/teleport <x> <y> <z>  |  /teleport <playerName>` | Teleports you to the given coordinates. | — |
+| `/teleport` | `/teleport <x> <y> <z>  \|  /teleport <playerName>` | Teleports you to the given coordinates. | — |
 | `/who` | `/who` | Lists connected players with their position. | — |
 | `/yield` | `/yield <message>` | Broadcasts a message to all connected players. | — |
 
