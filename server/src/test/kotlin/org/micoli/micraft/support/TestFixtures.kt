@@ -3,6 +3,7 @@ package org.micoli.micraft.support
 import java.nio.file.Path
 import java.nio.file.Paths
 import org.micoli.micraft.CommandContext
+import org.micoli.micraft.ConfigRegistry
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerStance
@@ -107,6 +108,7 @@ fun testContext(
     setGameTime: (Long) -> Unit = {},
     refetchChunks: (suspend (org.micoli.micraft.session.PlayerSession) -> Unit)? = null,
     liquidManager: LiquidManager? = null,
+    configRegistry: ConfigRegistry? = null,
 ) =
     CommandContext(
         world = world,
@@ -123,4 +125,5 @@ fun testContext(
         setGameTime = setGameTime,
         refetchChunks = refetchChunks,
         liquidManager = liquidManager,
+        configRegistry = configRegistry,
     )

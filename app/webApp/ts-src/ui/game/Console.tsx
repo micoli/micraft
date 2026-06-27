@@ -65,11 +65,12 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
 
   function applyCompletion(val: string, match: string) {
     const el = inputRef.current!;
-    const spaceIdx = val.indexOf(" ");
-    if (spaceIdx === -1) {
+    const firstSpaceIdx = val.indexOf(" ");
+    if (firstSpaceIdx === -1) {
       el.value = suggestions.length === 1 ? match + " " : match;
     } else {
-      el.value = val.slice(0, spaceIdx + 1) + match;
+      const lastSpaceIdx = val.lastIndexOf(" ");
+      el.value = val.slice(0, lastSpaceIdx + 1) + match;
     }
     updateSuggestions(el.value);
     setSelIdx(-1);
@@ -137,11 +138,12 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
         const nextIdx = (selIdx + 1) % suggestions.length;
         setSelIdx(nextIdx);
         const val = el.value;
-        const spaceIdx = val.indexOf(" ");
-        if (spaceIdx === -1) {
+        const firstSpaceIdx = val.indexOf(" ");
+        if (firstSpaceIdx === -1) {
           el.value = suggestions[nextIdx];
         } else {
-          el.value = val.slice(0, spaceIdx + 1) + suggestions[nextIdx];
+          const lastSpaceIdx = val.lastIndexOf(" ");
+          el.value = val.slice(0, lastSpaceIdx + 1) + suggestions[nextIdx];
         }
         break;
       default:

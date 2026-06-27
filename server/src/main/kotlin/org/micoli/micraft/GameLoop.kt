@@ -168,6 +168,7 @@ class GameLoop(
 
     private val weatherConfig = WeatherConfig()
     private val weatherManager = WeatherManager(weatherConfig)
+    private val configRegistry = buildConfigRegistry(weatherConfig)
 
     private val liquidManager = LiquidManager(world)
 
@@ -215,6 +216,7 @@ class GameLoop(
             weatherManager = weatherManager,
             authProvider = authProvider,
             liquidManager = liquidManager,
+            configRegistry = configRegistry,
         )
     private val blockBreaker =
         BlockBreaker(

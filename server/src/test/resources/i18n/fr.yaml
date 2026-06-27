@@ -66,3 +66,12 @@ pump:
   server:
     no_target: "Aucun bloc liquide en vue (regardez de l'eau à moins de 6 blocs)."
     done: "{0} bloc(s) pompé(s)."
+config:
+  server:
+    usage: "Usage : /config <get|set> <clé> [valeur]"
+    set_usage: "Usage : /config set <clé> <valeur>"
+    unknown_key: "Clé de config inconnue : {0}"
+    read_only: "Clé de config en lecture seule : {0}"
+    get_result: "{0} = {1}"
+    set_ok: "Config mise à jour : {0} = {1}"
+    set_invalid: "Valeur invalide pour {0} : {1}"

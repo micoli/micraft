@@ -54,9 +54,7 @@ version = "1.0.0"
 
 application { mainClass = "org.micoli.micraft.ApplicationKt" }
 
-tasks.named<JavaExec>("run") {
-    workingDir = rootProject.projectDir
-}
+tasks.named<JavaExec>("run") { workingDir = rootProject.projectDir }
 
 dependencies {
     api(projects.core)

@@ -103,4 +103,8 @@ class WeatherConfig(private val path: Path = Path.of("data/config/weather.yaml")
         log.info("Weather config reloaded: {} weather types", data.weatherTypes.size)
         return data
     }
+
+    internal fun update(fn: (WeatherConfigData) -> WeatherConfigData) {
+        data = fn(data)
+    }
 }

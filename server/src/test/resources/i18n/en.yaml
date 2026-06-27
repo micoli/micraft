@@ -71,3 +71,12 @@ pump:
   server:
     no_target: "No liquid block in sight (look at water within 6 blocks)."
     done: "Pumped {0} block(s)."
+config:
+  server:
+    usage: "Usage: /config <get|set> <key> [value]"
+    set_usage: "Usage: /config set <key> <value>"
+    unknown_key: "Unknown config key: {0}"
+    read_only: "Config key is read-only: {0}"
+    get_result: "{0} = {1}"
+    set_ok: "Config updated: {0} = {1}"
+    set_invalid: "Invalid value for {0}: {1}"

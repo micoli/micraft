@@ -7,10 +7,16 @@ function registerServerCompleters(commands: Array<{ id: string; command: string;
   for (const cmd of commands) {
     if (cmd.autocompleteArgs?.length) {
       registerCompleter(cmd.command, async (partial: string) => {
+        const tokens = partial.split(/\s+/);
+        const endsWithSpace = /\s$/.test(partial);
+        const filledCount = tokens.filter((t) => t.length > 0).length;
+        const argIndex = endsWithSpace ? filledCount : Math.max(0, filledCount - 1);
+        if (!cmd.autocompleteArgs!.includes(argIndex)) return [];
+        const currentPartial = endsWithSpace ? "" : (tokens[tokens.length - 1] ?? "");
         const player = (window as any).__mcPlayerName ?? "";
         try {
           const r = await fetch(
-            `/api/autocomplete/${cmd.id}/0?partial=${encodeURIComponent(partial)}&player=${encodeURIComponent(player)}`,
+            `/api/autocomplete/${cmd.id}/${argIndex}?partial=${encodeURIComponent(currentPartial)}&player=${encodeURIComponent(player)}`,
           );
           if (!r.ok) return [];
           return (await r.json()) as string[];

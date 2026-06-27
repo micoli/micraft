@@ -34,4 +34,5 @@ data class CommandContext(
     val weatherManager: WeatherManager? = null,
     val authProvider: AuthProvider? = null,
     val liquidManager: LiquidManager? = null,
+    val configRegistry: ConfigRegistry? = null,
 )
