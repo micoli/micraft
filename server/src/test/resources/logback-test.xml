@@ -1,0 +1,7 @@
+<configuration>
+    <appender name="NULL" class="ch.qos.logback.core.helpers.NullAppender"/>
+
+    <root level="OFF">
+        <appender-ref ref="NULL"/>
+    </root>
+</configuration>
