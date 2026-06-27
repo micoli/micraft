@@ -27,12 +27,35 @@ undo:
     nothing: "Rien à annuler."
     done_one: "Annulé {0} action."
     done_many: "Annulé {0} actions."
-build:
+join:
   server:
-    placed: "Bloc posé."
-    no_item: "Aucun élément constructible dans l'emplacement sélectionné."
-    blocked: "Impossible de placer: position occupée."
-    out_of_range: "Impossible de placer: trop loin."
+    usage: "Usage : /join <nomCanal>"
+    not_found: "Canal introuvable : {0}"
+    already_member: "Déjà membre de {0}."
+    joined: "Rejoint le canal {0}."
+leave:
+  server:
+    usage: "Usage : /leave <nomCanal>"
+    cannot_leave: "Impossible de quitter le canal protégé {0}."
+    not_member: "Pas membre de {0}."
+    left: "Quitté le canal {0}."
+preferences:
+  server:
+    command_disabled: "Cette commande est désactivée par les préférences serveur."
+refetch:
+  server:
+    unavailable: "Rechargement de chunks non disponible dans ce mode."
+    done: "Chunks rechargés."
+shaders:
+  server:
+    usage: "Usage : /shaders [on|off]"
+    enabled: "Shaders activés."
+    disabled: "Shaders désactivés."
+talk:
+  server:
+    usage: "Usage : /talk <nomJoueur>"
+    not_found: "Joueur introuvable : {0}"
+    opened: "Chat privé ouvert avec {0}."
 commands:
   server:
     unknown: "Commande inconnue: {0}"
@@ -43,6 +66,11 @@ inventory:
     item_picked_up: "+{0} {1}"
   client:
     empty: "Vide"
+time:
+  server:
+    current: "Heure : {0}"
+    set: "Heure définie à {0}."
+    usage: "Usage : /time [0-23]"
 give:
   server:
     done: "{0}x {1} accordé(s)."
@@ -66,6 +94,17 @@ pump:
   server:
     no_target: "Aucun bloc liquide en vue (regardez de l'eau à moins de 6 blocs)."
     done: "{0} bloc(s) pompé(s)."
+weather:
+  server:
+    unavailable: "Le gestionnaire météo n'est pas disponible."
+    no_zones: "Aucune zone météo active."
+    zone_list: "Zones actives : {0}"
+    cleared: "Toutes les zones météo ont été supprimées."
+    usage: "Usage : /weather [rain|storm|snow|fog|none]"
+    forced: "Zone météo {0} forcée à votre position."
+    no_discovered_chunk: "Impossible de créer une zone météo ici — chunk non encore découvert."
+    forecast_header: "Prévisions météo :"
+    forecast_zone: "  {0} à {1}m — r={2} intensité={3}"
 config:
   server:
     usage: "Usage : /config <get|set> <clé> [valeur]"

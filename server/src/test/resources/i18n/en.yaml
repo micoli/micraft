@@ -24,12 +24,35 @@ undo:
     nothing: "Nothing to undo."
     done_one: "Undid {0} action."
     done_many: "Undid {0} actions."
-build:
+join:
   server:
-    placed: "Block placed."
-    no_item: "No buildable item in selected slot."
-    blocked: "Cannot place: position occupied."
-    out_of_range: "Cannot place: too far away."
+    usage: "Usage: /join <channelName>"
+    not_found: "Channel not found: {0}"
+    already_member: "Already a member of {0}."
+    joined: "Joined channel {0}."
+leave:
+  server:
+    usage: "Usage: /leave <channelName>"
+    cannot_leave: "Cannot leave protected channel {0}."
+    not_member: "Not a member of {0}."
+    left: "Left channel {0}."
+preferences:
+  server:
+    command_disabled: "This command is disabled by server preferences."
+refetch:
+  server:
+    unavailable: "Refetch not available in this mode."
+    done: "Chunks refetched."
+shaders:
+  server:
+    usage: "Usage: /shaders [on|off]"
+    enabled: "Shaders enabled."
+    disabled: "Shaders disabled."
+talk:
+  server:
+    usage: "Usage: /talk <playerName>"
+    not_found: "Player not found: {0}"
+    opened: "Opened private chat with {0}."
 lang:
   server:
     available: "Available languages: {0}"
@@ -71,6 +94,17 @@ pump:
   server:
     no_target: "No liquid block in sight (look at water within 6 blocks)."
     done: "Pumped {0} block(s)."
+weather:
+  server:
+    unavailable: "Weather manager is not available."
+    no_zones: "No active weather zones."
+    zone_list: "Active zones: {0}"
+    cleared: "All weather zones cleared."
+    usage: "Usage: /weather [rain|storm|snow|fog|none]"
+    forced: "Forced {0} weather zone at your position."
+    no_discovered_chunk: "Cannot create weather zone here — chunk not yet discovered."
+    forecast_header: "Weather forecast:"
+    forecast_zone: "  {0} at {1}m — r={2} intensity={3}"
 config:
   server:
     usage: "Usage: /config <get|set> <key> [value]"
