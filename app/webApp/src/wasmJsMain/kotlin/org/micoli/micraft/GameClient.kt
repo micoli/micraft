@@ -231,6 +231,9 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 localController.setReconcileTolerances(
                     msg.reconcileToleranceXz, msg.reconcileToleranceY)
             }
+            is ServerMessage.GameConfigSync ->
+                localController.setReconcileTolerances(
+                    msg.reconcileToleranceXz, msg.reconcileToleranceY)
             is ServerMessage.ShadersUpdate -> chunkManager.setShadersEnabled(msg.enabled)
             is ServerMessage.ChunkData ->
                 chunkManager.renderChunk(

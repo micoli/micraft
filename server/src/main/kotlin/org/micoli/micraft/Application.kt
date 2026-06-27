@@ -164,6 +164,10 @@ fun Application.module() {
         ItemRegistry.load(itemRegistryLoader.reload())
     }
 
+    val reloadGameConfigLambda: () -> Unit = {
+        applyGameConfig(loadGameConfig(java.nio.file.Path.of("data/config/game.yaml")))
+    }
+
     val authConfig = serverConfig.auth
     val authScope = CoroutineScope(Dispatchers.Default)
     val (authProvider, tokenStore) =
@@ -187,6 +191,7 @@ fun Application.module() {
             persistence,
             reloadBiomes,
             reloadRegistries = reloadRegistries,
+            reloadGameConfig = reloadGameConfigLambda,
             tokenStore = tokenStore,
             authProvider = authProvider,
         )

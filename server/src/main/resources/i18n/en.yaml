@@ -19,6 +19,14 @@ reload:
   server:
     unavailable: "Reload not available in this mode."
     done: "Config reloaded — {0}"
+    drops: "Drops: {0} block types"
+    biomes: "Biomes reloaded"
+    registry: "Block/item registry reloaded"
+    game_config: "Game config reloaded"
+    npc: "NPC config + registry reloaded"
+    i18n: "i18n: {0} locales"
+    weather: "Weather: {0} types"
+    vegetation: "Vegetation: {0} chains"
 undo:
   server:
     nothing: "Nothing to undo."

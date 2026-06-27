@@ -85,7 +85,7 @@ fun testContext(
     sessions: List<PlayerSession> = emptyList(),
     broadcast: suspend (ServerMessage) -> Unit = {},
     kickSession: suspend (String) -> Unit = {},
-    reloadConfig: (suspend () -> String)? = null,
+    reloadConfig: (suspend (String) -> String)? = null,
     savePlayer: (PlayerSession) -> Unit = {},
     worldItems: WorldItemManager? = null,
     npcManager: NpcManager? = null,

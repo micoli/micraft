@@ -20,7 +20,7 @@ data class CommandContext(
     val broadcast: suspend (ServerMessage) -> Unit = {},
     val sessions: () -> Collection<PlayerSession> = { emptyList() },
     val kickSession: suspend (String) -> Unit = {},
-    val reloadConfig: (suspend () -> String)? = null,
+    val reloadConfig: (suspend (lang: String) -> String)? = null,
     val commands: () -> Collection<CommandHandler> = { emptyList() },
     val savePlayer: (PlayerSession) -> Unit = {},
     val worldItems: WorldItemManager? = null,

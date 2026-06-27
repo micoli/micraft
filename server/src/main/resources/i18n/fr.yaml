@@ -19,6 +19,14 @@ reload:
   server:
     unavailable: "Rechargement non disponible dans ce mode."
     done: "Config rechargée — {0}"
+    drops: "Drops : {0} types de blocs"
+    biomes: "Biomes rechargés"
+    registry: "Registre blocs/items rechargé"
+    game_config: "Config jeu rechargée"
+    npc: "Config + registre NPC rechargés"
+    i18n: "i18n : {0} langues"
+    weather: "Météo : {0} types"
+    vegetation: "Végétation : {0} chaînes"
 undo:
   server:
     nothing: "Rien à annuler."

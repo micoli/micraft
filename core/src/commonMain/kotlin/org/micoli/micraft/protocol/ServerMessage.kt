@@ -129,6 +129,12 @@ sealed class ServerMessage {
     ) : ServerMessage()
 
     @Serializable data class WeatherUpdate(val zones: List<WeatherZoneInfo>) : ServerMessage()
+
+    @Serializable
+    data class GameConfigSync(
+        val reconcileToleranceXz: Double,
+        val reconcileToleranceY: Double,
+    ) : ServerMessage()
 }
 
 @Serializable

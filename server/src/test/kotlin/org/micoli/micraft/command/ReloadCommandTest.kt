@@ -30,7 +30,7 @@ class ReloadCommandTest {
         val session = testSession()
         val ctx =
             testContext(
-                reloadConfig = {
+                reloadConfig = { _ ->
                     callCount++
                     "3 types reloaded"
                 })
@@ -41,7 +41,7 @@ class ReloadCommandTest {
     @Test
     fun withReloadConfig_sendsResult() = runBlocking {
         val session = testSession()
-        val ctx = testContext(reloadConfig = { "5 types reloaded" })
+        val ctx = testContext(reloadConfig = { _ -> "5 types reloaded" })
         cmd.execute(session, "", ctx)
         val notif = session.sent.filterIsInstance<ServerMessage.Notification>()
         assertTrue(notif.any { it.message.contains("5 types reloaded") })

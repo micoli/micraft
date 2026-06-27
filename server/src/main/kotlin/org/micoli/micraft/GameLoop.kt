@@ -133,6 +133,7 @@ class GameLoop(
     private val persistence: WorldPersistence? = null,
     private val reloadBiomes: (() -> ChunkGenerator)? = null,
     private val reloadRegistries: (() -> Unit)? = null,
+    private val reloadGameConfig: (() -> Unit)? = null,
     val i18n: I18nConfig = I18nConfig.fromClasspath(pluginsRoot = Path.of("plugins")),
     private val tokenStore: TokenStore? = null,
     private val authProvider: AuthProvider? = null,
@@ -361,31 +362,38 @@ class GameLoop(
         return ServerMessage.RegistrySync(blocks, items, npcs, npcDefinitions)
     }
 
-    private suspend fun reload(): String {
+    private suspend fun reload(lang: String): String {
         val lines = mutableListOf<String>()
         val dropCount = dropConfig.reload()
-        lines += "Drops: $dropCount block types"
+        lines += i18n.t(lang, "reload:server:drops", dropCount)
         if (reloadBiomes != null) {
             world.generator = reloadBiomes.invoke()
-            lines += "Biomes reloaded"
+            lines += i18n.t(lang, "reload:server:biomes")
         }
         if (reloadRegistries != null) {
             reloadRegistries.invoke()
             val registrySync = buildRegistrySync()
             sessions.values.forEach { it.send(registrySync) }
-            lines += "Block/item registry reloaded"
+            lines += i18n.t(lang, "reload:server:registry")
+        }
+        if (reloadGameConfig != null) {
+            reloadGameConfig.invoke()
+            val configSync =
+                ServerMessage.GameConfigSync(RECONCILE_TOLERANCE_XZ, RECONCILE_TOLERANCE_Y)
+            sessions.values.forEach { it.send(configSync) }
+            lines += i18n.t(lang, "reload:server:game_config")
         }
         npcConfigLoader.reload()
         npcManager.reloadDefinitions(npcRegistryLoader.reload())
-        lines += "NPC config + registry reloaded"
+        lines += i18n.t(lang, "reload:server:npc")
         i18n.reload()
-        lines += "i18n: ${i18n.locales.size} locales"
+        lines += i18n.t(lang, "reload:server:i18n", i18n.locales.size)
         val newWeatherConfig = WeatherConfig()
         weatherManager.reload(newWeatherConfig)
-        lines += "Weather: ${newWeatherConfig.data.weatherTypes.size} types"
+        lines += i18n.t(lang, "reload:server:weather", newWeatherConfig.data.weatherTypes.size)
         val newVegetationConfig = VegetationConfig(Path.of("data/config/vegetation.yaml"))
         vegetationManager.reload(newVegetationConfig)
-        lines += "Vegetation: ${newVegetationConfig.data.chains.size} chains"
+        lines += i18n.t(lang, "reload:server:vegetation", newVegetationConfig.data.chains.size)
         return lines.joinToString(", ")
     }
 

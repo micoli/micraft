@@ -27,7 +27,7 @@ class ReloadCommand : CommandHandler {
                 ServerMessage.Notification(context.i18n.t(lang, "reload:server:unavailable")))
             return
         }
-        val result = reload()
+        val result = reload(lang)
         session.send(ServerMessage.Notification(context.i18n.t(lang, "reload:server:done", result)))
         log.info("Config reloaded by {}: {}", session.state.name, result)
     }

@@ -36,6 +36,7 @@ object ServerMessageCodec {
         NPC_INTERACT_RESULT(23),
         PREFERENCES_SYNC(24),
         WEATHER_UPDATE(25),
+        GAME_CONFIG_SYNC(26),
     }
 
     fun encode(msg: ServerMessage): ByteArray {
@@ -72,6 +73,8 @@ object ServerMessageCodec {
                 is ServerMessage.PreferencesSync ->
                     Id.PREFERENCES_SYNC to proto.encodeToByteArray(msg)
                 is ServerMessage.WeatherUpdate -> Id.WEATHER_UPDATE to proto.encodeToByteArray(msg)
+                is ServerMessage.GameConfigSync ->
+                    Id.GAME_CONFIG_SYNC to proto.encodeToByteArray(msg)
             }
         return byteArrayOf(id.b) + payload
     }
@@ -105,6 +108,7 @@ object ServerMessageCodec {
             23 -> proto.decodeFromByteArray<ServerMessage.NpcInteractResult>(payload)
             24 -> proto.decodeFromByteArray<ServerMessage.PreferencesSync>(payload)
             25 -> proto.decodeFromByteArray<ServerMessage.WeatherUpdate>(payload)
+            26 -> proto.decodeFromByteArray<ServerMessage.GameConfigSync>(payload)
             else -> throw IllegalArgumentException("Unknown ServerMessage type id: ${data[0]}")
         }
     }
