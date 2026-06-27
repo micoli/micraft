@@ -56,7 +56,12 @@ class WeatherCommand : CommandHandler {
             return
         }
 
-        manager.forceWeather(type, session.state.pos.x, session.state.pos.z)
+        if (!manager.forceWeather(type, session.state.pos.x, session.state.pos.z, context.world)) {
+            session.send(
+                ServerMessage.Notification(
+                    context.i18n.t(lang, "weather:server:no_discovered_chunk")))
+            return
+        }
         context.broadcast(ServerMessage.WeatherUpdate(manager.getZones()))
         session.send(
             ServerMessage.Notification(context.i18n.t(lang, "weather:server:forced", type.name)))

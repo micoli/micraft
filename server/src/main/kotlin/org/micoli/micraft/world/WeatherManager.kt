@@ -1,6 +1,7 @@
 package org.micoli.micraft.world
 
 import java.util.UUID
+import kotlin.math.floor
 import kotlin.math.sqrt
 import kotlin.random.Random
 import org.micoli.micraft.protocol.ServerMessage
@@ -95,6 +96,15 @@ class WeatherManager(private var config: WeatherConfig) {
             val radius =
                 typeConfig.minRadius +
                     Random.nextFloat() * (typeConfig.maxRadius - typeConfig.minRadius)
+
+            if (overlapsAny(cx, cz, radius)) {
+                log.debug(
+                    "Skipping {} spawn at ({}, {}) — overlaps existing zone",
+                    typeConfig.type,
+                    cx.toInt(),
+                    cz.toInt())
+                continue
+            }
             val duration =
                 typeConfig.minDurationTicks +
                     Random.nextLong(typeConfig.maxDurationTicks - typeConfig.minDurationTicks + 1)
@@ -130,7 +140,25 @@ class WeatherManager(private var config: WeatherConfig) {
         return spawned
     }
 
-    fun forceWeather(type: WeatherType, cx: Float, cz: Float, radius: Float = 64f) {
+    fun forceWeather(
+        type: WeatherType,
+        cx: Float,
+        cz: Float,
+        world: WorldState,
+        radius: Float = 64f
+    ): Boolean {
+        if (!isOnDiscoveredChunk(cx, cz, world)) {
+            log.warn(
+                "forceWeather rejected — ({}, {}) is not on a discovered chunk",
+                cx.toInt(),
+                cz.toInt())
+            return false
+        }
+        activeZones.removeAll { zone ->
+            val dx = zone.cx - cx
+            val dz = zone.cz - cz
+            sqrt(dx * dx + dz * dz) < zone.radius + radius
+        }
         val duration =
             config.data.weatherTypes.find { it.type == type.name }?.maxDurationTicks ?: 6000L
         activeZones.add(
@@ -147,6 +175,20 @@ class WeatherManager(private var config: WeatherConfig) {
             ))
         dirty = true
         log.info("Forced {} zone at ({}, {})", type, cx.toInt(), cz.toInt())
+        return true
+    }
+
+    private fun overlapsAny(cx: Float, cz: Float, radius: Float): Boolean =
+        activeZones.any { zone ->
+            val dx = zone.cx - cx
+            val dz = zone.cz - cz
+            sqrt(dx * dx + dz * dz) < zone.radius + radius
+        }
+
+    private fun isOnDiscoveredChunk(cx: Float, cz: Float, world: WorldState): Boolean {
+        val chunkX = Math.floorDiv(floor(cx).toInt(), WorldConstants.CHUNK_SIZE)
+        val chunkZ = Math.floorDiv(floor(cz).toInt(), WorldConstants.CHUNK_SIZE)
+        return world.discoveredChunks().contains(ChunkPos(chunkX, chunkZ))
     }
 
     fun clearAllZones() {
