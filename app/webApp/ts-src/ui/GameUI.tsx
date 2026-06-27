@@ -145,10 +145,28 @@ export function GameUI() {
       biome: string,
       targetBlock: string,
       gameTime: string,
+      reconcileXzStats: string,
+      reconcileYStats: string,
     ) =>
       dispatch({
         type: "hud",
-        data: { x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime },
+        data: {
+          x,
+          y,
+          z,
+          yaw,
+          pitch,
+          stance,
+          speed,
+          fps,
+          kbIn,
+          kbOut,
+          biome,
+          targetBlock,
+          gameTime,
+          reconcileXzStats,
+          reconcileYStats,
+        },
       });
 
     (window as any).mcShowNotification = (msg: string) => dispatch({ type: "notification", msg });

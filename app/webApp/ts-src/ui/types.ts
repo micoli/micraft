@@ -12,6 +12,8 @@ export interface HudData {
   biome: string;
   targetBlock: string;
   gameTime: string;
+  reconcileXzStats: string;
+  reconcileYStats: string;
 }
 
 export interface LogEntry {

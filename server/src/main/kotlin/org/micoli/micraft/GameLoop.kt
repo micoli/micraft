@@ -560,7 +560,9 @@ class GameLoop(
                 shadersEnabled,
                 session.state.layouts,
                 session.state.activeLayout,
-                session.state.viewMode))
+                session.state.viewMode,
+                RECONCILE_TOLERANCE_XZ,
+                RECONCILE_TOLERANCE_Y))
         session.send(buildRegistrySync())
         session.send(buildPreferencesSync(session))
         chatService.onPlayerConnect(session)

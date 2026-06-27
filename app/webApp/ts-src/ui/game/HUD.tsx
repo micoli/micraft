@@ -24,7 +24,23 @@ export function HUD({
   layoutStyle?: React.CSSProperties;
 }) {
   if (!data) return null;
-  const { x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime } = data;
+  const {
+    x,
+    y,
+    z,
+    yaw,
+    pitch,
+    stance,
+    speed,
+    fps,
+    kbIn,
+    kbOut,
+    biome,
+    targetBlock,
+    gameTime,
+    reconcileXzStats,
+    reconcileYStats,
+  } = data;
 
   let lines: string[];
   if (mode === "simple") {
@@ -49,6 +65,8 @@ export function HUD({
       stance,
       `Speed: ×${speed.toFixed(1)}`,
       `↓ ${kbIn.toFixed(1)} KB/s  ↑ ${kbOut.toFixed(1)} KB/s`,
+      `Rec XZ: ${reconcileXzStats}`,
+      `Rec  Y: ${reconcileYStats}`,
       ...(biome ? [`Biome ${biome}`] : []),
       ...(targetBlock ? [`Block ${targetBlock}`] : []),
       ...(gameTime ? [`Time: ${gameTime}`] : []),

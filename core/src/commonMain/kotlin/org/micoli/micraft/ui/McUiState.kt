@@ -18,6 +18,8 @@ data class HudData(
     val biome: String = "",
     val targetBlock: String = "",
     val gameTime: String = "",
+    val reconcileXzStats: String = "",
+    val reconcileYStats: String = "",
 )
 
 class McUiState {

@@ -17,6 +17,9 @@ import org.micoli.micraft.world.*
 private const val PRED_DT = 16.0 / 1000.0
 private const val FLY_VERTICAL_SPEED = 8f
 private const val SNAP_THRESHOLD = 0.5
+private const val DEFAULT_RECONCILE_TOLERANCE_XZ = 0.5
+private const val DEFAULT_RECONCILE_TOLERANCE_Y = 0.99
+private const val STATS_WINDOW = 100
 private const val CLIENT_GRAVITY = -20.0
 private const val CLIENT_JUMP_SPEED = 8.5
 private const val TICKS_PER_DAY_CLIENT = 72_000L
@@ -77,11 +80,47 @@ class LocalPlayerController(
     private var hudBiome = ""
     var currentGameTicks = 0L
 
+    private var reconcileToleranceXz = DEFAULT_RECONCILE_TOLERANCE_XZ
+    private var reconcileToleranceY = DEFAULT_RECONCILE_TOLERANCE_Y
+    private var reconcileCountXz = 0
+    private var reconcileCountY = 0
+    private var totalClientTicks = 0
+    private var totalServerUpdates = 0
+    private val xzDistances = ArrayDeque<Double>()
+    private val yDistances = ArrayDeque<Double>()
+
     private var fpsFrameCount = 0
     private var fpsWindowStart = jsNow()
     private var currentFps = 0
     private var currentKbIn = 0.0
     private var currentKbOut = 0.0
+
+    fun setReconcileTolerances(xz: Double, y: Double) {
+        reconcileToleranceXz = xz
+        reconcileToleranceY = y
+    }
+
+    private fun ArrayDeque<Double>.addCapped(value: Double) {
+        addLast(value)
+        if (size > STATS_WINDOW) removeFirst()
+    }
+
+    private fun Double.r3(): String {
+        val v = (kotlin.math.round(this * 1000).toDouble() / 1000.0).toString()
+        val dot = v.indexOf('.')
+        return if (dot < 0) "$v.000" else v.padEnd(dot + 4, '0').take(dot + 4)
+    }
+
+    private fun reconcileStats(distances: ArrayDeque<Double>, count: Int, total: Int): String {
+        val pct = if (total > 0) count * 100 / total else 0
+        if (distances.isEmpty()) return "$count/$total ($pct%)"
+        val avg = distances.sum() / distances.size
+        val sorted = distances.sorted()
+        val med =
+            if (sorted.size % 2 == 0) (sorted[sorted.size / 2 - 1] + sorted[sorted.size / 2]) / 2.0
+            else sorted[sorted.size / 2]
+        return "$count/$total ($pct%) avg=${avg.r3()} med=${med.r3()}"
+    }
 
     fun setViewMode(mode: String) {
         viewMode = ViewMode.entries.firstOrNull { it.name == mode } ?: ViewMode.FIRST_PERSON
@@ -103,11 +142,20 @@ class LocalPlayerController(
             predVy = 0.0
             hasPrediction = true
         } else {
+            totalServerUpdates++
             val diffY = serverY - predY
-            if (kotlin.math.abs(diffY) > 1.0) {
-                predY = serverY
-                predVy = 0.0
-            } else predY += diffY * 0.2
+            val absY = kotlin.math.abs(diffY)
+            when {
+                absY > 1.0 -> {
+                    predY = serverY
+                    predVy = 0.0
+                }
+                absY > reconcileToleranceY -> {
+                    predY += diffY * 0.2
+                    reconcileCountY++
+                    yDistances.addCapped(absY)
+                }
+            }
         }
 
         val cx = state.pos.x.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
@@ -158,6 +206,7 @@ class LocalPlayerController(
     }
 
     fun tick() {
+        totalClientTicks++
         val consoleInput = jsConsumeConsoleInput()
         if (consoleInput.isNotEmpty()) {
             when (consoleInput.trim()) {
@@ -310,12 +359,18 @@ class LocalPlayerController(
 
         val diffX = serverX - predX
         val diffZ = serverZ - predZ
-        if (kotlin.math.abs(diffX) > SNAP_THRESHOLD || kotlin.math.abs(diffZ) > SNAP_THRESHOLD) {
-            predX = serverX
-            predZ = serverZ
-        } else {
-            predX += diffX * 0.3
-            predZ += diffZ * 0.3
+        val distXZ = kotlin.math.sqrt(diffX * diffX + diffZ * diffZ)
+        when {
+            distXZ > SNAP_THRESHOLD -> {
+                predX = serverX
+                predZ = serverZ
+            }
+            distXZ > reconcileToleranceXz -> {
+                predX += diffX * 0.3
+                predZ += diffZ * 0.3
+                reconcileCountXz++
+                xzDistances.addCapped(distXZ)
+            }
         }
 
         val events = jsConsumeEvents()
@@ -495,7 +550,9 @@ class LocalPlayerController(
             currentKbOut,
             hudBiome,
             targetBlockName,
-            gameTimeDisplay)
+            gameTimeDisplay,
+            reconcileStats(xzDistances, reconcileCountXz, totalClientTicks),
+            reconcileStats(yDistances, reconcileCountY, totalServerUpdates))
         uiState.hud =
             HudData(
                 x = hudX,
@@ -511,6 +568,8 @@ class LocalPlayerController(
                 biome = hudBiome,
                 targetBlock = targetBlockName,
                 gameTime = gameTimeDisplay,
+                reconcileXzStats = reconcileStats(xzDistances, reconcileCountXz, totalClientTicks),
+                reconcileYStats = reconcileStats(yDistances, reconcileCountY, totalServerUpdates),
             )
     }
 

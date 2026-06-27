@@ -29,6 +29,8 @@ data class GameConfig(
     @EncodeDefault(ALWAYS) val timeBroadcastTicks: Int = 20,
     @EncodeDefault(ALWAYS) val maxInteractionDistance: Double = 7.0,
     @EncodeDefault(ALWAYS) val debugWorld: Boolean = false,
+    @EncodeDefault(ALWAYS) val reconcileToleranceXz: Double = 0.5,
+    @EncodeDefault(ALWAYS) val reconcileToleranceY: Double = 0.99,
 )
 
 fun loadGameConfig(path: Path): GameConfig {
@@ -59,6 +61,8 @@ fun applyGameConfig(config: GameConfig) {
         org.micoli.micraft.TICKS_PER_DAY = ticksPerDay
         org.micoli.micraft.TIME_BROADCAST_TICKS = timeBroadcastTicks
         org.micoli.micraft.MAX_INTERACTION_DISTANCE = maxInteractionDistance
+        org.micoli.micraft.RECONCILE_TOLERANCE_XZ = reconcileToleranceXz
+        org.micoli.micraft.RECONCILE_TOLERANCE_Y = reconcileToleranceY
         org.micoli.micraft.SPAWN_X = spawnX
         if (debugWorld) {
             org.micoli.micraft.SPAWN_Y = 1f

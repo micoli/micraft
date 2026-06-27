@@ -228,6 +228,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 chunkManager.setShadersEnabled(msg.shadersEnabled)
                 jsSyncLayouts(Json.encodeToString(LayoutSyncPayload(msg.layouts, msg.activeLayout)))
                 localController.setViewMode(msg.viewMode)
+                localController.setReconcileTolerances(
+                    msg.reconcileToleranceXz, msg.reconcileToleranceY)
             }
             is ServerMessage.ShadersUpdate -> chunkManager.setShadersEnabled(msg.enabled)
             is ServerMessage.ChunkData ->
