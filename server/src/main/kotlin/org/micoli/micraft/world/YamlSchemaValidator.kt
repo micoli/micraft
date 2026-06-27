@@ -37,6 +37,7 @@ fun validateAllYamlConfigs(dataDir: Path = Path.of("data")) {
             dataDir.resolve("drops/drops.yaml") to schemasDir.resolve("drops.schema.json"),
             dataDir.resolve("biomes/biomes.yaml") to schemasDir.resolve("biomes.schema.json"),
             dataDir.resolve("server.yaml") to schemasDir.resolve("server.schema.json"),
+            dataDir.resolve("game.yaml") to schemasDir.resolve("game.schema.json"),
             dataDir.resolve("auth/users.yaml") to schemasDir.resolve("auth-users.schema.json"),
             dataDir.resolve("personal/keybindings.yaml") to
                 schemasDir.resolve("keybindings.schema.json"),

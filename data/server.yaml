@@ -16,17 +16,6 @@ player:
   speedStanding: 4.5
   speedSneaking: 1.3
   speedCrawling: 1.0
-gameplay:
-  tickMs: 50
-  gravity: -20.0
-  jumpSpeed: 8.5
-  flyVerticalSpeed: 8.0
-  saveIntervalSeconds: 30
-  spawnX: 8.0
-  spawnY: 200.0
-  spawnZ: 8.0
-  ticksPerDay: 72000
-  timeBroadcastTicks: 20
 auth:
   provider: "none"
   local:

@@ -10,7 +10,6 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import org.micoli.micraft.DEBUG_WORLD
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("ServerConfigLoader")
@@ -43,22 +42,6 @@ data class PlayerSection(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-data class GameplaySection(
-    @EncodeDefault(ALWAYS) val tickMs: Long = 50L,
-    @EncodeDefault(ALWAYS) val gravity: Float = -20f,
-    @EncodeDefault(ALWAYS) val jumpSpeed: Float = 8.5f,
-    @EncodeDefault(ALWAYS) val flyVerticalSpeed: Float = 8f,
-    @EncodeDefault(ALWAYS) val saveIntervalSeconds: Int = 30,
-    @EncodeDefault(ALWAYS) val spawnX: Float = 8f,
-    @EncodeDefault(ALWAYS) val spawnY: Float = 200f,
-    @EncodeDefault(ALWAYS) val spawnZ: Float = 8f,
-    @EncodeDefault(ALWAYS) val ticksPerDay: Long = 72_000L,
-    @EncodeDefault(ALWAYS) val timeBroadcastTicks: Int = 20,
-    @EncodeDefault(ALWAYS) val maxInteractionDistance: Double = 6.0,
-)
-
-@OptIn(ExperimentalSerializationApi::class)
-@Serializable
 data class LocalAuthConfig(
     @EncodeDefault(ALWAYS) val usersFile: String = "data/auth/users.yaml",
 )
@@ -86,7 +69,6 @@ data class AuthSection(
 data class ServerConfig(
     @EncodeDefault(ALWAYS) val world: WorldSection = WorldSection(),
     @EncodeDefault(ALWAYS) val player: PlayerSection = PlayerSection(),
-    @EncodeDefault(ALWAYS) val gameplay: GameplaySection = GameplaySection(),
     @EncodeDefault(ALWAYS) val auth: AuthSection = AuthSection(),
 )
 
@@ -130,25 +112,9 @@ fun applyServerConfig(config: ServerConfig) {
         PlayerConstants.SPEED_SNEAKING = speedSneaking
         PlayerConstants.SPEED_CRAWLING = speedCrawling
     }
-    with(config.gameplay) {
-        org.micoli.micraft.TICK_MS = tickMs
-        org.micoli.micraft.GRAVITY = gravity
-        org.micoli.micraft.JUMP_SPEED = jumpSpeed
-        org.micoli.micraft.FLY_VERTICAL_SPEED = flyVerticalSpeed
-        org.micoli.micraft.SAVE_INTERVAL_TICKS = (saveIntervalSeconds * 1000L / tickMs).toInt()
-        org.micoli.micraft.TICKS_PER_DAY = ticksPerDay
-        org.micoli.micraft.TIME_BROADCAST_TICKS = timeBroadcastTicks
-        org.micoli.micraft.MAX_INTERACTION_DISTANCE = maxInteractionDistance
-        org.micoli.micraft.SPAWN_X = spawnX
-        if (!DEBUG_WORLD) {
-            org.micoli.micraft.SPAWN_Y = spawnY
-            org.micoli.micraft.SPAWN_Z = spawnZ
-        }
-    }
     log.info(
-        "Server config applied: world={}, player={}, gameplay={}",
+        "Server config applied: world={}, player={}",
         config.world,
         config.player,
-        config.gameplay,
     )
 }

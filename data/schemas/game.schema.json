@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GameConfig",
+  "description": "Gameplay physics and timing constants loaded from data/game.yaml at startup.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "tickMs":                 { "type": "integer", "description": "Server tick interval in milliseconds.", "default": 50 },
+    "gravity":                { "type": "number",  "description": "Gravitational acceleration (blocks/s²), negative = downward.", "default": -20.0 },
+    "jumpSpeed":              { "type": "number",  "description": "Initial vertical speed when jumping (blocks/s).", "default": 8.5 },
+    "flyVerticalSpeed":       { "type": "number",  "description": "Vertical speed when flying (blocks/s).", "default": 8.0 },
+    "saveIntervalSeconds":    { "type": "integer", "description": "World auto-save interval in seconds.", "default": 30 },
+    "spawnX":                 { "type": "number",  "description": "Default spawn X coordinate for new players.", "default": 8.0 },
+    "spawnY":                 { "type": "number",  "description": "Default spawn Y coordinate for new players.", "default": 200.0 },
+    "spawnZ":                 { "type": "number",  "description": "Default spawn Z coordinate for new players.", "default": 8.0 },
+    "ticksPerDay":            { "type": "integer", "description": "Number of ticks in one in-game day.", "default": 72000 },
+    "timeBroadcastTicks":     { "type": "integer", "description": "Ticks between game-time broadcasts to clients.", "default": 20 },
+    "maxInteractionDistance": { "type": "number",  "description": "Maximum reach distance for block break/place (blocks).", "default": 7.0 },
+    "debugWorld":             { "type": "boolean", "description": "Enable debug world mode: single GRASS block, fly spawn at (8,1,14), procedural generation disabled.", "default": false }
+  }
+}

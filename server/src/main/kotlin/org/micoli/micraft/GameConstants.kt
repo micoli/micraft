@@ -11,9 +11,9 @@ internal var SAVE_INTERVAL_TICKS = (30_000L / TICK_MS).toInt()
 internal var TICKS_PER_DAY = 72_000L
 internal var TIME_BROADCAST_TICKS = 20
 
-internal val DEBUG_WORLD = System.getenv("MICRAFT_DEBUG_WORLD") == "1"
+internal var DEBUG_WORLD = false
 internal var SPAWN_X = 8f
-internal var SPAWN_Y = if (DEBUG_WORLD) 1f else 200f
-internal var SPAWN_Z = if (DEBUG_WORLD) 14f else 8f
+internal var SPAWN_Y = 200f
+internal var SPAWN_Z = 8f
 
 internal var MAX_INTERACTION_DISTANCE = 7.0

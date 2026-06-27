@@ -34,7 +34,9 @@ import org.micoli.micraft.world.ItemRegistryLoader
 import org.micoli.micraft.world.WorldMetadata
 import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
+import org.micoli.micraft.world.applyGameConfig
 import org.micoli.micraft.world.applyServerConfig
+import org.micoli.micraft.world.loadGameConfig
 import org.micoli.micraft.world.loadHouseConfig
 import org.micoli.micraft.world.loadKeyBindings
 import org.micoli.micraft.world.loadRoadConfig
@@ -62,7 +64,10 @@ fun Application.module() {
     val serverConfig = loadServerConfig(java.nio.file.Path.of("data/server.yaml"))
     applyServerConfig(serverConfig)
 
-    val debugWorld = System.getenv("MICRAFT_DEBUG_WORLD") == "1"
+    val gameConfig = loadGameConfig(java.nio.file.Path.of("data/game.yaml"))
+    applyGameConfig(gameConfig)
+
+    val debugWorld = gameConfig.debugWorld
     val worldName =
         System.getenv("MICRAFT_WORLD_NAME")?.takeIf { it.isNotBlank() } ?: "default_world"
 
