@@ -1,12 +1,12 @@
 # MicCraft
 
-Minecraft client/server clone in **Kotlin Multiplatform** — multiplayer voxel game, procedural generation, persistent server-side world.
+Minecraft client/server clone — **Kotlin Multiplatform**, multiplayer voxel, procedural gen, persistent server world.
 
 ## Modules
 
 | Module | Path | Role |
 |--------|------|------|
-| `core` | `core/src/commonMain` | Domain model, protocol, physics, chunk generation — shared all targets |
+| `core` | `core/src/commonMain` | Domain model, protocol, physics, chunk gen — shared all targets |
 | `server` | `server/src/main/kotlin` | Ktor WebSocket, game loop, persistence |
 | `app/webApp` | `app/webApp/src/wasmJsMain` | Web client (Kotlin/Wasm + BabylonJS) |
 | `app/desktopApp` | `app/desktopApp/src/main` | Desktop client (JVM) |
@@ -167,19 +167,19 @@ Provider selected via `data/config/server.yaml` → `auth.provider` (`none` | `l
 | `GET /auth/callback?code=&state=` | Exchange code → redirect to `returnUrl#auth_token=&auth_name=` |
 | `GET /auth/me` | `Authorization: Bearer <token>` → `{playerId, displayName}` |
 
-**Adding a local user**:
+**Adding local user**:
 ```bash
 ./gradlew :server:addUser -Pargs="email@example.com password [DisplayName]"
 # or in-game: /adduser email@example.com password [DisplayName]
 ```
 
-**Extending auth**: implement `AuthProvider` interface (`login`, `oauthStartUrl`, `oauthCallback`, `oauthReturnUrl`) and add a branch in `Application.module()`. Commands needing auth access `context.authProvider`.
+**Extending auth**: implement `AuthProvider` interface (`login`, `oauthStartUrl`, `oauthCallback`, `oauthReturnUrl`), add branch in `Application.module()`. Commands needing auth access `context.authProvider`.
 
 **Login overlay** (`LoginOverlay.tsx`): fetches `/api/auth/config` on mount. Token stored in `sessionStorage`. OAuth token arrives in URL fragment `#auth_token=`. Result written to `loginResultRef.current` as `user\tplayerName\tlang\ttoken` — tab-separated, parsed in `main.kt`.
 
 ## Slash command
- - Each in-game action (except movement) can have slash command; each slash command bindable to key via keybinding
- - When command has argument, arguments get autocompletion method attached
+- Every in-game action (except movement) can have slash command; each bindable to key via keybinding
+- Commands with arguments get autocompletion method attached
 
 ## Entities / animations
 Models use **bbmodel** (Blockbench) format. Example: `resources/player.bbmodel`
@@ -212,9 +212,9 @@ Keys 1–6 position camera on each face (+Z, -Z, +X, -X, +Y, -Y).
 
 ## Docker execution
 
-**All build/test/lint/run commands execute inside the dev container — never directly on the host.**
+**All build/test/lint/run commands execute inside dev container — never directly on host.**
 
-The dev container must be running (`make dev-up` in a separate terminal, or start it detached).
+Dev container must be running (`make dev-up` in separate terminal, or detached).
 
 ```bash
 # Run any command inside the container
@@ -229,9 +229,9 @@ make shell
 docker compose -f docker-compose.dev.yml exec micraft ./gradlew :server:test
 ```
 
-`rtk` runs on the host as a hook proxy — it wraps the `docker compose exec` command automatically. Do not add `rtk` inside the container command; it is injected by the hook at the host level.
+`rtk` runs on host as hook proxy — wraps `docker compose exec` automatically. Do not add `rtk` inside container command; hook injects it at host level.
 
-Restart server after server-side change (file is in mounted volume, works from host or container):
+Restart server after server-side change (file in mounted volume, works from host or container):
 ```bash
 touch run.lock   # from host — still valid
 # or:
@@ -254,10 +254,10 @@ make dc CMD="./gradlew :server:addUser -Pargs='email pass [name]'"
 
 ## Rules
 
-- **Never run `./gradlew`, `npm`, `node`, or `gradle` directly on the host.** Use `make dc CMD="..."`.
+- **Never run `./gradlew`, `npm`, `node`, or `gradle` directly on host.** Use `make dc CMD="..."`.
 - Always prefer `./gradlew` (never `gradle` directly).
-- Use `rtk` before verbose host-level commands (git diff, git status, find). For in-container commands via `make dc`, rtk is applied automatically by the hook.
-- Never run unfiltered `find`, `ls -R`, `git diff`, or `gradlew test` without `rtk`.
+- Use `rtk` before verbose host-level commands (git diff, git status, find). For in-container commands via `make dc`, rtk applied automatically by hook.
+- Never run unfiltered `find`, `grep`, `ls -R`, `git diff`, or `gradlew test` without `rtk`.
 - Read only necessary files.
 - Never start server or web client — user runs these.
 - Never read `data/world/default_world/chunks/` — binary compressed, useless.

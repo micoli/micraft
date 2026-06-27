@@ -57,7 +57,9 @@ class UndoCommand : CommandHandler {
         }
         context.savePlayer(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
-        val doneKey = if (count == 1) "undo:server:done_one" else "undo:server:done_many"
-        session.send(ServerMessage.Notification(context.i18n.t(lang, doneKey, count)))
+        val message =
+            if (count == 1) context.i18n.t(lang, "undo:server:done_one", count)
+            else context.i18n.t(lang, "undo:server:done_many", count)
+        session.send(ServerMessage.Notification(message))
     }
 }
