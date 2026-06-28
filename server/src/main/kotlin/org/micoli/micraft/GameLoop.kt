@@ -178,8 +178,8 @@ class GameLoop(
     private val npcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml"))
     private val npcRegistryLoader =
         NpcRegistryLoader(
-            resourcesEntityPath = Path.of("resources/entity"),
-            dataEntityPath = Path.of("data/resources/entity"),
+            resourcesEntityPath = Path.of("resources/entities"),
+            dataEntityPath = Path.of("data/resources/entities"),
         )
     private val npcManager =
         NpcManager(

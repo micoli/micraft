@@ -83,7 +83,7 @@ export function registerPlayerModel(): void {
   window.mcInitPlayerModel = (): void => {
     const playerSkin='player';
     window.__mc = window.__mc || ({} as any);
-    fetch(`/api/models/entity/${playerSkin}/${playerSkin}.bbmodel`)
+    fetch(`/api/models/entities/${playerSkin}/${playerSkin}.bbmodel`)
       .then((r) => r.json())
       .then((data: BbModel) => {
         window.__mc.playerBbmodel = data;

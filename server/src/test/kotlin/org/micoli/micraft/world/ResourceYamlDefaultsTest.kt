@@ -62,8 +62,8 @@ class ResourceYamlDefaultsTest {
 
     @Test
     fun entities_allResourceYamlsHaveAllDefaultKeys() {
-        val dir = projectRoot.resolve("resources/entity")
-        assertTrue(dir.exists(), "resources/entity not found")
+        val dir = projectRoot.resolve("resources/entities")
+        assertTrue(dir.exists(), "resources/entities not found")
         val failures = mutableListOf<String>()
         dir.listDirectoryEntries()
             .filter { it.isDirectory() }

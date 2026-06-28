@@ -47,6 +47,6 @@ fun main() {
     println("Patching blocks...")
     patchDir(projectDir.resolve("resources/blocks"), "blocks", BlockDefinition.serializer(), blockKeys)
     println("Patching entities...")
-    patchDir(projectDir.resolve("resources/entity"), "entity", NpcYamlEntry.serializer(), npcKeys)
+    patchDir(projectDir.resolve("resources/entities"), "entity", NpcYamlEntry.serializer(), npcKeys)
     println("Done — $patched file(s) patched.")
 }
