@@ -1,10 +1,11 @@
 package org.micoli.micraft.world
 
-import kotlin.io.path.createTempFile
-import kotlin.io.path.deleteIfExists
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import org.micoli.micraft.npc.behaviors.InteractionableNpcBehavior
@@ -12,47 +13,65 @@ import org.micoli.micraft.npc.behaviors.RandomMovableNpcBehavior
 
 class NpcRegistryLoaderTest {
 
-    private fun loaderWithYaml(yaml: String): NpcRegistryLoader {
-        val tmp = createTempFile(suffix = ".yaml")
-        tmp.toFile().deleteOnExit()
-        tmp.writeText(yaml)
-        return NpcRegistryLoader(tmp)
+    private data class LoaderContext(
+        val loader: NpcRegistryLoader,
+        val dataDir: java.nio.file.Path,
+    )
+
+    private fun loaderWithNpcs(
+        npcs: Map<String, String>,
+        overrides: Map<String, String> = emptyMap(),
+    ): LoaderContext {
+        val resourcesDir = createTempDirectory("resources_entity")
+        val dataDir = createTempDirectory("data_entity")
+        npcs.forEach { (name, yaml) ->
+            val npcDir = resourcesDir.resolve(name)
+            npcDir.toFile().mkdir()
+            npcDir.resolve("$name.yaml").writeText(yaml)
+        }
+        overrides.forEach { (name, yaml) ->
+            val overrideDir = dataDir.resolve(name)
+            overrideDir.toFile().mkdir()
+            overrideDir.resolve("$name.yaml").writeText(yaml)
+        }
+        return LoaderContext(NpcRegistryLoader(resourcesDir, dataDir), dataDir)
     }
 
     @Test
-    fun load_parsesYamlCorrectly() {
-        val loader =
-            loaderWithYaml(
-                """
-            SELLER:
-              bbmodelFile: npc_seller
-              behavior: interactionable
-              width: 0.6
-              height: 1.8
-              wanderSpeed: 0.0
-              wanderRadius: 0.0
-              spawn:
-                autoSpawn: false
-                maxTotal: 5
-                maxPerChunk: 1
-                spawnBiomes: []
-            GOAT:
-              bbmodelFile: npc_goat
-              behavior: random_movable
-              width: 0.5
-              height: 0.9
-              wanderSpeed: 2.0
-              wanderRadius: 12.0
-              spawn:
-                autoSpawn: true
-                maxTotal: 30
-                maxPerChunk: 3
-                spawnBiomes: [plains]
-        """
-                    .trimIndent())
+    fun validYaml_loadsAllNpcs() {
+        val (loader) =
+            loaderWithNpcs(
+                mapOf(
+                    "npc_seller" to
+                        """
+                        behavior: interactionable
+                        width: 0.6
+                        height: 1.8
+                        wanderSpeed: 0.0
+                        wanderRadius: 0.0
+                        spawn:
+                          autoSpawn: false
+                          maxTotal: 5
+                          maxPerChunk: 1
+                          spawnBiomes: []
+                        """.trimIndent(),
+                    "npc_goat" to
+                        """
+                        behavior: random_movable
+                        width: 0.5
+                        height: 0.9
+                        wanderSpeed: 2.0
+                        wanderRadius: 12.0
+                        spawn:
+                          autoSpawn: true
+                          maxTotal: 30
+                          maxPerChunk: 3
+                          spawnBiomes: [plains]
+                        """.trimIndent(),
+                ))
         val defs = loader.load()
-        assertTrue(defs.size >= 2)
-        val seller = defs["SELLER"]
+        assertEquals(2, defs.size)
+        val seller = defs["npc_seller"]
         assertNotNull(seller)
         assertEquals("npc_seller", seller.bbmodelFile)
         assertEquals(0.6f, seller.width)
@@ -60,8 +79,7 @@ class NpcRegistryLoaderTest {
         assertTrue(seller.behavior is InteractionableNpcBehavior)
         assertFalse(seller.spawn.autoSpawn)
         assertEquals(5, seller.spawn.maxTotal)
-
-        val goat = defs["GOAT"]
+        val goat = defs["npc_goat"]
         assertNotNull(goat)
         assertTrue(goat.behavior is RandomMovableNpcBehavior)
         assertTrue(goat.spawn.autoSpawn)
@@ -69,21 +87,58 @@ class NpcRegistryLoaderTest {
     }
 
     @Test
-    fun load_missingSpawnSection_usesDefaults() {
-        val loader =
-            loaderWithYaml(
-                """
-            DUCK:
-              bbmodelFile: npc_duck
-              behavior: static
-              width: 0.3
-              height: 0.5
-              wanderSpeed: 0.0
-              wanderRadius: 0.0
-        """
-                    .trimIndent())
+    fun bbmodelFile_equalsDirectoryName() {
+        val (loader) =
+            loaderWithNpcs(
+                mapOf(
+                    "npc_cat" to
+                        """
+                        behavior: random_movable
+                        width: 0.5
+                        height: 0.9
+                        wanderSpeed: 2.0
+                        wanderRadius: 12.0
+                        """.trimIndent()))
         val defs = loader.load()
-        val duck = defs["DUCK"]
+        assertEquals("npc_cat", defs["npc_cat"]?.bbmodelFile)
+    }
+
+    @Test
+    fun dirWithoutYaml_skipped() {
+        val (loader) =
+            loaderWithNpcs(
+                mapOf(
+                    "npc_seller" to
+                        """
+                        behavior: interactionable
+                        width: 0.6
+                        height: 1.8
+                        wanderSpeed: 0.0
+                        wanderRadius: 0.0
+                        """.trimIndent()))
+        // player dir has no yaml — verify it doesn't appear
+        val resourcesDir = createTempDirectory("resources_entity2")
+        resourcesDir.resolve("player").toFile().mkdir()
+        val loader2 = NpcRegistryLoader(resourcesDir, createTempDirectory("data_entity2"))
+        assertTrue(loader2.load().isEmpty())
+        assertEquals(1, loader.load().size)
+    }
+
+    @Test
+    fun missingSpawnSection_usesDefaults() {
+        val (loader) =
+            loaderWithNpcs(
+                mapOf(
+                    "npc_duck" to
+                        """
+                        behavior: static
+                        width: 0.3
+                        height: 0.5
+                        wanderSpeed: 0.0
+                        wanderRadius: 0.0
+                        """.trimIndent()))
+        val defs = loader.load()
+        val duck = defs["npc_duck"]
         assertNotNull(duck)
         assertFalse(duck.spawn.autoSpawn)
         assertEquals(0, duck.spawn.maxTotal)
@@ -92,40 +147,130 @@ class NpcRegistryLoaderTest {
     }
 
     @Test
-    fun load_unknownBehaviorKey_skipsEntry() {
-        val loader =
-            loaderWithYaml(
-                """
-            SELLER:
-              bbmodelFile: npc_seller
-              behavior: interactionable
-              width: 0.6
-              height: 1.8
-              wanderSpeed: 0.0
-              wanderRadius: 0.0
-            UNKNOWN_NPC:
-              bbmodelFile: npc_unknown
-              behavior: totally_fake_behavior
-              width: 0.6
-              height: 1.8
-              wanderSpeed: 0.0
-              wanderRadius: 0.0
-        """
-                    .trimIndent())
+    fun unknownBehaviorKey_skipsEntry() {
+        val (loader) =
+            loaderWithNpcs(
+                mapOf(
+                    "npc_seller" to
+                        """
+                        behavior: interactionable
+                        width: 0.6
+                        height: 1.8
+                        wanderSpeed: 0.0
+                        wanderRadius: 0.0
+                        """.trimIndent(),
+                    "npc_unknown" to
+                        """
+                        behavior: totally_fake_behavior
+                        width: 0.6
+                        height: 1.8
+                        wanderSpeed: 0.0
+                        wanderRadius: 0.0
+                        """.trimIndent(),
+                ))
         val defs = loader.load()
-        // SELLER should load, UNKNOWN_NPC should be skipped
-        assertTrue(defs.containsKey("SELLER"))
-        assertFalse(defs.containsKey("UNKNOWN_NPC"))
+        assertTrue(defs.containsKey("npc_seller"))
+        assertFalse(defs.containsKey("npc_unknown"))
     }
 
     @Test
-    fun load_missingFile_writesDefault() {
-        val tmp = createTempFile(suffix = ".yaml")
-        tmp.deleteIfExists()
-        val loader = NpcRegistryLoader(tmp)
+    fun invalidYaml_skipsNpc() {
+        val (loader) =
+            loaderWithNpcs(
+                mapOf(
+                    "npc_seller" to
+                        """
+                        behavior: interactionable
+                        width: 0.6
+                        height: 1.8
+                        wanderSpeed: 0.0
+                        wanderRadius: 0.0
+                        """.trimIndent(),
+                    "npc_goat" to "this is not: [valid yaml: }",
+                ))
         val defs = loader.load()
-        assertTrue(defs.isNotEmpty(), "Default NPC types should be written and loaded")
-        tmp.toFile().deleteOnExit()
+        assertEquals(1, defs.size)
+        assertTrue(defs.containsKey("npc_seller"))
+        assertFalse(defs.containsKey("npc_goat"))
+    }
+
+    @Test
+    fun dataOverride_emptyFile_writesBackDefaults() {
+        val (loader, dataDir) =
+            loaderWithNpcs(
+                npcs =
+                    mapOf(
+                        "npc_goat" to
+                            """
+                            behavior: random_movable
+                            width: 0.5
+                            height: 0.9
+                            wanderSpeed: 2.0
+                            wanderRadius: 12.0
+                            spawn:
+                              autoSpawn: true
+                              maxTotal: 30
+                              maxPerChunk: 3
+                              spawnBiomes: []
+                            """.trimIndent()),
+                overrides = mapOf("npc_goat" to ""),
+            )
+        val defs = loader.load()
+        val goat = defs["npc_goat"]
+        assertNotNull(goat)
+        assertEquals(0.5f, goat.width)
+        assertTrue(goat.spawn.autoSpawn)
+        val writtenBack = dataDir.resolve("npc_goat/npc_goat.yaml").readText()
+        assertTrue(writtenBack.contains("wanderSpeed"), "Write-back must contain all keys")
+        assertTrue(writtenBack.contains("behavior"))
+    }
+
+    @Test
+    fun dataOverride_mergesAndWritesBack() {
+        val (loader, dataDir) =
+            loaderWithNpcs(
+                npcs =
+                    mapOf(
+                        "npc_goat" to
+                            """
+                            behavior: random_movable
+                            width: 0.5
+                            height: 0.9
+                            wanderSpeed: 2.0
+                            wanderRadius: 12.0
+                            spawn:
+                              autoSpawn: true
+                              maxTotal: 30
+                              maxPerChunk: 3
+                              spawnBiomes: []
+                            """.trimIndent()),
+                overrides = mapOf("npc_goat" to "wanderSpeed: 9.9\n"),
+            )
+        val defs = loader.load()
+        val goat = defs["npc_goat"]
+        assertNotNull(goat)
+        assertEquals(9.9f, goat.wanderSpeed)
+        assertEquals(0.5f, goat.width)
+        val writtenBack = dataDir.resolve("npc_goat/npc_goat.yaml").readText()
+        assertTrue(writtenBack.contains("9.9"), "Override value preserved in write-back")
+        assertTrue(writtenBack.contains("behavior"), "Missing keys added in write-back")
+    }
+
+    @Test
+    fun dataOverride_noFile_notCreated() {
+        val (_, dataDir) =
+            loaderWithNpcs(
+                npcs =
+                    mapOf(
+                        "npc_goat" to
+                            """
+                            behavior: random_movable
+                            width: 0.5
+                            height: 0.9
+                            wanderSpeed: 2.0
+                            wanderRadius: 12.0
+                            """.trimIndent()))
+        assertFalse(dataDir.resolve("npc_goat/npc_goat.yaml").toFile().exists())
     }
 }
 

@@ -1,0 +1,13 @@
+hardness: 1
+solid: true
+transparent: false
+minimapColor:
+- 240
+- 240
+- 240
+modelElement: ""
+liquid: false
+viscosity: 0
+replaceable: false
+vegetationHost: false
+treeAllowed: true

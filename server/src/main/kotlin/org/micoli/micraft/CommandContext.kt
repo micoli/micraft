@@ -35,4 +35,6 @@ data class CommandContext(
     val authProvider: AuthProvider? = null,
     val liquidManager: LiquidManager? = null,
     val configRegistry: ConfigRegistry? = null,
+    val reloadBlocks: (suspend () -> Unit)? = null,
+    val reloadNpcs: (suspend () -> Unit)? = null,
 )

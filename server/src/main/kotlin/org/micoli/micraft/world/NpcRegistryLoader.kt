@@ -2,13 +2,12 @@ package org.micoli.micraft.world
 
 import com.charleskorn.kaml.Yaml
 import java.nio.file.Path
-import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.MapSerializer
-import kotlinx.serialization.builtins.serializer
 import org.micoli.micraft.npc.NpcBehaviorRegistry
 import org.micoli.micraft.npc.NpcDefinition
 import org.micoli.micraft.npc.NpcSpawnConfig
@@ -26,7 +25,6 @@ private data class NpcSpawnConfigRaw(
 
 @Serializable
 private data class NpcYamlEntry(
-    val bbmodelFile: String = "npc_unknown",
     val behavior: String = "static",
     val width: Float = 0.6f,
     val height: Float = 1.8f,
@@ -35,84 +33,91 @@ private data class NpcYamlEntry(
     val spawn: NpcSpawnConfigRaw = NpcSpawnConfigRaw(),
 )
 
-private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), NpcYamlEntry.serializer())
+@Serializable
+private data class NpcSpawnConfigRawOverride(
+    val autoSpawn: Boolean? = null,
+    val maxTotal: Int? = null,
+    val maxPerChunk: Int? = null,
+    val spawnBiomes: List<String>? = null,
+)
 
-private val DEFAULT_YAML: Map<String, NpcYamlEntry> =
-    mapOf(
-        "SELLER" to
-            NpcYamlEntry(
-                bbmodelFile = "npc_seller",
-                behavior = "interactionable",
-                width = 0.6f,
-                height = 1.8f,
-            ),
-        "BLACK_SMITH" to
-            NpcYamlEntry(
-                bbmodelFile = "npc_blacksmith",
-                behavior = "interactionable",
-                width = 0.6f,
-                height = 1.8f,
-            ),
-        "GOAT" to
-            NpcYamlEntry(
-                bbmodelFile = "npc_goat",
-                behavior = "random_movable",
-                width = 0.5f,
-                height = 0.9f,
-                wanderSpeed = 2.0f,
-                wanderRadius = 12.0f,
-                spawn = NpcSpawnConfigRaw(autoSpawn = true, maxTotal = 30, maxPerChunk = 3),
-            ),
-        "CAT" to
-            NpcYamlEntry(
-                bbmodelFile = "npc_cat",
-                behavior = "random_movable",
-                width = 0.5f,
-                height = 0.9f,
-                wanderSpeed = 2.0f,
-                wanderRadius = 12.0f,
-                spawn = NpcSpawnConfigRaw(autoSpawn = true, maxTotal = 30, maxPerChunk = 3),
-            ),
-        "DUCK" to
-            NpcYamlEntry(
-                bbmodelFile = "npc_duck",
-                behavior = "random_movable",
-                width = 0.3f,
-                height = 0.5f,
-                wanderSpeed = 1.2f,
-                wanderRadius = 6.0f,
-                spawn = NpcSpawnConfigRaw(autoSpawn = true, maxTotal = 20, maxPerChunk = 2),
-            ),
+@Serializable
+private data class NpcYamlOverride(
+    val behavior: String? = null,
+    val width: Float? = null,
+    val height: Float? = null,
+    val wanderSpeed: Float? = null,
+    val wanderRadius: Float? = null,
+    val spawn: NpcSpawnConfigRawOverride? = null,
+)
+
+private fun NpcSpawnConfigRaw.applyOverride(o: NpcSpawnConfigRawOverride) =
+    copy(
+        autoSpawn = o.autoSpawn ?: autoSpawn,
+        maxTotal = o.maxTotal ?: maxTotal,
+        maxPerChunk = o.maxPerChunk ?: maxPerChunk,
+        spawnBiomes = o.spawnBiomes ?: spawnBiomes,
     )
 
-class NpcRegistryLoader(private val path: Path) {
-    init {
-        if (!path.exists()) {
-            path.parent.createDirectories()
-            path.writeText(Yaml.default.encodeToString(ENTRY_MAP_SERIALIZER, DEFAULT_YAML))
-            log.info("Generated default NPC registry at {}", path.toAbsolutePath())
-        }
-    }
+private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
+    copy(
+        behavior = o.behavior ?: behavior,
+        width = o.width ?: width,
+        height = o.height ?: height,
+        wanderSpeed = o.wanderSpeed ?: wanderSpeed,
+        wanderRadius = o.wanderRadius ?: wanderRadius,
+        spawn = o.spawn?.let { spawn.applyOverride(it) } ?: spawn,
+    )
 
+class NpcRegistryLoader(
+    private val resourcesEntityPath: Path,
+    private val dataEntityPath: Path,
+) {
     fun load(): Map<String, NpcDefinition> {
-        val loaded =
-            runCatching { Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, path.readText()) }
-                .getOrElse { e ->
-                    log.warn("Failed to load npcs.yaml ({}), using defaults", e.message)
-                    DEFAULT_YAML
-                }
-        val missingKeys = DEFAULT_YAML.keys - loaded.keys
-        val raw =
-            if (missingKeys.isNotEmpty()) {
-                val merged = loaded + missingKeys.associateWith { DEFAULT_YAML.getValue(it) }
-                path.writeText(Yaml.default.encodeToString(ENTRY_MAP_SERIALIZER, merged))
-                log.info("Added missing NPC keys to npcs.yaml: {}", missingKeys)
-                merged
-            } else {
-                loaded
+        val entries = mutableMapOf<String, NpcYamlEntry>()
+        resourcesEntityPath
+            .listDirectoryEntries()
+            .filter { it.isDirectory() }
+            .forEach { entityDir ->
+                val name = entityDir.fileName.toString()
+                val resourceYaml = entityDir.resolve("$name.yaml")
+                if (!resourceYaml.exists()) return@forEach
+                runCatching {
+                        Yaml.default.decodeFromString(NpcYamlEntry.serializer(), resourceYaml.readText())
+                    }
+                    .onFailure { log.warn("Failed to load NPC {}: {}", name, it.message) }
+                    .getOrNull()
+                    ?.let { entry ->
+                        val dataYaml = dataEntityPath.resolve("$name/$name.yaml")
+                        val merged =
+                            if (dataYaml.exists()) {
+                                val content = dataYaml.readText()
+                                val overridden =
+                                    if (content.isNotBlank()) {
+                                        runCatching {
+                                                val override =
+                                                    Yaml.default.decodeFromString(
+                                                        NpcYamlOverride.serializer(), content)
+                                                entry.applyOverride(override)
+                                            }
+                                            .onFailure {
+                                                log.warn(
+                                                    "Failed to apply override for {}: {}",
+                                                    name,
+                                                    it.message)
+                                            }
+                                            .getOrDefault(entry)
+                                    } else entry
+                                dataYaml.writeText(
+                                    Yaml.default.encodeToString(NpcYamlEntry.serializer(), overridden))
+                                log.debug("Wrote back merged data override for {}", name)
+                                overridden
+                            } else entry
+                        entries[name] = merged
+                    }
             }
         val result =
-            raw.entries
+            entries.entries
                 .mapNotNull { (key, entry) ->
                     runCatching {
                             val behavior = NpcBehaviorRegistry.get(entry.behavior)
@@ -121,7 +126,7 @@ class NpcRegistryLoader(private val path: Path) {
                                     type = key,
                                     behavior = behavior,
                                     behaviorKey = entry.behavior,
-                                    bbmodelFile = entry.bbmodelFile,
+                                    bbmodelFile = key,
                                     width = entry.width,
                                     height = entry.height,
                                     wanderSpeed = entry.wanderSpeed,
@@ -136,7 +141,7 @@ class NpcRegistryLoader(private val path: Path) {
                                 )
                         }
                         .onFailure { e ->
-                            log.warn("Skipping NPC type '{}' in npcs.yaml: {}", key, e.message)
+                            log.warn("Skipping entity '{}': {}", key, e.message)
                         }
                         .getOrNull()
                 }

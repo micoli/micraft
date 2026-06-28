@@ -95,6 +95,8 @@ fun testContext(
     refetchChunks: (suspend (org.micoli.micraft.session.PlayerSession) -> Unit)? = null,
     liquidManager: LiquidManager? = null,
     configRegistry: ConfigRegistry? = null,
+    reloadBlocks: (suspend () -> Unit)? = null,
+    reloadNpcs: (suspend () -> Unit)? = null,
 ) =
     CommandContext(
         world = world,
@@ -112,4 +114,6 @@ fun testContext(
         refetchChunks = refetchChunks,
         liquidManager = liquidManager,
         configRegistry = configRegistry,
+        reloadBlocks = reloadBlocks,
+        reloadNpcs = reloadNpcs,
     )

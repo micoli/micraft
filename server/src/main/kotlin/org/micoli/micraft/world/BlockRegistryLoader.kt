@@ -4,6 +4,8 @@ import com.charleskorn.kaml.Yaml
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.Serializable
@@ -27,116 +29,106 @@ private data class BlockYamlEntry(
     val treeAllowed: Boolean = true,
 )
 
-private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), BlockYamlEntry.serializer())
+@Serializable
+private data class BlockYamlOverride(
+    val hardness: Int? = null,
+    val solid: Boolean? = null,
+    val transparent: Boolean? = null,
+    val minimapColor: List<Int>? = null,
+    val modelElement: String? = null,
+    val liquid: Boolean? = null,
+    val viscosity: Int? = null,
+    val replaceable: Boolean? = null,
+    val vegetationHost: Boolean? = null,
+    val treeAllowed: Boolean? = null,
+)
 
-private val DEFAULT_YAML: Map<String, BlockYamlEntry> =
-    mapOf(
-        "AIR" to
-            BlockYamlEntry(
-                hardness = 0,
-                solid = false,
-                transparent = true,
-                minimapColor = listOf(10, 10, 30),
-                replaceable = true),
-        "BEDROCK" to BlockYamlEntry(hardness = -1, solid = true, minimapColor = listOf(58, 58, 58)),
-        "STONE" to BlockYamlEntry(hardness = 5, solid = true, minimapColor = listOf(136, 136, 136)),
-        "DIRT" to BlockYamlEntry(hardness = 3, solid = true, minimapColor = listOf(122, 92, 46)),
-        "GRASS" to
-            BlockYamlEntry(
-                hardness = 3,
-                solid = true,
-                minimapColor = listOf(74, 122, 40),
-                vegetationHost = true),
-        "SAND" to
-            BlockYamlEntry(
-                hardness = 2,
-                solid = true,
-                minimapColor = listOf(212, 200, 122),
-                treeAllowed = false),
-        "SANDSTONE" to
-            BlockYamlEntry(
-                hardness = 4,
-                solid = true,
-                minimapColor = listOf(200, 160, 87),
-                treeAllowed = false),
-        "GRAVEL" to
-            BlockYamlEntry(hardness = 3, solid = true, minimapColor = listOf(128, 128, 128)),
-        "SNOW" to BlockYamlEntry(hardness = 1, solid = true, minimapColor = listOf(240, 240, 240)),
-        "OAK_LOG" to BlockYamlEntry(hardness = 3, solid = true, minimapColor = listOf(101, 67, 33)),
-        "OAK_LEAVES" to
-            BlockYamlEntry(
-                hardness = 1, solid = true, transparent = true, minimapColor = listOf(60, 100, 30)),
-        "PINE_LOG" to BlockYamlEntry(hardness = 3, solid = true, minimapColor = listOf(80, 50, 25)),
-        "PINE_LEAVES" to
-            BlockYamlEntry(
-                hardness = 1, solid = true, transparent = true, minimapColor = listOf(40, 90, 60)),
-        "PINE_LEAVES_SNOW" to
-            BlockYamlEntry(
-                hardness = 1,
-                solid = true,
-                transparent = true,
-                minimapColor = listOf(200, 215, 220)),
-        "FLOWER" to
-            BlockYamlEntry(
-                hardness = 1,
-                solid = false,
-                transparent = true,
-                minimapColor = listOf(230, 200, 50),
-                replaceable = true),
-        "WEED" to
-            BlockYamlEntry(
-                hardness = 1,
-                solid = false,
-                transparent = true,
-                minimapColor = listOf(70, 130, 40),
-                replaceable = true),
-        "WATER" to
-            BlockYamlEntry(
-                hardness = -1,
-                solid = false,
-                transparent = true,
-                minimapColor = listOf(50, 120, 200),
-                liquid = true,
-                viscosity = 3,
-                replaceable = true),
-        "SEED" to
-            BlockYamlEntry(
-                hardness = 0,
-                solid = false,
-                transparent = true,
-                minimapColor = listOf(180, 140, 60),
-                replaceable = true),
-        "SPROUT" to
-            BlockYamlEntry(
-                hardness = 0,
-                solid = false,
-                transparent = true,
-                minimapColor = listOf(100, 160, 50),
-                replaceable = true),
-        "SAPLING" to
-            BlockYamlEntry(
-                hardness = 1,
-                solid = false,
-                transparent = true,
-                minimapColor = listOf(60, 120, 40),
-                replaceable = true),
+private fun BlockYamlEntry.applyOverride(o: BlockYamlOverride) =
+    copy(
+        hardness = o.hardness ?: hardness,
+        solid = o.solid ?: solid,
+        transparent = o.transparent ?: transparent,
+        minimapColor = o.minimapColor ?: minimapColor,
+        modelElement = o.modelElement ?: modelElement,
+        liquid = o.liquid ?: liquid,
+        viscosity = o.viscosity ?: viscosity,
+        replaceable = o.replaceable ?: replaceable,
+        vegetationHost = o.vegetationHost ?: vegetationHost,
+        treeAllowed = o.treeAllowed ?: treeAllowed,
     )
 
-class BlockRegistryLoader(private val path: Path) {
+private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), BlockYamlEntry.serializer())
+
+class BlockRegistryLoader(
+    private val resourcesBlocksPath: Path,
+    private val dataBlocksPath: Path,
+    private val outputPath: Path,
+) {
     init {
-        if (!path.exists()) {
-            path.parent.createDirectories()
-            path.writeText(Yaml.default.encodeToString(ENTRY_MAP_SERIALIZER, DEFAULT_YAML))
-            log.info("Generated default block registry at {}", path.toAbsolutePath())
-        }
+        generateFromResources()
+    }
+
+    private fun generateFromResources() {
+        val map = mutableMapOf<String, BlockYamlEntry>()
+        resourcesBlocksPath
+            .listDirectoryEntries()
+            .filter { it.isDirectory() }
+            .forEach { blockDir ->
+                val name = blockDir.fileName.toString()
+                val resourceYaml = blockDir.resolve("$name.yaml")
+                if (!resourceYaml.exists()) {
+                    log.warn("No {}.yaml in {} — skipped", name, blockDir)
+                    return@forEach
+                }
+                runCatching {
+                        Yaml.default.decodeFromString(
+                            BlockYamlEntry.serializer(), resourceYaml.readText())
+                    }
+                    .onFailure { log.warn("Failed to load block {}: {}", name, it.message) }
+                    .getOrNull()
+                    ?.let { entry ->
+                        val dataYaml = dataBlocksPath.resolve("$name/$name.yaml")
+                        val merged =
+                            if (dataYaml.exists()) {
+                                val content = dataYaml.readText()
+                                val overridden =
+                                    if (content.isNotBlank()) {
+                                        runCatching {
+                                                val override =
+                                                    Yaml.default.decodeFromString(
+                                                        BlockYamlOverride.serializer(), content)
+                                                entry.applyOverride(override)
+                                            }
+                                            .onFailure {
+                                                log.warn(
+                                                    "Failed to apply override for {}: {}",
+                                                    name,
+                                                    it.message)
+                                            }
+                                            .getOrDefault(entry)
+                                    } else entry
+                                dataYaml.writeText(
+                                    Yaml.default.encodeToString(
+                                        BlockYamlEntry.serializer(), overridden))
+                                log.debug("Wrote back merged data override for {}", name)
+                                overridden
+                            } else entry
+                        map[name] = merged
+                    }
+            }
+        outputPath.parent.createDirectories()
+        outputPath.writeText(Yaml.default.encodeToString(ENTRY_MAP_SERIALIZER, map))
+        log.info("Generated blocks.yaml from {} block definitions", map.size)
     }
 
     fun load(): Map<BlockType, BlockDefinition> {
         val raw =
-            runCatching { Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, path.readText()) }
+            runCatching {
+                    Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, outputPath.readText())
+                }
                 .getOrElse { e ->
-                    log.warn("Failed to load blocks.yaml ({}), using defaults", e.message)
-                    DEFAULT_YAML
+                    log.warn("Failed to load blocks.yaml ({}), registry will be empty", e.message)
+                    emptyMap()
                 }
         val result =
             raw.entries
@@ -166,5 +158,8 @@ class BlockRegistryLoader(private val path: Path) {
         return result
     }
 
-    fun reload(): Map<BlockType, BlockDefinition> = load()
+    fun reload(): Map<BlockType, BlockDefinition> {
+        generateFromResources()
+        return load()
+    }
 }

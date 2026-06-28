@@ -176,7 +176,11 @@ class GameLoop(
         )
 
     private val npcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml"))
-    private val npcRegistryLoader = NpcRegistryLoader(Path.of("data/config/npcs.yaml"))
+    private val npcRegistryLoader =
+        NpcRegistryLoader(
+            resourcesEntityPath = Path.of("resources/entity"),
+            dataEntityPath = Path.of("data/resources/entity"),
+        )
     private val npcManager =
         NpcManager(
             broadcast = { msg -> sessions.values.forEach { it.send(msg) } },
@@ -220,6 +224,15 @@ class GameLoop(
             authProvider = authProvider,
             liquidManager = liquidManager,
             configRegistry = configRegistry,
+            reloadBlocks =
+                if (reloadRegistries != null) {
+                    {
+                        reloadRegistries.invoke()
+                        val sync = buildRegistrySync()
+                        for (s in sessions.values) s.send(sync)
+                    }
+                } else null,
+            reloadNpcs = { npcManager.reloadDefinitions(npcRegistryLoader.reload()) },
         )
     private val blockBreaker =
         BlockBreaker(

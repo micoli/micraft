@@ -35,7 +35,10 @@ sourceSets {
 
 val rootDirPath: String = rootProject.projectDir.absolutePath
 
-tasks.test { systemProperty("projectDir", rootDirPath) }
+tasks.test {
+    systemProperty("projectDir", rootDirPath)
+    workingDir = rootProject.projectDir
+}
 
 tasks.register<JavaExec>("addUser") {
     group = "application"

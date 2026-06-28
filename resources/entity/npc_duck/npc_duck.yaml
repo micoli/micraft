@@ -1,0 +1,10 @@
+behavior: random_movable
+width: 0.3
+height: 0.5
+wanderSpeed: 1.2
+wanderRadius: 6.0
+spawn:
+  autoSpawn: true
+  maxTotal: 20
+  maxPerChunk: 2
+  spawnBiomes: []

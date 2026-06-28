@@ -90,7 +90,12 @@ fun Application.module() {
             }
         } else null
 
-    val blockRegistryLoader = BlockRegistryLoader(Path.of("data/config/blocks.yaml"))
+    val blockRegistryLoader =
+        BlockRegistryLoader(
+            resourcesBlocksPath = Path.of("resources/blocks"),
+            dataBlocksPath = Path.of("data/resources/blocks"),
+            outputPath = Path.of("data/config/blocks.yaml"),
+        )
     val itemRegistryLoader = ItemRegistryLoader(Path.of("data/config/items.yaml"))
     BlockRegistry.load(blockRegistryLoader.load())
     ItemRegistry.load(itemRegistryLoader.load())

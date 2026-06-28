@@ -123,6 +123,11 @@ weather:
     no_discovered_chunk: "Cannot create weather zone here — chunk not yet discovered."
     forecast_header: "Weather forecast:"
     forecast_zone: "  {0} at {1}m — r={2} intensity={3}"
+config_reload:
+  server:
+    usage: "Usage: /config:reload [block|npc]"
+    unavailable: "Reload not available for: {0}"
+    done: "Reloaded: {0}"
 config:
   server:
     usage: "Usage: /config <get|set> <key> [value]"
