@@ -128,20 +128,46 @@ function Block3DPreview({ ordinal }: { ordinal: number }) {
     light.intensity = 1.0;
     light.groundColor = new B.Color3(0.25, 0.25, 0.25);
 
-    const box = B.MeshBuilder.CreateBox("block", { size: 1 }, scene);
+    const root = new B.TransformNode("root", scene);
 
-    const topUrl = getFaceTexUrl(ordinal, 4) ?? getFaceTexUrl(ordinal, 0);
-    if (topUrl) {
-      const mat = new B.StandardMaterial("mat", scene);
-      mat.diffuseTexture = new B.Texture(topUrl, scene, false, true, B.Texture.NEAREST_SAMPLINGMODE);
-      mat.specularColor = new B.Color3(0, 0, 0);
-      box.material = mat;
+    // 6 explicit planes — avoids BJS box UV quirks on side faces.
+    // faceDir: 0=south(+Z), 1=north(-Z), 2=east(+X), 3=west(-X), 4=up(+Y), 5=down(-Y)
+    // rotY first, then rotX — applied in Euler XYZ order by BJS (intrinsic).
+    const FACES = [
+      { dir: 0, x: 0, y: 0, z: 0.5, rx: 0, ry: Math.PI }, // south
+      { dir: 1, x: 0, y: 0, z: -0.5, rx: 0, ry: 0 }, // north
+      { dir: 2, x: 0.5, y: 0, z: 0, rx: 0, ry: -Math.PI / 2 }, // east
+      { dir: 3, x: -0.5, y: 0, z: 0, rx: 0, ry: Math.PI / 2 }, // west
+      { dir: 4, x: 0, y: 0.5, z: 0, rx: Math.PI / 2, ry: 0 }, // up
+      { dir: 5, x: 0, y: -0.5, z: 0, rx: -Math.PI / 2, ry: 0 }, // down
+    ];
+
+    const fallback = getFaceTexUrl(ordinal, 4) ?? getFaceTexUrl(ordinal, 0);
+    const matCache = new Map<string, unknown>();
+
+    for (const { dir, x, y, z, rx, ry } of FACES) {
+      const url = getFaceTexUrl(ordinal, dir) ?? fallback;
+      if (!url) continue;
+
+      if (!matCache.has(url)) {
+        const mat = new B.StandardMaterial("m_" + url, scene);
+        mat.diffuseTexture = new B.Texture(url, scene, false, true, B.Texture.NEAREST_SAMPLINGMODE);
+        mat.specularColor = new B.Color3(0, 0, 0);
+        mat.backFaceCulling = true;
+        matCache.set(url, mat);
+      }
+
+      const plane = B.MeshBuilder.CreatePlane("f" + dir, { size: 1 }, scene);
+      plane.parent = root;
+      plane.position = new B.Vector3(x, y, z);
+      plane.rotation = new B.Vector3(rx, ry, 0);
+      plane.material = matCache.get(url);
     }
 
     let angle = 0;
     scene.onBeforeRenderObservable.add(() => {
       angle += 0.018;
-      box.rotation.y = angle;
+      root.rotation.y = angle;
     });
 
     engine.runRenderLoop(() => scene.render());
@@ -315,7 +341,17 @@ function NpcCard({ npc, selected, onClick }: { npc: NpcEntry; selected: boolean;
   );
 }
 
-function BlockDetail({ block, defsReady }: { block: BlockEntry; defsReady: boolean }) {
+function BlockDetail({
+  block,
+  defsReady,
+  giveItemName,
+}: {
+  block: BlockEntry;
+  defsReady: boolean;
+  giveItemName: string | null;
+}) {
+  const [qty, setQty] = useState(1);
+
   const row = (label: string, value: string | number | boolean) => (
     <div
       key={label}
@@ -344,6 +380,44 @@ function BlockDetail({ block, defsReady }: { block: BlockEntry; defsReady: boole
         {row("Transparent", block.transparent ? "oui" : "non")}
         {row("Liquide", block.liquid ? "oui" : "non")}
       </div>
+      {giveItemName && (
+        <div style={{ display: "flex", gap: 6, alignItems: "center", paddingTop: 4 }}>
+          <input
+            type="number"
+            min={1}
+            max={128}
+            value={qty}
+            onChange={(e) => setQty(Math.max(1, Math.min(128, parseInt(e.target.value) || 1)))}
+            style={{
+              width: 56,
+              background: "#1e1e1e",
+              border: "1px solid #3a3a3a",
+              borderRadius: 4,
+              color: "#ddd",
+              fontFamily: "monospace",
+              fontSize: 12,
+              padding: "4px 6px",
+              outline: "none",
+            }}
+          />
+          <button
+            onClick={() => (window as any).__mc?.events?.push(`cmd:/give ${giveItemName} ${qty}`)}
+            style={{
+              flex: 1,
+              background: "#2a3d2a",
+              border: "1px solid #4a7a4a",
+              borderRadius: 4,
+              color: "#7aac7a",
+              fontFamily: "monospace",
+              fontSize: 12,
+              cursor: "pointer",
+              padding: "4px 8px",
+            }}
+          >
+            Donner
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -503,15 +577,16 @@ export function CodexModal({ open, onClose }: Props) {
 
   const allBlocks: BlockEntry[] = ((window as any).__mcCodexBlocks ?? [])
     .map((b: Omit<BlockEntry, "ordinal">, i: number) => ({ ...b, ordinal: i }))
-    .filter((b: BlockEntry) => b.name !== "AIR");
+    .filter((b: BlockEntry) => b.name !== "AIR")
+    .sort((a: BlockEntry, b: BlockEntry) => a.name.localeCompare(b.name));
 
-  const allItems: ItemEntry[] = Object.entries((window as any).__mcCodexItems ?? {}).map(
-    ([name, info]: [string, unknown]) => ({ name, ...(info as Omit<ItemEntry, "name">) }),
-  );
+  const allItems: ItemEntry[] = Object.entries((window as any).__mcCodexItems ?? {})
+    .map(([name, info]: [string, unknown]) => ({ name, ...(info as Omit<ItemEntry, "name">) }))
+    .sort((a: ItemEntry, b: ItemEntry) => a.name.localeCompare(b.name));
 
-  const allNpcs: NpcEntry[] = Object.entries((window as any).__mcCodexNpcs ?? {}).map(
-    ([type, info]: [string, unknown]) => ({ type, ...(info as Omit<NpcEntry, "type">) }),
-  );
+  const allNpcs: NpcEntry[] = Object.entries((window as any).__mcCodexNpcs ?? {})
+    .map(([type, info]: [string, unknown]) => ({ type, ...(info as Omit<NpcEntry, "type">) }))
+    .sort((a: NpcEntry, b: NpcEntry) => a.type.localeCompare(b.type));
 
   const TAB_LABEL: Record<CodexTab, string> = {
     bestiary: `Bestiaire (${allNpcs.length})`,
@@ -712,7 +787,10 @@ export function CodexModal({ open, onClose }: Props) {
             {selection?.kind === "block" &&
               (() => {
                 const block = allBlocks.find((b) => b.ordinal === selection.ordinal);
-                return block ? <BlockDetail block={block} defsReady={defsReady} /> : null;
+                const giveItemName = block
+                  ? (allItems.find((it) => it.placesBlock === block.name)?.name ?? null)
+                  : null;
+                return block ? <BlockDetail block={block} defsReady={defsReady} giveItemName={giveItemName} /> : null;
               })()}
             {selection?.kind === "item" &&
               (() => {
