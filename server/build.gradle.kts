@@ -38,6 +38,7 @@ val rootDirPath: String = rootProject.projectDir.absolutePath
 tasks.test {
     systemProperty("projectDir", rootDirPath)
     workingDir = rootProject.projectDir
+    jvmArgs("-Xmx512m")
 }
 
 tasks.register<JavaExec>("addUser") {

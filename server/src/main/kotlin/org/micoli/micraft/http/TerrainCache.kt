@@ -43,6 +43,14 @@ class TerrainCache {
             } else 0L
 
         val chunkFiles = chunksDir.toFile().listFiles { f -> f.name.endsWith(".mcc.gz") } ?: return
+        // Prune cache entries for chunks no longer on disk.
+        val diskChunks =
+            chunkFiles.mapNotNullTo(HashSet()) {
+                parseChunkPos(it.nameWithoutExtension.removeSuffix(".mcc"))
+            }
+        val staleCount = cache.keys.count { it !in diskChunks }
+        cache.keys.retainAll(diskChunks)
+        if (staleCount > 0) log.info("Pruned {} stale terrain cache entries", staleCount)
         var recomputed = 0
         for (file in chunkFiles) {
             if (file.lastModified() <= cacheTime) continue
