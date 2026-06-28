@@ -17,6 +17,9 @@ dev-down:
 dev-restart-server:
 	$(DC_DEV) exec micraft bash -c "touch run.lock"
 
+dev-restart-clean-server:
+	$(DC_DEV) exec micraft bash -c "touch run.lock; rm data/world/default_world/*.json data/world/default_world/chunks/* data/config/*/*"
+
 dev-restart:
 	make dev-down
 	make dev-up

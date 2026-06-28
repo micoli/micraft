@@ -432,12 +432,7 @@ function Npc3DPreview({ npc }: { npc: NpcEntry }) {
     light.intensity = 1.1;
     light.groundColor = new B.Color3(0.2, 0.2, 0.2);
 
-    // mcCreatePlayerModelFromBbmodel caches the material in window.__mcPlayerMat (main scene).
-    // Clear it so a fresh material is created for this preview scene, then restore.
-    const savedMat = (window as any).__mcPlayerMat;
-    (window as any).__mcPlayerMat = null;
     const model: McPlayerModel | null = (window as any).mcCreateNpcModel?.(scene, npc.type) ?? null;
-    (window as any).__mcPlayerMat = savedMat;
 
     let angle = 0;
     scene.onBeforeRenderObservable.add(() => {

@@ -51,7 +51,7 @@ declare global {
     elements: BbModelElement[];
     groups: BbModelGroup[];
     outliner: Array<string | { uuid: string; children: Array<string | unknown> }>;
-    textures: Array<{ source: string }>;
+    textures: Array<{ source: string; uuid?: string; name?: string }>;
     animations?: BbModelAnimation[];
   }
 
@@ -111,6 +111,7 @@ declare global {
     npcBbmodels: Record<string, BbModel>;
     npcModelsReady: boolean;
     modalOpen: boolean;
+    skinMatCache: Record<string, import("@babylonjs/core").StandardMaterial>;
   }
 
   interface McBlockFaceInfo {
@@ -161,7 +162,6 @@ declare global {
     __mcTargetMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     __mcBreakMesh: (InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string }) | null;
     __mcChunks: Record<string, InstanceType<typeof BABYLON.AbstractMesh>[]>;
-    __mcPlayerMat: InstanceType<typeof BABYLON.StandardMaterial> | null;
     __mcCurrentFPArms: McFPArms | null;
     __mcLoginResult: string;
     __mcNotifTimeout: ReturnType<typeof setTimeout>;

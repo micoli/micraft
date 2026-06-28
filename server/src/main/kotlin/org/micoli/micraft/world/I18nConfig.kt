@@ -1,6 +1,7 @@
 package org.micoli.micraft.world
 
 import com.charleskorn.kaml.Yaml
+import java.net.JarURLConnection
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
@@ -18,7 +19,10 @@ private val NESTED_MAP_SERIALIZER =
         MapSerializer(String.serializer(), MapSerializer(String.serializer(), String.serializer())),
     )
 
-class I18nConfig(private val dirs: List<Path>) {
+class I18nConfig(
+    private val dirs: List<Path>,
+    private val classpathYamls: Map<String, String> = emptyMap(),
+) {
     constructor(dir: Path) : this(listOf(dir))
 
     companion object {
@@ -26,12 +30,44 @@ class I18nConfig(private val dirs: List<Path>) {
             classLoader: ClassLoader = Thread.currentThread().contextClassLoader,
             pluginsRoot: Path? = null,
         ): I18nConfig {
-            val dirs =
-                classLoader
-                    .getResources("i18n")
-                    .toList()
-                    .mapNotNull { runCatching { Path.of(it.toURI()) }.getOrNull() }
-                    .toMutableList()
+            val dirs = mutableListOf<Path>()
+            val classpathYamls = mutableMapOf<String, String>()
+
+            classLoader.getResources("i18n").toList().forEach { url ->
+                when (url.protocol) {
+                    "file" ->
+                        runCatching { dirs.add(Path.of(url.toURI())) }
+                            .onFailure {
+                                log.warn("i18n: cannot resolve file URL {}: {}", url, it.message)
+                            }
+                    "jar" ->
+                        runCatching {
+                                val conn = url.openConnection() as JarURLConnection
+                                conn.jarFile.use { jar ->
+                                    jar.entries()
+                                        .asSequence()
+                                        .filter {
+                                            it.name.startsWith("i18n/") && it.name.endsWith(".yaml")
+                                        }
+                                        .forEach { entry ->
+                                            val locale =
+                                                entry.name
+                                                    .removePrefix("i18n/")
+                                                    .removeSuffix(".yaml")
+                                            classpathYamls[locale] =
+                                                jar.getInputStream(entry)
+                                                    .bufferedReader()
+                                                    .readText()
+                                        }
+                                }
+                            }
+                            .onFailure {
+                                log.warn("i18n: cannot read jar URL {}: {}", url, it.message)
+                            }
+                    else -> log.warn("i18n: unsupported URL protocol {} for {}", url.protocol, url)
+                }
+            }
+
             pluginsRoot
                 ?.takeIf { it.toFile().exists() }
                 ?.toFile()
@@ -40,7 +76,8 @@ class I18nConfig(private val dirs: List<Path>) {
                     val d = pluginsRoot.resolve(plugin.name).resolve("resources/i18n")
                     if (d.toFile().exists()) dirs.add(d)
                 }
-            return I18nConfig(dirs)
+
+            return I18nConfig(dirs, classpathYamls)
         }
     }
 
@@ -56,6 +93,11 @@ class I18nConfig(private val dirs: List<Path>) {
 
     fun reload() {
         val merged = mutableMapOf<String, MutableMap<String, String>>()
+
+        for ((locale, yaml) in classpathYamls) {
+            mergeYaml(locale, yaml, source = "classpath", merged)
+        }
+
         for (dir in dirs) {
             if (!dir.exists()) {
                 log.warn("i18n directory not found at {}, skipping", dir.toAbsolutePath())
@@ -63,26 +105,33 @@ class I18nConfig(private val dirs: List<Path>) {
             }
             dir.listDirectoryEntries("*.yaml").forEach { file ->
                 val locale = file.nameWithoutExtension
-                runCatching {
-                        val raw =
-                            Yaml.default.decodeFromString(NESTED_MAP_SERIALIZER, file.readText())
-                        val flat =
-                            raw.flatMap { (feature, scopes) ->
-                                    scopes.flatMap { (scope, keys) ->
-                                        keys.map { (key, value) -> "$feature:$scope:$key" to value }
-                                    }
-                                }
-                                .toMap()
-                        merged.getOrPut(locale) { mutableMapOf() }.putAll(flat)
-                        log.debug("i18n merged: {} from {} ({} keys)", locale, dir, flat.size)
-                    }
-                    .onFailure { e ->
-                        log.warn("Failed to load i18n from {}/{}.yaml: {}", dir, locale, e.message)
-                    }
+                mergeYaml(locale, file.readText(), source = dir.toString(), merged)
             }
         }
+
         if ("en" !in merged) merged["en"] = mutableMapOf()
         tables = merged
+    }
+
+    private fun mergeYaml(
+        locale: String,
+        yaml: String,
+        source: String,
+        merged: MutableMap<String, MutableMap<String, String>>,
+    ) {
+        runCatching {
+                val raw = Yaml.default.decodeFromString(NESTED_MAP_SERIALIZER, yaml)
+                val flat =
+                    raw.flatMap { (feature, scopes) ->
+                            scopes.flatMap { (scope, keys) ->
+                                keys.map { (key, value) -> "$feature:$scope:$key" to value }
+                            }
+                        }
+                        .toMap()
+                merged.getOrPut(locale) { mutableMapOf() }.putAll(flat)
+                log.debug("i18n merged: {} from {} ({} keys)", locale, source, flat.size)
+            }
+            .onFailure { e -> log.warn("Failed to load i18n {}/{}: {}", source, locale, e.message) }
     }
 
     fun t(locale: String, key: String, vararg args: Any): String {

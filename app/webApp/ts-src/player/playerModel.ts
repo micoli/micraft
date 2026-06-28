@@ -1,4 +1,4 @@
-import type { Scene } from "@babylonjs/core";
+import type { Scene, StandardMaterial } from "@babylonjs/core";
 
 // Linear interpolation between two bbmodel keyframes at normalised time t ∈ [0,1].
 export function interpAxis(keyframes: BbModelKeyframe[], t: number, axis: string): number {
@@ -100,18 +100,25 @@ export function registerPlayerModel(): void {
     createPlayerModelFromBbmodel(window.__mc.playerBbmodel!, scene);
 
   function createPlayerModelFromBbmodel(bbmodel: BbModel, scene: Scene): McPlayerModel {
-    if (!window.__mcPlayerMat) {
-      const src = bbmodel.textures[0].source;
+    window.__mc = window.__mc || ({} as any);
+    if (!window.__mc.skinMatCache) (window.__mc as any).skinMatCache = {};
+    const texDef = bbmodel.textures[0];
+    const texKey = texDef.uuid ?? texDef.name ?? "default";
+    const s = scene as any;
+    if (!s.__mcSceneId) s.__mcSceneId = Math.random().toString(36).slice(2);
+    const cacheKey = `${s.__mcSceneId}_${texKey}`;
+    if (!window.__mc.skinMatCache[cacheKey]) {
+      const src = texDef.source;
       const tex = new BABYLON.Texture(src, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
       tex.hasAlpha = false;
       tex.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
       tex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
-      const mat = new BABYLON.StandardMaterial("playerSkinMat", scene);
+      const mat = new BABYLON.StandardMaterial(`skinMat_${texKey}`, scene);
       mat.diffuseTexture = tex;
       mat.specularColor = new BABYLON.Color3(0, 0, 0);
-      window.__mcPlayerMat = mat;
+      window.__mc.skinMatCache[cacheKey] = mat;
     }
-    const mat = window.__mcPlayerMat!;
+    const mat = window.__mc.skinMatCache[cacheKey];
     const W = bbmodel.resolution.width;
     const H = bbmodel.resolution.height;
     const SCALE = 1 / 16;

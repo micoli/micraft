@@ -63,6 +63,16 @@ private val DEFAULT_YAML: Map<String, NpcYamlEntry> =
                 wanderRadius = 12.0f,
                 spawn = NpcSpawnConfigRaw(autoSpawn = true, maxTotal = 30, maxPerChunk = 3),
             ),
+        "CAT" to
+            NpcYamlEntry(
+                bbmodelFile = "npc_cat",
+                behavior = "random_movable",
+                width = 0.5f,
+                height = 0.9f,
+                wanderSpeed = 2.0f,
+                wanderRadius = 12.0f,
+                spawn = NpcSpawnConfigRaw(autoSpawn = true, maxTotal = 30, maxPerChunk = 3),
+            ),
         "DUCK" to
             NpcYamlEntry(
                 bbmodelFile = "npc_duck",
@@ -85,12 +95,22 @@ class NpcRegistryLoader(private val path: Path) {
     }
 
     fun load(): Map<String, NpcDefinition> {
-        val raw =
+        val loaded =
             runCatching { Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, path.readText()) }
                 .getOrElse { e ->
                     log.warn("Failed to load npcs.yaml ({}), using defaults", e.message)
                     DEFAULT_YAML
                 }
+        val missingKeys = DEFAULT_YAML.keys - loaded.keys
+        val raw =
+            if (missingKeys.isNotEmpty()) {
+                val merged = loaded + missingKeys.associateWith { DEFAULT_YAML.getValue(it) }
+                path.writeText(Yaml.default.encodeToString(ENTRY_MAP_SERIALIZER, merged))
+                log.info("Added missing NPC keys to npcs.yaml: {}", missingKeys)
+                merged
+            } else {
+                loaded
+            }
         val result =
             raw.entries
                 .mapNotNull { (key, entry) ->
