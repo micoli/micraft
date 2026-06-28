@@ -8,6 +8,9 @@ DC_PROD = docker compose -f docker-compose.prod.yml
 
 # ── Dev ───────────────────────────────────────────────────────────────────────
 
+dev-patch-resource-defaults:
+	$(DC_DEV) exec micraft bash -c "./gradlew :server:patchResourceDefaults"
+
 dev-up:
 	$(DC_DEV) up --build -d
 

@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger("NpcRegistryLoader")
 
 @Serializable
-private data class NpcSpawnConfigRaw(
+internal data class NpcSpawnConfigRaw(
     val autoSpawn: Boolean = false,
     val maxTotal: Int = 0,
     val maxPerChunk: Int = 1,
@@ -24,7 +24,7 @@ private data class NpcSpawnConfigRaw(
 )
 
 @Serializable
-private data class NpcYamlEntry(
+internal data class NpcYamlEntry(
     val behavior: String = "static",
     val width: Float = 0.6f,
     val height: Float = 1.8f,

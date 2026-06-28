@@ -172,6 +172,7 @@ stateDiagram-v2
 | `/adduser` | `/adduser <email> <password> [displayName]` | Add a local auth user. Usage: /adduser <email> <password> [displayName] | — |
 | `/codex` | `/codex` | Opens the codex (blocks, items, bestiary). | — |
 | `/config` | `/config <get\|set> <key> [value]` | Get or set a runtime config value. | — |
+| `/config:reload` | `/config:reload` | Reloads block or NPC definitions from resource files. | block, npc |
 | `/createchat` | `/createChat <channelName>` | Create a new chat channel. | — |
 | `/disconnect` | `/disconnect` | Déconnecte le joueur courant. | — |
 | `/give` | `/give <itemType> [N]` | Give items to yourself. | dynamic |
@@ -187,6 +188,7 @@ stateDiagram-v2
 | `/reload` | `/reload` | Reloads configuration files without restarting the server. | drops.yaml — block drop table, biomes.yaml — biome definitions, i18n/*.yaml — translations |
 | `/save` | `/save` | Saves the world and player state to disk. | — |
 | `/shaders` | `/shaders [on\|off]` | Toggles visual shaders (ambient occlusion, directional shading, fog). | on, off |
+| `/spawn` | `/spawn <npc_model> [x y z]` | Spawn an NPC of the given model on the solid block you are looking at. (admin) | dynamic |
 | `/talk` | `/talk <playerName>` | Open a private chat with a player. | — |
 | `/time` | `/time [0-23]` | Shows or sets the in-game time. | dynamic |
 | `/undo` | `/undo [N]` | Undo the last N block breaks, restoring blocks and reversing item collection. | — |

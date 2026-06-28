@@ -41,6 +41,14 @@ tasks.test {
     jvmArgs("-Xmx512m")
 }
 
+tasks.register<JavaExec>("patchResourceDefaults") {
+    group = "application"
+    description = "Patch missing default keys into resources/{blocks,entity} YAML files"
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.world.PatchResourceDefaultsCliKt")
+    workingDir = rootProject.projectDir
+}
+
 tasks.register<JavaExec>("addUser") {
     group = "application"
     description = "Add a local auth user. Args: <email> <password> [displayName]"
