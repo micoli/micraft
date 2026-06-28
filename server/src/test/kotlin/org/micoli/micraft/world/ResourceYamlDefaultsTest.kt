@@ -12,26 +12,47 @@ private val projectRoot: Path = Path.of(System.getProperty("projectDir", ".."))
 
 class ResourceYamlDefaultsTest {
 
-    private val blockRequiredKeys = setOf(
-        "hardness", "solid", "transparent", "minimapColor", "modelElement",
-        "liquid", "viscosity", "replaceable", "vegetationHost", "treeAllowed",
-    )
-    private val npcRequiredKeys = setOf(
-        "behavior", "width", "height", "wanderSpeed", "wanderRadius", "spawn",
-    )
-    private val spawnRequiredKeys = setOf(
-        "autoSpawn", "maxTotal", "maxPerChunk", "spawnBiomes",
-    )
+    private val blockRequiredKeys =
+        setOf(
+            "hardness",
+            "solid",
+            "transparent",
+            "minimapColor",
+            "modelElement",
+            "liquid",
+            "viscosity",
+            "replaceable",
+            "vegetationHost",
+            "treeAllowed",
+        )
+    private val npcRequiredKeys =
+        setOf(
+            "behavior",
+            "width",
+            "height",
+            "wanderSpeed",
+            "wanderRadius",
+            "spawn",
+        )
+    private val spawnRequiredKeys =
+        setOf(
+            "autoSpawn",
+            "maxTotal",
+            "maxPerChunk",
+            "spawnBiomes",
+        )
 
     private fun topLevelKeys(content: String): Set<String> =
-        content.lines()
+        content
+            .lines()
             .filter { it.matches(Regex("^[a-zA-Z][a-zA-Z0-9]*:.*")) }
             .map { it.substringBefore(":").trim() }
             .toSet()
 
     private fun nestedKeys(content: String, section: String): Set<String> {
         val afterSection = content.substringAfter("$section:\n", "")
-        return afterSection.lines()
+        return afterSection
+            .lines()
             .takeWhile { it.startsWith("  ") || it.isBlank() }
             .filter { it.matches(Regex("^  [a-zA-Z][a-zA-Z0-9]*:.*")) }
             .map { it.trim().substringBefore(":") }

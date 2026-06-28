@@ -22,8 +22,7 @@ class ConfigReloadCommand : CommandHandler {
         val doNpcs = target.isEmpty() || target == "npc"
         if (!doBlocks && !doNpcs) {
             session.send(
-                ServerMessage.Notification(
-                    context.i18n.t(lang, "config_reload:server:usage")))
+                ServerMessage.Notification(context.i18n.t(lang, "config_reload:server:usage")))
             return
         }
         val reloaded = mutableListOf<String>()

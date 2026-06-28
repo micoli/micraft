@@ -83,7 +83,8 @@ class NpcRegistryLoader(
                 val resourceYaml = entityDir.resolve("$name.yaml")
                 if (!resourceYaml.exists()) return@forEach
                 runCatching {
-                        Yaml.default.decodeFromString(NpcYamlEntry.serializer(), resourceYaml.readText())
+                        Yaml.default.decodeFromString(
+                            NpcYamlEntry.serializer(), resourceYaml.readText())
                     }
                     .onFailure { log.warn("Failed to load NPC {}: {}", name, it.message) }
                     .getOrNull()
@@ -109,7 +110,8 @@ class NpcRegistryLoader(
                                             .getOrDefault(entry)
                                     } else entry
                                 dataYaml.writeText(
-                                    Yaml.default.encodeToString(NpcYamlEntry.serializer(), overridden))
+                                    Yaml.default.encodeToString(
+                                        NpcYamlEntry.serializer(), overridden))
                                 log.debug("Wrote back merged data override for {}", name)
                                 overridden
                             } else entry
@@ -140,9 +142,7 @@ class NpcRegistryLoader(
                                         ),
                                 )
                         }
-                        .onFailure { e ->
-                            log.warn("Skipping entity '{}': {}", key, e.message)
-                        }
+                        .onFailure { e -> log.warn("Skipping entity '{}': {}", key, e.message) }
                         .getOrNull()
                 }
                 .toMap()

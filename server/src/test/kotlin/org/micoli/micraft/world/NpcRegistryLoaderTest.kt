@@ -54,7 +54,8 @@ class NpcRegistryLoaderTest {
                           maxTotal: 5
                           maxPerChunk: 1
                           spawnBiomes: []
-                        """.trimIndent(),
+                        """
+                            .trimIndent(),
                     "npc_goat" to
                         """
                         behavior: random_movable
@@ -67,7 +68,8 @@ class NpcRegistryLoaderTest {
                           maxTotal: 30
                           maxPerChunk: 3
                           spawnBiomes: [plains]
-                        """.trimIndent(),
+                        """
+                            .trimIndent(),
                 ))
         val defs = loader.load()
         assertEquals(2, defs.size)
@@ -98,7 +100,8 @@ class NpcRegistryLoaderTest {
                         height: 0.9
                         wanderSpeed: 2.0
                         wanderRadius: 12.0
-                        """.trimIndent()))
+                        """
+                            .trimIndent()))
         val defs = loader.load()
         assertEquals("npc_cat", defs["npc_cat"]?.bbmodelFile)
     }
@@ -115,7 +118,8 @@ class NpcRegistryLoaderTest {
                         height: 1.8
                         wanderSpeed: 0.0
                         wanderRadius: 0.0
-                        """.trimIndent()))
+                        """
+                            .trimIndent()))
         // player dir has no yaml — verify it doesn't appear
         val resourcesDir = createTempDirectory("resources_entity2")
         resourcesDir.resolve("player").toFile().mkdir()
@@ -136,7 +140,8 @@ class NpcRegistryLoaderTest {
                         height: 0.5
                         wanderSpeed: 0.0
                         wanderRadius: 0.0
-                        """.trimIndent()))
+                        """
+                            .trimIndent()))
         val defs = loader.load()
         val duck = defs["npc_duck"]
         assertNotNull(duck)
@@ -158,7 +163,8 @@ class NpcRegistryLoaderTest {
                         height: 1.8
                         wanderSpeed: 0.0
                         wanderRadius: 0.0
-                        """.trimIndent(),
+                        """
+                            .trimIndent(),
                     "npc_unknown" to
                         """
                         behavior: totally_fake_behavior
@@ -166,7 +172,8 @@ class NpcRegistryLoaderTest {
                         height: 1.8
                         wanderSpeed: 0.0
                         wanderRadius: 0.0
-                        """.trimIndent(),
+                        """
+                            .trimIndent(),
                 ))
         val defs = loader.load()
         assertTrue(defs.containsKey("npc_seller"))
@@ -185,7 +192,8 @@ class NpcRegistryLoaderTest {
                         height: 1.8
                         wanderSpeed: 0.0
                         wanderRadius: 0.0
-                        """.trimIndent(),
+                        """
+                            .trimIndent(),
                     "npc_goat" to "this is not: [valid yaml: }",
                 ))
         val defs = loader.load()
@@ -212,7 +220,8 @@ class NpcRegistryLoaderTest {
                               maxTotal: 30
                               maxPerChunk: 3
                               spawnBiomes: []
-                            """.trimIndent()),
+                            """
+                                .trimIndent()),
                 overrides = mapOf("npc_goat" to ""),
             )
         val defs = loader.load()
@@ -243,7 +252,8 @@ class NpcRegistryLoaderTest {
                               maxTotal: 30
                               maxPerChunk: 3
                               spawnBiomes: []
-                            """.trimIndent()),
+                            """
+                                .trimIndent()),
                 overrides = mapOf("npc_goat" to "wanderSpeed: 9.9\n"),
             )
         val defs = loader.load()
@@ -269,7 +279,8 @@ class NpcRegistryLoaderTest {
                             height: 0.9
                             wanderSpeed: 2.0
                             wanderRadius: 12.0
-                            """.trimIndent()))
+                            """
+                                .trimIndent()))
         assertFalse(dataDir.resolve("npc_goat/npc_goat.yaml").toFile().exists())
     }
 }

@@ -26,6 +26,7 @@ import org.micoli.micraft.protocol.CommandInfo
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.session.NetworkStats
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.session.toSlotMap
 import org.micoli.micraft.tick.BlockBreaker
@@ -261,6 +262,7 @@ class GameLoop(
     private val chunkStreamer = ChunkStreamer(world)
 
     val terrainCache = TerrainCache()
+    val networkStats = NetworkStats()
     @Volatile private var appScope: Application? = null
 
     fun getPlayerStates(): List<PlayerState> = sessions.values.map { it.state }
@@ -600,7 +602,7 @@ class GameLoop(
                 disabledCommands = saved?.disabledCommands ?: emptySet(),
                 viewMode = saved?.viewMode ?: "FIRST_PERSON",
             )
-        val session = PlayerSession(id, userName, socket, state)
+        val session = PlayerSession(id, userName, socket, state, networkStats = networkStats)
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
         saved?.shortcutBar?.forEachIndexed { i, item ->
             if (i in 0..9) session.shortcutBar[i] = item
@@ -652,7 +654,9 @@ class GameLoop(
         try {
             socket.incoming.consumeEach { frame ->
                 if (frame is Frame.Binary) {
-                    runCatching { ClientMessageCodec.decode(frame.readBytes()) }
+                    val frameBytes = frame.readBytes()
+                    networkStats.bytesIn.addAndGet(frameBytes.size.toLong())
+                    runCatching { ClientMessageCodec.decode(frameBytes) }
                         .onFailure { log.warn("bad frame from {}: {}", id.take(8), it.message) }
                         .getOrNull()
                         ?.let { msg ->

@@ -8,12 +8,19 @@ import org.micoli.micraft.GameLoop
 
 // Rough per-entry sizes for working-set estimates (no JAMM/JOL available):
 // BlockPos = 3 Int + obj header ≈ 28 B; ConcurrentHashMap node ≈ 56 B.
-private const val LIQUID_BYTES_PER_ENTRY = 284L  // 3 maps × (28 + 56) + keys shared
+private const val LIQUID_BYTES_PER_ENTRY = 284L // 3 maps × (28 + 56) + keys shared
 private const val VEGETATION_BYTES_PER_ENTRY = 182L // GrowingBlock ≈ 126 B + key 56 B
-private const val NPC_BYTES_PER_ENTRY = 512L      // NpcInstance + state + behavior ref
+private const val NPC_BYTES_PER_ENTRY = 512L // NpcInstance + state + behavior ref
 
-private fun gauge(name: String, help: String, value: Number, labels: Map<String, String> = emptyMap()): String {
-    val labelStr = if (labels.isEmpty()) "" else labels.entries.joinToString(",", "{", "}") { (k, v) -> """$k="$v"""" }
+private fun gauge(
+    name: String,
+    help: String,
+    value: Number,
+    labels: Map<String, String> = emptyMap()
+): String {
+    val labelStr =
+        if (labels.isEmpty()) ""
+        else labels.entries.joinToString(",", "{", "}") { (k, v) -> """$k="$v"""" }
     return "# HELP $name $help\n# TYPE $name gauge\n$name$labelStr $value\n"
 }
 
@@ -31,42 +38,96 @@ fun buildPrometheusMetrics(gameLoop: GameLoop): String {
     val activeLiquids = gameLoop.getActiveLiquidCount()
     val pendingLiquidTicks = gameLoop.getLiquidPendingTickCount()
     val activeVegetation = gameLoop.getActiveVegetationCount()
+    val net = gameLoop.networkStats
 
     return buildString {
         // Players
-        append(gauge("micraft_connected_players", "Number of connected players", gameLoop.getPlayerStates().size))
+        append(
+            gauge(
+                "micraft_connected_players",
+                "Number of connected players",
+                gameLoop.getPlayerStates().size))
 
         // NPCs
         append(gauge("micraft_npc_total", "Total NPCs alive", npcStates.size))
         if (npcByType.isNotEmpty()) {
-            append("# HELP micraft_npc_by_type NPCs alive by type\n# TYPE micraft_npc_by_type gauge\n")
+            append(
+                "# HELP micraft_npc_by_type NPCs alive by type\n# TYPE micraft_npc_by_type gauge\n")
             npcByType.forEach { (type, count) ->
                 append("""micraft_npc_by_type{type="$type"} $count""").append('\n')
             }
         }
-        append(gauge("micraft_npc_manager_estimated_bytes", "NpcManager estimated heap usage (bytes)", npcStates.size * NPC_BYTES_PER_ENTRY))
+        append(
+            gauge(
+                "micraft_npc_manager_estimated_bytes",
+                "NpcManager estimated heap usage (bytes)",
+                npcStates.size * NPC_BYTES_PER_ENTRY))
 
         // World items
-        append(gauge("micraft_world_items_total", "World items (drops) on the ground", gameLoop.getWorldItemCount()))
+        append(
+            gauge(
+                "micraft_world_items_total",
+                "World items (drops) on the ground",
+                gameLoop.getWorldItemCount()))
 
         // World state
-        append(gauge("micraft_loaded_chunks_total", "Loaded/generated chunks in memory", gameLoop.getLoadedChunkCount()))
+        append(
+            gauge(
+                "micraft_loaded_chunks_total",
+                "Loaded/generated chunks in memory",
+                gameLoop.getLoadedChunkCount()))
         append(counter("micraft_game_ticks_total", "Game tick counter", gameLoop.getGameTicks()))
 
+        // Network traffic
+        append(
+            counter(
+                "micraft_network_bytes_in_total",
+                "Total WebSocket bytes received from clients",
+                net.bytesIn.get()))
+        append(
+            counter(
+                "micraft_network_bytes_out_total",
+                "Total WebSocket bytes sent to clients",
+                net.bytesOut.get()))
+
         // LiquidManager
-        append(gauge("micraft_liquid_active_blocks", "LiquidManager: active liquid blocks", activeLiquids))
-        append(gauge("micraft_liquid_pending_ticks", "LiquidManager: blocks with pending tick countdown", pendingLiquidTicks))
-        append(gauge("micraft_liquid_manager_estimated_bytes", "LiquidManager estimated heap usage (bytes)", activeLiquids * LIQUID_BYTES_PER_ENTRY))
+        append(
+            gauge(
+                "micraft_liquid_active_blocks",
+                "LiquidManager: active liquid blocks",
+                activeLiquids))
+        append(
+            gauge(
+                "micraft_liquid_pending_ticks",
+                "LiquidManager: blocks with pending tick countdown",
+                pendingLiquidTicks))
+        append(
+            gauge(
+                "micraft_liquid_manager_estimated_bytes",
+                "LiquidManager estimated heap usage (bytes)",
+                activeLiquids * LIQUID_BYTES_PER_ENTRY))
 
         // VegetationManager
-        append(gauge("micraft_vegetation_active_blocks", "VegetationManager: blocks in growth queue", activeVegetation))
-        append(gauge("micraft_vegetation_manager_estimated_bytes", "VegetationManager estimated heap usage (bytes)", activeVegetation * VEGETATION_BYTES_PER_ENTRY))
+        append(
+            gauge(
+                "micraft_vegetation_active_blocks",
+                "VegetationManager: blocks in growth queue",
+                activeVegetation))
+        append(
+            gauge(
+                "micraft_vegetation_manager_estimated_bytes",
+                "VegetationManager estimated heap usage (bytes)",
+                activeVegetation * VEGETATION_BYTES_PER_ENTRY))
 
         // JVM
         append(gauge("jvm_heap_used_bytes", "JVM heap memory used in bytes", heapUsed))
         append(gauge("jvm_heap_max_bytes", "JVM heap memory max in bytes", heapMax))
         append(gauge("jvm_nonheap_used_bytes", "JVM non-heap memory used in bytes", nonHeapUsed))
-        append(gauge("jvm_processors", "Available processor count", Runtime.getRuntime().availableProcessors()))
+        append(
+            gauge(
+                "jvm_processors",
+                "Available processor count",
+                Runtime.getRuntime().availableProcessors()))
     }
 }
 
@@ -80,6 +141,7 @@ fun buildStatusSnapshot(gameLoop: GameLoop): StatusSnapshot {
     val activeLiquids = gameLoop.getActiveLiquidCount()
     val pendingLiquidTicks = gameLoop.getLiquidPendingTickCount()
     val activeVegetation = gameLoop.getActiveVegetationCount()
+    val net = gameLoop.networkStats
 
     return StatusSnapshot(
         connectedPlayers = gameLoop.getPlayerStates().size,
@@ -90,6 +152,8 @@ fun buildStatusSnapshot(gameLoop: GameLoop): StatusSnapshot {
         worldItems = gameLoop.getWorldItemCount(),
         loadedChunks = gameLoop.getLoadedChunkCount(),
         gameTicks = gameLoop.getGameTicks(),
+        networkBytesIn = net.bytesIn.get(),
+        networkBytesOut = net.bytesOut.get(),
         activeLiquids = activeLiquids,
         pendingLiquidTicks = pendingLiquidTicks,
         liquidEstBytes = activeLiquids * LIQUID_BYTES_PER_ENTRY,
@@ -111,6 +175,8 @@ data class StatusSnapshot(
     val worldItems: Int,
     val loadedChunks: Int,
     val gameTicks: Long,
+    val networkBytesIn: Long,
+    val networkBytesOut: Long,
     val activeLiquids: Int,
     val pendingLiquidTicks: Int,
     val liquidEstBytes: Long,
@@ -123,9 +189,7 @@ data class StatusSnapshot(
 )
 
 fun Route.metricsRoutes(gameLoop: GameLoop) {
-    get("/metrics") {
-        call.respondText(buildPrometheusMetrics(gameLoop), ContentType.Text.Plain)
-    }
+    get("/metrics") { call.respondText(buildPrometheusMetrics(gameLoop), ContentType.Text.Plain) }
 
     get("/status") {
         val s = buildStatusSnapshot(gameLoop)
@@ -137,10 +201,14 @@ private fun kb(bytes: Long) = if (bytes < 1024) "${bytes} B" else "${bytes / 102
 
 private fun buildStatusHtml(s: StatusSnapshot): String {
     val heapPct = if (s.heapMaxMb > 0) s.heapUsedMb * 100 / s.heapMaxMb else 0
-    val npcRows = if (s.npcByType.isEmpty()) "<tr><td colspan='2' style='color:#555'>none</td></tr>"
-        else s.npcByType.entries.sortedByDescending { it.value }
-            .joinToString("") { (t, c) -> "<tr><td>${esc(t)}</td><td>$c</td></tr>" }
-    val playerList = if (s.playerNames.isEmpty()) "<span style='color:#555'>none</span>"
+    val npcRows =
+        if (s.npcByType.isEmpty()) "<tr><td colspan='2' style='color:#555'>none</td></tr>"
+        else
+            s.npcByType.entries
+                .sortedByDescending { it.value }
+                .joinToString("") { (t, c) -> "<tr><td>${esc(t)}</td><td>$c</td></tr>" }
+    val playerList =
+        if (s.playerNames.isEmpty()) "<span style='color:#555'>none</span>"
         else s.playerNames.joinToString(", ") { esc(it) }
 
     return """<!DOCTYPE html>
@@ -208,6 +276,12 @@ private fun buildStatusHtml(s: StatusSnapshot): String {
   </div>
 
   <div class="card">
+    <h2>Network Traffic</h2>
+    <div class="row"><span>&#x2193; Received</span><span class="val">${kb(s.networkBytesIn)}</span></div>
+    <div class="row"><span>&#x2191; Sent</span><span class="val">${kb(s.networkBytesOut)}</span></div>
+  </div>
+
+  <div class="card">
     <h2>JVM Memory</h2>
     <div class="label">Heap ${s.heapUsedMb} MB / ${s.heapMaxMb} MB ($heapPct%)</div>
     <div class="bar-wrap"><div class="bar" style="width:${heapPct}%"></div></div>
@@ -221,7 +295,4 @@ private fun buildStatusHtml(s: StatusSnapshot): String {
 </html>"""
 }
 
-private fun esc(s: String) = s
-    .replace("&", "&amp;")
-    .replace("<", "&lt;")
-    .replace(">", "&gt;")
+private fun esc(s: String) = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
