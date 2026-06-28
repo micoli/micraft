@@ -80,7 +80,7 @@ Provider selected via `data/config/server.yaml` → `auth.provider` (`none` | `l
 - Commands with arguments get autocompletion method attached
 
 ## Entities / animations
-Models use **bbmodel** (Blockbench) format. Example: `resources/player.bbmodel`
+Models use **bbmodel** (Blockbench) format. Example: `resources/entity/player/player.bbmodel`
 
 ```
 node scripts/export_skin_presets.mjs ./resources/blockbench-export/.

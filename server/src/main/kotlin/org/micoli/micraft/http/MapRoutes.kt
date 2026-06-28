@@ -46,6 +46,9 @@ data class ChunkTerrainInfo(
 )
 
 fun Route.mapRoutes(gameLoop: GameLoop) {
+    if (!(System.getenv("MICRAFT_MAP_ENABLED") != "0")) {
+        return
+    }
     get("/api/map/state") {
         val players =
             gameLoop.getPlayerStates().map { s ->

@@ -31,7 +31,7 @@ private fun staticDef(type: String = "SELLER"): NpcDefinition =
     NpcDefinition(
         type = type,
         behavior = StaticNpcBehavior(),
-        bbmodelFile = "npc.bbmodel",
+        bbmodelFile = "npc",
         width = 0.6f,
         height = 1.8f,
         wanderSpeed = 0f,
@@ -42,7 +42,7 @@ private fun wanderDef(type: String = "GOAT"): NpcDefinition =
     NpcDefinition(
         type = type,
         behavior = RandomMovableNpcBehavior(),
-        bbmodelFile = "npc.bbmodel",
+        bbmodelFile = "npc",
         width = 0.5f,
         height = 0.9f,
         wanderSpeed = 3f,
@@ -53,7 +53,7 @@ private fun interactDef(type: String = "SELLER"): NpcDefinition =
     NpcDefinition(
         type = type,
         behavior = InteractionableNpcBehavior(),
-        bbmodelFile = "npc.bbmodel",
+        bbmodelFile = "npc",
         width = 0.6f,
         height = 1.8f,
         wanderSpeed = 0f,

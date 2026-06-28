@@ -78,7 +78,7 @@ export function registerBlockDefs(): void {
         return Promise.resolve();
       }
       const fileName = info.modelElement || info.name;
-      return fetch(`/models/blocks/${fileName}.bbmodel`)
+      return fetch(`/api/models/blocks/${fileName}/${fileName}.bbmodel`)
         .then((r) => r.json())
         .then((data: BlocksBbModel) => {
           const { def, textures } = parseSingleBlockBbmodel(data);

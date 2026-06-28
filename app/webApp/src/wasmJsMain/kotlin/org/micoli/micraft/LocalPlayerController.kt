@@ -745,6 +745,10 @@ class LocalPlayerController(
     private fun enrichCommand(cmd: String): String {
         val trimmed = cmd.trim()
         val parts = trimmed.split(Regex("\\s+"))
+        if (parts.size == 2 && parts[0] == "/spawn") {
+            val t = hoverTarget ?: return cmd
+            return "/spawn ${parts[1]} ${t.x} ${t.y + 1} ${t.z}"
+        }
         if (parts.size != 1) return cmd
         return when (parts[0]) {
             "/water" -> {

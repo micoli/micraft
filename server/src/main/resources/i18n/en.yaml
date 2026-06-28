@@ -98,6 +98,16 @@ water:
     not_air: "Target block is not air."
     no_solid_below: "Cannot place water: no solid block directly below."
     no_solid_target: "No solid block in sight to place water on (look at a solid block within 6 blocks)."
+spawn:
+  server:
+    unavailable: "NPC manager not available."
+    no_solid_target: "No solid block in sight to spawn NPC on (look at a solid block within 6 blocks)."
+    unknown_model: "Unknown NPC model: {0}. Available: {1}"
+    usage: "Usage: /spawn <npc_model> [x y z]"
+    out_of_bounds: "Position out of world bounds."
+    no_solid_below: "Cannot spawn NPC: no solid block directly below."
+    not_air: "Target block is not air."
+    spawned: "Spawned {0} at ({1}, {2}, {3})."
 pump:
   server:
     no_target: "No liquid block in sight (look at water within 6 blocks)."

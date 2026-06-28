@@ -22,7 +22,7 @@ private fun staticDef(type: String = "SELLER") =
     NpcDefinition(
         type = type,
         behavior = StaticNpcBehavior(),
-        bbmodelFile = "npc.bbmodel",
+        bbmodelFile = "npc",
         width = 0.6f,
         height = 1.8f,
         wanderSpeed = 0f,

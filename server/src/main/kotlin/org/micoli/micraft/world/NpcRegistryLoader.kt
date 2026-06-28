@@ -26,7 +26,7 @@ private data class NpcSpawnConfigRaw(
 
 @Serializable
 private data class NpcYamlEntry(
-    val bbmodelFile: String = "npc_unknown.bbmodel",
+    val bbmodelFile: String = "npc_unknown",
     val behavior: String = "static",
     val width: Float = 0.6f,
     val height: Float = 1.8f,
@@ -41,21 +41,21 @@ private val DEFAULT_YAML: Map<String, NpcYamlEntry> =
     mapOf(
         "SELLER" to
             NpcYamlEntry(
-                bbmodelFile = "npc_seller.bbmodel",
+                bbmodelFile = "npc_seller",
                 behavior = "interactionable",
                 width = 0.6f,
                 height = 1.8f,
             ),
         "BLACK_SMITH" to
             NpcYamlEntry(
-                bbmodelFile = "npc_blacksmith.bbmodel",
+                bbmodelFile = "npc_blacksmith",
                 behavior = "interactionable",
                 width = 0.6f,
                 height = 1.8f,
             ),
         "GOAT" to
             NpcYamlEntry(
-                bbmodelFile = "npc_goat.bbmodel",
+                bbmodelFile = "npc_goat",
                 behavior = "random_movable",
                 width = 0.5f,
                 height = 0.9f,
@@ -65,7 +65,7 @@ private val DEFAULT_YAML: Map<String, NpcYamlEntry> =
             ),
         "DUCK" to
             NpcYamlEntry(
-                bbmodelFile = "npc_duck.bbmodel",
+                bbmodelFile = "npc_duck",
                 behavior = "random_movable",
                 width = 0.3f,
                 height = 0.5f,

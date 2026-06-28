@@ -4,6 +4,7 @@ import com.charleskorn.kaml.Yaml
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
+import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -255,7 +256,8 @@ fun Application.module() {
             val serializer = MapSerializer(String.serializer(), ListSerializer(Double.serializer()))
             call.respondText(Json.encodeToString(serializer, colors), ContentType.Application.Json)
         }
-        if (System.getenv("MICRAFT_MAP_ENABLED") != "0") mapRoutes(gameLoop)
+        staticFiles("/api/models", java.io.File("resources"))
+        mapRoutes(gameLoop)
         webSocket("/game") { gameLoop.onConnect(this) }
         webSocket("/chunks") { gameLoop.onChunkConnect(this) }
     }

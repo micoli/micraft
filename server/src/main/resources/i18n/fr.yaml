@@ -98,6 +98,16 @@ water:
     not_air: "Le bloc cible n'est pas de l'air."
     no_solid_below: "Impossible de placer l'eau : aucun bloc solide directement en dessous."
     no_solid_target: "Aucun bloc solide en vue pour placer l'eau (regardez un bloc solide à moins de 6 blocs)."
+spawn:
+  server:
+    unavailable: "Le gestionnaire de PNJ n'est pas disponible."
+    no_solid_target: "Aucun bloc solide en vue pour faire apparaître un PNJ (regardez un bloc solide à moins de 6 blocs)."
+    unknown_model: "Modèle de PNJ inconnu : {0}. Disponibles : {1}"
+    usage: "Utilisation : /spawn <npc_model> [x y z]"
+    out_of_bounds: "Position hors des limites du monde."
+    no_solid_below: "Impossible de faire apparaître un PNJ : aucun bloc solide directement en dessous."
+    not_air: "Le bloc cible n'est pas de l'air."
+    spawned: "{0} apparu en ({1}, {2}, {3})."
 pump:
   server:
     no_target: "Aucun bloc liquide en vue (regardez de l'eau à moins de 6 blocs)."

@@ -25,7 +25,7 @@ class NpcRegistryLoaderTest {
             loaderWithYaml(
                 """
             SELLER:
-              bbmodelFile: npc_seller.bbmodel
+              bbmodelFile: npc_seller
               behavior: interactionable
               width: 0.6
               height: 1.8
@@ -37,7 +37,7 @@ class NpcRegistryLoaderTest {
                 maxPerChunk: 1
                 spawnBiomes: []
             GOAT:
-              bbmodelFile: npc_goat.bbmodel
+              bbmodelFile: npc_goat
               behavior: random_movable
               width: 0.5
               height: 0.9
@@ -54,7 +54,7 @@ class NpcRegistryLoaderTest {
         assertEquals(2, defs.size)
         val seller = defs["SELLER"]
         assertNotNull(seller)
-        assertEquals("npc_seller.bbmodel", seller.bbmodelFile)
+        assertEquals("npc_seller", seller.bbmodelFile)
         assertEquals(0.6f, seller.width)
         assertEquals(1.8f, seller.height)
         assertTrue(seller.behavior is InteractionableNpcBehavior)
@@ -74,7 +74,7 @@ class NpcRegistryLoaderTest {
             loaderWithYaml(
                 """
             DUCK:
-              bbmodelFile: npc_duck.bbmodel
+              bbmodelFile: npc_duck
               behavior: static
               width: 0.3
               height: 0.5
@@ -97,14 +97,14 @@ class NpcRegistryLoaderTest {
             loaderWithYaml(
                 """
             SELLER:
-              bbmodelFile: npc_seller.bbmodel
+              bbmodelFile: npc_seller
               behavior: interactionable
               width: 0.6
               height: 1.8
               wanderSpeed: 0.0
               wanderRadius: 0.0
             UNKNOWN_NPC:
-              bbmodelFile: npc_unknown.bbmodel
+              bbmodelFile: npc_unknown
               behavior: totally_fake_behavior
               width: 0.6
               height: 1.8

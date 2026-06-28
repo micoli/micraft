@@ -81,8 +81,9 @@ export function registerPlayerModel(): void {
   window.__mcSkinFaceUV = skinFaceUV;
 
   window.mcInitPlayerModel = (): void => {
+    const playerSkin='player';
     window.__mc = window.__mc || ({} as any);
-    fetch("/models/player.bbmodel")
+    fetch(`/api/models/entity/${playerSkin}/${playerSkin}.bbmodel`)
       .then((r) => r.json())
       .then((data: BbModel) => {
         window.__mc.playerBbmodel = data;
@@ -152,6 +153,7 @@ export function registerPlayerModel(): void {
     for (const el of bbmodel.elements) {
       const [fx, fy, fz] = el.from,
         [tx, ty, tz] = el.to;
+      if (Math.abs(tx - fx) < 0.001 || Math.abs(ty - fy) < 0.001 || Math.abs(tz - fz) < 0.001) continue;
       const mesh = BABYLON.MeshBuilder.CreateBox(
         el.name,
         {

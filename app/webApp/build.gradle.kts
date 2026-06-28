@@ -5,16 +5,6 @@ plugins {
     alias(libs.plugins.kotlinxSerialization)
 }
 
-val copyBbmodels by
-    tasks.registering(Copy::class) {
-        into("src/wasmJsMain/resources/models")
-        from(rootProject.file("resources")) { include("*.bbmodel") }
-        from(rootProject.file("resources/blocks")) {
-            include("*.bbmodel")
-            into("blocks")
-        }
-    }
-
 val tsBuild by
     tasks.registering(Exec::class) {
         workingDir = file("ts-src")
@@ -23,12 +13,7 @@ val tsBuild by
         commandLine("sh", "-c", "npm install && npm run build")
     }
 
-tasks
-    .matching { it.name == "wasmJsProcessResources" }
-    .configureEach {
-        dependsOn(copyBbmodels)
-        dependsOn(tsBuild)
-    }
+tasks.matching { it.name == "wasmJsProcessResources" }.configureEach { dependsOn(tsBuild) }
 
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)

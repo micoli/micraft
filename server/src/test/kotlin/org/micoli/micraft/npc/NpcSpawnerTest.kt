@@ -21,7 +21,7 @@ private fun wanderDef(
     NpcDefinition(
         type = type,
         behavior = RandomMovableNpcBehavior(),
-        bbmodelFile = "npc.bbmodel",
+        bbmodelFile = "npc",
         width = 0.5f,
         height = 0.9f,
         wanderSpeed = 2f,
@@ -41,7 +41,7 @@ private fun staticDef(
     NpcDefinition(
         type = type,
         behavior = StaticNpcBehavior(),
-        bbmodelFile = "npc.bbmodel",
+        bbmodelFile = "npc",
         width = 0.6f,
         height = 1.8f,
         wanderSpeed = 0f,

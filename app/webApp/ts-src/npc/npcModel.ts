@@ -25,7 +25,7 @@ export function registerNpcModel(): void {
 
     Promise.all(
       entries.map(([type, file]) =>
-        fetch(`/models/${file}`)
+        fetch(`/api/models/entity/${file}/${file}.bbmodel`)
           .then((r) => r.json())
           .then((data: BbModel) => {
             (window.__mc.npcBbmodels as NpcBbmodels)[type] = data;

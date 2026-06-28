@@ -121,60 +121,11 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     watchThread.isDaemon = true
     watchThread.start()
 
-    // Watch resources/*.bbmodel: copy changed files directly into the build dirs that
-    // webpack dev server actually serves so the browser hot-reloads without recompile.
-    val bbmodelSrcDir = rootDir.resolve("resources")
-    // Both dirs are served by the webpack dev server; write to both so the first
-    // full rebuild also picks up the change.
-    val bbmodelDstDirs =
-        listOf(
-            rootDir.resolve("app/webApp/src/wasmJsMain/resources/models"),
-            rootDir.resolve("app/webApp/build/processedResources/wasmJs/main/models"),
-            rootDir.resolve("build/wasm/packages/MiCraft-app-webApp/kotlin/models"),
-        )
-    println("[dev] watching ${bbmodelSrcDir.absolutePath} for *.bbmodel changes")
-    val bbmodelThread = Thread {
-        data class BbmodelEntry(val src: java.io.File, val subdir: String)
-        fun bbmodels(): List<BbmodelEntry> =
-            (bbmodelSrcDir
-                .listFiles()
-                ?.filter { it.name.endsWith(".bbmodel") }
-                ?.map { BbmodelEntry(it, "") } ?: emptyList())
-        val lastSeen = mutableMapOf<String, Long>()
-        bbmodels().forEach { (f, _) -> lastSeen[f.absolutePath] = f.lastModified() }
-        while (!Thread.currentThread().isInterrupted) {
-            try {
-                Thread.sleep(500)
-            } catch (_: InterruptedException) {
-                break
-            }
-            bbmodels().forEach { (src, subdir) ->
-                val prev = lastSeen[src.absolutePath] ?: 0L
-                val cur = src.lastModified()
-                if (cur != prev) {
-                    lastSeen[src.absolutePath] = cur
-                    bbmodelDstDirs.forEach { dstDir ->
-                        val targetDir = if (subdir.isEmpty()) dstDir else dstDir.resolve(subdir)
-                        if (targetDir.exists() || targetDir.mkdirs()) {
-                            src.copyTo(targetDir.resolve(src.name), overwrite = true)
-                        }
-                    }
-                    val label = if (subdir.isEmpty()) src.name else "$subdir/${src.name}"
-                    println(
-                        "[dev] $label updated in ${bbmodelDstDirs.count { it.exists() }} output dirs")
-                }
-            }
-        }
-    }
-    bbmodelThread.isDaemon = true
-    bbmodelThread.start()
-
     try {
         clientProc.waitFor()
     } finally {
         killTree(serverRef.get())
         watchThread.interrupt()
-        bbmodelThread.interrupt()
     }
 }
 
