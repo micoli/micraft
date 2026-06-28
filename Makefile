@@ -3,6 +3,7 @@ DC_PROD = docker compose -f docker-compose.prod.yml
 
 .PHONY: dev-up dev-down dev-restart dev-clean-wasm dev-logs dc shell npm-format \
         prod-up prod-down prod-restart prod-logs prod-build \
+        build-client build-wasm build-js \
         docs help
 
 # ── Dev ───────────────────────────────────────────────────────────────────────
@@ -37,6 +38,14 @@ shell:
 # Format TypeScript sources (runs npm run format in ts-src)
 npm-format:
 	$(DC_DEV) exec micraft bash -c "cd app/webApp/ts-src && npm run format"
+
+build-client: build-wasm build-js
+
+build-wasm:
+	$(DC_DEV) exec micraft bash -c "./gradlew :app:webApp:wasmJsDevelopmentExecutableCompileSync"
+
+build-js:
+	$(DC_DEV) exec micraft bash -c "cd app/webApp/ts-src && npm run build"
 
 # ── Prod ──────────────────────────────────────────────────────────────────────
 
@@ -89,6 +98,8 @@ help:
 	@echo "  make shell                open bash inside container"
 	@echo "  make dc CMD=\"<cmd>\"       run command inside container"
 	@echo "  make npm-format           run prettier in ts-src"
+	@echo "  make build-client         recompile wasm + js bundle (build-wasm + build-js)"
+	@echo "  make build-wasm           recompile kotlin/wasm only"
 	@echo ""
 	@echo "Prod (port 8080 via nginx):"
 	@echo "  make prod-build           build images"

@@ -14,62 +14,12 @@ Minecraft client/server clone — **Kotlin Multiplatform**, multiplayer voxel, p
 
 ## Key source files
 
-| File | Purpose |
-|------|---------|
-| `core/.../protocol/ClientMessage.kt` | All client→server messages (sealed class) |
-| `core/.../protocol/ServerMessage.kt` | All server→client messages (sealed class) |
-| `core/.../world/Block.kt` | `BlockType` enum + hardness + `BlockPos` |
-| `core/.../world/WorldConstants.kt` | `WorldConstants`, `PlayerConstants` |
-| `core/.../player/Player.kt` | `Vec3`, `Orientation`, `PlayerState` |
-| `core/.../world/ItemType.kt` | `ItemType` enum |
-| `core/.../world/WorldItem.kt` | `WorldItem(id, pos, type, count)` |
-| `server/.../GameLoop.kt` | Tick driver, coordinates all tick processors |
-| `server/.../session/PlayerSession.kt` | Per-player WebSocket session |
-| `server/.../tick/BlockBreaker.kt` | Block-break progress + drop spawning |
-| `server/.../world/DropConfig.kt` | YAML-driven drop table loader |
-| `server/.../world/BlockRegistryLoader.kt` | Loads `data/config/blocks.yaml` → `BlockRegistry` |
-| `server/.../world/ItemRegistryLoader.kt` | Loads `data/config/items.yaml` → `ItemRegistry` |
-| `core/.../world/BlockRegistry.kt` | Singleton holding `BlockDefinition` per `BlockType` |
-| `core/.../world/ItemRegistry.kt` | Singleton holding `ItemDefinition` per `ItemType` |
-| `server/.../world/WorldItemManager.kt` | Tracks live world items |
-| `server/.../auth/AuthProvider.kt` | `AuthProvider` interface + `AuthResult(playerId, displayName, token)` |
-| `server/.../auth/TokenStore.kt` | UUID→AuthResult in-memory store, TTL 10 min |
-| `server/.../auth/LocalAuthProvider.kt` | bcrypt login; re-reads `data/config/auth/users.yaml` on every call |
-| `server/.../auth/OAuthProvider.kt` | Google Authorization Code flow |
-| `server/.../auth/AuthRoutes.kt` | HTTP auth routes (see Auth section below) |
-| `server/.../auth/AddUserCommand.kt` | In-game `/adduser <email> <password> [displayName]` |
-| `server/.../auth/AddUserCli.kt` | CLI entry point — run via `./gradlew :server:addUser` |
-| `app/webApp/.../GameClient.kt` | Client-side prediction + server reconciliation |
-| `app/webApp/.../babylon/BabylonBindingsScene.kt` | BabylonJS interop — engine, scene, camera, lights |
-| `app/webApp/.../babylon/BabylonBindingsWorld.kt` | BabylonJS interop — meshes, materials, chunk geometry, block defs, fog/sky |
-| `app/webApp/.../babylon/BabylonBindingsInput.kt` | BabylonJS interop — keyboard, mouse, camera controls, target/break overlays, event queue |
-| `app/webApp/.../babylon/BabylonBindingsUI.kt` | BabylonJS interop — overlays, console, hotbar, HUD, layout, minimap, autocomplete |
-| `app/webApp/.../babylon/BabylonBindingsModels.kt` | BabylonJS interop — player model, NPC models, FP arms |
-| `app/webApp/.../babylon/BabylonBindingsUtil.kt` | BabylonJS interop — logging, URL/page utils, i18n, biome colors, block registry, debug camera |
-| `app/webApp/.../resources/mc_bindings.js` | JS-side BabylonJS binding glue |
+`/key-source-files`
+
 
 ## Protocol messages
 
-**Client → Server** (`ClientMessage`):
-- `Connect(playerName, userName, preferredLanguage, token)` — join; `token` required when server auth enabled
-- `MoveIntent(dx, dz, yaw, pitch, stance, jump, dy, flyToggle, speedUp, speedDown)`
-- `ChunkUnload(positions)` — client unloaded these chunks
-- `BlockBreakStart(pos)` / `BlockBreakStop`
-- `Command(text)` — slash command
-- `Disconnect(reason)`
-
-**Server → Client** (`ServerMessage`):
-- `Welcome(playerId, playerName, spawnPos)`
-- `ChunkData(pos, topY, wireBlocks: ByteArray)`
-- `PlayerUpdate(state: PlayerState)`
-- `WorldUpdate(changes: List<BlockChange>)`
-- `PlayerLeft(playerId)`
-- `BlockBreakProgress(pos, progress, hardness)`
-- `Notification(message)`
-- `ItemsSpawned(items: List<WorldItem>)`
-- `ItemDespawned(id)`
-- `InventoryUpdate(inventory: Map<ItemType, Int>)`
-- `RegistrySync(blocks: List<BlockInfo>, items: Map<String, ItemInfo>)` — sent on connect and `/reload`; client uses for AO, minimap colors
+`/protocol-messages`
 
 ## Domain types
 
@@ -94,63 +44,11 @@ Properties (buildable, placesBlock) in `data/config/items.yaml`.
 
 ## Data directory
 
-```
-data/
-  config/
-    blocks.yaml             # block properties (hardness, solid, minimapColor, modelElement)
-    items.yaml              # item properties (buildable, placesBlock)
-    drops.yaml              # block → item drop table
-    biomes.yaml             # biome definitions
-    server.yaml             # server config (auth provider, world, physics)
-    game.yaml               # gameplay constants (tick rate, gravity, etc.)
-    npc.yaml                # NPC behavior constants
-    npcs.yaml               # NPC definitions
-    roads.yaml              # road generation config
-    houses.yaml             # house generation config
-    weather.yaml            # weather config
-    spawns.json             # NPC spawn state (runtime)
-    auth/users.yaml         # local auth users (email, passwordHash, displayName)
-    personal/keybindings.yaml
-    i18n/en.yaml
-    i18n/fr.yaml
-    schemas/                # JSON Schemas for YAML config files (VS Code validation)
-  world/default_world/
-    world.json              # world metadata
-    players/Player.json     # persisted player states
-    chunks/*.mcc.gz         # binary chunk files (DO NOT READ)
-```
+`/data-directory`
 
 ## UI (TypeScript / React)
 
-Source in `app/webApp/ts-src/ui/`.
-
-| File | Purpose |
-|------|---------|
-| `LayoutEngine.ts` | Grid math (`DEFAULT_WIDGETS`, `MIN_WIDGET_SIZE`, `widgetStyle`, `fillMissingWidgets`) |
-| `types.ts` | `UiState`, `UiAction`, `GameLayout`, `LayoutWidget` |
-| `GameUI.tsx` | Central coordinator: state reducer, window-function bridge, widget render tree |
-| `Inventory.tsx` | Draggable inventory bag (shown when `hotbarVisible`) |
-| `ShortcutBar.tsx` | 10-slot bar with drag-drop from Inventory |
-| `HUD.tsx` | Player stats overlay |
-| `LayoutEditor.tsx` | Interactive layout editor (move/resize on 48×48 grid) |
-| `ServerLog.tsx` | Chat/server log |
-| `Console.tsx` | Command input box |
-| `Notifications.tsx` | Toast notifications |
-
-**Grid system**: 48×48 units mapped to viewport (`calc(n / 48 * 100vw/vh)`).
-
-**Kotlin → JS bridge** (data flow for new state):
-1. Add field to `McUiState` (Kotlin) → expose as `StateFlow`
-2. Collect in `WebUiBridge` → call `BabylonBindings.jsXxx(json)`
-3. `BabylonBindings`: `fun jsXxx(v: String) = js("mcXxx(v)")`
-4. `GameUI.tsx`: `(window as any).mcXxx = (v) => dispatch({ type: 'xxx', data: ... })`
-5. Add case to `reducer` in `GameUI.tsx`
-
-**Adding new layout widget** (checklist):
-1. `LayoutEngine.ts` — add entry to `DEFAULT_WIDGETS` and `MIN_WIDGET_SIZE`
-2. `LayoutEditor.tsx` — add label to `WIDGET_LABELS` and color to `WIDGET_COLORS`
-3. `GameUI.tsx` — pass `layoutStyle={widgetStyle(activeLayout, 'WIDGET_TYPE')}` to component
-4. `fillMissingWidgets` called when editor opens — existing persisted layouts get new widget at default position automatically (no migration needed)
+`/ui-react`
 
 ## Auth system
 
@@ -202,14 +100,6 @@ touch run.lock
 ```
 `./gradlew dev` watchdog kills/restarts Ktor process. Web client reconnects automatically. **Always use `touch run.lock` — never ask user to restart manually.**
 
-## Debug texture mode
-
-```bash
-./gradlew devDebug   # then open http://localhost:8081/?debug&bx=8&by=2&bz=8
-```
-Single GRASS block at (8, 2, 8), player spawns at (8, 1, 14) in fly mode.
-Keys 1–6 position camera on each face (+Z, -Z, +X, -X, +Y, -Y).
-
 ## Docker execution
 
 **All build/test/lint/run commands execute inside dev container — never directly on host.**
@@ -238,20 +128,6 @@ touch run.lock   # from host — still valid
 make dc CMD="touch run.lock"
 ```
 
-## Commands
-
-```bash
-make dev-up                                          # start dev container (foreground)
-make dc CMD="./gradlew dev"                          # server :8080 + webpack dev :8081
-make dc CMD="./gradlew devDebug"                     # debug texture mode
-make dc CMD="./gradlew build"                        # full build
-make dc CMD="./gradlew test"                         # all tests
-make dc CMD="./gradlew :server:test"                 # server tests only
-make dc CMD="./gradlew :app:shared:jvmTest"
-make dc CMD="./gradlew ktlintCheck"
-make dc CMD="./gradlew :server:addUser -Pargs='email pass [name]'"
-```
-
 ## Rules
 
 - **Never run `./gradlew`, `npm`, `node`, or `gradle` directly on host.** Use `make dc CMD="..."`.
@@ -264,37 +140,18 @@ make dc CMD="./gradlew :server:addUser -Pargs='email pass [name]'"
 - Commits must respect Conventional Commits + Semantic Commit Messages standard; body ≤10 lines.
 - Every server-side change (`server/src/main/`) needs new or updated test in `server/src/test/`. Run `make dc CMD="./gradlew :server:test"` before committing.
 - Before any commit use `make dc CMD="./gradlew :spotlessApply"` and `make dc CMD="npm run format"` (ts-src working dir handled by Makefile target).
+- never update mc_bindings.js, it's a generated JS-side BabylonJS binding glue, you should rather update source files.
 
 ## Schema maintenance
 
-JSON Schemas for YAML configs in `data/config/schemas/`. Keep in sync with Kotlin data classes:
-
-| Modified file | Update schema |
-|---|---|
-| `core/.../world/BiomeDefinition.kt`, `Block.kt` | `data/config/schemas/biomes.schema.json` |
-| `server/.../world/DropConfig.kt`, `core/.../world/ItemType.kt` | `data/config/schemas/drops.schema.json` |
-| `server/.../world/BlockRegistryLoader.kt`, `core/.../world/BlockDefinition.kt`, `Block.kt` | `data/config/schemas/blocks.schema.json` |
-| `server/.../world/ItemRegistryLoader.kt`, `core/.../world/ItemDefinition.kt`, `Block.kt` | `data/config/schemas/items.schema.json` |
-| `server/.../world/KeyBindingsConfig.kt` | `data/config/schemas/keybindings.schema.json` |
-| `server/.../world/I18nConfig.kt` | `data/config/schemas/i18n.schema.json` |
-| `server/.../world/ServerConfigLoader.kt` (`AuthSection`, `OAuthConfig`, `LocalAuthConfig`) | `data/config/schemas/server.schema.json` |
-| `server/.../auth/LocalAuthProvider.kt` (`UserEntry`, `UsersConfig`) | `data/config/schemas/auth-users.schema.json` |
-
-When adding/removing/renaming field or enum value in these data classes, update corresponding schema in same commit.
+JSON Schemas in `data/config/schemas/`. See `/update-schema` for the full mapping table. Update schema in same commit as data class changes.
 
 ## i18n (translations)
 
-Translation YAML files in `data/config/i18n/{locale}.yaml` (e.g. `en.yaml`, `fr.yaml`).
+Translation YAML files in `data/config/i18n/{locale}.yaml`. Key format: `feature:scope:key` (scope = `server` or `client`).
 
-Key format: `feature:scope:key` where scope is `server` or `client`.
+- Server: `context.i18n.t(session.state.language, "feature:server:key", ...args)` via `ServerMessage.Notification`
+- Client (TypeScript): `window.mcT("feature:client:key")` — served via `GET /api/i18n/{locale}`
+- `I18nConfig` instantiated in `GameLoop`, reloaded with `/reload`. Language in `PlayerState.language`, changed via `/lang <locale>`.
 
-- **Server notifications** (sent via `ServerMessage.Notification`) → always use `context.i18n.t(session.state.language, "feature:server:key", ...args)`.
-- **Client UI strings** → served via `GET /api/i18n/{locale}`, accessed in TypeScript via `window.mcT("feature:client:key")`.
-- `I18nConfig` instantiated once in `GameLoop`, reloaded with `/reload`.
-- Player language stored in `PlayerState.language`, persisted to `players/*.json`.
-- Language changed with `/lang <locale>` or language selector in login overlay.
-
-**Adding new user-visible strings:**
-1. Add key to **both** `data/config/i18n/en.yaml` and `data/config/i18n/fr.yaml`.
-2. Server-side: `context.i18n.t(session.state.language, "feature:server:key", ...args)`.
-3. Client-side (TypeScript): `window.mcT("feature:client:key")`.
+**Adding new strings**: `/add-i18n`

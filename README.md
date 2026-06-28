@@ -233,6 +233,20 @@ make shell                    # open bash inside container
 make dc CMD="<any command>"   # run any command inside container
 ```
 
+## Commands
+
+```bash
+make dev-up                                          # start dev container (foreground)
+make dc CMD="./gradlew dev"                          # server :8080 + webpack dev :8081
+make dc CMD="./gradlew devDebug"                     # debug texture mode
+make dc CMD="./gradlew build"                        # full build
+make dc CMD="./gradlew test"                         # all tests
+make dc CMD="./gradlew :server:test"                 # server tests only
+make dc CMD="./gradlew :app:shared:jvmTest"
+make dc CMD="./gradlew ktlintCheck"
+make dc CMD="./gradlew :server:addUser -Pargs='email pass [name]'"
+```
+
 ### Code formatting
 
 ```bash
