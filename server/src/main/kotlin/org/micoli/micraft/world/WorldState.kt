@@ -42,6 +42,8 @@ class WorldState(
     /**
      * All chunk positions that have ever been generated or loaded (i.e. discovered by a player).
      */
+    fun loadedChunkCount(): Int = chunks.size
+
     fun discoveredChunks(): Set<ChunkPos> = chunks.keys.toSet()
 
     /** Returns a chunk only if it was already generated — never triggers generation. */

@@ -26,6 +26,7 @@ import org.micoli.micraft.auth.OAuthProvider
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.auth.installAuthRoutes
 import org.micoli.micraft.http.mapRoutes
+import org.micoli.micraft.http.metricsRoutes
 import org.micoli.micraft.world.BiomeConfig
 import org.micoli.micraft.world.BiomeRegistry
 import org.micoli.micraft.world.BlockRegistry
@@ -263,6 +264,7 @@ fun Application.module() {
         }
         staticFiles("/api/models", java.io.File("resources"))
         mapRoutes(gameLoop)
+        metricsRoutes(gameLoop)
         webSocket("/game") { gameLoop.onConnect(this) }
         webSocket("/chunks") { gameLoop.onChunkConnect(this) }
     }

@@ -102,6 +102,10 @@ class LiquidManager(private val world: WorldState) {
         }
     }
 
+    fun activeLiquidCount(): Int = activeLiquids.size
+
+    fun pendingTickCount(): Int = pendingTicks.size
+
     fun deactivate(pos: BlockPos) {
         activeLiquids.remove(pos)
         flowDistance.remove(pos)

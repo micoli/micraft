@@ -271,6 +271,16 @@ class GameLoop(
 
     fun getWeatherZones() = weatherManager.getZones()
 
+    fun getWorldItemCount(): Int = worldItems.itemCount()
+
+    fun getLoadedChunkCount(): Int = world.loadedChunkCount()
+
+    fun getActiveLiquidCount(): Int = liquidManager.activeLiquidCount()
+
+    fun getLiquidPendingTickCount(): Int = liquidManager.pendingTickCount()
+
+    fun getActiveVegetationCount(): Int = vegetationManager.activeBlockCount()
+
     private fun flushWorld() {
         world.flushDirty()
         launchTerrainRebuild()

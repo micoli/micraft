@@ -39,6 +39,8 @@ class WorldItemManager(
         return spawned
     }
 
+    fun itemCount(): Int = items.size
+
     fun hasItem(id: String): Boolean = items.containsKey(id)
 
     suspend fun despawnItem(id: String) {
