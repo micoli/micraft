@@ -1,1 +1,98 @@
-{"meta": {"format_version": "4.0", "model_format": "free"}, "name": "OAK_LOG", "resolution": {"width": 16, "height": 16}, "elements": [{"uuid": "bb000009-0000-0000-0000-000000000009", "name": "OAK_LOG", "render_type": "solid", "from": [0, 0, 0], "to": [16, 16, 16], "faces": {"north": {"texture": 0, "uv": [0, 0, 16, 16]}, "south": {"texture": 0, "uv": [0, 0, 16, 16]}, "east": {"texture": 0, "uv": [0, 0, 16, 16]}, "west": {"texture": 0, "uv": [0, 0, 16, 16]}, "up": {"texture": 1, "uv": [0, 0, 16, 16]}, "down": {"texture": 1, "uv": [0, 0, 16, 16]}}}], "textures": [{"id": 9, "name": "log_oak", "path": "api/models/blocks/OAK_LOG/log_oak.png", "source": ""}, {"id": 10, "name": "log_oak_top", "path": "api/models/blocks/OAK_LOG/log_oak_top.png", "source": ""}]}
+{
+  "meta": {
+    "format_version": "4.0",
+    "model_format": "free"
+  },
+  "name": "OAK_LOG",
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
+  "elements": [
+    {
+      "uuid": "bb000009-0000-0000-0000-000000000009",
+      "name": "OAK_LOG",
+      "render_type": "solid",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": 1,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": 1,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ],
+  "textures": [
+    {
+      "id": 9,
+      "name": "log_oak",
+      "path": "api/models/blocks/OAK_LOG/log_oak.png",
+      "source": ""
+    },
+    {
+      "id": 10,
+      "name": "log_oak_top",
+      "path": "api/models/blocks/OAK_LOG/log_oak_top.png",
+      "source": ""
+    }
+  ]
+}

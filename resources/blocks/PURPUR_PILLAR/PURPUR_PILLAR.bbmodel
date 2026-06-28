@@ -1,0 +1,98 @@
+{
+  "meta": {
+    "format_version": "4.0",
+    "model_format": "free"
+  },
+  "name": "PURPUR_PILLAR",
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
+  "elements": [
+    {
+      "uuid": "bb000134-0000-0000-0000-00000000000034",
+      "name": "PURPUR_PILLAR",
+      "render_type": "solid",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": 1,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": 1,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ],
+  "textures": [
+    {
+      "id": 520,
+      "name": "purpur_pillar",
+      "path": "api/models/blocks/PURPUR_PILLAR/purpur_pillar.png",
+      "source": ""
+    },
+    {
+      "id": 521,
+      "name": "purpur_pillar_top",
+      "path": "api/models/blocks/PURPUR_PILLAR/purpur_pillar_top.png",
+      "source": ""
+    }
+  ]
+}

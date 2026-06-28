@@ -1,0 +1,92 @@
+{
+  "meta": {
+    "format_version": "4.0",
+    "model_format": "free"
+  },
+  "name": "WOOL_ORANGE",
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
+  "elements": [
+    {
+      "uuid": "bb000200-0000-0000-0000-000000000609",
+      "name": "WOOL_ORANGE",
+      "render_type": "solid",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ],
+  "textures": [
+    {
+      "id": 609,
+      "name": "wool_colored_orange",
+      "path": "api/models/blocks/WOOL_ORANGE/wool_colored_orange.png",
+      "source": ""
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "meta": {
+    "format_version": "4.0",
+    "model_format": "free"
+  },
+  "name": "SEED",
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
+  "elements": [
+    {
+      "uuid": "bb000011-0000-0000-0000-000000000011",
+      "name": "SEED",
+      "render_type": "cross_sprite",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ],
+  "textures": [
+    {
+      "id": 584,
+      "name": "wheat_stage_0",
+      "path": "api/models/blocks/SEED/wheat_stage_0.png",
+      "source": "",
+      "mc_alpha": true
+    }
+  ]
+}

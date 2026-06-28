@@ -2,12 +2,12 @@ hardness: 0
 solid: false
 transparent: true
 minimapColor:
-- 100
-- 160
-- 50
+- 60
+- 120
+- 40
 modelElement: ""
 liquid: false
 viscosity: 0
 replaceable: true
 vegetationHost: false
-treeAllowed: true
+treeAllowed: false

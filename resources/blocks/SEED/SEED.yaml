@@ -4,10 +4,10 @@ transparent: true
 minimapColor:
 - 180
 - 140
-- 60
+- 80
 modelElement: ""
 liquid: false
 viscosity: 0
 replaceable: true
 vegetationHost: false
-treeAllowed: true
+treeAllowed: false

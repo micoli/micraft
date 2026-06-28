@@ -1,1 +1,48 @@
-{"meta": {"format_version": "4.0", "model_format": "free"}, "name": "FLOWER", "resolution": {"width": 16, "height": 16}, "elements": [{"uuid": "bb00000e-0000-0000-0000-00000000000e", "name": "FLOWER", "render_type": "cross_sprite", "from": [0, 0, 0], "to": [16, 16, 16], "faces": {"north": {"texture": 0, "uv": [0, 0, 16, 16]}}}], "textures": [{"id": 16, "name": "flower_dandelion", "path": "api/models/blocks/FLOWER/flower_dandelion.png", "source": "", "mc_alpha": true}]}
+{
+  "meta": {
+    "format_version": "4.0",
+    "model_format": "free"
+  },
+  "name": "FLOWER",
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
+  "elements": [
+    {
+      "uuid": "bb00000e-0000-0000-0000-00000000000e",
+      "name": "FLOWER",
+      "render_type": "cross_sprite",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ],
+  "textures": [
+    {
+      "id": 16,
+      "name": "flower_dandelion",
+      "path": "api/models/blocks/FLOWER/flower_dandelion.png",
+      "source": "",
+      "mc_alpha": true
+    }
+  ]
+}

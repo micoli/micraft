@@ -1,0 +1,104 @@
+{
+  "meta": {
+    "format_version": "4.0",
+    "model_format": "free"
+  },
+  "name": "TNT",
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
+  "elements": [
+    {
+      "uuid": "bb000137-0000-0000-0000-00000000000037",
+      "name": "TNT",
+      "render_type": "solid",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": 2,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": 2,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": 2,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": 2,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": 1,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ],
+  "textures": [
+    {
+      "id": 550,
+      "name": "tnt_bottom",
+      "path": "api/models/blocks/TNT/tnt_bottom.png",
+      "source": ""
+    },
+    {
+      "id": 551,
+      "name": "tnt_top",
+      "path": "api/models/blocks/TNT/tnt_top.png",
+      "source": ""
+    },
+    {
+      "id": 552,
+      "name": "tnt_side",
+      "path": "api/models/blocks/TNT/tnt_side.png",
+      "source": ""
+    }
+  ]
+}

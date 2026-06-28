@@ -1,0 +1,110 @@
+{
+  "meta": {
+    "format_version": "4.0",
+    "model_format": "free"
+  },
+  "name": "CRAFTING_TABLE",
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
+  "elements": [
+    {
+      "uuid": "bb000139-0000-0000-0000-00000000000039",
+      "name": "CRAFTING_TABLE",
+      "render_type": "solid",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": 1,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": 1,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": 2,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": 3,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ],
+  "textures": [
+    {
+      "id": 570,
+      "name": "crafting_table_front",
+      "path": "api/models/blocks/CRAFTING_TABLE/crafting_table_front.png",
+      "source": ""
+    },
+    {
+      "id": 571,
+      "name": "crafting_table_side",
+      "path": "api/models/blocks/CRAFTING_TABLE/crafting_table_side.png",
+      "source": ""
+    },
+    {
+      "id": 572,
+      "name": "crafting_table_top",
+      "path": "api/models/blocks/CRAFTING_TABLE/crafting_table_top.png",
+      "source": ""
+    },
+    {
+      "id": 573,
+      "name": "planks_oak",
+      "path": "api/models/blocks/CRAFTING_TABLE/planks_oak.png",
+      "source": ""
+    }
+  ]
+}

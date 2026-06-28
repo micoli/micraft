@@ -1,0 +1,104 @@
+{
+  "meta": {
+    "format_version": "4.0",
+    "model_format": "free"
+  },
+  "name": "FURNACE",
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
+  "elements": [
+    {
+      "uuid": "bb00013a-0000-0000-0000-0000000000003a",
+      "name": "FURNACE",
+      "render_type": "solid",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": 1,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": 1,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": 1,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": 2,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": 2,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ],
+  "textures": [
+    {
+      "id": 580,
+      "name": "furnace_front_off",
+      "path": "api/models/blocks/FURNACE/furnace_front_off.png",
+      "source": ""
+    },
+    {
+      "id": 581,
+      "name": "furnace_side",
+      "path": "api/models/blocks/FURNACE/furnace_side.png",
+      "source": ""
+    },
+    {
+      "id": 582,
+      "name": "furnace_top",
+      "path": "api/models/blocks/FURNACE/furnace_top.png",
+      "source": ""
+    }
+  ]
+}
