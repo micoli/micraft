@@ -146,7 +146,7 @@ class ProtobufCodecTest {
                         stance = PlayerStance.STANDING)),
                 ServerMessage.WorldUpdate(emptyList()),
                 ServerMessage.PlayerLeft(""),
-                ServerMessage.BlockBreakProgress(BlockPos(0, 0, 0), 0, 0),
+                ServerMessage.BlockBreakProgress(BlockPos(0, 0, 0), 0, 0f),
                 ServerMessage.Notification(""),
                 ServerMessage.ChatMessage("", "", ""),
                 ServerMessage.ChannelsSync(emptyList(), emptyList()),

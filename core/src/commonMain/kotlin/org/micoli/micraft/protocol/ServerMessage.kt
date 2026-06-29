@@ -65,7 +65,7 @@ sealed class ServerMessage {
     @Serializable data class PlayerLeft(val playerId: String) : ServerMessage()
 
     @Serializable
-    data class BlockBreakProgress(val pos: BlockPos, val progress: Int, val hardness: Int) :
+    data class BlockBreakProgress(val pos: BlockPos, val progress: Int, val hardness: Float) :
         ServerMessage()
 
     @Serializable
@@ -140,7 +140,7 @@ sealed class ServerMessage {
 @Serializable
 data class BlockInfo(
     val name: String,
-    val hardness: Int,
+    val hardness: Float,
     val solid: Boolean,
     val transparent: Boolean,
     val minimapColor: List<Int>,

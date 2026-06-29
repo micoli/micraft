@@ -17,7 +17,7 @@ private val log = LoggerFactory.getLogger("BlockRegistryLoader")
 
 @Serializable
 private data class BlockYamlEntry(
-    val hardness: Int = 1,
+    val hardness: Float = 1f,
     val solid: Boolean = true,
     val transparent: Boolean = false,
     val minimapColor: List<Int> = listOf(128, 128, 128),
@@ -31,7 +31,7 @@ private data class BlockYamlEntry(
 
 @Serializable
 private data class BlockYamlOverride(
-    val hardness: Int? = null,
+    val hardness: Float? = null,
     val solid: Boolean? = null,
     val transparent: Boolean? = null,
     val minimapColor: List<Int>? = null,

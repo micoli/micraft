@@ -35,8 +35,8 @@ class BlockBreaker(
                     .toDouble())
         log.debug("BlockBreakStart pos={} block={} dist={}", bp, block, "%.2f".format(dist))
         if (dist <= org.micoli.micraft.MAX_INTERACTION_DISTANCE &&
-            block.hardness > 0 &&
-            block.hardness != Int.MAX_VALUE) {
+            block.hardness > 0f &&
+            block.hardness != Float.MAX_VALUE) {
             session.breakTarget = bp
             session.breakProgress = 0
         }
@@ -71,13 +71,13 @@ class BlockBreaker(
     suspend fun tick(session: PlayerSession) {
         val bt = session.breakTarget ?: return
         val block = world.getBlock(bt.x, bt.y, bt.z)
-        if (block.hardness == 0 || block.hardness == Int.MAX_VALUE) {
+        if (block.hardness == 0f || block.hardness == Float.MAX_VALUE) {
             session.breakTarget = null
             session.breakProgress = 0
             return
         }
         session.breakProgress++
-        if (session.breakProgress >= block.hardness) {
+        if (session.breakProgress.toFloat() >= block.hardness) {
             val change = BlockChange(bt, BlockType.AIR)
             world.applyChange(change)
             broadcast(ServerMessage.WorldUpdate(listOf(change)))

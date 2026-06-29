@@ -46,7 +46,7 @@ class BlockRegistryLoaderTest {
                 ))
         val result = loader.load()
         assertEquals(2, result.size)
-        assertEquals(5, result[BlockType.STONE]?.hardness)
+        assertEquals(5f, result[BlockType.STONE]?.hardness)
         assertEquals(true, result[BlockType.DIRT]?.solid)
     }
 
@@ -57,9 +57,9 @@ class BlockRegistryLoaderTest {
                 mapOf("BEDROCK" to "hardness: -1\nsolid: true\nminimapColor: [0, 0, 0]\n"))
         val result = loader.load()
         val def = result[BlockType.BEDROCK]!!
-        assertEquals(-1, def.hardness)
+        assertEquals(-1f, def.hardness)
         BlockRegistry.load(result)
-        assertEquals(Int.MAX_VALUE, BlockType.BEDROCK.hardness)
+        assertEquals(Float.MAX_VALUE, BlockType.BEDROCK.hardness)
     }
 
     @Test
@@ -69,7 +69,7 @@ class BlockRegistryLoaderTest {
                 mapOf("NOT_A_BLOCK" to "hardness: 1\nsolid: true\nminimapColor: [0, 0, 0]\n"))
         val result = loader.load()
         assertEquals(1, result.size)
-        assertEquals(1, result[BlockType("NOT_A_BLOCK")]?.hardness)
+        assertEquals(1f, result[BlockType("NOT_A_BLOCK")]?.hardness)
     }
 
     @Test
@@ -156,7 +156,7 @@ class BlockRegistryLoaderTest {
             )
         val result = loader.load()
         val def = result[BlockType.STONE]!!
-        assertEquals(5, def.hardness)
+        assertEquals(5f, def.hardness)
         assertEquals(true, def.solid)
         val writtenBack = dataDir.resolve("STONE/STONE.yaml").readText()
         assertTrue(writtenBack.contains("hardness"), "Write-back must contain all keys")
@@ -173,7 +173,7 @@ class BlockRegistryLoaderTest {
             )
         val result = loader.load()
         val def = result[BlockType.STONE]!!
-        assertEquals(99, def.hardness)
+        assertEquals(99f, def.hardness)
         assertEquals(true, def.solid)
         assertEquals(listOf(136, 136, 136), def.minimapColor)
         val writtenBack = dataDir.resolve("STONE/STONE.yaml").readText()

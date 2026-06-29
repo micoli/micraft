@@ -79,7 +79,7 @@ class ApplicationTest {
 
             // Verify first block is AIR
             assertEquals("AIR", registryMsg.blocks[0].name)
-            assertEquals(0, registryMsg.blocks[0].hardness)
+            assertEquals(0f, registryMsg.blocks[0].hardness)
 
             // Verify COBBLESTONE is buildable
             val cobble = registryMsg.items["COBBLESTONE"]

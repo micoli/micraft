@@ -106,7 +106,7 @@ class LocalPlayerController(
     }
 
     private fun Double.r3(): String {
-        val v = (kotlin.math.round(this * 1000).toDouble() / 1000.0).toString()
+        val v = (kotlin.math.round(this * 1000) / 1000.0).toString()
         val dot = v.indexOf('.')
         return if (dot < 0) "$v.000" else v.padEnd(dot + 4, '0').take(dot + 4)
     }
