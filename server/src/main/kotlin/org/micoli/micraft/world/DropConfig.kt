@@ -24,17 +24,17 @@ data class DropEntry(
 
 private val DEFAULT_DROPS: Map<String, List<DropEntry>> =
     mapOf(
-        "STONE" to listOf(DropEntry(ItemType.COBBLESTONE)),
-        "DIRT" to listOf(DropEntry(ItemType.DIRT)),
-        "GRASS" to listOf(DropEntry(ItemType.DIRT)),
-        "SAND" to listOf(DropEntry(ItemType.SAND)),
-        "SANDSTONE" to listOf(DropEntry(ItemType.SANDSTONE)),
+        "STONE" to listOf(DropEntry(ItemType("COBBLESTONE"))),
+        "DIRT" to listOf(DropEntry(ItemType("DIRT"))),
+        "GRASS" to listOf(DropEntry(ItemType("DIRT"))),
+        "SAND" to listOf(DropEntry(ItemType("SAND"))),
+        "SANDSTONE" to listOf(DropEntry(ItemType("SANDSTONE"))),
         "GRAVEL" to
             listOf(
-                DropEntry(ItemType.GRAVEL, dropRate = 90),
-                DropEntry(ItemType.FLINT, dropRate = 10),
+                DropEntry(ItemType("GRAVEL"), dropRate = 90),
+                DropEntry(ItemType("FLINT"), dropRate = 10),
             ),
-        "SNOW" to listOf(DropEntry(ItemType.SNOWBALL, minCount = 1, maxCount = 4)),
+        "SNOW" to listOf(DropEntry(ItemType("SNOWBALL"), minCount = 1, maxCount = 4)),
     )
 
 private val DROP_TABLE_SERIALIZER =

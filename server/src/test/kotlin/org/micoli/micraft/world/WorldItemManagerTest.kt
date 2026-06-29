@@ -98,7 +98,7 @@ class WorldItemManagerTest {
         val session = testSession(pos = Vec3(8.5f, 5f, 8.5f))
         wim.tickCollection(listOf(session))
         assertFalse(wim.hasItem(spawned[0].id))
-        assertTrue((session.inventory[ItemType.COBBLESTONE] ?: 0) > 0)
+        assertTrue((session.inventory[ItemType("COBBLESTONE")] ?: 0) > 0)
     }
 
     @Test

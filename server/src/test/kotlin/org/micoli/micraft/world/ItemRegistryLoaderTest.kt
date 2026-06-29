@@ -31,17 +31,18 @@ class ItemRegistryLoaderTest {
                     .trimIndent())
         val result = loader.load()
         assertEquals(2, result.size)
-        assertEquals(true, result[ItemType.COBBLESTONE]?.buildable)
-        assertEquals(BlockType.STONE, result[ItemType.COBBLESTONE]?.placesBlock)
-        assertEquals(false, result[ItemType.SNOWBALL]?.buildable)
-        assertNull(result[ItemType.SNOWBALL]?.placesBlock)
+        assertEquals(true, result[ItemType("COBBLESTONE")]?.buildable)
+        assertEquals(BlockType.STONE, result[ItemType("COBBLESTONE")]?.placesBlock)
+        assertEquals(false, result[ItemType("SNOWBALL")]?.buildable)
+        assertNull(result[ItemType("SNOWBALL")]?.placesBlock)
     }
 
     @Test
-    fun unknownItemKey_isSkipped() {
-        val loader = loaderWith("NOT_AN_ITEM:\n  buildable: false\n")
+    fun anyItemKey_isAccepted() {
+        val loader = loaderWith("CUSTOM_ITEM:\n  buildable: false\n")
         val result = loader.load()
-        assertTrue(result.isEmpty())
+        assertEquals(1, result.size)
+        assertEquals(false, result[ItemType("CUSTOM_ITEM")]?.buildable)
     }
 
     @Test
@@ -49,7 +50,7 @@ class ItemRegistryLoaderTest {
         val loader = loaderWith("COBBLESTONE:\n  buildable: true\n  placesBlock: UNKNOWN_BLOCK\n")
         val result = loader.load()
         assertEquals(1, result.size)
-        assertEquals(BlockType("UNKNOWN_BLOCK"), result[ItemType.COBBLESTONE]?.placesBlock)
+        assertEquals(BlockType("UNKNOWN_BLOCK"), result[ItemType("COBBLESTONE")]?.placesBlock)
     }
 
     @Test

@@ -33,7 +33,6 @@ import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockRegistryLoader
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemRegistryLoader
-import org.micoli.micraft.world.ItemType
 import org.micoli.micraft.world.WorldMetadata
 import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
@@ -248,9 +247,9 @@ fun Application.module() {
                 MapSerializer(
                     String.serializer(), MapSerializer(String.serializer(), String.serializer()))
             val meta =
-                ItemType.entries.associate { type ->
+                ItemRegistry.keys().associate { type ->
                     val def = ItemRegistry.get(type)
-                    type.name to mapOf("label" to def.label, "bg" to def.bg)
+                    type.id to mapOf("label" to def.label, "bg" to def.bg)
                 }
             call.respondText(Json.encodeToString(serializer, meta), ContentType.Application.Json)
         }

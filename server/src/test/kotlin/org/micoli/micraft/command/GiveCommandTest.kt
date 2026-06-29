@@ -36,22 +36,22 @@ class GiveCommandTest {
     fun giveOne_defaultN_addsToInventory() = runBlocking {
         val session = testSession()
         cmd.execute(session, "cobblestone", testContext())
-        assertEquals(1, session.inventory[ItemType.COBBLESTONE])
+        assertEquals(1, session.inventory[ItemType("COBBLESTONE")])
     }
 
     @Test
     fun giveExplicitN_addsCorrectAmount() = runBlocking {
         val session = testSession()
         cmd.execute(session, "dirt 5", testContext())
-        assertEquals(5, session.inventory[ItemType.DIRT])
+        assertEquals(5, session.inventory[ItemType("DIRT")])
     }
 
     @Test
     fun give_stacksWithExistingInventory() = runBlocking {
         val session = testSession()
-        session.inventory[ItemType.SAND] = 3
+        session.inventory[ItemType("SAND")] = 3
         cmd.execute(session, "sand 4", testContext())
-        assertEquals(7, session.inventory[ItemType.SAND])
+        assertEquals(7, session.inventory[ItemType("SAND")])
     }
 
     @Test
@@ -84,13 +84,13 @@ class GiveCommandTest {
     fun negativeN_treatedAsOne() = runBlocking {
         val session = testSession()
         cmd.execute(session, "cobblestone -5", testContext())
-        assertEquals(1, session.inventory[ItemType.COBBLESTONE])
+        assertEquals(1, session.inventory[ItemType("COBBLESTONE")])
     }
 
     @Test
     fun caseInsensitive_itemName() = runBlocking {
         val session = testSession()
         cmd.execute(session, "SANDSTONE 2", testContext())
-        assertEquals(2, session.inventory[ItemType.SANDSTONE])
+        assertEquals(2, session.inventory[ItemType("SANDSTONE")])
     }
 }

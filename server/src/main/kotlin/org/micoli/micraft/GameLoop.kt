@@ -44,7 +44,6 @@ import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.DropConfig
 import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.ItemRegistry
-import org.micoli.micraft.world.ItemType
 import org.micoli.micraft.world.NpcRegistryLoader
 import org.micoli.micraft.world.VegetationConfig
 import org.micoli.micraft.world.WeatherConfig
@@ -364,9 +363,9 @@ class GameLoop(
                 )
             }
         val items =
-            ItemType.entries.associate { type ->
+            ItemRegistry.keys().associate { type ->
                 val def = ItemRegistry.get(type)
-                type.name to ItemInfo(buildable = def.buildable, placesBlock = def.placesBlock?.id)
+                type.id to ItemInfo(buildable = def.buildable, placesBlock = def.placesBlock?.id)
             }
         val npcs = npcManager.getDefinitions().map { (key, def) -> key to def.bbmodelFile }.toMap()
         val npcDefinitions =

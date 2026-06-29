@@ -30,7 +30,7 @@ class DropConfigTest {
         repeat(20) {
             val drops = config.rollDrops(BlockType.STONE)
             assertEquals(1, drops.size)
-            assertEquals(ItemType.COBBLESTONE, drops[0].first)
+            assertEquals(ItemType("COBBLESTONE"), drops[0].first)
             assertEquals(1, drops[0].second)
         }
     }

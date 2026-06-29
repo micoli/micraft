@@ -7,14 +7,14 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ItemRegistry
-import org.micoli.micraft.world.ItemType
 
 class GiveCommand : CommandHandler {
     override val id: UUID = UUID.fromString("84b05d3d-19c7-4cee-bb3d-469d053c9b07")
     override val command = "/give"
     override val description = "Give items to yourself."
     override val usage = "/give <itemType> [N]"
-    override val options = ItemType.entries.map { it.name.lowercase() }
+    override val options
+        get() = ItemRegistry.keys().map { it.id.lowercase() }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
@@ -22,20 +22,22 @@ class GiveCommand : CommandHandler {
         val typeName = parts.getOrNull(0).orEmpty()
 
         if (typeName.isBlank()) {
-            val available = ItemType.entries.joinToString(", ") { it.name.lowercase() }
+            val available = ItemRegistry.keys().joinToString(", ") { it.id.lowercase() }
             session.send(
                 ServerMessage.Notification(context.i18n.t(lang, "give:server:usage", available)))
             return
         }
 
         val itemType =
-            ItemType.entries.firstOrNull { it.name.equals(typeName, ignoreCase = true) }
+            ItemRegistry.keys().firstOrNull { it.id.equals(typeName, ignoreCase = true) }
                 ?: run {
                     val blockType = BlockType(typeName.uppercase())
-                    ItemType.entries.firstOrNull { ItemRegistry.get(it).placesBlock == blockType }
+                    ItemRegistry.keys().firstOrNull {
+                        ItemRegistry.get(it).placesBlock == blockType
+                    }
                 }
         if (itemType == null) {
-            val available = ItemType.entries.joinToString(", ") { it.name.lowercase() }
+            val available = ItemRegistry.keys().joinToString(", ") { it.id.lowercase() }
             session.send(
                 ServerMessage.Notification(
                     context.i18n.t(lang, "give:server:unknown", typeName, available)))
@@ -49,6 +51,6 @@ class GiveCommand : CommandHandler {
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         session.send(
             ServerMessage.Notification(
-                context.i18n.t(lang, "give:server:done", n, itemType.name.lowercase())))
+                context.i18n.t(lang, "give:server:done", n, itemType.id.lowercase())))
     }
 }

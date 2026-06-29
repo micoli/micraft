@@ -293,21 +293,16 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         .toMap()
                 BlockRegistry.load(blockDefs)
                 val itemDefs =
-                    msg.items.entries
-                        .mapNotNull { (key, info) ->
-                            runCatching {
-                                    ItemType.valueOf(key) to
-                                        ItemDefinition(
-                                            buildable = info.buildable,
-                                            placesBlock =
-                                                info.placesBlock?.let {
-                                                    runCatching { BlockType(it) }.getOrNull()
-                                                },
-                                        )
-                                }
-                                .getOrNull()
-                        }
-                        .toMap()
+                    msg.items.entries.associate { (key, info) ->
+                        ItemType(key) to
+                            ItemDefinition(
+                                buildable = info.buildable,
+                                placesBlock =
+                                    info.placesBlock?.let {
+                                        runCatching { BlockType(it) }.getOrNull()
+                                    },
+                            )
+                    }
                 ItemRegistry.load(itemDefs)
                 jsSetBlockRegistry(Json.encodeToString(msg.blocks))
                 jsSetItemRegistry(Json.encodeToString(msg.items))

@@ -8,25 +8,18 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
-@Serializable
-enum class ItemType {
-    COBBLESTONE,
-    DIRT,
-    SAND,
-    GRAVEL,
-    SANDSTONE,
-    SNOWBALL,
-    FLINT,
-    SEED,
-    GRASS,
-    SNOW_BLOCK,
-    OAK_LOG,
-    OAK_LEAVES,
-    PINE_LOG,
-    PINE_LEAVES,
-    PINE_LEAVES_SNOW,
-    FLOWER,
-    WEED,
+@JvmInline
+@Serializable(with = ItemTypeSerializer::class)
+value class ItemType(val id: String) {
+    override fun toString(): String = id
+}
+
+object ItemTypeSerializer : KSerializer<ItemType> {
+    override val descriptor = PrimitiveSerialDescriptor("ItemType", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: ItemType) = encoder.encodeString(value.id)
+
+    override fun deserialize(decoder: Decoder) = ItemType(decoder.decodeString())
 }
 
 @JvmInline

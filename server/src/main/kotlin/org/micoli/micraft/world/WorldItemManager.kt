@@ -72,7 +72,7 @@ class WorldItemManager(
                     broadcast(ServerMessage.ItemDespawned(item.id))
                     session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
                     savePlayer(session)
-                    val label = item.type.name.lowercase().replaceFirstChar { it.uppercase() }
+                    val label = item.type.id.lowercase().replaceFirstChar { it.uppercase() }
                     val msg =
                         i18n?.t(
                             session.state.language,

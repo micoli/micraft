@@ -72,7 +72,8 @@ class ProtobufCodecTest {
     @Test
     fun `ServerMessage InventoryUpdate roundtrip`() {
         val msg =
-            ServerMessage.InventoryUpdate(mapOf(ItemType.COBBLESTONE to 5, ItemType.DIRT to 10))
+            ServerMessage.InventoryUpdate(
+                mapOf(ItemType("COBBLESTONE") to 5, ItemType("DIRT") to 10))
         assertEquals(msg, roundtripServer(msg))
     }
 
@@ -81,7 +82,7 @@ class ProtobufCodecTest {
         val msg =
             ServerMessage.ItemsSpawned(
                 listOf(
-                    WorldItem("w1", Vec3(1f, 64f, 1f), ItemType.COBBLESTONE, 3),
+                    WorldItem("w1", Vec3(1f, 64f, 1f), ItemType("COBBLESTONE"), 3),
                 ))
         assertEquals(msg, roundtripServer(msg))
     }

@@ -187,7 +187,7 @@ class LocalPlayerController(
     }
 
     fun syncShortcutBarToUi() {
-        val slots = shortcutBar.map { it?.name }
+        val slots = shortcutBar.map { it?.id }
         val json =
             "{\"slots\":[${slots.joinToString(",") { if (it == null) "null" else "\"$it\"" }}],\"selected\":$selectedSlot}"
         jsUpdateShortcutBar(json)
@@ -426,7 +426,7 @@ class LocalPlayerController(
                     Regex("\"itemType\":\"([A-Z_]+)\"").find(slotUpdateJson)?.groupValues?.get(1)
                 if (slotMatch != null && slotMatch in 1..9) {
                     val itemType =
-                        typeMatch?.let { name -> ItemType.entries.find { it.name == name } }
+                        typeMatch?.let { name -> ItemRegistry.keys().find { it.id == name } }
                     shortcutBar[slotMatch] = itemType
                     syncShortcutBarToUi()
                     outMessages.trySend(ClientMessage.ShortcutBarSet(slotMatch, itemType))

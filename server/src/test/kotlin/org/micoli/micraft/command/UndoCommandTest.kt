@@ -96,29 +96,29 @@ class UndoCommandTest {
         // Since emptyDropConfig yields nothing, we test with worldItems = null
         // instead test the branch where worldItems has no item → reduces inventory
         val session = testSession()
-        session.inventory[ItemType.COBBLESTONE] = 3
+        session.inventory[ItemType("COBBLESTONE")] = 3
         val item =
             org.micoli.micraft.world.WorldItem(
                 "item-test-1",
                 org.micoli.micraft.player.Vec3(8.5f, 5.5f, 8.5f),
-                ItemType.COBBLESTONE,
+                ItemType("COBBLESTONE"),
                 2,
             )
         session.actionHistory.addLast(WorldActionRecord.Break(pos, BlockType.STONE, listOf(item)))
         // worldItems = null → item treated as already collected → reduce inventory
         cmd.execute(session, "", testContext(worldItems = null))
-        assertEquals(1, session.inventory[ItemType.COBBLESTONE])
+        assertEquals(1, session.inventory[ItemType("COBBLESTONE")])
     }
 
     @Test
     fun itemAlreadyCollected_reducesInventoryToZero_removesKey() = runBlocking {
         val session = testSession()
-        session.inventory[ItemType.COBBLESTONE] = 1
+        session.inventory[ItemType("COBBLESTONE")] = 1
         val item =
             org.micoli.micraft.world.WorldItem(
                 "item-test-2",
                 org.micoli.micraft.player.Vec3(8.5f, 5.5f, 8.5f),
-                ItemType.COBBLESTONE,
+                ItemType("COBBLESTONE"),
                 1,
             )
         session.actionHistory.addLast(
@@ -126,8 +126,8 @@ class UndoCommandTest {
         // worldItems = null → item treated as collected → remove key
         cmd.execute(session, "", testContext(worldItems = null))
         assertTrue(
-            session.inventory[ItemType.COBBLESTONE] == null ||
-                session.inventory[ItemType.COBBLESTONE] == 0)
+            session.inventory[ItemType("COBBLESTONE")] == null ||
+                session.inventory[ItemType("COBBLESTONE")] == 0)
     }
 
     @Test
@@ -150,10 +150,10 @@ class UndoCommandTest {
         // Simulate a prior placement by setting the block and recording
         val change = org.micoli.micraft.protocol.BlockChange(pos, BlockType.STONE)
         world.applyChange(change)
-        session.actionHistory.addLast(WorldActionRecord.Place(pos, ItemType.COBBLESTONE))
+        session.actionHistory.addLast(WorldActionRecord.Place(pos, ItemType("COBBLESTONE")))
         cmd.execute(session, "", testContext(world = world))
         assertEquals(BlockType.AIR, world.getBlock(8, 7, 8))
-        assertEquals(1, session.inventory[ItemType.COBBLESTONE])
+        assertEquals(1, session.inventory[ItemType("COBBLESTONE")])
     }
 
     @Test
@@ -163,7 +163,7 @@ class UndoCommandTest {
         val pos = BlockPos(8, 7, 8)
         val world = org.micoli.micraft.support.testWorld()
         world.applyChange(org.micoli.micraft.protocol.BlockChange(pos, BlockType.STONE))
-        session.actionHistory.addLast(WorldActionRecord.Place(pos, ItemType.COBBLESTONE))
+        session.actionHistory.addLast(WorldActionRecord.Place(pos, ItemType("COBBLESTONE")))
         cmd.execute(session, "", testContext(world = world, broadcast = { broadcasts.add(it) }))
         assertTrue(broadcasts.any { it is ServerMessage.WorldUpdate })
     }
