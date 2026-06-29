@@ -69,7 +69,7 @@ fun Application.module() {
     val gameConfig = loadGameConfig(java.nio.file.Path.of("data/config/game.yaml"))
     applyGameConfig(gameConfig)
 
-    loadKeyBindings(java.nio.file.Path.of("data/config/personal/keybindings.yaml"))
+    loadKeyBindings(java.nio.file.Path.of("data/config/keybindings.yaml"))
 
     val debugWorld = gameConfig.debugWorld
     val worldName =
@@ -217,7 +217,7 @@ fun Application.module() {
                 if (player != null && persistence != null) {
                     persistence.loadPlayerKeyBindings(player)
                 } else {
-                    loadKeyBindings(Path.of("data/config/personal/keybindings.yaml"))
+                    loadKeyBindings(Path.of("data/config/keybindings.yaml"))
                 }
             val serializer = MapSerializer(String.serializer(), ListSerializer(String.serializer()))
             call.respondText(

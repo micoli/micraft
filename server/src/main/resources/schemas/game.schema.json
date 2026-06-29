@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["tickMs", "gravity", "jumpSpeed", "flyVerticalSpeed", "saveIntervalSeconds", "spawnX", "spawnY", "spawnZ", "ticksPerDay", "timeBroadcastTicks", "maxInteractionDistance", "debugWorld", "reconcileToleranceXz", "reconcileToleranceY"],
+  "additionalProperties": false,
+  "properties": {
+    "tickMs": {"type": "integer", "minimum": 1},
+    "gravity": {"type": "number"},
+    "jumpSpeed": {"type": "number"},
+    "flyVerticalSpeed": {"type": "number"},
+    "saveIntervalSeconds": {"type": "integer", "minimum": 1},
+    "spawnX": {"type": "number"},
+    "spawnY": {"type": "number"},
+    "spawnZ": {"type": "number"},
+    "ticksPerDay": {"type": "integer", "minimum": 1},
+    "timeBroadcastTicks": {"type": "integer", "minimum": 1},
+    "maxInteractionDistance": {"type": "number", "exclusiveMinimum": 0},
+    "debugWorld": {"type": "boolean"},
+    "reconcileToleranceXz": {"type": "number", "exclusiveMinimum": 0},
+    "reconcileToleranceY": {"type": "number", "exclusiveMinimum": 0}
+  }
+}

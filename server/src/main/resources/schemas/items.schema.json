@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "required": ["buildable", "placesBlock", "label", "bg"],
+    "additionalProperties": false,
+    "properties": {
+      "buildable": {"type": "boolean"},
+      "placesBlock": {"type": ["string", "null"]},
+      "label": {"type": "string", "minLength": 1, "maxLength": 4},
+      "bg": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"}
+    }
+  }
+}

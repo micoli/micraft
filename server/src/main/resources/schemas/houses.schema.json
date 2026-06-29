@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["enabled"],
+  "additionalProperties": false,
+  "properties": {
+    "enabled": {"type": "boolean"},
+    "gridCellSize": {"type": "integer", "minimum": 1},
+    "clusterCheckRadius": {"type": "integer", "minimum": 0},
+    "floorHeight": {"type": "integer", "minimum": 1},
+    "maxHouseSize": {"type": "integer", "minimum": 1},
+    "houseTypes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string"},
+          "widthMin": {"type": "integer", "minimum": 1},
+          "widthMax": {"type": "integer", "minimum": 1},
+          "depthMin": {"type": "integer", "minimum": 1},
+          "depthMax": {"type": "integer", "minimum": 1},
+          "floorsMin": {"type": "integer", "minimum": 1},
+          "floorsMax": {"type": "integer", "minimum": 1},
+          "roofTypes": {"type": "array", "items": {"type": "string"}},
+          "roomsMin": {"type": "integer", "minimum": 0},
+          "roomsMax": {"type": "integer", "minimum": 0},
+          "doorsMin": {"type": "integer", "minimum": 0},
+          "doorsMax": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "defaultBiome": {"$ref": "#/$defs/biomeConfig"},
+    "biomes": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/biomeConfig"}
+    }
+  },
+  "$defs": {
+    "biomeConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "wallBlock": {"type": "string"},
+        "roofBlock": {"type": "string"},
+        "floorBlock": {"type": "string"},
+        "houseProbability": {"type": "number", "minimum": 0, "maximum": 1},
+        "clusterBonus": {"type": "number", "minimum": 0},
+        "typeRates": {
+          "type": "object",
+          "additionalProperties": {"type": "number", "minimum": 0}
+        }
+      }
+    }
+  }
+}

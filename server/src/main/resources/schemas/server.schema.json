@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["world", "player", "auth"],
+  "additionalProperties": false,
+  "properties": {
+    "world": {
+      "type": "object",
+      "required": ["worldMinY", "worldMaxY", "chunkSize", "viewRadius", "forwardViewRadius", "waterLevel"],
+      "additionalProperties": false,
+      "properties": {
+        "worldMinY": {"type": "integer"},
+        "worldMaxY": {"type": "integer"},
+        "chunkSize": {"type": "integer", "minimum": 1},
+        "viewRadius": {"type": "integer", "minimum": 1},
+        "forwardViewRadius": {"type": "integer", "minimum": 1},
+        "waterLevel": {"type": "integer"}
+      }
+    },
+    "player": {
+      "type": "object",
+      "required": ["heightStanding", "heightSneaking", "heightCrawling", "width", "eyeOffsetStanding", "eyeOffsetSneaking", "eyeOffsetCrawling", "speedStanding", "speedSneaking", "speedCrawling"],
+      "additionalProperties": false,
+      "properties": {
+        "heightStanding": {"type": "number", "exclusiveMinimum": 0},
+        "heightSneaking": {"type": "number", "exclusiveMinimum": 0},
+        "heightCrawling": {"type": "number", "exclusiveMinimum": 0},
+        "width": {"type": "number", "exclusiveMinimum": 0},
+        "eyeOffsetStanding": {"type": "number", "exclusiveMinimum": 0},
+        "eyeOffsetSneaking": {"type": "number", "exclusiveMinimum": 0},
+        "eyeOffsetCrawling": {"type": "number", "exclusiveMinimum": 0},
+        "speedStanding": {"type": "number", "exclusiveMinimum": 0},
+        "speedSneaking": {"type": "number", "exclusiveMinimum": 0},
+        "speedCrawling": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "auth": {
+      "type": "object",
+      "required": ["provider"],
+      "additionalProperties": false,
+      "properties": {
+        "provider": {"type": "string", "enum": ["none", "local", "oauth"]},
+        "local": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "usersFile": {"type": "string"}
+              }
+            }
+          ]
+        },
+        "oauth": {"type": ["object", "null"]}
+      }
+    }
+  }
+}

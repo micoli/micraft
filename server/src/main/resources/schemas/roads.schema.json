@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["enabled"],
+  "additionalProperties": false,
+  "properties": {
+    "enabled": {"type": "boolean"},
+    "vegetationAllowedOnRoad": {"type": "boolean"},
+    "minVegetationDistanceFromRoad": {"type": "integer", "minimum": 0},
+    "voronoiCellSize": {"type": "integer", "minimum": 1},
+    "displacementScale": {"type": "number"},
+    "displacementFrequency": {"type": "number"},
+    "defaultRoad": {"$ref": "#/$defs/roadConfig"},
+    "biomes": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/roadConfig"}
+    }
+  },
+  "$defs": {
+    "roadConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "width": {"type": "integer", "minimum": 1},
+        "surface": {"type": "string"},
+        "roadProbability": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    }
+  }
+}

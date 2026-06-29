@@ -18,7 +18,7 @@ data/
     weather.yaml            # weather config
     spawns.json             # NPC spawn state (runtime)
     auth/users.yaml         # local auth users (email, passwordHash, displayName)
-    personal/keybindings.yaml
+    keybindings.yaml
     i18n/en.yaml
     i18n/fr.yaml
     schemas/                # JSON Schemas for YAML config files (VS Code validation)

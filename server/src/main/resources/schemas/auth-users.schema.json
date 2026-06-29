@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "users": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["email", "passwordHash"],
+        "additionalProperties": false,
+        "properties": {
+          "email": {"type": "string"},
+          "passwordHash": {"type": "string"},
+          "displayName": {"type": "string"}
+        }
+      }
+    }
+  }
+}
