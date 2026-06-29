@@ -79,10 +79,13 @@ class ChunkManager(private val scene: JsAny) {
         pendingChunks.add(Pair(chunk, topY))
     }
 
-    fun drainPendingChunks() {
+    fun drainPendingChunks(budgetMs: Double = 8.0) {
         if (getBlockMaterials() == null || pendingChunks.isEmpty()) return
-        val (chunk, topY) = pendingChunks.removeAt(0)
-        renderChunk(chunk, topY)
+        val deadline = jsNow() + budgetMs
+        while (pendingChunks.isNotEmpty() && jsNow() < deadline) {
+            val (chunk, topY) = pendingChunks.removeAt(0)
+            renderChunk(chunk, topY)
+        }
     }
 
     fun collectAndClearUnloads(): List<ChunkPos> {

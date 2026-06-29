@@ -236,7 +236,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     msg.reconcileToleranceXz, msg.reconcileToleranceY)
             is ServerMessage.ShadersUpdate -> chunkManager.setShadersEnabled(msg.enabled)
             is ServerMessage.ChunkData ->
-                chunkManager.renderChunk(
+                chunkManager.enqueueChunk(
                     Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
             is ServerMessage.PlayerUpdate -> {
                 val s = msg.state
