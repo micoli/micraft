@@ -1,5 +1,67 @@
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 
+function usePlayerModelReady(): boolean {
+  const [ready, setReady] = useState(() => !!(window as any).mcIsPlayerBbmodelReady?.());
+  useEffect(() => {
+    if (ready) return;
+    const iv = setInterval(() => {
+      if ((window as any).mcIsPlayerBbmodelReady?.()) {
+        setReady(true);
+        clearInterval(iv);
+      }
+    }, 150);
+    return () => clearInterval(iv);
+  }, [ready]);
+  return ready;
+}
+
+function PlayerModelPreview() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ready = usePlayerModelReady();
+
+  useEffect(() => {
+    if (!ready) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const B = (window as any).BABYLON;
+    if (!B) return;
+
+    const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
+    const scene = new B.Scene(engine);
+    scene.clearColor = new B.Color4(0, 0, 0, 0);
+
+    new B.ArcRotateCamera("cam", -Math.PI * 0.25, Math.PI / 3.2, 3.0, new B.Vector3(0, 0.9, 0), scene);
+
+    const light = new B.HemisphericLight("light", new B.Vector3(1, 2, 0.5), scene);
+    light.intensity = 1.1;
+    light.groundColor = new B.Color3(0.2, 0.2, 0.2);
+
+    const model = (window as any).mcCreatePlayerModelNow?.(scene) ?? null;
+
+    let angle = 0;
+    scene.onBeforeRenderObservable.add(() => {
+      angle += 0.015;
+      if (model) (window as any).mcSetPlayerTransform?.(model, 0, 0, 0, angle, 0, true);
+    });
+
+    engine.runRenderLoop(() => scene.render());
+
+    return () => {
+      if (model) (window as any).mcDisposePlayerModel?.(model);
+      engine.dispose();
+    };
+  }, [ready]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={160}
+      height={220}
+      style={{ display: "block", width: 160, height: 220, borderRadius: 6, background: "#111" }}
+    />
+  );
+}
+
 function getUsers(): Record<string, string[]> {
   try {
     return JSON.parse(localStorage.getItem("micraft_users") || "{}");
@@ -432,6 +494,7 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
         {/* Character selection step */}
         {step === "chars" && (
           <div
+            style={{ display: "flex", gap: 24, alignItems: "flex-start" }}
             onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
               if (e.key === "Enter" && selected !== "__new__") {
                 e.stopPropagation();
@@ -439,97 +502,103 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
               }
             }}
           >
-            <div style={{ fontSize: 14, color: "#aaa", marginBottom: 14 }}>
-              Welcome, {username}! Choose your character:
-            </div>
-            {(authMode === "local" || authMode === "oauth") && (
-              <div style={{ marginTop: 14 }}>
-                <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 6 }}>Language</label>
-                <select
-                  value={lang}
-                  onChange={(e) => setLang(e.target.value)}
-                  style={{ ...inputStyle, cursor: "pointer" }}
-                >
-                  {SUPPORTED_LANGS.map((l) => (
-                    <option key={l.code} value={l.code}>
-                      {l.label}
-                    </option>
-                  ))}
-                </select>
+            <div style={{ minWidth: 280 }}>
+              <div style={{ fontSize: 14, color: "#aaa", marginBottom: 14 }}>
+                Welcome, {username}! Choose your character:
               </div>
-            )}
-            <div style={{ marginBottom: 12, marginTop: 14 }}>
-              {chars.map((name, i) => (
-                <div key={name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+              {(authMode === "local" || authMode === "oauth") && (
+                <div style={{ marginTop: 14 }}>
+                  <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 6 }}>Language</label>
+                  <select
+                    value={lang}
+                    onChange={(e) => setLang(e.target.value)}
+                    style={{ ...inputStyle, cursor: "pointer" }}
+                  >
+                    {SUPPORTED_LANGS.map((l) => (
+                      <option key={l.code} value={l.code}>
+                        {l.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div style={{ marginBottom: 12, marginTop: 14 }}>
+                {chars.map((name, i) => (
+                  <div key={name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+                    <input
+                      type="radio"
+                      name="mc-char"
+                      value={name}
+                      id={`mc-char-${i}`}
+                      checked={selected === name}
+                      onChange={() => setSelected(name)}
+                    />
+                    <label htmlFor={`mc-char-${i}`} style={{ fontSize: 14, cursor: "pointer" }}>
+                      {name}
+                    </label>
+                  </div>
+                ))}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
                   <input
                     type="radio"
                     name="mc-char"
-                    value={name}
-                    id={`mc-char-${i}`}
-                    checked={selected === name}
-                    onChange={() => setSelected(name)}
+                    value="__new__"
+                    id="mc-char-new"
+                    checked={selected === "__new__"}
+                    onChange={() => setSelected("__new__")}
                   />
-                  <label htmlFor={`mc-char-${i}`} style={{ fontSize: 14, cursor: "pointer" }}>
-                    {name}
+                  <label
+                    htmlFor="mc-char-new"
+                    style={{ fontSize: 13, color: "#aaa", cursor: "pointer", whiteSpace: "nowrap" }}
+                  >
+                    + New character:
                   </label>
+                  <input
+                    ref={newCharInputRef}
+                    type="text"
+                    placeholder="Character name"
+                    style={{
+                      flex: 1,
+                      padding: "5px 8px",
+                      background: "#111",
+                      border: "1px solid #555",
+                      borderRadius: 4,
+                      color: "#eee",
+                      font: "14px monospace",
+                      outline: "none",
+                    }}
+                    value={newChar}
+                    onChange={(e) => setNewChar(e.target.value)}
+                    onFocus={() => setSelected("__new__")}
+                    onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                      if (e.key === "Enter") doPlay();
+                    }}
+                  />
                 </div>
-              ))}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-                <input
-                  type="radio"
-                  name="mc-char"
-                  value="__new__"
-                  id="mc-char-new"
-                  checked={selected === "__new__"}
-                  onChange={() => setSelected("__new__")}
-                />
-                <label
-                  htmlFor="mc-char-new"
-                  style={{ fontSize: 13, color: "#aaa", cursor: "pointer", whiteSpace: "nowrap" }}
-                >
-                  + New character:
-                </label>
-                <input
-                  ref={newCharInputRef}
-                  type="text"
-                  placeholder="Character name"
-                  style={{
-                    flex: 1,
-                    padding: "5px 8px",
-                    background: "#111",
-                    border: "1px solid #555",
-                    borderRadius: 4,
-                    color: "#eee",
-                    font: "14px monospace",
-                    outline: "none",
-                  }}
-                  value={newChar}
-                  onChange={(e) => setNewChar(e.target.value)}
-                  onFocus={() => setSelected("__new__")}
-                  onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                    if (e.key === "Enter") doPlay();
-                  }}
-                />
               </div>
+              <button ref={playButtonRef} style={btnPrimary} onClick={doPlay}>
+                Play
+              </button>
+              {authMode === "local" || authMode === "oauth" ? (
+                <button style={btnSecondary} onClick={doLogout}>
+                  ← Log out
+                </button>
+              ) : (
+                <button
+                  style={btnSecondary}
+                  onClick={() => {
+                    setStep("auth");
+                    setTimeout(() => usernameInputRef.current?.focus(), 50);
+                  }}
+                >
+                  ← Back
+                </button>
+              )}
             </div>
-            <button ref={playButtonRef} style={btnPrimary} onClick={doPlay}>
-              Play
-            </button>
-            {authMode === "local" || authMode === "oauth" ? (
-              <button style={btnSecondary} onClick={doLogout}>
-                ← Log out
-              </button>
-            ) : (
-              <button
-                style={btnSecondary}
-                onClick={() => {
-                  setStep("auth");
-                  setTimeout(() => usernameInputRef.current?.focus(), 50);
-                }}
-              >
-                ← Back
-              </button>
-            )}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+              <PlayerModelPreview />
+              <div style={{ fontSize: 11, color: "#555" }}>Preview</div>
+            </div>
           </div>
         )}
       </div>
