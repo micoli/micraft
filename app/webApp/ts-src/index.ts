@@ -20,6 +20,7 @@ import { registerWeather } from "./weather/weather";
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import { GameUI } from "./ui/GameUI";
+import { initFaviconAnimator } from "./favicon/faviconAnimator";
 
 registerUtils();
 registerEngine();
@@ -47,6 +48,14 @@ registerAutoUpdate();
   setRegistryBlocks(blocks);
   (window as any).__mcCodexBlocks = blocks;
   (window as any).mcInitBlockDefs();
+  const favIv = setInterval(() => {
+    if ((window as any).mcIsBlockDefsReady?.()) {
+      clearInterval(favIv);
+      const registryBlocks = (window as any).__mcCodexBlocks as Array<{ name: string }>;
+      const idx = registryBlocks.findIndex((b) => b.name === "QUARTZ_ORE");
+      if (idx >= 0) initFaviconAnimator(idx);
+    }
+  }, 200);
 };
 
 (window as any).mcSetItemRegistry = (json: string) => {

@@ -108,3 +108,14 @@ export function registerBlockDefs(): void {
 export function setRegistryBlocks(blocks: { name: string; modelElement: string; liquid?: boolean }[]): void {
   _registryBlocks = blocks;
 }
+
+export function getFaceTexUrl(ordinal: number, faceDir: number): string | null {
+  const def = (window as any).mcGetBlockDef?.(ordinal) as McBlockDef | null;
+  if (!def?.faces) return null;
+  const face =
+    (def.faces[faceDir] as McBlockFaceInfo | null) ?? (def.faces as (McBlockFaceInfo | null)[]).find((f) => f != null);
+  if (!face) return null;
+  const texName = face.matKey.replace(":biome_tint", "");
+  const texs: McBlockTextureDef[] = (window as any).mcGetBlockTextures?.() ?? [];
+  return texs.find((t) => t.name === texName)?.url ?? null;
+}

@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
+import { getFaceTexUrl } from "../blocks/blockDefs";
 
 interface BlockEntry {
   ordinal: number;
@@ -48,17 +49,6 @@ function useBlockDefsReady(): boolean {
     return () => clearInterval(iv);
   }, [ready]);
   return ready;
-}
-
-function getFaceTexUrl(ordinal: number, faceDir: number): string | null {
-  const def = (window as any).mcGetBlockDef?.(ordinal);
-  if (!def?.faces) return null;
-  const face =
-    (def.faces[faceDir] as McBlockFaceInfo | null) ?? (def.faces as (McBlockFaceInfo | null)[]).find((f) => f != null);
-  if (!face) return null;
-  const texName = face.matKey.replace(":biome_tint", "");
-  const texs: McBlockTextureDef[] = (window as any).mcGetBlockTextures?.() ?? [];
-  return texs.find((t) => t.name === texName)?.url ?? null;
 }
 
 function CssBlockCube({ ordinal, size }: { ordinal: number; size: number }) {
