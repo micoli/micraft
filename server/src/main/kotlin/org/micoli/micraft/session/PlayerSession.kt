@@ -21,6 +21,8 @@ class NetworkStats {
 fun List<ItemType?>.toSlotMap(): Map<Int, ItemType> =
     mapIndexedNotNull { i, t -> t?.let { i to it } }.toMap()
 
+fun PlayerSession.hasPermission(perm: String): Boolean = "*" in permissions || perm in permissions
+
 open class PlayerSession(
     val id: String,
     val userName: String,
@@ -28,6 +30,7 @@ open class PlayerSession(
     @Volatile var state: PlayerState,
     @Volatile var vy: Float = 0f,
     val networkStats: NetworkStats = NetworkStats(),
+    val permissions: Set<String> = emptySet(),
 ) {
     val intents = Channel<ClientMessage>(capacity = Channel.UNLIMITED)
     val loadedChunks: MutableSet<ChunkPos> = Collections.newSetFromMap(ConcurrentHashMap())

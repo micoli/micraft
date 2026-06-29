@@ -125,9 +125,17 @@ weather:
     forecast_zone: "  {0} à {1}m — r={2} intensité={3}"
 config_reload:
   server:
-    usage: "Usage : /config:reload [block|npc]"
+    usage: "Usage : /config:reload [block|npc|rbac]"
     unavailable: "Rechargement non disponible pour : {0}"
     done: "Rechargé : {0}"
+rbac:
+  server:
+    no_permission: "Vous n'avez pas la permission d'utiliser cette commande."
+    group_set: "Utilisateur {0} ajouté au(x) groupe(s) : {1}."
+    group_removed: "Utilisateur {0} retiré du/des groupe(s) : {1}."
+    groups_list: "Groupes :{0}"
+    group_not_found: "Groupe(s) inconnu(s) : {0}"
+    your_groups_updated: "Votre appartenance aux groupes a été mise à jour. Reconnectez-vous pour que les permissions prennent effet."
 config:
   server:
     usage: "Usage : /config <get|set> <clé> [valeur]"

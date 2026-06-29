@@ -10,6 +10,7 @@ import org.micoli.micraft.world.proceduralGenerator.weather.WeatherType
 class WeatherCommand : CommandHandler {
     override val id: UUID = UUID.fromString("b3e7f2d1-4a8c-4e9b-b5f6-7c1d2e3a4b5c")
     override val command = "/weather"
+    override val permission = "admin"
     override val description = "Force a weather zone at your position or clear all zones. (admin)"
     override val usage = "/weather [rain|storm|snow|fog|none]"
     override val options = listOf("rain", "storm", "snow", "fog", "none")

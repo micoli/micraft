@@ -3,17 +3,19 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "users": {
+    "defaultGroups": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "groups": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["email", "passwordHash"],
+        "required": ["name"],
         "additionalProperties": false,
         "properties": {
-          "email": {"type": "string"},
-          "passwordHash": {"type": "string"},
-          "displayName": {"type": "string"},
-          "groups": {
+          "name": {"type": "string"},
+          "permissions": {
             "type": "array",
             "items": {"type": "string"}
           }

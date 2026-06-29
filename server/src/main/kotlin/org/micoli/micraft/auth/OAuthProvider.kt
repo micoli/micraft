@@ -13,7 +13,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.world.OAuthConfig
 
-class OAuthProvider(private val config: OAuthConfig) : AuthProvider {
+class OAuthProvider(private val config: OAuthConfig, @Volatile var groupsConfig: GroupsConfig) :
+    AuthProvider {
     private data class StateEntry(val returnUrl: String)
 
     private val stateMap = ConcurrentHashMap<String, StateEntry>()
@@ -78,6 +79,7 @@ class OAuthProvider(private val config: OAuthConfig) : AuthProvider {
         val userJson = json.parseToJsonElement(userInfo).jsonObject
         val sub = userJson["sub"]?.jsonPrimitive?.content ?: return null
         val name = userJson["name"]?.jsonPrimitive?.content ?: sub
-        return AuthResult(playerId = sub, displayName = name)
+        val permissions = groupsConfig.resolveDefaultPermissions()
+        return AuthResult(playerId = sub, displayName = name, permissions = permissions)
     }
 }

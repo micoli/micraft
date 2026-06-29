@@ -18,7 +18,7 @@ class AuthTest {
         runBlocking<Unit> {
             val tmp = Files.createTempFile("micraft-users", ".yaml")
             tmp.toFile().writeText("users: []\n")
-            val provider = LocalAuthProvider(tmp)
+            val provider = LocalAuthProvider(tmp, GroupsConfig())
             provider.addUser("test@example.com", "secret123", "Test User")
 
             val result = provider.login("test@example.com", "secret123")
@@ -34,7 +34,7 @@ class AuthTest {
         runBlocking<Unit> {
             val tmp = Files.createTempFile("micraft-users", ".yaml")
             tmp.toFile().writeText("users: []\n")
-            val provider = LocalAuthProvider(tmp)
+            val provider = LocalAuthProvider(tmp, GroupsConfig())
             provider.addUser("user@example.com", "correct", "User")
 
             val result = provider.login("user@example.com", "wrong")
@@ -48,7 +48,7 @@ class AuthTest {
         runBlocking<Unit> {
             val tmp = Files.createTempFile("micraft-users", ".yaml")
             tmp.toFile().writeText("users: []\n")
-            val provider = LocalAuthProvider(tmp)
+            val provider = LocalAuthProvider(tmp, GroupsConfig())
 
             val result = provider.login("nobody@example.com", "any")
             assertNull(result)

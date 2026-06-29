@@ -44,6 +44,7 @@ data class PlayerSection(
 @Serializable
 data class LocalAuthConfig(
     @EncodeDefault(ALWAYS) val usersFile: String = "data/config/auth/users.yaml",
+    @EncodeDefault(ALWAYS) val groupsFile: String = "data/config/auth/groups.yaml",
 )
 
 @OptIn(ExperimentalSerializationApi::class)

@@ -9,6 +9,9 @@ interface CommandHandler {
     val description: String
         get() = ""
 
+    val permission: String?
+        get() = null
+
     val usage: String
         get() = command
 

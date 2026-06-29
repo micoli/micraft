@@ -3,6 +3,8 @@ package org.micoli.micraft.support
 import java.nio.file.Path
 import org.micoli.micraft.CommandContext
 import org.micoli.micraft.ConfigRegistry
+import org.micoli.micraft.auth.AuthProvider
+import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerStance
@@ -124,6 +126,7 @@ fun testPlayerState(
 fun testSession(
     id: String = "test-id",
     name: String = "Alice",
+    userName: String = name,
     pos: Vec3 = Vec3(8f, 8f, 8f),
     orientation: Orientation = Orientation(0f, 0f),
     language: String = "en",
@@ -131,7 +134,7 @@ fun testSession(
 ) =
     FakePlayerSession(
         id,
-        name,
+        userName,
         testPlayerState(
             id = id,
             name = name,
@@ -177,6 +180,8 @@ fun testContext(
     configRegistry: ConfigRegistry? = null,
     reloadBlocks: (suspend () -> Unit)? = null,
     reloadNpcs: (suspend () -> Unit)? = null,
+    authProvider: AuthProvider? = null,
+    groupsConfig: GroupsConfig? = null,
 ) =
     CommandContext(
         world = world,
@@ -196,4 +201,6 @@ fun testContext(
         configRegistry = configRegistry,
         reloadBlocks = reloadBlocks,
         reloadNpcs = reloadNpcs,
+        authProvider = authProvider,
+        groupsConfig = groupsConfig,
     )

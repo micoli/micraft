@@ -2,6 +2,7 @@ package org.micoli.micraft.tick
 
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.session.PlayerSession
+import org.micoli.micraft.session.hasPermission
 
 class IntentCollector(
     private val blockBreaker: BlockBreaker,
@@ -32,13 +33,18 @@ class IntentCollector(
                     pitch = intent.pitch
                     stance = intent.stance
                     if (intent.jump) jumpRequested = true
-                    if (intent.flyToggle) flyToggleRequested = true
+                    if (intent.flyToggle && session.hasPermission("action.fly"))
+                        flyToggleRequested = true
                     if (intent.speedUp) speedUpRequested = true
                     if (intent.speedDown) speedDownRequested = true
                 }
-                is ClientMessage.BlockBreakStart -> blockBreaker.handleStart(session, intent)
+                is ClientMessage.BlockBreakStart ->
+                    if (session.hasPermission("action.break"))
+                        blockBreaker.handleStart(session, intent)
                 is ClientMessage.BlockBreakStop -> blockBreaker.handleStop(session)
-                is ClientMessage.BlockPlace -> blockPlacer.handlePlace(session, intent)
+                is ClientMessage.BlockPlace ->
+                    if (session.hasPermission("action.place"))
+                        blockPlacer.handlePlace(session, intent)
                 is ClientMessage.ShortcutBarSet -> blockPlacer.handleShortcutBarSet(session, intent)
                 is ClientMessage.Command -> onCommand(session, intent.text)
                 is ClientMessage.ChatSend -> onChatSend(session, intent.channel, intent.text)

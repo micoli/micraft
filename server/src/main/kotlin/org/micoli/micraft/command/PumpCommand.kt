@@ -17,6 +17,7 @@ private const val MAX_PUMP_BLOCKS = 10_000
 class PumpCommand : CommandHandler {
     override val id: UUID = UUID.fromString("b7e2a1f3-9c4d-4e5b-8f6a-2d3c1e0b9a7f")
     override val command = "/pump"
+    override val permission = "admin"
     override val description = "Remove all connected liquid blocks in sight."
     override val usage = "/pump"
 

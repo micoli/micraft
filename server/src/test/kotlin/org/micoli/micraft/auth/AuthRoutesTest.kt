@@ -31,7 +31,7 @@ class AuthRoutesTest {
     fun `login success returns token`() = testApplication {
         val tmp = Files.createTempFile("micraft-users", ".yaml")
         tmp.toFile().writeText("users: []\n")
-        val provider = LocalAuthProvider(tmp)
+        val provider = LocalAuthProvider(tmp, GroupsConfig())
         provider.addUser("alice@test.com", "pass1234", "Alice")
         val store = TokenStore(scope)
 
@@ -55,7 +55,7 @@ class AuthRoutesTest {
     fun `login wrong password returns 401`() = testApplication {
         val tmp = Files.createTempFile("micraft-users", ".yaml")
         tmp.toFile().writeText("users: []\n")
-        val provider = LocalAuthProvider(tmp)
+        val provider = LocalAuthProvider(tmp, GroupsConfig())
         provider.addUser("bob@test.com", "correct", "Bob")
         val store = TokenStore(scope)
 

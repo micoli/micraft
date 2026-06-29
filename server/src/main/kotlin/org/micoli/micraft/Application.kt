@@ -25,6 +25,7 @@ import org.micoli.micraft.auth.LocalAuthProvider
 import org.micoli.micraft.auth.OAuthProvider
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.auth.installAuthRoutes
+import org.micoli.micraft.auth.loadGroupsConfig
 import org.micoli.micraft.http.mapRoutes
 import org.micoli.micraft.http.metricsRoutes
 import org.micoli.micraft.world.BiomeConfig
@@ -176,18 +177,32 @@ fun Application.module() {
 
     val authConfig = serverConfig.auth
     val authScope = CoroutineScope(Dispatchers.Default)
+    val groupsConfig = loadGroupsConfig(Path.of(authConfig.local.groupsFile))
     val (authProvider, tokenStore) =
         when (authConfig.provider) {
             "local" -> {
-                val provider = LocalAuthProvider(Path.of(authConfig.local.usersFile))
+                val provider = LocalAuthProvider(Path.of(authConfig.local.usersFile), groupsConfig)
                 Pair<AuthProvider, TokenStore>(provider, TokenStore(authScope))
             }
             "oauth" -> {
                 val oauthCfg =
                     authConfig.oauth ?: error("auth.oauth config required when provider=oauth")
-                Pair<AuthProvider, TokenStore>(OAuthProvider(oauthCfg), TokenStore(authScope))
+                Pair<AuthProvider, TokenStore>(
+                    OAuthProvider(oauthCfg, groupsConfig), TokenStore(authScope))
             }
             else -> Pair<AuthProvider?, TokenStore?>(null, null)
+        }
+
+    val groupsFilePath = Path.of(authConfig.local.groupsFile)
+    val reloadRbacLambda: (() -> Unit)? =
+        when (val p = authProvider) {
+            is LocalAuthProvider -> {
+                { p.groupsConfig = loadGroupsConfig(groupsFilePath) }
+            }
+            is OAuthProvider -> {
+                { p.groupsConfig = loadGroupsConfig(groupsFilePath) }
+            }
+            else -> null
         }
 
     val world = WorldState(generator = generator, persistence = persistence)
@@ -200,6 +215,8 @@ fun Application.module() {
             reloadGameConfig = reloadGameConfigLambda,
             tokenStore = tokenStore,
             authProvider = authProvider,
+            groupsConfig = groupsConfig,
+            reloadRbac = reloadRbacLambda,
         )
     gameLoop.start(this)
     installAuthRoutes(authConfig.provider, authProvider, tokenStore)

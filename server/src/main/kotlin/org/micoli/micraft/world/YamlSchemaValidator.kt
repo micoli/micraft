@@ -42,6 +42,7 @@ fun validateAllYamlConfigs(configDir: Path = Path.of("data/config")) {
             configDir.resolve("server.yaml") to "server.schema.json",
             configDir.resolve("game.yaml") to "game.schema.json",
             configDir.resolve("auth/users.yaml") to "auth-users.schema.json",
+            configDir.resolve("auth/groups.yaml") to "groups.schema.json",
             configDir.resolve("keybindings.yaml") to "keybindings.schema.json",
             configDir.resolve("roads.yaml") to "roads.schema.json",
             configDir.resolve("houses.yaml") to "houses.schema.json",
@@ -57,10 +58,12 @@ fun validateAllYamlConfigs(configDir: Path = Path.of("data/config")) {
 
     var ok = 0
     (staticPairs + i18nPairs).forEach { (yaml, schemaName) ->
-        val uri = schemaUri(schemaName) ?: run {
-            log.debug("No schema resource for {} — skipping", yaml)
-            return@forEach
-        }
+        val uri =
+            schemaUri(schemaName)
+                ?: run {
+                    log.debug("No schema resource for {} — skipping", yaml)
+                    return@forEach
+                }
         validateYaml(yaml, uri)
         ok++
     }

@@ -1,6 +1,7 @@
 package org.micoli.micraft
 
 import org.micoli.micraft.auth.AuthProvider
+import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
@@ -33,8 +34,10 @@ data class CommandContext(
     val chatChannelManager: ChatChannelManager? = null,
     val weatherManager: WeatherManager? = null,
     val authProvider: AuthProvider? = null,
+    val groupsConfig: GroupsConfig? = null,
     val liquidManager: LiquidManager? = null,
     val configRegistry: ConfigRegistry? = null,
     val reloadBlocks: (suspend () -> Unit)? = null,
     val reloadNpcs: (suspend () -> Unit)? = null,
+    val reloadRbac: (() -> Unit)? = null,
 )

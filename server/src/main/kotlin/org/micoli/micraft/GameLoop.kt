@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import org.micoli.micraft.auth.AuthProvider
+import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.npc.NpcConfigLoader
@@ -137,6 +138,8 @@ class GameLoop(
     val i18n: I18nConfig = I18nConfig.fromClasspath(pluginsRoot = Path.of("plugins")),
     private val tokenStore: TokenStore? = null,
     private val authProvider: AuthProvider? = null,
+    private val groupsConfig: GroupsConfig? = null,
+    private val reloadRbac: (() -> Unit)? = null,
 ) {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
     private var saveTickCounter = 0
@@ -222,8 +225,10 @@ class GameLoop(
             chatChannelManager = chatChannelManager,
             weatherManager = weatherManager,
             authProvider = authProvider,
+            groupsConfig = groupsConfig,
             liquidManager = liquidManager,
             configRegistry = configRegistry,
+            reloadRbac = reloadRbac,
             reloadBlocks =
                 if (reloadRegistries != null) {
                     {
@@ -305,9 +310,14 @@ class GameLoop(
     private fun buildPreferencesSync(session: PlayerSession): ServerMessage.PreferencesSync {
         val knownChannels = chatChannelManager.listKnownChannels()
         val commandList =
-            commands.values.map {
-                CommandInfo(it.id.toString(), it.command, it.description, it.autocompleteArgs)
-            }
+            commands.values
+                .filter { cmd ->
+                    val p = cmd.permission
+                    p == null || "*" in session.permissions || p in session.permissions
+                }
+                .map {
+                    CommandInfo(it.id.toString(), it.command, it.description, it.autocompleteArgs)
+                }
         val keybindings =
             persistence?.loadPlayerKeyBindings(session.state.name) ?: defaultKeyBindings()
         val customCommands = persistence?.loadPlayerCustomCommands(session.state.name) ?: emptyMap()
@@ -535,6 +545,13 @@ class GameLoop(
                         i18n.t(session.state.language, "preferences:server:command_disabled")))
                 return
             }
+            val perm = handler.permission
+            if (perm != null && "*" !in session.permissions && perm !in session.permissions) {
+                session.send(
+                    ServerMessage.Notification(
+                        i18n.t(session.state.language, "rbac:server:no_permission")))
+                return
+            }
             handler.execute(session, args, commandContext)
         } else
             session.send(
@@ -566,13 +583,16 @@ class GameLoop(
                     } else null
                 }
                 .getOrNull()
-        if (tokenStore != null) {
-            val token = connectMsg?.token ?: ""
-            if (tokenStore.validate(token) == null) {
-                socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "invalid token"))
-                return
-            }
-        }
+        val authResult =
+            if (tokenStore != null) {
+                val token = connectMsg?.token ?: ""
+                val result = tokenStore.validate(token)
+                if (result == null) {
+                    socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "invalid token"))
+                    return
+                }
+                result
+            } else null
 
         val playerName = connectMsg?.playerName ?: "Player"
         val userName = connectMsg?.userName ?: playerName
@@ -601,7 +621,15 @@ class GameLoop(
                 disabledCommands = saved?.disabledCommands ?: emptySet(),
                 viewMode = saved?.viewMode ?: "FIRST_PERSON",
             )
-        val session = PlayerSession(id, userName, socket, state, networkStats = networkStats)
+        val sessionPermissions = authResult?.permissions ?: setOf("*")
+        val session =
+            PlayerSession(
+                id,
+                userName,
+                socket,
+                state,
+                networkStats = networkStats,
+                permissions = sessionPermissions)
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
         saved?.shortcutBar?.forEachIndexed { i, item ->
             if (i in 0..9) session.shortcutBar[i] = item

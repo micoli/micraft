@@ -10,9 +10,10 @@ class AddUserCommand : PluginCommand {
     override val id: UUID = UUID.fromString("b3c4d5e6-f7a8-4901-b234-c5d6e7f8a901")
     override val name = "adduser"
     override val command = "/adduser"
+    override val permission = "admin"
     override val description =
-        "Add a local auth user. Usage: /adduser <email> <password> [displayName]"
-    override val usage = "/adduser <email> <password> [displayName]"
+        "Add a local auth user. Usage: /adduser <email> <password> [displayName] [group1,group2,...]"
+    override val usage = "/adduser <email> <password> [displayName] [group1,group2,...]"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val provider = context.authProvider as? LocalAuthProvider
@@ -20,16 +21,20 @@ class AddUserCommand : PluginCommand {
             session.send(ServerMessage.Notification("Local auth provider not active."))
             return
         }
-        val parts = args.trim().split(" ", limit = 3)
+        val parts = args.trim().split(" ", limit = 4)
         if (parts.size < 2) {
             session.send(
-                ServerMessage.Notification("Usage: /adduser <email> <password> [displayName]"))
+                ServerMessage.Notification(
+                    "Usage: /adduser <email> <password> [displayName] [group1,group2,...]"))
             return
         }
         val email = parts[0]
         val password = parts[1]
         val displayName = if (parts.size >= 3) parts[2] else email
-        runCatching { provider.addUser(email, password, displayName) }
+        val groups =
+            if (parts.size >= 4) parts[3].split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            else emptyList()
+        runCatching { provider.addUser(email, password, displayName, groups) }
             .onSuccess { session.send(ServerMessage.Notification("User added: $email")) }
             .onFailure { e -> session.send(ServerMessage.Notification("Failed: ${e.message}")) }
     }

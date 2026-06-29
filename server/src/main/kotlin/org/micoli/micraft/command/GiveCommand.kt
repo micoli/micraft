@@ -11,6 +11,7 @@ import org.micoli.micraft.world.ItemRegistry
 class GiveCommand : CommandHandler {
     override val id: UUID = UUID.fromString("84b05d3d-19c7-4cee-bb3d-469d053c9b07")
     override val command = "/give"
+    override val permission = "admin"
     override val description = "Give items to yourself."
     override val usage = "/give <itemType> [N]"
     override val options

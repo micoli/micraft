@@ -12,15 +12,17 @@ private val log = LoggerFactory.getLogger(ConfigReloadCommand::class.java)
 class ConfigReloadCommand : CommandHandler {
     override val id: UUID = UUID.fromString("3b4c5d6e-7f80-4a1b-9c2d-3e4f5a6b7c8d")
     override val command = "/config:reload"
-    override val description = "Reloads block or NPC definitions from resource files."
-    override val options = listOf("block", "npc")
+    override val permission = "admin"
+    override val description = "Reloads block, NPC, or RBAC definitions from resource files."
+    override val options = listOf("block", "npc", "rbac")
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
         val target = args.trim().lowercase()
         val doBlocks = target.isEmpty() || target == "block"
         val doNpcs = target.isEmpty() || target == "npc"
-        if (!doBlocks && !doNpcs) {
+        val doRbac = target.isEmpty() || target == "rbac"
+        if (!doBlocks && !doNpcs && !doRbac) {
             session.send(
                 ServerMessage.Notification(context.i18n.t(lang, "config_reload:server:usage")))
             return
@@ -46,6 +48,17 @@ class ConfigReloadCommand : CommandHandler {
                 session.send(
                     ServerMessage.Notification(
                         context.i18n.t(lang, "config_reload:server:unavailable", "npcs")))
+            }
+        }
+        if (doRbac) {
+            val fn = context.reloadRbac
+            if (fn != null) {
+                fn()
+                reloaded += "rbac"
+            } else {
+                session.send(
+                    ServerMessage.Notification(
+                        context.i18n.t(lang, "config_reload:server:unavailable", "rbac")))
             }
         }
         if (reloaded.isNotEmpty()) {
