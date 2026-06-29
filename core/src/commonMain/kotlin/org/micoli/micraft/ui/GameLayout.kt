@@ -8,7 +8,8 @@ enum class WidgetType {
     HUD,
     SHORTCUT_BAR,
     CHAT_HISTORY,
-    INPUT_BOX
+    INPUT_BOX,
+    INVENTORY,
 }
 
 @Serializable
@@ -30,6 +31,7 @@ val DEFAULT_WIDGETS =
         LayoutWidget(WidgetType.CHAT_HISTORY, x = 0, y = 36, w = 20, h = 9),
         LayoutWidget(WidgetType.INPUT_BOX, x = 0, y = 45, w = 20, h = 3),
         LayoutWidget(WidgetType.SHORTCUT_BAR, x = 15, y = 45, w = 18, h = 3),
+        LayoutWidget(WidgetType.INVENTORY, x = 16, y = 33, w = 16, h = 12),
     )
 
 fun defaultLayout() = GameLayout("default", DEFAULT_WIDGETS)
