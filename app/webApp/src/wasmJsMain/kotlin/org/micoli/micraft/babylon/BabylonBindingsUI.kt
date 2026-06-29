@@ -36,7 +36,7 @@ fun jsCreateHotbar(): Unit = js("mcCreateHotbar()")
 
 fun jsUpdateHotbar(inventoryJson: String): Unit = js("mcUpdateHotbar(inventoryJson)")
 
-fun jsToggleHotbar(): Unit = js("mcToggleHotbar()")
+fun jsToggleHotbar(): Unit = js("(mcToggleHotbar(), document.pointerLockElement && document.exitPointerLock())")
 
 fun jsUpdateShortcutBar(json: String): Unit = js("mcUpdateShortcutBar(json)")
 

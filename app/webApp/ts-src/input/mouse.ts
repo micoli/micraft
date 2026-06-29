@@ -17,7 +17,7 @@ export function registerMouse(): void {
     window.__mc.lastMouseMove = 0;
 
     window.addEventListener("pointerdown", (e: PointerEvent) => {
-      if (e.button === 0) window.__mc.mouseLeft = true;
+      if (e.button === 0 && document.pointerLockElement) window.__mc.mouseLeft = true;
     });
     window.addEventListener("pointerup", (e: PointerEvent) => {
       if (e.button === 0) window.__mc.mouseLeft = false;

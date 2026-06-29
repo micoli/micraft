@@ -380,44 +380,45 @@ function BlockDetail({
         {row("Transparent", block.transparent ? "oui" : "non")}
         {row("Liquide", block.liquid ? "oui" : "non")}
       </div>
-      {giveItemName && (
-        <div style={{ display: "flex", gap: 6, alignItems: "center", paddingTop: 4 }}>
-          <input
-            type="number"
-            min={1}
-            max={128}
-            value={qty}
-            onChange={(e) => setQty(Math.max(1, Math.min(128, parseInt(e.target.value) || 1)))}
-            style={{
-              width: 56,
-              background: "#1e1e1e",
-              border: "1px solid #3a3a3a",
-              borderRadius: 4,
-              color: "#ddd",
-              fontFamily: "monospace",
-              fontSize: 12,
-              padding: "4px 6px",
-              outline: "none",
-            }}
-          />
-          <button
-            onClick={() => (window as any).__mc?.events?.push(`cmd:/give ${giveItemName} ${qty}`)}
-            style={{
-              flex: 1,
-              background: "#2a3d2a",
-              border: "1px solid #4a7a4a",
-              borderRadius: 4,
-              color: "#7aac7a",
-              fontFamily: "monospace",
-              fontSize: 12,
-              cursor: "pointer",
-              padding: "4px 8px",
-            }}
-          >
-            Donner
-          </button>
-        </div>
-      )}
+      <div style={{ display: "flex", gap: 6, alignItems: "center", paddingTop: 4 }}>
+        <input
+          type="number"
+          min={1}
+          max={128}
+          value={qty}
+          disabled={!giveItemName}
+          onChange={(e) => setQty(Math.max(1, Math.min(128, parseInt(e.target.value) || 1)))}
+          style={{
+            width: 56,
+            background: "#1e1e1e",
+            border: "1px solid #3a3a3a",
+            borderRadius: 4,
+            color: giveItemName ? "#ddd" : "#555",
+            fontFamily: "monospace",
+            fontSize: 12,
+            padding: "4px 6px",
+            outline: "none",
+          }}
+        />
+        <button
+          disabled={!giveItemName}
+          onClick={() => giveItemName && (window as any).__mc?.events?.push(`cmd:/give ${giveItemName} ${qty}`)}
+          style={{
+            flex: 1,
+            background: giveItemName ? "#2a3d2a" : "#1e1e1e",
+            border: `1px solid ${giveItemName ? "#4a7a4a" : "#2a2a2a"}`,
+            borderRadius: 4,
+            color: giveItemName ? "#7aac7a" : "#444",
+            fontFamily: "monospace",
+            fontSize: 12,
+            cursor: giveItemName ? "pointer" : "default",
+            padding: "4px 8px",
+          }}
+          title={giveItemName ? undefined : "Aucun item disponible pour ce bloc"}
+        >
+          Donner
+        </button>
+      </div>
     </div>
   );
 }

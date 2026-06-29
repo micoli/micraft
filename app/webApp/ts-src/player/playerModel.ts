@@ -81,13 +81,13 @@ export function registerPlayerModel(): void {
   window.__mcSkinFaceUV = skinFaceUV;
 
   window.mcInitPlayerModel = (): void => {
-    const playerSkin='player';
+    const playerSkin = "player";
     window.__mc = window.__mc || ({} as any);
     fetch(`/api/models/entities/${playerSkin}/${playerSkin}.bbmodel`)
       .then((r) => r.json())
       .then((data: BbModel) => {
         window.__mc.playerBbmodel = data;
-        console.log("[MiCraft] Player model loaded");
+        console.log(`[MiCraft] Player model ${playerSkin} loaded`);
       })
       .catch((e) => {
         console.error("[MiCraft] Failed to load player model", e);

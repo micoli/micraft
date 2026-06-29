@@ -36,7 +36,16 @@ object ItemRegistry {
     fun load(incoming: Map<ItemType, ItemDefinition>) {
         defs.clear()
         defs.putAll(defaults)
-        defs.putAll(incoming)
+        incoming.forEach { (type, def) ->
+            val base = defs[type]
+            defs[type] =
+                if (base != null)
+                    base.copy(
+                        buildable = def.buildable,
+                        placesBlock = def.placesBlock ?: base.placesBlock,
+                    )
+                else def
+        }
     }
 
     fun get(type: ItemType): ItemDefinition = defs[type] ?: ItemDefinition()

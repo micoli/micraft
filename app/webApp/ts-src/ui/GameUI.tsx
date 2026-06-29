@@ -81,10 +81,20 @@ export function GameUI() {
   const codexOpenRef = useRef(false);
 
   useEffect(() => {
-    fetch("/api/items/meta")
-      .then((r) => r.json())
-      .then((data) => dispatch({ type: "item_meta_loaded", data }))
-      .catch(() => {});
+    let cancelled = false;
+    const load = () =>
+      fetch("/api/items/meta")
+        .then((r) => r.json())
+        .then((data) => {
+          if (!cancelled) dispatch({ type: "item_meta_loaded", data });
+        })
+        .catch(() => {
+          if (!cancelled) setTimeout(load, 2000);
+        });
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Keep consoleOpenRef in sync
@@ -207,6 +217,9 @@ export function GameUI() {
       const v = pendingSlotUpdateRef.current;
       pendingSlotUpdateRef.current = "";
       return v;
+    };
+    (window as any).__mcSlotDrop = (slot: number, itemType: string | null) => {
+      pendingSlotUpdateRef.current = JSON.stringify({ slot, itemType: itemType ?? null });
     };
 
     (window as any).mcShowLoginOverlay = () => dispatch({ type: "login_show" });

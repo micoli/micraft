@@ -89,6 +89,7 @@ export function ShortcutBar({ inventory, itemMeta, slots, selectedSlot, onSlotDr
         return (
           <div
             key={idx}
+            data-mc-slot={idx}
             draggable={!isHand && !!itemType}
             onDragStart={!isHand && itemType ? (e) => handleSlotDragStart(e, idx, itemType) : undefined}
             onDragEnd={!isHand && !!itemType ? handleSlotDragEnd : undefined}

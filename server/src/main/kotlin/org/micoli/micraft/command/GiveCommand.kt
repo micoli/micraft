@@ -5,6 +5,8 @@ import org.micoli.micraft.CommandContext
 import org.micoli.micraft.CommandHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
+import org.micoli.micraft.world.BlockType
+import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemType
 
 class GiveCommand : CommandHandler {
@@ -26,7 +28,12 @@ class GiveCommand : CommandHandler {
             return
         }
 
-        val itemType = ItemType.entries.firstOrNull { it.name.equals(typeName, ignoreCase = true) }
+        val itemType =
+            ItemType.entries.firstOrNull { it.name.equals(typeName, ignoreCase = true) }
+                ?: run {
+                    val blockType = BlockType(typeName.uppercase())
+                    ItemType.entries.firstOrNull { ItemRegistry.get(it).placesBlock == blockType }
+                }
         if (itemType == null) {
             val available = ItemType.entries.joinToString(", ") { it.name.lowercase() }
             session.send(
