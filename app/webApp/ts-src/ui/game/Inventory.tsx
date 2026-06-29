@@ -68,12 +68,11 @@ export function Inventory({ inventory, itemMeta, visible, layoutStyle }: Props) 
     ghostRef.current.style.left = `${e.clientX - 26}px`;
     ghostRef.current.style.top = `${e.clientY - 26}px`;
     // Highlight slot under cursor
-    const slotEl = document.elementsFromPoint(e.clientX, e.clientY).find(
-      (el) => el instanceof HTMLElement && (el as HTMLElement).hasAttribute("data-mc-slot"),
-    );
+    const slotEl = document
+      .elementsFromPoint(e.clientX, e.clientY)
+      .find((el) => el instanceof HTMLElement && (el as HTMLElement).hasAttribute("data-mc-slot"));
     if (slotEl !== lastSlotRef.current) {
-      if (lastSlotRef.current instanceof HTMLElement)
-        lastSlotRef.current.style.background = "rgba(0,0,0,0.72)";
+      if (lastSlotRef.current instanceof HTMLElement) lastSlotRef.current.style.background = "rgba(0,0,0,0.72)";
       if (slotEl instanceof HTMLElement) slotEl.style.background = "rgba(255,255,255,0.2)";
       lastSlotRef.current = slotEl ?? null;
     }
@@ -90,9 +89,11 @@ export function Inventory({ inventory, itemMeta, visible, layoutStyle }: Props) 
     if (lastSlotRef.current instanceof HTMLElement) lastSlotRef.current.style.background = "rgba(0,0,0,0.72)";
     lastSlotRef.current = null;
     if (!item) return;
-    const slotEl = document.elementsFromPoint(e.clientX, e.clientY).find(
-      (el) => el instanceof HTMLElement && (el as HTMLElement).hasAttribute("data-mc-slot"),
-    ) as HTMLElement | undefined;
+    const slotEl = document
+      .elementsFromPoint(e.clientX, e.clientY)
+      .find((el) => el instanceof HTMLElement && (el as HTMLElement).hasAttribute("data-mc-slot")) as
+      | HTMLElement
+      | undefined;
     if (slotEl) {
       const slotIdx = parseInt(slotEl.getAttribute("data-mc-slot")!);
       if (slotIdx > 0) (window as any).__mcSlotDrop?.(slotIdx, item);

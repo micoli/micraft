@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 
 interface BlockEntry {
   ordinal: number;
@@ -184,17 +184,10 @@ function Block3DPreview({ ordinal }: { ordinal: number }) {
   );
 }
 
-function BlockCard({
-  block,
-  selected,
-  defsReady,
-  onClick,
-}: {
-  block: BlockEntry;
-  selected: boolean;
-  defsReady: boolean;
-  onClick: () => void;
-}) {
+const BlockCard = forwardRef<
+  HTMLDivElement,
+  { block: BlockEntry; selected: boolean; defsReady: boolean; onClick: () => void }
+>(function BlockCard({ block, selected, defsReady, onClick }, ref) {
   const cardStyle: React.CSSProperties = {
     display: "flex",
     flexDirection: "column",
@@ -216,7 +209,7 @@ function BlockCard({
   };
 
   return (
-    <div style={cardStyle} onClick={onClick} title={block.name}>
+    <div ref={ref} style={cardStyle} onClick={onClick} title={block.name}>
       {defsReady ? (
         <CssBlockCube ordinal={block.ordinal} size={36} />
       ) : (
@@ -232,21 +225,12 @@ function BlockCard({
       <span style={label}>{block.name.replace(/_/g, " ")}</span>
     </div>
   );
-}
+});
 
-function ItemCard({
-  item,
-  blocks,
-  selected,
-  defsReady,
-  onClick,
-}: {
-  item: ItemEntry;
-  blocks: BlockEntry[];
-  selected: boolean;
-  defsReady: boolean;
-  onClick: () => void;
-}) {
+const ItemCard = forwardRef<
+  HTMLDivElement,
+  { item: ItemEntry; blocks: BlockEntry[]; selected: boolean; defsReady: boolean; onClick: () => void }
+>(function ItemCard({ item, blocks, selected, defsReady, onClick }, ref) {
   const linkedBlock = item.placesBlock ? blocks.find((b) => b.name === item.placesBlock) : null;
 
   const cardStyle: React.CSSProperties = {
@@ -270,7 +254,7 @@ function ItemCard({
   };
 
   return (
-    <div style={cardStyle} onClick={onClick} title={item.name}>
+    <div ref={ref} style={cardStyle} onClick={onClick} title={item.name}>
       {defsReady && linkedBlock ? (
         <CssBlockCube ordinal={linkedBlock.ordinal} size={36} />
       ) : (
@@ -294,9 +278,12 @@ function ItemCard({
       <span style={label}>{item.name.replace(/_/g, " ")}</span>
     </div>
   );
-}
+});
 
-function NpcCard({ npc, selected, onClick }: { npc: NpcEntry; selected: boolean; onClick: () => void }) {
+const NpcCard = forwardRef<HTMLDivElement, { npc: NpcEntry; selected: boolean; onClick: () => void }>(function NpcCard(
+  { npc, selected, onClick },
+  ref,
+) {
   const behaviorEmoji: Record<string, string> = {
     interactionable: "💬",
     random_movable: "🐾",
@@ -318,7 +305,7 @@ function NpcCard({ npc, selected, onClick }: { npc: NpcEntry; selected: boolean;
   };
 
   return (
-    <div style={cardStyle} onClick={onClick} title={npc.type}>
+    <div ref={ref} style={cardStyle} onClick={onClick} title={npc.type}>
       <div
         style={{
           width: 52,
@@ -339,7 +326,7 @@ function NpcCard({ npc, selected, onClick }: { npc: NpcEntry; selected: boolean;
       </span>
     </div>
   );
-}
+});
 
 function BlockDetail({
   block,
@@ -573,8 +560,8 @@ export function CodexModal({ open, onClose }: Props) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [filter, setFilter] = useState("");
   const defsReady = useBlockDefsReady();
-
-  if (!open) return null;
+  const gridRef = useRef<HTMLDivElement>(null);
+  const itemRefsMap = useRef<Map<string | number, HTMLDivElement | null>>(new Map());
 
   const allBlocks: BlockEntry[] = ((window as any).__mcCodexBlocks ?? [])
     .map((b: Omit<BlockEntry, "ordinal">, i: number) => ({ ...b, ordinal: i }))
@@ -588,6 +575,78 @@ export function CodexModal({ open, onClose }: Props) {
   const allNpcs: NpcEntry[] = Object.entries((window as any).__mcCodexNpcs ?? {})
     .map(([type, info]: [string, unknown]) => ({ type, ...(info as Omit<NpcEntry, "type">) }))
     .sort((a: NpcEntry, b: NpcEntry) => a.type.localeCompare(b.type));
+
+  const filteredBlocks = allBlocks.filter((b) => b.name.toLowerCase().includes(filter.toLowerCase()));
+  const filteredItems = allItems.filter((it) => it.name.toLowerCase().includes(filter.toLowerCase()));
+  const filteredNpcs = allNpcs.filter((n) => n.type.toLowerCase().includes(filter.toLowerCase()));
+
+  const currentList: (BlockEntry | ItemEntry | NpcEntry)[] =
+    tab === "bestiary" ? filteredNpcs : tab === "blocks" ? filteredBlocks : filteredItems;
+
+  const currentIdx =
+    selection === null
+      ? -1
+      : tab === "bestiary"
+        ? filteredNpcs.findIndex((n) => n.type === (selection as { kind: "npc"; npcType: string }).npcType)
+        : tab === "blocks"
+          ? filteredBlocks.findIndex((b) => b.ordinal === (selection as { kind: "block"; ordinal: number }).ordinal)
+          : filteredItems.findIndex((it) => it.name === (selection as { kind: "item"; name: string }).name);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const selectIdx = (idx: number) => {
+      if (idx < 0 || idx >= currentList.length) return;
+      const item = currentList[idx];
+      if (tab === "bestiary") setSelection({ kind: "npc", npcType: (item as NpcEntry).type });
+      else if (tab === "blocks") setSelection({ kind: "block", ordinal: (item as BlockEntry).ordinal });
+      else setSelection({ kind: "item", name: (item as ItemEntry).name });
+    };
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
+      if ((e.target as HTMLElement)?.tagName === "INPUT") return;
+      e.preventDefault();
+
+      const cardWidth = tab === "bestiary" ? 98 : 88;
+      const cols = gridRef.current ? Math.max(1, Math.floor(gridRef.current.clientWidth / cardWidth)) : 4;
+
+      if (currentIdx === -1) {
+        selectIdx(0);
+        return;
+      }
+
+      let newIdx = currentIdx;
+      if (e.key === "ArrowRight") newIdx = Math.min(currentIdx + 1, currentList.length - 1);
+      else if (e.key === "ArrowLeft") newIdx = Math.max(currentIdx - 1, 0);
+      else if (e.key === "ArrowDown") newIdx = Math.min(currentIdx + cols, currentList.length - 1);
+      else if (e.key === "ArrowUp") newIdx = Math.max(currentIdx - cols, 0);
+
+      selectIdx(newIdx);
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, tab, currentIdx, currentList, onClose]);
+
+  useEffect(() => {
+    if (!open || currentIdx < 0) return;
+    const item = currentList[currentIdx];
+    if (!item) return;
+    const key =
+      tab === "bestiary"
+        ? (item as NpcEntry).type
+        : tab === "blocks"
+          ? (item as BlockEntry).ordinal
+          : (item as ItemEntry).name;
+    itemRefsMap.current.get(key)?.scrollIntoView({ block: "nearest" });
+  }, [open, currentIdx, tab]);
+
+  if (!open) return null;
 
   const TAB_LABEL: Record<CodexTab, string> = {
     bestiary: `Bestiaire (${allNpcs.length})`,
@@ -739,43 +798,46 @@ export function CodexModal({ open, onClose }: Props) {
                 }}
               />
             </div>
-            <div style={grid}>
+            <div ref={gridRef} style={grid}>
               {tab === "bestiary" &&
-                allNpcs
-                  .filter((n) => n.type.toLowerCase().includes(filter.toLowerCase()))
-                  .map((npc) => (
-                    <NpcCard
-                      key={npc.type}
-                      npc={npc}
-                      selected={selection?.kind === "npc" && selection.npcType === npc.type}
-                      onClick={() => setSelection({ kind: "npc", npcType: npc.type })}
-                    />
-                  ))}
+                filteredNpcs.map((npc) => (
+                  <NpcCard
+                    key={npc.type}
+                    ref={(el) => {
+                      itemRefsMap.current.set(npc.type, el);
+                    }}
+                    npc={npc}
+                    selected={selection?.kind === "npc" && selection.npcType === npc.type}
+                    onClick={() => setSelection({ kind: "npc", npcType: npc.type })}
+                  />
+                ))}
               {tab === "blocks" &&
-                allBlocks
-                  .filter((b) => b.name.toLowerCase().includes(filter.toLowerCase()))
-                  .map((block) => (
-                    <BlockCard
-                      key={block.name}
-                      block={block}
-                      defsReady={defsReady}
-                      selected={selection?.kind === "block" && selection.ordinal === block.ordinal}
-                      onClick={() => setSelection({ kind: "block", ordinal: block.ordinal })}
-                    />
-                  ))}
+                filteredBlocks.map((block) => (
+                  <BlockCard
+                    key={block.name}
+                    ref={(el) => {
+                      itemRefsMap.current.set(block.ordinal, el);
+                    }}
+                    block={block}
+                    defsReady={defsReady}
+                    selected={selection?.kind === "block" && selection.ordinal === block.ordinal}
+                    onClick={() => setSelection({ kind: "block", ordinal: block.ordinal })}
+                  />
+                ))}
               {tab === "items" &&
-                allItems
-                  .filter((it) => it.name.toLowerCase().includes(filter.toLowerCase()))
-                  .map((item) => (
-                    <ItemCard
-                      key={item.name}
-                      item={item}
-                      blocks={allBlocks}
-                      defsReady={defsReady}
-                      selected={selection?.kind === "item" && selection.name === item.name}
-                      onClick={() => setSelection({ kind: "item", name: item.name })}
-                    />
-                  ))}
+                filteredItems.map((item) => (
+                  <ItemCard
+                    key={item.name}
+                    ref={(el) => {
+                      itemRefsMap.current.set(item.name, el);
+                    }}
+                    item={item}
+                    blocks={allBlocks}
+                    defsReady={defsReady}
+                    selected={selection?.kind === "item" && selection.name === item.name}
+                    onClick={() => setSelection({ kind: "item", name: item.name })}
+                  />
+                ))}
             </div>
           </div>
 
