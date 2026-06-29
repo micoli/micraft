@@ -18,6 +18,15 @@ enum class ItemType {
     SNOWBALL,
     FLINT,
     SEED,
+    GRASS,
+    SNOW_BLOCK,
+    OAK_LOG,
+    OAK_LEAVES,
+    PINE_LOG,
+    PINE_LEAVES,
+    PINE_LEAVES_SNOW,
+    FLOWER,
+    WEED,
 }
 
 @JvmInline
@@ -57,8 +66,8 @@ object BlockTypeSerializer : KSerializer<BlockType> {
     override fun deserialize(decoder: Decoder) = BlockType(decoder.decodeString())
 }
 
-val BlockType.hardness: Int
-    get() = BlockRegistry.get(this).hardness.let { if (it == -1) Int.MAX_VALUE else it }
+val BlockType.hardness: Float
+    get() = BlockRegistry.get(this).hardness.let { if (it == -1f) Float.MAX_VALUE else it }
 
 val BlockType.isSolid: Boolean
     get() = BlockRegistry.get(this).solid

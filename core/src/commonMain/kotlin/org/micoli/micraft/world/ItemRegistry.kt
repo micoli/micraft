@@ -29,6 +29,51 @@ object ItemRegistry {
             ItemType.SEED to
                 ItemDefinition(
                     buildable = true, placesBlock = BlockType.SEED, label = "SED", bg = "#C8A050"),
+            ItemType.GRASS to
+                ItemDefinition(
+                    buildable = true, placesBlock = BlockType.GRASS, label = "GRS", bg = "#4A7A28"),
+            ItemType.SNOW_BLOCK to
+                ItemDefinition(
+                    buildable = true, placesBlock = BlockType.SNOW, label = "SNB", bg = "#F0F0F0"),
+            ItemType.OAK_LOG to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.OAK_LOG,
+                    label = "OLG",
+                    bg = "#654321"),
+            ItemType.OAK_LEAVES to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.OAK_LEAVES,
+                    label = "OLV",
+                    bg = "#3C641E"),
+            ItemType.PINE_LOG to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.PINE_LOG,
+                    label = "PLG",
+                    bg = "#503219"),
+            ItemType.PINE_LEAVES to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.PINE_LEAVES,
+                    label = "PLV",
+                    bg = "#285A3C"),
+            ItemType.PINE_LEAVES_SNOW to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.PINE_LEAVES_SNOW,
+                    label = "PLS",
+                    bg = "#C8D7DC"),
+            ItemType.FLOWER to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.FLOWER,
+                    label = "FLW",
+                    bg = "#E6C832"),
+            ItemType.WEED to
+                ItemDefinition(
+                    buildable = true, placesBlock = BlockType.WEED, label = "WED", bg = "#468228"),
         )
 
     private val defs: MutableMap<ItemType, ItemDefinition> = defaults.toMutableMap()
