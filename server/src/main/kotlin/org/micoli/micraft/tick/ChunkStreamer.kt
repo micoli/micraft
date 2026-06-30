@@ -23,9 +23,11 @@ class ChunkStreamer(private val world: WorldState) {
 
     private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val readyPools = ConcurrentHashMap<String, ConcurrentHashMap<ChunkPos, Chunk>>()
+    private val pendingPools = ConcurrentHashMap<String, MutableSet<ChunkPos>>()
 
     fun cleanupSession(sessionId: String) {
         readyPools.remove(sessionId)
+        pendingPools.remove(sessionId)
     }
 
     fun checkAndRequest(session: PlayerSession) {
@@ -42,12 +44,36 @@ class ChunkStreamer(private val world: WorldState) {
 
     fun requestAround(session: PlayerSession, cx: Int, cz: Int) {
         val offsets = buildOffsets(session.state.orientation.yaw.toDouble(), cx, cz)
+        val pending = pendingPools.getOrPut(session.id) { ConcurrentHashMap.newKeySet() }
         for ((dx, dz) in offsets) {
-            if (session.inFlightChunks.size >= MAX_IN_FLIGHT) break
             val cp = ChunkPos(cx + dx, cz + dz)
-            if (session.loadedChunks.contains(cp) || session.inFlightChunks.contains(cp)) continue
+            if (!session.loadedChunks.contains(cp) && !session.inFlightChunks.contains(cp)) {
+                pending.add(cp)
+            }
+        }
+        drainPending(session)
+    }
+
+    private fun drainPending(session: PlayerSession) {
+        val pending = pendingPools[session.id] ?: return
+        if (pending.isEmpty()) return
+
+        val slots = MAX_IN_FLIGHT - session.inFlightChunks.size
+        if (slots <= 0) return
+
+        val cx = Math.floorDiv(session.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE)
+        val cz = Math.floorDiv(session.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE)
+        val yaw = session.state.orientation.yaw.toDouble()
+
+        val candidates = pending
+            .sortedBy { cp -> chunkScore(cp.cx - cx, cp.cz - cz, yaw) }
+            .take(slots)
+
+        val pool = readyPools.getOrPut(session.id) { ConcurrentHashMap() }
+        for (cp in candidates) {
+            if (session.inFlightChunks.size >= MAX_IN_FLIGHT) break
+            pending.remove(cp)
             session.inFlightChunks.add(cp)
-            val pool = readyPools.getOrPut(session.id) { ConcurrentHashMap() }
             ioScope.launch {
                 val chunk = world.getOrGenerate(cp)
                 pool[cp] = chunk
@@ -75,13 +101,16 @@ class ChunkStreamer(private val world: WorldState) {
             session.sendChunk(ServerMessage.ChunkData(chunk.pos, chunk.topY(), chunk.encodeWire()))
             delivered++
         }
-        if (delivered > 0) log.debug("{} chunks delivered to {}", delivered, session.id.take(8))
+        if (delivered > 0) {
+            log.debug("{} chunks delivered to {}", delivered, session.id.take(8))
+            drainPending(session)
+        }
     }
 
     private fun chunkScore(dx: Int, dz: Int, yaw: Double): Double {
         if (dx == 0 && dz == 0) return -1.0
-        val fwdX = sin(yaw)
-        val fwdZ = cos(yaw)
+        val fwdX = -sin(yaw)
+        val fwdZ = -cos(yaw)
         val dist = sqrt((dx * dx + dz * dz).toDouble())
         val dot = (dx * fwdX + dz * fwdZ) / dist
         val angleDeg = Math.toDegrees(acos(dot.coerceIn(-1.0, 1.0)))
