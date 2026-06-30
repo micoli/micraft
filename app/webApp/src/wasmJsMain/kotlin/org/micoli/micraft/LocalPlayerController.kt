@@ -225,7 +225,9 @@ class LocalPlayerController(
     fun tick() {
         totalClientTicks++
         val nowMs = jsNow()
-        val actualDt = if (lastTickMs == 0.0) PRED_DT else ((nowMs - lastTickMs) / 1000.0).coerceIn(0.008, 0.05)
+        val actualDt =
+            if (lastTickMs == 0.0) PRED_DT
+            else ((nowMs - lastTickMs) / 1000.0).coerceIn(0.008, 0.05)
         if (lastTickMs != 0.0) tickIntervals.addCapped(nowMs - lastTickMs)
         lastTickMs = nowMs
         val consoleInput = jsConsumeConsoleInput()

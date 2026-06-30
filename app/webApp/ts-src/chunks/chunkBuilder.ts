@@ -195,6 +195,9 @@ export function registerChunks(): void {
 
   window.mcChunkBegin = (cx: number, cz: number): void => {
     if (faceTable.length === 0) buildFaceTable();
+    if (__mcBuf) {
+      for (const mk of Object.keys(__mcBuf.groups)) releaseGroup(__mcBuf.groups[mk]);
+    }
     __mcBuf = { key: `${cx},${cz}`, groups: {} };
   };
 

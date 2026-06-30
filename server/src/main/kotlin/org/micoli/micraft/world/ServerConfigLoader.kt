@@ -18,8 +18,8 @@ private val log = LoggerFactory.getLogger("ServerConfigLoader")
 @Serializable
 data class WorldSection(
     @EncodeDefault(ALWAYS) val worldMinY: Int = 0,
-    @EncodeDefault(ALWAYS) val worldMaxY: Int = 1024,
-    @EncodeDefault(ALWAYS) val chunkSize: Int = 16,
+    @EncodeDefault(ALWAYS) val worldMaxY: Int = 128,
+    @EncodeDefault(ALWAYS) val chunkSize: Int = 32,
     @EncodeDefault(ALWAYS) val viewRadius: Int = 3,
     @EncodeDefault(ALWAYS) val forwardViewRadius: Int = 7,
     @EncodeDefault(ALWAYS) val waterLevel: Int = 65,

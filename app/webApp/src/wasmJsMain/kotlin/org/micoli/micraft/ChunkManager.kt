@@ -50,6 +50,10 @@ private val AO_NEIGHBORS: Array<Array<Array<IntArray>>> =
         ),
     )
 
+private const val SLICE_HEIGHT = 32
+
+private data class ChunkRender(val chunk: Chunk, val topY: Int, var nextY: Int = 0)
+
 class ChunkManager(private val scene: JsAny) {
     val loadedChunks = mutableSetOf<ChunkPos>()
     val chunkData = mutableMapOf<ChunkPos, Pair<Chunk, Int>>()
@@ -57,6 +61,7 @@ class ChunkManager(private val scene: JsAny) {
     private val pendingUnloads = mutableListOf<ChunkPos>()
     private var blockMaterials: JsAny? = null
     private var shadersEnabled = true
+    private var activeRender: ChunkRender? = null
 
     fun setShadersEnabled(enabled: Boolean) {
         shadersEnabled = enabled
@@ -76,15 +81,43 @@ class ChunkManager(private val scene: JsAny) {
     }
 
     fun enqueueChunk(chunk: Chunk, topY: Int) {
-        pendingChunks.add(Pair(chunk, topY))
+        val pos = chunk.pos
+        if (activeRender?.chunk?.pos == pos) {
+            // Abort in-progress render; jsChunkBegin on next drain will release the JS buffer
+            activeRender = null
+        }
+        pendingChunks.removeAll { (c, _) -> c.pos == pos }
+        pendingChunks.add(0, Pair(chunk, topY)) // front = higher priority
     }
 
-    fun drainPendingChunks(budgetMs: Double = 8.0) {
-        if (getBlockMaterials() == null || pendingChunks.isEmpty()) return
+    fun drainPendingChunks(budgetMs: Double = 4.0) {
+        val mats = getBlockMaterials() ?: return
+        if (pendingChunks.isEmpty() && activeRender == null) return
         val deadline = jsNow() + budgetMs
-        while (pendingChunks.isNotEmpty() && jsNow() < deadline) {
-            val (chunk, topY) = pendingChunks.removeAt(0)
-            renderChunk(chunk, topY)
+
+        while (jsNow() < deadline) {
+            if (activeRender == null) {
+                if (pendingChunks.isEmpty()) break
+                val (chunk, topY) = pendingChunks.removeAt(0)
+                chunkData[chunk.pos] = Pair(chunk, topY)
+                // mcChunkBegin resets __mcBuf and releases any orphaned pool groups
+                jsChunkBegin(chunk.pos.cx, chunk.pos.cz)
+                activeRender = ChunkRender(chunk, topY)
+            }
+
+            val ar = activeRender!!
+            val fromY = ar.nextY
+            val toY = minOf(fromY + SLICE_HEIGHT - 1, ar.topY)
+            renderSlice(ar.chunk, ar.topY, fromY, toY)
+            ar.nextY = toY + 1
+
+            if (ar.nextY > ar.topY) {
+                jsChunkEnd(scene, mats)
+                loadedChunks.add(ar.chunk.pos)
+                pushMinimapChunk(ar.chunk, ar.topY)
+                activeRender = null
+            }
+            // Budget check at top of loop — never blocks more than one slice duration
         }
     }
 
@@ -104,6 +137,7 @@ class ChunkManager(private val scene: JsAny) {
         return chunk.getBlock(lx, wy, lz)
     }
 
+    // Synchronous full re-render (WorldUpdate block changes) — old mesh stays until done
     fun renderChunk(chunk: Chunk, topY: Int) {
         val mats =
             getBlockMaterials()
@@ -111,41 +145,9 @@ class ChunkManager(private val scene: JsAny) {
                     pendingChunks.add(Pair(chunk, topY))
                     return
                 }
-        val chunkKey = "${chunk.pos.cx},${chunk.pos.cz}"
-        jsDisposeChunk(chunkKey)
         chunkData[chunk.pos] = Pair(chunk, topY)
-
-        val ox = chunk.pos.cx * WorldConstants.CHUNK_SIZE
-        val oz = chunk.pos.cz * WorldConstants.CHUNK_SIZE
-        val s = WorldConstants.CHUNK_SIZE
-
         jsChunkBegin(chunk.pos.cx, chunk.pos.cz)
-        for (x in 0 until s) {
-            for (z in 0 until s) {
-                for (y in 0..topY) {
-                    val block = chunk.getBlock(x, y, z)
-                    if (block == BlockType.AIR) continue
-                    val t = BlockRegistry.wireIndex(block) * 6
-                    val wx = ox + x
-                    val wz2 = oz + z
-                    val blockAbove =
-                        if (y >= WorldConstants.WORLD_MAX_Y) BlockType.AIR
-                        else chunk.getBlock(x, y + 1, z)
-                    if (!blockAbove.isSolid && !(block.isLiquid && blockAbove.isLiquid))
-                        jsChunkFace(wx, y, wz2, t + 4, computeFaceAO(chunk, x, y, z, 4))
-                    if (y <= 0 || !chunk.getBlock(x, y - 1, z).isSolid)
-                        jsChunkFace(wx, y, wz2, t + 5, computeFaceAO(chunk, x, y, z, 5))
-                    if (z == s - 1 || !chunk.getBlock(x, y, z + 1).isSolid)
-                        jsChunkFace(wx, y, wz2, t + 0, computeFaceAO(chunk, x, y, z, 0))
-                    if (z == 0 || !chunk.getBlock(x, y, z - 1).isSolid)
-                        jsChunkFace(wx, y, wz2, t + 1, computeFaceAO(chunk, x, y, z, 1))
-                    if (x == s - 1 || !chunk.getBlock(x + 1, y, z).isSolid)
-                        jsChunkFace(wx, y, wz2, t + 2, computeFaceAO(chunk, x, y, z, 2))
-                    if (x == 0 || !chunk.getBlock(x - 1, y, z).isSolid)
-                        jsChunkFace(wx, y, wz2, t + 3, computeFaceAO(chunk, x, y, z, 3))
-                }
-            }
-        }
+        renderSlice(chunk, topY, 0, topY)
         jsChunkEnd(scene, mats)
         loadedChunks.add(chunk.pos)
         pushMinimapChunk(chunk, topY)
@@ -172,6 +174,39 @@ class ChunkManager(private val scene: JsAny) {
         loadedChunks.clear()
         chunkData.clear()
         pendingChunks.clear()
+        activeRender = null
+    }
+
+    private fun renderSlice(chunk: Chunk, topY: Int, fromY: Int, toY: Int) {
+        val ox = chunk.pos.cx * WorldConstants.CHUNK_SIZE
+        val oz = chunk.pos.cz * WorldConstants.CHUNK_SIZE
+        val s = WorldConstants.CHUNK_SIZE
+        for (y in fromY..toY) {
+            for (x in 0 until s) {
+                for (z in 0 until s) {
+                    val block = chunk.getBlock(x, y, z)
+                    if (block == BlockType.AIR) continue
+                    val t = BlockRegistry.wireIndex(block) * 6
+                    val wx = ox + x
+                    val wz2 = oz + z
+                    val blockAbove =
+                        if (y >= WorldConstants.WORLD_MAX_Y) BlockType.AIR
+                        else chunk.getBlock(x, y + 1, z)
+                    if (!blockAbove.isSolid && !(block.isLiquid && blockAbove.isLiquid))
+                        jsChunkFace(wx, y, wz2, t + 4, computeFaceAO(chunk, x, y, z, 4))
+                    if (y <= 0 || !chunk.getBlock(x, y - 1, z).isSolid)
+                        jsChunkFace(wx, y, wz2, t + 5, computeFaceAO(chunk, x, y, z, 5))
+                    if (z == s - 1 || !chunk.getBlock(x, y, z + 1).isSolid)
+                        jsChunkFace(wx, y, wz2, t + 0, computeFaceAO(chunk, x, y, z, 0))
+                    if (z == 0 || !chunk.getBlock(x, y, z - 1).isSolid)
+                        jsChunkFace(wx, y, wz2, t + 1, computeFaceAO(chunk, x, y, z, 1))
+                    if (x == s - 1 || !chunk.getBlock(x + 1, y, z).isSolid)
+                        jsChunkFace(wx, y, wz2, t + 2, computeFaceAO(chunk, x, y, z, 2))
+                    if (x == 0 || !chunk.getBlock(x - 1, y, z).isSolid)
+                        jsChunkFace(wx, y, wz2, t + 3, computeFaceAO(chunk, x, y, z, 3))
+                }
+            }
+        }
     }
 
     private fun pushMinimapChunk(chunk: Chunk, topY: Int) {
