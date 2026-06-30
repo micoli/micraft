@@ -183,22 +183,24 @@ class ChunkManager(private val scene: JsAny) {
         activeRender = null
     }
 
-    fun getChunkDebugJson(playerCx: Int, playerCz: Int, radius: Int): String {
+    fun getChunkDebugJson(playerCx: Int, playerCz: Int, radius: Int, playerYaw: Double): String {
         val pendingSet = pendingChunks.map { (c, _) -> c.pos }.toSet()
         val activePos = activeRender?.chunk?.pos
         val sb = StringBuilder()
-        sb.append("{\"playerCx\":$playerCx,\"playerCz\":$playerCz,\"radius\":$radius,\"chunks\":[")
+        sb.append(
+            "{\"playerCx\":$playerCx,\"playerCz\":$playerCz,\"radius\":$radius,\"playerYaw\":$playerYaw,\"chunks\":[")
         var first = true
         for (dz in -radius..radius) {
             for (dx in -radius..radius) {
                 val cx = playerCx + dx
                 val cz = playerCz + dz
                 val pos = ChunkPos(cx, cz)
-                val state = when {
-                    loadedChunks.contains(pos) -> "loaded"
-                    pos == activePos || pendingSet.contains(pos) -> "loading"
-                    else -> "missing"
-                }
+                val state =
+                    when {
+                        loadedChunks.contains(pos) -> "loaded"
+                        pos == activePos || pendingSet.contains(pos) -> "loading"
+                        else -> "missing"
+                    }
                 if (!first) sb.append(",")
                 sb.append("{\"cx\":$cx,\"cz\":$cz,\"state\":\"$state\"}")
                 first = false

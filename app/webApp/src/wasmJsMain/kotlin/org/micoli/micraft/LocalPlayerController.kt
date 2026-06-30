@@ -625,7 +625,9 @@ class LocalPlayerController(
             )
         val debugCx = hudX.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
         val debugCz = hudZ.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
-        jsUpdateChunkDebug(chunkManager.getChunkDebugJson(debugCx, debugCz, WorldConstants.VIEW_RADIUS + 1))
+        jsUpdateChunkDebug(
+            chunkManager.getChunkDebugJson(
+                debugCx, debugCz, WorldConstants.FORWARD_VIEW_RADIUS, yaw.toDouble()))
     }
 
     fun buildMoveIntent(): ClientMessage.MoveIntent {

@@ -77,21 +77,16 @@ class ChunkStreamer(private val world: WorldState) {
         val fwdR = WorldConstants.FORWARD_VIEW_RADIUS
         return (-fwdR..fwdR)
             .flatMap { dx -> (-fwdR..fwdR).map { dz -> dx to dz } }
-            .filter { (dx, dz) ->
-                val chebyshev = maxOf(abs(dx), abs(dz))
-                if (chebyshev <= r) true
-                else {
-                    val len = sqrt((dx * dx + dz * dz).toDouble())
-                    val dot = (dx * fwdX + dz * fwdZ) / len
-                    Math.toDegrees(acos(dot.coerceIn(-1.0, 1.0))) < 90.0
-                }
-            }
             .sortedBy { (dx, dz) ->
-                if (dx == 0 && dz == 0) -1.0
-                else {
-                    val len = sqrt((dx * dx + dz * dz).toDouble())
-                    val dot = (dx * fwdX + dz * fwdZ) / len
-                    Math.toDegrees(acos(dot.coerceIn(-1.0, 1.0))) + 0.5 * maxOf(abs(dx), abs(dz))
+                if (dx == 0 && dz == 0) return@sortedBy -1.0
+                val chebyshev = maxOf(abs(dx), abs(dz))
+                val dist = sqrt((dx * dx + dz * dz).toDouble())
+                val dot = (dx * fwdX + dz * fwdZ) / dist
+                val inCone = Math.toDegrees(acos(dot.coerceIn(-1.0, 1.0))) < 90.0
+                when {
+                    chebyshev <= r -> dist               // tier 1: near sphere
+                    inCone -> 1000.0 + dist              // tier 2: forward cone
+                    else -> 2000.0 + dist                // tier 3: remaining
                 }
             }
     }

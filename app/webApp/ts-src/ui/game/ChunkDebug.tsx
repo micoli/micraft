@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 interface ChunkEntry {
   cx: number;
@@ -10,6 +10,7 @@ export interface ChunkDebugData {
   playerCx: number;
   playerCz: number;
   radius: number;
+  playerYaw: number;
   chunks: ChunkEntry[];
 }
 
@@ -26,7 +27,38 @@ interface Props {
 
 export function ChunkDebug({ data, layoutStyle }: Props) {
   if (!data) return null;
-  const { playerCx, playerCz, radius, chunks } = data;
+  const { playerCx, playerCz, radius, playerYaw, chunks } = data;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const s = canvas.width;
+    ctx.clearRect(0, 0, s, s);
+    // yaw=0 → +Z (south, down on map); north=up on canvas → same convention as minimap
+    const cx = s / 2;
+    const cz = s / 2;
+    const len = s * 0.38;
+    const dx = -Math.sin(playerYaw) * len;
+    const dz = Math.cos(playerYaw) * len;
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cz);
+    ctx.lineTo(cx + dx, cz + dz);
+    ctx.stroke();
+    // arrowhead
+    const headLen = s * 0.12;
+    const headAngle = 0.45;
+    ctx.beginPath();
+    ctx.moveTo(cx + dx, cz + dz);
+    ctx.lineTo(cx + dx + headLen * Math.sin(playerYaw - headAngle), cz + dz - headLen * Math.cos(playerYaw - headAngle));
+    ctx.moveTo(cx + dx, cz + dz);
+    ctx.lineTo(cx + dx + headLen * Math.sin(playerYaw + headAngle), cz + dz - headLen * Math.cos(playerYaw + headAngle));
+    ctx.stroke();
+  }, [playerYaw]);
   const side = radius * 2 + 1;
   const map = new Map(chunks.map((c) => [`${c.cx},${c.cz}`, c.state]));
 
@@ -80,6 +112,7 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
                 key={`${cx},${cz}`}
                 title={`${cx},${cz} ${state}`}
                 style={{
+                  position: "relative",
                   background: STATE_COLOR[state],
                   opacity: isPlayer ? 1 : 0.75,
                   borderRadius: 1,
@@ -87,7 +120,16 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
                   minWidth: 0,
                   minHeight: 0,
                 }}
-              />
+              >
+                {isPlayer && (
+                  <canvas
+                    ref={canvasRef}
+                    width={16}
+                    height={16}
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
+                  />
+                )}
+              </div>
             );
           }),
         )}

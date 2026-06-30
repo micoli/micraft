@@ -21,7 +21,7 @@ data class WorldSection(
     @EncodeDefault(ALWAYS) val worldMaxY: Int = 512,
     @EncodeDefault(ALWAYS) val chunkSize: Int = 16,
     @EncodeDefault(ALWAYS) val viewRadius: Int = 3,
-    @EncodeDefault(ALWAYS) val forwardViewRadius: Int = 3,
+    @EncodeDefault(ALWAYS) val forwardViewRadius: Int = 7,
     @EncodeDefault(ALWAYS) val waterLevel: Int = 65,
 )
 
