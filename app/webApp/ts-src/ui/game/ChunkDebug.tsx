@@ -41,8 +41,8 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
     const cx = s / 2;
     const cz = s / 2;
     const len = s * 0.38;
-    const dx = -Math.sin(playerYaw) * len;
-    const dz = Math.cos(playerYaw) * len;
+    const dx = Math.sin(playerYaw) * len;
+    const dz = -Math.cos(playerYaw) * len;
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -54,11 +54,11 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
     const headAngle = 0.45;
     ctx.beginPath();
     ctx.moveTo(cx + dx, cz + dz);
-    ctx.lineTo(cx + dx + headLen * Math.sin(playerYaw - headAngle), cz + dz - headLen * Math.cos(playerYaw - headAngle));
+    ctx.lineTo(cx + dx - headLen * Math.sin(playerYaw - headAngle), cz + dz + headLen * Math.cos(playerYaw - headAngle));
     ctx.moveTo(cx + dx, cz + dz);
-    ctx.lineTo(cx + dx + headLen * Math.sin(playerYaw + headAngle), cz + dz - headLen * Math.cos(playerYaw + headAngle));
+    ctx.lineTo(cx + dx - headLen * Math.sin(playerYaw + headAngle), cz + dz + headLen * Math.cos(playerYaw + headAngle));
     ctx.stroke();
-  }, [playerYaw]);
+  }, [data]);
   const side = radius * 2 + 1;
   const map = new Map(chunks.map((c) => [`${c.cx},${c.cz}`, c.state]));
 
