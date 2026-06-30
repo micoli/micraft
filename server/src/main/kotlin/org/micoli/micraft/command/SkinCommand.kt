@@ -21,8 +21,7 @@ fun availablePlayerSkins(): List<String> =
             skinsRoot
                 .listDirectoryEntries()
                 .filter { dir ->
-                    dir.isDirectory() &&
-                        dir.resolve("${dir.name}.bbmodel").toFile().exists()
+                    dir.isDirectory() && dir.resolve("${dir.name}.bbmodel").toFile().exists()
                 }
                 .map { it.name }
                 .sorted()

@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useRef, useState, useCallback } from "react";
 import { getFaceTexUrl } from "../blocks/blockDefs";
 
 interface BlockEntry {
@@ -28,8 +28,12 @@ interface NpcEntry {
   autoSpawn: boolean;
 }
 
-type CodexTab = "bestiary" | "blocks" | "items";
-type Selection = { kind: "block"; ordinal: number } | { kind: "item"; name: string } | { kind: "npc"; npcType: string };
+type CodexTab = "bestiary" | "blocks" | "items" | "skins";
+type Selection =
+  | { kind: "block"; ordinal: number }
+  | { kind: "item"; name: string }
+  | { kind: "npc"; npcType: string }
+  | { kind: "skin"; name: string };
 
 interface Props {
   open: boolean;
@@ -545,11 +549,184 @@ function NpcDetail({ npc }: { npc: NpcEntry }) {
   );
 }
 
+function usePlayerModelReady(skin: string): boolean {
+  const [ready, setReady] = useState(() => !!(window as any).mcIsPlayerBbmodelReady?.(skin));
+  useEffect(() => {
+    setReady(!!(window as any).mcIsPlayerBbmodelReady?.(skin));
+    (window as any).mcInitPlayerModel?.(skin);
+    if ((window as any).mcIsPlayerBbmodelReady?.(skin)) return;
+    const iv = setInterval(() => {
+      if ((window as any).mcIsPlayerBbmodelReady?.(skin)) {
+        setReady(true);
+        clearInterval(iv);
+      }
+    }, 150);
+    return () => clearInterval(iv);
+  }, [skin]);
+  return ready;
+}
+
+function SkinModelPreview({ skin, walking }: { skin: string; walking: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ready = usePlayerModelReady(skin);
+  const walkingRef = useRef(walking);
+  walkingRef.current = walking;
+
+  useEffect(() => {
+    if (!ready) return;
+    if (!(window as any).mcIsPlayerBbmodelReady?.(skin)) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const B = (window as any).BABYLON;
+    if (!B) return;
+
+    const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
+    const scene = new B.Scene(engine);
+    scene.clearColor = new B.Color4(0.08, 0.08, 0.08, 0);
+
+    new B.ArcRotateCamera("cam", -Math.PI * 0.25, Math.PI / 3.2, 3.0, new B.Vector3(0, 0.9, 0), scene);
+    const light = new B.HemisphericLight("light", new B.Vector3(1, 2, 0.5), scene);
+    light.intensity = 1.1;
+    light.groundColor = new B.Color3(0.2, 0.2, 0.2);
+
+    const model = (window as any).mcCreatePlayerModelNow?.(scene, skin) ?? null;
+
+    let angle = 0;
+    scene.onBeforeRenderObservable.add(() => {
+      angle += 0.015;
+      if (model) (window as any).mcSetPlayerTransform?.(model, 0, 0, 0, angle, 0, walkingRef.current);
+    });
+
+    engine.runRenderLoop(() => scene.render());
+    return () => {
+      if (model) (window as any).mcDisposePlayerModel?.(model);
+      engine.dispose();
+    };
+  }, [ready, skin]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={160}
+      height={220}
+      style={{ display: "block", width: 160, height: 220, borderRadius: 6, background: "#111" }}
+    />
+  );
+}
+
+const SkinCard = forwardRef<HTMLDivElement, { name: string; selected: boolean; onClick: () => void }>(function SkinCard(
+  { name, selected, onClick },
+  ref,
+) {
+  return (
+    <div
+      ref={ref}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "8px 6px",
+        cursor: "pointer",
+        borderRadius: 6,
+        border: `2px solid ${selected ? "#7aac7a" : "transparent"}`,
+        background: selected ? "rgba(122,172,122,0.12)" : "transparent",
+        gap: 4,
+        width: 90,
+      }}
+      onClick={onClick}
+      title={name}
+    >
+      <div
+        style={{
+          width: 52,
+          height: 52,
+          background: "#2a2a2a",
+          borderRadius: 8,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 28,
+          border: "1px solid #444",
+        }}
+      >
+        🧑
+      </div>
+      <span style={{ fontSize: 11, color: "#ccc", textAlign: "center", lineHeight: 1.2 }}>
+        {name.replace(/_/g, " ")}
+      </span>
+    </div>
+  );
+});
+
+function SkinDetail({ name }: { name: string }) {
+  const [walking, setWalking] = useState(true);
+
+  const btnStyle = (active: boolean): React.CSSProperties => ({
+    flex: 1,
+    background: active ? "#2a3d2a" : "#1e1e1e",
+    border: `1px solid ${active ? "#4a7a4a" : "#333"}`,
+    borderRadius: 4,
+    color: active ? "#7aac7a" : "#666",
+    fontFamily: "monospace",
+    fontSize: 11,
+    cursor: "pointer",
+    padding: "4px 0",
+  });
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 8 }}>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <SkinModelPreview skin={name} walking={walking} />
+      </div>
+      <div style={{ fontSize: 15, fontWeight: "bold", color: "#eee", textAlign: "center" }}>
+        {name.replace(/_/g, " ")}
+      </div>
+      <div style={{ display: "flex", gap: 4 }}>
+        <button style={btnStyle(!walking)} onClick={() => setWalking(false)}>
+          Statique
+        </button>
+        <button style={btnStyle(walking)} onClick={() => setWalking(true)}>
+          Marche
+        </button>
+      </div>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <button
+          onClick={() => (window as any).__mc?.events?.push(`cmd:/skin ${name}`)}
+          style={{
+            background: "#2a3d2a",
+            border: "1px solid #4a7a4a",
+            borderRadius: 4,
+            color: "#7aac7a",
+            fontFamily: "monospace",
+            fontSize: 12,
+            cursor: "pointer",
+            padding: "5px 16px",
+          }}
+        >
+          Équiper
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function CodexModal({ open, onClose }: Props) {
   const [tab, setTab] = useState<CodexTab>("bestiary");
   const [selection, setSelection] = useState<Selection | null>(null);
   const [filter, setFilter] = useState("");
+  const [allSkins, setAllSkins] = useState<string[]>([]);
   const defsReady = useBlockDefsReady();
+
+  const fetchSkins = useCallback(() => {
+    fetch("/api/skins")
+      .then((r) => r.json())
+      .then((data: string[]) => setAllSkins(data))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (open && tab === "skins" && allSkins.length === 0) fetchSkins();
+  }, [open, tab, allSkins.length, fetchSkins]);
   const gridRef = useRef<HTMLDivElement>(null);
   const itemRefsMap = useRef<Map<string | number, HTMLDivElement | null>>(new Map());
 
@@ -569,9 +746,16 @@ export function CodexModal({ open, onClose }: Props) {
   const filteredBlocks = allBlocks.filter((b) => b.name.toLowerCase().includes(filter.toLowerCase()));
   const filteredItems = allItems.filter((it) => it.name.toLowerCase().includes(filter.toLowerCase()));
   const filteredNpcs = allNpcs.filter((n) => n.type.toLowerCase().includes(filter.toLowerCase()));
+  const filteredSkins = allSkins.filter((s) => s.toLowerCase().includes(filter.toLowerCase()));
 
-  const currentList: (BlockEntry | ItemEntry | NpcEntry)[] =
-    tab === "bestiary" ? filteredNpcs : tab === "blocks" ? filteredBlocks : filteredItems;
+  const currentList: (BlockEntry | ItemEntry | NpcEntry | string)[] =
+    tab === "bestiary"
+      ? filteredNpcs
+      : tab === "blocks"
+        ? filteredBlocks
+        : tab === "items"
+          ? filteredItems
+          : filteredSkins;
 
   const currentIdx =
     selection === null
@@ -580,7 +764,9 @@ export function CodexModal({ open, onClose }: Props) {
         ? filteredNpcs.findIndex((n) => n.type === (selection as { kind: "npc"; npcType: string }).npcType)
         : tab === "blocks"
           ? filteredBlocks.findIndex((b) => b.ordinal === (selection as { kind: "block"; ordinal: number }).ordinal)
-          : filteredItems.findIndex((it) => it.name === (selection as { kind: "item"; name: string }).name);
+          : tab === "items"
+            ? filteredItems.findIndex((it) => it.name === (selection as { kind: "item"; name: string }).name)
+            : filteredSkins.findIndex((s) => s === (selection as { kind: "skin"; name: string }).name);
 
   useEffect(() => {
     if (!open) return;
@@ -590,7 +776,8 @@ export function CodexModal({ open, onClose }: Props) {
       const item = currentList[idx];
       if (tab === "bestiary") setSelection({ kind: "npc", npcType: (item as NpcEntry).type });
       else if (tab === "blocks") setSelection({ kind: "block", ordinal: (item as BlockEntry).ordinal });
-      else setSelection({ kind: "item", name: (item as ItemEntry).name });
+      else if (tab === "items") setSelection({ kind: "item", name: (item as ItemEntry).name });
+      else setSelection({ kind: "skin", name: item as string });
     };
 
     const handler = (e: KeyboardEvent) => {
@@ -602,7 +789,7 @@ export function CodexModal({ open, onClose }: Props) {
       if ((e.target as HTMLElement)?.tagName === "INPUT") return;
       e.preventDefault();
 
-      const cardWidth = tab === "bestiary" ? 98 : 88;
+      const cardWidth = tab === "bestiary" || tab === "skins" ? 98 : 88;
       const cols = gridRef.current ? Math.max(1, Math.floor(gridRef.current.clientWidth / cardWidth)) : 4;
 
       if (currentIdx === -1) {
@@ -632,7 +819,9 @@ export function CodexModal({ open, onClose }: Props) {
         ? (item as NpcEntry).type
         : tab === "blocks"
           ? (item as BlockEntry).ordinal
-          : (item as ItemEntry).name;
+          : tab === "items"
+            ? (item as ItemEntry).name
+            : (item as string);
     itemRefsMap.current.get(key)?.scrollIntoView({ block: "nearest" });
   }, [open, currentIdx, tab]);
 
@@ -642,6 +831,7 @@ export function CodexModal({ open, onClose }: Props) {
     bestiary: `Bestiaire (${allNpcs.length})`,
     blocks: `Blocs (${allBlocks.length})`,
     items: `Items (${allItems.length})`,
+    skins: `Skins (${allSkins.length})`,
   };
 
   const overlay: React.CSSProperties = {
@@ -741,7 +931,7 @@ export function CodexModal({ open, onClose }: Props) {
         </div>
 
         <div style={tabBar}>
-          {(["bestiary", "blocks", "items"] as CodexTab[]).map((t) => (
+          {(["bestiary", "blocks", "items", "skins"] as CodexTab[]).map((t) => (
             <button
               key={t}
               style={{
@@ -828,6 +1018,18 @@ export function CodexModal({ open, onClose }: Props) {
                     onClick={() => setSelection({ kind: "item", name: item.name })}
                   />
                 ))}
+              {tab === "skins" &&
+                filteredSkins.map((skin) => (
+                  <SkinCard
+                    key={skin}
+                    ref={(el) => {
+                      itemRefsMap.current.set(skin, el);
+                    }}
+                    name={skin}
+                    selected={selection?.kind === "skin" && selection.name === skin}
+                    onClick={() => setSelection({ kind: "skin", name: skin })}
+                  />
+                ))}
             </div>
           </div>
 
@@ -855,6 +1057,7 @@ export function CodexModal({ open, onClose }: Props) {
                 const npc = allNpcs.find((n) => n.type === selection.npcType);
                 return npc ? <NpcDetail npc={npc} /> : null;
               })()}
+            {selection?.kind === "skin" && <SkinDetail name={selection.name} />}
           </div>
         </div>
       </div>

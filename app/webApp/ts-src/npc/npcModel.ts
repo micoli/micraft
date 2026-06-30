@@ -48,7 +48,7 @@ export function registerNpcModel(): void {
       console.warn("[MiCraft] NPC bbmodel not found for type:", npcType);
       return null;
     }
-    return window.mcCreatePlayerModelFromBbmodel(bbmodel, scene);
+    return window.mcCreatePlayerModelFromBbmodel(bbmodel, scene, `npc_${npcType}`);
   };
 
   window.mcSetNpcTransform = (

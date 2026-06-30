@@ -26,6 +26,7 @@ import org.micoli.micraft.auth.OAuthProvider
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.auth.installAuthRoutes
 import org.micoli.micraft.auth.loadGroupsConfig
+import org.micoli.micraft.command.availablePlayerSkins
 import org.micoli.micraft.http.mapRoutes
 import org.micoli.micraft.http.metricsRoutes
 import org.micoli.micraft.world.BiomeConfig
@@ -282,6 +283,12 @@ fun Application.module() {
             val name = call.parameters["name"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             val skin = persistence?.loadPlayerState(name)?.skin ?: "player"
             call.respondText("""{"skin":"$skin"}""", ContentType.Application.Json)
+        }
+        get("/api/skins") {
+            val skins = availablePlayerSkins()
+            call.respondText(
+                Json.encodeToString(ListSerializer(String.serializer()), skins),
+                ContentType.Application.Json)
         }
         staticFiles("/api/models", java.io.File("resources"))
         mapRoutes(gameLoop)
