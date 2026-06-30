@@ -101,8 +101,8 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
       >
         {Array.from({ length: side }, (_, zi) =>
           Array.from({ length: side }, (_, xi) => {
-            const dx = xi - radius;
-            const dz = zi - radius;
+            const dx = radius - xi;
+            const dz = radius - zi;
             const cx = playerCx + dx;
             const cz = playerCz + dz;
             const state = map.get(`${cx},${cz}`) ?? "missing";

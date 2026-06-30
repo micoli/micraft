@@ -73,20 +73,18 @@ class ChunkStreamer(private val world: WorldState) {
     private fun buildOffsets(yaw: Double, cx: Int, cz: Int): List<Pair<Int, Int>> {
         val fwdX = sin(yaw)
         val fwdZ = cos(yaw)
-        val r = WorldConstants.VIEW_RADIUS
         val fwdR = WorldConstants.FORWARD_VIEW_RADIUS
         return (-fwdR..fwdR)
             .flatMap { dx -> (-fwdR..fwdR).map { dz -> dx to dz } }
             .sortedBy { (dx, dz) ->
                 if (dx == 0 && dz == 0) return@sortedBy -1.0
-                val chebyshev = maxOf(abs(dx), abs(dz))
                 val dist = sqrt((dx * dx + dz * dz).toDouble())
                 val dot = (dx * fwdX + dz * fwdZ) / dist
-                val inCone = Math.toDegrees(acos(dot.coerceIn(-1.0, 1.0))) < 90.0
+                val angleDeg = Math.toDegrees(acos(dot.coerceIn(-1.0, 1.0)))
                 when {
-                    chebyshev <= r -> dist               // tier 1: near sphere
-                    inCone -> 1000.0 + dist              // tier 2: forward cone
-                    else -> 2000.0 + dist                // tier 3: remaining
+                    angleDeg < 60.0 -> dist              // tier 1: forward cone
+                    angleDeg < 120.0 -> 1000.0 + dist   // tier 2: sides
+                    else -> 2000.0 + dist                // tier 3: behind
                 }
             }
     }
