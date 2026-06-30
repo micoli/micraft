@@ -51,6 +51,12 @@ refetch:
   server:
     unavailable: "Refetch not available in this mode."
     done: "Chunks refetched."
+skin:
+  server:
+    usage: "Usage: /skin <skinName>. Available: {0}"
+    set: "Skin changed to {0}."
+    already: "Skin is already {0}."
+    unknown: "Unknown skin: {0}. Available: {1}"
 shaders:
   server:
     usage: "Usage: /shaders [on|off]"

@@ -51,6 +51,12 @@ refetch:
   server:
     unavailable: "Rechargement de chunks non disponible dans ce mode."
     done: "Chunks rechargés."
+skin:
+  server:
+    usage: "Usage : /skin <nomSkin>. Disponibles : {0}"
+    set: "Skin changé en {0}."
+    already: "Le skin est déjà {0}."
+    unknown: "Skin inconnu : {0}. Disponibles : {1}"
 shaders:
   server:
     usage: "Usage : /shaders [on|off]"

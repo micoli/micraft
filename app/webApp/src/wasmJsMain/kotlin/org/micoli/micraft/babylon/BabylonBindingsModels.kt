@@ -4,11 +4,12 @@ package org.micoli.micraft.babylon
 
 // ── Player model ──────────────────────────────────────────────────────────────
 
-fun jsInitPlayerModel(): Unit = js("mcInitPlayerModel()")
+fun jsInitPlayerModel(skin: String): Unit = js("mcInitPlayerModel(skin)")
 
-fun jsIsPlayerBbmodelReady(): Boolean = js("mcIsPlayerBbmodelReady()")
+fun jsIsPlayerBbmodelReady(skin: String): Boolean = js("mcIsPlayerBbmodelReady(skin)")
 
-fun jsCreatePlayerModelNow(scene: JsAny): JsAny = js("mcCreatePlayerModelNow(scene)")
+fun jsCreatePlayerModelNow(scene: JsAny, skin: String): JsAny =
+    js("mcCreatePlayerModelNow(scene, skin)")
 
 fun jsSetPlayerTransform(
     model: JsAny,
@@ -50,7 +51,8 @@ fun jsOpenNpcDialog(json: String): Unit = js("mcOpenNpcDialog(json)")
 
 // ── First-person arm view model ───────────────────────────────────────────────
 
-fun jsCreateFPArms(camera: JsAny, scene: JsAny): JsAny? = js("mcCreateFPArms(scene, camera)")
+fun jsCreateFPArms(camera: JsAny, scene: JsAny, skin: String): JsAny? =
+    js("mcCreateFPArms(scene, camera, skin)")
 
 fun jsUpdateFPArms(fpArms: JsAny, isWalking: Boolean): Unit =
     js("mcUpdateFPArms(fpArms, isWalking)")

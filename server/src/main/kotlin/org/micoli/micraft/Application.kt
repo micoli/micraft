@@ -278,6 +278,11 @@ fun Application.module() {
             val serializer = MapSerializer(String.serializer(), ListSerializer(Double.serializer()))
             call.respondText(Json.encodeToString(serializer, colors), ContentType.Application.Json)
         }
+        get("/api/player/{name}/skin") {
+            val name = call.parameters["name"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val skin = persistence?.loadPlayerState(name)?.skin ?: "player"
+            call.respondText("""{"skin":"$skin"}""", ContentType.Application.Json)
+        }
         staticFiles("/api/models", java.io.File("resources"))
         mapRoutes(gameLoop)
         metricsRoutes(gameLoop)

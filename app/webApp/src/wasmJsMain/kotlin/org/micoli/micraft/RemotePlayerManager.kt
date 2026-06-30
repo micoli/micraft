@@ -16,10 +16,16 @@ class RemotePlayerManager(private val scene: JsAny) {
     private val playerTargetPitch = mutableMapOf<String, Float>()
     private val playerLerpT = mutableMapOf<String, Double>()
     private val playerNames = mutableMapOf<String, String>()
+    private val playerSkins = mutableMapOf<String, String>()
 
     fun updateFromServer(state: PlayerState) {
         playerNames[state.id] = state.name
         updateAutocomplete()
+        if (playerSkins[state.id] != state.skin) {
+            playerSkins[state.id] = state.skin
+            jsInitPlayerModel(state.skin)
+            playerModels.remove(state.id)?.let(::jsDisposePlayerModel)
+        }
         val nx = state.pos.x.toDouble()
         val ny = state.pos.y.toDouble()
         val nz = state.pos.z.toDouble()
@@ -33,6 +39,7 @@ class RemotePlayerManager(private val scene: JsAny) {
 
     fun remove(id: String) {
         playerNames.remove(id)
+        playerSkins.remove(id)
         updateAutocomplete()
         playerModels.remove(id)?.let(::jsDisposePlayerModel)
         playerPrevPos.remove(id)
@@ -45,8 +52,9 @@ class RemotePlayerManager(private val scene: JsAny) {
     }
 
     fun tick() {
-        if (!jsIsPlayerBbmodelReady()) return
         for (id in playerTargetPos.keys.toList()) {
+            val skin = playerSkins[id] ?: "player"
+            if (!jsIsPlayerBbmodelReady(skin)) continue
             val cur = playerCurrentPos[id] ?: continue
             val tgt = playerTargetPos[id] ?: continue
             val t = ((playerLerpT[id] ?: 0.0) + PRED_DT / 0.050).coerceAtMost(1.0)
@@ -58,7 +66,7 @@ class RemotePlayerManager(private val scene: JsAny) {
             val tgtYaw = playerTargetYaw[id] ?: 0f
             val yaw = curYaw + (tgtYaw - curYaw) * t.toFloat()
             val pitch = playerTargetPitch[id] ?: 0f
-            val model = playerModels.getOrPut(id) { jsCreatePlayerModelNow(scene) }
+            val model = playerModels.getOrPut(id) { jsCreatePlayerModelNow(scene, skin) }
             val prev = playerPrevPos[id]
             val walking =
                 prev != null &&
@@ -80,6 +88,7 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerTargetPitch.clear()
         playerLerpT.clear()
         playerNames.clear()
+        playerSkins.clear()
         jsSetConnectedPlayers("[]")
     }
 

@@ -2,12 +2,10 @@ import type { Camera, Scene, StandardMaterial } from "@babylonjs/core";
 import { interpAxis } from "./playerModel";
 
 export function registerFPArms(): void {
-  window.mcCreateFPArms = (scene: Scene, camera: Camera): McFPArms | null => {
-    const bbmodel = window.__mc?.playerBbmodel;
-    const texDef = bbmodel?.textures[0];
-    const texKey = texDef?.uuid ?? texDef?.name ?? "default";
+  window.mcCreateFPArms = (scene: Scene, camera: Camera, skin: string = "player"): McFPArms | null => {
+    const bbmodel = window.__mc?.playerBbmodels?.[skin];
     const sceneId = (scene as any).__mcSceneId ?? "";
-    const mat = window.__mc?.skinMatCache?.[`${sceneId}_${texKey}`];
+    const mat = window.__mc?.skinMatCache?.[`${sceneId}_${skin}`];
     if (!bbmodel || !mat) {
       console.warn("[MiCraft] mcCreateFPArms: bbmodel or material not ready");
       return null;

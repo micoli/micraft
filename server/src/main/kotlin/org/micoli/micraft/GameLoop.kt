@@ -620,6 +620,7 @@ class GameLoop(
                 subscribedChannels = saved?.subscribedChannels ?: listOf("world", "system", "game"),
                 disabledCommands = saved?.disabledCommands ?: emptySet(),
                 viewMode = saved?.viewMode ?: "FIRST_PERSON",
+                skin = saved?.skin ?: "player",
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =

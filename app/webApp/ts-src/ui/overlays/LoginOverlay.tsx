@@ -1,23 +1,25 @@
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 
-function usePlayerModelReady(): boolean {
-  const [ready, setReady] = useState(() => !!(window as any).mcIsPlayerBbmodelReady?.());
+function usePlayerModelReady(skin: string): boolean {
+  const [ready, setReady] = useState(() => !!(window as any).mcIsPlayerBbmodelReady?.(skin));
   useEffect(() => {
-    if (ready) return;
+    setReady(!!(window as any).mcIsPlayerBbmodelReady?.(skin));
+    (window as any).mcInitPlayerModel?.(skin);
+    if ((window as any).mcIsPlayerBbmodelReady?.(skin)) return;
     const iv = setInterval(() => {
-      if ((window as any).mcIsPlayerBbmodelReady?.()) {
+      if ((window as any).mcIsPlayerBbmodelReady?.(skin)) {
         setReady(true);
         clearInterval(iv);
       }
     }, 150);
     return () => clearInterval(iv);
-  }, [ready]);
+  }, [skin]);
   return ready;
 }
 
-function PlayerModelPreview() {
+function PlayerModelPreview({ skin }: { skin: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const ready = usePlayerModelReady();
+  const ready = usePlayerModelReady(skin);
 
   useEffect(() => {
     if (!ready) return;
@@ -36,7 +38,7 @@ function PlayerModelPreview() {
     light.intensity = 1.1;
     light.groundColor = new B.Color3(0.2, 0.2, 0.2);
 
-    const model = (window as any).mcCreatePlayerModelNow?.(scene) ?? null;
+    const model = (window as any).mcCreatePlayerModelNow?.(scene, skin) ?? null;
 
     let angle = 0;
     scene.onBeforeRenderObservable.add(() => {
@@ -190,6 +192,7 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
   const [lang, setLang] = useState("en");
   const [chars, setChars] = useState<string[]>([]);
   const [selected, setSelected] = useState("");
+  const [previewSkin, setPreviewSkin] = useState("player");
   const [newChar, setNewChar] = useState("");
   const usernameInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
@@ -287,6 +290,14 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
       setTimeout(() => playButtonRef.current?.focus(), 50);
     }
   }, [visible, step, selected]);
+
+  useEffect(() => {
+    if (step !== "chars" || !selected || selected === "__new__") return;
+    fetch(`/api/player/${encodeURIComponent(selected)}/skin`)
+      .then((r) => r.json())
+      .then((d) => setPreviewSkin(d.skin ?? "player"))
+      .catch(() => setPreviewSkin("player"));
+  }, [step, selected]);
 
   function goChars(user: string) {
     try {
@@ -596,7 +607,7 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
               )}
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-              <PlayerModelPreview />
+              <PlayerModelPreview key={previewSkin} skin={previewSkin} />
               <div style={{ fontSize: 11, color: "#555" }}>Preview</div>
             </div>
           </div>

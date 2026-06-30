@@ -80,40 +80,40 @@ export function registerPlayerModel(): void {
   window.__mcSkinUV = skinUV;
   window.__mcSkinFaceUV = skinFaceUV;
 
-  window.mcInitPlayerModel = (): void => {
-    const playerSkin = "player";
+  window.mcInitPlayerModel = (skin: string): void => {
     window.__mc = window.__mc || ({} as any);
-    fetch(`/api/models/entities/${playerSkin}/${playerSkin}.bbmodel`)
+    window.__mc.playerBbmodels = window.__mc.playerBbmodels || {};
+    if (window.__mc.playerBbmodels[skin]) return;
+    fetch(`/api/models/skins/${skin}/${skin}.bbmodel`)
       .then((r) => r.json())
       .then((data: BbModel) => {
-        window.__mc.playerBbmodel = data;
-        console.log(`[MiCraft] Player model ${playerSkin} loaded`);
+        window.__mc.playerBbmodels[skin] = data;
+        console.log(`[MiCraft] Player model ${skin} loaded`);
       })
       .catch((e) => {
-        console.error("[MiCraft] Failed to load player model", e);
+        console.error(`[MiCraft] Failed to load player model ${skin}`, e);
       });
   };
 
-  window.mcIsPlayerBbmodelReady = (): boolean => !!(window.__mc && window.__mc.playerBbmodel);
+  window.mcIsPlayerBbmodelReady = (skin: string): boolean => !!window.__mc?.playerBbmodels?.[skin];
 
-  window.mcCreatePlayerModelNow = (scene: Scene): McPlayerModel =>
-    createPlayerModelFromBbmodel(window.__mc.playerBbmodel!, scene);
+  window.mcCreatePlayerModelNow = (scene: Scene, skin: string): McPlayerModel =>
+    createPlayerModelFromBbmodel(window.__mc.playerBbmodels[skin]!, scene, skin);
 
-  function createPlayerModelFromBbmodel(bbmodel: BbModel, scene: Scene): McPlayerModel {
+  function createPlayerModelFromBbmodel(bbmodel: BbModel, scene: Scene, skin: string = "player"): McPlayerModel {
     window.__mc = window.__mc || ({} as any);
     if (!window.__mc.skinMatCache) (window.__mc as any).skinMatCache = {};
-    const texDef = bbmodel.textures[0];
-    const texKey = texDef.uuid ?? texDef.name ?? "default";
     const s = scene as any;
     if (!s.__mcSceneId) s.__mcSceneId = Math.random().toString(36).slice(2);
-    const cacheKey = `${s.__mcSceneId}_${texKey}`;
-    if (!window.__mc.skinMatCache[cacheKey]) {
+    const cacheKey = `${s.__mcSceneId}_${skin}`;
+    if (bbmodel.textures?.length>0 && !window.__mc.skinMatCache[cacheKey]) {
+      const texDef = bbmodel.textures[0];
       const src = texDef.source;
       const tex = new BABYLON.Texture(src, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
       tex.hasAlpha = false;
       tex.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
       tex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
-      const mat = new BABYLON.StandardMaterial(`skinMat_${texKey}`, scene);
+      const mat = new BABYLON.StandardMaterial(`skinMat_${skin}`, scene);
       mat.diffuseTexture = tex;
       mat.specularColor = new BABYLON.Color3(0, 0, 0);
       window.__mc.skinMatCache[cacheKey] = mat;

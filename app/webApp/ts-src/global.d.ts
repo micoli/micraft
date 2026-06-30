@@ -107,7 +107,7 @@ declare global {
     lastMouseMove: number;
     bindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
-    playerBbmodel: BbModel | null;
+    playerBbmodels: Record<string, BbModel>;
     npcBbmodels: Record<string, BbModel>;
     npcModelsReady: boolean;
     modalOpen: boolean;
@@ -196,7 +196,7 @@ declare global {
     __mcCodexItems: Record<string, unknown>;
     __mcCodexNpcs: Record<string, unknown>;
     mcSetupRenderPipeline: (scene: any, camera: any) => void;
-    mcCreatePlayerModelFromBbmodel: (bbmodel: BbModel, scene: any) => McPlayerModel;
+    mcCreatePlayerModelFromBbmodel: (bbmodel: BbModel, scene: any, skin: string) => McPlayerModel;
     [key: string]: unknown;
   }
 }

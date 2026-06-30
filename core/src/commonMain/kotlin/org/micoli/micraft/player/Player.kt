@@ -28,4 +28,5 @@ data class PlayerState(
     val subscribedChannels: List<String> = listOf("world", "system", "game"),
     val disabledCommands: Set<String> = emptySet(),
     val viewMode: String = "FIRST_PERSON",
+    val skin: String = "player",
 )

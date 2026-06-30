@@ -56,6 +56,7 @@ class LocalPlayerController(
     var localFlying = false
     var localStance = PlayerStance.STANDING
     var localSpeedMult = 1f
+    var localSkin = "player"
     var lastPlayerCx = Int.MIN_VALUE
     var lastPlayerCz = Int.MIN_VALUE
     private var viewMode: ViewMode = ViewMode.FIRST_PERSON
@@ -130,6 +131,14 @@ class LocalPlayerController(
         localFlying = state.flying
         localStance = state.stance
         localSpeedMult = state.speedMultiplier
+        if (state.skin != localSkin) {
+            localSkin = state.skin
+            jsInitPlayerModel(localSkin)
+            localPlayerModel?.let { jsDisposePlayerModel(it) }
+            localPlayerModel = null
+            fpArms?.let { jsDisposeFPArms(it) }
+            fpArms = null
+        }
 
         serverX = state.pos.x.toDouble()
         serverY = state.pos.y.toDouble()
@@ -434,13 +443,13 @@ class LocalPlayerController(
             }
         }
 
-        if (jsIsPlayerBbmodelReady()) {
+        if (jsIsPlayerBbmodelReady(localSkin)) {
             if (localPlayerModel == null) {
-                localPlayerModel = jsCreatePlayerModelNow(scene)
+                localPlayerModel = jsCreatePlayerModelNow(scene, localSkin)
                 jsSetPlayerVisible(localPlayerModel!!, false)
             }
             if (fpArms == null) {
-                fpArms = jsCreateFPArms(camera, scene)
+                fpArms = jsCreateFPArms(camera, scene, localSkin)
             }
         }
 
