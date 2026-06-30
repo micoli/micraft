@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.world.Chunk
@@ -18,19 +19,26 @@ private val log = LoggerFactory.getLogger(ChunkStreamer::class.java)
 
 private const val MAX_IN_FLIGHT = 12
 private const val MAX_DELIVER_PER_TICK = 3
+private const val VEL_ALPHA = 0.3f
+private const val LOOKAHEAD_TICKS = 40
 
 class ChunkStreamer(private val world: WorldState) {
 
     private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val readyPools = ConcurrentHashMap<String, ConcurrentHashMap<ChunkPos, Chunk>>()
     private val pendingPools = ConcurrentHashMap<String, MutableSet<ChunkPos>>()
+    private val prevPositions = ConcurrentHashMap<String, Vec3>()
+    private val smoothedVelocities = ConcurrentHashMap<String, Pair<Float, Float>>()
 
     fun cleanupSession(sessionId: String) {
         readyPools.remove(sessionId)
         pendingPools.remove(sessionId)
+        prevPositions.remove(sessionId)
+        smoothedVelocities.remove(sessionId)
     }
 
     fun checkAndRequest(session: PlayerSession) {
+        updateVelocity(session)
         val newCp =
             ChunkPos(
                 Math.floorDiv(session.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE),
@@ -54,6 +62,28 @@ class ChunkStreamer(private val world: WorldState) {
         drainPending(session)
     }
 
+    private fun updateVelocity(session: PlayerSession) {
+        val pos = session.state.pos
+        val prev = prevPositions[session.id]
+        if (prev != null) {
+            val rawVx = pos.x - prev.x
+            val rawVz = pos.z - prev.z
+            val (oldVx, oldVz) = smoothedVelocities[session.id] ?: (0f to 0f)
+            smoothedVelocities[session.id] =
+                (oldVx + VEL_ALPHA * (rawVx - oldVx)) to (oldVz + VEL_ALPHA * (rawVz - oldVz))
+        }
+        prevPositions[session.id] = pos
+    }
+
+    private fun predictedCenter(session: PlayerSession): Pair<Int, Int> {
+        val pos = session.state.pos
+        val (vx, vz) = smoothedVelocities[session.id] ?: (0f to 0f)
+        val predX = pos.x + vx * LOOKAHEAD_TICKS
+        val predZ = pos.z + vz * LOOKAHEAD_TICKS
+        return Math.floorDiv(predX.toInt(), WorldConstants.CHUNK_SIZE) to
+            Math.floorDiv(predZ.toInt(), WorldConstants.CHUNK_SIZE)
+    }
+
     private fun drainPending(session: PlayerSession) {
         val pending = pendingPools[session.id] ?: return
         if (pending.isEmpty()) return
@@ -61,13 +91,11 @@ class ChunkStreamer(private val world: WorldState) {
         val slots = MAX_IN_FLIGHT - session.inFlightChunks.size
         if (slots <= 0) return
 
-        val cx = Math.floorDiv(session.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE)
-        val cz = Math.floorDiv(session.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE)
+        val (pcx, pcz) = predictedCenter(session)
         val yaw = session.state.orientation.yaw.toDouble()
 
-        val candidates = pending
-            .sortedBy { cp -> chunkScore(cp.cx - cx, cp.cz - cz, yaw) }
-            .take(slots)
+        val candidates =
+            pending.sortedBy { cp -> chunkScore(cp.cx - pcx, cp.cz - pcz, yaw) }.take(slots)
 
         val pool = readyPools.getOrPut(session.id) { ConcurrentHashMap() }
         for (cp in candidates) {
@@ -85,13 +113,13 @@ class ChunkStreamer(private val world: WorldState) {
         val pool = readyPools[session.id] ?: return
         if (pool.isEmpty()) return
 
-        val cx = Math.floorDiv(session.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE)
-        val cz = Math.floorDiv(session.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE)
+        val (pcx, pcz) = predictedCenter(session)
         val yaw = session.state.orientation.yaw.toDouble()
 
-        val candidates = pool.keys
-            .sortedBy { cp -> chunkScore(cp.cx - cx, cp.cz - cz, yaw) }
-            .take(MAX_DELIVER_PER_TICK)
+        val candidates =
+            pool.keys
+                .sortedBy { cp -> chunkScore(cp.cx - pcx, cp.cz - pcz, yaw) }
+                .take(MAX_DELIVER_PER_TICK)
 
         var delivered = 0
         for (cp in candidates) {
