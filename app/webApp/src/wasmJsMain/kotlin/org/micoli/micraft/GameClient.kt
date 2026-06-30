@@ -337,7 +337,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     val newTopY =
                         if (change.type != BlockType.AIR) maxOf(existingTopY, change.pos.y)
                         else existingTopY
-                    chunkManager.renderChunk(updated, newTopY)
+                    chunkManager.updateAndEnqueue(updated, newTopY)
                     if (change.type == BlockType.AIR) localController.onBlockBroken(change.pos)
                 }
         }

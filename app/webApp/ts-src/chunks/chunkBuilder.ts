@@ -241,9 +241,9 @@ export function registerChunks(): void {
       vd.indices = g.i.subarray(0, g.ic);
       vd.applyToMesh(mesh, false);
       mesh.material = materials[mk] ?? null;
-      mesh.freezeWorldMatrix();
       mesh.isPickable = false;
-      mesh.doNotSyncBoundingInfo = true;
+      mesh.refreshBoundingInfo();
+      mesh.freezeWorldMatrix();
       meshes.push(mesh);
       releaseGroup(g);
     }

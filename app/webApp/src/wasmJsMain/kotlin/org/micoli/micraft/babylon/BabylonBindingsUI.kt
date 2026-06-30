@@ -95,6 +95,10 @@ fun jsSetNpcOnMinimap(id: String, x: Float, z: Float): Unit = js("mcSetNpcOnMini
 
 fun jsRemoveNpcFromMinimap(id: String): Unit = js("mcRemoveNpcFromMinimap(id)")
 
+// ── Chunk debug ───────────────────────────────────────────────────────────────
+
+fun jsUpdateChunkDebug(json: String): Unit = js("mcUpdateChunkDebug(json)")
+
 // ── Chat channels ─────────────────────────────────────────────────────────────
 
 fun jsAddServerLog(channel: String, message: String): Unit = js("mcAddServerLog(channel, message)")

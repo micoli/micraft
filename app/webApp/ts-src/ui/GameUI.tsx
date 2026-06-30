@@ -1,4 +1,4 @@
-import { useEffect, useRef, useReducer } from "react";
+import { useEffect, useRef, useReducer, useState } from "react";
 import { HudMode, GameLayout, NpcDialogData, PreferencesData } from "./types";
 import { UiState, reducer } from "./UIReducer";
 import { NpcDialog } from "../npc/NpcDialog";
@@ -15,6 +15,7 @@ import { PauseMenu } from "./overlays/PauseMenu";
 import { LayoutEditor } from "./layout/LayoutEditor";
 import { defaultLayout, resolveActiveLayout, widgetStyle } from "./layout/LayoutEngine";
 import { CodexModal } from "../codex/CodexModal";
+import { ChunkDebug, ChunkDebugData } from "./game/ChunkDebug";
 
 function loadHudMode(): HudMode {
   try {
@@ -57,6 +58,7 @@ const initial: UiState = {
 
 export function GameUI() {
   const [state, dispatch] = useReducer(reducer, initial);
+  const [chunkDebugData, setChunkDebugData] = useState<ChunkDebugData | null>(null);
 
   // Refs for synchronous reads by Kotlin
   const logTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -322,6 +324,14 @@ export function GameUI() {
     (window as any).mcShowPreferences = () => dispatch({ type: "preferences_show" });
     (window as any).mcOpenCodex = () => dispatch({ type: "codex_open" });
 
+    (window as any).mcUpdateChunkDebug = (json: string) => {
+      try {
+        setChunkDebugData(JSON.parse(json) as ChunkDebugData);
+      } catch {
+        /* ignore */
+      }
+    };
+
     // no-ops: React handles creation
     (window as any).mcCreateHUD = () => {};
     (window as any).mcCreateHotbar = () => {};
@@ -406,6 +416,7 @@ export function GameUI() {
       {!state.loginVisible && !state.disconnectMsg && (
         <>
           <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, "HUD")} />
+          <ChunkDebug data={chunkDebugData} layoutStyle={widgetStyle(activeLayout, "CHUNK_DEBUG")} />
           <ShortcutBar
             inventory={state.inventory}
             itemMeta={state.itemMeta}

@@ -80,6 +80,17 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
     editorLabel: "Inventory",
     editorColor: "rgba(180,160,40,0.75)",
   },
+  {
+    type: "CHUNK_DEBUG",
+    x: 40,
+    y: 8,
+    w: 8,
+    h: 10,
+    minW: 5,
+    minH: 6,
+    editorLabel: "Chunk Debug",
+    editorColor: "rgba(40,180,180,0.75)",
+  },
 ];
 
 export const DEFAULT_WIDGETS: LayoutWidget[] = WIDGET_REGISTRY.map(({ type, x, y, w, h }) => ({ type, x, y, w, h }));

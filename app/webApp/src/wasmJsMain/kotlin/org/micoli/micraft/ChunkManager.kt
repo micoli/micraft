@@ -153,6 +153,12 @@ class ChunkManager(private val scene: JsAny) {
         pushMinimapChunk(chunk, topY)
     }
 
+    // Update chunkData immediately (for physics/raycast) and defer mesh rebuild
+    fun updateAndEnqueue(chunk: Chunk, topY: Int) {
+        chunkData[chunk.pos] = Pair(chunk, topY)
+        enqueueChunk(chunk, topY)
+    }
+
     fun unloadDistantChunks(playerCx: Int, playerCz: Int) {
         val r = WorldConstants.CLIENT_VIEW_RADIUS
         val toUnload =
@@ -175,6 +181,31 @@ class ChunkManager(private val scene: JsAny) {
         chunkData.clear()
         pendingChunks.clear()
         activeRender = null
+    }
+
+    fun getChunkDebugJson(playerCx: Int, playerCz: Int, radius: Int): String {
+        val pendingSet = pendingChunks.map { (c, _) -> c.pos }.toSet()
+        val activePos = activeRender?.chunk?.pos
+        val sb = StringBuilder()
+        sb.append("{\"playerCx\":$playerCx,\"playerCz\":$playerCz,\"radius\":$radius,\"chunks\":[")
+        var first = true
+        for (dz in -radius..radius) {
+            for (dx in -radius..radius) {
+                val cx = playerCx + dx
+                val cz = playerCz + dz
+                val pos = ChunkPos(cx, cz)
+                val state = when {
+                    loadedChunks.contains(pos) -> "loaded"
+                    pos == activePos || pendingSet.contains(pos) -> "loading"
+                    else -> "missing"
+                }
+                if (!first) sb.append(",")
+                sb.append("{\"cx\":$cx,\"cz\":$cz,\"state\":\"$state\"}")
+                first = false
+            }
+        }
+        sb.append("]}")
+        return sb.toString()
     }
 
     private fun renderSlice(chunk: Chunk, topY: Int, fromY: Int, toY: Int) {

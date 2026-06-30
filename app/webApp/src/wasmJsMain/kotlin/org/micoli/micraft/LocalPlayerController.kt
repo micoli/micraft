@@ -53,6 +53,10 @@ class LocalPlayerController(
     var serverY = 0.0
     var serverZ = 0.0
     var hasPrediction = false
+    private var prevPredX = 0.0
+    private var prevPredY = 0.0
+    private var prevPredZ = 0.0
+    private var prevEyeOffset = 0.0
     var localFlying = false
     var localStance = PlayerStance.STANDING
     var localSpeedMult = 1f
@@ -157,6 +161,10 @@ class LocalPlayerController(
             predZ = serverZ
             predY = serverY
             predVy = 0.0
+            prevPredX = serverX
+            prevPredY = serverY
+            prevPredZ = serverZ
+            prevEyeOffset = localStance.eyeOffset.toDouble()
             hasPrediction = true
         } else {
             totalServerUpdates++
@@ -470,11 +478,13 @@ class LocalPlayerController(
         val yaw = jsGetCameraRotationY(camera)
         val pitch = jsGetCameraRotationX(camera)
 
+        val eyeOffset = localStance.eyeOffset.toDouble()
         if (viewMode == ViewMode.THIRD_PERSON) {
             val dist = 3.0
             val camX = predX - kotlin.math.sin(yaw) * dist
-            val camY = predY + localStance.eyeOffset.toDouble() + 0.3
+            val camY = predY + eyeOffset + 0.3
             val camZ = predZ - kotlin.math.cos(yaw) * dist
+            jsClearCameraInterpolation()
             jsCameraSetPosition(camera, camX, camY, camZ)
             localPlayerModel?.let {
                 jsSetPlayerTransform(
@@ -483,7 +493,14 @@ class LocalPlayerController(
             }
             fpArms?.let { jsSetFPArmsVisible(it, false) }
         } else {
-            jsCameraSetPosition(camera, predX, predY + localStance.eyeOffset.toDouble(), predZ)
+            jsSetCameraInterpolationState(
+                prevPredX,
+                prevPredY + prevEyeOffset,
+                prevPredZ,
+                predX,
+                predY + eyeOffset,
+                predZ,
+                lastTickMs)
             localPlayerModel?.let { jsSetPlayerVisible(it, false) }
             val showArms = viewMode == ViewMode.FIRST_PERSON
             fpArms?.let {
@@ -491,6 +508,10 @@ class LocalPlayerController(
                 jsSetFPArmsVisible(it, showArms)
             }
         }
+        prevPredX = predX
+        prevPredY = predY
+        prevPredZ = predZ
+        prevEyeOffset = eyeOffset
 
         val rayResult = raycastBlock()
         val target = rayResult?.target
@@ -602,6 +623,9 @@ class LocalPlayerController(
                 tickDtMs = tickIntervals.average().takeIf { it.isFinite() } ?: 0.0,
                 tickJitterMs = tickIntervals.tickJitter(),
             )
+        val debugCx = hudX.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
+        val debugCz = hudZ.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
+        jsUpdateChunkDebug(chunkManager.getChunkDebugJson(debugCx, debugCz, WorldConstants.VIEW_RADIUS + 1))
     }
 
     fun buildMoveIntent(): ClientMessage.MoveIntent {
@@ -691,6 +715,10 @@ class LocalPlayerController(
         predY = 0.0
         predZ = 0.0
         predVy = 0.0
+        prevPredX = 0.0
+        prevPredY = 0.0
+        prevPredZ = 0.0
+        prevEyeOffset = 0.0
         serverX = 0.0
         serverY = 0.0
         serverZ = 0.0
