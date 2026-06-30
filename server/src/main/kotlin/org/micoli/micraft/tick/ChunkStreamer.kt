@@ -5,8 +5,6 @@ import kotlin.math.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.launch
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
@@ -24,10 +22,10 @@ private const val MAX_DELIVER_PER_TICK = 3
 class ChunkStreamer(private val world: WorldState) {
 
     private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val readyQueues = ConcurrentHashMap<String, Channel<Pair<ChunkPos, Chunk>>>()
+    private val readyPools = ConcurrentHashMap<String, ConcurrentHashMap<ChunkPos, Chunk>>()
 
     fun cleanupSession(sessionId: String) {
-        readyQueues.remove(sessionId)?.cancel()
+        readyPools.remove(sessionId)
     }
 
     fun checkAndRequest(session: PlayerSession) {
@@ -49,19 +47,29 @@ class ChunkStreamer(private val world: WorldState) {
             val cp = ChunkPos(cx + dx, cz + dz)
             if (session.loadedChunks.contains(cp) || session.inFlightChunks.contains(cp)) continue
             session.inFlightChunks.add(cp)
-            val queue = readyQueues.getOrPut(session.id) { Channel(256) }
+            val pool = readyPools.getOrPut(session.id) { ConcurrentHashMap() }
             ioScope.launch {
                 val chunk = world.getOrGenerate(cp)
-                queue.trySendBlocking(cp to chunk)
+                pool[cp] = chunk
             }
         }
     }
 
     suspend fun deliverReady(session: PlayerSession) {
-        val queue = readyQueues[session.id] ?: return
+        val pool = readyPools[session.id] ?: return
+        if (pool.isEmpty()) return
+
+        val cx = Math.floorDiv(session.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE)
+        val cz = Math.floorDiv(session.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE)
+        val yaw = session.state.orientation.yaw.toDouble()
+
+        val candidates = pool.keys
+            .sortedBy { cp -> chunkScore(cp.cx - cx, cp.cz - cz, yaw) }
+            .take(MAX_DELIVER_PER_TICK)
+
         var delivered = 0
-        while (delivered < MAX_DELIVER_PER_TICK) {
-            val (cp, chunk) = queue.tryReceive().getOrNull() ?: break
+        for (cp in candidates) {
+            val chunk = pool.remove(cp) ?: continue
             session.loadedChunks.add(cp)
             session.inFlightChunks.remove(cp)
             session.sendChunk(ServerMessage.ChunkData(chunk.pos, chunk.topY(), chunk.encodeWire()))
@@ -70,22 +78,24 @@ class ChunkStreamer(private val world: WorldState) {
         if (delivered > 0) log.debug("{} chunks delivered to {}", delivered, session.id.take(8))
     }
 
-    private fun buildOffsets(yaw: Double, cx: Int, cz: Int): List<Pair<Int, Int>> {
+    private fun chunkScore(dx: Int, dz: Int, yaw: Double): Double {
+        if (dx == 0 && dz == 0) return -1.0
         val fwdX = sin(yaw)
         val fwdZ = cos(yaw)
+        val dist = sqrt((dx * dx + dz * dz).toDouble())
+        val dot = (dx * fwdX + dz * fwdZ) / dist
+        val angleDeg = Math.toDegrees(acos(dot.coerceIn(-1.0, 1.0)))
+        return when {
+            angleDeg < 60.0 -> dist
+            angleDeg < 120.0 -> 1000.0 + dist
+            else -> 2000.0 + dist
+        }
+    }
+
+    private fun buildOffsets(yaw: Double, cx: Int, cz: Int): List<Pair<Int, Int>> {
         val fwdR = WorldConstants.FORWARD_VIEW_RADIUS
         return (-fwdR..fwdR)
             .flatMap { dx -> (-fwdR..fwdR).map { dz -> dx to dz } }
-            .sortedBy { (dx, dz) ->
-                if (dx == 0 && dz == 0) return@sortedBy -1.0
-                val dist = sqrt((dx * dx + dz * dz).toDouble())
-                val dot = (dx * fwdX + dz * fwdZ) / dist
-                val angleDeg = Math.toDegrees(acos(dot.coerceIn(-1.0, 1.0)))
-                when {
-                    angleDeg < 60.0 -> dist              // tier 1: forward cone
-                    angleDeg < 120.0 -> 1000.0 + dist   // tier 2: sides
-                    else -> 2000.0 + dist                // tier 3: behind
-                }
-            }
+            .sortedBy { (dx, dz) -> chunkScore(dx, dz, yaw) }
     }
 }
