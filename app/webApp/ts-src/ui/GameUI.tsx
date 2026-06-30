@@ -173,6 +173,8 @@ export function GameUI() {
       gameTime: string,
       reconcileXzStats: string,
       reconcileYStats: string,
+      tickDtMs: number,
+      tickJitterMs: number,
     ) =>
       dispatch({
         type: "hud",
@@ -192,6 +194,8 @@ export function GameUI() {
           gameTime,
           reconcileXzStats,
           reconcileYStats,
+          tickDtMs,
+          tickJitterMs,
         },
       });
 

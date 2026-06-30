@@ -106,7 +106,7 @@ export function registerPlayerModel(): void {
     const s = scene as any;
     if (!s.__mcSceneId) s.__mcSceneId = Math.random().toString(36).slice(2);
     const cacheKey = `${s.__mcSceneId}_${skin}`;
-    if (bbmodel.textures?.length>0 && !window.__mc.skinMatCache[cacheKey]) {
+    if (bbmodel.textures?.length > 0 && !window.__mc.skinMatCache[cacheKey]) {
       const texDef = bbmodel.textures[0];
       const src = texDef.source;
       const tex = new BABYLON.Texture(src, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);

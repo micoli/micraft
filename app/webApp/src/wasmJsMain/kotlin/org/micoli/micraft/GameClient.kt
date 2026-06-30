@@ -73,9 +73,15 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             while (isActive) {
                 delay(16)
                 if (localController.hasPrediction) localController.tick()
-                chunkManager.drainPendingChunks()
                 npcManager.tick()
                 remotePlayerManager.tick()
+            }
+        }
+
+        scope.launch {
+            while (isActive) {
+                delay(16)
+                chunkManager.drainPendingChunks(budgetMs = 4.0)
             }
         }
 

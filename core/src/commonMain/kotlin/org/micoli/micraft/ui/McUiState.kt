@@ -20,6 +20,8 @@ data class HudData(
     val gameTime: String = "",
     val reconcileXzStats: String = "",
     val reconcileYStats: String = "",
+    val tickDtMs: Double = 0.0,
+    val tickJitterMs: Double = 0.0,
 )
 
 class McUiState {

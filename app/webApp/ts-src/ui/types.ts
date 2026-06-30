@@ -14,6 +14,8 @@ export interface HudData {
   gameTime: string;
   reconcileXzStats: string;
   reconcileYStats: string;
+  tickDtMs: number;
+  tickJitterMs: number;
 }
 
 export interface LogEntry {

@@ -65,9 +65,11 @@ fun jsUpdateHUD(
     gameTime: String,
     reconcileXzStats: String,
     reconcileYStats: String,
+    tickDtMs: Double,
+    tickJitterMs: Double,
 ): Unit =
     js(
-        "mcUpdateHUD(x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime, reconcileXzStats, reconcileYStats)")
+        "mcUpdateHUD(x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime, reconcileXzStats, reconcileYStats, tickDtMs, tickJitterMs)")
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 

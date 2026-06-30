@@ -40,6 +40,8 @@ export function HUD({
     gameTime,
     reconcileXzStats,
     reconcileYStats,
+    tickDtMs,
+    tickJitterMs,
   } = data;
 
   let lines: string[];
@@ -60,6 +62,7 @@ export function HUD({
   } else {
     lines = [
       `FPS: ${fps}`,
+      `Tick: ${tickDtMs.toFixed(1)}ms ±${tickJitterMs.toFixed(1)}ms`,
       `Pos: ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`,
       `Orientation: Y:${yaw.toFixed(1)}°, P:${pitch.toFixed(1)}°`,
       stance,

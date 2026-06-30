@@ -95,6 +95,8 @@ class LocalPlayerController(
     private var currentFps = 0
     private var currentKbIn = 0.0
     private var currentKbOut = 0.0
+    private var lastTickMs = 0.0
+    private val tickIntervals = ArrayDeque<Double>()
 
     fun setReconcileTolerances(xz: Double, y: Double) {
         reconcileToleranceXz = xz
@@ -104,6 +106,12 @@ class LocalPlayerController(
     private fun ArrayDeque<Double>.addCapped(value: Double) {
         addLast(value)
         if (size > STATS_WINDOW) removeFirst()
+    }
+
+    private fun ArrayDeque<Double>.tickJitter(): Double {
+        if (size < 2) return 0.0
+        val mean = average()
+        return kotlin.math.sqrt(sumOf { (it - mean) * (it - mean) } / size)
     }
 
     private fun Double.r3(): String {
@@ -216,6 +224,10 @@ class LocalPlayerController(
 
     fun tick() {
         totalClientTicks++
+        val nowMs = jsNow()
+        val actualDt = if (lastTickMs == 0.0) PRED_DT else ((nowMs - lastTickMs) / 1000.0).coerceIn(0.008, 0.05)
+        if (lastTickMs != 0.0) tickIntervals.addCapped(nowMs - lastTickMs)
+        lastTickMs = nowMs
         val consoleInput = jsConsumeConsoleInput()
         if (consoleInput.isNotEmpty()) {
             when (consoleInput.trim()) {
@@ -243,7 +255,7 @@ class LocalPlayerController(
         val rightX = fwdZ
         val rightZ = -fwdX
 
-        val turnSpeed = (2.5f * PRED_DT).toFloat()
+        val turnSpeed = (2.5f * actualDt).toFloat()
         if (jsIsActionDown("rotate_left")) jsRotateCameraYaw(camera, -turnSpeed)
         if (jsIsActionDown("rotate_right")) jsRotateCameraYaw(camera, turnSpeed)
 
@@ -282,7 +294,7 @@ class LocalPlayerController(
                 !localFlying && jsIsActionDown("sneak") -> PlayerStance.SNEAKING
                 else -> PlayerStance.STANDING
             }
-        val speed = stance.speed * localSpeedMult * PRED_DT.toFloat()
+        val speed = stance.speed * localSpeedMult * actualDt.toFloat()
         val solid = { bx: Int, by: Int, bz: Int ->
             chunkManager.getBlockAtWorld(bx, by, bz).isSolid
         }
@@ -323,7 +335,7 @@ class LocalPlayerController(
                 if (jsIsActionDown("forward") || autoAdvance) dy += fwdY
                 if (jsIsActionDown("backward")) dy -= fwdY
             }
-            val flyDy = (dy * FLY_VERTICAL_SPEED * localSpeedMult * PRED_DT).toFloat()
+            val flyDy = (dy * FLY_VERTICAL_SPEED * localSpeedMult * actualDt).toFloat()
             val resolvedFlyDy =
                 AabbCollider.resolveY(
                     solid,
@@ -350,8 +362,8 @@ class LocalPlayerController(
             if (grounded && predVy <= 0.0) {
                 predVy = if (jsIsActionDown("ascend")) CLIENT_JUMP_SPEED else 0.0
             } else {
-                predVy += CLIENT_GRAVITY * PRED_DT
-                val dy = (predVy * PRED_DT).toFloat()
+                predVy += CLIENT_GRAVITY * actualDt
+                val dy = (predVy * actualDt).toFloat()
                 val resolvedDy =
                     AabbCollider.resolveY(
                         solid2,
@@ -564,7 +576,10 @@ class LocalPlayerController(
             targetBlockName,
             gameTimeDisplay,
             reconcileStats(xzDistances, reconcileCountXz, totalClientTicks),
-            reconcileStats(yDistances, reconcileCountY, totalServerUpdates))
+            reconcileStats(yDistances, reconcileCountY, totalServerUpdates),
+            tickIntervals.average().takeIf { it.isFinite() } ?: 0.0,
+            tickIntervals.tickJitter(),
+        )
         uiState.hud =
             HudData(
                 x = hudX,
@@ -582,6 +597,8 @@ class LocalPlayerController(
                 gameTime = gameTimeDisplay,
                 reconcileXzStats = reconcileStats(xzDistances, reconcileCountXz, totalClientTicks),
                 reconcileYStats = reconcileStats(yDistances, reconcileCountY, totalServerUpdates),
+                tickDtMs = tickIntervals.average().takeIf { it.isFinite() } ?: 0.0,
+                tickJitterMs = tickIntervals.tickJitter(),
             )
     }
 
