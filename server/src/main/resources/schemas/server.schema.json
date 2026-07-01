@@ -4,6 +4,14 @@
   "required": ["world", "player", "auth"],
   "additionalProperties": false,
   "properties": {
+    "chunks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "transport": {"type": "string", "enum": ["websocket", "http"]},
+        "httpWorkers": {"type": "integer", "minimum": 1}
+      }
+    },
     "world": {
       "type": "object",
       "required": ["worldMinY", "worldMaxY", "chunkSize", "viewRadius", "forwardViewRadius", "waterLevel"],

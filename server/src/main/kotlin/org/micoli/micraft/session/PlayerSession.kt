@@ -31,6 +31,7 @@ open class PlayerSession(
     @Volatile var vy: Float = 0f,
     val networkStats: NetworkStats = NetworkStats(),
     val permissions: Set<String> = emptySet(),
+    val chunkMode: String = "websocket",
 ) {
     val intents = Channel<ClientMessage>(capacity = Channel.UNLIMITED)
     val loadedChunks: MutableSet<ChunkPos> = Collections.newSetFromMap(ConcurrentHashMap())

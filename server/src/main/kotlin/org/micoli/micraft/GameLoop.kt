@@ -42,6 +42,7 @@ import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.ChatChannelManager
 import org.micoli.micraft.world.ChatService
 import org.micoli.micraft.world.ChunkPos
+import org.micoli.micraft.world.ChunkSection
 import org.micoli.micraft.world.DropConfig
 import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.ItemRegistry
@@ -140,6 +141,7 @@ class GameLoop(
     private val authProvider: AuthProvider? = null,
     private val groupsConfig: GroupsConfig? = null,
     private val reloadRbac: (() -> Unit)? = null,
+    private val chunkSection: ChunkSection = ChunkSection(),
 ) {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
     private var saveTickCounter = 0
@@ -517,8 +519,10 @@ class GameLoop(
                 val update = ServerMessage.PlayerUpdate(newState)
                 sessions.values.forEach { it.send(update) }
             }
-            chunkStreamer.checkAndRequest(session)
-            chunkStreamer.deliverReady(session)
+            if (session.chunkMode == "websocket") {
+                chunkStreamer.checkAndRequest(session)
+                chunkStreamer.deliverReady(session)
+            }
         }
         worldItems.tickCollection(sessions.values)
         npcManager.tick(world)
@@ -630,7 +634,8 @@ class GameLoop(
                 socket,
                 state,
                 networkStats = networkStats,
-                permissions = sessionPermissions)
+                permissions = sessionPermissions,
+                chunkMode = chunkSection.transport)
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
         saved?.shortcutBar?.forEachIndexed { i, item ->
             if (i in 0..9) session.shortcutBar[i] = item
@@ -653,7 +658,8 @@ class GameLoop(
                 session.state.activeLayout,
                 session.state.viewMode,
                 RECONCILE_TOLERANCE_XZ,
-                RECONCILE_TOLERANCE_Y))
+                RECONCILE_TOLERANCE_Y,
+                chunkSection.transport))
         session.send(buildRegistrySync())
         session.send(buildPreferencesSync(session))
         chatService.onPlayerConnect(session)

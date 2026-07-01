@@ -15,7 +15,7 @@ export function registerAutoUpdate(): void {
     }
   }
 
-  setInterval(checkServerVersion, 5000);
+  setInterval(checkServerVersion, 15000);
   checkServerVersion();
 
   // Listen to webpack HMR websocket: reload on client rebuild

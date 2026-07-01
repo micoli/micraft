@@ -54,9 +54,15 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
     const headAngle = 0.45;
     ctx.beginPath();
     ctx.moveTo(cx + dx, cz + dz);
-    ctx.lineTo(cx + dx - headLen * Math.sin(playerYaw - headAngle), cz + dz + headLen * Math.cos(playerYaw - headAngle));
+    ctx.lineTo(
+      cx + dx - headLen * Math.sin(playerYaw - headAngle),
+      cz + dz + headLen * Math.cos(playerYaw - headAngle),
+    );
     ctx.moveTo(cx + dx, cz + dz);
-    ctx.lineTo(cx + dx - headLen * Math.sin(playerYaw + headAngle), cz + dz + headLen * Math.cos(playerYaw + headAngle));
+    ctx.lineTo(
+      cx + dx - headLen * Math.sin(playerYaw + headAngle),
+      cz + dz + headLen * Math.cos(playerYaw + headAngle),
+    );
     ctx.stroke();
   }, [data]);
   const side = radius * 2 + 1;
@@ -144,7 +150,9 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
       >
         {(["loaded", "loading", "missing"] as const).map((s) => (
           <span key={s} style={{ display: "flex", alignItems: "center", gap: 2, font: "8px monospace", color: "#ccc" }}>
-            <span style={{ width: 8, height: 8, background: STATE_COLOR[s], display: "inline-block", borderRadius: 1 }} />
+            <span
+              style={{ width: 8, height: 8, background: STATE_COLOR[s], display: "inline-block", borderRadius: 1 }}
+            />
             {s}
           </span>
         ))}

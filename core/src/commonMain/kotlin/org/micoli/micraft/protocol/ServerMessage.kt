@@ -27,6 +27,7 @@ sealed class ServerMessage {
         val viewMode: String = "FIRST_PERSON",
         val reconcileToleranceXz: Double = 0.5,
         val reconcileToleranceY: Double = 0.99,
+        val chunkTransport: String = "websocket",
     ) : ServerMessage()
 
     @Serializable data class ShadersUpdate(val enabled: Boolean) : ServerMessage()

@@ -18,7 +18,7 @@ private val log = LoggerFactory.getLogger("ServerConfigLoader")
 @Serializable
 data class WorldSection(
     @EncodeDefault(ALWAYS) val worldMinY: Int = 0,
-    @EncodeDefault(ALWAYS) val worldMaxY: Int = 512,
+    @EncodeDefault(ALWAYS) val worldMaxY: Int = 256,
     @EncodeDefault(ALWAYS) val chunkSize: Int = 16,
     @EncodeDefault(ALWAYS) val viewRadius: Int = 3,
     @EncodeDefault(ALWAYS) val forwardViewRadius: Int = 7,
@@ -67,10 +67,18 @@ data class AuthSection(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
+data class ChunkSection(
+    @EncodeDefault(ALWAYS) val transport: String = "websocket",
+    @EncodeDefault(ALWAYS) val httpWorkers: Int = 4,
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
 data class ServerConfig(
     @EncodeDefault(ALWAYS) val world: WorldSection = WorldSection(),
     @EncodeDefault(ALWAYS) val player: PlayerSection = PlayerSection(),
     @EncodeDefault(ALWAYS) val auth: AuthSection = AuthSection(),
+    @EncodeDefault(ALWAYS) val chunks: ChunkSection = ChunkSection(),
 )
 
 fun loadServerConfig(path: Path): ServerConfig {

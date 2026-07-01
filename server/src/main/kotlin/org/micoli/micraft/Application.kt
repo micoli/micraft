@@ -27,6 +27,7 @@ import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.auth.installAuthRoutes
 import org.micoli.micraft.auth.loadGroupsConfig
 import org.micoli.micraft.command.availablePlayerSkins
+import org.micoli.micraft.http.chunkRoutes
 import org.micoli.micraft.http.mapRoutes
 import org.micoli.micraft.http.metricsRoutes
 import org.micoli.micraft.world.BiomeConfig
@@ -218,6 +219,7 @@ fun Application.module() {
             authProvider = authProvider,
             groupsConfig = groupsConfig,
             reloadRbac = reloadRbacLambda,
+            chunkSection = serverConfig.chunks,
         )
     gameLoop.start(this)
     installAuthRoutes(authConfig.provider, authProvider, tokenStore)
@@ -293,6 +295,7 @@ fun Application.module() {
         staticFiles("/api/models", java.io.File("resources"))
         mapRoutes(gameLoop)
         metricsRoutes(gameLoop)
+        chunkRoutes(world, tokenStore, serverConfig.chunks.httpWorkers)
         webSocket("/game") { gameLoop.onConnect(this) }
         webSocket("/chunks") { gameLoop.onChunkConnect(this) }
     }

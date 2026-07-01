@@ -48,6 +48,12 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private var playerIdReady = CompletableDeferred<String>()
     private var serverHost = ""
     private var serverPort = 0
+    private var token = ""
+    private var chunkTransportMode = "websocket"
+    private var httpChunkFetcher: HttpChunkFetcher? = null
+    private var currentPlayerCx = 0
+    private var currentPlayerCz = 0
+    private var currentYaw = 0f
 
     init {
         jsOptimizeScene(scene)
@@ -68,6 +74,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         serverHost = host
         serverPort = port
         currentPlayerName = playerName
+        this.token = token
 
         scope.launch {
             while (isActive) {
@@ -90,6 +97,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             while (isActive) {
                 try {
                     val pid = playerIdReady.await()
+                    if (chunkTransportMode != "websocket") break
                     val chunkClient = HttpClient(Js) { install(WebSockets) }
                     chunkClient.webSocket(host = host, port = port, path = "/chunks") {
                         send(Frame.Text(pid))
@@ -217,6 +225,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         uiState.inventory = emptyMap()
         localPlayerId = null
         playerIdReady = CompletableDeferred()
+        chunkTransportMode = "websocket"
+        httpChunkFetcher = null
         localController.reset()
         chunkManager.clear()
         remotePlayerManager.clear()
@@ -227,6 +237,21 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         when (msg) {
             is ServerMessage.Welcome -> {
                 localPlayerId = msg.playerId
+                chunkTransportMode = msg.chunkTransport
+                if (msg.chunkTransport == "http") {
+                    httpChunkFetcher =
+                        HttpChunkFetcher(
+                            chunkManager = chunkManager,
+                            token = token,
+                            scope = scope,
+                        )
+                    scope.launch {
+                        while (isActive) {
+                            delay(2000)
+                            httpChunkFetcher?.trigger(currentPlayerCx, currentPlayerCz, currentYaw)
+                        }
+                    }
+                }
                 playerIdReady.complete(msg.playerId)
                 uiState.consolePlayerName = msg.playerName
                 jsFetchI18n(msg.language)
@@ -247,6 +272,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             is ServerMessage.PlayerUpdate -> {
                 val s = msg.state
                 if (s.id == localPlayerId) {
+                    currentPlayerCx = s.pos.x.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
+                    currentPlayerCz = s.pos.z.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
+                    currentYaw = s.orientation.yaw
+                    httpChunkFetcher?.trigger(currentPlayerCx, currentPlayerCz, currentYaw)
                     localController.updateFromServer(s) { cx, cz ->
                         chunkManager.unloadDistantChunks(cx, cz)
                     }
