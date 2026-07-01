@@ -9,6 +9,7 @@ interface SavePayload {
   subscribedChannels: string[];
   disabledCommands: string[];
   shadersEnabled: boolean;
+  animatedFavicon: boolean;
   keybindings: Record<string, string[]>;
   customCommands: Record<string, string[]>;
 }
@@ -149,6 +150,7 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
   const [localSubscribed, setLocalSubscribed] = useState<Set<string>>(new Set());
   const [localDisabled, setLocalDisabled] = useState<Set<string>>(new Set());
   const [localShaders, setLocalShaders] = useState(true);
+  const [localAnimatedFavicon, setLocalAnimatedFavicon] = useState(true);
   const [localBindings, setLocalBindings] = useState<Record<string, string[]>>({});
   const [localCustomCmds, setLocalCustomCmds] = useState<CustomCmdEntry[]>([]);
   const [recording, setRecording] = useState<{ action: string; index: number } | null>(null);
@@ -166,6 +168,7 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
       setLocalSubscribed(new Set(preferences.subscribedChannels));
       setLocalDisabled(new Set(preferences.disabledCommands));
       setLocalShaders(preferences.shadersEnabled);
+      setLocalAnimatedFavicon(preferences.animatedFavicon ?? true);
       setLocalBindings(preferences.keybindings ? { ...preferences.keybindings } : {});
       setLocalCustomCmds(Object.entries(preferences.customCommands || {}).map(([text, keys]) => ({ text, keys })));
       setRecording(null);
@@ -299,6 +302,7 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
       subscribedChannels: Array.from(localSubscribed),
       disabledCommands: Array.from(localDisabled),
       shadersEnabled: localShaders,
+      animatedFavicon: localAnimatedFavicon,
       keybindings: localBindings,
       customCommands,
     });
@@ -435,10 +439,20 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
             ))}
 
           {tab === "graphics" && (
-            <div style={ROW}>
-              <input type="checkbox" checked={localShaders} onChange={(e) => setLocalShaders(e.target.checked)} />
-              <span>Shaders (ambient occlusion, directional shading, fog)</span>
-            </div>
+            <>
+              <div style={ROW}>
+                <input type="checkbox" checked={localShaders} onChange={(e) => setLocalShaders(e.target.checked)} />
+                <span>Shaders (ambient occlusion, directional shading, fog)</span>
+              </div>
+              <div style={ROW}>
+                <input
+                  type="checkbox"
+                  checked={localAnimatedFavicon}
+                  onChange={(e) => setLocalAnimatedFavicon(e.target.checked)}
+                />
+                <span>Animated favicon (rotating block icon in browser tab)</span>
+              </div>
+            </>
           )}
 
           {tab === "keybindings" && (

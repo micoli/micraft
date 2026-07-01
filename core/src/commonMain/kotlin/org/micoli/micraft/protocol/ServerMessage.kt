@@ -127,6 +127,7 @@ sealed class ServerMessage {
         val commands: List<CommandInfo>,
         val keybindings: Map<String, List<String>> = emptyMap(),
         val customCommands: Map<String, List<String>> = emptyMap(),
+        val animatedFavicon: Boolean = true,
     ) : ServerMessage()
 
     @Serializable data class WeatherUpdate(val zones: List<WeatherZoneInfo>) : ServerMessage()

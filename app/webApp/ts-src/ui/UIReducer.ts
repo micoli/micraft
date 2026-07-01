@@ -65,6 +65,7 @@ export type UiAction =
       subscribedChannels: string[];
       disabledCommands: string[];
       shadersEnabled: boolean;
+      animatedFavicon: boolean;
       keybindings: Record<string, string[]>;
       customCommands: Record<string, string[]>;
     }
@@ -173,6 +174,7 @@ export function reducer(state: UiState, action: UiAction): UiState {
             subscribedChannels: action.subscribedChannels,
             disabledCommands: action.disabledCommands,
             shadersEnabled: action.shadersEnabled,
+            animatedFavicon: action.animatedFavicon,
             keybindings: action.keybindings,
             customCommands: action.customCommands,
           }

@@ -29,4 +29,5 @@ data class PlayerState(
     val disabledCommands: Set<String> = emptySet(),
     val viewMode: String = "FIRST_PERSON",
     val skin: String = "player",
+    val animatedFavicon: Boolean = true,
 )

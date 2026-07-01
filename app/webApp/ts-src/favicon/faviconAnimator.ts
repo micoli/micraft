@@ -17,16 +17,41 @@ async function toObjectUrl(url: string): Promise<string> {
   return URL.createObjectURL(blob);
 }
 
-export function initFaviconAnimator(ordinal: number): void {
-  const link = document.getElementById("favicon") as HTMLLinkElement | null;
-  if (!link) return;
-  const B = (window as any).BABYLON;
-  if (!B) return;
+let _link: HTMLLinkElement | null = null;
+let _ordinal = -1;
+let _staticUrl: string | null = null;
+let _frameCache: string[] = [];
+let _intervalId: ReturnType<typeof setInterval> | null = null;
+let _animating = false;
+let _buildStarted = false;
 
+function _startAnimation(): void {
+  if (_intervalId !== null || _frameCache.length === 0) return;
+  let idx = 0;
+  _intervalId = setInterval(() => {
+    if (_link) {
+      _link.href = _frameCache[idx % _frameCache.length];
+      idx++;
+    }
+  }, FRAME_INTERVAL_MS);
+}
+
+function _stopAnimation(): void {
+  if (_intervalId !== null) {
+    clearInterval(_intervalId);
+    _intervalId = null;
+  }
+  if (_link) _link.href = _frameCache.length > 0 ? _frameCache[0] : (_staticUrl ?? "");
+}
+
+function _buildFrameCache(): void {
+  const B = (window as any).BABYLON;
+  if (!B || _ordinal < 0) return;
+
+  const fallback = _staticUrl;
   const rawUrls = new Set<string>();
-  const fallback = getFaceTexUrl(ordinal, 4) ?? getFaceTexUrl(ordinal, 0);
   for (const { dir } of FACES) {
-    const url = getFaceTexUrl(ordinal, dir) ?? fallback;
+    const url = getFaceTexUrl(_ordinal, dir) ?? fallback;
     if (url) rawUrls.add(url);
   }
 
@@ -51,7 +76,7 @@ export function initFaviconAnimator(ordinal: number): void {
     const matCache = new Map<string, unknown>();
 
     for (const { dir, x, y, z, rx, ry } of FACES) {
-      const rawUrl = getFaceTexUrl(ordinal, dir) ?? fallback;
+      const rawUrl = (getFaceTexUrl(_ordinal, dir) ?? fallback)!;
       if (!rawUrl) continue;
       const blobUrl = blobMap.get(rawUrl)!;
 
@@ -72,7 +97,6 @@ export function initFaviconAnimator(ordinal: number): void {
 
     const ANGLE_STEP = 0.035;
     const FULL_ROTATION = Math.PI * 2;
-    const frameCache: string[] = [];
     let angle = 0;
     let frame = 0;
     let cacheComplete = false;
@@ -88,8 +112,8 @@ export function initFaviconAnimator(ordinal: number): void {
     scene.onAfterRenderObservable.add(() => {
       if (!pendingCapture || cacheComplete) return;
       pendingCapture = false;
-      frameCache.push(glCanvas.toDataURL("image/png"));
-      link.href = frameCache[frameCache.length - 1];
+      _frameCache.push(glCanvas.toDataURL("image/png"));
+      if (_link && _animating) _link.href = _frameCache[_frameCache.length - 1];
       if (angle >= FULL_ROTATION) {
         cacheComplete = true;
         engine.stopRenderLoop();
@@ -98,14 +122,35 @@ export function initFaviconAnimator(ordinal: number): void {
           engine.dispose();
           textureBlobUrls.forEach((b) => URL.revokeObjectURL(b));
         }, 0);
-        let idx = 0;
-        setInterval(() => {
-          link.href = frameCache[idx % frameCache.length];
-          idx++;
-        }, FRAME_INTERVAL_MS);
+        if (_animating) _startAnimation();
+        else if (_link) _link.href = _frameCache[0];
       }
     });
 
     engine.runRenderLoop(() => scene.render());
   });
+}
+
+export function setFaviconAnimated(animated: boolean): void {
+  _animating = animated;
+  if (animated) {
+    if (_frameCache.length > 0) {
+      _startAnimation();
+    } else if (!_buildStarted) {
+      _buildStarted = true;
+      _buildFrameCache();
+    }
+  } else {
+    _stopAnimation();
+  }
+}
+
+export function initFaviconAnimator(ordinal: number, animated: boolean): void {
+  _link = document.getElementById("favicon") as HTMLLinkElement | null;
+  if (!_link) return;
+  _ordinal = ordinal;
+  _staticUrl = getFaceTexUrl(ordinal, 4) ?? getFaceTexUrl(ordinal, 0) ?? null;
+  _animating = animated;
+  _buildStarted = true;
+  _buildFrameCache();
 }

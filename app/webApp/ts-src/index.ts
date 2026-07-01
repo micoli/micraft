@@ -20,7 +20,7 @@ import { registerWeather } from "./weather/weather";
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import { GameUI } from "./ui/GameUI";
-import { initFaviconAnimator } from "./favicon/faviconAnimator";
+import { initFaviconAnimator, setFaviconAnimated } from "./favicon/faviconAnimator";
 
 registerUtils();
 registerEngine();
@@ -40,6 +40,27 @@ registerWeather();
 registerAllPlugins();
 registerAutoUpdate();
 
+// ── Favicon coordination (ordinal from registry + animated from prefs) ────────
+
+let _faviconOrdinal = -1;
+let _faviconAnimated: boolean | null = null;
+let _faviconInitialized = false;
+
+function _maybeInitFavicon() {
+  if (_faviconOrdinal < 0 || _faviconAnimated === null || _faviconInitialized) return;
+  _faviconInitialized = true;
+  initFaviconAnimator(_faviconOrdinal, _faviconAnimated);
+}
+
+(window as any).mcApplyFaviconPref = (animated: boolean) => {
+  _faviconAnimated = animated;
+  if (_faviconInitialized) {
+    setFaviconAnimated(animated);
+  } else {
+    _maybeInitFavicon();
+  }
+};
+
 // ── Block/Item registry ───────────────────────────────────────────────────────
 
 (window as any).mcSetBlockRegistry = (json: string) => {
@@ -53,7 +74,10 @@ registerAutoUpdate();
       clearInterval(favIv);
       const registryBlocks = (window as any).__mcCodexBlocks as Array<{ name: string }>;
       const idx = registryBlocks.findIndex((b) => b.name === "QUARTZ_ORE");
-      if (idx >= 0) initFaviconAnimator(idx);
+      if (idx >= 0) {
+        _faviconOrdinal = idx;
+        _maybeInitFavicon();
+      }
     }
   }, 200);
 };

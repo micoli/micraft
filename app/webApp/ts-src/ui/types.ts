@@ -57,6 +57,7 @@ export interface PreferencesData {
   knownChannels: string[];
   disabledCommands: string[];
   shadersEnabled: boolean;
+  animatedFavicon: boolean;
   commands: CommandInfo[];
   keybindings: Record<string, string[]>;
   customCommands: Record<string, string[]>;

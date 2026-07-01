@@ -331,6 +331,7 @@ class GameLoop(
             commands = commandList,
             keybindings = keybindings,
             customCommands = customCommands,
+            animatedFavicon = session.state.animatedFavicon,
         )
     }
 
@@ -348,6 +349,7 @@ class GameLoop(
                 subscribedChannels = newSubscribed,
                 disabledCommands = msg.disabledCommands,
                 shadersEnabled = msg.shadersEnabled,
+                animatedFavicon = msg.animatedFavicon,
             )
         if (msg.keybindings.isNotEmpty()) {
             persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
@@ -625,6 +627,7 @@ class GameLoop(
                 disabledCommands = saved?.disabledCommands ?: emptySet(),
                 viewMode = saved?.viewMode ?: "FIRST_PERSON",
                 skin = saved?.skin ?: "player",
+                animatedFavicon = saved?.animatedFavicon ?: true,
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =

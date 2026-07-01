@@ -310,6 +310,7 @@ export function GameUI() {
           }
         }
         dispatch({ type: "preferences_sync", data });
+        (window as any).mcApplyFaviconPref?.(data.animatedFavicon ?? true);
       } catch {
         /* ignore */
       }
@@ -379,6 +380,7 @@ export function GameUI() {
     subscribedChannels: string[];
     disabledCommands: string[];
     shadersEnabled: boolean;
+    animatedFavicon: boolean;
     keybindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
   }) => {
@@ -387,6 +389,7 @@ export function GameUI() {
       window.__mc.bindings = payload.keybindings;
       window.__mc.customCommands = payload.customCommands;
     }
+    (window as any).mcApplyFaviconPref?.(payload.animatedFavicon);
     pendingPreferencesUpdateRef.current = JSON.stringify(payload);
   };
 
