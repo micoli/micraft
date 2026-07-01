@@ -381,6 +381,7 @@ export function GameUI() {
     disabledCommands: string[];
     shadersEnabled: boolean;
     animatedFavicon: boolean;
+    chunkDebugVisible: boolean;
     keybindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
   }) => {
@@ -419,7 +420,9 @@ export function GameUI() {
       {!state.loginVisible && !state.disconnectMsg && (
         <>
           <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, "HUD")} />
-          <ChunkDebug data={chunkDebugData} layoutStyle={widgetStyle(activeLayout, "CHUNK_DEBUG")} />
+          {(state.preferences?.chunkDebugVisible ?? false) && (
+            <ChunkDebug data={chunkDebugData} layoutStyle={widgetStyle(activeLayout, "CHUNK_DEBUG")} />
+          )}
           <ShortcutBar
             inventory={state.inventory}
             itemMeta={state.itemMeta}

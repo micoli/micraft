@@ -332,6 +332,7 @@ class GameLoop(
             keybindings = keybindings,
             customCommands = customCommands,
             animatedFavicon = session.state.animatedFavicon,
+            chunkDebugVisible = session.state.chunkDebugVisible,
         )
     }
 
@@ -350,6 +351,7 @@ class GameLoop(
                 disabledCommands = msg.disabledCommands,
                 shadersEnabled = msg.shadersEnabled,
                 animatedFavicon = msg.animatedFavicon,
+                chunkDebugVisible = msg.chunkDebugVisible,
             )
         if (msg.keybindings.isNotEmpty()) {
             persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
@@ -628,6 +630,7 @@ class GameLoop(
                 viewMode = saved?.viewMode ?: "FIRST_PERSON",
                 skin = saved?.skin ?: "player",
                 animatedFavicon = saved?.animatedFavicon ?: true,
+                chunkDebugVisible = saved?.chunkDebugVisible ?: false,
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =

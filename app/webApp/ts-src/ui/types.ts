@@ -58,6 +58,7 @@ export interface PreferencesData {
   disabledCommands: string[];
   shadersEnabled: boolean;
   animatedFavicon: boolean;
+  chunkDebugVisible: boolean;
   commands: CommandInfo[];
   keybindings: Record<string, string[]>;
   customCommands: Record<string, string[]>;

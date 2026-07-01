@@ -30,4 +30,5 @@ data class PlayerState(
     val viewMode: String = "FIRST_PERSON",
     val skin: String = "player",
     val animatedFavicon: Boolean = true,
+    val chunkDebugVisible: Boolean = false,
 )

@@ -10,6 +10,7 @@ interface SavePayload {
   disabledCommands: string[];
   shadersEnabled: boolean;
   animatedFavicon: boolean;
+  chunkDebugVisible: boolean;
   keybindings: Record<string, string[]>;
   customCommands: Record<string, string[]>;
 }
@@ -151,6 +152,7 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
   const [localDisabled, setLocalDisabled] = useState<Set<string>>(new Set());
   const [localShaders, setLocalShaders] = useState(true);
   const [localAnimatedFavicon, setLocalAnimatedFavicon] = useState(true);
+  const [localChunkDebugVisible, setLocalChunkDebugVisible] = useState(false);
   const [localBindings, setLocalBindings] = useState<Record<string, string[]>>({});
   const [localCustomCmds, setLocalCustomCmds] = useState<CustomCmdEntry[]>([]);
   const [recording, setRecording] = useState<{ action: string; index: number } | null>(null);
@@ -169,6 +171,7 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
       setLocalDisabled(new Set(preferences.disabledCommands));
       setLocalShaders(preferences.shadersEnabled);
       setLocalAnimatedFavicon(preferences.animatedFavicon ?? true);
+      setLocalChunkDebugVisible(preferences.chunkDebugVisible ?? false);
       setLocalBindings(preferences.keybindings ? { ...preferences.keybindings } : {});
       setLocalCustomCmds(Object.entries(preferences.customCommands || {}).map(([text, keys]) => ({ text, keys })));
       setRecording(null);
@@ -303,6 +306,7 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
       disabledCommands: Array.from(localDisabled),
       shadersEnabled: localShaders,
       animatedFavicon: localAnimatedFavicon,
+      chunkDebugVisible: localChunkDebugVisible,
       keybindings: localBindings,
       customCommands,
     });
@@ -451,6 +455,14 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                   onChange={(e) => setLocalAnimatedFavicon(e.target.checked)}
                 />
                 <span>Animated favicon (rotating block icon in browser tab)</span>
+              </div>
+              <div style={ROW}>
+                <input
+                  type="checkbox"
+                  checked={localChunkDebugVisible}
+                  onChange={(e) => setLocalChunkDebugVisible(e.target.checked)}
+                />
+                <span>Chunk debug overlay (streaming status grid)</span>
               </div>
             </>
           )}

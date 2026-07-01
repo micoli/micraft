@@ -66,6 +66,7 @@ export type UiAction =
       disabledCommands: string[];
       shadersEnabled: boolean;
       animatedFavicon: boolean;
+      chunkDebugVisible: boolean;
       keybindings: Record<string, string[]>;
       customCommands: Record<string, string[]>;
     }
@@ -175,6 +176,7 @@ export function reducer(state: UiState, action: UiAction): UiState {
             disabledCommands: action.disabledCommands,
             shadersEnabled: action.shadersEnabled,
             animatedFavicon: action.animatedFavicon,
+            chunkDebugVisible: action.chunkDebugVisible,
             keybindings: action.keybindings,
             customCommands: action.customCommands,
           }
