@@ -42,6 +42,7 @@ ui:
   view_toggle: [KeyF]
   hud_mode_cycle: [KeyH]
   inventory: [KeyI]
+  character: [KeyY]
   undo: ["Ctrl+KeyZ", "Cmd+KeyZ"]
   minimap_zoom_in: [l]
   minimap_zoom_out: [m]
