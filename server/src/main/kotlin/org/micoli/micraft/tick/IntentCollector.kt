@@ -21,14 +21,16 @@ class IntentCollector(
         var flyToggleRequested = false
         var speedUpRequested = false
         var speedDownRequested = false
+        var receivedMove = false
 
         while (true) {
             val intent = session.intents.tryReceive().getOrNull() ?: break
             when (intent) {
                 is ClientMessage.MoveIntent -> {
-                    dx += intent.dx
-                    dz += intent.dz
-                    dy += intent.dy
+                    receivedMove = true
+                    dx = intent.dx
+                    dz = intent.dz
+                    dy = intent.dy
                     yaw = intent.yaw
                     pitch = intent.pitch
                     stance = intent.stance
@@ -50,6 +52,16 @@ class IntentCollector(
                 is ClientMessage.ChatSend -> onChatSend(session, intent.channel, intent.text)
                 else -> {}
             }
+        }
+
+        if (receivedMove) {
+            session.lastMoveDx = dx
+            session.lastMoveDz = dz
+            session.lastMoveDy = dy
+        } else {
+            dx = session.lastMoveDx
+            dz = session.lastMoveDz
+            dy = session.lastMoveDy
         }
 
         return TickInput(

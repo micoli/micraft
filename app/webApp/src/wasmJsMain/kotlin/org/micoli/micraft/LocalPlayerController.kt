@@ -410,11 +410,15 @@ class LocalPlayerController(
         val diffZ = serverZ - predZ
         val distXZ = kotlin.math.sqrt(diffX * diffX + diffZ * diffZ)
         when {
-            distXZ > SNAP_THRESHOLD -> {
+            distXZ > SNAP_THRESHOLD && !isMovingXZ -> {
                 predX = serverX
                 predZ = serverZ
             }
-            distXZ > reconcileToleranceXz -> {
+            distXZ > 5.0 -> {
+                predX = serverX
+                predZ = serverZ
+            }
+            !isMovingXZ && distXZ > reconcileToleranceXz -> {
                 predX += diffX * 0.3
                 predZ += diffZ * 0.3
                 reconcileCountXz++

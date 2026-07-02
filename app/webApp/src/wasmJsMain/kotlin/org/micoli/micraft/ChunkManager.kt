@@ -78,7 +78,9 @@ class ChunkManager(private val scene: JsAny) {
         if (blockMaterials != null) jsApplyBiomeGrassTint(biome)
     }
 
-    val pendingRenderCount: Int get() = pendingChunks.size + if (activeRender != null) 1 else 0
+    val pendingRenderCount: Int
+        get() = pendingChunks.size + if (activeRender != null) 1 else 0
+
     private val pendingMinimapPushes = ArrayDeque<Pair<Chunk, Int>>()
 
     fun enqueueChunk(chunk: Chunk, topY: Int) {

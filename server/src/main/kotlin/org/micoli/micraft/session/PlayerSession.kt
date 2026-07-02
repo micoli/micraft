@@ -43,6 +43,10 @@ open class PlayerSession(
     val actionHistory: ArrayDeque<WorldActionRecord> = ArrayDeque()
     val shortcutBar: MutableList<ItemType?> = MutableList(10) { null }
 
+    @Volatile var lastMoveDx: Float = 0f
+    @Volatile var lastMoveDz: Float = 0f
+    @Volatile var lastMoveDy: Float = 0f
+
     @Volatile var chunkSocket: DefaultWebSocketSession? = null
 
     open suspend fun send(msg: ServerMessage) {
