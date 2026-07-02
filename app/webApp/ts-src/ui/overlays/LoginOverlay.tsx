@@ -153,6 +153,8 @@ const SUPPORTED_LANGS: { code: string; label: string }[] = [
   { code: "fr", label: "Français" },
 ];
 
+const SKINS = ["player", "askin"];
+
 const inputStyle: React.CSSProperties = {
   width: "100%",
   boxSizing: "border-box",
@@ -209,10 +211,11 @@ interface Props {
 }
 
 type AuthMode = "none" | "local" | "oauth" | "loading";
+type Step = "auth" | "chars" | "create";
 
 export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
   const [authMode, setAuthMode] = useState<AuthMode>("loading");
-  const [step, setStep] = useState<"auth" | "chars">("auth");
+  const [step, setStep] = useState<Step>("auth");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
@@ -224,10 +227,13 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
   const [previewSkin, setPreviewSkin] = useState("player");
   const [previewArmors, setPreviewArmors] = useState<string[]>([]);
   const [previewWalking, setPreviewWalking] = useState(true);
-  const [newChar, setNewChar] = useState("");
+  const [createName, setCreateName] = useState("");
+  const [createSkin, setCreateSkin] = useState("player");
+  const [createError, setCreateError] = useState("");
+  const [createWalking, setCreateWalking] = useState(true);
   const usernameInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
-  const newCharInputRef = useRef<HTMLInputElement>(null);
+  const createNameInputRef = useRef<HTMLInputElement>(null);
   const playButtonRef = useRef<HTMLButtonElement>(null);
 
   // Fetch auth config once on mount
@@ -317,13 +323,13 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
   }, [visible, step, authMode]);
 
   useEffect(() => {
-    if (visible && step === "chars" && selected !== "__new__") {
+    if (visible && step === "chars" && selected) {
       setTimeout(() => playButtonRef.current?.focus(), 50);
     }
   }, [visible, step, selected]);
 
   useEffect(() => {
-    if (step !== "chars" || !selected || selected === "__new__") return;
+    if (step !== "chars" || !selected) return;
     const enc = encodeURIComponent(selected);
     Promise.all([
       fetch(`/api/player/${enc}/skin`)
@@ -338,19 +344,71 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
     });
   }, [step, selected]);
 
-  function goChars(user: string) {
+  async function goChars(user: string) {
     const trimmed = user.trim();
     try {
       localStorage.setItem("micraft_last_user", trimmed);
     } catch {}
     setUsername(trimmed);
+    setStep("chars");
+    setLang(getLastLang());
     const users = getUsers();
-    const playerChars = users[trimmed] || [];
+    let playerChars = users[trimmed] || [];
+    if (playerChars.length > 0) {
+      const results = await Promise.all(
+        playerChars.map((name) =>
+          fetch(`/api/player/${encodeURIComponent(name)}/skin`)
+            .then((r) => (r.ok ? name : null))
+            .catch(() => name),
+        ),
+      );
+      const existing = results.filter((n): n is string => n !== null);
+      if (existing.length !== playerChars.length) {
+        users[trimmed] = existing;
+        saveUsers(users);
+        playerChars = existing;
+      }
+    }
     const lastPlayer = getLastPlayer(trimmed);
     setChars(playerChars);
-    setNewChar(playerChars.length === 0 ? trimmed : "");
-    setSelected(lastPlayer || (playerChars[0] ?? "__new__"));
-    setLang(getLastLang());
+    setSelected(lastPlayer && playerChars.includes(lastPlayer) ? lastPlayer : playerChars[0] || "");
+  }
+
+  function goCreate() {
+    setCreateName("");
+    setCreateSkin("player");
+    setCreateError("");
+    setCreateWalking(true);
+    setStep("create");
+    setTimeout(() => createNameInputRef.current?.focus(), 50);
+  }
+
+  async function doCreate() {
+    const name = createName.trim();
+    if (!name) {
+      setCreateError("Name required.");
+      createNameInputRef.current?.focus();
+      return;
+    }
+    if (chars.includes(name)) {
+      setCreateError("Name already taken.");
+      createNameInputRef.current?.focus();
+      return;
+    }
+    await fetch(`/api/player/${encodeURIComponent(name)}/skin`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ skin: createSkin }),
+    }).catch(() => {});
+    const users = getUsers();
+    if (!users[username]) users[username] = [];
+    users[username].push(name);
+    saveUsers(users);
+    const updated = users[username];
+    setChars(updated);
+    setSelected(name);
+    setPreviewSkin(createSkin);
+    setPreviewArmors([]);
     setStep("chars");
   }
 
@@ -392,24 +450,10 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
   }
 
   function doPlay() {
-    const user = username.trim();
-    let playerName: string;
-    if (selected === "__new__" || !selected) {
-      playerName = newChar.trim();
-      if (!playerName) {
-        newCharInputRef.current?.focus();
-        return;
-      }
-      const users = getUsers();
-      if (!users[user]) users[user] = [];
-      if (!users[user].includes(playerName)) users[user].push(playerName);
-      saveUsers(users);
-    } else {
-      playerName = selected;
-    }
-    saveLastPlayer(user, playerName);
+    if (!selected) return;
+    saveLastPlayer(username, selected);
     saveLastLang(lang);
-    loginResultRef.current = user + "\t" + playerName + "\t" + lang + "\t" + token;
+    loginResultRef.current = username + "\t" + selected + "\t" + lang + "\t" + token;
     onHide();
   }
 
@@ -548,7 +592,7 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
           <div
             style={{ display: "flex", gap: 24, alignItems: "flex-start" }}
             onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
-              if (e.key === "Enter" && selected !== "__new__") {
+              if (e.key === "Enter" && selected) {
                 e.stopPropagation();
                 doPlay();
               }
@@ -575,6 +619,9 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
                 </div>
               )}
               <div style={{ marginBottom: 12, marginTop: 14 }}>
+                {chars.length === 0 && (
+                  <div style={{ fontSize: 13, color: "#666", marginBottom: 8 }}>No characters yet.</div>
+                )}
                 {chars.map((name, i) => (
                   <div key={name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
                     <input
@@ -590,45 +637,14 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
                     </label>
                   </div>
                 ))}
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-                  <input
-                    type="radio"
-                    name="mc-char"
-                    value="__new__"
-                    id="mc-char-new"
-                    checked={selected === "__new__"}
-                    onChange={() => setSelected("__new__")}
-                  />
-                  <label
-                    htmlFor="mc-char-new"
-                    style={{ fontSize: 13, color: "#aaa", cursor: "pointer", whiteSpace: "nowrap" }}
-                  >
-                    + New character:
-                  </label>
-                  <input
-                    ref={newCharInputRef}
-                    type="text"
-                    placeholder="Character name"
-                    style={{
-                      flex: 1,
-                      padding: "5px 8px",
-                      background: "#111",
-                      border: "1px solid #555",
-                      borderRadius: 4,
-                      color: "#eee",
-                      font: "14px monospace",
-                      outline: "none",
-                    }}
-                    value={newChar}
-                    onChange={(e) => setNewChar(e.target.value)}
-                    onFocus={() => setSelected("__new__")}
-                    onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                      if (e.key === "Enter") doPlay();
-                    }}
-                  />
-                </div>
               </div>
-              <button ref={playButtonRef} style={btnPrimary} onClick={doPlay}>
+              <button
+                style={{ ...btnSecondary, marginTop: 4, color: "#7af", borderColor: "#3a6aaa" }}
+                onClick={goCreate}
+              >
+                + Create new character
+              </button>
+              <button ref={playButtonRef} style={{ ...btnPrimary, opacity: selected ? 1 : 0.4 }} onClick={doPlay} disabled={!selected}>
                 Play
               </button>
               {authMode === "local" || authMode === "oauth" ? (
@@ -648,21 +664,169 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
               )}
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-              <PlayerModelPreview
-                key={previewSkin + previewArmors.join(",")}
-                skin={previewSkin}
-                armors={previewArmors}
-                walking={previewWalking}
+              {selected ? (
+                <>
+                  <PlayerModelPreview
+                    key={previewSkin + previewArmors.join(",")}
+                    skin={previewSkin}
+                    armors={previewArmors}
+                    walking={previewWalking}
+                  />
+                  <div style={{ display: "flex", gap: 4, width: 160 }}>
+                    <button
+                      onClick={() => setPreviewWalking(false)}
+                      style={{
+                        flex: 1,
+                        background: !previewWalking ? "#2a3d2a" : "#1e1e1e",
+                        border: `1px solid ${!previewWalking ? "#4a7a4a" : "#333"}`,
+                        borderRadius: 4,
+                        color: !previewWalking ? "#7aac7a" : "#666",
+                        fontFamily: "monospace",
+                        fontSize: 11,
+                        cursor: "pointer",
+                        padding: "4px 0",
+                      }}
+                    >
+                      Statique
+                    </button>
+                    <button
+                      onClick={() => setPreviewWalking(true)}
+                      style={{
+                        flex: 1,
+                        background: previewWalking ? "#2a3d2a" : "#1e1e1e",
+                        border: `1px solid ${previewWalking ? "#4a7a4a" : "#333"}`,
+                        borderRadius: 4,
+                        color: previewWalking ? "#7aac7a" : "#666",
+                        fontFamily: "monospace",
+                        fontSize: 11,
+                        cursor: "pointer",
+                        padding: "4px 0",
+                      }}
+                    >
+                      Marche
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div
+                  style={{
+                    width: 160,
+                    height: 220,
+                    borderRadius: 6,
+                    background: "#111",
+                    border: "1px solid #333",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#444",
+                    fontSize: 12,
+                    textAlign: "center",
+                  }}
+                >
+                  No character selected
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Character creation step */}
+        {step === "create" && (
+          <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
+            <div style={{ minWidth: 280 }}>
+              <div style={{ fontSize: 14, color: "#aaa", marginBottom: 16 }}>New character</div>
+
+              <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 6 }}>Name</label>
+              <input
+                ref={createNameInputRef}
+                style={inputStyle}
+                type="text"
+                placeholder="Character name"
+                value={createName}
+                onChange={(e) => {
+                  setCreateName(e.target.value);
+                  setCreateError("");
+                }}
+                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === "Enter") doCreate();
+                }}
               />
-              <div style={{ display: "flex", gap: 4, width: 160 }}>
+              {createError && <div style={{ marginTop: 6, color: "#f66", fontSize: 13 }}>{createError}</div>}
+
+              <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 8, marginTop: 16 }}>
+                Skin
+              </label>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <button
-                  onClick={() => setPreviewWalking(false)}
+                  onClick={() => {
+                    const idx = SKINS.indexOf(createSkin);
+                    setCreateSkin(SKINS[(idx - 1 + SKINS.length) % SKINS.length]);
+                  }}
+                  style={{
+                    background: "#222",
+                    border: "1px solid #555",
+                    borderRadius: 4,
+                    color: "#eee",
+                    fontFamily: "monospace",
+                    fontSize: 16,
+                    cursor: "pointer",
+                    padding: "4px 10px",
+                  }}
+                >
+                  ‹
+                </button>
+                <div
                   style={{
                     flex: 1,
-                    background: !previewWalking ? "#2a3d2a" : "#1e1e1e",
-                    border: `1px solid ${!previewWalking ? "#4a7a4a" : "#333"}`,
+                    textAlign: "center",
+                    background: "#111",
+                    border: "1px solid #555",
                     borderRadius: 4,
-                    color: !previewWalking ? "#7aac7a" : "#666",
+                    padding: "6px 0",
+                    fontSize: 14,
+                  }}
+                >
+                  {createSkin}
+                </div>
+                <button
+                  onClick={() => {
+                    const idx = SKINS.indexOf(createSkin);
+                    setCreateSkin(SKINS[(idx + 1) % SKINS.length]);
+                  }}
+                  style={{
+                    background: "#222",
+                    border: "1px solid #555",
+                    borderRadius: 4,
+                    color: "#eee",
+                    fontFamily: "monospace",
+                    fontSize: 16,
+                    cursor: "pointer",
+                    padding: "4px 10px",
+                  }}
+                >
+                  ›
+                </button>
+              </div>
+
+              <button style={btnPrimary} onClick={doCreate}>
+                Create
+              </button>
+              <button style={btnSecondary} onClick={() => setStep("chars")}>
+                ← Back
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+              <PlayerModelPreview key={createSkin} skin={createSkin} armors={[]} walking={createWalking} />
+              <div style={{ display: "flex", gap: 4, width: 160 }}>
+                <button
+                  onClick={() => setCreateWalking(false)}
+                  style={{
+                    flex: 1,
+                    background: !createWalking ? "#2a3d2a" : "#1e1e1e",
+                    border: `1px solid ${!createWalking ? "#4a7a4a" : "#333"}`,
+                    borderRadius: 4,
+                    color: !createWalking ? "#7aac7a" : "#666",
                     fontFamily: "monospace",
                     fontSize: 11,
                     cursor: "pointer",
@@ -672,13 +836,13 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
                   Statique
                 </button>
                 <button
-                  onClick={() => setPreviewWalking(true)}
+                  onClick={() => setCreateWalking(true)}
                   style={{
                     flex: 1,
-                    background: previewWalking ? "#2a3d2a" : "#1e1e1e",
-                    border: `1px solid ${previewWalking ? "#4a7a4a" : "#333"}`,
+                    background: createWalking ? "#2a3d2a" : "#1e1e1e",
+                    border: `1px solid ${createWalking ? "#4a7a4a" : "#333"}`,
                     borderRadius: 4,
-                    color: previewWalking ? "#7aac7a" : "#666",
+                    color: createWalking ? "#7aac7a" : "#666",
                     fontFamily: "monospace",
                     fontSize: 11,
                     cursor: "pointer",

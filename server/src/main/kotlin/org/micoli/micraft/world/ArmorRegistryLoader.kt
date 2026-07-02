@@ -9,7 +9,7 @@ import kotlin.io.path.readText
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("StuffRegistryLoader")
+private val log = LoggerFactory.getLogger("ArmorRegistryLoader")
 
 @Serializable
 data class WearableSlots(
@@ -32,13 +32,13 @@ data class WearableSlots(
     fun overlaps(other: WearableSlots): Boolean = toSet().intersect(other.toSet()).isNotEmpty()
 }
 
-@Serializable private data class StuffYamlEntry(val wearable: WearableSlots = WearableSlots())
+@Serializable private data class ArmorYamlEntry(val wearable: WearableSlots = WearableSlots())
 
-class StuffRegistryLoader(private val stuffPath: Path) {
+class ArmorRegistryLoader(private val armorsPath: Path) {
     fun load(): Map<String, WearableSlots> {
-        if (!stuffPath.exists()) return emptyMap()
+        if (!armorsPath.exists()) return emptyMap()
         val result =
-            stuffPath
+            armorsPath
                 .listDirectoryEntries()
                 .filter { it.isDirectory() }
                 .mapNotNull { dir ->
@@ -48,14 +48,14 @@ class StuffRegistryLoader(private val stuffPath: Path) {
                     runCatching {
                             val entry =
                                 Yaml.default.decodeFromString(
-                                    StuffYamlEntry.serializer(), yaml.readText())
+                                    ArmorYamlEntry.serializer(), yaml.readText())
                             name to entry.wearable
                         }
-                        .onFailure { log.warn("Failed to load stuff '{}': {}", name, it.message) }
+                        .onFailure { log.warn("Failed to load armor '{}': {}", name, it.message) }
                         .getOrNull()
                 }
                 .toMap()
-        log.info("Stuff registry loaded: {} wearable types", result.size)
+        log.info("Armor registry loaded: {} wearable types", result.size)
         return result
     }
 }

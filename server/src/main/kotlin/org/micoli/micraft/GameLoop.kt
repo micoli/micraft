@@ -38,6 +38,7 @@ import org.micoli.micraft.tick.LiquidManager
 import org.micoli.micraft.tick.MovementProcessor
 import org.micoli.micraft.tick.VegetationManager
 import org.micoli.micraft.ui.validateLayouts
+import org.micoli.micraft.world.ArmorRegistryLoader
 import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.ChatChannelManager
 import org.micoli.micraft.world.ChatService
@@ -47,7 +48,6 @@ import org.micoli.micraft.world.DropConfig
 import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.NpcRegistryLoader
-import org.micoli.micraft.world.StuffRegistryLoader
 import org.micoli.micraft.world.VegetationConfig
 import org.micoli.micraft.world.WearableSlots
 import org.micoli.micraft.world.WeatherConfig
@@ -182,8 +182,8 @@ class GameLoop(
                     ?: Path.of("data/world/default_world/vegetation_state.json"),
         )
 
-    private val stuffRegistryLoader = StuffRegistryLoader(Path.of("resources/stuff"))
-    private var stuffRegistry: Map<String, WearableSlots> = emptyMap()
+    private val armorRegistryLoader = ArmorRegistryLoader(Path.of("resources/armors"))
+    private var armorRegistry: Map<String, WearableSlots> = emptyMap()
     private val npcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml"))
     private val npcRegistryLoader =
         NpcRegistryLoader(
@@ -244,7 +244,7 @@ class GameLoop(
                     }
                 } else null,
             reloadNpcs = { npcManager.reloadDefinitions(npcRegistryLoader.reload()) },
-            stuffRegistry = { stuffRegistry },
+            armorRegistry = { armorRegistry },
         )
     private val blockBreaker =
         BlockBreaker(
@@ -446,7 +446,7 @@ class GameLoop(
         appScope = app
         log.info("GameLoop starting (tick=${TICK_MS}ms, gravity=$GRAVITY)")
         validatePluginSystemIds(commands, discoverPlugins())
-        stuffRegistry = stuffRegistryLoader.load()
+        armorRegistry = armorRegistryLoader.load()
         npcConfigLoader.load()
         npcManager.loadDefinitions(npcRegistryLoader.load())
         val npcSavePath =

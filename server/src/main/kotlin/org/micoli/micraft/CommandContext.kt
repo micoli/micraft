@@ -41,5 +41,5 @@ data class CommandContext(
     val reloadBlocks: (suspend () -> Unit)? = null,
     val reloadNpcs: (suspend () -> Unit)? = null,
     val reloadRbac: (() -> Unit)? = null,
-    val stuffRegistry: () -> Map<String, WearableSlots> = { emptyMap() },
+    val armorRegistry: () -> Map<String, WearableSlots> = { emptyMap() },
 )

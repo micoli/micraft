@@ -6,6 +6,7 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
@@ -30,6 +31,9 @@ import org.micoli.micraft.command.availablePlayerSkins
 import org.micoli.micraft.http.chunkRoutes
 import org.micoli.micraft.http.mapRoutes
 import org.micoli.micraft.http.metricsRoutes
+import org.micoli.micraft.player.Orientation
+import org.micoli.micraft.player.PlayerState
+import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.world.BiomeConfig
 import org.micoli.micraft.world.BiomeRegistry
 import org.micoli.micraft.world.BlockRegistry
@@ -283,7 +287,31 @@ fun Application.module() {
         }
         get("/api/player/{name}/skin") {
             val name = call.parameters["name"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val skin = persistence?.loadPlayerState(name)?.skin ?: "player"
+            val state =
+                persistence?.loadPlayerState(name)
+                    ?: return@get call.respond(HttpStatusCode.NotFound)
+            call.respondText("""{"skin":"${state.skin}"}""", ContentType.Application.Json)
+        }
+        put("/api/player/{name}/skin") {
+            val name = call.parameters["name"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+            val body = call.receiveText()
+            val skin =
+                Regex(""""skin"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1)
+                    ?: return@put call.respond(HttpStatusCode.BadRequest)
+            val available = availablePlayerSkins()
+            if (skin !in available) return@put call.respond(HttpStatusCode.BadRequest)
+            val p = persistence ?: return@put call.respond(HttpStatusCode.ServiceUnavailable)
+            val existing = p.loadPlayerState(name)
+            val state =
+                existing?.copy(skin = skin)
+                    ?: PlayerState(
+                        id = UUID.randomUUID().toString(),
+                        name = name,
+                        pos = Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z),
+                        orientation = Orientation(0f, 0f),
+                        skin = skin,
+                    )
+            p.savePlayerState(name, state)
             call.respondText("""{"skin":"$skin"}""", ContentType.Application.Json)
         }
         get("/api/player/{name}/armors") {

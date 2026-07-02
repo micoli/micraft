@@ -22,7 +22,7 @@ export function registerArmorOverlay(): Pick<
   return {
     initArmorModel: (name: string): void => {
       if (window.mcState.armorBbmodels[name]) return;
-      fetch(`/api/models/stuff/${name}/${name}.bbmodel`)
+      fetch(`/api/models/armors/${name}/${name}.bbmodel`)
         .then((r) => r.json())
         .then((data: BbModel) => {
           window.mcState.armorBbmodels[name] = data;
