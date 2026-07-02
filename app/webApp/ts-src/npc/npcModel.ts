@@ -66,7 +66,7 @@ export function registerNpcModel(): Pick<
       const DEG = Math.PI / 180;
       const wa = model.walkAnim ?? {};
 
-      if (!isWalking) {
+      if (isWalking) {
         const animLen = wa["rightArm"]?.length ?? 1;
         const t = (Date.now() % (animLen * 1000)) / (animLen * 1000);
         for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
