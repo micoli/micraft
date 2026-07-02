@@ -240,5 +240,28 @@ export function registerMinimap(): void {
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 1;
     ctx.stroke();
+
+    const mc = (window as any).__mc;
+    const gameTime: string = mc?.minimapGameTime ?? "";
+    const playerY: number = mc?.minimapY ?? 0;
+
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillText(gameTime, MINIMAP_SIZE / 2 + 1, 4);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(gameTime, MINIMAP_SIZE / 2, 3);
+
+    const coordText = `${Math.floor(playerX)}|${Math.floor(playerY)}|${Math.floor(playerZ)}`;
+    ctx.font = "9px monospace";
+    ctx.textBaseline = "bottom";
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillText(coordText, MINIMAP_SIZE / 2 + 1, MINIMAP_SIZE - 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(coordText, MINIMAP_SIZE / 2, MINIMAP_SIZE - 3);
+
+    ctx.textAlign = "start";
+    ctx.textBaseline = "alphabetic";
   };
 }

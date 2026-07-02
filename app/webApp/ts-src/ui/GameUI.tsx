@@ -177,7 +177,11 @@ export function GameUI() {
       reconcileYStats: string,
       tickDtMs: number,
       tickJitterMs: number,
-    ) =>
+    ) => {
+      const mc = (window as any).__mc || {};
+      mc.minimapY = y;
+      mc.minimapGameTime = gameTime;
+      (window as any).__mc = mc;
       dispatch({
         type: "hud",
         data: {
@@ -200,6 +204,7 @@ export function GameUI() {
           tickJitterMs,
         },
       });
+    };
 
     (window as any).mcShowNotification = (msg: string) => dispatch({ type: "notification", msg });
     (window as any).mcAddServerLog = (channel: string, msg: string) => dispatch({ type: "log", channel, msg });
