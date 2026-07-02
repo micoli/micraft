@@ -19,9 +19,9 @@ interface Props {
 
 async function computeSuggestions(val: string): Promise<string[]> {
   if (!val.startsWith("/")) return [];
-  const knownCommands: string[] = ((window as any).__mcKnownCommands || []).sort();
+  const knownCommands: string[] = (window.mcState.knownCommands || []).sort();
   const completers: Record<string, (p: string) => string[] | Promise<string[]>> =
-    (window as any).__mcCommandCompleters || {};
+    window.mcState.commandCompleters || {};
   const spaceIdx = val.indexOf(" ");
   if (spaceIdx === -1) {
     return knownCommands.filter((cmd) => cmd.startsWith(val));

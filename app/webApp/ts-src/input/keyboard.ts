@@ -91,16 +91,16 @@ function matchesSequence(str: string, e: KeyboardEvent): boolean {
   const [prev, last] = parts;
   const lastMatch = /^[A-Z]/.test(last) ? e.code === last : e.key.toLowerCase() === last.toLowerCase();
   if (!lastMatch) return false;
-  const lkp = window.__mc.lastKeyPress;
+  const lkp = window.mcState.lastKeyPress;
   if (!lkp) return false;
   const prevMatch = /^[A-Z]/.test(prev) ? lkp.code === prev : lkp.key?.toLowerCase() === prev.toLowerCase();
   return prevMatch && Date.now() - lkp.time < 300;
 }
 
-// Continuous held-state check (called per-frame via mcIsActionDown).
+// Continuous held-state check (called per-frame via isActionDown).
 function isComboDown(str: string): boolean {
   if (isSequenceBinding(str)) return false;
-  const mc = window.__mc;
+  const mc = window.mcState;
   const parsed = parseBoundKey(str);
   if (!mc.keys[parsed.key]) return false;
   const hasModPrefix = parsed.mods.ctrl || parsed.mods.shift || parsed.mods.alt || parsed.mods.meta;
@@ -114,108 +114,99 @@ function isComboDown(str: string): boolean {
   );
 }
 
-export function registerKeyboard(): void {
-  window.mcLoadBindings = (host: string, port: number, player: string): void => {
-    const url = player
-      ? `http://${host}:${port}/api/keybindings?player=${encodeURIComponent(player)}`
-      : `http://${host}:${port}/api/keybindings`;
-    fetch(url)
-      .then((r) => r.json())
-      .then((data) => {
-        if (window.__mc) window.__mc.bindings = data;
-      })
-      .catch(() => {
-        /* keep defaults */
+export function registerKeyboard(): Pick<
+  McBindings,
+  "loadBindings" | "isActionDown" | "setupKeyboard" | "consumeEvents"
+> {
+  return {
+    loadBindings: (host: string, port: number, player: string): void => {
+      const url = player
+        ? `http://${host}:${port}/api/keybindings?player=${encodeURIComponent(player)}`
+        : `http://${host}:${port}/api/keybindings`;
+      fetch(url)
+        .then((r) => r.json())
+        .then((data) => {
+          if (window.mcState) window.mcState.bindings = data;
+        })
+        .catch(() => {
+          /* keep defaults */
+        });
+    },
+
+    isActionDown: (action: string): boolean => {
+      const keys = window.mcState.bindings[action];
+      if (!keys) return false;
+      return keys.some((k) => isComboDown(k));
+    },
+
+    setupKeyboard: (): void => {
+      window.mcState.bindings = MC_DEFAULT_BINDINGS;
+
+      window.addEventListener("keydown", (e: KeyboardEvent) => {
+        const tag = document.activeElement?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT") return;
+        if (window.mcState.modalOpen) return;
+        window.mcState.modifiers = { ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey };
+        window.mcState.keys[e.code] = true;
+        if (e.repeat) return;
+        const b = window.mcState.bindings;
+
+        // Sequence bindings: check before updating lastKeyPress so prevKey is the truly previous press.
+        for (const [action, keys] of Object.entries(b)) {
+          if (keys.some((k) => isSequenceBinding(k) && matchesSequence(k, e))) {
+            window.mcState.events.push(action);
+          }
+        }
+
+        window.mcState.lastKeyPress = { code: e.code, key: e.key, time: Date.now() };
+
+        if (b.view_toggle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("view_toggle");
+        if (b.hud_mode_cycle?.some((k) => matchesEvent(k, e))) window.mc?.cycleHudMode?.();
+        if (b.inventory?.some((k) => matchesEvent(k, e))) window.mcState.events.push("inventory");
+        if (b.undo?.some((k) => matchesEvent(k, e))) window.mcState.events.push("undo");
+        if (b.layout_editor?.some((k) => matchesEvent(k, e))) window.mc?.showLayoutEditor?.();
+        if (b.preferences?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.();
+        if (b.minimap_zoom_in?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomIn?.();
+        if (b.minimap_zoom_out?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomOut?.();
+        for (let s = 1; s <= 10; s++) {
+          const key = `slot_${s}` as string;
+          if (b[key]?.some((k: string) => matchesEvent(k, e))) window.mcState.events.push(key);
+        }
+        if (Object.values(b).some((keys) => keys.some((k) => matchesEvent(k, e)))) e.preventDefault();
+
+        for (const [cmdText, keys] of Object.entries(window.mcState.customCommands || {})) {
+          if (keys.some((k) => (isSequenceBinding(k) ? matchesSequence(k, e) : matchesEvent(k, e)))) {
+            window.mcState.events.push("cmd:" + cmdText);
+            e.preventDefault();
+          }
+        }
       });
-  };
 
-  window.mcIsActionDown = (action: string): boolean => {
-    if (!window.__mc) return false;
-    const keys = window.__mc.bindings[action];
-    if (!keys) return false;
-    return keys.some((k) => isComboDown(k));
-  };
-
-  window.mcSetupKeyboard = (): void => {
-    window.__mc = window.__mc || {
-      keys: {},
-      modifiers: { ctrl: false, shift: false, alt: false, meta: false },
-      events: [],
-      lastKeyPress: null,
-      mouseLeft: false,
-      lastMouseMove: 0,
-      bindings: {},
-      customCommands: {},
-      playerBbmodel: null,
-    };
-    window.__mc.bindings = MC_DEFAULT_BINDINGS;
-
-    window.addEventListener("keydown", (e: KeyboardEvent) => {
-      const tag = document.activeElement?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT") return;
-      if (window.__mc.modalOpen) return;
-      window.__mc.modifiers = { ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey };
-      window.__mc.keys[e.code] = true;
-      if (e.repeat) return;
-      const b = window.__mc.bindings;
-
-      // Sequence bindings: check before updating lastKeyPress so prevKey is the truly previous press.
-      for (const [action, keys] of Object.entries(b)) {
-        if (keys.some((k) => isSequenceBinding(k) && matchesSequence(k, e))) {
-          window.__mc.events.push(action);
+      window.addEventListener("keyup", (e: KeyboardEvent) => {
+        // On Mac, releasing Cmd swallows keyup for all held keys — clear all to prevent stuck movement.
+        if (e.code === "MetaLeft" || e.code === "MetaRight") {
+          window.mcState.keys = {};
+          window.mcState.modifiers = { ctrl: false, shift: false, alt: false, meta: false };
+          return;
         }
-      }
+        const tag = document.activeElement?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT") return;
+        if (window.mcState.modalOpen) return;
+        window.mcState.modifiers = { ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey };
+        window.mcState.keys[e.code] = false;
+      });
 
-      window.__mc.lastKeyPress = { code: e.code, key: e.key, time: Date.now() };
+      // Clear keys when window loses focus (Cmd+Tab, browser UI, etc.)
+      window.addEventListener("blur", () => {
+        window.mcState.keys = {};
+        window.mcState.modifiers = { ctrl: false, shift: false, alt: false, meta: false };
+      });
+    },
 
-      if (b.view_toggle?.some((k) => matchesEvent(k, e))) window.__mc.events.push("view_toggle");
-      if (b.hud_mode_cycle?.some((k) => matchesEvent(k, e))) (window as any).mcCycleHudMode?.();
-      if (b.inventory?.some((k) => matchesEvent(k, e))) window.__mc.events.push("inventory");
-      if (b.undo?.some((k) => matchesEvent(k, e))) window.__mc.events.push("undo");
-      if (b.layout_editor?.some((k) => matchesEvent(k, e))) (window as any).mcShowLayoutEditor?.();
-      if (b.preferences?.some((k) => matchesEvent(k, e))) (window as any).mcShowPreferences?.();
-      if (b.minimap_zoom_in?.some((k) => matchesEvent(k, e))) (window as any).mcMinimapZoomIn?.();
-      if (b.minimap_zoom_out?.some((k) => matchesEvent(k, e))) (window as any).mcMinimapZoomOut?.();
-      for (let s = 1; s <= 10; s++) {
-        const key = `slot_${s}` as string;
-        if (b[key]?.some((k: string) => matchesEvent(k, e))) window.__mc.events.push(key);
-      }
-      if (Object.values(b).some((keys) => keys.some((k) => matchesEvent(k, e)))) e.preventDefault();
-
-      for (const [cmdText, keys] of Object.entries(window.__mc.customCommands || {})) {
-        if (keys.some((k) => (isSequenceBinding(k) ? matchesSequence(k, e) : matchesEvent(k, e)))) {
-          window.__mc.events.push("cmd:" + cmdText);
-          e.preventDefault();
-        }
-      }
-    });
-
-    window.addEventListener("keyup", (e: KeyboardEvent) => {
-      // On Mac, releasing Cmd swallows keyup for all held keys — clear all to prevent stuck movement.
-      if (e.code === "MetaLeft" || e.code === "MetaRight") {
-        window.__mc.keys = {};
-        window.__mc.modifiers = { ctrl: false, shift: false, alt: false, meta: false };
-        return;
-      }
-      const tag = document.activeElement?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT") return;
-      if (window.__mc.modalOpen) return;
-      window.__mc.modifiers = { ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey };
-      window.__mc.keys[e.code] = false;
-    });
-
-    // Clear keys when window loses focus (Cmd+Tab, browser UI, etc.)
-    window.addEventListener("blur", () => {
-      if (!window.__mc) return;
-      window.__mc.keys = {};
-      window.__mc.modifiers = { ctrl: false, shift: false, alt: false, meta: false };
-    });
-  };
-
-  window.mcConsumeEvents = (): string[] => {
-    if (!window.__mc) return [];
-    const e = window.__mc.events;
-    window.__mc.events = [];
-    return e;
+    consumeEvents: (): string[] => {
+      const e = window.mcState.events;
+      window.mcState.events = [];
+      return e;
+    },
   };
 }

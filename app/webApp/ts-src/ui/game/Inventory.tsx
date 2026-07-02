@@ -96,7 +96,7 @@ export function Inventory({ inventory, itemMeta, visible, layoutStyle }: Props) 
       | undefined;
     if (slotEl) {
       const slotIdx = parseInt(slotEl.getAttribute("data-mc-slot")!);
-      if (slotIdx > 0) (window as any).__mcSlotDrop?.(slotIdx, item);
+      if (slotIdx > 0) window.mcState.slotDrop?.(slotIdx, item);
     }
   };
 

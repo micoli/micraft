@@ -37,7 +37,7 @@ let faceTable: (FaceInfo | null)[] = [];
 function buildFaceTable(): void {
   faceTable = [];
   for (let typeOrd = 0; typeOrd < 512; typeOrd++) {
-    const blockDef = window.mcGetBlockDef(typeOrd);
+    const blockDef = window.mc.getBlockDef(typeOrd);
     if (!blockDef) continue;
     const isCross = blockDef.renderType === "cross_sprite";
     for (let fd = 0; fd < 6; fd++) {
@@ -182,71 +182,74 @@ interface ChunkBuf {
 let __mcBuf: ChunkBuf | null = null;
 
 function disposeChunk(key: string): void {
-  const meshes = window.__mcChunks[key];
+  const meshes = window.mcState.chunks[key];
   if (meshes) {
     (meshes as InstanceType<typeof BABYLON.AbstractMesh>[]).forEach((m) => m.dispose());
-    delete window.__mcChunks[key];
+    delete window.mcState.chunks[key];
   }
 }
 
-export function registerChunks(): void {
-  window.__mcChunks = {};
-  window.mcDisposeChunk = disposeChunk;
+export function registerChunks(): Pick<McBindings, "disposeChunk" | "chunkBegin" | "chunkFace" | "chunkEnd"> {
+  window.mcState.chunks = {};
 
-  window.mcChunkBegin = (cx: number, cz: number): void => {
-    if (faceTable.length === 0) buildFaceTable();
-    if (__mcBuf) {
-      for (const mk of Object.keys(__mcBuf.groups)) releaseGroup(__mcBuf.groups[mk]);
-    }
-    __mcBuf = { key: `${cx},${cz}`, groups: {} };
-  };
+  return {
+    disposeChunk,
 
-  window.mcChunkFace = (wx: number, wy: number, wz: number, faceMat: number, ao: number): void => {
-    if (!__mcBuf) return;
-    const info = faceTable[faceMat];
-    if (!info) return;
-
-    const grp = __mcBuf.groups;
-    let g = grp[info.matKey];
-    if (!g) {
-      g = acquireGroup();
-      grp[info.matKey] = g;
-    }
-
-    if (info.isCrossSprite) {
-      emitCrossSprite(wx, wy, wz, g, info.uv, ao);
-    } else {
-      emitQuad(g, wx, wy, wz, info.verts, info.normX, info.normY, info.normZ, info.uv, info.shade, ao);
-    }
-  };
-
-  window.mcChunkEnd = (scene: Scene, materials: Record<string, Material>): void => {
-    const buf = __mcBuf!;
-    __mcBuf = null;
-    disposeChunk(buf.key);
-
-    const meshes: Mesh[] = [];
-    for (const mk of Object.keys(buf.groups)) {
-      const g = buf.groups[mk];
-      if (g.v === 0) {
-        releaseGroup(g);
-        continue;
+    chunkBegin: (cx: number, cz: number): void => {
+      if (faceTable.length === 0) buildFaceTable();
+      if (__mcBuf) {
+        for (const mk of Object.keys(__mcBuf.groups)) releaseGroup(__mcBuf.groups[mk]);
       }
-      const mesh = new BABYLON.Mesh(`ck${buf.key}${mk}`, scene);
-      const vd = new BABYLON.VertexData();
-      vd.positions = g.p.subarray(0, g.v * 3);
-      vd.normals = g.n.subarray(0, g.v * 3);
-      vd.uvs = g.u.subarray(0, g.v * 2);
-      vd.colors = g.c.subarray(0, g.v * 4);
-      vd.indices = g.i.subarray(0, g.ic);
-      vd.applyToMesh(mesh, false);
-      mesh.material = materials[mk] ?? null;
-      mesh.isPickable = false;
-      mesh.refreshBoundingInfo();
-      mesh.freezeWorldMatrix();
-      meshes.push(mesh);
-      releaseGroup(g);
-    }
-    window.__mcChunks[buf.key] = meshes;
+      __mcBuf = { key: `${cx},${cz}`, groups: {} };
+    },
+
+    chunkFace: (wx: number, wy: number, wz: number, faceMat: number, ao: number): void => {
+      if (!__mcBuf) return;
+      const info = faceTable[faceMat];
+      if (!info) return;
+
+      const grp = __mcBuf.groups;
+      let g = grp[info.matKey];
+      if (!g) {
+        g = acquireGroup();
+        grp[info.matKey] = g;
+      }
+
+      if (info.isCrossSprite) {
+        emitCrossSprite(wx, wy, wz, g, info.uv, ao);
+      } else {
+        emitQuad(g, wx, wy, wz, info.verts, info.normX, info.normY, info.normZ, info.uv, info.shade, ao);
+      }
+    },
+
+    chunkEnd: (scene: Scene, materials: Record<string, Material>): void => {
+      const buf = __mcBuf!;
+      __mcBuf = null;
+      disposeChunk(buf.key);
+
+      const meshes: Mesh[] = [];
+      for (const mk of Object.keys(buf.groups)) {
+        const g = buf.groups[mk];
+        if (g.v === 0) {
+          releaseGroup(g);
+          continue;
+        }
+        const mesh = new BABYLON.Mesh(`ck${buf.key}${mk}`, scene);
+        const vd = new BABYLON.VertexData();
+        vd.positions = g.p.subarray(0, g.v * 3);
+        vd.normals = g.n.subarray(0, g.v * 3);
+        vd.uvs = g.u.subarray(0, g.v * 2);
+        vd.colors = g.c.subarray(0, g.v * 4);
+        vd.indices = g.i.subarray(0, g.ic);
+        vd.applyToMesh(mesh, false);
+        mesh.material = materials[mk] ?? null;
+        mesh.isPickable = false;
+        mesh.refreshBoundingInfo();
+        mesh.freezeWorldMatrix();
+        meshes.push(mesh);
+        releaseGroup(g);
+      }
+      window.mcState.chunks[buf.key] = meshes;
+    },
   };
 }

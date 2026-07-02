@@ -1,6 +1,6 @@
 function registerCompleter(cmd: string, fn: (partial: string) => string[] | Promise<string[]>): void {
-  window.__mcCommandCompleters[cmd] = fn;
-  if (!window.__mcKnownCommands.includes(cmd)) window.__mcKnownCommands.push(cmd);
+  window.mcState.commandCompleters[cmd] = fn;
+  if (!window.mcState.knownCommands.includes(cmd)) window.mcState.knownCommands.push(cmd);
 }
 
 function registerServerCompleters(commands: Array<{ id: string; command: string; autocompleteArgs?: number[] }>): void {
@@ -13,7 +13,7 @@ function registerServerCompleters(commands: Array<{ id: string; command: string;
         const argIndex = endsWithSpace ? filledCount : Math.max(0, filledCount - 1);
         if (!cmd.autocompleteArgs!.includes(argIndex)) return [];
         const currentPartial = endsWithSpace ? "" : (tokens[tokens.length - 1] ?? "");
-        const player = (window as any).__mcPlayerName ?? "";
+        const player = window.mcState.playerName ?? "";
         try {
           const r = await fetch(
             `/api/autocomplete/${cmd.id}/${argIndex}?partial=${encodeURIComponent(currentPartial)}&player=${encodeURIComponent(player)}`,
@@ -30,47 +30,22 @@ function registerServerCompleters(commands: Array<{ id: string; command: string;
   }
 }
 
-export function registerUtils(): void {
-  window.__mcConnectedPlayers = [];
-  (window as any).__mcNpcNames = [];
-  window.__mcCommandCompleters = {};
-  window.__mcKnownCommands = [];
-  (window as any).__mcActiveChannel = "world";
-  (window as any).__mcSubscribedChannels = ["world", "system", "game"];
-  (window as any).__mcKnownChannels = [];
-
-  window.mcGetUrlParam = (name: string): string => {
-    const v = new URLSearchParams(window.location.search).get(name);
-    return v === null ? "" : v;
-  };
-
-  window.mcReload = (): void => {
-    window.location.reload();
-  };
-
-  window.mcSetConnectedPlayers = (namesJson: string): void => {
-    try {
-      window.__mcConnectedPlayers = JSON.parse(namesJson);
-    } catch (_e) {
-      /* keep empty */
-    }
-  };
-
-  (window as any).mcSetNpcNames = (namesJson: string): void => {
-    try {
-      (window as any).__mcNpcNames = JSON.parse(namesJson);
-    } catch (_e) {
-      /* keep empty */
-    }
-  };
-
-  window.mcRegisterCompleter = registerCompleter;
-  (window as any).mcRegisterServerCompleters = registerServerCompleters;
+export function registerUtils(): Pick<
+  McBindings,
+  "getUrlParam" | "reload" | "setConnectedPlayers" | "setNpcNames" | "registerCompleter" | "registerServerCompleters"
+> {
+  window.mcState.connectedPlayers = [];
+  window.mcState.npcNames = [];
+  window.mcState.commandCompleters = {};
+  window.mcState.knownCommands = [];
+  window.mcState.activeChannel = "world";
+  window.mcState.subscribedChannels = ["world", "system", "game"];
+  window.mcState.knownChannels = [];
 
   const itemTypes = ["cobblestone", "dirt", "sand", "gravel", "sandstone", "snowball", "flint"];
   registerCompleter("/give", (p) => itemTypes.filter((t) => t.startsWith(p.toLowerCase())));
   registerCompleter("/keyreload", () => []);
-  registerCompleter("/kick", (p) => (window.__mcConnectedPlayers || []).filter((n) => n.startsWith(p)));
+  registerCompleter("/kick", (p) => (window.mcState.connectedPlayers || []).filter((n) => n.startsWith(p)));
   registerCompleter("/shaders", (p) => ["on", "off"].filter((o) => o.startsWith(p)));
   registerCompleter("/time", (p) => Array.from({ length: 24 }, (_, i) => String(i)).filter((o) => o.startsWith(p)));
   registerCompleter("/save", () => []);
@@ -78,21 +53,49 @@ export function registerUtils(): void {
   registerCompleter("/yield", () => []);
   registerCompleter("/preferences", () => []);
   registerCompleter("/disconnect", () => []);
-  registerCompleter("/teleport", (p) => (window.__mcConnectedPlayers || []).filter((n) => n.startsWith(p)));
-  registerCompleter("/summon", (p) => (window.__mcConnectedPlayers || []).filter((n) => n.startsWith(p)));
+  registerCompleter("/teleport", (p) => (window.mcState.connectedPlayers || []).filter((n) => n.startsWith(p)));
+  registerCompleter("/summon", (p) => (window.mcState.connectedPlayers || []).filter((n) => n.startsWith(p)));
   registerCompleter("/goto", (p) => {
-    const players: string[] = (window.__mcConnectedPlayers || []).filter((n: string) => n.startsWith(p));
-    const npcs: string[] = ((window as any).__mcNpcNames || []).filter((n: string) => n.startsWith(p));
+    const players: string[] = (window.mcState.connectedPlayers || []).filter((n: string) => n.startsWith(p));
+    const npcs: string[] = (window.mcState.npcNames || []).filter((n: string) => n.startsWith(p));
     return [...players, ...npcs];
   });
   registerCompleter("/layouts", () => []);
   registerCompleter("/refetch", () => []);
   // /layout completer is overwritten by GameUI when layouts are synced
   registerCompleter("/layout", () => []);
-  registerCompleter("/talk", (p) => (window.__mcConnectedPlayers || []).filter((n: string) => n.startsWith(p)));
-  registerCompleter("/join", (p) => ((window as any).__mcKnownChannels || []).filter((c: string) => c.startsWith(p)));
-  registerCompleter("/leave", (p) =>
-    ((window as any).__mcSubscribedChannels || []).filter((c: string) => c.startsWith(p)),
-  );
+  registerCompleter("/talk", (p) => (window.mcState.connectedPlayers || []).filter((n: string) => n.startsWith(p)));
+  registerCompleter("/join", (p) => (window.mcState.knownChannels || []).filter((c: string) => c.startsWith(p)));
+  registerCompleter("/leave", (p) => (window.mcState.subscribedChannels || []).filter((c: string) => c.startsWith(p)));
   registerCompleter("/createchat", () => []);
+
+  return {
+    getUrlParam: (name: string): string => {
+      const v = new URLSearchParams(window.location.search).get(name);
+      return v === null ? "" : v;
+    },
+
+    reload: (): void => {
+      window.location.reload();
+    },
+
+    setConnectedPlayers: (namesJson: string): void => {
+      try {
+        window.mcState.connectedPlayers = JSON.parse(namesJson);
+      } catch (_e) {
+        /* keep empty */
+      }
+    },
+
+    setNpcNames: (namesJson: string): void => {
+      try {
+        window.mcState.npcNames = JSON.parse(namesJson);
+      } catch (_e) {
+        /* keep empty */
+      }
+    },
+
+    registerCompleter,
+    registerServerCompleters,
+  };
 }

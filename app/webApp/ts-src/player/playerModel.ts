@@ -76,37 +76,25 @@ function extractWalkAnim(
   return result;
 }
 
-export function registerPlayerModel(): void {
-  window.__mcSkinUV = skinUV;
-  window.__mcSkinFaceUV = skinFaceUV;
-
-  window.mcInitPlayerModel = (skin: string): void => {
-    window.__mc = window.__mc || ({} as any);
-    window.__mc.playerBbmodels = window.__mc.playerBbmodels || {};
-    if (window.__mc.playerBbmodels[skin]) return;
-    fetch(`/api/models/skins/${skin}/${skin}.bbmodel`)
-      .then((r) => r.json())
-      .then((data: BbModel) => {
-        window.__mc.playerBbmodels[skin] = data;
-        console.log(`[MiCraft] Player model ${skin} loaded`);
-      })
-      .catch((e) => {
-        console.error(`[MiCraft] Failed to load player model ${skin}`, e);
-      });
-  };
-
-  window.mcIsPlayerBbmodelReady = (skin: string): boolean => !!window.__mc?.playerBbmodels?.[skin];
-
-  window.mcCreatePlayerModelNow = (scene: Scene, skin: string): McPlayerModel =>
-    createPlayerModelFromBbmodel(window.__mc.playerBbmodels[skin]!, scene, skin);
+export function registerPlayerModel(): Pick<
+  McBindings,
+  | "initPlayerModel"
+  | "isPlayerBbmodelReady"
+  | "createPlayerModelNow"
+  | "createPlayerModelFromBbmodel"
+  | "setPlayerTransform"
+  | "setPlayerVisible"
+  | "setPlayerAlpha"
+  | "disposePlayerModel"
+> {
+  window.mcState.skinUV = skinUV;
+  window.mcState.skinFaceUV = skinFaceUV;
 
   function createPlayerModelFromBbmodel(bbmodel: BbModel, scene: Scene, skin: string = "player"): McPlayerModel {
-    window.__mc = window.__mc || ({} as any);
-    if (!window.__mc.skinMatCache) (window.__mc as any).skinMatCache = {};
     const s = scene as any;
     if (!s.__mcSceneId) s.__mcSceneId = Math.random().toString(36).slice(2);
     const cacheKey = `${s.__mcSceneId}_${skin}`;
-    if (bbmodel.textures?.length > 0 && !window.__mc.skinMatCache[cacheKey]) {
+    if (bbmodel.textures?.length > 0 && !window.mcState.skinMatCache[cacheKey]) {
       const texDef = bbmodel.textures[0];
       const src = texDef.source;
       const tex = new BABYLON.Texture(src, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
@@ -116,9 +104,9 @@ export function registerPlayerModel(): void {
       const mat = new BABYLON.StandardMaterial(`skinMat_${skin}`, scene);
       mat.diffuseTexture = tex;
       mat.specularColor = new BABYLON.Color3(0, 0, 0);
-      window.__mc.skinMatCache[cacheKey] = mat;
+      window.mcState.skinMatCache[cacheKey] = mat;
     }
-    const mat = window.__mc.skinMatCache[cacheKey];
+    const mat = window.mcState.skinMatCache[cacheKey];
     const W = bbmodel.resolution.width;
     const H = bbmodel.resolution.height;
     const SCALE = 1 / 16;
@@ -199,64 +187,85 @@ export function registerPlayerModel(): void {
       equippedArmors: {},
     };
   }
-  window.mcCreatePlayerModelFromBbmodel = createPlayerModelFromBbmodel;
 
-  window.mcSetPlayerTransform = (
-    model: McPlayerModel,
-    x: number,
-    y: number,
-    z: number,
-    yaw: number,
-    headPitch: number,
-    isWalking: boolean,
-  ): void => {
-    model.root.position.x = x;
-    model.root.position.y = y;
-    model.root.position.z = z;
-    model.root.rotation.y = yaw + Math.PI;
+  return {
+    initPlayerModel: (skin: string): void => {
+      if (window.mcState.playerBbmodels[skin]) return;
+      fetch(`/api/models/skins/${skin}/${skin}.bbmodel`)
+        .then((r) => r.json())
+        .then((data: BbModel) => {
+          window.mcState.playerBbmodels[skin] = data;
+          console.log(`[MiCraft] Player model ${skin} loaded`);
+        })
+        .catch((e) => {
+          console.error(`[MiCraft] Failed to load player model ${skin}`, e);
+        });
+    },
 
-    const pn = model.pivotNodes;
-    if (!pn) return;
-    const DEG = Math.PI / 180;
-    const headPivot = pn["head"]?.node ?? null;
-    const wa = model.walkAnim ?? {};
+    isPlayerBbmodelReady: (skin: string): boolean => !!window.mcState?.playerBbmodels?.[skin],
 
-    if (isWalking) {
-      const animLen = wa["rightArm"]?.length ?? 1;
-      const t = (Date.now() % (animLen * 1000)) / (animLen * 1000);
-      for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
-        if (!pn[bname]) continue;
-        pn[bname].node.rotation.x = (wa[bname] ? interpAxis(wa[bname].keyframes, t, "x") : 0) * DEG;
+    createPlayerModelNow: (scene: Scene, skin: string): McPlayerModel =>
+      createPlayerModelFromBbmodel(window.mcState.playerBbmodels[skin]!, scene, skin),
+
+    createPlayerModelFromBbmodel,
+
+    setPlayerTransform: (
+      model: McPlayerModel,
+      x: number,
+      y: number,
+      z: number,
+      yaw: number,
+      headPitch: number,
+      isWalking: boolean,
+    ): void => {
+      model.root.position.x = x;
+      model.root.position.y = y;
+      model.root.position.z = z;
+      model.root.rotation.y = yaw + Math.PI;
+
+      const pn = model.pivotNodes;
+      if (!pn) return;
+      const DEG = Math.PI / 180;
+      const headPivot = pn["head"]?.node ?? null;
+      const wa = model.walkAnim ?? {};
+
+      if (isWalking) {
+        const animLen = wa["rightArm"]?.length ?? 1;
+        const t = (Date.now() % (animLen * 1000)) / (animLen * 1000);
+        for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
+          if (!pn[bname]) continue;
+          pn[bname].node.rotation.x = (wa[bname] ? interpAxis(wa[bname].keyframes, t, "x") : 0) * DEG;
+        }
+        if (headPivot) {
+          const hb = wa["head"];
+          headPivot.rotation.x = headPitch + (hb ? interpAxis(hb.keyframes, t, "x") : 0) * DEG;
+          headPivot.rotation.y = (hb ? interpAxis(hb.keyframes, t, "y") : 0) * DEG;
+        }
+      } else {
+        for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
+          if (pn[bname]) pn[bname].node.rotation.x = 0;
+        }
+        if (headPivot) {
+          headPivot.rotation.x = headPitch;
+          headPivot.rotation.y = 0;
+        }
       }
-      if (headPivot) {
-        const hb = wa["head"];
-        headPivot.rotation.x = headPitch + (hb ? interpAxis(hb.keyframes, t, "x") : 0) * DEG;
-        headPivot.rotation.y = (hb ? interpAxis(hb.keyframes, t, "y") : 0) * DEG;
-      }
-    } else {
-      for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
-        if (pn[bname]) pn[bname].node.rotation.x = 0;
-      }
-      if (headPivot) {
-        headPivot.rotation.x = headPitch;
-        headPivot.rotation.y = 0;
-      }
-    }
-  };
+    },
 
-  window.mcSetPlayerVisible = (model: McPlayerModel, visible: boolean): void => {
-    model.root.setEnabled(visible);
-  };
+    setPlayerVisible: (model: McPlayerModel, visible: boolean): void => {
+      model.root.setEnabled(visible);
+    },
 
-  window.mcSetPlayerAlpha = (model: McPlayerModel, alpha: number): void => {
-    model.root.getChildMeshes(true).forEach((m) => {
-      m.visibility = alpha;
-    });
-  };
+    setPlayerAlpha: (model: McPlayerModel, alpha: number): void => {
+      model.root.getChildMeshes(true).forEach((m) => {
+        m.visibility = alpha;
+      });
+    },
 
-  window.mcDisposePlayerModel = (model: McPlayerModel): void => {
-    model.root.getChildMeshes(true).forEach((m) => m.dispose());
-    Object.values(model.pivotNodes).forEach((p) => p.node.dispose());
-    model.root.dispose();
+    disposePlayerModel: (model: McPlayerModel): void => {
+      model.root.getChildMeshes(true).forEach((m) => m.dispose());
+      Object.values(model.pivotNodes).forEach((p) => p.node.dispose());
+      model.root.dispose();
+    },
   };
 }

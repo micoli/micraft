@@ -19,44 +19,49 @@ function cubeLines(h: number): [unknown, unknown][] {
   ];
 }
 
-export function registerTargeting(): void {
-  window.mcShowTargetOutline = (scene: Scene, x: number, y: number, z: number, breakable: boolean): void => {
-    if (window.__mcTargetMesh) {
-      window.__mcTargetMesh.dispose();
-      window.__mcTargetMesh = null;
-    }
-    const ls = BABYLON.MeshBuilder.CreateLineSystem("targetOutline", { lines: cubeLines(0.502) as any }, scene);
-    ls.position = new BABYLON.Vector3(x, y, z);
-    (ls as any).color = breakable ? new BABYLON.Color3(0, 0, 0) : new BABYLON.Color3(0.55, 0.55, 0.55);
-    ls.isPickable = false;
-    window.__mcTargetMesh = ls;
-  };
-
-  window.mcHideTargetOutline = (): void => {
-    if (window.__mcTargetMesh) {
-      window.__mcTargetMesh.dispose();
-      window.__mcTargetMesh = null;
-    }
-  };
-
-  window.mcShowBreakOverlay = (scene: Scene, x: number, y: number, z: number, alpha: number): void => {
-    const bpos = `${x},${y},${z}`;
-    if (!window.__mcBreakMesh || window.__mcBreakMesh._bpos !== bpos) {
-      if (window.__mcBreakMesh) window.__mcBreakMesh.dispose();
-      const ls = BABYLON.MeshBuilder.CreateLineSystem("breakOverlay", { lines: cubeLines(0.51) as any }, scene);
+export function registerTargeting(): Pick<
+  McBindings,
+  "showTargetOutline" | "hideTargetOutline" | "showBreakOverlay" | "hideBreakOverlay"
+> {
+  return {
+    showTargetOutline: (scene: Scene, x: number, y: number, z: number, breakable: boolean): void => {
+      if (window.mcState.targetMesh) {
+        window.mcState.targetMesh.dispose();
+        window.mcState.targetMesh = null;
+      }
+      const ls = BABYLON.MeshBuilder.CreateLineSystem("targetOutline", { lines: cubeLines(0.502) as any }, scene);
       ls.position = new BABYLON.Vector3(x, y, z);
-      (ls as any).color = new BABYLON.Color3(0, 0, 0);
+      (ls as any).color = breakable ? new BABYLON.Color3(0, 0, 0) : new BABYLON.Color3(0.55, 0.55, 0.55);
       ls.isPickable = false;
-      window.__mcBreakMesh = ls as any;
-      window.__mcBreakMesh!._bpos = bpos;
-    }
-    window.__mcBreakMesh!.visibility = alpha;
-  };
+      window.mcState.targetMesh = ls;
+    },
 
-  window.mcHideBreakOverlay = (): void => {
-    if (window.__mcBreakMesh) {
-      window.__mcBreakMesh.dispose();
-      window.__mcBreakMesh = null;
-    }
+    hideTargetOutline: (): void => {
+      if (window.mcState.targetMesh) {
+        window.mcState.targetMesh.dispose();
+        window.mcState.targetMesh = null;
+      }
+    },
+
+    showBreakOverlay: (scene: Scene, x: number, y: number, z: number, alpha: number): void => {
+      const bpos = `${x},${y},${z}`;
+      if (!window.mcState.breakMesh || window.mcState.breakMesh._bpos !== bpos) {
+        if (window.mcState.breakMesh) window.mcState.breakMesh.dispose();
+        const ls = BABYLON.MeshBuilder.CreateLineSystem("breakOverlay", { lines: cubeLines(0.51) as any }, scene);
+        ls.position = new BABYLON.Vector3(x, y, z);
+        (ls as any).color = new BABYLON.Color3(0, 0, 0);
+        ls.isPickable = false;
+        window.mcState.breakMesh = ls as any;
+        window.mcState.breakMesh!._bpos = bpos;
+      }
+      window.mcState.breakMesh!.visibility = alpha;
+    },
+
+    hideBreakOverlay: (): void => {
+      if (window.mcState.breakMesh) {
+        window.mcState.breakMesh.dispose();
+        window.mcState.breakMesh = null;
+      }
+    },
   };
 }

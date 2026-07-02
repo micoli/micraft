@@ -4,40 +4,40 @@ package org.micoli.micraft.babylon
 
 // ── Input ─────────────────────────────────────────────────────────────────────
 
-fun jsSetupKeyboard(): Unit = js("mcSetupKeyboard()")
+fun jsSetupKeyboard(): Unit = js("mc.setupKeyboard()")
 
-fun jsSetupMouse(): Unit = js("mcSetupMouse()")
+fun jsSetupMouse(): Unit = js("mc.setupMouse()")
 
-fun jsIsBreaking(): Boolean = js("mcIsBreaking()")
+fun jsIsBreaking(): Boolean = js("mc.isBreaking()")
 
-fun jsCreateCrosshair(): Unit = js("mcCreateCrosshair()")
+fun jsCreateCrosshair(): Unit = js("mc.createCrosshair()")
 
-fun jsIsKeyDown(code: String): Boolean = js("!!(window.__mc && window.__mc.keys[code])")
+fun jsIsKeyDown(code: String): Boolean = js("!!window.mcState.keys[code]")
 
-fun jsIsActionDown(action: String): Boolean = js("mcIsActionDown(action)")
+fun jsIsActionDown(action: String): Boolean = js("mc.isActionDown(action)")
 
 fun jsLoadBindings(host: String, port: Int, player: String): Unit =
-    js("mcLoadBindings(host, port, player)")
+    js("mc.loadBindings(host, port, player)")
 
 // ── Camera read-back ──────────────────────────────────────────────────────────
 
-fun jsGetCameraPositionX(camera: JsAny): Double = js("mcGetCameraPositionX(camera)")
+fun jsGetCameraPositionX(camera: JsAny): Double = js("mc.getCameraPositionX(camera)")
 
-fun jsGetCameraPositionY(camera: JsAny): Double = js("mcGetCameraPositionY(camera)")
+fun jsGetCameraPositionY(camera: JsAny): Double = js("mc.getCameraPositionY(camera)")
 
-fun jsGetCameraPositionZ(camera: JsAny): Double = js("mcGetCameraPositionZ(camera)")
+fun jsGetCameraPositionZ(camera: JsAny): Double = js("mc.getCameraPositionZ(camera)")
 
-fun jsGetCameraDir3DX(camera: JsAny): Double = js("mcGetCameraDir3DX(camera)")
+fun jsGetCameraDir3DX(camera: JsAny): Double = js("mc.getCameraDir3DX(camera)")
 
-fun jsGetCameraDir3DY(camera: JsAny): Double = js("mcGetCameraDir3DY(camera)")
+fun jsGetCameraDir3DY(camera: JsAny): Double = js("mc.getCameraDir3DY(camera)")
 
-fun jsGetCameraDir3DZ(camera: JsAny): Double = js("mcGetCameraDir3DZ(camera)")
+fun jsGetCameraDir3DZ(camera: JsAny): Double = js("mc.getCameraDir3DZ(camera)")
 
-fun jsGetCameraForwardX(camera: JsAny): Double = js("mcGetCameraForwardX(camera)")
+fun jsGetCameraForwardX(camera: JsAny): Double = js("mc.getCameraForwardX(camera)")
 
 fun jsGetCameraForwardY(camera: JsAny): Double = js("camera.getForwardRay(1).direction.y")
 
-fun jsGetCameraForwardZ(camera: JsAny): Double = js("mcGetCameraForwardZ(camera)")
+fun jsGetCameraForwardZ(camera: JsAny): Double = js("mc.getCameraForwardZ(camera)")
 
 fun jsGetCameraRotationY(camera: JsAny): Double = js("camera.rotation.y")
 
@@ -67,18 +67,18 @@ fun jsDisableCameraKeyboard(camera: JsAny): Unit =
 // ── Target / break overlays ───────────────────────────────────────────────────
 
 fun jsShowTargetOutline(scene: JsAny, x: Int, y: Int, z: Int, breakable: Boolean): Unit =
-    js("mcShowTargetOutline(scene, x, y, z, breakable)")
+    js("mc.showTargetOutline(scene, x, y, z, breakable)")
 
-fun jsHideTargetOutline(): Unit = js("mcHideTargetOutline()")
+fun jsHideTargetOutline(): Unit = js("mc.hideTargetOutline()")
 
 fun jsShowBreakOverlay(scene: JsAny, x: Int, y: Int, z: Int, progress: Double): Unit =
-    js("mcShowBreakOverlay(scene, x, y, z, progress)")
+    js("mc.showBreakOverlay(scene, x, y, z, progress)")
 
-fun jsHideBreakOverlay(): Unit = js("mcHideBreakOverlay()")
+fun jsHideBreakOverlay(): Unit = js("mc.hideBreakOverlay()")
 
 // ── Event queue ───────────────────────────────────────────────────────────────
 
-fun jsConsumeEvents(): JsAny = js("mcConsumeEvents()")
+fun jsConsumeEvents(): JsAny = js("mc.consumeEvents()")
 
 fun jsEventsLength(arr: JsAny): Int = js("arr.length")
 

@@ -197,82 +197,82 @@ function playerZone(px: number, pz: number): WeatherZone | null {
   return best;
 }
 
-export function registerWeather(): void {
-  window.mcSetWeatherZones = (json: string): void => {
-    try {
-      activeZones = JSON.parse(json);
-    } catch {
-      activeZones = [];
-    }
-    // Share with minimap
-    if (typeof window.mcSetMinimapWeather === "function") {
-      window.mcSetMinimapWeather(json);
-    }
-  };
-
-  window.mcUpdateWeather = (scene: any, px: number, py: number, pz: number): void => {
-    syncCloudMeshes(scene);
-
-    const zone = playerZone(px, pz);
-    const newType = zone ? zone.type : "NONE";
-
-    // Transition: hide old particles if type changed
-    if (newType !== currentWeatherType) {
-      hideParticles(rainParticles);
-      hideParticles(snowParticles);
-      // Restore fog
-      scene.fogStart = FOG_DEFAULT_START;
-      scene.fogEnd = FOG_DEFAULT_END;
-      currentWeatherType = newType;
-    }
-
-    if (!zone) return;
-
-    switch (zone.type) {
-      case "RAIN": {
-        if (!rainParticles) {
-          rainParticles = initRainParticles(scene, 2000, [0.7, 0.85, 1.0]);
-        }
-        rainParticles.mesh.setEnabled(true);
-        updateParticles(rainParticles, px, py, pz);
-        break;
+export function registerWeather(): Pick<McBindings, "setWeatherZones" | "updateWeather"> {
+  return {
+    setWeatherZones: (json: string): void => {
+      try {
+        activeZones = JSON.parse(json);
+      } catch {
+        activeZones = [];
       }
-      case "STORM": {
-        if (!rainParticles) {
-          rainParticles = initRainParticles(scene, 3500, [0.6, 0.7, 0.9]);
-        }
-        rainParticles.mesh.setEnabled(true);
-        updateParticles(rainParticles, px, py, pz);
+      // Share with minimap
+      window.mc.setMinimapWeather(json);
+    },
 
-        // Lightning flash
-        stormFlashCounter++;
-        if (stormFlashCounter > 120 + Math.random() * 200) {
-          stormFlashCounter = 0;
-          const hemi = window.__mcHemiLight;
-          if (hemi) {
-            const orig = hemi.intensity;
-            hemi.intensity = Math.min(2.5, orig * 3);
-            setTimeout(() => {
-              if (hemi) hemi.intensity = orig;
-            }, 80);
+    updateWeather: (scene: any, px: number, py: number, pz: number): void => {
+      syncCloudMeshes(scene);
+
+      const zone = playerZone(px, pz);
+      const newType = zone ? zone.type : "NONE";
+
+      // Transition: hide old particles if type changed
+      if (newType !== currentWeatherType) {
+        hideParticles(rainParticles);
+        hideParticles(snowParticles);
+        // Restore fog
+        scene.fogStart = FOG_DEFAULT_START;
+        scene.fogEnd = FOG_DEFAULT_END;
+        currentWeatherType = newType;
+      }
+
+      if (!zone) return;
+
+      switch (zone.type) {
+        case "RAIN": {
+          if (!rainParticles) {
+            rainParticles = initRainParticles(scene, 2000, [0.7, 0.85, 1.0]);
           }
+          rainParticles.mesh.setEnabled(true);
+          updateParticles(rainParticles, px, py, pz);
+          break;
         }
-        break;
-      }
-      case "SNOW": {
-        if (!snowParticles) {
-          snowParticles = initSnowParticles(scene, 1500);
+        case "STORM": {
+          if (!rainParticles) {
+            rainParticles = initRainParticles(scene, 3500, [0.6, 0.7, 0.9]);
+          }
+          rainParticles.mesh.setEnabled(true);
+          updateParticles(rainParticles, px, py, pz);
+
+          // Lightning flash
+          stormFlashCounter++;
+          if (stormFlashCounter > 120 + Math.random() * 200) {
+            stormFlashCounter = 0;
+            const hemi = window.mcState.hemiLight;
+            if (hemi) {
+              const orig = hemi.intensity;
+              hemi.intensity = Math.min(2.5, orig * 3);
+              setTimeout(() => {
+                if (hemi) hemi.intensity = orig;
+              }, 80);
+            }
+          }
+          break;
         }
-        snowParticles.mesh.setEnabled(true);
-        updateParticles(snowParticles, px, py, pz);
-        break;
+        case "SNOW": {
+          if (!snowParticles) {
+            snowParticles = initSnowParticles(scene, 1500);
+          }
+          snowParticles.mesh.setEnabled(true);
+          updateParticles(snowParticles, px, py, pz);
+          break;
+        }
+        case "FOG": {
+          const fogEnd = FOG_DEFAULT_START + (1 - zone.intensity) * (FOG_DEFAULT_END - FOG_DEFAULT_START);
+          scene.fogEnd = Math.max(8, fogEnd);
+          scene.fogStart = Math.max(2, scene.fogEnd * 0.3);
+          break;
+        }
       }
-      case "FOG": {
-        const fogEnd = FOG_DEFAULT_START + (1 - zone.intensity) * (FOG_DEFAULT_END - FOG_DEFAULT_START);
-        scene.fogEnd = Math.max(8, fogEnd);
-        scene.fogStart = Math.max(2, scene.fogEnd * 0.3);
-        break;
-      }
-    }
+    },
   };
 }

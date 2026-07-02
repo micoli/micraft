@@ -41,11 +41,11 @@ interface Props {
 }
 
 function useBlockDefsReady(): boolean {
-  const [ready, setReady] = useState(() => !!(window as any).mcIsBlockDefsReady?.());
+  const [ready, setReady] = useState(() => !!window.mc.isBlockDefsReady?.());
   useEffect(() => {
     if (ready) return;
     const iv = setInterval(() => {
-      if ((window as any).mcIsBlockDefsReady?.()) {
+      if (window.mc.isBlockDefsReady?.()) {
         setReady(true);
         clearInterval(iv);
       }
@@ -383,7 +383,7 @@ function BlockDetail({
         />
         <button
           disabled={!giveItemName}
-          onClick={() => giveItemName && (window as any).__mc?.events?.push(`cmd:/give ${giveItemName} ${qty}`)}
+          onClick={() => giveItemName && window.mcState.events.push(`cmd:/give ${giveItemName} ${qty}`)}
           style={{
             flex: 1,
             background: giveItemName ? "#2a3d2a" : "#1e1e1e",
@@ -451,11 +451,11 @@ function ItemDetail({ item, blocks, defsReady }: { item: ItemEntry; blocks: Bloc
 }
 
 function useNpcModelsReady(): boolean {
-  const [ready, setReady] = useState(() => !!(window as any).mcIsNpcModelsReady?.());
+  const [ready, setReady] = useState(() => !!window.mc.isNpcModelsReady?.());
   useEffect(() => {
     if (ready) return;
     const iv = setInterval(() => {
-      if ((window as any).mcIsNpcModelsReady?.()) {
+      if (window.mc.isNpcModelsReady?.()) {
         setReady(true);
         clearInterval(iv);
       }
@@ -488,7 +488,7 @@ function Npc3DPreview({ npc }: { npc: NpcEntry }) {
     light.intensity = 1.1;
     light.groundColor = new B.Color3(0.2, 0.2, 0.2);
 
-    const model: McPlayerModel | null = (window as any).mcCreateNpcModel?.(scene, npc.type) ?? null;
+    const model: McPlayerModel | null = window.mc.createNpcModel?.(scene, npc.type) ?? null;
 
     let angle = 0;
     scene.onBeforeRenderObservable.add(() => {
@@ -499,7 +499,7 @@ function Npc3DPreview({ npc }: { npc: NpcEntry }) {
     engine.runRenderLoop(() => scene.render());
 
     return () => {
-      if (model) (window as any).mcDisposeNpcModel?.(model);
+      if (model) window.mc.disposeNpcModel?.(model);
       engine.dispose();
     };
   }, [ready, npc.type, npc.height]);
@@ -550,13 +550,13 @@ function NpcDetail({ npc }: { npc: NpcEntry }) {
 }
 
 function usePlayerModelReady(skin: string): boolean {
-  const [ready, setReady] = useState(() => !!(window as any).mcIsPlayerBbmodelReady?.(skin));
+  const [ready, setReady] = useState(() => !!window.mc.isPlayerBbmodelReady?.(skin));
   useEffect(() => {
-    setReady(!!(window as any).mcIsPlayerBbmodelReady?.(skin));
-    (window as any).mcInitPlayerModel?.(skin);
-    if ((window as any).mcIsPlayerBbmodelReady?.(skin)) return;
+    setReady(!!window.mc.isPlayerBbmodelReady?.(skin));
+    window.mc.initPlayerModel?.(skin);
+    if (window.mc.isPlayerBbmodelReady?.(skin)) return;
     const iv = setInterval(() => {
-      if ((window as any).mcIsPlayerBbmodelReady?.(skin)) {
+      if (window.mc.isPlayerBbmodelReady?.(skin)) {
         setReady(true);
         clearInterval(iv);
       }
@@ -574,7 +574,7 @@ function SkinModelPreview({ skin, walking }: { skin: string; walking: boolean })
 
   useEffect(() => {
     if (!ready) return;
-    if (!(window as any).mcIsPlayerBbmodelReady?.(skin)) return;
+    if (!window.mc.isPlayerBbmodelReady?.(skin)) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const B = (window as any).BABYLON;
@@ -589,17 +589,17 @@ function SkinModelPreview({ skin, walking }: { skin: string; walking: boolean })
     light.intensity = 1.1;
     light.groundColor = new B.Color3(0.2, 0.2, 0.2);
 
-    const model = (window as any).mcCreatePlayerModelNow?.(scene, skin) ?? null;
+    const model = window.mc.createPlayerModelNow?.(scene, skin) ?? null;
 
     let angle = 0;
     scene.onBeforeRenderObservable.add(() => {
       angle += 0.015;
-      if (model) (window as any).mcSetPlayerTransform?.(model, 0, 0, 0, angle, 0, walkingRef.current);
+      if (model) window.mc.setPlayerTransform?.(model, 0, 0, 0, angle, 0, walkingRef.current);
     });
 
     engine.runRenderLoop(() => scene.render());
     return () => {
-      if (model) (window as any).mcDisposePlayerModel?.(model);
+      if (model) window.mc.disposePlayerModel?.(model);
       engine.dispose();
     };
   }, [ready, skin]);
@@ -691,7 +691,7 @@ function SkinDetail({ name }: { name: string }) {
       </div>
       <div style={{ display: "flex", justifyContent: "center" }}>
         <button
-          onClick={() => (window as any).__mc?.events?.push(`cmd:/skin ${name}`)}
+          onClick={() => window.mcState.events.push(`cmd:/skin ${name}`)}
           style={{
             background: "#2a3d2a",
             border: "1px solid #4a7a4a",
@@ -730,16 +730,16 @@ export function CodexModal({ open, onClose }: Props) {
   const gridRef = useRef<HTMLDivElement>(null);
   const itemRefsMap = useRef<Map<string | number, HTMLDivElement | null>>(new Map());
 
-  const allBlocks: BlockEntry[] = ((window as any).__mcCodexBlocks ?? [])
+  const allBlocks: BlockEntry[] = (window.mcState.codexBlocks ?? [])
     .map((b: Omit<BlockEntry, "ordinal">, i: number) => ({ ...b, ordinal: i }))
     .filter((b: BlockEntry) => b.name !== "AIR")
     .sort((a: BlockEntry, b: BlockEntry) => a.name.localeCompare(b.name));
 
-  const allItems: ItemEntry[] = Object.entries((window as any).__mcCodexItems ?? {})
+  const allItems: ItemEntry[] = Object.entries(window.mcState.codexItems ?? {})
     .map(([name, info]: [string, unknown]) => ({ name, ...(info as Omit<ItemEntry, "name">) }))
     .sort((a: ItemEntry, b: ItemEntry) => a.name.localeCompare(b.name));
 
-  const allNpcs: NpcEntry[] = Object.entries((window as any).__mcCodexNpcs ?? {})
+  const allNpcs: NpcEntry[] = Object.entries(window.mcState.codexNpcs ?? {})
     .map(([type, info]: [string, unknown]) => ({ type, ...(info as Omit<NpcEntry, "type">) }))
     .sort((a: NpcEntry, b: NpcEntry) => a.type.localeCompare(b.type));
 

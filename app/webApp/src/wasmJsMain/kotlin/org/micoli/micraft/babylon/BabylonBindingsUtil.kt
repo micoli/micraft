@@ -19,30 +19,30 @@ fun jsGetPagePort(): Int =
 
 fun jsNow(): Double = js("Date.now()")
 
-fun jsReload(): Unit = js("mcReload()")
+fun jsReload(): Unit = js("mc.reload()")
 
 fun jsHasUrlParam(name: String): Boolean =
     js("(new URLSearchParams(window.location.search).has(name))")
 
-fun jsGetUrlParam(name: String): String = js("mcGetUrlParam(name)")
+fun jsGetUrlParam(name: String): String = js("mc.getUrlParam(name)")
 
 // ── i18n ─────────────────────────────────────────────────────────────────────
 
-fun jsFetchI18n(locale: String): Unit = js("mcFetchI18n(locale)")
+fun jsFetchI18n(locale: String): Unit = js("mc.fetchI18n(locale)")
 
 // ── Biome colors ──────────────────────────────────────────────────────────────
 
-fun jsFetchBiomeColors(): Unit = js("mcFetchBiomeColors()")
+fun jsFetchBiomeColors(): Unit = js("mc.fetchBiomeColors()")
 
-fun jsApplyBiomeGrassTint(biome: String): Unit = js("mcApplyBiomeGrassTint(biome)")
+fun jsApplyBiomeGrassTint(biome: String): Unit = js("mc.applyBiomeGrassTint(biome)")
 
 // ── Block/Item registry ───────────────────────────────────────────────────────
 
-fun jsSetBlockRegistry(json: String): Unit = js("mcSetBlockRegistry(json)")
+fun jsSetBlockRegistry(json: String): Unit = js("mc.setBlockRegistry(json)")
 
-fun jsSetItemRegistry(json: String): Unit = js("mcSetItemRegistry(json)")
+fun jsSetItemRegistry(json: String): Unit = js("mc.setItemRegistry(json)")
 
-fun jsSetNpcDefinitions(json: String): Unit = js("mcSetNpcDefinitions(json)")
+fun jsSetNpcDefinitions(json: String): Unit = js("mc.setNpcDefinitions(json)")
 
 // ── LocalStorage ─────────────────────────────────────────────────────────────
 
@@ -59,4 +59,4 @@ fun jsLocalStorageSet(key: String, value: String): Unit = js("localStorage.setIt
  * CreateBox order)
  */
 fun jsSetupDebugCameraKeys(camera: JsAny, scene: JsAny, bx: Double, by: Double, bz: Double): Unit =
-    js("mcSetupDebugCameraKeys(camera, scene, bx, by, bz)")
+    js("mc.setupDebugCameraKeys(camera, scene, bx, by, bz)")

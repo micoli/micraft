@@ -23,24 +23,61 @@ import { createElement } from "react";
 import { GameUI } from "./ui/GameUI";
 import { initFaviconAnimator, setFaviconAnimated } from "./favicon/faviconAnimator";
 
-registerUtils();
-registerEngine();
-registerMaterials();
-registerBlockDefs();
-registerKeyboard();
-registerMouse();
-registerCamera();
-registerTargeting();
-registerChunks();
-registerPlayerModel();
-registerFPArms();
-registerArmorOverlay();
-registerNpcModel();
-registerMinimap();
-registerSky();
-registerWeather();
-registerAllPlugins();
-registerAutoUpdate();
+// ── Initialize shared runtime state ──────────────────────────────────────────
+
+window.mcState = {
+  // Input
+  keys: {},
+  modifiers: { ctrl: false, shift: false, alt: false, meta: false },
+  events: [],
+  lastSpaceTime: 0,
+  lastKeyPress: null,
+  mouseLeft: false,
+  lastMouseMove: 0,
+  bindings: {},
+  customCommands: {},
+  modalOpen: false,
+  // Models
+  playerBbmodels: {},
+  npcBbmodels: {},
+  armorBbmodels: {},
+  npcModelsReady: false,
+  skinMatCache: {},
+  skinUV: () => undefined,
+  skinFaceUV: () => [],
+  // Scene
+  engine: null,
+  hemiLight: null,
+  targetMesh: null,
+  breakMesh: null,
+  chunks: {},
+  currentFPArms: null,
+  blockMaterials: undefined,
+  renderPipeline: null,
+  camState: null,
+  debugCamObserver: null,
+  // Codex
+  codexBlocks: [],
+  codexItems: {},
+  codexNpcs: {},
+  // i18n
+  i18nLocale: "en",
+  // Minimap
+  minimapY: 0,
+  minimapGameTime: "",
+  // Session
+  playerName: "",
+  connectedPlayers: [],
+  npcNames: [],
+  commandCompleters: {},
+  knownCommands: [],
+  activeChannel: "world",
+  subscribedChannels: ["world", "system", "game"],
+  knownChannels: [],
+  // React callbacks
+  dispatch: null,
+  slotDrop: null,
+};
 
 // ── Favicon coordination (ordinal from registry + animated from prefs) ────────
 
@@ -54,83 +91,150 @@ function _maybeInitFavicon() {
   initFaviconAnimator(_faviconOrdinal, _faviconAnimated);
 }
 
-(window as any).mcApplyFaviconPref = (animated: boolean) => {
-  _faviconAnimated = animated;
-  if (_faviconInitialized) {
-    setFaviconAnimated(animated);
-  } else {
-    _maybeInitFavicon();
-  }
-};
+// ── i18n ─────────────────────────────────────────────────────────────────────
 
-// ── Block/Item registry ───────────────────────────────────────────────────────
-
-(window as any).mcSetBlockRegistry = (json: string) => {
-  const blocks: { name: string; modelElement: string; minimapColor: [number, number, number] }[] = JSON.parse(json);
-  setMinimapColors(blocks);
-  setRegistryBlocks(blocks);
-  (window as any).__mcCodexBlocks = blocks;
-  (window as any).mcInitBlockDefs();
-  const favIv = setInterval(() => {
-    if ((window as any).mcIsBlockDefsReady?.()) {
-      clearInterval(favIv);
-      const registryBlocks = (window as any).__mcCodexBlocks as Array<{ name: string }>;
-      const idx = registryBlocks.findIndex((b) => b.name === "QUARTZ_ORE");
-      if (idx >= 0) {
-        _faviconOrdinal = idx;
-        _maybeInitFavicon();
-      }
-    }
-  }, 200);
-};
-
-(window as any).mcSetItemRegistry = (json: string) => {
-  (window as any).__mcCodexItems = JSON.parse(json);
-};
-
-(window as any).mcSetNpcDefinitions = (json: string) => {
-  (window as any).__mcCodexNpcs = JSON.parse(json);
-};
+let _i18nTable: Record<string, string> = {};
 
 // ── Biome colors ──────────────────────────────────────────────────────────────
 
 let _biomeColors: Record<string, [number, number, number]> = {};
 
-(window as any).mcFetchBiomeColors = () => {
-  fetch("/api/biomes")
-    .then((r) => r.json())
-    .then((data: Record<string, [number, number, number]>) => {
-      _biomeColors = data;
-    })
-    .catch(() => {});
-};
+// ── Assemble window.mc from all registered modules ────────────────────────────
 
-(window as any).mcApplyBiomeGrassTint = (biome: string) => {
-  const [r, g, b] = _biomeColors[biome] ?? [0.47, 0.75, 0.35];
-  (window as any).mcSetGrassTint(r, g, b);
-};
+window.mc = {
+  ...registerUtils(),
+  ...registerEngine(),
+  ...registerMaterials(),
+  ...registerBlockDefs(),
+  ...registerKeyboard(),
+  ...registerMouse(),
+  ...registerCamera(),
+  ...registerTargeting(),
+  ...registerChunks(),
+  ...registerPlayerModel(),
+  ...registerFPArms(),
+  ...registerArmorOverlay(),
+  ...registerNpcModel(),
+  ...registerMinimap(),
+  ...registerSky(),
+  ...registerWeather(),
 
-// ── i18n ─────────────────────────────────────────────────────────────────────
+  // ── Registry ────────────────────────────────────────────────────────────────
 
-let _i18nTable: Record<string, string> = {};
+  setBlockRegistry: (json: string) => {
+    const blocks = JSON.parse(json) as typeof window.mcState.codexBlocks;
+    setMinimapColors(blocks);
+    setRegistryBlocks(blocks);
+    window.mcState.codexBlocks = blocks;
+    window.mc.initBlockDefs();
+    const favIv = setInterval(() => {
+      if (window.mc.isBlockDefsReady?.()) {
+        clearInterval(favIv);
+        const registryBlocks = window.mcState.codexBlocks;
+        const idx = registryBlocks.findIndex((b) => b.name === "QUARTZ_ORE");
+        if (idx >= 0) {
+          _faviconOrdinal = idx;
+          _maybeInitFavicon();
+        }
+      }
+    }, 200);
+  },
 
-(window as any).mcFetchI18n = (locale: string) => {
-  fetch(`/api/i18n/${locale}`)
-    .then((r) => r.json())
-    .then((data: Record<string, string>) => {
-      _i18nTable = data;
-      (window as any).__mcI18nLocale = locale;
-    })
-    .catch(() => {});
-};
+  setItemRegistry: (json: string) => {
+    window.mcState.codexItems = JSON.parse(json);
+  },
 
-(window as any).mcT = (key: string, ...args: (string | number)[]): string => {
-  let s = _i18nTable[key] ?? key;
-  args.forEach((a, i) => {
-    s = s.replace(`{${i}}`, String(a));
-  });
-  return s;
-};
+  setNpcDefinitions: (json: string) => {
+    window.mcState.codexNpcs = JSON.parse(json);
+  },
+
+  // ── Biome colors ─────────────────────────────────────────────────────────────
+
+  fetchBiomeColors: () => {
+    fetch("/api/biomes")
+      .then((r) => r.json())
+      .then((data: Record<string, [number, number, number]>) => {
+        _biomeColors = data;
+      })
+      .catch(() => {});
+  },
+
+  applyBiomeGrassTint: (biome: string) => {
+    const [r, g, b] = _biomeColors[biome] ?? [0.47, 0.75, 0.35];
+    window.mc.setGrassTint(r, g, b);
+  },
+
+  // ── i18n ──────────────────────────────────────────────────────────────────────
+
+  fetchI18n: (locale: string) => {
+    fetch(`/api/i18n/${locale}`)
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => {
+        _i18nTable = data;
+        window.mcState.i18nLocale = locale;
+      })
+      .catch(() => {});
+  },
+
+  t: (key: string, ...args: (string | number)[]): string => {
+    let s = _i18nTable[key] ?? key;
+    args.forEach((a, i) => {
+      s = s.replace(`{${i}}`, String(a));
+    });
+    return s;
+  },
+
+  // ── Favicon ───────────────────────────────────────────────────────────────────
+
+  applyFaviconPref: (animated: boolean) => {
+    _faviconAnimated = animated;
+    if (_faviconInitialized) {
+      setFaviconAnimated(animated);
+    } else {
+      _maybeInitFavicon();
+    }
+  },
+
+  // ── UI placeholders (overwritten by GameUI React component) ──────────────────
+
+  updateHUD: () => {},
+  showNotification: () => {},
+  addServerLog: () => {},
+  addChatMessage: () => {},
+  channelsSync: () => {},
+  updateHotbar: () => {},
+  toggleHotbar: () => {},
+  updateShortcutBar: () => {},
+  setSelectedSlot: () => {},
+  consumeSlotUpdate: () => "",
+  showLoginOverlay: () => {},
+  hideLoginOverlay: () => {},
+  showDisconnectedOverlay: () => {},
+  hideDisconnectedOverlay: () => {},
+  showConsole: () => {},
+  hideConsole: () => {},
+  isConsoleOpen: () => false,
+  consumeConsoleInput: () => "",
+  consumeLoginResult: () => "",
+  consoleSetPlayer: () => {},
+  cycleHudMode: () => {},
+  syncLayouts: () => {},
+  showLayoutEditor: () => {},
+  hideLayoutEditor: () => {},
+  consumeLayoutUpdate: () => "",
+  preferencesSync: () => {},
+  consumePreferencesUpdate: () => "",
+  showPreferences: () => {},
+  openCodex: () => {},
+  updateChunkDebug: () => {},
+  createHUD: () => {},
+  createHotbar: () => {},
+  createConsole: () => {},
+  createServerLog: () => {},
+} satisfies McBindings;
+
+registerAllPlugins();
+registerAutoUpdate();
 
 // Mount React UI root
 const uiRoot = document.getElementById("mc-ui");

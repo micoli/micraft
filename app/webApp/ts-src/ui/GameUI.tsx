@@ -110,12 +110,12 @@ export function GameUI() {
 
   useEffect(() => {
     preferencesOpenRef.current = state.preferencesOpen;
-    if (window.__mc) window.__mc.modalOpen = state.preferencesOpen;
+    if (window.mcState) window.mcState.modalOpen = state.preferencesOpen;
   }, [state.preferencesOpen]);
 
   useEffect(() => {
     codexOpenRef.current = state.codexOpen;
-    if (window.__mc) window.__mc.modalOpen = state.codexOpen || state.preferencesOpen;
+    if (window.mcState) window.mcState.modalOpen = state.codexOpen || state.preferencesOpen;
   }, [state.codexOpen, state.preferencesOpen]);
 
   // Auto-hide server log after 15s of no new messages
@@ -146,20 +146,20 @@ export function GameUI() {
 
   // Update /layout autocomplete completer whenever layouts change
   useEffect(() => {
-    (window as any).__mcCommandCompleters = (window as any).__mcCommandCompleters ?? {};
-    (window as any).__mcCommandCompleters["/layout"] = (partial: string) =>
+    window.mcState.commandCompleters = window.mcState.commandCompleters ?? {};
+    window.mcState.commandCompleters["/layout"] = (partial: string) =>
       state.layouts.map((l: GameLayout) => l.name).filter((n: string) => n.startsWith(partial));
   }, [state.layouts]);
 
   // Sync channel completers when subscribed/known channels change
   useEffect(() => {
-    (window as any).__mcSubscribedChannels = state.subscribedChannels;
-    (window as any).__mcKnownChannels = state.knownChannels;
+    window.mcState.subscribedChannels = state.subscribedChannels;
+    window.mcState.knownChannels = state.knownChannels;
   }, [state.subscribedChannels, state.knownChannels]);
 
   useEffect(() => {
     // Wire Kotlin-callable window functions to React dispatch
-    (window as any).mcUpdateHUD = (
+    window.mc.updateHUD = (
       x: number,
       y: number,
       z: number,
@@ -178,10 +178,8 @@ export function GameUI() {
       tickDtMs: number,
       tickJitterMs: number,
     ) => {
-      const mc = (window as any).__mc || {};
-      mc.minimapY = y;
-      mc.minimapGameTime = gameTime;
-      (window as any).__mc = mc;
+      window.mcState.minimapY = y;
+      window.mcState.minimapGameTime = gameTime;
       dispatch({
         type: "hud",
         data: {
@@ -206,11 +204,11 @@ export function GameUI() {
       });
     };
 
-    (window as any).mcShowNotification = (msg: string) => dispatch({ type: "notification", msg });
-    (window as any).mcAddServerLog = (channel: string, msg: string) => dispatch({ type: "log", channel, msg });
-    (window as any).mcAddChatMessage = (channel: string, sender: string, msg: string) =>
+    window.mc.showNotification = (msg: string) => dispatch({ type: "notification", msg });
+    window.mc.addServerLog = (channel: string, msg: string) => dispatch({ type: "log", channel, msg });
+    window.mc.addChatMessage = (channel: string, sender: string, msg: string) =>
       dispatch({ type: "chat_message", channel, sender, msg });
-    (window as any).mcChannelsSync = (subscribedJson: string, knownJson: string) => {
+    window.mc.channelsSync = (subscribedJson: string, knownJson: string) => {
       try {
         const subscribed: string[] = JSON.parse(subscribedJson);
         const known: string[] = JSON.parse(knownJson);
@@ -219,44 +217,43 @@ export function GameUI() {
         /* ignore */
       }
     };
-    (window as any).mcUpdateHotbar = (json: string) => dispatch({ type: "inventory", data: JSON.parse(json) });
-    (window as any).mcToggleHotbar = () => dispatch({ type: "hotbar_toggle" });
-    (window as any).mcUpdateShortcutBar = (json: string) =>
-      dispatch({ type: "shortcut_bar_update", data: JSON.parse(json) });
-    (window as any).mcSetSelectedSlot = (slot: number) => dispatch({ type: "slot_select", slot });
-    (window as any).mcConsumeSlotUpdate = () => {
+    window.mc.updateHotbar = (json: string) => dispatch({ type: "inventory", data: JSON.parse(json) });
+    window.mc.toggleHotbar = () => dispatch({ type: "hotbar_toggle" });
+    window.mc.updateShortcutBar = (json: string) => dispatch({ type: "shortcut_bar_update", data: JSON.parse(json) });
+    window.mc.setSelectedSlot = (slot: number) => dispatch({ type: "slot_select", slot });
+    window.mc.consumeSlotUpdate = () => {
       const v = pendingSlotUpdateRef.current;
       pendingSlotUpdateRef.current = "";
       return v;
     };
-    (window as any).__mcSlotDrop = (slot: number, itemType: string | null) => {
+    window.mcState.slotDrop = (slot: number, itemType: string | null) => {
       pendingSlotUpdateRef.current = JSON.stringify({ slot, itemType: itemType ?? null });
     };
 
-    (window as any).mcShowLoginOverlay = () => dispatch({ type: "login_show" });
-    (window as any).mcHideLoginOverlay = () => dispatch({ type: "login_hide" });
-    (window as any).mcShowDisconnectedOverlay = (msg: string) => dispatch({ type: "disconnect_show", message: msg });
-    (window as any).mcHideDisconnectedOverlay = () => dispatch({ type: "disconnect_hide" });
+    window.mc.showLoginOverlay = () => dispatch({ type: "login_show" });
+    window.mc.hideLoginOverlay = () => dispatch({ type: "login_hide" });
+    window.mc.showDisconnectedOverlay = (msg: string) => dispatch({ type: "disconnect_show", message: msg });
+    window.mc.hideDisconnectedOverlay = () => dispatch({ type: "disconnect_hide" });
 
-    (window as any).mcShowConsole = () => dispatch({ type: "console_show" });
-    (window as any).mcHideConsole = () => dispatch({ type: "console_hide" });
-    (window as any).mcIsConsoleOpen = () => consoleOpenRef.current;
+    window.mc.showConsole = () => dispatch({ type: "console_show" });
+    window.mc.hideConsole = () => dispatch({ type: "console_hide" });
+    window.mc.isConsoleOpen = () => consoleOpenRef.current;
 
-    (window as any).mcConsumeConsoleInput = () => {
+    window.mc.consumeConsoleInput = () => {
       const v = consoleSubmittedRef.current || "";
       consoleSubmittedRef.current = null;
       return v;
     };
 
-    (window as any).mcConsumeLoginResult = () => {
+    window.mc.consumeLoginResult = () => {
       const v = loginResultRef.current;
       loginResultRef.current = "";
       return v;
     };
 
-    (window as any).mcConsoleSetPlayer = (name: string) => {
+    window.mc.consoleSetPlayer = (name: string) => {
       consoleStateRef.current.playerName = name;
-      (window as any).__mcPlayerName = name;
+      window.mcState.playerName = name;
       try {
         const stored = localStorage.getItem("mc_history_" + name);
         consoleStateRef.current.history = stored ? JSON.parse(stored) : [];
@@ -265,18 +262,18 @@ export function GameUI() {
       }
     };
 
-    (window as any).mcCycleHudMode = () => dispatch({ type: "hud_mode_cycle" });
+    window.mc.cycleHudMode = () => dispatch({ type: "hud_mode_cycle" });
 
-    (window as any).mcSyncLayouts = (json: string) => {
+    window.mc.syncLayouts = (json: string) => {
       const data: { layouts: GameLayout[]; activeLayout: string } = JSON.parse(json);
       dispatch({ type: "layouts_sync", layouts: data.layouts, activeLayout: data.activeLayout });
     };
 
-    (window as any).mcShowLayoutEditor = () => dispatch({ type: "layout_editor_show" });
-    (window as any).mcHideLayoutEditor = () => dispatch({ type: "layout_editor_hide" });
+    window.mc.showLayoutEditor = () => dispatch({ type: "layout_editor_show" });
+    window.mc.hideLayoutEditor = () => dispatch({ type: "layout_editor_hide" });
 
-    (window as any).__mcDispatch = dispatch;
-    (window as any).mcOpenNpcDialog = (json: string) => {
+    window.mcState.dispatch = dispatch as (action: unknown) => void;
+    window.mc.openNpcDialog = (json: string) => {
       try {
         dispatch({ type: "npc_dialog_open", payload: JSON.parse(json) as NpcDialogData });
       } catch {
@@ -284,53 +281,53 @@ export function GameUI() {
       }
     };
 
-    (window as any).mcConsumeLayoutUpdate = () => {
+    window.mc.consumeLayoutUpdate = () => {
       const v = pendingLayoutUpdateRef.current;
       pendingLayoutUpdateRef.current = "";
       return v;
     };
 
-    (window as any).mcPreferencesSync = (json: string) => {
+    window.mc.preferencesSync = (json: string) => {
       try {
         const data: PreferencesData = JSON.parse(json);
-        if (data.keybindings && (window as any).__mc) {
-          (window as any).__mc.bindings = data.keybindings;
+        if (data.keybindings) {
+          window.mcState.bindings = data.keybindings;
         }
-        if ((window as any).__mc) {
-          (window as any).__mc.customCommands = data.customCommands || {};
+        if (window.mcState) {
+          window.mcState.customCommands = data.customCommands || {};
         }
-        if (data.commands?.length && (window as any).mcRegisterServerCompleters) {
+        if (data.commands?.length && window.mc.registerServerCompleters) {
           const disabledIds = new Set<string>(data.disabledCommands || []);
           const enabledCmds = data.commands.filter((c) => !disabledIds.has(c.id));
-          (window as any).mcRegisterServerCompleters(enabledCmds);
+          window.mc.registerServerCompleters(enabledCmds);
           for (const cmd of data.commands) {
             if (disabledIds.has(cmd.id)) {
-              const known: string[] = (window as any).__mcKnownCommands;
+              const known: string[] = window.mcState.knownCommands;
               if (known) {
                 const idx = known.indexOf(cmd.command);
                 if (idx >= 0) known.splice(idx, 1);
               }
-              delete (window as any).__mcCommandCompleters?.[cmd.command];
+              delete window.mcState.commandCompleters?.[cmd.command];
             }
           }
         }
         dispatch({ type: "preferences_sync", data });
-        (window as any).mcApplyFaviconPref?.(data.animatedFavicon ?? true);
+        window.mc.applyFaviconPref?.(data.animatedFavicon ?? true);
       } catch {
         /* ignore */
       }
     };
 
-    (window as any).mcConsumePreferencesUpdate = () => {
+    window.mc.consumePreferencesUpdate = () => {
       const v = pendingPreferencesUpdateRef.current;
       pendingPreferencesUpdateRef.current = "";
       return v;
     };
 
-    (window as any).mcShowPreferences = () => dispatch({ type: "preferences_show" });
-    (window as any).mcOpenCodex = () => dispatch({ type: "codex_open" });
+    window.mc.showPreferences = () => dispatch({ type: "preferences_show" });
+    window.mc.openCodex = () => dispatch({ type: "codex_open" });
 
-    (window as any).mcUpdateChunkDebug = (json: string) => {
+    window.mc.updateChunkDebug = (json: string) => {
       try {
         setChunkDebugData(JSON.parse(json) as ChunkDebugData);
       } catch {
@@ -339,10 +336,10 @@ export function GameUI() {
     };
 
     // no-ops: React handles creation
-    (window as any).mcCreateHUD = () => {};
-    (window as any).mcCreateHotbar = () => {};
-    (window as any).mcCreateConsole = () => {};
-    (window as any).mcCreateServerLog = () => {};
+    window.mc.createHUD = () => {};
+    window.mc.createHotbar = () => {};
+    window.mc.createConsole = () => {};
+    window.mc.createServerLog = () => {};
 
     // Global keydown: open console via '/' or Enter (when not already open and no modal)
     function onGlobalKeydown(e: Event) {
@@ -391,11 +388,11 @@ export function GameUI() {
     customCommands: Record<string, string[]>;
   }) => {
     dispatch({ type: "preferences_save", ...payload });
-    if (window.__mc) {
-      window.__mc.bindings = payload.keybindings;
-      window.__mc.customCommands = payload.customCommands;
+    if (window.mcState) {
+      window.mcState.bindings = payload.keybindings;
+      window.mcState.customCommands = payload.customCommands;
     }
-    (window as any).mcApplyFaviconPref?.(payload.animatedFavicon);
+    window.mc.applyFaviconPref?.(payload.animatedFavicon);
     pendingPreferencesUpdateRef.current = JSON.stringify(payload);
   };
 
@@ -452,7 +449,7 @@ export function GameUI() {
             unreadChannels={state.unreadChannels}
             onChannelSelect={(ch) => {
               dispatch({ type: "active_channel_select", channel: ch });
-              (window as any).__mcActiveChannel = ch;
+              window.mcState.activeChannel = ch;
             }}
             layoutStyle={widgetStyle(activeLayout, "CHAT_HISTORY")}
           />

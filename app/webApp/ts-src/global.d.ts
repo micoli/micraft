@@ -99,24 +99,6 @@ declare global {
 
   // ── Game object types ─────────────────────────────────────────────────────────
 
-  interface McInputState {
-    keys: Record<string, boolean>;
-    modifiers: { ctrl: boolean; shift: boolean; alt: boolean; meta: boolean };
-    events: string[];
-    lastSpaceTime: number;
-    lastKeyPress: { code: string; key: string; time: number } | null;
-    mouseLeft: boolean;
-    lastMouseMove: number;
-    bindings: Record<string, string[]>;
-    customCommands: Record<string, string[]>;
-    playerBbmodels: Record<string, BbModel>;
-    npcBbmodels: Record<string, BbModel>;
-    armorBbmodels: Record<string, BbModel>;
-    npcModelsReady: boolean;
-    modalOpen: boolean;
-    skinMatCache: Record<string, import("@babylonjs/core").StandardMaterial>;
-  }
-
   interface McBlockFaceInfo {
     matKey: string;
     uv: number[]; // 8 floats: [u0,v0, u1,v1, u2,v2, u3,v3]
@@ -156,56 +138,252 @@ declare global {
     walkAnim: Record<string, { keyframes: BbModelKeyframe[]; length: number }>;
   }
 
+  // ── McState: all private JS-side runtime state ────────────────────────────────
+
+  interface McState {
+    // Input
+    keys: Record<string, boolean>;
+    modifiers: { ctrl: boolean; shift: boolean; alt: boolean; meta: boolean };
+    events: string[];
+    lastSpaceTime: number;
+    lastKeyPress: { code: string; key: string; time: number } | null;
+    mouseLeft: boolean;
+    lastMouseMove: number;
+    bindings: Record<string, string[]>;
+    customCommands: Record<string, string[]>;
+    modalOpen: boolean;
+    // Models
+    playerBbmodels: Record<string, BbModel>;
+    npcBbmodels: Record<string, BbModel>;
+    armorBbmodels: Record<string, BbModel>;
+    npcModelsReady: boolean;
+    skinMatCache: Record<string, import("@babylonjs/core").StandardMaterial>;
+    skinUV: (face: BbModelFace | undefined, W: number, H: number) => unknown;
+    skinFaceUV: (faces: BbModelElement["faces"], W: number, H: number) => unknown[];
+    // Scene objects
+    engine: InstanceType<typeof BABYLON.Engine> | null;
+    hemiLight: InstanceType<typeof BABYLON.HemisphericLight> | null;
+    targetMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
+    breakMesh: (InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string }) | null;
+    chunks: Record<string, InstanceType<typeof BABYLON.AbstractMesh>[]>;
+    currentFPArms: McFPArms | null;
+    blockMaterials: Record<string, unknown> | undefined;
+    renderPipeline: unknown;
+    camState: { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number; t: number } | null;
+    debugCamObserver: unknown;
+    // Codex
+    codexBlocks: Array<{
+      name: string;
+      modelElement: string;
+      minimapColor: [number, number, number];
+      hardness: number;
+      solid: boolean;
+      transparent: boolean;
+      liquid: boolean;
+      [key: string]: unknown;
+    }>;
+    codexItems: Record<string, unknown>;
+    codexNpcs: Record<string, unknown>;
+    // i18n / locale
+    i18nLocale: string;
+    // Minimap overlay
+    minimapY: number;
+    minimapGameTime: string;
+    // Player / session
+    playerName: string;
+    connectedPlayers: string[];
+    npcNames: string[];
+    // Commands / autocomplete
+    commandCompleters: Record<string, (partial: string) => string[] | Promise<string[]>>;
+    knownCommands: string[];
+    // Channels
+    activeChannel: string;
+    subscribedChannels: string[];
+    knownChannels: string[];
+    // React callbacks (set by GameUI after mount)
+    dispatch: ((action: unknown) => void) | null;
+    slotDrop: ((slot: number, itemType: string | null) => void) | null;
+  }
+
+  // ── McBindings: all public Kotlin-callable (and JS-callable) mc methods ───────
+
+  interface McBindings {
+    // Block defs
+    initBlockDefs(): void;
+    isBlockDefsReady(): boolean;
+    getBlockDef(ordinal: number): McBlockDef | null;
+    getBlockTextures(): McBlockTextureDef[];
+    createBlockMaterials(scene: any): Record<string, any>;
+    setGrassTint(r: number, g: number, b: number): void;
+    // Registry
+    setBlockRegistry(json: string): void;
+    setItemRegistry(json: string): void;
+    setNpcDefinitions(json: string): void;
+    // Materials
+    createTextureMaterial(name: string, url: string, scene: any): any;
+    createLeavesMaterial(name: string, url: string, scene: any, r?: number, g?: number, b?: number): any;
+    createCrossSpriteMaterial(name: string, url: string, scene: any): any;
+    // Engine / Scene
+    createEngine(): any;
+    createHemisphericLight(name: string, scene: any): any;
+    createBox(name: string, size: number, scene: any): any;
+    createSimpleBox(name: string, size: number, scene: any): any;
+    freezeMesh(mesh: any): void;
+    optimizeScene(scene: any): void;
+    setupFog(scene: any, r: number, g: number, b: number): void;
+    setShadersEnabled(scene: any, enabled: boolean): void;
+    setupRenderPipeline(scene: any, camera: any): void;
+    // Sky / Weather
+    updateSkyTime(scene: any, t: number): void;
+    setWeatherZones(json: string): void;
+    updateWeather(scene: any, px: number, py: number, pz: number): void;
+    // Input
+    setupKeyboard(): void;
+    setupMouse(): void;
+    loadBindings(host: string, port: number, player: string): void;
+    isActionDown(action: string): boolean;
+    consumeEvents(): string[];
+    isBreaking(): boolean;
+    // Camera
+    getCameraPositionX(camera: any): number;
+    getCameraPositionY(camera: any): number;
+    getCameraPositionZ(camera: any): number;
+    getCameraDir3DX(camera: any): number;
+    getCameraDir3DY(camera: any): number;
+    getCameraDir3DZ(camera: any): number;
+    getCameraForwardX(camera: any): number;
+    getCameraForwardZ(camera: any): number;
+    createCrosshair(): void;
+    setupDebugCameraKeys(camera: any, scene: any, bx: number, by: number, bz: number): void;
+    // Targeting
+    showTargetOutline(scene: any, x: number, y: number, z: number, breakable: boolean): void;
+    hideTargetOutline(): void;
+    showBreakOverlay(scene: any, x: number, y: number, z: number, alpha: number): void;
+    hideBreakOverlay(): void;
+    // Chunk builder
+    chunkBegin(cx: number, cz: number): void;
+    chunkFace(wx: number, wy: number, wz: number, faceMat: number, ao: number): void;
+    chunkEnd(scene: any, materials: Record<string, any>): void;
+    disposeChunk(key: string): void;
+    // Player model
+    initPlayerModel(skin: string): void;
+    isPlayerBbmodelReady(skin: string): boolean;
+    createPlayerModelNow(scene: any, skin: string): McPlayerModel;
+    createPlayerModelFromBbmodel(bbmodel: BbModel, scene: any, skin: string): McPlayerModel;
+    setPlayerTransform(
+      model: McPlayerModel,
+      x: number,
+      y: number,
+      z: number,
+      yaw: number,
+      headPitch: number,
+      isWalking: boolean,
+    ): void;
+    setPlayerVisible(model: McPlayerModel, visible: boolean): void;
+    setPlayerAlpha(model: McPlayerModel, alpha: number): void;
+    disposePlayerModel(model: McPlayerModel): void;
+    // FP arms
+    createFPArms(scene: any, camera: any, skin: string): McFPArms | null;
+    updateFPArms(fpArms: McFPArms, isWalking: boolean): void;
+    setFPArmsVisible(fpArms: McFPArms, visible: boolean): void;
+    disposeFPArms(fpArms: McFPArms): void;
+    debugFPArms(x?: number, y?: number, z?: number): void;
+    // Armor
+    initArmorModel(name: string): void;
+    isArmorModelReady(name: string): boolean;
+    attachArmor(model: McPlayerModel, armorName: string, scene: any): void;
+    detachArmor(model: McPlayerModel, armorName: string): void;
+    detachAllArmors(model: McPlayerModel): void;
+    // NPC
+    initNpcModels(npcTypesJson: string): void;
+    isNpcModelsReady(): boolean;
+    createNpcModel(scene: any, npcType: string): McPlayerModel | null;
+    setNpcTransform(model: McPlayerModel, x: number, y: number, z: number, yaw: number, isWalking: boolean): void;
+    disposeNpcModel(model: McPlayerModel): void;
+    openNpcDialog(json: string): void;
+    // Minimap
+    createMinimap(): void;
+    setMinimapChunk(cx: number, cz: number, topYJson: string, topBlockJson: string): void;
+    clearMinimapChunk(cx: number, cz: number): void;
+    minimapZoomIn(): void;
+    minimapZoomOut(): void;
+    setNpcOnMinimap(id: string, x: number, z: number): void;
+    removeNpcFromMinimap(id: string): void;
+    setMinimapWeather(json: string): void;
+    drawMinimap(playerX: number, playerZ: number, playerYaw: number): void;
+    // Utils
+    getUrlParam(name: string): string;
+    reload(): void;
+    setConnectedPlayers(namesJson: string): void;
+    setNpcNames(namesJson: string): void;
+    registerCompleter(cmd: string, fn: (partial: string) => string[] | Promise<string[]>): void;
+    registerServerCompleters(commands: Array<{ id: string; command: string; autocompleteArgs?: number[] }>): void;
+    // i18n / biome
+    fetchI18n(locale: string): void;
+    t(key: string, ...args: (string | number)[]): string;
+    fetchBiomeColors(): void;
+    applyBiomeGrassTint(biome: string): void;
+    applyFaviconPref(animated: boolean): void;
+    // UI (set by GameUI React component)
+    updateHUD(
+      x: number,
+      y: number,
+      z: number,
+      yaw: number,
+      pitch: number,
+      stance: string,
+      speed: number,
+      fps: number,
+      kbIn: number,
+      kbOut: number,
+      biome: string,
+      targetBlock: string,
+      gameTime: string,
+      reconcileXzStats: string,
+      reconcileYStats: string,
+      tickDtMs: number,
+      tickJitterMs: number,
+    ): void;
+    showNotification(msg: string): void;
+    addServerLog(channel: string, msg: string): void;
+    addChatMessage(channel: string, sender: string, msg: string): void;
+    channelsSync(subscribedJson: string, knownJson: string): void;
+    updateHotbar(json: string): void;
+    toggleHotbar(): void;
+    updateShortcutBar(json: string): void;
+    setSelectedSlot(slot: number): void;
+    consumeSlotUpdate(): string;
+    showLoginOverlay(): void;
+    hideLoginOverlay(): void;
+    showDisconnectedOverlay(msg: string): void;
+    hideDisconnectedOverlay(): void;
+    showConsole(): void;
+    hideConsole(): void;
+    isConsoleOpen(): boolean;
+    consumeConsoleInput(): string;
+    consumeLoginResult(): string;
+    consoleSetPlayer(name: string): void;
+    cycleHudMode(): void;
+    syncLayouts(json: string): void;
+    showLayoutEditor(): void;
+    hideLayoutEditor(): void;
+    consumeLayoutUpdate(): string;
+    preferencesSync(json: string): void;
+    consumePreferencesUpdate(): string;
+    showPreferences(): void;
+    openCodex(): void;
+    updateChunkDebug(json: string): void;
+    createHUD(): void;
+    createHotbar(): void;
+    createConsole(): void;
+    createServerLog(): void;
+  }
+
   // ── Window augmentation ───────────────────────────────────────────────────────
 
   interface Window {
-    __mc: McInputState;
-    __mcEngine: InstanceType<typeof BABYLON.Engine> | null;
-    __mcHemiLight: InstanceType<typeof BABYLON.HemisphericLight> | null;
-    mcUpdateSkyTime: (scene: any, t: number) => void;
-    __mcTargetMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
-    __mcBreakMesh: (InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string }) | null;
-    __mcChunks: Record<string, InstanceType<typeof BABYLON.AbstractMesh>[]>;
-    __mcCurrentFPArms: McFPArms | null;
-    __mcLoginResult: string;
-    __mcNotifTimeout: ReturnType<typeof setTimeout>;
-    __mcConnectedPlayers: string[];
-    __mcCommandCompleters: Record<string, (partial: string) => string[] | Promise<string[]>>;
-    __mcPlayerName: string;
-    __mcKnownCommands: string[];
-    __mcConsole: {
-      open: boolean;
-      submitted: string | null;
-      history: string[];
-      histIdx: number;
-      playerName: string;
-      tabIdx: number;
-      tabMatches: string[];
-    };
-    __debugCamObserver: unknown;
-    __mcSkinUV: (face: BbModelFace | undefined, W: number, H: number) => unknown;
-    __mcSkinFaceUV: (faces: BbModelElement["faces"], W: number, H: number) => unknown[];
-    // Block defs
-    mcInitBlockDefs: () => void;
-    mcIsBlockDefsReady: () => boolean;
-    mcGetBlockDef: (ordinal: number) => McBlockDef | null;
-    mcGetBlockTextures: () => McBlockTextureDef[];
-    mcCreateBlockMaterials: (scene: any) => Record<string, any>;
-    mcSetGrassTint: (r: number, g: number, b: number) => void;
-    mcSetBlockRegistry: (json: string) => void;
-    mcSetItemRegistry: (json: string) => void;
-    mcSetNpcDefinitions: (json: string) => void;
-    mcOpenCodex: () => void;
-    __mcCodexBlocks: unknown[];
-    __mcCodexItems: Record<string, unknown>;
-    __mcCodexNpcs: Record<string, unknown>;
-    mcSetupRenderPipeline: (scene: any, camera: any) => void;
-    mcCreatePlayerModelFromBbmodel: (bbmodel: BbModel, scene: any, skin: string) => McPlayerModel;
-    mcInitArmorModel: (name: string) => void;
-    mcIsArmorModelReady: (name: string) => boolean;
-    mcAttachArmor: (model: McPlayerModel, armorName: string, scene: any) => void;
-    mcDetachArmor: (model: McPlayerModel, armorName: string) => void;
-    mcDetachAllArmors: (model: McPlayerModel) => void;
+    mc: McBindings;
+    mcState: McState;
     [key: string]: unknown;
   }
 }

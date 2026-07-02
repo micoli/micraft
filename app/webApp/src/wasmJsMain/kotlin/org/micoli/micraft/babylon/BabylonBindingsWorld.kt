@@ -5,22 +5,22 @@ package org.micoli.micraft.babylon
 // ── Meshes ────────────────────────────────────────────────────────────────────
 
 fun jsCreateBox(name: String, size: Double, scene: JsAny): JsAny =
-    js("mcCreateBox(name, size, scene)")
+    js("mc.createBox(name, size, scene)")
 
 fun jsCreateSimpleBox(name: String, size: Double, scene: JsAny): JsAny =
-    js("mcCreateSimpleBox(name, size, scene)")
+    js("mc.createSimpleBox(name, size, scene)")
 
-fun jsFreezeMesh(mesh: JsAny): Unit = js("mcFreezeMesh(mesh)")
+fun jsFreezeMesh(mesh: JsAny): Unit = js("mc.freezeMesh(mesh)")
 
-fun jsOptimizeScene(scene: JsAny): Unit = js("mcOptimizeScene(scene)")
+fun jsOptimizeScene(scene: JsAny): Unit = js("mc.optimizeScene(scene)")
 
 fun jsSetupFog(scene: JsAny, r: Double, g: Double, b: Double): Unit =
-    js("mcSetupFog(scene, r, g, b)")
+    js("mc.setupFog(scene, r, g, b)")
 
 fun jsSetShadersEnabled(scene: JsAny, enabled: Boolean): Unit =
-    js("mcSetShadersEnabled(scene, enabled)")
+    js("mc.setShadersEnabled(scene, enabled)")
 
-fun jsUpdateSkyTime(scene: JsAny, t: Double): Unit = js("mcUpdateSkyTime(scene, t)")
+fun jsUpdateSkyTime(scene: JsAny, t: Double): Unit = js("mc.updateSkyTime(scene, t)")
 
 fun jsSetMeshPosition(mesh: JsAny, x: Double, y: Double, z: Double): Unit =
     js("mesh.position = new BABYLON.Vector3(x,y,z)")
@@ -39,21 +39,21 @@ fun jsSetMeshMaterial(mesh: JsAny, mat: JsAny): Unit = js("mesh.material = mat")
 
 // ── Chunk geometry builder ────────────────────────────────────────────────────
 
-fun jsChunkBegin(cx: Int, cz: Int): Unit = js("mcChunkBegin(cx, cz)")
+fun jsChunkBegin(cx: Int, cz: Int): Unit = js("mc.chunkBegin(cx, cz)")
 
 fun jsChunkFace(wx: Int, wy: Int, wz: Int, faceMat: Int, ao: Int): Unit =
-    js("mcChunkFace(wx, wy, wz, faceMat, ao)")
+    js("mc.chunkFace(wx, wy, wz, faceMat, ao)")
 
-fun jsChunkEnd(scene: JsAny, materials: JsAny): Unit = js("mcChunkEnd(scene, materials)")
+fun jsChunkEnd(scene: JsAny, materials: JsAny): Unit = js("mc.chunkEnd(scene, materials)")
 
-fun jsDisposeChunk(key: String): Unit = js("mcDisposeChunk(key)")
+fun jsDisposeChunk(key: String): Unit = js("mc.disposeChunk(key)")
 
 // ── Block definitions (bbmodel-driven) ───────────────────────────────────────
 
-fun jsInitBlockDefs(): Unit = js("mcInitBlockDefs()")
+fun jsInitBlockDefs(): Unit = js("mc.initBlockDefs()")
 
-fun jsIsBlockDefsReady(): Boolean = js("mcIsBlockDefsReady()")
+fun jsIsBlockDefsReady(): Boolean = js("mc.isBlockDefsReady()")
 
-fun jsCreateBlockMaterials(scene: JsAny): JsAny = js("mcCreateBlockMaterials(scene)")
+fun jsCreateBlockMaterials(scene: JsAny): JsAny = js("mc.createBlockMaterials(scene)")
 
-fun jsSetGrassTint(r: Double, g: Double, b: Double): Unit = js("mcSetGrassTint(r, g, b)")
+fun jsSetGrassTint(r: Double, g: Double, b: Double): Unit = js("mc.setGrassTint(r, g, b)")

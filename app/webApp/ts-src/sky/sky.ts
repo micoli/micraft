@@ -1,4 +1,4 @@
-export function registerSky(): void {
+export function registerSky(): Pick<McBindings, "updateSkyTime"> {
   // Sky color keyframes: [normalizedTime, [r, g, b]]
   const SKY_STOPS: Array<[number, [number, number, number]]> = [
     [0.0, [0.03, 0.03, 0.1]], // midnight
@@ -27,44 +27,46 @@ export function registerSky(): void {
   let moon: any = null;
   const DIST = 200;
 
-  window.mcUpdateSkyTime = (scene: any, t: number): void => {
-    if (!sun) {
-      sun = BABYLON.MeshBuilder.CreateSphere("mc_sun", { diameter: 12, segments: 4 }, scene);
-      sun.isPickable = false;
-      const m = new BABYLON.StandardMaterial("mc_sun_mat", scene);
-      m.emissiveColor = new BABYLON.Color3(1, 0.95, 0.7);
-      m.disableLighting = true;
-      (m as any).fogEnabled = false;
-      sun.material = m;
-    }
-    if (!moon) {
-      moon = BABYLON.MeshBuilder.CreateSphere("mc_moon", { diameter: 9, segments: 4 }, scene);
-      moon.isPickable = false;
-      const m = new BABYLON.StandardMaterial("mc_moon_mat", scene);
-      m.emissiveColor = new BABYLON.Color3(0.85, 0.85, 0.95);
-      m.disableLighting = true;
-      (m as any).fogEnabled = false;
-      moon.material = m;
-    }
+  return {
+    updateSkyTime: (scene: any, t: number): void => {
+      if (!sun) {
+        sun = BABYLON.MeshBuilder.CreateSphere("mc_sun", { diameter: 12, segments: 4 }, scene);
+        sun.isPickable = false;
+        const m = new BABYLON.StandardMaterial("mc_sun_mat", scene);
+        m.emissiveColor = new BABYLON.Color3(1, 0.95, 0.7);
+        m.disableLighting = true;
+        (m as any).fogEnabled = false;
+        sun.material = m;
+      }
+      if (!moon) {
+        moon = BABYLON.MeshBuilder.CreateSphere("mc_moon", { diameter: 9, segments: 4 }, scene);
+        moon.isPickable = false;
+        const m = new BABYLON.StandardMaterial("mc_moon_mat", scene);
+        m.emissiveColor = new BABYLON.Color3(0.85, 0.85, 0.95);
+        m.disableLighting = true;
+        (m as any).fogEnabled = false;
+        moon.material = m;
+      }
 
-    // Sun: angle=0 → +X horizon (dawn at t=0.25), angle=π/2 → overhead (noon at t=0.5)
-    const sunAngle = (t - 0.25) * Math.PI * 2;
-    const cam = scene.activeCamera;
-    const cx: number = cam ? cam.position.x : 0;
-    const cy: number = cam ? cam.position.y : 0;
-    const cz: number = cam ? cam.position.z : 0;
-    sun.position = new BABYLON.Vector3(cx + Math.cos(sunAngle) * DIST, cy + Math.sin(sunAngle) * DIST, cz);
-    moon.position = new BABYLON.Vector3(cx - Math.cos(sunAngle) * DIST, cy - Math.sin(sunAngle) * DIST, cz);
+      // Sun: angle=0 → +X horizon (dawn at t=0.25), angle=π/2 → overhead (noon at t=0.5)
+      const sunAngle = (t - 0.25) * Math.PI * 2;
+      const cam = scene.activeCamera;
+      const cx: number = cam ? cam.position.x : 0;
+      const cy: number = cam ? cam.position.y : 0;
+      const cz: number = cam ? cam.position.z : 0;
+      sun.position = new BABYLON.Vector3(cx + Math.cos(sunAngle) * DIST, cy + Math.sin(sunAngle) * DIST, cz);
+      moon.position = new BABYLON.Vector3(cx - Math.cos(sunAngle) * DIST, cy - Math.sin(sunAngle) * DIST, cz);
 
-    // Sky and fog color
-    const [r, g, b] = lerpSky(t);
-    scene.clearColor = new BABYLON.Color4(r, g, b, 1);
-    scene.fogColor = new BABYLON.Color3(r, g, b);
+      // Sky and fog color
+      const [r, g, b] = lerpSky(t);
+      scene.clearColor = new BABYLON.Color4(r, g, b, 1);
+      scene.fogColor = new BABYLON.Color3(r, g, b);
 
-    // Ambient light: brightest at noon (sunHeight=1), dim at night (floor 0.15)
-    const sunHeight = Math.sin(sunAngle);
-    const intensity = Math.max(0.15, Math.min(1.0, 0.15 + 0.85 * sunHeight));
-    const hemi = window.__mcHemiLight;
-    if (hemi) hemi.intensity = intensity;
+      // Ambient light: brightest at noon (sunHeight=1), dim at night (floor 0.15)
+      const sunHeight = Math.sin(sunAngle);
+      const intensity = Math.max(0.15, Math.min(1.0, 0.15 + 0.85 * sunHeight));
+      const hemi = window.mcState.hemiLight;
+      if (hemi) hemi.intensity = intensity;
+    },
   };
 }

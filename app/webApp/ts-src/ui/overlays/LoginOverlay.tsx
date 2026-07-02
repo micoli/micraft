@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 
 function usePlayerModelReady(skin: string): boolean {
-  const [ready, setReady] = useState(() => !!(window as any).mcIsPlayerBbmodelReady?.(skin));
+  const [ready, setReady] = useState(() => !!window.mc.isPlayerBbmodelReady?.(skin));
   useEffect(() => {
-    setReady(!!(window as any).mcIsPlayerBbmodelReady?.(skin));
-    (window as any).mcInitPlayerModel?.(skin);
-    if ((window as any).mcIsPlayerBbmodelReady?.(skin)) return;
+    setReady(!!window.mc.isPlayerBbmodelReady?.(skin));
+    window.mc.initPlayerModel?.(skin);
+    if (window.mc.isPlayerBbmodelReady?.(skin)) return;
     const iv = setInterval(() => {
-      if ((window as any).mcIsPlayerBbmodelReady?.(skin)) {
+      if (window.mc.isPlayerBbmodelReady?.(skin)) {
         setReady(true);
         clearInterval(iv);
       }
@@ -24,8 +24,8 @@ function useArmorModelsReady(armors: string[]): boolean {
       setReady(true);
       return;
     }
-    armors.forEach((a) => (window as any).mcInitArmorModel?.(a));
-    const check = () => armors.every((a) => (window as any).mcIsArmorModelReady?.(a));
+    armors.forEach((a) => window.mc.initArmorModel?.(a));
+    const check = () => armors.every((a) => window.mc.isArmorModelReady?.(a));
     if (check()) {
       setReady(true);
       return;
@@ -66,19 +66,19 @@ function PlayerModelPreview({ skin, armors, walking }: { skin: string; armors: s
     light.intensity = 1.1;
     light.groundColor = new B.Color3(0.2, 0.2, 0.2);
 
-    const model = (window as any).mcCreatePlayerModelNow?.(scene, skin) ?? null;
-    if (model) armors.forEach((a) => (window as any).mcAttachArmor?.(model, a, scene));
+    const model = window.mc.createPlayerModelNow?.(scene, skin) ?? null;
+    if (model) armors.forEach((a) => window.mc.attachArmor?.(model, a, scene));
 
     let angle = 0;
     scene.onBeforeRenderObservable.add(() => {
       angle += 0.015;
-      if (model) (window as any).mcSetPlayerTransform?.(model, 0, 0, 0, angle, 0, walkingRef.current);
+      if (model) window.mc.setPlayerTransform?.(model, 0, 0, 0, angle, 0, walkingRef.current);
     });
 
     engine.runRenderLoop(() => scene.render());
 
     return () => {
-      if (model) (window as any).mcDisposePlayerModel?.(model);
+      if (model) window.mc.disposePlayerModel?.(model);
       engine.dispose();
     };
   }, [ready]);

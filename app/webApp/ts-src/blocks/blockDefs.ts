@@ -63,59 +63,64 @@ let _blockTextures: McBlockTextureDef[] | null = null;
 // Loaded from RegistrySync — ordinal-indexed list of block infos
 let _registryBlocks: { name: string; modelElement: string; liquid?: boolean }[] | null = null;
 
-export function registerBlockDefs(): void {
-  window.mcInitBlockDefs = () => {
-    if (!_registryBlocks) return;
+export function registerBlockDefs(): Pick<
+  McBindings,
+  "initBlockDefs" | "isBlockDefsReady" | "getBlockDef" | "getBlockTextures"
+> {
+  return {
+    initBlockDefs: () => {
+      if (!_registryBlocks) return;
 
-    const allTextures: Map<string, McBlockTextureDef> = new Map();
-    const defs: (McBlockDef | null)[] = new Array(_registryBlocks.length).fill(null);
+      const allTextures: Map<string, McBlockTextureDef> = new Map();
+      const defs: (McBlockDef | null)[] = new Array(_registryBlocks.length).fill(null);
 
-    const fetches = _registryBlocks.map((info, ordinal) => {
-      if (info.name === "AIR") return Promise.resolve();
-      if (info.liquid) {
-        const faces: McBlockFaceInfo[] = Array.from({ length: 6 }, () => ({ matKey: WATER_MAT_KEY, uv: LIQUID_UV }));
-        defs[ordinal] = { name: info.name, renderType: "liquid", faces };
-        return Promise.resolve();
-      }
-      const fileName = info.modelElement || info.name;
-      return fetch(`/api/models/blocks/${fileName}/${fileName}.bbmodel`)
-        .then((r) => r.json())
-        .then((data: BlocksBbModel) => {
-          const { def, textures } = parseSingleBlockBbmodel(data);
-          defs[ordinal] = def;
-          for (const t of textures) {
-            if (!allTextures.has(t.name)) allTextures.set(t.name, t);
-            else if (t.biomeTint) allTextures.get(t.name)!.biomeTint = true;
-          }
-        })
-        .catch(() => {});
-    });
+      const fetches = _registryBlocks.map((info, ordinal) => {
+        if (info.name === "AIR") return Promise.resolve();
+        if (info.liquid) {
+          const faces: McBlockFaceInfo[] = Array.from({ length: 6 }, () => ({ matKey: WATER_MAT_KEY, uv: LIQUID_UV }));
+          defs[ordinal] = { name: info.name, renderType: "liquid", faces };
+          return Promise.resolve();
+        }
+        const fileName = info.modelElement || info.name;
+        return fetch(`/api/models/blocks/${fileName}/${fileName}.bbmodel`)
+          .then((r) => r.json())
+          .then((data: BlocksBbModel) => {
+            const { def, textures } = parseSingleBlockBbmodel(data);
+            defs[ordinal] = def;
+            for (const t of textures) {
+              if (!allTextures.has(t.name)) allTextures.set(t.name, t);
+              else if (t.biomeTint) allTextures.get(t.name)!.biomeTint = true;
+            }
+          })
+          .catch(() => {});
+      });
 
-    Promise.all(fetches).then(() => {
-      _blockDefs = defs;
-      _blockTextures = Array.from(allTextures.values());
-    });
+      Promise.all(fetches).then(() => {
+        _blockDefs = defs;
+        _blockTextures = Array.from(allTextures.values());
+      });
+    },
+
+    isBlockDefsReady: () => _blockDefs !== null && _blockTextures !== null,
+
+    getBlockDef: (ordinal: number): McBlockDef | null => _blockDefs?.[ordinal] ?? null,
+
+    getBlockTextures: (): McBlockTextureDef[] => _blockTextures ?? [],
   };
-
-  window.mcIsBlockDefsReady = () => _blockDefs !== null && _blockTextures !== null;
-
-  window.mcGetBlockDef = (ordinal: number): McBlockDef | null => _blockDefs?.[ordinal] ?? null;
-
-  window.mcGetBlockTextures = (): McBlockTextureDef[] => _blockTextures ?? [];
 }
 
-// Called from mcSetBlockRegistry (set up in minimap.ts) before mcInitBlockDefs
+// Called from setBlockRegistry (set up in index.ts) before initBlockDefs
 export function setRegistryBlocks(blocks: { name: string; modelElement: string; liquid?: boolean }[]): void {
   _registryBlocks = blocks;
 }
 
 export function getFaceTexUrl(ordinal: number, faceDir: number): string | null {
-  const def = (window as any).mcGetBlockDef?.(ordinal) as McBlockDef | null;
+  const def = window.mc?.getBlockDef?.(ordinal) as McBlockDef | null;
   if (!def?.faces) return null;
   const face =
     (def.faces[faceDir] as McBlockFaceInfo | null) ?? (def.faces as (McBlockFaceInfo | null)[]).find((f) => f != null);
   if (!face) return null;
   const texName = face.matKey.replace(":biome_tint", "");
-  const texs: McBlockTextureDef[] = (window as any).mcGetBlockTextures?.() ?? [];
+  const texs: McBlockTextureDef[] = window.mc?.getBlockTextures?.() ?? [];
   return texs.find((t) => t.name === texName)?.url ?? null;
 }
