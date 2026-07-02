@@ -91,7 +91,8 @@ class WorldPersistence(val worldDir: Path) {
             return defaults
         }
         return try {
-            playerJson.decodeFromString(keybindingsSerializer, file.readText())
+            val saved = playerJson.decodeFromString(keybindingsSerializer, file.readText())
+            defaultKeyBindings() + saved
         } catch (e: Exception) {
             log.warn("Failed to load keybindings for {}: {}", name, e.message)
             defaultKeyBindings()

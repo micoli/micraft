@@ -16,6 +16,12 @@ export interface HudData {
   reconcileYStats: string;
   tickDtMs: number;
   tickJitterMs: number;
+  tickDtMinMs: number;
+  tickDtMaxMs: number;
+  tickJitterMinMs: number;
+  tickJitterMaxMs: number;
+  chunkDownloading: number;
+  chunkMeshing: number;
 }
 
 export interface LogEntry {

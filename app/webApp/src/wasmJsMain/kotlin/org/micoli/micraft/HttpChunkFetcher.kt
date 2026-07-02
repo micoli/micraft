@@ -22,6 +22,7 @@ class HttpChunkFetcher(
     private val scope: CoroutineScope,
 ) {
     private val inFlight = mutableSetOf<ChunkPos>()
+    val inFlightCount: Int get() = inFlight.size
     private val httpClient = HttpClient(Js)
     private val baseUrl = "http://${jsGetPageHost()}:${jsGetPagePort()}"
 

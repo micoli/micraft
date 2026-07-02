@@ -22,6 +22,12 @@ data class HudData(
     val reconcileYStats: String = "",
     val tickDtMs: Double = 0.0,
     val tickJitterMs: Double = 0.0,
+    val tickDtMinMs: Double = 0.0,
+    val tickDtMaxMs: Double = 0.0,
+    val tickJitterMinMs: Double = 0.0,
+    val tickJitterMaxMs: Double = 0.0,
+    val chunkDownloading: Int = 0,
+    val chunkMeshing: Int = 0,
 )
 
 class McUiState {

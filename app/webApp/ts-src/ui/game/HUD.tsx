@@ -42,6 +42,12 @@ export function HUD({
     reconcileYStats,
     tickDtMs,
     tickJitterMs,
+    tickDtMinMs,
+    tickDtMaxMs,
+    tickJitterMinMs,
+    tickJitterMaxMs,
+    chunkDownloading,
+    chunkMeshing,
   } = data;
 
   let lines: string[];
@@ -62,7 +68,9 @@ export function HUD({
   } else {
     lines = [
       `FPS: ${fps}`,
-      `Tick: ${tickDtMs.toFixed(1)}ms ±${tickJitterMs.toFixed(1)}ms`,
+      `Tick: ${tickDtMinMs.toFixed(1)}↔${tickDtMaxMs.toFixed(1)}ms avg:${tickDtMs.toFixed(1)}ms`,
+      `Jitr: ${tickJitterMinMs.toFixed(1)}↔${tickJitterMaxMs.toFixed(1)}ms cur:${tickJitterMs.toFixed(1)}ms`,
+      `Chunks: DL:${chunkDownloading} mesh:${chunkMeshing}`,
       `Pos: ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`,
       `Orientation: Y:${yaw.toFixed(1)}°, P:${pitch.toFixed(1)}°`,
       stance,

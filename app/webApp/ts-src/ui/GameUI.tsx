@@ -84,6 +84,7 @@ export function GameUI() {
   const preferencesOpenRef = useRef(false);
   const codexOpenRef = useRef(false);
   const characterOpenRef = useRef(false);
+  const hudDataRef = useRef<import("./types").HudData | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +126,10 @@ export function GameUI() {
   useEffect(() => {
     characterOpenRef.current = state.characterOpen;
   }, [state.characterOpen]);
+
+  useEffect(() => {
+    hudDataRef.current = state.hud;
+  }, [state.hud]);
 
   // Auto-hide server log after 15s of no new messages
   useEffect(() => {
@@ -185,6 +190,12 @@ export function GameUI() {
       reconcileYStats: string,
       tickDtMs: number,
       tickJitterMs: number,
+      tickDtMinMs: number,
+      tickDtMaxMs: number,
+      tickJitterMinMs: number,
+      tickJitterMaxMs: number,
+      chunkDownloading: number,
+      chunkMeshing: number,
     ) => {
       window.mcState.minimapY = y;
       window.mcState.minimapGameTime = gameTime;
@@ -208,6 +219,12 @@ export function GameUI() {
           reconcileYStats,
           tickDtMs,
           tickJitterMs,
+          tickDtMinMs,
+          tickDtMaxMs,
+          tickJitterMinMs,
+          tickJitterMaxMs,
+          chunkDownloading,
+          chunkMeshing,
         },
       });
     };
@@ -335,6 +352,25 @@ export function GameUI() {
     window.mc.showPreferences = () => dispatch({ type: "preferences_show" });
     window.mc.openCodex = () => dispatch({ type: "codex_open" });
     window.mc.openCharacter = () => dispatch({ type: "character_open" });
+    window.mc.dumpStats = () => {
+      const h = hudDataRef.current;
+      if (!h) return;
+      console.table({
+        "FPS": h.fps,
+        "Tick avg (ms)": h.tickDtMs.toFixed(2),
+        "Tick min (ms)": h.tickDtMinMs.toFixed(2),
+        "Tick max (ms)": h.tickDtMaxMs.toFixed(2),
+        "Jitter cur (ms)": h.tickJitterMs.toFixed(2),
+        "Jitter min (ms)": h.tickJitterMinMs.toFixed(2),
+        "Jitter max (ms)": h.tickJitterMaxMs.toFixed(2),
+        "Chunks DL": h.chunkDownloading,
+        "Chunks mesh": h.chunkMeshing,
+      });
+      dispatch({
+        type: "notification",
+        msg: `Tick:${h.tickDtMinMs.toFixed(1)}↔${h.tickDtMaxMs.toFixed(1)}ms Jitr:${h.tickJitterMinMs.toFixed(1)}↔${h.tickJitterMaxMs.toFixed(1)}ms DL:${h.chunkDownloading} Mesh:${h.chunkMeshing}`,
+      });
+    };
 
     window.mc.updateChunkDebug = (json: string) => {
       try {

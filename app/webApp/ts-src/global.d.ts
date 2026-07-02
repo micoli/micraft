@@ -343,6 +343,12 @@ declare global {
       reconcileYStats: string,
       tickDtMs: number,
       tickJitterMs: number,
+      tickDtMinMs: number,
+      tickDtMaxMs: number,
+      tickJitterMinMs: number,
+      tickJitterMaxMs: number,
+      chunkDownloading: number,
+      chunkMeshing: number,
     ): void;
     showNotification(msg: string): void;
     addServerLog(channel: string, msg: string): void;
@@ -373,6 +379,7 @@ declare global {
     showPreferences(): void;
     openCodex(): void;
     openCharacter(): void;
+    dumpStats(): void;
     updateChunkDebug(json: string): void;
     createHUD(): void;
     createHotbar(): void;

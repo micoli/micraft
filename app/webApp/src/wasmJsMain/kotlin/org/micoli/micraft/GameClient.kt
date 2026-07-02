@@ -79,7 +79,11 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         scope.launch {
             while (isActive) {
                 delay(16)
-                if (localController.hasPrediction) localController.tick()
+                if (localController.hasPrediction) {
+                    localController.chunkDownloading = httpChunkFetcher?.inFlightCount ?: 0
+                    localController.chunkMeshing = chunkManager.pendingRenderCount
+                    localController.tick()
+                }
                 npcManager.tick()
                 remotePlayerManager.tick()
             }
@@ -89,6 +93,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             while (isActive) {
                 delay(16)
                 chunkManager.drainPendingChunks(budgetMs = 4.0)
+                chunkManager.drainOneMinimapPush()
             }
         }
 

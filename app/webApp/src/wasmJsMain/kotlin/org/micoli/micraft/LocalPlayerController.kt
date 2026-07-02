@@ -19,7 +19,8 @@ private const val FLY_VERTICAL_SPEED = 8f
 private const val SNAP_THRESHOLD = 0.5
 private const val DEFAULT_RECONCILE_TOLERANCE_XZ = 0.5
 private const val DEFAULT_RECONCILE_TOLERANCE_Y = 0.99
-private const val STATS_WINDOW = 100
+private const val STATS_WINDOW = 1000
+private const val JITTER_SNAPSHOT_WINDOW = 1000
 private const val CLIENT_GRAVITY = -20.0
 private const val CLIENT_JUMP_SPEED = 8.5
 private const val TICKS_PER_DAY_CLIENT = 72_000L
@@ -98,11 +99,15 @@ class LocalPlayerController(
 
     private var fpsFrameCount = 0
     private var fpsWindowStart = jsNow()
+    private var hudTickCounter = 0
     private var currentFps = 0
     private var currentKbIn = 0.0
     private var currentKbOut = 0.0
     private var lastTickMs = 0.0
     private val tickIntervals = ArrayDeque<Double>()
+    private val jitterSnapshots = ArrayDeque<Double>()
+    var chunkDownloading = 0
+    var chunkMeshing = 0
 
     fun setReconcileTolerances(xz: Double, y: Double) {
         reconcileToleranceXz = xz
@@ -120,6 +125,11 @@ class LocalPlayerController(
         return kotlin.math.sqrt(sumOf { (it - mean) * (it - mean) } / size)
     }
 
+    private fun ArrayDeque<Double>.addJitterSnapshot(value: Double) {
+        addLast(value)
+        if (size > JITTER_SNAPSHOT_WINDOW) removeFirst()
+    }
+
     private fun Double.r3(): String {
         val v = (kotlin.math.round(this * 1000) / 1000.0).toString()
         val dot = v.indexOf('.')
@@ -129,12 +139,13 @@ class LocalPlayerController(
     private fun reconcileStats(distances: ArrayDeque<Double>, count: Int, total: Int): String {
         val pct = if (total > 0) count * 100 / total else 0
         if (distances.isEmpty()) return "$count/$total ($pct%)"
-        val avg = distances.sum() / distances.size
-        val sorted = distances.sorted()
-        val med =
-            if (sorted.size % 2 == 0) (sorted[sorted.size / 2 - 1] + sorted[sorted.size / 2]) / 2.0
-            else sorted[sorted.size / 2]
-        return "$count/$total ($pct%) avg=${avg.r3()} med=${med.r3()}"
+        var sum = 0.0
+        for (d in distances) sum += d
+        val avg = sum / distances.size
+        var sumSq = 0.0
+        for (d in distances) sumSq += (d - avg) * (d - avg)
+        val std = kotlin.math.sqrt(sumSq / distances.size)
+        return "$count/$total ($pct%) avg=${avg.r3()} ±${std.r3()}"
     }
 
     fun setViewMode(mode: String) {
@@ -597,53 +608,78 @@ class LocalPlayerController(
         jsDrawMinimap(predX, predZ, yaw)
 
         val toDeg = 180.0 / kotlin.math.PI
-        val targetBlockName =
-            target?.let { chunkManager.getBlockAtWorld(it.x, it.y, it.z).id } ?: ""
-        val gameTimeDisplay = ticksToHHMM(currentGameTicks)
-        jsUpdateHUD(
-            hudX,
-            hudY,
-            hudZ,
-            yaw * toDeg,
-            pitch * toDeg,
-            hudStance,
-            hudSpeed,
-            currentFps,
-            currentKbIn,
-            currentKbOut,
-            hudBiome,
-            targetBlockName,
-            gameTimeDisplay,
-            reconcileStats(xzDistances, reconcileCountXz, totalClientTicks),
-            reconcileStats(yDistances, reconcileCountY, totalServerUpdates),
-            tickIntervals.average().takeIf { it.isFinite() } ?: 0.0,
-            tickIntervals.tickJitter(),
-        )
-        uiState.hud =
-            HudData(
-                x = hudX,
-                y = hudY,
-                z = hudZ,
-                yaw = yaw * toDeg,
-                pitch = pitch * toDeg,
-                stance = hudStance,
-                speed = hudSpeed,
-                fps = currentFps,
-                kbIn = currentKbIn,
-                kbOut = currentKbOut,
-                biome = hudBiome,
-                targetBlock = targetBlockName,
-                gameTime = gameTimeDisplay,
-                reconcileXzStats = reconcileStats(xzDistances, reconcileCountXz, totalClientTicks),
-                reconcileYStats = reconcileStats(yDistances, reconcileCountY, totalServerUpdates),
-                tickDtMs = tickIntervals.average().takeIf { it.isFinite() } ?: 0.0,
-                tickJitterMs = tickIntervals.tickJitter(),
+        val tickJitter = tickIntervals.tickJitter()
+        jitterSnapshots.addJitterSnapshot(tickJitter)
+        hudTickCounter++
+        if (hudTickCounter >= 10) {
+            hudTickCounter = 0
+            val targetBlockName =
+                target?.let { chunkManager.getBlockAtWorld(it.x, it.y, it.z).id } ?: ""
+            val gameTimeDisplay = ticksToHHMM(currentGameTicks)
+            val tickAvg = tickIntervals.average().takeIf { it.isFinite() } ?: 0.0
+            val tickMin = if (tickIntervals.isEmpty()) 0.0 else tickIntervals.min()
+            val tickMax = if (tickIntervals.isEmpty()) 0.0 else tickIntervals.max()
+            val jitterMin = if (jitterSnapshots.isEmpty()) 0.0 else jitterSnapshots.min()
+            val jitterMax = if (jitterSnapshots.isEmpty()) 0.0 else jitterSnapshots.max()
+            val reconcileXz = reconcileStats(xzDistances, reconcileCountXz, totalClientTicks)
+            val reconcileY = reconcileStats(yDistances, reconcileCountY, totalServerUpdates)
+            jsUpdateHUD(
+                hudX,
+                hudY,
+                hudZ,
+                yaw * toDeg,
+                pitch * toDeg,
+                hudStance,
+                hudSpeed,
+                currentFps,
+                currentKbIn,
+                currentKbOut,
+                hudBiome,
+                targetBlockName,
+                gameTimeDisplay,
+                reconcileXz,
+                reconcileY,
+                tickAvg,
+                tickJitter,
+                tickMin,
+                tickMax,
+                jitterMin,
+                jitterMax,
+                chunkDownloading,
+                chunkMeshing,
             )
-        val debugCx = hudX.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
-        val debugCz = hudZ.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
-        jsUpdateChunkDebug(
-            chunkManager.getChunkDebugJson(
-                debugCx, debugCz, WorldConstants.FORWARD_VIEW_RADIUS, yaw.toDouble()))
+            uiState.hud =
+                HudData(
+                    x = hudX,
+                    y = hudY,
+                    z = hudZ,
+                    yaw = yaw * toDeg,
+                    pitch = pitch * toDeg,
+                    stance = hudStance,
+                    speed = hudSpeed,
+                    fps = currentFps,
+                    kbIn = currentKbIn,
+                    kbOut = currentKbOut,
+                    biome = hudBiome,
+                    targetBlock = targetBlockName,
+                    gameTime = gameTimeDisplay,
+                    reconcileXzStats = reconcileXz,
+                    reconcileYStats = reconcileY,
+                    tickDtMs = tickAvg,
+                    tickJitterMs = tickJitter,
+                    tickDtMinMs = tickMin,
+                    tickDtMaxMs = tickMax,
+                    tickJitterMinMs = jitterMin,
+                    tickJitterMaxMs = jitterMax,
+                    chunkDownloading = chunkDownloading,
+                    chunkMeshing = chunkMeshing,
+                )
+            val debugCx = hudX.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
+            val debugCz = hudZ.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
+            jsUpdateChunkDebug(
+                chunkManager.getChunkDebugJson(
+                    debugCx, debugCz, WorldConstants.FORWARD_VIEW_RADIUS, yaw.toDouble()))
+        }
     }
 
     fun buildMoveIntent(): ClientMessage.MoveIntent {

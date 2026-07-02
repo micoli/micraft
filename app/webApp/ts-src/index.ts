@@ -227,6 +227,7 @@ window.mc = {
   showPreferences: () => {},
   openCodex: () => {},
   openCharacter: () => {},
+  dumpStats: () => {},
   updateChunkDebug: () => {},
   createHUD: () => {},
   createHotbar: () => {},

@@ -50,8 +50,6 @@ private val AO_NEIGHBORS: Array<Array<Array<IntArray>>> =
         ),
     )
 
-private const val SLICE_HEIGHT = 32
-
 private data class ChunkRender(val chunk: Chunk, val topY: Int, var nextY: Int = 0)
 
 class ChunkManager(private val scene: JsAny) {
@@ -80,6 +78,9 @@ class ChunkManager(private val scene: JsAny) {
         if (blockMaterials != null) jsApplyBiomeGrassTint(biome)
     }
 
+    val pendingRenderCount: Int get() = pendingChunks.size + if (activeRender != null) 1 else 0
+    private val pendingMinimapPushes = ArrayDeque<Pair<Chunk, Int>>()
+
     fun enqueueChunk(chunk: Chunk, topY: Int) {
         val pos = chunk.pos
         if (activeRender?.chunk?.pos == pos) {
@@ -106,19 +107,22 @@ class ChunkManager(private val scene: JsAny) {
             }
 
             val ar = activeRender!!
-            val fromY = ar.nextY
-            val toY = minOf(fromY + SLICE_HEIGHT - 1, ar.topY)
-            renderSlice(ar.chunk, ar.topY, fromY, toY)
-            ar.nextY = toY + 1
+            renderRow(ar.chunk, ar.topY, ar.nextY)
+            ar.nextY++
 
             if (ar.nextY > ar.topY) {
                 jsChunkEnd(scene, mats)
                 loadedChunks.add(ar.chunk.pos)
-                pushMinimapChunk(ar.chunk, ar.topY)
+                pendingMinimapPushes.addLast(Pair(ar.chunk, ar.topY))
                 activeRender = null
             }
             // Budget check at top of loop — never blocks more than one slice duration
         }
+    }
+
+    fun drainOneMinimapPush() {
+        val (chunk, topY) = pendingMinimapPushes.removeFirstOrNull() ?: return
+        pushMinimapChunk(chunk, topY)
     }
 
     fun collectAndClearUnloads(): List<ChunkPos> {
@@ -147,7 +151,7 @@ class ChunkManager(private val scene: JsAny) {
                 }
         chunkData[chunk.pos] = Pair(chunk, topY)
         jsChunkBegin(chunk.pos.cx, chunk.pos.cz)
-        renderSlice(chunk, topY, 0, topY)
+        for (y in 0..topY) renderRow(chunk, topY, y)
         jsChunkEnd(scene, mats)
         loadedChunks.add(chunk.pos)
         pushMinimapChunk(chunk, topY)
@@ -180,6 +184,7 @@ class ChunkManager(private val scene: JsAny) {
         loadedChunks.clear()
         chunkData.clear()
         pendingChunks.clear()
+        pendingMinimapPushes.clear()
         activeRender = null
     }
 
@@ -210,34 +215,32 @@ class ChunkManager(private val scene: JsAny) {
         return sb.toString()
     }
 
-    private fun renderSlice(chunk: Chunk, topY: Int, fromY: Int, toY: Int) {
+    private fun renderRow(chunk: Chunk, topY: Int, y: Int) {
         val ox = chunk.pos.cx * WorldConstants.CHUNK_SIZE
         val oz = chunk.pos.cz * WorldConstants.CHUNK_SIZE
         val s = WorldConstants.CHUNK_SIZE
-        for (y in fromY..toY) {
-            for (x in 0 until s) {
-                for (z in 0 until s) {
-                    val block = chunk.getBlock(x, y, z)
-                    if (block == BlockType.AIR) continue
-                    val t = BlockRegistry.wireIndex(block) * 6
-                    val wx = ox + x
-                    val wz2 = oz + z
-                    val blockAbove =
-                        if (y >= WorldConstants.WORLD_MAX_Y) BlockType.AIR
-                        else chunk.getBlock(x, y + 1, z)
-                    if (!blockAbove.isSolid && !(block.isLiquid && blockAbove.isLiquid))
-                        jsChunkFace(wx, y, wz2, t + 4, computeFaceAO(chunk, x, y, z, 4))
-                    if (y <= 0 || !chunk.getBlock(x, y - 1, z).isSolid)
-                        jsChunkFace(wx, y, wz2, t + 5, computeFaceAO(chunk, x, y, z, 5))
-                    if (z == s - 1 || !chunk.getBlock(x, y, z + 1).isSolid)
-                        jsChunkFace(wx, y, wz2, t + 0, computeFaceAO(chunk, x, y, z, 0))
-                    if (z == 0 || !chunk.getBlock(x, y, z - 1).isSolid)
-                        jsChunkFace(wx, y, wz2, t + 1, computeFaceAO(chunk, x, y, z, 1))
-                    if (x == s - 1 || !chunk.getBlock(x + 1, y, z).isSolid)
-                        jsChunkFace(wx, y, wz2, t + 2, computeFaceAO(chunk, x, y, z, 2))
-                    if (x == 0 || !chunk.getBlock(x - 1, y, z).isSolid)
-                        jsChunkFace(wx, y, wz2, t + 3, computeFaceAO(chunk, x, y, z, 3))
-                }
+        for (x in 0 until s) {
+            for (z in 0 until s) {
+                val block = chunk.getBlock(x, y, z)
+                if (block == BlockType.AIR) continue
+                val t = BlockRegistry.wireIndex(block) * 6
+                val wx = ox + x
+                val wz2 = oz + z
+                val blockAbove =
+                    if (y >= WorldConstants.WORLD_MAX_Y) BlockType.AIR
+                    else chunk.getBlock(x, y + 1, z)
+                if (!blockAbove.isSolid && !(block.isLiquid && blockAbove.isLiquid))
+                    jsChunkFace(wx, y, wz2, t + 4, computeFaceAO(chunk, x, y, z, 4))
+                if (y <= 0 || !chunk.getBlock(x, y - 1, z).isSolid)
+                    jsChunkFace(wx, y, wz2, t + 5, computeFaceAO(chunk, x, y, z, 5))
+                if (z == s - 1 || !chunk.getBlock(x, y, z + 1).isSolid)
+                    jsChunkFace(wx, y, wz2, t + 0, computeFaceAO(chunk, x, y, z, 0))
+                if (z == 0 || !chunk.getBlock(x, y, z - 1).isSolid)
+                    jsChunkFace(wx, y, wz2, t + 1, computeFaceAO(chunk, x, y, z, 1))
+                if (x == s - 1 || !chunk.getBlock(x + 1, y, z).isSolid)
+                    jsChunkFace(wx, y, wz2, t + 2, computeFaceAO(chunk, x, y, z, 2))
+                if (x == 0 || !chunk.getBlock(x - 1, y, z).isSolid)
+                    jsChunkFace(wx, y, wz2, t + 3, computeFaceAO(chunk, x, y, z, 3))
             }
         }
     }

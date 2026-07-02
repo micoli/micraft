@@ -46,6 +46,7 @@ ui:
   minimap_zoom_in: [l]
   minimap_zoom_out: [m]
   layout_editor: [KeyG]
+  dump_stats: [KeyV]
 
 hotbar:
   slot_1: [Digit1]
