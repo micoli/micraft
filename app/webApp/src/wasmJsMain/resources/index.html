@@ -5,14 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MiCraft</title>
     <link rel="icon" id="favicon" href="/favicon.svg">
+    <link rel="stylesheet" href="main.css">
     <style>
-        * { margin: 0; padding: 0; }
-        body { overflow: hidden; background: #87ceeb; }
-        #renderCanvas {
-            width: 100vw;
-            height: 100vh;
-            display: block;
-            touch-action: none;
+        @layer base {
+            * { margin: 0; padding: 0; }
+            body { overflow: hidden; background: #87ceeb; }
+            #renderCanvas {
+                width: 100vw;
+                height: 100vh;
+                display: block;
+                touch-action: none;
+            }
         }
     </style>
 </head>

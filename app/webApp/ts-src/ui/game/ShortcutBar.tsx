@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { cn } from "../primitives/cn";
+import { useShortcutBar } from "../hooks/useShortcutBar";
 
 interface Props {
   inventory: Record<string, number>;
@@ -10,75 +11,24 @@ interface Props {
 }
 
 export function ShortcutBar({ inventory, itemMeta, slots, selectedSlot, onSlotDrop, layoutStyle }: Props) {
-  const [dragOver, setDragOver] = useState<number | null>(null);
-  const draggingSlot = useRef<number | null>(null);
-
-  const handleSlotDragStart = (e: React.DragEvent, slotIdx: number, itemType: string) => {
-    draggingSlot.current = slotIdx;
-    e.dataTransfer.setData("text/plain", itemType);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleSlotDragEnd = (e: React.DragEvent) => {
-    if (e.dataTransfer.dropEffect === "none" && draggingSlot.current !== null) {
-      onSlotDrop(draggingSlot.current, null);
-    }
-    draggingSlot.current = null;
-  };
-
-  const handleDragOver = (e: React.DragEvent, slotIdx: number) => {
-    if (slotIdx === 0) return; // slot 1 (hand) — not a drop target
-    e.preventDefault();
-    setDragOver(slotIdx);
-  };
-
-  const handleDragLeave = () => setDragOver(null);
-
-  const handleDrop = (e: React.DragEvent, slotIdx: number) => {
-    if (slotIdx === 0) return;
-    e.preventDefault();
-    setDragOver(null);
-    const itemType = e.dataTransfer.getData("text/plain");
-    onSlotDrop(slotIdx, itemType || null);
-  };
-
-  const handleContextMenu = (e: React.MouseEvent, slotIdx: number) => {
-    if (slotIdx === 0) return;
-    e.preventDefault();
-    onSlotDrop(slotIdx, null);
-  };
-
-  const containerStyle: React.CSSProperties = layoutStyle
-    ? {
-        display: "flex",
-        gap: 4,
-        pointerEvents: "all",
-        zIndex: 999,
-        background: "rgba(0,0,0,0.6)",
-        border: "1px solid rgba(255,255,255,0.2)",
-        borderRadius: 6,
-        padding: "6px 10px",
-        alignItems: "center",
-        justifyContent: "center",
-        ...layoutStyle,
-      }
-    : {
-        position: "fixed",
-        bottom: 20,
-        left: "50%",
-        transform: "translateX(-50%)",
-        display: "flex",
-        gap: 4,
-        pointerEvents: "all",
-        zIndex: 999,
-        background: "rgba(0,0,0,0.6)",
-        border: "1px solid rgba(255,255,255,0.2)",
-        borderRadius: 6,
-        padding: "6px 10px",
-      };
+  const {
+    dragOver,
+    handleSlotDragStart,
+    handleSlotDragEnd,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleContextMenu,
+  } = useShortcutBar(onSlotDrop);
 
   return (
-    <div style={containerStyle}>
+    <div
+      className={cn(
+        "flex gap-1 pointer-events-auto z-[999] bg-black/60 border border-white/20 rounded-md py-1.5 px-2.5 items-center justify-center",
+        !layoutStyle && "fixed bottom-5 left-1/2 -translate-x-1/2",
+      )}
+      style={layoutStyle}
+    >
       {slots.map((itemType, idx) => {
         const isSelected = idx === selectedSlot;
         const isHand = idx === 0;
@@ -97,68 +47,36 @@ export function ShortcutBar({ inventory, itemMeta, slots, selectedSlot, onSlotDr
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, idx)}
             onContextMenu={(e) => handleContextMenu(e, idx)}
-            style={{
-              width: 52,
-              height: 52,
-              background: isDropTarget ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.72)",
-              border: isSelected ? "2px solid rgba(255,215,0,0.9)" : "2px solid rgba(255,255,255,0.35)",
-              borderRadius: 4,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              position: "relative",
-              cursor: isHand ? "default" : itemType ? "grab" : "pointer",
-              boxShadow: isSelected ? "0 0 6px rgba(255,215,0,0.5)" : "none",
-            }}
+            className={cn(
+              "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 transition-colors",
+              isDropTarget ? "bg-white/20" : "bg-black/72",
+              isSelected
+                ? "border-yellow-400/90 shadow-[0_0_6px_rgba(255,215,0,0.5)]"
+                : "border-white/35",
+              isHand ? "cursor-default" : itemType ? "cursor-grab" : "cursor-pointer",
+            )}
           >
-            {/* Slot number label */}
-            <div
-              style={{
-                position: "absolute",
-                top: 1,
-                left: 3,
-                color: "rgba(255,255,255,0.45)",
-                font: "8px monospace",
-              }}
-            >
+            <div className="absolute top-0.5 left-0.5 text-white/45 font-mono text-[8px]">
               {idx === 9 ? "0" : String(idx + 1)}
             </div>
 
             {isHand ? (
-              <div style={{ color: "rgba(255,255,255,0.6)", font: "16px monospace" }}>✋</div>
+              <div className="text-white/60 font-mono text-base">✋</div>
             ) : meta ? (
               <>
                 <div
+                  className="w-[26px] h-[26px] rounded-sm"
                   style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: 3,
                     background: meta.bg,
-                    boxShadow: "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
+                    boxShadow:
+                      "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
                   }}
                 />
-                <div
-                  style={{
-                    color: "rgba(255,255,255,0.7)",
-                    font: "8px monospace",
-                    marginTop: 2,
-                    letterSpacing: "0.5px",
-                  }}
-                >
+                <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px]">
                   {meta.label}
                 </div>
                 {count > 0 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: 2,
-                      right: 4,
-                      color: "#fff",
-                      font: "bold 9px monospace",
-                      textShadow: "1px 1px 0 #000",
-                    }}
-                  >
+                  <div className="absolute bottom-0.5 right-1 text-white font-mono font-bold text-[9px] [text-shadow:1px_1px_0_#000]">
                     {count}
                   </div>
                 )}

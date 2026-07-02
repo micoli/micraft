@@ -1,23 +1,9 @@
 export function DisconnectOverlay({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "rgba(0,0,0,0.72)",
-        color: "#fff",
-        font: "bold 22px/2 monospace",
-        zIndex: 1000,
-        textAlign: "center",
-      }}
-    >
+    <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black/[0.72] text-white font-mono font-bold text-[22px] leading-loose text-center">
       ⚠️ DISCONNECTED
-      <span style={{ fontSize: 15, fontWeight: "normal" }}>{message}</span>
+      <span className="text-[15px] font-normal">{message}</span>
     </div>
   );
 }

@@ -1,18 +1,5 @@
 import { HudData, HudMode } from "../types";
-
-const defaultStyle: React.CSSProperties = {
-  position: "fixed",
-  top: 12,
-  right: 12,
-  background: "rgba(0,0,0,0.55)",
-  color: "#fff",
-  font: "13px/1.6 monospace",
-  padding: "8px 12px",
-  borderRadius: 6,
-  pointerEvents: "none",
-  zIndex: 999,
-  whiteSpace: "pre",
-};
+import { cn } from "../primitives/cn";
 
 export function HUD({
   data,
@@ -25,29 +12,12 @@ export function HUD({
 }) {
   if (!data) return null;
   const {
-    x,
-    y,
-    z,
-    yaw,
-    pitch,
-    stance,
-    speed,
-    fps,
-    kbIn,
-    kbOut,
-    biome,
-    targetBlock,
-    gameTime,
-    reconcileXzStats,
-    reconcileYStats,
-    tickDtMs,
-    tickJitterMs,
-    tickDtMinMs,
-    tickDtMaxMs,
-    tickJitterMinMs,
-    tickJitterMaxMs,
-    chunkDownloading,
-    chunkMeshing,
+    x, y, z, yaw, pitch, stance, speed, fps,
+    kbIn, kbOut, biome, targetBlock, gameTime,
+    reconcileXzStats, reconcileYStats,
+    tickDtMs, tickJitterMs, tickDtMinMs, tickDtMaxMs,
+    tickJitterMinMs, tickJitterMaxMs,
+    chunkDownloading, chunkMeshing,
   } = data;
 
   let lines: string[];
@@ -84,8 +54,15 @@ export function HUD({
     ];
   }
 
-  const style = layoutStyle
-    ? { ...defaultStyle, top: undefined, right: undefined, ...layoutStyle, whiteSpace: "pre" as const }
-    : defaultStyle;
-  return <div style={style}>{lines.join("\n")}</div>;
+  return (
+    <div
+      className={cn(
+        "bg-black/55 text-white font-mono text-[13px] leading-relaxed px-3 py-2 rounded-md pointer-events-none z-[999] whitespace-pre",
+        !layoutStyle && "fixed top-3 right-3",
+      )}
+      style={layoutStyle}
+    >
+      {lines.join("\n")}
+    </div>
+  );
 }

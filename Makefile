@@ -53,6 +53,9 @@ build-wasm:
 build-js:
 	$(DC_DEV) exec micraft bash -c "cd app/webApp/ts-src && npm run build"
 
+storybook:
+	$(DC_DEV) exec micraft bash -c "cd app/webApp/ts-src && npm run storybook"
+
 # ── Prod ──────────────────────────────────────────────────────────────────────
 
 prod-build:

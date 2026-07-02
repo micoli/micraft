@@ -67,6 +67,14 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
         return p
     }
 
+    fun runNpm(vararg args: String): Int {
+        val cmd = (listOf("npm") + args.toList()).joinToString(" ")
+        val p =
+            ProcessBuilder("sh", "-c", cmd).directory(rootDir).redirectErrorStream(false).start()
+        p.pipeOutput("")
+        return p.waitFor()
+    }
+
     println("[dev] building server…")
     val serverResult = runGradle(":server:installDist")
     if (serverResult != 0)
@@ -76,6 +84,10 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     val clientResult = runGradle(":app:webApp:wasmJsDevelopmentExecutableCompileSync")
     if (clientResult != 0)
         error("[dev] client build failed — fix compilation errors before starting")
+
+    println("[dev] building CSS…")
+    val cssResult = runNpm("run", "build:css", "--prefix", "app/webApp/ts-src")
+    if (cssResult != 0) error("[dev] CSS build failed")
 
     val serverRef = java.util.concurrent.atomic.AtomicReference(startServer())
     val clientProc =
@@ -88,11 +100,18 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
             .start()
     clientProc.pipeOutput("[webpack] ")
 
+    val cssProc =
+        ProcessBuilder("sh", "-c", "npm run watch:css --prefix app/webApp/ts-src")
+            .directory(rootDir)
+            .start()
+    cssProc.pipeOutput("[css] ")
+
     Runtime.getRuntime()
         .addShutdownHook(
             Thread {
                 killTree(serverRef.get())
                 killTree(clientProc)
+                killTree(cssProc)
             })
 
     // Watch run.lock: restart server on every modification (debug mode is preserved across

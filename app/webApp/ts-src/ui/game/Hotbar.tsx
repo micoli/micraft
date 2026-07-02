@@ -22,78 +22,29 @@ export function Hotbar({ inventory, visible }: Props) {
     .map((type) => ({ type, count: inventory[type], meta: ITEM_META[type] }));
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: 20,
-        left: "50%",
-        transform: "translateX(-50%)",
-        display: "flex",
-        gap: 4,
-        pointerEvents: "none",
-        zIndex: 998,
-        alignItems: "center",
-        background: "rgba(0,0,0,0.6)",
-        border: "1px solid rgba(255,255,255,0.2)",
-        borderRadius: 6,
-        padding: "6px 10px",
-        minWidth: 120,
-        minHeight: 68,
-      }}
-    >
+    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 flex gap-1 pointer-events-none z-[998] items-center bg-black/60 border border-white/20 rounded-md py-1.5 px-2.5 min-w-[120px] min-h-[68px]">
       {items.length === 0 ? (
-        <div
-          style={{
-            color: "rgba(255,255,255,0.35)",
-            font: "12px monospace",
-            padding: "8px 16px",
-            textAlign: "center",
-            width: "100%",
-          }}
-        >
+        <div className="text-white/35 font-mono text-xs text-center w-full px-4 py-2">
           Inventaire vide
         </div>
       ) : (
         items.map(({ type, count, meta }) => (
           <div
             key={type}
-            style={{
-              width: 52,
-              height: 52,
-              background: "rgba(0,0,0,0.72)",
-              border: "2px solid rgba(255,255,255,0.45)",
-              borderRadius: 4,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              position: "relative",
-            }}
+            className="w-[52px] h-[52px] bg-black/72 border-2 border-white/45 rounded flex flex-col items-center justify-center relative"
           >
             <div
+              className="w-[26px] h-[26px] rounded-sm"
               style={{
-                width: 26,
-                height: 26,
-                borderRadius: 3,
                 background: meta.bg,
-                boxShadow: "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
+                boxShadow:
+                  "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
               }}
             />
-            <div
-              style={{ color: "rgba(255,255,255,0.7)", font: "8px monospace", marginTop: 3, letterSpacing: "0.5px" }}
-            >
+            <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px]">
               {meta.label}
             </div>
-            <div
-              style={{
-                position: "absolute",
-                bottom: 2,
-                right: 4,
-                color: "#fff",
-                font: "bold 10px monospace",
-                textShadow: "1px 1px 0 #000",
-              }}
-            >
+            <div className="absolute bottom-0.5 right-1 text-white font-mono font-bold text-[10px] [text-shadow:1px_1px_0_#000]">
               {count}
             </div>
           </div>

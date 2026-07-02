@@ -5,20 +5,37 @@
   "scripts": {
     "gen-plugins": "node scripts/gen-plugins-index.mjs",
     "build": "node scripts/gen-plugins-index.mjs && esbuild index.ts --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --alias:@plugins=../../../plugins --outfile=../src/wasmJsMain/resources/mc_bindings.js",
+    "build:css": "tailwindcss -i ./styles/main.css -o ../src/wasmJsMain/resources/main.css --minify",
     "typecheck": "tsc --noEmit",
     "watch": "node scripts/gen-plugins-index.mjs && esbuild index.ts --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --alias:@plugins=../../../plugins --outfile=../src/wasmJsMain/resources/mc_bindings.js --watch",
+    "watch:css": "tailwindcss -i ./styles/main.css -o ../src/wasmJsMain/resources/main.css --watch",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "storybook": "storybook dev -p 6006 --no-open",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.18",
+    "@radix-ui/react-tabs": "^1.1.16",
+    "@radix-ui/react-tooltip": "^1.2.11",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@babylonjs/core": "7.48.0",
+    "@storybook/addon-essentials": "^8.6.12",
+    "@storybook/react": "^8.6.12",
+    "@storybook/react-vite": "^8.6.12",
+    "@tailwindcss/vite": "^4.3.2",
+    "storybook": "^8.6.12",
+    "vite": "^6.3.5",
     "@eslint/js": "^9.0.0",
+    "@tailwindcss/cli": "^4.3.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "esbuild": "0.21.5",
@@ -28,6 +45,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "gifenc": "^1.0.3",
     "prettier": "^3.8.4",
+    "tailwindcss": "^4.3.2",
     "typescript": "5.4.5",
     "typescript-eslint": "^8.62.0"
   }

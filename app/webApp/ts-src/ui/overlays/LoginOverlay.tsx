@@ -1,60 +1,11 @@
-import { useState, useEffect, useRef, KeyboardEvent } from "react";
+import { KeyboardEvent } from "react";
 import { PlayerModelPreview } from "../shared/PlayerModelPreview";
-
-function getUsers(): Record<string, string[]> {
-  try {
-    return JSON.parse(localStorage.getItem("micraft_users") || "{}");
-  } catch {
-    return {};
-  }
-}
-function saveUsers(u: Record<string, string[]>) {
-  try {
-    localStorage.setItem("micraft_users", JSON.stringify(u));
-  } catch {}
-}
-function getLastPlayer(username: string): string {
-  try {
-    return localStorage.getItem("micraft_last_player_" + username) || "";
-  } catch {
-    return "";
-  }
-}
-function saveLastPlayer(username: string, playerName: string) {
-  try {
-    localStorage.setItem("micraft_last_player_" + username, playerName);
-  } catch {}
-}
-function getLastLang(): string {
-  try {
-    return localStorage.getItem("micraft_last_lang") || "en";
-  } catch {
-    return "en";
-  }
-}
-function saveLastLang(lang: string) {
-  try {
-    localStorage.setItem("micraft_last_lang", lang);
-  } catch {}
-}
-function getStoredToken(): string {
-  try {
-    return sessionStorage.getItem("micraft_auth_token") || "";
-  } catch {
-    return "";
-  }
-}
-function storeToken(token: string) {
-  try {
-    sessionStorage.setItem("micraft_auth_token", token);
-  } catch {}
-}
-function clearStoredToken() {
-  try {
-    sessionStorage.removeItem("micraft_auth_token");
-    sessionStorage.removeItem("micraft_auth_display");
-  } catch {}
-}
+import { cn } from "../primitives/cn";
+import { Input, inputFieldCls } from "../primitives/Input";
+import { Label } from "../primitives/Label";
+import { Button } from "../primitives/Button";
+import { Panel, FormField } from "../primitives/Panel";
+import { useLogin } from "../hooks/useLogin";
 
 const SUPPORTED_LANGS: { code: string; label: string }[] = [
   { code: "en", label: "English" },
@@ -63,54 +14,43 @@ const SUPPORTED_LANGS: { code: string; label: string }[] = [
 
 const SKINS = ["player", "askin"];
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "8px 10px",
-  background: "#111",
-  border: "1px solid #555",
-  borderRadius: 4,
-  color: "#eee",
-  font: "15px monospace",
-  outline: "none",
-};
-const btnPrimary: React.CSSProperties = {
-  marginTop: 16,
-  width: "100%",
-  padding: 10,
-  background: "#4a8fff",
-  border: "none",
-  borderRadius: 4,
-  color: "#fff",
-  font: "bold 15px monospace",
-  cursor: "pointer",
-};
-const btnSecondary: React.CSSProperties = {
-  marginTop: 8,
-  width: "100%",
-  padding: 8,
-  background: "transparent",
-  border: "1px solid #555",
-  borderRadius: 4,
-  color: "#aaa",
-  font: "14px monospace",
-  cursor: "pointer",
-};
-const btnGoogle: React.CSSProperties = {
-  marginTop: 16,
-  width: "100%",
-  padding: 10,
-  background: "#fff",
-  border: "1px solid #ccc",
-  borderRadius: 4,
-  color: "#333",
-  font: "bold 15px monospace",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 8,
-};
+function LangSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <FormField>
+      <Label>Language</Label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={cn(inputFieldCls, "cursor-pointer")}
+      >
+        {SUPPORTED_LANGS.map((l) => (
+          <option key={l.code} value={l.code}>{l.label}</option>
+        ))}
+      </select>
+    </FormField>
+  );
+}
+
+function WalkingToggle({ walking, onChange }: { walking: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex gap-1 w-40">
+      {[{ label: "Statique", value: false }, { label: "Marche", value: true }].map(({ label, value }) => (
+        <button
+          key={label}
+          onClick={() => onChange(value)}
+          className={cn(
+            "flex-1 font-mono text-[11px] py-1 rounded border transition-colors",
+            walking === value
+              ? "bg-green-950/60 border-green-700/60 text-green-400"
+              : "bg-[#1e1e1e] border-[#333] text-[#666]",
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 interface Props {
   visible: boolean;
@@ -118,524 +58,182 @@ interface Props {
   onHide: () => void;
 }
 
-type AuthMode = "none" | "local" | "oauth" | "loading";
-type Step = "auth" | "chars" | "create";
-
 export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
-  const [authMode, setAuthMode] = useState<AuthMode>("loading");
-  const [step, setStep] = useState<Step>("auth");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [authError, setAuthError] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
-  const [token, setToken] = useState("");
-  const [lang, setLang] = useState("en");
-  const [chars, setChars] = useState<string[]>([]);
-  const [selected, setSelected] = useState("");
-  const [previewSkin, setPreviewSkin] = useState("player");
-  const [previewArmors, setPreviewArmors] = useState<string[]>([]);
-  const [previewWalking, setPreviewWalking] = useState(true);
-  const [createName, setCreateName] = useState("");
-  const [createSkin, setCreateSkin] = useState("player");
-  const [createError, setCreateError] = useState("");
-  const [createWalking, setCreateWalking] = useState(true);
-  const usernameInputRef = useRef<HTMLInputElement>(null);
-  const passwordInputRef = useRef<HTMLInputElement>(null);
-  const createNameInputRef = useRef<HTMLInputElement>(null);
-  const playButtonRef = useRef<HTMLButtonElement>(null);
-
-  // Fetch auth config once on mount
-  useEffect(() => {
-    fetch("/api/auth/config")
-      .then((r) => r.json())
-      .then((d: { provider: string }) => {
-        setAuthMode((d.provider as AuthMode) || "none");
-      })
-      .catch(() => setAuthMode("none"));
-  }, []);
-
-  // Check for OAuth callback token in URL fragment
-  useEffect(() => {
-    if (authMode === "loading") return;
-    const hash = window.location.hash;
-    if (hash.includes("auth_token=")) {
-      const params = new URLSearchParams(hash.replace(/^#/, ""));
-      const oauthToken = params.get("auth_token") || "";
-      const oauthName = decodeURIComponent(params.get("auth_name") || "");
-      if (oauthToken) {
-        storeToken(oauthToken);
-        try {
-          sessionStorage.setItem("micraft_auth_display", oauthName);
-        } catch {}
-        window.history.replaceState(null, "", window.location.pathname + window.location.search);
-        setToken(oauthToken);
-        setUsername(oauthName || "player");
-        goChars(oauthName || "player");
-        return;
-      }
-    }
-    // Restore persisted token from session
-    const saved = getStoredToken();
-    if (saved && (authMode === "local" || authMode === "oauth")) {
-      setToken(saved);
-      try {
-        const savedName =
-          sessionStorage.getItem("micraft_auth_display") || localStorage.getItem("micraft_last_user") || "";
-        if (savedName) {
-          setUsername(savedName);
-          goChars(savedName);
-        } else {
-          // No cached name — verify token and fetch identity
-          fetch("/auth/me", { headers: { Authorization: `Bearer ${saved}` } })
-            .then((r) => (r.ok ? r.json() : null))
-            .then((d: { displayName: string } | null) => {
-              const name = d?.displayName || "";
-              if (name) {
-                try {
-                  sessionStorage.setItem("micraft_auth_display", name);
-                } catch {}
-                setUsername(name);
-                goChars(name);
-              } else {
-                // Token invalid or no identity — back to auth step
-                clearStoredToken();
-              }
-            })
-            .catch(() => {
-              clearStoredToken();
-            });
-        }
-      } catch {
-        clearStoredToken();
-      }
-      return;
-    }
-    // none mode: restore last user directly to chars, or stay on auth step for name entry
-    if (authMode === "none") {
-      try {
-        const last = localStorage.getItem("micraft_last_user") || "";
-        if (last) {
-          goChars(last);
-          return;
-        }
-      } catch {}
-      setLang(getLastLang());
-      setTimeout(() => usernameInputRef.current?.focus(), 50);
-    }
-  }, [authMode]);
-
-  useEffect(() => {
-    if (visible && step === "auth" && authMode !== "loading") {
-      setTimeout(() => usernameInputRef.current?.focus(), 50);
-    }
-  }, [visible, step, authMode]);
-
-  useEffect(() => {
-    if (visible && step === "chars" && selected) {
-      setTimeout(() => playButtonRef.current?.focus(), 50);
-    }
-  }, [visible, step, selected]);
-
-  useEffect(() => {
-    if (step !== "chars" || !selected) return;
-    const enc = encodeURIComponent(selected);
-    Promise.all([
-      fetch(`/api/player/${enc}/skin`)
-        .then((r) => r.json())
-        .catch(() => ({ skin: "player" })),
-      fetch(`/api/player/${enc}/armors`)
-        .then((r) => r.json())
-        .catch(() => []),
-    ]).then(([skinData, armors]) => {
-      setPreviewSkin(skinData.skin ?? "player");
-      setPreviewArmors(Array.isArray(armors) ? armors : []);
-    });
-  }, [step, selected]);
-
-  async function goChars(user: string) {
-    const trimmed = user.trim();
-    try {
-      localStorage.setItem("micraft_last_user", trimmed);
-    } catch {}
-    setUsername(trimmed);
-    setStep("chars");
-    setLang(getLastLang());
-    const users = getUsers();
-    let playerChars = users[trimmed] || [];
-    if (playerChars.length > 0) {
-      const results = await Promise.all(
-        playerChars.map((name) =>
-          fetch(`/api/player/${encodeURIComponent(name)}/skin`)
-            .then((r) => (r.ok ? name : null))
-            .catch(() => name),
-        ),
-      );
-      const existing = results.filter((n): n is string => n !== null);
-      if (existing.length !== playerChars.length) {
-        users[trimmed] = existing;
-        saveUsers(users);
-        playerChars = existing;
-      }
-    }
-    const lastPlayer = getLastPlayer(trimmed);
-    setChars(playerChars);
-    setSelected(lastPlayer && playerChars.includes(lastPlayer) ? lastPlayer : playerChars[0] || "");
-  }
-
-  function goCreate() {
-    setCreateName("");
-    setCreateSkin("player");
-    setCreateError("");
-    setCreateWalking(true);
-    setStep("create");
-    setTimeout(() => createNameInputRef.current?.focus(), 50);
-  }
-
-  async function doCreate() {
-    const name = createName.trim();
-    if (!name) {
-      setCreateError("Name required.");
-      createNameInputRef.current?.focus();
-      return;
-    }
-    if (chars.includes(name)) {
-      setCreateError("Name already taken.");
-      createNameInputRef.current?.focus();
-      return;
-    }
-    await fetch(`/api/player/${encodeURIComponent(name)}/skin`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ skin: createSkin }),
-    }).catch(() => {});
-    const users = getUsers();
-    if (!users[username]) users[username] = [];
-    users[username].push(name);
-    saveUsers(users);
-    const updated = users[username];
-    setChars(updated);
-    setSelected(name);
-    setPreviewSkin(createSkin);
-    setPreviewArmors([]);
-    setStep("chars");
-  }
-
-  async function doLocalLogin() {
-    const user = username.trim();
-    if (!user || !password) return;
-    setAuthLoading(true);
-    setAuthError("");
-    try {
-      const r = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user, password }),
-      });
-      if (!r.ok) {
-        setAuthError("Invalid email or password.");
-        setAuthLoading(false);
-        passwordInputRef.current?.focus();
-        return;
-      }
-      const data: { token: string; displayName: string } = await r.json();
-      storeToken(data.token);
-      try {
-        sessionStorage.setItem("micraft_auth_display", data.displayName);
-      } catch {}
-      setToken(data.token);
-      setUsername(data.displayName || user);
-      setAuthLoading(false);
-      goChars(data.displayName || user);
-    } catch {
-      setAuthError("Connection error. Is the server running?");
-      setAuthLoading(false);
-    }
-  }
-
-  function doOAuthLogin() {
-    const returnUrl = window.location.origin + window.location.pathname;
-    window.location.href = `/auth/oauth/start?returnUrl=${encodeURIComponent(returnUrl)}`;
-  }
-
-  function doPlay() {
-    if (!selected) return;
-    saveLastPlayer(username, selected);
-    saveLastLang(lang);
-    loginResultRef.current = username + "\t" + selected + "\t" + lang + "\t" + token;
-    onHide();
-  }
-
-  function doLogout() {
-    clearStoredToken();
-    setToken("");
-    setUsername("");
-    setPassword("");
-    setStep("auth");
-  }
+  const L = useLogin({ visible, loginResultRef, onHide });
 
   if (!visible) return null;
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "rgba(0,0,0,0.82)",
-        zIndex: 2000,
-      }}
-    >
-      <div
-        style={{
-          background: "#1a1a1a",
-          border: "1px solid #444",
-          borderRadius: 8,
-          padding: "32px 40px",
-          minWidth: 320,
-          fontFamily: "monospace",
-          color: "#eee",
-        }}
-      >
-        <div style={{ fontSize: 28, fontWeight: "bold", textAlign: "center", marginBottom: 24, color: "#6af" }}>
-          MiCraft
-        </div>
+    <div className="fixed inset-0 flex items-center justify-center bg-black/82 z-[2000]">
+      <Panel className="min-w-[340px]">
+        <div className="text-[30px] font-bold text-center mb-10 text-blue-400">MiCraft</div>
 
-        {authMode === "loading" && (
-          <div style={{ textAlign: "center", color: "#888", padding: "20px 0" }}>Loading…</div>
+        {L.authMode === "loading" && (
+          <div className="text-center text-[#888] py-5">Loading…</div>
         )}
 
-        {/* Local auth step */}
-        {authMode === "local" && step === "auth" && (
-          <div>
-            <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 6 }}>Email</label>
-            <input
-              ref={usernameInputRef}
-              style={inputStyle}
-              type="email"
-              placeholder="your@email.com"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === "Enter") passwordInputRef.current?.focus();
-              }}
-            />
-            <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 6, marginTop: 12 }}>
-              Password
-            </label>
-            <input
-              ref={passwordInputRef}
-              style={inputStyle}
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === "Enter") doLocalLogin();
-              }}
-            />
-            {authError && <div style={{ marginTop: 8, color: "#f66", fontSize: 13 }}>{authError}</div>}
-            <button style={btnPrimary} onClick={doLocalLogin} disabled={authLoading}>
-              {authLoading ? "Logging in…" : "Login"}
-            </button>
+        {/* Local auth */}
+        {L.authMode === "local" && L.step === "auth" && (
+          <div className="space-y-5">
+            <FormField>
+              <Label>Email</Label>
+              <Input
+                ref={L.usernameInputRef}
+                type="email"
+                placeholder="your@email.com"
+                value={L.username}
+                onChange={(e) => L.setUsername(e.target.value)}
+                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === "Enter") L.passwordInputRef.current?.focus();
+                }}
+              />
+            </FormField>
+            <FormField>
+              <Label>Password</Label>
+              <Input
+                ref={L.passwordInputRef}
+                type="password"
+                placeholder="••••••••"
+                value={L.password}
+                onChange={(e) => L.setPassword(e.target.value)}
+                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === "Enter") L.doLocalLogin();
+                }}
+              />
+            </FormField>
+            {L.authError && <div className="text-red-400 text-sm">{L.authError}</div>}
+            <Button variant="blue" size="lg" className="w-full" onClick={L.doLocalLogin} disabled={L.authLoading}>
+              {L.authLoading ? "Logging in…" : "Login"}
+            </Button>
           </div>
         )}
 
-        {/* OAuth auth step */}
-        {authMode === "oauth" && step === "auth" && (
-          <div>
-            <div style={{ textAlign: "center", color: "#aaa", fontSize: 14, marginBottom: 20 }}>Sign in to play</div>
-            <button style={btnGoogle} onClick={doOAuthLogin}>
-              <span>G</span>
-              Continue with Google
-            </button>
-          </div>
-        )}
-
-        {/* None mode — username + lang directly */}
-        {authMode === "none" && step === "auth" && (
-          <div>
-            <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 6 }}>Username</label>
-            <input
-              ref={usernameInputRef}
-              style={inputStyle}
-              type="text"
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === "Enter") {
-                  if (username.trim()) goChars(username.trim());
-                }
-              }}
-            />
-            <div style={{ marginTop: 14 }}>
-              <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 6 }}>Language</label>
-              <select
-                value={lang}
-                onChange={(e) => setLang(e.target.value)}
-                style={{ ...inputStyle, cursor: "pointer" }}
-              >
-                {SUPPORTED_LANGS.map((l) => (
-                  <option key={l.code} value={l.code}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {/* OAuth */}
+        {L.authMode === "oauth" && L.step === "auth" && (
+          <div className="space-y-5">
+            <div className="text-center text-[#aaa] text-sm">Sign in to play</div>
             <button
-              style={btnPrimary}
-              onClick={() => {
-                if (username.trim()) goChars(username.trim());
-              }}
+              className="w-full py-3 bg-white border border-[#ccc] rounded text-[#333] font-mono font-bold text-[15px] cursor-pointer flex items-center justify-center gap-2 hover:bg-gray-100"
+              onClick={L.doOAuthLogin}
+            >
+              <span>G</span> Continue with Google
+            </button>
+          </div>
+        )}
+
+        {/* None mode */}
+        {L.authMode === "none" && L.step === "auth" && (
+          <div className="space-y-5">
+            <FormField>
+              <Label>Username</Label>
+              <Input
+                ref={L.usernameInputRef}
+                type="text"
+                placeholder="Enter your username"
+                value={L.username}
+                onChange={(e) => L.setUsername(e.target.value)}
+                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === "Enter" && L.username.trim()) L.goChars(L.username.trim());
+                }}
+              />
+            </FormField>
+            <LangSelect value={L.lang} onChange={L.setLang} />
+            <Button
+              variant="blue"
+              size="lg"
+              className="w-full"
+              onClick={() => { if (L.username.trim()) L.goChars(L.username.trim()); }}
             >
               Continue
-            </button>
+            </Button>
           </div>
         )}
 
-        {/* Character selection step */}
-        {step === "chars" && (
+        {/* Character selection */}
+        {L.step === "chars" && (
           <div
-            style={{ display: "flex", gap: 24, alignItems: "flex-start" }}
+            className="flex gap-10 items-start"
             onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
-              if (e.key === "Enter" && selected) {
-                e.stopPropagation();
-                doPlay();
-              }
+              if (e.key === "Enter" && L.selected) { e.stopPropagation(); L.doPlay(); }
             }}
           >
-            <div style={{ minWidth: 280 }}>
-              <div style={{ fontSize: 14, color: "#aaa", marginBottom: 14 }}>
-                Welcome, {username}! Choose your character:
+            <div className="min-w-[280px] space-y-5">
+              <div className="text-sm text-[#aaa]">
+                Welcome, {L.username}! Choose your character:
               </div>
-              {(authMode === "local" || authMode === "oauth") && (
-                <div style={{ marginTop: 14 }}>
-                  <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 6 }}>Language</label>
-                  <select
-                    value={lang}
-                    onChange={(e) => setLang(e.target.value)}
-                    style={{ ...inputStyle, cursor: "pointer" }}
-                  >
-                    {SUPPORTED_LANGS.map((l) => (
-                      <option key={l.code} value={l.code}>
-                        {l.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {(L.authMode === "local" || L.authMode === "oauth") && (
+                <LangSelect value={L.lang} onChange={L.setLang} />
               )}
-              <div style={{ marginBottom: 12, marginTop: 14 }}>
-                {chars.length === 0 && (
-                  <div style={{ fontSize: 13, color: "#666", marginBottom: 8 }}>No characters yet.</div>
+              <div>
+                {L.chars.length === 0 && (
+                  <div className="text-xs text-[#666] mb-3">No characters yet.</div>
                 )}
-                {chars.map((name, i) => (
-                  <div key={name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+                {L.chars.map((name, i) => (
+                  <div key={name} className="flex items-center gap-2 py-2.5">
                     <input
                       type="radio"
                       name="mc-char"
                       value={name}
                       id={`mc-char-${i}`}
-                      checked={selected === name}
-                      onChange={() => setSelected(name)}
+                      checked={L.selected === name}
+                      onChange={() => L.setSelected(name)}
                     />
-                    <label htmlFor={`mc-char-${i}`} style={{ fontSize: 14, cursor: "pointer" }}>
-                      {name}
-                    </label>
+                    <label htmlFor={`mc-char-${i}`} className="text-sm cursor-pointer">{name}</label>
                   </div>
                 ))}
               </div>
-              <button
-                style={{ ...btnSecondary, marginTop: 4, color: "#7af", borderColor: "#3a6aaa" }}
-                onClick={goCreate}
-              >
-                + Create new character
-              </button>
-              <button
-                ref={playButtonRef}
-                style={{ ...btnPrimary, opacity: selected ? 1 : 0.4 }}
-                onClick={doPlay}
-                disabled={!selected}
-              >
-                Play
-              </button>
-              {authMode === "local" || authMode === "oauth" ? (
-                <button style={btnSecondary} onClick={doLogout}>
-                  ← Log out
-                </button>
-              ) : (
-                <button
-                  style={btnSecondary}
-                  onClick={() => {
-                    setStep("auth");
-                    setTimeout(() => usernameInputRef.current?.focus(), 50);
-                  }}
+              <div className="space-y-3">
+                <Button
+                  variant="outline"
+                  size="md"
+                  className="w-full text-blue-300 border-blue-800/60 hover:border-blue-600 hover:text-blue-200"
+                  onClick={L.goCreate}
                 >
-                  ← Back
-                </button>
-              )}
+                  + Create new character
+                </Button>
+                <Button
+                  ref={L.playButtonRef}
+                  variant="blue"
+                  size="lg"
+                  className={cn("w-full", !L.selected && "opacity-40")}
+                  onClick={L.doPlay}
+                  disabled={!L.selected}
+                >
+                  Play
+                </Button>
+                {L.authMode === "local" || L.authMode === "oauth" ? (
+                  <Button variant="outline" size="md" className="w-full" onClick={L.doLogout}>
+                    ← Log out
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="md"
+                    className="w-full"
+                    onClick={() => {
+                      L.setStep("auth");
+                      setTimeout(() => L.usernameInputRef.current?.focus(), 50);
+                    }}
+                  >
+                    ← Back
+                  </Button>
+                )}
+              </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-              {selected ? (
+
+            <div className="flex flex-col items-center gap-3">
+              {L.selected ? (
                 <>
                   <PlayerModelPreview
-                    key={previewSkin + previewArmors.join(",")}
-                    skin={previewSkin}
-                    armors={previewArmors}
-                    walking={previewWalking}
+                    key={L.previewSkin + L.previewArmors.join(",")}
+                    skin={L.previewSkin}
+                    armors={L.previewArmors}
+                    walking={L.previewWalking}
                   />
-                  <div style={{ display: "flex", gap: 4, width: 160 }}>
-                    <button
-                      onClick={() => setPreviewWalking(false)}
-                      style={{
-                        flex: 1,
-                        background: !previewWalking ? "#2a3d2a" : "#1e1e1e",
-                        border: `1px solid ${!previewWalking ? "#4a7a4a" : "#333"}`,
-                        borderRadius: 4,
-                        color: !previewWalking ? "#7aac7a" : "#666",
-                        fontFamily: "monospace",
-                        fontSize: 11,
-                        cursor: "pointer",
-                        padding: "4px 0",
-                      }}
-                    >
-                      Statique
-                    </button>
-                    <button
-                      onClick={() => setPreviewWalking(true)}
-                      style={{
-                        flex: 1,
-                        background: previewWalking ? "#2a3d2a" : "#1e1e1e",
-                        border: `1px solid ${previewWalking ? "#4a7a4a" : "#333"}`,
-                        borderRadius: 4,
-                        color: previewWalking ? "#7aac7a" : "#666",
-                        fontFamily: "monospace",
-                        fontSize: 11,
-                        cursor: "pointer",
-                        padding: "4px 0",
-                      }}
-                    >
-                      Marche
-                    </button>
-                  </div>
+                  <WalkingToggle walking={L.previewWalking} onChange={L.setPreviewWalking} />
                 </>
               ) : (
-                <div
-                  style={{
-                    width: 160,
-                    height: 220,
-                    borderRadius: 6,
-                    background: "#111",
-                    border: "1px solid #333",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#444",
-                    fontSize: 12,
-                    textAlign: "center",
-                  }}
-                >
+                <div className="w-40 h-[220px] rounded-md bg-[#111] border border-[#333] flex items-center justify-center text-[#444] text-xs text-center">
                   No character selected
                 </div>
               )}
@@ -643,132 +241,70 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
           </div>
         )}
 
-        {/* Character creation step */}
-        {step === "create" && (
-          <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
-            <div style={{ minWidth: 280 }}>
-              <div style={{ fontSize: 14, color: "#aaa", marginBottom: 16 }}>New character</div>
-
-              <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 6 }}>Name</label>
-              <input
-                ref={createNameInputRef}
-                style={inputStyle}
-                type="text"
-                placeholder="Character name"
-                value={createName}
-                onChange={(e) => {
-                  setCreateName(e.target.value);
-                  setCreateError("");
-                }}
-                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                  if (e.key === "Enter") doCreate();
-                }}
-              />
-              {createError && <div style={{ marginTop: 6, color: "#f66", fontSize: 13 }}>{createError}</div>}
-
-              <label style={{ display: "block", fontSize: 13, color: "#aaa", marginBottom: 8, marginTop: 16 }}>
-                Skin
-              </label>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <button
-                  onClick={() => {
-                    const idx = SKINS.indexOf(createSkin);
-                    setCreateSkin(SKINS[(idx - 1 + SKINS.length) % SKINS.length]);
+        {/* Character creation */}
+        {L.step === "create" && (
+          <div className="flex gap-10 items-start">
+            <div className="min-w-[280px] space-y-5">
+              <div className="text-sm text-[#aaa]">New character</div>
+              <FormField>
+                <Label>Name</Label>
+                <Input
+                  ref={L.createNameInputRef}
+                  type="text"
+                  placeholder="Character name"
+                  value={L.createName}
+                  onChange={(e) => { L.setCreateName(e.target.value); L.setCreateError(""); }}
+                  onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                    if (e.key === "Enter") L.doCreate();
                   }}
-                  style={{
-                    background: "#222",
-                    border: "1px solid #555",
-                    borderRadius: 4,
-                    color: "#eee",
-                    fontFamily: "monospace",
-                    fontSize: 16,
-                    cursor: "pointer",
-                    padding: "4px 10px",
-                  }}
-                >
-                  ‹
-                </button>
-                <div
-                  style={{
-                    flex: 1,
-                    textAlign: "center",
-                    background: "#111",
-                    border: "1px solid #555",
-                    borderRadius: 4,
-                    padding: "6px 0",
-                    fontSize: 14,
-                  }}
-                >
-                  {createSkin}
+                />
+                {L.createError && <div className="text-red-400 text-sm">{L.createError}</div>}
+              </FormField>
+              <FormField>
+                <Label>Skin</Label>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const idx = SKINS.indexOf(L.createSkin);
+                      L.setCreateSkin(SKINS[(idx - 1 + SKINS.length) % SKINS.length]);
+                    }}
+                  >
+                    ‹
+                  </Button>
+                  <div className="flex-1 text-center bg-[#111] border border-[#555] rounded py-1.5 text-sm">
+                    {L.createSkin}
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const idx = SKINS.indexOf(L.createSkin);
+                      L.setCreateSkin(SKINS[(idx + 1) % SKINS.length]);
+                    }}
+                  >
+                    ›
+                  </Button>
                 </div>
-                <button
-                  onClick={() => {
-                    const idx = SKINS.indexOf(createSkin);
-                    setCreateSkin(SKINS[(idx + 1) % SKINS.length]);
-                  }}
-                  style={{
-                    background: "#222",
-                    border: "1px solid #555",
-                    borderRadius: 4,
-                    color: "#eee",
-                    fontFamily: "monospace",
-                    fontSize: 16,
-                    cursor: "pointer",
-                    padding: "4px 10px",
-                  }}
-                >
-                  ›
-                </button>
+              </FormField>
+              <div className="space-y-3">
+                <Button variant="blue" size="lg" className="w-full" onClick={L.doCreate}>
+                  Create
+                </Button>
+                <Button variant="outline" size="md" className="w-full" onClick={() => L.setStep("chars")}>
+                  ← Back
+                </Button>
               </div>
-
-              <button style={btnPrimary} onClick={doCreate}>
-                Create
-              </button>
-              <button style={btnSecondary} onClick={() => setStep("chars")}>
-                ← Back
-              </button>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-              <PlayerModelPreview key={createSkin} skin={createSkin} armors={[]} walking={createWalking} />
-              <div style={{ display: "flex", gap: 4, width: 160 }}>
-                <button
-                  onClick={() => setCreateWalking(false)}
-                  style={{
-                    flex: 1,
-                    background: !createWalking ? "#2a3d2a" : "#1e1e1e",
-                    border: `1px solid ${!createWalking ? "#4a7a4a" : "#333"}`,
-                    borderRadius: 4,
-                    color: !createWalking ? "#7aac7a" : "#666",
-                    fontFamily: "monospace",
-                    fontSize: 11,
-                    cursor: "pointer",
-                    padding: "4px 0",
-                  }}
-                >
-                  Statique
-                </button>
-                <button
-                  onClick={() => setCreateWalking(true)}
-                  style={{
-                    flex: 1,
-                    background: createWalking ? "#2a3d2a" : "#1e1e1e",
-                    border: `1px solid ${createWalking ? "#4a7a4a" : "#333"}`,
-                    borderRadius: 4,
-                    color: createWalking ? "#7aac7a" : "#666",
-                    fontFamily: "monospace",
-                    fontSize: 11,
-                    cursor: "pointer",
-                    padding: "4px 0",
-                  }}
-                >
-                  Marche
-                </button>
-              </div>
+            <div className="flex flex-col items-center gap-3">
+              <PlayerModelPreview key={L.createSkin} skin={L.createSkin} armors={[]} walking={L.createWalking} />
+              <WalkingToggle walking={L.createWalking} onChange={L.setCreateWalking} />
             </div>
           </div>
         )}
-      </div>
+      </Panel>
     </div>
   );
 }

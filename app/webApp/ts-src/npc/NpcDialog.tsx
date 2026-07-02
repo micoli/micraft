@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { Dialog, DialogContent, DialogTitle } from "../ui/primitives/Dialog";
+import { Button } from "../ui/primitives/Button";
 
 export interface NpcDialogData {
   type: string;
@@ -11,65 +12,15 @@ interface Props {
 }
 
 export function NpcDialog({ data, onClose }: Props) {
-  useEffect(() => {
-    if (!data) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [data, onClose]);
-
-  if (!data) return null;
-
-  const overlayStyle: React.CSSProperties = {
-    position: "fixed",
-    inset: 0,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "rgba(0,0,0,0.45)",
-    zIndex: 5000,
-  };
-  const boxStyle: React.CSSProperties = {
-    background: "#1a1a1a",
-    border: "2px solid #555",
-    borderRadius: 8,
-    padding: "24px 32px",
-    minWidth: 260,
-    color: "#eee",
-    fontFamily: "monospace",
-    boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
-  };
-  const titleStyle: React.CSSProperties = {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 8,
-  };
-  const typeStyle: React.CSSProperties = {
-    fontSize: 13,
-    color: "#aaa",
-    marginBottom: 20,
-  };
-  const btnStyle: React.CSSProperties = {
-    padding: "6px 18px",
-    background: "#444",
-    border: "1px solid #666",
-    borderRadius: 4,
-    color: "#eee",
-    cursor: "pointer",
-    fontFamily: "monospace",
-  };
-
   return (
-    <div style={overlayStyle} onClick={onClose}>
-      <div style={boxStyle} onClick={(e) => e.stopPropagation()}>
-        <div style={titleStyle}>{data.name}</div>
-        <div style={typeStyle}>{data.type}</div>
-        <button style={btnStyle} onClick={onClose}>
+    <Dialog open={!!data} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="min-w-[260px] font-mono shadow-[0_8px_32px_rgba(0,0,0,0.7)]">
+        <DialogTitle className="text-lg font-bold mb-2">{data?.name}</DialogTitle>
+        <p className="text-sm text-white/60 mb-5">{data?.type}</p>
+        <Button variant="secondary" onClick={onClose} className="font-mono">
           Close
-        </button>
-      </div>
-    </div>
+        </Button>
+      </DialogContent>
+    </Dialog>
   );
 }

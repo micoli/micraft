@@ -461,14 +461,10 @@ export function GameUI() {
     pendingLayoutUpdateRef.current = JSON.stringify({ layouts, activeLayout: newActiveLayout });
   };
 
-  const minimapStyle: React.CSSProperties = {
+  const minimapLayoutStyle: React.CSSProperties = {
     ...widgetStyle(activeLayout, "MINIMAP"),
     zIndex: 999,
     pointerEvents: "none",
-    border: "2px solid rgba(255,255,255,0.25)",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
-    borderRadius: 6,
-    overflow: "hidden",
   };
 
   return (
@@ -476,8 +472,9 @@ export function GameUI() {
       {/* Minimap host: always in DOM (Kotlin appends canvas here at startup); hidden during login */}
       <div
         id="mc-minimap-host"
+        className="border-2 border-white/25 shadow-[0_2px_8px_rgba(0,0,0,0.5)] rounded-md overflow-hidden"
         style={{
-          ...minimapStyle,
+          ...minimapLayoutStyle,
           display: state.loginVisible || state.disconnectMsg || state.chunkLoading ? "none" : undefined,
         }}
       />

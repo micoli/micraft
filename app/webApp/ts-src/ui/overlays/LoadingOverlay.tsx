@@ -2,42 +2,15 @@ export function LoadingOverlay({ progress }: { progress: { loaded: number; total
   if (!progress) return null;
   const pct = Math.min(100, Math.round((progress.loaded / Math.max(progress.total, 1)) * 100));
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "rgba(0,0,0,0.80)",
-        color: "#fff",
-        fontFamily: "monospace",
-        zIndex: 1000,
-        pointerEvents: "all",
-      }}
-    >
-      <div style={{ fontSize: 20, fontWeight: "bold", marginBottom: 20, letterSpacing: 1 }}>Loading world…</div>
-      <div
-        style={{
-          width: 320,
-          background: "#222",
-          border: "2px solid #555",
-          borderRadius: 3,
-          overflow: "hidden",
-          marginBottom: 10,
-        }}
-      >
+    <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black/80 text-white font-mono pointer-events-all">
+      <div className="text-xl font-bold mb-5 tracking-wide">Loading world…</div>
+      <div className="w-80 bg-[#222] border-2 border-[#555] rounded-sm overflow-hidden mb-2.5">
         <div
-          style={{
-            width: `${pct}%`,
-            height: 18,
-            background: "linear-gradient(90deg, #3a3, #5c5)",
-            transition: "width 0.15s ease-out",
-          }}
+          className="h-[18px] bg-gradient-to-r from-green-600 to-green-400 transition-[width] duration-150 ease-out"
+          style={{ width: `${pct}%` }}
         />
       </div>
-      <div style={{ fontSize: 13, color: "#aaa" }}>
+      <div className="text-sm text-white/60">
         {progress.loaded} / {progress.total} chunks ({pct}%)
       </div>
     </div>
