@@ -552,7 +552,12 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
               >
                 + Create new character
               </button>
-              <button ref={playButtonRef} style={{ ...btnPrimary, opacity: selected ? 1 : 0.4 }} onClick={doPlay} disabled={!selected}>
+              <button
+                ref={playButtonRef}
+                style={{ ...btnPrimary, opacity: selected ? 1 : 0.4 }}
+                onClick={doPlay}
+                disabled={!selected}
+              >
                 Play
               </button>
               {authMode === "local" || authMode === "oauth" ? (

@@ -115,7 +115,17 @@ const ACTION_GROUPS: Record<string, string[]> = {
     "auto_forward",
   ],
   flight: ["fly_toggle", "ascend", "descend", "speed_up", "speed_down"],
-  ui: ["view_toggle", "hud_mode_cycle", "inventory", "character", "dump_stats", "undo", "minimap_zoom_in", "minimap_zoom_out", "layout_editor"],
+  ui: [
+    "view_toggle",
+    "hud_mode_cycle",
+    "inventory",
+    "character",
+    "dump_stats",
+    "undo",
+    "minimap_zoom_in",
+    "minimap_zoom_out",
+    "layout_editor",
+  ],
   hotbar: ["slot_1", "slot_2", "slot_3", "slot_4", "slot_5", "slot_6", "slot_7", "slot_8", "slot_9", "slot_10"],
 };
 

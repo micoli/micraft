@@ -2,6 +2,7 @@ import { useEffect, useRef, useReducer, useState } from "react";
 import { HudMode, GameLayout, NpcDialogData, PreferencesData } from "./types";
 import { UiState, reducer } from "./UIReducer";
 import { NpcDialog } from "../npc/NpcDialog";
+import { LoadingOverlay } from "./overlays/LoadingOverlay";
 import { Preferences } from "./game/Preferences";
 import { HUD } from "./game/HUD";
 import { Inventory } from "./game/Inventory";
@@ -47,6 +48,7 @@ const initial: UiState = {
   consoleOpen: false,
   loginVisible: false,
   disconnectMsg: null,
+  chunkLoading: null,
   layouts: [defaultLayout()],
   activeLayout: "default",
   layoutEditorOpen: false,
@@ -85,6 +87,7 @@ export function GameUI() {
   const codexOpenRef = useRef(false);
   const characterOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
+  const chunkLoadingRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,14 +117,11 @@ export function GameUI() {
 
   useEffect(() => {
     preferencesOpenRef.current = state.preferencesOpen;
-    if (window.mcState) window.mcState.modalOpen = state.preferencesOpen;
   }, [state.preferencesOpen]);
 
   useEffect(() => {
     codexOpenRef.current = state.codexOpen;
-    if (window.mcState)
-      window.mcState.modalOpen = state.codexOpen || state.preferencesOpen || state.characterOpen;
-  }, [state.codexOpen, state.preferencesOpen, state.characterOpen]);
+  }, [state.codexOpen]);
 
   useEffect(() => {
     characterOpenRef.current = state.characterOpen;
@@ -130,6 +130,13 @@ export function GameUI() {
   useEffect(() => {
     hudDataRef.current = state.hud;
   }, [state.hud]);
+
+  useEffect(() => {
+    chunkLoadingRef.current = state.chunkLoading !== null;
+    if (window.mcState)
+      window.mcState.modalOpen =
+        state.chunkLoading !== null || state.preferencesOpen || state.codexOpen || state.characterOpen;
+  }, [state.chunkLoading, state.preferencesOpen, state.codexOpen, state.characterOpen]);
 
   // Auto-hide server log after 15s of no new messages
   useEffect(() => {
@@ -259,6 +266,9 @@ export function GameUI() {
     window.mc.hideLoginOverlay = () => dispatch({ type: "login_hide" });
     window.mc.showDisconnectedOverlay = (msg: string) => dispatch({ type: "disconnect_show", message: msg });
     window.mc.hideDisconnectedOverlay = () => dispatch({ type: "disconnect_hide" });
+    window.mc.updateChunkLoading = (loaded: number, total: number) =>
+      dispatch({ type: "chunk_loading_update", loaded, total });
+    window.mc.hideChunkLoading = () => dispatch({ type: "chunk_loading_hide" });
 
     window.mc.showConsole = () => dispatch({ type: "console_show" });
     window.mc.hideConsole = () => dispatch({ type: "console_hide" });
@@ -356,7 +366,7 @@ export function GameUI() {
       const h = hudDataRef.current;
       if (!h) return;
       console.table({
-        "FPS": h.fps,
+        FPS: h.fps,
         "Tick avg (ms)": h.tickDtMs.toFixed(2),
         "Tick min (ms)": h.tickDtMinMs.toFixed(2),
         "Tick max (ms)": h.tickDtMaxMs.toFixed(2),
@@ -393,6 +403,7 @@ export function GameUI() {
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       const loginEl = document.getElementById("mc-login-root");
       if (loginEl && (loginEl as HTMLElement).dataset.visible === "true") return;
+      if (chunkLoadingRef.current) return;
       if (ke.key === "Escape" && !consoleOpenRef.current) {
         if (characterOpenRef.current) {
           dispatch({ type: "character_close" });
@@ -465,10 +476,13 @@ export function GameUI() {
       {/* Minimap host: always in DOM (Kotlin appends canvas here at startup); hidden during login */}
       <div
         id="mc-minimap-host"
-        style={{ ...minimapStyle, display: state.loginVisible || state.disconnectMsg ? "none" : undefined }}
+        style={{
+          ...minimapStyle,
+          display: state.loginVisible || state.disconnectMsg || state.chunkLoading ? "none" : undefined,
+        }}
       />
 
-      {!state.loginVisible && !state.disconnectMsg && (
+      {!state.loginVisible && !state.disconnectMsg && !state.chunkLoading && (
         <>
           <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, "HUD")} />
           {(state.preferences?.chunkDebugVisible ?? false) && (
@@ -559,6 +573,7 @@ export function GameUI() {
         />
       </div>
       <DisconnectOverlay message={state.disconnectMsg} />
+      {!state.loginVisible && !state.disconnectMsg && <LoadingOverlay progress={state.chunkLoading} />}
     </>
   );
 }

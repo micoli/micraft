@@ -2,6 +2,12 @@
 
 package org.micoli.micraft.babylon
 
+// ── Loading overlay ────────────────────────────────────────────────────────────
+
+fun jsUpdateChunkLoading(loaded: Int, total: Int): Unit = js("mc.updateChunkLoading(loaded, total)")
+
+fun jsHideChunkLoading(): Unit = js("mc.hideChunkLoading()")
+
 // ── Disconnect overlay ────────────────────────────────────────────────────────
 
 fun jsShowDisconnectedOverlay(message: String): Unit = js("mc.showDisconnectedOverlay(message)")

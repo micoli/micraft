@@ -54,6 +54,9 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private var currentPlayerCx = 0
     private var currentPlayerCz = 0
     private var currentYaw = 0f
+    private var isInitialLoading = false
+    private val expectedChunkCount
+        get() = (2 * WorldConstants.CLIENT_VIEW_RADIUS + 1).let { it * it }
 
     init {
         jsOptimizeScene(scene)
@@ -83,6 +86,16 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     localController.chunkDownloading = httpChunkFetcher?.inFlightCount ?: 0
                     localController.chunkMeshing = chunkManager.pendingRenderCount
                     localController.tick()
+                }
+                if (isInitialLoading) {
+                    val loaded = chunkManager.loadedChunks.size
+                    uiState.chunkLoadingProgress = Pair(loaded, expectedChunkCount)
+                    if (localController.hasPrediction &&
+                        chunkManager.pendingRenderCount == 0 &&
+                        loaded >= expectedChunkCount) {
+                        isInitialLoading = false
+                        uiState.chunkLoadingProgress = null
+                    }
                 }
                 npcManager.tick()
                 remotePlayerManager.tick()
@@ -227,6 +240,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     }
 
     private fun resetForReconnect() {
+        isInitialLoading = false
+        uiState.chunkLoadingProgress = null
         uiState.inventory = emptyMap()
         localPlayerId = null
         playerIdReady = CompletableDeferred()
@@ -241,6 +256,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private fun handleMessage(msg: ServerMessage) {
         when (msg) {
             is ServerMessage.Welcome -> {
+                isInitialLoading = true
+                uiState.chunkLoadingProgress = Pair(0, expectedChunkCount)
                 localPlayerId = msg.playerId
                 chunkTransportMode = msg.chunkTransport
                 if (msg.chunkTransport == "http") {

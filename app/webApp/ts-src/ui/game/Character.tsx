@@ -156,9 +156,7 @@ export function Character({ open, onClose, onCommand }: Props) {
           <div style={{ flex: 1, minWidth: 240 }}>
             {activeTab === "equipment" && (
               <>
-                {sortedArmors.length === 0 && (
-                  <div style={{ color: "#555", fontSize: 13 }}>No armor available.</div>
-                )}
+                {sortedArmors.length === 0 && <div style={{ color: "#555", fontSize: 13 }}>No armor available.</div>}
                 {sortedArmors.map((name) => {
                   const slots = available[name];
                   const isEquipped = equipped.includes(name);
@@ -241,12 +239,7 @@ export function Character({ open, onClose, onCommand }: Props) {
 
           {/* Preview */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-            <PlayerModelPreview
-              key={skin + equipped.join(",")}
-              skin={skin}
-              armors={equipped}
-              walking={walking}
-            />
+            <PlayerModelPreview key={skin + equipped.join(",")} skin={skin} armors={equipped} walking={walking} />
             <div style={{ display: "flex", gap: 4, width: 160 }}>
               <button
                 onClick={() => setWalking(false)}

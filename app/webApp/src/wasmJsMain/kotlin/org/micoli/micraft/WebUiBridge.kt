@@ -8,10 +8,12 @@ import org.micoli.micraft.babylon.jsAddChatMessage
 import org.micoli.micraft.babylon.jsAddServerLog
 import org.micoli.micraft.babylon.jsChannelsSync
 import org.micoli.micraft.babylon.jsConsoleSetPlayer
+import org.micoli.micraft.babylon.jsHideChunkLoading
 import org.micoli.micraft.babylon.jsHideDisconnectedOverlay
 import org.micoli.micraft.babylon.jsPreferencesSync
 import org.micoli.micraft.babylon.jsShowDisconnectedOverlay
 import org.micoli.micraft.babylon.jsShowNotification
+import org.micoli.micraft.babylon.jsUpdateChunkLoading
 import org.micoli.micraft.babylon.jsUpdateHotbar
 import org.micoli.micraft.ui.McUiState
 import org.micoli.micraft.world.ItemType
@@ -56,6 +58,12 @@ class WebUiBridge(private val state: McUiState, private val scope: CoroutineScop
         }
         scope.launch {
             state.preferencesSyncFlow.collect { json -> if (json != null) jsPreferencesSync(json) }
+        }
+        scope.launch {
+            state.chunkLoadingProgressFlow.collect { progress ->
+                if (progress != null) jsUpdateChunkLoading(progress.first, progress.second)
+                else jsHideChunkLoading()
+            }
         }
     }
 }
