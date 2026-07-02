@@ -196,6 +196,7 @@ export function registerPlayerModel(): void {
       headNode: pivotNodes["head"]?.node ?? null,
       pivotNodes,
       walkAnim: extractWalkAnim(bbmodel, [...ANIM_GROUPS, "head"]),
+      equippedArmors: {},
     };
   }
   window.mcCreatePlayerModelFromBbmodel = createPlayerModelFromBbmodel;

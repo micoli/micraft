@@ -17,6 +17,7 @@ declare global {
   interface BbModelElement {
     uuid: string;
     name: string;
+    visibility?: boolean;
     from: [number, number, number];
     to: [number, number, number];
     faces: {
@@ -33,6 +34,7 @@ declare global {
     uuid: string;
     name: string;
     origin: [number, number, number];
+    visibility?: boolean;
     children?: Array<string | BbModelGroup>;
   }
 
@@ -109,6 +111,7 @@ declare global {
     customCommands: Record<string, string[]>;
     playerBbmodels: Record<string, BbModel>;
     npcBbmodels: Record<string, BbModel>;
+    armorBbmodels: Record<string, BbModel>;
     npcModelsReady: boolean;
     modalOpen: boolean;
     skinMatCache: Record<string, import("@babylonjs/core").StandardMaterial>;
@@ -144,6 +147,7 @@ declare global {
       }
     >;
     walkAnim: Record<string, { keyframes: BbModelKeyframe[]; length: number }>;
+    equippedArmors: Record<string, InstanceType<typeof BABYLON.AbstractMesh>[]>;
   }
 
   interface McFPArms {
@@ -197,6 +201,11 @@ declare global {
     __mcCodexNpcs: Record<string, unknown>;
     mcSetupRenderPipeline: (scene: any, camera: any) => void;
     mcCreatePlayerModelFromBbmodel: (bbmodel: BbModel, scene: any, skin: string) => McPlayerModel;
+    mcInitArmorModel: (name: string) => void;
+    mcIsArmorModelReady: (name: string) => boolean;
+    mcAttachArmor: (model: McPlayerModel, armorName: string, scene: any) => void;
+    mcDetachArmor: (model: McPlayerModel, armorName: string) => void;
+    mcDetachAllArmors: (model: McPlayerModel) => void;
     [key: string]: unknown;
   }
 }

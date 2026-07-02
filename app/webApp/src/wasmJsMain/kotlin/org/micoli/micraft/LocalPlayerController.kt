@@ -61,6 +61,8 @@ class LocalPlayerController(
     var localStance = PlayerStance.STANDING
     var localSpeedMult = 1f
     var localSkin = "player"
+    var localArmors: List<String> = emptyList()
+    var localArmorsAttached: List<String> = emptyList()
     var lastPlayerCx = Int.MIN_VALUE
     var lastPlayerCz = Int.MIN_VALUE
     private var viewMode: ViewMode = ViewMode.FIRST_PERSON
@@ -150,6 +152,11 @@ class LocalPlayerController(
             localPlayerModel = null
             fpArms?.let { jsDisposeFPArms(it) }
             fpArms = null
+            localArmorsAttached = emptyList()
+        }
+        if (state.armors != localArmors) {
+            localArmors = state.armors
+            localArmors.forEach { jsInitArmorModel(it) }
         }
 
         serverX = state.pos.x.toDouble()
@@ -472,6 +479,15 @@ class LocalPlayerController(
             }
             if (fpArms == null) {
                 fpArms = jsCreateFPArms(camera, scene, localSkin)
+            }
+        }
+        localPlayerModel?.let { model ->
+            if (localArmors != localArmorsAttached) {
+                (localArmorsAttached - localArmors.toSet()).forEach { jsDetachArmor(model, it) }
+                val toAttach = localArmors - localArmorsAttached.toSet()
+                val readyToAttach = toAttach.filter { jsIsArmorModelReady(it) }
+                readyToAttach.forEach { jsAttachArmor(model, it, scene) }
+                localArmorsAttached = localArmorsAttached - toAttach.toSet() + readyToAttach
             }
         }
 

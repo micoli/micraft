@@ -17,6 +17,8 @@ class RemotePlayerManager(private val scene: JsAny) {
     private val playerLerpT = mutableMapOf<String, Double>()
     private val playerNames = mutableMapOf<String, String>()
     private val playerSkins = mutableMapOf<String, String>()
+    private val playerArmors = mutableMapOf<String, List<String>>()
+    private val playerArmorsAttached = mutableMapOf<String, List<String>>()
 
     fun updateFromServer(state: PlayerState) {
         playerNames[state.id] = state.name
@@ -25,6 +27,11 @@ class RemotePlayerManager(private val scene: JsAny) {
             playerSkins[state.id] = state.skin
             jsInitPlayerModel(state.skin)
             playerModels.remove(state.id)?.let(::jsDisposePlayerModel)
+            playerArmorsAttached[state.id] = emptyList()
+        }
+        if (playerArmors[state.id] != state.armors) {
+            playerArmors[state.id] = state.armors
+            state.armors.forEach { jsInitArmorModel(it) }
         }
         val nx = state.pos.x.toDouble()
         val ny = state.pos.y.toDouble()
@@ -40,6 +47,8 @@ class RemotePlayerManager(private val scene: JsAny) {
     fun remove(id: String) {
         playerNames.remove(id)
         playerSkins.remove(id)
+        playerArmors.remove(id)
+        playerArmorsAttached.remove(id)
         updateAutocomplete()
         playerModels.remove(id)?.let(::jsDisposePlayerModel)
         playerPrevPos.remove(id)
@@ -74,6 +83,16 @@ class RemotePlayerManager(private val scene: JsAny) {
                         kotlin.math.abs(z - prev.third) > 0.001)
             playerPrevPos[id] = Triple(x, y, z)
             jsSetPlayerTransform(model, x, y, z, yaw, pitch, walking)
+
+            val wanted = playerArmors[id] ?: emptyList()
+            val attached = playerArmorsAttached[id] ?: emptyList()
+            if (wanted != attached) {
+                (attached - wanted.toSet()).forEach { jsDetachArmor(model, it) }
+                val toAttach = wanted - attached.toSet()
+                val readyToAttach = toAttach.filter { jsIsArmorModelReady(it) }
+                readyToAttach.forEach { jsAttachArmor(model, it, scene) }
+                playerArmorsAttached[id] = attached - toAttach.toSet() + readyToAttach
+            }
         }
     }
 
@@ -89,6 +108,8 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerLerpT.clear()
         playerNames.clear()
         playerSkins.clear()
+        playerArmors.clear()
+        playerArmorsAttached.clear()
         jsSetConnectedPlayers("[]")
     }
 

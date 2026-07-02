@@ -1,0 +1,7 @@
+wearable:
+  head: false
+  body: false
+  rightArm: false
+  leftArm: false
+  rightLeg: true
+  leftLeg: true

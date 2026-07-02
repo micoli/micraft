@@ -79,6 +79,20 @@ Provider selected via `data/config/server.yaml` → `auth.provider` (`none` | `l
 - Every in-game action (except movement) can have slash command; each bindable to key via keybinding
 - Commands with arguments get autocompletion method attached
 
+## Armor system
+
+Armor configs in `resources/armors/<name>/<name>.yaml`. Each defines `wearable` slot flags (`head`, `body`, `rightArm`, `leftArm`, `rightLeg`, `leftLeg`). Loaded by `ArmorRegistryLoader`.
+
+**HTTP routes**:
+| Route | Purpose |
+|-------|---------|
+| `GET /api/armors` | `Map<name, WearableSlots>` — all available armors |
+| `GET /api/player/:name/armors` | currently equipped armor names |
+| `GET /api/player/:name/skin` | `{skin: string}` |
+
+**In-game**: `/equip <name>` / `/unequip <name>`. Client resolves slot conflicts before sending commands.
+**UI**: `Character.tsx` (key `Y`, or Pause → Character). Shared preview: `PlayerModelPreview.tsx`.
+
 ## Entities / animations
 Models use **bbmodel** (Blockbench) format. Example: `resources/skins/player/player.bbmodel`
 

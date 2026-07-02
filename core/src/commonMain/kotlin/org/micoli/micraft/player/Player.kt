@@ -29,6 +29,7 @@ data class PlayerState(
     val disabledCommands: Set<String> = emptySet(),
     val viewMode: String = "FIRST_PERSON",
     val skin: String = "player",
+    val armors: List<String> = emptyList(),
     val animatedFavicon: Boolean = true,
     val chunkDebugVisible: Boolean = false,
 )

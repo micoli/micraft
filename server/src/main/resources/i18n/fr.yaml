@@ -142,6 +142,18 @@ rbac:
     groups_list: "Groupes :{0}"
     group_not_found: "Groupe(s) inconnu(s) : {0}"
     your_groups_updated: "Votre appartenance aux groupes a été mise à jour. Reconnectez-vous pour que les permissions prennent effet."
+equip:
+  server:
+    usage: "Usage : /equip <nomArmure>"
+    unknown: "Armure inconnue : {0}. Disponibles : {1}"
+    already: "Vous portez déjà {0}."
+    overlap: "Conflit de slot : {0} est déjà couvert par {1}."
+    equipped: "{0} équipé."
+unequip:
+  server:
+    usage: "Usage : /unequip <nomArmure>"
+    not_wearing: "Vous ne portez pas {0}."
+    unequipped: "{0} retiré."
 config:
   server:
     usage: "Usage : /config <get|set> <clé> [valeur]"

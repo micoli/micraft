@@ -47,7 +47,9 @@ import org.micoli.micraft.world.DropConfig
 import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.NpcRegistryLoader
+import org.micoli.micraft.world.StuffRegistryLoader
 import org.micoli.micraft.world.VegetationConfig
+import org.micoli.micraft.world.WearableSlots
 import org.micoli.micraft.world.WeatherConfig
 import org.micoli.micraft.world.WeatherManager
 import org.micoli.micraft.world.WorldConstants
@@ -180,6 +182,8 @@ class GameLoop(
                     ?: Path.of("data/world/default_world/vegetation_state.json"),
         )
 
+    private val stuffRegistryLoader = StuffRegistryLoader(Path.of("resources/stuff"))
+    private var stuffRegistry: Map<String, WearableSlots> = emptyMap()
     private val npcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml"))
     private val npcRegistryLoader =
         NpcRegistryLoader(
@@ -240,6 +244,7 @@ class GameLoop(
                     }
                 } else null,
             reloadNpcs = { npcManager.reloadDefinitions(npcRegistryLoader.reload()) },
+            stuffRegistry = { stuffRegistry },
         )
     private val blockBreaker =
         BlockBreaker(
@@ -441,6 +446,7 @@ class GameLoop(
         appScope = app
         log.info("GameLoop starting (tick=${TICK_MS}ms, gravity=$GRAVITY)")
         validatePluginSystemIds(commands, discoverPlugins())
+        stuffRegistry = stuffRegistryLoader.load()
         npcConfigLoader.load()
         npcManager.loadDefinitions(npcRegistryLoader.load())
         val npcSavePath =
@@ -629,6 +635,7 @@ class GameLoop(
                 disabledCommands = saved?.disabledCommands ?: emptySet(),
                 viewMode = saved?.viewMode ?: "FIRST_PERSON",
                 skin = saved?.skin ?: "player",
+                armors = saved?.armors ?: emptyList(),
                 animatedFavicon = saved?.animatedFavicon ?: true,
                 chunkDebugVisible = saved?.chunkDebugVisible ?: false,
             )

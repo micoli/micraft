@@ -9,6 +9,7 @@ import org.micoli.micraft.tick.LiquidManager
 import org.micoli.micraft.world.ChatChannelManager
 import org.micoli.micraft.world.ChatService
 import org.micoli.micraft.world.I18nConfig
+import org.micoli.micraft.world.WearableSlots
 import org.micoli.micraft.world.WeatherManager
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldPersistence
@@ -40,4 +41,5 @@ data class CommandContext(
     val reloadBlocks: (suspend () -> Unit)? = null,
     val reloadNpcs: (suspend () -> Unit)? = null,
     val reloadRbac: (() -> Unit)? = null,
+    val stuffRegistry: () -> Map<String, WearableSlots> = { emptyMap() },
 )

@@ -61,3 +61,16 @@ fun jsSetFPArmsVisible(fpArms: JsAny, visible: Boolean): Unit =
     js("mcSetFPArmsVisible(fpArms, visible)")
 
 fun jsDisposeFPArms(fpArms: JsAny): Unit = js("mcDisposeFPArms(fpArms)")
+
+// ── Armor overlay ─────────────────────────────────────────────────────────────
+
+fun jsInitArmorModel(name: String): Unit = js("mcInitArmorModel(name)")
+
+fun jsIsArmorModelReady(name: String): Boolean = js("mcIsArmorModelReady(name)")
+
+fun jsAttachArmor(model: JsAny, armorName: String, scene: JsAny): Unit =
+    js("mcAttachArmor(model, armorName, scene)")
+
+fun jsDetachArmor(model: JsAny, armorName: String): Unit = js("mcDetachArmor(model, armorName)")
+
+fun jsDetachAllArmors(model: JsAny): Unit = js("mcDetachAllArmors(model)")

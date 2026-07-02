@@ -60,6 +60,7 @@ Key source files by layer.
 | `server/.../world/DropConfig.kt` | YAML-driven drop table loader |
 | `server/.../world/BlockRegistryLoader.kt` | Loads `data/config/blocks.yaml` → `BlockRegistry` |
 | `server/.../world/ItemRegistryLoader.kt` | Loads `data/config/items.yaml` → `ItemRegistry` |
+| `server/.../world/ArmorRegistryLoader.kt` | `WearableSlots` + loads `resources/armors/` → armor registry |
 | `server/.../world/NpcRegistryLoader.kt` | Loads `data/config/npcs.yaml` → NPC definitions |
 | `server/.../world/HouseConfigLoader.kt` | Loads house/structure config |
 | `server/.../world/RoadConfigLoader.kt` | Loads road config |
@@ -112,3 +113,10 @@ Key source files by layer.
 | `app/webApp/.../babylon/BabylonBindingsWeather.kt` | Weather visual effects |
 | `app/webApp/.../babylon/BabylonBindingsUtil.kt` | Logging, URL/page utils, i18n, biome colors, block registry, debug camera |
 | `app/webApp/.../resources/mc_bindings.js` | JS-side BabylonJS binding glue (generated — do not edit directly) |
+
+## Web UI (TypeScript / React)
+
+| File | Purpose |
+|------|---------|
+| `app/webApp/ts-src/ui/game/Character.tsx` | Character screen — armor equip/unequip, skin preview (key `Y`) |
+| `app/webApp/ts-src/ui/shared/PlayerModelPreview.tsx` | Shared BabylonJS player model canvas (skin + armor, walking toggle) |
