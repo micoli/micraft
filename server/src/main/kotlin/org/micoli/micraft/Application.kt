@@ -286,6 +286,13 @@ fun Application.module() {
             val skin = persistence?.loadPlayerState(name)?.skin ?: "player"
             call.respondText("""{"skin":"$skin"}""", ContentType.Application.Json)
         }
+        get("/api/player/{name}/armors") {
+            val name = call.parameters["name"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val armors = persistence?.loadPlayerState(name)?.armors ?: emptyList()
+            call.respondText(
+                Json.encodeToString(ListSerializer(String.serializer()), armors),
+                ContentType.Application.Json)
+        }
         get("/api/skins") {
             val skins = availablePlayerSkins()
             call.respondText(

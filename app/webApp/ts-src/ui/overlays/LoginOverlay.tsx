@@ -17,9 +17,37 @@ function usePlayerModelReady(skin: string): boolean {
   return ready;
 }
 
-function PlayerModelPreview({ skin }: { skin: string }) {
+function useArmorModelsReady(armors: string[]): boolean {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (armors.length === 0) {
+      setReady(true);
+      return;
+    }
+    armors.forEach((a) => (window as any).mcInitArmorModel?.(a));
+    const check = () => armors.every((a) => (window as any).mcIsArmorModelReady?.(a));
+    if (check()) {
+      setReady(true);
+      return;
+    }
+    const iv = setInterval(() => {
+      if (check()) {
+        setReady(true);
+        clearInterval(iv);
+      }
+    }, 150);
+    return () => clearInterval(iv);
+  }, [armors.join(",")]);
+  return ready;
+}
+
+function PlayerModelPreview({ skin, armors, walking }: { skin: string; armors: string[]; walking: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const ready = usePlayerModelReady(skin);
+  const skinReady = usePlayerModelReady(skin);
+  const armorsReady = useArmorModelsReady(armors);
+  const ready = skinReady && armorsReady;
+  const walkingRef = useRef(walking);
+  walkingRef.current = walking;
 
   useEffect(() => {
     if (!ready) return;
@@ -39,11 +67,12 @@ function PlayerModelPreview({ skin }: { skin: string }) {
     light.groundColor = new B.Color3(0.2, 0.2, 0.2);
 
     const model = (window as any).mcCreatePlayerModelNow?.(scene, skin) ?? null;
+    if (model) armors.forEach((a) => (window as any).mcAttachArmor?.(model, a, scene));
 
     let angle = 0;
     scene.onBeforeRenderObservable.add(() => {
       angle += 0.015;
-      if (model) (window as any).mcSetPlayerTransform?.(model, 0, 0, 0, angle, 0, true);
+      if (model) (window as any).mcSetPlayerTransform?.(model, 0, 0, 0, angle, 0, walkingRef.current);
     });
 
     engine.runRenderLoop(() => scene.render());
@@ -193,6 +222,8 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
   const [chars, setChars] = useState<string[]>([]);
   const [selected, setSelected] = useState("");
   const [previewSkin, setPreviewSkin] = useState("player");
+  const [previewArmors, setPreviewArmors] = useState<string[]>([]);
+  const [previewWalking, setPreviewWalking] = useState(true);
   const [newChar, setNewChar] = useState("");
   const usernameInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
@@ -293,10 +324,18 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
 
   useEffect(() => {
     if (step !== "chars" || !selected || selected === "__new__") return;
-    fetch(`/api/player/${encodeURIComponent(selected)}/skin`)
-      .then((r) => r.json())
-      .then((d) => setPreviewSkin(d.skin ?? "player"))
-      .catch(() => setPreviewSkin("player"));
+    const enc = encodeURIComponent(selected);
+    Promise.all([
+      fetch(`/api/player/${enc}/skin`)
+        .then((r) => r.json())
+        .catch(() => ({ skin: "player" })),
+      fetch(`/api/player/${enc}/armors`)
+        .then((r) => r.json())
+        .catch(() => []),
+    ]).then(([skinData, armors]) => {
+      setPreviewSkin(skinData.skin ?? "player");
+      setPreviewArmors(Array.isArray(armors) ? armors : []);
+    });
   }, [step, selected]);
 
   function goChars(user: string) {
@@ -609,8 +648,46 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
               )}
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-              <PlayerModelPreview key={previewSkin} skin={previewSkin} />
-              <div style={{ fontSize: 11, color: "#555" }}>Preview</div>
+              <PlayerModelPreview
+                key={previewSkin + previewArmors.join(",")}
+                skin={previewSkin}
+                armors={previewArmors}
+                walking={previewWalking}
+              />
+              <div style={{ display: "flex", gap: 4, width: 160 }}>
+                <button
+                  onClick={() => setPreviewWalking(false)}
+                  style={{
+                    flex: 1,
+                    background: !previewWalking ? "#2a3d2a" : "#1e1e1e",
+                    border: `1px solid ${!previewWalking ? "#4a7a4a" : "#333"}`,
+                    borderRadius: 4,
+                    color: !previewWalking ? "#7aac7a" : "#666",
+                    fontFamily: "monospace",
+                    fontSize: 11,
+                    cursor: "pointer",
+                    padding: "4px 0",
+                  }}
+                >
+                  Statique
+                </button>
+                <button
+                  onClick={() => setPreviewWalking(true)}
+                  style={{
+                    flex: 1,
+                    background: previewWalking ? "#2a3d2a" : "#1e1e1e",
+                    border: `1px solid ${previewWalking ? "#4a7a4a" : "#333"}`,
+                    borderRadius: 4,
+                    color: previewWalking ? "#7aac7a" : "#666",
+                    fontFamily: "monospace",
+                    fontSize: 11,
+                    cursor: "pointer",
+                    padding: "4px 0",
+                  }}
+                >
+                  Marche
+                </button>
+              </div>
             </div>
           </div>
         )}
