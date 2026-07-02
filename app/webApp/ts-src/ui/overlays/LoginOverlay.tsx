@@ -300,14 +300,16 @@ export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
   }, [step, selected]);
 
   function goChars(user: string) {
+    const trimmed = user.trim();
     try {
-      localStorage.setItem("micraft_last_user", user.trim());
+      localStorage.setItem("micraft_last_user", trimmed);
     } catch {}
+    setUsername(trimmed);
     const users = getUsers();
-    const playerChars = users[user.trim()] || [];
-    const lastPlayer = getLastPlayer(user.trim());
+    const playerChars = users[trimmed] || [];
+    const lastPlayer = getLastPlayer(trimmed);
     setChars(playerChars);
-    setNewChar(playerChars.length === 0 ? user.trim() : "");
+    setNewChar(playerChars.length === 0 ? trimmed : "");
     setSelected(lastPlayer || (playerChars[0] ?? "__new__"));
     setLang(getLastLang());
     setStep("chars");
