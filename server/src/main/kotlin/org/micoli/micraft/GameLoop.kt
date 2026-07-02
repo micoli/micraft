@@ -686,6 +686,7 @@ class GameLoop(
                 Math.floorDiv(spawn.z.toInt(), WorldConstants.CHUNK_SIZE),
             )
         session.lastChunkPos = spawnCp
+        chunkStreamer.sendCenterChunkNow(session, spawnCp)
         chunkStreamer.requestAround(session, spawnCp.cx, spawnCp.cz)
         log.info("chunk requests queued for {}", id.take(8))
 

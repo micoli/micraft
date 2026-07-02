@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
@@ -48,6 +49,12 @@ class ChunkStreamer(private val world: WorldState) {
         if (!posChanged && session.inFlightChunks.size >= MAX_IN_FLIGHT) return
         if (posChanged) session.lastChunkPos = newCp
         requestAround(session, newCp.cx, newCp.cz)
+    }
+
+    suspend fun sendCenterChunkNow(session: PlayerSession, cp: ChunkPos) {
+        val chunk = withContext(Dispatchers.IO) { world.getOrGenerate(cp) }
+        session.loadedChunks.add(cp)
+        session.sendChunk(ServerMessage.ChunkData(chunk.pos, chunk.topY(), chunk.encodeWire()))
     }
 
     fun requestAround(session: PlayerSession, cx: Int, cz: Int) {
