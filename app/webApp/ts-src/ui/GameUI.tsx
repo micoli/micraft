@@ -16,6 +16,7 @@ import { LayoutEditor } from "./layout/LayoutEditor";
 import { defaultLayout, resolveActiveLayout, widgetStyle } from "./layout/LayoutEngine";
 import { CodexModal } from "../codex/CodexModal";
 import { ChunkDebug, ChunkDebugData } from "./game/ChunkDebug";
+import { Character } from "./game/Character";
 
 function loadHudMode(): HudMode {
   try {
@@ -54,6 +55,7 @@ const initial: UiState = {
   preferencesOpen: false,
   preferences: null,
   pauseMenuOpen: false,
+  characterOpen: false,
 };
 
 export function GameUI() {
@@ -81,6 +83,7 @@ export function GameUI() {
   const pauseMenuOpenRef = useRef(false);
   const preferencesOpenRef = useRef(false);
   const codexOpenRef = useRef(false);
+  const characterOpenRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,8 +118,13 @@ export function GameUI() {
 
   useEffect(() => {
     codexOpenRef.current = state.codexOpen;
-    if (window.mcState) window.mcState.modalOpen = state.codexOpen || state.preferencesOpen;
-  }, [state.codexOpen, state.preferencesOpen]);
+    if (window.mcState)
+      window.mcState.modalOpen = state.codexOpen || state.preferencesOpen || state.characterOpen;
+  }, [state.codexOpen, state.preferencesOpen, state.characterOpen]);
+
+  useEffect(() => {
+    characterOpenRef.current = state.characterOpen;
+  }, [state.characterOpen]);
 
   // Auto-hide server log after 15s of no new messages
   useEffect(() => {
@@ -326,6 +334,7 @@ export function GameUI() {
 
     window.mc.showPreferences = () => dispatch({ type: "preferences_show" });
     window.mc.openCodex = () => dispatch({ type: "codex_open" });
+    window.mc.openCharacter = () => dispatch({ type: "character_open" });
 
     window.mc.updateChunkDebug = (json: string) => {
       try {
@@ -349,6 +358,10 @@ export function GameUI() {
       const loginEl = document.getElementById("mc-login-root");
       if (loginEl && (loginEl as HTMLElement).dataset.visible === "true") return;
       if (ke.key === "Escape" && !consoleOpenRef.current) {
+        if (characterOpenRef.current) {
+          dispatch({ type: "character_close" });
+          return;
+        }
         if (codexOpenRef.current) {
           dispatch({ type: "codex_close" });
           return;
@@ -471,6 +484,13 @@ export function GameUI() {
           />
           <NpcDialog data={state.npcDialog} onClose={() => dispatch({ type: "npc_dialog_close" })} />
           <CodexModal open={state.codexOpen} onClose={() => dispatch({ type: "codex_close" })} />
+          <Character
+            open={state.characterOpen}
+            onClose={() => dispatch({ type: "character_close" })}
+            onCommand={(cmd) => {
+              consoleSubmittedRef.current = cmd;
+            }}
+          />
           <Preferences
             open={state.preferencesOpen}
             preferences={state.preferences}
@@ -483,6 +503,10 @@ export function GameUI() {
             onPreferences={() => {
               dispatch({ type: "pause_menu_hide" });
               dispatch({ type: "preferences_show" });
+            }}
+            onCharacter={() => {
+              dispatch({ type: "pause_menu_hide" });
+              dispatch({ type: "character_open" });
             }}
             onDisconnect={() => {
               consoleSubmittedRef.current = "/disconnect";

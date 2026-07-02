@@ -226,6 +226,7 @@ window.mc = {
   consumePreferencesUpdate: () => "",
   showPreferences: () => {},
   openCodex: () => {},
+  openCharacter: () => {},
   updateChunkDebug: () => {},
   createHUD: () => {},
   createHotbar: () => {},

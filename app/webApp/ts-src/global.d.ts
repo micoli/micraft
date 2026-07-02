@@ -372,6 +372,7 @@ declare global {
     consumePreferencesUpdate(): string;
     showPreferences(): void;
     openCodex(): void;
+    openCharacter(): void;
     updateChunkDebug(json: string): void;
     createHUD(): void;
     createHotbar(): void;

@@ -25,6 +25,7 @@ const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   minimap_zoom_in: ["l"],
   minimap_zoom_out: ["m"],
   layout_editor: ["KeyG"],
+  character: ["KeyY"],
   slot_1: ["Digit1"],
   slot_2: ["Digit2"],
   slot_3: ["Digit3"],
@@ -165,6 +166,7 @@ export function registerKeyboard(): Pick<
         if (b.inventory?.some((k) => matchesEvent(k, e))) window.mcState.events.push("inventory");
         if (b.undo?.some((k) => matchesEvent(k, e))) window.mcState.events.push("undo");
         if (b.layout_editor?.some((k) => matchesEvent(k, e))) window.mc?.showLayoutEditor?.();
+        if (b.character?.some((k) => matchesEvent(k, e))) window.mc?.openCharacter?.();
         if (b.preferences?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.();
         if (b.minimap_zoom_in?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomIn?.();
         if (b.minimap_zoom_out?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomOut?.();

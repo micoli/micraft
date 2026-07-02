@@ -27,6 +27,7 @@ export interface UiState {
   preferencesOpen: boolean;
   preferences: PreferencesData | null;
   pauseMenuOpen: boolean;
+  characterOpen: boolean;
 }
 
 export type UiAction =
@@ -71,7 +72,9 @@ export type UiAction =
       customCommands: Record<string, string[]>;
     }
   | { type: "pause_menu_show" }
-  | { type: "pause_menu_hide" };
+  | { type: "pause_menu_hide" }
+  | { type: "character_open" }
+  | { type: "character_close" };
 
 const HUD_MODES: HudMode[] = ["simple", "medium", "complete"];
 let notifKey = 0;
@@ -187,5 +190,9 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, pauseMenuOpen: true };
     case "pause_menu_hide":
       return { ...state, pauseMenuOpen: false };
+    case "character_open":
+      return { ...state, characterOpen: true };
+    case "character_close":
+      return { ...state, characterOpen: false };
   }
 }

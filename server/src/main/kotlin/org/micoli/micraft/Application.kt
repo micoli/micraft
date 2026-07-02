@@ -34,12 +34,14 @@ import org.micoli.micraft.http.metricsRoutes
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.world.ArmorRegistryLoader
 import org.micoli.micraft.world.BiomeConfig
 import org.micoli.micraft.world.BiomeRegistry
 import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockRegistryLoader
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemRegistryLoader
+import org.micoli.micraft.world.WearableSlots
 import org.micoli.micraft.world.WorldMetadata
 import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
@@ -325,6 +327,13 @@ fun Application.module() {
             val skins = availablePlayerSkins()
             call.respondText(
                 Json.encodeToString(ListSerializer(String.serializer()), skins),
+                ContentType.Application.Json)
+        }
+        get("/api/armors") {
+            val armors = ArmorRegistryLoader(Path.of("resources/armors")).load()
+            call.respondText(
+                Json.encodeToString(
+                    MapSerializer(String.serializer(), WearableSlots.serializer()), armors),
                 ContentType.Application.Json)
         }
         staticFiles("/api/models", java.io.File("resources"))

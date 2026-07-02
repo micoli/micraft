@@ -49,9 +49,10 @@ interface PauseMenuProps {
   onClose: () => void;
   onDisconnect: () => void;
   onPreferences: () => void;
+  onCharacter: () => void;
 }
 
-export function PauseMenu({ open, onClose, onDisconnect, onPreferences }: PauseMenuProps) {
+export function PauseMenu({ open, onClose, onDisconnect, onPreferences, onCharacter }: PauseMenuProps) {
   const prefsButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (open) setTimeout(() => prefsButtonRef.current?.focus(), 50);
@@ -63,6 +64,9 @@ export function PauseMenu({ open, onClose, onDisconnect, onPreferences }: PauseM
         <div style={titleStyle}>PAUSE</div>
         <button ref={prefsButtonRef} style={btnStyle} onClick={onPreferences}>
           Preferences
+        </button>
+        <button style={btnStyle} onClick={onCharacter}>
+          Character
         </button>
         <button style={{ ...btnStyle, color: "#f88" }} onClick={onDisconnect}>
           Disconnect
