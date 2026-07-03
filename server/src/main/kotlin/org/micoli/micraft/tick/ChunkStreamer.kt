@@ -58,13 +58,23 @@ class ChunkStreamer(private val world: WorldState) {
     }
 
     fun requestAround(session: PlayerSession, cx: Int, cz: Int) {
-        val offsets = buildOffsets(session.state.orientation.yaw.toDouble(), cx, cz)
+        val yaw = session.state.orientation.yaw.toDouble()
+        val offsets = buildOffsets(yaw, cx, cz)
         val pending = pendingPools.getOrPut(session.id) { ConcurrentHashMap.newKeySet() }
+        val primaryAllCovered = offsets.none { (dx, dz) ->
+            chunkScore(dx, dz, yaw) < 4000.0 &&
+                run {
+                    val cp = ChunkPos(cx + dx, cz + dz)
+                    !session.loadedChunks.contains(cp) &&
+                        !session.inFlightChunks.contains(cp) &&
+                        !pending.contains(cp)
+                }
+        }
         for ((dx, dz) in offsets) {
             val cp = ChunkPos(cx + dx, cz + dz)
-            if (!session.loadedChunks.contains(cp) && !session.inFlightChunks.contains(cp)) {
-                pending.add(cp)
-            }
+            if (session.loadedChunks.contains(cp) || session.inFlightChunks.contains(cp)) continue
+            if (!primaryAllCovered && chunkScore(dx, dz, yaw) >= 4000.0) continue
+            pending.add(cp)
         }
         drainPending(session)
     }
@@ -143,16 +153,18 @@ class ChunkStreamer(private val world: WorldState) {
     }
 
     private fun chunkScore(dx: Int, dz: Int, yaw: Double): Double {
-        if (dx == 0 && dz == 0) return -1.0
+        val dist = sqrt((dx * dx + dz * dz).toDouble())
+        if (dist == 0.0) return -1.0
+        if (dist <= sqrt(2.0) + 0.01) return 1000.0 + dist
         val fwdX = -sin(yaw)
         val fwdZ = -cos(yaw)
-        val dist = sqrt((dx * dx + dz * dz).toDouble())
         val dot = (dx * fwdX + dz * fwdZ) / dist
         val angleDeg = Math.toDegrees(acos(dot.coerceIn(-1.0, 1.0)))
+        val halfR = WorldConstants.FORWARD_VIEW_RADIUS / 2.0
         return when {
-            angleDeg < 60.0 -> dist
-            angleDeg < 120.0 -> 1000.0 + dist
-            else -> 2000.0 + dist
+            dist <= halfR && angleDeg < 60.0 -> 2000.0 + dist
+            dist > halfR -> 3000.0 + dist
+            else -> 4000.0 + dist
         }
     }
 

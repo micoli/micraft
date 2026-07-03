@@ -1,5 +1,6 @@
 package org.micoli.micraft
 
+import kotlin.math.*
 import org.micoli.micraft.babylon.*
 import org.micoli.micraft.world.*
 
@@ -179,6 +180,45 @@ class ChunkManager(private val scene: JsAny) {
             chunkData.remove(cp)
         }
         pendingUnloads.addAll(toUnload)
+    }
+
+    fun isDownloaded(pos: ChunkPos): Boolean =
+        loadedChunks.contains(pos) ||
+            pendingChunks.any { (c, _) -> c.pos == pos } ||
+            activeRender?.chunk?.pos == pos
+
+    fun allFovChunksMeshed(playerCx: Int, playerCz: Int, yaw: Double): Boolean {
+        val r = WorldConstants.CLIENT_VIEW_RADIUS
+        val fwdX = -sin(yaw)
+        val fwdZ = -cos(yaw)
+        for (dx in -r..r) {
+            for (dz in -r..r) {
+                if (dx == 0 && dz == 0) continue
+                val dist = sqrt((dx * dx + dz * dz).toDouble())
+                val dot = (dx * fwdX + dz * fwdZ) / dist
+                val angleDeg = acos(dot.coerceIn(-1.0, 1.0)) * (180.0 / PI)
+                if (angleDeg >= 60.0) continue
+                if (!loadedChunks.contains(ChunkPos(playerCx + dx, playerCz + dz))) return false
+            }
+        }
+        return true
+    }
+
+    fun allFovChunksDownloaded(playerCx: Int, playerCz: Int, yaw: Double): Boolean {
+        val r = WorldConstants.CLIENT_VIEW_RADIUS
+        val fwdX = -sin(yaw)
+        val fwdZ = -cos(yaw)
+        for (dx in -r..r) {
+            for (dz in -r..r) {
+                if (dx == 0 && dz == 0) continue
+                val dist = sqrt((dx * dx + dz * dz).toDouble())
+                val dot = (dx * fwdX + dz * fwdZ) / dist
+                val angleDeg = acos(dot.coerceIn(-1.0, 1.0)) * (180.0 / PI)
+                if (angleDeg >= 60.0) continue
+                if (!isDownloaded(ChunkPos(playerCx + dx, playerCz + dz))) return false
+            }
+        }
+        return true
     }
 
     fun clear() {

@@ -4,7 +4,7 @@ package org.micoli.micraft.babylon
 
 // ── Loading overlay ────────────────────────────────────────────────────────────
 
-fun jsUpdateChunkLoading(loaded: Int, total: Int): Unit = js("mc.updateChunkLoading(loaded, total)")
+fun jsUpdateChunkLoading(meshed: Int, downloaded: Int, total: Int): Unit = js("mc.updateChunkLoading(meshed, downloaded, total)")
 
 fun jsHideChunkLoading(): Unit = js("mc.hideChunkLoading()")
 

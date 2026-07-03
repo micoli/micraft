@@ -88,11 +88,11 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     localController.tick()
                 }
                 if (isInitialLoading) {
-                    val loaded = chunkManager.loadedChunks.size
-                    uiState.chunkLoadingProgress = Pair(loaded, expectedChunkCount)
+                    val meshed = chunkManager.loadedChunks.size
+                    val pending = chunkManager.pendingRenderCount
+                    uiState.chunkLoadingProgress = Triple(meshed, pending, expectedChunkCount)
                     if (localController.hasPrediction &&
-                        chunkManager.pendingRenderCount == 0 &&
-                        loaded >= expectedChunkCount) {
+                        chunkManager.allFovChunksMeshed(currentPlayerCx, currentPlayerCz, currentYaw.toDouble())) {
                         isInitialLoading = false
                         uiState.chunkLoadingProgress = null
                     }
@@ -257,7 +257,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         when (msg) {
             is ServerMessage.Welcome -> {
                 isInitialLoading = true
-                uiState.chunkLoadingProgress = Pair(0, expectedChunkCount)
+                uiState.chunkLoadingProgress = Triple(0, 0, expectedChunkCount)
                 localPlayerId = msg.playerId
                 chunkTransportMode = msg.chunkTransport
                 if (msg.chunkTransport == "http") {

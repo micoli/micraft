@@ -29,10 +29,19 @@ class HttpChunkFetcher(
     private val baseUrl = "http://${jsGetPageHost()}:${jsGetPagePort()}"
 
     fun trigger(playerCx: Int, playerCz: Int, yaw: Float) {
-        val offsets = buildOffsets(yaw.toDouble(), playerCx, playerCz)
+        val yawD = yaw.toDouble()
+        val offsets = buildOffsets(yawD, playerCx, playerCz)
+        val primaryAllCovered = offsets.none { (dx, dz) ->
+            chunkScore(dx, dz, yawD) < 4000.0 &&
+                run {
+                    val cp = ChunkPos(playerCx + dx, playerCz + dz)
+                    !chunkManager.loadedChunks.contains(cp) && !inFlight.contains(cp)
+                }
+        }
         for ((dx, dz) in offsets) {
             val cp = ChunkPos(playerCx + dx, playerCz + dz)
             if (chunkManager.loadedChunks.contains(cp) || inFlight.contains(cp)) continue
+            if (!primaryAllCovered && chunkScore(dx, dz, yawD) >= 4000.0) continue
             inFlight.add(cp)
             scope.launch { fetch(cp) }
         }
@@ -63,16 +72,18 @@ class HttpChunkFetcher(
     }
 
     private fun chunkScore(dx: Int, dz: Int, yaw: Double): Double {
-        if (dx == 0 && dz == 0) return -1.0
+        val dist = sqrt((dx * dx + dz * dz).toDouble())
+        if (dist == 0.0) return 0.0
+        if (dist <= sqrt(2.0) + 0.01) return 1000.0 + dist
         val fwdX = -sin(yaw)
         val fwdZ = -cos(yaw)
-        val dist = sqrt((dx * dx + dz * dz).toDouble())
         val dot = (dx * fwdX + dz * fwdZ) / dist
         val angleDeg = acos(dot.coerceIn(-1.0, 1.0)) * (180.0 / PI)
+        val halfR = WorldConstants.CLIENT_VIEW_RADIUS / 2.0
         return when {
-            angleDeg < 60.0 -> dist
-            angleDeg < 120.0 -> 1000.0 + dist
-            else -> 2000.0 + dist
+            dist <= halfR && angleDeg < 60.0 -> 2000.0 + dist
+            dist > halfR -> 3000.0 + dist
+            else -> 4000.0 + dist
         }
     }
 }

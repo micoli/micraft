@@ -19,7 +19,7 @@ export interface UiState {
   consoleOpen: boolean;
   loginVisible: boolean;
   disconnectMsg: string | null;
-  chunkLoading: { loaded: number; total: number } | null;
+  chunkLoading: { meshed: number; downloaded: number; total: number } | null;
   layouts: GameLayout[];
   activeLayout: string;
   layoutEditorOpen: boolean;
@@ -51,7 +51,7 @@ export type UiAction =
   | { type: "login_hide" }
   | { type: "disconnect_show"; message: string }
   | { type: "disconnect_hide" }
-  | { type: "chunk_loading_update"; loaded: number; total: number }
+  | { type: "chunk_loading_update"; meshed: number; downloaded: number; total: number }
   | { type: "chunk_loading_hide" }
   | { type: "log_hide" }
   | { type: "layouts_sync"; layouts: GameLayout[]; activeLayout: string }
@@ -155,7 +155,7 @@ export function reducer(state: UiState, action: UiAction): UiState {
     case "disconnect_hide":
       return { ...state, disconnectMsg: null };
     case "chunk_loading_update":
-      return { ...state, chunkLoading: { loaded: action.loaded, total: action.total } };
+      return { ...state, chunkLoading: { meshed: action.meshed, downloaded: action.downloaded, total: action.total } };
     case "chunk_loading_hide":
       return { ...state, chunkLoading: null };
     case "layouts_sync":

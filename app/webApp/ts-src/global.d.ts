@@ -364,7 +364,7 @@ declare global {
     hideLoginOverlay(): void;
     showDisconnectedOverlay(msg: string): void;
     hideDisconnectedOverlay(): void;
-    updateChunkLoading(loaded: number, total: number): void;
+    updateChunkLoading(meshed: number, downloaded: number, total: number): void;
     hideChunkLoading(): void;
     showConsole(): void;
     hideConsole(): void;

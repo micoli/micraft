@@ -274,8 +274,8 @@ export function GameUI() {
     window.mc.hideLoginOverlay = () => dispatch({ type: "login_hide" });
     window.mc.showDisconnectedOverlay = (msg: string) => dispatch({ type: "disconnect_show", message: msg });
     window.mc.hideDisconnectedOverlay = () => dispatch({ type: "disconnect_hide" });
-    window.mc.updateChunkLoading = (loaded: number, total: number) =>
-      dispatch({ type: "chunk_loading_update", loaded, total });
+    window.mc.updateChunkLoading = (meshed: number, downloaded: number, total: number) =>
+      dispatch({ type: "chunk_loading_update", meshed, downloaded, total });
     window.mc.hideChunkLoading = () => dispatch({ type: "chunk_loading_hide" });
 
     window.mc.showConsole = () => dispatch({ type: "console_show" });

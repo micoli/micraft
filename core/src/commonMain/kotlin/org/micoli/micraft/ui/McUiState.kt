@@ -106,9 +106,9 @@ class McUiState {
         _preferencesSync.value = json
     }
 
-    private val _chunkLoadingProgress = MutableStateFlow<Pair<Int, Int>?>(null)
-    val chunkLoadingProgressFlow: StateFlow<Pair<Int, Int>?> = _chunkLoadingProgress
-    var chunkLoadingProgress: Pair<Int, Int>?
+    private val _chunkLoadingProgress = MutableStateFlow<Triple<Int, Int, Int>?>(null)
+    val chunkLoadingProgressFlow: StateFlow<Triple<Int, Int, Int>?> = _chunkLoadingProgress
+    var chunkLoadingProgress: Triple<Int, Int, Int>?
         get() = _chunkLoadingProgress.value
         set(value) {
             _chunkLoadingProgress.value = value
