@@ -63,6 +63,10 @@ const initial: UiState = {
 export function GameUI() {
   const [state, dispatch] = useReducer(reducer, initial);
   const [chunkDebugData, setChunkDebugData] = useState<ChunkDebugData | null>(null);
+  const chunkLoadStatsRef = useRef<{ chunkDownloading: number; chunkMeshing: number }>({
+    chunkDownloading: 0,
+    chunkMeshing: 0,
+  });
 
   // Refs for synchronous reads by Kotlin
   const logTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -207,6 +211,7 @@ export function GameUI() {
       window.mcState.minimapY = y;
       window.mcState.minimapGameTime = gameTime;
       window.mcState.minimapSpeed = speed;
+      chunkLoadStatsRef.current = { chunkDownloading, chunkMeshing };
       dispatch({
         type: "hud",
         data: {
@@ -385,7 +390,7 @@ export function GameUI() {
 
     window.mc.updateChunkDebug = (json: string) => {
       try {
-        setChunkDebugData(JSON.parse(json) as ChunkDebugData);
+        setChunkDebugData({ ...(JSON.parse(json) as ChunkDebugData), ...chunkLoadStatsRef.current });
       } catch {
         /* ignore */
       }

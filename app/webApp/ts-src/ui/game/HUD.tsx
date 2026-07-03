@@ -38,37 +38,27 @@ export function HUD({
   } = data;
 
   let lines: string[];
+  const simple = () => [
+    `Stance: ${stance}`,
+    `Biome: ${biome ? biome : "?"}`,
+    `Orientation: Y:${yaw.toFixed(1)}°, P:${pitch.toFixed(1)}°`,
+    `Block: ${targetBlock ? targetBlock : "?"}`
+  ];
+  const medium = () => [`FPS: ${fps}`,];
+  const full = () => [
+    `Tick: ${tickDtMinMs.toFixed(1)}↔${tickDtMaxMs.toFixed(1)}ms avg:${tickDtMs.toFixed(1)}ms`,
+    `Jitr: ${tickJitterMinMs.toFixed(1)}↔${tickJitterMaxMs.toFixed(1)}ms cur:${tickJitterMs.toFixed(1)}ms`,
+    `Chunks: DL:${chunkDownloading} mesh:${chunkMeshing}`,
+    `↓ ${kbIn.toFixed(1)} KB/s  ↑ ${kbOut.toFixed(1)} KB/s`,
+    `Rec XZ: ${reconcileXzStats}`,
+    `Rec  Y: ${reconcileYStats}`,
+  ];
   if (mode === "simple") {
-    lines = [
-      `Pos: ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`,
-      `Speed: ×${speed.toFixed(1)}`,
-      ...(gameTime ? [`Time: ${gameTime}`] : []),
-    ];
+    lines = [...simple()];
   } else if (mode === "medium") {
-    lines = [
-      `Pos: ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`,
-      `Orientation: Y:${yaw.toFixed(1)}°, P:${pitch.toFixed(1)}°`,
-      stance,
-      `Speed: ×${speed.toFixed(1)}`,
-      ...(gameTime ? [`Time: ${gameTime}`] : []),
-    ];
+    lines = [...simple(), ...medium()];
   } else {
-    lines = [
-      `FPS: ${fps}`,
-      `Tick: ${tickDtMinMs.toFixed(1)}↔${tickDtMaxMs.toFixed(1)}ms avg:${tickDtMs.toFixed(1)}ms`,
-      `Jitr: ${tickJitterMinMs.toFixed(1)}↔${tickJitterMaxMs.toFixed(1)}ms cur:${tickJitterMs.toFixed(1)}ms`,
-      `Chunks: DL:${chunkDownloading} mesh:${chunkMeshing}`,
-      `Pos: ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`,
-      `Orientation: Y:${yaw.toFixed(1)}°, P:${pitch.toFixed(1)}°`,
-      stance,
-      `Speed: ×${speed.toFixed(1)}`,
-      `↓ ${kbIn.toFixed(1)} KB/s  ↑ ${kbOut.toFixed(1)} KB/s`,
-      `Rec XZ: ${reconcileXzStats}`,
-      `Rec  Y: ${reconcileYStats}`,
-      ...(biome ? [`Biome ${biome}`] : []),
-      ...(targetBlock ? [`Block ${targetBlock}`] : []),
-      ...(gameTime ? [`Time: ${gameTime}`] : []),
-    ];
+    lines = [...simple(), ...medium(), ...full()];
   }
 
   return (

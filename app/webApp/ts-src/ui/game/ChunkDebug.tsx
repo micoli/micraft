@@ -12,6 +12,8 @@ export interface ChunkDebugData {
   radius: number;
   playerYaw: number;
   chunks: ChunkEntry[];
+  chunkDownloading?: number;
+  chunkMeshing?: number;
 }
 
 const STATE_COLOR: Record<string, string> = {
@@ -27,7 +29,7 @@ interface Props {
 
 export function ChunkDebug({ data, layoutStyle }: Props) {
   if (!data) return null;
-  const { playerCx, playerCz, radius, playerYaw, chunks } = data;
+  const { playerCx, playerCz, radius, playerYaw, chunks, chunkDownloading, chunkMeshing } = data;
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -95,6 +97,7 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
         }}
       >
         CHUNKS [{playerCx},{playerCz}]
+        {chunkDownloading !== undefined ? ` DL:${chunkDownloading} mesh:${chunkMeshing}` : ""}
       </div>
       <div
         style={{
