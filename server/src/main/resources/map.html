@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MicCraft Map</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #1a1a1a; color: #eee; font-family: monospace; display: flex; height: 100vh; overflow: hidden; }
+  #sidebar { width: 220px; min-width: 220px; background: #111; padding: 12px; overflow-y: auto; border-right: 1px solid #333; display: flex; flex-direction: column; }
+  #sidebar h2 { font-size: 13px; color: #aaa; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+  #sidebar h3 { font-size: 11px; color: #888; margin: 10px 0 4px; text-transform: uppercase; }
+  .entity-entry { font-size: 11px; padding: 5px 6px; border-bottom: 1px solid #222; cursor: pointer; border-radius: 3px; transition: background 0.1s; user-select: none; }
+  .entity-entry:hover { background: #1e2a3a; }
+  .entity-entry.tracking { background: #0d2040; border-left: 2px solid #6af; padding-left: 4px; }
+  .entity-entry.tracking.npc-tracking { border-left-color: #fa6; }
+  .entity-name { color: #6af; font-weight: bold; }
+  .npc-name { color: #fa6; font-weight: bold; }
+  .coords { color: #777; font-size: 10px; }
+  .follow-badge { font-size: 9px; color: #6af; vertical-align: middle; }
+  .follow-badge.npc { color: #fa6; }
+  #time { font-size: 12px; color: #ccc; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #333; }
+  .layer-toggles { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #333; }
+  .layer-toggles label { font-size: 11px; color: #bbb; display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+  .layer-toggles label:hover { color: #eee; }
+  .layer-toggles input[type=checkbox] { accent-color: #6af; width: 13px; height: 13px; cursor: pointer; }
+  .layer-toggles input[type=checkbox]:disabled { opacity: 0.35; cursor: default; }
+  .layer-toggles label.disabled { color: #555; cursor: default; }
+  #sidebar-footer { margin-top: auto; padding-top: 12px; border-top: 1px solid #333; }
+  #fit-btn { width: 100%; padding: 5px; background: #1a2a3a; border: 1px solid #446; color: #aaf; font-family: monospace; font-size: 11px; cursor: pointer; border-radius: 3px; }
+  #fit-btn:hover { background: #253a50; }
+  #canvas-wrap { flex: 1; position: relative; overflow: hidden; }
+  #map { display: block; cursor: grab; }
+  #map.dragging { cursor: grabbing; }
+  #map-controls { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 4px; z-index: 10; }
+  .ctrl-btn { width: 32px; height: 32px; background: rgba(15,15,25,0.88); border: 1px solid #444; color: #ccc; font-size: 20px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; user-select: none; line-height: 1; }
+  .ctrl-btn:hover { background: rgba(40,60,90,0.9); color: #fff; }
+  #map-coords { position: absolute; bottom: 8px; left: 8px; font-size: 10px; color: #667; pointer-events: none; background: rgba(0,0,0,0.4); padding: 2px 5px; border-radius: 3px; }
+  #status { position: absolute; bottom: 8px; right: 8px; font-size: 10px; color: #555; }
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <div id="time">⏰ --:--</div>
+  <h2>Layers</h2>
+  <div class="layer-toggles">
+    <label><input type="checkbox" id="layer-voronoi" checked> Biome borders</label>
+    <label><input type="checkbox" id="layer-contours" checked> Contour lines</label>
+    <label><input type="checkbox" id="layer-vegetation" checked> Vegetation</label>
+    <label><input type="checkbox" id="layer-houses" checked> Houses</label>
+    <label><input type="checkbox" id="layer-players" checked> Players</label>
+    <label><input type="checkbox" id="layer-npcs" checked> NPCs</label>
+    <label><input type="checkbox" id="layer-routes" checked> Routes</label>
+    <label><input type="checkbox" id="layer-precise-roads" checked> Precise roads</label>
+  </div>
+  <h3>Players</h3>
+  <div id="player-list"><span style="color:#555">none</span></div>
+  <h3>NPCs</h3>
+  <div id="npc-list"><span style="color:#555">none</span></div>
+  <div id="sidebar-footer">
+    <button id="fit-btn">⊡ Fit All</button>
+  </div>
+</div>
+<div id="canvas-wrap">
+  <canvas id="map"></canvas>
+  <div id="map-controls">
+    <div class="ctrl-btn" id="zoom-in-btn" title="Zoom in">+</div>
+    <div class="ctrl-btn" id="zoom-out-btn" title="Zoom out">−</div>
+  </div>
+  <div id="map-coords">x: — z: —</div>
+  <div id="status">connecting...</div>
+</div>
+<script src="/map.js"></script>
+</body>
+</html>

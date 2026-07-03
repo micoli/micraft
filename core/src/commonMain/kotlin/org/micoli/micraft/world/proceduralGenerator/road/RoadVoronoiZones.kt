@@ -197,6 +197,8 @@ class RoadVoronoiZones(
         )
     }
 
+    fun isOnRoadAt(wx: Int, wz: Int): Boolean = isOnRoad(biomeAt(wx, wz), wx, wz)
+
     fun isOnRoad(columnBiomeId: String, wx: Int, wz: Int): Boolean {
         if (!config.enabled) return false
         val info = edgeInfo(wx, wz)
