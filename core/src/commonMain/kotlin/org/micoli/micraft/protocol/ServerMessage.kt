@@ -101,6 +101,8 @@ sealed class ServerMessage {
 
     @Serializable object OpenCodex : ServerMessage()
 
+    @Serializable object ToggleBiomeMap : ServerMessage()
+
     @Serializable
     data class RegistrySync(
         val blocks: List<BlockInfo>,

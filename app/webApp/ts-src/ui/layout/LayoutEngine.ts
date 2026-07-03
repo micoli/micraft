@@ -91,6 +91,17 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
     editorLabel: "Chunk Debug",
     editorColor: "rgba(40,180,180,0.75)",
   },
+  {
+    type: "BIOME_MAP",
+    x: 40,
+    y: 20,
+    w: 8,
+    h: 12,
+    minW: 5,
+    minH: 6,
+    editorLabel: "Biome Map",
+    editorColor: "rgba(80,160,60,0.75)",
+  },
 ];
 
 export const DEFAULT_WIDGETS: LayoutWidget[] = WIDGET_REGISTRY.map(({ type, x, y, w, h }) => ({ type, x, y, w, h }));

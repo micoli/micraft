@@ -18,6 +18,7 @@ import { defaultLayout, resolveActiveLayout, widgetStyle } from "./layout/Layout
 import { CodexModal } from "../codex/CodexModal";
 import { ChunkDebug, ChunkDebugData } from "./game/ChunkDebug";
 import { Character } from "./game/Character";
+import { BiomeMap } from "./game/BiomeMap";
 
 function loadHudMode(): HudMode {
   try {
@@ -58,6 +59,7 @@ const initial: UiState = {
   preferences: null,
   pauseMenuOpen: false,
   characterOpen: false,
+  biomeMapVisible: false,
 };
 
 export function GameUI() {
@@ -368,6 +370,7 @@ export function GameUI() {
     window.mc.showPreferences = () => dispatch({ type: "preferences_show" });
     window.mc.openCodex = () => dispatch({ type: "codex_open" });
     window.mc.openCharacter = () => dispatch({ type: "character_open" });
+    window.mc.toggleBiomeMap = () => dispatch({ type: "biome_map_toggle" });
     window.mc.dumpStats = () => {
       const h = hudDataRef.current;
       if (!h) return;
@@ -490,6 +493,13 @@ export function GameUI() {
           <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, "HUD")} />
           {(state.preferences?.chunkDebugVisible ?? false) && (
             <ChunkDebug data={chunkDebugData} layoutStyle={widgetStyle(activeLayout, "CHUNK_DEBUG")} />
+          )}
+          {state.biomeMapVisible && (
+            <BiomeMap
+              playerX={state.hud?.x}
+              playerZ={state.hud?.z}
+              layoutStyle={widgetStyle(activeLayout, "BIOME_MAP")}
+            />
           )}
           <ShortcutBar
             inventory={state.inventory}

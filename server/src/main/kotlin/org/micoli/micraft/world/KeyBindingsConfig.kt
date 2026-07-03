@@ -44,8 +44,9 @@ ui:
   inventory: [KeyI]
   character: [KeyY]
   undo: ["Ctrl+KeyZ", "Cmd+KeyZ"]
-  minimap_zoom_in: [l]
-  minimap_zoom_out: [m]
+  minimap_zoom_in: [k]
+  minimap_zoom_out: [l]
+  biome_map: [m]
   layout_editor: [KeyG]
   dump_stats: [KeyV]
 

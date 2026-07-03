@@ -230,6 +230,7 @@ window.mc = {
   showPreferences: () => {},
   openCodex: () => {},
   openCharacter: () => {},
+  toggleBiomeMap: () => {},
   dumpStats: () => {},
   updateChunkDebug: () => {},
   createHUD: () => {},

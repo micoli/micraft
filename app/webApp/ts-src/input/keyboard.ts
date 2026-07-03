@@ -22,8 +22,9 @@ const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   inventory: ["KeyI"],
   undo: ["Ctrl+KeyZ", "Cmd+KeyZ"],
   auto_forward: ["KeyW+KeyW", "ArrowUp+ArrowUp"],
-  minimap_zoom_in: ["l"],
-  minimap_zoom_out: ["m"],
+  minimap_zoom_in: ["k"],
+  minimap_zoom_out: ["l"],
+  biome_map: ["m"],
   layout_editor: ["KeyG"],
   character: ["KeyY"],
   dump_stats: ["KeyV"],
@@ -172,6 +173,7 @@ export function registerKeyboard(): Pick<
         if (b.preferences?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.();
         if (b.minimap_zoom_in?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomIn?.();
         if (b.minimap_zoom_out?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomOut?.();
+        if (b.biome_map?.some((k) => matchesEvent(k, e))) window.mc?.toggleBiomeMap?.();
         for (let s = 1; s <= 10; s++) {
           const key = `slot_${s}` as string;
           if (b[key]?.some((k: string) => matchesEvent(k, e))) window.mcState.events.push(key);

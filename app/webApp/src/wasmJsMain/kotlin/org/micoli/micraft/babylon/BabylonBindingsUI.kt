@@ -140,3 +140,5 @@ fun jsShowPreferences(): Unit = js("mc.showPreferences()")
 // ── Codex ─────────────────────────────────────────────────────────────────────
 
 fun jsOpenCodex(): Unit = js("mc.openCodex()")
+
+fun jsToggleBiomeMap(): Unit = js("mc.toggleBiomeMap()")

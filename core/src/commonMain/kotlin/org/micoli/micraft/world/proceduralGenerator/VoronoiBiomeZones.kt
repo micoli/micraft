@@ -67,6 +67,28 @@ class VoronoiBiomeZones(
         return ColumnSample(b1!!, b2 ?: b1, blend)
     }
 
+    data class VoronoiCell(val seedX: Int, val seedZ: Int, val biome: BiomeDefinition)
+
+    fun cells(centerX: Int, centerZ: Int, radiusBlocks: Int): List<VoronoiCell> {
+        val minCX = floor((centerX - radiusBlocks).toDouble() / cellSize).toInt() - 1
+        val maxCX = floor((centerX + radiusBlocks).toDouble() / cellSize).toInt() + 1
+        val minCZ = floor((centerZ - radiusBlocks).toDouble() / cellSize).toInt() - 1
+        val maxCZ = floor((centerZ + radiusBlocks).toDouble() / cellSize).toInt() + 1
+        val r2 = radiusBlocks.toLong() * radiusBlocks
+        val result = mutableListOf<VoronoiCell>()
+        for (cx in minCX..maxCX) {
+            for (cz in minCZ..maxCZ) {
+                val (sx, sz) = seedPoint(cx, cz)
+                val dx = (sx - centerX).toLong()
+                val dz = (sz - centerZ).toLong()
+                if (dx * dx + dz * dz <= r2) {
+                    result.add(VoronoiCell(sx, sz, seedBiome(sx, sz)))
+                }
+            }
+        }
+        return result
+    }
+
     private fun moistureAt(wx: Int, wz: Int): Double =
         ((moistureNoise.octaveNoise(wx / 200.0, wz / 200.0, octaves = 3) + 1.0) / 2.0).coerceIn(
             0.0, 0.9999)

@@ -382,6 +382,7 @@ declare global {
     showPreferences(): void;
     openCodex(): void;
     openCharacter(): void;
+    toggleBiomeMap(): void;
     dumpStats(): void;
     updateChunkDebug(json: string): void;
     createHUD(): void;

@@ -37,6 +37,7 @@ object ServerMessageCodec {
         PREFERENCES_SYNC(24),
         WEATHER_UPDATE(25),
         GAME_CONFIG_SYNC(26),
+        TOGGLE_BIOME_MAP(27),
     }
 
     fun encode(msg: ServerMessage): ByteArray {
@@ -64,6 +65,7 @@ object ServerMessageCodec {
                 ServerMessage.OpenLayoutEditor -> Id.OPEN_LAYOUT_EDITOR to ByteArray(0)
                 ServerMessage.OpenPreferences -> Id.OPEN_PREFERENCES to ByteArray(0)
                 ServerMessage.OpenCodex -> Id.OPEN_CODEX to ByteArray(0)
+                ServerMessage.ToggleBiomeMap -> Id.TOGGLE_BIOME_MAP to ByteArray(0)
                 is ServerMessage.RegistrySync -> Id.REGISTRY_SYNC to proto.encodeToByteArray(msg)
                 is ServerMessage.NpcSpawned -> Id.NPC_SPAWNED to proto.encodeToByteArray(msg)
                 is ServerMessage.NpcDespawned -> Id.NPC_DESPAWNED to proto.encodeToByteArray(msg)
@@ -109,6 +111,7 @@ object ServerMessageCodec {
             24 -> proto.decodeFromByteArray<ServerMessage.PreferencesSync>(payload)
             25 -> proto.decodeFromByteArray<ServerMessage.WeatherUpdate>(payload)
             26 -> proto.decodeFromByteArray<ServerMessage.GameConfigSync>(payload)
+            27 -> ServerMessage.ToggleBiomeMap
             else -> throw IllegalArgumentException("Unknown ServerMessage type id: ${data[0]}")
         }
     }

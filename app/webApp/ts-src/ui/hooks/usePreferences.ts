@@ -40,6 +40,7 @@ const ACTION_GROUPS: Record<string, string[]> = {
     "undo",
     "minimap_zoom_in",
     "minimap_zoom_out",
+    "biome_map",
     "layout_editor",
   ],
   hotbar: ["slot_1", "slot_2", "slot_3", "slot_4", "slot_5", "slot_6", "slot_7", "slot_8", "slot_9", "slot_10"],

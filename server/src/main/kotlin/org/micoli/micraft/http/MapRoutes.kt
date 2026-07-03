@@ -6,6 +6,8 @@ import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.GameLoop
+import org.micoli.micraft.world.BlockRegistry
+import org.micoli.micraft.world.proceduralGenerator.ProceduralChunkGenerator
 import org.micoli.micraft.world.proceduralGenerator.weather.WeatherZoneInfo
 
 @Serializable
@@ -38,6 +40,9 @@ data class MapStateResponse(
 )
 
 @Serializable
+data class VoronoiCellInfo(val x: Int, val z: Int, val biome: String, val color: String)
+
+@Serializable
 data class ChunkTerrainInfo(
     val cx: Int,
     val cz: Int,
@@ -67,6 +72,20 @@ fun Route.mapRoutes(gameLoop: GameLoop) {
     get("/api/map/terrain") {
         call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
         call.respondText(gameLoop.terrainCache.cachedJson, ContentType.Application.Json)
+    }
+
+    get("/api/map/voronoi") {
+        val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
+        val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
+        val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: (50 * 16)
+        val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
+        val cells = gen?.voronoi?.cells(cx, cz, radius)?.map { cell ->
+            val rgb = BlockRegistry.get(cell.biome.surface).minimapColor
+            val color = "#%02x%02x%02x".format(rgb[0], rgb[1], rgb[2])
+            VoronoiCellInfo(cell.seedX, cell.seedZ, cell.biome.id, color)
+        } ?: emptyList()
+        call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+        call.respondText(Json.encodeToString(cells), ContentType.Application.Json)
     }
 
     get("/map") { call.respondText(MAP_HTML, ContentType.Text.Html) }

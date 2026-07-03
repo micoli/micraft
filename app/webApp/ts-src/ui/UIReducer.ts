@@ -29,6 +29,7 @@ export interface UiState {
   preferences: PreferencesData | null;
   pauseMenuOpen: boolean;
   characterOpen: boolean;
+  biomeMapVisible: boolean;
 }
 
 export type UiAction =
@@ -77,7 +78,8 @@ export type UiAction =
   | { type: "pause_menu_show" }
   | { type: "pause_menu_hide" }
   | { type: "character_open" }
-  | { type: "character_close" };
+  | { type: "character_close" }
+  | { type: "biome_map_toggle" };
 
 const HUD_MODES: HudMode[] = ["simple", "medium", "complete"];
 let notifKey = 0;
@@ -201,5 +203,7 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, characterOpen: true };
     case "character_close":
       return { ...state, characterOpen: false };
+    case "biome_map_toggle":
+      return { ...state, biomeMapVisible: !state.biomeMapVisible };
   }
 }

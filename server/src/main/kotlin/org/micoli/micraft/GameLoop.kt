@@ -286,6 +286,8 @@ class GameLoop(
 
     fun getWorldItemCount(): Int = worldItems.itemCount()
 
+    fun getChunkGenerator() = world.generator
+
     fun getLoadedChunkCount(): Int = world.loadedChunkCount()
 
     fun getActiveLiquidCount(): Int = liquidManager.activeLiquidCount()
