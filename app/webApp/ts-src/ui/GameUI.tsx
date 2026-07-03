@@ -206,6 +206,7 @@ export function GameUI() {
     ) => {
       window.mcState.minimapY = y;
       window.mcState.minimapGameTime = gameTime;
+      window.mcState.minimapSpeed = speed;
       dispatch({
         type: "hud",
         data: {

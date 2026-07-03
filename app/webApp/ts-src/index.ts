@@ -65,6 +65,7 @@ window.mcState = {
   // Minimap
   minimapY: 0,
   minimapGameTime: "",
+  minimapSpeed: 0,
   // Session
   playerName: "",
   connectedPlayers: [],

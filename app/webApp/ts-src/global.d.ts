@@ -189,6 +189,7 @@ declare global {
     // Minimap overlay
     minimapY: number;
     minimapGameTime: string;
+    minimapSpeed: number;
     // Player / session
     playerName: string;
     connectedPlayers: string[];

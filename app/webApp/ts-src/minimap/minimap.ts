@@ -255,7 +255,32 @@ export function registerMinimap(): Pick<
 
       const gameTime: string = window.mcState.minimapGameTime ?? "";
       const playerY: number = window.mcState.minimapY ?? 0;
+      const playerSpeed: number = window.mcState.minimapSpeed ?? 0;
 
+      // Compass: yaw=0 → South, yaw=π → North
+      const COMPASS_DIRS = [
+        "N",
+        "NNE",
+        "NE",
+        "ENE",
+        "E",
+        "ESE",
+        "SE",
+        "SSE",
+        "S",
+        "SSW",
+        "SW",
+        "WSW",
+        "W",
+        "WNW",
+        "NW",
+        "NNW",
+      ];
+      const compassIdx =
+        Math.round(((((playerYaw % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2)) * 16) % 16;
+      const compassLabel = COMPASS_DIRS[compassIdx];
+
+      // Game time (top center)
       ctx.font = "bold 10px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
@@ -264,9 +289,31 @@ export function registerMinimap(): Pick<
       ctx.fillStyle = "#ffffff";
       ctx.fillText(gameTime, MINIMAP_SIZE / 2, 3);
 
+      // Speed bar below game time (1 box per 0.5 speed)
+      const speedBoxCount = Math.round(playerSpeed / 0.5);
+      const boxW = 5;
+      const boxH = 4;
+      const boxGap = 1;
+      const totalBarW = speedBoxCount * (boxW + boxGap) - (speedBoxCount > 0 ? boxGap : 0);
+      const barX = Math.round(MINIMAP_SIZE / 2 - totalBarW / 2);
+      const barY = 16;
+      for (let i = 0; i < speedBoxCount; i++) {
+        const bx = barX + i * (boxW + boxGap);
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.fillRect(bx + 1, barY + 1, boxW, boxH);
+        ctx.fillStyle = "#44ff88";
+        ctx.fillRect(bx, barY, boxW, boxH);
+      }
+
+      // Orientation above coordinates
       const coordText = `${Math.floor(playerX)}|${Math.floor(playerY)}|${Math.floor(playerZ)}`;
       ctx.font = "9px monospace";
+      ctx.textAlign = "center";
       ctx.textBaseline = "bottom";
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
+      ctx.fillText(compassLabel, MINIMAP_SIZE / 2 + 1, MINIMAP_SIZE - 12);
+      ctx.fillStyle = "#ffdd44";
+      ctx.fillText(compassLabel, MINIMAP_SIZE / 2, MINIMAP_SIZE - 13);
       ctx.fillStyle = "rgba(0,0,0,0.6)";
       ctx.fillText(coordText, MINIMAP_SIZE / 2 + 1, MINIMAP_SIZE - 2);
       ctx.fillStyle = "#ffffff";
