@@ -20,9 +20,13 @@ interface Props {
 }
 
 export function Console({ open, onClose, submittedRef, stateRef, initialValueRef, layoutStyle }: Props) {
-  const { inputRef, suggestions, selIdx, handleKeyDown, handleInput, applyCompletion } = useConsole(
-    { open, onClose, submittedRef, stateRef, initialValueRef },
-  );
+  const { inputRef, suggestions, selIdx, handleKeyDown, handleInput, applyCompletion } = useConsole({
+    open,
+    onClose,
+    submittedRef,
+    stateRef,
+    initialValueRef,
+  });
 
   if (!open) return null;
 
@@ -34,11 +38,7 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
           ? "relative"
           : "fixed bottom-[60px] left-1/2 -translate-x-1/2 w-[60%]",
       )}
-      style={
-        layoutStyle && Object.keys(layoutStyle).length > 0
-          ? { ...layoutStyle, height: undefined }
-          : undefined
-      }
+      style={layoutStyle && Object.keys(layoutStyle).length > 0 ? { ...layoutStyle, height: undefined } : undefined}
     >
       {suggestions.length > 0 && (
         <div className="absolute bottom-full left-0 right-0 bg-black/85 rounded-t border-b border-white/15 max-h-[40vh] overflow-y-auto">

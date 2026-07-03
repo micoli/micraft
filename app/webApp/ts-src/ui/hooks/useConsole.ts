@@ -30,13 +30,7 @@ interface UseConsoleParams {
   initialValueRef: MutableRefObject<string>;
 }
 
-export function useConsole({
-  open,
-  onClose,
-  submittedRef,
-  stateRef,
-  initialValueRef,
-}: UseConsoleParams) {
+export function useConsole({ open, onClose, submittedRef, stateRef, initialValueRef }: UseConsoleParams) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [selIdx, setSelIdx] = useState(-1);

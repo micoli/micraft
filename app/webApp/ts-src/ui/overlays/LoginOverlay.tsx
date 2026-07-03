@@ -18,13 +18,11 @@ function LangSelect({ value, onChange }: { value: string; onChange: (v: string) 
   return (
     <FormField>
       <Label>Language</Label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={cn(inputFieldCls, "cursor-pointer")}
-      >
+      <select value={value} onChange={(e) => onChange(e.target.value)} className={cn(inputFieldCls, "cursor-pointer")}>
         {SUPPORTED_LANGS.map((l) => (
-          <option key={l.code} value={l.code}>{l.label}</option>
+          <option key={l.code} value={l.code}>
+            {l.label}
+          </option>
         ))}
       </select>
     </FormField>
@@ -34,7 +32,10 @@ function LangSelect({ value, onChange }: { value: string; onChange: (v: string) 
 function WalkingToggle({ walking, onChange }: { walking: boolean; onChange: (v: boolean) => void }) {
   return (
     <div className="flex gap-1 w-40">
-      {[{ label: "Statique", value: false }, { label: "Marche", value: true }].map(({ label, value }) => (
+      {[
+        { label: "Statique", value: false },
+        { label: "Marche", value: true },
+      ].map(({ label, value }) => (
         <button
           key={label}
           onClick={() => onChange(value)}
@@ -55,9 +56,9 @@ function WalkingToggle({ walking, onChange }: { walking: boolean; onChange: (v: 
 type L = ReturnType<typeof useLogin>;
 
 function AuthStep({ L }: { L: L }) {
-    if(L.authMode === "loading"){
-        return <div className="text-center text-[#888] py-5">Loading…</div>;
-    }
+  if (L.authMode === "loading") {
+    return <div className="text-center text-[#888] py-5">Loading…</div>;
+  }
   return (
     <>
       <div className="text-[30px] font-bold text-center mb-10 text-blue-400">MiCraft</div>
@@ -129,7 +130,9 @@ function AuthStep({ L }: { L: L }) {
             variant="blue"
             size="lg"
             className="w-full"
-            onClick={() => { if (L.username.trim()) L.goChars(L.username.trim()); }}
+            onClick={() => {
+              if (L.username.trim()) L.goChars(L.username.trim());
+            }}
           >
             Continue
           </Button>
@@ -144,21 +147,18 @@ function CharsStep({ L }: { L: L }) {
     <div
       className="flex flex-col gap-5"
       onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
-        if (e.key === "Enter" && L.selected) { e.stopPropagation(); L.doPlay(); }
+        if (e.key === "Enter" && L.selected) {
+          e.stopPropagation();
+          L.doPlay();
+        }
       }}
     >
       <div className="flex gap-10 items-start">
         <div className="min-w-[280px] space-y-5">
-          <div className="text-sm text-[#aaa]">
-            Choose your character:
-          </div>
-          {(L.authMode === "local" || L.authMode === "oauth") && (
-            <LangSelect value={L.lang} onChange={L.setLang} />
-          )}
+          <div className="text-sm text-[#aaa]">Choose your character:</div>
+          {(L.authMode === "local" || L.authMode === "oauth") && <LangSelect value={L.lang} onChange={L.setLang} />}
           <div>
-            {L.chars.length === 0 && (
-              <div className="text-xs text-[#666] mb-3">No characters yet.</div>
-            )}
+            {L.chars.length === 0 && <div className="text-xs text-[#666] mb-3">No characters yet.</div>}
             {L.chars.map((name, i) => (
               <div key={name} className="flex items-center gap-2 py-2.5">
                 <input
@@ -169,7 +169,9 @@ function CharsStep({ L }: { L: L }) {
                   checked={L.selected === name}
                   onChange={() => L.setSelected(name)}
                 />
-                <label htmlFor={`mc-char-${i}`} className="text-sm cursor-pointer">{name}</label>
+                <label htmlFor={`mc-char-${i}`} className="text-sm cursor-pointer">
+                  {name}
+                </label>
               </div>
             ))}
           </div>
@@ -247,7 +249,10 @@ function CreateStep({ L }: { L: L }) {
             type="text"
             placeholder="Character name"
             value={L.createName}
-            onChange={(e) => { L.setCreateName(e.target.value); L.setCreateError(""); }}
+            onChange={(e) => {
+              L.setCreateName(e.target.value);
+              L.setCreateError("");
+            }}
             onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
               if (e.key === "Enter") L.doCreate();
             }}

@@ -1,28 +1,52 @@
 import { useState, useEffect, useRef } from "react";
 
 function getUsers(): Record<string, string[]> {
-  try { return JSON.parse(localStorage.getItem("micraft_users") || "{}"); } catch { return {}; }
+  try {
+    return JSON.parse(localStorage.getItem("micraft_users") || "{}");
+  } catch {
+    return {};
+  }
 }
 function saveUsers(u: Record<string, string[]>) {
-  try { localStorage.setItem("micraft_users", JSON.stringify(u)); } catch {}
+  try {
+    localStorage.setItem("micraft_users", JSON.stringify(u));
+  } catch {}
 }
 function getLastPlayer(username: string): string {
-  try { return localStorage.getItem("micraft_last_player_" + username) || ""; } catch { return ""; }
+  try {
+    return localStorage.getItem("micraft_last_player_" + username) || "";
+  } catch {
+    return "";
+  }
 }
 function saveLastPlayer(username: string, playerName: string) {
-  try { localStorage.setItem("micraft_last_player_" + username, playerName); } catch {}
+  try {
+    localStorage.setItem("micraft_last_player_" + username, playerName);
+  } catch {}
 }
 function getLastLang(): string {
-  try { return localStorage.getItem("micraft_last_lang") || "en"; } catch { return "en"; }
+  try {
+    return localStorage.getItem("micraft_last_lang") || "en";
+  } catch {
+    return "en";
+  }
 }
 function saveLastLang(lang: string) {
-  try { localStorage.setItem("micraft_last_lang", lang); } catch {}
+  try {
+    localStorage.setItem("micraft_last_lang", lang);
+  } catch {}
 }
 function getStoredToken(): string {
-  try { return sessionStorage.getItem("micraft_auth_token") || ""; } catch { return ""; }
+  try {
+    return sessionStorage.getItem("micraft_auth_token") || "";
+  } catch {
+    return "";
+  }
 }
 function storeToken(token: string) {
-  try { sessionStorage.setItem("micraft_auth_token", token); } catch {}
+  try {
+    sessionStorage.setItem("micraft_auth_token", token);
+  } catch {}
 }
 function clearStoredToken() {
   try {
@@ -73,7 +97,9 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
 
   async function goChars(user: string) {
     const trimmed = user.trim();
-    try { localStorage.setItem("micraft_last_user", trimmed); } catch {}
+    try {
+      localStorage.setItem("micraft_last_user", trimmed);
+    } catch {}
     setUsername(trimmed);
     setStep("chars");
     setLang(getLastLang());
@@ -108,7 +134,9 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
       const oauthName = decodeURIComponent(params.get("auth_name") || "");
       if (oauthToken) {
         storeToken(oauthToken);
-        try { sessionStorage.setItem("micraft_auth_display", oauthName); } catch {}
+        try {
+          sessionStorage.setItem("micraft_auth_display", oauthName);
+        } catch {}
         window.history.replaceState(null, "", window.location.pathname + window.location.search);
         setToken(oauthToken);
         setUsername(oauthName || "player");
@@ -131,7 +159,9 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
             .then((d: { displayName: string } | null) => {
               const name = d?.displayName || "";
               if (name) {
-                try { sessionStorage.setItem("micraft_auth_display", name); } catch {}
+                try {
+                  sessionStorage.setItem("micraft_auth_display", name);
+                } catch {}
                 setUsername(name);
                 goChars(name);
               } else {
@@ -148,7 +178,10 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
     if (authMode === "none") {
       try {
         const last = localStorage.getItem("micraft_last_user") || "";
-        if (last) { goChars(last); return; }
+        if (last) {
+          goChars(last);
+          return;
+        }
       } catch {}
       setLang(getLastLang());
       setTimeout(() => usernameInputRef.current?.focus(), 50);
@@ -171,8 +204,12 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
     if (step !== "chars" || !selected) return;
     const enc = encodeURIComponent(selected);
     Promise.all([
-      fetch(`/api/player/${enc}/skin`).then((r) => r.json()).catch(() => ({ skin: "player" })),
-      fetch(`/api/player/${enc}/armors`).then((r) => r.json()).catch(() => []),
+      fetch(`/api/player/${enc}/skin`)
+        .then((r) => r.json())
+        .catch(() => ({ skin: "player" })),
+      fetch(`/api/player/${enc}/armors`)
+        .then((r) => r.json())
+        .catch(() => []),
     ]).then(([skinData, armors]) => {
       setPreviewSkin(skinData.skin ?? "player");
       setPreviewArmors(Array.isArray(armors) ? armors : []);
@@ -190,8 +227,16 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
 
   async function doCreate() {
     const name = createName.trim();
-    if (!name) { setCreateError("Name required."); createNameInputRef.current?.focus(); return; }
-    if (chars.includes(name)) { setCreateError("Name already taken."); createNameInputRef.current?.focus(); return; }
+    if (!name) {
+      setCreateError("Name required.");
+      createNameInputRef.current?.focus();
+      return;
+    }
+    if (chars.includes(name)) {
+      setCreateError("Name already taken.");
+      createNameInputRef.current?.focus();
+      return;
+    }
     await fetch(`/api/player/${encodeURIComponent(name)}/skin`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -227,7 +272,9 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
       }
       const data: { token: string; displayName: string } = await r.json();
       storeToken(data.token);
-      try { sessionStorage.setItem("micraft_auth_display", data.displayName); } catch {}
+      try {
+        sessionStorage.setItem("micraft_auth_display", data.displayName);
+      } catch {}
       setToken(data.token);
       setUsername(data.displayName || user);
       setAuthLoading(false);
@@ -260,18 +307,42 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
   }
 
   return {
-    authMode, step, setStep,
-    username, setUsername,
-    password, setPassword,
-    authError, authLoading,
-    lang, setLang,
-    chars, selected, setSelected,
-    previewSkin, previewArmors, previewWalking, setPreviewWalking,
-    createName, setCreateName,
-    createSkin, setCreateSkin,
-    createError, setCreateError,
-    createWalking, setCreateWalking,
-    usernameInputRef, passwordInputRef, createNameInputRef, playButtonRef,
-    goChars, goCreate, doCreate, doLocalLogin, doOAuthLogin, doPlay, doLogout,
+    authMode,
+    step,
+    setStep,
+    username,
+    setUsername,
+    password,
+    setPassword,
+    authError,
+    authLoading,
+    lang,
+    setLang,
+    chars,
+    selected,
+    setSelected,
+    previewSkin,
+    previewArmors,
+    previewWalking,
+    setPreviewWalking,
+    createName,
+    setCreateName,
+    createSkin,
+    setCreateSkin,
+    createError,
+    setCreateError,
+    createWalking,
+    setCreateWalking,
+    usernameInputRef,
+    passwordInputRef,
+    createNameInputRef,
+    playButtonRef,
+    goChars,
+    goCreate,
+    doCreate,
+    doLocalLogin,
+    doOAuthLogin,
+    doPlay,
+    doLogout,
   };
 }

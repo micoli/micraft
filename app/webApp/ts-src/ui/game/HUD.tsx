@@ -12,12 +12,29 @@ export function HUD({
 }) {
   if (!data) return null;
   const {
-    x, y, z, yaw, pitch, stance, speed, fps,
-    kbIn, kbOut, biome, targetBlock, gameTime,
-    reconcileXzStats, reconcileYStats,
-    tickDtMs, tickJitterMs, tickDtMinMs, tickDtMaxMs,
-    tickJitterMinMs, tickJitterMaxMs,
-    chunkDownloading, chunkMeshing,
+    x,
+    y,
+    z,
+    yaw,
+    pitch,
+    stance,
+    speed,
+    fps,
+    kbIn,
+    kbOut,
+    biome,
+    targetBlock,
+    gameTime,
+    reconcileXzStats,
+    reconcileYStats,
+    tickDtMs,
+    tickJitterMs,
+    tickDtMinMs,
+    tickDtMaxMs,
+    tickJitterMinMs,
+    tickJitterMaxMs,
+    chunkDownloading,
+    chunkMeshing,
   } = data;
 
   let lines: string[];

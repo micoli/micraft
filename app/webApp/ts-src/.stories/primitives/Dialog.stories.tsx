@@ -1,12 +1,6 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "../../ui/primitives/Dialog";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger, DialogClose } from "../../ui/primitives/Dialog";
 import { Button } from "../../ui/primitives/Button";
 
 const meta: Meta = {
@@ -51,9 +45,7 @@ export const PauseStyleDialog: Story = {
         <Button onClick={() => setOpen(true)}>Open Pause Menu</Button>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="min-w-[220px] p-8 flex flex-col gap-3">
-            <DialogTitle className="text-center font-mono text-xl tracking-[0.25em] mb-2">
-              PAUSE
-            </DialogTitle>
+            <DialogTitle className="text-center font-mono text-xl tracking-[0.25em] mb-2">PAUSE</DialogTitle>
             <Button variant="secondary" className="font-mono">
               Preferences
             </Button>

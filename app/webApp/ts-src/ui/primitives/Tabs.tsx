@@ -4,18 +4,10 @@ import { cn } from "./cn";
 export const Tabs = RadixTabs.Root;
 
 function TabsList({ className, ...props }: React.ComponentPropsWithoutRef<typeof RadixTabs.List>) {
-  return (
-    <RadixTabs.List
-      className={cn("flex border-b border-white/20 gap-1", className)}
-      {...props}
-    />
-  );
+  return <RadixTabs.List className={cn("flex border-b border-white/20 gap-1", className)} {...props} />;
 }
 
-function TabsTrigger({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<typeof RadixTabs.Trigger>) {
+function TabsTrigger({ className, ...props }: React.ComponentPropsWithoutRef<typeof RadixTabs.Trigger>) {
   return (
     <RadixTabs.Trigger
       className={cn(
@@ -29,10 +21,7 @@ function TabsTrigger({
   );
 }
 
-function TabsContent({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<typeof RadixTabs.Content>) {
+function TabsContent({ className, ...props }: React.ComponentPropsWithoutRef<typeof RadixTabs.Content>) {
   return <RadixTabs.Content className={cn("pt-4", className)} {...props} />;
 }
 

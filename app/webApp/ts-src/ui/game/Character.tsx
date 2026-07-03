@@ -98,9 +98,7 @@ export function Character({ open, onClose, onCommand }: Props) {
             <div className="flex gap-9 items-start">
               {/* Armor list */}
               <div className="flex-1 min-w-[240px]">
-                {sortedArmors.length === 0 && (
-                  <div className="text-white/30 text-xs">No armor available.</div>
-                )}
+                {sortedArmors.length === 0 && <div className="text-white/30 text-xs">No armor available.</div>}
                 {sortedArmors.map((name) => {
                   const slots = available[name];
                   const isEquipped = equipped.includes(name);
@@ -109,18 +107,11 @@ export function Character({ open, onClose, onCommand }: Props) {
                       key={name}
                       className={cn(
                         "flex items-center gap-3 px-3 py-3 mb-2.5 rounded border",
-                        isEquipped
-                          ? "bg-green-950/60 border-green-700/60"
-                          : "bg-black/40 border-white/15",
+                        isEquipped ? "bg-green-950/60 border-green-700/60" : "bg-black/40 border-white/15",
                       )}
                     >
                       <div className="flex-1">
-                        <div
-                          className={cn(
-                            "text-xs mb-1.5",
-                            isEquipped ? "text-green-400" : "text-white/80",
-                          )}
-                        >
+                        <div className={cn("text-xs mb-1.5", isEquipped ? "text-green-400" : "text-white/80")}>
                           {name}
                         </div>
                         <div className="flex gap-1 flex-wrap">
@@ -149,23 +140,14 @@ export function Character({ open, onClose, onCommand }: Props) {
                   );
                 })}
 
-                <Button
-                  variant="ghost"
-                  onClick={onClose}
-                  className="mt-6 w-full font-mono text-xs text-white/50"
-                >
+                <Button variant="ghost" onClick={onClose} className="mt-6 w-full font-mono text-xs text-white/50">
                   Close
                 </Button>
               </div>
 
               {/* Model preview */}
               <div className="flex flex-col items-center gap-2">
-                <PlayerModelPreview
-                  key={skin + equipped.join(",")}
-                  skin={skin}
-                  armors={equipped}
-                  walking={walking}
-                />
+                <PlayerModelPreview key={skin + equipped.join(",")} skin={skin} armors={equipped} walking={walking} />
                 <div className="flex gap-1 w-40">
                   <button
                     onClick={() => setWalking(false)}

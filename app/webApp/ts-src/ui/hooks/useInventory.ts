@@ -24,8 +24,7 @@ export function useInventory() {
       .elementsFromPoint(e.clientX, e.clientY)
       .find((el) => el instanceof HTMLElement && (el as HTMLElement).hasAttribute("data-mc-slot"));
     if (slotEl !== lastSlotRef.current) {
-      if (lastSlotRef.current instanceof HTMLElement)
-        lastSlotRef.current.style.background = "rgba(0,0,0,0.72)";
+      if (lastSlotRef.current instanceof HTMLElement) lastSlotRef.current.style.background = "rgba(0,0,0,0.72)";
       if (slotEl instanceof HTMLElement) slotEl.style.background = "rgba(255,255,255,0.2)";
       lastSlotRef.current = slotEl ?? null;
     }
@@ -39,15 +38,14 @@ export function useInventory() {
     } catch {}
     ghostRef.current?.remove();
     ghostRef.current = null;
-    if (lastSlotRef.current instanceof HTMLElement)
-      lastSlotRef.current.style.background = "rgba(0,0,0,0.72)";
+    if (lastSlotRef.current instanceof HTMLElement) lastSlotRef.current.style.background = "rgba(0,0,0,0.72)";
     lastSlotRef.current = null;
     if (!item) return;
     const slotEl = document
       .elementsFromPoint(e.clientX, e.clientY)
-      .find(
-        (el) => el instanceof HTMLElement && (el as HTMLElement).hasAttribute("data-mc-slot"),
-      ) as HTMLElement | undefined;
+      .find((el) => el instanceof HTMLElement && (el as HTMLElement).hasAttribute("data-mc-slot")) as
+      | HTMLElement
+      | undefined;
     if (slotEl) {
       const slotIdx = parseInt(slotEl.getAttribute("data-mc-slot")!);
       if (slotIdx > 0) window.mcState.slotDrop?.(slotIdx, item);

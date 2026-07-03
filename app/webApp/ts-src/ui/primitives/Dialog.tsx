@@ -80,12 +80,7 @@ function DialogContent({ className, children, movable = false, ...props }: Dialo
 }
 
 function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return (
-    <RadixDialog.Title
-      className={cn("text-lg font-semibold text-white/90", className)}
-      {...props}
-    />
-  );
+  return <RadixDialog.Title className={cn("text-lg font-semibold text-white/90", className)} {...props} />;
 }
 
 export { DialogContent, DialogTitle };

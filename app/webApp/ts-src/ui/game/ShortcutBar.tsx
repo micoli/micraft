@@ -50,9 +50,7 @@ export function ShortcutBar({ inventory, itemMeta, slots, selectedSlot, onSlotDr
             className={cn(
               "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 transition-colors",
               isDropTarget ? "bg-white/20" : "bg-black/72",
-              isSelected
-                ? "border-yellow-400/90 shadow-[0_0_6px_rgba(255,215,0,0.5)]"
-                : "border-white/35",
+              isSelected ? "border-yellow-400/90 shadow-[0_0_6px_rgba(255,215,0,0.5)]" : "border-white/35",
               isHand ? "cursor-default" : itemType ? "cursor-grab" : "cursor-pointer",
             )}
           >
@@ -68,13 +66,10 @@ export function ShortcutBar({ inventory, itemMeta, slots, selectedSlot, onSlotDr
                   className="w-[26px] h-[26px] rounded-sm"
                   style={{
                     background: meta.bg,
-                    boxShadow:
-                      "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
+                    boxShadow: "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
                   }}
                 />
-                <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px]">
-                  {meta.label}
-                </div>
+                <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px]">{meta.label}</div>
                 {count > 0 && (
                   <div className="absolute bottom-0.5 right-1 text-white font-mono font-bold text-[9px] [text-shadow:1px_1px_0_#000]">
                     {count}

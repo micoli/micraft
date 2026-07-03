@@ -26,9 +26,7 @@ function KeyBadge({
     <span
       className={cn(
         "inline-flex items-center gap-0.5 rounded-sm px-1.5 py-0.5 text-[11px] cursor-pointer mr-1 select-none border",
-        isRecording
-          ? "bg-amber-950 border-amber-500 text-amber-400"
-          : "bg-[#2a2a2a] border-[#555] text-[#ccc]",
+        isRecording ? "bg-amber-950 border-amber-500 text-amber-400" : "bg-[#2a2a2a] border-[#555] text-[#ccc]",
       )}
       onClick={onClick}
     >
@@ -146,9 +144,7 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                 />
                 <span>
                   <span className="text-sky-300">{cmd.command}</span>
-                  {cmd.description && (
-                    <span className="text-[#888] ml-2 text-xs">{cmd.description}</span>
-                  )}
+                  {cmd.description && <span className="text-[#888] ml-2 text-xs">{cmd.description}</span>}
                 </span>
               </div>
             ))}
@@ -157,9 +153,21 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
           {pref.tab === "graphics" && (
             <>
               {[
-                { state: pref.localShaders, setter: pref.setLocalShaders, label: "Shaders (ambient occlusion, directional shading, fog)" },
-                { state: pref.localAnimatedFavicon, setter: pref.setLocalAnimatedFavicon, label: "Animated favicon (rotating block icon in browser tab)" },
-                { state: pref.localChunkDebugVisible, setter: pref.setLocalChunkDebugVisible, label: "Chunk debug overlay (streaming status grid)" },
+                {
+                  state: pref.localShaders,
+                  setter: pref.setLocalShaders,
+                  label: "Shaders (ambient occlusion, directional shading, fog)",
+                },
+                {
+                  state: pref.localAnimatedFavicon,
+                  setter: pref.setLocalAnimatedFavicon,
+                  label: "Animated favicon (rotating block icon in browser tab)",
+                },
+                {
+                  state: pref.localChunkDebugVisible,
+                  setter: pref.setLocalChunkDebugVisible,
+                  label: "Chunk debug overlay (streaming status grid)",
+                },
               ].map(({ state, setter, label }) => (
                 <div key={label} className="flex items-center gap-2 py-1.5 border-b border-[#2a2a2a]">
                   <input type="checkbox" checked={state} onChange={(e) => setter(e.target.checked)} />
@@ -174,19 +182,12 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
             <>
               {pref.groups.map((group) => (
                 <div key={group} className="mb-2">
-                  <div className="text-[#888] text-[11px] uppercase tracking-wide py-1.5">
-                    {group}
-                  </div>
+                  <div className="text-[#888] text-[11px] uppercase tracking-wide py-1.5">{group}</div>
                   {pref.groupedBindings
                     .filter((r) => r.group === group)
                     .map(({ action, keys }) => (
-                      <div
-                        key={action}
-                        className="flex items-center flex-wrap gap-1 py-1.5 border-b border-[#2a2a2a]"
-                      >
-                        <span className="min-w-[140px] text-xs text-[#ccc]">
-                          {action.replace(/_/g, " ")}
-                        </span>
+                      <div key={action} className="flex items-center flex-wrap gap-1 py-1.5 border-b border-[#2a2a2a]">
+                        <span className="min-w-[140px] text-xs text-[#ccc]">{action.replace(/_/g, " ")}</span>
                         <div className="flex flex-wrap gap-1 flex-1">
                           {keys.map((k, i) => (
                             <KeyBadge
@@ -218,10 +219,7 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                 {pref.localCustomCmds.map((entry, cmdIdx) => {
                   const recAction = `$$cmd:${cmdIdx}`;
                   return (
-                    <div
-                      key={cmdIdx}
-                      className="flex items-center flex-wrap gap-1 py-1.5 border-b border-[#2a2a2a]"
-                    >
+                    <div key={cmdIdx} className="flex items-center flex-wrap gap-1 py-1.5 border-b border-[#2a2a2a]">
                       <input
                         type="text"
                         value={entry.text}
@@ -239,9 +237,7 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                             onRemove={() => pref.removeCustomCmdKey(cmdIdx, keyIdx)}
                           />
                         ))}
-                        <AddKeyBtn
-                          onClick={() => pref.setRecording({ action: recAction, index: entry.keys.length })}
-                        />
+                        <AddKeyBtn onClick={() => pref.setRecording({ action: recAction, index: entry.keys.length })} />
                       </div>
                       <button
                         className="bg-transparent border border-dashed border-red-900 rounded-sm text-red-300/70 cursor-pointer text-[11px] px-1.5 py-0.5 hover:border-red-500"
@@ -253,9 +249,7 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                   );
                 })}
                 {pref.localCustomCmds.length === 0 && (
-                  <div className="text-white/30 text-[11px] py-1">
-                    No custom command bindings. Click + to add one.
-                  </div>
+                  <div className="text-white/30 text-[11px] py-1">No custom command bindings. Click + to add one.</div>
                 )}
               </div>
             </>
@@ -275,7 +269,12 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
           >
             Cancel
           </Button>
-          <Button variant="primary" size="sm" className="font-mono bg-green-900/60 border-green-600/60 hover:bg-green-800/60" onClick={pref.handleSave}>
+          <Button
+            variant="primary"
+            size="sm"
+            className="font-mono bg-green-900/60 border-green-600/60 hover:bg-green-800/60"
+            onClick={pref.handleSave}
+          >
             Save
           </Button>
         </div>

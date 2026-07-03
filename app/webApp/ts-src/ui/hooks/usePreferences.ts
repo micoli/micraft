@@ -19,9 +19,29 @@ export interface CustomCmdEntry {
 const PROTECTED_CHANNELS = new Set(["system", "game"]);
 
 const ACTION_GROUPS: Record<string, string[]> = {
-  movement: ["forward", "backward", "strafe_left", "strafe_right", "rotate_left", "rotate_right", "sneak", "crawl", "auto_forward"],
+  movement: [
+    "forward",
+    "backward",
+    "strafe_left",
+    "strafe_right",
+    "rotate_left",
+    "rotate_right",
+    "sneak",
+    "crawl",
+    "auto_forward",
+  ],
   flight: ["fly_toggle", "ascend", "descend", "speed_up", "speed_down"],
-  ui: ["view_toggle", "hud_mode_cycle", "inventory", "character", "dump_stats", "undo", "minimap_zoom_in", "minimap_zoom_out", "layout_editor"],
+  ui: [
+    "view_toggle",
+    "hud_mode_cycle",
+    "inventory",
+    "character",
+    "dump_stats",
+    "undo",
+    "minimap_zoom_in",
+    "minimap_zoom_out",
+    "layout_editor",
+  ],
   hotbar: ["slot_1", "slot_2", "slot_3", "slot_4", "slot_5", "slot_6", "slot_7", "slot_8", "slot_9", "slot_10"],
 };
 
@@ -182,8 +202,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
 
   const addCustomCmd = () => setLocalCustomCmds((prev) => [...prev, { text: "", keys: [] }]);
 
-  const removeCustomCmd = (cmdIdx: number) =>
-    setLocalCustomCmds((prev) => prev.filter((_, i) => i !== cmdIdx));
+  const removeCustomCmd = (cmdIdx: number) => setLocalCustomCmds((prev) => prev.filter((_, i) => i !== cmdIdx));
 
   const removeCustomCmdKey = (cmdIdx: number, keyIdx: number) =>
     setLocalCustomCmds((prev) =>
@@ -218,23 +237,40 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
     });
   };
 
-  const sortedCommands = preferences ? [...preferences.commands].sort((a, b) => a.command.localeCompare(b.command)) : [];
+  const sortedCommands = preferences
+    ? [...preferences.commands].sort((a, b) => a.command.localeCompare(b.command))
+    : [];
   const groupedBindings = groupActions(localBindings);
   const groups = [...new Set(groupedBindings.map((r) => r.group))];
 
   return {
-    tab, setTab,
-    localSubscribed, localDisabled,
-    localShaders, setLocalShaders,
-    localAnimatedFavicon, setLocalAnimatedFavicon,
-    localChunkDebugVisible, setLocalChunkDebugVisible,
-    localBindings, localCustomCmds,
-    recording, setRecording,
+    tab,
+    setTab,
+    localSubscribed,
+    localDisabled,
+    localShaders,
+    setLocalShaders,
+    localAnimatedFavicon,
+    setLocalAnimatedFavicon,
+    localChunkDebugVisible,
+    setLocalChunkDebugVisible,
+    localBindings,
+    localCustomCmds,
+    recording,
+    setRecording,
     waitingDoubleTap,
     PROTECTED_CHANNELS,
-    toggleChannel, toggleCommand,
-    removeKey, addCustomCmd, removeCustomCmd, removeCustomCmdKey, updateCustomCmdText,
-    cancelRecording, handleSave,
-    sortedCommands, groupedBindings, groups,
+    toggleChannel,
+    toggleCommand,
+    removeKey,
+    addCustomCmd,
+    removeCustomCmd,
+    removeCustomCmdKey,
+    updateCustomCmdText,
+    cancelRecording,
+    handleSave,
+    sortedCommands,
+    groupedBindings,
+    groups,
   };
 }

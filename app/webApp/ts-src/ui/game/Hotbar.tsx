@@ -24,9 +24,7 @@ export function Hotbar({ inventory, visible }: Props) {
   return (
     <div className="fixed bottom-5 left-1/2 -translate-x-1/2 flex gap-1 pointer-events-none z-[998] items-center bg-black/60 border border-white/20 rounded-md py-1.5 px-2.5 min-w-[120px] min-h-[68px]">
       {items.length === 0 ? (
-        <div className="text-white/35 font-mono text-xs text-center w-full px-4 py-2">
-          Inventaire vide
-        </div>
+        <div className="text-white/35 font-mono text-xs text-center w-full px-4 py-2">Inventaire vide</div>
       ) : (
         items.map(({ type, count, meta }) => (
           <div
@@ -37,13 +35,10 @@ export function Hotbar({ inventory, visible }: Props) {
               className="w-[26px] h-[26px] rounded-sm"
               style={{
                 background: meta.bg,
-                boxShadow:
-                  "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
+                boxShadow: "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
               }}
             />
-            <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px]">
-              {meta.label}
-            </div>
+            <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px]">{meta.label}</div>
             <div className="absolute bottom-0.5 right-1 text-white font-mono font-bold text-[10px] [text-shadow:1px_1px_0_#000]">
               {count}
             </div>
