@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger("TerrainCache")
 
 class TerrainCache {
-    private val cache = ConcurrentHashMap<ChunkPos, List<String?>>()
+    private val cache = ConcurrentHashMap<ChunkPos, Pair<List<String?>, Int?>>()
     @Volatile
     var cachedJson: String = "[]"
         private set
@@ -33,7 +33,7 @@ class TerrainCache {
                 try {
                     Json.decodeFromString<List<ChunkTerrainInfo>>(cacheFile.readText()).forEach {
                         info ->
-                        cache[ChunkPos(info.cx, info.cz)] = info.colors
+                        cache[ChunkPos(info.cx, info.cz)] = Pair(info.colors, info.avgHeight)
                     }
                     cacheFile.getLastModifiedTime().toMillis()
                 } catch (e: Exception) {
@@ -89,11 +89,12 @@ class TerrainCache {
     fun update(chunk: Chunk) {
         val colors = ArrayList<String?>(256)
         for (lx in 0 until 16) for (lz in 0 until 16) colors += topBlockColor(chunk, lx, lz)
-        cache[chunk.pos] = colors
+        val centerHeight = topBlockY(chunk, 8, 8)
+        cache[chunk.pos] = Pair(colors, centerHeight)
     }
 
     fun getAll(): List<ChunkTerrainInfo> =
-        cache.entries.map { (pos, colors) -> ChunkTerrainInfo(pos.cx, pos.cz, colors) }
+        cache.entries.map { (pos, pair) -> ChunkTerrainInfo(pos.cx, pos.cz, pair.first, pair.second) }
 }
 
 /** Parses "{cx}_{cz}" (supports negative values). */
@@ -115,5 +116,11 @@ internal fun topBlockColor(chunk: Chunk, lx: Int, lz: Int): String? {
             return "#%02x%02x%02x".format(c[0], c[1], c[2])
         }
     }
+    return null
+}
+
+internal fun topBlockY(chunk: Chunk, lx: Int, lz: Int): Int? {
+    for (y in Chunk.SIZE_Y - 1 downTo 0)
+        if (chunk.getBlock(lx, y, lz) != BlockType.AIR) return y
     return null
 }

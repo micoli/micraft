@@ -65,6 +65,19 @@ class HouseZones(
         return cellHash(cx, cz, 0) < prob
     }
 
+    fun housesInArea(x1: Int, z1: Int, x2: Int, z2: Int): List<PlacedHouse> {
+        if (!config.enabled) return emptyList()
+        val cxMin = floor(x1.toDouble() / cellSize).toInt()
+        val cxMax = floor(x2.toDouble() / cellSize).toInt()
+        val czMin = floor(z1.toDouble() / cellSize).toInt()
+        val czMax = floor(z2.toDouble() / cellSize).toInt()
+        return buildList {
+            for (cx in cxMin..cxMax)
+                for (cz in czMin..czMax)
+                    if (hasHouseAt(cx, cz)) buildHouse(cx, cz)?.let { add(it) }
+        }
+    }
+
     fun housesNear(ox: Int, oz: Int): List<PlacedHouse> {
         if (!config.enabled) return emptyList()
         val maxSize = config.maxHouseSize
@@ -91,7 +104,7 @@ class HouseZones(
         return result
     }
 
-    private fun buildHouse(cx: Int, cz: Int): PlacedHouse? {
+    internal fun buildHouse(cx: Int, cz: Int): PlacedHouse? {
         val (ax, az) = anchorPoint(cx, cz)
         val biomeId = biomeAt(ax, az)
         val biomeCfg = config.configFor(biomeId)

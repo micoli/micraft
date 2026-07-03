@@ -29,7 +29,7 @@ class ProceduralChunkGenerator(
         roadConfig?.let {
             RoadVoronoiZones(seed, it) { wx, wz -> voronoi.sample(wx, wz).primary.id }
         }
-    private val houseZones =
+    val houseZones =
         houseConfig?.let { cfg ->
             HouseZones(
                 seed,

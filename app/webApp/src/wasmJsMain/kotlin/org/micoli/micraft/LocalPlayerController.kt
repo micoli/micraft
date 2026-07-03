@@ -682,7 +682,7 @@ class LocalPlayerController(
             val debugCz = hudZ.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
             jsUpdateChunkDebug(
                 chunkManager.getChunkDebugJson(
-                    debugCx, debugCz, WorldConstants.FORWARD_VIEW_RADIUS, yaw.toDouble()))
+                    debugCx, debugCz, WorldConstants.FORWARD_VIEW_RADIUS, yaw))
         }
     }
 

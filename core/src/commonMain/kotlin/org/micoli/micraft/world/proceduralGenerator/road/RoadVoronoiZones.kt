@@ -1,5 +1,6 @@
 package org.micoli.micraft.world.proceduralGenerator.road
 
+import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.sqrt
 import org.micoli.micraft.world.proceduralGenerator.PerlinNoise
@@ -109,6 +110,91 @@ class RoadVoronoiZones(
         val centerBiome = biomeAt(centerX, centerZ)
         val prob = config.configFor(centerBiome).roadProbability
         return edgeHash(info.s1x, info.s1z, info.s2x, info.s2z) < prob
+    }
+
+    data class RoadVertexSegment(val x1: Double, val z1: Double, val x2: Double, val z2: Double)
+
+    fun roadVertexSegmentsInArea(wx1: Int, wz1: Int, wx2: Int, wz2: Int): List<RoadVertexSegment> {
+        if (!config.enabled) return emptyList()
+        val margin = 2
+        val cxMin = floor(wx1.toDouble() / cellSize).toInt() - margin
+        val cxMax = floor(wx2.toDouble() / cellSize).toInt() + margin
+        val czMin = floor(wz1.toDouble() / cellSize).toInt() - margin
+        val czMax = floor(wz2.toDouble() / cellSize).toInt() + margin
+
+        // allSeeds[i] = [cellX, cellZ, seedX, seedZ]
+        val allSeeds = ArrayList<IntArray>()
+        val seedByCell = HashMap<Long, IntArray>()
+        for (cx in cxMin..cxMax) {
+            for (cz in czMin..czMax) {
+                val (sx, sz) = seedPoint(cx, cz)
+                val s = intArrayOf(cx, cz, sx, sz)
+                allSeeds.add(s)
+                seedByCell[cx.toLong() shl 32 or (cz.toLong() and 0xFFFFFFFFL)] = s
+            }
+        }
+        val checkR2 = (cellSize * 5.0) * (cellSize * 5.0)
+
+        val result = mutableListOf<RoadVertexSegment>()
+        val seen = HashSet<String>()
+        val dirs = listOf(Pair(1, 0), Pair(0, 1), Pair(1, 1), Pair(1, -1))
+
+        for (si in allSeeds) {
+            for ((dcx, dcz) in dirs) {
+                val jKey = (si[0] + dcx).toLong() shl 32 or ((si[1] + dcz).toLong() and 0xFFFFFFFFL)
+                val sj = seedByCell[jKey] ?: continue
+                val ax = si[2]; val az = si[3]; val bx = sj[2]; val bz = sj[3]
+                var cax = ax; var caz = az; var cbx = bx; var cbz = bz
+                if (ax > bx || (ax == bx && az > bz)) { cax = bx; caz = bz; cbx = ax; cbz = az }
+                val key = "$cax,$caz|$cbx,$cbz"
+                if (!seen.add(key)) continue
+                val prob = config.configFor(biomeAt((cax + cbx) / 2, (caz + cbz) / 2)).roadProbability
+                if (edgeHash(cax, caz, cbx, cbz) >= prob) continue
+
+                val mx = (cax + cbx) / 2.0; val mz = (caz + cbz) / 2.0
+                val pdx = -(cbz - caz).toDouble(); val pdz = (cbx - cax).toDouble()
+                val pLen = sqrt(pdx * pdx + pdz * pdz)
+                var posV: Pair<Double, Double>? = null
+                var negV: Pair<Double, Double>? = null
+                var posVDistSq = Double.MAX_VALUE
+                var negVDistSq = Double.MAX_VALUE
+
+                for (sk in allSeeds) {
+                    if (sk[0] == si[0] && sk[1] == si[1]) continue
+                    if (sk[0] == sj[0] && sk[1] == sj[1]) continue
+                    val dxm = sk[2] - mx; val dzm = sk[3] - mz
+                    if (dxm * dxm + dzm * dzm > checkR2) continue
+                    val projSeed = dxm * pdx + dzm * pdz
+                    val v = voronoiCircumcenter(cax, caz, cbx, cbz, sk[2], sk[3]) ?: continue
+                    val proj = (v.first - mx) * pdx + (v.second - mz) * pdz
+                    // Skip obtuse triangles: seed and circumcenter must be on same side of edge
+                    if (projSeed * proj <= 0.0) continue
+                    val distSq = (v.first - mx) * (v.first - mx) + (v.second - mz) * (v.second - mz)
+                    // Skip near-collinear triples: degenerate circumcenter shoots to infinity
+                    if (distSq > checkR2) continue
+                    if (proj > 0.0 && distSq < posVDistSq) { posV = v; posVDistSq = distSq }
+                    else if (proj < 0.0 && distSq < negVDistSq) { negV = v; negVDistSq = distSq }
+                }
+
+                val edgeDist = sqrt((cbx - cax).toDouble().let { it * it } + (cbz - caz).toDouble().let { it * it })
+                val fposV = posV ?: Pair(mx + pdx / pLen * edgeDist * 0.5, mz + pdz / pLen * edgeDist * 0.5)
+                val fnegV = negV ?: Pair(mx - pdx / pLen * edgeDist * 0.5, mz - pdz / pLen * edgeDist * 0.5)
+                result.add(RoadVertexSegment(fposV.first, fposV.second, fnegV.first, fnegV.second))
+            }
+        }
+        return result
+    }
+
+    private fun voronoiCircumcenter(ax: Int, az: Int, bx: Int, bz: Int, cx: Int, cz: Int): Pair<Double, Double>? {
+        val D = 2.0 * (ax * (bz - cz) + bx * (cz - az) + cx * (az - bz))
+        if (abs(D) < 1e-10) return null
+        val a2 = ax.toLong() * ax + az.toLong() * az
+        val b2 = bx.toLong() * bx + bz.toLong() * bz
+        val c2 = cx.toLong() * cx + cz.toLong() * cz
+        return Pair(
+            (a2 * (bz - cz) + b2 * (cz - az) + c2 * (az - bz)) / D,
+            (a2 * (cx - bx) + b2 * (ax - cx) + c2 * (bx - ax)) / D,
+        )
     }
 
     fun isOnRoad(columnBiomeId: String, wx: Int, wz: Int): Boolean {
