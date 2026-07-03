@@ -1,4 +1,5 @@
 import * as RadixDialog from "@radix-ui/react-dialog";
+import { useCallback, useRef, useState } from "react";
 import { cn } from "./cn";
 
 export const Dialog = RadixDialog.Root;
@@ -23,9 +24,37 @@ function DialogOverlay({ className }: DialogOverlayProps) {
 interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof RadixDialog.Content> {
   className?: string;
   children: React.ReactNode;
+  movable?: boolean;
 }
 
-function DialogContent({ className, children, ...props }: DialogContentProps) {
+function DialogContent({ className, children, movable = false, ...props }: DialogContentProps) {
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const dragStart = useRef<{ mx: number; my: number; ox: number; oy: number } | null>(null);
+
+  const onMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!movable) return;
+      e.preventDefault();
+      dragStart.current = { mx: e.clientX, my: e.clientY, ox: offset.x, oy: offset.y };
+
+      const onMove = (ev: MouseEvent) => {
+        if (!dragStart.current) return;
+        setOffset({
+          x: dragStart.current.ox + ev.clientX - dragStart.current.mx,
+          y: dragStart.current.oy + ev.clientY - dragStart.current.my,
+        });
+      };
+      const onUp = () => {
+        dragStart.current = null;
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    },
+    [movable, offset],
+  );
+
   return (
     <RadixDialog.Portal>
       <DialogOverlay />
@@ -37,8 +66,11 @@ function DialogContent({ className, children, ...props }: DialogContentProps) {
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          movable && "cursor-move select-none",
           className,
         )}
+        style={movable ? { translate: `calc(-50% + ${offset.x}px) calc(-50% + ${offset.y}px)` } : undefined}
+        onMouseDown={onMouseDown}
         {...props}
       >
         {children}
