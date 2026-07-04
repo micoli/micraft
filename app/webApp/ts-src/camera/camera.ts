@@ -1,5 +1,26 @@
 import type { Camera, Scene } from "@babylonjs/core";
 
+// Cache the forward direction for the current JS task — all Dir3D/Forward calls
+// within a single Kotlin tick are synchronous, so one getForwardRay() suffices.
+let _dirCacheCamera: Camera | null = null;
+let _dirX = 0,
+  _dirY = 0,
+  _dirZ = 0;
+
+function getCachedDir(camera: Camera): { x: number; y: number; z: number } {
+  if (_dirCacheCamera !== camera) {
+    const d = camera.getForwardRay(1).direction;
+    _dirX = d.x;
+    _dirY = d.y;
+    _dirZ = d.z;
+    _dirCacheCamera = camera;
+    queueMicrotask(() => {
+      _dirCacheCamera = null;
+    });
+  }
+  return { x: _dirX, y: _dirY, z: _dirZ };
+}
+
 export function registerCamera(): Pick<
   McBindings,
   | "getCameraPositionX"
@@ -18,18 +39,18 @@ export function registerCamera(): Pick<
     getCameraPositionY: (camera: Camera): number => camera.position.y,
     getCameraPositionZ: (camera: Camera): number => camera.position.z,
 
-    getCameraDir3DX: (camera: Camera): number => camera.getForwardRay(1).direction.x,
-    getCameraDir3DY: (camera: Camera): number => camera.getForwardRay(1).direction.y,
-    getCameraDir3DZ: (camera: Camera): number => camera.getForwardRay(1).direction.z,
+    getCameraDir3DX: (camera: Camera): number => getCachedDir(camera).x,
+    getCameraDir3DY: (camera: Camera): number => getCachedDir(camera).y,
+    getCameraDir3DZ: (camera: Camera): number => getCachedDir(camera).z,
 
     getCameraForwardX: (camera: Camera): number => {
-      const d = camera.getForwardRay(1).direction;
+      const d = getCachedDir(camera);
       const l = Math.sqrt(d.x * d.x + d.z * d.z) || 1;
       return d.x / l;
     },
 
     getCameraForwardZ: (camera: Camera): number => {
-      const d = camera.getForwardRay(1).direction;
+      const d = getCachedDir(camera);
       const l = Math.sqrt(d.x * d.x + d.z * d.z) || 1;
       return d.z / l;
     },

@@ -130,7 +130,7 @@ export function registerEngine(): Pick<
       pipeline.bloomWeight = 0.05;
       pipeline.bloomThreshold = 0.78;
       pipeline.bloomScale = 0.5;
-      pipeline.bloomKernel = 32;
+      pipeline.bloomKernel = 8;
 
       window.mcState.renderPipeline = pipeline;
     },
