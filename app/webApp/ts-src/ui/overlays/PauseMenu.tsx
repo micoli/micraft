@@ -18,7 +18,16 @@ export function PauseMenu({ open, onClose, onDisconnect, onPreferences, onCharac
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="min-w-[220px] p-8 flex flex-col gap-3">
+      <DialogContent
+        className="min-w-[220px] p-8 flex flex-col gap-3"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.stopPropagation();
+            onClose();
+          }
+        }}
+      >
         <DialogTitle className="text-center font-mono text-xl tracking-[0.25em] mb-2">PAUSE</DialogTitle>
         <Button ref={prefsButtonRef} variant="secondary" onClick={onPreferences} className="font-mono">
           Preferences

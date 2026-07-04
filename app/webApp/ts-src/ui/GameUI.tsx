@@ -94,6 +94,7 @@ export function GameUI() {
   const characterOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
   const chunkLoadingRef = useRef(false);
+  const overlayWasOpen = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -132,6 +133,19 @@ export function GameUI() {
   useEffect(() => {
     characterOpenRef.current = state.characterOpen;
   }, [state.characterOpen]);
+
+  useEffect(() => {
+    const anyOpen =
+      state.characterOpen || state.biomeMapVisible || state.preferencesOpen || state.pauseMenuOpen;
+    if (anyOpen) {
+      overlayWasOpen.current = true;
+      document.exitPointerLock();
+    } else if (overlayWasOpen.current) {
+      overlayWasOpen.current = false;
+      const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
+      canvas?.requestPointerLock()?.catch?.(() => {});
+    }
+  }, [state.characterOpen, state.biomeMapVisible, state.preferencesOpen, state.pauseMenuOpen]);
 
   useEffect(() => {
     hudDataRef.current = state.hud;
@@ -426,7 +440,14 @@ export function GameUI() {
           dispatch({ type: "preferences_hide" });
           return;
         }
-        dispatch({ type: pauseMenuOpenRef.current ? "pause_menu_hide" : "pause_menu_show" });
+        if (pauseMenuOpenRef.current) {
+          dispatch({ type: "pause_menu_hide" });
+          (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
+            ?.requestPointerLock()
+            ?.catch?.(() => {});
+        } else {
+          dispatch({ type: "pause_menu_show" });
+        }
         return;
       }
       if (pauseMenuOpenRef.current) return;
@@ -599,7 +620,12 @@ export function GameUI() {
           />
           <PauseMenu
             open={state.pauseMenuOpen}
-            onClose={() => dispatch({ type: "pause_menu_hide" })}
+            onClose={() => {
+              dispatch({ type: "pause_menu_hide" });
+              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
+                ?.requestPointerLock()
+                ?.catch?.(() => {});
+            }}
             onPreferences={() => {
               dispatch({ type: "pause_menu_hide" });
               dispatch({ type: "preferences_show" });
