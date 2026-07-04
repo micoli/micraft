@@ -7,13 +7,19 @@ interface VoronoiCell {
   color: string;
 }
 
+interface BiomeBorderChunk {
+  cx: number;
+  cz: number;
+  mask: boolean[];
+}
+
 interface Props {
   playerX?: number;
   playerZ?: number;
   layoutStyle?: React.CSSProperties;
 }
 
-const RADIUS = 800; // 50 chunks * 16 blocks
+const RADIUS = 800;
 const CANVAS_SIZE = 512;
 
 function parseColor(hex: string): [number, number, number] {
@@ -79,6 +85,48 @@ function renderBg(canvas: HTMLCanvasElement, cells: VoronoiCell[], cx: number, c
   }
 }
 
+function renderBorders(
+  canvas: HTMLCanvasElement,
+  borderData: BiomeBorderChunk[],
+  roadImg: HTMLImageElement | null,
+  fetchCx: number,
+  fetchCz: number,
+) {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const s = CANVAS_SIZE;
+  ctx.clearRect(0, 0, s, s);
+  const scale = s / (RADIUS * 2);
+  const pixSz = Math.max(1, Math.ceil(scale));
+
+  // Voronoi border pixels
+  ctx.fillStyle = "rgba(200,80,80,0.8)";
+  for (const chunk of borderData) {
+    for (let lx = 0; lx < 16; lx++) {
+      for (let lz = 0; lz < 16; lz++) {
+        if (!chunk.mask[lx * 16 + lz]) continue;
+        const wx = chunk.cx * 16 + lx;
+        const wz = chunk.cz * 16 + lz;
+        const px = s / 2 + (wx - fetchCx) * scale;
+        const pz = s / 2 + (wz - fetchCz) * scale;
+        if (px < -pixSz || px > s + pixSz || pz < -pixSz || pz > s + pixSz) continue;
+        ctx.fillRect(Math.round(px), Math.round(pz), pixSz, pixSz);
+      }
+    }
+  }
+
+  // Road raster — PNG has row 0 = highest Z, BiomeMap has higher Z = lower canvas Y → flip vertically
+  if (roadImg) {
+    ctx.globalAlpha = 0.85;
+    ctx.save();
+    ctx.translate(0, s);
+    ctx.scale(1, -1);
+    ctx.drawImage(roadImg, 0, 0, s, s);
+    ctx.restore();
+    ctx.globalAlpha = 1.0;
+  }
+}
+
 function renderOverlay(canvas: HTMLCanvasElement, px: number, pz: number, cx: number, cz: number) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -99,8 +147,11 @@ function renderOverlay(canvas: HTMLCanvasElement, px: number, pz: number, cx: nu
 
 export function BiomeMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
   const bgRef = useRef<HTMLCanvasElement>(null);
+  const bordersRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const cellsRef = useRef<VoronoiCell[]>([]);
+  const borderDataRef = useRef<BiomeBorderChunk[]>([]);
+  const roadImgRef = useRef<HTMLImageElement | null>(null);
   const fetchCenterRef = useRef({ x: NaN, z: NaN });
   const playerPosRef = useRef({ x: playerX, z: playerZ });
 
@@ -117,7 +168,10 @@ export function BiomeMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
     if (!isNaN(fc.x) && Math.abs(dx) < 100 && Math.abs(dz) < 100) return;
 
     fetchCenterRef.current = { x: playerX, z: playerZ };
-    fetch(`/api/map/voronoi?cx=${Math.round(playerX)}&cz=${Math.round(playerZ)}&radius=${RADIUS}`)
+    const cx = Math.round(playerX);
+    const cz = Math.round(playerZ);
+
+    fetch(`/api/map/voronoi?cx=${cx}&cz=${cz}&radius=${RADIUS}`)
       .then((r) => r.json())
       .then((data: VoronoiCell[]) => {
         cellsRef.current = data;
@@ -127,6 +181,38 @@ export function BiomeMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
         if (overlayRef.current) renderOverlay(overlayRef.current, ppx, ppz, fcx, fcz);
       })
       .catch(() => {});
+
+    const roadFetch = fetch(`/api/map/road-raster.png?cx=${cx}&cz=${cz}&radius=${RADIUS}`)
+      .then((r) => r.blob())
+      .then(
+        (blob) =>
+          new Promise<HTMLImageElement>((resolve, reject) => {
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = () => {
+              URL.revokeObjectURL(url);
+              resolve(img);
+            };
+            img.onerror = () => {
+              URL.revokeObjectURL(url);
+              reject(new Error("road img load failed"));
+            };
+            img.src = url;
+          }),
+      );
+
+    Promise.all([fetch(`/api/map/biome-borders?cx=${cx}&cz=${cz}&radius=${RADIUS}`).then((r) => r.json()), roadFetch])
+      .then(([borders, roadImg]: [BiomeBorderChunk[], HTMLImageElement]) => {
+        borderDataRef.current = borders;
+        roadImgRef.current = roadImg;
+        const { x: fcx, z: fcz } = fetchCenterRef.current;
+        if (bordersRef.current) renderBorders(bordersRef.current, borders, roadImg, fcx, fcz);
+      })
+      .catch(() => {
+        // render borders alone if road fetch failed
+        const { x: fcx, z: fcz } = fetchCenterRef.current;
+        if (bordersRef.current) renderBorders(bordersRef.current, borderDataRef.current, roadImgRef.current, fcx, fcz);
+      });
   }, [playerX, playerZ]);
 
   return (
@@ -157,6 +243,12 @@ export function BiomeMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
       <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
         <canvas
           ref={bgRef}
+          width={CANVAS_SIZE}
+          height={CANVAS_SIZE}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+        />
+        <canvas
+          ref={bordersRef}
           width={CANVAS_SIZE}
           height={CANVAS_SIZE}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}

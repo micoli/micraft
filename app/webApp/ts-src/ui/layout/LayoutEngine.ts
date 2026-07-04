@@ -92,7 +92,7 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
     editorColor: "rgba(40,180,180,0.75)",
   },
   {
-    type: "BIOME_MAP",
+    type: "INGAME_MAP",
     x: 40,
     y: 20,
     w: 8,

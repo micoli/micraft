@@ -37,7 +37,7 @@ object ServerMessageCodec {
         PREFERENCES_SYNC(24),
         WEATHER_UPDATE(25),
         GAME_CONFIG_SYNC(26),
-        TOGGLE_BIOME_MAP(27),
+        TOGGLE_INGAME_MAP(27),
     }
 
     fun encode(msg: ServerMessage): ByteArray {
@@ -65,7 +65,7 @@ object ServerMessageCodec {
                 ServerMessage.OpenLayoutEditor -> Id.OPEN_LAYOUT_EDITOR to ByteArray(0)
                 ServerMessage.OpenPreferences -> Id.OPEN_PREFERENCES to ByteArray(0)
                 ServerMessage.OpenCodex -> Id.OPEN_CODEX to ByteArray(0)
-                ServerMessage.ToggleBiomeMap -> Id.TOGGLE_BIOME_MAP to ByteArray(0)
+                ServerMessage.ToggleBiomeMap -> Id.TOGGLE_INGAME_MAP to ByteArray(0)
                 is ServerMessage.RegistrySync -> Id.REGISTRY_SYNC to proto.encodeToByteArray(msg)
                 is ServerMessage.NpcSpawned -> Id.NPC_SPAWNED to proto.encodeToByteArray(msg)
                 is ServerMessage.NpcDespawned -> Id.NPC_DESPAWNED to proto.encodeToByteArray(msg)

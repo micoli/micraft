@@ -370,7 +370,7 @@ export function GameUI() {
     window.mc.showPreferences = () => dispatch({ type: "preferences_show" });
     window.mc.openCodex = () => dispatch({ type: "codex_open" });
     window.mc.openCharacter = () => dispatch({ type: "character_open" });
-    window.mc.toggleBiomeMap = () => dispatch({ type: "biome_map_toggle" });
+    window.mc.toggleBiomeMap = () => dispatch({ type: "ingame_map_toggle" });
     window.mc.dumpStats = () => {
       const h = hudDataRef.current;
       if (!h) return;
@@ -535,7 +535,7 @@ export function GameUI() {
             <BiomeMap
               playerX={state.hud?.x}
               playerZ={state.hud?.z}
-              layoutStyle={widgetStyle(activeLayout, "BIOME_MAP")}
+              layoutStyle={widgetStyle(activeLayout, "INGAME_MAP")}
             />
           )}
           <ShortcutBar

@@ -179,8 +179,9 @@ fun Route.mapRoutes(gameLoop: GameLoop) {
         val size = radius * 2
         val img = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
         if (roadVoronoi != null) {
-            // rgba(160,120,60,0.85) pre-multiplied as ARGB int
-            val roadArgb = (0xD9 shl 24) or (0xA0 shl 16) or (0x78 shl 8) or 0x3C
+            val roadRGBA = intArrayOf(0xA0, 0xA0, 0xA0, 0xE9)
+            val roadArgb =
+                (roadRGBA[3] shl 24) or (roadRGBA[1] shl 16) or (roadRGBA[2] shl 8) or roadRGBA[3]
             val cxMin = Math.floorDiv(cx - radius, 16)
             val cxMax = Math.floorDiv(cx + radius, 16)
             val czMin = Math.floorDiv(cz - radius, 16)

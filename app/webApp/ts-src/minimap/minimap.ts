@@ -10,6 +10,74 @@ const chunkSurfaces: Record<string, { topY: number[]; topBlock: number[] }> = {}
 const npcPositions: Map<string, { x: number; z: number }> = new Map();
 let frameCount = 0;
 
+// Road raster overlay
+let roadImg: HTMLImageElement | null = null;
+let roadImgCx = 0;
+let roadImgCz = 0;
+let roadImgRadius = 0;
+let roadsFetching = false;
+const roadsFetchCenter = { x: NaN, z: NaN };
+
+// Biome borders overlay
+let biomeBorderData: Array<{ cx: number; cz: number; mask: boolean[] }> = [];
+const biomeFetchCenter = { x: NaN, z: NaN };
+let biomeFetching = false;
+
+function maybeRefetchRoads(playerX: number, playerZ: number): void {
+  if (roadsFetching) return;
+  if (!isNaN(roadsFetchCenter.x) && Math.hypot(playerX - roadsFetchCenter.x, playerZ - roadsFetchCenter.z) < 200)
+    return;
+  roadsFetchCenter.x = playerX;
+  roadsFetchCenter.z = playerZ;
+  const radius = 400;
+  roadsFetching = true;
+  const cx = Math.round(playerX),
+    cz = Math.round(playerZ);
+  fetch(`/api/map/road-raster.png?cx=${cx}&cz=${cz}&radius=${radius}`)
+    .then((r) => {
+      if (r.ok) return r.blob();
+    })
+    .then((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        if (roadImg?.src) URL.revokeObjectURL(roadImg.src);
+        roadImg = img;
+        roadImgCx = cx;
+        roadImgCz = cz;
+        roadImgRadius = radius;
+      };
+      img.src = url;
+    })
+    .catch(() => {})
+    .finally(() => {
+      roadsFetching = false;
+    });
+}
+
+function maybeRefetchBiomeBorders(playerX: number, playerZ: number): void {
+  if (biomeFetching) return;
+  if (!isNaN(biomeFetchCenter.x) && Math.hypot(playerX - biomeFetchCenter.x, playerZ - biomeFetchCenter.z) < 200)
+    return;
+  biomeFetchCenter.x = playerX;
+  biomeFetchCenter.z = playerZ;
+  biomeFetching = true;
+  const cx = Math.round(playerX),
+    cz = Math.round(playerZ);
+  fetch(`/api/map/biome-borders?cx=${cx}&cz=${cz}&radius=800`)
+    .then((r) => {
+      if (r.ok) return r.json();
+    })
+    .then((data) => {
+      if (data) biomeBorderData = data;
+    })
+    .catch(() => {})
+    .finally(() => {
+      biomeFetching = false;
+    });
+}
+
 interface MinimapWeatherZone {
   id: string;
   type: string;
@@ -115,6 +183,9 @@ export function registerMinimap(): Pick<
       frameCount++;
       if (frameCount % 4 !== 0) return;
 
+      maybeRefetchRoads(playerX, playerZ);
+      maybeRefetchBiomeBorders(playerX, playerZ);
+
       const canvas = document.getElementById("mc-minimap") as HTMLCanvasElement | null;
       if (!canvas) return;
       const ctx = canvas.getContext("2d")!;
@@ -178,6 +249,36 @@ export function registerMinimap(): Pick<
       }
 
       ctx.putImageData(imgData, 0, 0);
+
+      // Biome border contours
+      ctx.fillStyle = "rgba(200,80,80,0.8)";
+      for (const chunk of biomeBorderData) {
+        for (let lx = 0; lx < 16; lx++) {
+          for (let lz = 0; lz < 16; lz++) {
+            if (!chunk.mask[lx * 16 + lz]) continue;
+            const wx = chunk.cx * 16 + lx;
+            const wz = chunk.cz * 16 + lz;
+            const bx = wx - playerX + halfBlocks;
+            const bz = playerZ - wz + halfBlocks;
+            const px0 = Math.round(bx * pixPerBlock);
+            const pz0 = Math.round(bz * pixPerBlock);
+            if (px0 < 0 || px0 >= MINIMAP_SIZE || pz0 < 0 || pz0 >= MINIMAP_SIZE) continue;
+            const pw = Math.max(1, Math.round((bx + 1) * pixPerBlock) - px0);
+            const ph = Math.max(1, Math.round((bz + 1) * pixPerBlock) - pz0);
+            ctx.fillRect(px0, pz0, pw, ph);
+          }
+        }
+      }
+
+      // Precise road raster overlay
+      if (roadImg !== null) {
+        const tx = (roadImgCx - roadImgRadius - playerX + halfBlocks) * pixPerBlock;
+        const tz = (playerZ - (roadImgCz + roadImgRadius) + halfBlocks) * pixPerBlock;
+        const size = 2 * roadImgRadius * pixPerBlock;
+        ctx.globalAlpha = 0.85;
+        ctx.drawImage(roadImg, tx, tz, size, size);
+        ctx.globalAlpha = 1.0;
+      }
 
       // Weather zone overlays
       for (const zone of weatherZones) {

@@ -46,7 +46,7 @@ ui:
   undo: ["Ctrl+KeyZ", "Cmd+KeyZ"]
   minimap_zoom_in: [k]
   minimap_zoom_out: [l]
-  biome_map: [m]
+  ingame_map: [m]
   layout_editor: [KeyG]
   dump_stats: [KeyV]
 

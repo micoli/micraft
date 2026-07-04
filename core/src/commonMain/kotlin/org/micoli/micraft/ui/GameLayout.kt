@@ -10,6 +10,8 @@ enum class WidgetType {
     CHAT_HISTORY,
     INPUT_BOX,
     INVENTORY,
+    CHUNK_DEBUG,
+    INGAME_MAP,
 }
 
 @Serializable
