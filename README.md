@@ -260,7 +260,7 @@ make dc CMD="<any command>"   # run any command inside container
 
 ```bash
 make dev-up                                          # start dev container (foreground)
-make dc CMD="./gradlew dev"                          # server :8080 + webpack dev :8081
+make dc CMD="./gradlew dev"                          # server :8080
 make dc CMD="./gradlew devDebug"                     # debug texture mode
 make dc CMD="./gradlew build"                        # full build
 make dc CMD="./gradlew test"                         # all tests
@@ -319,7 +319,7 @@ make docs
 
 ```bash
 make dev-up                              # start dev container
-make dc CMD="./gradlew dev"              # server :8080 + webpack dev :8081
+make dc CMD="./gradlew dev"              # server :8080
 make dc CMD="./gradlew devDebug"         # debug texture mode
 ```
 

@@ -34,14 +34,20 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     // even when Gradle runs in rich/interactive mode (which wraps System.out).
     fun Process.pipeOutput(prefix: String): List<Thread> =
         listOf(
-            Thread { runCatching { inputStream.bufferedReader().forEachLine { println("$prefix$it") } } }
+            Thread {
+                    runCatching {
+                        inputStream.bufferedReader().forEachLine { println("$prefix$it") }
+                    }
+                }
                 .also {
                     it.isDaemon = true
                     it.start()
                 },
             Thread {
                     runCatching {
-                        errorStream.bufferedReader().forEachLine { System.err.println("$prefix$it") }
+                        errorStream.bufferedReader().forEachLine {
+                            System.err.println("$prefix$it")
+                        }
                     }
                 }
                 .also {
@@ -66,6 +72,7 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
             "[dev] starting server$tag (${java.time.LocalTime.now().let { "%02d:%02d:%02d".format(it.hour, it.minute, it.second) }})")
         val pb = ProcessBuilder(serverBin.absolutePath).directory(rootDir)
         if (debugWorld) pb.environment()["MICRAFT_DEBUG_WORLD"] = "1"
+        pb.environment()["MICRAFT_WEB_DIST"] = rootDir.resolve("app/webApp/build").absolutePath
         val p = pb.start()
         p.pipeOutput("[server] ")
         return p
@@ -85,7 +92,7 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
         error("[dev] server build failed — fix compilation errors before starting")
 
     println("[dev] building client…")
-    val clientResult = runGradle(":app:webApp:wasmJsDevelopmentExecutableCompileSync")
+    val clientResult = runGradle(":app:webApp:copyResourcesToWebDist")
     if (clientResult != 0)
         error("[dev] client build failed — fix compilation errors before starting")
 
@@ -104,13 +111,10 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     val serverRef = java.util.concurrent.atomic.AtomicReference(startServer())
     val clientProc =
         ProcessBuilder(
-                gradle,
-                ":app:webApp:wasmJsBrowserDevelopmentRun",
-                "--continuous",
-                "--console=plain")
+                gradle, ":app:webApp:copyResourcesToWebDist", "--continuous", "--console=plain")
             .directory(rootDir)
             .start()
-    clientProc.pipeOutput("[webpack] ")
+    clientProc.pipeOutput("[wasm] ")
 
     val cssProc =
         ProcessBuilder("sh", "-c", "npm run watch:css --prefix app/webApp/ts-src")
@@ -178,14 +182,14 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
  * ./gradlew dev
  *
  * Builds server + client, then starts both in parallel:
- * - Ktor game server on :8080 (ProceduralChunkGenerator)
- * - Webpack dev server on :8081 (hot-reload)
+ * - Ktor game server on :8080 — serves API, WebSocket, and the game client static files
+ * - wasmJsBrowserDevelopmentWebpack --continuous — recompiles Kotlin/Wasm on change
  *
- * Touching run.lock restarts the server without stopping the client. Ctrl+C stops both processes.
+ * Touching run.lock restarts the server without stopping the watcher. Ctrl+C stops both processes.
  */
 tasks.register("dev") {
     group = "micraft"
-    description = "Build and start the game server (:8080) and the webpack dev server (:8081)"
+    description = "Build and start the game server (:8080, serves everything)"
     notCompatibleWithConfigurationCache("Launches external processes via script-level function")
     val rootDir = rootProject.projectDir
     doLast { startDevMode(rootDir, debugWorld = false) }
@@ -198,7 +202,7 @@ tasks.register("dev") {
  * - DebugChunkGenerator: single GRASS block at world (8, 2, 8)
  * - Player spawns at (8, 1, 14) in fly mode, facing the block
  *
- * Then open: http://localhost:8081/?debug&bx=8&by=2&bz=8 Keys 1-6 orbit the camera around each face
+ * Then open: http://localhost:8080/?debug&bx=8&by=2&bz=8 Keys 1-6 orbit the camera around each face
  * of the block. Escape releases the camera lock. run.lock still works to restart the server (debug
  * mode is preserved).
  */

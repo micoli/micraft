@@ -243,7 +243,11 @@ fun Application.module() {
     Runtime.getRuntime().addShutdownHook(Thread { gameLoop.shutdown() })
 
     routing {
-        get("/") { call.respondRedirect("http://localhost:8081/", permanent = false) }
+        val webBuildDir = System.getenv("MICRAFT_WEB_DIST")
+        if (webBuildDir != null) {
+            staticFiles(
+                "/", java.io.File("$webBuildDir/kotlin-webpack/wasmJs/developmentExecutable"))
+        }
         get("/api/version") {
             call.respondText("""{"server":"$SERVER_ID"}""", ContentType.Application.Json)
         }

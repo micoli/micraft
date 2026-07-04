@@ -31,7 +31,7 @@ dev-clean-wasm:
 	$(DC_DEV) exec micraft bash -c "rm -rf /workspace/app/webApp/build/klib/cache /workspace/app/webApp/build/compileSync /workspace/app/shared/build/klib/cache /workspace/app/shared/build/compileSync"
 
 dev-logs:
-	@while true; do $(DC_DEV) logs -f | scripts/colorlog.pl; sleep 2; echo "===================="; done
+	@while true; do $(DC_DEV) logs -f 2>&1 | scripts/colorlog.pl; sleep 2; echo "===================="; done
 
 # Run any command inside the dev container: make dc CMD="./gradlew :server:test"
 dc:

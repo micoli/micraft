@@ -15,6 +15,13 @@ val tsBuild by
 
 tasks.matching { it.name == "wasmJsProcessResources" }.configureEach { dependsOn(tsBuild) }
 
+val copyResourcesToWebDist by
+    tasks.registering(Copy::class) {
+        dependsOn("wasmJsBrowserDevelopmentWebpack")
+        from(layout.buildDirectory.dir("processedResources/wasmJs/main"))
+        into(layout.buildDirectory.dir("kotlin-webpack/wasmJs/developmentExecutable"))
+    }
+
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
