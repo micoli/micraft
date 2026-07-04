@@ -94,7 +94,9 @@ class TerrainCache {
     }
 
     fun getAll(): List<ChunkTerrainInfo> =
-        cache.entries.map { (pos, pair) -> ChunkTerrainInfo(pos.cx, pos.cz, pair.first, pair.second) }
+        cache.entries.map { (pos, pair) ->
+            ChunkTerrainInfo(pos.cx, pos.cz, pair.first, pair.second)
+        }
 }
 
 /** Parses "{cx}_{cz}" (supports negative values). */
@@ -120,7 +122,6 @@ internal fun topBlockColor(chunk: Chunk, lx: Int, lz: Int): String? {
 }
 
 internal fun topBlockY(chunk: Chunk, lx: Int, lz: Int): Int? {
-    for (y in Chunk.SIZE_Y - 1 downTo 0)
-        if (chunk.getBlock(lx, y, lz) != BlockType.AIR) return y
+    for (y in Chunk.SIZE_Y - 1 downTo 0) if (chunk.getBlock(lx, y, lz) != BlockType.AIR) return y
     return null
 }

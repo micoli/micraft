@@ -14,7 +14,7 @@ import { LoginOverlay } from "./overlays/LoginOverlay";
 import { DisconnectOverlay } from "./overlays/DisconnectOverlay";
 import { PauseMenu } from "./overlays/PauseMenu";
 import { LayoutEditor } from "./layout/LayoutEditor";
-import { defaultLayout, resolveActiveLayout, widgetStyle } from "./layout/LayoutEngine";
+import { defaultLayout, getWidget, resolveActiveLayout, widgetStyle, WIDGET_REGISTRY } from "./layout/LayoutEngine";
 import { CodexModal } from "../codex/CodexModal";
 import { ChunkDebug, ChunkDebugData } from "./game/ChunkDebug";
 import { Character } from "./game/Character";
@@ -488,12 +488,49 @@ export function GameUI() {
         }}
       />
 
+      {!state.loginVisible &&
+        !state.disconnectMsg &&
+        !state.chunkLoading &&
+        (() => {
+          const mw = getWidget(activeLayout, "MINIMAP") ?? WIDGET_REGISTRY.find((w) => w.type === "MINIMAP")!;
+          const chunks = chunkDebugData?.chunks ?? [];
+          const total = Math.max(chunks.length, 1);
+          const loaded = chunks.filter((c) => c.state === "loaded").length;
+          const loading = chunks.filter((c) => c.state === "loading").length;
+          const loadedPct = (loaded / total) * 100;
+          const loadingPct = (loading / total) * 100;
+          const missingPct = Math.max(0, 100 - loadedPct - loadingPct);
+          return (
+            <div
+              style={{
+                position: "fixed",
+                left: `calc(${mw.x} / 48 * 100vw)`,
+                top: `calc(${mw.y + mw.h} / 48 * 100vh)`,
+                width: `calc(${mw.w} / 48 * 100vw)`,
+                height: "5px",
+                zIndex: 999,
+                pointerEvents: "none",
+                display: "flex",
+                overflow: "hidden",
+                borderRadius: "0 0 3px 3px",
+              }}
+            >
+              <div style={{ width: `${loadedPct}%`, background: "#16a34a", transition: "width 150ms ease-out" }} />
+              <div style={{ width: `${loadingPct}%`, background: "#ea580c", transition: "width 150ms ease-out" }} />
+              <div style={{ width: `${missingPct}%`, background: "#7f1d1d" }} />
+            </div>
+          );
+        })()}
+
+      {!state.loginVisible &&
+        !state.disconnectMsg &&
+        (state.chunkLoading || (state.preferences?.chunkDebugVisible ?? false)) && (
+          <ChunkDebug data={chunkDebugData} layoutStyle={widgetStyle(activeLayout, "CHUNK_DEBUG")} />
+        )}
+
       {!state.loginVisible && !state.disconnectMsg && !state.chunkLoading && (
         <>
           <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, "HUD")} />
-          {(state.preferences?.chunkDebugVisible ?? false) && (
-            <ChunkDebug data={chunkDebugData} layoutStyle={widgetStyle(activeLayout, "CHUNK_DEBUG")} />
-          )}
           {state.biomeMapVisible && (
             <BiomeMap
               playerX={state.hud?.x}

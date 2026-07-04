@@ -72,9 +72,8 @@ class HouseZones(
         val czMin = floor(z1.toDouble() / cellSize).toInt()
         val czMax = floor(z2.toDouble() / cellSize).toInt()
         return buildList {
-            for (cx in cxMin..cxMax)
-                for (cz in czMin..czMax)
-                    if (hasHouseAt(cx, cz)) buildHouse(cx, cz)?.let { add(it) }
+            for (cx in cxMin..cxMax) for (cz in czMin..czMax) if (hasHouseAt(cx, cz))
+                buildHouse(cx, cz)?.let { add(it) }
         }
     }
 

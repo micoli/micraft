@@ -42,9 +42,9 @@ export function HUD({
     `Stance: ${stance}`,
     `Biome: ${biome ? biome : "?"}`,
     `Orientation: Y:${yaw.toFixed(1)}°, P:${pitch.toFixed(1)}°`,
-    `Block: ${targetBlock ? targetBlock : "?"}`
+    `Block: ${targetBlock ? targetBlock : "?"}`,
   ];
-  const medium = () => [`FPS: ${fps}`,];
+  const medium = () => [`FPS: ${fps}`];
   const full = () => [
     `Tick: ${tickDtMinMs.toFixed(1)}↔${tickDtMaxMs.toFixed(1)}ms avg:${tickDtMs.toFixed(1)}ms`,
     `Jitr: ${tickJitterMinMs.toFixed(1)}↔${tickJitterMaxMs.toFixed(1)}ms cur:${tickJitterMs.toFixed(1)}ms`,

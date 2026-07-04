@@ -15,14 +15,16 @@ class BiomeRegistry(
                     listOf(
                         BiomeDefinition(
                             id = "snow_peaks",
-                            zones = listOf(BiomeZone(0.0, 1.0, altitudeMin = 150, altitudeMax = 1024)),
+                            zones =
+                                listOf(BiomeZone(0.0, 1.0, altitudeMin = 150, altitudeMax = 1024)),
                             surface = BlockType.SNOW,
                             subsurface = BlockType.STONE,
                             filler = BlockType.STONE,
                             subsurfaceDepth = 2,
                             elevationMin = 150,
                             elevationMax = 200,
-                            vegetation = listOf(VegetationEntry(VegetationType.PINE_TREE_SNOW, 0.04)),
+                            vegetation =
+                                listOf(VegetationEntry(VegetationType.PINE_TREE_SNOW, 0.04)),
                         ),
                         BiomeDefinition(
                             id = "desert",

@@ -25,23 +25,31 @@ class HttpChunkFetcher(
     val inFlightCount: Int
         get() = inFlight.size
 
+    private val pendingQueue = ArrayDeque<ChunkPos>()
+
     private val httpClient = HttpClient(Js)
     private val baseUrl = "http://${jsGetPageHost()}:${jsGetPagePort()}"
 
     fun trigger(playerCx: Int, playerCz: Int, yaw: Float) {
         val yawD = yaw.toDouble()
-        val offsets = buildOffsets(yawD, playerCx, playerCz)
-        val primaryAllCovered = offsets.none { (dx, dz) ->
-            chunkScore(dx, dz, yawD) < 4000.0 &&
-                run {
-                    val cp = ChunkPos(playerCx + dx, playerCz + dz)
-                    !chunkManager.loadedChunks.contains(cp) && !inFlight.contains(cp)
-                }
-        }
-        for ((dx, dz) in offsets) {
-            val cp = ChunkPos(playerCx + dx, playerCz + dz)
+        val primaryAllCovered = chunkManager.allNearFovChunksMeshed(playerCx, playerCz, yawD)
+        val needed =
+            buildOffsets(yawD, playerCx, playerCz).mapNotNull { (dx, dz) ->
+                val cp = ChunkPos(playerCx + dx, playerCz + dz)
+                if (chunkManager.loadedChunks.contains(cp) || inFlight.contains(cp))
+                    return@mapNotNull null
+                if (!primaryAllCovered && chunkScore(dx, dz, yawD) >= 3000.0) return@mapNotNull null
+                cp
+            }
+        pendingQueue.clear()
+        pendingQueue.addAll(needed)
+        pumpQueue()
+    }
+
+    private fun pumpQueue() {
+        while (inFlight.size < MAX_CONCURRENT && pendingQueue.isNotEmpty()) {
+            val cp = pendingQueue.removeFirst()
             if (chunkManager.loadedChunks.contains(cp) || inFlight.contains(cp)) continue
-            if (!primaryAllCovered && chunkScore(dx, dz, yawD) >= 4000.0) continue
             inFlight.add(cp)
             scope.launch { fetch(cp) }
         }
@@ -61,6 +69,7 @@ class HttpChunkFetcher(
                     Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
         } finally {
             inFlight.remove(cp)
+            pumpQueue()
         }
     }
 
@@ -75,8 +84,8 @@ class HttpChunkFetcher(
         val dist = sqrt((dx * dx + dz * dz).toDouble())
         if (dist == 0.0) return 0.0
         if (dist <= sqrt(2.0) + 0.01) return 1000.0 + dist
-        val fwdX = -sin(yaw)
-        val fwdZ = -cos(yaw)
+        val fwdX = sin(yaw)
+        val fwdZ = cos(yaw)
         val dot = (dx * fwdX + dz * fwdZ) / dist
         val angleDeg = acos(dot.coerceIn(-1.0, 1.0)) * (180.0 / PI)
         val halfR = WorldConstants.CLIENT_VIEW_RADIUS / 2.0
@@ -85,5 +94,9 @@ class HttpChunkFetcher(
             dist > halfR -> 3000.0 + dist
             else -> 4000.0 + dist
         }
+    }
+
+    companion object {
+        private const val MAX_CONCURRENT = 4
     }
 }

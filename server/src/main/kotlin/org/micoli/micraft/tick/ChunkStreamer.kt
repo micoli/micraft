@@ -61,15 +61,16 @@ class ChunkStreamer(private val world: WorldState) {
         val yaw = session.state.orientation.yaw.toDouble()
         val offsets = buildOffsets(yaw, cx, cz)
         val pending = pendingPools.getOrPut(session.id) { ConcurrentHashMap.newKeySet() }
-        val primaryAllCovered = offsets.none { (dx, dz) ->
-            chunkScore(dx, dz, yaw) < 4000.0 &&
-                run {
-                    val cp = ChunkPos(cx + dx, cz + dz)
-                    !session.loadedChunks.contains(cp) &&
-                        !session.inFlightChunks.contains(cp) &&
-                        !pending.contains(cp)
-                }
-        }
+        val primaryAllCovered =
+            offsets.none { (dx, dz) ->
+                chunkScore(dx, dz, yaw) < 4000.0 &&
+                    run {
+                        val cp = ChunkPos(cx + dx, cz + dz)
+                        !session.loadedChunks.contains(cp) &&
+                            !session.inFlightChunks.contains(cp) &&
+                            !pending.contains(cp)
+                    }
+            }
         for ((dx, dz) in offsets) {
             val cp = ChunkPos(cx + dx, cz + dz)
             if (session.loadedChunks.contains(cp) || session.inFlightChunks.contains(cp)) continue

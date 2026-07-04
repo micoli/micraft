@@ -1,4 +1,8 @@
-export function LoadingOverlay({ progress }: { progress: { meshed: number; downloaded: number; total: number } | null }) {
+export function LoadingOverlay({
+  progress,
+}: {
+  progress: { meshed: number; downloaded: number; total: number } | null;
+}) {
   if (!progress) return null;
   const { meshed, downloaded, total } = progress;
   const safeTotal = Math.max(total, 1);

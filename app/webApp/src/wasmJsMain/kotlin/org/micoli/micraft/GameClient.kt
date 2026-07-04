@@ -92,7 +92,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     val pending = chunkManager.pendingRenderCount
                     uiState.chunkLoadingProgress = Triple(meshed, pending, expectedChunkCount)
                     if (localController.hasPrediction &&
-                        chunkManager.allFovChunksMeshed(currentPlayerCx, currentPlayerCz, currentYaw.toDouble())) {
+                        chunkManager.allFovChunksMeshed(
+                            currentPlayerCx, currentPlayerCz, currentYaw.toDouble())) {
                         isInitialLoading = false
                         uiState.chunkLoadingProgress = null
                     }
@@ -105,7 +106,12 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         scope.launch {
             while (isActive) {
                 delay(16)
-                chunkManager.drainPendingChunks(budgetMs = 4.0)
+                chunkManager.drainPendingChunks(
+                    playerCx = currentPlayerCx,
+                    playerCz = currentPlayerCz,
+                    yaw = currentYaw.toDouble(),
+                    budgetMs = 4.0,
+                )
                 chunkManager.drainOneMinimapPush()
             }
         }

@@ -94,9 +94,19 @@ class ChunkManager(private val scene: JsAny) {
         pendingChunks.add(0, Pair(chunk, topY)) // front = higher priority
     }
 
-    fun drainPendingChunks(budgetMs: Double = 4.0) {
+    fun drainPendingChunks(
+        playerCx: Int = 0,
+        playerCz: Int = 0,
+        yaw: Double = 0.0,
+        budgetMs: Double = 4.0,
+    ) {
         val mats = getBlockMaterials() ?: return
         if (pendingChunks.isEmpty() && activeRender == null) return
+        if (pendingChunks.isNotEmpty()) {
+            pendingChunks.sortBy { (chunk, _) ->
+                meshScore(chunk.pos.cx - playerCx, chunk.pos.cz - playerCz, yaw)
+            }
+        }
         val deadline = jsNow() + budgetMs
 
         while (jsNow() < deadline) {
@@ -120,6 +130,23 @@ class ChunkManager(private val scene: JsAny) {
                 activeRender = null
             }
             // Budget check at top of loop — never blocks more than one slice duration
+        }
+    }
+
+    private fun meshScore(dx: Int, dz: Int, yaw: Double): Double {
+        val dist = sqrt((dx * dx + dz * dz).toDouble())
+        if (dist == 0.0) return 0.0
+        if (dist <= sqrt(2.0) + 0.01) return 1000.0 + dist
+        val fwdX = sin(yaw)
+        val fwdZ = cos(yaw)
+        val dot = (dx * fwdX + dz * fwdZ) / dist
+        val angleDeg = acos(dot.coerceIn(-1.0, 1.0)) * (180.0 / PI)
+        val halfR = WorldConstants.CLIENT_VIEW_RADIUS / 2.0
+        return when {
+            angleDeg < 60.0 -> 1500.0 + dist
+            dist <= halfR -> 2000.0 + dist
+            dist > halfR -> 3000.0 + dist
+            else -> 4000.0 + dist
         }
     }
 
@@ -189,8 +216,8 @@ class ChunkManager(private val scene: JsAny) {
 
     fun allFovChunksMeshed(playerCx: Int, playerCz: Int, yaw: Double): Boolean {
         val r = WorldConstants.CLIENT_VIEW_RADIUS
-        val fwdX = -sin(yaw)
-        val fwdZ = -cos(yaw)
+        val fwdX = sin(yaw)
+        val fwdZ = cos(yaw)
         for (dx in -r..r) {
             for (dz in -r..r) {
                 if (dx == 0 && dz == 0) continue
@@ -204,18 +231,20 @@ class ChunkManager(private val scene: JsAny) {
         return true
     }
 
-    fun allFovChunksDownloaded(playerCx: Int, playerCz: Int, yaw: Double): Boolean {
+    fun allNearFovChunksMeshed(playerCx: Int, playerCz: Int, yaw: Double): Boolean {
         val r = WorldConstants.CLIENT_VIEW_RADIUS
-        val fwdX = -sin(yaw)
-        val fwdZ = -cos(yaw)
+        val halfR = r / 2.0
+        val fwdX = sin(yaw)
+        val fwdZ = cos(yaw)
         for (dx in -r..r) {
             for (dz in -r..r) {
                 if (dx == 0 && dz == 0) continue
                 val dist = sqrt((dx * dx + dz * dz).toDouble())
+                if (dist > halfR) continue
                 val dot = (dx * fwdX + dz * fwdZ) / dist
                 val angleDeg = acos(dot.coerceIn(-1.0, 1.0)) * (180.0 / PI)
                 if (angleDeg >= 60.0) continue
-                if (!isDownloaded(ChunkPos(playerCx + dx, playerCz + dz))) return false
+                if (!loadedChunks.contains(ChunkPos(playerCx + dx, playerCz + dz))) return false
             }
         }
         return true

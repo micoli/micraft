@@ -34,7 +34,9 @@ function renderBg(canvas: HTMLCanvasElement, cells: VoronoiCell[], cx: number, c
       const wx = cx + (px - s / 2) / scale;
       const wz = cz + (py - s / 2) / scale;
       let minD = Infinity;
-      let r = 128, g = 128, b = 128;
+      let r = 128,
+        g = 128,
+        b = 128;
       for (const cell of parsed) {
         const dx = cell.x - wx;
         const dz = cell.z - wz;

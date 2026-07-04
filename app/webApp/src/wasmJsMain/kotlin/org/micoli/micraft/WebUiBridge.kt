@@ -61,7 +61,8 @@ class WebUiBridge(private val state: McUiState, private val scope: CoroutineScop
         }
         scope.launch {
             state.chunkLoadingProgressFlow.collect { progress ->
-                if (progress != null) jsUpdateChunkLoading(progress.first, progress.second, progress.third)
+                if (progress != null)
+                    jsUpdateChunkLoading(progress.first, progress.second, progress.third)
                 else jsHideChunkLoading()
             }
         }

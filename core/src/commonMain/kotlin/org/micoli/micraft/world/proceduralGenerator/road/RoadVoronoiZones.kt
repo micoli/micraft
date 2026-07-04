@@ -143,16 +143,30 @@ class RoadVoronoiZones(
             for ((dcx, dcz) in dirs) {
                 val jKey = (si[0] + dcx).toLong() shl 32 or ((si[1] + dcz).toLong() and 0xFFFFFFFFL)
                 val sj = seedByCell[jKey] ?: continue
-                val ax = si[2]; val az = si[3]; val bx = sj[2]; val bz = sj[3]
-                var cax = ax; var caz = az; var cbx = bx; var cbz = bz
-                if (ax > bx || (ax == bx && az > bz)) { cax = bx; caz = bz; cbx = ax; cbz = az }
+                val ax = si[2]
+                val az = si[3]
+                val bx = sj[2]
+                val bz = sj[3]
+                var cax = ax
+                var caz = az
+                var cbx = bx
+                var cbz = bz
+                if (ax > bx || (ax == bx && az > bz)) {
+                    cax = bx
+                    caz = bz
+                    cbx = ax
+                    cbz = az
+                }
                 val key = "$cax,$caz|$cbx,$cbz"
                 if (!seen.add(key)) continue
-                val prob = config.configFor(biomeAt((cax + cbx) / 2, (caz + cbz) / 2)).roadProbability
+                val prob =
+                    config.configFor(biomeAt((cax + cbx) / 2, (caz + cbz) / 2)).roadProbability
                 if (edgeHash(cax, caz, cbx, cbz) >= prob) continue
 
-                val mx = (cax + cbx) / 2.0; val mz = (caz + cbz) / 2.0
-                val pdx = -(cbz - caz).toDouble(); val pdz = (cbx - cax).toDouble()
+                val mx = (cax + cbx) / 2.0
+                val mz = (caz + cbz) / 2.0
+                val pdx = -(cbz - caz).toDouble()
+                val pdz = (cbx - cax).toDouble()
                 val pLen = sqrt(pdx * pdx + pdz * pdz)
                 var posV: Pair<Double, Double>? = null
                 var negV: Pair<Double, Double>? = null
@@ -162,7 +176,8 @@ class RoadVoronoiZones(
                 for (sk in allSeeds) {
                     if (sk[0] == si[0] && sk[1] == si[1]) continue
                     if (sk[0] == sj[0] && sk[1] == sj[1]) continue
-                    val dxm = sk[2] - mx; val dzm = sk[3] - mz
+                    val dxm = sk[2] - mx
+                    val dzm = sk[3] - mz
                     if (dxm * dxm + dzm * dzm > checkR2) continue
                     val projSeed = dxm * pdx + dzm * pdz
                     val v = voronoiCircumcenter(cax, caz, cbx, cbz, sk[2], sk[3]) ?: continue
@@ -172,20 +187,37 @@ class RoadVoronoiZones(
                     val distSq = (v.first - mx) * (v.first - mx) + (v.second - mz) * (v.second - mz)
                     // Skip near-collinear triples: degenerate circumcenter shoots to infinity
                     if (distSq > checkR2) continue
-                    if (proj > 0.0 && distSq < posVDistSq) { posV = v; posVDistSq = distSq }
-                    else if (proj < 0.0 && distSq < negVDistSq) { negV = v; negVDistSq = distSq }
+                    if (proj > 0.0 && distSq < posVDistSq) {
+                        posV = v
+                        posVDistSq = distSq
+                    } else if (proj < 0.0 && distSq < negVDistSq) {
+                        negV = v
+                        negVDistSq = distSq
+                    }
                 }
 
-                val edgeDist = sqrt((cbx - cax).toDouble().let { it * it } + (cbz - caz).toDouble().let { it * it })
-                val fposV = posV ?: Pair(mx + pdx / pLen * edgeDist * 0.5, mz + pdz / pLen * edgeDist * 0.5)
-                val fnegV = negV ?: Pair(mx - pdx / pLen * edgeDist * 0.5, mz - pdz / pLen * edgeDist * 0.5)
+                val edgeDist =
+                    sqrt(
+                        (cbx - cax).toDouble().let { it * it } +
+                            (cbz - caz).toDouble().let { it * it })
+                val fposV =
+                    posV ?: Pair(mx + pdx / pLen * edgeDist * 0.5, mz + pdz / pLen * edgeDist * 0.5)
+                val fnegV =
+                    negV ?: Pair(mx - pdx / pLen * edgeDist * 0.5, mz - pdz / pLen * edgeDist * 0.5)
                 result.add(RoadVertexSegment(fposV.first, fposV.second, fnegV.first, fnegV.second))
             }
         }
         return result
     }
 
-    private fun voronoiCircumcenter(ax: Int, az: Int, bx: Int, bz: Int, cx: Int, cz: Int): Pair<Double, Double>? {
+    private fun voronoiCircumcenter(
+        ax: Int,
+        az: Int,
+        bx: Int,
+        bz: Int,
+        cx: Int,
+        cz: Int
+    ): Pair<Double, Double>? {
         val D = 2.0 * (ax * (bz - cz) + bx * (cz - az) + cx * (az - bz))
         if (abs(D) < 1e-10) return null
         val a2 = ax.toLong() * ax + az.toLong() * az
