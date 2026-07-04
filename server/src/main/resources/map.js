@@ -25254,6 +25254,177 @@
     const m = Math.floor(t % 3e3 / 50);
     return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
   }
+  function drawContours(terrainData, ctx, worldToCanvas) {
+    const heightMap = {};
+    for (const c of terrainData.current) {
+      if (c.avgHeight != null) heightMap[`${c.cx},${c.cz}`] = c.avgHeight;
+    }
+    ctx.strokeStyle = "rgba(220,220,220,0.45)";
+    ctx.lineWidth = 0.6;
+    for (const chunk of terrainData.current) {
+      if (chunk.avgHeight == null) continue;
+      const hBand = Math.floor(chunk.avgHeight / 10);
+      const rh = heightMap[`${chunk.cx + 1},${chunk.cz}`];
+      if (rh != null && Math.floor(rh / 10) !== hBand) {
+        const [ax, az] = worldToCanvas((chunk.cx + 1) * 16, chunk.cz * 16);
+        const [bx, bz] = worldToCanvas((chunk.cx + 1) * 16, (chunk.cz + 1) * 16);
+        ctx.beginPath();
+        ctx.moveTo(ax, az);
+        ctx.lineTo(bx, bz);
+        ctx.stroke();
+      }
+      const bh = heightMap[`${chunk.cx},${chunk.cz + 1}`];
+      if (bh != null && Math.floor(bh / 10) !== hBand) {
+        const [ax, az] = worldToCanvas(chunk.cx * 16, (chunk.cz + 1) * 16);
+        const [bx, bz] = worldToCanvas((chunk.cx + 1) * 16, (chunk.cz + 1) * 16);
+        ctx.beginPath();
+        ctx.moveTo(ax, az);
+        ctx.lineTo(bx, bz);
+        ctx.stroke();
+      }
+    }
+  }
+  function drawPreciseRoads(roadImgRadius, worldToCanvas, roadImgCx, roadImgCz, cam, ctx, roadImg) {
+    if (roadImg.current === null) return;
+    const r2 = roadImgRadius.current;
+    const [tx, tz] = worldToCanvas(roadImgCx.current - r2, roadImgCz.current + r2);
+    const px = 2 * r2 * cam.pxPerBlock;
+    ctx.drawImage(roadImg.current, tx, tz, px, px);
+  }
+  function drawHouses(cam, housesData, worldToCanvas, ctx) {
+    const ppb = cam.pxPerBlock;
+    for (const h of housesData.current) {
+      const [ax, az] = worldToCanvas(h.x, h.z);
+      const w = h.width * ppb, d = h.depth * ppb;
+      ctx.fillStyle = "rgba(255,200,100,0.32)";
+      ctx.fillRect(ax, az - d, w, d);
+      ctx.strokeStyle = "#c80";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(ax, az - d, w, d);
+    }
+  }
+  function drawVoronoi(biomeDirty, renderBiomeBorders, ctx, bc, voronoiCells, cam, worldToCanvas, W, H) {
+    if (biomeDirty.current) {
+      renderBiomeBorders();
+      biomeDirty.current = false;
+    }
+    ctx.drawImage(bc, 0, 0);
+    if (voronoiCells.current.length) {
+      const fontSize = Math.max(9, Math.min(14, cam.pxPerBlock * 80));
+      ctx.font = "bold " + Math.round(fontSize) + "px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      for (const cell of voronoiCells.current) {
+        const [px, pz] = worldToCanvas(cell.x, cell.z);
+        if (px < -100 || px > W + 100 || pz < -100 || pz > H + 100) continue;
+        ctx.fillStyle = "rgba(0,0,0,0.65)";
+        ctx.fillText(cell.biome, px + 1, pz + 1);
+        ctx.fillStyle = "#fff";
+        ctx.fillText(cell.biome, px, pz);
+      }
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+    }
+  }
+  function drawVegetation(voronoiCells, cam, worldToCanvas, ctx) {
+    const cells = voronoiCells.current;
+    const estR = Math.sqrt(3200 * 3200 / cells.length) * 0.65 * cam.pxPerBlock;
+    for (const cell of cells) {
+      const tint = VEGETATION_TINT[cell.biome];
+      if (!tint) continue;
+      const [px, pz] = worldToCanvas(cell.x, cell.z);
+      ctx.fillStyle = tint;
+      ctx.beginPath();
+      ctx.arc(px, pz, estR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  function drawGrids(canvasToWorld, W, H, cam, ctx, worldToCanvas) {
+    const [worldLeft, worldTop] = canvasToWorld(0, 0);
+    const [worldRight, worldBottom] = canvasToWorld(W, H);
+    const gridStep = Math.pow(10, Math.ceil(Math.log10(80 / cam.pxPerBlock)));
+    ctx.strokeStyle = "rgba(255,255,255,0.06)";
+    ctx.lineWidth = 0.5;
+    ctx.fillStyle = "rgba(255,255,255,0.28)";
+    ctx.font = "9px monospace";
+    for (let gx = Math.ceil(worldLeft / gridStep) * gridStep; gx <= worldRight; gx += gridStep) {
+      const cx2 = worldToCanvas(gx, 0)[0];
+      ctx.beginPath();
+      ctx.moveTo(cx2, 0);
+      ctx.lineTo(cx2, H);
+      ctx.stroke();
+      ctx.fillText(String(Math.round(gx)), cx2 + 2, 10);
+    }
+    for (let gz = Math.ceil(worldTop / gridStep) * gridStep; gz <= worldBottom; gz += gridStep) {
+      const cz = worldToCanvas(0, gz)[1];
+      ctx.beginPath();
+      ctx.moveTo(0, cz);
+      ctx.lineTo(W, cz);
+      ctx.stroke();
+      ctx.fillText(String(Math.round(gz)), 2, cz - 2);
+    }
+  }
+  function drawWeathers(state, worldToCanvas, cam, ctx) {
+    var _a, _b, _c;
+    for (const z of (_a = state.weatherZones) != null ? _a : []) {
+      const [wx, wz] = worldToCanvas(z.cx, z.cz);
+      const rPx = z.radius * cam.pxPerBlock;
+      ctx.beginPath();
+      ctx.arc(wx, wz, rPx, 0, Math.PI * 2);
+      ctx.fillStyle = (_b = WEATHER_FILL[z.type]) != null ? _b : "rgba(128,128,128,0.15)";
+      ctx.fill();
+      ctx.strokeStyle = (_c = WEATHER_STROKE[z.type]) != null ? _c : "rgba(128,128,128,0.5)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = "#ccc";
+      ctx.font = "10px monospace";
+      ctx.fillText(z.type, wx - 12, wz + 3);
+    }
+  }
+  function drawNPCs(state, worldToCanvas, ft, ctx) {
+    for (const n of state.npcs) {
+      const [nx, nz] = worldToCanvas(n.x, n.z);
+      if ((ft == null ? void 0 : ft.type) === "npc" && ft.id === n.id) {
+        ctx.strokeStyle = "#ffcc44";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(nx - 8, nz - 8, 16, 16);
+      }
+      ctx.fillStyle = "#fa6";
+      ctx.beginPath();
+      ctx.arc(nx, nz, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fa6";
+      ctx.font = "10px monospace";
+      ctx.fillText(n.type, nx + 7, nz + 4);
+    }
+  }
+  function drawPlayers(state, worldToCanvas, ft, ctx) {
+    for (const p of state.players) {
+      const [px, pz] = worldToCanvas(p.x, p.z);
+      const yawRad = p.yaw * Math.PI / 180;
+      if ((ft == null ? void 0 : ft.type) === "player" && ft.id === p.id) {
+        ctx.strokeStyle = "#44aaff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px - 10, pz - 10, 20, 20);
+      }
+      ctx.save();
+      ctx.translate(px, pz);
+      ctx.strokeStyle = "#6af";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.sin(yawRad) * 12, -Math.cos(yawRad) * 12);
+      ctx.stroke();
+      ctx.fillStyle = "#6af";
+      ctx.beginPath();
+      ctx.arc(0, 0, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = "#8cf";
+      ctx.font = "bold 11px monospace";
+      ctx.fillText(p.name, px + 9, pz + 4);
+    }
+  }
   function useMapRenderer(canvasRef) {
     const [layers, setLayers] = (0, import_react2.useState)(loadLayerState);
     const [apiState, setApiState] = (0, import_react2.useState)({
@@ -25351,7 +25522,6 @@
         }
       }
       function draw() {
-        var _a, _b, _c;
         const W = canvas.width, H = canvas.height;
         const cam = camera.current;
         const L = layersRef.current;
@@ -25374,171 +25544,29 @@
         ctx.fillRect(0, 0, W, H);
         if (L.chunks) ctx.drawImage(tc, 0, 0);
         if (L.vegetation && voronoiCells.current.length) {
-          const cells = voronoiCells.current;
-          const estR = Math.sqrt(3200 * 3200 / cells.length) * 0.65 * cam.pxPerBlock;
-          for (const cell of cells) {
-            const tint = VEGETATION_TINT[cell.biome];
-            if (!tint) continue;
-            const [px, pz] = worldToCanvas(cell.x, cell.z);
-            ctx.fillStyle = tint;
-            ctx.beginPath();
-            ctx.arc(px, pz, estR, 0, Math.PI * 2);
-            ctx.fill();
-          }
+          drawVegetation(voronoiCells, cam, worldToCanvas, ctx);
         }
         if (L.voronoi) {
-          if (biomeDirty.current) {
-            renderBiomeBorders();
-            biomeDirty.current = false;
-          }
-          ctx.drawImage(bc, 0, 0);
-          if (voronoiCells.current.length) {
-            const fontSize = Math.max(9, Math.min(14, cam.pxPerBlock * 80));
-            ctx.font = "bold " + Math.round(fontSize) + "px monospace";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            for (const cell of voronoiCells.current) {
-              const [px, pz] = worldToCanvas(cell.x, cell.z);
-              if (px < -100 || px > W + 100 || pz < -100 || pz > H + 100) continue;
-              ctx.fillStyle = "rgba(0,0,0,0.65)";
-              ctx.fillText(cell.biome, px + 1, pz + 1);
-              ctx.fillStyle = "#fff";
-              ctx.fillText(cell.biome, px, pz);
-            }
-            ctx.textAlign = "left";
-            ctx.textBaseline = "alphabetic";
-          }
+          drawVoronoi(biomeDirty, renderBiomeBorders, ctx, bc, voronoiCells, cam, worldToCanvas, W, H);
         }
         if (L.contours && terrainData.current.length) {
-          const heightMap = {};
-          for (const c of terrainData.current) {
-            if (c.avgHeight != null) heightMap[`${c.cx},${c.cz}`] = c.avgHeight;
-          }
-          ctx.strokeStyle = "rgba(220,220,220,0.45)";
-          ctx.lineWidth = 0.6;
-          for (const chunk of terrainData.current) {
-            if (chunk.avgHeight == null) continue;
-            const hBand = Math.floor(chunk.avgHeight / 10);
-            const rh = heightMap[`${chunk.cx + 1},${chunk.cz}`];
-            if (rh != null && Math.floor(rh / 10) !== hBand) {
-              const [ax, az] = worldToCanvas((chunk.cx + 1) * 16, chunk.cz * 16);
-              const [bx, bz] = worldToCanvas((chunk.cx + 1) * 16, (chunk.cz + 1) * 16);
-              ctx.beginPath();
-              ctx.moveTo(ax, az);
-              ctx.lineTo(bx, bz);
-              ctx.stroke();
-            }
-            const bh = heightMap[`${chunk.cx},${chunk.cz + 1}`];
-            if (bh != null && Math.floor(bh / 10) !== hBand) {
-              const [ax, az] = worldToCanvas(chunk.cx * 16, (chunk.cz + 1) * 16);
-              const [bx, bz] = worldToCanvas((chunk.cx + 1) * 16, (chunk.cz + 1) * 16);
-              ctx.beginPath();
-              ctx.moveTo(ax, az);
-              ctx.lineTo(bx, bz);
-              ctx.stroke();
-            }
-          }
+          drawContours(terrainData, ctx, worldToCanvas);
         }
         if (L["precise-roads"] && roadImg.current) {
-          const r2 = roadImgRadius.current;
-          const [tx, tz] = worldToCanvas(roadImgCx.current - r2, roadImgCz.current + r2);
-          const px = 2 * r2 * cam.pxPerBlock;
-          ctx.drawImage(roadImg.current, tx, tz, px, px);
+          drawPreciseRoads(roadImgRadius, worldToCanvas, roadImgCx, roadImgCz, cam, ctx, roadImg);
         }
         if (L.houses) {
-          const ppb = cam.pxPerBlock;
-          for (const h of housesData.current) {
-            const [ax, az] = worldToCanvas(h.x, h.z);
-            const w = h.width * ppb, d = h.depth * ppb;
-            ctx.fillStyle = "rgba(255,200,100,0.32)";
-            ctx.fillRect(ax, az - d, w, d);
-            ctx.strokeStyle = "#c80";
-            ctx.lineWidth = 1;
-            ctx.strokeRect(ax, az - d, w, d);
-          }
+          drawHouses(cam, housesData, worldToCanvas, ctx);
         }
-        const [worldLeft, worldTop] = canvasToWorld(0, 0);
-        const [worldRight, worldBottom] = canvasToWorld(W, H);
-        const gridStep = Math.pow(10, Math.ceil(Math.log10(80 / cam.pxPerBlock)));
-        ctx.strokeStyle = "rgba(255,255,255,0.06)";
-        ctx.lineWidth = 0.5;
-        ctx.fillStyle = "rgba(255,255,255,0.28)";
-        ctx.font = "9px monospace";
-        for (let gx = Math.ceil(worldLeft / gridStep) * gridStep; gx <= worldRight; gx += gridStep) {
-          const cx2 = worldToCanvas(gx, 0)[0];
-          ctx.beginPath();
-          ctx.moveTo(cx2, 0);
-          ctx.lineTo(cx2, H);
-          ctx.stroke();
-          ctx.fillText(String(Math.round(gx)), cx2 + 2, 10);
-        }
-        for (let gz = Math.ceil(worldTop / gridStep) * gridStep; gz <= worldBottom; gz += gridStep) {
-          const cz = worldToCanvas(0, gz)[1];
-          ctx.beginPath();
-          ctx.moveTo(0, cz);
-          ctx.lineTo(W, cz);
-          ctx.stroke();
-          ctx.fillText(String(Math.round(gz)), 2, cz - 2);
-        }
+        drawGrids(canvasToWorld, W, H, cam, ctx, worldToCanvas);
         if (L.weather) {
-          for (const z of (_a = state.weatherZones) != null ? _a : []) {
-            const [wx, wz] = worldToCanvas(z.cx, z.cz);
-            const rPx = z.radius * cam.pxPerBlock;
-            ctx.beginPath();
-            ctx.arc(wx, wz, rPx, 0, Math.PI * 2);
-            ctx.fillStyle = (_b = WEATHER_FILL[z.type]) != null ? _b : "rgba(128,128,128,0.15)";
-            ctx.fill();
-            ctx.strokeStyle = (_c = WEATHER_STROKE[z.type]) != null ? _c : "rgba(128,128,128,0.5)";
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            ctx.fillStyle = "#ccc";
-            ctx.font = "10px monospace";
-            ctx.fillText(z.type, wx - 12, wz + 3);
-          }
+          drawWeathers(state, worldToCanvas, cam, ctx);
         }
         if (L.npcs) {
-          for (const n of state.npcs) {
-            const [nx, nz] = worldToCanvas(n.x, n.z);
-            if ((ft == null ? void 0 : ft.type) === "npc" && ft.id === n.id) {
-              ctx.strokeStyle = "#ffcc44";
-              ctx.lineWidth = 2;
-              ctx.strokeRect(nx - 8, nz - 8, 16, 16);
-            }
-            ctx.fillStyle = "#fa6";
-            ctx.beginPath();
-            ctx.arc(nx, nz, 5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = "#fa6";
-            ctx.font = "10px monospace";
-            ctx.fillText(n.type, nx + 7, nz + 4);
-          }
+          drawNPCs(state, worldToCanvas, ft, ctx);
         }
         if (L.players) {
-          for (const p of state.players) {
-            const [px, pz] = worldToCanvas(p.x, p.z);
-            const yawRad = p.yaw * Math.PI / 180;
-            if ((ft == null ? void 0 : ft.type) === "player" && ft.id === p.id) {
-              ctx.strokeStyle = "#44aaff";
-              ctx.lineWidth = 2;
-              ctx.strokeRect(px - 10, pz - 10, 20, 20);
-            }
-            ctx.save();
-            ctx.translate(px, pz);
-            ctx.strokeStyle = "#6af";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(Math.sin(yawRad) * 12, -Math.cos(yawRad) * 12);
-            ctx.stroke();
-            ctx.fillStyle = "#6af";
-            ctx.beginPath();
-            ctx.arc(0, 0, 6, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-            ctx.fillStyle = "#8cf";
-            ctx.font = "bold 11px monospace";
-            ctx.fillText(p.name, px + 9, pz + 4);
-          }
+          drawPlayers(state, worldToCanvas, ft, ctx);
         }
       }
       function autoFitView() {
