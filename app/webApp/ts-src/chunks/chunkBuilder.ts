@@ -225,6 +225,7 @@ export function registerChunks(): Pick<McBindings, "disposeChunk" | "chunkBegin"
     chunkEnd: (scene: Scene, materials: Record<string, Material>): void => {
       const buf = __mcBuf!;
       __mcBuf = null;
+      const t0 = performance.now();
       disposeChunk(buf.key);
 
       const meshes: Mesh[] = [];
@@ -250,6 +251,7 @@ export function registerChunks(): Pick<McBindings, "disposeChunk" | "chunkBegin"
         releaseGroup(g);
       }
       window.mcState.chunks[buf.key] = meshes;
+      console.log(`[mesh-ts] key=${buf.key} groups=${meshes.length} applyMs=${(performance.now() - t0).toFixed(1)}`);
     },
   };
 }

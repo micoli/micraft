@@ -51,7 +51,7 @@ private val AO_NEIGHBORS: Array<Array<Array<IntArray>>> =
         ),
     )
 
-private data class ChunkRender(val chunk: Chunk, val topY: Int, var nextY: Int = 0)
+private data class ChunkRender(val chunk: Chunk, val topY: Int, var nextY: Int = 0, val t0: Double = jsNow(), var faces: Int = 0)
 
 class ChunkManager(private val scene: JsAny) {
     val loadedChunks = mutableSetOf<ChunkPos>()
@@ -61,6 +61,22 @@ class ChunkManager(private val scene: JsAny) {
     private var blockMaterials: JsAny? = null
     private var shadersEnabled = true
     private var activeRender: ChunkRender? = null
+
+    // Precomputed per-wireIndex flags to avoid HashMap lookups in the hot meshing path
+    private val solidByOrd = ByteArray(256)
+    private val liquidByOrd = ByteArray(256)
+    private var ordFlagsBuilt = false
+    private val strideX = (WorldConstants.WORLD_MAX_Y + 1) * WorldConstants.CHUNK_SIZE
+
+    private fun buildOrdFlags() {
+        if (ordFlagsBuilt) return
+        for (i in 0 until 256) {
+            val bt = BlockRegistry.byWireIndex(i)
+            solidByOrd[i] = if (bt.isSolid) 1 else 0
+            liquidByOrd[i] = if (bt.isLiquid) 1 else 0
+        }
+        ordFlagsBuilt = true
+    }
 
     fun setShadersEnabled(enabled: Boolean) {
         shadersEnabled = enabled
@@ -101,6 +117,7 @@ class ChunkManager(private val scene: JsAny) {
         budgetMs: Double = 4.0,
     ) {
         val mats = getBlockMaterials() ?: return
+        buildOrdFlags()
         if (pendingChunks.isEmpty() && activeRender == null) return
         if (pendingChunks.isNotEmpty()) {
             pendingChunks.sortBy { (chunk, _) ->
@@ -120,11 +137,13 @@ class ChunkManager(private val scene: JsAny) {
             }
 
             val ar = activeRender!!
-            renderRow(ar.chunk, ar.topY, ar.nextY)
+            ar.faces += renderRow(ar.chunk, ar.topY, ar.nextY)
             ar.nextY++
 
             if (ar.nextY > ar.topY) {
                 jsChunkEnd(scene, mats)
+                val elapsed = jsNow() - ar.t0
+                jsLog("[mesh] ${ar.chunk.pos.cx},${ar.chunk.pos.cz} rows=${ar.topY + 1} ms=${elapsed.toInt()} faces=${ar.faces} ffiCalls=${ar.faces}")
                 loadedChunks.add(ar.chunk.pos)
                 pendingMinimapPushes.addLast(Pair(ar.chunk, ar.topY))
                 activeRender = null
@@ -179,6 +198,7 @@ class ChunkManager(private val scene: JsAny) {
                     pendingChunks.add(Pair(chunk, topY))
                     return
                 }
+        buildOrdFlags()
         chunkData[chunk.pos] = Pair(chunk, topY)
         jsChunkBegin(chunk.pos.cx, chunk.pos.cz)
         for (y in 0..topY) renderRow(chunk, topY, y)
@@ -286,34 +306,52 @@ class ChunkManager(private val scene: JsAny) {
         return sb.toString()
     }
 
-    private fun renderRow(chunk: Chunk, topY: Int, y: Int) {
-        val ox = chunk.pos.cx * WorldConstants.CHUNK_SIZE
-        val oz = chunk.pos.cz * WorldConstants.CHUNK_SIZE
+    // Returns number of faces emitted (= FFI calls to jsChunkFace)
+    private fun renderRow(chunk: Chunk, topY: Int, y: Int): Int {
+        val blocks = chunk.blocks
         val s = WorldConstants.CHUNK_SIZE
+        val ox = chunk.pos.cx * s
+        val oz = chunk.pos.cz * s
+        var faceCount = 0
         for (x in 0 until s) {
             for (z in 0 until s) {
-                val block = chunk.getBlock(x, y, z)
-                if (block == BlockType.AIR) continue
-                val t = BlockRegistry.wireIndex(block) * 6
+                // Direct ByteArray access — no getBlock(), no registry lookup
+                val idx = x * strideX + y * s + z
+                val ord = blocks[idx].toInt() and 0xFF
+                if (ord == 0) continue  // AIR = wire index 0
+                val t = ord * 6
                 val wx = ox + x
                 val wz2 = oz + z
-                val blockAbove =
-                    if (y >= WorldConstants.WORLD_MAX_Y) BlockType.AIR
-                    else chunk.getBlock(x, y + 1, z)
-                if (!blockAbove.isSolid && !(block.isLiquid && blockAbove.isLiquid))
-                    jsChunkFace(wx, y, wz2, t + 4, computeFaceAO(chunk, x, y, z, 4))
-                if (y <= 0 || !chunk.getBlock(x, y - 1, z).isSolid)
-                    jsChunkFace(wx, y, wz2, t + 5, computeFaceAO(chunk, x, y, z, 5))
-                if (z == s - 1 || !chunk.getBlock(x, y, z + 1).isSolid)
-                    jsChunkFace(wx, y, wz2, t + 0, computeFaceAO(chunk, x, y, z, 0))
-                if (z == 0 || !chunk.getBlock(x, y, z - 1).isSolid)
-                    jsChunkFace(wx, y, wz2, t + 1, computeFaceAO(chunk, x, y, z, 1))
-                if (x == s - 1 || !chunk.getBlock(x + 1, y, z).isSolid)
-                    jsChunkFace(wx, y, wz2, t + 2, computeFaceAO(chunk, x, y, z, 2))
-                if (x == 0 || !chunk.getBlock(x - 1, y, z).isSolid)
-                    jsChunkFace(wx, y, wz2, t + 3, computeFaceAO(chunk, x, y, z, 3))
+
+                // top (+Y): use solidByOrd + liquidByOrd to skip redundant BlockType creation
+                val aboveOrd = if (y >= WorldConstants.WORLD_MAX_Y) 0 else blocks[idx + s].toInt() and 0xFF
+                if (solidByOrd[aboveOrd].toInt() == 0 &&
+                    !(liquidByOrd[ord].toInt() != 0 && liquidByOrd[aboveOrd].toInt() != 0)) {
+                    jsChunkFace(wx, y, wz2, t + 4, computeFaceAO(blocks, x, y, z, 4)); faceCount++
+                }
+                // bottom (-Y)
+                if (y <= 0 || solidByOrd[blocks[idx - s].toInt() and 0xFF].toInt() == 0) {
+                    jsChunkFace(wx, y, wz2, t + 5, computeFaceAO(blocks, x, y, z, 5)); faceCount++
+                }
+                // south (+Z)
+                if (z == s - 1 || solidByOrd[blocks[idx + 1].toInt() and 0xFF].toInt() == 0) {
+                    jsChunkFace(wx, y, wz2, t + 0, computeFaceAO(blocks, x, y, z, 0)); faceCount++
+                }
+                // north (-Z)
+                if (z == 0 || solidByOrd[blocks[idx - 1].toInt() and 0xFF].toInt() == 0) {
+                    jsChunkFace(wx, y, wz2, t + 1, computeFaceAO(blocks, x, y, z, 1)); faceCount++
+                }
+                // east (+X)
+                if (x == s - 1 || solidByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0) {
+                    jsChunkFace(wx, y, wz2, t + 2, computeFaceAO(blocks, x, y, z, 2)); faceCount++
+                }
+                // west (-X)
+                if (x == 0 || solidByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0) {
+                    jsChunkFace(wx, y, wz2, t + 3, computeFaceAO(blocks, x, y, z, 3)); faceCount++
+                }
             }
         }
+        return faceCount
     }
 
     private fun pushMinimapChunk(chunk: Chunk, topY: Int) {
@@ -340,7 +378,8 @@ class ChunkManager(private val scene: JsAny) {
         )
     }
 
-    private fun computeFaceAO(chunk: Chunk, lx: Int, ly: Int, lz: Int, fd: Int): Int {
+    // Takes raw blocks ByteArray — avoids getBlock() + registry HashMap lookups per neighbor
+    private fun computeFaceAO(blocks: ByteArray, lx: Int, ly: Int, lz: Int, fd: Int): Int {
         val nbrs = AO_NEIGHBORS[fd]
         val s = WorldConstants.CHUNK_SIZE
         var packed = 0
@@ -353,7 +392,8 @@ class ChunkManager(private val scene: JsAny) {
                 val nz = lz + off[2]
                 if (nx < 0 || nx >= s || nz < 0 || nz >= s) continue
                 if (ny < 0 || ny > WorldConstants.WORLD_MAX_Y) continue
-                if (chunk.getBlock(nx, ny, nz).isSolid) solid++
+                val nIdx = nx * strideX + ny * s + nz
+                if (solidByOrd[blocks[nIdx].toInt() and 0xFF].toInt() != 0) solid++
             }
             packed = packed or ((solid * 5).coerceAtMost(15) shl (v * 4))
         }
