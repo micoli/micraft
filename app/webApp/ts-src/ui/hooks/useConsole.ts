@@ -108,10 +108,6 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
       case "Escape":
         e.preventDefault();
         onClose();
-        setTimeout(() => {
-          const canvas = document.getElementById("renderCanvas");
-          if (canvas && !document.pointerLockElement) canvas.requestPointerLock();
-        }, 50);
         break;
       case "ArrowUp":
         e.preventDefault();
