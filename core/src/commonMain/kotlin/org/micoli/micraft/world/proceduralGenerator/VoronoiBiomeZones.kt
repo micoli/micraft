@@ -39,6 +39,8 @@ class VoronoiBiomeZones(
         val primary: BiomeDefinition,
         val secondary: BiomeDefinition,
         val blendFactor: Double,
+        val primarySeedX: Int = 0,
+        val primarySeedZ: Int = 0,
     )
 
     fun sample(wx: Int, wz: Int): ColumnSample {
@@ -48,6 +50,7 @@ class VoronoiBiomeZones(
         var d2 = Double.MAX_VALUE
         var b1: BiomeDefinition? = null
         var b2: BiomeDefinition? = null
+        var sx1 = 0; var sz1 = 0
         for (dcx in -1..1) for (dcz in -1..1) {
             val (sx, sz) = seedPoint(cx + dcx, cz + dcz)
             val dx = (wx - sx).toDouble()
@@ -58,13 +61,14 @@ class VoronoiBiomeZones(
                 b2 = b1
                 d1 = dist
                 b1 = seedBiome(sx, sz)
+                sx1 = sx; sz1 = sz
             } else if (dist < d2) {
                 d2 = dist
                 b2 = seedBiome(sx, sz)
             }
         }
         val blend = ((sqrt(d2) - sqrt(d1)) / (2.0 * blendRadius)).coerceIn(0.0, 1.0)
-        return ColumnSample(b1!!, b2 ?: b1, blend)
+        return ColumnSample(b1!!, b2 ?: b1, blend, sx1, sz1)
     }
 
     data class VoronoiCell(val seedX: Int, val seedZ: Int, val biome: BiomeDefinition)

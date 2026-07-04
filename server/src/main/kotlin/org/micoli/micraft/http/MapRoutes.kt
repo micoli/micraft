@@ -167,7 +167,7 @@ fun Route.mapRoutes(gameLoop: GameLoop) {
     get("/api/map/biome-borders") {
         val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
         val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
-        val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 800
+        val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 1500
         val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
         val voronoi = gen?.voronoi
         val chunks = mutableListOf<ChunkBiomeBorderInfo>()
@@ -185,16 +185,17 @@ fun Route.mapRoutes(gameLoop: GameLoop) {
                                 for (lz in 0 until 16) {
                                     val wx = chunkX * 16 + lx
                                     val wz = chunkZ * 16 + lz
-                                    val b = voronoi.sample(wx, wz).primary.id
+                                    val s = voronoi.sample(wx, wz)
+                                    val cellId = "${s.primarySeedX},${s.primarySeedZ}"
+                                    fun cellAt(x: Int, z: Int): String {
+                                        val n = voronoi.sample(x, z)
+                                        return "${n.primarySeedX},${n.primarySeedZ}"
+                                    }
                                     add(
-                                        voronoi.sample(wx + 1, wz).primary.id != b ||
-                                            voronoi.sample(wx - 1, wz).primary.id != b ||
-                                            voronoi.sample(wx, wz + 1).primary.id != b ||
-                                            voronoi.sample(wx, wz - 1).primary.id != b ||
-                                            voronoi.sample(wx + 1, wz + 1).primary.id != b ||
-                                            voronoi.sample(wx + 1, wz - 1).primary.id != b ||
-                                            voronoi.sample(wx - 1, wz + 1).primary.id != b ||
-                                            voronoi.sample(wx - 1, wz - 1).primary.id != b
+                                        cellAt(wx + 1, wz) != cellId ||
+                                            cellAt(wx - 1, wz) != cellId ||
+                                            cellAt(wx, wz + 1) != cellId ||
+                                            cellAt(wx, wz - 1) != cellId
                                     )
                                 }
                             }

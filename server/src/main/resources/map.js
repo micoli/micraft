@@ -12,12 +12,36 @@ let biomeBorderData = [];
 let housesFetchCenter = { x: NaN, z: NaN };
 let roadsFetchCenter = { x: NaN, z: NaN };
 let preciseRoadsFetchCenter = { x: NaN, z: NaN };
-let biomeBorderFetchKey = '';
+let biomeBorderFetchCenter = { x: NaN, z: NaN };
 
-const layers = { voronoi: true, contours: true, vegetation: true, houses: true, players: true, npcs: true, routes: true, 'precise-roads': true };
-['voronoi', 'contours', 'vegetation', 'houses', 'players', 'npcs', 'routes', 'precise-roads'].forEach(function(k) {
-  document.getElementById('layer-' + k).addEventListener('change', function(e) {
+var LAYER_KEYS = ['voronoi', 'contours', 'vegetation', 'houses', 'players', 'npcs', 'routes', 'precise-roads', 'chunks', 'weather'];
+var LAYERS_STORAGE_KEY = 'micraft-map-layers';
+
+function loadLayerState() {
+  try {
+    var saved = JSON.parse(localStorage.getItem(LAYERS_STORAGE_KEY) || '{}');
+    var result = {};
+    LAYER_KEYS.forEach(function(k) { result[k] = k in saved ? saved[k] : true; });
+    return result;
+  } catch(e) {
+    var result = {};
+    LAYER_KEYS.forEach(function(k) { result[k] = true; });
+    return result;
+  }
+}
+function saveLayerState() {
+  localStorage.setItem(LAYERS_STORAGE_KEY, JSON.stringify(layers));
+}
+
+const layers = loadLayerState();
+
+LAYER_KEYS.forEach(function(k) {
+  var el = document.getElementById('layer-' + k);
+  if (!el) return;
+  el.checked = layers[k];
+  el.addEventListener('change', function(e) {
     layers[k] = e.target.checked;
+    saveLayerState();
     draw();
   });
 });
@@ -49,14 +73,14 @@ let dragLast = { x: 0, y: 0 };
 function worldToCanvas(wx, wz) {
   return [
     (wx - camera.x) * camera.pxPerBlock + canvas.width / 2,
-    (wz - camera.z) * camera.pxPerBlock + canvas.height / 2,
+    -(wz - camera.z) * camera.pxPerBlock + canvas.height / 2,
   ];
 }
 
 function canvasToWorld(cx, cz) {
   return [
     (cx - canvas.width / 2) / camera.pxPerBlock + camera.x,
-    (cz - canvas.height / 2) / camera.pxPerBlock + camera.z,
+    -(cz - canvas.height / 2) / camera.pxPerBlock + camera.z,
   ];
 }
 
@@ -111,7 +135,7 @@ function zoomAt(factor, mx, mz) {
   var wc = canvasToWorld(mx, mz);
   camera.pxPerBlock = Math.max(0.05, Math.min(64, camera.pxPerBlock * factor));
   camera.x = wc[0] - (mx - canvas.width / 2) / camera.pxPerBlock;
-  camera.z = wc[1] - (mz - canvas.height / 2) / camera.pxPerBlock;
+  camera.z = wc[1] + (mz - canvas.height / 2) / camera.pxPerBlock;
   terrainDirty = true;
   roadRasterDirty = true;
   biomeBorderDirty = true;
@@ -137,7 +161,7 @@ window.addEventListener('mousemove', function(e) {
     var dx = e.clientX - dragLast.x;
     var dy = e.clientY - dragLast.y;
     camera.x -= dx / camera.pxPerBlock;
-    camera.z -= dy / camera.pxPerBlock;
+    camera.z += dy / camera.pxPerBlock;
     dragLast = { x: e.clientX, y: e.clientY };
     terrainDirty = true;
     roadRasterDirty = true;
@@ -259,7 +283,7 @@ function renderBiomeBorders() {
   bbCtx.clearRect(0, 0, W, H);
   if (!biomeBorderData.length) return;
   var size = Math.ceil(Math.max(1, camera.pxPerBlock));
-  bbCtx.fillStyle = 'rgba(0,0,0,0.55)';
+  bbCtx.fillStyle = 'rgba(128,0,0,0.85)';
   for (var ci = 0; ci < biomeBorderData.length; ci++) {
     var chunk = biomeBorderData[ci];
     for (var lx = 0; lx < 16; lx++) {
@@ -276,6 +300,25 @@ function renderBiomeBorders() {
 function drawVoronoiBorders() {
   if (biomeBorderDirty) { renderBiomeBorders(); biomeBorderDirty = false; }
   ctx.drawImage(biomeBorderCanvas, 0, 0);
+}
+
+function drawBiomeLabels() {
+  if (!voronoiCells.length) return;
+  var fontSize = Math.max(9, Math.min(14, camera.pxPerBlock * 80));
+  ctx.font = 'bold ' + Math.round(fontSize) + 'px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (var i = 0; i < voronoiCells.length; i++) {
+    var cell = voronoiCells[i];
+    var pc = worldToCanvas(cell.x, cell.z);
+    if (pc[0] < -100 || pc[0] > canvas.width + 100 || pc[1] < -100 || pc[1] > canvas.height + 100) continue;
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillText(cell.biome, pc[0] + 1, pc[1] + 1);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(cell.biome, pc[0], pc[1]);
+  }
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
 }
 
 function drawContours() {
@@ -327,10 +370,10 @@ function drawHouses() {
     var a = worldToCanvas(h.x, h.z);
     var w = h.width * ppb, d = h.depth * ppb;
     ctx.fillStyle = 'rgba(255,200,100,0.32)';
-    ctx.fillRect(a[0], a[1], w, d);
+    ctx.fillRect(a[0], a[1] - d, w, d);
     ctx.strokeStyle = '#c80';
     ctx.lineWidth = 1;
-    ctx.strokeRect(a[0], a[1], w, d);
+    ctx.strokeRect(a[0], a[1] - d, w, d);
   }
 }
 
@@ -357,10 +400,10 @@ function draw() {
 
   ctx.fillStyle = '#111';
   ctx.fillRect(0, 0, W, H);
-  ctx.drawImage(terrainCanvas, 0, 0);
+  if (layers.chunks) ctx.drawImage(terrainCanvas, 0, 0);
 
   if (layers.vegetation) drawVegetation();
-  if (layers.voronoi) drawVoronoiBorders();
+  if (layers.voronoi) { drawVoronoiBorders(); drawBiomeLabels(); }
   if (layers.contours) drawContours();
   if (layers['precise-roads']) drawPreciseRoads();
   if (layers.routes) drawRoads();
@@ -389,18 +432,20 @@ function draw() {
   }
 
   // Weather zones
-  var WEATHER_COLORS = { RAIN: 'rgba(80,120,255,0.18)', STORM: 'rgba(100,0,200,0.22)', SNOW: 'rgba(200,230,255,0.2)', FOG: 'rgba(150,150,150,0.18)' };
-  var WEATHER_STROKE = { RAIN: 'rgba(80,120,255,0.55)', STORM: 'rgba(100,0,200,0.55)', SNOW: 'rgba(200,230,255,0.6)', FOG: 'rgba(140,140,140,0.5)' };
-  var zones = state.weatherZones || [];
-  for (var zi = 0; zi < zones.length; zi++) {
-    var z = zones[zi];
-    var wc = worldToCanvas(z.cx, z.cz);
-    var rPx = z.radius * camera.pxPerBlock;
-    ctx.beginPath(); ctx.arc(wc[0], wc[1], rPx, 0, Math.PI * 2);
-    ctx.fillStyle = WEATHER_COLORS[z.type] || 'rgba(128,128,128,0.15)'; ctx.fill();
-    ctx.strokeStyle = WEATHER_STROKE[z.type] || 'rgba(128,128,128,0.5)'; ctx.lineWidth = 1; ctx.stroke();
-    ctx.fillStyle = '#ccc'; ctx.font = '10px monospace';
-    ctx.fillText(z.type, wc[0] - 12, wc[1] + 3);
+  if (layers.weather) {
+    var WEATHER_COLORS = { RAIN: 'rgba(80,120,255,0.18)', STORM: 'rgba(100,0,200,0.22)', SNOW: 'rgba(200,230,255,0.2)', FOG: 'rgba(150,150,150,0.18)' };
+    var WEATHER_STROKE = { RAIN: 'rgba(80,120,255,0.55)', STORM: 'rgba(100,0,200,0.55)', SNOW: 'rgba(200,230,255,0.6)', FOG: 'rgba(140,140,140,0.5)' };
+    var zones = state.weatherZones || [];
+    for (var zi = 0; zi < zones.length; zi++) {
+      var z = zones[zi];
+      var wc = worldToCanvas(z.cx, z.cz);
+      var rPx = z.radius * camera.pxPerBlock;
+      ctx.beginPath(); ctx.arc(wc[0], wc[1], rPx, 0, Math.PI * 2);
+      ctx.fillStyle = WEATHER_COLORS[z.type] || 'rgba(128,128,128,0.15)'; ctx.fill();
+      ctx.strokeStyle = WEATHER_STROKE[z.type] || 'rgba(128,128,128,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = '#ccc'; ctx.font = '10px monospace';
+      ctx.fillText(z.type, wc[0] - 12, wc[1] + 3);
+    }
   }
 
   if (layers.npcs) {
@@ -506,14 +551,12 @@ async function pollTerrain() {
       terrainDirty = true;
       roadRasterDirty = true;
       biomeBorderDirty = true;
-      biomeBorderFetchKey = '';
       if (!autoFitDone && terrainData.length > 0) {
         autoFitDone = true;
         autoFitView();
         fetchHouses();
         fetchRoads();
         fetchPreciseRoads();
-        fetchBiomeBorders();
       }
       draw();
     }
@@ -561,21 +604,11 @@ async function fetchPreciseRoads() {
 }
 
 async function fetchBiomeBorders() {
-  if (!terrainData.length) return;
-  var minCx = terrainData[0].cx, maxCx = terrainData[0].cx;
-  var minCz = terrainData[0].cz, maxCz = terrainData[0].cz;
-  for (var i = 1; i < terrainData.length; i++) {
-    if (terrainData[i].cx < minCx) minCx = terrainData[i].cx;
-    if (terrainData[i].cx > maxCx) maxCx = terrainData[i].cx;
-    if (terrainData[i].cz < minCz) minCz = terrainData[i].cz;
-    if (terrainData[i].cz > maxCz) maxCz = terrainData[i].cz;
-  }
-  var cx = Math.round((minCx + maxCx) * 8);
-  var cz = Math.round((minCz + maxCz) * 8);
-  var radius = Math.ceil(Math.max((maxCx - minCx + 4), (maxCz - minCz + 4)) * 8);
-  var key = cx + '|' + cz + '|' + radius;
-  if (key === biomeBorderFetchKey) return;
-  biomeBorderFetchKey = key;
+  var cx = Math.round(camera.x), cz = Math.round(camera.z);
+  var ddx = cx - biomeBorderFetchCenter.x, ddz = cz - biomeBorderFetchCenter.z;
+  if (!isNaN(biomeBorderFetchCenter.x) && Math.sqrt(ddx*ddx + ddz*ddz) < 300) return;
+  biomeBorderFetchCenter = { x: cx, z: cz };
+  var radius = 2000;
   try {
     var r = await fetch('/api/map/biome-borders?cx=' + cx + '&cz=' + cz + '&radius=' + radius);
     if (r.ok) { biomeBorderData = await r.json(); biomeBorderDirty = true; draw(); }
@@ -585,6 +618,7 @@ async function fetchBiomeBorders() {
 pollState();
 pollTerrain();
 fetchVoronoi();
+fetchBiomeBorders();
 setInterval(pollState, 1000);
 setInterval(pollTerrain, 5000);
 setInterval(fetchHouses, 10000);
