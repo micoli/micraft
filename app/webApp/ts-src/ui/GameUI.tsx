@@ -19,6 +19,7 @@ import { CodexModal } from "../codex/CodexModal";
 import { ChunkDebug, ChunkDebugData } from "./game/ChunkDebug";
 import { Character } from "./game/Character";
 import { BiomeMap } from "./game/BiomeMap";
+import { Craft } from "./game/Craft";
 
 function loadHudMode(): HudMode {
   try {
@@ -55,6 +56,9 @@ const initial: UiState = {
   layoutEditorOpen: false,
   npcDialog: null,
   codexOpen: false,
+  craftOpen: false,
+  craftRecipes: {},
+  craftKnownRecipes: [],
   preferencesOpen: false,
   preferences: null,
   pauseMenuOpen: false,
@@ -91,6 +95,7 @@ export function GameUI() {
   const pauseMenuOpenRef = useRef(false);
   const preferencesOpenRef = useRef(false);
   const codexOpenRef = useRef(false);
+  const craftOpenRef = useRef(false);
   const characterOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
   const chunkLoadingRef = useRef(false);
@@ -131,6 +136,10 @@ export function GameUI() {
   }, [state.codexOpen]);
 
   useEffect(() => {
+    craftOpenRef.current = state.craftOpen;
+  }, [state.craftOpen]);
+
+  useEffect(() => {
     characterOpenRef.current = state.characterOpen;
   }, [state.characterOpen]);
 
@@ -154,8 +163,12 @@ export function GameUI() {
     chunkLoadingRef.current = state.chunkLoading !== null;
     if (window.mcState)
       window.mcState.modalOpen =
-        state.chunkLoading !== null || state.preferencesOpen || state.codexOpen || state.characterOpen;
-  }, [state.chunkLoading, state.preferencesOpen, state.codexOpen, state.characterOpen]);
+        state.chunkLoading !== null ||
+        state.preferencesOpen ||
+        state.codexOpen ||
+        state.craftOpen ||
+        state.characterOpen;
+  }, [state.chunkLoading, state.preferencesOpen, state.codexOpen, state.craftOpen, state.characterOpen]);
 
   // Auto-hide server log after 15s of no new messages
   useEffect(() => {
@@ -382,6 +395,18 @@ export function GameUI() {
 
     window.mc.showPreferences = () => dispatch({ type: "preferences_show" });
     window.mc.openCodex = () => dispatch({ type: "codex_open" });
+    window.mc.openCraft = () => dispatch({ type: "craft_open" });
+    window.mc.recipeSync = (json: string) => {
+      try {
+        const parsed = JSON.parse(json) as {
+          recipes: Record<string, import("./types").RecipeDefinition>;
+          knownRecipes: string[];
+        };
+        dispatch({ type: "craft_sync", recipes: parsed.recipes, knownRecipes: parsed.knownRecipes });
+      } catch {
+        /* ignore */
+      }
+    };
     window.mc.openCharacter = () => dispatch({ type: "character_open" });
     window.mc.toggleBiomeMap = () => dispatch({ type: "ingame_map_toggle" });
     window.mc.dumpStats = () => {
@@ -433,6 +458,10 @@ export function GameUI() {
         }
         if (codexOpenRef.current) {
           dispatch({ type: "codex_close" });
+          return;
+        }
+        if (craftOpenRef.current) {
+          dispatch({ type: "craft_close" });
           return;
         }
         if (preferencesOpenRef.current) {
@@ -606,6 +635,17 @@ export function GameUI() {
           />
           <NpcDialog data={state.npcDialog} onClose={() => dispatch({ type: "npc_dialog_close" })} />
           <CodexModal open={state.codexOpen} onClose={() => dispatch({ type: "codex_close" })} />
+          <Craft
+            open={state.craftOpen}
+            onClose={() => dispatch({ type: "craft_close" })}
+            recipes={state.craftRecipes}
+            knownRecipes={state.craftKnownRecipes}
+            inventory={state.inventory}
+            itemMeta={state.itemMeta}
+            onCommand={(cmd) => {
+              consoleSubmittedRef.current = cmd;
+            }}
+          />
           <Character
             open={state.characterOpen}
             onClose={() => dispatch({ type: "character_close" })}

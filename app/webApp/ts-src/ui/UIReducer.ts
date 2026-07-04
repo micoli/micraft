@@ -1,4 +1,4 @@
-import { GameLayout, HudData, HudMode, LogEntry, NpcDialogData, PreferencesData } from "./types";
+import { GameLayout, HudData, HudMode, LogEntry, NpcDialogData, PreferencesData, RecipeDefinition } from "./types";
 
 export interface UiState {
   hud: HudData | null;
@@ -25,6 +25,9 @@ export interface UiState {
   layoutEditorOpen: boolean;
   npcDialog: NpcDialogData | null;
   codexOpen: boolean;
+  craftOpen: boolean;
+  craftRecipes: Record<string, RecipeDefinition>;
+  craftKnownRecipes: string[];
   preferencesOpen: boolean;
   preferences: PreferencesData | null;
   pauseMenuOpen: boolean;
@@ -62,6 +65,9 @@ export type UiAction =
   | { type: "npc_dialog_close" }
   | { type: "codex_open" }
   | { type: "codex_close" }
+  | { type: "craft_open" }
+  | { type: "craft_close" }
+  | { type: "craft_sync"; recipes: Record<string, RecipeDefinition>; knownRecipes: string[] }
   | { type: "preferences_sync"; data: PreferencesData }
   | { type: "preferences_show" }
   | { type: "preferences_hide" }
@@ -174,6 +180,12 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, codexOpen: true };
     case "codex_close":
       return { ...state, codexOpen: false };
+    case "craft_open":
+      return { ...state, craftOpen: true };
+    case "craft_close":
+      return { ...state, craftOpen: false };
+    case "craft_sync":
+      return { ...state, craftRecipes: action.recipes, craftKnownRecipes: action.knownRecipes };
     case "preferences_sync":
       return { ...state, preferences: action.data };
     case "preferences_show":

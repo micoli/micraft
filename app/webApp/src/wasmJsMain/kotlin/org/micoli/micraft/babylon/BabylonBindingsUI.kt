@@ -148,3 +148,9 @@ fun jsShowPreferences(): Unit = js("mc.showPreferences()")
 fun jsOpenCodex(): Unit = js("mc.openCodex()")
 
 fun jsToggleBiomeMap(): Unit = js("mc.toggleBiomeMap()")
+
+// ── Craft ──────────────────────────────────────────────────────────────────────
+
+fun jsOpenCraft(): Unit = js("mc.openCraft()")
+
+fun jsRecipeSync(json: String): Unit = js("mc.recipeSync(json)")

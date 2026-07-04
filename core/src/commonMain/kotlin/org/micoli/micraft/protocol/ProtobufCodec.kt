@@ -38,6 +38,8 @@ object ServerMessageCodec {
         WEATHER_UPDATE(25),
         GAME_CONFIG_SYNC(26),
         TOGGLE_INGAME_MAP(27),
+        OPEN_CRAFT(28),
+        RECIPE_SYNC(29),
     }
 
     fun encode(msg: ServerMessage): ByteArray {
@@ -77,6 +79,8 @@ object ServerMessageCodec {
                 is ServerMessage.WeatherUpdate -> Id.WEATHER_UPDATE to proto.encodeToByteArray(msg)
                 is ServerMessage.GameConfigSync ->
                     Id.GAME_CONFIG_SYNC to proto.encodeToByteArray(msg)
+                ServerMessage.OpenCraft -> Id.OPEN_CRAFT to ByteArray(0)
+                is ServerMessage.RecipeSync -> Id.RECIPE_SYNC to proto.encodeToByteArray(msg)
             }
         return byteArrayOf(id.b) + payload
     }
@@ -112,6 +116,8 @@ object ServerMessageCodec {
             25 -> proto.decodeFromByteArray<ServerMessage.WeatherUpdate>(payload)
             26 -> proto.decodeFromByteArray<ServerMessage.GameConfigSync>(payload)
             27 -> ServerMessage.ToggleBiomeMap
+            28 -> ServerMessage.OpenCraft
+            29 -> proto.decodeFromByteArray<ServerMessage.RecipeSync>(payload)
             else -> throw IllegalArgumentException("Unknown ServerMessage type id: ${data[0]}")
         }
     }
@@ -137,6 +143,7 @@ object ClientMessageCodec {
                 is ClientMessage.ChatSend -> 11.toByte() to proto.encodeToByteArray(msg)
                 is ClientMessage.PreferencesUpdate -> 12.toByte() to proto.encodeToByteArray(msg)
                 is ClientMessage.ViewModeUpdate -> 13.toByte() to proto.encodeToByteArray(msg)
+                is ClientMessage.DoCraft -> 14.toByte() to proto.encodeToByteArray(msg)
             }
         return byteArrayOf(id) + payload
     }
@@ -158,6 +165,7 @@ object ClientMessageCodec {
             11 -> proto.decodeFromByteArray<ClientMessage.ChatSend>(payload)
             12 -> proto.decodeFromByteArray<ClientMessage.PreferencesUpdate>(payload)
             13 -> proto.decodeFromByteArray<ClientMessage.ViewModeUpdate>(payload)
+            14 -> proto.decodeFromByteArray<ClientMessage.DoCraft>(payload)
             else -> throw IllegalArgumentException("Unknown ClientMessage type id: ${data[0]}")
         }
     }

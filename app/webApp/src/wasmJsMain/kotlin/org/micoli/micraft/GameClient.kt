@@ -338,6 +338,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             is ServerMessage.OpenLayoutEditor -> jsShowLayoutEditor()
             is ServerMessage.OpenPreferences -> jsShowPreferences()
             is ServerMessage.OpenCodex -> jsOpenCodex()
+            is ServerMessage.OpenCraft -> jsOpenCraft()
+            is ServerMessage.RecipeSync -> jsRecipeSync(Json.encodeToString(msg))
             is ServerMessage.ToggleBiomeMap -> jsToggleBiomeMap()
             is ServerMessage.RegistrySync -> {
                 val blockDefs =

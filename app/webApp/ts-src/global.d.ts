@@ -383,6 +383,8 @@ declare global {
     consumePreferencesUpdate(): string;
     showPreferences(): void;
     openCodex(): void;
+    openCraft(): void;
+    recipeSync(json: string): void;
     openCharacter(): void;
     toggleBiomeMap(): void;
     dumpStats(): void;

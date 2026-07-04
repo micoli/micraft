@@ -10,6 +10,7 @@ import org.micoli.micraft.world.BlockPos
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.ItemType
+import org.micoli.micraft.world.RecipeDefinition
 import org.micoli.micraft.world.WorldItem
 import org.micoli.micraft.world.proceduralGenerator.weather.WeatherZoneInfo
 
@@ -101,7 +102,15 @@ sealed class ServerMessage {
 
     @Serializable object OpenCodex : ServerMessage()
 
+    @Serializable object OpenCraft : ServerMessage()
+
     @Serializable object ToggleBiomeMap : ServerMessage()
+
+    @Serializable
+    data class RecipeSync(
+        val recipes: Map<String, RecipeDefinition>,
+        val knownRecipes: Set<String>,
+    ) : ServerMessage()
 
     @Serializable
     data class RegistrySync(

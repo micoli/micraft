@@ -90,6 +90,15 @@ give:
     done: "{0}x {1} accordé(s)."
     unknown: "Objet inconnu : {0}. Disponibles : {1}"
     usage: "Usage : /give <itemType> [N]. Disponibles : {0}"
+craft:
+  server:
+    done: "{0}x {1} fabriqué(s)."
+    not_enough: "Pas assez de {0} : {1} disponible(s), {2} nécessaire(s)."
+    not_known: "Recette inconnue : {0}."
+    unknown_recipe: "Recette introuvable : {0}."
+    learned: "Recette apprise : {0}."
+    learnrecipe_usage: "Usage : /learnrecipe <recetteId>. Disponibles : {0}"
+    docraft_usage: "Usage : /docraft <recetteId> [quantité]"
 layout:
   server:
     switched: "Mise en page changée vers {0}."

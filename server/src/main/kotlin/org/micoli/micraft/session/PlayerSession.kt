@@ -42,6 +42,10 @@ open class PlayerSession(
     val inventory: MutableMap<ItemType, Int> = ConcurrentHashMap()
     val actionHistory: ArrayDeque<WorldActionRecord> = ArrayDeque()
     val shortcutBar: MutableList<ItemType?> = MutableList(10) { null }
+    val knownRecipes: MutableSet<String> =
+        Collections.newSetFromMap(ConcurrentHashMap<String, Boolean>()).also {
+            it.addAll(state.knownRecipes)
+        }
 
     @Volatile var lastMoveDx: Float = 0f
     @Volatile var lastMoveDz: Float = 0f

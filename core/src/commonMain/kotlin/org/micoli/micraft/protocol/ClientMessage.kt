@@ -69,4 +69,6 @@ sealed class ClientMessage {
     ) : ClientMessage()
 
     @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()
+
+    @Serializable data class DoCraft(val recipeId: String, val count: Int) : ClientMessage()
 }

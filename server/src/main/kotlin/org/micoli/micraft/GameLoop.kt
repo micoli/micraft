@@ -48,6 +48,8 @@ import org.micoli.micraft.world.DropConfig
 import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.NpcRegistryLoader
+import org.micoli.micraft.world.RecipeRegistry
+import org.micoli.micraft.world.RecipeRegistryLoader
 import org.micoli.micraft.world.VegetationConfig
 import org.micoli.micraft.world.WearableSlots
 import org.micoli.micraft.world.WeatherConfig
@@ -181,6 +183,8 @@ class GameLoop(
                 persistence?.worldDir?.resolve("vegetation_state.json")
                     ?: Path.of("data/world/default_world/vegetation_state.json"),
         )
+
+    private val recipeRegistryLoader = RecipeRegistryLoader(Path.of("data/config/recipes.yaml"))
 
     private val armorRegistryLoader = ArmorRegistryLoader(Path.of("resources/armors"))
     private var armorRegistry: Map<String, WearableSlots> = emptyMap()
@@ -448,6 +452,7 @@ class GameLoop(
         appScope = app
         log.info("GameLoop starting (tick=${TICK_MS}ms, gravity=$GRAVITY)")
         validatePluginSystemIds(commands, discoverPlugins())
+        RecipeRegistry.load(recipeRegistryLoader.load())
         armorRegistry = armorRegistryLoader.load()
         npcConfigLoader.load()
         npcManager.loadDefinitions(npcRegistryLoader.load())
@@ -506,6 +511,7 @@ class GameLoop(
             session.state.copy(
                 inventory = session.inventory.toMap(),
                 shortcutBar = session.shortcutBar.toList(),
+                knownRecipes = session.knownRecipes.toSet(),
             ),
         )
     }
@@ -650,6 +656,7 @@ class GameLoop(
                 armors = saved?.armors ?: emptyList(),
                 animatedFavicon = saved?.animatedFavicon ?: true,
                 chunkDebugVisible = saved?.chunkDebugVisible ?: false,
+                knownRecipes = saved?.knownRecipes ?: emptySet(),
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =
@@ -686,6 +693,11 @@ class GameLoop(
                 RECONCILE_TOLERANCE_Y,
                 chunkSection.transport))
         session.send(buildRegistrySync())
+        session.send(
+            ServerMessage.RecipeSync(
+                recipes = RecipeRegistry.all(),
+                knownRecipes = session.knownRecipes.toSet(),
+            ))
         session.send(buildPreferencesSync(session))
         chatService.onPlayerConnect(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))

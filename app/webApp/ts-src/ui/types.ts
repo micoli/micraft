@@ -58,6 +58,18 @@ export interface CommandInfo {
   autocompleteArgs?: number[];
 }
 
+export interface RecipeIngredient {
+  type: string;
+  count: number;
+}
+
+export interface RecipeDefinition {
+  giveType: string;
+  giveId: string;
+  giveAmount: number;
+  ingredients: RecipeIngredient[];
+}
+
 export interface PreferencesData {
   subscribedChannels: string[];
   knownChannels: string[];

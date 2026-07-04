@@ -32,4 +32,5 @@ data class PlayerState(
     val armors: List<String> = emptyList(),
     val animatedFavicon: Boolean = true,
     val chunkDebugVisible: Boolean = false,
+    val knownRecipes: Set<String> = emptySet(),
 )
