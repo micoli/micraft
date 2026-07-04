@@ -120,6 +120,7 @@ fun loadHouseConfig(path: Path): HouseConfig {
         path.writeText(DEFAULT_YAML)
         return Yaml.default.decodeFromString(HouseConfig.serializer(), DEFAULT_YAML)
     }
+    validateYamlConfig(path, "houses.schema.json")
     return runCatching {
             val config = Yaml.default.decodeFromString(HouseConfig.serializer(), path.readText())
             log.info(

@@ -53,8 +53,8 @@ class MapRoutesTest {
         val r = client.get("/map")
         assertEquals(HttpStatusCode.OK, r.status)
         val body = r.bodyAsText()
-        assertTrue(body.contains("<canvas"), "map page must include a canvas element")
-        assertTrue(body.contains("/api/map/state"), "map page must reference the API endpoint")
+        assertTrue(body.contains("id=\"root\""), "map page must include the app mount point")
+        assertTrue(body.contains("/map.js"), "map page must load the map script")
     }
 
     @Test

@@ -124,6 +124,7 @@ class BlockRegistryLoader(
     fun load(): Map<BlockType, BlockDefinition> {
         val raw =
             runCatching {
+                    validateYamlConfig(outputPath, "blocks.schema.json")
                     Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, outputPath.readText())
                 }
                 .getOrElse { e ->

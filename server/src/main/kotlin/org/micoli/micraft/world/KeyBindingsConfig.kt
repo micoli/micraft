@@ -75,6 +75,7 @@ fun loadKeyBindings(path: Path): Map<String, List<String>> {
         path.parent?.createDirectories()
         path.writeText(DEFAULT_YAML)
     }
+    validateYamlConfig(path, "keybindings.schema.json")
     val sections =
         runCatching { Yaml.default.decodeFromString(SECTION_SERIALIZER, path.readText()) }
             .getOrElse { e ->

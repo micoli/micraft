@@ -85,6 +85,7 @@ class WeatherConfig(private val path: Path = Path.of("data/config/weather.yaml")
             path.writeText(DEFAULT_YAML)
             log.info("Generated default weather config at {}", path.toAbsolutePath())
         }
+        validateYamlConfig(path, "weather.schema.json")
         data = parse()
         log.info("Weather config loaded: {} weather types", data.weatherTypes.size)
     }

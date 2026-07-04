@@ -8,6 +8,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.world.validateYamlConfig
 
 @Serializable
 data class UserEntry(
@@ -24,6 +25,7 @@ class LocalAuthProvider(private val usersFile: Path, @Volatile var groupsConfig:
     private fun load(): UsersConfig =
         if (usersFile.exists())
             runCatching {
+                    validateYamlConfig(usersFile, "auth-users.schema.json")
                     Yaml.default.decodeFromString(UsersConfig.serializer(), usersFile.readText())
                 }
                 .getOrDefault(UsersConfig())

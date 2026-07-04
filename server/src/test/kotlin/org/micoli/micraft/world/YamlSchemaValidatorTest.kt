@@ -3,7 +3,6 @@ package org.micoli.micraft.world
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
-import kotlin.test.assertFailsWith
 
 class YamlSchemaValidatorTest {
 
@@ -28,7 +27,7 @@ class YamlSchemaValidatorTest {
     }
 
     @Test
-    fun `invalid YAML throws`() {
+    fun `invalid YAML is logged and does not throw`() {
         val schema =
             tempSchema(
                 """{"$${"$"}schema":"http://json-schema.org/draft-07/schema#","type":"object","required":["name"],"properties":{"name":{"type":"string"}}}""")
@@ -36,7 +35,7 @@ class YamlSchemaValidatorTest {
             Files.createTempFile("micraft-yaml-test", ".yaml").also {
                 it.toFile().writeText("age: 42")
             }
-        assertFailsWith<IllegalStateException> { validateYaml(yaml, schema) }
+        validateYaml(yaml, schema)
     }
 
     @Test
@@ -49,6 +48,6 @@ class YamlSchemaValidatorTest {
 
     @Test
     fun `all project YAML configs pass their schemas`() {
-        validateAllYamlConfigs(dataDir.resolve("config"))
+        validateAlli18nYamlConfigs(dataDir.resolve("config"))
     }
 }

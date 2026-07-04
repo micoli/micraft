@@ -55,7 +55,8 @@ import org.micoli.micraft.world.loadServerConfig
 import org.micoli.micraft.world.proceduralGenerator.ProceduralChunkGenerator
 import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.DebugChunkGenerator
-import org.micoli.micraft.world.validateAllYamlConfigs
+import org.micoli.micraft.world.validateAlli18nYamlConfigs
+import org.micoli.micraft.world.validateYamlConfig
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("Application")
@@ -66,19 +67,20 @@ fun main() {
 }
 
 private val SERVER_ID: String = UUID.randomUUID().toString()
+val dataPath = "data"
+val configDir = Path.of(dataPath + "/config")
 
 fun Application.module() {
     install(WebSockets) {}
 
-    validateAllYamlConfigs()
-
-    val serverConfig = loadServerConfig(java.nio.file.Path.of("data/config/server.yaml"))
+    validateAlli18nYamlConfigs(configDir)
+    val serverConfig = loadServerConfig(Path.of(dataPath + "/config/server.yaml"))
     applyServerConfig(serverConfig)
 
-    val gameConfig = loadGameConfig(java.nio.file.Path.of("data/config/game.yaml"))
+    val gameConfig = loadGameConfig(Path.of(dataPath + "/config/game.yaml"))
     applyGameConfig(gameConfig)
 
-    loadKeyBindings(java.nio.file.Path.of("data/config/keybindings.yaml"))
+    loadKeyBindings(Path.of(dataPath + "/config/keybindings.yaml"))
 
     val debugWorld = gameConfig.debugWorld
     val worldName =
@@ -86,7 +88,7 @@ fun Application.module() {
 
     val persistence =
         if (!debugWorld) {
-            val dir = Path.of("data/world/$worldName")
+            val dir = Path.of(dataPath + "/world/$worldName")
             WorldPersistence(dir).also { p ->
                 if (p.loadMetadata() == null) {
                     p.saveMetadata(
@@ -102,15 +104,17 @@ fun Application.module() {
     val blockRegistryLoader =
         BlockRegistryLoader(
             resourcesBlocksPath = Path.of("resources/blocks"),
-            dataBlocksPath = Path.of("data/resources/blocks"),
-            outputPath = Path.of("data/config/blocks.yaml"),
+            dataBlocksPath = Path.of(dataPath + "/resources/blocks"),
+            outputPath = Path.of(dataPath + "/config/blocks.yaml"),
         )
-    val itemRegistryLoader = ItemRegistryLoader(Path.of("data/config/items.yaml"))
+
+    val itemRegistryLoader = ItemRegistryLoader(Path.of(dataPath + "/config/items.yaml"))
     BlockRegistry.load(blockRegistryLoader.load())
     ItemRegistry.load(itemRegistryLoader.load())
 
     fun loadBiomeRegistry(): BiomeRegistry {
-        val biomeFile = Path.of("data/config/biomes.yaml")
+        validateYamlConfig(configDir.resolve("biomes.yaml"), "biomes.schema.json")
+        val biomeFile = Path.of(dataPath + "/config/biomes.yaml")
         return if (biomeFile.exists()) {
             log.info("Loading biomes from {}", biomeFile.toAbsolutePath())
             runCatching {
@@ -145,10 +149,14 @@ fun Application.module() {
             BiomeRegistry.default()
         }
 
-    val roadConfigPath = Path.of("data/config/roads.yaml")
+    validateYamlConfig(
+        configDir.resolve("roads.yaml"),
+        "roads.schema.json",
+    )
+    val roadConfigPath = Path.of(dataPath + "/config/roads.yaml")
     val roadConfig = if (!debugWorld) loadRoadConfig(roadConfigPath) else null
 
-    val houseConfigPath = Path.of("data/config/houses.yaml")
+    val houseConfigPath = Path.of(dataPath + "/config/houses.yaml")
     val houseConfig = if (!debugWorld) loadHouseConfig(houseConfigPath) else null
 
     val generator =
@@ -180,7 +188,8 @@ fun Application.module() {
     }
 
     val reloadGameConfigLambda: () -> Unit = {
-        applyGameConfig(loadGameConfig(java.nio.file.Path.of("data/config/game.yaml")))
+        validateYamlConfig(configDir.resolve("game.yaml"), "game.schema.json")
+        applyGameConfig(loadGameConfig(Path.of(dataPath + "/config/game.yaml")))
     }
 
     val authConfig = serverConfig.auth
@@ -202,6 +211,7 @@ fun Application.module() {
         }
 
     val groupsFilePath = Path.of(authConfig.local.groupsFile)
+    validateYamlConfig(groupsFilePath, "groups.schema.json")
     val reloadRbacLambda: (() -> Unit)? =
         when (val p = authProvider) {
             is LocalAuthProvider -> {
@@ -243,7 +253,7 @@ fun Application.module() {
                 if (player != null && persistence != null) {
                     persistence.loadPlayerKeyBindings(player)
                 } else {
-                    loadKeyBindings(Path.of("data/config/keybindings.yaml"))
+                    loadKeyBindings(Path.of(dataPath + "/config/keybindings.yaml"))
                 }
             val serializer = MapSerializer(String.serializer(), ListSerializer(String.serializer()))
             call.respondText(

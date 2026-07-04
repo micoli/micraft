@@ -51,6 +51,7 @@ class DropConfig(private val path: Path) {
             path.writeText(yaml)
             log.info("Generated default drop config at {}", path.toAbsolutePath())
         }
+        validateYamlConfig(path, "drops.schema.json")
         table = parseTable()
         log.info("Drop table loaded: {} block types configured", table.size)
     }

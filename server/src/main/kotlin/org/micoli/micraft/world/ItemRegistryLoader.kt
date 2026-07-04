@@ -71,6 +71,7 @@ class ItemRegistryLoader(private val path: Path) {
             path.writeText(Yaml.default.encodeToString(ENTRY_MAP_SERIALIZER, DEFAULT_YAML))
             log.info("Generated default item registry at {}", path.toAbsolutePath())
         }
+        validateYamlConfig(path, "items.schema.json")
     }
 
     fun load(): Map<ItemType, ItemDefinition> {

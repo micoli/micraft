@@ -149,7 +149,8 @@ class ChunkManager(private val scene: JsAny) {
             if (ar.nextY > ar.topY) {
                 jsChunkEnd(scene, mats)
                 // val elapsed = jsNow() - ar.t0
-                // jsLog("[mesh] ${ar.chunk.pos.cx},${ar.chunk.pos.cz} rows=${ar.topY + 1} ms=${elapsed.toInt()} faces=${ar.faces} ffiCalls=${ar.faces}")
+                // jsLog("[mesh] ${ar.chunk.pos.cx},${ar.chunk.pos.cz} rows=${ar.topY + 1}
+                // ms=${elapsed.toInt()} faces=${ar.faces} ffiCalls=${ar.faces}")
                 loadedChunks.add(ar.chunk.pos)
                 pendingMinimapPushes.addLast(Pair(ar.chunk, ar.topY))
                 activeRender = null

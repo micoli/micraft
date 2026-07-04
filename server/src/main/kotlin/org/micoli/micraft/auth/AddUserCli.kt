@@ -20,6 +20,7 @@ fun main(args: Array<String>) {
         else emptyList()
 
     val usersFile = Path.of("data/config/auth/users.yaml")
+
     val groupsConfig = loadGroupsConfig(Path.of("data/config/auth/groups.yaml"))
     val provider = LocalAuthProvider(usersFile, groupsConfig)
     runCatching { provider.addUser(email, password, displayName, groups) }

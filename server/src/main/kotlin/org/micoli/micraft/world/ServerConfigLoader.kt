@@ -84,6 +84,7 @@ data class ServerConfig(
 fun loadServerConfig(path: Path): ServerConfig {
     val config =
         if (path.exists()) {
+            validateYamlConfig(path, "server.schema.json")
             runCatching {
                     Yaml.default.decodeFromString(ServerConfig.serializer(), path.readText())
                 }

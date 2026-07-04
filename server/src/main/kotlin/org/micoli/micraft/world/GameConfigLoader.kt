@@ -36,6 +36,7 @@ data class GameConfig(
 fun loadGameConfig(path: Path): GameConfig {
     val config =
         if (path.exists()) {
+            validateYamlConfig(path, "game.schema.json")
             runCatching { Yaml.default.decodeFromString(GameConfig.serializer(), path.readText()) }
                 .getOrElse { e ->
                     log.warn("Failed to parse game.yaml ({}), using defaults", e.message)

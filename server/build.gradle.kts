@@ -38,7 +38,10 @@ val rootDirPath: String = rootProject.projectDir.absolutePath
 tasks.test {
     systemProperty("projectDir", rootDirPath)
     workingDir = rootProject.projectDir
+    environment("MICRAFT_WORLD_NAME", "test_world")
     jvmArgs("-Xmx512m")
+    val testWorldDir = rootProject.projectDir.resolve("data/world/test_world")
+    doFirst { testWorldDir.deleteRecursively() }
 }
 
 tasks.register<JavaExec>("patchResourceDefaults") {
