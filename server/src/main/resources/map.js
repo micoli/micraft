@@ -6,15 +6,13 @@ let state = { gameTicks: 0, players: [], npcs: [] };
 let terrainData = [];
 let voronoiCells = [];
 let housesData = [];
-let roadsData = [];
 let preciseRoadsData = [];
 let biomeBorderData = [];
 let housesFetchCenter = { x: NaN, z: NaN };
-let roadsFetchCenter = { x: NaN, z: NaN };
 let preciseRoadsFetchCenter = { x: NaN, z: NaN };
 let biomeBorderFetchCenter = { x: NaN, z: NaN };
 
-var LAYER_KEYS = ['voronoi', 'contours', 'vegetation', 'houses', 'players', 'npcs', 'routes', 'precise-roads', 'chunks', 'weather'];
+var LAYER_KEYS = ['voronoi', 'contours', 'vegetation', 'houses', 'players', 'npcs', 'precise-roads', 'chunks', 'weather'];
 var LAYERS_STORAGE_KEY = 'micraft-map-layers';
 
 function loadLayerState() {
@@ -349,20 +347,6 @@ function drawContours() {
   }
 }
 
-function drawRoads() {
-  if (!roadsData.length) return;
-  ctx.strokeStyle = 'rgba(180,140,60,0.85)';
-  ctx.lineWidth = Math.max(1.5, camera.pxPerBlock * 3);
-  ctx.lineCap = 'round';
-  for (var i = 0; i < roadsData.length; i++) {
-    var seg = roadsData[i];
-    var a = worldToCanvas(seg.x1, seg.z1);
-    var b = worldToCanvas(seg.x2, seg.z2);
-    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
-  }
-  ctx.lineCap = 'butt';
-}
-
 function drawHouses() {
   var ppb = camera.pxPerBlock;
   for (var i = 0; i < housesData.length; i++) {
@@ -406,7 +390,6 @@ function draw() {
   if (layers.voronoi) { drawVoronoiBorders(); drawBiomeLabels(); }
   if (layers.contours) drawContours();
   if (layers['precise-roads']) drawPreciseRoads();
-  if (layers.routes) drawRoads();
   if (layers.houses) drawHouses();
 
   // Grid lines + labels
@@ -555,7 +538,6 @@ async function pollTerrain() {
         autoFitDone = true;
         autoFitView();
         fetchHouses();
-        fetchRoads();
         fetchPreciseRoads();
       }
       draw();
@@ -578,17 +560,6 @@ async function fetchHouses() {
   try {
     var r = await fetch('/api/map/houses?cx=' + cx + '&cz=' + cz + '&radius=1200');
     if (r.ok) { housesData = await r.json(); draw(); }
-  } catch (e) { /* non-critical */ }
-}
-
-async function fetchRoads() {
-  var cx = Math.round(camera.x), cz = Math.round(camera.z);
-  var ddx = cx - roadsFetchCenter.x, ddz = cz - roadsFetchCenter.z;
-  if (!isNaN(roadsFetchCenter.x) && Math.sqrt(ddx*ddx + ddz*ddz) < 300) return;
-  roadsFetchCenter = { x: cx, z: cz };
-  try {
-    var r = await fetch('/api/map/roads?cx=' + cx + '&cz=' + cz + '&radius=1200');
-    if (r.ok) { roadsData = await r.json(); draw(); }
   } catch (e) { /* non-critical */ }
 }
 
@@ -622,6 +593,5 @@ fetchBiomeBorders();
 setInterval(pollState, 1000);
 setInterval(pollTerrain, 5000);
 setInterval(fetchHouses, 10000);
-setInterval(fetchRoads, 10000);
 setInterval(fetchPreciseRoads, 10000);
 setInterval(fetchBiomeBorders, 10000);
