@@ -26,6 +26,9 @@ Minecraft client/server clone — **Kotlin Multiplatform**, multiplayer voxel, p
 **Block types**: `AIR BEDROCK STONE DIRT GRASS SAND SANDSTONE GRAVEL SNOW OAK_LOG OAK_LEAVES PINE_LOG PINE_LEAVES PINE_LEAVES_SNOW FLOWER WEED`
 Properties (hardness, solid, minimapColor, modelElement) in `data/config/blocks.yaml`. `hardness: -1` = unbreakable.
 
+**Biome types**: `snow_peaks desert dry_plains plains forest pine_forest`
+Defined in `data/config/biomes.yaml` (optional — falls back to `BiomeRegistry.default()` if missing). Properties (surface/subsurface/filler blocks, elevationMin/Max, grassColor, vegetation entries) in `core/.../world/BiomeDefinition.kt`. Distributed via Voronoi zones by moisture value (0→1).
+
 **Item types**: `COBBLESTONE DIRT SAND GRAVEL SANDSTONE SNOWBALL FLINT`
 Properties (buildable, placesBlock) in `data/config/items.yaml`.
 
