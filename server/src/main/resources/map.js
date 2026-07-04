@@ -25401,7 +25401,7 @@
   function drawPlayers(state, worldToCanvas, ft, ctx) {
     for (const p of state.players) {
       const [px, pz] = worldToCanvas(p.x, p.z);
-      const yawRad = p.yaw * Math.PI / 180;
+      const yawRad = p.yaw;
       if ((ft == null ? void 0 : ft.type) === "player" && ft.id === p.id) {
         ctx.strokeStyle = "#44aaff";
         ctx.lineWidth = 2;
@@ -25409,16 +25409,28 @@
       }
       ctx.save();
       ctx.translate(px, pz);
-      ctx.strokeStyle = "#6af";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(Math.sin(yawRad) * 12, -Math.cos(yawRad) * 12);
-      ctx.stroke();
+      const adx = Math.sin(yawRad);
+      const ady = -Math.cos(yawRad);
+      const perpX = -ady;
+      const perpY = adx;
+      const arrowLen = 10;
+      const arrowWidth = 5;
+      const tipX = adx * arrowLen;
+      const tipY = ady * arrowLen;
+      const b1x = -adx * arrowLen * 0.4 + perpX * arrowWidth;
+      const b1y = -ady * arrowLen * 0.4 + perpY * arrowWidth;
+      const b2x = -adx * arrowLen * 0.4 - perpX * arrowWidth;
+      const b2y = -ady * arrowLen * 0.4 - perpY * arrowWidth;
       ctx.fillStyle = "#6af";
       ctx.beginPath();
-      ctx.arc(0, 0, 6, 0, Math.PI * 2);
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(b1x, b1y);
+      ctx.lineTo(b2x, b2y);
+      ctx.closePath();
       ctx.fill();
+      ctx.strokeStyle = "#003366";
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
       ctx.restore();
       ctx.fillStyle = "#8cf";
       ctx.font = "bold 11px monospace";
