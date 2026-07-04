@@ -69,7 +69,11 @@ export interface MapRendererState {
   onZoomOut: () => void;
 }
 
-function drawContours(terrainData: React.RefObject<ChunkTerrainInfo[]>, ctx: CanvasRenderingContext2D, worldToCanvas: (wx: number, wz: number) => [number, number]) {
+function drawContours(
+  terrainData: React.RefObject<ChunkTerrainInfo[]>,
+  ctx: CanvasRenderingContext2D,
+  worldToCanvas: (wx: number, wz: number) => [number, number],
+) {
   const heightMap: Record<string, number> = {};
   for (const c of terrainData.current) {
     if (c.avgHeight != null) heightMap[`${c.cx},${c.cz}`] = c.avgHeight;
@@ -100,20 +104,33 @@ function drawContours(terrainData: React.RefObject<ChunkTerrainInfo[]>, ctx: Can
   }
 }
 
-function drawPreciseRoads(roadImgRadius: React.RefObject<number>, worldToCanvas: (wx: number, wz: number) => [number, number], roadImgCx: React.RefObject<number>, roadImgCz: React.RefObject<number>, cam: Camera, ctx: CanvasRenderingContext2D, roadImg: React.RefObject<HTMLImageElement | null>) {
-  if(roadImg.current===null) return;
+function drawPreciseRoads(
+  roadImgRadius: React.RefObject<number>,
+  worldToCanvas: (wx: number, wz: number) => [number, number],
+  roadImgCx: React.RefObject<number>,
+  roadImgCz: React.RefObject<number>,
+  cam: Camera,
+  ctx: CanvasRenderingContext2D,
+  roadImg: React.RefObject<HTMLImageElement | null>,
+) {
+  if (roadImg.current === null) return;
   const r = roadImgRadius.current;
   const [tx, tz] = worldToCanvas(roadImgCx.current - r, roadImgCz.current + r);
   const px = 2 * r * cam.pxPerBlock;
   ctx.drawImage(roadImg.current, tx, tz, px, px);
 }
 
-function drawHouses(cam: Camera, housesData: React.RefObject<HouseMapInfo[]>, worldToCanvas: (wx: number, wz: number) => [number, number], ctx: CanvasRenderingContext2D) {
+function drawHouses(
+  cam: Camera,
+  housesData: React.RefObject<HouseMapInfo[]>,
+  worldToCanvas: (wx: number, wz: number) => [number, number],
+  ctx: CanvasRenderingContext2D,
+) {
   const ppb = cam.pxPerBlock;
   for (const h of housesData.current) {
     const [ax, az] = worldToCanvas(h.x, h.z);
     const w = h.width * ppb,
-        d = h.depth * ppb;
+      d = h.depth * ppb;
     ctx.fillStyle = "rgba(255,200,100,0.32)";
     ctx.fillRect(ax, az - d, w, d);
     ctx.strokeStyle = "#c80";
@@ -122,7 +139,17 @@ function drawHouses(cam: Camera, housesData: React.RefObject<HouseMapInfo[]>, wo
   }
 }
 
-function drawVoronoi(biomeDirty: React.RefObject<boolean>, renderBiomeBorders: () => void, ctx: CanvasRenderingContext2D, bc: HTMLCanvasElement, voronoiCells: React.RefObject<VoronoiCellInfo[]>, cam: Camera, worldToCanvas: (wx: number, wz: number) => [number, number], W: number, H: number) {
+function drawVoronoi(
+  biomeDirty: React.RefObject<boolean>,
+  renderBiomeBorders: () => void,
+  ctx: CanvasRenderingContext2D,
+  bc: HTMLCanvasElement,
+  voronoiCells: React.RefObject<VoronoiCellInfo[]>,
+  cam: Camera,
+  worldToCanvas: (wx: number, wz: number) => [number, number],
+  W: number,
+  H: number,
+) {
   if (biomeDirty.current) {
     renderBiomeBorders();
     biomeDirty.current = false;
@@ -146,7 +173,12 @@ function drawVoronoi(biomeDirty: React.RefObject<boolean>, renderBiomeBorders: (
   }
 }
 
-function drawVegetation(voronoiCells: React.RefObject<VoronoiCellInfo[]>, cam: Camera, worldToCanvas: (wx: number, wz: number) => [number, number], ctx: CanvasRenderingContext2D) {
+function drawVegetation(
+  voronoiCells: React.RefObject<VoronoiCellInfo[]>,
+  cam: Camera,
+  worldToCanvas: (wx: number, wz: number) => [number, number],
+  ctx: CanvasRenderingContext2D,
+) {
   const cells = voronoiCells.current;
   const estR = Math.sqrt((3200 * 3200) / cells.length) * 0.65 * cam.pxPerBlock;
   for (const cell of cells) {
@@ -160,7 +192,14 @@ function drawVegetation(voronoiCells: React.RefObject<VoronoiCellInfo[]>, cam: C
   }
 }
 
-function drawGrids(canvasToWorld: (cx: number, cz: number) => [number, number], W: number, H: number, cam: Camera, ctx: CanvasRenderingContext2D, worldToCanvas: (wx: number, wz: number) => [number, number]) {
+function drawGrids(
+  canvasToWorld: (cx: number, cz: number) => [number, number],
+  W: number,
+  H: number,
+  cam: Camera,
+  ctx: CanvasRenderingContext2D,
+  worldToCanvas: (wx: number, wz: number) => [number, number],
+) {
   const [worldLeft, worldTop] = canvasToWorld(0, 0);
   const [worldRight, worldBottom] = canvasToWorld(W, H);
   const gridStep = Math.pow(10, Math.ceil(Math.log10(80 / cam.pxPerBlock)));
@@ -186,7 +225,12 @@ function drawGrids(canvasToWorld: (cx: number, cz: number) => [number, number], 
   }
 }
 
-function drawWeathers(state: MapApiState, worldToCanvas: (wx: number, wz: number) => [number, number], cam: Camera, ctx: CanvasRenderingContext2D) {
+function drawWeathers(
+  state: MapApiState,
+  worldToCanvas: (wx: number, wz: number) => [number, number],
+  cam: Camera,
+  ctx: CanvasRenderingContext2D,
+) {
   for (const z of state.weatherZones ?? []) {
     const [wx, wz] = worldToCanvas(z.cx, z.cz);
     const rPx = z.radius * cam.pxPerBlock;
@@ -203,10 +247,18 @@ function drawWeathers(state: MapApiState, worldToCanvas: (wx: number, wz: number
   }
 }
 
-function drawNPCs(state: MapApiState, worldToCanvas: (wx: number, wz: number) => [number, number], ft: {
-  type: "player" | "npc" | undefined;
-  id: string | undefined
-} | { type: "player" | "npc"; id: string } | null, ctx: CanvasRenderingContext2D) {
+function drawNPCs(
+  state: MapApiState,
+  worldToCanvas: (wx: number, wz: number) => [number, number],
+  ft:
+    | {
+        type: "player" | "npc" | undefined;
+        id: string | undefined;
+      }
+    | { type: "player" | "npc"; id: string }
+    | null,
+  ctx: CanvasRenderingContext2D,
+) {
   for (const n of state.npcs) {
     const [nx, nz] = worldToCanvas(n.x, n.z);
     if (ft?.type === "npc" && ft.id === n.id) {
@@ -224,10 +276,18 @@ function drawNPCs(state: MapApiState, worldToCanvas: (wx: number, wz: number) =>
   }
 }
 
-function drawPlayers(state: MapApiState, worldToCanvas: (wx: number, wz: number) => [number, number], ft: {
-  type: "player" | "npc" | undefined;
-  id: string | undefined
-} | { type: "player" | "npc"; id: string }| null, ctx: CanvasRenderingContext2D) {
+function drawPlayers(
+  state: MapApiState,
+  worldToCanvas: (wx: number, wz: number) => [number, number],
+  ft:
+    | {
+        type: "player" | "npc" | undefined;
+        id: string | undefined;
+      }
+    | { type: "player" | "npc"; id: string }
+    | null,
+  ctx: CanvasRenderingContext2D,
+) {
   for (const p of state.players) {
     const [px, pz] = worldToCanvas(p.x, p.z);
     const yawRad = (p.yaw * Math.PI) / 180;

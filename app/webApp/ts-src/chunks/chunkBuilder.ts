@@ -251,7 +251,7 @@ export function registerChunks(): Pick<McBindings, "disposeChunk" | "chunkBegin"
         releaseGroup(g);
       }
       window.mcState.chunks[buf.key] = meshes;
-      console.log(`[mesh-ts] key=${buf.key} groups=${meshes.length} applyMs=${(performance.now() - t0).toFixed(1)}`);
+      // console.log(`[mesh-ts] key=${buf.key} groups=${meshes.length} applyMs=${(performance.now() - t0).toFixed(1)}`);
     },
   };
 }

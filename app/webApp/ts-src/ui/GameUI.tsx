@@ -135,15 +135,14 @@ export function GameUI() {
   }, [state.characterOpen]);
 
   useEffect(() => {
-    const anyOpen =
-      state.characterOpen || state.biomeMapVisible || state.preferencesOpen || state.pauseMenuOpen;
+    const anyOpen = state.characterOpen || state.biomeMapVisible || state.preferencesOpen || state.pauseMenuOpen;
     if (anyOpen) {
       overlayWasOpen.current = true;
       document.exitPointerLock();
     } else if (overlayWasOpen.current) {
       overlayWasOpen.current = false;
       const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
-      canvas?.requestPointerLock()?.catch?.(() => {});
+      (canvas?.requestPointerLock() as unknown as Promise<void>)?.catch?.(() => {});
     }
   }, [state.characterOpen, state.biomeMapVisible, state.preferencesOpen, state.pauseMenuOpen]);
 
@@ -442,9 +441,11 @@ export function GameUI() {
         }
         if (pauseMenuOpenRef.current) {
           dispatch({ type: "pause_menu_hide" });
-          (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
-            ?.requestPointerLock()
-            ?.catch?.(() => {});
+          (
+            (
+              document.getElementById("renderCanvas") as HTMLCanvasElement | null
+            )?.requestPointerLock() as unknown as Promise<void>
+          )?.catch?.(() => {});
         } else {
           dispatch({ type: "pause_menu_show" });
         }
@@ -622,9 +623,11 @@ export function GameUI() {
             open={state.pauseMenuOpen}
             onClose={() => {
               dispatch({ type: "pause_menu_hide" });
-              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
-                ?.requestPointerLock()
-                ?.catch?.(() => {});
+              (
+                (
+                  document.getElementById("renderCanvas") as HTMLCanvasElement | null
+                )?.requestPointerLock() as unknown as Promise<void>
+              )?.catch?.(() => {});
             }}
             onPreferences={() => {
               dispatch({ type: "pause_menu_hide" });
