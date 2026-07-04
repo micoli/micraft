@@ -3,7 +3,10 @@ package org.micoli.micraft.http
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.ConcurrentHashMap
+import javax.imageio.ImageIO
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.GameLoop
@@ -165,6 +168,57 @@ fun Route.mapRoutes(gameLoop: GameLoop) {
         }
         call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
         call.respondText(Json.encodeToString(chunks), ContentType.Application.Json)
+    }
+
+    get("/api/map/road-raster.png") {
+        val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
+        val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
+        val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 1200
+        val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
+        val roadVoronoi = gen?.roadVoronoi
+        val size = radius * 2
+        val img = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
+        if (roadVoronoi != null) {
+            // rgba(160,120,60,0.85) pre-multiplied as ARGB int
+            val roadArgb = (0xD9 shl 24) or (0xA0 shl 16) or (0x78 shl 8) or 0x3C
+            val cxMin = Math.floorDiv(cx - radius, 16)
+            val cxMax = Math.floorDiv(cx + radius, 16)
+            val czMin = Math.floorDiv(cz - radius, 16)
+            val czMax = Math.floorDiv(cz + radius, 16)
+            for (chunkX in cxMin..cxMax) {
+                for (chunkZ in czMin..czMax) {
+                    val key = chunkX.toLong() shl 32 or (chunkZ.toLong() and 0xFFFFFFFFL)
+                    val mask =
+                        roadRasterCache.getOrPut(key) {
+                            buildList {
+                                for (lx in 0 until 16) {
+                                    for (lz in 0 until 16) {
+                                        add(
+                                            roadVoronoi.isOnRoadAt(
+                                                chunkX * 16 + lx, chunkZ * 16 + lz))
+                                    }
+                                }
+                            }
+                        }
+                    for (lx in 0 until 16) {
+                        for (lz in 0 until 16) {
+                            if (!mask[lx * 16 + lz]) continue
+                            val wx = chunkX * 16 + lx
+                            val wz = chunkZ * 16 + lz
+                            val px = wx - (cx - radius)
+                            // flip Z: row 0 = highest wz so canvas Y maps correctly
+                            val pz = (cz + radius) - wz
+                            if (px < 0 || px >= size || pz < 0 || pz >= size) continue
+                            img.setRGB(px, pz, roadArgb)
+                        }
+                    }
+                }
+            }
+        }
+        val baos = ByteArrayOutputStream()
+        ImageIO.write(img, "PNG", baos)
+        call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+        call.respondBytes(baos.toByteArray(), ContentType.Image.PNG)
     }
 
     get("/api/map/biome-borders") {

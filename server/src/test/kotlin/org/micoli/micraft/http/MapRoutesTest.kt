@@ -58,6 +58,16 @@ class MapRoutesTest {
     }
 
     @Test
+    fun testRoadRasterPngReturnsPng() = testApplication {
+        application { module() }
+        val r = client.get("/api/map/road-raster.png?cx=0&cz=0&radius=64")
+        assertEquals(HttpStatusCode.OK, r.status)
+        assertEquals(ContentType.Image.PNG, r.contentType()?.withoutParameters())
+        assertEquals("*", r.headers[HttpHeaders.AccessControlAllowOrigin])
+        assertTrue(r.readBytes().isNotEmpty(), "PNG body must not be empty")
+    }
+
+    @Test
     fun testDtoMapping() {
         val info = PlayerMapInfo(id = "abc", name = "Alice", x = 1f, y = 64f, z = 2f, yaw = 90f)
         assertEquals("abc", info.id)

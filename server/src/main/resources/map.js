@@ -6,10 +6,12 @@ let state = { gameTicks: 0, players: [], npcs: [] };
 let terrainData = [];
 let voronoiCells = [];
 let housesData = [];
-let preciseRoadsData = [];
+let roadImg = null;
+let roadImgWorldCx = 0, roadImgWorldCz = 0, roadImgRadius = 0;
 let biomeBorderData = [];
 let housesFetchCenter = { x: NaN, z: NaN };
 let preciseRoadsFetchCenter = { x: NaN, z: NaN };
+let preciseRoadsFetching = false;
 let biomeBorderFetchCenter = { x: NaN, z: NaN };
 
 var LAYER_KEYS = ['voronoi', 'contours', 'vegetation', 'houses', 'players', 'npcs', 'precise-roads', 'chunks', 'weather'];
@@ -54,11 +56,6 @@ const terrainCanvas = document.createElement('canvas');
 const tCtx = terrainCanvas.getContext('2d');
 let terrainDirty = true;
 
-// Precise road raster offscreen cache
-const roadRasterCanvas = document.createElement('canvas');
-const rrCtx = roadRasterCanvas.getContext('2d');
-let roadRasterDirty = true;
-
 // Precise biome border raster offscreen cache
 const biomeBorderCanvas = document.createElement('canvas');
 const bbCtx = biomeBorderCanvas.getContext('2d');
@@ -87,12 +84,9 @@ function resize() {
   canvas.height = wrap.clientHeight;
   terrainCanvas.width = canvas.width;
   terrainCanvas.height = canvas.height;
-  roadRasterCanvas.width = canvas.width;
-  roadRasterCanvas.height = canvas.height;
   biomeBorderCanvas.width = canvas.width;
   biomeBorderCanvas.height = canvas.height;
   terrainDirty = true;
-  roadRasterDirty = true;
   biomeBorderDirty = true;
   draw();
 }
@@ -125,7 +119,6 @@ function autoFitView() {
     canvas.height / (maxZ - minZ + pad)
   );
   terrainDirty = true;
-  roadRasterDirty = true;
   biomeBorderDirty = true;
 }
 
@@ -135,7 +128,6 @@ function zoomAt(factor, mx, mz) {
   camera.x = wc[0] - (mx - canvas.width / 2) / camera.pxPerBlock;
   camera.z = wc[1] + (mz - canvas.height / 2) / camera.pxPerBlock;
   terrainDirty = true;
-  roadRasterDirty = true;
   biomeBorderDirty = true;
   draw();
 }
@@ -162,8 +154,7 @@ window.addEventListener('mousemove', function(e) {
     camera.z += dy / camera.pxPerBlock;
     dragLast = { x: e.clientX, y: e.clientY };
     terrainDirty = true;
-    roadRasterDirty = true;
-    biomeBorderDirty = true;
+      biomeBorderDirty = true;
     draw();
   }
   var rect = canvas.getBoundingClientRect();
@@ -206,7 +197,7 @@ function setFollow(type, id) {
     var entity = type === 'player'
       ? state.players.find(function(p) { return p.id === id; })
       : state.npcs.find(function(n) { return n.id === id; });
-    if (entity) { camera.x = entity.x; camera.z = entity.z; terrainDirty = true; roadRasterDirty = true; biomeBorderDirty = true; }
+    if (entity) { camera.x = entity.x; camera.z = entity.z; terrainDirty = true; biomeBorderDirty = true; }
   }
   updateSidebar();
   draw();
@@ -231,28 +222,13 @@ function renderTerrain() {
   }
 }
 
-function renderRoadRaster() {
-  var W = roadRasterCanvas.width, H = roadRasterCanvas.height;
-  rrCtx.clearRect(0, 0, W, H);
-  if (!preciseRoadsData.length) return;
-  var size = Math.ceil(Math.max(1, camera.pxPerBlock));
-  rrCtx.fillStyle = 'rgba(160,120,60,0.85)';
-  for (var ci = 0; ci < preciseRoadsData.length; ci++) {
-    var chunk = preciseRoadsData[ci];
-    for (var lx = 0; lx < 16; lx++) {
-      for (var lz = 0; lz < 16; lz++) {
-        if (!chunk.mask[lx * 16 + lz]) continue;
-        var pc = worldToCanvas(chunk.cx * 16 + lx, chunk.cz * 16 + lz);
-        if (pc[0] + size < 0 || pc[0] >= W || pc[1] + size < 0 || pc[1] >= H) continue;
-        rrCtx.fillRect(pc[0], pc[1], size, size);
-      }
-    }
-  }
-}
-
 function drawPreciseRoads() {
-  if (roadRasterDirty) { renderRoadRaster(); roadRasterDirty = false; }
-  ctx.drawImage(roadRasterCanvas, 0, 0);
+  if (!roadImg) return;
+  var r = roadImgRadius;
+  // Image row 0 = wz = roadImgWorldCz + r (Z flipped on server), canvas Y increases downward
+  var topLeft = worldToCanvas(roadImgWorldCx - r, roadImgWorldCz + r);
+  var px = 2 * r * camera.pxPerBlock;
+  ctx.drawImage(roadImg, topLeft[0], topLeft[1], px, px);
 }
 
 var VEGETATION_TINT = {
@@ -372,7 +348,6 @@ function draw() {
       camera.x = entity.x;
       camera.z = entity.z;
       terrainDirty = true;
-      roadRasterDirty = true;
       biomeBorderDirty = true;
     }
   }
@@ -532,7 +507,6 @@ async function pollTerrain() {
     if (r.ok) {
       terrainData = await r.json();
       terrainDirty = true;
-      roadRasterDirty = true;
       biomeBorderDirty = true;
       if (!autoFitDone && terrainData.length > 0) {
         autoFitDone = true;
@@ -564,14 +538,31 @@ async function fetchHouses() {
 }
 
 async function fetchPreciseRoads() {
+  if (preciseRoadsFetching) return;
   var cx = Math.round(camera.x), cz = Math.round(camera.z);
   var ddx = cx - preciseRoadsFetchCenter.x, ddz = cz - preciseRoadsFetchCenter.z;
   if (!isNaN(preciseRoadsFetchCenter.x) && Math.sqrt(ddx*ddx + ddz*ddz) < 300) return;
   preciseRoadsFetchCenter = { x: cx, z: cz };
+  var radius = 1200;
+  preciseRoadsFetching = true;
   try {
-    var r = await fetch('/api/map/road-raster?cx=' + cx + '&cz=' + cz + '&radius=1200');
-    if (r.ok) { preciseRoadsData = await r.json(); roadRasterDirty = true; draw(); }
+    var r = await fetch('/api/map/road-raster.png?cx=' + cx + '&cz=' + cz + '&radius=' + radius);
+    if (r.ok) {
+      var blob = await r.blob();
+      var url = URL.createObjectURL(blob);
+      var img = new Image();
+      img.onload = function() {
+        if (roadImg && roadImg.src) URL.revokeObjectURL(roadImg.src);
+        roadImg = img;
+        roadImgWorldCx = cx;
+        roadImgWorldCz = cz;
+        roadImgRadius = radius;
+        draw();
+      };
+      img.src = url;
+    }
   } catch (e) { /* non-critical */ }
+  finally { preciseRoadsFetching = false; }
 }
 
 async function fetchBiomeBorders() {

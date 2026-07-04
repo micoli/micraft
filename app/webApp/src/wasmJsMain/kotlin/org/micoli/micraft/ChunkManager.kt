@@ -51,7 +51,13 @@ private val AO_NEIGHBORS: Array<Array<Array<IntArray>>> =
         ),
     )
 
-private data class ChunkRender(val chunk: Chunk, val topY: Int, var nextY: Int = 0, val t0: Double = jsNow(), var faces: Int = 0)
+private data class ChunkRender(
+    val chunk: Chunk,
+    val topY: Int,
+    var nextY: Int = 0,
+    val t0: Double = jsNow(),
+    var faces: Int = 0
+)
 
 class ChunkManager(private val scene: JsAny) {
     val loadedChunks = mutableSetOf<ChunkPos>()
@@ -143,7 +149,8 @@ class ChunkManager(private val scene: JsAny) {
             if (ar.nextY > ar.topY) {
                 jsChunkEnd(scene, mats)
                 val elapsed = jsNow() - ar.t0
-                jsLog("[mesh] ${ar.chunk.pos.cx},${ar.chunk.pos.cz} rows=${ar.topY + 1} ms=${elapsed.toInt()} faces=${ar.faces} ffiCalls=${ar.faces}")
+                jsLog(
+                    "[mesh] ${ar.chunk.pos.cx},${ar.chunk.pos.cz} rows=${ar.topY + 1} ms=${elapsed.toInt()} faces=${ar.faces} ffiCalls=${ar.faces}")
                 loadedChunks.add(ar.chunk.pos)
                 pendingMinimapPushes.addLast(Pair(ar.chunk, ar.topY))
                 activeRender = null
@@ -318,36 +325,43 @@ class ChunkManager(private val scene: JsAny) {
                 // Direct ByteArray access — no getBlock(), no registry lookup
                 val idx = x * strideX + y * s + z
                 val ord = blocks[idx].toInt() and 0xFF
-                if (ord == 0) continue  // AIR = wire index 0
+                if (ord == 0) continue // AIR = wire index 0
                 val t = ord * 6
                 val wx = ox + x
                 val wz2 = oz + z
 
                 // top (+Y): use solidByOrd + liquidByOrd to skip redundant BlockType creation
-                val aboveOrd = if (y >= WorldConstants.WORLD_MAX_Y) 0 else blocks[idx + s].toInt() and 0xFF
+                val aboveOrd =
+                    if (y >= WorldConstants.WORLD_MAX_Y) 0 else blocks[idx + s].toInt() and 0xFF
                 if (solidByOrd[aboveOrd].toInt() == 0 &&
                     !(liquidByOrd[ord].toInt() != 0 && liquidByOrd[aboveOrd].toInt() != 0)) {
-                    jsChunkFace(wx, y, wz2, t + 4, computeFaceAO(blocks, x, y, z, 4)); faceCount++
+                    jsChunkFace(wx, y, wz2, t + 4, computeFaceAO(blocks, x, y, z, 4))
+                    faceCount++
                 }
                 // bottom (-Y)
                 if (y <= 0 || solidByOrd[blocks[idx - s].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFace(wx, y, wz2, t + 5, computeFaceAO(blocks, x, y, z, 5)); faceCount++
+                    jsChunkFace(wx, y, wz2, t + 5, computeFaceAO(blocks, x, y, z, 5))
+                    faceCount++
                 }
                 // south (+Z)
                 if (z == s - 1 || solidByOrd[blocks[idx + 1].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFace(wx, y, wz2, t + 0, computeFaceAO(blocks, x, y, z, 0)); faceCount++
+                    jsChunkFace(wx, y, wz2, t + 0, computeFaceAO(blocks, x, y, z, 0))
+                    faceCount++
                 }
                 // north (-Z)
                 if (z == 0 || solidByOrd[blocks[idx - 1].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFace(wx, y, wz2, t + 1, computeFaceAO(blocks, x, y, z, 1)); faceCount++
+                    jsChunkFace(wx, y, wz2, t + 1, computeFaceAO(blocks, x, y, z, 1))
+                    faceCount++
                 }
                 // east (+X)
                 if (x == s - 1 || solidByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFace(wx, y, wz2, t + 2, computeFaceAO(blocks, x, y, z, 2)); faceCount++
+                    jsChunkFace(wx, y, wz2, t + 2, computeFaceAO(blocks, x, y, z, 2))
+                    faceCount++
                 }
                 // west (-X)
                 if (x == 0 || solidByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFace(wx, y, wz2, t + 3, computeFaceAO(blocks, x, y, z, 3)); faceCount++
+                    jsChunkFace(wx, y, wz2, t + 3, computeFaceAO(blocks, x, y, z, 3))
+                    faceCount++
                 }
             }
         }
