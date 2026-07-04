@@ -424,6 +424,12 @@ class LocalPlayerController(
                 reconcileCountXz++
                 xzDistances.addCapped(distXZ)
             }
+            isMovingXZ && distXZ > reconcileToleranceXz -> {
+                predX += diffX * 0.05
+                predZ += diffZ * 0.05
+                reconcileCountXz++
+                xzDistances.addCapped(distXZ)
+            }
         }
 
         val events = jsConsumeEvents()
