@@ -479,6 +479,16 @@ class GameLoop(
     }
 
     fun shutdown() {
+        runBlocking {
+            val restartMsg = ServerMessage.Notification("Server restarting…")
+            sessions.values.forEach { session ->
+                runCatching { session.send(restartMsg) }
+                runCatching {
+                    session.socket.close(
+                        CloseReason(CloseReason.Codes.SERVICE_RESTART, "restarting"))
+                }
+            }
+        }
         world.flushDirty()
         rebuildTerrainSync()
         worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }

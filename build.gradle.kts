@@ -34,12 +34,16 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     // even when Gradle runs in rich/interactive mode (which wraps System.out).
     fun Process.pipeOutput(prefix: String): List<Thread> =
         listOf(
-            Thread { inputStream.bufferedReader().forEachLine { println("$prefix$it") } }
+            Thread { runCatching { inputStream.bufferedReader().forEachLine { println("$prefix$it") } } }
                 .also {
                     it.isDaemon = true
                     it.start()
                 },
-            Thread { errorStream.bufferedReader().forEachLine { System.err.println("$prefix$it") } }
+            Thread {
+                    runCatching {
+                        errorStream.bufferedReader().forEachLine { System.err.println("$prefix$it") }
+                    }
+                }
                 .also {
                     it.isDaemon = true
                     it.start()
