@@ -310,6 +310,8 @@ declare global {
     minimapZoomOut(): void;
     setNpcOnMinimap(id: string, x: number, z: number): void;
     removeNpcFromMinimap(id: string): void;
+    setPlayerOnMinimap(id: string, x: number, z: number, yaw: number): void;
+    removePlayerFromMinimap(id: string): void;
     setMinimapWeather(json: string): void;
     drawMinimap(playerX: number, playerZ: number, playerYaw: number): void;
     // Utils

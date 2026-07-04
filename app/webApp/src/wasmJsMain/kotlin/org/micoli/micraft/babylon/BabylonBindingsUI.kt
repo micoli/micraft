@@ -108,6 +108,11 @@ fun jsSetNpcOnMinimap(id: String, x: Float, z: Float): Unit = js("mc.setNpcOnMin
 
 fun jsRemoveNpcFromMinimap(id: String): Unit = js("mc.removeNpcFromMinimap(id)")
 
+fun jsSetPlayerOnMinimap(id: String, x: Float, z: Float, yaw: Float): Unit =
+    js("mc.setPlayerOnMinimap(id, x, z, yaw)")
+
+fun jsRemovePlayerFromMinimap(id: String): Unit = js("mc.removePlayerFromMinimap(id)")
+
 // ── Chunk debug ───────────────────────────────────────────────────────────────
 
 fun jsUpdateChunkDebug(json: String): Unit = js("mc.updateChunkDebug(json)")

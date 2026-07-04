@@ -8,6 +8,7 @@ let minimapColors: [number, number, number][] = [];
 let zoomIndex = 1;
 const chunkSurfaces: Record<string, { topY: number[]; topBlock: number[] }> = {};
 const npcPositions: Map<string, { x: number; z: number }> = new Map();
+const remotePlayers: Map<string, { x: number; z: number; yaw: number }> = new Map();
 let frameCount = 0;
 
 // Road raster overlay
@@ -120,6 +121,8 @@ export function registerMinimap(): Pick<
   | "minimapZoomOut"
   | "setNpcOnMinimap"
   | "removeNpcFromMinimap"
+  | "setPlayerOnMinimap"
+  | "removePlayerFromMinimap"
   | "setMinimapWeather"
   | "drawMinimap"
 > {
@@ -169,6 +172,14 @@ export function registerMinimap(): Pick<
 
     removeNpcFromMinimap: (id: string): void => {
       npcPositions.delete(id);
+    },
+
+    setPlayerOnMinimap: (id: string, x: number, z: number, yaw: number): void => {
+      remotePlayers.set(id, { x, z, yaw });
+    },
+
+    removePlayerFromMinimap: (id: string): void => {
+      remotePlayers.delete(id);
     },
 
     setMinimapWeather: (json: string): void => {
@@ -322,6 +333,38 @@ export function registerMinimap(): Pick<
         ctx.fill();
         ctx.strokeStyle = "#000000";
         ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+
+      // Remote player arrows
+      for (const [, rp] of remotePlayers) {
+        const bx = rp.x - playerX + halfBlocks;
+        const bz = playerZ - rp.z + halfBlocks; // Z flipped
+        const px = bx * pixPerBlock;
+        const pz = bz * pixPerBlock;
+        if (px < -8 || px > MINIMAP_SIZE + 8 || pz < -8 || pz > MINIMAP_SIZE + 8) continue;
+        const rpYaw = rp.yaw + Math.PI;
+        const radx = -Math.sin(rpYaw);
+        const rady = Math.cos(rpYaw);
+        const rperpX = -rady;
+        const rperpY = radx;
+        const rpLen = 6;
+        const rpWidth = 3;
+        const rpTipX = px + radx * rpLen;
+        const rpTipY = pz + rady * rpLen;
+        const rpB1x = px - radx * rpLen * 0.4 + rperpX * rpWidth;
+        const rpB1y = pz - rady * rpLen * 0.4 + rperpY * rpWidth;
+        const rpB2x = px - radx * rpLen * 0.4 - rperpX * rpWidth;
+        const rpB2y = pz - rady * rpLen * 0.4 - rperpY * rpWidth;
+        ctx.fillStyle = "#33ddff";
+        ctx.beginPath();
+        ctx.moveTo(rpTipX, rpTipY);
+        ctx.lineTo(rpB1x, rpB1y);
+        ctx.lineTo(rpB2x, rpB2y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 0.8;
         ctx.stroke();
       }
 

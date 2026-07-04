@@ -27,6 +27,9 @@ dev-restart:
 	make dev-down
 	make dev-up
 
+dev-shell:
+	$(DC_DEV) exec -it micraft bash
+
 dev-clean-wasm:
 	$(DC_DEV) exec micraft bash -c "rm -rf /workspace/app/webApp/build/klib/cache /workspace/app/webApp/build/compileSync /workspace/app/shared/build/klib/cache /workspace/app/shared/build/compileSync"
 

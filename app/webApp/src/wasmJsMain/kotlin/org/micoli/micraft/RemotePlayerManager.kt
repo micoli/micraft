@@ -51,6 +51,7 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerArmorsAttached.remove(id)
         updateAutocomplete()
         playerModels.remove(id)?.let(::jsDisposePlayerModel)
+        jsRemovePlayerFromMinimap(id)
         playerPrevPos.remove(id)
         playerCurrentPos.remove(id)
         playerTargetPos.remove(id)
@@ -83,6 +84,7 @@ class RemotePlayerManager(private val scene: JsAny) {
                         kotlin.math.abs(z - prev.third) > 0.001)
             playerPrevPos[id] = Triple(x, y, z)
             jsSetPlayerTransform(model, x, y, z, yaw, pitch, walking)
+            jsSetPlayerOnMinimap(id, x.toFloat(), z.toFloat(), yaw)
 
             val wanted = playerArmors[id] ?: emptyList()
             val attached = playerArmorsAttached[id] ?: emptyList()
@@ -97,6 +99,7 @@ class RemotePlayerManager(private val scene: JsAny) {
     }
 
     fun clear() {
+        playerModels.keys.forEach(::jsRemovePlayerFromMinimap)
         playerModels.values.forEach(::jsDisposePlayerModel)
         playerModels.clear()
         playerPrevPos.clear()
