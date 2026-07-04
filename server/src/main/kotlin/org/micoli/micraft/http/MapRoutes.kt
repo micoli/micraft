@@ -284,4 +284,13 @@ fun Route.mapRoutes(gameLoop: GameLoop) {
                 .readText()
         call.respondText(js, ContentType.Text.JavaScript)
     }
+    get("/map.css") {
+        val css =
+            Thread.currentThread()
+                .contextClassLoader
+                .getResourceAsStream("map.css")!!
+                .bufferedReader()
+                .readText()
+        call.respondText(css, ContentType.Text.CSS)
+    }
 }

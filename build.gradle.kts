@@ -89,6 +89,14 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     val cssResult = runNpm("run", "build:css", "--prefix", "app/webApp/ts-src")
     if (cssResult != 0) error("[dev] CSS build failed")
 
+    println("[dev] building map…")
+    val mapResult = runNpm("run", "build:map", "--prefix", "app/webApp/ts-src")
+    if (mapResult != 0) error("[dev] map build failed")
+
+    println("[dev] building map CSS…")
+    val mapCssResult = runNpm("run", "build:map:css", "--prefix", "app/webApp/ts-src")
+    if (mapCssResult != 0) error("[dev] map CSS build failed")
+
     val serverRef = java.util.concurrent.atomic.AtomicReference(startServer())
     val clientProc =
         ProcessBuilder(
@@ -106,12 +114,26 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
             .start()
     cssProc.pipeOutput("[css] ")
 
+    val mapProc =
+        ProcessBuilder("sh", "-c", "npm run watch:map --prefix app/webApp/ts-src")
+            .directory(rootDir)
+            .start()
+    mapProc.pipeOutput("[map] ")
+
+    val mapCssProc =
+        ProcessBuilder("sh", "-c", "npm run watch:map:css --prefix app/webApp/ts-src")
+            .directory(rootDir)
+            .start()
+    mapCssProc.pipeOutput("[map:css] ")
+
     Runtime.getRuntime()
         .addShutdownHook(
             Thread {
                 killTree(serverRef.get())
                 killTree(clientProc)
                 killTree(cssProc)
+                killTree(mapProc)
+                killTree(mapCssProc)
             })
 
     // Watch run.lock: restart server on every modification (debug mode is preserved across
