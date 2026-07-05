@@ -13,6 +13,8 @@ services:
       - app-webapp-node-modules:/workspace/app/webApp/ts-src/node_modules
       - gradle-home:/root/.gradle
       - gradle-build:/workspace/.gradle
+    environment:
+      - WATCH_MODE=0
     ports:
       - "8080:8080"
       - "6006:6006"

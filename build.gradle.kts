@@ -19,6 +19,8 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     val gradle = "${rootDir}/gradlew"
     val lockFile = rootDir.resolve("run.lock")
     val serverBin = rootDir.resolve("server/build/install/server/bin/server")
+    // WATCH_MODE=0 → skip file watchers; touch run.lock rebuilds everything then restarts server
+    val watchMode = System.getenv("WATCH_MODE") != "0"
 
     fun killTree(p: Process) {
         p.descendants().forEach { it.destroy() }
@@ -86,6 +88,15 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
         return p.waitFor()
     }
 
+    fun buildCss() {
+        println("[dev] building CSS…")
+        runNpm("run", "build:css", "--prefix", "app/webApp/ts-src")
+        println("[dev] building map…")
+        runNpm("run", "build:map", "--prefix", "app/webApp/ts-src")
+        println("[dev] building map CSS…")
+        runNpm("run", "build:map:css", "--prefix", "app/webApp/ts-src")
+    }
+
     println("[dev] building server…")
     val serverResult = runGradle(":server:installDist")
     if (serverResult != 0)
@@ -96,56 +107,63 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     if (clientResult != 0)
         error("[dev] client build failed — fix compilation errors before starting")
 
-    println("[dev] building CSS…")
-    val cssResult = runNpm("run", "build:css", "--prefix", "app/webApp/ts-src")
-    if (cssResult != 0) error("[dev] CSS build failed")
-
-    println("[dev] building map…")
-    val mapResult = runNpm("run", "build:map", "--prefix", "app/webApp/ts-src")
-    if (mapResult != 0) error("[dev] map build failed")
-
-    println("[dev] building map CSS…")
-    val mapCssResult = runNpm("run", "build:map:css", "--prefix", "app/webApp/ts-src")
-    if (mapCssResult != 0) error("[dev] map CSS build failed")
+    buildCss()
 
     val serverRef = java.util.concurrent.atomic.AtomicReference(startServer())
-    val clientProc =
-        ProcessBuilder(
-                gradle, ":app:webApp:copyResourcesToWebDist", "--continuous", "--console=plain")
-            .directory(rootDir)
-            .start()
-    clientProc.pipeOutput("[wasm] ")
 
-    val cssProc =
-        ProcessBuilder("sh", "-c", "npm run watch:css --prefix app/webApp/ts-src")
-            .directory(rootDir)
-            .start()
-    cssProc.pipeOutput("[css] ")
+    val clientProc: Process?
+    val cssProc: Process?
+    val mapProc: Process?
+    val mapCssProc: Process?
 
-    val mapProc =
-        ProcessBuilder("sh", "-c", "npm run watch:map --prefix app/webApp/ts-src")
-            .directory(rootDir)
-            .start()
-    mapProc.pipeOutput("[map] ")
+    if (watchMode) {
+        clientProc =
+            ProcessBuilder(
+                    gradle,
+                    ":app:webApp:copyResourcesToWebDist",
+                    "--continuous",
+                    "--console=plain")
+                .directory(rootDir)
+                .start()
+        clientProc.pipeOutput("[wasm] ")
 
-    val mapCssProc =
-        ProcessBuilder("sh", "-c", "npm run watch:map:css --prefix app/webApp/ts-src")
-            .directory(rootDir)
-            .start()
-    mapCssProc.pipeOutput("[map:css] ")
+        cssProc =
+            ProcessBuilder("sh", "-c", "npm run watch:css --prefix app/webApp/ts-src")
+                .directory(rootDir)
+                .start()
+        cssProc.pipeOutput("[css] ")
+
+        mapProc =
+            ProcessBuilder("sh", "-c", "npm run watch:map --prefix app/webApp/ts-src")
+                .directory(rootDir)
+                .start()
+        mapProc.pipeOutput("[map] ")
+
+        mapCssProc =
+            ProcessBuilder("sh", "-c", "npm run watch:map:css --prefix app/webApp/ts-src")
+                .directory(rootDir)
+                .start()
+        mapCssProc.pipeOutput("[map:css] ")
+    } else {
+        clientProc = null
+        cssProc = null
+        mapProc = null
+        mapCssProc = null
+        println("[dev] WATCH_MODE=0 — watchers disabled; touch run.lock to rebuild all and restart")
+    }
 
     Runtime.getRuntime()
         .addShutdownHook(
             Thread {
                 killTree(serverRef.get())
-                killTree(clientProc)
-                killTree(cssProc)
-                killTree(mapProc)
-                killTree(mapCssProc)
+                clientProc?.let { killTree(it) }
+                cssProc?.let { killTree(it) }
+                mapProc?.let { killTree(it) }
+                mapCssProc?.let { killTree(it) }
             })
 
-    // Watch run.lock: restart server on every modification (debug mode is preserved across
-    // restarts)
+    // Watch run.lock: on modification rebuild server (and in WATCH_MODE=0 also CSS+client) then
+    // restart. Debug mode is preserved across restarts.
     val watchThread = Thread {
         var lastModified = if (lockFile.exists()) lockFile.lastModified() else 0L
         while (!Thread.currentThread().isInterrupted) {
@@ -159,8 +177,12 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
                 if (modified != lastModified) {
                     lastModified = modified
                     println(
-                        "[dev] run.lock modified — rebuilding server… (${java.time.LocalTime.now().let { "%02d:%02d:%02d".format(it.hour, it.minute, it.second) }})")
+                        "[dev] run.lock modified — rebuilding… (${java.time.LocalTime.now().let { "%02d:%02d:%02d".format(it.hour, it.minute, it.second) }})")
                     killTree(serverRef.get())
+                    if (!watchMode) {
+                        buildCss()
+                        runGradle(":app:webApp:copyResourcesToWebDist")
+                    }
                     runGradle(":server:installDist")
                     serverRef.set(startServer())
                 }
@@ -171,7 +193,13 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     watchThread.start()
 
     try {
-        clientProc.waitFor()
+        if (watchMode) {
+            clientProc!!.waitFor()
+        } else {
+            java.util.concurrent.CountDownLatch(1).await()
+        }
+    } catch (_: InterruptedException) {
+        // shutdown
     } finally {
         killTree(serverRef.get())
         watchThread.interrupt()

@@ -53,7 +53,7 @@ function ItemSlot({
       }}
     >
       <span style={{ fontSize: 11, color: "#fff", fontWeight: 600, textAlign: "center", lineHeight: 1.1 }}>
-        {label}
+        - {label}
       </span>
       <span style={{ fontSize: 13, color: "#ffd", fontWeight: 700 }}>×{count}</span>
     </div>
