@@ -18,13 +18,13 @@ import org.micoli.micraft.world.ArmorDefinition
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChatChannelManager
 import org.micoli.micraft.world.ChatService
-import org.micoli.micraft.world.WeatherConfig
-import org.micoli.micraft.world.WeatherManager
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.ItemDefinition
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemType
+import org.micoli.micraft.world.WeatherConfig
+import org.micoli.micraft.world.WeatherManager
 import org.micoli.micraft.world.WorldConstants
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldState

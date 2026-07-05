@@ -63,13 +63,17 @@ class StatusEffectProcessor(
                 val newHp = (charData.currentHp + hpDelta.toInt()).coerceIn(0, derived.maxHp)
                 session.characterData = charData.copy(currentHp = newHp)
                 broadcastHealthUpdate(session.id, false, newHp, derived.maxHp)
-                val effectNames = effects.mapNotNull {
-                    when (it.effect) {
-                        is StatusEffect.Poisoned -> "poison"
-                        is StatusEffect.Burning -> "burn"
-                        else -> null
-                    }
-                }.distinct().joinToString("+")
+                val effectNames =
+                    effects
+                        .mapNotNull {
+                            when (it.effect) {
+                                is StatusEffect.Poisoned -> "poison"
+                                is StatusEffect.Burning -> "burn"
+                                else -> null
+                            }
+                        }
+                        .distinct()
+                        .joinToString("+")
                 val dmg = -hpDelta.toInt()
                 if (dmg > 0) {
                     subscribeToChannel(session, "combat")

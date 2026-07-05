@@ -4,7 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 import org.micoli.micraft.player.rpg.CharacterData
@@ -33,7 +32,9 @@ class StatusEffectProcessorTest {
         StatusEffectProcessor(
             armorRegistry = emptyMap(),
             world = testWorld(),
-            broadcastHealthUpdate = { id, _, hp, maxHp -> healthUpdates.add(Triple(id, hp, maxHp)) },
+            broadcastHealthUpdate = { id, _, hp, maxHp ->
+                healthUpdates.add(Triple(id, hp, maxHp))
+            },
             broadcastCombatLog = { combatLog.add(it) },
             subscribeToChannel = { s, ch -> subscribed.add(s to ch) },
         )
@@ -102,8 +103,7 @@ class StatusEffectProcessorTest {
 
         assertTrue(session.combatState.activeEffects.isEmpty())
         // StatusEffectUpdate sent to notify client of cleared effects
-        assertTrue(
-            session.sent.filterIsInstance<ServerMessage.StatusEffectUpdate>().isNotEmpty())
+        assertTrue(session.sent.filterIsInstance<ServerMessage.StatusEffectUpdate>().isNotEmpty())
     }
 
     @Test

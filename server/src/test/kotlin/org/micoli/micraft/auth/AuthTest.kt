@@ -75,4 +75,40 @@ class AuthTest {
         val store = TokenStore(scope)
         assertNull(store.validate("not-a-real-token"))
     }
+
+    @Test
+    fun localAuth_caseInsensitiveEmail() =
+        runBlocking<Unit> {
+            val tmp = Files.createTempFile("micraft-users", ".yaml")
+            tmp.toFile().writeText("users: []\n")
+            val provider = LocalAuthProvider(tmp, GroupsConfig())
+            provider.addUser("Case@Example.COM", "pass", "User")
+            assertNotNull(provider.login("case@example.com", "pass"))
+            assertNotNull(provider.login("CASE@EXAMPLE.COM", "pass"))
+            tmp.toFile().delete()
+        }
+
+    @Test
+    fun tokenStore_expiredToken_returnsNull() {
+        val store = TokenStore(scope, ttlSeconds = -1L)
+        val token = store.issue(AuthResult(playerId = "u", displayName = "U"))
+        assertNull(store.validate(token))
+    }
+
+    @Test
+    fun localAuth_groupPermissions_resolvedInAuthResult() =
+        runBlocking<Unit> {
+            val tmp = Files.createTempFile("micraft-users", ".yaml")
+            tmp.toFile().writeText("users: []\n")
+            val groups =
+                GroupsConfig(
+                    groups = listOf(GroupEntry("admins", listOf("admin.kick", "admin.ban"))),
+                )
+            val provider = LocalAuthProvider(tmp, groups)
+            provider.addUser("admin@example.com", "pass", "Admin", listOf("admins"))
+            val result = provider.login("admin@example.com", "pass")
+            assertNotNull(result)
+            assertEquals(setOf("admin.kick", "admin.ban"), result.permissions)
+            tmp.toFile().delete()
+        }
 }

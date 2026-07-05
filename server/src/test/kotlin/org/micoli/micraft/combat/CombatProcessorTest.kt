@@ -4,11 +4,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.npc.AggroMode
 import org.micoli.micraft.npc.NpcDefinition
 import org.micoli.micraft.npc.NpcInstance
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.npc.NpcState
-import org.micoli.micraft.npc.AggroMode
 import org.micoli.micraft.npc.behaviors.StaticNpcBehavior
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.rpg.BaseStats
@@ -52,7 +52,8 @@ class CombatProcessorTest {
 
     private fun buildProcessor(
         sessions: () -> Collection<PlayerSession>,
-        attackRegistry: Map<String, AttackDefinition> = mapOf("basic_attack" to guaranteedHitAttack),
+        attackRegistry: Map<String, AttackDefinition> =
+            mapOf("basic_attack" to guaranteedHitAttack),
         combatLog: MutableList<String> = mutableListOf(),
         subscribed: MutableList<Pair<PlayerSession, String>> = mutableListOf(),
     ) =
@@ -110,8 +111,9 @@ class CombatProcessorTest {
             )
 
         assertTrue(
-            attacker.sent.filterIsInstance<ServerMessage.Notification>()
-                .any { it.message.contains("not found", ignoreCase = true) })
+            attacker.sent.filterIsInstance<ServerMessage.Notification>().any {
+                it.message.contains("not found", ignoreCase = true)
+            })
     }
 
     @Test
@@ -124,12 +126,14 @@ class CombatProcessorTest {
         buildProcessor(sessions = { listOf(attacker, target) })
             .handleAttack(
                 attacker,
-                ClientMessage.AttackTarget(attackId = "basic_attack", targetId = "b", isNpc = false),
+                ClientMessage.AttackTarget(
+                    attackId = "basic_attack", targetId = "b", isNpc = false),
             )
 
         assertTrue(
-            attacker.sent.filterIsInstance<ServerMessage.Notification>()
-                .any { it.message.contains("range", ignoreCase = true) })
+            attacker.sent.filterIsInstance<ServerMessage.Notification>().any {
+                it.message.contains("range", ignoreCase = true)
+            })
         assertEquals(20, target.characterData!!.currentHp)
     }
 
@@ -143,7 +147,8 @@ class CombatProcessorTest {
         buildProcessor(sessions = { listOf(attacker, target) })
             .handleAttack(
                 attacker,
-                ClientMessage.AttackTarget(attackId = "basic_attack", targetId = "b", isNpc = false),
+                ClientMessage.AttackTarget(
+                    attackId = "basic_attack", targetId = "b", isNpc = false),
             )
 
         assertTrue(target.characterData!!.currentHp < 20)
@@ -160,7 +165,8 @@ class CombatProcessorTest {
         buildProcessor(sessions = { listOf(attacker, target) }, subscribed = subscribed)
             .handleAttack(
                 attacker,
-                ClientMessage.AttackTarget(attackId = "basic_attack", targetId = "b", isNpc = false),
+                ClientMessage.AttackTarget(
+                    attackId = "basic_attack", targetId = "b", isNpc = false),
             )
 
         assertTrue(subscribed.any { (s, ch) -> s.id == "b" && ch == "combat" })
@@ -177,7 +183,8 @@ class CombatProcessorTest {
         buildProcessor(sessions = { listOf(attacker, target) }, combatLog = combatLog)
             .handleAttack(
                 attacker,
-                ClientMessage.AttackTarget(attackId = "basic_attack", targetId = "b", isNpc = false),
+                ClientMessage.AttackTarget(
+                    attackId = "basic_attack", targetId = "b", isNpc = false),
             )
 
         assertEquals(1, combatLog.size)
@@ -195,7 +202,8 @@ class CombatProcessorTest {
         buildProcessor(sessions = { listOf(attacker, target) })
             .handleAttack(
                 attacker,
-                ClientMessage.AttackTarget(attackId = "basic_attack", targetId = "b", isNpc = false),
+                ClientMessage.AttackTarget(
+                    attackId = "basic_attack", targetId = "b", isNpc = false),
             )
 
         assertTrue(target.combatState.isDowned)
@@ -210,9 +218,11 @@ class CombatProcessorTest {
         target.characterData = testChar("b", "Bob", hp = 100)
 
         val combatLog = mutableListOf<String>()
-        val processor = buildProcessor(sessions = { listOf(attacker, target) }, combatLog = combatLog)
+        val processor =
+            buildProcessor(sessions = { listOf(attacker, target) }, combatLog = combatLog)
 
-        val msg = ClientMessage.AttackTarget(attackId = "basic_attack", targetId = "b", isNpc = false)
+        val msg =
+            ClientMessage.AttackTarget(attackId = "basic_attack", targetId = "b", isNpc = false)
         processor.handleAttack(attacker, msg)
         processor.handleAttack(attacker, msg) // blocked by cooldown
 
@@ -228,10 +238,11 @@ class CombatProcessorTest {
 
         // power=100: roll+100 always ≥ AC
         val highPower = guaranteedHitAttack.copy(power = 100)
-        val proc = buildProcessor(
-            sessions = { listOf(target) },
-            attackRegistry = mapOf("basic_attack" to highPower),
-        )
+        val proc =
+            buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry = mapOf("basic_attack" to highPower),
+            )
 
         proc.handleNpcAttack(fakeNpc(), target)
 
@@ -245,11 +256,12 @@ class CombatProcessorTest {
 
         val subscribed = mutableListOf<Pair<PlayerSession, String>>()
         val highPower = guaranteedHitAttack.copy(power = 100)
-        val proc = buildProcessor(
-            sessions = { listOf(target) },
-            attackRegistry = mapOf("basic_attack" to highPower),
-            subscribed = subscribed,
-        )
+        val proc =
+            buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry = mapOf("basic_attack" to highPower),
+                subscribed = subscribed,
+            )
 
         proc.handleNpcAttack(fakeNpc(), target)
 
