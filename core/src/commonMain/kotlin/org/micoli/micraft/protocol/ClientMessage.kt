@@ -71,4 +71,14 @@ sealed class ClientMessage {
     @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()
 
     @Serializable data class DoCraft(val recipeId: String, val count: Int) : ClientMessage()
+
+    @Serializable
+    data class SetCombatTarget(val targetId: String?, val isNpc: Boolean) : ClientMessage()
+
+    @Serializable
+    data class AttackTarget(
+        val targetId: String,
+        val isNpc: Boolean,
+        val attackId: String,
+    ) : ClientMessage()
 }

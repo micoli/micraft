@@ -45,6 +45,7 @@ class LocalPlayerController(
     private val serverHost: () -> String,
     private val serverPort: () -> Int,
     private val playerName: () -> String,
+    private val npcManager: NpcManager,
 ) {
     var predX = 0.0
     var predY = 0.0
@@ -74,6 +75,7 @@ class LocalPlayerController(
     @OptIn(ExperimentalWasmJsInterop::class) var localPlayerModel: JsAny? = null
     @OptIn(ExperimentalWasmJsInterop::class) var fpArms: JsAny? = null
 
+    var currentCombatTargetId: String? = null
     private var breakTarget: BlockPos? = null
     private var hoverTarget: BlockPos? = null
     var selectedSlot: Int = 0
@@ -454,6 +456,11 @@ class LocalPlayerController(
                 event == "slot_8" -> selectSlot(7)
                 event == "slot_9" -> selectSlot(8)
                 event == "slot_10" -> selectSlot(9)
+                event == "combat_target_cycle" -> {
+                    val next = npcManager.cycleNearestNpc(predX, predY, predZ, currentCombatTargetId)
+                    currentCombatTargetId = next
+                    outMessages.trySend(ClientMessage.SetCombatTarget(next, isNpc = true))
+                }
                 event.startsWith("cmd:") ->
                     outMessages.trySend(ClientMessage.Command(event.removePrefix("cmd:")))
             }

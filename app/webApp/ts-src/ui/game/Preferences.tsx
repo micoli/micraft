@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { PreferencesData } from "../types";
 import { Dialog, DialogContent, DialogTitle } from "../primitives/Dialog";
 import { Button } from "../primitives/Button";
@@ -64,6 +65,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 export function Preferences({ open, preferences, onSave, onClose }: Props) {
   const pref = usePreferences({ open, preferences, onSave, onClose });
+  const [kbSearch, setKbSearch] = useState("");
 
   if (!open || !preferences) return null;
 
@@ -180,11 +182,28 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
           {/* Keybindings tab */}
           {pref.tab === "keybindings" && (
             <>
-              {pref.groups.map((group) => (
+              <input
+                type="text"
+                value={kbSearch}
+                onChange={(e) => setKbSearch(e.target.value)}
+                placeholder="Search actions…"
+                className="w-full bg-[#2a2a2a] border border-[#555] rounded-sm text-xs text-[#eee] px-2 py-1 font-mono outline-none mb-3"
+              />
+              {pref.groups
+                .filter((group) =>
+                  pref.groupedBindings.some(
+                    (r) => r.group === group && r.action.includes(kbSearch.toLowerCase().replace(/ /g, "_")),
+                  ),
+                )
+                .map((group) => (
                 <div key={group} className="mb-2">
                   <div className="text-[#888] text-[11px] uppercase tracking-wide py-1.5">{group}</div>
                   {pref.groupedBindings
-                    .filter((r) => r.group === group)
+                    .filter(
+                      (r) =>
+                        r.group === group &&
+                        r.action.includes(kbSearch.toLowerCase().replace(/ /g, "_")),
+                    )
                     .map(({ action, keys }) => (
                       <div key={action} className="flex items-center flex-wrap gap-1 py-1.5 border-b border-[#2a2a2a]">
                         <span className="min-w-[140px] text-xs text-[#ccc]">{action.replace(/_/g, " ")}</span>

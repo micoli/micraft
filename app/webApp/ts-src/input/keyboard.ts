@@ -39,6 +39,7 @@ const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   slot_8: ["Digit8"],
   slot_9: ["Digit9"],
   slot_10: ["Digit0"],
+  combat_target_cycle: ["KeyZ"],
 };
 
 const MODIFIERS = new Set(["ctrl", "control", "shift", "alt", "option", "cmd", "command", "meta"]);
@@ -149,6 +150,8 @@ export function registerKeyboard(): Pick<
       window.addEventListener("keydown", (e: KeyboardEvent) => {
         const tag = document.activeElement?.tagName;
         if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT") return;
+        // Prevent browser quickfind (Firefox) — GameUI document listener fires first and opens console
+        if (e.key === "/" || e.code === "Slash") e.preventDefault();
         if (window.mcState.modalOpen) return;
         window.mcState.modifiers = { ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey };
         window.mcState.keys[e.code] = true;
@@ -176,6 +179,7 @@ export function registerKeyboard(): Pick<
         if (b.minimap_zoom_in?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomIn?.();
         if (b.minimap_zoom_out?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomOut?.();
         if (b.ingame_map?.some((k) => matchesEvent(k, e))) window.mc?.toggleBiomeMap?.();
+        if (b.combat_target_cycle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_target_cycle");
         for (let s = 1; s <= 10; s++) {
           const key = `slot_${s}` as string;
           if (b[key]?.some((k: string) => matchesEvent(k, e))) window.mcState.events.push(key);

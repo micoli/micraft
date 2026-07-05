@@ -244,6 +244,12 @@ window.mc = {
   tradeClosed: () => {},
   openTrade: () => {},
   tradeUpdate: () => {},
+  combatTargetUpdate: () => {},
+  healthUpdate: () => {},
+  playerStatusUpdate: () => {},
+  statusEffectUpdate: () => {},
+  playerDowned: () => {},
+  playerRespawned: () => {},
 } satisfies McBindings;
 
 registerAllPlugins();

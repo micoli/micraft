@@ -9,6 +9,13 @@ No true turn-by-turn combat (incompatible with real-time voxel). Instead: real-t
 - Spells cost **mana** in addition to their cooldown
 - Initiative order determines who attacks first in the opening round
 
+### Combat target
+ - the opponent must be within a specific range
+ - tab key switch between potential targets
+ - current target is graphically emphased and viewed on the gui
+ - a player can have only one target at a time
+
+
 ### Attack resolution
 
 ```

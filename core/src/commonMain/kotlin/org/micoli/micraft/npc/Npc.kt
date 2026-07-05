@@ -10,4 +10,6 @@ data class NpcState(
     val type: String,
     val pos: Vec3,
     val yaw: Float,
+    val currentHp: Int = 0,
+    val maxHp: Int = 0,
 )

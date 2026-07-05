@@ -10,4 +10,5 @@ data class StatBonus(
     val wis: Int = 0,
     val con: Int = 0,
     val cha: Int = 0,
+    val acBonus: Int = 0,
 )

@@ -388,6 +388,12 @@ declare global {
     openCharacter(): void;
     showCharacterCreation(): void;
     characterSync(json: string): void;
+    combatTargetUpdate(json: string): void;
+    healthUpdate(json: string): void;
+    playerStatusUpdate(json: string): void;
+    statusEffectUpdate(json: string): void;
+    playerDowned(playerId: string): void;
+    playerRespawned(json: string): void;
     toggleBiomeMap(): void;
     dumpStats(): void;
     updateChunkDebug(json: string): void;

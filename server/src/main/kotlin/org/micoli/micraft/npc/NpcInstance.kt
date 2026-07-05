@@ -11,9 +11,14 @@ class NpcInstance(
     var wanderTargetZ: Float = 0f,
     var wanderPauseTicks: Int = 0,
     var wanderStepTicks: Int = 0,
+    @Volatile var currentHp: Int = -1,
+    @Volatile var aggroTarget: String? = null,
+    @Volatile var lastDamagedAtMs: Long = 0L,
+    @Volatile var attackCooldownUntilMs: Long = 0L,
 ) {
     init {
         wanderTargetX = spawnPos.x
         wanderTargetZ = spawnPos.z
+        if (currentHp < 0) currentHp = definition.hp
     }
 }

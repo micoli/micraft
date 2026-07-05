@@ -45,6 +45,24 @@ export interface UiState {
   characterSyncData: CharacterSyncData | null;
   rpgCreationRequired: boolean;
   biomeMapVisible: boolean;
+  combatTarget: {
+    targetId: string | null;
+    displayName: string | null;
+    currentHp: number;
+    maxHp: number;
+    targetOfTarget: { id: string; name: string; currentHp: number; maxHp: number } | null;
+  } | null;
+  playerStatus: {
+    currentHp: number;
+    maxHp: number;
+    currentMana: number;
+    maxMana: number;
+    currentRage: number;
+    maxRage: number;
+    stance: string;
+    globalCooldownRemainingMs: number;
+  } | null;
+  playerDowned: boolean;
   tradeOpen: boolean;
   tradeId: string | null;
   tradeOtherPlayer: string | null;
@@ -118,7 +136,13 @@ export type UiAction =
       myAccepted: boolean;
       theirAccepted: boolean;
     }
-  | { type: "trade_close" };
+  | { type: "trade_close" }
+  | { type: "combat_target_update"; data: unknown }
+  | { type: "health_update"; data: unknown }
+  | { type: "player_status_update"; data: unknown }
+  | { type: "status_effect_update"; data: unknown }
+  | { type: "player_downed"; playerId: string }
+  | { type: "player_respawned"; data: unknown };
 
 const HUD_MODES: HudMode[] = ["simple", "medium", "complete"];
 let notifKey = 0;
@@ -295,5 +319,16 @@ export function reducer(state: UiState, action: UiAction): UiState {
         tradeMyAccepted: false,
         tradeTheirAccepted: false,
       };
+    case "combat_target_update":
+      return { ...state, combatTarget: action.data as UiState["combatTarget"] };
+    case "player_status_update":
+      return { ...state, playerStatus: action.data as UiState["playerStatus"], playerDowned: false };
+    case "player_downed":
+      return { ...state, playerDowned: true };
+    case "player_respawned":
+      return { ...state, playerDowned: false };
+    case "health_update":
+    case "status_effect_update":
+      return state;
   }
 }

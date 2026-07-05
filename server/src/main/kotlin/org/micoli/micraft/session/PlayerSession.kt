@@ -5,6 +5,7 @@ import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.channels.Channel
+import org.micoli.micraft.combat.CombatState
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.protocol.ClientMessage
@@ -49,6 +50,7 @@ open class PlayerSession(
         }
 
     @Volatile var characterData: CharacterData? = null
+    @Volatile var combatState: CombatState = CombatState()
 
     @Volatile var lastMoveDx: Float = 0f
     @Volatile var lastMoveDz: Float = 0f

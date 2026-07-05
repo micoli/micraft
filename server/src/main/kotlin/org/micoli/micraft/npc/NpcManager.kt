@@ -9,6 +9,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import org.micoli.micraft.combat.CombatProcessor
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
@@ -180,4 +181,74 @@ class NpcManager(
         npcs[query] ?: npcs.values.firstOrNull { it.state.name.equals(query, ignoreCase = true) }
 
     fun getDefinitions(): Map<String, NpcDefinition> = definitions
+
+    fun getInstance(id: String): NpcInstance? = npcs[id]
+
+    suspend fun applyDamage(npcId: String, damage: Int, attackerId: String) {
+        val instance = npcs[npcId] ?: return
+        val now = System.currentTimeMillis()
+        instance.currentHp = (instance.currentHp - damage).coerceAtLeast(0)
+        instance.lastDamagedAtMs = now
+        if (instance.aggroTarget == null) instance.aggroTarget = attackerId
+
+        val newHp = instance.currentHp
+        val maxHp = instance.definition.hp
+        instance.state = instance.state.copy(currentHp = newHp, maxHp = maxHp)
+        broadcast(ServerMessage.HealthUpdate(npcId, true, newHp, maxHp))
+
+        if (newHp <= 0) {
+            log.info("NPC {} killed", instance.state.name)
+            despawnNpc(npcId)
+        }
+    }
+
+    suspend fun tickAggro(
+        sessions: Collection<PlayerSession>,
+        combatProcessor: CombatProcessor,
+    ) {
+        val now = System.currentTimeMillis()
+        for (instance in npcs.values) {
+            val def = instance.definition
+            val aggroRangeSq = def.aggroRange * def.aggroRange
+            val deaggroMs = (def.deaggroTimeSec * 1000).toLong()
+
+            when (def.aggroMode) {
+                AggroMode.PASSIVE -> {
+                    if (instance.aggroTarget != null &&
+                        now - instance.lastDamagedAtMs > deaggroMs) {
+                        instance.aggroTarget = null
+                    }
+                }
+                AggroMode.AGGRESSIVE -> {
+                    if (instance.aggroTarget == null) {
+                        val npcPos = instance.state.pos
+                        val inRange =
+                            sessions.firstOrNull { session ->
+                                val dx = session.state.pos.x - npcPos.x
+                                val dz = session.state.pos.z - npcPos.z
+                                dx * dx + dz * dz <= aggroRangeSq
+                            }
+                        if (inRange != null) instance.aggroTarget = inRange.id
+                    } else {
+                        val target = sessions.find { it.id == instance.aggroTarget }
+                        if (target == null) {
+                            instance.aggroTarget = null
+                        } else {
+                            val npcPos = instance.state.pos
+                            val dx = target.state.pos.x - npcPos.x
+                            val dz = target.state.pos.z - npcPos.z
+                            if (dx * dx + dz * dz > aggroRangeSq * 4 &&
+                                now - instance.lastDamagedAtMs > deaggroMs) {
+                                instance.aggroTarget = null
+                            }
+                        }
+                    }
+                }
+            }
+
+            val aggroTargetId = instance.aggroTarget ?: continue
+            val targetSession = sessions.find { it.id == aggroTargetId } ?: continue
+            combatProcessor.handleNpcAttack(instance, targetSession)
+        }
+    }
 }

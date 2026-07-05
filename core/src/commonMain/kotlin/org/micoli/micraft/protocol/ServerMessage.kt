@@ -1,7 +1,9 @@
 package org.micoli.micraft.protocol
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.npc.NpcState
+import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.rpg.BaseStats
@@ -182,6 +184,59 @@ sealed class ServerMessage {
         val character: CharacterData,
         val derived: DerivedStats,
         val effectiveBaseStats: BaseStats,
+    ) : ServerMessage()
+
+    @Serializable
+    data class TargetRef(
+        val id: String,
+        val name: String,
+        val currentHp: Int,
+        val maxHp: Int,
+    )
+
+    @Serializable
+    data class CombatTargetUpdate(
+        val targetId: String?,
+        val displayName: String?,
+        val currentHp: Int,
+        val maxHp: Int,
+        val targetOfTarget: TargetRef? = null,
+    ) : ServerMessage()
+
+    @Serializable
+    data class HealthUpdate(
+        val entityId: String,
+        val isNpc: Boolean,
+        val currentHp: Int,
+        val maxHp: Int,
+    ) : ServerMessage()
+
+    @Serializable
+    data class PlayerStatusUpdate(
+        val currentHp: Int,
+        val maxHp: Int,
+        val currentMana: Int,
+        val maxMana: Int,
+        val currentRage: Int,
+        val maxRage: Int,
+        val stance: PlayerStance,
+        val globalCooldownRemainingMs: Long,
+    ) : ServerMessage()
+
+    @Serializable
+    data class StatusEffectUpdate(
+        val playerId: String,
+        val effects: List<ActiveStatusEffect>,
+    ) : ServerMessage()
+
+    @Serializable data class PlayerDowned(val playerId: String) : ServerMessage()
+
+    @Serializable
+    data class PlayerRespawned(
+        val playerId: String,
+        val pos: Vec3,
+        val currentHp: Int,
+        val currentMana: Int,
     ) : ServerMessage()
 }
 

@@ -12,6 +12,10 @@ import kotlinx.coroutines.launch
 import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.TokenStore
+import org.micoli.micraft.combat.AttackRegistryLoader
+import org.micoli.micraft.combat.CombatConfigLoader
+import org.micoli.micraft.combat.CombatProcessor
+import org.micoli.micraft.combat.StatusEffectProcessor
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.npc.NpcConfigLoader
 import org.micoli.micraft.npc.NpcManager
@@ -205,6 +209,34 @@ class GameLoop(
     private val npcSpawner = NpcSpawner()
     private var npcSpawnTickCounter = 0
 
+    private val combatConfig = CombatConfigLoader(Path.of("data/config/combat.yaml")).load()
+    private val attackRegistry = AttackRegistryLoader(Path.of("data/config/attacks")).load()
+    private val combatProcessor =
+        CombatProcessor(
+            config = combatConfig,
+            attackRegistry = attackRegistry,
+            armorRegistry = armorRegistry,
+            npcManager = npcManager,
+            getSessions = { sessions.values },
+            broadcastCombatLog = { msg ->
+                val chatMsg =
+                    ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
+                sessions.values.forEach { it.send(chatMsg) }
+            },
+            i18n = i18n,
+            savePlayer = { savePlayer(it) },
+        )
+    private val statusEffectProcessor =
+        StatusEffectProcessor(
+            armorRegistry = armorRegistry,
+            world = world,
+            broadcastHealthUpdate = { id, isNpc, hp, maxHp ->
+                sessions.values.forEach {
+                    it.send(ServerMessage.HealthUpdate(id, isNpc, hp, maxHp))
+                }
+            },
+        )
+
     private val tradeConfigLoader = TradeConfigLoader(Path.of("data/config/trade.yaml"))
     private val tradeManager =
         TradeManager(
@@ -285,6 +317,7 @@ class GameLoop(
             onChatSend = { session, channel, text ->
                 chatService.routeMessage(session, channel, text)
             },
+            combatProcessor = combatProcessor,
         )
     private val movementProcessor = MovementProcessor(world)
     private val chunkStreamer = ChunkStreamer(world)
@@ -568,6 +601,8 @@ class GameLoop(
         }
         worldItems.tickCollection(sessions.values)
         npcManager.tick(world)
+        npcManager.tickAggro(sessions.values, combatProcessor)
+        statusEffectProcessor.tick(sessions.values)
         weatherManager.tick(world) { msg -> sessions.values.forEach { it.send(msg) } }
         liquidManager.tick { msg -> sessions.values.forEach { it.send(msg) } }
         vegetationManager.tick { msg -> sessions.values.forEach { it.send(msg) } }

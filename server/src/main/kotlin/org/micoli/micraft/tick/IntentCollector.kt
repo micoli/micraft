@@ -1,5 +1,6 @@
 package org.micoli.micraft.tick
 
+import org.micoli.micraft.combat.CombatProcessor
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.session.hasPermission
@@ -9,6 +10,7 @@ class IntentCollector(
     private val blockPlacer: BlockPlacer,
     private val onCommand: suspend (PlayerSession, String) -> Unit,
     private val onChatSend: suspend (PlayerSession, String, String) -> Unit = { _, _, _ -> },
+    private val combatProcessor: CombatProcessor? = null,
 ) {
     suspend fun collect(session: PlayerSession): TickInput {
         var dx = 0f
@@ -50,6 +52,9 @@ class IntentCollector(
                 is ClientMessage.ShortcutBarSet -> blockPlacer.handleShortcutBarSet(session, intent)
                 is ClientMessage.Command -> onCommand(session, intent.text)
                 is ClientMessage.ChatSend -> onChatSend(session, intent.channel, intent.text)
+                is ClientMessage.SetCombatTarget ->
+                    combatProcessor?.handleSetTarget(session, intent)
+                is ClientMessage.AttackTarget -> combatProcessor?.handleAttack(session, intent)
                 else -> {}
             }
         }

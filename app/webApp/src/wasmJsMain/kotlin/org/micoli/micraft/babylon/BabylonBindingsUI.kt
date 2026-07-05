@@ -169,3 +169,17 @@ fun jsTradeClosed(tradeId: String, reason: String): Unit = js("mc.tradeClosed(tr
 fun jsShowCharacterCreation(): Unit = js("mc.showCharacterCreation()")
 
 fun jsCharacterSync(json: String): Unit = js("mc.characterSync(json)")
+
+// ── Combat ────────────────────────────────────────────────────────────────────
+
+fun jsCombatTargetUpdate(json: String): Unit = js("mc.combatTargetUpdate(json)")
+
+fun jsHealthUpdate(json: String): Unit = js("mc.healthUpdate(json)")
+
+fun jsPlayerStatusUpdate(json: String): Unit = js("mc.playerStatusUpdate(json)")
+
+fun jsStatusEffectUpdate(json: String): Unit = js("mc.statusEffectUpdate(json)")
+
+fun jsPlayerDowned(playerId: String): Unit = js("mc.playerDowned(playerId)")
+
+fun jsPlayerRespawned(json: String): Unit = js("mc.playerRespawned(json)")

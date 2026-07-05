@@ -8,6 +8,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.npc.AggroMode
 import org.micoli.micraft.npc.NpcBehaviorRegistry
 import org.micoli.micraft.npc.NpcDefinition
 import org.micoli.micraft.npc.NpcSpawnConfig
@@ -31,6 +32,11 @@ internal data class NpcYamlEntry(
     val wanderSpeed: Float = 0f,
     val wanderRadius: Float = 0f,
     val spawn: NpcSpawnConfigRaw = NpcSpawnConfigRaw(),
+    val hp: Int = 20,
+    val aggroMode: AggroMode = AggroMode.PASSIVE,
+    val aggroRange: Float = 12.0f,
+    val deaggroTimeSec: Float = 10.0f,
+    val attackId: String? = null,
 )
 
 @Serializable
@@ -49,6 +55,11 @@ private data class NpcYamlOverride(
     val wanderSpeed: Float? = null,
     val wanderRadius: Float? = null,
     val spawn: NpcSpawnConfigRawOverride? = null,
+    val hp: Int? = null,
+    val aggroMode: AggroMode? = null,
+    val aggroRange: Float? = null,
+    val deaggroTimeSec: Float? = null,
+    val attackId: String? = null,
 )
 
 private fun NpcSpawnConfigRaw.applyOverride(o: NpcSpawnConfigRawOverride) =
@@ -67,6 +78,11 @@ private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
         wanderSpeed = o.wanderSpeed ?: wanderSpeed,
         wanderRadius = o.wanderRadius ?: wanderRadius,
         spawn = o.spawn?.let { spawn.applyOverride(it) } ?: spawn,
+        hp = o.hp ?: hp,
+        aggroMode = o.aggroMode ?: aggroMode,
+        aggroRange = o.aggroRange ?: aggroRange,
+        deaggroTimeSec = o.deaggroTimeSec ?: deaggroTimeSec,
+        attackId = o.attackId ?: attackId,
     )
 
 class NpcRegistryLoader(
@@ -140,6 +156,11 @@ class NpcRegistryLoader(
                                             maxPerChunk = entry.spawn.maxPerChunk,
                                             spawnBiomes = entry.spawn.spawnBiomes,
                                         ),
+                                    hp = entry.hp,
+                                    aggroMode = entry.aggroMode,
+                                    aggroRange = entry.aggroRange,
+                                    deaggroTimeSec = entry.deaggroTimeSec,
+                                    attackId = entry.attackId,
                                 )
                         }
                         .onFailure { e -> log.warn("Skipping entity '{}': {}", key, e.message) }

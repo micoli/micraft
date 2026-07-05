@@ -22,6 +22,9 @@ import { CharacterCreation } from "./overlays/CharacterCreation";
 import { BiomeMap } from "./game/BiomeMap";
 import { Craft } from "./game/Craft";
 import { Trade } from "./game/Trade";
+import { PlayerStatusBar } from "./game/PlayerStatusBar";
+import { CombatTargetFrame } from "./game/CombatTargetFrame";
+import { PlayerDownedOverlay } from "./game/PlayerDownedOverlay";
 
 function loadHudMode(): HudMode {
   try {
@@ -69,6 +72,9 @@ const initial: UiState = {
   characterSyncData: null,
   rpgCreationRequired: false,
   biomeMapVisible: false,
+  combatTarget: null,
+  playerStatus: null,
+  playerDowned: false,
   tradeOpen: false,
   tradeId: null,
   tradeOtherPlayer: null,
@@ -297,8 +303,7 @@ export function GameUI() {
 
     window.mc.showNotification = (msg: string) => dispatch({ type: "notification", msg });
     window.mc.addServerLog = (channel: string, msg: string) => dispatch({ type: "log", channel, msg });
-    window.mc.addChatMessage = (channel: string, sender: string, msg: string) =>
-      dispatch({ type: "chat_message", channel, sender, msg });
+    window.mc.addChatMessage = (channel: string, sender: string, msg: string) => dispatch({ type: "chat_message", channel, sender, msg });
     window.mc.channelsSync = (subscribedJson: string, knownJson: string) => {
       try {
         const subscribed: string[] = JSON.parse(subscribedJson);
@@ -367,13 +372,7 @@ export function GameUI() {
     window.mc.hideLayoutEditor = () => dispatch({ type: "layout_editor_hide" });
 
     window.mcState.dispatch = dispatch as (action: unknown) => void;
-    window.mc.openNpcDialog = (json: string) => {
-      try {
-        dispatch({ type: "npc_dialog_open", payload: JSON.parse(json) as NpcDialogData });
-      } catch {
-        /* ignore */
-      }
-    };
+    window.mc.openNpcDialog = (json: string) => dispatch({ type: "npc_dialog_open", payload: JSON.parse(json) as NpcDialogData });
 
     window.mc.consumeLayoutUpdate = () => {
       const v = pendingLayoutUpdateRef.current;
@@ -444,13 +443,7 @@ export function GameUI() {
         dispatch({ type: "rpg_creation_required" });
       }
     };
-    window.mc.characterSync = (json: string) => {
-      try {
-        dispatch({ type: "character_sync", data: JSON.parse(json) });
-      } catch {
-        /* ignore */
-      }
-    };
+    window.mc.characterSync = (json: string) => dispatch({ type: "character_sync", data: JSON.parse(json) });
     window.mc.openTrade = (tradeId: string, otherPlayer: string, _role: string) =>
       dispatch({ type: "trade_open", tradeId, otherPlayer });
     window.mc.tradeUpdate = (json: string) => {
@@ -490,12 +483,15 @@ export function GameUI() {
     };
 
     window.mc.updateChunkDebug = (json: string) => {
-      try {
         setChunkDebugData({ ...(JSON.parse(json) as ChunkDebugData), ...chunkLoadStatsRef.current });
-      } catch {
-        /* ignore */
-      }
     };
+
+    window.mc.combatTargetUpdate = (json: string) => dispatch({ type: "combat_target_update", data: JSON.parse(json) });
+    window.mc.healthUpdate = (json: string) => dispatch({ type: "health_update", data: JSON.parse(json) });
+    window.mc.playerStatusUpdate = (json: string) => dispatch({ type: "player_status_update", data: JSON.parse(json) });
+    window.mc.statusEffectUpdate = (json: string) => dispatch({ type: "status_effect_update", data: JSON.parse(json) });
+    window.mc.playerDowned = (playerId: string) => dispatch({ type: "player_downed", playerId });
+    window.mc.playerRespawned = (json: string) => dispatch({ type: "player_respawned", data: JSON.parse(json) });
 
     // no-ops: React handles creation
     window.mc.createHUD = () => {};
@@ -683,6 +679,13 @@ export function GameUI() {
             layoutStyle={widgetStyle(activeLayout, "CHAT_HISTORY")}
           />
           <Notifications notif={state.notif?.msg ? state.notif : null} />
+          {state.playerStatus && (
+            <PlayerStatusBar status={state.playerStatus} layoutStyle={widgetStyle(activeLayout, "PLAYER_STATUS")} />
+          )}
+          {state.combatTarget && (
+            <CombatTargetFrame target={state.combatTarget} layoutStyle={widgetStyle(activeLayout, "COMBAT_TARGET")} />
+          )}
+          {state.playerDowned && <PlayerDownedOverlay />}
           <Console
             open={state.consoleOpen}
             onClose={() => dispatch({ type: "console_hide" })}

@@ -41,6 +41,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             serverHost = { serverHost },
             serverPort = { serverPort },
             playerName = { currentPlayerName },
+            npcManager = npcManager,
         )
 
     private val scope = CoroutineScope(Dispatchers.Default)
@@ -387,6 +388,15 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             is ServerMessage.TradeClosed -> jsTradeClosed(msg.tradeId, msg.reason)
             is ServerMessage.CharacterCreationRequired -> jsShowCharacterCreation()
             is ServerMessage.CharacterSync -> jsCharacterSync(Json.encodeToString(msg))
+            is ServerMessage.CombatTargetUpdate -> {
+                localController.currentCombatTargetId = msg.targetId
+                jsCombatTargetUpdate(Json.encodeToString(msg))
+            }
+            is ServerMessage.HealthUpdate -> jsHealthUpdate(Json.encodeToString(msg))
+            is ServerMessage.PlayerStatusUpdate -> jsPlayerStatusUpdate(Json.encodeToString(msg))
+            is ServerMessage.StatusEffectUpdate -> jsStatusEffectUpdate(Json.encodeToString(msg))
+            is ServerMessage.PlayerDowned -> jsPlayerDowned(msg.playerId)
+            is ServerMessage.PlayerRespawned -> jsPlayerRespawned(Json.encodeToString(msg))
             is ServerMessage.WeatherUpdate -> jsSetWeatherZones(Json.encodeToString(msg.zones))
             is ServerMessage.PreferencesSync ->
                 uiState.setPreferencesSync(Json.encodeToString<ServerMessage.PreferencesSync>(msg))

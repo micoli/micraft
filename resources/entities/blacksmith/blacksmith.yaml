@@ -5,6 +5,11 @@ wanderSpeed: 0.0
 wanderRadius: 0.0
 spawn:
   autoSpawn: false
-  maxTotal: 0
+  maxTotal: 10
   maxPerChunk: 1
   spawnBiomes: []
+hp: 20
+aggroMode: AGGRESSIVE
+aggroRange:  20.0
+deaggroTimeSec:  10.0
+attackId: null

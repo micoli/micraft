@@ -45,6 +45,12 @@ object ServerMessageCodec {
         TRADE_CLOSED(32),
         CHARACTER_CREATION_REQUIRED(33),
         CHARACTER_SYNC(34),
+        COMBAT_TARGET_UPDATE(35),
+        HEALTH_UPDATE(36),
+        PLAYER_STATUS_UPDATE(37),
+        STATUS_EFFECT_UPDATE(38),
+        PLAYER_DOWNED(39),
+        PLAYER_RESPAWNED(40),
     }
 
     fun encode(msg: ServerMessage): ByteArray {
@@ -92,6 +98,16 @@ object ServerMessageCodec {
                 ServerMessage.CharacterCreationRequired ->
                     Id.CHARACTER_CREATION_REQUIRED to ByteArray(0)
                 is ServerMessage.CharacterSync -> Id.CHARACTER_SYNC to proto.encodeToByteArray(msg)
+                is ServerMessage.CombatTargetUpdate ->
+                    Id.COMBAT_TARGET_UPDATE to proto.encodeToByteArray(msg)
+                is ServerMessage.HealthUpdate -> Id.HEALTH_UPDATE to proto.encodeToByteArray(msg)
+                is ServerMessage.PlayerStatusUpdate ->
+                    Id.PLAYER_STATUS_UPDATE to proto.encodeToByteArray(msg)
+                is ServerMessage.StatusEffectUpdate ->
+                    Id.STATUS_EFFECT_UPDATE to proto.encodeToByteArray(msg)
+                is ServerMessage.PlayerDowned -> Id.PLAYER_DOWNED to proto.encodeToByteArray(msg)
+                is ServerMessage.PlayerRespawned ->
+                    Id.PLAYER_RESPAWNED to proto.encodeToByteArray(msg)
             }
         return byteArrayOf(id.b) + payload
     }
@@ -134,6 +150,12 @@ object ServerMessageCodec {
             32 -> proto.decodeFromByteArray<ServerMessage.TradeClosed>(payload)
             33 -> ServerMessage.CharacterCreationRequired
             34 -> proto.decodeFromByteArray<ServerMessage.CharacterSync>(payload)
+            35 -> proto.decodeFromByteArray<ServerMessage.CombatTargetUpdate>(payload)
+            36 -> proto.decodeFromByteArray<ServerMessage.HealthUpdate>(payload)
+            37 -> proto.decodeFromByteArray<ServerMessage.PlayerStatusUpdate>(payload)
+            38 -> proto.decodeFromByteArray<ServerMessage.StatusEffectUpdate>(payload)
+            39 -> proto.decodeFromByteArray<ServerMessage.PlayerDowned>(payload)
+            40 -> proto.decodeFromByteArray<ServerMessage.PlayerRespawned>(payload)
             else -> throw IllegalArgumentException("Unknown ServerMessage type id: ${data[0]}")
         }
     }
@@ -160,6 +182,8 @@ object ClientMessageCodec {
                 is ClientMessage.PreferencesUpdate -> 12.toByte() to proto.encodeToByteArray(msg)
                 is ClientMessage.ViewModeUpdate -> 13.toByte() to proto.encodeToByteArray(msg)
                 is ClientMessage.DoCraft -> 14.toByte() to proto.encodeToByteArray(msg)
+                is ClientMessage.SetCombatTarget -> 15.toByte() to proto.encodeToByteArray(msg)
+                is ClientMessage.AttackTarget -> 16.toByte() to proto.encodeToByteArray(msg)
             }
         return byteArrayOf(id) + payload
     }
@@ -182,6 +206,8 @@ object ClientMessageCodec {
             12 -> proto.decodeFromByteArray<ClientMessage.PreferencesUpdate>(payload)
             13 -> proto.decodeFromByteArray<ClientMessage.ViewModeUpdate>(payload)
             14 -> proto.decodeFromByteArray<ClientMessage.DoCraft>(payload)
+            15 -> proto.decodeFromByteArray<ClientMessage.SetCombatTarget>(payload)
+            16 -> proto.decodeFromByteArray<ClientMessage.AttackTarget>(payload)
             else -> throw IllegalArgumentException("Unknown ClientMessage type id: ${data[0]}")
         }
     }

@@ -30,6 +30,7 @@ const ACTION_GROUPS: Record<string, string[]> = {
     "crawl",
     "auto_forward",
   ],
+  combat: ["combat_target_cycle"],
   flight: ["fly_toggle", "ascend", "descend", "speed_up", "speed_down"],
   ui: [
     "view_toggle",

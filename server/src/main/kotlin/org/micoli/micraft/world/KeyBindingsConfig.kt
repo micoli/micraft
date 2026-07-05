@@ -20,6 +20,9 @@ private val SECTION_SERIALIZER =
 
 private val DEFAULT_YAML =
     """
+combat:
+  combat_target_cycle: [Tab]
+
 movement:
   forward: [KeyW, ArrowUp]
   backward: [KeyS, ArrowDown]
