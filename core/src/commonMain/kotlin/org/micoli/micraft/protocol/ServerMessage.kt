@@ -4,6 +4,8 @@ import kotlinx.serialization.Serializable
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.player.rpg.CharacterData
+import org.micoli.micraft.player.rpg.DerivedStats
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.ui.defaultLayout
 import org.micoli.micraft.world.BlockPos
@@ -170,6 +172,14 @@ sealed class ServerMessage {
     data class TradeClosed(
         val tradeId: String,
         val reason: String,
+    ) : ServerMessage()
+
+    @Serializable object CharacterCreationRequired : ServerMessage()
+
+    @Serializable
+    data class CharacterSync(
+        val character: CharacterData,
+        val derived: DerivedStats,
     ) : ServerMessage()
 }
 

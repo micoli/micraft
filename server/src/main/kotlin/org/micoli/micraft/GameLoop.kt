@@ -27,6 +27,7 @@ import org.micoli.micraft.protocol.CommandInfo
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.rpg.character.DerivedStatsCalculator
 import org.micoli.micraft.session.NetworkStats
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.session.toSlotMap
@@ -524,6 +525,7 @@ class GameLoop(
                 inventory = session.inventory.toMap(),
                 shortcutBar = session.shortcutBar.toList(),
                 knownRecipes = session.knownRecipes.toSet(),
+                characterData = session.characterData,
             ),
         )
     }
@@ -684,6 +686,7 @@ class GameLoop(
         saved?.shortcutBar?.forEachIndexed { i, item ->
             if (i in 0..9) session.shortcutBar[i] = item
         }
+        session.characterData = saved?.characterData
         log.info(
             "player connected: {} name={} user={} (total={})",
             id.take(8),
@@ -715,6 +718,13 @@ class GameLoop(
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toSlotMap()))
         session.send(ServerMessage.TimeUpdate(gameTicks))
+        val charData = session.characterData
+        if (charData != null) {
+            session.send(
+                ServerMessage.CharacterSync(charData, DerivedStatsCalculator.compute(charData)))
+        } else if (!session.state.rpgOptOut) {
+            session.send(ServerMessage.CharacterCreationRequired)
+        }
 
         val spawnCp =
             ChunkPos(

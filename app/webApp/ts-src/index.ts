@@ -239,6 +239,11 @@ window.mc = {
   createHotbar: () => {},
   createConsole: () => {},
   createServerLog: () => {},
+  showCharacterCreation: () => {},
+  characterSync: () => {},
+  tradeClosed: () => {},
+  openTrade: () => {},
+  tradeUpdate: () => {},
 } satisfies McBindings;
 
 registerAllPlugins();

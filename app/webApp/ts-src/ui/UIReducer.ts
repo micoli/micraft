@@ -1,4 +1,13 @@
-import { GameLayout, HudData, HudMode, LogEntry, NpcDialogData, PreferencesData, RecipeDefinition } from "./types";
+import {
+  CharacterSyncData,
+  GameLayout,
+  HudData,
+  HudMode,
+  LogEntry,
+  NpcDialogData,
+  PreferencesData,
+  RecipeDefinition,
+} from "./types";
 
 export interface UiState {
   hud: HudData | null;
@@ -32,6 +41,9 @@ export interface UiState {
   preferences: PreferencesData | null;
   pauseMenuOpen: boolean;
   characterOpen: boolean;
+  characterCreationOpen: boolean;
+  characterSyncData: CharacterSyncData | null;
+  rpgCreationRequired: boolean;
   biomeMapVisible: boolean;
   tradeOpen: boolean;
   tradeId: string | null;
@@ -92,6 +104,10 @@ export type UiAction =
   | { type: "pause_menu_hide" }
   | { type: "character_open" }
   | { type: "character_close" }
+  | { type: "character_creation_show" }
+  | { type: "character_creation_hide" }
+  | { type: "character_sync"; data: CharacterSyncData }
+  | { type: "rpg_creation_required" }
   | { type: "ingame_map_toggle" }
   | { type: "trade_open"; tradeId: string; otherPlayer: string }
   | {
@@ -232,6 +248,20 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, characterOpen: true };
     case "character_close":
       return { ...state, characterOpen: false };
+    case "character_creation_show":
+      return { ...state, characterCreationOpen: true };
+    case "character_creation_hide":
+      return { ...state, characterCreationOpen: false };
+    case "character_sync":
+      return {
+        ...state,
+        characterSyncData: action.data,
+        characterCreationOpen: false,
+        rpgCreationRequired: false,
+        loginVisible: false,
+      };
+    case "rpg_creation_required":
+      return { ...state, rpgCreationRequired: true, loginVisible: true, characterCreationOpen: false };
     case "ingame_map_toggle":
       return { ...state, biomeMapVisible: !state.biomeMapVisible };
     case "trade_open":

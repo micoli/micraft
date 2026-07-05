@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogTitle } from "../primitives/Dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../primitives/Tabs";
 import { Button } from "../primitives/Button";
 import { cn } from "../primitives/cn";
+import { CharacterSyncData } from "../types";
 
 interface ArmorSlots {
   head: boolean;
@@ -23,6 +24,62 @@ const SLOT_LABELS: { key: keyof ArmorSlots; label: string }[] = [
   { key: "leftLeg", label: "L.LEG" },
 ];
 
+function StatRow({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="flex justify-between items-center py-1 border-b border-white/5">
+      <span className="text-white/50 text-xs">{label}</span>
+      <span className="text-white text-xs font-mono">{value}</span>
+    </div>
+  );
+}
+
+function CharacterStatsPanel({ data }: { data: CharacterSyncData }) {
+  const { character: c, derived: d } = data;
+  const CLASS_LABELS: Record<string, string> = {
+    WARRIOR: "Warrior",
+    MAGE: "Mage",
+    RANGER: "Ranger",
+    ROGUE: "Rogue",
+    CLERIC: "Cleric",
+  };
+  return (
+    <div className="flex gap-6">
+      <div className="flex-1">
+        <div className="text-blue-300 text-xs font-mono mb-3 tracking-widest">IDENTITY</div>
+        <StatRow label="Name" value={c.name} />
+        <StatRow label="Class" value={CLASS_LABELS[c.characterClass] ?? c.characterClass} />
+        <StatRow label="Level" value={c.level} />
+        <StatRow label="XP" value={c.xp.toLocaleString()} />
+        <StatRow label="HP" value={`${c.currentHp} / ${d.maxHp}`} />
+        <StatRow label="Mana" value={`${c.currentMana} / ${d.maxMana}`} />
+
+        <div className="text-blue-300 text-xs font-mono mt-5 mb-3 tracking-widest">BASE STATS</div>
+        <StatRow label="STR" value={c.baseStats.str} />
+        <StatRow label="DEX" value={c.baseStats.dex} />
+        <StatRow label="INT" value={c.baseStats.intel} />
+        <StatRow label="WIS" value={c.baseStats.wis} />
+        <StatRow label="CON" value={c.baseStats.con} />
+        <StatRow label="CHA" value={c.baseStats.cha} />
+      </div>
+      <div className="flex-1">
+        <div className="text-blue-300 text-xs font-mono mb-3 tracking-widest">COMBAT</div>
+        <StatRow label="Melee dmg" value={`+${d.meleeDmg}`} />
+        <StatRow label="Ranged dmg" value={`+${d.rangedDmg}`} />
+        <StatRow label="Spell dmg" value={`+${d.spellDmg}`} />
+        <StatRow label="Crit chance" value={`${d.critChancePct.toFixed(1)}%`} />
+        <StatRow label="Crit mult" value={`×${d.critDmgMult}`} />
+        <StatRow label="Dodge" value={`${d.dodgePct.toFixed(1)}%`} />
+        <StatRow label="Magic resist" value={`${d.magicResistPct.toFixed(0)}%`} />
+        <StatRow label="Initiative" value={d.initiative >= 0 ? `+${d.initiative}` : `${d.initiative}`} />
+
+        <div className="text-blue-300 text-xs font-mono mt-5 mb-3 tracking-widest">REGEN</div>
+        <StatRow label="HP/s" value={d.hpRegenPerSec.toFixed(1)} />
+        <StatRow label="Mana/s" value={d.manaRegenPerSec.toFixed(1)} />
+      </div>
+    </div>
+  );
+}
+
 function slotsOverlap(a: ArmorSlots | undefined, b: ArmorSlots | undefined): boolean {
   if (!a || !b) return false;
   return (
@@ -39,9 +96,10 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onCommand: (cmd: string) => void;
+  characterSyncData?: CharacterSyncData | null;
 }
 
-export function Character({ open, onClose, onCommand }: Props) {
+export function Character({ open, onClose, onCommand, characterSyncData }: Props) {
   const [available, setAvailable] = useState<Record<string, ArmorSlots>>({});
   const [equipped, setEquipped] = useState<string[]>([]);
   const [skin, setSkin] = useState("player");
@@ -87,12 +145,23 @@ export function Character({ open, onClose, onCommand }: Props) {
       <DialogContent movable className="min-w-[520px] font-mono p-9">
         <DialogTitle className="text-blue-300 tracking-widest mb-5">CHARACTER</DialogTitle>
 
-        <Tabs defaultValue="equipment">
+        <Tabs defaultValue={characterSyncData ? "stats" : "equipment"}>
           <TabsList className="mb-5">
+            {characterSyncData && (
+              <TabsTrigger value="stats" className="font-mono text-xs">
+                Stats
+              </TabsTrigger>
+            )}
             <TabsTrigger value="equipment" className="font-mono text-xs">
               Equipment
             </TabsTrigger>
           </TabsList>
+
+          {characterSyncData && (
+            <TabsContent value="stats">
+              <CharacterStatsPanel data={characterSyncData} />
+            </TabsContent>
+          )}
 
           <TabsContent value="equipment">
             <div className="flex gap-9 items-start">

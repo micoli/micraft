@@ -182,3 +182,13 @@ config:
     get_result: "{0} = {1}"
     set_ok: "Config mis à jour : {0} = {1}"
     set_invalid: "Valeur invalide pour {0} : {1}"
+rpg:
+  server:
+    already_has_character: "Vous avez déjà un personnage."
+    name_length: "Le nom du personnage doit faire 3–24 caractères."
+    unknown_class: "Classe inconnue. Classes valides : {0}"
+    stat_range: "Chaque statistique doit être entre 8 et 15 avant les bonus de classe."
+    budget_exceeded: "Budget de points dépassé : {0} / {1} points utilisés."
+    character_created: "Personnage '{0}' créé avec succès !"
+    no_character: "Vous n'avez pas encore de personnage RPG. Utilisez le menu pause pour en créer un."
+    skipped_rpg: "Système RPG désactivé pour ce personnage."

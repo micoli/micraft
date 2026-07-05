@@ -386,6 +386,8 @@ declare global {
     openCraft(): void;
     recipeSync(json: string): void;
     openCharacter(): void;
+    showCharacterCreation(): void;
+    characterSync(json: string): void;
     toggleBiomeMap(): void;
     dumpStats(): void;
     updateChunkDebug(json: string): void;
@@ -393,6 +395,9 @@ declare global {
     createHotbar(): void;
     createConsole(): void;
     createServerLog(): void;
+    tradeClosed(_tradeId: string, _reason: string): void;
+    openTrade(tradeId: string, otherPlayer: string, _role: string): void;
+    tradeUpdate(json: string);
   }
 
   // ── Window augmentation ───────────────────────────────────────────────────────

@@ -385,6 +385,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             is ServerMessage.OpenTrade -> jsOpenTrade(msg.tradeId, msg.otherPlayerName, msg.myRole)
             is ServerMessage.TradeUpdate -> jsTradeUpdate(Json.encodeToString(msg))
             is ServerMessage.TradeClosed -> jsTradeClosed(msg.tradeId, msg.reason)
+            is ServerMessage.CharacterCreationRequired -> jsShowCharacterCreation()
+            is ServerMessage.CharacterSync -> jsCharacterSync(Json.encodeToString(msg))
             is ServerMessage.WeatherUpdate -> jsSetWeatherZones(Json.encodeToString(msg.zones))
             is ServerMessage.PreferencesSync ->
                 uiState.setPreferencesSync(Json.encodeToString<ServerMessage.PreferencesSync>(msg))

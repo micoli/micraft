@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ES2019",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
     "noEmit": true,
-    "lib": ["ES2017", "DOM"],
+    "lib": ["ES2019", "DOM"],
     "jsx": "react-jsx",
     "skipLibCheck": true,
     "noUnusedLocals": false,

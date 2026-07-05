@@ -1,6 +1,7 @@
 package org.micoli.micraft.player
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.ui.defaultLayout
 import org.micoli.micraft.world.ItemType
@@ -33,4 +34,6 @@ data class PlayerState(
     val animatedFavicon: Boolean = true,
     val chunkDebugVisible: Boolean = false,
     val knownRecipes: Set<String> = emptySet(),
+    val characterData: CharacterData? = null,
+    val rpgOptOut: Boolean = true,
 )

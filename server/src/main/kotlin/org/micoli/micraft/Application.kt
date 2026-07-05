@@ -326,6 +326,7 @@ fun Application.module() {
                         pos = Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z),
                         orientation = Orientation(0f, 0f),
                         skin = skin,
+                        rpgOptOut = false,
                     )
             p.savePlayerState(name, state)
             call.respondText("""{"skin":"$skin"}""", ContentType.Application.Json)
@@ -335,6 +336,15 @@ fun Application.module() {
             val armors = persistence?.loadPlayerState(name)?.armors ?: emptyList()
             call.respondText(
                 Json.encodeToString(ListSerializer(String.serializer()), armors),
+                ContentType.Application.Json)
+        }
+        get("/api/player/{name}/rpg") {
+            val name = call.parameters["name"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val characterData =
+                persistence?.loadPlayerState(name)?.characterData
+                    ?: return@get call.respond(HttpStatusCode.NotFound)
+            call.respondText(
+                """{"characterClass":"${characterData.characterClass}"}""",
                 ContentType.Application.Json)
         }
         get("/api/skins") {

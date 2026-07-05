@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.channels.Channel
 import org.micoli.micraft.player.PlayerState
+import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
@@ -46,6 +47,8 @@ open class PlayerSession(
         Collections.newSetFromMap(ConcurrentHashMap<String, Boolean>()).also {
             it.addAll(state.knownRecipes)
         }
+
+    @Volatile var characterData: CharacterData? = null
 
     @Volatile var lastMoveDx: Float = 0f
     @Volatile var lastMoveDz: Float = 0f

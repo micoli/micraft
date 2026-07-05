@@ -43,6 +43,8 @@ object ServerMessageCodec {
         OPEN_TRADE(30),
         TRADE_UPDATE(31),
         TRADE_CLOSED(32),
+        CHARACTER_CREATION_REQUIRED(33),
+        CHARACTER_SYNC(34),
     }
 
     fun encode(msg: ServerMessage): ByteArray {
@@ -87,6 +89,9 @@ object ServerMessageCodec {
                 is ServerMessage.OpenTrade -> Id.OPEN_TRADE to proto.encodeToByteArray(msg)
                 is ServerMessage.TradeUpdate -> Id.TRADE_UPDATE to proto.encodeToByteArray(msg)
                 is ServerMessage.TradeClosed -> Id.TRADE_CLOSED to proto.encodeToByteArray(msg)
+                ServerMessage.CharacterCreationRequired ->
+                    Id.CHARACTER_CREATION_REQUIRED to ByteArray(0)
+                is ServerMessage.CharacterSync -> Id.CHARACTER_SYNC to proto.encodeToByteArray(msg)
             }
         return byteArrayOf(id.b) + payload
     }
@@ -127,6 +132,8 @@ object ServerMessageCodec {
             30 -> proto.decodeFromByteArray<ServerMessage.OpenTrade>(payload)
             31 -> proto.decodeFromByteArray<ServerMessage.TradeUpdate>(payload)
             32 -> proto.decodeFromByteArray<ServerMessage.TradeClosed>(payload)
+            33 -> ServerMessage.CharacterCreationRequired
+            34 -> proto.decodeFromByteArray<ServerMessage.CharacterSync>(payload)
             else -> throw IllegalArgumentException("Unknown ServerMessage type id: ${data[0]}")
         }
     }

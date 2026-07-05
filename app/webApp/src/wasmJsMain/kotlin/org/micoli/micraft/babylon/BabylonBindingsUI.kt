@@ -163,3 +163,9 @@ fun jsOpenTrade(tradeId: String, otherPlayer: String, myRole: String): Unit =
 fun jsTradeUpdate(json: String): Unit = js("mc.tradeUpdate(json)")
 
 fun jsTradeClosed(tradeId: String, reason: String): Unit = js("mc.tradeClosed(tradeId, reason)")
+
+// ── RPG Character ──────────────────────────────────────────────────────────────
+
+fun jsShowCharacterCreation(): Unit = js("mc.showCharacterCreation()")
+
+fun jsCharacterSync(json: String): Unit = js("mc.characterSync(json)")

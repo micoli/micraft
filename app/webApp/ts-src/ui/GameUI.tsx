@@ -18,6 +18,7 @@ import { defaultLayout, getWidget, resolveActiveLayout, widgetStyle, WIDGET_REGI
 import { CodexModal } from "../codex/CodexModal";
 import { ChunkDebug, ChunkDebugData } from "./game/ChunkDebug";
 import { Character } from "./game/Character";
+import { CharacterCreation } from "./overlays/CharacterCreation";
 import { BiomeMap } from "./game/BiomeMap";
 import { Craft } from "./game/Craft";
 import { Trade } from "./game/Trade";
@@ -64,6 +65,9 @@ const initial: UiState = {
   preferences: null,
   pauseMenuOpen: false,
   characterOpen: false,
+  characterCreationOpen: false,
+  characterSyncData: null,
+  rpgCreationRequired: false,
   biomeMapVisible: false,
   tradeOpen: false,
   tradeId: null,
@@ -100,11 +104,15 @@ export function GameUI() {
   const pendingLayoutUpdateRef = useRef<string>("");
   const pendingPreferencesUpdateRef = useRef<string>("");
 
+  const pendingRpgCmdRef = useRef("");
+  const pendingRpgSkipRef = useRef(false);
+
   const pauseMenuOpenRef = useRef(false);
   const preferencesOpenRef = useRef(false);
   const codexOpenRef = useRef(false);
   const craftOpenRef = useRef(false);
   const characterOpenRef = useRef(false);
+  const characterCreationOpenRef = useRef(false);
   const tradeOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
   const chunkLoadingRef = useRef(false);
@@ -151,6 +159,10 @@ export function GameUI() {
   useEffect(() => {
     characterOpenRef.current = state.characterOpen;
   }, [state.characterOpen]);
+
+  useEffect(() => {
+    characterCreationOpenRef.current = state.characterCreationOpen;
+  }, [state.characterCreationOpen]);
 
   useEffect(() => {
     tradeOpenRef.current = state.tradeOpen;
@@ -421,6 +433,24 @@ export function GameUI() {
       }
     };
     window.mc.openCharacter = () => dispatch({ type: "character_open" });
+    window.mc.showCharacterCreation = () => {
+      if (pendingRpgCmdRef.current) {
+        consoleSubmittedRef.current = pendingRpgCmdRef.current;
+        pendingRpgCmdRef.current = "";
+      } else if (pendingRpgSkipRef.current) {
+        consoleSubmittedRef.current = "/skiprpg";
+        pendingRpgSkipRef.current = false;
+      } else {
+        dispatch({ type: "rpg_creation_required" });
+      }
+    };
+    window.mc.characterSync = (json: string) => {
+      try {
+        dispatch({ type: "character_sync", data: JSON.parse(json) });
+      } catch {
+        /* ignore */
+      }
+    };
     window.mc.openTrade = (tradeId: string, otherPlayer: string, _role: string) =>
       dispatch({ type: "trade_open", tradeId, otherPlayer });
     window.mc.tradeUpdate = (json: string) => {
@@ -704,8 +734,17 @@ export function GameUI() {
           />
           <Character
             open={state.characterOpen}
+            characterSyncData={state.characterSyncData}
             onClose={() => dispatch({ type: "character_close" })}
             onCommand={(cmd) => {
+              consoleSubmittedRef.current = cmd;
+            }}
+          />
+          <CharacterCreation
+            open={state.characterCreationOpen}
+            required={state.characterSyncData === null}
+            onClose={() => dispatch({ type: "character_creation_hide" })}
+            onSubmit={(cmd) => {
               consoleSubmittedRef.current = cmd;
             }}
           />
@@ -744,6 +783,20 @@ export function GameUI() {
         <LoginOverlay
           visible={state.loginVisible}
           loginResultRef={loginResultRef}
+          rpgCreationRequired={state.rpgCreationRequired}
+          onRpgSubmit={(cmd) => {
+            consoleSubmittedRef.current = cmd;
+          }}
+          onRpgFormComplete={(cmd) => {
+            pendingRpgCmdRef.current = cmd;
+          }}
+          onRpgSkip={() => {
+            consoleSubmittedRef.current = "/skiprpg";
+            dispatch({ type: "login_hide" });
+          }}
+          onRpgOptOut={() => {
+            pendingRpgSkipRef.current = true;
+          }}
           onHide={() => dispatch({ type: "login_hide" })}
         />
       </div>

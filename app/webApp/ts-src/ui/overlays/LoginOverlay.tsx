@@ -1,4 +1,4 @@
-import { KeyboardEvent } from "react";
+import { KeyboardEvent, useEffect, useState } from "react";
 import { PlayerModelPreview } from "../shared/PlayerModelPreview";
 import { cn } from "../primitives/cn";
 import { Input, inputFieldCls } from "../primitives/Input";
@@ -6,6 +6,7 @@ import { Label } from "../primitives/Label";
 import { Button } from "../primitives/Button";
 import { Panel, FormField } from "../primitives/Panel";
 import { useLogin } from "../hooks/useLogin";
+import { CharacterCreationForm } from "./CharacterCreation";
 
 const SUPPORTED_LANGS: { code: string; label: string }[] = [
   { code: "en", label: "English" },
@@ -169,8 +170,13 @@ function CharsStep({ L }: { L: L }) {
                   checked={L.selected === name}
                   onChange={() => L.setSelected(name)}
                 />
-                <label htmlFor={`mc-char-${i}`} className="text-sm cursor-pointer">
+                <label htmlFor={`mc-char-${i}`} className="text-sm cursor-pointer flex items-center gap-2">
                   {name}
+                  {L.charClasses[name] && (
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-950/60 border border-blue-700/50 text-blue-300">
+                      {L.charClasses[name]}
+                    </span>
+                  )}
                 </label>
               </div>
             ))}
@@ -179,7 +185,7 @@ function CharsStep({ L }: { L: L }) {
             variant="outline"
             size="md"
             className="w-full text-blue-300 border-blue-800/60 hover:border-blue-600 hover:text-blue-200"
-            onClick={L.goCreate}
+            onClick={L.goTypeSelect}
           >
             + Create new character
           </Button>
@@ -234,6 +240,83 @@ function CharsStep({ L }: { L: L }) {
         </Button>
       </div>
     </div>
+  );
+}
+
+function TypeSelectStep({
+  L,
+  postConnect,
+  onRpgOptOut,
+  onRpgSkip,
+}: {
+  L: L;
+  postConnect: boolean;
+  onRpgOptOut: () => void;
+  onRpgSkip: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-6 min-w-[340px]">
+      <div className="text-center">
+        <div className="text-blue-300 tracking-widest text-sm font-mono mb-1">CHARACTER TYPE</div>
+        <div className="text-[#666] text-xs">Choose how you want to play</div>
+      </div>
+      <div className="flex flex-col gap-3">
+        <button
+          onClick={() => L.setStep("rpgCreate")}
+          className="flex flex-col gap-1 px-5 py-4 rounded border border-blue-700/50 bg-blue-950/30 text-left hover:border-blue-500/70 transition-colors"
+        >
+          <span className="text-blue-300 font-mono text-sm font-bold">RPG Character</span>
+          <span className="text-[#888] text-xs">Classes, stats, progression — full RPG system.</span>
+        </button>
+        <button
+          onClick={() => {
+            if (postConnect) {
+              onRpgSkip();
+            } else {
+              onRpgOptOut();
+              L.goCreate();
+            }
+          }}
+          className="flex flex-col gap-1 px-5 py-4 rounded border border-white/10 bg-black/20 text-left hover:border-white/25 transition-colors"
+        >
+          <span className="text-white/70 font-mono text-sm font-bold">No RPG</span>
+          <span className="text-[#666] text-xs">Play without stats or classes. This choice is saved.</span>
+        </button>
+      </div>
+      {!postConnect && (
+        <Button variant="ghost" size="sm" className="text-white/30 font-mono" onClick={() => L.setStep("chars")}>
+          ← Back
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function RpgCreateStep({
+  L,
+  postConnect,
+  onRpgSubmit,
+  onRpgFormComplete,
+}: {
+  L: L;
+  postConnect: boolean;
+  onRpgSubmit: (cmd: string) => void;
+  onRpgFormComplete: (cmd: string) => void;
+}) {
+  return (
+    <CharacterCreationForm
+      required={false}
+      onSubmit={(cmd) => {
+        if (postConnect) {
+          onRpgSubmit(cmd);
+        } else {
+          const name = cmd.split(" ")[1] ?? "";
+          L.doRpgCreate(name);
+          onRpgFormComplete(cmd);
+        }
+      }}
+      onCancel={() => L.setStep("typeSelect")}
+    />
   );
 }
 
@@ -308,20 +391,52 @@ function CreateStep({ L }: { L: L }) {
 interface Props {
   visible: boolean;
   loginResultRef: React.MutableRefObject<string>;
+  rpgCreationRequired: boolean;
+  onRpgSubmit: (cmd: string) => void;
+  onRpgFormComplete: (cmd: string) => void;
+  onRpgSkip: () => void;
+  onRpgOptOut: () => void;
   onHide: () => void;
 }
 
-export function LoginOverlay({ visible, loginResultRef, onHide }: Props) {
+export function LoginOverlay({
+  visible,
+  loginResultRef,
+  rpgCreationRequired,
+  onRpgSubmit,
+  onRpgFormComplete,
+  onRpgSkip,
+  onRpgOptOut,
+  onHide,
+}: Props) {
   const L = useLogin({ visible, loginResultRef, onHide });
+
+  useEffect(() => {
+    if (rpgCreationRequired) L.setStep("typeSelect");
+  }, [rpgCreationRequired]);
 
   if (!visible) return null;
 
+  const postConnect = rpgCreationRequired;
+  const wideStep = L.step === "rpgCreate";
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/82 z-[2000]">
-      <Panel className="min-w-[340px]">
+      <Panel className={cn("min-w-[340px]", wideStep && "min-w-[760px]")}>
         {L.step === "auth" && <AuthStep L={L} />}
         {L.step === "chars" && <CharsStep L={L} />}
         {L.step === "create" && <CreateStep L={L} />}
+        {L.step === "typeSelect" && (
+          <TypeSelectStep L={L} postConnect={postConnect} onRpgOptOut={onRpgOptOut} onRpgSkip={onRpgSkip} />
+        )}
+        {L.step === "rpgCreate" && (
+          <RpgCreateStep
+            L={L}
+            postConnect={postConnect}
+            onRpgSubmit={onRpgSubmit}
+            onRpgFormComplete={onRpgFormComplete}
+          />
+        )}
       </Panel>
     </div>
   );

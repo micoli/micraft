@@ -70,6 +70,46 @@ export interface RecipeDefinition {
   ingredients: RecipeIngredient[];
 }
 
+export interface BaseStats {
+  str: number;
+  dex: number;
+  intel: number;
+  wis: number;
+  con: number;
+  cha: number;
+}
+
+export interface DerivedStats {
+  maxHp: number;
+  maxMana: number;
+  meleeDmg: number;
+  rangedDmg: number;
+  spellDmg: number;
+  critChancePct: number;
+  critDmgMult: number;
+  dodgePct: number;
+  magicResistPct: number;
+  initiative: number;
+  hpRegenPerSec: number;
+  manaRegenPerSec: number;
+}
+
+export interface CharacterData {
+  id: string;
+  name: string;
+  characterClass: string;
+  level: number;
+  xp: number;
+  baseStats: BaseStats;
+  currentHp: number;
+  currentMana: number;
+}
+
+export interface CharacterSyncData {
+  character: CharacterData;
+  derived: DerivedStats;
+}
+
 export interface PreferencesData {
   subscribedChannels: string[];
   knownChannels: string[];

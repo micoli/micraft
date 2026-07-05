@@ -56,7 +56,7 @@ function clearStoredToken() {
 }
 
 export type AuthMode = "none" | "local" | "oauth" | "loading";
-export type LoginStep = "auth" | "chars" | "create";
+export type LoginStep = "auth" | "chars" | "create" | "typeSelect" | "rpgCreate";
 
 interface UseLoginParams {
   visible: boolean;
@@ -74,6 +74,7 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
   const [token, setToken] = useState("");
   const [lang, setLang] = useState("en");
   const [chars, setChars] = useState<string[]>([]);
+  const [charClasses, setCharClasses] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState("");
   const [previewSkin, setPreviewSkin] = useState("player");
   const [previewArmors, setPreviewArmors] = useState<string[]>([]);
@@ -123,6 +124,15 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
     const lastPlayer = getLastPlayer(trimmed);
     setChars(playerChars);
     setSelected(lastPlayer && playerChars.includes(lastPlayer) ? lastPlayer : playerChars[0] || "");
+    const classEntries = await Promise.all(
+      playerChars.map((n) =>
+        fetch(`/api/player/${encodeURIComponent(n)}/rpg`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d: { characterClass: string } | null) => [n, d?.characterClass ?? null] as const)
+          .catch(() => [n, null] as const),
+      ),
+    );
+    setCharClasses(Object.fromEntries(classEntries.filter(([, cls]) => cls !== null)) as Record<string, string>);
   }
 
   useEffect(() => {
@@ -225,6 +235,27 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
     setTimeout(() => createNameInputRef.current?.focus(), 50);
   }
 
+  function goTypeSelect() {
+    setStep("typeSelect");
+  }
+
+  async function doRpgCreate(rpgName: string) {
+    await fetch(`/api/player/${encodeURIComponent(rpgName)}/skin`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ skin: "player" }),
+    }).catch(() => {});
+    const users = getUsers();
+    if (!users[username]) users[username] = [];
+    if (!users[username].includes(rpgName)) users[username].push(rpgName);
+    saveUsers(users);
+    setChars(users[username]);
+    setSelected(rpgName);
+    setPreviewSkin("player");
+    setPreviewArmors([]);
+    setStep("chars");
+  }
+
   async function doCreate() {
     const name = createName.trim();
     if (!name) {
@@ -319,6 +350,7 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
     lang,
     setLang,
     chars,
+    charClasses,
     selected,
     setSelected,
     previewSkin,
@@ -339,7 +371,9 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
     playButtonRef,
     goChars,
     goCreate,
+    goTypeSelect,
     doCreate,
+    doRpgCreate,
     doLocalLogin,
     doOAuthLogin,
     doPlay,

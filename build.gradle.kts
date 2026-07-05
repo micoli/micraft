@@ -119,10 +119,7 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     if (watchMode) {
         clientProc =
             ProcessBuilder(
-                    gradle,
-                    ":app:webApp:copyResourcesToWebDist",
-                    "--continuous",
-                    "--console=plain")
+                    gradle, ":app:webApp:copyResourcesToWebDist", "--continuous", "--console=plain")
                 .directory(rootDir)
                 .start()
         clientProc.pipeOutput("[wasm] ")
