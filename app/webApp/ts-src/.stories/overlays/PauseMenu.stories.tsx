@@ -43,6 +43,7 @@ export const Controlled: Story = {
           onDisconnect={() => setOpen(false)}
           onPreferences={() => setOpen(false)}
           onCharacter={() => setOpen(false)}
+          onMacros={() => setOpen(false)}
         />
       </>
     );

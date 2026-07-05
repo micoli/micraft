@@ -53,7 +53,10 @@ class ResurectCommandTest {
     @Test
     fun targetNoCharacterData_sendsError() = runBlocking {
         val caster = testSession(id = "a", name = "Alice")
-        val bob = testSession(id = "b", name = "Bob").also { it.combatState = CombatState(isDowned = true) }
+        val bob =
+            testSession(id = "b", name = "Bob").also {
+                it.combatState = CombatState(isDowned = true)
+            }
         cmd.execute(caster, "Bob", testContext(sessions = listOf(caster, bob)))
         val notifs = caster.sent.filterIsInstance<ServerMessage.Notification>()
         assertTrue(notifs.isNotEmpty())
@@ -91,9 +94,8 @@ class ResurectCommandTest {
             ),
         )
         // PlayerRespawned is sent per-session via sessions().forEach
-        val respawned =
-            (caster.sent + bob.sent).filterIsInstance<ServerMessage.PlayerRespawned>()
-        assertTrue(respawned.any { it.id == "b" })
+        val respawned = (caster.sent + bob.sent).filterIsInstance<ServerMessage.PlayerRespawned>()
+        assertTrue(respawned.any { it.playerId == "b" })
     }
 
     @Test
@@ -124,7 +126,11 @@ class ResurectCommandTest {
         cmd.execute(caster, "", testContext(sessions = listOf(caster)))
         // No "done" notification when self-resurect
         val notifs = caster.sent.filterIsInstance<ServerMessage.Notification>()
-        assertTrue(notifs.none { it.message.contains("Alice", ignoreCase = true) && it.message.contains("resur", ignoreCase = true) })
+        assertTrue(
+            notifs.none {
+                it.message.contains("Alice", ignoreCase = true) &&
+                    it.message.contains("resur", ignoreCase = true)
+            })
     }
 
     // ── autocomplete ──────────────────────────────────────────────────────────
@@ -134,7 +140,8 @@ class ResurectCommandTest {
         val caster = testSession(id = "a", name = "Alice")
         val bob = downedSession(id = "b", name = "Bob")
         val carol = testSession(id = "c", name = "Carol") // not downed
-        val result = cmd.completeArg(0, "", caster, testContext(sessions = listOf(caster, bob, carol)))
+        val result =
+            cmd.completeArg(0, "", caster, testContext(sessions = listOf(caster, bob, carol)))
         assertTrue("Bob" in result)
         assertFalse("Carol" in result)
     }
@@ -144,7 +151,8 @@ class ResurectCommandTest {
         val caster = testSession(id = "a", name = "Alice")
         val bob = downedSession(id = "b", name = "Bob")
         val barry = downedSession(id = "d", name = "Barry")
-        val result = cmd.completeArg(0, "Ba", caster, testContext(sessions = listOf(caster, bob, barry)))
+        val result =
+            cmd.completeArg(0, "Ba", caster, testContext(sessions = listOf(caster, bob, barry)))
         assertTrue("Barry" in result)
         assertFalse("Bob" in result)
     }

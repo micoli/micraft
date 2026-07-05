@@ -14,7 +14,12 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.tick.LiquidManager
 import org.micoli.micraft.trade.TradeManager
+import org.micoli.micraft.world.ArmorDefinition
 import org.micoli.micraft.world.BlockType
+import org.micoli.micraft.world.ChatChannelManager
+import org.micoli.micraft.world.ChatService
+import org.micoli.micraft.world.WeatherConfig
+import org.micoli.micraft.world.WeatherManager
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.ItemDefinition
@@ -184,6 +189,10 @@ fun testContext(
     authProvider: AuthProvider? = null,
     groupsConfig: GroupsConfig? = null,
     tradeManager: TradeManager? = null,
+    chatService: ChatService? = null,
+    chatChannelManager: ChatChannelManager? = null,
+    weatherManager: WeatherManager? = null,
+    armorRegistry: () -> Map<String, ArmorDefinition> = { emptyMap() },
 ) =
     CommandContext(
         world = world,
@@ -206,4 +215,10 @@ fun testContext(
         authProvider = authProvider,
         groupsConfig = groupsConfig,
         tradeManager = tradeManager,
+        chatService = chatService,
+        chatChannelManager = chatChannelManager,
+        weatherManager = weatherManager,
+        armorRegistry = armorRegistry,
     )
+
+fun testWeatherManager() = WeatherManager(WeatherConfig())
