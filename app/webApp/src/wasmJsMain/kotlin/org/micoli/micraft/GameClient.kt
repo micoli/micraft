@@ -149,24 +149,28 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
 
         scope.launch {
             var retryDelay = 1000L
+            var currentUsername = username
+            var currentPlayerNameLocal = playerName
+            var currentLang = preferredLanguage
+            var currentToken = token
             while (isActive) {
                 var sessionWelcomed = false
                 try {
                     uiState.disconnectMessage = null
-                    jsLog("WS connecting to ws://$host:$port/game")
+                    jsLog("WS connecting to ws://$serverHost:$serverPort/game")
                     val client = HttpClient(Js) { install(WebSockets) }
-                    client.webSocket(host = host, port = port, path = "/game") {
+                    client.webSocket(host = serverHost, port = serverPort, path = "/game") {
                         jsLog(
-                            "WS connected, sending Connect(playerName=$playerName, userName=$username)")
+                            "WS connected, sending Connect(playerName=$currentPlayerNameLocal, userName=$currentUsername)")
                         send(
                             Frame.Binary(
                                 true,
                                 ClientMessageCodec.encode(
                                     ClientMessage.Connect(
-                                        playerName = playerName,
-                                        userName = username,
-                                        preferredLanguage = preferredLanguage,
-                                        token = token))))
+                                        playerName = currentPlayerNameLocal,
+                                        userName = currentUsername,
+                                        preferredLanguage = currentLang,
+                                        token = currentToken))))
 
                         val inputJob = launch {
                             while (isActive) {
@@ -235,13 +239,32 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 }
 
                 if (!isActive) break
-                if (sessionWelcomed) retryDelay = 1000L
-                jsLog("WS resetForReconnect, retryDelay=${retryDelay}ms")
                 resetForReconnect()
-                val retrySec = retryDelay / 1000
-                uiState.disconnectMessage = "Reconnecting in ${retrySec}s…"
-                delay(retryDelay)
-                retryDelay = minOf(retryDelay * 2, 8000L)
+                if (sessionWelcomed) {
+                    retryDelay = 1000L
+                    jsLog("WS disconnected after session — returning to login")
+                    jsShowLoginOverlay()
+                    var loginResult = ""
+                    while (loginResult.isEmpty()) {
+                        delay(100)
+                        loginResult = jsConsumeLoginResult()
+                    }
+                    val parts = loginResult.split("\t")
+                    currentUsername = parts[0]
+                    currentPlayerNameLocal = if (parts.size > 1) parts[1] else parts[0]
+                    currentLang = if (parts.size > 2) parts[2] else "en"
+                    currentToken = if (parts.size > 3) parts[3] else ""
+                    currentPlayerName = currentPlayerNameLocal
+                    this@GameClient.token = currentToken
+                    jsFetchI18n(currentLang)
+                    jsHideLoginOverlay()
+                } else {
+                    jsLog("WS resetForReconnect, retryDelay=${retryDelay}ms")
+                    val retrySec = retryDelay / 1000
+                    uiState.disconnectMessage = "Reconnecting in ${retrySec}s…"
+                    delay(retryDelay)
+                    retryDelay = minOf(retryDelay * 2, 8000L)
+                }
             }
         }
     }
