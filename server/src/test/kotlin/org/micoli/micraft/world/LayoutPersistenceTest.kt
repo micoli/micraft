@@ -17,6 +17,8 @@ import org.micoli.micraft.ui.validateLayouts
 
 class LayoutPersistenceTest {
 
+    private val lenientJson = Json { ignoreUnknownKeys = true }
+
     private fun minimalState() =
         PlayerState(
             id = "x",
@@ -45,7 +47,7 @@ class LayoutPersistenceTest {
         // JSON without layouts/activeLayout fields (old save format)
         val json =
             """{"id":"x","name":"Alice","pos":{"x":0,"y":0,"z":0},"orientation":{"yaw":0,"pitch":0}}"""
-        val decoded = Json { ignoreUnknownKeys = true }.decodeFromString<PlayerState>(json)
+        val decoded = lenientJson.decodeFromString<PlayerState>(json)
         assertNotNull(decoded.layouts)
         assertEquals(1, decoded.layouts.size)
         assertEquals("default", decoded.layouts[0].name)

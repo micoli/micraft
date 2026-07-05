@@ -64,7 +64,7 @@ class MapRoutesTest {
         assertEquals(HttpStatusCode.OK, r.status)
         assertEquals(ContentType.Image.PNG, r.contentType()?.withoutParameters())
         assertEquals("*", r.headers[HttpHeaders.AccessControlAllowOrigin])
-        assertTrue(r.readBytes().isNotEmpty(), "PNG body must not be empty")
+        assertTrue(r.readRawBytes().isNotEmpty(), "PNG body must not be empty")
     }
 
     @Test
