@@ -1,14 +1,16 @@
-export function registerAutoUpdate(): void {
-  let serverVersion: string | null = null;
+const MC_SERVER_VERSION_KEY = "mc_server_version";
 
+export function registerAutoUpdate(): void {
   async function checkServerVersion() {
     try {
       const r = await fetch("/api/version", { cache: "no-cache" });
       const { server } = (await r.json()) as { server: string };
-      if (serverVersion === null) {
-        serverVersion = server;
-      } else if (serverVersion !== server) {
-        window.location.reload();
+      const stored = sessionStorage.getItem(MC_SERVER_VERSION_KEY);
+      if (stored === null) {
+        sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
+      } else if (stored !== server) {
+        sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
+        window.location.href = location.pathname + "?_v=" + server;
       }
     } catch {
       /* server offline, skip */

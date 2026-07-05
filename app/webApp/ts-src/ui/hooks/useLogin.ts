@@ -64,9 +64,12 @@ interface UseLoginParams {
   onHide: () => void;
 }
 
+const MC_SERVER_VERSION_KEY = "mc_server_version";
+
 export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
   const [authMode, setAuthMode] = useState<AuthMode>("loading");
   const [step, setStep] = useState<LoginStep>("auth");
+  const [serverReady, setServerReady] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
@@ -95,6 +98,40 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
       .then((d: { provider: string }) => setAuthMode((d.provider as AuthMode) || "none"))
       .catch(() => setAuthMode("none"));
   }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+    let cancelled = false;
+
+    async function checkServer() {
+      try {
+        const r = await fetch("/api/version", { cache: "no-cache" });
+        if (!r.ok) {
+          if (!cancelled) setServerReady(false);
+          return;
+        }
+        const { server } = (await r.json()) as { server: string };
+        const stored = sessionStorage.getItem(MC_SERVER_VERSION_KEY);
+        if (stored === null) {
+          sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
+        } else if (stored !== server) {
+          sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
+          window.location.href = location.pathname + "?_v=" + server;
+          return;
+        }
+        if (!cancelled) setServerReady(true);
+      } catch {
+        if (!cancelled) setServerReady(false);
+      }
+    }
+
+    void checkServer();
+    const interval = setInterval(() => void checkServer(), 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [visible]);
 
   async function goChars(user: string) {
     const trimmed = user.trim();
@@ -341,6 +378,7 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
     authMode,
     step,
     setStep,
+    serverReady,
     username,
     setUsername,
     password,

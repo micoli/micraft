@@ -59,6 +59,7 @@ const initial: UiState = {
   loginVisible: false,
   disconnectMsg: null,
   chunkLoading: null,
+  gameReady: false,
   layouts: [defaultLayout()],
   activeLayout: "default",
   layoutEditorOpen: false,
@@ -676,11 +677,12 @@ export function GameUI() {
         className="border-2 border-white/25 shadow-[0_2px_8px_rgba(0,0,0,0.5)] rounded-md overflow-hidden"
         style={{
           ...minimapLayoutStyle,
-          display: state.loginVisible || state.disconnectMsg || state.chunkLoading ? "none" : undefined,
+          display: !state.gameReady || state.loginVisible || state.disconnectMsg || state.chunkLoading ? "none" : undefined,
         }}
       />
 
-      {!state.loginVisible &&
+      {state.gameReady &&
+        !state.loginVisible &&
         !state.disconnectMsg &&
         !state.chunkLoading &&
         (() => {
@@ -714,13 +716,14 @@ export function GameUI() {
           );
         })()}
 
-      {!state.loginVisible &&
+      {state.gameReady &&
+        !state.loginVisible &&
         !state.disconnectMsg &&
         (state.chunkLoading || (state.preferences?.chunkDebugVisible ?? false)) && (
           <ChunkDebug data={chunkDebugData} layoutStyle={widgetStyle(activeLayout, "CHUNK_DEBUG")} />
         )}
 
-      {!state.loginVisible && !state.disconnectMsg && !state.chunkLoading && (
+      {state.gameReady && !state.loginVisible && !state.disconnectMsg && !state.chunkLoading && (
         <>
           <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, "HUD")} />
           {state.biomeMapVisible && (
@@ -902,7 +905,7 @@ export function GameUI() {
         />
       </div>
       <DisconnectOverlay message={state.disconnectMsg} />
-      {!state.loginVisible && !state.disconnectMsg && <LoadingOverlay progress={state.chunkLoading} />}
+      {state.gameReady && !state.loginVisible && !state.disconnectMsg && <LoadingOverlay progress={state.chunkLoading} />}
     </>
   );
 }

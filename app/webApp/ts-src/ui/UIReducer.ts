@@ -36,6 +36,7 @@ export interface UiState {
   loginVisible: boolean;
   disconnectMsg: string | null;
   chunkLoading: { meshed: number; downloaded: number; total: number } | null;
+  gameReady: boolean;
   layouts: GameLayout[];
   activeLayout: string;
   layoutEditorOpen: boolean;
@@ -226,13 +227,13 @@ export function reducer(state: UiState, action: UiAction): UiState {
     case "login_show":
       return { ...state, loginVisible: true };
     case "login_hide":
-      return { ...state, loginVisible: false };
+      return { ...state, loginVisible: false, gameReady: true };
     case "disconnect_show":
       return { ...state, disconnectMsg: action.message };
     case "disconnect_hide":
       return { ...state, disconnectMsg: null };
     case "chunk_loading_update":
-      return { ...state, chunkLoading: { meshed: action.meshed, downloaded: action.downloaded, total: action.total } };
+      return { ...state, gameReady: true, chunkLoading: { meshed: action.meshed, downloaded: action.downloaded, total: action.total } };
     case "chunk_loading_hide":
       return { ...state, chunkLoading: null };
     case "layouts_sync":

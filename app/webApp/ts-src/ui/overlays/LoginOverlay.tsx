@@ -228,16 +228,24 @@ function CharsStep({ L }: { L: L }) {
             ← Back
           </Button>
         )}
-        <Button
-          ref={L.playButtonRef}
-          variant="blue"
-          size="md"
-          className={cn("flex-1", !L.selected && "opacity-40")}
-          onClick={L.doPlay}
-          disabled={!L.selected}
-        >
-          Play
-        </Button>
+        <div className="flex-1 flex flex-col gap-1">
+          <Button
+            ref={L.playButtonRef}
+            variant="blue"
+            size="md"
+            className={cn("w-full", (!L.selected || !L.serverReady) && "opacity-40")}
+            onClick={L.doPlay}
+            disabled={!L.selected || !L.serverReady}
+          >
+            Play
+          </Button>
+          {!L.serverReady && (
+            <div className="flex items-center gap-1.5 justify-center text-[10px] text-yellow-500/70 font-mono">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-yellow-500/70 animate-pulse" />
+              Connexion au serveur…
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
