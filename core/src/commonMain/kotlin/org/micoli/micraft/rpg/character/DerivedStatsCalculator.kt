@@ -1,12 +1,29 @@
 package org.micoli.micraft.rpg.character
 
 import kotlin.math.floor
+import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.player.rpg.DerivedStats
+import org.micoli.micraft.player.rpg.StatBonus
 
 object DerivedStatsCalculator {
-    fun compute(data: CharacterData): DerivedStats {
-        val s = data.baseStats
+    fun effectiveBaseStats(
+        data: CharacterData,
+        armorBonuses: List<StatBonus> = emptyList()
+    ): BaseStats =
+        if (armorBonuses.isEmpty()) data.baseStats
+        else
+            BaseStats(
+                str = data.baseStats.str + armorBonuses.sumOf { it.str },
+                dex = data.baseStats.dex + armorBonuses.sumOf { it.dex },
+                intel = data.baseStats.intel + armorBonuses.sumOf { it.intel },
+                wis = data.baseStats.wis + armorBonuses.sumOf { it.wis },
+                con = data.baseStats.con + armorBonuses.sumOf { it.con },
+                cha = data.baseStats.cha + armorBonuses.sumOf { it.cha },
+            )
+
+    fun compute(data: CharacterData, armorBonuses: List<StatBonus> = emptyList()): DerivedStats {
+        val s = effectiveBaseStats(data, armorBonuses)
         val lvl = data.level
         return DerivedStats(
             maxHp = (floor((s.con - 10) / 2.0) * lvl + 10).toInt().coerceAtLeast(1),

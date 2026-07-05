@@ -102,7 +102,7 @@ class CreateCharacterCommand : CommandHandler {
         session.characterData = character
         session.state = session.state.copy(characterData = character)
         context.savePlayer(session)
-        session.send(ServerMessage.CharacterSync(character, derived))
+        session.send(ServerMessage.CharacterSync(character, derived, character.baseStats))
         session.send(
             ServerMessage.Notification(
                 context.i18n.t(lang, "rpg:server:character_created", character.name)))

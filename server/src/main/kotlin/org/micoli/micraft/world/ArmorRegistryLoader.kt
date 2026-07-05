@@ -7,6 +7,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.player.rpg.StatBonus
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("ArmorRegistryLoader")
@@ -32,10 +33,20 @@ data class WearableSlots(
     fun overlaps(other: WearableSlots): Boolean = toSet().intersect(other.toSet()).isNotEmpty()
 }
 
-@Serializable private data class ArmorYamlEntry(val wearable: WearableSlots = WearableSlots())
+@Serializable
+data class ArmorDefinition(
+    val wearable: WearableSlots = WearableSlots(),
+    val statBonus: StatBonus = StatBonus(),
+)
+
+@Serializable
+private data class ArmorYamlEntry(
+    val wearable: WearableSlots = WearableSlots(),
+    val statBonus: StatBonus = StatBonus(),
+)
 
 class ArmorRegistryLoader(private val armorsPath: Path) {
-    fun load(): Map<String, WearableSlots> {
+    fun load(): Map<String, ArmorDefinition> {
         if (!armorsPath.exists()) return emptyMap()
         val result =
             armorsPath
@@ -49,7 +60,9 @@ class ArmorRegistryLoader(private val armorsPath: Path) {
                             val entry =
                                 Yaml.default.decodeFromString(
                                     ArmorYamlEntry.serializer(), yaml.readText())
-                            name to entry.wearable
+                            name to
+                                ArmorDefinition(
+                                    wearable = entry.wearable, statBonus = entry.statBonus)
                         }
                         .onFailure { log.warn("Failed to load armor '{}': {}", name, it.message) }
                         .getOrNull()

@@ -19,7 +19,11 @@ class CharacterCommand : CommandHandler {
                 ServerMessage.Notification(context.i18n.t(lang, "rpg:server:no_character")))
             return
         }
-        val derived = DerivedStatsCalculator.compute(char)
-        session.send(ServerMessage.CharacterSync(char, derived))
+        val bonuses = session.state.armors.mapNotNull { context.armorRegistry()[it]?.statBonus }
+        session.send(
+            ServerMessage.CharacterSync(
+                char,
+                DerivedStatsCalculator.compute(char, bonuses),
+                DerivedStatsCalculator.effectiveBaseStats(char, bonuses)))
     }
 }

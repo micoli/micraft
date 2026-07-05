@@ -3,8 +3,10 @@ package org.micoli.micraft.command
 import java.util.UUID
 import org.micoli.micraft.CommandContext
 import org.micoli.micraft.CommandHandler
+import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessage.Notification
 import org.micoli.micraft.protocol.ServerMessage.PlayerUpdate
+import org.micoli.micraft.rpg.character.DerivedStatsCalculator
 import org.micoli.micraft.session.PlayerSession
 
 class EquipCommand : CommandHandler {
@@ -35,8 +37,8 @@ class EquipCommand : CommandHandler {
             return
         }
 
-        val slots = context.armorRegistry()[name]
-        if (slots == null) {
+        val armorDef = context.armorRegistry()[name]
+        if (armorDef == null) {
             val available = context.armorRegistry().keys.sorted().joinToString(", ")
             session.send(Notification(i18n.t(lang, "equip:server:unknown", name, available)))
             return
@@ -49,7 +51,7 @@ class EquipCommand : CommandHandler {
 
         val conflict =
             session.state.armors.firstOrNull { worn ->
-                context.armorRegistry()[worn]?.overlaps(slots) == true
+                context.armorRegistry()[worn]?.wearable?.overlaps(armorDef.wearable) == true
             }
         if (conflict != null) {
             session.send(Notification(i18n.t(lang, "equip:server:overlap", name, conflict)))
@@ -58,6 +60,15 @@ class EquipCommand : CommandHandler {
 
         session.state = session.state.copy(armors = session.state.armors + name)
         context.broadcast(PlayerUpdate(session.state))
+        context.savePlayer(session)
+        session.characterData?.let { char ->
+            val bonuses = session.state.armors.mapNotNull { context.armorRegistry()[it]?.statBonus }
+            session.send(
+                ServerMessage.CharacterSync(
+                    char,
+                    DerivedStatsCalculator.compute(char, bonuses),
+                    DerivedStatsCalculator.effectiveBaseStats(char, bonuses)))
+        }
         session.send(Notification(i18n.t(lang, "equip:server:equipped", name)))
     }
 }
@@ -98,6 +109,15 @@ class UnequipCommand : CommandHandler {
 
         session.state = session.state.copy(armors = session.state.armors - name)
         context.broadcast(PlayerUpdate(session.state))
+        context.savePlayer(session)
+        session.characterData?.let { char ->
+            val bonuses = session.state.armors.mapNotNull { context.armorRegistry()[it]?.statBonus }
+            session.send(
+                ServerMessage.CharacterSync(
+                    char,
+                    DerivedStatsCalculator.compute(char, bonuses),
+                    DerivedStatsCalculator.effectiveBaseStats(char, bonuses)))
+        }
         session.send(Notification(i18n.t(lang, "unequip:server:unequipped", name)))
     }
 }

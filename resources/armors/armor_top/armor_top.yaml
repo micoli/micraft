@@ -5,3 +5,6 @@ wearable:
   leftArm: true
   rightLeg: false
   leftLeg: false
+statBonus:
+  str: 2
+  con: 1

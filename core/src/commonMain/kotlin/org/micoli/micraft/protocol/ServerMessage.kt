@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.player.rpg.DerivedStats
 import org.micoli.micraft.ui.GameLayout
@@ -180,6 +181,7 @@ sealed class ServerMessage {
     data class CharacterSync(
         val character: CharacterData,
         val derived: DerivedStats,
+        val effectiveBaseStats: BaseStats,
     ) : ServerMessage()
 }
 

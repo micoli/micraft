@@ -108,6 +108,7 @@ export interface CharacterData {
 export interface CharacterSyncData {
   character: CharacterData;
   derived: DerivedStats;
+  effectiveBaseStats: BaseStats;
 }
 
 export interface PreferencesData {

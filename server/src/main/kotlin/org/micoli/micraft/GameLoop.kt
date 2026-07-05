@@ -41,6 +41,7 @@ import org.micoli.micraft.tick.VegetationManager
 import org.micoli.micraft.trade.TradeConfigLoader
 import org.micoli.micraft.trade.TradeManager
 import org.micoli.micraft.ui.validateLayouts
+import org.micoli.micraft.world.ArmorDefinition
 import org.micoli.micraft.world.ArmorRegistryLoader
 import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.ChatChannelManager
@@ -54,7 +55,6 @@ import org.micoli.micraft.world.NpcRegistryLoader
 import org.micoli.micraft.world.RecipeRegistry
 import org.micoli.micraft.world.RecipeRegistryLoader
 import org.micoli.micraft.world.VegetationConfig
-import org.micoli.micraft.world.WearableSlots
 import org.micoli.micraft.world.WeatherConfig
 import org.micoli.micraft.world.WeatherManager
 import org.micoli.micraft.world.WorldConstants
@@ -190,7 +190,7 @@ class GameLoop(
     private val recipeRegistryLoader = RecipeRegistryLoader(Path.of("data/config/recipes.yaml"))
 
     private val armorRegistryLoader = ArmorRegistryLoader(Path.of("resources/armors"))
-    private var armorRegistry: Map<String, WearableSlots> = emptyMap()
+    private var armorRegistry: Map<String, ArmorDefinition> = emptyMap()
     private val npcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml"))
     private val npcRegistryLoader =
         NpcRegistryLoader(
@@ -721,7 +721,13 @@ class GameLoop(
         val charData = session.characterData
         if (charData != null) {
             session.send(
-                ServerMessage.CharacterSync(charData, DerivedStatsCalculator.compute(charData)))
+                ServerMessage.CharacterSync(
+                    charData,
+                    DerivedStatsCalculator.compute(
+                        charData, session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }),
+                    DerivedStatsCalculator.effectiveBaseStats(
+                        charData,
+                        session.state.armors.mapNotNull { armorRegistry[it]?.statBonus })))
         } else if (!session.state.rpgOptOut) {
             session.send(ServerMessage.CharacterCreationRequired)
         }

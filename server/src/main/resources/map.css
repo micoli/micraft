@@ -398,6 +398,9 @@
   .ml-0\.5 {
     margin-left: calc(var(--spacing) * 0.5);
   }
+  .ml-1 {
+    margin-left: var(--spacing);
+  }
   .ml-1\.5 {
     margin-left: calc(var(--spacing) * 1.5);
   }

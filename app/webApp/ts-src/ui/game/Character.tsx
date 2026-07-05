@@ -15,6 +15,20 @@ interface ArmorSlots {
   leftLeg: boolean;
 }
 
+interface ArmorStatBonus {
+  str?: number;
+  dex?: number;
+  intel?: number;
+  wis?: number;
+  con?: number;
+  cha?: number;
+}
+
+interface ArmorDefinition {
+  wearable: ArmorSlots;
+  statBonus: ArmorStatBonus;
+}
+
 const SLOT_LABELS: { key: keyof ArmorSlots; label: string }[] = [
   { key: "head", label: "HEAD" },
   { key: "body", label: "BODY" },
@@ -33,15 +47,35 @@ function StatRow({ label, value }: { label: string; value: string | number }) {
   );
 }
 
+const CLASS_LABELS: Record<string, string> = {
+  WARRIOR: "Warrior",
+  MAGE: "Mage",
+  RANGER: "Ranger",
+  ROGUE: "Rogue",
+  CLERIC: "Cleric",
+};
+
+function BaseStatRow({ label, base, effective }: { label: string; base: number; effective: number }) {
+  const bonus = effective - base;
+  return (
+    <div className="flex justify-between items-center py-1 border-b border-white/5">
+      <span className="text-white/50 text-xs">{label}</span>
+      <span className="text-xs font-mono">
+        <span className="text-white/60">{base}</span>
+        {bonus !== 0 && (
+          <span className={cn("ml-1", bonus > 0 ? "text-green-400" : "text-red-400")}>
+            {bonus > 0 ? `+${bonus}` : `${bonus}`}
+          </span>
+        )}
+        {bonus !== 0 && <span className="text-white ml-1">= {effective}</span>}
+        {bonus === 0 && <span className="text-white ml-1">{base}</span>}
+      </span>
+    </div>
+  );
+}
+
 function CharacterStatsPanel({ data }: { data: CharacterSyncData }) {
-  const { character: c, derived: d } = data;
-  const CLASS_LABELS: Record<string, string> = {
-    WARRIOR: "Warrior",
-    MAGE: "Mage",
-    RANGER: "Ranger",
-    ROGUE: "Rogue",
-    CLERIC: "Cleric",
-  };
+  const { character: c, derived: d, effectiveBaseStats: e } = data;
   return (
     <div className="flex gap-6">
       <div className="flex-1">
@@ -54,12 +88,12 @@ function CharacterStatsPanel({ data }: { data: CharacterSyncData }) {
         <StatRow label="Mana" value={`${c.currentMana} / ${d.maxMana}`} />
 
         <div className="text-blue-300 text-xs font-mono mt-5 mb-3 tracking-widest">BASE STATS</div>
-        <StatRow label="STR" value={c.baseStats.str} />
-        <StatRow label="DEX" value={c.baseStats.dex} />
-        <StatRow label="INT" value={c.baseStats.intel} />
-        <StatRow label="WIS" value={c.baseStats.wis} />
-        <StatRow label="CON" value={c.baseStats.con} />
-        <StatRow label="CHA" value={c.baseStats.cha} />
+        <BaseStatRow label="STR" base={c.baseStats.str} effective={e.str} />
+        <BaseStatRow label="DEX" base={c.baseStats.dex} effective={e.dex} />
+        <BaseStatRow label="INT" base={c.baseStats.intel} effective={e.intel} />
+        <BaseStatRow label="WIS" base={c.baseStats.wis} effective={e.wis} />
+        <BaseStatRow label="CON" base={c.baseStats.con} effective={e.con} />
+        <BaseStatRow label="CHA" base={c.baseStats.cha} effective={e.cha} />
       </div>
       <div className="flex-1">
         <div className="text-blue-300 text-xs font-mono mb-3 tracking-widest">COMBAT</div>
@@ -92,6 +126,20 @@ function slotsOverlap(a: ArmorSlots | undefined, b: ArmorSlots | undefined): boo
   );
 }
 
+function formatBonus(v: number): string {
+  return v === 0 ? "" : v > 0 ? `+${v}` : `${v}`;
+}
+
+function ArmorBonusLine({ bonus }: { bonus: ArmorStatBonus | undefined }) {
+  if (!bonus) return null;
+  const parts = (["str", "dex", "intel", "wis", "con", "cha"] as const)
+    .map((k) => ({ k, v: bonus[k] ?? 0 }))
+    .filter(({ v }) => v !== 0)
+    .map(({ k, v }) => `${k.toUpperCase()} ${formatBonus(v)}`);
+  if (parts.length === 0) return null;
+  return <span className="text-green-400 text-xs ml-1">{parts.join("  ")}</span>;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -100,7 +148,7 @@ interface Props {
 }
 
 export function Character({ open, onClose, onCommand, characterSyncData }: Props) {
-  const [available, setAvailable] = useState<Record<string, ArmorSlots>>({});
+  const [available, setAvailable] = useState<Record<string, ArmorDefinition>>({});
   const [equipped, setEquipped] = useState<string[]>([]);
   const [skin, setSkin] = useState("player");
   const [walking, setWalking] = useState(true);
@@ -119,7 +167,7 @@ export function Character({ open, onClose, onCommand, characterSyncData }: Props
         .then((r) => r.json())
         .catch(() => ({ skin: "player" })),
     ]).then(([armors, equippedArmors, skinData]) => {
-      setAvailable(armors as Record<string, ArmorSlots>);
+      setAvailable(armors as Record<string, ArmorDefinition>);
       setEquipped(Array.isArray(equippedArmors) ? equippedArmors : []);
       setSkin((skinData as { skin: string }).skin ?? "player");
     });
@@ -130,8 +178,8 @@ export function Character({ open, onClose, onCommand, characterSyncData }: Props
       onCommand(`/unequip ${name}`);
       setEquipped((prev) => prev.filter((a) => a !== name));
     } else {
-      const slots = available[name];
-      const conflicting = equipped.filter((a) => slotsOverlap(available[a], slots));
+      const slots = available[name]?.wearable;
+      const conflicting = equipped.filter((a) => slotsOverlap(available[a]?.wearable, slots));
       conflicting.forEach((c) => onCommand(`/unequip ${c}`));
       onCommand(`/equip ${name}`);
       setEquipped((prev) => prev.filter((a) => !conflicting.includes(a)).concat(name));
@@ -169,7 +217,7 @@ export function Character({ open, onClose, onCommand, characterSyncData }: Props
               <div className="flex-1 min-w-[240px]">
                 {sortedArmors.length === 0 && <div className="text-white/30 text-xs">No armor available.</div>}
                 {sortedArmors.map((name) => {
-                  const slots = available[name];
+                  const armorDef = available[name];
                   const isEquipped = equipped.includes(name);
                   return (
                     <div
@@ -182,9 +230,10 @@ export function Character({ open, onClose, onCommand, characterSyncData }: Props
                       <div className="flex-1">
                         <div className={cn("text-xs mb-1.5", isEquipped ? "text-green-400" : "text-white/80")}>
                           {name}
+                          {armorDef && <ArmorBonusLine bonus={armorDef.statBonus} />}
                         </div>
                         <div className="flex gap-1 flex-wrap">
-                          {SLOT_LABELS.filter((s) => slots[s.key]).map((s) => (
+                          {SLOT_LABELS.filter((s) => armorDef?.wearable[s.key]).map((s) => (
                             <span
                               key={s.key}
                               className="text-[9px] px-1 py-px bg-blue-950/60 border border-blue-700/40 rounded-sm text-blue-300"
