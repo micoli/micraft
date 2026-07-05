@@ -19,5 +19,6 @@ kotlin {
             api(libs.kotlinx.coroutinesCore)
         }
         commonTest.dependencies { implementation(libs.kotlin.test) }
+        val jvmTest by getting { dependencies { implementation(kotlin("reflect")) } }
     }
 }

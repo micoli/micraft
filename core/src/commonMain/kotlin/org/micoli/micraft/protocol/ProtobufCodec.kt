@@ -2,213 +2,144 @@
 
 package org.micoli.micraft.protocol
 
+import kotlin.reflect.KClass
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class ProtoId(val id: Int)
+
+private val proto = ProtoBuf
+
+internal data class CodecEntry<T>(
+    val klass: KClass<out Any>,
+    val matches: (T) -> Boolean,
+    val encode: (T) -> ByteArray,
+    val decode: (ByteArray) -> T,
+)
+
+@Suppress("UNCHECKED_CAST")
+private inline fun <reified T : ServerMessage> serverEntry() =
+    CodecEntry<ServerMessage>(
+        klass = T::class,
+        matches = { it is T },
+        encode = { proto.encodeToByteArray(it as T) },
+        decode = { proto.decodeFromByteArray<T>(it) },
+    )
+
+private fun serverSingleton(instance: ServerMessage) =
+    CodecEntry<ServerMessage>(
+        klass = instance::class,
+        matches = { it === instance },
+        encode = { ByteArray(0) },
+        decode = { instance },
+    )
+
+@Suppress("UNCHECKED_CAST")
+private inline fun <reified T : ClientMessage> clientEntry() =
+    CodecEntry<ClientMessage>(
+        klass = T::class,
+        matches = { it is T },
+        encode = { proto.encodeToByteArray(it as T) },
+        decode = { proto.decodeFromByteArray<T>(it) },
+    )
+
+private fun clientSingleton(instance: ClientMessage) =
+    CodecEntry<ClientMessage>(
+        klass = instance::class,
+        matches = { it === instance },
+        encode = { ByteArray(0) },
+        decode = { instance },
+    )
+
+private fun <T> encodeWith(registry: List<CodecEntry<T>>, msg: T): ByteArray {
+    val idx = registry.indexOfFirst { it.matches(msg) }
+    if (idx == -1) throw IllegalArgumentException("Unknown message type: ${msg!!::class}")
+    return byteArrayOf(idx.toByte()) + registry[idx].encode(msg)
+}
+
+private fun <T> decodeWith(registry: List<CodecEntry<T>>, data: ByteArray): T {
+    val idx = data[0].toInt()
+    return registry.getOrNull(idx)?.decode(data.copyOfRange(1, data.size))
+        ?: throw IllegalArgumentException("Unknown message type id: $idx")
+}
+
 object ServerMessageCodec {
-    private val proto = ProtoBuf
+    internal val registry: List<CodecEntry<ServerMessage>> =
+        listOf(
+            serverEntry<ServerMessage.Welcome>(), // 0
+            serverEntry<ServerMessage.ShadersUpdate>(), // 1
+            serverEntry<ServerMessage.ChunkData>(), // 2
+            serverEntry<ServerMessage.PlayerUpdate>(), // 3
+            serverEntry<ServerMessage.WorldUpdate>(), // 4
+            serverEntry<ServerMessage.PlayerLeft>(), // 5
+            serverEntry<ServerMessage.BlockBreakProgress>(), // 6
+            serverEntry<ServerMessage.Notification>(), // 7
+            serverEntry<ServerMessage.ChatMessage>(), // 8
+            serverEntry<ServerMessage.ChannelsSync>(), // 9
+            serverEntry<ServerMessage.ItemsSpawned>(), // 10
+            serverEntry<ServerMessage.ItemDespawned>(), // 11
+            serverEntry<ServerMessage.InventoryUpdate>(), // 12
+            serverEntry<ServerMessage.TimeUpdate>(), // 13
+            serverEntry<ServerMessage.ShortcutBarUpdate>(), // 14
+            serverEntry<ServerMessage.LayoutsSync>(), // 15
+            serverSingleton(ServerMessage.OpenLayoutEditor), // 16
+            serverSingleton(ServerMessage.OpenPreferences), // 17
+            serverSingleton(ServerMessage.OpenCodex), // 18
+            serverEntry<ServerMessage.RegistrySync>(), // 19
+            serverEntry<ServerMessage.NpcSpawned>(), // 20
+            serverEntry<ServerMessage.NpcDespawned>(), // 21
+            serverEntry<ServerMessage.NpcUpdate>(), // 22
+            serverEntry<ServerMessage.NpcInteractResult>(), // 23
+            serverEntry<ServerMessage.PreferencesSync>(), // 24
+            serverEntry<ServerMessage.WeatherUpdate>(), // 25
+            serverEntry<ServerMessage.GameConfigSync>(), // 26
+            serverSingleton(ServerMessage.ToggleBiomeMap), // 27
+            serverSingleton(ServerMessage.OpenCraft), // 28
+            serverEntry<ServerMessage.RecipeSync>(), // 29
+            serverEntry<ServerMessage.OpenTrade>(), // 30
+            serverEntry<ServerMessage.TradeUpdate>(), // 31
+            serverEntry<ServerMessage.TradeClosed>(), // 32
+            serverSingleton(ServerMessage.CharacterCreationRequired), // 33
+            serverEntry<ServerMessage.CharacterSync>(), // 34
+            serverEntry<ServerMessage.CombatTargetUpdate>(), // 35
+            serverEntry<ServerMessage.HealthUpdate>(), // 36
+            serverEntry<ServerMessage.PlayerStatusUpdate>(), // 37
+            serverEntry<ServerMessage.StatusEffectUpdate>(), // 38
+            serverEntry<ServerMessage.PlayerDowned>(), // 39
+            serverEntry<ServerMessage.PlayerRespawned>(), // 40
+        )
 
-    private enum class Id(val b: Byte) {
-        WELCOME(0),
-        SHADERS_UPDATE(1),
-        CHUNK_DATA(2),
-        PLAYER_UPDATE(3),
-        WORLD_UPDATE(4),
-        PLAYER_LEFT(5),
-        BLOCK_BREAK_PROGRESS(6),
-        NOTIFICATION(7),
-        CHAT_MESSAGE(8),
-        CHANNELS_SYNC(9),
-        ITEMS_SPAWNED(10),
-        ITEM_DESPAWNED(11),
-        INVENTORY_UPDATE(12),
-        TIME_UPDATE(13),
-        SHORTCUT_BAR_UPDATE(14),
-        LAYOUTS_SYNC(15),
-        OPEN_LAYOUT_EDITOR(16),
-        OPEN_PREFERENCES(17),
-        OPEN_CODEX(18),
-        REGISTRY_SYNC(19),
-        NPC_SPAWNED(20),
-        NPC_DESPAWNED(21),
-        NPC_UPDATE(22),
-        NPC_INTERACT_RESULT(23),
-        PREFERENCES_SYNC(24),
-        WEATHER_UPDATE(25),
-        GAME_CONFIG_SYNC(26),
-        TOGGLE_INGAME_MAP(27),
-        OPEN_CRAFT(28),
-        RECIPE_SYNC(29),
-        OPEN_TRADE(30),
-        TRADE_UPDATE(31),
-        TRADE_CLOSED(32),
-        CHARACTER_CREATION_REQUIRED(33),
-        CHARACTER_SYNC(34),
-        COMBAT_TARGET_UPDATE(35),
-        HEALTH_UPDATE(36),
-        PLAYER_STATUS_UPDATE(37),
-        STATUS_EFFECT_UPDATE(38),
-        PLAYER_DOWNED(39),
-        PLAYER_RESPAWNED(40),
-    }
+    fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)
 
-    fun encode(msg: ServerMessage): ByteArray {
-        val (id, payload) =
-            when (msg) {
-                is ServerMessage.Welcome -> Id.WELCOME to proto.encodeToByteArray(msg)
-                is ServerMessage.ShadersUpdate -> Id.SHADERS_UPDATE to proto.encodeToByteArray(msg)
-                is ServerMessage.ChunkData -> Id.CHUNK_DATA to proto.encodeToByteArray(msg)
-                is ServerMessage.PlayerUpdate -> Id.PLAYER_UPDATE to proto.encodeToByteArray(msg)
-                is ServerMessage.WorldUpdate -> Id.WORLD_UPDATE to proto.encodeToByteArray(msg)
-                is ServerMessage.PlayerLeft -> Id.PLAYER_LEFT to proto.encodeToByteArray(msg)
-                is ServerMessage.BlockBreakProgress ->
-                    Id.BLOCK_BREAK_PROGRESS to proto.encodeToByteArray(msg)
-                is ServerMessage.Notification -> Id.NOTIFICATION to proto.encodeToByteArray(msg)
-                is ServerMessage.ChatMessage -> Id.CHAT_MESSAGE to proto.encodeToByteArray(msg)
-                is ServerMessage.ChannelsSync -> Id.CHANNELS_SYNC to proto.encodeToByteArray(msg)
-                is ServerMessage.ItemsSpawned -> Id.ITEMS_SPAWNED to proto.encodeToByteArray(msg)
-                is ServerMessage.ItemDespawned -> Id.ITEM_DESPAWNED to proto.encodeToByteArray(msg)
-                is ServerMessage.InventoryUpdate ->
-                    Id.INVENTORY_UPDATE to proto.encodeToByteArray(msg)
-                is ServerMessage.TimeUpdate -> Id.TIME_UPDATE to proto.encodeToByteArray(msg)
-                is ServerMessage.ShortcutBarUpdate ->
-                    Id.SHORTCUT_BAR_UPDATE to proto.encodeToByteArray(msg)
-                is ServerMessage.LayoutsSync -> Id.LAYOUTS_SYNC to proto.encodeToByteArray(msg)
-                ServerMessage.OpenLayoutEditor -> Id.OPEN_LAYOUT_EDITOR to ByteArray(0)
-                ServerMessage.OpenPreferences -> Id.OPEN_PREFERENCES to ByteArray(0)
-                ServerMessage.OpenCodex -> Id.OPEN_CODEX to ByteArray(0)
-                ServerMessage.ToggleBiomeMap -> Id.TOGGLE_INGAME_MAP to ByteArray(0)
-                is ServerMessage.RegistrySync -> Id.REGISTRY_SYNC to proto.encodeToByteArray(msg)
-                is ServerMessage.NpcSpawned -> Id.NPC_SPAWNED to proto.encodeToByteArray(msg)
-                is ServerMessage.NpcDespawned -> Id.NPC_DESPAWNED to proto.encodeToByteArray(msg)
-                is ServerMessage.NpcUpdate -> Id.NPC_UPDATE to proto.encodeToByteArray(msg)
-                is ServerMessage.NpcInteractResult ->
-                    Id.NPC_INTERACT_RESULT to proto.encodeToByteArray(msg)
-                is ServerMessage.PreferencesSync ->
-                    Id.PREFERENCES_SYNC to proto.encodeToByteArray(msg)
-                is ServerMessage.WeatherUpdate -> Id.WEATHER_UPDATE to proto.encodeToByteArray(msg)
-                is ServerMessage.GameConfigSync ->
-                    Id.GAME_CONFIG_SYNC to proto.encodeToByteArray(msg)
-                ServerMessage.OpenCraft -> Id.OPEN_CRAFT to ByteArray(0)
-                is ServerMessage.RecipeSync -> Id.RECIPE_SYNC to proto.encodeToByteArray(msg)
-                is ServerMessage.OpenTrade -> Id.OPEN_TRADE to proto.encodeToByteArray(msg)
-                is ServerMessage.TradeUpdate -> Id.TRADE_UPDATE to proto.encodeToByteArray(msg)
-                is ServerMessage.TradeClosed -> Id.TRADE_CLOSED to proto.encodeToByteArray(msg)
-                ServerMessage.CharacterCreationRequired ->
-                    Id.CHARACTER_CREATION_REQUIRED to ByteArray(0)
-                is ServerMessage.CharacterSync -> Id.CHARACTER_SYNC to proto.encodeToByteArray(msg)
-                is ServerMessage.CombatTargetUpdate ->
-                    Id.COMBAT_TARGET_UPDATE to proto.encodeToByteArray(msg)
-                is ServerMessage.HealthUpdate -> Id.HEALTH_UPDATE to proto.encodeToByteArray(msg)
-                is ServerMessage.PlayerStatusUpdate ->
-                    Id.PLAYER_STATUS_UPDATE to proto.encodeToByteArray(msg)
-                is ServerMessage.StatusEffectUpdate ->
-                    Id.STATUS_EFFECT_UPDATE to proto.encodeToByteArray(msg)
-                is ServerMessage.PlayerDowned -> Id.PLAYER_DOWNED to proto.encodeToByteArray(msg)
-                is ServerMessage.PlayerRespawned ->
-                    Id.PLAYER_RESPAWNED to proto.encodeToByteArray(msg)
-            }
-        return byteArrayOf(id.b) + payload
-    }
-
-    fun decode(data: ByteArray): ServerMessage {
-        val payload = data.copyOfRange(1, data.size)
-        return when (data[0].toInt()) {
-            0 -> proto.decodeFromByteArray<ServerMessage.Welcome>(payload)
-            1 -> proto.decodeFromByteArray<ServerMessage.ShadersUpdate>(payload)
-            2 -> proto.decodeFromByteArray<ServerMessage.ChunkData>(payload)
-            3 -> proto.decodeFromByteArray<ServerMessage.PlayerUpdate>(payload)
-            4 -> proto.decodeFromByteArray<ServerMessage.WorldUpdate>(payload)
-            5 -> proto.decodeFromByteArray<ServerMessage.PlayerLeft>(payload)
-            6 -> proto.decodeFromByteArray<ServerMessage.BlockBreakProgress>(payload)
-            7 -> proto.decodeFromByteArray<ServerMessage.Notification>(payload)
-            8 -> proto.decodeFromByteArray<ServerMessage.ChatMessage>(payload)
-            9 -> proto.decodeFromByteArray<ServerMessage.ChannelsSync>(payload)
-            10 -> proto.decodeFromByteArray<ServerMessage.ItemsSpawned>(payload)
-            11 -> proto.decodeFromByteArray<ServerMessage.ItemDespawned>(payload)
-            12 -> proto.decodeFromByteArray<ServerMessage.InventoryUpdate>(payload)
-            13 -> proto.decodeFromByteArray<ServerMessage.TimeUpdate>(payload)
-            14 -> proto.decodeFromByteArray<ServerMessage.ShortcutBarUpdate>(payload)
-            15 -> proto.decodeFromByteArray<ServerMessage.LayoutsSync>(payload)
-            16 -> ServerMessage.OpenLayoutEditor
-            17 -> ServerMessage.OpenPreferences
-            18 -> ServerMessage.OpenCodex
-            19 -> proto.decodeFromByteArray<ServerMessage.RegistrySync>(payload)
-            20 -> proto.decodeFromByteArray<ServerMessage.NpcSpawned>(payload)
-            21 -> proto.decodeFromByteArray<ServerMessage.NpcDespawned>(payload)
-            22 -> proto.decodeFromByteArray<ServerMessage.NpcUpdate>(payload)
-            23 -> proto.decodeFromByteArray<ServerMessage.NpcInteractResult>(payload)
-            24 -> proto.decodeFromByteArray<ServerMessage.PreferencesSync>(payload)
-            25 -> proto.decodeFromByteArray<ServerMessage.WeatherUpdate>(payload)
-            26 -> proto.decodeFromByteArray<ServerMessage.GameConfigSync>(payload)
-            27 -> ServerMessage.ToggleBiomeMap
-            28 -> ServerMessage.OpenCraft
-            29 -> proto.decodeFromByteArray<ServerMessage.RecipeSync>(payload)
-            30 -> proto.decodeFromByteArray<ServerMessage.OpenTrade>(payload)
-            31 -> proto.decodeFromByteArray<ServerMessage.TradeUpdate>(payload)
-            32 -> proto.decodeFromByteArray<ServerMessage.TradeClosed>(payload)
-            33 -> ServerMessage.CharacterCreationRequired
-            34 -> proto.decodeFromByteArray<ServerMessage.CharacterSync>(payload)
-            35 -> proto.decodeFromByteArray<ServerMessage.CombatTargetUpdate>(payload)
-            36 -> proto.decodeFromByteArray<ServerMessage.HealthUpdate>(payload)
-            37 -> proto.decodeFromByteArray<ServerMessage.PlayerStatusUpdate>(payload)
-            38 -> proto.decodeFromByteArray<ServerMessage.StatusEffectUpdate>(payload)
-            39 -> proto.decodeFromByteArray<ServerMessage.PlayerDowned>(payload)
-            40 -> proto.decodeFromByteArray<ServerMessage.PlayerRespawned>(payload)
-            else -> throw IllegalArgumentException("Unknown ServerMessage type id: ${data[0]}")
-        }
-    }
+    fun decode(data: ByteArray): ServerMessage = decodeWith(registry, data)
 }
 
 object ClientMessageCodec {
-    private val proto = ProtoBuf
+    internal val registry: List<CodecEntry<ClientMessage>> =
+        listOf(
+            clientEntry<ClientMessage.Connect>(), // 0
+            clientEntry<ClientMessage.MoveIntent>(), // 1
+            clientEntry<ClientMessage.ChunkUnload>(), // 2
+            clientEntry<ClientMessage.BlockBreakStart>(), // 3
+            clientSingleton(ClientMessage.BlockBreakStop), // 4
+            clientEntry<ClientMessage.Command>(), // 5
+            clientEntry<ClientMessage.BlockPlace>(), // 6
+            clientEntry<ClientMessage.ShortcutBarSet>(), // 7
+            clientEntry<ClientMessage.LayoutUpdate>(), // 8
+            clientEntry<ClientMessage.Disconnect>(), // 9
+            clientEntry<ClientMessage.NpcInteract>(), // 10
+            clientEntry<ClientMessage.ChatSend>(), // 11
+            clientEntry<ClientMessage.PreferencesUpdate>(), // 12
+            clientEntry<ClientMessage.ViewModeUpdate>(), // 13
+            clientEntry<ClientMessage.DoCraft>(), // 14
+            clientEntry<ClientMessage.SetCombatTarget>(), // 15
+            clientEntry<ClientMessage.AttackTarget>(), // 16
+        )
 
-    fun encode(msg: ClientMessage): ByteArray {
-        val (id, payload) =
-            when (msg) {
-                is ClientMessage.Connect -> 0.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.MoveIntent -> 1.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.ChunkUnload -> 2.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.BlockBreakStart -> 3.toByte() to proto.encodeToByteArray(msg)
-                ClientMessage.BlockBreakStop -> 4.toByte() to ByteArray(0)
-                is ClientMessage.Command -> 5.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.BlockPlace -> 6.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.ShortcutBarSet -> 7.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.LayoutUpdate -> 8.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.Disconnect -> 9.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.NpcInteract -> 10.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.ChatSend -> 11.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.PreferencesUpdate -> 12.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.ViewModeUpdate -> 13.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.DoCraft -> 14.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.SetCombatTarget -> 15.toByte() to proto.encodeToByteArray(msg)
-                is ClientMessage.AttackTarget -> 16.toByte() to proto.encodeToByteArray(msg)
-            }
-        return byteArrayOf(id) + payload
-    }
+    fun encode(msg: ClientMessage): ByteArray = encodeWith(registry, msg)
 
-    fun decode(data: ByteArray): ClientMessage {
-        val payload = data.copyOfRange(1, data.size)
-        return when (data[0].toInt()) {
-            0 -> proto.decodeFromByteArray<ClientMessage.Connect>(payload)
-            1 -> proto.decodeFromByteArray<ClientMessage.MoveIntent>(payload)
-            2 -> proto.decodeFromByteArray<ClientMessage.ChunkUnload>(payload)
-            3 -> proto.decodeFromByteArray<ClientMessage.BlockBreakStart>(payload)
-            4 -> ClientMessage.BlockBreakStop
-            5 -> proto.decodeFromByteArray<ClientMessage.Command>(payload)
-            6 -> proto.decodeFromByteArray<ClientMessage.BlockPlace>(payload)
-            7 -> proto.decodeFromByteArray<ClientMessage.ShortcutBarSet>(payload)
-            8 -> proto.decodeFromByteArray<ClientMessage.LayoutUpdate>(payload)
-            9 -> proto.decodeFromByteArray<ClientMessage.Disconnect>(payload)
-            10 -> proto.decodeFromByteArray<ClientMessage.NpcInteract>(payload)
-            11 -> proto.decodeFromByteArray<ClientMessage.ChatSend>(payload)
-            12 -> proto.decodeFromByteArray<ClientMessage.PreferencesUpdate>(payload)
-            13 -> proto.decodeFromByteArray<ClientMessage.ViewModeUpdate>(payload)
-            14 -> proto.decodeFromByteArray<ClientMessage.DoCraft>(payload)
-            15 -> proto.decodeFromByteArray<ClientMessage.SetCombatTarget>(payload)
-            16 -> proto.decodeFromByteArray<ClientMessage.AttackTarget>(payload)
-            else -> throw IllegalArgumentException("Unknown ClientMessage type id: ${data[0]}")
-        }
-    }
+    fun decode(data: ByteArray): ClientMessage = decodeWith(registry, data)
 }
