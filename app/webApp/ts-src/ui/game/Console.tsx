@@ -48,7 +48,10 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
       style={layoutStyle && Object.keys(layoutStyle).length > 0 ? { ...layoutStyle, height: undefined } : undefined}
     >
       {suggestions.length > 0 && (
-        <div ref={listRef} className="absolute bottom-full left-0 right-0 bg-black/85 rounded-t border-b border-white/15 max-h-[40vh] overflow-y-auto">
+        <div
+          ref={listRef}
+          className="absolute bottom-full left-0 right-0 bg-black/85 rounded-t border-b border-white/15 max-h-[40vh] overflow-y-auto"
+        >
           {suggestions.map((s, i) => (
             <div
               key={s}

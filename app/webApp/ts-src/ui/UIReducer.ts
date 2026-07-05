@@ -9,6 +9,9 @@ import {
   RecipeDefinition,
 } from "./types";
 
+export type ShortcutSlot = { kind: "item"; id: string } | { kind: "attack"; id: string };
+export type AttackMeta = { damageType: string; manaCost: number; rageCost: number; cooldownMs: number };
+
 export interface UiState {
   hud: HudData | null;
   hudMode: HudMode;
@@ -22,8 +25,9 @@ export interface UiState {
   unreadChannels: string[];
   inventory: Record<string, number>;
   itemMeta: Record<string, { label: string; bg: string }>;
+  attackMeta: Record<string, AttackMeta>;
   hotbarVisible: boolean;
-  shortcutBar: (string | null)[];
+  shortcutBar: (ShortcutSlot | null)[];
   selectedSlot: number;
   consoleOpen: boolean;
   loginVisible: boolean;
@@ -82,8 +86,9 @@ export type UiAction =
   | { type: "active_channel_select"; channel: string }
   | { type: "inventory"; data: Record<string, number> }
   | { type: "item_meta_loaded"; data: Record<string, { label: string; bg: string }> }
+  | { type: "attack_meta_loaded"; data: Record<string, AttackMeta> }
   | { type: "hotbar_toggle" }
-  | { type: "shortcut_bar_update"; data: { slots: (string | null)[]; selected: number } }
+  | { type: "shortcut_bar_update"; data: { slots: (ShortcutSlot | null)[]; selected: number } }
   | { type: "slot_select"; slot: number }
   | { type: "console_show" }
   | { type: "console_hide" }
@@ -199,6 +204,8 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, inventory: action.data };
     case "item_meta_loaded":
       return { ...state, itemMeta: action.data };
+    case "attack_meta_loaded":
+      return { ...state, attackMeta: action.data };
     case "hotbar_toggle":
       return { ...state, hotbarVisible: !state.hotbarVisible };
     case "shortcut_bar_update":

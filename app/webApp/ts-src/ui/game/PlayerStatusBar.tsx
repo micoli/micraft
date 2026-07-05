@@ -48,12 +48,8 @@ export function PlayerStatusBar({ status, layoutStyle }: Props) {
       style={{ ...layoutStyle, userSelect: "none" }}
     >
       <Bar value={status.currentHp} max={status.maxHp} color="#c0392b" label="HP" />
-      {status.maxMana > 0 && (
-        <Bar value={status.currentMana} max={status.maxMana} color="#2980b9" label="MP" />
-      )}
-      {status.maxRage > 0 && (
-        <Bar value={status.currentRage} max={status.maxRage} color="#e67e22" label="RP" />
-      )}
+      {status.maxMana > 0 && <Bar value={status.currentMana} max={status.maxMana} color="#2980b9" label="MP" />}
+      {status.maxRage > 0 && <Bar value={status.currentRage} max={status.maxRage} color="#e67e22" label="RP" />}
       <GcdBar remainingMs={status.globalCooldownRemainingMs} />
     </div>
   );

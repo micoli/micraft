@@ -35,14 +35,8 @@ export function CombatTargetFrame({ target, layoutStyle }: Props) {
       <HpBar current={target.currentHp} max={target.maxHp} />
       {target.targetOfTarget && (
         <div className="mt-1 flex flex-col gap-1 border-t border-white/10 pt-1">
-          <span className="text-[10px] text-white/50 font-mono truncate">
-            ↳ {target.targetOfTarget.name}
-          </span>
-          <HpBar
-            current={target.targetOfTarget.currentHp}
-            max={target.targetOfTarget.maxHp}
-            height="h-2"
-          />
+          <span className="text-[10px] text-white/50 font-mono truncate">↳ {target.targetOfTarget.name}</span>
+          <HpBar current={target.targetOfTarget.currentHp} max={target.targetOfTarget.maxHp} height="h-2" />
         </div>
       )}
     </div>

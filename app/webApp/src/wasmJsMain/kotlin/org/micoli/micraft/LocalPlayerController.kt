@@ -3,6 +3,7 @@ package org.micoli.micraft
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.babylon.*
+import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.physics.AabbCollider
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
@@ -79,7 +80,7 @@ class LocalPlayerController(
     private var breakTarget: BlockPos? = null
     private var hoverTarget: BlockPos? = null
     var selectedSlot: Int = 0
-    val shortcutBar: Array<ItemType?> = arrayOfNulls(10)
+    val shortcutBar: Array<ShortcutSlot?> = arrayOfNulls(10)
     private var hasPlacedThisClick = false
 
     private var hudX = 0.0
@@ -232,10 +233,15 @@ class LocalPlayerController(
     }
 
     fun syncShortcutBarToUi() {
-        val slots = shortcutBar.map { it?.id }
-        val json =
-            "{\"slots\":[${slots.joinToString(",") { if (it == null) "null" else "\"$it\"" }}],\"selected\":$selectedSlot}"
-        jsUpdateShortcutBar(json)
+        val slotsJson =
+            shortcutBar.joinToString(",") { slot ->
+                when (slot) {
+                    is ShortcutSlot.Item -> """{"kind":"item","id":"${slot.itemType.id}"}"""
+                    is ShortcutSlot.Attack -> """{"kind":"attack","id":"${slot.attackId}"}"""
+                    null -> "null"
+                }
+            }
+        jsUpdateShortcutBar("{\"slots\":[$slotsJson],\"selected\":$selectedSlot}")
         jsSetSelectedSlot(selectedSlot)
     }
 
@@ -489,14 +495,22 @@ class LocalPlayerController(
             runCatching {
                 val slotMatch =
                     Regex("\"slot\":(\\d+)").find(slotUpdateJson)?.groupValues?.get(1)?.toInt()
-                val typeMatch =
-                    Regex("\"itemType\":\"([A-Z_]+)\"").find(slotUpdateJson)?.groupValues?.get(1)
                 if (slotMatch != null && slotMatch in 1..9) {
-                    val itemType =
-                        typeMatch?.let { name -> ItemRegistry.keys().find { it.id == name } }
-                    shortcutBar[slotMatch] = itemType
+                    val kind =
+                        Regex("\"kind\":\"([^\"]+)\"").find(slotUpdateJson)?.groupValues?.get(1)
+                    val id = Regex("\"id\":\"([^\"]+)\"").find(slotUpdateJson)?.groupValues?.get(1)
+                    val content: ShortcutSlot? =
+                        when {
+                            kind == "item" && id != null ->
+                                ItemRegistry.keys()
+                                    .find { it.id == id }
+                                    ?.let { ShortcutSlot.Item(it) }
+                            kind == "attack" && id != null -> ShortcutSlot.Attack(id)
+                            else -> null
+                        }
+                    shortcutBar[slotMatch] = content
                     syncShortcutBarToUi()
-                    outMessages.trySend(ClientMessage.ShortcutBarSet(slotMatch, itemType))
+                    outMessages.trySend(ClientMessage.ShortcutBarSet(slotMatch, content))
                 }
             }
         }
@@ -577,7 +591,8 @@ class LocalPlayerController(
         }
 
         val isBreaking = jsIsBreaking()
-        val selectedItem = if (selectedSlot > 0) shortcutBar[selectedSlot] else null
+        val selectedSlotContent = if (selectedSlot > 0) shortcutBar[selectedSlot] else null
+        val selectedItem = (selectedSlotContent as? ShortcutSlot.Item)?.itemType
         val isPlaceMode = selectedItem != null && selectedItem.buildable
 
         if (isPlaceMode) {

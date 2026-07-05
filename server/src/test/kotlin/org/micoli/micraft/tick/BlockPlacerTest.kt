@@ -5,6 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
@@ -151,9 +152,9 @@ class BlockPlacerTest {
         val saved = mutableListOf<org.micoli.micraft.session.PlayerSession>()
         val placer = placer(saved = saved)
         val session = testSession()
-        val intent = ClientMessage.ShortcutBarSet(2, ItemType("COBBLESTONE"))
+        val intent = ClientMessage.ShortcutBarSet(2, ShortcutSlot.Item(ItemType("COBBLESTONE")))
         placer.handleShortcutBarSet(session, intent)
-        assertEquals(ItemType("COBBLESTONE"), session.shortcutBar[2])
+        assertEquals(ShortcutSlot.Item(ItemType("COBBLESTONE")), session.shortcutBar[2])
         assertTrue(session.sent.any { it is ServerMessage.ShortcutBarUpdate })
         assertEquals(1, saved.size)
     }
@@ -163,7 +164,7 @@ class BlockPlacerTest {
         val placer = placer()
         val session = testSession()
         placer.handleShortcutBarSet(
-            session, ClientMessage.ShortcutBarSet(0, ItemType("COBBLESTONE")))
+            session, ClientMessage.ShortcutBarSet(0, ShortcutSlot.Item(ItemType("COBBLESTONE"))))
         // slot 0 = hand slot, must stay null
         assertEquals(null, session.shortcutBar[0])
         assertTrue(session.sent.isEmpty())
@@ -173,7 +174,8 @@ class BlockPlacerTest {
     fun shortcutBarSet_nonBuildableItem_rejected() = runBlocking {
         val placer = placer()
         val session = testSession()
-        placer.handleShortcutBarSet(session, ClientMessage.ShortcutBarSet(1, ItemType("SNOWBALL")))
+        placer.handleShortcutBarSet(
+            session, ClientMessage.ShortcutBarSet(1, ShortcutSlot.Item(ItemType("SNOWBALL"))))
         assertEquals(null, session.shortcutBar[1])
         assertTrue(session.sent.isEmpty())
     }
@@ -182,9 +184,31 @@ class BlockPlacerTest {
     fun shortcutBarSet_null_clearsSlot() = runBlocking {
         val placer = placer()
         val session = testSession()
-        session.shortcutBar[3] = ItemType("DIRT")
+        session.shortcutBar[3] = ShortcutSlot.Item(ItemType("DIRT"))
         placer.handleShortcutBarSet(session, ClientMessage.ShortcutBarSet(3, null))
         assertEquals(null, session.shortcutBar[3])
         assertTrue(session.sent.any { it is ServerMessage.ShortcutBarUpdate })
+    }
+
+    @Test
+    fun shortcutBarSet_attack_validAttack_updatesSlot() = runBlocking {
+        val saved = mutableListOf<org.micoli.micraft.session.PlayerSession>()
+        val registry = mapOf("fireball" to org.micoli.micraft.combat.AttackDefinition())
+        val placer = BlockPlacer(testWorld(), {}, { saved.add(it) }, attackRegistry = registry)
+        val session = testSession()
+        placer.handleShortcutBarSet(
+            session, ClientMessage.ShortcutBarSet(1, ShortcutSlot.Attack("fireball")))
+        assertEquals(ShortcutSlot.Attack("fireball"), session.shortcutBar[1])
+        assertTrue(session.sent.any { it is ServerMessage.ShortcutBarUpdate })
+    }
+
+    @Test
+    fun shortcutBarSet_attack_unknownAttack_rejected() = runBlocking {
+        val placer = placer()
+        val session = testSession()
+        placer.handleShortcutBarSet(
+            session, ClientMessage.ShortcutBarSet(1, ShortcutSlot.Attack("unknown_spell")))
+        assertEquals(null, session.shortcutBar[1])
+        assertTrue(session.sent.isEmpty())
     }
 }

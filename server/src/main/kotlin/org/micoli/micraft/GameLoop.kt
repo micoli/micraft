@@ -210,7 +210,7 @@ class GameLoop(
     private var npcSpawnTickCounter = 0
 
     private val combatConfig = CombatConfigLoader(Path.of("data/config/combat.yaml")).load()
-    private val attackRegistry = AttackRegistryLoader(Path.of("data/config/attacks")).load()
+    val attackRegistry = AttackRegistryLoader(Path.of("data/config/attacks")).load()
     private val combatProcessor =
         CombatProcessor(
             config = combatConfig,
@@ -308,6 +308,7 @@ class GameLoop(
             { msg -> sessions.values.forEach { it.send(msg) } },
             ::savePlayer,
             vegetationManager,
+            attackRegistry,
         )
     private val intentCollector =
         IntentCollector(

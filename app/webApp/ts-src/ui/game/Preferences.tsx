@@ -196,33 +196,32 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                   ),
                 )
                 .map((group) => (
-                <div key={group} className="mb-2">
-                  <div className="text-[#888] text-[11px] uppercase tracking-wide py-1.5">{group}</div>
-                  {pref.groupedBindings
-                    .filter(
-                      (r) =>
-                        r.group === group &&
-                        r.action.includes(kbSearch.toLowerCase().replace(/ /g, "_")),
-                    )
-                    .map(({ action, keys }) => (
-                      <div key={action} className="flex items-center flex-wrap gap-1 py-1.5 border-b border-[#2a2a2a]">
-                        <span className="min-w-[140px] text-xs text-[#ccc]">{action.replace(/_/g, " ")}</span>
-                        <div className="flex flex-wrap gap-1 flex-1">
-                          {keys.map((k, i) => (
-                            <KeyBadge
-                              key={i}
-                              label={k}
-                              isRecording={pref.recording?.action === action && pref.recording?.index === i}
-                              onClick={() => pref.setRecording({ action, index: i })}
-                              onRemove={() => pref.removeKey(action, i)}
-                            />
-                          ))}
-                          <AddKeyBtn onClick={() => pref.setRecording({ action, index: keys.length })} />
+                  <div key={group} className="mb-2">
+                    <div className="text-[#888] text-[11px] uppercase tracking-wide py-1.5">{group}</div>
+                    {pref.groupedBindings
+                      .filter((r) => r.group === group && r.action.includes(kbSearch.toLowerCase().replace(/ /g, "_")))
+                      .map(({ action, keys }) => (
+                        <div
+                          key={action}
+                          className="flex items-center flex-wrap gap-1 py-1.5 border-b border-[#2a2a2a]"
+                        >
+                          <span className="min-w-[140px] text-xs text-[#ccc]">{action.replace(/_/g, " ")}</span>
+                          <div className="flex flex-wrap gap-1 flex-1">
+                            {keys.map((k, i) => (
+                              <KeyBadge
+                                key={i}
+                                label={k}
+                                isRecording={pref.recording?.action === action && pref.recording?.index === i}
+                                onClick={() => pref.setRecording({ action, index: i })}
+                                onRemove={() => pref.removeKey(action, i)}
+                              />
+                            ))}
+                            <AddKeyBtn onClick={() => pref.setRecording({ action, index: keys.length })} />
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                </div>
-              ))}
+                      ))}
+                  </div>
+                ))}
 
               {/* Custom slash commands */}
               <div className="mt-3">

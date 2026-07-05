@@ -2,6 +2,7 @@ package org.micoli.micraft.protocol
 
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.combat.ActiveStatusEffect
+import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
@@ -108,7 +109,7 @@ sealed class ServerMessage {
 
     @ProtoId(14)
     @Serializable
-    data class ShortcutBarUpdate(val slots: Map<Int, ItemType> = emptyMap()) : ServerMessage()
+    data class ShortcutBarUpdate(val slots: Map<Int, ShortcutSlot> = emptyMap()) : ServerMessage()
 
     @ProtoId(15)
     @Serializable

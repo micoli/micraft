@@ -1,6 +1,7 @@
 package org.micoli.micraft.protocol
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.world.BlockPos
@@ -49,7 +50,7 @@ sealed class ClientMessage {
 
     @ProtoId(7)
     @Serializable
-    data class ShortcutBarSet(val slot: Int, val itemType: ItemType?) : ClientMessage()
+    data class ShortcutBarSet(val slot: Int, val content: ShortcutSlot?) : ClientMessage()
 
     @ProtoId(8)
     @Serializable

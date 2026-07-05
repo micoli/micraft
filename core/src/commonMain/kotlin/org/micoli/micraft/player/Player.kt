@@ -1,6 +1,7 @@
 package org.micoli.micraft.player
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.ui.defaultLayout
@@ -23,7 +24,7 @@ data class PlayerState(
     val inventory: Map<ItemType, Int> = emptyMap(),
     val language: String = "en",
     val shadersEnabled: Boolean = true,
-    val shortcutBar: List<ItemType?> = List(10) { null },
+    val shortcutBar: List<ShortcutSlot?> = List(10) { null },
     val layouts: List<GameLayout> = listOf(defaultLayout()),
     val activeLayout: String = "default",
     val subscribedChannels: List<String> = listOf("world", "system", "game"),

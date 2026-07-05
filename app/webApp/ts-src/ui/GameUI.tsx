@@ -25,6 +25,7 @@ import { Trade } from "./game/Trade";
 import { PlayerStatusBar } from "./game/PlayerStatusBar";
 import { CombatTargetFrame } from "./game/CombatTargetFrame";
 import { PlayerDownedOverlay } from "./game/PlayerDownedOverlay";
+import { AttackPanel } from "./game/AttackPanel";
 
 function loadHudMode(): HudMode {
   try {
@@ -49,6 +50,7 @@ const initial: UiState = {
   unreadChannels: [],
   inventory: {},
   itemMeta: {},
+  attackMeta: {},
   hotbarVisible: false,
   shortcutBar: Array(10).fill(null),
   selectedSlot: 0,
@@ -95,7 +97,7 @@ export function GameUI() {
   // Refs for synchronous reads by Kotlin
   const logTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const consoleOpenRef = useRef(false);
-  const pendingSlotUpdateRef = useRef<string>("");
+  const pendingSlotUpdateRef = useRef<string[]>([]);
   const consoleStateRef = useRef({
     history: [] as string[],
     histIdx: -1,
@@ -131,6 +133,35 @@ export function GameUI() {
         .then((r) => r.json())
         .then((data) => {
           if (!cancelled) dispatch({ type: "item_meta_loaded", data });
+        })
+        .catch(() => {
+          if (!cancelled) setTimeout(load, 2000);
+        });
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () =>
+      fetch("/api/attacks")
+        .then((r) => r.json())
+        .then((raw: Record<string, Record<string, string>>) => {
+          if (cancelled) return;
+          const data = Object.fromEntries(
+            Object.entries(raw).map(([k, v]) => [
+              k,
+              {
+                damageType: v.damageType ?? "",
+                manaCost: parseInt(v.manaCost ?? "0"),
+                rageCost: parseInt(v.rageCost ?? "0"),
+                cooldownMs: parseInt(v.cooldownMs ?? "0"),
+              },
+            ]),
+          );
+          dispatch({ type: "attack_meta_loaded", data });
         })
         .catch(() => {
           if (!cancelled) setTimeout(load, 2000);
@@ -303,7 +334,8 @@ export function GameUI() {
 
     window.mc.showNotification = (msg: string) => dispatch({ type: "notification", msg });
     window.mc.addServerLog = (channel: string, msg: string) => dispatch({ type: "log", channel, msg });
-    window.mc.addChatMessage = (channel: string, sender: string, msg: string) => dispatch({ type: "chat_message", channel, sender, msg });
+    window.mc.addChatMessage = (channel: string, sender: string, msg: string) =>
+      dispatch({ type: "chat_message", channel, sender, msg });
     window.mc.channelsSync = (subscribedJson: string, knownJson: string) => {
       try {
         const subscribed: string[] = JSON.parse(subscribedJson);
@@ -315,15 +347,21 @@ export function GameUI() {
     };
     window.mc.updateHotbar = (json: string) => dispatch({ type: "inventory", data: JSON.parse(json) });
     window.mc.toggleHotbar = () => dispatch({ type: "hotbar_toggle" });
-    window.mc.updateShortcutBar = (json: string) => dispatch({ type: "shortcut_bar_update", data: JSON.parse(json) });
+    window.mc.updateShortcutBar = (json: string) => {
+      const raw = JSON.parse(json) as { slots: ({ kind: string; id: string } | null)[]; selected: number };
+      const slots = raw.slots.map((s): import("./UIReducer").ShortcutSlot | null => {
+        if (!s) return null;
+        if (s.kind === "attack") return { kind: "attack", id: s.id };
+        return { kind: "item", id: s.id };
+      });
+      dispatch({ type: "shortcut_bar_update", data: { slots, selected: raw.selected } });
+    };
     window.mc.setSelectedSlot = (slot: number) => dispatch({ type: "slot_select", slot });
     window.mc.consumeSlotUpdate = () => {
-      const v = pendingSlotUpdateRef.current;
-      pendingSlotUpdateRef.current = "";
-      return v;
+      return pendingSlotUpdateRef.current.shift() ?? "";
     };
-    window.mcState.slotDrop = (slot: number, itemType: string | null) => {
-      pendingSlotUpdateRef.current = JSON.stringify({ slot, itemType: itemType ?? null });
+    window.mcState.slotDrop = (slot: number, content: { kind: string; id: string } | null) => {
+      pendingSlotUpdateRef.current.push(JSON.stringify({ slot, content: content ?? null }));
     };
 
     window.mc.showLoginOverlay = () => dispatch({ type: "login_show" });
@@ -372,7 +410,8 @@ export function GameUI() {
     window.mc.hideLayoutEditor = () => dispatch({ type: "layout_editor_hide" });
 
     window.mcState.dispatch = dispatch as (action: unknown) => void;
-    window.mc.openNpcDialog = (json: string) => dispatch({ type: "npc_dialog_open", payload: JSON.parse(json) as NpcDialogData });
+    window.mc.openNpcDialog = (json: string) =>
+      dispatch({ type: "npc_dialog_open", payload: JSON.parse(json) as NpcDialogData });
 
     window.mc.consumeLayoutUpdate = () => {
       const v = pendingLayoutUpdateRef.current;
@@ -483,7 +522,7 @@ export function GameUI() {
     };
 
     window.mc.updateChunkDebug = (json: string) => {
-        setChunkDebugData({ ...(JSON.parse(json) as ChunkDebugData), ...chunkLoadStatsRef.current });
+      setChunkDebugData({ ...(JSON.parse(json) as ChunkDebugData), ...chunkLoadStatsRef.current });
     };
 
     window.mc.combatTargetUpdate = (json: string) => dispatch({ type: "combat_target_update", data: JSON.parse(json) });
@@ -653,13 +692,15 @@ export function GameUI() {
           <ShortcutBar
             inventory={state.inventory}
             itemMeta={state.itemMeta}
+            attackMeta={state.attackMeta}
             slots={state.shortcutBar}
             selectedSlot={state.selectedSlot}
-            onSlotDrop={(slot, itemType) => {
-              pendingSlotUpdateRef.current = JSON.stringify({ slot, itemType: itemType ?? null });
+            onSlotDrop={(slot, content) => {
+              pendingSlotUpdateRef.current.push(JSON.stringify({ slot, content: content ?? null }));
             }}
             layoutStyle={widgetStyle(activeLayout, "SHORTCUT_BAR")}
           />
+          <AttackPanel attackMeta={state.attackMeta} layoutStyle={widgetStyle(activeLayout, "ATTACK_PANEL")} />
           <Inventory
             inventory={state.inventory}
             itemMeta={state.itemMeta}

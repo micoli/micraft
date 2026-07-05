@@ -1,5 +1,7 @@
 package org.micoli.micraft.tick
 
+import org.micoli.micraft.combat.AttackDefinition
+import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.ClientMessage
@@ -21,6 +23,7 @@ class BlockPlacer(
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val savePlayer: (PlayerSession) -> Unit,
     private val vegetationManager: VegetationManager? = null,
+    private val attackRegistry: Map<String, AttackDefinition> = emptyMap(),
 ) {
     suspend fun handlePlace(session: PlayerSession, intent: ClientMessage.BlockPlace) {
         val pos = intent.pos
@@ -77,18 +80,27 @@ class BlockPlacer(
 
     suspend fun handleShortcutBarSet(session: PlayerSession, intent: ClientMessage.ShortcutBarSet) {
         val slot = intent.slot
-        val itemType = intent.itemType
+        val content = intent.content
 
         if (slot !in 1..9) {
             log.debug("ShortcutBarSet rejected: slot {} out of range 1..9", slot)
             return
         }
-        if (itemType != null && !itemType.buildable) {
-            log.debug("ShortcutBarSet rejected: {} not buildable", itemType)
-            return
+        when (content) {
+            is ShortcutSlot.Item ->
+                if (!content.itemType.buildable) {
+                    log.debug("ShortcutBarSet rejected: {} not buildable", content.itemType)
+                    return
+                }
+            is ShortcutSlot.Attack ->
+                if (!attackRegistry.containsKey(content.attackId)) {
+                    log.debug("ShortcutBarSet rejected: unknown attack {}", content.attackId)
+                    return
+                }
+            null -> {}
         }
 
-        session.shortcutBar[slot] = itemType
+        session.shortcutBar[slot] = content
         savePlayer(session)
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toSlotMap()))
     }

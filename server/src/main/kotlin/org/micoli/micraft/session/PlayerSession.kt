@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.channels.Channel
 import org.micoli.micraft.combat.CombatState
+import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.protocol.ClientMessage
@@ -20,7 +21,7 @@ class NetworkStats {
     val bytesOut = AtomicLong(0)
 }
 
-fun List<ItemType?>.toSlotMap(): Map<Int, ItemType> =
+fun List<ShortcutSlot?>.toSlotMap(): Map<Int, ShortcutSlot> =
     mapIndexedNotNull { i, t -> t?.let { i to it } }.toMap()
 
 fun PlayerSession.hasPermission(perm: String): Boolean = "*" in permissions || perm in permissions
@@ -43,7 +44,7 @@ open class PlayerSession(
     @Volatile var breakProgress: Int = 0
     val inventory: MutableMap<ItemType, Int> = ConcurrentHashMap()
     val actionHistory: ArrayDeque<WorldActionRecord> = ArrayDeque()
-    val shortcutBar: MutableList<ItemType?> = MutableList(10) { null }
+    val shortcutBar: MutableList<ShortcutSlot?> = MutableList(10) { null }
     val knownRecipes: MutableSet<String> =
         Collections.newSetFromMap(ConcurrentHashMap<String, Boolean>()).also {
             it.addAll(state.knownRecipes)

@@ -203,7 +203,7 @@ declare global {
     knownChannels: string[];
     // React callbacks (set by GameUI after mount)
     dispatch: ((action: unknown) => void) | null;
-    slotDrop: ((slot: number, itemType: string | null) => void) | null;
+    slotDrop: ((slot: number, content: { kind: string; id: string } | null) => void) | null;
   }
 
   // ── McBindings: all public Kotlin-callable (and JS-callable) mc methods ───────

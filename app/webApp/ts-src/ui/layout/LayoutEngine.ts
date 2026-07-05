@@ -70,6 +70,17 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
     editorColor: "rgba(60,160,80,0.75)",
   },
   {
+    type: "ATTACK_PANEL",
+    x: 15,
+    y: 40,
+    w: 18,
+    h: 5,
+    minW: 6,
+    minH: 4,
+    editorLabel: "Attack Panel",
+    editorColor: "rgba(180,60,60,0.75)",
+  },
+  {
     type: "INVENTORY",
     x: 16,
     y: 33,

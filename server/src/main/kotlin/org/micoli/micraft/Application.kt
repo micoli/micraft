@@ -293,6 +293,21 @@ fun Application.module() {
                 }
             call.respondText(Json.encodeToString(serializer, meta), ContentType.Application.Json)
         }
+        get("/api/attacks") {
+            val serializer =
+                MapSerializer(
+                    String.serializer(), MapSerializer(String.serializer(), String.serializer()))
+            val meta =
+                gameLoop.attackRegistry.mapValues { (_, def) ->
+                    mapOf(
+                        "damageType" to def.damageType.name,
+                        "manaCost" to def.manaCost.toString(),
+                        "rageCost" to def.rageCost.toString(),
+                        "cooldownMs" to def.cooldownMs.toString(),
+                    )
+                }
+            call.respondText(Json.encodeToString(serializer, meta), ContentType.Application.Json)
+        }
         get("/api/biomes") {
             val colors =
                 biomeRegistry.biomes.associate { b ->
