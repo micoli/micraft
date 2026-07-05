@@ -168,6 +168,14 @@ class NpcRegistryLoader(
                 }
                 .toMap()
         log.info("NPC registry loaded: {} NPC types", result.size)
+        log.info(
+            "NPC entries:\n{}",
+            entries.entries.joinToString("\n") { (key, entry) ->
+                Yaml.default.encodeToString(NpcYamlEntry.serializer(), entry)
+                    .lines()
+                    .joinToString("\n") { "  $it" }
+                    .let { "$key:\n$it" }
+            })
         return result
     }
 
