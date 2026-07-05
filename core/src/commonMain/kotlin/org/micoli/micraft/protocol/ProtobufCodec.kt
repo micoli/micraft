@@ -40,6 +40,9 @@ object ServerMessageCodec {
         TOGGLE_INGAME_MAP(27),
         OPEN_CRAFT(28),
         RECIPE_SYNC(29),
+        OPEN_TRADE(30),
+        TRADE_UPDATE(31),
+        TRADE_CLOSED(32),
     }
 
     fun encode(msg: ServerMessage): ByteArray {
@@ -81,6 +84,9 @@ object ServerMessageCodec {
                     Id.GAME_CONFIG_SYNC to proto.encodeToByteArray(msg)
                 ServerMessage.OpenCraft -> Id.OPEN_CRAFT to ByteArray(0)
                 is ServerMessage.RecipeSync -> Id.RECIPE_SYNC to proto.encodeToByteArray(msg)
+                is ServerMessage.OpenTrade -> Id.OPEN_TRADE to proto.encodeToByteArray(msg)
+                is ServerMessage.TradeUpdate -> Id.TRADE_UPDATE to proto.encodeToByteArray(msg)
+                is ServerMessage.TradeClosed -> Id.TRADE_CLOSED to proto.encodeToByteArray(msg)
             }
         return byteArrayOf(id.b) + payload
     }
@@ -118,6 +124,9 @@ object ServerMessageCodec {
             27 -> ServerMessage.ToggleBiomeMap
             28 -> ServerMessage.OpenCraft
             29 -> proto.decodeFromByteArray<ServerMessage.RecipeSync>(payload)
+            30 -> proto.decodeFromByteArray<ServerMessage.OpenTrade>(payload)
+            31 -> proto.decodeFromByteArray<ServerMessage.TradeUpdate>(payload)
+            32 -> proto.decodeFromByteArray<ServerMessage.TradeClosed>(payload)
             else -> throw IllegalArgumentException("Unknown ServerMessage type id: ${data[0]}")
         }
     }

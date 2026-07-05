@@ -37,6 +37,8 @@ import org.micoli.micraft.tick.IntentCollector
 import org.micoli.micraft.tick.LiquidManager
 import org.micoli.micraft.tick.MovementProcessor
 import org.micoli.micraft.tick.VegetationManager
+import org.micoli.micraft.trade.TradeConfigLoader
+import org.micoli.micraft.trade.TradeManager
 import org.micoli.micraft.ui.validateLayouts
 import org.micoli.micraft.world.ArmorRegistryLoader
 import org.micoli.micraft.world.BlockRegistry
@@ -202,6 +204,15 @@ class GameLoop(
     private val npcSpawner = NpcSpawner()
     private var npcSpawnTickCounter = 0
 
+    private val tradeConfigLoader = TradeConfigLoader(Path.of("data/config/trade.yaml"))
+    private val tradeManager =
+        TradeManager(
+            getSessions = { sessions.values },
+            i18n = i18n,
+            savePlayer = ::savePlayer,
+            maxDistance = tradeConfigLoader.load().maxDistance,
+        )
+
     private val commandContext =
         CommandContext(
             world = world,
@@ -249,6 +260,7 @@ class GameLoop(
                 } else null,
             reloadNpcs = { npcManager.reloadDefinitions(npcRegistryLoader.reload()) },
             armorRegistry = { armorRegistry },
+            tradeManager = tradeManager,
         )
     private val blockBreaker =
         BlockBreaker(
@@ -759,6 +771,7 @@ class GameLoop(
             sessions.remove(id)
             chunkStreamer.cleanupSession(id)
             npcManager.clearPlayer(id)
+            tradeManager.onPlayerDisconnect(id)
             savePlayer(session)
             log.info(
                 "player disconnected: {} name={} (total={})",

@@ -13,6 +13,7 @@ import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 import org.micoli.micraft.tick.LiquidManager
+import org.micoli.micraft.trade.TradeManager
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.ChunkPos
 import org.micoli.micraft.world.I18nConfig
@@ -182,6 +183,7 @@ fun testContext(
     reloadNpcs: (suspend () -> Unit)? = null,
     authProvider: AuthProvider? = null,
     groupsConfig: GroupsConfig? = null,
+    tradeManager: TradeManager? = null,
 ) =
     CommandContext(
         world = world,
@@ -203,4 +205,5 @@ fun testContext(
         reloadNpcs = reloadNpcs,
         authProvider = authProvider,
         groupsConfig = groupsConfig,
+        tradeManager = tradeManager,
     )

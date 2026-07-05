@@ -20,6 +20,7 @@ import { ChunkDebug, ChunkDebugData } from "./game/ChunkDebug";
 import { Character } from "./game/Character";
 import { BiomeMap } from "./game/BiomeMap";
 import { Craft } from "./game/Craft";
+import { Trade } from "./game/Trade";
 
 function loadHudMode(): HudMode {
   try {
@@ -64,6 +65,13 @@ const initial: UiState = {
   pauseMenuOpen: false,
   characterOpen: false,
   biomeMapVisible: false,
+  tradeOpen: false,
+  tradeId: null,
+  tradeOtherPlayer: null,
+  tradeMyOffer: {},
+  tradeTheirOffer: {},
+  tradeMyAccepted: false,
+  tradeTheirAccepted: false,
 };
 
 export function GameUI() {
@@ -97,6 +105,7 @@ export function GameUI() {
   const codexOpenRef = useRef(false);
   const craftOpenRef = useRef(false);
   const characterOpenRef = useRef(false);
+  const tradeOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
   const chunkLoadingRef = useRef(false);
   const overlayWasOpen = useRef(false);
@@ -142,6 +151,10 @@ export function GameUI() {
   useEffect(() => {
     characterOpenRef.current = state.characterOpen;
   }, [state.characterOpen]);
+
+  useEffect(() => {
+    tradeOpenRef.current = state.tradeOpen;
+  }, [state.tradeOpen]);
 
   useEffect(() => {
     const anyOpen = state.characterOpen || state.biomeMapVisible || state.preferencesOpen || state.pauseMenuOpen;
@@ -408,6 +421,23 @@ export function GameUI() {
       }
     };
     window.mc.openCharacter = () => dispatch({ type: "character_open" });
+    window.mc.openTrade = (tradeId: string, otherPlayer: string, _role: string) =>
+      dispatch({ type: "trade_open", tradeId, otherPlayer });
+    window.mc.tradeUpdate = (json: string) => {
+      try {
+        const msg = JSON.parse(json) as {
+          tradeId: string;
+          myOffer: Record<string, number>;
+          theirOffer: Record<string, number>;
+          myAccepted: boolean;
+          theirAccepted: boolean;
+        };
+        dispatch({ type: "trade_update", ...msg });
+      } catch {
+        /* ignore */
+      }
+    };
+    window.mc.tradeClosed = (_tradeId: string, _reason: string) => dispatch({ type: "trade_close" });
     window.mc.toggleBiomeMap = () => dispatch({ type: "ingame_map_toggle" });
     window.mc.dumpStats = () => {
       const h = hudDataRef.current;
@@ -462,6 +492,11 @@ export function GameUI() {
         }
         if (craftOpenRef.current) {
           dispatch({ type: "craft_close" });
+          return;
+        }
+        if (tradeOpenRef.current) {
+          // closing via ESC sends cancel to server — handled inside Trade component's onClose
+          dispatch({ type: "trade_close" });
           return;
         }
         if (preferencesOpenRef.current) {
@@ -644,6 +679,27 @@ export function GameUI() {
             itemMeta={state.itemMeta}
             onCommand={(cmd) => {
               consoleSubmittedRef.current = cmd;
+            }}
+          />
+          <Trade
+            open={state.tradeOpen}
+            tradeId={state.tradeId}
+            otherPlayer={state.tradeOtherPlayer ?? ""}
+            myOffer={state.tradeMyOffer}
+            theirOffer={state.tradeTheirOffer}
+            myAccepted={state.tradeMyAccepted}
+            theirAccepted={state.tradeTheirAccepted}
+            inventory={state.inventory}
+            itemMeta={state.itemMeta}
+            onClose={(tradeId) => {
+              if (tradeId) consoleSubmittedRef.current = `/tradecancel ${tradeId}`;
+              dispatch({ type: "trade_close" });
+            }}
+            onAccept={(tradeId) => {
+              consoleSubmittedRef.current = `/tradeaccept ${tradeId}`;
+            }}
+            onOffer={(tradeId, offer) => {
+              consoleSubmittedRef.current = `/tradeoffer ${tradeId} ${JSON.stringify(offer)}`;
             }}
           />
           <Character

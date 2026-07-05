@@ -154,3 +154,12 @@ fun jsToggleBiomeMap(): Unit = js("mc.toggleBiomeMap()")
 fun jsOpenCraft(): Unit = js("mc.openCraft()")
 
 fun jsRecipeSync(json: String): Unit = js("mc.recipeSync(json)")
+
+// ── Trade ─────────────────────────────────────────────────────────────────────
+
+fun jsOpenTrade(tradeId: String, otherPlayer: String, myRole: String): Unit =
+    js("mc.openTrade(tradeId, otherPlayer, myRole)")
+
+fun jsTradeUpdate(json: String): Unit = js("mc.tradeUpdate(json)")
+
+fun jsTradeClosed(tradeId: String, reason: String): Unit = js("mc.tradeClosed(tradeId, reason)")

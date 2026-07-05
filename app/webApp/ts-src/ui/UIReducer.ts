@@ -33,6 +33,13 @@ export interface UiState {
   pauseMenuOpen: boolean;
   characterOpen: boolean;
   biomeMapVisible: boolean;
+  tradeOpen: boolean;
+  tradeId: string | null;
+  tradeOtherPlayer: string | null;
+  tradeMyOffer: Record<string, number>;
+  tradeTheirOffer: Record<string, number>;
+  tradeMyAccepted: boolean;
+  tradeTheirAccepted: boolean;
 }
 
 export type UiAction =
@@ -85,7 +92,17 @@ export type UiAction =
   | { type: "pause_menu_hide" }
   | { type: "character_open" }
   | { type: "character_close" }
-  | { type: "ingame_map_toggle" };
+  | { type: "ingame_map_toggle" }
+  | { type: "trade_open"; tradeId: string; otherPlayer: string }
+  | {
+      type: "trade_update";
+      tradeId: string;
+      myOffer: Record<string, number>;
+      theirOffer: Record<string, number>;
+      myAccepted: boolean;
+      theirAccepted: boolean;
+    }
+  | { type: "trade_close" };
 
 const HUD_MODES: HudMode[] = ["simple", "medium", "complete"];
 let notifKey = 0;
@@ -217,5 +234,36 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, characterOpen: false };
     case "ingame_map_toggle":
       return { ...state, biomeMapVisible: !state.biomeMapVisible };
+    case "trade_open":
+      return {
+        ...state,
+        tradeOpen: true,
+        tradeId: action.tradeId,
+        tradeOtherPlayer: action.otherPlayer,
+        tradeMyOffer: {},
+        tradeTheirOffer: {},
+        tradeMyAccepted: false,
+        tradeTheirAccepted: false,
+      };
+    case "trade_update":
+      return {
+        ...state,
+        tradeId: action.tradeId,
+        tradeMyOffer: action.myOffer,
+        tradeTheirOffer: action.theirOffer,
+        tradeMyAccepted: action.myAccepted,
+        tradeTheirAccepted: action.theirAccepted,
+      };
+    case "trade_close":
+      return {
+        ...state,
+        tradeOpen: false,
+        tradeId: null,
+        tradeOtherPlayer: null,
+        tradeMyOffer: {},
+        tradeTheirOffer: {},
+        tradeMyAccepted: false,
+        tradeTheirAccepted: false,
+      };
   }
 }

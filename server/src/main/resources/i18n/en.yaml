@@ -163,6 +163,16 @@ unequip:
     usage: "Usage: /unequip <armorName>"
     not_wearing: "You are not wearing {0}."
     unequipped: "Unequipped {0}."
+trade:
+  server:
+    usage: "Usage: /trade <playerName>"
+    not_found: "Player '{0}' not found or not online."
+    too_far: "Player '{0}' is too far away (max {1} blocks)."
+    already_trading: "You or '{0}' are already in a trade."
+    cancelled: "Trade cancelled."
+    completed: "Trade completed!"
+    inventory_changed: "Trade cancelled: inventory changed."
+    disconnected: "Trade cancelled: other player disconnected."
 config:
   server:
     usage: "Usage: /config <get|set> <key> [value]"

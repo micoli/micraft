@@ -163,6 +163,16 @@ unequip:
     usage: "Usage : /unequip <nomArmure>"
     not_wearing: "Vous ne portez pas {0}."
     unequipped: "{0} retiré."
+trade:
+  server:
+    usage: "Usage : /trade <nomJoueur>"
+    not_found: "Joueur '{0}' introuvable ou non connecté."
+    too_far: "Le joueur '{0}' est trop loin (max {1} blocs)."
+    already_trading: "Vous ou '{0}' êtes déjà en train d'échanger."
+    cancelled: "Échange annulé."
+    completed: "Échange terminé !"
+    inventory_changed: "Échange annulé : inventaire modifié."
+    disconnected: "Échange annulé : l'autre joueur s'est déconnecté."
 config:
   server:
     usage: "Usage : /config <get|set> <clé> [valeur]"

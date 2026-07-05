@@ -149,6 +149,28 @@ sealed class ServerMessage {
         val reconcileToleranceXz: Double,
         val reconcileToleranceY: Double,
     ) : ServerMessage()
+
+    @Serializable
+    data class OpenTrade(
+        val tradeId: String,
+        val otherPlayerName: String,
+        val myRole: String,
+    ) : ServerMessage()
+
+    @Serializable
+    data class TradeUpdate(
+        val tradeId: String,
+        val myOffer: Map<ItemType, Int>,
+        val theirOffer: Map<ItemType, Int>,
+        val myAccepted: Boolean,
+        val theirAccepted: Boolean,
+    ) : ServerMessage()
+
+    @Serializable
+    data class TradeClosed(
+        val tradeId: String,
+        val reason: String,
+    ) : ServerMessage()
 }
 
 @Serializable
