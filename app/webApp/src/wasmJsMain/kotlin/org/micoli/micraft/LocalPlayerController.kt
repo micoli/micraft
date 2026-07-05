@@ -478,7 +478,17 @@ class LocalPlayerController(
                     val next =
                         npcManager.cycleNearestNpc(predX, predY, predZ, currentCombatTargetId)
                     currentCombatTargetId = next
+                    npcManager.setHighlightTarget(next)
                     outMessages.trySend(ClientMessage.SetCombatTarget(next, isNpc = true))
+                }
+                event == "combat_attack" -> {
+                    val targetId = currentCombatTargetId ?: return@repeat
+                    val attackId =
+                        (shortcutBar.getOrNull(selectedSlot) as? ShortcutSlot.Attack)?.attackId
+                            ?: "basic_attack"
+                    outMessages.trySend(
+                        ClientMessage.AttackTarget(
+                            targetId = targetId, isNpc = true, attackId = attackId))
                 }
                 event.startsWith("cmd:") ->
                     outMessages.trySend(ClientMessage.Command(event.removePrefix("cmd:")))

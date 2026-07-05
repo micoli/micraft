@@ -47,6 +47,7 @@ class CombatProcessor(
     private val npcManager: NpcManager,
     private val getSessions: () -> Collection<PlayerSession>,
     private val broadcastCombatLog: suspend (String) -> Unit,
+    private val subscribeToChannel: suspend (PlayerSession, String) -> Unit,
     @Suppress("unused") private val i18n: I18nConfig,
     private val savePlayer: suspend (PlayerSession) -> Unit,
 ) {
@@ -124,6 +125,7 @@ class CombatProcessor(
             target.characterData = targetChar.copy(currentHp = newHp)
             applyStatusEffect(target, attackDef, now)
             broadcastHealthUpdate(target.id, false, newHp, theirDerived.maxHp)
+            subscribeToChannel(target, "combat")
             if (newHp <= 0) handlePlayerDowned(target)
         }
 
@@ -203,6 +205,7 @@ class CombatProcessor(
             val newHp = (targetChar.currentHp - damage).coerceAtLeast(0)
             target.characterData = targetChar.copy(currentHp = newHp)
             broadcastHealthUpdate(target.id, false, newHp, theirDerived.maxHp)
+            subscribeToChannel(target, "combat")
             if (newHp <= 0) handlePlayerDowned(target)
         } else {
             damage = 0

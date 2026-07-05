@@ -62,7 +62,10 @@ export function useAttackDrag(color: (id: string) => string, kind: "attack" | "m
   }
 
   function guardClick(cb: () => void) {
-    if (didMoveRef.current) { didMoveRef.current = false; return; }
+    if (didMoveRef.current) {
+      didMoveRef.current = false;
+      return;
+    }
     cb();
   }
 

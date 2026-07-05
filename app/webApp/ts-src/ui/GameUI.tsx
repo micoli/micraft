@@ -239,7 +239,14 @@ export function GameUI() {
         state.craftOpen ||
         state.characterOpen ||
         state.macroEditorOpen;
-  }, [state.chunkLoading, state.preferencesOpen, state.codexOpen, state.craftOpen, state.characterOpen, state.macroEditorOpen]);
+  }, [
+    state.chunkLoading,
+    state.preferencesOpen,
+    state.codexOpen,
+    state.craftOpen,
+    state.characterOpen,
+    state.macroEditorOpen,
+  ]);
 
   // Auto-hide server log after 15s of no new messages
   useEffect(() => {
@@ -677,7 +684,8 @@ export function GameUI() {
         className="border-2 border-white/25 shadow-[0_2px_8px_rgba(0,0,0,0.5)] rounded-md overflow-hidden"
         style={{
           ...minimapLayoutStyle,
-          display: !state.gameReady || state.loginVisible || state.disconnectMsg || state.chunkLoading ? "none" : undefined,
+          display:
+            !state.gameReady || state.loginVisible || state.disconnectMsg || state.chunkLoading ? "none" : undefined,
         }}
       />
 
@@ -905,7 +913,9 @@ export function GameUI() {
         />
       </div>
       <DisconnectOverlay message={state.disconnectMsg} />
-      {state.gameReady && !state.loginVisible && !state.disconnectMsg && <LoadingOverlay progress={state.chunkLoading} />}
+      {state.gameReady && !state.loginVisible && !state.disconnectMsg && (
+        <LoadingOverlay progress={state.chunkLoading} />
+      )}
     </>
   );
 }

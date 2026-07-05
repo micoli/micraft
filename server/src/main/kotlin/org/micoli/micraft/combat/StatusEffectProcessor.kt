@@ -14,6 +14,8 @@ class StatusEffectProcessor(
     private val armorRegistry: Map<String, ArmorDefinition>,
     private val world: WorldState,
     private val broadcastHealthUpdate: suspend (String, Boolean, Int, Int) -> Unit,
+    private val broadcastCombatLog: suspend (String) -> Unit,
+    private val subscribeToChannel: suspend (PlayerSession, String) -> Unit,
 ) {
     private var lastTickMs = System.currentTimeMillis()
 
@@ -61,6 +63,18 @@ class StatusEffectProcessor(
                 val newHp = (charData.currentHp + hpDelta.toInt()).coerceIn(0, derived.maxHp)
                 session.characterData = charData.copy(currentHp = newHp)
                 broadcastHealthUpdate(session.id, false, newHp, derived.maxHp)
+                val effectNames = effects.mapNotNull {
+                    when (it.effect) {
+                        is StatusEffect.Poisoned -> "poison"
+                        is StatusEffect.Burning -> "burn"
+                        else -> null
+                    }
+                }.distinct().joinToString("+")
+                val dmg = -hpDelta.toInt()
+                if (dmg > 0) {
+                    subscribeToChannel(session, "combat")
+                    broadcastCombatLog("${charData.name} takes $dmg damage from $effectNames")
+                }
             }
         }
     }

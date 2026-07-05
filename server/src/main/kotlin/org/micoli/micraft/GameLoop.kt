@@ -221,8 +221,11 @@ class GameLoop(
             broadcastCombatLog = { msg ->
                 val chatMsg =
                     ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
-                sessions.values.forEach { it.send(chatMsg) }
+                sessions.values
+                    .filter { "combat" in it.state.subscribedChannels }
+                    .forEach { it.send(chatMsg) }
             },
+            subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
             i18n = i18n,
             savePlayer = { savePlayer(it) },
         )
@@ -235,6 +238,14 @@ class GameLoop(
                     it.send(ServerMessage.HealthUpdate(id, isNpc, hp, maxHp))
                 }
             },
+            broadcastCombatLog = { msg ->
+                val chatMsg =
+                    ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
+                sessions.values
+                    .filter { "combat" in it.state.subscribedChannels }
+                    .forEach { it.send(chatMsg) }
+            },
+            subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
         )
 
     private val tradeConfigLoader = TradeConfigLoader(Path.of("data/config/trade.yaml"))

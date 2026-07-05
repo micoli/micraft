@@ -48,6 +48,9 @@ fun jsSetNpcTransform(
 
 fun jsDisposeNpcModel(model: JsAny): Unit = js("mc.disposeNpcModel(model)")
 
+fun jsHighlightNpcModel(scene: JsAny, model: JsAny, on: Boolean): Unit =
+    js("mc.highlightNpcModel(scene, model, on)")
+
 fun jsOpenNpcDialog(json: String): Unit = js("mc.openNpcDialog(json)")
 
 // ── First-person arm view model ───────────────────────────────────────────────

@@ -402,6 +402,7 @@ declare global {
     createHotbar(): void;
     createConsole(): void;
     createServerLog(): void;
+    highlightNpcModel(scene: unknown, model: unknown, on: boolean): void;
     tradeClosed(_tradeId: string, _reason: string): void;
     openTrade(tradeId: string, otherPlayer: string, _role: string): void;
     tradeUpdate(json: string);

@@ -29,7 +29,12 @@ interface Props {
 export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [] }: Props) {
   const attacks = Object.entries(attackMeta);
   const { startDrag, moveDrag, endDrag } = useAttackDrag((id) => damageTypeColor(attackMeta[id]?.damageType ?? ""));
-  const { startDrag: startMacroDrag, moveDrag: moveMacroDrag, endDrag: endMacroDrag, guardClick: guardMacroClick } = useAttackDrag(() => "#b45309", "macro");
+  const {
+    startDrag: startMacroDrag,
+    moveDrag: moveMacroDrag,
+    endDrag: endMacroDrag,
+    guardClick: guardMacroClick,
+  } = useAttackDrag(() => "#b45309", "macro");
   if (attacks.length === 0 && pinnedMacros.length === 0) return null;
 
   return (
@@ -64,7 +69,9 @@ export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [] }: Prop
           </div>
         </>
       )}
-      {attacks.length > 0 && <div className="text-white/40 font-mono text-[9px] mb-1 uppercase tracking-widest">Attacks</div>}
+      {attacks.length > 0 && (
+        <div className="text-white/40 font-mono text-[9px] mb-1 uppercase tracking-widest">Attacks</div>
+      )}
       <div className="flex gap-1 flex-wrap">
         {attacks.map(([id, meta]) => (
           <div

@@ -171,7 +171,8 @@ class NpcRegistryLoader(
         log.info(
             "NPC entries:\n{}",
             entries.entries.joinToString("\n") { (key, entry) ->
-                Yaml.default.encodeToString(NpcYamlEntry.serializer(), entry)
+                Yaml.default
+                    .encodeToString(NpcYamlEntry.serializer(), entry)
                     .lines()
                     .joinToString("\n") { "  $it" }
                     .let { "$key:\n$it" }

@@ -182,6 +182,12 @@ config:
     get_result: "{0} = {1}"
     set_ok: "Config updated: {0} = {1}"
     set_invalid: "Invalid value for {0}: {1}"
+resurect:
+  server:
+    not_found: "Player '{0}' not found."
+    not_downed: "{0} is not downed."
+    no_character: "{0} has no character data."
+    done: "Resurrected {0}."
 rpg:
   server:
     already_has_character: "You already have a character."

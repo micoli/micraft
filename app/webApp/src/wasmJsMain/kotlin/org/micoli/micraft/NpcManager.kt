@@ -8,6 +8,7 @@ class NpcManager(private val scene: JsAny) {
     private val npcPrevPos = mutableMapOf<String, Triple<Double, Double, Double>>()
     private val pendingNpcs = mutableListOf<NpcState>()
     private val npcNames = mutableMapOf<String, String>()
+    private var highlightedNpcId: String? = null
 
     fun handleSpawned(npc: NpcState) {
         npcNames[npc.id] = npc.name
@@ -67,6 +68,15 @@ class NpcManager(private val scene: JsAny) {
                 (kotlin.math.abs(x - prev.first) > 0.001 || kotlin.math.abs(z - prev.third) > 0.001)
         npcPrevPos[npc.id] = Triple(x, y, z)
         jsSetNpcTransform(model, x, y, z, npc.yaw, isWalking)
+    }
+
+    @OptIn(ExperimentalWasmJsInterop::class)
+    fun setHighlightTarget(id: String?) {
+        val prevModel = highlightedNpcId?.let { npcModels[it] }
+        if (prevModel != null) jsHighlightNpcModel(scene, prevModel, false)
+        highlightedNpcId = id
+        val nextModel = id?.let { npcModels[it] }
+        if (nextModel != null) jsHighlightNpcModel(scene, nextModel, true)
     }
 
     fun cycleNearestNpc(

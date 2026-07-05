@@ -4,7 +4,7 @@ class ChatChannelManager {
     private val customChannels = mutableSetOf<String>()
 
     companion object {
-        val BUILTIN = setOf("world", "around", "system", "game")
+        val BUILTIN = setOf("world", "around", "system", "game", "combat")
         val PROTECTED = setOf("system", "game")
     }
 

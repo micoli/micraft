@@ -40,6 +40,7 @@ const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   slot_9: ["Digit9"],
   slot_10: ["Digit0"],
   combat_target_cycle: ["KeyZ"],
+  combat_attack: ["KeyR"],
 };
 
 const MODIFIERS = new Set(["ctrl", "control", "shift", "alt", "option", "cmd", "command", "meta"]);
@@ -199,6 +200,7 @@ export function registerKeyboard(): Pick<
         if (b.minimap_zoom_out?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomOut?.();
         if (b.ingame_map?.some((k) => matchesEvent(k, e))) window.mc?.toggleBiomeMap?.();
         if (b.combat_target_cycle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_target_cycle");
+        if (b.combat_attack?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_attack");
         for (let s = 1; s <= 10; s++) {
           const key = `slot_${s}` as string;
           if (b[key]?.some((k: string) => matchesEvent(k, e))) window.mcState.events.push(key);

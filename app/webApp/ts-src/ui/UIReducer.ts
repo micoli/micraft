@@ -233,7 +233,11 @@ export function reducer(state: UiState, action: UiAction): UiState {
     case "disconnect_hide":
       return { ...state, disconnectMsg: null };
     case "chunk_loading_update":
-      return { ...state, gameReady: true, chunkLoading: { meshed: action.meshed, downloaded: action.downloaded, total: action.total } };
+      return {
+        ...state,
+        gameReady: true,
+        chunkLoading: { meshed: action.meshed, downloaded: action.downloaded, total: action.total },
+      };
     case "chunk_loading_hide":
       return { ...state, chunkLoading: null };
     case "layouts_sync":

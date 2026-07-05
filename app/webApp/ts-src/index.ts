@@ -10,6 +10,7 @@ import { registerKeyboard } from "./input/keyboard";
 import { registerMouse } from "./input/mouse";
 import { registerCamera } from "./camera/camera";
 import { registerTargeting } from "./targeting/targeting";
+import { registerCombatTargetHighlight } from "./targeting/targetHighlight";
 import { registerChunks } from "./chunks/chunkBuilder";
 import { registerPlayerModel } from "./player/playerModel";
 import { registerFPArms } from "./player/fpArms";
@@ -113,6 +114,7 @@ window.mc = {
   ...registerMouse(),
   ...registerCamera(),
   ...registerTargeting(),
+  ...registerCombatTargetHighlight(),
   ...registerChunks(),
   ...registerPlayerModel(),
   ...registerFPArms(),
@@ -246,6 +248,7 @@ window.mc = {
   tradeClosed: () => {},
   openTrade: () => {},
   tradeUpdate: () => {},
+  highlightNpcModel: () => {},
   combatTargetUpdate: () => {},
   healthUpdate: () => {},
   playerStatusUpdate: () => {},
