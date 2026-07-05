@@ -69,15 +69,21 @@ class NpcManager(private val scene: JsAny) {
         jsSetNpcTransform(model, x, y, z, npc.yaw, isWalking)
     }
 
-    fun cycleNearestNpc(playerX: Double, playerY: Double, playerZ: Double, currentId: String?): String? {
-        val sorted = npcPrevPos.entries
-            .sortedBy { (_, pos) ->
-                val dx = pos.first - playerX
-                val dy = pos.second - playerY
-                val dz = pos.third - playerZ
-                dx * dx + dy * dy + dz * dz
-            }
-            .map { it.key }
+    fun cycleNearestNpc(
+        playerX: Double,
+        playerY: Double,
+        playerZ: Double,
+        currentId: String?
+    ): String? {
+        val sorted =
+            npcPrevPos.entries
+                .sortedBy { (_, pos) ->
+                    val dx = pos.first - playerX
+                    val dy = pos.second - playerY
+                    val dz = pos.third - playerZ
+                    dx * dx + dy * dy + dz * dz
+                }
+                .map { it.key }
         if (sorted.isEmpty()) return null
         if (currentId == null) return sorted.first()
         val idx = sorted.indexOf(currentId)

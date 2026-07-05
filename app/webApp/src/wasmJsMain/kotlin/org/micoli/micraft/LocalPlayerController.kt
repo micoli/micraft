@@ -457,7 +457,8 @@ class LocalPlayerController(
                 event == "slot_9" -> selectSlot(8)
                 event == "slot_10" -> selectSlot(9)
                 event == "combat_target_cycle" -> {
-                    val next = npcManager.cycleNearestNpc(predX, predY, predZ, currentCombatTargetId)
+                    val next =
+                        npcManager.cycleNearestNpc(predX, predY, predZ, currentCombatTargetId)
                     currentCombatTargetId = next
                     outMessages.trySend(ClientMessage.SetCombatTarget(next, isNpc = true))
                 }

@@ -1,4 +1,4 @@
-import { MutableRefObject } from "react";
+import { MutableRefObject, useEffect, useRef } from "react";
 import { cn } from "../primitives/cn";
 import { useConsole } from "../hooks/useConsole";
 
@@ -20,6 +20,7 @@ interface Props {
 }
 
 export function Console({ open, onClose, submittedRef, stateRef, initialValueRef, layoutStyle }: Props) {
+  const listRef = useRef<HTMLDivElement>(null);
   const { inputRef, suggestions, selIdx, handleKeyDown, handleInput, applyCompletion } = useConsole({
     open,
     onClose,
@@ -27,6 +28,12 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
     stateRef,
     initialValueRef,
   });
+
+  useEffect(() => {
+    if (selIdx < 0 || !listRef.current) return;
+    const item = listRef.current.children[selIdx] as HTMLElement | undefined;
+    item?.scrollIntoView({ block: "nearest" });
+  }, [selIdx]);
 
   if (!open) return null;
 
@@ -41,7 +48,7 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
       style={layoutStyle && Object.keys(layoutStyle).length > 0 ? { ...layoutStyle, height: undefined } : undefined}
     >
       {suggestions.length > 0 && (
-        <div className="absolute bottom-full left-0 right-0 bg-black/85 rounded-t border-b border-white/15 max-h-[40vh] overflow-y-auto">
+        <div ref={listRef} className="absolute bottom-full left-0 right-0 bg-black/85 rounded-t border-b border-white/15 max-h-[40vh] overflow-y-auto">
           {suggestions.map((s, i) => (
             <div
               key={s}
