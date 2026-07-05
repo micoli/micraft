@@ -15,6 +15,8 @@ import org.micoli.micraft.ui.HudData
 import org.micoli.micraft.ui.McUiState
 import org.micoli.micraft.world.*
 
+private fun mcRunMacro(name: String): Unit = js("window.mcRunMacro(name)")
+
 private const val PRED_DT = 16.0 / 1000.0
 private const val FLY_VERTICAL_SPEED = 8f
 private const val SNAP_THRESHOLD = 0.5
@@ -221,6 +223,15 @@ class LocalPlayerController(
         chunkManager.applyBiomeGrassTint(state.biome)
     }
 
+    fun activateSlot(index: Int) {
+        val slot = shortcutBar.getOrNull(index)
+        if (slot is ShortcutSlot.Macro) {
+            mcRunMacro(slot.macroName)
+        } else {
+            selectSlot(index)
+        }
+    }
+
     fun selectSlot(index: Int) {
         selectedSlot = index
         hasPlacedThisClick = false
@@ -238,6 +249,7 @@ class LocalPlayerController(
                 when (slot) {
                     is ShortcutSlot.Item -> """{"kind":"item","id":"${slot.itemType.id}"}"""
                     is ShortcutSlot.Attack -> """{"kind":"attack","id":"${slot.attackId}"}"""
+                    is ShortcutSlot.Macro -> """{"kind":"macro","id":"${slot.macroName}"}"""
                     null -> "null"
                 }
             }
@@ -452,16 +464,16 @@ class LocalPlayerController(
                 event == "undo" -> outMessages.trySend(ClientMessage.Command("/undo 1"))
                 event == "fly_toggle" -> pendingFlyToggle = true
                 event == "auto_forward" -> autoAdvance = !autoAdvance
-                event == "slot_1" -> selectSlot(0)
-                event == "slot_2" -> selectSlot(1)
-                event == "slot_3" -> selectSlot(2)
-                event == "slot_4" -> selectSlot(3)
-                event == "slot_5" -> selectSlot(4)
-                event == "slot_6" -> selectSlot(5)
-                event == "slot_7" -> selectSlot(6)
-                event == "slot_8" -> selectSlot(7)
-                event == "slot_9" -> selectSlot(8)
-                event == "slot_10" -> selectSlot(9)
+                event == "slot_1" -> activateSlot(0)
+                event == "slot_2" -> activateSlot(1)
+                event == "slot_3" -> activateSlot(2)
+                event == "slot_4" -> activateSlot(3)
+                event == "slot_5" -> activateSlot(4)
+                event == "slot_6" -> activateSlot(5)
+                event == "slot_7" -> activateSlot(6)
+                event == "slot_8" -> activateSlot(7)
+                event == "slot_9" -> activateSlot(8)
+                event == "slot_10" -> activateSlot(9)
                 event == "combat_target_cycle" -> {
                     val next =
                         npcManager.cycleNearestNpc(predX, predY, predZ, currentCombatTargetId)
@@ -470,6 +482,7 @@ class LocalPlayerController(
                 }
                 event.startsWith("cmd:") ->
                     outMessages.trySend(ClientMessage.Command(event.removePrefix("cmd:")))
+                event.startsWith("macro:") -> mcRunMacro(event.removePrefix("macro:"))
             }
         }
 
@@ -506,6 +519,7 @@ class LocalPlayerController(
                                     .find { it.id == id }
                                     ?.let { ShortcutSlot.Item(it) }
                             kind == "attack" && id != null -> ShortcutSlot.Attack(id)
+                            kind == "macro" && id != null -> ShortcutSlot.Macro(id)
                             else -> null
                         }
                     shortcutBar[slotMatch] = content

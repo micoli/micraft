@@ -97,6 +97,11 @@ class BlockPlacer(
                     log.debug("ShortcutBarSet rejected: unknown attack {}", content.attackId)
                     return
                 }
+            is ShortcutSlot.Macro ->
+                if (content.macroName.isBlank()) {
+                    log.debug("ShortcutBarSet rejected: blank macro name")
+                    return
+                }
             null -> {}
         }
 

@@ -121,4 +121,5 @@ export interface PreferencesData {
   commands: CommandInfo[];
   keybindings: Record<string, string[]>;
   customCommands: Record<string, string[]>;
+  macros: Record<string, string>;
 }

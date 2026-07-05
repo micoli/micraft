@@ -21,6 +21,7 @@ import { registerWeather } from "./weather/weather";
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import { GameUI } from "./ui/GameUI";
+import { setWidgetRegistry } from "./ui/layout/LayoutEngine";
 import { initFaviconAnimator, setFaviconAnimated } from "./favicon/faviconAnimator";
 
 // ── Initialize shared runtime state ──────────────────────────────────────────
@@ -36,6 +37,7 @@ window.mcState = {
   lastMouseMove: 0,
   bindings: {},
   customCommands: {},
+  macros: {},
   modalOpen: false,
   // Models
   playerBbmodels: {},
@@ -255,6 +257,16 @@ window.mc = {
 registerAllPlugins();
 registerAutoUpdate();
 
-// Mount React UI root
-const uiRoot = document.getElementById("mc-ui");
-if (uiRoot) createRoot(uiRoot).render(createElement(GameUI));
+async function mountUI() {
+  const uiRoot = document.getElementById("mc-ui");
+  if (!uiRoot) return;
+  try {
+    const resp = await fetch("/api/layout/registry");
+    setWidgetRegistry(await resp.json());
+  } catch {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return mountUI();
+  }
+  createRoot(uiRoot).render(createElement(GameUI));
+}
+mountUI();

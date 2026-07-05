@@ -8,9 +8,10 @@ interface PauseMenuProps {
   onDisconnect: () => void;
   onPreferences: () => void;
   onCharacter: () => void;
+  onMacros: () => void;
 }
 
-export function PauseMenu({ open, onClose, onDisconnect, onPreferences, onCharacter }: PauseMenuProps) {
+export function PauseMenu({ open, onClose, onDisconnect, onPreferences, onCharacter, onMacros }: PauseMenuProps) {
   const prefsButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (open) setTimeout(() => prefsButtonRef.current?.focus(), 50);
@@ -31,6 +32,9 @@ export function PauseMenu({ open, onClose, onDisconnect, onPreferences, onCharac
         <DialogTitle className="text-center font-mono text-xl tracking-[0.25em] mb-2">PAUSE</DialogTitle>
         <Button ref={prefsButtonRef} variant="secondary" onClick={onPreferences} className="font-mono">
           Preferences
+        </Button>
+        <Button variant="secondary" onClick={onMacros} className="font-mono">
+          Macros
         </Button>
         <Button variant="secondary" onClick={onCharacter} className="font-mono">
           Character

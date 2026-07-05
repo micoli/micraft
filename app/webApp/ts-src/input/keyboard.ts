@@ -146,6 +146,25 @@ export function registerKeyboard(): Pick<
 
     setupKeyboard: (): void => {
       window.mcState.bindings = MC_DEFAULT_BINDINGS;
+      window.mcState.macros = {};
+
+      window.mcRunMacro = (name: string): void => {
+        const code = window.mcState.macros[name];
+        if (!code) return;
+        const mcSend = (cmd: string) => {
+          if (window.mcState.events !== undefined) {
+            window.mcState.events.push("cmd:" + cmd);
+          }
+        };
+        const mcAction = (action: string) => {
+          window.mcState.events.push(action);
+        };
+        try {
+          new Function("mcSend", "mcAction", code)(mcSend, mcAction);
+        } catch (err) {
+          console.error("[macro:" + name + "]", err);
+        }
+      };
 
       window.addEventListener("keydown", (e: KeyboardEvent) => {
         const tag = document.activeElement?.tagName;
@@ -188,7 +207,7 @@ export function registerKeyboard(): Pick<
 
         for (const [cmdText, keys] of Object.entries(window.mcState.customCommands || {})) {
           if (keys.some((k) => (isSequenceBinding(k) ? matchesSequence(k, e) : matchesEvent(k, e)))) {
-            window.mcState.events.push("cmd:" + cmdText);
+            window.mcState.events.push(cmdText.startsWith("macro:") ? cmdText : "cmd:" + cmdText);
             e.preventDefault();
           }
         }

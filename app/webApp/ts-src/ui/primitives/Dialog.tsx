@@ -29,13 +29,18 @@ interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof Radix
 
 function DialogContent({ className, children, movable = false, ...props }: DialogContentProps) {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isDraggingWindow, setIsDraggingWindow] = useState(false);
   const dragStart = useRef<{ mx: number; my: number; ox: number; oy: number } | null>(null);
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (!movable) return;
-      e.preventDefault();
+      const target = e.target as HTMLElement;
+      const tag = target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT" || tag === "A") return;
+      if (target.closest("[draggable]")) return;
       dragStart.current = { mx: e.clientX, my: e.clientY, ox: offset.x, oy: offset.y };
+      setIsDraggingWindow(true);
 
       const onMove = (ev: MouseEvent) => {
         if (!dragStart.current) return;
@@ -46,6 +51,7 @@ function DialogContent({ className, children, movable = false, ...props }: Dialo
       };
       const onUp = () => {
         dragStart.current = null;
+        setIsDraggingWindow(false);
         window.removeEventListener("mousemove", onMove);
         window.removeEventListener("mouseup", onUp);
       };
@@ -66,7 +72,7 @@ function DialogContent({ className, children, movable = false, ...props }: Dialo
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-          movable && "cursor-move select-none",
+          movable && isDraggingWindow && "select-none cursor-move",
           className,
         )}
         style={movable ? { translate: `calc(-50% + ${offset.x}px) calc(-50% + ${offset.y}px)` } : undefined}

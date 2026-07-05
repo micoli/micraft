@@ -77,6 +77,7 @@ sealed class ClientMessage {
         val customCommands: Map<String, List<String>> = emptyMap(),
         val animatedFavicon: Boolean = true,
         val chunkDebugVisible: Boolean = false,
+        val macros: Map<String, String> = emptyMap(),
     ) : ClientMessage()
 
     @ProtoId(13) @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()

@@ -9,7 +9,10 @@ import {
   RecipeDefinition,
 } from "./types";
 
-export type ShortcutSlot = { kind: "item"; id: string } | { kind: "attack"; id: string };
+export type ShortcutSlot =
+  | { kind: "item"; id: string }
+  | { kind: "attack"; id: string }
+  | { kind: "macro"; id: string };
 export type AttackMeta = { damageType: string; manaCost: number; rageCost: number; cooldownMs: number };
 
 export interface UiState {
@@ -44,6 +47,7 @@ export interface UiState {
   preferencesOpen: boolean;
   preferences: PreferencesData | null;
   pauseMenuOpen: boolean;
+  macroEditorOpen: boolean;
   characterOpen: boolean;
   characterCreationOpen: boolean;
   characterSyncData: CharacterSyncData | null;
@@ -122,9 +126,12 @@ export type UiAction =
       chunkDebugVisible: boolean;
       keybindings: Record<string, string[]>;
       customCommands: Record<string, string[]>;
+      macros?: Record<string, string>;
     }
   | { type: "pause_menu_show" }
   | { type: "pause_menu_hide" }
+  | { type: "macro_editor_open" }
+  | { type: "macro_editor_close" }
   | { type: "character_open" }
   | { type: "character_close" }
   | { type: "character_creation_show" }
@@ -267,6 +274,7 @@ export function reducer(state: UiState, action: UiAction): UiState {
             chunkDebugVisible: action.chunkDebugVisible,
             keybindings: action.keybindings,
             customCommands: action.customCommands,
+            ...(action.macros !== undefined ? { macros: action.macros } : {}),
           }
         : state.preferences;
       return { ...state, preferences: prefs, preferencesOpen: false };
@@ -275,6 +283,10 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, pauseMenuOpen: true };
     case "pause_menu_hide":
       return { ...state, pauseMenuOpen: false };
+    case "macro_editor_open":
+      return { ...state, macroEditorOpen: true };
+    case "macro_editor_close":
+      return { ...state, macroEditorOpen: false };
     case "character_open":
       return { ...state, characterOpen: true };
     case "character_close":

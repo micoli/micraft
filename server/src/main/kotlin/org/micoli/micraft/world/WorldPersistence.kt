@@ -83,6 +83,8 @@ class WorldPersistence(val worldDir: Path) {
     private val keybindingsSerializer =
         MapSerializer(String.serializer(), ListSerializer(String.serializer()))
 
+    private val macrosSerializer = MapSerializer(String.serializer(), String.serializer())
+
     fun loadPlayerKeyBindings(name: String): Map<String, List<String>> {
         val file = playersDir.resolve("${name.sanitize()}-keybindings.json")
         if (!file.exists()) {
@@ -125,6 +127,26 @@ class WorldPersistence(val worldDir: Path) {
             file.writeText(playerJson.encodeToString(keybindingsSerializer, commands))
         } catch (e: IOException) {
             log.warn("Failed to save custom commands for {}: {}", name, e.message)
+        }
+    }
+
+    fun loadPlayerMacros(name: String): Map<String, String> {
+        val file = playersDir.resolve("${name.sanitize()}-macros.json")
+        if (!file.exists()) return emptyMap()
+        return try {
+            playerJson.decodeFromString(macrosSerializer, file.readText())
+        } catch (e: Exception) {
+            log.warn("Failed to load macros for {}: {}", name, e.message)
+            emptyMap()
+        }
+    }
+
+    fun savePlayerMacros(name: String, macros: Map<String, String>) {
+        val file = playersDir.resolve("${name.sanitize()}-macros.json")
+        try {
+            file.writeText(playerJson.encodeToString(macrosSerializer, macros))
+        } catch (e: IOException) {
+            log.warn("Failed to save macros for {}: {}", name, e.message)
         }
     }
 

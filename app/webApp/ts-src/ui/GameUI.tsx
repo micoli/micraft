@@ -13,6 +13,7 @@ import { Notifications } from "./game/Notifications";
 import { LoginOverlay } from "./overlays/LoginOverlay";
 import { DisconnectOverlay } from "./overlays/DisconnectOverlay";
 import { PauseMenu } from "./overlays/PauseMenu";
+import { MacroEditor } from "./overlays/MacroEditor";
 import { LayoutEditor } from "./layout/LayoutEditor";
 import { defaultLayout, getWidget, resolveActiveLayout, widgetStyle, WIDGET_REGISTRY } from "./layout/LayoutEngine";
 import { CodexModal } from "../codex/CodexModal";
@@ -69,6 +70,7 @@ const initial: UiState = {
   preferencesOpen: false,
   preferences: null,
   pauseMenuOpen: false,
+  macroEditorOpen: false,
   characterOpen: false,
   characterCreationOpen: false,
   characterSyncData: null,
@@ -206,7 +208,12 @@ export function GameUI() {
   }, [state.tradeOpen]);
 
   useEffect(() => {
-    const anyOpen = state.characterOpen || state.biomeMapVisible || state.preferencesOpen || state.pauseMenuOpen;
+    const anyOpen =
+      state.characterOpen ||
+      state.biomeMapVisible ||
+      state.preferencesOpen ||
+      state.pauseMenuOpen ||
+      state.macroEditorOpen;
     if (anyOpen) {
       overlayWasOpen.current = true;
       document.exitPointerLock();
@@ -215,7 +222,7 @@ export function GameUI() {
       const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
       (canvas?.requestPointerLock() as unknown as Promise<void>)?.catch?.(() => {});
     }
-  }, [state.characterOpen, state.biomeMapVisible, state.preferencesOpen, state.pauseMenuOpen]);
+  }, [state.characterOpen, state.biomeMapVisible, state.preferencesOpen, state.pauseMenuOpen, state.macroEditorOpen]);
 
   useEffect(() => {
     hudDataRef.current = state.hud;
@@ -229,8 +236,9 @@ export function GameUI() {
         state.preferencesOpen ||
         state.codexOpen ||
         state.craftOpen ||
-        state.characterOpen;
-  }, [state.chunkLoading, state.preferencesOpen, state.codexOpen, state.craftOpen, state.characterOpen]);
+        state.characterOpen ||
+        state.macroEditorOpen;
+  }, [state.chunkLoading, state.preferencesOpen, state.codexOpen, state.craftOpen, state.characterOpen, state.macroEditorOpen]);
 
   // Auto-hide server log after 15s of no new messages
   useEffect(() => {
@@ -352,6 +360,7 @@ export function GameUI() {
       const slots = raw.slots.map((s): import("./UIReducer").ShortcutSlot | null => {
         if (!s) return null;
         if (s.kind === "attack") return { kind: "attack", id: s.id };
+        if (s.kind === "macro") return { kind: "macro", id: s.id };
         return { kind: "item", id: s.id };
       });
       dispatch({ type: "shortcut_bar_update", data: { slots, selected: raw.selected } });
@@ -427,6 +436,7 @@ export function GameUI() {
         }
         if (window.mcState) {
           window.mcState.customCommands = data.customCommands || {};
+          window.mcState.macros = data.macros || {};
         }
         if (data.commands?.length && window.mc.registerServerCompleters) {
           const disabledIds = new Set<string>(data.disabledCommands || []);
@@ -616,6 +626,37 @@ export function GameUI() {
     pendingPreferencesUpdateRef.current = JSON.stringify(payload);
   };
 
+  const handleMacrosSave = (macros: Record<string, string>, customCommands: Record<string, string[]>) => {
+    const prefs = state.preferences;
+    if (!prefs) return;
+    dispatch({
+      type: "preferences_save",
+      subscribedChannels: prefs.subscribedChannels,
+      disabledCommands: prefs.disabledCommands,
+      shadersEnabled: prefs.shadersEnabled,
+      animatedFavicon: prefs.animatedFavicon ?? true,
+      chunkDebugVisible: prefs.chunkDebugVisible ?? false,
+      keybindings: prefs.keybindings || {},
+      customCommands,
+      macros,
+    });
+    if (window.mcState) {
+      window.mcState.macros = macros;
+      window.mcState.customCommands = customCommands;
+    }
+    pendingPreferencesUpdateRef.current = JSON.stringify({
+      subscribedChannels: prefs.subscribedChannels,
+      disabledCommands: prefs.disabledCommands,
+      shadersEnabled: prefs.shadersEnabled,
+      animatedFavicon: prefs.animatedFavicon ?? true,
+      chunkDebugVisible: prefs.chunkDebugVisible ?? false,
+      keybindings: prefs.keybindings || {},
+      customCommands,
+      macros,
+    });
+    dispatch({ type: "macro_editor_close" });
+  };
+
   const handleLayoutSave = (layouts: GameLayout[], newActiveLayout: string) => {
     dispatch({ type: "layout_editor_save", layouts, activeLayout: newActiveLayout });
     pendingLayoutUpdateRef.current = JSON.stringify({ layouts, activeLayout: newActiveLayout });
@@ -695,12 +736,17 @@ export function GameUI() {
             attackMeta={state.attackMeta}
             slots={state.shortcutBar}
             selectedSlot={state.selectedSlot}
+            macros={state.preferences?.macros ?? {}}
             onSlotDrop={(slot, content) => {
               pendingSlotUpdateRef.current.push(JSON.stringify({ slot, content: content ?? null }));
             }}
             layoutStyle={widgetStyle(activeLayout, "SHORTCUT_BAR")}
           />
-          <AttackPanel attackMeta={state.attackMeta} layoutStyle={widgetStyle(activeLayout, "ATTACK_PANEL")} />
+          <AttackPanel
+            attackMeta={state.attackMeta}
+            layoutStyle={widgetStyle(activeLayout, "ATTACK_PANEL")}
+            pinnedMacros={state.preferences?.customCommands?.["__pinned_macros__"] ?? []}
+          />
           <Inventory
             inventory={state.inventory}
             itemMeta={state.itemMeta}
@@ -812,6 +858,10 @@ export function GameUI() {
               dispatch({ type: "pause_menu_hide" });
               dispatch({ type: "preferences_show" });
             }}
+            onMacros={() => {
+              dispatch({ type: "pause_menu_hide" });
+              dispatch({ type: "macro_editor_open" });
+            }}
             onCharacter={() => {
               dispatch({ type: "pause_menu_hide" });
               dispatch({ type: "character_open" });
@@ -820,6 +870,13 @@ export function GameUI() {
               consoleSubmittedRef.current = "/disconnect";
               dispatch({ type: "pause_menu_hide" });
             }}
+          />
+          <MacroEditor
+            open={state.macroEditorOpen}
+            macros={state.preferences?.macros ?? {}}
+            customCommands={state.preferences?.customCommands ?? {}}
+            onSave={handleMacrosSave}
+            onClose={() => dispatch({ type: "macro_editor_close" })}
           />
         </>
       )}

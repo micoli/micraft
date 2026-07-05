@@ -1,17 +1,24 @@
 import { useRef } from "react";
 
-export function useAttackDrag(color: (id: string) => string) {
+export function useAttackDrag(color: (id: string) => string, kind: "attack" | "macro" = "attack") {
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const lastSlotRef = useRef<Element | null>(null);
   const dragIdRef = useRef<string | null>(null);
+  const didMoveRef = useRef(false);
 
   function startDrag(e: React.PointerEvent<HTMLDivElement>, id: string) {
     e.currentTarget.setPointerCapture(e.pointerId);
     dragIdRef.current = id;
+    didMoveRef.current = false;
     const ghost = document.createElement("div");
     ghost.style.cssText = `position:fixed;pointer-events:none;z-index:9999;width:52px;height:52px;background:rgba(0,0,0,0.9);border:2px solid rgba(255,255,255,0.8);border-radius:4px;display:flex;align-items:center;justify-content:center;left:${e.clientX - 26}px;top:${e.clientY - 26}px;opacity:0.85;cursor:grabbing;`;
     const inner = document.createElement("div");
-    inner.style.cssText = `width:26px;height:26px;border-radius:50%;background:${color(id)};box-shadow:inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.2);`;
+    if (kind === "macro") {
+      inner.style.cssText = `font-size:22px;line-height:1;`;
+      inner.textContent = "⚡";
+    } else {
+      inner.style.cssText = `width:26px;height:26px;border-radius:50%;background:${color(id)};box-shadow:inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.2);`;
+    }
     ghost.appendChild(inner);
     document.body.appendChild(ghost);
     ghostRef.current = ghost;
@@ -19,6 +26,7 @@ export function useAttackDrag(color: (id: string) => string) {
 
   function moveDrag(e: React.PointerEvent<HTMLDivElement>) {
     if (!ghostRef.current) return;
+    didMoveRef.current = true;
     ghostRef.current.style.left = `${e.clientX - 26}px`;
     ghostRef.current.style.top = `${e.clientY - 26}px`;
     const slotEl = document
@@ -49,9 +57,14 @@ export function useAttackDrag(color: (id: string) => string) {
       | undefined;
     if (slotEl) {
       const slotIdx = parseInt(slotEl.getAttribute("data-mc-slot")!);
-      if (slotIdx > 0) window.mcState.slotDrop?.(slotIdx, { kind: "attack", id });
+      if (slotIdx > 0) window.mcState.slotDrop?.(slotIdx, { kind, id });
     }
   }
 
-  return { startDrag, moveDrag, endDrag };
+  function guardClick(cb: () => void) {
+    if (didMoveRef.current) { didMoveRef.current = false; return; }
+    cb();
+  }
+
+  return { startDrag, moveDrag, endDrag, guardClick };
 }

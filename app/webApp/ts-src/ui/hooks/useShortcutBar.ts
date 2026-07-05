@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ShortcutSlot } from "../UIReducer";
 
 export function useShortcutBar(
@@ -6,11 +6,36 @@ export function useShortcutBar(
   slots: (ShortcutSlot | null)[],
 ) {
   const [dragOver, setDragOver] = useState<number | null>(null);
+  const [pressedSlot, setPressedSlot] = useState<number | null>(null);
+  const slotsRef = useRef(slots);
+  slotsRef.current = slots;
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const bindings = window.mcState?.bindings;
+      if (!bindings) return;
+      for (let i = 0; i < 10; i++) {
+        const action = `slot_${i + 1}`;
+        const keys: string[] = bindings[action] ?? [];
+        if (keys.some((k) => k === e.code || k === e.key)) {
+          const slot = slotsRef.current[i];
+          if (slot?.kind === "attack" || slot?.kind === "macro") {
+            setPressedSlot(i);
+            setTimeout(() => setPressedSlot(null), 150);
+          }
+          break;
+        }
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
   const draggingSlot = useRef<number | null>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const lastSlotRef = useRef<HTMLElement | null>(null);
 
   function startSlotDrag(e: React.PointerEvent<HTMLDivElement>, slotIdx: number) {
+    if (!e.altKey) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     draggingSlot.current = slotIdx;
     const ghost = document.createElement("div");
@@ -86,6 +111,11 @@ export function useShortcutBar(
     e.preventDefault();
     e.stopPropagation();
     setDragOver(null);
+    const macroId = e.dataTransfer.getData("application/x-mc-macro");
+    if (macroId) {
+      onSlotDrop(slotIdx, { kind: "macro", id: macroId });
+      return;
+    }
     const attackId = e.dataTransfer.getData("application/x-mc-attack");
     if (attackId) {
       onSlotDrop(slotIdx, { kind: "attack", id: attackId });
@@ -93,6 +123,18 @@ export function useShortcutBar(
     }
     const itemId = e.dataTransfer.getData("text/plain");
     onSlotDrop(slotIdx, itemId ? { kind: "item", id: itemId } : null);
+  }
+
+  function handleSlotClick(slotIdx: number) {
+    const slot = slots[slotIdx];
+    if (!slot) return;
+    setPressedSlot(slotIdx);
+    setTimeout(() => setPressedSlot(null), 150);
+    if (slot.kind === "macro") {
+      window.mcRunMacro?.(slot.id);
+    } else if (slot.kind === "attack") {
+      window.mcState?.events?.push(`slot_${slotIdx + 1}`);
+    }
   }
 
   function handleContextMenu(e: React.MouseEvent, slotIdx: number) {
@@ -103,6 +145,7 @@ export function useShortcutBar(
 
   return {
     dragOver,
+    pressedSlot,
     startSlotDrag,
     moveSlotDrag,
     endSlotDrag,
@@ -110,5 +153,6 @@ export function useShortcutBar(
     handleDragLeave,
     handleDrop,
     handleContextMenu,
+    handleSlotClick,
   };
 }

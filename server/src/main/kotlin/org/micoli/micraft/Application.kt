@@ -34,6 +34,8 @@ import org.micoli.micraft.http.metricsRoutes
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.ui.WIDGET_REGISTRY
+import org.micoli.micraft.ui.WidgetRegistryEntry
 import org.micoli.micraft.world.ArmorDefinition
 import org.micoli.micraft.world.ArmorRegistryLoader
 import org.micoli.micraft.world.BiomeConfig
@@ -281,6 +283,12 @@ fun Application.module() {
             val keys = gameLoop.i18n.clientKeys(locale)
             val serializer = MapSerializer(String.serializer(), String.serializer())
             call.respondText(Json.encodeToString(serializer, keys), ContentType.Application.Json)
+        }
+        get("/api/layout/registry") {
+            call.respondText(
+                Json.encodeToString(
+                    ListSerializer(WidgetRegistryEntry.serializer()), WIDGET_REGISTRY),
+                ContentType.Application.Json)
         }
         get("/api/items/meta") {
             val serializer =

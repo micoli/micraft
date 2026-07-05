@@ -8,4 +8,6 @@ sealed class ShortcutSlot {
     @Serializable data class Item(val itemType: ItemType) : ShortcutSlot()
 
     @Serializable data class Attack(val attackId: String) : ShortcutSlot()
+
+    @Serializable data class Macro(val macroName: String) : ShortcutSlot()
 }

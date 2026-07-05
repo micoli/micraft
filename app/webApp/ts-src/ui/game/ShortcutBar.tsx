@@ -11,11 +11,22 @@ interface Props {
   selectedSlot: number;
   onSlotDrop: (slot: number, content: ShortcutSlot | null) => void;
   layoutStyle?: React.CSSProperties;
+  macros?: Record<string, string>;
 }
 
-export function ShortcutBar({ inventory, itemMeta, attackMeta, slots, selectedSlot, onSlotDrop, layoutStyle }: Props) {
+export function ShortcutBar({
+  inventory,
+  itemMeta,
+  attackMeta,
+  slots,
+  selectedSlot,
+  onSlotDrop,
+  layoutStyle,
+  macros,
+}: Props) {
   const {
     dragOver,
+    pressedSlot,
     startSlotDrag,
     moveSlotDrag,
     endSlotDrag,
@@ -23,6 +34,7 @@ export function ShortcutBar({ inventory, itemMeta, attackMeta, slots, selectedSl
     handleDragLeave,
     handleDrop,
     handleContextMenu,
+    handleSlotClick,
   } = useShortcutBar(onSlotDrop, slots);
 
   return (
@@ -45,7 +57,9 @@ export function ShortcutBar({ inventory, itemMeta, attackMeta, slots, selectedSl
         const isSelected = idx === selectedSlot;
         const isHand = idx === 0;
         const isDropTarget = dragOver === idx;
+        const isPressed = pressedSlot === idx;
         const isAttack = slot?.kind === "attack";
+        const isMacro = slot?.kind === "macro";
         const attackDef = isAttack ? attackMeta[slot!.id] : null;
         const itemMeta_ = slot?.kind === "item" ? itemMeta[slot.id] : null;
         const count = slot?.kind === "item" ? (inventory[slot.id] ?? 0) : 0;
@@ -58,15 +72,23 @@ export function ShortcutBar({ inventory, itemMeta, attackMeta, slots, selectedSl
             onPointerMove={!isHand && slot ? moveSlotDrag : undefined}
             onPointerUp={!isHand && slot ? endSlotDrag : undefined}
             onPointerCancel={!isHand && slot ? endSlotDrag : undefined}
+            onClick={!isHand && (isAttack || isMacro) ? () => handleSlotClick(idx) : undefined}
             onDragOver={(e) => handleDragOver(e, idx)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, idx)}
             onContextMenu={(e) => handleContextMenu(e, idx)}
             className={cn(
-              "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 transition-colors touch-none",
+              "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 transition-all touch-none",
               isDropTarget ? "bg-white/20" : "bg-black/72",
               isSelected ? "border-yellow-400/90 shadow-[0_0_6px_rgba(255,215,0,0.5)]" : "border-white/35",
-              isHand ? "cursor-default" : slot ? "cursor-grab" : "cursor-pointer",
+              isHand
+                ? "cursor-default"
+                : isAttack || isMacro
+                  ? "cursor-pointer"
+                  : slot
+                    ? "cursor-grab"
+                    : "cursor-pointer",
+              isPressed && "scale-90 brightness-150",
             )}
           >
             <div className="absolute top-0.5 left-0.5 text-white/45 font-mono text-[8px]">
@@ -75,6 +97,16 @@ export function ShortcutBar({ inventory, itemMeta, attackMeta, slots, selectedSl
 
             {isHand ? (
               <div className="text-white/60 font-mono text-base">✋</div>
+            ) : isMacro ? (
+              <>
+                <div className="text-amber-400/80 font-mono text-base">⚡</div>
+                <div
+                  className="text-amber-300/70 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate"
+                  title={slot!.id}
+                >
+                  {slot!.id}
+                </div>
+              </>
             ) : isAttack ? (
               <>
                 <div

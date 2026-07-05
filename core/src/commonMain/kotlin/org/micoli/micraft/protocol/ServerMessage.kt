@@ -164,6 +164,7 @@ sealed class ServerMessage {
         val customCommands: Map<String, List<String>> = emptyMap(),
         val animatedFavicon: Boolean = true,
         val chunkDebugVisible: Boolean = false,
+        val macros: Map<String, String> = emptyMap(),
     ) : ServerMessage()
 
     @ProtoId(25)

@@ -211,4 +211,24 @@ class BlockPlacerTest {
         assertEquals(null, session.shortcutBar[1])
         assertTrue(session.sent.isEmpty())
     }
+
+    @Test
+    fun shortcutBarSet_macro_validName_accepted() = runBlocking {
+        val placer = placer()
+        val session = testSession()
+        placer.handleShortcutBarSet(
+            session, ClientMessage.ShortcutBarSet(1, ShortcutSlot.Macro("myMacro")))
+        assertEquals(ShortcutSlot.Macro("myMacro"), session.shortcutBar[1])
+        assertTrue(session.sent.any { it is ServerMessage.ShortcutBarUpdate })
+    }
+
+    @Test
+    fun shortcutBarSet_macro_blankName_rejected() = runBlocking {
+        val placer = placer()
+        val session = testSession()
+        placer.handleShortcutBarSet(
+            session, ClientMessage.ShortcutBarSet(1, ShortcutSlot.Macro("   ")))
+        assertEquals(null, session.shortcutBar[1])
+        assertTrue(session.sent.isEmpty())
+    }
 }

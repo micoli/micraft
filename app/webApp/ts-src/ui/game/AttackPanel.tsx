@@ -23,12 +23,14 @@ export function damageTypeColor(damageType: string): string {
 interface Props {
   attackMeta: Record<string, AttackMeta>;
   layoutStyle?: React.CSSProperties;
+  pinnedMacros?: string[];
 }
 
-export function AttackPanel({ attackMeta, layoutStyle }: Props) {
+export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [] }: Props) {
   const attacks = Object.entries(attackMeta);
   const { startDrag, moveDrag, endDrag } = useAttackDrag((id) => damageTypeColor(attackMeta[id]?.damageType ?? ""));
-  if (attacks.length === 0) return null;
+  const { startDrag: startMacroDrag, moveDrag: moveMacroDrag, endDrag: endMacroDrag, guardClick: guardMacroClick } = useAttackDrag(() => "#b45309", "macro");
+  if (attacks.length === 0 && pinnedMacros.length === 0) return null;
 
   return (
     <div
@@ -38,7 +40,31 @@ export function AttackPanel({ attackMeta, layoutStyle }: Props) {
       )}
       style={layoutStyle}
     >
-      <div className="text-white/40 font-mono text-[9px] mb-1 uppercase tracking-widest">Attacks</div>
+      {pinnedMacros.length > 0 && (
+        <>
+          <div className="text-white/40 font-mono text-[9px] mb-1 uppercase tracking-widest">Macros</div>
+          <div className="flex gap-1 flex-wrap mb-2">
+            {pinnedMacros.map((name) => (
+              <div
+                key={name}
+                onClick={() => guardMacroClick(() => window.mcRunMacro?.(name))}
+                onPointerDown={(e) => startMacroDrag(e, name)}
+                onPointerMove={moveMacroDrag}
+                onPointerUp={endMacroDrag}
+                onPointerCancel={endMacroDrag}
+                title={name}
+                className="w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-amber-400/40 bg-black/72 cursor-grab hover:border-amber-400/80 transition-colors touch-none"
+              >
+                <div className="text-amber-400/80 font-mono text-base">⚡</div>
+                <div className="text-amber-300/70 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">
+                  {name}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      {attacks.length > 0 && <div className="text-white/40 font-mono text-[9px] mb-1 uppercase tracking-widest">Attacks</div>}
       <div className="flex gap-1 flex-wrap">
         {attacks.map(([id, meta]) => (
           <div

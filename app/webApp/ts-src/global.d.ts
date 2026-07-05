@@ -151,6 +151,7 @@ declare global {
     lastMouseMove: number;
     bindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
+    macros: Record<string, string>;
     modalOpen: boolean;
     // Models
     playerBbmodels: Record<string, BbModel>;
@@ -411,6 +412,7 @@ declare global {
   interface Window {
     mc: McBindings;
     mcState: McState;
+    mcRunMacro: (name: string) => void;
     [key: string]: unknown;
   }
 }
