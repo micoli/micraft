@@ -20,8 +20,10 @@ class FakeWebSocketSession : DefaultWebSocketSession {
     override val coroutineContext: CoroutineContext = Dispatchers.Unconfined + Job()
     override var masking: Boolean = false
     override var maxFrameSize: Long = Long.MAX_VALUE
-    override val outgoing: SendChannel<Frame> = Channel(Channel.UNLIMITED)
-    override val incoming: ReceiveChannel<Frame> = Channel(Channel.UNLIMITED)
+    val outgoingChannel: Channel<Frame> = Channel(Channel.UNLIMITED)
+    val incomingChannel: Channel<Frame> = Channel(Channel.UNLIMITED)
+    override val outgoing: SendChannel<Frame> = outgoingChannel
+    override val incoming: ReceiveChannel<Frame> = incomingChannel
     override val extensions: List<WebSocketExtension<*>> = emptyList()
     override var pingIntervalMillis: Long = 0L
     override var timeoutMillis: Long = 15_000L
