@@ -11,9 +11,9 @@ private val log = LoggerFactory.getLogger(LangCommand::class.java)
 
 class LangCommand : CommandHandler {
     override val id: UUID = UUID.fromString("062ef1bc-100c-4a80-aab0-a160bda112b1")
-    override val command = "/lang"
+    override val name = "lang"
     override val description = "Changes your language preference."
-    override val usage = "/lang [locale]"
+    override val usage = "$command [locale]"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val locale = args.trim().lowercase()

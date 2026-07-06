@@ -8,7 +8,7 @@ import org.micoli.micraft.session.PlayerSession
 
 class CharacterCommand : CommandHandler {
     override val id: UUID = UUID.fromString("d4e5f6a7-b8c9-0123-defa-234567890bcd")
-    override val command = "/character"
+    override val name = "character"
     override val description = "Show your RPG character sheet"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {

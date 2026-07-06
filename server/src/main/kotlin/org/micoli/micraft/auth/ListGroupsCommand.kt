@@ -9,10 +9,8 @@ import org.micoli.micraft.session.PlayerSession
 class ListGroupsCommand : PluginCommand {
     override val id: UUID = UUID.fromString("e6f7a8b9-c0d1-4234-e567-f8a9b0c1d234")
     override val name = "rbac:listgroups"
-    override val command = "/rbac:listgroups"
     override val permission = "admin"
     override val description = "List all groups and their permissions."
-    override val usage = "/rbac:listgroups"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val groupsConfig = context.groupsConfig

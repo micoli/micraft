@@ -11,7 +11,7 @@ private val log = LoggerFactory.getLogger(ReloadCommand::class.java)
 
 class ReloadCommand : CommandHandler {
     override val id: UUID = UUID.fromString("ca8872ff-542c-4581-bf05-0cc68ea01f60")
-    override val command = "/reload"
+    override val name = "reload"
     override val permission = "admin"
     override val description = "Reloads configuration files without restarting the server."
     override val options =

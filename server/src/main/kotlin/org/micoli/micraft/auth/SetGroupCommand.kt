@@ -9,10 +9,9 @@ import org.micoli.micraft.session.PlayerSession
 class SetGroupCommand : PluginCommand {
     override val id: UUID = UUID.fromString("c4d5e6f7-a8b9-4012-c345-d6e7f8a9b012")
     override val name = "rbac:setgroup"
-    override val command = "/rbac:setgroup"
     override val permission = "admin"
     override val description = "Add groups to a user."
-    override val usage = "/rbac:setgroup <email> <group1,group2,...>"
+    override val usage = "$command <email> <group1,group2,...>"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val provider = context.authProvider as? LocalAuthProvider

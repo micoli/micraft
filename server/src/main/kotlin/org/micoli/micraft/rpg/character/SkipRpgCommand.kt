@@ -8,7 +8,7 @@ import org.micoli.micraft.session.PlayerSession
 
 class SkipRpgCommand : CommandHandler {
     override val id: UUID = UUID.fromString("e5f6a7b8-c9d0-1234-efab-345678901cde")
-    override val command = "/skiprpg"
+    override val name = "skiprpg"
     override val description = "Opt out of RPG system"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {

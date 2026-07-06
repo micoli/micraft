@@ -30,9 +30,9 @@ fun availablePlayerSkins(): List<String> =
 
 class SkinCommand : CommandHandler {
     override val id: UUID = UUID.fromString("a7f3e2d1-4b5c-4e6f-8a9b-0c1d2e3f4a5b")
-    override val command = "/skin"
+    override val name = "skin"
     override val description = "Changes your player skin."
-    override val usage = "/skin <skinName>"
+    override val usage = "$command <skinName>"
     override val autocompleteArgs = listOf(0)
 
     override suspend fun completeArg(

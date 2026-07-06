@@ -15,15 +15,14 @@ class HelpCommandTest {
     private val cmd = HelpCommand()
 
     private fun fakeHandler(
-        name: String,
+        cmdName: String,
         desc: String = "",
         opts: List<String> = emptyList()
     ): CommandHandler =
         object : CommandHandler {
             override val id: UUID = UUID.randomUUID()
-            override val command = name
+            override val name = cmdName
             override val description = desc
-            override val usage = name
             override val options = opts
 
             override suspend fun execute(
@@ -36,8 +35,7 @@ class HelpCommandTest {
     @Test
     fun noArgs_listsAllCommands() = runBlocking {
         val session = testSession()
-        val handlers =
-            listOf(fakeHandler("/foo", "Foo command"), fakeHandler("/bar", "Bar command"))
+        val handlers = listOf(fakeHandler("foo", "Foo command"), fakeHandler("bar", "Bar command"))
         val ctx = testContext(sessions = listOf(session)).copy(commands = { handlers })
         cmd.execute(session, "", ctx)
         val notif = session.sent.filterIsInstance<ServerMessage.Notification>().first()
@@ -48,7 +46,7 @@ class HelpCommandTest {
     @Test
     fun specificCommand_showsUsageAndDesc() = runBlocking {
         val session = testSession()
-        val handlers = listOf(fakeHandler("/foo", "Does foo things"))
+        val handlers = listOf(fakeHandler("foo", "Does foo things"))
         val ctx = testContext(sessions = listOf(session)).copy(commands = { handlers })
         cmd.execute(session, "/foo", ctx)
         val notif = session.sent.filterIsInstance<ServerMessage.Notification>().first()
@@ -58,7 +56,7 @@ class HelpCommandTest {
     @Test
     fun specificCommand_withoutSlash_resolves() = runBlocking {
         val session = testSession()
-        val handlers = listOf(fakeHandler("/foo", "Does foo"))
+        val handlers = listOf(fakeHandler("foo", "Does foo"))
         val ctx = testContext(sessions = listOf(session)).copy(commands = { handlers })
         cmd.execute(session, "foo", ctx)
         val notif = session.sent.filterIsInstance<ServerMessage.Notification>().first()
@@ -77,7 +75,7 @@ class HelpCommandTest {
     @Test
     fun commandWithOptions_listsOptions() = runBlocking {
         val session = testSession()
-        val handlers = listOf(fakeHandler("/foo", "Foo", listOf("opt1 — thing1", "opt2 — thing2")))
+        val handlers = listOf(fakeHandler("foo", "Foo", listOf("opt1 — thing1", "opt2 — thing2")))
         val ctx = testContext(sessions = listOf(session)).copy(commands = { handlers })
         cmd.execute(session, "/foo", ctx)
         val notif = session.sent.filterIsInstance<ServerMessage.Notification>().first()

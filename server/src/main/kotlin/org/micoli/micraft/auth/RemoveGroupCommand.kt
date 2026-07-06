@@ -9,10 +9,9 @@ import org.micoli.micraft.session.PlayerSession
 class RemoveGroupCommand : PluginCommand {
     override val id: UUID = UUID.fromString("d5e6f7a8-b9c0-4123-d456-e7f8a9b0c123")
     override val name = "rbac:removegroup"
-    override val command = "/rbac:removegroup"
     override val permission = "admin"
     override val description = "Remove groups from a user."
-    override val usage = "/rbac:removegroup <email> <group1,group2,...>"
+    override val usage = "$command <email> <group1,group2,...>"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val provider = context.authProvider as? LocalAuthProvider

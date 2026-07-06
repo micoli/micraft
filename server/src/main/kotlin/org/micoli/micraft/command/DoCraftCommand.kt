@@ -10,9 +10,9 @@ import org.micoli.micraft.world.RecipeRegistry
 
 class DoCraftCommand : CommandHandler {
     override val id: UUID = UUID.fromString("c3d4e5f6-a7b8-9012-cdef-123456789012")
-    override val command = "/docraft"
+    override val name = "docraft"
     override val description = "Crafts a recipe."
-    override val usage = "/docraft <recipeId> [count]"
+    override val usage = "$command <recipeId> [count]"
     override val options
         get() = RecipeRegistry.keys().map { it.lowercase() }
 

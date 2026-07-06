@@ -12,9 +12,9 @@ import org.micoli.micraft.session.PlayerSession
 
 class CreateCharacterCommand : CommandHandler {
     override val id: UUID = UUID.fromString("c3d4e5f6-a7b8-9012-cdef-123456789abc")
-    override val command = "/createcharacter"
+    override val name = "createcharacter"
     override val description = "Create your RPG character"
-    override val usage = "/createcharacter <name> <class> <str> <dex> <intel> <wis> <con> <cha>"
+    override val usage = "$command <name> <class> <str> <dex> <intel> <wis> <con> <cha>"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language

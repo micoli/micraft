@@ -9,9 +9,9 @@ import org.micoli.micraft.world.ItemType
 
 class TradeOfferCommand : CommandHandler {
     override val id: UUID = UUID.fromString("bc5d4e7f-6e0a-7b1c-d5e8-f9a0b1c2d3e4")
-    override val command = "/tradeoffer"
+    override val name = "tradeoffer"
     override val description = "Updates your current trade offer."
-    override val usage = "/tradeoffer <tradeId> <json>"
+    override val usage = "$command <tradeId> <json>"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val tradeManager = context.tradeManager ?: return

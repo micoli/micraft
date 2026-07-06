@@ -8,9 +8,9 @@ import org.micoli.micraft.session.PlayerSession
 
 class TradeCommand : CommandHandler {
     override val id: UUID = UUID.fromString("8f2a1c4e-3b7d-4e9f-a2b5-c6d8e0f1a2b3")
-    override val command = "/trade"
+    override val name = "trade"
     override val description = "Initiates a trade with another player."
-    override val usage = "/trade <playerName>"
+    override val usage = "$command <playerName>"
     override val autocompleteArgs = listOf(0)
 
     override suspend fun completeArg(

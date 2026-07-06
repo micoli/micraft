@@ -8,9 +8,9 @@ import org.micoli.micraft.session.PlayerSession
 
 class LayoutCommand : CommandHandler {
     override val id: UUID = UUID.fromString("5adafecc-76ca-44dd-9e06-8d492ec28bce")
-    override val command = "/layout"
+    override val name = "layout"
     override val description = "Switches to a named layout."
-    override val usage = "/layout <name>"
+    override val usage = "$command <name>"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val name = args.trim()

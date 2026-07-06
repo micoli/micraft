@@ -10,9 +10,9 @@ import org.micoli.micraft.session.PlayerSession
 
 class ResurectCommand : CommandHandler {
     override val id: UUID = UUID.fromString("3e7a1f2c-9b4d-4e8a-b1c5-d2e3f4a5b6c7")
-    override val command = "/resurect"
+    override val name = "resurect"
     override val description = "Resurrect a downed player (self if no name given)."
-    override val usage = "/resurect [playerName]"
+    override val usage = "$command [playerName]"
     override val autocompleteArgs = listOf(0)
 
     override suspend fun completeArg(

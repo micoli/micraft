@@ -9,9 +9,8 @@ import org.micoli.micraft.world.RecipeRegistry
 
 class CraftCommand : CommandHandler {
     override val id: UUID = UUID.fromString("a9b8c7d6-e5f4-3210-abcd-fedcba987654")
-    override val command = "/craft"
+    override val name = "craft"
     override val description = "Opens the crafting window."
-    override val usage = "/craft"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         session.send(ServerMessage.OpenCraft)

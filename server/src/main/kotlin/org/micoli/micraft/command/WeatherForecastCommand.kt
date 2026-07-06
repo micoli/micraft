@@ -9,9 +9,8 @@ import org.micoli.micraft.session.PlayerSession
 
 class WeatherForecastCommand : CommandHandler {
     override val id: UUID = UUID.fromString("c4f8a3e2-5b9d-4f0c-c6a7-8d2e3f4a5b6c")
-    override val command = "/weather-forecast"
+    override val name = "weather-forecast"
     override val description = "Shows active weather zones and their location."
-    override val usage = "/weather-forecast"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language

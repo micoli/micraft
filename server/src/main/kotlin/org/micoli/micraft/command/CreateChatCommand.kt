@@ -9,9 +9,9 @@ import org.micoli.micraft.world.ChatChannelManager
 
 class CreateChatCommand : CommandHandler {
     override val id: UUID = UUID.fromString("e30d38dc-aee3-44e8-9f56-4800a1cef7ff")
-    override val command = "/createchat"
+    override val name = "createchat"
     override val description = "Create a new chat channel."
-    override val usage = "/createChat <channelName>"
+    override val usage = "$command <channelName>"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val i18n = context.i18n

@@ -11,7 +11,7 @@ private val log = LoggerFactory.getLogger(ConfigReloadCommand::class.java)
 
 class ConfigReloadCommand : CommandHandler {
     override val id: UUID = UUID.fromString("3b4c5d6e-7f80-4a1b-9c2d-3e4f5a6b7c8d")
-    override val command = "/config:reload"
+    override val name = "config:reload"
     override val permission = "admin"
     override val description = "Reloads block, NPC, or RBAC definitions from resource files."
     override val options = listOf("block", "npc", "rbac")

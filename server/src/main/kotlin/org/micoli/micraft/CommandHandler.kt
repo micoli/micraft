@@ -5,7 +5,10 @@ import org.micoli.micraft.session.PlayerSession
 
 interface CommandHandler {
     val id: UUID
+    val name: String
     val command: String
+        get() = "/$name"
+
     val description: String
         get() = ""
 

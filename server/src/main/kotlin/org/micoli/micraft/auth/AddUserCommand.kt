@@ -9,11 +9,10 @@ import org.micoli.micraft.session.PlayerSession
 class AddUserCommand : PluginCommand {
     override val id: UUID = UUID.fromString("b3c4d5e6-f7a8-4901-b234-c5d6e7f8a901")
     override val name = "adduser"
-    override val command = "/adduser"
     override val permission = "admin"
     override val description =
         "Add a local auth user. Usage: /adduser <email> <password> [displayName] [group1,group2,...]"
-    override val usage = "/adduser <email> <password> [displayName] [group1,group2,...]"
+    override val usage = "$command <email> <password> [displayName] [group1,group2,...]"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val provider = context.authProvider as? LocalAuthProvider

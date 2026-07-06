@@ -14,10 +14,10 @@ import org.micoli.micraft.world.isSolid
 class WaterCommand : CommandHandler {
     override val id: UUID = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
     override val permission = "admin"
-    override val command = "/water"
+    override val name = "water"
     override val description =
         "Place a water source on the solid block you are looking at (or x y z). (admin)"
-    override val usage = "/water [x y z]"
+    override val usage = "$command [x y z]"
     override val options = emptyList<String>()
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {

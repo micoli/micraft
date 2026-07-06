@@ -8,9 +8,9 @@ import org.micoli.micraft.session.PlayerSession
 
 class ConfigCommand : CommandHandler {
     override val id: UUID = UUID.fromString("c3d4e5f6-a7b8-4c9d-8e0f-1a2b3c4d5e6f")
-    override val command = "/config"
+    override val name = "config"
     override val description = "Get or set a runtime config value."
-    override val usage = "/config <get|set> <key> [value]"
+    override val usage = "$command <get|set> <key> [value]"
     override val autocompleteArgs = listOf(0, 1)
 
     override suspend fun completeArg(

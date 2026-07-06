@@ -11,10 +11,10 @@ import org.micoli.micraft.world.BlockType
 
 class UndoCommand : CommandHandler {
     override val id: UUID = UUID.fromString("efe56d66-b31e-4e09-9898-1735149e6adf")
-    override val command = "/undo"
+    override val name = "undo"
     override val description =
         "Undo the last N block breaks, restoring blocks and reversing item collection."
-    override val usage = "/undo [N]"
+    override val usage = "$command [N]"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language

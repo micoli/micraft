@@ -11,10 +11,10 @@ private val log = LoggerFactory.getLogger(ShadersCommand::class.java)
 
 class ShadersCommand : CommandHandler {
     override val id: UUID = UUID.fromString("b2a1d2bb-1912-4ca2-8b60-8b2012b2ab30")
-    override val command = "/shaders"
+    override val name = "shaders"
     override val description =
         "Toggles visual shaders (ambient occlusion, directional shading, fog)."
-    override val usage = "/shaders [on|off]"
+    override val usage = "$command [on|off]"
     override val options = listOf("on", "off")
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {

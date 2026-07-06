@@ -11,10 +11,10 @@ import org.micoli.micraft.world.isSolid
 
 class SpawnCommand : CommandHandler {
     override val id: UUID = UUID.fromString("c3d4e5f6-a7b8-9012-cdef-012345678901")
-    override val command = "/spawn"
+    override val name = "spawn"
     override val description =
         "Spawn an NPC of the given model on the solid block you are looking at. (admin)"
-    override val usage = "/spawn <npc_model> [x y z]"
+    override val usage = "$command <npc_model> [x y z]"
     override val options = emptyList<String>()
     override val autocompleteArgs = listOf(0)
 

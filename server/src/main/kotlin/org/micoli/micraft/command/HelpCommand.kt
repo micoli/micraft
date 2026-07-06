@@ -8,9 +8,9 @@ import org.micoli.micraft.session.PlayerSession
 
 class HelpCommand : CommandHandler {
     override val id: UUID = UUID.fromString("a458fe30-07ab-42dc-b47c-9e7ed09253bd")
-    override val command = "/help"
+    override val name = "help"
     override val description = "Lists available commands."
-    override val usage = "/help [command]"
+    override val usage = "$command [command]"
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
@@ -19,7 +19,7 @@ class HelpCommand : CommandHandler {
         val target = args.trim().let { if (it.isNotBlank()) it else null }
 
         if (target != null) {
-            val cmd = all.find { it.command == target || it.command == "/$target" }
+            val cmd = all.find { it.name == target || it.command == target }
             if (cmd == null) {
                 session.send(
                     ServerMessage.Notification(i18n.t(lang, "help:server:unknown_cmd", target)))

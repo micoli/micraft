@@ -9,10 +9,10 @@ import org.micoli.micraft.world.RecipeRegistry
 
 class LearnRecipeCommand : CommandHandler {
     override val id: UUID = UUID.fromString("b2c3d4e5-f6a7-8901-bcde-f12345678901")
-    override val command = "/learnrecipe"
+    override val name = "learnrecipe"
     override val permission = "admin"
     override val description = "Teach a recipe to the player."
-    override val usage = "/learnrecipe <recipeId>"
+    override val usage = "$command <recipeId>"
     override val options
         get() = RecipeRegistry.keys().map { it.lowercase() }
 
