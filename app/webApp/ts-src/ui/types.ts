@@ -1,3 +1,8 @@
+export interface ChannelSubscription {
+  name: string;
+  autoFocus: boolean;
+}
+
 export interface HudData {
   x: number;
   y: number;
@@ -112,7 +117,7 @@ export interface CharacterSyncData {
 }
 
 export interface PreferencesData {
-  subscribedChannels: string[];
+  subscribedChannels: ChannelSubscription[];
   knownChannels: string[];
   disabledCommands: string[];
   shadersEnabled: boolean;

@@ -1,4 +1,5 @@
 import {
+  ChannelSubscription,
   CharacterSyncData,
   GameLayout,
   HudData,
@@ -22,7 +23,7 @@ export interface UiState {
   logs: LogEntry[];
   logVisible: boolean;
   logKey: number;
-  subscribedChannels: string[];
+  subscribedChannels: ChannelSubscription[];
   knownChannels: string[];
   activeChannel: string;
   unreadChannels: string[];
@@ -89,7 +90,7 @@ export type UiAction =
   | { type: "notification"; msg: string }
   | { type: "log"; msg: string; channel: string }
   | { type: "chat_message"; channel: string; sender: string; msg: string }
-  | { type: "channels_sync"; subscribed: string[]; known: string[] }
+  | { type: "channels_sync"; subscribed: ChannelSubscription[]; known: string[] }
   | { type: "active_channel_select"; channel: string }
   | { type: "inventory"; data: Record<string, number> }
   | { type: "item_meta_loaded"; data: Record<string, { label: string; bg: string }> }
@@ -123,7 +124,7 @@ export type UiAction =
   | { type: "preferences_hide" }
   | {
       type: "preferences_save";
-      subscribedChannels: string[];
+      subscribedChannels: ChannelSubscription[];
       disabledCommands: string[];
       shadersEnabled: boolean;
       animatedFavicon: boolean;
@@ -195,11 +196,14 @@ export function reducer(state: UiState, action: UiAction): UiState {
       const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
       const entry: LogEntry = { time, msg: action.msg, channel: action.channel, sender: action.sender };
       const logs = [...state.logs, entry].slice(-MC_LOG_MAX);
-      const unreadChannels =
-        action.channel !== state.activeChannel && !state.unreadChannels.includes(action.channel)
+      const autoFocus = state.subscribedChannels.find((c) => c.name === action.channel)?.autoFocus ?? false;
+      const activeChannel = autoFocus ? action.channel : state.activeChannel;
+      const unreadChannels = autoFocus
+        ? state.unreadChannels.filter((c) => c !== action.channel)
+        : action.channel !== state.activeChannel && !state.unreadChannels.includes(action.channel)
           ? [...state.unreadChannels, action.channel]
           : state.unreadChannels;
-      return { ...state, logs, logVisible: true, logKey: state.logKey + 1, unreadChannels };
+      return { ...state, logs, logVisible: true, logKey: state.logKey + 1, unreadChannels, activeChannel };
     }
     case "channels_sync":
       return { ...state, subscribedChannels: action.subscribed, knownChannels: action.known };

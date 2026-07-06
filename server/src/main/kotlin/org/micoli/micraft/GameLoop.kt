@@ -25,10 +25,12 @@ import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.npc.NpcConfigLoader
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.npc.NpcSpawner
+import org.micoli.micraft.player.ChannelSubscription
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
@@ -222,7 +224,7 @@ class GameLoop(
                     ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
                 sessionRegistry
                     .all()
-                    .filter { "combat" in it.state.subscribedChannels }
+                    .filter { it.state.subscribedChannels.hasChannel("combat") }
                     .forEach { it.send(chatMsg) }
             },
             subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
@@ -260,7 +262,7 @@ class GameLoop(
                     ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
                 sessionRegistry
                     .all()
-                    .filter { "combat" in it.state.subscribedChannels }
+                    .filter { it.state.subscribedChannels.hasChannel("combat") }
                     .forEach { it.send(chatMsg) }
             },
             subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
@@ -461,8 +463,9 @@ class GameLoop(
     ) {
         val knownChannels = chatChannelManager.listKnownChannels()
         val newSubscribed =
-            (msg.subscribedChannels.filter { it in knownChannels } + ChatChannelManager.PROTECTED)
-                .distinct()
+            (msg.subscribedChannels.filter { it.name in knownChannels } +
+                    ChatChannelManager.PROTECTED.map { ChannelSubscription(it) })
+                .distinctBy { it.name }
         val shadersChanged = session.state.shadersEnabled != msg.shadersEnabled
         session.state =
             session.state.copy(
@@ -746,7 +749,12 @@ class GameLoop(
                 shadersEnabled = shadersEnabled,
                 layouts = saved?.layouts ?: listOf(org.micoli.micraft.ui.defaultLayout()),
                 activeLayout = saved?.activeLayout ?: "default",
-                subscribedChannels = saved?.subscribedChannels ?: listOf("world", "system", "game"),
+                subscribedChannels =
+                    saved?.subscribedChannels
+                        ?: listOf(
+                            ChannelSubscription("world"),
+                            ChannelSubscription("system"),
+                            ChannelSubscription("game")),
                 disabledCommands = saved?.disabledCommands ?: emptySet(),
                 viewMode = saved?.viewMode ?: "FIRST_PERSON",
                 skin = saved?.skin ?: "player",

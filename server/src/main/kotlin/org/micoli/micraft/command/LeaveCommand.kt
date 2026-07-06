@@ -21,9 +21,9 @@ class LeaveCommand : CommandHandler {
         session: PlayerSession?,
         context: CommandContext
     ): List<String> =
-        (session?.state?.subscribedChannels ?: emptyList()).filter {
-            it.startsWith(partial, ignoreCase = true)
-        }
+        (session?.state?.subscribedChannels ?: emptyList())
+            .map { it.name }
+            .filter { it.startsWith(partial, ignoreCase = true) }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val i18n = context.i18n

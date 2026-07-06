@@ -4,6 +4,8 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.player.ChannelSubscription
+import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
@@ -31,7 +33,8 @@ class LeaveCommandTest {
     @Test
     fun protectedChannel_sendsCantLeave() = runBlocking {
         val session = testSession()
-        session.state = session.state.copy(subscribedChannels = listOf("system"))
+        session.state =
+            session.state.copy(subscribedChannels = listOf(ChannelSubscription("system")))
         cmd.execute(session, "system", chatCtx(session))
         val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
         assertTrue(
@@ -58,15 +61,17 @@ class LeaveCommandTest {
     @Test
     fun success_removesFromSubscribedChannels() = runBlocking {
         val session = testSession()
-        session.state = session.state.copy(subscribedChannels = listOf("world"))
+        session.state =
+            session.state.copy(subscribedChannels = listOf(ChannelSubscription("world")))
         cmd.execute(session, "world", chatCtx(session))
-        assertFalse("world" in session.state.subscribedChannels)
+        assertFalse(session.state.subscribedChannels.hasChannel("world"))
     }
 
     @Test
     fun success_sendsLeft_notification() = runBlocking {
         val session = testSession()
-        session.state = session.state.copy(subscribedChannels = listOf("world"))
+        session.state =
+            session.state.copy(subscribedChannels = listOf(ChannelSubscription("world")))
         cmd.execute(session, "world", chatCtx(session))
         val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
         assertTrue(
@@ -80,7 +85,10 @@ class LeaveCommandTest {
     @Test
     fun completeArg_listsSubscribedChannels() = runBlocking {
         val session = testSession()
-        session.state = session.state.copy(subscribedChannels = listOf("world", "around"))
+        session.state =
+            session.state.copy(
+                subscribedChannels =
+                    listOf(ChannelSubscription("world"), ChannelSubscription("around")))
         val results = cmd.completeArg(0, "w", session, chatCtx(session))
         assertTrue(results.contains("world"))
         assertFalse(results.contains("around"))

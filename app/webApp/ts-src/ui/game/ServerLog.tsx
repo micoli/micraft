@@ -1,6 +1,6 @@
 import { cn } from "../primitives/cn";
 import { useServerLog } from "../hooks/useServerLog";
-import { LogEntry } from "../types";
+import { ChannelSubscription, LogEntry } from "../types";
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -21,7 +21,7 @@ function channelColor(ch: string): string {
 interface Props {
   logs: LogEntry[];
   visible: boolean;
-  subscribedChannels: string[];
+  subscribedChannels: ChannelSubscription[];
   activeChannel: string;
   unreadChannels: string[];
   onChannelSelect: (channel: string) => void;
@@ -52,18 +52,18 @@ export function ServerLog({
       <div className="flex flex-shrink-0 overflow-x-auto border-b border-white/15">
         {subscribedChannels.map((ch) => (
           <button
-            key={ch}
+            key={ch.name}
             onMouseDown={(e) => {
               e.preventDefault();
-              onChannelSelect(ch);
+              onChannelSelect(ch.name);
             }}
             className={cn(
               "px-2 py-0.5 border-none border-r border-white/10 font-mono text-[11px] cursor-pointer whitespace-nowrap transition-colors",
-              ch === activeChannel ? "bg-white/15" : "bg-transparent hover:bg-white/5",
+              ch.name === activeChannel ? "bg-white/15" : "bg-transparent hover:bg-white/5",
             )}
-            style={{ color: channelColor(ch) }}
+            style={{ color: channelColor(ch.name) }}
           >
-            {unreadChannels.includes(ch) ? `* ${ch}` : ch}
+            {unreadChannels.includes(ch.name) ? `* ${ch.name}` : ch.name}
           </button>
         ))}
       </div>

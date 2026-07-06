@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.npc.NpcState
+import org.micoli.micraft.player.ChannelSubscription
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
@@ -92,8 +93,10 @@ sealed class ServerMessage {
 
     @ProtoId(9)
     @Serializable
-    data class ChannelsSync(val subscribedChannels: List<String>, val knownChannels: List<String>) :
-        ServerMessage()
+    data class ChannelsSync(
+        val subscribedChannels: List<ChannelSubscription>,
+        val knownChannels: List<String>,
+    ) : ServerMessage()
 
     @ProtoId(10)
     @Serializable
@@ -155,7 +158,7 @@ sealed class ServerMessage {
     @ProtoId(24)
     @Serializable
     data class PreferencesSync(
-        val subscribedChannels: List<String>,
+        val subscribedChannels: List<ChannelSubscription>,
         val knownChannels: List<String>,
         val disabledCommands: Set<String>,
         val shadersEnabled: Boolean,

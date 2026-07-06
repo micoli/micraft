@@ -1,6 +1,7 @@
 !gradle/wrapper/gradle-wrapper.jar
 run.lock
 app/webApp/src/wasmJsMain/resources/mc_bindings.js
+app/webApp/src/wasmJsMain/resources/models/
 app/webApp/ts-src/node_modules/
 app/webApp/ts-src/storybook-static/
 .kotlin

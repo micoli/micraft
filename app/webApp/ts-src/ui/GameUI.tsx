@@ -1,5 +1,5 @@
 import { useEffect, useRef, useReducer, useState } from "react";
-import { HudMode, GameLayout, NpcDialogData, PreferencesData } from "./types";
+import { HudMode, GameLayout, NpcDialogData, PreferencesData, ChannelSubscription } from "./types";
 import { UiState, reducer } from "./UIReducer";
 import { NpcDialog } from "../npc/NpcDialog";
 import { LoadingOverlay } from "./overlays/LoadingOverlay";
@@ -45,7 +45,11 @@ const initial: UiState = {
   logs: [],
   logVisible: false,
   logKey: 0,
-  subscribedChannels: ["world", "system", "game"],
+  subscribedChannels: [
+    { name: "world", autoFocus: false },
+    { name: "system", autoFocus: false },
+    { name: "game", autoFocus: false },
+  ],
   knownChannels: [],
   activeChannel: "world",
   unreadChannels: [],
@@ -355,7 +359,7 @@ export function GameUI() {
       dispatch({ type: "chat_message", channel, sender, msg });
     window.mc.channelsSync = (subscribedJson: string, knownJson: string) => {
       try {
-        const subscribed: string[] = JSON.parse(subscribedJson);
+        const subscribed: ChannelSubscription[] = JSON.parse(subscribedJson);
         const known: string[] = JSON.parse(knownJson);
         dispatch({ type: "channels_sync", subscribed, known });
       } catch {
@@ -619,7 +623,7 @@ export function GameUI() {
   const activeLayout = resolveActiveLayout(state.layouts, state.activeLayout);
 
   const handlePreferencesSave = (payload: {
-    subscribedChannels: string[];
+    subscribedChannels: ChannelSubscription[];
     disabledCommands: string[];
     shadersEnabled: boolean;
     animatedFavicon: boolean;

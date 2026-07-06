@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { PreferencesData, CommandInfo } from "../types";
+import { PreferencesData, CommandInfo, ChannelSubscription } from "../types";
 
 export interface SavePayload {
-  subscribedChannels: string[];
+  subscribedChannels: ChannelSubscription[];
   disabledCommands: string[];
   shadersEnabled: boolean;
   animatedFavicon: boolean;
@@ -86,6 +86,7 @@ interface UsePreferencesParams {
 export function usePreferences({ open, preferences, onSave, onClose }: UsePreferencesParams) {
   const [tab, setTab] = useState<Tab>("chat");
   const [localSubscribed, setLocalSubscribed] = useState<Set<string>>(new Set());
+  const [localAutoFocus, setLocalAutoFocus] = useState<Set<string>>(new Set());
   const [localDisabled, setLocalDisabled] = useState<Set<string>>(new Set());
   const [localShaders, setLocalShaders] = useState(true);
   const [localAnimatedFavicon, setLocalAnimatedFavicon] = useState(true);
@@ -104,7 +105,8 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
 
   useEffect(() => {
     if (open && preferences) {
-      setLocalSubscribed(new Set(preferences.subscribedChannels));
+      setLocalSubscribed(new Set(preferences.subscribedChannels.map((c) => c.name)));
+      setLocalAutoFocus(new Set(preferences.subscribedChannels.filter((c) => c.autoFocus).map((c) => c.name)));
       setLocalDisabled(new Set(preferences.disabledCommands));
       setLocalShaders(preferences.shadersEnabled);
       setLocalAnimatedFavicon(preferences.animatedFavicon ?? true);
@@ -187,6 +189,20 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
     if (checked) next.add(ch);
     else next.delete(ch);
     setLocalSubscribed(next);
+    if (!checked) {
+      setLocalAutoFocus((prev) => {
+        const nextAutoFocus = new Set(prev);
+        nextAutoFocus.delete(ch);
+        return nextAutoFocus;
+      });
+    }
+  };
+
+  const toggleAutoFocus = (ch: string, checked: boolean) => {
+    const next = new Set(localAutoFocus);
+    if (checked) next.add(ch);
+    else next.delete(ch);
+    setLocalAutoFocus(next);
   };
 
   const toggleCommand = (cmd: CommandInfo, enabled: boolean) => {
@@ -230,7 +246,10 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
       }
     }
     onSave({
-      subscribedChannels: Array.from(localSubscribed),
+      subscribedChannels: Array.from(localSubscribed).map((name) => ({
+        name,
+        autoFocus: localAutoFocus.has(name),
+      })),
       disabledCommands: Array.from(localDisabled),
       shadersEnabled: localShaders,
       animatedFavicon: localAnimatedFavicon,
@@ -250,6 +269,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
     tab,
     setTab,
     localSubscribed,
+    localAutoFocus,
     localDisabled,
     localShaders,
     setLocalShaders,
@@ -264,6 +284,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
     waitingDoubleTap,
     PROTECTED_CHANNELS,
     toggleChannel,
+    toggleAutoFocus,
     toggleCommand,
     removeKey,
     addCustomCmd,

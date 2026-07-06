@@ -1,5 +1,7 @@
 package org.micoli.micraft.world
 
+import org.micoli.micraft.player.ChannelSubscription
+import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.session.PlayerSession
 
@@ -11,18 +13,22 @@ class ChatService(
     private val getSessions: () -> Collection<PlayerSession>,
 ) {
     suspend fun subscribe(session: PlayerSession, channel: String): Boolean {
-        if (channel in session.state.subscribedChannels) return false
+        if (session.state.subscribedChannels.hasChannel(channel)) return false
         session.state =
-            session.state.copy(subscribedChannels = session.state.subscribedChannels + channel)
+            session.state.copy(
+                subscribedChannels =
+                    session.state.subscribedChannels + ChannelSubscription(channel))
         savePlayer(session)
         return true
     }
 
     suspend fun unsubscribe(session: PlayerSession, channel: String): Boolean {
         if (channel in ChatChannelManager.PROTECTED) return false
-        if (channel !in session.state.subscribedChannels) return false
+        if (!session.state.subscribedChannels.hasChannel(channel)) return false
         session.state =
-            session.state.copy(subscribedChannels = session.state.subscribedChannels - channel)
+            session.state.copy(
+                subscribedChannels =
+                    session.state.subscribedChannels.filterNot { it.name == channel })
         savePlayer(session)
         return true
     }
@@ -40,10 +46,11 @@ class ChatService(
         val all = getSessions()
         when {
             channel == "world" ->
-                all.filter { "world" in it.state.subscribedChannels }.forEach { it.send(msg) }
+                all.filter { it.state.subscribedChannels.hasChannel("world") }
+                    .forEach { it.send(msg) }
             channel == "around" -> {
                 val sp = sender.state.pos
-                all.filter { "around" in it.state.subscribedChannels }
+                all.filter { it.state.subscribedChannels.hasChannel("around") }
                     .filter { other ->
                         val dx = other.state.pos.x - sp.x
                         val dy = other.state.pos.y - sp.y
@@ -56,14 +63,16 @@ class ChatService(
                 val parts = channel.removePrefix("dm:").split(":")
                 val recipients = all.filter { it.state.name in parts }
                 recipients.forEach { session ->
-                    if (channel !in session.state.subscribedChannels) {
+                    if (!session.state.subscribedChannels.hasChannel(channel)) {
                         subscribe(session, channel)
                         syncChannels(session)
                     }
                     session.send(msg)
                 }
             }
-            else -> all.filter { channel in it.state.subscribedChannels }.forEach { it.send(msg) }
+            else ->
+                all.filter { it.state.subscribedChannels.hasChannel(channel) }
+                    .forEach { it.send(msg) }
         }
     }
 

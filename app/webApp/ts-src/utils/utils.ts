@@ -39,7 +39,11 @@ export function registerUtils(): Pick<
   window.mcState.commandCompleters = {};
   window.mcState.knownCommands = [];
   window.mcState.activeChannel = "world";
-  window.mcState.subscribedChannels = ["world", "system", "game"];
+  window.mcState.subscribedChannels = [
+    { name: "world", autoFocus: false },
+    { name: "system", autoFocus: false },
+    { name: "game", autoFocus: false },
+  ];
   window.mcState.knownChannels = [];
 
   const itemTypes = ["cobblestone", "dirt", "sand", "gravel", "sandstone", "snowball", "flint"];
@@ -66,7 +70,9 @@ export function registerUtils(): Pick<
   registerCompleter("/layout", () => []);
   registerCompleter("/talk", (p) => (window.mcState.connectedPlayers || []).filter((n: string) => n.startsWith(p)));
   registerCompleter("/join", (p) => (window.mcState.knownChannels || []).filter((c: string) => c.startsWith(p)));
-  registerCompleter("/leave", (p) => (window.mcState.subscribedChannels || []).filter((c: string) => c.startsWith(p)));
+  registerCompleter("/leave", (p) =>
+    (window.mcState.subscribedChannels || []).map((c) => c.name).filter((n) => n.startsWith(p)),
+  );
   registerCompleter("/createchat", () => []);
 
   return {

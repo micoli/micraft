@@ -2,6 +2,7 @@ package org.micoli.micraft.ui
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.micoli.micraft.player.ChannelSubscription
 import org.micoli.micraft.world.ItemType
 
 data class HudData(
@@ -71,8 +72,9 @@ class McUiState {
         }
 
     // Pair: (subscribedChannels, knownChannels)
-    private val _channelsSync = MutableStateFlow<Pair<List<String>, List<String>>?>(null)
-    val channelsSyncFlow: StateFlow<Pair<List<String>, List<String>>?> = _channelsSync
+    private val _channelsSync =
+        MutableStateFlow<Pair<List<ChannelSubscription>, List<String>>?>(null)
+    val channelsSyncFlow: StateFlow<Pair<List<ChannelSubscription>, List<String>>?> = _channelsSync
 
     // Triple: (channel, sender, message)
     private val _latestChatMessage = MutableStateFlow<Triple<String, String, String>?>(null)
@@ -95,7 +97,7 @@ class McUiState {
         chatSeq++
     }
 
-    fun setChannelsSync(subscribed: List<String>, known: List<String>) {
+    fun setChannelsSync(subscribed: List<ChannelSubscription>, known: List<String>) {
         _channelsSync.value = subscribed to known
     }
 

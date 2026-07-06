@@ -68,7 +68,7 @@ class TalkCommandTest {
             alice,
             "Bob",
             testContext(chatService = svc, chatChannelManager = mgr, sessions = listOf(alice, bob)))
-        assertTrue(alice.state.subscribedChannels.any { it.startsWith("dm:") })
+        assertTrue(alice.state.subscribedChannels.any { it.name.startsWith("dm:") })
     }
 
     @Test

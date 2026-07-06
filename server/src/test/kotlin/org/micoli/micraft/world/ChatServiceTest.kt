@@ -4,6 +4,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.player.ChannelSubscription
+import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testSession
 
@@ -25,9 +27,13 @@ class ChatServiceTest {
 
         // Alice unsubscribed from DM channel
         alice.state =
-            alice.state.copy(subscribedChannels = alice.state.subscribedChannels - channel)
+            alice.state.copy(
+                subscribedChannels =
+                    alice.state.subscribedChannels.filterNot { it.name == channel })
         // Bob is subscribed
-        bob.state = bob.state.copy(subscribedChannels = bob.state.subscribedChannels + channel)
+        bob.state =
+            bob.state.copy(
+                subscribedChannels = bob.state.subscribedChannels + ChannelSubscription(channel))
 
         // Bob sends a message
         service.routeMessage(bob, channel, "hello")
@@ -38,7 +44,7 @@ class ChatServiceTest {
         assertEquals("hello", aliceMessages[0].message)
 
         // Alice must be re-subscribed
-        assertTrue(channel in alice.state.subscribedChannels)
+        assertTrue(alice.state.subscribedChannels.hasChannel(channel))
 
         // Alice must have received a ChannelsSync
         val aliceSyncs = alice.sent.filterIsInstance<ServerMessage.ChannelsSync>()
@@ -53,8 +59,11 @@ class ChatServiceTest {
         val channel = "dm:Alice:Bob"
 
         alice.state =
-            alice.state.copy(subscribedChannels = alice.state.subscribedChannels + channel)
-        bob.state = bob.state.copy(subscribedChannels = bob.state.subscribedChannels + channel)
+            alice.state.copy(
+                subscribedChannels = alice.state.subscribedChannels + ChannelSubscription(channel))
+        bob.state =
+            bob.state.copy(
+                subscribedChannels = bob.state.subscribedChannels + ChannelSubscription(channel))
 
         service.routeMessage(bob, channel, "hi")
 

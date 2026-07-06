@@ -76,7 +76,11 @@ window.mcState = {
   commandCompleters: {},
   knownCommands: [],
   activeChannel: "world",
-  subscribedChannels: ["world", "system", "game"],
+  subscribedChannels: [
+    { name: "world", autoFocus: false },
+    { name: "system", autoFocus: false },
+    { name: "game", autoFocus: false },
+  ],
   knownChannels: [],
   // React callbacks
   dispatch: null,

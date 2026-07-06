@@ -66,6 +66,7 @@ const TABS: { id: Tab; label: string }[] = [
 export function Preferences({ open, preferences, onSave, onClose }: Props) {
   const pref = usePreferences({ open, preferences, onSave, onClose });
   const [kbSearch, setKbSearch] = useState("");
+  const [cmdSearch, setCmdSearch] = useState("");
 
   if (!open || !preferences) return null;
 
@@ -127,6 +128,13 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                     disabled={protected_}
                     onChange={(e) => pref.toggleChannel(ch, e.target.checked)}
                   />
+                  <input
+                    type="checkbox"
+                    checked={pref.localAutoFocus.has(ch)}
+                    disabled={!pref.localSubscribed.has(ch)}
+                    onChange={(e) => pref.toggleAutoFocus(ch, e.target.checked)}
+                    title="Auto focus"
+                  />
                   <span className={protected_ ? "text-[#888]" : "text-[#eee]"}>
                     #{ch}
                     {protected_ && <span className="text-[#666] ml-1.5 text-[11px]">(protected)</span>}
@@ -136,20 +144,36 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
             })}
 
           {/* Commands tab */}
-          {pref.tab === "commands" &&
-            pref.sortedCommands.map((cmd) => (
-              <div key={cmd.id} className="flex items-center gap-2 py-1.5 border-b border-[#2a2a2a]">
-                <input
-                  type="checkbox"
-                  checked={!pref.localDisabled.has(cmd.id)}
-                  onChange={(e) => pref.toggleCommand(cmd, e.target.checked)}
-                />
-                <span>
-                  <span className="text-sky-300">{cmd.command}</span>
-                  {cmd.description && <span className="text-[#888] ml-2 text-xs">{cmd.description}</span>}
-                </span>
-              </div>
-            ))}
+          {pref.tab === "commands" && (
+            <>
+              <input
+                type="text"
+                value={cmdSearch}
+                onChange={(e) => setCmdSearch(e.target.value)}
+                placeholder="Search commands…"
+                className="w-full bg-[#2a2a2a] border border-[#555] rounded-sm text-xs text-[#eee] px-2 py-1 font-mono outline-none mb-3"
+              />
+              {pref.sortedCommands
+                .filter(
+                  (cmd) =>
+                    cmd.command.toLowerCase().includes(cmdSearch.toLowerCase()) ||
+                    (cmd.description ?? "").toLowerCase().includes(cmdSearch.toLowerCase()),
+                )
+                .map((cmd) => (
+                  <div key={cmd.id} className="flex items-center gap-2 py-1.5 border-b border-[#2a2a2a]">
+                    <input
+                      type="checkbox"
+                      checked={!pref.localDisabled.has(cmd.id)}
+                      onChange={(e) => pref.toggleCommand(cmd, e.target.checked)}
+                    />
+                    <span>
+                      <span className="text-sky-300">{cmd.command}</span>
+                      {cmd.description && <span className="text-[#888] ml-2 text-xs">{cmd.description}</span>}
+                    </span>
+                  </div>
+                ))}
+            </>
+          )}
 
           {/* Graphics tab */}
           {pref.tab === "graphics" && (

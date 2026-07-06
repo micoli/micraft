@@ -3,6 +3,8 @@ package org.micoli.micraft.command
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.player.ChannelSubscription
+import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
@@ -43,7 +45,8 @@ class JoinCommandTest {
     @Test
     fun alreadyMember_sendsAlreadyMember() = runBlocking {
         val session = testSession()
-        session.state = session.state.copy(subscribedChannels = listOf("world"))
+        session.state =
+            session.state.copy(subscribedChannels = listOf(ChannelSubscription("world")))
         cmd.execute(session, "world", chatCtx(session))
         val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
         assertTrue(
@@ -71,7 +74,7 @@ class JoinCommandTest {
     fun success_subscribesSession() = runBlocking {
         val session = testSession()
         cmd.execute(session, "world", chatCtx(session))
-        assertTrue("world" in session.state.subscribedChannels)
+        assertTrue(session.state.subscribedChannels.hasChannel("world"))
     }
 
     @Test

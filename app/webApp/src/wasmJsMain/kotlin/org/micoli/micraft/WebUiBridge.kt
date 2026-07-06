@@ -15,6 +15,7 @@ import org.micoli.micraft.babylon.jsShowDisconnectedOverlay
 import org.micoli.micraft.babylon.jsShowNotification
 import org.micoli.micraft.babylon.jsUpdateChunkLoading
 import org.micoli.micraft.babylon.jsUpdateHotbar
+import org.micoli.micraft.player.ChannelSubscription
 import org.micoli.micraft.ui.McUiState
 import org.micoli.micraft.world.ItemType
 
@@ -42,7 +43,9 @@ class WebUiBridge(private val state: McUiState, private val scope: CoroutineScop
             state.channelsSyncFlow.collect { sync ->
                 if (sync != null) {
                     fun List<String>.toJson() = "[${joinToString(",") { "\"$it\"" }}]"
-                    jsChannelsSync(sync.first.toJson(), sync.second.toJson())
+                    jsChannelsSync(
+                        Json.encodeToString<List<ChannelSubscription>>(sync.first),
+                        sync.second.toJson())
                 }
             }
         }

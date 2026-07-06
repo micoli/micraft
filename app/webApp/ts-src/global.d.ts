@@ -200,7 +200,7 @@ declare global {
     knownCommands: string[];
     // Channels
     activeChannel: string;
-    subscribedChannels: string[];
+    subscribedChannels: import("./ui/types").ChannelSubscription[];
     knownChannels: string[];
     // React callbacks (set by GameUI after mount)
     dispatch: ((action: unknown) => void) | null;

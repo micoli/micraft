@@ -2,6 +2,7 @@ package org.micoli.micraft.protocol
 
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.combat.ShortcutSlot
+import org.micoli.micraft.player.ChannelSubscription
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.world.BlockPos
@@ -70,7 +71,7 @@ sealed class ClientMessage {
     @ProtoId(12)
     @Serializable
     data class PreferencesUpdate(
-        val subscribedChannels: List<String>,
+        val subscribedChannels: List<ChannelSubscription>,
         val disabledCommands: Set<String>,
         val shadersEnabled: Boolean,
         val keybindings: Map<String, List<String>> = emptyMap(),

@@ -11,6 +11,10 @@ import org.micoli.micraft.world.ItemType
 
 @Serializable data class Orientation(val yaw: Float, val pitch: Float)
 
+@Serializable data class ChannelSubscription(val name: String, val autoFocus: Boolean = false)
+
+fun List<ChannelSubscription>.hasChannel(name: String): Boolean = any { it.name == name }
+
 @Serializable
 data class PlayerState(
     val id: String,
@@ -27,7 +31,11 @@ data class PlayerState(
     val shortcutBar: List<ShortcutSlot?> = List(10) { null },
     val layouts: List<GameLayout> = listOf(defaultLayout()),
     val activeLayout: String = "default",
-    val subscribedChannels: List<String> = listOf("world", "system", "game"),
+    val subscribedChannels: List<ChannelSubscription> =
+        listOf(
+            ChannelSubscription("world"),
+            ChannelSubscription("system"),
+            ChannelSubscription("game")),
     val disabledCommands: Set<String> = emptySet(),
     val viewMode: String = "FIRST_PERSON",
     val skin: String = "player",

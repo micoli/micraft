@@ -11,6 +11,7 @@ import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.npc.NpcConfigLoader
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.npc.NpcSpawner
+import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.rpg.character.DerivedStatsCalculator
 import org.micoli.micraft.session.NetworkStats
@@ -114,7 +115,7 @@ val gameLoopModule = module {
                     ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
                 get<SessionRegistry>()
                     .all()
-                    .filter { "combat" in it.state.subscribedChannels }
+                    .filter { it.state.subscribedChannels.hasChannel("combat") }
                     .forEach { it.send(chatMsg) }
             },
             subscribeToChannel = { session, channel ->
@@ -156,7 +157,7 @@ val gameLoopModule = module {
                     ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
                 get<SessionRegistry>()
                     .all()
-                    .filter { "combat" in it.state.subscribedChannels }
+                    .filter { it.state.subscribedChannels.hasChannel("combat") }
                     .forEach { it.send(chatMsg) }
             },
             subscribeToChannel = { session, channel ->
