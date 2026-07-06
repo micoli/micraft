@@ -8,10 +8,10 @@ export function registerCombatTargetHighlight(): Pick<McBindings, "highlightNpcM
         highlightLayer.innerGlow = false;
         highlightLayer.outerGlow = true;
       }
-      const root = model as InstanceType<typeof BABYLON.TransformNode>;
+      const root = (model as McPlayerModel).root ?? (model as InstanceType<typeof BABYLON.TransformNode>);
       const meshes = root.getChildMeshes?.() ?? [];
-      if (meshes.length === 0 && typeof (model as { isPickable?: boolean }).isPickable !== "undefined") {
-        meshes.push(model as InstanceType<typeof BABYLON.AbstractMesh>);
+      if (meshes.length === 0 && typeof (root as { isPickable?: boolean }).isPickable !== "undefined") {
+        meshes.push(root as InstanceType<typeof BABYLON.AbstractMesh>);
       }
       const color = new BABYLON.Color3(1, 0.2, 0.2);
       meshes.forEach((mesh) => {

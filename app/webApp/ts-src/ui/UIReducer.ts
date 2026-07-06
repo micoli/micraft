@@ -30,6 +30,7 @@ export interface UiState {
   itemMeta: Record<string, { label: string; bg: string }>;
   attackMeta: Record<string, AttackMeta>;
   hotbarVisible: boolean;
+  healthBarVisible: boolean;
   shortcutBar: (ShortcutSlot | null)[];
   selectedSlot: number;
   consoleOpen: boolean;
@@ -60,6 +61,7 @@ export interface UiState {
     currentHp: number;
     maxHp: number;
     targetOfTarget: { id: string; name: string; currentHp: number; maxHp: number } | null;
+    distance: number | null;
   } | null;
   playerStatus: {
     currentHp: number;
@@ -93,6 +95,7 @@ export type UiAction =
   | { type: "item_meta_loaded"; data: Record<string, { label: string; bg: string }> }
   | { type: "attack_meta_loaded"; data: Record<string, AttackMeta> }
   | { type: "hotbar_toggle" }
+  | { type: "healthbar_toggle" }
   | { type: "shortcut_bar_update"; data: { slots: (ShortcutSlot | null)[]; selected: number } }
   | { type: "slot_select"; slot: number }
   | { type: "console_show" }
@@ -216,6 +219,8 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, attackMeta: action.data };
     case "hotbar_toggle":
       return { ...state, hotbarVisible: !state.hotbarVisible };
+    case "healthbar_toggle":
+      return { ...state, healthBarVisible: !state.healthBarVisible };
     case "shortcut_bar_update":
       return { ...state, shortcutBar: action.data.slots, selectedSlot: action.data.selected };
     case "slot_select":
@@ -343,10 +348,24 @@ export function reducer(state: UiState, action: UiAction): UiState {
         tradeMyAccepted: false,
         tradeTheirAccepted: false,
       };
-    case "combat_target_update":
-      return { ...state, combatTarget: action.data as UiState["combatTarget"] };
-    case "player_status_update":
-      return { ...state, playerStatus: action.data as UiState["playerStatus"], playerDowned: false };
+    case "combat_target_update": {
+      const target = action.data as UiState["combatTarget"];
+      return {
+        ...state,
+        combatTarget: target,
+        healthBarVisible: target?.targetId ? true : state.healthBarVisible,
+      };
+    }
+    case "player_status_update": {
+      const next = action.data as UiState["playerStatus"];
+      const damaged = state.playerStatus != null && next != null && next.currentHp < state.playerStatus.currentHp;
+      return {
+        ...state,
+        playerStatus: next,
+        playerDowned: false,
+        healthBarVisible: state.healthBarVisible || damaged,
+      };
+    }
     case "player_downed":
       return { ...state, playerDowned: true };
     case "player_respawned":

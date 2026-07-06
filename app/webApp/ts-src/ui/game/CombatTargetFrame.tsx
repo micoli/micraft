@@ -31,6 +31,7 @@ export function CombatTargetFrame({ target, layoutStyle }: Props) {
     >
       <span className="text-[13px] text-white font-mono truncate text-center">
         {target.displayName ?? target.targetId}
+        {target.distance != null && <span className="text-white/50"> · {target.distance.toFixed(1)}m</span>}
       </span>
       <HpBar current={target.currentHp} max={target.maxHp} />
       {target.targetOfTarget && (

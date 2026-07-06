@@ -70,6 +70,7 @@ class CombatProcessor(
             attackRegistry[msg.attackId]
                 ?: run {
                     log.warn("Unknown attackId '{}' from {}", msg.attackId, session.id.take(8))
+                    session.send(ServerMessage.Notification("Unknown attack '${msg.attackId}'"))
                     return
                 }
         if (charData.characterClass !in attackDef.eligibleClasses) {
@@ -178,6 +179,7 @@ class CombatProcessor(
         broadcastCombatLog("${charData.name} → ${npc.state.name}: $hitMsg")
 
         sendStatusUpdate(session, session.characterData ?: charData, myDerived)
+        session.send(buildTargetUpdate(session))
     }
 
     // ── NPC-initiated attack ──────────────────────────────────────────────────
@@ -280,6 +282,7 @@ class CombatProcessor(
         getSessions().forEach {
             it.send(ServerMessage.PlayerRespawned(session.id, respawnPos, newHp, newMana))
         }
+        broadcastHealthUpdate(session.id, false, newHp, derived.maxHp)
         savePlayer(session)
         log.info("Player {} died, respawned at {}", session.state.name, respawnPos)
     }
@@ -361,6 +364,18 @@ class CombatProcessor(
         getSessions().forEach {
             it.send(ServerMessage.HealthUpdate(entityId, isNpc, currentHp, maxHp))
         }
+        if (!isNpc) {
+            getSessions()
+                .find { it.id == entityId }
+                ?.let { s ->
+                    val charData = s.characterData ?: return@let
+                    val armors = s.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
+                    val derived = DerivedStatsCalculator.compute(charData, armors)
+                    s.send(
+                        makeStatusUpdate(
+                            charData, derived, s.state.stance, s.combatState.attackCooldownUntilMs))
+                }
+        }
     }
 
     private suspend fun sendStatusUpdate(
@@ -398,12 +413,15 @@ class CombatProcessor(
             session.combatState.targetId
                 ?: return ServerMessage.CombatTargetUpdate(null, null, 0, 0)
 
+        val pos = session.state.pos
         return if (session.combatState.targetIsNpc) {
             val npc =
                 npcManager.getInstance(targetId)
                     ?: return ServerMessage.CombatTargetUpdate(targetId, "Unknown", 0, 0)
+            val dist =
+                distance3(pos.x, pos.y, pos.z, npc.state.pos.x, npc.state.pos.y, npc.state.pos.z)
             ServerMessage.CombatTargetUpdate(
-                targetId, npc.state.name, npc.state.currentHp, npc.state.maxHp)
+                targetId, npc.state.name, npc.state.currentHp, npc.state.maxHp, distance = dist)
         } else {
             val targetSession =
                 getSessions().find { it.id == targetId }
@@ -412,12 +430,15 @@ class CombatProcessor(
             val armors = targetSession.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
             val derived = targetChar?.let { DerivedStatsCalculator.compute(it, armors) }
             val tot = buildTargetOfTarget(targetSession)
+            val tPos = targetSession.state.pos
+            val dist = distance3(pos.x, pos.y, pos.z, tPos.x, tPos.y, tPos.z)
             ServerMessage.CombatTargetUpdate(
                 targetId = targetId,
                 displayName = targetChar?.name ?: targetSession.state.name,
                 currentHp = targetChar?.currentHp ?: 0,
                 maxHp = derived?.maxHp ?: 0,
                 targetOfTarget = tot,
+                distance = dist,
             )
         }
     }

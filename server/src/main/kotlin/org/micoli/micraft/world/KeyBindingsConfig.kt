@@ -53,6 +53,7 @@ ui:
   ingame_map: [m]
   layout_editor: [KeyG]
   dump_stats: [KeyV]
+  health_bar: [KeyB]
 
 hotbar:
   slot_1: [Digit1]

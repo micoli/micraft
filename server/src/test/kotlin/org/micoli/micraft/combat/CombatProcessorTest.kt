@@ -282,4 +282,76 @@ class CombatProcessorTest {
         assertEquals(0, combatLog.size)
         assertEquals(20, target.characterData!!.currentHp)
     }
+
+    // ── HP sync to victim (regression: HP stuck at stale value) ────────────────
+
+    @Test
+    fun `attackPlayer hit sends victim a PlayerStatusUpdate with the new HP`() = runBlocking {
+        val attacker = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
+        attacker.characterData = testChar("a", "Alice")
+        target.characterData = testChar("b", "Bob", hp = 20)
+
+        buildProcessor(sessions = { listOf(attacker, target) })
+            .handleAttack(
+                attacker,
+                ClientMessage.AttackTarget(
+                    attackId = "basic_attack", targetId = "b", isNpc = false),
+            )
+
+        val statusUpdates = target.sent.filterIsInstance<ServerMessage.PlayerStatusUpdate>()
+        assertTrue(statusUpdates.isNotEmpty())
+        assertEquals(target.characterData!!.currentHp, statusUpdates.last().currentHp)
+    }
+
+    // ── Downed / stabilize / death ───────────────────────────────────────────
+
+    @Test
+    fun `stabilize sends PlayerStatusUpdate with hp 1`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob")
+        target.characterData = testChar("b", "Bob", hp = 0)
+        target.combatState =
+            target.combatState.copy(isDowned = true, downingSuccesses = 2, downingFailures = 0)
+        val proc = buildProcessor(sessions = { listOf(target) })
+
+        var attempts = 0
+        while (target.combatState.isDowned && attempts < 1000) {
+            proc.tickDowningRolls(target)
+            if (target.combatState.isDowned) {
+                // re-roll only the success dimension so this converges on stabilize, not death
+                target.combatState =
+                    target.combatState.copy(downingSuccesses = 2, downingFailures = 0)
+            }
+            attempts++
+        }
+
+        assertEquals(1, target.characterData!!.currentHp)
+        val statusUpdates = target.sent.filterIsInstance<ServerMessage.PlayerStatusUpdate>()
+        assertTrue(statusUpdates.any { it.currentHp == 1 })
+    }
+
+    @Test
+    fun `death and respawn sends PlayerStatusUpdate matching new HP`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob")
+        target.characterData = testChar("b", "Bob", hp = 0)
+        target.combatState =
+            target.combatState.copy(isDowned = true, downingSuccesses = 0, downingFailures = 2)
+        val proc = buildProcessor(sessions = { listOf(target) })
+
+        var attempts = 0
+        while (target.combatState.isDowned && attempts < 1000) {
+            proc.tickDowningRolls(target)
+            if (target.combatState.isDowned) {
+                // re-roll only the failure dimension so this converges on death, not stabilize
+                target.combatState =
+                    target.combatState.copy(downingSuccesses = 0, downingFailures = 2)
+            }
+            attempts++
+        }
+
+        assertTrue(target.sent.filterIsInstance<ServerMessage.PlayerRespawned>().isNotEmpty())
+        val statusUpdates = target.sent.filterIsInstance<ServerMessage.PlayerStatusUpdate>()
+        assertTrue(statusUpdates.isNotEmpty())
+        assertEquals(target.characterData!!.currentHp, statusUpdates.last().currentHp)
+    }
 }

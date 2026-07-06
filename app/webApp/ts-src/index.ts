@@ -209,6 +209,7 @@ window.mc = {
   channelsSync: () => {},
   updateHotbar: () => {},
   toggleHotbar: () => {},
+  toggleHealthBar: () => {},
   updateShortcutBar: () => {},
   setSelectedSlot: () => {},
   consumeSlotUpdate: () => "",

@@ -229,6 +229,12 @@ class LocalPlayerController(
             mcRunMacro(slot.macroName)
         } else {
             selectSlot(index)
+            if (slot is ShortcutSlot.Attack) {
+                val targetId = currentCombatTargetId ?: return
+                outMessages.trySend(
+                    ClientMessage.AttackTarget(
+                        targetId = targetId, isNpc = true, attackId = slot.attackId))
+            }
         }
     }
 
@@ -476,7 +482,12 @@ class LocalPlayerController(
                 event == "slot_10" -> activateSlot(9)
                 event == "combat_target_cycle" -> {
                     val next =
-                        npcManager.cycleNearestNpc(predX, predY, predZ, currentCombatTargetId)
+                        npcManager.cycleNearestNpc(
+                            predX,
+                            predY,
+                            predZ,
+                            jsGetCameraRotationY(camera),
+                            currentCombatTargetId)
                     currentCombatTargetId = next
                     npcManager.setHighlightTarget(next)
                     outMessages.trySend(ClientMessage.SetCombatTarget(next, isNpc = true))
@@ -493,6 +504,14 @@ class LocalPlayerController(
                 event.startsWith("cmd:") ->
                     outMessages.trySend(ClientMessage.Command(event.removePrefix("cmd:")))
                 event.startsWith("macro:") -> mcRunMacro(event.removePrefix("macro:"))
+                event.startsWith("attack:") -> {
+                    val targetId = currentCombatTargetId ?: return@repeat
+                    outMessages.trySend(
+                        ClientMessage.AttackTarget(
+                            targetId = targetId,
+                            isNpc = true,
+                            attackId = event.removePrefix("attack:")))
+                }
             }
         }
 

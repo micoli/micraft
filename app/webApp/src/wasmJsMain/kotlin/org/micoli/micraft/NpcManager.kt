@@ -83,10 +83,25 @@ class NpcManager(private val scene: JsAny) {
         playerX: Double,
         playerY: Double,
         playerZ: Double,
+        playerYaw: Double,
         currentId: String?
     ): String? {
+        val maxDist2 = 20.0 * 20.0
+        val halfConeCos = kotlin.math.cos(kotlin.math.PI / 6.0) // cos(30°) — half of 60° cone
+        val fwdX = kotlin.math.sin(playerYaw)
+        val fwdZ = kotlin.math.cos(playerYaw)
         val sorted =
             npcPrevPos.entries
+                .filter { (_, pos) ->
+                    val dx = pos.first - playerX
+                    val dy = pos.second - playerY
+                    val dz = pos.third - playerZ
+                    val dist2 = dx * dx + dy * dy + dz * dz
+                    if (dist2 > maxDist2) return@filter false
+                    val dist2D = kotlin.math.sqrt(dx * dx + dz * dz)
+                    if (dist2D < 0.001) return@filter true
+                    (dx * fwdX + dz * fwdZ) / dist2D >= halfConeCos
+                }
                 .sortedBy { (_, pos) ->
                     val dx = pos.first - playerX
                     val dy = pos.second - playerY

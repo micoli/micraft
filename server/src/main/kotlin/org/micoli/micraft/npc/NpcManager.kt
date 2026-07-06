@@ -69,8 +69,15 @@ class NpcManager(
                         log.warn("Unknown NPC type '{}' in save file — skipped", state.type)
                         continue
                     }
+                    val fixedState =
+                        if (state.maxHp <= 0) state.copy(currentHp = def.hp, maxHp = def.hp)
+                        else state
                     npcs[state.id] =
-                        NpcInstance(state = state, definition = def, spawnPos = state.pos)
+                        NpcInstance(
+                            state = fixedState,
+                            currentHp = fixedState.currentHp,
+                            definition = def,
+                            spawnPos = state.pos)
                     loaded++
                 }
                 log.info("Loaded {} NPCs from {}", loaded, savePath)
@@ -92,8 +99,17 @@ class NpcManager(
         val def =
             definitions[type] ?: error("Unknown NPC type: '$type'. Available: ${definitions.keys}")
         val id = UUID.randomUUID().toString()
-        val state = NpcState(id = id, name = name, type = type, pos = pos, yaw = 0f)
-        val instance = NpcInstance(state = state, definition = def, spawnPos = pos)
+        val state =
+            NpcState(
+                id = id,
+                name = name,
+                type = type,
+                pos = pos,
+                yaw = 0f,
+                currentHp = def.hp,
+                maxHp = def.hp)
+        val instance =
+            NpcInstance(state = state, currentHp = def.hp, definition = def, spawnPos = pos)
         npcs[id] = instance
         broadcast(ServerMessage.NpcSpawned(state))
         log.info("NPC spawned: {} ({}) at ({},{},{})", name, type, pos.x, pos.y, pos.z)

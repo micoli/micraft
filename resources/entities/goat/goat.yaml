@@ -8,3 +8,7 @@ spawn:
   maxTotal: 30
   maxPerChunk: 3
   spawnBiomes: []
+hp: 10
+aggroMode: PASSIVE
+aggroRange: 5
+deaggroTimeSec: 1.5

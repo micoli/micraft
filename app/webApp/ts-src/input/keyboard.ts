@@ -27,6 +27,7 @@ const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   ingame_map: ["m"],
   layout_editor: ["KeyG"],
   character: ["KeyY"],
+  health_bar: ["KeyB"],
   craft: ["Alt+KeyC"],
   dump_stats: ["KeyV"],
   slot_1: ["Digit1"],
@@ -195,6 +196,7 @@ export function registerKeyboard(): Pick<
         if (b.character?.some((k) => matchesEvent(k, e))) window.mc?.openCharacter?.();
         if (b.craft?.some((k) => matchesEvent(k, e))) window.mc?.openCraft?.();
         if (b.dump_stats?.some((k) => matchesEvent(k, e))) window.mc?.dumpStats?.();
+        if (b.health_bar?.some((k) => matchesEvent(k, e))) window.mc?.toggleHealthBar?.();
         if (b.preferences?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.();
         if (b.minimap_zoom_in?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomIn?.();
         if (b.minimap_zoom_out?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomOut?.();

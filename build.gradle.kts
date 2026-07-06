@@ -173,8 +173,10 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
                 val modified = lockFile.lastModified()
                 if (modified != lastModified) {
                     lastModified = modified
+                    println("⚠\uFE0F=====================================⚠\uFE0F")
                     println(
                         "[dev] run.lock modified — rebuilding… (${java.time.LocalTime.now().let { "%02d:%02d:%02d".format(it.hour, it.minute, it.second) }})")
+                    println("⚠\uFE0F=====================================⚠\uFE0F")
                     killTree(serverRef.get())
                     if (!watchMode) {
                         buildCss()

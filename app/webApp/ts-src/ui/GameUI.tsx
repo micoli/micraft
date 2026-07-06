@@ -53,6 +53,7 @@ const initial: UiState = {
   itemMeta: {},
   attackMeta: {},
   hotbarVisible: false,
+  healthBarVisible: true,
   shortcutBar: Array(10).fill(null),
   selectedSlot: 0,
   consoleOpen: false,
@@ -363,6 +364,7 @@ export function GameUI() {
     };
     window.mc.updateHotbar = (json: string) => dispatch({ type: "inventory", data: JSON.parse(json) });
     window.mc.toggleHotbar = () => dispatch({ type: "hotbar_toggle" });
+    window.mc.toggleHealthBar = () => dispatch({ type: "healthbar_toggle" });
     window.mc.updateShortcutBar = (json: string) => {
       const raw = JSON.parse(json) as { slots: ({ kind: string; id: string } | null)[]; selected: number };
       const slots = raw.slots.map((s): import("./UIReducer").ShortcutSlot | null => {
@@ -777,7 +779,7 @@ export function GameUI() {
             layoutStyle={widgetStyle(activeLayout, "CHAT_HISTORY")}
           />
           <Notifications notif={state.notif?.msg ? state.notif : null} />
-          {state.playerStatus && (
+          {state.healthBarVisible && state.playerStatus && (
             <PlayerStatusBar status={state.playerStatus} layoutStyle={widgetStyle(activeLayout, "PLAYER_STATUS")} />
           )}
           {state.combatTarget && (

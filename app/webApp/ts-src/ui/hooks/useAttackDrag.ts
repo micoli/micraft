@@ -7,6 +7,7 @@ export function useAttackDrag(color: (id: string) => string, kind: "attack" | "m
   const didMoveRef = useRef(false);
 
   function startDrag(e: React.PointerEvent<HTMLDivElement>, id: string) {
+    if (!e.altKey) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     dragIdRef.current = id;
     didMoveRef.current = false;

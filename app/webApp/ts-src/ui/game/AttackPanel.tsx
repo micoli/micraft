@@ -28,7 +28,9 @@ interface Props {
 
 export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [] }: Props) {
   const attacks = Object.entries(attackMeta);
-  const { startDrag, moveDrag, endDrag } = useAttackDrag((id) => damageTypeColor(attackMeta[id]?.damageType ?? ""));
+  const { startDrag, moveDrag, endDrag, guardClick } = useAttackDrag((id) =>
+    damageTypeColor(attackMeta[id]?.damageType ?? ""),
+  );
   const {
     startDrag: startMacroDrag,
     moveDrag: moveMacroDrag,
@@ -76,6 +78,7 @@ export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [] }: Prop
         {attacks.map(([id, meta]) => (
           <div
             key={id}
+            onClick={() => guardClick(() => window.mcState?.events?.push(`attack:${id}`))}
             onPointerDown={(e) => startDrag(e, id)}
             onPointerMove={moveDrag}
             onPointerUp={endDrag}

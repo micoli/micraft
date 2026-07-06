@@ -12,6 +12,7 @@ import org.micoli.micraft.npc.NpcConfigLoader
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.npc.NpcSpawner
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.rpg.character.DerivedStatsCalculator
 import org.micoli.micraft.session.NetworkStats
 import org.micoli.micraft.tick.BlockBreaker
 import org.micoli.micraft.tick.BlockPlacer
@@ -130,6 +131,24 @@ val gameLoopModule = module {
             broadcastHealthUpdate = { id, isNpc, hp, maxHp ->
                 get<SessionRegistry>().all().forEach {
                     it.send(ServerMessage.HealthUpdate(id, isNpc, hp, maxHp))
+                }
+                if (!isNpc) {
+                    get<SessionRegistry>()
+                        .all()
+                        .find { it.id == id }
+                        ?.let { s ->
+                            val charData = s.characterData
+                            if (charData != null) {
+                                val derived = DerivedStatsCalculator.compute(charData, emptyList())
+                                s.send(
+                                    get<CombatProcessor>()
+                                        .makeStatusUpdate(
+                                            charData,
+                                            derived,
+                                            s.state.stance,
+                                            s.combatState.attackCooldownUntilMs))
+                            }
+                        }
                 }
             },
             broadcastCombatLog = { msg ->

@@ -360,6 +360,7 @@ declare global {
     channelsSync(subscribedJson: string, knownJson: string): void;
     updateHotbar(json: string): void;
     toggleHotbar(): void;
+    toggleHealthBar(): void;
     updateShortcutBar(json: string): void;
     setSelectedSlot(slot: number): void;
     consumeSlotUpdate(): string;

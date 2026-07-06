@@ -147,6 +147,8 @@ fun validatePluginSystemIds(commands: Map<String, CommandHandler>, plugins: List
     }
 }
 
+private const val TARGET_DISTANCE_REFRESH_TICKS = 5
+
 class GameLoop(
     private val world: WorldState,
     private val persistence: WorldPersistence? = null,
@@ -235,6 +237,23 @@ class GameLoop(
                 sessionRegistry.all().forEach {
                     it.send(ServerMessage.HealthUpdate(id, isNpc, hp, maxHp))
                 }
+                if (!isNpc) {
+                    sessionRegistry
+                        .all()
+                        .find { it.id == id }
+                        ?.let { s ->
+                            val charData = s.characterData
+                            if (charData != null) {
+                                val derived = DerivedStatsCalculator.compute(charData, emptyList())
+                                s.send(
+                                    combatProcessor.makeStatusUpdate(
+                                        charData,
+                                        derived,
+                                        s.state.stance,
+                                        s.combatState.attackCooldownUntilMs))
+                            }
+                        }
+                }
             },
             broadcastCombatLog = { msg ->
                 val chatMsg =
@@ -281,6 +300,7 @@ class GameLoop(
 
     private var armorRegistry: Map<String, ArmorDefinition> = emptyMap()
     private var npcSpawnTickCounter = 0
+    private var targetDistanceTickCounter = 0
 
     private val commandContextClosures =
         CommandContextClosures(
@@ -631,6 +651,15 @@ class GameLoop(
             npcSpawner.trySpawn(
                 world, npcManager, npcManager.getDefinitions(), world.discoveredChunks())
         }
+        targetDistanceTickCounter++
+        if (targetDistanceTickCounter >= TARGET_DISTANCE_REFRESH_TICKS) {
+            targetDistanceTickCounter = 0
+            sessionRegistry.all().forEach { session ->
+                if (session.combatState.targetId != null) {
+                    session.send(combatProcessor.buildTargetUpdate(session))
+                }
+            }
+        }
     }
 
     private suspend fun handleCommand(session: PlayerSession, text: String) {
@@ -774,14 +803,22 @@ class GameLoop(
         session.send(ServerMessage.TimeUpdate(gameTicks))
         val charData = session.characterData
         if (charData != null) {
+            val derived =
+                DerivedStatsCalculator.compute(
+                    charData, session.state.armors.mapNotNull { armorRegistry[it]?.statBonus })
             session.send(
                 ServerMessage.CharacterSync(
                     charData,
-                    DerivedStatsCalculator.compute(
-                        charData, session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }),
+                    derived,
                     DerivedStatsCalculator.effectiveBaseStats(
                         charData,
                         session.state.armors.mapNotNull { armorRegistry[it]?.statBonus })))
+            session.send(
+                combatProcessor.makeStatusUpdate(
+                    charData,
+                    derived,
+                    session.state.stance,
+                    session.combatState.attackCooldownUntilMs))
         } else if (!session.state.rpgOptOut) {
             session.send(ServerMessage.CharacterCreationRequired)
         }
