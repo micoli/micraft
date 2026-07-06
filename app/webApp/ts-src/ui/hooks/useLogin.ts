@@ -276,7 +276,7 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
     setStep("typeSelect");
   }
 
-  async function doRpgCreate(rpgName: string) {
+  async function doRpgCreate(rpgName: string, characterClass?: string) {
     await fetch(`/api/player/${encodeURIComponent(rpgName)}/skin`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -288,6 +288,9 @@ export function useLogin({ visible, loginResultRef, onHide }: UseLoginParams) {
     saveUsers(users);
     setChars(users[username]);
     setSelected(rpgName);
+    if (characterClass) {
+      setCharClasses((prev) => ({ ...prev, [rpgName]: characterClass }));
+    }
     setPreviewSkin("player");
     setPreviewArmors([]);
     setStep("chars");

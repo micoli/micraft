@@ -318,8 +318,10 @@ function RpgCreateStep({
         if (postConnect) {
           onRpgSubmit(cmd);
         } else {
-          const name = cmd.split(" ")[1] ?? "";
-          L.doRpgCreate(name);
+          const parts = cmd.split(" ");
+          const name = parts[1] ?? "";
+          const characterClass = parts[2] ?? "";
+          L.doRpgCreate(name, characterClass);
           onRpgFormComplete(cmd);
         }
       }}

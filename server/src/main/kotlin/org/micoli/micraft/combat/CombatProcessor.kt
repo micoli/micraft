@@ -65,7 +65,12 @@ class CombatProcessor(
     // ── Player attack ─────────────────────────────────────────────────────────
 
     suspend fun handleAttack(session: PlayerSession, msg: ClientMessage.AttackTarget) {
-        val charData = session.characterData ?: return
+        val charData =
+            session.characterData
+                ?: run {
+                    session.send(ServerMessage.Notification("No character — use /createcharacter"))
+                    return
+                }
         val attackDef =
             attackRegistry[msg.attackId]
                 ?: run {
@@ -78,7 +83,10 @@ class CombatProcessor(
             return
         }
         val now = System.currentTimeMillis()
-        if (now < session.combatState.attackCooldownUntilMs) return
+        if (now < session.combatState.attackCooldownUntilMs) {
+            session.send(ServerMessage.Notification("Attack on cooldown"))
+            return
+        }
 
         val range = attackDef.rangeOverride ?: config.maxCombatRange
         if (msg.isNpc) attackNpc(session, msg, attackDef, charData, range, now)
