@@ -1,6 +1,6 @@
 package org.micoli.micraft.tick
 
-import kotlin.io.path.createTempFile
+import kotlin.io.path.createTempDirectory
 import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,6 +14,7 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testSession
 import org.micoli.micraft.support.testWorld
 import org.micoli.micraft.world.BlockPos
+import org.micoli.micraft.world.BlockRegistryLoader
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.DropConfig
 import org.micoli.micraft.world.WorldItemManager
@@ -21,11 +22,14 @@ import org.micoli.micraft.world.WorldItemManager
 class BlockBreakerTest {
 
     private fun createDropConfig(): DropConfig {
-        val tmp = createTempFile(suffix = ".yaml")
-        tmp.toFile().deleteOnExit()
-        tmp.writeText(
-            "STONE:\n  - item: COBBLESTONE\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\n")
-        return DropConfig(tmp)
+        val resourcesDir = createTempDirectory("resources_blocks")
+        val blockDir = resourcesDir.resolve("STONE")
+        blockDir.toFile().mkdirs()
+        blockDir
+            .resolve("STONE.yaml")
+            .writeText(
+                "hardness: 1\nsolid: true\nminimapColor: [0, 0, 0]\ndrops:\n- item: COBBLESTONE\n  dropRate: 100\n  minCount: 1\n  maxCount: 1\n")
+        return DropConfig(BlockRegistryLoader(resourcesDir, createTempDirectory("data_blocks")))
     }
 
     private fun noopWim(

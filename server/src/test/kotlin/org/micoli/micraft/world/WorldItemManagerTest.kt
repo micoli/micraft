@@ -1,7 +1,6 @@
 package org.micoli.micraft.world
 
 import kotlin.io.path.createTempDirectory
-import kotlin.io.path.createTempFile
 import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,27 +14,25 @@ import org.micoli.micraft.support.testSession
 
 class WorldItemManagerTest {
 
-    private fun emptyResourcesFile(): java.nio.file.Path {
-        val dir = createTempDirectory()
-        val resources = dir.resolve("drops-defaults.yaml")
-        resources.writeText("{}\n")
-        return resources
+    private fun blockLoader(blocks: Map<String, String> = emptyMap()): BlockRegistryLoader {
+        val resourcesDir = createTempDirectory("resources_blocks")
+        val dataDir = createTempDirectory("data_blocks")
+        blocks.forEach { (name, yaml) ->
+            val blockDir = resourcesDir.resolve(name)
+            blockDir.toFile().mkdirs()
+            blockDir.resolve("$name.yaml").writeText(yaml)
+        }
+        return BlockRegistryLoader(resourcesDir, dataDir)
     }
 
-    private fun dropConfigWith100PctStone(): DropConfig {
-        val tmp = createTempFile(suffix = ".yaml")
-        tmp.toFile().deleteOnExit()
-        tmp.writeText(
-            "STONE:\n  - item: COBBLESTONE\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\n")
-        return DropConfig(tmp, emptyResourcesFile())
-    }
+    private fun dropConfigWith100PctStone(): DropConfig =
+        DropConfig(
+            blockLoader(
+                mapOf(
+                    "STONE" to
+                        "hardness: 1\nsolid: true\nminimapColor: [0, 0, 0]\ndrops:\n- item: COBBLESTONE\n  dropRate: 100\n  minCount: 1\n  maxCount: 1\n")))
 
-    private fun emptyDropConfig(): DropConfig {
-        val tmp = createTempFile(suffix = ".yaml")
-        tmp.toFile().deleteOnExit()
-        tmp.writeText("{}\n")
-        return DropConfig(tmp, emptyResourcesFile())
-    }
+    private fun emptyDropConfig(): DropConfig = DropConfig(blockLoader())
 
     @Test
     fun spawnDrops_emptyDrop_noBroadcast() = runBlocking {

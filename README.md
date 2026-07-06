@@ -206,7 +206,7 @@ stateDiagram-v2
 | `/preferences` | `/preferences` | Opens the preferences panel. | — |
 | `/pump` | `/pump` | Remove all connected liquid blocks in sight. | — |
 | `/refetch` | `/refetch` | Reloads all chunks around the player. | — |
-| `/reload` | `/reload` | Reloads configuration files without restarting the server. | drops.yaml — block drop table, biomes.yaml — biome definitions, i18n/*.yaml — translations |
+| `/reload` | `/reload` | Reloads configuration files without restarting the server. | resources/blocks/*.yaml — block properties + drop tables, biomes.yaml — biome definitions, i18n/*.yaml — translations |
 | `/save` | `/save` | Saves the world and player state to disk. | — |
 | `/shaders` | `/shaders [on\|off]` | Toggles visual shaders (ambient occlusion, directional shading, fog). | on, off |
 | `/spawn` | `/spawn <npc_model> [x y z]` | Spawn an NPC of the given model on the solid block you are looking at. (admin) | dynamic |

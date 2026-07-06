@@ -16,7 +16,7 @@ class ReloadCommand : CommandHandler {
     override val description = "Reloads configuration files without restarting the server."
     override val options =
         listOf(
-            "drops.yaml — block drop table",
+            "resources/blocks/*.yaml — block properties + drop tables",
             "biomes.yaml — biome definitions",
             "i18n/*.yaml — translations")
 

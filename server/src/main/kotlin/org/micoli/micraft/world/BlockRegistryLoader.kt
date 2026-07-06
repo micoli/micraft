@@ -16,6 +16,14 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger("BlockRegistryLoader")
 
 @Serializable
+data class DropEntry(
+    val item: ItemType,
+    val dropRate: Int = 100,
+    val minCount: Int = 1,
+    val maxCount: Int = 1,
+)
+
+@Serializable
 private data class BlockYamlEntry(
     val hardness: Float = 1f,
     val solid: Boolean = true,
@@ -27,6 +35,7 @@ private data class BlockYamlEntry(
     val replaceable: Boolean = false,
     val vegetationHost: Boolean = false,
     val treeAllowed: Boolean = true,
+    val drops: List<DropEntry> = emptyList(),
 )
 
 @Serializable
@@ -41,6 +50,7 @@ private data class BlockYamlOverride(
     val replaceable: Boolean? = null,
     val vegetationHost: Boolean? = null,
     val treeAllowed: Boolean? = null,
+    val drops: List<DropEntry>? = null,
 )
 
 private val ENTRY_PROPERTIES =
@@ -82,6 +92,7 @@ class BlockRegistryLoader(
                     log.warn("No {}.yaml in {} — skipped", name, blockDir)
                     return@forEach
                 }
+                validateYamlConfig(resourceYaml, "blocks.schema.json")
                 runCatching {
                         Yaml.default.decodeFromString(
                             BlockYamlEntry.serializer(), resourceYaml.readText())
@@ -95,6 +106,7 @@ class BlockRegistryLoader(
                                 val content = dataYaml.readText()
                                 val overrideResult =
                                     if (content.isNotBlank()) {
+                                        validateYamlConfig(dataYaml, "blocks.schema.json")
                                         runCatching {
                                             Yaml.default.decodeFromString(
                                                 BlockYamlOverride.serializer(), content)
@@ -124,35 +136,43 @@ class BlockRegistryLoader(
         return map
     }
 
+    private fun toBlockTypes(merged: Map<String, BlockYamlEntry>): Map<BlockType, BlockYamlEntry> =
+        merged.entries
+            .mapNotNull { (key, entry) ->
+                runCatching { BlockType(key) to entry }
+                    .onFailure {
+                        log.warn("Unknown block type '{}' in resources/blocks — skipped", key)
+                    }
+                    .getOrNull()
+            }
+            .toMap()
+
     fun load(): Map<BlockType, BlockDefinition> {
         val result =
-            generateFromResources()
-                .entries
-                .mapNotNull { (key, entry) ->
-                    runCatching {
-                            BlockType(key) to
-                                BlockDefinition(
-                                    hardness = entry.hardness,
-                                    solid = entry.solid,
-                                    transparent = entry.transparent,
-                                    minimapColor = entry.minimapColor,
-                                    modelElement = entry.modelElement,
-                                    liquid = entry.liquid,
-                                    viscosity = entry.viscosity,
-                                    replaceable = entry.replaceable,
-                                    vegetationHost = entry.vegetationHost,
-                                    treeAllowed = entry.treeAllowed,
-                                )
-                        }
-                        .onFailure {
-                            log.warn("Unknown block type '{}' in resources/blocks — skipped", key)
-                        }
-                        .getOrNull()
-                }
-                .toMap()
+            toBlockTypes(generateFromResources()).mapValues { (_, entry) ->
+                BlockDefinition(
+                    hardness = entry.hardness,
+                    solid = entry.solid,
+                    transparent = entry.transparent,
+                    minimapColor = entry.minimapColor,
+                    modelElement = entry.modelElement,
+                    liquid = entry.liquid,
+                    viscosity = entry.viscosity,
+                    replaceable = entry.replaceable,
+                    vegetationHost = entry.vegetationHost,
+                    treeAllowed = entry.treeAllowed,
+                )
+            }
         log.info("Block registry loaded: {} block types", result.size)
         return result
     }
+
+    fun loadDropTable(): Map<BlockType, List<DropEntry>> =
+        toBlockTypes(generateFromResources())
+            .mapNotNull { (blockType, entry) ->
+                entry.drops.takeIf { it.isNotEmpty() }?.let { blockType to it }
+            }
+            .toMap()
 
     fun reload(): Map<BlockType, BlockDefinition> = load()
 }

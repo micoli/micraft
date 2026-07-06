@@ -1,26 +1,36 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "additionalProperties": {
-    "type": "object",
-    "required": ["hardness", "solid", "transparent", "minimapColor", "modelElement", "liquid", "viscosity", "replaceable", "vegetationHost", "treeAllowed"],
-    "additionalProperties": false,
-    "properties": {
-      "hardness": {"type": "number"},
-      "solid": {"type": "boolean"},
-      "transparent": {"type": "boolean"},
-      "minimapColor": {
-        "type": "array",
-        "items": {"type": "integer", "minimum": 0, "maximum": 255},
-        "minItems": 3,
-        "maxItems": 3
-      },
-      "modelElement": {"type": "string"},
-      "liquid": {"type": "boolean"},
-      "viscosity": {"type": "integer", "minimum": 0},
-      "replaceable": {"type": "boolean"},
-      "vegetationHost": {"type": "boolean"},
-      "treeAllowed": {"type": "boolean"}
+  "additionalProperties": false,
+  "properties": {
+    "hardness": {"type": "number"},
+    "solid": {"type": "boolean"},
+    "transparent": {"type": "boolean"},
+    "minimapColor": {
+      "type": "array",
+      "items": {"type": "integer", "minimum": 0, "maximum": 255},
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "modelElement": {"type": "string"},
+    "liquid": {"type": "boolean"},
+    "viscosity": {"type": "integer", "minimum": 0},
+    "replaceable": {"type": "boolean"},
+    "vegetationHost": {"type": "boolean"},
+    "treeAllowed": {"type": "boolean"},
+    "drops": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["item"],
+        "additionalProperties": false,
+        "properties": {
+          "item": {"type": "string"},
+          "dropRate": {"type": "integer", "minimum": 0, "maximum": 100},
+          "minCount": {"type": "integer", "minimum": 0},
+          "maxCount": {"type": "integer", "minimum": 0}
+        }
+      }
     }
   }
 }

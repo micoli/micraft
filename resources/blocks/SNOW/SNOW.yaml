@@ -11,3 +11,8 @@ viscosity: 0
 replaceable: false
 vegetationHost: false
 treeAllowed: true
+drops:
+- item: SNOWBALL
+  dropRate: 100
+  minCount: 1
+  maxCount: 4

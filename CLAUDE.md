@@ -24,15 +24,13 @@ Minecraft client/server clone — **Kotlin Multiplatform**, multiplayer voxel, p
 ## Domain types
 
 **Block types**: `AIR BEDROCK STONE DIRT GRASS SAND SANDSTONE GRAVEL SNOW OAK_LOG OAK_LEAVES PINE_LOG PINE_LEAVES PINE_LEAVES_SNOW FLOWER WEED`
-Properties (hardness, solid, minimapColor, modelElement) in `resources/blocks/<name>/<name>.yaml`, overridable per-block in `data/resources/blocks/<name>/<name>.yaml`. `hardness: -1` = unbreakable.
+Properties (hardness, solid, minimapColor, modelElement) in `resources/blocks/<name>/<name>.yaml`, overridable per-block in `data/resources/blocks/<name>/<name>.yaml`. `hardness: -1` = unbreakable. Optional `drops:` list (`item`, `dropRate`, `minCount`, `maxCount`) — omitted if the block drops nothing.
 
 **Biome types**: `snow_peaks desert dry_plains plains forest pine_forest`
 Defined in `data/config/biomes.yaml` (optional — falls back to `BiomeRegistry.default()` if missing). Properties (surface/subsurface/filler blocks, elevationMin/Max, grassColor, vegetation entries) in `core/.../world/BiomeDefinition.kt`. Distributed via Voronoi zones by moisture value (0→1).
 
 **Item types**: `COBBLESTONE DIRT SAND GRAVEL SANDSTONE SNOWBALL FLINT`
 Properties (buildable, placesBlock) in `data/config/items.yaml`.
-
-**Drop config**: `data/config/drops.yaml` — maps `BlockType → List<(ItemType, weight, minCount, maxCount)>`
 
 **WorldConstants**: `CHUNK_SIZE=16`, `VIEW_RADIUS=2` (5×5 chunks), `Y ∈ [0, 1024]`
 

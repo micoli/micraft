@@ -23,6 +23,7 @@ import org.micoli.micraft.trade.TradeConfigLoader
 import org.micoli.micraft.trade.TradeManager
 import org.micoli.micraft.world.ArmorDefinition
 import org.micoli.micraft.world.ArmorRegistryLoader
+import org.micoli.micraft.world.BlockRegistryLoader
 import org.micoli.micraft.world.ChatChannelManager
 import org.micoli.micraft.world.ChatService
 import org.micoli.micraft.world.DropConfig
@@ -48,7 +49,7 @@ val gameLoopModule = module {
     }
 
     // items / weather / liquid / vegetation cluster
-    single { DropConfig(Path.of("data/config/drops.yaml")) }
+    single { DropConfig(get<BlockRegistryLoader>()) }
     single {
         WorldItemManager(
             get<DropConfig>(),

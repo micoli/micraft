@@ -1,7 +1,6 @@
 package org.micoli.micraft.command
 
-import kotlin.io.path.createTempFile
-import kotlin.io.path.writeText
+import kotlin.io.path.createTempDirectory
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -11,6 +10,7 @@ import org.micoli.micraft.session.WorldActionRecord
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 import org.micoli.micraft.world.BlockPos
+import org.micoli.micraft.world.BlockRegistryLoader
 import org.micoli.micraft.world.BlockType
 import org.micoli.micraft.world.DropConfig
 import org.micoli.micraft.world.ItemType
@@ -19,12 +19,8 @@ import org.micoli.micraft.world.WorldItemManager
 class UndoCommandTest {
     private val cmd = UndoCommand()
 
-    private fun emptyDropConfig(): DropConfig {
-        val tmp = createTempFile(suffix = ".yaml")
-        tmp.toFile().deleteOnExit()
-        tmp.writeText("{}\n")
-        return DropConfig(tmp)
-    }
+    private fun emptyDropConfig(): DropConfig =
+        DropConfig(BlockRegistryLoader(createTempDirectory(), createTempDirectory()))
 
     @Test
     fun emptyHistory_sendsNothingToUndo() = runBlocking {

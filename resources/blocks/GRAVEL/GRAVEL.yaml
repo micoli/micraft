@@ -11,3 +11,12 @@ viscosity: 0
 replaceable: false
 vegetationHost: false
 treeAllowed: true
+drops:
+- item: GRAVEL
+  dropRate: 90
+  minCount: 1
+  maxCount: 1
+- item: FLINT
+  dropRate: 10
+  minCount: 1
+  maxCount: 1

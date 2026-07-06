@@ -215,4 +215,76 @@ class BlockRegistryLoaderTest {
                 blocks = mapOf("STONE" to "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n"))
         assertFalse(dataDir.resolve("STONE/STONE.yaml").toFile().exists())
     }
+
+    @Test
+    fun drops_absentInBase_notInDropTable() {
+        val (loader) =
+            loaderWithBlocks(
+                mapOf("STONE" to "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n"))
+        val dropTable = loader.loadDropTable()
+        assertFalse(dropTable.containsKey(BlockType.STONE))
+    }
+
+    @Test
+    fun drops_presentInBase_loadedIntoDropTable() {
+        val (loader) =
+            loaderWithBlocks(
+                mapOf(
+                    "STONE" to
+                        "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\ndrops:\n- item: COBBLESTONE\n  dropRate: 100\n  minCount: 1\n  maxCount: 1\n"))
+        val dropTable = loader.loadDropTable()
+        val entries = dropTable.getValue(BlockType.STONE)
+        assertEquals(1, entries.size)
+        assertEquals(ItemType("COBBLESTONE"), entries[0].item)
+        assertEquals(100, entries[0].dropRate)
+    }
+
+    @Test
+    fun drops_override_replacesWholeList() {
+        val (loader) =
+            loaderWithBlocks(
+                blocks =
+                    mapOf(
+                        "STONE" to
+                            "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\ndrops:\n- item: COBBLESTONE\n  dropRate: 100\n  minCount: 1\n  maxCount: 1\n"),
+                overrides =
+                    mapOf(
+                        "STONE" to
+                            "drops:\n- item: FLINT\n  dropRate: 50\n  minCount: 1\n  maxCount: 2\n"),
+            )
+        val entries = loader.loadDropTable().getValue(BlockType.STONE)
+        assertEquals(1, entries.size)
+        assertEquals(ItemType("FLINT"), entries[0].item)
+        assertEquals(50, entries[0].dropRate)
+    }
+
+    @Test
+    fun drops_override_absentKey_inheritsBaseList() {
+        val (loader) =
+            loaderWithBlocks(
+                blocks =
+                    mapOf(
+                        "STONE" to
+                            "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\ndrops:\n- item: COBBLESTONE\n  dropRate: 100\n  minCount: 1\n  maxCount: 1\n"),
+                overrides = mapOf("STONE" to "hardness: 99\n"),
+            )
+        val entries = loader.loadDropTable().getValue(BlockType.STONE)
+        assertEquals(1, entries.size)
+        assertEquals(ItemType("COBBLESTONE"), entries[0].item)
+    }
+
+    @Test
+    fun drops_writeback_missingFieldAppendedAsComment() {
+        val (loader, dataDir) =
+            loaderWithBlocks(
+                blocks =
+                    mapOf(
+                        "STONE" to
+                            "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\ndrops:\n- item: COBBLESTONE\n  dropRate: 100\n  minCount: 1\n  maxCount: 1\n"),
+                overrides = mapOf("STONE" to "hardness: 99\n"),
+            )
+        loader.loadDropTable()
+        val writtenBack = dataDir.resolve("STONE/STONE.yaml").readText()
+        assertTrue(writtenBack.contains("drops"), "Missing drops key must be added as comment")
+    }
 }

@@ -11,3 +11,8 @@ viscosity: 0
 replaceable: false
 vegetationHost: true
 treeAllowed: true
+drops:
+- item: DIRT
+  dropRate: 100
+  minCount: 1
+  maxCount: 1

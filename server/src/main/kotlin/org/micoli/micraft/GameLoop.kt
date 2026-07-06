@@ -53,6 +53,7 @@ import org.micoli.micraft.ui.validateLayouts
 import org.micoli.micraft.world.ArmorDefinition
 import org.micoli.micraft.world.ArmorRegistryLoader
 import org.micoli.micraft.world.BlockRegistry
+import org.micoli.micraft.world.BlockRegistryLoader
 import org.micoli.micraft.world.ChatChannelManager
 import org.micoli.micraft.world.ChatService
 import org.micoli.micraft.world.ChunkPos
@@ -163,7 +164,9 @@ class GameLoop(
     private val chatChannelManager: ChatChannelManager = ChatChannelManager(),
     private val chatService: ChatService =
         ChatService(chatChannelManager, playerPersister::save, sessionRegistry::all),
-    private val dropConfig: DropConfig = DropConfig(Path.of("data/config/drops.yaml")),
+    private val dropConfig: DropConfig =
+        DropConfig(
+            BlockRegistryLoader(Path.of("resources/blocks"), Path.of("data/resources/blocks"))),
     private val worldItems: WorldItemManager =
         WorldItemManager(
             dropConfig,
