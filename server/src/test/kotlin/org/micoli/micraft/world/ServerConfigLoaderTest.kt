@@ -59,6 +59,30 @@ class ServerConfigLoaderTest {
     }
 
     @Test
+    fun corruptFile_leftUntouched() {
+        val dir = createTempDirectory()
+        val path = dir.resolve("server.yaml")
+        val original = "this: [is: not: valid yaml: }"
+        path.writeText(original)
+        loadServerConfig(path)
+        assertEquals(original, path.readText(), "Unparseable file must not be rewritten")
+    }
+
+    @Test
+    fun reload_isIdempotent_doesNotDuplicateComments() {
+        val dir = createTempDirectory()
+        val path = dir.resolve("server.yaml")
+        path.writeText("world:\n  viewRadius: 4\n")
+        loadServerConfig(path)
+        val afterFirstLoad = path.readText()
+        loadServerConfig(path)
+        val afterSecondLoad = path.readText()
+        assertEquals(
+            afterFirstLoad, afterSecondLoad, "Reloading must not duplicate default comments")
+        assertEquals(1, Regex("waterLevel").findAll(afterSecondLoad).count())
+    }
+
+    @Test
     fun applyServerConfig_setsWorldConstants() {
         val config =
             ServerConfig(

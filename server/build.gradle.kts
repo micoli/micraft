@@ -42,6 +42,10 @@ tasks.test {
     jvmArgs("-Xmx512m")
     val testWorldDir = rootProject.projectDir.resolve("data/world/test_world")
     doFirst { testWorldDir.deleteRecursively() }
+    //    testLogging {
+    //        events("passed", "skipped", "failed")
+    //        showStandardStreams = true
+    //    }
 }
 
 tasks.register<JavaExec>("patchResourceDefaults") {
@@ -73,6 +77,7 @@ tasks.named<JavaExec>("run") { workingDir = rootProject.projectDir }
 
 dependencies {
     api(projects.core)
+    implementation(kotlin("reflect"))
     implementation(libs.bcrypt)
     implementation(libs.classgraph)
     implementation(libs.logback)

@@ -2,15 +2,15 @@ package org.micoli.micraft.world
 
 import com.charleskorn.kaml.Yaml
 import java.nio.file.Path
-import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.isAccessible
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.MapSerializer
-import kotlinx.serialization.builtins.serializer
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("BlockRegistryLoader")
@@ -43,32 +43,34 @@ private data class BlockYamlOverride(
     val treeAllowed: Boolean? = null,
 )
 
-private fun BlockYamlEntry.applyOverride(o: BlockYamlOverride) =
-    copy(
-        hardness = o.hardness ?: hardness,
-        solid = o.solid ?: solid,
-        transparent = o.transparent ?: transparent,
-        minimapColor = o.minimapColor ?: minimapColor,
-        modelElement = o.modelElement ?: modelElement,
-        liquid = o.liquid ?: liquid,
-        viscosity = o.viscosity ?: viscosity,
-        replaceable = o.replaceable ?: replaceable,
-        vegetationHost = o.vegetationHost ?: vegetationHost,
-        treeAllowed = o.treeAllowed ?: treeAllowed,
-    )
+private val ENTRY_PROPERTIES =
+    BlockYamlEntry::class
+        .memberProperties
+        .associateBy { it.name }
+        .mapValues { it.value.apply { isAccessible = true } }
+private val OVERRIDE_PROPERTIES =
+    BlockYamlOverride::class
+        .memberProperties
+        .associateBy { it.name }
+        .mapValues { it.value.apply { isAccessible = true } }
 
-private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), BlockYamlEntry.serializer())
+private val ENTRY_CONSTRUCTOR =
+    BlockYamlEntry::class.primaryConstructor!!.apply { isAccessible = true }
+
+private fun BlockYamlEntry.applyOverride(o: BlockYamlOverride): BlockYamlEntry {
+    val args =
+        ENTRY_CONSTRUCTOR.parameters.associateWith { param ->
+            OVERRIDE_PROPERTIES.getValue(param.name!!).get(o)
+                ?: ENTRY_PROPERTIES.getValue(param.name!!).get(this)
+        }
+    return ENTRY_CONSTRUCTOR.callBy(args)
+}
 
 class BlockRegistryLoader(
     private val resourcesBlocksPath: Path,
     private val dataBlocksPath: Path,
-    private val outputPath: Path,
 ) {
-    init {
-        generateFromResources()
-    }
-
-    private fun generateFromResources() {
+    private fun generateFromResources(): Map<String, BlockYamlEntry> {
         val map = mutableMapOf<String, BlockYamlEntry>()
         resourcesBlocksPath
             .listDirectoryEntries()
@@ -91,48 +93,41 @@ class BlockRegistryLoader(
                         val merged =
                             if (dataYaml.exists()) {
                                 val content = dataYaml.readText()
-                                val overridden =
+                                val overrideResult =
                                     if (content.isNotBlank()) {
                                         runCatching {
-                                                val override =
-                                                    Yaml.default.decodeFromString(
-                                                        BlockYamlOverride.serializer(), content)
-                                                entry.applyOverride(override)
-                                            }
-                                            .onFailure {
-                                                log.warn(
-                                                    "Failed to apply override for {}: {}",
-                                                    name,
-                                                    it.message)
-                                            }
-                                            .getOrDefault(entry)
-                                    } else entry
-                                dataYaml.writeText(
-                                    Yaml.default.encodeToString(
-                                        BlockYamlEntry.serializer(), overridden))
-                                log.debug("Wrote back merged data override for {}", name)
+                                            Yaml.default.decodeFromString(
+                                                BlockYamlOverride.serializer(), content)
+                                        }
+                                    } else Result.success(BlockYamlOverride())
+                                val override = overrideResult.getOrNull()
+                                val overridden = override?.let { entry.applyOverride(it) } ?: entry
+                                overrideResult.fold(
+                                    onSuccess = {
+                                        dataYaml.writeText(
+                                            spliceMissingAsComments(
+                                                content, yamlOverrideSection(overridden, it)))
+                                        log.debug("Wrote back merged data override for {}", name)
+                                    },
+                                    onFailure = {
+                                        log.warn(
+                                            "Failed to apply override for {}, leaving file untouched: {}",
+                                            name,
+                                            it.message)
+                                    })
                                 overridden
                             } else entry
                         map[name] = merged
                     }
             }
-        outputPath.parent.createDirectories()
-        outputPath.writeText(Yaml.default.encodeToString(ENTRY_MAP_SERIALIZER, map))
-        log.info("Generated blocks.yaml from {} block definitions", map.size)
+        log.info("Generated {} block definitions from resources", map.size)
+        return map
     }
 
     fun load(): Map<BlockType, BlockDefinition> {
-        val raw =
-            runCatching {
-                    validateYamlConfig(outputPath, "blocks.schema.json")
-                    Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, outputPath.readText())
-                }
-                .getOrElse { e ->
-                    log.warn("Failed to load blocks.yaml ({}), registry will be empty", e.message)
-                    emptyMap()
-                }
         val result =
-            raw.entries
+            generateFromResources()
+                .entries
                 .mapNotNull { (key, entry) ->
                     runCatching {
                             BlockType(key) to
@@ -150,7 +145,7 @@ class BlockRegistryLoader(
                                 )
                         }
                         .onFailure {
-                            log.warn("Unknown block type '{}' in blocks.yaml — skipped", key)
+                            log.warn("Unknown block type '{}' in resources/blocks — skipped", key)
                         }
                         .getOrNull()
                 }
@@ -159,8 +154,5 @@ class BlockRegistryLoader(
         return result
     }
 
-    fun reload(): Map<BlockType, BlockDefinition> {
-        generateFromResources()
-        return load()
-    }
+    fun reload(): Map<BlockType, BlockDefinition> = load()
 }

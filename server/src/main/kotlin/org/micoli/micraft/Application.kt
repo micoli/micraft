@@ -107,7 +107,6 @@ fun Application.module() {
         BlockRegistryLoader(
             resourcesBlocksPath = Path.of("resources/blocks"),
             dataBlocksPath = Path.of(dataPath + "/resources/blocks"),
-            outputPath = Path.of(dataPath + "/config/blocks.yaml"),
         )
 
     val itemRegistryLoader = ItemRegistryLoader(Path.of(dataPath + "/config/items.yaml"))

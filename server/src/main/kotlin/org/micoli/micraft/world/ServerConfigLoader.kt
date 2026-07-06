@@ -82,12 +82,11 @@ data class ServerConfig(
 )
 
 fun loadServerConfig(path: Path): ServerConfig {
+    val originalText = if (path.exists()) path.readText() else ""
     val config =
         if (path.exists()) {
             validateYamlConfig(path, "server.schema.json")
-            runCatching {
-                    Yaml.default.decodeFromString(ServerConfig.serializer(), path.readText())
-                }
+            runCatching { Yaml.default.decodeFromString(ServerConfig.serializer(), originalText) }
                 .getOrElse { e ->
                     log.warn("Failed to parse server.yaml ({}), using defaults", e.message)
                     ServerConfig()
@@ -97,7 +96,22 @@ fun loadServerConfig(path: Path): ServerConfig {
             ServerConfig()
         }
     path.parent?.createDirectories()
-    path.writeText(Yaml.default.encodeToString(ServerConfig.serializer(), config))
+    if (originalText.isBlank()) {
+        path.writeText(
+            spliceMissingAsComments(
+                originalText, yamlConfigSection(ServerConfig::class, "", config, null)))
+    } else {
+        runCatching { Yaml.default.parseToYamlNode(originalText) }
+            .onSuccess { node ->
+                path.writeText(
+                    spliceMissingAsComments(
+                        originalText, yamlConfigSection(ServerConfig::class, "", config, node)))
+            }
+            .onFailure {
+                log.warn(
+                    "server.yaml has unparseable structure, leaving file untouched: {}", it.message)
+            }
+    }
     return config
 }
 

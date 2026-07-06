@@ -1,7 +1,6 @@
 package org.micoli.micraft.world
 
 import kotlin.io.path.createTempDirectory
-import kotlin.io.path.createTempFile
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.Test
@@ -22,7 +21,6 @@ class BlockRegistryLoaderTest {
     ): LoaderContext {
         val resourcesDir = createTempDirectory("resources_blocks")
         val dataDir = createTempDirectory("data_blocks")
-        val outputFile = createTempFile(suffix = ".yaml")
         blocks.forEach { (name, yaml) ->
             val blockDir = resourcesDir.resolve(name)
             blockDir.toFile().mkdir()
@@ -33,7 +31,7 @@ class BlockRegistryLoaderTest {
             overrideDir.toFile().mkdir()
             overrideDir.resolve("$name.yaml").writeText(yaml)
         }
-        return LoaderContext(BlockRegistryLoader(resourcesDir, dataDir, outputFile), dataDir)
+        return LoaderContext(BlockRegistryLoader(resourcesDir, dataDir), dataDir)
     }
 
     @Test
@@ -179,6 +177,35 @@ class BlockRegistryLoaderTest {
         val writtenBack = dataDir.resolve("STONE/STONE.yaml").readText()
         assertTrue(writtenBack.contains("99"), "Override value preserved in write-back")
         assertTrue(writtenBack.contains("minimapColor"), "Missing keys added in write-back")
+    }
+
+    @Test
+    fun dataOverride_reload_isIdempotent_doesNotDuplicateComments() {
+        val (loader, dataDir) =
+            loaderWithBlocks(
+                blocks =
+                    mapOf("STONE" to "hardness: 5\nsolid: true\nminimapColor: [136, 136, 136]\n"),
+                overrides = mapOf("STONE" to "hardness: 99\n"),
+            )
+        loader.reload()
+        val afterFirstReload = dataDir.resolve("STONE/STONE.yaml").readText()
+        loader.reload()
+        val afterSecondReload = dataDir.resolve("STONE/STONE.yaml").readText()
+        assertEquals(
+            afterFirstReload, afterSecondReload, "Reloading must not duplicate default comments")
+        assertEquals(1, Regex("minimapColor").findAll(afterSecondReload).count())
+    }
+
+    @Test
+    fun dataOverride_invalidYaml_leftUntouched() {
+        val (loader, dataDir) =
+            loaderWithBlocks(
+                blocks =
+                    mapOf("STONE" to "hardness: 5\nsolid: true\nminimapColor: [136, 136, 136]\n"),
+                overrides = mapOf("STONE" to "this is not: [valid yaml: }"),
+            )
+        loader.reload()
+        assertEquals("this is not: [valid yaml: }", dataDir.resolve("STONE/STONE.yaml").readText())
     }
 
     @Test
