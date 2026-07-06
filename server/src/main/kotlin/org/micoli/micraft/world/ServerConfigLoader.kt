@@ -79,6 +79,7 @@ data class ServerConfig(
     @EncodeDefault(ALWAYS) val player: PlayerSection = PlayerSection(),
     @EncodeDefault(ALWAYS) val auth: AuthSection = AuthSection(),
     @EncodeDefault(ALWAYS) val chunks: ChunkSection = ChunkSection(),
+    @EncodeDefault(ALWAYS) val game: GameConfig = GameConfig(),
 )
 
 fun loadServerConfig(path: Path, resourcesPath: Path): ServerConfig {
@@ -130,6 +131,7 @@ fun applyServerConfig(config: ServerConfig) {
         PlayerConstants.SPEED_SNEAKING = speedSneaking
         PlayerConstants.SPEED_CRAWLING = speedCrawling
     }
+    applyGameConfig(config.game)
     log.info(
         "Server config applied: world={}, player={}",
         config.world,

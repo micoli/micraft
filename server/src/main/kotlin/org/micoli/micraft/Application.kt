@@ -75,12 +75,12 @@ import org.micoli.micraft.world.WeatherConfig
 import org.micoli.micraft.world.WeatherManager
 import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldState
-import org.micoli.micraft.world.applyGameConfig
+import org.micoli.micraft.world.applyServerConfig
 import org.micoli.micraft.world.loadBiomeRegistry
-import org.micoli.micraft.world.loadGameConfig
 import org.micoli.micraft.world.loadHouseConfig
 import org.micoli.micraft.world.loadKeyBindings
 import org.micoli.micraft.world.loadRoadConfig
+import org.micoli.micraft.world.loadServerConfig
 import org.micoli.micraft.world.proceduralGenerator.ProceduralChunkGenerator
 import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.world.validateYamlConfig
@@ -136,10 +136,11 @@ fun Application.module() {
     }
 
     val reloadGameConfigLambda: () -> Unit = {
-        validateYamlConfig(configDir.resolve("game.yaml"), "game.schema.json")
-        applyGameConfig(
-            loadGameConfig(
-                Path.of(dataPath + "/config/game.yaml"), resourcesConfigDir.resolve("game.yaml")))
+        validateYamlConfig(configDir.resolve("server.yaml"), "server.schema.json")
+        applyServerConfig(
+            loadServerConfig(
+                Path.of(dataPath + "/config/server.yaml"),
+                resourcesConfigDir.resolve("server.yaml")))
     }
 
     val authConfig = serverConfig.auth

@@ -41,6 +41,25 @@ class ServerConfigLoaderTest {
         assertEquals(5, config.world.viewRadius)
         assertEquals(10, config.world.forwardViewRadius)
         assertEquals(6.0f, config.player.speedStanding)
+        assertEquals(GameConfig(), config.game, "game section falls back to defaults")
+    }
+
+    @Test
+    fun existingFile_loadsGameSectionValues() {
+        val dir = createTempDirectory()
+        val path = dir.resolve("server.yaml")
+        path.writeText(
+            """
+            game:
+              gravity: -25.0
+              spawnY: 64.0
+              ticksPerDay: 36000
+            """
+                .trimIndent())
+        val config = loadServerConfig(path, defaultResourcesFile(dir))
+        assertEquals(-25.0f, config.game.gravity)
+        assertEquals(64.0f, config.game.spawnY)
+        assertEquals(36000L, config.game.ticksPerDay)
     }
 
     @Test
@@ -116,5 +135,29 @@ class ServerConfigLoaderTest {
         assertEquals(512, WorldConstants.WORLD_MAX_Y)
         assertEquals(6.0f, PlayerConstants.SPEED_STANDING)
         assertEquals(0.8f, PlayerConstants.WIDTH)
+    }
+
+    @Test
+    fun applyServerConfig_setsGameConstants() {
+        val config =
+            ServerConfig(
+                game =
+                    GameConfig(
+                        gravity = -15f,
+                        tickMs = 100L,
+                        saveIntervalSeconds = 60,
+                        spawnX = 16f,
+                        ticksPerDay = 36_000L,
+                        timeBroadcastTicks = 10,
+                        maxInteractionDistance = 5.0,
+                    ))
+        applyServerConfig(config)
+        assertEquals(-15f, org.micoli.micraft.GRAVITY)
+        assertEquals(100L, org.micoli.micraft.TICK_MS)
+        assertEquals(600, org.micoli.micraft.SAVE_INTERVAL_TICKS)
+        assertEquals(16f, org.micoli.micraft.SPAWN_X)
+        assertEquals(36_000L, org.micoli.micraft.TICKS_PER_DAY)
+        assertEquals(10, org.micoli.micraft.TIME_BROADCAST_TICKS)
+        assertEquals(5.0, org.micoli.micraft.MAX_INTERACTION_DISTANCE)
     }
 }

@@ -1,11 +1,5 @@
 package org.micoli.micraft.world
 
-import com.charleskorn.kaml.Yaml
-import java.nio.file.Path
-import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
-import kotlin.io.path.readText
-import kotlin.io.path.writeText
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -32,34 +26,6 @@ data class GameConfig(
     @EncodeDefault(ALWAYS) val reconcileToleranceXz: Double = 0.5,
     @EncodeDefault(ALWAYS) val reconcileToleranceY: Double = 0.99,
 )
-
-fun loadGameConfig(path: Path, resourcesPath: Path): GameConfig {
-    val default = Yaml.default.decodeFromString(GameConfig.serializer(), resourcesPath.readText())
-    val originalText = if (path.exists()) path.readText() else ""
-    path.parent?.createDirectories()
-    if (originalText.isBlank()) {
-        log.info("No game.yaml at {}, creating with defaults", path.toAbsolutePath())
-        path.writeText(
-            spliceMissingAsComments("", yamlConfigSection(GameConfig::class, "", default, null)))
-        return default
-    }
-    val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
-    if (node == null) {
-        log.warn("game.yaml has unparseable structure, leaving file untouched")
-        return default
-    }
-    val decoded =
-        runCatching { Yaml.default.decodeFromString(GameConfig.serializer(), originalText) }
-            .getOrElse { e ->
-                log.warn("Failed to parse game.yaml ({}), using defaults", e.message)
-                default
-            }
-    val merged = mergeConfig(GameConfig::class, decoded, default, node)
-    path.writeText(
-        spliceMissingAsComments(
-            originalText, yamlConfigSection(GameConfig::class, "", merged, node)))
-    return merged
-}
 
 fun applyGameConfig(config: GameConfig) {
     with(config) {
