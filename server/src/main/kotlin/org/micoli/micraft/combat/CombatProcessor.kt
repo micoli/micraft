@@ -41,7 +41,7 @@ private fun distance3(
 }
 
 class CombatProcessor(
-    private val config: CombatConfig,
+    private val config: CombatConfigData,
     private val attackRegistry: Map<String, AttackDefinition>,
     private val armorRegistry: Map<String, ArmorDefinition>,
     private val npcManager: NpcManager,

@@ -24,7 +24,7 @@ import org.micoli.micraft.auth.OAuthProvider
 import org.micoli.micraft.auth.installAuthRoutes
 import org.micoli.micraft.auth.loadGroupsConfig
 import org.micoli.micraft.combat.AttackDefinition
-import org.micoli.micraft.combat.CombatConfig
+import org.micoli.micraft.combat.CombatConfigData
 import org.micoli.micraft.combat.CombatProcessor
 import org.micoli.micraft.combat.StatusEffectProcessor
 import org.micoli.micraft.command.availablePlayerSkins
@@ -196,7 +196,7 @@ fun Application.module() {
             npcRegistryLoader = get<NpcRegistryLoader>(),
             npcManager = get<NpcManager>(),
             npcSpawner = get<NpcSpawner>(),
-            combatConfig = get<CombatConfig>(),
+            combatConfig = get<CombatConfigData>(),
             attackRegistry = get<Map<String, AttackDefinition>>(),
             combatProcessor = get<CombatProcessor>(),
             statusEffectProcessor = get<StatusEffectProcessor>(),

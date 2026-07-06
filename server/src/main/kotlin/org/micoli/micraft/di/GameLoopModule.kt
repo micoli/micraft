@@ -3,8 +3,8 @@ package org.micoli.micraft.di
 import java.nio.file.Path
 import org.koin.dsl.module
 import org.micoli.micraft.buildConfigRegistry
-import org.micoli.micraft.combat.AttackRegistryLoader
-import org.micoli.micraft.combat.CombatConfigLoader
+import org.micoli.micraft.combat.AttackConfig
+import org.micoli.micraft.combat.CombatConfig
 import org.micoli.micraft.combat.CombatProcessor
 import org.micoli.micraft.combat.StatusEffectProcessor
 import org.micoli.micraft.http.TerrainCache
@@ -100,8 +100,8 @@ val gameLoopModule = module {
 
     // combat cluster — armorRegistry is a mutable snapshot populated later in GameLoop.start(),
     // so (matching prior behavior) these processors are built with an empty map at construction.
-    single { CombatConfigLoader(Path.of("data/config/combat.yaml")).load() }
-    single { AttackRegistryLoader(Path.of("data/config/attacks")).load() }
+    single { CombatConfig().data }
+    single { AttackConfig().data.attacks }
     single {
         val emptyArmorRegistry = emptyMap<String, ArmorDefinition>()
         CombatProcessor(

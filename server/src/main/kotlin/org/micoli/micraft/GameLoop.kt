@@ -11,10 +11,10 @@ import kotlinx.coroutines.launch
 import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.TokenStore
+import org.micoli.micraft.combat.AttackConfig
 import org.micoli.micraft.combat.AttackDefinition
-import org.micoli.micraft.combat.AttackRegistryLoader
 import org.micoli.micraft.combat.CombatConfig
-import org.micoli.micraft.combat.CombatConfigLoader
+import org.micoli.micraft.combat.CombatConfigData
 import org.micoli.micraft.combat.CombatProcessor
 import org.micoli.micraft.combat.StatusEffectProcessor
 import org.micoli.micraft.di.CommandContextClosures
@@ -208,10 +208,8 @@ class GameLoop(
     private val npcManager: NpcManager =
         NpcManager(broadcast = sessionRegistry::broadcast, getSessions = sessionRegistry::all),
     private val npcSpawner: NpcSpawner = NpcSpawner(),
-    private val combatConfig: CombatConfig =
-        CombatConfigLoader(Path.of("data/config/combat.yaml")).load(),
-    val attackRegistry: Map<String, AttackDefinition> =
-        AttackRegistryLoader(Path.of("data/config/attacks")).load(),
+    private val combatConfig: CombatConfigData = CombatConfig().data,
+    val attackRegistry: Map<String, AttackDefinition> = AttackConfig().data.attacks,
     private val combatProcessor: CombatProcessor =
         CombatProcessor(
             config = combatConfig,

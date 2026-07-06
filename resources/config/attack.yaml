@@ -1,0 +1,26 @@
+attacks:
+  slash:
+    damageType: PHYSICAL
+    power: 5
+    weaponDice: 1d8
+    cooldownMs: 800
+
+  heavy_slash:
+    damageType: PHYSICAL
+    power: 10
+    weaponDice: 2d8
+    cooldownMs: 1500
+    rageCost: 20
+
+  fireball:
+    damageType: FIRE
+    power: 8
+    weaponDice: 3d6
+    cooldownMs: 2000
+    manaCost: 15
+
+  poison_bite:
+    damageType: POISON
+    power: 4
+    weaponDice: 1d6
+    cooldownMs: 1000

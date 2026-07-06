@@ -22,7 +22,7 @@ import org.micoli.micraft.support.testSession
 
 class CombatProcessorTest {
 
-    private val config = CombatConfig(maxCombatRange = 10f)
+    private val config = CombatConfigData(maxCombatRange = 10f)
 
     // str=30 → meleeDmg=10; target AC ≤ 9 → roll(1..20)+10 always ≥ 9
     private val guaranteedHitAttack =
