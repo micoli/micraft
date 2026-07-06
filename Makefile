@@ -89,6 +89,7 @@ ts-typecheck:
 test: kt-test web-test
 
 kt-test:
+	$(DC_DEV) exec micraft bash -c "./gradlew :core:jvmTest --rerun-tasks"
 	$(DC_DEV) exec micraft bash -c "./gradlew :server:test --rerun-tasks"
 
 web-test:
