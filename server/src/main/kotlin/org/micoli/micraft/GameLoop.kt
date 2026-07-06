@@ -4,7 +4,6 @@ import io.ktor.server.application.*
 import io.ktor.websocket.*
 import java.nio.file.Path
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.consumeEach
@@ -12,10 +11,16 @@ import kotlinx.coroutines.launch
 import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.TokenStore
+import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.combat.AttackRegistryLoader
+import org.micoli.micraft.combat.CombatConfig
 import org.micoli.micraft.combat.CombatConfigLoader
 import org.micoli.micraft.combat.CombatProcessor
 import org.micoli.micraft.combat.StatusEffectProcessor
+import org.micoli.micraft.di.CommandContextClosures
+import org.micoli.micraft.di.PlayerPersister
+import org.micoli.micraft.di.ReloadCoordinator
+import org.micoli.micraft.di.SessionRegistry
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.npc.NpcConfigLoader
 import org.micoli.micraft.npc.NpcManager
@@ -153,8 +158,116 @@ class GameLoop(
     private val groupsConfig: GroupsConfig? = null,
     private val reloadRbac: (() -> Unit)? = null,
     private val chunkSection: ChunkSection = ChunkSection(),
+    private val sessionRegistry: SessionRegistry = SessionRegistry(),
+    private val playerPersister: PlayerPersister = PlayerPersister(persistence),
+    private val chatChannelManager: ChatChannelManager = ChatChannelManager(),
+    private val chatService: ChatService =
+        ChatService(chatChannelManager, playerPersister::save, sessionRegistry::all),
+    private val dropConfig: DropConfig = DropConfig(Path.of("data/config/drops.yaml")),
+    private val worldItems: WorldItemManager =
+        WorldItemManager(
+            dropConfig,
+            broadcast = sessionRegistry::broadcast,
+            savePlayer = playerPersister::save,
+            i18n = i18n,
+        ),
+    private val weatherConfig: WeatherConfig = WeatherConfig(),
+    private val weatherManager: WeatherManager = WeatherManager(weatherConfig),
+    private val configRegistry: ConfigRegistry = buildConfigRegistry(weatherConfig),
+    private val liquidManager: LiquidManager = LiquidManager(world),
+    private val vegetationConfig: VegetationConfig =
+        VegetationConfig(Path.of("data/config/vegetation.yaml")),
+    private val vegetationManager: VegetationManager =
+        VegetationManager(
+            world,
+            vegetationConfig,
+            savePath =
+                persistence?.worldDir?.resolve("vegetation_state.json")
+                    ?: Path.of("data/world/default_world/vegetation_state.json"),
+        ),
+    private val recipeRegistryLoader: RecipeRegistryLoader =
+        RecipeRegistryLoader(Path.of("data/config/recipes.yaml")),
+    private val armorRegistryLoader: ArmorRegistryLoader =
+        ArmorRegistryLoader(
+            armorsPath = Path.of("resources/armors"),
+            dataArmorsPath = Path.of("data/resources/armors"),
+        ),
+    private val npcConfigLoader: NpcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml")),
+    private val npcRegistryLoader: NpcRegistryLoader =
+        NpcRegistryLoader(
+            resourcesEntityPath = Path.of("resources/entities"),
+            dataEntityPath = Path.of("data/resources/entities"),
+        ),
+    private val npcManager: NpcManager =
+        NpcManager(broadcast = sessionRegistry::broadcast, getSessions = sessionRegistry::all),
+    private val npcSpawner: NpcSpawner = NpcSpawner(),
+    private val combatConfig: CombatConfig =
+        CombatConfigLoader(Path.of("data/config/combat.yaml")).load(),
+    val attackRegistry: Map<String, AttackDefinition> =
+        AttackRegistryLoader(Path.of("data/config/attacks")).load(),
+    private val combatProcessor: CombatProcessor =
+        CombatProcessor(
+            config = combatConfig,
+            attackRegistry = attackRegistry,
+            armorRegistry = emptyMap(),
+            npcManager = npcManager,
+            getSessions = sessionRegistry::all,
+            broadcastCombatLog = { msg ->
+                val chatMsg =
+                    ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
+                sessionRegistry
+                    .all()
+                    .filter { "combat" in it.state.subscribedChannels }
+                    .forEach { it.send(chatMsg) }
+            },
+            subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
+            i18n = i18n,
+            savePlayer = playerPersister::save,
+        ),
+    private val statusEffectProcessor: StatusEffectProcessor =
+        StatusEffectProcessor(
+            armorRegistry = emptyMap(),
+            world = world,
+            broadcastHealthUpdate = { id, isNpc, hp, maxHp ->
+                sessionRegistry.all().forEach {
+                    it.send(ServerMessage.HealthUpdate(id, isNpc, hp, maxHp))
+                }
+            },
+            broadcastCombatLog = { msg ->
+                val chatMsg =
+                    ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
+                sessionRegistry
+                    .all()
+                    .filter { "combat" in it.state.subscribedChannels }
+                    .forEach { it.send(chatMsg) }
+            },
+            subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
+        ),
+    private val tradeConfigLoader: TradeConfigLoader =
+        TradeConfigLoader(Path.of("data/config/trade.yaml")),
+    private val tradeManager: TradeManager =
+        TradeManager(
+            getSessions = sessionRegistry::all,
+            i18n = i18n,
+            savePlayer = playerPersister::save,
+            maxDistance = tradeConfigLoader.load().maxDistance,
+        ),
+    private val blockBreaker: BlockBreaker =
+        BlockBreaker(world, sessionRegistry::broadcast, worldItems, liquidManager),
+    private val blockPlacer: BlockPlacer =
+        BlockPlacer(
+            world,
+            sessionRegistry::broadcast,
+            playerPersister::save,
+            vegetationManager,
+            attackRegistry,
+        ),
+    private val movementProcessor: MovementProcessor = MovementProcessor(world),
+    private val chunkStreamer: ChunkStreamer = ChunkStreamer(world),
+    val terrainCache: TerrainCache = TerrainCache(),
+    val networkStats: NetworkStats = NetworkStats(),
+    private val commandContextFactory: ((CommandContextClosures) -> CommandContext)? = null,
 ) {
-    private val sessions = ConcurrentHashMap<String, PlayerSession>()
     private var saveTickCounter = 0
     private var timeBroadcastCounter = 0
 
@@ -163,113 +276,16 @@ class GameLoop(
 
     private val commands: Map<String, CommandHandler> = discoverCommandHandlers()
 
-    private val chatChannelManager = ChatChannelManager()
-    private val chatService = ChatService(chatChannelManager, ::savePlayer, { sessions.values })
-
-    private val dropConfig = DropConfig(Path.of("data/config/drops.yaml"))
-    private val worldItems =
-        WorldItemManager(
-            dropConfig,
-            broadcast = { msg -> sessions.values.forEach { it.send(msg) } },
-            savePlayer = ::savePlayer,
-            i18n = i18n,
-        )
-
-    private val weatherConfig = WeatherConfig()
-    private val weatherManager = WeatherManager(weatherConfig)
-    private val configRegistry = buildConfigRegistry(weatherConfig)
-
-    private val liquidManager = LiquidManager(world)
-
-    private val vegetationConfig = VegetationConfig(Path.of("data/config/vegetation.yaml"))
-    private val vegetationManager =
-        VegetationManager(
-            world,
-            vegetationConfig,
-            savePath =
-                persistence?.worldDir?.resolve("vegetation_state.json")
-                    ?: Path.of("data/world/default_world/vegetation_state.json"),
-        )
-
-    private val recipeRegistryLoader = RecipeRegistryLoader(Path.of("data/config/recipes.yaml"))
-
-    private val armorRegistryLoader =
-        ArmorRegistryLoader(
-            armorsPath = Path.of("resources/armors"),
-            dataArmorsPath = Path.of("data/resources/armors"),
-        )
     private var armorRegistry: Map<String, ArmorDefinition> = emptyMap()
-    private val npcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml"))
-    private val npcRegistryLoader =
-        NpcRegistryLoader(
-            resourcesEntityPath = Path.of("resources/entities"),
-            dataEntityPath = Path.of("data/resources/entities"),
-        )
-    private val npcManager =
-        NpcManager(
-            broadcast = { msg -> sessions.values.forEach { it.send(msg) } },
-            getSessions = { sessions.values },
-        )
-    private val npcSpawner = NpcSpawner()
     private var npcSpawnTickCounter = 0
 
-    private val combatConfig = CombatConfigLoader(Path.of("data/config/combat.yaml")).load()
-    val attackRegistry = AttackRegistryLoader(Path.of("data/config/attacks")).load()
-    private val combatProcessor =
-        CombatProcessor(
-            config = combatConfig,
-            attackRegistry = attackRegistry,
-            armorRegistry = armorRegistry,
-            npcManager = npcManager,
-            getSessions = { sessions.values },
-            broadcastCombatLog = { msg ->
-                val chatMsg =
-                    ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
-                sessions.values
-                    .filter { "combat" in it.state.subscribedChannels }
-                    .forEach { it.send(chatMsg) }
-            },
-            subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
-            i18n = i18n,
-            savePlayer = { savePlayer(it) },
-        )
-    private val statusEffectProcessor =
-        StatusEffectProcessor(
-            armorRegistry = armorRegistry,
-            world = world,
-            broadcastHealthUpdate = { id, isNpc, hp, maxHp ->
-                sessions.values.forEach {
-                    it.send(ServerMessage.HealthUpdate(id, isNpc, hp, maxHp))
-                }
-            },
-            broadcastCombatLog = { msg ->
-                val chatMsg =
-                    ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
-                sessions.values
-                    .filter { "combat" in it.state.subscribedChannels }
-                    .forEach { it.send(chatMsg) }
-            },
-            subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
-        )
-
-    private val tradeConfigLoader = TradeConfigLoader(Path.of("data/config/trade.yaml"))
-    private val tradeManager =
-        TradeManager(
-            getSessions = { sessions.values },
-            i18n = i18n,
-            savePlayer = ::savePlayer,
-            maxDistance = tradeConfigLoader.load().maxDistance,
-        )
-
-    private val commandContext =
-        CommandContext(
-            world = world,
-            persistence = persistence,
-            i18n = i18n,
-            broadcast = { msg -> sessions.values.forEach { it.send(msg) } },
-            sessions = { sessions.values },
+    private val commandContextClosures =
+        CommandContextClosures(
+            broadcast = sessionRegistry::broadcast,
+            sessions = sessionRegistry::all,
             kickSession = { playerName ->
-                sessions.values
+                sessionRegistry
+                    .all()
                     .find { it.state.name == playerName }
                     ?.socket
                     ?.close(CloseReason(CloseReason.Codes.NORMAL, "Kicked by server"))
@@ -277,8 +293,6 @@ class GameLoop(
             reloadConfig = ::reload,
             commands = { commands.values },
             savePlayer = ::savePlayer,
-            worldItems = worldItems,
-            npcManager = npcManager,
             getGameTime = { gameTicks },
             setGameTime = { gameTicks = it },
             refetchChunks = { session ->
@@ -290,6 +304,36 @@ class GameLoop(
                 chunkStreamer.requestAround(session, cx, cz)
             },
             flushWorld = ::flushWorld,
+            reloadBlocks =
+                if (reloadRegistries != null) {
+                    {
+                        reloadRegistries.invoke()
+                        val sync = buildRegistrySync()
+                        for (s in sessionRegistry.all()) s.send(sync)
+                    }
+                } else null,
+            reloadNpcs = { npcManager.reloadDefinitions(npcRegistryLoader.reload()) },
+            reloadRbac = reloadRbac,
+            armorRegistry = { armorRegistry },
+        )
+
+    private fun buildDefaultCommandContext(closures: CommandContextClosures): CommandContext =
+        CommandContext(
+            world = world,
+            persistence = persistence,
+            i18n = i18n,
+            broadcast = closures.broadcast,
+            sessions = closures.sessions,
+            kickSession = closures.kickSession,
+            reloadConfig = closures.reloadConfig,
+            commands = closures.commands,
+            savePlayer = closures.savePlayer,
+            worldItems = worldItems,
+            npcManager = npcManager,
+            getGameTime = closures.getGameTime,
+            setGameTime = closures.setGameTime,
+            refetchChunks = closures.refetchChunks,
+            flushWorld = closures.flushWorld,
             chatService = chatService,
             chatChannelManager = chatChannelManager,
             weatherManager = weatherManager,
@@ -297,34 +341,15 @@ class GameLoop(
             groupsConfig = groupsConfig,
             liquidManager = liquidManager,
             configRegistry = configRegistry,
-            reloadRbac = reloadRbac,
-            reloadBlocks =
-                if (reloadRegistries != null) {
-                    {
-                        reloadRegistries.invoke()
-                        val sync = buildRegistrySync()
-                        for (s in sessions.values) s.send(sync)
-                    }
-                } else null,
-            reloadNpcs = { npcManager.reloadDefinitions(npcRegistryLoader.reload()) },
-            armorRegistry = { armorRegistry },
+            reloadBlocks = closures.reloadBlocks,
+            reloadNpcs = closures.reloadNpcs,
+            reloadRbac = closures.reloadRbac,
+            armorRegistry = closures.armorRegistry,
             tradeManager = tradeManager,
         )
-    private val blockBreaker =
-        BlockBreaker(
-            world,
-            { msg -> sessions.values.forEach { it.send(msg) } },
-            worldItems,
-            liquidManager,
-        )
-    private val blockPlacer =
-        BlockPlacer(
-            world,
-            { msg -> sessions.values.forEach { it.send(msg) } },
-            ::savePlayer,
-            vegetationManager,
-            attackRegistry,
-        )
+
+    private val commandContext =
+        (commandContextFactory ?: ::buildDefaultCommandContext).invoke(commandContextClosures)
     private val intentCollector =
         IntentCollector(
             blockBreaker,
@@ -335,14 +360,10 @@ class GameLoop(
             },
             combatProcessor = combatProcessor,
         )
-    private val movementProcessor = MovementProcessor(world)
-    private val chunkStreamer = ChunkStreamer(world)
 
-    val terrainCache = TerrainCache()
-    val networkStats = NetworkStats()
     @Volatile private var appScope: Application? = null
 
-    fun getPlayerStates(): List<PlayerState> = sessions.values.map { it.state }
+    fun getPlayerStates(): List<PlayerState> = sessionRegistry.all().map { it.state }
 
     fun getNpcStates(): List<org.micoli.micraft.npc.NpcState> = npcManager.getAll().map { it.state }
 
@@ -480,40 +501,24 @@ class GameLoop(
         return ServerMessage.RegistrySync(blocks, items, npcs, npcDefinitions)
     }
 
-    private suspend fun reload(lang: String): String {
-        val lines = mutableListOf<String>()
-        val dropCount = dropConfig.reload()
-        lines += i18n.t(lang, "reload:server:drops", dropCount)
-        if (reloadBiomes != null) {
-            world.generator = reloadBiomes.invoke()
-            lines += i18n.t(lang, "reload:server:biomes")
-        }
-        if (reloadRegistries != null) {
-            reloadRegistries.invoke()
-            val registrySync = buildRegistrySync()
-            sessions.values.forEach { it.send(registrySync) }
-            lines += i18n.t(lang, "reload:server:registry")
-        }
-        if (reloadGameConfig != null) {
-            reloadGameConfig.invoke()
-            val configSync =
-                ServerMessage.GameConfigSync(RECONCILE_TOLERANCE_XZ, RECONCILE_TOLERANCE_Y)
-            sessions.values.forEach { it.send(configSync) }
-            lines += i18n.t(lang, "reload:server:game_config")
-        }
-        npcConfigLoader.reload()
-        npcManager.reloadDefinitions(npcRegistryLoader.reload())
-        lines += i18n.t(lang, "reload:server:npc")
-        i18n.reload()
-        lines += i18n.t(lang, "reload:server:i18n", i18n.locales.size)
-        val newWeatherConfig = WeatherConfig()
-        weatherManager.reload(newWeatherConfig)
-        lines += i18n.t(lang, "reload:server:weather", newWeatherConfig.data.weatherTypes.size)
-        val newVegetationConfig = VegetationConfig(Path.of("data/config/vegetation.yaml"))
-        vegetationManager.reload(newVegetationConfig)
-        lines += i18n.t(lang, "reload:server:vegetation", newVegetationConfig.data.chains.size)
-        return lines.joinToString(", ")
-    }
+    private val reloadCoordinator =
+        ReloadCoordinator(
+            dropConfig = dropConfig,
+            world = world,
+            reloadBiomes = reloadBiomes,
+            reloadRegistries = reloadRegistries,
+            reloadGameConfig = reloadGameConfig,
+            sessionRegistry = sessionRegistry,
+            buildRegistrySync = ::buildRegistrySync,
+            npcConfigLoader = npcConfigLoader,
+            npcRegistryLoader = npcRegistryLoader,
+            npcManager = npcManager,
+            i18n = i18n,
+            weatherManager = weatherManager,
+            vegetationManager = vegetationManager,
+        )
+
+    private suspend fun reload(lang: String): String = reloadCoordinator.reload(lang)
 
     fun start(app: Application) {
         appScope = app
@@ -553,7 +558,7 @@ class GameLoop(
     fun shutdown() {
         runBlocking {
             val restartMsg = ServerMessage.Notification("Server restarting…")
-            sessions.values.forEach { session ->
+            sessionRegistry.all().forEach { session ->
                 runCatching { session.send(restartMsg) }
                 runCatching {
                     session.socket.close(
@@ -564,7 +569,7 @@ class GameLoop(
         world.flushDirty()
         rebuildTerrainSync()
         worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
-        sessions.values.forEach { session -> savePlayer(session) }
+        sessionRegistry.all().forEach { session -> savePlayer(session) }
         val npcSavePath =
             persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/config/spawns.json")
         npcManager.save(npcSavePath)
@@ -572,17 +577,7 @@ class GameLoop(
         log.info("World saved on shutdown")
     }
 
-    private fun savePlayer(session: PlayerSession) {
-        persistence?.savePlayerState(
-            session.state.name,
-            session.state.copy(
-                inventory = session.inventory.toMap(),
-                shortcutBar = session.shortcutBar.toList(),
-                knownRecipes = session.knownRecipes.toSet(),
-                characterData = session.characterData,
-            ),
-        )
-    }
+    private fun savePlayer(session: PlayerSession) = playerPersister.save(session)
 
     private suspend fun handleLayoutUpdate(
         session: PlayerSession,
@@ -603,30 +598,30 @@ class GameLoop(
         if (timeBroadcastCounter >= TIME_BROADCAST_TICKS) {
             timeBroadcastCounter = 0
             val timeMsg = ServerMessage.TimeUpdate(gameTicks)
-            sessions.values.forEach { it.send(timeMsg) }
+            sessionRegistry.all().forEach { it.send(timeMsg) }
         }
 
-        sessions.values.forEach { session ->
+        sessionRegistry.all().forEach { session ->
             val input = intentCollector.collect(session)
             blockBreaker.tick(session)
             val newState = movementProcessor.process(session, input)
             if (newState != session.state) {
                 session.state = newState
                 val update = ServerMessage.PlayerUpdate(newState)
-                sessions.values.forEach { it.send(update) }
+                sessionRegistry.all().forEach { it.send(update) }
             }
             if (session.chunkMode == "websocket") {
                 chunkStreamer.checkAndRequest(session)
                 chunkStreamer.deliverReady(session)
             }
         }
-        worldItems.tickCollection(sessions.values)
+        worldItems.tickCollection(sessionRegistry.all())
         npcManager.tick(world)
-        npcManager.tickAggro(sessions.values, combatProcessor)
-        statusEffectProcessor.tick(sessions.values)
-        weatherManager.tick(world) { msg -> sessions.values.forEach { it.send(msg) } }
-        liquidManager.tick { msg -> sessions.values.forEach { it.send(msg) } }
-        vegetationManager.tick { msg -> sessions.values.forEach { it.send(msg) } }
+        npcManager.tickAggro(sessionRegistry.all(), combatProcessor)
+        statusEffectProcessor.tick(sessionRegistry.all())
+        weatherManager.tick(world) { msg -> sessionRegistry.all().forEach { it.send(msg) } }
+        liquidManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
+        vegetationManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
         npcSpawnTickCounter++
         if (npcSpawnTickCounter >= org.micoli.micraft.npc.NpcConstants.SPAWN_CHECK_INTERVAL_TICKS) {
             npcSpawnTickCounter = 0
@@ -669,7 +664,7 @@ class GameLoop(
     ): List<String> {
         val handler = commands.values.find { it.id.toString() == commandId } ?: return emptyList()
         if (argIndex !in handler.autocompleteArgs) return emptyList()
-        val session = sessions.values.find { it.state.name == playerName }
+        val session = sessionRegistry.all().find { it.state.name == playerName }
         return handler.completeArg(argIndex, partial, session, commandContext)
     }
 
@@ -748,7 +743,7 @@ class GameLoop(
             id.take(8),
             playerName,
             userName,
-            sessions.size + 1)
+            sessionRegistry.size + 1)
 
         session.send(
             ServerMessage.Welcome(
@@ -798,14 +793,15 @@ class GameLoop(
         chunkStreamer.requestAround(session, spawnCp.cx, spawnCp.cz)
         log.info("chunk requests queued for {}", id.take(8))
 
-        sessions.values
+        sessionRegistry
+            .all()
             .filter { it.id != id }
             .forEach { other ->
                 session.send(ServerMessage.PlayerUpdate(other.state))
                 other.send(ServerMessage.PlayerUpdate(state))
             }
         npcManager.sendAllTo(session)
-        sessions[id] = session
+        sessionRegistry[id] = session
 
         try {
             socket.incoming.consumeEach { frame ->
@@ -840,7 +836,7 @@ class GameLoop(
                 }
             }
         } finally {
-            sessions.remove(id)
+            sessionRegistry.remove(id)
             chunkStreamer.cleanupSession(id)
             npcManager.clearPlayer(id)
             tradeManager.onPlayerDisconnect(id)
@@ -849,9 +845,9 @@ class GameLoop(
                 "player disconnected: {} name={} (total={})",
                 id.take(8),
                 session.state.name,
-                sessions.size)
+                sessionRegistry.size)
             val left = ServerMessage.PlayerLeft(id)
-            sessions.values.forEach { it.send(left) }
+            sessionRegistry.all().forEach { it.send(left) }
         }
     }
 
@@ -862,7 +858,7 @@ class GameLoop(
                     if (frame is Frame.Text) frame.readText().trim() else null
                 }
                 .getOrNull() ?: return
-        val session = sessions[playerId] ?: return
+        val session = sessionRegistry[playerId] ?: return
         session.chunkSocket = socket
         log.info("chunk socket attached for {}", playerId.take(8))
         try {

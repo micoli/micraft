@@ -10,27 +10,49 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import java.nio.file.Path
-import java.time.Instant
 import java.util.UUID
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
-import org.micoli.micraft.auth.AuthProvider
+import org.koin.core.parameter.parametersOf
+import org.koin.ktor.ext.get
+import org.koin.ktor.plugin.Koin
+import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.LocalAuthProvider
 import org.micoli.micraft.auth.OAuthProvider
-import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.auth.installAuthRoutes
 import org.micoli.micraft.auth.loadGroupsConfig
+import org.micoli.micraft.combat.AttackDefinition
+import org.micoli.micraft.combat.CombatConfig
+import org.micoli.micraft.combat.CombatProcessor
+import org.micoli.micraft.combat.StatusEffectProcessor
 import org.micoli.micraft.command.availablePlayerSkins
+import org.micoli.micraft.di.OptionalAuthProvider
+import org.micoli.micraft.di.OptionalTokenStore
+import org.micoli.micraft.di.OptionalWorldPersistence
+import org.micoli.micraft.di.PlayerPersister
+import org.micoli.micraft.di.SessionRegistry
+import org.micoli.micraft.di.appModules
+import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.http.chunkRoutes
 import org.micoli.micraft.http.mapRoutes
 import org.micoli.micraft.http.metricsRoutes
+import org.micoli.micraft.npc.NpcConfigLoader
+import org.micoli.micraft.npc.NpcManager
+import org.micoli.micraft.npc.NpcSpawner
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.session.NetworkStats
+import org.micoli.micraft.tick.BlockBreaker
+import org.micoli.micraft.tick.BlockPlacer
+import org.micoli.micraft.tick.ChunkStreamer
+import org.micoli.micraft.tick.LiquidManager
+import org.micoli.micraft.tick.MovementProcessor
+import org.micoli.micraft.tick.VegetationManager
+import org.micoli.micraft.trade.TradeConfigLoader
+import org.micoli.micraft.trade.TradeManager
 import org.micoli.micraft.ui.WIDGET_REGISTRY
 import org.micoli.micraft.ui.WidgetRegistryEntry
 import org.micoli.micraft.world.ArmorDefinition
@@ -38,23 +60,29 @@ import org.micoli.micraft.world.ArmorRegistryLoader
 import org.micoli.micraft.world.BiomeRegistry
 import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockRegistryLoader
+import org.micoli.micraft.world.ChatChannelManager
+import org.micoli.micraft.world.ChatService
+import org.micoli.micraft.world.DropConfig
+import org.micoli.micraft.world.GameConfig
+import org.micoli.micraft.world.I18nConfig
 import org.micoli.micraft.world.ItemRegistry
 import org.micoli.micraft.world.ItemRegistryLoader
-import org.micoli.micraft.world.WorldMetadata
-import org.micoli.micraft.world.WorldPersistence
+import org.micoli.micraft.world.NpcRegistryLoader
+import org.micoli.micraft.world.RecipeRegistryLoader
+import org.micoli.micraft.world.ServerConfig
+import org.micoli.micraft.world.VegetationConfig
+import org.micoli.micraft.world.WeatherConfig
+import org.micoli.micraft.world.WeatherManager
+import org.micoli.micraft.world.WorldItemManager
 import org.micoli.micraft.world.WorldState
 import org.micoli.micraft.world.applyGameConfig
-import org.micoli.micraft.world.applyServerConfig
 import org.micoli.micraft.world.loadBiomeRegistry
 import org.micoli.micraft.world.loadGameConfig
 import org.micoli.micraft.world.loadHouseConfig
 import org.micoli.micraft.world.loadKeyBindings
 import org.micoli.micraft.world.loadRoadConfig
-import org.micoli.micraft.world.loadServerConfig
 import org.micoli.micraft.world.proceduralGenerator.ProceduralChunkGenerator
 import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator
-import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.DebugChunkGenerator
-import org.micoli.micraft.world.validateAlli18nYamlConfigs
 import org.micoli.micraft.world.validateYamlConfig
 import org.slf4j.LoggerFactory
 
@@ -72,83 +100,23 @@ val resourcesConfigDir = Path.of("resources/config")
 
 fun Application.module() {
     install(WebSockets) {}
+    install(Koin) { modules(appModules) }
 
-    validateAlli18nYamlConfigs(configDir)
-    val serverConfig =
-        loadServerConfig(
-            Path.of(dataPath + "/config/server.yaml"), resourcesConfigDir.resolve("server.yaml"))
-    applyServerConfig(serverConfig)
-
-    val gameConfig =
-        loadGameConfig(
-            Path.of(dataPath + "/config/game.yaml"), resourcesConfigDir.resolve("game.yaml"))
-    applyGameConfig(gameConfig)
-
-    loadKeyBindings(Path.of(dataPath + "/config/keybindings.yaml"))
+    val serverConfig = get<ServerConfig>()
+    val gameConfig = get<GameConfig>()
 
     val debugWorld = gameConfig.debugWorld
-    val worldName =
-        System.getenv("MICRAFT_WORLD_NAME")?.takeIf { it.isNotBlank() } ?: "default_world"
 
-    val persistence =
-        if (!debugWorld) {
-            val dir = Path.of(dataPath + "/world/$worldName")
-            WorldPersistence(dir).also { p ->
-                if (p.loadMetadata() == null) {
-                    p.saveMetadata(
-                        WorldMetadata(
-                            seed = 42L,
-                            generator = "procedural",
-                            createdAt = Instant.now().toString(),
-                        ))
-                }
-            }
-        } else null
-
-    val blockRegistryLoader =
-        BlockRegistryLoader(
-            resourcesBlocksPath = Path.of("resources/blocks"),
-            dataBlocksPath = Path.of(dataPath + "/resources/blocks"),
-        )
-
-    val itemRegistryLoader =
-        ItemRegistryLoader(
-            Path.of(dataPath + "/config/items.yaml"), resourcesConfigDir.resolve("items.yaml"))
-    BlockRegistry.load(blockRegistryLoader.load())
-    ItemRegistry.load(itemRegistryLoader.load())
+    val persistence = get<OptionalWorldPersistence>().value
+    val blockRegistryLoader = get<BlockRegistryLoader>()
+    val itemRegistryLoader = get<ItemRegistryLoader>()
 
     val biomeFile = Path.of(dataPath + "/config/biomes.yaml")
     val biomeResourcesFile = resourcesConfigDir.resolve("biomes.yaml")
-    val biomeRegistry =
-        if (!debugWorld) loadBiomeRegistry(biomeFile, biomeResourcesFile)
-        else {
-            log.info("Debug world mode — biomes disabled")
-            BiomeRegistry.default()
-        }
-
-    validateYamlConfig(
-        configDir.resolve("roads.yaml"),
-        "roads.schema.json",
-    )
     val roadConfigPath = Path.of(dataPath + "/config/roads.yaml")
     val roadResourcesFile = resourcesConfigDir.resolve("roads.yaml")
-    val roadConfig = if (!debugWorld) loadRoadConfig(roadConfigPath, roadResourcesFile) else null
-
     val houseConfigPath = Path.of(dataPath + "/config/houses.yaml")
     val houseResourcesFile = resourcesConfigDir.resolve("houses.yaml")
-    val houseConfig =
-        if (!debugWorld) loadHouseConfig(houseConfigPath, houseResourcesFile) else null
-
-    val generator =
-        if (debugWorld) DebugChunkGenerator()
-        else
-            ProceduralChunkGenerator(
-                seed = 42L,
-                biomeRegistry = biomeRegistry,
-                roadConfig = roadConfig,
-                houseConfig = houseConfig,
-            )
-    log.info("World: {} | generator={} | seed=42", worldName, generator::class.simpleName)
 
     val reloadBiomes: (() -> ChunkGenerator)? =
         if (!debugWorld) {
@@ -175,23 +143,10 @@ fun Application.module() {
     }
 
     val authConfig = serverConfig.auth
-    val authScope = CoroutineScope(Dispatchers.Default)
     val groupsResourcesFile = resourcesConfigDir.resolve("groups.yaml")
-    val groupsConfig = loadGroupsConfig(Path.of(authConfig.local.groupsFile), groupsResourcesFile)
-    val (authProvider, tokenStore) =
-        when (authConfig.provider) {
-            "local" -> {
-                val provider = LocalAuthProvider(Path.of(authConfig.local.usersFile), groupsConfig)
-                Pair<AuthProvider, TokenStore>(provider, TokenStore(authScope))
-            }
-            "oauth" -> {
-                val oauthCfg =
-                    authConfig.oauth ?: error("auth.oauth config required when provider=oauth")
-                Pair<AuthProvider, TokenStore>(
-                    OAuthProvider(oauthCfg, groupsConfig), TokenStore(authScope))
-            }
-            else -> Pair<AuthProvider?, TokenStore?>(null, null)
-        }
+    val groupsConfig = get<GroupsConfig>()
+    val authProvider = get<OptionalAuthProvider>().value
+    val tokenStore = get<OptionalTokenStore>().value
 
     val groupsFilePath = Path.of(authConfig.local.groupsFile)
     validateYamlConfig(groupsFilePath, "groups.schema.json")
@@ -206,7 +161,9 @@ fun Application.module() {
             else -> null
         }
 
-    val world = WorldState(generator = generator, persistence = persistence)
+    val world = get<WorldState>()
+    val biomeRegistry = get<BiomeRegistry>()
+    val sessionRegistry = get<SessionRegistry>()
     val gameLoop =
         GameLoop(
             world,
@@ -214,11 +171,43 @@ fun Application.module() {
             reloadBiomes,
             reloadRegistries = reloadRegistries,
             reloadGameConfig = reloadGameConfigLambda,
+            i18n = get<I18nConfig>(),
             tokenStore = tokenStore,
             authProvider = authProvider,
             groupsConfig = groupsConfig,
             reloadRbac = reloadRbacLambda,
             chunkSection = serverConfig.chunks,
+            sessionRegistry = sessionRegistry,
+            playerPersister = get<PlayerPersister>(),
+            chatChannelManager = get<ChatChannelManager>(),
+            chatService = get<ChatService>(),
+            dropConfig = get<DropConfig>(),
+            worldItems = get<WorldItemManager>(),
+            weatherConfig = get<WeatherConfig>(),
+            weatherManager = get<WeatherManager>(),
+            configRegistry = get<ConfigRegistry>(),
+            liquidManager = get<LiquidManager>(),
+            vegetationConfig = get<VegetationConfig>(),
+            vegetationManager = get<VegetationManager>(),
+            recipeRegistryLoader = get<RecipeRegistryLoader>(),
+            armorRegistryLoader = get<ArmorRegistryLoader>(),
+            npcConfigLoader = get<NpcConfigLoader>(),
+            npcRegistryLoader = get<NpcRegistryLoader>(),
+            npcManager = get<NpcManager>(),
+            npcSpawner = get<NpcSpawner>(),
+            combatConfig = get<CombatConfig>(),
+            attackRegistry = get<Map<String, AttackDefinition>>(),
+            combatProcessor = get<CombatProcessor>(),
+            statusEffectProcessor = get<StatusEffectProcessor>(),
+            tradeConfigLoader = get<TradeConfigLoader>(),
+            tradeManager = get<TradeManager>(),
+            blockBreaker = get<BlockBreaker>(),
+            blockPlacer = get<BlockPlacer>(),
+            movementProcessor = get<MovementProcessor>(),
+            chunkStreamer = get<ChunkStreamer>(),
+            terrainCache = get<TerrainCache>(),
+            networkStats = get<NetworkStats>(),
+            commandContextFactory = { closures -> get<CommandContext> { parametersOf(closures) } },
         )
     gameLoop.start(this)
     installAuthRoutes(authConfig.provider, authProvider, tokenStore)

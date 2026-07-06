@@ -82,6 +82,10 @@ dependencies {
     implementation(libs.kaml)
     implementation(libs.jackson.dataformat.yaml)
     implementation(libs.json.schema.validator)
+    implementation(libs.koin.core)
+    implementation(libs.koin.ktor)
     testImplementation(libs.ktor.serverTestHost)
     testImplementation(libs.kotlin.testJunit)
+    testImplementation(libs.koin.test)
+    testImplementation(libs.koin.test.junit4)
 }
