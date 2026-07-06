@@ -21,7 +21,9 @@ fun main(args: Array<String>) {
 
     val usersFile = Path.of("data/config/auth/users.yaml")
 
-    val groupsConfig = loadGroupsConfig(Path.of("data/config/auth/groups.yaml"))
+    val groupsConfig =
+        loadGroupsConfig(
+            Path.of("data/config/auth/groups.yaml"), Path.of("resources/config/groups.yaml"))
     val provider = LocalAuthProvider(usersFile, groupsConfig)
     runCatching { provider.addUser(email, password, displayName, groups) }
         .onSuccess { println("User added: $email (displayName=$displayName, groups=$groups)") }

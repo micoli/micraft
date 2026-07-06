@@ -1,7 +1,7 @@
 package org.micoli.micraft.world
 
 import kotlin.io.path.createTempDirectory
-import kotlin.io.path.createTempFile
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,11 +10,13 @@ import kotlin.test.assertTrue
 
 class ItemRegistryLoaderTest {
 
-    private fun loaderWith(yaml: String): ItemRegistryLoader {
-        val tmp = createTempFile(suffix = ".yaml")
-        tmp.toFile().deleteOnExit()
+    private fun loaderWith(yaml: String, resourcesYaml: String = "{}\n"): ItemRegistryLoader {
+        val dir = createTempDirectory()
+        val tmp = dir.resolve("items.yaml")
         tmp.writeText(yaml)
-        return ItemRegistryLoader(tmp)
+        val resources = dir.resolve("items-defaults.yaml")
+        resources.writeText(resourcesYaml)
+        return ItemRegistryLoader(tmp, resources)
     }
 
     @Test
@@ -57,7 +59,9 @@ class ItemRegistryLoaderTest {
     fun missingFile_generatesDefault() {
         val dir = createTempDirectory()
         val path = dir.resolve("items.yaml")
-        val loader = ItemRegistryLoader(path)
+        val resources = dir.resolve("items-defaults.yaml")
+        resources.writeText("COBBLESTONE:\n  buildable: true\n  label: COB\n  bg: \"#7A7A7A\"\n")
+        val loader = ItemRegistryLoader(path, resources)
         assertTrue(path.toFile().exists(), "Default file should be generated")
         val result = loader.load()
         assertTrue(result.isNotEmpty())
@@ -65,8 +69,35 @@ class ItemRegistryLoaderTest {
 
     @Test
     fun invalidYaml_fallsBackToDefaults() {
-        val loader = loaderWith("this is not: [valid yaml: }")
+        val loader = loaderWith("this is not: [valid yaml: }", "COBBLESTONE:\n  buildable: true\n")
         val result = loader.load()
         assertTrue(result.isNotEmpty(), "Corrupt YAML should fall back to built-in defaults")
+    }
+
+    @Test
+    fun partialFile_missingDefaultEntriesAppendedAsComments() {
+        val dir = createTempDirectory()
+        val tmp = dir.resolve("items.yaml")
+        tmp.writeText(
+            "COBBLESTONE:\n  buildable: true\n  placesBlock: STONE\n  label: COB\n  bg: \"#7A7A7A\"\n")
+        val resources = dir.resolve("items-defaults.yaml")
+        resources.writeText(
+            "COBBLESTONE:\n  buildable: true\n  placesBlock: STONE\n  label: COB\n  bg: \"#7A7A7A\"\nDIRT:\n  buildable: true\n  placesBlock: DIRT\n  label: DRT\n  bg: \"#8B5A2B\"\n")
+        ItemRegistryLoader(tmp, resources)
+        val written = tmp.readText()
+        assertTrue(written.contains("COBBLESTONE:\n  buildable: true"), "existing entry untouched")
+        assertTrue(written.contains("# DIRT:"), "missing default entry added as comment")
+    }
+
+    @Test
+    fun missingEntry_isMergedFromResourcesDefault() {
+        val dir = createTempDirectory()
+        val tmp = dir.resolve("items.yaml")
+        tmp.writeText("COBBLESTONE:\n  buildable: true\n")
+        val resources = dir.resolve("items-defaults.yaml")
+        resources.writeText("COBBLESTONE:\n  buildable: true\nDIRT:\n  buildable: true\n")
+        val result = ItemRegistryLoader(tmp, resources).load()
+        assertEquals(2, result.size, "missing default entry is active in loaded result")
+        assertTrue(result.containsKey(ItemType("DIRT")))
     }
 }

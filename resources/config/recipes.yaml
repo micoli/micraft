@@ -1,0 +1,10 @@
+COBBLESTONE_BRICK:
+  giveType: block
+  giveId: COBBLESTONE
+  giveAmount: 4
+  items: ["COBBLESTONE*2", "GRAVEL*1"]
+DIRT_PILE:
+  giveType: item
+  giveId: DIRT
+  giveAmount: 2
+  items: ["GRAVEL*2", "SAND*1"]

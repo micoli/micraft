@@ -193,7 +193,11 @@ class GameLoop(
 
     private val recipeRegistryLoader = RecipeRegistryLoader(Path.of("data/config/recipes.yaml"))
 
-    private val armorRegistryLoader = ArmorRegistryLoader(Path.of("resources/armors"))
+    private val armorRegistryLoader =
+        ArmorRegistryLoader(
+            armorsPath = Path.of("resources/armors"),
+            dataArmorsPath = Path.of("data/resources/armors"),
+        )
     private var armorRegistry: Map<String, ArmorDefinition> = emptyMap()
     private val npcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml"))
     private val npcRegistryLoader =

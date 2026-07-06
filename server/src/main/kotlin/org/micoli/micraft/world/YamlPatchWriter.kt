@@ -104,6 +104,74 @@ fun <T : Any> yamlConfigSection(
     )
 }
 
+/**
+ * Fuses [decoded] (from the user's file) with [default] (from the shipped resources file): a field
+ * absent from [node] takes its value from [default] instead of [decoded]'s own constructor default,
+ * so defaults live only in the resources yaml, never in Kotlin code. Recurses into nested
+ * `@Serializable` properties exactly like [yamlConfigSection].
+ */
+fun <T : Any> mergeConfig(
+    kClass: KClass<T>,
+    decoded: T,
+    default: T,
+    node: YamlNode?,
+    path: List<String> = emptyList(),
+): T {
+    val props =
+        kClass.memberProperties
+            .associateBy { it.name }
+            .mapValues { it.value.apply { isAccessible = true } }
+    val ctor = kClass.primaryConstructor!!.apply { isAccessible = true }
+    val args =
+        ctor.parameters.associateWith { param ->
+            val name = param.name!!
+            val prop = props.getValue(name)
+            val classifier = prop.returnType.classifier as? KClass<*>
+            if (classifier != null && classifier.findAnnotation<Serializable>() != null) {
+                @Suppress("UNCHECKED_CAST") val kc = classifier as KClass<Any>
+                val nestedCtor = kc.primaryConstructor!!.apply { isAccessible = true }
+                val decodedNested = prop.get(decoded) ?: nestedCtor.callBy(emptyMap())
+                val defaultNested = prop.get(default) ?: nestedCtor.callBy(emptyMap())
+                mergeConfig(kc, decodedNested, defaultNested, node, path + name)
+            } else {
+                if (presentInYaml(node, *(path + name).toTypedArray())) prop.get(decoded)
+                else prop.get(default)
+            }
+        }
+    return ctor.callBy(args)
+}
+
+/**
+ * Map-of-entries variant of [mergeConfig]: merges by key, fusing each entry present on both sides
+ * field-by-field, keeping user-only entries as-is, and adding resources-only entries untouched.
+ */
+inline fun <reified T : Any> mergeMapConfig(
+    decodedMap: Map<String, T>,
+    defaultMap: Map<String, T>,
+    node: YamlNode?,
+): Map<String, T> =
+    (defaultMap.keys + decodedMap.keys).associateWith { key ->
+        val decodedEntry = decodedMap[key]
+        val defaultEntry = defaultMap[key]
+        when {
+            decodedEntry != null && defaultEntry != null ->
+                mergeConfig(T::class, decodedEntry, defaultEntry, node, listOf(key))
+            decodedEntry != null -> decodedEntry
+            else -> defaultEntry!!
+        }
+    }
+
+/**
+ * Builds a [YamlSection] for a map of homogeneous entries (e.g. items, recipes, drop tables): one
+ * subsection per map key, built via [yamlConfigSection] so both whole-entry presence and per-field
+ * presence within an existing entry are checked against [node].
+ */
+inline fun <reified T : Any> yamlMapSection(entries: Map<String, T>, node: YamlNode?): YamlSection =
+    YamlSection(
+        key = "",
+        subsections = entries.map { (key, value) -> yamlConfigSection(T::class, key, value, node) },
+    )
+
 fun presentInYaml(node: YamlNode?, vararg path: String): Boolean {
     var current: YamlNode? = node
     for (key in path) {

@@ -1,6 +1,7 @@
 package org.micoli.micraft.world
 
 import com.charleskorn.kaml.Yaml
+import com.charleskorn.kaml.YamlNode
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
@@ -8,6 +9,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.random.Random
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import org.slf4j.LoggerFactory
@@ -22,51 +24,76 @@ data class DropEntry(
     val maxCount: Int = 1,
 )
 
-private val DEFAULT_DROPS: Map<String, List<DropEntry>> =
-    mapOf(
-        "STONE" to listOf(DropEntry(ItemType("COBBLESTONE"))),
-        "DIRT" to listOf(DropEntry(ItemType("DIRT"))),
-        "GRASS" to listOf(DropEntry(ItemType("DIRT"))),
-        "SAND" to listOf(DropEntry(ItemType("SAND"))),
-        "SANDSTONE" to listOf(DropEntry(ItemType("SANDSTONE"))),
-        "GRAVEL" to
-            listOf(
-                DropEntry(ItemType("GRAVEL"), dropRate = 90),
-                DropEntry(ItemType("FLINT"), dropRate = 10),
-            ),
-        "SNOW" to listOf(DropEntry(ItemType("SNOWBALL"), minCount = 1, maxCount = 4)),
+private val DROP_LIST_SERIALIZER = ListSerializer(DropEntry.serializer())
+private val DROP_TABLE_SERIALIZER = MapSerializer(String.serializer(), DROP_LIST_SERIALIZER)
+
+/**
+ * Each map value is a `List<DropEntry>`, not a record — [mergeConfig]/[mergeMapConfig] can't
+ * reflect into it, so merging/backfilling happens at whole-key granularity only.
+ */
+private fun mergeDropTable(
+    decoded: Map<String, List<DropEntry>>,
+    default: Map<String, List<DropEntry>>,
+): Map<String, List<DropEntry>> =
+    (default.keys + decoded.keys).associateWith { key -> decoded[key] ?: default.getValue(key) }
+
+private fun dropTableSection(entries: Map<String, List<DropEntry>>, node: YamlNode?): YamlSection =
+    YamlSection(
+        key = "",
+        fields =
+            entries.map { (key, value) ->
+                YamlField(key, value, DROP_LIST_SERIALIZER, presentInYaml(node, key))
+            },
     )
 
-private val DROP_TABLE_SERIALIZER =
-    MapSerializer(
-        String.serializer(), kotlinx.serialization.builtins.ListSerializer(DropEntry.serializer()))
+class DropConfig(
+    private val path: Path,
+    private val resourcesPath: Path = Path.of("resources/config/drops.yaml"),
+) {
+    private val default: Map<String, List<DropEntry>> =
+        Yaml.default.decodeFromString(DROP_TABLE_SERIALIZER, resourcesPath.readText())
 
-class DropConfig(private val path: Path) {
     @Volatile private var table: Map<BlockType, List<DropEntry>>
 
     init {
-        if (!path.exists()) {
-            path.parent.createDirectories()
-            val yaml = Yaml.default.encodeToString(DROP_TABLE_SERIALIZER, DEFAULT_DROPS)
-            path.writeText(yaml)
+        val originalText = if (path.exists()) path.readText() else ""
+        path.parent.createDirectories()
+        if (originalText.isBlank()) {
+            path.writeText(spliceMissingAsComments("", dropTableSection(default, null)))
             log.info("Generated default drop config at {}", path.toAbsolutePath())
+        } else {
+            runCatching { Yaml.default.parseToYamlNode(originalText) }
+                .onSuccess { node ->
+                    path.writeText(
+                        spliceMissingAsComments(
+                            originalText, dropTableSection(mergedTable(), node)))
+                }
+                .onFailure {
+                    log.warn(
+                        "drops.yaml has unparseable structure, leaving file untouched: {}",
+                        it.message)
+                }
         }
         validateYamlConfig(path, "drops.schema.json")
         table = parseTable()
         log.info("Drop table loaded: {} block types configured", table.size)
     }
 
-    private fun parseTable(): Map<BlockType, List<DropEntry>> {
-        val raw =
-            runCatching { Yaml.default.decodeFromString(DROP_TABLE_SERIALIZER, path.readText()) }
-                .getOrElse { e ->
-                    log.warn("Failed to load drops.yaml ({}), using defaults", e.message)
-                    DEFAULT_DROPS
-                }
-        return raw.entries
+    private fun mergedTable(): Map<String, List<DropEntry>> {
+        val originalText = if (path.exists()) path.readText() else ""
+        val decoded =
+            if (originalText.isBlank()) emptyMap()
+            else
+                runCatching { Yaml.default.decodeFromString(DROP_TABLE_SERIALIZER, originalText) }
+                    .getOrElse { emptyMap() }
+        return mergeDropTable(decoded, default)
+    }
+
+    private fun parseTable(): Map<BlockType, List<DropEntry>> =
+        mergedTable()
+            .entries
             .mapNotNull { (key, entries) -> runCatching { BlockType(key) to entries }.getOrNull() }
             .toMap()
-    }
 
     fun reload(): Int {
         table = parseTable()

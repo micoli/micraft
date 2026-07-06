@@ -33,22 +33,32 @@ data class GameConfig(
     @EncodeDefault(ALWAYS) val reconcileToleranceY: Double = 0.99,
 )
 
-fun loadGameConfig(path: Path): GameConfig {
-    val config =
-        if (path.exists()) {
-            validateYamlConfig(path, "game.schema.json")
-            runCatching { Yaml.default.decodeFromString(GameConfig.serializer(), path.readText()) }
-                .getOrElse { e ->
-                    log.warn("Failed to parse game.yaml ({}), using defaults", e.message)
-                    GameConfig()
-                }
-        } else {
-            log.info("No game.yaml at {}, creating with defaults", path.toAbsolutePath())
-            GameConfig()
-        }
+fun loadGameConfig(path: Path, resourcesPath: Path): GameConfig {
+    val default = Yaml.default.decodeFromString(GameConfig.serializer(), resourcesPath.readText())
+    val originalText = if (path.exists()) path.readText() else ""
     path.parent?.createDirectories()
-    path.writeText(Yaml.default.encodeToString(GameConfig.serializer(), config))
-    return config
+    if (originalText.isBlank()) {
+        log.info("No game.yaml at {}, creating with defaults", path.toAbsolutePath())
+        path.writeText(
+            spliceMissingAsComments("", yamlConfigSection(GameConfig::class, "", default, null)))
+        return default
+    }
+    val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
+    if (node == null) {
+        log.warn("game.yaml has unparseable structure, leaving file untouched")
+        return default
+    }
+    val decoded =
+        runCatching { Yaml.default.decodeFromString(GameConfig.serializer(), originalText) }
+            .getOrElse { e ->
+                log.warn("Failed to parse game.yaml ({}), using defaults", e.message)
+                default
+            }
+    val merged = mergeConfig(GameConfig::class, decoded, default, node)
+    path.writeText(
+        spliceMissingAsComments(
+            originalText, yamlConfigSection(GameConfig::class, "", merged, node)))
+    return merged
 }
 
 fun applyGameConfig(config: GameConfig) {

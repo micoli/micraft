@@ -30,77 +30,58 @@ data class WeatherConfigData(
     val weatherTypes: List<WeatherTypeConfig> = emptyList(),
 )
 
-private val DEFAULT_YAML =
-    """
-# yaml-language-server: ${'$'}schema=../schemas/weather.schema.json
-enabled: true
-weatherTypes:
-  - type: RAIN
-    biomes: [plains, forest]
-    enabled: true
-    spawnRatePerBiomeTick: 0.0002
-    minDurationTicks: 1200
-    maxDurationTicks: 12000
-    minRadius: 48.0
-    maxRadius: 192.0
-    driftSpeed: 0.1
-  - type: STORM
-    biomes: [plains, forest, mountains]
-    enabled: true
-    spawnRatePerBiomeTick: 0.00005
-    minDurationTicks: 600
-    maxDurationTicks: 3600
-    minRadius: 32.0
-    maxRadius: 128.0
-    driftSpeed: 0.15
-  - type: SNOW
-    biomes: [tundra, mountains]
-    enabled: true
-    spawnRatePerBiomeTick: 0.0003
-    minDurationTicks: 2400
-    maxDurationTicks: 24000
-    minRadius: 64.0
-    maxRadius: 256.0
-    driftSpeed: 0.05
-  - type: FOG
-    biomes: [forest, plains, mountains]
-    enabled: true
-    spawnRatePerBiomeTick: 0.0001
-    minDurationTicks: 3000
-    maxDurationTicks: 18000
-    minRadius: 32.0
-    maxRadius: 96.0
-    driftSpeed: 0.02
-"""
-        .trimIndent()
+private const val SCHEMA_HEADER = "# yaml-language-server: \$schema=../schemas/weather.schema.json"
 
-class WeatherConfig(private val path: Path = Path.of("data/config/weather.yaml")) {
+class WeatherConfig(
+    private val path: Path = Path.of("data/config/weather.yaml"),
+    private val resourcesPath: Path = Path.of("resources/config/weather.yaml"),
+) {
     @Volatile
     var data: WeatherConfigData = WeatherConfigData()
         private set
 
     init {
-        if (!path.exists()) {
-            path.parent.createDirectories()
-            path.writeText(DEFAULT_YAML)
-            log.info("Generated default weather config at {}", path.toAbsolutePath())
-        }
         validateYamlConfig(path, "weather.schema.json")
-        data = parse()
+        data = load()
         log.info("Weather config loaded: {} weather types", data.weatherTypes.size)
     }
 
-    private fun parse(): WeatherConfigData =
-        runCatching {
-                Yaml.default.decodeFromString(WeatherConfigData.serializer(), path.readText())
-            }
-            .getOrElse { e ->
-                log.warn("Failed to load weather.yaml ({}), using defaults", e.message)
-                Yaml.default.decodeFromString(WeatherConfigData.serializer(), DEFAULT_YAML)
-            }
+    private fun load(): WeatherConfigData {
+        val default =
+            Yaml.default.decodeFromString(WeatherConfigData.serializer(), resourcesPath.readText())
+        val originalText = if (path.exists()) path.readText() else ""
+        path.parent.createDirectories()
+        if (originalText.isBlank()) {
+            path.writeText(
+                SCHEMA_HEADER +
+                    "\n" +
+                    spliceMissingAsComments(
+                        "", yamlConfigSection(WeatherConfigData::class, "", default, null)))
+            log.info("Generated default weather config at {}", path.toAbsolutePath())
+            return default
+        }
+        val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
+        if (node == null) {
+            log.warn("weather.yaml has unparseable structure, leaving file untouched")
+            return default
+        }
+        val decoded =
+            runCatching {
+                    Yaml.default.decodeFromString(WeatherConfigData.serializer(), originalText)
+                }
+                .getOrElse { e ->
+                    log.warn("Failed to load weather.yaml ({}), using defaults", e.message)
+                    default
+                }
+        val merged = mergeConfig(WeatherConfigData::class, decoded, default, node)
+        path.writeText(
+            spliceMissingAsComments(
+                originalText, yamlConfigSection(WeatherConfigData::class, "", merged, node)))
+        return merged
+    }
 
     fun reload(): WeatherConfigData {
-        data = parse()
+        data = load()
         log.info("Weather config reloaded: {} weather types", data.weatherTypes.size)
         return data
     }

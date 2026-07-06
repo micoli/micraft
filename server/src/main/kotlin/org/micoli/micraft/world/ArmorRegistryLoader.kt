@@ -6,6 +6,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.player.rpg.StatBonus
 import org.slf4j.LoggerFactory
@@ -45,7 +46,23 @@ private data class ArmorYamlEntry(
     val statBonus: StatBonus = StatBonus(),
 )
 
-class ArmorRegistryLoader(private val armorsPath: Path) {
+/**
+ * Whole-block override, not per-leaf-field: a user overriding `wearable`/`statBonus` must supply
+ * the full nested block, same convention as [ServerConfigLoader]'s `AuthSection.oauth`.
+ */
+@Serializable
+private data class ArmorYamlOverride(
+    val wearable: WearableSlots? = null,
+    val statBonus: StatBonus? = null,
+)
+
+private fun ArmorYamlEntry.applyOverride(o: ArmorYamlOverride) =
+    copy(wearable = o.wearable ?: wearable, statBonus = o.statBonus ?: statBonus)
+
+class ArmorRegistryLoader(
+    private val armorsPath: Path,
+    private val dataArmorsPath: Path,
+) {
     fun load(): Map<String, ArmorDefinition> {
         if (!armorsPath.exists()) return emptyMap()
         val result =
@@ -57,15 +74,55 @@ class ArmorRegistryLoader(private val armorsPath: Path) {
                     val yaml = dir.resolve("$name.yaml")
                     if (!yaml.exists()) return@mapNotNull null
                     runCatching {
-                            val entry =
-                                Yaml.default.decodeFromString(
-                                    ArmorYamlEntry.serializer(), yaml.readText())
-                            name to
-                                ArmorDefinition(
-                                    wearable = entry.wearable, statBonus = entry.statBonus)
+                            Yaml.default.decodeFromString(
+                                ArmorYamlEntry.serializer(), yaml.readText())
                         }
                         .onFailure { log.warn("Failed to load armor '{}': {}", name, it.message) }
                         .getOrNull()
+                        ?.let { entry ->
+                            val dataYaml = dataArmorsPath.resolve("$name/$name.yaml")
+                            val merged =
+                                if (dataYaml.exists()) {
+                                    val content = dataYaml.readText()
+                                    val overrideResult =
+                                        if (content.isNotBlank()) {
+                                            runCatching {
+                                                Yaml.default.decodeFromString(
+                                                    ArmorYamlOverride.serializer(), content)
+                                            }
+                                        } else Result.success(ArmorYamlOverride())
+                                    val override = overrideResult.getOrNull()
+                                    val overridden =
+                                        override?.let { entry.applyOverride(it) } ?: entry
+                                    overrideResult
+                                        .mapCatching {
+                                            Yaml.default.parseToYamlNode(content.ifBlank { "{}" })
+                                        }
+                                        .fold(
+                                            onSuccess = { node ->
+                                                dataYaml.writeText(
+                                                    spliceMissingAsComments(
+                                                        content,
+                                                        yamlConfigSection(
+                                                            ArmorYamlEntry::class,
+                                                            "",
+                                                            overridden,
+                                                            node)))
+                                                log.debug(
+                                                    "Wrote back merged data override for {}", name)
+                                            },
+                                            onFailure = {
+                                                log.warn(
+                                                    "Failed to apply override for {}, leaving file untouched: {}",
+                                                    name,
+                                                    it.message)
+                                            })
+                                    overridden
+                                } else entry
+                            name to
+                                ArmorDefinition(
+                                    wearable = merged.wearable, statBonus = merged.statBonus)
+                        }
                 }
                 .toMap()
         log.info("Armor registry loaded: {} wearable types", result.size)

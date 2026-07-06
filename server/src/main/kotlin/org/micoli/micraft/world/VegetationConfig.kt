@@ -33,69 +33,59 @@ data class VegetationConfigData(
     val chains: List<GrowthChain> = emptyList(),
 )
 
-private val DEFAULT_YAML =
-    """
-# yaml-language-server: ${'$'}schema=../schemas/vegetation.schema.json
-enabled: true
-growthCheckIntervalTicks: 40
+private const val SCHEMA_HEADER =
+    "# yaml-language-server: \$schema=../schemas/vegetation.schema.json"
 
-chains:
-  - name: oak_growth
-    stages:
-      - block: SEED
-        minTicks: 400
-        maxTicks: 1200
-      - block: SPROUT
-        minTicks: 600
-        maxTicks: 2000
-      - block: SAPLING
-        minTicks: 800
-        maxTicks: 3000
-    finalTree: OAK_TREE
-    requiresVegetationHost: true
-
-  - name: pine_growth
-    stages:
-      - block: SEED
-        minTicks: 500
-        maxTicks: 1500
-      - block: SPROUT
-        minTicks: 700
-        maxTicks: 2200
-      - block: SAPLING
-        minTicks: 1000
-        maxTicks: 3500
-    finalTree: PINE_TREE
-    requiresVegetationHost: true
-"""
-        .trimIndent()
-
-class VegetationConfig(private val path: Path = Path.of("data/config/vegetation.yaml")) {
+class VegetationConfig(
+    private val path: Path = Path.of("data/config/vegetation.yaml"),
+    private val resourcesPath: Path = Path.of("resources/config/vegetation.yaml"),
+) {
     @Volatile
     var data: VegetationConfigData = VegetationConfigData()
         private set
 
     init {
-        if (!path.exists()) {
-            path.parent.createDirectories()
-            path.writeText(DEFAULT_YAML)
-            log.info("Generated default vegetation config at {}", path.toAbsolutePath())
-        }
-        data = parse()
+        data = load()
         log.info("Vegetation config loaded: {} chains", data.chains.size)
     }
 
-    private fun parse(): VegetationConfigData =
-        runCatching {
-                Yaml.default.decodeFromString(VegetationConfigData.serializer(), path.readText())
-            }
-            .getOrElse { e ->
-                log.warn("Failed to load vegetation.yaml ({}), using defaults", e.message)
-                Yaml.default.decodeFromString(VegetationConfigData.serializer(), DEFAULT_YAML)
-            }
+    private fun load(): VegetationConfigData {
+        val default =
+            Yaml.default.decodeFromString(
+                VegetationConfigData.serializer(), resourcesPath.readText())
+        val originalText = if (path.exists()) path.readText() else ""
+        path.parent.createDirectories()
+        if (originalText.isBlank()) {
+            path.writeText(
+                SCHEMA_HEADER +
+                    "\n" +
+                    spliceMissingAsComments(
+                        "", yamlConfigSection(VegetationConfigData::class, "", default, null)))
+            log.info("Generated default vegetation config at {}", path.toAbsolutePath())
+            return default
+        }
+        val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
+        if (node == null) {
+            log.warn("vegetation.yaml has unparseable structure, leaving file untouched")
+            return default
+        }
+        val decoded =
+            runCatching {
+                    Yaml.default.decodeFromString(VegetationConfigData.serializer(), originalText)
+                }
+                .getOrElse { e ->
+                    log.warn("Failed to load vegetation.yaml ({}), using defaults", e.message)
+                    default
+                }
+        val merged = mergeConfig(VegetationConfigData::class, decoded, default, node)
+        path.writeText(
+            spliceMissingAsComments(
+                originalText, yamlConfigSection(VegetationConfigData::class, "", merged, node)))
+        return merged
+    }
 
     fun reload(): VegetationConfigData {
-        data = parse()
+        data = load()
         log.info("Vegetation config reloaded: {} chains", data.chains.size)
         return data
     }

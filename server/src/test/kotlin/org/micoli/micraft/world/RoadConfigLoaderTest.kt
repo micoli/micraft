@@ -1,7 +1,10 @@
 package org.micoli.micraft.world
 
+import com.charleskorn.kaml.Yaml
+import java.nio.file.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.createTempFile
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -11,11 +14,29 @@ import org.micoli.micraft.world.proceduralGenerator.road.RoadConfig
 
 class RoadConfigLoaderTest {
 
+    private val defaultYaml =
+        """
+        enabled: true
+        defaultRoad:
+          width: 3
+          surface: GRAVEL
+          roadProbability: 0.7
+        biomes:
+          desert:
+            width: 5
+            surface: SANDSTONE
+            roadProbability: 0.5
+        """
+            .trimIndent()
+
+    private fun defaultResourcesFile(dir: Path) =
+        dir.resolve("roads-defaults.yaml").apply { writeText(defaultYaml) }
+
     private fun configFrom(yaml: String): RoadConfig {
-        val tmp = createTempFile(suffix = ".yaml")
-        tmp.toFile().deleteOnExit()
+        val dir = createTempDirectory()
+        val tmp = createTempFile(dir, suffix = ".yaml")
         tmp.writeText(yaml)
-        return loadRoadConfig(tmp)
+        return loadRoadConfig(tmp, defaultResourcesFile(dir))
     }
 
     @Test
@@ -100,9 +121,8 @@ class RoadConfigLoaderTest {
     @Test
     fun missingFile_createsDefaultAndReturnsDefaults() {
         val dir = createTempDirectory()
-        dir.toFile().deleteOnExit()
         val path = dir.resolve("roads.yaml")
-        val config = loadRoadConfig(path)
+        val config = loadRoadConfig(path, defaultResourcesFile(dir))
         assertTrue(path.toFile().exists(), "File should be created")
         assertTrue(config.enabled)
         assertEquals(BlockType.GRAVEL, config.defaultRoad.surface)
@@ -128,6 +148,55 @@ class RoadConfigLoaderTest {
     }
 
     @Test
+    fun partialFile_writesMissingKeysBack() {
+        val dir = createTempDirectory()
+        val path = dir.resolve("roads.yaml")
+        path.writeText("enabled: true\n")
+        loadRoadConfig(path, defaultResourcesFile(dir))
+        val written = path.readText()
+        assertTrue(written.contains("voronoiCellSize"), "Missing keys must be written back to file")
+        assertTrue(written.contains("# biomes:"), "Missing curated biomes must be commented in")
+        assertTrue(written.contains("desert"), "Missing curated biomes must be commented in")
+    }
+
+    @Test
+    fun missingField_isMergedFromResourcesDefault() {
+        val dir = createTempDirectory()
+        val path = dir.resolve("roads.yaml")
+        val resources = defaultResourcesFile(dir)
+        path.writeText("enabled: true\n")
+        val config = loadRoadConfig(path, resources)
+        assertEquals(3, config.defaultRoad.width, "absent field is active, sourced from resources")
+        assertTrue(
+            config.biomes.containsKey("desert"), "absent map is active, sourced from resources")
+    }
+
+    @Test
+    fun corruptFile_leftUntouched() {
+        val dir = createTempDirectory()
+        val path = dir.resolve("roads.yaml")
+        val original = "this: [is: not: valid yaml: }"
+        path.writeText(original)
+        loadRoadConfig(path, defaultResourcesFile(dir))
+        assertEquals(original, path.readText(), "Unparseable file must not be rewritten")
+    }
+
+    @Test
+    fun reload_isIdempotent_doesNotDuplicateComments() {
+        val dir = createTempDirectory()
+        val path = dir.resolve("roads.yaml")
+        val resources = defaultResourcesFile(dir)
+        path.writeText("enabled: true\n")
+        loadRoadConfig(path, resources)
+        val afterFirstLoad = path.readText()
+        loadRoadConfig(path, resources)
+        val afterSecondLoad = path.readText()
+        assertEquals(
+            afterFirstLoad, afterSecondLoad, "Reloading must not duplicate default comments")
+        assertEquals(1, Regex("voronoiCellSize").findAll(afterSecondLoad).count())
+    }
+
+    @Test
     fun disabledConfig_defaultsUsed() {
         val config =
             configFrom(
@@ -140,5 +209,14 @@ class RoadConfigLoaderTest {
             """
                     .trimIndent())
         assertFalse(config.enabled)
+    }
+
+    @Test
+    fun productionResourcesFile_parsesSuccessfully() {
+        val projectRoot = Path.of(System.getProperty("projectDir", ".."))
+        val path = projectRoot.resolve("resources/config/roads.yaml")
+        assertTrue(path.toFile().exists(), "resources/config/roads.yaml should exist")
+        val config = Yaml.default.decodeFromString(RoadConfig.serializer(), path.readText())
+        assertTrue(config.biomes.isNotEmpty())
     }
 }

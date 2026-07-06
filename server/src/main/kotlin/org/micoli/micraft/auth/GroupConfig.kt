@@ -10,6 +10,12 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.world.mergeConfig
+import org.micoli.micraft.world.spliceMissingAsComments
+import org.micoli.micraft.world.yamlConfigSection
+import org.slf4j.LoggerFactory
+
+private val log = LoggerFactory.getLogger("GroupConfig")
 
 @Serializable
 data class GroupEntry(
@@ -36,15 +42,26 @@ data class GroupsConfig(
     fun resolveDefaultPermissions(): Set<String> = resolvePermissions(defaultGroups)
 }
 
-fun loadGroupsConfig(path: Path): GroupsConfig {
-    val config =
-        if (path.exists())
-            runCatching {
-                    Yaml.default.decodeFromString(GroupsConfig.serializer(), path.readText())
-                }
-                .getOrElse { GroupsConfig() }
-        else GroupsConfig()
+fun loadGroupsConfig(path: Path, resourcesPath: Path): GroupsConfig {
+    val default = Yaml.default.decodeFromString(GroupsConfig.serializer(), resourcesPath.readText())
+    val originalText = if (path.exists()) path.readText() else ""
     path.parent?.createDirectories()
-    path.writeText(Yaml.default.encodeToString(GroupsConfig.serializer(), config))
-    return config
+    if (originalText.isBlank()) {
+        path.writeText(
+            spliceMissingAsComments("", yamlConfigSection(GroupsConfig::class, "", default, null)))
+        return default
+    }
+    val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
+    if (node == null) {
+        log.warn("groups.yaml has unparseable structure, leaving file untouched")
+        return default
+    }
+    val decoded =
+        runCatching { Yaml.default.decodeFromString(GroupsConfig.serializer(), originalText) }
+            .getOrElse { default }
+    val merged = mergeConfig(GroupsConfig::class, decoded, default, node)
+    path.writeText(
+        spliceMissingAsComments(
+            originalText, yamlConfigSection(GroupsConfig::class, "", merged, node)))
+    return merged
 }

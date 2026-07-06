@@ -1,5 +1,6 @@
 package org.micoli.micraft.world
 
+import kotlin.io.path.createTempDirectory
 import kotlin.io.path.createTempFile
 import kotlin.io.path.writeText
 import kotlin.test.Test
@@ -14,19 +15,26 @@ import org.micoli.micraft.support.testSession
 
 class WorldItemManagerTest {
 
+    private fun emptyResourcesFile(): java.nio.file.Path {
+        val dir = createTempDirectory()
+        val resources = dir.resolve("drops-defaults.yaml")
+        resources.writeText("{}\n")
+        return resources
+    }
+
     private fun dropConfigWith100PctStone(): DropConfig {
         val tmp = createTempFile(suffix = ".yaml")
         tmp.toFile().deleteOnExit()
         tmp.writeText(
             "STONE:\n  - item: COBBLESTONE\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\n")
-        return DropConfig(tmp)
+        return DropConfig(tmp, emptyResourcesFile())
     }
 
     private fun emptyDropConfig(): DropConfig {
         val tmp = createTempFile(suffix = ".yaml")
         tmp.toFile().deleteOnExit()
         tmp.writeText("{}\n")
-        return DropConfig(tmp)
+        return DropConfig(tmp, emptyResourcesFile())
     }
 
     @Test

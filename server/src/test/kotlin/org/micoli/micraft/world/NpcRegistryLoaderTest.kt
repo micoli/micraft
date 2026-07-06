@@ -267,6 +267,54 @@ class NpcRegistryLoaderTest {
     }
 
     @Test
+    fun dataOverride_reload_isIdempotent_doesNotDuplicateComments() {
+        val (loader, dataDir) =
+            loaderWithNpcs(
+                npcs =
+                    mapOf(
+                        "npc_goat" to
+                            """
+                            behavior: random_movable
+                            width: 0.5
+                            height: 0.9
+                            wanderSpeed: 2.0
+                            wanderRadius: 12.0
+                            """
+                                .trimIndent()),
+                overrides = mapOf("npc_goat" to "wanderSpeed: 9.9\n"),
+            )
+        loader.reload()
+        val afterFirstReload = dataDir.resolve("npc_goat/npc_goat.yaml").readText()
+        loader.reload()
+        val afterSecondReload = dataDir.resolve("npc_goat/npc_goat.yaml").readText()
+        assertEquals(
+            afterFirstReload, afterSecondReload, "Reloading must not duplicate default comments")
+        assertEquals(1, Regex("behavior").findAll(afterSecondReload).count())
+    }
+
+    @Test
+    fun dataOverride_invalidYaml_leftUntouched() {
+        val (loader, dataDir) =
+            loaderWithNpcs(
+                npcs =
+                    mapOf(
+                        "npc_goat" to
+                            """
+                            behavior: random_movable
+                            width: 0.5
+                            height: 0.9
+                            wanderSpeed: 2.0
+                            wanderRadius: 12.0
+                            """
+                                .trimIndent()),
+                overrides = mapOf("npc_goat" to "this is not: [valid yaml: }"),
+            )
+        loader.reload()
+        assertEquals(
+            "this is not: [valid yaml: }", dataDir.resolve("npc_goat/npc_goat.yaml").readText())
+    }
+
+    @Test
     fun dataOverride_noFile_notCreated() {
         val (_, dataDir) =
             loaderWithNpcs(

@@ -81,38 +81,32 @@ data class ServerConfig(
     @EncodeDefault(ALWAYS) val chunks: ChunkSection = ChunkSection(),
 )
 
-fun loadServerConfig(path: Path): ServerConfig {
+fun loadServerConfig(path: Path, resourcesPath: Path): ServerConfig {
+    val default = Yaml.default.decodeFromString(ServerConfig.serializer(), resourcesPath.readText())
     val originalText = if (path.exists()) path.readText() else ""
-    val config =
-        if (path.exists()) {
-            validateYamlConfig(path, "server.schema.json")
-            runCatching { Yaml.default.decodeFromString(ServerConfig.serializer(), originalText) }
-                .getOrElse { e ->
-                    log.warn("Failed to parse server.yaml ({}), using defaults", e.message)
-                    ServerConfig()
-                }
-        } else {
-            log.info("No server.yaml at {}, creating with defaults", path.toAbsolutePath())
-            ServerConfig()
-        }
     path.parent?.createDirectories()
     if (originalText.isBlank()) {
+        log.info("No server.yaml at {}, creating with defaults", path.toAbsolutePath())
         path.writeText(
-            spliceMissingAsComments(
-                originalText, yamlConfigSection(ServerConfig::class, "", config, null)))
-    } else {
-        runCatching { Yaml.default.parseToYamlNode(originalText) }
-            .onSuccess { node ->
-                path.writeText(
-                    spliceMissingAsComments(
-                        originalText, yamlConfigSection(ServerConfig::class, "", config, node)))
-            }
-            .onFailure {
-                log.warn(
-                    "server.yaml has unparseable structure, leaving file untouched: {}", it.message)
-            }
+            spliceMissingAsComments("", yamlConfigSection(ServerConfig::class, "", default, null)))
+        return default
     }
-    return config
+    val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
+    if (node == null) {
+        log.warn("server.yaml has unparseable structure, leaving file untouched")
+        return default
+    }
+    val decoded =
+        runCatching { Yaml.default.decodeFromString(ServerConfig.serializer(), originalText) }
+            .getOrElse { e ->
+                log.warn("Failed to parse server.yaml ({}), using defaults", e.message)
+                default
+            }
+    val merged = mergeConfig(ServerConfig::class, decoded, default, node)
+    path.writeText(
+        spliceMissingAsComments(
+            originalText, yamlConfigSection(ServerConfig::class, "", merged, node)))
+    return merged
 }
 
 fun applyServerConfig(config: ServerConfig) {

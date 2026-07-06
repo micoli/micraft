@@ -1,0 +1,14 @@
+tickMs: 50
+gravity: -20.0
+jumpSpeed: 8.5
+flyVerticalSpeed: 8.0
+saveIntervalSeconds: 30
+spawnX: 8.0
+spawnY: 200.0
+spawnZ: 8.0
+ticksPerDay: 72000
+timeBroadcastTicks: 20
+maxInteractionDistance: 7.0
+debugWorld: false
+reconcileToleranceXz: 0.5
+reconcileToleranceY: 0.99

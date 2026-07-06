@@ -1,6 +1,5 @@
 package org.micoli.micraft
 
-import com.charleskorn.kaml.Yaml
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -13,8 +12,6 @@ import io.ktor.server.websocket.*
 import java.nio.file.Path
 import java.time.Instant
 import java.util.UUID
-import kotlin.io.path.exists
-import kotlin.io.path.readText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.builtins.ListSerializer
@@ -38,7 +35,6 @@ import org.micoli.micraft.ui.WIDGET_REGISTRY
 import org.micoli.micraft.ui.WidgetRegistryEntry
 import org.micoli.micraft.world.ArmorDefinition
 import org.micoli.micraft.world.ArmorRegistryLoader
-import org.micoli.micraft.world.BiomeConfig
 import org.micoli.micraft.world.BiomeRegistry
 import org.micoli.micraft.world.BlockRegistry
 import org.micoli.micraft.world.BlockRegistryLoader
@@ -49,6 +45,7 @@ import org.micoli.micraft.world.WorldPersistence
 import org.micoli.micraft.world.WorldState
 import org.micoli.micraft.world.applyGameConfig
 import org.micoli.micraft.world.applyServerConfig
+import org.micoli.micraft.world.loadBiomeRegistry
 import org.micoli.micraft.world.loadGameConfig
 import org.micoli.micraft.world.loadHouseConfig
 import org.micoli.micraft.world.loadKeyBindings
@@ -71,15 +68,20 @@ fun main() {
 private val SERVER_ID: String = UUID.randomUUID().toString()
 val dataPath = "data"
 val configDir = Path.of(dataPath + "/config")
+val resourcesConfigDir = Path.of("resources/config")
 
 fun Application.module() {
     install(WebSockets) {}
 
     validateAlli18nYamlConfigs(configDir)
-    val serverConfig = loadServerConfig(Path.of(dataPath + "/config/server.yaml"))
+    val serverConfig =
+        loadServerConfig(
+            Path.of(dataPath + "/config/server.yaml"), resourcesConfigDir.resolve("server.yaml"))
     applyServerConfig(serverConfig)
 
-    val gameConfig = loadGameConfig(Path.of(dataPath + "/config/game.yaml"))
+    val gameConfig =
+        loadGameConfig(
+            Path.of(dataPath + "/config/game.yaml"), resourcesConfigDir.resolve("game.yaml"))
     applyGameConfig(gameConfig)
 
     loadKeyBindings(Path.of(dataPath + "/config/keybindings.yaml"))
@@ -109,42 +111,16 @@ fun Application.module() {
             dataBlocksPath = Path.of(dataPath + "/resources/blocks"),
         )
 
-    val itemRegistryLoader = ItemRegistryLoader(Path.of(dataPath + "/config/items.yaml"))
+    val itemRegistryLoader =
+        ItemRegistryLoader(
+            Path.of(dataPath + "/config/items.yaml"), resourcesConfigDir.resolve("items.yaml"))
     BlockRegistry.load(blockRegistryLoader.load())
     ItemRegistry.load(itemRegistryLoader.load())
 
-    fun loadBiomeRegistry(): BiomeRegistry {
-        validateYamlConfig(configDir.resolve("biomes.yaml"), "biomes.schema.json")
-        val biomeFile = Path.of(dataPath + "/config/biomes.yaml")
-        return if (biomeFile.exists()) {
-            log.info("Loading biomes from {}", biomeFile.toAbsolutePath())
-            runCatching {
-                    val config =
-                        Yaml.default.decodeFromString(
-                            BiomeConfig.serializer(), biomeFile.readText())
-                    val registry = BiomeRegistry.from(config)
-                    log.info(
-                        "Biomes loaded: [{}] | voronoiCellSize={} blendRadius={}",
-                        config.biomes.joinToString { it.id },
-                        config.voronoiCellSize,
-                        config.voronoiBlendRadius,
-                    )
-                    registry
-                }
-                .getOrElse { e ->
-                    log.warn("Failed to load biomes.yaml ({}), using default", e.message)
-                    BiomeRegistry.default()
-                }
-        } else {
-            log.warn(
-                "No biomes.yaml found at {} — using default (plains only)",
-                biomeFile.toAbsolutePath())
-            BiomeRegistry.default()
-        }
-    }
-
+    val biomeFile = Path.of(dataPath + "/config/biomes.yaml")
+    val biomeResourcesFile = resourcesConfigDir.resolve("biomes.yaml")
     val biomeRegistry =
-        if (!debugWorld) loadBiomeRegistry()
+        if (!debugWorld) loadBiomeRegistry(biomeFile, biomeResourcesFile)
         else {
             log.info("Debug world mode — biomes disabled")
             BiomeRegistry.default()
@@ -155,10 +131,13 @@ fun Application.module() {
         "roads.schema.json",
     )
     val roadConfigPath = Path.of(dataPath + "/config/roads.yaml")
-    val roadConfig = if (!debugWorld) loadRoadConfig(roadConfigPath) else null
+    val roadResourcesFile = resourcesConfigDir.resolve("roads.yaml")
+    val roadConfig = if (!debugWorld) loadRoadConfig(roadConfigPath, roadResourcesFile) else null
 
     val houseConfigPath = Path.of(dataPath + "/config/houses.yaml")
-    val houseConfig = if (!debugWorld) loadHouseConfig(houseConfigPath) else null
+    val houseResourcesFile = resourcesConfigDir.resolve("houses.yaml")
+    val houseConfig =
+        if (!debugWorld) loadHouseConfig(houseConfigPath, houseResourcesFile) else null
 
     val generator =
         if (debugWorld) DebugChunkGenerator()
@@ -176,9 +155,9 @@ fun Application.module() {
             {
                 ProceduralChunkGenerator(
                     seed = 42L,
-                    biomeRegistry = loadBiomeRegistry(),
-                    roadConfig = loadRoadConfig(roadConfigPath),
-                    houseConfig = loadHouseConfig(houseConfigPath),
+                    biomeRegistry = loadBiomeRegistry(biomeFile, biomeResourcesFile),
+                    roadConfig = loadRoadConfig(roadConfigPath, roadResourcesFile),
+                    houseConfig = loadHouseConfig(houseConfigPath, houseResourcesFile),
                 )
             }
         } else null
@@ -190,12 +169,15 @@ fun Application.module() {
 
     val reloadGameConfigLambda: () -> Unit = {
         validateYamlConfig(configDir.resolve("game.yaml"), "game.schema.json")
-        applyGameConfig(loadGameConfig(Path.of(dataPath + "/config/game.yaml")))
+        applyGameConfig(
+            loadGameConfig(
+                Path.of(dataPath + "/config/game.yaml"), resourcesConfigDir.resolve("game.yaml")))
     }
 
     val authConfig = serverConfig.auth
     val authScope = CoroutineScope(Dispatchers.Default)
-    val groupsConfig = loadGroupsConfig(Path.of(authConfig.local.groupsFile))
+    val groupsResourcesFile = resourcesConfigDir.resolve("groups.yaml")
+    val groupsConfig = loadGroupsConfig(Path.of(authConfig.local.groupsFile), groupsResourcesFile)
     val (authProvider, tokenStore) =
         when (authConfig.provider) {
             "local" -> {
@@ -216,10 +198,10 @@ fun Application.module() {
     val reloadRbacLambda: (() -> Unit)? =
         when (val p = authProvider) {
             is LocalAuthProvider -> {
-                { p.groupsConfig = loadGroupsConfig(groupsFilePath) }
+                { p.groupsConfig = loadGroupsConfig(groupsFilePath, groupsResourcesFile) }
             }
             is OAuthProvider -> {
-                { p.groupsConfig = loadGroupsConfig(groupsFilePath) }
+                { p.groupsConfig = loadGroupsConfig(groupsFilePath, groupsResourcesFile) }
             }
             else -> null
         }
@@ -376,7 +358,10 @@ fun Application.module() {
                 ContentType.Application.Json)
         }
         get("/api/armors") {
-            val armors = ArmorRegistryLoader(Path.of("resources/armors")).load()
+            val armors =
+                ArmorRegistryLoader(
+                        Path.of("resources/armors"), Path.of("$dataPath/resources/armors"))
+                    .load()
             call.respondText(
                 Json.encodeToString(
                     MapSerializer(String.serializer(), ArmorDefinition.serializer()), armors),

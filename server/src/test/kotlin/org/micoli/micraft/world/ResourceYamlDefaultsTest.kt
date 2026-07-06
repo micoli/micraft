@@ -76,7 +76,7 @@ class ResourceYamlDefaultsTest {
             }
         assertTrue(
             failures.isEmpty(),
-            "Block resource YAMLs have missing keys — run: ./gradlew :server:patchResourceDefaults\n" +
+            "Block resource YAMLs have missing keys — add them manually:\n" +
                 failures.joinToString("\n"),
         )
     }
@@ -101,7 +101,7 @@ class ResourceYamlDefaultsTest {
             }
         assertTrue(
             failures.isEmpty(),
-            "Entity resource YAMLs have missing keys — run: ./gradlew :server:patchResourceDefaults\n" +
+            "Entity resource YAMLs have missing keys — add them manually:\n" +
                 failures.joinToString("\n"),
         )
     }

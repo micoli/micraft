@@ -1,5 +1,6 @@
 package org.micoli.micraft.world
 
+import com.charleskorn.kaml.Yaml
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -9,11 +10,16 @@ import kotlin.test.assertTrue
 
 class ServerConfigLoaderTest {
 
+    private fun defaultResourcesFile(dir: java.nio.file.Path) =
+        dir.resolve("server-defaults.yaml").apply {
+            writeText(Yaml.default.encodeToString(ServerConfig.serializer(), ServerConfig()))
+        }
+
     @Test
     fun missingFile_createsWithDefaults() {
         val dir = createTempDirectory()
         val path = dir.resolve("server.yaml")
-        val config = loadServerConfig(path)
+        val config = loadServerConfig(path, defaultResourcesFile(dir))
         assertTrue(path.toFile().exists(), "server.yaml should be created")
         assertEquals(ServerConfig(), config)
     }
@@ -31,7 +37,7 @@ class ServerConfigLoaderTest {
               speedStanding: 6.0
             """
                 .trimIndent())
-        val config = loadServerConfig(path)
+        val config = loadServerConfig(path, defaultResourcesFile(dir))
         assertEquals(5, config.world.viewRadius)
         assertEquals(10, config.world.forwardViewRadius)
         assertEquals(6.0f, config.player.speedStanding)
@@ -42,7 +48,7 @@ class ServerConfigLoaderTest {
         val dir = createTempDirectory()
         val path = dir.resolve("server.yaml")
         path.writeText("world:\n  viewRadius: 4\n")
-        loadServerConfig(path)
+        loadServerConfig(path, defaultResourcesFile(dir))
         val written = path.readText()
         assertTrue(written.contains("worldMaxY"), "Missing keys must be written back to file")
         assertTrue(
@@ -50,11 +56,24 @@ class ServerConfigLoaderTest {
     }
 
     @Test
+    fun missingField_isMergedFromResourcesDefault() {
+        val dir = createTempDirectory()
+        val path = dir.resolve("server.yaml")
+        val resources = dir.resolve("server-defaults.yaml")
+        resources.writeText(
+            Yaml.default.encodeToString(
+                ServerConfig.serializer(), ServerConfig(world = WorldSection(waterLevel = 99))))
+        path.writeText("world:\n  viewRadius: 4\n")
+        val config = loadServerConfig(path, resources)
+        assertEquals(99, config.world.waterLevel, "absent field is active, sourced from resources")
+    }
+
+    @Test
     fun corruptFile_fallsBackToDefaults() {
         val dir = createTempDirectory()
         val path = dir.resolve("server.yaml")
         path.writeText("this: [is: not: valid yaml: }")
-        val config = loadServerConfig(path)
+        val config = loadServerConfig(path, defaultResourcesFile(dir))
         assertEquals(ServerConfig(), config)
     }
 
@@ -64,7 +83,7 @@ class ServerConfigLoaderTest {
         val path = dir.resolve("server.yaml")
         val original = "this: [is: not: valid yaml: }"
         path.writeText(original)
-        loadServerConfig(path)
+        loadServerConfig(path, defaultResourcesFile(dir))
         assertEquals(original, path.readText(), "Unparseable file must not be rewritten")
     }
 
@@ -72,10 +91,11 @@ class ServerConfigLoaderTest {
     fun reload_isIdempotent_doesNotDuplicateComments() {
         val dir = createTempDirectory()
         val path = dir.resolve("server.yaml")
+        val resources = defaultResourcesFile(dir)
         path.writeText("world:\n  viewRadius: 4\n")
-        loadServerConfig(path)
+        loadServerConfig(path, resources)
         val afterFirstLoad = path.readText()
-        loadServerConfig(path)
+        loadServerConfig(path, resources)
         val afterSecondLoad = path.readText()
         assertEquals(
             afterFirstLoad, afterSecondLoad, "Reloading must not duplicate default comments")

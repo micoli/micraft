@@ -1,0 +1,88 @@
+voronoiCellSize: 256
+voronoiBlendRadius: 20
+biomes:
+  - id: snow_peaks
+    zones:
+      - moistureMin: 0.0
+        moistureMax: 1.0
+        altitudeMin: 150
+        altitudeMax: 1024
+    surface: SNOW
+    subsurface: STONE
+    filler: STONE
+    subsurfaceDepth: 2
+    elevationMin: 150
+    elevationMax: 200
+    vegetation:
+      - type: pine_tree_snow
+        density: 0.04
+  - id: desert
+    zones:
+      - moistureMin: 0.0
+        moistureMax: 0.12
+    surface: SAND
+    subsurface: SANDSTONE
+    filler: STONE
+    subsurfaceDepth: 4
+    elevationMin: 40
+    elevationMax: 70
+  - id: dry_plains
+    zones:
+      - moistureMin: 0.12
+        moistureMax: 0.30
+    surface: GRASS
+    subsurface: DIRT
+    filler: STONE
+    elevationMin: 55
+    elevationMax: 90
+    vegetation:
+      - type: weed
+        density: 0.08
+  - id: plains
+    zones:
+      - moistureMin: 0.30
+        moistureMax: 0.62
+    surface: GRASS
+    subsurface: DIRT
+    filler: STONE
+    elevationMin: 60
+    elevationMax: 100
+    vegetation:
+      - type: flower
+        density: 0.06
+      - type: weed
+        density: 0.05
+      - type: oak_tree
+        density: 0.01
+  - id: forest
+    zones:
+      - moistureMin: 0.62
+        moistureMax: 0.82
+    surface: GRASS
+    subsurface: DIRT
+    filler: STONE
+    elevationMin: 60
+    elevationMax: 110
+    grassColor: [0.3, 0.55, 0.2]
+    vegetation:
+      - type: oak_tree
+        density: 0.12
+      - type: flower
+        density: 0.04
+      - type: weed
+        density: 0.04
+  - id: pine_forest
+    zones:
+      - moistureMin: 0.82
+        moistureMax: 1.0
+    surface: GRASS
+    subsurface: DIRT
+    filler: STONE
+    elevationMin: 70
+    elevationMax: 130
+    grassColor: [0.25, 0.45, 0.22]
+    vegetation:
+      - type: pine_tree
+        density: 0.15
+      - type: weed
+        density: 0.03

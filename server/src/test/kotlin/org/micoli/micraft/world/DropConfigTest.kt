@@ -1,6 +1,7 @@
 package org.micoli.micraft.world
 
-import kotlin.io.path.createTempFile
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -8,11 +9,13 @@ import kotlin.test.assertTrue
 
 class DropConfigTest {
 
-    private fun configWith(yaml: String): DropConfig {
-        val tmp = createTempFile(suffix = ".yaml")
-        tmp.toFile().deleteOnExit()
+    private fun configWith(yaml: String, resourcesYaml: String = "{}\n"): DropConfig {
+        val dir = createTempDirectory()
+        val tmp = dir.resolve("drops.yaml")
         tmp.writeText(yaml)
-        return DropConfig(tmp)
+        val resources = dir.resolve("drops-defaults.yaml")
+        resources.writeText(resourcesYaml)
+        return DropConfig(tmp, resources)
     }
 
     @Test
@@ -72,10 +75,12 @@ class DropConfigTest {
 
     @Test
     fun reload_picksUpNewConfig() {
-        val tmp = createTempFile(suffix = ".yaml")
-        tmp.toFile().deleteOnExit()
+        val dir = createTempDirectory()
+        val tmp = dir.resolve("drops.yaml")
         tmp.writeText("{}\n")
-        val config = DropConfig(tmp)
+        val resources = dir.resolve("drops-defaults.yaml")
+        resources.writeText("{}\n")
+        val config = DropConfig(tmp, resources)
         assertTrue(config.rollDrops(BlockType.STONE).isEmpty())
         tmp.writeText(
             "STONE:\n  - item: COBBLESTONE\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\n")
@@ -86,10 +91,41 @@ class DropConfigTest {
 
     @Test
     fun invalidYaml_fallsBackToDefaults() {
-        val config = configWith("this is: not: valid: yaml\n  content\n")
-        // With invalid YAML, parseTable falls back to DEFAULT_DROPS which includes STONE →
-        // COBBLESTONE
+        val config =
+            configWith(
+                "this is: not: valid: yaml\n  content\n",
+                "STONE:\n  - item: COBBLESTONE\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\n")
         val drops = config.rollDrops(BlockType.STONE)
         assertTrue(drops.isNotEmpty())
+    }
+
+    @Test
+    fun partialFile_missingDefaultBlocksAppendedAsComments() {
+        val dir = createTempDirectory()
+        val tmp = dir.resolve("drops.yaml")
+        tmp.writeText(
+            "STONE:\n  - item: COBBLESTONE\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\n")
+        val resources = dir.resolve("drops-defaults.yaml")
+        resources.writeText(
+            "STONE:\n  - item: COBBLESTONE\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\nDIRT:\n  - item: DIRT\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\n")
+        DropConfig(tmp, resources)
+        val written = tmp.readText()
+        assertTrue(written.contains("STONE:\n  - item: COBBLESTONE"), "existing entry untouched")
+        assertTrue(written.contains("# DIRT:"), "missing default block added as comment")
+    }
+
+    @Test
+    fun missingBlock_isMergedFromResourcesDefault() {
+        val dir = createTempDirectory()
+        val tmp = dir.resolve("drops.yaml")
+        tmp.writeText(
+            "STONE:\n  - item: COBBLESTONE\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\n")
+        val resources = dir.resolve("drops-defaults.yaml")
+        resources.writeText(
+            "STONE:\n  - item: COBBLESTONE\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\nDIRT:\n  - item: DIRT\n    dropRate: 100\n    minCount: 1\n    maxCount: 1\n")
+        val config = DropConfig(tmp, resources)
+        assertTrue(
+            config.rollDrops(BlockType.DIRT).isNotEmpty(),
+            "missing default block is active, sourced from resources")
     }
 }

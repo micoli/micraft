@@ -14,7 +14,7 @@ data class RoadBiomeConfig(
 data class RoadConfig(
     val enabled: Boolean = true,
     val vegetationAllowedOnRoad: Boolean = false,
-    val minVegetationDistanceFromRoad: Int = 0,
+    val minVegetationDistanceFromRoad: Int = 1,
     val voronoiCellSize: Int = 128,
     val displacementScale: Double = 20.0,
     val displacementFrequency: Double = 0.02,

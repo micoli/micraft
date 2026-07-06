@@ -109,26 +109,28 @@ class NpcRegistryLoader(
                         val merged =
                             if (dataYaml.exists()) {
                                 val content = dataYaml.readText()
-                                val overridden =
+                                val overrideResult =
                                     if (content.isNotBlank()) {
                                         runCatching {
-                                                val override =
-                                                    Yaml.default.decodeFromString(
-                                                        NpcYamlOverride.serializer(), content)
-                                                entry.applyOverride(override)
-                                            }
-                                            .onFailure {
-                                                log.warn(
-                                                    "Failed to apply override for {}: {}",
-                                                    name,
-                                                    it.message)
-                                            }
-                                            .getOrDefault(entry)
-                                    } else entry
-                                dataYaml.writeText(
-                                    Yaml.default.encodeToString(
-                                        NpcYamlEntry.serializer(), overridden))
-                                log.debug("Wrote back merged data override for {}", name)
+                                            Yaml.default.decodeFromString(
+                                                NpcYamlOverride.serializer(), content)
+                                        }
+                                    } else Result.success(NpcYamlOverride())
+                                val override = overrideResult.getOrNull()
+                                val overridden = override?.let { entry.applyOverride(it) } ?: entry
+                                overrideResult.fold(
+                                    onSuccess = {
+                                        dataYaml.writeText(
+                                            spliceMissingAsComments(
+                                                content, yamlOverrideSection(overridden, it)))
+                                        log.debug("Wrote back merged data override for {}", name)
+                                    },
+                                    onFailure = {
+                                        log.warn(
+                                            "Failed to apply override for {}, leaving file untouched: {}",
+                                            name,
+                                            it.message)
+                                    })
                                 overridden
                             } else entry
                         entries[name] = merged

@@ -1,6 +1,7 @@
 package org.micoli.micraft.world
 
 import com.charleskorn.kaml.Yaml
+import com.charleskorn.kaml.YamlNode
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
@@ -67,27 +68,69 @@ hotbar:
 """
         .trimIndent()
 
+private val DEFAULT_SECTIONS: Map<String, Map<String, List<String>>> =
+    Yaml.default.decodeFromString(SECTION_SERIALIZER, DEFAULT_YAML)
+
 fun defaultKeyBindings(): Map<String, List<String>> = buildMap {
-    for ((_, actions) in Yaml.default.decodeFromString(SECTION_SERIALIZER, DEFAULT_YAML)) putAll(
-        actions)
+    for ((_, actions) in DEFAULT_SECTIONS) putAll(actions)
 }
 
+/**
+ * Two levels of dynamic maps (category -> action -> keys), not a fixed data class, so this builds
+ * the [YamlSection] tree by hand instead of via [yamlConfigSection]/[yamlMapSection].
+ */
+private fun keyBindingsSection(
+    defaults: Map<String, Map<String, List<String>>>,
+    node: YamlNode?,
+): YamlSection =
+    YamlSection(
+        key = "",
+        subsections =
+            defaults.map { (section, actions) ->
+                YamlSection(
+                    key = section,
+                    present = presentInYaml(node, section),
+                    fields =
+                        actions.map { (action, keys) ->
+                            YamlField(
+                                action,
+                                keys,
+                                ListSerializer(String.serializer()),
+                                presentInYaml(node, section, action))
+                        },
+                )
+            },
+    )
+
 fun loadKeyBindings(path: Path): Map<String, List<String>> {
-    if (!path.exists()) {
-        log.info("No keybindings.yaml at {}, creating with defaults", path.toAbsolutePath())
-        path.parent?.createDirectories()
-        path.writeText(DEFAULT_YAML)
-    }
-    validateYamlConfig(path, "keybindings.schema.json")
+    val originalText = if (path.exists()) path.readText() else ""
     val sections =
-        runCatching { Yaml.default.decodeFromString(SECTION_SERIALIZER, path.readText()) }
-            .getOrElse { e ->
-                log.warn("Failed to parse keybindings.yaml ({}), using defaults", e.message)
-                return buildMap {
-                    for ((_, actions) in
-                        Yaml.default.decodeFromString(SECTION_SERIALIZER, DEFAULT_YAML)) putAll(
-                        actions)
+        if (path.exists()) {
+            validateYamlConfig(path, "keybindings.schema.json")
+            runCatching { Yaml.default.decodeFromString(SECTION_SERIALIZER, originalText) }
+                .getOrElse { e ->
+                    log.warn("Failed to parse keybindings.yaml ({}), using defaults", e.message)
+                    DEFAULT_SECTIONS
                 }
+        } else {
+            log.info("No keybindings.yaml at {}, creating with defaults", path.toAbsolutePath())
+            DEFAULT_SECTIONS
+        }
+    path.parent?.createDirectories()
+    if (originalText.isBlank()) {
+        path.writeText(spliceMissingAsComments("", keyBindingsSection(DEFAULT_SECTIONS, null)))
+    } else {
+        runCatching { Yaml.default.parseToYamlNode(originalText) }
+            .onSuccess { node ->
+                path.writeText(
+                    spliceMissingAsComments(
+                        originalText, keyBindingsSection(DEFAULT_SECTIONS, node)))
             }
+            .onFailure {
+                log.warn(
+                    "keybindings.yaml has unparseable structure, leaving file untouched: {}",
+                    it.message)
+            }
+    }
     return buildMap { for ((_, actions) in sections) putAll(actions) }
 }

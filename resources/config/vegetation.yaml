@@ -1,0 +1,31 @@
+enabled: true
+growthCheckIntervalTicks: 40
+
+chains:
+  - name: oak_growth
+    stages:
+      - block: SEED
+        minTicks: 400
+        maxTicks: 1200
+      - block: SPROUT
+        minTicks: 600
+        maxTicks: 2000
+      - block: SAPLING
+        minTicks: 800
+        maxTicks: 3000
+    finalTree: OAK_TREE
+    requiresVegetationHost: true
+
+  - name: pine_growth
+    stages:
+      - block: SEED
+        minTicks: 500
+        maxTicks: 1500
+      - block: SPROUT
+        minTicks: 700
+        maxTicks: 2200
+      - block: SAPLING
+        minTicks: 1000
+        maxTicks: 3500
+    finalTree: PINE_TREE
+    requiresVegetationHost: true

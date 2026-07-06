@@ -11,58 +11,37 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("RoadConfigLoader")
 
-private val DEFAULT_YAML =
-    """
-enabled: true
-vegetationAllowedOnRoad: false
-minVegetationDistanceFromRoad: 1
-voronoiCellSize: 128
-displacementScale: 20.0
-displacementFrequency: 0.02
-defaultRoad:
-  width: 3
-  surface: GRAVEL
-  roadProbability: 0.7
-biomes:
-  desert:
-    width: 5
-    surface: SANDSTONE
-    roadProbability: 0.5
-  plains:
-    width: 3
-    surface: GRAVEL
-    roadProbability: 0.8
-  forest:
-    width: 2
-    surface: DIRT
-    roadProbability: 0.6
-  tundra:
-    width: 3
-    surface: SNOW
-    roadProbability: 0.4
-"""
-        .trimIndent()
-
-fun loadRoadConfig(path: Path): RoadConfig {
-    if (!path.exists()) {
+fun loadRoadConfig(path: Path, resourcesPath: Path): RoadConfig {
+    val default = Yaml.default.decodeFromString(RoadConfig.serializer(), resourcesPath.readText())
+    val originalText = if (path.exists()) path.readText() else ""
+    path.parent?.createDirectories()
+    if (originalText.isBlank()) {
         log.info("No roads.yaml found at {} — creating with defaults", path.toAbsolutePath())
-        path.parent?.createDirectories()
-        path.writeText(DEFAULT_YAML)
-        return RoadConfig()
+        path.writeText(
+            spliceMissingAsComments("", yamlConfigSection(RoadConfig::class, "", default, null)))
+        return default
     }
-    return runCatching {
-            val config = Yaml.default.decodeFromString(RoadConfig.serializer(), path.readText())
-            log.info(
-                "Roads loaded: enabled={} | defaultWidth={} | voronoiCellSize={} | biomes=[{}]",
-                config.enabled,
-                config.defaultRoad.width,
-                config.voronoiCellSize,
-                config.biomes.keys.joinToString(),
-            )
-            config
-        }
-        .getOrElse { e ->
-            log.warn("Failed to load roads.yaml ({}) — using defaults", e.message)
-            RoadConfig()
-        }
+    val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
+    if (node == null) {
+        log.warn("roads.yaml has unparseable structure, leaving file untouched")
+        return default
+    }
+    val decoded =
+        runCatching { Yaml.default.decodeFromString(RoadConfig.serializer(), originalText) }
+            .getOrElse { e ->
+                log.warn("Failed to load roads.yaml ({}) — using defaults", e.message)
+                default
+            }
+    val merged = mergeConfig(RoadConfig::class, decoded, default, node)
+    log.info(
+        "Roads loaded: enabled={} | defaultWidth={} | voronoiCellSize={} | biomes=[{}]",
+        merged.enabled,
+        merged.defaultRoad.width,
+        merged.voronoiCellSize,
+        merged.biomes.keys.joinToString(),
+    )
+    path.writeText(
+        spliceMissingAsComments(
+            originalText, yamlConfigSection(RoadConfig::class, "", merged, node)))
+    return merged
 }

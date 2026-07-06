@@ -1,0 +1,27 @@
+enabled: true
+vegetationAllowedOnRoad: false
+minVegetationDistanceFromRoad: 1
+voronoiCellSize: 128
+displacementScale: 20.0
+displacementFrequency: 0.02
+defaultRoad:
+  width: 3
+  surface: GRAVEL
+  roadProbability: 0.7
+biomes:
+  desert:
+    width: 5
+    surface: SANDSTONE
+    roadProbability: 0.5
+  plains:
+    width: 3
+    surface: GRAVEL
+    roadProbability: 0.8
+  forest:
+    width: 2
+    surface: DIRT
+    roadProbability: 0.6
+  tundra:
+    width: 3
+    surface: SNOW
+    roadProbability: 0.4

@@ -1,0 +1,83 @@
+COBBLESTONE:
+  buildable: true
+  placesBlock: STONE
+  label: COB
+  bg: "#7A7A7A"
+DIRT:
+  buildable: true
+  placesBlock: DIRT
+  label: DRT
+  bg: "#8B5A2B"
+SAND:
+  buildable: true
+  placesBlock: SAND
+  label: SND
+  bg: "#D5C89A"
+GRAVEL:
+  buildable: true
+  placesBlock: GRAVEL
+  label: GRV
+  bg: "#9A9A9A"
+SANDSTONE:
+  buildable: true
+  placesBlock: SANDSTONE
+  label: SST
+  bg: "#C8B46C"
+SNOWBALL:
+  buildable: false
+  label: SNW
+  bg: "#DCE8F5"
+FLINT:
+  buildable: false
+  label: FLT
+  bg: "#4A4A52"
+SEED:
+  buildable: true
+  placesBlock: SEED
+  label: SED
+  bg: "#C8A050"
+GRASS:
+  buildable: true
+  placesBlock: GRASS
+  label: GRS
+  bg: "#4A7A28"
+SNOW_BLOCK:
+  buildable: true
+  placesBlock: SNOW
+  label: SNB
+  bg: "#F0F0F0"
+OAK_LOG:
+  buildable: true
+  placesBlock: OAK_LOG
+  label: OLG
+  bg: "#654321"
+OAK_LEAVES:
+  buildable: true
+  placesBlock: OAK_LEAVES
+  label: OLV
+  bg: "#3C641E"
+PINE_LOG:
+  buildable: true
+  placesBlock: PINE_LOG
+  label: PLG
+  bg: "#503219"
+PINE_LEAVES:
+  buildable: true
+  placesBlock: PINE_LEAVES
+  label: PLV
+  bg: "#285A3C"
+PINE_LEAVES_SNOW:
+  buildable: true
+  placesBlock: PINE_LEAVES_SNOW
+  label: PLS
+  bg: "#C8D7DC"
+FLOWER:
+  buildable: true
+  placesBlock: FLOWER
+  label: FLW
+  bg: "#E6C832"
+WEED:
+  buildable: true
+  placesBlock: WEED
+  label: WED
+  bg: "#468228"
