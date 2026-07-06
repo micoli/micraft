@@ -14,11 +14,12 @@ fun Application.installAuthRoutes(
     providerName: String,
     provider: AuthProvider?,
     tokenStore: TokenStore?,
+    messageEncoder: String,
 ) {
     routing {
         get("/api/auth/config") {
             call.respondText(
-                """{"provider":"$providerName"}""",
+                """{"provider":"$providerName","messageEncoder":"$messageEncoder"}""",
                 ContentType.Application.Json,
             )
         }

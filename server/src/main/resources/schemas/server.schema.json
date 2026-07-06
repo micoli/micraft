@@ -12,6 +12,13 @@
         "httpWorkers": {"type": "integer", "minimum": 1}
       }
     },
+    "network": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "messageEncoder": {"type": "string", "enum": ["json", "protobuf"]}
+      }
+    },
     "world": {
       "type": "object",
       "required": ["worldMinY", "worldMaxY", "chunkSize", "viewRadius", "forwardViewRadius", "waterLevel"],

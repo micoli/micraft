@@ -24,6 +24,8 @@ auth:
 chunks:
   transport: websocket
   httpWorkers: 4
+network:
+  messageEncoder: protobuf
 game:
   tickMs: 50
   gravity: -20.0

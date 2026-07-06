@@ -20,11 +20,12 @@ class AuthRoutesTest {
 
     @Test
     fun `auth config returns provider name`() = testApplication {
-        application { installAuthRoutes("none", null, null) }
+        application { installAuthRoutes("none", null, null, "protobuf") }
         val r = client.get("/api/auth/config")
         assertEquals(HttpStatusCode.OK, r.status)
         val body = r.bodyAsText()
         assertTrue(body.contains("\"none\""))
+        assertTrue(body.contains("\"protobuf\""))
     }
 
     @Test
@@ -35,7 +36,7 @@ class AuthRoutesTest {
         provider.addUser("alice@test.com", "pass1234", "Alice")
         val store = TokenStore(scope)
 
-        application { installAuthRoutes("local", provider, store) }
+        application { installAuthRoutes("local", provider, store, "protobuf") }
 
         val r =
             client.post("/auth/login") {
@@ -59,7 +60,7 @@ class AuthRoutesTest {
         provider.addUser("bob@test.com", "correct", "Bob")
         val store = TokenStore(scope)
 
-        application { installAuthRoutes("local", provider, store) }
+        application { installAuthRoutes("local", provider, store, "protobuf") }
 
         val r =
             client.post("/auth/login") {
@@ -76,7 +77,7 @@ class AuthRoutesTest {
         val store = TokenStore(scope)
         val token = store.issue(AuthResult("carol@test.com", "Carol"))
 
-        application { installAuthRoutes("local", null, store) }
+        application { installAuthRoutes("local", null, store, "protobuf") }
 
         val r = client.get("/auth/me") { headers.append("Authorization", "Bearer $token") }
         assertEquals(HttpStatusCode.OK, r.status)
@@ -87,7 +88,7 @@ class AuthRoutesTest {
     @Test
     fun `auth me with invalid token returns 401`() = testApplication {
         val store = TokenStore(scope)
-        application { installAuthRoutes("local", null, store) }
+        application { installAuthRoutes("local", null, store, "protobuf") }
 
         val r = client.get("/auth/me") { headers.append("Authorization", "Bearer invalid-token") }
         assertEquals(HttpStatusCode.Unauthorized, r.status)

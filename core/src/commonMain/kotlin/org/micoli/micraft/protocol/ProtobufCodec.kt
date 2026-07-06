@@ -3,21 +3,52 @@
 package org.micoli.micraft.protocol
 
 import kotlin.reflect.KClass
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToByteArray
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
+import kotlinx.serialization.serializer
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class ProtoId(val id: Int)
 
-private val proto = ProtoBuf
+enum class MessageEncoding {
+    PROTOBUF,
+    JSON;
 
-internal data class CodecEntry<T>(
+    companion object {
+        var current: MessageEncoding = PROTOBUF
+
+        fun fromConfigValue(value: String): MessageEncoding =
+            when (value.lowercase()) {
+                "json" -> JSON
+                "protobuf" -> PROTOBUF
+                else -> throw IllegalArgumentException("Unknown message encoder: $value")
+            }
+    }
+}
+
+private fun <T> encodeValue(serializer: KSerializer<T>, value: T): ByteArray =
+    when (MessageEncoding.current) {
+        MessageEncoding.PROTOBUF -> ProtoBuf.encodeToByteArray(serializer, value)
+        MessageEncoding.JSON -> Json.encodeToString(serializer, value).encodeToByteArray()
+    }
+
+private fun <T> decodeValue(serializer: KSerializer<T>, bytes: ByteArray): T =
+    when (MessageEncoding.current) {
+        MessageEncoding.PROTOBUF -> ProtoBuf.decodeFromByteArray(serializer, bytes)
+        MessageEncoding.JSON -> Json.decodeFromString(serializer, bytes.decodeToString())
+    }
+
+internal class CodecEntry<T>(
     val klass: KClass<out Any>,
     val matches: (T) -> Boolean,
-    val encode: (T) -> ByteArray,
-    val decode: (ByteArray) -> T,
+    val serializer: KSerializer<T>?,
+    val singleton: T? = null,
 )
 
 @Suppress("UNCHECKED_CAST")
@@ -25,16 +56,15 @@ private inline fun <reified T : ServerMessage> serverEntry() =
     CodecEntry<ServerMessage>(
         klass = T::class,
         matches = { it is T },
-        encode = { proto.encodeToByteArray(it as T) },
-        decode = { proto.decodeFromByteArray<T>(it) },
+        serializer = serializer<T>() as KSerializer<ServerMessage>,
     )
 
 private fun serverSingleton(instance: ServerMessage) =
     CodecEntry<ServerMessage>(
         klass = instance::class,
         matches = { it === instance },
-        encode = { ByteArray(0) },
-        decode = { instance },
+        serializer = null,
+        singleton = instance,
     )
 
 @Suppress("UNCHECKED_CAST")
@@ -42,28 +72,32 @@ private inline fun <reified T : ClientMessage> clientEntry() =
     CodecEntry<ClientMessage>(
         klass = T::class,
         matches = { it is T },
-        encode = { proto.encodeToByteArray(it as T) },
-        decode = { proto.decodeFromByteArray<T>(it) },
+        serializer = serializer<T>() as KSerializer<ClientMessage>,
     )
 
 private fun clientSingleton(instance: ClientMessage) =
     CodecEntry<ClientMessage>(
         klass = instance::class,
         matches = { it === instance },
-        encode = { ByteArray(0) },
-        decode = { instance },
+        serializer = null,
+        singleton = instance,
     )
 
 private fun <T> encodeWith(registry: List<CodecEntry<T>>, msg: T): ByteArray {
     val idx = registry.indexOfFirst { it.matches(msg) }
     if (idx == -1) throw IllegalArgumentException("Unknown message type: ${msg!!::class}")
-    return byteArrayOf(idx.toByte()) + registry[idx].encode(msg)
+    val entry = registry[idx]
+    val payload = entry.serializer?.let { encodeValue(it, msg) } ?: ByteArray(0)
+    return byteArrayOf(idx.toByte()) + payload
 }
 
 private fun <T> decodeWith(registry: List<CodecEntry<T>>, data: ByteArray): T {
     val idx = data[0].toInt()
-    return registry.getOrNull(idx)?.decode(data.copyOfRange(1, data.size))
-        ?: throw IllegalArgumentException("Unknown message type id: $idx")
+    val entry =
+        registry.getOrNull(idx) ?: throw IllegalArgumentException("Unknown message type id: $idx")
+    return entry.serializer?.let { decodeValue(it, data.copyOfRange(1, data.size)) }
+        ?: entry.singleton
+        ?: throw IllegalStateException("Codec entry $idx has neither serializer nor singleton")
 }
 
 object ServerMessageCodec {

@@ -2,11 +2,19 @@
 
 package org.micoli.micraft
 
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.js.Js
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.babylon.*
+import org.micoli.micraft.protocol.MessageEncoding
 import org.micoli.micraft.ui.McUiState
 
 val uiState = McUiState()
@@ -67,6 +75,12 @@ fun main() {
         val playerName = if (parts.size > 1) parts[1] else parts[0]
         val lang = if (parts.size > 2) parts[2] else "en"
         val token = if (parts.size > 3) parts[3] else ""
+        runCatching {
+                val config = HttpClient(Js).get("http://$host:$port/api/auth/config").bodyAsText()
+                Json.parseToJsonElement(config).jsonObject["messageEncoder"]?.jsonPrimitive?.content
+            }
+            .getOrNull()
+            ?.let { MessageEncoding.current = MessageEncoding.fromConfigValue(it) }
         jsLoadBindings(host, port, playerName)
         jsFetchI18n(lang)
         jsLog(

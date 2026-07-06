@@ -10,6 +10,7 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.protocol.MessageEncoding
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("ServerConfigLoader")
@@ -74,11 +75,18 @@ data class ChunkSection(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
+data class NetworkSection(
+    @EncodeDefault(ALWAYS) val messageEncoder: String = "protobuf",
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
 data class ServerConfig(
     @EncodeDefault(ALWAYS) val world: WorldSection = WorldSection(),
     @EncodeDefault(ALWAYS) val player: PlayerSection = PlayerSection(),
     @EncodeDefault(ALWAYS) val auth: AuthSection = AuthSection(),
     @EncodeDefault(ALWAYS) val chunks: ChunkSection = ChunkSection(),
+    @EncodeDefault(ALWAYS) val network: NetworkSection = NetworkSection(),
     @EncodeDefault(ALWAYS) val game: GameConfig = GameConfig(),
 )
 
@@ -131,10 +139,12 @@ fun applyServerConfig(config: ServerConfig) {
         PlayerConstants.SPEED_SNEAKING = speedSneaking
         PlayerConstants.SPEED_CRAWLING = speedCrawling
     }
+    MessageEncoding.current = MessageEncoding.fromConfigValue(config.network.messageEncoder)
     applyGameConfig(config.game)
     log.info(
-        "Server config applied: world={}, player={}",
+        "Server config applied: world={}, player={}, messageEncoder={}",
         config.world,
         config.player,
+        config.network.messageEncoder,
     )
 }

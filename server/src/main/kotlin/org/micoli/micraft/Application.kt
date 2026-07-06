@@ -211,7 +211,8 @@ fun Application.module() {
             commandContextFactory = { closures -> get<CommandContext> { parametersOf(closures) } },
         )
     gameLoop.start(this)
-    installAuthRoutes(authConfig.provider, authProvider, tokenStore)
+    installAuthRoutes(
+        authConfig.provider, authProvider, tokenStore, serverConfig.network.messageEncoder)
 
     Runtime.getRuntime().addShutdownHook(Thread { gameLoop.shutdown() })
 
