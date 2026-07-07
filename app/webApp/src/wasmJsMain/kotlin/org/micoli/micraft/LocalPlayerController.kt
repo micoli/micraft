@@ -189,6 +189,8 @@ class LocalPlayerController(
             prevPredZ = serverZ
             prevEyeOffset = localStance.eyeOffset.toDouble()
             hasPrediction = true
+            jsSetCameraRotationY(camera, state.orientation.yaw.toDouble())
+            jsSetCameraRotationX(camera, state.orientation.pitch.toDouble())
         } else {
             totalServerUpdates++
             val diffY = serverY - predY

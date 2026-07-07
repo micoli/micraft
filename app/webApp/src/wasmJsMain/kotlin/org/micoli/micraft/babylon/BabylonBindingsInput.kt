@@ -45,6 +45,10 @@ fun jsGetCameraRotationX(camera: JsAny): Double = js("camera.rotation.x")
 
 fun jsRotateCameraYaw(camera: JsAny, delta: Float): Unit = js("camera.rotation.y += delta")
 
+fun jsSetCameraRotationY(camera: JsAny, yaw: Double): Unit = js("camera.rotation.y = yaw")
+
+fun jsSetCameraRotationX(camera: JsAny, pitch: Double): Unit = js("camera.rotation.x = pitch")
+
 fun jsDisableCameraKeyboard(camera: JsAny): Unit =
     js(
         """(function(c){
