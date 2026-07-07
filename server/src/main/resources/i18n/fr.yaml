@@ -202,3 +202,13 @@ rpg:
 macros:
   server:
     error: "Erreur dans la macro '{0}' : {1}"
+
+set:
+  server:
+    usage: "Utilisation : /set <hp|mana> <nomJoueur> <valeur>"
+    invalid_value: "Valeur invalide : '{0}'. Doit être un entier positif ou nul."
+    not_found: "Joueur '{0}' introuvable."
+    no_character: "{0} n'a pas de données de personnage."
+    done_hp: "HP de {0} défini à {1}."
+    done_mana: "Mana de {0} défini à {1}."
+    unknown_stat: "Statistique inconnue '{0}'. Utiliser : hp, mana"

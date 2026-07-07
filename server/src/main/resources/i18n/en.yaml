@@ -202,3 +202,13 @@ rpg:
 macros:
   server:
     error: "Macro '{0}' error: {1}"
+
+set:
+  server:
+    usage: "Usage: /set <hp|mana> <playerName> <value>"
+    invalid_value: "Invalid value: '{0}'. Must be a non-negative integer."
+    not_found: "Player '{0}' not found."
+    no_character: "{0} has no character data."
+    done_hp: "Set {0} HP to {1}."
+    done_mana: "Set {0} mana to {1}."
+    unknown_stat: "Unknown stat '{0}'. Use: hp, mana"
