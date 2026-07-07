@@ -201,10 +201,12 @@ class NpcManager(
     fun getInstance(id: String): NpcInstance? = npcs[id]
 
     suspend fun applyDamage(npcId: String, damage: Int, attackerId: String) {
-        val instance = npcs[npcId] ?: run {
-            log.warn("applyDamage: NPC {} not found", npcId.take(8))
-            return
-        }
+        val instance =
+            npcs[npcId]
+                ?: run {
+                    log.warn("applyDamage: NPC {} not found", npcId.take(8))
+                    return
+                }
         val now = System.currentTimeMillis()
         instance.currentHp = (instance.currentHp - damage).coerceAtLeast(0)
         instance.lastDamagedAtMs = now

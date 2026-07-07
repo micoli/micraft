@@ -1,32 +1,16 @@
 import { useEffect, useRef, useReducer, useState } from "react";
+import { MemoryRouter, Routes, Route, useNavigate, useLocation } from "react-router";
 import { HudMode, GameLayout, NpcDialogData, PreferencesData, ChannelSubscription } from "./types";
 import { UiState, reducer } from "./UIReducer";
-import { NpcDialog } from "../npc/NpcDialog";
-import { LoadingOverlay } from "./overlays/LoadingOverlay";
-import { Preferences } from "./game/Preferences";
-import { HUD } from "./game/HUD";
-import { Inventory } from "./game/Inventory";
-import { ShortcutBar } from "./game/ShortcutBar";
-import { Console } from "./game/Console";
-import { ServerLog } from "./game/ServerLog";
-import { Notifications } from "./game/Notifications";
-import { LoginOverlay } from "./overlays/LoginOverlay";
+import { GameContext } from "./GameContext";
 import { DisconnectOverlay } from "./overlays/DisconnectOverlay";
-import { PauseMenu } from "./overlays/PauseMenu";
-import { MacroEditor } from "./overlays/MacroEditor";
-import { LayoutEditor } from "./layout/LayoutEditor";
-import { defaultLayout, getWidget, resolveActiveLayout, widgetStyle, WIDGET_REGISTRY } from "./layout/LayoutEngine";
-import { CodexModal } from "../codex/CodexModal";
-import { ChunkDebug, ChunkDebugData } from "./game/ChunkDebug";
-import { Character } from "./game/Character";
-import { CharacterCreation } from "./overlays/CharacterCreation";
-import { BiomeMap } from "./game/BiomeMap";
-import { Craft } from "./game/Craft";
-import { Trade } from "./game/Trade";
-import { PlayerStatusBar } from "./game/PlayerStatusBar";
-import { CombatTargetFrame } from "./game/CombatTargetFrame";
-import { PlayerDownedOverlay } from "./game/PlayerDownedOverlay";
-import { AttackPanel } from "./game/AttackPanel";
+import { defaultLayout } from "./layout/LayoutEngine";
+import { ChunkDebugData } from "./game/ChunkDebug";
+import { AuthScreen } from "./screens/AuthScreen";
+import { CharacterSelectionScreen } from "./screens/CharacterSelectionScreen";
+import { CharacterCreationScreen } from "./screens/CharacterCreationScreen";
+import { CharacterRPGCreationScreen } from "./screens/CharacterRPGCreationScreen";
+import { GameScreen } from "./screens/GameScreen";
 
 function loadHudMode(): HudMode {
   try {
@@ -61,10 +45,8 @@ const initial: UiState = {
   shortcutBar: Array(10).fill(null),
   selectedSlot: 0,
   consoleOpen: false,
-  loginVisible: false,
   disconnectMsg: null,
   chunkLoading: null,
-  gameReady: false,
   layouts: [defaultLayout()],
   activeLayout: "default",
   layoutEditorOpen: false,
@@ -78,9 +60,7 @@ const initial: UiState = {
   pauseMenuOpen: false,
   macroEditorOpen: false,
   characterOpen: false,
-  characterCreationOpen: false,
   characterSyncData: null,
-  rpgCreationRequired: false,
   biomeMapVisible: false,
   combatTarget: null,
   playerStatus: null,
@@ -94,6 +74,30 @@ const initial: UiState = {
   tradeTheirAccepted: false,
 };
 
+function RouterBridge({
+  navigateRef,
+  isGameRouteRef,
+}: {
+  navigateRef: React.MutableRefObject<((to: string) => void) | null>;
+  isGameRouteRef: React.MutableRefObject<boolean>;
+}) {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  useEffect(() => {
+    navigateRef.current = navigate;
+  }, [navigate, navigateRef]);
+  useEffect(() => {
+    const isGame = pathname === "/game";
+    isGameRouteRef.current = isGame;
+    const vis = isGame ? "visible" : "hidden";
+    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
+    if (canvas) canvas.style.visibility = vis;
+    const minimap = document.getElementById("mc-minimap");
+    if (minimap) (minimap as HTMLElement).style.visibility = vis;
+  }, [pathname, isGameRouteRef]);
+  return null;
+}
+
 export function GameUI() {
   const [state, dispatch] = useReducer(reducer, initial);
   const [chunkDebugData, setChunkDebugData] = useState<ChunkDebugData | null>(null);
@@ -102,7 +106,9 @@ export function GameUI() {
     chunkMeshing: 0,
   });
 
-  // Refs for synchronous reads by Kotlin
+  const navigateRef = useRef<((to: string) => void) | null>(null);
+  const isGameRouteRef = useRef(false);
+
   const logTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const consoleOpenRef = useRef(false);
   const pendingSlotUpdateRef = useRef<string[]>([]);
@@ -120,15 +126,11 @@ export function GameUI() {
   const pendingLayoutUpdateRef = useRef<string>("");
   const pendingPreferencesUpdateRef = useRef<string>("");
 
-  const pendingRpgCmdRef = useRef("");
-  const pendingRpgSkipRef = useRef(false);
-
   const pauseMenuOpenRef = useRef(false);
   const preferencesOpenRef = useRef(false);
   const codexOpenRef = useRef(false);
   const craftOpenRef = useRef(false);
   const characterOpenRef = useRef(false);
-  const characterCreationOpenRef = useRef(false);
   const tradeOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
   const chunkLoadingRef = useRef(false);
@@ -180,35 +182,24 @@ export function GameUI() {
     };
   }, []);
 
-  // Keep consoleOpenRef in sync
   useEffect(() => {
     consoleOpenRef.current = state.consoleOpen;
   }, [state.consoleOpen]);
-
   useEffect(() => {
     pauseMenuOpenRef.current = state.pauseMenuOpen;
   }, [state.pauseMenuOpen]);
-
   useEffect(() => {
     preferencesOpenRef.current = state.preferencesOpen;
   }, [state.preferencesOpen]);
-
   useEffect(() => {
     codexOpenRef.current = state.codexOpen;
   }, [state.codexOpen]);
-
   useEffect(() => {
     craftOpenRef.current = state.craftOpen;
   }, [state.craftOpen]);
-
   useEffect(() => {
     characterOpenRef.current = state.characterOpen;
   }, [state.characterOpen]);
-
-  useEffect(() => {
-    characterCreationOpenRef.current = state.characterCreationOpen;
-  }, [state.characterCreationOpen]);
-
   useEffect(() => {
     tradeOpenRef.current = state.tradeOpen;
   }, [state.tradeOpen]);
@@ -253,7 +244,6 @@ export function GameUI() {
     state.macroEditorOpen,
   ]);
 
-  // Auto-hide server log after 15s of no new messages
   useEffect(() => {
     if (!state.logVisible) return;
     if (logTimerRef.current) clearTimeout(logTimerRef.current);
@@ -263,7 +253,6 @@ export function GameUI() {
     };
   }, [state.logKey]);
 
-  // Auto-dismiss notifications
   useEffect(() => {
     if (!state.notif) return;
     if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
@@ -274,26 +263,17 @@ export function GameUI() {
   }, [state.notif?.key]);
 
   useEffect(() => {
-    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
-    if (!canvas) return;
-    canvas.style.visibility = state.loginVisible ? "hidden" : "visible";
-  }, [state.loginVisible]);
-
-  // Update /layout autocomplete completer whenever layouts change
-  useEffect(() => {
     window.mcState.commandCompleters = window.mcState.commandCompleters ?? {};
     window.mcState.commandCompleters["/layout"] = (partial: string) =>
       state.layouts.map((l: GameLayout) => l.name).filter((n: string) => n.startsWith(partial));
   }, [state.layouts]);
 
-  // Sync channel completers when subscribed/known channels change
   useEffect(() => {
     window.mcState.subscribedChannels = state.subscribedChannels;
     window.mcState.knownChannels = state.knownChannels;
   }, [state.subscribedChannels, state.knownChannels]);
 
   useEffect(() => {
-    // Wire Kotlin-callable window functions to React dispatch
     window.mc.updateHUD = (
       x: number,
       y: number,
@@ -380,16 +360,17 @@ export function GameUI() {
       dispatch({ type: "shortcut_bar_update", data: { slots, selected: raw.selected } });
     };
     window.mc.setSelectedSlot = (slot: number) => dispatch({ type: "slot_select", slot });
-    window.mc.consumeSlotUpdate = () => {
-      return pendingSlotUpdateRef.current.shift() ?? "";
-    };
+    window.mc.consumeSlotUpdate = () => pendingSlotUpdateRef.current.shift() ?? "";
     window.mcState.slotDrop = (slot: number, content: { kind: string; id: string } | null) => {
       pendingSlotUpdateRef.current.push(JSON.stringify({ slot, content: content ?? null }));
     };
 
-    window.mc.showLoginOverlay = () => dispatch({ type: "login_show" });
-    window.mc.hideLoginOverlay = () => dispatch({ type: "login_hide" });
-    window.mc.showDisconnectedOverlay = (msg: string) => dispatch({ type: "disconnect_show", message: msg });
+    window.mc.showLoginOverlay = () => navigateRef.current?.("/auth");
+    window.mc.hideLoginOverlay = () => navigateRef.current?.("/game");
+    window.mc.showDisconnectedOverlay = (msg: string) => {
+      dispatch({ type: "disconnect_show", message: msg });
+      navigateRef.current?.("/auth");
+    };
     window.mc.hideDisconnectedOverlay = () => dispatch({ type: "disconnect_hide" });
     window.mc.updateChunkLoading = (meshed: number, downloaded: number, total: number) =>
       dispatch({ type: "chunk_loading_update", meshed, downloaded, total });
@@ -445,9 +426,7 @@ export function GameUI() {
     window.mc.preferencesSync = (json: string) => {
       try {
         const data: PreferencesData = JSON.parse(json);
-        if (data.keybindings) {
-          window.mcState.bindings = data.keybindings;
-        }
+        if (data.keybindings) window.mcState.bindings = data.keybindings;
         if (window.mcState) {
           window.mcState.customCommands = data.customCommands || {};
           window.mcState.macros = data.macros || {};
@@ -495,17 +474,7 @@ export function GameUI() {
       }
     };
     window.mc.openCharacter = () => dispatch({ type: "character_open" });
-    window.mc.showCharacterCreation = () => {
-      if (pendingRpgCmdRef.current) {
-        consoleSubmittedRef.current = pendingRpgCmdRef.current;
-        pendingRpgCmdRef.current = "";
-      } else if (pendingRpgSkipRef.current) {
-        consoleSubmittedRef.current = "/skiprpg";
-        pendingRpgSkipRef.current = false;
-      } else {
-        dispatch({ type: "rpg_creation_required" });
-      }
-    };
+    window.mc.showCharacterCreation = () => navigateRef.current?.("/char-rpg-create");
     window.mc.characterSync = (json: string) => dispatch({ type: "character_sync", data: JSON.parse(json) });
     window.mc.openTrade = (tradeId: string, otherPlayer: string, _role: string) =>
       dispatch({ type: "trade_open", tradeId, otherPlayer });
@@ -556,19 +525,16 @@ export function GameUI() {
     window.mc.playerDowned = (playerId: string) => dispatch({ type: "player_downed", playerId });
     window.mc.playerRespawned = (json: string) => dispatch({ type: "player_respawned", data: JSON.parse(json) });
 
-    // no-ops: React handles creation
     window.mc.createHUD = () => {};
     window.mc.createHotbar = () => {};
     window.mc.createConsole = () => {};
     window.mc.createServerLog = () => {};
 
-    // Global keydown: open console via '/' or Enter (when not already open and no modal)
     function onGlobalKeydown(e: Event) {
+      if (!isGameRouteRef.current) return;
       const ke = e as globalThis.KeyboardEvent;
       const tag = (document.activeElement as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
-      const loginEl = document.getElementById("mc-login-root");
-      if (loginEl && (loginEl as HTMLElement).dataset.visible === "true") return;
       if (chunkLoadingRef.current) return;
       if (ke.key === "Escape" && !consoleOpenRef.current) {
         if (characterOpenRef.current) {
@@ -584,7 +550,6 @@ export function GameUI() {
           return;
         }
         if (tradeOpenRef.current) {
-          // closing via ESC sends cancel to server — handled inside Trade component's onClose
           dispatch({ type: "trade_close" });
           return;
         }
@@ -620,308 +585,32 @@ export function GameUI() {
     return () => document.removeEventListener("keydown", onGlobalKeydown);
   }, []);
 
-  const activeLayout = resolveActiveLayout(state.layouts, state.activeLayout);
-
-  const handlePreferencesSave = (payload: {
-    subscribedChannels: ChannelSubscription[];
-    disabledCommands: string[];
-    shadersEnabled: boolean;
-    animatedFavicon: boolean;
-    chunkDebugVisible: boolean;
-    keybindings: Record<string, string[]>;
-    customCommands: Record<string, string[]>;
-  }) => {
-    dispatch({ type: "preferences_save", ...payload });
-    if (window.mcState) {
-      window.mcState.bindings = payload.keybindings;
-      window.mcState.customCommands = payload.customCommands;
-    }
-    window.mc.applyFaviconPref?.(payload.animatedFavicon);
-    pendingPreferencesUpdateRef.current = JSON.stringify(payload);
-  };
-
-  const handleMacrosSave = (macros: Record<string, string>, customCommands: Record<string, string[]>) => {
-    const prefs = state.preferences;
-    if (!prefs) return;
-    dispatch({
-      type: "preferences_save",
-      subscribedChannels: prefs.subscribedChannels,
-      disabledCommands: prefs.disabledCommands,
-      shadersEnabled: prefs.shadersEnabled,
-      animatedFavicon: prefs.animatedFavicon ?? true,
-      chunkDebugVisible: prefs.chunkDebugVisible ?? false,
-      keybindings: prefs.keybindings || {},
-      customCommands,
-      macros,
-    });
-    if (window.mcState) {
-      window.mcState.macros = macros;
-      window.mcState.customCommands = customCommands;
-    }
-    pendingPreferencesUpdateRef.current = JSON.stringify({
-      subscribedChannels: prefs.subscribedChannels,
-      disabledCommands: prefs.disabledCommands,
-      shadersEnabled: prefs.shadersEnabled,
-      animatedFavicon: prefs.animatedFavicon ?? true,
-      chunkDebugVisible: prefs.chunkDebugVisible ?? false,
-      keybindings: prefs.keybindings || {},
-      customCommands,
-      macros,
-    });
-    dispatch({ type: "macro_editor_close" });
-  };
-
-  const handleLayoutSave = (layouts: GameLayout[], newActiveLayout: string) => {
-    dispatch({ type: "layout_editor_save", layouts, activeLayout: newActiveLayout });
-    pendingLayoutUpdateRef.current = JSON.stringify({ layouts, activeLayout: newActiveLayout });
-  };
-
-  const minimapLayoutStyle: React.CSSProperties = {
-    ...widgetStyle(activeLayout, "MINIMAP"),
-    zIndex: 999,
-    pointerEvents: "none",
+  const contextValue = {
+    state,
+    dispatch,
+    loginResultRef,
+    consoleSubmittedRef,
+    consoleStateRef,
+    consoleInitialValueRef,
+    pendingLayoutUpdateRef,
+    pendingPreferencesUpdateRef,
+    pendingSlotUpdateRef,
+    chunkDebugData,
   };
 
   return (
-    <>
-      {/* Minimap host: always in DOM (Kotlin appends canvas here at startup); hidden during login */}
-      <div
-        id="mc-minimap-host"
-        className="border-2 border-white/25 shadow-[0_2px_8px_rgba(0,0,0,0.5)] rounded-md overflow-hidden"
-        style={{
-          ...minimapLayoutStyle,
-          display:
-            !state.gameReady || state.loginVisible || state.disconnectMsg || state.chunkLoading ? "none" : undefined,
-        }}
-      />
-
-      {state.gameReady &&
-        !state.loginVisible &&
-        !state.disconnectMsg &&
-        !state.chunkLoading &&
-        (() => {
-          const mw = getWidget(activeLayout, "MINIMAP") ?? WIDGET_REGISTRY.find((w) => w.type === "MINIMAP")!;
-          const chunks = chunkDebugData?.chunks ?? [];
-          const total = Math.max(chunks.length, 1);
-          const loaded = chunks.filter((c) => c.state === "loaded").length;
-          const loading = chunks.filter((c) => c.state === "loading").length;
-          const loadedPct = (loaded / total) * 100;
-          const loadingPct = (loading / total) * 100;
-          const missingPct = Math.max(0, 100 - loadedPct - loadingPct);
-          return (
-            <div
-              style={{
-                position: "fixed",
-                left: `calc(${mw.x} / 48 * 100vw)`,
-                top: `calc(${mw.y + mw.h} / 48 * 100vh)`,
-                width: `calc(${mw.w} / 48 * 100vw)`,
-                height: "5px",
-                zIndex: 999,
-                pointerEvents: "none",
-                display: "flex",
-                overflow: "hidden",
-                borderRadius: "0 0 3px 3px",
-              }}
-            >
-              <div style={{ width: `${loadedPct}%`, background: "#16a34a", transition: "width 150ms ease-out" }} />
-              <div style={{ width: `${loadingPct}%`, background: "#ea580c", transition: "width 150ms ease-out" }} />
-              <div style={{ width: `${missingPct}%`, background: "#7f1d1d" }} />
-            </div>
-          );
-        })()}
-
-      {state.gameReady &&
-        !state.loginVisible &&
-        !state.disconnectMsg &&
-        (state.chunkLoading || (state.preferences?.chunkDebugVisible ?? false)) && (
-          <ChunkDebug data={chunkDebugData} layoutStyle={widgetStyle(activeLayout, "CHUNK_DEBUG")} />
-        )}
-
-      {state.gameReady && !state.loginVisible && !state.disconnectMsg && !state.chunkLoading && (
-        <>
-          <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, "HUD")} />
-          {state.biomeMapVisible && (
-            <BiomeMap
-              playerX={state.hud?.x}
-              playerZ={state.hud?.z}
-              layoutStyle={widgetStyle(activeLayout, "INGAME_MAP")}
-            />
-          )}
-          <ShortcutBar
-            inventory={state.inventory}
-            itemMeta={state.itemMeta}
-            attackMeta={state.attackMeta}
-            slots={state.shortcutBar}
-            selectedSlot={state.selectedSlot}
-            macros={state.preferences?.macros ?? {}}
-            onSlotDrop={(slot, content) => {
-              pendingSlotUpdateRef.current.push(JSON.stringify({ slot, content: content ?? null }));
-            }}
-            layoutStyle={widgetStyle(activeLayout, "SHORTCUT_BAR")}
-          />
-          <AttackPanel
-            attackMeta={state.attackMeta}
-            layoutStyle={widgetStyle(activeLayout, "ATTACK_PANEL")}
-            pinnedMacros={state.preferences?.customCommands?.["__pinned_macros__"] ?? []}
-          />
-          <Inventory
-            inventory={state.inventory}
-            itemMeta={state.itemMeta}
-            visible={state.hotbarVisible}
-            layoutStyle={widgetStyle(activeLayout, "INVENTORY")}
-          />
-          <ServerLog
-            logs={state.logs}
-            visible={state.logVisible || state.consoleOpen}
-            subscribedChannels={state.subscribedChannels}
-            activeChannel={state.activeChannel}
-            unreadChannels={state.unreadChannels}
-            onChannelSelect={(ch) => {
-              dispatch({ type: "active_channel_select", channel: ch });
-              window.mcState.activeChannel = ch;
-            }}
-            layoutStyle={widgetStyle(activeLayout, "CHAT_HISTORY")}
-          />
-          <Notifications notif={state.notif?.msg ? state.notif : null} />
-          {state.healthBarVisible && state.playerStatus && (
-            <PlayerStatusBar status={state.playerStatus} layoutStyle={widgetStyle(activeLayout, "PLAYER_STATUS")} />
-          )}
-          {state.combatTarget && (
-            <CombatTargetFrame target={state.combatTarget} layoutStyle={widgetStyle(activeLayout, "COMBAT_TARGET")} />
-          )}
-          {state.playerDowned && <PlayerDownedOverlay />}
-          <Console
-            open={state.consoleOpen}
-            onClose={() => dispatch({ type: "console_hide" })}
-            submittedRef={consoleSubmittedRef}
-            stateRef={consoleStateRef}
-            initialValueRef={consoleInitialValueRef}
-            layoutStyle={widgetStyle(activeLayout, "INPUT_BOX")}
-          />
-          <LayoutEditor
-            open={state.layoutEditorOpen}
-            layouts={state.layouts}
-            activeLayout={state.activeLayout}
-            onSave={handleLayoutSave}
-            onClose={() => dispatch({ type: "layout_editor_hide" })}
-          />
-          <NpcDialog data={state.npcDialog} onClose={() => dispatch({ type: "npc_dialog_close" })} />
-          <CodexModal open={state.codexOpen} onClose={() => dispatch({ type: "codex_close" })} />
-          <Craft
-            open={state.craftOpen}
-            onClose={() => dispatch({ type: "craft_close" })}
-            recipes={state.craftRecipes}
-            knownRecipes={state.craftKnownRecipes}
-            inventory={state.inventory}
-            itemMeta={state.itemMeta}
-            onCommand={(cmd) => {
-              consoleSubmittedRef.current = cmd;
-            }}
-          />
-          <Trade
-            open={state.tradeOpen}
-            tradeId={state.tradeId}
-            otherPlayer={state.tradeOtherPlayer ?? ""}
-            myOffer={state.tradeMyOffer}
-            theirOffer={state.tradeTheirOffer}
-            myAccepted={state.tradeMyAccepted}
-            theirAccepted={state.tradeTheirAccepted}
-            inventory={state.inventory}
-            itemMeta={state.itemMeta}
-            onClose={(tradeId) => {
-              if (tradeId) consoleSubmittedRef.current = `/tradecancel ${tradeId}`;
-              dispatch({ type: "trade_close" });
-            }}
-            onAccept={(tradeId) => {
-              consoleSubmittedRef.current = `/tradeaccept ${tradeId}`;
-            }}
-            onOffer={(tradeId, offer) => {
-              consoleSubmittedRef.current = `/tradeoffer ${tradeId} ${JSON.stringify(offer)}`;
-            }}
-          />
-          <Character
-            open={state.characterOpen}
-            characterSyncData={state.characterSyncData}
-            onClose={() => dispatch({ type: "character_close" })}
-            onCommand={(cmd) => {
-              consoleSubmittedRef.current = cmd;
-            }}
-          />
-          <CharacterCreation
-            open={state.characterCreationOpen}
-            required={state.characterSyncData === null}
-            onClose={() => dispatch({ type: "character_creation_hide" })}
-            onSubmit={(cmd) => {
-              consoleSubmittedRef.current = cmd;
-            }}
-          />
-          <Preferences
-            open={state.preferencesOpen}
-            preferences={state.preferences}
-            onSave={handlePreferencesSave}
-            onClose={() => dispatch({ type: "preferences_hide" })}
-          />
-          <PauseMenu
-            open={state.pauseMenuOpen}
-            onClose={() => {
-              dispatch({ type: "pause_menu_hide" });
-              (
-                (
-                  document.getElementById("renderCanvas") as HTMLCanvasElement | null
-                )?.requestPointerLock() as unknown as Promise<void>
-              )?.catch?.(() => {});
-            }}
-            onPreferences={() => {
-              dispatch({ type: "pause_menu_hide" });
-              dispatch({ type: "preferences_show" });
-            }}
-            onMacros={() => {
-              dispatch({ type: "pause_menu_hide" });
-              dispatch({ type: "macro_editor_open" });
-            }}
-            onCharacter={() => {
-              dispatch({ type: "pause_menu_hide" });
-              dispatch({ type: "character_open" });
-            }}
-            onDisconnect={() => {
-              consoleSubmittedRef.current = "/disconnect";
-              dispatch({ type: "pause_menu_hide" });
-            }}
-          />
-          <MacroEditor
-            open={state.macroEditorOpen}
-            macros={state.preferences?.macros ?? {}}
-            customCommands={state.preferences?.customCommands ?? {}}
-            onSave={handleMacrosSave}
-            onClose={() => dispatch({ type: "macro_editor_close" })}
-          />
-        </>
-      )}
-      <div id="mc-login-root" data-visible={String(state.loginVisible)}>
-        <LoginOverlay
-          visible={state.loginVisible}
-          loginResultRef={loginResultRef}
-          rpgCreationRequired={state.rpgCreationRequired}
-          onRpgSubmit={(cmd) => {
-            consoleSubmittedRef.current = cmd;
-          }}
-          onRpgFormComplete={(cmd) => {
-            pendingRpgCmdRef.current = cmd;
-          }}
-          onRpgSkip={() => {
-            consoleSubmittedRef.current = "/skiprpg";
-            dispatch({ type: "login_hide" });
-          }}
-          onRpgOptOut={() => {
-            pendingRpgSkipRef.current = true;
-          }}
-          onHide={() => dispatch({ type: "login_hide" })}
-        />
-      </div>
-      <DisconnectOverlay message={state.disconnectMsg} />
-      {state.gameReady && !state.loginVisible && !state.disconnectMsg && (
-        <LoadingOverlay progress={state.chunkLoading} />
-      )}
-    </>
+    <GameContext.Provider value={contextValue}>
+      <MemoryRouter initialEntries={["/auth"]}>
+        <RouterBridge navigateRef={navigateRef} isGameRouteRef={isGameRouteRef} />
+        <Routes>
+          <Route path="/auth" element={<AuthScreen />} />
+          <Route path="/chars" element={<CharacterSelectionScreen />} />
+          <Route path="/char-create" element={<CharacterCreationScreen />} />
+          <Route path="/char-rpg-create" element={<CharacterRPGCreationScreen />} />
+          <Route path="/game" element={<GameScreen />} />
+        </Routes>
+        <DisconnectOverlay message={state.disconnectMsg} />
+      </MemoryRouter>
+    </GameContext.Provider>
   );
 }

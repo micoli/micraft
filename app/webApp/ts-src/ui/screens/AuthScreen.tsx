@@ -1,0 +1,301 @@
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router";
+import { KeyboardEvent } from "react";
+import { Input } from "../primitives/Input";
+import { Label } from "../primitives/Label";
+import { Button } from "../primitives/Button";
+import { Panel, FormField } from "../primitives/Panel";
+import {
+  AuthMode,
+  getStoredToken,
+  storeToken,
+  clearStoredToken,
+  getLastLang,
+  saveLastLang,
+  getLastUser,
+  saveLastUser,
+  storeDisplayName,
+  getStoredDisplayName,
+} from "../lib/authStorage";
+
+const SUPPORTED_LANGS: { code: string; label: string }[] = [
+  { code: "en", label: "English" },
+  { code: "fr", label: "Français" },
+];
+
+const MC_SERVER_VERSION_KEY = "mc_server_version";
+
+export function AuthScreen() {
+  const navigate = useNavigate();
+  const [authMode, setAuthMode] = useState<AuthMode>("loading");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [lang, setLang] = useState(getLastLang());
+  const [serverReady, setServerReady] = useState(false);
+
+  const usernameInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/config")
+      .then((r) => r.json())
+      .then((d: { provider: string }) => setAuthMode((d.provider as AuthMode) || "none"))
+      .catch(() => setAuthMode("none"));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function checkServer() {
+      try {
+        const r = await fetch("/api/version", { cache: "no-cache" });
+        if (!r.ok) {
+          if (!cancelled) setServerReady(false);
+          return;
+        }
+        const { server } = (await r.json()) as { server: string };
+        const stored = sessionStorage.getItem(MC_SERVER_VERSION_KEY);
+        if (stored === null) {
+          sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
+        } else if (stored !== server) {
+          sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
+          window.location.href = location.pathname + "?_v=" + server;
+          return;
+        }
+        if (!cancelled) setServerReady(true);
+      } catch {
+        if (!cancelled) setServerReady(false);
+      }
+    }
+    void checkServer();
+    const interval = setInterval(() => void checkServer(), 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (authMode === "loading") return;
+    const hash = window.location.hash;
+    if (hash.includes("auth_token=")) {
+      const params = new URLSearchParams(hash.replace(/^#/, ""));
+      const oauthToken = params.get("auth_token") || "";
+      const oauthName = decodeURIComponent(params.get("auth_name") || "");
+      if (oauthToken) {
+        storeToken(oauthToken);
+        storeDisplayName(oauthName || "player");
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        saveLastUser(oauthName || "player");
+        navigate("/chars");
+        return;
+      }
+    }
+    const saved = getStoredToken();
+    if (saved && (authMode === "local" || authMode === "oauth")) {
+      const savedName = getStoredDisplayName() || getLastUser();
+      if (savedName) {
+        navigate("/chars");
+      } else {
+        fetch("/auth/me", { headers: { Authorization: `Bearer ${saved}` } })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d: { displayName: string } | null) => {
+            const name = d?.displayName || "";
+            if (name) {
+              storeDisplayName(name);
+              saveLastUser(name);
+              navigate("/chars");
+            } else {
+              clearStoredToken();
+            }
+          })
+          .catch(() => clearStoredToken());
+      }
+      return;
+    }
+    if (authMode === "none") {
+      const last = getLastUser();
+      if (last) {
+        navigate("/chars");
+        return;
+      }
+      setTimeout(() => usernameInputRef.current?.focus(), 50);
+    }
+  }, [authMode]);
+
+  useEffect(() => {
+    if (authMode !== "loading") {
+      setTimeout(() => usernameInputRef.current?.focus(), 50);
+    }
+  }, [authMode]);
+
+  async function doLocalLogin() {
+    const user = username.trim();
+    if (!user || !password) return;
+    setAuthLoading(true);
+    setAuthError("");
+    try {
+      const r = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user, password }),
+      });
+      if (!r.ok) {
+        setAuthError("Invalid email or password.");
+        setAuthLoading(false);
+        passwordInputRef.current?.focus();
+        return;
+      }
+      const data: { token: string; displayName: string } = await r.json();
+      storeToken(data.token);
+      storeDisplayName(data.displayName || user);
+      saveLastUser(data.displayName || user);
+      setAuthLoading(false);
+      navigate("/chars");
+    } catch {
+      setAuthError("Connection error. Is the server running?");
+      setAuthLoading(false);
+    }
+  }
+
+  function doOAuthLogin() {
+    const returnUrl = window.location.origin + window.location.pathname;
+    window.location.href = `/auth/oauth/start?returnUrl=${encodeURIComponent(returnUrl)}`;
+  }
+
+  function handleNoneContinue() {
+    const trimmed = username.trim();
+    if (!trimmed) return;
+    saveLastUser(trimmed);
+    saveLastLang(lang);
+    navigate("/chars");
+  }
+
+  if (authMode === "loading") {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black/82 z-[2000]">
+        <Panel className="min-w-[340px]">
+          <div className="text-center text-[#888] py-5">Loading…</div>
+        </Panel>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black/82 z-[2000]">
+      <Panel className="min-w-[340px]">
+        <div className="text-[30px] font-bold text-center mb-6 text-blue-400">MiCraft</div>
+
+        <div className="mb-4 text-center">
+          <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#1a1a2e] border border-blue-900/60 text-blue-400/70">
+            {authMode === "local" && "Local auth"}
+            {authMode === "oauth" && "OAuth"}
+            {authMode === "none" && "Open server"}
+          </span>
+        </div>
+
+        {!serverReady && (
+          <div className="mb-4 flex items-center gap-1.5 justify-center text-[10px] text-yellow-500/70 font-mono">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-yellow-500/70 animate-pulse" />
+            Connexion au serveur…
+          </div>
+        )}
+
+        {authMode === "local" && (
+          <div className="space-y-5">
+            <FormField>
+              <Label>Email</Label>
+              <Input
+                ref={usernameInputRef}
+                type="email"
+                placeholder="your@email.com"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === "Enter") passwordInputRef.current?.focus();
+                }}
+              />
+            </FormField>
+            <FormField>
+              <Label>Password</Label>
+              <Input
+                ref={passwordInputRef}
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === "Enter") void doLocalLogin();
+                }}
+              />
+            </FormField>
+            {authError && <div className="text-red-400 text-sm">{authError}</div>}
+            <Button
+              variant="blue"
+              size="lg"
+              className="w-full"
+              onClick={() => void doLocalLogin()}
+              disabled={authLoading}
+            >
+              {authLoading ? "Logging in…" : "Login"}
+            </Button>
+          </div>
+        )}
+
+        {authMode === "oauth" && (
+          <div className="space-y-5">
+            <div className="text-center text-[#aaa] text-sm">Sign in to play</div>
+            <button
+              className="w-full py-3 bg-white border border-[#ccc] rounded text-[#333] font-mono font-bold text-[15px] cursor-pointer flex items-center justify-center gap-2 hover:bg-gray-100"
+              onClick={doOAuthLogin}
+            >
+              <span>G</span> Continue with Google
+            </button>
+          </div>
+        )}
+
+        {authMode === "none" && (
+          <div className="space-y-5">
+            <FormField>
+              <Label>Username</Label>
+              <Input
+                ref={usernameInputRef}
+                type="text"
+                placeholder="Enter your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === "Enter" && username.trim()) handleNoneContinue();
+                }}
+              />
+            </FormField>
+            <FormField>
+              <Label>Language</Label>
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value)}
+                className="w-full bg-[#111] border border-[#444] rounded px-3 py-2 text-sm text-white cursor-pointer"
+              >
+                {SUPPORTED_LANGS.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <Button
+              variant="blue"
+              size="lg"
+              className="w-full"
+              onClick={handleNoneContinue}
+              disabled={!username.trim()}
+            >
+              Continue
+            </Button>
+          </div>
+        )}
+      </Panel>
+    </div>
+  );
+}

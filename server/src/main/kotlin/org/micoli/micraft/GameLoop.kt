@@ -760,6 +760,7 @@ class GameLoop(
                 animatedFavicon = saved?.animatedFavicon ?: true,
                 chunkDebugVisible = saved?.chunkDebugVisible ?: false,
                 knownRecipes = saved?.knownRecipes ?: emptySet(),
+                rpgOptOut = saved?.rpgOptOut ?: false,
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =

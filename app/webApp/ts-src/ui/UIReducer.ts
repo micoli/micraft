@@ -35,10 +35,8 @@ export interface UiState {
   shortcutBar: (ShortcutSlot | null)[];
   selectedSlot: number;
   consoleOpen: boolean;
-  loginVisible: boolean;
   disconnectMsg: string | null;
   chunkLoading: { meshed: number; downloaded: number; total: number } | null;
-  gameReady: boolean;
   layouts: GameLayout[];
   activeLayout: string;
   layoutEditorOpen: boolean;
@@ -52,9 +50,7 @@ export interface UiState {
   pauseMenuOpen: boolean;
   macroEditorOpen: boolean;
   characterOpen: boolean;
-  characterCreationOpen: boolean;
   characterSyncData: CharacterSyncData | null;
-  rpgCreationRequired: boolean;
   biomeMapVisible: boolean;
   combatTarget: {
     targetId: string | null;
@@ -101,8 +97,6 @@ export type UiAction =
   | { type: "slot_select"; slot: number }
   | { type: "console_show" }
   | { type: "console_hide" }
-  | { type: "login_show" }
-  | { type: "login_hide" }
   | { type: "disconnect_show"; message: string }
   | { type: "disconnect_hide" }
   | { type: "chunk_loading_update"; meshed: number; downloaded: number; total: number }
@@ -139,10 +133,7 @@ export type UiAction =
   | { type: "macro_editor_close" }
   | { type: "character_open" }
   | { type: "character_close" }
-  | { type: "character_creation_show" }
-  | { type: "character_creation_hide" }
   | { type: "character_sync"; data: CharacterSyncData }
-  | { type: "rpg_creation_required" }
   | { type: "ingame_map_toggle" }
   | { type: "trade_open"; tradeId: string; otherPlayer: string }
   | {
@@ -233,10 +224,6 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, consoleOpen: true };
     case "console_hide":
       return { ...state, consoleOpen: false };
-    case "login_show":
-      return { ...state, loginVisible: true };
-    case "login_hide":
-      return { ...state, loginVisible: false, gameReady: true };
     case "disconnect_show":
       return { ...state, disconnectMsg: action.message };
     case "disconnect_hide":
@@ -244,7 +231,6 @@ export function reducer(state: UiState, action: UiAction): UiState {
     case "chunk_loading_update":
       return {
         ...state,
-        gameReady: true,
         chunkLoading: { meshed: action.meshed, downloaded: action.downloaded, total: action.total },
       };
     case "chunk_loading_hide":
@@ -305,20 +291,8 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, characterOpen: true };
     case "character_close":
       return { ...state, characterOpen: false };
-    case "character_creation_show":
-      return { ...state, characterCreationOpen: true };
-    case "character_creation_hide":
-      return { ...state, characterCreationOpen: false };
     case "character_sync":
-      return {
-        ...state,
-        characterSyncData: action.data,
-        characterCreationOpen: false,
-        rpgCreationRequired: false,
-        loginVisible: false,
-      };
-    case "rpg_creation_required":
-      return { ...state, rpgCreationRequired: true, loginVisible: true, characterCreationOpen: false };
+      return { ...state, characterSyncData: action.data };
     case "ingame_map_toggle":
       return { ...state, biomeMapVisible: !state.biomeMapVisible };
     case "trade_open":
