@@ -67,6 +67,8 @@ export function CharacterSelectionScreen() {
   const [previewArmors, setPreviewArmors] = useState<string[]>([]);
   const [previewWalking, setPreviewWalking] = useState(true);
   const [serverReady, setServerReady] = useState(false);
+  const [retryCountdown, setRetryCountdown] = useState(0);
+  const nextCheckAtRef = useRef<number>(0);
 
   const playButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -79,11 +81,16 @@ export function CharacterSelectionScreen() {
 
   useEffect(() => {
     let cancelled = false;
+    const RETRY_MS = 3000;
+
     async function checkServer() {
       try {
         const r = await fetch("/api/version", { cache: "no-cache" });
         if (!r.ok) {
-          if (!cancelled) setServerReady(false);
+          if (!cancelled) {
+            setServerReady(false);
+            nextCheckAtRef.current = Date.now() + RETRY_MS;
+          }
           return;
         }
         const { server } = (await r.json()) as { server: string };
@@ -97,14 +104,27 @@ export function CharacterSelectionScreen() {
         }
         if (!cancelled) setServerReady(true);
       } catch {
-        if (!cancelled) setServerReady(false);
+        if (!cancelled) {
+          setServerReady(false);
+          nextCheckAtRef.current = Date.now() + RETRY_MS;
+        }
       }
     }
+
     void checkServer();
-    const interval = setInterval(() => void checkServer(), 3000);
+    const checkInterval = setInterval(() => void checkServer(), RETRY_MS);
+
+    const countdownInterval = setInterval(() => {
+      if (!cancelled) {
+        const remaining = Math.max(0, nextCheckAtRef.current - Date.now());
+        setRetryCountdown(Math.ceil(remaining / 1000));
+      }
+    }, 300);
+
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      clearInterval(checkInterval);
+      clearInterval(countdownInterval);
     };
   }, []);
 
@@ -320,7 +340,7 @@ export function CharacterSelectionScreen() {
               {!serverReady && (
                 <div className="flex items-center gap-1.5 justify-center text-[10px] text-yellow-500/70 font-mono">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-yellow-500/70 animate-pulse" />
-                  Connexion au serveur…
+                  Connexion au serveur…{retryCountdown > 0 ? ` (${retryCountdown}s)` : ""}
                 </div>
               )}
             </div>
