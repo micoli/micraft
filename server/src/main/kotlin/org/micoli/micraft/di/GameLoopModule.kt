@@ -4,8 +4,11 @@ import java.nio.file.Path
 import org.koin.dsl.module
 import org.micoli.micraft.buildConfigRegistry
 import org.micoli.micraft.combat.AttackConfig
+import org.micoli.micraft.combat.ClassesConfig
 import org.micoli.micraft.combat.CombatConfig
+import org.micoli.micraft.combat.CombatConfigData
 import org.micoli.micraft.combat.CombatProcessor
+import org.micoli.micraft.combat.RegenProcessor
 import org.micoli.micraft.combat.StatusEffectProcessor
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.npc.NpcConfigLoader
@@ -163,6 +166,15 @@ val gameLoopModule = module {
             subscribeToChannel = { session, channel ->
                 get<ChatService>().subscribe(session, channel)
             },
+        )
+    }
+    single { ClassesConfig().data }
+    single {
+        RegenProcessor(
+            config = get(),
+            maxRage = get<CombatConfigData>().maxRage,
+            armorRegistry = emptyMap<String, ArmorDefinition>(),
+            combatProcessor = get(),
         )
     }
 

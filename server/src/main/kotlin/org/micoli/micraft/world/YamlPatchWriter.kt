@@ -82,7 +82,9 @@ fun <T : Any> yamlConfigSection(
     for (name in fieldNames) {
         val prop = props.getValue(name)
         val classifier = prop.returnType.classifier as? KClass<*>
-        if (classifier != null && classifier.findAnnotation<Serializable>() != null) {
+        if (classifier != null &&
+            classifier.findAnnotation<Serializable>() != null &&
+            !classifier.java.isEnum) {
             val nested =
                 prop.get(value)
                     ?: classifier.primaryConstructor!!
@@ -127,7 +129,9 @@ fun <T : Any> mergeConfig(
             val name = param.name!!
             val prop = props.getValue(name)
             val classifier = prop.returnType.classifier as? KClass<*>
-            if (classifier != null && classifier.findAnnotation<Serializable>() != null) {
+            if (classifier != null &&
+                classifier.findAnnotation<Serializable>() != null &&
+                !classifier.java.isEnum) {
                 @Suppress("UNCHECKED_CAST") val kc = classifier as KClass<Any>
                 val nestedCtor = kc.primaryConstructor!!.apply { isAccessible = true }
                 val decodedNested = prop.get(decoded) ?: nestedCtor.callBy(emptyMap())

@@ -1,0 +1,56 @@
+regen:
+  regenIntervalMs: 1000
+  default:
+    hpFormula: "hpRegenPerSec * dt"
+    manaFormula: "manaRegenPerSec * dt"
+classes:
+  WARRIOR:
+    strBonus: 2
+    dexBonus: 0
+    intelBonus: 0
+    wisBonus: 0
+    conBonus: 1
+    chaBonus: 0
+    classResource: RAGE
+    hpFormula: "hpRegenPerSec * dt"
+    manaFormula: "0"
+  MAGE:
+    strBonus: 0
+    dexBonus: 0
+    intelBonus: 2
+    wisBonus: 1
+    conBonus: 0
+    chaBonus: 0
+    classResource: MANA
+    hpFormula: "hpRegenPerSec * dt * 0.5"
+    manaFormula: "manaRegenPerSec * dt * 1.5"
+  RANGER:
+    strBonus: 0
+    dexBonus: 2
+    intelBonus: 0
+    wisBonus: 1
+    conBonus: 0
+    chaBonus: 0
+    classResource: MANA
+    hpFormula: "hpRegenPerSec * dt"
+    manaFormula: "manaRegenPerSec * dt"
+  ROGUE:
+    strBonus: 0
+    dexBonus: 2
+    intelBonus: 1
+    wisBonus: 0
+    conBonus: 0
+    chaBonus: 0
+    classResource: MANA
+    hpFormula: "hpRegenPerSec * dt"
+    manaFormula: "manaRegenPerSec * dt"
+  CLERIC:
+    strBonus: 0
+    dexBonus: 0
+    intelBonus: 0
+    wisBonus: 2
+    conBonus: 1
+    chaBonus: 0
+    classResource: MANA
+    hpFormula: "hpRegenPerSec * dt * 1.5"
+    manaFormula: "manaRegenPerSec * dt"

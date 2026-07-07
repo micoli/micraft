@@ -13,9 +13,11 @@ import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.combat.AttackConfig
 import org.micoli.micraft.combat.AttackDefinition
+import org.micoli.micraft.combat.ClassesConfig
 import org.micoli.micraft.combat.CombatConfig
 import org.micoli.micraft.combat.CombatConfigData
 import org.micoli.micraft.combat.CombatProcessor
+import org.micoli.micraft.combat.RegenProcessor
 import org.micoli.micraft.combat.StatusEffectProcessor
 import org.micoli.micraft.di.CommandContextClosures
 import org.micoli.micraft.di.PlayerPersister
@@ -265,6 +267,13 @@ class GameLoop(
                     .forEach { it.send(chatMsg) }
             },
             subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
+        ),
+    private val regenProcessor: RegenProcessor =
+        RegenProcessor(
+            config = ClassesConfig().data,
+            maxRage = combatConfig.maxRage,
+            armorRegistry = emptyMap(),
+            combatProcessor = combatProcessor,
         ),
     private val tradeConfigLoader: TradeConfigLoader =
         TradeConfigLoader(Path.of("data/config/trade.yaml")),
@@ -724,6 +733,7 @@ class GameLoop(
         npcManager.tick(world)
         npcManager.tickAggro(sessionRegistry.all(), combatProcessor)
         statusEffectProcessor.tick(sessionRegistry.all())
+        regenProcessor.tick(sessionRegistry.all())
         weatherManager.tick(world) { msg -> sessionRegistry.all().forEach { it.send(msg) } }
         liquidManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
         vegetationManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
