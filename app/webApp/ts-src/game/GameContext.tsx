@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 import { UiState, UiAction } from "./UIReducer";
-import { ChunkDebugData } from "./game/ChunkDebug";
+import { ChunkDebugData } from "./components/ChunkDebug";
 
 export interface GameContextValue {
   state: UiState;

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger, DialogClose } from "../../ui/primitives/Dialog";
-import { Button } from "../../ui/primitives/Button";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger, DialogClose } from "../../game/primitives/Dialog";
+import { Button } from "../../game/primitives/Button";
 
 const meta: Meta = {
   title: "Primitives/Dialog",

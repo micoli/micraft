@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import { KeyboardEvent } from "react";
-import { PlayerModelPreview } from "../shared/PlayerModelPreview";
+import { PlayerModelPreview } from "../game/shared/PlayerModelPreview";
 import { Button } from "../primitives/Button";
 import { Input } from "../primitives/Input";
 import { Label } from "../primitives/Label";

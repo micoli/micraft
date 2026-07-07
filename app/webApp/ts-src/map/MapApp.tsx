@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Button } from "../ui/primitives/Button";
+import { Button } from "../primitives/Button";
 import { Sidebar } from "./Sidebar";
 import { useMapRenderer } from "./useMapRenderer";
 

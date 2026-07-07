@@ -1,5 +1,5 @@
 import { HudData, HudMode } from "../types";
-import { cn } from "../primitives/cn";
+import { cn } from "../../primitives/cn";
 
 export function HUD({
   data,

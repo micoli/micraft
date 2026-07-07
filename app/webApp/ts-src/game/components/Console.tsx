@@ -1,5 +1,5 @@
 import { MutableRefObject, useEffect, useRef } from "react";
-import { cn } from "../primitives/cn";
+import { cn } from "../../primitives/cn";
 import { useConsole } from "../hooks/useConsole";
 
 interface ConsoleState {

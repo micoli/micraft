@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { KeyboardEvent } from "react";
-import { PlayerModelPreview } from "../shared/PlayerModelPreview";
+import { PlayerModelPreview } from "../game/shared/PlayerModelPreview";
 import { Button } from "../primitives/Button";
 import { Panel } from "../primitives/Panel";
 import { cn } from "../primitives/cn";
-import { useGameContext } from "../GameContext";
+import { useGameContext } from "../game/GameContext";
 import {
   getUsers,
   saveUsers,

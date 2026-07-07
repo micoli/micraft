@@ -5,12 +5,12 @@ import { UiState, reducer } from "./UIReducer";
 import { GameContext } from "./GameContext";
 import { DisconnectOverlay } from "./overlays/DisconnectOverlay";
 import { defaultLayout } from "./layout/LayoutEngine";
-import { ChunkDebugData } from "./game/ChunkDebug";
-import { AuthScreen } from "./screens/AuthScreen";
-import { CharacterSelectionScreen } from "./screens/CharacterSelectionScreen";
-import { CharacterCreationScreen } from "./screens/CharacterCreationScreen";
-import { CharacterRPGCreationScreen } from "./screens/CharacterRPGCreationScreen";
-import { GameScreen } from "./screens/GameScreen";
+import { ChunkDebugData } from "./components/ChunkDebug";
+import { AuthScreen } from "../screens/AuthScreen";
+import { CharacterSelectionScreen } from "../screens/CharacterSelectionScreen";
+import { CharacterCreationScreen } from "../screens/CharacterCreationScreen";
+import { CharacterRPGCreationScreen } from "../screens/CharacterRPGCreationScreen";
+import { GameScreen } from "../screens/GameScreen";
 
 function loadHudMode(): HudMode {
   try {

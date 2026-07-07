@@ -1,4 +1,4 @@
-import { cn } from "../primitives/cn";
+import { cn } from "../../primitives/cn";
 import { AttackMeta } from "../UIReducer";
 import { useAttackDrag } from "../hooks/useAttackDrag";
 

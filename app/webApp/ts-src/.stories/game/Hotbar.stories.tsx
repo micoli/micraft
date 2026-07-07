@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Hotbar } from "../../ui/game/Hotbar";
+import { Hotbar } from "../../game/components/Hotbar";
 
 const meta: Meta<typeof Hotbar> = {
   title: "Game/Hotbar",

@@ -1,5 +1,5 @@
-import { Dialog, DialogContent, DialogTitle } from "../ui/primitives/Dialog";
-import { Button } from "../ui/primitives/Button";
+import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
+import { Button } from "../../primitives/Button";
 
 export interface NpcDialogData {
   type: string;

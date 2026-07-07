@@ -1,4 +1,4 @@
-import { getFaceTexUrl } from "../blocks/blockDefs";
+import { getFaceTexUrl } from "../game/blocks/blockDefs";
 
 const FACES = [
   { dir: 0, x: 0, y: 0, z: 0.5, rx: 0, ry: Math.PI },

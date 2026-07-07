@@ -21754,7 +21754,7 @@
   // map/MapApp.tsx
   var import_react3 = __toESM(require_react(), 1);
 
-  // ui/primitives/Button.tsx
+  // primitives/Button.tsx
   var import_react = __toESM(require_react(), 1);
 
   // node_modules/clsx/dist/clsx.mjs
@@ -25061,12 +25061,12 @@
   };
   var twMerge = /* @__PURE__ */ createTailwindMerge(getDefaultConfig);
 
-  // ui/primitives/cn.ts
+  // primitives/cn.ts
   function cn(...inputs) {
     return twMerge(clsx(inputs));
   }
 
-  // ui/primitives/Button.tsx
+  // primitives/Button.tsx
   var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
   var buttonVariants = cva(
     "inline-flex items-center justify-center rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 disabled:pointer-events-none disabled:opacity-50",

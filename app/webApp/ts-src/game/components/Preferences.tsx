@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { PreferencesData } from "../types";
-import { Dialog, DialogContent, DialogTitle } from "../primitives/Dialog";
-import { Button } from "../primitives/Button";
-import { cn } from "../primitives/cn";
+import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
+import { Button } from "../../primitives/Button";
+import { cn } from "../../primitives/cn";
 import { usePreferences, SavePayload, Tab } from "../hooks/usePreferences";
 
 interface Props {

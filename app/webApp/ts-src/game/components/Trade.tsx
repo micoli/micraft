@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Dialog, DialogContent, DialogTitle } from "../primitives/Dialog";
-import { Button } from "../primitives/Button";
+import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
+import { Button } from "../../primitives/Button";
 
 interface Props {
   open: boolean;

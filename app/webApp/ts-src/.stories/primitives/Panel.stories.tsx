@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Panel, FormField } from "../../ui/primitives/Panel";
-import { Label } from "../../ui/primitives/Label";
-import { Input } from "../../ui/primitives/Input";
-import { Button } from "../../ui/primitives/Button";
+import { Panel, FormField } from "../../game/primitives/Panel";
+import { Label } from "../../game/primitives/Label";
+import { Input } from "../../game/primitives/Input";
+import { Button } from "../../game/primitives/Button";
 
 const meta: Meta<typeof Panel> = {
   title: "Primitives/Panel",

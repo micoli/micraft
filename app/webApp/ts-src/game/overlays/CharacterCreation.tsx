@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
-import { Dialog, DialogContent, DialogTitle } from "../primitives/Dialog";
-import { Button } from "../primitives/Button";
-import { cn } from "../primitives/cn";
+import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
+import { Button } from "../../primitives/Button";
+import { cn } from "../../primitives/cn";
 
 const POINT_BUY_COST: Record<number, number> = {
   8: 0,
@@ -281,13 +281,13 @@ export function CharacterCreation({ open, required, onClose, onSubmit }: Props) 
   return (
     <Dialog
       open={open}
-      onOpenChange={(o) => {
+      onOpenChange={(o:any) => {
         if (!o && !required) onClose();
       }}
     >
       <DialogContent
-        className="min-w-[720px] font-mono p-9"
-        onEscapeKeyDown={(e) => {
+        className="min-w-180 font-mono p-9"
+        onEscapeKeyDown={(e:any) => {
           if (required) e.preventDefault();
         }}
       >

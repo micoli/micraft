@@ -1,4 +1,4 @@
-import { cn } from "../primitives/cn";
+import { cn } from "../../primitives/cn";
 import { useServerLog } from "../hooks/useServerLog";
 import { ChannelSubscription, LogEntry } from "../types";
 

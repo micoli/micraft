@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { PlayerModelPreview } from "../shared/PlayerModelPreview";
-import { Dialog, DialogContent, DialogTitle } from "../primitives/Dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "../primitives/Tabs";
-import { Button } from "../primitives/Button";
-import { cn } from "../primitives/cn";
+import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../primitives/Tabs";
+import { Button } from "../../primitives/Button";
+import { cn } from "../../primitives/cn";
 import { CharacterSyncData } from "../types";
 
 interface ArmorSlots {

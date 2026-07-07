@@ -1,28 +1,28 @@
 // mc_bindings.js — BabylonJS host functions called from Kotlin/Wasm via js()
 // Must be loaded AFTER babylon.js and BEFORE webApp.js.
 import { registerAllPlugins } from "@plugins/index";
-import { registerAutoUpdate } from "./update/autoUpdate";
-import { registerUtils } from "./utils/utils";
-import { registerEngine } from "./engine/engine";
-import { registerMaterials } from "./materials/materials";
-import { registerBlockDefs, setRegistryBlocks } from "./blocks/blockDefs";
-import { registerKeyboard } from "./input/keyboard";
-import { registerMouse } from "./input/mouse";
-import { registerCamera } from "./camera/camera";
-import { registerTargeting } from "./targeting/targeting";
-import { registerCombatTargetHighlight } from "./targeting/targetHighlight";
-import { registerChunks } from "./chunks/chunkBuilder";
-import { registerPlayerModel } from "./player/playerModel";
-import { registerFPArms } from "./player/fpArms";
-import { registerArmorOverlay } from "./player/armorOverlay";
-import { registerNpcModel } from "./npc/npcModel";
-import { registerMinimap, setMinimapColors } from "./minimap/minimap";
-import { registerSky } from "./sky/sky";
-import { registerWeather } from "./weather/weather";
+import { registerAutoUpdate } from "./lib/autoUpdate";
+import { registerUtils } from "./game/utils/utils";
+import { registerEngine } from "./game/engine/engine";
+import { registerMaterials } from "./game/materials/materials";
+import { registerBlockDefs, setRegistryBlocks } from "./game/blocks/blockDefs";
+import { registerKeyboard } from "./game/input/keyboard";
+import { registerMouse } from "./game/input/mouse";
+import { registerCamera } from "./game/camera/camera";
+import { registerTargeting } from "./game/targeting/targeting";
+import { registerCombatTargetHighlight } from "./game/targeting/targetHighlight";
+import { registerChunks } from "./game/chunks/chunkBuilder";
+import { registerPlayerModel } from "./game/player/playerModel";
+import { registerFPArms } from "./game/player/fpArms";
+import { registerArmorOverlay } from "./game/player/armorOverlay";
+import { registerNpcModel } from "./game/npc/npcModel";
+import { registerMinimap, setMinimapColors } from "./game/minimap/minimap";
+import { registerSky } from "./game/sky/sky";
+import { registerWeather } from "./game/weather/weather";
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
-import { GameUI } from "./ui/GameUI";
-import { setWidgetRegistry } from "./ui/layout/LayoutEngine";
+import { GameUI } from "./game/GameUI";
+import { setWidgetRegistry } from "./game/layout/LayoutEngine";
 import { initFaviconAnimator, setFaviconAnimated } from "./favicon/faviconAnimator";
 
 // ── Initialize shared runtime state ──────────────────────────────────────────

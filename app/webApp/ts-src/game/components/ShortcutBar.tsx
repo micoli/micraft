@@ -1,4 +1,4 @@
-import { cn } from "../primitives/cn";
+import { cn } from "../../primitives/cn";
 import { useShortcutBar } from "../hooks/useShortcutBar";
 import { ShortcutSlot, AttackMeta } from "../UIReducer";
 import { damageTypeColor } from "./AttackPanel";

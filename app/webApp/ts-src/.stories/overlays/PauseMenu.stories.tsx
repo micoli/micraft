@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { PauseMenu } from "../../ui/overlays/PauseMenu";
-import { Button } from "../../ui/primitives/Button";
+import { PauseMenu } from "../../game/overlays/PauseMenu";
+import { Button } from "../../game/primitives/Button";
 
 const meta: Meta<typeof PauseMenu> = {
   title: "Overlays/PauseMenu",

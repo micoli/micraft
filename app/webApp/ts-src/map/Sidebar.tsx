@@ -1,5 +1,5 @@
-import { Button } from "../ui/primitives/Button";
-import { cn } from "../ui/primitives/cn";
+import { Button } from "../primitives/Button";
+import { cn } from "../primitives/cn";
 import type { FollowTarget, LayerKey, Layers, MapApiState } from "./types";
 import { LAYER_KEYS } from "./types";
 

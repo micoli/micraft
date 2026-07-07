@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
-import { Dialog, DialogContent, DialogTitle } from "../primitives/Dialog";
-import { Button } from "../primitives/Button";
+import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
+import { Button } from "../../primitives/Button";
 import { RecipeDefinition } from "../types";
 
 interface Props {

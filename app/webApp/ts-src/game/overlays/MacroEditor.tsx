@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Dialog, DialogContent, DialogTitle } from "../primitives/Dialog";
-import { Button } from "../primitives/Button";
+import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
+import { Button } from "../../primitives/Button";
 
 const PINNED_KEY = "__pinned_macros__";
 

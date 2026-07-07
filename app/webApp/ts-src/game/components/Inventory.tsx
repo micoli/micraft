@@ -1,4 +1,4 @@
-import { cn } from "../primitives/cn";
+import { cn } from "../../primitives/cn";
 import { useInventory } from "../hooks/useInventory";
 
 interface Props {
