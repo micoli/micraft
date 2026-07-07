@@ -532,6 +532,41 @@ class GameLoop(
         }
     }
 
+    private suspend fun handleRunMacroContent(
+        session: PlayerSession,
+        msg: ClientMessage.RunMacroContent,
+    ) {
+        val pendingCommands = mutableListOf<String>()
+        runCatching {
+                macroExecutor.execute(
+                    script = msg.script,
+                    onSend = { cmd -> pendingCommands.add(cmd) },
+                    onAction = {},
+                )
+            }
+            .onFailure {
+                log.warn("macro content error for player {}: {}", session.state.name, it.message)
+                session.send(
+                    ServerMessage.Notification(
+                        i18n.t(
+                            session.state.language,
+                            "macros:server:error",
+                            "editor",
+                            it.message ?: "")))
+                return
+            }
+        for (cmd in pendingCommands) {
+            runCatching { handleCommand(session, cmd) }
+                .onFailure { e ->
+                    log.warn(
+                        "macro content command error '{}' for {}: {}",
+                        cmd,
+                        session.state.name,
+                        e.message)
+                }
+        }
+    }
+
     private fun buildRegistrySync(): ServerMessage.RegistrySync {
         val blocks =
             BlockRegistry.orderedList().mapIndexed { i, def ->
@@ -906,30 +941,42 @@ class GameLoop(
                         .getOrNull()
                         ?.let { msg ->
                             runCatching {
-                                when (msg) {
-                                is ClientMessage.Disconnect -> return@consumeEach
-                                is ClientMessage.ChunkUnload -> {
-                                    msg.positions.forEach { session.loadedChunks.remove(it) }
-                                    log.debug(
-                                        "{} chunks unloaded by {}",
-                                        msg.positions.size,
-                                        session.id.take(8))
+                                    when (msg) {
+                                        is ClientMessage.Disconnect -> return@consumeEach
+                                        is ClientMessage.ChunkUnload -> {
+                                            msg.positions.forEach {
+                                                session.loadedChunks.remove(it)
+                                            }
+                                            log.debug(
+                                                "{} chunks unloaded by {}",
+                                                msg.positions.size,
+                                                session.id.take(8))
+                                        }
+                                        is ClientMessage.LayoutUpdate ->
+                                            handleLayoutUpdate(session, msg)
+                                        is ClientMessage.PreferencesUpdate ->
+                                            handlePreferencesUpdate(session, msg)
+                                        is ClientMessage.ViewModeUpdate -> {
+                                            session.state =
+                                                session.state.copy(viewMode = msg.viewMode)
+                                            savePlayer(session)
+                                        }
+                                        is ClientMessage.NpcInteract ->
+                                            npcManager.handleInteract(session, msg.npcId)
+                                        is ClientMessage.RunMacro -> handleRunMacro(session, msg)
+                                        is ClientMessage.RunMacroContent ->
+                                            handleRunMacroContent(session, msg)
+                                        else -> session.intents.trySend(msg)
+                                    }
                                 }
-                                is ClientMessage.LayoutUpdate -> handleLayoutUpdate(session, msg)
-                                is ClientMessage.PreferencesUpdate ->
-                                    handlePreferencesUpdate(session, msg)
-                                is ClientMessage.ViewModeUpdate -> {
-                                    session.state = session.state.copy(viewMode = msg.viewMode)
-                                    savePlayer(session)
+                                .onFailure { e ->
+                                    log.error(
+                                        "unhandled exception for msg {} player {}: {}",
+                                        msg::class.simpleName,
+                                        id.take(8),
+                                        e.message,
+                                        e)
                                 }
-                                is ClientMessage.NpcInteract ->
-                                    npcManager.handleInteract(session, msg.npcId)
-                                is ClientMessage.RunMacro -> handleRunMacro(session, msg)
-                                else -> session.intents.trySend(msg)
-                            }
-                            }.onFailure { e ->
-                                log.error("unhandled exception for msg {} player {}: {}", msg::class.simpleName, id.take(8), e.message, e)
-                            }
                         }
                 }
             }

@@ -158,10 +158,10 @@ export function registerKeyboard(): Pick<
 
       window.addEventListener("keydown", (e: KeyboardEvent) => {
         const tag = document.activeElement?.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT") return;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT" || (document.activeElement as HTMLElement | null)?.isContentEditable) return;
+        if (window.mcState.modalOpen) return;
         // Prevent browser quickfind (Firefox) — GameUI document listener fires first and opens console
         if (e.key === "/" || e.code === "Slash") e.preventDefault();
-        if (window.mcState.modalOpen) return;
         window.mcState.modifiers = { ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey };
         window.mcState.keys[e.code] = true;
         if (e.repeat) return;
@@ -213,7 +213,7 @@ export function registerKeyboard(): Pick<
           return;
         }
         const tag = document.activeElement?.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT") return;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT" || (document.activeElement as HTMLElement | null)?.isContentEditable) return;
         if (window.mcState.modalOpen) return;
         window.mcState.modifiers = { ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey };
         window.mcState.keys[e.code] = false;

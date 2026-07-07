@@ -100,4 +100,6 @@ sealed class ClientMessage {
     ) : ClientMessage()
 
     @ProtoId(17) @Serializable data class RunMacro(val name: String) : ClientMessage()
+
+    @ProtoId(18) @Serializable data class RunMacroContent(val script: String) : ClientMessage()
 }

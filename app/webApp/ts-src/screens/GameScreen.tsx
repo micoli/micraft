@@ -301,6 +301,8 @@ export function GameScreen() {
             open={state.macroEditorOpen}
             macros={state.preferences?.macros ?? {}}
             customCommands={state.preferences?.customCommands ?? {}}
+            commands={state.preferences?.commands ?? []}
+            attackKeys={Object.keys(state.attackMeta ?? {})}
             onSave={handleMacrosSave}
             onClose={() => dispatch({ type: "macro_editor_close" })}
           />

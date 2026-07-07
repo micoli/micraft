@@ -383,6 +383,8 @@ declare global {
     consumeLayoutUpdate(): string;
     preferencesSync(json: string): void;
     consumePreferencesUpdate(): string;
+    setPendingRunMacroScript(script: string): void;
+    consumeRunMacroScript(): string;
     showPreferences(): void;
     openCodex(): void;
     openCraft(): void;

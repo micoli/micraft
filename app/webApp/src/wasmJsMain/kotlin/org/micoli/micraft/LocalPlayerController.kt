@@ -524,6 +524,11 @@ class LocalPlayerController(
             }
         }
 
+        val runMacroScript = jsConsumeRunMacroScript()
+        if (runMacroScript.isNotEmpty()) {
+            outMessages.trySend(ClientMessage.RunMacroContent(runMacroScript))
+        }
+
         val preferencesUpdateJson = jsConsumePreferencesUpdate()
         if (preferencesUpdateJson.isNotEmpty()) {
             runCatching {

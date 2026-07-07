@@ -141,6 +141,8 @@ fun jsPreferencesSync(json: String): Unit = js("mc.preferencesSync(json)")
 
 fun jsConsumePreferencesUpdate(): String = js("mc.consumePreferencesUpdate()")
 
+fun jsConsumeRunMacroScript(): String = js("mc.consumeRunMacroScript()")
+
 fun jsShowPreferences(): Unit = js("mc.showPreferences()")
 
 // ── Codex ─────────────────────────────────────────────────────────────────────

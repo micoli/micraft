@@ -459,6 +459,16 @@ export function GameUI() {
       return v;
     };
 
+    const pendingRunMacroScriptRef = { current: "" };
+    window.mc.setPendingRunMacroScript = (script: string) => {
+      pendingRunMacroScriptRef.current = script;
+    };
+    window.mc.consumeRunMacroScript = () => {
+      const v = pendingRunMacroScriptRef.current;
+      pendingRunMacroScriptRef.current = "";
+      return v;
+    };
+
     window.mc.showPreferences = () => dispatch({ type: "preferences_show" });
     window.mc.openCodex = () => dispatch({ type: "codex_open" });
     window.mc.openCraft = () => dispatch({ type: "craft_open" });
@@ -534,7 +544,7 @@ export function GameUI() {
       if (!isGameRouteRef.current) return;
       const ke = e as globalThis.KeyboardEvent;
       const tag = (document.activeElement as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (document.activeElement as HTMLElement)?.isContentEditable) return;
       if (chunkLoadingRef.current) return;
       if (ke.key === "Escape" && !consoleOpenRef.current) {
         if (characterOpenRef.current) {

@@ -704,9 +704,6 @@
   .resize {
     resize: both;
   }
-  .resize-none {
-    resize: none;
-  }
   .grid-cols-1 {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
@@ -1033,9 +1030,6 @@
   }
   .bg-\[\#0d2040\] {
     background-color: #0d2040;
-  }
-  .bg-\[\#0e0e0e\] {
-    background-color: #0e0e0e;
   }
   .bg-\[\#1a1a1a\] {
     background-color: #1a1a1a;
@@ -1433,9 +1427,6 @@
   .text-\[11px\] {
     font-size: 11px;
   }
-  .text-\[12px\] {
-    font-size: 12px;
-  }
   .text-\[13px\] {
     font-size: 13px;
   }
@@ -1788,6 +1779,11 @@
       }
     }
   }
+  .focus-within\:border-\[\#555\] {
+    &:focus-within {
+      border-color: #555;
+    }
+  }
   .hover\:border-\[\#888\] {
     &:hover {
       @media (hover: hover) {
@@ -1966,11 +1962,6 @@
           color: color-mix(in oklab, var(--color-white) 80%, transparent);
         }
       }
-    }
-  }
-  .focus\:border-\[\#555\] {
-    &:focus {
-      border-color: #555;
     }
   }
   .focus\:border-\[\#888\] {

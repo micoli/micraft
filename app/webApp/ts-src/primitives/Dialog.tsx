@@ -38,6 +38,7 @@ function DialogContent({ className, children, movable = false, ...props }: Dialo
       const target = e.target as HTMLElement;
       const tag = target.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT" || tag === "A") return;
+      if (target.isContentEditable) return;
       if (target.closest("[draggable]")) return;
       dragStart.current = { mx: e.clientX, my: e.clientY, ox: offset.x, oy: offset.y };
       setIsDraggingWindow(true);
