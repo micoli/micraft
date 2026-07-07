@@ -128,23 +128,21 @@ export function registerMinimap(): Pick<
 > {
   return {
     createMinimap: (): void => {
+      document.getElementById("mc-minimap")?.remove();
       const c = document.createElement("canvas");
       c.id = "mc-minimap";
       (c as HTMLCanvasElement).width = MINIMAP_SIZE;
       (c as HTMLCanvasElement).height = MINIMAP_SIZE;
-      const host = document.getElementById("mc-minimap-host");
-      if (host) {
-        c.style.cssText = "width:100%;height:100%;display:block;border-radius:6px;pointer-events:none";
-        host.appendChild(c);
-      } else {
-        c.style.cssText = [
-          "position:fixed;top:12px;left:12px",
-          "border-radius:6px;pointer-events:none;z-index:999",
-          "border:2px solid rgba(255,255,255,0.25)",
-          "box-shadow:0 2px 8px rgba(0,0,0,0.5)",
-        ].join(";");
-        document.body.appendChild(c);
-      }
+      c.style.cssText = "width:100%;height:100%;display:block;border-radius:6px;pointer-events:none";
+      const tryMount = (): void => {
+        const host = document.getElementById("mc-minimap-host");
+        if (host) {
+          host.appendChild(c);
+        } else {
+          requestAnimationFrame(tryMount);
+        }
+      };
+      tryMount();
     },
 
     setMinimapChunk: (cx: number, cz: number, topYJson: string, topBlockJson: string): void => {
