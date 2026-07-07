@@ -171,6 +171,7 @@ object ClientMessageCodec {
             clientEntry<ClientMessage.DoCraft>(), // 14
             clientEntry<ClientMessage.SetCombatTarget>(), // 15
             clientEntry<ClientMessage.AttackTarget>(), // 16
+            clientEntry<ClientMessage.RunMacro>(), // 17
         )
 
     fun encode(msg: ClientMessage): ByteArray = encodeWith(registry, msg)

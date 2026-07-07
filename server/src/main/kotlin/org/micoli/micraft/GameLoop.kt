@@ -22,6 +22,7 @@ import org.micoli.micraft.di.PlayerPersister
 import org.micoli.micraft.di.ReloadCoordinator
 import org.micoli.micraft.di.SessionRegistry
 import org.micoli.micraft.http.TerrainCache
+import org.micoli.micraft.macro.MacroExecutor
 import org.micoli.micraft.npc.NpcConfigLoader
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.npc.NpcSpawner
@@ -290,6 +291,8 @@ class GameLoop(
     val networkStats: NetworkStats = NetworkStats(),
     private val commandContextFactory: ((CommandContextClosures) -> CommandContext)? = null,
 ) {
+    private val macroExecutor = MacroExecutor()
+
     private var saveTickCounter = 0
     private var timeBroadcastCounter = 0
 
@@ -484,6 +487,49 @@ class GameLoop(
         session.send(buildPreferencesSync(session))
         session.send(ServerMessage.ChannelsSync(newSubscribed, knownChannels))
         if (shadersChanged) session.send(ServerMessage.ShadersUpdate(msg.shadersEnabled))
+    }
+
+    private suspend fun handleRunMacro(session: PlayerSession, msg: ClientMessage.RunMacro) {
+        val macros = persistence?.loadPlayerMacros(session.state.name) ?: emptyMap()
+        val code = macros[msg.name] ?: return
+        val pendingCommands = mutableListOf<String>()
+        runCatching {
+                macroExecutor.execute(
+                    script = code,
+                    onSend = { cmd -> pendingCommands.add(cmd) },
+                    onAction = {},
+                )
+            }
+            .onFailure {
+                log.warn(
+                    "macro '{}' error for player {}: {}", msg.name, session.state.name, it.message)
+                session.send(
+                    ServerMessage.Notification(
+                        i18n.t(
+                            session.state.language,
+                            "macros:server:error",
+                            msg.name,
+                            it.message ?: "")))
+                return
+            }
+        for (cmd in pendingCommands) {
+            runCatching { handleCommand(session, cmd) }
+                .onFailure { e ->
+                    log.warn(
+                        "macro '{}' command error '{}' for {}: {}",
+                        msg.name,
+                        cmd,
+                        session.state.name,
+                        e.message)
+                    session.send(
+                        ServerMessage.Notification(
+                            i18n.t(
+                                session.state.language,
+                                "macros:server:error",
+                                msg.name,
+                                e.message ?: "")))
+                }
+        }
     }
 
     private fun buildRegistrySync(): ServerMessage.RegistrySync {
@@ -859,7 +905,8 @@ class GameLoop(
                         .onFailure { log.warn("bad frame from {}: {}", id.take(8), it.message) }
                         .getOrNull()
                         ?.let { msg ->
-                            when (msg) {
+                            runCatching {
+                                when (msg) {
                                 is ClientMessage.Disconnect -> return@consumeEach
                                 is ClientMessage.ChunkUnload -> {
                                     msg.positions.forEach { session.loadedChunks.remove(it) }
@@ -877,7 +924,11 @@ class GameLoop(
                                 }
                                 is ClientMessage.NpcInteract ->
                                     npcManager.handleInteract(session, msg.npcId)
+                                is ClientMessage.RunMacro -> handleRunMacro(session, msg)
                                 else -> session.intents.trySend(msg)
+                            }
+                            }.onFailure { e ->
+                                log.error("unhandled exception for msg {} player {}: {}", msg::class.simpleName, id.take(8), e.message, e)
                             }
                         }
                 }

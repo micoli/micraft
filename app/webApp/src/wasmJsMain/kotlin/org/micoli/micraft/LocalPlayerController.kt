@@ -15,8 +15,6 @@ import org.micoli.micraft.ui.HudData
 import org.micoli.micraft.ui.McUiState
 import org.micoli.micraft.world.*
 
-private fun mcRunMacro(name: String): Unit = js("window.mcRunMacro(name)")
-
 private const val PRED_DT = 16.0 / 1000.0
 private const val FLY_VERTICAL_SPEED = 8f
 private const val SNAP_THRESHOLD = 0.5
@@ -228,7 +226,7 @@ class LocalPlayerController(
     fun activateSlot(index: Int) {
         val slot = shortcutBar.getOrNull(index)
         if (slot is ShortcutSlot.Macro) {
-            mcRunMacro(slot.macroName)
+            outMessages.trySend(ClientMessage.RunMacro(slot.macroName))
         } else {
             selectSlot(index)
             if (slot is ShortcutSlot.Attack) {
@@ -505,7 +503,8 @@ class LocalPlayerController(
                 }
                 event.startsWith("cmd:") ->
                     outMessages.trySend(ClientMessage.Command(event.removePrefix("cmd:")))
-                event.startsWith("macro:") -> mcRunMacro(event.removePrefix("macro:"))
+                event.startsWith("macro:") ->
+                    outMessages.trySend(ClientMessage.RunMacro(event.removePrefix("macro:")))
                 event.startsWith("attack:") -> {
                     val targetId = currentCombatTargetId ?: return@repeat
                     outMessages.trySend(

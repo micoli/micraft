@@ -198,3 +198,7 @@ rpg:
     character_created: "Personnage '{0}' créé avec succès !"
     no_character: "Vous n'avez pas encore de personnage RPG. Utilisez le menu pause pour en créer un."
     skipped_rpg: "Système RPG désactivé pour ce personnage."
+
+macros:
+  server:
+    error: "Erreur dans la macro '{0}' : {1}"

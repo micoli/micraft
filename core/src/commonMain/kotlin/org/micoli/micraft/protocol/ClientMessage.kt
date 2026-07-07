@@ -98,4 +98,6 @@ sealed class ClientMessage {
         val isNpc: Boolean,
         val attackId: String,
     ) : ClientMessage()
+
+    @ProtoId(17) @Serializable data class RunMacro(val name: String) : ClientMessage()
 }

@@ -198,3 +198,7 @@ rpg:
     character_created: "Character '{0}' created successfully!"
     no_character: "You have no RPG character yet. Use the pause menu to create one."
     skipped_rpg: "RPG system disabled for your character."
+
+macros:
+  server:
+    error: "Macro '{0}' error: {1}"

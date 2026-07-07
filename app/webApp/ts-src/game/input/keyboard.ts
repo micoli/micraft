@@ -151,20 +151,8 @@ export function registerKeyboard(): Pick<
       window.mcState.macros = {};
 
       window.mcRunMacro = (name: string): void => {
-        const code = window.mcState.macros[name];
-        if (!code) return;
-        const mcSend = (cmd: string) => {
-          if (window.mcState.events !== undefined) {
-            window.mcState.events.push("cmd:" + cmd);
-          }
-        };
-        const mcAction = (action: string) => {
-          window.mcState.events.push(action);
-        };
-        try {
-          new Function("mcSend", "mcAction", code)(mcSend, mcAction);
-        } catch (err) {
-          console.error("[macro:" + name + "]", err);
+        if (window.mcState?.events !== undefined) {
+          window.mcState.events.push("macro:" + name);
         }
       };
 

@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.json.schema.validator)
     implementation(libs.koin.core)
     implementation(libs.koin.ktor)
+    implementation(libs.commons.jexl3)
     testImplementation(libs.ktor.serverTestHost)
     testImplementation(libs.kotlin.testJunit)
     testImplementation(libs.koin.test)

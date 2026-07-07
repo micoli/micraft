@@ -281,13 +281,13 @@ export function CharacterCreation({ open, required, onClose, onSubmit }: Props) 
   return (
     <Dialog
       open={open}
-      onOpenChange={(o:any) => {
+      onOpenChange={(o: any) => {
         if (!o && !required) onClose();
       }}
     >
       <DialogContent
         className="min-w-180 font-mono p-9"
-        onEscapeKeyDown={(e:any) => {
+        onEscapeKeyDown={(e: any) => {
           if (required) e.preventDefault();
         }}
       >

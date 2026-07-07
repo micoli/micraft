@@ -155,7 +155,6 @@ export function MacroEditor({ open, macros, customCommands, onSave, onClose }: M
 
   const handleRun = () => {
     if (!selected) return;
-    if (window.mcState) window.mcState.macros[selected] = localMacros[selected] ?? "";
     window.mcRunMacro?.(selected);
   };
 
@@ -280,14 +279,14 @@ export function MacroEditor({ open, macros, customCommands, onSave, onClose }: M
                     }}
                     className="flex-1 bg-transparent border-b border-[#444] text-white/70 text-[11px] uppercase tracking-wide outline-none focus:border-amber-400/50 font-mono min-w-0"
                   />
-                  <span className="text-white/30 text-[11px] shrink-0">— JS code</span>
+                  <span className="text-white/30 text-[11px] shrink-0">— JEXL script</span>
                 </div>
                 <textarea
                   value={selectedCode}
                   onChange={(e) => updateCode(e.target.value)}
                   spellCheck={false}
                   className="flex-1 bg-[#0e0e0e] border border-[#333] rounded text-green-300 text-[12px] px-3 py-2 font-mono resize-none outline-none focus:border-[#555]"
-                  placeholder={`// API:\n// mcSend("/tp 0 64 0")   — slash command\n// mcAction("jump")         — keybinding action`}
+                  placeholder={`// JEXL API:\n// send("/tp 0 64 0")   — slash command\n// send("/heal")          — another command`}
                 />
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-white/40 text-[11px]">Keys:</span>

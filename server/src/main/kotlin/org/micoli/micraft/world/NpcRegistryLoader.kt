@@ -170,7 +170,7 @@ class NpcRegistryLoader(
                 }
                 .toMap()
         log.info("NPC registry loaded: {} NPC types", result.size)
-        log.info(
+        log.debug(
             "NPC entries:\n{}",
             entries.entries.joinToString("\n") { (key, entry) ->
                 Yaml.default
