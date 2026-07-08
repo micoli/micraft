@@ -1,0 +1,30 @@
+progression:
+  thresholds:
+    - 300      # L1→L2
+    - 900      # L2→L3
+    - 2700     # L3→L4
+    - 6500     # L4→L5
+    - 11700    # L5→L6
+    - 21060    # L6→L7
+    - 37908    # L7→L8
+    - 68234    # L8→L9
+    - 122821   # L9→L10
+    - 171950   # L10→L11
+    - 240730   # L11→L12
+    - 337022   # L12→L13
+    - 471831   # L13→L14
+    - 660563   # L14→L15
+    - 924789   # L15→L16
+    - 1294704  # L16→L17
+    - 1812586  # L17→L18
+    - 2537620  # L18→L19
+    - 3552668  # L19→L20
+
+sources:
+  commonPerLevel: 50
+  elitePerLevel: 200
+  bossPerLevel: 1000
+
+group:
+  enabled: true
+  bonusPerMember: 0.10

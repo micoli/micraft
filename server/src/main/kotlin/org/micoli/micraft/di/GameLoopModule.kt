@@ -16,6 +16,8 @@ import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.npc.NpcSpawner
 import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.rpg.ExperienceConfig
+import org.micoli.micraft.rpg.ExperienceProcessor
 import org.micoli.micraft.rpg.character.DerivedStatsCalculator
 import org.micoli.micraft.session.NetworkStats
 import org.micoli.micraft.tick.BlockBreaker
@@ -97,6 +99,7 @@ val gameLoopModule = module {
         NpcManager(
             broadcast = get<SessionRegistry>()::broadcast,
             getSessions = get<SessionRegistry>()::all,
+            onNpcKilled = get<ExperienceProcessor>()::onNpcKilled,
         )
     }
     single { NpcSpawner() }
@@ -104,6 +107,17 @@ val gameLoopModule = module {
     // combat cluster — armorRegistry is a mutable snapshot populated later in GameLoop.start(),
     // so (matching prior behavior) these processors are built with an empty map at construction.
     single { CombatConfig().data }
+    single { ExperienceConfig().data }
+    single {
+        ExperienceProcessor(
+            config = get(),
+            getSessions = get<SessionRegistry>()::all,
+            savePlayer = get<PlayerPersister>()::save,
+            subscribeToChannel = { session, channel ->
+                get<ChatService>().subscribe(session, channel)
+            },
+        )
+    }
     single { AttackConfig().data.attacks }
     single {
         val emptyArmorRegistry = emptyMap<String, ArmorDefinition>()

@@ -1,6 +1,7 @@
 package org.micoli.micraft.rpg
 
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -92,6 +93,18 @@ class CreateCharacterCommandTest {
             cmd.execute(session, "Mage mage 8 8 10 10 8 8", context)
             val syncs = session.sent.filterIsInstance<ServerMessage.CharacterSync>()
             assertTrue(syncs.isNotEmpty())
+        }
+
+    @Test
+    fun validArgs_clearsRpgOptOut() =
+        runBlocking<Unit> {
+            val session = testSession()
+            // PlayerState defaults rpgOptOut = true
+            assertTrue(session.state.rpgOptOut)
+            val context = testContext(sessions = listOf(session), savePlayer = {})
+            cmd.execute(session, "Hero warrior 8 8 8 8 8 8", context)
+            assertNotNull(session.characterData)
+            assertFalse(session.state.rpgOptOut)
         }
 
     @Test

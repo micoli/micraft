@@ -42,6 +42,8 @@ import org.micoli.micraft.protocol.CommandInfo
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.rpg.ExperienceConfig
+import org.micoli.micraft.rpg.ExperienceProcessor
 import org.micoli.micraft.rpg.character.DerivedStatsCalculator
 import org.micoli.micraft.session.NetworkStats
 import org.micoli.micraft.session.PlayerSession
@@ -300,6 +302,8 @@ class GameLoop(
     val terrainCache: TerrainCache = TerrainCache(),
     val networkStats: NetworkStats = NetworkStats(),
     private val commandContextFactory: ((CommandContextClosures) -> CommandContext)? = null,
+    private val experienceProcessor: ExperienceProcessor =
+        ExperienceProcessor(ExperienceConfig().data, sessionRegistry::all, playerPersister::save),
 ) {
     private val macroExecutor = MacroExecutor()
 
@@ -870,7 +874,8 @@ class GameLoop(
                 animatedFavicon = saved?.animatedFavicon ?: true,
                 chunkDebugVisible = saved?.chunkDebugVisible ?: false,
                 knownRecipes = saved?.knownRecipes ?: emptySet(),
-                rpgOptOut = saved?.rpgOptOut ?: false,
+                rpgOptOut =
+                    if (saved?.characterData != null) false else (saved?.rpgOptOut ?: false),
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =
@@ -936,6 +941,7 @@ class GameLoop(
                     derived,
                     session.state.stance,
                     session.combatState.attackCooldownUntilMs))
+            experienceProcessor.sendXpState(session)
         } else if (!session.state.rpgOptOut) {
             session.send(ServerMessage.CharacterCreationRequired)
         }

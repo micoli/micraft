@@ -29,6 +29,7 @@ import { PlayerStatusBar } from "../game/components/PlayerStatusBar";
 import { CombatTargetFrame } from "../game/components/CombatTargetFrame";
 import { PlayerDownedOverlay } from "../game/components/PlayerDownedOverlay";
 import { AttackPanel } from "../game/components/AttackPanel";
+import { XpBar } from "../game/components/XpBar";
 import { useGameContext } from "../game/GameContext";
 
 export function GameScreen() {
@@ -206,6 +207,7 @@ export function GameScreen() {
           {state.combatTarget && (
             <CombatTargetFrame target={state.combatTarget} layoutStyle={widgetStyle(activeLayout, "COMBAT_TARGET")} />
           )}
+          <XpBar layoutStyle={widgetStyle(activeLayout, "XP_BAR")} />
           {state.playerDowned && <PlayerDownedOverlay />}
           <Console
             open={state.consoleOpen}

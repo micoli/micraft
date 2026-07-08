@@ -15,6 +15,7 @@ enum class WidgetType {
     ATTACK_PANEL,
     PLAYER_STATUS,
     COMBAT_TARGET,
+    XP_BAR,
 }
 
 @Serializable
@@ -154,6 +155,16 @@ val WIDGET_REGISTRY: List<WidgetRegistryEntry> =
             minH = 3,
             editorLabel = "Combat Target",
             editorColor = "rgba(230,126,34,0.75)"),
+        WidgetRegistryEntry(
+            WidgetType.XP_BAR,
+            x = 8,
+            y = 0,
+            w = 29,
+            h = 2,
+            minW = 8,
+            minH = 1,
+            editorLabel = "XP Bar",
+            editorColor = "rgba(46,204,113,0.75)"),
     )
 
 val DEFAULT_WIDGETS: List<LayoutWidget> =

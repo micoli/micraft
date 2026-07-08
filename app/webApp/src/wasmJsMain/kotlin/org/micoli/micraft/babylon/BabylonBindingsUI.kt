@@ -185,3 +185,5 @@ fun jsStatusEffectUpdate(json: String): Unit = js("mc.statusEffectUpdate(json)")
 fun jsPlayerDowned(playerId: String): Unit = js("mc.playerDowned(playerId)")
 
 fun jsPlayerRespawned(json: String): Unit = js("mc.playerRespawned(json)")
+
+fun jsXpGained(json: String): Unit = js("mc.xpGained(json)")

@@ -1,5 +1,11 @@
 package org.micoli.micraft.npc
 
+enum class NpcTier {
+    COMMON,
+    ELITE,
+    BOSS
+}
+
 data class NpcSpawnConfig(
     val autoSpawn: Boolean = false,
     val maxTotal: Int = 0,
@@ -22,4 +28,6 @@ data class NpcDefinition(
     val aggroRange: Float = 12.0f,
     val deaggroTimeSec: Float = 10.0f,
     val attackId: String? = null,
+    val level: Int = 1,
+    val tier: NpcTier = NpcTier.COMMON,
 )

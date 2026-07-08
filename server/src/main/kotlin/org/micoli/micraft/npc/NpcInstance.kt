@@ -15,6 +15,7 @@ class NpcInstance(
     @Volatile var aggroTarget: String? = null,
     @Volatile var lastDamagedAtMs: Long = 0L,
     @Volatile var attackCooldownUntilMs: Long = 0L,
+    val damageContributors: MutableMap<String, Int> = mutableMapOf(),
 ) {
     init {
         wanderTargetX = spawnPos.x

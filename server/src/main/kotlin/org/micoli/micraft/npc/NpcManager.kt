@@ -31,6 +31,7 @@ private fun NpcState.round1() =
 class NpcManager(
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val getSessions: () -> Collection<PlayerSession> = { emptyList() },
+    private val onNpcKilled: suspend (NpcInstance) -> Unit = {},
 ) {
     private val npcs = ConcurrentHashMap<String, NpcInstance>()
     @Volatile private var definitions: Map<String, NpcDefinition> = emptyMap()
@@ -211,6 +212,8 @@ class NpcManager(
         instance.currentHp = (instance.currentHp - damage).coerceAtLeast(0)
         instance.lastDamagedAtMs = now
         if (instance.aggroTarget == null) instance.aggroTarget = attackerId
+        instance.damageContributors[attackerId] =
+            (instance.damageContributors[attackerId] ?: 0) + damage
 
         val newHp = instance.currentHp
         val maxHp = instance.definition.hp
@@ -219,6 +222,7 @@ class NpcManager(
 
         if (newHp <= 0) {
             log.info("NPC {} killed", instance.state.name)
+            onNpcKilled(instance)
             despawnNpc(npcId)
         }
     }

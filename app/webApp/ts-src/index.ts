@@ -262,6 +262,7 @@ window.mc = {
   statusEffectUpdate: () => {},
   playerDowned: () => {},
   playerRespawned: () => {},
+  xpGained: () => {},
 } satisfies McBindings;
 
 registerAllPlugins();

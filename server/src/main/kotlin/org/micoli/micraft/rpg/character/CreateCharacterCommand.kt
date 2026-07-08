@@ -100,7 +100,7 @@ class CreateCharacterCommand : CommandHandler {
         val derived = DerivedStatsCalculator.compute(prelimChar)
         val character = prelimChar.copy(currentHp = derived.maxHp, currentMana = derived.maxMana)
         session.characterData = character
-        session.state = session.state.copy(characterData = character)
+        session.state = session.state.copy(characterData = character, rpgOptOut = false)
         context.savePlayer(session)
         session.send(ServerMessage.CharacterSync(character, derived, character.baseStats))
         session.send(

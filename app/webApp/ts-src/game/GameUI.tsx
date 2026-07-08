@@ -65,6 +65,7 @@ const initial: UiState = {
   combatTarget: null,
   playerStatus: null,
   playerDowned: false,
+  xpState: null,
   tradeOpen: false,
   tradeId: null,
   tradeOtherPlayer: null,
@@ -534,6 +535,7 @@ export function GameUI() {
     window.mc.statusEffectUpdate = (json: string) => dispatch({ type: "status_effect_update", data: JSON.parse(json) });
     window.mc.playerDowned = (playerId: string) => dispatch({ type: "player_downed", playerId });
     window.mc.playerRespawned = (json: string) => dispatch({ type: "player_respawned", data: JSON.parse(json) });
+    window.mc.xpGained = (json: string) => dispatch({ type: "xp_gained", data: JSON.parse(json) });
 
     window.mc.createHUD = () => {};
     window.mc.createHotbar = () => {};

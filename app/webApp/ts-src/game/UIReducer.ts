@@ -71,6 +71,7 @@ export interface UiState {
     globalCooldownRemainingMs: number;
   } | null;
   playerDowned: boolean;
+  xpState: { xpGained: number; totalXp: number; level: number; leveledUp: boolean; nextLevelXp: number } | null;
   tradeOpen: boolean;
   tradeId: string | null;
   tradeOtherPlayer: string | null;
@@ -150,7 +151,8 @@ export type UiAction =
   | { type: "player_status_update"; data: unknown }
   | { type: "status_effect_update"; data: unknown }
   | { type: "player_downed"; playerId: string }
-  | { type: "player_respawned"; data: unknown };
+  | { type: "player_respawned"; data: unknown }
+  | { type: "xp_gained"; data: unknown };
 
 const HUD_MODES: HudMode[] = ["simple", "medium", "complete"];
 let notifKey = 0;
@@ -348,6 +350,8 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, playerDowned: true };
     case "player_respawned":
       return { ...state, playerDowned: false };
+    case "xp_gained":
+      return { ...state, xpState: action.data as UiState["xpState"] };
     case "health_update":
     case "status_effect_update":
       return state;

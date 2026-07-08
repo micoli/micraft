@@ -420,6 +420,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             is ServerMessage.StatusEffectUpdate -> jsStatusEffectUpdate(Json.encodeToString(msg))
             is ServerMessage.PlayerDowned -> jsPlayerDowned(msg.playerId)
             is ServerMessage.PlayerRespawned -> jsPlayerRespawned(Json.encodeToString(msg))
+            is ServerMessage.XpGained -> jsXpGained(Json.encodeToString(msg))
             is ServerMessage.WeatherUpdate -> jsSetWeatherZones(Json.encodeToString(msg.zones))
             is ServerMessage.PreferencesSync ->
                 uiState.setPreferencesSync(Json.encodeToString<ServerMessage.PreferencesSync>(msg))

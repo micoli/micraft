@@ -398,6 +398,7 @@ declare global {
     statusEffectUpdate(json: string): void;
     playerDowned(playerId: string): void;
     playerRespawned(json: string): void;
+    xpGained(json: string): void;
     toggleBiomeMap(): void;
     dumpStats(): void;
     updateChunkDebug(json: string): void;

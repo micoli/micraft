@@ -274,6 +274,16 @@ sealed class ServerMessage {
         val currentHp: Int,
         val currentMana: Int,
     ) : ServerMessage()
+
+    @ProtoId(41)
+    @Serializable
+    data class XpGained(
+        val xpGained: Int,
+        val totalXp: Int,
+        val level: Int,
+        val leveledUp: Boolean,
+        val nextLevelXp: Int,
+    ) : ServerMessage()
 }
 
 @Serializable

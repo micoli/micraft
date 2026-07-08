@@ -50,6 +50,7 @@ import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 import org.micoli.micraft.player.rpg.CharacterConstants
 import org.micoli.micraft.player.rpg.CharacterData
+import org.micoli.micraft.rpg.ExperienceProcessor
 import org.micoli.micraft.rpg.character.DerivedStatsCalculator
 import org.micoli.micraft.session.NetworkStats
 import org.micoli.micraft.tick.BlockBreaker
@@ -216,6 +217,7 @@ fun Application.module() {
             terrainCache = get<TerrainCache>(),
             networkStats = get<NetworkStats>(),
             commandContextFactory = { closures -> get<CommandContext> { parametersOf(closures) } },
+            experienceProcessor = get<ExperienceProcessor>(),
         )
     gameLoop.start(this)
     installAuthRoutes(
