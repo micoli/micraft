@@ -2,16 +2,16 @@ package org.micoli.micraft.protocol
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.game.world.WorldItem
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
-import org.micoli.micraft.world.BlockPos
-import org.micoli.micraft.world.BlockType
-import org.micoli.micraft.world.ChunkPos
-import org.micoli.micraft.world.ItemType
-import org.micoli.micraft.world.WorldItem
 
 class ProtobufCodecTest {
     private fun roundtripServer(msg: ServerMessage): ServerMessage =

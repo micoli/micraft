@@ -2,12 +2,12 @@ package org.micoli.micraft.protocol
 
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.combat.ShortcutSlot
+import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.player.ChannelSubscription
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.ui.GameLayout
-import org.micoli.micraft.world.BlockPos
-import org.micoli.micraft.world.ChunkPos
-import org.micoli.micraft.world.ItemType
 
 @Serializable
 sealed class ClientMessage {

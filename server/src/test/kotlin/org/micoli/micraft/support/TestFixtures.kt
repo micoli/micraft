@@ -1,33 +1,33 @@
 package org.micoli.micraft.support
 
 import java.nio.file.Path
-import org.micoli.micraft.CommandContext
-import org.micoli.micraft.ConfigRegistry
+import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.GroupsConfig
-import org.micoli.micraft.npc.NpcManager
+import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.config.ConfigRegistry
+import org.micoli.micraft.game.armor.ArmorDefinition
+import org.micoli.micraft.game.chat.ChatChannelManager
+import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.trade.TradeManager
+import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.ItemDefinition
+import org.micoli.micraft.game.world.ItemRegistry
+import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.game.world.WorldConstants
+import org.micoli.micraft.game.world.WorldItemManager
+import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.liquid.LiquidManager
+import org.micoli.micraft.game.world.weather.WeatherConfig
+import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.session.PlayerSession
-import org.micoli.micraft.tick.LiquidManager
-import org.micoli.micraft.trade.TradeManager
-import org.micoli.micraft.world.ArmorDefinition
-import org.micoli.micraft.world.BlockType
-import org.micoli.micraft.world.ChatChannelManager
-import org.micoli.micraft.world.ChatService
-import org.micoli.micraft.world.ChunkPos
-import org.micoli.micraft.world.I18nConfig
-import org.micoli.micraft.world.ItemDefinition
-import org.micoli.micraft.world.ItemRegistry
-import org.micoli.micraft.world.ItemType
-import org.micoli.micraft.world.WeatherConfig
-import org.micoli.micraft.world.WeatherManager
-import org.micoli.micraft.world.WorldConstants
-import org.micoli.micraft.world.WorldItemManager
-import org.micoli.micraft.world.WorldState
 
 private val _itemRegistryInit =
     ItemRegistry.load(
@@ -181,7 +181,7 @@ fun testContext(
     i18n: I18nConfig = testI18n(),
     getGameTime: () -> Long = { 0L },
     setGameTime: (Long) -> Unit = {},
-    refetchChunks: (suspend (org.micoli.micraft.session.PlayerSession) -> Unit)? = null,
+    refetchChunks: (suspend (PlayerSession) -> Unit)? = null,
     liquidManager: LiquidManager? = null,
     configRegistry: ConfigRegistry? = null,
     reloadBlocks: (suspend () -> Unit)? = null,

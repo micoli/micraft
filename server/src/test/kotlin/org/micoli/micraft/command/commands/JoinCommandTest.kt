@@ -1,0 +1,89 @@
+package org.micoli.micraft.command.commands
+
+import kotlin.test.Test
+import kotlin.test.assertTrue
+import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.game.chat.ChatChannelManager
+import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.player.ChannelSubscription
+import org.micoli.micraft.player.hasChannel
+import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.support.FakePlayerSession
+import org.micoli.micraft.support.testContext
+import org.micoli.micraft.support.testSession
+
+class JoinCommandTest {
+    private val cmd = JoinCommand()
+
+    private fun chatCtx(session: FakePlayerSession): CommandContext {
+        val mgr = ChatChannelManager()
+        val svc = ChatService(mgr, {}, { listOf(session) })
+        return testContext(chatChannelManager = mgr, chatService = svc)
+    }
+
+    @Test
+    fun blankChannel_sendsUsage() = runBlocking {
+        val session = testSession()
+        cmd.execute(session, "  ", chatCtx(session))
+        assertTrue(session.sent.filterIsInstance<ServerMessage.Notification>().isNotEmpty())
+    }
+
+    @Test
+    fun unknownChannel_sendsNotFound() = runBlocking {
+        val session = testSession()
+        cmd.execute(session, "nonexistent", chatCtx(session))
+        val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
+        assertTrue(
+            notifs.any {
+                it.message.contains("nonexistent") ||
+                    it.message.contains("not found") ||
+                    it.message.contains("introuvable")
+            })
+    }
+
+    @Test
+    fun alreadyMember_sendsAlreadyMember() = runBlocking {
+        val session = testSession()
+        session.state =
+            session.state.copy(subscribedChannels = listOf(ChannelSubscription("world")))
+        cmd.execute(session, "world", chatCtx(session))
+        val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
+        assertTrue(
+            notifs.any {
+                it.message.contains("world") ||
+                    it.message.contains("already") ||
+                    it.message.contains("déjà")
+            })
+    }
+
+    @Test
+    fun success_sendsJoined() = runBlocking {
+        val session = testSession()
+        cmd.execute(session, "world", chatCtx(session))
+        val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
+        assertTrue(
+            notifs.any {
+                it.message.contains("world") ||
+                    it.message.contains("joined") ||
+                    it.message.contains("rejoint")
+            })
+    }
+
+    @Test
+    fun success_subscribesSession() = runBlocking {
+        val session = testSession()
+        cmd.execute(session, "world", chatCtx(session))
+        assertTrue(session.state.subscribedChannels.hasChannel("world"))
+    }
+
+    @Test
+    fun completeArg_listsKnownChannels() = runBlocking {
+        val session = testSession()
+        val mgr = ChatChannelManager()
+        val svc = ChatService(mgr, {}, { listOf(session) })
+        val ctx = testContext(chatChannelManager = mgr, chatService = svc)
+        val results = cmd.completeArg(0, "w", session, ctx)
+        assertTrue(results.any { it.startsWith("w", ignoreCase = true) })
+    }
+}

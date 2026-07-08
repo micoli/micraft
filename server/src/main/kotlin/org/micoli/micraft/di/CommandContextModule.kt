@@ -1,22 +1,22 @@
 package org.micoli.micraft.di
 
 import org.koin.dsl.module
-import org.micoli.micraft.CommandContext
-import org.micoli.micraft.CommandHandler
-import org.micoli.micraft.ConfigRegistry
+import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.auth.GroupsConfig
-import org.micoli.micraft.npc.NpcManager
+import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.config.ConfigRegistry
+import org.micoli.micraft.game.armor.ArmorDefinition
+import org.micoli.micraft.game.chat.ChatChannelManager
+import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.trade.TradeManager
+import org.micoli.micraft.game.world.WorldItemManager
+import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.liquid.LiquidManager
+import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.session.PlayerSession
-import org.micoli.micraft.tick.LiquidManager
-import org.micoli.micraft.trade.TradeManager
-import org.micoli.micraft.world.ArmorDefinition
-import org.micoli.micraft.world.ChatChannelManager
-import org.micoli.micraft.world.ChatService
-import org.micoli.micraft.world.I18nConfig
-import org.micoli.micraft.world.WeatherManager
-import org.micoli.micraft.world.WorldItemManager
-import org.micoli.micraft.world.WorldState
 
 /**
  * [CommandContext] fields that close over GameLoop's own per-connection/per-instance mutable state

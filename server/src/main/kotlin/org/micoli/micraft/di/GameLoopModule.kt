@@ -2,46 +2,46 @@ package org.micoli.micraft.di
 
 import java.nio.file.Path
 import org.koin.dsl.module
-import org.micoli.micraft.buildConfigRegistry
-import org.micoli.micraft.combat.AttackConfig
-import org.micoli.micraft.combat.ClassesConfig
-import org.micoli.micraft.combat.CombatConfig
-import org.micoli.micraft.combat.CombatConfigData
-import org.micoli.micraft.combat.CombatProcessor
-import org.micoli.micraft.combat.RegenProcessor
-import org.micoli.micraft.combat.StatusEffectProcessor
+import org.micoli.micraft.I18nConfig
+import org.micoli.micraft.config.ConfigRegistry
+import org.micoli.micraft.game.armor.ArmorDefinition
+import org.micoli.micraft.game.armor.ArmorRegistryLoader
+import org.micoli.micraft.game.chat.ChatChannelManager
+import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.classes.ClassesConfig
+import org.micoli.micraft.game.combat.AttackConfig
+import org.micoli.micraft.game.combat.CombatConfig
+import org.micoli.micraft.game.combat.CombatConfigData
+import org.micoli.micraft.game.combat.CombatProcessor
+import org.micoli.micraft.game.combat.RegenProcessor
+import org.micoli.micraft.game.combat.StatusEffectProcessor
+import org.micoli.micraft.game.drop.DropConfig
+import org.micoli.micraft.game.npc.NpcConfigLoader
+import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.npc.NpcRegistryLoader
+import org.micoli.micraft.game.npc.NpcSpawner
+import org.micoli.micraft.game.recipe.RecipeRegistryLoader
+import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.ExperienceConfig
+import org.micoli.micraft.game.rpg.ExperienceProcessor
+import org.micoli.micraft.game.session.NetworkStats
+import org.micoli.micraft.game.tick.ChunkStreamer
+import org.micoli.micraft.game.tick.MovementProcessor
+import org.micoli.micraft.game.trade.TradeConfigLoader
+import org.micoli.micraft.game.trade.TradeManager
+import org.micoli.micraft.game.world.WorldItemManager
+import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.block.BlockBreaker
+import org.micoli.micraft.game.world.block.BlockPlacer
+import org.micoli.micraft.game.world.block.BlockRegistryLoader
+import org.micoli.micraft.game.world.liquid.LiquidManager
+import org.micoli.micraft.game.world.vegetation.VegetationConfig
+import org.micoli.micraft.game.world.vegetation.VegetationManager
+import org.micoli.micraft.game.world.weather.WeatherConfig
+import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.http.TerrainCache
-import org.micoli.micraft.npc.NpcConfigLoader
-import org.micoli.micraft.npc.NpcManager
-import org.micoli.micraft.npc.NpcSpawner
 import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.rpg.ExperienceConfig
-import org.micoli.micraft.rpg.ExperienceProcessor
-import org.micoli.micraft.rpg.character.DerivedStatsCalculator
-import org.micoli.micraft.session.NetworkStats
-import org.micoli.micraft.tick.BlockBreaker
-import org.micoli.micraft.tick.BlockPlacer
-import org.micoli.micraft.tick.ChunkStreamer
-import org.micoli.micraft.tick.LiquidManager
-import org.micoli.micraft.tick.MovementProcessor
-import org.micoli.micraft.tick.VegetationManager
-import org.micoli.micraft.trade.TradeConfigLoader
-import org.micoli.micraft.trade.TradeManager
-import org.micoli.micraft.world.ArmorDefinition
-import org.micoli.micraft.world.ArmorRegistryLoader
-import org.micoli.micraft.world.BlockRegistryLoader
-import org.micoli.micraft.world.ChatChannelManager
-import org.micoli.micraft.world.ChatService
-import org.micoli.micraft.world.DropConfig
-import org.micoli.micraft.world.I18nConfig
-import org.micoli.micraft.world.NpcRegistryLoader
-import org.micoli.micraft.world.RecipeRegistryLoader
-import org.micoli.micraft.world.VegetationConfig
-import org.micoli.micraft.world.WeatherConfig
-import org.micoli.micraft.world.WeatherManager
-import org.micoli.micraft.world.WorldItemManager
-import org.micoli.micraft.world.WorldState
 
 val gameLoopModule = module {
     single { SessionRegistry() }
@@ -67,7 +67,7 @@ val gameLoopModule = module {
     }
     single { WeatherConfig() }
     single { WeatherManager(get<WeatherConfig>()) }
-    single { buildConfigRegistry(get<WeatherConfig>()) }
+    single { ConfigRegistry.buildConfigRegistry(get<WeatherConfig>()) }
     single { LiquidManager(get<WorldState>()) }
     single { VegetationConfig(Path.of("data/config/vegetation.yaml")) }
     single {

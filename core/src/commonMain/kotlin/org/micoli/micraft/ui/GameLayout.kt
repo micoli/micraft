@@ -2,46 +2,8 @@ package org.micoli.micraft.ui
 
 import kotlinx.serialization.Serializable
 
-@Serializable
-enum class WidgetType {
-    MINIMAP,
-    HUD,
-    SHORTCUT_BAR,
-    CHAT_HISTORY,
-    INPUT_BOX,
-    INVENTORY,
-    CHUNK_DEBUG,
-    INGAME_MAP,
-    ATTACK_PANEL,
-    PLAYER_STATUS,
-    COMBAT_TARGET,
-    XP_BAR,
-}
-
-@Serializable
-data class LayoutWidget(
-    val type: WidgetType,
-    val x: Int,
-    val y: Int,
-    val w: Int,
-    val h: Int,
-)
-
 // name is the unique key per player — no two layouts for the same player share a name
 @Serializable data class GameLayout(val name: String, val widgets: List<LayoutWidget>)
-
-@Serializable
-data class WidgetRegistryEntry(
-    val type: WidgetType,
-    val x: Int,
-    val y: Int,
-    val w: Int,
-    val h: Int,
-    val minW: Int,
-    val minH: Int,
-    val editorLabel: String,
-    val editorColor: String,
-)
 
 val WIDGET_REGISTRY: List<WidgetRegistryEntry> =
     listOf(
@@ -171,8 +133,6 @@ val DEFAULT_WIDGETS: List<LayoutWidget> =
     WIDGET_REGISTRY.map { LayoutWidget(it.type, it.x, it.y, it.w, it.h) }
 
 fun defaultLayout() = GameLayout("default", DEFAULT_WIDGETS)
-
-@Serializable data class LayoutSyncPayload(val layouts: List<GameLayout>, val activeLayout: String)
 
 fun validateLayouts(layouts: List<GameLayout>, activeLayout: String): String? {
     if (layouts.isEmpty()) return "At least one layout is required"

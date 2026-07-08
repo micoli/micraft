@@ -4,10 +4,10 @@ import java.nio.file.Path
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.micoli.micraft.dataPath
-import org.micoli.micraft.world.BlockRegistry
-import org.micoli.micraft.world.BlockRegistryLoader
-import org.micoli.micraft.world.ItemRegistry
-import org.micoli.micraft.world.ItemRegistryLoader
+import org.micoli.micraft.game.item.ItemRegistryLoader
+import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.ItemRegistry
+import org.micoli.micraft.game.world.block.BlockRegistryLoader
 
 val REGISTRY_LOAD_BOOTSTRAP = named("registryLoadBootstrap")
 

@@ -9,8 +9,8 @@ import org.micoli.micraft.auth.LocalAuthProvider
 import org.micoli.micraft.auth.OAuthProvider
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.auth.loadGroupsConfig
+import org.micoli.micraft.game.ServerConfig
 import org.micoli.micraft.resourcesConfigDir
-import org.micoli.micraft.world.ServerConfig
 
 val authModule = module {
     single { CoroutineScope(Dispatchers.Default) }

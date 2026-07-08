@@ -5,6 +5,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.command.commands.DisconnectCommand
+import org.micoli.micraft.command.commands.GiveCommand
+import org.micoli.micraft.command.commands.SaveCommand
+import org.micoli.micraft.command.commands.ShadersCommand
+import org.micoli.micraft.command.commands.TalkCommand
+import org.micoli.micraft.command.commands.TimeCommand
 import org.micoli.micraft.plugins.goto.GotoCommand
 import org.micoli.micraft.plugins.kick.KickCommand
 import org.micoli.micraft.plugins.summon.SummonCommand

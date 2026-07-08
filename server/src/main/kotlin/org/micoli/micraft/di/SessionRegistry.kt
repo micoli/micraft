@@ -1,8 +1,8 @@
 package org.micoli.micraft.di
 
 import java.util.concurrent.ConcurrentHashMap
+import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.session.PlayerSession
 
 class SessionRegistry {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()

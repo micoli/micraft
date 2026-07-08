@@ -21,6 +21,6 @@ exclude:
       - "**/build"
       - "**/generated"
       - "**/.gradle"
-
+  - name: ConvertLongToDuration
 projectJDK: "21" #(Applied in CI/CD pipeline)
 linter: jetbrains/qodana-jvm:2025.3

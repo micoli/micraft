@@ -1,14 +1,14 @@
 package org.micoli.micraft.plugins.goto
 
 import java.util.UUID
-import org.micoli.micraft.CommandContext
-import org.micoli.micraft.PluginCommand
+import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.PluginCommand
+import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.plugins.teleport.safeTeleportPos
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.session.PlayerSession
 
 class GotoCommand : PluginCommand {
-    override val id = UUID.fromString("b7d4d94a-3403-4565-864e-ec2eb7f87941")
+    override val id: UUID = UUID.fromString("b7d4d94a-3403-4565-864e-ec2eb7f87941")
     override val name = "goto"
     override val command = "/goto"
     override val description = "Teleports you to a player or NPC."

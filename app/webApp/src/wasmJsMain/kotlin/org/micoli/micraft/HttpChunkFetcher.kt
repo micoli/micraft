@@ -10,11 +10,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.micoli.micraft.babylon.jsGetPageHost
 import org.micoli.micraft.babylon.jsGetPagePort
+import org.micoli.micraft.game.world.Chunk
+import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
-import org.micoli.micraft.world.Chunk
-import org.micoli.micraft.world.ChunkPos
-import org.micoli.micraft.world.WorldConstants
 
 class HttpChunkFetcher(
     private val chunkManager: ChunkManager,

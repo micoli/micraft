@@ -3,6 +3,13 @@ package org.micoli.micraft.protocol
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.ShortcutSlot
+import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.game.world.RecipeDefinition
+import org.micoli.micraft.game.world.WeatherZoneInfo
+import org.micoli.micraft.game.world.WorldItem
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.ChannelSubscription
 import org.micoli.micraft.player.PlayerStance
@@ -13,13 +20,6 @@ import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.player.rpg.DerivedStats
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.ui.defaultLayout
-import org.micoli.micraft.world.BlockPos
-import org.micoli.micraft.world.BlockType
-import org.micoli.micraft.world.ChunkPos
-import org.micoli.micraft.world.ItemType
-import org.micoli.micraft.world.RecipeDefinition
-import org.micoli.micraft.world.WorldItem
-import org.micoli.micraft.world.proceduralGenerator.weather.WeatherZoneInfo
 
 @Serializable
 sealed class ServerMessage {

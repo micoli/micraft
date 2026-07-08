@@ -1,13 +1,15 @@
 package org.micoli.micraft.plugins.npc
 
 import java.util.UUID
-import org.micoli.micraft.CommandContext
-import org.micoli.micraft.PluginCommand
+import org.micoli.micraft.I18nConfig
+import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.PluginCommand
+import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.session.PlayerSession
 
 class NpcCommand : PluginCommand {
-    override val id = UUID.fromString("1818ec75-b26c-42b8-b9dd-cb72e9612fbd")
+    override val id: UUID = UUID.fromString("1818ec75-b26c-42b8-b9dd-cb72e9612fbd")
     override val name = "npc"
     override val command = "/npc"
     override val description = "Manage NPCs in the world."
@@ -40,8 +42,8 @@ class NpcCommand : PluginCommand {
         args: String,
         context: CommandContext,
         lang: String,
-        i18n: org.micoli.micraft.world.I18nConfig,
-        npcManager: org.micoli.micraft.npc.NpcManager,
+        i18n: I18nConfig,
+        npcManager: NpcManager,
     ) {
         val parts = args.split(" ", limit = 2)
         if (parts.isEmpty() || parts[0].isBlank()) {
@@ -73,8 +75,8 @@ class NpcCommand : PluginCommand {
         session: PlayerSession,
         @Suppress("UNUSED_PARAMETER") context: CommandContext,
         lang: String,
-        i18n: org.micoli.micraft.world.I18nConfig,
-        npcManager: org.micoli.micraft.npc.NpcManager,
+        i18n: I18nConfig,
+        npcManager: NpcManager,
     ) {
         val all = npcManager.getAll()
         session.send(ServerMessage.Notification(i18n.t(lang, "npc:server:listed", all.size)))
@@ -91,8 +93,8 @@ class NpcCommand : PluginCommand {
         args: String,
         @Suppress("UNUSED_PARAMETER") context: CommandContext,
         lang: String,
-        i18n: org.micoli.micraft.world.I18nConfig,
-        npcManager: org.micoli.micraft.npc.NpcManager,
+        i18n: I18nConfig,
+        npcManager: NpcManager,
     ) {
         if (args.isBlank()) {
             session.send(ServerMessage.Notification(i18n.t(lang, "npc:server:usage")))
@@ -113,8 +115,8 @@ class NpcCommand : PluginCommand {
         args: String,
         @Suppress("UNUSED_PARAMETER") context: CommandContext,
         lang: String,
-        i18n: org.micoli.micraft.world.I18nConfig,
-        npcManager: org.micoli.micraft.npc.NpcManager,
+        i18n: I18nConfig,
+        npcManager: NpcManager,
     ) {
         if (args.isBlank()) {
             session.send(ServerMessage.Notification(i18n.t(lang, "npc:server:usage")))

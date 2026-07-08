@@ -5,9 +5,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.support.testSession
-import org.micoli.micraft.world.ItemType
-import org.micoli.micraft.world.WorldPersistence
 
 class PlayerPersisterTest {
 

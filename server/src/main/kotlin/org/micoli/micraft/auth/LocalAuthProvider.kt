@@ -7,18 +7,7 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
-import kotlinx.serialization.Serializable
-import org.micoli.micraft.world.validateYamlConfig
-
-@Serializable
-data class UserEntry(
-    val email: String,
-    val passwordHash: String,
-    val displayName: String = email,
-    val groups: List<String> = emptyList(),
-)
-
-@Serializable data class UsersConfig(val users: List<UserEntry> = emptyList())
+import org.micoli.micraft.config.validateYamlConfig
 
 class LocalAuthProvider(private val usersFile: Path, @Volatile var groupsConfig: GroupsConfig) :
     AuthProvider {

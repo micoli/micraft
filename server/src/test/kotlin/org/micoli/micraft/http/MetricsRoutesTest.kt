@@ -10,7 +10,7 @@ import io.ktor.server.testing.testApplication
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import org.micoli.micraft.GameLoop
+import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.support.testWorld
 
 class MetricsRoutesTest {

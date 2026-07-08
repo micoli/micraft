@@ -3,15 +3,15 @@ package org.micoli.micraft.di
 import java.nio.file.Path
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import org.micoli.micraft.config.validateAlli18nYamlConfigs
 import org.micoli.micraft.configDir
 import org.micoli.micraft.dataPath
+import org.micoli.micraft.game.GameConfig
+import org.micoli.micraft.game.ServerConfig
+import org.micoli.micraft.game.applyServerConfig
+import org.micoli.micraft.game.keybinding.loadKeyBindings
+import org.micoli.micraft.game.loadServerConfig
 import org.micoli.micraft.resourcesConfigDir
-import org.micoli.micraft.world.GameConfig
-import org.micoli.micraft.world.ServerConfig
-import org.micoli.micraft.world.applyServerConfig
-import org.micoli.micraft.world.loadKeyBindings
-import org.micoli.micraft.world.loadServerConfig
-import org.micoli.micraft.world.validateAlli18nYamlConfigs
 
 val I18N_YAML_BOOTSTRAP = named("i18nYamlBootstrap")
 val KEY_BINDINGS_BOOTSTRAP = named("keyBindingsBootstrap")

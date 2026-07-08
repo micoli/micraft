@@ -10,18 +10,12 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import org.micoli.micraft.world.mergeConfig
-import org.micoli.micraft.world.spliceMissingAsComments
-import org.micoli.micraft.world.yamlConfigSection
+import org.micoli.micraft.config.mergeConfig
+import org.micoli.micraft.config.spliceMissingAsComments
+import org.micoli.micraft.config.yamlConfigSection
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("GroupConfig")
-
-@Serializable
-data class GroupEntry(
-    val name: String,
-    val permissions: List<String> = emptyList(),
-)
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable

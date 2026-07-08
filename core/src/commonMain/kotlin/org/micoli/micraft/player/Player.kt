@@ -2,10 +2,10 @@ package org.micoli.micraft.player
 
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.combat.ShortcutSlot
+import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.ui.defaultLayout
-import org.micoli.micraft.world.ItemType
 
 @Serializable data class Vec3(val x: Float, val y: Float, val z: Float)
 

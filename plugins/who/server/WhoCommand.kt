@@ -1,13 +1,13 @@
 package org.micoli.micraft.plugins.who
 
 import java.util.UUID
-import org.micoli.micraft.CommandContext
-import org.micoli.micraft.PluginCommand
+import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.PluginCommand
+import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.session.PlayerSession
 
 class WhoCommand : PluginCommand {
-    override val id = UUID.fromString("251f8410-ab3f-49f7-a9ab-1facb1a4519e")
+    override val id: UUID = UUID.fromString("251f8410-ab3f-49f7-a9ab-1facb1a4519e")
     override val name = "who"
     override val command = "/who"
     override val description = "Lists connected players with their position."

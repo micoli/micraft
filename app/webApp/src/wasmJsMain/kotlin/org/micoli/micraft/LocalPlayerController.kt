@@ -4,6 +4,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.babylon.*
 import org.micoli.micraft.combat.ShortcutSlot
+import org.micoli.micraft.game.NetworkStats
+import org.micoli.micraft.game.NpcManager
+import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.ItemRegistry
+import org.micoli.micraft.game.world.PlayerConstants
+import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.physics.AabbCollider
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
@@ -13,7 +20,6 @@ import org.micoli.micraft.player.speed
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.ui.HudData
 import org.micoli.micraft.ui.McUiState
-import org.micoli.micraft.world.*
 
 private const val PRED_DT = 16.0 / 1000.0
 private const val FLY_VERTICAL_SPEED = 8f

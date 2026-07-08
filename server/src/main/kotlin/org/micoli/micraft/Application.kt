@@ -9,6 +9,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import java.io.File
 import java.nio.file.Path
 import java.util.UUID
 import kotlinx.serialization.builtins.ListSerializer
@@ -24,74 +25,79 @@ import org.micoli.micraft.auth.OAuthProvider
 import org.micoli.micraft.auth.installAuthRoutes
 import org.micoli.micraft.auth.loadGroupsConfig
 import org.micoli.micraft.combat.AttackDefinition
-import org.micoli.micraft.combat.CombatConfigData
-import org.micoli.micraft.combat.CombatProcessor
-import org.micoli.micraft.combat.StatusEffectProcessor
-import org.micoli.micraft.command.availablePlayerSkins
+import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.commands.availablePlayerSkins
+import org.micoli.micraft.config.ConfigRegistry
+import org.micoli.micraft.config.validateYamlConfig
 import org.micoli.micraft.di.OptionalAuthProvider
 import org.micoli.micraft.di.OptionalTokenStore
 import org.micoli.micraft.di.OptionalWorldPersistence
 import org.micoli.micraft.di.PlayerPersister
 import org.micoli.micraft.di.SessionRegistry
 import org.micoli.micraft.di.appModules
+import org.micoli.micraft.game.GameConfig
+import org.micoli.micraft.game.GameLoop
+import org.micoli.micraft.game.SPAWN_X
+import org.micoli.micraft.game.SPAWN_Y
+import org.micoli.micraft.game.SPAWN_Z
+import org.micoli.micraft.game.ServerConfig
+import org.micoli.micraft.game.applyServerConfig
+import org.micoli.micraft.game.armor.ArmorDefinition
+import org.micoli.micraft.game.armor.ArmorRegistryLoader
+import org.micoli.micraft.game.chat.ChatChannelManager
+import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.combat.CombatConfigData
+import org.micoli.micraft.game.combat.CombatProcessor
+import org.micoli.micraft.game.combat.StatusEffectProcessor
+import org.micoli.micraft.game.drop.DropConfig
+import org.micoli.micraft.game.item.ItemRegistryLoader
+import org.micoli.micraft.game.keybinding.loadKeyBindings
+import org.micoli.micraft.game.loadServerConfig
+import org.micoli.micraft.game.macro.MACRO_CONTEXT_SCHEMA
+import org.micoli.micraft.game.macro.MacroContextVar
+import org.micoli.micraft.game.npc.NpcConfigLoader
+import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.npc.NpcRegistryLoader
+import org.micoli.micraft.game.npc.NpcSpawner
+import org.micoli.micraft.game.recipe.RecipeRegistryLoader
+import org.micoli.micraft.game.rpg.CharacterConstants
+import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.ExperienceProcessor
+import org.micoli.micraft.game.session.NetworkStats
+import org.micoli.micraft.game.tick.ChunkStreamer
+import org.micoli.micraft.game.tick.MovementProcessor
+import org.micoli.micraft.game.trade.TradeConfigLoader
+import org.micoli.micraft.game.trade.TradeManager
+import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.ItemRegistry
+import org.micoli.micraft.game.world.WorldItemManager
+import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.biome.BiomeRegistry
+import org.micoli.micraft.game.world.biome.loadBiomeRegistry
+import org.micoli.micraft.game.world.block.BlockBreaker
+import org.micoli.micraft.game.world.block.BlockPlacer
+import org.micoli.micraft.game.world.block.BlockRegistryLoader
+import org.micoli.micraft.game.world.house.loadHouseConfig
+import org.micoli.micraft.game.world.liquid.LiquidManager
+import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
+import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.game.world.road.loadRoadConfig
+import org.micoli.micraft.game.world.vegetation.VegetationConfig
+import org.micoli.micraft.game.world.vegetation.VegetationManager
+import org.micoli.micraft.game.world.weather.WeatherConfig
+import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.http.chunkRoutes
 import org.micoli.micraft.http.mapRoutes
 import org.micoli.micraft.http.metricsRoutes
-import org.micoli.micraft.macro.MACRO_CONTEXT_SCHEMA
-import org.micoli.micraft.macro.MacroContextVar
-import org.micoli.micraft.npc.NpcConfigLoader
-import org.micoli.micraft.npc.NpcManager
-import org.micoli.micraft.npc.NpcSpawner
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
-import org.micoli.micraft.player.rpg.CharacterConstants
 import org.micoli.micraft.player.rpg.CharacterData
-import org.micoli.micraft.rpg.ExperienceProcessor
-import org.micoli.micraft.rpg.character.DerivedStatsCalculator
-import org.micoli.micraft.session.NetworkStats
-import org.micoli.micraft.tick.BlockBreaker
-import org.micoli.micraft.tick.BlockPlacer
-import org.micoli.micraft.tick.ChunkStreamer
-import org.micoli.micraft.tick.LiquidManager
-import org.micoli.micraft.tick.MovementProcessor
-import org.micoli.micraft.tick.VegetationManager
-import org.micoli.micraft.trade.TradeConfigLoader
-import org.micoli.micraft.trade.TradeManager
 import org.micoli.micraft.ui.WIDGET_REGISTRY
 import org.micoli.micraft.ui.WidgetRegistryEntry
-import org.micoli.micraft.world.ArmorDefinition
-import org.micoli.micraft.world.ArmorRegistryLoader
-import org.micoli.micraft.world.BiomeRegistry
-import org.micoli.micraft.world.BlockRegistry
-import org.micoli.micraft.world.BlockRegistryLoader
-import org.micoli.micraft.world.ChatChannelManager
-import org.micoli.micraft.world.ChatService
-import org.micoli.micraft.world.DropConfig
-import org.micoli.micraft.world.GameConfig
-import org.micoli.micraft.world.I18nConfig
-import org.micoli.micraft.world.ItemRegistry
-import org.micoli.micraft.world.ItemRegistryLoader
-import org.micoli.micraft.world.NpcRegistryLoader
-import org.micoli.micraft.world.RecipeRegistryLoader
-import org.micoli.micraft.world.ServerConfig
-import org.micoli.micraft.world.VegetationConfig
-import org.micoli.micraft.world.WeatherConfig
-import org.micoli.micraft.world.WeatherManager
-import org.micoli.micraft.world.WorldItemManager
-import org.micoli.micraft.world.WorldState
-import org.micoli.micraft.world.applyServerConfig
-import org.micoli.micraft.world.loadBiomeRegistry
-import org.micoli.micraft.world.loadHouseConfig
-import org.micoli.micraft.world.loadKeyBindings
-import org.micoli.micraft.world.loadRoadConfig
-import org.micoli.micraft.world.loadServerConfig
-import org.micoli.micraft.world.proceduralGenerator.ProceduralChunkGenerator
-import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator
-import org.micoli.micraft.world.validateYamlConfig
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("Application")
@@ -103,8 +109,8 @@ fun main() {
 
 private val SERVER_ID: String = UUID.randomUUID().toString()
 val dataPath = "data"
-val configDir = Path.of(dataPath + "/config")
-val resourcesConfigDir = Path.of("resources/config")
+val configDir: Path = Path.of("$dataPath/config")
+val resourcesConfigDir: Path = Path.of("resources/config")
 
 fun Application.module() {
     install(WebSockets) {}
@@ -228,8 +234,7 @@ fun Application.module() {
     routing {
         val webBuildDir = System.getenv("MICRAFT_WEB_DIST")
         if (webBuildDir != null) {
-            staticFiles(
-                "/", java.io.File("$webBuildDir/kotlin-webpack/wasmJs/developmentExecutable"))
+            staticFiles("/", File("$webBuildDir/kotlin-webpack/wasmJs/developmentExecutable"))
         }
         get("/api/version") {
             call.respondText("""{"server":"$SERVER_ID"}""", ContentType.Application.Json)
@@ -484,7 +489,7 @@ fun Application.module() {
                     MapSerializer(String.serializer(), ArmorDefinition.serializer()), armors),
                 ContentType.Application.Json)
         }
-        staticFiles("/api/models", java.io.File("resources"))
+        staticFiles("/api/models", File("resources"))
         mapRoutes(gameLoop)
         metricsRoutes(gameLoop)
         chunkRoutes(world, tokenStore, serverConfig.chunks.httpWorkers)

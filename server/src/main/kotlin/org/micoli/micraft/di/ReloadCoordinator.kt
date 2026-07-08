@@ -1,23 +1,23 @@
 package org.micoli.micraft.di
 
 import java.nio.file.Path
-import org.micoli.micraft.RECONCILE_TOLERANCE_XZ
-import org.micoli.micraft.RECONCILE_TOLERANCE_Y
-import org.micoli.micraft.npc.NpcConfigLoader
-import org.micoli.micraft.npc.NpcManager
+import org.micoli.micraft.I18nConfig
+import org.micoli.micraft.game.RECONCILE_TOLERANCE_XZ
+import org.micoli.micraft.game.RECONCILE_TOLERANCE_Y
+import org.micoli.micraft.game.drop.DropConfig
+import org.micoli.micraft.game.npc.NpcConfigLoader
+import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.npc.NpcRegistryLoader
+import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.game.world.vegetation.VegetationConfig
+import org.micoli.micraft.game.world.vegetation.VegetationManager
+import org.micoli.micraft.game.world.weather.WeatherConfig
+import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.tick.VegetationManager
-import org.micoli.micraft.world.DropConfig
-import org.micoli.micraft.world.I18nConfig
-import org.micoli.micraft.world.NpcRegistryLoader
-import org.micoli.micraft.world.VegetationConfig
-import org.micoli.micraft.world.WeatherConfig
-import org.micoli.micraft.world.WeatherManager
-import org.micoli.micraft.world.WorldState
-import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 
 /**
- * Extracted from [org.micoli.micraft.GameLoop.reload] so `/reload` behavior can be tested in
+ * Extracted from [org.micoli.micraft.game.GameLoop.reload] so `/reload` behavior can be tested in
  * isolation.
  */
 class ReloadCoordinator(

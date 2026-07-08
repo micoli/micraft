@@ -3,7 +3,7 @@ package org.micoli.micraft.di
 import org.junit.Test
 import org.koin.dsl.koinApplication
 import org.koin.test.check.checkModules
-import org.micoli.micraft.CommandContext
+import org.micoli.micraft.command.CommandContext
 
 class AppModuleTest {
     @Suppress("DEPRECATION")

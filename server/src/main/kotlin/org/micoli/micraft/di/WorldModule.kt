@@ -3,21 +3,21 @@ package org.micoli.micraft.di
 import java.nio.file.Path
 import java.time.Instant
 import org.koin.dsl.module
+import org.micoli.micraft.config.validateYamlConfig
 import org.micoli.micraft.configDir
 import org.micoli.micraft.dataPath
+import org.micoli.micraft.game.GameConfig
+import org.micoli.micraft.game.world.WorldMetadata
+import org.micoli.micraft.game.world.WorldPersistence
+import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.biome.BiomeRegistry
+import org.micoli.micraft.game.world.biome.loadBiomeRegistry
+import org.micoli.micraft.game.world.house.loadHouseConfig
+import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
+import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.DebugChunkGenerator
+import org.micoli.micraft.game.world.road.loadRoadConfig
 import org.micoli.micraft.resourcesConfigDir
-import org.micoli.micraft.world.BiomeRegistry
-import org.micoli.micraft.world.GameConfig
-import org.micoli.micraft.world.WorldMetadata
-import org.micoli.micraft.world.WorldPersistence
-import org.micoli.micraft.world.WorldState
-import org.micoli.micraft.world.loadBiomeRegistry
-import org.micoli.micraft.world.loadHouseConfig
-import org.micoli.micraft.world.loadRoadConfig
-import org.micoli.micraft.world.proceduralGenerator.ProceduralChunkGenerator
-import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator
-import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.DebugChunkGenerator
-import org.micoli.micraft.world.validateYamlConfig
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("WorldModule")

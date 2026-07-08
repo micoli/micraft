@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import org.micoli.micraft.world.OAuthConfig
+import org.micoli.micraft.game.OAuthConfig
 
 class OAuthProviderTest {
     private val config =

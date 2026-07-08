@@ -1,10 +1,10 @@
 package org.micoli.micraft.plugins.teleport
 
 import kotlin.math.floor
+import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.WorldConstants
+import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.player.Vec3
-import org.micoli.micraft.world.BlockType
-import org.micoli.micraft.world.WorldConstants
-import org.micoli.micraft.world.WorldState
 
 fun safeTeleportPos(world: WorldState, target: Vec3): Vec3 {
     var y = floor(target.y).toInt()

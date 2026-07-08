@@ -2,9 +2,9 @@ package org.micoli.micraft.di
 
 import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.TokenStore
-import org.micoli.micraft.world.WorldPersistence
-import org.micoli.micraft.world.proceduralGenerator.house.HouseConfig
-import org.micoli.micraft.world.proceduralGenerator.road.RoadConfig
+import org.micoli.micraft.game.world.WorldPersistence
+import org.micoli.micraft.game.world.house.HouseConfig
+import org.micoli.micraft.game.world.road.RoadConfig
 
 /**
  * Koin's `single {}` cannot hold a `null` value (the instance factory throws once created), so

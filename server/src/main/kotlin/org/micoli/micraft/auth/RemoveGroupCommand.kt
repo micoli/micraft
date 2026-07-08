@@ -1,10 +1,10 @@
 package org.micoli.micraft.auth
 
 import java.util.UUID
-import org.micoli.micraft.CommandContext
-import org.micoli.micraft.PluginCommand
+import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.PluginCommand
+import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.session.PlayerSession
 
 class RemoveGroupCommand : PluginCommand {
     override val id: UUID = UUID.fromString("d5e6f7a8-b9c0-4123-d456-e7f8a9b0c123")

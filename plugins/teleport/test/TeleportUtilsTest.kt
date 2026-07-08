@@ -2,12 +2,12 @@ package org.micoli.micraft.plugins.teleport
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.WorldConstants
+import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.support.MapChunkGenerator
 import org.micoli.micraft.support.testWorld
-import org.micoli.micraft.world.BlockType
-import org.micoli.micraft.world.WorldConstants
-import org.micoli.micraft.world.WorldState
 
 class TeleportUtilsTest {
 

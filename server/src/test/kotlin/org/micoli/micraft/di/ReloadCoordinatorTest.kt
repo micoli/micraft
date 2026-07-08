@@ -5,25 +5,26 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.micoli.micraft.npc.NpcConfigLoader
-import org.micoli.micraft.npc.NpcManager
+import org.micoli.micraft.game.drop.DropConfig
+import org.micoli.micraft.game.npc.NpcConfigLoader
+import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.npc.NpcRegistryLoader
+import org.micoli.micraft.game.world.Chunk
+import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.block.BlockRegistryLoader
+import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.game.world.vegetation.VegetationConfig
+import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testI18n
 import org.micoli.micraft.support.testSession
 import org.micoli.micraft.support.testWeatherManager
 import org.micoli.micraft.support.testWorld
-import org.micoli.micraft.tick.VegetationManager
-import org.micoli.micraft.world.BlockRegistryLoader
-import org.micoli.micraft.world.DropConfig
-import org.micoli.micraft.world.NpcRegistryLoader
-import org.micoli.micraft.world.VegetationConfig
 
 class ReloadCoordinatorTest {
 
     private fun buildCoordinator(
-        reloadBiomes:
-            (() -> org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator)? =
-            null,
+        reloadBiomes: (() -> ChunkGenerator)? = null,
         reloadRegistries: (() -> Unit)? = null,
         reloadGameConfig: (() -> Unit)? = null,
         sessionRegistry: SessionRegistry = SessionRegistry(),
@@ -63,9 +64,8 @@ class ReloadCoordinatorTest {
     fun reload_invokesReloadBiomesWhenProvided() = runBlocking {
         var invoked = false
         val fakeGenerator =
-            object : org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator {
-                override fun generate(pos: org.micoli.micraft.world.ChunkPos) =
-                    org.micoli.micraft.world.Chunk.empty(pos)
+            object : ChunkGenerator {
+                override fun generate(pos: ChunkPos) = Chunk.empty(pos)
 
                 override fun biomeAt(wx: Int, wz: Int) = "plains"
             }

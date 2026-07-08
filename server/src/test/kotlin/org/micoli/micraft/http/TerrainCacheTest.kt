@@ -5,8 +5,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.support.testWorld
-import org.micoli.micraft.world.ChunkPos
 
 class TerrainCacheTest {
     @Test

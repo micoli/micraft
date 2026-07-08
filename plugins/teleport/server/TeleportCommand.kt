@@ -1,14 +1,14 @@
 package org.micoli.micraft.plugins.teleport
 
 import java.util.UUID
-import org.micoli.micraft.CommandContext
-import org.micoli.micraft.PluginCommand
+import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.PluginCommand
+import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.session.PlayerSession
 
 class TeleportCommand : PluginCommand {
-    override val id = UUID.fromString("664abb28-f6c2-45fe-91de-da3c38562fbc")
+    override val id: UUID = UUID.fromString("664abb28-f6c2-45fe-91de-da3c38562fbc")
     override val name = "teleport"
     override val command = "/teleport"
     override val description = "Teleports you to the given coordinates."

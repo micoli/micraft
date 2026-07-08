@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import org.micoli.micraft.world.OAuthConfig
+import org.micoli.micraft.game.OAuthConfig
 
 class OAuthProvider(private val config: OAuthConfig, @Volatile var groupsConfig: GroupsConfig) :
     AuthProvider {

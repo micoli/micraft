@@ -4,7 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.lang.management.ManagementFactory
-import org.micoli.micraft.GameLoop
+import org.micoli.micraft.game.GameLoop
 
 // Rough per-entry sizes for working-set estimates (no JAMM/JOL available):
 // BlockPos = 3 Int + obj header ≈ 28 B; ConcurrentHashMap node ≈ 56 B.

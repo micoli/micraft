@@ -1,7 +1,7 @@
 package org.micoli.micraft.player
 
 import kotlinx.serialization.Serializable
-import org.micoli.micraft.world.PlayerConstants
+import org.micoli.micraft.game.world.PlayerConstants
 
 @Serializable
 enum class PlayerStance {

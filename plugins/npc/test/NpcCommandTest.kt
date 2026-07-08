@@ -3,10 +3,10 @@ package org.micoli.micraft.plugins.npc
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.micoli.micraft.npc.NpcDefinition
-import org.micoli.micraft.npc.NpcManager
-import org.micoli.micraft.npc.behaviors.InteractionableNpcBehavior
-import org.micoli.micraft.npc.behaviors.RandomMovableNpcBehavior
+import org.micoli.micraft.game.npc.NpcDefinition
+import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.npc.behaviors.InteractionableNpcBehavior
+import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext

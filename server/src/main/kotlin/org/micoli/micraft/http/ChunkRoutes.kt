@@ -6,10 +6,10 @@ import io.ktor.server.routing.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.micoli.micraft.auth.TokenStore
+import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
-import org.micoli.micraft.world.ChunkPos
-import org.micoli.micraft.world.WorldState
 
 fun Route.chunkRoutes(world: WorldState, tokenStore: TokenStore?, httpWorkers: Int) {
     val dispatcher = Dispatchers.IO.limitedParallelism(httpWorkers)

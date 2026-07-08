@@ -5,6 +5,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import org.micoli.micraft.game.world.BlockDefinition
+import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockType
 
 class BlockRegistryTest {
 

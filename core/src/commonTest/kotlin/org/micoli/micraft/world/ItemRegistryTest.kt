@@ -4,6 +4,10 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.ItemDefinition
+import org.micoli.micraft.game.world.ItemRegistry
+import org.micoli.micraft.game.world.ItemType
 
 class ItemRegistryTest {
 

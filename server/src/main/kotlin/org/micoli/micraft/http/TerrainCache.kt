@@ -7,12 +7,11 @@ import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.micoli.micraft.world.BlockRegistry
-import org.micoli.micraft.world.BlockType
-import org.micoli.micraft.world.Chunk
-import org.micoli.micraft.world.ChunkPos
+import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.Chunk
+import org.micoli.micraft.game.world.ChunkPos
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("TerrainCache")

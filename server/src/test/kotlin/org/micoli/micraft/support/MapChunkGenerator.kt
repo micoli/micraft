@@ -1,10 +1,10 @@
 package org.micoli.micraft.support
 
-import org.micoli.micraft.world.BlockType
-import org.micoli.micraft.world.Chunk
-import org.micoli.micraft.world.ChunkPos
-import org.micoli.micraft.world.WorldConstants
-import org.micoli.micraft.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.Chunk
+import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.WorldConstants
+import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 
 class MapChunkGenerator(
     private val blocks: Map<Triple<Int, Int, Int>, BlockType> = emptyMap(),

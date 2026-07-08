@@ -1,13 +1,13 @@
 package org.micoli.micraft.plugins.yield
 
 import java.util.UUID
-import org.micoli.micraft.CommandContext
-import org.micoli.micraft.PluginCommand
+import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.PluginCommand
+import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.session.PlayerSession
 
 class YieldCommand : PluginCommand {
-    override val id = UUID.fromString("1eb67076-83cd-41da-9895-f37b0a0927a6")
+    override val id: UUID = UUID.fromString("1eb67076-83cd-41da-9895-f37b0a0927a6")
     override val name = "yield"
     override val command = "/yield"
     override val description = "Broadcasts a message to all connected players."

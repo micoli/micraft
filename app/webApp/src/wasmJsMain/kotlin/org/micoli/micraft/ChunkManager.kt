@@ -2,7 +2,11 @@ package org.micoli.micraft
 
 import kotlin.math.*
 import org.micoli.micraft.babylon.*
-import org.micoli.micraft.world.*
+import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.Chunk
+import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.WorldConstants
 
 // AO neighbor offsets: [face][vertex][neighbor(s1,s2,corner)][axis(dx,dy,dz)]
 private val AO_NEIGHBORS: Array<Array<Array<IntArray>>> =

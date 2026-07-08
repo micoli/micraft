@@ -1,10 +1,10 @@
 package org.micoli.micraft.auth
 
 import java.util.UUID
-import org.micoli.micraft.CommandContext
-import org.micoli.micraft.PluginCommand
+import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.PluginCommand
+import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.session.PlayerSession
 
 class AddUserCommand : PluginCommand {
     override val id: UUID = UUID.fromString("b3c4d5e6-f7a8-4901-b234-c5d6e7f8a901")

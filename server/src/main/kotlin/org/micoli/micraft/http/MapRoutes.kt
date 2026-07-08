@@ -9,10 +9,10 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.imageio.ImageIO
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.micoli.micraft.GameLoop
-import org.micoli.micraft.world.BlockRegistry
-import org.micoli.micraft.world.proceduralGenerator.ProceduralChunkGenerator
-import org.micoli.micraft.world.proceduralGenerator.weather.WeatherZoneInfo
+import org.micoli.micraft.game.GameLoop
+import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.WeatherZoneInfo
+import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
 
 @Serializable
 data class PlayerMapInfo(
