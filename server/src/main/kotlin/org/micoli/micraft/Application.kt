@@ -12,10 +12,6 @@ import io.ktor.server.websocket.*
 import java.io.File
 import java.nio.file.Path
 import java.util.UUID
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.MapSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
 import org.koin.core.parameter.parametersOf
 import org.koin.ktor.ext.get
 import org.koin.ktor.plugin.Koin
@@ -26,7 +22,6 @@ import org.micoli.micraft.auth.installAuthRoutes
 import org.micoli.micraft.auth.loadGroupsConfig
 import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.command.CommandContext
-import org.micoli.micraft.command.commands.availablePlayerSkins
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.config.validateYamlConfig
 import org.micoli.micraft.di.OptionalAuthProvider
@@ -37,12 +32,8 @@ import org.micoli.micraft.di.SessionRegistry
 import org.micoli.micraft.di.appModules
 import org.micoli.micraft.game.GameConfig
 import org.micoli.micraft.game.GameLoop
-import org.micoli.micraft.game.SPAWN_X
-import org.micoli.micraft.game.SPAWN_Y
-import org.micoli.micraft.game.SPAWN_Z
 import org.micoli.micraft.game.ServerConfig
 import org.micoli.micraft.game.applyServerConfig
-import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.armor.ArmorRegistryLoader
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
@@ -51,17 +42,12 @@ import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
 import org.micoli.micraft.game.item.ItemRegistryLoader
-import org.micoli.micraft.game.keybinding.loadKeyBindings
 import org.micoli.micraft.game.loadServerConfig
-import org.micoli.micraft.game.macro.MACRO_CONTEXT_SCHEMA
-import org.micoli.micraft.game.macro.MacroContextVar
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
-import org.micoli.micraft.game.rpg.CharacterConstants
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.session.NetworkStats
 import org.micoli.micraft.game.tick.ChunkStreamer
@@ -86,18 +72,25 @@ import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.game.world.weather.WeatherConfig
 import org.micoli.micraft.game.world.weather.WeatherManager
+import org.micoli.micraft.http.ArmorsController
+import org.micoli.micraft.http.AttacksController
+import org.micoli.micraft.http.AutocompleteController
+import org.micoli.micraft.http.BiomesController
+import org.micoli.micraft.http.CharacterController
+import org.micoli.micraft.http.ChunkController
+import org.micoli.micraft.http.I18nController
+import org.micoli.micraft.http.ItemsController
+import org.micoli.micraft.http.KeybindingsController
+import org.micoli.micraft.http.LayoutController
+import org.micoli.micraft.http.MacrosController
+import org.micoli.micraft.http.MapController
+import org.micoli.micraft.http.MetricsController
+import org.micoli.micraft.http.PlayerArmorsController
+import org.micoli.micraft.http.PlayerRpgController
+import org.micoli.micraft.http.PlayerSkinController
+import org.micoli.micraft.http.SkinsController
 import org.micoli.micraft.http.TerrainCache
-import org.micoli.micraft.http.chunkRoutes
-import org.micoli.micraft.http.mapRoutes
-import org.micoli.micraft.http.metricsRoutes
-import org.micoli.micraft.player.Orientation
-import org.micoli.micraft.player.PlayerState
-import org.micoli.micraft.player.Vec3
-import org.micoli.micraft.player.rpg.BaseStats
-import org.micoli.micraft.player.rpg.CharacterClass
-import org.micoli.micraft.player.rpg.CharacterData
-import org.micoli.micraft.ui.WIDGET_REGISTRY
-import org.micoli.micraft.ui.WidgetRegistryEntry
+import org.micoli.micraft.http.VersionController
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("Application")
@@ -236,263 +229,25 @@ fun Application.module() {
         if (webBuildDir != null) {
             staticFiles("/", File("$webBuildDir/kotlin-webpack/wasmJs/developmentExecutable"))
         }
-        get("/api/version") {
-            call.respondText("""{"server":"$SERVER_ID"}""", ContentType.Application.Json)
-        }
-        get("/api/keybindings") {
-            val player = call.request.queryParameters["player"]
-            val bindings =
-                if (player != null && persistence != null) {
-                    persistence.loadPlayerKeyBindings(player)
-                } else {
-                    loadKeyBindings(Path.of(dataPath + "/config/keybindings.yaml"))
-                }
-            val serializer = MapSerializer(String.serializer(), ListSerializer(String.serializer()))
-            call.respondText(
-                Json.encodeToString(serializer, bindings), ContentType.Application.Json)
-        }
-        get("/api/autocomplete/{commandId}/{argIndex}") {
-            val commandId =
-                call.parameters["commandId"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val argIndex =
-                call.parameters["argIndex"]?.toIntOrNull()
-                    ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val partial = call.request.queryParameters["partial"] ?: ""
-            val player = call.request.queryParameters["player"] ?: ""
-            val results = gameLoop.autocomplete(commandId, argIndex, partial, player)
-            call.respondText(
-                Json.encodeToString(ListSerializer(String.serializer()), results),
-                ContentType.Application.Json)
-        }
-        get("/api/i18n/{locale}") {
-            val locale = call.parameters["locale"] ?: "en"
-            val keys = gameLoop.i18n.clientKeys(locale)
-            val serializer = MapSerializer(String.serializer(), String.serializer())
-            call.respondText(Json.encodeToString(serializer, keys), ContentType.Application.Json)
-        }
-        get("/api/layout/registry") {
-            call.respondText(
-                Json.encodeToString(
-                    ListSerializer(WidgetRegistryEntry.serializer()), WIDGET_REGISTRY),
-                ContentType.Application.Json)
-        }
-        get("/api/items/meta") {
-            val serializer =
-                MapSerializer(
-                    String.serializer(), MapSerializer(String.serializer(), String.serializer()))
-            val meta =
-                ItemRegistry.keys().associate { type ->
-                    val def = ItemRegistry.get(type)
-                    type.id to mapOf("label" to def.label, "bg" to def.bg)
-                }
-            call.respondText(Json.encodeToString(serializer, meta), ContentType.Application.Json)
-        }
-        get("/api/attacks") {
-            val serializer =
-                MapSerializer(
-                    String.serializer(), MapSerializer(String.serializer(), String.serializer()))
-            val meta =
-                gameLoop.attackRegistry.mapValues { (_, def) ->
-                    mapOf(
-                        "damageType" to def.damageType.name,
-                        "manaCost" to def.manaCost.toString(),
-                        "rageCost" to def.rageCost.toString(),
-                        "cooldownMs" to def.cooldownMs.toString(),
-                    )
-                }
-            call.respondText(Json.encodeToString(serializer, meta), ContentType.Application.Json)
-        }
-        get("/api/macros/context") {
-            call.respondText(
-                Json.encodeToString(
-                    ListSerializer(MacroContextVar.serializer()), MACRO_CONTEXT_SCHEMA),
-                ContentType.Application.Json,
-            )
-        }
-        get("/api/biomes") {
-            val colors =
-                biomeRegistry.biomes.associate { b ->
-                    b.id to (b.grassColor ?: listOf(0.47, 0.75, 0.35))
-                }
-            val serializer = MapSerializer(String.serializer(), ListSerializer(Double.serializer()))
-            call.respondText(Json.encodeToString(serializer, colors), ContentType.Application.Json)
-        }
-        get("/api/player/{name}/skin") {
-            val name = call.parameters["name"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val state =
-                persistence?.loadPlayerState(name)
-                    ?: return@get call.respond(HttpStatusCode.NotFound)
-            call.respondText("""{"skin":"${state.skin}"}""", ContentType.Application.Json)
-        }
-        put("/api/player/{name}/skin") {
-            val name = call.parameters["name"] ?: return@put call.respond(HttpStatusCode.BadRequest)
-            val body = call.receiveText()
-            val skin =
-                Regex(""""skin"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1)
-                    ?: return@put call.respond(HttpStatusCode.BadRequest)
-            val available = availablePlayerSkins()
-            if (skin !in available) return@put call.respond(HttpStatusCode.BadRequest)
-            val p = persistence ?: return@put call.respond(HttpStatusCode.ServiceUnavailable)
-            val existing = p.loadPlayerState(name)
-            val state =
-                existing?.copy(skin = skin)
-                    ?: PlayerState(
-                        id = UUID.randomUUID().toString(),
-                        name = name,
-                        pos = Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z),
-                        orientation = Orientation(0f, 0f),
-                        skin = skin,
-                        rpgOptOut = false,
-                    )
-            p.savePlayerState(name, state)
-            call.respondText("""{"skin":"$skin"}""", ContentType.Application.Json)
-        }
-        get("/api/player/{name}/armors") {
-            val name = call.parameters["name"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val armors = persistence?.loadPlayerState(name)?.armors ?: emptyList()
-            call.respondText(
-                Json.encodeToString(ListSerializer(String.serializer()), armors),
-                ContentType.Application.Json)
-        }
-        get("/api/player/{name}/rpg") {
-            val name = call.parameters["name"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val characterData =
-                persistence?.loadPlayerState(name)?.characterData
-                    ?: return@get call.respond(HttpStatusCode.NotFound)
-            call.respondText(
-                """{"characterClass":"${characterData.characterClass}"}""",
-                ContentType.Application.Json)
-        }
-        post("/api/character/create") {
-            val body = call.receiveText()
-            val playerName =
-                Regex(""""playerName"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1)
-                    ?: return@post call.respond(HttpStatusCode.BadRequest)
-            val skin =
-                Regex(""""skin"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1) ?: "player"
-            if (playerName.length !in 3..24) return@post call.respond(HttpStatusCode.BadRequest)
-            val available = availablePlayerSkins()
-            val safeSkin = if (skin in available) skin else available.firstOrNull() ?: "player"
-            val p = persistence ?: return@post call.respond(HttpStatusCode.ServiceUnavailable)
-            val existing = p.loadPlayerState(playerName)
-            val state =
-                existing?.copy(skin = safeSkin)
-                    ?: PlayerState(
-                        id = UUID.randomUUID().toString(),
-                        name = playerName,
-                        pos = Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z),
-                        orientation = Orientation(0f, 0f),
-                        skin = safeSkin,
-                        rpgOptOut = true,
-                    )
-            p.savePlayerState(playerName, state)
-            call.respondText(
-                """{"playerName":"$playerName","skin":"$safeSkin"}""", ContentType.Application.Json)
-        }
-        post("/api/character/rpgcreate") {
-            val body = call.receiveText()
-            val playerName =
-                Regex(""""playerName"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1)
-                    ?: return@post call.respond(HttpStatusCode.BadRequest)
-            if (playerName.length !in 3..24) return@post call.respond(HttpStatusCode.BadRequest)
-            val skin =
-                Regex(""""skin"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1) ?: "player"
-            val characterClassStr =
-                Regex(""""characterClass"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1)
-                    ?: return@post call.respond(HttpStatusCode.BadRequest)
-            val characterClass =
-                runCatching { CharacterClass.valueOf(characterClassStr.uppercase()) }.getOrNull()
-                    ?: return@post call.respond(HttpStatusCode.BadRequest)
-            fun extractInt(field: String): Int? =
-                Regex(""""$field"\s*:\s*(\d+)""").find(body)?.groupValues?.get(1)?.toIntOrNull()
-            val str = extractInt("str") ?: return@post call.respond(HttpStatusCode.BadRequest)
-            val dex = extractInt("dex") ?: return@post call.respond(HttpStatusCode.BadRequest)
-            val intel = extractInt("intel") ?: return@post call.respond(HttpStatusCode.BadRequest)
-            val wis = extractInt("wis") ?: return@post call.respond(HttpStatusCode.BadRequest)
-            val con = extractInt("con") ?: return@post call.respond(HttpStatusCode.BadRequest)
-            val cha = extractInt("cha") ?: return@post call.respond(HttpStatusCode.BadRequest)
-            val statValues = listOf(str, dex, intel, wis, con, cha)
-            if (statValues.any {
-                it !in CharacterConstants.STAT_MIN_BUY..CharacterConstants.STAT_MAX_BUY
-            })
-                return@post call.respond(HttpStatusCode.BadRequest)
-            val totalCost = statValues.sumOf { CharacterConstants.POINT_BUY_COST[it] ?: 9 }
-            if (totalCost > CharacterConstants.POINT_BUY_BUDGET)
-                return@post call.respond(HttpStatusCode.BadRequest)
-            val p = persistence ?: return@post call.respond(HttpStatusCode.ServiceUnavailable)
-            val existing = p.loadPlayerState(playerName)
-            if (existing?.characterData != null) return@post call.respond(HttpStatusCode.Conflict)
-            val finalStats =
-                BaseStats(
-                    str =
-                        (str + characterClass.strBonus).coerceIn(
-                            1, CharacterConstants.STAT_MAX_TOTAL),
-                    dex =
-                        (dex + characterClass.dexBonus).coerceIn(
-                            1, CharacterConstants.STAT_MAX_TOTAL),
-                    intel =
-                        (intel + characterClass.intelBonus).coerceIn(
-                            1, CharacterConstants.STAT_MAX_TOTAL),
-                    wis =
-                        (wis + characterClass.wisBonus).coerceIn(
-                            1, CharacterConstants.STAT_MAX_TOTAL),
-                    con =
-                        (con + characterClass.conBonus).coerceIn(
-                            1, CharacterConstants.STAT_MAX_TOTAL),
-                    cha =
-                        (cha + characterClass.chaBonus).coerceIn(
-                            1, CharacterConstants.STAT_MAX_TOTAL),
-                )
-            val prelimChar =
-                CharacterData(
-                    id = UUID.randomUUID().toString(),
-                    name = playerName,
-                    characterClass = characterClass,
-                    baseStats = finalStats,
-                    currentHp = 0,
-                    currentMana = 0,
-                )
-            val derived = DerivedStatsCalculator.compute(prelimChar)
-            val character =
-                prelimChar.copy(currentHp = derived.maxHp, currentMana = derived.maxMana)
-            val available = availablePlayerSkins()
-            val safeSkin = if (skin in available) skin else available.firstOrNull() ?: "player"
-            val state =
-                existing?.copy(skin = safeSkin, characterData = character)
-                    ?: PlayerState(
-                        id = UUID.randomUUID().toString(),
-                        name = playerName,
-                        pos = Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z),
-                        orientation = Orientation(0f, 0f),
-                        skin = safeSkin,
-                        rpgOptOut = false,
-                        characterData = character,
-                    )
-            p.savePlayerState(playerName, state)
-            call.respondText(
-                """{"playerName":"$playerName","characterClass":"${characterClass.name}"}""",
-                ContentType.Application.Json)
-        }
-        get("/api/skins") {
-            val skins = availablePlayerSkins()
-            call.respondText(
-                Json.encodeToString(ListSerializer(String.serializer()), skins),
-                ContentType.Application.Json)
-        }
-        get("/api/armors") {
-            val armors =
-                ArmorRegistryLoader(
-                        Path.of("resources/armors"), Path.of("$dataPath/resources/armors"))
-                    .load()
-            call.respondText(
-                Json.encodeToString(
-                    MapSerializer(String.serializer(), ArmorDefinition.serializer()), armors),
-                ContentType.Application.Json)
-        }
+        VersionController(SERVER_ID).register(this)
+        KeybindingsController(persistence, dataPath).register(this)
+        AutocompleteController(gameLoop).register(this)
+        I18nController(gameLoop).register(this)
+        LayoutController().register(this)
+        ItemsController().register(this)
+        AttacksController(gameLoop).register(this)
+        MacrosController().register(this)
+        BiomesController(biomeRegistry).register(this)
+        PlayerSkinController(persistence).register(this)
+        PlayerArmorsController(persistence).register(this)
+        PlayerRpgController(persistence).register(this)
+        CharacterController(persistence).register(this)
+        SkinsController().register(this)
+        ArmorsController(dataPath).register(this)
         staticFiles("/api/models", File("resources"))
-        mapRoutes(gameLoop)
-        metricsRoutes(gameLoop)
-        chunkRoutes(world, tokenStore, serverConfig.chunks.httpWorkers)
+        MapController(gameLoop).register(this)
+        MetricsController(gameLoop).register(this)
+        ChunkController(world, tokenStore, serverConfig.chunks.httpWorkers).register(this)
         webSocket("/game") { gameLoop.onConnect(this) }
         webSocket("/chunks") { gameLoop.onChunkConnect(this) }
     }

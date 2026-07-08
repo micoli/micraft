@@ -1,4 +1,4 @@
-package org.micoli.micraft.http
+package org.micoli.micraft.http.chunks
 
 import io.ktor.client.request.*
 import io.ktor.client.statement.*

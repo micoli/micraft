@@ -1,4 +1,4 @@
-package org.micoli.micraft.http
+package org.micoli.micraft.http.map
 
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -12,6 +12,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.micoli.micraft.http.NpcMapInfo
+import org.micoli.micraft.http.PlayerMapInfo
 import org.micoli.micraft.module
 
 class MapRoutesTest {

@@ -1,4 +1,4 @@
-package org.micoli.micraft.http
+package org.micoli.micraft.http.metrics
 
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -11,6 +11,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.micoli.micraft.game.GameLoop
+import org.micoli.micraft.http.MetricsController
+import org.micoli.micraft.http.buildPrometheusMetrics
+import org.micoli.micraft.http.buildStatusSnapshot
 import org.micoli.micraft.support.testWorld
 
 class MetricsRoutesTest {
@@ -18,7 +21,7 @@ class MetricsRoutesTest {
     @Test
     fun `metrics endpoint exposes prometheus gauges`() = testApplication {
         val gameLoop = GameLoop(testWorld())
-        application { routing { metricsRoutes(gameLoop) } }
+        application { routing { MetricsController(gameLoop).register(this) } }
 
         val r = client.get("/metrics")
         assertEquals(HttpStatusCode.OK, r.status)
@@ -32,7 +35,7 @@ class MetricsRoutesTest {
     @Test
     fun `status endpoint renders html snapshot`() = testApplication {
         val gameLoop = GameLoop(testWorld())
-        application { routing { metricsRoutes(gameLoop) } }
+        application { routing { MetricsController(gameLoop).register(this) } }
 
         val r = client.get("/status")
         assertEquals(HttpStatusCode.OK, r.status)

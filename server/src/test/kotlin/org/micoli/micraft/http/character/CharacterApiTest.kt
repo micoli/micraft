@@ -1,4 +1,4 @@
-package org.micoli.micraft.http
+package org.micoli.micraft.http.character
 
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody

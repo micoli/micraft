@@ -1,4 +1,4 @@
-package org.micoli.micraft.http
+package org.micoli.micraft.http.terrain
 
 import java.nio.file.Files
 import kotlin.test.Test
@@ -6,6 +6,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.http.TerrainCache
+import org.micoli.micraft.http.topBlockColor
+import org.micoli.micraft.http.topBlockY
 import org.micoli.micraft.support.testWorld
 
 class TerrainCacheTest {

@@ -188,13 +188,18 @@ data class StatusSnapshot(
     val processors: Int,
 )
 
-fun Route.metricsRoutes(gameLoop: GameLoop) {
-    get("/metrics") { call.respondText(buildPrometheusMetrics(gameLoop), ContentType.Text.Plain) }
+class MetricsController(private val gameLoop: GameLoop) {
+    fun register(route: Route) =
+        route.apply {
+            get("/metrics") {
+                call.respondText(buildPrometheusMetrics(gameLoop), ContentType.Text.Plain)
+            }
 
-    get("/status") {
-        val s = buildStatusSnapshot(gameLoop)
-        call.respondText(buildStatusHtml(s), ContentType.Text.Html)
-    }
+            get("/status") {
+                val s = buildStatusSnapshot(gameLoop)
+                call.respondText(buildStatusHtml(s), ContentType.Text.Html)
+            }
+        }
 }
 
 private fun kb(bytes: Long) = if (bytes < 1024) "${bytes} B" else "${bytes / 1024} KB"
