@@ -127,6 +127,7 @@ export type UiAction =
       keybindings: Record<string, string[]>;
       customCommands: Record<string, string[]>;
       macros?: Record<string, string>;
+      fieldOfView?: number;
     }
   | { type: "pause_menu_show" }
   | { type: "pause_menu_hide" }
@@ -277,6 +278,7 @@ export function reducer(state: UiState, action: UiAction): UiState {
             keybindings: action.keybindings,
             customCommands: action.customCommands,
             ...(action.macros !== undefined ? { macros: action.macros } : {}),
+            ...(action.fieldOfView !== undefined ? { fieldOfView: action.fieldOfView } : {}),
           }
         : state.preferences;
       return { ...state, preferences: prefs, preferencesOpen: false };

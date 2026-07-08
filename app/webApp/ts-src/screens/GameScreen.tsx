@@ -55,6 +55,7 @@ export function GameScreen() {
     chunkDebugVisible: boolean;
     keybindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
+    fieldOfView?: number;
   }) => {
     dispatch({ type: "preferences_save", ...payload });
     if (window.mcState) {

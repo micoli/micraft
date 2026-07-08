@@ -42,6 +42,7 @@ data class PlayerState(
     val armors: List<String> = emptyList(),
     val animatedFavicon: Boolean = true,
     val chunkDebugVisible: Boolean = false,
+    val fieldOfView: Int = 70,
     val knownRecipes: Set<String> = emptySet(),
     val characterData: CharacterData? = null,
     val rpgOptOut: Boolean = true,

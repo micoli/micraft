@@ -200,6 +200,25 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                   <span>{label}</span>
                 </div>
               ))}
+              <div className="flex flex-col gap-1 py-2 border-b border-[#2a2a2a]">
+                <div className="flex justify-between text-sm">
+                  <span>Field of View</span>
+                  <span className="text-[#aaa]">{pref.localFov}°</span>
+                </div>
+                <input
+                  type="range"
+                  min={60}
+                  max={120}
+                  step={1}
+                  value={pref.localFov}
+                  onChange={(e) => pref.setLocalFov(Number(e.target.value))}
+                  className="w-full accent-[#888]"
+                />
+                <div className="flex justify-between text-xs text-[#666]">
+                  <span>60° (narrow)</span>
+                  <span>120° (fisheye)</span>
+                </div>
+              </div>
             </>
           )}
 

@@ -433,8 +433,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             is ServerMessage.PlayerRespawned -> jsPlayerRespawned(Json.encodeToString(msg))
             is ServerMessage.XpGained -> jsXpGained(Json.encodeToString(msg))
             is ServerMessage.WeatherUpdate -> jsSetWeatherZones(Json.encodeToString(msg.zones))
-            is ServerMessage.PreferencesSync ->
+            is ServerMessage.PreferencesSync -> {
+                jsCameraSetFov(camera, msg.fieldOfView)
                 uiState.setPreferencesSync(Json.encodeToString<ServerMessage.PreferencesSync>(msg))
+            }
             is ServerMessage.WorldUpdate ->
                 msg.changes.forEach { change ->
                     val cx = change.pos.x.floorDiv(WorldConstants.CHUNK_SIZE)

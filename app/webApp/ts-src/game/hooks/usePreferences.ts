@@ -9,6 +9,7 @@ export interface SavePayload {
   chunkDebugVisible: boolean;
   keybindings: Record<string, string[]>;
   customCommands: Record<string, string[]>;
+  fieldOfView: number;
 }
 
 export interface CustomCmdEntry {
@@ -91,6 +92,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
   const [localShaders, setLocalShaders] = useState(true);
   const [localAnimatedFavicon, setLocalAnimatedFavicon] = useState(true);
   const [localChunkDebugVisible, setLocalChunkDebugVisible] = useState(false);
+  const [localFov, setLocalFov] = useState(70);
   const [localBindings, setLocalBindings] = useState<Record<string, string[]>>({});
   const [localCustomCmds, setLocalCustomCmds] = useState<CustomCmdEntry[]>([]);
   const [recording, setRecording] = useState<{ action: string; index: number } | null>(null);
@@ -111,6 +113,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
       setLocalShaders(preferences.shadersEnabled);
       setLocalAnimatedFavicon(preferences.animatedFavicon ?? true);
       setLocalChunkDebugVisible(preferences.chunkDebugVisible ?? false);
+      setLocalFov(preferences.fieldOfView ?? 70);
       setLocalBindings(preferences.keybindings ? { ...preferences.keybindings } : {});
       setLocalCustomCmds(Object.entries(preferences.customCommands || {}).map(([text, keys]) => ({ text, keys })));
       setRecording(null);
@@ -256,6 +259,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
       chunkDebugVisible: localChunkDebugVisible,
       keybindings: localBindings,
       customCommands,
+      fieldOfView: localFov,
     });
   };
 
@@ -277,6 +281,8 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
     setLocalAnimatedFavicon,
     localChunkDebugVisible,
     setLocalChunkDebugVisible,
+    localFov,
+    setLocalFov,
     localBindings,
     localCustomCmds,
     recording,

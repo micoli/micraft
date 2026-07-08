@@ -168,6 +168,7 @@ sealed class ServerMessage {
         val animatedFavicon: Boolean = true,
         val chunkDebugVisible: Boolean = false,
         val macros: Map<String, String> = emptyMap(),
+        val fieldOfView: Int = 70,
     ) : ServerMessage()
 
     @ProtoId(25)

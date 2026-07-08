@@ -464,6 +464,7 @@ class GameLoop(
             animatedFavicon = session.state.animatedFavicon,
             chunkDebugVisible = session.state.chunkDebugVisible,
             macros = macros,
+            fieldOfView = session.state.fieldOfView,
         )
     }
 
@@ -484,6 +485,7 @@ class GameLoop(
                 shadersEnabled = msg.shadersEnabled,
                 animatedFavicon = msg.animatedFavicon,
                 chunkDebugVisible = msg.chunkDebugVisible,
+                fieldOfView = msg.fieldOfView,
             )
         if (msg.keybindings.isNotEmpty()) {
             persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
@@ -868,6 +870,7 @@ class GameLoop(
                 armors = saved?.armors ?: emptyList(),
                 animatedFavicon = saved?.animatedFavicon ?: true,
                 chunkDebugVisible = saved?.chunkDebugVisible ?: false,
+                fieldOfView = saved?.fieldOfView ?: 70,
                 knownRecipes = saved?.knownRecipes ?: emptySet(),
                 rpgOptOut =
                     if (saved?.characterData != null) false else (saved?.rpgOptOut ?: false),
