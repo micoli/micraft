@@ -24,6 +24,7 @@ import org.micoli.micraft.di.PlayerPersister
 import org.micoli.micraft.di.ReloadCoordinator
 import org.micoli.micraft.di.SessionRegistry
 import org.micoli.micraft.http.TerrainCache
+import org.micoli.micraft.macro.MacroContext
 import org.micoli.micraft.macro.MacroExecutor
 import org.micoli.micraft.npc.NpcConfigLoader
 import org.micoli.micraft.npc.NpcManager
@@ -498,6 +499,22 @@ class GameLoop(
         if (shadersChanged) session.send(ServerMessage.ShadersUpdate(msg.shadersEnabled))
     }
 
+    private fun buildMacroContext(session: PlayerSession): MacroContext {
+        val state = session.state
+        return MacroContext(
+            posX = state.pos.x,
+            posY = state.pos.y,
+            posZ = state.pos.z,
+            biome = state.biome,
+            yaw = state.orientation.yaw,
+            pitch = state.orientation.pitch,
+            currentHp = session.characterData?.currentHp ?: 0,
+            currentMana = session.characterData?.currentMana ?: 0,
+            effects =
+                session.combatState.activeEffects.map { it.effect::class.simpleName ?: "Unknown" },
+        )
+    }
+
     private suspend fun handleRunMacro(session: PlayerSession, msg: ClientMessage.RunMacro) {
         val macros = persistence?.loadPlayerMacros(session.state.name) ?: emptyMap()
         val code = macros[msg.name] ?: return
@@ -505,6 +522,7 @@ class GameLoop(
         runCatching {
                 macroExecutor.execute(
                     script = code,
+                    context = buildMacroContext(session),
                     onSend = { cmd -> pendingCommands.add(cmd) },
                     onAction = {},
                 )
@@ -549,6 +567,7 @@ class GameLoop(
         runCatching {
                 macroExecutor.execute(
                     script = msg.script,
+                    context = buildMacroContext(session),
                     onSend = { cmd -> pendingCommands.add(cmd) },
                     onAction = {},
                 )

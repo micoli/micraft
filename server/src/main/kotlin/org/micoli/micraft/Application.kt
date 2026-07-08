@@ -38,6 +38,8 @@ import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.http.chunkRoutes
 import org.micoli.micraft.http.mapRoutes
 import org.micoli.micraft.http.metricsRoutes
+import org.micoli.micraft.macro.MACRO_CONTEXT_SCHEMA
+import org.micoli.micraft.macro.MacroContextVar
 import org.micoli.micraft.npc.NpcConfigLoader
 import org.micoli.micraft.npc.NpcManager
 import org.micoli.micraft.npc.NpcSpawner
@@ -292,6 +294,13 @@ fun Application.module() {
                     )
                 }
             call.respondText(Json.encodeToString(serializer, meta), ContentType.Application.Json)
+        }
+        get("/api/macros/context") {
+            call.respondText(
+                Json.encodeToString(
+                    ListSerializer(MacroContextVar.serializer()), MACRO_CONTEXT_SCHEMA),
+                ContentType.Application.Json,
+            )
         }
         get("/api/biomes") {
             val colors =

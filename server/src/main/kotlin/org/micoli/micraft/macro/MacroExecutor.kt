@@ -8,6 +8,9 @@ class MacroExecutor {
     private val sandbox =
         JexlSandbox(false).apply {
             allow(MacroFunctionsJava::class.java.name).execute("send").execute("action")
+            // Allow basic collection access for macro context variables
+            allow(java.util.HashMap::class.java.name)
+            allow(java.util.ArrayList::class.java.name)
         }
 
     private val jexl =
@@ -19,12 +22,31 @@ class MacroExecutor {
             .strict(true)
             .create()
 
-    fun execute(script: String, onSend: (String) -> Unit, onAction: (String) -> Unit) {
+    fun execute(
+        script: String,
+        context: MacroContext = MacroContext(),
+        onSend: (String) -> Unit,
+        onAction: (String) -> Unit,
+    ) {
         val preprocessed = preprocess(script)
         MacroFunctionsJava.setSendCallback { cmd -> onSend(cmd) }
         MacroFunctionsJava.setActionCallback { act -> onAction(act) }
+        val posMap = java.util.HashMap<String, Any>()
+        posMap["x"] = context.posX
+        posMap["y"] = context.posY
+        posMap["z"] = context.posZ
+        val jexlContext =
+            MapContext().apply {
+                set("position", posMap)
+                set("biome", context.biome)
+                set("yaw", context.yaw)
+                set("pitch", context.pitch)
+                set("currentHp", context.currentHp)
+                set("currentMana", context.currentMana)
+                set("effects", java.util.ArrayList(context.effects))
+            }
         try {
-            jexl.createScript(preprocessed).execute(MapContext())
+            jexl.createScript(preprocessed).execute(jexlContext)
         } finally {
             MacroFunctionsJava.clearCallbacks()
         }

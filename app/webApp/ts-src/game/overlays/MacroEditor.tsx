@@ -54,12 +54,15 @@ interface JexlEditorProps {
   attackKeys: string[];
 }
 
+type MacroContextVar = { name: string; type: string; children?: string[] };
+
 function JexlEditor({ value, onChange, commands, attackKeys }: JexlEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   const commandsRef = useRef(commands);
   const attackKeysRef = useRef(attackKeys);
+  const contextVarsRef = useRef<MacroContextVar[]>([]);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -70,6 +73,15 @@ function JexlEditor({ value, onChange, commands, attackKeys }: JexlEditorProps) 
   useEffect(() => {
     attackKeysRef.current = attackKeys;
   }, [attackKeys]);
+
+  useEffect(() => {
+    fetch("/api/macros/context")
+      .then((r) => r.json())
+      .then((data: MacroContextVar[]) => {
+        contextVarsRef.current = data;
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -95,6 +107,30 @@ function JexlEditor({ value, onChange, commands, attackKeys }: JexlEditorProps) 
             .filter((k) => k.startsWith(partial))
             .map((k) => ({ label: k, type: "keyword" })),
         };
+      }
+      const positionPropMatch = text.match(/(\w+)\.(\w*)$/);
+      if (positionPropMatch) {
+        const [, parentName, partial] = positionPropMatch;
+        const parent = contextVarsRef.current.find((v) => v.name === parentName);
+        const children = parent?.children ?? [];
+        if (children.length > 0) {
+          return {
+            from: context.pos - partial.length,
+            options: children
+              .filter((p) => p.startsWith(partial))
+              .map((p) => ({ label: p, detail: "Float", type: "variable" })),
+          };
+        }
+      }
+      const varMatch = text.match(/(?:^|[^.\w])(\w*)$/);
+      if (varMatch) {
+        const partial = varMatch[1];
+        if (partial.length === 0 && !context.explicit) return null;
+        const options = contextVarsRef.current
+          .filter((v) => v.name.startsWith(partial))
+          .map((v) => ({ label: v.name, detail: v.type, type: "variable" }));
+        if (options.length === 0) return null;
+        return { from: context.pos - partial.length, options };
       }
       return null;
     };
