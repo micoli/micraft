@@ -16,6 +16,7 @@ import {
   saveLastUser,
   storeDisplayName,
   getStoredDisplayName,
+  getLastPlayer,
 } from "../lib/authStorage";
 
 const SUPPORTED_LANGS: { code: string; label: string }[] = [
@@ -34,6 +35,7 @@ export function AuthScreen() {
   const [authLoading, setAuthLoading] = useState(false);
   const [lang, setLang] = useState(getLastLang());
   const [serverReady, setServerReady] = useState(false);
+  const [autoConnecting, setAutoConnecting] = useState(false);
 
   const usernameInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +97,10 @@ export function AuthScreen() {
     const saved = getStoredToken();
     if (saved && (authMode === "local" || authMode === "oauth")) {
       const savedName = getStoredDisplayName() || getLastUser();
+      if (savedName && getLastPlayer(savedName)) {
+        setAutoConnecting(true);
+        return;
+      }
       if (savedName) {
         navigate("/chars");
       } else {
@@ -105,7 +111,11 @@ export function AuthScreen() {
             if (name) {
               storeDisplayName(name);
               saveLastUser(name);
-              navigate("/chars");
+              if (getLastPlayer(name)) {
+                setAutoConnecting(true);
+              } else {
+                navigate("/chars");
+              }
             } else {
               clearStoredToken();
             }
@@ -116,6 +126,10 @@ export function AuthScreen() {
     }
     if (authMode === "none") {
       const last = getLastUser();
+      if (last && getLastPlayer(last)) {
+        setAutoConnecting(true);
+        return;
+      }
       if (last) {
         navigate("/chars");
         return;
@@ -172,11 +186,35 @@ export function AuthScreen() {
     navigate("/chars");
   }
 
-  if (authMode === "loading") {
+  if (authMode === "loading" || autoConnecting) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black/82 z-[2000]">
         <Panel className="min-w-[340px]">
-          <div className="text-center text-[#888] py-5">Loading…</div>
+          {autoConnecting ? (
+            <div className="flex flex-col items-center gap-4 py-5 font-mono">
+              <div className="flex gap-1">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="w-2 h-2 rounded-full bg-blue-400 animate-bounce"
+                    style={{ animationDelay: `${i * 0.15}s` }}
+                  />
+                ))}
+              </div>
+              <span className="text-white/80 text-sm">Reconnexion en cours…</span>
+              <button
+                className="text-xs text-white/30 hover:text-white/60 underline cursor-pointer mt-1"
+                onClick={() => {
+                  setAutoConnecting(false);
+                  navigate("/chars");
+                }}
+              >
+                Connexion manuelle
+              </button>
+            </div>
+          ) : (
+            <div className="text-center text-[#888] py-5">Loading…</div>
+          )}
         </Panel>
       </div>
     );
