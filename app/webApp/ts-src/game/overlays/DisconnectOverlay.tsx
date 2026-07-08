@@ -1,9 +1,33 @@
 export function DisconnectOverlay({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black/[0.72] text-white font-mono font-bold text-[22px] leading-loose text-center">
-      ⚠️ DISCONNECTED
-      <span className="text-[15px] font-normal">{message}</span>
+    <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black/75 backdrop-blur-sm text-white font-mono text-center">
+      <div className="flex flex-col items-center gap-3 bg-black/60 border border-white/20 rounded-xl px-8 py-6">
+        <svg
+          className="w-10 h-10 text-yellow-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5.636 5.636a9 9 0 1 0 12.728 12.728M5.636 5.636A9 9 0 0 1 18.364 18.364M5.636 5.636 18.364 18.364"
+          />
+        </svg>
+        <span className="font-bold text-lg">Serveur inaccessible</span>
+        <span className="text-sm text-white/70">{message}</span>
+        <div className="flex gap-1 mt-1">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="w-2 h-2 rounded-full bg-white/60 animate-bounce"
+              style={{ animationDelay: `${i * 0.15}s` }}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

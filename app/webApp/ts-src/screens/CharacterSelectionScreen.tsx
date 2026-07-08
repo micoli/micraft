@@ -191,6 +191,7 @@ export function CharacterSelectionScreen() {
 
   function doPlay() {
     if (!selected) return;
+    saveLastUser(username);
     saveLastPlayer(username, selected);
     saveLastLang(lang);
     loginResultRef.current = username + "\t" + selected + "\t" + lang + "\t" + token;

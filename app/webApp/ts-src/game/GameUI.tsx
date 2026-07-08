@@ -8,6 +8,7 @@ import { defaultLayout } from "./layout/LayoutEngine";
 import { ChunkDebugData } from "./components/ChunkDebug";
 import { AuthScreen } from "../screens/AuthScreen";
 import { CharacterSelectionScreen } from "../screens/CharacterSelectionScreen";
+import { getLastUser, getLastPlayer, getLastLang, getStoredToken } from "../lib/authStorage";
 import { CharacterCreationScreen } from "../screens/CharacterCreationScreen";
 import { CharacterRPGCreationScreen } from "../screens/CharacterRPGCreationScreen";
 import { GameScreen } from "../screens/GameScreen";
@@ -366,11 +367,21 @@ export function GameUI() {
       pendingSlotUpdateRef.current.push(JSON.stringify({ slot, content: content ?? null }));
     };
 
-    window.mc.showLoginOverlay = () => navigateRef.current?.("/auth");
+    window.mc.showLoginOverlay = () => {
+      const username = getLastUser();
+      const player = getLastPlayer(username);
+      const lang = getLastLang();
+      const token = getStoredToken();
+      if (player) {
+        loginResultRef.current = `${username}\t${player}\t${lang}\t${token}`;
+        navigateRef.current?.("/game");
+        return;
+      }
+      navigateRef.current?.("/auth");
+    };
     window.mc.hideLoginOverlay = () => navigateRef.current?.("/game");
     window.mc.showDisconnectedOverlay = (msg: string) => {
       dispatch({ type: "disconnect_show", message: msg });
-      navigateRef.current?.("/auth");
     };
     window.mc.hideDisconnectedOverlay = () => dispatch({ type: "disconnect_hide" });
     window.mc.updateChunkLoading = (meshed: number, downloaded: number, total: number) =>
