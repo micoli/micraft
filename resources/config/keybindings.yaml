@@ -1,0 +1,45 @@
+combat:
+  combat_target_cycle: [Tab]
+
+movement:
+  forward: [KeyW, ArrowUp]
+  backward: [KeyS, ArrowDown]
+  strafe_right: [KeyD, ArrowRight]
+  strafe_left: [KeyA, ArrowLeft]
+  rotate_left: [KeyQ]
+  rotate_right: [KeyE]
+  sneak: [ShiftLeft]
+  crawl: [ControlLeft]
+  auto_forward: ["KeyW+KeyW", "ArrowUp+ArrowUp"]
+
+flight:
+  fly_toggle: ["Space+Space"]
+  ascend: [Space]
+  descend: [ShiftLeft]
+  speed_up: [KeyP]
+  speed_down: [KeyO]
+
+ui:
+  view_toggle: [KeyF]
+  hud_mode_cycle: [KeyH]
+  inventory: [KeyI]
+  character: [KeyY]
+  undo: ["Ctrl+KeyZ", "Cmd+KeyZ"]
+  minimap_zoom_in: [k]
+  minimap_zoom_out: [l]
+  ingame_map: [m]
+  layout_editor: [KeyG]
+  dump_stats: [KeyV]
+  health_bar: [KeyB]
+
+hotbar:
+  slot_1: [Digit1]
+  slot_2: [Digit2]
+  slot_3: [Digit3]
+  slot_4: [Digit4]
+  slot_5: [Digit5]
+  slot_6: [Digit6]
+  slot_7: [Digit7]
+  slot_8: [Digit8]
+  slot_9: [Digit9]
+  slot_10: [Digit0]
