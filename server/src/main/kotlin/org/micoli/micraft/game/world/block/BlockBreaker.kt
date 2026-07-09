@@ -19,12 +19,17 @@ import org.slf4j.LoggerFactory
 private val blockBreakerLog = LoggerFactory.getLogger(BlockBreaker::class.java)
 private const val MAX_UNDO_HISTORY = 20
 
+private data class BlockBreakEntry(val blockType: BlockType, var ticks: Int)
+
 class BlockBreaker(
     private val world: WorldState,
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val worldItems: WorldItemManager,
     private val liquidManager: LiquidManager? = null,
+    private val bufferSize: Int = 1000,
 ) {
+    private val blockProgress = LinkedHashMap<BlockPos, BlockBreakEntry>()
+
     fun handleStart(session: PlayerSession, intent: ClientMessage.BlockBreakStart) {
         val bp = intent.pos
         val block = world.getBlock(bp.x, bp.y, bp.z)
@@ -41,13 +46,11 @@ class BlockBreaker(
             block.hardness > 0f &&
             block.hardness != Float.MAX_VALUE) {
             session.breakTarget = bp
-            session.breakProgress = 0
         }
     }
 
     fun handleStop(session: PlayerSession) {
         session.breakTarget = null
-        session.breakProgress = 0
     }
 
     private fun activateAdjacentLiquids(pos: BlockPos) {
@@ -76,11 +79,22 @@ class BlockBreaker(
         val block = world.getBlock(bt.x, bt.y, bt.z)
         if (block.hardness == 0f || block.hardness == Float.MAX_VALUE) {
             session.breakTarget = null
-            session.breakProgress = 0
+            blockProgress.remove(bt)
             return
         }
-        session.breakProgress++
-        if (session.breakProgress.toFloat() >= block.hardness) {
+        val entry = blockProgress[bt]
+        val current: BlockBreakEntry
+        if (entry == null || entry.blockType != block) {
+            if (entry == null && blockProgress.size >= bufferSize) {
+                blockProgress.remove(blockProgress.keys.first())
+            }
+            current = BlockBreakEntry(block, 0)
+            blockProgress[bt] = current
+        } else {
+            current = entry
+        }
+        current.ticks++
+        if (current.ticks.toFloat() >= block.hardness) {
             val change = BlockChange(bt, BlockType.AIR)
             world.applyChange(change)
             broadcast(ServerMessage.WorldUpdate(listOf(change)))
@@ -89,10 +103,10 @@ class BlockBreaker(
             session.actionHistory.addLast(WorldActionRecord.Break(bt, block, spawned))
             if (session.actionHistory.size > MAX_UNDO_HISTORY) session.actionHistory.removeFirst()
             session.breakTarget = null
-            session.breakProgress = 0
+            blockProgress.remove(bt)
         } else {
             session.send(
-                ServerMessage.BlockBreakProgress(bt, session.breakProgress, block.hardness))
+                ServerMessage.BlockBreakProgress(bt, current.ticks, block.hardness))
         }
     }
 }

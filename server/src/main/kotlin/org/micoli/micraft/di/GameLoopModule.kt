@@ -24,6 +24,7 @@ import org.micoli.micraft.game.recipe.RecipeRegistryLoader
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.ExperienceConfig
 import org.micoli.micraft.game.rpg.ExperienceProcessor
+import org.micoli.micraft.game.GameConfig
 import org.micoli.micraft.game.session.NetworkStats
 import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.MovementProcessor
@@ -210,6 +211,7 @@ val gameLoopModule = module {
             get<SessionRegistry>()::broadcast,
             get<WorldItemManager>(),
             get<LiquidManager>(),
+            bufferSize = get<GameConfig>().blockBreakBufferSize,
         )
     }
     single {

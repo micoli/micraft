@@ -35,7 +35,6 @@ open class PlayerSession(
     val inFlightChunks: MutableSet<ChunkPos> = Collections.newSetFromMap(ConcurrentHashMap())
     @Volatile var lastChunkPos: ChunkPos? = null
     @Volatile var breakTarget: BlockPos? = null
-    @Volatile var breakProgress: Int = 0
     val inventory: MutableMap<ItemType, Int> = ConcurrentHashMap()
     val actionHistory: ArrayDeque<WorldActionRecord> = ArrayDeque()
     val shortcutBar: MutableList<ShortcutSlot?> = MutableList(10) { null }

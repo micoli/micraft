@@ -41,3 +41,4 @@ game:
   debugWorld: false
   reconcileToleranceXz: 0.5
   reconcileToleranceY: 0.99
+  blockBreakBufferSize: 1000
