@@ -78,6 +78,7 @@ class LocalPlayerController(
     var pendingFlyToggle = false
     var autoAdvance = false
     var lastSentIntent: ClientMessage.MoveIntent? = null
+    var disconnectRequested = false
 
     @OptIn(ExperimentalWasmJsInterop::class) var localPlayerModel: JsAny? = null
     @OptIn(ExperimentalWasmJsInterop::class) var fpArms: JsAny? = null
@@ -295,10 +296,7 @@ class LocalPlayerController(
                     jsLoadBindings(serverHost(), serverPort(), playerName())
                     jsShowNotification("Keybindings reloaded")
                 }
-                "/disconnect" -> {
-                    outMessages.trySend(ClientMessage.Disconnect())
-                    jsReload()
-                }
+                "/disconnect" -> disconnectRequested = true
                 else ->
                     if (consoleInput.startsWith("/")) {
                         outMessages.trySend(ClientMessage.Command(enrichCommand(consoleInput)))

@@ -205,6 +205,10 @@ declare global {
     // React callbacks (set by GameUI after mount)
     dispatch: ((action: unknown) => void) | null;
     slotDrop: ((slot: number, content: { kind: string; id: string } | null) => void) | null;
+    // Set to true before sending /disconnect so showLoginOverlay navigates to /chars
+    intentionalDisconnect?: boolean;
+    // Set by autoUpdate when a new server version is detected while game is active
+    pendingVersionReload?: boolean;
   }
 
   // ── McBindings: all public Kotlin-callable (and JS-callable) mc methods ───────

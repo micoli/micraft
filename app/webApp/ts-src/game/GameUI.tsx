@@ -372,12 +372,20 @@ export function GameUI() {
       const player = getLastPlayer(username);
       const lang = getLastLang();
       const token = getStoredToken();
-      if (player) {
+      const intentional = window.mcState.intentionalDisconnect;
+      window.mcState.intentionalDisconnect = false;
+      if (player && !intentional) {
         loginResultRef.current = `${username}\t${player}\t${lang}\t${token}`;
         navigateRef.current?.("/game");
         return;
       }
-      navigateRef.current?.("/auth");
+      document.exitPointerLock();
+      if (window.mcState.pendingVersionReload) {
+        window.mcState.pendingVersionReload = false;
+        window.location.href = location.pathname;
+        return;
+      }
+      navigateRef.current?.(player ? "/chars" : "/auth");
     };
     window.mc.hideLoginOverlay = () => navigateRef.current?.("/game");
     window.mc.showDisconnectedOverlay = (msg: string) => {

@@ -186,6 +186,11 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         val inputJob = launch {
                             while (isActive) {
                                 delay(50)
+                                if (localController.disconnectRequested) {
+                                    localController.disconnectRequested = false
+                                    close(CloseReason(CloseReason.Codes.NORMAL, "disconnect"))
+                                    break
+                                }
                                 val intent = localController.buildMoveIntent()
                                 val idle =
                                     intent.dx == 0f &&
@@ -234,7 +239,11 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         }
                                         .getOrNull() ?: continue
                                 if (msg is ServerMessage.Welcome) sessionWelcomed = true
-                                handleMessage(msg)
+                                runCatching { handleMessage(msg) }
+                                    .onFailure { e ->
+                                        jsError(
+                                            "handleMessage error on ${msg::class.simpleName}: ${e.message}")
+                                    }
                             } else {
                                 jsLog("WS non-binary frame: ${frame::class.simpleName}")
                             }

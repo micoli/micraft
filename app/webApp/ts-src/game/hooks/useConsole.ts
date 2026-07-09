@@ -97,17 +97,20 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
         }
         const text = el.value.trim();
         if (text) {
+          if (text === "/disconnect" && window.mcState) {
+            window.mcState.intentionalDisconnect = true;
+          }
           submittedRef.current = text;
           if (h.length === 0 || h[h.length - 1] !== text) h.push(text);
           try {
             localStorage.setItem("mc_history_" + c.playerName, JSON.stringify(h.slice(-50)));
           } catch {}
         }
-        onClose();
+        //onClose();
         break;
       case "Escape":
         e.preventDefault();
-        onClose();
+        //onClose();
         break;
       case "ArrowUp":
         e.preventDefault();

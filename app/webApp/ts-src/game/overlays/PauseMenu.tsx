@@ -11,7 +11,14 @@ interface PauseMenuProps {
   onMacros: () => void;
 }
 
-export function PauseMenu({ open, onClose, onDisconnect, onPreferences, onCharacter, onMacros }: PauseMenuProps) {
+export function PauseMenu({
+  open,
+  onClose,
+  onDisconnect,
+  onPreferences,
+  onCharacter,
+  onMacros,
+}: PauseMenuProps) {
   const prefsButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (open) setTimeout(() => prefsButtonRef.current?.focus(), 50);

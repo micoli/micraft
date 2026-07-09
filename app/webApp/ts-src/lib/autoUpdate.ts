@@ -10,7 +10,11 @@ export function registerAutoUpdate(): void {
         sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
       } else if (stored !== server) {
         sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
-        window.location.href = location.pathname + "?_v=" + server;
+        if (window.mcState) {
+          window.mcState.pendingVersionReload = true;
+        } else {
+          window.location.href = location.pathname + "?_v=" + server;
+        }
       }
     } catch {
       /* server offline, skip */

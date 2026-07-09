@@ -83,6 +83,12 @@ export function clearLastUser() {
   } catch {}
 }
 
+export function clearLastPlayer(username: string) {
+  try {
+    localStorage.removeItem("micraft_last_player_" + username);
+  } catch {}
+}
+
 export function getStoredDisplayName(): string {
   try {
     return sessionStorage.getItem("micraft_auth_display") || "";

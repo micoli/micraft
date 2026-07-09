@@ -31,6 +31,7 @@ import { PlayerDownedOverlay } from "../game/components/PlayerDownedOverlay";
 import { AttackPanel } from "../game/components/AttackPanel";
 import { XpBar } from "../game/components/XpBar";
 import { useGameContext } from "../game/GameContext";
+import { getLastUser, clearLastPlayer } from "../lib/authStorage";
 
 export function GameScreen() {
   const {
@@ -296,6 +297,7 @@ export function GameScreen() {
               dispatch({ type: "character_open" });
             }}
             onDisconnect={() => {
+              window.mcState.intentionalDisconnect = true;
               consoleSubmittedRef.current = "/disconnect";
               dispatch({ type: "pause_menu_hide" });
             }}
