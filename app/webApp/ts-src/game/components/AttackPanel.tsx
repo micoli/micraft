@@ -42,42 +42,32 @@ export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [] }: Prop
   return (
     <div
       className={cn(
-        "pointer-events-auto z-[999] bg-black/60 border border-white/20 rounded-md p-2",
+        "pointer-events-auto z-[999] bg-black/60 border border-white/20 rounded-md p-2 overflow-hidden",
         !layoutStyle && "fixed bottom-24 left-1/2 -translate-x-1/2",
       )}
       style={layoutStyle}
     >
-      {pinnedMacros.length > 0 && (
-        <>
-          <div className="text-white/40 font-mono text-[9px] mb-1 uppercase tracking-widest">Macros</div>
-          <div className="flex gap-1 flex-wrap mb-2">
-            {pinnedMacros.map((name) => (
-              <div
-                key={name}
-                onClick={() => guardMacroClick(() => window.mcRunMacro?.(name))}
-                onPointerDown={(e) => startMacroDrag(e, name)}
-                onPointerMove={moveMacroDrag}
-                onPointerUp={endMacroDrag}
-                onPointerCancel={endMacroDrag}
-                title={name}
-                className="w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-amber-400/40 bg-black/72 cursor-grab hover:border-amber-400/80 transition-colors touch-none"
-              >
-                <div className="text-amber-400/80 font-mono text-base">⚡</div>
-                <div className="text-amber-300/70 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">
-                  {name}
-                </div>
-              </div>
-            ))}
+      <div className="flex flex-wrap gap-1 content-start">
+        {pinnedMacros.map((name) => (
+          <div
+            key={`macro-${name}`}
+            onClick={() => guardMacroClick(() => window.mcRunMacro?.(name))}
+            onPointerDown={(e) => startMacroDrag(e, name)}
+            onPointerMove={moveMacroDrag}
+            onPointerUp={endMacroDrag}
+            onPointerCancel={endMacroDrag}
+            title={name}
+            className="w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-amber-400/40 bg-black/72 cursor-grab hover:border-amber-400/80 transition-colors touch-none"
+          >
+            <div className="text-amber-400/80 font-mono text-base">⚡</div>
+            <div className="text-amber-300/70 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">
+              {name}
+            </div>
           </div>
-        </>
-      )}
-      {attacks.length > 0 && (
-        <div className="text-white/40 font-mono text-[9px] mb-1 uppercase tracking-widest">Attacks</div>
-      )}
-      <div className="flex gap-1 flex-wrap">
+        ))}
         {attacks.map(([id, meta]) => (
           <div
-            key={id}
+            key={`attack-${id}`}
             onClick={() => guardClick(() => window.mcState?.events?.push(`attack:${id}`))}
             onPointerDown={(e) => startDrag(e, id)}
             onPointerMove={moveDrag}
