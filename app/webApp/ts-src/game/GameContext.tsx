@@ -15,6 +15,7 @@ export interface GameContextValue {
     tabMatches: string[];
   }>;
   consoleInitialValueRef: React.MutableRefObject<string>;
+  consoleFocusRef: React.MutableRefObject<boolean>;
   pendingLayoutUpdateRef: React.MutableRefObject<string>;
   pendingPreferencesUpdateRef: React.MutableRefObject<string>;
   pendingSlotUpdateRef: React.MutableRefObject<string[]>;

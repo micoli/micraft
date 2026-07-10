@@ -3,7 +3,7 @@ interface ParsedKey {
   key: string;
 }
 
-const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
+export const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   forward: ["KeyW", "ArrowUp"],
   backward: ["KeyS", "ArrowDown"],
   strafe_right: ["KeyD", "ArrowRight"],
@@ -19,6 +19,7 @@ const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   speed_down: ["KeyO"],
   view_toggle: ["KeyF"],
   hud_mode_cycle: ["KeyH"],
+  console_toggle: ["KeyH"],
   inventory: ["KeyI"],
   undo: ["Ctrl+KeyZ", "Cmd+KeyZ"],
   auto_forward: ["KeyW+KeyW", "ArrowUp+ArrowUp"],
@@ -75,7 +76,7 @@ function parseBoundKey(str: string): ParsedKey {
 // Key names starting with an uppercase letter (KeyW, Space, ShiftLeft…) match e.code (physical
 // position, layout-independent). Lowercase names (m, l…) match e.key (produced character,
 // layout-aware — works correctly on AZERTY, Dvorak, etc.).
-function matchesEvent(str: string, e: KeyboardEvent): boolean {
+export function matchesEvent(str: string, e: KeyboardEvent): boolean {
   if (isSequenceBinding(str)) return false;
   const parsed = parseBoundKey(str);
   const keyMatch = /^[A-Z]/.test(parsed.key) ? e.code === parsed.key : e.key.toLowerCase() === parsed.key.toLowerCase();
@@ -185,6 +186,7 @@ export function registerKeyboard(): Pick<
 
         if (b.view_toggle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("view_toggle");
         if (b.hud_mode_cycle?.some((k) => matchesEvent(k, e))) window.mc?.cycleHudMode?.();
+        if (b.console_toggle?.some((k) => matchesEvent(k, e))) window.mc?.toggleConsole?.();
         if (b.inventory?.some((k) => matchesEvent(k, e))) window.mcState.events.push("inventory");
         if (b.undo?.some((k) => matchesEvent(k, e))) window.mcState.events.push("undo");
         if (b.layout_editor?.some((k) => matchesEvent(k, e))) window.mc?.showLayoutEditor?.();

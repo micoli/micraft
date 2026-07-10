@@ -306,7 +306,7 @@ class LocalPlayerController(
                     }
             }
         }
-        if (jsIsConsoleOpen()) return
+        if (jsIsConsoleInputFocused()) return
 
         val fwdX = jsGetCameraForwardX(camera).toFloat()
         val fwdZ = jsGetCameraForwardZ(camera).toFloat()

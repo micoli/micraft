@@ -16,10 +16,11 @@ interface Props {
   submittedRef: MutableRefObject<string | null>;
   stateRef: MutableRefObject<ConsoleState>;
   initialValueRef: MutableRefObject<string>;
+  focusRef: MutableRefObject<boolean>;
   layoutStyle?: React.CSSProperties;
 }
 
-export function Console({ open, onClose, submittedRef, stateRef, initialValueRef, layoutStyle }: Props) {
+export function Console({ open, onClose, submittedRef, stateRef, initialValueRef, focusRef, layoutStyle }: Props) {
   const listRef = useRef<HTMLDivElement>(null);
   const { inputRef, suggestions, selIdx, handleKeyDown, handleInput, applyCompletion } = useConsole({
     open,
@@ -27,6 +28,7 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
     submittedRef,
     stateRef,
     initialValueRef,
+    focusRef,
   });
 
   useEffect(() => {
@@ -74,6 +76,7 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
         <input
           ref={inputRef}
           type="text"
+          data-console-input
           className="w-full bg-transparent border-none text-white font-mono text-[15px] outline-none"
           onKeyDown={handleKeyDown}
           onInput={handleInput}

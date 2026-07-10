@@ -40,6 +40,7 @@ export function GameScreen() {
     consoleSubmittedRef,
     consoleStateRef,
     consoleInitialValueRef,
+    consoleFocusRef,
     pendingLayoutUpdateRef,
     pendingPreferencesUpdateRef,
     pendingSlotUpdateRef,
@@ -217,6 +218,7 @@ export function GameScreen() {
             submittedRef={consoleSubmittedRef}
             stateRef={consoleStateRef}
             initialValueRef={consoleInitialValueRef}
+            focusRef={consoleFocusRef}
             layoutStyle={widgetStyle(activeLayout, "INPUT_BOX")}
           />
           <LayoutEditor

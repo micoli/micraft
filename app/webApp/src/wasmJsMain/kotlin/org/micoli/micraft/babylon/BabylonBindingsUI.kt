@@ -32,6 +32,7 @@ fun jsCreateServerLog(): Unit = js("mc.createServerLog()")
 fun jsConsoleSetPlayer(name: String): Unit = js("mc.consoleSetPlayer(name)")
 
 fun jsIsConsoleOpen(): Boolean = js("mc.isConsoleOpen()")
+fun jsIsConsoleInputFocused(): Boolean = js("mc.isConsoleInputFocused()")
 
 fun jsConsumeConsoleInput(): String = js("mc.consumeConsoleInput()")
 

@@ -123,6 +123,7 @@ export function GameUI() {
   });
   const consoleSubmittedRef = useRef<string | null>(null);
   const consoleInitialValueRef = useRef("");
+  const consoleFocusRef = useRef(true);
   const loginResultRef = useRef("");
   const notifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingLayoutUpdateRef = useRef<string>("");
@@ -399,6 +400,16 @@ export function GameUI() {
     window.mc.showConsole = () => dispatch({ type: "console_show" });
     window.mc.hideConsole = () => dispatch({ type: "console_hide" });
     window.mc.isConsoleOpen = () => consoleOpenRef.current;
+    window.mc.isConsoleInputFocused = () => consoleOpenRef.current && consoleFocusRef.current;
+    window.mc.toggleConsole = () => {
+      if (consoleOpenRef.current) {
+        dispatch({ type: "console_hide" });
+      } else {
+        consoleInitialValueRef.current = "";
+        consoleFocusRef.current = false;
+        dispatch({ type: "console_show" });
+      }
+    };
 
     window.mc.consumeConsoleInput = () => {
       const v = consoleSubmittedRef.current || "";
@@ -602,13 +613,25 @@ export function GameUI() {
       }
       if (pauseMenuOpenRef.current) return;
       if (preferencesOpenRef.current) return;
-      if (ke.key === "/" && !consoleOpenRef.current) {
+      if (consoleOpenRef.current && !consoleFocusRef.current && (ke.key === "/" || ke.key === "Enter")) {
+        ke.preventDefault();
+        if (ke.key === "/") consoleInitialValueRef.current = "/";
+        consoleFocusRef.current = true;
+        if (document.pointerLockElement) document.exitPointerLock();
+        const input = document.querySelector<HTMLInputElement>("[data-console-input]");
+        if (input) {
+          if (ke.key === "/") input.value = "/";
+          setTimeout(() => input.focus(), 10);
+        }
+      } else if (ke.key === "/" && !consoleOpenRef.current) {
         ke.preventDefault();
         consoleInitialValueRef.current = "/";
+        consoleFocusRef.current = true;
         dispatch({ type: "console_show" });
       } else if (ke.key === "Enter" && !consoleOpenRef.current) {
         ke.preventDefault();
         consoleInitialValueRef.current = "";
+        consoleFocusRef.current = true;
         dispatch({ type: "console_show" });
       }
     }
@@ -623,6 +646,7 @@ export function GameUI() {
     consoleSubmittedRef,
     consoleStateRef,
     consoleInitialValueRef,
+    consoleFocusRef,
     pendingLayoutUpdateRef,
     pendingPreferencesUpdateRef,
     pendingSlotUpdateRef,

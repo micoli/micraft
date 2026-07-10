@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, KeyboardEvent, MutableRefObject } from "react";
+import { matchesEvent } from "../input/keyboard";
 
 interface ConsoleState {
   history: string[];
@@ -28,9 +29,10 @@ interface UseConsoleParams {
   submittedRef: MutableRefObject<string | null>;
   stateRef: MutableRefObject<ConsoleState>;
   initialValueRef: MutableRefObject<string>;
+  focusRef: MutableRefObject<boolean>;
 }
 
-export function useConsole({ open, onClose, submittedRef, stateRef, initialValueRef }: UseConsoleParams) {
+export function useConsole({ open, onClose, submittedRef, stateRef, initialValueRef, focusRef }: UseConsoleParams) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [selIdx, setSelIdx] = useState(-1);
@@ -54,9 +56,10 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
     initialValueRef.current = "";
     submittedRef.current = null;
     stateRef.current.histIdx = -1;
-    if (document.pointerLockElement) document.exitPointerLock();
+    const shouldFocus = focusRef.current;
+    if (shouldFocus && document.pointerLockElement) document.exitPointerLock();
     setTimeout(() => {
-      el.focus();
+      if (shouldFocus) el.focus();
       updateSuggestions(el.value);
       setSelIdx(-1);
     }, 10);
@@ -106,11 +109,11 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
             localStorage.setItem("mc_history_" + c.playerName, JSON.stringify(h.slice(-50)));
           } catch {}
         }
-        //onClose();
+        onClose();
         break;
       case "Escape":
         e.preventDefault();
-        //onClose();
+        onClose();
         break;
       case "ArrowUp":
         e.preventDefault();
@@ -148,8 +151,15 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
           el.value = val.slice(0, lastSpaceIdx + 1) + suggestions[nextIdx];
         }
         break;
-      default:
+      default: {
+        const toggleKeys = window.mcState?.bindings?.console_toggle;
+        if (toggleKeys?.some((k) => matchesEvent(k, e.nativeEvent))) {
+          e.preventDefault();
+          onClose();
+          return;
+        }
         setSelIdx(-1);
+      }
     }
   }
 

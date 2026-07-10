@@ -36,6 +36,7 @@ const ACTION_GROUPS: Record<string, string[]> = {
   ui: [
     "view_toggle",
     "hud_mode_cycle",
+    "console_toggle",
     "inventory",
     "character",
     "dump_stats",

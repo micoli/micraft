@@ -376,7 +376,9 @@ declare global {
     hideChunkLoading(): void;
     showConsole(): void;
     hideConsole(): void;
+    toggleConsole(): void;
     isConsoleOpen(): boolean;
+    isConsoleInputFocused(): boolean;
     consumeConsoleInput(): string;
     consumeLoginResult(): string;
     consoleSetPlayer(name: string): void;
