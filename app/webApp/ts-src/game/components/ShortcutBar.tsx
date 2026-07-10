@@ -1,7 +1,7 @@
 import { cn } from "../../primitives/cn";
 import { useShortcutBar } from "../hooks/useShortcutBar";
-import { ShortcutSlot, AttackMeta } from "../UIReducer";
-import { damageTypeColor } from "./AttackPanel";
+import { ShortcutSlot, AttackMeta, UiState } from "../UIReducer";
+import { damageTypeColor, AttackCooldownOverlay } from "./AttackPanel";
 
 interface Props {
   inventory: Record<string, number>;
@@ -12,6 +12,7 @@ interface Props {
   onSlotDrop: (slot: number, content: ShortcutSlot | null) => void;
   layoutStyle?: React.CSSProperties;
   macros?: Record<string, string>;
+  playerStatus?: UiState["playerStatus"];
 }
 
 export function ShortcutBar({
@@ -23,6 +24,7 @@ export function ShortcutBar({
   onSlotDrop,
   layoutStyle,
   macros,
+  playerStatus,
 }: Props) {
   const {
     dragOver,
@@ -64,6 +66,7 @@ export function ShortcutBar({
         const itemMeta_ = slot?.kind === "item" ? itemMeta[slot.id] : null;
         const count = slot?.kind === "item" ? (inventory[slot.id] ?? 0) : 0;
 
+        const slotHasCd = isAttack && (playerStatus?.attackCooldownsRemainingMs?.[slot!.id] ?? 0) > 0;
         return (
           <div
             key={idx}
@@ -78,7 +81,7 @@ export function ShortcutBar({
             onDrop={(e) => handleDrop(e, idx)}
             onContextMenu={(e) => handleContextMenu(e, idx)}
             className={cn(
-              "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 transition-all touch-none",
+              "w-[52px] h-[52px] shrink-0 flex flex-col items-center justify-center relative rounded border-2 transition-all touch-none",
               isDropTarget ? "bg-white/20" : "bg-black/72",
               isSelected ? "border-yellow-400/90 shadow-[0_0_6px_rgba(255,215,0,0.5)]" : "border-white/35",
               isHand
@@ -89,6 +92,7 @@ export function ShortcutBar({
                     ? "cursor-grab"
                     : "cursor-pointer",
               isPressed && "scale-90 brightness-150",
+              slotHasCd && "opacity-50",
             )}
           >
             <div className="absolute top-0.5 left-0.5 text-white/45 font-mono text-[8px]">
@@ -119,6 +123,7 @@ export function ShortcutBar({
                 <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">
                   {slot!.id}
                 </div>
+                <AttackCooldownOverlay id={slot!.id} meta={attackDef} playerStatus={playerStatus} />
               </>
             ) : itemMeta_ ? (
               <>

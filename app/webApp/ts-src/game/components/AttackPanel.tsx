@@ -1,6 +1,7 @@
 import { cn } from "../../primitives/cn";
-import { AttackMeta } from "../UIReducer";
+import { AttackMeta, UiState } from "../UIReducer";
 import { useAttackDrag } from "../hooks/useAttackDrag";
+import { useCooldownDisplay } from "../hooks/useCooldownDisplay";
 
 export function damageTypeColor(damageType: string): string {
   switch (damageType) {
@@ -20,13 +21,48 @@ export function damageTypeColor(damageType: string): string {
   }
 }
 
+export function hasEnoughResources(meta: AttackMeta, status: UiState["playerStatus"] | undefined): boolean {
+  if (!status) return true;
+  if (meta.manaCost > 0 && status.currentMana < meta.manaCost) return false;
+  if (meta.rageCost > 0 && status.currentRage < meta.rageCost) return false;
+  return true;
+}
+
 interface Props {
   attackMeta: Record<string, AttackMeta>;
   layoutStyle?: React.CSSProperties;
   pinnedMacros?: string[];
+  playerStatus?: UiState["playerStatus"];
 }
 
-export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [] }: Props) {
+export function AttackCooldownOverlay({
+  id,
+  meta,
+  playerStatus,
+}: {
+  id: string;
+  meta: AttackMeta | null;
+  playerStatus: UiState["playerStatus"] | undefined;
+}) {
+  const serverCd = playerStatus?.attackCooldownsRemainingMs?.[id] ?? 0;
+  const cooldownDisplay = useCooldownDisplay(serverCd);
+  const hasCd = cooldownDisplay > 0;
+  const hasRes = meta ? hasEnoughResources(meta, playerStatus) : true;
+
+  return (
+    <>
+      {hasCd ? (
+        <div className="absolute bottom-0.5 right-0.5 text-white font-mono text-[8px] leading-none [text-shadow:1px_1px_0_#000]">
+          {(cooldownDisplay / 1000).toFixed(1)}
+        </div>
+      ) : !hasRes ? (
+        <div className="absolute bottom-0 right-0 text-[10px] leading-none select-none">🚫</div>
+      ) : null}
+    </>
+  );
+}
+
+export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [], playerStatus }: Props) {
   const attacks = Object.entries(attackMeta);
   const { startDrag, moveDrag, endDrag, guardClick } = useAttackDrag((id) =>
     damageTypeColor(attackMeta[id]?.damageType ?? ""),
@@ -65,32 +101,41 @@ export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [] }: Prop
             </div>
           </div>
         ))}
-        {attacks.map(([id, meta]) => (
-          <div
-            key={`attack-${id}`}
-            onClick={() => guardClick(() => window.mcState?.events?.push(`attack:${id}`))}
-            onPointerDown={(e) => startDrag(e, id)}
-            onPointerMove={moveDrag}
-            onPointerUp={endDrag}
-            onPointerCancel={endDrag}
-            title={`${id}\n${meta.damageType}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}`}
-            className="w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-white/25 bg-black/72 cursor-grab hover:border-white/60 transition-colors touch-none"
-          >
+        {attacks.map(([id, meta]) => {
+          const hasCd = (playerStatus?.attackCooldownsRemainingMs?.[id] ?? 0) > 0;
+          return (
             <div
-              className="w-[26px] h-[26px] rounded-full"
-              style={{
-                background: damageTypeColor(meta.damageType),
-                boxShadow: "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.2)",
-              }}
-            />
-            <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">{id}</div>
-            {meta.manaCost > 0 && (
-              <div className="absolute top-0.5 right-1 text-blue-300 font-mono font-bold text-[8px]">
-                {meta.manaCost}
+              key={`attack-${id}`}
+              onClick={() => guardClick(() => window.mcState?.events?.push(`attack:${id}`))}
+              onPointerDown={(e) => startDrag(e, id)}
+              onPointerMove={moveDrag}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+              title={`${id}\n${meta.damageType}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}`}
+              className={cn(
+                "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-white/25 bg-black/72 cursor-grab hover:border-white/60 transition-colors touch-none",
+                hasCd && "opacity-50",
+              )}
+            >
+              <div
+                className="w-[26px] h-[26px] rounded-full"
+                style={{
+                  background: damageTypeColor(meta.damageType),
+                  boxShadow: "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.2)",
+                }}
+              />
+              <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">
+                {id}
               </div>
-            )}
-          </div>
-        ))}
+              {meta.manaCost > 0 && (
+                <div className="absolute top-0.5 right-1 text-blue-300 font-mono font-bold text-[8px]">
+                  {meta.manaCost}
+                </div>
+              )}
+              <AttackCooldownOverlay id={id} meta={meta} playerStatus={playerStatus} />
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -69,6 +69,7 @@ export interface UiState {
     maxRage: number;
     stance: string;
     globalCooldownRemainingMs: number;
+    attackCooldownsRemainingMs: Record<string, number>;
   } | null;
   playerDowned: boolean;
   xpState: { xpGained: number; totalXp: number; level: number; leveledUp: boolean; nextLevelXp: number } | null;

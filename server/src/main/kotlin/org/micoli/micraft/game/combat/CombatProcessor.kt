@@ -90,6 +90,10 @@ class CombatProcessor(
             session.send(ServerMessage.Notification("Attack on cooldown"))
             return
         }
+        if (now < (session.combatState.attackCooldownsUntilMs[msg.attackId] ?: 0L)) {
+            session.send(ServerMessage.Notification("${msg.attackId} on cooldown"))
+            return
+        }
 
         val range = attackDef.rangeOverride ?: config.maxCombatRange
         if (msg.isNpc) attackNpc(session, msg, attackDef, charData, range, now)
@@ -130,7 +134,12 @@ class CombatProcessor(
 
         val (hit, isCrit, damage) = resolveAttack(attackDef, myDerived, theirDerived.armorClass)
         session.combatState =
-            session.combatState.copy(attackCooldownUntilMs = now + attackDef.cooldownMs)
+            session.combatState.copy(
+                attackCooldownUntilMs = now + attackDef.cooldownMs,
+                attackCooldownsUntilMs =
+                    session.combatState.attackCooldownsUntilMs +
+                        (msg.attackId to now + attackDef.cooldownMs),
+            )
 
         if (hit) {
             val newHp = (targetChar.currentHp - damage).coerceAtLeast(0)
@@ -180,7 +189,12 @@ class CombatProcessor(
         val npcAc = 10
         val (hit, isCrit, damage) = resolveAttack(attackDef, myDerived, npcAc)
         session.combatState =
-            session.combatState.copy(attackCooldownUntilMs = now + attackDef.cooldownMs)
+            session.combatState.copy(
+                attackCooldownUntilMs = now + attackDef.cooldownMs,
+                attackCooldownsUntilMs =
+                    session.combatState.attackCooldownsUntilMs +
+                        (msg.attackId to now + attackDef.cooldownMs),
+            )
 
         if (hit) {
             npcManager.applyDamage(msg.targetId, damage, session.id)
@@ -232,7 +246,9 @@ class CombatProcessor(
                 targetChar,
                 theirDerived,
                 target.state.stance,
-                target.combatState.attackCooldownUntilMs))
+                target.combatState.attackCooldownUntilMs,
+                target.combatState.attackCooldownsUntilMs,
+            ))
     }
 
     // ── Downed / death ────────────────────────────────────────────────────────
@@ -384,7 +400,12 @@ class CombatProcessor(
                     val derived = DerivedStatsCalculator.compute(charData, armors)
                     s.send(
                         makeStatusUpdate(
-                            charData, derived, s.state.stance, s.combatState.attackCooldownUntilMs))
+                            charData,
+                            derived,
+                            s.state.stance,
+                            s.combatState.attackCooldownUntilMs,
+                            s.combatState.attackCooldownsUntilMs,
+                        ))
                 }
         }
     }
@@ -396,7 +417,12 @@ class CombatProcessor(
     ) {
         session.send(
             makeStatusUpdate(
-                charData, derived, session.state.stance, session.combatState.attackCooldownUntilMs))
+                charData,
+                derived,
+                session.state.stance,
+                session.combatState.attackCooldownUntilMs,
+                session.combatState.attackCooldownsUntilMs,
+            ))
     }
 
     fun makeStatusUpdate(
@@ -404,8 +430,10 @@ class CombatProcessor(
         derived: DerivedStats,
         stance: PlayerStance,
         cooldownUntilMs: Long,
+        attackCooldownsUntilMs: Map<String, Long> = emptyMap(),
     ): ServerMessage.PlayerStatusUpdate {
         val isRage = charData.characterClass.classResource == ClassResource.RAGE
+        val now = System.currentTimeMillis()
         return ServerMessage.PlayerStatusUpdate(
             currentHp = charData.currentHp,
             maxHp = derived.maxHp,
@@ -414,8 +442,11 @@ class CombatProcessor(
             currentRage = if (isRage) charData.currentRage else 0,
             maxRage = if (isRage) config.maxRage else 0,
             stance = stance,
-            globalCooldownRemainingMs =
-                (cooldownUntilMs - System.currentTimeMillis()).coerceAtLeast(0),
+            globalCooldownRemainingMs = (cooldownUntilMs - now).coerceAtLeast(0),
+            attackCooldownsRemainingMs =
+                attackCooldownsUntilMs
+                    .mapValues { (_, until) -> (until - now).coerceAtLeast(0) }
+                    .filter { (_, rem) -> rem > 0 },
         )
     }
 

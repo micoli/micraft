@@ -179,11 +179,13 @@ export function GameScreen() {
               pendingSlotUpdateRef.current.push(JSON.stringify({ slot, content: content ?? null }));
             }}
             layoutStyle={widgetStyle(activeLayout, "SHORTCUT_BAR")}
+            playerStatus={state.playerStatus ?? undefined}
           />
           <AttackPanel
             attackMeta={state.attackMeta}
             layoutStyle={widgetStyle(activeLayout, "ATTACK_PANEL")}
             pinnedMacros={state.preferences?.customCommands?.["__pinned_macros__"] ?? []}
+            playerStatus={state.playerStatus ?? undefined}
           />
           <Inventory
             inventory={state.inventory}
