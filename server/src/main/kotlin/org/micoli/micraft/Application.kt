@@ -11,7 +11,6 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import java.io.File
 import java.nio.file.Path
-import java.util.UUID
 import org.koin.core.parameter.parametersOf
 import org.koin.ktor.ext.get
 import org.koin.ktor.plugin.Koin
@@ -73,6 +72,8 @@ import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.game.world.weather.WeatherConfig
 import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.http.ArmorsController
+import org.micoli.micraft.http.AssetManifestController
+import org.micoli.micraft.http.AssetNotifyController
 import org.micoli.micraft.http.AttacksController
 import org.micoli.micraft.http.AutocompleteController
 import org.micoli.micraft.http.BiomesController
@@ -90,7 +91,6 @@ import org.micoli.micraft.http.PlayerRpgController
 import org.micoli.micraft.http.PlayerSkinController
 import org.micoli.micraft.http.SkinsController
 import org.micoli.micraft.http.TerrainCache
-import org.micoli.micraft.http.VersionController
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("Application")
@@ -100,7 +100,6 @@ fun main() {
         .start(wait = true)
 }
 
-private val SERVER_ID: String = UUID.randomUUID().toString()
 val dataPath = "data"
 val configDir: Path = Path.of("$dataPath/config")
 val resourcesConfigDir: Path = Path.of("resources/config")
@@ -229,7 +228,11 @@ fun Application.module() {
         if (webBuildDir != null) {
             staticFiles("/", File("$webBuildDir/kotlin-webpack/wasmJs/developmentExecutable"))
         }
-        VersionController(SERVER_ID).register(this)
+        val assetManifest = AssetManifestController(webBuildDir)
+        assetManifest.register(this)
+        val assetNotify = AssetNotifyController(assetManifest)
+        assetNotify.register(this)
+        assetNotify.start(this@module)
         KeybindingsController(persistence, dataPath).register(this)
         AutocompleteController(gameLoop).register(this)
         I18nController(gameLoop).register(this)

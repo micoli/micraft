@@ -1,39 +1,41 @@
-const MC_SERVER_VERSION_KEY = "mc_server_version";
-
 export function registerAutoUpdate(): void {
-  async function checkServerVersion() {
-    try {
-      const r = await fetch("/api/version", { cache: "no-cache" });
-      const { server } = (await r.json()) as { server: string };
-      const stored = sessionStorage.getItem(MC_SERVER_VERSION_KEY);
-      if (stored === null) {
-        sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
-      } else if (stored !== server) {
-        sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
-        if (window.mcState) {
-          window.mcState.pendingVersionReload = true;
-        } else {
-          window.location.href = location.pathname + "?_v=" + server;
-        }
-      }
-    } catch {
-      /* server offline, skip */
-    }
-  }
-
-  setInterval(checkServerVersion, 15000);
-  checkServerVersion();
-
-  // Listen to webpack HMR websocket: reload on client rebuild
   try {
     const wsUrl = `ws://${location.hostname}:${location.port}/ws`;
     const ws = new WebSocket(wsUrl);
+
+    // HMR state (webpack dev server sends hash + ok in WATCH_MODE=1)
     let initialHash: string | null = null;
     let pendingHash: string | null = null;
+
+    ws.onopen = () => {
+      // Send our asset signature so the server can detect version drift
+      fetch("/api/assets/manifest", { cache: "no-cache" })
+        .then((r) => r.json())
+        .then((manifest: Record<string, string>) => {
+          const sig = Object.entries(manifest)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([k, v]) => `${k}:${v}`)
+            .join(",");
+          ws.send(JSON.stringify({ type: "client-version", data: sig }));
+        })
+        .catch(() => {
+          /* ignore */
+        });
+    };
 
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data as string) as { type: string; data?: string };
+        // Server-push reload (version mismatch or explicit /api/assets/reload)
+        if (msg.type === "reload") {
+          if (window.mcState) {
+            window.mcState.pendingVersionReload = true;
+          } else {
+            window.location.reload();
+          }
+          return;
+        }
+        // Webpack HMR protocol (WATCH_MODE=1 via webpack dev server at :8081)
         if (msg.type === "hash") {
           if (initialHash === null) {
             initialHash = msg.data ?? null;
@@ -47,8 +49,9 @@ export function registerAutoUpdate(): void {
         /* ignore */
       }
     };
+
     ws.onerror = () => {
-      /* webpack HMR not available in this environment */
+      /* /ws not available in this environment */
     };
   } catch {
     /* ignore */

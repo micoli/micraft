@@ -105,8 +105,7 @@ class BlockBreaker(
             session.breakTarget = null
             blockProgress.remove(bt)
         } else {
-            session.send(
-                ServerMessage.BlockBreakProgress(bt, current.ticks, block.hardness))
+            session.send(ServerMessage.BlockBreakProgress(bt, current.ticks, block.hardness))
         }
     }
 }

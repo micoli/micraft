@@ -196,8 +196,10 @@ class BlockBreakerTest {
         // Back to (8,5,8): was evicted, starts from 0 → progress reported as 1
         session.breakTarget = BlockPos(8, 5, 8)
         breaker.tick(session)
-        val progressMsg = session.sent.filterIsInstance<ServerMessage.BlockBreakProgress>()
-            .last { it.pos == BlockPos(8, 5, 8) }
+        val progressMsg =
+            session.sent.filterIsInstance<ServerMessage.BlockBreakProgress>().last {
+                it.pos == BlockPos(8, 5, 8)
+            }
         assertEquals(1, progressMsg.progress)
     }
 }

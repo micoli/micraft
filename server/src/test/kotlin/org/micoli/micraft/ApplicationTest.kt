@@ -13,7 +13,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.ServerMessage
@@ -22,22 +21,12 @@ import org.micoli.micraft.protocol.ServerMessageCodec
 class ApplicationTest {
 
     @Test
-    fun testVersionEndpoint() = testApplication {
+    fun testAssetManifestReturnsJsonObject() = testApplication {
         application { module() }
-        val r = client.get("/api/version")
+        val r = client.get("/api/assets/manifest")
         assertEquals(HttpStatusCode.OK, r.status)
-        val json = Json.parseToJsonElement(r.bodyAsText()).jsonObject
-        val server = json["server"]?.jsonPrimitive?.content
-        assertNotNull(server)
-        assertTrue(server.isNotEmpty())
-    }
-
-    @Test
-    fun testVersionStableWithinProcess() = testApplication {
-        application { module() }
-        val r1 = client.get("/api/version").bodyAsText()
-        val r2 = client.get("/api/version").bodyAsText()
-        assertEquals(r1, r2)
+        // MICRAFT_WEB_DIST absent in tests → {} is a valid empty JSON object
+        Json.parseToJsonElement(r.bodyAsText()).jsonObject
     }
 
     @Test

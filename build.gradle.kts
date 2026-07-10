@@ -191,6 +191,42 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     watchThread.isDaemon = true
     watchThread.start()
 
+    val assetsLockFile = rootDir.resolve("run-assets.lock")
+    val assetsWatchThread = Thread {
+        var lastModified = if (assetsLockFile.exists()) assetsLockFile.lastModified() else 0L
+        while (!Thread.currentThread().isInterrupted) {
+            try {
+                Thread.sleep(500)
+            } catch (_: InterruptedException) {
+                break
+            }
+            if (assetsLockFile.exists()) {
+                val modified = assetsLockFile.lastModified()
+                if (modified != lastModified) {
+                    lastModified = modified
+                    if (!watchMode) {
+                        println("⚡=====================================⚡")
+                        println(
+                            "[dev] run-assets.lock modified — rebuilding assets only… (${java.time.LocalTime.now().let { "%02d:%02d:%02d".format(it.hour, it.minute, it.second) }})")
+                        println("⚡=====================================⚡")
+                        buildCss()
+                        runGradle(":app:webApp:copyResourcesToWebDist")
+                        println("[dev] assets rebuilt — notifying browser…")
+                        ProcessBuilder(
+                                "sh",
+                                "-c",
+                                "curl -s -X POST http://localhost:8080/api/assets/reload || true")
+                            .directory(rootDir)
+                            .start()
+                            .waitFor()
+                    }
+                }
+            }
+        }
+    }
+    assetsWatchThread.isDaemon = true
+    assetsWatchThread.start()
+
     try {
         if (watchMode) {
             clientProc!!.waitFor()
@@ -202,6 +238,7 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     } finally {
         killTree(serverRef.get())
         watchThread.interrupt()
+        assetsWatchThread.interrupt()
     }
 }
 

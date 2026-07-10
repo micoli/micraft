@@ -4,6 +4,7 @@ import java.nio.file.Path
 import org.koin.dsl.module
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.config.ConfigRegistry
+import org.micoli.micraft.game.GameConfig
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.armor.ArmorRegistryLoader
 import org.micoli.micraft.game.chat.ChatChannelManager
@@ -24,7 +25,6 @@ import org.micoli.micraft.game.recipe.RecipeRegistryLoader
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.ExperienceConfig
 import org.micoli.micraft.game.rpg.ExperienceProcessor
-import org.micoli.micraft.game.GameConfig
 import org.micoli.micraft.game.session.NetworkStats
 import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.MovementProcessor

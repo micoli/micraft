@@ -48,7 +48,9 @@ fun jsSetNpcTransform(
 
 fun jsDisposeNpcModel(model: JsAny): Unit = js("mc.disposeNpcModel(model)")
 
-fun jsHighlightNpcModel(scene: JsAny, model: JsAny, on: Boolean): Unit = js("""
+fun jsHighlightNpcModel(scene: JsAny, model: JsAny, on: Boolean): Unit =
+    js(
+        """
     (() => {
         if (!window._combatHL) {
             window._combatHL = new BABYLON.HighlightLayer('combatHL', scene, {isStroke:true,blurHorizontalSize:0.3,blurVerticalSize:0.3});

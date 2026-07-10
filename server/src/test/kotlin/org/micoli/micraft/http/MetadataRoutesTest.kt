@@ -17,13 +17,13 @@ import org.micoli.micraft.module
 class MetadataRoutesTest {
 
     @Test
-    fun testVersionReturnsServerId() = testApplication {
+    fun testAssetManifestEndpoint() = testApplication {
         application { module() }
-        val r = client.get("/api/version")
+        val r = client.get("/api/assets/manifest")
         assertEquals(HttpStatusCode.OK, r.status)
         assertEquals(ContentType.Application.Json, r.contentType()?.withoutParameters())
-        val json = Json.parseToJsonElement(r.bodyAsText()).jsonObject
-        assertTrue(json.containsKey("server"), "version payload must expose server id")
+        // MICRAFT_WEB_DIST absent in tests → returns {} which is still a valid JSON object
+        Json.parseToJsonElement(r.bodyAsText()).jsonObject
     }
 
     @Test

@@ -11,6 +11,7 @@ else
 endif
 
 .PHONY: dev-up dev-down dev-restart dev-clean-wasm dev-logs dc shell npm-format \
+        dev-restart-server dev-restart-assets dev-restart-clean-server \
         prod-up prod-down prod-restart prod-logs prod-build \
         build-client build-wasm build-js \
         docs help
@@ -28,6 +29,9 @@ dev-down:
 
 dev-restart-server:
 	$(EXEC) "touch run.lock"
+
+dev-restart-assets:
+	$(EXEC) "touch run-assets.lock"
 
 dev-restart-clean-server:
 	$(EXEC) "touch run.lock; rm data/world/default_world/*.json data/world/default_world/chunks/* data/config/*/*"
@@ -133,6 +137,7 @@ help:
 	@echo "  make shell                open bash inside container (DOCKER mode only)"
 	@echo "  make dc CMD=\"<cmd>\"       run command inside container / directly in HOST mode"
 	@echo "  make npm-format           run prettier in ts-src"
+	@echo "  make dev-restart-assets   rebuild frontend assets only (no server restart)"
 	@echo "  make build-client         recompile wasm + js bundle (build-wasm + build-js)"
 	@echo "  make build-wasm           recompile kotlin/wasm only"
 	@echo ""
