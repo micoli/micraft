@@ -48,8 +48,20 @@ fun jsSetNpcTransform(
 
 fun jsDisposeNpcModel(model: JsAny): Unit = js("mc.disposeNpcModel(model)")
 
-fun jsHighlightNpcModel(scene: JsAny, model: JsAny, on: Boolean): Unit =
-    js("mc.highlightNpcModel(scene, model, on)")
+fun jsHighlightNpcModel(scene: JsAny, model: JsAny, on: Boolean): Unit = js("""
+    (() => {
+        if (!window._combatHL) {
+            window._combatHL = new BABYLON.HighlightLayer('combatHL', scene, {isStroke:true,blurHorizontalSize:0.3,blurVerticalSize:0.3});
+            window._combatHL.innerGlow = false;
+            window._combatHL.outerGlow = true;
+        }
+        var hl = window._combatHL;
+        var root = model.root || model;
+        var meshes = root.getChildMeshes ? root.getChildMeshes() : [];
+        var col = new BABYLON.Color3(1, 0.2, 0.2);
+        meshes.forEach(function(m) { if (on) hl.addMesh(m, col); else hl.removeMesh(m); });
+    })()
+""")
 
 fun jsOpenNpcDialog(json: String): Unit = js("mc.openNpcDialog(json)")
 
