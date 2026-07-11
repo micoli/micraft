@@ -33,6 +33,9 @@ import org.micoli.micraft.game.combat.CombatConfig
 import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.RegenProcessor
+import org.micoli.micraft.game.combat.SpellConfig
+import org.micoli.micraft.game.combat.SpellDefinition
+import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
@@ -212,6 +215,7 @@ class GameLoop(
     private val npcSpawner: NpcSpawner = NpcSpawner(),
     private val combatConfig: CombatConfigData = CombatConfig().data,
     val attackRegistry: Map<String, AttackDefinition> = AttackConfig().data.attacks,
+    val spellRegistry: Map<String, SpellDefinition> = SpellConfig().data.spells,
     private val classesData: ClassesConfigData = ClassesConfig().data,
     private val combatProcessor: CombatProcessor =
         CombatProcessor(
@@ -274,6 +278,14 @@ class GameLoop(
             config = ClassesConfig().data,
             maxRage = combatConfig.maxRage,
             armorRegistry = emptyMap(),
+            combatProcessor = combatProcessor,
+        ),
+    private val spellProcessor: SpellProcessor =
+        SpellProcessor(
+            spellRegistry = spellRegistry,
+            classRegistry = classesData.classes,
+            armorRegistry = emptyMap(),
+            combatConfig = combatConfig,
             combatProcessor = combatProcessor,
         ),
     private val tradeConfigLoader: TradeConfigLoader =
@@ -387,6 +399,20 @@ class GameLoop(
             reloadRbac = closures.reloadRbac,
             armorRegistry = closures.armorRegistry,
             tradeManager = tradeManager,
+            clearTokenAccumulator = regenProcessor::clearTokenAccumulator,
+            sendStatusUpdate = sendStatusUpdate@{ session ->
+                    val charData = session.characterData ?: return@sendStatusUpdate
+                    val armors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
+                    val derived = DerivedStatsCalculator.compute(charData, armors)
+                    session.send(
+                        combatProcessor.makeStatusUpdate(
+                            charData,
+                            derived,
+                            session.state.stance,
+                            session.combatState.attackCooldownUntilMs,
+                            session.combatState.attackCooldownsUntilMs,
+                        ))
+                },
         )
 
     private val commandContext =
@@ -400,6 +426,7 @@ class GameLoop(
                 chatService.routeMessage(session, channel, text)
             },
             combatProcessor = combatProcessor,
+            spellProcessor = spellProcessor,
         )
 
     @Volatile private var appScope: Application? = null

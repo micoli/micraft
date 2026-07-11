@@ -234,6 +234,8 @@ class LocalPlayerController(
         val slot = shortcutBar.getOrNull(index)
         if (slot is ShortcutSlot.Macro) {
             outMessages.trySend(ClientMessage.RunMacro(slot.macroName))
+        } else if (slot is ShortcutSlot.Spell) {
+            outMessages.trySend(ClientMessage.UseSpell(spellId = slot.spellId))
         } else {
             selectSlot(index)
             if (slot is ShortcutSlot.Attack) {
@@ -267,6 +269,7 @@ class LocalPlayerController(
                     is ShortcutSlot.Attack ->
                         """{"kind":"attack","id":"${slot.attackId}:${slot.level}"}"""
                     is ShortcutSlot.Macro -> """{"kind":"macro","id":"${slot.macroName}"}"""
+                    is ShortcutSlot.Spell -> """{"kind":"spell","id":"${slot.spellId}"}"""
                     null -> "null"
                 }
             }
@@ -528,6 +531,10 @@ class LocalPlayerController(
                             attackId = attackId,
                             attackLevel = attackLevel))
                 }
+                event.startsWith("spell:") -> {
+                    val spellId = event.removePrefix("spell:")
+                    outMessages.trySend(ClientMessage.UseSpell(spellId = spellId))
+                }
             }
         }
 
@@ -577,6 +584,7 @@ class LocalPlayerController(
                                 else ShortcutSlot.Attack(id)
                             }
                             kind == "macro" && id != null -> ShortcutSlot.Macro(id)
+                            kind == "spell" && id != null -> ShortcutSlot.Spell(id)
                             else -> null
                         }
                     shortcutBar[slotMatch] = content

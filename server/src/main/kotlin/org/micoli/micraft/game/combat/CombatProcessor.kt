@@ -170,12 +170,19 @@ class CombatProcessor(
             )
 
         if (hit) {
-            val newHp = (targetChar.currentHp - damage).coerceAtLeast(0)
-            target.characterData = targetChar.copy(currentHp = newHp)
+            var newTargetChar =
+                targetChar.copy(currentHp = (targetChar.currentHp - damage).coerceAtLeast(0))
+            if (targetChar.characterClass.classResource == ClassResource.RAGE) {
+                newTargetChar =
+                    newTargetChar.copy(
+                        currentRage = (newTargetChar.currentRage + 20).coerceAtMost(config.maxRage))
+            }
+            target.characterData = newTargetChar
             applyStatusEffect(target, levelDef, now)
-            broadcastHealthUpdate(target.id, false, newHp, theirDerived.maxHp)
+            broadcastHealthUpdate(target.id, false, newTargetChar.currentHp, theirDerived.maxHp)
             subscribeToChannel(target, "combat")
-            if (newHp <= 0) handlePlayerDowned(target)
+            if (newTargetChar.currentHp <= 0) handlePlayerDowned(target)
+            sendStatusUpdate(target, newTargetChar, theirDerived)
         }
 
         val hitMsg = if (hit) "hits for $damage${if (isCrit) " [CRIT]" else ""}" else "misses"
@@ -260,26 +267,39 @@ class CombatProcessor(
         if (hit) {
             val raw = rollDice(levelDef.weaponDice) + levelDef.power
             damage = if (isCrit) raw * 2 else raw
-            val newHp = (targetChar.currentHp - damage).coerceAtLeast(0)
-            target.characterData = targetChar.copy(currentHp = newHp)
-            broadcastHealthUpdate(target.id, false, newHp, theirDerived.maxHp)
+            var newTargetChar =
+                targetChar.copy(currentHp = (targetChar.currentHp - damage).coerceAtLeast(0))
+            if (targetChar.characterClass.classResource == ClassResource.RAGE) {
+                newTargetChar =
+                    newTargetChar.copy(
+                        currentRage = (newTargetChar.currentRage + 20).coerceAtMost(config.maxRage))
+            }
+            target.characterData = newTargetChar
+            broadcastHealthUpdate(target.id, false, newTargetChar.currentHp, theirDerived.maxHp)
             subscribeToChannel(target, "combat")
-            if (newHp <= 0) handlePlayerDowned(target)
+            if (newTargetChar.currentHp <= 0) handlePlayerDowned(target)
+            target.send(
+                makeStatusUpdate(
+                    newTargetChar,
+                    theirDerived,
+                    target.state.stance,
+                    target.combatState.attackCooldownUntilMs,
+                    target.combatState.attackCooldownsUntilMs,
+                ))
         } else {
             damage = 0
+            target.send(
+                makeStatusUpdate(
+                    targetChar,
+                    theirDerived,
+                    target.state.stance,
+                    target.combatState.attackCooldownUntilMs,
+                    target.combatState.attackCooldownsUntilMs,
+                ))
         }
 
         val hitMsg = if (hit) "hits for $damage${if (isCrit) " [CRIT]" else ""}" else "misses"
         broadcastCombatLog("${npc.state.name} → ${targetChar.name}: $hitMsg")
-
-        target.send(
-            makeStatusUpdate(
-                targetChar,
-                theirDerived,
-                target.state.stance,
-                target.combatState.attackCooldownUntilMs,
-                target.combatState.attackCooldownsUntilMs,
-            ))
     }
 
     // ── Downed / death ────────────────────────────────────────────────────────
@@ -473,6 +493,8 @@ class CombatProcessor(
             maxMana = if (isRage) 0 else derived.maxMana,
             currentRage = if (isRage) charData.currentRage else 0,
             maxRage = if (isRage) config.maxRage else 0,
+            currentTokens = if (isRage) charData.currentTokens else 0,
+            maxTokens = if (isRage) derived.maxTokens else 0,
             stance = stance,
             globalCooldownRemainingMs = (cooldownUntilMs - now).coerceAtLeast(0),
             attackCooldownsRemainingMs =

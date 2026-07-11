@@ -1,11 +1,15 @@
 package org.micoli.micraft.game.tick
 
 import org.micoli.micraft.game.combat.CombatProcessor
+import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.hasPermission
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.protocol.ClientMessage
+import org.slf4j.LoggerFactory
+
+private val log = LoggerFactory.getLogger("IntentCollector")
 
 class IntentCollector(
     private val blockBreaker: BlockBreaker,
@@ -13,6 +17,7 @@ class IntentCollector(
     private val onCommand: suspend (PlayerSession, String) -> Unit,
     private val onChatSend: suspend (PlayerSession, String, String) -> Unit = { _, _, _ -> },
     private val combatProcessor: CombatProcessor? = null,
+    private val spellProcessor: SpellProcessor? = null,
 ) {
     suspend fun collect(session: PlayerSession): TickInput {
         var dx = 0f
@@ -57,6 +62,12 @@ class IntentCollector(
                 is ClientMessage.SetCombatTarget ->
                     combatProcessor?.handleSetTarget(session, intent)
                 is ClientMessage.AttackTarget -> combatProcessor?.handleAttack(session, intent)
+                is ClientMessage.UseSpell ->
+                    runCatching { spellProcessor?.handleSpell(session, intent) }
+                        .onFailure {
+                            log.error(
+                                "handleSpell failed for {}: {}", session.id.take(8), it.message, it)
+                        }
                 else -> {}
             }
         }

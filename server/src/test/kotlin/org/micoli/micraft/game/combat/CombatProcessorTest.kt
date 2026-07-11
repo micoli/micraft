@@ -457,4 +457,33 @@ class CombatProcessorTest {
         assertTrue(statusUpdates.isNotEmpty())
         assertEquals(target.characterData!!.currentHp, statusUpdates.last().currentHp)
     }
+
+    @Test
+    fun `handleNpcAttack grants rage to WARRIOR target on hit`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob")
+        target.characterData =
+            testChar("b", "Bob", hp = 100, str = 10, characterClass = CharacterClass.WARRIOR)
+        target.characterData = target.characterData!!.copy(currentRage = 0)
+
+        val highPowerAttack =
+            AttackDefinition(
+                damageType = DamageType.PHYSICAL,
+                levels =
+                    mapOf(
+                        1 to
+                            AttackLevelDefinition(power = 100, weaponDice = "1d4", cooldownMs = 0)),
+            )
+        val npc = fakeNpc()
+        npc.state = npc.state.copy(pos = Vec3(0f, 0f, 0f))
+
+        val proc =
+            buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry = mapOf("basic_attack" to highPowerAttack),
+            )
+        proc.handleNpcAttack(npc, target)
+
+        assertEquals(
+            20, target.characterData!!.currentRage, "Warrior should gain +20 rage when hit by NPC")
+    }
 }

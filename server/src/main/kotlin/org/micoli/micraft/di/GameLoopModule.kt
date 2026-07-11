@@ -1,6 +1,7 @@
 package org.micoli.micraft.di
 
 import java.nio.file.Path
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.config.ConfigRegistry
@@ -16,6 +17,8 @@ import org.micoli.micraft.game.combat.CombatConfig
 import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.RegenProcessor
+import org.micoli.micraft.game.combat.SpellConfig
+import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
 import org.micoli.micraft.game.npc.NpcConfigLoader
@@ -120,12 +123,13 @@ val gameLoopModule = module {
             },
         )
     }
-    single { AttackConfig().data.attacks }
+    single(named("attacks")) { AttackConfig().data.attacks }
+    single(named("spells")) { SpellConfig().data.spells }
     single {
         val emptyArmorRegistry = emptyMap<String, ArmorDefinition>()
         CombatProcessor(
             config = get(),
-            attackRegistry = get(),
+            attackRegistry = get(named("attacks")),
             armorRegistry = emptyArmorRegistry,
             classRegistry = get<ClassesConfigData>().classes,
             npcManager = get<NpcManager>(),
@@ -194,6 +198,15 @@ val gameLoopModule = module {
             combatProcessor = get(),
         )
     }
+    single {
+        SpellProcessor(
+            spellRegistry = get(named("spells")),
+            classRegistry = get<ClassesConfigData>().classes,
+            armorRegistry = emptyMap<String, ArmorDefinition>(),
+            combatConfig = get(),
+            combatProcessor = get(),
+        )
+    }
 
     // trade cluster
     single { TradeConfigLoader(Path.of("data/config/trade.yaml")) }
@@ -222,7 +235,7 @@ val gameLoopModule = module {
             get<SessionRegistry>()::broadcast,
             get<PlayerPersister>()::save,
             get<VegetationManager>(),
-            get(),
+            get(named("attacks")),
         )
     }
     single { MovementProcessor(get<WorldState>()) }

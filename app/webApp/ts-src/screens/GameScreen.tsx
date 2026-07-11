@@ -188,6 +188,7 @@ export function GameScreen() {
             inventory={state.inventory}
             itemMeta={state.itemMeta}
             attackMeta={filteredAttackMeta}
+            spellMeta={state.spellMeta}
             slots={state.shortcutBar}
             selectedSlot={state.selectedSlot}
             macros={state.preferences?.macros ?? {}}
@@ -199,6 +200,7 @@ export function GameScreen() {
           />
           <AttackPanel
             attackMeta={filteredAttackMeta}
+            spellMeta={state.spellMeta}
             layoutStyle={widgetStyle(activeLayout, "ATTACK_PANEL")}
             pinnedMacros={state.preferences?.customCommands?.["__pinned_macros__"] ?? []}
             playerStatus={state.playerStatus ?? undefined}

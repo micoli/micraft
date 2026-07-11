@@ -1,5 +1,5 @@
 import { cn } from "../../primitives/cn";
-import { AttackMeta, UiState } from "../UIReducer";
+import { AttackMeta, SpellMeta, UiState } from "../UIReducer";
 import { useAttackDrag } from "../hooks/useAttackDrag";
 import { useCooldownDisplay } from "../hooks/useCooldownDisplay";
 
@@ -21,15 +21,17 @@ export function damageTypeColor(damageType: string): string {
   }
 }
 
-export function hasEnoughResources(meta: AttackMeta, status: UiState["playerStatus"] | undefined): boolean {
+export function hasEnoughResources(meta: AttackMeta | SpellMeta, status: UiState["playerStatus"] | undefined): boolean {
   if (!status) return true;
   if (meta.manaCost > 0 && status.currentMana < meta.manaCost) return false;
   if (meta.rageCost > 0 && status.currentRage < meta.rageCost) return false;
+  if ("tokenCost" in meta && meta.tokenCost > 0 && (status.currentTokens ?? 0) < meta.tokenCost) return false;
   return true;
 }
 
 interface Props {
   attackMeta: Record<string, AttackMeta>;
+  spellMeta?: Record<string, SpellMeta>;
   layoutStyle?: React.CSSProperties;
   pinnedMacros?: string[];
   playerStatus?: UiState["playerStatus"];
@@ -41,7 +43,7 @@ export function AttackCooldownOverlay({
   playerStatus,
 }: {
   id: string;
-  meta: AttackMeta | null;
+  meta: AttackMeta | SpellMeta | null;
   playerStatus: UiState["playerStatus"] | undefined;
 }) {
   const serverCd = playerStatus?.attackCooldownsRemainingMs?.[id] ?? 0;
@@ -62,8 +64,9 @@ export function AttackCooldownOverlay({
   );
 }
 
-export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [], playerStatus }: Props) {
+export function AttackPanel({ attackMeta, spellMeta = {}, layoutStyle, pinnedMacros = [], playerStatus }: Props) {
   const attacks = Object.entries(attackMeta);
+  const spells = Object.entries(spellMeta);
   const { startDrag, moveDrag, endDrag, guardClick } = useAttackDrag((id) =>
     damageTypeColor(attackMeta[id]?.damageType ?? ""),
   );
@@ -73,7 +76,13 @@ export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [], player
     endDrag: endMacroDrag,
     guardClick: guardMacroClick,
   } = useAttackDrag(() => "#b45309", "macro");
-  if (attacks.length === 0 && pinnedMacros.length === 0) return null;
+  const {
+    startDrag: startSpellDrag,
+    moveDrag: moveSpellDrag,
+    endDrag: endSpellDrag,
+    guardClick: guardSpellClick,
+  } = useAttackDrag(() => "#ea580c", "spell");
+  if (attacks.length === 0 && spells.length === 0 && pinnedMacros.length === 0) return null;
 
   return (
     <div
@@ -136,6 +145,35 @@ export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [], player
               {meta.manaCost > 0 && (
                 <div className="absolute top-0.5 right-1 text-blue-300 font-mono font-bold text-[8px]">
                   {meta.manaCost}
+                </div>
+              )}
+              <AttackCooldownOverlay id={id} meta={meta} playerStatus={playerStatus} />
+            </div>
+          );
+        })}
+        {spells.map(([id, meta]) => {
+          const hasRes = hasEnoughResources(meta, playerStatus);
+          return (
+            <div
+              key={`spell-${id}`}
+              onClick={() => guardSpellClick(() => window.mcState?.events?.push(`spell:${id}`))}
+              onPointerDown={(e) => startSpellDrag(e, id)}
+              onPointerMove={moveSpellDrag}
+              onPointerUp={endSpellDrag}
+              onPointerCancel={endSpellDrag}
+              title={`${id}${meta.tokenCost > 0 ? ` · ${meta.tokenCost} token` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}`}
+              className={cn(
+                "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-orange-400/60 bg-black/72 cursor-grab hover:border-orange-400 transition-colors touch-none",
+                !hasRes && "opacity-50",
+              )}
+            >
+              <div className="text-orange-400 text-lg leading-none">⚡</div>
+              <div className="text-orange-300/80 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">
+                {id}
+              </div>
+              {meta.tokenCost > 0 && (
+                <div className="absolute top-0.5 right-1 text-orange-300 font-mono font-bold text-[8px]">
+                  {meta.tokenCost}t
                 </div>
               )}
               <AttackCooldownOverlay id={id} meta={meta} playerStatus={playerStatus} />

@@ -121,6 +121,11 @@ export function useShortcutBar(
       onSlotDrop(slotIdx, { kind: "attack", id: attackId });
       return;
     }
+    const spellId = e.dataTransfer.getData("application/x-mc-spell");
+    if (spellId) {
+      onSlotDrop(slotIdx, { kind: "spell", id: spellId });
+      return;
+    }
     const itemId = e.dataTransfer.getData("text/plain");
     onSlotDrop(slotIdx, itemId ? { kind: "item", id: itemId } : null);
   }
@@ -133,6 +138,8 @@ export function useShortcutBar(
     if (slot.kind === "macro") {
       window.mcRunMacro?.(slot.id);
     } else if (slot.kind === "attack") {
+      window.mcState?.events?.push(`slot_${slotIdx + 1}`);
+    } else if (slot.kind === "spell") {
       window.mcState?.events?.push(`slot_${slotIdx + 1}`);
     }
   }

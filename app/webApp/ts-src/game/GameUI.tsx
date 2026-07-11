@@ -41,6 +41,7 @@ const initial: UiState = {
   inventory: {},
   itemMeta: {},
   attackMeta: {},
+  spellMeta: {},
   hotbarVisible: false,
   healthBarVisible: true,
   shortcutBar: Array(10).fill(null),
@@ -205,6 +206,33 @@ export function GameUI() {
         .catch(() => {});
     loadClassDefinitionsRef.current = load;
     load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/spells")
+      .then((r) => r.json())
+      .then((raw: Record<string, Record<string, string>>) => {
+        if (cancelled) return;
+        const data = Object.fromEntries(
+          Object.entries(raw).map(([k, v]) => [
+            k,
+            {
+              type: v.type ?? "",
+              rageGain: parseInt(v.rageGain ?? "0"),
+              tokenCost: parseInt(v.tokenCost ?? "0"),
+              manaCost: parseInt(v.manaCost ?? "0"),
+              rageCost: parseInt(v.rageCost ?? "0"),
+              cooldownMs: parseInt(v.cooldownMs ?? "0"),
+            },
+          ]),
+        );
+        dispatch({ type: "spell_meta_loaded", data });
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -383,6 +411,7 @@ export function GameUI() {
         if (!s) return null;
         if (s.kind === "attack") return { kind: "attack", id: s.id };
         if (s.kind === "macro") return { kind: "macro", id: s.id };
+        if (s.kind === "spell") return { kind: "spell", id: s.id };
         return { kind: "item", id: s.id };
       });
       dispatch({ type: "shortcut_bar_update", data: { slots, selected: raw.selected } });

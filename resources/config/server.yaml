@@ -25,7 +25,7 @@ chunks:
   transport: websocket
   httpWorkers: 4
 network:
-  messageEncoder: protobuf
+  messageEncoder: json
 game:
   tickMs: 50
   gravity: -20.0

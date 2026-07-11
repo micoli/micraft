@@ -45,4 +45,6 @@ data class CommandContext(
     val reloadRbac: (() -> Unit)? = null,
     val armorRegistry: () -> Map<String, ArmorDefinition> = { emptyMap() },
     val tradeManager: TradeManager? = null,
+    val clearTokenAccumulator: ((String) -> Unit)? = null,
+    val sendStatusUpdate: (suspend (PlayerSession) -> Unit)? = null,
 )

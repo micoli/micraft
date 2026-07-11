@@ -103,6 +103,11 @@ class BlockPlacer(
                     blockPlacerLog.debug("ShortcutBarSet rejected: blank macro name")
                     return
                 }
+            is ShortcutSlot.Spell ->
+                if (content.spellId.isBlank()) {
+                    blockPlacerLog.debug("ShortcutBarSet rejected: blank spell id")
+                    return
+                }
             null -> {}
         }
 

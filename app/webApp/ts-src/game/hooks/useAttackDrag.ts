@@ -1,6 +1,6 @@
 import { useRef } from "react";
 
-export function useAttackDrag(color: (id: string) => string, kind: "attack" | "macro" = "attack") {
+export function useAttackDrag(color: (id: string) => string, kind: "attack" | "macro" | "spell" = "attack") {
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const lastSlotRef = useRef<Element | null>(null);
   const dragIdRef = useRef<string | null>(null);
@@ -16,6 +16,9 @@ export function useAttackDrag(color: (id: string) => string, kind: "attack" | "m
     const inner = document.createElement("div");
     if (kind === "macro") {
       inner.style.cssText = `font-size:22px;line-height:1;`;
+      inner.textContent = "⚡";
+    } else if (kind === "spell") {
+      inner.style.cssText = `font-size:22px;line-height:1;color:#fb923c;`;
       inner.textContent = "⚡";
     } else {
       inner.style.cssText = `width:26px;height:26px;border-radius:50%;background:${color(id)};box-shadow:inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.2);`;

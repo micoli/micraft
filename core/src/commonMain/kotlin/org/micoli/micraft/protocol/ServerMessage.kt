@@ -257,6 +257,8 @@ sealed class ServerMessage {
         val stance: PlayerStance,
         val globalCooldownRemainingMs: Long,
         val attackCooldownsRemainingMs: Map<String, Long> = emptyMap(),
+        val currentTokens: Int = 0,
+        val maxTokens: Int = 0,
     ) : ServerMessage()
 
     @ProtoId(38)

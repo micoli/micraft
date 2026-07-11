@@ -54,5 +54,27 @@ class AttacksController(private val gameLoop: GameLoop) {
                 call.respondText(
                     Json.encodeToString(classSer, classes), ContentType.Application.Json)
             }
+            get("/api/spells") {
+                val serializer =
+                    MapSerializer(
+                        String.serializer(),
+                        MapSerializer(String.serializer(), String.serializer()))
+                val flat = buildMap {
+                    gameLoop.spellRegistry.forEach { (spellId, def) ->
+                        put(
+                            spellId,
+                            mapOf(
+                                "type" to def.type.name,
+                                "rageGain" to def.rageGain.toString(),
+                                "tokenCost" to def.tokenCost.toString(),
+                                "manaCost" to def.manaCost.toString(),
+                                "rageCost" to def.rageCost.toString(),
+                                "cooldownMs" to def.cooldownMs.toString(),
+                            ))
+                    }
+                }
+                call.respondText(
+                    Json.encodeToString(serializer, flat), ContentType.Application.Json)
+            }
         }
 }

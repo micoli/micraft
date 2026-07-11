@@ -212,3 +212,7 @@ set:
     done_hp: "HP de {0} défini à {1}."
     done_mana: "Mana de {0} défini à {1}."
     unknown_stat: "Statistique inconnue '{0}'. Utiliser : hp, mana"
+
+rest:
+  server:
+    done: "Repos court pris. Rage et jetons restaurés."

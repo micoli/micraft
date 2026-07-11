@@ -44,6 +44,7 @@ class DerivedStatsCalculatorTest {
         assertEquals(0, derived.rangedDmg)
         assertEquals(0, derived.spellDmg)
         assertEquals(10, derived.armorClass) // 10 + 0 + 0
+        assertEquals(1, derived.maxTokens) // level 1: 1/4+1 = 1
     }
 
     @Test
@@ -75,6 +76,14 @@ class DerivedStatsCalculatorTest {
         val data = character(BaseStats(wis = 1))
         val derived = DerivedStatsCalculator.compute(data)
         assertEquals(0f, derived.magicResistPct)
+    }
+
+    @Test
+    fun compute_maxTokens_scalesWithLevel() {
+        assertEquals(1, DerivedStatsCalculator.compute(character(level = 1)).maxTokens)
+        assertEquals(2, DerivedStatsCalculator.compute(character(level = 4)).maxTokens)
+        assertEquals(3, DerivedStatsCalculator.compute(character(level = 8)).maxTokens)
+        assertEquals(6, DerivedStatsCalculator.compute(character(level = 20)).maxTokens)
     }
 
     @Test

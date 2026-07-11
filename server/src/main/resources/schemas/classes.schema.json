@@ -33,6 +33,7 @@
           "classResource": {"type": "string", "enum": ["MANA", "RAGE"]},
           "hpFormula": {"type": "string"},
           "manaFormula": {"type": "string"},
+          "rageFormula": {"type": "string"},
           "levels": {
             "type": "object",
             "additionalProperties": {
@@ -50,6 +51,10 @@
                       "level": {"type": "integer", "minimum": 1}
                     }
                   }
+                },
+                "spells": {
+                  "type": "array",
+                  "items": {"type": "string"}
                 }
               }
             }

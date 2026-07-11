@@ -12,6 +12,7 @@ import io.ktor.server.websocket.*
 import java.io.File
 import java.nio.file.Path
 import org.koin.core.parameter.parametersOf
+import org.koin.core.qualifier.named
 import org.koin.ktor.ext.get
 import org.koin.ktor.plugin.Koin
 import org.micoli.micraft.auth.GroupsConfig
@@ -19,7 +20,6 @@ import org.micoli.micraft.auth.LocalAuthProvider
 import org.micoli.micraft.auth.OAuthProvider
 import org.micoli.micraft.auth.installAuthRoutes
 import org.micoli.micraft.auth.loadGroupsConfig
-import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.config.validateYamlConfig
@@ -203,7 +203,7 @@ fun Application.module() {
             npcManager = get<NpcManager>(),
             npcSpawner = get<NpcSpawner>(),
             combatConfig = get<CombatConfigData>(),
-            attackRegistry = get<Map<String, AttackDefinition>>(),
+            attackRegistry = get(named("attacks")),
             combatProcessor = get<CombatProcessor>(),
             statusEffectProcessor = get<StatusEffectProcessor>(),
             tradeConfigLoader = get<TradeConfigLoader>(),

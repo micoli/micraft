@@ -17,4 +17,5 @@ data class DerivedStats(
     val hpRegenPerSec: Float,
     val manaRegenPerSec: Float,
     val armorClass: Int,
+    val maxTokens: Int,
 )

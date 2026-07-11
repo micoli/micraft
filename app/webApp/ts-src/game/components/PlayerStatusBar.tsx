@@ -82,6 +82,20 @@ export function PlayerStatusBar({ status, layoutStyle }: Props) {
       <Bar value={status.currentHp} max={status.maxHp} color="#c0392b" label="HP" />
       {status.maxMana > 0 && <Bar value={status.currentMana} max={status.maxMana} color="#2980b9" label="MP" />}
       {status.maxRage > 0 && <Bar value={status.currentRage} max={status.maxRage} color="#e67e22" label="RP" />}
+      {status.maxTokens > 0 && (
+        <div className="flex items-center gap-1">
+          <span className="text-orange-300/70 font-mono text-[10px] w-5 shrink-0">TK</span>
+          <div className="flex gap-0.5">
+            {Array.from({ length: status.maxTokens }).map((_, i) => (
+              <div
+                key={i}
+                className="w-3 h-3 rounded-sm border border-orange-400/60"
+                style={{ background: i < (status.currentTokens ?? 0) ? "#e67e22" : "rgba(0,0,0,0.4)" }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
       <GcdBar remainingMs={status.globalCooldownRemainingMs} />
     </div>
   );

@@ -17,5 +17,6 @@ data class CharacterData(
     @EncodeDefault val currentHp: Int,
     @EncodeDefault val currentMana: Int,
     @EncodeDefault val currentRage: Int = 0,
+    @EncodeDefault val currentTokens: Int = 0,
     @EncodeDefault val restPoint: List<Vec3> = emptyList(),
 )

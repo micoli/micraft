@@ -15,6 +15,44 @@ No true turn-by-turn combat (incompatible with real-time voxel). Instead: real-t
  - current target is graphically emphased and viewed on the gui
  - a player can have only one target at a time
 
+### Rage System (Warrior)
+
+Rage replaces Mana for the Warrior class. It builds through incoming hits or token spending, and drains progressively out of combat.
+
+#### Gauge
+```
+Rage max    = 100
+In combat   : +20 rage per hit received
+Out of combat: −CON / 20 per second (drains progressively toward 0)
+```
+#### Tokens
+```
+Token max   = floor(level / 4) + 1
+Token regen = 1 token every 30 s out of combat
+Spend 1 token → +20 rage instantly
+At 0 tokens : cannot spend
+```
+| Token | Rage |
+|-------|------|
+| 1-3   | 1    |
+| 4-7   | 2    |
+| 8-11  | 3    |
+| 12-15 | 4    |
+| 16-20 | 5    |
+| ...   | ...  |
+
+
+#### Ability costs
+
+| Ability      | Cost |
+|--------------|------|
+| Second Wind  | 30   |
+| Extra Attack | 20   |
+| Indomitable  | 50   |
+
+#### Rest
+Short or long rest: tokens and rage restored to maximum immediately.
+
 
 ### Attack resolution
 

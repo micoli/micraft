@@ -1,12 +1,13 @@
 import { cn } from "../../primitives/cn";
 import { useShortcutBar } from "../hooks/useShortcutBar";
-import { ShortcutSlot, AttackMeta, UiState } from "../UIReducer";
+import { ShortcutSlot, AttackMeta, SpellMeta, UiState } from "../UIReducer";
 import { damageTypeColor, AttackCooldownOverlay } from "./AttackPanel";
 
 interface Props {
   inventory: Record<string, number>;
   itemMeta: Record<string, { label: string; bg: string }>;
   attackMeta: Record<string, AttackMeta>;
+  spellMeta?: Record<string, SpellMeta>;
   slots: (ShortcutSlot | null)[];
   selectedSlot: number;
   onSlotDrop: (slot: number, content: ShortcutSlot | null) => void;
@@ -19,6 +20,7 @@ export function ShortcutBar({
   inventory,
   itemMeta,
   attackMeta,
+  spellMeta = {},
   slots,
   selectedSlot,
   onSlotDrop,
@@ -62,7 +64,9 @@ export function ShortcutBar({
         const isPressed = pressedSlot === idx;
         const isAttack = slot?.kind === "attack";
         const isMacro = slot?.kind === "macro";
+        const isSpell = slot?.kind === "spell";
         const attackDef = isAttack ? attackMeta[slot!.id] : null;
+        const spellDef = isSpell ? spellMeta[slot!.id] : null;
         const itemMeta_ = slot?.kind === "item" ? itemMeta[slot.id] : null;
         const count = slot?.kind === "item" ? (inventory[slot.id] ?? 0) : 0;
 
@@ -75,7 +79,7 @@ export function ShortcutBar({
             onPointerMove={!isHand && slot ? moveSlotDrag : undefined}
             onPointerUp={!isHand && slot ? endSlotDrag : undefined}
             onPointerCancel={!isHand && slot ? endSlotDrag : undefined}
-            onClick={!isHand && (isAttack || isMacro) ? () => handleSlotClick(idx) : undefined}
+            onClick={!isHand && (isAttack || isMacro || isSpell) ? () => handleSlotClick(idx) : undefined}
             onDragOver={(e) => handleDragOver(e, idx)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, idx)}
@@ -86,7 +90,7 @@ export function ShortcutBar({
               isSelected ? "border-yellow-400/90 shadow-[0_0_6px_rgba(255,215,0,0.5)]" : "border-white/35",
               isHand
                 ? "cursor-default"
-                : isAttack || isMacro
+                : isAttack || isMacro || isSpell
                   ? "cursor-pointer"
                   : slot
                     ? "cursor-grab"
@@ -124,6 +128,14 @@ export function ShortcutBar({
                   {slot!.id}
                 </div>
                 <AttackCooldownOverlay id={slot!.id} meta={attackDef} playerStatus={playerStatus} />
+              </>
+            ) : isSpell ? (
+              <>
+                <div className="text-orange-400 text-lg leading-none">⚡</div>
+                <div className="text-orange-300/80 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">
+                  {slot!.id}
+                </div>
+                <AttackCooldownOverlay id={slot!.id} meta={spellDef} playerStatus={playerStatus} />
               </>
             ) : itemMeta_ ? (
               <>

@@ -38,6 +38,7 @@ object DerivedStatsCalculator {
             hpRegenPerSec = s.con / 10f,
             manaRegenPerSec = s.wis / 20f,
             armorClass = 10 + armorBonuses.sumOf { it.acBonus } + floor((s.dex - 10) / 2.0).toInt(),
+            maxTokens = lvl / 4 + 1,
         )
     }
 }

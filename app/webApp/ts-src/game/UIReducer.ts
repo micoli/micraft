@@ -13,7 +13,8 @@ import {
 export type ShortcutSlot =
   | { kind: "item"; id: string }
   | { kind: "attack"; id: string }
-  | { kind: "macro"; id: string };
+  | { kind: "macro"; id: string }
+  | { kind: "spell"; id: string };
 export type AttackMeta = {
   damageType: string;
   manaCost: number;
@@ -27,6 +28,15 @@ export type AttackMeta = {
 
 export type ClassAttackAccess = { attack: string; level: number };
 export type ClassDefinitions = Record<string, Record<string, ClassAttackAccess[]>>;
+
+export type SpellMeta = {
+  type: string;
+  rageGain: number;
+  tokenCost: number;
+  manaCost: number;
+  rageCost: number;
+  cooldownMs: number;
+};
 
 export interface UiState {
   hud: HudData | null;
@@ -42,6 +52,7 @@ export interface UiState {
   inventory: Record<string, number>;
   itemMeta: Record<string, { label: string; bg: string }>;
   attackMeta: Record<string, AttackMeta>;
+  spellMeta: Record<string, SpellMeta>;
   hotbarVisible: boolean;
   healthBarVisible: boolean;
   shortcutBar: (ShortcutSlot | null)[];
@@ -79,6 +90,8 @@ export interface UiState {
     maxMana: number;
     currentRage: number;
     maxRage: number;
+    currentTokens: number;
+    maxTokens: number;
     stance: string;
     globalCooldownRemainingMs: number;
     attackCooldownsRemainingMs: Record<string, number>;
@@ -106,6 +119,7 @@ export type UiAction =
   | { type: "inventory"; data: Record<string, number> }
   | { type: "item_meta_loaded"; data: Record<string, { label: string; bg: string }> }
   | { type: "attack_meta_loaded"; data: Record<string, AttackMeta> }
+  | { type: "spell_meta_loaded"; data: Record<string, SpellMeta> }
   | { type: "class_definitions_loaded"; data: ClassDefinitions }
   | { type: "hotbar_toggle" }
   | { type: "healthbar_toggle" }
@@ -230,6 +244,8 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, itemMeta: action.data };
     case "attack_meta_loaded":
       return { ...state, attackMeta: action.data };
+    case "spell_meta_loaded":
+      return { ...state, spellMeta: action.data };
     case "class_definitions_loaded":
       return { ...state, classDefinitions: action.data };
     case "hotbar_toggle":

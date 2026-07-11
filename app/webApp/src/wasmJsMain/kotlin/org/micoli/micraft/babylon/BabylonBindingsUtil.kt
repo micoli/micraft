@@ -44,6 +44,8 @@ fun jsSetItemRegistry(json: String): Unit = js("mc.setItemRegistry(json)")
 
 fun jsSetNpcDefinitions(json: String): Unit = js("mc.setNpcDefinitions(json)")
 
+fun jsReloadAttackMeta(): Unit = js("mc.reloadAttackMeta()")
+
 // ── LocalStorage ─────────────────────────────────────────────────────────────
 
 fun jsLocalStorageGet(key: String): String = js("localStorage.getItem(key) || ''")
