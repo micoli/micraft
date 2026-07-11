@@ -49,8 +49,13 @@ function GcdBar({ remainingMs }: { remainingMs: number }) {
       };
       rafRef.current = requestAnimationFrame(tick);
     }
-    return () => cancelAnimationFrame(rafRef.current);
+    // No cleanup here — tick self-terminates at 0; canceling on every remainingMs update
+    // would kill the countdown when server sends intermediate updates (e.g. 800ms while local is at 900ms).
   }, [remainingMs]);
+
+  useEffect(() => {
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
 
   const pct = display > 0 ? Math.min(100, (display / 1500) * 100) : 0;
   const label = display > 0 ? `${(display / 1000).toFixed(1)}s` : "ready";
