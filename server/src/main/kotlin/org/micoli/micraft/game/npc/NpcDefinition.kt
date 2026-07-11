@@ -1,5 +1,7 @@
 package org.micoli.micraft.game.npc
 
+import org.micoli.micraft.player.rpg.ClassResource
+
 data class NpcDefinition(
     val type: String,
     val behavior: NpcBehavior,
@@ -14,7 +16,10 @@ data class NpcDefinition(
     val aggroMode: AggroMode = AggroMode.PASSIVE,
     val aggroRange: Float = 12.0f,
     val deaggroTimeSec: Float = 10.0f,
-    val attackId: String? = null,
+    val attacks: List<NpcAttackSlot> = emptyList(),
     val level: Int = 1,
     val tier: NpcTier = NpcTier.COMMON,
+    val classResource: ClassResource = ClassResource.MANA,
+    val maxMana: Int = 0,
+    val maxRage: Int = 0,
 )

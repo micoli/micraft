@@ -20,6 +20,8 @@ declare global {
     visibility?: boolean;
     from: [number, number, number];
     to: [number, number, number];
+    box_uv?: boolean;
+    uv_offset?: [number, number];
     faces: {
       north?: BbModelFace;
       south?: BbModelFace;
@@ -34,6 +36,7 @@ declare global {
     uuid: string;
     name: string;
     origin: [number, number, number];
+    rotation?: [number, number, number];
     visibility?: boolean;
     children?: Array<string | BbModelGroup>;
   }
@@ -160,7 +163,7 @@ declare global {
     npcModelsReady: boolean;
     skinMatCache: Record<string, import("@babylonjs/core").StandardMaterial>;
     skinUV: (face: BbModelFace | undefined, W: number, H: number) => unknown;
-    skinFaceUV: (faces: BbModelElement["faces"], W: number, H: number) => unknown[];
+    skinFaceUV: (el: BbModelElement, W: number, H: number) => unknown[];
     // Scene objects
     engine: InstanceType<typeof BABYLON.Engine> | null;
     hemiLight: InstanceType<typeof BABYLON.HemisphericLight> | null;

@@ -33,7 +33,11 @@ private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
         aggroMode = o.aggroMode ?: aggroMode,
         aggroRange = o.aggroRange ?: aggroRange,
         deaggroTimeSec = o.deaggroTimeSec ?: deaggroTimeSec,
-        attackId = o.attackId ?: attackId,
+        attacks = o.attacks ?: attacks,
+        level = o.level ?: level,
+        classResource = o.classResource ?: classResource,
+        maxMana = o.maxMana ?: maxMana,
+        maxRage = o.maxRage ?: maxRage,
     )
 
 class NpcRegistryLoader(
@@ -113,7 +117,11 @@ class NpcRegistryLoader(
                                     aggroMode = entry.aggroMode,
                                     aggroRange = entry.aggroRange,
                                     deaggroTimeSec = entry.deaggroTimeSec,
-                                    attackId = entry.attackId,
+                                    attacks = entry.attacks,
+                                    level = entry.level,
+                                    classResource = entry.classResource,
+                                    maxMana = entry.maxMana,
+                                    maxRage = entry.maxRage,
                                 )
                         }
                         .onFailure { e -> npcLog.warn("Skipping entity '{}': {}", key, e.message) }

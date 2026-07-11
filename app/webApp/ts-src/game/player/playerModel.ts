@@ -36,7 +36,23 @@ function skinUV(face: BbModelFace | undefined, W: number, H: number): unknown {
 
 // BabylonJS CreateBox face order: 0=front(+Z/south), 1=back(-Z/north),
 // 2=right(+X/east), 3=left(-X/west), 4=top(+Y), 5=bottom(-Y)
-function skinFaceUV(faces: BbModelElement["faces"], W: number, H: number): unknown[] {
+function skinFaceUV(el: BbModelElement, W: number, H: number): unknown[] {
+  const faces = el.faces;
+  if (el.box_uv && el.uv_offset) {
+    const bw = Math.round(Math.abs(el.to[0] - el.from[0]));
+    const bh = Math.round(Math.abs(el.to[1] - el.from[1]));
+    const bd = Math.round(Math.abs(el.to[2] - el.from[2]));
+    const [u, v] = el.uv_offset;
+    const fakeUV = (x0: number, y0: number, x1: number, y1: number): BbModelFace => ({ uv: [x0, y0, x1, y1] });
+    return [
+      skinUV(fakeUV(u + 2 * bd + bw, v + bd, u + 2 * bd + 2 * bw, v + bd + bh), W, H), // south
+      skinUV(fakeUV(u + bd, v + bd, u + bd + bw, v + bd + bh), W, H),                   // north
+      skinUV(fakeUV(u, v + bd, u + bd, v + bd + bh), W, H),                             // east
+      skinUV(fakeUV(u + bd + bw, v + bd, u + 2 * bd + bw, v + bd + bh), W, H),          // west
+      skinUV(fakeUV(u + bd, v, u + bd + bw, v + bd), W, H),                             // up
+      skinUV(fakeUV(u + bd + bw, v, u + bd + 2 * bw, v + bd), W, H),                   // down
+    ];
+  }
   return [
     skinUV(faces.south, W, H),
     skinUV(faces.north, W, H),
@@ -116,34 +132,36 @@ export function registerPlayerModel(): Pick<
       groupMap[g.uuid] = g;
     });
 
-    // Map each element UUID to its nearest animated ancestor group name
-    const elToGroup: Record<string, AnimGroupName | null> = {};
-    function walkOutliner(nodes: BbModel["outliner"], animAncestor: AnimGroupName | null): void {
+    // Map each element UUID to its direct parent group UUID
+    const elToGroupUuid: Record<string, string | null> = {};
+    function walkOutliner(nodes: BbModel["outliner"], parentUuid: string | null): void {
       if (!nodes) return;
       for (const node of nodes) {
         if (typeof node === "string") {
-          elToGroup[node] = animAncestor;
+          elToGroupUuid[node] = parentUuid;
           continue;
         }
-        const g = groupMap[(node as any).uuid];
-        const gname = g?.name as AnimGroupName | undefined;
-        const next = gname && (ANIM_GROUPS as readonly string[]).includes(gname) ? gname : animAncestor;
-        walkOutliner((node as any).children, next);
+        walkOutliner((node as any).children, (node as any).uuid);
       }
     }
     walkOutliner(bbmodel.outliner, null);
 
     const root = new BABYLON.TransformNode("playerRoot", scene);
     const pivotNodes: McPlayerModel["pivotNodes"] = {};
+    const DEG = Math.PI / 180;
 
-    for (const gname of ANIM_GROUPS) {
-      const g = bbmodel.groups.find((gr) => gr.name === gname);
-      if (!g) continue;
-      const node = new BABYLON.TransformNode(`player_${gname}`, scene);
+    // Create a TransformNode for every group (applying its base rotation)
+    const allGroupNodes: Record<string, { node: InstanceType<typeof BABYLON.TransformNode>; origin: [number, number, number] }> = {};
+    bbmodel.groups.forEach((g) => {
+      const node = new BABYLON.TransformNode(`grp_${g.name}`, scene);
       node.parent = root;
       node.position = new BABYLON.Vector3(g.origin[0] * SCALE, g.origin[1] * SCALE, g.origin[2] * SCALE);
-      pivotNodes[gname] = { node, origin: g.origin };
-    }
+      if (g.rotation) node.rotation = new BABYLON.Vector3(g.rotation[0] * DEG, g.rotation[1] * DEG, g.rotation[2] * DEG);
+      allGroupNodes[g.uuid] = { node, origin: g.origin };
+      if ((ANIM_GROUPS as readonly string[]).includes(g.name)) {
+        pivotNodes[g.name as AnimGroupName] = { node, origin: g.origin };
+      }
+    });
 
     for (const el of bbmodel.elements) {
       const [fx, fy, fz] = el.from,
@@ -155,7 +173,7 @@ export function registerPlayerModel(): Pick<
           width: Math.abs(tx - fx) * SCALE,
           height: Math.abs(ty - fy) * SCALE,
           depth: Math.abs(tz - fz) * SCALE,
-          faceUV: skinFaceUV(el.faces, W, H) as any,
+          faceUV: skinFaceUV(el, W, H) as any,
         },
         scene,
       );
@@ -165,7 +183,8 @@ export function registerPlayerModel(): Pick<
       const cx = ((fx + tx) / 2) * SCALE,
         cy = ((fy + ty) / 2) * SCALE,
         cz = ((fz + tz) / 2) * SCALE;
-      const pg = elToGroup[el.uuid] ? pivotNodes[elToGroup[el.uuid]!] : null;
+      const groupUuid = elToGroupUuid[el.uuid];
+      const pg = groupUuid ? allGroupNodes[groupUuid] : null;
       if (pg) {
         mesh.parent = pg.node;
         mesh.position = new BABYLON.Vector3(

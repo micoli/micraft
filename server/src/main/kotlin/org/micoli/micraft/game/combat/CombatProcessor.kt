@@ -247,12 +247,50 @@ class CombatProcessor(
     // ── NPC-initiated attack ──────────────────────────────────────────────────
 
     suspend fun handleNpcAttack(npc: NpcInstance, target: PlayerSession) {
-        val attackId = npc.definition.attackId ?: "basic_attack"
-        val attackDef = attackRegistry[attackId] ?: return
-        val levelDef = attackDef.levels.values.firstOrNull() ?: return
         val now = System.currentTimeMillis()
-        if (now < npc.attackCooldownUntilMs) return
-        npc.attackCooldownUntilMs = now + levelDef.cooldownMs
+        val def = npc.definition
+        val slots =
+            def.attacks.ifEmpty {
+                return
+            }
+
+        data class Resolved(
+            val slot: org.micoli.micraft.game.npc.NpcAttackSlot,
+            val attackDef: org.micoli.micraft.combat.AttackDefinition,
+            val levelDef: org.micoli.micraft.combat.AttackLevelDefinition,
+        )
+
+        val resolved =
+            slots.shuffled().firstNotNullOfOrNull { slot ->
+                val cooldownKey = "${slot.attackId}:${slot.level}"
+                if (now < (npc.attackCooldownsUntilMs[cooldownKey] ?: 0L))
+                    return@firstNotNullOfOrNull null
+                val aDef = attackRegistry[slot.attackId] ?: return@firstNotNullOfOrNull null
+                val lDef =
+                    aDef.levels[slot.level]
+                        ?: aDef.levels.entries.maxByOrNull { it.key }?.value
+                        ?: return@firstNotNullOfOrNull null
+                Resolved(slot, aDef, lDef)
+            } ?: return
+
+        val (slot, _, levelDef) = resolved
+
+        when (def.classResource) {
+            ClassResource.MANA -> {
+                if (def.maxMana > 0 && levelDef.manaCost > 0) {
+                    if (npc.currentMana < levelDef.manaCost) return
+                    npc.currentMana -= levelDef.manaCost
+                }
+            }
+            ClassResource.RAGE -> {
+                if (def.maxRage > 0 && levelDef.rageCost > 0) {
+                    if (npc.currentRage < levelDef.rageCost) return
+                    npc.currentRage -= levelDef.rageCost
+                }
+            }
+        }
+
+        npc.attackCooldownsUntilMs["${slot.attackId}:${slot.level}"] = now + levelDef.cooldownMs
 
         val targetChar = target.characterData ?: return
         val theirArmors = target.state.armors.mapNotNull { armorRegistry[it]?.statBonus }

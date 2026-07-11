@@ -212,7 +212,24 @@ class NpcManager(
         val now = System.currentTimeMillis()
         instance.currentHp = (instance.currentHp - damage).coerceAtLeast(0)
         instance.lastDamagedAtMs = now
-        if (instance.aggroTarget == null) instance.aggroTarget = attackerId
+        if (instance.aggroTarget == null) {
+            instance.aggroTarget = attackerId
+            if (instance.definition.aggroMode == AggroMode.PASSIVE_COOPERATIVE) {
+                val npcPos = instance.state.pos
+                val rangeSq = instance.definition.aggroRange * instance.definition.aggroRange
+                npcs.values.forEach { peer ->
+                    if (peer.state.id != npcId &&
+                        peer.state.type == instance.state.type &&
+                        peer.aggroTarget == null) {
+                        val dx = peer.state.pos.x - npcPos.x
+                        val dz = peer.state.pos.z - npcPos.z
+                        if (dx * dx + dz * dz <= rangeSq) {
+                            peer.aggroTarget = attackerId
+                        }
+                    }
+                }
+            }
+        }
         instance.damageContributors[attackerId] =
             (instance.damageContributors[attackerId] ?: 0) + damage
 
@@ -238,8 +255,21 @@ class NpcManager(
             val aggroRangeSq = def.aggroRange * def.aggroRange
             val deaggroMs = (def.deaggroTimeSec * 1000).toLong()
 
+            if (instance.currentMana < def.maxMana)
+                instance.currentMana = (instance.currentMana + 1).coerceAtMost(def.maxMana)
+            if (instance.aggroTarget != null && instance.currentRage < def.maxRage)
+                instance.currentRage = (instance.currentRage + 2).coerceAtMost(def.maxRage)
+            else if (instance.aggroTarget == null && instance.currentRage > 0)
+                instance.currentRage = (instance.currentRage - 1).coerceAtLeast(0)
+
             when (def.aggroMode) {
                 AggroMode.PASSIVE -> {
+                    if (instance.aggroTarget != null &&
+                        now - instance.lastDamagedAtMs > deaggroMs) {
+                        instance.aggroTarget = null
+                    }
+                }
+                AggroMode.PASSIVE_COOPERATIVE -> {
                     if (instance.aggroTarget != null &&
                         now - instance.lastDamagedAtMs > deaggroMs) {
                         instance.aggroTarget = null
@@ -274,6 +304,10 @@ class NpcManager(
 
             val aggroTargetId = instance.aggroTarget ?: continue
             val targetSession = sessions.find { it.id == aggroTargetId } ?: continue
+            if (targetSession.combatState.isDowned) {
+                instance.aggroTarget = null
+                continue
+            }
             combatProcessor.handleNpcAttack(instance, targetSession)
         }
     }

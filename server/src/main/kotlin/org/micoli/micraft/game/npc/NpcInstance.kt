@@ -14,14 +14,17 @@ class NpcInstance(
     var wanderPauseTicks: Int = 0,
     var wanderStepTicks: Int = 0,
     @Volatile var currentHp: Int = -1,
+    @Volatile var currentMana: Int = -1,
+    @Volatile var currentRage: Int = 0,
     @Volatile var aggroTarget: String? = null,
     @Volatile var lastDamagedAtMs: Long = 0L,
-    @Volatile var attackCooldownUntilMs: Long = 0L,
+    val attackCooldownsUntilMs: MutableMap<String, Long> = mutableMapOf(),
     val damageContributors: MutableMap<String, Int> = mutableMapOf(),
 ) {
     init {
         wanderTargetX = spawnPos.x
         wanderTargetZ = spawnPos.z
         if (currentHp < 0) currentHp = definition.hp
+        if (currentMana < 0) currentMana = definition.maxMana
     }
 }

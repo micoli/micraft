@@ -11,6 +11,7 @@ import org.micoli.micraft.game.classes.ClassAttackAccess
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.classes.ClassLevelEntry
 import org.micoli.micraft.game.npc.AggroMode
+import org.micoli.micraft.game.npc.NpcAttackSlot
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
@@ -87,7 +88,7 @@ class CombatProcessorTest {
                 height = 1.8f,
                 wanderSpeed = 1f,
                 wanderRadius = 5f,
-                attackId = "basic_attack",
+                attacks = listOf(NpcAttackSlot("basic_attack", 1)),
                 hp = 30,
                 aggroMode = AggroMode.AGGRESSIVE,
             )
@@ -381,7 +382,7 @@ class CombatProcessorTest {
         val combatLog = mutableListOf<String>()
         val proc = buildProcessor(sessions = { listOf(target) }, combatLog = combatLog)
 
-        val npc = fakeNpc().also { it.attackCooldownUntilMs = Long.MAX_VALUE }
+        val npc = fakeNpc().also { it.attackCooldownsUntilMs["basic_attack:1"] = Long.MAX_VALUE }
         proc.handleNpcAttack(npc, target)
 
         assertEquals(0, combatLog.size)

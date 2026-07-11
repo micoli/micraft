@@ -1,0 +1,22 @@
+behavior: random_movable
+width: 0.5
+height: 0.9
+wanderSpeed: 2.0
+wanderRadius: 12.0
+spawn:
+  autoSpawn: true
+  maxTotal: 30
+  maxPerChunk: 3
+  spawnBiomes: []
+hp: 18
+aggroMode: AGGRESSIVE
+aggroRange: 6.0
+deaggroTimeSec: 10.0
+level: 1
+classResource: RAGE
+maxRage: 60
+attacks:
+  - attackId: wolf_bite
+    level: 1
+  - attackId: wolf_pounce
+    level: 1

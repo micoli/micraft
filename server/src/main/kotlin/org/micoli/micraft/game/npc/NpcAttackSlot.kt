@@ -3,8 +3,7 @@ package org.micoli.micraft.game.npc
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class AggroMode {
-    AGGRESSIVE,
-    PASSIVE,
-    PASSIVE_COOPERATIVE,
-}
+data class NpcAttackSlot(
+    val attackId: String,
+    val level: Int = 1,
+)

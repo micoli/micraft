@@ -106,7 +106,7 @@ export function registerArmorOverlay(): Pick<
             width: Math.abs(tx - fx) * SCALE,
             height: Math.abs(ty - fy) * SCALE,
             depth: Math.abs(tz - fz) * SCALE,
-            faceUV: window.mcState.skinFaceUV(el.faces, W, H) as any,
+            faceUV: window.mcState.skinFaceUV(el, W, H) as any,
           },
           scene,
         );

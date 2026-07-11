@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.npc
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.player.rpg.ClassResource
 
 @Serializable
 data class NpcYamlOverride(
@@ -14,5 +15,9 @@ data class NpcYamlOverride(
     val aggroMode: AggroMode? = null,
     val aggroRange: Float? = null,
     val deaggroTimeSec: Float? = null,
-    val attackId: String? = null,
+    val attacks: List<NpcAttackSlot>? = null,
+    val level: Int? = null,
+    val classResource: ClassResource? = null,
+    val maxMana: Int? = null,
+    val maxRage: Int? = null,
 )

@@ -55,3 +55,53 @@ attacks:
         power: 7
         weaponDice: 2d6
         cooldownMs: 950
+
+  camel_kick:
+    damageType: PHYSICAL
+    levels:
+      1:
+        power: 4
+        weaponDice: 1d8
+        cooldownMs: 2000
+
+  wolf_bite:
+    damageType: PHYSICAL
+    levels:
+      1:
+        power: 4
+        weaponDice: 1d6
+        cooldownMs: 1200
+      2:
+        power: 6
+        weaponDice: 2d6
+        cooldownMs: 1000
+
+  wolf_pounce:
+    damageType: PHYSICAL
+    levels:
+      1:
+        power: 5
+        weaponDice: 1d8
+        cooldownMs: 3000
+        rageCost: 15
+
+  polar_bear_swipe:
+    damageType: PHYSICAL
+    levels:
+      1:
+        power: 7
+        weaponDice: 2d6
+        cooldownMs: 2000
+      2:
+        power: 10
+        weaponDice: 3d6
+        cooldownMs: 1800
+
+  polar_bear_crush:
+    damageType: PHYSICAL
+    levels:
+      1:
+        power: 12
+        weaponDice: 3d8
+        cooldownMs: 4000
+        rageCost: 25

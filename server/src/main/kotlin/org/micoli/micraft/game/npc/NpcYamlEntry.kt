@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.npc
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.player.rpg.ClassResource
 
 @Serializable
 data class NpcYamlEntry(
@@ -14,5 +15,9 @@ data class NpcYamlEntry(
     val aggroMode: AggroMode = AggroMode.PASSIVE,
     val aggroRange: Float = 12.0f,
     val deaggroTimeSec: Float = 10.0f,
-    val attackId: String? = null,
+    val attacks: List<NpcAttackSlot> = emptyList(),
+    val level: Int = 1,
+    val classResource: ClassResource = ClassResource.MANA,
+    val maxMana: Int = 0,
+    val maxRage: Int = 0,
 )

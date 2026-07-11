@@ -1,0 +1,22 @@
+behavior: random_movable
+width: 0.5
+height: 0.9
+wanderSpeed: 2.0
+wanderRadius: 12.0
+spawn:
+  autoSpawn: true
+  maxTotal: 30
+  maxPerChunk: 3
+  spawnBiomes: []
+hp: 40
+aggroMode: AGGRESSIVE
+aggroRange: 15.0
+deaggroTimeSec: 12.0
+level: 2
+classResource: RAGE
+maxRage: 80
+attacks:
+  - attackId: polar_bear_swipe
+    level: 2
+  - attackId: polar_bear_crush
+    level: 1
