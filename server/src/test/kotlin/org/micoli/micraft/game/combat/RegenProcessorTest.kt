@@ -108,12 +108,11 @@ class RegenProcessorTest {
     @Test
     fun `downed player does not regenerate`() = runBlocking {
         val session = testSession()
-        session.characterData = testChar(hp = 1)
-        session.combatState = session.combatState.copy(isDowned = true)
+        session.characterData = testChar(hp = 0)
         val processor = buildProcessor(hpFormula = "10.0")
         Thread.sleep(150)
         processor.tick(listOf(session))
-        assertEquals(1, session.characterData!!.currentHp)
+        assertEquals(0, session.characterData!!.currentHp)
     }
 
     @Test

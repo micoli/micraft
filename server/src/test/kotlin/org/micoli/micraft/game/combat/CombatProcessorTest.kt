@@ -218,7 +218,7 @@ class CombatProcessorTest {
                     attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
             )
 
-        assertTrue(target.combatState.isDowned)
+        assertTrue(target.isDowned)
         assertTrue(target.sent.filterIsInstance<ServerMessage.PlayerDowned>().isNotEmpty())
     }
 
@@ -416,14 +416,13 @@ class CombatProcessorTest {
     fun `stabilize sends PlayerStatusUpdate with hp 1`() = runBlocking {
         val target = testSession(id = "b", name = "Bob")
         target.characterData = testChar("b", "Bob", hp = 0)
-        target.combatState =
-            target.combatState.copy(isDowned = true, downingSuccesses = 2, downingFailures = 0)
+        target.combatState = target.combatState.copy(downingSuccesses = 2, downingFailures = 0)
         val proc = buildProcessor(sessions = { listOf(target) })
 
         var attempts = 0
-        while (target.combatState.isDowned && attempts < 1000) {
+        while (target.isDowned && attempts < 1000) {
             proc.tickDowningRolls(target)
-            if (target.combatState.isDowned) {
+            if (target.isDowned) {
                 target.combatState =
                     target.combatState.copy(downingSuccesses = 2, downingFailures = 0)
             }
@@ -439,14 +438,13 @@ class CombatProcessorTest {
     fun `death and respawn sends PlayerStatusUpdate matching new HP`() = runBlocking {
         val target = testSession(id = "b", name = "Bob")
         target.characterData = testChar("b", "Bob", hp = 0)
-        target.combatState =
-            target.combatState.copy(isDowned = true, downingSuccesses = 0, downingFailures = 2)
+        target.combatState = target.combatState.copy(downingSuccesses = 0, downingFailures = 2)
         val proc = buildProcessor(sessions = { listOf(target) })
 
         var attempts = 0
-        while (target.combatState.isDowned && attempts < 1000) {
+        while (target.isDowned && attempts < 1000) {
             proc.tickDowningRolls(target)
-            if (target.combatState.isDowned) {
+            if (target.isDowned) {
                 target.combatState =
                     target.combatState.copy(downingSuccesses = 0, downingFailures = 2)
             }

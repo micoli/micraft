@@ -5,7 +5,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.micoli.micraft.combat.CombatState
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
@@ -29,7 +28,6 @@ class ResurectCommandTest {
                     currentHp = 0,
                     currentMana = 0,
                 )
-            s.combatState = CombatState(isDowned = true)
         }
 
     // ── target resolution ─────────────────────────────────────────────────────
@@ -54,10 +52,7 @@ class ResurectCommandTest {
     @Test
     fun targetNoCharacterData_sendsError() = runBlocking {
         val caster = testSession(id = "a", name = "Alice")
-        val bob =
-            testSession(id = "b", name = "Bob").also {
-                it.combatState = CombatState(isDowned = true)
-            }
+        val bob = testSession(id = "b", name = "Bob")
         cmd.execute(caster, "Bob", testContext(sessions = listOf(caster, bob)))
         val notifs = caster.sent.filterIsInstance<ServerMessage.Notification>()
         assertTrue(notifs.isNotEmpty())
@@ -70,7 +65,7 @@ class ResurectCommandTest {
         val caster = testSession(id = "a", name = "Alice")
         val bob = downedSession()
         cmd.execute(caster, "Bob", testContext(sessions = listOf(caster, bob)))
-        assertFalse(bob.combatState.isDowned)
+        assertFalse(bob.isDowned)
     }
 
     @Test

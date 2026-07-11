@@ -383,8 +383,14 @@ export function reducer(state: UiState, action: UiAction): UiState {
     }
     case "player_downed":
       return { ...state, playerDowned: true };
-    case "player_respawned":
-      return { ...state, playerDowned: false };
+    case "player_respawned": {
+      const { currentHp, currentMana } = action.data as { currentHp: number; currentMana: number };
+      return {
+        ...state,
+        playerDowned: false,
+        playerStatus: state.playerStatus ? { ...state.playerStatus, currentHp, currentMana } : state.playerStatus,
+      };
+    }
     case "xp_gained":
       return { ...state, xpState: action.data as UiState["xpState"] };
     case "health_update":

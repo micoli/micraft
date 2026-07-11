@@ -304,7 +304,7 @@ class NpcManager(
 
             val aggroTargetId = instance.aggroTarget ?: continue
             val targetSession = sessions.find { it.id == aggroTargetId } ?: continue
-            if (targetSession.combatState.isDowned) {
+            if (targetSession.isDowned) {
                 instance.aggroTarget = null
                 continue
             }

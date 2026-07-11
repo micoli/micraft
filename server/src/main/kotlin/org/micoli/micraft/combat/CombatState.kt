@@ -8,5 +8,4 @@ data class CombatState(
     val activeEffects: MutableList<ActiveStatusEffect> = mutableListOf(),
     val downingSuccesses: Int = 0,
     val downingFailures: Int = 0,
-    val isDowned: Boolean = false,
 )

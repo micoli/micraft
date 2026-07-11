@@ -65,7 +65,7 @@ class StatusEffectProcessor(
                 val newHp = (charData.currentHp + hpDelta.toInt()).coerceIn(0, derived.maxHp)
                 session.characterData = charData.copy(currentHp = newHp)
                 broadcastHealthUpdate(session.id, false, newHp, derived.maxHp)
-                if (newHp <= 0 && !session.combatState.isDowned) onPlayerDowned(session)
+                if (newHp <= 0 && !session.isDowned) onPlayerDowned(session)
                 val effectNames =
                     effects
                         .mapNotNull {

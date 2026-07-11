@@ -30,7 +30,7 @@ class RegenProcessor(
 
         for (session in sessions) {
             val charData = session.characterData ?: continue
-            if (session.combatState.isDowned) continue
+            if (session.isDowned) continue
 
             val armors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
             val derived = DerivedStatsCalculator.compute(charData, armors)

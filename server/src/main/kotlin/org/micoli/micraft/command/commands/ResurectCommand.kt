@@ -25,7 +25,7 @@ class ResurectCommand : CommandHandler {
         else
             context
                 .sessions()
-                .filter { it.combatState.isDowned }
+                .filter { it.isDowned }
                 .map { it.state.name }
                 .filter { it.startsWith(partial, ignoreCase = true) }
 
@@ -41,7 +41,7 @@ class ResurectCommand : CommandHandler {
                     return
                 }
 
-        if (!target.combatState.isDowned) {
+        if (!target.isDowned) {
             session.send(
                 ServerMessage.Notification(
                     context.i18n.t(lang, "resurect:server:not_downed", target.state.name)))
@@ -65,8 +65,7 @@ class ResurectCommand : CommandHandler {
         val respawnPos = charData.restPoint.firstOrNull() ?: target.state.pos
 
         target.characterData = charData.copy(currentHp = newHp, currentMana = newMana)
-        target.combatState =
-            CombatState(isDowned = false, downingSuccesses = 0, downingFailures = 0)
+        target.combatState = CombatState(downingSuccesses = 0, downingFailures = 0)
 
         context.sessions().forEach {
             it.send(ServerMessage.PlayerRespawned(target.id, respawnPos, newHp, newMana))

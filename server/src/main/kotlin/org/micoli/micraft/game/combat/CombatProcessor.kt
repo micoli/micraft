@@ -350,13 +350,13 @@ class CombatProcessor(
 
     internal suspend fun handlePlayerDowned(session: PlayerSession) {
         session.combatState =
-            session.combatState.copy(isDowned = true, downingSuccesses = 0, downingFailures = 0)
+            session.combatState.copy(downingSuccesses = 0, downingFailures = 0)
         getSessions().forEach { it.send(ServerMessage.PlayerDowned(session.id)) }
         log.info("Player {} downed", session.state.name)
     }
 
     suspend fun tickDowningRolls(session: PlayerSession) {
-        if (!session.combatState.isDowned) return
+        if (!session.isDowned) return
         if (Random.nextInt(1, 21) >= 10) {
             val s =
                 session.combatState.copy(
@@ -376,7 +376,7 @@ class CombatProcessor(
         val updated = charData.copy(currentHp = 1)
         session.characterData = updated
         session.combatState =
-            session.combatState.copy(isDowned = false, downingSuccesses = 0, downingFailures = 0)
+            session.combatState.copy(downingSuccesses = 0, downingFailures = 0)
         val derived =
             DerivedStatsCalculator.compute(
                 updated, session.state.armors.mapNotNull { armorRegistry[it]?.statBonus })
@@ -400,7 +400,7 @@ class CombatProcessor(
                 xp = (charData.xp - xpLoss).coerceAtLeast(0),
             )
         session.combatState =
-            session.combatState.copy(isDowned = false, downingSuccesses = 0, downingFailures = 0)
+            session.combatState.copy(downingSuccesses = 0, downingFailures = 0)
         getSessions().forEach {
             it.send(ServerMessage.PlayerRespawned(session.id, respawnPos, newHp, newMana))
         }

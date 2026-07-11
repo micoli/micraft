@@ -45,6 +45,7 @@ open class PlayerSession(
 
     @Volatile var characterData: CharacterData? = null
     @Volatile var combatState: CombatState = CombatState()
+    val isDowned: Boolean get() = (characterData?.currentHp ?: 1) <= 0
 
     @Volatile var lastMoveDx: Float = 0f
     @Volatile var lastMoveDz: Float = 0f
