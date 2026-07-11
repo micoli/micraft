@@ -194,8 +194,8 @@ class GameLoop(
             world,
             vegetationConfig,
             savePath =
-                persistence?.worldDir?.resolve("vegetation_state.json")
-                    ?: Path.of("data/world/default_world/vegetation_state.json"),
+                persistence?.worldDir?.resolve("vegetation_state.yaml")
+                    ?: Path.of("data/world/default_world/vegetation_state.yaml"),
         ),
     private val recipeRegistryLoader: RecipeRegistryLoader =
         RecipeRegistryLoader(Path.of("data/config/recipes.yaml")),
@@ -461,14 +461,14 @@ class GameLoop(
         val chunks = world.discoveredChunks().mapNotNull { world.getChunkIfDiscovered(it) }
         scope.launch(Dispatchers.IO) {
             terrainCache.rebuild(chunks)
-            persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache.json")) }
+            persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache.yaml")) }
         }
     }
 
     private fun rebuildTerrainSync() {
         val chunks = world.discoveredChunks().mapNotNull { world.getChunkIfDiscovered(it) }
         terrainCache.rebuild(chunks)
-        persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache.json")) }
+        persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache.yaml")) }
     }
 
     private fun buildPreferencesSync(session: PlayerSession): ServerMessage.PreferencesSync {
@@ -696,18 +696,18 @@ class GameLoop(
         npcConfigLoader.load()
         npcManager.loadDefinitions(npcRegistryLoader.load())
         val npcSavePath =
-            persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/config/spawns.json")
+            persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
         npcManager.load(npcSavePath)
         vegetationManager.load()
         persistence?.let {
             terrainCache.prewarm(
                 chunksDir = it.worldDir.resolve("chunks"),
-                cacheFile = it.worldDir.resolve("terrain_cache.json"),
+                cacheFile = it.worldDir.resolve("terrain_cache.yaml"),
             )
         }
         app.launch {
             val npcSavePath =
-                persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/config/spawns.json")
+                persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
             while (isActive) {
                 delay(TICK_MS)
                 tick()
@@ -738,7 +738,7 @@ class GameLoop(
         worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
         sessionRegistry.all().forEach { session -> savePlayer(session) }
         val npcSavePath =
-            persistence?.worldDir?.resolve("npcs.json") ?: Path.of("data/config/spawns.json")
+            persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
         npcManager.save(npcSavePath)
         vegetationManager.save()
         log.info("World saved on shutdown")

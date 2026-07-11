@@ -24,8 +24,6 @@ const SUPPORTED_LANGS: { code: string; label: string }[] = [
   { code: "fr", label: "Français" },
 ];
 
-const MC_SERVER_VERSION_KEY = "mc_server_version";
-
 export function AuthScreen() {
   const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<AuthMode>("loading");
@@ -43,39 +41,14 @@ export function AuthScreen() {
   useEffect(() => {
     fetch("/api/auth/config")
       .then((r) => r.json())
-      .then((d: { provider: string }) => setAuthMode((d.provider as AuthMode) || "none"))
-      .catch(() => setAuthMode("none"));
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function checkServer() {
-      try {
-        const r = await fetch("/api/version", { cache: "no-cache" });
-        if (!r.ok) {
-          if (!cancelled) setServerReady(false);
-          return;
-        }
-        const { server } = (await r.json()) as { server: string };
-        const stored = sessionStorage.getItem(MC_SERVER_VERSION_KEY);
-        if (stored === null) {
-          sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
-        } else if (stored !== server) {
-          sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
-          window.location.href = location.pathname + "?_v=" + server;
-          return;
-        }
-        if (!cancelled) setServerReady(true);
-      } catch {
-        if (!cancelled) setServerReady(false);
-      }
-    }
-    void checkServer();
-    const interval = setInterval(() => void checkServer(), 3000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
+      .then((d: { provider: string }) => {
+        setAuthMode((d.provider as AuthMode) || "none");
+        setServerReady(true);
+      })
+      .catch(() => {
+        setAuthMode("none");
+        setServerReady(true);
+      });
   }, []);
 
   useEffect(() => {

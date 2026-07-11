@@ -7,6 +7,8 @@ import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import com.charleskorn.kaml.Yaml
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
@@ -30,7 +32,7 @@ class TerrainCache {
         val cacheTime =
             if (cacheFile.exists()) {
                 try {
-                    Json.decodeFromString<List<ChunkTerrainInfo>>(cacheFile.readText()).forEach {
+                    Yaml.default.decodeFromString(ListSerializer(ChunkTerrainInfo.serializer()), cacheFile.readText()).forEach {
                         info ->
                         cache[ChunkPos(info.cx, info.cz)] = Pair(info.colors, info.avgHeight)
                     }
@@ -74,7 +76,7 @@ class TerrainCache {
 
     fun save(cacheFile: Path) {
         try {
-            cacheFile.writeText(Json.encodeToString(getAll()))
+            cacheFile.writeText(Yaml.default.encodeToString(ListSerializer(ChunkTerrainInfo.serializer()), getAll()))
         } catch (e: Exception) {
             log.warn("Failed to save terrain cache: {}", e.message)
         }

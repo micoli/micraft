@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.world
 
+import com.charleskorn.kaml.Yaml
 import java.io.IOException
 import java.nio.file.Path
 import java.util.zip.GZIPInputStream
@@ -8,22 +9,16 @@ import kotlin.io.path.*
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
 import org.micoli.micraft.player.PlayerState
 import org.slf4j.LoggerFactory
-
-private val playerJson = Json {
-    encodeDefaults = true
-    prettyPrint = true
-}
 
 private val worldPersistenceLog = LoggerFactory.getLogger("WorldPersistence")
 
 class WorldPersistence(val worldDir: Path) {
     private val chunksDir = worldDir.resolve("chunks")
     private val playersDir = worldDir.resolve("players")
-    private val metaFile = worldDir.resolve("world.json")
+    private val metaFile = worldDir.resolve("world.yaml")
 
     init {
         worldDir.createDirectories()
@@ -61,10 +56,10 @@ class WorldPersistence(val worldDir: Path) {
     }
 
     fun loadPlayerState(name: String): PlayerState? {
-        val file = playersDir.resolve("${name.sanitize()}.json")
+        val file = playersDir.resolve("${name.sanitize()}.yaml")
         if (!file.exists()) return null
         return try {
-            playerJson.decodeFromString<PlayerState>(file.readText())
+            Yaml.default.decodeFromString(PlayerState.serializer(), file.readText())
         } catch (e: Exception) {
             worldPersistenceLog.warn("Failed to load player {}: {}", name, e.message)
             null
@@ -72,9 +67,9 @@ class WorldPersistence(val worldDir: Path) {
     }
 
     fun savePlayerState(name: String, state: PlayerState) {
-        val file = playersDir.resolve("${name.sanitize()}.json")
+        val file = playersDir.resolve("${name.sanitize()}.yaml")
         try {
-            file.writeText(playerJson.encodeToString(state))
+            file.writeText(Yaml.default.encodeToString(PlayerState.serializer(), state))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save player {}: {}", name, e.message)
         }
@@ -86,14 +81,14 @@ class WorldPersistence(val worldDir: Path) {
     private val macrosSerializer = MapSerializer(String.serializer(), String.serializer())
 
     fun loadPlayerKeyBindings(name: String): Map<String, List<String>> {
-        val file = playersDir.resolve("${name.sanitize()}-keybindings.json")
+        val file = playersDir.resolve("${name.sanitize()}-keybindings.yaml")
         if (!file.exists()) {
             val defaults = defaultKeyBindings()
             savePlayerKeyBindings(name, defaults)
             return defaults
         }
         return try {
-            val saved = playerJson.decodeFromString(keybindingsSerializer, file.readText())
+            val saved = Yaml.default.decodeFromString(keybindingsSerializer, file.readText())
             defaultKeyBindings() + saved
         } catch (e: Exception) {
             worldPersistenceLog.warn("Failed to load keybindings for {}: {}", name, e.message)
@@ -102,19 +97,19 @@ class WorldPersistence(val worldDir: Path) {
     }
 
     fun savePlayerKeyBindings(name: String, bindings: Map<String, List<String>>) {
-        val file = playersDir.resolve("${name.sanitize()}-keybindings.json")
+        val file = playersDir.resolve("${name.sanitize()}-keybindings.yaml")
         try {
-            file.writeText(playerJson.encodeToString(keybindingsSerializer, bindings))
+            file.writeText(Yaml.default.encodeToString(keybindingsSerializer, bindings))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save keybindings for {}: {}", name, e.message)
         }
     }
 
     fun loadPlayerCustomCommands(name: String): Map<String, List<String>> {
-        val file = playersDir.resolve("${name.sanitize()}-custom-commands.json")
+        val file = playersDir.resolve("${name.sanitize()}-custom-commands.yaml")
         if (!file.exists()) return emptyMap()
         return try {
-            playerJson.decodeFromString(keybindingsSerializer, file.readText())
+            Yaml.default.decodeFromString(keybindingsSerializer, file.readText())
         } catch (e: Exception) {
             worldPersistenceLog.warn("Failed to load custom commands for {}: {}", name, e.message)
             emptyMap()
@@ -122,19 +117,19 @@ class WorldPersistence(val worldDir: Path) {
     }
 
     fun savePlayerCustomCommands(name: String, commands: Map<String, List<String>>) {
-        val file = playersDir.resolve("${name.sanitize()}-custom-commands.json")
+        val file = playersDir.resolve("${name.sanitize()}-custom-commands.yaml")
         try {
-            file.writeText(playerJson.encodeToString(keybindingsSerializer, commands))
+            file.writeText(Yaml.default.encodeToString(keybindingsSerializer, commands))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save custom commands for {}: {}", name, e.message)
         }
     }
 
     fun loadPlayerMacros(name: String): Map<String, String> {
-        val file = playersDir.resolve("${name.sanitize()}-macros.json")
+        val file = playersDir.resolve("${name.sanitize()}-macros.yaml")
         if (!file.exists()) return emptyMap()
         return try {
-            playerJson.decodeFromString(macrosSerializer, file.readText())
+            Yaml.default.decodeFromString(macrosSerializer, file.readText())
         } catch (e: Exception) {
             worldPersistenceLog.warn("Failed to load macros for {}: {}", name, e.message)
             emptyMap()
@@ -142,9 +137,9 @@ class WorldPersistence(val worldDir: Path) {
     }
 
     fun savePlayerMacros(name: String, macros: Map<String, String>) {
-        val file = playersDir.resolve("${name.sanitize()}-macros.json")
+        val file = playersDir.resolve("${name.sanitize()}-macros.yaml")
         try {
-            file.writeText(playerJson.encodeToString(macrosSerializer, macros))
+            file.writeText(Yaml.default.encodeToString(macrosSerializer, macros))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save macros for {}: {}", name, e.message)
         }
@@ -153,7 +148,7 @@ class WorldPersistence(val worldDir: Path) {
     fun loadMetadata(): WorldMetadata? {
         if (!metaFile.exists()) return null
         return try {
-            Json.decodeFromString<WorldMetadata>(metaFile.readText())
+            Yaml.default.decodeFromString(WorldMetadata.serializer(), metaFile.readText())
         } catch (e: Exception) {
             worldPersistenceLog.warn("Failed to load world metadata: {}", e.message)
             null
@@ -162,7 +157,7 @@ class WorldPersistence(val worldDir: Path) {
 
     fun saveMetadata(meta: WorldMetadata) {
         try {
-            metaFile.writeText(Json.encodeToString(meta))
+            metaFile.writeText(Yaml.default.encodeToString(WorldMetadata.serializer(), meta))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save world metadata: {}", e.message)
         }

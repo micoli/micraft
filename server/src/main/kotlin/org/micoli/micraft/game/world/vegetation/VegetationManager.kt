@@ -8,7 +8,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.random.Random
-import kotlinx.serialization.json.Json
+import com.charleskorn.kaml.Yaml
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldState
@@ -159,7 +159,7 @@ class VegetationManager(
     fun load() {
         if (!savePath.exists()) return
         runCatching {
-                val state = Json.decodeFromString(VegetationState.serializer(), savePath.readText())
+                val state = Yaml.default.decodeFromString(VegetationState.serializer(), savePath.readText())
                 state.blocks.forEach { activeBlocks[it.pos] = it }
                 vegetationManagerLog.info(
                     "VegetationManager: loaded {} growing blocks from {}",
@@ -176,7 +176,7 @@ class VegetationManager(
         runCatching {
                 savePath.parent?.createDirectories()
                 val state = VegetationState(activeBlocks.values.toList())
-                savePath.writeText(Json.encodeToString(state))
+                savePath.writeText(Yaml.default.encodeToString(VegetationState.serializer(), state))
             }
             .onFailure { e ->
                 vegetationManagerLog.warn("VegetationManager: failed to save: {}", e.message)

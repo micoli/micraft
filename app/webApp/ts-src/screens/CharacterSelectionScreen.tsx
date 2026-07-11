@@ -50,8 +50,6 @@ function WalkingToggle({ walking, onChange }: { walking: boolean; onChange: (v: 
   );
 }
 
-const MC_SERVER_VERSION_KEY = "mc_server_version";
-
 export function CharacterSelectionScreen() {
   const navigate = useNavigate();
   const { loginResultRef } = useGameContext();
@@ -67,65 +65,20 @@ export function CharacterSelectionScreen() {
   const [previewArmors, setPreviewArmors] = useState<string[]>([]);
   const [previewWalking, setPreviewWalking] = useState(true);
   const [serverReady, setServerReady] = useState(false);
-  const [retryCountdown, setRetryCountdown] = useState(0);
-  const nextCheckAtRef = useRef<number>(0);
 
   const playButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     fetch("/api/auth/config")
       .then((r) => r.json())
-      .then((d: { provider: string }) => setAuthMode((d.provider as AuthMode) || "none"))
-      .catch(() => setAuthMode("none"));
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    const RETRY_MS = 3000;
-
-    async function checkServer() {
-      try {
-        const r = await fetch("/api/version", { cache: "no-cache" });
-        if (!r.ok) {
-          if (!cancelled) {
-            setServerReady(false);
-            nextCheckAtRef.current = Date.now() + RETRY_MS;
-          }
-          return;
-        }
-        const { server } = (await r.json()) as { server: string };
-        const stored = sessionStorage.getItem(MC_SERVER_VERSION_KEY);
-        if (stored === null) {
-          sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
-        } else if (stored !== server) {
-          sessionStorage.setItem(MC_SERVER_VERSION_KEY, server);
-          window.location.href = location.pathname + "?_v=" + server;
-          return;
-        }
-        if (!cancelled) setServerReady(true);
-      } catch {
-        if (!cancelled) {
-          setServerReady(false);
-          nextCheckAtRef.current = Date.now() + RETRY_MS;
-        }
-      }
-    }
-
-    void checkServer();
-    const checkInterval = setInterval(() => void checkServer(), RETRY_MS);
-
-    const countdownInterval = setInterval(() => {
-      if (!cancelled) {
-        const remaining = Math.max(0, nextCheckAtRef.current - Date.now());
-        setRetryCountdown(Math.ceil(remaining / 1000));
-      }
-    }, 300);
-
-    return () => {
-      cancelled = true;
-      clearInterval(checkInterval);
-      clearInterval(countdownInterval);
-    };
+      .then((d: { provider: string }) => {
+        setAuthMode((d.provider as AuthMode) || "none");
+        setServerReady(true);
+      })
+      .catch(() => {
+        setAuthMode("none");
+        setServerReady(true);
+      });
   }, []);
 
   useEffect(() => {
@@ -341,7 +294,7 @@ export function CharacterSelectionScreen() {
               {!serverReady && (
                 <div className="flex items-center gap-1.5 justify-center text-[10px] text-yellow-500/70 font-mono">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-yellow-500/70 animate-pulse" />
-                  Connexion au serveur…{retryCountdown > 0 ? ` (${retryCountdown}s)` : ""}
+                  Connexion au serveur…
                 </div>
               )}
             </div>

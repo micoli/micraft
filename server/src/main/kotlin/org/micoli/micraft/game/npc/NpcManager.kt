@@ -7,8 +7,8 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ChunkPos
@@ -62,7 +62,7 @@ class NpcManager(
         }
         runCatching {
                 val states =
-                    Json.decodeFromString(
+                    Yaml.default.decodeFromString(
                         ListSerializer(NpcState.serializer()), savePath.readText())
                 var loaded = 0
                 for (state in states) {
@@ -92,7 +92,7 @@ class NpcManager(
                 savePath.parent?.createDirectories()
                 val states = npcs.values.map { it.state }
                 savePath.writeText(
-                    Json.encodeToString(ListSerializer(NpcState.serializer()), states))
+                    Yaml.default.encodeToString(ListSerializer(NpcState.serializer()), states))
             }
             .onFailure { e -> log.warn("Failed to save NPCs: {}", e.message) }
     }

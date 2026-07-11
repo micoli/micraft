@@ -80,8 +80,8 @@ val gameLoopModule = module {
             get<WorldState>(),
             get<VegetationConfig>(),
             savePath =
-                get<OptionalWorldPersistence>().value?.worldDir?.resolve("vegetation_state.json")
-                    ?: Path.of("data/world/default_world/vegetation_state.json"),
+                get<OptionalWorldPersistence>().value?.worldDir?.resolve("vegetation_state.yaml")
+                    ?: Path.of("data/world/default_world/vegetation_state.yaml"),
         )
     }
 
