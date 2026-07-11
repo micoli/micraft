@@ -458,6 +458,47 @@ class CombatProcessorTest {
     }
 
     @Test
+    fun `handleNpcAttack out of range vertically does not hit`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 10f, 0f))
+        target.characterData = testChar("b", "Bob", hp = 20)
+
+        val npc = fakeNpc()
+        npc.state = npc.state.copy(pos = Vec3(0f, 0f, 0f))
+
+        val combatLog = mutableListOf<String>()
+        buildProcessor(sessions = { listOf(target) }, combatLog = combatLog)
+            .handleNpcAttack(npc, target)
+
+        assertEquals(0, combatLog.size)
+        assertEquals(20, target.characterData!!.currentHp)
+    }
+
+    @Test
+    fun `handleNpcAttack within 3D range but elevated hits`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 2f, 0f))
+        target.characterData = testChar("b", "Bob", hp = 20)
+
+        val highPower =
+            AttackDefinition(
+                damageType = DamageType.PHYSICAL,
+                levels =
+                    mapOf(
+                        1 to
+                            AttackLevelDefinition(
+                                power = 100, weaponDice = "1d4", cooldownMs = 1000)))
+        val npc = fakeNpc()
+        npc.state = npc.state.copy(pos = Vec3(0f, 0f, 0f))
+
+        buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry = mapOf("basic_attack" to highPower),
+            )
+            .handleNpcAttack(npc, target)
+
+        assertTrue(target.characterData!!.currentHp < 20)
+    }
+
+    @Test
     fun `handleNpcAttack grants rage to WARRIOR target on hit`() = runBlocking {
         val target = testSession(id = "b", name = "Bob")
         target.characterData =

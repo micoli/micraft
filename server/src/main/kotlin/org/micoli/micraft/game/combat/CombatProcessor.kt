@@ -261,8 +261,9 @@ class CombatProcessor(
         )
 
         val dx = target.state.pos.x - npc.state.pos.x
+        val dy = target.state.pos.y - npc.state.pos.y
         val dz = target.state.pos.z - npc.state.pos.z
-        val distSq = dx * dx + dz * dz
+        val distSq = dx * dx + dy * dy + dz * dz
 
         val resolved =
             slots.shuffled().firstNotNullOfOrNull { slot ->
