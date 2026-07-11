@@ -458,6 +458,46 @@ class CombatProcessorTest {
     }
 
     @Test
+    fun `death logs combat message with player name markup`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob")
+        target.characterData = testChar("b", "Bob", hp = 0)
+        target.combatState = target.combatState.copy(downingSuccesses = 0, downingFailures = 2)
+        val combatLog = mutableListOf<String>()
+        val proc = buildProcessor(sessions = { listOf(target) }, combatLog = combatLog)
+
+        var attempts = 0
+        while (target.isDowned && attempts < 1000) {
+            proc.tickDowningRolls(target)
+            if (target.isDowned)
+                target.combatState =
+                    target.combatState.copy(downingSuccesses = 0, downingFailures = 2)
+            attempts++
+        }
+
+        assertTrue(combatLog.any { it.contains("[p:Bob]") && it.contains("died") })
+    }
+
+    @Test
+    fun `stabilize logs combat message with player name markup`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob")
+        target.characterData = testChar("b", "Bob", hp = 0)
+        target.combatState = target.combatState.copy(downingSuccesses = 2, downingFailures = 0)
+        val combatLog = mutableListOf<String>()
+        val proc = buildProcessor(sessions = { listOf(target) }, combatLog = combatLog)
+
+        var attempts = 0
+        while (target.isDowned && attempts < 1000) {
+            proc.tickDowningRolls(target)
+            if (target.isDowned)
+                target.combatState =
+                    target.combatState.copy(downingSuccesses = 2, downingFailures = 0)
+            attempts++
+        }
+
+        assertTrue(combatLog.any { it.contains("[p:Bob]") && it.contains("stabilizes") })
+    }
+
+    @Test
     fun `handleNpcAttack out of range vertically does not hit`() = runBlocking {
         val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 10f, 0f))
         target.characterData = testChar("b", "Bob", hp = 20)

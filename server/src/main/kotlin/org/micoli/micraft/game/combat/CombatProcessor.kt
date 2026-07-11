@@ -186,7 +186,7 @@ class CombatProcessor(
         }
 
         val hitMsg = if (hit) "hits for $damage${if (isCrit) " [CRIT]" else ""}" else "misses"
-        broadcastCombatLog("${charData.name} → ${targetChar.name}: $hitMsg")
+        broadcastCombatLog("[p:${charData.name}] → [p:${targetChar.name}]: $hitMsg")
 
         sendStatusUpdate(session, session.characterData ?: charData, myDerived)
         session.send(buildTargetUpdate(session))
@@ -238,7 +238,7 @@ class CombatProcessor(
         }
 
         val hitMsg = if (hit) "hits for $damage${if (isCrit) " [CRIT]" else ""}" else "misses"
-        broadcastCombatLog("${charData.name} → ${npc.state.name}: $hitMsg")
+        broadcastCombatLog("[p:${charData.name}] → [m:${npc.state.name}]: $hitMsg")
 
         sendStatusUpdate(session, session.characterData ?: charData, myDerived)
         session.send(buildTargetUpdate(session))
@@ -344,14 +344,13 @@ class CombatProcessor(
         }
 
         val hitMsg = if (hit) "hits for $damage${if (isCrit) " [CRIT]" else ""}" else "misses"
-        broadcastCombatLog("${npc.state.name} → ${targetChar.name}: $hitMsg")
+        broadcastCombatLog("[m:${npc.state.name}] → [p:${targetChar.name}]: $hitMsg")
     }
 
     // ── Downed / death ────────────────────────────────────────────────────────
 
     internal suspend fun handlePlayerDowned(session: PlayerSession) {
-        session.combatState =
-            session.combatState.copy(downingSuccesses = 0, downingFailures = 0)
+        session.combatState = session.combatState.copy(downingSuccesses = 0, downingFailures = 0)
         getSessions().forEach { it.send(ServerMessage.PlayerDowned(session.id)) }
         log.info("Player {} downed", session.state.name)
     }
@@ -376,12 +375,12 @@ class CombatProcessor(
         val charData = session.characterData ?: return
         val updated = charData.copy(currentHp = 1)
         session.characterData = updated
-        session.combatState =
-            session.combatState.copy(downingSuccesses = 0, downingFailures = 0)
+        session.combatState = session.combatState.copy(downingSuccesses = 0, downingFailures = 0)
         val derived =
             DerivedStatsCalculator.compute(
                 updated, session.state.armors.mapNotNull { armorRegistry[it]?.statBonus })
         broadcastHealthUpdate(session.id, false, 1, derived.maxHp)
+        broadcastCombatLog("[p:${charData.name}] stabilizes.")
         session.send(ServerMessage.Notification("You have stabilized!"))
     }
 
@@ -400,12 +399,12 @@ class CombatProcessor(
                 currentMana = newMana,
                 xp = (charData.xp - xpLoss).coerceAtLeast(0),
             )
-        session.combatState =
-            session.combatState.copy(downingSuccesses = 0, downingFailures = 0)
+        session.combatState = session.combatState.copy(downingSuccesses = 0, downingFailures = 0)
         getSessions().forEach {
             it.send(ServerMessage.PlayerRespawned(session.id, respawnPos, newHp, newMana))
         }
         broadcastHealthUpdate(session.id, false, newHp, derived.maxHp)
+        broadcastCombatLog("[p:${charData.name}] has died!")
         savePlayer(session)
         log.info("Player {} died, respawned at {}", session.state.name, respawnPos)
     }

@@ -105,6 +105,14 @@ val gameLoopModule = module {
             broadcast = get<SessionRegistry>()::broadcast,
             getSessions = get<SessionRegistry>()::all,
             onNpcKilled = get<ExperienceProcessor>()::onNpcKilled,
+            broadcastCombatLog = { msg ->
+                val chatMsg =
+                    ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
+                get<SessionRegistry>()
+                    .all()
+                    .filter { it.state.subscribedChannels.hasChannel("combat") }
+                    .forEach { it.send(chatMsg) }
+            },
         )
     }
     single { NpcSpawner() }

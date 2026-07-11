@@ -6,6 +6,37 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+const COMBAT_PALETTE = [
+  "#f87171",
+  "#fb923c",
+  "#facc15",
+  "#4ade80",
+  "#22d3ee",
+  "#818cf8",
+  "#e879f9",
+  "#f472b6",
+  "#38bdf8",
+  "#a78bfa",
+];
+
+function nameToColor(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return COMBAT_PALETTE[h % COMBAT_PALETTE.length];
+}
+
+function renderCombatMsg(raw: string): string {
+  const TOKEN = /\[(p|m):([^\]]*)\]/g;
+  let out = "",
+    last = 0;
+  for (const m of raw.matchAll(TOKEN)) {
+    out += escapeHtml(raw.slice(last, m.index!));
+    out += `<span style="color:${nameToColor(m[2])};font-weight:bold">${escapeHtml(m[2])}</span>`;
+    last = m.index! + m[0].length;
+  }
+  return out + escapeHtml(raw.slice(last));
+}
+
 const CHANNEL_COLORS: Record<string, string> = {
   system: "#aaa",
   game: "#f5c542",
@@ -79,7 +110,11 @@ export function ServerLog({
                 {escapeHtml(entry.sender)}:{" "}
               </span>
             )}
-            <span dangerouslySetInnerHTML={{ __html: escapeHtml(entry.msg) }} />
+            <span
+              dangerouslySetInnerHTML={{
+                __html: entry.channel === "combat" ? renderCombatMsg(entry.msg) : escapeHtml(entry.msg),
+              }}
+            />
           </div>
         ))}
       </div>

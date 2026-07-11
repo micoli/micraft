@@ -33,6 +33,7 @@ class NpcManager(
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val getSessions: () -> Collection<PlayerSession> = { emptyList() },
     private val onNpcKilled: suspend (NpcInstance) -> Unit = {},
+    private val broadcastCombatLog: suspend (String) -> Unit = {},
 ) {
     private val npcs = ConcurrentHashMap<String, NpcInstance>()
     @Volatile private var definitions: Map<String, NpcDefinition> = emptyMap()
@@ -218,6 +219,8 @@ class NpcManager(
         instance.lastDamagedAtMs = now
         if (instance.aggroTarget == null) {
             instance.aggroTarget = attackerId
+            val attackerName = getSessions().find { it.id == attackerId }?.state?.name ?: "?"
+            broadcastCombatLog("[m:${instance.state.name}] targets [p:$attackerName]!")
             if (instance.definition.aggroMode == AggroMode.PASSIVE_COOPERATIVE) {
                 val npcPos = instance.state.pos
                 val rangeSq = instance.definition.aggroRange * instance.definition.aggroRange
@@ -229,6 +232,7 @@ class NpcManager(
                         val dz = peer.state.pos.z - npcPos.z
                         if (dx * dx + dz * dz <= rangeSq) {
                             peer.aggroTarget = attackerId
+                            broadcastCombatLog("[m:${peer.state.name}] targets [p:$attackerName]!")
                         }
                     }
                 }
@@ -244,6 +248,7 @@ class NpcManager(
 
         if (newHp <= 0) {
             log.info("NPC {} killed", instance.state.name)
+            broadcastCombatLog("[m:${instance.state.name}] has been slain!")
             onNpcKilled(instance)
             despawnNpc(npcId)
         }
@@ -258,6 +263,7 @@ class NpcManager(
             val def = instance.definition
             val aggroRangeSq = def.aggroRange * def.aggroRange
             val deaggroMs = (def.deaggroTimeSec * 1000).toLong()
+            val prevAggroTarget = instance.aggroTarget
 
             if (instance.currentMana < def.maxMana)
                 instance.currentMana = (instance.currentMana + 1).coerceAtMost(def.maxMana)
@@ -303,6 +309,18 @@ class NpcManager(
                             }
                         }
                     }
+                }
+            }
+
+            val newAggroTarget = instance.aggroTarget
+            if (prevAggroTarget == null && newAggroTarget != null) {
+                val name = sessions.find { it.id == newAggroTarget }?.state?.name ?: "?"
+                broadcastCombatLog("[m:${instance.state.name}] targets [p:$name]!")
+            } else if (prevAggroTarget != null && newAggroTarget == null) {
+                val prevSession = sessions.find { it.id == prevAggroTarget }
+                if (prevSession != null) {
+                    broadcastCombatLog(
+                        "[m:${instance.state.name}] loses interest in [p:${prevSession.state.name}].")
                 }
             }
 
