@@ -18,8 +18,91 @@ class RandomMovableNpcBehavior : NpcBehavior {
 
     override fun tick(instance: NpcInstance, world: WorldState): Boolean {
         var changed = NpcPhysics.applyGravity(instance, world)
-        changed = tickWander(instance, world) || changed
+        val chaseTarget = instance.chaseTargetPos
+        changed =
+            if (chaseTarget != null) tickChase(instance, world, chaseTarget) || changed
+            else tickWander(instance, world) || changed
         return changed
+    }
+
+    private fun tickChase(instance: NpcInstance, world: WorldState, targetPos: Vec3): Boolean {
+        val def = instance.definition
+        val pos = instance.state.pos
+        val sp = instance.spawnPos
+
+        val dtx = targetPos.x - sp.x
+        val dtz = targetPos.z - sp.z
+        val distFromSpawnSq = dtx * dtx + dtz * dtz
+        val effectiveTarget =
+            if (distFromSpawnSq > def.aggroRange * def.aggroRange) {
+                val d = sqrt(distFromSpawnSq.toDouble()).toFloat()
+                Vec3(sp.x + dtx / d * def.aggroRange, targetPos.y, sp.z + dtz / d * def.aggroRange)
+            } else targetPos
+
+        val dx = effectiveTarget.x - pos.x
+        val dz = effectiveTarget.z - pos.z
+        val dist = sqrt((dx * dx + dz * dz).toDouble()).toFloat()
+
+        if (dist < 0.5f) {
+            if (instance.state.vel.x != 0f || instance.state.vel.z != 0f) {
+                instance.velocity = Vec3(0f, instance.velocity.y, 0f)
+                instance.state = instance.state.copy(vel = instance.velocity)
+                return true
+            }
+            return false
+        }
+
+        val speed = def.wanderSpeed * TICK_SECONDS
+        val nx = dx / dist
+        val nz = dz / dist
+        val solid = { bx: Int, by: Int, bz: Int -> world.getBlockIfLoaded(bx, by, bz).isSolid }
+
+        val resolvedDx =
+            AabbCollider.resolveX(solid, pos.x, pos.y, pos.z, def.width, def.height, nx * speed)
+        val midX = pos.x + resolvedDx
+        val resolvedDz =
+            AabbCollider.resolveZ(solid, midX, pos.y, pos.z, def.width, def.height, nz * speed)
+        val newX = midX
+        val newZ = pos.z + resolvedDz
+
+        if (resolvedDx == 0f && resolvedDz == 0f) {
+            if (instance.vy == 0f &&
+                AabbCollider.isGrounded(solid, pos.x, pos.y, pos.z, def.width)) {
+                val rdxAbove =
+                    AabbCollider.resolveX(
+                        solid, pos.x, pos.y + 1f, pos.z, def.width, def.height, nx * speed)
+                val rdzAbove =
+                    AabbCollider.resolveZ(
+                        solid,
+                        pos.x + rdxAbove,
+                        pos.y + 1f,
+                        pos.z,
+                        def.width,
+                        def.height,
+                        nz * speed)
+                if (rdxAbove != 0f || rdzAbove != 0f) {
+                    instance.vy = NpcConstants.JUMP_VELOCITY
+                    return true
+                }
+            }
+            if (instance.state.vel.x != 0f || instance.state.vel.z != 0f) {
+                instance.velocity = Vec3(0f, instance.velocity.y, 0f)
+                instance.state = instance.state.copy(vel = instance.velocity)
+                return true
+            }
+            return false
+        }
+
+        val newYaw = atan2(nx.toDouble(), nz.toDouble()).toFloat()
+        instance.velocity =
+            Vec3(resolvedDx / TICK_SECONDS, instance.velocity.y, resolvedDz / TICK_SECONDS)
+        instance.state =
+            instance.state.copy(
+                pos = Vec3(newX, pos.y, newZ),
+                yaw = newYaw,
+                vel = instance.velocity,
+            )
+        return true
     }
 
     private fun tickWander(instance: NpcInstance, world: WorldState): Boolean {

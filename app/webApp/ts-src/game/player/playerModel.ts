@@ -46,11 +46,11 @@ function skinFaceUV(el: BbModelElement, W: number, H: number): unknown[] {
     const fakeUV = (x0: number, y0: number, x1: number, y1: number): BbModelFace => ({ uv: [x0, y0, x1, y1] });
     return [
       skinUV(fakeUV(u + 2 * bd + bw, v + bd, u + 2 * bd + 2 * bw, v + bd + bh), W, H), // south
-      skinUV(fakeUV(u + bd, v + bd, u + bd + bw, v + bd + bh), W, H),                   // north
-      skinUV(fakeUV(u, v + bd, u + bd, v + bd + bh), W, H),                             // east
-      skinUV(fakeUV(u + bd + bw, v + bd, u + 2 * bd + bw, v + bd + bh), W, H),          // west
-      skinUV(fakeUV(u + bd, v, u + bd + bw, v + bd), W, H),                             // up
-      skinUV(fakeUV(u + bd + bw, v, u + bd + 2 * bw, v + bd), W, H),                   // down
+      skinUV(fakeUV(u + bd, v + bd, u + bd + bw, v + bd + bh), W, H), // north
+      skinUV(fakeUV(u, v + bd, u + bd, v + bd + bh), W, H), // east
+      skinUV(fakeUV(u + bd + bw, v + bd, u + 2 * bd + bw, v + bd + bh), W, H), // west
+      skinUV(fakeUV(u + bd, v, u + bd + bw, v + bd), W, H), // up
+      skinUV(fakeUV(u + bd + bw, v, u + bd + 2 * bw, v + bd), W, H), // down
     ];
   }
   return [
@@ -151,12 +151,16 @@ export function registerPlayerModel(): Pick<
     const DEG = Math.PI / 180;
 
     // Create a TransformNode for every group (applying its base rotation)
-    const allGroupNodes: Record<string, { node: InstanceType<typeof BABYLON.TransformNode>; origin: [number, number, number] }> = {};
+    const allGroupNodes: Record<
+      string,
+      { node: InstanceType<typeof BABYLON.TransformNode>; origin: [number, number, number] }
+    > = {};
     bbmodel.groups.forEach((g) => {
       const node = new BABYLON.TransformNode(`grp_${g.name}`, scene);
       node.parent = root;
       node.position = new BABYLON.Vector3(g.origin[0] * SCALE, g.origin[1] * SCALE, g.origin[2] * SCALE);
-      if (g.rotation) node.rotation = new BABYLON.Vector3(g.rotation[0] * DEG, g.rotation[1] * DEG, g.rotation[2] * DEG);
+      if (g.rotation)
+        node.rotation = new BABYLON.Vector3(g.rotation[0] * DEG, g.rotation[1] * DEG, g.rotation[2] * DEG);
       allGroupNodes[g.uuid] = { node, origin: g.origin };
       if ((ANIM_GROUPS as readonly string[]).includes(g.name)) {
         pivotNodes[g.name as AnimGroupName] = { node, origin: g.origin };

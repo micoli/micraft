@@ -136,6 +136,10 @@ class NpcManager(
                     Math.floorDiv(pos.z.toInt(), WorldConstants.CHUNK_SIZE),
                 )
             if (world.getChunkIfDiscovered(chunkPos) == null) continue
+            instance.chaseTargetPos =
+                instance.aggroTarget?.let { targetId ->
+                    sessions.find { it.id == targetId }?.state?.pos
+                }
             val before = instance.state
             val changed = instance.definition.behavior.tick(instance, world)
             if (changed && instance.state != before) {

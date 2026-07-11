@@ -14,7 +14,8 @@ class RandomMovableNpcBehaviorTest {
     private fun instanceAt(
         pos: Vec3,
         wanderRadius: Float = 12f,
-        wanderSpeed: Float = 3f
+        wanderSpeed: Float = 3f,
+        aggroRange: Float = 12f,
     ): NpcInstance {
         val def =
             NpcDefinition(
@@ -25,6 +26,7 @@ class RandomMovableNpcBehaviorTest {
                 height = 0.9f,
                 wanderSpeed = wanderSpeed,
                 wanderRadius = wanderRadius,
+                aggroRange = aggroRange,
             )
         return NpcInstance(
             state = NpcState(id = "1", name = "Goat", type = "GOAT", pos = pos, yaw = 0f),
@@ -70,5 +72,40 @@ class RandomMovableNpcBehaviorTest {
         val instance = instanceAt(Vec3(8.5f, 30f, 8.5f))
         RandomMovableNpcBehavior().tick(instance, world)
         assertTrue(instance.state.pos.y < 30f)
+    }
+
+    @Test
+    fun tick_withChaseTarget_movesNpcTowardTarget() {
+        val floorY = 4
+        val world =
+            testWorld(
+                *(0..30).flatMap { x -> (0..30).map { z -> Triple(x, floorY, z) } }.toTypedArray())
+        val spawn = Vec3(5.5f, (floorY + 1).toFloat(), 5.5f)
+        val target = Vec3(15.5f, (floorY + 1).toFloat(), 5.5f)
+        val instance = instanceAt(spawn, wanderRadius = 5f)
+        instance.vy = 0f
+        instance.chaseTargetPos = target
+        val before = instance.state.pos.x
+        repeat(20) { RandomMovableNpcBehavior().tick(instance, world) }
+        assertTrue(instance.state.pos.x > before, "npc should move toward target")
+    }
+
+    @Test
+    fun tick_withChaseTargetBeyondAggroRange_stopsAtAggroBoundary() {
+        val floorY = 4
+        val world =
+            testWorld(
+                *(0..40).flatMap { x -> (0..40).map { z -> Triple(x, floorY, z) } }.toTypedArray())
+        val aggroRange = 8f
+        val spawn = Vec3(10.5f, (floorY + 1).toFloat(), 10.5f)
+        val farTarget = Vec3(30.5f, (floorY + 1).toFloat(), 10.5f)
+        val instance = instanceAt(spawn, wanderRadius = 5f, aggroRange = aggroRange)
+        instance.vy = 0f
+        instance.chaseTargetPos = farTarget
+        repeat(300) { RandomMovableNpcBehavior().tick(instance, world) }
+        val dx = instance.state.pos.x - spawn.x
+        val dz = instance.state.pos.z - spawn.z
+        val dist = sqrt((dx * dx + dz * dz).toDouble())
+        assertTrue(dist <= aggroRange + 0.5, "npc should not exceed aggroRange from spawn: $dist")
     }
 }
