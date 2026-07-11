@@ -74,6 +74,7 @@ const initial: UiState = {
   tradeTheirOffer: {},
   tradeMyAccepted: false,
   tradeTheirAccepted: false,
+  classDefinitions: null,
 };
 
 function RouterBridge({
@@ -156,6 +157,9 @@ export function GameUI() {
     };
   }, []);
 
+  const loadAttackMetaRef = useRef<() => void>(() => {});
+  const loadClassDefinitionsRef = useRef<() => void>(() => {});
+
   useEffect(() => {
     let cancelled = false;
     const load = () =>
@@ -171,6 +175,10 @@ export function GameUI() {
                 manaCost: parseInt(v.manaCost ?? "0"),
                 rageCost: parseInt(v.rageCost ?? "0"),
                 cooldownMs: parseInt(v.cooldownMs ?? "0"),
+                power: parseInt(v.power ?? "0"),
+                weaponDice: v.weaponDice ?? "",
+                attackId: v.attackId ?? k.split(":")[0],
+                level: parseInt(v.level ?? k.split(":")[1] ?? "1"),
               },
             ]),
           );
@@ -179,6 +187,23 @@ export function GameUI() {
         .catch(() => {
           if (!cancelled) setTimeout(load, 2000);
         });
+    loadAttackMetaRef.current = load;
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () =>
+      fetch("/api/classes")
+        .then((r) => r.json())
+        .then((data) => {
+          if (!cancelled) dispatch({ type: "class_definitions_loaded", data });
+        })
+        .catch(() => {});
+    loadClassDefinitionsRef.current = load;
     load();
     return () => {
       cancelled = true;
@@ -566,6 +591,10 @@ export function GameUI() {
     window.mc.playerDowned = (playerId: string) => dispatch({ type: "player_downed", playerId });
     window.mc.playerRespawned = (json: string) => dispatch({ type: "player_respawned", data: JSON.parse(json) });
     window.mc.xpGained = (json: string) => dispatch({ type: "xp_gained", data: JSON.parse(json) });
+    window.mc.reloadAttackMeta = () => {
+      loadAttackMetaRef.current();
+      loadClassDefinitionsRef.current();
+    };
 
     window.mc.createHUD = () => {};
     window.mc.createHotbar = () => {};

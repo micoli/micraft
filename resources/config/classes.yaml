@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../schemas/classes.schema.json
 regen:
   regenIntervalMs: 1000
   default:
@@ -14,6 +15,17 @@ classes:
     classResource: RAGE
     hpFormula: "hpRegenPerSec * dt"
     manaFormula: "0"
+    levels:
+      1:
+        attacks:
+          - attack: slash
+            level: 1
+          - attack: heavy_slash
+            level: 1
+      3:
+        attacks:
+          - attack: heavy_slash
+            level: 2
   MAGE:
     strBonus: 0
     dexBonus: 0
@@ -24,6 +36,15 @@ classes:
     classResource: MANA
     hpFormula: "hpRegenPerSec * dt * 0.5"
     manaFormula: "manaRegenPerSec * dt * 1.5"
+    levels:
+      1:
+        attacks:
+          - attack: fireball
+            level: 1
+      3:
+        attacks:
+          - attack: fireball
+            level: 2
   RANGER:
     strBonus: 0
     dexBonus: 2
@@ -34,6 +55,21 @@ classes:
     classResource: MANA
     hpFormula: "hpRegenPerSec * dt"
     manaFormula: "manaRegenPerSec * dt"
+    levels:
+      1:
+        attacks:
+          - attack: slash
+            level: 1
+          - attack: poison_bite
+            level: 1
+      2:
+        attacks:
+          - attack: poison_bite
+            level: 2
+      3:
+        attacks:
+          - attack: slash
+            level: 2
   ROGUE:
     strBonus: 0
     dexBonus: 2
@@ -44,6 +80,19 @@ classes:
     classResource: MANA
     hpFormula: "hpRegenPerSec * dt"
     manaFormula: "manaRegenPerSec * dt"
+    levels:
+      1:
+        attacks:
+          - attack: slash
+            level: 1
+          - attack: poison_bite
+            level: 1
+      2:
+        attacks:
+          - attack: slash
+            level: 2
+          - attack: poison_bite
+            level: 2
   CLERIC:
     strBonus: 0
     dexBonus: 0
@@ -54,3 +103,14 @@ classes:
     classResource: MANA
     hpFormula: "hpRegenPerSec * dt * 1.5"
     manaFormula: "manaRegenPerSec * dt"
+    levels:
+      1:
+        attacks:
+          - attack: slash
+            level: 1
+          - attack: fireball
+            level: 1
+      3:
+        attacks:
+          - attack: fireball
+            level: 2

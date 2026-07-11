@@ -27,12 +27,28 @@ class ClassesConfigTest {
                 classResource: RAGE
                 hpFormula: "hpRegenPerSec * dt"
                 manaFormula: "0"
+                levels:
+                  1:
+                    attacks:
+                      - attack: slash
+                        level: 1
+                      - attack: heavy_slash
+                        level: 1
+                  2:
+                    attacks:
+                      - attack: slash
+                        level: 2
               MAGE:
                 intelBonus: 2
                 wisBonus: 1
                 classResource: MANA
                 hpFormula: "hpRegenPerSec * dt * 0.5"
                 manaFormula: "manaRegenPerSec * dt * 1.5"
+                levels:
+                  1:
+                    attacks:
+                      - attack: fireball
+                        level: 1
             """
                 .trimIndent())
         return path
@@ -80,9 +96,27 @@ class ClassesConfigTest {
     }
 
     @Test
+    fun loadsClassLevelAttacks() {
+        val dir = Files.createTempDirectory("classes-config-test5")
+        val path = dir.resolve("classes.yaml")
+        val config = ClassesConfig(path, resourcesYaml()).data
+        val warrior = config.classes["WARRIOR"]!!
+        assertEquals(2, warrior.levels.size)
+        val level1Attacks = warrior.levels[1]!!.attacks
+        assertEquals(2, level1Attacks.size)
+        assertEquals("slash", level1Attacks[0].attack)
+        assertEquals(1, level1Attacks[0].level)
+        assertEquals("heavy_slash", level1Attacks[1].attack)
+        val level2Attacks = warrior.levels[2]!!.attacks
+        assertEquals(1, level2Attacks.size)
+        assertEquals("slash", level2Attacks[0].attack)
+        assertEquals(2, level2Attacks[0].level)
+    }
+
+    @Test
     fun partialOverride_mergesWithDefaults() {
         val resourcesPath = resourcesYaml()
-        val dir = Files.createTempDirectory("classes-config-test5")
+        val dir = Files.createTempDirectory("classes-config-test6")
         val path = dir.resolve("classes.yaml")
         path.writeText(
             """
@@ -96,16 +130,14 @@ class ClassesConfigTest {
         val config = ClassesConfig(path, resourcesPath).data
         assertEquals(2000L, config.regen.regenIntervalMs)
         assertEquals("con * dt", config.classes["WARRIOR"]!!.hpFormula)
-        // Other WARRIOR fields come from resources default
         assertEquals(2, config.classes["WARRIOR"]!!.strBonus)
-        // MAGE class still present from resources
         assertNotNull(config.classes["MAGE"])
     }
 
     @Test
     fun customClass_addedToRegistry() {
         val resourcesPath = resourcesYaml()
-        val dir = Files.createTempDirectory("classes-config-test6")
+        val dir = Files.createTempDirectory("classes-config-test7")
         val path = dir.resolve("classes.yaml")
         path.writeText(
             """
@@ -116,6 +148,11 @@ class ClassesConfigTest {
                 classResource: MANA
                 hpFormula: "hpRegenPerSec * dt * 2"
                 manaFormula: "manaRegenPerSec * dt"
+                levels:
+                  1:
+                    attacks:
+                      - attack: slash
+                        level: 1
             """
                 .trimIndent())
         val config = ClassesConfig(path, resourcesPath).data
@@ -127,7 +164,7 @@ class ClassesConfigTest {
     @Test
     fun invalidYaml_fallsBackToDefaults() {
         val resourcesPath = resourcesYaml()
-        val dir = Files.createTempDirectory("classes-config-test7")
+        val dir = Files.createTempDirectory("classes-config-test8")
         val path = dir.resolve("classes.yaml")
         path.writeText("this: [is: broken}")
         val config = ClassesConfig(path, resourcesPath).data

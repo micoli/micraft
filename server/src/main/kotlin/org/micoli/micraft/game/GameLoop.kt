@@ -27,6 +27,7 @@ import org.micoli.micraft.game.armor.ArmorRegistryLoader
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.classes.ClassesConfig
+import org.micoli.micraft.game.classes.ClassesConfigData
 import org.micoli.micraft.game.combat.AttackConfig
 import org.micoli.micraft.game.combat.CombatConfig
 import org.micoli.micraft.game.combat.CombatConfigData
@@ -211,11 +212,13 @@ class GameLoop(
     private val npcSpawner: NpcSpawner = NpcSpawner(),
     private val combatConfig: CombatConfigData = CombatConfig().data,
     val attackRegistry: Map<String, AttackDefinition> = AttackConfig().data.attacks,
+    private val classesData: ClassesConfigData = ClassesConfig().data,
     private val combatProcessor: CombatProcessor =
         CombatProcessor(
             config = combatConfig,
             attackRegistry = attackRegistry,
             armorRegistry = emptyMap(),
+            classRegistry = classesData.classes,
             npcManager = npcManager,
             getSessions = sessionRegistry::all,
             broadcastCombatLog = { msg ->
@@ -300,6 +303,9 @@ class GameLoop(
     private val experienceProcessor: ExperienceProcessor =
         ExperienceProcessor(ExperienceConfig().data, sessionRegistry::all, playerPersister::save),
 ) {
+    val classRegistry: Map<String, org.micoli.micraft.game.classes.ClassDefinitionEntry>
+        get() = classesData.classes
+
     private val macroExecutor = MacroExecutor()
 
     private var saveTickCounter = 0

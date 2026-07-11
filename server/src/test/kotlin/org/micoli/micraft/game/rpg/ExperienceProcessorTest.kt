@@ -174,7 +174,7 @@ class ExperienceProcessorTest {
 
         val xpMsg = session.sent.filterIsInstance<ServerMessage.XpGained>().last()
         assertEquals(0, xpMsg.xpGained)
-        assertEquals(500, xpMsg.totalXp)
+        assertEquals(200, xpMsg.totalXp) // xpIntoLevel: 500 - 300 (L1 threshold) = 200
         assertEquals(2, xpMsg.level)
         assertFalse(xpMsg.leveledUp)
         assertEquals(900, xpMsg.nextLevelXp)

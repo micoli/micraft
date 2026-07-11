@@ -5,7 +5,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.combat.AttackDefinition
+import org.micoli.micraft.combat.AttackLevelDefinition
 import org.micoli.micraft.combat.DamageType
+import org.micoli.micraft.game.classes.ClassAttackAccess
+import org.micoli.micraft.game.classes.ClassDefinitionEntry
+import org.micoli.micraft.game.classes.ClassLevelEntry
 import org.micoli.micraft.game.npc.AggroMode
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
@@ -26,14 +30,12 @@ class CombatProcessorTest {
 
     private val config = CombatConfigData(maxCombatRange = 10f)
 
+    private val level1Stats =
+        AttackLevelDefinition(power = 0, weaponDice = "1d4", cooldownMs = 1000)
+
     // str=30 → meleeDmg=10; target AC ≤ 9 → roll(1..20)+10 always ≥ 9
     private val guaranteedHitAttack =
-        AttackDefinition(
-            damageType = DamageType.PHYSICAL,
-            power = 0,
-            weaponDice = "1d4",
-            cooldownMs = 1000,
-        )
+        AttackDefinition(damageType = DamageType.PHYSICAL, levels = mapOf(1 to level1Stats))
 
     private fun testChar(
         id: String,
@@ -41,6 +43,7 @@ class CombatProcessorTest {
         hp: Int = 20,
         str: Int = 30,
         characterClass: CharacterClass = CharacterClass.WARRIOR,
+        level: Int = 1,
     ) =
         CharacterData(
             id = id,
@@ -50,12 +53,14 @@ class CombatProcessorTest {
             currentHp = hp,
             currentMana = 50,
             currentRage = 50,
+            level = level,
         )
 
     private fun buildProcessor(
         sessions: () -> Collection<PlayerSession>,
         attackRegistry: Map<String, AttackDefinition> =
             mapOf("basic_attack" to guaranteedHitAttack),
+        classRegistry: Map<String, ClassDefinitionEntry> = emptyMap(),
         combatLog: MutableList<String> = mutableListOf(),
         subscribed: MutableList<Pair<PlayerSession, String>> = mutableListOf(),
     ) =
@@ -63,6 +68,7 @@ class CombatProcessorTest {
             config = config,
             attackRegistry = attackRegistry,
             armorRegistry = emptyMap(),
+            classRegistry = classRegistry,
             npcManager = NpcManager(broadcast = {}),
             getSessions = sessions,
             broadcastCombatLog = { combatLog.add(it) },
@@ -109,7 +115,10 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "missing", isNpc = false),
+                    attackId = "basic_attack",
+                    targetId = "missing",
+                    isNpc = false,
+                    attackLevel = 1),
             )
 
         assertTrue(
@@ -129,7 +138,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
             )
 
         assertTrue(
@@ -150,7 +159,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
             )
 
         assertTrue(target.characterData!!.currentHp < 20)
@@ -168,7 +177,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
             )
 
         assertTrue(subscribed.any { (s, ch) -> s.id == "b" && ch == "combat" })
@@ -186,7 +195,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
             )
 
         assertEquals(1, combatLog.size)
@@ -205,7 +214,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
             )
 
         assertTrue(target.combatState.isDowned)
@@ -224,9 +233,90 @@ class CombatProcessorTest {
             buildProcessor(sessions = { listOf(attacker, target) }, combatLog = combatLog)
 
         val msg =
-            ClientMessage.AttackTarget(attackId = "basic_attack", targetId = "b", isNpc = false)
+            ClientMessage.AttackTarget(
+                attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1)
         processor.handleAttack(attacker, msg)
         processor.handleAttack(attacker, msg) // blocked by cooldown
+
+        assertEquals(1, combatLog.size)
+    }
+
+    // ── Class level gate ──────────────────────────────────────────────────────
+
+    @Test
+    fun `class gate blocks attack not in unlocked list`() = runBlocking {
+        val attacker = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
+        attacker.characterData = testChar("a", "Alice", level = 1)
+        target.characterData = testChar("b", "Bob", hp = 20)
+
+        val classRegistry =
+            mapOf(
+                "WARRIOR" to
+                    ClassDefinitionEntry(
+                        levels =
+                            mapOf(
+                                1 to
+                                    ClassLevelEntry(listOf(ClassAttackAccess("basic_attack", 1))))))
+
+        val combatLog = mutableListOf<String>()
+        buildProcessor(
+                sessions = { listOf(attacker, target) },
+                classRegistry = classRegistry,
+                combatLog = combatLog,
+            )
+            .handleAttack(
+                attacker,
+                ClientMessage.AttackTarget(
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 2),
+            )
+
+        assertEquals(0, combatLog.size)
+        assertEquals(20, target.characterData!!.currentHp)
+        assertTrue(
+            attacker.sent.filterIsInstance<ServerMessage.Notification>().any {
+                it.message.contains("cannot use", ignoreCase = true)
+            })
+    }
+
+    @Test
+    fun `class gate allows attack unlocked at current level`() = runBlocking {
+        val attacker = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
+        attacker.characterData = testChar("a", "Alice", level = 2)
+        target.characterData = testChar("b", "Bob", hp = 100)
+
+        val attack =
+            AttackDefinition(
+                damageType = DamageType.PHYSICAL,
+                levels =
+                    mapOf(
+                        1 to
+                            AttackLevelDefinition(power = 0, weaponDice = "1d4", cooldownMs = 1000),
+                        2 to
+                            AttackLevelDefinition(power = 0, weaponDice = "1d4", cooldownMs = 1000),
+                    ))
+        val classRegistry =
+            mapOf(
+                "WARRIOR" to
+                    ClassDefinitionEntry(
+                        levels =
+                            mapOf(
+                                1 to ClassLevelEntry(listOf(ClassAttackAccess("slash", 1))),
+                                2 to ClassLevelEntry(listOf(ClassAttackAccess("slash", 2))))))
+
+        val combatLog = mutableListOf<String>()
+        buildProcessor(
+                sessions = { listOf(attacker, target) },
+                attackRegistry = mapOf("slash" to attack),
+                classRegistry = classRegistry,
+                combatLog = combatLog,
+            )
+            .handleAttack(
+                attacker,
+                ClientMessage.AttackTarget(
+                    attackId = "slash", targetId = "b", isNpc = false, attackLevel = 2),
+            )
 
         assertEquals(1, combatLog.size)
     }
@@ -238,8 +328,14 @@ class CombatProcessorTest {
         val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
         target.characterData = testChar("b", "Bob", hp = 20)
 
-        // power=100: roll+100 always ≥ AC
-        val highPower = guaranteedHitAttack.copy(power = 100)
+        val highPower =
+            AttackDefinition(
+                damageType = DamageType.PHYSICAL,
+                levels =
+                    mapOf(
+                        1 to
+                            AttackLevelDefinition(
+                                power = 100, weaponDice = "1d4", cooldownMs = 1000)))
         val proc =
             buildProcessor(
                 sessions = { listOf(target) },
@@ -257,7 +353,14 @@ class CombatProcessorTest {
         target.characterData = testChar("b", "Bob", hp = 20)
 
         val subscribed = mutableListOf<Pair<PlayerSession, String>>()
-        val highPower = guaranteedHitAttack.copy(power = 100)
+        val highPower =
+            AttackDefinition(
+                damageType = DamageType.PHYSICAL,
+                levels =
+                    mapOf(
+                        1 to
+                            AttackLevelDefinition(
+                                power = 100, weaponDice = "1d4", cooldownMs = 1000)))
         val proc =
             buildProcessor(
                 sessions = { listOf(target) },
@@ -298,7 +401,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
             )
 
         val statusUpdates = target.sent.filterIsInstance<ServerMessage.PlayerStatusUpdate>()
@@ -320,7 +423,6 @@ class CombatProcessorTest {
         while (target.combatState.isDowned && attempts < 1000) {
             proc.tickDowningRolls(target)
             if (target.combatState.isDowned) {
-                // re-roll only the success dimension so this converges on stabilize, not death
                 target.combatState =
                     target.combatState.copy(downingSuccesses = 2, downingFailures = 0)
             }
@@ -344,7 +446,6 @@ class CombatProcessorTest {
         while (target.combatState.isDowned && attempts < 1000) {
             proc.tickDowningRolls(target)
             if (target.combatState.isDowned) {
-                // re-roll only the failure dimension so this converges on death, not stabilize
                 target.combatState =
                     target.combatState.copy(downingSuccesses = 0, downingFailures = 2)
             }

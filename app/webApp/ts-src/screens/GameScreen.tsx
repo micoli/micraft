@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { GameLayout, ChannelSubscription } from "../game/types";
 import { NpcDialog } from "../game/npc/NpcDialog";
 import { LoadingOverlay } from "../game/overlays/LoadingOverlay";
@@ -48,6 +48,22 @@ export function GameScreen() {
   } = useGameContext();
 
   const activeLayout = resolveActiveLayout(state.layouts, state.activeLayout);
+
+  const filteredAttackMeta = useMemo(() => {
+    const charData = state.characterSyncData?.character;
+    if (!charData || !state.classDefinitions) return state.attackMeta;
+    const classDef = state.classDefinitions[charData.characterClass];
+    if (!classDef) return {};
+    const unlocked = new Set<string>();
+    for (const [lvlStr, attacks] of Object.entries(classDef)) {
+      if (parseInt(lvlStr) <= charData.level) {
+        for (const { attack, level } of attacks) {
+          unlocked.add(`${attack}:${level}`);
+        }
+      }
+    }
+    return Object.fromEntries(Object.entries(state.attackMeta).filter(([key]) => unlocked.has(key)));
+  }, [state.attackMeta, state.characterSyncData, state.classDefinitions]);
 
   const handlePreferencesSave = (payload: {
     subscribedChannels: ChannelSubscription[];
@@ -171,7 +187,7 @@ export function GameScreen() {
           <ShortcutBar
             inventory={state.inventory}
             itemMeta={state.itemMeta}
-            attackMeta={state.attackMeta}
+            attackMeta={filteredAttackMeta}
             slots={state.shortcutBar}
             selectedSlot={state.selectedSlot}
             macros={state.preferences?.macros ?? {}}
@@ -182,7 +198,7 @@ export function GameScreen() {
             playerStatus={state.playerStatus ?? undefined}
           />
           <AttackPanel
-            attackMeta={state.attackMeta}
+            attackMeta={filteredAttackMeta}
             layoutStyle={widgetStyle(activeLayout, "ATTACK_PANEL")}
             pinnedMacros={state.preferences?.customCommands?.["__pinned_macros__"] ?? []}
             playerStatus={state.playerStatus ?? undefined}
@@ -311,7 +327,7 @@ export function GameScreen() {
             macros={state.preferences?.macros ?? {}}
             customCommands={state.preferences?.customCommands ?? {}}
             commands={state.preferences?.commands ?? []}
-            attackKeys={Object.keys(state.attackMeta ?? {})}
+            attackKeys={Object.keys(filteredAttackMeta)}
             onSave={handleMacrosSave}
             onClose={() => dispatch({ type: "macro_editor_close" })}
           />

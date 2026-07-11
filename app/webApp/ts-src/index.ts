@@ -265,6 +265,7 @@ window.mc = {
   playerDowned: () => {},
   playerRespawned: () => {},
   xpGained: () => {},
+  reloadAttackMeta: () => {},
 } satisfies McBindings;
 
 registerAllPlugins();

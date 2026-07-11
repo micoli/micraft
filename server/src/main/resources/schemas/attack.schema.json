@@ -13,16 +13,24 @@
             "type": "string",
             "enum": ["PHYSICAL", "FIRE", "POISON", "MAGIC", "LIGHTNING", "NECROTIC"]
           },
-          "power": {"type": "integer", "minimum": 0},
-          "eligibleClasses": {"type": "array", "items": {"type": "string"}},
-          "cooldownMs": {"type": "integer", "minimum": 0},
-          "manaCost": {"type": "integer", "minimum": 0},
-          "rageCost": {"type": "integer", "minimum": 0},
-          "rangeOverride": {"type": ["number", "null"], "minimum": 0},
-          "weaponDice": {"type": "string", "pattern": "^[0-9]+d[0-9]+$"},
-          "statusEffect": {
-            "type": ["string", "null"],
-            "enum": ["Poisoned", "Burning", "Paralyzed", "Stunned", "Blessed", "Cursed", null]
+          "levels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "power": {"type": "integer", "minimum": 0},
+                "cooldownMs": {"type": "integer", "minimum": 0},
+                "manaCost": {"type": "integer", "minimum": 0},
+                "rageCost": {"type": "integer", "minimum": 0},
+                "rangeOverride": {"type": ["number", "null"], "minimum": 0},
+                "weaponDice": {"type": "string", "pattern": "^[0-9]+d[0-9]+$"},
+                "statusEffect": {
+                  "type": ["string", "null"],
+                  "enum": ["Poisoned", "Burning", "Paralyzed", "Stunned", "Blessed", "Cursed", null]
+                }
+              }
+            }
           }
         }
       }

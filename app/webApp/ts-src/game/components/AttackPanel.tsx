@@ -103,6 +103,7 @@ export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [], player
         ))}
         {attacks.map(([id, meta]) => {
           const hasCd = (playerStatus?.attackCooldownsRemainingMs?.[id] ?? 0) > 0;
+          const displayName = meta.attackId ?? id;
           return (
             <div
               key={`attack-${id}`}
@@ -111,7 +112,7 @@ export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [], player
               onPointerMove={moveDrag}
               onPointerUp={endDrag}
               onPointerCancel={endDrag}
-              title={`${id}\n${meta.damageType}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}`}
+              title={`${displayName} (rank ${meta.level})\n${meta.damageType}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}${meta.power > 0 ? ` · power ${meta.power}` : ""}`}
               className={cn(
                 "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-white/25 bg-black/72 cursor-grab hover:border-white/60 transition-colors touch-none",
                 hasCd && "opacity-50",
@@ -125,8 +126,13 @@ export function AttackPanel({ attackMeta, layoutStyle, pinnedMacros = [], player
                 }}
               />
               <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">
-                {id}
+                {displayName}
               </div>
+              {meta.level > 1 && (
+                <div className="absolute top-0.5 left-1 text-yellow-300 font-mono font-bold text-[8px]">
+                  {meta.level}
+                </div>
+              )}
               {meta.manaCost > 0 && (
                 <div className="absolute top-0.5 right-1 text-blue-300 font-mono font-bold text-[8px]">
                   {meta.manaCost}

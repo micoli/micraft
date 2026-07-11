@@ -5,13 +5,25 @@ import java.nio.file.Path
 import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class AttackConfigTest {
     private fun resourcesDefault(): Path {
         val dir = Files.createTempDirectory("attack-config-resources")
         val path = dir.resolve("attack.yaml")
-        path.writeText("attacks:\n  slash:\n    power: 5\n    weaponDice: 1d8\n")
+        path.writeText(
+            """
+            attacks:
+              slash:
+                damageType: PHYSICAL
+                levels:
+                  1:
+                    power: 5
+                    weaponDice: 1d8
+                    cooldownMs: 800
+            """
+                .trimIndent())
         return path
     }
 
@@ -21,7 +33,9 @@ class AttackConfigTest {
         val path = dir.resolve("attack.yaml")
         val attacks = AttackConfig(path, resourcesDefault()).data.attacks
         assertEquals(1, attacks.size)
-        assertEquals(5, attacks["slash"]?.power)
+        val slashLevel1 = attacks["slash"]?.levels?.get(1)
+        assertNotNull(slashLevel1)
+        assertEquals(5, slashLevel1.power)
     }
 
     @Test
@@ -29,11 +43,23 @@ class AttackConfigTest {
         val dir = Files.createTempDirectory("attack-config-test2")
         val path = dir.resolve("attack.yaml")
         path.writeText(
-            "attacks:\n  fireball:\n    power: 8\n    weaponDice: 3d6\n    manaCost: 10\n")
+            """
+            attacks:
+              fireball:
+                damageType: FIRE
+                levels:
+                  1:
+                    power: 8
+                    weaponDice: 3d6
+                    manaCost: 10
+            """
+                .trimIndent())
         val attacks = AttackConfig(path, resourcesDefault()).data.attacks
         assertTrue(attacks.containsKey("fireball"))
-        assertEquals(8, attacks["fireball"]?.power)
-        assertEquals(10, attacks["fireball"]?.manaCost)
+        val level1 = attacks["fireball"]?.levels?.get(1)
+        assertNotNull(level1)
+        assertEquals(8, level1.power)
+        assertEquals(10, level1.manaCost)
     }
 
     @Test
@@ -44,5 +70,34 @@ class AttackConfigTest {
         val attacks = AttackConfig(path, resourcesDefault()).data.attacks
         assertEquals(1, attacks.size)
         assertTrue(attacks.containsKey("slash"))
+    }
+
+    @Test
+    fun multipleLevel_loadsAllLevels() {
+        val dir = Files.createTempDirectory("attack-config-test4")
+        val path = dir.resolve("attack.yaml")
+        path.writeText(
+            """
+            attacks:
+              slash:
+                damageType: PHYSICAL
+                levels:
+                  1:
+                    power: 5
+                    weaponDice: 1d8
+                    cooldownMs: 800
+                  2:
+                    power: 8
+                    weaponDice: 1d10
+                    cooldownMs: 750
+            """
+                .trimIndent())
+        val attacks = AttackConfig(path, resourcesDefault()).data.attacks
+        val slash = attacks["slash"]
+        assertNotNull(slash)
+        assertEquals(2, slash.levels.size)
+        assertEquals(5, slash.levels[1]?.power)
+        assertEquals(8, slash.levels[2]?.power)
+        assertEquals(750, slash.levels[2]?.cooldownMs)
     }
 }

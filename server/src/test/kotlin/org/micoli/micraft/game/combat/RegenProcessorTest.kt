@@ -40,6 +40,7 @@ class RegenProcessorTest {
             config = CombatConfigData(),
             attackRegistry = emptyMap(),
             armorRegistry = emptyMap(),
+            classRegistry = emptyMap(),
             npcManager = NpcManager(broadcast = {}),
             getSessions = { emptyList() },
             broadcastCombatLog = {},

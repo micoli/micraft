@@ -240,7 +240,10 @@ class LocalPlayerController(
                 val targetId = currentCombatTargetId ?: return
                 outMessages.trySend(
                     ClientMessage.AttackTarget(
-                        targetId = targetId, isNpc = true, attackId = slot.attackId))
+                        targetId = targetId,
+                        isNpc = true,
+                        attackId = slot.attackId,
+                        attackLevel = slot.level))
             }
         }
     }
@@ -261,7 +264,8 @@ class LocalPlayerController(
             shortcutBar.joinToString(",") { slot ->
                 when (slot) {
                     is ShortcutSlot.Item -> """{"kind":"item","id":"${slot.itemType.id}"}"""
-                    is ShortcutSlot.Attack -> """{"kind":"attack","id":"${slot.attackId}"}"""
+                    is ShortcutSlot.Attack ->
+                        """{"kind":"attack","id":"${slot.attackId}:${slot.level}"}"""
                     is ShortcutSlot.Macro -> """{"kind":"macro","id":"${slot.macroName}"}"""
                     null -> "null"
                 }
@@ -498,12 +502,13 @@ class LocalPlayerController(
                 }
                 event == "combat_attack" -> {
                     val targetId = currentCombatTargetId ?: return@repeat
-                    val attackId =
-                        (shortcutBar.getOrNull(selectedSlot) as? ShortcutSlot.Attack)?.attackId
-                            ?: "basic_attack"
+                    val slot = shortcutBar.getOrNull(selectedSlot) as? ShortcutSlot.Attack
                     outMessages.trySend(
                         ClientMessage.AttackTarget(
-                            targetId = targetId, isNpc = true, attackId = attackId))
+                            targetId = targetId,
+                            isNpc = true,
+                            attackId = slot?.attackId ?: "basic_attack",
+                            attackLevel = slot?.level ?: 1))
                 }
                 event.startsWith("cmd:") ->
                     outMessages.trySend(ClientMessage.Command(event.removePrefix("cmd:")))
@@ -511,11 +516,17 @@ class LocalPlayerController(
                     outMessages.trySend(ClientMessage.RunMacro(event.removePrefix("macro:")))
                 event.startsWith("attack:") -> {
                     val targetId = currentCombatTargetId ?: return@repeat
+                    val rest = event.removePrefix("attack:")
+                    val lastColon = rest.lastIndexOf(':')
+                    val attackId = if (lastColon > 0) rest.substring(0, lastColon) else rest
+                    val attackLevel =
+                        if (lastColon > 0) rest.substring(lastColon + 1).toIntOrNull() ?: 1 else 1
                     outMessages.trySend(
                         ClientMessage.AttackTarget(
                             targetId = targetId,
                             isNpc = true,
-                            attackId = event.removePrefix("attack:")))
+                            attackId = attackId,
+                            attackLevel = attackLevel))
                 }
             }
         }
@@ -557,7 +568,14 @@ class LocalPlayerController(
                                 ItemRegistry.keys()
                                     .find { it.id == id }
                                     ?.let { ShortcutSlot.Item(it) }
-                            kind == "attack" && id != null -> ShortcutSlot.Attack(id)
+                            kind == "attack" && id != null -> {
+                                val colon = id.lastIndexOf(':')
+                                if (colon > 0)
+                                    ShortcutSlot.Attack(
+                                        id.substring(0, colon),
+                                        id.substring(colon + 1).toIntOrNull() ?: 1)
+                                else ShortcutSlot.Attack(id)
+                            }
                             kind == "macro" && id != null -> ShortcutSlot.Macro(id)
                             else -> null
                         }

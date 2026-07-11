@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "regen": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "regenIntervalMs": {"type": "integer", "minimum": 100},
+        "default": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "hpFormula": {"type": "string"},
+            "manaFormula": {"type": "string"}
+          }
+        }
+      }
+    },
+    "classes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "strBonus": {"type": "integer"},
+          "dexBonus": {"type": "integer"},
+          "intelBonus": {"type": "integer"},
+          "wisBonus": {"type": "integer"},
+          "conBonus": {"type": "integer"},
+          "chaBonus": {"type": "integer"},
+          "classResource": {"type": "string", "enum": ["MANA", "RAGE"]},
+          "hpFormula": {"type": "string"},
+          "manaFormula": {"type": "string"},
+          "levels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "attacks": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["attack", "level"],
+                    "properties": {
+                      "attack": {"type": "string"},
+                      "level": {"type": "integer", "minimum": 1}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

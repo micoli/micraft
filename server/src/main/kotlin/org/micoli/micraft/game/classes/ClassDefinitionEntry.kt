@@ -14,4 +14,5 @@ data class ClassDefinitionEntry(
     val classResource: ClassResource = ClassResource.MANA,
     val hpFormula: String = "hpRegenPerSec * dt",
     val manaFormula: String = "manaRegenPerSec * dt",
+    val levels: Map<Int, ClassLevelEntry> = emptyMap(),
 )

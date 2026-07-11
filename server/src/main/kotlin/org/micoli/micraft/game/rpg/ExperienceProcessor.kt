@@ -50,7 +50,7 @@ class ExperienceProcessor(
         session.send(
             ServerMessage.XpGained(
                 xpGained = amount,
-                totalXp = newXp,
+                totalXp = xpIntoLevel,
                 level = newLevel,
                 leveledUp = leveledUp,
                 nextLevelXp = nextXp,
@@ -91,10 +91,11 @@ class ExperienceProcessor(
         val thresholds = config.progression.thresholds
         val level = computeLevel(charData.xp, thresholds)
         val nextXp = nextLevelXp(level, thresholds)
+        val xpIntoLevel = xpIntoCurrentLevel(charData.xp, level, thresholds)
         session.send(
             ServerMessage.XpGained(
                 xpGained = 0,
-                totalXp = charData.xp,
+                totalXp = xpIntoLevel,
                 level = level,
                 leveledUp = false,
                 nextLevelXp = nextXp,

@@ -10,6 +10,7 @@ import org.micoli.micraft.game.armor.ArmorRegistryLoader
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.classes.ClassesConfig
+import org.micoli.micraft.game.classes.ClassesConfigData
 import org.micoli.micraft.game.combat.AttackConfig
 import org.micoli.micraft.game.combat.CombatConfig
 import org.micoli.micraft.game.combat.CombatConfigData
@@ -126,6 +127,7 @@ val gameLoopModule = module {
             config = get(),
             attackRegistry = get(),
             armorRegistry = emptyArmorRegistry,
+            classRegistry = get<ClassesConfigData>().classes,
             npcManager = get<NpcManager>(),
             getSessions = get<SessionRegistry>()::all,
             broadcastCombatLog = { msg ->

@@ -419,6 +419,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 if (msg.npcs.isNotEmpty()) jsInitNpcModels(Json.encodeToString(msg.npcs))
                 if (msg.npcDefinitions.isNotEmpty())
                     jsSetNpcDefinitions(Json.encodeToString(msg.npcDefinitions))
+                js("mc.reloadAttackMeta()")
             }
             is ServerMessage.ItemsSpawned -> Unit
             is ServerMessage.ItemDespawned -> Unit

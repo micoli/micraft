@@ -405,6 +405,7 @@ declare global {
     playerDowned(playerId: string): void;
     playerRespawned(json: string): void;
     xpGained(json: string): void;
+    reloadAttackMeta(): void;
     toggleBiomeMap(): void;
     dumpStats(): void;
     updateChunkDebug(json: string): void;

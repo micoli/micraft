@@ -5,8 +5,10 @@ import kotlin.random.Random
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.AttackDefinition
+import org.micoli.micraft.combat.AttackLevelDefinition
 import org.micoli.micraft.combat.DamageType
 import org.micoli.micraft.game.armor.ArmorDefinition
+import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
@@ -47,6 +49,7 @@ class CombatProcessor(
     private val config: CombatConfigData,
     private val attackRegistry: Map<String, AttackDefinition>,
     private val armorRegistry: Map<String, ArmorDefinition>,
+    private val classRegistry: Map<String, ClassDefinitionEntry>,
     private val npcManager: NpcManager,
     private val getSessions: () -> Collection<PlayerSession>,
     private val broadcastCombatLog: suspend (String) -> Unit,
@@ -81,32 +84,56 @@ class CombatProcessor(
                     session.send(ServerMessage.Notification("Unknown attack '${msg.attackId}'"))
                     return
                 }
-        if (charData.characterClass !in attackDef.eligibleClasses) {
-            session.send(ServerMessage.Notification("Your class cannot use this attack"))
+        val classDef = classRegistry[charData.characterClass.name]
+        val unlockedAttacks =
+            classDef
+                ?.levels
+                ?.filter { (classLevel, _) -> classLevel <= charData.level }
+                ?.values
+                ?.flatMap { it.attacks } ?: emptyList()
+        if (classDef != null &&
+            unlockedAttacks.isNotEmpty() &&
+            unlockedAttacks.none { it.attack == msg.attackId && it.level == msg.attackLevel }) {
+            session.send(
+                ServerMessage.Notification(
+                    "Your class cannot use ${msg.attackId} level ${msg.attackLevel}"))
             return
         }
+        val levelDef =
+            attackDef.levels[msg.attackLevel]
+                ?: run {
+                    session.send(
+                        ServerMessage.Notification(
+                            "Unknown level ${msg.attackLevel} for '${msg.attackId}'"))
+                    return
+                }
         val now = System.currentTimeMillis()
+        val cooldownKey = "${msg.attackId}:${msg.attackLevel}"
         if (now < session.combatState.attackCooldownUntilMs) {
             session.send(ServerMessage.Notification("Attack on cooldown"))
             return
         }
-        if (now < (session.combatState.attackCooldownsUntilMs[msg.attackId] ?: 0L)) {
-            session.send(ServerMessage.Notification("${msg.attackId} on cooldown"))
+        if (now < (session.combatState.attackCooldownsUntilMs[cooldownKey] ?: 0L)) {
+            session.send(
+                ServerMessage.Notification("${msg.attackId} (rank ${msg.attackLevel}) on cooldown"))
             return
         }
 
-        val range = attackDef.rangeOverride ?: config.maxCombatRange
-        if (msg.isNpc) attackNpc(session, msg, attackDef, charData, range, now)
-        else attackPlayer(session, msg, attackDef, charData, range, now)
+        val range = levelDef.rangeOverride ?: config.maxCombatRange
+        if (msg.isNpc)
+            attackNpc(session, msg, attackDef, levelDef, charData, range, now, cooldownKey)
+        else attackPlayer(session, msg, attackDef, levelDef, charData, range, now, cooldownKey)
     }
 
     private suspend fun attackPlayer(
         session: PlayerSession,
         msg: ClientMessage.AttackTarget,
         attackDef: AttackDefinition,
+        levelDef: AttackLevelDefinition,
         charData: CharacterData,
         range: Float,
         now: Long,
+        cooldownKey: String,
     ) {
         val target =
             getSessions().find { it.id == msg.targetId }
@@ -127,24 +154,25 @@ class CombatProcessor(
         val theirArmors = target.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
         val theirDerived = DerivedStatsCalculator.compute(targetChar, theirArmors)
 
-        if (!deductResource(session, charData, attackDef)) {
+        if (!deductResource(session, charData, levelDef)) {
             session.send(ServerMessage.Notification("Not enough resources"))
             return
         }
 
-        val (hit, isCrit, damage) = resolveAttack(attackDef, myDerived, theirDerived.armorClass)
+        val (hit, isCrit, damage) =
+            resolveAttack(attackDef, levelDef, myDerived, theirDerived.armorClass)
         session.combatState =
             session.combatState.copy(
-                attackCooldownUntilMs = now + attackDef.cooldownMs,
+                attackCooldownUntilMs = now + levelDef.cooldownMs,
                 attackCooldownsUntilMs =
                     session.combatState.attackCooldownsUntilMs +
-                        (msg.attackId to now + attackDef.cooldownMs),
+                        (cooldownKey to now + levelDef.cooldownMs),
             )
 
         if (hit) {
             val newHp = (targetChar.currentHp - damage).coerceAtLeast(0)
             target.characterData = targetChar.copy(currentHp = newHp)
-            applyStatusEffect(target, attackDef, now)
+            applyStatusEffect(target, levelDef, now)
             broadcastHealthUpdate(target.id, false, newHp, theirDerived.maxHp)
             subscribeToChannel(target, "combat")
             if (newHp <= 0) handlePlayerDowned(target)
@@ -161,9 +189,11 @@ class CombatProcessor(
         session: PlayerSession,
         msg: ClientMessage.AttackTarget,
         attackDef: AttackDefinition,
+        levelDef: AttackLevelDefinition,
         charData: CharacterData,
         range: Float,
         now: Long,
+        cooldownKey: String,
     ) {
         val npc =
             npcManager.getInstance(msg.targetId)
@@ -181,19 +211,19 @@ class CombatProcessor(
         val myArmors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
         val myDerived = DerivedStatsCalculator.compute(charData, myArmors)
 
-        if (!deductResource(session, charData, attackDef)) {
+        if (!deductResource(session, charData, levelDef)) {
             session.send(ServerMessage.Notification("Not enough resources"))
             return
         }
 
         val npcAc = 10
-        val (hit, isCrit, damage) = resolveAttack(attackDef, myDerived, npcAc)
+        val (hit, isCrit, damage) = resolveAttack(attackDef, levelDef, myDerived, npcAc)
         session.combatState =
             session.combatState.copy(
-                attackCooldownUntilMs = now + attackDef.cooldownMs,
+                attackCooldownUntilMs = now + levelDef.cooldownMs,
                 attackCooldownsUntilMs =
                     session.combatState.attackCooldownsUntilMs +
-                        (msg.attackId to now + attackDef.cooldownMs),
+                        (cooldownKey to now + levelDef.cooldownMs),
             )
 
         if (hit) {
@@ -212,22 +242,23 @@ class CombatProcessor(
     suspend fun handleNpcAttack(npc: NpcInstance, target: PlayerSession) {
         val attackId = npc.definition.attackId ?: "basic_attack"
         val attackDef = attackRegistry[attackId] ?: return
+        val levelDef = attackDef.levels.values.firstOrNull() ?: return
         val now = System.currentTimeMillis()
         if (now < npc.attackCooldownUntilMs) return
-        npc.attackCooldownUntilMs = now + attackDef.cooldownMs
+        npc.attackCooldownUntilMs = now + levelDef.cooldownMs
 
         val targetChar = target.characterData ?: return
         val theirArmors = target.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
         val theirDerived = DerivedStatsCalculator.compute(targetChar, theirArmors)
 
-        val npcModifier = attackDef.power
+        val npcModifier = levelDef.power
         val roll = Random.nextInt(1, 21)
         val isCrit = roll == 20
         val hit = isCrit || (roll + npcModifier) >= theirDerived.armorClass
 
         val damage: Int
         if (hit) {
-            val raw = rollDice(attackDef.weaponDice) + attackDef.power
+            val raw = rollDice(levelDef.weaponDice) + levelDef.power
             damage = if (isCrit) raw * 2 else raw
             val newHp = (targetChar.currentHp - damage).coerceAtLeast(0)
             target.characterData = targetChar.copy(currentHp = newHp)
@@ -320,6 +351,7 @@ class CombatProcessor(
 
     private fun resolveAttack(
         attackDef: AttackDefinition,
+        levelDef: AttackLevelDefinition,
         myDerived: DerivedStats,
         targetAc: Int
     ): AttackResult {
@@ -334,7 +366,7 @@ class CombatProcessor(
         val hit = isCrit || (roll + modifier) >= targetAc
         val damage =
             if (hit) {
-                val raw = rollDice(attackDef.weaponDice) + attackDef.power + modifier
+                val raw = rollDice(levelDef.weaponDice) + levelDef.power + modifier
                 if (isCrit) raw * 2 else raw
             } else 0
         return AttackResult(hit, isCrit, damage)
@@ -343,23 +375,23 @@ class CombatProcessor(
     private fun deductResource(
         session: PlayerSession,
         charData: CharacterData,
-        attackDef: AttackDefinition
+        levelDef: AttackLevelDefinition
     ): Boolean {
         val resource = charData.characterClass.classResource
         return when {
-            resource == ClassResource.MANA && attackDef.manaCost > 0 -> {
-                if (charData.currentMana < attackDef.manaCost) false
+            resource == ClassResource.MANA && levelDef.manaCost > 0 -> {
+                if (charData.currentMana < levelDef.manaCost) false
                 else {
                     session.characterData =
-                        charData.copy(currentMana = charData.currentMana - attackDef.manaCost)
+                        charData.copy(currentMana = charData.currentMana - levelDef.manaCost)
                     true
                 }
             }
-            resource == ClassResource.RAGE && attackDef.rageCost > 0 -> {
-                if (charData.currentRage < attackDef.rageCost) false
+            resource == ClassResource.RAGE && levelDef.rageCost > 0 -> {
+                if (charData.currentRage < levelDef.rageCost) false
                 else {
                     session.characterData =
-                        charData.copy(currentRage = charData.currentRage - attackDef.rageCost)
+                        charData.copy(currentRage = charData.currentRage - levelDef.rageCost)
                     true
                 }
             }
@@ -369,10 +401,10 @@ class CombatProcessor(
 
     private suspend fun applyStatusEffect(
         target: PlayerSession,
-        attackDef: AttackDefinition,
+        levelDef: AttackLevelDefinition,
         now: Long
     ) {
-        val effect = attackDef.statusEffect ?: return
+        val effect = levelDef.statusEffect ?: return
         val expiry = now + (effect.durationSec * 1000).toLong()
         val idx =
             target.combatState.activeEffects.indexOfFirst { it.effect::class == effect::class }
