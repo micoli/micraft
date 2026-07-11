@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.npc
 
+import com.charleskorn.kaml.Yaml
 import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -7,7 +8,6 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
-import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.builtins.ListSerializer
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.session.PlayerSession

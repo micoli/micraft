@@ -6,6 +6,7 @@ import org.micoli.micraft.player.Vec3
 class NpcInstance(
     @Volatile var state: NpcState,
     @Volatile var vy: Float = 0f,
+    @Volatile var velocity: Vec3 = Vec3(0f, 0f, 0f),
     val definition: NpcDefinition,
     val spawnPos: Vec3,
     var wanderTargetX: Float = 0f,

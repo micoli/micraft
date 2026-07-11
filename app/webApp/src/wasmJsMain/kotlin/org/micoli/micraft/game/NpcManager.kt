@@ -2,38 +2,53 @@ package org.micoli.micraft.game
 
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.time.TimeSource
 import org.micoli.micraft.babylon.*
 import org.micoli.micraft.npc.NpcState
+import org.micoli.micraft.player.Vec3
 
 class NpcManager(private val scene: JsAny) {
     @OptIn(ExperimentalWasmJsInterop::class) private val npcModels = mutableMapOf<String, JsAny>()
-    private val npcPrevPos = mutableMapOf<String, Triple<Double, Double, Double>>()
+    private val npcBuffers = mutableMapOf<String, ArrayDeque<PosSnapshot>>()
+    private val npcRenderedYaw = mutableMapOf<String, Float>()
     private val pendingNpcs = mutableListOf<NpcState>()
     private val npcNames = mutableMapOf<String, String>()
     private var highlightedNpcId: String? = null
+
+    private val clock = TimeSource.Monotonic
+    private val startMark = clock.markNow()
+
+    private fun nowMs(): Long = startMark.elapsedNow().inWholeMilliseconds
+
+    private class PosSnapshot(val pos: Vec3, val vel: Vec3, val yaw: Float, val timeMs: Long)
+
+    private data class InterpResult(val pos: Vec3, val vel: Vec3, val yaw: Float)
 
     fun handleSpawned(npc: NpcState) {
         npcNames[npc.id] = npc.name
         updateAutocomplete()
         jsSetNpcOnMinimap(npc.id, npc.pos.x, npc.pos.z)
+        pushSnapshot(npc)
         if (!jsIsNpcModelsReady()) {
             pendingNpcs.add(npc)
             return
         }
-        createOrUpdateMesh(npc)
+        ensureMesh(npc)
     }
 
     fun handleUpdate(npc: NpcState) {
         jsSetNpcOnMinimap(npc.id, npc.pos.x, npc.pos.z)
+        pushSnapshot(npc)
         if (!jsIsNpcModelsReady()) {
             pendingNpcs.removeAll { it.id == npc.id }
             pendingNpcs.add(npc)
             return
         }
-        createOrUpdateMesh(npc)
+        ensureMesh(npc)
     }
 
     fun handleDespawned(id: String) {
@@ -42,35 +57,97 @@ class NpcManager(private val scene: JsAny) {
         jsRemoveNpcFromMinimap(id)
         pendingNpcs.removeAll { it.id == id }
         npcModels.remove(id)?.let(::jsDisposeNpcModel)
-        npcPrevPos.remove(id)
+        npcBuffers.remove(id)
+        npcRenderedYaw.remove(id)
     }
 
     fun tick() {
-        if (!jsIsNpcModelsReady() || pendingNpcs.isEmpty()) return
-        val snapshot = pendingNpcs.toList()
-        pendingNpcs.clear()
-        snapshot.forEach { createOrUpdateMesh(it) }
+        if (jsIsNpcModelsReady() && pendingNpcs.isNotEmpty()) {
+            val batch = pendingNpcs.toList()
+            pendingNpcs.clear()
+            batch.forEach { ensureMesh(it) }
+        }
+        if (!jsIsNpcModelsReady()) return
+        val renderTime = nowMs() - INTERP_DELAY_MS
+        for ((id, buf) in npcBuffers) {
+            val model = npcModels[id] ?: continue
+            val (pos, vel, yaw) = interpolate(buf, renderTime)
+            val prevYaw = npcRenderedYaw[id] ?: yaw
+            val renderedYaw = lerpAngle(prevYaw, yaw, 0.12f)
+            npcRenderedYaw[id] = renderedYaw
+            val isWalking = abs(vel.x) > 0.01f || abs(vel.z) > 0.01f
+            jsSetNpcTransform(
+                model,
+                pos.x.toDouble(),
+                pos.y.toDouble(),
+                pos.z.toDouble(),
+                renderedYaw,
+                isWalking,
+            )
+        }
     }
 
     fun clear() {
         npcModels.values.forEach(::jsDisposeNpcModel)
         npcModels.clear()
-        npcPrevPos.clear()
+        npcBuffers.clear()
+        npcRenderedYaw.clear()
         pendingNpcs.clear()
         npcNames.clear()
         jsSetNpcNames("[]")
     }
 
     @OptIn(ExperimentalWasmJsInterop::class)
-    private fun createOrUpdateMesh(npc: NpcState) {
-        val model = npcModels.getOrPut(npc.id) { jsCreateNpcModel(scene, npc.type) ?: return }
-        val prev = npcPrevPos[npc.id]
-        val x = npc.pos.x.toDouble()
-        val y = npc.pos.y.toDouble()
-        val z = npc.pos.z.toDouble()
-        val isWalking = prev != null && (abs(x - prev.first) > 0.001 || abs(z - prev.third) > 0.001)
-        npcPrevPos[npc.id] = Triple(x, y, z)
-        jsSetNpcTransform(model, x, y, z, npc.yaw, isWalking)
+    private fun ensureMesh(npc: NpcState) {
+        npcModels.getOrPut(npc.id) { jsCreateNpcModel(scene, npc.type) ?: return }
+    }
+
+    private fun pushSnapshot(npc: NpcState) {
+        val buf = npcBuffers.getOrPut(npc.id) { ArrayDeque() }
+        buf.addLast(PosSnapshot(npc.pos, npc.vel, npc.yaw, nowMs()))
+        while (buf.size > MAX_BUFFER) buf.removeFirst()
+    }
+
+    private fun interpolate(buf: ArrayDeque<PosSnapshot>, renderTime: Long): InterpResult {
+        if (buf.isEmpty()) return InterpResult(Vec3(0f, 0f, 0f), Vec3(0f, 0f, 0f), 0f)
+        if (buf.size == 1 || renderTime <= buf.first().timeMs) {
+            val s = buf.first()
+            return InterpResult(s.pos, s.vel, s.yaw)
+        }
+        if (renderTime >= buf.last().timeMs) {
+            val s = buf.last()
+            return InterpResult(s.pos, s.vel, s.yaw)
+        }
+        val nextIdx = buf.indexOfFirst { it.timeMs >= renderTime }
+        val prev = buf[nextIdx - 1]
+        val next = buf[nextIdx]
+        val t =
+            ((renderTime - prev.timeMs).toFloat() / (next.timeMs - prev.timeMs)).coerceIn(0f, 1f)
+        val dx = next.pos.x - prev.pos.x
+        val dz = next.pos.z - prev.pos.z
+        val yaw =
+            if (dx * dx + dz * dz > 1e-6f) atan2(dx.toDouble(), dz.toDouble()).toFloat()
+            else next.yaw
+        return InterpResult(
+            pos =
+                Vec3(
+                    lerp(prev.pos.x, next.pos.x, t),
+                    lerp(prev.pos.y, next.pos.y, t),
+                    lerp(prev.pos.z, next.pos.z, t),
+                ),
+            vel = next.vel,
+            yaw = yaw,
+        )
+    }
+
+    private fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
+
+    private fun lerpAngle(from: Float, to: Float, t: Float): Float {
+        var diff = to - from
+        val twoPi = (2.0 * PI).toFloat()
+        while (diff > PI.toFloat()) diff -= twoPi
+        while (diff < -PI.toFloat()) diff += twoPi
+        return from + diff * t
     }
 
     @OptIn(ExperimentalWasmJsInterop::class)
@@ -87,28 +164,31 @@ class NpcManager(private val scene: JsAny) {
         playerY: Double,
         playerZ: Double,
         playerYaw: Double,
-        currentId: String?
+        currentId: String?,
     ): String? {
         val maxDist2 = 20.0 * 20.0
-        val halfConeCos = cos(PI / 6.0) // cos(30°) — half of 60° cone
+        val halfConeCos = cos(PI / 6.0)
         val fwdX = sin(playerYaw)
         val fwdZ = cos(playerYaw)
+        val renderTime = nowMs() - INTERP_DELAY_MS
         val sorted =
-            npcPrevPos.entries
-                .filter { (_, pos) ->
-                    val dx = pos.first - playerX
-                    val dy = pos.second - playerY
-                    val dz = pos.third - playerZ
+            npcBuffers.entries
+                .filter { (_, buf) ->
+                    val (pos, _, _) = interpolate(buf, renderTime)
+                    val dx = pos.x.toDouble() - playerX
+                    val dy = pos.y.toDouble() - playerY
+                    val dz = pos.z.toDouble() - playerZ
                     val dist2 = dx * dx + dy * dy + dz * dz
                     if (dist2 > maxDist2) return@filter false
                     val dist2D = sqrt(dx * dx + dz * dz)
                     if (dist2D < 0.001) return@filter true
                     (dx * fwdX + dz * fwdZ) / dist2D >= halfConeCos
                 }
-                .sortedBy { (_, pos) ->
-                    val dx = pos.first - playerX
-                    val dy = pos.second - playerY
-                    val dz = pos.third - playerZ
+                .sortedBy { (_, buf) ->
+                    val (pos, _, _) = interpolate(buf, renderTime)
+                    val dx = pos.x.toDouble() - playerX
+                    val dy = pos.y.toDouble() - playerY
+                    val dz = pos.z.toDouble() - playerZ
                     dx * dx + dy * dy + dz * dz
                 }
                 .map { it.key }
@@ -121,5 +201,10 @@ class NpcManager(private val scene: JsAny) {
     private fun updateAutocomplete() {
         val json = "[" + npcNames.values.joinToString(",") { "\"$it\"" } + "]"
         jsSetNpcNames(json)
+    }
+
+    companion object {
+        private const val INTERP_DELAY_MS = 100L
+        private const val MAX_BUFFER = 8
     }
 }

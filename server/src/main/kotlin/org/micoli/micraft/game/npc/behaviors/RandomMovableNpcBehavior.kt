@@ -28,6 +28,11 @@ class RandomMovableNpcBehavior : NpcBehavior {
 
         if (instance.wanderPauseTicks > 0) {
             instance.wanderPauseTicks--
+            if (instance.state.vel.x != 0f || instance.state.vel.z != 0f) {
+                instance.velocity = Vec3(0f, instance.velocity.y, 0f)
+                instance.state = instance.state.copy(vel = instance.velocity)
+                return true
+            }
             return false
         }
 
@@ -84,12 +89,24 @@ class RandomMovableNpcBehavior : NpcBehavior {
             }
             pickNewTarget(instance)
             instance.wanderStepTicks--
+            if (instance.state.vel.x != 0f || instance.state.vel.z != 0f) {
+                instance.velocity = Vec3(0f, instance.velocity.y, 0f)
+                instance.state = instance.state.copy(vel = instance.velocity)
+                return true
+            }
             return false
         }
 
         instance.wanderStepTicks--
-        val newYaw = atan2(-nx.toDouble(), -nz.toDouble()).toFloat()
-        instance.state = instance.state.copy(pos = Vec3(newX, pos.y, newZ), yaw = newYaw)
+        val newYaw = atan2(nx.toDouble(), nz.toDouble()).toFloat()
+        instance.velocity =
+            Vec3(resolvedDx / TICK_SECONDS, instance.velocity.y, resolvedDz / TICK_SECONDS)
+        instance.state =
+            instance.state.copy(
+                pos = Vec3(newX, pos.y, newZ),
+                yaw = newYaw,
+                vel = instance.velocity,
+            )
         return true
     }
 

@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.world.vegetation
 
+import com.charleskorn.kaml.Yaml
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.iterator
@@ -8,7 +9,6 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.random.Random
-import com.charleskorn.kaml.Yaml
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldState
@@ -159,7 +159,8 @@ class VegetationManager(
     fun load() {
         if (!savePath.exists()) return
         runCatching {
-                val state = Yaml.default.decodeFromString(VegetationState.serializer(), savePath.readText())
+                val state =
+                    Yaml.default.decodeFromString(VegetationState.serializer(), savePath.readText())
                 state.blocks.forEach { activeBlocks[it.pos] = it }
                 vegetationManagerLog.info(
                     "VegetationManager: loaded {} growing blocks from {}",

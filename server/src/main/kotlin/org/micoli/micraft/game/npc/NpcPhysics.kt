@@ -15,6 +15,7 @@ internal object NpcPhysics {
         return if (instance.vy <= 0f &&
             AabbCollider.isGrounded(solid, pos.x, pos.y, pos.z, def.width)) {
             instance.vy = 0f
+            instance.velocity = Vec3(instance.velocity.x, 0f, instance.velocity.z)
             val snapDy =
                 AabbCollider.resolveY(solid, pos.x, pos.y, pos.z, def.width, def.height, -1f)
             val newY = (pos.y + snapDy).coerceAtLeast(0f)
@@ -28,6 +29,7 @@ internal object NpcPhysics {
             val resolvedDy =
                 AabbCollider.resolveY(solid, pos.x, pos.y, pos.z, def.width, def.height, dy)
             if (resolvedDy != dy) instance.vy = 0f
+            instance.velocity = Vec3(instance.velocity.x, instance.vy, instance.velocity.z)
             val newY = (pos.y + resolvedDy).coerceAtLeast(0f)
             instance.state = instance.state.copy(pos = Vec3(pos.x, newY, pos.z))
             resolvedDy != 0f

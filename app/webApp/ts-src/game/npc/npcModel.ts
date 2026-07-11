@@ -5,6 +5,50 @@ interface NpcBbmodels {
   [type: string]: BbModel;
 }
 
+function computeForwardOffset(bbmodel: BbModel): number {
+  const elemMap: Record<string, { from: number[]; to: number[] }> = {};
+  for (const e of (bbmodel as any).elements ?? []) {
+    if (e.uuid && e.from && e.to) elemMap[e.uuid] = e;
+  }
+  const groupNames: Record<string, string> = {};
+  for (const g of (bbmodel as any).groups ?? []) {
+    if (g?.uuid && g?.name) groupNames[g.uuid] = g.name;
+  }
+
+  let hX = 0,
+    hZ = 0,
+    hN = 0,
+    aX = 0,
+    aZ = 0,
+    aN = 0;
+
+  function walk(nodes: any[], inHead: boolean): void {
+    for (const node of nodes) {
+      if (typeof node === "string") {
+        const e = elemMap[node];
+        if (!e) continue;
+        const cx = (e.from[0] + e.to[0]) / 2;
+        const cz = (e.from[2] + e.to[2]) / 2;
+        aX += cx;
+        aZ += cz;
+        aN++;
+        if (inHead) {
+          hX += cx;
+          hZ += cz;
+          hN++;
+        }
+      } else if (node && typeof node === "object") {
+        const name = groupNames[node.uuid] ?? "";
+        walk(node.children ?? [], inHead || name.toLowerCase().includes("head"));
+      }
+    }
+  }
+
+  walk((bbmodel as any).outliner ?? [], false);
+  if (hN === 0 || aN === 0) return Math.PI;
+  return -Math.atan2(hX / hN - aX / aN, hZ / hN - aZ / aN);
+}
+
 export function registerNpcModel(): Pick<
   McBindings,
   "initNpcModels" | "isNpcModelsReady" | "createNpcModel" | "setNpcTransform" | "disposeNpcModel" | "openNpcDialog"
@@ -52,14 +96,16 @@ export function registerNpcModel(): Pick<
         console.warn("[MiCraft] NPC bbmodel not found for type:", npcType);
         return null;
       }
-      return window.mc.createPlayerModelFromBbmodel(bbmodel, scene, `npc_${npcType}`);
+      const model = window.mc.createPlayerModelFromBbmodel(bbmodel, scene, `npc_${npcType}`);
+      (model as any)._forwardOffset = computeForwardOffset(bbmodel);
+      return model;
     },
 
     setNpcTransform: (model: McPlayerModel, x: number, y: number, z: number, yaw: number, isWalking: boolean): void => {
       model.root.position.x = x;
       model.root.position.y = y;
       model.root.position.z = z;
-      model.root.rotation.y = yaw + Math.PI;
+      model.root.rotation.y = yaw + ((model as any)._forwardOffset ?? Math.PI);
 
       const pn = model.pivotNodes;
       if (!pn) return;

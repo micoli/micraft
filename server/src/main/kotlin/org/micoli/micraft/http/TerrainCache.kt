@@ -1,5 +1,6 @@
 package org.micoli.micraft.http
 
+import com.charleskorn.kaml.Yaml
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.GZIPInputStream
@@ -7,7 +8,6 @@ import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
-import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.world.BlockRegistry
@@ -32,10 +32,12 @@ class TerrainCache {
         val cacheTime =
             if (cacheFile.exists()) {
                 try {
-                    Yaml.default.decodeFromString(ListSerializer(ChunkTerrainInfo.serializer()), cacheFile.readText()).forEach {
-                        info ->
-                        cache[ChunkPos(info.cx, info.cz)] = Pair(info.colors, info.avgHeight)
-                    }
+                    Yaml.default
+                        .decodeFromString(
+                            ListSerializer(ChunkTerrainInfo.serializer()), cacheFile.readText())
+                        .forEach { info ->
+                            cache[ChunkPos(info.cx, info.cz)] = Pair(info.colors, info.avgHeight)
+                        }
                     cacheFile.getLastModifiedTime().toMillis()
                 } catch (e: Exception) {
                     log.warn("Failed to load terrain cache: {}", e.message)
@@ -76,7 +78,9 @@ class TerrainCache {
 
     fun save(cacheFile: Path) {
         try {
-            cacheFile.writeText(Yaml.default.encodeToString(ListSerializer(ChunkTerrainInfo.serializer()), getAll()))
+            cacheFile.writeText(
+                Yaml.default.encodeToString(
+                    ListSerializer(ChunkTerrainInfo.serializer()), getAll()))
         } catch (e: Exception) {
             log.warn("Failed to save terrain cache: {}", e.message)
         }
