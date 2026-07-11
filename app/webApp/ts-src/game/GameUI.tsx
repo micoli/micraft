@@ -435,11 +435,6 @@ export function GameUI() {
         return;
       }
       document.exitPointerLock();
-      if (window.mcState.pendingVersionReload) {
-        window.mcState.pendingVersionReload = false;
-        window.location.href = location.pathname;
-        return;
-      }
       navigateRef.current?.(player ? "/chars" : "/auth");
     };
     window.mc.hideLoginOverlay = () => navigateRef.current?.("/game");

@@ -35,10 +35,14 @@ class AssetManifestController(private val webBuildDir: String?) {
         return entries
     }
 
-    private fun resolveDir(): File? =
-        webBuildDir
-            ?.let { File("$it/kotlin-webpack/wasmJs/developmentExecutable") }
-            ?.takeIf { it.isDirectory }
+    // MICRAFT_WEB_DIST points directly at the served executable dir. Legacy fallback: if it points
+    // at the module build dir, descend into the dev executable subdir.
+    private fun resolveDir(): File? {
+        val base = webBuildDir?.let { File(it) }?.takeIf { it.isDirectory } ?: return null
+        if (File(base, "index.html").exists()) return base
+        return File(base, "kotlin-webpack/wasmJs/developmentExecutable").takeIf { it.isDirectory }
+            ?: base
+    }
 
     /** Stable sorted signature of all asset hashes, or null when no dist dir is available. */
     fun signature(): String? =

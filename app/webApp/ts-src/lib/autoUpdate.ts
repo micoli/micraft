@@ -1,35 +1,48 @@
 export function registerAutoUpdate(): void {
   try {
+    // The service worker is the comparator: it posts ASSETS_UPDATED once its cache holds the
+    // new assets, and we then hard-reload to boot them.
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener("message", (e) => {
+        if ((e.data as { type?: string })?.type === "ASSETS_UPDATED") {
+          window.location.reload();
+        }
+      });
+    }
+
     const wsUrl = `ws://${location.hostname}:${location.port}/ws`;
     const ws = new WebSocket(wsUrl);
 
     // HMR state (webpack dev server sends hash + ok in WATCH_MODE=1)
     let initialHash: string | null = null;
     let pendingHash: string | null = null;
+    // Signature the page booted with, used when no service worker controls this page.
+    let bootSig: string | null = null;
 
-    ws.onopen = () => {
-      // Send our asset signature so the server can detect version drift
-      fetch("/api/assets/manifest", { cache: "no-cache" })
-        .then((r) => r.json())
-        .then((manifest: Record<string, string>) => {
-          const sig = Object.entries(manifest)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([k, v]) => `${k}:${v}`)
-            .join(",");
-          ws.send(JSON.stringify({ type: "client-version", data: sig }));
-        })
-        .catch(() => {
-          /* ignore */
-        });
-    };
+    const sw = () => navigator.serviceWorker?.controller ?? null;
 
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data as string) as { type: string; data?: string };
-        // Server-push reload (version mismatch or explicit /api/assets/reload)
+        // Server-published asset signature — let the SW compare it to what it cached.
+        if (msg.type === "version") {
+          const controller = sw();
+          if (controller) {
+            controller.postMessage({ type: "CHECK_VERSION", sig: msg.data });
+          } else {
+            if (bootSig === null) {
+              bootSig = msg.data ?? null;
+            } else if (msg.data !== bootSig) {
+              window.location.reload();
+            }
+          }
+          return;
+        }
+        // Forced reload (POST /api/assets/reload, e.g. run-assets.lock).
         if (msg.type === "reload") {
-          if (window.mcState) {
-            window.mcState.pendingVersionReload = true;
+          const controller = sw();
+          if (controller) {
+            controller.postMessage({ type: "FORCE_UPDATE" });
           } else {
             window.location.reload();
           }

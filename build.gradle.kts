@@ -15,12 +15,15 @@ plugins {
  * @param debugWorld true → MICRAFT_DEBUG_WORLD=1 is passed to the server process, which activates
  *   DebugChunkGenerator + fly spawn near the test block.
  */
-fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
+fun startDevMode(rootDir: java.io.File, debugWorld: Boolean, watch: Boolean) {
     val gradle = "${rootDir}/gradlew"
     val lockFile = rootDir.resolve("run.lock")
     val serverBin = rootDir.resolve("server/build/install/server/bin/server")
-    // WATCH_MODE=0 → skip file watchers; touch run.lock rebuilds everything then restarts server
-    val watchMode = System.getenv("WATCH_MODE") != "0"
+    // Single served dir that webpack never cleans. dev → build/web (assembled by
+    // copyResourcesToWebDist + esbuild/tailwind watchers); prod → productionExecutable.
+    val webDist =
+        if (watch) rootDir.resolve("app/webApp/build/web")
+        else rootDir.resolve("app/webApp/build/dist/wasmJs/productionExecutable")
 
     fun killTree(p: Process) {
         p.descendants().forEach { it.destroy() }
@@ -74,7 +77,7 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
             "[dev] starting server$tag (${java.time.LocalTime.now().let { "%02d:%02d:%02d".format(it.hour, it.minute, it.second) }})")
         val pb = ProcessBuilder(serverBin.absolutePath).directory(rootDir)
         if (debugWorld) pb.environment()["MICRAFT_DEBUG_WORLD"] = "1"
-        pb.environment()["MICRAFT_WEB_DIST"] = rootDir.resolve("app/webApp/build").absolutePath
+        pb.environment()["MICRAFT_WEB_DIST"] = webDist.absolutePath
         val p = pb.start()
         p.pipeOutput("[server] ")
         return p
@@ -88,79 +91,94 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
         return p.waitFor()
     }
 
-    fun buildCss() {
+    fun runNpmEnv(env: Map<String, String>, vararg args: String): Int {
+        val cmd = (listOf("npm") + args.toList()).joinToString(" ")
+        val pb = ProcessBuilder("sh", "-c", cmd).directory(rootDir).redirectErrorStream(false)
+        pb.environment().putAll(env)
+        val p = pb.start()
+        p.pipeOutput("")
+        return p.waitFor()
+    }
+
+    // App CSS goes straight into the served dir; map CSS/JS go to server resources.
+    fun buildClientCss() {
         println("[dev] building CSS…")
-        runNpm("run", "build:css", "--prefix", "app/webApp/ts-src")
+        runNpmEnv(
+            mapOf("MC_OUT_CSS" to webDist.resolve("main.css").absolutePath),
+            "run",
+            "build:css",
+            "--prefix",
+            "app/webApp/ts-src")
+    }
+    fun buildMap() {
         println("[dev] building map…")
         runNpm("run", "build:map", "--prefix", "app/webApp/ts-src")
-        println("[dev] building map CSS…")
         runNpm("run", "build:map:css", "--prefix", "app/webApp/ts-src")
     }
 
     println("[dev] building server…")
-    val serverResult = runGradle(":server:installDist")
-    if (serverResult != 0)
+    if (runGradle(":server:installDist") != 0)
         error("[dev] server build failed — fix compilation errors before starting")
 
     println("[dev] building client…")
-    val clientResult = runGradle(":app:webApp:copyResourcesToWebDist")
-    if (clientResult != 0)
-        error("[dev] client build failed — fix compilation errors before starting")
+    if (watch) {
+        // Assembles build/web: webpack output (webApp.js, .wasm) + static (index.html, sw.js…).
+        if (runGradle(":app:webApp:copyResourcesToWebDist") != 0)
+            error("[dev] client build failed — fix compilation errors before starting")
+    } else {
+        // Production distribution assembles wasm + static resources into webDist.
+        if (runGradle(":app:webApp:wasmJsBrowserDistribution") != 0)
+            error("[prod] client build failed — fix compilation errors before starting")
+    }
 
-    buildCss()
+    // App bundle + CSS straight into the served dir (overwrites any stale resource copies).
+    val jsOut = webDist.resolve("mc_bindings.js").absolutePath
+    runNpmEnv(
+        mapOf("MC_OUT_JS" to jsOut, "MC_ESBUILD_FLAGS" to if (watch) "" else "--minify"),
+        "run",
+        "build",
+        "--prefix",
+        "app/webApp/ts-src")
+    buildClientCss()
+    buildMap()
 
     val serverRef = java.util.concurrent.atomic.AtomicReference(startServer())
 
-    val clientProc: Process?
-    val cssProc: Process?
-    val mapProc: Process?
-    val mapCssProc: Process?
-
-    if (watchMode) {
-        clientProc =
-            ProcessBuilder(
-                    gradle, ":app:webApp:copyResourcesToWebDist", "--continuous", "--console=plain")
-                .directory(rootDir)
-                .start()
-        clientProc.pipeOutput("[wasm] ")
-
-        cssProc =
-            ProcessBuilder("sh", "-c", "npm run watch:css --prefix app/webApp/ts-src")
-                .directory(rootDir)
-                .start()
-        cssProc.pipeOutput("[css] ")
-
-        mapProc =
-            ProcessBuilder("sh", "-c", "npm run watch:map --prefix app/webApp/ts-src")
-                .directory(rootDir)
-                .start()
-        mapProc.pipeOutput("[map] ")
-
-        mapCssProc =
-            ProcessBuilder("sh", "-c", "npm run watch:map:css --prefix app/webApp/ts-src")
-                .directory(rootDir)
-                .start()
-        mapCssProc.pipeOutput("[map:css] ")
+    val watchers = mutableListOf<Process>()
+    if (watch) {
+        fun watcher(prefix: String, cmd: String, env: Map<String, String> = emptyMap()) {
+            val pb = ProcessBuilder("sh", "-c", cmd).directory(rootDir)
+            pb.environment().putAll(env)
+            val p = pb.start()
+            p.pipeOutput(prefix)
+            watchers += p
+        }
+        // Kotlin/Wasm client — continuous recompile; copyResourcesToWebDist restores webApp.js +
+        // static into build/web after each rebuild (webpack cleans its own output dir, not
+        // build/web).
+        watcher(
+            "[wasm] ", "$gradle :app:webApp:copyResourcesToWebDist --continuous --console=plain")
+        // App TS bundle + CSS — esbuild/tailwind --watch straight into the served dir.
+        watcher("[js] ", "npm run watch --prefix app/webApp/ts-src", mapOf("MC_OUT_JS" to jsOut))
+        watcher(
+            "[css] ",
+            "npm run watch:css --prefix app/webApp/ts-src",
+            mapOf("MC_OUT_CSS" to webDist.resolve("main.css").absolutePath))
+        watcher("[map] ", "npm run watch:map --prefix app/webApp/ts-src")
+        watcher("[map:css] ", "npm run watch:map:css --prefix app/webApp/ts-src")
     } else {
-        clientProc = null
-        cssProc = null
-        mapProc = null
-        mapCssProc = null
-        println("[dev] WATCH_MODE=0 — watchers disabled; touch run.lock to rebuild all and restart")
+        println("[prod] serving optimized build; no watchers")
     }
 
     Runtime.getRuntime()
         .addShutdownHook(
             Thread {
                 killTree(serverRef.get())
-                clientProc?.let { killTree(it) }
-                cssProc?.let { killTree(it) }
-                mapProc?.let { killTree(it) }
-                mapCssProc?.let { killTree(it) }
+                watchers.forEach { killTree(it) }
             })
 
-    // Watch run.lock: on modification rebuild server (and in WATCH_MODE=0 also CSS+client) then
-    // restart. Debug mode is preserved across restarts.
+    // Watch run.lock: on modification rebuild + restart the server (the client stays fresh via the
+    // live watchers in dev). Debug mode is preserved across restarts.
     val watchThread = Thread {
         var lastModified = if (lockFile.exists()) lockFile.lastModified() else 0L
         while (!Thread.currentThread().isInterrupted) {
@@ -178,10 +196,6 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
                         "[dev] run.lock modified — rebuilding… (${java.time.LocalTime.now().let { "%02d:%02d:%02d".format(it.hour, it.minute, it.second) }})")
                     println("⚠\uFE0F=====================================⚠\uFE0F")
                     killTree(serverRef.get())
-                    if (!watchMode) {
-                        buildCss()
-                        runGradle(":app:webApp:copyResourcesToWebDist")
-                    }
                     runGradle(":server:installDist")
                     serverRef.set(startServer())
                 }
@@ -191,72 +205,48 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean) {
     watchThread.isDaemon = true
     watchThread.start()
 
-    val assetsLockFile = rootDir.resolve("run-assets.lock")
-    val assetsWatchThread = Thread {
-        var lastModified = if (assetsLockFile.exists()) assetsLockFile.lastModified() else 0L
-        while (!Thread.currentThread().isInterrupted) {
-            try {
-                Thread.sleep(500)
-            } catch (_: InterruptedException) {
-                break
-            }
-            if (assetsLockFile.exists()) {
-                val modified = assetsLockFile.lastModified()
-                if (modified != lastModified) {
-                    lastModified = modified
-                    if (!watchMode) {
-                        println("⚡=====================================⚡")
-                        println(
-                            "[dev] run-assets.lock modified — rebuilding assets only… (${java.time.LocalTime.now().let { "%02d:%02d:%02d".format(it.hour, it.minute, it.second) }})")
-                        println("⚡=====================================⚡")
-                        buildCss()
-                        runGradle(":app:webApp:copyResourcesToWebDist")
-                        println("[dev] assets rebuilt — notifying browser…")
-                        ProcessBuilder(
-                                "sh",
-                                "-c",
-                                "curl -s -X POST http://localhost:8080/api/assets/reload || true")
-                            .directory(rootDir)
-                            .start()
-                            .waitFor()
-                    }
-                }
-            }
-        }
-    }
-    assetsWatchThread.isDaemon = true
-    assetsWatchThread.start()
-
     try {
-        if (watchMode) {
-            clientProc!!.waitFor()
-        } else {
-            java.util.concurrent.CountDownLatch(1).await()
-        }
+        if (watch) watchers.first().waitFor() else java.util.concurrent.CountDownLatch(1).await()
     } catch (_: InterruptedException) {
         // shutdown
     } finally {
         killTree(serverRef.get())
         watchThread.interrupt()
-        assetsWatchThread.interrupt()
     }
 }
 
 /**
  * ./gradlew dev
  *
- * Builds server + client, then starts both in parallel:
+ * Builds server + client, then starts both with live watchers:
  * - Ktor game server on :8080 — serves API, WebSocket, and the game client static files
  * - wasmJsBrowserDevelopmentWebpack --continuous — recompiles Kotlin/Wasm on change
+ * - esbuild/tailwind --watch — rebuild the TS bundle + CSS straight into the served dir
  *
- * Touching run.lock restarts the server without stopping the watcher. Ctrl+C stops both processes.
+ * Any client change updates the served dir; the server's asset-hash poll pushes a version over /ws
+ * and the service worker refreshes. Touching run.lock rebuilds + restarts the server only. Ctrl+C
+ * stops everything.
  */
 tasks.register("dev") {
     group = "micraft"
-    description = "Build and start the game server (:8080, serves everything)"
+    description = "Build and start the game server with live client watchers (:8080)"
     notCompatibleWithConfigurationCache("Launches external processes via script-level function")
     val rootDir = rootProject.projectDir
-    doLast { startDevMode(rootDir, debugWorld = false) }
+    doLast { startDevMode(rootDir, debugWorld = false, watch = true) }
+}
+
+/**
+ * ./gradlew prod
+ *
+ * Builds optimized bundles (production wasm, esbuild --minify, tailwind --minify) into the served
+ * production dir and starts the server — no watchers. run.lock still restarts the server.
+ */
+tasks.register("prod") {
+    group = "micraft"
+    description = "Build optimized bundles and start the game server (:8080, no watchers)"
+    notCompatibleWithConfigurationCache("Launches external processes via script-level function")
+    val rootDir = rootProject.projectDir
+    doLast { startDevMode(rootDir, debugWorld = false, watch = false) }
 }
 
 /**
@@ -275,7 +265,7 @@ tasks.register("devDebug") {
     description = "Same as dev but with a single-block debug world for texture inspection"
     notCompatibleWithConfigurationCache("Launches external processes via script-level function")
     val rootDir = rootProject.projectDir
-    doLast { startDevMode(rootDir, debugWorld = true) }
+    doLast { startDevMode(rootDir, debugWorld = true, watch = true) }
 }
 
 spotless {

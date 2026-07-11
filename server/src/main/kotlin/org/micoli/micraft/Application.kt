@@ -224,9 +224,16 @@ fun Application.module() {
     Runtime.getRuntime().addShutdownHook(Thread { gameLoop.shutdown() })
 
     routing {
+        // MICRAFT_WEB_DIST points directly at the served executable dir
+        // (…/kotlin-webpack/wasmJs/developmentExecutable or …/productionExecutable).
+        // Legacy fallback: if it points at the module build dir, descend into the dev subdir.
         val webBuildDir = System.getenv("MICRAFT_WEB_DIST")
         if (webBuildDir != null) {
-            staticFiles("/", File("$webBuildDir/kotlin-webpack/wasmJs/developmentExecutable"))
+            val base = File(webBuildDir)
+            val served =
+                if (File(base, "index.html").exists()) base
+                else File(base, "kotlin-webpack/wasmJs/developmentExecutable")
+            staticFiles("/", served)
         }
         val assetManifest = AssetManifestController(webBuildDir)
         assetManifest.register(this)

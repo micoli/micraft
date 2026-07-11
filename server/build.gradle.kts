@@ -86,6 +86,7 @@ dependencies {
     implementation(libs.koin.ktor)
     implementation(libs.commons.jexl3)
     testImplementation(libs.ktor.serverTestHost)
+    testImplementation(libs.ktor.client.websockets)
     testImplementation(libs.kotlin.testJunit)
     testImplementation(libs.koin.test)
     testImplementation(libs.koin.test.junit4)

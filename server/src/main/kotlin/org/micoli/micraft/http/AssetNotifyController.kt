@@ -10,62 +10,49 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 
 class AssetNotifyController(private val manifestController: AssetManifestController) {
-    private data class ClientSession(
-        val ws: DefaultWebSocketSession,
-        @Volatile var clientSignature: String? = null,
-    )
+    private val sessions = ConcurrentHashMap<String, DefaultWebSocketSession>()
 
-    private val sessions = ConcurrentHashMap<String, ClientSession>()
-
-    /** Start the background worker that pushes reload to clients with stale asset versions. */
+    /** Start the background worker that publishes the current asset signature to all clients. */
     fun start(application: Application) {
         application.launch {
             while (true) {
                 delay(5_000)
-                checkAndNotify()
+                publishVersion()
             }
         }
     }
 
-    private suspend fun checkAndNotify() {
-        val currentSig = manifestController.signature() ?: return
-        sessions.values.forEach { session ->
-            val clientSig = session.clientSignature ?: return@forEach
-            if (clientSig != currentSig) {
-                runCatching { session.ws.send("""{"type":"reload"}""") }
-            }
-        }
+    /** Broadcast the current asset signature; the service worker compares it to its own. */
+    private suspend fun publishVersion() {
+        val sig = manifestController.signature() ?: return
+        broadcast("""{"type":"version","data":"$sig"}""")
     }
 
+    /** Force all clients to refresh regardless of their current version. */
     private suspend fun notifyAll() {
         manifestController.invalidateCache()
-        sessions.values.forEach { session ->
-            runCatching { session.ws.send("""{"type":"reload"}""") }
-        }
+        broadcast("""{"type":"reload"}""")
+    }
+
+    private suspend fun broadcast(message: String) {
+        sessions.values.forEach { session -> runCatching { session.send(message) } }
     }
 
     fun register(route: Route) =
         route.apply {
             webSocket("/ws") {
                 val id = UUID.randomUUID().toString()
-                sessions[id] = ClientSession(this)
+                sessions[id] = this
+                runCatching {
+                    manifestController.signature()?.let { sig ->
+                        send("""{"type":"version","data":"$sig"}""")
+                    }
+                }
                 try {
                     for (frame in incoming) {
-                        if (frame is Frame.Text) {
-                            runCatching {
-                                val obj = Json.parseToJsonElement(frame.readText()).jsonObject
-                                val type = obj["type"]?.jsonPrimitive?.content
-                                if (type == "client-version") {
-                                    sessions[id]?.clientSignature =
-                                        obj["data"]?.jsonPrimitive?.content
-                                }
-                            }
-                        }
+                        // Inbound frames are ignored; the client compares versions itself.
                     }
                 } finally {
                     sessions.remove(id)
