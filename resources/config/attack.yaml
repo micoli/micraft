@@ -63,6 +63,7 @@ attacks:
         power: 4
         weaponDice: 1d8
         cooldownMs: 2000
+        rangeOverride: 3.0
 
   wolf_bite:
     damageType: PHYSICAL
@@ -71,10 +72,12 @@ attacks:
         power: 4
         weaponDice: 1d6
         cooldownMs: 1200
+        rangeOverride: 2.5
       2:
         power: 6
         weaponDice: 2d6
         cooldownMs: 1000
+        rangeOverride: 2.5
 
   wolf_pounce:
     damageType: PHYSICAL
@@ -84,6 +87,7 @@ attacks:
         weaponDice: 1d8
         cooldownMs: 3000
         rageCost: 15
+        rangeOverride: 4.0
 
   polar_bear_swipe:
     damageType: PHYSICAL
@@ -92,10 +96,12 @@ attacks:
         power: 7
         weaponDice: 2d6
         cooldownMs: 2000
+        rangeOverride: 3.5
       2:
         power: 10
         weaponDice: 3d6
         cooldownMs: 1800
+        rangeOverride: 3.5
 
   polar_bear_crush:
     damageType: PHYSICAL
@@ -105,3 +111,4 @@ attacks:
         weaponDice: 3d8
         cooldownMs: 4000
         rageCost: 25
+        rangeOverride: 3.0

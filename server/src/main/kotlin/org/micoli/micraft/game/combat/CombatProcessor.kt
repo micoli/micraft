@@ -260,6 +260,10 @@ class CombatProcessor(
             val levelDef: org.micoli.micraft.combat.AttackLevelDefinition,
         )
 
+        val dx = target.state.pos.x - npc.state.pos.x
+        val dz = target.state.pos.z - npc.state.pos.z
+        val distSq = dx * dx + dz * dz
+
         val resolved =
             slots.shuffled().firstNotNullOfOrNull { slot ->
                 val cooldownKey = "${slot.attackId}:${slot.level}"
@@ -270,6 +274,8 @@ class CombatProcessor(
                     aDef.levels[slot.level]
                         ?: aDef.levels.entries.maxByOrNull { it.key }?.value
                         ?: return@firstNotNullOfOrNull null
+                val range = lDef.rangeOverride ?: config.npcMaxAttackRange
+                if (distSq > range * range) return@firstNotNullOfOrNull null
                 Resolved(slot, aDef, lDef)
             } ?: return
 

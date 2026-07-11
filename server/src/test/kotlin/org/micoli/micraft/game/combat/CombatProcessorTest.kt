@@ -476,6 +476,7 @@ class CombatProcessorTest {
             )
         val npc = fakeNpc()
         npc.state = npc.state.copy(pos = Vec3(0f, 0f, 0f))
+        target.state = target.state.copy(pos = Vec3(1f, 0f, 0f))
 
         val proc =
             buildProcessor(

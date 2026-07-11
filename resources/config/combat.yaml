@@ -1,3 +1,4 @@
 maxCombatRange: 10.0
+npcMaxAttackRange: 3.0
 downingRollIntervalMs: 3000
 maxRage: 100
