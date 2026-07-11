@@ -377,7 +377,7 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return {
         ...state,
         playerStatus: next,
-        playerDowned: false,
+        playerDowned: next != null ? next.currentHp <= 0 : state.playerDowned,
         healthBarVisible: state.healthBarVisible || damaged,
       };
     }
