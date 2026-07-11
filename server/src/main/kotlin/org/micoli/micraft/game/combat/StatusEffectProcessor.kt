@@ -17,6 +17,7 @@ class StatusEffectProcessor(
     private val broadcastHealthUpdate: suspend (String, Boolean, Int, Int) -> Unit,
     private val broadcastCombatLog: suspend (String) -> Unit,
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit,
+    private val onPlayerDowned: suspend (PlayerSession) -> Unit = {},
 ) {
     private var lastTickMs = System.currentTimeMillis()
 
@@ -64,6 +65,7 @@ class StatusEffectProcessor(
                 val newHp = (charData.currentHp + hpDelta.toInt()).coerceIn(0, derived.maxHp)
                 session.characterData = charData.copy(currentHp = newHp)
                 broadcastHealthUpdate(session.id, false, newHp, derived.maxHp)
+                if (newHp <= 0 && !session.combatState.isDowned) onPlayerDowned(session)
                 val effectNames =
                     effects
                         .mapNotNull {

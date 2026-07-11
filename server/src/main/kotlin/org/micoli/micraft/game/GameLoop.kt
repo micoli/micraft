@@ -272,6 +272,7 @@ class GameLoop(
                     .forEach { it.send(chatMsg) }
             },
             subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
+            onPlayerDowned = { session -> combatProcessor.handlePlayerDowned(session) },
         ),
     private val regenProcessor: RegenProcessor =
         RegenProcessor(

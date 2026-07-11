@@ -348,7 +348,7 @@ class CombatProcessor(
 
     // ── Downed / death ────────────────────────────────────────────────────────
 
-    private suspend fun handlePlayerDowned(session: PlayerSession) {
+    internal suspend fun handlePlayerDowned(session: PlayerSession) {
         session.combatState =
             session.combatState.copy(isDowned = true, downingSuccesses = 0, downingFailures = 0)
         getSessions().forEach { it.send(ServerMessage.PlayerDowned(session.id)) }

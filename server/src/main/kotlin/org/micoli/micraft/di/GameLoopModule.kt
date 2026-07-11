@@ -187,6 +187,7 @@ val gameLoopModule = module {
             subscribeToChannel = { session, channel ->
                 get<ChatService>().subscribe(session, channel)
             },
+            onPlayerDowned = { session -> get<CombatProcessor>().handlePlayerDowned(session) },
         )
     }
     single { ClassesConfig().data }
