@@ -46,6 +46,7 @@ export function useAttackDrag(color: (id: string) => string, kind: "attack" | "m
   function endDrag(e: React.PointerEvent<HTMLDivElement>) {
     const id = dragIdRef.current;
     dragIdRef.current = null;
+    if (id) e.preventDefault();
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
     } catch {}

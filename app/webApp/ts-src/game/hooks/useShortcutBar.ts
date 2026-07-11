@@ -31,6 +31,7 @@ export function useShortcutBar(
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
   const draggingSlot = useRef<number | null>(null);
+  const didDragRef = useRef(false);
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const lastSlotRef = useRef<HTMLElement | null>(null);
 
@@ -38,6 +39,7 @@ export function useShortcutBar(
     if (!e.altKey) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     draggingSlot.current = slotIdx;
+    didDragRef.current = true;
     const ghost = document.createElement("div");
     ghost.style.cssText = `position:fixed;pointer-events:none;z-index:9999;width:52px;height:52px;background:rgba(0,0,0,0.9);border:2px solid rgba(255,255,255,0.8);border-radius:4px;display:flex;align-items:center;justify-content:center;left:${e.clientX - 26}px;top:${e.clientY - 26}px;opacity:0.85;cursor:grabbing;`;
     document.body.appendChild(ghost);
@@ -71,6 +73,7 @@ export function useShortcutBar(
   function endSlotDrag(e: React.PointerEvent<HTMLDivElement>) {
     const sourceIdx = draggingSlot.current;
     draggingSlot.current = null;
+    if (sourceIdx !== null) e.preventDefault();
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
     } catch {}
@@ -131,6 +134,10 @@ export function useShortcutBar(
   }
 
   function handleSlotClick(slotIdx: number) {
+    if (didDragRef.current) {
+      didDragRef.current = false;
+      return;
+    }
     const slot = slots[slotIdx];
     if (!slot) return;
     setPressedSlot(slotIdx);
