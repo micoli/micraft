@@ -1,5 +1,5 @@
 combat:
-  combat_target_cycle: [Tab]
+  combat_target_cycle: [KeyZ]
 
 movement:
   forward: [KeyW, ArrowUp]
