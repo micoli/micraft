@@ -1,8 +1,77 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "additionalProperties": {
-    "type": "object",
-    "additionalProperties": true
-  }
+  "properties": {
+    "voronoiCellSize": { "type": "integer", "minimum": 1 },
+    "voronoiBlendRadius": { "type": "integer", "minimum": 0 },
+    "biomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "zones": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "moistureMin": { "type": "number" },
+                "moistureMax": { "type": "number" },
+                "altitudeMin": { "type": "integer" },
+                "altitudeMax": { "type": "integer" }
+              }
+            }
+          },
+          "surface": { "type": "string" },
+          "subsurface": { "type": "string" },
+          "subsurfaceDepth": { "type": "integer", "minimum": 0 },
+          "fillers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string" },
+                "density": { "type": "number", "minimum": 0 }
+              }
+            }
+          },
+          "vegetation": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string" },
+                "density": { "type": "number", "minimum": 0, "maximum": 1 }
+              }
+            }
+          },
+          "elevationMin": { "type": "integer" },
+          "elevationMax": { "type": "integer" },
+          "grassColor": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "waterSourceRate": { "type": "number", "minimum": 0, "maximum": 1 },
+          "caverns": {
+            "type": "object",
+            "properties": {
+              "cavernMinHeight": { "type": "integer", "minimum": 0 },
+              "cavernMaxHeight": { "type": "integer", "minimum": 0 },
+              "stalactitesPresent": { "type": "boolean" },
+              "stalagmitesPresent": { "type": "boolean" },
+              "numberPerVoronoi": { "type": "integer", "minimum": 1 },
+              "cavernMinRadius": { "type": "integer", "minimum": 1 },
+              "cavernMaxRadius": { "type": "integer", "minimum": 1 },
+              "wallBlock": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
 }

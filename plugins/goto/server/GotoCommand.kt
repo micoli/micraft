@@ -24,7 +24,8 @@ class GotoCommand : PluginCommand {
     ): List<String> {
         val players = context.sessions().map { it.state.name }
         val npcs = context.npcManager?.getAll()?.map { it.state.name } ?: emptyList()
-        return (players + npcs).filter { it.startsWith(partial, ignoreCase = true) }
+        val named = context.namedPoints().keys.toList()
+        return (players + npcs + named).filter { it.startsWith(partial, ignoreCase = true) }
     }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
@@ -38,6 +39,7 @@ class GotoCommand : PluginCommand {
         val targetPos =
             context.sessions().find { it.state.name == target }?.state?.pos
                 ?: context.npcManager?.findByNameOrId(target)?.state?.pos
+                ?: context.namedPoints()[target]
         if (targetPos == null) {
             session.send(ServerMessage.Notification(i18n.t(lang, "goto:server:not_found", target)))
             return

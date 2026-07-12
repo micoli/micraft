@@ -193,6 +193,7 @@ fun testContext(
     chatChannelManager: ChatChannelManager? = null,
     weatherManager: WeatherManager? = null,
     armorRegistry: () -> Map<String, ArmorDefinition> = { emptyMap() },
+    namedPoints: () -> Map<String, Vec3> = { emptyMap() },
 ) =
     CommandContext(
         world = world,
@@ -219,6 +220,7 @@ fun testContext(
         chatChannelManager = chatChannelManager,
         weatherManager = weatherManager,
         armorRegistry = armorRegistry,
+        namedPoints = namedPoints,
     )
 
 fun testWeatherManager() = WeatherManager(WeatherConfig())

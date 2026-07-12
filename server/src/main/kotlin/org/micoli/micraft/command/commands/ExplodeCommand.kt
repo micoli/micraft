@@ -28,7 +28,9 @@ class ExplodeCommand : CommandHandler {
             return
         }
         if (radius > MAX_RADIUS) {
-            session.send(ServerMessage.Notification(context.i18n.t(lang, "explode:server:too_large", MAX_RADIUS)))
+            session.send(
+                ServerMessage.Notification(
+                    context.i18n.t(lang, "explode:server:too_large", MAX_RADIUS)))
             return
         }
 
@@ -55,6 +57,7 @@ class ExplodeCommand : CommandHandler {
 
         changes.forEach { context.world.applyChange(it) }
         context.broadcast(ServerMessage.WorldUpdate(changes))
-        session.send(ServerMessage.Notification(context.i18n.t(lang, "explode:server:done", changes.size)))
+        session.send(
+            ServerMessage.Notification(context.i18n.t(lang, "explode:server:done", changes.size)))
     }
 }

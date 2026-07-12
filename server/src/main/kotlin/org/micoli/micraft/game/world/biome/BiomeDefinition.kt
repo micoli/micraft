@@ -20,6 +20,18 @@ data class BiomeZone(
 @Serializable data class FillerEntry(val type: BlockType, val density: Double = 1.0)
 
 @Serializable
+data class CavernConfig(
+    val cavernMinHeight: Int = 5,
+    val cavernMaxHeight: Int = 50,
+    val stalactitesPresent: Boolean = false,
+    val stalagmitesPresent: Boolean = false,
+    val wallBlock: BlockType = BlockType.STONE,
+    val numberPerVoronoi: Int = 1,
+    val cavernMinRadius: Int = 20,
+    val cavernMaxRadius: Int = 50,
+)
+
+@Serializable
 data class BiomeDefinition(
     val id: String,
     val zones: List<BiomeZone>,
@@ -32,6 +44,7 @@ data class BiomeDefinition(
     val elevationMax: Int = 120,
     val grassColor: List<Double>? = null,
     val waterSourceRate: Double = 0.0,
+    val caverns: CavernConfig? = null,
 ) {
     fun selectFiller(hash: Double): BlockType {
         val total = fillers.sumOf { it.density }

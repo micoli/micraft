@@ -132,12 +132,14 @@ class VoronoiBiomeZones(
         val moisture = moistureAt(wx, wz)
         val override = registry.altitudeOverride(surfaceY, moisture)
         return if (override != null) {
-            ColumnBlocks(override.surface, override.subsurface, override.subsurfaceDepth, override.fillers)
+            ColumnBlocks(
+                override.surface, override.subsurface, override.subsurfaceDepth, override.fillers)
         } else {
             val surf =
                 if (col.blendFactor > columnHash(wx, wz)) col.primary.surface
                 else col.secondary.surface
-            ColumnBlocks(surf, col.primary.subsurface, col.primary.subsurfaceDepth, col.primary.fillers)
+            ColumnBlocks(
+                surf, col.primary.subsurface, col.primary.subsurfaceDepth, col.primary.fillers)
         }
     }
 }

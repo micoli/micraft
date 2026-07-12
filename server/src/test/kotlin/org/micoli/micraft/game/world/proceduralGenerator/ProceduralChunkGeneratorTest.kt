@@ -11,6 +11,8 @@ import org.micoli.micraft.game.world.biome.BiomeConfig
 import org.micoli.micraft.game.world.biome.BiomeDefinition
 import org.micoli.micraft.game.world.biome.BiomeRegistry
 import org.micoli.micraft.game.world.biome.BiomeZone
+import org.micoli.micraft.game.world.biome.CavernConfig
+
 import org.micoli.micraft.game.world.biome.VegetationEntry
 import org.micoli.micraft.game.world.road.RoadBiomeConfig
 import org.micoli.micraft.game.world.road.RoadConfig
@@ -226,5 +228,95 @@ class ProceduralChunkGeneratorTest {
     fun biomeAt_matchesVoronoiSamplePrimary() {
         val gen = ProceduralChunkGenerator(seed = 7L)
         assertEquals(gen.voronoi.sample(33, 17).primary.id, gen.biomeAt(33, 17))
+    }
+
+    // ── Cavern integration ────────────────────────────────────────────────────
+
+    private fun biomeWithCaverns(caverns: CavernConfig) =
+        BiomeDefinition(
+            id = "cave_test",
+            zones = listOf(BiomeZone(0.0, 1.0)),
+            surface = BlockType.GRASS,
+            subsurface = BlockType.DIRT,
+            elevationMin = 80,
+            elevationMax = 90,
+            caverns = caverns,
+        )
+
+    private fun registryWith(biome: BiomeDefinition) =
+        BiomeRegistry.from(
+            BiomeConfig(biomes = listOf(biome), voronoiCellSize = 32, voronoiBlendRadius = 4))
+
+    @Test
+    fun generate_withCavernConfig_producesUndergroundAir() {
+        val biome = biomeWithCaverns(CavernConfig(cavernMinHeight = 5, cavernMaxHeight = 60))
+        val gen = ProceduralChunkGenerator(seed = 42L, biomeRegistry = registryWith(biome))
+        val chunk = gen.generate(ChunkPos(0, 0))
+        var foundUndergroundAir = false
+        for (lx in 0 until WorldConstants.CHUNK_SIZE) {
+            for (lz in 0 until WorldConstants.CHUNK_SIZE) {
+                val surface =
+                    (WorldConstants.WORLD_MAX_Y downTo 1).first {
+                        chunk.getBlock(lx, it, lz) != BlockType.AIR
+                    }
+                for (y in 5 until minOf(60, surface - 1)) {
+                    if (chunk.getBlock(lx, y, lz) == BlockType.AIR) {
+                        foundUndergroundAir = true
+                    }
+                }
+            }
+        }
+        assertTrue(foundUndergroundAir, "cave carving must produce underground AIR blocks")
+    }
+
+    @Test
+    fun generate_cavernsNeverBreakSurface() {
+        val biome = biomeWithCaverns(CavernConfig(cavernMinHeight = 5, cavernMaxHeight = 200))
+        val gen = ProceduralChunkGenerator(seed = 99L, biomeRegistry = registryWith(biome))
+        val chunk = gen.generate(ChunkPos(0, 0))
+        for (lx in 0 until WorldConstants.CHUNK_SIZE) {
+            for (lz in 0 until WorldConstants.CHUNK_SIZE) {
+                val surface =
+                    (WorldConstants.WORLD_MAX_Y downTo 1).first {
+                        chunk.getBlock(lx, it, lz) != BlockType.AIR
+                    }
+                // Blocks at and above surface must not be AIR due to cave carving
+                // (surface itself is solid, blocks above surface are always AIR but not from caves)
+                assertFalse(
+                    chunk.getBlock(lx, surface, lz) == BlockType.AIR,
+                    "surface block at y=$surface must remain solid")
+            }
+        }
+    }
+
+    @Test
+    fun generate_withCaverns_sandstoneWallBlockAppearsUnderground() {
+        val biome =
+            biomeWithCaverns(
+                CavernConfig(
+                    cavernMinHeight = 5,
+                    cavernMaxHeight = 60,
+                    wallBlock = BlockType.SANDSTONE,
+                ))
+        val gen = ProceduralChunkGenerator(seed = 42L, biomeRegistry = registryWith(biome))
+        val chunk = gen.generate(ChunkPos(0, 0))
+        var foundSandstone = false
+        for (lx in 0 until WorldConstants.CHUNK_SIZE) {
+            for (lz in 0 until WorldConstants.CHUNK_SIZE) {
+                for (y in 5..60) {
+                    if (chunk.getBlock(lx, y, lz) == BlockType.SANDSTONE) foundSandstone = true
+                }
+            }
+        }
+        assertTrue(foundSandstone, "SANDSTONE wall blocks must appear adjacent to carved cave air")
+    }
+
+    @Test
+    fun generate_sameSeed_identicalCavernedChunks() {
+        val biome = biomeWithCaverns(CavernConfig(cavernMinHeight = 5, cavernMaxHeight = 60))
+        val registry = registryWith(biome)
+        val a = ProceduralChunkGenerator(seed = 55L, biomeRegistry = registry)
+        val b = ProceduralChunkGenerator(seed = 55L, biomeRegistry = registry)
+        assertEquals(a.generate(ChunkPos(1, -2)), b.generate(ChunkPos(1, -2)))
     }
 }

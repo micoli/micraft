@@ -2,7 +2,6 @@ package org.micoli.micraft.game.world.biome
 
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.vegetation.VegetationType
-import org.micoli.micraft.game.world.biome.FillerEntry
 
 class BiomeRegistry(
     val biomes: List<BiomeDefinition>,

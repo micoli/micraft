@@ -11,12 +11,15 @@ uniform mat4 world;
 varying vec2 vUv;
 varying vec4 vColor;
 varying float vFogDepth;
+varying vec3 vWorldPos;
 
 void main() {
+  vec4 worldPos = world * vec4(position, 1.0);
   gl_Position = worldViewProjection * vec4(position, 1.0);
   vUv = uv;
   vColor = color;
-  vFogDepth = -(view * world * vec4(position, 1.0)).z;
+  vFogDepth = -(view * worldPos).z;
+  vWorldPos = worldPos.xyz;
 }
 `;
 
@@ -29,10 +32,14 @@ uniform float fogStart;
 uniform float fogEnd;
 uniform vec3 tint;
 uniform float shadersEnabled;
+uniform float ambient;
+uniform vec3 playerPos;
+uniform float playerLightIntensity;
 
 varying vec2 vUv;
 varying vec4 vColor;
 varying float vFogDepth;
+varying vec3 vWorldPos;
 
 void main() {
   vec4 texColor = texture2D(textureSampler, vUv);
@@ -42,6 +49,14 @@ void main() {
 
   // AO + directional face shading (baked into vertex colors)
   color *= mix(vec3(1.0), vColor.rgb, shadersEnabled);
+
+  color *= ambient;
+
+  // Player point light (diffuse, quadratic falloff, radius ~18 blocks)
+  float dist = length(vWorldPos - playerPos);
+  float att = clamp(1.0 - dist / 18.0, 0.0, 1.0);
+  att = att * att;
+  color += texColor.rgb * tint * att * playerLightIntensity;
 
   // Fog linéaire
   float fogFactor = clamp((fogEnd - vFogDepth) / (fogEnd - fogStart), 0.0, 1.0);

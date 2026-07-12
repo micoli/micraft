@@ -26,6 +26,15 @@ biomes:
     vegetation:
       - type: pine_tree_snow
         density: 0.04
+    caverns:
+      cavernMinHeight: 8
+      cavernMaxHeight: 25
+      stalactitesPresent: true
+      stalagmitesPresent: false
+      numberPerVoronoi: 1
+      cavernMinRadius: 10
+      cavernMaxRadius: 22
+      wallBlock: STONE
   - id: desert
     zones:
       - moistureMin: 0.0
@@ -46,6 +55,15 @@ biomes:
     subsurfaceDepth: 4
     elevationMin: 40
     elevationMax: 70
+    caverns:
+      cavernMinHeight: 5
+      cavernMaxHeight: 45
+      stalactitesPresent: false
+      stalagmitesPresent: true
+      numberPerVoronoi: 2
+      cavernMinRadius: 15
+      cavernMaxRadius: 38
+      wallBlock: SANDSTONE
   - id: dry_plains
     zones:
       - moistureMin: 0.12
@@ -68,6 +86,15 @@ biomes:
     vegetation:
       - type: weed
         density: 0.08
+    caverns:
+      cavernMinHeight: 5
+      cavernMaxHeight: 50
+      stalactitesPresent: false
+      stalagmitesPresent: false
+      numberPerVoronoi: 1
+      cavernMinRadius: 12
+      cavernMaxRadius: 30
+      wallBlock: STONE
   - id: plains
     zones:
       - moistureMin: 0.30
@@ -94,6 +121,15 @@ biomes:
         density: 0.05
       - type: oak_tree
         density: 0.01
+    caverns:
+      cavernMinHeight: 5
+      cavernMaxHeight: 55
+      stalactitesPresent: false
+      stalagmitesPresent: false
+      numberPerVoronoi: 2
+      cavernMinRadius: 15
+      cavernMaxRadius: 35
+      wallBlock: STONE
   - id: forest
     zones:
       - moistureMin: 0.62
@@ -121,6 +157,15 @@ biomes:
         density: 0.04
       - type: weed
         density: 0.04
+    caverns:
+      cavernMinHeight: 5
+      cavernMaxHeight: 60
+      stalactitesPresent: true
+      stalagmitesPresent: true
+      numberPerVoronoi: 3
+      cavernMinRadius: 20
+      cavernMaxRadius: 50
+      wallBlock: STONE
   - id: pine_forest
     zones:
       - moistureMin: 0.82
@@ -146,3 +191,12 @@ biomes:
         density: 0.15
       - type: weed
         density: 0.03
+    caverns:
+      cavernMinHeight: 5
+      cavernMaxHeight: 70
+      stalactitesPresent: true
+      stalagmitesPresent: true
+      numberPerVoronoi: 3
+      cavernMinRadius: 18
+      cavernMaxRadius: 45
+      wallBlock: STONE

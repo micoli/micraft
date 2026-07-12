@@ -80,7 +80,10 @@ export function registerMaterials(): Pick<
               "fogEnd",
               "tint",
               "shadersEnabled",
+              "ambient",
+              "playerLightIntensity",
             ],
+            vectors3: ["playerPos"],
             samplers: ["textureSampler"],
           },
         );
@@ -91,6 +94,9 @@ export function registerMaterials(): Pick<
         mat.setFloat("fogEnd", fogEnd);
         mat.setVector3("tint", new BABYLON.Vector3(tintR, tintG, tintB));
         mat.setFloat("shadersEnabled", 1.0);
+        mat.setFloat("ambient", 1.0);
+        mat.setFloat("playerLightIntensity", 0.0);
+        mat.setVector3("playerPos", new BABYLON.Vector3(0, 0, 0));
         mat.backFaceCulling = false;
         mat.forceDepthWrite = true;
         return mat;

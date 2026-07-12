@@ -240,6 +240,8 @@ declare global {
     optimizeScene(scene: any): void;
     setupFog(scene: any, r: number, g: number, b: number): void;
     setShadersEnabled(scene: any, enabled: boolean): void;
+    setAmbient(scene: any, v: number): void;
+    setPlayerLight(scene: any, x: number, y: number, z: number, intensity: number): void;
     setupRenderPipeline(scene: any, camera: any): void;
     // Sky / Weather
     updateSkyTime(scene: any, t: number): void;

@@ -65,8 +65,10 @@ export function registerSky(): Pick<McBindings, "updateSkyTime"> {
       // Ambient light: brightest at noon (sunHeight=1), dim at night (floor 0.15)
       const sunHeight = Math.sin(sunAngle);
       const intensity = Math.max(0.15, Math.min(1.0, 0.15 + 0.85 * sunHeight));
+      const caveFactor: number = (window.mcState as any).caveFactor ?? 1.0;
       const hemi = window.mcState.hemiLight;
       if (hemi) hemi.intensity = intensity;
+      mc.setAmbient(scene, Math.max(0.08, intensity * caveFactor));
     },
   };
 }

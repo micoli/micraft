@@ -15,6 +15,7 @@ import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.weather.WeatherManager
+import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 
 data class CommandContext(
@@ -47,4 +48,5 @@ data class CommandContext(
     val tradeManager: TradeManager? = null,
     val clearTokenAccumulator: ((String) -> Unit)? = null,
     val sendStatusUpdate: (suspend (PlayerSession) -> Unit)? = null,
+    val namedPoints: () -> Map<String, Vec3> = { emptyMap() },
 )

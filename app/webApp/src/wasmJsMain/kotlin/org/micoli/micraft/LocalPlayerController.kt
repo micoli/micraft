@@ -716,6 +716,7 @@ class LocalPlayerController(
             (currentGameTicks % TICKS_PER_DAY_CLIENT).toDouble() / TICKS_PER_DAY_CLIENT
         jsUpdateSkyTime(scene, normalizedTime)
         jsUpdateWeather(scene, predX, predY, predZ)
+        updateCaveLighting()
 
         jsDrawMinimap(predX, predZ, yaw)
 
@@ -792,6 +793,30 @@ class LocalPlayerController(
                 chunkManager.getChunkDebugJson(
                     debugCx, debugCz, WorldConstants.FORWARD_VIEW_RADIUS, yaw))
         }
+    }
+
+    private var caveLightTarget = 1.0
+    private var caveLightCurrent = 1.0
+    private var lastLoggedUnderground: Boolean? = null
+
+    private fun updateCaveLighting() {
+        val eyeYInt = (predY + localStance.eyeOffset).toInt()
+        val wx = predX.toInt()
+        val wz = predZ.toInt()
+        val underground = (1..60).any { dy ->
+            val b = chunkManager.getBlockAtWorld(wx, eyeYInt + dy, wz)
+            b != BlockType.AIR && b != BlockType.WATER
+        }
+        if (underground != lastLoggedUnderground) {
+            lastLoggedUnderground = underground
+            jsLog("caveFactor: underground=$underground eyeY=$eyeYInt wx=$wx wz=$wz target=${if (underground) 0.3 else 1.0}")
+        }
+        caveLightTarget = if (underground) 0.3 else 1.0
+        caveLightCurrent += (caveLightTarget - caveLightCurrent) * 0.05
+        jsSetCaveFactor(caveLightCurrent)
+        val eyeY = predY + localStance.eyeOffset
+        val lightIntensity = (1.0 - caveLightCurrent).coerceAtLeast(0.0)
+        jsSetPlayerLight(scene, predX, eyeY, predZ, lightIntensity)
     }
 
     fun buildMoveIntent(): ClientMessage.MoveIntent {

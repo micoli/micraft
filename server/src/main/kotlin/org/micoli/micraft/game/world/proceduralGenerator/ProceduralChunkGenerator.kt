@@ -14,6 +14,7 @@ import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGen
 import org.micoli.micraft.game.world.road.RoadConfig
 import org.micoli.micraft.game.world.road.RoadVoronoiZones
 import org.micoli.micraft.game.world.vegetation.placeVegetation
+import org.micoli.micraft.player.Vec3
 
 class ProceduralChunkGenerator(
     public val seed: Long = 42L,
@@ -25,6 +26,8 @@ class ProceduralChunkGenerator(
     private val mountainNoise = PerlinNoise(seed + 2L)
     private val moistureNoise = PerlinNoise(seed + 1L)
     private val waterNoise = PerlinNoise(seed + 3L)
+    private val fillerNoise = PerlinNoise3D(seed + 5L)
+    private val cavernGenerator = CavernGenerator(seed, biomeRegistry.voronoiCellSize)
     val voronoi = VoronoiBiomeZones(seed, biomeRegistry, moistureNoise)
     val roadVoronoi =
         roadConfig?.let {
@@ -61,14 +64,7 @@ class ProceduralChunkGenerator(
         return (baseY + mountainBoost).toInt().coerceIn(4, WorldConstants.WORLD_MAX_Y - 1)
     }
 
-    private fun blockHash(wx: Int, wy: Int, wz: Int): Double {
-        val HASH_MUL_X = 1664525L    // Knuth LCG multiplier
-        val HASH_MUL_Y = 22695477L   // Borland C LCG multiplier
-        val HASH_MUL_Z = 1013904223L // Knuth LCG addend (reused as Z multiplier)
-        val HASH_MASK = 0x7FFFFFFFL  // 31-bit positive mask
-        val h = (wx.toLong() * HASH_MUL_X + wy.toLong() * HASH_MUL_Y + wz.toLong() * HASH_MUL_Z + seed) and HASH_MASK
-        return h.toDouble() / HASH_MASK.toDouble()
-    }
+
 
     private fun terrainBlock(wx: Int, wy: Int, wz: Int, col: ColumnData): BlockType {
         val h = col.h
@@ -77,7 +73,7 @@ class ProceduralChunkGenerator(
             wy == 0 -> BlockType.BEDROCK
             wy == h -> col.roadSurface ?: b.surface
             wy > h - b.subsurfaceDepth && wy < h -> b.subsurface
-            wy < h -> b.fillers.selectFiller(blockHash(wx, wy, wz))
+            wy < h -> b.fillers.selectFillerCompetitive(wx, wy, wz)
             wy > h && wy <= WorldConstants.WATER_LEVEL && col.isWaterColumn -> BlockType.WATER
             else -> BlockType.AIR
         }
@@ -118,10 +114,22 @@ class ProceduralChunkGenerator(
             for (ly in 0 until Chunk.SIZE_Y) {
                 for (lz in 0 until s) {
                     blocks[Chunk.index(lx, ly, lz)] =
-                        BlockRegistry.wireIndex(terrainBlock(ox + lx, ly, oz + lz, cols[lx][lz])).toByte()
+                        BlockRegistry.wireIndex(terrainBlock(ox + lx, ly, oz + lz, cols[lx][lz]))
+                            .toByte()
                 }
             }
         }
+
+        cavernGenerator.carve(
+            blocks,
+            ox,
+            oz,
+            surfaceAt = { lx, lz -> cols[lx][lz].h },
+            cavernsAt = { lx, lz ->
+                val col = cols[lx][lz]
+                voronoi.effectiveBiome(ox + lx, oz + lz, col.h).caverns
+            },
+        )
 
         // here surfaceHeight is a ref to a fun
         placeVegetation(this, blocks, ox, oz)
@@ -132,18 +140,48 @@ class ProceduralChunkGenerator(
 
     override fun biomeAt(wx: Int, wz: Int): String = voronoi.sample(wx, wz).primary.id
 
+    fun namedCavernPoints(cellRadius: Int = 5): Map<String, Vec3> {
+        val cellSize = biomeRegistry.voronoiCellSize
+        val result = mutableMapOf<String, Vec3>()
+        var seq = 0
+        for (cx in -cellRadius..cellRadius) {
+            for (cz in -cellRadius..cellRadius) {
+                val wx = cx * cellSize + cellSize / 2
+                val wz = cz * cellSize + cellSize / 2
+                val biome = voronoi.sample(wx, wz).primary
+                val config = biome.caverns ?: continue
+                for (s in cavernGenerator.cavernSeedPoints(cx, cz, config)) {
+                    result["cavern - ${biome.id}_$seq"] =
+                        Vec3(s.wx.toFloat(), s.wy.toFloat(), s.wz.toFloat())
+                    seq++
+                }
+            }
+        }
+        return result
+    }
+
     private fun placeHouses(blocks: ByteArray, ox: Int, oz: Int) {
         houseZones?.housesNear(ox, oz)?.forEach { house -> house.renderIntoChunk(blocks, ox, oz) }
     }
 
-    private fun List<FillerEntry>.selectFiller(hash: Double): BlockType {
+    private fun List<FillerEntry>.selectFillerCompetitive(wx: Int, wy: Int, wz: Int): BlockType {
+        if (size == 1) return first().type
         val total = sumOf { it.density }
-        var cumulative = 0.0
-        for (entry in this) {
-            cumulative += entry.density / total
-            if (hash < cumulative) return entry.type
+        val scale = 10.0
+        var bestScore = Double.MIN_VALUE
+        var bestType = last().type
+        forEachIndexed { i, entry ->
+            val ox = i * 73.7
+            val oy = i * 211.9
+            val oz = i * 157.3
+            val n = fillerNoise.noise(wx / scale + ox, wy / scale + oy, wz / scale + oz)
+            val score = n * (entry.density / total)
+            if (score > bestScore) {
+                bestScore = score
+                bestType = entry.type
+            }
         }
-        return last().type
+        return bestType
     }
 
     // ── Vegetation ────────────────────────────────────────────────────────────

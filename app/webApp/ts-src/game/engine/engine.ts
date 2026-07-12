@@ -117,6 +117,23 @@ export function registerEngine(): Pick<
       }
     },
 
+    setAmbient: (_scene: Scene, v: number): void => {
+      const mats = window.mcState.blockMaterials as Record<string, any> | undefined;
+      if (mats)
+        for (const mat of Object.values(mats))
+          if (typeof mat.setFloat === "function") mat.setFloat("ambient", v);
+    },
+
+    setPlayerLight: (_scene: Scene, x: number, y: number, z: number, intensity: number): void => {
+      const mats = window.mcState.blockMaterials as Record<string, any> | undefined;
+      if (!mats) return;
+      const pos = new BABYLON.Vector3(x, y, z);
+      for (const mat of Object.values(mats)) {
+        if (typeof mat.setVector3 === "function") mat.setVector3("playerPos", pos);
+        if (typeof mat.setFloat === "function") mat.setFloat("playerLightIntensity", intensity);
+      }
+    },
+
     setupRenderPipeline: (scene: Scene, camera: any): void => {
       const pipeline = new BABYLON.DefaultRenderingPipeline("mcPipeline", true, scene, [camera]);
 

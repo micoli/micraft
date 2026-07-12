@@ -15,6 +15,7 @@ import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.liquid.LiquidManager
+import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
 import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -42,8 +43,11 @@ data class CommandContextClosures(
 
 val commandContextModule = module {
     single { (closures: CommandContextClosures) ->
+        val world = get<WorldState>()
+        val cavernPoints =
+            (world.generator as? ProceduralChunkGenerator)?.namedCavernPoints() ?: emptyMap()
         CommandContext(
-            world = get<WorldState>(),
+            world = world,
             persistence = get<OptionalWorldPersistence>().value,
             i18n = get<I18nConfig>(),
             broadcast = closures.broadcast,
@@ -70,6 +74,7 @@ val commandContextModule = module {
             reloadRbac = closures.reloadRbac,
             armorRegistry = closures.armorRegistry,
             tradeManager = get<TradeManager>(),
+            namedPoints = { cavernPoints },
         )
     }
 }
