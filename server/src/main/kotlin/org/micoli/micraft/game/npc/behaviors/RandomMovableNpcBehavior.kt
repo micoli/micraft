@@ -87,6 +87,7 @@ class RandomMovableNpcBehavior : NpcBehavior {
                     return true
                 }
             }
+            if (instance.vy != 0f) return false
             if (instance.state.vel.x != 0f || instance.state.vel.z != 0f) {
                 instance.velocity = Vec3(0f, instance.velocity.y, 0f)
                 instance.state = instance.state.copy(vel = instance.velocity)
@@ -174,6 +175,7 @@ class RandomMovableNpcBehavior : NpcBehavior {
                     return true
                 }
             }
+            if (instance.vy != 0f) return false
             pickNewTarget(instance)
             instance.wanderStepTicks--
             if (instance.state.vel.x != 0f || instance.state.vel.z != 0f) {
