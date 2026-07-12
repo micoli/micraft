@@ -10,8 +10,10 @@ import kotlin.time.TimeSource
 import org.micoli.micraft.babylon.*
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.protocol.ServerMessage
 
-class NpcManager(private val scene: JsAny) {
+class NpcManager(private val scene: JsAny, private val localPlayerId: () -> String?) :
+    ServerMessageHandler {
     @OptIn(ExperimentalWasmJsInterop::class) private val npcModels = mutableMapOf<String, JsAny>()
     private val npcBuffers = mutableMapOf<String, ArrayDeque<PosSnapshot>>()
     private val npcRenderedYaw = mutableMapOf<String, Float>()
@@ -29,7 +31,16 @@ class NpcManager(private val scene: JsAny) {
 
     private data class InterpResult(val pos: Vec3, val vel: Vec3, val yaw: Float)
 
-    fun handleSpawned(npc: NpcState, localPlayerId: String?) {
+    override fun handle(msg: ServerMessage) =
+        when (msg) {
+            is ServerMessage.NpcSpawned -> handleSpawned(msg.npc)
+            is ServerMessage.NpcUpdate -> handleUpdate(msg.npc)
+            is ServerMessage.NpcDespawned -> handleDespawned(msg.id)
+            is ServerMessage.NpcInteractResult -> jsOpenNpcDialog(msg.payload)
+            else -> Unit
+        }
+
+    fun handleSpawned(npc: NpcState) {
         npcNames[npc.id] = npc.name
         updateAutocomplete()
         jsSetNpcOnMinimap(npc.id, npc.pos.x, npc.pos.z)
@@ -39,13 +50,13 @@ class NpcManager(private val scene: JsAny) {
             return
         }
         ensureMesh(npc)
-        updateAggroHighlight(npc, localPlayerId)
+        updateAggroHighlight(npc, localPlayerId())
     }
 
-    fun handleUpdate(npc: NpcState, localPlayerId: String?) {
+    fun handleUpdate(npc: NpcState) {
         jsSetNpcOnMinimap(npc.id, npc.pos.x, npc.pos.z)
         pushSnapshot(npc)
-        updateAggroHighlight(npc, localPlayerId)
+        updateAggroHighlight(npc, localPlayerId())
         if (!jsIsNpcModelsReady()) {
             pendingNpcs.removeAll { it.id == npc.id }
             pendingNpcs.add(npc)

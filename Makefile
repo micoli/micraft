@@ -71,7 +71,9 @@ npm-format:
 build-client: build-wasm build-js
 
 build-wasm:
-	$(EXEC) "./gradlew :app:webApp:wasmJsDevelopmentExecutableCompileSync"
+	$(EXEC) "./gradlew :app:webApp:compileKotlinWasmJs --rerun-tasks"
+	$(EXEC) "./gradlew :app:webApp:wasmJsBrowserDevelopmentRun --rerun-tasks"
+	#$(EXEC) "./gradlew :app:webApp:wasmJsDevelopmentExecutableCompileSync"
 
 build-js:
 	$(EXEC) "cd app/webApp/ts-src && npm run build"
