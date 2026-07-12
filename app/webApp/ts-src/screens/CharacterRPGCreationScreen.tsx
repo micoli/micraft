@@ -5,6 +5,233 @@ import { Panel } from "../primitives/Panel";
 import { cn } from "../primitives/cn";
 import { getUsers, saveUsers, getLastUser } from "../lib/authStorage";
 
+const NAME_DATA = {
+  first_start: [
+    "gar",
+    "ald",
+    "bran",
+    "ced",
+    "eth",
+    "wil",
+    "tho",
+    "mar",
+    "el",
+    "cor",
+    "aed",
+    "bal",
+    "dor",
+    "fin",
+    "gal",
+    "har",
+    "ing",
+    "jor",
+    "ken",
+    "lor",
+    "mir",
+    "ned",
+    "osw",
+    "per",
+    "quin",
+    "ran",
+    "sel",
+    "tor",
+    "uld",
+    "val",
+    "wyn",
+    "yor",
+    "arn",
+    "bea",
+    "col",
+    "den",
+    "eir",
+    "fre",
+    "gis",
+    "hal",
+    "ism",
+    "kae",
+    "leof",
+    "mor",
+    "oth",
+    "ric",
+    "sig",
+    "tan",
+    "ulf",
+    "cas",
+  ],
+  first_end: [
+    "ric",
+    "win",
+    "dor",
+    "ton",
+    "lan",
+    "ren",
+    "bert",
+    "mund",
+    "hart",
+    "den",
+    "ricc",
+    "wyn",
+    "rid",
+    "gar",
+    "mir",
+    "rad",
+    "wulf",
+    "lin",
+    "ran",
+    "vald",
+    "son",
+    "mar",
+    "fin",
+    "las",
+    "dir",
+    "vor",
+    "lok",
+    "ris",
+    "lom",
+    "rol",
+    "rik",
+    "rim",
+    "tal",
+    "fer",
+    "gis",
+    "hem",
+    "bar",
+    "gir",
+    "han",
+    "wir",
+    "lof",
+    "bur",
+    "nor",
+    "tru",
+    "hal",
+    "tan",
+    "eld",
+    "wyns",
+    "gund",
+    "bran",
+  ],
+  surname_prefix: [
+    "Iron",
+    "Stone",
+    "Wood",
+    "Raven",
+    "Silver",
+    "Green",
+    "Black",
+    "Red",
+    "White",
+    "Gold",
+    "Ashen",
+    "Frost",
+    "Storm",
+    "Flint",
+    "Steel",
+    "Crow",
+    "Wolf",
+    "Oak",
+    "Thorn",
+    "Hawk",
+    "Bear",
+    "Fox",
+    "Deer",
+    "Swan",
+    "Falcon",
+    "Bright",
+    "Dusk",
+    "Shade",
+    "Grim",
+    "Swift",
+    "Rain",
+    "Snow",
+    "Wind",
+    "Bronze",
+    "Ember",
+    "River",
+    "Clear",
+    "Leaf",
+    "Burn",
+    "Mist",
+    "Wild",
+    "Glen",
+    "Pine",
+    "Briar",
+    "Drake",
+    "Vale",
+    "Hearth",
+    "Lark",
+    "Sun",
+    "Shadow",
+    "Cinder",
+  ],
+  surname_suffix: [
+    "forge",
+    "bridge",
+    "field",
+    "guard",
+    "helm",
+    "wood",
+    "stone",
+    "brook",
+    "dale",
+    "ton",
+    "hall",
+    "worth",
+    "well",
+    "glen",
+    "moor",
+    "crest",
+    "shore",
+    "hill",
+    "ford",
+    "holt",
+    "mere",
+    "vale",
+    "ridge",
+    "burn",
+    "fall",
+    "gate",
+    "croft",
+    "stead",
+    "mont",
+    "peak",
+    "cliff",
+    "bank",
+    "bloom",
+    "thorn",
+    "grove",
+    "wick",
+    "port",
+    "den",
+    "glade",
+    "path",
+    "keep",
+    "haven",
+    "loch",
+    "marsh",
+    "fen",
+    "bay",
+    "watch",
+    "run",
+    "firth",
+    "barrow",
+  ],
+};
+
+function pick(arr: string[]): string {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function generateFantasyName(): string {
+  const first = capitalize(pick(NAME_DATA.first_start) + pick(NAME_DATA.first_end));
+  const last = capitalize(pick(NAME_DATA.surname_prefix) + pick(NAME_DATA.surname_suffix));
+  const name = `${first} ${last}`;
+  return name.length <= 24 ? name : first;
+}
+
 const POINT_BUY_COST: Record<number, number> = {
   8: 0,
   9: 1,
@@ -65,7 +292,7 @@ export function CharacterRPGCreationScreen() {
   const navigate = useNavigate();
   const username = getLastUser();
 
-  const [name, setName] = useState("");
+  const [name, setName] = useState(() => generateFantasyName());
   const [selectedClass, setSelectedClass] = useState("WARRIOR");
   const [allocation, setAllocation] = useState<BaseStats>({ str: 8, dex: 8, intel: 8, wis: 8, con: 8, cha: 8 });
   const [error, setError] = useState("");
@@ -101,6 +328,30 @@ export function CharacterRPGCreationScreen() {
     } else {
       setError("Not enough points.");
     }
+  }
+
+  function rollStats() {
+    const stats: BaseStats = { str: 8, dex: 8, intel: 8, wis: 8, con: 8, cha: 8 };
+    const keys = Object.keys(stats) as StatKey[];
+    let budget = BUDGET;
+    let stuck = false;
+    while (!stuck) {
+      const shuffled = [...keys].sort(() => Math.random() - 0.5);
+      stuck = true;
+      for (const k of shuffled) {
+        const cur = stats[k];
+        if (cur >= STAT_MAX) continue;
+        const cost = (POINT_BUY_COST[cur + 1] ?? 9) - (POINT_BUY_COST[cur] ?? 0);
+        if (cost <= budget) {
+          stats[k] = cur + 1;
+          budget -= cost;
+          stuck = false;
+          break;
+        }
+      }
+    }
+    setAllocation(stats);
+    setError("");
   }
 
   async function handleSubmit() {
@@ -148,16 +399,25 @@ export function CharacterRPGCreationScreen() {
           <div className="flex-1 flex flex-col gap-5">
             <div>
               <div className="text-white/50 text-xs mb-1 tracking-widest">NAME</div>
-              <input
-                className={cn(
-                  "w-full bg-black/40 border rounded px-3 py-2 text-sm text-white outline-none focus:border-blue-500 transition-colors",
-                  nameValid || name === "" ? "border-white/20" : "border-red-500/60",
-                )}
-                placeholder="3–24 characters"
-                value={name}
-                maxLength={24}
-                onChange={(e) => setName(e.target.value)}
-              />
+              <div className="flex gap-2">
+                <input
+                  className={cn(
+                    "flex-1 bg-black/40 border rounded px-3 py-2 text-sm text-white outline-none focus:border-blue-500 transition-colors",
+                    nameValid || name === "" ? "border-white/20" : "border-red-500/60",
+                  )}
+                  placeholder="3–24 characters"
+                  value={name}
+                  maxLength={24}
+                  onChange={(e) => setName(e.target.value)}
+                />
+                <button
+                  title="Generate random name"
+                  onClick={() => setName(generateFantasyName())}
+                  className="px-2 text-white/40 hover:text-white border border-white/10 rounded bg-black/30 hover:border-white/25 transition-colors text-sm"
+                >
+                  ↺
+                </button>
+              </div>
             </div>
 
             <div>
@@ -188,7 +448,16 @@ export function CharacterRPGCreationScreen() {
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <div className="text-white/50 text-xs tracking-widest">STAT ALLOCATION</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-white/50 text-xs tracking-widest">STAT ALLOCATION</div>
+                  <button
+                    title="Roll random stats"
+                    onClick={rollStats}
+                    className="px-1.5 py-0.5 text-white/40 hover:text-white border border-white/10 rounded bg-black/30 hover:border-white/25 transition-colors text-xs"
+                  >
+                    Roll
+                  </button>
+                </div>
                 <div
                   className={cn(
                     "text-xs font-mono",
