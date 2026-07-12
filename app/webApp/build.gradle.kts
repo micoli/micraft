@@ -15,13 +15,18 @@ val tsBuild by
 
 tasks.matching { it.name == "wasmJsProcessResources" }.configureEach { dependsOn(tsBuild) }
 
+val cleanStaleWasm by
+    tasks.registering(Delete::class) {
+        delete(fileTree(layout.buildDirectory.dir("web")) { include("*.wasm") })
+    }
+
 // Assemble the served dir (build/web) — a dir webpack never cleans. Copies the webpack output
 // (webApp.js, .wasm, composeResources) plus static resources (index.html, sw.js, favicon).
 // mc_bindings.js and main.css are owned by esbuild/tailwind, which write straight into build/web,
 // so they are excluded here to avoid overwriting the fresh bundles with stale source copies.
 val copyResourcesToWebDist by
     tasks.registering(Copy::class) {
-        dependsOn("wasmJsBrowserDevelopmentWebpack")
+        dependsOn("wasmJsBrowserDevelopmentWebpack", cleanStaleWasm)
         from(layout.buildDirectory.dir("kotlin-webpack/wasmJs/developmentExecutable"))
         from(layout.buildDirectory.dir("processedResources/wasmJs/main")) {
             exclude("mc_bindings.js", "main.css")

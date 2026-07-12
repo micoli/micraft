@@ -15,4 +15,4 @@ ENV CHROME_BIN=/usr/bin/chromium-browser
 
 WORKDIR /workspace
 
-CMD ["./gradlew", "dev"]
+CMD ["./start.sh"]

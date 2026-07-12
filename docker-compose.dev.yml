@@ -10,7 +10,7 @@ services:
       - app-desktop-build:/workspace/app/desktopApp/build
       - app-shared-build:/workspace/app/shared/build
       - app-webapp-build:/workspace/app/webApp/build
-      #- app-webapp-node-modules:/workspace/app/webApp/ts-src/node_modules
+      - app-webapp-node-modules:/workspace/app/webApp/ts-src/node_modules
       - gradle-home:/root/.gradle
       - gradle-build:/workspace/.gradle
     ports:
