@@ -216,3 +216,8 @@ set:
 rest:
   server:
     done: "Repos court pris. Rage et jetons restaurés."
+
+god:
+  server:
+    on: "Mode dieu activé. Vous êtes immunisé aux dégâts."
+    off: "Mode dieu désactivé."

@@ -135,4 +135,16 @@ class StatusEffectProcessorTest {
 
         assertEquals(0, combatLog.size)
     }
+
+    @Test
+    fun `poisoned player with godMode keeps full HP`() = runBlocking {
+        val session = testSession(id = "a", name = "Alice")
+        session.characterData = testChar("Alice", hp = 20)
+        session.state = session.state.copy(godMode = true)
+        session.combatState.activeEffects.add(activeEffect(StatusEffect.Poisoned))
+
+        sleepingProcessor().tick(listOf(session))
+
+        assertEquals(20, session.characterData!!.currentHp)
+    }
 }

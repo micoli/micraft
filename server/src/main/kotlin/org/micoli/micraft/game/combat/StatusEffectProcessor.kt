@@ -59,7 +59,7 @@ class StatusEffectProcessor(
                 session.send(ServerMessage.StatusEffectUpdate(session.id, effects.toList()))
             }
 
-            if (hpDelta != 0f) {
+            if (hpDelta != 0f && !(hpDelta < 0 && session.state.godMode)) {
                 val armors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
                 val derived = DerivedStatsCalculator.compute(charData, armors)
                 val newHp = (charData.currentHp + hpDelta.toInt()).coerceIn(0, derived.maxHp)

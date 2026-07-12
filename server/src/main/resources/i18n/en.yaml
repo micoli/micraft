@@ -216,3 +216,8 @@ set:
 rest:
   server:
     done: "Short rest taken. Rage and tokens restored."
+
+god:
+  server:
+    on: "God mode enabled. You are immune to damage."
+    off: "God mode disabled."

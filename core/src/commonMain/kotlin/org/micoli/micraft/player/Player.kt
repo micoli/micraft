@@ -46,4 +46,5 @@ data class PlayerState(
     val knownRecipes: Set<String> = emptySet(),
     val characterData: CharacterData? = null,
     val rpgOptOut: Boolean = true,
+    val godMode: Boolean = false,
 )

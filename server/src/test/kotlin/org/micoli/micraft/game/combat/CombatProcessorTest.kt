@@ -2,6 +2,7 @@ package org.micoli.micraft.game.combat
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.combat.AttackDefinition
@@ -566,5 +567,69 @@ class CombatProcessorTest {
 
         assertEquals(
             20, target.characterData!!.currentRage, "Warrior should gain +20 rage when hit by NPC")
+    }
+
+    // ── God mode ──────────────────────────────────────────────────────────────
+
+    @Test
+    fun `attackPlayer godMode target keeps full HP`() = runBlocking {
+        val attacker = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
+        attacker.characterData = testChar("a", "Alice")
+        target.characterData = testChar("b", "Bob", hp = 20)
+        target.state = target.state.copy(godMode = true)
+
+        buildProcessor(sessions = { listOf(attacker, target) })
+            .handleAttack(
+                attacker,
+                ClientMessage.AttackTarget(
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
+            )
+
+        assertEquals(20, target.characterData!!.currentHp)
+    }
+
+    @Test
+    fun `attackPlayer godMode target is not downed`() = runBlocking {
+        val attacker = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
+        attacker.characterData = testChar("a", "Alice")
+        target.characterData = testChar("b", "Bob", hp = 1)
+        target.state = target.state.copy(godMode = true)
+
+        buildProcessor(sessions = { listOf(attacker, target) })
+            .handleAttack(
+                attacker,
+                ClientMessage.AttackTarget(
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
+            )
+
+        assertFalse(target.isDowned)
+    }
+
+    @Test
+    fun `handleNpcAttack godMode target keeps full HP`() = runBlocking {
+        val highPowerAttack =
+            AttackDefinition(
+                damageType = DamageType.PHYSICAL,
+                levels =
+                    mapOf(
+                        1 to
+                            AttackLevelDefinition(power = 100, weaponDice = "1d4", cooldownMs = 0)),
+            )
+        val target = testSession(id = "b", name = "Bob")
+        target.characterData = testChar("b", "Bob", hp = 20)
+        target.state = target.state.copy(godMode = true, pos = Vec3(1f, 0f, 0f))
+
+        val npc = fakeNpc()
+        npc.state = npc.state.copy(pos = Vec3(0f, 0f, 0f))
+
+        buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry = mapOf("basic_attack" to highPowerAttack),
+            )
+            .handleNpcAttack(npc, target)
+
+        assertEquals(20, target.characterData!!.currentHp)
     }
 }

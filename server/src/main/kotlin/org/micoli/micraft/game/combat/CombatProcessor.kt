@@ -169,7 +169,7 @@ class CombatProcessor(
                         (cooldownKey to now + levelDef.cooldownMs),
             )
 
-        if (hit) {
+        if (hit && !target.state.godMode) {
             var newTargetChar =
                 targetChar.copy(currentHp = (targetChar.currentHp - damage).coerceAtLeast(0))
             if (targetChar.characterClass.classResource == ClassResource.RAGE) {
@@ -311,7 +311,7 @@ class CombatProcessor(
         val hit = isCrit || (roll + npcModifier) >= theirDerived.armorClass
 
         val damage: Int
-        if (hit) {
+        if (hit && !target.state.godMode) {
             val raw = rollDice(levelDef.weaponDice) + levelDef.power
             damage = if (isCrit) raw * 2 else raw
             var newTargetChar =
