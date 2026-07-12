@@ -63,7 +63,9 @@ class RandomMovableNpcBehavior : NpcBehavior {
         val resolvedDz =
             AabbCollider.resolveZ(solid, midX, pos.y, pos.z, def.width, def.height, nz * speed)
         val newZ = pos.z + resolvedDz
-        val newX = pos.x + AabbCollider.resolveX(solid, pos.x, pos.y, newZ, def.width, def.height, nx * speed)
+        val newX =
+            pos.x +
+                AabbCollider.resolveX(solid, pos.x, pos.y, newZ, def.width, def.height, nx * speed)
 
         if ((newX - pos.x) == 0f && resolvedDz == 0f) {
             if (instance.vy == 0f &&
@@ -147,7 +149,9 @@ class RandomMovableNpcBehavior : NpcBehavior {
         val resolvedDz =
             AabbCollider.resolveZ(solid, midX, pos.y, pos.z, def.width, def.height, nz * speed)
         val newZ = pos.z + resolvedDz
-        val newX = pos.x + AabbCollider.resolveX(solid, pos.x, pos.y, newZ, def.width, def.height, nx * speed)
+        val newX =
+            pos.x +
+                AabbCollider.resolveX(solid, pos.x, pos.y, newZ, def.width, def.height, nx * speed)
 
         if ((newX - pos.x) == 0f && resolvedDz == 0f) {
             if (instance.vy == 0f &&

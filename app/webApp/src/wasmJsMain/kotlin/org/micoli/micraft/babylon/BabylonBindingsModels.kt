@@ -62,6 +62,23 @@ fun jsHighlightNpcModel(scene: JsAny, model: JsAny, on: Boolean): Unit =
         var hl = window._combatHL;
         var root = model.root || model;
         var meshes = root.getChildMeshes ? root.getChildMeshes() : [];
+        var col = new BABYLON.Color3(0.6, 0.2, 1.0);
+        meshes.forEach(function(m) { if (on) hl.addMesh(m, col); else hl.removeMesh(m); });
+    })()
+""")
+
+fun jsAggroHighlightNpcModel(scene: JsAny, model: JsAny, on: Boolean): Unit =
+    js(
+        """
+    (() => {
+        if (!window._aggroHL) {
+            window._aggroHL = new BABYLON.HighlightLayer('aggroHL', scene, {isStroke:true,blurHorizontalSize:0.3,blurVerticalSize:0.3});
+            window._aggroHL.innerGlow = false;
+            window._aggroHL.outerGlow = true;
+        }
+        var hl = window._aggroHL;
+        var root = model.root || model;
+        var meshes = root.getChildMeshes ? root.getChildMeshes() : [];
         var col = new BABYLON.Color3(1, 0.2, 0.2);
         meshes.forEach(function(m) { if (on) hl.addMesh(m, col); else hl.removeMesh(m); });
     })()

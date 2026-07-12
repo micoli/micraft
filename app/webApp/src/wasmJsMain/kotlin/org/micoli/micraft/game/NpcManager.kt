@@ -18,6 +18,7 @@ class NpcManager(private val scene: JsAny) {
     private val pendingNpcs = mutableListOf<NpcState>()
     private val npcNames = mutableMapOf<String, String>()
     private var highlightedNpcId: String? = null
+    private val aggroNpcIds = mutableSetOf<String>()
 
     private val clock = TimeSource.Monotonic
     private val startMark = clock.markNow()
@@ -28,7 +29,7 @@ class NpcManager(private val scene: JsAny) {
 
     private data class InterpResult(val pos: Vec3, val vel: Vec3, val yaw: Float)
 
-    fun handleSpawned(npc: NpcState) {
+    fun handleSpawned(npc: NpcState, localPlayerId: String?) {
         npcNames[npc.id] = npc.name
         updateAutocomplete()
         jsSetNpcOnMinimap(npc.id, npc.pos.x, npc.pos.z)
@@ -38,11 +39,13 @@ class NpcManager(private val scene: JsAny) {
             return
         }
         ensureMesh(npc)
+        updateAggroHighlight(npc, localPlayerId)
     }
 
-    fun handleUpdate(npc: NpcState) {
+    fun handleUpdate(npc: NpcState, localPlayerId: String?) {
         jsSetNpcOnMinimap(npc.id, npc.pos.x, npc.pos.z)
         pushSnapshot(npc)
+        updateAggroHighlight(npc, localPlayerId)
         if (!jsIsNpcModelsReady()) {
             pendingNpcs.removeAll { it.id == npc.id }
             pendingNpcs.add(npc)
@@ -56,6 +59,7 @@ class NpcManager(private val scene: JsAny) {
         updateAutocomplete()
         jsRemoveNpcFromMinimap(id)
         pendingNpcs.removeAll { it.id == id }
+        aggroNpcIds.remove(id)
         npcModels.remove(id)?.let(::jsDisposeNpcModel)
         npcBuffers.remove(id)
         npcRenderedYaw.remove(id)
@@ -94,6 +98,7 @@ class NpcManager(private val scene: JsAny) {
         npcRenderedYaw.clear()
         pendingNpcs.clear()
         npcNames.clear()
+        aggroNpcIds.clear()
         jsSetNpcNames("[]")
     }
 
@@ -148,6 +153,16 @@ class NpcManager(private val scene: JsAny) {
         while (diff > PI.toFloat()) diff -= twoPi
         while (diff < -PI.toFloat()) diff += twoPi
         return from + diff * t
+    }
+
+    @OptIn(ExperimentalWasmJsInterop::class)
+    private fun updateAggroHighlight(npc: NpcState, localPlayerId: String?) {
+        val wasAggro = npc.id in aggroNpcIds
+        val isAggro = localPlayerId != null && npc.aggroTargetId == localPlayerId
+        if (wasAggro == isAggro) return
+        val model = npcModels[npc.id]
+        if (model != null) jsAggroHighlightNpcModel(scene, model, isAggro)
+        if (isAggro) aggroNpcIds.add(npc.id) else aggroNpcIds.remove(npc.id)
     }
 
     @OptIn(ExperimentalWasmJsInterop::class)

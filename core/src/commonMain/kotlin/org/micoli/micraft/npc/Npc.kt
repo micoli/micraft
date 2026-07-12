@@ -13,4 +13,5 @@ data class NpcState(
     val vel: Vec3 = Vec3(0f, 0f, 0f),
     val currentHp: Int = 0,
     val maxHp: Int = 0,
+    val aggroTargetId: String? = null,
 )

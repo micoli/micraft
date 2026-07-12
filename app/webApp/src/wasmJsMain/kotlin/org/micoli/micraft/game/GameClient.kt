@@ -425,8 +425,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             }
             is ServerMessage.ItemsSpawned -> Unit
             is ServerMessage.ItemDespawned -> Unit
-            is ServerMessage.NpcSpawned -> npcManager.handleSpawned(msg.npc)
-            is ServerMessage.NpcUpdate -> npcManager.handleUpdate(msg.npc)
+            is ServerMessage.NpcSpawned -> npcManager.handleSpawned(msg.npc, localPlayerId)
+            is ServerMessage.NpcUpdate -> npcManager.handleUpdate(msg.npc, localPlayerId)
             is ServerMessage.NpcDespawned -> npcManager.handleDespawned(msg.id)
             is ServerMessage.NpcInteractResult -> jsOpenNpcDialog(msg.payload)
             is ServerMessage.OpenTrade -> jsOpenTrade(msg.tradeId, msg.otherPlayerName, msg.myRole)

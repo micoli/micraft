@@ -145,6 +145,7 @@ class NpcManager(
             val changed = instance.definition.behavior.tick(instance, world)
             if (changed && instance.state != before) {
                 val roundedState = instance.state.round1()
+                val stateWithAggro = roundedState.copy(aggroTargetId = instance.aggroTarget)
                 val pos = roundedState.pos
                 for (session in sessions) {
                     val dx = session.state.pos.x - pos.x
@@ -152,9 +153,9 @@ class NpcManager(
                     if (dx * dx + dz * dz <= rangesq) {
                         val playerStates =
                             lastSentToPlayer.getOrPut(session.id) { ConcurrentHashMap() }
-                        if (playerStates[instance.state.id] != roundedState) {
-                            playerStates[instance.state.id] = roundedState
-                            session.send(ServerMessage.NpcUpdate(roundedState))
+                        if (playerStates[instance.state.id] != stateWithAggro) {
+                            playerStates[instance.state.id] = stateWithAggro
+                            session.send(ServerMessage.NpcUpdate(stateWithAggro))
                         }
                     }
                 }
@@ -176,8 +177,9 @@ class NpcManager(
         val playerStates = lastSentToPlayer.getOrPut(session.id) { ConcurrentHashMap() }
         for (instance in npcs.values) {
             val roundedState = instance.state.round1()
-            playerStates[instance.state.id] = roundedState
-            session.send(ServerMessage.NpcSpawned(roundedState))
+            val stateWithAggro = roundedState.copy(aggroTargetId = instance.aggroTarget)
+            playerStates[instance.state.id] = stateWithAggro
+            session.send(ServerMessage.NpcSpawned(stateWithAggro))
         }
         log.info("sendAllTo {}: done", session.id.take(8))
     }
@@ -316,12 +318,14 @@ class NpcManager(
             if (prevAggroTarget == null && newAggroTarget != null) {
                 val name = sessions.find { it.id == newAggroTarget }?.state?.name ?: "?"
                 broadcastCombatLog("[m:${instance.state.name}] targets [p:$name]!")
+                broadcastAggroUpdate(instance, sessions)
             } else if (prevAggroTarget != null && newAggroTarget == null) {
                 val prevSession = sessions.find { it.id == prevAggroTarget }
                 if (prevSession != null) {
                     broadcastCombatLog(
                         "[m:${instance.state.name}] loses interest in [p:${prevSession.state.name}].")
                 }
+                broadcastAggroUpdate(instance, sessions)
             }
 
             val aggroTargetId = instance.aggroTarget ?: continue
@@ -331,6 +335,24 @@ class NpcManager(
                 continue
             }
             combatProcessor.handleNpcAttack(instance, targetSession)
+        }
+    }
+
+    private suspend fun broadcastAggroUpdate(
+        instance: NpcInstance,
+        sessions: Collection<PlayerSession>,
+    ) {
+        val stateWithAggro = instance.state.round1().copy(aggroTargetId = instance.aggroTarget)
+        val rangesq = NpcConstants.UPDATE_RANGE * NpcConstants.UPDATE_RANGE
+        val pos = stateWithAggro.pos
+        for (session in sessions) {
+            val dx = session.state.pos.x - pos.x
+            val dz = session.state.pos.z - pos.z
+            if (dx * dx + dz * dz <= rangesq) {
+                val playerStates = lastSentToPlayer.getOrPut(session.id) { ConcurrentHashMap() }
+                playerStates[instance.state.id] = stateWithAggro
+                session.send(ServerMessage.NpcUpdate(stateWithAggro))
+            }
         }
     }
 }
