@@ -62,10 +62,10 @@ class RandomMovableNpcBehavior : NpcBehavior {
         val midX = pos.x + resolvedDx
         val resolvedDz =
             AabbCollider.resolveZ(solid, midX, pos.y, pos.z, def.width, def.height, nz * speed)
-        val newX = midX
         val newZ = pos.z + resolvedDz
+        val newX = pos.x + AabbCollider.resolveX(solid, pos.x, pos.y, newZ, def.width, def.height, nx * speed)
 
-        if (resolvedDx == 0f && resolvedDz == 0f) {
+        if ((newX - pos.x) == 0f && resolvedDz == 0f) {
             if (instance.vy == 0f &&
                 AabbCollider.isGrounded(solid, pos.x, pos.y, pos.z, def.width)) {
                 val rdxAbove =
@@ -95,7 +95,7 @@ class RandomMovableNpcBehavior : NpcBehavior {
 
         val newYaw = atan2(nx.toDouble(), nz.toDouble()).toFloat()
         instance.velocity =
-            Vec3(resolvedDx / TICK_SECONDS, instance.velocity.y, resolvedDz / TICK_SECONDS)
+            Vec3((newX - pos.x) / TICK_SECONDS, instance.velocity.y, resolvedDz / TICK_SECONDS)
         instance.state =
             instance.state.copy(
                 pos = Vec3(newX, pos.y, newZ),
@@ -146,10 +146,10 @@ class RandomMovableNpcBehavior : NpcBehavior {
         val midX = pos.x + resolvedDx
         val resolvedDz =
             AabbCollider.resolveZ(solid, midX, pos.y, pos.z, def.width, def.height, nz * speed)
-        val newX = midX
         val newZ = pos.z + resolvedDz
+        val newX = pos.x + AabbCollider.resolveX(solid, pos.x, pos.y, newZ, def.width, def.height, nx * speed)
 
-        if (resolvedDx == 0f && resolvedDz == 0f) {
+        if ((newX - pos.x) == 0f && resolvedDz == 0f) {
             if (instance.vy == 0f &&
                 AabbCollider.isGrounded(solid, pos.x, pos.y, pos.z, def.width)) {
                 val rdxAbove =
@@ -183,7 +183,7 @@ class RandomMovableNpcBehavior : NpcBehavior {
         instance.wanderStepTicks--
         val newYaw = atan2(nx.toDouble(), nz.toDouble()).toFloat()
         instance.velocity =
-            Vec3(resolvedDx / TICK_SECONDS, instance.velocity.y, resolvedDz / TICK_SECONDS)
+            Vec3((newX - pos.x) / TICK_SECONDS, instance.velocity.y, resolvedDz / TICK_SECONDS)
         instance.state =
             instance.state.copy(
                 pos = Vec3(newX, pos.y, newZ),

@@ -256,7 +256,7 @@ export function registerPlayerModel(): Pick<
       isWalking: boolean,
     ): void => {
       model.root.position.x = x;
-      model.root.position.y = y;
+      model.root.position.y = y - 0.5;
       model.root.position.z = z;
       model.root.rotation.y = yaw + Math.PI;
 

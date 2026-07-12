@@ -44,18 +44,20 @@ object AabbCollider {
         val hw = w / 2f
         val newCx = cx + dx
         val ys = blocks(cy, cy + h)
-        val zs = blocks(cz - hw, cz + hw)
+        val zs = blocks(cz - hw, cz + hw + 0.001f)
         if (dx > 0) {
             val from = floor((cx + hw).toDouble()).toInt()
+            val checkFrom = if (cx + hw > from.toFloat()) from + 1 else from
             val to = floor((newCx + hw).toDouble()).toInt()
-            for (bx in from..to) for (by in ys) for (bz in zs) if (isSolid(bx, by, bz)) {
+            for (bx in checkFrom..to) for (by in ys) for (bz in zs) if (isSolid(bx, by, bz)) {
                 val snap = bx.toFloat() - hw
                 return (snap - cx).coerceIn(0f, dx)
             }
         } else {
             val from = floor((cx - hw).toDouble()).toInt()
+            val checkFrom = if (cx - hw > from.toFloat()) from - 1 else from
             val to = floor((newCx - hw).toDouble()).toInt()
-            for (bx in from downTo to) for (by in ys) for (bz in zs) if (isSolid(bx, by, bz)) {
+            for (bx in checkFrom downTo to) for (by in ys) for (bz in zs) if (isSolid(bx, by, bz)) {
                 val snap = (bx + 1).toFloat() + hw
                 return (snap - cx).coerceIn(dx, 0f)
             }
@@ -80,18 +82,20 @@ object AabbCollider {
         val hw = w / 2f
         val newCz = cz + dz
         val ys = blocks(cy, cy + h)
-        val xs = blocks(cx - hw, cx + hw)
+        val xs = blocks(cx - hw, cx + hw + 0.001f)
         if (dz > 0) {
             val from = floor((cz + hw).toDouble()).toInt()
+            val checkFrom = if (cz + hw > from.toFloat()) from + 1 else from
             val to = floor((newCz + hw).toDouble()).toInt()
-            for (bz in from..to) for (by in ys) for (bx in xs) if (isSolid(bx, by, bz)) {
+            for (bz in checkFrom..to) for (by in ys) for (bx in xs) if (isSolid(bx, by, bz)) {
                 val snap = bz.toFloat() - hw
                 return (snap - cz).coerceIn(0f, dz)
             }
         } else {
             val from = floor((cz - hw).toDouble()).toInt()
+            val checkFrom = if (cz - hw > from.toFloat()) from - 1 else from
             val to = floor((newCz - hw).toDouble()).toInt()
-            for (bz in from downTo to) for (by in ys) for (bx in xs) if (isSolid(bx, by, bz)) {
+            for (bz in checkFrom downTo to) for (by in ys) for (bx in xs) if (isSolid(bx, by, bz)) {
                 val snap = (bz + 1).toFloat() + hw
                 return (snap - cz).coerceIn(dz, 0f)
             }

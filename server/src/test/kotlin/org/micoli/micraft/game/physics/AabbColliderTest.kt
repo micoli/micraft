@@ -142,6 +142,26 @@ class AabbColliderTest {
         assertTrue(result == dy)
     }
 
+    // --- corner penetration ---
+
+    @Test
+    fun diagonalMovement_intoCorner_doesNotPenetrate() {
+        // Corner block at (5,5,5), entity at (4.0,5.0,4.0) moving diagonally +X +Z by 1.0
+        val world = testWorld(Triple(5, 5, 5))
+        val solid = world.solid()
+        val hw = w / 2f
+        val speed = 1.0f
+
+        val resolvedDx = AabbCollider.resolveX(solid, 4.0f, 5.0f, 4.0f, w, h, speed)
+        val midX = 4.0f + resolvedDx
+        val resolvedDz = AabbCollider.resolveZ(solid, midX, 5.0f, 4.0f, w, h, speed)
+        val newZ = 4.0f + resolvedDz
+        val newX = 4.0f + AabbCollider.resolveX(solid, 4.0f, 5.0f, newZ, w, h, speed)
+
+        assertTrue(newX + hw <= 5.0f + 0.01f, "X right edge must not penetrate block at x=5: $newX")
+        assertTrue(newZ + hw <= 5.0f + 0.01f, "Z right edge must not penetrate block at z=5: $newZ")
+    }
+
     // --- canAdoptStance ---
 
     @Test

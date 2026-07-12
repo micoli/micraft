@@ -70,8 +70,8 @@ class MovementProcessor(private val world: WorldState) {
         val resolvedDx = AabbCollider.resolveX(solid, pos.x, pos.y, pos.z, w, h, nx * speed)
         val midX = pos.x + resolvedDx
         val resolvedDz = AabbCollider.resolveZ(solid, midX, pos.y, pos.z, w, h, nz * speed)
-        val newX = midX
         val newZ = pos.z + resolvedDz
+        val newX = pos.x + AabbCollider.resolveX(solid, pos.x, pos.y, newZ, w, h, nx * speed)
 
         val newY =
             if (newFlying) {
