@@ -6,6 +6,7 @@ import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.biome.BiomeRegistry
+import org.micoli.micraft.game.world.biome.FillerEntry
 import org.micoli.micraft.game.world.house.HouseConfig
 import org.micoli.micraft.game.world.house.HouseZones
 import org.micoli.micraft.game.world.house.renderIntoChunk
@@ -60,15 +61,24 @@ class ProceduralChunkGenerator(
         return (baseY + mountainBoost).toInt().coerceIn(4, WorldConstants.WORLD_MAX_Y - 1)
     }
 
-    private fun terrainBlock(y: Int, col: ColumnData): BlockType {
+    private fun blockHash(wx: Int, wy: Int, wz: Int): Double {
+        val HASH_MUL_X = 1664525L    // Knuth LCG multiplier
+        val HASH_MUL_Y = 22695477L   // Borland C LCG multiplier
+        val HASH_MUL_Z = 1013904223L // Knuth LCG addend (reused as Z multiplier)
+        val HASH_MASK = 0x7FFFFFFFL  // 31-bit positive mask
+        val h = (wx.toLong() * HASH_MUL_X + wy.toLong() * HASH_MUL_Y + wz.toLong() * HASH_MUL_Z + seed) and HASH_MASK
+        return h.toDouble() / HASH_MASK.toDouble()
+    }
+
+    private fun terrainBlock(wx: Int, wy: Int, wz: Int, col: ColumnData): BlockType {
         val h = col.h
         val b = col.blocks
         return when {
-            y == 0 -> BlockType.BEDROCK
-            y == h -> col.roadSurface ?: b.surface
-            y > h - b.subsurfaceDepth && y < h -> b.subsurface
-            y < h -> BlockType.STONE
-            y > h && y <= WorldConstants.WATER_LEVEL && col.isWaterColumn -> BlockType.WATER
+            wy == 0 -> BlockType.BEDROCK
+            wy == h -> col.roadSurface ?: b.surface
+            wy > h - b.subsurfaceDepth && wy < h -> b.subsurface
+            wy < h -> b.fillers.selectFiller(blockHash(wx, wy, wz))
+            wy > h && wy <= WorldConstants.WATER_LEVEL && col.isWaterColumn -> BlockType.WATER
             else -> BlockType.AIR
         }
     }
@@ -108,7 +118,7 @@ class ProceduralChunkGenerator(
             for (ly in 0 until Chunk.SIZE_Y) {
                 for (lz in 0 until s) {
                     blocks[Chunk.index(lx, ly, lz)] =
-                        BlockRegistry.wireIndex(terrainBlock(ly, cols[lx][lz])).toByte()
+                        BlockRegistry.wireIndex(terrainBlock(ox + lx, ly, oz + lz, cols[lx][lz])).toByte()
                 }
             }
         }
@@ -124,6 +134,16 @@ class ProceduralChunkGenerator(
 
     private fun placeHouses(blocks: ByteArray, ox: Int, oz: Int) {
         houseZones?.housesNear(ox, oz)?.forEach { house -> house.renderIntoChunk(blocks, ox, oz) }
+    }
+
+    private fun List<FillerEntry>.selectFiller(hash: Double): BlockType {
+        val total = sumOf { it.density }
+        var cumulative = 0.0
+        for (entry in this) {
+            cumulative += entry.density / total
+            if (hash < cumulative) return entry.type
+        }
+        return last().type
     }
 
     // ── Vegetation ────────────────────────────────────────────────────────────

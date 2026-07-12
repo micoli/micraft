@@ -17,6 +17,8 @@ data class BiomeZone(
 
 @Serializable data class VegetationEntry(val type: VegetationType, val density: Double = 0.0)
 
+@Serializable data class FillerEntry(val type: BlockType, val density: Double = 1.0)
+
 @Serializable
 data class BiomeDefinition(
     val id: String,
@@ -24,13 +26,23 @@ data class BiomeDefinition(
     val surface: BlockType,
     val subsurface: BlockType,
     val subsurfaceDepth: Int = 3,
-    val filler: BlockType = BlockType.STONE,
+    val fillers: List<FillerEntry> = listOf(FillerEntry(BlockType.STONE, 1.0)),
     val vegetation: List<VegetationEntry> = emptyList(),
     val elevationMin: Int = 40,
     val elevationMax: Int = 120,
     val grassColor: List<Double>? = null,
     val waterSourceRate: Double = 0.0,
-)
+) {
+    fun selectFiller(hash: Double): BlockType {
+        val total = fillers.sumOf { it.density }
+        var cumulative = 0.0
+        for (entry in fillers) {
+            cumulative += entry.density / total
+            if (hash < cumulative) return entry.type
+        }
+        return fillers.last().type
+    }
+}
 
 @Serializable
 data class BiomeConfig(

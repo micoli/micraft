@@ -221,3 +221,9 @@ god:
   server:
     on: "Mode dieu activé. Vous êtes immunisé aux dégâts."
     off: "Mode dieu désactivé."
+
+explode:
+  server:
+    usage: "Utilisation : /explode <rayon>"
+    too_large: "Rayon trop grand (max {0})."
+    done: "Explosion : {0} bloc(s) détruits."

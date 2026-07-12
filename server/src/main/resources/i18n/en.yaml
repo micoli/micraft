@@ -221,3 +221,9 @@ god:
   server:
     on: "God mode enabled. You are immune to damage."
     off: "God mode disabled."
+
+explode:
+  server:
+    usage: "Usage: /explode <radius>"
+    too_large: "Radius too large (max {0})."
+    done: "Explosion destroyed {0} block(s)."

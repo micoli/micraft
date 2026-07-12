@@ -107,7 +107,8 @@ class VoronoiBiomeZones(
     data class ColumnBlocks(
         val surface: BlockType,
         val subsurface: BlockType,
-        val subsurfaceDepth: Int
+        val subsurfaceDepth: Int,
+        val fillers: List<org.micoli.micraft.game.world.biome.FillerEntry>,
     )
 
     fun effectiveBiome(
@@ -131,12 +132,12 @@ class VoronoiBiomeZones(
         val moisture = moistureAt(wx, wz)
         val override = registry.altitudeOverride(surfaceY, moisture)
         return if (override != null) {
-            ColumnBlocks(override.surface, override.subsurface, override.subsurfaceDepth)
+            ColumnBlocks(override.surface, override.subsurface, override.subsurfaceDepth, override.fillers)
         } else {
             val surf =
                 if (col.blendFactor > columnHash(wx, wz)) col.primary.surface
                 else col.secondary.surface
-            ColumnBlocks(surf, col.primary.subsurface, col.primary.subsurfaceDepth)
+            ColumnBlocks(surf, col.primary.subsurface, col.primary.subsurfaceDepth, col.primary.fillers)
         }
     }
 }

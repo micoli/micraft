@@ -2,6 +2,7 @@ package org.micoli.micraft.game.world.biome
 
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.vegetation.VegetationType
+import org.micoli.micraft.game.world.biome.FillerEntry
 
 class BiomeRegistry(
     val biomes: List<BiomeDefinition>,
@@ -22,7 +23,7 @@ class BiomeRegistry(
                                 listOf(BiomeZone(0.0, 1.0, altitudeMin = 150, altitudeMax = 1024)),
                             surface = BlockType.SNOW,
                             subsurface = BlockType.STONE,
-                            filler = BlockType.STONE,
+                            fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
                             subsurfaceDepth = 2,
                             elevationMin = 150,
                             elevationMax = 200,
@@ -34,7 +35,7 @@ class BiomeRegistry(
                             zones = listOf(BiomeZone(0.0, 0.12)),
                             surface = BlockType.SAND,
                             subsurface = BlockType.SANDSTONE,
-                            filler = BlockType.STONE,
+                            fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
                             subsurfaceDepth = 4,
                             elevationMin = 40,
                             elevationMax = 70,
@@ -44,7 +45,7 @@ class BiomeRegistry(
                             zones = listOf(BiomeZone(0.12, 0.30)),
                             surface = BlockType.GRASS,
                             subsurface = BlockType.DIRT,
-                            filler = BlockType.STONE,
+                            fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
                             elevationMin = 55,
                             elevationMax = 90,
                             vegetation = listOf(VegetationEntry(VegetationType.WEED, 0.08)),
@@ -54,7 +55,7 @@ class BiomeRegistry(
                             zones = listOf(BiomeZone(0.30, 0.62)),
                             surface = BlockType.GRASS,
                             subsurface = BlockType.DIRT,
-                            filler = BlockType.STONE,
+                            fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
                             elevationMin = 60,
                             elevationMax = 100,
                             vegetation =
@@ -69,7 +70,7 @@ class BiomeRegistry(
                             zones = listOf(BiomeZone(0.62, 0.82)),
                             surface = BlockType.GRASS,
                             subsurface = BlockType.DIRT,
-                            filler = BlockType.STONE,
+                            fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
                             elevationMin = 60,
                             elevationMax = 110,
                             grassColor = listOf(0.3, 0.55, 0.2),
@@ -85,7 +86,7 @@ class BiomeRegistry(
                             zones = listOf(BiomeZone(0.82, 1.0)),
                             surface = BlockType.GRASS,
                             subsurface = BlockType.DIRT,
-                            filler = BlockType.STONE,
+                            fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
                             elevationMin = 70,
                             elevationMax = 130,
                             grassColor = listOf(0.25, 0.45, 0.22),

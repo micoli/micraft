@@ -9,7 +9,17 @@ biomes:
         altitudeMax: 1024
     surface: SNOW
     subsurface: STONE
-    filler: STONE
+    fillers:
+      - type: STONE
+        density: 0.4
+      - type: SANDSTONE
+        density: 0.3
+      - type: SAND
+        density: 0.1
+      - type: BEDROCK
+        density: 0.15
+      - type: AIR
+        density: 0.05
     subsurfaceDepth: 2
     elevationMin: 150
     elevationMax: 200
@@ -22,7 +32,17 @@ biomes:
         moistureMax: 0.12
     surface: SAND
     subsurface: SANDSTONE
-    filler: STONE
+    fillers:
+      - type: STONE
+        density: 0.4
+      - type: SANDSTONE
+        density: 0.3
+      - type: SAND
+        density: 0.1
+      - type: BEDROCK
+        density: 0.15
+      - type: AIR
+        density: 0.05
     subsurfaceDepth: 4
     elevationMin: 40
     elevationMax: 70
@@ -32,7 +52,17 @@ biomes:
         moistureMax: 0.30
     surface: GRASS
     subsurface: DIRT
-    filler: STONE
+    fillers:
+      - type: STONE
+        density: 0.4
+      - type: SANDSTONE
+        density: 0.3
+      - type: SAND
+        density: 0.1
+      - type: BEDROCK
+        density: 0.15
+      - type: AIR
+        density: 0.05
     elevationMin: 55
     elevationMax: 90
     vegetation:
@@ -44,7 +74,17 @@ biomes:
         moistureMax: 0.62
     surface: GRASS
     subsurface: DIRT
-    filler: STONE
+    fillers:
+      - type: STONE
+        density: 0.4
+      - type: SANDSTONE
+        density: 0.3
+      - type: SAND
+        density: 0.1
+      - type: BEDROCK
+        density: 0.15
+      - type: AIR
+        density: 0.05
     elevationMin: 60
     elevationMax: 100
     vegetation:
@@ -60,7 +100,17 @@ biomes:
         moistureMax: 0.82
     surface: GRASS
     subsurface: DIRT
-    filler: STONE
+    fillers:
+      - type: STONE
+        density: 0.4
+      - type: SANDSTONE
+        density: 0.3
+      - type: SAND
+        density: 0.1
+      - type: BEDROCK
+        density: 0.15
+      - type: AIR
+        density: 0.05
     elevationMin: 60
     elevationMax: 110
     grassColor: [0.3, 0.55, 0.2]
@@ -77,7 +127,17 @@ biomes:
         moistureMax: 1.0
     surface: GRASS
     subsurface: DIRT
-    filler: STONE
+    fillers:
+      - type: STONE
+        density: 0.4
+      - type: SANDSTONE
+        density: 0.3
+      - type: SAND
+        density: 0.1
+      - type: BEDROCK
+        density: 0.15
+      - type: AIR
+        density: 0.05
     elevationMin: 70
     elevationMax: 130
     grassColor: [0.25, 0.45, 0.22]
