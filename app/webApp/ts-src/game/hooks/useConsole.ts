@@ -60,7 +60,7 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
     if (shouldFocus && document.pointerLockElement) document.exitPointerLock();
     setTimeout(() => {
       if (shouldFocus) el.focus();
-      updateSuggestions(el.value);
+      if (el.value.includes(" ")) updateSuggestions(el.value);
       setSelIdx(-1);
     }, 10);
   }, [open]);
@@ -117,23 +117,25 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
         break;
       case "ArrowUp":
         e.preventDefault();
-        if (suggestions.length > 0) {
+        if (suggestions.length > 0 && c.histIdx === -1) {
           setSelIdx((idx) => (idx <= 0 ? suggestions.length - 1 : idx - 1));
         } else if (h.length > 0) {
           c.histIdx = Math.min(c.histIdx + 1, h.length - 1);
           el.value = h[h.length - 1 - c.histIdx];
-          updateSuggestions(el.value);
+          setSuggestions([]);
+          setSelIdx(-1);
           setTimeout(() => el.setSelectionRange(el.value.length, el.value.length), 0);
         }
         break;
       case "ArrowDown":
         e.preventDefault();
-        if (suggestions.length > 0) {
+        if (suggestions.length > 0 && c.histIdx === -1) {
           setSelIdx((idx) => (idx >= suggestions.length - 1 ? -1 : idx + 1));
-        } else {
+        } else if (c.histIdx >= 0) {
           c.histIdx = Math.max(c.histIdx - 1, -1);
           el.value = c.histIdx === -1 ? "/" : h[h.length - 1 - c.histIdx];
-          updateSuggestions(el.value);
+          setSuggestions([]);
+          setSelIdx(-1);
           setTimeout(() => el.setSelectionRange(el.value.length, el.value.length), 0);
         }
         break;
@@ -165,6 +167,7 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
 
   function handleInput() {
     const el = inputRef.current!;
+    stateRef.current.histIdx = -1;
     updateSuggestions(el.value);
     setSelIdx(-1);
     stateRef.current.tabIdx = -1;
