@@ -186,7 +186,7 @@ class CombatProcessor(
         }
 
         val hitMsg = if (hit) "hits for $damage${if (isCrit) " [CRIT]" else ""}" else "misses"
-        broadcastCombatLog("[p:${charData.name}] → [p:${targetChar.name}]: $hitMsg")
+        broadcastCombatLog("[p:${charData.name}] → [p:${targetChar.name}] (${msg.attackId}): $hitMsg")
 
         sendStatusUpdate(session, session.characterData ?: charData, myDerived)
         session.send(buildTargetUpdate(session))
@@ -238,7 +238,7 @@ class CombatProcessor(
         }
 
         val hitMsg = if (hit) "hits for $damage${if (isCrit) " [CRIT]" else ""}" else "misses"
-        broadcastCombatLog("[p:${charData.name}] → [m:${npc.state.name}]: $hitMsg")
+        broadcastCombatLog("[p:${charData.name}] → [m:${npc.state.name}] (${msg.attackId}): $hitMsg")
 
         sendStatusUpdate(session, session.characterData ?: charData, myDerived)
         session.send(buildTargetUpdate(session))
@@ -344,7 +344,7 @@ class CombatProcessor(
         }
 
         val hitMsg = if (hit) "hits for $damage${if (isCrit) " [CRIT]" else ""}" else "misses"
-        broadcastCombatLog("[m:${npc.state.name}] → [p:${targetChar.name}]: $hitMsg")
+        broadcastCombatLog("[m:${npc.state.name}] → [p:${targetChar.name}] (${slot.attackId}): $hitMsg")
     }
 
     // ── Downed / death ────────────────────────────────────────────────────────
