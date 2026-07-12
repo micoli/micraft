@@ -20,4 +20,5 @@ data class NpcYamlOverride(
     val classResource: ClassResource? = null,
     val maxMana: Int? = null,
     val maxRage: Int? = null,
+    val walkBoneAliases: Map<String, String>? = null,
 )

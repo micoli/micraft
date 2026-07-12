@@ -51,7 +51,13 @@ function computeForwardOffset(bbmodel: BbModel): number {
 
 export function registerNpcModel(): Pick<
   McBindings,
-  "initNpcModels" | "isNpcModelsReady" | "createNpcModel" | "setNpcTransform" | "disposeNpcModel" | "openNpcDialog"
+  | "initNpcModels"
+  | "initNpcWalkBones"
+  | "isNpcModelsReady"
+  | "createNpcModel"
+  | "setNpcTransform"
+  | "disposeNpcModel"
+  | "openNpcDialog"
 > {
   return {
     initNpcModels: (npcTypesJson: string): void => {
@@ -88,6 +94,14 @@ export function registerNpcModel(): Pick<
       });
     },
 
+    initNpcWalkBones: (json: string): void => {
+      try {
+        window.mcState.npcWalkBones = JSON.parse(json);
+      } catch {
+        // ignore
+      }
+    },
+
     isNpcModelsReady: (): boolean => !!(window.mcState && window.mcState.npcModelsReady),
 
     createNpcModel: (scene: Scene, npcType: string): McPlayerModel | null => {
@@ -96,7 +110,8 @@ export function registerNpcModel(): Pick<
         console.warn("[MiCraft] NPC bbmodel not found for type:", npcType);
         return null;
       }
-      const model = window.mc.createPlayerModelFromBbmodel(bbmodel, scene, `npc_${npcType}`);
+      const aliases = window.mcState.npcWalkBones?.[npcType] ?? {};
+      const model = window.mc.createPlayerModelFromBbmodel(bbmodel, scene, `npc_${npcType}`, aliases);
       (model as any)._forwardOffset = computeForwardOffset(bbmodel);
       return model;
     },
@@ -112,12 +127,17 @@ export function registerNpcModel(): Pick<
       const DEG = Math.PI / 180;
       const wa = model.walkAnim ?? {};
 
+      const PROC_AMP = 30;
+      const PROC_PHASE: Record<string, number> = { rightArm: 0, leftArm: Math.PI, rightLeg: Math.PI, leftLeg: 0 };
+
       if (isWalking) {
         const animLen = wa["rightArm"]?.length ?? 1;
         const t = (Date.now() % (animLen * 1000)) / (animLen * 1000);
         for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
           if (!pn[bname]) continue;
-          pn[bname].node.rotation.x = (wa[bname] ? interpAxis(wa[bname].keyframes, t, "x") : 0) * DEG;
+          pn[bname].node.rotation.x = wa[bname]
+            ? interpAxis(wa[bname].keyframes, t, "x") * DEG
+            : PROC_AMP * DEG * Math.sin(t * 2 * Math.PI + (PROC_PHASE[bname] ?? 0));
         }
         return;
       }

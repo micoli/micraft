@@ -1,24 +1,24 @@
 package org.micoli.micraft.game.npc
 
-import kotlin.random.Random
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
-// Credits: Fantasy name generation logic based on https://github.com/FyefoxxM/fantasy-name-generator
+// Credits: Fantasy name generation logic based on
+// https://github.com/FyefoxxM/fantasy-name-generator
 // by FyefoxxM — see also https://jdookeran.medium.com/day-7-fantasy-name-generator-c2b4458b13f7
 object FantasyNameGenerator {
     private val data: Map<String, Map<String, List<String>>> by lazy { loadData() }
 
     private fun loadData(): Map<String, Map<String, List<String>>> {
-        val json = FantasyNameGenerator::class.java.classLoader
-            .getResourceAsStream("name_data.json")
-            ?.bufferedReader()
-            ?.readText()
-            ?: error("name_data.json not found in resources")
+        val json =
+            FantasyNameGenerator::class
+                .java
+                .classLoader
+                .getResourceAsStream("name_data.json")
+                ?.bufferedReader()
+                ?.readText() ?: error("name_data.json not found in resources")
         val root = Json.parseToJsonElement(json).jsonObject
         return root.mapValues { (_, raceEl) ->
             raceEl.jsonObject.mapValues { (_, listEl) ->
@@ -27,12 +27,13 @@ object FantasyNameGenerator {
         }
     }
 
-    private fun race(npcType: String): String = when {
-        "orc" in npcType || "goblin" in npcType || "troll" in npcType -> "orc"
-        "elf" in npcType || "elven" in npcType -> "elf"
-        "dwarf" in npcType || "dwarven" in npcType -> "dwarf"
-        else -> "human"
-    }
+    private fun race(npcType: String): String =
+        when {
+            "orc" in npcType || "goblin" in npcType || "troll" in npcType -> "orc"
+            "elf" in npcType || "elven" in npcType -> "elf"
+            "dwarf" in npcType || "dwarven" in npcType -> "dwarf"
+            else -> "human"
+        }
 
     fun generate(npcType: String): String {
         val r = race(npcType)

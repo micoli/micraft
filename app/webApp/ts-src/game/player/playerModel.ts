@@ -106,7 +106,12 @@ export function registerPlayerModel(): Pick<
   window.mcState.skinUV = skinUV;
   window.mcState.skinFaceUV = skinFaceUV;
 
-  function createPlayerModelFromBbmodel(bbmodel: BbModel, scene: Scene, skin: string = "player"): McPlayerModel {
+  function createPlayerModelFromBbmodel(
+    bbmodel: BbModel,
+    scene: Scene,
+    skin: string = "player",
+    boneAliases?: Record<string, string>,
+  ): McPlayerModel {
     const s = scene as any;
     if (!s.__mcSceneId) s.__mcSceneId = Math.random().toString(36).slice(2);
     const cacheKey = `${s.__mcSceneId}_${skin}`;
@@ -150,6 +155,11 @@ export function registerPlayerModel(): Pick<
     const pivotNodes: McPlayerModel["pivotNodes"] = {};
     const DEG = Math.PI / 180;
 
+    const reverseAliases: Record<string, string> = {};
+    if (boneAliases) {
+      for (const [role, actual] of Object.entries(boneAliases)) reverseAliases[actual] = role;
+    }
+
     // Create a TransformNode for every group (applying its base rotation)
     const allGroupNodes: Record<
       string,
@@ -164,6 +174,10 @@ export function registerPlayerModel(): Pick<
       allGroupNodes[g.uuid] = { node, origin: g.origin };
       if ((ANIM_GROUPS as readonly string[]).includes(g.name)) {
         pivotNodes[g.name as AnimGroupName] = { node, origin: g.origin };
+      }
+      const aliasName = reverseAliases[g.name];
+      if (aliasName && (ANIM_GROUPS as readonly string[]).includes(aliasName)) {
+        pivotNodes[aliasName as AnimGroupName] = { node, origin: g.origin };
       }
     });
 

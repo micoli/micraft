@@ -143,6 +143,7 @@ sealed class ServerMessage {
         val items: Map<String, ItemInfo>,
         val npcs: Map<String, String> = emptyMap(),
         val npcDefinitions: Map<String, NpcCodexInfo> = emptyMap(),
+        val npcWalkBones: Map<String, Map<String, String>> = emptyMap(),
     ) : ServerMessage()
 
     @ProtoId(20) @Serializable data class NpcSpawned(val npc: NpcState) : ServerMessage()

@@ -159,6 +159,7 @@ declare global {
     // Models
     playerBbmodels: Record<string, BbModel>;
     npcBbmodels: Record<string, BbModel>;
+    npcWalkBones: Record<string, Record<string, string>>;
     armorBbmodels: Record<string, BbModel>;
     npcModelsReady: boolean;
     skinMatCache: Record<string, import("@babylonjs/core").StandardMaterial>;
@@ -276,7 +277,12 @@ declare global {
     initPlayerModel(skin: string): void;
     isPlayerBbmodelReady(skin: string): boolean;
     createPlayerModelNow(scene: any, skin: string): McPlayerModel;
-    createPlayerModelFromBbmodel(bbmodel: BbModel, scene: any, skin: string): McPlayerModel;
+    createPlayerModelFromBbmodel(
+      bbmodel: BbModel,
+      scene: any,
+      skin: string,
+      boneAliases?: Record<string, string>,
+    ): McPlayerModel;
     setPlayerTransform(
       model: McPlayerModel,
       x: number,
@@ -303,6 +309,7 @@ declare global {
     detachAllArmors(model: McPlayerModel): void;
     // NPC
     initNpcModels(npcTypesJson: string): void;
+    initNpcWalkBones(json: string): void;
     isNpcModelsReady(): boolean;
     createNpcModel(scene: any, npcType: string): McPlayerModel | null;
     setNpcTransform(model: McPlayerModel, x: number, y: number, z: number, yaw: number, isWalking: boolean): void;

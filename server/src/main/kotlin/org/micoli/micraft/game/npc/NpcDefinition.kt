@@ -22,4 +22,5 @@ data class NpcDefinition(
     val classResource: ClassResource = ClassResource.MANA,
     val maxMana: Int = 0,
     val maxRage: Int = 0,
+    val walkBoneAliases: Map<String, String> = emptyMap(),
 )

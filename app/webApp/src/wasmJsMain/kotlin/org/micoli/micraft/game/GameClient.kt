@@ -417,6 +417,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 jsSetBlockRegistry(Json.encodeToString(msg.blocks))
                 jsSetItemRegistry(Json.encodeToString(msg.items))
                 if (msg.npcs.isNotEmpty()) jsInitNpcModels(Json.encodeToString(msg.npcs))
+                if (msg.npcWalkBones.isNotEmpty())
+                    jsInitNpcWalkBones(Json.encodeToString(msg.npcWalkBones))
                 if (msg.npcDefinitions.isNotEmpty())
                     jsSetNpcDefinitions(Json.encodeToString(msg.npcDefinitions))
                 jsReloadAttackMeta()

@@ -122,6 +122,7 @@ class NpcRegistryLoader(
                                     classResource = entry.classResource,
                                     maxMana = entry.maxMana,
                                     maxRage = entry.maxRage,
+                                    walkBoneAliases = entry.walkBoneAliases,
                                 )
                         }
                         .onFailure { e -> npcLog.warn("Skipping entity '{}': {}", key, e.message) }

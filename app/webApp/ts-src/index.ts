@@ -43,6 +43,7 @@ window.mcState = {
   // Models
   playerBbmodels: {},
   npcBbmodels: {},
+  npcWalkBones: {},
   armorBbmodels: {},
   npcModelsReady: false,
   skinMatCache: {},

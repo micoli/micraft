@@ -32,6 +32,8 @@ fun jsDisposePlayerModel(model: JsAny): Unit = js("mc.disposePlayerModel(model)"
 
 fun jsInitNpcModels(npcTypesJson: String): Unit = js("mc.initNpcModels(npcTypesJson)")
 
+fun jsInitNpcWalkBones(json: String): Unit = js("mc.initNpcWalkBones(json)")
+
 fun jsIsNpcModelsReady(): Boolean = js("mc.isNpcModelsReady()")
 
 fun jsCreateNpcModel(scene: JsAny, npcType: String): JsAny? =

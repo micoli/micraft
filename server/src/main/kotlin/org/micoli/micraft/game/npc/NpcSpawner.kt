@@ -58,7 +58,8 @@ class NpcSpawner {
                         solid, spawnPos.x, spawnPos.y, spawnPos.z, def.width, def.height, 0f)
                 if (clearX != 0f || clearZ != 0f) continue
 
-                val name = "${type.lowercase().replaceFirstChar { it.uppercase() }.replace('_',' ')} - ${FantasyNameGenerator.generate(type)}"
+                val name =
+                    "${type.lowercase().replaceFirstChar { it.uppercase() }.replace('_',' ')} - ${FantasyNameGenerator.generate(type)}"
                 npcManager.spawnNpc(name, type, spawnPos)
                 log.debug("Auto-spawned {} at ({},{},{})", type, wx, surfaceY, wz)
                 attempts++

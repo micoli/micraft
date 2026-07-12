@@ -1,3 +1,8 @@
+walkBoneAliases:
+  rightArm: leg0
+  leftArm: leg1
+  rightLeg: leg2
+  leftLeg: leg3
 behavior: random_movable
 width: 0.5
 height: 0.9

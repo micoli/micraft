@@ -666,7 +666,12 @@ class GameLoop(
                         )
                 }
                 .toMap()
-        return ServerMessage.RegistrySync(blocks, items, npcs, npcDefinitions)
+        val npcWalkBones =
+            npcManager
+                .getDefinitions()
+                .filter { it.value.walkBoneAliases.isNotEmpty() }
+                .mapValues { it.value.walkBoneAliases }
+        return ServerMessage.RegistrySync(blocks, items, npcs, npcDefinitions, npcWalkBones)
     }
 
     private val reloadCoordinator =
