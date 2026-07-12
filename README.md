@@ -344,3 +344,9 @@ make dc CMD="./gradlew test"                   # all targets
 4. Server-side changes (`server/src/main/`) require a new or updated test in `server/src/test/`
 5. New user-visible strings must be added to **both** `data/i18n/en.yaml` and `data/i18n/fr.yaml`
 6. Update the relevant JSON Schema in `data/schemas/` when modifying YAML-backed data classes
+
+---
+
+## Credits
+
+- **Fantasy name generation** — NPC names are generated using syllable data and logic from [FyefoxxM/fantasy-name-generator](https://github.com/FyefoxxM/fantasy-name-generator), inspired by [Day 7: Fantasy Name Generator](https://jdookeran.medium.com/day-7-fantasy-name-generator-c2b4458b13f7) by J. Dookeran.

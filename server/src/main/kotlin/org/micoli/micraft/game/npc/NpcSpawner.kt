@@ -1,6 +1,5 @@
 package org.micoli.micraft.game.npc
 
-import java.util.UUID
 import kotlin.collections.iterator
 import kotlin.random.Random
 import org.micoli.micraft.game.world.ChunkPos
@@ -59,8 +58,7 @@ class NpcSpawner {
                         solid, spawnPos.x, spawnPos.y, spawnPos.z, def.width, def.height, 0f)
                 if (clearX != 0f || clearZ != 0f) continue
 
-                val name =
-                    "${type.lowercase().replaceFirstChar { it.uppercase() }} #${UUID.randomUUID().toString().take(4)}"
+                val name = "${type.lowercase().replaceFirstChar { it.uppercase() }.replace('_',' ')} - ${FantasyNameGenerator.generate(type)}"
                 npcManager.spawnNpc(name, type, spawnPos)
                 log.debug("Auto-spawned {} at ({},{},{})", type, wx, surfaceY, wz)
                 attempts++
