@@ -1423,6 +1423,9 @@
   .pr-1 {
     padding-right: var(--spacing);
   }
+  .pb-0\.5 {
+    padding-bottom: calc(var(--spacing) * 0.5);
+  }
   .pb-2 {
     padding-bottom: calc(var(--spacing) * 2);
   }

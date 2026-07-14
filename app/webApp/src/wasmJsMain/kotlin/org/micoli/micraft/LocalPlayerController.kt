@@ -799,6 +799,7 @@ class LocalPlayerController(
     private var caveLightCurrent = 1.0
     private var lastLoggedUnderground: Boolean? = null
     var lightBoostEnabled = false
+    var nearestRemoteLightBoost: (() -> Triple<Double, Double, Double>?)? = null
 
     private fun updateCaveLighting() {
         val eyeYInt = (predY + localStance.eyeOffset).toInt()
@@ -818,9 +819,14 @@ class LocalPlayerController(
         caveLightCurrent += (caveLightTarget - caveLightCurrent) * 0.05
         jsSetCaveFactor(caveLightCurrent)
         val eyeY = predY + localStance.eyeOffset
+        val remoteBoost = if (!lightBoostEnabled) nearestRemoteLightBoost?.invoke() else null
+        val lightX = remoteBoost?.first ?: predX
+        val lightY = remoteBoost?.second ?: eyeY
+        val lightZ = remoteBoost?.third ?: predZ
         val lightIntensity =
-            if (lightBoostEnabled) 2.0 else (1.0 - caveLightCurrent).coerceAtLeast(0.0)
-        jsSetPlayerLight(scene, predX, eyeY, predZ, lightIntensity)
+            if (lightBoostEnabled || remoteBoost != null) 2.0
+            else (1.0 - caveLightCurrent).coerceAtLeast(0.0)
+        jsSetPlayerLight(scene, lightX, lightY, lightZ, lightIntensity)
     }
 
     fun buildMoveIntent(): ClientMessage.MoveIntent {

@@ -79,11 +79,13 @@ function GcdBar({ remainingMs }: { remainingMs: number }) {
 }
 
 export function PlayerStatusBar({ status, layoutStyle }: Props) {
+  const playerName = window.mcState?.playerName ?? "";
   return (
     <div
       className="flex flex-col gap-1 bg-black/55 rounded-md px-3 py-2 pointer-events-none z-[998]"
       style={{ ...layoutStyle, userSelect: "none" }}
     >
+      {playerName && <span className="text-white/80 text-[11px] font-semibold truncate pb-0.5">{playerName}</span>}
       <Bar value={status.currentHp} max={status.maxHp} color="#c0392b" label="HP" />
       {status.maxMana > 0 && <Bar value={status.currentMana} max={status.maxMana} color="#2980b9" label="MP" />}
       {status.maxRage > 0 && <Bar value={status.currentRage} max={status.maxRage} color="#e67e22" label="RP" />}

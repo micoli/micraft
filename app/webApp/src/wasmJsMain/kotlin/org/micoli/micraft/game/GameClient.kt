@@ -56,6 +56,13 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             npcManager = npcManager,
         )
 
+    init {
+        localController.nearestRemoteLightBoost = {
+            remotePlayerManager.nearestLightBoostPosition(
+                localController.predX, localController.predZ)
+        }
+    }
+
     private val scope = CoroutineScope(Dispatchers.Default)
     private var localPlayerId: String? = null
     private var playerIdReady = CompletableDeferred<String>()

@@ -12,6 +12,7 @@ export function registerEngine(): Pick<
   | "setShadersEnabled"
   | "setAmbient"
   | "setPlayerLight"
+  | "setRemotePlayerLight"
   | "setupRenderPipeline"
 > {
   return {
@@ -132,6 +133,49 @@ export function registerEngine(): Pick<
       for (const mat of Object.values(mats)) {
         if (typeof mat.setVector3 === "function") mat.setVector3("playerPos", pos);
         if (typeof mat.setFloat === "function") mat.setFloat("playerLightIntensity", intensity);
+      }
+    },
+
+    setRemotePlayerLight: (model: McPlayerModel, _scene: Scene, enabled: boolean): void => {
+      if (enabled) {
+        if ((model as any)._lightBoost) return;
+
+        const armNode = model.pivotNodes["rightArm"]?.node ?? model.root;
+        // hand offset relative to rightArm pivot in scene units (bbmodel: rightItem=[6,15,1], rightArm=[5,22,0], SCALE=1/16)
+        const handOffset = new BABYLON.Vector3(0.0625, -0.4375, 0.0625);
+
+        const orb = BABYLON.MeshBuilder.CreateSphere(
+          "lightOrb_" + Math.random().toString(36).slice(2),
+          { diameter: 0.18, segments: 6 },
+          _scene,
+        );
+        orb.parent = armNode;
+        orb.position = handOffset.clone();
+        orb.isPickable = false;
+        const mat = new BABYLON.StandardMaterial("lightOrbMat_" + Math.random().toString(36).slice(2), _scene);
+        mat.emissiveColor = new BABYLON.Color3(1.0, 0.75, 0.2);
+        mat.disableLighting = true;
+        orb.material = mat;
+
+        const light = new BABYLON.PointLight(
+          "remotePlayerPointLight_" + Math.random().toString(36).slice(2),
+          BABYLON.Vector3.Zero(),
+          _scene,
+        );
+        light.intensity = 1.5;
+        light.range = 20;
+        light.diffuse = new BABYLON.Color3(1.0, 0.85, 0.5);
+        light.parent = armNode;
+        light.position = handOffset.clone();
+
+        (model as any)._lightBoost = { orb, light };
+      } else {
+        const lb = (model as any)._lightBoost;
+        if (lb) {
+          lb.orb?.dispose();
+          lb.light?.dispose();
+          (model as any)._lightBoost = null;
+        }
       }
     },
 

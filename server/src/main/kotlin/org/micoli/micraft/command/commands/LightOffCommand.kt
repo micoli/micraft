@@ -13,6 +13,8 @@ class LightOffCommand : CommandHandler {
     override val usage = command
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
+        session.state = session.state.copy(lightBoostEnabled = false)
+        context.broadcast(ServerMessage.PlayerUpdate(session.state))
         session.send(ServerMessage.LightBoostUpdate(false))
         session.send(
             ServerMessage.Notification(context.i18n.t(session.state.language, "light:server:off")))

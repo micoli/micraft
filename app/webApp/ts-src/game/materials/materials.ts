@@ -65,28 +65,23 @@ export function registerMaterials(): Pick<
       const fogEnd: number = (scene as any).fogEnd ?? 40;
 
       const makeMat = (name: string, url: string, tintR: number, tintG: number, tintB: number): any => {
-        const mat = new BABYLON.ShaderMaterial(
-          name,
-          scene,
-          { vertexSource: BLOCK_VERT, fragmentSource: BLOCK_FRAG },
-          {
-            attributes: ["position", "normal", "uv", "color"],
-            uniforms: [
-              "worldViewProjection",
-              "view",
-              "world",
-              "fogColor",
-              "fogStart",
-              "fogEnd",
-              "tint",
-              "shadersEnabled",
-              "ambient",
-              "playerLightIntensity",
-            ],
-            vectors3: ["playerPos"],
-            samplers: ["textureSampler"],
-          } as any,
-        );
+        const mat = new BABYLON.ShaderMaterial(name, scene, { vertexSource: BLOCK_VERT, fragmentSource: BLOCK_FRAG }, {
+          attributes: ["position", "normal", "uv", "color"],
+          uniforms: [
+            "worldViewProjection",
+            "view",
+            "world",
+            "fogColor",
+            "fogStart",
+            "fogEnd",
+            "tint",
+            "shadersEnabled",
+            "ambient",
+            "playerLightIntensity",
+          ],
+          vectors3: ["playerPos"],
+          samplers: ["textureSampler"],
+        } as any);
         const tex = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
         mat.setTexture("textureSampler", tex);
         mat.setVector3("fogColor", new BABYLON.Vector3(fogColor.r, fogColor.g, fogColor.b));

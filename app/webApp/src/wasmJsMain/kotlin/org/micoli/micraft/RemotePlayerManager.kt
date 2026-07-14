@@ -19,6 +19,8 @@ class RemotePlayerManager(private val scene: JsAny) {
     private val playerSkins = mutableMapOf<String, String>()
     private val playerArmors = mutableMapOf<String, List<String>>()
     private val playerArmorsAttached = mutableMapOf<String, List<String>>()
+    private val playerLightBoost = mutableMapOf<String, Boolean>()
+    private val playerLightBoostApplied = mutableMapOf<String, Boolean>()
 
     fun updateFromServer(state: PlayerState) {
         playerNames[state.id] = state.name
@@ -42,6 +44,7 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerTargetYaw[state.id] = state.orientation.yaw
         playerTargetPitch[state.id] = state.orientation.pitch
         playerLerpT[state.id] = 0.0
+        playerLightBoost[state.id] = state.lightBoostEnabled
     }
 
     fun remove(id: String) {
@@ -59,6 +62,8 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerTargetYaw.remove(id)
         playerTargetPitch.remove(id)
         playerLerpT.remove(id)
+        playerLightBoost.remove(id)
+        playerLightBoostApplied.remove(id)
     }
 
     fun tick() {
@@ -95,6 +100,12 @@ class RemotePlayerManager(private val scene: JsAny) {
                 readyToAttach.forEach { jsAttachArmor(model, it, scene) }
                 playerArmorsAttached[id] = attached - toAttach.toSet() + readyToAttach
             }
+
+            val lightBoost = playerLightBoost[id] ?: false
+            if (lightBoost != (playerLightBoostApplied[id] ?: false)) {
+                jsSetRemotePlayerLight(model, scene, lightBoost)
+                playerLightBoostApplied[id] = lightBoost
+            }
         }
     }
 
@@ -113,8 +124,23 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerSkins.clear()
         playerArmors.clear()
         playerArmorsAttached.clear()
+        playerLightBoost.clear()
+        playerLightBoostApplied.clear()
         jsSetConnectedPlayers("[]")
     }
+
+    fun nearestLightBoostPosition(
+        observerX: Double,
+        observerZ: Double
+    ): Triple<Double, Double, Double>? =
+        playerTargetPos.entries
+            .filter { (id, _) -> playerLightBoost[id] == true }
+            .minByOrNull { (_, pos) ->
+                val dx = pos.first - observerX
+                val dz = pos.third - observerZ
+                dx * dx + dz * dz
+            }
+            ?.value
 
     private fun updateAutocomplete() {
         val json = "[" + playerNames.values.joinToString(",") { "\"$it\"" } + "]"

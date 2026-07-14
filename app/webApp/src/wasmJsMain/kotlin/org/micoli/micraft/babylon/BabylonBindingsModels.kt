@@ -111,3 +111,6 @@ fun jsAttachArmor(model: JsAny, armorName: String, scene: JsAny): Unit =
 fun jsDetachArmor(model: JsAny, armorName: String): Unit = js("mc.detachArmor(model, armorName)")
 
 fun jsDetachAllArmors(model: JsAny): Unit = js("mc.detachAllArmors(model)")
+
+fun jsSetRemotePlayerLight(model: JsAny, scene: JsAny, enabled: Boolean): Unit =
+    js("mc.setRemotePlayerLight(model, scene, enabled)")

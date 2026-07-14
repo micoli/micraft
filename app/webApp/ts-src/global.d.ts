@@ -242,6 +242,7 @@ declare global {
     setShadersEnabled(scene: any, enabled: boolean): void;
     setAmbient(scene: any, v: number): void;
     setPlayerLight(scene: any, x: number, y: number, z: number, intensity: number): void;
+    setRemotePlayerLight(model: McPlayerModel, scene: any, enabled: boolean): void;
     setupRenderPipeline(scene: any, camera: any): void;
     // Sky / Weather
     updateSkyTime(scene: any, t: number): void;

@@ -13,6 +13,8 @@ class LightOnCommand : CommandHandler {
     override val usage = command
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
+        session.state = session.state.copy(lightBoostEnabled = true)
+        context.broadcast(ServerMessage.PlayerUpdate(session.state))
         session.send(ServerMessage.LightBoostUpdate(true))
         session.send(
             ServerMessage.Notification(context.i18n.t(session.state.language, "light:server:on")))
