@@ -118,12 +118,12 @@ export function PlayerStatusBar({ status, npcProximity = [], layoutStyle }: Prop
                     viewBox="0 0 12 12"
                     style={{ transform: `rotate(${angleDeg}deg)`, flexShrink: 0 }}
                   >
-                    <polygon
-                      points="6,1 10,11 6,8 2,11"
-                      fill={npc.aggro ? "#e74c3c" : "rgba(255,255,255,0.45)"}
-                    />
+                    <polygon points="6,1 10,11 6,8 2,11" fill={npc.aggro ? "#e74c3c" : "rgba(255,255,255,0.45)"} />
                   </svg>
-                  <span className="font-mono text-[9px]" style={{ color: npc.aggro ? "#e74c3c" : "rgba(255,255,255,0.55)" }}>
+                  <span
+                    className="font-mono text-[9px]"
+                    style={{ color: npc.aggro ? "#e74c3c" : "rgba(255,255,255,0.55)" }}
+                  >
                     {Math.round(npc.dist)}m
                   </span>
                 </div>

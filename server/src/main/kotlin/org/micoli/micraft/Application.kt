@@ -71,6 +71,7 @@ import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.game.world.weather.WeatherConfig
 import org.micoli.micraft.game.world.weather.WeatherManager
+import org.micoli.micraft.http.AdminController
 import org.micoli.micraft.http.ArmorsController
 import org.micoli.micraft.http.AssetManifestController
 import org.micoli.micraft.http.AssetNotifyController
@@ -259,6 +260,8 @@ fun Application.module() {
         staticFiles("/api/models", File("resources"))
         MapController(gameLoop).register(this)
         MetricsController(gameLoop).register(this)
+        AdminController(authProvider as? LocalAuthProvider, persistence, gameLoop, dataPath)
+            .register(this)
         ChunkController(world, tokenStore, serverConfig.chunks.httpWorkers).register(this)
         webSocket("/game") { gameLoop.onConnect(this) }
         webSocket("/chunks") { gameLoop.onChunkConnect(this) }

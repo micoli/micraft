@@ -40,7 +40,7 @@ data class PlayerState(
     val viewMode: String = "FIRST_PERSON",
     val skin: String = "player",
     val armors: List<String> = emptyList(),
-    val animatedFavicon: Boolean = true,
+    val animatedFavicon: Boolean = false,
     val chunkDebugVisible: Boolean = false,
     val fieldOfView: Int = 70,
     val knownRecipes: Set<String> = emptySet(),

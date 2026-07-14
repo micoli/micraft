@@ -169,11 +169,33 @@ class WorldPersistence(val worldDir: Path) {
         }
     }
 
+    fun listPlayers(): List<String> =
+        playersDir
+            .toFile()
+            .listFiles { f -> f.extension == "yaml" && !f.name.contains("-") }
+            ?.map { it.nameWithoutExtension } ?: emptyList()
+
+    fun loadPlayerFile(name: String): PlayerFile? = loadOrCreatePlayerFile(name)
+
     fun loadPlayerState(name: String): PlayerState? = loadOrCreatePlayerFile(name)?.state
 
     fun savePlayerState(name: String, state: PlayerState) {
         val existing = loadOrCreatePlayerFile(name)
         writePlayerFile(name, existing?.copy(state = state) ?: PlayerFile(state))
+    }
+
+    fun renamePlayer(oldName: String, newName: String) {
+        val oldSanitized = oldName.sanitize()
+        val newSanitized = newName.sanitize()
+        playersDir
+            .listDirectoryEntries()
+            .filter { it.name.startsWith(oldSanitized) }
+            .forEach { file ->
+                val newFileName = newSanitized + file.name.removePrefix(oldSanitized)
+                file.moveTo(playersDir.resolve(newFileName), overwrite = true)
+            }
+        val state = loadPlayerState(newName)
+        if (state != null) savePlayerState(newName, state.copy(name = newName))
     }
 
     private val keybindingsSerializer =

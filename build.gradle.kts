@@ -166,6 +166,8 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean, watch: Boolean) {
             mapOf("MC_OUT_CSS" to webDist.resolve("main.css").absolutePath))
         watcher("[map] ", "npm run watch:map --prefix app/webApp/ts-src")
         watcher("[map:css] ", "npm run watch:map:css --prefix app/webApp/ts-src")
+        watcher("[admin] ", "npm run watch:admin --prefix app/webApp/ts-src")
+        watcher("[admin:css] ", "npm run watch:admin:css --prefix app/webApp/ts-src")
     } else {
         println("[prod] serving optimized build; no watchers")
     }

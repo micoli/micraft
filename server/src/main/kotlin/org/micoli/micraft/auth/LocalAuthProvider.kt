@@ -63,4 +63,31 @@ class LocalAuthProvider(private val usersFile: Path, @Volatile var groupsConfig:
 
     fun getUserGroups(email: String): List<String>? =
         load().users.firstOrNull { it.email.equals(email, ignoreCase = true) }?.groups
+
+    fun listUsers(): List<UserEntry> = load().users
+
+    fun deleteUser(email: String) {
+        val config = load()
+        if (config.users.none { it.email.equals(email, ignoreCase = true) })
+            error("User not found: $email")
+        val updated =
+            config.copy(users = config.users.filter { !it.email.equals(email, ignoreCase = true) })
+        usersFile.writeText(Yaml.default.encodeToString(UsersConfig.serializer(), updated))
+    }
+
+    fun updateUser(email: String, displayName: String?, groups: List<String>?) {
+        val config = load()
+        val updated =
+            config.copy(
+                users =
+                    config.users.map {
+                        if (it.email.equals(email, ignoreCase = true))
+                            it.copy(
+                                displayName = displayName ?: it.displayName,
+                                groups = groups ?: it.groups,
+                            )
+                        else it
+                    })
+        usersFile.writeText(Yaml.default.encodeToString(UsersConfig.serializer(), updated))
+    }
 }

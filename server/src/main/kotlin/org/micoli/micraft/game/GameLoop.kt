@@ -438,6 +438,10 @@ class GameLoop(
 
     fun getGameTicks(): Long = gameTicks
 
+    fun setGameTicks(ticks: Long) {
+        gameTicks = ticks
+    }
+
     fun getWeatherZones() = weatherManager.getZones()
 
     fun getWorldItemCount(): Int = worldItems.itemCount()

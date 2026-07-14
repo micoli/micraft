@@ -4,7 +4,9 @@ import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.lang.management.ManagementFactory
+import kotlinx.serialization.Serializable
 import org.micoli.micraft.game.GameLoop
+import org.micoli.micraft.game.TICKS_PER_DAY
 
 // Rough per-entry sizes for working-set estimates (no JAMM/JOL available):
 // BlockPos = 3 Int + obj header ≈ 28 B; ConcurrentHashMap node ≈ 56 B.
@@ -163,9 +165,11 @@ fun buildStatusSnapshot(gameLoop: GameLoop): StatusSnapshot {
         heapMaxMb = heapMax / 1_048_576,
         nonHeapUsedMb = nonHeapUsed / 1_048_576,
         processors = Runtime.getRuntime().availableProcessors(),
+        ticksPerDay = TICKS_PER_DAY,
     )
 }
 
+@Serializable
 data class StatusSnapshot(
     val connectedPlayers: Int,
     val playerNames: List<String>,
@@ -186,6 +190,7 @@ data class StatusSnapshot(
     val heapMaxMb: Long,
     val nonHeapUsedMb: Long,
     val processors: Int,
+    val ticksPerDay: Long,
 )
 
 class MetricsController(private val gameLoop: GameLoop) {

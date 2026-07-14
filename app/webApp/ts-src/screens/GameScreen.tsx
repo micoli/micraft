@@ -225,7 +225,11 @@ export function GameScreen() {
           />
           <Notifications notif={state.notif?.msg ? state.notif : null} />
           {state.healthBarVisible && state.playerStatus && (
-            <PlayerStatusBar status={state.playerStatus} npcProximity={state.npcProximity} layoutStyle={widgetStyle(activeLayout, "PLAYER_STATUS")} />
+            <PlayerStatusBar
+              status={state.playerStatus}
+              npcProximity={state.npcProximity}
+              layoutStyle={widgetStyle(activeLayout, "PLAYER_STATUS")}
+            />
           )}
           {state.combatTarget && (
             <CombatTargetFrame target={state.combatTarget} layoutStyle={widgetStyle(activeLayout, "COMBAT_TARGET")} />
