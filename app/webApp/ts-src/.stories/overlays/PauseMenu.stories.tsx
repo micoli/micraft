@@ -26,6 +26,8 @@ export const Open: Story = {
     onDisconnect: () => alert("disconnect"),
     onPreferences: () => alert("preferences"),
     onCharacter: () => alert("character"),
+    onMacros: () => alert("macros"),
+    onRefresh: () => alert("refresh"),
   },
 };
 
@@ -44,6 +46,7 @@ export const Controlled: Story = {
           onPreferences={() => setOpen(false)}
           onCharacter={() => setOpen(false)}
           onMacros={() => setOpen(false)}
+          onRefresh={() => setOpen(false)}
         />
       </>
     );

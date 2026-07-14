@@ -236,6 +236,12 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
   const updateCustomCmdText = (cmdIdx: number, text: string) =>
     setLocalCustomCmds((prev) => prev.map((e, i) => (i !== cmdIdx ? e : { ...e, text })));
 
+  const resetKeybindings = () => {
+    if (preferences?.defaultKeybindings) {
+      setLocalBindings({ ...preferences.defaultKeybindings });
+    }
+  };
+
   const cancelRecording = () => {
     if (doubleTapTimerRef.current) clearTimeout(doubleTapTimerRef.current);
     pendingKeyRef.current = null;
@@ -300,6 +306,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
     removeCustomCmdKey,
     updateCustomCmdText,
     cancelRecording,
+    resetKeybindings,
     handleSave,
     sortedCommands,
     groupedBindings,

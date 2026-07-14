@@ -125,6 +125,7 @@ export interface PreferencesData {
   chunkDebugVisible: boolean;
   commands: CommandInfo[];
   keybindings: Record<string, string[]>;
+  defaultKeybindings: Record<string, string[]>;
   customCommands: Record<string, string[]>;
   macros: Record<string, string>;
   fieldOfView: number;

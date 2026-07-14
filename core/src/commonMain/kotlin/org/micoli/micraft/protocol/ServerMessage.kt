@@ -170,6 +170,7 @@ sealed class ServerMessage {
         val chunkDebugVisible: Boolean = false,
         val macros: Map<String, String> = emptyMap(),
         val fieldOfView: Int = 70,
+        val defaultKeybindings: Map<String, List<String>> = emptyMap(),
     ) : ServerMessage()
 
     @ProtoId(25)

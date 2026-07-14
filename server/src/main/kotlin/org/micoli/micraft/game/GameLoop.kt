@@ -483,8 +483,8 @@ class GameLoop(
                 .map {
                     CommandInfo(it.id.toString(), it.command, it.description, it.autocompleteArgs)
                 }
-        val keybindings =
-            persistence?.loadPlayerKeyBindings(session.state.name) ?: defaultKeyBindings()
+        val defaults = defaultKeyBindings()
+        val keybindings = persistence?.loadPlayerKeyBindings(session.state.name) ?: defaults
         val customCommands = persistence?.loadPlayerCustomCommands(session.state.name) ?: emptyMap()
         val macros = persistence?.loadPlayerMacros(session.state.name) ?: emptyMap()
         return ServerMessage.PreferencesSync(
@@ -499,6 +499,7 @@ class GameLoop(
             chunkDebugVisible = session.state.chunkDebugVisible,
             macros = macros,
             fieldOfView = session.state.fieldOfView,
+            defaultKeybindings = defaults,
         )
     }
 

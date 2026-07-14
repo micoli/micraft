@@ -2030,6 +2030,13 @@
       }
     }
   }
+  .hover\:text-\[\#ccc\] {
+    &:hover {
+      @media (hover: hover) {
+        color: #ccc;
+      }
+    }
+  }
   .hover\:text-\[\#eee\] {
     &:hover {
       @media (hover: hover) {

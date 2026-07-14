@@ -225,13 +225,21 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
           {/* Keybindings tab */}
           {pref.tab === "keybindings" && (
             <>
-              <input
-                type="text"
-                value={kbSearch}
-                onChange={(e) => setKbSearch(e.target.value)}
-                placeholder="Search actions…"
-                className="w-full bg-[#2a2a2a] border border-[#555] rounded-sm text-xs text-[#eee] px-2 py-1 font-mono outline-none mb-3"
-              />
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={kbSearch}
+                  onChange={(e) => setKbSearch(e.target.value)}
+                  placeholder="Search actions…"
+                  className="flex-1 bg-[#2a2a2a] border border-[#555] rounded-sm text-xs text-[#eee] px-2 py-1 font-mono outline-none"
+                />
+                <button
+                  className="bg-transparent border border-[#555] rounded-sm text-[#888] cursor-pointer text-xs px-2 py-1 font-mono hover:border-[#888] hover:text-[#ccc] whitespace-nowrap"
+                  onClick={pref.resetKeybindings}
+                >
+                  Reset to default
+                </button>
+              </div>
               {pref.groups
                 .filter((group) =>
                   pref.groupedBindings.some(
