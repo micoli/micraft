@@ -19,9 +19,9 @@ private val TIMESTAMP_FMT: DateTimeFormatter =
 class ScreenshotController(private val dataPath: String) {
     fun register(route: Route) =
         route.apply {
-            post("/api/player/{name}/screenshots") {
-                val name =
-                    call.parameters["name"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+            post("/api/player/{id}/screenshots") {
+                val id =
+                    call.parameters["id"] ?: return@post call.respond(HttpStatusCode.BadRequest)
                 val body =
                     runCatching { call.receiveText() }
                         .getOrElse {
@@ -47,7 +47,7 @@ class ScreenshotController(private val dataPath: String) {
                             return@post call.respond(HttpStatusCode.BadRequest)
                         }
 
-                val dir = File("$dataPath/screenshots/$name")
+                val dir = File("$dataPath/screenshots/$id")
                 dir.mkdirs()
                 val filename = "${TIMESTAMP_FMT.format(Instant.now())}.png"
                 File(dir, filename).writeBytes(bytes)

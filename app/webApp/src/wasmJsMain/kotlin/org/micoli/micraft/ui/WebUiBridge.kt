@@ -10,6 +10,7 @@ import org.micoli.micraft.babylon.jsConsoleSetPlayer
 import org.micoli.micraft.babylon.jsHideChunkLoading
 import org.micoli.micraft.babylon.jsHideDisconnectedOverlay
 import org.micoli.micraft.babylon.jsPreferencesSync
+import org.micoli.micraft.babylon.jsSetPlayerId
 import org.micoli.micraft.babylon.jsShowDisconnectedOverlay
 import org.micoli.micraft.babylon.jsShowNotification
 import org.micoli.micraft.babylon.jsUpdateChunkLoading
@@ -57,6 +58,7 @@ class WebUiBridge(private val state: McUiState, private val scope: CoroutineScop
                 if (name.isNotEmpty()) jsConsoleSetPlayer(name)
             }
         }
+        scope.launch { state.playerIdFlow.collect { id -> if (id.isNotEmpty()) jsSetPlayerId(id) } }
         scope.launch {
             state.preferencesSyncFlow.collect { json -> if (json != null) jsPreferencesSync(json) }
         }

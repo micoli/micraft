@@ -380,9 +380,10 @@ export function CharacterRPGCreationScreen() {
         setLoading(false);
         return;
       }
+      const data = (await r.json()) as { id: string };
       const users = getUsers();
       if (!users[username]) users[username] = [];
-      if (!users[username].includes(trimmed)) users[username].push(trimmed);
+      if (!users[username].some((c) => c.name === trimmed)) users[username].push({ name: trimmed, id: data.id });
       saveUsers(users);
       navigate("/chars");
     } catch {

@@ -157,13 +157,13 @@ export function Character({ open, onClose, onCommand, characterSyncData }: Props
 
   useEffect(() => {
     if (!open) return;
-    const playerName = window.mcState?.playerName || "";
+    const playerId = window.mcState?.playerId || "";
     Promise.all([
       fetch("/api/armors").then((r) => r.json()),
-      fetch(`/api/player/${encodeURIComponent(playerName)}/armors`)
+      fetch(`/api/player/${encodeURIComponent(playerId)}/armors`)
         .then((r) => r.json())
         .catch(() => []),
-      fetch(`/api/player/${encodeURIComponent(playerName)}/skin`)
+      fetch(`/api/player/${encodeURIComponent(playerId)}/skin`)
         .then((r) => r.json())
         .catch(() => ({ skin: "player" })),
     ]).then(([armors, equippedArmors, skinData]) => {

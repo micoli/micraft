@@ -8,11 +8,10 @@ import org.micoli.micraft.game.world.WorldPersistence
 class PlayerRpgController(private val persistence: WorldPersistence?) {
     fun register(route: Route) =
         route.apply {
-            get("/api/player/{name}/rpg") {
-                val name =
-                    call.parameters["name"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+            get("/api/player/{id}/rpg") {
+                val id = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                 val characterData =
-                    persistence?.loadPlayerState(name)?.characterData
+                    persistence?.loadPlayerStateById(id)?.characterData
                         ?: return@get call.respond(HttpStatusCode.NotFound)
                 call.respondText(
                     """{"characterClass":"${characterData.characterClass}"}""",

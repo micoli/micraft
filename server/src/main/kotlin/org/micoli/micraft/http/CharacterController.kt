@@ -46,7 +46,7 @@ class CharacterController(private val persistence: WorldPersistence?) {
                         )
                 p.savePlayerState(playerName, state)
                 call.respondText(
-                    """{"playerName":"$playerName","skin":"$safeSkin"}""",
+                    """{"playerName":"$playerName","skin":"$safeSkin","id":"${state.id}"}""",
                     ContentType.Application.Json)
             }
             post("/api/character/rpgcreate") {
@@ -132,7 +132,7 @@ class CharacterController(private val persistence: WorldPersistence?) {
                         )
                 p.savePlayerState(playerName, state)
                 call.respondText(
-                    """{"playerName":"$playerName","characterClass":"${characterClass.name}"}""",
+                    """{"playerName":"$playerName","characterClass":"${characterClass.name}","id":"${state.id}"}""",
                     ContentType.Application.Json)
             }
         }

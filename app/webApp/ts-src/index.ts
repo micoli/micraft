@@ -73,6 +73,7 @@ window.mcState = {
   minimapSpeed: 0,
   // Session
   playerName: "",
+  playerId: "",
   connectedPlayers: [],
   npcNames: [],
   commandCompleters: {},
@@ -234,6 +235,7 @@ window.mc = {
   consumeConsoleInput: () => "",
   consumeLoginResult: () => "",
   consoleSetPlayer: () => {},
+  setPlayerId: () => {},
   cycleHudMode: () => {},
   syncLayouts: () => {},
   showLayoutEditor: () => {},

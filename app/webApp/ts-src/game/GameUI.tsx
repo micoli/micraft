@@ -483,6 +483,10 @@ export function GameUI() {
       }
     };
 
+    window.mc.setPlayerId = (id: string) => {
+      window.mcState.playerId = id;
+    };
+
     window.mc.cycleHudMode = () => dispatch({ type: "hud_mode_cycle" });
 
     window.mc.syncLayouts = (json: string) => {

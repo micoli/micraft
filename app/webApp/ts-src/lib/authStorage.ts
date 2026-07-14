@@ -1,14 +1,22 @@
 export type AuthMode = "none" | "local" | "oauth" | "loading";
 
-export function getUsers(): Record<string, string[]> {
+export type PlayerEntry = { name: string; id: string };
+
+export function getUsers(): Record<string, PlayerEntry[]> {
   try {
-    return JSON.parse(localStorage.getItem("micraft_users") || "{}");
+    const raw = JSON.parse(localStorage.getItem("micraft_users") || "{}") as Record<string, (string | PlayerEntry)[]>;
+    return Object.fromEntries(
+      Object.entries(raw).map(([user, chars]) => [
+        user,
+        Array.isArray(chars) ? chars.map((c) => (typeof c === "string" ? { name: c, id: "" } : c)) : [],
+      ]),
+    );
   } catch {
     return {};
   }
 }
 
-export function saveUsers(u: Record<string, string[]>) {
+export function saveUsers(u: Record<string, PlayerEntry[]>) {
   try {
     localStorage.setItem("micraft_users", JSON.stringify(u));
   } catch {}

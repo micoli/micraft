@@ -39,24 +39,26 @@ class ScreenshotControllerTest {
         return "data:image/png;base64," + Base64.getEncoder().encodeToString(pngBytes)
     }
 
+    private val testPlayerId = "550e8400-e29b-41d4-a716-446655440000"
+
     @Test
     fun saveScreenshot_createsFile() = testApplication {
         application { routing { ScreenshotController(tmpDir.absolutePath).register(this) } }
         val r =
-            client.post("/api/player/alice/screenshots") {
+            client.post("/api/player/$testPlayerId/screenshots") {
                 contentType(ContentType.Application.Json)
                 setBody("""{"imageData":"${fakePng()}"}""")
             }
         assertEquals(HttpStatusCode.Created, r.status)
         val body = r.bodyAsText()
         assertTrue(body.contains("filename"))
-        val dir = File(tmpDir, "screenshots/alice")
+        val dir = File(tmpDir, "screenshots/$testPlayerId")
         assertTrue(dir.exists())
         assertTrue(dir.listFiles()?.any { it.name.endsWith(".png") } == true)
     }
 
     @Test
-    fun missingPlayerName_returnsBadRequest() = testApplication {
+    fun missingPlayerId_returnsBadRequest() = testApplication {
         application { routing { ScreenshotController(tmpDir.absolutePath).register(this) } }
         val r =
             client.post("/api/player//screenshots") {
@@ -70,7 +72,7 @@ class ScreenshotControllerTest {
     fun missingImageData_returnsBadRequest() = testApplication {
         application { routing { ScreenshotController(tmpDir.absolutePath).register(this) } }
         val r =
-            client.post("/api/player/alice/screenshots") {
+            client.post("/api/player/$testPlayerId/screenshots") {
                 contentType(ContentType.Application.Json)
                 setBody("""{}""")
             }
@@ -81,7 +83,7 @@ class ScreenshotControllerTest {
     fun invalidBase64_returnsBadRequest() = testApplication {
         application { routing { ScreenshotController(tmpDir.absolutePath).register(this) } }
         val r =
-            client.post("/api/player/alice/screenshots") {
+            client.post("/api/player/$testPlayerId/screenshots") {
                 contentType(ContentType.Application.Json)
                 setBody("""{"imageData":"not-valid-base64!!!"}""")
             }

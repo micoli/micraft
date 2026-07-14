@@ -56,7 +56,7 @@ export function CharacterCreationScreen() {
     }
     const users = getUsers();
     const existing = users[username] || [];
-    if (existing.includes(name)) {
+    if (existing.some((c) => c.name === name)) {
       setCreateError("Name already taken.");
       createNameInputRef.current?.focus();
       return;
@@ -74,8 +74,9 @@ export function CharacterCreationScreen() {
         setLoading(false);
         return;
       }
+      const data = (await r.json()) as { id: string };
       if (!users[username]) users[username] = [];
-      users[username].push(name);
+      users[username].push({ name, id: data.id });
       saveUsers(users);
       navigate("/chars");
     } catch {

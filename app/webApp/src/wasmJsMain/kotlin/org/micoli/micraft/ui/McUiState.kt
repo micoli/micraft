@@ -71,6 +71,14 @@ class McUiState {
             _consolePlayerName.value = value
         }
 
+    private val _playerId = MutableStateFlow("")
+    val playerIdFlow: StateFlow<String> = _playerId
+    var playerId: String
+        get() = _playerId.value
+        set(value) {
+            _playerId.value = value
+        }
+
     // Pair: (subscribedChannels, knownChannels)
     private val _channelsSync =
         MutableStateFlow<Pair<List<ChannelSubscription>, List<String>>?>(null)

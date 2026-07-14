@@ -52,6 +52,7 @@ class LocalPlayerController(
     private val serverHost: () -> String,
     private val serverPort: () -> Int,
     private val playerName: () -> String,
+    private val playerId: () -> String,
     private val npcManager: NpcManager,
 ) {
     var predX = 0.0
@@ -478,7 +479,7 @@ class LocalPlayerController(
                     outMessages.trySend(ClientMessage.ViewModeUpdate(viewMode.name))
                 }
                 event == "inventory" -> jsToggleHotbar()
-                event == "screenshot" -> jsTakeScreenshot(scene, camera, playerName())
+                event == "screenshot" -> jsTakeScreenshot(scene, camera, playerId())
                 event == "undo" -> outMessages.trySend(ClientMessage.Command("/undo 1"))
                 event == "fly_toggle" -> pendingFlyToggle = true
                 event == "auto_forward" -> autoAdvance = !autoAdvance

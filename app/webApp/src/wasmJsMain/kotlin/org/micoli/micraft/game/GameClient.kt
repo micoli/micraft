@@ -53,6 +53,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             serverHost = { serverHost },
             serverPort = { serverPort },
             playerName = { currentPlayerName },
+            playerId = { localPlayerId ?: "" },
             npcManager = npcManager,
         )
 
@@ -345,6 +346,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         }
                     }
                     playerIdReady.complete(msg.playerId)
+                    uiState.playerId = msg.playerId
                     uiState.consolePlayerName = msg.playerName
                     jsFetchI18n(msg.language)
                     jsFetchBiomeColors()

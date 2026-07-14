@@ -63,6 +63,20 @@ class WorldPersistence(val worldDir: Path) {
         }
     }
 
+    fun loadPlayerStateById(id: String): PlayerState? =
+        playersDir
+            .toFile()
+            .listFiles { f -> f.extension == "json" }
+            ?.firstNotNullOfOrNull { file ->
+                try {
+                    playerJson.decodeFromString(PlayerState.serializer(), file.readText()).takeIf {
+                        it.id == id
+                    }
+                } catch (_: Exception) {
+                    null
+                }
+            }
+
     fun loadPlayerState(name: String): PlayerState? {
         val jsonFile = playersDir.resolve("${name.sanitize()}.json")
         val yamlFile = playersDir.resolve("${name.sanitize()}.yaml")

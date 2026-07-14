@@ -11,10 +11,9 @@ import org.micoli.micraft.game.world.WorldPersistence
 class PlayerArmorsController(private val persistence: WorldPersistence?) {
     fun register(route: Route) =
         route.apply {
-            get("/api/player/{name}/armors") {
-                val name =
-                    call.parameters["name"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-                val armors = persistence?.loadPlayerState(name)?.armors ?: emptyList()
+            get("/api/player/{id}/armors") {
+                val id = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                val armors = persistence?.loadPlayerStateById(id)?.armors ?: emptyList()
                 call.respondText(
                     Json.encodeToString(ListSerializer(String.serializer()), armors),
                     ContentType.Application.Json)

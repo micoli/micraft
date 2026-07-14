@@ -19,6 +19,7 @@ import {
   saveLastUser,
   clearLastUser,
   AuthMode,
+  PlayerEntry,
 } from "../lib/authStorage";
 
 const SUPPORTED_LANGS: { code: string; label: string }[] = [
@@ -58,7 +59,7 @@ export function CharacterSelectionScreen() {
   const [username, setUsername] = useState(getLastUser());
   const [token, setToken] = useState(getStoredToken());
   const [lang, setLang] = useState(getLastLang());
-  const [chars, setChars] = useState<string[]>([]);
+  const [chars, setChars] = useState<PlayerEntry[]>([]);
   const [charClasses, setCharClasses] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState("");
   const [previewSkin, setPreviewSkin] = useState("player");
@@ -90,13 +91,13 @@ export function CharacterSelectionScreen() {
     async function loadChars() {
       if (playerChars.length > 0) {
         const results = await Promise.all(
-          playerChars.map((name) =>
-            fetch(`/api/player/${encodeURIComponent(name)}/skin`)
-              .then((r) => (r.ok ? name : null))
-              .catch(() => name),
+          playerChars.map((char) =>
+            fetch(`/api/player/${encodeURIComponent(char.id)}/skin`)
+              .then((r) => (r.ok ? char : null))
+              .catch(() => char),
           ),
         );
-        const existing = results.filter((n): n is string => n !== null);
+        const existing = results.filter((c): c is PlayerEntry => c !== null);
         if (existing.length !== playerChars.length) {
           const updated = getUsers();
           updated[user] = existing;
@@ -106,14 +107,16 @@ export function CharacterSelectionScreen() {
       }
       const lastPlayer = getLastPlayer(user);
       setChars(playerChars);
-      setSelected(lastPlayer && playerChars.includes(lastPlayer) ? lastPlayer : playerChars[0] || "");
+      setSelected(
+        lastPlayer && playerChars.some((c) => c.name === lastPlayer) ? lastPlayer : playerChars[0]?.name || "",
+      );
 
       const classEntries = await Promise.all(
-        playerChars.map((n) =>
-          fetch(`/api/player/${encodeURIComponent(n)}/rpg`)
+        playerChars.map((char) =>
+          fetch(`/api/player/${encodeURIComponent(char.id)}/rpg`)
             .then((r) => (r.ok ? r.json() : null))
-            .then((d: { characterClass: string } | null) => [n, d?.characterClass ?? null] as const)
-            .catch(() => [n, null] as const),
+            .then((d: { characterClass: string } | null) => [char.name, d?.characterClass ?? null] as const)
+            .catch(() => [char.name, null] as const),
         ),
       );
       setCharClasses(Object.fromEntries(classEntries.filter(([, cls]) => cls !== null)) as Record<string, string>);
@@ -124,7 +127,9 @@ export function CharacterSelectionScreen() {
 
   useEffect(() => {
     if (!selected) return;
-    const enc = encodeURIComponent(selected);
+    const selectedChar = chars.find((c) => c.name === selected);
+    if (!selectedChar?.id) return;
+    const enc = encodeURIComponent(selectedChar.id);
     Promise.all([
       fetch(`/api/player/${enc}/skin`)
         .then((r) => r.json())
@@ -136,7 +141,7 @@ export function CharacterSelectionScreen() {
       setPreviewSkin(skinData.skin ?? "player");
       setPreviewArmors(Array.isArray(armors) ? armors : []);
     });
-  }, [selected]);
+  }, [selected, chars]);
 
   useEffect(() => {
     if (selected) setTimeout(() => playButtonRef.current?.focus(), 50);
@@ -158,11 +163,11 @@ export function CharacterSelectionScreen() {
     navigate("/auth");
   }
 
-  function addCharToList(name: string, skin: string) {
+  function addCharToList(name: string, id: string, skin: string) {
     const user = username;
     const users = getUsers();
     if (!users[user]) users[user] = [];
-    if (!users[user].includes(name)) users[user].push(name);
+    if (!users[user].some((c) => c.name === name)) users[user].push({ name, id });
     saveUsers(users);
     setChars(users[user]);
     setSelected(name);
@@ -202,21 +207,21 @@ export function CharacterSelectionScreen() {
               )}
               <div>
                 {chars.length === 0 && <div className="text-xs text-[#666] mb-3">No characters yet.</div>}
-                {chars.map((name, i) => (
-                  <div key={name} className="flex items-center gap-2 py-2.5">
+                {chars.map((char, i) => (
+                  <div key={char.name} className="flex items-center gap-2 py-2.5">
                     <input
                       type="radio"
                       name="mc-char"
-                      value={name}
+                      value={char.name}
                       id={`mc-char-${i}`}
-                      checked={selected === name}
-                      onChange={() => setSelected(name)}
+                      checked={selected === char.name}
+                      onChange={() => setSelected(char.name)}
                     />
                     <label htmlFor={`mc-char-${i}`} className="text-sm cursor-pointer flex items-center gap-2">
-                      {name}
-                      {charClasses[name] && (
+                      {char.name}
+                      {charClasses[char.name] && (
                         <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-950/60 border border-blue-700/50 text-blue-300">
-                          {charClasses[name]}
+                          {charClasses[char.name]}
                         </span>
                       )}
                     </label>
