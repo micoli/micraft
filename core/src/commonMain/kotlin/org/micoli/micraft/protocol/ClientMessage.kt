@@ -76,7 +76,7 @@ sealed class ClientMessage {
         val shadersEnabled: Boolean,
         val keybindings: Map<String, List<String>> = emptyMap(),
         val customCommands: Map<String, List<String>> = emptyMap(),
-        val animatedFavicon: Boolean = true,
+        val animatedFavicon: Boolean = false,
         val chunkDebugVisible: Boolean = false,
         val macros: Map<String, String> = emptyMap(),
         val fieldOfView: Int = 70,

@@ -129,6 +129,19 @@ class ProceduralChunkGenerator(
             },
         )
 
+        cavernGenerator.carveStaircases(
+            blocks,
+            ox,
+            oz,
+            localSurfaceAt = { lx, lz -> cols[lx][lz].h },
+            cellConfigAt = { cellX, cellZ ->
+                val wx = cellX * biomeRegistry.voronoiCellSize + biomeRegistry.voronoiCellSize / 2
+                val wz = cellZ * biomeRegistry.voronoiCellSize + biomeRegistry.voronoiCellSize / 2
+                val sample = voronoi.sample(wx, wz)
+                voronoi.effectiveBiome(wx, wz, surfaceHeight(wx, wz, sample)).caverns
+            },
+        )
+
         // here surfaceHeight is a ref to a fun
         placeVegetation(this, blocks, ox, oz)
         placeHouses(blocks, ox, oz)
@@ -152,6 +165,38 @@ class ProceduralChunkGenerator(
                     result["cavern - ${biome.id}_$seq"] =
                         Vec3(s.wx.toFloat(), s.wy.toFloat(), s.wz.toFloat())
                     seq++
+                }
+            }
+        }
+        return result
+    }
+
+    fun namedStaircasePoints(cellRadius: Int = 5): Map<String, Vec3> {
+        val cellSize = biomeRegistry.voronoiCellSize
+        val result = mutableMapOf<String, Vec3>()
+        var seq = 0
+        for (cx in -cellRadius..cellRadius) {
+            for (cz in -cellRadius..cellRadius) {
+                val wx = cx * cellSize + cellSize / 2
+                val wz = cz * cellSize + cellSize / 2
+                val biome = voronoi.sample(wx, wz).primary
+                val config = biome.caverns ?: continue
+                if (!config.staircaseEnabled) continue
+                for (s in cavernGenerator.cavernSeedPoints(cx, cz, config)) {
+                    val dir = cavernGenerator.staircaseDirection(s)
+                    val startY = cavernGenerator.staircaseStartY(s, config)
+                    for (i in 0..300) {
+                        val exitWx = s.wx + i * dir.dx
+                        val exitWz = s.wz + i * dir.dz
+                        val sample = voronoi.sample(exitWx, exitWz)
+                        val surface = surfaceHeight(exitWx, exitWz, sample)
+                        if (startY + i >= surface - 1) {
+                            result["staircase - ${biome.id}_$seq"] =
+                                Vec3(exitWx.toFloat(), surface.toFloat(), exitWz.toFloat())
+                            seq++
+                            break
+                        }
+                    }
                 }
             }
         }

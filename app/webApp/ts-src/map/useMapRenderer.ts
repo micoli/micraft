@@ -7,6 +7,7 @@ import type {
   LayerKey,
   Layers,
   MapApiState,
+  StaircaseMapInfo,
   VoronoiCellInfo,
 } from "./types";
 import { LAYER_KEYS } from "./types";
@@ -276,6 +277,30 @@ function drawNPCs(
   }
 }
 
+function drawStaircases(
+  staircases: StaircaseMapInfo[],
+  worldToCanvas: (wx: number, wz: number) => [number, number],
+  cam: Camera,
+  ctx: CanvasRenderingContext2D,
+) {
+  const r = Math.max(4, Math.min(10, cam.pxPerBlock * 3));
+  for (const s of staircases) {
+    const [sx, sz] = worldToCanvas(s.x, s.z);
+    ctx.beginPath();
+    ctx.arc(sx, sz, r, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(160,80,220,0.35)";
+    ctx.fill();
+    ctx.strokeStyle = "#b060e0";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    if (cam.pxPerBlock >= 0.5) {
+      ctx.fillStyle = "#d090f0";
+      ctx.font = "9px monospace";
+      ctx.fillText("↑", sx - 3, sz + 3);
+    }
+  }
+}
+
 function drawPlayers(
   state: MapApiState,
   worldToCanvas: (wx: number, wz: number) => [number, number],
@@ -351,6 +376,8 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
   const terrainData = useRef<ChunkTerrainInfo[]>([]);
   const voronoiCells = useRef<VoronoiCellInfo[]>([]);
   const housesData = useRef<HouseMapInfo[]>([]);
+  const staircasesData = useRef<StaircaseMapInfo[]>([]);
+  const staircasesFetched = useRef(false);
   const roadImg = useRef<HTMLImageElement | null>(null);
   const roadImgCx = useRef(0);
   const roadImgCz = useRef(0);
@@ -501,6 +528,11 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
       if (L.players) {
         drawPlayers(state, worldToCanvas, ft, ctx);
       }
+
+      // Staircases
+      if (L.staircases) {
+        drawStaircases(staircasesData.current, worldToCanvas, cam, ctx);
+      }
     }
 
     function autoFitView() {
@@ -554,6 +586,20 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
       terrainDirty.current = true;
       biomeDirty.current = true;
       draw();
+    }
+
+    async function fetchStaircases() {
+      if (staircasesFetched.current) return;
+      staircasesFetched.current = true;
+      try {
+        const r = await fetch("/api/map/staircases");
+        if (r.ok) {
+          staircasesData.current = await r.json();
+          draw();
+        }
+      } catch {
+        staircasesFetched.current = false;
+      }
     }
 
     async function fetchHouses() {
@@ -650,6 +696,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
             autoFitView();
             fetchHouses();
             fetchPreciseRoads();
+            fetchStaircases();
           }
           draw();
         }
@@ -761,6 +808,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
       setInterval(fetchHouses, 10000),
       setInterval(fetchPreciseRoads, 10000),
       setInterval(fetchBiomeBorders, 10000),
+      setInterval(fetchStaircases, 30000),
     ];
 
     return () => {

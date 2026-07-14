@@ -318,4 +318,14 @@ class ProceduralChunkGeneratorTest {
         val b = ProceduralChunkGenerator(seed = 55L, biomeRegistry = registry)
         assertEquals(a.generate(ChunkPos(1, -2)), b.generate(ChunkPos(1, -2)))
     }
+
+    @Test
+    fun namedStaircasePoints_defaultRegistry_returnsNonEmpty() {
+        val gen = ProceduralChunkGenerator(seed = 42L, biomeRegistry = BiomeRegistry.default())
+        val staircases = gen.namedStaircasePoints()
+        val caverns = gen.namedCavernPoints()
+        assertTrue(
+            staircases.isNotEmpty(),
+            "expected staircase points, cavern count=${caverns.size}, staircase count=${staircases.size}")
+    }
 }

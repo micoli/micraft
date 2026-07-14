@@ -29,6 +29,7 @@ data class CavernConfig(
     val numberPerVoronoi: Int = 1,
     val cavernMinRadius: Int = 20,
     val cavernMaxRadius: Int = 50,
+    val staircaseEnabled: Boolean = false,
 )
 
 @Serializable

@@ -2,6 +2,7 @@ package org.micoli.micraft.game.world.proceduralGenerator
 
 import kotlin.math.abs
 import kotlin.math.floor
+import kotlin.math.min
 import kotlin.math.sqrt
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
@@ -20,6 +21,8 @@ class CavernGenerator(private val seed: Long, private val voronoiCellSize: Int =
     private val patatoidNoise = PerlinNoise(seed + 500L)
 
     companion object {
+        private const val STAIRCASE_CLEARANCE = 5
+        private const val STAIRCASE_MAX_STEPS = 300
         private const val CAVERN_THRESHOLD = 0.25
         private const val TUNNEL_THRESHOLD = 0.10
         private const val CAVERN_SCALE_XZ = 55.0
@@ -215,4 +218,94 @@ class CavernGenerator(private val seed: Long, private val voronoiCellSize: Int =
             }
         }
     }
+
+    // Cardinal direction (dx, dz) for the staircase from this seed, derived deterministically.
+    // perpX/perpZ is the +1 offset for the second width block (perpendicular to travel direction).
+    internal fun staircaseDirection(seed: CavernSeed): StaircaseDir {
+        val h = seed.wx.toLong() * 1234567L xor seed.wz.toLong() * 7654321L xor this.seed
+        return when (((h % 4) + 4) % 4) {
+            0L -> StaircaseDir(dx = 1, dz = 0, perpX = 0, perpZ = 1)
+            1L -> StaircaseDir(dx = -1, dz = 0, perpX = 0, perpZ = 1)
+            2L -> StaircaseDir(dx = 0, dz = 1, perpX = 1, perpZ = 0)
+            else -> StaircaseDir(dx = 0, dz = -1, perpX = 1, perpZ = 0)
+        }
+    }
+
+    fun carveStaircases(
+        blocks: ByteArray,
+        ox: Int,
+        oz: Int,
+        localSurfaceAt: (lx: Int, lz: Int) -> Int,
+        cellConfigAt: (cellX: Int, cellZ: Int) -> CavernConfig?,
+    ) {
+        val s = WorldConstants.CHUNK_SIZE
+        val airWire = BlockRegistry.wireIndex(BlockType.AIR).toByte()
+        val cellRadius = voronoiCellSize / s + 2
+
+        val cxChunk = floor(ox.toDouble() / voronoiCellSize).toInt()
+        val czChunk = floor(oz.toDouble() / voronoiCellSize).toInt()
+
+        for (dcx in -cellRadius..cellRadius) {
+            for (dcz in -cellRadius..cellRadius) {
+                val cellX = cxChunk + dcx
+                val cellZ = czChunk + dcz
+                val config = cellConfigAt(cellX, cellZ) ?: continue
+                if (!config.staircaseEnabled) continue
+                for (seed in cavernSeedPoints(cellX, cellZ, config)) {
+                    val startY = staircaseStartY(seed, config)
+                    carveStaircaseSegment(blocks, ox, oz, seed, startY, localSurfaceAt, airWire, s)
+                }
+            }
+        }
+    }
+
+    internal fun staircaseStartY(seed: CavernSeed, config: CavernConfig): Int {
+        val halfRange = (config.cavernMaxHeight - config.cavernMinHeight) / 2
+        return maxOf(seed.wy - halfRange, config.cavernMinHeight)
+    }
+
+    private fun carveStaircaseSegment(
+        blocks: ByteArray,
+        ox: Int,
+        oz: Int,
+        seed: CavernSeed,
+        startY: Int,
+        localSurfaceAt: (lx: Int, lz: Int) -> Int,
+        airWire: Byte,
+        chunkSize: Int,
+    ) {
+        val dir = staircaseDirection(seed)
+        val maxSteps = min(STAIRCASE_MAX_STEPS, WorldConstants.WORLD_MAX_Y - startY)
+
+        for (i in 0..maxSteps) {
+            val wx1 = seed.wx + i * dir.dx
+            val wz1 = seed.wz + i * dir.dz
+            val wx2 = wx1 + dir.perpX
+            val wz2 = wz1 + dir.perpZ
+            val stepY = startY + i
+
+            for (clearOffset in 1..STAIRCASE_CLEARANCE) {
+                val clearY = stepY + clearOffset
+                if (clearY >= Chunk.SIZE_Y) break
+
+                val lx1 = wx1 - ox
+                val lz1 = wz1 - oz
+                if (lx1 in 0 until chunkSize && lz1 in 0 until chunkSize) {
+                    if (clearY < localSurfaceAt(lx1, lz1)) {
+                        blocks[Chunk.index(lx1, clearY, lz1)] = airWire
+                    }
+                }
+
+                val lx2 = wx2 - ox
+                val lz2 = wz2 - oz
+                if (lx2 in 0 until chunkSize && lz2 in 0 until chunkSize) {
+                    if (clearY < localSurfaceAt(lx2, lz2)) {
+                        blocks[Chunk.index(lx2, clearY, lz2)] = airWire
+                    }
+                }
+            }
+        }
+    }
 }
+
+data class StaircaseDir(val dx: Int, val dz: Int, val perpX: Int, val perpZ: Int)

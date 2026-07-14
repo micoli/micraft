@@ -65,6 +65,8 @@ data class RoadSegmentInfo(val x1: Float, val z1: Float, val x2: Float, val z2: 
 
 @Serializable data class ChunkBiomeBorderInfo(val cx: Int, val cz: Int, val mask: List<Boolean>)
 
+@Serializable data class StaircaseMapInfo(val name: String, val x: Float, val z: Float)
+
 class MapController(private val gameLoop: GameLoop) {
     private val roadRasterCache = ConcurrentHashMap<Long, List<Boolean>>()
     private val biomeBorderCache = ConcurrentHashMap<Long, List<Boolean>>()
@@ -123,6 +125,16 @@ class MapController(private val gameLoop: GameLoop) {
                         } ?: emptyList()
                 call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
                 call.respondText(Json.encodeToString(houses), ContentType.Application.Json)
+            }
+
+            get("/api/map/staircases") {
+                val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
+                val points =
+                    gen?.namedStaircasePoints()?.map { (name, pos) ->
+                        StaircaseMapInfo(name, pos.x, pos.z)
+                    } ?: emptyList()
+                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+                call.respondText(Json.encodeToString(points), ContentType.Application.Json)
             }
 
             get("/api/map/roads") {

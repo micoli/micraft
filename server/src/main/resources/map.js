@@ -25108,7 +25108,8 @@
     "npcs",
     "precise-roads",
     "chunks",
-    "weather"
+    "weather",
+    "staircases"
   ];
 
   // map/Sidebar.tsx
@@ -25122,7 +25123,8 @@
     npcs: "NPCs",
     "precise-roads": "Precise roads",
     chunks: "Chunks",
-    weather: "Weather zones"
+    weather: "Weather zones",
+    staircases: "Staircases"
   };
   function Sidebar({ time, apiState, layers, followTarget, onLayerToggle, onSetFollow, onFitAll }) {
     return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "w-[220px] min-w-[220px] bg-[#111] p-3 overflow-y-auto border-r border-[#333] flex flex-col gap-0 font-mono", children: [
@@ -25398,6 +25400,24 @@
       ctx.fillText(n.type, nx + 7, nz + 4);
     }
   }
+  function drawStaircases(staircases, worldToCanvas, cam, ctx) {
+    const r2 = Math.max(4, Math.min(10, cam.pxPerBlock * 3));
+    for (const s of staircases) {
+      const [sx, sz] = worldToCanvas(s.x, s.z);
+      ctx.beginPath();
+      ctx.arc(sx, sz, r2, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(160,80,220,0.35)";
+      ctx.fill();
+      ctx.strokeStyle = "#b060e0";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      if (cam.pxPerBlock >= 0.5) {
+        ctx.fillStyle = "#d090f0";
+        ctx.font = "9px monospace";
+        ctx.fillText("\u2191", sx - 3, sz + 3);
+      }
+    }
+  }
   function drawPlayers(state, worldToCanvas, ft, ctx) {
     for (const p of state.players) {
       const [px, pz] = worldToCanvas(p.x, p.z);
@@ -25458,6 +25478,8 @@
     const terrainData = (0, import_react2.useRef)([]);
     const voronoiCells = (0, import_react2.useRef)([]);
     const housesData = (0, import_react2.useRef)([]);
+    const staircasesData = (0, import_react2.useRef)([]);
+    const staircasesFetched = (0, import_react2.useRef)(false);
     const roadImg = (0, import_react2.useRef)(null);
     const roadImgCx = (0, import_react2.useRef)(0);
     const roadImgCz = (0, import_react2.useRef)(0);
@@ -25580,6 +25602,9 @@
         if (L.players) {
           drawPlayers(state, worldToCanvas, ft, ctx);
         }
+        if (L.staircases) {
+          drawStaircases(staircasesData.current, worldToCanvas, cam, ctx);
+        }
       }
       function autoFitView() {
         const terrain = terrainData.current;
@@ -25630,6 +25655,19 @@
         terrainDirty.current = true;
         biomeDirty.current = true;
         draw();
+      }
+      async function fetchStaircases() {
+        if (staircasesFetched.current) return;
+        staircasesFetched.current = true;
+        try {
+          const r2 = await fetch("/api/map/staircases");
+          if (r2.ok) {
+            staircasesData.current = await r2.json();
+            draw();
+          }
+        } catch (e) {
+          staircasesFetched.current = false;
+        }
       }
       async function fetchHouses() {
         const cx2 = Math.round(camera.current.x), cz = Math.round(camera.current.z);
@@ -25716,6 +25754,7 @@
               autoFitView();
               fetchHouses();
               fetchPreciseRoads();
+              fetchStaircases();
             }
             draw();
           }
@@ -25813,7 +25852,8 @@
         setInterval(pollTerrain, 5e3),
         setInterval(fetchHouses, 1e4),
         setInterval(fetchPreciseRoads, 1e4),
-        setInterval(fetchBiomeBorders, 1e4)
+        setInterval(fetchBiomeBorders, 1e4),
+        setInterval(fetchStaircases, 3e4)
       ];
       return () => {
         canvas.removeEventListener("wheel", onWheel);

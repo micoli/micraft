@@ -45,6 +45,12 @@ export interface VoronoiCellInfo {
   color: string;
 }
 
+export interface StaircaseMapInfo {
+  name: string;
+  x: number;
+  z: number;
+}
+
 export interface HouseMapInfo {
   x: number;
   z: number;
@@ -69,6 +75,7 @@ export const LAYER_KEYS = [
   "precise-roads",
   "chunks",
   "weather",
+  "staircases",
 ] as const;
 
 export type LayerKey = (typeof LAYER_KEYS)[number];

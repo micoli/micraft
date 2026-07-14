@@ -321,4 +321,81 @@ class CavernGeneratorTest {
             mismatches < 50,
             "border columns should mostly agree across chunks (mismatches=$mismatches)")
     }
+
+    // ── staircase ─────────────────────────────────────────────────────────────
+
+    private fun staircaseConfig(enabled: Boolean = true) =
+        basicConfig()
+            .copy(
+                cavernMinHeight = 5,
+                cavernMaxHeight = 40,
+                cavernMinRadius = 8,
+                cavernMaxRadius = 8,
+                staircaseEnabled = enabled,
+            )
+
+    private fun carveStaircases(
+        blocks: ByteArray,
+        ox: Int = 0,
+        oz: Int = 0,
+        surface: Int = 80,
+        config: CavernConfig? = staircaseConfig(),
+    ) =
+        gen(seed = 1L)
+            .carveStaircases(
+                blocks,
+                ox,
+                oz,
+                localSurfaceAt = { _, _ -> surface },
+                cellConfigAt = { _, _ -> config },
+            )
+
+    @Test
+    fun carveStaircases_noConfig_leavesChunkUnchanged() {
+        val blocks = solidChunk()
+        val original = blocks.copyOf()
+        carveStaircases(blocks, config = null)
+        assertTrue(blocks.contentEquals(original))
+    }
+
+    @Test
+    fun carveStaircases_staircaseDisabled_leavesChunkUnchanged() {
+        val blocks = solidChunk()
+        val original = blocks.copyOf()
+        carveStaircases(blocks, config = staircaseConfig(enabled = false))
+        assertTrue(blocks.contentEquals(original))
+    }
+
+    @Test
+    fun carveStaircases_enabled_carvesAtLeastOneClearanceBlock() {
+        val blocks = solidChunk()
+        carveStaircases(blocks)
+        assertTrue(
+            blocks.count { it == airWire } > 0, "staircase must carve at least one air block")
+    }
+
+    @Test
+    fun carveStaircases_neverBreachesSurface() {
+        val surface = 60
+        val blocks = solidChunk()
+        carveStaircases(blocks, surface = surface)
+        for (lx in 0 until WorldConstants.CHUNK_SIZE) {
+            for (lz in 0 until WorldConstants.CHUNK_SIZE) {
+                for (y in surface until Chunk.SIZE_Y) {
+                    assertFalse(
+                        blocks[Chunk.index(lx, y, lz)] == airWire,
+                        "staircase breached surface at lx=$lx y=$y lz=$lz (surface=$surface)")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun carveStaircases_isDeterministic() {
+        val b1 = solidChunk()
+        val b2 = solidChunk()
+        carveStaircases(b1)
+        carveStaircases(b2)
+        assertTrue(b1.contentEquals(b2), "staircase carving must be deterministic")
+    }
 }

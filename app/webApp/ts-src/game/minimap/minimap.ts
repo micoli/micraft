@@ -24,6 +24,30 @@ let biomeBorderData: Array<{ cx: number; cz: number; mask: boolean[] }> = [];
 const biomeFetchCenter = { x: NaN, z: NaN };
 let biomeFetching = false;
 
+// Staircase surface points
+let staircasePoints: Array<{ x: number; z: number }> = [];
+let staircasesFetching = false;
+let staircasesFetched = false;
+
+function maybeRefetchStaircases(): void {
+  if (staircasesFetching || staircasesFetched) return;
+  staircasesFetching = true;
+  fetch("/api/map/staircases")
+    .then((r) => {
+      if (r.ok) return r.json();
+    })
+    .then((data) => {
+      if (data) {
+        staircasePoints = data;
+        staircasesFetched = true;
+      }
+    })
+    .catch(() => {})
+    .finally(() => {
+      staircasesFetching = false;
+    });
+}
+
 function maybeRefetchRoads(playerX: number, playerZ: number): void {
   if (roadsFetching) return;
   if (!isNaN(roadsFetchCenter.x) && Math.hypot(playerX - roadsFetchCenter.x, playerZ - roadsFetchCenter.z) < 200)
@@ -194,6 +218,7 @@ export function registerMinimap(): Pick<
 
       maybeRefetchRoads(playerX, playerZ);
       maybeRefetchBiomeBorders(playerX, playerZ);
+      maybeRefetchStaircases();
 
       const canvas = document.getElementById("mc-minimap") as HTMLCanvasElement | null;
       if (!canvas) return;
@@ -331,6 +356,22 @@ export function registerMinimap(): Pick<
         ctx.fill();
         ctx.strokeStyle = "#000000";
         ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+
+      // Staircase surface exits (violet circles)
+      for (const s of staircasePoints) {
+        const bx = s.x - playerX + halfBlocks;
+        const bz = playerZ - s.z + halfBlocks; // Z flipped
+        const px = bx * pixPerBlock;
+        const pz = bz * pixPerBlock;
+        if (px < -6 || px > MINIMAP_SIZE + 6 || pz < -6 || pz > MINIMAP_SIZE + 6) continue;
+        ctx.beginPath();
+        ctx.arc(px, pz, 3, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(160,80,220,0.5)";
+        ctx.fill();
+        ctx.strokeStyle = "#b060e0";
+        ctx.lineWidth = 1;
         ctx.stroke();
       }
 

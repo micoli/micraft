@@ -48,6 +48,16 @@ class BiomeRegistry(
                             elevationMin = 55,
                             elevationMax = 90,
                             vegetation = listOf(VegetationEntry(VegetationType.WEED, 0.08)),
+                            caverns =
+                                CavernConfig(
+                                    cavernMinHeight = 5,
+                                    cavernMaxHeight = 50,
+                                    wallBlock = BlockType.STONE,
+                                    numberPerVoronoi = 1,
+                                    cavernMinRadius = 12,
+                                    cavernMaxRadius = 30,
+                                    staircaseEnabled = true,
+                                ),
                         ),
                         BiomeDefinition(
                             id = "plains",
@@ -62,6 +72,16 @@ class BiomeRegistry(
                                     VegetationEntry(VegetationType.FLOWER, 0.06),
                                     VegetationEntry(VegetationType.WEED, 0.05),
                                     VegetationEntry(VegetationType.OAK_TREE, 0.01),
+                                ),
+                            caverns =
+                                CavernConfig(
+                                    cavernMinHeight = 5,
+                                    cavernMaxHeight = 55,
+                                    wallBlock = BlockType.STONE,
+                                    numberPerVoronoi = 2,
+                                    cavernMinRadius = 15,
+                                    cavernMaxRadius = 35,
+                                    staircaseEnabled = true,
                                 ),
                         ),
                         BiomeDefinition(
@@ -78,6 +98,18 @@ class BiomeRegistry(
                                     VegetationEntry(VegetationType.OAK_TREE, 0.12),
                                     VegetationEntry(VegetationType.FLOWER, 0.04),
                                     VegetationEntry(VegetationType.WEED, 0.04),
+                                ),
+                            caverns =
+                                CavernConfig(
+                                    cavernMinHeight = 5,
+                                    cavernMaxHeight = 60,
+                                    stalactitesPresent = true,
+                                    stalagmitesPresent = true,
+                                    wallBlock = BlockType.STONE,
+                                    numberPerVoronoi = 3,
+                                    cavernMinRadius = 20,
+                                    cavernMaxRadius = 50,
+                                    staircaseEnabled = true,
                                 ),
                         ),
                         BiomeDefinition(

@@ -44,8 +44,9 @@ data class CommandContextClosures(
 val commandContextModule = module {
     single { (closures: CommandContextClosures) ->
         val world = get<WorldState>()
-        val cavernPoints =
-            (world.generator as? ProceduralChunkGenerator)?.namedCavernPoints() ?: emptyMap()
+        val generator = world.generator as? ProceduralChunkGenerator
+        val cavernPoints = generator?.namedCavernPoints() ?: emptyMap()
+        val staircasePoints = generator?.namedStaircasePoints() ?: emptyMap()
         CommandContext(
             world = world,
             persistence = get<OptionalWorldPersistence>().value,
@@ -74,7 +75,7 @@ val commandContextModule = module {
             reloadRbac = closures.reloadRbac,
             armorRegistry = closures.armorRegistry,
             tradeManager = get<TradeManager>(),
-            namedPoints = { cavernPoints },
+            namedPoints = { cavernPoints + staircasePoints },
         )
     }
 }

@@ -13,6 +13,7 @@ const LAYER_LABELS: Record<LayerKey, string> = {
   "precise-roads": "Precise roads",
   chunks: "Chunks",
   weather: "Weather zones",
+  staircases: "Staircases",
 };
 
 interface Props {
