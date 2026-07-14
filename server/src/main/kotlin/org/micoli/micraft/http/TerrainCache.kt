@@ -119,6 +119,13 @@ class TerrainCache {
             ChunkTerrainInfo(pos.cx, pos.cz, pair.first, pair.second)
         }
 
+    fun getChunkImage(pos: ChunkPos): BufferedImage? {
+        val (colors, _) = cache[pos] ?: return null
+        val img = BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB)
+        for (lx in 0..15) for (lz in 0..15) img.setRGB(lx, lz, colorToArgb(colors[lx * 16 + lz]))
+        return img
+    }
+
     private fun loadHeights(cacheDir: Path): Map<ChunkPos, Int?> {
         val file = cacheDir.resolve("heights.yaml").toFile()
         if (!file.exists()) return emptyMap()

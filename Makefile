@@ -68,7 +68,7 @@ endif
 npm-format:
 	$(EXEC) "cd app/webApp/ts-src && npm run format"
 
-build-client: build-wasm build-js
+build-client: build-js build-wasm
 
 # When ./gradlew :dev is running its --continuous wasm watcher already holds the Gradle
 # project lock. In that case touch a source file to trigger the watcher instead.

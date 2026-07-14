@@ -11,6 +11,14 @@ const npcPositions: Map<string, { x: number; z: number }> = new Map();
 const remotePlayers: Map<string, { x: number; z: number; yaw: number }> = new Map();
 let frameCount = 0;
 
+// Terrain raster base layer
+let terrainPixels: ImageData | null = null;
+let terrainImgCx = 0;
+let terrainImgCz = 0;
+let terrainImgRadius = 0;
+let terrainFetching = false;
+const terrainFetchCenter = { x: NaN, z: NaN };
+
 // Road raster overlay
 let roadImg: HTMLImageElement | null = null;
 let roadImgCx = 0;
@@ -28,6 +36,42 @@ let biomeFetching = false;
 let staircasePoints: Array<{ x: number; z: number }> = [];
 let staircasesFetching = false;
 let staircasesFetched = false;
+
+function maybeRefetchTerrain(playerX: number, playerZ: number): void {
+  if (terrainFetching) return;
+  if (!isNaN(terrainFetchCenter.x) && Math.hypot(playerX - terrainFetchCenter.x, playerZ - terrainFetchCenter.z) < 200)
+    return;
+  terrainFetchCenter.x = playerX;
+  terrainFetchCenter.z = playerZ;
+  const radius = 400;
+  terrainFetching = true;
+  const cx = Math.round(playerX);
+  const cz = Math.round(playerZ);
+  fetch(`/api/map/terrain-raster.png?cx=${cx}&cz=${cz}&radius=${radius}`)
+    .then((r) => {
+      if (r.ok) return r.blob();
+    })
+    .then((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        const oc = new OffscreenCanvas(img.width, img.height);
+        const oc_ctx = oc.getContext("2d")!;
+        oc_ctx.drawImage(img, 0, 0);
+        terrainPixels = oc_ctx.getImageData(0, 0, img.width, img.height);
+        terrainImgCx = cx;
+        terrainImgCz = cz;
+        terrainImgRadius = radius;
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    })
+    .catch(() => {})
+    .finally(() => {
+      terrainFetching = false;
+    });
+}
 
 function maybeRefetchStaircases(): void {
   if (staircasesFetching || staircasesFetched) return;
@@ -216,6 +260,7 @@ export function registerMinimap(): Pick<
       frameCount++;
       if (frameCount % 4 !== 0) return;
 
+      maybeRefetchTerrain(playerX, playerZ);
       maybeRefetchRoads(playerX, playerZ);
       maybeRefetchBiomeBorders(playerX, playerZ);
       maybeRefetchStaircases();
@@ -238,6 +283,28 @@ export function registerMinimap(): Pick<
         data[i + 1] = 10;
         data[i + 2] = 20;
         data[i + 3] = 180;
+      }
+
+      // Terrain raster base layer from cached PNGs
+      if (terrainPixels !== null) {
+        const rasterOriginX = terrainImgCx - terrainImgRadius;
+        const rasterOriginZ = terrainImgCz + terrainImgRadius; // top of raster (highest Z)
+        for (let py = 0; py < MINIMAP_SIZE; py++) {
+          for (let px = 0; px < MINIMAP_SIZE; px++) {
+            const wx = Math.floor(playerX - halfBlocks + (px + 0.5) / pixPerBlock);
+            const wz = Math.floor(playerZ + halfBlocks - (py + 0.5) / pixPerBlock); // Z flipped
+            const rx = wx - rasterOriginX;
+            const rz = rasterOriginZ - wz;
+            if (rx < 0 || rx >= terrainPixels.width || rz < 0 || rz >= terrainPixels.height) continue;
+            const srcIdx = (rz * terrainPixels.width + rx) * 4;
+            if (terrainPixels.data[srcIdx + 3] === 0) continue;
+            const dstIdx = (py * MINIMAP_SIZE + px) * 4;
+            data[dstIdx] = terrainPixels.data[srcIdx];
+            data[dstIdx + 1] = terrainPixels.data[srcIdx + 1];
+            data[dstIdx + 2] = terrainPixels.data[srcIdx + 2];
+            data[dstIdx + 3] = 255;
+          }
+        }
       }
 
       for (let dcx = -(radius + 1); dcx <= radius + 1; dcx++) {

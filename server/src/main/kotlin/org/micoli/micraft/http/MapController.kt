@@ -11,6 +11,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WeatherZoneInfo
 import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
 
@@ -234,6 +235,41 @@ class MapController(private val gameLoop: GameLoop) {
                                     if (px < 0 || px >= size || pz < 0 || pz >= size) continue
                                     img.setRGB(px, pz, roadArgb)
                                 }
+                            }
+                        }
+                    }
+                }
+                val baos = ByteArrayOutputStream()
+                ImageIO.write(img, "PNG", baos)
+                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+                call.respondBytes(baos.toByteArray(), ContentType.Image.PNG)
+            }
+
+            get("/api/map/terrain-raster.png") {
+                val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
+                val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
+                val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 400
+                val size = radius * 2
+                val img = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
+                val cxMin = Math.floorDiv(cx - radius, 16)
+                val cxMax = Math.floorDiv(cx + radius, 16)
+                val czMin = Math.floorDiv(cz - radius, 16)
+                val czMax = Math.floorDiv(cz + radius, 16)
+                for (chunkX in cxMin..cxMax) {
+                    for (chunkZ in czMin..czMax) {
+                        val chunkImg =
+                            gameLoop.terrainCache.getChunkImage(ChunkPos(chunkX, chunkZ))
+                                ?: continue
+                        for (lx in 0 until 16) {
+                            for (lz in 0 until 16) {
+                                val wx = chunkX * 16 + lx
+                                val wz = chunkZ * 16 + lz
+                                val px = wx - (cx - radius)
+                                val pz = (cz + radius) - wz // Z flipped: row 0 = highest wz
+                                if (px < 0 || px >= size || pz < 0 || pz >= size) continue
+                                val argb = chunkImg.getRGB(lx, lz)
+                                if ((argb ushr 24) == 0) continue
+                                img.setRGB(px, pz, argb)
                             }
                         }
                     }
