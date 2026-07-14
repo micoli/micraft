@@ -43,6 +43,7 @@ export interface VoronoiCellInfo {
   z: number;
   biome: string;
   color: string;
+  name: string;
 }
 
 export interface StaircaseMapInfo {

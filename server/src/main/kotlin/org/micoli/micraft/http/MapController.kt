@@ -45,7 +45,13 @@ data class MapStateResponse(
 )
 
 @Serializable
-data class VoronoiCellInfo(val x: Int, val z: Int, val biome: String, val color: String)
+data class VoronoiCellInfo(
+    val x: Int,
+    val z: Int,
+    val biome: String,
+    val color: String,
+    val name: String
+)
 
 @Serializable
 data class ChunkTerrainInfo(
@@ -107,7 +113,7 @@ class MapController(private val gameLoop: GameLoop) {
                     gen?.voronoi?.cells(cx, cz, radius)?.map { cell ->
                         val rgb = BlockRegistry.get(cell.biome.surface).minimapColor
                         val color = "#%02x%02x%02x".format(rgb[0], rgb[1], rgb[2])
-                        VoronoiCellInfo(cell.seedX, cell.seedZ, cell.biome.id, color)
+                        VoronoiCellInfo(cell.seedX, cell.seedZ, cell.biome.id, color, cell.name)
                     } ?: emptyList()
                 call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
                 call.respondText(Json.encodeToString(cells), ContentType.Application.Json)

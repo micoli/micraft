@@ -73,7 +73,14 @@ class VoronoiBiomeZones(
         return ColumnSample(b1!!, b2 ?: b1, blend, sx1, sz1)
     }
 
-    data class VoronoiCell(val seedX: Int, val seedZ: Int, val biome: BiomeDefinition)
+    data class VoronoiCell(
+        val seedX: Int,
+        val seedZ: Int,
+        val biome: BiomeDefinition,
+        val name: String
+    )
+
+    fun cellName(cellX: Int, cellZ: Int): String = FantasyNameGenerator.generate(seed, cellX, cellZ)
 
     fun cells(centerX: Int, centerZ: Int, radiusBlocks: Int): List<VoronoiCell> {
         val minCX = floor((centerX - radiusBlocks).toDouble() / cellSize).toInt() - 1
@@ -88,7 +95,7 @@ class VoronoiBiomeZones(
                 val dx = (sx - centerX).toLong()
                 val dz = (sz - centerZ).toLong()
                 if (dx * dx + dz * dz <= r2) {
-                    result.add(VoronoiCell(sx, sz, seedBiome(sx, sz)))
+                    result.add(VoronoiCell(sx, sz, seedBiome(sx, sz), cellName(cx, cz)))
                 }
             }
         }

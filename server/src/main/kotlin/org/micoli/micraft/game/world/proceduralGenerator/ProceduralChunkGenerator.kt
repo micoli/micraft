@@ -154,17 +154,16 @@ class ProceduralChunkGenerator(
     fun namedCavernPoints(cellRadius: Int = 5): Map<String, Vec3> {
         val cellSize = biomeRegistry.voronoiCellSize
         val result = mutableMapOf<String, Vec3>()
-        var seq = 0
         for (cx in -cellRadius..cellRadius) {
             for (cz in -cellRadius..cellRadius) {
                 val wx = cx * cellSize + cellSize / 2
                 val wz = cz * cellSize + cellSize / 2
                 val biome = voronoi.sample(wx, wz).primary
                 val config = biome.caverns ?: continue
-                for (s in cavernGenerator.cavernSeedPoints(cx, cz, config)) {
-                    result["cavern - ${biome.id}_$seq"] =
+                val zoneName = voronoi.cellName(cx, cz)
+                for ((idx, s) in cavernGenerator.cavernSeedPoints(cx, cz, config).withIndex()) {
+                    result["Cavern - $zoneName ${idx + 1}"] =
                         Vec3(s.wx.toFloat(), s.wy.toFloat(), s.wz.toFloat())
-                    seq++
                 }
             }
         }
@@ -174,7 +173,6 @@ class ProceduralChunkGenerator(
     fun namedStaircasePoints(cellRadius: Int = 5): Map<String, Vec3> {
         val cellSize = biomeRegistry.voronoiCellSize
         val result = mutableMapOf<String, Vec3>()
-        var seq = 0
         for (cx in -cellRadius..cellRadius) {
             for (cz in -cellRadius..cellRadius) {
                 val wx = cx * cellSize + cellSize / 2
@@ -182,7 +180,8 @@ class ProceduralChunkGenerator(
                 val biome = voronoi.sample(wx, wz).primary
                 val config = biome.caverns ?: continue
                 if (!config.staircaseEnabled) continue
-                for (s in cavernGenerator.cavernSeedPoints(cx, cz, config)) {
+                val zoneName = voronoi.cellName(cx, cz)
+                for ((idx, s) in cavernGenerator.cavernSeedPoints(cx, cz, config).withIndex()) {
                     val dir = cavernGenerator.staircaseDirection(s)
                     val startY = cavernGenerator.staircaseStartY(s, config)
                     for (i in 0..300) {
@@ -191,9 +190,8 @@ class ProceduralChunkGenerator(
                         val sample = voronoi.sample(exitWx, exitWz)
                         val surface = surfaceHeight(exitWx, exitWz, sample)
                         if (startY + i >= surface - 1) {
-                            result["staircase - ${biome.id}_$seq"] =
+                            result["Staircase - $zoneName ${idx + 1}"] =
                                 Vec3(exitWx.toFloat(), surface.toFloat(), exitWz.toFloat())
-                            seq++
                             break
                         }
                     }

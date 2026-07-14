@@ -25312,17 +25312,23 @@
     }
     ctx.drawImage(bc, 0, 0);
     if (voronoiCells.current.length) {
-      const fontSize = Math.max(9, Math.min(14, cam.pxPerBlock * 80));
-      ctx.font = "bold " + Math.round(fontSize) + "px monospace";
+      const nameFontSize = Math.max(9, Math.min(15, cam.pxPerBlock * 80));
+      const biomeFontSize = Math.max(7, Math.min(10, cam.pxPerBlock * 55));
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       for (const cell of voronoiCells.current) {
         const [px, pz] = worldToCanvas(cell.x, cell.z);
         if (px < -100 || px > W + 100 || pz < -100 || pz > H + 100) continue;
-        ctx.fillStyle = "rgba(0,0,0,0.65)";
-        ctx.fillText(cell.biome, px + 1, pz + 1);
+        ctx.font = "bold " + Math.round(nameFontSize) + "px serif";
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillText(cell.name, px + 1, pz + 1);
         ctx.fillStyle = "#fff";
-        ctx.fillText(cell.biome, px, pz);
+        ctx.fillText(cell.name, px, pz);
+        ctx.font = Math.round(biomeFontSize) + "px monospace";
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        ctx.fillText(cell.biome, px + 1, pz + nameFontSize + 2);
+        ctx.fillStyle = "rgba(200,220,255,0.85)";
+        ctx.fillText(cell.biome, px, pz + nameFontSize + 1);
       }
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
@@ -25415,6 +25421,15 @@
         ctx.fillStyle = "#d090f0";
         ctx.font = "9px monospace";
         ctx.fillText("\u2191", sx - 3, sz + 3);
+      }
+      if (cam.pxPerBlock >= 1.5) {
+        ctx.font = "9px serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillText(s.name, sx + 1, sz - r2 - 4);
+        ctx.fillStyle = "#e0b0ff";
+        ctx.fillText(s.name, sx, sz - r2 - 5);
+        ctx.textAlign = "left";
       }
     }
   }
