@@ -22,8 +22,13 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
     private var highlightedNpcId: String? = null
     private val aggroNpcIds = mutableSetOf<String>()
 
+    var playerX = 0.0
+    var playerZ = 0.0
+    var playerYaw = 0.0
+
     private val clock = TimeSource.Monotonic
     private val startMark = clock.markNow()
+    private var proximityTick = 0
 
     private fun nowMs(): Long = startMark.elapsedNow().inWholeMilliseconds
 
@@ -100,6 +105,36 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
                 isWalking,
             )
         }
+        if (++proximityTick >= PROXIMITY_THROTTLE_TICKS) {
+            proximityTick = 0
+            tickProximity(renderTime)
+        }
+    }
+
+    private fun tickProximity(renderTime: Long) {
+        val entries =
+            npcBuffers.entries
+                .map { (id, buf) ->
+                    val (pos, _, _) = interpolate(buf, renderTime)
+                    val dx = pos.x.toDouble() - playerX
+                    val dz = pos.z.toDouble() - playerZ
+                    val dist = sqrt(dx * dx + dz * dz)
+                    val absAngle = atan2(dx, dz)
+                    var relAngle = absAngle - playerYaw
+                    val twoPi = 2.0 * PI
+                    while (relAngle > PI) relAngle -= twoPi
+                    while (relAngle < -PI) relAngle += twoPi
+                    val aggro = id in aggroNpcIds
+                    val name = npcNames[id] ?: ""
+                    Triple(
+                        dist,
+                        id,
+                        "{\"id\":\"$id\",\"name\":\"$name\",\"relAngle\":${relAngle.toFloat()},\"dist\":${dist.toFloat()},\"aggro\":$aggro}")
+                }
+                .sortedBy { it.first }
+                .take(3)
+                .map { it.third }
+        jsUpdateNpcProximity("[" + entries.joinToString(",") + "]")
     }
 
     fun clear() {
@@ -111,6 +146,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
         npcNames.clear()
         aggroNpcIds.clear()
         jsSetNpcNames("[]")
+        jsUpdateNpcProximity("[]")
     }
 
     @OptIn(ExperimentalWasmJsInterop::class)
@@ -232,5 +268,6 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
     companion object {
         private const val INTERP_DELAY_MS = 100L
         private const val MAX_BUFFER = 8
+        private const val PROXIMITY_THROTTLE_TICKS = 12
     }
 }

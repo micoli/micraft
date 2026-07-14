@@ -336,6 +336,7 @@ declare global {
     reload(): void;
     setConnectedPlayers(namesJson: string): void;
     setNpcNames(namesJson: string): void;
+    updateNpcProximity(json: string): void;
     registerCompleter(cmd: string, fn: (partial: string) => string[] | Promise<string[]>): void;
     registerServerCompleters(commands: Array<{ id: string; command: string; autocompleteArgs?: number[] }>): void;
     // i18n / biome

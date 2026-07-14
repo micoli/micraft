@@ -401,6 +401,9 @@
   .-mb-px {
     margin-bottom: -1px;
   }
+  .mb-0\.5 {
+    margin-bottom: calc(var(--spacing) * 0.5);
+  }
   .mb-1 {
     margin-bottom: var(--spacing);
   }
@@ -635,8 +638,20 @@
   .max-w-\[48px\] {
     max-width: 48px;
   }
+  .max-w-\[60px\] {
+    max-width: 60px;
+  }
+  .max-w-\[80px\] {
+    max-width: 80px;
+  }
   .max-w-\[95vw\] {
     max-width: 95vw;
+  }
+  .max-w-\[96px\] {
+    max-width: 96px;
+  }
+  .max-w-\[120px\] {
+    max-width: 120px;
   }
   .max-w-\[560px\] {
     max-width: 560px;
@@ -741,6 +756,9 @@
   }
   .flex-col {
     flex-direction: column;
+  }
+  .flex-row {
+    flex-direction: row;
   }
   .flex-wrap {
     flex-wrap: wrap;

@@ -29,6 +29,8 @@ export type AttackMeta = {
 export type ClassAttackAccess = { attack: string; level: number };
 export type ClassDefinitions = Record<string, Record<string, ClassAttackAccess[]>>;
 
+export type NpcProximityEntry = { id: string; name: string; relAngle: number; dist: number; aggro: boolean };
+
 export type SpellMeta = {
   type: string;
   rageGain: number;
@@ -106,6 +108,7 @@ export interface UiState {
   tradeMyAccepted: boolean;
   tradeTheirAccepted: boolean;
   classDefinitions: ClassDefinitions | null;
+  npcProximity: NpcProximityEntry[];
 }
 
 export type UiAction =
@@ -179,6 +182,7 @@ export type UiAction =
   | { type: "combat_target_update"; data: unknown }
   | { type: "health_update"; data: unknown }
   | { type: "player_status_update"; data: unknown }
+  | { type: "npc_proximity_update"; data: NpcProximityEntry[] }
   | { type: "status_effect_update"; data: unknown }
   | { type: "player_downed"; playerId: string }
   | { type: "player_respawned"; data: unknown }
@@ -371,6 +375,8 @@ export function reducer(state: UiState, action: UiAction): UiState {
         healthBarVisible: target?.targetId ? true : state.healthBarVisible,
       };
     }
+    case "npc_proximity_update":
+      return { ...state, npcProximity: action.data };
     case "player_status_update": {
       const next = action.data as UiState["playerStatus"];
       const damaged = state.playerStatus != null && next != null && next.currentHp < state.playerStatus.currentHp;

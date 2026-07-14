@@ -123,6 +123,9 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         uiState.chunkLoadingProgress = null
                     }
                 }
+                npcManager.playerX = localController.predX
+                npcManager.playerZ = localController.predZ
+                npcManager.playerYaw = currentYaw.toDouble()
                 npcManager.tick()
                 remotePlayerManager.tick()
             }

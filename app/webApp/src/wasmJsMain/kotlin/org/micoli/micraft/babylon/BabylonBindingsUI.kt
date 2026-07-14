@@ -139,6 +139,8 @@ fun jsSetConnectedPlayers(namesJson: String): Unit = js("mc.setConnectedPlayers(
 
 fun jsSetNpcNames(namesJson: String): Unit = js("mc.setNpcNames(namesJson)")
 
+fun jsUpdateNpcProximity(json: String): Unit = js("mc.updateNpcProximity(json)")
+
 // ── Preferences ───────────────────────────────────────────────────────────────
 
 fun jsPreferencesSync(json: String): Unit = js("mc.preferencesSync(json)")

@@ -266,6 +266,7 @@ window.mc = {
   combatTargetUpdate: () => {},
   healthUpdate: () => {},
   playerStatusUpdate: () => {},
+  updateNpcProximity: () => {},
   statusEffectUpdate: () => {},
   playerDowned: () => {},
   playerRespawned: () => {},
