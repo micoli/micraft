@@ -462,14 +462,14 @@ class GameLoop(
         val chunks = world.discoveredChunks().mapNotNull { world.getChunkIfDiscovered(it) }
         scope.launch(Dispatchers.IO) {
             terrainCache.rebuild(chunks)
-            persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache.yaml")) }
+            persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache")) }
         }
     }
 
     private fun rebuildTerrainSync() {
         val chunks = world.discoveredChunks().mapNotNull { world.getChunkIfDiscovered(it) }
         terrainCache.rebuild(chunks)
-        persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache.yaml")) }
+        persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache")) }
     }
 
     private fun buildPreferencesSync(session: PlayerSession): ServerMessage.PreferencesSync {
@@ -709,7 +709,7 @@ class GameLoop(
         persistence?.let {
             terrainCache.prewarm(
                 chunksDir = it.worldDir.resolve("chunks"),
-                cacheFile = it.worldDir.resolve("terrain_cache.yaml"),
+                cacheDir = it.worldDir.resolve("terrain_cache"),
             )
         }
         app.launch {

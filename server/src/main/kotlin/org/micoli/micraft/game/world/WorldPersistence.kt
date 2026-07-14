@@ -72,11 +72,12 @@ class WorldPersistence(val worldDir: Path) {
             .listFiles { f -> f.extension == "json" || f.extension == "yaml" }
             ?.firstNotNullOfOrNull { file ->
                 try {
-                    val state = if (file.extension == "yaml")
-                        loadPlayerFileFromYaml(file.toPath())?.state
-                            ?: playerYaml.decodeFromString(PlayerState.serializer(), file.readText())
-                    else
-                        playerJson.decodeFromString(PlayerState.serializer(), file.readText())
+                    val state =
+                        if (file.extension == "yaml")
+                            loadPlayerFileFromYaml(file.toPath())?.state
+                                ?: playerYaml.decodeFromString(
+                                    PlayerState.serializer(), file.readText())
+                        else playerJson.decodeFromString(PlayerState.serializer(), file.readText())
                     state.takeIf { it.id == id }
                 } catch (_: Exception) {
                     null
@@ -95,21 +96,30 @@ class WorldPersistence(val worldDir: Path) {
         val jsonFile = playersDir.resolve("${name.sanitize()}.json")
         return when {
             yamlFile.exists() -> {
-                loadPlayerFileFromYaml(yamlFile) ?: run {
-                    // Legacy bare PlayerState yaml — migrate
-                    try {
-                        val state = playerYaml.decodeFromString(PlayerState.serializer(), yamlFile.readText())
-                        PlayerFile(state, migrateLegacyKeybindings(name), migrateLegacyCustomCommands(name))
-                    } catch (e: Exception) {
-                        worldPersistenceLog.warn("Failed to load player {}: {}", name, e.message)
-                        null
+                loadPlayerFileFromYaml(yamlFile)
+                    ?: run {
+                        // Legacy bare PlayerState yaml — migrate
+                        try {
+                            val state =
+                                playerYaml.decodeFromString(
+                                    PlayerState.serializer(), yamlFile.readText())
+                            PlayerFile(
+                                state,
+                                migrateLegacyKeybindings(name),
+                                migrateLegacyCustomCommands(name))
+                        } catch (e: Exception) {
+                            worldPersistenceLog.warn(
+                                "Failed to load player {}: {}", name, e.message)
+                            null
+                        }
                     }
-                }
             }
             jsonFile.exists() -> {
                 try {
-                    val state = playerJson.decodeFromString(PlayerState.serializer(), jsonFile.readText())
-                    PlayerFile(state, migrateLegacyKeybindings(name), migrateLegacyCustomCommands(name))
+                    val state =
+                        playerJson.decodeFromString(PlayerState.serializer(), jsonFile.readText())
+                    PlayerFile(
+                        state, migrateLegacyKeybindings(name), migrateLegacyCustomCommands(name))
                 } catch (e: Exception) {
                     worldPersistenceLog.warn("Failed to load player {}: {}", name, e.message)
                     null
@@ -123,15 +133,30 @@ class WorldPersistence(val worldDir: Path) {
         val jsonFile = playersDir.resolve("${name.sanitize()}-keybindings.json")
         val yamlFile = playersDir.resolve("${name.sanitize()}-keybindings.yaml")
         return when {
-            jsonFile.exists() -> try { keybindingsJson.decodeFromString(keybindingsSerializer, jsonFile.readText()) } catch (_: Exception) { emptyMap() }
-            yamlFile.exists() -> try { Yaml.default.decodeFromString(keybindingsSerializer, yamlFile.readText()) } catch (_: Exception) { emptyMap() }
+            jsonFile.exists() ->
+                try {
+                    keybindingsJson.decodeFromString(keybindingsSerializer, jsonFile.readText())
+                } catch (_: Exception) {
+                    emptyMap()
+                }
+            yamlFile.exists() ->
+                try {
+                    Yaml.default.decodeFromString(keybindingsSerializer, yamlFile.readText())
+                } catch (_: Exception) {
+                    emptyMap()
+                }
             else -> emptyMap()
         }
     }
 
     private fun migrateLegacyCustomCommands(name: String): Map<String, List<String>> {
         val file = playersDir.resolve("${name.sanitize()}-custom-commands.yaml")
-        return if (file.exists()) try { Yaml.default.decodeFromString(keybindingsSerializer, file.readText()) } catch (_: Exception) { emptyMap() }
+        return if (file.exists())
+            try {
+                Yaml.default.decodeFromString(keybindingsSerializer, file.readText())
+            } catch (_: Exception) {
+                emptyMap()
+            }
         else emptyMap()
     }
 

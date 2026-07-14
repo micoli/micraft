@@ -59,17 +59,20 @@ class TerrainCacheTest {
         val cache = TerrainCache()
         val world = testWorld()
         cache.update(world.getOrGenerate(ChunkPos(0, 0)))
-        val file = Files.createTempFile("terrain-cache", ".json")
-        cache.save(file)
-        assertTrue(file.toFile().length() > 0)
+        val dir = Files.createTempDirectory("terrain-cache")
+        cache.save(dir)
+        assertTrue(
+            dir.toFile().listFiles()?.isNotEmpty() == true,
+            "terrain_cache dir should contain files")
+        assertTrue(dir.resolve("0_0.png").toFile().exists(), "should write 0_0.png")
     }
 
     @Test
     fun prewarm_emptyChunksDir_doesNotThrow() {
         val cache = TerrainCache()
         val chunksDir = Files.createTempDirectory("terrain-chunks")
-        val cacheFile = Files.createTempFile("terrain-cache", ".json")
-        cache.prewarm(chunksDir, cacheFile)
+        val cacheDir = Files.createTempDirectory("terrain-cache")
+        cache.prewarm(chunksDir, cacheDir)
     }
 
     @Test
