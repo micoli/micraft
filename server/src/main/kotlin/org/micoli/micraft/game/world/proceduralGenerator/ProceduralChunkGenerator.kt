@@ -64,8 +64,6 @@ class ProceduralChunkGenerator(
         return (baseY + mountainBoost).toInt().coerceIn(4, WorldConstants.WORLD_MAX_Y - 1)
     }
 
-
-
     private fun terrainBlock(wx: Int, wy: Int, wz: Int, col: ColumnData): BlockType {
         val h = col.h
         val b = col.blocks

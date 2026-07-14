@@ -13,7 +13,7 @@ endif
 .PHONY: dev-up dev-down dev-restart dev-clean-wasm dev-logs dc shell npm-format \
         dev-restart-server dev-restart-clean-server \
         prod-up prod-down prod-restart prod-logs prod-build \
-        build-client build-wasm build-js \
+        build-client build-wasm build-js trigger-wasm \
         docs help
 
 # ── Dev ───────────────────────────────────────────────────────────────────────
@@ -70,8 +70,19 @@ npm-format:
 
 build-client: build-wasm build-js
 
+# When ./gradlew :dev is running its --continuous wasm watcher already holds the Gradle
+# project lock. In that case touch a source file to trigger the watcher instead.
 build-wasm:
-	$(EXEC) "./gradlew :app:webApp:copyResourcesToWebDist --rerun-tasks"
+	@if $(DC_DEV) exec micraft pgrep -f "copyResourcesToWebDist.*continuous" > /dev/null 2>&1; then \
+		echo "[wasm] dev watcher running — triggering rebuild via source touch…"; \
+		$(EXEC) "touch app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/babylon/BabylonBindingsWorld.kt"; \
+	else \
+		$(EXEC) "./gradlew :app:webApp:copyResourcesToWebDist --rerun-tasks"; \
+	fi
+
+# Explicitly trigger the --continuous wasm watcher (use when ./gradlew :dev is running).
+trigger-wasm:
+	$(EXEC) "touch app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/babylon/BabylonBindingsWorld.kt"
 
 build-js:
 	$(EXEC) "cd app/webApp/ts-src && npm run build"
@@ -135,7 +146,8 @@ help:
 	@echo "  make dc CMD=\"<cmd>\"       run command inside container / directly in HOST mode"
 	@echo "  make npm-format           run prettier in ts-src"
 	@echo "  make build-client         recompile wasm + js bundle (build-wasm + build-js)"
-	@echo "  make build-wasm           recompile kotlin/wasm only"
+	@echo "  make build-wasm           recompile kotlin/wasm (auto-triggers watcher if :dev running)"
+	@echo "  make trigger-wasm         force wasm rebuild when :dev is running"
 	@echo ""
 	@echo "Prod (port 8080 via nginx):"
 	@echo "  make prod-build           build images"

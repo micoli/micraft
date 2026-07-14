@@ -123,7 +123,9 @@ class GotoCommandTest {
     @Test
     fun namedPoint_appearsInAutocomplete() = runBlocking {
         val points =
-            mapOf("cavern - desert_0" to Vec3(10f, 5f, 10f), "cavern - forest_1" to Vec3(20f, 5f, 20f))
+            mapOf(
+                "cavern - desert_0" to Vec3(10f, 5f, 10f),
+                "cavern - forest_1" to Vec3(20f, 5f, 20f))
         val result = cmd.completeArg(0, "cavern", null, testContext(namedPoints = { points }))
         assertTrue(result.contains("cavern - desert_0"))
         assertTrue(result.contains("cavern - forest_1"))
@@ -135,6 +137,8 @@ class GotoCommandTest {
         cmd.execute(session, "cavern - snow_99", testContext(namedPoints = { emptyMap() }))
         val notif = session.sent.filterIsInstance<ServerMessage.Notification>()
         assertTrue(
-            notif.any { it.message.contains("cavern - snow_99") || it.message.contains("not found") })
+            notif.any {
+                it.message.contains("cavern - snow_99") || it.message.contains("not found")
+            })
     }
 }

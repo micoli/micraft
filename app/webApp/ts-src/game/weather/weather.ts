@@ -210,6 +210,15 @@ export function registerWeather(): Pick<McBindings, "setWeatherZones" | "updateW
     },
 
     updateWeather: (scene: any, px: number, py: number, pz: number): void => {
+      const underground = (window.mcState as any).caveFactor !== undefined && (window.mcState as any).caveFactor < 0.9;
+      if (underground) {
+        hideParticles(rainParticles);
+        hideParticles(snowParticles);
+        for (const mesh of cloudMeshes.values()) mesh.setEnabled(false);
+        return;
+      }
+      for (const mesh of cloudMeshes.values()) mesh.setEnabled(true);
+
       syncCloudMeshes(scene);
 
       const zone = playerZone(px, pz);

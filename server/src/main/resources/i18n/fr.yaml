@@ -227,3 +227,7 @@ explode:
     usage: "Utilisation : /explode <rayon>"
     too_large: "Rayon trop grand (max {0})."
     done: "Explosion : {0} bloc(s) détruits."
+light:
+  server:
+    on: "Éclairage des cavernes activé."
+    off: "Éclairage des cavernes désactivé."

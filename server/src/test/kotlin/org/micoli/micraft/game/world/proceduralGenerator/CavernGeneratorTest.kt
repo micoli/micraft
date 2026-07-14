@@ -10,7 +10,6 @@ import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.biome.CavernConfig
 
-
 class CavernGeneratorTest {
 
     private val airWire = BlockRegistry.wireIndex(BlockType.AIR).toByte()

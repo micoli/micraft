@@ -12,7 +12,6 @@ import org.micoli.micraft.game.world.biome.BiomeDefinition
 import org.micoli.micraft.game.world.biome.BiomeRegistry
 import org.micoli.micraft.game.world.biome.BiomeZone
 import org.micoli.micraft.game.world.biome.CavernConfig
-
 import org.micoli.micraft.game.world.biome.VegetationEntry
 import org.micoli.micraft.game.world.road.RoadBiomeConfig
 import org.micoli.micraft.game.world.road.RoadConfig

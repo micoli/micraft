@@ -364,6 +364,11 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     chunkManager.setShadersEnabled(msg.enabled)
                 })
             put(
+                ServerMessage.LightBoostUpdate::class,
+                typedHandler { msg: ServerMessage.LightBoostUpdate ->
+                    localController.lightBoostEnabled = msg.enabled
+                })
+            put(
                 ServerMessage.WorldUpdate::class,
                 typedHandler { msg: ServerMessage.WorldUpdate ->
                     msg.changes.forEach { change ->

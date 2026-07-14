@@ -68,7 +68,7 @@ export function registerSky(): Pick<McBindings, "updateSkyTime"> {
       const caveFactor: number = (window.mcState as any).caveFactor ?? 1.0;
       const hemi = window.mcState.hemiLight;
       if (hemi) hemi.intensity = intensity;
-      mc.setAmbient(scene, Math.max(0.08, intensity * caveFactor));
+      window.mc?.setAmbient(scene, Math.max(0.08, intensity * caveFactor));
     },
   };
 }

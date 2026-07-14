@@ -85,7 +85,7 @@ export function registerMaterials(): Pick<
             ],
             vectors3: ["playerPos"],
             samplers: ["textureSampler"],
-          },
+          } as any,
         );
         const tex = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
         mat.setTexture("textureSampler", tex);

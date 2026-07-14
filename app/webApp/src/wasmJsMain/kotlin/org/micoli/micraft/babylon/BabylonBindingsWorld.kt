@@ -22,7 +22,8 @@ fun jsSetShadersEnabled(scene: JsAny, enabled: Boolean): Unit =
 
 fun jsUpdateSkyTime(scene: JsAny, t: Double): Unit = js("mc.updateSkyTime(scene, t)")
 
-fun jsSetCaveFactor(factor: Double): Unit = js("{ if(window.mcState) window.mcState.caveFactor = factor }")
+fun jsSetCaveFactor(factor: Double): Unit =
+    js("{ if(window.mcState) window.mcState.caveFactor = factor }")
 
 fun jsSetPlayerLight(scene: JsAny, x: Double, y: Double, z: Double, intensity: Double): Unit =
     js("mc.setPlayerLight(scene, x, y, z, intensity)")

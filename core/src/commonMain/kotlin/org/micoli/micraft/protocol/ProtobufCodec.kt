@@ -145,6 +145,7 @@ object ServerMessageCodec {
             serverEntry<ServerMessage.PlayerDowned>(), // 39
             serverEntry<ServerMessage.PlayerRespawned>(), // 40
             serverEntry<ServerMessage.XpGained>(), // 41
+            serverEntry<ServerMessage.LightBoostUpdate>(), // 42
         )
 
     fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)

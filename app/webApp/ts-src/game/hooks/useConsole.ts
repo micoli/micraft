@@ -155,7 +155,7 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
         break;
       default: {
         const toggleKeys = window.mcState?.bindings?.console_toggle;
-        if (toggleKeys?.some((k) => matchesEvent(k, e.nativeEvent))) {
+        if (toggleKeys?.some((k) => matchesEvent(k, e.nativeEvent)) && el.value === "") {
           e.preventDefault();
           onClose();
           return;

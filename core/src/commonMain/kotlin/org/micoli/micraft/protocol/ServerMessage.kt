@@ -289,6 +289,8 @@ sealed class ServerMessage {
         val leveledUp: Boolean,
         val nextLevelXp: Int,
     ) : ServerMessage()
+
+    @ProtoId(42) @Serializable data class LightBoostUpdate(val enabled: Boolean) : ServerMessage()
 }
 
 @Serializable

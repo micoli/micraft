@@ -10,6 +10,8 @@ export function registerEngine(): Pick<
   | "optimizeScene"
   | "setupFog"
   | "setShadersEnabled"
+  | "setAmbient"
+  | "setPlayerLight"
   | "setupRenderPipeline"
 > {
   return {
@@ -120,8 +122,7 @@ export function registerEngine(): Pick<
     setAmbient: (_scene: Scene, v: number): void => {
       const mats = window.mcState.blockMaterials as Record<string, any> | undefined;
       if (mats)
-        for (const mat of Object.values(mats))
-          if (typeof mat.setFloat === "function") mat.setFloat("ambient", v);
+        for (const mat of Object.values(mats)) if (typeof mat.setFloat === "function") mat.setFloat("ambient", v);
     },
 
     setPlayerLight: (_scene: Scene, x: number, y: number, z: number, intensity: number): void => {
