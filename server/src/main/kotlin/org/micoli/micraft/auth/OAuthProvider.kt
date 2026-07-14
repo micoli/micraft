@@ -79,7 +79,9 @@ class OAuthProvider(private val config: OAuthConfig, @Volatile var groupsConfig:
         val userJson = json.parseToJsonElement(userInfo).jsonObject
         val sub = userJson["sub"]?.jsonPrimitive?.content ?: return null
         val name = userJson["name"]?.jsonPrimitive?.content ?: sub
+        val googleEmail = userJson["email"]?.jsonPrimitive?.content ?: sub
         val permissions = groupsConfig.resolveDefaultPermissions()
-        return AuthResult(playerId = sub, displayName = name, permissions = permissions)
+        return AuthResult(
+            playerId = sub, displayName = name, permissions = permissions, email = googleEmail)
     }
 }

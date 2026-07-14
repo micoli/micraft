@@ -17,6 +17,7 @@ import {
   storeDisplayName,
   getStoredDisplayName,
   getLastPlayer,
+  saveAccountEmail,
 } from "../lib/authStorage";
 
 const SUPPORTED_LANGS: { code: string; label: string }[] = [
@@ -58,9 +59,11 @@ export function AuthScreen() {
       const params = new URLSearchParams(hash.replace(/^#/, ""));
       const oauthToken = params.get("auth_token") || "";
       const oauthName = decodeURIComponent(params.get("auth_name") || "");
+      const oauthEmail = decodeURIComponent(params.get("auth_email") || "");
       if (oauthToken) {
         storeToken(oauthToken);
         storeDisplayName(oauthName || "player");
+        if (oauthEmail) saveAccountEmail(oauthEmail);
         window.history.replaceState(null, "", window.location.pathname + window.location.search);
         saveLastUser(oauthName || "player");
         navigate("/chars");
@@ -79,10 +82,11 @@ export function AuthScreen() {
       } else {
         fetch("/auth/me", { headers: { Authorization: `Bearer ${saved}` } })
           .then((r) => (r.ok ? r.json() : null))
-          .then((d: { displayName: string } | null) => {
+          .then((d: { displayName: string; email?: string } | null) => {
             const name = d?.displayName || "";
             if (name) {
               storeDisplayName(name);
+              if (d?.email) saveAccountEmail(d.email);
               saveLastUser(name);
               if (getLastPlayer(name)) {
                 setAutoConnecting(true);
@@ -134,9 +138,10 @@ export function AuthScreen() {
         passwordInputRef.current?.focus();
         return;
       }
-      const data: { token: string; displayName: string } = await r.json();
+      const data: { token: string; displayName: string; email?: string } = await r.json();
       storeToken(data.token);
       storeDisplayName(data.displayName || user);
+      saveAccountEmail(data.email || user);
       saveLastUser(data.displayName || user);
       setAuthLoading(false);
       navigate("/chars");
@@ -151,11 +156,35 @@ export function AuthScreen() {
     window.location.href = `/auth/oauth/start?returnUrl=${encodeURIComponent(returnUrl)}`;
   }
 
-  function handleNoneContinue() {
+  async function handleNoneContinue() {
     const trimmed = username.trim();
     if (!trimmed) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setAuthError("Please enter a valid email address.");
+      return;
+    }
+    setAuthLoading(true);
+    setAuthError("");
+    try {
+      const r = await fetch("/auth/noauth-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmed }),
+      });
+      if (!r.ok) {
+        setAuthError("Invalid email address.");
+        setAuthLoading(false);
+        return;
+      }
+    } catch {
+      setAuthError("Connection error. Is the server running?");
+      setAuthLoading(false);
+      return;
+    }
     saveLastUser(trimmed);
+    saveAccountEmail(trimmed);
     saveLastLang(lang);
+    setAuthLoading(false);
     navigate("/chars");
   }
 
@@ -269,15 +298,18 @@ export function AuthScreen() {
         {authMode === "none" && (
           <div className="space-y-5">
             <FormField>
-              <Label>Username</Label>
+              <Label>Email</Label>
               <Input
                 ref={usernameInputRef}
-                type="text"
-                placeholder="Enter your username"
+                type="email"
+                placeholder="your@email.com"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  setAuthError("");
+                }}
                 onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                  if (e.key === "Enter" && username.trim()) handleNoneContinue();
+                  if (e.key === "Enter" && username.trim()) void handleNoneContinue();
                 }}
               />
             </FormField>
@@ -295,14 +327,15 @@ export function AuthScreen() {
                 ))}
               </select>
             </FormField>
+            {authError && <div className="text-red-400 text-sm">{authError}</div>}
             <Button
               variant="blue"
               size="lg"
               className="w-full"
-              onClick={handleNoneContinue}
-              disabled={!username.trim()}
+              onClick={() => void handleNoneContinue()}
+              disabled={!username.trim() || authLoading}
             >
-              Continue
+              {authLoading ? "Connecting…" : "Continue"}
             </Button>
           </div>
         )}

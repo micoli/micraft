@@ -7,7 +7,7 @@ import { Input } from "../primitives/Input";
 import { Label } from "../primitives/Label";
 import { Panel, FormField } from "../primitives/Panel";
 import { cn } from "../primitives/cn";
-import { getUsers, saveUsers, getLastUser } from "../lib/authStorage";
+import { getUsers, saveUsers, getLastUser, getAccountEmail } from "../lib/authStorage";
 
 const SKINS = ["player", "askin"];
 
@@ -38,6 +38,7 @@ function WalkingToggle({ walking, onChange }: { walking: boolean; onChange: (v: 
 export function CharacterCreationScreen() {
   const navigate = useNavigate();
   const username = getLastUser();
+  const accountKey = getAccountEmail() || username;
 
   const [createName, setCreateName] = useState("");
   const [createSkin, setCreateSkin] = useState("player");
@@ -55,7 +56,7 @@ export function CharacterCreationScreen() {
       return;
     }
     const users = getUsers();
-    const existing = users[username] || [];
+    const existing = users[accountKey] || [];
     if (existing.some((c) => c.name === name)) {
       setCreateError("Name already taken.");
       createNameInputRef.current?.focus();
@@ -66,7 +67,7 @@ export function CharacterCreationScreen() {
       const r = await fetch("/api/character/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerName: name, skin: createSkin }),
+        body: JSON.stringify({ playerName: name, skin: createSkin, email: accountKey }),
       });
       if (!r.ok) {
         const text = await r.text().catch(() => "");
@@ -75,8 +76,8 @@ export function CharacterCreationScreen() {
         return;
       }
       const data = (await r.json()) as { id: string };
-      if (!users[username]) users[username] = [];
-      users[username].push({ name, id: data.id });
+      if (!users[accountKey]) users[accountKey] = [];
+      users[accountKey].push({ name, id: data.id });
       saveUsers(users);
       navigate("/chars");
     } catch {

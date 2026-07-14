@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { Button } from "../primitives/Button";
 import { Panel } from "../primitives/Panel";
 import { cn } from "../primitives/cn";
-import { getUsers, saveUsers, getLastUser } from "../lib/authStorage";
+import { getUsers, saveUsers, getLastUser, getAccountEmail } from "../lib/authStorage";
 
 const NAME_DATA = {
   first_start: [
@@ -291,6 +291,7 @@ function computeDerived(stats: BaseStats, level: number) {
 export function CharacterRPGCreationScreen() {
   const navigate = useNavigate();
   const username = getLastUser();
+  const accountKey = getAccountEmail() || username;
 
   const [name, setName] = useState(() => generateFantasyName());
   const [selectedClass, setSelectedClass] = useState("WARRIOR");
@@ -372,6 +373,7 @@ export function CharacterRPGCreationScreen() {
           wis: allocation.wis,
           con: allocation.con,
           cha: allocation.cha,
+          email: accountKey,
         }),
       });
       if (!r.ok) {
@@ -382,8 +384,8 @@ export function CharacterRPGCreationScreen() {
       }
       const data = (await r.json()) as { id: string };
       const users = getUsers();
-      if (!users[username]) users[username] = [];
-      if (!users[username].some((c) => c.name === trimmed)) users[username].push({ name: trimmed, id: data.id });
+      if (!users[accountKey]) users[accountKey] = [];
+      if (!users[accountKey].some((c) => c.name === trimmed)) users[accountKey].push({ name: trimmed, id: data.id });
       saveUsers(users);
       navigate("/chars");
     } catch {

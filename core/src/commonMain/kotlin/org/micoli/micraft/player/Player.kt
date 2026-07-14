@@ -48,4 +48,5 @@ data class PlayerState(
     val rpgOptOut: Boolean = true,
     val godMode: Boolean = false,
     val lightBoostEnabled: Boolean = false,
+    val email: String = "",
 )

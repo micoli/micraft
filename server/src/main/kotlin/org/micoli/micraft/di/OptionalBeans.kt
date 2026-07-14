@@ -1,6 +1,7 @@
 package org.micoli.micraft.di
 
 import org.micoli.micraft.auth.AuthProvider
+import org.micoli.micraft.auth.NoAuthAccountStore
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.house.HouseConfig
@@ -20,3 +21,5 @@ class OptionalHouseConfig(val value: HouseConfig?)
 class OptionalAuthProvider(val value: AuthProvider?)
 
 class OptionalTokenStore(val value: TokenStore?)
+
+class OptionalNoAuthAccountStore(val value: NoAuthAccountStore?)

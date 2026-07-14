@@ -18,6 +18,7 @@ import {
   getLastUser,
   saveLastUser,
   clearLastUser,
+  getAccountEmail,
   AuthMode,
   PlayerEntry,
 } from "../lib/authStorage";
@@ -85,10 +86,26 @@ export function CharacterSelectionScreen() {
   useEffect(() => {
     const user = username || getLastUser();
     if (!user) return;
+    const accountKey = getAccountEmail() || user;
     const users = getUsers();
-    let playerChars = users[user] || [];
+    let playerChars = users[accountKey] || [];
 
     async function loadChars() {
+      // Try server-authoritative list first
+      try {
+        const serverChars: PlayerEntry[] = await fetch(`/api/players/by-email/${encodeURIComponent(accountKey)}`).then(
+          (r) => (r.ok ? r.json() : null),
+        );
+        if (Array.isArray(serverChars) && serverChars.length > 0) {
+          playerChars = serverChars;
+          const updated = getUsers();
+          updated[accountKey] = serverChars;
+          saveUsers(updated);
+        }
+      } catch {
+        // fall back to localStorage cache
+      }
+
       if (playerChars.length > 0) {
         const results = await Promise.all(
           playerChars.map((char) =>
@@ -100,12 +117,12 @@ export function CharacterSelectionScreen() {
         const existing = results.filter((c): c is PlayerEntry => c !== null);
         if (existing.length !== playerChars.length) {
           const updated = getUsers();
-          updated[user] = existing;
+          updated[accountKey] = existing;
           saveUsers(updated);
           playerChars = existing;
         }
       }
-      const lastPlayer = getLastPlayer(user);
+      const lastPlayer = getLastPlayer(accountKey);
       setChars(playerChars);
       setSelected(
         lastPlayer && playerChars.some((c) => c.name === lastPlayer) ? lastPlayer : playerChars[0]?.name || "",
@@ -149,10 +166,11 @@ export function CharacterSelectionScreen() {
 
   function doPlay() {
     if (!selected) return;
+    const accountKey = getAccountEmail() || username;
     saveLastUser(username);
-    saveLastPlayer(username, selected);
+    saveLastPlayer(accountKey, selected);
     saveLastLang(lang);
-    loginResultRef.current = username + "\t" + selected + "\t" + lang + "\t" + token;
+    loginResultRef.current = accountKey + "\t" + selected + "\t" + lang + "\t" + token;
     navigate("/game");
   }
 
@@ -164,12 +182,12 @@ export function CharacterSelectionScreen() {
   }
 
   function addCharToList(name: string, id: string, skin: string) {
-    const user = username;
+    const accountKey = getAccountEmail() || username;
     const users = getUsers();
-    if (!users[user]) users[user] = [];
-    if (!users[user].some((c) => c.name === name)) users[user].push({ name, id });
+    if (!users[accountKey]) users[accountKey] = [];
+    if (!users[accountKey].some((c) => c.name === name)) users[accountKey].push({ name, id });
     saveUsers(users);
-    setChars(users[user]);
+    setChars(users[accountKey]);
     setSelected(name);
     setPreviewSkin(skin);
     setPreviewArmors([]);

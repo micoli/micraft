@@ -15,6 +15,7 @@ fun Application.installAuthRoutes(
     provider: AuthProvider?,
     tokenStore: TokenStore?,
     messageEncoder: String,
+    noAuthAccountStore: NoAuthAccountStore? = null,
 ) {
     routing {
         get("/api/auth/config") {
@@ -39,7 +40,40 @@ fun Application.installAuthRoutes(
                     return@get
                 }
                 call.respondText(
-                    """{"playerId":"${result.playerId}","displayName":"${result.displayName.replace("\"", "\\\"")}"}""",
+                    """{"playerId":"${result.playerId}","displayName":"${result.displayName.replace("\"", "\\\"")}","email":"${result.email}"}""",
+                    ContentType.Application.Json,
+                )
+            }
+        }
+
+        if (noAuthAccountStore != null) {
+            post("/auth/noauth-login") {
+                val body =
+                    runCatching { call.receiveText() }
+                        .getOrElse {
+                            call.respond(HttpStatusCode.BadRequest)
+                            return@post
+                        }
+                val json = Json { ignoreUnknownKeys = true }
+                val obj =
+                    runCatching { json.parseToJsonElement(body).jsonObject }
+                        .getOrElse {
+                            call.respond(HttpStatusCode.BadRequest)
+                            return@post
+                        }
+                val email =
+                    obj["email"]?.jsonPrimitive?.content?.trim()
+                        ?: run {
+                            call.respond(HttpStatusCode.BadRequest)
+                            return@post
+                        }
+                if (!email.matches(Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"))) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
+                noAuthAccountStore.getOrCreate(email)
+                call.respondText(
+                    """{"email":"${email.replace("\"", "\\\"")}"}""",
                     ContentType.Application.Json,
                 )
             }
@@ -80,7 +114,7 @@ fun Application.installAuthRoutes(
             }
             val token = tokenStore.issue(result)
             call.respondText(
-                """{"token":"$token","displayName":"${result.displayName.replace("\"", "\\\"")}","playerId":"${result.playerId}"}""",
+                """{"token":"$token","displayName":"${result.displayName.replace("\"", "\\\"")}","playerId":"${result.playerId}","email":"${result.email}"}""",
                 ContentType.Application.Json,
             )
         }
@@ -118,7 +152,9 @@ fun Application.installAuthRoutes(
             val token = tokenStore.issue(result)
             val encodedName =
                 URLEncoder.encode(result.displayName, Charsets.UTF_8).replace("+", "%20")
-            call.respondRedirect("$returnUrl#auth_token=$token&auth_name=$encodedName")
+            val encodedEmail = URLEncoder.encode(result.email, Charsets.UTF_8).replace("+", "%20")
+            call.respondRedirect(
+                "$returnUrl#auth_token=$token&auth_name=$encodedName&auth_email=$encodedEmail")
         }
     }
 }

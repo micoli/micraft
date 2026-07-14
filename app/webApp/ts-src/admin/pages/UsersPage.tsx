@@ -181,7 +181,9 @@ export function UsersPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-[#8A99AF]">{users.length} user{users.length !== 1 ? "s" : ""}</p>
+        <p className="text-sm text-[#8A99AF]">
+          {users.length} user{users.length !== 1 ? "s" : ""}
+        </p>
         <Btn onClick={() => setAddOpen(true)}>+ Add User</Btn>
       </div>
 
@@ -211,7 +213,10 @@ export function UsersPage() {
                 </tr>
               )}
               {users.map((u) => (
-                <tr key={u.email} className="border-b border-[#2E3A4E] last:border-0 hover:bg-[#1F2D3D] transition-colors">
+                <tr
+                  key={u.email}
+                  className="border-b border-[#2E3A4E] last:border-0 hover:bg-[#1F2D3D] transition-colors"
+                >
                   <td className="px-5 py-3 text-sm text-[#8A99AF]">{u.email}</td>
                   <td className="px-5 py-3 text-sm text-white font-medium">{u.displayName}</td>
                   <td className="px-5 py-3">

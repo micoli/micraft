@@ -48,6 +48,7 @@ class AuthRoutesTest {
         val token = json["token"]?.jsonPrimitive?.content
         assertTrue(!token.isNullOrEmpty())
         assertEquals("Alice", json["displayName"]?.jsonPrimitive?.content)
+        assertEquals("alice@test.com", json["email"]?.jsonPrimitive?.content)
 
         tmp.toFile().delete()
     }
@@ -92,5 +93,55 @@ class AuthRoutesTest {
 
         val r = client.get("/auth/me") { headers.append("Authorization", "Bearer invalid-token") }
         assertEquals(HttpStatusCode.Unauthorized, r.status)
+    }
+
+    @Test
+    fun `auth me returns email field`() = testApplication {
+        val store = TokenStore(scope)
+        val token = store.issue(AuthResult("carol@test.com", "Carol", email = "carol@test.com"))
+
+        application { installAuthRoutes("local", null, store, "protobuf") }
+
+        val r = client.get("/auth/me") { headers.append("Authorization", "Bearer $token") }
+        assertEquals(HttpStatusCode.OK, r.status)
+        val json = Json.parseToJsonElement(r.bodyAsText()).jsonObject
+        assertEquals("carol@test.com", json["email"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun `noauth-login creates account and returns email`() = testApplication {
+        val file = java.io.File.createTempFile("noauth-accounts", ".yaml").also { it.delete() }
+        val store = NoAuthAccountStore(file.toPath())
+
+        application { installAuthRoutes("none", null, null, "protobuf", store) }
+
+        val r =
+            client.post("/auth/noauth-login") {
+                contentType(ContentType.Application.Json)
+                setBody("""{"email":"dave@test.com"}""")
+            }
+        assertEquals(HttpStatusCode.OK, r.status)
+        val json = Json.parseToJsonElement(r.bodyAsText()).jsonObject
+        assertEquals("dave@test.com", json["email"]?.jsonPrimitive?.content)
+        assertTrue(store.exists("dave@test.com"))
+
+        file.delete()
+    }
+
+    @Test
+    fun `noauth-login rejects invalid email`() = testApplication {
+        val file = java.io.File.createTempFile("noauth-accounts", ".yaml").also { it.delete() }
+        val store = NoAuthAccountStore(file.toPath())
+
+        application { installAuthRoutes("none", null, null, "protobuf", store) }
+
+        val r =
+            client.post("/auth/noauth-login") {
+                contentType(ContentType.Application.Json)
+                setBody("""{"email":"not-an-email"}""")
+            }
+        assertEquals(HttpStatusCode.BadRequest, r.status)
+
+        file.delete()
     }
 }

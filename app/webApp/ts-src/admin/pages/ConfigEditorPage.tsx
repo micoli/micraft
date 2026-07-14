@@ -61,7 +61,15 @@ function useEditor(
   return viewRef;
 }
 
-function Editor({ content, schema, onChange }: { content: string; schema: object | null; onChange: (v: string) => void }) {
+function Editor({
+  content,
+  schema,
+  onChange,
+}: {
+  content: string;
+  schema: object | null;
+  onChange: (v: string) => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   useEditor(containerRef, content, schema, onChange);
   return <div ref={containerRef} className="flex-1 overflow-auto h-full" />;

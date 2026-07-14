@@ -68,6 +68,7 @@ export function clearStoredToken() {
   try {
     sessionStorage.removeItem("micraft_auth_token");
     sessionStorage.removeItem("micraft_auth_display");
+    sessionStorage.removeItem("micraft_auth_email");
   } catch {}
 }
 
@@ -108,5 +109,25 @@ export function getStoredDisplayName(): string {
 export function storeDisplayName(name: string) {
   try {
     sessionStorage.setItem("micraft_auth_display", name);
+  } catch {}
+}
+
+export function getAccountEmail(): string {
+  try {
+    return sessionStorage.getItem("micraft_auth_email") || "";
+  } catch {
+    return "";
+  }
+}
+
+export function saveAccountEmail(email: string) {
+  try {
+    sessionStorage.setItem("micraft_auth_email", email);
+  } catch {}
+}
+
+export function clearAccountEmail() {
+  try {
+    sessionStorage.removeItem("micraft_auth_email");
   } catch {}
 }

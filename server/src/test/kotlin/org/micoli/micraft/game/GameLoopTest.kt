@@ -81,7 +81,7 @@ class GameLoopTest {
     fun onConnect_sendsWelcomeAndRegistrationMessages() = runTest {
         val gameLoop = GameLoop(testWorld())
         val socket = FakeWebSocketSession()
-        val connect = ClientMessage.Connect(playerName = "Alice")
+        val connect = ClientMessage.Connect(playerName = "Alice", userName = "alice@example.com")
         socket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
         socket.incomingChannel.close()
 

@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.GroupsConfig
+import org.micoli.micraft.auth.NoAuthAccountStore
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.command.CommandContext
@@ -167,6 +168,7 @@ class GameLoop(
     private val authProvider: AuthProvider? = null,
     private val groupsConfig: GroupsConfig? = null,
     private val reloadRbac: (() -> Unit)? = null,
+    private val noAuthAccountStore: NoAuthAccountStore? = null,
     private val chunkSection: ChunkSection = ChunkSection(),
     private val sessionRegistry: SessionRegistry = SessionRegistry(),
     private val playerPersister: PlayerPersister = PlayerPersister(persistence),
@@ -884,7 +886,26 @@ class GameLoop(
         val preferredLanguage =
             connectMsg?.preferredLanguage?.let { if (it in i18n.locales) it else "en" } ?: "en"
 
+        val accountEmail: String =
+            if (tokenStore != null) {
+                authResult!!.email
+            } else {
+                val email = userName
+                if (!email.matches(Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"))) {
+                    socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "invalid email"))
+                    return
+                }
+                noAuthAccountStore?.getOrCreate(email)
+                email
+            }
+
         val saved = persistence?.loadPlayerState(playerName)
+        if (saved != null &&
+            saved.email.isNotEmpty() &&
+            !saved.email.equals(accountEmail, ignoreCase = true)) {
+            socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "forbidden"))
+            return
+        }
         val spawn = saved?.pos ?: Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z)
         val language =
             saved?.language?.let { if (it in i18n.locales) it else "en" } ?: preferredLanguage
@@ -918,6 +939,7 @@ class GameLoop(
                 knownRecipes = saved?.knownRecipes ?: emptySet(),
                 rpgOptOut =
                     if (saved?.characterData != null) false else (saved?.rpgOptOut ?: false),
+                email = accountEmail,
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =

@@ -24,6 +24,7 @@ import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.config.validateYamlConfig
 import org.micoli.micraft.di.OptionalAuthProvider
+import org.micoli.micraft.di.OptionalNoAuthAccountStore
 import org.micoli.micraft.di.OptionalTokenStore
 import org.micoli.micraft.di.OptionalWorldPersistence
 import org.micoli.micraft.di.PlayerPersister
@@ -156,6 +157,7 @@ fun Application.module() {
     val groupsConfig = get<GroupsConfig>()
     val authProvider = get<OptionalAuthProvider>().value
     val tokenStore = get<OptionalTokenStore>().value
+    val noAuthAccountStore = get<OptionalNoAuthAccountStore>().value
 
     val groupsFilePath = Path.of(authConfig.local.groupsFile)
     validateYamlConfig(groupsFilePath, "groups.schema.json")
@@ -186,6 +188,7 @@ fun Application.module() {
             groupsConfig = groupsConfig,
             reloadRbac = reloadRbacLambda,
             chunkSection = serverConfig.chunks,
+            noAuthAccountStore = noAuthAccountStore,
             sessionRegistry = sessionRegistry,
             playerPersister = get<PlayerPersister>(),
             chatChannelManager = get<ChatChannelManager>(),
@@ -221,7 +224,11 @@ fun Application.module() {
         )
     gameLoop.start(this)
     installAuthRoutes(
-        authConfig.provider, authProvider, tokenStore, serverConfig.network.messageEncoder)
+        authConfig.provider,
+        authProvider,
+        tokenStore,
+        serverConfig.network.messageEncoder,
+        noAuthAccountStore)
 
     Runtime.getRuntime().addShutdownHook(Thread { gameLoop.shutdown() })
 
@@ -263,6 +270,16 @@ fun Application.module() {
         AdminController(authProvider as? LocalAuthProvider, persistence, gameLoop, dataPath)
             .register(this)
         ChunkController(world, tokenStore, serverConfig.chunks.httpWorkers).register(this)
+        get("/api/players/by-email/{email}") {
+            val email =
+                call.parameters["email"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val players = persistence?.listPlayersByEmail(email) ?: emptyList()
+            val json =
+                players.joinToString(",", "[", "]") {
+                    """{"name":"${it.name.replace("\"", "\\\"")}","id":"${it.id}"}"""
+                }
+            call.respondText(json, ContentType.Application.Json)
+        }
         webSocket("/game") { gameLoop.onConnect(this) }
         webSocket("/chunks") { gameLoop.onChunkConnect(this) }
     }

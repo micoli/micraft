@@ -29,12 +29,14 @@ class CharacterController(private val persistence: WorldPersistence?) {
                         ?: return@post call.respond(HttpStatusCode.BadRequest)
                 val skin =
                     Regex(""""skin"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1) ?: "player"
+                val email =
+                    Regex(""""email"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1) ?: ""
                 if (playerName.length !in 3..24) return@post call.respond(HttpStatusCode.BadRequest)
                 val available = availablePlayerSkins()
                 val safeSkin = if (skin in available) skin else available.firstOrNull() ?: "player"
                 val p = persistence ?: return@post call.respond(HttpStatusCode.ServiceUnavailable)
                 val existing = p.loadPlayerState(playerName)
-                val state =
+                val base =
                     existing?.copy(skin = safeSkin)
                         ?: PlayerState(
                             id = UUID.randomUUID().toString(),
@@ -44,6 +46,9 @@ class CharacterController(private val persistence: WorldPersistence?) {
                             skin = safeSkin,
                             rpgOptOut = true,
                         )
+                val state =
+                    if (email.isNotEmpty() && base.email.isEmpty()) base.copy(email = email)
+                    else base
                 p.savePlayerState(playerName, state)
                 call.respondText(
                     """{"playerName":"$playerName","skin":"$safeSkin","id":"${state.id}"}""",
@@ -57,6 +62,8 @@ class CharacterController(private val persistence: WorldPersistence?) {
                 if (playerName.length !in 3..24) return@post call.respond(HttpStatusCode.BadRequest)
                 val skin =
                     Regex(""""skin"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1) ?: "player"
+                val email =
+                    Regex(""""email"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1) ?: ""
                 val characterClassStr =
                     Regex(""""characterClass"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1)
                         ?: return@post call.respond(HttpStatusCode.BadRequest)
@@ -119,7 +126,7 @@ class CharacterController(private val persistence: WorldPersistence?) {
                     prelimChar.copy(currentHp = derived.maxHp, currentMana = derived.maxMana)
                 val available = availablePlayerSkins()
                 val safeSkin = if (skin in available) skin else available.firstOrNull() ?: "player"
-                val state =
+                val base =
                     existing?.copy(skin = safeSkin, characterData = character)
                         ?: PlayerState(
                             id = UUID.randomUUID().toString(),
@@ -130,6 +137,9 @@ class CharacterController(private val persistence: WorldPersistence?) {
                             rpgOptOut = false,
                             characterData = character,
                         )
+                val state =
+                    if (email.isNotEmpty() && base.email.isEmpty()) base.copy(email = email)
+                    else base
                 p.savePlayerState(playerName, state)
                 call.respondText(
                     """{"playerName":"$playerName","characterClass":"${characterClass.name}","id":"${state.id}"}""",

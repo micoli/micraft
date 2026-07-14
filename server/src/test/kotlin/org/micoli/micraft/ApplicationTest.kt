@@ -34,7 +34,12 @@ class ApplicationTest {
         application { module() }
         val wsClient = createClient { install(io.ktor.client.plugins.websocket.WebSockets) }
         wsClient.webSocket("/game") {
-            send(Frame.Binary(true, ClientMessageCodec.encode(ClientMessage.Connect("TestPlayer"))))
+            send(
+                Frame.Binary(
+                    true,
+                    ClientMessageCodec.encode(
+                        ClientMessage.Connect(
+                            playerName = "TestPlayer", userName = "test@example.com"))))
             val frame = incoming.receive()
             assertIs<Frame.Binary>(frame)
             val msg = ServerMessageCodec.decode(frame.readBytes())
@@ -48,7 +53,12 @@ class ApplicationTest {
         application { module() }
         val wsClient = createClient { install(io.ktor.client.plugins.websocket.WebSockets) }
         wsClient.webSocket("/game") {
-            send(Frame.Binary(true, ClientMessageCodec.encode(ClientMessage.Connect("TestPlayer"))))
+            send(
+                Frame.Binary(
+                    true,
+                    ClientMessageCodec.encode(
+                        ClientMessage.Connect(
+                            playerName = "TestPlayer", userName = "test@example.com"))))
 
             // First message: Welcome
             val welcomeFrame = incoming.receive()

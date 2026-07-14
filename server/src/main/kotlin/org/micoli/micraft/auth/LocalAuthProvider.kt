@@ -27,7 +27,11 @@ class LocalAuthProvider(private val usersFile: Path, @Volatile var groupsConfig:
         if (!result.verified) return null
         val permissions = groupsConfig.resolvePermissions(user.groups)
         return AuthResult(
-            playerId = user.email, displayName = user.displayName, permissions = permissions)
+            playerId = user.email,
+            displayName = user.displayName,
+            permissions = permissions,
+            email = user.email,
+        )
     }
 
     fun addUser(

@@ -85,7 +85,8 @@
         "characterData": {"type": ["object", "null"]},
         "rpgOptOut": {"type": "boolean"},
         "godMode": {"type": "boolean"},
-        "lightBoostEnabled": {"type": "boolean"}
+        "lightBoostEnabled": {"type": "boolean"},
+        "email": {"type": "string"}
       }
     },
     "keybindings": {

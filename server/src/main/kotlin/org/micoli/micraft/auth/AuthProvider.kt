@@ -5,6 +5,7 @@ data class AuthResult(
     val displayName: String,
     val token: String = "",
     val permissions: Set<String> = emptySet(),
+    val email: String = playerId,
 )
 
 interface AuthProvider {

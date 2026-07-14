@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import org.koin.dsl.module
 import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.LocalAuthProvider
+import org.micoli.micraft.auth.NoAuthAccountStore
 import org.micoli.micraft.auth.OAuthProvider
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.auth.loadGroupsConfig
@@ -40,5 +41,13 @@ val authModule = module {
     single {
         val authProvider = get<OptionalAuthProvider>().value
         OptionalTokenStore(if (authProvider != null) TokenStore(get<CoroutineScope>()) else null)
+    }
+
+    single {
+        val authConfig = get<ServerConfig>().auth
+        OptionalNoAuthAccountStore(
+            if (authConfig.provider == "none")
+                NoAuthAccountStore(Path.of("data/config/auth/noauth_accounts.yaml"))
+            else null)
     }
 }

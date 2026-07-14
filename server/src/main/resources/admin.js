@@ -81909,7 +81909,11 @@ ${end.comment}` : end.comment;
     }, [content2, schema4]);
     return viewRef;
   }
-  function Editor({ content: content2, schema: schema4, onChange }) {
+  function Editor({
+    content: content2,
+    schema: schema4,
+    onChange
+  }) {
     const containerRef = (0, import_react.useRef)(null);
     useEditor(containerRef, content2, schema4, onChange);
     return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { ref: containerRef, className: "flex-1 overflow-auto h-full" });
@@ -85733,22 +85737,29 @@ ${end.comment}` : end.comment;
         )) }) }),
         /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("tbody", { children: [
           users.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { colSpan: 4, className: "px-5 py-8 text-[#8A99AF] text-sm text-center", children: "No users configured" }) }),
-          users.map((u) => /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("tr", { className: "border-b border-[#2E3A4E] last:border-0 hover:bg-[#1F2D3D] transition-colors", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3 text-sm text-[#8A99AF]", children: u.email }),
-            /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3 text-sm text-white font-medium", children: u.displayName }),
-            /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "flex flex-wrap gap-1", children: u.groups.map((g) => /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
-              "span",
-              {
-                className: "bg-[#3C50E0]/20 text-[#818CF8] text-[10px] font-medium px-2 py-0.5 rounded-full border border-[#3C50E0]/30",
-                children: g
-              },
-              g
-            )) }) }),
-            /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "flex gap-2 justify-end", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Btn, { variant: "ghost", onClick: () => setEditUser(u), children: "Edit" }),
-              /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Btn, { variant: "danger", onClick: () => setDeleteEmail(u.email), children: "Delete" })
-            ] }) })
-          ] }, u.email))
+          users.map((u) => /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)(
+            "tr",
+            {
+              className: "border-b border-[#2E3A4E] last:border-0 hover:bg-[#1F2D3D] transition-colors",
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3 text-sm text-[#8A99AF]", children: u.email }),
+                /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3 text-sm text-white font-medium", children: u.displayName }),
+                /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "flex flex-wrap gap-1", children: u.groups.map((g) => /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
+                  "span",
+                  {
+                    className: "bg-[#3C50E0]/20 text-[#818CF8] text-[10px] font-medium px-2 py-0.5 rounded-full border border-[#3C50E0]/30",
+                    children: g
+                  },
+                  g
+                )) }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "flex gap-2 justify-end", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Btn, { variant: "ghost", onClick: () => setEditUser(u), children: "Edit" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Btn, { variant: "danger", onClick: () => setDeleteEmail(u.email), children: "Delete" })
+                ] }) })
+              ]
+            },
+            u.email
+          ))
         ] })
       ] }) }),
       /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Dialog2, { open: addOpen, onOpenChange: setAddOpen, children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)(DialogContent2, { children: [
@@ -85785,7 +85796,20 @@ ${end.comment}` : end.comment;
   // admin/AdminApp.tsx
   var import_jsx_runtime18 = __toESM(require_jsx_runtime(), 1);
   function Icon({ d, size = 18 }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("path", { d }) });
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+      "svg",
+      {
+        width: size,
+        height: size,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: 1.8,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("path", { d })
+      }
+    );
   }
   var ICONS = {
     status: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
