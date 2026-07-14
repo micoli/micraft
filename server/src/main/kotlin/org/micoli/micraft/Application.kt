@@ -267,7 +267,12 @@ fun Application.module() {
         staticFiles("/api/models", File("resources"))
         MapController(gameLoop).register(this)
         MetricsController(gameLoop).register(this)
-        AdminController(authProvider as? LocalAuthProvider, persistence, gameLoop, dataPath)
+        AdminController(
+                authProvider as? LocalAuthProvider,
+                noAuthAccountStore,
+                persistence,
+                gameLoop,
+                dataPath)
             .register(this)
         ChunkController(world, tokenStore, serverConfig.chunks.httpWorkers).register(this)
         get("/api/players/by-email/{email}") {

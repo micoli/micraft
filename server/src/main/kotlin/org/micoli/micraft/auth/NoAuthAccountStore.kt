@@ -25,6 +25,18 @@ class NoAuthAccountStore(private val file: Path) {
     fun exists(email: String): Boolean =
         load().accounts.any { it.email.equals(email, ignoreCase = true) }
 
+    fun listAccounts(): List<NoAuthAccount> = load().accounts
+
+    @Synchronized
+    fun delete(email: String) {
+        val config = load()
+        val updated =
+            config.copy(
+                accounts = config.accounts.filter { !it.email.equals(email, ignoreCase = true) })
+        file.parent?.createDirectories()
+        file.writeText(Yaml.default.encodeToString(NoAuthAccountsConfig.serializer(), updated))
+    }
+
     @Synchronized
     fun getOrCreate(email: String): NoAuthAccount {
         val config = load()

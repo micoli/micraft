@@ -27225,6 +27225,29 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     (!target || target === "_self") && // Let browser handle "target=_blank" etc.
     !isModifiedEvent(event);
   }
+  function createSearchParams(init = "") {
+    return new URLSearchParams(
+      typeof init === "string" || Array.isArray(init) || init instanceof URLSearchParams ? init : Object.keys(init).reduce((memo2, key2) => {
+        let value = init[key2];
+        return memo2.concat(
+          Array.isArray(value) ? value.map((v) => [key2, v]) : [[key2, value]]
+        );
+      }, [])
+    );
+  }
+  function getSearchParamsForLocation(locationSearch, defaultSearchParams) {
+    let searchParams = createSearchParams(locationSearch);
+    if (defaultSearchParams) {
+      defaultSearchParams.forEach((_, key2) => {
+        if (!searchParams.has(key2)) {
+          defaultSearchParams.getAll(key2).forEach((value) => {
+            searchParams.append(key2, value);
+          });
+        }
+      });
+    }
+    return searchParams;
+  }
   var _formDataSupportsSubmitter = null;
   function isFormDataSubmitterSupported() {
     if (_formDataSupportsSubmitter === null) {
@@ -28232,6 +28255,39 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
         useTransitions
       ]
     );
+  }
+  function useSearchParams(defaultInit) {
+    warning(
+      typeof URLSearchParams !== "undefined",
+      `You cannot use the \`useSearchParams\` hook in a browser that does not support the URLSearchParams API. If you need to support Internet Explorer 11, we recommend you load a polyfill such as https://github.com/ungap/url-search-params.`
+    );
+    let defaultSearchParamsRef = React10.useRef(createSearchParams(defaultInit));
+    let hasSetSearchParamsRef = React10.useRef(false);
+    let location = useLocation();
+    let searchParams = React10.useMemo(
+      () => (
+        // Only merge in the defaults if we haven't yet called setSearchParams.
+        // Once we call that we want those to take precedence, otherwise you can't
+        // remove a param with setSearchParams({}) if it has an initial value
+        getSearchParamsForLocation(
+          location.search,
+          hasSetSearchParamsRef.current ? null : defaultSearchParamsRef.current
+        )
+      ),
+      [location.search]
+    );
+    let navigate = useNavigate();
+    let setSearchParams = React10.useCallback(
+      (nextInit, navigateOptions) => {
+        const newSearchParams = createSearchParams(
+          typeof nextInit === "function" ? nextInit(new URLSearchParams(searchParams)) : nextInit
+        );
+        hasSetSearchParamsRef.current = true;
+        navigate("?" + newSearchParams, navigateOptions);
+      },
+      [navigate, searchParams]
+    );
+    return [searchParams, setSearchParams];
   }
   var fetcherId = 0;
   var getUniqueFetcherId = () => `__${String(++fetcherId)}__`;
@@ -83460,7 +83516,16 @@ ${end.comment}` : end.comment;
           )
         ] }),
         renameErr && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-xs text-red-400", children: renameErr }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-[10px] font-medium bg-[#2E3A4E] text-[#8A99AF] px-2 py-0.5 rounded-full ml-auto", children: hasRpg ? `RPG \xB7 ${file.state.characterData.characterClass}` : "classic" })
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-[10px] font-medium bg-[#2E3A4E] text-[#8A99AF] px-2 py-0.5 rounded-full ml-auto", children: hasRpg ? `RPG \xB7 ${file.state.characterData.characterClass}` : "classic" }),
+        file.state.email && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+          Link,
+          {
+            to: `/admin/users?u=${encodeURIComponent(file.state.email)}`,
+            className: "text-[10px] text-[#818CF8] hover:text-white transition-colors font-mono truncate max-w-[180px]",
+            title: `Owner: ${file.state.email}`,
+            children: file.state.email
+          }
+        )
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(Tabs2, { defaultValue: "prefs", children: [
         /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(TabsList2, { className: "px-5 border-b border-[#2E3A4E] rounded-none bg-transparent gap-1", children: [
@@ -83523,9 +83588,10 @@ ${end.comment}` : end.comment;
     ] });
   }
   function PlayersPage() {
+    const [searchParams] = useSearchParams();
     const [players, setPlayers] = (0, import_react2.useState)([]);
     const [loading, setLoading] = (0, import_react2.useState)(true);
-    const [selected, setSelected] = (0, import_react2.useState)(null);
+    const [selected, setSelected] = (0, import_react2.useState)(searchParams.get("p"));
     (0, import_react2.useEffect)(() => {
       api.players.list().then((p2) => {
         setPlayers(p2.sort());
@@ -85639,7 +85705,8 @@ ${end.comment}` : end.comment;
     initial,
     onSave,
     onClose,
-    isNew
+    isNew,
+    noauth = false
   }) {
     var _a6, _b, _c;
     const [email, setEmail] = (0, import_react6.useState)((_a6 = initial.email) != null ? _a6 : "");
@@ -85667,9 +85734,9 @@ ${end.comment}` : end.comment;
     };
     return /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "space-y-4", children: [
       isNew && /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Field2, { label: "Email", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(TextInput, { value: email, onChange: setEmail, placeholder: "user@example.com" }) }),
-      isNew && /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Field2, { label: "Password", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(TextInput, { value: password, onChange: setPassword, type: "password" }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Field2, { label: "Display Name", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(TextInput, { value: displayName, onChange: setDisplayName, placeholder: email }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Field2, { label: "Groups (comma-separated)", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(TextInput, { value: groups, onChange: setGroups, placeholder: "admin, player" }) }),
+      isNew && !noauth && /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Field2, { label: "Password", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(TextInput, { value: password, onChange: setPassword, type: "password" }) }),
+      !noauth && /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Field2, { label: "Display Name", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(TextInput, { value: displayName, onChange: setDisplayName, placeholder: email }) }),
+      !noauth && /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Field2, { label: "Groups (comma-separated)", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(TextInput, { value: groups, onChange: setGroups, placeholder: "admin, player" }) }),
       error2 && /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("p", { className: "text-red-400 text-xs", children: error2 }),
       /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "flex gap-2 justify-end pt-1", children: [
         /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Btn, { variant: "ghost", onClick: onClose, children: "Cancel" }),
@@ -85678,18 +85745,47 @@ ${end.comment}` : end.comment;
     ] });
   }
   function UsersPage() {
+    const [searchParams] = useSearchParams();
+    const highlightEmail = searchParams.get("u");
+    const highlightRef = (0, import_react6.useRef)(null);
     const [users, setUsers] = (0, import_react6.useState)([]);
     const [loading, setLoading] = (0, import_react6.useState)(true);
+    const [unavailable, setUnavailable] = (0, import_react6.useState)(false);
+    const [authProvider, setAuthProvider] = (0, import_react6.useState)("local");
+    const [playersByEmail, setPlayersByEmail] = (0, import_react6.useState)({});
     const [addOpen, setAddOpen] = (0, import_react6.useState)(false);
     const [editUser, setEditUser] = (0, import_react6.useState)(null);
     const [deleteEmail, setDeleteEmail] = (0, import_react6.useState)(null);
+    (0, import_react6.useEffect)(() => {
+      if (highlightRef.current) highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, [loading]);
     const refresh = async () => {
+      var _a6;
       setLoading(true);
-      setUsers(await api.users.list());
-      setLoading(false);
+      try {
+        const [configR, usersR] = await Promise.all([fetch("/api/auth/config"), fetch("/api/admin/users")]);
+        const config3 = await configR.json();
+        setAuthProvider((_a6 = config3.provider) != null ? _a6 : "local");
+        if (usersR.status === 503) {
+          setUnavailable(true);
+          return;
+        }
+        const loadedUsers = await usersR.json();
+        setUsers(loadedUsers);
+        const entries = await Promise.all(
+          loadedUsers.map(async (u) => {
+            const r2 = await fetch(`/api/players/by-email/${encodeURIComponent(u.email)}`);
+            const players = r2.ok ? await r2.json() : [];
+            return [u.email, players.map((p2) => p2.name)];
+          })
+        );
+        setPlayersByEmail(Object.fromEntries(entries));
+      } finally {
+        setLoading(false);
+      }
     };
     (0, import_react6.useEffect)(() => {
-      refresh();
+      void refresh();
     }, []);
     const handleAdd = async (u) => {
       var _a6;
@@ -85717,6 +85813,16 @@ ${end.comment}` : end.comment;
       setDeleteEmail(null);
       await refresh();
     };
+    if (unavailable) {
+      return /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "rounded-xl border border-[#2E3A4E] bg-[#1A222C] p-6 text-sm text-[#8A99AF]", children: [
+        "User management requires ",
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("code", { className: "text-white", children: "auth.provider: local" }),
+        " in",
+        " ",
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("code", { className: "text-white", children: "data/config/server.yaml" }),
+        "."
+      ] });
+    }
     return /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "space-y-5", children: [
       /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "flex items-center justify-between", children: [
         /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("p", { className: "text-sm text-[#8A99AF]", children: [
@@ -85727,7 +85833,7 @@ ${end.comment}` : end.comment;
         /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Btn, { onClick: () => setAddOpen(true), children: "+ Add User" })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "bg-[#1A222C] rounded-xl border border-[#2E3A4E] overflow-hidden", children: loading ? /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("p", { className: "p-6 text-[#8A99AF] text-sm animate-pulse", children: "Loading\u2026" }) : /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("table", { className: "w-full", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("tr", { className: "border-b border-[#2E3A4E]", children: ["Email", "Display Name", "Groups", ""].map((h) => /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("tr", { className: "border-b border-[#2E3A4E]", children: (authProvider === "none" ? ["Email", "Players", ""] : ["Email", "Display Name", "Groups", "Players", ""]).map((h) => /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
           "th",
           {
             className: "px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]",
@@ -85736,35 +85842,67 @@ ${end.comment}` : end.comment;
           h
         )) }) }),
         /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("tbody", { children: [
-          users.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { colSpan: 4, className: "px-5 py-8 text-[#8A99AF] text-sm text-center", children: "No users configured" }) }),
-          users.map((u) => /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)(
-            "tr",
+          users.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
+            "td",
             {
-              className: "border-b border-[#2E3A4E] last:border-0 hover:bg-[#1F2D3D] transition-colors",
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3 text-sm text-[#8A99AF]", children: u.email }),
-                /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3 text-sm text-white font-medium", children: u.displayName }),
-                /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "flex flex-wrap gap-1", children: u.groups.map((g) => /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
-                  "span",
-                  {
-                    className: "bg-[#3C50E0]/20 text-[#818CF8] text-[10px] font-medium px-2 py-0.5 rounded-full border border-[#3C50E0]/30",
-                    children: g
-                  },
-                  g
-                )) }) }),
-                /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "flex gap-2 justify-end", children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Btn, { variant: "ghost", onClick: () => setEditUser(u), children: "Edit" }),
-                  /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Btn, { variant: "danger", onClick: () => setDeleteEmail(u.email), children: "Delete" })
-                ] }) })
-              ]
-            },
-            u.email
-          ))
+              colSpan: authProvider === "none" ? 3 : 5,
+              className: "px-5 py-8 text-[#8A99AF] text-sm text-center",
+              children: "No users configured"
+            }
+          ) }),
+          users.map((u) => {
+            var _a6;
+            const isHighlighted = highlightEmail && u.email.toLowerCase() === highlightEmail.toLowerCase();
+            return /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)(
+              "tr",
+              {
+                ref: isHighlighted ? highlightRef : void 0,
+                className: `border-b border-[#2E3A4E] last:border-0 transition-colors ${isHighlighted ? "bg-[#3C50E0]/10 ring-1 ring-inset ring-[#3C50E0]/40" : "hover:bg-[#1F2D3D]"}`,
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3 text-sm text-[#8A99AF]", children: u.email }),
+                  authProvider !== "none" && /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)(import_jsx_runtime17.Fragment, { children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3 text-sm text-white font-medium", children: u.displayName }),
+                    /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "flex flex-wrap gap-1", children: u.groups.map((g) => /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
+                      "span",
+                      {
+                        className: "bg-[#3C50E0]/20 text-[#818CF8] text-[10px] font-medium px-2 py-0.5 rounded-full border border-[#3C50E0]/30",
+                        children: g
+                      },
+                      g
+                    )) }) })
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("div", { className: "flex flex-wrap gap-1", children: ((_a6 = playersByEmail[u.email]) != null ? _a6 : []).map((p2) => /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
+                    Link,
+                    {
+                      to: `/admin/players?p=${encodeURIComponent(p2)}`,
+                      className: "text-[10px] font-medium px-2 py-0.5 rounded-full border bg-green-950/40 border-green-700/40 text-green-400 hover:text-white hover:border-green-500 transition-colors",
+                      children: p2
+                    },
+                    p2
+                  )) }) }),
+                  /* @__PURE__ */ (0, import_jsx_runtime17.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)("div", { className: "flex gap-2 justify-end", children: [
+                    authProvider !== "none" && /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Btn, { variant: "ghost", onClick: () => setEditUser(u), children: "Edit" }),
+                    /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Btn, { variant: "danger", onClick: () => setDeleteEmail(u.email), children: "Delete" })
+                  ] }) })
+                ]
+              },
+              u.email
+            );
+          })
         ] })
       ] }) }),
       /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Dialog2, { open: addOpen, onOpenChange: setAddOpen, children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)(DialogContent2, { children: [
         /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(DialogTitle2, { children: "Add User" }),
-        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(UserForm, { initial: {}, isNew: true, onSave: handleAdd, onClose: () => setAddOpen(false) })
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
+          UserForm,
+          {
+            initial: {},
+            isNew: true,
+            noauth: authProvider === "none",
+            onSave: handleAdd,
+            onClose: () => setAddOpen(false)
+          }
+        )
       ] }) }),
       /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Dialog2, { open: !!editUser, onOpenChange: (o) => !o && setEditUser(null), children: /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)(DialogContent2, { children: [
         /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(DialogTitle2, { children: "Edit User" }),

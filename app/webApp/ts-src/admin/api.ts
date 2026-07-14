@@ -61,6 +61,7 @@ export interface PlayerState {
   lightBoostEnabled: boolean;
   rpgOptOut: boolean;
   characterData: CharacterData | null;
+  email?: string;
 }
 
 export interface PlayerFile {

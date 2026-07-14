@@ -56,6 +56,7 @@ private val configFileWhitelist =
 
 class AdminController(
     private val localAuth: LocalAuthProvider?,
+    private val noAuthAccountStore: org.micoli.micraft.auth.NoAuthAccountStore?,
     private val persistence: WorldPersistence?,
     private val gameLoop: GameLoop,
     private val dataPath: String,
@@ -138,44 +139,67 @@ class AdminController(
 
             // ── Users ────────────────────────────────────────────────────────
             get("/api/admin/users") {
-                val auth = localAuth ?: return@get call.respond(HttpStatusCode.ServiceUnavailable)
-                val users = auth.listUsers().map { UserDto(it.email, it.displayName, it.groups) }
+                val users: List<UserDto> =
+                    when {
+                        localAuth != null ->
+                            localAuth.listUsers().map {
+                                UserDto(it.email, it.displayName, it.groups)
+                            }
+                        noAuthAccountStore != null ->
+                            noAuthAccountStore.listAccounts().map {
+                                UserDto(it.email, it.email, emptyList())
+                            }
+                        else -> return@get call.respond(HttpStatusCode.ServiceUnavailable)
+                    }
                 call.respondText(
                     adminJson.encodeToString(ListSerializer(UserDto.serializer()), users),
                     ContentType.Application.Json)
             }
 
             post("/api/admin/users") {
-                val auth = localAuth ?: return@post call.respond(HttpStatusCode.ServiceUnavailable)
                 val body =
                     runCatching { Json.parseToJsonElement(call.receiveText()).jsonObject }
                         .getOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest)
                 val email =
                     body["email"]?.jsonPrimitive?.content
                         ?: return@post call.respond(HttpStatusCode.BadRequest)
-                val password =
-                    body["password"]?.jsonPrimitive?.content
-                        ?: return@post call.respond(HttpStatusCode.BadRequest)
-                val displayName = body["displayName"]?.jsonPrimitive?.content ?: email
-                val groups =
-                    body["groups"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
-                runCatching { auth.addUser(email, password, displayName, groups) }
-                    .onFailure {
-                        return@post call.respond(HttpStatusCode.Conflict)
+                when {
+                    localAuth != null -> {
+                        val password =
+                            body["password"]?.jsonPrimitive?.content
+                                ?: return@post call.respond(HttpStatusCode.BadRequest)
+                        val displayName = body["displayName"]?.jsonPrimitive?.content ?: email
+                        val groups =
+                            body["groups"]?.jsonArray?.map { it.jsonPrimitive.content }
+                                ?: emptyList()
+                        runCatching { localAuth.addUser(email, password, displayName, groups) }
+                            .onFailure {
+                                return@post call.respond(HttpStatusCode.Conflict)
+                            }
                     }
+                    noAuthAccountStore != null -> {
+                        if (noAuthAccountStore.exists(email))
+                            return@post call.respond(HttpStatusCode.Conflict)
+                        noAuthAccountStore.getOrCreate(email)
+                    }
+                    else -> return@post call.respond(HttpStatusCode.ServiceUnavailable)
+                }
                 call.respond(HttpStatusCode.Created)
             }
 
             delete("/api/admin/users/{email}") {
-                val auth =
-                    localAuth ?: return@delete call.respond(HttpStatusCode.ServiceUnavailable)
                 val email =
                     call.parameters["email"]
                         ?: return@delete call.respond(HttpStatusCode.BadRequest)
-                runCatching { auth.deleteUser(email) }
-                    .onFailure {
-                        return@delete call.respond(HttpStatusCode.NotFound)
-                    }
+                when {
+                    localAuth != null ->
+                        runCatching { localAuth.deleteUser(email) }
+                            .onFailure {
+                                return@delete call.respond(HttpStatusCode.NotFound)
+                            }
+                    noAuthAccountStore != null -> noAuthAccountStore.delete(email)
+                    else -> return@delete call.respond(HttpStatusCode.ServiceUnavailable)
+                }
                 call.respond(HttpStatusCode.NoContent)
             }
 

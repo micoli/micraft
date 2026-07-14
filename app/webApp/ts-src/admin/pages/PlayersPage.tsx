@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../primitives/Tabs";
 import { api, BaseStats, PlayerFile } from "../api";
 
@@ -470,6 +471,15 @@ function PlayerDetail({
         <span className="text-[10px] font-medium bg-[#2E3A4E] text-[#8A99AF] px-2 py-0.5 rounded-full ml-auto">
           {hasRpg ? `RPG · ${file.state.characterData!.characterClass}` : "classic"}
         </span>
+        {file.state.email && (
+          <Link
+            to={`/admin/users?u=${encodeURIComponent(file.state.email)}`}
+            className="text-[10px] text-[#818CF8] hover:text-white transition-colors font-mono truncate max-w-[180px]"
+            title={`Owner: ${file.state.email}`}
+          >
+            {file.state.email}
+          </Link>
+        )}
       </div>
       <Tabs defaultValue="prefs">
         <TabsList className="px-5 border-b border-[#2E3A4E] rounded-none bg-transparent gap-1">
@@ -530,9 +540,10 @@ function PlayerDetail({
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function PlayersPage() {
+  const [searchParams] = useSearchParams();
   const [players, setPlayers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(searchParams.get("p"));
 
   useEffect(() => {
     api.players.list().then((p) => {
