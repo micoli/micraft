@@ -87,3 +87,6 @@ fun jsConsumeEvents(): JsAny = js("mc.consumeEvents()")
 fun jsEventsLength(arr: JsAny): Int = js("arr.length")
 
 fun jsEventsGet(arr: JsAny, i: Int): String = js("arr[i]")
+
+fun jsTakeScreenshot(scene: JsAny, camera: JsAny, player: String): Unit =
+    js("mc.takeScreenshot(scene, camera, player)")

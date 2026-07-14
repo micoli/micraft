@@ -89,6 +89,7 @@ import org.micoli.micraft.http.MetricsController
 import org.micoli.micraft.http.PlayerArmorsController
 import org.micoli.micraft.http.PlayerRpgController
 import org.micoli.micraft.http.PlayerSkinController
+import org.micoli.micraft.http.ScreenshotController
 import org.micoli.micraft.http.SkinsController
 import org.micoli.micraft.http.TerrainCache
 import org.slf4j.LoggerFactory
@@ -249,6 +250,7 @@ fun Application.module() {
         MacrosController().register(this)
         BiomesController(biomeRegistry).register(this)
         PlayerSkinController(persistence).register(this)
+        ScreenshotController(dataPath).register(this)
         PlayerArmorsController(persistence).register(this)
         PlayerRpgController(persistence).register(this)
         CharacterController(persistence).register(this)

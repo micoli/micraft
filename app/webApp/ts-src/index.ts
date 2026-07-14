@@ -19,6 +19,7 @@ import { registerNpcModel } from "./game/npc/npcModel";
 import { registerMinimap, setMinimapColors } from "./game/minimap/minimap";
 import { registerSky } from "./game/sky/sky";
 import { registerWeather } from "./game/weather/weather";
+import { registerScreenshot } from "./game/screenshot/screenshot";
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import { GameUI } from "./game/GameUI";
@@ -128,6 +129,7 @@ window.mc = {
   ...registerMinimap(),
   ...registerSky(),
   ...registerWeather(),
+  ...registerScreenshot(),
 
   // ── Registry ────────────────────────────────────────────────────────────────
 

@@ -478,6 +478,7 @@ class LocalPlayerController(
                     outMessages.trySend(ClientMessage.ViewModeUpdate(viewMode.name))
                 }
                 event == "inventory" -> jsToggleHotbar()
+                event == "screenshot" -> jsTakeScreenshot(scene, camera, playerName())
                 event == "undo" -> outMessages.trySend(ClientMessage.Command("/undo 1"))
                 event == "fly_toggle" -> pendingFlyToggle = true
                 event == "auto_forward" -> autoAdvance = !autoAdvance

@@ -28,6 +28,7 @@ export const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   ingame_map: ["m"],
   layout_editor: ["KeyG"],
   character: ["KeyY"],
+  screenshot: ["KeyJ"],
   health_bar: ["KeyB"],
   craft: ["Alt+KeyC"],
   dump_stats: ["KeyV"],
@@ -200,6 +201,7 @@ export function registerKeyboard(): Pick<
         if (b.ingame_map?.some((k) => matchesEvent(k, e))) window.mc?.toggleBiomeMap?.();
         if (b.combat_target_cycle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_target_cycle");
         if (b.combat_attack?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_attack");
+        if (b.screenshot?.some((k) => matchesEvent(k, e))) window.mcState.events.push("screenshot");
         for (let s = 1; s <= 10; s++) {
           const key = `slot_${s}` as string;
           if (b[key]?.some((k: string) => matchesEvent(k, e))) window.mcState.events.push(key);

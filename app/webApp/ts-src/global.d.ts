@@ -428,6 +428,7 @@ declare global {
     tradeClosed(_tradeId: string, _reason: string): void;
     openTrade(tradeId: string, otherPlayer: string, _role: string): void;
     tradeUpdate(json: string);
+    takeScreenshot(scene: unknown, camera: unknown, playerName: string): void;
   }
 
   // ── Window augmentation ───────────────────────────────────────────────────────
