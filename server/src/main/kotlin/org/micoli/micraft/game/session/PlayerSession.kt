@@ -64,7 +64,14 @@ open class PlayerSession(
         val bytes = ServerMessageCodec.encode(msg)
         networkStats.bytesOut.addAndGet(bytes.size.toLong())
         val cs = chunkSocket
-        if (cs != null) cs.send(Frame.Binary(true, bytes))
-        else socket.send(Frame.Binary(true, bytes))
+        if (cs != null) {
+            try {
+                cs.send(Frame.Binary(true, bytes))
+                return
+            } catch (_: Exception) {
+                // chunk socket closed mid-delivery; fall through to main socket
+            }
+        }
+        socket.send(Frame.Binary(true, bytes))
     }
 }

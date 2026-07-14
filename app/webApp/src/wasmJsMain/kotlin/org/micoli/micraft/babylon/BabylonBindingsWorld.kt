@@ -2,7 +2,7 @@
 
 package org.micoli.micraft.babylon
 
-// ── Meshes ────────────────────────────────────────────────────────────────────
+// ── Meshes
 
 fun jsCreateBox(name: String, size: Double, scene: JsAny): JsAny =
     js("mc.createBox(name, size, scene)")
@@ -33,7 +33,7 @@ fun jsSetMeshPosition(mesh: JsAny, x: Double, y: Double, z: Double): Unit =
 
 fun jsDisposeMesh(mesh: JsAny): Unit = js("mesh.dispose()")
 
-// ── Materials ─────────────────────────────────────────────────────────────────
+// ── Materials
 
 fun jsCreateMaterial(name: String, scene: JsAny): JsAny =
     js("new BABYLON.StandardMaterial(name, scene)")
@@ -43,7 +43,7 @@ fun jsSetMaterialColor(mat: JsAny, r: Double, g: Double, b: Double): Unit =
 
 fun jsSetMeshMaterial(mesh: JsAny, mat: JsAny): Unit = js("mesh.material = mat")
 
-// ── Chunk geometry builder ────────────────────────────────────────────────────
+// ── Chunk geometry builder
 
 fun jsChunkBegin(cx: Int, cz: Int): Unit = js("mc.chunkBegin(cx, cz)")
 
@@ -54,7 +54,7 @@ fun jsChunkEnd(scene: JsAny, materials: JsAny): Unit = js("mc.chunkEnd(scene, ma
 
 fun jsDisposeChunk(key: String): Unit = js("mc.disposeChunk(key)")
 
-// ── Block definitions (bbmodel-driven) ───────────────────────────────────────
+// ── Block definitions (bbmodel-driven)
 
 fun jsInitBlockDefs(): Unit = js("mc.initBlockDefs()")
 

@@ -716,7 +716,7 @@ class GameLoop(
                 persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
             while (isActive) {
                 delay(TICK_MS)
-                tick()
+                runCatching { tick() }.onFailure { log.error("tick error: {}", it.message, it) }
                 saveTickCounter++
                 if (saveTickCounter >= SAVE_INTERVAL_TICKS) {
                     saveTickCounter = 0

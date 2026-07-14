@@ -109,10 +109,12 @@ class WorldPersistence(val worldDir: Path) {
         }
         return try {
             if (jsonFile.exists()) {
-                val saved = keybindingsJson.decodeFromString(keybindingsSerializer, jsonFile.readText())
+                val saved =
+                    keybindingsJson.decodeFromString(keybindingsSerializer, jsonFile.readText())
                 defaultKeyBindings() + saved
             } else {
-                val saved = Yaml.default.decodeFromString(keybindingsSerializer, yamlFile.readText())
+                val saved =
+                    Yaml.default.decodeFromString(keybindingsSerializer, yamlFile.readText())
                 defaultKeyBindings() + saved
             }
         } catch (e: Exception) {

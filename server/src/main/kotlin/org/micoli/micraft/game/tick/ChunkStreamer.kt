@@ -141,10 +141,17 @@ class ChunkStreamer(private val world: WorldState) {
 
         var delivered = 0
         for (cp in candidates) {
-            val chunk = pool.remove(cp) ?: continue
+            val chunk = pool[cp] ?: continue
+            try {
+                session.sendChunk(
+                    ServerMessage.ChunkData(chunk.pos, chunk.topY(), chunk.encodeWire()))
+            } catch (e: Exception) {
+                log.debug("chunk send failed for {}: {}", session.id.take(8), e.message)
+                break
+            }
+            pool.remove(cp)
             session.loadedChunks.add(cp)
             session.inFlightChunks.remove(cp)
-            session.sendChunk(ServerMessage.ChunkData(chunk.pos, chunk.topY(), chunk.encodeWire()))
             delivered++
         }
         if (delivered > 0) {
