@@ -24,8 +24,8 @@ internal object NpcPhysics {
                 true
             } else false
         } else {
-            val dy = instance.vy * TICK_SECONDS
             instance.vy += GRAVITY * TICK_SECONDS
+            val dy = instance.vy * TICK_SECONDS
             val resolvedDy =
                 AabbCollider.resolveY(solid, pos.x, pos.y, pos.z, def.width, def.height, dy)
             if (resolvedDy != dy) instance.vy = 0f

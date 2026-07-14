@@ -9,11 +9,19 @@ import kotlin.io.path.*
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
 import org.micoli.micraft.player.PlayerState
 import org.slf4j.LoggerFactory
 
 private val worldPersistenceLog = LoggerFactory.getLogger("WorldPersistence")
+
+private val playerJson = Json {
+    encodeDefaults = true
+    ignoreUnknownKeys = true
+}
+
+private val keybindingsJson = Json { ignoreUnknownKeys = true }
 
 class WorldPersistence(val worldDir: Path) {
     private val chunksDir = worldDir.resolve("chunks")
@@ -56,20 +64,31 @@ class WorldPersistence(val worldDir: Path) {
     }
 
     fun loadPlayerState(name: String): PlayerState? {
-        val file = playersDir.resolve("${name.sanitize()}.yaml")
-        if (!file.exists()) return null
-        return try {
-            Yaml.default.decodeFromString(PlayerState.serializer(), file.readText())
-        } catch (e: Exception) {
-            worldPersistenceLog.warn("Failed to load player {}: {}", name, e.message)
-            null
+        val jsonFile = playersDir.resolve("${name.sanitize()}.json")
+        val yamlFile = playersDir.resolve("${name.sanitize()}.yaml")
+        return when {
+            jsonFile.exists() ->
+                try {
+                    playerJson.decodeFromString(PlayerState.serializer(), jsonFile.readText())
+                } catch (e: Exception) {
+                    worldPersistenceLog.warn("Failed to load player {}: {}", name, e.message)
+                    null
+                }
+            yamlFile.exists() ->
+                try {
+                    Yaml.default.decodeFromString(PlayerState.serializer(), yamlFile.readText())
+                } catch (e: Exception) {
+                    worldPersistenceLog.warn("Failed to load player {}: {}", name, e.message)
+                    null
+                }
+            else -> null
         }
     }
 
     fun savePlayerState(name: String, state: PlayerState) {
-        val file = playersDir.resolve("${name.sanitize()}.yaml")
+        val file = playersDir.resolve("${name.sanitize()}.json")
         try {
-            file.writeText(Yaml.default.encodeToString(PlayerState.serializer(), state))
+            file.writeText(playerJson.encodeToString(PlayerState.serializer(), state))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save player {}: {}", name, e.message)
         }
@@ -81,15 +100,21 @@ class WorldPersistence(val worldDir: Path) {
     private val macrosSerializer = MapSerializer(String.serializer(), String.serializer())
 
     fun loadPlayerKeyBindings(name: String): Map<String, List<String>> {
-        val file = playersDir.resolve("${name.sanitize()}-keybindings.yaml")
-        if (!file.exists()) {
+        val jsonFile = playersDir.resolve("${name.sanitize()}-keybindings.json")
+        val yamlFile = playersDir.resolve("${name.sanitize()}-keybindings.yaml")
+        if (!jsonFile.exists() && !yamlFile.exists()) {
             val defaults = defaultKeyBindings()
             savePlayerKeyBindings(name, defaults)
             return defaults
         }
         return try {
-            val saved = Yaml.default.decodeFromString(keybindingsSerializer, file.readText())
-            defaultKeyBindings() + saved
+            if (jsonFile.exists()) {
+                val saved = keybindingsJson.decodeFromString(keybindingsSerializer, jsonFile.readText())
+                defaultKeyBindings() + saved
+            } else {
+                val saved = Yaml.default.decodeFromString(keybindingsSerializer, yamlFile.readText())
+                defaultKeyBindings() + saved
+            }
         } catch (e: Exception) {
             worldPersistenceLog.warn("Failed to load keybindings for {}: {}", name, e.message)
             defaultKeyBindings()
@@ -97,9 +122,9 @@ class WorldPersistence(val worldDir: Path) {
     }
 
     fun savePlayerKeyBindings(name: String, bindings: Map<String, List<String>>) {
-        val file = playersDir.resolve("${name.sanitize()}-keybindings.yaml")
+        val file = playersDir.resolve("${name.sanitize()}-keybindings.json")
         try {
-            file.writeText(Yaml.default.encodeToString(keybindingsSerializer, bindings))
+            file.writeText(keybindingsJson.encodeToString(keybindingsSerializer, bindings))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save keybindings for {}: {}", name, e.message)
         }
