@@ -29,7 +29,7 @@ class ViewModePersistenceTest {
     fun savePlayer_defaultViewMode_presentInJson() {
         val (p, dir) = persistence()
         p.savePlayerState("alice", minimalState("FIRST_PERSON"))
-        val raw = dir.resolve("players/alice.json").readText()
+        val raw = dir.resolve("players/alice.yaml").readText()
         assertTrue(raw.contains("viewMode"), "viewMode must be written even for default value")
     }
 

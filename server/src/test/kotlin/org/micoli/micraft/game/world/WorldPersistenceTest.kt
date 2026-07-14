@@ -58,6 +58,7 @@ class WorldPersistenceTest {
     @Test
     fun keyBindingsRoundtrip() {
         val p = persistence()
+        p.savePlayerState("alice", testPlayerState(name = "alice"))
         val bindings = mapOf("action.jump" to listOf("Space"), "action.fly" to listOf("F"))
         p.savePlayerKeyBindings("alice", bindings)
         val loaded = p.loadPlayerKeyBindings("alice")
