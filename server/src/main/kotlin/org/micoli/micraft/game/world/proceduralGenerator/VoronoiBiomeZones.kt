@@ -103,8 +103,9 @@ class VoronoiBiomeZones(
     }
 
     private fun moistureAt(wx: Int, wz: Int): Double =
-        ((moistureNoise.octaveNoise(wx / 200.0, wz / 200.0, octaves = 3) + 1.0) / 2.0).coerceIn(
-            0.0, 0.9999)
+        ((moistureNoise.octaveNoise(wx / 200.0, wz / 200.0, octaves = 3, persistence = 0.6) + 1.0) /
+                2.0)
+            .coerceIn(0.0, 0.9999)
 
     private fun columnHash(wx: Int, wz: Int): Double {
         val h = (wx.toLong() * 1664525L + wz.toLong() * 1013904223L + seed) and 0x7FFFFFFFL
@@ -125,8 +126,9 @@ class VoronoiBiomeZones(
         col: ColumnSample = sample(wx, wz)
     ): BiomeDefinition {
         val moisture =
-            ((moistureNoise.octaveNoise(wx / 200.0, wz / 200.0, octaves = 3) + 1.0) / 2.0).coerceIn(
-                0.0, 0.9999)
+            ((moistureNoise.octaveNoise(wx / 200.0, wz / 200.0, octaves = 3, persistence = 0.6) +
+                    1.0) / 2.0)
+                .coerceIn(0.0, 0.9999)
         return registry.altitudeOverride(surfaceY, moisture) ?: col.primary
     }
 

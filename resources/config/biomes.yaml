@@ -39,7 +39,7 @@ biomes:
   - id: desert
     zones:
       - moistureMin: 0.0
-        moistureMax: 0.12
+        moistureMax: 0.25
     surface: SAND
     subsurface: SANDSTONE
     fillers:
@@ -68,7 +68,7 @@ biomes:
       staircaseEnabled: true
   - id: dry_plains
     zones:
-      - moistureMin: 0.12
+      - moistureMin: 0.25
         moistureMax: 0.30
     surface: GRASS
     subsurface: DIRT
