@@ -32,3 +32,14 @@ const lines = [
 
 fs.writeFileSync(outputFile, lines.join("\n"));
 console.log(`[plugins] Generated index.ts — ${plugins.length} plugin(s): ${plugins.join(", ") || "(none)"}`);
+
+const pad = (n) => String(n).padStart(2, "0");
+const d = new Date();
+const ts = `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}-${pad(d.getUTCHours())}.${pad(d.getUTCMinutes())}.${pad(d.getUTCSeconds())}`;
+const buildConfigFile = path.join(__dirname, "..", "buildConfig.ts");
+const existing = fs.existsSync(buildConfigFile) ? fs.readFileSync(buildConfigFile, "utf8") : "";
+const existingTs = existing.match(/"([^"]+)"/)?.[1] ?? "";
+if (existingTs.slice(0, 14) !== ts.slice(0, 14)) {
+  fs.writeFileSync(buildConfigFile, `// Auto-generated — do not edit\nexport const MC_BUILD_TIMESTAMP = "${ts}";\n`);
+  console.log(`[build] mc_bindings timestamp: ${ts}`);
+}

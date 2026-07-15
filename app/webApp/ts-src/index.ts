@@ -25,6 +25,9 @@ import { createElement } from "react";
 import { GameUI } from "./game/GameUI";
 import { setWidgetRegistry } from "./game/layout/LayoutEngine";
 import { initFaviconAnimator, setFaviconAnimated } from "./favicon/faviconAnimator";
+import { MC_BUILD_TIMESTAMP } from "./buildConfig";
+
+console.log("[debug] build " + MC_BUILD_TIMESTAMP + " (mc_bindings)");
 
 // ── Initialize shared runtime state ──────────────────────────────────────────
 

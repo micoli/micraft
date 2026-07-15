@@ -84,8 +84,8 @@ build-client: build-js build-wasm
 # project lock. In that case touch a source file to trigger the watcher instead.
 build-wasm:
 	@if $(DC_DEV) exec micraft pgrep -f "copyResourcesToWebDist.*continuous" > /dev/null 2>&1; then \
-		echo "[wasm] dev watcher running — triggering rebuild via source touch…"; \
-		$(EXEC) "touch app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/babylon/BabylonBindingsWorld.kt"; \
+		echo "[wasm] dev watcher running — triggering rebuild via source change…"; \
+		$(EXEC) "f=app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/babylon/BabylonBindingsWorld.kt; sed -i '/^\\/\\/ wasm-trigger/d' \$$f; echo \"// wasm-trigger $$(date +%s)\" >> \$$f"; \
 	else \
 		$(EXEC) "./gradlew :app:webApp:copyResourcesToWebDist --rerun-tasks"; \
 	fi
@@ -94,7 +94,7 @@ copy-wasm:
 
 # Explicitly trigger the --continuous wasm watcher (use when ./gradlew :dev is running).
 trigger-wasm:
-	$(EXEC) "touch app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/babylon/BabylonBindingsWorld.kt"
+	$(EXEC) "f=app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/babylon/BabylonBindingsWorld.kt; sed -i '/^\\/\\/ wasm-trigger/d' \$$f; echo \"// wasm-trigger $$(date +%s)\" >> \$$f"
 
 build-js:
 	$(EXEC) "cd app/webApp/ts-src && npm run build"
