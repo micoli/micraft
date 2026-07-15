@@ -239,7 +239,6 @@ window.mc = {
   consumeLoginResult: () => "",
   consoleSetPlayer: () => {},
   setPlayerId: () => {},
-  cycleHudMode: () => {},
   syncLayouts: () => {},
   showLayoutEditor: () => {},
   hideLayoutEditor: () => {},

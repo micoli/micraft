@@ -13,4 +13,5 @@ data class WidgetRegistryEntry(
     val minH: Int,
     val editorLabel: String,
     val editorColor: String,
+    val flow: Boolean = false,
 )

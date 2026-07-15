@@ -378,6 +378,7 @@ declare global {
     updateHotbar(json: string): void;
     toggleHotbar(): void;
     toggleHealthBar(): void;
+    toggleStatistics(): void;
     updateShortcutBar(json: string): void;
     setSelectedSlot(slot: number): void;
     consumeSlotUpdate(): string;
@@ -396,7 +397,6 @@ declare global {
     consumeLoginResult(): string;
     consoleSetPlayer(name: string): void;
     setPlayerId(id: string): void;
-    cycleHudMode(): void;
     syncLayouts(json: string): void;
     showLayoutEditor(): void;
     hideLayoutEditor(): void;

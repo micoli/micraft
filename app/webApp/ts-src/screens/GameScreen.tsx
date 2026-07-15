@@ -32,7 +32,8 @@ import { AttackPanel } from "../game/components/AttackPanel";
 import { XpBar } from "../game/components/XpBar";
 import { useGameContext } from "../game/GameContext";
 import { getLastUser, clearLastPlayer } from "../lib/authStorage";
-import {AggroIndicators} from "../game/components/AggroIndicators";
+import { AggroIndicators } from "../game/components/AggroIndicators";
+import { Statistics } from "../game/components/Statistics";
 
 export function GameScreen() {
   const {
@@ -72,6 +73,7 @@ export function GameScreen() {
     shadersEnabled: boolean;
     animatedFavicon: boolean;
     chunkDebugVisible: boolean;
+    statisticsVisible: boolean;
     keybindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
     fieldOfView?: number;
@@ -95,6 +97,7 @@ export function GameScreen() {
       shadersEnabled: prefs.shadersEnabled,
       animatedFavicon: prefs.animatedFavicon ?? true,
       chunkDebugVisible: prefs.chunkDebugVisible ?? false,
+      statisticsVisible: prefs.statisticsVisible ?? false,
       keybindings: prefs.keybindings || {},
       customCommands,
       macros,
@@ -109,6 +112,7 @@ export function GameScreen() {
       shadersEnabled: prefs.shadersEnabled,
       animatedFavicon: prefs.animatedFavicon ?? true,
       chunkDebugVisible: prefs.chunkDebugVisible ?? false,
+      statisticsVisible: prefs.statisticsVisible ?? false,
       keybindings: prefs.keybindings || {},
       customCommands,
       macros,
@@ -177,7 +181,10 @@ export function GameScreen() {
 
       {!state.disconnectMsg && !state.chunkLoading && (
         <>
-          <HUD data={state.hud} mode={state.hudMode} layoutStyle={widgetStyle(activeLayout, "HUD")} />
+          <HUD data={state.hud} layoutStyle={widgetStyle(activeLayout, "HUD")} />
+          {(state.preferences?.statisticsVisible ?? false) && (
+            <Statistics data={state.hud} layoutStyle={widgetStyle(activeLayout, "STATISTICS")} />
+          )}
           {state.biomeMapVisible && (
             <BiomeMap
               playerX={state.hud?.x}

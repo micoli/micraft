@@ -123,6 +123,7 @@ export interface PreferencesData {
   shadersEnabled: boolean;
   animatedFavicon: boolean;
   chunkDebugVisible: boolean;
+  statisticsVisible: boolean;
   commands: CommandInfo[];
   keybindings: Record<string, string[]>;
   defaultKeybindings: Record<string, string[]>;

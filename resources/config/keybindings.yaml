@@ -21,8 +21,7 @@ flight:
 
 ui:
   view_toggle: [KeyF]
-  hud_mode_cycle: [KeyH]
-  console_toggle: [KeyH]
+  statistics_toggle: [KeyN]
   inventory: [KeyI]
   character: [KeyY]
   undo: ["Ctrl+KeyZ", "Cmd+KeyZ"]

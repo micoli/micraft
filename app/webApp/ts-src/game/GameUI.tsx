@@ -25,7 +25,6 @@ function loadHudMode(): HudMode {
 
 const initial: UiState = {
   hud: null,
-  hudMode: loadHudMode(),
   notif: null,
   logs: [],
   logVisible: false,
@@ -140,6 +139,7 @@ export function GameUI() {
   const tradeOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
   const chunkLoadingRef = useRef(false);
+  const preferencesRef = useRef<import("./types").PreferencesData | null>(null);
   const overlayWasOpen = useRef(false);
 
   useEffect(() => {
@@ -283,6 +283,10 @@ export function GameUI() {
   }, [state.hud]);
 
   useEffect(() => {
+    preferencesRef.current = state.preferences;
+  }, [state.preferences]);
+
+  useEffect(() => {
     chunkLoadingRef.current = state.chunkLoading !== null;
     if (window.mcState)
       window.mcState.modalOpen =
@@ -406,6 +410,25 @@ export function GameUI() {
     window.mc.updateHotbar = (json: string) => dispatch({ type: "inventory", data: JSON.parse(json) });
     window.mc.toggleHotbar = () => dispatch({ type: "hotbar_toggle" });
     window.mc.toggleHealthBar = () => dispatch({ type: "healthbar_toggle" });
+    window.mc.toggleStatistics = () => {
+      dispatch({ type: "statistics_toggle" });
+      const prefs = preferencesRef.current;
+      if (prefs) {
+        const newVisible = !(prefs.statisticsVisible ?? false);
+        pendingPreferencesUpdateRef.current = JSON.stringify({
+          subscribedChannels: prefs.subscribedChannels,
+          disabledCommands: prefs.disabledCommands,
+          shadersEnabled: prefs.shadersEnabled,
+          animatedFavicon: prefs.animatedFavicon ?? true,
+          chunkDebugVisible: prefs.chunkDebugVisible ?? false,
+          statisticsVisible: newVisible,
+          keybindings: prefs.keybindings || {},
+          customCommands: prefs.customCommands || {},
+          macros: prefs.macros || {},
+          fieldOfView: prefs.fieldOfView ?? 70,
+        });
+      }
+    };
     window.mc.updateShortcutBar = (json: string) => {
       const raw = JSON.parse(json) as { slots: ({ kind: string; id: string } | null)[]; selected: number };
       const slots = raw.slots.map((s): import("./UIReducer").ShortcutSlot | null => {
@@ -491,8 +514,8 @@ export function GameUI() {
     window.mc.cycleHudMode = () => dispatch({ type: "hud_mode_cycle" });
 
     window.mc.syncLayouts = (json: string) => {
-      const data: { layouts: GameLayout[]; activeLayout: string } = JSON.parse(json);
-      dispatch({ type: "layouts_sync", layouts: data.layouts, activeLayout: data.activeLayout });
+      const data: { layouts?: GameLayout[]; activeLayout: string } = JSON.parse(json);
+      if (data.layouts) dispatch({ type: "layouts_sync", layouts: data.layouts, activeLayout: data.activeLayout });
     };
 
     window.mc.showLayoutEditor = () => dispatch({ type: "layout_editor_show" });

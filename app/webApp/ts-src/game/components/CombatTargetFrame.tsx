@@ -26,7 +26,7 @@ export function CombatTargetFrame({ target, layoutStyle }: Props) {
 
   return (
     <div
-      className="flex flex-col gap-1 bg-black/55 rounded-md px-3 py-2 pointer-events-none z-[998] overflow-hidden"
+      className="flex flex-col gap-1 bg-black/55 rounded-md px-3 py-2 pointer-events-none z-[998]"
       style={{ ...layoutStyle, userSelect: "none" }}
     >
       <span className="text-[13px] text-white font-mono truncate text-center">

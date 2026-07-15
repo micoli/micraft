@@ -21,6 +21,7 @@ export interface WidgetDefinition {
   minH: number;
   editorLabel: string;
   editorColor: string;
+  flow?: boolean;
 }
 
 export let WIDGET_REGISTRY: WidgetDefinition[] = [];
@@ -42,7 +43,8 @@ export function fillMissingWidgets(layout: GameLayout): GameLayout {
   return { ...layout, widgets: [...layout.widgets, ...missing] };
 }
 
-export function resolveActiveLayout(layouts: GameLayout[], activeLayout: string): GameLayout {
+export function resolveActiveLayout(layouts: GameLayout[] | undefined, activeLayout: string): GameLayout {
+  if (!layouts?.length) return defaultLayout();
   return layouts.find((l) => l.name === activeLayout) ?? layouts.find((l) => l.name === "default") ?? defaultLayout();
 }
 
@@ -60,8 +62,20 @@ export function gridToStyle(x: number, y: number, w: number, h: number): React.C
   };
 }
 
+export function gridToFlowStyle(x: number, y: number, w: number, h: number): React.CSSProperties {
+  return {
+    position: "fixed",
+    left: `calc(${x} / 48 * 100vw)`,
+    top: `calc(${y} / 48 * 100vh)`,
+    maxWidth: `calc(${w} / 48 * 100vw)`,
+    maxHeight: `calc(${h} / 48 * 100vh)`,
+  };
+}
+
 export function widgetStyle(layout: GameLayout, type: string): React.CSSProperties {
   const w = getWidget(layout, type) ?? DEFAULT_WIDGETS.find((d) => d.type === type);
   if (!w) return {};
+  const def = WIDGET_REGISTRY.find((d) => d.type === type);
+  if (def?.flow) return gridToFlowStyle(w.x, w.y, w.w, w.h);
   return gridToStyle(w.x, w.y, w.w, w.h);
 }

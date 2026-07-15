@@ -17,4 +17,5 @@ enum class WidgetType {
     COMBAT_TARGET,
     XP_BAR,
     AGGRO_INDICATORS,
+    STATISTICS,
 }

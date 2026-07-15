@@ -18,7 +18,6 @@ export const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   speed_up: ["KeyP"],
   speed_down: ["KeyO"],
   view_toggle: ["KeyF"],
-  hud_mode_cycle: ["KeyH"],
   console_toggle: ["KeyH"],
   inventory: ["KeyI"],
   undo: ["Ctrl+KeyZ", "Cmd+KeyZ"],
@@ -27,6 +26,7 @@ export const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   minimap_zoom_out: ["l"],
   ingame_map: ["m"],
   layout_editor: ["KeyG"],
+  statistics_toggle: ["KeyN"],
   character: ["KeyY"],
   screenshot: ["KeyJ"],
   health_bar: ["KeyB"],
@@ -195,6 +195,7 @@ export function registerKeyboard(): Pick<
         if (b.craft?.some((k) => matchesEvent(k, e))) window.mc?.openCraft?.();
         if (b.dump_stats?.some((k) => matchesEvent(k, e))) window.mc?.dumpStats?.();
         if (b.health_bar?.some((k) => matchesEvent(k, e))) window.mc?.toggleHealthBar?.();
+        if (b.statistics_toggle?.some((k) => matchesEvent(k, e))) window.mc?.toggleStatistics?.();
         if (b.preferences?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.();
         if (b.minimap_zoom_in?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomIn?.();
         if (b.minimap_zoom_out?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomOut?.();

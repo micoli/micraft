@@ -80,6 +80,7 @@
         "armors": {"type": "array", "items": {"type": "string"}},
         "animatedFavicon": {"type": "boolean"},
         "chunkDebugVisible": {"type": "boolean"},
+        "statisticsVisible": {"type": "boolean"},
         "fieldOfView": {"type": "integer", "minimum": 1, "maximum": 180},
         "knownRecipes": {"type": "array", "items": {"type": "string"}},
         "characterData": {"type": ["object", "null"]},

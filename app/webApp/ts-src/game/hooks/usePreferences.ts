@@ -7,6 +7,7 @@ export interface SavePayload {
   shadersEnabled: boolean;
   animatedFavicon: boolean;
   chunkDebugVisible: boolean;
+  statisticsVisible: boolean;
   keybindings: Record<string, string[]>;
   customCommands: Record<string, string[]>;
   fieldOfView: number;
@@ -35,7 +36,7 @@ const ACTION_GROUPS: Record<string, string[]> = {
   flight: ["fly_toggle", "ascend", "descend", "speed_up", "speed_down"],
   ui: [
     "view_toggle",
-    "hud_mode_cycle",
+    "statistics_toggle",
     "console_toggle",
     "inventory",
     "character",
@@ -94,6 +95,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
   const [localShaders, setLocalShaders] = useState(true);
   const [localAnimatedFavicon, setLocalAnimatedFavicon] = useState(true);
   const [localChunkDebugVisible, setLocalChunkDebugVisible] = useState(false);
+  const [localStatisticsVisible, setLocalStatisticsVisible] = useState(false);
   const [localFov, setLocalFov] = useState(70);
   const [localBindings, setLocalBindings] = useState<Record<string, string[]>>({});
   const [localCustomCmds, setLocalCustomCmds] = useState<CustomCmdEntry[]>([]);
@@ -115,6 +117,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
       setLocalShaders(preferences.shadersEnabled);
       setLocalAnimatedFavicon(preferences.animatedFavicon ?? true);
       setLocalChunkDebugVisible(preferences.chunkDebugVisible ?? false);
+      setLocalStatisticsVisible(preferences.statisticsVisible ?? false);
       setLocalFov(preferences.fieldOfView ?? 70);
       setLocalBindings(preferences.keybindings ? { ...preferences.keybindings } : {});
       setLocalCustomCmds(Object.entries(preferences.customCommands || {}).map(([text, keys]) => ({ text, keys })));
@@ -265,6 +268,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
       shadersEnabled: localShaders,
       animatedFavicon: localAnimatedFavicon,
       chunkDebugVisible: localChunkDebugVisible,
+      statisticsVisible: localStatisticsVisible,
       keybindings: localBindings,
       customCommands,
       fieldOfView: localFov,
@@ -289,6 +293,8 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
     setLocalAnimatedFavicon,
     localChunkDebugVisible,
     setLocalChunkDebugVisible,
+    localStatisticsVisible,
+    setLocalStatisticsVisible,
     localFov,
     setLocalFov,
     localBindings,

@@ -3,7 +3,6 @@ import {
   CharacterSyncData,
   GameLayout,
   HudData,
-  HudMode,
   LogEntry,
   NpcDialogData,
   PreferencesData,
@@ -42,7 +41,6 @@ export type SpellMeta = {
 
 export interface UiState {
   hud: HudData | null;
-  hudMode: HudMode;
   notif: { msg: string; key: number } | null;
   logs: LogEntry[];
   logVisible: boolean;
@@ -113,7 +111,6 @@ export interface UiState {
 
 export type UiAction =
   | { type: "hud"; data: HudData }
-  | { type: "hud_mode_cycle" }
   | { type: "notification"; msg: string }
   | { type: "log"; msg: string; channel: string }
   | { type: "chat_message"; channel: string; sender: string; msg: string }
@@ -126,6 +123,7 @@ export type UiAction =
   | { type: "class_definitions_loaded"; data: ClassDefinitions }
   | { type: "hotbar_toggle" }
   | { type: "healthbar_toggle" }
+  | { type: "statistics_toggle" }
   | { type: "shortcut_bar_update"; data: { slots: (ShortcutSlot | null)[]; selected: number } }
   | { type: "slot_select"; slot: number }
   | { type: "console_show" }
@@ -156,6 +154,7 @@ export type UiAction =
       shadersEnabled: boolean;
       animatedFavicon: boolean;
       chunkDebugVisible: boolean;
+      statisticsVisible: boolean;
       keybindings: Record<string, string[]>;
       customCommands: Record<string, string[]>;
       macros?: Record<string, string>;
@@ -188,7 +187,6 @@ export type UiAction =
   | { type: "player_respawned"; data: unknown }
   | { type: "xp_gained"; data: unknown };
 
-const HUD_MODES: HudMode[] = ["simple", "medium", "complete"];
 let notifKey = 0;
 const MC_LOG_MAX = 100;
 
@@ -196,15 +194,6 @@ export function reducer(state: UiState, action: UiAction): UiState {
   switch (action.type) {
     case "hud":
       return { ...state, hud: action.data };
-    case "hud_mode_cycle": {
-      const next = HUD_MODES[(HUD_MODES.indexOf(state.hudMode) + 1) % HUD_MODES.length];
-      try {
-        localStorage.setItem("mc_hud_mode", next);
-      } catch {
-        /* ignore */
-      }
-      return { ...state, hudMode: next };
-    }
     case "notification":
       return { ...state, notif: { msg: action.msg, key: ++notifKey } };
     case "log": {
@@ -256,6 +245,13 @@ export function reducer(state: UiState, action: UiAction): UiState {
       return { ...state, hotbarVisible: !state.hotbarVisible };
     case "healthbar_toggle":
       return { ...state, healthBarVisible: !state.healthBarVisible };
+    case "statistics_toggle":
+      return {
+        ...state,
+        preferences: state.preferences
+          ? { ...state.preferences, statisticsVisible: !(state.preferences.statisticsVisible ?? false) }
+          : state.preferences,
+      };
     case "shortcut_bar_update":
       return { ...state, shortcutBar: action.data.slots, selectedSlot: action.data.selected };
     case "slot_select":
@@ -312,6 +308,7 @@ export function reducer(state: UiState, action: UiAction): UiState {
             shadersEnabled: action.shadersEnabled,
             animatedFavicon: action.animatedFavicon,
             chunkDebugVisible: action.chunkDebugVisible,
+            statisticsVisible: action.statisticsVisible,
             keybindings: action.keybindings,
             customCommands: action.customCommands,
             ...(action.macros !== undefined ? { macros: action.macros } : {}),
