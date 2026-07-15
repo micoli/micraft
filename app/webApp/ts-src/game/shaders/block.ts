@@ -30,6 +30,11 @@ uniform sampler2D textureSampler;
 uniform vec3 fogColor;
 uniform float fogStart;
 uniform float fogEnd;
+uniform float fogZoneCx;
+uniform float fogZoneCz;
+uniform float fogZoneRadius;
+uniform float fogZoneStart;
+uniform float fogZoneEnd;
 uniform vec3 tint;
 uniform float shadersEnabled;
 uniform float ambient;
@@ -58,9 +63,17 @@ void main() {
   att = att * att;
   color += texColor.rgb * tint * att * playerLightIntensity;
 
-  // Fog linéaire
+  // Fog linéaire (joueur dans une zone fog)
   float fogFactor = clamp((fogEnd - vFogDepth) / (fogEnd - fogStart), 0.0, 1.0);
   color = mix(fogColor, color, mix(1.0, fogFactor, shadersEnabled));
+
+  // Zone fog per-fragment : blocs dans la zone fog visibles de l'extérieur
+  float dxZ = vWorldPos.x - fogZoneCx;
+  float dzZ = vWorldPos.z - fogZoneCz;
+  float distToZone = sqrt(dxZ * dxZ + dzZ * dzZ);
+  float zoneWeight = clamp(1.0 - distToZone / max(fogZoneRadius, 0.001), 0.0, 1.0);
+  float zoneFogFactor = clamp((fogZoneEnd - vFogDepth) / (fogZoneEnd - fogZoneStart + 0.001), 0.0, 1.0);
+  color = mix(fogColor, color, mix(1.0, zoneFogFactor, zoneWeight * shadersEnabled));
 
   gl_FragColor = vec4(color, 1.0);
 }

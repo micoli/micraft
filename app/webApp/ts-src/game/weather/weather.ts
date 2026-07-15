@@ -11,8 +11,8 @@ interface WeatherZone {
 const CLOUD_Y = 1034;
 const FOG_NO_END = 2000;
 const FOG_NO_START = 1000;
-const FOG_DENSE_END = 8;
-const FOG_LIGHT_END = 40;
+const FOG_DENSE_END = 40;
+const FOG_LIGHT_END = 110;
 
 let activeZones: WeatherZone[] = [];
 
@@ -195,6 +195,36 @@ function syncFogToMaterials(fogStart: number, fogEnd: number): void {
   }
 }
 
+function syncZoneFogToMaterials(cx: number, cz: number, radius: number, fogStart: number, fogEnd: number): void {
+  const mats = (window.mcState as any).blockMaterials as Record<string, any> | undefined;
+  if (!mats) return;
+  for (const mat of Object.values(mats)) {
+    if (typeof mat.setFloat === "function") {
+      mat.setFloat("fogZoneCx", cx);
+      mat.setFloat("fogZoneCz", cz);
+      mat.setFloat("fogZoneRadius", radius);
+      mat.setFloat("fogZoneStart", fogStart);
+      mat.setFloat("fogZoneEnd", fogEnd);
+    }
+  }
+}
+
+function nearestFogZone(px: number, pz: number): WeatherZone | null {
+  let best: WeatherZone | null = null;
+  let bestDist = Infinity;
+  for (const z of activeZones) {
+    if (z.type !== "FOG") continue;
+    const dx = z.cx - px;
+    const dz = z.cz - pz;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = z;
+    }
+  }
+  return best;
+}
+
 function playerZone(px: number, pz: number): WeatherZone | null {
   let best: WeatherZone | null = null;
   let bestDist = Infinity;
@@ -241,60 +271,71 @@ export function registerWeather(): Pick<McBindings, "setWeatherZones" | "updateW
       if (newType !== currentWeatherType) {
         hideParticles(rainParticles);
         hideParticles(snowParticles);
-        // Restore fog
-        scene.fogStart = FOG_NO_START;
-        scene.fogEnd = FOG_NO_END;
-        syncFogToMaterials(FOG_NO_START, FOG_NO_END);
         currentWeatherType = newType;
       }
 
-      if (!zone) return;
-
-      switch (zone.type) {
-        case "RAIN": {
-          if (!rainParticles) {
-            rainParticles = initRainParticles(scene, 2000, [0.7, 0.85, 1.0]);
-          }
-          rainParticles.mesh.setEnabled(true);
-          updateParticles(rainParticles, px, py, pz);
-          break;
-        }
-        case "STORM": {
-          if (!rainParticles) {
-            rainParticles = initRainParticles(scene, 3500, [0.6, 0.7, 0.9]);
-          }
-          rainParticles.mesh.setEnabled(true);
-          updateParticles(rainParticles, px, py, pz);
-
-          // Lightning flash
-          stormFlashCounter++;
-          if (stormFlashCounter > 120 + Math.random() * 200) {
-            stormFlashCounter = 0;
-            const hemi = window.mcState.hemiLight;
-            if (hemi) {
-              const orig = hemi.intensity;
-              hemi.intensity = Math.min(2.5, orig * 3);
-              setTimeout(() => {
-                if (hemi) hemi.intensity = orig;
-              }, 80);
+      if (zone) {
+        switch (zone.type) {
+          case "RAIN": {
+            if (!rainParticles) {
+              rainParticles = initRainParticles(scene, 2000, [0.7, 0.85, 1.0]);
             }
+            rainParticles.mesh.setEnabled(true);
+            updateParticles(rainParticles, px, py, pz);
+            break;
           }
-          break;
-        }
-        case "SNOW": {
-          if (!snowParticles) {
-            snowParticles = initSnowParticles(scene, 1500);
+          case "STORM": {
+            if (!rainParticles) {
+              rainParticles = initRainParticles(scene, 3500, [0.6, 0.7, 0.9]);
+            }
+            rainParticles.mesh.setEnabled(true);
+            updateParticles(rainParticles, px, py, pz);
+
+            // Lightning flash
+            stormFlashCounter++;
+            if (stormFlashCounter > 120 + Math.random() * 200) {
+              stormFlashCounter = 0;
+              const hemi = window.mcState.hemiLight;
+              if (hemi) {
+                const orig = hemi.intensity;
+                hemi.intensity = Math.min(2.5, orig * 3);
+                setTimeout(() => {
+                  if (hemi) hemi.intensity = orig;
+                }, 80);
+              }
+            }
+            break;
           }
-          snowParticles.mesh.setEnabled(true);
-          updateParticles(snowParticles, px, py, pz);
-          break;
+          case "SNOW": {
+            if (!snowParticles) {
+              snowParticles = initSnowParticles(scene, 1500);
+            }
+            snowParticles.mesh.setEnabled(true);
+            updateParticles(snowParticles, px, py, pz);
+            break;
+          }
         }
-        case "FOG": {
-          scene.fogEnd = FOG_DENSE_END + (1 - zone.intensity) * (FOG_LIGHT_END - FOG_DENSE_END);
-          scene.fogStart = Math.max(2, scene.fogEnd * 0.3);
-          syncFogToMaterials(scene.fogStart, scene.fogEnd);
-          break;
-        }
+      }
+
+      // Fog uniforms: every frame, not just on transition
+      if (zone?.type === "FOG") {
+        scene.fogEnd = FOG_DENSE_END + (1 - zone.intensity) * (FOG_LIGHT_END - FOG_DENSE_END);
+        scene.fogStart = Math.max(2, scene.fogEnd * 0.3);
+        syncFogToMaterials(scene.fogStart, scene.fogEnd);
+      } else {
+        scene.fogStart = FOG_NO_START;
+        scene.fogEnd = FOG_NO_END;
+        syncFogToMaterials(FOG_NO_START, FOG_NO_END);
+      }
+
+      // Zone fog per-fragment: blocs dans la zone fog visibles de l'extérieur via shader
+      const fogZone = nearestFogZone(px, pz);
+      if (fogZone && zone?.type !== "FOG") {
+        const zFogEnd = FOG_DENSE_END + (1 - fogZone.intensity) * (FOG_LIGHT_END - FOG_DENSE_END);
+        const zFogStart = Math.max(2, zFogEnd * 0.3);
+        syncZoneFogToMaterials(fogZone.cx, fogZone.cz, fogZone.radius, zFogStart, zFogEnd);
+      } else {
+        syncZoneFogToMaterials(0, 0, 0, 8, 40);
       }
     },
   };

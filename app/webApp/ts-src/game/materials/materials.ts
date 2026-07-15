@@ -74,6 +74,11 @@ export function registerMaterials(): Pick<
             "fogColor",
             "fogStart",
             "fogEnd",
+            "fogZoneCx",
+            "fogZoneCz",
+            "fogZoneRadius",
+            "fogZoneStart",
+            "fogZoneEnd",
             "tint",
             "shadersEnabled",
             "ambient",
@@ -92,6 +97,11 @@ export function registerMaterials(): Pick<
         mat.setFloat("ambient", 1.0);
         mat.setFloat("playerLightIntensity", 0.0);
         mat.setVector3("playerPos", new BABYLON.Vector3(0, 0, 0));
+        mat.setFloat("fogZoneCx", 0.0);
+        mat.setFloat("fogZoneCz", 0.0);
+        mat.setFloat("fogZoneRadius", 0.0);
+        mat.setFloat("fogZoneStart", 8.0);
+        mat.setFloat("fogZoneEnd", 40.0);
         mat.backFaceCulling = false;
         mat.forceDepthWrite = true;
         return mat;
