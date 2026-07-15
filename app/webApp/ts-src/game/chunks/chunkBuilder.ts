@@ -45,7 +45,7 @@ function buildFaceTable(): void {
       const faceMat = typeOrd * 6 + fd;
       if (isCross) {
         if (fd === 0) {
-          const fi = blockDef.faces[0];
+          const fi = blockDef.faces.find((f) => f != null) ?? null;
           if (fi)
             faceTable[faceMat] = {
               matKey: fi.matKey,
