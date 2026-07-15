@@ -3,16 +3,13 @@ FROM eclipse-temurin:21-jdk-jammy
 RUN apt-get update && \
     apt-get install -y curl gnupg && \
     curl -fsSL https://deb.nodesource.com/setup_26.x | bash - && \
-    apt-get install -y nodejs
-
-RUN apt-get update && \
-    apt-get install -y curl && \
-    curl -fsSL https://deb.nodesource.com/setup_26.x | bash - && \
-    apt-get install -y nodejs chromium-browser && \
+    apt-get install -y nodejs chromium-browser supervisor && \
     rm -rf /var/lib/apt/lists/*
 
 ENV CHROME_BIN=/usr/bin/chromium-browser
 
+COPY docker/supervisord.conf /etc/supervisord.conf
+
 WORKDIR /workspace
 
-CMD ["./start.sh"]
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]

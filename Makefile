@@ -12,6 +12,7 @@ endif
 
 .PHONY: dev-up dev-down dev-restart dev-clean-wasm dev-logs dc shell npm-format \
         dev-restart-server dev-restart-clean-server \
+        dev-task-stop dev-task-start dev-task-restart \
         prod-up prod-down prod-restart prod-logs prod-build \
         build-client build-wasm build-js trigger-wasm \
         docs help
@@ -39,6 +40,15 @@ dev-restart:
 
 dev-shell:
 	$(DC_DEV) exec -it micraft bash
+
+dev-task-stop:
+	$(DC_DEV) exec micraft supervisorctl stop dev
+
+dev-task-start:
+	$(DC_DEV) exec micraft supervisorctl start dev
+
+dev-task-restart:
+	$(DC_DEV) exec micraft supervisorctl restart dev
 
 dev-clean-wasm:
 	$(EXEC) "rm -rf /workspace/app/webApp/build/klib/cache /workspace/app/webApp/build/compileSync /workspace/app/shared/build/klib/cache /workspace/app/shared/build/compileSync"
@@ -79,6 +89,8 @@ build-wasm:
 	else \
 		$(EXEC) "./gradlew :app:webApp:copyResourcesToWebDist --rerun-tasks"; \
 	fi
+copy-wasm:
+	$(EXEC) "./gradlew :app:webApp:copyResourcesToWebDist --rerun-tasks"; \
 
 # Explicitly trigger the --continuous wasm watcher (use when ./gradlew :dev is running).
 trigger-wasm:
@@ -141,6 +153,9 @@ help:
 	@echo "  make dev-up               start dev container (source mounted, hot-reload)"
 	@echo "  make dev-down             stop"
 	@echo "  make dev-restart          restart"
+	@echo "  make dev-task-stop        stop ./gradlew dev inside container (keeps container alive)"
+	@echo "  make dev-task-start       start ./gradlew dev inside container"
+	@echo "  make dev-task-restart     restart ./gradlew dev inside container"
 	@echo "  make dev-logs             tail logs"
 	@echo "  make shell                open bash inside container (DOCKER mode only)"
 	@echo "  make dc CMD=\"<cmd>\"       run command inside container / directly in HOST mode"

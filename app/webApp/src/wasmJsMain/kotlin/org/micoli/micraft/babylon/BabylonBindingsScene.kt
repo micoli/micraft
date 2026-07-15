@@ -49,5 +49,7 @@ fun jsClearCameraInterpolation(): Unit = js("window.mcState.camState=null")
 fun jsCameraSetFov(camera: JsAny, fovDegrees: Int): Unit =
     js("camera.fov = fovDegrees * Math.PI / 180")
 
+fun jsConsoleLog(msg: String): Unit = js("console.log(msg)")
+
 fun jsSetupRenderPipeline(scene: JsAny, camera: JsAny): Unit =
     js("mc.setupRenderPipeline(scene, camera)")

@@ -290,6 +290,7 @@ class LocalPlayerController(
     }
 
     fun tick() {
+        if (totalClientTicks == 0) jsConsoleLog("[debug] build $BUILD_TIMESTAMP")
         totalClientTicks++
         val nowMs = jsNow()
         val actualDt =
