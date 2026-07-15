@@ -366,26 +366,14 @@ class LocalPlayerController(
             chunkManager.getBlockAtWorld(bx, by, bz).isSolid
         }
         val h = stance.height
-        val resolvedDx =
-            AabbCollider.resolveX(
-                solid,
-                predX.toFloat(),
-                predY.toFloat(),
-                predZ.toFloat(),
-                PlayerConstants.WIDTH,
-                h,
-                dx * speed)
-        predX += resolvedDx.toDouble()
-        val resolvedDz =
-            AabbCollider.resolveZ(
-                solid,
-                predX.toFloat(),
-                predY.toFloat(),
-                predZ.toFloat(),
-                PlayerConstants.WIDTH,
-                h,
-                dz * speed)
-        predZ += resolvedDz.toDouble()
+        val startX = predX
+        val startZ = predZ
+        val midDx = AabbCollider.resolveX(solid, startX.toFloat(), predY.toFloat(), startZ.toFloat(), PlayerConstants.WIDTH, h, dx * speed)
+        val midX = startX + midDx
+        val resolvedDz = AabbCollider.resolveZ(solid, midX.toFloat(), predY.toFloat(), startZ.toFloat(), PlayerConstants.WIDTH, h, dz * speed)
+        predZ = startZ + resolvedDz
+        val resolvedDx = AabbCollider.resolveX(solid, startX.toFloat(), predY.toFloat(), predZ.toFloat(), PlayerConstants.WIDTH, h, dx * speed)
+        predX = startX + resolvedDx
 
         if (autoAdvance && (dx != 0f || dz != 0f)) {
             val intendedSq = (dx * speed) * (dx * speed) + (dz * speed) * (dz * speed)

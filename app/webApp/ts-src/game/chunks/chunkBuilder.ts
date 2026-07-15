@@ -1,13 +1,14 @@
 import type { Scene, Mesh, Material } from "@babylonjs/core";
 
-// Pre-baked vertex offsets as flat Float32Array (4 verts × 3 floats = 12 values per face)
+// Pre-baked vertex offsets as flat Float32Array (4 verts × 3 floats = 12 values per face).
+// Blocks are floor-aligned: integer (wx,wy,wz) is the block's lower corner, spanning [wx,wx+1]×[wy,wy+1]×[wz,wz+1].
 const MC_VERTS: Float32Array[] = [
-  new Float32Array([-0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5]), // +Z south
-  new Float32Array([0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5]), // -Z north
-  new Float32Array([0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5]), // +X east
-  new Float32Array([-0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5]), // -X west
-  new Float32Array([-0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5]), // +Y top
-  new Float32Array([-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5]), // -Y bottom
+  new Float32Array([0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1]), // +Z south
+  new Float32Array([1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0]), // -Z north
+  new Float32Array([1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1]), // +X east
+  new Float32Array([0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0]), // -X west
+  new Float32Array([0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0]), // +Y top
+  new Float32Array([0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1]), // -Y bottom
 ];
 const MC_NORMS = [
   [0, 0, 1],
@@ -165,8 +166,8 @@ function emitQuad(
 }
 
 const CROSS_QUADS: Float32Array[] = [
-  new Float32Array([-0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, -0.5]),
-  new Float32Array([0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5]),
+  new Float32Array([0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0]),
+  new Float32Array([1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0]),
 ];
 
 function emitCrossSprite(wx: number, wy: number, wz: number, g: FaceGroup, uv: Float32Array, ao: number): void {

@@ -30,7 +30,7 @@ export function registerTargeting(): Pick<
         window.mcState.targetMesh = null;
       }
       const ls = BABYLON.MeshBuilder.CreateLineSystem("targetOutline", { lines: cubeLines(0.502) as any }, scene);
-      ls.position = new BABYLON.Vector3(x, y, z);
+      ls.position = new BABYLON.Vector3(x + 0.5, y + 0.5, z + 0.5);
       (ls as any).color = breakable ? new BABYLON.Color3(0, 0, 0) : new BABYLON.Color3(0.55, 0.55, 0.55);
       ls.isPickable = false;
       window.mcState.targetMesh = ls;
@@ -48,7 +48,7 @@ export function registerTargeting(): Pick<
       if (!window.mcState.breakMesh || window.mcState.breakMesh._bpos !== bpos) {
         if (window.mcState.breakMesh) window.mcState.breakMesh.dispose();
         const ls = BABYLON.MeshBuilder.CreateLineSystem("breakOverlay", { lines: cubeLines(0.51) as any }, scene);
-        ls.position = new BABYLON.Vector3(x, y, z);
+        ls.position = new BABYLON.Vector3(x + 0.5, y + 0.5, z + 0.5);
         (ls as any).color = new BABYLON.Color3(0, 0, 0);
         ls.isPickable = false;
         window.mcState.breakMesh = ls as any;

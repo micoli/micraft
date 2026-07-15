@@ -12,7 +12,7 @@ private fun WorldState.solid() = { bx: Int, by: Int, bz: Int -> getBlock(bx, by,
 
 class AabbColliderTest {
     private val w = PlayerConstants.WIDTH
-    private val h = 1.8f
+    private val h = PlayerConstants.HEIGHT_STANDING
 
     // --- isGrounded ---
 
@@ -140,6 +140,46 @@ class AabbColliderTest {
         val dy = -2f
         val result = AabbCollider.resolveY(world.solid(), 8.5f, 5f, 8.5f, w, h, dy)
         assertTrue(result == dy)
+    }
+
+    // --- eye-level only block ---
+
+    @Test
+    fun resolveX_positive_stopsAtEyeLevelOnlyBlock() {
+        // Block only at y=6 (eye level), none at y=5 (feet). cy=5, h=1.8 → ys=5..6 → must detect.
+        val world = testWorld(Triple(10, 6, 8))
+        val result = AabbCollider.resolveX(world.solid(), 9.5f, 5f, 8.5f, w, h, 1.0f)
+        assertTrue(result < 1.0f, "Should stop at eye-level block: result=$result")
+        assertTrue(9.5f + result + w / 2f <= 10f + 0.01f)
+    }
+
+    @Test
+    fun resolveX_negative_stopsAtEyeLevelOnlyBlock() {
+        val world = testWorld(Triple(7, 6, 8))
+        val result = AabbCollider.resolveX(world.solid(), 8.5f, 5f, 8.5f, w, h, -1.0f)
+        assertTrue(result > -1.0f, "Should stop at eye-level block: result=$result")
+        assertTrue(8.5f + result - w / 2f >= 8f - 0.01f)
+    }
+
+    @Test
+    fun resolveX_positive_stopsAtCameraLevelBlock() {
+        // Camera at cy+1.62 is inside physics block cy+2 (due to block centering: block cy+2 spans Babylon Y cy+1.5..cy+2.5).
+        // ys must cover cy+2, which requires HEIGHT_STANDING >= 2.001.
+        val world = testWorld(Triple(10, 7, 8)) // block at cy+2 = 5+2 = 7
+        val result = AabbCollider.resolveX(world.solid(), 9.5f, 5f, 8.5f, w, h, 1.0f)
+        assertTrue(result < 1.0f, "Should stop at camera-level block (cy+2): result=$result")
+        assertTrue(9.5f + result + w / 2f <= 10f + 0.01f)
+    }
+
+    @Test
+    fun resolveX_negative_stopsAtEyeLevelBlock_approachingFromRight() {
+        // Player approaching block 8 (eye-level only, y=6) from the right. cx-hw starts at 9.0 (outside block 8).
+        // Should be stopped by block 8 before entering it.
+        val world = testWorld(Triple(8, 6, 8))
+        val cx = 9.0f + w / 2f  // cx-hw = 9.0, right face of block 8 column
+        val result = AabbCollider.resolveX(world.solid(), cx, 5f, 8.5f, w, h, -1.0f)
+        assertTrue(result > -1.0f, "Should stop at eye-level block when approaching from outside: result=$result")
+        assertTrue(cx + result - w / 2f >= 9f - 0.01f)
     }
 
     // --- corner penetration ---

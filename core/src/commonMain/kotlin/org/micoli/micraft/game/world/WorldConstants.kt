@@ -13,7 +13,7 @@ object WorldConstants {
 }
 
 object PlayerConstants {
-    var HEIGHT_STANDING = 1.8f
+    var HEIGHT_STANDING = 2.1f
     var HEIGHT_SNEAKING = 1.5f
     var HEIGHT_CRAWLING = 0.6f
     var WIDTH = 0.6f
