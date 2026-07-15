@@ -18,7 +18,7 @@ void main() {
   gl_Position = worldViewProjection * vec4(position, 1.0);
   vUv = uv;
   vColor = color;
-  vFogDepth = -(view * worldPos).z;
+  vFogDepth = (view * worldPos).z;
   vWorldPos = worldPos.xyz;
 }
 `;

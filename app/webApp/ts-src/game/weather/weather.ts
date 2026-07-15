@@ -9,8 +9,10 @@ interface WeatherZone {
 }
 
 const CLOUD_Y = 1034;
-const FOG_DEFAULT_END = 40;
-const FOG_DEFAULT_START = 24;
+const FOG_NO_END = 2000;
+const FOG_NO_START = 1000;
+const FOG_DENSE_END = 8;
+const FOG_LIGHT_END = 40;
 
 let activeZones: WeatherZone[] = [];
 
@@ -182,6 +184,17 @@ function syncCloudMeshes(scene: any): void {
   }
 }
 
+function syncFogToMaterials(fogStart: number, fogEnd: number): void {
+  const mats = (window.mcState as any).blockMaterials as Record<string, any> | undefined;
+  if (!mats) return;
+  for (const mat of Object.values(mats)) {
+    if (typeof mat.setFloat === "function") {
+      mat.setFloat("fogStart", fogStart);
+      mat.setFloat("fogEnd", fogEnd);
+    }
+  }
+}
+
 function playerZone(px: number, pz: number): WeatherZone | null {
   let best: WeatherZone | null = null;
   let bestDist = Infinity;
@@ -229,8 +242,9 @@ export function registerWeather(): Pick<McBindings, "setWeatherZones" | "updateW
         hideParticles(rainParticles);
         hideParticles(snowParticles);
         // Restore fog
-        scene.fogStart = FOG_DEFAULT_START;
-        scene.fogEnd = FOG_DEFAULT_END;
+        scene.fogStart = FOG_NO_START;
+        scene.fogEnd = FOG_NO_END;
+        syncFogToMaterials(FOG_NO_START, FOG_NO_END);
         currentWeatherType = newType;
       }
 
@@ -276,9 +290,9 @@ export function registerWeather(): Pick<McBindings, "setWeatherZones" | "updateW
           break;
         }
         case "FOG": {
-          const fogEnd = FOG_DEFAULT_START + (1 - zone.intensity) * (FOG_DEFAULT_END - FOG_DEFAULT_START);
-          scene.fogEnd = Math.max(8, fogEnd);
+          scene.fogEnd = FOG_DENSE_END + (1 - zone.intensity) * (FOG_LIGHT_END - FOG_DENSE_END);
           scene.fogStart = Math.max(2, scene.fogEnd * 0.3);
+          syncFogToMaterials(scene.fogStart, scene.fogEnd);
           break;
         }
       }
