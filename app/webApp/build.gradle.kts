@@ -21,29 +21,32 @@ val tsBuild by
 
 tasks.matching { it.name == "wasmJsProcessResources" }.configureEach { dependsOn(tsBuild) }
 
-tasks
-    .matching { it.name == "compileKotlinWasmJs" }
-    .configureEach {
-        val genDir = File(projectDir, buildConfigGenDir)
-        doFirst {
-            val ts =
-                DateTimeFormatter.ofPattern("yyyyMMdd-HH.mm.ss")
-                    .withZone(ZoneOffset.UTC)
-                    .format(Instant.now())
-            val content = "package org.micoli.micraft\n\nconst val BUILD_TIMESTAMP = \"$ts\"\n"
-            val outFile = File(genDir, "BuildConfig.kt")
-            // Compare only the minute prefix (14 chars: "yyyyMMdd-HH.mm") to break the watcher
-            // loop:
-            // a compile takes ~15 s so the second changes each iteration, but minute stays stable.
-            val existingTs =
-                if (outFile.exists()) outFile.readText().substringAfter("\"").substringBefore("\"")
-                else ""
-            if (existingTs.take(14) != ts.take(14)) {
-                genDir.mkdirs()
-                outFile.writeText(content)
-            }
+val generateBuildConfig by tasks.registering {
+    val genDir = File(projectDir, buildConfigGenDir)
+    val outFile = File(genDir, "BuildConfig.kt")
+    outputs.file(outFile)
+    // Always re-run so the timestamp is current, but the minute guard below prevents
+    // content from changing within a single compile cycle (~15 s), breaking the watch loop.
+    outputs.upToDateWhen { false }
+    doLast {
+        val ts =
+            DateTimeFormatter.ofPattern("yyyyMMdd-HH.mm.ss")
+                .withZone(ZoneOffset.UTC)
+                .format(Instant.now())
+        val content = "package org.micoli.micraft\n\nconst val BUILD_TIMESTAMP = \"$ts\"\n"
+        val existingTs =
+            if (outFile.exists()) outFile.readText().substringAfter("\"").substringBefore("\"")
+            else ""
+        if (existingTs.take(14) != ts.take(14)) {
+            genDir.mkdirs()
+            outFile.writeText(content)
         }
     }
+}
+
+tasks.matching { it.name == "compileKotlinWasmJs" }.configureEach {
+    dependsOn(generateBuildConfig)
+}
 
 val cleanStaleWasm by
     tasks.registering(Delete::class) {

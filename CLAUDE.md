@@ -111,7 +111,7 @@ node scripts/export_skin_presets.mjs ./resources/blockbench-export/.
 
 After every server-side code change:
 ```bash
-touch run.lock
+make dev-restart-server
 ```
 `./gradlew dev` watchdog kills/restarts Ktor process. Web client reconnects automatically. **Always use `touch run.lock` — never ask user to restart manually.**
 
@@ -138,9 +138,17 @@ docker compose -f docker-compose.dev.yml exec micraft ./gradlew :server:test
 
 Restart server after server-side change (file in mounted volume, works from host or container):
 ```bash
-touch run.lock   # from host — still valid
-# or:
-make dc CMD="touch run.lock"
+make dc CMD="make restart-dev-server"
+```
+
+forcer le build du wasm
+```bash
+make dc CMD="make trigger-wasm"
+```
+
+forcer le build des mc_bindings
+```bash
+make dc CMD="make build-client"
 ```
 
 ## Rules

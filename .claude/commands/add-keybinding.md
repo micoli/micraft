@@ -109,6 +109,6 @@ Create `server/src/main/kotlin/org/micoli/micraft/http/MyActionController.kt`:
 make dc CMD="./gradlew :spotlessApply"
 make npm-format
 make dc CMD="./gradlew :server:test"
-touch run.lock         # restart server
+make dev-restart-server         # restart server
 make build-wasm        # rebuild TS/Wasm bundle
 ```

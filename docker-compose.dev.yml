@@ -2,7 +2,7 @@ services:
   micraft:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: ./.docker/Dockerfile.dev
     volumes:
       - .:/workspace
       - core-build:/workspace/core/build

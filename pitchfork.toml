@@ -1,0 +1,57 @@
+namespace = "mc"
+
+[daemons.server]
+run = "bash -c './gradlew :server:installDist --console=plain && MICRAFT_WEB_DIST=/workspace/app/webApp/build/web /workspace/server/build/install/server/bin/server'"
+dir = "/workspace"
+ready-port = 8080
+retry = true
+boot_start = true
+
+[daemons.run-lock]
+run = "bash -c 'inotifywait -m -e close_write,moved_to,create -q run.lock | while read _; do pitchfork restart server; done'"
+dir = "/workspace"
+boot_start = true
+
+[daemons.wasm]
+run = "./gradlew :app:webApp:copyResourcesToWebDist --continuous --console=plain"
+dir = "/workspace"
+depends = ["server"]
+boot_start = true
+
+[daemons.mc_bindings]
+run = "npm run watch:mc_bindings"
+dir = "/workspace/app/webApp/ts-src"
+env = { MC_OUT_JS="/workspace/app/webApp/build/web/mc_bindings.js"}
+depends = ["server"]
+boot_start = true
+
+[daemons.css]
+run = "npm run watch:css"
+dir = "/workspace/app/webApp/ts-src"
+env = {MC_OUT_CSS="/workspace/app/webApp/build/web/main.css"}
+depends = ["server"]
+boot_start = true
+
+[daemons.map]
+run = "npm run watch:map"
+dir = "/workspace/app/webApp/ts-src"
+depends = ["server"]
+boot_start = true
+
+[daemons.map-css]
+run = "npm run watch:map:css"
+dir = "/workspace/app/webApp/ts-src"
+depends = ["server"]
+boot_start = true
+
+[daemons.admin]
+run = "npm run watch:admin"
+dir = "/workspace/app/webApp/ts-src"
+depends = ["server"]
+boot_start = true
+
+[daemons.admin-css]
+run = "npm run watch:admin:css"
+dir = "/workspace/app/webApp/ts-src"
+depends = ["server"]
+boot_start = true

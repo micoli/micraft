@@ -29,10 +29,11 @@ dev-down:
 	$(DC_DEV) down
 
 dev-restart-server:
-	$(EXEC) "touch run.lock"
+	$(DC_DEV) exec micraft pitchfork restart server
 
 dev-restart-clean-server:
-	$(EXEC) "touch run.lock; rm data/world/default_world/*.json data/world/default_world/chunks/* data/config/*/*"
+	$(EXEC) "rm data/world/default_world/*.json data/world/default_world/chunks/* data/config/*/*"
+	$(DC_DEV) exec micraft pitchfork restart server
 
 dev-restart:
 	make dev-down
@@ -42,19 +43,22 @@ dev-shell:
 	$(DC_DEV) exec -it micraft bash
 
 dev-task-stop:
-	$(DC_DEV) exec micraft supervisorctl stop dev
+	$(DC_DEV) exec micraft pitchfork stop -l
 
 dev-task-start:
-	$(DC_DEV) exec micraft supervisorctl start dev
+	$(DC_DEV) exec micraft pitchfork start -l
 
 dev-task-restart:
-	$(DC_DEV) exec micraft supervisorctl restart dev
+	$(DC_DEV) exec micraft pitchfork restart -l
 
 dev-clean-wasm:
 	$(EXEC) "rm -rf /workspace/app/webApp/build/klib/cache /workspace/app/webApp/build/compileSync /workspace/app/shared/build/klib/cache /workspace/app/shared/build/compileSync"
 
+dev-tui:
+	$(DC_DEV) exec -it micraft pitchfork tui
+
 dev-logs:
-	@while true; do $(DC_DEV) logs -f 2>&1 | scripts/colorlog.pl; sleep 2; echo "===================="; done
+	@while true; do $(DC_DEV) exec -it micraft pitchfork logs server wasm mc_bindings css map map-css admin admin-css --tail 2>&1 | scripts/colorlog.pl; sleep 2; echo "===================="; done
 
 # Run any command inside the dev container: make dc CMD="./gradlew :server:test"
 ifeq ($(RUN_MODE),DOCKER)
@@ -80,11 +84,11 @@ npm-format:
 
 build-client: build-js build-wasm
 
-# When ./gradlew :dev is running its --continuous wasm watcher already holds the Gradle
-# project lock. In that case touch a source file to trigger the watcher instead.
+# When the pitchfork wasm watcher is running, trigger via source file touch to avoid
+# Gradle project lock contention. Otherwise run a one-shot build.
 build-wasm:
-	@if $(DC_DEV) exec micraft pgrep -f "copyResourcesToWebDist.*continuous" > /dev/null 2>&1; then \
-		echo "[wasm] dev watcher running — triggering rebuild via source change…"; \
+	@if $(DC_DEV) exec micraft pitchfork status wasm 2>/dev/null | grep -qi "running"; then \
+		echo "[wasm] watcher running — triggering rebuild via source change…"; \
 		$(EXEC) "f=app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/babylon/BabylonBindingsWorld.kt; sed -i '/^\\/\\/ wasm-trigger/d' \$$f; echo \"// wasm-trigger $$(date +%s)\" >> \$$f"; \
 	else \
 		$(EXEC) "./gradlew :app:webApp:copyResourcesToWebDist --rerun-tasks"; \
@@ -149,20 +153,24 @@ docs:
 help:
 	@echo "RUN_MODE=$(RUN_MODE)  (DOCKER|HOST, default DOCKER — override via .env or env var)"
 	@echo ""
-	@echo "Dev  (ports 8080 game-server / 8081 webpack):"
-	@echo "  make dev-up               start dev container (source mounted, hot-reload)"
+	@echo "Dev  (port 8080 game-server):"
+	@echo "  make dev-up               build + start container (pitchfork starts all daemons)"
 	@echo "  make dev-down             stop"
-	@echo "  make dev-restart          restart"
-	@echo "  make dev-task-stop        stop ./gradlew dev inside container (keeps container alive)"
-	@echo "  make dev-task-start       start ./gradlew dev inside container"
-	@echo "  make dev-task-restart     restart ./gradlew dev inside container"
-	@echo "  make dev-logs             tail logs"
+	@echo "  make dev-restart          full restart (down + up)"
+	@echo "  make dev-restart-server   rebuild + restart Ktor only (replaces: touch run.lock)"
+	@echo "  make dev-task-stop        stop all pitchfork daemons (keeps container alive)"
+	@echo "  make dev-task-start       start all pitchfork daemons"
+	@echo "  make dev-task-restart     restart all pitchfork daemons"
+	@echo "  make dev-logs             tail container logs"
 	@echo "  make shell                open bash inside container (DOCKER mode only)"
 	@echo "  make dc CMD=\"<cmd>\"       run command inside container / directly in HOST mode"
+	@echo "  make dc CMD=\"pitchfork list\"         check daemon status"
+	@echo "  make dc CMD=\"pitchfork logs server\"  tail server log"
+	@echo "  make dc CMD=\"pitchfork tui\"          live dashboard (interactive)"
 	@echo "  make npm-format           run prettier in ts-src"
 	@echo "  make build-client         recompile wasm + js bundle (build-wasm + build-js)"
-	@echo "  make build-wasm           recompile kotlin/wasm (auto-triggers watcher if :dev running)"
-	@echo "  make trigger-wasm         force wasm rebuild when :dev is running"
+	@echo "  make build-wasm           recompile kotlin/wasm (triggers pitchfork watcher if running)"
+	@echo "  make trigger-wasm         force wasm rebuild via source touch"
 	@echo ""
 	@echo "Prod (port 8080 via nginx):"
 	@echo "  make prod-build           build images"
