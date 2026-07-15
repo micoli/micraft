@@ -32,6 +32,7 @@ import { AttackPanel } from "../game/components/AttackPanel";
 import { XpBar } from "../game/components/XpBar";
 import { useGameContext } from "../game/GameContext";
 import { getLastUser, clearLastPlayer } from "../lib/authStorage";
+import {AggroIndicators} from "../game/components/AggroIndicators";
 
 export function GameScreen() {
   const {
@@ -231,6 +232,10 @@ export function GameScreen() {
               layoutStyle={widgetStyle(activeLayout, "PLAYER_STATUS")}
             />
           )}
+          <AggroIndicators
+            npcProximity={state.npcProximity}
+            layoutStyle={widgetStyle(activeLayout, "AGGRO_INDICATORS")}
+          />
           {state.combatTarget && (
             <CombatTargetFrame target={state.combatTarget} layoutStyle={widgetStyle(activeLayout, "COMBAT_TARGET")} />
           )}

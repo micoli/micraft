@@ -108,6 +108,16 @@ val WIDGET_REGISTRY: List<WidgetRegistryEntry> =
             editorLabel = "Player Status",
             editorColor = "rgba(192,57,43,0.75)"),
         WidgetRegistryEntry(
+            WidgetType.AGGRO_INDICATORS,
+            x = 0,
+            y = 11,
+            w = 7,
+            h = 4,
+            minW = 7,
+            minH = 4,
+            editorLabel = "Aggro Indicators",
+            editorColor = "rgba(192,77,23,0.75)"),
+        WidgetRegistryEntry(
             WidgetType.COMBAT_TARGET,
             x = 23,
             y = 0,

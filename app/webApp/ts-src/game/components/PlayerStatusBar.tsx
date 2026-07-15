@@ -62,7 +62,7 @@ function GcdBar({ remainingMs }: { remainingMs: number }) {
   const label = display > 0 ? `${(display / 1000).toFixed(1)}s` : "ready";
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[11px] text-white/60 w-6 shrink-0">GCD</span>
+      <span className="text-[11px] text-white/60 w-6 shrink-0 ml-2">GCD</span>
       <div className="relative flex-1 h-4 bg-black/60 rounded overflow-hidden border border-white/10">
         <div
           className="h-full rounded"
@@ -79,66 +79,38 @@ function GcdBar({ remainingMs }: { remainingMs: number }) {
   );
 }
 
-export function PlayerStatusBar({ status, npcProximity = [], layoutStyle }: Props) {
+export function PlayerStatusBar({ status, layoutStyle }: Props) {
   const playerName = window.mcState?.playerName ?? "";
   return (
     <div
       className="flex flex-col gap-1 bg-black/55 rounded-md px-3 py-2 pointer-events-none z-[998]"
       style={{ ...layoutStyle, userSelect: "none" }}
     >
-      {playerName && <span className="text-white/80 text-[11px] font-semibold truncate pb-0.5">{playerName}</span>}
-      <Bar value={status.currentHp} max={status.maxHp} color="#c0392b" label="HP" />
-      {status.maxMana > 0 && <Bar value={status.currentMana} max={status.maxMana} color="#2980b9" label="MP" />}
-      {status.maxRage > 0 && <Bar value={status.currentRage} max={status.maxRage} color="#e67e22" label="RP" />}
-      {status.maxTokens > 0 && (
-        <div className="flex items-center gap-1">
-          <span className="text-orange-300/70 font-mono text-[10px] w-5 shrink-0">TK</span>
-          <div className="flex gap-0.5">
-            {Array.from({ length: status.maxTokens }).map((_, i) => (
-              <div
-                key={i}
-                className="w-3 h-3 rounded-sm border border-orange-400/60"
-                style={{ background: i < (status.currentTokens ?? 0) ? "#e67e22" : "rgba(0,0,0,0.4)" }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-      <GcdBar remainingMs={status.globalCooldownRemainingMs} />
-      {npcProximity.length > 0 && (
-        <div className="flex flex-row gap-2 border-t border-white/10 pt-1 mt-0.5">
-          {npcProximity.map((npc) => {
-            const angleDeg = (npc.relAngle * 180) / Math.PI;
-            return (
-              <div key={npc.id} className="flex flex-col gap-0 min-w-0">
-                <div className="flex items-center gap-1">
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 12 12"
-                    style={{ transform: `rotate(${angleDeg}deg)`, flexShrink: 0 }}
-                  >
-                    <polygon points="6,1 10,11 6,8 2,11" fill={npc.aggro ? "#e74c3c" : "rgba(255,255,255,0.45)"} />
-                  </svg>
-                  <span
-                    className="font-mono text-[9px]"
-                    style={{ color: npc.aggro ? "#e74c3c" : "rgba(255,255,255,0.55)" }}
-                  >
-                    {Math.round(npc.dist)}m
-                  </span>
+      {playerName && (
+          <div className="flex items-center gap-2 w-full">
+            <span className="text-white/80 text-[11px] font-semibold shrink-0 pb-0.5">{playerName}</span>
+            <div className="flex-1 min-w-0">
+              <GcdBar remainingMs={status.globalCooldownRemainingMs}/>
+            </div>
+            {status.maxTokens > 0 && (
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="text-orange-300/70 font-mono text-[10px]">TK</span>
+                <div className="flex gap-0.5">
+                  {Array.from({length: status.maxTokens}).map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-3 h-3 rounded-sm border border-orange-400/60"
+                      style={{background: i < (status.currentTokens ?? 0) ? "#e67e22" : "rgba(0,0,0,0.4)"}}
+                    />
+                  ))}
                 </div>
-                <span
-                  className="font-mono text-[9px] truncate max-w-[96px]"
-                  style={{ color: npc.aggro ? "#e74c3c" : "rgba(255,255,255,0.4)" }}
-                  title={npc.name}
-                >
-                  {npc.name || npc.id}
-                </span>
               </div>
-            );
-          })}
-        </div>
+            )}
+          </div>
       )}
-    </div>
-  );
-}
+        <Bar value={status.currentHp} max={status.maxHp} color="#c0392b" label="HP"/>
+        {status.maxMana > 0 && <Bar value={status.currentMana} max={status.maxMana} color="#2980b9" label="MP"/>}
+        {status.maxRage > 0 && <Bar value={status.currentRage} max={status.maxRage} color="#e67e22" label="RP"/>}
+      </div>
+        );
+      }
