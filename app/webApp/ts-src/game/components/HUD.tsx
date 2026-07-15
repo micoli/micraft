@@ -3,9 +3,9 @@ import { cn } from "../../primitives/cn";
 
 export function HUD({ data, layoutStyle }: { data: HudData | null; layoutStyle?: React.CSSProperties }) {
   if (!data) return null;
-  const { stance, biome, targetBlock } = data;
+  const { stance, biome, weather, targetBlock } = data;
 
-  const simple = [`Stance: ${stance}`, `Biome: ${biome ? biome : "?"}`, `Block: ${targetBlock ? targetBlock : "?"}`];
+  const simple = [`Stance: ${stance}`, `Biome: ${biome ? biome : "?"}`, `Block: ${targetBlock ? targetBlock : "?"}`, `Weather: ${weather ? weather : ""}`];
   return (
     <div
       className={cn(

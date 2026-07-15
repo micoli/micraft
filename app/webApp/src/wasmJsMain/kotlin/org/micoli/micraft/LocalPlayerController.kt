@@ -97,6 +97,7 @@ class LocalPlayerController(
     private var hudStance = "STANDING"
     private var hudSpeed = 1.0
     private var hudBiome = ""
+    private var hudWeather = ""
     var currentGameTicks = 0L
 
     private var reconcileToleranceXz = DEFAULT_RECONCILE_TOLERANCE_XZ
@@ -731,6 +732,7 @@ class LocalPlayerController(
             (currentGameTicks % TICKS_PER_DAY_CLIENT).toDouble() / TICKS_PER_DAY_CLIENT
         jsUpdateSkyTime(scene, normalizedTime)
         jsUpdateWeather(scene, predX, predY, predZ)
+        hudWeather = jsGetCurrentWeather()
         updateCaveLighting()
 
         jsDrawMinimap(predX, predZ, yaw)
@@ -775,6 +777,7 @@ class LocalPlayerController(
                 jitterMax,
                 chunkDownloading,
                 chunkMeshing,
+                hudWeather,
             )
             uiState.hud =
                 HudData(
@@ -801,6 +804,7 @@ class LocalPlayerController(
                     tickJitterMaxMs = jitterMax,
                     chunkDownloading = chunkDownloading,
                     chunkMeshing = chunkMeshing,
+                    weather = hudWeather,
                 )
             val debugCx = hudX.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
             val debugCz = hudZ.toInt().floorDiv(WorldConstants.CHUNK_SIZE)

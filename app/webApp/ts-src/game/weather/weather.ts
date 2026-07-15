@@ -240,7 +240,7 @@ function playerZone(px: number, pz: number): WeatherZone | null {
   return best;
 }
 
-export function registerWeather(): Pick<McBindings, "setWeatherZones" | "updateWeather"> {
+export function registerWeather(): Pick<McBindings, "setWeatherZones" | "updateWeather" | "getCurrentWeather"> {
   return {
     setWeatherZones: (json: string): void => {
       try {
@@ -338,5 +338,7 @@ export function registerWeather(): Pick<McBindings, "setWeatherZones" | "updateW
         syncZoneFogToMaterials(0, 0, 0, 8, 40);
       }
     },
+
+    getCurrentWeather: (): string => currentWeatherType,
   };
 }

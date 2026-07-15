@@ -249,6 +249,7 @@ declare global {
     updateSkyTime(scene: any, t: number): void;
     setWeatherZones(json: string): void;
     updateWeather(scene: any, px: number, py: number, pz: number): void;
+    getCurrentWeather(): string;
     // Input
     setupKeyboard(): void;
     setupMouse(): void;
@@ -370,6 +371,7 @@ declare global {
       tickJitterMaxMs: number,
       chunkDownloading: number,
       chunkMeshing: number,
+      weather: string,
     ): void;
     showNotification(msg: string): void;
     addServerLog(channel: string, msg: string): void;
@@ -397,6 +399,7 @@ declare global {
     consumeLoginResult(): string;
     consoleSetPlayer(name: string): void;
     setPlayerId(id: string): void;
+    cycleHudMode(): void;
     syncLayouts(json: string): void;
     showLayoutEditor(): void;
     hideLayoutEditor(): void;

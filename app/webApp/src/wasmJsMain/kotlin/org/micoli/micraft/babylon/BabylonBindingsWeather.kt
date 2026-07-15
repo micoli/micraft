@@ -6,3 +6,5 @@ fun jsSetWeatherZones(json: String): Unit = js("mc.setWeatherZones(json)")
 
 fun jsUpdateWeather(scene: JsAny, px: Double, py: Double, pz: Double): Unit =
     js("mc.updateWeather(scene, px, py, pz)")
+
+fun jsGetCurrentWeather(): String = js("mc.getCurrentWeather()")

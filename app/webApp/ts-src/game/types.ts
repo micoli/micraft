@@ -10,6 +10,7 @@ export interface HudData {
   yaw: number;
   pitch: number;
   stance: string;
+  weather: string;
   speed: number;
   fps: number;
   kbIn: number;

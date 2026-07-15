@@ -186,7 +186,6 @@ export function registerKeyboard(): Pick<
         window.mcState.lastKeyPress = { code: e.code, key: e.key, time: Date.now() };
 
         if (b.view_toggle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("view_toggle");
-        if (b.hud_mode_cycle?.some((k) => matchesEvent(k, e))) window.mc?.cycleHudMode?.();
         if (b.console_toggle?.some((k) => matchesEvent(k, e))) window.mc?.toggleConsole?.();
         if (b.inventory?.some((k) => matchesEvent(k, e))) window.mcState.events.push("inventory");
         if (b.undo?.some((k) => matchesEvent(k, e))) window.mcState.events.push("undo");

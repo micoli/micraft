@@ -13,16 +13,6 @@ import { CharacterCreationScreen } from "../screens/CharacterCreationScreen";
 import { CharacterRPGCreationScreen } from "../screens/CharacterRPGCreationScreen";
 import { GameScreen } from "../screens/GameScreen";
 
-function loadHudMode(): HudMode {
-  try {
-    const stored = localStorage.getItem("mc_hud_mode");
-    if (stored === "simple" || stored === "medium" || stored === "complete") return stored;
-  } catch {
-    /* ignore */
-  }
-  return "complete";
-}
-
 const initial: UiState = {
   hud: null,
   notif: null,
@@ -359,6 +349,7 @@ export function GameUI() {
       tickJitterMaxMs: number,
       chunkDownloading: number,
       chunkMeshing: number,
+      weather: string,
     ) => {
       window.mcState.minimapY = y;
       window.mcState.minimapGameTime = gameTime;
@@ -390,6 +381,7 @@ export function GameUI() {
           tickJitterMaxMs,
           chunkDownloading,
           chunkMeshing,
+          weather,
         },
       });
     };
@@ -510,8 +502,6 @@ export function GameUI() {
     window.mc.setPlayerId = (id: string) => {
       window.mcState.playerId = id;
     };
-
-    window.mc.cycleHudMode = () => dispatch({ type: "hud_mode_cycle" });
 
     window.mc.syncLayouts = (json: string) => {
       const data: { layouts?: GameLayout[]; activeLayout: string } = JSON.parse(json);
