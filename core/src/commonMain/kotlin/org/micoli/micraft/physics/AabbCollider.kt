@@ -130,6 +130,43 @@ object AabbCollider {
         return dy
     }
 
+    /** True if the player AABB already overlaps any solid block (penetration detected). */
+    fun isOverlapping(
+        isSolid: (Int, Int, Int) -> Boolean,
+        cx: Float,
+        cy: Float,
+        cz: Float,
+        w: Float,
+        h: Float
+    ): Boolean {
+        val hw = w / 2f
+        for (bx in blocks(cx - hw, cx + hw)) for (by in blocks(cy, cy + h)) for (bz in
+            blocks(cz - hw, cz + hw)) if (isSolid(bx, by, bz)) return true
+        return false
+    }
+
+    /**
+     * Returns the lowest Y ≥ cy where the player AABB fits without overlapping any solid block.
+     * Scans upward block-by-block up to maxSearch blocks. Returns cy unchanged if no free space
+     * found.
+     */
+    fun ejectUp(
+        isSolid: (Int, Int, Int) -> Boolean,
+        cx: Float,
+        cy: Float,
+        cz: Float,
+        w: Float,
+        h: Float,
+        maxSearch: Int = 20
+    ): Float {
+        var testY = cy
+        repeat(maxSearch) {
+            if (!isOverlapping(isSolid, cx, testY, cz, w, h)) return testY
+            testY += 1f
+        }
+        return cy
+    }
+
     /** Returns true if the player can expand from currentH to newH without hitting blocks. */
     fun canAdoptStance(
         isSolid: (Int, Int, Int) -> Boolean,

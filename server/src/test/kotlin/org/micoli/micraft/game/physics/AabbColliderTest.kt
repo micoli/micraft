@@ -163,7 +163,8 @@ class AabbColliderTest {
 
     @Test
     fun resolveX_positive_stopsAtCameraLevelBlock() {
-        // Camera at cy+1.62 is inside physics block cy+2 (due to block centering: block cy+2 spans Babylon Y cy+1.5..cy+2.5).
+        // Camera at cy+1.62 is inside physics block cy+2 (due to block centering: block cy+2 spans
+        // Babylon Y cy+1.5..cy+2.5).
         // ys must cover cy+2, which requires HEIGHT_STANDING >= 2.001.
         val world = testWorld(Triple(10, 7, 8)) // block at cy+2 = 5+2 = 7
         val result = AabbCollider.resolveX(world.solid(), 9.5f, 5f, 8.5f, w, h, 1.0f)
@@ -173,12 +174,15 @@ class AabbColliderTest {
 
     @Test
     fun resolveX_negative_stopsAtEyeLevelBlock_approachingFromRight() {
-        // Player approaching block 8 (eye-level only, y=6) from the right. cx-hw starts at 9.0 (outside block 8).
+        // Player approaching block 8 (eye-level only, y=6) from the right. cx-hw starts at 9.0
+        // (outside block 8).
         // Should be stopped by block 8 before entering it.
         val world = testWorld(Triple(8, 6, 8))
-        val cx = 9.0f + w / 2f  // cx-hw = 9.0, right face of block 8 column
+        val cx = 9.0f + w / 2f // cx-hw = 9.0, right face of block 8 column
         val result = AabbCollider.resolveX(world.solid(), cx, 5f, 8.5f, w, h, -1.0f)
-        assertTrue(result > -1.0f, "Should stop at eye-level block when approaching from outside: result=$result")
+        assertTrue(
+            result > -1.0f,
+            "Should stop at eye-level block when approaching from outside: result=$result")
         assertTrue(cx + result - w / 2f >= 9f - 0.01f)
     }
 
@@ -200,6 +204,56 @@ class AabbColliderTest {
 
         assertTrue(newX + hw <= 5.0f + 0.01f, "X right edge must not penetrate block at x=5: $newX")
         assertTrue(newZ + hw <= 5.0f + 0.01f, "Z right edge must not penetrate block at z=5: $newZ")
+    }
+
+    // --- isOverlapping ---
+
+    @Test
+    fun isOverlapping_playerInsideBlock_returnsTrue() {
+        // Block at y=5; player feet at y=5 → AABB y=5..6.8 overlaps block
+        val world = testWorld(Triple(8, 5, 8))
+        assertTrue(AabbCollider.isOverlapping(world.solid(), 8.5f, 5f, 8.5f, w, h))
+    }
+
+    @Test
+    fun isOverlapping_playerAboveBlock_returnsFalse() {
+        // Block at y=4; player feet at y=5 → no overlap
+        val world = testWorld(Triple(8, 4, 8))
+        assertFalse(AabbCollider.isOverlapping(world.solid(), 8.5f, 5f, 8.5f, w, h))
+    }
+
+    @Test
+    fun isOverlapping_noBlocks_returnsFalse() {
+        val world = testWorld()
+        assertFalse(AabbCollider.isOverlapping(world.solid(), 8.5f, 5f, 8.5f, w, h))
+    }
+
+    // --- ejectUp ---
+
+    @Test
+    fun ejectUp_insideSingleBlock_ejectsAbove() {
+        // Block at y=5; player feet at y=5 → must eject to y=6
+        val world = testWorld(Triple(8, 5, 8))
+        val ejected = AabbCollider.ejectUp(world.solid(), 8.5f, 5f, 8.5f, w, h)
+        assertTrue(ejected >= 6f, "Expected ejected y >= 6, got $ejected")
+        assertFalse(AabbCollider.isOverlapping(world.solid(), 8.5f, ejected, 8.5f, w, h))
+    }
+
+    @Test
+    fun ejectUp_notOverlapping_returnsSameY() {
+        // No block at player position → ejectUp returns original Y
+        val world = testWorld(Triple(8, 4, 8))
+        val ejected = AabbCollider.ejectUp(world.solid(), 8.5f, 5f, 8.5f, w, h)
+        assertTrue(ejected == 5f, "Expected same y=5, got $ejected")
+    }
+
+    @Test
+    fun ejectUp_twoBlocksStacked_ejectsAboveBoth() {
+        // Blocks at y=5 and y=6; player at y=5 → must eject above both
+        val world = testWorld(Triple(8, 5, 8), Triple(8, 6, 8))
+        val ejected = AabbCollider.ejectUp(world.solid(), 8.5f, 5f, 8.5f, w, h)
+        assertFalse(AabbCollider.isOverlapping(world.solid(), 8.5f, ejected, 8.5f, w, h))
+        assertTrue(ejected >= 7f, "Expected ejected above y=7, got $ejected")
     }
 
     // --- canAdoptStance ---

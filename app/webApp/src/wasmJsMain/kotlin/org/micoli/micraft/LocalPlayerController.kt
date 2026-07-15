@@ -368,11 +368,35 @@ class LocalPlayerController(
         val h = stance.height
         val startX = predX
         val startZ = predZ
-        val midDx = AabbCollider.resolveX(solid, startX.toFloat(), predY.toFloat(), startZ.toFloat(), PlayerConstants.WIDTH, h, dx * speed)
+        val midDx =
+            AabbCollider.resolveX(
+                solid,
+                startX.toFloat(),
+                predY.toFloat(),
+                startZ.toFloat(),
+                PlayerConstants.WIDTH,
+                h,
+                dx * speed)
         val midX = startX + midDx
-        val resolvedDz = AabbCollider.resolveZ(solid, midX.toFloat(), predY.toFloat(), startZ.toFloat(), PlayerConstants.WIDTH, h, dz * speed)
+        val resolvedDz =
+            AabbCollider.resolveZ(
+                solid,
+                midX.toFloat(),
+                predY.toFloat(),
+                startZ.toFloat(),
+                PlayerConstants.WIDTH,
+                h,
+                dz * speed)
         predZ = startZ + resolvedDz
-        val resolvedDx = AabbCollider.resolveX(solid, startX.toFloat(), predY.toFloat(), predZ.toFloat(), PlayerConstants.WIDTH, h, dx * speed)
+        val resolvedDx =
+            AabbCollider.resolveX(
+                solid,
+                startX.toFloat(),
+                predY.toFloat(),
+                predZ.toFloat(),
+                PlayerConstants.WIDTH,
+                h,
+                dx * speed)
         predX = startX + resolvedDx
 
         if (autoAdvance && (dx != 0f || dz != 0f)) {

@@ -25,8 +25,21 @@ class MovementProcessor(private val world: WorldState) {
     fun process(session: PlayerSession, input: TickInput): PlayerState {
         val old = session.state
         val w = PlayerConstants.WIDTH
-        val pos = old.pos
         val solid = { bx: Int, by: Int, bz: Int -> world.getBlock(bx, by, bz).isSolid }
+        val rawPos = old.pos
+        val recoveredY =
+            if (AabbCollider.isOverlapping(
+                solid, rawPos.x, rawPos.y, rawPos.z, w, old.stance.height)) {
+                val ejected =
+                    AabbCollider.ejectUp(solid, rawPos.x, rawPos.y, rawPos.z, w, old.stance.height)
+                log.warn(
+                    "player {} stuck inside block at y={}, ejected to y={}",
+                    session.id.take(8),
+                    rawPos.y,
+                    ejected)
+                ejected
+            } else rawPos.y
+        val pos = rawPos.copy(y = recoveredY)
 
         val newSpeedMult =
             when {
