@@ -1,10 +1,12 @@
 import { HudData } from "../types";
 import { cn } from "../../primitives/cn";
-function StatisticsRow({ label, value }: { label: string, value: string | number }) {
-  return <div key={label} className="flex items-center gap-1.5">
-    <span className="text-[11px] text-white/60 w-14 shrink-0 truncate">{label}</span>
-    <span className="text-white/90 truncate">{value}</span>
-  </div>;
+function StatisticsRow({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div key={label} className="flex items-center gap-1.5">
+      <span className="text-[11px] text-white/60 w-14 shrink-0 truncate">{label}</span>
+      <span className="text-white/90 truncate">{value}</span>
+    </div>
+  );
 }
 
 export function Statistics({ data, layoutStyle }: { data: HudData | null; layoutStyle?: React.CSSProperties }) {
@@ -42,8 +44,14 @@ export function Statistics({ data, layoutStyle }: { data: HudData | null; layout
       <StatisticsRow label={"X/Z/Y"} value={`${x.toFixed(1)}, ${z.toFixed(1)}, ${y.toFixed(1)}`} />
       <StatisticsRow label={"Orientation"} value={`Y:${yaw.toFixed(1)}°, P:${pitch.toFixed(1)}°`} />
       <StatisticsRow label={"FPS"} value={fps} />
-      <StatisticsRow label={"Tick"} value={`${tickDtMinMs.toFixed(1)}↔${tickDtMaxMs.toFixed(1)}ms avg:${tickDtMs.toFixed(1)}ms`} />
-      <StatisticsRow label={"Jitr"} value={`${tickJitterMinMs.toFixed(1)}↔${tickJitterMaxMs.toFixed(1)}ms cur:${tickJitterMs.toFixed(1)}ms`} />
+      <StatisticsRow
+        label={"Tick"}
+        value={`${tickDtMinMs.toFixed(1)}↔${tickDtMaxMs.toFixed(1)}ms avg:${tickDtMs.toFixed(1)}ms`}
+      />
+      <StatisticsRow
+        label={"Jitr"}
+        value={`${tickJitterMinMs.toFixed(1)}↔${tickJitterMaxMs.toFixed(1)}ms cur:${tickJitterMs.toFixed(1)}ms`}
+      />
       <StatisticsRow label={"Chunks"} value={`DL:${chunkDownloading} mesh:${chunkMeshing}`} />
       <StatisticsRow label={"Net"} value={`↓ ${kbIn.toFixed(1)} KB/s  ↑ ${kbOut.toFixed(1)} KB/s`} />
       <StatisticsRow label={"Rec XZ"} value={reconcileXzStats} />
