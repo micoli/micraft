@@ -16,6 +16,7 @@ services:
     ports:
       - "8080:8080"
       - "6006:6006"
+      - "3120:3120"
     working_dir: /workspace
     stdin_open: true
     tty: true
