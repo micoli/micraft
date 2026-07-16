@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "gen-plugins": "node scripts/gen-plugins-index.mjs",
-    "build": "node scripts/gen-plugins-index.mjs && esbuild index.ts --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --alias:@plugins=../../../plugins $MC_ESBUILD_FLAGS --outfile=${MC_OUT_JS:-../src/wasmJsMain/resources/mc_bindings.js}",
+    "copy:babylon": "cp node_modules/babylonjs/babylon.js ${MC_OUT_BABYLON:-../src/wasmJsMain/resources/babylon.js}",
+    "build": "npm run copy:babylon && node scripts/gen-plugins-index.mjs && esbuild index.ts --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --alias:@plugins=../../../plugins $MC_ESBUILD_FLAGS --outfile=${MC_OUT_JS:-../src/wasmJsMain/resources/mc_bindings.js}",
     "build:css": "tailwindcss -i ./styles/main.css -o ${MC_OUT_CSS:-../src/wasmJsMain/resources/main.css} ${MC_TW_FLAGS:---minify}",
     "typecheck": "tsc --noEmit",
     "watch:mc_bindings": "node scripts/gen-plugins-index.mjs && esbuild index.ts --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --alias:@plugins=../../../plugins --outfile=${MC_OUT_JS:-../src/wasmJsMain/resources/mc_bindings.js} --watch=forever",
@@ -41,6 +42,7 @@
   },
   "devDependencies": {
     "@babylonjs/core": "7.48.0",
+    "babylonjs": "7.48.0",
     "@eslint/js": "^9.0.0",
     "@storybook/addon-essentials": "^8.6.12",
     "@storybook/react": "^8.6.12",
