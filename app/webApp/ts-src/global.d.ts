@@ -448,6 +448,7 @@ declare global {
     mc: McBindings;
     mcState: McState;
     mcRunMacro: (name: string) => void;
+    mcBuildInfo: { mcBindings: string; webApp: string; wasm: string };
     [key: string]: unknown;
   }
 }

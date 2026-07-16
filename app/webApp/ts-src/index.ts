@@ -27,6 +27,7 @@ import { setWidgetRegistry } from "./game/layout/LayoutEngine";
 import { initFaviconAnimator, setFaviconAnimated } from "./favicon/faviconAnimator";
 import { MC_BUILD_TIMESTAMP } from "./buildConfig";
 
+window.mcBuildInfo = { mcBindings: MC_BUILD_TIMESTAMP, webApp: "", wasm: "" };
 console.log("[debug] build " + MC_BUILD_TIMESTAMP + " (mc_bindings)");
 
 // ── Initialize shared runtime state ──────────────────────────────────────────

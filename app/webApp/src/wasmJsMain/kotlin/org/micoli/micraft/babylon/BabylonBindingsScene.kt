@@ -51,5 +51,8 @@ fun jsCameraSetFov(camera: JsAny, fovDegrees: Int): Unit =
 
 fun jsConsoleLog(msg: String): Unit = js("console.log(msg)")
 
+fun jsSetWasmBuildTimestamp(ts: String): Unit =
+    js("window.mcBuildInfo && (window.mcBuildInfo.wasm = ts)")
+
 fun jsSetupRenderPipeline(scene: JsAny, camera: JsAny): Unit =
     js("mc.setupRenderPipeline(scene, camera)")
