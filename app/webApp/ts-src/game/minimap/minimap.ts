@@ -50,6 +50,7 @@ function maybeRefetchTerrain(playerX: number, playerZ: number): void {
   fetch(`/api/map/terrain-raster.png?cx=${cx}&cz=${cz}&radius=${radius}`)
     .then((r) => {
       if (r.ok) return r.blob();
+      terrainFetchCenter.x = NaN;
     })
     .then((blob) => {
       if (!blob) return;
@@ -65,9 +66,15 @@ function maybeRefetchTerrain(playerX: number, playerZ: number): void {
         terrainImgRadius = radius;
         URL.revokeObjectURL(url);
       };
+      img.onerror = () => {
+        terrainFetchCenter.x = NaN;
+        URL.revokeObjectURL(url);
+      };
       img.src = url;
     })
-    .catch(() => {})
+    .catch(() => {
+      terrainFetchCenter.x = NaN;
+    })
     .finally(() => {
       terrainFetching = false;
     });
@@ -105,6 +112,7 @@ function maybeRefetchRoads(playerX: number, playerZ: number): void {
   fetch(`/api/map/road-raster.png?cx=${cx}&cz=${cz}&radius=${radius}`)
     .then((r) => {
       if (r.ok) return r.blob();
+      roadsFetchCenter.x = NaN;
     })
     .then((blob) => {
       if (!blob) return;
@@ -117,9 +125,15 @@ function maybeRefetchRoads(playerX: number, playerZ: number): void {
         roadImgCz = cz;
         roadImgRadius = radius;
       };
+      img.onerror = () => {
+        roadsFetchCenter.x = NaN;
+        URL.revokeObjectURL(url);
+      };
       img.src = url;
     })
-    .catch(() => {})
+    .catch(() => {
+      roadsFetchCenter.x = NaN;
+    })
     .finally(() => {
       roadsFetching = false;
     });
@@ -137,11 +151,14 @@ function maybeRefetchBiomeBorders(playerX: number, playerZ: number): void {
   fetch(`/api/map/biome-borders?cx=${cx}&cz=${cz}&radius=800`)
     .then((r) => {
       if (r.ok) return r.json();
+      biomeFetchCenter.x = NaN;
     })
     .then((data) => {
       if (data) biomeBorderData = data;
     })
-    .catch(() => {})
+    .catch(() => {
+      biomeFetchCenter.x = NaN;
+    })
     .finally(() => {
       biomeFetching = false;
     });
