@@ -367,7 +367,11 @@ export function GameScreen() {
               consoleSubmittedRef.current = cmd;
             }}
           />
-          <QuestTracker visible={state.questTrackerVisible} quests={state.quests} layoutStyle={widgetStyle(activeLayout, "QUEST_TRACKER")} />
+          <QuestTracker
+            visible={state.questTrackerVisible}
+            quests={state.quests}
+            layoutStyle={widgetStyle(activeLayout, "QUEST_TRACKER")}
+          />
         </>
       )}
       <LoadingOverlay progress={state.chunkLoading} />

@@ -131,6 +131,7 @@ export function GameUI() {
   const craftOpenRef = useRef(false);
   const characterOpenRef = useRef(false);
   const tradeOpenRef = useRef(false);
+  const questJournalOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
   const chunkLoadingRef = useRef(false);
   const preferencesRef = useRef<import("./types").PreferencesData | null>(null);
@@ -254,6 +255,9 @@ export function GameUI() {
   useEffect(() => {
     tradeOpenRef.current = state.tradeOpen;
   }, [state.tradeOpen]);
+  useEffect(() => {
+    questJournalOpenRef.current = state.questJournalOpen;
+  }, [state.questJournalOpen]);
 
   useEffect(() => {
     const anyOpen =
@@ -701,6 +705,10 @@ export function GameUI() {
         }
         if (tradeOpenRef.current) {
           dispatch({ type: "trade_close" });
+          return;
+        }
+        if (questJournalOpenRef.current) {
+          dispatch({ type: "quest_journal_close" });
           return;
         }
         if (preferencesOpenRef.current) {
