@@ -5,6 +5,7 @@ interface VoronoiCell {
   z: number;
   biome: string;
   color: string;
+  name: string;
 }
 
 interface BiomeBorderChunk {
@@ -76,7 +77,7 @@ function renderBg(canvas: HTMLCanvasElement, cells: VoronoiCell[], cx: number, c
     ctx.arc(px, py, 2, 0, Math.PI * 2);
     ctx.fill();
 
-    const label = cell.biome.replace(/_/g, " ");
+    const label = cell.name;
     ctx.font = "bold 10px monospace";
     ctx.fillStyle = "rgba(0,0,0,0.8)";
     ctx.fillText(label, px + 1, py + 5);
