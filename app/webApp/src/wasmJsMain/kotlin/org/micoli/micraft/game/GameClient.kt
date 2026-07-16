@@ -598,6 +598,19 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     jsXpGained(Json.encodeToString(msg))
                 })
             put(
+                ServerMessage.QuestSync::class,
+                typedHandler { msg: ServerMessage.QuestSync ->
+                    jsQuestSync(Json.encodeToString(msg))
+                })
+            put(
+                ServerMessage.QuestUpdate::class,
+                typedHandler { msg: ServerMessage.QuestUpdate ->
+                    jsQuestUpdate(Json.encodeToString(msg))
+                })
+            put(
+                ServerMessage.OpenQuestJournal::class,
+                typedHandler { _: ServerMessage.OpenQuestJournal -> jsOpenQuestJournal() })
+            put(
                 ServerMessage.WeatherUpdate::class,
                 typedHandler { msg: ServerMessage.WeatherUpdate ->
                     jsSetWeatherZones(Json.encodeToString(msg.zones))

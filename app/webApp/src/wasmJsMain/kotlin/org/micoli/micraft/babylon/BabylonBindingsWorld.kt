@@ -63,4 +63,4 @@ fun jsIsBlockDefsReady(): Boolean = js("mc.isBlockDefsReady()")
 fun jsCreateBlockMaterials(scene: JsAny): JsAny = js("mc.createBlockMaterials(scene)")
 
 fun jsSetGrassTint(r: Double, g: Double, b: Double): Unit = js("mc.setGrassTint(r, g, b)")
-// wasm-trigger 1784182775
+// wasm-trigger 1784213500

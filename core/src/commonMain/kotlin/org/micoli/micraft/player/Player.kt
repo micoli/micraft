@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.player.rpg.CharacterData
+import org.micoli.micraft.quest.QuestProgress
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.ui.defaultLayout
 
@@ -51,4 +52,5 @@ data class PlayerState(
     val lightBoostEnabled: Boolean = false,
     val email: String = "",
     val zoneLevel: Int = 0,
+    val quests: Map<String, QuestProgress> = emptyMap(),
 )

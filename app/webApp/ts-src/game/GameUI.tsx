@@ -66,6 +66,9 @@ const initial: UiState = {
   tradeTheirAccepted: false,
   classDefinitions: null,
   npcProximity: [],
+  quests: {},
+  questJournalOpen: false,
+  questTrackerVisible: false,
 };
 
 function RouterBridge({
@@ -118,6 +121,7 @@ export function GameUI() {
   const consoleFocusRef = useRef(true);
   const loginResultRef = useRef("");
   const notifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const questDefsRef = useRef<Record<string, { title: string }>>({});
   const pendingLayoutUpdateRef = useRef<string>("");
   const pendingPreferencesUpdateRef = useRef<string>("");
 
@@ -634,6 +638,38 @@ export function GameUI() {
     window.mc.playerDowned = (playerId: string) => dispatch({ type: "player_downed", playerId });
     window.mc.playerRespawned = (json: string) => dispatch({ type: "player_respawned", data: JSON.parse(json) });
     window.mc.xpGained = (json: string) => dispatch({ type: "xp_gained", data: JSON.parse(json) });
+    window.mc.questSync = (json: string) => {
+      try {
+        const msg = JSON.parse(json) as { quests: Record<string, import("./UIReducer").QuestProgress> };
+        dispatch({ type: "quest_sync", quests: msg.quests });
+        if (Object.keys(questDefsRef.current).length === 0) {
+          fetch("/api/quests")
+            .then((r) => r.json())
+            .then((arr: { id: string; title: string }[]) => {
+              const map: Record<string, { title: string }> = {};
+              for (const q of arr) map[q.id] = { title: q.title };
+              questDefsRef.current = map;
+            })
+            .catch(() => {});
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+    window.mc.questUpdate = (json: string) => {
+      try {
+        const msg = JSON.parse(json) as { questId: string; progress: import("./UIReducer").QuestProgress };
+        dispatch({ type: "quest_update", questId: msg.questId, progress: msg.progress });
+        if (msg.progress.status === "COMPLETED") {
+          const title = questDefsRef.current[msg.questId]?.title ?? msg.questId;
+          dispatch({ type: "notification", msg: `✓ Quest completed: ${title}` });
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+    window.mc.openQuestJournal = () => dispatch({ type: "quest_journal_open" });
+    window.mc.toggleQuestTracker = () => dispatch({ type: "quest_tracker_toggle" });
     window.mc.reloadAttackMeta = () => {
       loadAttackMetaRef.current();
       loadClassDefinitionsRef.current();

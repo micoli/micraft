@@ -30,6 +30,15 @@ export type ClassDefinitions = Record<string, Record<string, ClassAttackAccess[]
 
 export type NpcProximityEntry = { id: string; name: string; relAngle: number; dist: number; aggro: boolean };
 
+export type QuestStatus = "TODO" | "IN_PROGRESS" | "COMPLETED" | "ABANDONED" | "FAILED";
+export type QuestProgress = {
+  status: QuestStatus;
+  progress: Record<string, number>;
+  acceptedAt: number | null;
+  completedAt: number | null;
+  lastCompletedAt: number | null;
+};
+
 export type SpellMeta = {
   type: string;
   rageGain: number;
@@ -108,6 +117,9 @@ export interface UiState {
   tradeTheirAccepted: boolean;
   classDefinitions: ClassDefinitions | null;
   npcProximity: NpcProximityEntry[];
+  quests: Record<string, QuestProgress>;
+  questJournalOpen: boolean;
+  questTrackerVisible: boolean;
 }
 
 export type UiAction =
@@ -186,7 +198,12 @@ export type UiAction =
   | { type: "status_effect_update"; data: unknown }
   | { type: "player_downed"; playerId: string }
   | { type: "player_respawned"; data: unknown }
-  | { type: "xp_gained"; data: unknown };
+  | { type: "xp_gained"; data: unknown }
+  | { type: "quest_sync"; quests: Record<string, QuestProgress> }
+  | { type: "quest_update"; questId: string; progress: QuestProgress }
+  | { type: "quest_journal_open" }
+  | { type: "quest_journal_close" }
+  | { type: "quest_tracker_toggle" };
 
 let notifKey = 0;
 const MC_LOG_MAX = 100;
@@ -397,6 +414,16 @@ export function reducer(state: UiState, action: UiAction): UiState {
     }
     case "xp_gained":
       return { ...state, xpState: action.data as UiState["xpState"] };
+    case "quest_sync":
+      return { ...state, quests: action.quests };
+    case "quest_update":
+      return { ...state, quests: { ...state.quests, [action.questId]: action.progress } };
+    case "quest_journal_open":
+      return { ...state, questJournalOpen: true };
+    case "quest_journal_close":
+      return { ...state, questJournalOpen: false };
+    case "quest_tracker_toggle":
+      return { ...state, questTrackerVisible: !state.questTrackerVisible };
     case "health_update":
     case "status_effect_update":
       return state;

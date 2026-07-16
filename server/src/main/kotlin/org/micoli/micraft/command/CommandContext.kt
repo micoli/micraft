@@ -8,6 +8,7 @@ import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.world.WorldItemManager
@@ -49,4 +50,5 @@ data class CommandContext(
     val clearTokenAccumulator: ((String) -> Unit)? = null,
     val sendStatusUpdate: (suspend (PlayerSession) -> Unit)? = null,
     val namedPoints: () -> Map<String, Vec3> = { emptyMap() },
+    val questManager: QuestManager? = null,
 )

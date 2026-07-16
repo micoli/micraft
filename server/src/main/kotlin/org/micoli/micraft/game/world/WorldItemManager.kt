@@ -17,6 +17,7 @@ class WorldItemManager(
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val savePlayer: (PlayerSession) -> Unit = {},
     private val i18n: I18nConfig? = null,
+    private val onItemCollected: suspend (PlayerSession, ItemType, Int) -> Unit = { _, _, _ -> },
 ) {
     private val items = ConcurrentHashMap<String, WorldItem>()
 
@@ -74,6 +75,7 @@ class WorldItemManager(
                     broadcast(ServerMessage.ItemDespawned(item.id))
                     session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
                     savePlayer(session)
+                    onItemCollected(session, item.type, item.count)
                     val label = item.type.id.lowercase().replaceFirstChar { it.uppercase() }
                     val msg =
                         i18n?.t(

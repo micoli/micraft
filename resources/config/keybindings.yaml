@@ -32,6 +32,8 @@ ui:
   dump_stats: [KeyV]
   health_bar: [KeyB]
   screenshot: [KeyJ]
+  quest_journal: ["Alt+KeyQ"]
+  quest_tracking: [KeyT]
 
 hotbar:
   slot_1: [Digit1]

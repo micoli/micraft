@@ -34,6 +34,8 @@ import { useGameContext } from "../game/GameContext";
 import { getLastUser, clearLastPlayer } from "../lib/authStorage";
 import { AggroIndicators } from "../game/components/AggroIndicators";
 import { Statistics } from "../game/components/Statistics";
+import { QuestJournal } from "../game/components/QuestJournal";
+import { QuestTracker } from "../game/components/QuestTracker";
 
 export function GameScreen() {
   const {
@@ -357,6 +359,15 @@ export function GameScreen() {
             onSave={handleMacrosSave}
             onClose={() => dispatch({ type: "macro_editor_close" })}
           />
+          <QuestJournal
+            open={state.questJournalOpen}
+            quests={state.quests}
+            onClose={() => dispatch({ type: "quest_journal_close" })}
+            onCommand={(cmd) => {
+              consoleSubmittedRef.current = cmd;
+            }}
+          />
+          <QuestTracker visible={state.questTrackerVisible} quests={state.quests} layoutStyle={widgetStyle(activeLayout, "QUEST_TRACKER")} />
         </>
       )}
       <LoadingOverlay progress={state.chunkLoading} />

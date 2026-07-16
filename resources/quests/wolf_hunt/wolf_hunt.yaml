@@ -1,0 +1,17 @@
+title: "Wolf Hunt"
+description: "Kill wolves and bears threatening the village."
+type: KILL
+level: 3
+objectives:
+  - npcType: wolf
+    requiredCount: 10
+  - npcType: bear
+    requiredCount: 3
+rewards:
+  xp: 500
+  items:
+    - type: COBBLESTONE
+      count: 5
+dependsOn: []
+repeatable: true
+cooldownSeconds: 3600

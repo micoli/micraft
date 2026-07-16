@@ -194,3 +194,13 @@ fun jsPlayerDowned(playerId: String): Unit = js("mc.playerDowned(playerId)")
 fun jsPlayerRespawned(json: String): Unit = js("mc.playerRespawned(json)")
 
 fun jsXpGained(json: String): Unit = js("mc.xpGained(json)")
+
+// ── Quest ─────────────────────────────────────────────────────────────────────
+
+fun jsQuestSync(json: String): Unit = js("mc.questSync(json)")
+
+fun jsQuestUpdate(json: String): Unit = js("mc.questUpdate(json)")
+
+fun jsOpenQuestJournal(): Unit = js("mc.openQuestJournal()")
+
+fun jsToggleQuestTracker(): Unit = js("mc.toggleQuestTracker()")

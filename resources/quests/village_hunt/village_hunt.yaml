@@ -1,0 +1,19 @@
+title: "Village Hunt"
+description: "The village needs protecting. Hunt the wild animals causing trouble."
+type: KILL
+level: 1
+objectives:
+  - npcType: goat
+    requiredCount: 5
+  - npcType: wolf
+    requiredCount: 2
+  - npcType: polar_bear
+    requiredCount: 1
+rewards:
+  xp: 200
+  items:
+    - type: GOLD
+      count: 3
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

@@ -422,6 +422,10 @@ declare global {
     playerDowned(playerId: string): void;
     playerRespawned(json: string): void;
     xpGained(json: string): void;
+    questSync(json: string): void;
+    questUpdate(json: string): void;
+    openQuestJournal(): void;
+    toggleQuestTracker(): void;
     reloadAttackMeta(): void;
     toggleBiomeMap(): void;
     dumpStats(): void;

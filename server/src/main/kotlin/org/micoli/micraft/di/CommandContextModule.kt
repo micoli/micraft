@@ -10,6 +10,7 @@ import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.world.WorldItemManager
@@ -75,6 +76,7 @@ val commandContextModule = module {
             reloadRbac = closures.reloadRbac,
             armorRegistry = closures.armorRegistry,
             tradeManager = get<TradeManager>(),
+            questManager = get<QuestManager>(),
             namedPoints = { cavernPoints + staircasePoints },
         )
     }

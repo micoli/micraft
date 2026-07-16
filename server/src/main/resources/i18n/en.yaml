@@ -231,3 +231,14 @@ light:
   server:
     on: "Cavern lighting boost enabled."
     off: "Cavern lighting boost disabled."
+
+quest:
+  server:
+    accepted: "Quest accepted: {0}"
+    already_active: "Quest already active."
+    prereq_missing: "Complete prerequisites first."
+    not_found: "Quest not found: {0}"
+    cooldown: "Quest on cooldown for {0} more seconds."
+    completed: "Quest completed: {0}!"
+    abandoned: "Quest abandoned: {0}."
+    already_done: "Quest already completed (not repeatable)."

@@ -47,6 +47,8 @@ import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
+import org.micoli.micraft.game.quest.QuestManager
+import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
 import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.session.NetworkStats
@@ -91,6 +93,7 @@ import org.micoli.micraft.http.MetricsController
 import org.micoli.micraft.http.PlayerArmorsController
 import org.micoli.micraft.http.PlayerRpgController
 import org.micoli.micraft.http.PlayerSkinController
+import org.micoli.micraft.http.QuestsController
 import org.micoli.micraft.http.ScreenshotController
 import org.micoli.micraft.http.SkinsController
 import org.micoli.micraft.http.TerrainCache
@@ -221,6 +224,8 @@ fun Application.module() {
             networkStats = get<NetworkStats>(),
             commandContextFactory = { closures -> get<CommandContext> { parametersOf(closures) } },
             experienceProcessor = get<ExperienceProcessor>(),
+            questManager = get<QuestManager>(),
+            questRegistryLoader = get<QuestRegistryLoader>(),
         )
     gameLoop.start(this)
     installAuthRoutes(
@@ -231,6 +236,8 @@ fun Application.module() {
         noAuthAccountStore)
 
     Runtime.getRuntime().addShutdownHook(Thread { gameLoop.shutdown() })
+
+    val questManager = get<QuestManager>()
 
     routing {
         // MICRAFT_WEB_DIST points directly at the served executable dir
@@ -264,6 +271,7 @@ fun Application.module() {
         CharacterController(persistence).register(this)
         SkinsController().register(this)
         ArmorsController(dataPath).register(this)
+        QuestsController(questManager).register(this)
         staticFiles("/api/models", File("resources"))
         MapController(gameLoop).register(this)
         MetricsController(gameLoop).register(this)

@@ -25,6 +25,8 @@ import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
+import org.micoli.micraft.game.quest.QuestManager
+import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.ExperienceConfig
@@ -62,12 +64,26 @@ val gameLoopModule = module {
 
     // items / weather / liquid / vegetation cluster
     single { DropConfig(get<BlockRegistryLoader>()) }
+    single { QuestRegistryLoader(java.nio.file.Path.of("resources/quests")) }
+    single {
+        QuestManager(
+            getSessions = get<SessionRegistry>()::all,
+            savePlayer = get<PlayerPersister>()::save,
+            grantXp = get<ExperienceProcessor>()::grantXp,
+            subscribeToChannel = { session, channel ->
+                get<ChatService>().subscribe(session, channel)
+            },
+            i18n = get<I18nConfig>(),
+        )
+    }
+
     single {
         WorldItemManager(
             get<DropConfig>(),
             broadcast = get<SessionRegistry>()::broadcast,
             savePlayer = get<PlayerPersister>()::save,
             i18n = get<I18nConfig>(),
+            onItemCollected = get<QuestManager>()::onItemCollected,
         )
     }
     single { WeatherConfig() }
@@ -104,7 +120,10 @@ val gameLoopModule = module {
         NpcManager(
             broadcast = get<SessionRegistry>()::broadcast,
             getSessions = get<SessionRegistry>()::all,
-            onNpcKilled = get<ExperienceProcessor>()::onNpcKilled,
+            onNpcKilled = { npc ->
+                get<ExperienceProcessor>().onNpcKilled(npc)
+                get<QuestManager>().onNpcKilled(npc)
+            },
             broadcastCombatLog = { msg ->
                 val chatMsg =
                     ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)

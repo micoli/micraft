@@ -231,3 +231,14 @@ light:
   server:
     on: "Éclairage des cavernes activé."
     off: "Éclairage des cavernes désactivé."
+
+quest:
+  server:
+    accepted: "Quête acceptée : {0}"
+    already_active: "Quête déjà en cours."
+    prereq_missing: "Complétez les prérequis d'abord."
+    not_found: "Quête introuvable : {0}"
+    cooldown: "Quête disponible dans {0} secondes."
+    completed: "Quête accomplie : {0} !"
+    abandoned: "Quête abandonnée : {0}."
+    already_done: "Quête déjà complétée (non répétable)."

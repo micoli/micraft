@@ -18,6 +18,7 @@ import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.player.rpg.DerivedStats
+import org.micoli.micraft.quest.QuestProgress
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.ui.defaultLayout
 
@@ -294,6 +295,16 @@ sealed class ServerMessage {
     ) : ServerMessage()
 
     @ProtoId(42) @Serializable data class LightBoostUpdate(val enabled: Boolean) : ServerMessage()
+
+    @ProtoId(43)
+    @Serializable
+    data class QuestSync(val quests: Map<String, QuestProgress>) : ServerMessage()
+
+    @ProtoId(44)
+    @Serializable
+    data class QuestUpdate(val questId: String, val progress: QuestProgress) : ServerMessage()
+
+    @ProtoId(45) @Serializable object OpenQuestJournal : ServerMessage()
 }
 
 @Serializable

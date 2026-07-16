@@ -152,6 +152,17 @@ val WIDGET_REGISTRY: List<WidgetRegistryEntry> =
             minH = 1,
             editorLabel = "XP Bar",
             editorColor = "rgba(46,204,113,0.75)"),
+        WidgetRegistryEntry(
+            WidgetType.QUEST_TRACKER,
+            x = 38,
+            y = 6,
+            w = 10,
+            h = 20,
+            minW = 6,
+            minH = 4,
+            editorLabel = "Quest Tracker",
+            editorColor = "rgba(218,165,32,0.75)",
+            flow = true),
     )
 
 val DEFAULT_WIDGETS: List<LayoutWidget> =

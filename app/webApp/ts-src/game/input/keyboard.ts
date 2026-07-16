@@ -44,6 +44,8 @@ export const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
   slot_10: ["Digit0"],
   combat_target_cycle: ["KeyZ"],
   combat_attack: ["KeyR"],
+  quest_journal: ["Alt+KeyQ"],
+  quest_tracking: ["KeyT"],
 };
 
 const MODIFIERS = new Set(["ctrl", "control", "shift", "alt", "option", "cmd", "command", "meta"]);
@@ -202,6 +204,8 @@ export function registerKeyboard(): Pick<
         if (b.combat_target_cycle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_target_cycle");
         if (b.combat_attack?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_attack");
         if (b.screenshot?.some((k) => matchesEvent(k, e))) window.mcState.events.push("screenshot");
+        if (b.quest_journal?.some((k) => matchesEvent(k, e))) window.mc?.openQuestJournal?.();
+        if (b.quest_tracking?.some((k) => matchesEvent(k, e))) window.mc?.toggleQuestTracker?.();
         for (let s = 1; s <= 10; s++) {
           const key = `slot_${s}` as string;
           if (b[key]?.some((k: string) => matchesEvent(k, e))) window.mcState.events.push(key);

@@ -47,6 +47,8 @@ import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
+import org.micoli.micraft.game.quest.QuestManager
+import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistry
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
@@ -317,6 +319,8 @@ class GameLoop(
     private val commandContextFactory: ((CommandContextClosures) -> CommandContext)? = null,
     private val experienceProcessor: ExperienceProcessor =
         ExperienceProcessor(ExperienceConfig().data, sessionRegistry::all, playerPersister::save),
+    private val questManager: QuestManager? = null,
+    private val questRegistryLoader: QuestRegistryLoader? = null,
 ) {
     val classRegistry: Map<String, org.micoli.micraft.game.classes.ClassDefinitionEntry>
         get() = classesData.classes
@@ -402,6 +406,7 @@ class GameLoop(
             reloadRbac = closures.reloadRbac,
             armorRegistry = closures.armorRegistry,
             tradeManager = tradeManager,
+            questManager = questManager,
             clearTokenAccumulator = regenProcessor::clearTokenAccumulator,
             sendStatusUpdate = sendStatusUpdate@{ session ->
                     val charData = session.characterData ?: return@sendStatusUpdate
@@ -698,6 +703,8 @@ class GameLoop(
             i18n = i18n,
             weatherManager = weatherManager,
             vegetationManager = vegetationManager,
+            questManager = questManager,
+            questRegistryLoader = questRegistryLoader,
         )
 
     private suspend fun reload(lang: String): String = reloadCoordinator.reload(lang)
@@ -710,6 +717,7 @@ class GameLoop(
         armorRegistry = armorRegistryLoader.load()
         npcConfigLoader.load()
         npcManager.loadDefinitions(npcRegistryLoader.load())
+        questRegistryLoader?.load()?.let { questManager?.reloadDefinitions(it) }
         val npcSavePath =
             persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
         npcManager.load(npcSavePath)
@@ -988,6 +996,7 @@ class GameLoop(
         session.send(buildPreferencesSync(session))
         chatService.onPlayerConnect(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
+        questManager?.sendQuestSync(session)
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toSlotMap()))
         session.send(ServerMessage.TimeUpdate(gameTicks))
         val charData = session.characterData

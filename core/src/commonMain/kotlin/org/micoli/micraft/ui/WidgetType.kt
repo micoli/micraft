@@ -18,4 +18,5 @@ enum class WidgetType {
     XP_BAR,
     AGGRO_INDICATORS,
     STATISTICS,
+    QUEST_TRACKER,
 }

@@ -8,6 +8,8 @@ import org.micoli.micraft.game.drop.DropConfig
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
+import org.micoli.micraft.game.quest.QuestManager
+import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
@@ -34,6 +36,8 @@ class ReloadCoordinator(
     private val i18n: I18nConfig,
     private val weatherManager: WeatherManager,
     private val vegetationManager: VegetationManager,
+    private val questManager: QuestManager? = null,
+    private val questRegistryLoader: QuestRegistryLoader? = null,
 ) {
     suspend fun reload(lang: String): String {
         val lines = mutableListOf<String>()
@@ -59,6 +63,7 @@ class ReloadCoordinator(
         npcConfigLoader.reload()
         npcManager.reloadDefinitions(npcRegistryLoader.reload())
         lines += i18n.t(lang, "reload:server:npc")
+        questRegistryLoader?.load()?.let { questManager?.reloadDefinitions(it) }
         i18n.reload()
         lines += i18n.t(lang, "reload:server:i18n", i18n.locales.size)
         val newWeatherConfig = WeatherConfig()
