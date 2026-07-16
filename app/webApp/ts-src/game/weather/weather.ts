@@ -319,7 +319,11 @@ export function registerWeather(): Pick<McBindings, "setWeatherZones" | "updateW
 
       // Fog uniforms: every frame, not just on transition
       if (zone?.type === "FOG") {
-        scene.fogEnd = FOG_DENSE_END + (1 - zone.intensity) * (FOG_LIGHT_END - FOG_DENSE_END);
+        const _dx = px - zone.cx;
+        const _dz = pz - zone.cz;
+        const normalizedDist = Math.min(1, Math.sqrt(_dx * _dx + _dz * _dz) / Math.max(zone.radius, 0.001));
+        const localIntensity = zone.intensity * (1 - normalizedDist);
+        scene.fogEnd = FOG_DENSE_END + (1 - localIntensity) * (FOG_LIGHT_END - FOG_DENSE_END);
         scene.fogStart = Math.max(2, scene.fogEnd * 0.3);
         syncFogToMaterials(scene.fogStart, scene.fogEnd);
       } else {
