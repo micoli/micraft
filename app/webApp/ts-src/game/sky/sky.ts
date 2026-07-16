@@ -60,12 +60,14 @@ export function registerSky(): Pick<McBindings, "updateSkyTime"> {
       // Sky and fog color
       const [r, g, b] = lerpSky(t);
       scene.clearColor = new BABYLON.Color4(r, g, b, 1);
-      scene.fogColor = new BABYLON.Color3(r, g, b);
-      const _mats = (window.mcState as any).blockMaterials as Record<string, any> | undefined;
-      if (_mats) {
-        const _fv = new BABYLON.Vector3(r, g, b);
-        for (const _mat of Object.values(_mats))
-          if (typeof (_mat as any).setVector3 === "function") (_mat as any).setVector3("fogColor", _fv);
+      if ((window.mcState as any).dynamicFogEnabled !== false) {
+        scene.fogColor = new BABYLON.Color3(r, g, b);
+        const _mats = (window.mcState as any).blockMaterials as Record<string, any> | undefined;
+        if (_mats) {
+          const _fv = new BABYLON.Vector3(r, g, b);
+          for (const _mat of Object.values(_mats))
+            if (typeof (_mat as any).setVector3 === "function") (_mat as any).setVector3("fogColor", _fv);
+        }
       }
 
       // Ambient light: brightest at noon (sunHeight=1), dim at night (floor 0.15)

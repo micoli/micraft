@@ -5,6 +5,7 @@ export interface SavePayload {
   subscribedChannels: ChannelSubscription[];
   disabledCommands: string[];
   shadersEnabled: boolean;
+  dynamicFogEnabled: boolean;
   animatedFavicon: boolean;
   chunkDebugVisible: boolean;
   statisticsVisible: boolean;
@@ -93,6 +94,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
   const [localAutoFocus, setLocalAutoFocus] = useState<Set<string>>(new Set());
   const [localDisabled, setLocalDisabled] = useState<Set<string>>(new Set());
   const [localShaders, setLocalShaders] = useState(true);
+  const [localDynamicFogEnabled, setLocalDynamicFogEnabled] = useState(true);
   const [localAnimatedFavicon, setLocalAnimatedFavicon] = useState(true);
   const [localChunkDebugVisible, setLocalChunkDebugVisible] = useState(false);
   const [localStatisticsVisible, setLocalStatisticsVisible] = useState(false);
@@ -115,6 +117,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
       setLocalAutoFocus(new Set(preferences.subscribedChannels.filter((c) => c.autoFocus).map((c) => c.name)));
       setLocalDisabled(new Set(preferences.disabledCommands));
       setLocalShaders(preferences.shadersEnabled);
+      setLocalDynamicFogEnabled(preferences.dynamicFogEnabled ?? true);
       setLocalAnimatedFavicon(preferences.animatedFavicon ?? true);
       setLocalChunkDebugVisible(preferences.chunkDebugVisible ?? false);
       setLocalStatisticsVisible(preferences.statisticsVisible ?? false);
@@ -266,6 +269,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
       })),
       disabledCommands: Array.from(localDisabled),
       shadersEnabled: localShaders,
+      dynamicFogEnabled: localDynamicFogEnabled,
       animatedFavicon: localAnimatedFavicon,
       chunkDebugVisible: localChunkDebugVisible,
       statisticsVisible: localStatisticsVisible,
@@ -289,6 +293,8 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
     localDisabled,
     localShaders,
     setLocalShaders,
+    localDynamicFogEnabled,
+    setLocalDynamicFogEnabled,
     localAnimatedFavicon,
     setLocalAnimatedFavicon,
     localChunkDebugVisible,

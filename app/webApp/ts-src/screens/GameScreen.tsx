@@ -73,6 +73,7 @@ export function GameScreen() {
     subscribedChannels: ChannelSubscription[];
     disabledCommands: string[];
     shadersEnabled: boolean;
+    dynamicFogEnabled?: boolean;
     animatedFavicon: boolean;
     chunkDebugVisible: boolean;
     statisticsVisible: boolean;
@@ -84,6 +85,7 @@ export function GameScreen() {
     if (window.mcState) {
       window.mcState.bindings = payload.keybindings;
       window.mcState.customCommands = payload.customCommands;
+      (window.mcState as any).dynamicFogEnabled = payload.dynamicFogEnabled ?? true;
     }
     window.mc.applyFaviconPref?.(payload.animatedFavicon);
     pendingPreferencesUpdateRef.current = JSON.stringify(payload);
@@ -97,6 +99,7 @@ export function GameScreen() {
       subscribedChannels: prefs.subscribedChannels,
       disabledCommands: prefs.disabledCommands,
       shadersEnabled: prefs.shadersEnabled,
+      dynamicFogEnabled: prefs.dynamicFogEnabled ?? true,
       animatedFavicon: prefs.animatedFavicon ?? true,
       chunkDebugVisible: prefs.chunkDebugVisible ?? false,
       statisticsVisible: prefs.statisticsVisible ?? false,
@@ -112,6 +115,7 @@ export function GameScreen() {
       subscribedChannels: prefs.subscribedChannels,
       disabledCommands: prefs.disabledCommands,
       shadersEnabled: prefs.shadersEnabled,
+      dynamicFogEnabled: prefs.dynamicFogEnabled ?? true,
       animatedFavicon: prefs.animatedFavicon ?? true,
       chunkDebugVisible: prefs.chunkDebugVisible ?? false,
       statisticsVisible: prefs.statisticsVisible ?? false,

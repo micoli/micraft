@@ -512,6 +512,7 @@ class GameLoop(
             macros = macros,
             fieldOfView = session.state.fieldOfView,
             defaultKeybindings = defaults,
+            dynamicFogEnabled = session.state.dynamicFogEnabled,
         )
     }
 
@@ -534,6 +535,7 @@ class GameLoop(
                 chunkDebugVisible = msg.chunkDebugVisible,
                 statisticsVisible = msg.statisticsVisible,
                 fieldOfView = msg.fieldOfView,
+                dynamicFogEnabled = msg.dynamicFogEnabled,
             )
         if (msg.keybindings.isNotEmpty()) {
             persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
@@ -947,6 +949,7 @@ class GameLoop(
                 chunkDebugVisible = saved?.chunkDebugVisible ?: false,
                 statisticsVisible = saved?.statisticsVisible ?: false,
                 fieldOfView = saved?.fieldOfView ?: 70,
+                dynamicFogEnabled = saved?.dynamicFogEnabled ?: true,
                 knownRecipes = saved?.knownRecipes ?: emptySet(),
                 rpgOptOut =
                     if (saved?.characterData != null) false else (saved?.rpgOptOut ?: false),

@@ -165,6 +165,7 @@ export type UiAction =
       subscribedChannels: ChannelSubscription[];
       disabledCommands: string[];
       shadersEnabled: boolean;
+      dynamicFogEnabled?: boolean;
       animatedFavicon: boolean;
       chunkDebugVisible: boolean;
       statisticsVisible: boolean;
@@ -324,6 +325,7 @@ export function reducer(state: UiState, action: UiAction): UiState {
             subscribedChannels: action.subscribedChannels,
             disabledCommands: action.disabledCommands,
             shadersEnabled: action.shadersEnabled,
+            ...(action.dynamicFogEnabled !== undefined ? { dynamicFogEnabled: action.dynamicFogEnabled } : {}),
             animatedFavicon: action.animatedFavicon,
             chunkDebugVisible: action.chunkDebugVisible,
             statisticsVisible: action.statisticsVisible,

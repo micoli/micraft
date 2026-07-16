@@ -123,6 +123,7 @@ export interface PreferencesData {
   knownChannels: string[];
   disabledCommands: string[];
   shadersEnabled: boolean;
+  dynamicFogEnabled: boolean;
   animatedFavicon: boolean;
   chunkDebugVisible: boolean;
   statisticsVisible: boolean;

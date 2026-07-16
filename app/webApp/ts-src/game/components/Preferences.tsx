@@ -185,6 +185,11 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                   label: "Shaders (ambient occlusion, directional shading, fog)",
                 },
                 {
+                  state: pref.localDynamicFogEnabled,
+                  setter: pref.setLocalDynamicFogEnabled,
+                  label: "Dynamic fog (sky color blended into fog, may affect performance)",
+                },
+                {
                   state: pref.localAnimatedFavicon,
                   setter: pref.setLocalAnimatedFavicon,
                   label: "Animated favicon (rotating block icon in browser tab)",

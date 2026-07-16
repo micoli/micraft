@@ -81,6 +81,7 @@ sealed class ClientMessage {
         val statisticsVisible: Boolean = false,
         val macros: Map<String, String> = emptyMap(),
         val fieldOfView: Int = 70,
+        val dynamicFogEnabled: Boolean = true,
     ) : ClientMessage()
 
     @ProtoId(13) @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()

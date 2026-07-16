@@ -421,6 +421,7 @@ export function GameUI() {
           subscribedChannels: prefs.subscribedChannels,
           disabledCommands: prefs.disabledCommands,
           shadersEnabled: prefs.shadersEnabled,
+          dynamicFogEnabled: prefs.dynamicFogEnabled ?? true,
           animatedFavicon: prefs.animatedFavicon ?? true,
           chunkDebugVisible: prefs.chunkDebugVisible ?? false,
           statisticsVisible: newVisible,
@@ -538,6 +539,7 @@ export function GameUI() {
         if (window.mcState) {
           window.mcState.customCommands = data.customCommands || {};
           window.mcState.macros = data.macros || {};
+          (window.mcState as any).dynamicFogEnabled = data.dynamicFogEnabled ?? true;
         }
         if (data.commands?.length && window.mc.registerServerCompleters) {
           const disabledIds = new Set<string>(data.disabledCommands || []);

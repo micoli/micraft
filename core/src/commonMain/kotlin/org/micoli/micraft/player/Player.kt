@@ -44,6 +44,7 @@ data class PlayerState(
     val animatedFavicon: Boolean = false,
     val chunkDebugVisible: Boolean = false,
     val statisticsVisible: Boolean = false,
+    val dynamicFogEnabled: Boolean = true,
     val fieldOfView: Int = 70,
     val knownRecipes: Set<String> = emptySet(),
     val characterData: CharacterData? = null,

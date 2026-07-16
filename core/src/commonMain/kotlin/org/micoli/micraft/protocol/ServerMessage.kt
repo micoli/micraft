@@ -173,6 +173,7 @@ sealed class ServerMessage {
         val macros: Map<String, String> = emptyMap(),
         val fieldOfView: Int = 70,
         val defaultKeybindings: Map<String, List<String>> = emptyMap(),
+        val dynamicFogEnabled: Boolean = true,
     ) : ServerMessage()
 
     @ProtoId(25)
