@@ -372,6 +372,7 @@ declare global {
       chunkDownloading: number,
       chunkMeshing: number,
       weather: string,
+      zoneLevel: number,
     ): void;
     showNotification(msg: string): void;
     addServerLog(channel: string, msg: string): void;

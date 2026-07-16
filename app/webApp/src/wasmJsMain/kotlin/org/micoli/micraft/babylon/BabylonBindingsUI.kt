@@ -85,9 +85,10 @@ fun jsUpdateHUD(
     chunkDownloading: Int,
     chunkMeshing: Int,
     weather: String,
+    zoneLevel: Int,
 ): Unit =
     js(
-        "mc.updateHUD(x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime, reconcileXzStats, reconcileYStats, tickDtMs, tickJitterMs, tickDtMinMs, tickDtMaxMs, tickJitterMinMs, tickJitterMaxMs, chunkDownloading, chunkMeshing, weather)")
+        "mc.updateHUD(x, y, z, yaw, pitch, stance, speed, fps, kbIn, kbOut, biome, targetBlock, gameTime, reconcileXzStats, reconcileYStats, tickDtMs, tickJitterMs, tickDtMinMs, tickDtMaxMs, tickJitterMinMs, tickJitterMaxMs, chunkDownloading, chunkMeshing, weather, zoneLevel)")
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 

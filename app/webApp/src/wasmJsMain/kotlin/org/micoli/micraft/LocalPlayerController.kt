@@ -780,6 +780,7 @@ class LocalPlayerController(
                 chunkDownloading,
                 chunkMeshing,
                 hudWeather,
+                hudZoneLevel,
             )
             uiState.hud =
                 HudData(

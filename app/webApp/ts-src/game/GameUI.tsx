@@ -358,6 +358,7 @@ export function GameUI() {
       chunkDownloading: number,
       chunkMeshing: number,
       weather: string,
+      zoneLevel: number,
     ) => {
       window.mcState.minimapY = y;
       window.mcState.minimapGameTime = gameTime;
@@ -390,6 +391,7 @@ export function GameUI() {
           chunkDownloading,
           chunkMeshing,
           weather,
+          zoneLevel,
         },
       });
     };

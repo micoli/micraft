@@ -120,11 +120,13 @@ class QuestManager(
     }
 
     suspend fun onNpcKilled(npc: NpcInstance) {
-        log.debug("onNpcKilled: type={} contributors={}", npc.state.type, npc.damageContributors.keys)
+        log.debug(
+            "onNpcKilled: type={} contributors={}", npc.state.type, npc.damageContributors.keys)
         val sessions = getSessions()
         for (contributorId in npc.damageContributors.keys) {
             val session = sessions.find { it.id == contributorId } ?: continue
-            log.debug("onNpcKilled: player={} quests={}", session.state.name, session.state.quests.keys)
+            log.debug(
+                "onNpcKilled: player={} quests={}", session.state.name, session.state.quests.keys)
             for ((questId, progress) in session.state.quests) {
                 if (progress.status != QuestStatus.IN_PROGRESS) continue
                 val def = definitions[questId] ?: continue
