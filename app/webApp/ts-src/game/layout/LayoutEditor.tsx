@@ -31,6 +31,7 @@ export function LayoutEditor({ open, layouts, activeLayout, onSave, onClose }: P
   const [localLayouts, setLocalLayouts] = useState<GameLayout[]>([]);
   const [localActive, setLocalActive] = useState("default");
   const [nameInput, setNameInput] = useState("");
+  const [selectedWidget, setSelectedWidget] = useState<string | null>(null);
   const drag = useRef<DragState | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -57,6 +58,7 @@ export function LayoutEditor({ open, layouts, activeLayout, onSave, onClose }: P
     e.stopPropagation();
     const w = currentLayout.widgets.find((w) => w.type === type);
     if (!w) return;
+    setSelectedWidget(type);
     drag.current = {
       type,
       mode,
@@ -256,8 +258,9 @@ export function LayoutEditor({ open, layouts, activeLayout, onSave, onClose }: P
               top: `calc(${w.y} / 48 * 100%)`,
               width: `calc(${w.w} / 48 * 100%)`,
               height: `calc(${w.h} / 48 * 100%)`,
+              zIndex: selectedWidget === w.type ? 10 : 1,
               background: WIDGET_REGISTRY.find((d) => d.type === w.type)?.editorColor ?? "rgba(100,100,100,0.7)",
-              border: "2px solid rgba(255,255,255,0.4)",
+              border: selectedWidget === w.type ? "2px solid rgba(255,220,80,0.9)" : "2px solid rgba(255,255,255,0.4)",
               borderRadius: 4,
               cursor: "grab",
               userSelect: "none",
