@@ -564,7 +564,12 @@ class CombatProcessor(
             val dist =
                 distance3(pos.x, pos.y, pos.z, npc.state.pos.x, npc.state.pos.y, npc.state.pos.z)
             ServerMessage.CombatTargetUpdate(
-                targetId, npc.state.name, npc.state.currentHp, npc.state.maxHp, distance = dist)
+                targetId,
+                npc.state.name,
+                npc.state.currentHp,
+                npc.state.maxHp,
+                distance = dist,
+                level = npc.instanceLevel)
         } else {
             val targetSession =
                 getSessions().find { it.id == targetId }

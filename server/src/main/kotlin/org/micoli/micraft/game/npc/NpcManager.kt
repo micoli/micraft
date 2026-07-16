@@ -98,9 +98,15 @@ class NpcManager(
             .onFailure { e -> log.warn("Failed to save NPCs: {}", e.message) }
     }
 
-    suspend fun spawnNpc(name: String, type: String, pos: Vec3): NpcInstance {
+    suspend fun spawnNpc(
+        name: String,
+        type: String,
+        pos: Vec3,
+        instanceLevel: Int = -1
+    ): NpcInstance {
         val def =
             definitions[type] ?: error("Unknown NPC type: '$type'. Available: ${definitions.keys}")
+        val effectiveLevel = if (instanceLevel < 1) def.level else instanceLevel
         val id = UUID.randomUUID().toString()
         val state =
             NpcState(
@@ -110,12 +116,25 @@ class NpcManager(
                 pos = pos,
                 yaw = 0f,
                 currentHp = def.hp,
-                maxHp = def.hp)
+                maxHp = def.hp,
+                level = effectiveLevel)
         val instance =
-            NpcInstance(state = state, currentHp = def.hp, definition = def, spawnPos = pos)
+            NpcInstance(
+                state = state,
+                currentHp = def.hp,
+                definition = def,
+                spawnPos = pos,
+                instanceLevel = effectiveLevel)
         npcs[id] = instance
         broadcast(ServerMessage.NpcSpawned(state))
-        log.info("NPC spawned: {} ({}) at ({},{},{})", name, type, pos.x, pos.y, pos.z)
+        log.info(
+            "NPC spawned: {} ({}) lv{} at ({},{},{})",
+            name,
+            type,
+            effectiveLevel,
+            pos.x,
+            pos.y,
+            pos.z)
         return instance
     }
 

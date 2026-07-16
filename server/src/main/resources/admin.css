@@ -1982,6 +1982,12 @@
   .text-yellow-300 {
     color: var(--color-yellow-300);
   }
+  .text-yellow-300\/80 {
+    color: color-mix(in srgb, oklch(90.5% 0.182 98.111) 80%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-yellow-300) 80%, transparent);
+    }
+  }
   .text-yellow-400 {
     color: var(--color-yellow-400);
   }

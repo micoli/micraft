@@ -30,6 +30,7 @@ data class HudData(
     val chunkDownloading: Int = 0,
     val chunkMeshing: Int = 0,
     val weather: String = "",
+    val zoneLevel: Int = 0,
 )
 
 class McUiState {

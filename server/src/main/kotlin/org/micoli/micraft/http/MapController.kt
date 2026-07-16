@@ -50,7 +50,8 @@ data class VoronoiCellInfo(
     val z: Int,
     val biome: String,
     val color: String,
-    val name: String
+    val name: String,
+    val level: Int,
 )
 
 @Serializable
@@ -113,7 +114,8 @@ class MapController(private val gameLoop: GameLoop) {
                     gen?.voronoi?.cells(cx, cz, radius)?.map { cell ->
                         val rgb = BlockRegistry.get(cell.biome.surface).minimapColor
                         val color = "#%02x%02x%02x".format(rgb[0], rgb[1], rgb[2])
-                        VoronoiCellInfo(cell.seedX, cell.seedZ, cell.biome.id, color, cell.name)
+                        VoronoiCellInfo(
+                            cell.seedX, cell.seedZ, cell.biome.id, color, cell.name, cell.level)
                     } ?: emptyList()
                 call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
                 call.respondText(Json.encodeToString(cells), ContentType.Application.Json)

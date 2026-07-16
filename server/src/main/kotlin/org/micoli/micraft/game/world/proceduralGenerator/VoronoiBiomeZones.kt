@@ -1,8 +1,10 @@
 package org.micoli.micraft.game.world.proceduralGenerator
 
 import kotlin.math.floor
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.biome.BiomeDefinition
 import org.micoli.micraft.game.world.biome.BiomeRegistry
 
@@ -13,6 +15,7 @@ class VoronoiBiomeZones(
 ) {
     private val cellSize = registry.voronoiCellSize
     private val blendRadius = registry.voronoiBlendRadius
+    private val LEVEL_MAX_DIST = 4096.0
 
     private fun seedPoint(cellX: Int, cellZ: Int): Pair<Int, Int> {
         var h =
@@ -77,10 +80,39 @@ class VoronoiBiomeZones(
         val seedX: Int,
         val seedZ: Int,
         val biome: BiomeDefinition,
-        val name: String
+        val name: String,
+        val level: Int,
     )
 
     fun cellName(cellX: Int, cellZ: Int): String = FantasyNameGenerator.generate(seed, cellX, cellZ)
+
+    private fun cellLevel(seedX: Int, seedZ: Int): Int {
+        val dist = sqrt((seedX.toLong() * seedX + seedZ.toLong() * seedZ).toDouble())
+        val distFraction = (dist / LEVEL_MAX_DIST).coerceIn(0.0, 1.0)
+        return (distFraction * (WorldConstants.RPG_LEVEL_MAX - 1) + 1)
+            .roundToInt()
+            .coerceIn(1, WorldConstants.RPG_LEVEL_MAX)
+    }
+
+    fun zoneLevelAt(wx: Int, wz: Int): Int {
+        val cx = floor(wx.toDouble() / cellSize).toInt()
+        val cz = floor(wz.toDouble() / cellSize).toInt()
+        var minDist = Double.MAX_VALUE
+        var nearestSx = 0
+        var nearestSz = 0
+        for (dcx in -1..1) for (dcz in -1..1) {
+            val (sx, sz) = seedPoint(cx + dcx, cz + dcz)
+            val dx = (wx - sx).toDouble()
+            val dz = (wz - sz).toDouble()
+            val dist = dx * dx + dz * dz
+            if (dist < minDist) {
+                minDist = dist
+                nearestSx = sx
+                nearestSz = sz
+            }
+        }
+        return cellLevel(nearestSx, nearestSz)
+    }
 
     fun cells(centerX: Int, centerZ: Int, radiusBlocks: Int): List<VoronoiCell> {
         val minCX = floor((centerX - radiusBlocks).toDouble() / cellSize).toInt() - 1
@@ -95,7 +127,8 @@ class VoronoiBiomeZones(
                 val dx = (sx - centerX).toLong()
                 val dz = (sz - centerZ).toLong()
                 if (dx * dx + dz * dz <= r2) {
-                    result.add(VoronoiCell(sx, sz, seedBiome(sx, sz), cellName(cx, cz)))
+                    result.add(
+                        VoronoiCell(sx, sz, seedBiome(sx, sz), cellName(cx, cz), cellLevel(sx, sz)))
                 }
             }
         }

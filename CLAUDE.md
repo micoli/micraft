@@ -138,7 +138,7 @@ docker compose -f docker-compose.dev.yml exec micraft ./gradlew :server:test
 
 Restart server after server-side change (file in mounted volume, works from host or container):
 ```bash
-make dc CMD="make restart-dev-server"
+make dc CMD="make dev-restart-server"
 ```
 
 forcer le build du wasm

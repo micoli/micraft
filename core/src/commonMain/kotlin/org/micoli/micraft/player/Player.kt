@@ -50,4 +50,5 @@ data class PlayerState(
     val godMode: Boolean = false,
     val lightBoostEnabled: Boolean = false,
     val email: String = "",
+    val zoneLevel: Int = 0,
 )

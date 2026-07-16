@@ -98,6 +98,7 @@ class LocalPlayerController(
     private var hudSpeed = 1.0
     private var hudBiome = ""
     private var hudWeather = ""
+    private var hudZoneLevel = 0
     var currentGameTicks = 0L
 
     private var reconcileToleranceXz = DEFAULT_RECONCILE_TOLERANCE_XZ
@@ -229,6 +230,7 @@ class LocalPlayerController(
         hudStance = if (state.flying) "FLYING" else state.stance.name
         hudSpeed = state.speedMultiplier.toDouble()
         hudBiome = state.biome
+        hudZoneLevel = state.zoneLevel
         chunkManager.applyBiomeGrassTint(state.biome)
     }
 
@@ -805,6 +807,7 @@ class LocalPlayerController(
                     chunkDownloading = chunkDownloading,
                     chunkMeshing = chunkMeshing,
                     weather = hudWeather,
+                    zoneLevel = hudZoneLevel,
                 )
             val debugCx = hudX.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
             val debugCz = hudZ.toInt().floorDiv(WorldConstants.CHUNK_SIZE)

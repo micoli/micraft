@@ -31,6 +31,8 @@ class WorldState(
 
     fun biomeAt(wx: Int, wz: Int): String = generator.biomeAt(wx, wz)
 
+    fun zoneLevelAt(wx: Int, wz: Int): Int = generator.zoneLevelAt(wx, wz)
+
     fun getBlock(wx: Int, wy: Int, wz: Int): BlockType {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return BlockType.AIR
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)

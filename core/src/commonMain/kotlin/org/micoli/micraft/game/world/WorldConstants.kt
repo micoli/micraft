@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.world
 
 object WorldConstants {
+    const val RPG_LEVEL_MAX = 60
     var WORLD_MIN_Y = 0
     var WORLD_MAX_Y = 1024
     var CHUNK_SIZE = 16

@@ -21,6 +21,7 @@ class NpcInstance(
     val attackCooldownsUntilMs: MutableMap<String, Long> = mutableMapOf(),
     val damageContributors: MutableMap<String, Int> = mutableMapOf(),
     @Volatile var chaseTargetPos: Vec3? = null,
+    @Volatile var instanceLevel: Int = 1,
 ) {
     init {
         wanderTargetX = spawnPos.x

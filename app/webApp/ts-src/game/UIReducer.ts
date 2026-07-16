@@ -82,6 +82,7 @@ export interface UiState {
     maxHp: number;
     targetOfTarget: { id: string; name: string; currentHp: number; maxHp: number } | null;
     distance: number | null;
+    level?: number;
   } | null;
   playerStatus: {
     currentHp: number;
@@ -185,7 +186,7 @@ export type UiAction =
   | { type: "status_effect_update"; data: unknown }
   | { type: "player_downed"; playerId: string }
   | { type: "player_respawned"; data: unknown }
-  | { type: "xp_gained"; data: unknown }
+  | { type: "xp_gained"; data: unknown };
 
 let notifKey = 0;
 const MC_LOG_MAX = 100;

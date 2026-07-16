@@ -3,9 +3,15 @@ import { cn } from "../../primitives/cn";
 
 export function HUD({ data, layoutStyle }: { data: HudData | null; layoutStyle?: React.CSSProperties }) {
   if (!data) return null;
-  const { stance, biome, weather, targetBlock } = data;
+  const { stance, biome, weather, targetBlock, zoneLevel } = data;
 
-  const simple = [`Stance: ${stance}`, `Biome: ${biome ? biome : "?"}`, `Block: ${targetBlock ? targetBlock : "?"}`, `Weather: ${weather ? weather : ""}`];
+  const simple = [
+    `Stance: ${stance}`,
+    `Biome: ${biome ? biome : "?"}`,
+    `Block: ${targetBlock ? targetBlock : "?"}`,
+    `Weather: ${weather ? weather : ""}`,
+    ...(zoneLevel > 0 ? [`Zone Lv: ${zoneLevel}`] : []),
+  ];
   return (
     <div
       className={cn(

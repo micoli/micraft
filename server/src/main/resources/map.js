@@ -25329,6 +25329,11 @@
         ctx.fillText(cell.biome, px + 1, pz + nameFontSize + 2);
         ctx.fillStyle = "rgba(200,220,255,0.85)";
         ctx.fillText(cell.biome, px, pz + nameFontSize + 1);
+        ctx.font = Math.round(biomeFontSize) + "px monospace";
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        ctx.fillText("Lv " + cell.level, px + 1, pz + nameFontSize * 2 + 3);
+        ctx.fillStyle = "rgba(255,210,80,0.9)";
+        ctx.fillText("Lv " + cell.level, px, pz + nameFontSize * 2 + 2);
       }
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";

@@ -28,6 +28,7 @@ export interface HudData {
   tickJitterMaxMs: number;
   chunkDownloading: number;
   chunkMeshing: number;
+  zoneLevel: number;
 }
 
 export interface LogEntry {

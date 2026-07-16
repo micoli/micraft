@@ -237,6 +237,7 @@ sealed class ServerMessage {
         val maxHp: Int,
         val targetOfTarget: TargetRef? = null,
         val distance: Float? = null,
+        val level: Int? = null,
     ) : ServerMessage()
 
     @ProtoId(36)

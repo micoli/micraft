@@ -14,4 +14,5 @@ data class NpcState(
     val currentHp: Int = 0,
     val maxHp: Int = 0,
     val aggroTargetId: String? = null,
+    val level: Int = 1,
 )

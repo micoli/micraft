@@ -6,6 +6,7 @@ interface VoronoiCell {
   biome: string;
   color: string;
   name: string;
+  level: number;
 }
 
 interface BiomeBorderChunk {
@@ -83,6 +84,11 @@ function renderBg(canvas: HTMLCanvasElement, cells: VoronoiCell[], cx: number, c
     ctx.fillText(label, px + 1, py + 5);
     ctx.fillStyle = "#fff";
     ctx.fillText(label, px, py + 4);
+    ctx.font = "8px monospace";
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillText("Lv " + cell.level, px + 1, py + 17);
+    ctx.fillStyle = "rgba(255,210,80,0.95)";
+    ctx.fillText("Lv " + cell.level, px, py + 16);
   }
 }
 

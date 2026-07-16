@@ -58,9 +58,12 @@ class NpcSpawner {
                         solid, spawnPos.x, spawnPos.y, spawnPos.z, def.width, def.height, 0f)
                 if (clearX != 0f || clearZ != 0f) continue
 
+                val zoneLevel = world.zoneLevelAt(wx, wz)
+                val instanceLevel =
+                    (zoneLevel + Random.nextInt(-3, 4)).coerceIn(1, WorldConstants.RPG_LEVEL_MAX)
                 val name =
                     "${type.lowercase().replaceFirstChar { it.uppercase() }.replace('_',' ')} - ${FantasyNameGenerator.generate(type)}"
-                npcManager.spawnNpc(name, type, spawnPos)
+                npcManager.spawnNpc(name, type, spawnPos, instanceLevel)
                 log.debug("Auto-spawned {} at ({},{},{})", type, wx, surfaceY, wz)
                 attempts++
                 if (spawn.maxTotal > 0 && npcManager.countByType(type) >= spawn.maxTotal) break

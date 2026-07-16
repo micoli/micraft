@@ -7,4 +7,6 @@ interface ChunkGenerator {
     fun generate(pos: ChunkPos): Chunk
 
     fun biomeAt(wx: Int, wz: Int): String = ""
+
+    fun zoneLevelAt(wx: Int, wz: Int): Int = 0
 }
