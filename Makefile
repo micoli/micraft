@@ -14,7 +14,7 @@ endif
         dev-restart-server dev-restart-clean-server \
         dev-task-stop dev-task-start dev-task-restart \
         prod-up prod-down prod-restart prod-logs prod-build \
-        build-client build-wasm build-js trigger-wasm \
+        build-client build-wasm build-js trigger-wasm force-update-wasm \
         docs help
 
 # ── Dev ───────────────────────────────────────────────────────────────────────
@@ -53,6 +53,13 @@ dev-task-restart:
 
 dev-clean-wasm:
 	$(EXEC) "rm -rf /workspace/app/webApp/build/klib/cache /workspace/app/webApp/build/compileSync /workspace/app/shared/build/klib/cache /workspace/app/shared/build/compileSync"
+
+# Force full recompile of core + wasm when Gradle reuses a stale klib (e.g. after core data class changes)
+force-update-wasm:
+	-$(DC_DEV) exec micraft pitchfork stop wasm
+	$(EXEC) "rm -rf /workspace/core/build/classes/kotlin/wasmJs /workspace/core/build/kotlin/wasmJs /workspace/core/build/klib"
+	$(EXEC) "./gradlew :core:compileKotlinWasmJs :app:webApp:copyResourcesToWebDist --rerun-tasks"
+	-$(DC_DEV) exec micraft pitchfork start wasm
 
 dev-tui:
 	$(DC_DEV) exec -it micraft pitchfork tui
@@ -171,6 +178,7 @@ help:
 	@echo "  make build-client         recompile wasm + js bundle (build-wasm + build-js)"
 	@echo "  make build-wasm           recompile kotlin/wasm (triggers pitchfork watcher if running)"
 	@echo "  make trigger-wasm         force wasm rebuild via source touch"
+	@echo "  make force-update-wasm    nuke stale core klib + full recompile (fixes proto decode errors after core changes)"
 	@echo ""
 	@echo "Prod (port 8080 via nginx):"
 	@echo "  make prod-build           build images"
