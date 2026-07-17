@@ -13,6 +13,7 @@ interface Props {
   onSlotDrop: (slot: number, content: ShortcutSlot | null) => void;
   layoutStyle?: React.CSSProperties;
   macros?: Record<string, string>;
+  macroIcons?: Record<string, string>;
   playerStatus?: UiState["playerStatus"];
 }
 
@@ -26,6 +27,7 @@ export function ShortcutBar({
   onSlotDrop,
   layoutStyle,
   macros,
+  macroIcons,
   playerStatus,
 }: Props) {
   const {
@@ -107,7 +109,9 @@ export function ShortcutBar({
               <div className="text-white/60 font-mono text-base">✋</div>
             ) : isMacro ? (
               <>
-                <div className="text-amber-400/80 font-mono text-base">⚡</div>
+                <div className="text-amber-400/80 font-mono text-base leading-none">
+                  {macroIcons?.[slot!.id] ?? "⚡"}
+                </div>
                 <div
                   className="text-amber-300/70 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate"
                   title={slot!.id}

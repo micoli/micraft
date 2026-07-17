@@ -10,8 +10,32 @@ import { tags } from "@lezer/highlight";
 import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
 import { Button } from "../../primitives/Button";
 import type { CommandInfo } from "../types";
+import { useAttackDrag } from "../hooks/useAttackDrag";
 
 const PINNED_KEY = "__pinned_macros__";
+const DEFAULT_MACRO_ICON = "⚡";
+const MACRO_ICON_PALETTE = [
+  "⚡",
+  "🗡️",
+  "🛡️",
+  "🔥",
+  "❄️",
+  "⚔️",
+  "🏃",
+  "💊",
+  "🎯",
+  "🔮",
+  "💥",
+  "⚗️",
+  "🌀",
+  "🦅",
+  "🐉",
+  "💀",
+  "🌟",
+  "⚙️",
+  "🎆",
+  "🩹",
+];
 
 const jexlHighlightStyle = HighlightStyle.define([
   { tag: tags.keyword, color: "#c792ea" },
@@ -178,10 +202,15 @@ function JexlEditor({ value, onChange, commands, attackKeys }: JexlEditorProps) 
 interface MacroEditorProps {
   open: boolean;
   macros: Record<string, string>;
+  macroIcons?: Record<string, string>;
   customCommands: Record<string, string[]>;
   commands: CommandInfo[];
   attackKeys: string[];
-  onSave: (macros: Record<string, string>, customCommands: Record<string, string[]>) => void;
+  onSave: (
+    macros: Record<string, string>,
+    customCommands: Record<string, string[]>,
+    macroIcons: Record<string, string>,
+  ) => void;
   onClose: () => void;
 }
 
@@ -194,14 +223,30 @@ function captureKey(e: KeyboardEvent): string {
   return mods.length ? `${mods.join("+")}+${e.code}` : e.code;
 }
 
-export function MacroEditor({ open, macros, customCommands, commands, attackKeys, onSave, onClose }: MacroEditorProps) {
+export function MacroEditor({
+  open,
+  macros,
+  macroIcons,
+  customCommands,
+  commands,
+  attackKeys,
+  onSave,
+  onClose,
+}: MacroEditorProps) {
   const [localMacros, setLocalMacros] = useState<Record<string, string>>({});
+  const [localIcons, setLocalIcons] = useState<Record<string, string>>({});
   const [localBindings, setLocalBindings] = useState<Record<string, string[]>>({});
   const [pinned, setPinned] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [recording, setRecording] = useState<{ macro: string; index: number } | null>(null);
   const recordingRef = useRef<{ macro: string; index: number } | null>(null);
+
+  const { startDrag, moveDrag, endDrag, guardClick } = useAttackDrag(
+    () => "#b45309",
+    "macro",
+    (id) => localIcons[id] ?? DEFAULT_MACRO_ICON,
+  );
 
   useLayoutEffect(() => {
     if (open && window.mcState) window.mcState.modalOpen = true;
@@ -214,6 +259,7 @@ export function MacroEditor({ open, macros, customCommands, commands, attackKeys
   useEffect(() => {
     if (open) {
       setLocalMacros({ ...macros });
+      setLocalIcons({ ...(macroIcons ?? {}) });
       const macroBindings: Record<string, string[]> = {};
       for (const [k, v] of Object.entries(customCommands)) {
         if (k.startsWith("macro:")) macroBindings[k] = v;
@@ -265,6 +311,11 @@ export function MacroEditor({ open, macros, customCommands, commands, attackKeys
       delete next[name];
       return next;
     });
+    setLocalIcons((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
     setLocalBindings((prev) => {
       const next = { ...prev };
       delete next["macro:" + name];
@@ -301,6 +352,12 @@ export function MacroEditor({ open, macros, customCommands, commands, attackKeys
     setLocalMacros((prev) => {
       const next: Record<string, string> = {};
       for (const [k, v] of Object.entries(prev)) next[k === oldName ? trimmed : k] = v;
+      return next;
+    });
+    setLocalIcons((prev) => {
+      if (prev[oldName] === undefined) return prev;
+      const next = { ...prev, [trimmed]: prev[oldName] };
+      delete next[oldName];
       return next;
     });
     setLocalBindings((prev) => {
@@ -344,7 +401,7 @@ export function MacroEditor({ open, macros, customCommands, commands, attackKeys
       ...localBindings,
       ...(pinned.size > 0 ? { [PINNED_KEY]: [...pinned] } : {}),
     };
-    onSave(localMacros, merged);
+    onSave(localMacros, merged, localIcons);
   };
 
   const names = Object.keys(localMacros);
@@ -419,6 +476,24 @@ export function MacroEditor({ open, macros, customCommands, commands, attackKeys
                     title="Show in attack panel"
                     className="accent-amber-400 shrink-0"
                   />
+                  <div
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      startDrag(e, name);
+                    }}
+                    onPointerMove={moveDrag}
+                    onPointerUp={endDrag}
+                    onPointerCancel={endDrag}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      guardClick(() => {});
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    title="Alt+drag to shortcut bar"
+                    className="w-[22px] h-[22px] flex items-center justify-center rounded border border-amber-400/40 bg-amber-400/10 text-[13px] leading-none cursor-grab shrink-0 select-none text-amber-400"
+                  >
+                    {localIcons[name] ?? DEFAULT_MACRO_ICON}
+                  </div>
                   <span className="truncate flex-1">{name}</span>
                   <button
                     onClick={(e) => {
@@ -465,6 +540,35 @@ export function MacroEditor({ open, macros, customCommands, commands, attackKeys
                   commands={commands}
                   attackKeys={attackKeys}
                 />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-white/40 text-[11px]">Icon:</span>
+                  <div
+                    onPointerDown={(e) => startDrag(e, selected)}
+                    onPointerMove={moveDrag}
+                    onPointerUp={endDrag}
+                    onPointerCancel={endDrag}
+                    onClick={() => guardClick(() => {})}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    title="Alt+drag to shortcut bar"
+                    className="w-[32px] h-[32px] flex items-center justify-center rounded border-2 border-amber-400/60 bg-amber-400/15 text-[20px] leading-none cursor-grab shrink-0 select-none text-amber-400"
+                  >
+                    {localIcons[selected] ?? DEFAULT_MACRO_ICON}
+                  </div>
+                  <div className="w-px h-5 bg-white/15 shrink-0" />
+                  {MACRO_ICON_PALETTE.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => setLocalIcons((prev) => ({ ...prev, [selected]: emoji }))}
+                      className={`w-[22px] h-[22px] flex items-center justify-center rounded text-[13px] leading-none transition-colors ${
+                        (localIcons[selected] ?? DEFAULT_MACRO_ICON) === emoji
+                          ? "bg-amber-400/30 border border-amber-400/70"
+                          : "bg-[#1a1a1a] border border-[#333] hover:border-amber-400/40"
+                      }`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-white/40 text-[11px]">Keys:</span>
                   {selectedKeys.map((k, i) => (

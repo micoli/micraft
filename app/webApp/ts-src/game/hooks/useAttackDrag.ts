@@ -1,6 +1,10 @@
 import { useRef } from "react";
 
-export function useAttackDrag(color: (id: string) => string, kind: "attack" | "macro" | "spell" = "attack") {
+export function useAttackDrag(
+  color: (id: string) => string,
+  kind: "attack" | "macro" | "spell" = "attack",
+  iconFn?: (id: string) => string,
+) {
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const lastSlotRef = useRef<Element | null>(null);
   const dragIdRef = useRef<string | null>(null);
@@ -16,7 +20,7 @@ export function useAttackDrag(color: (id: string) => string, kind: "attack" | "m
     const inner = document.createElement("div");
     if (kind === "macro") {
       inner.style.cssText = `font-size:22px;line-height:1;`;
-      inner.textContent = "⚡";
+      inner.textContent = iconFn ? iconFn(id) : "⚡";
     } else if (kind === "spell") {
       inner.style.cssText = `font-size:22px;line-height:1;color:#fb923c;`;
       inner.textContent = "⚡";

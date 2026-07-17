@@ -132,5 +132,6 @@ export interface PreferencesData {
   defaultKeybindings: Record<string, string[]>;
   customCommands: Record<string, string[]>;
   macros: Record<string, string>;
+  macroIcons?: Record<string, string>;
   fieldOfView: number;
 }

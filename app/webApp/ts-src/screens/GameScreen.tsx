@@ -91,7 +91,11 @@ export function GameScreen() {
     pendingPreferencesUpdateRef.current = JSON.stringify(payload);
   };
 
-  const handleMacrosSave = (macros: Record<string, string>, customCommands: Record<string, string[]>) => {
+  const handleMacrosSave = (
+    macros: Record<string, string>,
+    customCommands: Record<string, string[]>,
+    macroIcons: Record<string, string>,
+  ) => {
     const prefs = state.preferences;
     if (!prefs) return;
     dispatch({
@@ -106,6 +110,7 @@ export function GameScreen() {
       keybindings: prefs.keybindings || {},
       customCommands,
       macros,
+      macroIcons,
     });
     if (window.mcState) {
       window.mcState.macros = macros;
@@ -122,6 +127,7 @@ export function GameScreen() {
       keybindings: prefs.keybindings || {},
       customCommands,
       macros,
+      macroIcons,
     });
     dispatch({ type: "macro_editor_close" });
   };
@@ -206,6 +212,7 @@ export function GameScreen() {
             slots={state.shortcutBar}
             selectedSlot={state.selectedSlot}
             macros={state.preferences?.macros ?? {}}
+            macroIcons={state.preferences?.macroIcons ?? {}}
             onSlotDrop={(slot, content) => {
               pendingSlotUpdateRef.current.push(JSON.stringify({ slot, content: content ?? null }));
             }}
@@ -323,6 +330,8 @@ export function GameScreen() {
           <Character
             open={state.characterOpen}
             characterSyncData={state.characterSyncData}
+            attackMeta={filteredAttackMeta}
+            spellMeta={state.spellMeta}
             onClose={() => {
               dispatch({ type: "character_close" });
               (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
@@ -383,6 +392,7 @@ export function GameScreen() {
           <MacroEditor
             open={state.macroEditorOpen}
             macros={state.preferences?.macros ?? {}}
+            macroIcons={state.preferences?.macroIcons ?? {}}
             customCommands={state.preferences?.customCommands ?? {}}
             commands={state.preferences?.commands ?? []}
             attackKeys={Object.keys(filteredAttackMeta)}
