@@ -121,7 +121,7 @@ build-client: build-js build-wasm
 build-wasm:
 	@if $(DC_DEV) exec micraft pitchfork status wasm 2>/dev/null | grep -qi "running"; then \
 		echo "[wasm] watcher running — triggering rebuild via source change…"; \
-		$(EXEC) "f=app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/babylon/BabylonBindingsWorld.kt; sed -i '/^\\/\\/ wasm-trigger/d' \$$f; echo \"// wasm-trigger $$(date +%s)\" >> \$$f"; \
+		$(EXEC) "f=app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/WasmBuildTrigger.kt; echo 'package org.micoli.micraft' > \$$f; echo \"// wasm-trigger $$(date +%s)\" >> \$$f"; \
 	else \
 		$(EXEC) "./gradlew :app:webApp:copyResourcesToWebDist --rerun-tasks"; \
 	fi
@@ -131,7 +131,7 @@ wasm-watch:
 
 # Explicitly trigger the --continuous wasm watcher (use when wasm-watch is running).
 trigger-wasm:
-	$(EXEC) "f=app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/babylon/BabylonBindingsWorld.kt; sed -i '/^\\/\\/ wasm-trigger/d' \$$f; echo \"// wasm-trigger $$(date +%s)\" >> \$$f"
+	$(EXEC) "f=app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/WasmBuildTrigger.kt; echo 'package org.micoli.micraft' > \$$f; echo \"// wasm-trigger $$(date +%s)\" >> \$$f"
 
 build-js:
 	$(EXEC) "cd app/webApp/ts-src && npm run build"
