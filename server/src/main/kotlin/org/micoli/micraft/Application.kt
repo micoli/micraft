@@ -37,8 +37,11 @@ import org.micoli.micraft.game.applyServerConfig
 import org.micoli.micraft.game.armor.ArmorRegistryLoader
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.classes.ClassesConfigData
 import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.CombatProcessor
+import org.micoli.micraft.game.combat.RegenProcessor
+import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
 import org.micoli.micraft.game.item.ItemRegistryLoader
@@ -212,8 +215,12 @@ fun Application.module() {
             npcSpawner = get<NpcSpawner>(),
             combatConfig = get<CombatConfigData>(),
             attackRegistry = get(named("attacks")),
+            spellRegistry = get(named("spells")),
+            classesData = get<ClassesConfigData>(),
             combatProcessor = get<CombatProcessor>(),
             statusEffectProcessor = get<StatusEffectProcessor>(),
+            regenProcessor = get<RegenProcessor>(),
+            spellProcessor = get<SpellProcessor>(),
             tradeConfigLoader = get<TradeConfigLoader>(),
             tradeManager = get<TradeManager>(),
             blockBreaker = get<BlockBreaker>(),
