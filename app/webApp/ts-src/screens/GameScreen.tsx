@@ -37,6 +37,12 @@ import { Statistics } from "../game/components/Statistics";
 import { QuestJournal } from "../game/components/QuestJournal";
 import { QuestTracker } from "../game/components/QuestTracker";
 
+const resumePointerLock = () =>
+  (
+    (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
+      ?.requestPointerLock() as unknown as Promise<void>
+  )?.catch(() => {});
+
 export function GameScreen() {
   const {
     state,
@@ -282,18 +288,14 @@ export function GameScreen() {
             open={state.codexOpen}
             onClose={() => {
               dispatch({ type: "codex_close" });
-              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
-                ?.requestPointerLock()
-                ?.catch?.(() => {});
+              resumePointerLock();
             }}
           />
           <Craft
             open={state.craftOpen}
             onClose={() => {
               dispatch({ type: "craft_close" });
-              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
-                ?.requestPointerLock()
-                ?.catch?.(() => {});
+              resumePointerLock();
             }}
             recipes={state.craftRecipes}
             knownRecipes={state.craftKnownRecipes}
@@ -316,9 +318,7 @@ export function GameScreen() {
             onClose={(tradeId) => {
               if (tradeId) consoleSubmittedRef.current = `/tradecancel ${tradeId}`;
               dispatch({ type: "trade_close" });
-              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
-                ?.requestPointerLock()
-                ?.catch?.(() => {});
+              resumePointerLock();
             }}
             onAccept={(tradeId) => {
               consoleSubmittedRef.current = `/tradeaccept ${tradeId}`;
@@ -334,9 +334,7 @@ export function GameScreen() {
             spellMeta={state.spellMeta}
             onClose={() => {
               dispatch({ type: "character_close" });
-              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
-                ?.requestPointerLock()
-                ?.catch?.(() => {});
+              resumePointerLock();
             }}
             onCommand={(cmd) => {
               consoleSubmittedRef.current = cmd;
@@ -348,9 +346,7 @@ export function GameScreen() {
             onSave={handlePreferencesSave}
             onClose={() => {
               dispatch({ type: "preferences_hide" });
-              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
-                ?.requestPointerLock()
-                ?.catch?.(() => {});
+              resumePointerLock();
             }}
           />
           <PauseMenu
@@ -399,9 +395,7 @@ export function GameScreen() {
             onSave={handleMacrosSave}
             onClose={() => {
               dispatch({ type: "macro_editor_close" });
-              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
-                ?.requestPointerLock()
-                ?.catch?.(() => {});
+              resumePointerLock();
             }}
           />
           <QuestJournal
@@ -409,9 +403,7 @@ export function GameScreen() {
             quests={state.quests}
             onClose={() => {
               dispatch({ type: "quest_journal_close" });
-              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
-                ?.requestPointerLock()
-                ?.catch?.(() => {});
+              resumePointerLock();
             }}
             onCommand={(cmd) => {
               consoleSubmittedRef.current = cmd;

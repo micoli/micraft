@@ -705,9 +705,10 @@ export function GameUI() {
       if (chunkLoadingRef.current) return;
       if (ke.key === "Escape" && !consoleOpenRef.current) {
         const resumeGame = () => {
-          (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
-            ?.requestPointerLock()
-            ?.catch?.(() => {});
+          (
+            (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
+              ?.requestPointerLock() as unknown as Promise<void>
+          )?.catch(() => {});
         };
         if (characterOpenRef.current) {
           dispatch({ type: "character_close" });
