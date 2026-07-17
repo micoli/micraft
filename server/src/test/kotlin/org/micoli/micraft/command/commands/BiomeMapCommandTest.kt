@@ -7,13 +7,13 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 
-class BiomeMapCommandTest {
-    private val cmd = BiomeMapCommand()
+class IngameMapCommandTest {
+    private val cmd = IngameMapCommand()
 
     @Test
-    fun execute_sendsToggleBiomeMap() = runBlocking {
+    fun execute_sendsToggleIngameMap() = runBlocking {
         val session = testSession()
         cmd.execute(session, "", testContext())
-        assertTrue(session.sent.any { it is ServerMessage.ToggleBiomeMap })
+        assertTrue(session.sent.any { it is ServerMessage.ToggleIngameMap })
     }
 }

@@ -87,6 +87,9 @@ import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.hasChannel
+import org.micoli.micraft.plugin.PluginLoader
+import org.micoli.micraft.plugin.TickContext
+import org.micoli.micraft.plugin.TickHandler
 import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
@@ -333,7 +336,9 @@ class GameLoop(
     private var worldMeta: WorldMetadata? = persistence?.loadMetadata()
     private var gameTicks: Long = worldMeta?.gameTicks ?: 18_000L
 
-    private val commands: Map<String, CommandHandler> = discoverCommandHandlers()
+    private val commands: MutableMap<String, CommandHandler> =
+        discoverCommandHandlers().toMutableMap()
+    private val pluginTickHandlers: MutableList<TickHandler> = mutableListOf()
 
     private var armorRegistry: Map<String, ArmorDefinition> = emptyMap()
     private var npcSpawnTickCounter = 0
@@ -715,6 +720,16 @@ class GameLoop(
         appScope = app
         log.info("GameLoop starting (tick=${TICK_MS}ms, gravity=$GRAVITY)")
         validatePluginSystemIds(commands, discoverPlugins())
+        PluginLoader.load().forEach { plugin ->
+            log.info("Loaded plugin: {} ({})", plugin.name, plugin.id)
+            plugin.commands().forEach { cmd ->
+                check(cmd.command !in commands) {
+                    "Plugin ${plugin.name}: command ${cmd.command} already registered"
+                }
+                commands[cmd.command] = cmd
+            }
+            pluginTickHandlers += plugin.tickHandlers()
+        }
         RecipeRegistry.load(recipeRegistryLoader.load())
         armorRegistry = armorRegistryLoader.load()
         npcConfigLoader.load()
@@ -828,6 +843,21 @@ class GameLoop(
                 if (session.combatState.targetId != null) {
                     session.send(combatProcessor.buildTargetUpdate(session))
                 }
+            }
+        }
+        if (pluginTickHandlers.isNotEmpty()) {
+            val ctx =
+                TickContext(
+                    gameTicks = gameTicks,
+                    sessionRegistry = sessionRegistry,
+                    world = world,
+                    commandContext = commandContext,
+                )
+            pluginTickHandlers.forEach { handler ->
+                runCatching { handler.tick(ctx) }
+                    .onFailure {
+                        log.error("TickHandler {} error: {}", handler.name, it.message, it)
+                    }
             }
         }
     }

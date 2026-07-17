@@ -38,3 +38,5 @@ include(":app:webApp")
 include(":core")
 
 include(":server")
+
+include(":plugin-examples:hello-world")

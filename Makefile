@@ -136,6 +136,9 @@ trigger-wasm:
 build-js:
 	$(EXEC) "cd app/webApp/ts-src && npm run build"
 
+build-plugin-examples-hello-world:
+	$(EXEC) "./gradlew :plugin-examples:hello-world:shadowJa"
+
 storybook:
 	$(EXEC) "cd app/webApp/ts-src && npm run storybook"
 

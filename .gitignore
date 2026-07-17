@@ -1,4 +1,5 @@
 !gradle/wrapper/gradle-wrapper.jar
+jar-plugins/*
 run.lock
 run-assets.lock
 app/webApp/src/wasmJsMain/resources/mc_bindings.js
