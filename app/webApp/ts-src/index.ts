@@ -278,6 +278,10 @@ window.mc = {
   playerRespawned: () => {},
   xpGained: () => {},
   reloadAttackMeta: () => {},
+  questSync: () => {},
+  questUpdate: () => {},
+  openQuestJournal: () => {},
+  toggleQuestTracker: () => {},
 } satisfies McBindings;
 
 registerAllPlugins();

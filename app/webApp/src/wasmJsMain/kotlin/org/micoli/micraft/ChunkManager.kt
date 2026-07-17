@@ -64,7 +64,7 @@ private data class ChunkRender(
     var nextY: Int = 0,
     val t0: Double = jsNow(),
     var faces: Int = 0,
-    var faceCount: Int = -1,       // set when rows finish; -1 = rows still in progress
+    var faceCount: Int = -1, // set when rows finish; -1 = rows still in progress
     var faceProcessingCursor: Int = 0,
 )
 

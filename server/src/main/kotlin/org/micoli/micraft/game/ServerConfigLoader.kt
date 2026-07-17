@@ -34,7 +34,7 @@ data class WorldSection(
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class PlayerSection(
-    @EncodeDefault(ALWAYS) val heightStanding: Float = 1.8f,
+    @EncodeDefault(ALWAYS) val heightStanding: Float = 2.1f,
     @EncodeDefault(ALWAYS) val heightSneaking: Float = 1.5f,
     @EncodeDefault(ALWAYS) val heightCrawling: Float = 0.6f,
     @EncodeDefault(ALWAYS) val width: Float = 0.6f,

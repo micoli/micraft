@@ -55,7 +55,8 @@ fun jsChunkFaceAppend(wx: Int, wy: Int, wz: Int, faceMat: Int, ao: Int): Unit =
         "{const i=window.__mcFI;window.__mcFB[i]=wx;window.__mcFB[i+1]=wy;window.__mcFB[i+2]=wz;window.__mcFB[i+3]=faceMat;window.__mcFB[i+4]=ao;window.__mcFI=i+5}")
 
 // Process a budget slice of __mcFB into FaceGroups; returns faces processed.
-fun jsChunkProcessFaces(cursor: Int, maxFaces: Int): Int = js("mc.chunkProcessFaces(cursor, maxFaces)")
+fun jsChunkProcessFaces(cursor: Int, maxFaces: Int): Int =
+    js("mc.chunkProcessFaces(cursor, maxFaces)")
 
 // Total faces written to __mcFB by jsChunkFaceAppend calls for the current chunk.
 fun jsGetFaceCount(): Int = js("(window.__mcFI / 5) | 0")
