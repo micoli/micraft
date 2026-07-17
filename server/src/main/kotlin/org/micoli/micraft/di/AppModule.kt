@@ -1,5 +1,15 @@
 package org.micoli.micraft.di
 
-val appModules =
-    listOf(
-        configModule, registryModule, worldModule, authModule, gameLoopModule, commandContextModule)
+import org.koin.core.annotation.Module
+
+@Module(
+    includes =
+        [
+            ConfigModule::class,
+            RegistryModule::class,
+            WorldModule::class,
+            AuthModule::class,
+            GameLoopModule::class,
+            CommandContextModule::class,
+        ])
+class AppModule

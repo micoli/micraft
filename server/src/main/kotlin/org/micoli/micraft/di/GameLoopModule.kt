@@ -1,9 +1,11 @@
 package org.micoli.micraft.di
 
 import java.nio.file.Path
-import org.koin.core.qualifier.named
-import org.koin.dsl.module
+import org.koin.core.annotation.Module
+import org.koin.core.annotation.Named
+import org.koin.core.annotation.Single
 import org.micoli.micraft.I18nConfig
+import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.GameConfig
 import org.micoli.micraft.game.armor.ArmorDefinition
@@ -18,6 +20,7 @@ import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.RegenProcessor
 import org.micoli.micraft.game.combat.SpellConfig
+import org.micoli.micraft.game.combat.SpellDefinition
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
@@ -30,6 +33,7 @@ import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.ExperienceConfig
+import org.micoli.micraft.game.rpg.ExperienceConfigData
 import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.session.NetworkStats
 import org.micoli.micraft.game.tick.ChunkStreamer
@@ -50,142 +54,212 @@ import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.protocol.ServerMessage
 
-val gameLoopModule = module {
-    single { SessionRegistry() }
-    single { I18nConfig.fromClasspath(pluginsRoot = Path.of("plugins")) }
-    single { PlayerPersister(get<OptionalWorldPersistence>().value) }
+@Module
+class GameLoopModule {
+    @Single fun sessionRegistry(): SessionRegistry = SessionRegistry()
 
-    // chat cluster
-    single { ChatChannelManager() }
-    single {
-        ChatService(
-            get<ChatChannelManager>(), get<PlayerPersister>()::save, get<SessionRegistry>()::all)
-    }
+    @Single
+    fun i18nConfig(): I18nConfig = I18nConfig.fromClasspath(pluginsRoot = Path.of("plugins"))
 
-    // items / weather / liquid / vegetation cluster
-    single { DropConfig(get<BlockRegistryLoader>()) }
-    single { QuestRegistryLoader(java.nio.file.Path.of("resources/quests")) }
-    single {
+    @Single
+    fun playerPersister(optionalWorldPersistence: OptionalWorldPersistence): PlayerPersister =
+        PlayerPersister(optionalWorldPersistence.value)
+
+    @Single fun chatChannelManager(): ChatChannelManager = ChatChannelManager()
+
+    @Single
+    fun chatService(
+        chatChannelManager: ChatChannelManager,
+        playerPersister: PlayerPersister,
+        sessionRegistry: SessionRegistry,
+    ): ChatService = ChatService(chatChannelManager, playerPersister::save, sessionRegistry::all)
+
+    @Single
+    fun dropConfig(blockRegistryLoader: BlockRegistryLoader): DropConfig =
+        DropConfig(blockRegistryLoader)
+
+    @Single
+    fun questRegistryLoader(): QuestRegistryLoader =
+        QuestRegistryLoader(Path.of("resources/quests"))
+
+    @Single
+    fun questManager(
+        sessionRegistry: SessionRegistry,
+        playerPersister: PlayerPersister,
+        experienceProcessor: ExperienceProcessor,
+        chatService: ChatService,
+        i18nConfig: I18nConfig,
+    ): QuestManager =
         QuestManager(
-            getSessions = get<SessionRegistry>()::all,
-            savePlayer = get<PlayerPersister>()::save,
-            grantXp = get<ExperienceProcessor>()::grantXp,
-            subscribeToChannel = { session, channel ->
-                get<ChatService>().subscribe(session, channel)
-            },
-            i18n = get<I18nConfig>(),
+            getSessions = sessionRegistry::all,
+            savePlayer = playerPersister::save,
+            grantXp = experienceProcessor::grantXp,
+            subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
+            i18n = i18nConfig,
         )
-    }
 
-    single {
+    @Single
+    fun worldItemManager(
+        dropConfig: DropConfig,
+        sessionRegistry: SessionRegistry,
+        playerPersister: PlayerPersister,
+        i18nConfig: I18nConfig,
+        questManager: QuestManager,
+    ): WorldItemManager =
         WorldItemManager(
-            get<DropConfig>(),
-            broadcast = get<SessionRegistry>()::broadcast,
-            savePlayer = get<PlayerPersister>()::save,
-            i18n = get<I18nConfig>(),
-            onItemCollected = get<QuestManager>()::onItemCollected,
+            dropConfig,
+            broadcast = sessionRegistry::broadcast,
+            savePlayer = playerPersister::save,
+            i18n = i18nConfig,
+            onItemCollected = questManager::onItemCollected,
         )
-    }
-    single { WeatherConfig() }
-    single { WeatherManager(get<WeatherConfig>()) }
-    single { ConfigRegistry.buildConfigRegistry(get<WeatherConfig>()) }
-    single { LiquidManager(get<WorldState>()) }
-    single { VegetationConfig(Path.of("data/config/vegetation.yaml")) }
-    single {
+
+    @Single fun weatherConfig(): WeatherConfig = WeatherConfig()
+
+    @Single
+    fun weatherManager(weatherConfig: WeatherConfig): WeatherManager = WeatherManager(weatherConfig)
+
+    @Single
+    fun configRegistry(weatherConfig: WeatherConfig): ConfigRegistry =
+        ConfigRegistry.buildConfigRegistry(weatherConfig)
+
+    @Single fun liquidManager(worldState: WorldState): LiquidManager = LiquidManager(worldState)
+
+    @Single
+    fun vegetationConfig(): VegetationConfig =
+        VegetationConfig(Path.of("data/config/vegetation.yaml"))
+
+    @Single
+    fun vegetationManager(
+        worldState: WorldState,
+        vegetationConfig: VegetationConfig,
+        optionalWorldPersistence: OptionalWorldPersistence,
+    ): VegetationManager =
         VegetationManager(
-            get<WorldState>(),
-            get<VegetationConfig>(),
+            worldState,
+            vegetationConfig,
             savePath =
-                get<OptionalWorldPersistence>().value?.worldDir?.resolve("vegetation_state.yaml")
+                optionalWorldPersistence.value?.worldDir?.resolve("vegetation_state.yaml")
                     ?: Path.of("data/world/default_world/vegetation_state.yaml"),
         )
-    }
 
-    // npc cluster
-    single { RecipeRegistryLoader(Path.of("data/config/recipes.yaml")) }
-    single {
+    @Single
+    fun recipeRegistryLoader(): RecipeRegistryLoader =
+        RecipeRegistryLoader(Path.of("data/config/recipes.yaml"))
+
+    @Single
+    fun armorRegistryLoader(): ArmorRegistryLoader =
         ArmorRegistryLoader(
             armorsPath = Path.of("resources/armors"),
             dataArmorsPath = Path.of("data/resources/armors"),
         )
-    }
-    single { NpcConfigLoader(Path.of("data/config/npc.yaml")) }
-    single {
+
+    @Single
+    fun npcConfigLoader(): NpcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml"))
+
+    @Single
+    fun npcRegistryLoader(): NpcRegistryLoader =
         NpcRegistryLoader(
             resourcesEntityPath = Path.of("resources/entities"),
             dataEntityPath = Path.of("data/resources/entities"),
         )
-    }
-    single {
-        NpcManager(
-            broadcast = get<SessionRegistry>()::broadcast,
-            getSessions = get<SessionRegistry>()::all,
-            onNpcKilled = { npc ->
-                get<ExperienceProcessor>().onNpcKilled(npc)
-                get<QuestManager>().onNpcKilled(npc)
-            },
-            broadcastCombatLog = { msg ->
-                val chatMsg =
-                    ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
-                get<SessionRegistry>()
-                    .all()
-                    .filter { it.state.subscribedChannels.hasChannel("combat") }
-                    .forEach { it.send(chatMsg) }
-            },
-        )
-    }
-    single { NpcSpawner() }
 
-    // combat cluster — armorRegistry is a mutable snapshot populated later in GameLoop.start(),
-    // so (matching prior behavior) these processors are built with an empty map at construction.
-    single { CombatConfig().data }
-    single { ExperienceConfig().data }
-    single {
-        ExperienceProcessor(
-            config = get(),
-            getSessions = get<SessionRegistry>()::all,
-            savePlayer = get<PlayerPersister>()::save,
-            subscribeToChannel = { session, channel ->
-                get<ChatService>().subscribe(session, channel)
+    @Single
+    fun npcManager(
+        sessionRegistry: SessionRegistry,
+        experienceProcessor: ExperienceProcessor,
+        questManager: QuestManager,
+    ): NpcManager =
+        NpcManager(
+            broadcast = sessionRegistry::broadcast,
+            getSessions = sessionRegistry::all,
+            onNpcKilled = { npc ->
+                experienceProcessor.onNpcKilled(npc)
+                questManager.onNpcKilled(npc)
             },
-        )
-    }
-    single(named("attacks")) { AttackConfig().data.attacks }
-    single(named("spells")) { SpellConfig().data.spells }
-    single {
-        val emptyArmorRegistry = emptyMap<String, ArmorDefinition>()
-        CombatProcessor(
-            config = get(),
-            attackRegistry = get(named("attacks")),
-            armorRegistry = emptyArmorRegistry,
-            classRegistry = get<ClassesConfigData>().classes,
-            npcManager = get<NpcManager>(),
-            getSessions = get<SessionRegistry>()::all,
             broadcastCombatLog = { msg ->
                 val chatMsg =
                     ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
-                get<SessionRegistry>()
+                sessionRegistry
                     .all()
                     .filter { it.state.subscribedChannels.hasChannel("combat") }
                     .forEach { it.send(chatMsg) }
             },
-            subscribeToChannel = { session, channel ->
-                get<ChatService>().subscribe(session, channel)
-            },
-            i18n = get<I18nConfig>(),
-            savePlayer = get<PlayerPersister>()::save,
         )
-    }
-    single {
+
+    @Single fun npcSpawner(): NpcSpawner = NpcSpawner()
+
+    @Single fun combatConfigData(): CombatConfigData = CombatConfig().data
+
+    @Single fun experienceConfigData(): ExperienceConfigData = ExperienceConfig().data
+
+    @Single
+    fun experienceProcessor(
+        experienceConfigData: ExperienceConfigData,
+        sessionRegistry: SessionRegistry,
+        playerPersister: PlayerPersister,
+        chatService: ChatService,
+    ): ExperienceProcessor =
+        ExperienceProcessor(
+            config = experienceConfigData,
+            getSessions = sessionRegistry::all,
+            savePlayer = playerPersister::save,
+            subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
+        )
+
+    @Single
+    @Named("attacks")
+    fun attacks(): Map<String, AttackDefinition> = AttackConfig().data.attacks
+
+    @Single @Named("spells") fun spells(): Map<String, SpellDefinition> = SpellConfig().data.spells
+
+    @Single
+    fun combatProcessor(
+        combatConfigData: CombatConfigData,
+        @Named("attacks") attacks: Map<String, AttackDefinition>,
+        classesConfigData: ClassesConfigData,
+        npcManager: NpcManager,
+        sessionRegistry: SessionRegistry,
+        chatService: ChatService,
+        i18nConfig: I18nConfig,
+        playerPersister: PlayerPersister,
+    ): CombatProcessor =
+        CombatProcessor(
+            config = combatConfigData,
+            attackRegistry = attacks,
+            armorRegistry = emptyMap<String, ArmorDefinition>(),
+            classRegistry = classesConfigData.classes,
+            npcManager = npcManager,
+            getSessions = sessionRegistry::all,
+            broadcastCombatLog = { msg ->
+                val chatMsg =
+                    ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
+                sessionRegistry
+                    .all()
+                    .filter { it.state.subscribedChannels.hasChannel("combat") }
+                    .forEach { it.send(chatMsg) }
+            },
+            subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
+            i18n = i18nConfig,
+            savePlayer = playerPersister::save,
+        )
+
+    @Single
+    fun statusEffectProcessor(
+        worldState: WorldState,
+        sessionRegistry: SessionRegistry,
+        combatProcessor: CombatProcessor,
+        chatService: ChatService,
+    ): StatusEffectProcessor =
         StatusEffectProcessor(
             armorRegistry = emptyMap<String, ArmorDefinition>(),
-            world = get<WorldState>(),
+            world = worldState,
             broadcastHealthUpdate = { id, isNpc, hp, maxHp ->
-                get<SessionRegistry>().all().forEach {
+                sessionRegistry.all().forEach {
                     it.send(ServerMessage.HealthUpdate(id, isNpc, hp, maxHp))
                 }
                 if (!isNpc) {
-                    get<SessionRegistry>()
+                    sessionRegistry
                         .all()
                         .find { it.id == id }
                         ?.let { s ->
@@ -193,12 +267,11 @@ val gameLoopModule = module {
                             if (charData != null) {
                                 val derived = DerivedStatsCalculator.compute(charData, emptyList())
                                 s.send(
-                                    get<CombatProcessor>()
-                                        .makeStatusUpdate(
-                                            charData,
-                                            derived,
-                                            s.state.stance,
-                                            s.combatState.attackCooldownUntilMs))
+                                    combatProcessor.makeStatusUpdate(
+                                        charData,
+                                        derived,
+                                        s.state.stance,
+                                        s.combatState.attackCooldownUntilMs))
                             }
                         }
                 }
@@ -206,68 +279,101 @@ val gameLoopModule = module {
             broadcastCombatLog = { msg ->
                 val chatMsg =
                     ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
-                get<SessionRegistry>()
+                sessionRegistry
                     .all()
                     .filter { it.state.subscribedChannels.hasChannel("combat") }
                     .forEach { it.send(chatMsg) }
             },
-            subscribeToChannel = { session, channel ->
-                get<ChatService>().subscribe(session, channel)
-            },
-            onPlayerDowned = { session -> get<CombatProcessor>().handlePlayerDowned(session) },
+            subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
+            onPlayerDowned = { session -> combatProcessor.handlePlayerDowned(session) },
         )
-    }
-    single { ClassesConfig().data }
-    single {
+
+    @Single fun classesConfigData(): ClassesConfigData = ClassesConfig().data
+
+    @Single
+    fun regenProcessor(
+        classesConfigData: ClassesConfigData,
+        combatConfigData: CombatConfigData,
+        combatProcessor: CombatProcessor,
+    ): RegenProcessor =
         RegenProcessor(
-            config = get(),
-            maxRage = get<CombatConfigData>().maxRage,
+            config = classesConfigData,
+            maxRage = combatConfigData.maxRage,
             armorRegistry = emptyMap<String, ArmorDefinition>(),
-            combatProcessor = get(),
+            combatProcessor = combatProcessor,
         )
-    }
-    single {
+
+    @Single
+    fun spellProcessor(
+        @Named("spells") spells: Map<String, SpellDefinition>,
+        classesConfigData: ClassesConfigData,
+        combatConfigData: CombatConfigData,
+        combatProcessor: CombatProcessor,
+    ): SpellProcessor =
         SpellProcessor(
-            spellRegistry = get(named("spells")),
-            classRegistry = get<ClassesConfigData>().classes,
+            spellRegistry = spells,
+            classRegistry = classesConfigData.classes,
             armorRegistry = emptyMap<String, ArmorDefinition>(),
-            combatConfig = get(),
-            combatProcessor = get(),
+            combatConfig = combatConfigData,
+            combatProcessor = combatProcessor,
         )
-    }
 
-    // trade cluster
-    single { TradeConfigLoader(Path.of("data/config/trade.yaml")) }
-    single {
+    @Single
+    fun tradeConfigLoader(): TradeConfigLoader =
+        TradeConfigLoader(Path.of("data/config/trade.yaml"))
+
+    @Single
+    fun tradeManager(
+        sessionRegistry: SessionRegistry,
+        i18nConfig: I18nConfig,
+        playerPersister: PlayerPersister,
+        tradeConfigLoader: TradeConfigLoader,
+    ): TradeManager =
         TradeManager(
-            getSessions = get<SessionRegistry>()::all,
-            i18n = get<I18nConfig>(),
-            savePlayer = get<PlayerPersister>()::save,
-            maxDistance = get<TradeConfigLoader>().load().maxDistance,
+            getSessions = sessionRegistry::all,
+            i18n = i18nConfig,
+            savePlayer = playerPersister::save,
+            maxDistance = tradeConfigLoader.load().maxDistance,
         )
-    }
 
-    // tick cluster
-    single {
+    @Single
+    fun blockBreaker(
+        worldState: WorldState,
+        sessionRegistry: SessionRegistry,
+        worldItemManager: WorldItemManager,
+        liquidManager: LiquidManager,
+        gameConfig: GameConfig,
+    ): BlockBreaker =
         BlockBreaker(
-            get<WorldState>(),
-            get<SessionRegistry>()::broadcast,
-            get<WorldItemManager>(),
-            get<LiquidManager>(),
-            bufferSize = get<GameConfig>().blockBreakBufferSize,
+            worldState,
+            sessionRegistry::broadcast,
+            worldItemManager,
+            liquidManager,
+            bufferSize = gameConfig.blockBreakBufferSize,
         )
-    }
-    single {
+
+    @Single
+    fun blockPlacer(
+        worldState: WorldState,
+        sessionRegistry: SessionRegistry,
+        playerPersister: PlayerPersister,
+        vegetationManager: VegetationManager,
+        @Named("attacks") attacks: Map<String, AttackDefinition>,
+    ): BlockPlacer =
         BlockPlacer(
-            get<WorldState>(),
-            get<SessionRegistry>()::broadcast,
-            get<PlayerPersister>()::save,
-            get<VegetationManager>(),
-            get(named("attacks")),
+            worldState,
+            sessionRegistry::broadcast,
+            playerPersister::save,
+            vegetationManager,
+            attacks,
         )
-    }
-    single { MovementProcessor(get<WorldState>()) }
-    single { ChunkStreamer(get<WorldState>()) }
-    single { TerrainCache() }
-    single { NetworkStats() }
+
+    @Single
+    fun movementProcessor(worldState: WorldState): MovementProcessor = MovementProcessor(worldState)
+
+    @Single fun chunkStreamer(worldState: WorldState): ChunkStreamer = ChunkStreamer(worldState)
+
+    @Single fun terrainCache(): TerrainCache = TerrainCache()
+
+    @Single fun networkStats(): NetworkStats = NetworkStats()
 }

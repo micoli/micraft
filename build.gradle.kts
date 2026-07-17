@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.ktor) apply false
     alias(libs.plugins.kotlinxSerialization) apply false
+    alias(libs.plugins.ksp) apply false
     id("org.jetbrains.qodana") version "2024.3.4"
     id("com.diffplug.spotless") version "7.2.1"
 }

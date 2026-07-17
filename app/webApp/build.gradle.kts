@@ -52,6 +52,15 @@ val cleanStaleWasm by
         delete(fileTree(layout.buildDirectory.dir("web")) { include("*.wasm") })
     }
 
+// Copies only static assets (index.html, sw.js, favicon…) into build/web without compiling WASM
+// or running npm. Used at server startup so index.html is present before the first request.
+val copyStaticToWebDist by
+    tasks.registering(Copy::class) {
+        doNotTrackState("build/web is a shared output directory")
+        from("src/wasmJsMain/resources") { exclude("mc_bindings.js", "main.css") }
+        into(layout.buildDirectory.dir("web"))
+    }
+
 // Assemble the served dir (build/web) — a dir webpack never cleans. Copies the webpack output
 // (webApp.js, .wasm, composeResources) plus static resources (index.html, sw.js, favicon).
 // mc_bindings.js and main.css are owned by esbuild/tailwind, which write straight into build/web,

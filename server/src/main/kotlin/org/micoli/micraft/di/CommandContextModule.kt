@@ -1,6 +1,8 @@
 package org.micoli.micraft.di
 
-import org.koin.dsl.module
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.Module
+import org.koin.core.annotation.Single
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.command.CommandContext
@@ -20,11 +22,6 @@ import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerato
 import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.protocol.ServerMessage
 
-/**
- * [CommandContext] fields that close over GameLoop's own per-connection/per-instance mutable state
- * (sessions, game ticks, reload closures owned by Application.module()). These cannot be resolved
- * from Koin the way the rest of the field set can, so GameLoop passes them in explicitly.
- */
 data class CommandContextClosures(
     val broadcast: suspend (ServerMessage) -> Unit,
     val sessions: () -> Collection<PlayerSession>,
@@ -42,41 +39,58 @@ data class CommandContextClosures(
     val armorRegistry: () -> Map<String, ArmorDefinition>,
 )
 
-val commandContextModule = module {
-    single { (closures: CommandContextClosures) ->
-        val world = get<WorldState>()
-        val generator = world.generator as? ProceduralChunkGenerator
+@Module
+class CommandContextModule {
+    @Single
+    fun commandContext(
+        @InjectedParam closures: CommandContextClosures,
+        worldState: WorldState,
+        optionalWorldPersistence: OptionalWorldPersistence,
+        i18nConfig: I18nConfig,
+        worldItemManager: WorldItemManager,
+        npcManager: NpcManager,
+        chatService: ChatService,
+        chatChannelManager: ChatChannelManager,
+        weatherManager: WeatherManager,
+        optionalAuthProvider: OptionalAuthProvider,
+        groupsConfig: GroupsConfig,
+        liquidManager: LiquidManager,
+        configRegistry: ConfigRegistry,
+        tradeManager: TradeManager,
+        questManager: QuestManager,
+    ): CommandContext {
+        val generator = worldState.generator as? ProceduralChunkGenerator
         val cavernPoints = generator?.namedCavernPoints() ?: emptyMap()
         val staircasePoints = generator?.namedStaircasePoints() ?: emptyMap()
-        CommandContext(
-            world = world,
-            persistence = get<OptionalWorldPersistence>().value,
-            i18n = get<I18nConfig>(),
+        return CommandContext(
+            world = worldState,
+            persistence = optionalWorldPersistence.value,
+            i18n = i18nConfig,
             broadcast = closures.broadcast,
             sessions = closures.sessions,
             kickSession = closures.kickSession,
             reloadConfig = closures.reloadConfig,
             commands = closures.commands,
             savePlayer = closures.savePlayer,
-            worldItems = get<WorldItemManager>(),
-            npcManager = get<NpcManager>(),
+            worldItems = worldItemManager,
+            npcManager = npcManager,
             getGameTime = closures.getGameTime,
             setGameTime = closures.setGameTime,
             refetchChunks = closures.refetchChunks,
             flushWorld = closures.flushWorld,
-            chatService = get<ChatService>(),
-            chatChannelManager = get<ChatChannelManager>(),
-            weatherManager = get<WeatherManager>(),
-            authProvider = get<OptionalAuthProvider>().value,
-            groupsConfig = get<GroupsConfig>(),
-            liquidManager = get<LiquidManager>(),
-            configRegistry = get<ConfigRegistry>(),
+            chatService = chatService,
+            chatChannelManager = chatChannelManager,
+            weatherManager = weatherManager,
+            authProvider = optionalAuthProvider.value,
+            groupsConfig = groupsConfig,
+            liquidManager = liquidManager,
+            configRegistry = configRegistry,
             reloadBlocks = closures.reloadBlocks,
             reloadNpcs = closures.reloadNpcs,
             reloadRbac = closures.reloadRbac,
             armorRegistry = closures.armorRegistry,
-            tradeManager = get<TradeManager>(),
-            questManager = get<QuestManager>(),
+            tradeManager = tradeManager,
+            questManager = questManager,
             namedPoints = { cavernPoints + staircasePoints },
         )
     }

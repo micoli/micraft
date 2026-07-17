@@ -6,7 +6,7 @@ bind_port = 3120
 bind_address = "0.0.0.0"
 
 [daemons.server]
-run = "bash -c './gradlew :server:installDist --console=plain && MICRAFT_WEB_DIST=/workspace/app/webApp/build/web /workspace/server/build/install/server/bin/server'"
+run = "bash -c './gradlew :server:installDist :app:webApp:copyStaticToWebDist --console=plain && MICRAFT_WEB_DIST=/workspace/app/webApp/build/web /workspace/server/build/install/server/bin/server'"
 dir = "/workspace"
 ready-port = 8080
 retry = true
@@ -21,7 +21,7 @@ watch = ["run.lock"]
 run = "./gradlew :app:webApp:copyResourcesToWebDist --continuous --console=plain --no-build-cache"
 dir = "/workspace"
 depends = ["server"]
-boot_start = false
+boot_start = true
 
 [daemons.mc_bindings]
 run = "npm run watch:mc_bindings"

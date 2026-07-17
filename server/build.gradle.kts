@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.ktor)
     alias(libs.plugins.kotlinxSerialization)
+    alias(libs.plugins.ksp)
 }
 
 sourceSets {
@@ -84,6 +85,8 @@ dependencies {
     implementation(libs.json.schema.validator)
     implementation(libs.koin.core)
     implementation(libs.koin.ktor)
+    implementation(libs.koin.annotations)
+    ksp(libs.koin.ksp.compiler)
     implementation(libs.commons.jexl3)
     implementation(libs.java.jwt)
     testImplementation(libs.ktor.serverTestHost)

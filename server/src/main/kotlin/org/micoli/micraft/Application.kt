@@ -13,6 +13,7 @@ import java.io.File
 import java.nio.file.Path
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
+import org.koin.ksp.generated.module
 import org.koin.ktor.ext.get
 import org.koin.ktor.plugin.Koin
 import org.micoli.micraft.auth.GroupsConfig
@@ -23,13 +24,13 @@ import org.micoli.micraft.auth.loadGroupsConfig
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.config.validateYamlConfig
+import org.micoli.micraft.di.AppModule
 import org.micoli.micraft.di.OptionalAuthProvider
 import org.micoli.micraft.di.OptionalNoAuthAccountStore
 import org.micoli.micraft.di.OptionalTokenStore
 import org.micoli.micraft.di.OptionalWorldPersistence
 import org.micoli.micraft.di.PlayerPersister
 import org.micoli.micraft.di.SessionRegistry
-import org.micoli.micraft.di.appModules
 import org.micoli.micraft.game.GameConfig
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.ServerConfig
@@ -115,7 +116,7 @@ val resourcesConfigDir: Path = Path.of("resources/config")
 
 fun Application.module() {
     install(WebSockets) {}
-    install(Koin) { modules(appModules) }
+    install(Koin) { modules(AppModule().module) }
 
     val serverConfig = get<ServerConfig>()
     val gameConfig = get<GameConfig>()

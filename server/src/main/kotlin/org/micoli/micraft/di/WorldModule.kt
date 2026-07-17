@@ -2,7 +2,8 @@ package org.micoli.micraft.di
 
 import java.nio.file.Path
 import java.time.Instant
-import org.koin.dsl.module
+import org.koin.core.annotation.Module
+import org.koin.core.annotation.Single
 import org.micoli.micraft.config.validateYamlConfig
 import org.micoli.micraft.configDir
 import org.micoli.micraft.dataPath
@@ -25,10 +26,11 @@ private val log = LoggerFactory.getLogger("WorldModule")
 fun worldName(): String =
     System.getenv("MICRAFT_WORLD_NAME")?.takeIf { it.isNotBlank() } ?: "default_world"
 
-val worldModule = module {
-    single {
-        val gameConfig = get<GameConfig>()
-        if (gameConfig.debugWorld) return@single OptionalWorldPersistence(null)
+@Module
+class WorldModule {
+    @Single
+    fun optionalWorldPersistence(gameConfig: GameConfig): OptionalWorldPersistence {
+        if (gameConfig.debugWorld) return OptionalWorldPersistence(null)
         val dir = Path.of("$dataPath/world/${worldName()}")
         val persistence =
             WorldPersistence(dir).also { p ->
@@ -40,24 +42,23 @@ val worldModule = module {
                             createdAt = Instant.now().toString()))
                 }
             }
-        OptionalWorldPersistence(persistence)
+        return OptionalWorldPersistence(persistence)
     }
 
-    single<BiomeRegistry> {
-        val gameConfig = get<GameConfig>()
+    @Single
+    fun biomeRegistry(gameConfig: GameConfig): BiomeRegistry {
         if (gameConfig.debugWorld) {
             log.info("Debug world mode — biomes disabled")
-            BiomeRegistry.default()
-        } else {
-            loadBiomeRegistry(
-                Path.of("$dataPath/config/biomes.yaml"), resourcesConfigDir.resolve("biomes.yaml"))
+            return BiomeRegistry.default()
         }
+        return loadBiomeRegistry(
+            Path.of("$dataPath/config/biomes.yaml"), resourcesConfigDir.resolve("biomes.yaml"))
     }
 
-    single {
+    @Single
+    fun optionalRoadConfig(gameConfig: GameConfig): OptionalRoadConfig {
         validateYamlConfig(configDir.resolve("roads.yaml"), "roads.schema.json")
-        val gameConfig = get<GameConfig>()
-        OptionalRoadConfig(
+        return OptionalRoadConfig(
             if (gameConfig.debugWorld) null
             else
                 loadRoadConfig(
@@ -65,33 +66,39 @@ val worldModule = module {
                     resourcesConfigDir.resolve("roads.yaml")))
     }
 
-    single {
-        val gameConfig = get<GameConfig>()
+    @Single
+    fun optionalHouseConfig(gameConfig: GameConfig): OptionalHouseConfig =
         OptionalHouseConfig(
             if (gameConfig.debugWorld) null
             else
                 loadHouseConfig(
                     Path.of("$dataPath/config/houses.yaml"),
                     resourcesConfigDir.resolve("houses.yaml")))
-    }
 
-    single<ChunkGenerator> {
-        val gameConfig = get<GameConfig>()
+    @Single
+    fun chunkGenerator(
+        gameConfig: GameConfig,
+        biomeRegistry: BiomeRegistry,
+        optionalRoadConfig: OptionalRoadConfig,
+        optionalHouseConfig: OptionalHouseConfig,
+    ): ChunkGenerator {
         val generator =
             if (gameConfig.debugWorld) DebugChunkGenerator()
             else
                 ProceduralChunkGenerator(
                     seed = 42L,
-                    biomeRegistry = get<BiomeRegistry>(),
-                    roadConfig = get<OptionalRoadConfig>().value,
-                    houseConfig = get<OptionalHouseConfig>().value,
+                    biomeRegistry = biomeRegistry,
+                    roadConfig = optionalRoadConfig.value,
+                    houseConfig = optionalHouseConfig.value,
                 )
         log.info("World: {} | generator={} | seed=42", worldName(), generator::class.simpleName)
-        generator
+        return generator
     }
 
-    single {
-        WorldState(
-            generator = get<ChunkGenerator>(), persistence = get<OptionalWorldPersistence>().value)
-    }
+    @Single
+    fun worldState(
+        chunkGenerator: ChunkGenerator,
+        optionalWorldPersistence: OptionalWorldPersistence,
+    ): WorldState =
+        WorldState(generator = chunkGenerator, persistence = optionalWorldPersistence.value)
 }

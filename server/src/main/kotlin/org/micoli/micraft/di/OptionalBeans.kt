@@ -23,3 +23,9 @@ class OptionalAuthProvider(val value: AuthProvider?)
 class OptionalTokenStore(val value: TokenStore?)
 
 class OptionalNoAuthAccountStore(val value: NoAuthAccountStore?)
+
+class I18nBootstrapResult
+
+class KeyBindingsBootstrapResult
+
+class RegistryBootstrapResult

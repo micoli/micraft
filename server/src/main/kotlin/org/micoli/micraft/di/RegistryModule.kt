@@ -1,33 +1,37 @@
 package org.micoli.micraft.di
 
 import java.nio.file.Path
-import org.koin.core.qualifier.named
-import org.koin.dsl.module
+import org.koin.core.annotation.Module
+import org.koin.core.annotation.Single
 import org.micoli.micraft.dataPath
 import org.micoli.micraft.game.item.ItemRegistryLoader
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
 
-val REGISTRY_LOAD_BOOTSTRAP = named("registryLoadBootstrap")
-
-val registryModule = module {
-    single {
+@Module
+class RegistryModule {
+    @Single
+    fun blockRegistryLoader(): BlockRegistryLoader =
         BlockRegistryLoader(
             resourcesBlocksPath = Path.of("resources/blocks"),
             dataBlocksPath = Path.of("$dataPath/resources/blocks"),
         )
-    }
 
-    single {
+    @Single
+    fun itemRegistryLoader(): ItemRegistryLoader =
         ItemRegistryLoader(
             Path.of("$dataPath/config/items.yaml"),
             Path.of("resources/config/items.yaml"),
         )
-    }
 
-    single(REGISTRY_LOAD_BOOTSTRAP, createdAtStart = true) {
-        BlockRegistry.load(get<BlockRegistryLoader>().load())
-        ItemRegistry.load(get<ItemRegistryLoader>().load())
+    @Single(createdAtStart = true)
+    fun registryBootstrap(
+        blockRegistryLoader: BlockRegistryLoader,
+        itemRegistryLoader: ItemRegistryLoader,
+    ): RegistryBootstrapResult {
+        BlockRegistry.load(blockRegistryLoader.load())
+        ItemRegistry.load(itemRegistryLoader.load())
+        return RegistryBootstrapResult()
     }
 }
