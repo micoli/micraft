@@ -23,6 +23,8 @@ fun jsHideLoginOverlay(): Unit = js("mc.hideLoginOverlay()")
 
 fun jsConsumeLoginResult(): String = js("mc.consumeLoginResult()")
 
+fun jsClearStoredToken(): Unit = js("mc.clearStoredToken()")
+
 // ── Console / Server log ──────────────────────────────────────────────────────
 
 fun jsCreateConsole(): Unit = js("mc.createConsole()")

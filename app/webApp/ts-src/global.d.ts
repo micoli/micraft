@@ -212,6 +212,8 @@ declare global {
     slotDrop: ((slot: number, content: { kind: string; id: string } | null) => void) | null;
     // Set to true before sending /disconnect so showLoginOverlay navigates to /chars
     intentionalDisconnect?: boolean;
+    // Set to true by stub when WASM calls showLoginOverlay before React is ready
+    loginOverlayPending?: boolean;
   }
 
   // ── McBindings: all public Kotlin-callable (and JS-callable) mc methods ───────
@@ -387,6 +389,7 @@ declare global {
     consumeSlotUpdate(): string;
     showLoginOverlay(): void;
     hideLoginOverlay(): void;
+    clearStoredToken(): void;
     showDisconnectedOverlay(msg: string): void;
     hideDisconnectedOverlay(): void;
     updateChunkLoading(meshed: number, downloaded: number, total: number): void;

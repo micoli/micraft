@@ -16,10 +16,9 @@ boot_start = true
 run = "pitchfork restart server"
 dir = "/workspace"
 watch = ["run.lock"]
-boot_start = true
 
 [daemons.wasm]
-run = "./gradlew :app:webApp:copyResourcesToWebDist --continuous --console=plain"
+run = "./gradlew :app:webApp:copyResourcesToWebDist --continuous --console=plain --no-build-cache"
 dir = "/workspace"
 depends = ["server"]
 boot_start = true

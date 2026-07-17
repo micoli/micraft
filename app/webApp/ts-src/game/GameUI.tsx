@@ -8,7 +8,7 @@ import { defaultLayout } from "./layout/LayoutEngine";
 import { ChunkDebugData } from "./components/ChunkDebug";
 import { AuthScreen } from "../screens/AuthScreen";
 import { CharacterSelectionScreen } from "../screens/CharacterSelectionScreen";
-import { getLastUser, getLastPlayer, getLastLang, getStoredToken } from "../lib/authStorage";
+import { getLastUser, getLastPlayer, getLastLang, getStoredToken, clearStoredToken } from "../lib/authStorage";
 import { CharacterCreationScreen } from "../screens/CharacterCreationScreen";
 import { CharacterRPGCreationScreen } from "../screens/CharacterRPGCreationScreen";
 import { GameScreen } from "../screens/GameScreen";
@@ -449,7 +449,10 @@ export function GameUI() {
       pendingSlotUpdateRef.current.push(JSON.stringify({ slot, content: content ?? null }));
     };
 
+    window.mc.clearStoredToken = () => clearStoredToken();
+
     window.mc.showLoginOverlay = () => {
+      window.mcState.loginOverlayPending = false;
       const username = getLastUser();
       const player = getLastPlayer(username);
       const lang = getLastLang();
@@ -756,6 +759,14 @@ export function GameUI() {
       }
     }
     document.addEventListener("keydown", onGlobalKeydown);
+
+    // WASM may call showLoginOverlay before this useEffect runs (race on page load).
+    // The stub sets loginOverlayPending; fire the real handler now if so.
+    if (window.mcState.loginOverlayPending) {
+      window.mcState.loginOverlayPending = false;
+      window.mc.showLoginOverlay();
+    }
+
     return () => document.removeEventListener("keydown", onGlobalKeydown);
   }, []);
 

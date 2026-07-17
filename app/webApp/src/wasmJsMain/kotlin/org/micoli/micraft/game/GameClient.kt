@@ -182,6 +182,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             var currentToken = token
             while (isActive) {
                 var sessionWelcomed = false
+                var lastCloseCode: Short? = null
                 try {
                     uiState.disconnectMessage = null
                     jsLog("WS connecting to ws://$serverHost:$serverPort/game")
@@ -264,8 +265,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                 jsLog("WS non-binary frame: ${frame::class.simpleName}")
                             }
                         }
+                        val reason = closeReason.await()
+                        lastCloseCode = reason?.code
                         jsLog(
-                            "WS incoming loop ended after $frameCount frames (closeReason=${closeReason.await()})")
+                            "WS incoming loop ended after $frameCount frames (closeReason=$reason)")
                         inputJob.cancel()
                         breakJob.cancel()
                     }
@@ -276,9 +279,16 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
 
                 if (!isActive) break
                 resetForReconnect()
-                if (sessionWelcomed) {
+                val authRejected = lastCloseCode == CloseReason.Codes.VIOLATED_POLICY.code
+                if (sessionWelcomed || authRejected) {
                     retryDelay = 1000L
-                    jsLog("WS disconnected after session — returning to login")
+                    if (authRejected) {
+                        jsLog("WS auth rejected (1008) — clearing token, returning to login")
+                        jsClearStoredToken()
+                        currentToken = ""
+                    } else {
+                        jsLog("WS disconnected after session — returning to login")
+                    }
                     jsShowLoginOverlay()
                     var loginResult = ""
                     while (loginResult.isEmpty()) {
