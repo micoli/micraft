@@ -58,6 +58,9 @@ val cleanStaleWasm by
 // so they are excluded here to avoid overwriting the fresh bundles with stale source copies.
 val copyResourcesToWebDist by
     tasks.registering(Copy::class) {
+        // build/web is a shared dir written by esbuild/tailwind watchers too;
+        // disable stale-output cleanup so Gradle doesn't wipe mc_bindings.js / main.css on re-run.
+        doNotTrackState("build/web is a shared output directory")
         dependsOn("wasmJsBrowserDevelopmentWebpack", cleanStaleWasm)
         from(layout.buildDirectory.dir("kotlin-webpack/wasmJs/developmentExecutable"))
         from(layout.buildDirectory.dir("processedResources/wasmJs/main")) {
