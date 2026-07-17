@@ -55,12 +55,17 @@ private val AO_NEIGHBORS: Array<Array<Array<IntArray>>> =
         ),
     )
 
+// Faces processed per Phase-2 budget slice. At ~200–400ns/face this targets ~1–2ms/slice.
+private const val FACE_SLICE_SIZE = 5_000
+
 private data class ChunkRender(
     val chunk: Chunk,
     val topY: Int,
     var nextY: Int = 0,
     val t0: Double = jsNow(),
-    var faces: Int = 0
+    var faces: Int = 0,
+    var faceCount: Int = -1,       // set when rows finish; -1 = rows still in progress
+    var faceProcessingCursor: Int = 0,
 )
 
 class ChunkManager(private val scene: JsAny) {
@@ -129,37 +134,49 @@ class ChunkManager(private val scene: JsAny) {
         val mats = getBlockMaterials() ?: return
         buildOrdFlags()
         if (pendingChunks.isEmpty() && activeRender == null) return
-        if (pendingChunks.isNotEmpty()) {
-            pendingChunks.sortBy { (chunk, _) ->
-                meshScore(chunk.pos.cx - playerCx, chunk.pos.cz - playerCz, yaw)
-            }
-        }
         val deadline = jsNow() + budgetMs
 
-        while (jsNow() < deadline) {
-            if (activeRender == null) {
+        while (true) {
+            val ar = activeRender
+
+            if (ar == null) {
+                if (jsNow() >= deadline) break
                 if (pendingChunks.isEmpty()) break
+                pendingChunks.sortBy { (chunk, _) ->
+                    meshScore(chunk.pos.cx - playerCx, chunk.pos.cz - playerCz, yaw)
+                }
                 val (chunk, topY) = pendingChunks.removeAt(0)
                 chunkData[chunk.pos] = Pair(chunk, topY)
-                // mcChunkBegin resets __mcBuf and releases any orphaned pool groups
                 jsChunkBegin(chunk.pos.cx, chunk.pos.cz)
                 activeRender = ChunkRender(chunk, topY)
+                continue
             }
 
-            val ar = activeRender!!
-            ar.faces += renderRow(ar.chunk, ar.topY, ar.nextY)
-            ar.nextY++
-
-            if (ar.nextY > ar.topY) {
-                jsChunkEnd(scene, mats)
-                // val elapsed = jsNow() - ar.t0
-                // jsLog("[mesh] ${ar.chunk.pos.cx},${ar.chunk.pos.cz} rows=${ar.topY + 1}
-                // ms=${elapsed.toInt()} faces=${ar.faces} ffiCalls=${ar.faces}")
-                loadedChunks.add(ar.chunk.pos)
-                pendingMinimapPushes.addLast(Pair(ar.chunk, ar.topY))
-                activeRender = null
+            when {
+                ar.faceCount < 0 -> {
+                    // Phase 1: scan rows — fill __mcFB via jsChunkFaceAppend
+                    if (jsNow() >= deadline) break
+                    ar.faces += renderRow(ar.chunk, ar.topY, ar.nextY)
+                    ar.nextY++
+                    if (ar.nextY > ar.topY) {
+                        ar.faceCount = jsGetFaceCount()
+                    }
+                }
+                ar.faceProcessingCursor < ar.faceCount -> {
+                    // Phase 2: process face buffer in budget slices (geometry only, no GPU)
+                    if (jsNow() >= deadline) break
+                    val processed = jsChunkProcessFaces(ar.faceProcessingCursor, FACE_SLICE_SIZE)
+                    ar.faceProcessingCursor += processed
+                }
+                else -> {
+                    // Phase 3: GPU upload — always execute when face processing is done
+                    jsChunkEnd(scene, mats)
+                    loadedChunks.add(ar.chunk.pos)
+                    pendingMinimapPushes.addLast(Pair(ar.chunk, ar.topY))
+                    activeRender = null
+                    break // one GPU upload per drain call
+                }
             }
-            // Budget check at top of loop — never blocks more than one slice duration
         }
     }
 
@@ -213,6 +230,10 @@ class ChunkManager(private val scene: JsAny) {
         chunkData[chunk.pos] = Pair(chunk, topY)
         jsChunkBegin(chunk.pos.cx, chunk.pos.cz)
         for (y in 0..topY) renderRow(chunk, topY, y)
+        // Drain face buffer before GPU upload (same as async Phase 2)
+        val faceCount = jsGetFaceCount()
+        var cursor = 0
+        while (cursor < faceCount) cursor += jsChunkProcessFaces(cursor, FACE_SLICE_SIZE)
         jsChunkEnd(scene, mats)
         loadedChunks.add(chunk.pos)
         pushMinimapChunk(chunk, topY)
@@ -317,7 +338,7 @@ class ChunkManager(private val scene: JsAny) {
         return sb.toString()
     }
 
-    // Returns number of faces emitted (= FFI calls to jsChunkFace)
+    // Returns number of faces emitted (appended to window.__mcFB via jsChunkFaceAppend)
     private fun renderRow(chunk: Chunk, topY: Int, y: Int): Int {
         val blocks = chunk.blocks
         val s = WorldConstants.CHUNK_SIZE
@@ -339,32 +360,32 @@ class ChunkManager(private val scene: JsAny) {
                     if (y >= WorldConstants.WORLD_MAX_Y) 0 else blocks[idx + s].toInt() and 0xFF
                 if (solidByOrd[aboveOrd].toInt() == 0 &&
                     !(liquidByOrd[ord].toInt() != 0 && liquidByOrd[aboveOrd].toInt() != 0)) {
-                    jsChunkFace(wx, y, wz2, t + 4, computeFaceAO(blocks, x, y, z, 4))
+                    jsChunkFaceAppend(wx, y, wz2, t + 4, computeFaceAO(blocks, x, y, z, 4))
                     faceCount++
                 }
                 // bottom (-Y)
                 if (y <= 0 || solidByOrd[blocks[idx - s].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFace(wx, y, wz2, t + 5, computeFaceAO(blocks, x, y, z, 5))
+                    jsChunkFaceAppend(wx, y, wz2, t + 5, computeFaceAO(blocks, x, y, z, 5))
                     faceCount++
                 }
                 // south (+Z)
                 if (z == s - 1 || solidByOrd[blocks[idx + 1].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFace(wx, y, wz2, t + 0, computeFaceAO(blocks, x, y, z, 0))
+                    jsChunkFaceAppend(wx, y, wz2, t + 0, computeFaceAO(blocks, x, y, z, 0))
                     faceCount++
                 }
                 // north (-Z)
                 if (z == 0 || solidByOrd[blocks[idx - 1].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFace(wx, y, wz2, t + 1, computeFaceAO(blocks, x, y, z, 1))
+                    jsChunkFaceAppend(wx, y, wz2, t + 1, computeFaceAO(blocks, x, y, z, 1))
                     faceCount++
                 }
                 // east (+X)
                 if (x == s - 1 || solidByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFace(wx, y, wz2, t + 2, computeFaceAO(blocks, x, y, z, 2))
+                    jsChunkFaceAppend(wx, y, wz2, t + 2, computeFaceAO(blocks, x, y, z, 2))
                     faceCount++
                 }
                 // west (-X)
                 if (x == 0 || solidByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFace(wx, y, wz2, t + 3, computeFaceAO(blocks, x, y, z, 3))
+                    jsChunkFaceAppend(wx, y, wz2, t + 3, computeFaceAO(blocks, x, y, z, 3))
                     faceCount++
                 }
             }

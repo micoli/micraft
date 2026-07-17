@@ -174,6 +174,12 @@ function emitCrossSprite(wx: number, wy: number, wz: number, g: FaceGroup, uv: F
   for (const q of CROSS_QUADS) emitQuad(g, wx, wy, wz, q, 0, 1, 0, uv, 0.8, ao);
 }
 
+// --- Face buffer (shared with Kotlin via window.__mcFB / window.__mcFI) ---
+// Kotlin writes face data here (jsChunkFaceAppend); chunkEnd processes the whole
+// buffer in one tight loop — eliminates per-face JS function-call overhead.
+
+const FACE_BUF_SLOTS = 600_000; // 5 ints × up to 120k faces per chunk
+
 // --- Chunk state ---
 
 interface ChunkBuf {
@@ -190,7 +196,10 @@ function disposeChunk(key: string): void {
   }
 }
 
-export function registerChunks(): Pick<McBindings, "disposeChunk" | "chunkBegin" | "chunkFace" | "chunkEnd"> {
+export function registerChunks(): Pick<
+  McBindings,
+  "disposeChunk" | "chunkBegin" | "chunkFace" | "chunkProcessFaces" | "chunkEnd"
+> {
   window.mcState.chunks = {};
 
   return {
@@ -202,31 +211,51 @@ export function registerChunks(): Pick<McBindings, "disposeChunk" | "chunkBegin"
         for (const mk of Object.keys(__mcBuf.groups)) releaseGroup(__mcBuf.groups[mk]);
       }
       __mcBuf = { key: `${cx},${cz}`, groups: {} };
+      if (!(window as any).__mcFB) (window as any).__mcFB = new Int32Array(FACE_BUF_SLOTS);
+      (window as any).__mcFI = 0;
     },
 
-    chunkFace: (wx: number, wy: number, wz: number, faceMat: number, ao: number): void => {
-      if (!__mcBuf) return;
-      const info = faceTable[faceMat];
-      if (!info) return;
+    // no-op stub — Kotlin uses jsChunkFaceAppend (writes directly to __mcFB)
+    chunkFace: (_wx: number, _wy: number, _wz: number, _faceMat: number, _ao: number): void => {},
 
-      const grp = __mcBuf.groups;
-      let g = grp[info.matKey];
-      if (!g) {
-        g = acquireGroup();
-        grp[info.matKey] = g;
+    // Process a slice of __mcFB into FaceGroups (geometry work only, no GPU upload).
+    // cursor: face index (not byte offset); maxFaces: max to process this call.
+    // Returns actual faces processed. Call repeatedly until return value < maxFaces
+    // (or until cursor × 5 >= __mcFI) then call chunkEnd for GPU upload.
+    chunkProcessFaces: (cursor: number, maxFaces: number): number => {
+      const buf = __mcBuf!;
+      const fb = (window as any).__mcFB as Int32Array;
+      const fi = (window as any).__mcFI as number;
+      const startI = cursor * 5;
+      const endI = Math.min(startI + maxFaces * 5, fi);
+      const grp = buf.groups;
+      for (let i = startI; i < endI; i += 5) {
+        const wx = fb[i],
+          wy = fb[i + 1],
+          wz = fb[i + 2],
+          faceMat = fb[i + 3],
+          ao = fb[i + 4];
+        const info = faceTable[faceMat];
+        if (!info) continue;
+        let g = grp[info.matKey];
+        if (!g) {
+          g = acquireGroup();
+          grp[info.matKey] = g;
+        }
+        if (info.isCrossSprite) {
+          emitCrossSprite(wx, wy, wz, g, info.uv, ao);
+        } else {
+          emitQuad(g, wx, wy, wz, info.verts, info.normX, info.normY, info.normZ, info.uv, info.shade, ao);
+        }
       }
-
-      if (info.isCrossSprite) {
-        emitCrossSprite(wx, wy, wz, g, info.uv, ao);
-      } else {
-        emitQuad(g, wx, wy, wz, info.verts, info.normX, info.normY, info.normZ, info.uv, info.shade, ao);
-      }
+      return ((endI - startI) / 5) | 0;
     },
 
+    // GPU upload only — call after chunkProcessFaces has consumed all faces.
     chunkEnd: (scene: Scene, materials: Record<string, Material>): void => {
       const buf = __mcBuf!;
       __mcBuf = null;
-      const t0 = performance.now();
+
       disposeChunk(buf.key);
 
       const meshes: Mesh[] = [];
@@ -252,7 +281,6 @@ export function registerChunks(): Pick<McBindings, "disposeChunk" | "chunkBegin"
         releaseGroup(g);
       }
       window.mcState.chunks[buf.key] = meshes;
-      // console.log(`[mesh-ts] key=${buf.key} groups=${meshes.length} applyMs=${(performance.now() - t0).toFixed(1)}`);
     },
   };
 }

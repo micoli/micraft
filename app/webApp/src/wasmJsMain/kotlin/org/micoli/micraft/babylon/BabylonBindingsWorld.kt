@@ -47,8 +47,18 @@ fun jsSetMeshMaterial(mesh: JsAny, mat: JsAny): Unit = js("mesh.material = mat")
 
 fun jsChunkBegin(cx: Int, cz: Int): Unit = js("mc.chunkBegin(cx, cz)")
 
-fun jsChunkFace(wx: Int, wy: Int, wz: Int, faceMat: Int, ao: Int): Unit =
-    js("mc.chunkFace(wx, wy, wz, faceMat, ao)")
+// Batch approach: write face data directly into a pre-allocated JS Int32Array.
+// Eliminates JS function-call dispatch and dict lookup per face; work deferred to
+// the tight loop in chunkEnd (which the JS engine can JIT more aggressively).
+fun jsChunkFaceAppend(wx: Int, wy: Int, wz: Int, faceMat: Int, ao: Int): Unit =
+    js(
+        "{const i=window.__mcFI;window.__mcFB[i]=wx;window.__mcFB[i+1]=wy;window.__mcFB[i+2]=wz;window.__mcFB[i+3]=faceMat;window.__mcFB[i+4]=ao;window.__mcFI=i+5}")
+
+// Process a budget slice of __mcFB into FaceGroups; returns faces processed.
+fun jsChunkProcessFaces(cursor: Int, maxFaces: Int): Int = js("mc.chunkProcessFaces(cursor, maxFaces)")
+
+// Total faces written to __mcFB by jsChunkFaceAppend calls for the current chunk.
+fun jsGetFaceCount(): Int = js("(window.__mcFI / 5) | 0")
 
 fun jsChunkEnd(scene: JsAny, materials: JsAny): Unit = js("mc.chunkEnd(scene, materials)")
 

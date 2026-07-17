@@ -278,6 +278,7 @@ declare global {
     // Chunk builder
     chunkBegin(cx: number, cz: number): void;
     chunkFace(wx: number, wy: number, wz: number, faceMat: number, ao: number): void;
+    chunkProcessFaces(cursor: number, maxFaces: number): number;
     chunkEnd(scene: any, materials: Record<string, any>): void;
     disposeChunk(key: string): void;
     // Player model
