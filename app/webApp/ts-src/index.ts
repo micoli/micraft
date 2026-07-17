@@ -226,7 +226,9 @@ window.mc = {
   updateShortcutBar: () => {},
   setSelectedSlot: () => {},
   consumeSlotUpdate: () => "",
-  showLoginOverlay: () => { window.mcState.loginOverlayPending = true; },
+  showLoginOverlay: () => {
+    window.mcState.loginOverlayPending = true;
+  },
   hideLoginOverlay: () => {},
   clearStoredToken: () => {},
   showDisconnectedOverlay: () => {},

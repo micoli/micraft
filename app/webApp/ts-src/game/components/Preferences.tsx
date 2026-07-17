@@ -72,7 +72,11 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent movable className="min-w-[520px] max-w-[560px] max-h-[80vh] flex flex-col font-mono p-5">
+      <DialogContent
+        movable
+        className="min-w-[520px] max-w-[560px] max-h-[80vh] flex flex-col font-mono p-5"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         {/* Key recording overlay */}
         {pref.recording && (
           <div

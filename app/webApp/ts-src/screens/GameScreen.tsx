@@ -271,10 +271,23 @@ export function GameScreen() {
             onClose={() => dispatch({ type: "layout_editor_hide" })}
           />
           <NpcDialog data={state.npcDialog} onClose={() => dispatch({ type: "npc_dialog_close" })} />
-          <CodexModal open={state.codexOpen} onClose={() => dispatch({ type: "codex_close" })} />
+          <CodexModal
+            open={state.codexOpen}
+            onClose={() => {
+              dispatch({ type: "codex_close" });
+              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
+                ?.requestPointerLock()
+                ?.catch?.(() => {});
+            }}
+          />
           <Craft
             open={state.craftOpen}
-            onClose={() => dispatch({ type: "craft_close" })}
+            onClose={() => {
+              dispatch({ type: "craft_close" });
+              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
+                ?.requestPointerLock()
+                ?.catch?.(() => {});
+            }}
             recipes={state.craftRecipes}
             knownRecipes={state.craftKnownRecipes}
             inventory={state.inventory}
@@ -296,6 +309,9 @@ export function GameScreen() {
             onClose={(tradeId) => {
               if (tradeId) consoleSubmittedRef.current = `/tradecancel ${tradeId}`;
               dispatch({ type: "trade_close" });
+              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
+                ?.requestPointerLock()
+                ?.catch?.(() => {});
             }}
             onAccept={(tradeId) => {
               consoleSubmittedRef.current = `/tradeaccept ${tradeId}`;
@@ -307,7 +323,12 @@ export function GameScreen() {
           <Character
             open={state.characterOpen}
             characterSyncData={state.characterSyncData}
-            onClose={() => dispatch({ type: "character_close" })}
+            onClose={() => {
+              dispatch({ type: "character_close" });
+              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
+                ?.requestPointerLock()
+                ?.catch?.(() => {});
+            }}
             onCommand={(cmd) => {
               consoleSubmittedRef.current = cmd;
             }}
@@ -316,7 +337,12 @@ export function GameScreen() {
             open={state.preferencesOpen}
             preferences={state.preferences}
             onSave={handlePreferencesSave}
-            onClose={() => dispatch({ type: "preferences_hide" })}
+            onClose={() => {
+              dispatch({ type: "preferences_hide" });
+              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
+                ?.requestPointerLock()
+                ?.catch?.(() => {});
+            }}
           />
           <PauseMenu
             open={state.pauseMenuOpen}
@@ -361,12 +387,22 @@ export function GameScreen() {
             commands={state.preferences?.commands ?? []}
             attackKeys={Object.keys(filteredAttackMeta)}
             onSave={handleMacrosSave}
-            onClose={() => dispatch({ type: "macro_editor_close" })}
+            onClose={() => {
+              dispatch({ type: "macro_editor_close" });
+              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
+                ?.requestPointerLock()
+                ?.catch?.(() => {});
+            }}
           />
           <QuestJournal
             open={state.questJournalOpen}
             quests={state.quests}
-            onClose={() => dispatch({ type: "quest_journal_close" })}
+            onClose={() => {
+              dispatch({ type: "quest_journal_close" });
+              (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
+                ?.requestPointerLock()
+                ?.catch?.(() => {});
+            }}
             onCommand={(cmd) => {
               consoleSubmittedRef.current = cmd;
             }}

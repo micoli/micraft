@@ -190,7 +190,7 @@ export function Character({ open, onClose, onCommand, characterSyncData }: Props
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent movable className="min-w-[520px] font-mono p-9">
+      <DialogContent movable className="min-w-[520px] font-mono p-9" onEscapeKeyDown={(e) => e.preventDefault()}>
         <DialogTitle className="text-blue-300 tracking-widest mb-5">CHARACTER</DialogTitle>
 
         <Tabs defaultValue={characterSyncData ? "stats" : "equipment"}>

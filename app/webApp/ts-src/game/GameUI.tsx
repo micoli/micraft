@@ -1,4 +1,4 @@
-import { useEffect, useRef, useReducer, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useReducer, useState } from "react";
 import { MemoryRouter, Routes, Route, useNavigate, useLocation } from "react-router";
 import { HudMode, GameLayout, NpcDialogData, PreferencesData, ChannelSubscription } from "./types";
 import { UiState, reducer } from "./UIReducer";
@@ -132,6 +132,7 @@ export function GameUI() {
   const characterOpenRef = useRef(false);
   const tradeOpenRef = useRef(false);
   const questJournalOpenRef = useRef(false);
+  const macroEditorOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
   const chunkLoadingRef = useRef(false);
   const preferencesRef = useRef<import("./types").PreferencesData | null>(null);
@@ -234,30 +235,33 @@ export function GameUI() {
     };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     consoleOpenRef.current = state.consoleOpen;
   }, [state.consoleOpen]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     pauseMenuOpenRef.current = state.pauseMenuOpen;
   }, [state.pauseMenuOpen]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     preferencesOpenRef.current = state.preferencesOpen;
   }, [state.preferencesOpen]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     codexOpenRef.current = state.codexOpen;
   }, [state.codexOpen]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     craftOpenRef.current = state.craftOpen;
   }, [state.craftOpen]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     characterOpenRef.current = state.characterOpen;
   }, [state.characterOpen]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     tradeOpenRef.current = state.tradeOpen;
   }, [state.tradeOpen]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     questJournalOpenRef.current = state.questJournalOpen;
   }, [state.questJournalOpen]);
+  useLayoutEffect(() => {
+    macroEditorOpenRef.current = state.macroEditorOpen;
+  }, [state.macroEditorOpen]);
 
   useEffect(() => {
     const anyOpen =
@@ -284,7 +288,7 @@ export function GameUI() {
     preferencesRef.current = state.preferences;
   }, [state.preferences]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     chunkLoadingRef.current = state.chunkLoading !== null;
     if (window.mcState)
       window.mcState.modalOpen =
@@ -293,7 +297,8 @@ export function GameUI() {
         state.codexOpen ||
         state.craftOpen ||
         state.characterOpen ||
-        state.macroEditorOpen;
+        state.macroEditorOpen ||
+        state.pauseMenuOpen;
   }, [
     state.chunkLoading,
     state.preferencesOpen,
@@ -301,6 +306,7 @@ export function GameUI() {
     state.craftOpen,
     state.characterOpen,
     state.macroEditorOpen,
+    state.pauseMenuOpen,
   ]);
 
   useEffect(() => {
@@ -698,28 +704,44 @@ export function GameUI() {
       if (tag === "INPUT" || tag === "TEXTAREA" || (document.activeElement as HTMLElement)?.isContentEditable) return;
       if (chunkLoadingRef.current) return;
       if (ke.key === "Escape" && !consoleOpenRef.current) {
+        const resumeGame = () => {
+          (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
+            ?.requestPointerLock()
+            ?.catch?.(() => {});
+        };
         if (characterOpenRef.current) {
           dispatch({ type: "character_close" });
+          resumeGame();
           return;
         }
         if (codexOpenRef.current) {
           dispatch({ type: "codex_close" });
+          resumeGame();
           return;
         }
         if (craftOpenRef.current) {
           dispatch({ type: "craft_close" });
+          resumeGame();
           return;
         }
         if (tradeOpenRef.current) {
           dispatch({ type: "trade_close" });
+          resumeGame();
           return;
         }
         if (questJournalOpenRef.current) {
           dispatch({ type: "quest_journal_close" });
+          resumeGame();
           return;
         }
         if (preferencesOpenRef.current) {
           dispatch({ type: "preferences_hide" });
+          resumeGame();
+          return;
+        }
+        if (macroEditorOpenRef.current) {
+          dispatch({ type: "macro_editor_close" });
+          resumeGame();
           return;
         }
         if (pauseMenuOpenRef.current) {
