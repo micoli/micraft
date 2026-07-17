@@ -130,7 +130,7 @@ object ServerMessageCodec {
             serverEntry<ServerMessage.PreferencesSync>(), // 24
             serverEntry<ServerMessage.WeatherUpdate>(), // 25
             serverEntry<ServerMessage.GameConfigSync>(), // 26
-            serverSingleton(ServerMessage.ToggleBiomeMap), // 27
+            serverSingleton(ServerMessage.ToggleIngameMap), // 27
             serverSingleton(ServerMessage.OpenCraft), // 28
             serverEntry<ServerMessage.RecipeSync>(), // 29
             serverEntry<ServerMessage.OpenTrade>(), // 30

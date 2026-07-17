@@ -511,7 +511,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 typedHandler { msg: ServerMessage.RecipeSync ->
                     jsRecipeSync(Json.encodeToString(msg))
                 })
-            put(ServerMessage.ToggleBiomeMap::class, ServerMessageHandler { jsToggleBiomeMap() })
+            put(ServerMessage.ToggleIngameMap::class, ServerMessageHandler { jsToggleIngameMap() })
             put(
                 ServerMessage.RegistrySync::class,
                 typedHandler { msg: ServerMessage.RegistrySync ->

@@ -1,29 +1,27 @@
 import { useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
-import { Button } from "../../primitives/Button";
+import { Button, ButtonProps } from "../../primitives/Button";
+
+interface PauseMenuItem {
+  label: string;
+  variant?: ButtonProps["variant"];
+  callback: () => void;
+}
 
 interface PauseMenuProps {
   open: boolean;
   onClose: () => void;
-  onDisconnect: () => void;
-  onPreferences: () => void;
-  onCharacter: () => void;
-  onMacros: () => void;
-  onRefresh: () => void;
+  items: PauseMenuItem[];
 }
 
 export function PauseMenu({
   open,
   onClose,
-  onDisconnect,
-  onPreferences,
-  onCharacter,
-  onMacros,
-  onRefresh,
+  items,
 }: PauseMenuProps) {
-  const prefsButtonRef = useRef<HTMLButtonElement>(null);
+  const firstButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (open) setTimeout(() => prefsButtonRef.current?.focus(), 50);
+    if (open) setTimeout(() => firstButton.current?.focus(), 50);
   }, [open]);
 
   return (
@@ -39,21 +37,11 @@ export function PauseMenu({
         }}
       >
         <DialogTitle className="text-center font-mono text-xl tracking-[0.25em] mb-2">PAUSE</DialogTitle>
-        <Button ref={prefsButtonRef} variant="secondary" onClick={onPreferences} className="font-mono">
-          Preferences
-        </Button>
-        <Button variant="secondary" onClick={onMacros} className="font-mono">
-          Macros
-        </Button>
-        <Button variant="secondary" onClick={onCharacter} className="font-mono">
-          Character
-        </Button>
-        <Button variant="secondary" onClick={onRefresh} className="font-mono">
-          Refresh
-        </Button>
-        <Button variant="danger" onClick={onDisconnect} className="font-mono">
-          Disconnect
-        </Button>
+        {items.map((item,k)=>(
+          <Button ref={k===0?firstButton:null} variant={item.variant??"secondary"} onClick={item.callback} className="font-mono">
+            {item.label}
+          </Button>
+        ))}
       </DialogContent>
     </Dialog>
   );

@@ -52,7 +52,7 @@ const initial: UiState = {
   macroEditorOpen: false,
   characterOpen: false,
   characterSyncData: null,
-  biomeMapVisible: false,
+  ingameMapVisible: false,
   combatTarget: null,
   playerStatus: null,
   playerDowned: false,
@@ -266,7 +266,7 @@ export function GameUI() {
   useEffect(() => {
     const anyOpen =
       state.characterOpen ||
-      state.biomeMapVisible ||
+      state.ingameMapVisible ||
       state.preferencesOpen ||
       state.pauseMenuOpen ||
       state.macroEditorOpen;
@@ -278,7 +278,7 @@ export function GameUI() {
       const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
       (canvas?.requestPointerLock() as unknown as Promise<void>)?.catch?.(() => {});
     }
-  }, [state.characterOpen, state.biomeMapVisible, state.preferencesOpen, state.pauseMenuOpen, state.macroEditorOpen]);
+  }, [state.characterOpen, state.ingameMapVisible, state.preferencesOpen, state.pauseMenuOpen, state.macroEditorOpen]);
 
   useEffect(() => {
     hudDataRef.current = state.hud;
@@ -622,7 +622,7 @@ export function GameUI() {
       }
     };
     window.mc.tradeClosed = (_tradeId: string, _reason: string) => dispatch({ type: "trade_close" });
-    window.mc.toggleBiomeMap = () => dispatch({ type: "ingame_map_toggle" });
+    window.mc.IngameMap = () => dispatch({ type: "ingame_map_toggle" });
     window.mc.dumpStats = () => {
       const h = hudDataRef.current;
       if (!h) return;

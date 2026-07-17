@@ -159,7 +159,7 @@ fun jsShowPreferences(): Unit = js("mc.showPreferences()")
 
 fun jsOpenCodex(): Unit = js("mc.openCodex()")
 
-fun jsToggleBiomeMap(): Unit = js("mc.toggleBiomeMap()")
+fun jsToggleIngameMap(): Unit = js("mc.toggleIngameMap()")
 
 // ── Craft ──────────────────────────────────────────────────────────────────────
 

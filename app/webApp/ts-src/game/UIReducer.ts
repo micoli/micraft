@@ -83,7 +83,7 @@ export interface UiState {
   macroEditorOpen: boolean;
   characterOpen: boolean;
   characterSyncData: CharacterSyncData | null;
-  biomeMapVisible: boolean;
+  ingameMapVisible: boolean;
   combatTarget: {
     targetId: string | null;
     displayName: string | null;
@@ -183,6 +183,8 @@ export type UiAction =
   | { type: "character_close" }
   | { type: "character_sync"; data: CharacterSyncData }
   | { type: "ingame_map_toggle" }
+  | { type: "ingame_map_open" }
+  | { type: "ingame_map_close" }
   | { type: "trade_open"; tradeId: string; otherPlayer: string }
   | {
       type: "trade_update";
@@ -354,7 +356,11 @@ export function reducer(state: UiState, action: UiAction): UiState {
     case "character_sync":
       return { ...state, characterSyncData: action.data };
     case "ingame_map_toggle":
-      return { ...state, biomeMapVisible: !state.biomeMapVisible };
+      return { ...state, ingameMapVisible: !state.ingameMapVisible };
+    case "ingame_map_open":
+      return { ...state, ingameMapVisible: true };
+    case "ingame_map_close":
+      return { ...state, ingameMapVisible: false };
     case "trade_open":
       return {
         ...state,

@@ -3,51 +3,6 @@ interface ParsedKey {
   key: string;
 }
 
-export const MC_DEFAULT_BINDINGS: Record<string, string[]> = {
-  forward: ["KeyW", "ArrowUp"],
-  backward: ["KeyS", "ArrowDown"],
-  strafe_right: ["KeyD", "ArrowRight"],
-  strafe_left: ["KeyA", "ArrowLeft"],
-  rotate_left: ["KeyQ"],
-  rotate_right: ["KeyE"],
-  sneak: ["ShiftLeft"],
-  crawl: ["ControlLeft"],
-  fly_toggle: ["Space+Space"],
-  ascend: ["Space"],
-  descend: ["ShiftLeft"],
-  speed_up: ["KeyP"],
-  speed_down: ["KeyO"],
-  view_toggle: ["KeyF"],
-  console_toggle: ["KeyH"],
-  inventory: ["KeyI"],
-  undo: ["Ctrl+KeyZ", "Cmd+KeyZ"],
-  auto_forward: ["KeyW+KeyW", "ArrowUp+ArrowUp"],
-  minimap_zoom_in: ["k"],
-  minimap_zoom_out: ["l"],
-  ingame_map: ["m"],
-  layout_editor: ["KeyG"],
-  statistics_toggle: ["KeyN"],
-  character: ["KeyY"],
-  screenshot: ["KeyJ"],
-  health_bar: ["KeyB"],
-  craft: ["Alt+KeyC"],
-  dump_stats: ["KeyV"],
-  slot_1: ["Digit1"],
-  slot_2: ["Digit2"],
-  slot_3: ["Digit3"],
-  slot_4: ["Digit4"],
-  slot_5: ["Digit5"],
-  slot_6: ["Digit6"],
-  slot_7: ["Digit7"],
-  slot_8: ["Digit8"],
-  slot_9: ["Digit9"],
-  slot_10: ["Digit0"],
-  combat_target_cycle: ["KeyZ"],
-  combat_attack: ["KeyR"],
-  quest_journal: ["Alt+KeyQ"],
-  quest_tracking: ["KeyT"],
-};
-
 const MODIFIERS = new Set(["ctrl", "control", "shift", "alt", "option", "cmd", "command", "meta"]);
 
 // Returns true if any non-last part is not a known modifier — i.e. it's a key sequence, not a combo.
@@ -151,7 +106,7 @@ export function registerKeyboard(): Pick<
     },
 
     setupKeyboard: (): void => {
-      window.mcState.bindings = MC_DEFAULT_BINDINGS;
+      window.mcState.bindings = {};
       window.mcState.macros = {};
 
       window.mcRunMacro = (name: string): void => {
@@ -200,7 +155,7 @@ export function registerKeyboard(): Pick<
         if (b.preferences?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.();
         if (b.minimap_zoom_in?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomIn?.();
         if (b.minimap_zoom_out?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomOut?.();
-        if (b.ingame_map?.some((k) => matchesEvent(k, e))) window.mc?.toggleBiomeMap?.();
+        if (b.ingame_map?.some((k) => matchesEvent(k, e))) window.mc?.IngameMap?.();
         if (b.combat_target_cycle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_target_cycle");
         if (b.combat_attack?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_attack");
         if (b.screenshot?.some((k) => matchesEvent(k, e))) window.mcState.events.push("screenshot");

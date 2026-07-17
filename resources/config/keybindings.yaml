@@ -1,5 +1,7 @@
 combat:
   combat_target_cycle: [KeyZ]
+  combat_attack: [KeyR]
+  console_toggle: [KeyH]
 
 movement:
   forward: [KeyW, ArrowUp]
@@ -20,6 +22,7 @@ flight:
   speed_down: [KeyO]
 
 ui:
+  console_toggle: [KeyH]
   view_toggle: [KeyF]
   statistics_toggle: [KeyN]
   inventory: [KeyI]
@@ -30,6 +33,7 @@ ui:
   ingame_map: [m]
   layout_editor: [KeyG]
   dump_stats: [KeyV]
+  craft: ["Alt+KeyC"]
   health_bar: [KeyB]
   screenshot: [KeyJ]
   quest_journal: ["Alt+KeyQ"]

@@ -432,7 +432,7 @@ declare global {
     openQuestJournal(): void;
     toggleQuestTracker(): void;
     reloadAttackMeta(): void;
-    toggleBiomeMap(): void;
+    IngameMap(): void;
     dumpStats(): void;
     updateChunkDebug(json: string): void;
     createHUD(): void;

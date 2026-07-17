@@ -3,10 +3,10 @@ package org.micoli.micraft.examples.hello
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import java.util.logging.Logger
 import org.micoli.micraft.plugin.TickContext
 import org.micoli.micraft.plugin.TickHandler
 import org.micoli.micraft.protocol.ServerMessage
-import java.util.logging.Logger
 
 private const val TICKS_PER_GAME_HOUR = 3_000L // TICKS_PER_DAY(72_000) / 24
 private val log = Logger.getLogger(HelloTickHandler::class.java.name)

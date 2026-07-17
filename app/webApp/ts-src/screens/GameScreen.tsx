@@ -22,7 +22,7 @@ import {
 import { CodexModal } from "../game/components/CodexModal";
 import { ChunkDebug } from "../game/components/ChunkDebug";
 import { Character } from "../game/components/Character";
-import { BiomeMap } from "../game/components/BiomeMap";
+import { IngameMap } from "../game/components/IngameMap";
 import { Craft } from "../game/components/Craft";
 import { Trade } from "../game/components/Trade";
 import { PlayerStatusBar } from "../game/components/PlayerStatusBar";
@@ -203,8 +203,8 @@ export function GameScreen() {
           {(state.preferences?.statisticsVisible ?? false) && (
             <Statistics data={state.hud} layoutStyle={widgetStyle(activeLayout, "STATISTICS")} />
           )}
-          {state.biomeMapVisible && (
-            <BiomeMap
+          {state.ingameMapVisible && (
+            <IngameMap
               playerX={state.hud?.x}
               playerZ={state.hud?.z}
               layoutStyle={widgetStyle(activeLayout, "INGAME_MAP")}
@@ -359,24 +359,37 @@ export function GameScreen() {
                 )?.requestPointerLock() as unknown as Promise<void>
               )?.catch?.(() => {});
             }}
-            onPreferences={() => {
+            items={[
+            {label:"Craft",callback:() => {
               dispatch({ type: "pause_menu_hide" });
-              dispatch({ type: "preferences_show" });
-            }}
-            onMacros={() => {
+              dispatch({ type: "craft_open" });
+            }},
+            {label:"Quests",callback:() => {
               dispatch({ type: "pause_menu_hide" });
-              dispatch({ type: "macro_editor_open" });
-            }}
-            onCharacter={() => {
+              dispatch({ type: "quest_journal_open" });
+            }},
+            {label:"Character",callback:() => {
               dispatch({ type: "pause_menu_hide" });
               dispatch({ type: "character_open" });
-            }}
-            onDisconnect={() => {
+            }},
+            {label:"Map",callback:() => {
+              dispatch({ type: "pause_menu_hide" });
+              dispatch({ type: "ingame_map_toggle" });
+            }},
+            {label:"Macros",callback:() => {
+              dispatch({ type: "pause_menu_hide" });
+              dispatch({ type: "macro_editor_open" });
+            }},
+            {label:"Preferences",callback:() => {
+              dispatch({ type: "pause_menu_hide" });
+              dispatch({ type: "preferences_show" });
+            }},
+            {label:"Disconnect",variant:"danger",callback:() => {
               window.mcState.intentionalDisconnect = true;
               consoleSubmittedRef.current = "/disconnect";
               dispatch({ type: "pause_menu_hide" });
-            }}
-            onRefresh={() => {
+            }},
+            {label:"Refresh",variant:"outline",callback:() => {
               const controller = navigator.serviceWorker?.controller ?? null;
               if (controller) {
                 controller.postMessage({ type: "FORCE_UPDATE" });
@@ -384,6 +397,7 @@ export function GameScreen() {
                 window.location.reload();
               }
             }}
+          ]}
           />
           <MacroEditor
             open={state.macroEditorOpen}

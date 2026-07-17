@@ -128,7 +128,7 @@ sealed class ServerMessage {
 
     @ProtoId(28) @Serializable object OpenCraft : ServerMessage()
 
-    @ProtoId(27) @Serializable object ToggleBiomeMap : ServerMessage()
+    @ProtoId(27) @Serializable object ToggleIngameMap : ServerMessage()
 
     @ProtoId(29)
     @Serializable
