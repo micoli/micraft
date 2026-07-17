@@ -259,14 +259,13 @@ make dc CMD="<any command>"   # run any command inside container
 ## Commands
 
 ```bash
-make dev-up                                          # start dev container (foreground)
-make dc CMD="./gradlew dev"                          # server :8080
-make dc CMD="./gradlew devDebug"                     # debug texture mode
-make dc CMD="./gradlew build"                        # full build
-make dc CMD="./gradlew test"                         # all tests
-make dc CMD="./gradlew :server:test"                 # server tests only
-make dc CMD="./gradlew :app:shared:jvmTest"
-make dc CMD="./gradlew ktlintCheck"
+make dev-up                    # build image + start container (pitchfork auto-starts all daemons)
+make dev-restart-server        # rebuild + restart Ktor only
+make build-wasm                # one-shot WASM recompile (Kotlin/WASM change)
+make dev-reset-wasm            # nuke WASM caches + full recompile (proto errors after core changes)
+make dev-reset                 # stop all daemons + clear caches + restart (~2 min, no volume teardown)
+make dev-nuke                  # destroy all named build volumes + full restart (nuclear)
+make dc CMD="./gradlew :server:test"                 # server tests
 make dc CMD="./gradlew :server:addUser -Pargs='email pass [name]'"
 ```
 
@@ -304,7 +303,7 @@ Same as above but implement `PluginCommand` and place the file under `plugins/<n
 After any server-side change:
 
 ```bash
-touch run.lock   # watchdog restarts Ktor; web client reconnects automatically
+make dev-restart-server   # pitchfork rebuilds + restarts Ktor; web client reconnects automatically
 ```
 
 ### Generate README commands section
@@ -318,9 +317,8 @@ make docs
 ## Running the Apps
 
 ```bash
-make dev-up                              # start dev container
-make dc CMD="./gradlew dev"              # server :8080
-make dc CMD="./gradlew devDebug"         # debug texture mode
+make dev-up                              # start dev container (server + asset watchers auto-start)
+make dc CMD="./gradlew devDebug"         # debug texture mode (single block, fly mode)
 ```
 
 ---

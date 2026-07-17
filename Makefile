@@ -10,11 +10,12 @@ else
   EXEC = bash -c
 endif
 
-.PHONY: dev-up dev-down dev-restart dev-clean-wasm dev-logs dc shell npm-format \
+.PHONY: dev-up dev-down dev-restart dev-logs dc shell npm-format \
         dev-restart-server dev-restart-clean-server \
         dev-task-stop dev-task-start dev-task-restart \
+        dev-nuke-wasm dev-reset dev-reset-wasm dev-nuke wasm-watch \
         prod-up prod-down prod-restart prod-logs prod-build \
-        build-client build-wasm build-js trigger-wasm force-update-wasm \
+        build-client build-wasm build-js trigger-wasm \
         docs help
 
 # ── Dev ───────────────────────────────────────────────────────────────────────
@@ -39,6 +40,11 @@ dev-restart:
 	make dev-down
 	make dev-up
 
+# Nuclear: destroy all named build volumes + full restart (clean slate)
+dev-nuke:
+	$(DC_DEV) down -v
+	$(DC_DEV) up --build -d
+
 dev-shell:
 	$(DC_DEV) exec -it micraft bash
 
@@ -51,15 +57,34 @@ dev-task-start:
 dev-task-restart:
 	$(DC_DEV) exec micraft pitchfork restart -l
 
-dev-clean-wasm:
-	$(EXEC) "rm -rf /workspace/app/webApp/build/klib/cache /workspace/app/webApp/build/compileSync /workspace/app/shared/build/klib/cache /workspace/app/shared/build/compileSync"
+# Nuke WASM + core klib caches in-container — no container restart needed
+# Use when wasm build produces proto decode errors or stale output after core type changes
+# Follow with: make build-wasm
+dev-nuke-wasm:
+	$(EXEC) "rm -rf \
+	  /workspace/core/build/classes/kotlin/wasmJs \
+	  /workspace/core/build/kotlin/wasmJs \
+	  /workspace/core/build/klib \
+	  /workspace/app/webApp/build/klib \
+	  /workspace/app/webApp/build/compileSync \
+	  /workspace/app/shared/build/klib \
+	  /workspace/app/shared/build/compileSync"
 
-# Force full recompile of core + wasm when Gradle reuses a stale klib (e.g. after core data class changes)
-force-update-wasm:
-	-$(DC_DEV) exec micraft pitchfork stop wasm
-	$(EXEC) "rm -rf /workspace/core/build/classes/kotlin/wasmJs /workspace/core/build/kotlin/wasmJs /workspace/core/build/klib"
-	$(EXEC) "./gradlew :core:compileKotlinWasmJs :app:webApp:copyResourcesToWebDist --rerun-tasks"
-	-$(DC_DEV) exec micraft pitchfork start wasm
+# Nuke WASM caches + full recompile in one shot (proto decode errors / stale output after core changes)
+dev-reset-wasm: dev-nuke-wasm build-wasm
+
+# Full cache reset without container restart: stop all daemons → clear build dirs → restart
+# Replaces: dev-down + docker volume rm + dev-up (faster, no volume teardown needed)
+# Note: does NOT clear build/web/ (served assets) or gradle-home/node_modules
+dev-reset:
+	$(DC_DEV) exec micraft pitchfork stop -l
+	$(EXEC) "rm -rf \
+	  /workspace/core/build \
+	  /workspace/server/build \
+	  /workspace/app/shared/build \
+	  /workspace/app/webApp/build/klib \
+	  /workspace/app/webApp/build/compileSync"
+	$(DC_DEV) exec micraft pitchfork start -l
 
 dev-tui:
 	$(DC_DEV) exec -it micraft pitchfork tui
@@ -100,10 +125,11 @@ build-wasm:
 	else \
 		$(EXEC) "./gradlew :app:webApp:copyResourcesToWebDist --rerun-tasks"; \
 	fi
-copy-wasm:
-	$(EXEC) "./gradlew :app:webApp:copyResourcesToWebDist --rerun-tasks"; \
+# Start the WASM continuous watcher (opt-in; use when iterating heavily on Kotlin/WASM code)
+wasm-watch:
+	$(DC_DEV) exec micraft pitchfork start wasm
 
-# Explicitly trigger the --continuous wasm watcher (use when ./gradlew :dev is running).
+# Explicitly trigger the --continuous wasm watcher (use when wasm-watch is running).
 trigger-wasm:
 	$(EXEC) "f=app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/babylon/BabylonBindingsWorld.kt; sed -i '/^\\/\\/ wasm-trigger/d' \$$f; echo \"// wasm-trigger $$(date +%s)\" >> \$$f"
 
@@ -176,9 +202,13 @@ help:
 	@echo "  make dc CMD=\"pitchfork tui\"          live dashboard (interactive)"
 	@echo "  make npm-format           run prettier in ts-src"
 	@echo "  make build-client         recompile wasm + js bundle (build-wasm + build-js)"
-	@echo "  make build-wasm           recompile kotlin/wasm (triggers pitchfork watcher if running)"
-	@echo "  make trigger-wasm         force wasm rebuild via source touch"
-	@echo "  make force-update-wasm    nuke stale core klib + full recompile (fixes proto decode errors after core changes)"
+	@echo "  make build-wasm           one-shot WASM recompile (use after any Kotlin/WASM change)"
+	@echo "  make wasm-watch           start WASM continuous watcher (opt-in; for heavy WASM iteration)"
+	@echo "  make trigger-wasm         force wasm rebuild via source touch (when wasm-watch is running)"
+	@echo "  make dev-nuke-wasm        nuke WASM + core klib caches in-container (follow with make build-wasm)"
+	@echo "  make dev-reset-wasm       nuke WASM caches + full recompile in one shot (proto errors / stale after core changes)"
+	@echo "  make dev-reset            stop all daemons + clear all build caches + restart (faster than dev-nuke)"
+	@echo "  make dev-nuke             destroy all named build volumes + full restart (nuclear option)"
 	@echo ""
 	@echo "Prod (port 8080 via nginx):"
 	@echo "  make prod-build           build images"

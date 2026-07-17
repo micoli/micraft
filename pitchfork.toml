@@ -21,7 +21,7 @@ watch = ["run.lock"]
 run = "./gradlew :app:webApp:copyResourcesToWebDist --continuous --console=plain --no-build-cache"
 dir = "/workspace"
 depends = ["server"]
-boot_start = true
+boot_start = false
 
 [daemons.mc_bindings]
 run = "npm run watch:mc_bindings"

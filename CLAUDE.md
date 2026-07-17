@@ -113,7 +113,34 @@ After every server-side code change:
 ```bash
 make dev-restart-server
 ```
-`./gradlew dev` watchdog kills/restarts Ktor process. Web client reconnects automatically. **Always use `touch run.lock` — never ask user to restart manually.**
+Pitchfork watchdog rebuilds and restarts Ktor. Web client reconnects automatically. **Never ask user to restart manually — always use `make dev-restart-server`.**
+
+## WASM build
+
+WASM watcher is **opt-in** (`boot_start = false`). Use these host-level commands:
+
+```bash
+make build-wasm        # one-shot WASM recompile (use after any Kotlin/WASM change)
+make dev-reset-wasm    # proto decode errors / stale output after core type changes
+make wasm-watch        # start continuous watcher (optional, for heavy WASM iteration)
+make trigger-wasm      # trigger rebuild when wasm-watch is running
+```
+
+## JS / CSS build
+
+esbuild watchers for mc_bindings, css, map, admin auto-start with the container.
+
+```bash
+make build-js          # one-shot mc_bindings rebuild (also copies babylon.js)
+```
+
+## DX — stale cache recovery
+
+| Situation | Command |
+|---|---|
+| WASM stale / proto errors | `make dev-reset-wasm` |
+| Everything weird | `make dev-reset` (stop all → clear caches → restart, ~2 min) |
+| Nuclear | `make dev-nuke` (destroy all volumes + full restart) |
 
 ## Docker execution
 
@@ -129,27 +156,9 @@ make dc CMD="npm run format"          # runs in /workspace/app/webApp/ts-src
 
 # Open a shell
 make shell
-
-# Direct form (equivalent)
-docker compose -f docker-compose.dev.yml exec micraft ./gradlew :server:test
 ```
 
 `rtk` runs on host as hook proxy — wraps `docker compose exec` automatically. Do not add `rtk` inside container command; hook injects it at host level.
-
-Restart server after server-side change (file in mounted volume, works from host or container):
-```bash
-make dc CMD="make dev-restart-server"
-```
-
-forcer le build du wasm
-```bash
-make dc CMD="make trigger-wasm"
-```
-
-forcer le build des mc_bindings
-```bash
-make dc CMD="make build-client"
-```
 
 ## Rules
 
