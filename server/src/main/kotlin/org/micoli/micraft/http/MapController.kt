@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.imageio.ImageIO
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ChunkPos
@@ -75,7 +76,7 @@ data class RoadSegmentInfo(val x1: Float, val z1: Float, val x2: Float, val z2: 
 
 @Serializable data class StaircaseMapInfo(val name: String, val x: Float, val z: Float)
 
-class MapController(private val gameLoop: GameLoop) {
+class MapController(private val gameLoop: GameLoop, private val tokenStore: TokenStore? = null) {
     private val roadRasterCache = ConcurrentHashMap<Long, List<Boolean>>()
     private val biomeBorderCache = ConcurrentHashMap<Long, List<Boolean>>()
 
@@ -83,8 +84,21 @@ class MapController(private val gameLoop: GameLoop) {
         if (!(System.getenv("MICRAFT_MAP_ENABLED") != "0")) {
             return
         }
+
+        suspend fun RoutingContext.requireMapAuth(): Boolean {
+            tokenStore ?: return true
+            val token =
+                call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")?.trim()
+            if (token == null || tokenStore.validate(token) == null) {
+                call.respond(HttpStatusCode.Unauthorized)
+                return false
+            }
+            return true
+        }
+
         route.apply {
             get("/api/map/state") {
+                if (!requireMapAuth()) return@get
                 val players =
                     gameLoop.getPlayerStates().map { s ->
                         PlayerMapInfo(s.id, s.name, s.pos.x, s.pos.y, s.pos.z, s.orientation.yaw)
@@ -101,11 +115,13 @@ class MapController(private val gameLoop: GameLoop) {
             }
 
             get("/api/map/terrain") {
+                if (!requireMapAuth()) return@get
                 call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
                 call.respondText(gameLoop.terrainCache.cachedJson, ContentType.Application.Json)
             }
 
             get("/api/map/voronoi") {
+                if (!requireMapAuth()) return@get
                 val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
                 val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
                 val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: (50 * 16)
@@ -122,6 +138,7 @@ class MapController(private val gameLoop: GameLoop) {
             }
 
             get("/api/map/houses") {
+                if (!requireMapAuth()) return@get
                 val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
                 val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
                 val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 800
@@ -137,6 +154,7 @@ class MapController(private val gameLoop: GameLoop) {
             }
 
             get("/api/map/staircases") {
+                if (!requireMapAuth()) return@get
                 val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
                 val points =
                     gen?.namedStaircasePoints()?.map { (name, pos) ->
@@ -147,6 +165,7 @@ class MapController(private val gameLoop: GameLoop) {
             }
 
             get("/api/map/roads") {
+                if (!requireMapAuth()) return@get
                 val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
                 val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
                 val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 800
@@ -164,6 +183,7 @@ class MapController(private val gameLoop: GameLoop) {
             }
 
             get("/api/map/road-raster") {
+                if (!requireMapAuth()) return@get
                 val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
                 val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
                 val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 800
@@ -199,6 +219,7 @@ class MapController(private val gameLoop: GameLoop) {
             }
 
             get("/api/map/road-raster.png") {
+                if (!requireMapAuth()) return@get
                 val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
                 val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
                 val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 1200
@@ -254,6 +275,7 @@ class MapController(private val gameLoop: GameLoop) {
             }
 
             get("/api/map/terrain-raster.png") {
+                if (!requireMapAuth()) return@get
                 val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
                 val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
                 val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 400
@@ -289,6 +311,7 @@ class MapController(private val gameLoop: GameLoop) {
             }
 
             get("/api/map/biome-borders") {
+                if (!requireMapAuth()) return@get
                 val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
                 val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
                 val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 1500

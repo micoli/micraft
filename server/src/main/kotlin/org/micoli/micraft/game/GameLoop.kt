@@ -1111,12 +1111,23 @@ class GameLoop(
     }
 
     suspend fun onChunkConnect(socket: DefaultWebSocketSession) {
-        val playerId =
+        val firstFrame =
             runCatching {
                     val frame = socket.incoming.receive()
                     if (frame is Frame.Text) frame.readText().trim() else null
                 }
                 .getOrNull() ?: return
+        val playerId =
+            if (tokenStore != null) {
+                val authResult = tokenStore.validate(firstFrame)
+                if (authResult == null) {
+                    socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "invalid token"))
+                    return
+                }
+                authResult.playerId
+            } else {
+                firstFrame
+            }
         val session = sessionRegistry[playerId] ?: return
         session.chunkSocket = socket
         log.info("chunk socket attached for {}", playerId.take(8))

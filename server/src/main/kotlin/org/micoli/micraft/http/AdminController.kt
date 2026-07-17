@@ -21,6 +21,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.auth.LocalAuthProvider
+import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
 import org.micoli.micraft.game.world.PlayerFile
@@ -60,8 +61,24 @@ class AdminController(
     private val persistence: WorldPersistence?,
     private val gameLoop: GameLoop,
     private val dataPath: String,
+    private val tokenStore: TokenStore? = null,
 ) {
     private val configDir = Path.of("$dataPath/config")
+
+    private suspend fun RoutingContext.requireAdmin(): Boolean {
+        tokenStore ?: return true
+        val token = call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")?.trim()
+        val auth = if (token != null) tokenStore.validate(token) else null
+        if (auth == null) {
+            call.respond(HttpStatusCode.Unauthorized)
+            return false
+        }
+        if ("*" !in auth.permissions && "admin" !in auth.permissions) {
+            call.respond(HttpStatusCode.Forbidden)
+            return false
+        }
+        return true
+    }
 
     fun register(route: Route) =
         route.apply {
@@ -109,6 +126,7 @@ class AdminController(
 
             // ── Status ───────────────────────────────────────────────────────
             get("/api/admin/status") {
+                if (!requireAdmin()) return@get
                 val snapshot = buildStatusSnapshot(gameLoop)
                 call.respondText(
                     adminJson.encodeToString(StatusSnapshot.serializer(), snapshot),
@@ -116,6 +134,7 @@ class AdminController(
             }
 
             post("/api/admin/restart") {
+                if (!requireAdmin()) return@post
                 val lock = Path.of("run.lock")
                 if (!lock.exists()) Files.createFile(lock)
                 Files.setLastModifiedTime(lock, FileTime.fromMillis(System.currentTimeMillis()))
@@ -123,6 +142,7 @@ class AdminController(
             }
 
             put("/api/admin/gametime") {
+                if (!requireAdmin()) return@put
                 val body =
                     runCatching { Json.parseToJsonElement(call.receiveText()).jsonObject }
                         .getOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
@@ -139,6 +159,7 @@ class AdminController(
 
             // ── Users ────────────────────────────────────────────────────────
             get("/api/admin/users") {
+                if (!requireAdmin()) return@get
                 val users: List<UserDto> =
                     when {
                         localAuth != null ->
@@ -157,6 +178,7 @@ class AdminController(
             }
 
             post("/api/admin/users") {
+                if (!requireAdmin()) return@post
                 val body =
                     runCatching { Json.parseToJsonElement(call.receiveText()).jsonObject }
                         .getOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest)
@@ -188,6 +210,7 @@ class AdminController(
             }
 
             delete("/api/admin/users/{email}") {
+                if (!requireAdmin()) return@delete
                 val email =
                     call.parameters["email"]
                         ?: return@delete call.respond(HttpStatusCode.BadRequest)
@@ -204,6 +227,7 @@ class AdminController(
             }
 
             put("/api/admin/users/{email}") {
+                if (!requireAdmin()) return@put
                 val auth = localAuth ?: return@put call.respond(HttpStatusCode.ServiceUnavailable)
                 val email =
                     call.parameters["email"] ?: return@put call.respond(HttpStatusCode.BadRequest)
@@ -221,6 +245,7 @@ class AdminController(
 
             // ── Players ──────────────────────────────────────────────────────
             get("/api/admin/players") {
+                if (!requireAdmin()) return@get
                 val p = persistence ?: return@get call.respond(HttpStatusCode.ServiceUnavailable)
                 val names = p.listPlayers()
                 call.respondText(
@@ -229,6 +254,7 @@ class AdminController(
             }
 
             get("/api/admin/players/{name}") {
+                if (!requireAdmin()) return@get
                 val p = persistence ?: return@get call.respond(HttpStatusCode.ServiceUnavailable)
                 val name =
                     call.parameters["name"] ?: return@get call.respond(HttpStatusCode.BadRequest)
@@ -240,6 +266,7 @@ class AdminController(
             }
 
             put("/api/admin/players/{name}/keybindings") {
+                if (!requireAdmin()) return@put
                 val p = persistence ?: return@put call.respond(HttpStatusCode.ServiceUnavailable)
                 val name =
                     call.parameters["name"] ?: return@put call.respond(HttpStatusCode.BadRequest)
@@ -255,6 +282,7 @@ class AdminController(
             }
 
             put("/api/admin/players/{name}/preferences") {
+                if (!requireAdmin()) return@put
                 val p = persistence ?: return@put call.respond(HttpStatusCode.ServiceUnavailable)
                 val name =
                     call.parameters["name"] ?: return@put call.respond(HttpStatusCode.BadRequest)
@@ -282,6 +310,7 @@ class AdminController(
             }
 
             post("/api/admin/players/{name}/rename") {
+                if (!requireAdmin()) return@post
                 val p = persistence ?: return@post call.respond(HttpStatusCode.ServiceUnavailable)
                 val name =
                     call.parameters["name"] ?: return@post call.respond(HttpStatusCode.BadRequest)
@@ -296,6 +325,7 @@ class AdminController(
             }
 
             put("/api/admin/players/{name}/rpg") {
+                if (!requireAdmin()) return@put
                 val p = persistence ?: return@put call.respond(HttpStatusCode.ServiceUnavailable)
                 val name =
                     call.parameters["name"] ?: return@put call.respond(HttpStatusCode.BadRequest)
@@ -331,6 +361,7 @@ class AdminController(
 
             // ── Config files ─────────────────────────────────────────────────
             get("/api/admin/configs") {
+                if (!requireAdmin()) return@get
                 val files =
                     if (configDir.exists()) {
                         configDir
@@ -358,6 +389,7 @@ class AdminController(
             }
 
             get("/api/admin/configs/{filename...}") {
+                if (!requireAdmin()) return@get
                 val filename =
                     call.parameters.getAll("filename")?.joinToString("/")
                         ?: return@get call.respond(HttpStatusCode.BadRequest)
@@ -369,6 +401,7 @@ class AdminController(
             }
 
             put("/api/admin/configs/{filename...}") {
+                if (!requireAdmin()) return@put
                 val filename =
                     call.parameters.getAll("filename")?.joinToString("/")
                         ?: return@put call.respond(HttpStatusCode.BadRequest)
@@ -382,6 +415,7 @@ class AdminController(
 
             // ── Schemas ──────────────────────────────────────────────────────
             get("/api/admin/schemas/{filename}") {
+                if (!requireAdmin()) return@get
                 val filename =
                     call.parameters["filename"]
                         ?: return@get call.respond(HttpStatusCode.BadRequest)

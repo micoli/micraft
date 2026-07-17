@@ -280,14 +280,15 @@ fun Application.module() {
         ArmorsController(dataPath).register(this)
         QuestsController(questManager).register(this)
         staticFiles("/api/models", File("resources"))
-        MapController(gameLoop).register(this)
+        MapController(gameLoop, tokenStore).register(this)
         MetricsController(gameLoop).register(this)
         AdminController(
                 authProvider as? LocalAuthProvider,
                 noAuthAccountStore,
                 persistence,
                 gameLoop,
-                dataPath)
+                dataPath,
+                tokenStore)
             .register(this)
         ChunkController(world, tokenStore, serverConfig.chunks.httpWorkers).register(this)
         get("/api/players/by-email/{email}") {

@@ -152,7 +152,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     if (chunkTransportMode != "websocket") break
                     val chunkClient = HttpClient(Js) { install(WebSockets) }
                     chunkClient.webSocket(host = host, port = port, path = "/chunks") {
-                        send(Frame.Text(pid))
+                        send(Frame.Text(token.ifEmpty { pid }))
                         for (frame in incoming) {
                             if (frame !is Frame.Binary) continue
                             val data = frame.readBytes()
