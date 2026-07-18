@@ -1,7 +1,15 @@
 import { useEffect, useLayoutEffect, useRef, useReducer, useState } from "react";
 import { MemoryRouter, Routes, Route, useNavigate, useLocation } from "react-router";
-import { HudMode, GameLayout, NpcDialogData, PreferencesData, ChannelSubscription } from "./types";
-import { UiState, reducer } from "./UIReducer";
+import {
+  HudMode,
+  GameLayout,
+  NpcDialogData,
+  PreferencesData,
+  ChannelSubscription,
+  ShortcutSlot,
+  QuestProgress,
+} from "./types";
+import { UiState, reducer, makeUiDispatch } from "./UIReducer";
 import { GameContext } from "./GameContext";
 import { DisconnectOverlay } from "./overlays/DisconnectOverlay";
 import { defaultLayout } from "./layout/LayoutEngine";
@@ -90,7 +98,8 @@ function RouterBridge({
 }
 
 export function GameUI() {
-  const [state, dispatch] = useReducer(reducer, initial);
+  const [state, rawDispatch] = useReducer(reducer, initial);
+  const dispatch = makeUiDispatch(rawDispatch);
   const [chunkDebugData, setChunkDebugData] = useState<ChunkDebugData | null>(null);
   const chunkLoadStatsRef = useRef<{ chunkDownloading: number; chunkMeshing: number }>({
     chunkDownloading: 0,
@@ -139,7 +148,7 @@ export function GameUI() {
       fetch("/api/items/meta")
         .then((r) => r.json())
         .then((data) => {
-          if (!cancelled) dispatch({ type: "item_meta_loaded", data });
+          if (!cancelled) dispatch("item_meta_loaded", { data });
         })
         .catch(() => {
           if (!cancelled) setTimeout(load, 2000);
@@ -175,7 +184,7 @@ export function GameUI() {
               },
             ]),
           );
-          dispatch({ type: "attack_meta_loaded", data });
+          dispatch("attack_meta_loaded", { data });
         })
         .catch(() => {
           if (!cancelled) setTimeout(load, 2000);
@@ -193,7 +202,7 @@ export function GameUI() {
       fetch("/api/classes")
         .then((r) => r.json())
         .then((data) => {
-          if (!cancelled) dispatch({ type: "class_definitions_loaded", data });
+          if (!cancelled) dispatch("class_definitions_loaded", { data });
         })
         .catch(() => {});
     loadClassDefinitionsRef.current = load;
@@ -222,7 +231,7 @@ export function GameUI() {
             },
           ]),
         );
-        dispatch({ type: "spell_meta_loaded", data });
+        dispatch("spell_meta_loaded", { data });
       })
       .catch(() => {});
     return () => {
@@ -308,7 +317,7 @@ export function GameUI() {
   useEffect(() => {
     if (!state.logVisible) return;
     if (logTimerRef.current) clearTimeout(logTimerRef.current);
-    logTimerRef.current = setTimeout(() => dispatch({ type: "log_hide" }), 15000);
+    logTimerRef.current = setTimeout(() => dispatch("log_hide"), 15000);
     return () => {
       if (logTimerRef.current) clearTimeout(logTimerRef.current);
     };
@@ -317,7 +326,7 @@ export function GameUI() {
   useEffect(() => {
     if (!state.notif) return;
     if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
-    notifTimerRef.current = setTimeout(() => dispatch({ type: "notification", msg: "" }), 3000);
+    notifTimerRef.current = setTimeout(() => dispatch("notification", { msg: "" }), 3000);
     return () => {
       if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
     };
@@ -366,8 +375,7 @@ export function GameUI() {
       window.mcState.minimapGameTime = gameTime;
       window.mcState.minimapSpeed = speed;
       chunkLoadStatsRef.current = { chunkDownloading, chunkMeshing };
-      dispatch({
-        type: "hud",
+      dispatch("hud", {
         data: {
           x,
           y,
@@ -398,24 +406,24 @@ export function GameUI() {
       });
     };
 
-    window.mc.showNotification = (msg: string) => dispatch({ type: "notification", msg });
-    window.mc.addServerLog = (channel: string, msg: string) => dispatch({ type: "log", channel, msg });
+    window.mc.showNotification = (msg: string) => dispatch("notification", { msg });
+    window.mc.addServerLog = (channel: string, msg: string) => dispatch("log", { channel, msg });
     window.mc.addChatMessage = (channel: string, sender: string, msg: string) =>
-      dispatch({ type: "chat_message", channel, sender, msg });
+      dispatch("chat_message", { channel, sender, msg });
     window.mc.channelsSync = (subscribedJson: string, knownJson: string) => {
       try {
         const subscribed: ChannelSubscription[] = JSON.parse(subscribedJson);
         const known: string[] = JSON.parse(knownJson);
-        dispatch({ type: "channels_sync", subscribed, known });
+        dispatch("channels_sync", { subscribed, known });
       } catch {
         /* ignore */
       }
     };
-    window.mc.updateHotbar = (json: string) => dispatch({ type: "inventory", data: JSON.parse(json) });
-    window.mc.toggleHotbar = () => dispatch({ type: "hotbar_toggle" });
-    window.mc.toggleHealthBar = () => dispatch({ type: "healthbar_toggle" });
+    window.mc.updateHotbar = (json: string) => dispatch("inventory", { data: JSON.parse(json) });
+    window.mc.toggleHotbar = () => dispatch("hotbar_toggle");
+    window.mc.toggleHealthBar = () => dispatch("healthbar_toggle");
     window.mc.toggleStatistics = () => {
-      dispatch({ type: "statistics_toggle" });
+      dispatch("statistics_toggle");
       const prefs = preferencesRef.current;
       if (prefs) {
         const newVisible = !(prefs.statisticsVisible ?? false);
@@ -436,16 +444,16 @@ export function GameUI() {
     };
     window.mc.updateShortcutBar = (json: string) => {
       const raw = JSON.parse(json) as { slots: ({ kind: string; id: string } | null)[]; selected: number };
-      const slots = raw.slots.map((s): import("./UIReducer").ShortcutSlot | null => {
+      const slots = raw.slots.map((s): ShortcutSlot | null => {
         if (!s) return null;
         if (s.kind === "attack") return { kind: "attack", id: s.id };
         if (s.kind === "macro") return { kind: "macro", id: s.id };
         if (s.kind === "spell") return { kind: "spell", id: s.id };
         return { kind: "item", id: s.id };
       });
-      dispatch({ type: "shortcut_bar_update", data: { slots, selected: raw.selected } });
+      dispatch("shortcut_bar_update", { data: { slots, selected: raw.selected } });
     };
-    window.mc.setSelectedSlot = (slot: number) => dispatch({ type: "slot_select", slot });
+    window.mc.setSelectedSlot = (slot: number) => dispatch("slot_select", { slot });
     window.mc.consumeSlotUpdate = () => pendingSlotUpdateRef.current.shift() ?? "";
     window.mcState.slotDrop = (slot: number, content: { kind: string; id: string } | null) => {
       pendingSlotUpdateRef.current.push(JSON.stringify({ slot, content: content ?? null }));
@@ -471,24 +479,24 @@ export function GameUI() {
     };
     window.mc.hideLoginOverlay = () => navigateRef.current?.("/game");
     window.mc.showDisconnectedOverlay = (msg: string) => {
-      dispatch({ type: "disconnect_show", message: msg });
+      dispatch("disconnect_show", { message: msg });
     };
-    window.mc.hideDisconnectedOverlay = () => dispatch({ type: "disconnect_hide" });
+    window.mc.hideDisconnectedOverlay = () => dispatch("disconnect_hide");
     window.mc.updateChunkLoading = (meshed: number, downloaded: number, total: number) =>
-      dispatch({ type: "chunk_loading_update", meshed, downloaded, total });
-    window.mc.hideChunkLoading = () => dispatch({ type: "chunk_loading_hide" });
+      dispatch("chunk_loading_update", { meshed, downloaded, total });
+    window.mc.hideChunkLoading = () => dispatch("chunk_loading_hide");
 
-    window.mc.showConsole = () => dispatch({ type: "console_show" });
-    window.mc.hideConsole = () => dispatch({ type: "console_hide" });
+    window.mc.showConsole = () => dispatch("console_show");
+    window.mc.hideConsole = () => dispatch("console_hide");
     window.mc.isConsoleOpen = () => consoleOpenRef.current;
     window.mc.isConsoleInputFocused = () => consoleOpenRef.current && consoleFocusRef.current;
     window.mc.toggleConsole = () => {
       if (consoleOpenRef.current) {
-        dispatch({ type: "console_hide" });
+        dispatch("console_hide");
       } else {
         consoleInitialValueRef.current = "";
         consoleFocusRef.current = false;
-        dispatch({ type: "console_show" });
+        dispatch("console_show");
       }
     };
 
@@ -521,15 +529,15 @@ export function GameUI() {
 
     window.mc.syncLayouts = (json: string) => {
       const data: { layouts?: GameLayout[]; activeLayout: string } = JSON.parse(json);
-      if (data.layouts) dispatch({ type: "layouts_sync", layouts: data.layouts, activeLayout: data.activeLayout });
+      if (data.layouts) dispatch("layouts_sync", { layouts: data.layouts, activeLayout: data.activeLayout });
     };
 
-    window.mc.showLayoutEditor = () => dispatch({ type: "layout_editor_show" });
-    window.mc.hideLayoutEditor = () => dispatch({ type: "layout_editor_hide" });
+    window.mc.showLayoutEditor = () => dispatch("layout_editor_show");
+    window.mc.hideLayoutEditor = () => dispatch("layout_editor_hide");
 
-    window.mcState.dispatch = dispatch as (action: unknown) => void;
+    window.mcState.dispatch = dispatch as unknown as (action: unknown) => void;
     window.mc.openNpcDialog = (json: string) =>
-      dispatch({ type: "npc_dialog_open", payload: JSON.parse(json) as NpcDialogData });
+      dispatch("npc_dialog_open", { data: JSON.parse(json) as NpcDialogData });
 
     window.mc.consumeLayoutUpdate = () => {
       const v = pendingLayoutUpdateRef.current;
@@ -561,7 +569,7 @@ export function GameUI() {
             }
           }
         }
-        dispatch({ type: "preferences_sync", data });
+        dispatch("preferences_sync", { data });
         window.mc.applyFaviconPref?.(data.animatedFavicon ?? true);
       } catch {
         /* ignore */
@@ -584,26 +592,25 @@ export function GameUI() {
       return v;
     };
 
-    window.mc.showPreferences = () => dispatch({ type: "preferences_show" });
-    window.mc.openCodex = () => dispatch({ type: "codex_open" });
-    window.mc.openCraft = () => dispatch({ type: "craft_open" });
+    window.mc.showPreferences = () => dispatch("preferences_show");
+    window.mc.openCodex = () => dispatch("codex_open");
+    window.mc.openCraft = () => dispatch("craft_open");
     window.mc.recipeSync = (json: string) => {
       try {
         const parsed = JSON.parse(json) as {
           recipes: Record<string, import("./types").RecipeDefinition>;
           knownRecipes: string[];
         };
-        dispatch({ type: "craft_sync", recipes: parsed.recipes, knownRecipes: parsed.knownRecipes });
+        dispatch("craft_sync", { recipes: parsed.recipes, knownRecipes: parsed.knownRecipes });
       } catch {
         /* ignore */
       }
     };
-    window.mc.openCharacter = () => dispatch({ type: "character_open" });
+    window.mc.openCharacter = () => dispatch("character_open");
     window.mc.showCharacterCreation = () => navigateRef.current?.("/char-rpg-create");
-    window.mc.characterSync = (json: string) => dispatch({ type: "character_sync", data: JSON.parse(json) });
+    window.mc.characterSync = (json: string) => dispatch("character_sync", { data: JSON.parse(json) });
     window.mc.openTrade = (tradeId: string, otherPlayer: string, _role: string) =>
-      dispatch({
-        type: "trade_open",
+      dispatch("trade_open", {
         data: { tradeId, otherPlayer, myOffer: {}, theirOffer: {}, myAccepted: false, theirAccepted: false },
       });
     window.mc.tradeUpdate = (json: string) => {
@@ -616,13 +623,13 @@ export function GameUI() {
           theirAccepted: boolean;
         };
         const data = { ...partial, otherPlayer: tradeRef.current?.otherPlayer ?? "" };
-        dispatch({ type: "trade_update", data });
+        dispatch("trade_update", { data });
       } catch {
         /* ignore */
       }
     };
-    window.mc.tradeClosed = (_tradeId: string, _reason: string) => dispatch({ type: "trade_close" });
-    window.mc.IngameMap = () => dispatch({ type: "ingame_map_toggle" });
+    window.mc.tradeClosed = (_tradeId: string, _reason: string) => dispatch("trade_close");
+    window.mc.IngameMap = () => dispatch("ingame_map_toggle");
     window.mc.dumpStats = () => {
       const h = hudDataRef.current;
       if (!h) return;
@@ -637,8 +644,7 @@ export function GameUI() {
         "Chunks DL": h.chunkDownloading,
         "Chunks mesh": h.chunkMeshing,
       });
-      dispatch({
-        type: "notification",
+      dispatch("notification", {
         msg: `Tick:${h.tickDtMinMs.toFixed(1)}↔${h.tickDtMaxMs.toFixed(1)}ms Jitr:${h.tickJitterMinMs.toFixed(1)}↔${h.tickJitterMaxMs.toFixed(1)}ms DL:${h.chunkDownloading} Mesh:${h.chunkMeshing}`,
       });
     };
@@ -647,18 +653,18 @@ export function GameUI() {
       setChunkDebugData({ ...(JSON.parse(json) as ChunkDebugData), ...chunkLoadStatsRef.current });
     };
 
-    window.mc.combatTargetUpdate = (json: string) => dispatch({ type: "combat_target_update", data: JSON.parse(json) });
-    window.mc.healthUpdate = (json: string) => dispatch({ type: "health_update", data: JSON.parse(json) });
-    window.mc.playerStatusUpdate = (json: string) => dispatch({ type: "player_status_update", data: JSON.parse(json) });
-    window.mc.updateNpcProximity = (json: string) => dispatch({ type: "npc_proximity_update", data: JSON.parse(json) });
-    window.mc.statusEffectUpdate = (json: string) => dispatch({ type: "status_effect_update", data: JSON.parse(json) });
-    window.mc.playerDowned = (playerId: string) => dispatch({ type: "player_downed", playerId });
-    window.mc.playerRespawned = (json: string) => dispatch({ type: "player_respawned", data: JSON.parse(json) });
-    window.mc.xpGained = (json: string) => dispatch({ type: "xp_gained", data: JSON.parse(json) });
+    window.mc.combatTargetUpdate = (json: string) => dispatch("combat_target_update", { data: JSON.parse(json) });
+    window.mc.healthUpdate = (json: string) => dispatch("health_update", { data: JSON.parse(json) });
+    window.mc.playerStatusUpdate = (json: string) => dispatch("player_status_update", { data: JSON.parse(json) });
+    window.mc.updateNpcProximity = (json: string) => dispatch("npc_proximity_update", { data: JSON.parse(json) });
+    window.mc.statusEffectUpdate = (json: string) => dispatch("status_effect_update", { data: JSON.parse(json) });
+    window.mc.playerDowned = (playerId: string) => dispatch("player_downed", { playerId });
+    window.mc.playerRespawned = (json: string) => dispatch("player_respawned", { data: JSON.parse(json) });
+    window.mc.xpGained = (json: string) => dispatch("xp_gained", { data: JSON.parse(json) });
     window.mc.questSync = (json: string) => {
       try {
-        const msg = JSON.parse(json) as { quests: Record<string, import("./UIReducer").QuestProgress> };
-        dispatch({ type: "quest_sync", quests: msg.quests });
+        const msg = JSON.parse(json) as { quests: Record<string, QuestProgress> };
+        dispatch("quest_sync", { quests: msg.quests });
         if (Object.keys(questDefsRef.current).length === 0) {
           fetch("/api/quests")
             .then((r) => r.json())
@@ -675,18 +681,18 @@ export function GameUI() {
     };
     window.mc.questUpdate = (json: string) => {
       try {
-        const msg = JSON.parse(json) as { questId: string; progress: import("./UIReducer").QuestProgress };
-        dispatch({ type: "quest_update", questId: msg.questId, progress: msg.progress });
+        const msg = JSON.parse(json) as { questId: string; progress: QuestProgress };
+        dispatch("quest_update", { questId: msg.questId, progress: msg.progress });
         if (msg.progress.status === "COMPLETED") {
           const title = questDefsRef.current[msg.questId]?.title ?? msg.questId;
-          dispatch({ type: "notification", msg: `✓ Quest completed: ${title}` });
+          dispatch("notification", { msg: `✓ Quest completed: ${title}` });
         }
       } catch {
         /* ignore */
       }
     };
-    window.mc.openQuestJournal = () => dispatch({ type: "quest_journal_open" });
-    window.mc.toggleQuestTracker = () => dispatch({ type: "quest_tracker_toggle" });
+    window.mc.openQuestJournal = () => dispatch("quest_journal_open");
+    window.mc.toggleQuestTracker = () => dispatch("quest_tracker_toggle");
     window.mc.reloadAttackMeta = () => {
       loadAttackMetaRef.current();
       loadClassDefinitionsRef.current();
@@ -712,49 +718,49 @@ export function GameUI() {
           )?.catch(() => {});
         };
         if (characterOpenRef.current) {
-          dispatch({ type: "character_close" });
+          dispatch("character_close");
           resumeGame();
           return;
         }
         if (codexOpenRef.current) {
-          dispatch({ type: "codex_close" });
+          dispatch("codex_close");
           resumeGame();
           return;
         }
         if (craftOpenRef.current) {
-          dispatch({ type: "craft_close" });
+          dispatch("craft_close");
           resumeGame();
           return;
         }
         if (tradeOpenRef.current) {
-          dispatch({ type: "trade_close" });
+          dispatch("trade_close");
           resumeGame();
           return;
         }
         if (questJournalOpenRef.current) {
-          dispatch({ type: "quest_journal_close" });
+          dispatch("quest_journal_close");
           resumeGame();
           return;
         }
         if (preferencesOpenRef.current) {
-          dispatch({ type: "preferences_hide" });
+          dispatch("preferences_hide");
           resumeGame();
           return;
         }
         if (macroEditorOpenRef.current) {
-          dispatch({ type: "macro_editor_close" });
+          dispatch("macro_editor_close");
           resumeGame();
           return;
         }
         if (pauseMenuOpenRef.current) {
-          dispatch({ type: "pause_menu_hide" });
+          dispatch("pause_menu_hide");
           (
             (
               document.getElementById("renderCanvas") as HTMLCanvasElement | null
             )?.requestPointerLock() as unknown as Promise<void>
           )?.catch?.(() => {});
         } else {
-          dispatch({ type: "pause_menu_show" });
+          dispatch("pause_menu_show");
         }
         return;
       }
@@ -774,12 +780,12 @@ export function GameUI() {
         ke.preventDefault();
         consoleInitialValueRef.current = "/";
         consoleFocusRef.current = true;
-        dispatch({ type: "console_show" });
+        dispatch("console_show");
       } else if (ke.key === "Enter" && !consoleOpenRef.current) {
         ke.preventDefault();
         consoleInitialValueRef.current = "";
         consoleFocusRef.current = true;
-        dispatch({ type: "console_show" });
+        dispatch("console_show");
       }
     }
     document.addEventListener("keydown", onGlobalKeydown);

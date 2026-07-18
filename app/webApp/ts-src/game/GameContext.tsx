@@ -1,10 +1,10 @@
 import { createContext, useContext } from "react";
-import { UiState, UiAction } from "./UIReducer";
+import { UiState, UiDispatch } from "./UIReducer";
 import { ChunkDebugData } from "./components/ChunkDebug";
 
 export interface GameContextValue {
   state: UiState;
-  dispatch: React.Dispatch<UiAction>;
+  dispatch: UiDispatch;
   loginResultRef: React.MutableRefObject<string>;
   consoleSubmittedRef: React.MutableRefObject<string | null>;
   consoleStateRef: React.MutableRefObject<{

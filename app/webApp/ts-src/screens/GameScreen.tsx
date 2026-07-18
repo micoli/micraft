@@ -88,8 +88,7 @@ export function GameScreen() {
     customCommands: Record<string, string[]>;
     fieldOfView?: number;
   }) => {
-    dispatch({
-      type: "preferences_save",
+    dispatch("preferences_save", {
       data: {
         ...payload,
         dynamicFogEnabled: payload.dynamicFogEnabled ?? state.preferences?.dynamicFogEnabled ?? true,
@@ -114,8 +113,7 @@ export function GameScreen() {
   ) => {
     const prefs = state.preferences;
     if (!prefs) return;
-    dispatch({
-      type: "preferences_save",
+    dispatch("preferences_save", {
       data: {
         subscribedChannels: prefs.subscribedChannels,
         disabledCommands: prefs.disabledCommands,
@@ -148,11 +146,11 @@ export function GameScreen() {
       macros,
       macroIcons,
     });
-    dispatch({ type: "macro_editor_close" });
+    dispatch("macro_editor_close");
   };
 
   const handleLayoutSave = (layouts: GameLayout[], newActiveLayout: string) => {
-    dispatch({ type: "layout_editor_save", layouts, activeLayout: newActiveLayout });
+    dispatch("layout_editor_save", { layouts, activeLayout: newActiveLayout });
     pendingLayoutUpdateRef.current = JSON.stringify({ layouts, activeLayout: newActiveLayout });
   };
 
@@ -258,7 +256,7 @@ export function GameScreen() {
             activeChannel={state.activeChannel}
             unreadChannels={state.unreadChannels}
             onChannelSelect={(ch) => {
-              dispatch({ type: "active_channel_select", channel: ch });
+              dispatch("active_channel_select", { channel: ch });
               window.mcState.activeChannel = ch;
             }}
             layoutStyle={widgetStyle(activeLayout, "CHAT_HISTORY")}
@@ -282,7 +280,7 @@ export function GameScreen() {
           {state.playerDowned && <PlayerDownedOverlay />}
           <Console
             open={state.consoleOpen}
-            onClose={() => dispatch({ type: "console_hide" })}
+            onClose={() => dispatch("console_hide")}
             submittedRef={consoleSubmittedRef}
             stateRef={consoleStateRef}
             initialValueRef={consoleInitialValueRef}
@@ -294,20 +292,20 @@ export function GameScreen() {
             layouts={state.layouts}
             activeLayout={state.activeLayout}
             onSave={handleLayoutSave}
-            onClose={() => dispatch({ type: "layout_editor_hide" })}
+            onClose={() => dispatch("layout_editor_hide")}
           />
-          <NpcDialog data={state.npcDialog} onClose={() => dispatch({ type: "npc_dialog_close" })} />
+          <NpcDialog data={state.npcDialog} onClose={() => dispatch("npc_dialog_close")} />
           <CodexModal
             open={state.codexOpen}
             onClose={() => {
-              dispatch({ type: "codex_close" });
+              dispatch("codex_close");
               resumePointerLock();
             }}
           />
           <Craft
             open={state.craftOpen}
             onClose={() => {
-              dispatch({ type: "craft_close" });
+              dispatch("craft_close");
               resumePointerLock();
             }}
             recipes={state.craftRecipes}
@@ -330,7 +328,7 @@ export function GameScreen() {
             itemMeta={state.itemMeta}
             onClose={(tradeId) => {
               if (tradeId) consoleSubmittedRef.current = `/tradecancel ${tradeId}`;
-              dispatch({ type: "trade_close" });
+              dispatch("trade_close");
               resumePointerLock();
             }}
             onAccept={(tradeId) => {
@@ -346,7 +344,7 @@ export function GameScreen() {
             attackMeta={filteredAttackMeta}
             spellMeta={state.spellMeta}
             onClose={() => {
-              dispatch({ type: "character_close" });
+              dispatch("character_close");
               resumePointerLock();
             }}
             onCommand={(cmd) => {
@@ -358,14 +356,14 @@ export function GameScreen() {
             preferences={state.preferences}
             onSave={handlePreferencesSave}
             onClose={() => {
-              dispatch({ type: "preferences_hide" });
+              dispatch("preferences_hide");
               resumePointerLock();
             }}
           />
           <PauseMenu
             open={state.pauseMenuOpen}
             onClose={() => {
-              dispatch({ type: "pause_menu_hide" });
+              dispatch("pause_menu_hide");
               (
                 (
                   document.getElementById("renderCanvas") as HTMLCanvasElement | null
@@ -376,43 +374,43 @@ export function GameScreen() {
               {
                 label: "Craft",
                 callback: () => {
-                  dispatch({ type: "pause_menu_hide" });
-                  dispatch({ type: "craft_open" });
+                  dispatch("pause_menu_hide");
+                  dispatch("craft_open");
                 },
               },
               {
                 label: "Quests",
                 callback: () => {
-                  dispatch({ type: "pause_menu_hide" });
-                  dispatch({ type: "quest_journal_open" });
+                  dispatch("pause_menu_hide");
+                  dispatch("quest_journal_open");
                 },
               },
               {
                 label: "Character",
                 callback: () => {
-                  dispatch({ type: "pause_menu_hide" });
-                  dispatch({ type: "character_open" });
+                  dispatch("pause_menu_hide");
+                  dispatch("character_open");
                 },
               },
               {
                 label: "Map",
                 callback: () => {
-                  dispatch({ type: "pause_menu_hide" });
-                  dispatch({ type: "ingame_map_toggle" });
+                  dispatch("pause_menu_hide");
+                  dispatch("ingame_map_toggle");
                 },
               },
               {
                 label: "Macros",
                 callback: () => {
-                  dispatch({ type: "pause_menu_hide" });
-                  dispatch({ type: "macro_editor_open" });
+                  dispatch("pause_menu_hide");
+                  dispatch("macro_editor_open");
                 },
               },
               {
                 label: "Preferences",
                 callback: () => {
-                  dispatch({ type: "pause_menu_hide" });
-                  dispatch({ type: "preferences_show" });
+                  dispatch("pause_menu_hide");
+                  dispatch("preferences_show");
                 },
               },
               {
@@ -421,7 +419,7 @@ export function GameScreen() {
                 callback: () => {
                   window.mcState.intentionalDisconnect = true;
                   consoleSubmittedRef.current = "/disconnect";
-                  dispatch({ type: "pause_menu_hide" });
+                  dispatch("pause_menu_hide");
                 },
               },
               {
@@ -447,7 +445,7 @@ export function GameScreen() {
             attackKeys={Object.keys(filteredAttackMeta)}
             onSave={handleMacrosSave}
             onClose={() => {
-              dispatch({ type: "macro_editor_close" });
+              dispatch("macro_editor_close");
               resumePointerLock();
             }}
           />
@@ -455,7 +453,7 @@ export function GameScreen() {
             open={state.questJournalOpen}
             quests={state.quests}
             onClose={() => {
-              dispatch({ type: "quest_journal_close" });
+              dispatch("quest_journal_close");
               resumePointerLock();
             }}
             onCommand={(cmd) => {
