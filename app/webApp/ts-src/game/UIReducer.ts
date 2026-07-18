@@ -1,12 +1,15 @@
 import {
   ChannelSubscription,
   CharacterSyncData,
+  CombatTargetData,
   GameLayout,
   HudData,
   LogEntry,
   NpcDialogData,
+  PlayerStatusData,
   PreferencesData,
   RecipeDefinition,
+  TradeData,
 } from "./types";
 
 export type ShortcutSlot =
@@ -86,37 +89,11 @@ export interface UiState {
   characterOpen: boolean;
   characterSyncData: CharacterSyncData | null;
   ingameMapVisible: boolean;
-  combatTarget: {
-    targetId: string | null;
-    displayName: string | null;
-    currentHp: number;
-    maxHp: number;
-    targetOfTarget: { id: string; name: string; currentHp: number; maxHp: number } | null;
-    distance: number | null;
-    level?: number;
-  } | null;
-  playerStatus: {
-    currentHp: number;
-    maxHp: number;
-    currentMana: number;
-    maxMana: number;
-    currentRage: number;
-    maxRage: number;
-    currentTokens: number;
-    maxTokens: number;
-    stance: string;
-    globalCooldownRemainingMs: number;
-    attackCooldownsRemainingMs: Record<string, number>;
-  } | null;
+  combatTarget: CombatTargetData | null;
+  playerStatus: PlayerStatusData | null;
   playerDowned: boolean;
   xpState: { xpGained: number; totalXp: number; level: number; leveledUp: boolean; nextLevelXp: number } | null;
-  tradeOpen: boolean;
-  tradeId: string | null;
-  tradeOtherPlayer: string | null;
-  tradeMyOffer: Record<string, number>;
-  tradeTheirOffer: Record<string, number>;
-  tradeMyAccepted: boolean;
-  tradeTheirAccepted: boolean;
+  trade: TradeData | null;
   classDefinitions: ClassDefinitions | null;
   npcProximity: NpcProximityEntry[];
   quests: Record<string, QuestProgress>;
@@ -173,19 +150,12 @@ export type UiAction =
   | { type: "ingame_map_toggle" }
   | { type: "ingame_map_open" }
   | { type: "ingame_map_close" }
-  | { type: "trade_open"; tradeId: string; otherPlayer: string }
-  | {
-      type: "trade_update";
-      tradeId: string;
-      myOffer: Record<string, number>;
-      theirOffer: Record<string, number>;
-      myAccepted: boolean;
-      theirAccepted: boolean;
-    }
-  | { type: "trade_close" }
-  | { type: "combat_target_update"; data: unknown }
+  | { type: "trade_open"; data: TradeData }
+  | { type: "trade_update"; data: TradeData }
+  | { type: "trade_close"; data?: TradeData }
+  | { type: "combat_target_update"; data: CombatTargetData | null }
   | { type: "health_update"; data: unknown }
-  | { type: "player_status_update"; data: unknown }
+  | { type: "player_status_update"; data: PlayerStatusData | null }
   | { type: "npc_proximity_update"; data: NpcProximityEntry[] }
   | { type: "status_effect_update"; data: unknown }
   | { type: "player_downed"; playerId: string }
@@ -334,38 +304,12 @@ export function reducer(state: UiState, action: UiAction): UiState {
     case "ingame_map_close":
       return { ...state, ingameMapVisible: false };
     case "trade_open":
-      return {
-        ...state,
-        tradeOpen: true,
-        tradeId: action.tradeId,
-        tradeOtherPlayer: action.otherPlayer,
-        tradeMyOffer: {},
-        tradeTheirOffer: {},
-        tradeMyAccepted: false,
-        tradeTheirAccepted: false,
-      };
     case "trade_update":
-      return {
-        ...state,
-        tradeId: action.tradeId,
-        tradeMyOffer: action.myOffer,
-        tradeTheirOffer: action.theirOffer,
-        tradeMyAccepted: action.myAccepted,
-        tradeTheirAccepted: action.theirAccepted,
-      };
+      return { ...state, trade: action.data };
     case "trade_close":
-      return {
-        ...state,
-        tradeOpen: false,
-        tradeId: null,
-        tradeOtherPlayer: null,
-        tradeMyOffer: {},
-        tradeTheirOffer: {},
-        tradeMyAccepted: false,
-        tradeTheirAccepted: false,
-      };
+      return { ...state, trade: null };
     case "combat_target_update": {
-      const target = action.data as UiState["combatTarget"];
+      const target = action.data;
       return {
         ...state,
         combatTarget: target,
@@ -375,7 +319,7 @@ export function reducer(state: UiState, action: UiAction): UiState {
     case "npc_proximity_update":
       return { ...state, npcProximity: action.data };
     case "player_status_update": {
-      const next = action.data as UiState["playerStatus"];
+      const next = action.data;
       const damaged = state.playerStatus != null && next != null && next.currentHp < state.playerStatus.currentHp;
       return {
         ...state,

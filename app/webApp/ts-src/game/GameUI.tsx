@@ -57,13 +57,7 @@ const initial: UiState = {
   playerStatus: null,
   playerDowned: false,
   xpState: null,
-  tradeOpen: false,
-  tradeId: null,
-  tradeOtherPlayer: null,
-  tradeMyOffer: {},
-  tradeTheirOffer: {},
-  tradeMyAccepted: false,
-  tradeTheirAccepted: false,
+  trade: null,
   classDefinitions: null,
   npcProximity: [],
   quests: {},
@@ -131,6 +125,7 @@ export function GameUI() {
   const craftOpenRef = useRef(false);
   const characterOpenRef = useRef(false);
   const tradeOpenRef = useRef(false);
+  const tradeRef = useRef<import("./types").TradeData | null>(null);
   const questJournalOpenRef = useRef(false);
   const macroEditorOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
@@ -254,8 +249,9 @@ export function GameUI() {
     characterOpenRef.current = state.characterOpen;
   }, [state.characterOpen]);
   useLayoutEffect(() => {
-    tradeOpenRef.current = state.tradeOpen;
-  }, [state.tradeOpen]);
+    tradeOpenRef.current = state.trade !== null;
+    tradeRef.current = state.trade;
+  }, [state.trade]);
   useLayoutEffect(() => {
     questJournalOpenRef.current = state.questJournalOpen;
   }, [state.questJournalOpen]);
@@ -606,17 +602,21 @@ export function GameUI() {
     window.mc.showCharacterCreation = () => navigateRef.current?.("/char-rpg-create");
     window.mc.characterSync = (json: string) => dispatch({ type: "character_sync", data: JSON.parse(json) });
     window.mc.openTrade = (tradeId: string, otherPlayer: string, _role: string) =>
-      dispatch({ type: "trade_open", tradeId, otherPlayer });
+      dispatch({
+        type: "trade_open",
+        data: { tradeId, otherPlayer, myOffer: {}, theirOffer: {}, myAccepted: false, theirAccepted: false },
+      });
     window.mc.tradeUpdate = (json: string) => {
       try {
-        const msg = JSON.parse(json) as {
+        const partial = JSON.parse(json) as {
           tradeId: string;
           myOffer: Record<string, number>;
           theirOffer: Record<string, number>;
           myAccepted: boolean;
           theirAccepted: boolean;
         };
-        dispatch({ type: "trade_update", ...msg });
+        const data = { ...partial, otherPlayer: tradeRef.current?.otherPlayer ?? "" };
+        dispatch({ type: "trade_update", data });
       } catch {
         /* ignore */
       }
@@ -706,8 +706,9 @@ export function GameUI() {
       if (ke.key === "Escape" && !consoleOpenRef.current) {
         const resumeGame = () => {
           (
-            (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
-              ?.requestPointerLock() as unknown as Promise<void>
+            (
+              document.getElementById("renderCanvas") as HTMLCanvasElement | null
+            )?.requestPointerLock() as unknown as Promise<void>
           )?.catch(() => {});
         };
         if (characterOpenRef.current) {

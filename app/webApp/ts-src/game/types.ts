@@ -118,6 +118,15 @@ export interface CharacterSyncData {
   effectiveBaseStats: BaseStats;
 }
 
+export interface TradeData {
+  tradeId: string;
+  otherPlayer: string;
+  myOffer: Record<string, number>;
+  theirOffer: Record<string, number>;
+  myAccepted: boolean;
+  theirAccepted: boolean;
+}
+
 export interface PreferencesData {
   subscribedChannels: ChannelSubscription[];
   knownChannels: string[];
@@ -135,3 +144,27 @@ export interface PreferencesData {
   macroIcons?: Record<string, string>;
   fieldOfView: number;
 }
+
+export type CombatTargetData = {
+  targetId: string | null;
+  displayName: string | null;
+  currentHp: number;
+  maxHp: number;
+  targetOfTarget: { id: string; name: string; currentHp: number; maxHp: number } | null;
+  distance: number | null;
+  level?: number;
+};
+
+export type PlayerStatusData = {
+  currentHp: number;
+  maxHp: number;
+  currentMana: number;
+  maxMana: number;
+  currentRage: number;
+  maxRage: number;
+  currentTokens: number;
+  maxTokens: number;
+  stance: string;
+  globalCooldownRemainingMs: number;
+  attackCooldownsRemainingMs: Record<string, number>;
+};

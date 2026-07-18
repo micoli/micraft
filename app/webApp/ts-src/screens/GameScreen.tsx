@@ -318,13 +318,13 @@ export function GameScreen() {
             }}
           />
           <Trade
-            open={state.tradeOpen}
-            tradeId={state.tradeId}
-            otherPlayer={state.tradeOtherPlayer ?? ""}
-            myOffer={state.tradeMyOffer}
-            theirOffer={state.tradeTheirOffer}
-            myAccepted={state.tradeMyAccepted}
-            theirAccepted={state.tradeTheirAccepted}
+            open={state.trade !== null}
+            tradeId={state.trade?.tradeId ?? null}
+            otherPlayer={state.trade?.otherPlayer ?? ""}
+            myOffer={state.trade?.myOffer ?? {}}
+            theirOffer={state.trade?.theirOffer ?? {}}
+            myAccepted={state.trade?.myAccepted ?? false}
+            theirAccepted={state.trade?.theirAccepted ?? false}
             inventory={state.inventory}
             itemMeta={state.itemMeta}
             onClose={(tradeId) => {
@@ -372,44 +372,70 @@ export function GameScreen() {
               )?.catch?.(() => {});
             }}
             items={[
-            {label:"Craft",callback:() => {
-              dispatch({ type: "pause_menu_hide" });
-              dispatch({ type: "craft_open" });
-            }},
-            {label:"Quests",callback:() => {
-              dispatch({ type: "pause_menu_hide" });
-              dispatch({ type: "quest_journal_open" });
-            }},
-            {label:"Character",callback:() => {
-              dispatch({ type: "pause_menu_hide" });
-              dispatch({ type: "character_open" });
-            }},
-            {label:"Map",callback:() => {
-              dispatch({ type: "pause_menu_hide" });
-              dispatch({ type: "ingame_map_toggle" });
-            }},
-            {label:"Macros",callback:() => {
-              dispatch({ type: "pause_menu_hide" });
-              dispatch({ type: "macro_editor_open" });
-            }},
-            {label:"Preferences",callback:() => {
-              dispatch({ type: "pause_menu_hide" });
-              dispatch({ type: "preferences_show" });
-            }},
-            {label:"Disconnect",variant:"danger",callback:() => {
-              window.mcState.intentionalDisconnect = true;
-              consoleSubmittedRef.current = "/disconnect";
-              dispatch({ type: "pause_menu_hide" });
-            }},
-            {label:"Refresh",variant:"outline",callback:() => {
-              const controller = navigator.serviceWorker?.controller ?? null;
-              if (controller) {
-                controller.postMessage({ type: "FORCE_UPDATE" });
-              } else {
-                window.location.reload();
-              }
-            }}
-          ]}
+              {
+                label: "Craft",
+                callback: () => {
+                  dispatch({ type: "pause_menu_hide" });
+                  dispatch({ type: "craft_open" });
+                },
+              },
+              {
+                label: "Quests",
+                callback: () => {
+                  dispatch({ type: "pause_menu_hide" });
+                  dispatch({ type: "quest_journal_open" });
+                },
+              },
+              {
+                label: "Character",
+                callback: () => {
+                  dispatch({ type: "pause_menu_hide" });
+                  dispatch({ type: "character_open" });
+                },
+              },
+              {
+                label: "Map",
+                callback: () => {
+                  dispatch({ type: "pause_menu_hide" });
+                  dispatch({ type: "ingame_map_toggle" });
+                },
+              },
+              {
+                label: "Macros",
+                callback: () => {
+                  dispatch({ type: "pause_menu_hide" });
+                  dispatch({ type: "macro_editor_open" });
+                },
+              },
+              {
+                label: "Preferences",
+                callback: () => {
+                  dispatch({ type: "pause_menu_hide" });
+                  dispatch({ type: "preferences_show" });
+                },
+              },
+              {
+                label: "Disconnect",
+                variant: "danger",
+                callback: () => {
+                  window.mcState.intentionalDisconnect = true;
+                  consoleSubmittedRef.current = "/disconnect";
+                  dispatch({ type: "pause_menu_hide" });
+                },
+              },
+              {
+                label: "Refresh",
+                variant: "outline",
+                callback: () => {
+                  const controller = navigator.serviceWorker?.controller ?? null;
+                  if (controller) {
+                    controller.postMessage({ type: "FORCE_UPDATE" });
+                  } else {
+                    window.location.reload();
+                  }
+                },
+              },
+            ]}
           />
           <MacroEditor
             open={state.macroEditorOpen}
