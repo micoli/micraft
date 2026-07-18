@@ -17,7 +17,7 @@ endif
         dev-task-stop dev-task-start dev-task-restart \
         dev-nuke-wasm dev-reset dev-reset-wasm dev-nuke wasm-watch \
         prod-up prod-down prod-restart prod-logs prod-build \
-        build-client build-wasm build-js trigger-wasm \
+        build-client build-wasm build-js build-map trigger-wasm \
         docs help
 
 # ── Dev ───────────────────────────────────────────────────────────────────────
@@ -138,6 +138,9 @@ trigger-wasm:
 build-js:
 	$(EXEC) "cd app/webApp/ts-src && npm run build"
 
+build-map:
+	$(EXEC) "cd app/webApp/ts-src && npm run build:map && npm run build:map:css"
+
 build-plugin-examples-hello-world:
 	$(EXEC) "./gradlew :plugin-examples:hello-world:shadowJa"
 
@@ -224,6 +227,7 @@ help:
 	@echo "  make npm-format           run prettier in ts-src"
 	@echo "  make build-client         recompile wasm + js bundle (build-wasm + build-js)"
 	@echo "  make build-wasm           one-shot WASM recompile (use after any Kotlin/WASM change)"
+	@echo "  make build-map            rebuild map TypeScript client (map.js + map.css → server/src/main/resources)"
 	@echo "  make wasm-watch           start WASM continuous watcher (opt-in; for heavy WASM iteration)"
 	@echo "  make trigger-wasm         force wasm rebuild via source touch (when wasm-watch is running)"
 	@echo "  make dev-nuke-wasm        nuke WASM + core klib caches in-container (follow with make build-wasm)"

@@ -21752,7 +21752,7 @@
   var import_client = __toESM(require_client(), 1);
 
   // map/MapApp.tsx
-  var import_react3 = __toESM(require_react(), 1);
+  var import_react4 = __toESM(require_react(), 1);
 
   // primitives/Button.tsx
   var import_react = __toESM(require_react(), 1);
@@ -25098,6 +25098,9 @@
   });
   Button.displayName = "Button";
 
+  // map/Sidebar.tsx
+  var import_react2 = __toESM(require_react(), 1);
+
   // map/types.ts
   var LAYER_KEYS = [
     "voronoi",
@@ -25127,6 +25130,10 @@
     staircases: "Staircases"
   };
   function Sidebar({ time, apiState, layers, followTarget, onLayerToggle, onSetFollow, onFitAll }) {
+    const [query, setQuery] = (0, import_react2.useState)("");
+    const q = query.trim().toLowerCase();
+    const visPlayers = q ? apiState.players.filter((p) => p.name.toLowerCase().includes(q)) : apiState.players;
+    const visNpcs = q ? apiState.npcs.filter((n) => (n.name + " " + n.type).toLowerCase().includes(q)) : apiState.npcs;
     return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "w-[220px] min-w-[220px] bg-[#111] p-3 overflow-y-auto border-r border-[#333] flex flex-col gap-0 font-mono", children: [
       /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "text-xs text-[#ccc] mb-2.5 pb-2 border-b border-[#333]", children: [
         "\u23F0 ",
@@ -25152,8 +25159,26 @@
         },
         key
       )) }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("h3", { className: "text-[10px] text-[#888] uppercase tracking-wider mt-1 mb-1 font-normal", children: "Players" }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "flex flex-col", children: apiState.players.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[11px] text-[#555]", children: "none" }) : apiState.players.map((p) => {
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        "input",
+        {
+          type: "search",
+          placeholder: "Search players / NPCs\u2026",
+          value: query,
+          onChange: (e) => setQuery(e.target.value),
+          className: "w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1 text-[11px] text-[#ccc] placeholder-[#555] outline-none focus:border-[#6af] mb-2"
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("h3", { className: "text-[10px] text-[#888] uppercase tracking-wider mt-1 mb-1 font-normal", children: [
+        "Players",
+        q && apiState.players.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "text-[#555]", children: [
+          " ",
+          visPlayers.length,
+          "/",
+          apiState.players.length
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "flex flex-col", children: visPlayers.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[11px] text-[#555]", children: q ? "no match" : "none" }) : visPlayers.map((p) => {
         const tracked = (followTarget == null ? void 0 : followTarget.type) === "player" && followTarget.id === p.id;
         return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
           "div",
@@ -25179,8 +25204,16 @@
           p.id
         );
       }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("h3", { className: "text-[10px] text-[#888] uppercase tracking-wider mt-2.5 mb-1 font-normal", children: "NPCs" }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "flex flex-col", children: apiState.npcs.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[11px] text-[#555]", children: "none" }) : apiState.npcs.map((n) => {
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("h3", { className: "text-[10px] text-[#888] uppercase tracking-wider mt-2.5 mb-1 font-normal", children: [
+        "NPCs",
+        q && apiState.npcs.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "text-[#555]", children: [
+          " ",
+          visNpcs.length,
+          "/",
+          apiState.npcs.length
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "flex flex-col", children: visNpcs.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[11px] text-[#555]", children: q ? "no match" : "none" }) : visNpcs.map((n) => {
         const tracked = (followTarget == null ? void 0 : followTarget.type) === "npc" && followTarget.id === n.id;
         return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
           "div",
@@ -25217,7 +25250,7 @@
   }
 
   // map/useMapRenderer.ts
-  var import_react2 = __toESM(require_react(), 1);
+  var import_react3 = __toESM(require_react(), 1);
   var LAYERS_STORAGE_KEY = "micraft-map-layers";
   var VEGETATION_TINT = {
     forest: "rgba(30,120,30,0.28)",
@@ -25478,55 +25511,58 @@
     }
   }
   function useMapRenderer(canvasRef) {
-    const [layers, setLayers] = (0, import_react2.useState)(loadLayerState);
-    const [apiState, setApiState] = (0, import_react2.useState)({
+    const [layers, setLayers] = (0, import_react3.useState)(loadLayerState);
+    const [apiState, setApiState] = (0, import_react3.useState)({
       gameTicks: 0,
       players: [],
       npcs: [],
       weatherZones: []
     });
-    const [followTarget, setFollowTarget] = (0, import_react2.useState)(null);
-    const [coords, setCoords] = (0, import_react2.useState)("x: \u2014 z: \u2014");
-    const [status, setStatus] = (0, import_react2.useState)("connecting...");
-    const [dragging, setDragging] = (0, import_react2.useState)(false);
-    const layersRef = (0, import_react2.useRef)(layers);
-    layersRef.current = layers;
-    (0, import_react2.useEffect)(() => {
+    const [followTarget, setFollowTarget] = (0, import_react3.useState)(null);
+    const [coords, setCoords] = (0, import_react3.useState)("x: \u2014 z: \u2014");
+    const [status, setStatus] = (0, import_react3.useState)("connecting...");
+    const [dragging, setDragging] = (0, import_react3.useState)(false);
+    const layersRef = (0, import_react3.useRef)(layers);
+    (0, import_react3.useLayoutEffect)(() => {
+      layersRef.current = layers;
+    });
+    (0, import_react3.useEffect)(() => {
       localStorage.setItem(LAYERS_STORAGE_KEY, JSON.stringify(layers));
     }, [layers]);
-    const camera = (0, import_react2.useRef)({ x: 0, z: 0, pxPerBlock: 2 });
-    const terrainData = (0, import_react2.useRef)([]);
-    const voronoiCells = (0, import_react2.useRef)([]);
-    const housesData = (0, import_react2.useRef)([]);
-    const staircasesData = (0, import_react2.useRef)([]);
-    const staircasesFetched = (0, import_react2.useRef)(false);
-    const roadImg = (0, import_react2.useRef)(null);
-    const roadImgCx = (0, import_react2.useRef)(0);
-    const roadImgCz = (0, import_react2.useRef)(0);
-    const roadImgRadius = (0, import_react2.useRef)(0);
-    const biomeBorderData = (0, import_react2.useRef)([]);
-    const apiStateRef = (0, import_react2.useRef)({ gameTicks: 0, players: [], npcs: [], weatherZones: [] });
-    const followTargetRef = (0, import_react2.useRef)(null);
-    const autoFitDone = (0, import_react2.useRef)(false);
-    const housesFetchCenter = (0, import_react2.useRef)({ x: NaN, z: NaN });
-    const roadsFetchCenter = (0, import_react2.useRef)({ x: NaN, z: NaN });
-    const roadsFetching = (0, import_react2.useRef)(false);
-    const biomeFetchCenter = (0, import_react2.useRef)({ x: NaN, z: NaN });
-    const isDragging = (0, import_react2.useRef)(false);
-    const dragLast = (0, import_react2.useRef)({ x: 0, y: 0 });
-    const terrainDirty = (0, import_react2.useRef)(true);
-    const biomeDirty = (0, import_react2.useRef)(true);
-    const terrainCanvas = (0, import_react2.useRef)(document.createElement("canvas"));
-    const biomeCanvas = (0, import_react2.useRef)(document.createElement("canvas"));
-    const drawRef = (0, import_react2.useRef)(() => {
+    const camera = (0, import_react3.useRef)({ x: 0, z: 0, pxPerBlock: 2 });
+    const terrainData = (0, import_react3.useRef)([]);
+    const voronoiCells = (0, import_react3.useRef)([]);
+    const housesData = (0, import_react3.useRef)([]);
+    const staircasesData = (0, import_react3.useRef)([]);
+    const staircasesFetched = (0, import_react3.useRef)(false);
+    const roadImg = (0, import_react3.useRef)(null);
+    const roadImgCx = (0, import_react3.useRef)(0);
+    const roadImgCz = (0, import_react3.useRef)(0);
+    const roadImgRadius = (0, import_react3.useRef)(0);
+    const biomeBorderData = (0, import_react3.useRef)([]);
+    const apiStateRef = (0, import_react3.useRef)({ gameTicks: 0, players: [], npcs: [], weatherZones: [] });
+    const followTargetRef = (0, import_react3.useRef)(null);
+    const autoFitDone = (0, import_react3.useRef)(false);
+    const housesFetchCenter = (0, import_react3.useRef)({ x: NaN, z: NaN });
+    const roadsFetchCenter = (0, import_react3.useRef)({ x: NaN, z: NaN });
+    const roadsFetching = (0, import_react3.useRef)(false);
+    const biomeFetchCenter = (0, import_react3.useRef)({ x: NaN, z: NaN });
+    const isDragging = (0, import_react3.useRef)(false);
+    const dragLast = (0, import_react3.useRef)({ x: 0, y: 0 });
+    const terrainDirty = (0, import_react3.useRef)(true);
+    const biomeDirty = (0, import_react3.useRef)(true);
+    const terrainCanvas = (0, import_react3.useRef)(document.createElement("canvas"));
+    const biomeCanvas = (0, import_react3.useRef)(document.createElement("canvas"));
+    const drawRef = (0, import_react3.useRef)(() => {
     });
-    const zoomAtRef = (0, import_react2.useRef)(() => {
+    const zoomAtRef = (0, import_react3.useRef)(() => {
     });
-    const fitAllRef = (0, import_react2.useRef)(() => {
+    const fitAllRef = (0, import_react3.useRef)(() => {
     });
-    const setFollowRef = (0, import_react2.useRef)(() => {
+    const setFollowRef = (0, import_react3.useRef)(() => {
     });
-    (0, import_react2.useEffect)(() => {
+    const rafPending = (0, import_react3.useRef)(false);
+    (0, import_react3.useEffect)(() => {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
       const tc = terrainCanvas.current;
@@ -25540,40 +25576,52 @@
         return [(cx2 - canvas.width / 2) / cam.pxPerBlock + cam.x, -(cz - canvas.height / 2) / cam.pxPerBlock + cam.z];
       }
       function renderTerrain() {
+        const cam = camera.current;
         const W = tc.width, H = tc.height;
         const tCtx = tc.getContext("2d");
         tCtx.clearRect(0, 0, W, H);
-        const size = Math.ceil(Math.max(1, camera.current.pxPerBlock));
+        const ppb = cam.pxPerBlock;
+        tCtx.setTransform(ppb, 0, 0, -ppb, -cam.x * ppb + W / 2, cam.z * ppb + H / 2);
         for (const chunk of terrainData.current) {
           for (let lx = 0; lx < 16; lx++) {
             for (let lz = 0; lz < 16; lz++) {
               const color = chunk.colors[lx * 16 + lz];
               if (!color) continue;
-              const [px, pz] = worldToCanvas(chunk.cx * 16 + lx, chunk.cz * 16 + lz);
-              if (px + size < 0 || px >= W || pz + size < 0 || pz >= H) continue;
+              const wx = chunk.cx * 16 + lx;
+              const wz = chunk.cz * 16 + lz;
+              const cpx = (wx - cam.x) * ppb + W / 2;
+              const cpz = -(wz - cam.z) * ppb + H / 2;
+              if (cpx < -ppb || cpx > W + ppb || cpz < -ppb || cpz > H + ppb) continue;
               tCtx.fillStyle = color;
-              tCtx.fillRect(px, pz, size, size);
+              tCtx.fillRect(wx, wz, 1, 1);
             }
           }
         }
+        tCtx.resetTransform();
       }
       function renderBiomeBorders() {
+        const cam = camera.current;
         const W = bc.width, H = bc.height;
         const bCtx = bc.getContext("2d");
         bCtx.clearRect(0, 0, W, H);
         if (!biomeBorderData.current.length) return;
-        const size = Math.ceil(Math.max(1, camera.current.pxPerBlock));
+        const ppb = cam.pxPerBlock;
+        bCtx.setTransform(ppb, 0, 0, -ppb, -cam.x * ppb + W / 2, cam.z * ppb + H / 2);
         bCtx.fillStyle = "rgba(128,0,0,0.85)";
         for (const chunk of biomeBorderData.current) {
           for (let lx = 0; lx < 16; lx++) {
             for (let lz = 0; lz < 16; lz++) {
               if (!chunk.mask[lx * 16 + lz]) continue;
-              const [px, pz] = worldToCanvas(chunk.cx * 16 + lx, chunk.cz * 16 + lz);
-              if (px + size < 0 || px >= W || pz + size < 0 || pz >= H) continue;
-              bCtx.fillRect(px, pz, size, size);
+              const wx = chunk.cx * 16 + lx;
+              const wz = chunk.cz * 16 + lz;
+              const cpx = (wx - cam.x) * ppb + W / 2;
+              const cpz = -(wz - cam.z) * ppb + H / 2;
+              if (cpx < -ppb || cpx > W + ppb || cpz < -ppb || cpz > H + ppb) continue;
+              bCtx.fillRect(wx, wz, 1, 1);
             }
           }
         }
+        bCtx.resetTransform();
       }
       function draw() {
         const W = canvas.width, H = canvas.height;
@@ -25626,6 +25674,14 @@
           drawStaircases(staircasesData.current, worldToCanvas, cam, ctx);
         }
       }
+      function scheduleDraw() {
+        if (rafPending.current) return;
+        rafPending.current = true;
+        requestAnimationFrame(() => {
+          rafPending.current = false;
+          draw();
+        });
+      }
       function autoFitView() {
         const terrain = terrainData.current;
         const state = apiStateRef.current;
@@ -25662,7 +25718,7 @@
         camera.current.z = wz + (mz - canvas.height / 2) / camera.current.pxPerBlock;
         terrainDirty.current = true;
         biomeDirty.current = true;
-        draw();
+        scheduleDraw();
       }
       function resize() {
         const wrap = canvas.parentElement;
@@ -25683,7 +25739,7 @@
           const r2 = await fetch("/api/map/staircases");
           if (r2.ok) {
             staircasesData.current = await r2.json();
-            draw();
+            scheduleDraw();
           }
         } catch (e) {
           staircasesFetched.current = false;
@@ -25698,7 +25754,7 @@
           const r2 = await fetch(`/api/map/houses?cx=${cx2}&cz=${cz}&radius=1200`);
           if (r2.ok) {
             housesData.current = await r2.json();
-            draw();
+            scheduleDraw();
           }
         } catch (e) {
         }
@@ -25724,7 +25780,7 @@
               roadImgCx.current = cx2;
               roadImgCz.current = cz;
               roadImgRadius.current = radius;
-              draw();
+              scheduleDraw();
             };
             img.src = url;
           }
@@ -25743,7 +25799,7 @@
           if (r2.ok) {
             biomeBorderData.current = await r2.json();
             biomeDirty.current = true;
-            draw();
+            scheduleDraw();
           }
         } catch (e) {
         }
@@ -25755,7 +25811,7 @@
             const data = await r2.json();
             apiStateRef.current = data;
             setApiState(data);
-            draw();
+            scheduleDraw();
             setStatus("updated " + (/* @__PURE__ */ new Date()).toLocaleTimeString());
           }
         } catch (e) {
@@ -25776,7 +25832,7 @@
               fetchPreciseRoads();
               fetchStaircases();
             }
-            draw();
+            scheduleDraw();
           }
         } catch (e) {
         }
@@ -25786,7 +25842,7 @@
           const r2 = await fetch("/api/map/voronoi?cx=0&cz=0&radius=3200");
           if (r2.ok) {
             voronoiCells.current = await r2.json();
-            draw();
+            scheduleDraw();
           }
         } catch (e) {
         }
@@ -25797,7 +25853,7 @@
         followTargetRef.current = null;
         setFollowTarget(null);
         autoFitView();
-        draw();
+        scheduleDraw();
       };
       setFollowRef.current = (type, id) => {
         const current = followTargetRef.current;
@@ -25817,7 +25873,7 @@
             biomeDirty.current = true;
           }
         }
-        draw();
+        scheduleDraw();
       };
       const onWheel = (e) => {
         e.preventDefault();
@@ -25847,7 +25903,7 @@
           dragLast.current = { x: e.clientX, y: e.clientY };
           terrainDirty.current = true;
           biomeDirty.current = true;
-          draw();
+          scheduleDraw();
         }
         const rect = canvas.getBoundingClientRect();
         const [wx, wz] = canvasToWorld(e.clientX - rect.left, e.clientY - rect.top);
@@ -25884,23 +25940,23 @@
         intervals.forEach(clearInterval);
       };
     }, []);
-    (0, import_react2.useEffect)(() => {
+    (0, import_react3.useEffect)(() => {
       drawRef.current();
     }, [layers]);
-    const onLayerToggle = (0, import_react2.useCallback)((key, checked) => {
+    const onLayerToggle = (0, import_react3.useCallback)((key, checked) => {
       setLayers((prev) => __spreadProps(__spreadValues({}, prev), { [key]: checked }));
     }, []);
-    const onSetFollow = (0, import_react2.useCallback)((type, id) => {
+    const onSetFollow = (0, import_react3.useCallback)((type, id) => {
       setFollowRef.current(type, id);
     }, []);
-    const onFitAll = (0, import_react2.useCallback)(() => {
+    const onFitAll = (0, import_react3.useCallback)(() => {
       fitAllRef.current();
     }, []);
-    const onZoomIn = (0, import_react2.useCallback)(() => {
+    const onZoomIn = (0, import_react3.useCallback)(() => {
       const canvas = canvasRef.current;
       zoomAtRef.current(1.5, canvas.width / 2, canvas.height / 2);
     }, [canvasRef]);
-    const onZoomOut = (0, import_react2.useCallback)(() => {
+    const onZoomOut = (0, import_react3.useCallback)(() => {
       const canvas = canvasRef.current;
       zoomAtRef.current(0.67, canvas.width / 2, canvas.height / 2);
     }, [canvasRef]);
@@ -25923,7 +25979,7 @@
   // map/MapApp.tsx
   var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
   function MapApp() {
-    const canvasRef = (0, import_react3.useRef)(null);
+    const canvasRef = (0, import_react4.useRef)(null);
     const renderer = useMapRenderer(canvasRef);
     return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#1a1a1a] text-[#eee] font-mono", children: [
       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
