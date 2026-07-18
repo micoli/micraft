@@ -28,10 +28,8 @@ val tsBuild by
                     "**/*.test.tsx",
                     "**/*.test.ts",
                     "**/*.spec.tsx",
-                    "**/*.spec.ts"
-                )
-            }
-        )
+                    "**/*.spec.ts")
+            })
         outputs.file("src/wasmJsMain/resources/mc_bindings.js")
         commandLine("sh", "-c", "npm install && npm run build")
     }

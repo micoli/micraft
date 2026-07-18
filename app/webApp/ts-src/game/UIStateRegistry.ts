@@ -208,6 +208,12 @@ const componentVisibilityRegistry = {
       ? { ...state.preferences, statisticsVisible: !(state.preferences.statisticsVisible ?? false) }
       : state.preferences,
   }),
+  attack_panel_toggle: (state: UiState) => ({
+    ...state,
+    preferences: state.preferences
+      ? { ...state.preferences, attackPanelVisible: !(state.preferences.attackPanelVisible ?? true) }
+      : state.preferences,
+  }),
   log_hide: (state: UiState) => ({ ...state, logVisible: false }),
 };
 

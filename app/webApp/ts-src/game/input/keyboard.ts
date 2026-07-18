@@ -152,6 +152,7 @@ export function registerKeyboard(): Pick<
         if (b.dump_stats?.some((k) => matchesEvent(k, e))) window.mc?.dumpStats?.();
         if (b.health_bar?.some((k) => matchesEvent(k, e))) window.mc?.toggleHealthBar?.();
         if (b.statistics_toggle?.some((k) => matchesEvent(k, e))) window.mc?.toggleStatistics?.();
+        if (b.attack_panel_toggle?.some((k) => matchesEvent(k, e))) window.mc?.toggleAttackPanel?.();
         if (b.preferences?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.();
         if (b.minimap_zoom_in?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomIn?.();
         if (b.minimap_zoom_out?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomOut?.();

@@ -136,6 +136,7 @@ export interface PreferencesData {
   animatedFavicon: boolean;
   chunkDebugVisible: boolean;
   statisticsVisible: boolean;
+  attackPanelVisible: boolean;
   commands: CommandInfo[];
   keybindings: Record<string, string[]>;
   defaultKeybindings: Record<string, string[]>;

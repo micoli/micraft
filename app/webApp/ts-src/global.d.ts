@@ -403,6 +403,7 @@ declare global {
     toggleHotbar(): void;
     toggleHealthBar(): void;
     toggleStatistics(): void;
+    toggleAttackPanel(): void;
     updateShortcutBar(json: string): void;
     setSelectedSlot(slot: number): void;
     consumeSlotUpdate(): string;

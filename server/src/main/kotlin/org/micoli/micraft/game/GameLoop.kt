@@ -514,6 +514,7 @@ class GameLoop(
             animatedFavicon = session.state.animatedFavicon,
             chunkDebugVisible = session.state.chunkDebugVisible,
             statisticsVisible = session.state.statisticsVisible,
+            attackPanelVisible = session.state.attackPanelVisible,
             macros = macros,
             fieldOfView = session.state.fieldOfView,
             defaultKeybindings = defaults,
@@ -539,6 +540,7 @@ class GameLoop(
                 animatedFavicon = msg.animatedFavicon,
                 chunkDebugVisible = msg.chunkDebugVisible,
                 statisticsVisible = msg.statisticsVisible,
+                attackPanelVisible = msg.attackPanelVisible,
                 fieldOfView = msg.fieldOfView,
                 dynamicFogEnabled = msg.dynamicFogEnabled,
             )

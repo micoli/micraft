@@ -229,13 +229,15 @@ export function GameScreen() {
             layoutStyle={widgetStyle(activeLayout, "SHORTCUT_BAR")}
             playerStatus={state.playerStatus ?? undefined}
           />
-          <AttackPanel
-            attackMeta={filteredAttackMeta}
-            spellMeta={state.spellMeta}
-            layoutStyle={widgetStyle(activeLayout, "ATTACK_PANEL")}
-            pinnedMacros={state.preferences?.customCommands?.["__pinned_macros__"] ?? []}
-            playerStatus={state.playerStatus ?? undefined}
-          />
+          {(state.preferences?.attackPanelVisible ?? true) && (
+            <AttackPanel
+              attackMeta={filteredAttackMeta}
+              spellMeta={state.spellMeta}
+              layoutStyle={widgetStyle(activeLayout, "ATTACK_PANEL")}
+              pinnedMacros={state.preferences?.customCommands?.["__pinned_macros__"] ?? []}
+              playerStatus={state.playerStatus ?? undefined}
+            />
+          )}
           <Inventory
             inventory={state.inventory}
             itemMeta={state.itemMeta}

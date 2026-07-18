@@ -25,6 +25,7 @@ ui:
   console_toggle: [KeyH]
   view_toggle: [KeyF]
   statistics_toggle: [KeyN]
+  attack_panel_toggle: [KeyU]
   inventory: [KeyI]
   character: [KeyY]
   undo: ["Ctrl+KeyZ", "Cmd+KeyZ"]

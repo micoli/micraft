@@ -427,6 +427,28 @@ export function GameUI() {
           animatedFavicon: prefs.animatedFavicon ?? true,
           chunkDebugVisible: prefs.chunkDebugVisible ?? false,
           statisticsVisible: newVisible,
+          attackPanelVisible: prefs.attackPanelVisible ?? true,
+          keybindings: prefs.keybindings || {},
+          customCommands: prefs.customCommands || {},
+          macros: prefs.macros || {},
+          fieldOfView: prefs.fieldOfView ?? 70,
+        });
+      }
+    };
+    window.mc.toggleAttackPanel = () => {
+      dispatch("attack_panel_toggle");
+      const prefs = preferencesRef.current;
+      if (prefs) {
+        const newVisible = !(prefs.attackPanelVisible ?? true);
+        pendingPreferencesUpdateRef.current = JSON.stringify({
+          subscribedChannels: prefs.subscribedChannels,
+          disabledCommands: prefs.disabledCommands,
+          shadersEnabled: prefs.shadersEnabled,
+          dynamicFogEnabled: prefs.dynamicFogEnabled ?? true,
+          animatedFavicon: prefs.animatedFavicon ?? true,
+          chunkDebugVisible: prefs.chunkDebugVisible ?? false,
+          statisticsVisible: prefs.statisticsVisible ?? false,
+          attackPanelVisible: newVisible,
           keybindings: prefs.keybindings || {},
           customCommands: prefs.customCommands || {},
           macros: prefs.macros || {},
