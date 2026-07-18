@@ -423,6 +423,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
   const zoomAtRef = useRef<(f: number, mx: number, mz: number) => void>(() => {});
   const fitAllRef = useRef<() => void>(() => {});
   const setFollowRef = useRef<(type: "player" | "npc", id: string) => void>(() => {});
+  const rafPending = useRef(false);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -441,43 +442,55 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
     }
 
     function renderTerrain() {
+      const cam = camera.current;
       const W = tc.width,
         H = tc.height;
       const tCtx = tc.getContext("2d")!;
       tCtx.clearRect(0, 0, W, H);
-      const size = Math.ceil(Math.max(1, camera.current.pxPerBlock));
+      const ppb = cam.pxPerBlock;
+      tCtx.setTransform(ppb, 0, 0, -ppb, -cam.x * ppb + W / 2, cam.z * ppb + H / 2);
       for (const chunk of terrainData.current) {
         for (let lx = 0; lx < 16; lx++) {
           for (let lz = 0; lz < 16; lz++) {
             const color = chunk.colors[lx * 16 + lz];
             if (!color) continue;
-            const [px, pz] = worldToCanvas(chunk.cx * 16 + lx, chunk.cz * 16 + lz);
-            if (px + size < 0 || px >= W || pz + size < 0 || pz >= H) continue;
+            const wx = chunk.cx * 16 + lx;
+            const wz = chunk.cz * 16 + lz;
+            const cpx = (wx - cam.x) * ppb + W / 2;
+            const cpz = -(wz - cam.z) * ppb + H / 2;
+            if (cpx < -ppb || cpx > W + ppb || cpz < -ppb || cpz > H + ppb) continue;
             tCtx.fillStyle = color;
-            tCtx.fillRect(px, pz, size, size);
+            tCtx.fillRect(wx, wz, 1, 1);
           }
         }
       }
+      tCtx.resetTransform();
     }
 
     function renderBiomeBorders() {
+      const cam = camera.current;
       const W = bc.width,
         H = bc.height;
       const bCtx = bc.getContext("2d")!;
       bCtx.clearRect(0, 0, W, H);
       if (!biomeBorderData.current.length) return;
-      const size = Math.ceil(Math.max(1, camera.current.pxPerBlock));
+      const ppb = cam.pxPerBlock;
+      bCtx.setTransform(ppb, 0, 0, -ppb, -cam.x * ppb + W / 2, cam.z * ppb + H / 2);
       bCtx.fillStyle = "rgba(128,0,0,0.85)";
       for (const chunk of biomeBorderData.current) {
         for (let lx = 0; lx < 16; lx++) {
           for (let lz = 0; lz < 16; lz++) {
             if (!chunk.mask[lx * 16 + lz]) continue;
-            const [px, pz] = worldToCanvas(chunk.cx * 16 + lx, chunk.cz * 16 + lz);
-            if (px + size < 0 || px >= W || pz + size < 0 || pz >= H) continue;
-            bCtx.fillRect(px, pz, size, size);
+            const wx = chunk.cx * 16 + lx;
+            const wz = chunk.cz * 16 + lz;
+            const cpx = (wx - cam.x) * ppb + W / 2;
+            const cpz = -(wz - cam.z) * ppb + H / 2;
+            if (cpx < -ppb || cpx > W + ppb || cpz < -ppb || cpz > H + ppb) continue;
+            bCtx.fillRect(wx, wz, 1, 1);
           }
         }
       }
+      bCtx.resetTransform();
     }
 
     function draw() {
@@ -557,6 +570,15 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
       }
     }
 
+    function scheduleDraw() {
+      if (rafPending.current) return;
+      rafPending.current = true;
+      requestAnimationFrame(() => {
+        rafPending.current = false;
+        draw();
+      });
+    }
+
     function autoFitView() {
       const terrain = terrainData.current;
       const state = apiStateRef.current;
@@ -594,7 +616,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
       camera.current.z = wz + (mz - canvas.height / 2) / camera.current.pxPerBlock;
       terrainDirty.current = true;
       biomeDirty.current = true;
-      draw();
+      scheduleDraw();
     }
 
     function resize() {
@@ -617,7 +639,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
         const r = await fetch("/api/map/staircases");
         if (r.ok) {
           staircasesData.current = await r.json();
-          draw();
+          scheduleDraw();
         }
       } catch {
         staircasesFetched.current = false;
@@ -634,7 +656,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
         const r = await fetch(`/api/map/houses?cx=${cx}&cz=${cz}&radius=1200`);
         if (r.ok) {
           housesData.current = await r.json();
-          draw();
+          scheduleDraw();
         }
       } catch {
         /* non-critical */
@@ -662,7 +684,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
             roadImgCx.current = cx;
             roadImgCz.current = cz;
             roadImgRadius.current = radius;
-            draw();
+            scheduleDraw();
           };
           img.src = url;
         }
@@ -684,7 +706,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
         if (r.ok) {
           biomeBorderData.current = await r.json();
           biomeDirty.current = true;
-          draw();
+          scheduleDraw();
         }
       } catch {
         /* non-critical */
@@ -698,7 +720,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
           const data: MapApiState = await r.json();
           apiStateRef.current = data;
           setApiState(data);
-          draw();
+          scheduleDraw();
           setStatus("updated " + new Date().toLocaleTimeString());
         }
       } catch (e) {
@@ -720,7 +742,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
             fetchPreciseRoads();
             fetchStaircases();
           }
-          draw();
+          scheduleDraw();
         }
       } catch {
         /* non-critical */
@@ -732,7 +754,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
         const r = await fetch("/api/map/voronoi?cx=0&cz=0&radius=3200");
         if (r.ok) {
           voronoiCells.current = await r.json();
-          draw();
+          scheduleDraw();
         }
       } catch {
         /* non-critical */
@@ -746,7 +768,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
       followTargetRef.current = null;
       setFollowTarget(null);
       autoFitView();
-      draw();
+      scheduleDraw();
     };
     setFollowRef.current = (type, id) => {
       const current = followTargetRef.current;
@@ -766,7 +788,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
           biomeDirty.current = true;
         }
       }
-      draw();
+      scheduleDraw();
     };
 
     // Canvas event handlers
@@ -800,7 +822,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
         dragLast.current = { x: e.clientX, y: e.clientY };
         terrainDirty.current = true;
         biomeDirty.current = true;
-        draw();
+        scheduleDraw();
       }
       const rect = canvas.getBoundingClientRect();
       const [wx, wz] = canvasToWorld(e.clientX - rect.left, e.clientY - rect.top);

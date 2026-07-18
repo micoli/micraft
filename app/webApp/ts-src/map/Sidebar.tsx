@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "../primitives/Button";
 import { cn } from "../primitives/cn";
 import type { FollowTarget, LayerKey, Layers, MapApiState } from "./types";
@@ -27,6 +28,11 @@ interface Props {
 }
 
 export function Sidebar({ time, apiState, layers, followTarget, onLayerToggle, onSetFollow, onFitAll }: Props) {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const visPlayers = q ? apiState.players.filter((p) => p.name.toLowerCase().includes(q)) : apiState.players;
+  const visNpcs = q ? apiState.npcs.filter((n) => (n.name + " " + n.type).toLowerCase().includes(q)) : apiState.npcs;
+
   return (
     <div className="w-[220px] min-w-[220px] bg-[#111] p-3 overflow-y-auto border-r border-[#333] flex flex-col gap-0 font-mono">
       <div className="text-xs text-[#ccc] mb-2.5 pb-2 border-b border-[#333]">⏰ {time}</div>
@@ -49,12 +55,28 @@ export function Sidebar({ time, apiState, layers, followTarget, onLayerToggle, o
         ))}
       </div>
 
-      <h3 className="text-[10px] text-[#888] uppercase tracking-wider mt-1 mb-1 font-normal">Players</h3>
+      <input
+        type="search"
+        placeholder="Search players / NPCs…"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1 text-[11px] text-[#ccc] placeholder-[#555] outline-none focus:border-[#6af] mb-2"
+      />
+
+      <h3 className="text-[10px] text-[#888] uppercase tracking-wider mt-1 mb-1 font-normal">
+        Players
+        {q && apiState.players.length > 0 && (
+          <span className="text-[#555]">
+            {" "}
+            {visPlayers.length}/{apiState.players.length}
+          </span>
+        )}
+      </h3>
       <div className="flex flex-col">
-        {apiState.players.length === 0 ? (
-          <span className="text-[11px] text-[#555]">none</span>
+        {visPlayers.length === 0 ? (
+          <span className="text-[11px] text-[#555]">{q ? "no match" : "none"}</span>
         ) : (
-          apiState.players.map((p) => {
+          visPlayers.map((p) => {
             const tracked = followTarget?.type === "player" && followTarget.id === p.id;
             return (
               <div
@@ -77,12 +99,20 @@ export function Sidebar({ time, apiState, layers, followTarget, onLayerToggle, o
         )}
       </div>
 
-      <h3 className="text-[10px] text-[#888] uppercase tracking-wider mt-2.5 mb-1 font-normal">NPCs</h3>
+      <h3 className="text-[10px] text-[#888] uppercase tracking-wider mt-2.5 mb-1 font-normal">
+        NPCs
+        {q && apiState.npcs.length > 0 && (
+          <span className="text-[#555]">
+            {" "}
+            {visNpcs.length}/{apiState.npcs.length}
+          </span>
+        )}
+      </h3>
       <div className="flex flex-col">
-        {apiState.npcs.length === 0 ? (
-          <span className="text-[11px] text-[#555]">none</span>
+        {visNpcs.length === 0 ? (
+          <span className="text-[11px] text-[#555]">{q ? "no match" : "none"}</span>
         ) : (
-          apiState.npcs.map((n) => {
+          visNpcs.map((n) => {
             const tracked = followTarget?.type === "npc" && followTarget.id === n.id;
             return (
               <div
