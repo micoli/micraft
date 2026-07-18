@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { QuestProgress } from "../UIReducer";
+import { QuestProgress } from "../types";
 
 type KillObjective = { npcType: string; requiredCount: number };
 type QuestDef = {

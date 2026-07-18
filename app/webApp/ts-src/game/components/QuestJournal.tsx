@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
 import { Button } from "../../primitives/Button";
-import { QuestProgress, QuestStatus } from "../UIReducer";
+import { QuestProgress, QuestStatus } from "../types";
 
 type QuestType = "KILL" | "FETCH" | "ESCORT" | "EXPLORE" | "BOSS";
 

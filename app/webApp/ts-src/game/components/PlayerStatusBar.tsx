@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { NpcProximityEntry, UiState } from "../UIReducer";
+import { NpcProximityEntry } from "../types";
+import { UiState } from "../UIReducer";
 
 interface Props {
   status: NonNullable<UiState["playerStatus"]>;

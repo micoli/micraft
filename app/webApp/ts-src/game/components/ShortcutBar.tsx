@@ -1,6 +1,7 @@
 import { cn } from "../../primitives/cn";
 import { useShortcutBar } from "../hooks/useShortcutBar";
-import { ShortcutSlot, AttackMeta, SpellMeta, UiState } from "../UIReducer";
+import { ShortcutSlot, AttackMeta, SpellMeta } from "../types";
+import { UiState } from "../UIReducer";
 import { damageTypeColor, AttackCooldownOverlay } from "./AttackPanel";
 
 interface Props {

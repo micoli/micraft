@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NpcProximityEntry } from "../UIReducer";
+import { NpcProximityEntry } from "../types";
 
 interface Props {
   npcProximity?: NpcProximityEntry[];

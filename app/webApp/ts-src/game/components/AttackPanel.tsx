@@ -1,5 +1,6 @@
 import { cn } from "../../primitives/cn";
-import { AttackMeta, SpellMeta, UiState } from "../UIReducer";
+import { AttackMeta, SpellMeta } from "../types";
+import { UiState } from "../UIReducer";
 import { useAttackDrag } from "../hooks/useAttackDrag";
 import { useCooldownDisplay } from "../hooks/useCooldownDisplay";
 

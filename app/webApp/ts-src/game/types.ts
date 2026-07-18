@@ -168,3 +168,45 @@ export type PlayerStatusData = {
   globalCooldownRemainingMs: number;
   attackCooldownsRemainingMs: Record<string, number>;
 };
+
+export type ShortcutSlot =
+  | { kind: "item"; id: string }
+  | { kind: "attack"; id: string }
+  | { kind: "macro"; id: string }
+  | { kind: "spell"; id: string };
+
+export type AttackMeta = {
+  damageType: string;
+  manaCost: number;
+  rageCost: number;
+  cooldownMs: number;
+  power: number;
+  weaponDice: string;
+  attackId: string;
+  level: number;
+};
+
+export type ClassAttackAccess = { attack: string; level: number };
+export type ClassDefinitions = Record<string, Record<string, ClassAttackAccess[]>>;
+
+export type NpcProximityEntry = { id: string; name: string; relAngle: number; dist: number; aggro: boolean };
+
+export type QuestStatus = "TODO" | "IN_PROGRESS" | "COMPLETED" | "ABANDONED" | "FAILED";
+export type QuestProgress = {
+  status: QuestStatus;
+  progress: Record<string, number>;
+  acceptedAt: number | null;
+  completedAt: number | null;
+  lastCompletedAt: number | null;
+};
+
+export type SpellMeta = {
+  type: string;
+  rageGain: number;
+  tokenCost: number;
+  manaCost: number;
+  rageCost: number;
+  cooldownMs: number;
+};
+
+export type PreferencesSaveData = Omit<PreferencesData, "knownChannels" | "commands" | "defaultKeybindings">;

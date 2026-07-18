@@ -4,8 +4,7 @@ import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../primitives/Tabs";
 import { Button } from "../../primitives/Button";
 import { cn } from "../../primitives/cn";
-import { CharacterSyncData } from "../types";
-import { AttackMeta, SpellMeta } from "../UIReducer";
+import { CharacterSyncData, AttackMeta, SpellMeta } from "../types";
 import { damageTypeColor } from "./AttackPanel";
 import { useAttackDrag } from "../hooks/useAttackDrag";
 

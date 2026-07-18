@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ShortcutSlot } from "../UIReducer";
+import { ShortcutSlot } from "../types";
 
 export function useShortcutBar(
   onSlotDrop: (slot: number, content: ShortcutSlot | null) => void,
