@@ -19,7 +19,7 @@ export function getUsers(): Record<string, PlayerEntry[]> {
 export function saveUsers(u: Record<string, PlayerEntry[]>) {
   try {
     localStorage.setItem("micraft_users", JSON.stringify(u));
-  } catch {}
+  } catch { /* empty */ }
 }
 
 export function getLastPlayer(username: string): string {
@@ -33,7 +33,7 @@ export function getLastPlayer(username: string): string {
 export function saveLastPlayer(username: string, playerName: string) {
   try {
     localStorage.setItem("micraft_last_player_" + username, playerName);
-  } catch {}
+  } catch { /* empty */ }
 }
 
 export function getLastLang(): string {
@@ -47,7 +47,7 @@ export function getLastLang(): string {
 export function saveLastLang(lang: string) {
   try {
     localStorage.setItem("micraft_last_lang", lang);
-  } catch {}
+  } catch { /* empty */ }
 }
 
 export function getStoredToken(): string {
@@ -61,7 +61,7 @@ export function getStoredToken(): string {
 export function storeToken(token: string) {
   try {
     sessionStorage.setItem("micraft_auth_token", token);
-  } catch {}
+  } catch { /* empty */ }
 }
 
 export function clearStoredToken() {
@@ -69,7 +69,7 @@ export function clearStoredToken() {
     sessionStorage.removeItem("micraft_auth_token");
     sessionStorage.removeItem("micraft_auth_display");
     sessionStorage.removeItem("micraft_auth_email");
-  } catch {}
+  } catch { /* empty */ }
 }
 
 export function getLastUser(): string {
@@ -83,19 +83,19 @@ export function getLastUser(): string {
 export function saveLastUser(user: string) {
   try {
     localStorage.setItem("micraft_last_user", user);
-  } catch {}
+  } catch { /* empty */ }
 }
 
 export function clearLastUser() {
   try {
     localStorage.removeItem("micraft_last_user");
-  } catch {}
+  } catch { /* empty */ }
 }
 
 export function clearLastPlayer(username: string) {
   try {
     localStorage.removeItem("micraft_last_player_" + username);
-  } catch {}
+  } catch { /* empty */ }
 }
 
 export function getStoredDisplayName(): string {
@@ -109,7 +109,7 @@ export function getStoredDisplayName(): string {
 export function storeDisplayName(name: string) {
   try {
     sessionStorage.setItem("micraft_auth_display", name);
-  } catch {}
+  } catch { /* empty */ }
 }
 
 export function getAccountEmail(): string {
@@ -123,11 +123,11 @@ export function getAccountEmail(): string {
 export function saveAccountEmail(email: string) {
   try {
     sessionStorage.setItem("micraft_auth_email", email);
-  } catch {}
+  } catch { /* empty */ }
 }
 
 export function clearAccountEmail() {
   try {
     sessionStorage.removeItem("micraft_auth_email");
-  } catch {}
+  } catch { /* empty */ }
 }

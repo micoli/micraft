@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef, useState, useCallback } from "react";
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import { getFaceTexUrl } from "../blocks/blockDefs";
 
 interface BlockEntry {
@@ -470,7 +470,7 @@ function Npc3DPreview({ npc }: { npc: NpcEntry }) {
   const ready = useNpcModelsReady();
   const [walking, setWalking] = useState(false);
   const walkingRef = useRef(walking);
-  walkingRef.current = walking;
+  useLayoutEffect(() => { walkingRef.current = walking; });
 
   useEffect(() => {
     if (!ready) return;
@@ -638,6 +638,7 @@ function NpcDetail({ npc }: { npc: NpcEntry }) {
 function usePlayerModelReady(skin: string): boolean {
   const [ready, setReady] = useState(() => !!window.mc.isPlayerBbmodelReady?.(skin));
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReady(!!window.mc.isPlayerBbmodelReady?.(skin));
     window.mc.initPlayerModel?.(skin);
     if (window.mc.isPlayerBbmodelReady?.(skin)) return;
@@ -656,7 +657,7 @@ function SkinModelPreview({ skin, walking }: { skin: string; walking: boolean })
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ready = usePlayerModelReady(skin);
   const walkingRef = useRef(walking);
-  walkingRef.current = walking;
+  useLayoutEffect(() => { walkingRef.current = walking; });
 
   useEffect(() => {
     if (!ready) return;

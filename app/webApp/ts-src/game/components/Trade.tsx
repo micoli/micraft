@@ -79,6 +79,7 @@ export function Trade({
 
   // Reset local state when a new trade opens
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (open) setLocalOffer({});
   }, [tradeId, open]);
 
@@ -243,7 +244,7 @@ export function Trade({
           {/* Their offer */}
           <div style={{ flex: 1 }}>
             <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, marginBottom: 6 }}>
-              {otherPlayer}'s offer {theirAccepted && <span style={{ color: "#4ade80" }}>✓ Accepted</span>}
+              {otherPlayer}&apos;s offer {theirAccepted && <span style={{ color: "#4ade80" }}>✓ Accepted</span>}
             </div>
             <div
               style={{

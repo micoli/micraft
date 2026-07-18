@@ -46,7 +46,9 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
 
   useEffect(() => {
     if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestions([]);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelIdx(-1);
       return;
     }
@@ -85,7 +87,7 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
     const h = c.history;
 
     switch (e.key) {
-      case "Enter":
+      case "Enter": {
         if (selIdx >= 0 && selIdx < suggestions.length) {
           applyCompletion(el.value, suggestions[selIdx]);
           return;
@@ -107,10 +109,11 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
           if (h.length === 0 || h[h.length - 1] !== text) h.push(text);
           try {
             localStorage.setItem("mc_history_" + c.playerName, JSON.stringify(h.slice(-50)));
-          } catch {}
+          } catch { /* empty */ }
         }
         onClose();
         break;
+      }
       case "Escape":
         e.preventDefault();
         onClose();
@@ -139,7 +142,7 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
           setTimeout(() => el.setSelectionRange(el.value.length, el.value.length), 0);
         }
         break;
-      case "Tab":
+      case "Tab": {
         e.preventDefault();
         if (suggestions.length === 0) return;
         const nextIdx = (selIdx + 1) % suggestions.length;
@@ -153,6 +156,7 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
           el.value = val.slice(0, lastSpaceIdx + 1) + suggestions[nextIdx];
         }
         break;
+      }
       default: {
         const toggleKeys = window.mcState?.bindings?.console_toggle;
         if (toggleKeys?.some((k) => matchesEvent(k, e.nativeEvent)) && el.value === "") {

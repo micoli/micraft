@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 export function useCooldownDisplay(serverRemainingMs: number): number {
   const [display, setDisplay] = useState(serverRemainingMs);
   const currentRef = useRef(serverRemainingMs);
-  const lastTimeRef = useRef(performance.now());
+  const lastTimeRef = useRef(0);
   const ivRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   useEffect(() => {

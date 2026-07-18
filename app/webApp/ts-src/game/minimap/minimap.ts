@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 const MINIMAP_SIZE = 180;
 const ZOOM_RADII = [0, 1, 2, 3]; // chunk radius: 1x1, 3x3 (default), 5x5, 7x7

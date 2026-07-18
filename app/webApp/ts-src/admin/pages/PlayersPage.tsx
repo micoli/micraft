@@ -300,7 +300,7 @@ function RpgTab({ file, onSave }: { file: PlayerFile; onSave: (rpg: Record<strin
 
   const derived = computeDerived(stats, cd.level);
 
-  const StatRow = ({ name, label }: { name: keyof typeof stats; label: string }) => (
+  const statRow = (name: keyof typeof stats, label: string) => (
     <div className="flex items-center gap-3 py-2 border-b border-[#2E3A4E] last:border-0">
       <span className="text-xs text-[#8A99AF] w-24">{label}</span>
       <input
@@ -337,12 +337,12 @@ function RpgTab({ file, onSave }: { file: PlayerFile; onSave: (rpg: Record<strin
       </div>
       <div>
         <p className="text-xs font-medium text-[#8A99AF] mb-2">Base Stats</p>
-        <StatRow name="str" label="Strength" />
-        <StatRow name="dex" label="Dexterity" />
-        <StatRow name="intel" label="Intellect" />
-        <StatRow name="wis" label="Wisdom" />
-        <StatRow name="con" label="Constitution" />
-        <StatRow name="cha" label="Charisma" />
+        {statRow("str", "Strength")}
+        {statRow("dex", "Dexterity")}
+        {statRow("intel", "Intellect")}
+        {statRow("wis", "Wisdom")}
+        {statRow("con", "Constitution")}
+        {statRow("cha", "Charisma")}
       </div>
       <div>
         <p className="text-xs font-medium text-[#8A99AF] mb-2">
@@ -395,6 +395,7 @@ function PlayerDetail({
   const [renameErr, setRenameErr] = useState<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFile(null);
     setNewName(name);
     api.players

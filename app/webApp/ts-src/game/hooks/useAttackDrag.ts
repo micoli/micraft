@@ -53,7 +53,7 @@ export function useAttackDrag(
     if (id) e.preventDefault();
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
+    } catch { /* empty */ }
     ghostRef.current?.remove();
     ghostRef.current = null;
     if (lastSlotRef.current instanceof HTMLElement) lastSlotRef.current.style.background = "rgba(0,0,0,0.72)";

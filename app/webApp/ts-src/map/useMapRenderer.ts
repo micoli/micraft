@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import type {
   Camera,
   ChunkTerrainInfo,
@@ -386,7 +386,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
   const [dragging, setDragging] = useState(false);
 
   const layersRef = useRef<Layers>(layers);
-  layersRef.current = layers;
+  useLayoutEffect(() => { layersRef.current = layers; });
 
   useEffect(() => {
     localStorage.setItem(LAYERS_STORAGE_KEY, JSON.stringify(layers));

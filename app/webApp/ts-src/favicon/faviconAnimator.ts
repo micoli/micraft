@@ -20,7 +20,7 @@ async function toObjectUrl(url: string): Promise<string> {
 let _link: HTMLLinkElement | null = null;
 let _ordinal = -1;
 let _staticUrl: string | null = null;
-let _frameCache: string[] = [];
+const _frameCache: string[] = [];
 let _intervalId: ReturnType<typeof setInterval> | null = null;
 let _animating = false;
 let _buildStarted = false;

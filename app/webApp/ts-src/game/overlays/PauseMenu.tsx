@@ -35,6 +35,7 @@ export function PauseMenu({ open, onClose, items }: PauseMenuProps) {
         <DialogTitle className="text-center font-mono text-xl tracking-[0.25em] mb-2">PAUSE</DialogTitle>
         {items.map((item, k) => (
           <Button
+            key={item.label}
             ref={k === 0 ? firstButton : null}
             variant={item.variant ?? "secondary"}
             onClick={item.callback}

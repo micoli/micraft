@@ -161,13 +161,19 @@ prod-logs:
 
 # ── Standard and code analysis ────────────────────────────────────────────────
 
-code-standard: spotless-apply npm-format ts-typecheck
+code-standard: spotless-apply npm-format ts-typecheck ts-lint
 
 spotless-apply:
 	$(EXEC) "./gradlew :spotlessApply"
 
 ts-typecheck:
 	$(EXEC) "cd app/webApp/ts-src/; npm run typecheck"
+
+ts-lint:
+	$(EXEC) "cd app/webApp/ts-src/; npm run lint"
+
+ts-lint-fix:
+	$(EXEC) "cd app/webApp/ts-src/; npm run lint:fix"
 
 test: kt-test web-test
 

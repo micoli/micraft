@@ -37,27 +37,29 @@ export const BasicDialog: Story = {
   ),
 };
 
+function PauseStyleDialogStory() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <Button onClick={() => setOpen(true)}>Open Pause Menu</Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="min-w-[220px] p-8 flex flex-col gap-3">
+          <DialogTitle className="text-center font-mono text-xl tracking-[0.25em] mb-2">PAUSE</DialogTitle>
+          <Button variant="secondary" className="font-mono">
+            Preferences
+          </Button>
+          <Button variant="secondary" className="font-mono">
+            Character
+          </Button>
+          <Button variant="danger" onClick={() => setOpen(false)} className="font-mono">
+            Disconnect
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 export const PauseStyleDialog: Story = {
-  render: () => {
-    const [open, setOpen] = useState(false);
-    return (
-      <div>
-        <Button onClick={() => setOpen(true)}>Open Pause Menu</Button>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="min-w-[220px] p-8 flex flex-col gap-3">
-            <DialogTitle className="text-center font-mono text-xl tracking-[0.25em] mb-2">PAUSE</DialogTitle>
-            <Button variant="secondary" className="font-mono">
-              Preferences
-            </Button>
-            <Button variant="secondary" className="font-mono">
-              Character
-            </Button>
-            <Button variant="danger" onClick={() => setOpen(false)} className="font-mono">
-              Disconnect
-            </Button>
-          </DialogContent>
-        </Dialog>
-      </div>
-    );
-  },
+  render: () => <PauseStyleDialogStory />,
 };

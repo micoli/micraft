@@ -35,7 +35,7 @@ export function useInventory() {
     (window as any).__mcDragItem = null;
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
+    } catch { /* empty */ }
     ghostRef.current?.remove();
     ghostRef.current = null;
     if (lastSlotRef.current instanceof HTMLElement) lastSlotRef.current.style.background = "rgba(0,0,0,0.72)";

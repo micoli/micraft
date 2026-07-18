@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { ShortcutSlot } from "../types";
 
 export function useShortcutBar(
@@ -8,7 +8,7 @@ export function useShortcutBar(
   const [dragOver, setDragOver] = useState<number | null>(null);
   const [pressedSlot, setPressedSlot] = useState<number | null>(null);
   const slotsRef = useRef(slots);
-  slotsRef.current = slots;
+  useLayoutEffect(() => { slotsRef.current = slots; });
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -76,7 +76,7 @@ export function useShortcutBar(
     if (sourceIdx !== null) e.preventDefault();
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
+    } catch { /* empty */ }
     ghostRef.current?.remove();
     ghostRef.current = null;
     if (lastSlotRef.current) lastSlotRef.current.style.background = "";

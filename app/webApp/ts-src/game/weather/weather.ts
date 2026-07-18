@@ -1,4 +1,3 @@
-// @ts-nocheck
 interface WeatherZone {
   id: string;
   type: "RAIN" | "STORM" | "SNOW" | "FOG" | string;

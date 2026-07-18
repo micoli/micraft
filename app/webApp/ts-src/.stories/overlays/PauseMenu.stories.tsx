@@ -31,24 +31,26 @@ export const Open: Story = {
   },
 };
 
+function ControlledStory() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <Button onClick={() => setOpen(true)}>Open Pause Menu (ESC)</Button>
+      </div>
+      <PauseMenu
+        open={open}
+        onClose={() => setOpen(false)}
+        onDisconnect={() => setOpen(false)}
+        onPreferences={() => setOpen(false)}
+        onCharacter={() => setOpen(false)}
+        onMacros={() => setOpen(false)}
+        onRefresh={() => setOpen(false)}
+      />
+    </>
+  );
+}
+
 export const Controlled: Story = {
-  render: () => {
-    const [open, setOpen] = useState(false);
-    return (
-      <>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Button onClick={() => setOpen(true)}>Open Pause Menu (ESC)</Button>
-        </div>
-        <PauseMenu
-          open={open}
-          onClose={() => setOpen(false)}
-          onDisconnect={() => setOpen(false)}
-          onPreferences={() => setOpen(false)}
-          onCharacter={() => setOpen(false)}
-          onMacros={() => setOpen(false)}
-          onRefresh={() => setOpen(false)}
-        />
-      </>
-    );
-  },
+  render: () => <ControlledStory />,
 };

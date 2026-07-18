@@ -28,11 +28,11 @@ interface Props {
 }
 
 export function ChunkDebug({ data, layoutStyle }: Props) {
-  if (!data) return null;
-  const { playerCx, playerCz, radius, playerYaw, chunks, chunkDownloading, chunkMeshing } = data;
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    if (!data) return;
+    const { playerYaw } = data;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -67,6 +67,9 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
     );
     ctx.stroke();
   }, [data]);
+
+  if (!data) return null;
+  const { playerCx, playerCz, radius, chunks, chunkDownloading, chunkMeshing } = data;
   const side = radius * 2 + 1;
   const map = new Map(chunks.map((c) => [`${c.cx},${c.cz}`, c.state]));
 

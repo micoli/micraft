@@ -8,9 +8,11 @@ export function DisconnectOverlay({ message }: { message: string | null }) {
 
   useEffect(() => {
     if (totalSecs === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRemaining(null);
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRemaining(totalSecs);
     const interval = setInterval(() => {
       setRemaining((r) => (r !== null && r > 0 ? r - 1 : 0));

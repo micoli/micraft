@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { PlayerModelPreview } from "../shared/PlayerModelPreview";
 import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../primitives/Tabs";
@@ -249,7 +249,7 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
   const [skin, setSkin] = useState("player");
   const [walking, setWalking] = useState(true);
   const closeRef = useRef(onClose);
-  closeRef.current = onClose;
+  useLayoutEffect(() => { closeRef.current = onClose; });
 
   useEffect(() => {
     if (!open) return;

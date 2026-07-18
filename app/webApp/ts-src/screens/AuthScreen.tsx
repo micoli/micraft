@@ -74,6 +74,7 @@ export function AuthScreen() {
     if (saved && (authMode === "local" || authMode === "oauth")) {
       const savedName = getStoredDisplayName() || getLastUser();
       if (savedName && getLastPlayer(savedName)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setAutoConnecting(true);
         return;
       }

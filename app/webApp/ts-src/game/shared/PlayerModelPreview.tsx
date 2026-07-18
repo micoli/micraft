@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 
 export function usePlayerModelReady(skin: string): boolean {
   const [ready, setReady] = useState(() => !!window.mc.isPlayerBbmodelReady?.(skin));
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReady(!!window.mc.isPlayerBbmodelReady?.(skin));
     window.mc.initPlayerModel?.(skin);
     if (window.mc.isPlayerBbmodelReady?.(skin)) return;
@@ -21,12 +22,14 @@ export function useArmorModelsReady(armors: string[]): boolean {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     if (armors.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setReady(true);
       return;
     }
     armors.forEach((a) => window.mc.initArmorModel?.(a));
     const check = () => armors.every((a) => window.mc.isArmorModelReady?.(a));
     if (check()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setReady(true);
       return;
     }
@@ -59,7 +62,7 @@ export function PlayerModelPreview({
   const armorsReady = useArmorModelsReady(armors);
   const ready = skinReady && armorsReady;
   const walkingRef = useRef(walking);
-  walkingRef.current = walking;
+  useLayoutEffect(() => { walkingRef.current = walking; });
 
   useEffect(() => {
     if (!ready) return;

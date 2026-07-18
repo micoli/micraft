@@ -1,6 +1,6 @@
 import { cn } from "./cn";
 
-interface PanelProps extends React.HTMLAttributes<HTMLDivElement> {}
+type PanelProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function Panel({ className, ...props }: PanelProps) {
   return (
@@ -11,7 +11,7 @@ export function Panel({ className, ...props }: PanelProps) {
   );
 }
 
-interface FormFieldProps extends React.HTMLAttributes<HTMLDivElement> {}
+type FormFieldProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function FormField({ className, ...props }: FormFieldProps) {
   return <div className={cn("flex flex-col gap-2", className)} {...props} />;

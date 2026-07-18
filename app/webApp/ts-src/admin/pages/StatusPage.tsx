@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { api, StatusSnapshot } from "../api";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -125,10 +125,12 @@ function GameTimeSetter({ snap }: { snap: StatusSnapshot }) {
 
   const newHM = ticksToTime(snap.gameTicks, snap.ticksPerDay || 72000);
   const newStr = `${pad2(newHM.h)}:${pad2(newHM.m)}`;
-  if (newStr !== prevRef.current) {
-    prevRef.current = newStr;
-    setTime(newStr);
-  }
+  useLayoutEffect(() => {
+    if (newStr !== prevRef.current) {
+      prevRef.current = newStr;
+      setTime(newStr);
+    }
+  });
 
   const save = async () => {
     const [hh, mm] = time.split(":").map(Number);
@@ -136,7 +138,7 @@ function GameTimeSetter({ snap }: { snap: StatusSnapshot }) {
     setSaving(true);
     try {
       await api.status.setGameTime(hh, mm);
-    } catch {}
+    } catch { /* empty */ }
     setSaving(false);
   };
 
@@ -191,7 +193,7 @@ export function StatusPage() {
     setRestarting(true);
     try {
       await api.status.restart();
-    } catch {}
+    } catch { /* empty */ }
     setTimeout(() => setRestarting(false), 4000);
   };
 
