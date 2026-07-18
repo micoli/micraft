@@ -14,7 +14,24 @@ val buildConfigGenDir = "build/generated/buildConfig/wasmJsMain/kotlin"
 val tsBuild by
     tasks.registering(Exec::class) {
         workingDir = file("ts-src")
-        inputs.dir("ts-src")
+        inputs.files(
+            fileTree("ts-src") {
+                exclude(
+                    "package.json",
+                    "node_modules/**",
+                    ".storybook/**",
+                    ".stories/**",
+                    "__tests__/**",
+                    "storybook-static/**",
+                    "**/*.stories.tsx",
+                    "**/*.stories.ts",
+                    "**/*.test.tsx",
+                    "**/*.test.ts",
+                    "**/*.spec.tsx",
+                    "**/*.spec.ts"
+                )
+            }
+        )
         outputs.file("src/wasmJsMain/resources/mc_bindings.js")
         commandLine("sh", "-c", "npm install && npm run build")
     }

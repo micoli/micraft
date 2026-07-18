@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Button } from "../../game/primitives/Button";
+import { expect, fn, userEvent, within } from "@storybook/test";
+import { Button } from "../../primitives/Button";
 
 const meta: Meta<typeof Button> = {
   title: "Primitives/Button",
@@ -22,6 +23,10 @@ type Story = StoryObj<typeof Button>;
 
 export const Primary: Story = {
   args: { children: "Primary", variant: "primary", size: "md" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("button", { name: "Primary" })).toBeVisible();
+  },
 };
 
 export const Secondary: Story = {
@@ -46,6 +51,20 @@ export const Outline: Story = {
 
 export const Disabled: Story = {
   args: { children: "Disabled", variant: "primary", size: "md", disabled: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const btn = canvas.getByRole("button", { name: "Disabled" });
+    await expect(btn).toBeDisabled();
+  },
+};
+
+export const Clickable: Story = {
+  args: { children: "Click me", variant: "primary", onClick: fn() },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Click me" }));
+    await expect(args.onClick).toHaveBeenCalledOnce();
+  },
 };
 
 export const AllVariants: Story = {

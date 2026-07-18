@@ -177,12 +177,16 @@ ts-lint:
 ts-lint-fix:
 	$(EXEC) "cd app/webApp/ts-src/; npm run lint:fix"
 
+ts-test-setup:
+	$(EXEC) "cd app/webApp/ts-src/; npx playwright install chromium --with-deps"
 
 ts-test:
 	$(EXEC) "cd app/webApp/ts-src/; npm run test"
 
 ts-test-storybook:
 	$(EXEC) "cd app/webApp/ts-src && npm run test-storybook:ci"
+
+test: kt-test kt-web-test ts-test ts-test-storybook
 
 kt-test:
 	$(EXEC) "./gradlew :core:jvmTest --rerun-tasks"
