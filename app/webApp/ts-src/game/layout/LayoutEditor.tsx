@@ -40,9 +40,7 @@ export function LayoutEditor({ open, layouts, activeLayout, onSave, onClose }: P
       const copy = layouts.map((l) => fillMissingWidgets({ ...l, widgets: [...l.widgets] }));
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalLayouts(copy);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalActive(activeLayout);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNameInput(activeLayout);
     }
   }, [open, layouts, activeLayout]);

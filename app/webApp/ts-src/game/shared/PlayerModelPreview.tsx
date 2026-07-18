@@ -29,7 +29,6 @@ export function useArmorModelsReady(armors: string[]): boolean {
     armors.forEach((a) => window.mc.initArmorModel?.(a));
     const check = () => armors.every((a) => window.mc.isArmorModelReady?.(a));
     if (check()) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setReady(true);
       return;
     }
@@ -40,6 +39,7 @@ export function useArmorModelsReady(armors: string[]): boolean {
       }
     }, 150);
     return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- armors.join(",") is intentional: stable string key for array identity
   }, [armors.join(",")]);
   return ready;
 }
@@ -62,13 +62,15 @@ export function PlayerModelPreview({
   const armorsReady = useArmorModelsReady(armors);
   const ready = skinReady && armorsReady;
   const walkingRef = useRef(walking);
-  useLayoutEffect(() => { walkingRef.current = walking; });
+  useLayoutEffect(() => {
+    walkingRef.current = walking;
+  });
 
   useEffect(() => {
     if (!ready) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const B = (window as any).BABYLON;
+    const B = window.BABYLON;
     if (!B) return;
 
     const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
@@ -96,6 +98,7 @@ export function PlayerModelPreview({
       if (model) window.mc.disposePlayerModel?.(model);
       engine.dispose();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only when ready; skin/armors change via component key
   }, [ready]);
 
   return (

@@ -57,7 +57,7 @@ export function CharacterSelectionScreen() {
   const { loginResultRef } = useGameContext();
 
   const [authMode, setAuthMode] = useState<AuthMode>("loading");
-  const [username, setUsername] = useState(getLastUser());
+  const [username] = useState(getLastUser());
   const [token, setToken] = useState(getStoredToken());
   const [lang, setLang] = useState(getLastLang());
   const [chars, setChars] = useState<PlayerEntry[]>([]);
@@ -179,18 +179,6 @@ export function CharacterSelectionScreen() {
     setToken("");
     saveLastUser("");
     navigate("/auth");
-  }
-
-  function addCharToList(name: string, id: string, skin: string) {
-    const accountKey = getAccountEmail() || username;
-    const users = getUsers();
-    if (!users[accountKey]) users[accountKey] = [];
-    if (!users[accountKey].some((c) => c.name === name)) users[accountKey].push({ name, id });
-    saveUsers(users);
-    setChars(users[accountKey]);
-    setSelected(name);
-    setPreviewSkin(skin);
-    setPreviewArmors([]);
   }
 
   return (

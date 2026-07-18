@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, KeyboardEvent, MutableRefObject } from "react";
+import { useCallback, useEffect, useRef, useState, KeyboardEvent, MutableRefObject } from "react";
 import { matchesEvent } from "../input/keyboard";
 
 interface ConsoleState {
@@ -38,17 +38,16 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
   const [selIdx, setSelIdx] = useState(-1);
   const completionSeqRef = useRef(0);
 
-  async function updateSuggestions(val: string) {
+  const updateSuggestions = useCallback(async (val: string) => {
     const seq = ++completionSeqRef.current;
     const sug = await computeSuggestions(val);
     if (seq === completionSeqRef.current) setSuggestions(sug);
-  }
+  }, []);
 
   useEffect(() => {
     if (!open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestions([]);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelIdx(-1);
       return;
     }
@@ -65,7 +64,7 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
       if (el.value.includes(" ")) updateSuggestions(el.value);
       setSelIdx(-1);
     }, 10);
-  }, [open]);
+  }, [open, focusRef, initialValueRef, stateRef, submittedRef, updateSuggestions]);
 
   function applyCompletion(val: string, match: string) {
     const el = inputRef.current!;
@@ -109,7 +108,9 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
           if (h.length === 0 || h[h.length - 1] !== text) h.push(text);
           try {
             localStorage.setItem("mc_history_" + c.playerName, JSON.stringify(h.slice(-50)));
-          } catch { /* empty */ }
+          } catch {
+            /* empty */
+          }
         }
         onClose();
         break;

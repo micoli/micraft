@@ -1,4 +1,4 @@
-import type { Scene, StandardMaterial } from "@babylonjs/core";
+import type { Scene, ShaderMaterial, StandardMaterial } from "@babylonjs/core";
 import { BLOCK_VERT, BLOCK_FRAG } from "../shaders/block";
 
 export function registerMaterials(): Pick<
@@ -19,7 +19,7 @@ export function registerMaterials(): Pick<
       mat.diffuseTexture.hasAlpha = false;
       mat.specularColor = new BABYLON.Color3(0, 0, 0);
       mat.backFaceCulling = false;
-      (mat as any).useVertexColors = true;
+      // mat.useVertexColors = true;
       return mat;
     },
 
@@ -33,60 +33,65 @@ export function registerMaterials(): Pick<
     ): StandardMaterial => {
       const mat = new BABYLON.StandardMaterial(name, scene);
       mat.diffuseTexture = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
-      (mat.diffuseTexture as any).hasAlpha = true;
-      (mat as any).useAlphaFromDiffuseTexture = true;
+      mat.diffuseTexture.hasAlpha = true;
+      mat.useAlphaFromDiffuseTexture = true;
       mat.backFaceCulling = false;
       mat.specularColor = new BABYLON.Color3(0, 0, 0);
       if (r !== undefined) mat.diffuseColor = new BABYLON.Color3(r, g!, b!);
-      (mat as any).useVertexColors = true;
+      // mat.useVertexColors = true;
       return mat;
     },
 
     createCrossSpriteMaterial: (name: string, url: string, scene: Scene): StandardMaterial => {
       const mat = new BABYLON.StandardMaterial(name, scene);
       mat.diffuseTexture = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
-      (mat.diffuseTexture as any).hasAlpha = true;
-      (mat as any).useAlphaFromDiffuseTexture = true;
+      mat.diffuseTexture.hasAlpha = true;
+      mat.useAlphaFromDiffuseTexture = true;
       mat.backFaceCulling = false;
       mat.specularColor = new BABYLON.Color3(0, 0, 0);
-      (mat as any).useVertexColors = true;
+      // mat.useVertexColors = true;
       return mat;
     },
 
     // Creates a ShaderMaterial for each block texture defined in blocks.bbmodel.
     // Returns a Record<matKey, Material> used by chunkEnd.
     // The special key "<name>:biome_tint" is created for biome-tinted faces (e.g. grass_top).
-    createBlockMaterials: (scene: any): Record<string, any> => {
+    createBlockMaterials: (scene: Scene): Record<string, ShaderMaterial | StandardMaterial> => {
       const textures: McBlockTextureDef[] = window.mc.getBlockTextures();
-      const mats: Record<string, any> = {};
+      const mats: Record<string, ShaderMaterial | StandardMaterial> = {};
 
-      const fogColor = (scene as any).fogColor ?? { r: 0.53, g: 0.81, b: 0.98 };
-      const fogStart: number = (scene as any).fogStart ?? 24;
-      const fogEnd: number = (scene as any).fogEnd ?? 40;
+      const fogColor = scene.fogColor ?? { r: 0.53, g: 0.81, b: 0.98 };
+      const fogStart: number = scene.fogStart ?? 24;
+      const fogEnd: number = scene.fogEnd ?? 40;
 
-      const makeMat = (name: string, url: string, tintR: number, tintG: number, tintB: number): any => {
-        const mat = new BABYLON.ShaderMaterial(name, scene, { vertexSource: BLOCK_VERT, fragmentSource: BLOCK_FRAG }, {
-          attributes: ["position", "normal", "uv", "color"],
-          uniforms: [
-            "worldViewProjection",
-            "view",
-            "world",
-            "fogColor",
-            "fogStart",
-            "fogEnd",
-            "fogZoneCx",
-            "fogZoneCz",
-            "fogZoneRadius",
-            "fogZoneStart",
-            "fogZoneEnd",
-            "tint",
-            "shadersEnabled",
-            "ambient",
-            "playerLightIntensity",
-          ],
-          vectors3: ["playerPos"],
-          samplers: ["textureSampler"],
-        } as any);
+      const makeMat = (name: string, url: string, tintR: number, tintG: number, tintB: number): ShaderMaterial => {
+        const mat = new BABYLON.ShaderMaterial(
+          name,
+          scene,
+          { vertexSource: BLOCK_VERT, fragmentSource: BLOCK_FRAG },
+          {
+            attributes: ["position", "normal", "uv", "color"],
+            uniforms: [
+              "worldViewProjection",
+              "view",
+              "world",
+              "fogColor",
+              "fogStart",
+              "fogEnd",
+              "fogZoneCx",
+              "fogZoneCz",
+              "fogZoneRadius",
+              "fogZoneStart",
+              "fogZoneEnd",
+              "tint",
+              "shadersEnabled",
+              "ambient",
+              "playerLightIntensity",
+              "playerPos",
+            ],
+            samplers: ["textureSampler"],
+          },
+        );
         const tex = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
         mat.setTexture("textureSampler", tex);
         mat.setVector3("fogColor", new BABYLON.Vector3(fogColor.r, fogColor.g, fogColor.b));
@@ -121,7 +126,7 @@ export function registerMaterials(): Pick<
       setGrassTintImpl = (r: number, g: number, b: number) => {
         for (const key of Object.keys(mats)) {
           if (key.endsWith(":biome_tint")) {
-            mats[key].setVector3("tint", new BABYLON.Vector3(r, g, b));
+            (mats[key] as ShaderMaterial).setVector3("tint", new BABYLON.Vector3(r, g, b));
           }
         }
       };

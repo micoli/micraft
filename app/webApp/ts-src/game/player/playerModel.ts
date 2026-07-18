@@ -1,4 +1,4 @@
-import type { Scene, StandardMaterial } from "@babylonjs/core";
+import type { Scene, Vector4 } from "@babylonjs/core";
 
 // Linear interpolation between two bbmodel keyframes at normalised time t ∈ [0,1].
 export function interpAxis(keyframes: BbModelKeyframe[], t: number, axis: string): number {
@@ -23,7 +23,7 @@ export function interpAxis(keyframes: BbModelKeyframe[], t: number, axis: string
 
 // Pixel coords [x0,y0,x1,y1] → BabylonJS Vector4(uMin,vMin,uMax,vMax).
 // BabylonJS loads textures with invertY so pixel y=0 maps to v=1.
-function skinUV(face: BbModelFace | undefined, W: number, H: number): unknown {
+function skinUV(face: BbModelFace | undefined, W: number, H: number): Vector4 {
   if (!face?.uv) return new BABYLON.Vector4(0, 0, 0, 0);
   const [x0, y0, x1, y1] = face.uv;
   return new BABYLON.Vector4(
@@ -36,7 +36,7 @@ function skinUV(face: BbModelFace | undefined, W: number, H: number): unknown {
 
 // BabylonJS CreateBox face order: 0=front(+Z/south), 1=back(-Z/north),
 // 2=right(+X/east), 3=left(-X/west), 4=top(+Y), 5=bottom(-Y)
-function skinFaceUV(el: BbModelElement, W: number, H: number): unknown[] {
+function skinFaceUV(el: BbModelElement, W: number, H: number): Vector4[] {
   const faces = el.faces;
   if (el.box_uv && el.uv_offset) {
     const bw = Math.round(Math.abs(el.to[0] - el.from[0]));
@@ -112,9 +112,8 @@ export function registerPlayerModel(): Pick<
     skin: string = "player",
     boneAliases?: Record<string, string>,
   ): McPlayerModel {
-    const s = scene as any;
-    if (!s.__mcSceneId) s.__mcSceneId = Math.random().toString(36).slice(2);
-    const cacheKey = `${s.__mcSceneId}_${skin}`;
+    if (!scene.__mcSceneId) scene.__mcSceneId = Math.random().toString(36).slice(2);
+    const cacheKey = `${scene.__mcSceneId}_${skin}`;
     if (bbmodel.textures?.length > 0 && !window.mcState.skinMatCache[cacheKey]) {
       const texDef = bbmodel.textures[0];
       const src = texDef.source;
@@ -146,7 +145,10 @@ export function registerPlayerModel(): Pick<
           elToGroupUuid[node] = parentUuid;
           continue;
         }
-        walkOutliner((node as any).children, (node as any).uuid);
+        walkOutliner(
+          (node as { uuid: string; children?: BbModel["outliner"] }).children ?? [],
+          (node as { uuid: string }).uuid,
+        );
       }
     }
     walkOutliner(bbmodel.outliner, null);
@@ -191,7 +193,7 @@ export function registerPlayerModel(): Pick<
           width: Math.abs(tx - fx) * SCALE,
           height: Math.abs(ty - fy) * SCALE,
           depth: Math.abs(tz - fz) * SCALE,
-          faceUV: skinFaceUV(el, W, H) as any,
+          faceUV: skinFaceUV(el, W, H),
         },
         scene,
       );

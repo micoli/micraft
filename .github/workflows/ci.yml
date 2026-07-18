@@ -18,7 +18,10 @@ jobs:
           cache-dependency-path: app/webApp/ts-src/package-lock.json
       - run: npm ci
         working-directory: app/webApp/ts-src
+      - run: echo "export const MC_BUILD_TIMESTAMP = "20260718-12.22.06";" > app/webApp/ts-src/buildConfig.ts
       - run: npm run typecheck
+        working-directory: app/webApp/ts-src
+      - run: npm run eslint
         working-directory: app/webApp/ts-src
 
   kotlin-test:

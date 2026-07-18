@@ -114,6 +114,7 @@ export function AuthScreen() {
       }
       setTimeout(() => usernameInputRef.current?.focus(), 50);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- navigate/refs are stable; only authMode drives this logic
   }, [authMode]);
 
   useEffect(() => {

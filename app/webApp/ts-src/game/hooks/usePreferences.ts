@@ -88,7 +88,7 @@ interface UsePreferencesParams {
   onClose: () => void;
 }
 
-export function usePreferences({ open, preferences, onSave, onClose }: UsePreferencesParams) {
+export function usePreferences({ open, preferences, onSave, onClose: _onClose }: UsePreferencesParams) {
   const [tab, setTab] = useState<Tab>("chat");
   const [localSubscribed, setLocalSubscribed] = useState<Set<string>>(new Set());
   const [localAutoFocus, setLocalAutoFocus] = useState<Set<string>>(new Set());
@@ -131,6 +131,7 @@ export function usePreferences({ open, preferences, onSave, onClose }: UsePrefer
       if (doubleTapTimerRef.current) clearTimeout(doubleTapTimerRef.current);
       setTab("chat");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional init-on-open; re-running on preferences change would discard in-progress edits
   }, [open]);
 
   const commitKey = (key: string) => {

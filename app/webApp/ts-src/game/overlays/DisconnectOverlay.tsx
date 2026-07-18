@@ -12,13 +12,12 @@ export function DisconnectOverlay({ message }: { message: string | null }) {
       setRemaining(null);
       return;
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRemaining(totalSecs);
     const interval = setInterval(() => {
       setRemaining((r) => (r !== null && r > 0 ? r - 1 : 0));
     }, 1000);
     return () => clearInterval(interval);
-  }, [message]);
+  }, [message, totalSecs]);
 
   if (!message) return null;
 

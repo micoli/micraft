@@ -1,3 +1,5 @@
+import type { Mesh, Scene, StandardMaterial } from "@babylonjs/core";
+
 interface WeatherZone {
   id: string;
   type: "RAIN" | "STORM" | "SNOW" | "FOG" | string;
@@ -17,7 +19,7 @@ let activeZones: WeatherZone[] = [];
 
 // Per-type particle state
 interface ParticleState {
-  mesh: any;
+  mesh: Mesh;
   matrices: Float32Array;
   offsets: Float32Array; // x, y, z per particle (ox, oy, oz)
   count: number;
@@ -31,11 +33,11 @@ let snowParticles: ParticleState | null = null;
 let currentWeatherType: string = "NONE";
 
 // Cloud meshes keyed by zone id
-const cloudMeshes: Map<string, any> = new Map();
+const cloudMeshes: Map<string, Mesh> = new Map();
 
 let stormFlashCounter = 0;
 
-function createParticleMesh(scene: any, name: string, w: number, h: number): any {
+function createParticleMesh(scene: Scene, name: string, w: number, h: number): Mesh {
   const positions = [-w / 2, -h / 2, 0, w / 2, -h / 2, 0, w / 2, h / 2, 0, -w / 2, h / 2, 0];
   const indices = [0, 1, 2, 0, 2, 3, 2, 1, 0, 3, 2, 0];
   const normals: number[] = [];
@@ -56,12 +58,12 @@ function createParticleMesh(scene: any, name: string, w: number, h: number): any
   return mesh;
 }
 
-function initRainParticles(scene: any, count: number, color: [number, number, number]): ParticleState {
+function initRainParticles(scene: Scene, count: number, color: [number, number, number]): ParticleState {
   const mesh = createParticleMesh(scene, "mc_rain", 0.05, 0.8);
-  const mat = mesh.material;
+  const mat = mesh.material as StandardMaterial;
   mat.emissiveColor = new BABYLON.Color3(...color);
   mat.alpha = 0.55;
-  (mat as any).fogEnabled = false;
+  mat.fogEnabled = false;
 
   const offsets = new Float32Array(count * 3);
   const spread = 20;
@@ -78,12 +80,12 @@ function initRainParticles(scene: any, count: number, color: [number, number, nu
   return { mesh, matrices, offsets, count, fallSpeed: 0.6, spread, heightSpan };
 }
 
-function initSnowParticles(scene: any, count: number): ParticleState {
+function initSnowParticles(scene: Scene, count: number): ParticleState {
   const mesh = createParticleMesh(scene, "mc_snow", 0.3, 0.3);
-  const mat = mesh.material;
+  const mat = mesh.material as StandardMaterial;
   mat.emissiveColor = new BABYLON.Color3(0.92, 0.95, 1.0);
   mat.alpha = 0.7;
-  (mat as any).fogEnabled = false;
+  mat.fogEnabled = false;
 
   const offsets = new Float32Array(count * 3);
   const spread = 22;
@@ -147,7 +149,7 @@ function hideParticles(state: ParticleState | null): void {
   if (state) state.mesh.setEnabled(false);
 }
 
-function syncCloudMeshes(scene: any): void {
+function syncCloudMeshes(scene: Scene): void {
   const currentIds = new Set(activeZones.filter((z) => z.type === "RAIN" || z.type === "STORM").map((z) => z.id));
 
   // Remove clouds for gone zones
@@ -176,7 +178,7 @@ function syncCloudMeshes(scene: any): void {
     mat.emissiveColor = zone.type === "STORM" ? new BABYLON.Color3(0.2, 0.1, 0.25) : new BABYLON.Color3(0.4, 0.4, 0.45);
     mat.alpha = 0.55;
     mat.backFaceCulling = false;
-    (mat as any).fogEnabled = false;
+    mat.fogEnabled = false;
     cloud.material = mat;
 
     cloudMeshes.set(zone.id, cloud);
@@ -184,10 +186,10 @@ function syncCloudMeshes(scene: any): void {
 }
 
 function syncFogToMaterials(fogStart: number, fogEnd: number): void {
-  const mats = (window.mcState as any).blockMaterials as Record<string, any> | undefined;
+  const mats = window.mcState.blockMaterials;
   if (!mats) return;
   for (const mat of Object.values(mats)) {
-    if (typeof mat.setFloat === "function") {
+    if (mat instanceof BABYLON.ShaderMaterial) {
       mat.setFloat("fogStart", fogStart);
       mat.setFloat("fogEnd", fogEnd);
     }
@@ -195,10 +197,10 @@ function syncFogToMaterials(fogStart: number, fogEnd: number): void {
 }
 
 function syncZoneFogToMaterials(cx: number, cz: number, radius: number, fogStart: number, fogEnd: number): void {
-  const mats = (window.mcState as any).blockMaterials as Record<string, any> | undefined;
+  const mats = window.mcState.blockMaterials;
   if (!mats) return;
   for (const mat of Object.values(mats)) {
-    if (typeof mat.setFloat === "function") {
+    if (mat instanceof BABYLON.ShaderMaterial) {
       mat.setFloat("fogZoneCx", cx);
       mat.setFloat("fogZoneCz", cz);
       mat.setFloat("fogZoneRadius", radius);
@@ -251,8 +253,8 @@ export function registerWeather(): Pick<McBindings, "setWeatherZones" | "updateW
       window.mc.setMinimapWeather(json);
     },
 
-    updateWeather: (scene: any, px: number, py: number, pz: number): void => {
-      const underground = (window.mcState as any).caveFactor !== undefined && (window.mcState as any).caveFactor < 0.9;
+    updateWeather: (scene: Scene, px: number, py: number, pz: number): void => {
+      const underground = window.mcState.caveFactor !== undefined && window.mcState.caveFactor < 0.9;
       if (underground) {
         hideParticles(rainParticles);
         hideParticles(snowParticles);

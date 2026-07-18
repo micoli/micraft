@@ -130,7 +130,7 @@ function GameTimeSetter({ snap }: { snap: StatusSnapshot }) {
       prevRef.current = newStr;
       setTime(newStr);
     }
-  });
+  }, [newStr]);
 
   const save = async () => {
     const [hh, mm] = time.split(":").map(Number);
@@ -138,7 +138,9 @@ function GameTimeSetter({ snap }: { snap: StatusSnapshot }) {
     setSaving(true);
     try {
       await api.status.setGameTime(hh, mm);
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
     setSaving(false);
   };
 
@@ -193,7 +195,9 @@ export function StatusPage() {
     setRestarting(true);
     try {
       await api.status.restart();
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
     setTimeout(() => setRestarting(false), 4000);
   };
 

@@ -1,4 +1,4 @@
-import type { Camera, Scene } from "@babylonjs/core";
+import type { Camera, Scene, TargetCamera } from "@babylonjs/core";
 
 // Cache the forward direction for the current JS task — all Dir3D/Forward calls
 // within a single Kotlin tick are synchronous, so one getForwardRay() suffices.
@@ -73,7 +73,7 @@ export function registerCamera(): Pick<
      * Binds keys 1-6 to camera positions facing each face of the block at (bx,by,bz).
      * Face mapping: 1=+Z, 2=-Z, 3=+X, 4=-X, 5=+Y, 6=-Y  (BabylonJS CreateBox order)
      */
-    setupDebugCameraKeys: (camera: Camera, scene: Scene, bx: number, by: number, bz: number): void => {
+    setupDebugCameraKeys: (camera: TargetCamera, scene: Scene, bx: number, by: number, bz: number): void => {
       const dist = 5;
       const faces: [number, number, number][] = [
         [bx, by, bz + dist],
@@ -85,11 +85,10 @@ export function registerCamera(): Pick<
       ];
 
       const lock = (px: number, py: number, pz: number): void => {
-        if (window.mcState.debugCamObserver)
-          (scene as any).onBeforeRenderObservable.remove(window.mcState.debugCamObserver);
-        window.mcState.debugCamObserver = (scene as any).onBeforeRenderObservable.add(() => {
-          (camera as any).position = new BABYLON.Vector3(px, py, pz);
-          (camera as any).setTarget(new BABYLON.Vector3(bx, by, bz));
+        if (window.mcState.debugCamObserver) scene.onBeforeRenderObservable.remove(window.mcState.debugCamObserver);
+        window.mcState.debugCamObserver = scene.onBeforeRenderObservable.add(() => {
+          camera.position = new BABYLON.Vector3(px, py, pz);
+          camera.setTarget(new BABYLON.Vector3(bx, by, bz));
         });
       };
 
@@ -103,7 +102,7 @@ export function registerCamera(): Pick<
         }
         if (e.key === "Escape") {
           if (window.mcState.debugCamObserver) {
-            (scene as any).onBeforeRenderObservable.remove(window.mcState.debugCamObserver);
+            scene.onBeforeRenderObservable.remove(window.mcState.debugCamObserver);
             window.mcState.debugCamObserver = null;
           }
         }

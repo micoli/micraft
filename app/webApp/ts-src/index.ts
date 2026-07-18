@@ -1,5 +1,6 @@
 // mc_bindings.js — BabylonJS host functions called from Kotlin/Wasm via js()
 // Must be loaded AFTER babylon.js and BEFORE webApp.js.
+import type { Vector4 } from "@babylonjs/core";
 import { registerAllPlugins } from "@plugins/index";
 import { registerAutoUpdate } from "./lib/autoUpdate";
 import { registerUtils } from "./game/utils/utils";
@@ -52,7 +53,7 @@ window.mcState = {
   armorBbmodels: {},
   npcModelsReady: false,
   skinMatCache: {},
-  skinUV: () => undefined,
+  skinUV: () => undefined as unknown as Vector4,
   skinFaceUV: () => [],
   // Scene
   engine: null,

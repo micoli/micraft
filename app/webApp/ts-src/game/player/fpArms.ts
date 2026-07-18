@@ -1,4 +1,4 @@
-import type { Camera, Scene, StandardMaterial } from "@babylonjs/core";
+import type { Camera, Node, Scene } from "@babylonjs/core";
 import { interpAxis } from "./playerModel";
 
 export function registerFPArms(): Pick<
@@ -8,7 +8,7 @@ export function registerFPArms(): Pick<
   return {
     createFPArms: (scene: Scene, camera: Camera, skin: string = "player"): McFPArms | null => {
       const bbmodel = window.mcState?.playerBbmodels?.[skin];
-      const sceneId = (scene as any).__mcSceneId ?? "";
+      const sceneId = scene.__mcSceneId ?? "";
       const mat = window.mcState?.skinMatCache?.[`${sceneId}_${skin}`];
       if (!bbmodel || !mat) {
         console.warn("[MiCraft] createFPArms: bbmodel or material not ready");
@@ -54,7 +54,7 @@ export function registerFPArms(): Pick<
         }
 
         const pivot = new BABYLON.TransformNode(`fp_${name}`, scene);
-        pivot.parent = camera as any;
+        pivot.parent = camera as Node;
         pivot.position = new BABYLON.Vector3(px, py, 0.45);
 
         const [fx, fy, fz] = el.from,
@@ -65,13 +65,13 @@ export function registerFPArms(): Pick<
             width: Math.abs(tx - fx) * SCALE,
             height: Math.abs(ty - fy) * SCALE,
             depth: Math.abs(tz - fz) * SCALE,
-            faceUV: window.mcState.skinFaceUV(el, W, H) as any,
+            faceUV: window.mcState.skinFaceUV(el, W, H),
           },
           scene,
         );
         mesh.material = mat;
         mesh.isPickable = false;
-        (mesh as any).alwaysSelectAsActiveMesh = true; // bypass frustum culling for camera-parented mesh
+        mesh.alwaysSelectAsActiveMesh = true; // bypass frustum culling for camera-parented mesh
         mesh.parent = pivot;
         mesh.position = new BABYLON.Vector3(0, -0.375, 0); // arm hangs below shoulder pivot
 

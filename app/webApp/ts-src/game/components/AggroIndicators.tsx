@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { NpcProximityEntry } from "../types";
 
 interface Props {
   npcProximity?: NpcProximityEntry[];
-  layoutStyle?: React.CSSProperties;
+  layoutStyle?: CSSProperties;
 }
 
 export function AggroIndicators({ npcProximity = [], layoutStyle }: Props) {

@@ -27,7 +27,7 @@ export function ShortcutBar({
   selectedSlot,
   onSlotDrop,
   layoutStyle,
-  macros,
+  macros: _macros,
   macroIcons,
   playerStatus,
 }: Props) {

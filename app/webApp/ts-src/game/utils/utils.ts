@@ -88,7 +88,7 @@ export function registerUtils(): Pick<
     setConnectedPlayers: (namesJson: string): void => {
       try {
         window.mcState.connectedPlayers = JSON.parse(namesJson);
-      } catch (_e) {
+      } catch {
         /* keep empty */
       }
     },
@@ -96,7 +96,7 @@ export function registerUtils(): Pick<
     setNpcNames: (namesJson: string): void => {
       try {
         window.mcState.npcNames = JSON.parse(namesJson);
-      } catch (_e) {
+      } catch {
         /* keep empty */
       }
     },

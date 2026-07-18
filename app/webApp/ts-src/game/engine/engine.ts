@@ -1,4 +1,4 @@
-import type { Engine, Scene, HemisphericLight, Mesh } from "@babylonjs/core";
+import type { Camera, Engine, Scene, HemisphericLight, Mesh } from "@babylonjs/core";
 
 export function registerEngine(): Pick<
   McBindings,
@@ -20,7 +20,7 @@ export function registerEngine(): Pick<
       if (window.mcState.engine) {
         try {
           (window.mcState.engine as Engine).dispose();
-        } catch (_e) {
+        } catch {
           /* ignore */
         }
         window.mcState.engine = null;
@@ -93,52 +93,55 @@ export function registerEngine(): Pick<
 
     // One-time scene tweaks: skip per-frame pointer picking and material dirty checks.
     optimizeScene: (scene: Scene): void => {
-      (scene as any).skipPointerMovePicking = true;
-      (scene as any).blockMaterialDirtyMechanism = true;
+      scene.skipPointerMovePicking = true;
+      scene.blockMaterialDirtyMechanism = true;
     },
 
     setupFog: (scene: Scene, r: number, g: number, b: number): void => {
-      (scene as any).fogMode = BABYLON.Scene.FOGMODE_LINEAR;
-      (scene as any).fogStart = 24;
-      (scene as any).fogEnd = 40;
-      (scene as any).fogColor = new BABYLON.Color3(r, g, b);
-      (scene as any).clearColor = new BABYLON.Color4(r, g, b, 1.0);
+      scene.fogMode = BABYLON.Scene.FOGMODE_LINEAR;
+      scene.fogStart = 24;
+      scene.fogEnd = 40;
+      scene.fogColor = new BABYLON.Color3(r, g, b);
+      scene.clearColor = new BABYLON.Color4(r, g, b, 1.0);
       // Sync fog color to block shader materials (created after this call)
-      const mats = window.mcState.blockMaterials as Record<string, any> | undefined;
+      const mats = window.mcState.blockMaterials;
       if (mats) {
         const fv = new BABYLON.Vector3(r, g, b);
-        for (const mat of Object.values(mats)) if (typeof mat.setVector3 === "function") mat.setVector3("fogColor", fv);
+        for (const mat of Object.values(mats))
+          if (mat instanceof BABYLON.ShaderMaterial) mat.setVector3("fogColor", fv);
       }
     },
 
-    setShadersEnabled: (scene: Scene, enabled: boolean): void => {
-      const mats = window.mcState.blockMaterials as Record<string, any> | undefined;
+    setShadersEnabled: (_scene: Scene, enabled: boolean): void => {
+      const mats = window.mcState.blockMaterials;
       if (mats) {
         const v = enabled ? 1.0 : 0.0;
         for (const mat of Object.values(mats))
-          if (typeof mat.setFloat === "function") mat.setFloat("shadersEnabled", v);
+          if (mat instanceof BABYLON.ShaderMaterial) mat.setFloat("shadersEnabled", v);
       }
     },
 
     setAmbient: (_scene: Scene, v: number): void => {
-      const mats = window.mcState.blockMaterials as Record<string, any> | undefined;
+      const mats = window.mcState.blockMaterials;
       if (mats)
-        for (const mat of Object.values(mats)) if (typeof mat.setFloat === "function") mat.setFloat("ambient", v);
+        for (const mat of Object.values(mats)) if (mat instanceof BABYLON.ShaderMaterial) mat.setFloat("ambient", v);
     },
 
     setPlayerLight: (_scene: Scene, x: number, y: number, z: number, intensity: number): void => {
-      const mats = window.mcState.blockMaterials as Record<string, any> | undefined;
+      const mats = window.mcState.blockMaterials;
       if (!mats) return;
       const pos = new BABYLON.Vector3(x, y, z);
       for (const mat of Object.values(mats)) {
-        if (typeof mat.setVector3 === "function") mat.setVector3("playerPos", pos);
-        if (typeof mat.setFloat === "function") mat.setFloat("playerLightIntensity", intensity);
+        if (mat instanceof BABYLON.ShaderMaterial) {
+          mat.setVector3("playerPos", pos);
+          mat.setFloat("playerLightIntensity", intensity);
+        }
       }
     },
 
     setRemotePlayerLight: (model: McPlayerModel, _scene: Scene, enabled: boolean): void => {
       if (enabled) {
-        if ((model as any)._lightBoost) return;
+        if (model._lightBoost) return;
 
         const armNode = model.pivotNodes["rightArm"]?.node ?? model.root;
         // hand offset relative to rightArm pivot in scene units (bbmodel: rightItem=[6,15,1], rightArm=[5,22,0], SCALE=1/16)
@@ -168,18 +171,18 @@ export function registerEngine(): Pick<
         light.parent = armNode;
         light.position = handOffset.clone();
 
-        (model as any)._lightBoost = { orb, light };
+        model._lightBoost = { orb, light };
       } else {
-        const lb = (model as any)._lightBoost;
+        const lb = model._lightBoost;
         if (lb) {
           lb.orb?.dispose();
           lb.light?.dispose();
-          (model as any)._lightBoost = null;
+          model._lightBoost = null;
         }
       }
     },
 
-    setupRenderPipeline: (scene: Scene, camera: any): void => {
+    setupRenderPipeline: (scene: Scene, camera: Camera): void => {
       const pipeline = new BABYLON.DefaultRenderingPipeline("mcPipeline", true, scene, [camera]);
 
       pipeline.imageProcessingEnabled = false;

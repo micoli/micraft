@@ -260,23 +260,19 @@ export function MacroEditor({
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalMacros({ ...macros });
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalIcons({ ...(macroIcons ?? {}) });
       const macroBindings: Record<string, string[]> = {};
       for (const [k, v] of Object.entries(customCommands)) {
         if (k.startsWith("macro:")) macroBindings[k] = v;
       }
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalBindings(macroBindings);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPinned(new Set(customCommands[PINNED_KEY] ?? []));
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelected(Object.keys(macros)[0] ?? null);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNewName("");
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRecording(null);
     }
+    // intentionally only runs on open; re-running on macros/icons/customCommands change would discard in-progress edits
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {

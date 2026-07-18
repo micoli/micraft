@@ -249,7 +249,9 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
   const [skin, setSkin] = useState("player");
   const [walking, setWalking] = useState(true);
   const closeRef = useRef(onClose);
-  useLayoutEffect(() => { closeRef.current = onClose; });
+  useLayoutEffect(() => {
+    closeRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return;

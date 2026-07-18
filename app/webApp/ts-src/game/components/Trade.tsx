@@ -18,7 +18,7 @@ interface Props {
 }
 
 function ItemSlot({
-  type,
+  type: _type,
   count,
   bg,
   label,

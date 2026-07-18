@@ -4,6 +4,7 @@ import { Button, ButtonProps } from "../../primitives/Button";
 
 interface PauseMenuItem {
   label: string;
+  icon?: string;
   variant?: ButtonProps["variant"];
   callback: () => void;
 }
@@ -41,6 +42,7 @@ export function PauseMenu({ open, onClose, items }: PauseMenuProps) {
             onClick={item.callback}
             className="font-mono"
           >
+            {item.icon ? `${item.icon} ` : ""}
             {item.label}
           </Button>
         ))}

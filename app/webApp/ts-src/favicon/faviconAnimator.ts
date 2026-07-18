@@ -1,3 +1,4 @@
+import type { StandardMaterial } from "@babylonjs/core";
 import { getFaceTexUrl } from "../game/blocks/blockDefs";
 
 const FACES = [
@@ -45,7 +46,7 @@ function _stopAnimation(): void {
 }
 
 function _buildFrameCache(): void {
-  const B = (window as any).BABYLON;
+  const B = window.BABYLON;
   if (!B || _ordinal < 0) return;
 
   const fallback = _staticUrl;
@@ -73,7 +74,7 @@ function _buildFrameCache(): void {
     light.groundColor = new B.Color3(0.25, 0.25, 0.25);
 
     const root = new B.TransformNode("favroot", scene);
-    const matCache = new Map<string, unknown>();
+    const matCache = new Map<string, StandardMaterial>();
 
     for (const { dir, x, y, z, rx, ry } of FACES) {
       const rawUrl = (getFaceTexUrl(_ordinal, dir) ?? fallback)!;
@@ -92,7 +93,7 @@ function _buildFrameCache(): void {
       plane.parent = root;
       plane.position = new B.Vector3(x, y, z);
       plane.rotation = new B.Vector3(rx, ry, 0);
-      plane.material = matCache.get(blobUrl);
+      plane.material = matCache.get(blobUrl) ?? null;
     }
 
     const ANGLE_STEP = 0.035;

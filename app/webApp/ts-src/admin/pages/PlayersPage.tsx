@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../primitives/Tabs";
 import { api, BaseStats, PlayerFile } from "../api";
@@ -15,34 +15,6 @@ function SaveBtn({ saving, saved, onClick }: { saving: boolean; saved: boolean; 
     >
       {saving ? "Saving…" : saved ? "Saved ✓" : "Save"}
     </button>
-  );
-}
-
-function TextInput({
-  id,
-  value,
-  onChange,
-  type = "text",
-  min,
-  max,
-}: {
-  id?: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-  min?: number;
-  max?: number;
-}) {
-  return (
-    <input
-      id={id}
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      min={min}
-      max={max}
-      className="w-full bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#3C50E0] transition-colors"
-    />
   );
 }
 
@@ -282,6 +254,31 @@ function computeDerived(s: BaseStats, level: number) {
     maxTokens: Math.floor(level / 4) + 1,
   };
 }
+const StatRow = ({
+  stats,
+  name,
+  label,
+  setStats,
+}: {
+  label: string;
+  stats: BaseStats;
+  name: keyof typeof stats;
+  setStats: Dispatch<SetStateAction<BaseStats>>;
+}) => (
+  // const statRow = (name: keyof typeof stats, label: string) => (
+  <div className="flex items-center gap-3 py-2 border-b border-[#2E3A4E] last:border-0">
+    <span className="text-xs text-[#8A99AF] w-24">{label}</span>
+    <input
+      type="range"
+      min={1}
+      max={20}
+      value={stats[name]}
+      onChange={(e) => setStats((p) => ({ ...p, [name]: Number(e.target.value) }))}
+      className="flex-1 accent-[#3C50E0]"
+    />
+    <span className="text-sm text-[#3C50E0] w-6 text-right tabular-nums font-semibold">{stats[name]}</span>
+  </div>
+);
 
 function RpgTab({ file, onSave }: { file: PlayerFile; onSave: (rpg: Record<string, unknown>) => Promise<void> }) {
   const cd = file.state.characterData!;
@@ -299,21 +296,6 @@ function RpgTab({ file, onSave }: { file: PlayerFile; onSave: (rpg: Record<strin
   };
 
   const derived = computeDerived(stats, cd.level);
-
-  const statRow = (name: keyof typeof stats, label: string) => (
-    <div className="flex items-center gap-3 py-2 border-b border-[#2E3A4E] last:border-0">
-      <span className="text-xs text-[#8A99AF] w-24">{label}</span>
-      <input
-        type="range"
-        min={1}
-        max={20}
-        value={stats[name]}
-        onChange={(e) => setStats((p) => ({ ...p, [name]: Number(e.target.value) }))}
-        className="flex-1 accent-[#3C50E0]"
-      />
-      <span className="text-sm text-[#3C50E0] w-6 text-right tabular-nums font-semibold">{stats[name]}</span>
-    </div>
-  );
 
   return (
     <div className="p-5 space-y-5">
@@ -337,12 +319,17 @@ function RpgTab({ file, onSave }: { file: PlayerFile; onSave: (rpg: Record<strin
       </div>
       <div>
         <p className="text-xs font-medium text-[#8A99AF] mb-2">Base Stats</p>
-        {statRow("str", "Strength")}
-        {statRow("dex", "Dexterity")}
-        {statRow("intel", "Intellect")}
-        {statRow("wis", "Wisdom")}
-        {statRow("con", "Constitution")}
-        {statRow("cha", "Charisma")}
+        {
+          <div>
+            <p className="text-xs font-medium text-[#8A99AF] mb-2">Base Stats</p>
+            <StatRow name="str" label="Strength" stats={stats} setStats={setStats} />
+            <StatRow name="dex" label="Dexterity" stats={stats} setStats={setStats} />
+            <StatRow name="intel" label="Intellect" stats={stats} setStats={setStats} />
+            <StatRow name="wis" label="Wisdom" stats={stats} setStats={setStats} />
+            <StatRow name="con" label="Constitution" stats={stats} setStats={setStats} />
+            <StatRow name="cha" label="Charisma" stats={stats} setStats={setStats} />
+          </div>
+        }
       </div>
       <div>
         <p className="text-xs font-medium text-[#8A99AF] mb-2">

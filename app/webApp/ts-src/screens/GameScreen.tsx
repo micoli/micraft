@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { GameLayout, ChannelSubscription } from "../game/types";
 import { NpcDialog } from "../game/npc/NpcDialog";
 import { LoadingOverlay } from "../game/overlays/LoadingOverlay";
@@ -12,13 +12,7 @@ import { Notifications } from "../game/components/Notifications";
 import { PauseMenu } from "../game/overlays/PauseMenu";
 import { MacroEditor } from "../game/overlays/MacroEditor";
 import { LayoutEditor } from "../game/layout/LayoutEditor";
-import {
-  defaultLayout,
-  getWidget,
-  resolveActiveLayout,
-  widgetStyle,
-  WIDGET_REGISTRY,
-} from "../game/layout/LayoutEngine";
+import { getWidget, resolveActiveLayout, widgetStyle, WIDGET_REGISTRY } from "../game/layout/LayoutEngine";
 import { CodexModal } from "../game/components/CodexModal";
 import { ChunkDebug } from "../game/components/ChunkDebug";
 import { Character } from "../game/components/Character";
@@ -31,7 +25,6 @@ import { PlayerDownedOverlay } from "../game/components/PlayerDownedOverlay";
 import { AttackPanel } from "../game/components/AttackPanel";
 import { XpBar } from "../game/components/XpBar";
 import { useGameContext } from "../game/GameContext";
-import { getLastUser, clearLastPlayer } from "../lib/authStorage";
 import { AggroIndicators } from "../game/components/AggroIndicators";
 import { Statistics } from "../game/components/Statistics";
 import { QuestJournal } from "../game/components/QuestJournal";
@@ -100,7 +93,7 @@ export function GameScreen() {
     if (window.mcState) {
       window.mcState.bindings = payload.keybindings;
       window.mcState.customCommands = payload.customCommands;
-      (window.mcState as any).dynamicFogEnabled = payload.dynamicFogEnabled ?? true;
+      window.mcState.dynamicFogEnabled = payload.dynamicFogEnabled ?? true;
     }
     window.mc.applyFaviconPref?.(payload.animatedFavicon);
     pendingPreferencesUpdateRef.current = JSON.stringify(payload);
@@ -372,6 +365,7 @@ export function GameScreen() {
             }}
             items={[
               {
+                icon: "🛠",
                 label: "Craft",
                 callback: () => {
                   dispatch("pause_menu_hide");
@@ -379,6 +373,7 @@ export function GameScreen() {
                 },
               },
               {
+                icon: "📚",
                 label: "Quests",
                 callback: () => {
                   dispatch("pause_menu_hide");
@@ -386,6 +381,7 @@ export function GameScreen() {
                 },
               },
               {
+                icon: "🎭",
                 label: "Character",
                 callback: () => {
                   dispatch("pause_menu_hide");
@@ -393,6 +389,7 @@ export function GameScreen() {
                 },
               },
               {
+                icon: "🗺️",
                 label: "Map",
                 callback: () => {
                   dispatch("pause_menu_hide");
@@ -400,6 +397,7 @@ export function GameScreen() {
                 },
               },
               {
+                icon: "💻",
                 label: "Macros",
                 callback: () => {
                   dispatch("pause_menu_hide");
@@ -407,6 +405,7 @@ export function GameScreen() {
                 },
               },
               {
+                icon: "¶",
                 label: "Preferences",
                 callback: () => {
                   dispatch("pause_menu_hide");
@@ -414,15 +413,7 @@ export function GameScreen() {
                 },
               },
               {
-                label: "Disconnect",
-                variant: "danger",
-                callback: () => {
-                  window.mcState.intentionalDisconnect = true;
-                  consoleSubmittedRef.current = "/disconnect";
-                  dispatch("pause_menu_hide");
-                },
-              },
-              {
+                icon: "🔄",
                 label: "Refresh",
                 variant: "outline",
                 callback: () => {
@@ -432,6 +423,16 @@ export function GameScreen() {
                   } else {
                     window.location.reload();
                   }
+                },
+              },
+              {
+                icon: "🚫",
+                label: "Disconnect",
+                variant: "danger",
+                callback: () => {
+                  window.mcState.intentionalDisconnect = true;
+                  consoleSubmittedRef.current = "/disconnect";
+                  dispatch("pause_menu_hide");
                 },
               },
             ]}

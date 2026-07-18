@@ -1,7 +1,7 @@
-import type { Scene } from "@babylonjs/core";
+import type { LinesMesh, Scene, Vector3 } from "@babylonjs/core";
 
 // 12 edges of a unit cube centred at origin, expanded by `h` on each side.
-function cubeLines(h: number): [unknown, unknown][] {
+function cubeLines(h: number): [Vector3, Vector3][] {
   const V = (x: number, y: number, z: number) => new BABYLON.Vector3(x, y, z);
   return [
     [V(-h, -h, -h), V(h, -h, -h)],
@@ -29,9 +29,9 @@ export function registerTargeting(): Pick<
         window.mcState.targetMesh.dispose();
         window.mcState.targetMesh = null;
       }
-      const ls = BABYLON.MeshBuilder.CreateLineSystem("targetOutline", { lines: cubeLines(0.502) as any }, scene);
+      const ls = BABYLON.MeshBuilder.CreateLineSystem("targetOutline", { lines: cubeLines(0.502) }, scene) as LinesMesh;
       ls.position = new BABYLON.Vector3(x + 0.5, y + 0.5, z + 0.5);
-      (ls as any).color = breakable ? new BABYLON.Color3(0, 0, 0) : new BABYLON.Color3(0.55, 0.55, 0.55);
+      ls.color = breakable ? new BABYLON.Color3(0, 0, 0) : new BABYLON.Color3(0.55, 0.55, 0.55);
       ls.isPickable = false;
       window.mcState.targetMesh = ls;
     },
@@ -47,11 +47,11 @@ export function registerTargeting(): Pick<
       const bpos = `${x},${y},${z}`;
       if (!window.mcState.breakMesh || window.mcState.breakMesh._bpos !== bpos) {
         if (window.mcState.breakMesh) window.mcState.breakMesh.dispose();
-        const ls = BABYLON.MeshBuilder.CreateLineSystem("breakOverlay", { lines: cubeLines(0.51) as any }, scene);
+        const ls = BABYLON.MeshBuilder.CreateLineSystem("breakOverlay", { lines: cubeLines(0.51) }, scene) as LinesMesh;
         ls.position = new BABYLON.Vector3(x + 0.5, y + 0.5, z + 0.5);
-        (ls as any).color = new BABYLON.Color3(0, 0, 0);
+        ls.color = new BABYLON.Color3(0, 0, 0);
         ls.isPickable = false;
-        window.mcState.breakMesh = ls as any;
+        window.mcState.breakMesh = ls as InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string };
         window.mcState.breakMesh!._bpos = bpos;
       }
       window.mcState.breakMesh!.visibility = alpha;

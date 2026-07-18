@@ -6,7 +6,7 @@ export function useInventory() {
 
   function startDrag(e: React.PointerEvent<HTMLDivElement>, type: string, bg: string) {
     e.currentTarget.setPointerCapture(e.pointerId);
-    (window as any).__mcDragItem = type;
+    window.__mcDragItem = type;
     const ghost = document.createElement("div");
     ghost.style.cssText = `position:fixed;pointer-events:none;z-index:9999;width:52px;height:52px;background:rgba(0,0,0,0.9);border:2px solid rgba(255,255,255,0.8);border-radius:4px;display:flex;align-items:center;justify-content:center;left:${e.clientX - 26}px;top:${e.clientY - 26}px;opacity:0.85;cursor:grabbing;`;
     const inner = document.createElement("div");
@@ -31,11 +31,13 @@ export function useInventory() {
   }
 
   function endDrag(e: React.PointerEvent<HTMLDivElement>) {
-    const item = (window as any).__mcDragItem as string | null;
-    (window as any).__mcDragItem = null;
+    const item = window.__mcDragItem as string | null;
+    window.__mcDragItem = null;
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
     ghostRef.current?.remove();
     ghostRef.current = null;
     if (lastSlotRef.current instanceof HTMLElement) lastSlotRef.current.style.background = "rgba(0,0,0,0.72)";

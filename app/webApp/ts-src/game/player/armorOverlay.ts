@@ -46,9 +46,8 @@ export function registerArmorOverlay(): Pick<
       const SCALE = 1 / 16;
 
       // Material — one per armor type, cached per scene
-      const s = scene as any;
-      if (!s.__mcSceneId) s.__mcSceneId = Math.random().toString(36).slice(2);
-      const cacheKey = `armor_${armorName}_${s.__mcSceneId}`;
+      if (!scene.__mcSceneId) scene.__mcSceneId = Math.random().toString(36).slice(2);
+      const cacheKey = `armor_${armorName}_${scene.__mcSceneId}`;
       if (bbmodel.textures?.length > 0 && !window.mcState.skinMatCache[cacheKey]) {
         const texDef = bbmodel.textures[0];
         const tex = new BABYLON.Texture(texDef.source, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
@@ -83,11 +82,12 @@ export function registerArmorOverlay(): Pick<
             if (groupHidden) hiddenEls.add(node);
             continue;
           }
-          const g = groupMap[(node as any).uuid];
+          const objectNode = node as { uuid: string; children?: BbModel["outliner"] };
+          const g = groupMap[objectNode.uuid];
           const normalized = g ? normalizeBoneName(g.name) : null;
           const next = normalized && normalized in ARMOR_TO_PIVOT ? ARMOR_TO_PIVOT[normalized] : pivotKey;
           const isHidden = groupHidden || g?.visibility === false;
-          walkOutliner((node as any).children, next, isHidden);
+          walkOutliner(objectNode.children ?? [], next, isHidden);
         }
       }
       walkOutliner(bbmodel.outliner, undefined, false);
@@ -106,7 +106,7 @@ export function registerArmorOverlay(): Pick<
             width: Math.abs(tx - fx) * SCALE,
             height: Math.abs(ty - fy) * SCALE,
             depth: Math.abs(tz - fz) * SCALE,
-            faceUV: window.mcState.skinFaceUV(el, W, H) as any,
+            faceUV: window.mcState.skinFaceUV(el, W, H),
           },
           scene,
         );

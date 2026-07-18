@@ -238,7 +238,7 @@ const gameRegistry = {
   status_effect_update: (state: UiState, _payload: { data: unknown }) => state,
   player_downed: (state: UiState, _payload: { playerId: string }) => ({ ...state, playerDowned: true }),
   player_respawned: (state: UiState, payload: { data: { currentHp: number; currentMana: number } }) => {
-    const { currentHp, currentMana } = payload.data ;
+    const { currentHp, currentMana } = payload.data;
     return {
       ...state,
       playerDowned: false,

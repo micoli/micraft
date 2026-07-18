@@ -386,7 +386,9 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
   const [dragging, setDragging] = useState(false);
 
   const layersRef = useRef<Layers>(layers);
-  useLayoutEffect(() => { layersRef.current = layers; });
+  useLayoutEffect(() => {
+    layersRef.current = layers;
+  });
 
   useEffect(() => {
     localStorage.setItem(LAYERS_STORAGE_KEY, JSON.stringify(layers));
@@ -839,6 +841,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
       window.removeEventListener("resize", resize);
       intervals.forEach(clearInterval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- canvasRef is stable; mount-only setup
   }, []);
 
   // Redraw when layers change (layersRef.current already updated synchronously above)

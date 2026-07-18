@@ -1,3 +1,4 @@
+import type { StandardMaterial, Texture } from "@babylonjs/core";
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import { getFaceTexUrl } from "../blocks/blockDefs";
 
@@ -110,7 +111,7 @@ function Block3DPreview({ ordinal }: { ordinal: number }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const B = (window as any).BABYLON;
+    const B = window.BABYLON;
     if (!B) return;
 
     const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
@@ -137,7 +138,7 @@ function Block3DPreview({ ordinal }: { ordinal: number }) {
     ];
 
     const fallback = getFaceTexUrl(ordinal, 4) ?? getFaceTexUrl(ordinal, 0);
-    const matCache = new Map<string, unknown>();
+    const matCache = new Map<string, StandardMaterial>();
 
     for (const { dir, x, y, z, rx, ry } of FACES) {
       const url = getFaceTexUrl(ordinal, dir) ?? fallback;
@@ -155,7 +156,7 @@ function Block3DPreview({ ordinal }: { ordinal: number }) {
       plane.parent = root;
       plane.position = new B.Vector3(x, y, z);
       plane.rotation = new B.Vector3(rx, ry, 0);
-      plane.material = matCache.get(url);
+      plane.material = matCache.get(url) ?? null;
     }
 
     let angle = 0;
@@ -470,13 +471,15 @@ function Npc3DPreview({ npc }: { npc: NpcEntry }) {
   const ready = useNpcModelsReady();
   const [walking, setWalking] = useState(false);
   const walkingRef = useRef(walking);
-  useLayoutEffect(() => { walkingRef.current = walking; });
+  useLayoutEffect(() => {
+    walkingRef.current = walking;
+  });
 
   useEffect(() => {
     if (!ready) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const B = (window as any).BABYLON;
+    const B = window.BABYLON;
     if (!B) return;
 
     const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
@@ -520,8 +523,8 @@ function Npc3DPreview({ npc }: { npc: NpcEntry }) {
       const topMat = new B.StandardMaterial("floorTop", scene);
       if (topUrl) {
         topMat.diffuseTexture = new B.Texture(topUrl, scene, false, true, B.Texture.NEAREST_SAMPLINGMODE);
-        topMat.diffuseTexture.uScale = 5;
-        topMat.diffuseTexture.vScale = 5;
+        (topMat.diffuseTexture as Texture).uScale = 5;
+        (topMat.diffuseTexture as Texture).vScale = 5;
       } else {
         topMat.diffuseColor = new B.Color3(0.3, 0.6, 0.2);
       }
@@ -657,14 +660,16 @@ function SkinModelPreview({ skin, walking }: { skin: string; walking: boolean })
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ready = usePlayerModelReady(skin);
   const walkingRef = useRef(walking);
-  useLayoutEffect(() => { walkingRef.current = walking; });
+  useLayoutEffect(() => {
+    walkingRef.current = walking;
+  });
 
   useEffect(() => {
     if (!ready) return;
     if (!window.mc.isPlayerBbmodelReady?.(skin)) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const B = (window as any).BABYLON;
+    const B = window.BABYLON;
     if (!B) return;
 
     const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
@@ -910,6 +915,7 @@ export function CodexModal({ open, onClose }: Props) {
             ? (item as ItemEntry).name
             : (item as string);
     itemRefsMap.current.get(key)?.scrollIntoView({ block: "nearest" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- currentList derives from state already captured by currentIdx/tab
   }, [open, currentIdx, tab]);
 
   if (!open) return null;

@@ -211,8 +211,8 @@ export function registerChunks(): Pick<
         for (const mk of Object.keys(__mcBuf.groups)) releaseGroup(__mcBuf.groups[mk]);
       }
       __mcBuf = { key: `${cx},${cz}`, groups: {} };
-      if (!(window as any).__mcFB) (window as any).__mcFB = new Int32Array(FACE_BUF_SLOTS);
-      (window as any).__mcFI = 0;
+      if (!window.__mcFB) window.__mcFB = new Int32Array(FACE_BUF_SLOTS);
+      window.__mcFI = 0;
     },
 
     // no-op stub — Kotlin uses jsChunkFaceAppend (writes directly to __mcFB)
@@ -224,8 +224,8 @@ export function registerChunks(): Pick<
     // (or until cursor × 5 >= __mcFI) then call chunkEnd for GPU upload.
     chunkProcessFaces: (cursor: number, maxFaces: number): number => {
       const buf = __mcBuf!;
-      const fb = (window as any).__mcFB as Int32Array;
-      const fi = (window as any).__mcFI as number;
+      const fb = window.__mcFB!;
+      const fi = window.__mcFI ?? 0;
       const startI = cursor * 5;
       const endI = Math.min(startI + maxFaces * 5, fi);
       const grp = buf.groups;

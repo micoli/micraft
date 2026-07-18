@@ -7,11 +7,11 @@ interface NpcBbmodels {
 
 function computeForwardOffset(bbmodel: BbModel): number {
   const elemMap: Record<string, { from: number[]; to: number[] }> = {};
-  for (const e of (bbmodel as any).elements ?? []) {
+  for (const e of bbmodel.elements) {
     if (e.uuid && e.from && e.to) elemMap[e.uuid] = e;
   }
   const groupNames: Record<string, string> = {};
-  for (const g of (bbmodel as any).groups ?? []) {
+  for (const g of bbmodel.groups) {
     if (g?.uuid && g?.name) groupNames[g.uuid] = g.name;
   }
 
@@ -22,7 +22,8 @@ function computeForwardOffset(bbmodel: BbModel): number {
     aZ = 0,
     aN = 0;
 
-  function walk(nodes: any[], inHead: boolean): void {
+  type OutlinerNode = string | { uuid?: string; children?: OutlinerNode[] };
+  function walk(nodes: OutlinerNode[], inHead: boolean): void {
     for (const node of nodes) {
       if (typeof node === "string") {
         const e = elemMap[node];
@@ -38,13 +39,13 @@ function computeForwardOffset(bbmodel: BbModel): number {
           hN++;
         }
       } else if (node && typeof node === "object") {
-        const name = groupNames[node.uuid] ?? "";
+        const name = groupNames[node.uuid ?? ""] ?? "";
         walk(node.children ?? [], inHead || name.toLowerCase().includes("head"));
       }
     }
   }
 
-  walk((bbmodel as any).outliner ?? [], false);
+  walk((bbmodel.outliner ?? []) as OutlinerNode[], false);
   if (hN === 0 || aN === 0) return Math.PI;
   return -Math.atan2(hX / hN - aX / aN, hZ / hN - aZ / aN);
 }
@@ -112,7 +113,7 @@ export function registerNpcModel(): Pick<
       }
       const aliases = window.mcState.npcWalkBones?.[npcType] ?? {};
       const model = window.mc.createPlayerModelFromBbmodel(bbmodel, scene, `npc_${npcType}`, aliases);
-      (model as any)._forwardOffset = computeForwardOffset(bbmodel);
+      model._forwardOffset = computeForwardOffset(bbmodel);
       return model;
     },
 
@@ -120,7 +121,7 @@ export function registerNpcModel(): Pick<
       model.root.position.x = x;
       model.root.position.y = y;
       model.root.position.z = z;
-      model.root.rotation.y = yaw + ((model as any)._forwardOffset ?? Math.PI);
+      model.root.rotation.y = yaw + (model._forwardOffset ?? Math.PI);
 
       const pn = model.pivotNodes;
       if (!pn) return;
@@ -149,7 +150,7 @@ export function registerNpcModel(): Pick<
     disposeNpcModel: (model: McPlayerModel): void => {
       if (!model) return;
       model.root.getChildMeshes(true).forEach((m) => m.dispose());
-      Object.values(model.pivotNodes).forEach((p: any) => p.node.dispose());
+      Object.values(model.pivotNodes).forEach((p) => p.node.dispose());
       model.root.dispose();
     },
 

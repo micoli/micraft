@@ -8,7 +8,9 @@ export function useShortcutBar(
   const [dragOver, setDragOver] = useState<number | null>(null);
   const [pressedSlot, setPressedSlot] = useState<number | null>(null);
   const slotsRef = useRef(slots);
-  useLayoutEffect(() => { slotsRef.current = slots; });
+  useLayoutEffect(() => {
+    slotsRef.current = slots;
+  });
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -76,7 +78,9 @@ export function useShortcutBar(
     if (sourceIdx !== null) e.preventDefault();
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
     ghostRef.current?.remove();
     ghostRef.current = null;
     if (lastSlotRef.current) lastSlotRef.current.style.background = "";

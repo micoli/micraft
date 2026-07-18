@@ -1,3 +1,17 @@
+import type {
+  Scene,
+  Camera,
+  TargetCamera,
+  Engine,
+  Mesh,
+  HemisphericLight,
+  PointLight,
+  StandardMaterial,
+  ShaderMaterial,
+  Observer,
+  Vector4,
+} from "@babylonjs/core";
+
 declare global {
   // BabylonJS is loaded from CDN — never import it, reference via this global
   const BABYLON: typeof import("@babylonjs/core");
@@ -133,6 +147,8 @@ declare global {
     >;
     walkAnim: Record<string, { keyframes: BbModelKeyframe[]; length: number }>;
     equippedArmors: Record<string, InstanceType<typeof BABYLON.AbstractMesh>[]>;
+    _forwardOffset?: number;
+    _lightBoost?: { orb: Mesh; light: PointLight } | null;
   }
 
   interface McFPArms {
@@ -163,8 +179,8 @@ declare global {
     armorBbmodels: Record<string, BbModel>;
     npcModelsReady: boolean;
     skinMatCache: Record<string, import("@babylonjs/core").StandardMaterial>;
-    skinUV: (face: BbModelFace | undefined, W: number, H: number) => unknown;
-    skinFaceUV: (el: BbModelElement, W: number, H: number) => unknown[];
+    skinUV: (face: BbModelFace | undefined, W: number, H: number) => Vector4;
+    skinFaceUV: (el: BbModelElement, W: number, H: number) => Vector4[];
     // Scene objects
     engine: InstanceType<typeof BABYLON.Engine> | null;
     hemiLight: InstanceType<typeof BABYLON.HemisphericLight> | null;
@@ -172,10 +188,12 @@ declare global {
     breakMesh: (InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string }) | null;
     chunks: Record<string, InstanceType<typeof BABYLON.AbstractMesh>[]>;
     currentFPArms: McFPArms | null;
-    blockMaterials: Record<string, unknown> | undefined;
+    blockMaterials: Record<string, ShaderMaterial | StandardMaterial> | undefined;
     renderPipeline: unknown;
     camState: { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number; t: number } | null;
-    debugCamObserver: unknown;
+    debugCamObserver: Observer<Scene> | null;
+    dynamicFogEnabled?: boolean;
+    caveFactor?: number;
     // Codex
     codexBlocks: Array<{
       name: string;
@@ -224,33 +242,33 @@ declare global {
     isBlockDefsReady(): boolean;
     getBlockDef(ordinal: number): McBlockDef | null;
     getBlockTextures(): McBlockTextureDef[];
-    createBlockMaterials(scene: any): Record<string, any>;
+    createBlockMaterials(scene: Scene): Record<string, ShaderMaterial | StandardMaterial>;
     setGrassTint(r: number, g: number, b: number): void;
     // Registry
     setBlockRegistry(json: string): void;
     setItemRegistry(json: string): void;
     setNpcDefinitions(json: string): void;
     // Materials
-    createTextureMaterial(name: string, url: string, scene: any): any;
-    createLeavesMaterial(name: string, url: string, scene: any, r?: number, g?: number, b?: number): any;
-    createCrossSpriteMaterial(name: string, url: string, scene: any): any;
+    createTextureMaterial(name: string, url: string, scene: Scene): StandardMaterial;
+    createLeavesMaterial(name: string, url: string, scene: Scene, r?: number, g?: number, b?: number): StandardMaterial;
+    createCrossSpriteMaterial(name: string, url: string, scene: Scene): StandardMaterial;
     // Engine / Scene
-    createEngine(): any;
-    createHemisphericLight(name: string, scene: any): any;
-    createBox(name: string, size: number, scene: any): any;
-    createSimpleBox(name: string, size: number, scene: any): any;
-    freezeMesh(mesh: any): void;
-    optimizeScene(scene: any): void;
-    setupFog(scene: any, r: number, g: number, b: number): void;
-    setShadersEnabled(scene: any, enabled: boolean): void;
-    setAmbient(scene: any, v: number): void;
-    setPlayerLight(scene: any, x: number, y: number, z: number, intensity: number): void;
-    setRemotePlayerLight(model: McPlayerModel, scene: any, enabled: boolean): void;
-    setupRenderPipeline(scene: any, camera: any): void;
+    createEngine(): Engine;
+    createHemisphericLight(name: string, scene: Scene): HemisphericLight;
+    createBox(name: string, size: number, scene: Scene): Mesh;
+    createSimpleBox(name: string, size: number, scene: Scene): Mesh;
+    freezeMesh(mesh: Mesh): void;
+    optimizeScene(scene: Scene): void;
+    setupFog(scene: Scene, r: number, g: number, b: number): void;
+    setShadersEnabled(scene: Scene, enabled: boolean): void;
+    setAmbient(scene: Scene, v: number): void;
+    setPlayerLight(scene: Scene, x: number, y: number, z: number, intensity: number): void;
+    setRemotePlayerLight(model: McPlayerModel, scene: Scene, enabled: boolean): void;
+    setupRenderPipeline(scene: Scene, camera: Camera): void;
     // Sky / Weather
-    updateSkyTime(scene: any, t: number): void;
+    updateSkyTime(scene: Scene, t: number): void;
     setWeatherZones(json: string): void;
-    updateWeather(scene: any, px: number, py: number, pz: number): void;
+    updateWeather(scene: Scene, px: number, py: number, pz: number): void;
     getCurrentWeather(): string;
     // Input
     setupKeyboard(): void;
@@ -260,34 +278,34 @@ declare global {
     consumeEvents(): string[];
     isBreaking(): boolean;
     // Camera
-    getCameraPositionX(camera: any): number;
-    getCameraPositionY(camera: any): number;
-    getCameraPositionZ(camera: any): number;
-    getCameraDir3DX(camera: any): number;
-    getCameraDir3DY(camera: any): number;
-    getCameraDir3DZ(camera: any): number;
-    getCameraForwardX(camera: any): number;
-    getCameraForwardZ(camera: any): number;
+    getCameraPositionX(camera: Camera): number;
+    getCameraPositionY(camera: Camera): number;
+    getCameraPositionZ(camera: Camera): number;
+    getCameraDir3DX(camera: Camera): number;
+    getCameraDir3DY(camera: Camera): number;
+    getCameraDir3DZ(camera: Camera): number;
+    getCameraForwardX(camera: Camera): number;
+    getCameraForwardZ(camera: Camera): number;
     createCrosshair(): void;
-    setupDebugCameraKeys(camera: any, scene: any, bx: number, by: number, bz: number): void;
+    setupDebugCameraKeys(camera: TargetCamera, scene: Scene, bx: number, by: number, bz: number): void;
     // Targeting
-    showTargetOutline(scene: any, x: number, y: number, z: number, breakable: boolean): void;
+    showTargetOutline(scene: Scene, x: number, y: number, z: number, breakable: boolean): void;
     hideTargetOutline(): void;
-    showBreakOverlay(scene: any, x: number, y: number, z: number, alpha: number): void;
+    showBreakOverlay(scene: Scene, x: number, y: number, z: number, alpha: number): void;
     hideBreakOverlay(): void;
     // Chunk builder
     chunkBegin(cx: number, cz: number): void;
     chunkFace(wx: number, wy: number, wz: number, faceMat: number, ao: number): void;
     chunkProcessFaces(cursor: number, maxFaces: number): number;
-    chunkEnd(scene: any, materials: Record<string, any>): void;
+    chunkEnd(scene: Scene, materials: Record<string, ShaderMaterial | StandardMaterial>): void;
     disposeChunk(key: string): void;
     // Player model
     initPlayerModel(skin: string): void;
     isPlayerBbmodelReady(skin: string): boolean;
-    createPlayerModelNow(scene: any, skin: string): McPlayerModel;
+    createPlayerModelNow(scene: Scene, skin: string): McPlayerModel;
     createPlayerModelFromBbmodel(
       bbmodel: BbModel,
-      scene: any,
+      scene: Scene,
       skin: string,
       boneAliases?: Record<string, string>,
     ): McPlayerModel;
@@ -304,7 +322,7 @@ declare global {
     setPlayerAlpha(model: McPlayerModel, alpha: number): void;
     disposePlayerModel(model: McPlayerModel): void;
     // FP arms
-    createFPArms(scene: any, camera: any, skin: string): McFPArms | null;
+    createFPArms(scene: Scene, camera: Camera, skin: string): McFPArms | null;
     updateFPArms(fpArms: McFPArms, isWalking: boolean): void;
     setFPArmsVisible(fpArms: McFPArms, visible: boolean): void;
     disposeFPArms(fpArms: McFPArms): void;
@@ -312,14 +330,14 @@ declare global {
     // Armor
     initArmorModel(name: string): void;
     isArmorModelReady(name: string): boolean;
-    attachArmor(model: McPlayerModel, armorName: string, scene: any): void;
+    attachArmor(model: McPlayerModel, armorName: string, scene: Scene): void;
     detachArmor(model: McPlayerModel, armorName: string): void;
     detachAllArmors(model: McPlayerModel): void;
     // NPC
     initNpcModels(npcTypesJson: string): void;
     initNpcWalkBones(json: string): void;
     isNpcModelsReady(): boolean;
-    createNpcModel(scene: any, npcType: string): McPlayerModel | null;
+    createNpcModel(scene: Scene, npcType: string): McPlayerModel | null;
     setNpcTransform(model: McPlayerModel, x: number, y: number, z: number, yaw: number, isWalking: boolean): void;
     disposeNpcModel(model: McPlayerModel): void;
     openNpcDialog(json: string): void;
@@ -453,7 +471,17 @@ declare global {
     mcState: McState;
     mcRunMacro: (name: string) => void;
     mcBuildInfo: { mcBindings: string; webApp: string; wasm: string };
+    __mcDragItem?: string | null;
+    __mcFB?: Int32Array;
+    __mcFI?: number;
+    BABYLON?: typeof import("@babylonjs/core");
     [key: string]: unknown;
+  }
+}
+
+declare module "@babylonjs/core" {
+  interface Scene {
+    __mcSceneId?: string;
   }
 }
 

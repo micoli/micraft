@@ -1,14 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useReducer, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useReducer, useState, useMemo } from "react";
 import { MemoryRouter, Routes, Route, useNavigate, useLocation } from "react-router";
-import {
-  HudMode,
-  GameLayout,
-  NpcDialogData,
-  PreferencesData,
-  ChannelSubscription,
-  ShortcutSlot,
-  QuestProgress,
-} from "./types";
+import { GameLayout, NpcDialogData, PreferencesData, ChannelSubscription, ShortcutSlot, QuestProgress } from "./types";
 import { UiState, reducer, makeUiDispatch } from "./UIReducer";
 import { GameContext } from "./GameContext";
 import { DisconnectOverlay } from "./overlays/DisconnectOverlay";
@@ -99,7 +91,7 @@ function RouterBridge({
 
 export function GameUI() {
   const [state, rawDispatch] = useReducer(reducer, initial);
-  const dispatch = makeUiDispatch(rawDispatch);
+  const dispatch = useMemo(() => makeUiDispatch(rawDispatch), [rawDispatch]);
   const [chunkDebugData, setChunkDebugData] = useState<ChunkDebugData | null>(null);
   const chunkLoadStatsRef = useRef<{ chunkDownloading: number; chunkMeshing: number }>({
     chunkDownloading: 0,
@@ -157,7 +149,7 @@ export function GameUI() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [dispatch]);
 
   const loadAttackMetaRef = useRef<() => void>(() => {});
   const loadClassDefinitionsRef = useRef<() => void>(() => {});
@@ -194,7 +186,7 @@ export function GameUI() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     let cancelled = false;
@@ -210,7 +202,7 @@ export function GameUI() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     let cancelled = false;
@@ -237,7 +229,7 @@ export function GameUI() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [dispatch]);
 
   useLayoutEffect(() => {
     consoleOpenRef.current = state.consoleOpen;
@@ -321,7 +313,7 @@ export function GameUI() {
     return () => {
       if (logTimerRef.current) clearTimeout(logTimerRef.current);
     };
-  }, [state.logKey]);
+  }, [state.logKey, state.logVisible, dispatch]);
 
   useEffect(() => {
     if (!state.notif) return;
@@ -330,7 +322,7 @@ export function GameUI() {
     return () => {
       if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
     };
-  }, [state.notif?.key]);
+  }, [state.notif, state.notif?.key, dispatch]);
 
   useEffect(() => {
     window.mcState.commandCompleters = window.mcState.commandCompleters ?? {};
@@ -552,7 +544,7 @@ export function GameUI() {
         if (window.mcState) {
           window.mcState.customCommands = data.customCommands || {};
           window.mcState.macros = data.macros || {};
-          (window.mcState as any).dynamicFogEnabled = data.dynamicFogEnabled ?? true;
+          window.mcState.dynamicFogEnabled = data.dynamicFogEnabled ?? true;
         }
         if (data.commands?.length && window.mc.registerServerCompleters) {
           const disabledIds = new Set<string>(data.disabledCommands || []);
@@ -798,7 +790,7 @@ export function GameUI() {
     }
 
     return () => document.removeEventListener("keydown", onGlobalKeydown);
-  }, []);
+  }, [dispatch]);
 
   const contextValue = {
     state,
