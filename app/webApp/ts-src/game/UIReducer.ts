@@ -48,6 +48,8 @@ export type SpellMeta = {
   cooldownMs: number;
 };
 
+export type PreferencesSaveData = Omit<PreferencesData, "knownChannels" | "commands" | "defaultKeybindings">;
+
 export interface UiState {
   hud: HudData | null;
   notif: { msg: string; key: number } | null;
@@ -160,21 +162,7 @@ export type UiAction =
   | { type: "preferences_sync"; data: PreferencesData }
   | { type: "preferences_show" }
   | { type: "preferences_hide" }
-  | {
-      type: "preferences_save";
-      subscribedChannels: ChannelSubscription[];
-      disabledCommands: string[];
-      shadersEnabled: boolean;
-      dynamicFogEnabled?: boolean;
-      animatedFavicon: boolean;
-      chunkDebugVisible: boolean;
-      statisticsVisible: boolean;
-      keybindings: Record<string, string[]>;
-      customCommands: Record<string, string[]>;
-      macros?: Record<string, string>;
-      macroIcons?: Record<string, string>;
-      fieldOfView?: number;
-    }
+  | { type: "preferences_save"; data: PreferencesSaveData }
   | { type: "pause_menu_show" }
   | { type: "pause_menu_hide" }
   | { type: "macro_editor_open" }
@@ -322,23 +310,7 @@ export function reducer(state: UiState, action: UiAction): UiState {
     case "preferences_hide":
       return { ...state, preferencesOpen: false };
     case "preferences_save": {
-      const prefs = state.preferences
-        ? {
-            ...state.preferences,
-            subscribedChannels: action.subscribedChannels,
-            disabledCommands: action.disabledCommands,
-            shadersEnabled: action.shadersEnabled,
-            ...(action.dynamicFogEnabled !== undefined ? { dynamicFogEnabled: action.dynamicFogEnabled } : {}),
-            animatedFavicon: action.animatedFavicon,
-            chunkDebugVisible: action.chunkDebugVisible,
-            statisticsVisible: action.statisticsVisible,
-            keybindings: action.keybindings,
-            customCommands: action.customCommands,
-            ...(action.macros !== undefined ? { macros: action.macros } : {}),
-            ...(action.macroIcons !== undefined ? { macroIcons: action.macroIcons } : {}),
-            ...(action.fieldOfView !== undefined ? { fieldOfView: action.fieldOfView } : {}),
-          }
-        : state.preferences;
+      const prefs = state.preferences ? { ...state.preferences, ...action.data } : state.preferences;
       return { ...state, preferences: prefs, preferencesOpen: false };
     }
     case "pause_menu_show":

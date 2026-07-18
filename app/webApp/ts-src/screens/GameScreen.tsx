@@ -87,7 +87,16 @@ export function GameScreen() {
     customCommands: Record<string, string[]>;
     fieldOfView?: number;
   }) => {
-    dispatch({ type: "preferences_save", ...payload });
+    dispatch({
+      type: "preferences_save",
+      data: {
+        ...payload,
+        dynamicFogEnabled: payload.dynamicFogEnabled ?? state.preferences?.dynamicFogEnabled ?? true,
+        fieldOfView: payload.fieldOfView ?? state.preferences?.fieldOfView ?? 70,
+        macros: state.preferences?.macros ?? {},
+        macroIcons: state.preferences?.macroIcons,
+      },
+    });
     if (window.mcState) {
       window.mcState.bindings = payload.keybindings;
       window.mcState.customCommands = payload.customCommands;
@@ -106,17 +115,20 @@ export function GameScreen() {
     if (!prefs) return;
     dispatch({
       type: "preferences_save",
-      subscribedChannels: prefs.subscribedChannels,
-      disabledCommands: prefs.disabledCommands,
-      shadersEnabled: prefs.shadersEnabled,
-      dynamicFogEnabled: prefs.dynamicFogEnabled ?? true,
-      animatedFavicon: prefs.animatedFavicon ?? true,
-      chunkDebugVisible: prefs.chunkDebugVisible ?? false,
-      statisticsVisible: prefs.statisticsVisible ?? false,
-      keybindings: prefs.keybindings || {},
-      customCommands,
-      macros,
-      macroIcons,
+      data: {
+        subscribedChannels: prefs.subscribedChannels,
+        disabledCommands: prefs.disabledCommands,
+        shadersEnabled: prefs.shadersEnabled,
+        dynamicFogEnabled: prefs.dynamicFogEnabled ?? true,
+        animatedFavicon: prefs.animatedFavicon ?? true,
+        chunkDebugVisible: prefs.chunkDebugVisible ?? false,
+        statisticsVisible: prefs.statisticsVisible ?? false,
+        keybindings: prefs.keybindings || {},
+        customCommands,
+        macros,
+        macroIcons,
+        fieldOfView: prefs.fieldOfView,
+      },
     });
     if (window.mcState) {
       window.mcState.macros = macros;
