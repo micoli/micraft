@@ -39,8 +39,9 @@ import { QuestTracker } from "../game/components/QuestTracker";
 
 const resumePointerLock = () =>
   (
-    (document.getElementById("renderCanvas") as HTMLCanvasElement | null)
-      ?.requestPointerLock() as unknown as Promise<void>
+    (
+      document.getElementById("renderCanvas") as HTMLCanvasElement | null
+    )?.requestPointerLock() as unknown as Promise<void>
   )?.catch(() => {});
 
 export function GameScreen() {

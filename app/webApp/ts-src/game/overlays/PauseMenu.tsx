@@ -14,11 +14,7 @@ interface PauseMenuProps {
   items: PauseMenuItem[];
 }
 
-export function PauseMenu({
-  open,
-  onClose,
-  items,
-}: PauseMenuProps) {
+export function PauseMenu({ open, onClose, items }: PauseMenuProps) {
   const firstButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (open) setTimeout(() => firstButton.current?.focus(), 50);
@@ -37,8 +33,13 @@ export function PauseMenu({
         }}
       >
         <DialogTitle className="text-center font-mono text-xl tracking-[0.25em] mb-2">PAUSE</DialogTitle>
-        {items.map((item,k)=>(
-          <Button ref={k===0?firstButton:null} variant={item.variant??"secondary"} onClick={item.callback} className="font-mono">
+        {items.map((item, k) => (
+          <Button
+            ref={k === 0 ? firstButton : null}
+            variant={item.variant ?? "secondary"}
+            onClick={item.callback}
+            className="font-mono"
+          >
             {item.label}
           </Button>
         ))}

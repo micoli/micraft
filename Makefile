@@ -161,7 +161,7 @@ prod-logs:
 
 # ── Standard and code analysis ────────────────────────────────────────────────
 
-code-standard: spotless-apply ts-typecheck
+code-standard: spotless-apply npm-format ts-typecheck
 
 spotless-apply:
 	$(EXEC) "./gradlew :spotlessApply"
