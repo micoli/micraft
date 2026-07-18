@@ -2,7 +2,7 @@ services:
   server:
     build:
       context: .
-      dockerfile: Dockerfile.prod
+      dockerfile: .docker/prod/Dockerfile
       target: server
     volumes:
       - ./data:/app/data
@@ -14,7 +14,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: Dockerfile.prod
+      dockerfile: .docker/prod/Dockerfile
       target: web
     ports:
       - "8080:8080"

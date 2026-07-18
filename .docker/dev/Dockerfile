@@ -10,12 +10,10 @@ RUN wget https://github.com/jdx/pitchfork/releases/download/v2.16.0/pitchfork-aa
     tar xvfz pitchfork-aarch64-unknown-linux-gnu.tar.gz && \
     mv pitchfork /usr/local/bin/pitchfork
 
-#COPY --from=ghcr.io/jdx/pitchfork:latest /usr/local/bin/pitchfork /usr/local/bin/pitchfork
-
-ENV CHROME_BIN=/usr/bin/chromium-browser
+RUN npx playwright install chromium --with-deps
 
 WORKDIR /workspace
 
-COPY .docker/start.sh /start.sh
+COPY .docker/dev/start.sh /start.sh
 
 CMD ["/start.sh"]

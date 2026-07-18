@@ -10,6 +10,8 @@ else
   EXEC = bash -c
 endif
 
+.ONESHELL:
+
 .PHONY: dev-up dev-down dev-restart dev-logs dc shell npm-format \
         dev-restart-server dev-restart-clean-server \
         dev-task-stop dev-task-start dev-task-restart \
@@ -175,15 +177,21 @@ ts-lint:
 ts-lint-fix:
 	$(EXEC) "cd app/webApp/ts-src/; npm run lint:fix"
 
-test: kt-test web-test
+
+ts-test:
+	$(EXEC) "cd app/webApp/ts-src/; npm run test"
+
+ts-test-storybook:
+	$(EXEC) "cd app/webApp/ts-src && npm run test-storybook:ci"
 
 kt-test:
 	$(EXEC) "./gradlew :core:jvmTest --rerun-tasks"
 	$(EXEC) "./gradlew :server:test --rerun-tasks"
 
-web-test:
+kt-web-test:
 	$(EXEC) "./gradlew :app:shared:wasmJsTest"
 	$(EXEC) "./gradlew :app:shared:jsTest"
+
 
 # ── Docs ──────────────────────────────────────────────────────────────────────
 
