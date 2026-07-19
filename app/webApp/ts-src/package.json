@@ -79,5 +79,12 @@
     "vite": "^6.3.5",
     "vitest": "^4.1.10",
     "wait-on": "^9.0.0"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.5.1": true,
+    "@swc/core@1.15.43": true,
+    "babylonjs@7.48.0": true,
+    "esbuild@0.21.5": true,
+    "esbuild@0.25.12": true
   }
 }
