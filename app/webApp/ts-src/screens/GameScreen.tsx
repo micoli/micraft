@@ -213,6 +213,7 @@ export function GameScreen() {
             <IngameMap
               playerX={state.hud?.x}
               playerZ={state.hud?.z}
+              playerYaw={state.hud?.yaw}
               layoutStyle={widgetStyle(activeLayout, "INGAME_MAP")}
             />
           )}

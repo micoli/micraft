@@ -34,6 +34,7 @@ interface StaircaseMapInfo {
 interface Props {
   playerX?: number;
   playerZ?: number;
+  playerYaw?: number;
   layoutStyle?: React.CSSProperties;
 }
 
@@ -57,19 +58,30 @@ function parseColor(hex: string): [number, number, number] {
   return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
 }
 
-function renderBg(canvas: HTMLCanvasElement, cells: VoronoiCell[], cx: number, cz: number, showNames: boolean) {
+function renderBg(
+  canvas: HTMLCanvasElement,
+  cells: VoronoiCell[],
+  cx: number,
+  cz: number,
+  showNames: boolean,
+  panX = 0,
+  panZ = 0,
+  zoom = 1,
+) {
   const ctx = canvas.getContext("2d");
   if (!ctx || cells.length === 0) return;
   const w = canvas.width;
   const h = canvas.height;
-  const scale = Math.min(w, h) / (RADIUS * 2);
+  const viewCx = cx + panX;
+  const viewCz = cz + panZ;
+  const scale = (Math.min(w, h) / (RADIUS * 2)) * zoom;
   const parsed = cells.map((c) => ({ ...c, rgb: parseColor(c.color) }));
 
   const imageData = ctx.createImageData(w, h);
   for (let py = 0; py < h; py++) {
     for (let px = 0; px < w; px++) {
-      const wx = cx + (px - w / 2) / scale;
-      const wz = cz - (py - h / 2) / scale;
+      const wx = viewCx + (px - w / 2) / scale;
+      const wz = viewCz - (py - h / 2) / scale;
       let minD = Infinity;
       let r = 128,
         g = 128,
@@ -95,8 +107,8 @@ function renderBg(canvas: HTMLCanvasElement, cells: VoronoiCell[], cx: number, c
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   for (const cell of cells) {
-    const px = Math.round(w / 2 + (cell.x - cx) * scale);
-    const py = Math.round(h / 2 - (cell.z - cz) * scale);
+    const px = Math.round(w / 2 + (cell.x - viewCx) * scale);
+    const py = Math.round(h / 2 - (cell.z - viewCz) * scale);
 
     ctx.fillStyle = "rgba(0,0,0,0.75)";
     ctx.beginPath();
@@ -129,31 +141,37 @@ function renderBorders(
   roadImg: HTMLImageElement | null,
   fetchCx: number,
   fetchCz: number,
+  panX = 0,
+  panZ = 0,
+  zoom = 1,
 ) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   const w = canvas.width;
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
-  const scale = Math.min(w, h) / (RADIUS * 2);
+  const baseScale = Math.min(w, h) / (RADIUS * 2);
+  const scale = baseScale * zoom;
+  const viewCx = fetchCx + panX;
+  const viewCz = fetchCz + panZ;
 
   // Voronoi border segments
   ctx.strokeStyle = "rgba(200,80,80,0.8)";
   ctx.lineWidth = Math.max(1, scale);
   ctx.beginPath();
   for (const seg of borderData) {
-    const sx1 = w / 2 + (seg.x1 - fetchCx) * scale;
-    const sy1 = h / 2 - (seg.z1 - fetchCz) * scale;
-    const sx2 = w / 2 + (seg.x2 - fetchCx) * scale;
-    const sy2 = h / 2 - (seg.z2 - fetchCz) * scale;
+    const sx1 = w / 2 + (seg.x1 - viewCx) * scale;
+    const sy1 = h / 2 - (seg.z1 - viewCz) * scale;
+    const sx2 = w / 2 + (seg.x2 - viewCx) * scale;
+    const sy2 = h / 2 - (seg.z2 - viewCz) * scale;
     if (sx1 < -1 || sx1 > w + 1 || sy1 < -1 || sy1 > h + 1) continue;
     ctx.moveTo(sx1, sy1);
     ctx.lineTo(sx2, sy2);
   }
   ctx.stroke();
 
-  // Road raster — PNG row 0 = highest Z = top of canvas (north up), no flip needed
-  if (roadImg) {
+  // Road raster — only draw when pan=0 and zoom=1 (raster is baked for fetch center)
+  if (roadImg && panX === 0 && panZ === 0 && zoom === 1) {
     ctx.globalAlpha = 0.85;
     ctx.drawImage(roadImg, 0, 0, w, h);
     ctx.globalAlpha = 1.0;
@@ -168,20 +186,25 @@ function renderPoi(
   cz: number,
   showWeather = true,
   showStaircases = true,
+  panX = 0,
+  panZ = 0,
+  zoom = 1,
 ) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   const w = canvas.width;
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
-  const scale = Math.min(w, h) / (RADIUS * 2);
+  const scale = (Math.min(w, h) / (RADIUS * 2)) * zoom;
+  const viewCx = cx + panX;
+  const viewCz = cz + panZ;
 
   const visibleWeather = showWeather ? weatherZones : [];
   const visibleStaircases = showStaircases ? staircases : [];
 
   for (const z of visibleWeather) {
-    const sx = w / 2 + (z.cx - cx) * scale;
-    const sz = h / 2 - (z.cz - cz) * scale;
+    const sx = w / 2 + (z.cx - viewCx) * scale;
+    const sz = h / 2 - (z.cz - viewCz) * scale;
     const rPx = z.radius * scale;
     ctx.beginPath();
     ctx.arc(sx, sz, rPx, 0, Math.PI * 2);
@@ -198,8 +221,8 @@ function renderPoi(
   }
 
   for (const s of visibleStaircases) {
-    const sx = Math.round(w / 2 + (s.x - cx) * scale);
-    const sz = Math.round(h / 2 - (s.z - cz) * scale);
+    const sx = Math.round(w / 2 + (s.x - viewCx) * scale);
+    const sz = Math.round(h / 2 - (s.z - viewCz) * scale);
     if (sx < -20 || sx > w + 20 || sz < -20 || sz > h + 20) continue;
     ctx.beginPath();
     ctx.arc(sx, sz, 5, 0, Math.PI * 2);
@@ -221,26 +244,55 @@ function renderPoi(
   }
 }
 
-function renderOverlay(canvas: HTMLCanvasElement, px: number, pz: number, cx: number, cz: number) {
+function renderOverlay(
+  canvas: HTMLCanvasElement,
+  px: number,
+  pz: number,
+  cx: number,
+  cz: number,
+  yaw: number,
+  panX: number,
+  panZ: number,
+  zoom: number,
+) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   const w = canvas.width;
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
-  const scale = Math.min(w, h) / RADIUS;
-  const sx = Math.round(w / 2 + (px - cx) * scale);
-  const sz = Math.round(h / 2 - (pz - cz) * scale);
-  if (sx < -10 || sx > w + 10 || sz < -10 || sz > h + 10) return;
-  ctx.fillStyle = "#f44";
+  const baseScale = Math.min(w, h) / RADIUS;
+  const scale = baseScale * zoom;
+  const viewCx = cx + panX;
+  const viewCz = cz + panZ;
+  const sx = Math.round(w / 2 + (px - viewCx) * scale);
+  const sz = Math.round(h / 2 - (pz - viewCz) * scale);
+  if (sx < -20 || sx > w + 20 || sz < -20 || sz > h + 20) return;
+
+  const len = 10;
+  const wing = 5;
+  const yawRad = (yaw * Math.PI) / 180;
+  const adx = Math.sin(yawRad);
+  const ady = -Math.cos(yawRad);
+  const perpX = -ady;
+  const perpY = adx;
+
+  ctx.save();
+  ctx.translate(sx, sz);
   ctx.beginPath();
-  ctx.arc(sx, sz, 5, 0, Math.PI * 2);
+  ctx.moveTo(adx * len, ady * len);
+  ctx.lineTo(-adx * len * 0.4 + perpX * wing, -ady * len * 0.4 + perpY * wing);
+  ctx.lineTo(-adx * len * 0.15, -ady * len * 0.15);
+  ctx.lineTo(-adx * len * 0.4 - perpX * wing, -ady * len * 0.4 - perpY * wing);
+  ctx.closePath();
+  ctx.fillStyle = "#f44";
   ctx.fill();
   ctx.strokeStyle = "#fff";
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = 1.2;
   ctx.stroke();
+  ctx.restore();
 }
 
-export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
+export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle }: Props) {
   const bgRef = useRef<HTMLCanvasElement>(null);
   const bordersRef = useRef<HTMLCanvasElement>(null);
   const poiRef = useRef<HTMLCanvasElement>(null);
@@ -252,7 +304,7 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
   const staircasesRef = useRef<StaircaseMapInfo[]>([]);
   const weatherZonesRef = useRef<WeatherZoneInfo[]>([]);
   const fetchCenterRef = useRef({ x: NaN, z: NaN });
-  const playerPosRef = useRef({ x: playerX, z: playerZ });
+  const playerPosRef = useRef({ x: playerX, z: playerZ, yaw: playerYaw });
   const [layers, setLayers] = useState({
     biomes: true,
     biomeNames: true,
@@ -265,23 +317,30 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
     layersRef.current = layers;
   });
 
+  // Widget position (drag from toolbar)
   const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const dragStart = useRef<{ mx: number; my: number; ox: number; oy: number } | null>(null);
+  const widgetDragStart = useRef<{ mx: number; my: number; ox: number; oy: number } | null>(null);
+
+  // Map pan/zoom (drag on map canvas, wheel)
+  const panRef = useRef({ x: 0, z: 0 }); // world offset from player
+  const zoomRef = useRef(1);
+  const mapDragStart = useRef<{ mx: number; my: number; px: number; pz: number } | null>(null);
+  const [mapDragging, setMapDragging] = useState(false);
 
   const onToolbarMouseDown = useCallback(
     (e: React.MouseEvent) => {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "LABEL") return;
-      dragStart.current = { mx: e.clientX, my: e.clientY, ox: offset.x, oy: offset.y };
+      widgetDragStart.current = { mx: e.clientX, my: e.clientY, ox: offset.x, oy: offset.y };
       const onMove = (ev: MouseEvent) => {
-        if (!dragStart.current) return;
+        if (!widgetDragStart.current) return;
         setOffset({
-          x: dragStart.current.ox + ev.clientX - dragStart.current.mx,
-          y: dragStart.current.oy + ev.clientY - dragStart.current.my,
+          x: widgetDragStart.current.ox + ev.clientX - widgetDragStart.current.mx,
+          y: widgetDragStart.current.oy + ev.clientY - widgetDragStart.current.my,
         });
       };
       const onUp = () => {
-        dragStart.current = null;
+        widgetDragStart.current = null;
         window.removeEventListener("mousemove", onMove);
         window.removeEventListener("mouseup", onUp);
       };
@@ -293,19 +352,32 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
 
   const rerender = useCallback(() => {
     const { x: fcx, z: fcz } = fetchCenterRef.current;
-    const { x: ppx, z: ppz } = playerPosRef.current;
+    const { x: ppx, z: ppz, yaw } = playerPosRef.current;
+    const { x: panX, z: panZ } = panRef.current;
+    const zoom = zoomRef.current;
     const L = layersRef.current;
     if (bgRef.current) {
       bgRef.current.style.display = L.biomes ? "" : "none";
-      renderBg(bgRef.current, cellsRef.current, fcx, fcz, L.biomeNames);
+      renderBg(bgRef.current, cellsRef.current, fcx, fcz, L.biomeNames, panX, panZ, zoom);
     }
     if (bordersRef.current) {
       bordersRef.current.style.display = L.borders ? "" : "none";
-      renderBorders(bordersRef.current, borderDataRef.current, roadImgRef.current, fcx, fcz);
+      renderBorders(bordersRef.current, borderDataRef.current, roadImgRef.current, fcx, fcz, panX, panZ, zoom);
     }
     if (poiRef.current)
-      renderPoi(poiRef.current, staircasesRef.current, weatherZonesRef.current, fcx, fcz, L.weather, L.staircases);
-    if (overlayRef.current) renderOverlay(overlayRef.current, ppx, ppz, fcx, fcz);
+      renderPoi(
+        poiRef.current,
+        staircasesRef.current,
+        weatherZonesRef.current,
+        fcx,
+        fcz,
+        L.weather,
+        L.staircases,
+        panX,
+        panZ,
+        zoom,
+      );
+    if (overlayRef.current) renderOverlay(overlayRef.current, ppx, ppz, fcx, fcz, yaw, panX, panZ, zoom);
   }, []);
 
   useEffect(() => {
@@ -332,12 +404,74 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
     return () => observer.disconnect();
   }, [rerender]);
 
+  // Map pan (left-drag on canvas) and zoom (wheel)
   useEffect(() => {
-    playerPosRef.current = { x: playerX, z: playerZ };
+    const container = containerRef.current;
+    if (!container) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.2 : 1 / 1.2;
+      zoomRef.current = Math.max(0.25, Math.min(8, zoomRef.current * factor));
+      rerender();
+    };
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      mapDragStart.current = { mx: e.clientX, my: e.clientY, px: panRef.current.x, pz: panRef.current.z };
+      setMapDragging(true);
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!mapDragStart.current) return;
+      const canvas = overlayRef.current;
+      if (!canvas) return;
+      const canvasSize = Math.min(canvas.width, canvas.height);
+      const baseScale = canvasSize / RADIUS;
+      const scale = baseScale * zoomRef.current;
+      const dx = e.clientX - mapDragStart.current.mx;
+      const dy = e.clientY - mapDragStart.current.my;
+      panRef.current = {
+        x: mapDragStart.current.px - dx / scale,
+        z: mapDragStart.current.pz + dy / scale,
+      };
+      rerender();
+    };
+
+    const onMouseUp = () => {
+      mapDragStart.current = null;
+      setMapDragging(false);
+    };
+
+    const onDblClick = () => {
+      panRef.current = { x: 0, z: 0 };
+      zoomRef.current = 1;
+      rerender();
+    };
+
+    container.addEventListener("wheel", onWheel, { passive: false });
+    container.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    container.addEventListener("dblclick", onDblClick);
+
+    return () => {
+      container.removeEventListener("wheel", onWheel);
+      container.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      container.removeEventListener("dblclick", onDblClick);
+    };
+  }, [rerender]);
+
+  useEffect(() => {
+    playerPosRef.current = { x: playerX, z: playerZ, yaw: playerYaw };
     const fc = fetchCenterRef.current;
+    const { x: panX, z: panZ } = panRef.current;
+    const zoom = zoomRef.current;
 
     if (overlayRef.current) {
-      renderOverlay(overlayRef.current, playerX, playerZ, fc.x, fc.z);
+      renderOverlay(overlayRef.current, playerX, playerZ, fc.x, fc.z, playerYaw, panX, panZ, zoom);
     }
 
     const dx = playerX - fc.x;
@@ -354,7 +488,10 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
         staircasesRef.current = data;
         const { x: fcx, z: fcz } = fetchCenterRef.current;
         const L = layersRef.current;
-        if (poiRef.current) renderPoi(poiRef.current, data, weatherZonesRef.current, fcx, fcz, L.weather, L.staircases);
+        const { x: px2, z: pz2 } = panRef.current;
+        const z2 = zoomRef.current;
+        if (poiRef.current)
+          renderPoi(poiRef.current, data, weatherZonesRef.current, fcx, fcz, L.weather, L.staircases, px2, pz2, z2);
       })
       .catch(() => {});
 
@@ -364,8 +501,21 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
         weatherZonesRef.current = data.weatherZones ?? [];
         const { x: fcx, z: fcz } = fetchCenterRef.current;
         const L = layersRef.current;
+        const { x: px2, z: pz2 } = panRef.current;
+        const z2 = zoomRef.current;
         if (poiRef.current)
-          renderPoi(poiRef.current, staircasesRef.current, weatherZonesRef.current, fcx, fcz, L.weather, L.staircases);
+          renderPoi(
+            poiRef.current,
+            staircasesRef.current,
+            weatherZonesRef.current,
+            fcx,
+            fcz,
+            L.weather,
+            L.staircases,
+            px2,
+            pz2,
+            z2,
+          );
       })
       .catch(() => {});
 
@@ -374,9 +524,11 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
       .then((data: VoronoiCell[]) => {
         cellsRef.current = data;
         const { x: fcx, z: fcz } = fetchCenterRef.current;
-        if (bgRef.current) renderBg(bgRef.current, data, fcx, fcz, layersRef.current.biomeNames);
-        const { x: ppx, z: ppz } = playerPosRef.current;
-        if (overlayRef.current) renderOverlay(overlayRef.current, ppx, ppz, fcx, fcz);
+        const { x: px2, z: pz2 } = panRef.current;
+        const z2 = zoomRef.current;
+        if (bgRef.current) renderBg(bgRef.current, data, fcx, fcz, layersRef.current.biomeNames, px2, pz2, z2);
+        const { x: ppx, z: ppz, yaw } = playerPosRef.current;
+        if (overlayRef.current) renderOverlay(overlayRef.current, ppx, ppz, fcx, fcz, yaw, px2, pz2, z2);
       })
       .catch(() => {});
 
@@ -407,14 +559,18 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
         borderDataRef.current = borders;
         roadImgRef.current = roadImg;
         const { x: fcx, z: fcz } = fetchCenterRef.current;
-        if (bordersRef.current) renderBorders(bordersRef.current, borders, roadImg, fcx, fcz);
+        const { x: px2, z: pz2 } = panRef.current;
+        const z2 = zoomRef.current;
+        if (bordersRef.current) renderBorders(bordersRef.current, borders, roadImg, fcx, fcz, px2, pz2, z2);
       })
       .catch(() => {
-        // render borders alone if road fetch failed
         const { x: fcx, z: fcz } = fetchCenterRef.current;
-        if (bordersRef.current) renderBorders(bordersRef.current, borderDataRef.current, roadImgRef.current, fcx, fcz);
+        const { x: px2, z: pz2 } = panRef.current;
+        const z2 = zoomRef.current;
+        if (bordersRef.current)
+          renderBorders(bordersRef.current, borderDataRef.current, roadImgRef.current, fcx, fcz, px2, pz2, z2);
       });
-  }, [playerX, playerZ]);
+  }, [playerX, playerZ, playerYaw]);
 
   const toggle = (key: keyof typeof layers) => setLayers((prev) => ({ ...prev, [key]: !prev[key] }));
 
@@ -466,7 +622,10 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
           </label>
         ))}
       </div>
-      <div ref={containerRef} style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+      <div
+        ref={containerRef}
+        style={{ flex: 1, position: "relative", overflow: "hidden", cursor: mapDragging ? "grabbing" : "grab" }}
+      >
         <canvas ref={bgRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
         <canvas ref={bordersRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
         <canvas ref={poiRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />

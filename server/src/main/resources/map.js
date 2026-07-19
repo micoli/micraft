@@ -25518,6 +25518,7 @@
       dragging,
       svgWidth,
       svgHeight,
+      // eslint-disable-next-line react-hooks/refs
       camera: camera.current,
       voronoiCells,
       biomeBorderPath,
@@ -25920,7 +25921,6 @@
   function MapApp() {
     const svgRef = (0, import_react4.useRef)(null);
     const renderer = useMapRenderer(svgRef);
-    console.log("ee");
     return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#1a1a1a] text-[#eee] font-mono", children: [
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
         Sidebar,
@@ -25968,7 +25968,6 @@
 
   // map/index.tsx
   var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
-  console.log("ee1");
   (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime5.jsx)(MapApp, {}));
 })();
 /*! Bundled license information:
