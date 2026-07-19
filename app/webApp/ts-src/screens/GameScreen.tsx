@@ -97,7 +97,10 @@ export function GameScreen() {
       window.mcState.dynamicFogEnabled = payload.dynamicFogEnabled ?? true;
     }
     window.mc.applyFaviconPref?.(payload.animatedFavicon);
-    pendingPreferencesUpdateRef.current = JSON.stringify(payload);
+    pendingPreferencesUpdateRef.current = JSON.stringify({
+      ...payload,
+      attackPanelVisible: state.preferences?.attackPanelVisible ?? true,
+    });
   };
 
   const handleMacrosSave = (
