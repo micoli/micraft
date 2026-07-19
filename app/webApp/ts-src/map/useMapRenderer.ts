@@ -131,7 +131,7 @@ export interface MapRendererState {
   onZoomOut: () => void;
 }
 
-export function useMapRenderer(svgRef: React.RefObject<SVGSVGElement>): MapRendererState {
+export function useMapRenderer(svgRef: React.RefObject<SVGSVGElement | null>): MapRendererState {
   const [layers, setLayers] = useState<Layers>(loadLayerState);
   const [apiState, setApiState] = useState<MapApiState>({
     gameTicks: 0,
@@ -188,7 +188,6 @@ export function useMapRenderer(svgRef: React.RefObject<SVGSVGElement>): MapRende
         H = svg.clientHeight;
       return [(cx - W / 2) / cam.pxPerBlock + cam.x, -(cz - H / 2) / cam.pxPerBlock + cam.z];
     }
-
 
     function scheduleUpdate() {
       if (rafPending.current) return;
@@ -491,6 +490,7 @@ export function useMapRenderer(svgRef: React.RefObject<SVGSVGElement>): MapRende
     zoomAtRef.current(0.67, svg.clientWidth / 2, svg.clientHeight / 2);
   }, [svgRef]);
 
+  // eslint-disable-next-line react-hooks/refs -- camera is a ref for perf; setRenderKey drives re-renders
   return {
     layers,
     apiState,
@@ -501,6 +501,7 @@ export function useMapRenderer(svgRef: React.RefObject<SVGSVGElement>): MapRende
     dragging,
     svgWidth,
     svgHeight,
+    // eslint-disable-next-line react-hooks/refs
     camera: camera.current,
     voronoiCells,
     biomeBorderPath,

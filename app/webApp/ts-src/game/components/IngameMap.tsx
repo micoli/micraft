@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useCallback, useState } from "react";
 
 interface VoronoiCell {
   x: number;
@@ -136,7 +136,6 @@ function renderBorders(
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
   const scale = Math.min(w, h) / (RADIUS * 2);
-  const pixSz = Math.max(1, Math.ceil(scale));
 
   // Voronoi border segments
   ctx.strokeStyle = "rgba(200,80,80,0.8)";
@@ -262,7 +261,9 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
     staircases: true,
   });
   const layersRef = useRef(layers);
-  layersRef.current = layers;
+  useLayoutEffect(() => {
+    layersRef.current = layers;
+  });
 
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const dragStart = useRef<{ mx: number; my: number; ox: number; oy: number } | null>(null);
@@ -373,7 +374,7 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
       .then((data: VoronoiCell[]) => {
         cellsRef.current = data;
         const { x: fcx, z: fcz } = fetchCenterRef.current;
-        if (bgRef.current) renderBg(bgRef.current, data, fcx, fcz);
+        if (bgRef.current) renderBg(bgRef.current, data, fcx, fcz, layersRef.current.biomeNames);
         const { x: ppx, z: ppz } = playerPosRef.current;
         if (overlayRef.current) renderOverlay(overlayRef.current, ppx, ppz, fcx, fcz);
       })

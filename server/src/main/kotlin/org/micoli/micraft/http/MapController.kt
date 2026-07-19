@@ -197,7 +197,6 @@ class MapController(private val gameLoop: GameLoop, private val tokenStore: Toke
             }
 
             get("/api/map/road-raster") {
-
                 if (!requireMapAuth()) return@get
                 val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
                 val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0

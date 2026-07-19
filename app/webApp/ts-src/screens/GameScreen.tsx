@@ -88,6 +88,7 @@ export function GameScreen() {
         fieldOfView: payload.fieldOfView ?? state.preferences?.fieldOfView ?? 70,
         macros: state.preferences?.macros ?? {},
         macroIcons: state.preferences?.macroIcons,
+        attackPanelVisible: state.preferences?.attackPanelVisible ?? true,
       },
     });
     if (window.mcState) {
@@ -115,6 +116,7 @@ export function GameScreen() {
         animatedFavicon: prefs.animatedFavicon ?? true,
         chunkDebugVisible: prefs.chunkDebugVisible ?? false,
         statisticsVisible: prefs.statisticsVisible ?? false,
+        attackPanelVisible: prefs.attackPanelVisible ?? true,
         keybindings: prefs.keybindings || {},
         customCommands,
         macros,
