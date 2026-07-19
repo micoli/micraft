@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router";
+import { NavigateFunction, useNavigate } from "react-router";
 import { KeyboardEvent } from "react";
 import { Input } from "../primitives/Input";
 import { Label } from "../primitives/Label";
@@ -24,6 +24,44 @@ const SUPPORTED_LANGS: { code: string; label: string }[] = [
   { code: "en", label: "English" },
   { code: "fr", label: "Français" },
 ];
+
+function displayAutoReconnectionLogin(
+  autoConnecting: boolean,
+  setAutoConnecting: (value: ((prevState: boolean) => boolean) | boolean) => void,
+  navigate: NavigateFunction,
+) {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black/82 z-[2000]">
+      <Panel className="min-w-[340px]">
+        {autoConnecting ? (
+          <div className="flex flex-col items-center gap-4 py-5 font-mono">
+            <div className="flex gap-1">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="w-2 h-2 rounded-full bg-blue-400 animate-bounce"
+                  style={{ animationDelay: `${i * 0.15}s` }}
+                />
+              ))}
+            </div>
+            <span className="text-white/80 text-sm">Reconnexion en cours...</span>
+            <button
+              className="text-xs text-white/30 hover:text-white/60 underline cursor-pointer mt-1"
+              onClick={() => {
+                setAutoConnecting(false);
+                navigate("/chars");
+              }}
+            >
+              Connexion manuelle
+            </button>
+          </div>
+        ) : (
+          <div className="text-center text-[#888] py-5">Loading…</div>
+        )}
+      </Panel>
+    </div>
+  );
+}
 
 export function AuthScreen() {
   const navigate = useNavigate();
@@ -191,43 +229,15 @@ export function AuthScreen() {
   }
 
   if (authMode === "loading" || autoConnecting) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black/82 z-[2000]">
-        <Panel className="min-w-[340px]">
-          {autoConnecting ? (
-            <div className="flex flex-col items-center gap-4 py-5 font-mono">
-              <div className="flex gap-1">
-                {[0, 1, 2].map((i) => (
-                  <span
-                    key={i}
-                    className="w-2 h-2 rounded-full bg-blue-400 animate-bounce"
-                    style={{ animationDelay: `${i * 0.15}s` }}
-                  />
-                ))}
-              </div>
-              <span className="text-white/80 text-sm">Reconnexion en cours…</span>
-              <button
-                className="text-xs text-white/30 hover:text-white/60 underline cursor-pointer mt-1"
-                onClick={() => {
-                  setAutoConnecting(false);
-                  navigate("/chars");
-                }}
-              >
-                Connexion manuelle
-              </button>
-            </div>
-          ) : (
-            <div className="text-center text-[#888] py-5">Loading…</div>
-          )}
-        </Panel>
-      </div>
-    );
+    return displayAutoReconnectionLogin(autoConnecting, setAutoConnecting, navigate);
   }
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/82 z-[2000]">
       <Panel className="min-w-[340px]">
-        <div className="text-[30px] font-bold text-center mb-6 text-blue-400">MiCraft</div>
+        <div className="flex justify-center mb-6">
+          <img src="/assets/splash.png" alt="MiCraft" className="max-w-[260px] w-full rounded-md" />
+        </div>
 
         <div className="mb-4 text-center">
           <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#1a1a2e] border border-blue-900/60 text-blue-400/70">

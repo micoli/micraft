@@ -195,6 +195,9 @@ export function CharacterSelectionScreen() {
         >
           <div className="flex gap-10 items-start">
             <div className="min-w-[280px] space-y-5">
+              <div className="flex justify-center">
+                <img src="/assets/logo.png" alt="MiCraft" className="max-w-[180px] w-full" />
+              </div>
               <div className="text-sm text-[#aaa]">Choose your character:</div>
               {(authMode === "local" || authMode === "oauth") && (
                 <div className="w-full">
