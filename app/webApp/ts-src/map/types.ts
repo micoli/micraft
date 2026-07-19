@@ -69,6 +69,7 @@ export interface Camera {
 
 export const LAYER_KEYS = [
   "voronoi",
+  "voronoi-names",
   "contours",
   "vegetation",
   "houses",

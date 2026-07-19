@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.world.proceduralGenerator
 
+import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -133,6 +134,122 @@ class VoronoiBiomeZones(
             }
         }
         return result
+    }
+
+    data class VoronoiEdge(val x1: Float, val z1: Float, val x2: Float, val z2: Float)
+
+    private fun circumcenter(
+        x1: Double,
+        z1: Double,
+        x2: Double,
+        z2: Double,
+        x3: Double,
+        z3: Double
+    ): Pair<Double, Double>? {
+        val ax = x2 - x1
+        val az = z2 - z1
+        val bx = x3 - x1
+        val bz = z3 - z1
+        val D = 2.0 * (ax * bz - az * bx)
+        if (abs(D) < 1e-10) return null
+        val ux = (bz * (ax * ax + az * az) - az * (bx * bx + bz * bz)) / D
+        val uz = (ax * (bx * bx + bz * bz) - bx * (ax * ax + az * az)) / D
+        return (x1 + ux) to (z1 + uz)
+    }
+
+    fun computeBorderEdges(centerX: Int, centerZ: Int, radiusBlocks: Int): List<VoronoiEdge> {
+        val margin = cellSize * 2
+        val minCX = floor((centerX - radiusBlocks - margin).toDouble() / cellSize).toInt() - 2
+        val maxCX = floor((centerX + radiusBlocks + margin).toDouble() / cellSize).toInt() + 2
+        val minCZ = floor((centerZ - radiusBlocks - margin).toDouble() / cellSize).toInt() - 2
+        val maxCZ = floor((centerZ + radiusBlocks + margin).toDouble() / cellSize).toInt() + 2
+
+        val seedGrid = HashMap<Long, Pair<Int, Int>>()
+        for (cx in minCX..maxCX) for (cz in minCZ..maxCZ) {
+            seedGrid[cx.toLong() shl 32 or (cz.toLong() and 0xFFFFFFFFL)] = seedPoint(cx, cz)
+        }
+        fun cachedSeed(cx: Int, cz: Int) =
+            seedGrid[cx.toLong() shl 32 or (cz.toLong() and 0xFFFFFFFFL)] ?: seedPoint(cx, cz)
+
+        fun seedId(sx: Int, sz: Int) = sx.toLong() shl 32 or (sz.toLong() and 0xFFFFFFFFL)
+        fun pairKey(a: Long, b: Long) = if (a <= b) a to b else b to a
+
+        // vertex per edge pair: map pair key → up to 2 circumcenters
+        val edgeVertices = HashMap<Pair<Long, Long>, MutableList<Pair<Double, Double>>>()
+        val processedTriples = HashSet<Triple<Long, Long, Long>>()
+
+        for (cx in minCX + 1 until maxCX) {
+            for (cz in minCZ + 1 until maxCZ) {
+                // Collect unique seeds from 3x3 neighbourhood
+                val neighbors =
+                    buildList {
+                            for (dx in -1..1) for (dz in -1..1) add(cachedSeed(cx + dx, cz + dz))
+                        }
+                        .distinctBy { (sx, sz) -> seedId(sx, sz) }
+
+                val n = neighbors.size
+                for (i in 0 until n) {
+                    val (sx1, sz1) = neighbors[i]
+                    for (j in i + 1 until n) {
+                        val (sx2, sz2) = neighbors[j]
+                        for (k in j + 1 until n) {
+                            val (sx3, sz3) = neighbors[k]
+
+                            val ids =
+                                listOf(seedId(sx1, sz1), seedId(sx2, sz2), seedId(sx3, sz3))
+                                    .sorted()
+                            val tripleKey = Triple(ids[0], ids[1], ids[2])
+                            if (!processedTriples.add(tripleKey)) continue
+
+                            val V =
+                                circumcenter(
+                                    sx1.toDouble(),
+                                    sz1.toDouble(),
+                                    sx2.toDouble(),
+                                    sz2.toDouble(),
+                                    sx3.toDouble(),
+                                    sz3.toDouble()) ?: continue
+                            val (vx, vz) = V
+
+                            // Validate: no other seed closer than circumradius
+                            val R2 = (vx - sx1) * (vx - sx1) + (vz - sz1) * (vz - sz1)
+                            val gvx = floor(vx / cellSize).toInt()
+                            val gvz = floor(vz / cellSize).toInt()
+                            var valid = true
+                            outer@ for (dvx in -1..1) for (dvz in -1..1) {
+                                val (osx, osz) = cachedSeed(gvx + dvx, gvz + dvz)
+                                if ((osx == sx1 && osz == sz1) ||
+                                    (osx == sx2 && osz == sz2) ||
+                                    (osx == sx3 && osz == sz3))
+                                    continue
+                                if ((vx - osx) * (vx - osx) + (vz - osz) * (vz - osz) < R2 - 1.0) {
+                                    valid = false
+                                    break@outer
+                                }
+                            }
+                            if (!valid) continue
+
+                            val id1 = seedId(sx1, sz1)
+                            val id2 = seedId(sx2, sz2)
+                            val id3 = seedId(sx3, sz3)
+                            edgeVertices.getOrPut(pairKey(id1, id2)) { mutableListOf() }.add(V)
+                            edgeVertices.getOrPut(pairKey(id1, id3)) { mutableListOf() }.add(V)
+                            edgeVertices.getOrPut(pairKey(id2, id3)) { mutableListOf() }.add(V)
+                        }
+                    }
+                }
+            }
+        }
+
+        return edgeVertices.values
+            .filter { it.size >= 2 }
+            .map { verts ->
+                VoronoiEdge(
+                    verts[0].first.toFloat(),
+                    verts[0].second.toFloat(),
+                    verts[1].first.toFloat(),
+                    verts[1].second.toFloat())
+            }
     }
 
     private fun moistureAt(wx: Int, wz: Int): Double =

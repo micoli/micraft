@@ -9,10 +9,11 @@ interface VoronoiCell {
   level: number;
 }
 
-interface BiomeBorderChunk {
-  cx: number;
-  cz: number;
-  mask: boolean[];
+interface BiomeBorderSegment {
+  x1: number;
+  z1: number;
+  x2: number;
+  z2: number;
 }
 
 interface WeatherZoneInfo {
@@ -56,7 +57,7 @@ function parseColor(hex: string): [number, number, number] {
   return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
 }
 
-function renderBg(canvas: HTMLCanvasElement, cells: VoronoiCell[], cx: number, cz: number) {
+function renderBg(canvas: HTMLCanvasElement, cells: VoronoiCell[], cx: number, cz: number, showNames: boolean) {
   const ctx = canvas.getContext("2d");
   if (!ctx || cells.length === 0) return;
   const w = canvas.width;
@@ -106,23 +107,25 @@ function renderBg(canvas: HTMLCanvasElement, cells: VoronoiCell[], cx: number, c
     ctx.arc(px, py, 2, 0, Math.PI * 2);
     ctx.fill();
 
-    const label = cell.name;
-    ctx.font = "bold 10px monospace";
-    ctx.fillStyle = "rgba(0,0,0,0.8)";
-    ctx.fillText(label, px + 1, py + 5);
-    ctx.fillStyle = "#fff";
-    ctx.fillText(label, px, py + 4);
-    ctx.font = "8px monospace";
-    ctx.fillStyle = "rgba(0,0,0,0.7)";
-    ctx.fillText("Lv " + cell.level, px + 1, py + 17);
-    ctx.fillStyle = "rgba(255,210,80,0.95)";
-    ctx.fillText("Lv " + cell.level, px, py + 16);
+    if (showNames) {
+      const label = cell.name;
+      ctx.font = "bold 10px monospace";
+      ctx.fillStyle = "rgba(0,0,0,0.8)";
+      ctx.fillText(label, px + 1, py + 5);
+      ctx.fillStyle = "#fff";
+      ctx.fillText(label, px, py + 4);
+      ctx.font = "8px monospace";
+      ctx.fillStyle = "rgba(0,0,0,0.7)";
+      ctx.fillText("Lv " + cell.level, px + 1, py + 17);
+      ctx.fillStyle = "rgba(255,210,80,0.95)";
+      ctx.fillText("Lv " + cell.level, px, py + 16);
+    }
   }
 }
 
 function renderBorders(
   canvas: HTMLCanvasElement,
-  borderData: BiomeBorderChunk[],
+  borderData: BiomeBorderSegment[],
   roadImg: HTMLImageElement | null,
   fetchCx: number,
   fetchCz: number,
@@ -135,21 +138,20 @@ function renderBorders(
   const scale = Math.min(w, h) / (RADIUS * 2);
   const pixSz = Math.max(1, Math.ceil(scale));
 
-  // Voronoi border pixels
-  ctx.fillStyle = "rgba(200,80,80,0.8)";
-  for (const chunk of borderData) {
-    for (let lx = 0; lx < 16; lx++) {
-      for (let lz = 0; lz < 16; lz++) {
-        if (!chunk.mask[lx * 16 + lz]) continue;
-        const wx = chunk.cx * 16 + lx;
-        const wz = chunk.cz * 16 + lz;
-        const px = w / 2 + (wx - fetchCx) * scale;
-        const pz = h / 2 - (wz - fetchCz) * scale;
-        if (px < -pixSz || px > w + pixSz || pz < -pixSz || pz > h + pixSz) continue;
-        ctx.fillRect(Math.round(px), Math.round(pz), pixSz, pixSz);
-      }
-    }
+  // Voronoi border segments
+  ctx.strokeStyle = "rgba(200,80,80,0.8)";
+  ctx.lineWidth = Math.max(1, scale);
+  ctx.beginPath();
+  for (const seg of borderData) {
+    const sx1 = w / 2 + (seg.x1 - fetchCx) * scale;
+    const sy1 = h / 2 - (seg.z1 - fetchCz) * scale;
+    const sx2 = w / 2 + (seg.x2 - fetchCx) * scale;
+    const sy2 = h / 2 - (seg.z2 - fetchCz) * scale;
+    if (sx1 < -1 || sx1 > w + 1 || sy1 < -1 || sy1 > h + 1) continue;
+    ctx.moveTo(sx1, sy1);
+    ctx.lineTo(sx2, sy2);
   }
+  ctx.stroke();
 
   // Road raster — PNG row 0 = highest Z = top of canvas (north up), no flip needed
   if (roadImg) {
@@ -246,13 +248,19 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const cellsRef = useRef<VoronoiCell[]>([]);
-  const borderDataRef = useRef<BiomeBorderChunk[]>([]);
+  const borderDataRef = useRef<BiomeBorderSegment[]>([]);
   const roadImgRef = useRef<HTMLImageElement | null>(null);
   const staircasesRef = useRef<StaircaseMapInfo[]>([]);
   const weatherZonesRef = useRef<WeatherZoneInfo[]>([]);
   const fetchCenterRef = useRef({ x: NaN, z: NaN });
   const playerPosRef = useRef({ x: playerX, z: playerZ });
-  const [layers, setLayers] = useState({ biomes: true, borders: true, weather: true, staircases: true });
+  const [layers, setLayers] = useState({
+    biomes: true,
+    biomeNames: true,
+    borders: true,
+    weather: true,
+    staircases: true,
+  });
   const layersRef = useRef(layers);
   layersRef.current = layers;
 
@@ -288,7 +296,7 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
     const L = layersRef.current;
     if (bgRef.current) {
       bgRef.current.style.display = L.biomes ? "" : "none";
-      renderBg(bgRef.current, cellsRef.current, fcx, fcz);
+      renderBg(bgRef.current, cellsRef.current, fcx, fcz, L.biomeNames);
     }
     if (bordersRef.current) {
       bordersRef.current.style.display = L.borders ? "" : "none";
@@ -391,10 +399,10 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
       );
 
     Promise.all([
-      fetch(`/api/map/biome-borders?cx=${cx}&cz=${cz}&radius=${RADIUS * 2}`).then((r) => r.json()),
+      fetch(`/api/map/voronoi-borders?cx=${cx}&cz=${cz}&radius=${RADIUS * 2}`).then((r) => r.json()),
       roadFetch,
     ])
-      .then(([borders, roadImg]: [BiomeBorderChunk[], HTMLImageElement]) => {
+      .then(([borders, roadImg]: [BiomeBorderSegment[], HTMLImageElement]) => {
         borderDataRef.current = borders;
         roadImgRef.current = roadImg;
         const { x: fcx, z: fcz } = fetchCenterRef.current;
@@ -442,6 +450,7 @@ export function IngameMap({ playerX = 0, playerZ = 0, layoutStyle }: Props) {
         {(
           [
             ["biomes", "Biomes"],
+            ["biomeNames", "Names"],
             ["borders", "Borders"],
             ["weather", "Weather"],
             ["staircases", "Stairs"],

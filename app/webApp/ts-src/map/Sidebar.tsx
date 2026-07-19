@@ -6,6 +6,7 @@ import { LAYER_KEYS } from "./types";
 
 const LAYER_LABELS: Record<LayerKey, string> = {
   voronoi: "Biome borders",
+  "voronoi-names": "Zone names",
   contours: "Contour lines",
   vegetation: "Vegetation",
   houses: "Houses",

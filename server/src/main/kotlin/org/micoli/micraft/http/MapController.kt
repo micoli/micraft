@@ -5,6 +5,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import javax.imageio.ImageIO
 import kotlinx.serialization.Serializable
@@ -72,13 +73,26 @@ data class RoadSegmentInfo(val x1: Float, val z1: Float, val x2: Float, val z2: 
 
 @Serializable data class ChunkRoadInfo(val cx: Int, val cz: Int, val mask: List<Boolean>)
 
-@Serializable data class ChunkBiomeBorderInfo(val cx: Int, val cz: Int, val mask: List<Boolean>)
+@Serializable
+data class VoronoiBorderSegment(val x1: Float, val z1: Float, val x2: Float, val z2: Float)
 
 @Serializable data class StaircaseMapInfo(val name: String, val x: Float, val z: Float)
 
 class MapController(private val gameLoop: GameLoop, private val tokenStore: TokenStore? = null) {
     private val roadRasterCache = ConcurrentHashMap<Long, List<Boolean>>()
-    private val biomeBorderCache = ConcurrentHashMap<Long, List<Boolean>>()
+    private val staticDir = System.getenv("MICRAFT_MAP_STATIC_DIR")
+
+    private fun readStaticResource(name: String): String {
+        if (staticDir != null) {
+            val f = File(staticDir, name)
+            if (f.exists()) return f.readText()
+        }
+        return Thread.currentThread()
+            .contextClassLoader
+            .getResourceAsStream(name)!!
+            .bufferedReader()
+            .readText()
+    }
 
     fun register(route: Route) {
         if (!(System.getenv("MICRAFT_MAP_ENABLED") != "0")) {
@@ -183,6 +197,7 @@ class MapController(private val gameLoop: GameLoop, private val tokenStore: Toke
             }
 
             get("/api/map/road-raster") {
+
                 if (!requireMapAuth()) return@get
                 val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
                 val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
@@ -310,79 +325,34 @@ class MapController(private val gameLoop: GameLoop, private val tokenStore: Toke
                 call.respondBytes(baos.toByteArray(), ContentType.Image.PNG)
             }
 
-            get("/api/map/biome-borders") {
+            get("/api/map/voronoi-borders") {
                 if (!requireMapAuth()) return@get
                 val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
                 val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
                 val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 1500
                 val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
-                val voronoi = gen?.voronoi
-                val chunks = mutableListOf<ChunkBiomeBorderInfo>()
-                if (voronoi != null) {
-                    val cxMin = Math.floorDiv(cx - radius, 16)
-                    val cxMax = Math.floorDiv(cx + radius, 16)
-                    val czMin = Math.floorDiv(cz - radius, 16)
-                    val czMax = Math.floorDiv(cz + radius, 16)
-                    for (chunkX in cxMin..cxMax) {
-                        for (chunkZ in czMin..czMax) {
-                            val key = chunkX.toLong() shl 32 or (chunkZ.toLong() and 0xFFFFFFFFL)
-                            val mask =
-                                biomeBorderCache.getOrPut(key) {
-                                    buildList {
-                                        for (lx in 0 until 16) {
-                                            for (lz in 0 until 16) {
-                                                val wx = chunkX * 16 + lx
-                                                val wz = chunkZ * 16 + lz
-                                                val s = voronoi.sample(wx, wz)
-                                                val cellId = "${s.primarySeedX},${s.primarySeedZ}"
-                                                fun cellAt(x: Int, z: Int): String {
-                                                    val n = voronoi.sample(x, z)
-                                                    return "${n.primarySeedX},${n.primarySeedZ}"
-                                                }
-                                                add(
-                                                    cellAt(wx + 1, wz) != cellId ||
-                                                        cellAt(wx - 1, wz) != cellId ||
-                                                        cellAt(wx, wz + 1) != cellId ||
-                                                        cellAt(wx, wz - 1) != cellId)
-                                            }
-                                        }
-                                    }
-                                }
-                            if (mask.any { it })
-                                chunks.add(ChunkBiomeBorderInfo(chunkX, chunkZ, mask))
-                        }
-                    }
-                }
+                val edges =
+                    gen?.voronoi?.computeBorderEdges(cx, cz, radius)?.map {
+                        VoronoiBorderSegment(it.x1, it.z1, it.x2, it.z2)
+                    } ?: emptyList()
                 call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
-                call.respondText(Json.encodeToString(chunks), ContentType.Application.Json)
+                call.respondText(Json.encodeToString(edges), ContentType.Application.Json)
             }
 
             get("/map") {
-                val html =
-                    Thread.currentThread()
-                        .contextClassLoader
-                        .getResourceAsStream("map.html")!!
-                        .bufferedReader()
-                        .readText()
-                call.respondText(html, ContentType.Text.Html)
+                if (staticDir != null)
+                    call.response.headers.append(HttpHeaders.CacheControl, "no-cache")
+                call.respondText(readStaticResource("map.html"), ContentType.Text.Html)
             }
             get("/map.js") {
-                val js =
-                    Thread.currentThread()
-                        .contextClassLoader
-                        .getResourceAsStream("map.js")!!
-                        .bufferedReader()
-                        .readText()
-                call.respondText(js, ContentType.Text.JavaScript)
+                if (staticDir != null)
+                    call.response.headers.append(HttpHeaders.CacheControl, "no-cache")
+                call.respondText(readStaticResource("map.js"), ContentType.Text.JavaScript)
             }
             get("/map.css") {
-                val css =
-                    Thread.currentThread()
-                        .contextClassLoader
-                        .getResourceAsStream("map.css")!!
-                        .bufferedReader()
-                        .readText()
-                call.respondText(css, ContentType.Text.CSS)
+                if (staticDir != null)
+                    call.response.headers.append(HttpHeaders.CacheControl, "no-cache")
+                call.respondText(readStaticResource("map.css"), ContentType.Text.CSS)
             }
         }
     }

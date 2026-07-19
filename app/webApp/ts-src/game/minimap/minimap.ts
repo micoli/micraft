@@ -29,7 +29,7 @@ let roadsFetching = false;
 const roadsFetchCenter = { x: NaN, z: NaN };
 
 // Biome borders overlay
-let biomeBorderData: Array<{ cx: number; cz: number; mask: boolean[] }> = [];
+let biomeBorderData: Array<{ x1: number; z1: number; x2: number; z2: number }> = [];
 const biomeFetchCenter = { x: NaN, z: NaN };
 let biomeFetching = false;
 
@@ -149,7 +149,7 @@ function maybeRefetchBiomeBorders(playerX: number, playerZ: number): void {
   biomeFetching = true;
   const cx = Math.round(playerX),
     cz = Math.round(playerZ);
-  fetch(`/api/map/biome-borders?cx=${cx}&cz=${cz}&radius=800`)
+  fetch(`/api/map/voronoi-borders?cx=${cx}&cz=${cz}&radius=800`)
     .then((r) => {
       if (r.ok) return r.json();
       biomeFetchCenter.x = NaN;
@@ -370,24 +370,18 @@ export function registerMinimap(): Pick<
       ctx.putImageData(imgData, 0, 0);
 
       // Biome border contours
-      ctx.fillStyle = "rgba(200,80,80,0.8)";
-      for (const chunk of biomeBorderData) {
-        for (let lx = 0; lx < 16; lx++) {
-          for (let lz = 0; lz < 16; lz++) {
-            if (!chunk.mask[lx * 16 + lz]) continue;
-            const wx = chunk.cx * 16 + lx;
-            const wz = chunk.cz * 16 + lz;
-            const bx = wx - playerX + halfBlocks;
-            const bz = playerZ - wz + halfBlocks;
-            const px0 = Math.round(bx * pixPerBlock);
-            const pz0 = Math.round(bz * pixPerBlock);
-            if (px0 < 0 || px0 >= MINIMAP_SIZE || pz0 < 0 || pz0 >= MINIMAP_SIZE) continue;
-            const pw = Math.max(1, Math.round((bx + 1) * pixPerBlock) - px0);
-            const ph = Math.max(1, Math.round((bz + 1) * pixPerBlock) - pz0);
-            ctx.fillRect(px0, pz0, pw, ph);
-          }
-        }
+      ctx.strokeStyle = "rgba(200,80,80,0.8)";
+      ctx.lineWidth = Math.max(1, pixPerBlock);
+      ctx.beginPath();
+      for (const seg of biomeBorderData) {
+        const sx1 = (seg.x1 - playerX + halfBlocks) * pixPerBlock;
+        const sy1 = (playerZ - seg.z1 + halfBlocks) * pixPerBlock;
+        const sx2 = (seg.x2 - playerX + halfBlocks) * pixPerBlock;
+        const sy2 = (playerZ - seg.z2 + halfBlocks) * pixPerBlock;
+        ctx.moveTo(sx1, sy1);
+        ctx.lineTo(sx2, sy2);
       }
+      ctx.stroke();
 
       // Precise road raster overlay
       if (roadImg !== null) {

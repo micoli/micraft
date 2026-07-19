@@ -20,6 +20,8 @@ services:
     working_dir: /workspace
     stdin_open: true
     tty: true
+    environment:
+      - MICRAFT_MAP_STATIC_DIR=/workspace/server/src/main/resources
 
 volumes:
   core-build:

@@ -150,13 +150,15 @@ function drawVoronoi(
   worldToCanvas: (wx: number, wz: number) => [number, number],
   W: number,
   H: number,
+  showBorders: boolean,
+  showNames: boolean,
 ) {
   if (biomeDirty.current) {
     renderBiomeBorders();
     biomeDirty.current = false;
   }
-  ctx.drawImage(bc, 0, 0);
-  if (voronoiCells.current.length) {
+  if (showBorders) ctx.drawImage(bc, 0, 0);
+  if (showNames && voronoiCells.current.length) {
     const nameFontSize = Math.max(9, Math.min(15, cam.pxPerBlock * 80));
     const biomeFontSize = Math.max(7, Math.min(10, cam.pxPerBlock * 55));
     ctx.textAlign = "center";
@@ -404,7 +406,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
   const roadImgCx = useRef(0);
   const roadImgCz = useRef(0);
   const roadImgRadius = useRef(0);
-  const biomeBorderData = useRef<Array<{ cx: number; cz: number; mask: boolean[] }>>([]);
+  const biomeBorderData = useRef<Array<{ x1: number; z1: number; x2: number; z2: number }>>([]);
   const apiStateRef = useRef<MapApiState>({ gameTicks: 0, players: [], npcs: [], weatherZones: [] });
   const followTargetRef = useRef<FollowTarget>(null);
   const autoFitDone = useRef(false);
@@ -476,20 +478,14 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
       if (!biomeBorderData.current.length) return;
       const ppb = cam.pxPerBlock;
       bCtx.setTransform(ppb, 0, 0, -ppb, -cam.x * ppb + W / 2, cam.z * ppb + H / 2);
-      bCtx.fillStyle = "rgba(128,0,0,0.85)";
-      for (const chunk of biomeBorderData.current) {
-        for (let lx = 0; lx < 16; lx++) {
-          for (let lz = 0; lz < 16; lz++) {
-            if (!chunk.mask[lx * 16 + lz]) continue;
-            const wx = chunk.cx * 16 + lx;
-            const wz = chunk.cz * 16 + lz;
-            const cpx = (wx - cam.x) * ppb + W / 2;
-            const cpz = -(wz - cam.z) * ppb + H / 2;
-            if (cpx < -ppb || cpx > W + ppb || cpz < -ppb || cpz > H + ppb) continue;
-            bCtx.fillRect(wx, wz, 1, 1);
-          }
-        }
+      bCtx.strokeStyle = "rgba(128,0,0,0.85)";
+      bCtx.lineWidth = 1 / ppb;
+      bCtx.beginPath();
+      for (const seg of biomeBorderData.current) {
+        bCtx.moveTo(seg.x1, seg.z1);
+        bCtx.lineTo(seg.x2, seg.z2);
       }
+      bCtx.stroke();
       bCtx.resetTransform();
     }
 
@@ -526,9 +522,21 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
         drawVegetation(voronoiCells, cam, worldToCanvas, ctx);
       }
 
-      // Voronoi biome borders
-      if (L.voronoi) {
-        drawVoronoi(biomeDirty, renderBiomeBorders, ctx, bc, voronoiCells, cam, worldToCanvas, W, H);
+      // Voronoi biome borders + zone names
+      if (L.voronoi || L["voronoi-names"]) {
+        drawVoronoi(
+          biomeDirty,
+          renderBiomeBorders,
+          ctx,
+          bc,
+          voronoiCells,
+          cam,
+          worldToCanvas,
+          W,
+          H,
+          L.voronoi,
+          L["voronoi-names"],
+        );
       }
 
       // Contours
@@ -702,7 +710,7 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
       if (!isNaN(x) && Math.hypot(cx - x, cz - z) < 300) return;
       biomeFetchCenter.current = { x: cx, z: cz };
       try {
-        const r = await fetch(`/api/map/biome-borders?cx=${cx}&cz=${cz}&radius=2000`);
+        const r = await fetch(`/api/map/voronoi-borders?cx=${cx}&cz=${cz}&radius=2000`);
         if (r.ok) {
           biomeBorderData.current = await r.json();
           biomeDirty.current = true;
