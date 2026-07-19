@@ -167,11 +167,13 @@ export function CharacterSelectionScreen() {
   function doPlay() {
     if (!selected) return;
     const accountKey = getAccountEmail() || username;
+    const charEntry = chars.find((c) => c.name === selected);
+    if (!charEntry) return;
     saveLastUser(username);
     saveLastPlayer(accountKey, selected);
     saveLastLang(lang);
     loginResultRef.current = accountKey + "\t" + selected + "\t" + lang + "\t" + token;
-    navigate("/game");
+    navigate(`/game/${encodeURIComponent(accountKey)}/${charEntry.id}`);
   }
 
   function doLogout() {

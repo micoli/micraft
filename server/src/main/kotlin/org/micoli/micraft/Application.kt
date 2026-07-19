@@ -252,11 +252,13 @@ fun Application.module() {
         // (…/kotlin-webpack/wasmJs/developmentExecutable or …/productionExecutable).
         // Legacy fallback: if it points at the module build dir, descend into the dev subdir.
         val webBuildDir = System.getenv("MICRAFT_WEB_DIST")
+        var servedDir: File? = null
         if (webBuildDir != null) {
             val base = File(webBuildDir)
             val served =
                 if (File(base, "index.html").exists()) base
                 else File(base, "kotlin-webpack/wasmJs/developmentExecutable")
+            servedDir = served
             staticFiles("/", served)
         }
         val assetManifest = AssetManifestController(webBuildDir)
@@ -304,5 +306,12 @@ fun Application.module() {
         }
         webSocket("/game") { gameLoop.onConnect(this) }
         webSocket("/chunks") { gameLoop.onChunkConnect(this) }
+        servedDir?.let { dir ->
+            val indexFile = File(dir, "index.html")
+            listOf("/", "/auth", "/chars", "/char-create", "/char-rpg-create").forEach { path ->
+                get(path) { call.respondFile(indexFile) }
+            }
+            get("/game/{accountEmail}/{charId}") { call.respondFile(indexFile) }
+        }
     }
 }

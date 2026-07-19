@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { NavigateFunction, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { KeyboardEvent } from "react";
 import { Input } from "../primitives/Input";
 import { Label } from "../primitives/Label";
@@ -25,44 +25,6 @@ const SUPPORTED_LANGS: { code: string; label: string }[] = [
   { code: "fr", label: "Français" },
 ];
 
-function displayAutoReconnectionLogin(
-  autoConnecting: boolean,
-  setAutoConnecting: (value: ((prevState: boolean) => boolean) | boolean) => void,
-  navigate: NavigateFunction,
-) {
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/82 z-[2000]">
-      <Panel className="min-w-[340px]">
-        {autoConnecting ? (
-          <div className="flex flex-col items-center gap-4 py-5 font-mono">
-            <div className="flex gap-1">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="w-2 h-2 rounded-full bg-blue-400 animate-bounce"
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                />
-              ))}
-            </div>
-            <span className="text-white/80 text-sm">Reconnexion en cours...</span>
-            <button
-              className="text-xs text-white/30 hover:text-white/60 underline cursor-pointer mt-1"
-              onClick={() => {
-                setAutoConnecting(false);
-                navigate("/chars");
-              }}
-            >
-              Connexion manuelle
-            </button>
-          </div>
-        ) : (
-          <div className="text-center text-[#888] py-5">Loading…</div>
-        )}
-      </Panel>
-    </div>
-  );
-}
-
 export function AuthScreen() {
   const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<AuthMode>("loading");
@@ -72,7 +34,6 @@ export function AuthScreen() {
   const [authLoading, setAuthLoading] = useState(false);
   const [lang, setLang] = useState(getLastLang());
   const [serverReady, setServerReady] = useState(false);
-  const [autoConnecting, setAutoConnecting] = useState(false);
 
   const usernameInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
@@ -112,8 +73,8 @@ export function AuthScreen() {
     if (saved && (authMode === "local" || authMode === "oauth")) {
       const savedName = getStoredDisplayName() || getLastUser();
       if (savedName && getLastPlayer(savedName)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setAutoConnecting(true);
+        window.mcState.intentionalDisconnect = true;
+        navigate("/chars");
         return;
       }
       if (savedName) {
@@ -128,7 +89,8 @@ export function AuthScreen() {
               if (d?.email) saveAccountEmail(d.email);
               saveLastUser(name);
               if (getLastPlayer(name)) {
-                setAutoConnecting(true);
+                window.mcState.intentionalDisconnect = true;
+                navigate("/chars");
               } else {
                 navigate("/chars");
               }
@@ -143,7 +105,8 @@ export function AuthScreen() {
     if (authMode === "none") {
       const last = getLastUser();
       if (last && getLastPlayer(last)) {
-        setAutoConnecting(true);
+        window.mcState.intentionalDisconnect = true;
+        navigate("/chars");
         return;
       }
       if (last) {
@@ -226,10 +189,6 @@ export function AuthScreen() {
     saveLastLang(lang);
     setAuthLoading(false);
     navigate("/chars");
-  }
-
-  if (authMode === "loading" || autoConnecting) {
-    return displayAutoReconnectionLogin(autoConnecting, setAutoConnecting, navigate);
   }
 
   return (

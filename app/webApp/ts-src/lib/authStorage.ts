@@ -24,6 +24,17 @@ export function saveUsers(u: Record<string, PlayerEntry[]>) {
   }
 }
 
+export function getPlayerEntries(accountKey: string): PlayerEntry[] {
+  return getUsers()[accountKey] ?? [];
+}
+
+export function getLastPlayerEntry(username: string): PlayerEntry | null {
+  const accountKey = getAccountEmail() || username;
+  const name = getLastPlayer(accountKey);
+  if (!name) return null;
+  return getPlayerEntries(accountKey).find((e) => e.name === name) ?? null;
+}
+
 export function getLastPlayer(username: string): string {
   try {
     return localStorage.getItem("micraft_last_player_" + username) || "";

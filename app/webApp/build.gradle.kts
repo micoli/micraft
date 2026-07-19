@@ -64,10 +64,11 @@ val generateBuildConfig by
     }
 
 tasks.matching { it.name == "compileKotlinWasmJs" }.configureEach { dependsOn(generateBuildConfig) }
+
 // The WASM binary is ~6 MB; attempting to cache it causes pack corruption errors.
-tasks.matching { it.name == "compileDevelopmentExecutableKotlinWasmJs" }.configureEach {
-    outputs.cacheIf { false }
-}
+tasks
+    .matching { it.name == "compileDevelopmentExecutableKotlinWasmJs" }
+    .configureEach { outputs.cacheIf { false } }
 
 val cleanStaleWasm by
     tasks.registering(Delete::class) {

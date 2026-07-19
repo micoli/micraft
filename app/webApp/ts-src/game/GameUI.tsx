@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useReducer, useState, useMemo } from "react";
-import { MemoryRouter, Routes, Route, useNavigate, useLocation } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router";
 import { GameLayout, NpcDialogData, PreferencesData, ChannelSubscription, ShortcutSlot, QuestProgress } from "./types";
 import { UiState, reducer, makeUiDispatch } from "./UIReducer";
 import { GameContext } from "./GameContext";
@@ -8,7 +8,15 @@ import { defaultLayout } from "./layout/LayoutEngine";
 import { ChunkDebugData } from "./components/ChunkDebug";
 import { AuthScreen } from "../screens/AuthScreen";
 import { CharacterSelectionScreen } from "../screens/CharacterSelectionScreen";
-import { getLastUser, getLastPlayer, getLastLang, getStoredToken, clearStoredToken } from "../lib/authStorage";
+import {
+  getLastUser,
+  getLastPlayer,
+  getLastLang,
+  getStoredToken,
+  clearStoredToken,
+  getAccountEmail,
+  getLastPlayerEntry,
+} from "../lib/authStorage";
 import { CharacterCreationScreen } from "../screens/CharacterCreationScreen";
 import { CharacterRPGCreationScreen } from "../screens/CharacterRPGCreationScreen";
 import { GameScreen } from "../screens/GameScreen";
@@ -78,13 +86,14 @@ function RouterBridge({
     navigateRef.current = navigate;
   }, [navigate, navigateRef]);
   useEffect(() => {
-    const isGame = pathname === "/game";
+    const isGame = pathname.startsWith("/game/");
     isGameRouteRef.current = isGame;
     const vis = isGame ? "visible" : "hidden";
     const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
     if (canvas) canvas.style.visibility = vis;
     const minimap = document.getElementById("mc-minimap");
     if (minimap) (minimap as HTMLElement).style.visibility = vis;
+    if (pathname === "/chars") window.mcState.intentionalDisconnect = true;
   }, [pathname, isGameRouteRef]);
   return null;
 }
@@ -479,23 +488,32 @@ export function GameUI() {
 
     window.mc.clearStoredToken = () => clearStoredToken();
 
+    const lastGameUrl = () => {
+      if (window.location.pathname.startsWith("/game/")) return window.location.pathname;
+      const u = getLastUser();
+      const entry = getLastPlayerEntry(u);
+      const email = getAccountEmail() || u;
+      return entry ? `/game/${encodeURIComponent(email)}/${entry.id}` : "/chars";
+    };
+
     window.mc.showLoginOverlay = () => {
       window.mcState.loginOverlayPending = false;
       const username = getLastUser();
-      const player = getLastPlayer(username);
+      const accountKey = getAccountEmail() || username;
+      const player = getLastPlayer(accountKey);
       const lang = getLastLang();
       const token = getStoredToken();
       const intentional = window.mcState.intentionalDisconnect;
       window.mcState.intentionalDisconnect = false;
       if (player && !intentional) {
-        loginResultRef.current = `${username}\t${player}\t${lang}\t${token}`;
-        navigateRef.current?.("/game");
+        loginResultRef.current = `${accountKey}\t${player}\t${lang}\t${token}`;
+        navigateRef.current?.(lastGameUrl());
         return;
       }
       document.exitPointerLock();
       navigateRef.current?.(player ? "/chars" : "/auth");
     };
-    window.mc.hideLoginOverlay = () => navigateRef.current?.("/game");
+    window.mc.hideLoginOverlay = () => navigateRef.current?.(lastGameUrl());
     window.mc.showDisconnectedOverlay = (msg: string) => {
       dispatch("disconnect_show", { message: msg });
     };
@@ -839,17 +857,18 @@ export function GameUI() {
 
   return (
     <GameContext.Provider value={contextValue}>
-      <MemoryRouter initialEntries={["/auth"]}>
+      <BrowserRouter>
         <RouterBridge navigateRef={navigateRef} isGameRouteRef={isGameRouteRef} />
         <Routes>
+          <Route path="/" element={<Navigate to="/auth" replace />} />
           <Route path="/auth" element={<AuthScreen />} />
           <Route path="/chars" element={<CharacterSelectionScreen />} />
           <Route path="/char-create" element={<CharacterCreationScreen />} />
           <Route path="/char-rpg-create" element={<CharacterRPGCreationScreen />} />
-          <Route path="/game" element={<GameScreen />} />
+          <Route path="/game/:accountEmail/:charId" element={<GameScreen />} />
         </Routes>
         <DisconnectOverlay message={state.disconnectMsg} />
-      </MemoryRouter>
+      </BrowserRouter>
     </GameContext.Provider>
   );
 }

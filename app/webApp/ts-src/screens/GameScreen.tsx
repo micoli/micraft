@@ -1,4 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router";
+import { getStoredToken, getLastLang, getAccountEmail, getLastPlayer } from "../lib/authStorage";
 import { GameLayout, ChannelSubscription } from "../game/types";
 import { NpcDialog } from "../game/npc/NpcDialog";
 import { LoadingOverlay } from "../game/overlays/LoadingOverlay";
@@ -41,6 +43,7 @@ export function GameScreen() {
   const {
     state,
     dispatch,
+    loginResultRef,
     consoleSubmittedRef,
     consoleStateRef,
     consoleInitialValueRef,
@@ -50,6 +53,26 @@ export function GameScreen() {
     pendingSlotUpdateRef,
     chunkDebugData,
   } = useGameContext();
+
+  const { accountEmail: encodedEmail } = useParams<{ accountEmail: string; charId: string }>();
+  const navigate = useNavigate();
+  const reconnectAttempted = useRef(false);
+
+  useEffect(() => {
+    if (reconnectAttempted.current || !encodedEmail) return;
+    reconnectAttempted.current = true;
+    if (loginResultRef.current) return;
+    const email = decodeURIComponent(encodedEmail);
+    const token = getStoredToken();
+    const lang = getLastLang();
+    const accountKey = getAccountEmail() || email;
+    const charName = getLastPlayer(accountKey) || getLastPlayer(email);
+    if (charName) {
+      loginResultRef.current = `${email}\t${charName}\t${lang}\t${token}`;
+    } else {
+      navigate("/auth");
+    }
+  }, [encodedEmail, loginResultRef, navigate]);
 
   const activeLayout = resolveActiveLayout(state.layouts, state.activeLayout);
 
