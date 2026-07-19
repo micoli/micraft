@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 26
           cache: npm
           cache-dependency-path: app/webApp/ts-src/package-lock.json
       - run: npm ci
@@ -21,7 +21,9 @@ jobs:
       - run: echo "export const MC_BUILD_TIMESTAMP = '20260718-12.22.06';" > app/webApp/ts-src/buildConfig.ts
       - run: npm run typecheck
         working-directory: app/webApp/ts-src
-      - run: npm run eslint
+      - run: npm run lint
+        working-directory: app/webApp/ts-src
+      - run: npx playwright install chromium --with-deps
         working-directory: app/webApp/ts-src
       - run: npm run test-storybook:ci
         working-directory: app/webApp/ts-src
