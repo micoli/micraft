@@ -79,10 +79,10 @@ sealed class ClientMessage {
         val animatedFavicon: Boolean = false,
         val chunkDebugVisible: Boolean = false,
         val statisticsVisible: Boolean = false,
+        val attackPanelVisible: Boolean = false,
         val macros: Map<String, String> = emptyMap(),
         val fieldOfView: Int = 70,
         val dynamicFogEnabled: Boolean = true,
-        val attackPanelVisible: Boolean = true,
     ) : ClientMessage()
 
     @ProtoId(13) @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()

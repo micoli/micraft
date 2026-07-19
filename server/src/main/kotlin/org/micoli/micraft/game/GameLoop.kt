@@ -980,6 +980,7 @@ class GameLoop(
                 animatedFavicon = saved?.animatedFavicon ?: true,
                 chunkDebugVisible = saved?.chunkDebugVisible ?: false,
                 statisticsVisible = saved?.statisticsVisible ?: false,
+                attackPanelVisible = saved?.attackPanelVisible ?: false,
                 fieldOfView = saved?.fieldOfView ?: 70,
                 dynamicFogEnabled = saved?.dynamicFogEnabled ?: true,
                 knownRecipes = saved?.knownRecipes ?: emptySet(),

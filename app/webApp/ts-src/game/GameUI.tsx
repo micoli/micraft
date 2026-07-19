@@ -427,7 +427,7 @@ export function GameUI() {
           animatedFavicon: prefs.animatedFavicon ?? true,
           chunkDebugVisible: prefs.chunkDebugVisible ?? false,
           statisticsVisible: newVisible,
-          attackPanelVisible: prefs.attackPanelVisible ?? true,
+          attackPanelVisible: prefs.attackPanelVisible ?? false,
           keybindings: prefs.keybindings || {},
           customCommands: prefs.customCommands || {},
           macros: prefs.macros || {},
@@ -439,7 +439,7 @@ export function GameUI() {
       dispatch("attack_panel_toggle");
       const prefs = preferencesRef.current;
       if (prefs) {
-        const newVisible = !(prefs.attackPanelVisible ?? true);
+        const newVisible = !(prefs.attackPanelVisible ?? false);
         pendingPreferencesUpdateRef.current = JSON.stringify({
           subscribedChannels: prefs.subscribedChannels,
           disabledCommands: prefs.disabledCommands,

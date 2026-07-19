@@ -9,6 +9,7 @@ export interface SavePayload {
   animatedFavicon: boolean;
   chunkDebugVisible: boolean;
   statisticsVisible: boolean;
+  attackPanelVisible: boolean;
   keybindings: Record<string, string[]>;
   customCommands: Record<string, string[]>;
   fieldOfView: number;
@@ -98,6 +99,7 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
   const [localAnimatedFavicon, setLocalAnimatedFavicon] = useState(true);
   const [localChunkDebugVisible, setLocalChunkDebugVisible] = useState(false);
   const [localStatisticsVisible, setLocalStatisticsVisible] = useState(false);
+  const [localAttackPanelVisible, setLocalAttackPanelVisible] = useState(false);
   const [localFov, setLocalFov] = useState(70);
   const [localBindings, setLocalBindings] = useState<Record<string, string[]>>({});
   const [localCustomCmds, setLocalCustomCmds] = useState<CustomCmdEntry[]>([]);
@@ -122,6 +124,7 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
       setLocalAnimatedFavicon(preferences.animatedFavicon ?? true);
       setLocalChunkDebugVisible(preferences.chunkDebugVisible ?? false);
       setLocalStatisticsVisible(preferences.statisticsVisible ?? false);
+      setLocalAttackPanelVisible(preferences.attackPanelVisible ?? false);
       setLocalFov(preferences.fieldOfView ?? 70);
       setLocalBindings(preferences.keybindings ? { ...preferences.keybindings } : {});
       setLocalCustomCmds(Object.entries(preferences.customCommands || {}).map(([text, keys]) => ({ text, keys })));
@@ -275,6 +278,7 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
       animatedFavicon: localAnimatedFavicon,
       chunkDebugVisible: localChunkDebugVisible,
       statisticsVisible: localStatisticsVisible,
+      attackPanelVisible: localAttackPanelVisible,
       keybindings: localBindings,
       customCommands,
       fieldOfView: localFov,
@@ -303,6 +307,8 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
     setLocalChunkDebugVisible,
     localStatisticsVisible,
     setLocalStatisticsVisible,
+    localAttackPanelVisible,
+    setLocalAttackPanelVisible,
     localFov,
     setLocalFov,
     localBindings,

@@ -77,6 +77,7 @@ export function GameScreen() {
     animatedFavicon: boolean;
     chunkDebugVisible: boolean;
     statisticsVisible: boolean;
+    attackPanelVisible: boolean;
     keybindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
     fieldOfView?: number;
@@ -88,7 +89,7 @@ export function GameScreen() {
         fieldOfView: payload.fieldOfView ?? state.preferences?.fieldOfView ?? 70,
         macros: state.preferences?.macros ?? {},
         macroIcons: state.preferences?.macroIcons,
-        attackPanelVisible: state.preferences?.attackPanelVisible ?? true,
+        attackPanelVisible: payload.attackPanelVisible,
       },
     });
     if (window.mcState) {
@@ -99,7 +100,6 @@ export function GameScreen() {
     window.mc.applyFaviconPref?.(payload.animatedFavicon);
     pendingPreferencesUpdateRef.current = JSON.stringify({
       ...payload,
-      attackPanelVisible: state.preferences?.attackPanelVisible ?? true,
     });
   };
 
@@ -119,7 +119,7 @@ export function GameScreen() {
         animatedFavicon: prefs.animatedFavicon ?? true,
         chunkDebugVisible: prefs.chunkDebugVisible ?? false,
         statisticsVisible: prefs.statisticsVisible ?? false,
-        attackPanelVisible: prefs.attackPanelVisible ?? true,
+        attackPanelVisible: prefs.attackPanelVisible ?? false,
         keybindings: prefs.keybindings || {},
         customCommands,
         macros,
@@ -131,6 +131,7 @@ export function GameScreen() {
       window.mcState.macros = macros;
       window.mcState.customCommands = customCommands;
     }
+
     pendingPreferencesUpdateRef.current = JSON.stringify({
       subscribedChannels: prefs.subscribedChannels,
       disabledCommands: prefs.disabledCommands,
@@ -139,6 +140,7 @@ export function GameScreen() {
       animatedFavicon: prefs.animatedFavicon ?? true,
       chunkDebugVisible: prefs.chunkDebugVisible ?? false,
       statisticsVisible: prefs.statisticsVisible ?? false,
+      attackPanelVisible: prefs.attackPanelVisible ?? false,
       keybindings: prefs.keybindings || {},
       customCommands,
       macros,
@@ -235,7 +237,7 @@ export function GameScreen() {
             layoutStyle={widgetStyle(activeLayout, "SHORTCUT_BAR")}
             playerStatus={state.playerStatus ?? undefined}
           />
-          {(state.preferences?.attackPanelVisible ?? true) && (
+          {(state.preferences?.attackPanelVisible ?? false) && (
             <AttackPanel
               attackMeta={filteredAttackMeta}
               spellMeta={state.spellMeta}

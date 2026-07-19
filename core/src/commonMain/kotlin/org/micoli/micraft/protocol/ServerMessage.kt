@@ -170,11 +170,11 @@ sealed class ServerMessage {
         val animatedFavicon: Boolean = true,
         val chunkDebugVisible: Boolean = false,
         val statisticsVisible: Boolean = false,
+        val attackPanelVisible: Boolean = false,
         val macros: Map<String, String> = emptyMap(),
         val fieldOfView: Int = 70,
         val defaultKeybindings: Map<String, List<String>> = emptyMap(),
         val dynamicFogEnabled: Boolean = true,
-        val attackPanelVisible: Boolean = true,
     ) : ServerMessage()
 
     @ProtoId(25)
