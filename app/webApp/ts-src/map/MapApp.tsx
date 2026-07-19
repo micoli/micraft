@@ -1,11 +1,12 @@
 import { useRef } from "react";
 import { Button } from "../primitives/Button";
+import { MapSvgRenderer } from "./MapSvgRenderer";
 import { Sidebar } from "./Sidebar";
 import { useMapRenderer } from "./useMapRenderer";
 
 export function MapApp() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const renderer = useMapRenderer(canvasRef);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const renderer = useMapRenderer(svgRef);
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#1a1a1a] text-[#eee] font-mono">
@@ -20,7 +21,7 @@ export function MapApp() {
       />
 
       <div className="flex-1 relative overflow-hidden">
-        <canvas ref={canvasRef} className="block" style={{ cursor: renderer.dragging ? "grabbing" : "grab" }} />
+        <MapSvgRenderer renderer={renderer} svgRef={svgRef} />
 
         <div className="absolute top-2.5 right-2.5 flex flex-col gap-1 z-10">
           <Button

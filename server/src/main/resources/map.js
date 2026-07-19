@@ -25098,7 +25098,7 @@
   });
   Button.displayName = "Button";
 
-  // map/Sidebar.tsx
+  // map/useMapRenderer.ts
   var import_react2 = __toESM(require_react(), 1);
 
   // map/types.ts
@@ -25116,143 +25116,7 @@
     "staircases"
   ];
 
-  // map/Sidebar.tsx
-  var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
-  var LAYER_LABELS = {
-    voronoi: "Biome borders",
-    "voronoi-names": "Zone names",
-    contours: "Contour lines",
-    vegetation: "Vegetation",
-    houses: "Houses",
-    players: "Players",
-    npcs: "NPCs",
-    "precise-roads": "Precise roads",
-    chunks: "Chunks",
-    weather: "Weather zones",
-    staircases: "Staircases"
-  };
-  function Sidebar({ time, apiState, layers, followTarget, onLayerToggle, onSetFollow, onFitAll }) {
-    const [query, setQuery] = (0, import_react2.useState)("");
-    const q = query.trim().toLowerCase();
-    const visPlayers = q ? apiState.players.filter((p) => p.name.toLowerCase().includes(q)) : apiState.players;
-    const visNpcs = q ? apiState.npcs.filter((n) => (n.name + " " + n.type).toLowerCase().includes(q)) : apiState.npcs;
-    return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "w-[220px] min-w-[220px] bg-[#111] p-3 overflow-y-auto border-r border-[#333] flex flex-col gap-0 font-mono", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "text-xs text-[#ccc] mb-2.5 pb-2 border-b border-[#333]", children: [
-        "\u23F0 ",
-        time
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("h2", { className: "text-[11px] text-[#aaa] uppercase tracking-widest mb-2 font-normal", children: "Layers" }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "flex flex-col gap-1 mb-2.5 pb-2.5 border-b border-[#333]", children: LAYER_KEYS.map((key) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
-        "label",
-        {
-          className: "text-[11px] text-[#bbb] flex items-center gap-1.5 cursor-pointer select-none hover:text-[#eee]",
-          children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
-              "input",
-              {
-                type: "checkbox",
-                checked: layers[key],
-                onChange: (e) => onLayerToggle(key, e.target.checked),
-                className: "accent-[#6af] w-3 h-3 cursor-pointer"
-              }
-            ),
-            LAYER_LABELS[key]
-          ]
-        },
-        key
-      )) }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
-        "input",
-        {
-          type: "search",
-          placeholder: "Search players / NPCs\u2026",
-          value: query,
-          onChange: (e) => setQuery(e.target.value),
-          className: "w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1 text-[11px] text-[#ccc] placeholder-[#555] outline-none focus:border-[#6af] mb-2"
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("h3", { className: "text-[10px] text-[#888] uppercase tracking-wider mt-1 mb-1 font-normal", children: [
-        "Players",
-        q && apiState.players.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "text-[#555]", children: [
-          " ",
-          visPlayers.length,
-          "/",
-          apiState.players.length
-        ] })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "flex flex-col", children: visPlayers.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[11px] text-[#555]", children: q ? "no match" : "none" }) : visPlayers.map((p) => {
-        const tracked = (followTarget == null ? void 0 : followTarget.type) === "player" && followTarget.id === p.id;
-        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
-          "div",
-          {
-            onClick: () => onSetFollow("player", p.id),
-            className: cn(
-              "text-[11px] py-1.5 px-1.5 border-b border-[#222] cursor-pointer rounded-sm border-l-2 select-none hover:bg-white/5 transition-colors",
-              tracked ? "bg-[#0d2040] border-l-[#6af]" : "border-l-transparent"
-            ),
-            children: [
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[#6af] font-bold", children: p.name }),
-              tracked && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[9px] text-[#6af] align-middle", children: " \u25CF follow" }),
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("br", {}),
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "text-[10px] text-[#777]", children: [
-                Math.round(p.x),
-                " ",
-                Math.round(p.y),
-                " ",
-                Math.round(p.z)
-              ] })
-            ]
-          },
-          p.id
-        );
-      }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("h3", { className: "text-[10px] text-[#888] uppercase tracking-wider mt-2.5 mb-1 font-normal", children: [
-        "NPCs",
-        q && apiState.npcs.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "text-[#555]", children: [
-          " ",
-          visNpcs.length,
-          "/",
-          apiState.npcs.length
-        ] })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "flex flex-col", children: visNpcs.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[11px] text-[#555]", children: q ? "no match" : "none" }) : visNpcs.map((n) => {
-        const tracked = (followTarget == null ? void 0 : followTarget.type) === "npc" && followTarget.id === n.id;
-        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
-          "div",
-          {
-            onClick: () => onSetFollow("npc", n.id),
-            className: cn(
-              "text-[11px] py-1.5 px-1.5 border-b border-[#222] cursor-pointer rounded-sm border-l-2 select-none hover:bg-white/5 transition-colors",
-              tracked ? "bg-[#0d2040] border-l-[#fa6]" : "border-l-transparent"
-            ),
-            children: [
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[#fa6] font-bold", children: n.name }),
-              " ",
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "text-[#888]", children: [
-                "(",
-                n.type,
-                ")"
-              ] }),
-              tracked && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[9px] text-[#fa6] align-middle", children: " \u25CF follow" }),
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("br", {}),
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "text-[10px] text-[#777]", children: [
-                Math.round(n.x),
-                " ",
-                Math.round(n.y),
-                " ",
-                Math.round(n.z)
-              ] })
-            ]
-          },
-          n.id
-        );
-      }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "mt-auto pt-3 border-t border-[#333]", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Button, { variant: "outline", size: "sm", onClick: onFitAll, className: "w-full font-mono text-[11px]", children: "\u22A1 Fit All" }) })
-    ] });
-  }
-
   // map/useMapRenderer.ts
-  var import_react3 = __toESM(require_react(), 1);
   var LAYERS_STORAGE_KEY = "micraft-map-layers";
   var VEGETATION_TINT = {
     forest: "rgba(30,120,30,0.28)",
@@ -25291,396 +25155,119 @@
     const m = Math.floor(t % 3e3 / 50);
     return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
   }
-  function drawContours(terrainData, ctx, worldToCanvas) {
+  function computeBiomeBorderPath(segs) {
+    return segs.map((s) => `M${s.x1} ${s.z1}L${s.x2} ${s.z2}`).join("");
+  }
+  function computeTerrainPaths(data) {
+    var _a;
+    const byColor = /* @__PURE__ */ new Map();
+    for (const chunk of data) {
+      for (let lx = 0; lx < 16; lx++) {
+        for (let lz = 0; lz < 16; lz++) {
+          const color = chunk.colors[lx * 16 + lz];
+          if (!color) continue;
+          const wx = chunk.cx * 16 + lx;
+          const wz = chunk.cz * 16 + lz;
+          byColor.set(color, ((_a = byColor.get(color)) != null ? _a : "") + `M${wx} ${wz}h1v1h-1z`);
+        }
+      }
+    }
+    return Array.from(byColor.entries()).map(([color, d]) => ({ color, d }));
+  }
+  function computeContourPath(data) {
     const heightMap = {};
-    for (const c of terrainData.current) {
+    for (const c of data) {
       if (c.avgHeight != null) heightMap[`${c.cx},${c.cz}`] = c.avgHeight;
     }
-    ctx.strokeStyle = "rgba(220,220,220,0.45)";
-    ctx.lineWidth = 0.6;
-    for (const chunk of terrainData.current) {
+    let d = "";
+    for (const chunk of data) {
       if (chunk.avgHeight == null) continue;
       const hBand = Math.floor(chunk.avgHeight / 10);
       const rh = heightMap[`${chunk.cx + 1},${chunk.cz}`];
       if (rh != null && Math.floor(rh / 10) !== hBand) {
-        const [ax, az] = worldToCanvas((chunk.cx + 1) * 16, chunk.cz * 16);
-        const [bx, bz] = worldToCanvas((chunk.cx + 1) * 16, (chunk.cz + 1) * 16);
-        ctx.beginPath();
-        ctx.moveTo(ax, az);
-        ctx.lineTo(bx, bz);
-        ctx.stroke();
+        d += `M${(chunk.cx + 1) * 16} ${chunk.cz * 16}L${(chunk.cx + 1) * 16} ${(chunk.cz + 1) * 16}`;
       }
       const bh = heightMap[`${chunk.cx},${chunk.cz + 1}`];
       if (bh != null && Math.floor(bh / 10) !== hBand) {
-        const [ax, az] = worldToCanvas(chunk.cx * 16, (chunk.cz + 1) * 16);
-        const [bx, bz] = worldToCanvas((chunk.cx + 1) * 16, (chunk.cz + 1) * 16);
-        ctx.beginPath();
-        ctx.moveTo(ax, az);
-        ctx.lineTo(bx, bz);
-        ctx.stroke();
+        d += `M${chunk.cx * 16} ${(chunk.cz + 1) * 16}L${(chunk.cx + 1) * 16} ${(chunk.cz + 1) * 16}`;
       }
     }
+    return d;
   }
-  function drawPreciseRoads(roadImgRadius, worldToCanvas, roadImgCx, roadImgCz, cam, ctx, roadImg) {
-    if (roadImg.current === null) return;
-    const r2 = roadImgRadius.current;
-    const [tx, tz] = worldToCanvas(roadImgCx.current - r2, roadImgCz.current + r2);
-    const px = 2 * r2 * cam.pxPerBlock;
-    ctx.drawImage(roadImg.current, tx, tz, px, px);
-  }
-  function drawHouses(cam, housesData, worldToCanvas, ctx) {
-    const ppb = cam.pxPerBlock;
-    for (const h of housesData.current) {
-      const [ax, az] = worldToCanvas(h.x, h.z);
-      const w = h.width * ppb, d = h.depth * ppb;
-      ctx.fillStyle = "rgba(255,200,100,0.32)";
-      ctx.fillRect(ax, az - d, w, d);
-      ctx.strokeStyle = "#c80";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(ax, az - d, w, d);
-    }
-  }
-  function drawVoronoi(biomeDirty, renderBiomeBorders, ctx, bc, voronoiCells, cam, worldToCanvas, W, H, showBorders, showNames) {
-    if (biomeDirty.current) {
-      renderBiomeBorders();
-      biomeDirty.current = false;
-    }
-    if (showBorders) ctx.drawImage(bc, 0, 0);
-    if (showNames && voronoiCells.current.length) {
-      const nameFontSize = Math.max(9, Math.min(15, cam.pxPerBlock * 80));
-      const biomeFontSize = Math.max(7, Math.min(10, cam.pxPerBlock * 55));
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      for (const cell of voronoiCells.current) {
-        const [px, pz] = worldToCanvas(cell.x, cell.z);
-        if (px < -100 || px > W + 100 || pz < -100 || pz > H + 100) continue;
-        ctx.font = "bold " + Math.round(nameFontSize) + "px serif";
-        ctx.fillStyle = "rgba(0,0,0,0.7)";
-        ctx.fillText(cell.name, px + 1, pz + 1);
-        ctx.fillStyle = "#fff";
-        ctx.fillText(cell.name, px, pz);
-        ctx.font = Math.round(biomeFontSize) + "px monospace";
-        ctx.fillStyle = "rgba(0,0,0,0.55)";
-        ctx.fillText(cell.biome, px + 1, pz + nameFontSize + 2);
-        ctx.fillStyle = "rgba(200,220,255,0.85)";
-        ctx.fillText(cell.biome, px, pz + nameFontSize + 1);
-        ctx.font = Math.round(biomeFontSize) + "px monospace";
-        ctx.fillStyle = "rgba(0,0,0,0.55)";
-        ctx.fillText("Lv " + cell.level, px + 1, pz + nameFontSize * 2 + 3);
-        ctx.fillStyle = "rgba(255,210,80,0.9)";
-        ctx.fillText("Lv " + cell.level, px, pz + nameFontSize * 2 + 2);
-      }
-      ctx.textAlign = "left";
-      ctx.textBaseline = "alphabetic";
-    }
-  }
-  function drawVegetation(voronoiCells, cam, worldToCanvas, ctx) {
-    const cells = voronoiCells.current;
-    const estR = Math.sqrt(3200 * 3200 / cells.length) * 0.65 * cam.pxPerBlock;
-    for (const cell of cells) {
-      const tint = VEGETATION_TINT[cell.biome];
-      if (!tint) continue;
-      const [px, pz] = worldToCanvas(cell.x, cell.z);
-      ctx.fillStyle = tint;
-      ctx.beginPath();
-      ctx.arc(px, pz, estR, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-  function drawGrids(canvasToWorld, W, H, cam, ctx, worldToCanvas) {
-    const [worldLeft, worldTop] = canvasToWorld(0, 0);
-    const [worldRight, worldBottom] = canvasToWorld(W, H);
-    const gridStep = Math.pow(10, Math.ceil(Math.log10(80 / cam.pxPerBlock)));
-    ctx.strokeStyle = "rgba(255,255,255,0.06)";
-    ctx.lineWidth = 0.5;
-    ctx.fillStyle = "rgba(255,255,255,0.28)";
-    ctx.font = "9px monospace";
-    for (let gx = Math.ceil(worldLeft / gridStep) * gridStep; gx <= worldRight; gx += gridStep) {
-      const cx2 = worldToCanvas(gx, 0)[0];
-      ctx.beginPath();
-      ctx.moveTo(cx2, 0);
-      ctx.lineTo(cx2, H);
-      ctx.stroke();
-      ctx.fillText(String(Math.round(gx)), cx2 + 2, 10);
-    }
-    for (let gz = Math.ceil(worldTop / gridStep) * gridStep; gz <= worldBottom; gz += gridStep) {
-      const cz = worldToCanvas(0, gz)[1];
-      ctx.beginPath();
-      ctx.moveTo(0, cz);
-      ctx.lineTo(W, cz);
-      ctx.stroke();
-      ctx.fillText(String(Math.round(gz)), 2, cz - 2);
-    }
-  }
-  function drawWeathers(state, worldToCanvas, cam, ctx) {
-    var _a, _b, _c;
-    for (const z of (_a = state.weatherZones) != null ? _a : []) {
-      const [wx, wz] = worldToCanvas(z.cx, z.cz);
-      const rPx = z.radius * cam.pxPerBlock;
-      ctx.beginPath();
-      ctx.arc(wx, wz, rPx, 0, Math.PI * 2);
-      ctx.fillStyle = (_b = WEATHER_FILL[z.type]) != null ? _b : "rgba(128,128,128,0.15)";
-      ctx.fill();
-      ctx.strokeStyle = (_c = WEATHER_STROKE[z.type]) != null ? _c : "rgba(128,128,128,0.5)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.fillStyle = "#ccc";
-      ctx.font = "10px monospace";
-      ctx.fillText(z.type, wx - 12, wz + 3);
-    }
-  }
-  function drawNPCs(state, worldToCanvas, ft, ctx) {
-    for (const n of state.npcs) {
-      const [nx, nz] = worldToCanvas(n.x, n.z);
-      if ((ft == null ? void 0 : ft.type) === "npc" && ft.id === n.id) {
-        ctx.strokeStyle = "#ffcc44";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(nx - 8, nz - 8, 16, 16);
-      }
-      ctx.fillStyle = "#fa6";
-      ctx.beginPath();
-      ctx.arc(nx, nz, 5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#fa6";
-      ctx.font = "10px monospace";
-      ctx.fillText(n.type, nx + 7, nz + 4);
-    }
-  }
-  function drawStaircases(staircases, worldToCanvas, cam, ctx) {
-    const r2 = Math.max(4, Math.min(10, cam.pxPerBlock * 3));
-    for (const s of staircases) {
-      const [sx, sz] = worldToCanvas(s.x, s.z);
-      ctx.beginPath();
-      ctx.arc(sx, sz, r2, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(160,80,220,0.35)";
-      ctx.fill();
-      ctx.strokeStyle = "#b060e0";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      if (cam.pxPerBlock >= 0.5) {
-        ctx.fillStyle = "#d090f0";
-        ctx.font = "9px monospace";
-        ctx.fillText("\u2191", sx - 3, sz + 3);
-      }
-      if (cam.pxPerBlock >= 1.5) {
-        ctx.font = "9px serif";
-        ctx.textAlign = "center";
-        ctx.fillStyle = "rgba(0,0,0,0.6)";
-        ctx.fillText(s.name, sx + 1, sz - r2 - 4);
-        ctx.fillStyle = "#e0b0ff";
-        ctx.fillText(s.name, sx, sz - r2 - 5);
-        ctx.textAlign = "left";
-      }
-    }
-  }
-  function drawPlayers(state, worldToCanvas, ft, ctx) {
-    for (const p of state.players) {
-      const [px, pz] = worldToCanvas(p.x, p.z);
-      const yawRad = p.yaw;
-      if ((ft == null ? void 0 : ft.type) === "player" && ft.id === p.id) {
-        ctx.strokeStyle = "#44aaff";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(px - 10, pz - 10, 20, 20);
-      }
-      ctx.save();
-      ctx.translate(px, pz);
-      const adx = Math.sin(yawRad);
-      const ady = -Math.cos(yawRad);
-      const perpX = -ady;
-      const perpY = adx;
-      const arrowLen = 10;
-      const arrowWidth = 5;
-      const tipX = adx * arrowLen;
-      const tipY = ady * arrowLen;
-      const b1x = -adx * arrowLen * 0.4 + perpX * arrowWidth;
-      const b1y = -ady * arrowLen * 0.4 + perpY * arrowWidth;
-      const b2x = -adx * arrowLen * 0.4 - perpX * arrowWidth;
-      const b2y = -ady * arrowLen * 0.4 - perpY * arrowWidth;
-      ctx.fillStyle = "#6af";
-      ctx.beginPath();
-      ctx.moveTo(tipX, tipY);
-      ctx.lineTo(b1x, b1y);
-      ctx.lineTo(b2x, b2y);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = "#003366";
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-      ctx.restore();
-      ctx.fillStyle = "#8cf";
-      ctx.font = "bold 11px monospace";
-      ctx.fillText(p.name, px + 9, pz + 4);
-    }
-  }
-  function useMapRenderer(canvasRef) {
-    const [layers, setLayers] = (0, import_react3.useState)(loadLayerState);
-    const [apiState, setApiState] = (0, import_react3.useState)({
+  function useMapRenderer(svgRef) {
+    const [layers, setLayers] = (0, import_react2.useState)(loadLayerState);
+    const [apiState, setApiState] = (0, import_react2.useState)({
       gameTicks: 0,
       players: [],
       npcs: [],
       weatherZones: []
     });
-    const [followTarget, setFollowTarget] = (0, import_react3.useState)(null);
-    const [coords, setCoords] = (0, import_react3.useState)("x: \u2014 z: \u2014");
-    const [status, setStatus] = (0, import_react3.useState)("connecting...");
-    const [dragging, setDragging] = (0, import_react3.useState)(false);
-    const layersRef = (0, import_react3.useRef)(layers);
-    (0, import_react3.useLayoutEffect)(() => {
-      layersRef.current = layers;
-    });
-    (0, import_react3.useEffect)(() => {
+    const [followTarget, setFollowTarget] = (0, import_react2.useState)(null);
+    const [coords, setCoords] = (0, import_react2.useState)("x: \u2014 z: \u2014");
+    const [status, setStatus] = (0, import_react2.useState)("connecting...");
+    const [dragging, setDragging] = (0, import_react2.useState)(false);
+    const [svgWidth, setSvgWidth] = (0, import_react2.useState)(0);
+    const [svgHeight, setSvgHeight] = (0, import_react2.useState)(0);
+    const [, setRenderKey] = (0, import_react2.useState)(0);
+    const [voronoiCells, setVoronoiCells] = (0, import_react2.useState)([]);
+    const [biomeBorderPath, setBiomeBorderPath] = (0, import_react2.useState)("");
+    const [contourPath, setContourPath] = (0, import_react2.useState)("");
+    const [staircases, setStaircases] = (0, import_react2.useState)([]);
+    const [houses, setHouses] = (0, import_react2.useState)([]);
+    const [roadImageUrl, setRoadImageUrl] = (0, import_react2.useState)(null);
+    const [roadBounds, setRoadBounds] = (0, import_react2.useState)(null);
+    const [terrainPaths, setTerrainPaths] = (0, import_react2.useState)([]);
+    (0, import_react2.useEffect)(() => {
       localStorage.setItem(LAYERS_STORAGE_KEY, JSON.stringify(layers));
     }, [layers]);
-    const camera = (0, import_react3.useRef)({ x: 0, z: 0, pxPerBlock: 2 });
-    const terrainData = (0, import_react3.useRef)([]);
-    const voronoiCells = (0, import_react3.useRef)([]);
-    const housesData = (0, import_react3.useRef)([]);
-    const staircasesData = (0, import_react3.useRef)([]);
-    const staircasesFetched = (0, import_react3.useRef)(false);
-    const roadImg = (0, import_react3.useRef)(null);
-    const roadImgCx = (0, import_react3.useRef)(0);
-    const roadImgCz = (0, import_react3.useRef)(0);
-    const roadImgRadius = (0, import_react3.useRef)(0);
-    const biomeBorderData = (0, import_react3.useRef)([]);
-    const apiStateRef = (0, import_react3.useRef)({ gameTicks: 0, players: [], npcs: [], weatherZones: [] });
-    const followTargetRef = (0, import_react3.useRef)(null);
-    const autoFitDone = (0, import_react3.useRef)(false);
-    const housesFetchCenter = (0, import_react3.useRef)({ x: NaN, z: NaN });
-    const roadsFetchCenter = (0, import_react3.useRef)({ x: NaN, z: NaN });
-    const roadsFetching = (0, import_react3.useRef)(false);
-    const biomeFetchCenter = (0, import_react3.useRef)({ x: NaN, z: NaN });
-    const isDragging = (0, import_react3.useRef)(false);
-    const dragLast = (0, import_react3.useRef)({ x: 0, y: 0 });
-    const terrainDirty = (0, import_react3.useRef)(true);
-    const biomeDirty = (0, import_react3.useRef)(true);
-    const terrainCanvas = (0, import_react3.useRef)(document.createElement("canvas"));
-    const biomeCanvas = (0, import_react3.useRef)(document.createElement("canvas"));
-    const drawRef = (0, import_react3.useRef)(() => {
+    const camera = (0, import_react2.useRef)({ x: 0, z: 0, pxPerBlock: 2 });
+    const terrainData = (0, import_react2.useRef)([]);
+    const apiStateRef = (0, import_react2.useRef)({ gameTicks: 0, players: [], npcs: [], weatherZones: [] });
+    const followTargetRef = (0, import_react2.useRef)(null);
+    const autoFitDone = (0, import_react2.useRef)(false);
+    const housesFetchCenter = (0, import_react2.useRef)({ x: NaN, z: NaN });
+    const roadsFetchCenter = (0, import_react2.useRef)({ x: NaN, z: NaN });
+    const roadsFetching = (0, import_react2.useRef)(false);
+    const biomeFetchCenter = (0, import_react2.useRef)({ x: NaN, z: NaN });
+    const staircasesFetched = (0, import_react2.useRef)(false);
+    const isDragging = (0, import_react2.useRef)(false);
+    const dragLast = (0, import_react2.useRef)({ x: 0, y: 0 });
+    const rafPending = (0, import_react2.useRef)(false);
+    const roadObjUrl = (0, import_react2.useRef)(null);
+    const fitAllRef = (0, import_react2.useRef)(() => {
     });
-    const zoomAtRef = (0, import_react3.useRef)(() => {
+    const setFollowRef = (0, import_react2.useRef)(() => {
     });
-    const fitAllRef = (0, import_react3.useRef)(() => {
+    const zoomAtRef = (0, import_react2.useRef)(() => {
     });
-    const setFollowRef = (0, import_react3.useRef)(() => {
-    });
-    const rafPending = (0, import_react3.useRef)(false);
-    (0, import_react3.useEffect)(() => {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
-      const tc = terrainCanvas.current;
-      const bc = biomeCanvas.current;
-      function worldToCanvas(wx, wz) {
-        const cam = camera.current;
-        return [(wx - cam.x) * cam.pxPerBlock + canvas.width / 2, -(wz - cam.z) * cam.pxPerBlock + canvas.height / 2];
-      }
+    (0, import_react2.useEffect)(() => {
+      const svg = svgRef.current;
       function canvasToWorld(cx2, cz) {
         const cam = camera.current;
-        return [(cx2 - canvas.width / 2) / cam.pxPerBlock + cam.x, -(cz - canvas.height / 2) / cam.pxPerBlock + cam.z];
+        const W = svg.clientWidth, H = svg.clientHeight;
+        return [(cx2 - W / 2) / cam.pxPerBlock + cam.x, -(cz - H / 2) / cam.pxPerBlock + cam.z];
       }
-      function renderTerrain() {
-        const cam = camera.current;
-        const W = tc.width, H = tc.height;
-        const tCtx = tc.getContext("2d");
-        tCtx.clearRect(0, 0, W, H);
-        const ppb = cam.pxPerBlock;
-        tCtx.setTransform(ppb, 0, 0, -ppb, -cam.x * ppb + W / 2, cam.z * ppb + H / 2);
-        for (const chunk of terrainData.current) {
-          for (let lx = 0; lx < 16; lx++) {
-            for (let lz = 0; lz < 16; lz++) {
-              const color = chunk.colors[lx * 16 + lz];
-              if (!color) continue;
-              const wx = chunk.cx * 16 + lx;
-              const wz = chunk.cz * 16 + lz;
-              const cpx = (wx - cam.x) * ppb + W / 2;
-              const cpz = -(wz - cam.z) * ppb + H / 2;
-              if (cpx < -ppb || cpx > W + ppb || cpz < -ppb || cpz > H + ppb) continue;
-              tCtx.fillStyle = color;
-              tCtx.fillRect(wx, wz, 1, 1);
-            }
-          }
-        }
-        tCtx.resetTransform();
-      }
-      function renderBiomeBorders() {
-        const cam = camera.current;
-        const W = bc.width, H = bc.height;
-        const bCtx = bc.getContext("2d");
-        bCtx.clearRect(0, 0, W, H);
-        if (!biomeBorderData.current.length) return;
-        const ppb = cam.pxPerBlock;
-        bCtx.setTransform(ppb, 0, 0, -ppb, -cam.x * ppb + W / 2, cam.z * ppb + H / 2);
-        bCtx.strokeStyle = "rgba(128,0,0,0.85)";
-        bCtx.lineWidth = 1 / ppb;
-        bCtx.beginPath();
-        for (const seg of biomeBorderData.current) {
-          bCtx.moveTo(seg.x1, seg.z1);
-          bCtx.lineTo(seg.x2, seg.z2);
-        }
-        bCtx.stroke();
-        bCtx.resetTransform();
-      }
-      function draw() {
-        const W = canvas.width, H = canvas.height;
-        const cam = camera.current;
-        const L = layersRef.current;
-        const state = apiStateRef.current;
-        const ft = followTargetRef.current;
-        if (ft) {
-          const entity = ft.type === "player" ? state.players.find((p) => p.id === ft.id) : state.npcs.find((n) => n.id === ft.id);
-          if (entity && (entity.x !== cam.x || entity.z !== cam.z)) {
-            cam.x = entity.x;
-            cam.z = entity.z;
-            terrainDirty.current = true;
-            biomeDirty.current = true;
-          }
-        }
-        if (terrainDirty.current) {
-          renderTerrain();
-          terrainDirty.current = false;
-        }
-        ctx.fillStyle = "#111";
-        ctx.fillRect(0, 0, W, H);
-        if (L.chunks) ctx.drawImage(tc, 0, 0);
-        if (L.vegetation && voronoiCells.current.length) {
-          drawVegetation(voronoiCells, cam, worldToCanvas, ctx);
-        }
-        if (L.voronoi || L["voronoi-names"]) {
-          drawVoronoi(biomeDirty, renderBiomeBorders, ctx, bc, voronoiCells, cam, worldToCanvas, W, H, L.voronoi, L["voronoi-names"]);
-        }
-        if (L.contours && terrainData.current.length) {
-          drawContours(terrainData, ctx, worldToCanvas);
-        }
-        if (L["precise-roads"] && roadImg.current) {
-          drawPreciseRoads(roadImgRadius, worldToCanvas, roadImgCx, roadImgCz, cam, ctx, roadImg);
-        }
-        if (L.houses) {
-          drawHouses(cam, housesData, worldToCanvas, ctx);
-        }
-        drawGrids(canvasToWorld, W, H, cam, ctx, worldToCanvas);
-        if (L.weather) {
-          drawWeathers(state, worldToCanvas, cam, ctx);
-        }
-        if (L.npcs) {
-          drawNPCs(state, worldToCanvas, ft, ctx);
-        }
-        if (L.players) {
-          drawPlayers(state, worldToCanvas, ft, ctx);
-        }
-        if (L.staircases) {
-          drawStaircases(staircasesData.current, worldToCanvas, cam, ctx);
-        }
-      }
-      function scheduleDraw() {
+      function scheduleUpdate() {
         if (rafPending.current) return;
         rafPending.current = true;
         requestAnimationFrame(() => {
           rafPending.current = false;
-          draw();
+          const ft = followTargetRef.current;
+          if (ft) {
+            const state = apiStateRef.current;
+            const entity = ft.type === "player" ? state.players.find((p) => p.id === ft.id) : state.npcs.find((n) => n.id === ft.id);
+            if (entity) {
+              camera.current.x = entity.x;
+              camera.current.z = entity.z;
+            }
+          }
+          setRenderKey((k) => k + 1);
         });
       }
       function autoFitView() {
         const terrain = terrainData.current;
         const state = apiStateRef.current;
+        const W = svg.clientWidth, H = svg.clientHeight;
         let minX, maxX, minZ, maxZ;
         if (terrain.length > 0) {
           minX = Math.min(...terrain.map((c) => c.cx)) * 16;
@@ -25703,153 +25290,21 @@
         }
         camera.current.x = (minX + maxX) / 2;
         camera.current.z = (minZ + maxZ) / 2;
-        camera.current.pxPerBlock = Math.min(canvas.width / (maxX - minX + 40), canvas.height / (maxZ - minZ + 40));
-        terrainDirty.current = true;
-        biomeDirty.current = true;
+        camera.current.pxPerBlock = Math.min(W / (maxX - minX + 40), H / (maxZ - minZ + 40));
       }
-      function zoomAt(factor, mx, mz) {
+      zoomAtRef.current = (factor, mx, mz) => {
         const [wx, wz] = canvasToWorld(mx, mz);
+        const W = svg.clientWidth, H = svg.clientHeight;
         camera.current.pxPerBlock = Math.max(0.05, Math.min(64, camera.current.pxPerBlock * factor));
-        camera.current.x = wx - (mx - canvas.width / 2) / camera.current.pxPerBlock;
-        camera.current.z = wz + (mz - canvas.height / 2) / camera.current.pxPerBlock;
-        terrainDirty.current = true;
-        biomeDirty.current = true;
-        scheduleDraw();
-      }
-      function resize() {
-        const wrap = canvas.parentElement;
-        canvas.width = wrap.clientWidth;
-        canvas.height = wrap.clientHeight;
-        tc.width = canvas.width;
-        tc.height = canvas.height;
-        bc.width = canvas.width;
-        bc.height = canvas.height;
-        terrainDirty.current = true;
-        biomeDirty.current = true;
-        draw();
-      }
-      async function fetchStaircases() {
-        if (staircasesFetched.current) return;
-        staircasesFetched.current = true;
-        try {
-          const r2 = await fetch("/api/map/staircases");
-          if (r2.ok) {
-            staircasesData.current = await r2.json();
-            scheduleDraw();
-          }
-        } catch (e) {
-          staircasesFetched.current = false;
-        }
-      }
-      async function fetchHouses() {
-        const cx2 = Math.round(camera.current.x), cz = Math.round(camera.current.z);
-        const { x, z } = housesFetchCenter.current;
-        if (!isNaN(x) && Math.hypot(cx2 - x, cz - z) < 300) return;
-        housesFetchCenter.current = { x: cx2, z: cz };
-        try {
-          const r2 = await fetch(`/api/map/houses?cx=${cx2}&cz=${cz}&radius=1200`);
-          if (r2.ok) {
-            housesData.current = await r2.json();
-            scheduleDraw();
-          }
-        } catch (e) {
-        }
-      }
-      async function fetchPreciseRoads() {
-        if (roadsFetching.current) return;
-        const cx2 = Math.round(camera.current.x), cz = Math.round(camera.current.z);
-        const { x, z } = roadsFetchCenter.current;
-        if (!isNaN(x) && Math.hypot(cx2 - x, cz - z) < 300) return;
-        roadsFetchCenter.current = { x: cx2, z: cz };
-        const radius = 1200;
-        roadsFetching.current = true;
-        try {
-          const r2 = await fetch(`/api/map/road-raster.png?cx=${cx2}&cz=${cz}&radius=${radius}`);
-          if (r2.ok) {
-            const blob = await r2.blob();
-            const url = URL.createObjectURL(blob);
-            const img = new Image();
-            img.onload = () => {
-              var _a;
-              if ((_a = roadImg.current) == null ? void 0 : _a.src) URL.revokeObjectURL(roadImg.current.src);
-              roadImg.current = img;
-              roadImgCx.current = cx2;
-              roadImgCz.current = cz;
-              roadImgRadius.current = radius;
-              scheduleDraw();
-            };
-            img.src = url;
-          }
-        } catch (e) {
-        } finally {
-          roadsFetching.current = false;
-        }
-      }
-      async function fetchBiomeBorders() {
-        const cx2 = Math.round(camera.current.x), cz = Math.round(camera.current.z);
-        const { x, z } = biomeFetchCenter.current;
-        if (!isNaN(x) && Math.hypot(cx2 - x, cz - z) < 300) return;
-        biomeFetchCenter.current = { x: cx2, z: cz };
-        try {
-          const r2 = await fetch(`/api/map/voronoi-borders?cx=${cx2}&cz=${cz}&radius=2000`);
-          if (r2.ok) {
-            biomeBorderData.current = await r2.json();
-            biomeDirty.current = true;
-            scheduleDraw();
-          }
-        } catch (e) {
-        }
-      }
-      async function pollState() {
-        try {
-          const r2 = await fetch("/api/map/state");
-          if (r2.ok) {
-            const data = await r2.json();
-            apiStateRef.current = data;
-            setApiState(data);
-            scheduleDraw();
-            setStatus("updated " + (/* @__PURE__ */ new Date()).toLocaleTimeString());
-          }
-        } catch (e) {
-          setStatus("error: " + (e instanceof Error ? e.message : String(e)));
-        }
-      }
-      async function pollTerrain() {
-        try {
-          const r2 = await fetch("/api/map/terrain");
-          if (r2.ok) {
-            terrainData.current = await r2.json();
-            terrainDirty.current = true;
-            biomeDirty.current = true;
-            if (!autoFitDone.current && terrainData.current.length > 0) {
-              autoFitDone.current = true;
-              autoFitView();
-              fetchHouses();
-              fetchPreciseRoads();
-              fetchStaircases();
-            }
-            scheduleDraw();
-          }
-        } catch (e) {
-        }
-      }
-      async function fetchVoronoi() {
-        try {
-          const r2 = await fetch("/api/map/voronoi?cx=0&cz=0&radius=3200");
-          if (r2.ok) {
-            voronoiCells.current = await r2.json();
-            scheduleDraw();
-          }
-        } catch (e) {
-        }
-      }
-      drawRef.current = draw;
-      zoomAtRef.current = zoomAt;
+        camera.current.x = wx - (mx - W / 2) / camera.current.pxPerBlock;
+        camera.current.z = wz + (mz - H / 2) / camera.current.pxPerBlock;
+        scheduleUpdate();
+      };
       fitAllRef.current = () => {
         followTargetRef.current = null;
         setFollowTarget(null);
         autoFitView();
-        scheduleDraw();
+        scheduleUpdate();
       };
       setFollowRef.current = (type, id) => {
         const current = followTargetRef.current;
@@ -25865,11 +25320,9 @@
           if (entity) {
             camera.current.x = entity.x;
             camera.current.z = entity.z;
-            terrainDirty.current = true;
-            biomeDirty.current = true;
           }
         }
-        scheduleDraw();
+        scheduleUpdate();
       };
       const onWheel = (e) => {
         e.preventDefault();
@@ -25877,8 +25330,8 @@
           followTargetRef.current = null;
           setFollowTarget(null);
         }
-        const rect = canvas.getBoundingClientRect();
-        zoomAt(e.deltaY < 0 ? 1.25 : 0.8, e.clientX - rect.left, e.clientY - rect.top);
+        const rect = svg.getBoundingClientRect();
+        zoomAtRef.current(e.deltaY < 0 ? 1.25 : 0.8, e.clientX - rect.left, e.clientY - rect.top);
       };
       const onMouseDown = (e) => {
         if (e.button !== 0) return;
@@ -25897,11 +25350,9 @@
           camera.current.x -= dx / camera.current.pxPerBlock;
           camera.current.z += dy / camera.current.pxPerBlock;
           dragLast.current = { x: e.clientX, y: e.clientY };
-          terrainDirty.current = true;
-          biomeDirty.current = true;
-          scheduleDraw();
+          scheduleUpdate();
         }
-        const rect = canvas.getBoundingClientRect();
+        const rect = svg.getBoundingClientRect();
         const [wx, wz] = canvasToWorld(e.clientX - rect.left, e.clientY - rect.top);
         setCoords(`x:${Math.round(wx)}  z:${Math.round(wz)}`);
       };
@@ -25909,12 +25360,115 @@
         isDragging.current = false;
         setDragging(false);
       };
-      canvas.addEventListener("wheel", onWheel, { passive: false });
-      canvas.addEventListener("mousedown", onMouseDown);
+      async function pollState() {
+        try {
+          const r2 = await fetch("/api/map/state");
+          if (r2.ok) {
+            const data = await r2.json();
+            apiStateRef.current = data;
+            setApiState(data);
+            scheduleUpdate();
+            setStatus("updated " + (/* @__PURE__ */ new Date()).toLocaleTimeString());
+          }
+        } catch (e) {
+          setStatus("error: " + (e instanceof Error ? e.message : String(e)));
+        }
+      }
+      async function pollTerrain() {
+        try {
+          const r2 = await fetch("/api/map/terrain");
+          if (r2.ok) {
+            terrainData.current = await r2.json();
+            setContourPath(computeContourPath(terrainData.current));
+            if (!autoFitDone.current && terrainData.current.length > 0) {
+              autoFitDone.current = true;
+              autoFitView();
+              fetchHouses();
+              fetchPreciseRoads();
+              fetchStaircases();
+            }
+            setTerrainPaths(computeTerrainPaths(terrainData.current));
+          }
+        } catch (e) {
+        }
+      }
+      async function fetchVoronoi() {
+        try {
+          const r2 = await fetch("/api/map/voronoi?cx=0&cz=0&radius=3200");
+          if (r2.ok) setVoronoiCells(await r2.json());
+        } catch (e) {
+        }
+      }
+      async function fetchBiomeBorders() {
+        const cx2 = Math.round(camera.current.x), cz = Math.round(camera.current.z);
+        const { x, z } = biomeFetchCenter.current;
+        if (!isNaN(x) && Math.hypot(cx2 - x, cz - z) < 300) return;
+        biomeFetchCenter.current = { x: cx2, z: cz };
+        try {
+          const r2 = await fetch(`/api/map/voronoi-borders?cx=${cx2}&cz=${cz}&radius=2000`);
+          if (r2.ok) setBiomeBorderPath(computeBiomeBorderPath(await r2.json()));
+        } catch (e) {
+        }
+      }
+      async function fetchHouses() {
+        const cx2 = Math.round(camera.current.x), cz = Math.round(camera.current.z);
+        const { x, z } = housesFetchCenter.current;
+        if (!isNaN(x) && Math.hypot(cx2 - x, cz - z) < 300) return;
+        housesFetchCenter.current = { x: cx2, z: cz };
+        try {
+          const r2 = await fetch(`/api/map/houses?cx=${cx2}&cz=${cz}&radius=1200`);
+          if (r2.ok) setHouses(await r2.json());
+        } catch (e) {
+        }
+      }
+      async function fetchPreciseRoads() {
+        if (roadsFetching.current) return;
+        const cx2 = Math.round(camera.current.x), cz = Math.round(camera.current.z);
+        const { x, z } = roadsFetchCenter.current;
+        if (!isNaN(x) && Math.hypot(cx2 - x, cz - z) < 300) return;
+        roadsFetchCenter.current = { x: cx2, z: cz };
+        const radius = 1200;
+        roadsFetching.current = true;
+        try {
+          const r2 = await fetch(`/api/map/road-raster.png?cx=${cx2}&cz=${cz}&radius=${radius}`);
+          if (r2.ok) {
+            const blob = await r2.blob();
+            const url = URL.createObjectURL(blob);
+            if (roadObjUrl.current) URL.revokeObjectURL(roadObjUrl.current);
+            roadObjUrl.current = url;
+            setRoadImageUrl(url);
+            setRoadBounds({ cx: cx2, cz, radius });
+          }
+        } catch (e) {
+        } finally {
+          roadsFetching.current = false;
+        }
+      }
+      async function fetchStaircases() {
+        if (staircasesFetched.current) return;
+        staircasesFetched.current = true;
+        try {
+          const r2 = await fetch("/api/map/staircases");
+          if (r2.ok) setStaircases(await r2.json());
+        } catch (e) {
+          staircasesFetched.current = false;
+        }
+      }
+      const ro = new ResizeObserver((entries) => {
+        const { width, height } = entries[0].contentRect;
+        setSvgWidth(width);
+        setSvgHeight(height);
+        scheduleUpdate();
+      });
+      const container = svg.parentElement;
+      ro.observe(container);
+      const initW = container.clientWidth, initH = container.clientHeight;
+      setSvgWidth(initW);
+      setSvgHeight(initH);
+      svg.addEventListener("wheel", onWheel, { passive: false });
+      svg.addEventListener("mousedown", onMouseDown);
       window.addEventListener("mousemove", onMouseMove);
       window.addEventListener("mouseup", onMouseUp);
-      window.addEventListener("resize", resize);
-      resize();
       pollState();
       pollTerrain();
       fetchVoronoi();
@@ -25928,34 +25482,32 @@
         setInterval(fetchStaircases, 3e4)
       ];
       return () => {
-        canvas.removeEventListener("wheel", onWheel);
-        canvas.removeEventListener("mousedown", onMouseDown);
+        svg.removeEventListener("wheel", onWheel);
+        svg.removeEventListener("mousedown", onMouseDown);
         window.removeEventListener("mousemove", onMouseMove);
         window.removeEventListener("mouseup", onMouseUp);
-        window.removeEventListener("resize", resize);
+        ro.disconnect();
         intervals.forEach(clearInterval);
+        if (roadObjUrl.current) URL.revokeObjectURL(roadObjUrl.current);
       };
     }, []);
-    (0, import_react3.useEffect)(() => {
-      drawRef.current();
-    }, [layers]);
-    const onLayerToggle = (0, import_react3.useCallback)((key, checked) => {
+    const onLayerToggle = (0, import_react2.useCallback)((key, checked) => {
       setLayers((prev) => __spreadProps(__spreadValues({}, prev), { [key]: checked }));
     }, []);
-    const onSetFollow = (0, import_react3.useCallback)((type, id) => {
+    const onSetFollow = (0, import_react2.useCallback)((type, id) => {
       setFollowRef.current(type, id);
     }, []);
-    const onFitAll = (0, import_react3.useCallback)(() => {
+    const onFitAll = (0, import_react2.useCallback)(() => {
       fitAllRef.current();
     }, []);
-    const onZoomIn = (0, import_react3.useCallback)(() => {
-      const canvas = canvasRef.current;
-      zoomAtRef.current(1.5, canvas.width / 2, canvas.height / 2);
-    }, [canvasRef]);
-    const onZoomOut = (0, import_react3.useCallback)(() => {
-      const canvas = canvasRef.current;
-      zoomAtRef.current(0.67, canvas.width / 2, canvas.height / 2);
-    }, [canvasRef]);
+    const onZoomIn = (0, import_react2.useCallback)(() => {
+      const svg = svgRef.current;
+      zoomAtRef.current(1.5, svg.clientWidth / 2, svg.clientHeight / 2);
+    }, [svgRef]);
+    const onZoomOut = (0, import_react2.useCallback)(() => {
+      const svg = svgRef.current;
+      zoomAtRef.current(0.67, svg.clientWidth / 2, svg.clientHeight / 2);
+    }, [svgRef]);
     return {
       layers,
       apiState,
@@ -25964,6 +25516,17 @@
       coords,
       status,
       dragging,
+      svgWidth,
+      svgHeight,
+      camera: camera.current,
+      voronoiCells,
+      biomeBorderPath,
+      contourPath,
+      staircases,
+      houses,
+      roadImageUrl,
+      roadBounds,
+      terrainPaths,
       onLayerToggle,
       onSetFollow,
       onFitAll,
@@ -25972,13 +25535,394 @@
     };
   }
 
-  // map/MapApp.tsx
+  // map/MapSvgRenderer.tsx
+  var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
+  function w2s(wx, wz, cam, W, H) {
+    return [(wx - cam.x) * cam.pxPerBlock + W / 2, -(wz - cam.z) * cam.pxPerBlock + H / 2];
+  }
+  function arrowPoints(yaw) {
+    const adx = Math.sin(yaw), ady = -Math.cos(yaw);
+    const perpX = -ady, perpY = adx;
+    const len = 10, w = 5;
+    const tipX = adx * len, tipY = ady * len;
+    const b1x = -adx * len * 0.4 + perpX * w, b1y = -ady * len * 0.4 + perpY * w;
+    const b2x = -adx * len * 0.4 - perpX * w, b2y = -ady * len * 0.4 - perpY * w;
+    return `${tipX},${tipY} ${b1x},${b1y} ${b2x},${b2y}`;
+  }
+  function MapSvgRenderer({ renderer, svgRef }) {
+    var _a, _b;
+    const { layers, apiState, followTarget: ft, camera: cam, svgWidth: W, svgHeight: H } = renderer;
+    const ppb = cam.pxPerBlock;
+    const worldTransform = `matrix(${ppb},0,0,${-ppb},${W / 2 - cam.x * ppb},${H / 2 + cam.z * ppb})`;
+    const wLeft = cam.x - W / (2 * ppb);
+    const wRight = cam.x + W / (2 * ppb);
+    const wBottom = cam.z - H / (2 * ppb);
+    const wTop = cam.z + H / (2 * ppb);
+    const gridStep = Math.pow(10, Math.ceil(Math.log10(80 / ppb)));
+    const gridX = [];
+    for (let gx = Math.ceil(wLeft / gridStep) * gridStep; gx <= wRight; gx += gridStep) gridX.push(gx);
+    const gridZ = [];
+    for (let gz = Math.ceil(wBottom / gridStep) * gridStep; gz <= wTop; gz += gridStep) gridZ.push(gz);
+    let roadX = 0, roadY = 0, roadSize = 0;
+    if (renderer.roadImageUrl && renderer.roadBounds) {
+      const rb = renderer.roadBounds;
+      [roadX, roadY] = w2s(rb.cx - rb.radius, rb.cz + rb.radius, cam, W, H);
+      roadSize = 2 * rb.radius * ppb;
+    }
+    const vegCells = renderer.voronoiCells;
+    const vegR = vegCells.length > 0 ? Math.sqrt(3200 * 3200 / vegCells.length) * 0.65 : 0;
+    return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+      "svg",
+      {
+        ref: svgRef,
+        style: {
+          position: "absolute",
+          inset: 0,
+          overflow: "hidden",
+          background: "#111",
+          cursor: renderer.dragging ? "grabbing" : "grab"
+        },
+        width: W || void 0,
+        height: H || void 0,
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("g", { transform: worldTransform, children: [
+            layers.chunks && renderer.terrainPaths.map(({ color, d }) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d, fill: color }, color)),
+            layers.vegetation && vegCells.map((cell) => {
+              const tint = VEGETATION_TINT[cell.biome];
+              if (!tint) return null;
+              return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: cell.x, cy: cell.z, r: vegR, fill: tint }, cell.name);
+            }),
+            layers.voronoi && renderer.biomeBorderPath && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: renderer.biomeBorderPath, stroke: "rgba(128,0,0,0.85)", strokeWidth: 1 / ppb, fill: "none" }),
+            layers.contours && renderer.contourPath && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: renderer.contourPath, stroke: "rgba(220,220,220,0.45)", strokeWidth: 0.6 / ppb, fill: "none" }),
+            layers.houses && renderer.houses.map((h, i) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+              "rect",
+              {
+                x: h.x,
+                y: h.z,
+                width: h.width,
+                height: h.depth,
+                fill: "rgba(255,200,100,0.32)",
+                stroke: "#c80",
+                strokeWidth: 1 / ppb
+              },
+              i
+            )),
+            layers.weather && ((_a = apiState.weatherZones) != null ? _a : []).map((z, i) => {
+              var _a2, _b2;
+              return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                "circle",
+                {
+                  cx: z.cx,
+                  cy: z.cz,
+                  r: z.radius,
+                  fill: (_a2 = WEATHER_FILL[z.type]) != null ? _a2 : "rgba(128,128,128,0.15)",
+                  stroke: (_b2 = WEATHER_STROKE[z.type]) != null ? _b2 : "rgba(128,128,128,0.5)",
+                  strokeWidth: 1 / ppb
+                },
+                i
+              );
+            }),
+            gridX.map((gx) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+              "line",
+              {
+                x1: gx,
+                y1: wBottom,
+                x2: gx,
+                y2: wTop,
+                stroke: "rgba(255,255,255,0.06)",
+                strokeWidth: 0.5 / ppb
+              },
+              `gx${gx}`
+            )),
+            gridZ.map((gz) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+              "line",
+              {
+                x1: wLeft,
+                y1: gz,
+                x2: wRight,
+                y2: gz,
+                stroke: "rgba(255,255,255,0.06)",
+                strokeWidth: 0.5 / ppb
+              },
+              `gz${gz}`
+            ))
+          ] }),
+          layers["precise-roads"] && renderer.roadImageUrl && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            "image",
+            {
+              href: renderer.roadImageUrl,
+              x: roadX,
+              y: roadY,
+              width: roadSize,
+              height: roadSize,
+              style: { imageRendering: "pixelated" }
+            }
+          ),
+          gridX.map((gx) => {
+            const [sx] = w2s(gx, 0, cam, W, H);
+            return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("text", { x: sx + 2, y: 10, fill: "rgba(255,255,255,0.28)", fontSize: 9, fontFamily: "monospace", children: Math.round(gx) }, `gxl${gx}`);
+          }),
+          gridZ.map((gz) => {
+            const [, sy] = w2s(0, gz, cam, W, H);
+            return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("text", { x: 2, y: sy - 2, fill: "rgba(255,255,255,0.28)", fontSize: 9, fontFamily: "monospace", children: Math.round(gz) }, `gzl${gz}`);
+          }),
+          layers.weather && ((_b = apiState.weatherZones) != null ? _b : []).map((z, i) => {
+            const [sx, sy] = w2s(z.cx, z.cz, cam, W, H);
+            return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("text", { x: sx - 12, y: sy + 3, fill: "#ccc", fontSize: 10, fontFamily: "monospace", children: z.type }, `wl${i}`);
+          }),
+          layers["voronoi-names"] && renderer.voronoiCells.map((cell) => {
+            const [px, py] = w2s(cell.x, cell.z, cam, W, H);
+            if (px < -100 || px > W + 100 || py < -100 || py > H + 100) return null;
+            const nfs = Math.max(9, Math.min(15, ppb * 80));
+            const bfs = Math.max(7, Math.min(10, ppb * 55));
+            return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("g", { transform: `translate(${px},${py})`, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                "text",
+                {
+                  textAnchor: "middle",
+                  dominantBaseline: "middle",
+                  fontSize: nfs,
+                  fontFamily: "serif",
+                  fontWeight: "bold",
+                  fill: "rgba(0,0,0,0.7)",
+                  x: 1,
+                  y: 1,
+                  children: cell.name
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                "text",
+                {
+                  textAnchor: "middle",
+                  dominantBaseline: "middle",
+                  fontSize: nfs,
+                  fontFamily: "serif",
+                  fontWeight: "bold",
+                  fill: "#fff",
+                  children: cell.name
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("text", { textAnchor: "middle", fontSize: bfs, fontFamily: "monospace", fill: "rgba(0,0,0,0.55)", x: 1, y: nfs + 2, children: cell.biome }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("text", { textAnchor: "middle", fontSize: bfs, fontFamily: "monospace", fill: "rgba(200,220,255,0.85)", y: nfs + 1, children: cell.biome }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+                "text",
+                {
+                  textAnchor: "middle",
+                  fontSize: bfs,
+                  fontFamily: "monospace",
+                  fill: "rgba(0,0,0,0.55)",
+                  x: 1,
+                  y: nfs * 2 + 3,
+                  children: [
+                    "Lv ",
+                    cell.level
+                  ]
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+                "text",
+                {
+                  textAnchor: "middle",
+                  fontSize: bfs,
+                  fontFamily: "monospace",
+                  fill: "rgba(255,210,80,0.9)",
+                  y: nfs * 2 + 2,
+                  children: [
+                    "Lv ",
+                    cell.level
+                  ]
+                }
+              )
+            ] }, cell.name);
+          }),
+          layers.npcs && apiState.npcs.map((n) => {
+            const [nx, ny] = w2s(n.x, n.z, cam, W, H);
+            return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("g", { children: [
+              (ft == null ? void 0 : ft.type) === "npc" && ft.id === n.id && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: nx - 8, y: ny - 8, width: 16, height: 16, fill: "none", stroke: "#ffcc44", strokeWidth: 2 }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: nx, cy: ny, r: 5, fill: "#fa6" }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("text", { x: nx + 7, y: ny + 4, fill: "#fa6", fontSize: 10, fontFamily: "monospace", children: n.type })
+            ] }, n.id);
+          }),
+          layers.players && apiState.players.map((p) => {
+            const [px, py] = w2s(p.x, p.z, cam, W, H);
+            return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("g", { children: [
+              (ft == null ? void 0 : ft.type) === "player" && ft.id === p.id && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("rect", { x: px - 10, y: py - 10, width: 20, height: 20, fill: "none", stroke: "#44aaff", strokeWidth: 2 }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("g", { transform: `translate(${px},${py})`, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("polygon", { points: arrowPoints(p.yaw), fill: "#6af", stroke: "#003366", strokeWidth: 0.8 }) }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("text", { x: px + 9, y: py + 4, fill: "#8cf", fontSize: 11, fontFamily: "monospace", fontWeight: "bold", children: p.name })
+            ] }, p.id);
+          }),
+          layers.staircases && renderer.staircases.map((s) => {
+            const [sx, sy] = w2s(s.x, s.z, cam, W, H);
+            const r2 = Math.max(4, Math.min(10, ppb * 3));
+            return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("g", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("circle", { cx: sx, cy: sy, r: r2, fill: "rgba(160,80,220,0.35)", stroke: "#b060e0", strokeWidth: 1.5 }),
+              ppb >= 0.5 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("text", { x: sx - 3, y: sy + 3, fill: "#d090f0", fontSize: 9, fontFamily: "monospace", children: "\u2191" }),
+              ppb >= 1.5 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                  "text",
+                  {
+                    textAnchor: "middle",
+                    x: sx + 1,
+                    y: sy - r2 - 4,
+                    fill: "rgba(0,0,0,0.6)",
+                    fontSize: 9,
+                    fontFamily: "serif",
+                    children: s.name
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("text", { textAnchor: "middle", x: sx, y: sy - r2 - 5, fill: "#e0b0ff", fontSize: 9, fontFamily: "serif", children: s.name })
+              ] })
+            ] }, s.name);
+          })
+        ]
+      }
+    );
+  }
+
+  // map/Sidebar.tsx
+  var import_react3 = __toESM(require_react(), 1);
   var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
-  function MapApp() {
-    const canvasRef = (0, import_react4.useRef)(null);
-    const renderer = useMapRenderer(canvasRef);
-    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#1a1a1a] text-[#eee] font-mono", children: [
+  var LAYER_LABELS = {
+    voronoi: "Biome borders",
+    "voronoi-names": "Zone names",
+    contours: "Contour lines",
+    vegetation: "Vegetation",
+    houses: "Houses",
+    players: "Players",
+    npcs: "NPCs",
+    "precise-roads": "Precise roads",
+    chunks: "Chunks",
+    weather: "Weather zones",
+    staircases: "Staircases"
+  };
+  function Sidebar({ time, apiState, layers, followTarget, onLayerToggle, onSetFollow, onFitAll }) {
+    const [query, setQuery] = (0, import_react3.useState)("");
+    const q = query.trim().toLowerCase();
+    const visPlayers = q ? apiState.players.filter((p) => p.name.toLowerCase().includes(q)) : apiState.players;
+    const visNpcs = q ? apiState.npcs.filter((n) => (n.name + " " + n.type).toLowerCase().includes(q)) : apiState.npcs;
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "w-[220px] min-w-[220px] bg-[#111] p-3 overflow-y-auto border-r border-[#333] flex flex-col gap-0 font-mono", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "text-xs text-[#ccc] mb-2.5 pb-2 border-b border-[#333]", children: [
+        "\u23F0 ",
+        time
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("h2", { className: "text-[11px] text-[#aaa] uppercase tracking-widest mb-2 font-normal", children: "Layers" }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex flex-col gap-1 mb-2.5 pb-2.5 border-b border-[#333]", children: LAYER_KEYS.map((key) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+        "label",
+        {
+          className: "text-[11px] text-[#bbb] flex items-center gap-1.5 cursor-pointer select-none hover:text-[#eee]",
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+              "input",
+              {
+                type: "checkbox",
+                checked: layers[key],
+                onChange: (e) => onLayerToggle(key, e.target.checked),
+                className: "accent-[#6af] w-3 h-3 cursor-pointer"
+              }
+            ),
+            LAYER_LABELS[key]
+          ]
+        },
+        key
+      )) }),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+        "input",
+        {
+          type: "search",
+          placeholder: "Search players / NPCs\u2026",
+          value: query,
+          onChange: (e) => setQuery(e.target.value),
+          className: "w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1 text-[11px] text-[#ccc] placeholder-[#555] outline-none focus:border-[#6af] mb-2"
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("h3", { className: "text-[10px] text-[#888] uppercase tracking-wider mt-1 mb-1 font-normal", children: [
+        "Players",
+        q && apiState.players.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-[#555]", children: [
+          " ",
+          visPlayers.length,
+          "/",
+          apiState.players.length
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex flex-col", children: visPlayers.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[11px] text-[#555]", children: q ? "no match" : "none" }) : visPlayers.map((p) => {
+        const tracked = (followTarget == null ? void 0 : followTarget.type) === "player" && followTarget.id === p.id;
+        return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+          "div",
+          {
+            onClick: () => onSetFollow("player", p.id),
+            className: cn(
+              "text-[11px] py-1.5 px-1.5 border-b border-[#222] cursor-pointer rounded-sm border-l-2 select-none hover:bg-white/5 transition-colors",
+              tracked ? "bg-[#0d2040] border-l-[#6af]" : "border-l-transparent"
+            ),
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[#6af] font-bold", children: p.name }),
+              tracked && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[9px] text-[#6af] align-middle", children: " \u25CF follow" }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("br", {}),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-[10px] text-[#777]", children: [
+                Math.round(p.x),
+                " ",
+                Math.round(p.y),
+                " ",
+                Math.round(p.z)
+              ] })
+            ]
+          },
+          p.id
+        );
+      }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("h3", { className: "text-[10px] text-[#888] uppercase tracking-wider mt-2.5 mb-1 font-normal", children: [
+        "NPCs",
+        q && apiState.npcs.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-[#555]", children: [
+          " ",
+          visNpcs.length,
+          "/",
+          apiState.npcs.length
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex flex-col", children: visNpcs.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[11px] text-[#555]", children: q ? "no match" : "none" }) : visNpcs.map((n) => {
+        const tracked = (followTarget == null ? void 0 : followTarget.type) === "npc" && followTarget.id === n.id;
+        return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+          "div",
+          {
+            onClick: () => onSetFollow("npc", n.id),
+            className: cn(
+              "text-[11px] py-1.5 px-1.5 border-b border-[#222] cursor-pointer rounded-sm border-l-2 select-none hover:bg-white/5 transition-colors",
+              tracked ? "bg-[#0d2040] border-l-[#fa6]" : "border-l-transparent"
+            ),
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[#fa6] font-bold", children: n.name }),
+              " ",
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-[#888]", children: [
+                "(",
+                n.type,
+                ")"
+              ] }),
+              tracked && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[9px] text-[#fa6] align-middle", children: " \u25CF follow" }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("br", {}),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-[10px] text-[#777]", children: [
+                Math.round(n.x),
+                " ",
+                Math.round(n.y),
+                " ",
+                Math.round(n.z)
+              ] })
+            ]
+          },
+          n.id
+        );
+      }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "mt-auto pt-3 border-t border-[#333]", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Button, { variant: "outline", size: "sm", onClick: onFitAll, className: "w-full font-mono text-[11px]", children: "\u22A1 Fit All" }) })
+    ] });
+  }
+
+  // map/MapApp.tsx
+  var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
+  function MapApp() {
+    const svgRef = (0, import_react4.useRef)(null);
+    const renderer = useMapRenderer(svgRef);
+    console.log("ee");
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#1a1a1a] text-[#eee] font-mono", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
         Sidebar,
         {
           time: renderer.time,
@@ -25990,10 +25934,10 @@
           onFitAll: renderer.onFitAll
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex-1 relative overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("canvas", { ref: canvasRef, className: "block", style: { cursor: renderer.dragging ? "grabbing" : "grab" } }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "absolute top-2.5 right-2.5 flex flex-col gap-1 z-10", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex-1 relative overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(MapSvgRenderer, { renderer, svgRef }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "absolute top-2.5 right-2.5 flex flex-col gap-1 z-10", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
             Button,
             {
               variant: "secondary",
@@ -26004,7 +25948,7 @@
               children: "+"
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
             Button,
             {
               variant: "secondary",
@@ -26016,15 +25960,16 @@
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "absolute bottom-2 left-2 text-[10px] text-[#667] pointer-events-none bg-black/40 px-1.5 py-0.5 rounded", children: renderer.coords }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "absolute bottom-2 right-2 text-[10px] text-[#555]", children: renderer.status })
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "absolute bottom-2 left-2 text-[10px] text-[#667] pointer-events-none bg-black/40 px-1.5 py-0.5 rounded", children: renderer.coords }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "absolute bottom-2 right-2 text-[10px] text-[#555]", children: renderer.status })
       ] })
     ] });
   }
 
   // map/index.tsx
-  var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
-  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime4.jsx)(MapApp, {}));
+  var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
+  console.log("ee1");
+  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime5.jsx)(MapApp, {}));
 })();
 /*! Bundled license information:
 

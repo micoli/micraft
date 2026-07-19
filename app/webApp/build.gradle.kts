@@ -22,6 +22,7 @@ val tsBuild by
                     ".storybook/**",
                     ".stories/**",
                     "__tests__/**",
+                    "map/**",
                     "storybook-static/**",
                     "**/*.stories.tsx",
                     "**/*.stories.ts",

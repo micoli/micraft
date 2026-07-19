@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import type {
   Camera,
   ChunkTerrainInfo,
@@ -14,20 +14,20 @@ import { LAYER_KEYS } from "./types";
 
 const LAYERS_STORAGE_KEY = "micraft-map-layers";
 
-const VEGETATION_TINT: Record<string, string> = {
+export const VEGETATION_TINT: Record<string, string> = {
   forest: "rgba(30,120,30,0.28)",
   plains: "rgba(80,160,80,0.14)",
   tundra: "rgba(180,210,200,0.12)",
 };
 
-const WEATHER_FILL: Record<string, string> = {
+export const WEATHER_FILL: Record<string, string> = {
   RAIN: "rgba(80,120,255,0.18)",
   STORM: "rgba(100,0,200,0.22)",
   SNOW: "rgba(200,230,255,0.2)",
   FOG: "rgba(150,150,150,0.18)",
 };
 
-const WEATHER_STROKE: Record<string, string> = {
+export const WEATHER_STROKE: Record<string, string> = {
   RAIN: "rgba(80,120,255,0.55)",
   STORM: "rgba(100,0,200,0.55)",
   SNOW: "rgba(200,230,255,0.6)",
@@ -55,6 +55,53 @@ function ticksToTime(ticks: number): string {
   return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
 }
 
+export function computeBiomeBorderPath(segs: Array<{ x1: number; z1: number; x2: number; z2: number }>): string {
+  return segs.map((s) => `M${s.x1} ${s.z1}L${s.x2} ${s.z2}`).join("");
+}
+
+export function computeTerrainPaths(data: ChunkTerrainInfo[]): Array<{ color: string; d: string }> {
+  const byColor = new Map<string, string>();
+  for (const chunk of data) {
+    for (let lx = 0; lx < 16; lx++) {
+      for (let lz = 0; lz < 16; lz++) {
+        const color = chunk.colors[lx * 16 + lz];
+        if (!color) continue;
+        const wx = chunk.cx * 16 + lx;
+        const wz = chunk.cz * 16 + lz;
+        byColor.set(color, (byColor.get(color) ?? "") + `M${wx} ${wz}h1v1h-1z`);
+      }
+    }
+  }
+  return Array.from(byColor.entries()).map(([color, d]) => ({ color, d }));
+}
+
+export function computeContourPath(data: ChunkTerrainInfo[]): string {
+  const heightMap: Record<string, number> = {};
+  for (const c of data) {
+    if (c.avgHeight != null) heightMap[`${c.cx},${c.cz}`] = c.avgHeight;
+  }
+  let d = "";
+  for (const chunk of data) {
+    if (chunk.avgHeight == null) continue;
+    const hBand = Math.floor(chunk.avgHeight / 10);
+    const rh = heightMap[`${chunk.cx + 1},${chunk.cz}`];
+    if (rh != null && Math.floor(rh / 10) !== hBand) {
+      d += `M${(chunk.cx + 1) * 16} ${chunk.cz * 16}L${(chunk.cx + 1) * 16} ${(chunk.cz + 1) * 16}`;
+    }
+    const bh = heightMap[`${chunk.cx},${chunk.cz + 1}`];
+    if (bh != null && Math.floor(bh / 10) !== hBand) {
+      d += `M${chunk.cx * 16} ${(chunk.cz + 1) * 16}L${(chunk.cx + 1) * 16} ${(chunk.cz + 1) * 16}`;
+    }
+  }
+  return d;
+}
+
+export interface RoadBounds {
+  cx: number;
+  cz: number;
+  radius: number;
+}
+
 export interface MapRendererState {
   layers: Layers;
   apiState: MapApiState;
@@ -63,6 +110,20 @@ export interface MapRendererState {
   coords: string;
   status: string;
   dragging: boolean;
+
+  svgWidth: number;
+  svgHeight: number;
+  camera: Camera;
+
+  voronoiCells: VoronoiCellInfo[];
+  biomeBorderPath: string;
+  contourPath: string;
+  staircases: StaircaseMapInfo[];
+  houses: HouseMapInfo[];
+  roadImageUrl: string | null;
+  roadBounds: RoadBounds | null;
+  terrainPaths: Array<{ color: string; d: string }>;
+
   onLayerToggle: (key: LayerKey, checked: boolean) => void;
   onSetFollow: (type: "player" | "npc", id: string) => void;
   onFitAll: () => void;
@@ -70,311 +131,7 @@ export interface MapRendererState {
   onZoomOut: () => void;
 }
 
-function drawContours(
-  terrainData: React.RefObject<ChunkTerrainInfo[]>,
-  ctx: CanvasRenderingContext2D,
-  worldToCanvas: (wx: number, wz: number) => [number, number],
-) {
-  const heightMap: Record<string, number> = {};
-  for (const c of terrainData.current) {
-    if (c.avgHeight != null) heightMap[`${c.cx},${c.cz}`] = c.avgHeight;
-  }
-  ctx.strokeStyle = "rgba(220,220,220,0.45)";
-  ctx.lineWidth = 0.6;
-  for (const chunk of terrainData.current) {
-    if (chunk.avgHeight == null) continue;
-    const hBand = Math.floor(chunk.avgHeight / 10);
-    const rh = heightMap[`${chunk.cx + 1},${chunk.cz}`];
-    if (rh != null && Math.floor(rh / 10) !== hBand) {
-      const [ax, az] = worldToCanvas((chunk.cx + 1) * 16, chunk.cz * 16);
-      const [bx, bz] = worldToCanvas((chunk.cx + 1) * 16, (chunk.cz + 1) * 16);
-      ctx.beginPath();
-      ctx.moveTo(ax, az);
-      ctx.lineTo(bx, bz);
-      ctx.stroke();
-    }
-    const bh = heightMap[`${chunk.cx},${chunk.cz + 1}`];
-    if (bh != null && Math.floor(bh / 10) !== hBand) {
-      const [ax, az] = worldToCanvas(chunk.cx * 16, (chunk.cz + 1) * 16);
-      const [bx, bz] = worldToCanvas((chunk.cx + 1) * 16, (chunk.cz + 1) * 16);
-      ctx.beginPath();
-      ctx.moveTo(ax, az);
-      ctx.lineTo(bx, bz);
-      ctx.stroke();
-    }
-  }
-}
-
-function drawPreciseRoads(
-  roadImgRadius: React.RefObject<number>,
-  worldToCanvas: (wx: number, wz: number) => [number, number],
-  roadImgCx: React.RefObject<number>,
-  roadImgCz: React.RefObject<number>,
-  cam: Camera,
-  ctx: CanvasRenderingContext2D,
-  roadImg: React.RefObject<HTMLImageElement | null>,
-) {
-  if (roadImg.current === null) return;
-  const r = roadImgRadius.current;
-  const [tx, tz] = worldToCanvas(roadImgCx.current - r, roadImgCz.current + r);
-  const px = 2 * r * cam.pxPerBlock;
-  ctx.drawImage(roadImg.current, tx, tz, px, px);
-}
-
-function drawHouses(
-  cam: Camera,
-  housesData: React.RefObject<HouseMapInfo[]>,
-  worldToCanvas: (wx: number, wz: number) => [number, number],
-  ctx: CanvasRenderingContext2D,
-) {
-  const ppb = cam.pxPerBlock;
-  for (const h of housesData.current) {
-    const [ax, az] = worldToCanvas(h.x, h.z);
-    const w = h.width * ppb,
-      d = h.depth * ppb;
-    ctx.fillStyle = "rgba(255,200,100,0.32)";
-    ctx.fillRect(ax, az - d, w, d);
-    ctx.strokeStyle = "#c80";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(ax, az - d, w, d);
-  }
-}
-
-function drawVoronoi(
-  biomeDirty: React.RefObject<boolean>,
-  renderBiomeBorders: () => void,
-  ctx: CanvasRenderingContext2D,
-  bc: HTMLCanvasElement,
-  voronoiCells: React.RefObject<VoronoiCellInfo[]>,
-  cam: Camera,
-  worldToCanvas: (wx: number, wz: number) => [number, number],
-  W: number,
-  H: number,
-  showBorders: boolean,
-  showNames: boolean,
-) {
-  if (biomeDirty.current) {
-    renderBiomeBorders();
-    biomeDirty.current = false;
-  }
-  if (showBorders) ctx.drawImage(bc, 0, 0);
-  if (showNames && voronoiCells.current.length) {
-    const nameFontSize = Math.max(9, Math.min(15, cam.pxPerBlock * 80));
-    const biomeFontSize = Math.max(7, Math.min(10, cam.pxPerBlock * 55));
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    for (const cell of voronoiCells.current) {
-      const [px, pz] = worldToCanvas(cell.x, cell.z);
-      if (px < -100 || px > W + 100 || pz < -100 || pz > H + 100) continue;
-      ctx.font = "bold " + Math.round(nameFontSize) + "px serif";
-      ctx.fillStyle = "rgba(0,0,0,0.7)";
-      ctx.fillText(cell.name, px + 1, pz + 1);
-      ctx.fillStyle = "#fff";
-      ctx.fillText(cell.name, px, pz);
-      ctx.font = Math.round(biomeFontSize) + "px monospace";
-      ctx.fillStyle = "rgba(0,0,0,0.55)";
-      ctx.fillText(cell.biome, px + 1, pz + nameFontSize + 2);
-      ctx.fillStyle = "rgba(200,220,255,0.85)";
-      ctx.fillText(cell.biome, px, pz + nameFontSize + 1);
-      ctx.font = Math.round(biomeFontSize) + "px monospace";
-      ctx.fillStyle = "rgba(0,0,0,0.55)";
-      ctx.fillText("Lv " + cell.level, px + 1, pz + nameFontSize * 2 + 3);
-      ctx.fillStyle = "rgba(255,210,80,0.9)";
-      ctx.fillText("Lv " + cell.level, px, pz + nameFontSize * 2 + 2);
-    }
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-  }
-}
-
-function drawVegetation(
-  voronoiCells: React.RefObject<VoronoiCellInfo[]>,
-  cam: Camera,
-  worldToCanvas: (wx: number, wz: number) => [number, number],
-  ctx: CanvasRenderingContext2D,
-) {
-  const cells = voronoiCells.current;
-  const estR = Math.sqrt((3200 * 3200) / cells.length) * 0.65 * cam.pxPerBlock;
-  for (const cell of cells) {
-    const tint = VEGETATION_TINT[cell.biome];
-    if (!tint) continue;
-    const [px, pz] = worldToCanvas(cell.x, cell.z);
-    ctx.fillStyle = tint;
-    ctx.beginPath();
-    ctx.arc(px, pz, estR, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-function drawGrids(
-  canvasToWorld: (cx: number, cz: number) => [number, number],
-  W: number,
-  H: number,
-  cam: Camera,
-  ctx: CanvasRenderingContext2D,
-  worldToCanvas: (wx: number, wz: number) => [number, number],
-) {
-  const [worldLeft, worldTop] = canvasToWorld(0, 0);
-  const [worldRight, worldBottom] = canvasToWorld(W, H);
-  const gridStep = Math.pow(10, Math.ceil(Math.log10(80 / cam.pxPerBlock)));
-  ctx.strokeStyle = "rgba(255,255,255,0.06)";
-  ctx.lineWidth = 0.5;
-  ctx.fillStyle = "rgba(255,255,255,0.28)";
-  ctx.font = "9px monospace";
-  for (let gx = Math.ceil(worldLeft / gridStep) * gridStep; gx <= worldRight; gx += gridStep) {
-    const cx = worldToCanvas(gx, 0)[0];
-    ctx.beginPath();
-    ctx.moveTo(cx, 0);
-    ctx.lineTo(cx, H);
-    ctx.stroke();
-    ctx.fillText(String(Math.round(gx)), cx + 2, 10);
-  }
-  for (let gz = Math.ceil(worldTop / gridStep) * gridStep; gz <= worldBottom; gz += gridStep) {
-    const cz = worldToCanvas(0, gz)[1];
-    ctx.beginPath();
-    ctx.moveTo(0, cz);
-    ctx.lineTo(W, cz);
-    ctx.stroke();
-    ctx.fillText(String(Math.round(gz)), 2, cz - 2);
-  }
-}
-
-function drawWeathers(
-  state: MapApiState,
-  worldToCanvas: (wx: number, wz: number) => [number, number],
-  cam: Camera,
-  ctx: CanvasRenderingContext2D,
-) {
-  for (const z of state.weatherZones ?? []) {
-    const [wx, wz] = worldToCanvas(z.cx, z.cz);
-    const rPx = z.radius * cam.pxPerBlock;
-    ctx.beginPath();
-    ctx.arc(wx, wz, rPx, 0, Math.PI * 2);
-    ctx.fillStyle = WEATHER_FILL[z.type] ?? "rgba(128,128,128,0.15)";
-    ctx.fill();
-    ctx.strokeStyle = WEATHER_STROKE[z.type] ?? "rgba(128,128,128,0.5)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.fillStyle = "#ccc";
-    ctx.font = "10px monospace";
-    ctx.fillText(z.type, wx - 12, wz + 3);
-  }
-}
-
-function drawNPCs(
-  state: MapApiState,
-  worldToCanvas: (wx: number, wz: number) => [number, number],
-  ft:
-    | {
-        type: "player" | "npc" | undefined;
-        id: string | undefined;
-      }
-    | { type: "player" | "npc"; id: string }
-    | null,
-  ctx: CanvasRenderingContext2D,
-) {
-  for (const n of state.npcs) {
-    const [nx, nz] = worldToCanvas(n.x, n.z);
-    if (ft?.type === "npc" && ft.id === n.id) {
-      ctx.strokeStyle = "#ffcc44";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(nx - 8, nz - 8, 16, 16);
-    }
-    ctx.fillStyle = "#fa6";
-    ctx.beginPath();
-    ctx.arc(nx, nz, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#fa6";
-    ctx.font = "10px monospace";
-    ctx.fillText(n.type, nx + 7, nz + 4);
-  }
-}
-
-function drawStaircases(
-  staircases: StaircaseMapInfo[],
-  worldToCanvas: (wx: number, wz: number) => [number, number],
-  cam: Camera,
-  ctx: CanvasRenderingContext2D,
-) {
-  const r = Math.max(4, Math.min(10, cam.pxPerBlock * 3));
-  for (const s of staircases) {
-    const [sx, sz] = worldToCanvas(s.x, s.z);
-    ctx.beginPath();
-    ctx.arc(sx, sz, r, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(160,80,220,0.35)";
-    ctx.fill();
-    ctx.strokeStyle = "#b060e0";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    if (cam.pxPerBlock >= 0.5) {
-      ctx.fillStyle = "#d090f0";
-      ctx.font = "9px monospace";
-      ctx.fillText("↑", sx - 3, sz + 3);
-    }
-    if (cam.pxPerBlock >= 1.5) {
-      ctx.font = "9px serif";
-      ctx.textAlign = "center";
-      ctx.fillStyle = "rgba(0,0,0,0.6)";
-      ctx.fillText(s.name, sx + 1, sz - r - 4);
-      ctx.fillStyle = "#e0b0ff";
-      ctx.fillText(s.name, sx, sz - r - 5);
-      ctx.textAlign = "left";
-    }
-  }
-}
-
-function drawPlayers(
-  state: MapApiState,
-  worldToCanvas: (wx: number, wz: number) => [number, number],
-  ft:
-    | {
-        type: "player" | "npc" | undefined;
-        id: string | undefined;
-      }
-    | { type: "player" | "npc"; id: string }
-    | null,
-  ctx: CanvasRenderingContext2D,
-) {
-  for (const p of state.players) {
-    const [px, pz] = worldToCanvas(p.x, p.z);
-    const yawRad = p.yaw;
-    if (ft?.type === "player" && ft.id === p.id) {
-      ctx.strokeStyle = "#44aaff";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(px - 10, pz - 10, 20, 20);
-    }
-    ctx.save();
-    ctx.translate(px, pz);
-    const adx = Math.sin(yawRad);
-    const ady = -Math.cos(yawRad);
-    const perpX = -ady;
-    const perpY = adx;
-    const arrowLen = 10;
-    const arrowWidth = 5;
-    const tipX = adx * arrowLen;
-    const tipY = ady * arrowLen;
-    const b1x = -adx * arrowLen * 0.4 + perpX * arrowWidth;
-    const b1y = -ady * arrowLen * 0.4 + perpY * arrowWidth;
-    const b2x = -adx * arrowLen * 0.4 - perpX * arrowWidth;
-    const b2y = -ady * arrowLen * 0.4 - perpY * arrowWidth;
-    ctx.fillStyle = "#6af";
-    ctx.beginPath();
-    ctx.moveTo(tipX, tipY);
-    ctx.lineTo(b1x, b1y);
-    ctx.lineTo(b2x, b2y);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = "#003366";
-    ctx.lineWidth = 0.8;
-    ctx.stroke();
-    ctx.restore();
-    ctx.fillStyle = "#8cf";
-    ctx.font = "bold 11px monospace";
-    ctx.fillText(p.name, px + 9, pz + 4);
-  }
-}
-
-export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | null>): MapRendererState {
+export function useMapRenderer(svgRef: React.RefObject<SVGSVGElement>): MapRendererState {
   const [layers, setLayers] = useState<Layers>(loadLayerState);
   const [apiState, setApiState] = useState<MapApiState>({
     gameTicks: 0,
@@ -386,11 +143,18 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
   const [coords, setCoords] = useState("x: — z: —");
   const [status, setStatus] = useState("connecting...");
   const [dragging, setDragging] = useState(false);
+  const [svgWidth, setSvgWidth] = useState(0);
+  const [svgHeight, setSvgHeight] = useState(0);
+  const [, setRenderKey] = useState(0);
 
-  const layersRef = useRef<Layers>(layers);
-  useLayoutEffect(() => {
-    layersRef.current = layers;
-  });
+  const [voronoiCells, setVoronoiCells] = useState<VoronoiCellInfo[]>([]);
+  const [biomeBorderPath, setBiomeBorderPath] = useState("");
+  const [contourPath, setContourPath] = useState("");
+  const [staircases, setStaircases] = useState<StaircaseMapInfo[]>([]);
+  const [houses, setHouses] = useState<HouseMapInfo[]>([]);
+  const [roadImageUrl, setRoadImageUrl] = useState<string | null>(null);
+  const [roadBounds, setRoadBounds] = useState<RoadBounds | null>(null);
+  const [terrainPaths, setTerrainPaths] = useState<Array<{ color: string; d: string }>>([]);
 
   useEffect(() => {
     localStorage.setItem(LAYERS_STORAGE_KEY, JSON.stringify(layers));
@@ -398,15 +162,6 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
 
   const camera = useRef<Camera>({ x: 0, z: 0, pxPerBlock: 2 });
   const terrainData = useRef<ChunkTerrainInfo[]>([]);
-  const voronoiCells = useRef<VoronoiCellInfo[]>([]);
-  const housesData = useRef<HouseMapInfo[]>([]);
-  const staircasesData = useRef<StaircaseMapInfo[]>([]);
-  const staircasesFetched = useRef(false);
-  const roadImg = useRef<HTMLImageElement | null>(null);
-  const roadImgCx = useRef(0);
-  const roadImgCz = useRef(0);
-  const roadImgRadius = useRef(0);
-  const biomeBorderData = useRef<Array<{ x1: number; z1: number; x2: number; z2: number }>>([]);
   const apiStateRef = useRef<MapApiState>({ gameTicks: 0, players: [], npcs: [], weatherZones: [] });
   const followTargetRef = useRef<FollowTarget>(null);
   const autoFitDone = useRef(false);
@@ -414,182 +169,51 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
   const roadsFetchCenter = useRef({ x: NaN, z: NaN });
   const roadsFetching = useRef(false);
   const biomeFetchCenter = useRef({ x: NaN, z: NaN });
+  const staircasesFetched = useRef(false);
   const isDragging = useRef(false);
   const dragLast = useRef({ x: 0, y: 0 });
-  const terrainDirty = useRef(true);
-  const biomeDirty = useRef(true);
-  const terrainCanvas = useRef(document.createElement("canvas"));
-  const biomeCanvas = useRef(document.createElement("canvas"));
+  const rafPending = useRef(false);
+  const roadObjUrl = useRef<string | null>(null);
 
-  const drawRef = useRef<() => void>(() => {});
-  const zoomAtRef = useRef<(f: number, mx: number, mz: number) => void>(() => {});
   const fitAllRef = useRef<() => void>(() => {});
   const setFollowRef = useRef<(type: "player" | "npc", id: string) => void>(() => {});
-  const rafPending = useRef(false);
+  const zoomAtRef = useRef<(f: number, mx: number, mz: number) => void>(() => {});
 
   useEffect(() => {
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
-    const tc = terrainCanvas.current;
-    const bc = biomeCanvas.current;
-
-    function worldToCanvas(wx: number, wz: number): [number, number] {
-      const cam = camera.current;
-      return [(wx - cam.x) * cam.pxPerBlock + canvas.width / 2, -(wz - cam.z) * cam.pxPerBlock + canvas.height / 2];
-    }
+    const svg = svgRef.current!;
 
     function canvasToWorld(cx: number, cz: number): [number, number] {
       const cam = camera.current;
-      return [(cx - canvas.width / 2) / cam.pxPerBlock + cam.x, -(cz - canvas.height / 2) / cam.pxPerBlock + cam.z];
+      const W = svg.clientWidth,
+        H = svg.clientHeight;
+      return [(cx - W / 2) / cam.pxPerBlock + cam.x, -(cz - H / 2) / cam.pxPerBlock + cam.z];
     }
 
-    function renderTerrain() {
-      const cam = camera.current;
-      const W = tc.width,
-        H = tc.height;
-      const tCtx = tc.getContext("2d")!;
-      tCtx.clearRect(0, 0, W, H);
-      const ppb = cam.pxPerBlock;
-      tCtx.setTransform(ppb, 0, 0, -ppb, -cam.x * ppb + W / 2, cam.z * ppb + H / 2);
-      for (const chunk of terrainData.current) {
-        for (let lx = 0; lx < 16; lx++) {
-          for (let lz = 0; lz < 16; lz++) {
-            const color = chunk.colors[lx * 16 + lz];
-            if (!color) continue;
-            const wx = chunk.cx * 16 + lx;
-            const wz = chunk.cz * 16 + lz;
-            const cpx = (wx - cam.x) * ppb + W / 2;
-            const cpz = -(wz - cam.z) * ppb + H / 2;
-            if (cpx < -ppb || cpx > W + ppb || cpz < -ppb || cpz > H + ppb) continue;
-            tCtx.fillStyle = color;
-            tCtx.fillRect(wx, wz, 1, 1);
-          }
-        }
-      }
-      tCtx.resetTransform();
-    }
 
-    function renderBiomeBorders() {
-      const cam = camera.current;
-      const W = bc.width,
-        H = bc.height;
-      const bCtx = bc.getContext("2d")!;
-      bCtx.clearRect(0, 0, W, H);
-      if (!biomeBorderData.current.length) return;
-      const ppb = cam.pxPerBlock;
-      bCtx.setTransform(ppb, 0, 0, -ppb, -cam.x * ppb + W / 2, cam.z * ppb + H / 2);
-      bCtx.strokeStyle = "rgba(128,0,0,0.85)";
-      bCtx.lineWidth = 1 / ppb;
-      bCtx.beginPath();
-      for (const seg of biomeBorderData.current) {
-        bCtx.moveTo(seg.x1, seg.z1);
-        bCtx.lineTo(seg.x2, seg.z2);
-      }
-      bCtx.stroke();
-      bCtx.resetTransform();
-    }
-
-    function draw() {
-      const W = canvas.width,
-        H = canvas.height;
-      const cam = camera.current;
-      const L = layersRef.current;
-      const state = apiStateRef.current;
-      const ft = followTargetRef.current;
-
-      if (ft) {
-        const entity =
-          ft.type === "player" ? state.players.find((p) => p.id === ft.id) : state.npcs.find((n) => n.id === ft.id);
-        if (entity && (entity.x !== cam.x || entity.z !== cam.z)) {
-          cam.x = entity.x;
-          cam.z = entity.z;
-          terrainDirty.current = true;
-          biomeDirty.current = true;
-        }
-      }
-
-      if (terrainDirty.current) {
-        renderTerrain();
-        terrainDirty.current = false;
-      }
-
-      ctx.fillStyle = "#111";
-      ctx.fillRect(0, 0, W, H);
-      if (L.chunks) ctx.drawImage(tc, 0, 0);
-
-      // Vegetation
-      if (L.vegetation && voronoiCells.current.length) {
-        drawVegetation(voronoiCells, cam, worldToCanvas, ctx);
-      }
-
-      // Voronoi biome borders + zone names
-      if (L.voronoi || L["voronoi-names"]) {
-        drawVoronoi(
-          biomeDirty,
-          renderBiomeBorders,
-          ctx,
-          bc,
-          voronoiCells,
-          cam,
-          worldToCanvas,
-          W,
-          H,
-          L.voronoi,
-          L["voronoi-names"],
-        );
-      }
-
-      // Contours
-      if (L.contours && terrainData.current.length) {
-        drawContours(terrainData, ctx, worldToCanvas);
-      }
-
-      // Precise roads (PNG overlay)
-      if (L["precise-roads"] && roadImg.current) {
-        drawPreciseRoads(roadImgRadius, worldToCanvas, roadImgCx, roadImgCz, cam, ctx, roadImg);
-      }
-
-      // Houses
-      if (L.houses) {
-        drawHouses(cam, housesData, worldToCanvas, ctx);
-      }
-
-      // Grid
-      drawGrids(canvasToWorld, W, H, cam, ctx, worldToCanvas);
-
-      // Weather zones
-      if (L.weather) {
-        drawWeathers(state, worldToCanvas, cam, ctx);
-      }
-
-      // NPCs
-      if (L.npcs) {
-        drawNPCs(state, worldToCanvas, ft, ctx);
-      }
-
-      // Players
-      if (L.players) {
-        drawPlayers(state, worldToCanvas, ft, ctx);
-      }
-
-      // Staircases
-      if (L.staircases) {
-        drawStaircases(staircasesData.current, worldToCanvas, cam, ctx);
-      }
-    }
-
-    function scheduleDraw() {
+    function scheduleUpdate() {
       if (rafPending.current) return;
       rafPending.current = true;
       requestAnimationFrame(() => {
         rafPending.current = false;
-        draw();
+        const ft = followTargetRef.current;
+        if (ft) {
+          const state = apiStateRef.current;
+          const entity =
+            ft.type === "player" ? state.players.find((p) => p.id === ft.id) : state.npcs.find((n) => n.id === ft.id);
+          if (entity) {
+            camera.current.x = entity.x;
+            camera.current.z = entity.z;
+          }
+        }
+        setRenderKey((k) => k + 1);
       });
     }
 
     function autoFitView() {
       const terrain = terrainData.current;
       const state = apiStateRef.current;
+      const W = svg.clientWidth,
+        H = svg.clientHeight;
       let minX: number, maxX: number, minZ: number, maxZ: number;
       if (terrain.length > 0) {
         minX = Math.min(...terrain.map((c) => c.cx)) * 16;
@@ -612,172 +236,26 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
       }
       camera.current.x = (minX + maxX) / 2;
       camera.current.z = (minZ + maxZ) / 2;
-      camera.current.pxPerBlock = Math.min(canvas.width / (maxX - minX + 40), canvas.height / (maxZ - minZ + 40));
-      terrainDirty.current = true;
-      biomeDirty.current = true;
+      camera.current.pxPerBlock = Math.min(W / (maxX - minX + 40), H / (maxZ - minZ + 40));
     }
 
-    function zoomAt(factor: number, mx: number, mz: number) {
+    zoomAtRef.current = (factor, mx, mz) => {
       const [wx, wz] = canvasToWorld(mx, mz);
+      const W = svg.clientWidth,
+        H = svg.clientHeight;
       camera.current.pxPerBlock = Math.max(0.05, Math.min(64, camera.current.pxPerBlock * factor));
-      camera.current.x = wx - (mx - canvas.width / 2) / camera.current.pxPerBlock;
-      camera.current.z = wz + (mz - canvas.height / 2) / camera.current.pxPerBlock;
-      terrainDirty.current = true;
-      biomeDirty.current = true;
-      scheduleDraw();
-    }
+      camera.current.x = wx - (mx - W / 2) / camera.current.pxPerBlock;
+      camera.current.z = wz + (mz - H / 2) / camera.current.pxPerBlock;
+      scheduleUpdate();
+    };
 
-    function resize() {
-      const wrap = canvas.parentElement!;
-      canvas.width = wrap.clientWidth;
-      canvas.height = wrap.clientHeight;
-      tc.width = canvas.width;
-      tc.height = canvas.height;
-      bc.width = canvas.width;
-      bc.height = canvas.height;
-      terrainDirty.current = true;
-      biomeDirty.current = true;
-      draw();
-    }
-
-    async function fetchStaircases() {
-      if (staircasesFetched.current) return;
-      staircasesFetched.current = true;
-      try {
-        const r = await fetch("/api/map/staircases");
-        if (r.ok) {
-          staircasesData.current = await r.json();
-          scheduleDraw();
-        }
-      } catch {
-        staircasesFetched.current = false;
-      }
-    }
-
-    async function fetchHouses() {
-      const cx = Math.round(camera.current.x),
-        cz = Math.round(camera.current.z);
-      const { x, z } = housesFetchCenter.current;
-      if (!isNaN(x) && Math.hypot(cx - x, cz - z) < 300) return;
-      housesFetchCenter.current = { x: cx, z: cz };
-      try {
-        const r = await fetch(`/api/map/houses?cx=${cx}&cz=${cz}&radius=1200`);
-        if (r.ok) {
-          housesData.current = await r.json();
-          scheduleDraw();
-        }
-      } catch {
-        /* non-critical */
-      }
-    }
-
-    async function fetchPreciseRoads() {
-      if (roadsFetching.current) return;
-      const cx = Math.round(camera.current.x),
-        cz = Math.round(camera.current.z);
-      const { x, z } = roadsFetchCenter.current;
-      if (!isNaN(x) && Math.hypot(cx - x, cz - z) < 300) return;
-      roadsFetchCenter.current = { x: cx, z: cz };
-      const radius = 1200;
-      roadsFetching.current = true;
-      try {
-        const r = await fetch(`/api/map/road-raster.png?cx=${cx}&cz=${cz}&radius=${radius}`);
-        if (r.ok) {
-          const blob = await r.blob();
-          const url = URL.createObjectURL(blob);
-          const img = new Image();
-          img.onload = () => {
-            if (roadImg.current?.src) URL.revokeObjectURL(roadImg.current.src);
-            roadImg.current = img;
-            roadImgCx.current = cx;
-            roadImgCz.current = cz;
-            roadImgRadius.current = radius;
-            scheduleDraw();
-          };
-          img.src = url;
-        }
-      } catch {
-        /* non-critical */
-      } finally {
-        roadsFetching.current = false;
-      }
-    }
-
-    async function fetchBiomeBorders() {
-      const cx = Math.round(camera.current.x),
-        cz = Math.round(camera.current.z);
-      const { x, z } = biomeFetchCenter.current;
-      if (!isNaN(x) && Math.hypot(cx - x, cz - z) < 300) return;
-      biomeFetchCenter.current = { x: cx, z: cz };
-      try {
-        const r = await fetch(`/api/map/voronoi-borders?cx=${cx}&cz=${cz}&radius=2000`);
-        if (r.ok) {
-          biomeBorderData.current = await r.json();
-          biomeDirty.current = true;
-          scheduleDraw();
-        }
-      } catch {
-        /* non-critical */
-      }
-    }
-
-    async function pollState() {
-      try {
-        const r = await fetch("/api/map/state");
-        if (r.ok) {
-          const data: MapApiState = await r.json();
-          apiStateRef.current = data;
-          setApiState(data);
-          scheduleDraw();
-          setStatus("updated " + new Date().toLocaleTimeString());
-        }
-      } catch (e) {
-        setStatus("error: " + (e instanceof Error ? e.message : String(e)));
-      }
-    }
-
-    async function pollTerrain() {
-      try {
-        const r = await fetch("/api/map/terrain");
-        if (r.ok) {
-          terrainData.current = await r.json();
-          terrainDirty.current = true;
-          biomeDirty.current = true;
-          if (!autoFitDone.current && terrainData.current.length > 0) {
-            autoFitDone.current = true;
-            autoFitView();
-            fetchHouses();
-            fetchPreciseRoads();
-            fetchStaircases();
-          }
-          scheduleDraw();
-        }
-      } catch {
-        /* non-critical */
-      }
-    }
-
-    async function fetchVoronoi() {
-      try {
-        const r = await fetch("/api/map/voronoi?cx=0&cz=0&radius=3200");
-        if (r.ok) {
-          voronoiCells.current = await r.json();
-          scheduleDraw();
-        }
-      } catch {
-        /* non-critical */
-      }
-    }
-
-    // Wire up refs for external callers
-    drawRef.current = draw;
-    zoomAtRef.current = zoomAt;
     fitAllRef.current = () => {
       followTargetRef.current = null;
       setFollowTarget(null);
       autoFitView();
-      scheduleDraw();
+      scheduleUpdate();
     };
+
     setFollowRef.current = (type, id) => {
       const current = followTargetRef.current;
       if (current?.type === type && current.id === id) {
@@ -792,22 +270,19 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
         if (entity) {
           camera.current.x = entity.x;
           camera.current.z = entity.z;
-          terrainDirty.current = true;
-          biomeDirty.current = true;
         }
       }
-      scheduleDraw();
+      scheduleUpdate();
     };
 
-    // Canvas event handlers
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       if (followTargetRef.current) {
         followTargetRef.current = null;
         setFollowTarget(null);
       }
-      const rect = canvas.getBoundingClientRect();
-      zoomAt(e.deltaY < 0 ? 1.25 : 0.8, e.clientX - rect.left, e.clientY - rect.top);
+      const rect = svg.getBoundingClientRect();
+      zoomAtRef.current(e.deltaY < 0 ? 1.25 : 0.8, e.clientX - rect.left, e.clientY - rect.top);
     };
 
     const onMouseDown = (e: MouseEvent) => {
@@ -828,11 +303,9 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
         camera.current.x -= dx / camera.current.pxPerBlock;
         camera.current.z += dy / camera.current.pxPerBlock;
         dragLast.current = { x: e.clientX, y: e.clientY };
-        terrainDirty.current = true;
-        biomeDirty.current = true;
-        scheduleDraw();
+        scheduleUpdate();
       }
-      const rect = canvas.getBoundingClientRect();
+      const rect = svg.getBoundingClientRect();
       const [wx, wz] = canvasToWorld(e.clientX - rect.left, e.clientY - rect.top);
       setCoords(`x:${Math.round(wx)}  z:${Math.round(wz)}`);
     };
@@ -842,12 +315,133 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
       setDragging(false);
     };
 
-    canvas.addEventListener("wheel", onWheel, { passive: false });
-    canvas.addEventListener("mousedown", onMouseDown);
+    async function pollState() {
+      try {
+        const r = await fetch("/api/map/state");
+        if (r.ok) {
+          const data: MapApiState = await r.json();
+          apiStateRef.current = data;
+          setApiState(data);
+          scheduleUpdate();
+          setStatus("updated " + new Date().toLocaleTimeString());
+        }
+      } catch (e) {
+        setStatus("error: " + (e instanceof Error ? e.message : String(e)));
+      }
+    }
+
+    async function pollTerrain() {
+      try {
+        const r = await fetch("/api/map/terrain");
+        if (r.ok) {
+          terrainData.current = await r.json();
+          setContourPath(computeContourPath(terrainData.current));
+          if (!autoFitDone.current && terrainData.current.length > 0) {
+            autoFitDone.current = true;
+            autoFitView();
+            fetchHouses();
+            fetchPreciseRoads();
+            fetchStaircases();
+          }
+          setTerrainPaths(computeTerrainPaths(terrainData.current));
+        }
+      } catch {
+        /* non-critical */
+      }
+    }
+
+    async function fetchVoronoi() {
+      try {
+        const r = await fetch("/api/map/voronoi?cx=0&cz=0&radius=3200");
+        if (r.ok) setVoronoiCells(await r.json());
+      } catch {
+        /* non-critical */
+      }
+    }
+
+    async function fetchBiomeBorders() {
+      const cx = Math.round(camera.current.x),
+        cz = Math.round(camera.current.z);
+      const { x, z } = biomeFetchCenter.current;
+      if (!isNaN(x) && Math.hypot(cx - x, cz - z) < 300) return;
+      biomeFetchCenter.current = { x: cx, z: cz };
+      try {
+        const r = await fetch(`/api/map/voronoi-borders?cx=${cx}&cz=${cz}&radius=2000`);
+        if (r.ok) setBiomeBorderPath(computeBiomeBorderPath(await r.json()));
+      } catch {
+        /* non-critical */
+      }
+    }
+
+    async function fetchHouses() {
+      const cx = Math.round(camera.current.x),
+        cz = Math.round(camera.current.z);
+      const { x, z } = housesFetchCenter.current;
+      if (!isNaN(x) && Math.hypot(cx - x, cz - z) < 300) return;
+      housesFetchCenter.current = { x: cx, z: cz };
+      try {
+        const r = await fetch(`/api/map/houses?cx=${cx}&cz=${cz}&radius=1200`);
+        if (r.ok) setHouses(await r.json());
+      } catch {
+        /* non-critical */
+      }
+    }
+
+    async function fetchPreciseRoads() {
+      if (roadsFetching.current) return;
+      const cx = Math.round(camera.current.x),
+        cz = Math.round(camera.current.z);
+      const { x, z } = roadsFetchCenter.current;
+      if (!isNaN(x) && Math.hypot(cx - x, cz - z) < 300) return;
+      roadsFetchCenter.current = { x: cx, z: cz };
+      const radius = 1200;
+      roadsFetching.current = true;
+      try {
+        const r = await fetch(`/api/map/road-raster.png?cx=${cx}&cz=${cz}&radius=${radius}`);
+        if (r.ok) {
+          const blob = await r.blob();
+          const url = URL.createObjectURL(blob);
+          if (roadObjUrl.current) URL.revokeObjectURL(roadObjUrl.current);
+          roadObjUrl.current = url;
+          setRoadImageUrl(url);
+          setRoadBounds({ cx, cz, radius });
+        }
+      } catch {
+        /* non-critical */
+      } finally {
+        roadsFetching.current = false;
+      }
+    }
+
+    async function fetchStaircases() {
+      if (staircasesFetched.current) return;
+      staircasesFetched.current = true;
+      try {
+        const r = await fetch("/api/map/staircases");
+        if (r.ok) setStaircases(await r.json());
+      } catch {
+        staircasesFetched.current = false;
+      }
+    }
+
+    const ro = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      setSvgWidth(width);
+      setSvgHeight(height);
+      scheduleUpdate();
+    });
+    const container = svg.parentElement!;
+    ro.observe(container);
+
+    const initW = container.clientWidth,
+      initH = container.clientHeight;
+    setSvgWidth(initW);
+    setSvgHeight(initH);
+
+    svg.addEventListener("wheel", onWheel, { passive: false });
+    svg.addEventListener("mousedown", onMouseDown);
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
-    window.addEventListener("resize", resize);
-    resize();
 
     pollState();
     pollTerrain();
@@ -864,20 +458,16 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
     ];
 
     return () => {
-      canvas.removeEventListener("wheel", onWheel);
-      canvas.removeEventListener("mousedown", onMouseDown);
+      svg.removeEventListener("wheel", onWheel);
+      svg.removeEventListener("mousedown", onMouseDown);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
-      window.removeEventListener("resize", resize);
+      ro.disconnect();
       intervals.forEach(clearInterval);
+      if (roadObjUrl.current) URL.revokeObjectURL(roadObjUrl.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- canvasRef is stable; mount-only setup
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- svgRef is stable; mount-only setup
   }, []);
-
-  // Redraw when layers change (layersRef.current already updated synchronously above)
-  useEffect(() => {
-    drawRef.current();
-  }, [layers]);
 
   const onLayerToggle = useCallback((key: LayerKey, checked: boolean) => {
     setLayers((prev) => ({ ...prev, [key]: checked }));
@@ -892,14 +482,14 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
   }, []);
 
   const onZoomIn = useCallback(() => {
-    const canvas = canvasRef.current!;
-    zoomAtRef.current(1.5, canvas.width / 2, canvas.height / 2);
-  }, [canvasRef]);
+    const svg = svgRef.current!;
+    zoomAtRef.current(1.5, svg.clientWidth / 2, svg.clientHeight / 2);
+  }, [svgRef]);
 
   const onZoomOut = useCallback(() => {
-    const canvas = canvasRef.current!;
-    zoomAtRef.current(0.67, canvas.width / 2, canvas.height / 2);
-  }, [canvasRef]);
+    const svg = svgRef.current!;
+    zoomAtRef.current(0.67, svg.clientWidth / 2, svg.clientHeight / 2);
+  }, [svgRef]);
 
   return {
     layers,
@@ -909,6 +499,17 @@ export function useMapRenderer(canvasRef: React.RefObject<HTMLCanvasElement | nu
     coords,
     status,
     dragging,
+    svgWidth,
+    svgHeight,
+    camera: camera.current,
+    voronoiCells,
+    biomeBorderPath,
+    contourPath,
+    staircases,
+    houses,
+    roadImageUrl,
+    roadBounds,
+    terrainPaths,
     onLayerToggle,
     onSetFollow,
     onFitAll,
