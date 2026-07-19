@@ -425,12 +425,7 @@ export function GameScreen() {
                 label: "Refresh",
                 variant: "outline",
                 callback: () => {
-                  const controller = navigator.serviceWorker?.controller ?? null;
-                  if (controller) {
-                    controller.postMessage({ type: "FORCE_UPDATE" });
-                  } else {
-                    window.location.reload();
-                  }
+                  window.location.reload();
                 },
               },
               {

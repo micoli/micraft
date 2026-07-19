@@ -45,6 +45,8 @@ val generateBuildConfig by
         // Always re-run so the timestamp is current, but the minute guard below prevents
         // content from changing within a single compile cycle (~15 s), breaking the watch loop.
         outputs.upToDateWhen { false }
+        // No inputs → cache key is always identical → build cache would restore stale timestamp.
+        outputs.cacheIf { false }
         doLast {
             val ts =
                 DateTimeFormatter.ofPattern("yyyyMMdd-HH.mm.ss")
@@ -62,6 +64,10 @@ val generateBuildConfig by
     }
 
 tasks.matching { it.name == "compileKotlinWasmJs" }.configureEach { dependsOn(generateBuildConfig) }
+// The WASM binary is ~6 MB; attempting to cache it causes pack corruption errors.
+tasks.matching { it.name == "compileDevelopmentExecutableKotlinWasmJs" }.configureEach {
+    outputs.cacheIf { false }
+}
 
 val cleanStaleWasm by
     tasks.registering(Delete::class) {

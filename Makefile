@@ -66,6 +66,7 @@ dev-nuke-wasm:
 	$(EXEC) "rm -rf \
 	  /workspace/core/build/classes/kotlin/wasmJs \
 	  /workspace/core/build/kotlin/wasmJs \
+	  /workspace/core/build/kotlin/compileKotlinWasmJs \
 	  /workspace/core/build/klib \
 	  /workspace/app/webApp/build/klib \
 	  /workspace/app/webApp/build/compileSync \
