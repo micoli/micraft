@@ -129,6 +129,7 @@ export function GameUI() {
   const tradeRef = useRef<import("./types").TradeData | null>(null);
   const questJournalOpenRef = useRef(false);
   const macroEditorOpenRef = useRef(false);
+  const ingameMapOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
   const chunkLoadingRef = useRef(false);
   const preferencesRef = useRef<import("./types").PreferencesData | null>(null);
@@ -259,6 +260,9 @@ export function GameUI() {
   useLayoutEffect(() => {
     macroEditorOpenRef.current = state.macroEditorOpen;
   }, [state.macroEditorOpen]);
+  useLayoutEffect(() => {
+    ingameMapOpenRef.current = state.ingameMapVisible;
+  }, [state.ingameMapVisible]);
 
   useEffect(() => {
     const anyOpen =
@@ -763,6 +767,11 @@ export function GameUI() {
         }
         if (macroEditorOpenRef.current) {
           dispatch("macro_editor_close");
+          resumeGame();
+          return;
+        }
+        if (ingameMapOpenRef.current) {
+          dispatch("ingame_map_close");
           resumeGame();
           return;
         }
