@@ -32,7 +32,6 @@ class NpcConfigLoaderTest {
             wanderStepTicksMax: 20
             interactionRange: 8.0
             updateRange: 64.0
-            spawnCheckIntervalTicks: 100
             maxSpawnAttemptsPerTick: 5
             jumpVelocity: 7.0
             """
@@ -58,13 +57,13 @@ class NpcConfigLoaderTest {
         val dir = Files.createTempDirectory("npc-config-test4")
         val path = dir.resolve("npc.yaml")
         path.writeText(
-            "wanderPauseTicksMin: 5\nwanderPauseTicksMax: 15\nwanderStepTicksMax: 10\ninteractionRange: 2.0\nupdateRange: 50.0\nspawnCheckIntervalTicks: 100\nmaxSpawnAttemptsPerTick: 2\njumpVelocity: 5.0\n")
+            "wanderPauseTicksMin: 5\nwanderPauseTicksMax: 15\nwanderStepTicksMax: 10\ninteractionRange: 2.0\nupdateRange: 50.0\nmaxSpawnAttemptsPerTick: 2\njumpVelocity: 5.0\n")
         val loader = NpcConfigLoader(path)
         val first = loader.load()
         assertEquals(5, first.wanderPauseTicksMin)
 
         path.writeText(
-            "wanderPauseTicksMin: 99\nwanderPauseTicksMax: 200\nwanderStepTicksMax: 80\ninteractionRange: 2.0\nupdateRange: 50.0\nspawnCheckIntervalTicks: 100\nmaxSpawnAttemptsPerTick: 2\njumpVelocity: 5.0\n")
+            "wanderPauseTicksMin: 99\nwanderPauseTicksMax: 200\nwanderStepTicksMax: 80\ninteractionRange: 2.0\nupdateRange: 50.0\nmaxSpawnAttemptsPerTick: 2\njumpVelocity: 5.0\n")
         val second = loader.reload()
         assertEquals(99, second.wanderPauseTicksMin)
     }

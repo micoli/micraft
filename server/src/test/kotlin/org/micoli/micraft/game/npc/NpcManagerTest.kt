@@ -64,10 +64,11 @@ private fun interactDef(type: String = "SELLER"): NpcDefinition =
 
 class NpcManagerTest {
     @Test
-    fun spawnNpc_broadcastsNpcSpawned() = runBlocking {
-        val (m, broadcasts) = testNpcManager(mapOf("SELLER" to staticDef()))
+    fun spawnNpc_sendsNpcSpawnedToNearbySession() = runBlocking {
+        val session = testSession(pos = Vec3(8f, 5f, 8f))
+        val (m, _) = testNpcManager(mapOf("SELLER" to staticDef()), nearbySession = session)
         m.spawnNpc("Bob", "SELLER", Vec3(8f, 5f, 8f))
-        assertTrue(broadcasts.any { it is ServerMessage.NpcSpawned })
+        assertTrue(session.sent.any { it is ServerMessage.NpcSpawned })
     }
 
     @Test
@@ -86,12 +87,13 @@ class NpcManagerTest {
     }
 
     @Test
-    fun despawnNpc_broadcastsNpcDespawned() = runBlocking {
-        val (m, broadcasts) = testNpcManager(mapOf("SELLER" to staticDef()))
-        val instance = m.spawnNpc("Bob", "SELLER", Vec3(0f, 0f, 0f))
-        broadcasts.clear()
+    fun despawnNpc_sendsNpcDespawnedToKnownSession() = runBlocking {
+        val session = testSession(pos = Vec3(0f, 5f, 0f))
+        val (m, _) = testNpcManager(mapOf("SELLER" to staticDef()), nearbySession = session)
+        val instance = m.spawnNpc("Bob", "SELLER", Vec3(0f, 5f, 0f))
+        session.sent.clear()
         m.despawnNpc(instance.state.id)
-        assertTrue(broadcasts.any { it is ServerMessage.NpcDespawned })
+        assertTrue(session.sent.any { it is ServerMessage.NpcDespawned })
     }
 
     @Test

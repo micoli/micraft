@@ -29,6 +29,13 @@ private fun NpcState.round1() =
         yaw = yaw.round1(),
     )
 
+data class PendingRespawn(
+    val name: String,
+    val type: String,
+    val spawnPos: Vec3,
+    val instanceLevel: Int,
+)
+
 class NpcManager(
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val getSessions: () -> Collection<PlayerSession> = { emptyList() },
@@ -38,6 +45,8 @@ class NpcManager(
     private val npcs = ConcurrentHashMap<String, NpcInstance>()
     @Volatile private var definitions: Map<String, NpcDefinition> = emptyMap()
     private val lastSentToPlayer = ConcurrentHashMap<String, ConcurrentHashMap<String, NpcState>>()
+    private val pendingRespawns = ConcurrentHashMap<String, MutableList<PendingRespawn>>()
+    private val broadCastNpcPositions = false
 
     fun loadDefinitions(defs: Map<String, NpcDefinition>) {
         definitions = defs
@@ -126,7 +135,20 @@ class NpcManager(
                 spawnPos = pos,
                 instanceLevel = effectiveLevel)
         npcs[id] = instance
-        broadcast(ServerMessage.NpcSpawned(state))
+        if (broadCastNpcPositions) {
+            broadcast(ServerMessage.NpcSpawned(state))
+        } else {
+            val stateWithAggro = state.copy(aggroTargetId = null)
+            val rangesq = NpcConstants.UPDATE_RANGE * NpcConstants.UPDATE_RANGE
+            for (s in getSessions()) {
+                val dx = s.state.pos.x - pos.x
+                val dz = s.state.pos.z - pos.z
+                if (dx * dx + dz * dz <= rangesq) {
+                    lastSentToPlayer.getOrPut(s.id) { ConcurrentHashMap() }[id] = stateWithAggro
+                    s.send(ServerMessage.NpcSpawned(stateWithAggro))
+                }
+            }
+        }
         log.info(
             "NPC spawned: {} ({}) lv{} at ({},{},{})",
             name,
@@ -140,7 +162,9 @@ class NpcManager(
 
     suspend fun despawnNpc(id: String) {
         if (npcs.remove(id) != null) {
-            broadcast(ServerMessage.NpcDespawned(id))
+            val targets = getSessions().filter { lastSentToPlayer[it.id]?.containsKey(id) == true }
+            lastSentToPlayer.values.forEach { it.remove(id) }
+            targets.forEach { it.send(ServerMessage.NpcDespawned(id)) }
             log.info("NPC despawned: {}", id.take(8))
         }
     }
@@ -182,6 +206,91 @@ class NpcManager(
         }
     }
 
+    suspend fun tickVisibility(sessions: Collection<PlayerSession>) {
+        val rangesq = NpcConstants.UPDATE_RANGE * NpcConstants.UPDATE_RANGE
+        for (session in sessions) {
+            val playerPos = session.state.pos
+            val known = lastSentToPlayer.getOrPut(session.id) { ConcurrentHashMap() }
+
+            for (instance in npcs.values) {
+                if (known.containsKey(instance.state.id)) continue
+                val dx = playerPos.x - instance.state.pos.x
+                val dz = playerPos.z - instance.state.pos.z
+                if (dx * dx + dz * dz <= rangesq) {
+                    val state = instance.state.round1().copy(aggroTargetId = instance.aggroTarget)
+                    known[instance.state.id] = state
+                    session.send(ServerMessage.NpcSpawned(state))
+                }
+            }
+
+            val toRemove =
+                known.keys.filter { npcId ->
+                    val npc = npcs[npcId] ?: return@filter true
+                    val dx = playerPos.x - npc.state.pos.x
+                    val dz = playerPos.z - npc.state.pos.z
+                    dx * dx + dz * dz > rangesq
+                }
+            toRemove.forEach { npcId ->
+                known.remove(npcId)
+                session.send(ServerMessage.NpcDespawned(npcId))
+            }
+        }
+    }
+
+    suspend fun despawnOrphanedNpcs(sessions: Collection<PlayerSession>) {
+        val zoneSizeSq = NpcConstants.NPC_ZONE_SIZE.toFloat().let { it * it }
+        val orphans =
+            npcs.values.filter { npc ->
+                sessions.none { s ->
+                    val dx = s.state.pos.x - npc.state.pos.x
+                    val dz = s.state.pos.z - npc.state.pos.z
+                    dx * dx + dz * dz <= zoneSizeSq
+                }
+            }
+        for (npc in orphans) {
+            val key = zoneKey(npc.state.pos.x, npc.state.pos.z)
+            pendingRespawns
+                .getOrPut(key) { mutableListOf() }
+                .add(
+                    PendingRespawn(npc.state.name, npc.state.type, npc.spawnPos, npc.instanceLevel))
+            despawnNpc(npc.state.id)
+        }
+        if (orphans.isNotEmpty()) log.info("Orphan-despawned {} NPCs", orphans.size)
+    }
+
+    suspend fun respawnPendingInZone(zoneX: Int, zoneZ: Int) {
+        val key = "$zoneX,$zoneZ"
+        val pending = pendingRespawns.remove(key) ?: return
+        for (entry in pending) {
+            if (definitions.containsKey(entry.type))
+                spawnNpc(entry.name, entry.type, entry.spawnPos, entry.instanceLevel)
+        }
+        if (pending.isNotEmpty())
+            log.info("Respawned {} pending NPCs in zone {}", pending.size, key)
+    }
+
+    fun zoneKey(wx: Float, wz: Float): String {
+        val zx = Math.floorDiv(wx.toInt(), NpcConstants.NPC_ZONE_SIZE)
+        val zz = Math.floorDiv(wz.toInt(), NpcConstants.NPC_ZONE_SIZE)
+        return "$zx,$zz"
+    }
+
+    fun countInZone(zoneKey: String): Int {
+        val parts = zoneKey.split(",")
+        val zx = parts[0].toInt()
+        val zz = parts[1].toInt()
+        val minX = zx * NpcConstants.NPC_ZONE_SIZE.toFloat()
+        val maxX = minX + NpcConstants.NPC_ZONE_SIZE
+        val minZ = zz * NpcConstants.NPC_ZONE_SIZE.toFloat()
+        val maxZ = minZ + NpcConstants.NPC_ZONE_SIZE
+        return npcs.values.count {
+            it.state.pos.x >= minX &&
+                it.state.pos.x < maxX &&
+                it.state.pos.z >= minZ &&
+                it.state.pos.z < maxZ
+        }
+    }
+
     fun clearPlayer(sessionId: String) {
         lastSentToPlayer.remove(sessionId)
     }
@@ -193,14 +302,21 @@ class NpcManager(
 
     suspend fun sendAllTo(session: PlayerSession) {
         log.info("sendAllTo {}: {} NPCs in memory", session.id.take(8), npcs.size)
+        val rangesq = NpcConstants.UPDATE_RANGE * NpcConstants.UPDATE_RANGE
+        val playerPos = session.state.pos
         val playerStates = lastSentToPlayer.getOrPut(session.id) { ConcurrentHashMap() }
+        var sent = 0
         for (instance in npcs.values) {
+            val dx = playerPos.x - instance.state.pos.x
+            val dz = playerPos.z - instance.state.pos.z
+            if (dx * dx + dz * dz > rangesq) continue
             val roundedState = instance.state.round1()
             val stateWithAggro = roundedState.copy(aggroTargetId = instance.aggroTarget)
             playerStates[instance.state.id] = stateWithAggro
             session.send(ServerMessage.NpcSpawned(stateWithAggro))
+            sent++
         }
-        log.info("sendAllTo {}: done", session.id.take(8))
+        log.info("sendAllTo {}: sent {} in-range NPCs", session.id.take(8), sent)
     }
 
     fun getAll(): Collection<NpcInstance> = npcs.values

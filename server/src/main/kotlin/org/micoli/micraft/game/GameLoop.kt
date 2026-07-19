@@ -161,6 +161,7 @@ fun validatePluginSystemIds(commands: Map<String, CommandHandler>, plugins: List
 }
 
 private const val TARGET_DISTANCE_REFRESH_TICKS = 5
+private const val NPC_LIFECYCLE_INTERVAL_MS = 5_000L
 
 class GameLoop(
     private val world: WorldState,
@@ -341,7 +342,7 @@ class GameLoop(
     private val pluginTickHandlers: MutableList<TickHandler> = mutableListOf()
 
     private var armorRegistry: Map<String, ArmorDefinition> = emptyMap()
-    private var npcSpawnTickCounter = 0
+    private var npcVisibilityCheckTickCounter = 0
     private var targetDistanceTickCounter = 0
 
     private val commandContextClosures =
@@ -762,6 +763,20 @@ class GameLoop(
                 }
             }
         }
+        app.launch(Dispatchers.IO) {
+            while (isActive) {
+                delay(NPC_LIFECYCLE_INTERVAL_MS)
+                runCatching {
+                        npcManager.despawnOrphanedNpcs(sessionRegistry.all())
+                        npcSpawner.trySpawn(
+                            world,
+                            npcManager,
+                            npcManager.getDefinitions(),
+                            world.discoveredChunks())
+                    }
+                    .onFailure { log.error("npc lifecycle error: {}", it.message, it) }
+            }
+        }
     }
 
     fun shutdown() {
@@ -823,6 +838,24 @@ class GameLoop(
                 chunkStreamer.checkAndRequest(session)
                 chunkStreamer.deliverReady(session)
             }
+            val newZoneX = Math.floorDiv(session.state.pos.x.toInt(), NpcConstants.NPC_ZONE_SIZE)
+            val newZoneZ = Math.floorDiv(session.state.pos.z.toInt(), NpcConstants.NPC_ZONE_SIZE)
+            val lastZone = session.lastZonePos
+            if (lastZone == null || lastZone.first != newZoneX || lastZone.second != newZoneZ) {
+                session.lastZonePos = Pair(newZoneX, newZoneZ)
+                npcManager.respawnPendingInZone(newZoneX, newZoneZ)
+                val zoneChunks =
+                    world.discoveredChunks().filter { cp ->
+                        Math.floorDiv(
+                            cp.cx * WorldConstants.CHUNK_SIZE, NpcConstants.NPC_ZONE_SIZE) ==
+                            newZoneX &&
+                            Math.floorDiv(
+                                cp.cz * WorldConstants.CHUNK_SIZE, NpcConstants.NPC_ZONE_SIZE) ==
+                                newZoneZ
+                    }
+                if (zoneChunks.isNotEmpty())
+                    npcSpawner.trySpawn(world, npcManager, npcManager.getDefinitions(), zoneChunks)
+            }
         }
         worldItems.tickCollection(sessionRegistry.all())
         npcManager.tick(world)
@@ -832,11 +865,10 @@ class GameLoop(
         weatherManager.tick(world) { msg -> sessionRegistry.all().forEach { it.send(msg) } }
         liquidManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
         vegetationManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
-        npcSpawnTickCounter++
-        if (npcSpawnTickCounter >= NpcConstants.SPAWN_CHECK_INTERVAL_TICKS) {
-            npcSpawnTickCounter = 0
-            npcSpawner.trySpawn(
-                world, npcManager, npcManager.getDefinitions(), world.discoveredChunks())
+        npcVisibilityCheckTickCounter++
+        if (npcVisibilityCheckTickCounter >= NpcConstants.NPC_VISIBILITY_CHECK_INTERVAL_TICKS) {
+            npcVisibilityCheckTickCounter = 0
+            npcManager.tickVisibility(sessionRegistry.all())
         }
         targetDistanceTickCounter++
         if (targetDistanceTickCounter >= TARGET_DISTANCE_REFRESH_TICKS) {
@@ -1131,6 +1163,7 @@ class GameLoop(
             sessionRegistry.remove(id)
             chunkStreamer.cleanupSession(id)
             npcManager.clearPlayer(id)
+            npcManager.despawnOrphanedNpcs(sessionRegistry.all())
             tradeManager.onPlayerDisconnect(id)
             savePlayer(session)
             log.info(

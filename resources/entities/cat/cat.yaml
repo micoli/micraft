@@ -10,7 +10,6 @@ wanderSpeed: 2.0
 wanderRadius: 12.0
 spawn:
   autoSpawn: true
-  maxTotal: 30
   maxPerChunk: 3
   spawnBiomes: []
 hp: 5

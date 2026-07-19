@@ -7,8 +7,11 @@ object NpcConstants {
     var INTERACTION_RANGE = 4f
     // ~6 chunks; clients beyond this don't receive NpcUpdate
     var UPDATE_RANGE = 96f
-    var SPAWN_CHECK_INTERVAL_TICKS = 200
     var MAX_SPAWN_ATTEMPTS_PER_TICK = 3
     // v = sqrt(2 * |GRAVITY| * h), h ≈ 1.05 blocks for reliable 1-block clearance
     var JUMP_VELOCITY = 6.5f
+    // zone cell size in blocks — matches voronoiCellSize; used for per-biome limits and orphan
+    // despawn
+    var NPC_ZONE_SIZE = 256
+    var NPC_VISIBILITY_CHECK_INTERVAL_TICKS = 20
 }

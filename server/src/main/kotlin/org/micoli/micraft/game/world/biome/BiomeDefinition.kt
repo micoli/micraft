@@ -46,6 +46,7 @@ data class BiomeDefinition(
     val grassColor: List<Double>? = null,
     val waterSourceRate: Double = 0.0,
     val caverns: CavernConfig? = null,
+    val maxNpcs: Int = 0,
 ) {
     fun selectFiller(hash: Double): BlockType {
         val total = fillers.sumOf { it.density }

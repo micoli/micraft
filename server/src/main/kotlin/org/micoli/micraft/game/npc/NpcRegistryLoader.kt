@@ -16,7 +16,6 @@ private val npcLog = LoggerFactory.getLogger("NpcRegistryLoader")
 private fun NpcSpawnConfigRaw.applyOverride(o: NpcSpawnConfigRawOverride) =
     copy(
         autoSpawn = o.autoSpawn ?: autoSpawn,
-        maxTotal = o.maxTotal ?: maxTotal,
         maxPerChunk = o.maxPerChunk ?: maxPerChunk,
         spawnBiomes = o.spawnBiomes ?: spawnBiomes,
     )
@@ -109,7 +108,6 @@ class NpcRegistryLoader(
                                     spawn =
                                         NpcSpawnConfig(
                                             autoSpawn = entry.spawn.autoSpawn,
-                                            maxTotal = entry.spawn.maxTotal,
                                             maxPerChunk = entry.spawn.maxPerChunk,
                                             spawnBiomes = entry.spawn.spawnBiomes,
                                         ),

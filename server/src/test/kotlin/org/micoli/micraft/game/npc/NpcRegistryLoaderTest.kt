@@ -52,7 +52,6 @@ class NpcRegistryLoaderTest {
                         wanderRadius: 0.0
                         spawn:
                           autoSpawn: false
-                          maxTotal: 5
                           maxPerChunk: 1
                           spawnBiomes: []
                         """
@@ -66,7 +65,6 @@ class NpcRegistryLoaderTest {
                         wanderRadius: 12.0
                         spawn:
                           autoSpawn: true
-                          maxTotal: 30
                           maxPerChunk: 3
                           spawnBiomes: [plains]
                         """
@@ -81,7 +79,6 @@ class NpcRegistryLoaderTest {
         assertEquals(1.8f, seller.height)
         assertTrue(seller.behavior is InteractionableNpcBehavior)
         assertFalse(seller.spawn.autoSpawn)
-        assertEquals(5, seller.spawn.maxTotal)
         val goat = defs["npc_goat"]
         assertNotNull(goat)
         assertTrue(goat.behavior is RandomMovableNpcBehavior)
@@ -147,7 +144,6 @@ class NpcRegistryLoaderTest {
         val duck = defs["npc_duck"]
         assertNotNull(duck)
         assertFalse(duck.spawn.autoSpawn)
-        assertEquals(0, duck.spawn.maxTotal)
         assertEquals(1, duck.spawn.maxPerChunk)
         assertTrue(duck.spawn.spawnBiomes.isEmpty())
     }
@@ -218,7 +214,6 @@ class NpcRegistryLoaderTest {
                             wanderRadius: 12.0
                             spawn:
                               autoSpawn: true
-                              maxTotal: 30
                               maxPerChunk: 3
                               spawnBiomes: []
                             """
@@ -250,7 +245,6 @@ class NpcRegistryLoaderTest {
                             wanderRadius: 12.0
                             spawn:
                               autoSpawn: true
-                              maxTotal: 30
                               maxPerChunk: 3
                               spawnBiomes: []
                             """

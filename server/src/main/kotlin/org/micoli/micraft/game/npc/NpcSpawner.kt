@@ -25,7 +25,6 @@ class NpcSpawner {
         for ((type, def) in definitions) {
             val spawn = def.spawn
             if (!spawn.autoSpawn) continue
-            if (spawn.maxTotal > 0 && npcManager.countByType(type) >= spawn.maxTotal) continue
 
             var attempts = 0
             for (chunkPos in chunkList) {
@@ -39,9 +38,13 @@ class NpcSpawner {
                     chunkPos.cz * WorldConstants.CHUNK_SIZE +
                         Random.nextInt(WorldConstants.CHUNK_SIZE)
 
-                if (spawn.spawnBiomes.isNotEmpty()) {
-                    val biome = world.biomeAt(wx, wz)
-                    if (biome !in spawn.spawnBiomes) continue
+                val biomeDef = world.biomeDefinitionAt(wx, wz)
+                if (spawn.spawnBiomes.isNotEmpty() && biomeDef?.id !in spawn.spawnBiomes) continue
+
+                val maxNpcs = biomeDef?.maxNpcs ?: 0
+                if (maxNpcs > 0) {
+                    val zk = npcManager.zoneKey(wx.toFloat(), wz.toFloat())
+                    if (npcManager.countInZone(zk) >= maxNpcs) continue
                 }
 
                 val surfaceY = findSurfaceY(world, wx, wz) ?: continue
@@ -66,7 +69,6 @@ class NpcSpawner {
                 npcManager.spawnNpc(name, type, spawnPos, instanceLevel)
                 log.debug("Auto-spawned {} at ({},{},{})", type, wx, surfaceY, wz)
                 attempts++
-                if (spawn.maxTotal > 0 && npcManager.countByType(type) >= spawn.maxTotal) break
             }
         }
     }

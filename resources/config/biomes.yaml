@@ -9,6 +9,7 @@ biomes:
         altitudeMax: 1024
     surface: SNOW
     subsurface: STONE
+    maxNpcs: 40
     fillers:
       - type: STONE
         density: 0.4
@@ -42,6 +43,7 @@ biomes:
         moistureMax: 0.25
     surface: SAND
     subsurface: SANDSTONE
+    maxNpcs: 10
     fillers:
       - type: STONE
         density: 0.4
@@ -67,6 +69,7 @@ biomes:
       wallBlock: SANDSTONE
       staircaseEnabled: true
   - id: dry_plains
+    maxNpcs: 30
     zones:
       - moistureMin: 0.25
         moistureMax: 0.30
@@ -104,6 +107,7 @@ biomes:
         moistureMax: 0.62
     surface: GRASS
     subsurface: DIRT
+    maxNpcs: 40
     fillers:
       - type: STONE
         density: 0.4
@@ -140,6 +144,7 @@ biomes:
         moistureMax: 0.82
     surface: GRASS
     subsurface: DIRT
+    maxNpcs: 50
     fillers:
       - type: STONE
         density: 0.4
@@ -177,6 +182,7 @@ biomes:
         moistureMax: 1.0
     surface: GRASS
     subsurface: DIRT
+    maxNpcs: 40
     fillers:
       - type: STONE
         density: 0.4

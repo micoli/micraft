@@ -2,6 +2,7 @@ package org.micoli.micraft.command.commands
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.npc.NpcDefinition
@@ -75,19 +76,15 @@ class SpawnCommandTest {
     fun solidBelow_npcSpawned() = runBlocking {
         val session = testSession()
         val w = world(Triple(5, 3, 5) to BlockType.STONE)
-        val broadcasts = mutableListOf<ServerMessage>()
-        val nm = NpcManager(broadcast = { broadcasts.add(it) })
+        val nm = NpcManager(broadcast = {})
         nm.loadDefinitions(mapOf("GOAT" to goatDef))
-        cmd.execute(
-            session,
-            "GOAT 5 4 5",
-            testContext(world = w, npcManager = nm, broadcast = { broadcasts.add(it) }))
-        assertTrue(broadcasts.any { it is ServerMessage.NpcSpawned })
+        cmd.execute(session, "GOAT 5 4 5", testContext(world = w, npcManager = nm))
         val spawned = nm.getAll().firstOrNull()
-        assertEquals("GOAT", spawned?.state?.type)
-        assertEquals(5.5f, spawned?.state?.pos?.x)
-        assertEquals(4f, spawned?.state?.pos?.y)
-        assertEquals(5.5f, spawned?.state?.pos?.z)
+        assertNotNull(spawned)
+        assertEquals("GOAT", spawned.state.type)
+        assertEquals(5.5f, spawned.state.pos.x)
+        assertEquals(4f, spawned.state.pos.y)
+        assertEquals(5.5f, spawned.state.pos.z)
     }
 
     @Test

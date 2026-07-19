@@ -41,7 +41,6 @@ class NpcConfigLoader(private val path: Path) {
         NpcConstants.WANDER_STEP_TICKS_MAX = config.wanderStepTicksMax
         NpcConstants.INTERACTION_RANGE = config.interactionRange
         NpcConstants.UPDATE_RANGE = config.updateRange
-        NpcConstants.SPAWN_CHECK_INTERVAL_TICKS = config.spawnCheckIntervalTicks
         NpcConstants.MAX_SPAWN_ATTEMPTS_PER_TICK = config.maxSpawnAttemptsPerTick
         NpcConstants.JUMP_VELOCITY = config.jumpVelocity
     }

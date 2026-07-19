@@ -151,6 +151,8 @@ class ProceduralChunkGenerator(
 
     override fun biomeAt(wx: Int, wz: Int): String = voronoi.sample(wx, wz).primary.id
 
+    override fun biomeDefinitionAt(wx: Int, wz: Int) = voronoi.sample(wx, wz).primary
+
     override fun zoneLevelAt(wx: Int, wz: Int): Int = voronoi.zoneLevelAt(wx, wz)
 
     fun namedCavernPoints(cellRadius: Int = 5): Map<String, Vec3> {

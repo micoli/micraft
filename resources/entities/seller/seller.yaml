@@ -5,6 +5,5 @@ wanderSpeed: 0.0
 wanderRadius: 0.0
 spawn:
   autoSpawn: false
-  maxTotal: 0
   maxPerChunk: 1
   spawnBiomes: []

@@ -31,6 +31,8 @@ class WorldState(
 
     fun biomeAt(wx: Int, wz: Int): String = generator.biomeAt(wx, wz)
 
+    fun biomeDefinitionAt(wx: Int, wz: Int) = generator.biomeDefinitionAt(wx, wz)
+
     fun zoneLevelAt(wx: Int, wz: Int): Int = generator.zoneLevelAt(wx, wz)
 
     fun getBlock(wx: Int, wy: Int, wz: Int): BlockType {

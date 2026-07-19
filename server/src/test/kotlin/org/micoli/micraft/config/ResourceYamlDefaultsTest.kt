@@ -37,7 +37,6 @@ class ResourceYamlDefaultsTest {
     private val spawnRequiredKeys =
         setOf(
             "autoSpawn",
-            "maxTotal",
             "maxPerChunk",
             "spawnBiomes",
         )

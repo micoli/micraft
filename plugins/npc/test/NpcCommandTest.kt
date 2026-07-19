@@ -48,10 +48,10 @@ class NpcCommandTest {
 
     @Test
     fun spawn_validType_spawnsAndNotifies() = runBlocking {
-        val (m, broadcasts) = testNpcManager()
+        val (m, _) = testNpcManager()
         val session = testSession()
         cmd.execute(session, "spawn SELLER Bob the Seller", testContext(npcManager = m))
-        assertTrue(broadcasts.any { it is ServerMessage.NpcSpawned })
+        assertTrue(m.getAll().isNotEmpty())
         assertTrue(session.sent.any { it is ServerMessage.Notification })
     }
 
@@ -88,12 +88,11 @@ class NpcCommandTest {
 
     @Test
     fun remove_validId_despawns() = runBlocking {
-        val (m, broadcasts) = testNpcManager()
+        val (m, _) = testNpcManager()
         val instance = m.spawnNpc("Bob", "SELLER", Vec3(0f, 0f, 0f))
-        broadcasts.clear()
         val session = testSession()
         cmd.execute(session, "remove ${instance.state.id}", testContext(npcManager = m))
-        assertTrue(broadcasts.any { it is ServerMessage.NpcDespawned })
+        assertTrue(m.getAll().none { it.state.id == instance.state.id })
         assertTrue(session.sent.any { it is ServerMessage.Notification })
     }
 
