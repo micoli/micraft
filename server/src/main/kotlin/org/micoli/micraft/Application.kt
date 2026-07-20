@@ -99,6 +99,7 @@ import org.micoli.micraft.http.PlayerRpgController
 import org.micoli.micraft.http.PlayerSkinController
 import org.micoli.micraft.http.QuestsController
 import org.micoli.micraft.http.ScreenshotController
+import org.micoli.micraft.http.ServerInfoController
 import org.micoli.micraft.http.SkinsController
 import org.micoli.micraft.http.TerrainCache
 import org.slf4j.LoggerFactory
@@ -271,6 +272,7 @@ fun Application.module() {
         I18nController(gameLoop).register(this)
         LayoutController().register(this)
         ItemsController().register(this)
+        ServerInfoController().register(this)
         AttacksController(gameLoop).register(this)
         MacrosController().register(this)
         BiomesController(biomeRegistry).register(this)

@@ -1,8 +1,24 @@
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.ktor)
     alias(libs.plugins.kotlinxSerialization)
     alias(libs.plugins.ksp)
+}
+
+tasks.named<ProcessResources>("processResources") {
+    outputs.upToDateWhen { false }
+    outputs.cacheIf { false }
+    doLast {
+        val ts =
+            DateTimeFormatter.ofPattern("yyyyMMdd-HH.mm.ss")
+                .withZone(ZoneOffset.UTC)
+                .format(Instant.now())
+        File(destinationDir, "server-build-timestamp.txt").writeText(ts)
+    }
 }
 
 sourceSets {

@@ -32,7 +32,7 @@ export function Statistics({ data, layoutStyle }: { data: HudData | null; layout
     chunkMeshing,
   } = data;
 
-  const bi = window.mcBuildInfo ?? { mcBindings: "?", webApp: "?", wasm: "?" };
+  const bi = window.mcBuildInfo ?? { mcBindings: "?", webApp: "?", wasm: "?", server: "?" };
   return (
     <div
       className={cn(
@@ -59,6 +59,7 @@ export function Statistics({ data, layoutStyle }: { data: HudData | null; layout
       <StatisticsRow label={"mc_bindings"} value={bi.mcBindings} />
       <StatisticsRow label={"webApp"} value={bi.webApp || "?"} />
       <StatisticsRow label={"wasm"} value={bi.wasm || "?"} />
+      <StatisticsRow label={"server"} value={bi.server || "?"} />
     </div>
   );
 }

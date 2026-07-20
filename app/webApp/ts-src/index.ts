@@ -28,7 +28,13 @@ import { setWidgetRegistry } from "./game/layout/LayoutEngine";
 import { initFaviconAnimator, setFaviconAnimated } from "./favicon/faviconAnimator";
 import { MC_BUILD_TIMESTAMP } from "./buildConfig";
 
-window.mcBuildInfo = { mcBindings: MC_BUILD_TIMESTAMP, webApp: "", wasm: "" };
+window.mcBuildInfo = { mcBindings: MC_BUILD_TIMESTAMP, webApp: "", wasm: "", server: "" };
+fetch("/api/server/info")
+  .then((r) => r.json())
+  .then((d) => {
+    window.mcBuildInfo.server = d.buildTimestamp ?? "";
+  })
+  .catch(() => {});
 console.log("[debug] build " + MC_BUILD_TIMESTAMP + " (mc_bindings)");
 
 // ── Initialize shared runtime state ──────────────────────────────────────────

@@ -471,7 +471,7 @@ declare global {
     mc: McBindings;
     mcState: McState;
     mcRunMacro: (name: string) => void;
-    mcBuildInfo: { mcBindings: string; webApp: string; wasm: string };
+    mcBuildInfo: { mcBindings: string; webApp: string; wasm: string; server: string };
     __mcDragItem?: string | null;
     __mcFB?: Int32Array;
     __mcFI?: number;
