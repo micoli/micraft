@@ -137,26 +137,62 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional init-on-open; re-running on preferences change would discard in-progress edits
   }, [open]);
 
+  const reportDuplicateBindings = (bindings: Record<string, string[]>, customCmds: CustomCmdEntry[]) => {
+    const keyToActions = new Map<string, string[]>();
+    for (const [action, keys] of Object.entries(bindings)) {
+      for (const k of keys) {
+        if (!keyToActions.has(k)) keyToActions.set(k, []);
+        keyToActions.get(k)!.push(action);
+      }
+    }
+    for (const entry of customCmds) {
+      if (!entry.text.trim()) continue;
+      for (const k of entry.keys) {
+        if (!keyToActions.has(k)) keyToActions.set(k, []);
+        keyToActions.get(k)!.push(entry.text.trim());
+      }
+    }
+    const conflicts: string[] = [];
+    for (const [k, actions] of keyToActions.entries()) {
+      if (actions.length > 1) conflicts.push(`[${k}] → ${actions.join(", ")}`);
+    }
+    return conflicts;
+  };
+
   const commitKey = (key: string) => {
     const rec = recordingRef.current;
     if (!rec) return;
     if (rec.action.startsWith("$$cmd:")) {
       const cmdIdx = parseInt(rec.action.slice(6), 10);
-      setLocalCustomCmds((prev) =>
-        prev.map((e, i) => {
+      setLocalCustomCmds((prev) => {
+        const next = prev.map((e, i) => {
           if (i !== cmdIdx) return e;
           const keys = [...e.keys];
           if (rec.index === keys.length) keys.push(key);
           else keys[rec.index] = key;
           return { ...e, keys };
-        }),
-      );
+        });
+        const conflicts = reportDuplicateBindings(localBindings, next);
+        const myConflict = conflicts.find((c) => c.includes(key));
+        if (myConflict) {
+          window.mc.showNotification(`⚠ Key conflict: ${myConflict}`);
+          window.mc.addServerLog("system", `[keybindings] conflict: ${myConflict}`);
+        }
+        return next;
+      });
     } else {
       setLocalBindings((prev) => {
         const keys = [...(prev[rec.action] ?? [])];
         if (rec.index === keys.length) keys.push(key);
         else keys[rec.index] = key;
-        return { ...prev, [rec.action]: keys };
+        const next = { ...prev, [rec.action]: keys };
+        const conflicts = reportDuplicateBindings(next, localCustomCmds);
+        const myConflict = conflicts.find((c) => c.includes(key));
+        if (myConflict) {
+          window.mc.showNotification(`⚠ Key conflict: ${myConflict}`);
+          window.mc.addServerLog("system", `[keybindings] conflict: ${myConflict}`);
+        }
+        return next;
       });
     }
     setRecording(null);
@@ -285,6 +321,16 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
     });
   };
 
+  const setTabWithAudit = (t: Tab) => {
+    setTab(t);
+    if (t === "keybindings") {
+      const conflicts = reportDuplicateBindings(localBindings, localCustomCmds);
+      for (const c of conflicts) {
+        window.mc.addServerLog("system", `[keybindings] duplicate: ${c}`);
+      }
+    }
+  };
+
   const sortedCommands = preferences
     ? [...preferences.commands].sort((a, b) => a.command.localeCompare(b.command))
     : [];
@@ -293,7 +339,7 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
 
   return {
     tab,
-    setTab,
+    setTab: setTabWithAudit,
     localSubscribed,
     localAutoFocus,
     localDisabled,
