@@ -106,6 +106,7 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
   const [recording, setRecording] = useState<{ action: string; index: number } | null>(null);
   const [waitingDoubleTap, setWaitingDoubleTap] = useState(false);
   const recordingRef = useRef<{ action: string; index: number } | null>(null);
+  const commitKeyRef = useRef<(key: string) => void>(() => {});
   const pendingKeyRef = useRef<string | null>(null);
   const doubleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -199,6 +200,9 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
     setWaitingDoubleTap(false);
     pendingKeyRef.current = null;
   };
+  useEffect(() => {
+    commitKeyRef.current = commitKey;
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -217,16 +221,16 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
       if (pendingKeyRef.current !== null) {
         if (doubleTapTimerRef.current) clearTimeout(doubleTapTimerRef.current);
         if (pendingKeyRef.current === key) {
-          commitKey(`${key}+${key}`);
+          commitKeyRef.current(`${key}+${key}`);
         } else {
           pendingKeyRef.current = key;
           setWaitingDoubleTap(true);
-          doubleTapTimerRef.current = setTimeout(() => commitKey(key), 400);
+          doubleTapTimerRef.current = setTimeout(() => commitKeyRef.current(key), 400);
         }
       } else {
         pendingKeyRef.current = key;
         setWaitingDoubleTap(true);
-        doubleTapTimerRef.current = setTimeout(() => commitKey(key), 400);
+        doubleTapTimerRef.current = setTimeout(() => commitKeyRef.current(key), 400);
       }
     };
     window.addEventListener("keydown", handler, true);
