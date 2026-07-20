@@ -428,8 +428,9 @@ class NpcManager(
                         val inRange =
                             sessions.firstOrNull { session ->
                                 val dx = session.state.pos.x - npcPos.x
+                                val dy = session.state.pos.y - npcPos.y
                                 val dz = session.state.pos.z - npcPos.z
-                                dx * dx + dz * dz <= aggroRangeSq
+                                (dx * dx + dz * dz <= aggroRangeSq) && Math.abs(dy) <= 5
                             }
                         if (inRange != null) instance.aggroTarget = inRange.id
                     } else {
@@ -439,8 +440,9 @@ class NpcManager(
                         } else {
                             val npcPos = instance.state.pos
                             val dx = target.state.pos.x - npcPos.x
+                            val dy = target.state.pos.y - npcPos.y
                             val dz = target.state.pos.z - npcPos.z
-                            if (dx * dx + dz * dz > aggroRangeSq * 4 &&
+                            if (dx * dx + dy * dy + dz * dz > aggroRangeSq * 4 &&
                                 now - instance.lastDamagedAtMs > deaggroMs) {
                                 instance.aggroTarget = null
                             }

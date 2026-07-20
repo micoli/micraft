@@ -5,8 +5,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.game.combat.CombatConfigData
+import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.npc.behaviors.InteractionableNpcBehavior
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
 import org.micoli.micraft.game.npc.behaviors.StaticNpcBehavior
@@ -15,6 +18,7 @@ import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.FakePlayerSession
+import org.micoli.micraft.support.testI18n
 import org.micoli.micraft.support.testSession
 import org.micoli.micraft.support.testWorld
 
@@ -49,6 +53,33 @@ private fun wanderDef(type: String = "GOAT"): NpcDefinition =
         height = 0.9f,
         wanderSpeed = 3f,
         wanderRadius = 12f,
+    )
+
+private fun aggressiveDef(type: String = "ZOMBIE", aggroRange: Float = 10f): NpcDefinition =
+    NpcDefinition(
+        type = type,
+        behavior = StaticNpcBehavior(),
+        bbmodelFile = "npc",
+        width = 0.6f,
+        height = 1.8f,
+        wanderSpeed = 0f,
+        wanderRadius = 0f,
+        aggroMode = AggroMode.AGGRESSIVE,
+        aggroRange = aggroRange,
+    )
+
+private fun fakeCombatProcessor(npcManager: NpcManager) =
+    CombatProcessor(
+        config = CombatConfigData(),
+        attackRegistry = emptyMap(),
+        armorRegistry = emptyMap(),
+        classRegistry = emptyMap(),
+        npcManager = npcManager,
+        getSessions = { emptyList() },
+        broadcastCombatLog = {},
+        subscribeToChannel = { _, _ -> },
+        i18n = testI18n(),
+        savePlayer = {},
     )
 
 private fun interactDef(type: String = "SELLER"): NpcDefinition =
@@ -403,5 +434,33 @@ class NpcManagerTest {
         m.spawnNpc("C", "SELLER", Vec3(20f, 5f, 20f))
         assertEquals(2, m.countByTypeInChunk("SELLER", ChunkPos(0, 0)))
         assertEquals(1, m.countByTypeInChunk("SELLER", ChunkPos(1, 1)))
+    }
+
+    @Test
+    fun tickAggro_playerElevatedBeyondAggroRange_doesNotAggro() = runBlocking {
+        val aggroRange = 10f
+        val npcPos = Vec3(0f, 5f, 0f)
+        // player directly above, 30 blocks up — beyond aggroRange in 3D
+        val session = testSession(id = "p1", pos = Vec3(0f, 5f + 30f, 0f))
+        val (m, _) =
+            testNpcManager(
+                mapOf("ZOMBIE" to aggressiveDef(aggroRange = aggroRange)), nearbySession = session)
+        val instance = m.spawnNpc("Z", "ZOMBIE", npcPos)
+        m.tickAggro(listOf(session), fakeCombatProcessor(m))
+        assertNull(instance.aggroTarget, "elevated player should not trigger aggro")
+    }
+
+    @Test
+    fun tickAggro_playerWithinAggroRange_aggros() = runBlocking {
+        val aggroRange = 10f
+        val npcPos = Vec3(0f, 5f, 0f)
+        // player at same elevation, within XZ range
+        val session = testSession(id = "p1", pos = Vec3(5f, 5f, 0f))
+        val (m, _) =
+            testNpcManager(
+                mapOf("ZOMBIE" to aggressiveDef(aggroRange = aggroRange)), nearbySession = session)
+        val instance = m.spawnNpc("Z", "ZOMBIE", npcPos)
+        m.tickAggro(listOf(session), fakeCombatProcessor(m))
+        assertEquals(session.id, instance.aggroTarget, "nearby player should be aggro target")
     }
 }
