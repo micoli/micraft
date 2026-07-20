@@ -29,12 +29,11 @@ import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.classes.ClassesConfig
 import org.micoli.micraft.game.classes.ClassesConfigData
-import org.micoli.micraft.game.combat.AttackConfig
 import org.micoli.micraft.game.combat.CombatConfig
 import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.RegenProcessor
-import org.micoli.micraft.game.combat.SpellConfig
+import org.micoli.micraft.game.combat.SkillsConfig
 import org.micoli.micraft.game.combat.SpellDefinition
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
@@ -222,8 +221,8 @@ class GameLoop(
         NpcManager(broadcast = sessionRegistry::broadcast, getSessions = sessionRegistry::all),
     private val npcSpawner: NpcSpawner = NpcSpawner(),
     private val combatConfig: CombatConfigData = CombatConfig().data,
-    val attackRegistry: Map<String, AttackDefinition> = AttackConfig().data.attacks,
-    val spellRegistry: Map<String, SpellDefinition> = SpellConfig().data.spells,
+    val attackRegistry: Map<String, AttackDefinition> = SkillsConfig().data.attacks,
+    val spellRegistry: Map<String, SpellDefinition> = SkillsConfig().data.spells,
     private val classesData: ClassesConfigData = ClassesConfig().data,
     private val combatProcessor: CombatProcessor =
         CombatProcessor(

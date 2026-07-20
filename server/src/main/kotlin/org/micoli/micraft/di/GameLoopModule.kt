@@ -14,12 +14,11 @@ import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.classes.ClassesConfig
 import org.micoli.micraft.game.classes.ClassesConfigData
-import org.micoli.micraft.game.combat.AttackConfig
 import org.micoli.micraft.game.combat.CombatConfig
 import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.RegenProcessor
-import org.micoli.micraft.game.combat.SpellConfig
+import org.micoli.micraft.game.combat.SkillsConfig
 import org.micoli.micraft.game.combat.SpellDefinition
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
@@ -207,11 +206,13 @@ class GameLoopModule {
             subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
         )
 
+    @Single fun skillsConfig(): SkillsConfig = SkillsConfig()
+
     @Single
     @Named("attacks")
-    fun attacks(): Map<String, AttackDefinition> = AttackConfig().data.attacks
+    fun attacks(skillsConfig: SkillsConfig): Map<String, AttackDefinition> = skillsConfig.data.attacks
 
-    @Single @Named("spells") fun spells(): Map<String, SpellDefinition> = SpellConfig().data.spells
+    @Single @Named("spells") fun spells(skillsConfig: SkillsConfig): Map<String, SpellDefinition> = skillsConfig.data.spells
 
     @Single
     fun combatProcessor(

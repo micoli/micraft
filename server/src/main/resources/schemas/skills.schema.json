@@ -34,6 +34,21 @@
           }
         }
       }
+    },
+    "spells": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {"type": "string", "enum": ["TOKEN_RAGE_CONSUME"]},
+          "rageGain": {"type": "integer", "minimum": 0},
+          "tokenCost": {"type": "integer", "minimum": 0},
+          "manaCost": {"type": "integer", "minimum": 0},
+          "rageCost": {"type": "integer", "minimum": 0},
+          "cooldownMs": {"type": "integer", "minimum": 0}
+        }
+      }
     }
   }
 }

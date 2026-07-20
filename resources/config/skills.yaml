@@ -112,3 +112,10 @@ attacks:
         cooldownMs: 4000
         rageCost: 25
         rangeOverride: 3.0
+
+spells:
+  tokenRageConsume:
+    type: TOKEN_RAGE_CONSUME
+    rageGain: 20
+    tokenCost: 1
+    cooldownMs: 0

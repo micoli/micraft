@@ -1,6 +1,0 @@
-spells:
-  tokenRageConsume:
-    type: TOKEN_RAGE_CONSUME
-    rageGain: 20
-    tokenCost: 1
-    cooldownMs: 0

@@ -46,7 +46,7 @@ private val configFileWhitelist =
         "npc.yaml",
         "items.yaml",
         "recipes.yaml",
-        "attack.yaml",
+        "skills.yaml",
         "classes.yaml",
         "combat.yaml",
         "experience.yaml",
