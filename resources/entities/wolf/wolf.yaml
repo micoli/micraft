@@ -16,7 +16,7 @@ hp: 18
 aggroMode: AGGRESSIVE
 aggroRange: 6.0
 deaggroTimeSec: 10.0
-level: 1
+minLevel: 0
 classResource: RAGE
 maxRage: 60
 attacks:

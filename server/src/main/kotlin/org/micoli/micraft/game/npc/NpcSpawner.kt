@@ -62,6 +62,7 @@ class NpcSpawner {
                 if (clearX != 0f || clearZ != 0f) continue
 
                 val zoneLevel = world.zoneLevelAt(wx, wz)
+                if (zoneLevel < def.minLevel || zoneLevel > def.maxLevel) continue
                 val instanceLevel =
                     (zoneLevel + Random.nextInt(-3, 4)).coerceIn(1, WorldConstants.RPG_LEVEL_MAX)
                 val name =

@@ -215,7 +215,7 @@ class ExperienceProcessorTest {
                 wanderRadius = 0f,
                 hp = 20,
                 aggroMode = AggroMode.PASSIVE,
-                level = level,
+                minLevel = level,
                 tier = tier,
             )
         val state =

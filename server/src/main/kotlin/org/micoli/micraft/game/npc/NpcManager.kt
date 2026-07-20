@@ -115,7 +115,7 @@ class NpcManager(
     ): NpcInstance {
         val def =
             definitions[type] ?: error("Unknown NPC type: '$type'. Available: ${definitions.keys}")
-        val effectiveLevel = if (instanceLevel < 1) def.level else instanceLevel
+        val effectiveLevel = if (instanceLevel < 1) def.minLevel else instanceLevel
         val id = UUID.randomUUID().toString()
         val state =
             NpcState(
