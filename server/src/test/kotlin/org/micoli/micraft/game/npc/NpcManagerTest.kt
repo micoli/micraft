@@ -159,9 +159,7 @@ class NpcManagerTest {
         val (m, _) = testNpcManager(mapOf("GOAT" to wanderDef()), nearbySession = nearby)
         val instance = m.spawnNpc("Billy", "GOAT", Vec3(8.5f, (floorY + 1).toFloat(), 8.5f))
         instance.vy = 0f
-        instance.wanderStepTicks = 30
-        instance.wanderTargetX = 20f
-        instance.wanderTargetZ = 20f
+        instance.wanderPhase = WanderPhase.Moving(20f, 20f, 1f, 30)
         val startX = instance.state.pos.x
         val startZ = instance.state.pos.z
         repeat(40) { m.tick(world) }
@@ -185,9 +183,7 @@ class NpcManagerTest {
         val (m, _) = testNpcManager(mapOf("GOAT" to wanderDef()))
         val instance = m.spawnNpc("Billy", "GOAT", Vec3(8.5f, (floorY + 1).toFloat(), 8.5f))
         instance.vy = 0f
-        instance.wanderStepTicks = 60
-        instance.wanderTargetX = 8.5f
-        instance.wanderTargetZ = 20f
+        instance.wanderPhase = WanderPhase.Moving(8.5f, 20f, 1f, 60)
         val startY = instance.state.pos.y
         var ticks = 0
         while (ticks < 200 && instance.vy <= 0f && instance.state.pos.y <= startY) {
@@ -199,6 +195,80 @@ class NpcManagerTest {
         assertTrue(
             instance.state.pos.y > startY || instance.vy > 0f,
             "Expected NPC to jump over 1-block wall")
+    }
+
+    @Test
+    fun tick_wanderNpc_actuallyPassesWallAfterJump() = runBlocking {
+        val floorY = 4
+        val chunkSize = WorldConstants.CHUNK_SIZE
+        val floor = buildList {
+            for (x in 0 until chunkSize * 3) for (z in 0 until chunkSize * 3) add(
+                Triple(x, floorY, z))
+        }
+        val wall = buildList { for (x in 0 until chunkSize * 3) add(Triple(x, floorY + 1, 12)) }
+        val world = testWorld(*(floor + wall).toTypedArray())
+        val (m, _) = testNpcManager(mapOf("GOAT" to wanderDef()))
+        val instance = m.spawnNpc("Billy", "GOAT", Vec3(8.5f, (floorY + 1).toFloat(), 8.5f))
+        instance.vy = 0f
+        instance.wanderPhase = WanderPhase.Moving(8.5f, 20f, 1f, 120)
+        var maxZ = instance.state.pos.z
+        repeat(200) {
+            m.tick(world)
+            if (instance.state.pos.z > maxZ) maxZ = instance.state.pos.z
+        }
+        assertTrue(maxZ > 12f, "NPC should have crossed the wall, maxZ=$maxZ")
+    }
+
+    @Test
+    fun tick_wanderNpc_climbsTerrainStep() = runBlocking {
+        val lowFloorY = 4
+        val highFloorY = 5
+        val chunkSize = WorldConstants.CHUNK_SIZE
+        // Approach side: floor at y=lowFloorY → NPC stands at y=5
+        val lowSide = buildList {
+            for (x in 0 until chunkSize * 3) for (z in 0 until 12) add(Triple(x, lowFloorY, z))
+        }
+        // Raised side: floor at y=highFloorY → NPC would stand at y=6
+        val highSide = buildList {
+            for (x in 0 until chunkSize * 3) for (z in 12 until chunkSize * 3) add(
+                Triple(x, highFloorY, z))
+        }
+        val world = testWorld(*(lowSide + highSide).toTypedArray())
+        val (m, _) = testNpcManager(mapOf("GOAT" to wanderDef()))
+        val instance = m.spawnNpc("Billy", "GOAT", Vec3(8.5f, (lowFloorY + 1).toFloat(), 8.5f))
+        instance.vy = 0f
+        instance.wanderPhase = WanderPhase.Moving(8.5f, 20f, 1f, 120)
+        var maxZ = instance.state.pos.z
+        repeat(200) {
+            m.tick(world)
+            if (instance.state.pos.z > maxZ) maxZ = instance.state.pos.z
+        }
+        assertTrue(maxZ > 12f, "NPC should have climbed the terrain step, maxZ=$maxZ")
+    }
+
+    @Test
+    fun tick_wanderNpc_crossesWallEvenWithFewTicksRemaining() = runBlocking {
+        // NPC reaches the wall with only 4 ticks left — without the vy guard, remainingTicks=0
+        // fires mid-jump and the NPC picks a new waypoint behind the wall and drifts back.
+        val floorY = 4
+        val chunkSize = WorldConstants.CHUNK_SIZE
+        val floor = buildList {
+            for (x in 0 until chunkSize * 3) for (z in 0 until chunkSize * 3) add(
+                Triple(x, floorY, z))
+        }
+        val wall = buildList { for (x in 0 until chunkSize * 3) add(Triple(x, floorY + 1, 12)) }
+        val world = testWorld(*(floor + wall).toTypedArray())
+        val (m, _) = testNpcManager(mapOf("GOAT" to wanderDef()))
+        val instance = m.spawnNpc("Billy", "GOAT", Vec3(8.5f, (floorY + 1).toFloat(), 8.5f))
+        instance.vy = 0f
+        // Only 25 ticks — NPC reaches wall around tick 22, leaving ≤3 ticks before expiry
+        instance.wanderPhase = WanderPhase.Moving(8.5f, 20f, 1f, 25)
+        var maxZ = instance.state.pos.z
+        repeat(60) {
+            m.tick(world)
+            if (instance.state.pos.z > maxZ) maxZ = instance.state.pos.z
+        }
+        assertTrue(maxZ > 12f, "NPC should cross wall even with few ticks remaining, maxZ=$maxZ")
     }
 
     @Test
@@ -220,9 +290,7 @@ class NpcManagerTest {
         val (m, _) = testNpcManager(mapOf("GOAT" to wanderDef()))
         val instance = m.spawnNpc("Billy", "GOAT", Vec3(8.5f, (floorY + 1).toFloat(), 8.5f))
         instance.vy = 0f
-        instance.wanderStepTicks = 60
-        instance.wanderTargetX = 8.5f
-        instance.wanderTargetZ = 20f
+        instance.wanderPhase = WanderPhase.Moving(8.5f, 20f, 1f, 60)
         repeat(5) { m.tick(world) }
         // NPC should pick a new target rather than jumping — vy stays 0
         assertTrue(instance.vy == 0f, "NPC should not jump over a 2-block wall")

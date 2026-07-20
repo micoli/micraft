@@ -9,10 +9,6 @@ class NpcInstance(
     @Volatile var velocity: Vec3 = Vec3(0f, 0f, 0f),
     val definition: NpcDefinition,
     val spawnPos: Vec3,
-    var wanderTargetX: Float = 0f,
-    var wanderTargetZ: Float = 0f,
-    var wanderPauseTicks: Int = 0,
-    var wanderStepTicks: Int = 0,
     @Volatile var currentHp: Int = -1,
     @Volatile var currentMana: Int = -1,
     @Volatile var currentRage: Int = 0,
@@ -23,9 +19,11 @@ class NpcInstance(
     @Volatile var chaseTargetPos: Vec3? = null,
     @Volatile var instanceLevel: Int = 1,
 ) {
+    var wanderPhase: WanderPhase =
+        WanderPhase.Moving(spawnPos.x, spawnPos.z, 1f, NpcConstants.WANDER_STEP_TICKS_MAX)
+    val wanderWaypoints: ArrayDeque<Pair<Float, Float>> = ArrayDeque()
+
     init {
-        wanderTargetX = spawnPos.x
-        wanderTargetZ = spawnPos.z
         if (currentHp < 0) currentHp = definition.hp
         if (currentMana < 0) currentMana = definition.maxMana
     }

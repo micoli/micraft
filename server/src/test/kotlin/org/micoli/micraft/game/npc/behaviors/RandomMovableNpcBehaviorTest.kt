@@ -1,10 +1,13 @@
 package org.micoli.micraft.game.npc.behaviors
 
+import kotlin.math.abs
 import kotlin.math.sqrt
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
+import org.micoli.micraft.game.npc.WanderPhase
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.support.testWorld
@@ -88,6 +91,71 @@ class RandomMovableNpcBehaviorTest {
         val before = instance.state.pos.x
         repeat(20) { RandomMovableNpcBehavior().tick(instance, world) }
         assertTrue(instance.state.pos.x > before, "npc should move toward target")
+    }
+
+    @Test
+    fun tick_pausingPhase_rotatesYawTowardLookTarget() {
+        val floorY = 4
+        val world = testWorld(Triple(8, floorY, 8))
+        val spawn = Vec3(8.5f, (floorY + 1).toFloat(), 8.5f)
+        val instance = instanceAt(spawn)
+        instance.vy = 0f
+        instance.wanderPhase = WanderPhase.Pausing(60, 3.0f, 1)
+        val initialYaw = instance.state.yaw
+        repeat(20) { RandomMovableNpcBehavior().tick(instance, world) }
+        assertTrue(instance.state.yaw != initialYaw, "yaw should rotate during pause look-around")
+    }
+
+    @Test
+    fun tick_movingPhase_yawInterpolatesGradually() {
+        val floorY = 4
+        val world =
+            testWorld(
+                *(0..20).flatMap { x -> (0..20).map { z -> Triple(x, floorY, z) } }.toTypedArray())
+        val spawn = Vec3(5f, (floorY + 1).toFloat(), 10f)
+        val instance = instanceAt(spawn, wanderSpeed = 3f)
+        instance.vy = 0f
+        instance.wanderPhase = WanderPhase.Moving(15f, 10f, 1f, 100)
+        var anyGradualStep = false
+        var prevYaw = instance.state.yaw
+        repeat(10) {
+            RandomMovableNpcBehavior().tick(instance, world)
+            val delta = abs(instance.state.yaw - prevYaw)
+            if (delta > 0f && delta <= NpcConstants.YAW_TURN_SPEED + 0.001f) anyGradualStep = true
+            prevYaw = instance.state.yaw
+        }
+        assertTrue(anyGradualStep, "yaw should interpolate gradually, not snap")
+    }
+
+    @Test
+    fun tick_decelPhase_transitionsToPausingWhenQueueEmpty() {
+        val floorY = 4
+        val world = testWorld(Triple(8, floorY, 8))
+        val spawn = Vec3(8.5f, (floorY + 1).toFloat(), 8.5f)
+        val instance = instanceAt(spawn)
+        instance.vy = 0f
+        instance.wanderPhase = WanderPhase.Decel(8.5f, 8.5f, NpcConstants.WANDER_DECEL_TICKS, 1f)
+        repeat(NpcConstants.WANDER_DECEL_TICKS + 1) {
+            RandomMovableNpcBehavior().tick(instance, world)
+        }
+        assertTrue(instance.wanderPhase is WanderPhase.Pausing, "should enter Pausing after Decel")
+    }
+
+    @Test
+    fun tick_waypointQueue_consumedBeforePause() {
+        val floorY = 4
+        val world =
+            testWorld(
+                *(0..30).flatMap { x -> (0..30).map { z -> Triple(x, floorY, z) } }.toTypedArray())
+        val spawn = Vec3(15f, (floorY + 1).toFloat(), 15f)
+        val instance = instanceAt(spawn, wanderRadius = 10f)
+        instance.vy = 0f
+        instance.wanderWaypoints.addLast(Pair(17f, 15f))
+        instance.wanderPhase = WanderPhase.Decel(17f, 15f, 1, 1f)
+        repeat(3) { RandomMovableNpcBehavior().tick(instance, world) }
+        assertTrue(
+            instance.wanderPhase is WanderPhase.Moving,
+            "should pop next waypoint from queue into Moving, not Pausing")
     }
 
     @Test
