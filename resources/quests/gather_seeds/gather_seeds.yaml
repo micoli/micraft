@@ -1,0 +1,16 @@
+title: "Gather Seeds"
+description: "The farmers need seeds for the coming planting season. Recommended for level 14 players."
+type: FETCH
+level: 14
+itemType: SEED
+requiredCount: 30
+rewards:
+  xp: 1200
+  items:
+    - type: GRASS
+      count: 20
+    - type: DIRT
+      count: 20
+dependsOn: []
+repeatable: true
+cooldownSeconds: 3600

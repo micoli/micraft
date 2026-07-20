@@ -1,0 +1,23 @@
+title: "Mountain Lord"
+description: "The mountain lord commands fifteen bears and fifteen wolves — break his army. Recommended for level 27 players."
+type: KILL
+level: 27
+objectives:
+  - npcType: polar_bear
+    requiredCount: 15
+  - npcType: wolf
+    requiredCount: 15
+rewards:
+  xp: 7500
+  items:
+    - type: SNOWBALL
+      count: 40
+    - type: SNOW_BLOCK
+      count: 30
+    - type: PINE_LOG
+      count: 25
+    - type: COBBLESTONE
+      count: 50
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

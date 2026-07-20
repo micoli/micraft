@@ -1,0 +1,14 @@
+title: "Snowball Collection"
+description: "Gather snowballs for the village festival. Recommended for level 5 players."
+type: FETCH
+level: 5
+itemType: SNOWBALL
+requiredCount: 10
+rewards:
+  xp: 280
+  items:
+    - type: SAND
+      count: 10
+dependsOn: []
+repeatable: true
+cooldownSeconds: 3600

@@ -1,0 +1,17 @@
+title: "Polar Patrol"
+description: "Four polar bears have been spotted near the northern gate. Recommended for level 10 players."
+type: KILL
+level: 10
+objectives:
+  - npcType: polar_bear
+    requiredCount: 4
+rewards:
+  xp: 850
+  items:
+    - type: SNOWBALL
+      count: 15
+    - type: SNOW_BLOCK
+      count: 5
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

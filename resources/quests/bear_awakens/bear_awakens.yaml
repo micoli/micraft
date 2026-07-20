@@ -1,0 +1,17 @@
+title: "The Bear Awakens"
+description: "Polar bears have left the northern range and are threatening the village. Recommended for level 6 players."
+type: KILL
+level: 6
+objectives:
+  - npcType: polar_bear
+    requiredCount: 2
+rewards:
+  xp: 450
+  items:
+    - type: SNOWBALL
+      count: 8
+    - type: GRAVEL
+      count: 8
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

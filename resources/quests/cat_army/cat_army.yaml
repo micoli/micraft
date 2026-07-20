@@ -1,0 +1,21 @@
+title: "Cat Army"
+description: "A vast army of feral cats and ducks has overrun the southern coast. Recommended for level 23 players."
+type: KILL
+level: 23
+objectives:
+  - npcType: cat
+    requiredCount: 25
+  - npcType: duck
+    requiredCount: 15
+rewards:
+  xp: 4500
+  items:
+    - type: COBBLESTONE
+      count: 45
+    - type: FLINT
+      count: 25
+    - type: SEED
+      count: 20
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

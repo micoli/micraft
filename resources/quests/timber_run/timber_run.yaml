@@ -1,0 +1,14 @@
+title: "Timber Run"
+description: "The village needs lumber for repairs. Recommended for level 7 players."
+type: FETCH
+level: 7
+itemType: OAK_LOG
+requiredCount: 15
+rewards:
+  xp: 500
+  items:
+    - type: FLINT
+      count: 8
+dependsOn: []
+repeatable: true
+cooldownSeconds: 3600

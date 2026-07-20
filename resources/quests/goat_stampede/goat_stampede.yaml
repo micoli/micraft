@@ -1,0 +1,17 @@
+title: "Goat Stampede"
+description: "A massive goat stampede is heading toward the village walls. Recommended for level 7 players."
+type: KILL
+level: 7
+objectives:
+  - npcType: goat
+    requiredCount: 15
+rewards:
+  xp: 520
+  items:
+    - type: COBBLESTONE
+      count: 15
+    - type: DIRT
+      count: 10
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

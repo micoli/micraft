@@ -1,0 +1,17 @@
+title: "Wolf Territory"
+description: "Push back the wolf pack that has claimed the trade road. Recommended for level 9 players."
+type: KILL
+level: 9
+objectives:
+  - npcType: wolf
+    requiredCount: 10
+rewards:
+  xp: 720
+  items:
+    - type: GRAVEL
+      count: 12
+    - type: COBBLESTONE
+      count: 10
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

@@ -1,0 +1,21 @@
+title: "Pack Hunters"
+description: "Wolves and polar bears have formed a deadly hunting coalition in the highlands. Recommended for level 22 players."
+type: KILL
+level: 22
+objectives:
+  - npcType: wolf
+    requiredCount: 18
+  - npcType: polar_bear
+    requiredCount: 8
+rewards:
+  xp: 4000
+  items:
+    - type: COBBLESTONE
+      count: 45
+    - type: SNOWBALL
+      count: 30
+    - type: GRAVEL
+      count: 25
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

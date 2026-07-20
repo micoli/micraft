@@ -1,0 +1,19 @@
+title: "Predator Hunt"
+description: "Wolves and polar bears are hunting together in the mountain pass. Recommended for level 11 players."
+type: KILL
+level: 11
+objectives:
+  - npcType: wolf
+    requiredCount: 8
+  - npcType: polar_bear
+    requiredCount: 2
+rewards:
+  xp: 1000
+  items:
+    - type: COBBLESTONE
+      count: 20
+    - type: GRAVEL
+      count: 10
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

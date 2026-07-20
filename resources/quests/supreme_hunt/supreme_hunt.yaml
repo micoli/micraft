@@ -1,0 +1,25 @@
+title: "Supreme Hunt"
+description: "The supreme hunt demands the slaughter of the most dangerous beasts across the realm. Recommended for level 29 players."
+type: KILL
+level: 29
+objectives:
+  - npcType: wolf
+    requiredCount: 25
+  - npcType: polar_bear
+    requiredCount: 12
+  - npcType: cat
+    requiredCount: 20
+rewards:
+  xp: 9000
+  items:
+    - type: COBBLESTONE
+      count: 60
+    - type: SNOWBALL
+      count: 40
+    - type: OAK_LOG
+      count: 30
+    - type: FLINT
+      count: 30
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

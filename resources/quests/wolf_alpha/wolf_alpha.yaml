@@ -1,0 +1,19 @@
+title: "Wolf Alpha"
+description: "Twenty wolves led by a cunning alpha are besieging the northern outpost. Recommended for level 18 players."
+type: KILL
+level: 18
+objectives:
+  - npcType: wolf
+    requiredCount: 20
+rewards:
+  xp: 2600
+  items:
+    - type: COBBLESTONE
+      count: 35
+    - type: GRAVEL
+      count: 20
+    - type: OAK_LOG
+      count: 15
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

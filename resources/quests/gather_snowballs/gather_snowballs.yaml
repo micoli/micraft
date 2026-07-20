@@ -1,0 +1,16 @@
+title: "Gather Snowballs"
+description: "Stock the village's winter supply of snowballs. Recommended for level 17 players."
+type: FETCH
+level: 17
+itemType: SNOWBALL
+requiredCount: 30
+rewards:
+  xp: 2000
+  items:
+    - type: SNOW_BLOCK
+      count: 20
+    - type: PINE_LEAVES_SNOW
+      count: 10
+dependsOn: []
+repeatable: true
+cooldownSeconds: 7200

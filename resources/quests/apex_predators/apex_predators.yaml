@@ -1,0 +1,25 @@
+title: "Apex Predators"
+description: "Face the apex predators — twenty bears and thirty wolves — in the final proving grounds. Recommended for level 30 players."
+type: KILL
+level: 30
+objectives:
+  - npcType: polar_bear
+    requiredCount: 20
+  - npcType: wolf
+    requiredCount: 30
+rewards:
+  xp: 12000
+  items:
+    - type: COBBLESTONE
+      count: 80
+    - type: SNOWBALL
+      count: 50
+    - type: SNOW_BLOCK
+      count: 40
+    - type: PINE_LOG
+      count: 35
+    - type: OAK_LOG
+      count: 35
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

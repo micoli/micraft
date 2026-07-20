@@ -1,0 +1,15 @@
+title: "Wolf Scouts"
+description: "Wolf scouts from the eastern forest are circling the village. Recommended for level 4 players."
+type: KILL
+level: 4
+objectives:
+  - npcType: wolf
+    requiredCount: 3
+rewards:
+  xp: 280
+  items:
+    - type: GRAVEL
+      count: 5
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

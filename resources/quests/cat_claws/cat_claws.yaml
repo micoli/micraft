@@ -1,0 +1,19 @@
+title: "Cat Claws"
+description: "Packs of cats and wolves are hunting together in the eastern wood. Recommended for level 9 players."
+type: KILL
+level: 9
+objectives:
+  - npcType: cat
+    requiredCount: 12
+  - npcType: wolf
+    requiredCount: 3
+rewards:
+  xp: 700
+  items:
+    - type: FLINT
+      count: 10
+    - type: COBBLESTONE
+      count: 12
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

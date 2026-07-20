@@ -1,0 +1,15 @@
+title: "First Steps"
+description: "Cull the goats roaming near the starting village. Recommended for level 1 players."
+type: KILL
+level: 1
+objectives:
+  - npcType: goat
+    requiredCount: 3
+rewards:
+  xp: 100
+  items:
+    - type: COBBLESTONE
+      count: 5
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

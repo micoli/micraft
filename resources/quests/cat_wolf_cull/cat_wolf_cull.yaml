@@ -1,0 +1,19 @@
+title: "Cat and Wolf Cull"
+description: "The forest edge is overrun with cats and wolves. Recommended for level 12 players."
+type: KILL
+level: 12
+objectives:
+  - npcType: cat
+    requiredCount: 10
+  - npcType: wolf
+    requiredCount: 8
+rewards:
+  xp: 1150
+  items:
+    - type: COBBLESTONE
+      count: 20
+    - type: FLINT
+      count: 12
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

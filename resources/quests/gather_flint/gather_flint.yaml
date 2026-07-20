@@ -1,0 +1,14 @@
+title: "Gather Flint"
+description: "The blacksmith needs flint for tools. Recommended for level 2 players."
+type: FETCH
+level: 2
+itemType: FLINT
+requiredCount: 8
+rewards:
+  xp: 130
+  items:
+    - type: COBBLESTONE
+      count: 8
+dependsOn: []
+repeatable: true
+cooldownSeconds: 900

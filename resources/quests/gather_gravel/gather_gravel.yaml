@@ -1,0 +1,14 @@
+title: "Gather Gravel"
+description: "The road builders need gravel for the new path. Recommended for level 8 players."
+type: FETCH
+level: 8
+itemType: GRAVEL
+requiredCount: 20
+rewards:
+  xp: 550
+  items:
+    - type: COBBLESTONE
+      count: 15
+dependsOn: []
+repeatable: true
+cooldownSeconds: 1800

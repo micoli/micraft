@@ -1,0 +1,15 @@
+title: "Stray Cats"
+description: "Too many stray cats are disrupting the village. Recommended for level 2 players."
+type: KILL
+level: 2
+objectives:
+  - npcType: cat
+    requiredCount: 5
+rewards:
+  xp: 150
+  items:
+    - type: FLINT
+      count: 3
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

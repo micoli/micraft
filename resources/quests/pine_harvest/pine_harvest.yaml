@@ -1,0 +1,16 @@
+title: "Pine Harvest"
+description: "Gather pine logs from the northern forest for the new watchtower. Recommended for level 10 players."
+type: FETCH
+level: 10
+itemType: PINE_LOG
+requiredCount: 20
+rewards:
+  xp: 800
+  items:
+    - type: FLINT
+      count: 12
+    - type: OAK_LOG
+      count: 8
+dependsOn: []
+repeatable: true
+cooldownSeconds: 3600

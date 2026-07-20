@@ -1,0 +1,16 @@
+title: "Sandstone Run"
+description: "Collect sandstone blocks for the new market district. Recommended for level 11 players."
+type: FETCH
+level: 11
+itemType: SANDSTONE
+requiredCount: 25
+rewards:
+  xp: 950
+  items:
+    - type: SAND
+      count: 20
+    - type: FLINT
+      count: 10
+dependsOn: []
+repeatable: true
+cooldownSeconds: 3600

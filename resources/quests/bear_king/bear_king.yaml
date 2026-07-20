@@ -1,0 +1,19 @@
+title: "Bear King"
+description: "Ten polar bears ruled by a fearsome king prowl the snowfields. Recommended for level 19 players."
+type: KILL
+level: 19
+objectives:
+  - npcType: polar_bear
+    requiredCount: 10
+rewards:
+  xp: 3000
+  items:
+    - type: SNOWBALL
+      count: 30
+    - type: SNOW_BLOCK
+      count: 20
+    - type: PINE_LOG
+      count: 15
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

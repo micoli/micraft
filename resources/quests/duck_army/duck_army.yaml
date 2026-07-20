@@ -1,0 +1,17 @@
+title: "Duck Army"
+description: "An enormous flock of ducks is blocking the southern river trade route. Recommended for level 13 players."
+type: KILL
+level: 13
+objectives:
+  - npcType: duck
+    requiredCount: 25
+rewards:
+  xp: 1300
+  items:
+    - type: SEED
+      count: 25
+    - type: GRASS
+      count: 15
+dependsOn: []
+repeatable: true
+cooldownSeconds: 7200

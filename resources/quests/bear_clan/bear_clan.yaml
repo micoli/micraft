@@ -1,0 +1,19 @@
+title: "Bear Clan"
+description: "A clan of six polar bears has claimed the mountain trail. Recommended for level 13 players."
+type: KILL
+level: 13
+objectives:
+  - npcType: polar_bear
+    requiredCount: 6
+rewards:
+  xp: 1400
+  items:
+    - type: SNOWBALL
+      count: 20
+    - type: SNOW_BLOCK
+      count: 10
+    - type: COBBLESTONE
+      count: 15
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

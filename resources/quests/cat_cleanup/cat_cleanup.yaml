@@ -1,0 +1,17 @@
+title: "Cat Cleanup"
+description: "Feral cats are raiding food stores. Drive them away. Recommended for level 5 players."
+type: KILL
+level: 5
+objectives:
+  - npcType: cat
+    requiredCount: 8
+rewards:
+  xp: 320
+  items:
+    - type: FLINT
+      count: 5
+    - type: COBBLESTONE
+      count: 8
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

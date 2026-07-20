@@ -1,0 +1,16 @@
+title: "Timber Harvest"
+description: "The kingdom needs a massive timber supply for the fortress walls. Recommended for level 20 players."
+type: FETCH
+level: 20
+itemType: OAK_LOG
+requiredCount: 40
+rewards:
+  xp: 3000
+  items:
+    - type: PINE_LOG
+      count: 20
+    - type: FLINT
+      count: 20
+dependsOn: []
+repeatable: true
+cooldownSeconds: 7200

@@ -1,0 +1,15 @@
+title: "Wolf Pack"
+description: "A wolf pack has been spotted hunting villagers at dusk. Recommended for level 6 players."
+type: KILL
+level: 6
+objectives:
+  - npcType: wolf
+    requiredCount: 6
+rewards:
+  xp: 420
+  items:
+    - type: COBBLESTONE
+      count: 12
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

@@ -1,0 +1,23 @@
+title: "Mixed Hunt"
+description: "Wolves, cats and ducks have formed an unlikely alliance disrupting the valley. Recommended for level 17 players."
+type: KILL
+level: 17
+objectives:
+  - npcType: wolf
+    requiredCount: 12
+  - npcType: cat
+    requiredCount: 10
+  - npcType: duck
+    requiredCount: 8
+rewards:
+  xp: 2200
+  items:
+    - type: COBBLESTONE
+      count: 30
+    - type: FLINT
+      count: 15
+    - type: SEED
+      count: 15
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

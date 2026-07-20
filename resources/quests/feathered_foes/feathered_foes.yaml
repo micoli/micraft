@@ -1,0 +1,15 @@
+title: "Feathered Foes"
+description: "A large flock of ducks has taken over the river path. Recommended for level 4 players."
+type: KILL
+level: 4
+objectives:
+  - npcType: duck
+    requiredCount: 10
+rewards:
+  xp: 260
+  items:
+    - type: SEED
+      count: 10
+dependsOn: []
+repeatable: true
+cooldownSeconds: 1800

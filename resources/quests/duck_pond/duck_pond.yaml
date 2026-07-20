@@ -1,0 +1,15 @@
+title: "Duck Pond Trouble"
+description: "Ducks are spoiling the village water supply. Recommended for level 1 players."
+type: KILL
+level: 1
+objectives:
+  - npcType: duck
+    requiredCount: 4
+rewards:
+  xp: 120
+  items:
+    - type: SEED
+      count: 5
+dependsOn: []
+repeatable: true
+cooldownSeconds: 1800

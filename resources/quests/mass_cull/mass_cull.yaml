@@ -1,0 +1,21 @@
+title: "Mass Cull"
+description: "Goats and ducks have overrun the lowlands in alarming numbers. Recommended for level 20 players."
+type: KILL
+level: 20
+objectives:
+  - npcType: goat
+    requiredCount: 20
+  - npcType: duck
+    requiredCount: 20
+rewards:
+  xp: 3200
+  items:
+    - type: COBBLESTONE
+      count: 40
+    - type: SEED
+      count: 25
+    - type: GRASS
+      count: 20
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

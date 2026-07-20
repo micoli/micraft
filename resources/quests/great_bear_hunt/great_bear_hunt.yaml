@@ -1,0 +1,19 @@
+title: "Great Bear Hunt"
+description: "Eight polar bears have descended from the peaks. Drive them back. Recommended for level 15 players."
+type: KILL
+level: 15
+objectives:
+  - npcType: polar_bear
+    requiredCount: 8
+rewards:
+  xp: 1800
+  items:
+    - type: SNOWBALL
+      count: 25
+    - type: SNOW_BLOCK
+      count: 15
+    - type: PINE_LOG
+      count: 10
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

@@ -1,0 +1,17 @@
+title: "Duck Menace"
+description: "Aggressive ducks are attacking fishermen at the lake. Recommended for level 8 players."
+type: KILL
+level: 8
+objectives:
+  - npcType: duck
+    requiredCount: 15
+rewards:
+  xp: 600
+  items:
+    - type: SEED
+      count: 15
+    - type: GRASS
+      count: 8
+dependsOn: []
+repeatable: true
+cooldownSeconds: 2700

@@ -1,0 +1,15 @@
+title: "Goat Patrol"
+description: "Goats are trampling crops across three farms. Recommended for level 3 players."
+type: KILL
+level: 3
+objectives:
+  - npcType: goat
+    requiredCount: 8
+rewards:
+  xp: 220
+  items:
+    - type: COBBLESTONE
+      count: 10
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

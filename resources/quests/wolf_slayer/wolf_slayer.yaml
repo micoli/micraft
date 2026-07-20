@@ -1,0 +1,17 @@
+title: "Wolf Slayer"
+description: "Fifteen wolves are terrorizing outlying homesteads. Recommended for level 14 players."
+type: KILL
+level: 14
+objectives:
+  - npcType: wolf
+    requiredCount: 15
+rewards:
+  xp: 1500
+  items:
+    - type: COBBLESTONE
+      count: 25
+    - type: GRAVEL
+      count: 15
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

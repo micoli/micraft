@@ -1,0 +1,23 @@
+title: "Great Cull"
+description: "The great cull is called — cleanse the land of goats, wolves and ducks. Recommended for level 25 players."
+type: KILL
+level: 25
+objectives:
+  - npcType: goat
+    requiredCount: 25
+  - npcType: wolf
+    requiredCount: 20
+  - npcType: duck
+    requiredCount: 15
+rewards:
+  xp: 6000
+  items:
+    - type: COBBLESTONE
+      count: 50
+    - type: GRAVEL
+      count: 30
+    - type: OAK_LOG
+      count: 25
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

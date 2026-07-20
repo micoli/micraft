@@ -1,0 +1,17 @@
+title: "Goat Horde"
+description: "A massive horde of thirty goats is devastating farmland across the region. Recommended for level 16 players."
+type: KILL
+level: 16
+objectives:
+  - npcType: goat
+    requiredCount: 30
+rewards:
+  xp: 2000
+  items:
+    - type: COBBLESTONE
+      count: 30
+    - type: DIRT
+      count: 20
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0
