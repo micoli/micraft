@@ -38,6 +38,7 @@ sealed class ServerMessage {
         val reconcileToleranceXz: Double = 0.5,
         val reconcileToleranceY: Double = 0.99,
         val chunkTransport: String = "websocket",
+        val buildTimestamp: String = "",
     ) : ServerMessage()
 
     @ProtoId(1) @Serializable data class ShadersUpdate(val enabled: Boolean) : ServerMessage()

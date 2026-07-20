@@ -2,6 +2,10 @@
 
 package org.micoli.micraft.babylon
 
+// ── Build info ────────────────────────────────────────────────────────────────
+
+fun jsSetServerBuildTimestamp(timestamp: String): Unit = js("window.mcBuildInfo.server = timestamp")
+
 // ── Loading overlay ────────────────────────────────────────────────────────────
 
 fun jsUpdateChunkLoading(meshed: Int, downloaded: Int, total: Int): Unit =

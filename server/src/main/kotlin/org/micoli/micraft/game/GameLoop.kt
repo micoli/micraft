@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import org.micoli.micraft.I18nConfig
+import org.micoli.micraft.SERVER_BUILD_TIMESTAMP
 import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.NoAuthAccountStore
@@ -1053,7 +1054,8 @@ class GameLoop(
                 session.state.viewMode,
                 RECONCILE_TOLERANCE_XZ,
                 RECONCILE_TOLERANCE_Y,
-                chunkSection.transport))
+                chunkSection.transport,
+                SERVER_BUILD_TIMESTAMP))
         session.send(buildRegistrySync())
         session.send(
             ServerMessage.RecipeSync(

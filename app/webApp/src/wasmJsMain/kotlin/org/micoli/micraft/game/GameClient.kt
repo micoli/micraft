@@ -361,6 +361,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     playerIdReady.complete(msg.playerId)
                     uiState.playerId = msg.playerId
                     uiState.consolePlayerName = msg.playerName
+                    jsSetServerBuildTimestamp(msg.buildTimestamp)
                     jsFetchI18n(msg.language)
                     jsFetchBiomeColors()
                     chunkManager.setShadersEnabled(msg.shadersEnabled)
