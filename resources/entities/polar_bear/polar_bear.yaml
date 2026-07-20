@@ -21,6 +21,8 @@ classResource: RAGE
 maxRage: 80
 attacks:
   - attackId: polar_bear_swipe
-    level: 2
+    level: 3
   - attackId: polar_bear_crush
-    level: 1
+    level: 2
+  - attackId: ice_claw
+    level: 2

@@ -21,4 +21,6 @@ classResource: MANA
 maxMana: 0
 attacks:
   - attackId: camel_kick
+    level: 2
+  - attackId: charge
     level: 1

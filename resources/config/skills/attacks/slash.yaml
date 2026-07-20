@@ -9,3 +9,15 @@ levels:
     power: 8
     weaponDice: 1d10
     cooldownMs: 750
+  3:
+    power: 11
+    weaponDice: 2d6
+    cooldownMs: 700
+  4:
+    power: 15
+    weaponDice: 2d8
+    cooldownMs: 680
+  5:
+    power: 20
+    weaponDice: 3d6
+    cooldownMs: 660

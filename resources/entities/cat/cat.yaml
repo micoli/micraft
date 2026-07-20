@@ -16,3 +16,8 @@ hp: 5
 aggroMode: PASSIVE
 aggroRange: 5
 deaggroTimeSec: 2
+attacks:
+  - attackId: shadow_claw
+    level: 1
+  - attackId: poison_bite
+    level: 1

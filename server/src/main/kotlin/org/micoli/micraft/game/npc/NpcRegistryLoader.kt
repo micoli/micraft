@@ -38,6 +38,7 @@ private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
         classResource = o.classResource ?: classResource,
         maxMana = o.maxMana ?: maxMana,
         maxRage = o.maxRage ?: maxRage,
+        bbmodelFile = o.bbmodelFile ?: bbmodelFile,
     )
 
 class NpcRegistryLoader(
@@ -101,7 +102,7 @@ class NpcRegistryLoader(
                                     type = key,
                                     behavior = behavior,
                                     behaviorKey = entry.behavior,
-                                    bbmodelFile = key,
+                                    bbmodelFile = entry.bbmodelFile ?: key,
                                     width = entry.width,
                                     height = entry.height,
                                     wanderSpeed = entry.wanderSpeed,

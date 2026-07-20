@@ -1,0 +1,30 @@
+damageType: PHYSICAL
+enabled: true
+levels:
+  1:
+    power: 8
+    weaponDice: 2d6
+    cooldownMs: 4000
+    rangeOverride: 6.0
+  2:
+    power: 12
+    weaponDice: 2d8
+    cooldownMs: 3800
+    rangeOverride: 6.0
+  3:
+    power: 17
+    weaponDice: 3d6
+    cooldownMs: 3600
+    rangeOverride: 7.0
+  4:
+    power: 22
+    weaponDice: 3d8
+    cooldownMs: 3400
+    rangeOverride: 7.0
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Stunned> {}
+  5:
+    power: 28
+    weaponDice: 4d8
+    cooldownMs: 3200
+    rangeOverride: 8.0
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Stunned> {}

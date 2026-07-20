@@ -7,3 +7,22 @@ levels:
     cooldownMs: 4000
     rageCost: 25
     rangeOverride: 3.0
+  2:
+    power: 16
+    weaponDice: 4d8
+    cooldownMs: 3800
+    rageCost: 30
+    rangeOverride: 3.0
+  3:
+    power: 20
+    weaponDice: 4d10
+    cooldownMs: 3600
+    rageCost: 35
+    rangeOverride: 3.5
+  4:
+    power: 25
+    weaponDice: 5d8
+    cooldownMs: 3400
+    rageCost: 40
+    rangeOverride: 3.5
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Stunned> {}

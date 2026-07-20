@@ -1,0 +1,28 @@
+damageType: POISON
+enabled: true
+levels:
+  1:
+    power: 5
+    weaponDice: 1d4
+    cooldownMs: 1500
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Poisoned> {}
+  2:
+    power: 8
+    weaponDice: 2d4
+    cooldownMs: 1400
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Poisoned> {}
+  3:
+    power: 11
+    weaponDice: 2d6
+    cooldownMs: 1300
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Poisoned> {}
+  4:
+    power: 15
+    weaponDice: 3d6
+    cooldownMs: 1200
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Poisoned> {}
+  5:
+    power: 19
+    weaponDice: 3d8
+    cooldownMs: 1100
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Poisoned> {}

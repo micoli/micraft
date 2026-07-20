@@ -9,6 +9,10 @@ spawn:
   spawnBiomes: []
 hp: 20
 aggroMode: AGGRESSIVE
-aggroRange:  20.0
-deaggroTimeSec:  10.0
-attacks: []
+aggroRange: 20.0
+deaggroTimeSec: 10.0
+attacks:
+  - attackId: slash
+    level: 2
+  - attackId: heavy_slash
+    level: 1

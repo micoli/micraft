@@ -16,3 +16,14 @@ levels:
     weaponDice: 3d8
     cooldownMs: 1400
     rageCost: 25
+  4:
+    power: 20
+    weaponDice: 4d8
+    cooldownMs: 1300
+    rageCost: 30
+  5:
+    power: 26
+    weaponDice: 5d8
+    cooldownMs: 1200
+    rageCost: 35
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Stunned> {}

@@ -11,3 +11,18 @@ levels:
     weaponDice: 3d6
     cooldownMs: 1800
     rangeOverride: 3.5
+  3:
+    power: 14
+    weaponDice: 3d8
+    cooldownMs: 1700
+    rangeOverride: 3.5
+  4:
+    power: 18
+    weaponDice: 4d6
+    cooldownMs: 1600
+    rangeOverride: 4.0
+  5:
+    power: 22
+    weaponDice: 4d8
+    cooldownMs: 1500
+    rangeOverride: 4.0

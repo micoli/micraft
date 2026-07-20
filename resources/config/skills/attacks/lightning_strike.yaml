@@ -1,0 +1,36 @@
+damageType: LIGHTNING
+enabled: true
+levels:
+  1:
+    power: 10
+    weaponDice: 2d6
+    cooldownMs: 3000
+    manaCost: 20
+    rangeOverride: 8.0
+  2:
+    power: 15
+    weaponDice: 3d6
+    cooldownMs: 3000
+    manaCost: 30
+    rangeOverride: 8.0
+  3:
+    power: 20
+    weaponDice: 4d6
+    cooldownMs: 2800
+    manaCost: 42
+    rangeOverride: 10.0
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Paralyzed> {}
+  4:
+    power: 26
+    weaponDice: 5d6
+    cooldownMs: 2800
+    manaCost: 56
+    rangeOverride: 10.0
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Paralyzed> {}
+  5:
+    power: 33
+    weaponDice: 6d6
+    cooldownMs: 2600
+    manaCost: 72
+    rangeOverride: 12.0
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Stunned> {}

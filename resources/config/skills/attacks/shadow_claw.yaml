@@ -1,0 +1,25 @@
+damageType: NECROTIC
+enabled: true
+levels:
+  1:
+    power: 6
+    weaponDice: 1d8
+    cooldownMs: 1800
+  2:
+    power: 9
+    weaponDice: 2d6
+    cooldownMs: 1700
+  3:
+    power: 13
+    weaponDice: 2d8
+    cooldownMs: 1600
+  4:
+    power: 18
+    weaponDice: 3d6
+    cooldownMs: 1500
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Cursed> {}
+  5:
+    power: 24
+    weaponDice: 3d8
+    cooldownMs: 1400
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Cursed> {}

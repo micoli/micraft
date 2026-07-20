@@ -22,4 +22,5 @@ data class NpcYamlEntry(
     val maxMana: Int = 0,
     val maxRage: Int = 0,
     val walkBoneAliases: Map<String, String> = emptyMap(),
+    val bbmodelFile: String? = null,
 )

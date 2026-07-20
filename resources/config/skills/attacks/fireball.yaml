@@ -11,3 +11,21 @@ levels:
     weaponDice: 5d6
     cooldownMs: 2200
     manaCost: 28
+  3:
+    power: 20
+    weaponDice: 6d6
+    cooldownMs: 2400
+    manaCost: 42
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Burning> {}
+  4:
+    power: 27
+    weaponDice: 7d6
+    cooldownMs: 2600
+    manaCost: 58
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Burning> {}
+  5:
+    power: 35
+    weaponDice: 8d6
+    cooldownMs: 2800
+    manaCost: 75
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Burning> {}

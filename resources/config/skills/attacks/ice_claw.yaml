@@ -1,0 +1,30 @@
+damageType: MAGIC
+enabled: true
+levels:
+  1:
+    power: 6
+    weaponDice: 2d4
+    cooldownMs: 2500
+    rangeOverride: 3.0
+  2:
+    power: 9
+    weaponDice: 2d6
+    cooldownMs: 2300
+    rangeOverride: 3.0
+  3:
+    power: 13
+    weaponDice: 3d6
+    cooldownMs: 2200
+    rangeOverride: 3.0
+  4:
+    power: 17
+    weaponDice: 3d8
+    cooldownMs: 2100
+    rangeOverride: 3.0
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Paralyzed> {}
+  5:
+    power: 22
+    weaponDice: 4d6
+    cooldownMs: 2000
+    rangeOverride: 3.0
+    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Stunned> {}

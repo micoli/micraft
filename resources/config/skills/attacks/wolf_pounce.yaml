@@ -7,3 +7,27 @@ levels:
     cooldownMs: 3000
     rageCost: 15
     rangeOverride: 4.0
+  2:
+    power: 8
+    weaponDice: 2d8
+    cooldownMs: 2800
+    rageCost: 20
+    rangeOverride: 4.5
+  3:
+    power: 12
+    weaponDice: 2d10
+    cooldownMs: 2600
+    rageCost: 25
+    rangeOverride: 5.0
+  4:
+    power: 16
+    weaponDice: 3d8
+    cooldownMs: 2400
+    rageCost: 30
+    rangeOverride: 5.5
+  5:
+    power: 20
+    weaponDice: 4d8
+    cooldownMs: 2200
+    rageCost: 35
+    rangeOverride: 6.0

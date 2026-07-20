@@ -11,3 +11,6 @@ hp: 10
 aggroMode: PASSIVE
 aggroRange: 5
 deaggroTimeSec: 1.5
+attacks:
+  - attackId: charge
+    level: 1

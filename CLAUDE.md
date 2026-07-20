@@ -126,6 +126,18 @@ make wasm-watch        # start continuous watcher (optional, for heavy WASM iter
 make trigger-wasm      # trigger rebuild when wasm-watch is running
 ```
 
+## Zone/npc tier per skill level
+Skill level → zone tier mapping for future zone-tiered entities:
+
+| skill level | npc/zone level |
+|-------------|----------------|
+| 1 | 1–5            |
+| 2 | 6–10           |
+| 3 | 11–15          |
+| 4 | 16–20          |
+| 5 | 21–25+         |
+
+
 ## JS / CSS build
 
 esbuild watchers for mc_bindings, css, map, admin auto-start with the container.
