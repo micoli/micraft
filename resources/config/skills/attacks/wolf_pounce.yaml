@@ -1,0 +1,9 @@
+damageType: PHYSICAL
+enabled: true
+levels:
+  1:
+    power: 5
+    weaponDice: 1d8
+    cooldownMs: 3000
+    rageCost: 15
+    rangeOverride: 4.0

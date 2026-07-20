@@ -1,0 +1,13 @@
+damageType: FIRE
+enabled: true
+levels:
+  1:
+    power: 8
+    weaponDice: 3d6
+    cooldownMs: 2000
+    manaCost: 15
+  2:
+    power: 14
+    weaponDice: 5d6
+    cooldownMs: 2200
+    manaCost: 28

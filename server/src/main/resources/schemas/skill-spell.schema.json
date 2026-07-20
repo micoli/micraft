@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {"type": "string", "enum": ["TOKEN_RAGE_CONSUME"]},
+    "enabled": {"type": "boolean"},
+    "rageGain": {"type": "integer", "minimum": 0},
+    "tokenCost": {"type": "integer", "minimum": 0},
+    "manaCost": {"type": "integer", "minimum": 0},
+    "rageCost": {"type": "integer", "minimum": 0},
+    "cooldownMs": {"type": "integer", "minimum": 0}
+  }
+}

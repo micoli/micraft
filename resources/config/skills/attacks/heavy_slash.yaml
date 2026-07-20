@@ -1,0 +1,18 @@
+damageType: PHYSICAL
+enabled: true
+levels:
+  1:
+    power: 10
+    weaponDice: 2d8
+    cooldownMs: 1500
+    rageCost: 20
+  2:
+    power: 15
+    weaponDice: 3d8
+    cooldownMs: 1400
+    rageCost: 25
+  3:
+    power: 15
+    weaponDice: 3d8
+    cooldownMs: 1400
+    rageCost: 25

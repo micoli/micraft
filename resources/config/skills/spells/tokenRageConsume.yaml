@@ -1,0 +1,5 @@
+type: TOKEN_RAGE_CONSUME
+enabled: true
+rageGain: 20
+tokenCost: 1
+cooldownMs: 0

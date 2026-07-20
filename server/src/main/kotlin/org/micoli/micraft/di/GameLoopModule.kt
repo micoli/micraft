@@ -210,9 +210,12 @@ class GameLoopModule {
 
     @Single
     @Named("attacks")
-    fun attacks(skillsConfig: SkillsConfig): Map<String, AttackDefinition> = skillsConfig.data.attacks
+    fun attacks(skillsConfig: SkillsConfig): Map<String, AttackDefinition> =
+        skillsConfig.data.attacks
 
-    @Single @Named("spells") fun spells(skillsConfig: SkillsConfig): Map<String, SpellDefinition> = skillsConfig.data.spells
+    @Single
+    @Named("spells")
+    fun spells(skillsConfig: SkillsConfig): Map<String, SpellDefinition> = skillsConfig.data.spells
 
     @Single
     fun combatProcessor(

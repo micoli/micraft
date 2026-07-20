@@ -1,0 +1,8 @@
+damageType: PHYSICAL
+enabled: true
+levels:
+  1:
+    power: 4
+    weaponDice: 1d8
+    cooldownMs: 2000
+    rangeOverride: 3.0

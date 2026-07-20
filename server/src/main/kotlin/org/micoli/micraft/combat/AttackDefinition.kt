@@ -15,5 +15,6 @@ enum class DamageType {
 @Serializable
 data class AttackDefinition(
     val damageType: DamageType = DamageType.PHYSICAL,
+    val enabled: Boolean = true,
     val levels: Map<Int, AttackLevelDefinition> = emptyMap(),
 )
