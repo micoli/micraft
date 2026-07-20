@@ -25,4 +25,4 @@ levels:
     cooldownMs: 3400
     rageCost: 40
     rangeOverride: 3.5
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Stunned> {}
+    statusEffect: Stunned

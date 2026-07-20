@@ -21,10 +21,10 @@ levels:
     weaponDice: 3d8
     cooldownMs: 3400
     rangeOverride: 7.0
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Stunned> {}
+    statusEffect: Stunned
   5:
     power: 28
     weaponDice: 4d8
     cooldownMs: 3200
     rangeOverride: 8.0
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Stunned> {}
+    statusEffect: Stunned

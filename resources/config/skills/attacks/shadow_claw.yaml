@@ -17,9 +17,9 @@ levels:
     power: 18
     weaponDice: 3d6
     cooldownMs: 1500
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Cursed> {}
+    statusEffect: Cursed
   5:
     power: 24
     weaponDice: 3d8
     cooldownMs: 1400
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Cursed> {}
+    statusEffect: Cursed

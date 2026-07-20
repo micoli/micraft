@@ -13,14 +13,14 @@ levels:
     power: 10
     weaponDice: 2d8
     cooldownMs: 900
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Poisoned> {}
+    statusEffect: Poisoned
   4:
     power: 13
     weaponDice: 3d6
     cooldownMs: 850
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Poisoned> {}
+    statusEffect: Poisoned
   5:
     power: 17
     weaponDice: 3d8
     cooldownMs: 800
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Poisoned> {}
+    statusEffect: Poisoned

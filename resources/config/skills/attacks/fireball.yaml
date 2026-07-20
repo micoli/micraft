@@ -16,16 +16,16 @@ levels:
     weaponDice: 6d6
     cooldownMs: 2400
     manaCost: 42
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Burning> {}
+    statusEffect: Burning
   4:
     power: 27
     weaponDice: 7d6
     cooldownMs: 2600
     manaCost: 58
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Burning> {}
+    statusEffect: Burning
   5:
     power: 35
     weaponDice: 8d6
     cooldownMs: 2800
     manaCost: 75
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Burning> {}
+    statusEffect: Burning

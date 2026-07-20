@@ -21,10 +21,10 @@ levels:
     weaponDice: 3d8
     cooldownMs: 2100
     rangeOverride: 3.0
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Paralyzed> {}
+    statusEffect: Paralyzed
   5:
     power: 22
     weaponDice: 4d6
     cooldownMs: 2000
     rangeOverride: 3.0
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Stunned> {}
+    statusEffect: Stunned

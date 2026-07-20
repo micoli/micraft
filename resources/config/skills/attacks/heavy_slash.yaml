@@ -26,4 +26,4 @@ levels:
     weaponDice: 5d8
     cooldownMs: 1200
     rageCost: 35
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Stunned> {}
+    statusEffect: Stunned

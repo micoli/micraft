@@ -19,18 +19,18 @@ levels:
     cooldownMs: 2800
     manaCost: 42
     rangeOverride: 10.0
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Paralyzed> {}
+    statusEffect: Paralyzed
   4:
     power: 26
     weaponDice: 5d6
     cooldownMs: 2800
     manaCost: 56
     rangeOverride: 10.0
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Paralyzed> {}
+    statusEffect: Paralyzed
   5:
     power: 33
     weaponDice: 6d6
     cooldownMs: 2600
     manaCost: 72
     rangeOverride: 12.0
-    statusEffect: !<org.micoli.micraft.combat.StatusEffect.Stunned> {}
+    statusEffect: Stunned
