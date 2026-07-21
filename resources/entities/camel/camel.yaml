@@ -7,7 +7,7 @@ behavior: random_movable
 width: 0.8
 height: 1.9
 wanderSpeed: 2.5
-wanderRadius: 14.0
+wanderRadius: 24.0
 spawn:
   autoSpawn: false
   maxPerChunk: 2
