@@ -76,6 +76,15 @@ tasks.register<JavaExec>("addUser") {
     }
 }
 
+tasks.register<JavaExec>("validateConfig") {
+    group = "verification"
+    description =
+        "Validate all YAML config files in resources/ and data/config/. Reports all errors."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.config.ValidateConfigCliKt")
+    workingDir = rootProject.projectDir
+}
+
 group = "org.micoli.micraft"
 
 version = "1.0.0"

@@ -1,5 +1,5 @@
 combat:
-  combat_target_cycle: [KeyZ]
+  combat_target_cycle: ["Tab"]
   combat_attack: [KeyR]
   console_toggle: [KeyH]
 

@@ -5,6 +5,7 @@
   "properties": {
     "maxCombatRange": {"type": "number", "minimum": 0},
     "downingRollIntervalMs": {"type": "integer", "minimum": 0},
-    "maxRage": {"type": "integer", "minimum": 0}
+    "maxRage": {"type": "integer", "minimum": 0},
+    "npcMaxAttackRange": {"type": "number", "minimum": 0}
   }
 }

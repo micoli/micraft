@@ -51,6 +51,17 @@ fun validateAlli18nYamlConfigs(configDir: Path) {
     log.info("YAML config validation: {} file(s) validated", ok)
 }
 
+fun validateYamlErrors(yamlPath: Path, schemaUri: URI): List<String> {
+    if (!yamlPath.exists()) return emptyList()
+    return runCatching {
+            val jsonNode = yamlMapper.readTree(yamlPath.toFile())
+            if (jsonNode == null || jsonNode.isNull || jsonNode.isMissingNode) return emptyList()
+            val schema = schemaFactory.getSchema(schemaUri)
+            schema.validate(jsonNode).map { "$yamlPath: ${it.message}" }
+        }
+        .getOrElse { e -> listOf("$yamlPath: ${e.message}") }
+}
+
 fun validateYamlConfig(yaml: Path, schemaName: String): Boolean {
     val uri =
         schemaUri(schemaName)

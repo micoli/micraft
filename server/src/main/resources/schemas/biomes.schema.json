@@ -64,10 +64,12 @@
               "numberPerVoronoi": { "type": "integer", "minimum": 1 },
               "cavernMinRadius": { "type": "integer", "minimum": 1 },
               "cavernMaxRadius": { "type": "integer", "minimum": 1 },
-              "wallBlock": { "type": "string" }
+              "wallBlock": { "type": "string" },
+              "staircaseEnabled": { "type": "boolean" }
             },
             "additionalProperties": false
-          }
+          },
+          "maxNpcs": { "type": "integer", "minimum": 0 }
         },
         "additionalProperties": false
       }

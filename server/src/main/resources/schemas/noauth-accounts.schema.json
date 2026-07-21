@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "accounts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["email"],
+        "additionalProperties": false,
+        "properties": {
+          "email": {"type": "string"}
+        }
+      }
+    }
+  }
+}

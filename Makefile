@@ -167,9 +167,12 @@ prod-logs:
 
 # ── Standard and code analysis ────────────────────────────────────────────────
 
-code-standard: spotless-apply ts-code-standard
+code-standard: spotless-apply check-configuration ts-code-standard
 
 ts-code-standard: npm-format ts-typecheck ts-lint
+
+check-configuration:
+	$(EXEC) "./gradlew :server:validateConfig"
 
 spotless-apply:
 	$(EXEC) "./gradlew :spotlessApply"
