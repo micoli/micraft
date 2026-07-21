@@ -128,6 +128,8 @@ export function registerKeyboard(): Pick<
         if (window.mcState.modalOpen) return;
         // Prevent browser quickfind (Firefox) — GameUI document listener fires first and opens console
         if (e.key === "/" || e.code === "Slash") e.preventDefault();
+        // Prevent Tab from cycling focus and releasing pointer lock
+        if (e.code === "Tab") e.preventDefault();
         window.mcState.modifiers = { ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey, meta: e.metaKey };
         window.mcState.keys[e.code] = true;
         if (e.repeat) return;

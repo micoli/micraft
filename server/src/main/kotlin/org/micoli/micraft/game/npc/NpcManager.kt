@@ -165,6 +165,12 @@ class NpcManager(
             val targets = getSessions().filter { lastSentToPlayer[it.id]?.containsKey(id) == true }
             lastSentToPlayer.values.forEach { it.remove(id) }
             targets.forEach { it.send(ServerMessage.NpcDespawned(id)) }
+            getSessions()
+                .filter { it.combatState.targetId == id && it.combatState.targetIsNpc }
+                .forEach { session ->
+                    session.combatState = session.combatState.copy(targetId = null)
+                    session.send(ServerMessage.CombatTargetUpdate(null, null, 0, 0))
+                }
             log.info("NPC despawned: {}", id.take(8))
         }
     }

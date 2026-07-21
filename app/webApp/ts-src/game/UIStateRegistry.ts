@@ -219,11 +219,11 @@ const componentVisibilityRegistry = {
 
 const gameRegistry = {
   combat_target_update: (state: UiState, payload: { data: CombatTargetData | null }) => {
-    const target = payload.data;
+    const target = payload.data?.targetId ? payload.data : null;
     return {
       ...state,
       combatTarget: target,
-      healthBarVisible: target?.targetId ? true : state.healthBarVisible,
+      healthBarVisible: target ? true : state.healthBarVisible,
     };
   },
   health_update: (state: UiState, _payload: { data: unknown }) => state,
