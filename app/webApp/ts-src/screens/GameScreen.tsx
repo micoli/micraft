@@ -481,6 +481,7 @@ export function GameScreen() {
           <QuestJournal
             open={state.questJournalOpen}
             quests={state.quests}
+            playerLevel={state.characterSyncData?.character?.level ?? 1}
             onClose={() => {
               dispatch("quest_journal_close");
               resumePointerLock();

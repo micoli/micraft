@@ -27,6 +27,7 @@ type QuestDef = {
 interface Props {
   open: boolean;
   quests: Record<string, QuestProgress>;
+  playerLevel: number;
   onClose: () => void;
   onCommand: (cmd: string) => void;
 }
@@ -80,7 +81,7 @@ function ObjectiveRow({ label, current, required }: { label: string; current: nu
   );
 }
 
-export function QuestJournal({ open, quests, onClose, onCommand }: Props) {
+export function QuestJournal({ open, quests, playerLevel, onClose, onCommand }: Props) {
   const [definitions, setDefinitions] = useState<Record<string, QuestDef>>({});
   const [statusFilter, setStatusFilter] = useState<QuestStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
@@ -101,14 +102,19 @@ export function QuestJournal({ open, quests, onClose, onCommand }: Props) {
   const questIds = Object.keys(definitions);
 
   const filtered = questIds.filter((id) => {
+    const def = definitions[id];
     const progress = quests[id];
     const status: QuestStatus = progress?.status ?? "TODO";
+    if (def.level > playerLevel + 2) return false;
     if (statusFilter !== "ALL" && status !== statusFilter) return false;
-    if (search && !definitions[id].title.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !def.title.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
-  const selected = selectedId && definitions[selectedId] ? selectedId : (filtered[0] ?? null);
+  filtered.sort((a, b) => definitions[a].level - definitions[b].level);
+
+  const inProgressId = filtered.find((id) => (quests[id]?.status ?? "TODO") === "IN_PROGRESS") ?? null;
+  const selected = selectedId && definitions[selectedId] ? selectedId : (inProgressId ?? filtered[0] ?? null);
   const selDef = selected ? definitions[selected] : null;
   const selProgress = selected
     ? (quests[selected] ?? {
@@ -257,10 +263,7 @@ export function QuestJournal({ open, quests, onClose, onCommand }: Props) {
                 <div className="flex gap-2 mt-2">
                   {canAccept && (
                     <Button
-                      onClick={() => {
-                        onCommand(`/quest accept ${selected}`);
-                        onClose();
-                      }}
+                      onClick={() => onCommand(`/quest accept ${selected}`)}
                       className="text-xs"
                     >
                       Accept
@@ -269,10 +272,7 @@ export function QuestJournal({ open, quests, onClose, onCommand }: Props) {
                   {canAbandon && (
                     <Button
                       variant="danger"
-                      onClick={() => {
-                        onCommand(`/quest abandon ${selected}`);
-                        onClose();
-                      }}
+                      onClick={() => onCommand(`/quest abandon ${selected}`)}
                       className="text-xs"
                     >
                       Abandon
