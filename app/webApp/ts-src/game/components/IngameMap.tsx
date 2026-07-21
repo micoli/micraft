@@ -404,17 +404,18 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
     return () => observer.disconnect();
   }, [rerender]);
 
-  // Map pan (left-drag on canvas) and zoom (wheel)
+  const adjustZoom = useCallback(
+    (factor: number) => {
+      zoomRef.current = Math.max(0.25, Math.min(8, zoomRef.current * factor));
+      rerender();
+    },
+    [rerender],
+  );
+
+  // Map pan (left-drag on canvas)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const factor = e.deltaY < 0 ? 1.2 : 1 / 1.2;
-      zoomRef.current = Math.max(0.25, Math.min(8, zoomRef.current * factor));
-      rerender();
-    };
 
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
@@ -449,14 +450,12 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
       rerender();
     };
 
-    container.addEventListener("wheel", onWheel, { passive: false });
     container.addEventListener("mousedown", onMouseDown);
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
     container.addEventListener("dblclick", onDblClick);
 
     return () => {
-      container.removeEventListener("wheel", onWheel);
       container.removeEventListener("mousedown", onMouseDown);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
@@ -630,6 +629,45 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
         <canvas ref={bordersRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
         <canvas ref={poiRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
         <canvas ref={overlayRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
+        <div
+          style={{
+            position: "absolute",
+            top: 6,
+            right: 6,
+            display: "flex",
+            flexDirection: "column",
+            gap: 3,
+            zIndex: 10,
+          }}
+        >
+          {[
+            ["+", 1.2],
+            ["−", 1 / 1.2],
+          ].map(([label, factor]) => (
+            <button
+              key={label as string}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={() => adjustZoom(factor as number)}
+              style={{
+                width: 22,
+                height: 22,
+                background: "rgba(0,0,0,0.6)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                borderRadius: 4,
+                color: "rgba(255,255,255,0.9)",
+                fontSize: 14,
+                lineHeight: 1,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+              }}
+            >
+              {label as string}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
