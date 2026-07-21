@@ -1,34 +1,53 @@
 export function registerAutoUpdate(): void {
-  try {
-    const wsUrl = `ws://${location.hostname}:${location.port}/ws`;
-    const ws = new WebSocket(wsUrl);
+  let bootSig: string | null = null;
+  let hadSession = false;
 
-    let bootSig: string | null = null;
+  function connect(): void {
+    try {
+      const ws = new WebSocket(`ws://${location.hostname}:${location.port}/ws`);
 
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data as string) as { type: string; data?: string };
-        if (msg.type === "version") {
-          if (bootSig === null) {
-            bootSig = msg.data ?? null;
-          } else if (msg.data !== bootSig) {
+      ws.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data as string) as { type: string; data?: string };
+          if (msg.type === "version") {
+            if (bootSig === null) {
+              bootSig = msg.data ?? null;
+              hadSession = true;
+            } else if (msg.data !== bootSig) {
+              window.location.reload();
+            }
+            return;
+          }
+          if (msg.type === "reload") {
             window.location.reload();
           }
-          return;
+        } catch {
+          /* ignore */
         }
-        if (msg.type === "reload") {
-          window.location.reload();
-          return;
-        }
-      } catch {
-        /* ignore */
-      }
-    };
+      };
 
-    ws.onerror = () => {
-      /* /ws not available in this environment */
-    };
-  } catch {
-    /* ignore */
+      ws.onclose = () => {
+        if (!hadSession) {
+          // Never received a version — server may not support /ws; retry silently
+          setTimeout(connect, 3000);
+          return;
+        }
+        // Had an active session — server restarted; probe until it's back then reload
+        const probe = (): void => {
+          fetch("/api/assets/manifest")
+            .then(() => window.location.reload())
+            .catch(() => setTimeout(probe, 2000));
+        };
+        setTimeout(probe, 1500);
+      };
+
+      ws.onerror = () => {
+        /* /ws not available in this environment */
+      };
+    } catch {
+      /* ignore */
+    }
   }
+
+  connect();
 }

@@ -42,8 +42,6 @@ val generateBuildConfig by
         val genDir = File(projectDir, buildConfigGenDir)
         val outFile = File(genDir, "BuildConfig.kt")
         outputs.file(outFile)
-        // Always re-run so the timestamp is current, but the minute guard below prevents
-        // content from changing within a single compile cycle (~15 s), breaking the watch loop.
         outputs.upToDateWhen { false }
         // No inputs → cache key is always identical → build cache would restore stale timestamp.
         outputs.cacheIf { false }
@@ -52,14 +50,8 @@ val generateBuildConfig by
                 DateTimeFormatter.ofPattern("yyyyMMdd-HH.mm.ss")
                     .withZone(ZoneOffset.UTC)
                     .format(Instant.now())
-            val content = "package org.micoli.micraft\n\nconst val BUILD_TIMESTAMP = \"$ts\"\n"
-            val existingTs =
-                if (outFile.exists()) outFile.readText().substringAfter("\"").substringBefore("\"")
-                else ""
-            if (existingTs.take(14) != ts.take(14)) {
-                genDir.mkdirs()
-                outFile.writeText(content)
-            }
+            genDir.mkdirs()
+            outFile.writeText("package org.micoli.micraft\n\nconst val BUILD_TIMESTAMP = \"$ts\"\n")
         }
     }
 

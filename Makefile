@@ -17,7 +17,7 @@ endif
         dev-task-stop dev-task-start dev-task-restart \
         dev-nuke-wasm dev-reset dev-reset-wasm dev-nuke wasm-watch \
         prod-up prod-down prod-restart prod-logs prod-build \
-        build-client build-wasm build-js build-map trigger-wasm \
+        build build-all build-client build-wasm build-js build-map trigger-wasm \
         docs help
 
 # ── Dev ───────────────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ dev-restart-server:
 	$(DC_DEV) exec micraft pitchfork restart server
 
 dev-restart-clean-server:
-	$(EXEC) "rm data/world/default_world/*.json data/world/default_world/chunks/* data/config/*/*"
+	$(EXEC) "rm data/world/default_world/*.json data/world/default_world/chunks/* data/config/*/* || true"
 	$(DC_DEV) exec micraft pitchfork restart server
 
 dev-restart:
@@ -116,6 +116,14 @@ endif
 # Format TypeScript sources (runs npm run format in ts-src)
 npm-format:
 	$(EXEC) "cd app/webApp/ts-src && npm run format"
+
+# Detect what changed, build in order (JS/CSS → WASM → server), restart, browser auto-reloads
+build:
+	$(EXEC) "bash /workspace/scripts/dev-build.sh"
+
+# Force full rebuild: WASM + JS/CSS + server (ignores change detection)
+build-all:
+	$(EXEC) "bash /workspace/scripts/dev-build.sh --force"
 
 build-client: build-js build-wasm
 
@@ -234,6 +242,8 @@ help:
 	@echo "  make dc CMD=\"pitchfork logs server\"  tail server log"
 	@echo "  make dc CMD=\"pitchfork tui\"          live dashboard (interactive)"
 	@echo "  make npm-format           run prettier in ts-src"
+	@echo "  make build                detect changes + rebuild (JS→WASM→server) + restart + browser auto-reloads"
+	@echo "  make build-all            force full rebuild: WASM + JS/CSS + server (ignores change detection)"
 	@echo "  make build-client         recompile wasm + js bundle (build-wasm + build-js)"
 	@echo "  make build-wasm           one-shot WASM recompile (use after any Kotlin/WASM change)"
 	@echo "  make build-map            rebuild map TypeScript client (map.js + map.css → server/src/main/resources)"

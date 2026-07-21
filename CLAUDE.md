@@ -117,12 +117,14 @@ Pitchfork watchdog rebuilds and restarts Ktor. Web client reconnects automatical
 
 ## WASM build
 
-WASM watcher is **opt-in** (`boot_start = false`). Use these host-level commands:
+No watcher auto-starts. Use `make build` for all dev rebuilds.
 
 ```bash
-make build-wasm        # one-shot WASM recompile (use after any Kotlin/WASM change)
+make build             # detect changes → rebuild in order → restart → browser auto-reloads
+make build-all         # force full rebuild (WASM + JS/CSS + server)
+make build-wasm        # one-shot WASM-only recompile
 make dev-reset-wasm    # proto decode errors / stale output after core type changes
-make wasm-watch        # start continuous watcher (optional, for heavy WASM iteration)
+make wasm-watch        # start continuous WASM watcher (opt-in, for heavy WASM iteration)
 make trigger-wasm      # trigger rebuild when wasm-watch is running
 ```
 
@@ -140,10 +142,13 @@ Skill level → zone tier mapping for future zone-tiered entities:
 
 ## JS / CSS build
 
-esbuild watchers for mc_bindings, css, map, admin auto-start with the container.
+No watchers auto-start. Use `make build` for the full build, or targeted commands:
 
 ```bash
-make build-js          # one-shot mc_bindings rebuild (also copies babylon.js)
+make build             # preferred: detect changes + rebuild + restart + browser reload
+make build-js          # one-shot mc_bindings rebuild only (also copies babylon.js)
+make build-map         # rebuild map.js + map.css
+make build-admin       # rebuild admin.js + admin.css
 ```
 
 ## DX — stale cache recovery
