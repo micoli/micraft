@@ -37,7 +37,7 @@ class WorldModule {
                 if (p.loadMetadata() == null) {
                     p.saveMetadata(
                         WorldMetadata(
-                            seed = 42L,
+                            seed = gameConfig.worldSeed,
                             generator = "procedural",
                             createdAt = Instant.now().toString()))
                 }
@@ -86,12 +86,12 @@ class WorldModule {
             if (gameConfig.debugWorld) DebugChunkGenerator()
             else
                 ProceduralChunkGenerator(
-                    seed = 42L,
+                    seed = gameConfig.worldSeed,
                     biomeRegistry = biomeRegistry,
                     roadConfig = optionalRoadConfig.value,
                     houseConfig = optionalHouseConfig.value,
                 )
-        log.info("World: {} | generator={} | seed=42", worldName(), generator::class.simpleName)
+        log.info("World: {} | generator={} | seed={}", worldName(), generator::class.simpleName, gameConfig.worldSeed)
         return generator
     }
 

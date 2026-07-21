@@ -73,7 +73,7 @@
     },
     "game": {
       "type": "object",
-      "required": ["tickMs", "gravity", "jumpSpeed", "flyVerticalSpeed", "saveIntervalSeconds", "spawnX", "spawnY", "spawnZ", "ticksPerDay", "timeBroadcastTicks", "maxInteractionDistance", "debugWorld", "reconcileToleranceXz", "reconcileToleranceY"],
+      "required": ["tickMs", "gravity", "jumpSpeed", "flyVerticalSpeed", "saveIntervalSeconds", "spawnX", "spawnY", "spawnZ", "ticksPerDay", "timeBroadcastTicks", "maxInteractionDistance", "debugWorld", "reconcileToleranceXz", "reconcileToleranceY", "worldSeed"],
       "additionalProperties": false,
       "properties": {
         "tickMs": {"type": "integer", "minimum": 1},
@@ -89,7 +89,8 @@
         "maxInteractionDistance": {"type": "number", "exclusiveMinimum": 0},
         "debugWorld": {"type": "boolean"},
         "reconcileToleranceXz": {"type": "number", "exclusiveMinimum": 0},
-        "reconcileToleranceY": {"type": "number", "exclusiveMinimum": 0}
+        "reconcileToleranceY": {"type": "number", "exclusiveMinimum": 0},
+        "worldSeed": {"type": "integer"}
       }
     }
   }

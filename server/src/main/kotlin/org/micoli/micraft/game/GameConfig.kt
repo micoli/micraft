@@ -22,4 +22,5 @@ data class GameConfig(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val reconcileToleranceXz: Double = 0.5,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val reconcileToleranceY: Double = 0.99,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val blockBreakBufferSize: Int = 1000,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val worldSeed: Long = 42L,
 )

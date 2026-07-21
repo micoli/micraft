@@ -139,7 +139,7 @@ fun Application.module() {
         if (!debugWorld) {
             {
                 ProceduralChunkGenerator(
-                    seed = 42L,
+                    seed = gameConfig.worldSeed,
                     biomeRegistry = loadBiomeRegistry(biomeFile, biomeResourcesFile),
                     roadConfig = loadRoadConfig(roadConfigPath, roadResourcesFile),
                     houseConfig = loadHouseConfig(houseConfigPath, houseResourcesFile),
