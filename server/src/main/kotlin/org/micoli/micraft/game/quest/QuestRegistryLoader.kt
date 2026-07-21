@@ -24,7 +24,6 @@ class QuestRegistryLoader(private val questsPath: Path) {
                 .filter { it.isRegularFile() }
                 .mapNotNull { file ->
                     val name = file.fileName.toString()
-                    log.warn("load quest '{}': {}", name, file.toString())
                     runCatching {
                             Yaml.default.decodeFromString(
                                 QuestYamlEntry.serializer(), file.readText())

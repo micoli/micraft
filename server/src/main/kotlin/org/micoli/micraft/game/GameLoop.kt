@@ -763,7 +763,7 @@ class GameLoop(
                 }
             }
         }
-        app.launch(Dispatchers.IO) {
+        app.launch {
             while (isActive) {
                 delay(NPC_LIFECYCLE_INTERVAL_MS)
                 runCatching {
