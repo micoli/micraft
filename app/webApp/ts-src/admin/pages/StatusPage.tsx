@@ -270,12 +270,14 @@ export function StatusPage() {
         <Card title="Network">
           <Row label="↓ Received" value={kb(snap.networkBytesIn)} />
           <Row label="↑ Sent" value={kb(snap.networkBytesOut)} />
-          <div className="mt-4">
-            <HeapBar used={snap.heapUsedMb} max={snap.heapMaxMb} />
-            <div className="mt-3 space-y-0.5">
-              <Row label="Non-heap" value={`${snap.nonHeapUsedMb} MB`} />
-              <Row label="Processors" value={snap.processors} />
-            </div>
+        </Card>
+
+        {/* Processor */}
+        <Card title="Processor">
+          <HeapBar used={snap.heapUsedMb} max={snap.heapMaxMb} />
+          <div className="mt-3 space-y-0.5">
+            <Row label="Non-heap" value={`${snap.nonHeapUsedMb} MB`} />
+            <Row label="Processors" value={snap.processors} />
           </div>
         </Card>
       </div>

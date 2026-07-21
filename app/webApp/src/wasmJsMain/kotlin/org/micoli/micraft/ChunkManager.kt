@@ -401,11 +401,12 @@ class ChunkManager(private val scene: JsAny) {
                 val idx = lx * WorldConstants.CHUNK_SIZE + lz
                 for (y in topY downTo 0) {
                     val block = chunk.getBlock(lx, y, lz)
-                    if (block != BlockType.AIR) {
-                        topYParts[idx] = y
-                        topBlockParts[idx] = BlockRegistry.wireIndex(block)
-                        break
-                    }
+                    if (block == BlockType.AIR) continue
+                    val def = BlockRegistry.get(block)
+                    if (!def.solid && !def.liquid && !def.minimapVisible) continue
+                    topYParts[idx] = y
+                    topBlockParts[idx] = BlockRegistry.wireIndex(block)
+                    break
                 }
             }
         }

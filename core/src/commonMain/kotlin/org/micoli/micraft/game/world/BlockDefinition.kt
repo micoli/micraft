@@ -14,4 +14,5 @@ data class BlockDefinition(
     val replaceable: Boolean = false,
     val vegetationHost: Boolean = false,
     val treeAllowed: Boolean = true,
+    val minimapVisible: Boolean = false,
 )

@@ -176,6 +176,7 @@ make shell
 
 - **Never run `./gradlew`, `npm`, `node`, or `gradle` directly on host.** Use `make dc CMD="..."`.
 - Always prefer `./gradlew` (never `gradle` directly).
+- Always view files in docker instance, not on host filesystem
 - Use `rtk` before verbose host-level commands (git diff, git status, find). For in-container commands via `make dc`, rtk applied automatically by hook.
 - Never run unfiltered `find`, `grep`, `ls -R`, `git diff`, or `gradlew test` without `rtk`.
 - Read only necessary files.

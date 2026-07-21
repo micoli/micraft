@@ -173,15 +173,22 @@ private fun parseChunkPos(name: String): ChunkPos? {
 internal fun topBlockColor(chunk: Chunk, lx: Int, lz: Int): String? {
     for (y in Chunk.SIZE_Y - 1 downTo 0) {
         val bt = chunk.getBlock(lx, y, lz)
-        if (bt != BlockType.AIR) {
-            val c = BlockRegistry.get(bt).minimapColor
-            return "#%02x%02x%02x".format(c[0], c[1], c[2])
-        }
+        if (bt == BlockType.AIR) continue
+        val def = BlockRegistry.get(bt)
+        if (!def.solid && !def.liquid && !def.minimapVisible) continue
+        val c = def.minimapColor
+        return "#%02x%02x%02x".format(c[0], c[1], c[2])
     }
     return null
 }
 
 internal fun topBlockY(chunk: Chunk, lx: Int, lz: Int): Int? {
-    for (y in Chunk.SIZE_Y - 1 downTo 0) if (chunk.getBlock(lx, y, lz) != BlockType.AIR) return y
+    for (y in Chunk.SIZE_Y - 1 downTo 0) {
+        val bt = chunk.getBlock(lx, y, lz)
+        if (bt == BlockType.AIR) continue
+        val def = BlockRegistry.get(bt)
+        if (!def.solid && !def.liquid && !def.minimapVisible) continue
+        return y
+    }
     return null
 }

@@ -18,6 +18,7 @@
     "replaceable": {"type": "boolean"},
     "vegetationHost": {"type": "boolean"},
     "treeAllowed": {"type": "boolean"},
+    "minimapVisible": {"type": "boolean"},
     "drops": {
       "type": "array",
       "items": {
