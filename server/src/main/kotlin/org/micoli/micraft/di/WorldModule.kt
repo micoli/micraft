@@ -91,7 +91,11 @@ class WorldModule {
                     roadConfig = optionalRoadConfig.value,
                     houseConfig = optionalHouseConfig.value,
                 )
-        log.info("World: {} | generator={} | seed={}", worldName(), generator::class.simpleName, gameConfig.worldSeed)
+        log.info(
+            "World: {} | generator={} | seed={}",
+            worldName(),
+            generator::class.simpleName,
+            gameConfig.worldSeed)
         return generator
     }
 

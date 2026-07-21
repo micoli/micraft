@@ -4,6 +4,7 @@ import { ConfigEditorPage } from "./pages/ConfigEditorPage";
 import { PlayersPage } from "./pages/PlayersPage";
 import { StatusPage } from "./pages/StatusPage";
 import { UsersPage } from "./pages/UsersPage";
+import { WorldsPage } from "./pages/WorldsPage";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 function Icon({ d, size = 18 }: { d: string; size?: number }) {
@@ -30,6 +31,7 @@ const ICONS = {
   players: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
   config:
     "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
+  worlds: "M3 7l9-4 9 4M3 7v10l9 4m-9-14l9 4m9-4v10l-9 4m0-14v14",
 };
 
 const NAV = [
@@ -37,6 +39,7 @@ const NAV = [
   { path: "/admin/users", label: "Users", icon: ICONS.users },
   { path: "/admin/players", label: "Players", icon: ICONS.players },
   { path: "/admin/config", label: "Config", icon: ICONS.config },
+  { path: "/admin/worlds", label: "Worlds", icon: ICONS.worlds },
 ];
 
 const PAGE_LABELS: Record<string, string> = {
@@ -44,6 +47,7 @@ const PAGE_LABELS: Record<string, string> = {
   "/admin/users": "Users",
   "/admin/players": "Players",
   "/admin/config": "Config Editor",
+  "/admin/worlds": "Worlds",
 };
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -122,6 +126,7 @@ export function AdminApp() {
               <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/players" element={<PlayersPage />} />
               <Route path="/admin/config" element={<ConfigEditorPage />} />
+              <Route path="/admin/worlds" element={<WorldsPage />} />
             </Routes>
           </main>
         </div>

@@ -81900,6 +81900,10 @@ ${end.comment}` : end.comment;
       saveRpg: (name2, rpg) => put(`/api/admin/players/${encodeURIComponent(name2)}/rpg`, rpg),
       rename: (name2, newName) => post(`/api/admin/players/${encodeURIComponent(name2)}/rename`, { newName })
     },
+    worlds: {
+      list: () => get5("/api/admin/worlds").then((r2) => r2.json()),
+      create: (name2, seed) => post("/api/admin/worlds", { name: name2, seed })
+    },
     skins: {
       list: () => get5("/api/skins").then((r2) => r2.json())
     },
@@ -83350,6 +83354,29 @@ ${end.comment}` : end.comment;
       maxTokens: Math.floor(level / 4) + 1
     };
   }
+  var StatRow = ({
+    stats,
+    name: name2,
+    label,
+    setStats
+  }) => (
+    // const statRow = (name: keyof typeof stats, label: string) => (
+    /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex items-center gap-3 py-2 border-b border-[#2E3A4E] last:border-0", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-xs text-[#8A99AF] w-24", children: label }),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+        "input",
+        {
+          type: "range",
+          min: 1,
+          max: 20,
+          value: stats[name2],
+          onChange: (e) => setStats((p2) => __spreadProps(__spreadValues({}, p2), { [name2]: Number(e.target.value) })),
+          className: "flex-1 accent-[#3C50E0]"
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-sm text-[#3C50E0] w-6 text-right tabular-nums font-semibold", children: stats[name2] })
+    ] })
+  );
   function RpgTab({ file, onSave }) {
     const cd = file.state.characterData;
     const [cls, setCls] = (0, import_react2.useState)(cd.characterClass);
@@ -83364,21 +83391,6 @@ ${end.comment}` : end.comment;
       setTimeout(() => setSaved(false), 1500);
     };
     const derived = computeDerived(stats, cd.level);
-    const StatRow = ({ name: name2, label }) => /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex items-center gap-3 py-2 border-b border-[#2E3A4E] last:border-0", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-xs text-[#8A99AF] w-24", children: label }),
-      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
-        "input",
-        {
-          type: "range",
-          min: 1,
-          max: 20,
-          value: stats[name2],
-          onChange: (e) => setStats((p2) => __spreadProps(__spreadValues({}, p2), { [name2]: Number(e.target.value) })),
-          className: "flex-1 accent-[#3C50E0]"
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-sm text-[#3C50E0] w-6 text-right tabular-nums font-semibold", children: stats[name2] })
-    ] });
     return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "p-5 space-y-5", children: [
       /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { children: [
         /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: "Class" }),
@@ -83394,12 +83406,15 @@ ${end.comment}` : end.comment;
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { children: [
         /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: "Base Stats" }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(StatRow, { name: "str", label: "Strength" }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(StatRow, { name: "dex", label: "Dexterity" }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(StatRow, { name: "intel", label: "Intellect" }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(StatRow, { name: "wis", label: "Wisdom" }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(StatRow, { name: "con", label: "Constitution" }),
-        /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(StatRow, { name: "cha", label: "Charisma" })
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: "Base Stats" }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(StatRow, { name: "str", label: "Strength", stats, setStats }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(StatRow, { name: "dex", label: "Dexterity", stats, setStats }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(StatRow, { name: "intel", label: "Intellect", stats, setStats }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(StatRow, { name: "wis", label: "Wisdom", stats, setStats }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(StatRow, { name: "con", label: "Constitution", stats, setStats }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(StatRow, { name: "cha", label: "Charisma", stats, setStats })
+        ] })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { children: [
         /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: [
@@ -83723,10 +83738,12 @@ ${end.comment}` : end.comment;
     const prevRef = (0, import_react3.useRef)(`${pad2(h)}:${pad2(m)}`);
     const newHM = ticksToTime(snap.gameTicks, snap.ticksPerDay || 72e3);
     const newStr = `${pad2(newHM.h)}:${pad2(newHM.m)}`;
-    if (newStr !== prevRef.current) {
-      prevRef.current = newStr;
-      setTime(newStr);
-    }
+    (0, import_react3.useLayoutEffect)(() => {
+      if (newStr !== prevRef.current) {
+        prevRef.current = newStr;
+        setTime(newStr);
+      }
+    }, [newStr]);
     const save = async () => {
       const [hh, mm] = time.split(":").map(Number);
       if (isNaN(hh) || isNaN(mm)) return;
@@ -83852,13 +83869,13 @@ ${end.comment}` : end.comment;
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Card, { title: "Network", children: [
           /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Row, { label: "\u2193 Received", value: kb(snap.networkBytesIn) }),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Row, { label: "\u2191 Sent", value: kb(snap.networkBytesOut) }),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "mt-4", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(HeapBar, { used: snap.heapUsedMb, max: snap.heapMaxMb }),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "mt-3 space-y-0.5", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Row, { label: "Non-heap", value: `${snap.nonHeapUsedMb} MB` }),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Row, { label: "Processors", value: snap.processors })
-            ] })
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Row, { label: "\u2191 Sent", value: kb(snap.networkBytesOut) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Card, { title: "Processor", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(HeapBar, { used: snap.heapUsedMb, max: snap.heapMaxMb }),
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "mt-3 space-y-0.5", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Row, { label: "Non-heap", value: `${snap.nonHeapUsedMb} MB` }),
+            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Row, { label: "Processors", value: snap.processors })
           ] })
         ] })
       ] }),
@@ -85931,9 +85948,10 @@ ${end.comment}` : end.comment;
     ] });
   }
 
-  // admin/AdminApp.tsx
+  // admin/pages/WorldsPage.tsx
+  var import_react7 = __toESM(require_react(), 1);
   var import_jsx_runtime18 = __toESM(require_jsx_runtime(), 1);
-  function Icon({ d, size = 18 }) {
+  function Icon({ d, size = 16 }) {
     return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
       "svg",
       {
@@ -85949,37 +85967,262 @@ ${end.comment}` : end.comment;
       }
     );
   }
+  var I2 = {
+    world: "M3 7l9-4 9 4M3 7v10l9 4m-9-14l9 4m9-4v10l-9 4m0-14v14",
+    chunk: "M3 7l9-4 9 4M3 7v10l9 4m-9-14l9 4m9-4v10l-9 4m0-14v14",
+    player: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
+    seed: "M12 2a10 10 0 100 20A10 10 0 0012 2zm0 0v20M2 12h20",
+    add: "M12 5v14M5 12h14",
+    active: "M5 13l4 4L19 7"
+  };
+  function Badge({ children, color }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: `inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${color}`, children });
+  }
+  function WorldCard({ world, onRefresh }) {
+    const date = new Date(world.createdAt).toLocaleDateString(void 0, {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(
+      "div",
+      {
+        className: `bg-[#1A222C] rounded-xl border p-5 transition-colors ${world.isActive ? "border-[#3C50E0]" : "border-[#2E3A4E]"}`,
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex items-start justify-between gap-3 mb-4", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex items-center gap-2.5 min-w-0", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+                "div",
+                {
+                  className: `w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${world.isActive ? "bg-[#3C50E0]/20 text-[#3C50E0]" : "bg-[#2E3A4E] text-[#8A99AF]"}`,
+                  children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Icon, { d: I2.world, size: 18 })
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "min-w-0", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-white font-semibold text-[15px] truncate", children: world.name }),
+                /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
+                  "Created ",
+                  date
+                ] })
+              ] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex items-center gap-2 shrink-0", children: [
+              world.isActive && /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(Badge, { color: "bg-[#3C50E0]/20 text-[#3C50E0]", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Icon, { d: I2.active, size: 10 }),
+                /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: "ml-1", children: "Active" })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Badge, { color: "bg-[#2E3A4E] text-[#8A99AF]", children: world.generator })
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "grid grid-cols-3 gap-3 p-3 bg-[#0E1726] rounded-lg", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "text-center", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: "Seed" }),
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-white font-mono text-sm font-semibold tabular-nums", children: world.seed })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "text-center border-x border-[#2E3A4E]", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: "Chunks" }),
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-white font-semibold text-sm tabular-nums", children: world.chunkCount.toLocaleString() })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "text-center", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: "Players" }),
+              /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-white font-semibold text-sm tabular-nums", children: world.playerCount })
+            ] })
+          ] })
+        ]
+      }
+    );
+  }
+  function CreateWorldForm({ onCreated }) {
+    const [open, setOpen] = (0, import_react7.useState)(false);
+    const [name2, setName] = (0, import_react7.useState)("");
+    const [seed, setSeed] = (0, import_react7.useState)("");
+    const [saving, setSaving] = (0, import_react7.useState)(false);
+    const [error2, setError] = (0, import_react7.useState)(null);
+    const randomSeed = () => setSeed(String(Math.floor(Math.random() * 2147483647)));
+    const submit = async (e) => {
+      e.preventDefault();
+      setError(null);
+      if (!name2.trim()) return setError("Name required");
+      if (!/^[a-zA-Z0-9_-]+$/.test(name2)) return setError("Name: letters, digits, _ and - only");
+      const seedNum = seed === "" ? 42 : Number(seed);
+      if (isNaN(seedNum)) return setError("Seed must be a number");
+      setSaving(true);
+      try {
+        const r2 = await api.worlds.create(name2.trim(), seedNum);
+        if (r2.status === 409) return setError("World already exists");
+        if (!r2.ok) return setError("Server error");
+        setName("");
+        setSeed("");
+        setOpen(false);
+        onCreated();
+      } finally {
+        setSaving(false);
+      }
+    };
+    if (!open) {
+      return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(
+        "button",
+        {
+          onClick: () => setOpen(true),
+          className: "flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#3C50E0] hover:bg-[#3446c7] text-white text-sm font-medium transition-colors",
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Icon, { d: I2.add, size: 16 }),
+            "Create world"
+          ]
+        }
+      );
+    }
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "bg-[#1A222C] rounded-xl border border-[#3C50E0] p-5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("h3", { className: "text-white font-semibold text-[15px] mb-4", children: "New world" }),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("form", { onSubmit: submit, className: "space-y-3", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("label", { className: "block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5", children: "Name" }),
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+            "input",
+            {
+              type: "text",
+              value: name2,
+              onChange: (e) => setName(e.target.value),
+              placeholder: "my_world",
+              className: "w-full bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-3 py-2 text-sm text-white placeholder-[#4A5568] focus:outline-none focus:border-[#3C50E0] transition-colors"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("label", { className: "block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5", children: "Seed" }),
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+              "input",
+              {
+                type: "number",
+                value: seed,
+                onChange: (e) => setSeed(e.target.value),
+                placeholder: "42",
+                className: "flex-1 bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-3 py-2 text-sm text-white placeholder-[#4A5568] focus:outline-none focus:border-[#3C50E0] transition-colors font-mono"
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+              "button",
+              {
+                type: "button",
+                onClick: randomSeed,
+                className: "px-3 py-2 rounded-lg border border-[#2E3A4E] text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E] text-xs transition-colors",
+                children: "Random"
+              }
+            )
+          ] })
+        ] }),
+        error2 && /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-red-400 text-xs", children: error2 }),
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex gap-2 pt-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+            "button",
+            {
+              type: "submit",
+              disabled: saving,
+              className: "flex-1 py-2 rounded-lg bg-[#3C50E0] hover:bg-[#3446c7] text-white text-sm font-medium transition-colors disabled:opacity-50",
+              children: saving ? "Creating\u2026" : "Create"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+            "button",
+            {
+              type: "button",
+              onClick: () => {
+                setOpen(false);
+                setError(null);
+              },
+              className: "px-4 py-2 rounded-lg border border-[#2E3A4E] text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E] text-sm transition-colors",
+              children: "Cancel"
+            }
+          )
+        ] })
+      ] })
+    ] });
+  }
+  function WorldsPage() {
+    const [worlds, setWorlds] = (0, import_react7.useState)(null);
+    const [error2, setError] = (0, import_react7.useState)(null);
+    const load = async () => {
+      try {
+        const data2 = await api.worlds.list();
+        setWorlds(data2);
+        setError(null);
+      } catch (e) {
+        setError("Failed to load worlds");
+      }
+    };
+    (0, import_react7.useEffect)(() => {
+      load();
+    }, []);
+    if (error2) return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-red-400 text-sm", children: error2 });
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "space-y-6", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex items-center justify-between", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-[#8A99AF] text-xs", children: worlds ? `${worlds.length} world${worlds.length !== 1 ? "s" : ""}` : "\u2026" }),
+          /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("p", { className: "text-[11px] text-[#4A5568] mt-0.5", children: [
+            "Switch active world via ",
+            /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("code", { className: "font-mono", children: "MICRAFT_WORLD_NAME" }),
+            " env var + server restart"
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(CreateWorldForm, { onCreated: load })
+      ] }),
+      worlds === null ? /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-[#8A99AF] text-sm animate-pulse", children: "Loading\u2026" }) : worlds.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-[#8A99AF] text-sm", children: "No worlds found." }) : /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4", children: worlds.map((w) => /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(WorldCard, { world: w, onRefresh: load }, w.name)) })
+    ] });
+  }
+
+  // admin/AdminApp.tsx
+  var import_jsx_runtime19 = __toESM(require_jsx_runtime(), 1);
+  function Icon2({ d, size = 18 }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+      "svg",
+      {
+        width: size,
+        height: size,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: 1.8,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("path", { d })
+      }
+    );
+  }
   var ICONS = {
     status: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
     users: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm8 2l2 2 4-4",
     players: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
-    config: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+    config: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
+    worlds: "M3 7l9-4 9 4M3 7v10l9 4m-9-14l9 4m9-4v10l-9 4m0-14v14"
   };
   var NAV = [
     { path: "/admin", label: "Status", icon: ICONS.status, exact: true },
     { path: "/admin/users", label: "Users", icon: ICONS.users },
     { path: "/admin/players", label: "Players", icon: ICONS.players },
-    { path: "/admin/config", label: "Config", icon: ICONS.config }
+    { path: "/admin/config", label: "Config", icon: ICONS.config },
+    { path: "/admin/worlds", label: "Worlds", icon: ICONS.worlds }
   ];
   var PAGE_LABELS = {
     "/admin": "Server Status",
     "/admin/users": "Users",
     "/admin/players": "Players",
-    "/admin/config": "Config Editor"
+    "/admin/config": "Config Editor",
+    "/admin/worlds": "Worlds"
   };
   function Sidebar() {
     const { pathname } = useLocation();
-    return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("aside", { className: "w-64 shrink-0 h-screen flex flex-col bg-[#1C2434] border-r border-[#2E3A4E]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "h-16 flex items-center px-6 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex items-center gap-2.5", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "w-8 h-8 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("aside", { className: "w-64 shrink-0 h-screen flex flex-col bg-[#1C2434] border-r border-[#2E3A4E]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "h-16 flex items-center px-6 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex items-center gap-2.5", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "w-8 h-8 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("nav", { className: "flex-1 px-4 py-5 space-y-0.5 overflow-y-auto", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: "Menu" }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("nav", { className: "flex-1 px-4 py-5 space-y-0.5 overflow-y-auto", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: "Menu" }),
         NAV.map(({ path, label, icon, exact }) => {
           const active = exact ? pathname === path : pathname.startsWith(path);
-          return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(
+          return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)(
             Link,
             {
               to: path,
@@ -85988,7 +86231,7 @@ ${end.comment}` : end.comment;
                 active ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white"
               ),
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Icon, { d: icon, size: 17 }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Icon2, { d: icon, size: 17 }) }),
                 label
               ]
             },
@@ -85996,45 +86239,46 @@ ${end.comment}` : end.comment;
           );
         })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "px-6 py-4 border-t border-[#2E3A4E] text-[10px] text-[#8A99AF]", children: "micraft admin v1" })
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "px-6 py-4 border-t border-[#2E3A4E] text-[10px] text-[#8A99AF]", children: "micraft admin v1" })
     ] });
   }
   function Header() {
     var _a6;
     const { pathname } = useLocation();
     const title = (_a6 = PAGE_LABELS[pathname]) != null ? _a6 : "Admin";
-    return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
           "Admin / ",
           title
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
         "Server online"
       ] })
     ] });
   }
   function AdminApp() {
-    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Sidebar, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Header, {}),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(Routes, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(StatusPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(UsersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(PlayersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(ConfigEditorPage, {}) })
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Sidebar, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Header, {}),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)(Routes, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(StatusPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(UsersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(PlayersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(ConfigEditorPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(WorldsPage, {}) })
         ] }) })
       ] })
     ] }) });
   }
 
   // admin/index.tsx
-  var import_jsx_runtime19 = __toESM(require_jsx_runtime(), 1);
-  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime19.jsx)(AdminApp, {}));
+  var import_jsx_runtime20 = __toESM(require_jsx_runtime(), 1);
+  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime20.jsx)(AdminApp, {}));
 })();
 /*! Bundled license information:
 

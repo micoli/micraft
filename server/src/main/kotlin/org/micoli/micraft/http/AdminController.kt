@@ -25,11 +25,23 @@ import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
 import org.micoli.micraft.game.world.PlayerFile
+import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.player.rpg.CharacterClass
 
 @Serializable
 data class UserDto(val email: String, val displayName: String, val groups: List<String>)
+
+@Serializable
+data class WorldStatsDto(
+    val name: String,
+    val seed: Long,
+    val generator: String,
+    val createdAt: String,
+    val chunkCount: Int,
+    val playerCount: Int,
+    val isActive: Boolean,
+)
 
 private val adminJson = Json {
     encodeDefaults = true
@@ -63,6 +75,9 @@ class AdminController(
     private val tokenStore: TokenStore? = null,
 ) {
     private val configDir = Path.of("$dataPath/config")
+    private val worldsDir = Path.of("$dataPath/world")
+    private val activeWorldName: String =
+        System.getenv("MICRAFT_WORLD_NAME")?.takeIf { it.isNotBlank() } ?: "default_world"
 
     private suspend fun RoutingContext.requireAdmin(): Boolean {
         tokenStore ?: return true
@@ -358,6 +373,50 @@ class AdminController(
                 call.respond(HttpStatusCode.NoContent)
             }
 
+            // ── Worlds ───────────────────────────────────────────────────────
+            get("/api/admin/worlds") {
+                if (!requireAdmin()) return@get
+                val worlds = listWorlds()
+                call.respondText(
+                    adminJson.encodeToString(ListSerializer(WorldStatsDto.serializer()), worlds),
+                    ContentType.Application.Json)
+            }
+
+            post("/api/admin/worlds") {
+                if (!requireAdmin()) return@post
+                val body =
+                    runCatching { Json.parseToJsonElement(call.receiveText()).jsonObject }
+                        .getOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest)
+                val name =
+                    body["name"]?.jsonPrimitive?.content?.trim()
+                        ?: return@post call.respond(HttpStatusCode.BadRequest)
+                if (!name.matches(Regex("[a-zA-Z0-9_-]+")))
+                    return@post call.respond(HttpStatusCode.BadRequest)
+                val seed = body["seed"]?.jsonPrimitive?.content?.toLongOrNull() ?: 42L
+                val worldDir = worldsDir.resolve(name)
+                if (worldDir.exists()) return@post call.respond(HttpStatusCode.Conflict)
+                val worldPersistence = WorldPersistence(worldDir)
+                worldPersistence.saveMetadata(
+                    WorldMetadata(
+                        seed = seed,
+                        generator = "procedural",
+                        createdAt = java.time.Instant.now().toString()))
+                call.respondText(
+                    adminJson.encodeToString(
+                        WorldStatsDto.serializer(),
+                        WorldStatsDto(
+                            name = name,
+                            seed = seed,
+                            generator = "procedural",
+                            createdAt = java.time.Instant.now().toString(),
+                            chunkCount = 0,
+                            playerCount = 0,
+                            isActive = name == activeWorldName,
+                        )),
+                    ContentType.Application.Json,
+                    HttpStatusCode.Created)
+            }
+
             // ── Config files ─────────────────────────────────────────────────
             get("/api/admin/configs") {
                 if (!requireAdmin()) return@get
@@ -432,6 +491,34 @@ class AdminController(
                 call.respondText(content, ContentType.Application.Json)
             }
         }
+
+    private fun listWorlds(): List<WorldStatsDto> {
+        if (!worldsDir.exists()) return emptyList()
+        return worldsDir
+            .toFile()
+            .listFiles { f -> f.isDirectory }
+            ?.mapNotNull { dir ->
+                val wp = WorldPersistence(dir.toPath())
+                val meta = wp.loadMetadata() ?: return@mapNotNull null
+                val chunkCount =
+                    dir.resolve("chunks").listFiles { f -> f.name.endsWith(".mcc.gz") }?.size ?: 0
+                val playerCount =
+                    dir.resolve("players")
+                        .listFiles { f -> f.extension == "yaml" && !f.name.contains("-") }
+                        ?.size ?: 0
+                WorldStatsDto(
+                    name = dir.name,
+                    seed = meta.seed,
+                    generator = meta.generator,
+                    createdAt = meta.createdAt,
+                    chunkCount = chunkCount,
+                    playerCount = playerCount,
+                    isActive = dir.name == activeWorldName,
+                )
+            }
+            ?.sortedWith(compareByDescending<WorldStatsDto> { it.isActive }.thenBy { it.name })
+            ?: emptyList()
+    }
 
     private fun isAllowedConfigFile(filename: String): Boolean {
         if (filename.contains("..")) return false

@@ -21,6 +21,16 @@ export interface StatusSnapshot {
   ticksPerDay: number;
 }
 
+export interface WorldStatsDto {
+  name: string;
+  seed: number;
+  generator: string;
+  createdAt: string;
+  chunkCount: number;
+  playerCount: number;
+  isActive: boolean;
+}
+
 export interface UserDto {
   email: string;
   displayName: string;
@@ -109,6 +119,10 @@ export const api = {
       put(`/api/admin/players/${encodeURIComponent(name)}/rpg`, rpg),
     rename: (name: string, newName: string) =>
       post(`/api/admin/players/${encodeURIComponent(name)}/rename`, { newName }),
+  },
+  worlds: {
+    list: () => get("/api/admin/worlds").then((r) => r.json() as Promise<WorldStatsDto[]>),
+    create: (name: string, seed: number) => post("/api/admin/worlds", { name, seed }),
   },
   skins: {
     list: () => get("/api/skins").then((r) => r.json() as Promise<string[]>),
