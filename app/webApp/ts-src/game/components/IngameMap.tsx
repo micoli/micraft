@@ -189,6 +189,7 @@ function renderPoi(
   panX = 0,
   panZ = 0,
   zoom = 1,
+  showNames = true,
 ) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -235,11 +236,13 @@ function renderPoi(
     ctx.font = "bold 9px monospace";
     ctx.textAlign = "center";
     ctx.fillText("↑", sx, sz + 3);
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
-    const text = s.name.replace(/^Staircase - /, "");
-    ctx.fillText(text, sx + 1, sz - 10);
-    ctx.fillStyle = "#e0b0ff";
-    ctx.fillText(text, sx, sz - 11);
+    if (showNames) {
+      const text = s.name.replace(/^Staircase - /, "");
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
+      ctx.fillText(text, sx + 1, sz - 10);
+      ctx.fillStyle = "#e0b0ff";
+      ctx.fillText(text, sx, sz - 11);
+    }
     ctx.textAlign = "left";
   }
 }
@@ -376,6 +379,7 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
         panX,
         panZ,
         zoom,
+        L.biomeNames,
       );
     if (overlayRef.current) renderOverlay(overlayRef.current, ppx, ppz, fcx, fcz, yaw, panX, panZ, zoom);
   }, []);
@@ -490,7 +494,7 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
         const { x: px2, z: pz2 } = panRef.current;
         const z2 = zoomRef.current;
         if (poiRef.current)
-          renderPoi(poiRef.current, data, weatherZonesRef.current, fcx, fcz, L.weather, L.staircases, px2, pz2, z2);
+          renderPoi(poiRef.current, data, weatherZonesRef.current, fcx, fcz, L.weather, L.staircases, px2, pz2, z2, L.biomeNames);
       })
       .catch(() => {});
 
@@ -514,6 +518,7 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
             px2,
             pz2,
             z2,
+            L.biomeNames,
           );
       })
       .catch(() => {});
