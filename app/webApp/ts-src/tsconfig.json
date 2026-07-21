@@ -16,5 +16,6 @@
       "@plugins": ["../../../plugins"]
     }
   },
-  "include": ["./**/*.ts", "./**/*.tsx"]
+  "include": ["./**/*.ts", "./**/*.tsx"],
+  "exclude": ["./__tests__/**", "./vitest.config.ts"]
 }

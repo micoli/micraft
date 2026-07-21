@@ -641,7 +641,6 @@ function NpcDetail({ npc }: { npc: NpcEntry }) {
 function usePlayerModelReady(skin: string): boolean {
   const [ready, setReady] = useState(() => !!window.mc.isPlayerBbmodelReady?.(skin));
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReady(!!window.mc.isPlayerBbmodelReady?.(skin));
     window.mc.initPlayerModel?.(skin);
     if (window.mc.isPlayerBbmodelReady?.(skin)) return;

@@ -382,7 +382,6 @@ function PlayerDetail({
   const [renameErr, setRenameErr] = useState<string | null>(null);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFile(null);
     setNewName(name);
     api.players

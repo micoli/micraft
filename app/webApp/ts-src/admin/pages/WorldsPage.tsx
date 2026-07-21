@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api, WorldStatsDto } from "../api";
 
 function Icon({ d, size = 16 }: { d: string; size?: number }) {
@@ -35,17 +35,7 @@ function Badge({ children, color }: { children: React.ReactNode; color: string }
   );
 }
 
-function StatPill({ icon, value, label }: { icon: string; value: number; label: string }) {
-  return (
-    <div className="flex items-center gap-1.5 text-sm text-[#8A99AF]">
-      <Icon d={icon} size={14} />
-      <span className="text-white font-medium tabular-nums">{value.toLocaleString()}</span>
-      <span>{label}</span>
-    </div>
-  );
-}
-
-function WorldCard({ world, onRefresh }: { world: WorldStatsDto; onRefresh: () => void }) {
+function WorldCard({ world, onRefresh: _onRefresh }: { world: WorldStatsDto; onRefresh: () => void }) {
   const date = new Date(world.createdAt).toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
@@ -203,7 +193,7 @@ export function WorldsPage() {
   const [worlds, setWorlds] = useState<WorldStatsDto[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const data = await api.worlds.list();
       setWorlds(data);
@@ -211,11 +201,11 @@ export function WorldsPage() {
     } catch {
       setError("Failed to load worlds");
     }
-  };
+  }, []);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   if (error) return <p className="text-red-400 text-sm">{error}</p>;
 

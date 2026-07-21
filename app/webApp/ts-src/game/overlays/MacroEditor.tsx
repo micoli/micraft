@@ -258,7 +258,6 @@ export function MacroEditor({
 
   useEffect(() => {
     if (open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalMacros({ ...macros });
       setLocalIcons({ ...(macroIcons ?? {}) });
       const macroBindings: Record<string, string[]> = {};

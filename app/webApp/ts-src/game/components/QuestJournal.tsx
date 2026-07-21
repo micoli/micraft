@@ -262,10 +262,7 @@ export function QuestJournal({ open, quests, playerLevel, onClose, onCommand }: 
                 {/* Actions */}
                 <div className="flex gap-2 mt-2">
                   {canAccept && (
-                    <Button
-                      onClick={() => onCommand(`/quest accept ${selected}`)}
-                      className="text-xs"
-                    >
+                    <Button onClick={() => onCommand(`/quest accept ${selected}`)} className="text-xs">
                       Accept
                     </Button>
                   )}

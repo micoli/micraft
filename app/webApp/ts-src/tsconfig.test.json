@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["vitest/globals"]
+  },
+  "include": ["./__tests__/**/*.ts", "./__tests__/**/*.tsx", "./vitest.config.ts"]
+}

@@ -46,7 +46,6 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
 
   useEffect(() => {
     if (!open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestions([]);
       setSelIdx(-1);
       return;

@@ -3,7 +3,6 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 export function usePlayerModelReady(skin: string): boolean {
   const [ready, setReady] = useState(() => !!window.mc.isPlayerBbmodelReady?.(skin));
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReady(!!window.mc.isPlayerBbmodelReady?.(skin));
     window.mc.initPlayerModel?.(skin);
     if (window.mc.isPlayerBbmodelReady?.(skin)) return;
@@ -22,7 +21,6 @@ export function useArmorModelsReady(armors: string[]): boolean {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     if (armors.length === 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setReady(true);
       return;
     }

@@ -8,7 +8,6 @@ export function DisconnectOverlay({ message }: { message: string | null }) {
 
   useEffect(() => {
     if (totalSecs === null) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRemaining(null);
       return;
     }

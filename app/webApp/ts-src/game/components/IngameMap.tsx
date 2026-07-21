@@ -494,7 +494,19 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
         const { x: px2, z: pz2 } = panRef.current;
         const z2 = zoomRef.current;
         if (poiRef.current)
-          renderPoi(poiRef.current, data, weatherZonesRef.current, fcx, fcz, L.weather, L.staircases, px2, pz2, z2, L.biomeNames);
+          renderPoi(
+            poiRef.current,
+            data,
+            weatherZonesRef.current,
+            fcx,
+            fcz,
+            L.weather,
+            L.staircases,
+            px2,
+            pz2,
+            z2,
+            L.biomeNames,
+          );
       })
       .catch(() => {});
 

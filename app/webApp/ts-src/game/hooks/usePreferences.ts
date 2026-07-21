@@ -116,7 +116,6 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
 
   useEffect(() => {
     if (open && preferences) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalSubscribed(new Set(preferences.subscribedChannels.map((c) => c.name)));
       setLocalAutoFocus(new Set(preferences.subscribedChannels.filter((c) => c.autoFocus).map((c) => c.name)));
       setLocalDisabled(new Set(preferences.disabledCommands));

@@ -79,7 +79,6 @@ export function Trade({
 
   // Reset local state when a new trade opens
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (open) setLocalOffer({});
   }, [tradeId, open]);
 

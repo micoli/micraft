@@ -289,7 +289,14 @@ export function GameUI() {
       const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
       (canvas?.requestPointerLock() as unknown as Promise<void>)?.catch?.(() => {});
     }
-  }, [state.characterOpen, state.ingameMapVisible, state.preferencesOpen, state.pauseMenuOpen, state.macroEditorOpen, state.questJournalOpen]);
+  }, [
+    state.characterOpen,
+    state.ingameMapVisible,
+    state.preferencesOpen,
+    state.pauseMenuOpen,
+    state.macroEditorOpen,
+    state.questJournalOpen,
+  ]);
 
   useEffect(() => {
     hudDataRef.current = state.hud;
