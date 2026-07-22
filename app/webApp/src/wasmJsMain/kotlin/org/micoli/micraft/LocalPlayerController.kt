@@ -971,9 +971,9 @@ class LocalPlayerController(
         val dy = jsGetCameraDir3DY(camera).toFloat()
         val dz = jsGetCameraDir3DZ(camera).toFloat()
 
-        var bx = kotlin.math.round(ox).toInt()
-        var by = kotlin.math.round(oy).toInt()
-        var bz = kotlin.math.round(oz).toInt()
+        var bx = kotlin.math.floor(ox).toInt()
+        var by = kotlin.math.floor(oy).toInt()
+        var bz = kotlin.math.floor(oz).toInt()
         var prevBx = bx
         var prevBy = by
         var prevBz = bz
@@ -987,14 +987,14 @@ class LocalPlayerController(
         val tDeltaZ = if (dz != 0f) kotlin.math.abs(1f / dz) else Float.MAX_VALUE
 
         var tMaxX =
-            if (dx > 0) ((bx + 0.5 - ox) / dx).toFloat()
-            else if (dx < 0) ((bx - 0.5 - ox) / dx).toFloat() else Float.MAX_VALUE
+            if (dx > 0) ((bx + 1 - ox) / dx).toFloat()
+            else if (dx < 0) ((bx - ox) / dx).toFloat() else Float.MAX_VALUE
         var tMaxY =
-            if (dy > 0) ((by + 0.5 - oy) / dy).toFloat()
-            else if (dy < 0) ((by - 0.5 - oy) / dy).toFloat() else Float.MAX_VALUE
+            if (dy > 0) ((by + 1 - oy) / dy).toFloat()
+            else if (dy < 0) ((by - oy) / dy).toFloat() else Float.MAX_VALUE
         var tMaxZ =
-            if (dz > 0) ((bz + 0.5 - oz) / dz).toFloat()
-            else if (dz < 0) ((bz - 0.5 - oz) / dz).toFloat() else Float.MAX_VALUE
+            if (dz > 0) ((bz + 1 - oz) / dz).toFloat()
+            else if (dz < 0) ((bz - oz) / dz).toFloat() else Float.MAX_VALUE
 
         while (true) {
             val t = minOf(tMaxX, tMaxY, tMaxZ)
