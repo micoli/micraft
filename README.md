@@ -43,6 +43,32 @@
 - **Weather zones** — rain, storm, snow, fog spawned dynamically with drift and radius
 - **NPC entities** — 4 types (SELLER, BLACK_SMITH, GOAT, DUCK) with static, interactable, and random-wander behaviors
 
+### Combat & RPG
+
+- **Attack system** — attacks and spells with cooldown tracking, resource checks, and draggable action bar (`AttackPanel`)
+- **Combat target frame** — HP bar + target info overlay for the focused entity (`CombatTargetFrame`)
+- **Aggro indicators** — angular proximity indicators showing nearby hostile NPCs (`AggroIndicators`)
+- **XP / level** — experience bar and level display (`XpBar`)
+- **Player status** — HP, mana, stamina bars with downed/respawn overlay (`PlayerStatusBar`, `PlayerDownedOverlay`)
+- **Quest system** — quest journal (key `J`) and persistent on-screen quest tracker widget (`QuestJournal`, `QuestTracker`)
+- **Trade** — NPC trade dialog with buy/sell slots (`Trade`)
+- **Crafting** — recipe-based crafting panel (`Craft`)
+- **Statistics** — toggleable performance and game-stats overlay
+
+### Character
+
+- **Character screen** — armor equip/unequip per slot with 3-D player model preview (key `Y`, or Pause → Character)
+- **Character creation** — name + skin selection at first login (`CharacterCreationScreen`, `CharacterRPGCreationScreen`)
+- **Character selection** — choose or create a character on login (`CharacterSelectionScreen`)
+
+### Pages
+
+| URL | Purpose |
+|-----|---------|
+| `/` | Game client (Kotlin/Wasm + BabylonJS) |
+| `/map` | Live top-down SVG world map — toggleable layers (biome borders, zone names, contours, vegetation, houses, roads, chunks, weather, staircases, players, NPCs), player/NPC follow mode, zoom, fit-all |
+| `/admin` | Admin panel — server status (TPS, connected players, loaded chunks, game time, network, CPU), user management, player list, live config editor, world browser |
+
 ### Infrastructure
 
 - **Auth** — three modes: `none`, `local` (bcrypt), `oauth` (Google Authorization Code)
