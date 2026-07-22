@@ -144,6 +144,7 @@ export interface PreferencesData {
   macros: Record<string, string>;
   macroIcons?: Record<string, string>;
   fieldOfView: number;
+  autoTargetEnabled: boolean;
 }
 
 export type CombatTargetData = {

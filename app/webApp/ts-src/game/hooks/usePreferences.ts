@@ -13,6 +13,7 @@ export interface SavePayload {
   keybindings: Record<string, string[]>;
   customCommands: Record<string, string[]>;
   fieldOfView: number;
+  autoTargetEnabled: boolean;
 }
 
 export interface CustomCmdEntry {
@@ -100,6 +101,7 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
   const [localChunkDebugVisible, setLocalChunkDebugVisible] = useState(false);
   const [localStatisticsVisible, setLocalStatisticsVisible] = useState(false);
   const [localAttackPanelVisible, setLocalAttackPanelVisible] = useState(false);
+  const [localAutoTarget, setLocalAutoTarget] = useState(true);
   const [localFov, setLocalFov] = useState(70);
   const [localBindings, setLocalBindings] = useState<Record<string, string[]>>({});
   const [localCustomCmds, setLocalCustomCmds] = useState<CustomCmdEntry[]>([]);
@@ -125,6 +127,7 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
       setLocalChunkDebugVisible(preferences.chunkDebugVisible ?? false);
       setLocalStatisticsVisible(preferences.statisticsVisible ?? false);
       setLocalAttackPanelVisible(preferences.attackPanelVisible ?? false);
+      setLocalAutoTarget(preferences.autoTargetEnabled ?? true);
       setLocalFov(preferences.fieldOfView ?? 70);
       setLocalBindings(preferences.keybindings ? { ...preferences.keybindings } : {});
       setLocalCustomCmds(Object.entries(preferences.customCommands || {}).map(([text, keys]) => ({ text, keys })));
@@ -318,6 +321,7 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
       chunkDebugVisible: localChunkDebugVisible,
       statisticsVisible: localStatisticsVisible,
       attackPanelVisible: localAttackPanelVisible,
+      autoTargetEnabled: localAutoTarget,
       keybindings: localBindings,
       customCommands,
       fieldOfView: localFov,
@@ -358,6 +362,8 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
     setLocalStatisticsVisible,
     localAttackPanelVisible,
     setLocalAttackPanelVisible,
+    localAutoTarget,
+    setLocalAutoTarget,
     localFov,
     setLocalFov,
     localBindings,

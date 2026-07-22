@@ -521,6 +521,7 @@ class GameLoop(
             fieldOfView = session.state.fieldOfView,
             defaultKeybindings = defaults,
             dynamicFogEnabled = session.state.dynamicFogEnabled,
+            autoTargetEnabled = session.state.autoTargetEnabled,
         )
     }
 
@@ -545,6 +546,7 @@ class GameLoop(
                 attackPanelVisible = msg.attackPanelVisible,
                 fieldOfView = msg.fieldOfView,
                 dynamicFogEnabled = msg.dynamicFogEnabled,
+                autoTargetEnabled = msg.autoTargetEnabled,
             )
         if (msg.keybindings.isNotEmpty()) {
             persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
@@ -1020,6 +1022,7 @@ class GameLoop(
                 rpgOptOut =
                     if (saved?.characterData != null) false else (saved?.rpgOptOut ?: false),
                 email = accountEmail,
+                autoTargetEnabled = saved?.autoTargetEnabled ?: true,
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =

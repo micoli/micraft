@@ -630,6 +630,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 ServerMessage.PreferencesSync::class,
                 typedHandler { msg: ServerMessage.PreferencesSync ->
                     jsCameraSetFov(camera, msg.fieldOfView)
+                    localController.autoTargetEnabled = msg.autoTargetEnabled
                     uiState.setPreferencesSync(
                         Json.encodeToString<ServerMessage.PreferencesSync>(msg))
                 })

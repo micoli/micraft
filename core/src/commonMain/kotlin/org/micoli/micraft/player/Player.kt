@@ -55,4 +55,5 @@ data class PlayerState(
     val email: String = "",
     val zoneLevel: Int = 0,
     val quests: Map<String, QuestProgress> = emptyMap(),
+    val autoTargetEnabled: Boolean = true,
 )

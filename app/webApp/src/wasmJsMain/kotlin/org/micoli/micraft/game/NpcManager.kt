@@ -265,6 +265,37 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
         jsSetNpcNames(json)
     }
 
+    fun nearestAggroNpc(playerX: Double, playerY: Double, playerZ: Double): String? {
+        val renderTime = nowMs() - INTERP_DELAY_MS
+        return npcBuffers.entries
+            .filter { (id, _) -> id in aggroNpcIds }
+            .minByOrNull { (_, buf) ->
+                val (pos, _, _) = interpolate(buf, renderTime)
+                val dx = pos.x.toDouble() - playerX
+                val dy = pos.y.toDouble() - playerY
+                val dz = pos.z.toDouble() - playerZ
+                dx * dx + dy * dy + dz * dz
+            }
+            ?.key
+    }
+
+    fun npcDistanceSquared(
+        npcId: String,
+        playerX: Double,
+        playerY: Double,
+        playerZ: Double
+    ): Double? {
+        val buf = npcBuffers[npcId] ?: return null
+        val renderTime = nowMs() - INTERP_DELAY_MS
+        val (pos, _, _) = interpolate(buf, renderTime)
+        val dx = pos.x.toDouble() - playerX
+        val dy = pos.y.toDouble() - playerY
+        val dz = pos.z.toDouble() - playerZ
+        return dx * dx + dy * dy + dz * dz
+    }
+
+    fun isAggroOnPlayer(npcId: String): Boolean = npcId in aggroNpcIds
+
     companion object {
         private const val INTERP_DELAY_MS = 100L
         private const val MAX_BUFFER = 8

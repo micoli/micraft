@@ -199,6 +199,11 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                   label: "Animated favicon (rotating block icon in browser tab)",
                 },
                 {
+                  state: pref.localAutoTarget,
+                  setter: pref.setLocalAutoTarget,
+                  label: "Auto-target nearest aggro mob (when no target selected)",
+                },
+                {
                   state: pref.localChunkDebugVisible,
                   setter: pref.setLocalChunkDebugVisible,
                   label: "Chunk debug overlay (streaming status grid)",

@@ -31,6 +31,7 @@ private const val JITTER_SNAPSHOT_WINDOW = 1000
 private const val CLIENT_GRAVITY = -20.0
 private const val CLIENT_JUMP_SPEED = 8.5
 private const val TICKS_PER_DAY_CLIENT = 72_000L
+private const val MAX_AUTO_TARGET_RANGE_SQ = 30.0 * 30.0
 
 private enum class ViewMode {
     FIRST_PERSON,
@@ -85,6 +86,7 @@ class LocalPlayerController(
     @OptIn(ExperimentalWasmJsInterop::class) var fpArms: JsAny? = null
 
     var currentCombatTargetId: String? = null
+    var autoTargetEnabled: Boolean = true
     private var breakTarget: BlockPos? = null
     private var hoverTarget: BlockPos? = null
     var selectedSlot: Int = 0
@@ -559,6 +561,26 @@ class LocalPlayerController(
             }
         }
 
+        val targetId = currentCombatTargetId
+        if (targetId != null) {
+            val dist2 = npcManager.npcDistanceSquared(targetId, predX, predY, predZ)
+            val inRange = dist2 != null && dist2 <= MAX_AUTO_TARGET_RANGE_SQ
+            if (!inRange && !npcManager.isAggroOnPlayer(targetId)) {
+                currentCombatTargetId = null
+                npcManager.setHighlightTarget(null)
+                outMessages.trySend(ClientMessage.SetCombatTarget(null, isNpc = true))
+            }
+        }
+
+        if (autoTargetEnabled && currentCombatTargetId == null) {
+            val nearest = npcManager.nearestAggroNpc(predX, predY, predZ)
+            if (nearest != null) {
+                currentCombatTargetId = nearest
+                npcManager.setHighlightTarget(nearest)
+                outMessages.trySend(ClientMessage.SetCombatTarget(nearest, isNpc = true))
+            }
+        }
+
         val layoutUpdateJson = jsConsumeLayoutUpdate()
         if (layoutUpdateJson.isNotEmpty()) {
             runCatching {
@@ -575,10 +597,15 @@ class LocalPlayerController(
         val preferencesUpdateJson = jsConsumePreferencesUpdate()
         if (preferencesUpdateJson.isNotEmpty()) {
             runCatching {
-                val msg =
-                    Json.decodeFromString<ClientMessage.PreferencesUpdate>(preferencesUpdateJson)
-                outMessages.trySend(msg)
-            }
+                    val msg =
+                        Json.decodeFromString<ClientMessage.PreferencesUpdate>(
+                            preferencesUpdateJson)
+                    outMessages.trySend(msg)
+                }
+                .onFailure { e ->
+                    jsError(
+                        "PreferencesUpdate decode failed: ${e.message} | json=$preferencesUpdateJson")
+                }
         }
 
         val slotUpdateJson = jsConsumeSlotUpdate()

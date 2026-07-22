@@ -101,6 +101,7 @@ export function GameScreen() {
     chunkDebugVisible: boolean;
     statisticsVisible: boolean;
     attackPanelVisible: boolean;
+    autoTargetEnabled: boolean;
     keybindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
     fieldOfView?: number;
@@ -113,6 +114,7 @@ export function GameScreen() {
         macros: state.preferences?.macros ?? {},
         macroIcons: state.preferences?.macroIcons,
         attackPanelVisible: payload.attackPanelVisible,
+        autoTargetEnabled: payload.autoTargetEnabled,
       },
     });
     if (window.mcState) {
@@ -143,6 +145,7 @@ export function GameScreen() {
         chunkDebugVisible: prefs.chunkDebugVisible ?? false,
         statisticsVisible: prefs.statisticsVisible ?? false,
         attackPanelVisible: prefs.attackPanelVisible ?? false,
+        autoTargetEnabled: prefs.autoTargetEnabled ?? true,
         keybindings: prefs.keybindings || {},
         customCommands,
         macros,
@@ -164,6 +167,7 @@ export function GameScreen() {
       chunkDebugVisible: prefs.chunkDebugVisible ?? false,
       statisticsVisible: prefs.statisticsVisible ?? false,
       attackPanelVisible: prefs.attackPanelVisible ?? false,
+      autoTargetEnabled: prefs.autoTargetEnabled ?? true,
       keybindings: prefs.keybindings || {},
       customCommands,
       macros,
