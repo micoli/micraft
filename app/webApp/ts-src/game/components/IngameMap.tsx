@@ -67,6 +67,7 @@ function renderBg(
   panX = 0,
   panZ = 0,
   zoom = 1,
+  showLevel = false,
 ) {
   const ctx = canvas.getContext("2d");
   if (!ctx || cells.length === 0) return;
@@ -126,11 +127,14 @@ function renderBg(
       ctx.fillText(label, px + 1, py + 5);
       ctx.fillStyle = "#fff";
       ctx.fillText(label, px, py + 4);
+    }
+    if (showLevel) {
+      const nameOffset = showNames ? 13 : 0;
       ctx.font = "8px monospace";
       ctx.fillStyle = "rgba(0,0,0,0.7)";
-      ctx.fillText("Lv " + cell.level, px + 1, py + 17);
+      ctx.fillText("Lv " + cell.level, px + 1, py + 5 + nameOffset);
       ctx.fillStyle = "rgba(255,210,80,0.95)";
-      ctx.fillText("Lv " + cell.level, px, py + 16);
+      ctx.fillText("Lv " + cell.level, px, py + 4 + nameOffset);
     }
   }
 }
@@ -311,6 +315,7 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
   const [layers, setLayers] = useState({
     biomes: true,
     biomeNames: true,
+    level: true,
     borders: true,
     weather: true,
     staircases: true,
@@ -361,7 +366,7 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
     const L = layersRef.current;
     if (bgRef.current) {
       bgRef.current.style.display = L.biomes ? "" : "none";
-      renderBg(bgRef.current, cellsRef.current, fcx, fcz, L.biomeNames, panX, panZ, zoom);
+      renderBg(bgRef.current, cellsRef.current, fcx, fcz, L.biomeNames, panX, panZ, zoom, L.level);
     }
     if (bordersRef.current) {
       bordersRef.current.style.display = L.borders ? "" : "none";
@@ -542,7 +547,7 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
         const { x: fcx, z: fcz } = fetchCenterRef.current;
         const { x: px2, z: pz2 } = panRef.current;
         const z2 = zoomRef.current;
-        if (bgRef.current) renderBg(bgRef.current, data, fcx, fcz, layersRef.current.biomeNames, px2, pz2, z2);
+        if (bgRef.current) renderBg(bgRef.current, data, fcx, fcz, layersRef.current.biomeNames, px2, pz2, z2, layersRef.current.level);
         const { x: ppx, z: ppz, yaw } = playerPosRef.current;
         if (overlayRef.current) renderOverlay(overlayRef.current, ppx, ppz, fcx, fcz, yaw, px2, pz2, z2);
       })
@@ -624,6 +629,7 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
           [
             ["biomes", "Biomes"],
             ["biomeNames", "Names"],
+            ["level", "Level"],
             ["borders", "Borders"],
             ["weather", "Weather"],
             ["staircases", "Stairs"],
