@@ -7,6 +7,7 @@ import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.combat.AttackLevelDefinition
 import org.micoli.micraft.combat.DamageType
+import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcInstance
@@ -236,6 +237,7 @@ class CombatProcessor(
 
         if (hit) {
             npcManager.applyDamage(msg.targetId, damage, session.id)
+            npcManager.applyStatusEffect(msg.targetId, levelDef, now)
         }
 
         val hitMsg = if (hit) "hits for $damage${if (isCrit) " [CRIT]" else ""}" else "misses"
@@ -250,6 +252,10 @@ class CombatProcessor(
 
     suspend fun handleNpcAttack(npc: NpcInstance, target: PlayerSession) {
         val now = System.currentTimeMillis()
+        if (npc.activeEffects.any {
+            it.effect is StatusEffect.FrozenInTime && it.expiresAtMs > now
+        })
+            return
         val def = npc.definition
         val slots =
             def.attacks.ifEmpty {
@@ -472,7 +478,8 @@ class CombatProcessor(
         now: Long
     ) {
         val effect = levelDef.statusEffect ?: return
-        val expiry = now + (effect.durationSec * 1000).toLong()
+        val durationSec = levelDef.durationSec ?: effect.durationSec
+        val expiry = now + (durationSec * 1000).toLong()
         val idx =
             target.combatState.activeEffects.indexOfFirst { it.effect::class == effect::class }
         if (idx >= 0) target.combatState.activeEffects[idx] = ActiveStatusEffect(effect, expiry)

@@ -5,9 +5,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.combat.AttackLevelDefinition
 import org.micoli.micraft.combat.DamageType
+import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.classes.ClassAttackAccess
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.classes.ClassLevelEntry
@@ -631,5 +633,55 @@ class CombatProcessorTest {
             .handleNpcAttack(npc, target)
 
         assertEquals(20, target.characterData!!.currentHp)
+    }
+
+    @Test
+    fun `handleNpcAttack frozenInTime NPC does not attack`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
+        target.characterData = testChar("b", "Bob", hp = 20)
+
+        val combatLog = mutableListOf<String>()
+        val proc = buildProcessor(sessions = { listOf(target) }, combatLog = combatLog)
+
+        val npc = fakeNpc()
+        npc.activeEffects.add(
+            ActiveStatusEffect(
+                effect = StatusEffect.FrozenInTime,
+                expiresAtMs = System.currentTimeMillis() + 60_000L,
+            ))
+        proc.handleNpcAttack(npc, target)
+
+        assertEquals(0, combatLog.size)
+        assertEquals(20, target.characterData!!.currentHp)
+    }
+
+    @Test
+    fun `handleNpcAttack frozen NPC can still attack`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
+        target.characterData = testChar("b", "Bob", hp = 20)
+
+        val highPower =
+            AttackDefinition(
+                damageType = DamageType.PHYSICAL,
+                levels =
+                    mapOf(
+                        1 to
+                            AttackLevelDefinition(
+                                power = 100, weaponDice = "1d4", cooldownMs = 1000)))
+        val proc =
+            buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry = mapOf("basic_attack" to highPower),
+            )
+
+        val npc = fakeNpc(power = 100)
+        npc.activeEffects.add(
+            ActiveStatusEffect(
+                effect = StatusEffect.Frozen,
+                expiresAtMs = System.currentTimeMillis() + 60_000L,
+            ))
+        proc.handleNpcAttack(npc, target)
+
+        assertTrue(target.characterData!!.currentHp < 20)
     }
 }

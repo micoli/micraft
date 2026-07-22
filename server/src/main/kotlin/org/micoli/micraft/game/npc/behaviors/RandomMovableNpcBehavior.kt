@@ -6,6 +6,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
+import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.TICK_SECONDS
 import org.micoli.micraft.game.npc.NpcBehavior
 import org.micoli.micraft.game.npc.NpcConstants
@@ -20,6 +21,13 @@ class RandomMovableNpcBehavior : NpcBehavior {
 
     override fun tick(instance: NpcInstance, world: WorldState): Boolean {
         var changed = NpcPhysics.applyGravity(instance, world)
+        val now = System.currentTimeMillis()
+        val isFrozen =
+            instance.activeEffects.any {
+                (it.effect is StatusEffect.Frozen || it.effect is StatusEffect.FrozenInTime) &&
+                    it.expiresAtMs > now
+            }
+        if (isFrozen) return changed
         val chaseTarget = instance.chaseTargetPos
         changed =
             if (chaseTarget != null) tickChase(instance, world, chaseTarget) || changed

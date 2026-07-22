@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=../../schemas/skill-attack.schema.json
+damageType: FIRE
+enabled: true
+levels:
+  1:
+    power: 4
+    weaponDice: 1d4
+    cooldownMs: 2500
+    manaCost: 18
+    statusEffect: Pyre
+    durationSec: 2
+  2:
+    power: 7
+    weaponDice: 2d4
+    cooldownMs: 2300
+    manaCost: 28
+    statusEffect: Pyre
+    durationSec: 3
+  3:
+    power: 10
+    weaponDice: 3d4
+    cooldownMs: 2100
+    manaCost: 40
+    statusEffect: Pyre
+    durationSec: 4
+  4:
+    power: 14
+    weaponDice: 4d4
+    cooldownMs: 1900
+    manaCost: 55
+    statusEffect: Pyre
+    durationSec: 5
+  5:
+    power: 18
+    weaponDice: 5d4
+    cooldownMs: 1800
+    manaCost: 72
+    statusEffect: Pyre
+    durationSec: 6

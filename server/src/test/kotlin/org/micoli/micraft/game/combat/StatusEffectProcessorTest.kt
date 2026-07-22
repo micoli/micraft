@@ -147,4 +147,42 @@ class StatusEffectProcessorTest {
 
         assertEquals(20, session.characterData!!.currentHp)
     }
+
+    @Test
+    fun `pyre player takes HP damage on tick`() = runBlocking {
+        val session = testSession(id = "a", name = "Alice")
+        session.characterData = testChar("Alice", hp = 20)
+        session.combatState.activeEffects.add(activeEffect(StatusEffect.Pyre))
+
+        sleepingProcessor().tick(listOf(session))
+
+        assertTrue(session.characterData!!.currentHp < 20)
+    }
+
+    @Test
+    fun `pyre player combat log contains pyre`() = runBlocking {
+        val session = testSession(id = "a", name = "Alice")
+        session.characterData = testChar("Alice", hp = 20)
+        session.combatState.activeEffects.add(activeEffect(StatusEffect.Pyre))
+
+        val combatLog = mutableListOf<String>()
+        sleepingProcessor(combatLog = combatLog).tick(listOf(session))
+
+        assertTrue(combatLog.isNotEmpty())
+        assertTrue(combatLog[0].contains("pyre"))
+    }
+
+    @Test
+    fun `pyre accumulates fractional damage across fast ticks`() = runBlocking {
+        val session = testSession(id = "a", name = "Alice")
+        session.characterData = testChar("Alice", hp = 20)
+        session.combatState.activeEffects.add(activeEffect(StatusEffect.Pyre))
+
+        // Simulate many 50ms ticks without sleeping — processor ticks immediately so dtSec ≈ 0
+        // but fractional damage must accumulate and eventually deal ≥1 damage.
+        val processor = buildProcessor()
+        repeat(30) { Thread.sleep(50); processor.tick(listOf(session)) }
+
+        assertTrue(session.characterData!!.currentHp < 20)
+    }
 }

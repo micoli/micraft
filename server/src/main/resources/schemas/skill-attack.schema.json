@@ -22,7 +22,12 @@
           "weaponDice": {"type": "string", "pattern": "^[0-9]+d[0-9]+$"},
           "statusEffect": {
             "type": ["string", "null"],
-            "enum": ["Poisoned", "Burning", "Paralyzed", "Stunned", "Blessed", "Cursed", null]
+            "enum": ["Poisoned", "Burning", "Paralyzed", "Stunned", "Blessed", "Cursed", "Frozen", "FrozenInTime", "Pyre", null]
+          },
+          "durationSec": {
+            "type": ["number", "null"],
+            "minimum": 0,
+            "description": "Override duration in seconds for the status effect (defaults to the effect's built-in duration if omitted)"
           }
         }
       }

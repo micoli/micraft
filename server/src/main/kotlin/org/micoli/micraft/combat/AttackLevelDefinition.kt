@@ -11,4 +11,5 @@ data class AttackLevelDefinition(
     val rangeOverride: Float? = null,
     val weaponDice: String = "1d4",
     val statusEffect: StatusEffect? = null,
+    val durationSec: Float? = null,
 )

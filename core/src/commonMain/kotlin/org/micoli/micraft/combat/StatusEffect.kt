@@ -34,6 +34,18 @@ sealed class StatusEffect {
     data object Cursed : StatusEffect() {
         override val durationSec = 60f
     }
+
+    data object Frozen : StatusEffect() {
+        override val durationSec = 5f
+    }
+
+    data object FrozenInTime : StatusEffect() {
+        override val durationSec = 4f
+    }
+
+    data object Pyre : StatusEffect() {
+        override val durationSec = 8f
+    }
 }
 
 object StatusEffectSerializer : KSerializer<StatusEffect> {
@@ -47,6 +59,9 @@ object StatusEffectSerializer : KSerializer<StatusEffect> {
                 StatusEffect.Stunned,
                 StatusEffect.Blessed,
                 StatusEffect.Cursed,
+                StatusEffect.Frozen,
+                StatusEffect.FrozenInTime,
+                StatusEffect.Pyre,
             )
             .associateBy { it::class.simpleName!! }
 

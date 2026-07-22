@@ -9,6 +9,9 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.builtins.ListSerializer
+import org.micoli.micraft.combat.ActiveStatusEffect
+import org.micoli.micraft.combat.AttackLevelDefinition
+import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ChunkPos
@@ -44,6 +47,7 @@ class NpcManager(
 ) {
     private val npcs = ConcurrentHashMap<String, NpcInstance>()
     @Volatile private var definitions: Map<String, NpcDefinition> = emptyMap()
+    private var lastEffectTickMs = System.currentTimeMillis()
     private val lastSentToPlayer = ConcurrentHashMap<String, ConcurrentHashMap<String, NpcState>>()
     private val pendingRespawns = ConcurrentHashMap<String, MutableList<PendingRespawn>>()
     private val broadCastNpcPositions = false
@@ -180,6 +184,7 @@ class NpcManager(
     }
 
     suspend fun tick(world: WorldState) {
+        tickEffects()
         val sessions = getSessions()
         val rangesq = NpcConstants.UPDATE_RANGE * NpcConstants.UPDATE_RANGE
         for (instance in npcs.values) {
@@ -398,6 +403,54 @@ class NpcManager(
             broadcastCombatLog("[m:${instance.state.name}] has been slain!")
             onNpcKilled(instance)
             despawnNpc(npcId)
+        }
+    }
+
+    fun applyStatusEffect(npcId: String, levelDef: AttackLevelDefinition, now: Long) {
+        val instance = npcs[npcId] ?: return
+        val effect = levelDef.statusEffect ?: return
+        val durationSec = levelDef.durationSec ?: effect.durationSec
+        val expiry = now + (durationSec * 1000).toLong()
+        val idx = instance.activeEffects.indexOfFirst { it.effect::class == effect::class }
+        if (idx >= 0) instance.activeEffects[idx] = ActiveStatusEffect(effect, expiry)
+        else instance.activeEffects.add(ActiveStatusEffect(effect, expiry))
+    }
+
+    private suspend fun tickEffects() {
+        val now = System.currentTimeMillis()
+        val dtSec = (now - lastEffectTickMs) / 1000f
+        lastEffectTickMs = now
+        for (instance in npcs.values.toList()) {
+            val effects = instance.activeEffects
+            if (effects.isEmpty()) continue
+            effects.removeAll { it.expiresAtMs <= now }
+            var hpDelta = 0f
+            for (active in effects) {
+                when (active.effect) {
+                    is StatusEffect.Pyre -> hpDelta -= 4f * dtSec
+                    else -> {}
+                }
+            }
+            if (hpDelta < 0) {
+                instance.pendingDotDamage += -hpDelta
+                val damage = instance.pendingDotDamage.toInt()
+                if (damage > 0) {
+                    instance.pendingDotDamage -= damage
+                    instance.currentHp = (instance.currentHp - damage).coerceAtLeast(0)
+                    val maxHp =
+                        NpcHpCalculator.computeMaxHp(instance.definition, instance.instanceLevel)
+                    instance.state =
+                        instance.state.copy(currentHp = instance.currentHp, maxHp = maxHp)
+                    broadcast(
+                        ServerMessage.HealthUpdate(
+                            instance.state.id, true, instance.currentHp, maxHp))
+                    if (instance.currentHp <= 0) {
+                        broadcastCombatLog("[m:${instance.state.name}] burns to death!")
+                        onNpcKilled(instance)
+                        despawnNpc(instance.state.id)
+                    }
+                }
+            }
         }
     }
 

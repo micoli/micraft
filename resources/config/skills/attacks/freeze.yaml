@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=../../schemas/skill-attack.schema.json
+damageType: MAGIC
+enabled: true
+levels:
+  1:
+    power: 6
+    weaponDice: 2d4
+    cooldownMs: 3000
+    manaCost: 20
+    statusEffect: Frozen
+  2:
+    power: 9
+    weaponDice: 3d4
+    cooldownMs: 2800
+    manaCost: 30
+    statusEffect: Frozen
+  3:
+    power: 13
+    weaponDice: 4d4
+    cooldownMs: 2600
+    manaCost: 42
+    statusEffect: Frozen
+  4:
+    power: 17
+    weaponDice: 5d4
+    cooldownMs: 2400
+    manaCost: 55
+    statusEffect: Frozen
+  5:
+    power: 22
+    weaponDice: 6d4
+    cooldownMs: 2200
+    manaCost: 70
+    statusEffect: Frozen

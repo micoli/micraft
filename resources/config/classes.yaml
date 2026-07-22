@@ -44,10 +44,40 @@ classes:
         attacks:
           - attack: fireball
             level: 1
+          - attack: pyre
+            level: 1
+      2:
+        attacks:
+          - attack: pyre
+            level: 2
+          - attack: freeze
+            level: 1
       3:
         attacks:
           - attack: fireball
             level: 2
+          - attack: pyre
+            level: 3
+          - attack: freeze
+            level: 2
+      4:
+        attacks:
+          - attack: frozen_in_time
+            level: 1
+          - attack: freeze
+            level: 3
+          - attack: pyre
+            level: 4
+      5:
+        attacks:
+          - attack: fireball
+            level: 3
+          - attack: frozen_in_time
+            level: 2
+          - attack: freeze
+            level: 4
+          - attack: pyre
+            level: 5
   RANGER:
     strBonus: 0
     dexBonus: 2

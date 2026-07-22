@@ -20,6 +20,7 @@ class StatusEffectProcessor(
     private val onPlayerDowned: suspend (PlayerSession) -> Unit = {},
 ) {
     private var lastTickMs = System.currentTimeMillis()
+    private val pendingDotDamage = mutableMapOf<String, Float>()
 
     suspend fun tick(sessions: Collection<PlayerSession>) {
         val now = System.currentTimeMillis()
@@ -51,6 +52,7 @@ class StatusEffectProcessor(
                             hpDelta -= 3f * dtSec
                         }
                     }
+                    is StatusEffect.Pyre -> hpDelta -= 4f * dtSec
                     else -> {}
                 }
             }
@@ -62,7 +64,10 @@ class StatusEffectProcessor(
             if (hpDelta != 0f && !(hpDelta < 0 && session.state.godMode)) {
                 val armors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
                 val derived = DerivedStatsCalculator.compute(charData, armors)
-                val newHp = (charData.currentHp + hpDelta.toInt()).coerceIn(0, derived.maxHp)
+                val pending = (pendingDotDamage[session.id] ?: 0f) - hpDelta
+                val intDamage = pending.toInt()
+                pendingDotDamage[session.id] = pending - intDamage
+                val newHp = (charData.currentHp - intDamage).coerceIn(0, derived.maxHp)
                 session.characterData = charData.copy(currentHp = newHp)
                 broadcastHealthUpdate(session.id, false, newHp, derived.maxHp)
                 if (newHp <= 0 && !session.isDowned) onPlayerDowned(session)
@@ -72,15 +77,15 @@ class StatusEffectProcessor(
                             when (it.effect) {
                                 is StatusEffect.Poisoned -> "poison"
                                 is StatusEffect.Burning -> "burn"
+                                is StatusEffect.Pyre -> "pyre"
                                 else -> null
                             }
                         }
                         .distinct()
                         .joinToString("+")
-                val dmg = -hpDelta.toInt()
-                if (dmg > 0) {
+                if (intDamage > 0) {
                     subscribeToChannel(session, "combat")
-                    broadcastCombatLog("${charData.name} takes $dmg damage from $effectNames")
+                    broadcastCombatLog("${charData.name} takes $intDamage damage from $effectNames")
                 }
             }
         }
