@@ -14,5 +14,6 @@ data class BlockYamlEntry(
     val replaceable: Boolean = false,
     val vegetationHost: Boolean = false,
     val treeAllowed: Boolean = true,
+    val minimapVisible: Boolean = true,
     val drops: List<DropEntry> = emptyList(),
 )

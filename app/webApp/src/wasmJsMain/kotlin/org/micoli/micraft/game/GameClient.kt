@@ -528,6 +528,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         modelElement = info.modelElement,
                                         liquid = info.liquid,
                                         viscosity = info.viscosity,
+                                        minimapVisible = info.minimapVisible,
                                     )
                             }
                             .toMap()

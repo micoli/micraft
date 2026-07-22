@@ -670,6 +670,7 @@ class GameLoop(
                     modelElement = def.modelElement,
                     liquid = def.liquid,
                     viscosity = def.viscosity,
+                    minimapVisible = def.minimapVisible,
                 )
             }
         val items =

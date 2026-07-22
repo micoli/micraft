@@ -127,6 +127,7 @@ class BlockRegistryLoader(
                     replaceable = entry.replaceable,
                     vegetationHost = entry.vegetationHost,
                     treeAllowed = entry.treeAllowed,
+                    minimapVisible = entry.minimapVisible,
                 )
             }
         log.info("Block registry loaded: {} block types", result.size)

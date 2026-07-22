@@ -14,5 +14,6 @@ data class BlockYamlOverride(
     val replaceable: Boolean? = null,
     val vegetationHost: Boolean? = null,
     val treeAllowed: Boolean? = null,
+    val minimapVisible: Boolean? = null,
     val drops: List<DropEntry>? = null,
 )

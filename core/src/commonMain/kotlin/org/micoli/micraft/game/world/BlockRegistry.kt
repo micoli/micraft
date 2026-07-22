@@ -18,7 +18,8 @@ object BlockRegistry {
                     solid = false,
                     transparent = true,
                     minimapColor = listOf(10, 10, 30),
-                    replaceable = true),
+                    replaceable = true,
+                    minimapVisible = false),
             BlockType.BEDROCK to
                 BlockDefinition(hardness = -1f, solid = true, minimapColor = listOf(58, 58, 58)),
             BlockType.STONE to
@@ -98,21 +99,24 @@ object BlockRegistry {
                     solid = false,
                     transparent = true,
                     minimapColor = listOf(180, 140, 60),
-                    replaceable = true),
+                    replaceable = true,
+                    minimapVisible = false),
             BlockType.SPROUT to
                 BlockDefinition(
                     hardness = 0f,
                     solid = false,
                     transparent = true,
                     minimapColor = listOf(100, 160, 50),
-                    replaceable = true),
+                    replaceable = true,
+                    minimapVisible = false),
             BlockType.SAPLING to
                 BlockDefinition(
                     hardness = 1f,
                     solid = false,
                     transparent = true,
                     minimapColor = listOf(60, 120, 40),
-                    replaceable = true),
+                    replaceable = true,
+                    minimapVisible = false),
         )
 
     private val defs: MutableMap<BlockType, BlockDefinition> = defaults.toMutableMap()
