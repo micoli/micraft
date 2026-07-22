@@ -791,10 +791,7 @@ class GameLoop(
                                 }
                             }
                         npcSpawner.trySpawn(
-                            world,
-                            npcManager,
-                            npcManager.getDefinitions(),
-                            nearChunks)
+                            world, npcManager, npcManager.getDefinitions(), nearChunks)
                     }
                     .onFailure { log.error("npc lifecycle error: {}", it.message, it) }
             }
