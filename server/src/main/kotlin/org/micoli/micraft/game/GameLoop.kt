@@ -770,12 +770,31 @@ class GameLoop(
             while (isActive) {
                 delay(NPC_LIFECYCLE_INTERVAL_MS)
                 runCatching {
-                        npcManager.despawnOrphanedNpcs(sessionRegistry.all())
+                        val activeSessions = sessionRegistry.all()
+                        npcManager.despawnOrphanedNpcs(activeSessions)
+                        val nearChunks =
+                            if (activeSessions.isEmpty()) emptyList()
+                            else {
+                                val halfZone =
+                                    NpcConstants.NPC_ZONE_SIZE / WorldConstants.CHUNK_SIZE
+                                world.discoveredChunks().filter { cp ->
+                                    activeSessions.any { s ->
+                                        val pcx =
+                                            Math.floorDiv(
+                                                s.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE)
+                                        val pcz =
+                                            Math.floorDiv(
+                                                s.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE)
+                                        Math.abs(cp.cx - pcx) <= halfZone &&
+                                            Math.abs(cp.cz - pcz) <= halfZone
+                                    }
+                                }
+                            }
                         npcSpawner.trySpawn(
                             world,
                             npcManager,
                             npcManager.getDefinitions(),
-                            world.discoveredChunks())
+                            nearChunks)
                     }
                     .onFailure { log.error("npc lifecycle error: {}", it.message, it) }
             }
