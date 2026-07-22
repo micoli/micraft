@@ -547,7 +547,8 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
         const { x: fcx, z: fcz } = fetchCenterRef.current;
         const { x: px2, z: pz2 } = panRef.current;
         const z2 = zoomRef.current;
-        if (bgRef.current) renderBg(bgRef.current, data, fcx, fcz, layersRef.current.biomeNames, px2, pz2, z2, layersRef.current.level);
+        if (bgRef.current)
+          renderBg(bgRef.current, data, fcx, fcz, layersRef.current.biomeNames, px2, pz2, z2, layersRef.current.level);
         const { x: ppx, z: ppz, yaw } = playerPosRef.current;
         if (overlayRef.current) renderOverlay(overlayRef.current, ppx, ppz, fcx, fcz, yaw, px2, pz2, z2);
       })

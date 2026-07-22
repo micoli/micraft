@@ -82,7 +82,10 @@ class NpcManager(
                         continue
                     }
                     val fixedState =
-                        if (state.maxHp <= 0) state.copy(currentHp = def.hp, maxHp = def.hp)
+                        if (state.maxHp <= 0)
+                            NpcHpCalculator.computeMaxHp(def, state.level).let {
+                                state.copy(currentHp = it, maxHp = it)
+                            }
                         else state
                     npcs[state.id] =
                         NpcInstance(
@@ -116,6 +119,7 @@ class NpcManager(
         val def =
             definitions[type] ?: error("Unknown NPC type: '$type'. Available: ${definitions.keys}")
         val effectiveLevel = if (instanceLevel < 1) def.minLevel else instanceLevel
+        val spawnMaxHp = NpcHpCalculator.computeMaxHp(def, effectiveLevel)
         val id = UUID.randomUUID().toString()
         val state =
             NpcState(
@@ -124,8 +128,8 @@ class NpcManager(
                 type = type,
                 pos = pos,
                 yaw = 0f,
-                currentHp = def.hp,
-                maxHp = def.hp,
+                currentHp = spawnMaxHp,
+                maxHp = spawnMaxHp,
                 level = effectiveLevel)
         val instance =
             NpcInstance(
@@ -385,7 +389,7 @@ class NpcManager(
             (instance.damageContributors[attackerId] ?: 0) + damage
 
         val newHp = instance.currentHp
-        val maxHp = instance.definition.hp
+        val maxHp = NpcHpCalculator.computeMaxHp(instance.definition, instance.instanceLevel)
         instance.state = instance.state.copy(currentHp = newHp, maxHp = maxHp)
         broadcast(ServerMessage.HealthUpdate(npcId, true, newHp, maxHp))
 

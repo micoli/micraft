@@ -12,6 +12,7 @@ data class NpcYamlOverride(
     val wanderRadius: Float? = null,
     val spawn: NpcSpawnConfigRawOverride? = null,
     val hp: Int? = null,
+    val hpFormula: String? = null,
     val aggroMode: AggroMode? = null,
     val aggroRange: Float? = null,
     val deaggroTimeSec: Float? = null,

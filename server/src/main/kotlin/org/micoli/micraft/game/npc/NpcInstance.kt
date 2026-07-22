@@ -24,7 +24,7 @@ class NpcInstance(
     val wanderWaypoints: ArrayDeque<Pair<Float, Float>> = ArrayDeque()
 
     init {
-        if (currentHp < 0) currentHp = definition.hp
+        if (currentHp < 0) currentHp = NpcHpCalculator.computeMaxHp(definition, instanceLevel)
         if (currentMana < 0) currentMana = definition.maxMana
     }
 }
