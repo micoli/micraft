@@ -266,7 +266,8 @@ class GameLoop(
                                         charData,
                                         derived,
                                         s.state.stance,
-                                        s.combatState.attackCooldownUntilMs))
+                                        s.combatState.attackCooldownUntilMs,
+                                        s.combatState.attackCooldownsUntilMs))
                             }
                         }
                 }
@@ -413,7 +414,7 @@ class GameLoop(
             armorRegistry = closures.armorRegistry,
             tradeManager = tradeManager,
             questManager = questManager,
-            clearTokenAccumulator = regenProcessor::clearTokenAccumulator,
+            clearAccumulators = regenProcessor::clearAccumulators,
             sendStatusUpdate = sendStatusUpdate@{ session ->
                     val charData = session.characterData ?: return@sendStatusUpdate
                     val armors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
@@ -1085,7 +1086,8 @@ class GameLoop(
                     charData,
                     derived,
                     session.state.stance,
-                    session.combatState.attackCooldownUntilMs))
+                    session.combatState.attackCooldownUntilMs,
+                    session.combatState.attackCooldownsUntilMs))
             experienceProcessor.sendXpState(session)
         } else if (!session.state.rpgOptOut) {
             session.send(ServerMessage.CharacterCreationRequired)

@@ -22,8 +22,13 @@ export function useCooldownDisplay(serverRemainingMs: number): number {
         if (currentRef.current <= 0) clearInterval(ivRef.current);
       }, 200);
     }
-    return () => clearInterval(ivRef.current);
+    // No cleanup here — interval self-terminates when done and is reset on new attack above.
+    // Returning a cleanup would kill it on every serverRemainingMs change (e.g. regen ticks).
   }, [serverRemainingMs]);
+
+  useEffect(() => {
+    return () => clearInterval(ivRef.current);
+  }, []);
 
   return display;
 }

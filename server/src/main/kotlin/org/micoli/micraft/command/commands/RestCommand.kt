@@ -37,7 +37,7 @@ class RestCommand : CommandHandler {
                 currentTokens = derived.maxTokens,
             )
         session.characterData = restored
-        context.clearTokenAccumulator?.invoke(session.id)
+        context.clearAccumulators?.invoke(session.id)
         context.savePlayer(session)
         context.sendStatusUpdate?.invoke(session)
         session.send(
