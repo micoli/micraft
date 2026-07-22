@@ -20,6 +20,8 @@ class RegenProcessor(
     private var lastTickMs = System.currentTimeMillis()
     private val jexl = JexlBuilder().silent(false).strict(true).create()
     private val tokenAccumulators = mutableMapOf<String, Float>()
+    private val hpAccumulators = mutableMapOf<String, Float>()
+    private val manaAccumulators = mutableMapOf<String, Float>()
 
     suspend fun tick(sessions: Collection<PlayerSession>) {
         val now = System.currentTimeMillis()
@@ -67,9 +69,17 @@ class RegenProcessor(
                         "dt" to dt,
                     ))
 
-            val hpInt = evalFormula(hpFormula, ctx).toInt()
-            val manaInt = evalFormula(manaFormula, ctx).toInt()
+            val hpDelta = evalFormula(hpFormula, ctx).toFloat()
+            val manaDelta = evalFormula(manaFormula, ctx).toFloat()
             val rageDelta = evalFormula(rageFormula, ctx).toInt()
+
+            val hpAcc = (hpAccumulators[session.id] ?: 0f) + hpDelta
+            val hpInt = hpAcc.toInt()
+            hpAccumulators[session.id] = hpAcc - hpInt
+
+            val manaAcc = (manaAccumulators[session.id] ?: 0f) + manaDelta
+            val manaInt = manaAcc.toInt()
+            manaAccumulators[session.id] = manaAcc - manaInt
 
             var newHp = (charData.currentHp + hpInt).coerceIn(0, derived.maxHp)
             var newMana = (charData.currentMana + manaInt).coerceIn(0, derived.maxMana)
@@ -107,12 +117,15 @@ class RegenProcessor(
                     derived,
                     session.state.stance,
                     session.combatState.attackCooldownUntilMs,
+                    session.combatState.attackCooldownsUntilMs,
                 ))
         }
     }
 
-    fun clearTokenAccumulator(sessionId: String) {
+    fun clearAccumulators(sessionId: String) {
         tokenAccumulators.remove(sessionId)
+        hpAccumulators.remove(sessionId)
+        manaAccumulators.remove(sessionId)
     }
 
     private fun evalFormula(formula: String, ctx: MapContext): Double =

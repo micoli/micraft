@@ -149,7 +149,7 @@ class NpcManager(
                 }
             }
         }
-        log.info(
+        log.debug(
             "NPC spawned: {} ({}) lv{} at ({},{},{})",
             name,
             type,
@@ -171,7 +171,7 @@ class NpcManager(
                     session.combatState = session.combatState.copy(targetId = null)
                     session.send(ServerMessage.CombatTargetUpdate(null, null, 0, 0))
                 }
-            log.info("NPC despawned: {}", id.take(8))
+            log.debug("NPC despawned: {}", id.take(8))
         }
     }
 
