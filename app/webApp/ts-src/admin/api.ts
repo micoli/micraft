@@ -21,6 +21,30 @@ export interface StatusSnapshot {
   ticksPerDay: number;
 }
 
+export interface ClassAttackAccess {
+  attack: string;
+  level: number;
+}
+
+export interface ClassLevelEntry {
+  attacks: ClassAttackAccess[];
+  spells: string[];
+}
+
+export interface ClassDefinitionEntry {
+  strBonus: number;
+  dexBonus: number;
+  intelBonus: number;
+  wisBonus: number;
+  conBonus: number;
+  chaBonus: number;
+  classResource: string;
+  hpFormula: string;
+  manaFormula: string;
+  rageFormula: string;
+  levels: Record<string, ClassLevelEntry>;
+}
+
 export interface WorldStatsDto {
   name: string;
   seed: number;
@@ -123,6 +147,10 @@ export const api = {
   worlds: {
     list: () => get("/api/admin/worlds").then((r) => r.json() as Promise<WorldStatsDto[]>),
     create: (name: string, seed: number) => post("/api/admin/worlds", { name, seed }),
+  },
+  classes: {
+    get: () => get("/api/admin/classes").then((r) => r.json() as Promise<Record<string, ClassDefinitionEntry>>),
+    skills: () => get("/api/admin/skills").then((r) => r.json() as Promise<{ attacks: string[]; spells: string[] }>),
   },
   skins: {
     list: () => get("/api/skins").then((r) => r.json() as Promise<string[]>),

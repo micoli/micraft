@@ -1,5 +1,6 @@
 import { BrowserRouter, Link, Route, Routes, useLocation } from "react-router";
 import { cn } from "../primitives/cn";
+import { ClassesPage } from "./pages/ClassesPage";
 import { ConfigEditorPage } from "./pages/ConfigEditorPage";
 import { PlayersPage } from "./pages/PlayersPage";
 import { StatusPage } from "./pages/StatusPage";
@@ -32,12 +33,14 @@ const ICONS = {
   config:
     "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
   worlds: "M3 7l9-4 9 4M3 7v10l9 4m-9-14l9 4m9-4v10l-9 4m0-14v14",
+  classes: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
 };
 
 const NAV = [
   { path: "/admin", label: "Status", icon: ICONS.status, exact: true },
   { path: "/admin/users", label: "Users", icon: ICONS.users },
   { path: "/admin/players", label: "Players", icon: ICONS.players },
+  { path: "/admin/classes", label: "Classes", icon: ICONS.classes },
   { path: "/admin/config", label: "Config", icon: ICONS.config },
   { path: "/admin/worlds", label: "Worlds", icon: ICONS.worlds },
 ];
@@ -46,6 +49,7 @@ const PAGE_LABELS: Record<string, string> = {
   "/admin": "Server Status",
   "/admin/users": "Users",
   "/admin/players": "Players",
+  "/admin/classes": "Classes & Skills",
   "/admin/config": "Config Editor",
   "/admin/worlds": "Worlds",
 };
@@ -125,6 +129,7 @@ export function AdminApp() {
               <Route path="/admin" element={<StatusPage />} />
               <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/players" element={<PlayersPage />} />
+              <Route path="/admin/classes" element={<ClassesPage />} />
               <Route path="/admin/config" element={<ConfigEditorPage />} />
               <Route path="/admin/worlds" element={<WorldsPage />} />
             </Routes>

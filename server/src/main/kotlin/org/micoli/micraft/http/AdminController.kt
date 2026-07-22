@@ -15,6 +15,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
@@ -24,6 +25,7 @@ import org.micoli.micraft.auth.LocalAuthProvider
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
+import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.world.PlayerFile
 import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
@@ -469,6 +471,40 @@ class AdminController(
                 val content = call.receiveText()
                 file.writeText(content)
                 call.respond(HttpStatusCode.NoContent)
+            }
+
+            // ── Classes ──────────────────────────────────────────────────────
+            get("/api/admin/classes") {
+                if (!requireAdmin()) return@get
+                call.respondText(
+                    adminJson.encodeToString(
+                        MapSerializer(String.serializer(), ClassDefinitionEntry.serializer()),
+                        gameLoop.classRegistry,
+                    ),
+                    ContentType.Application.Json)
+            }
+
+            get("/api/admin/skills") {
+                if (!requireAdmin()) return@get
+                val payload =
+                    adminJson.encodeToString(
+                        kotlinx.serialization.json.buildJsonObject {
+                            put(
+                                "attacks",
+                                kotlinx.serialization.json.buildJsonArray {
+                                    gameLoop.attackRegistry.keys.sorted().forEach {
+                                        add(kotlinx.serialization.json.JsonPrimitive(it))
+                                    }
+                                })
+                            put(
+                                "spells",
+                                kotlinx.serialization.json.buildJsonArray {
+                                    gameLoop.spellRegistry.keys.sorted().forEach {
+                                        add(kotlinx.serialization.json.JsonPrimitive(it))
+                                    }
+                                })
+                        })
+                call.respondText(payload, ContentType.Application.Json)
             }
 
             // ── Schemas ──────────────────────────────────────────────────────
