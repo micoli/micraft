@@ -21,6 +21,8 @@ class NpcInstance(
     @Volatile var instanceLevel: Int = 1,
     val activeEffects: MutableList<ActiveStatusEffect> = mutableListOf(),
     @Volatile var pendingDotDamage: Float = 0f,
+    @Volatile var isDead: Boolean = false,
+    @Volatile var deathTimeMs: Long = 0L,
 ) {
     var wanderPhase: WanderPhase =
         WanderPhase.Moving(spawnPos.x, spawnPos.z, 1f, NpcConstants.WANDER_STEP_TICKS_MAX)

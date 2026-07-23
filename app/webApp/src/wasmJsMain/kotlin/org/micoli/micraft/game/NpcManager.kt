@@ -21,6 +21,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
     private val npcNames = mutableMapOf<String, String>()
     private var highlightedNpcId: String? = null
     private val aggroNpcIds = mutableSetOf<String>()
+    private val deadNpcIds = mutableSetOf<String>()
 
     var playerX = 0.0
     var playerZ = 0.0
@@ -58,9 +59,23 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
         updateAggroHighlight(npc, localPlayerId())
     }
 
+    @OptIn(ExperimentalWasmJsInterop::class)
     fun handleUpdate(npc: NpcState) {
         jsSetNpcOnMinimap(npc.id, npc.pos.x, npc.pos.z)
         pushSnapshot(npc)
+        if (npc.isDead) {
+            if (npc.id !in deadNpcIds) {
+                deadNpcIds.add(npc.id)
+                aggroNpcIds.remove(npc.id)
+                val model = npcModels[npc.id]
+                if (model != null) {
+                    jsAggroHighlightNpcModel(scene, model, false)
+                    jsHighlightNpcModel(scene, model, false)
+                    jsSetNpcDead(scene, model)
+                }
+            }
+            return
+        }
         updateAggroHighlight(npc, localPlayerId())
         if (!jsIsNpcModelsReady()) {
             pendingNpcs.removeAll { it.id == npc.id }
@@ -76,6 +91,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
         jsRemoveNpcFromMinimap(id)
         pendingNpcs.removeAll { it.id == id }
         aggroNpcIds.remove(id)
+        deadNpcIds.remove(id)
         npcModels.remove(id)?.let(::jsDisposeNpcModel)
         npcBuffers.remove(id)
         npcRenderedYaw.remove(id)
@@ -90,6 +106,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
         if (!jsIsNpcModelsReady()) return
         val renderTime = nowMs() - INTERP_DELAY_MS
         for ((id, buf) in npcBuffers) {
+            if (id in deadNpcIds) continue
             val model = npcModels[id] ?: continue
             val (pos, vel, yaw) = interpolate(buf, renderTime)
             val prevYaw = npcRenderedYaw[id] ?: yaw
@@ -145,6 +162,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
         pendingNpcs.clear()
         npcNames.clear()
         aggroNpcIds.clear()
+        deadNpcIds.clear()
         jsSetNpcNames("[]")
         jsUpdateNpcProximity("[]")
     }
@@ -235,6 +253,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
         val renderTime = nowMs() - INTERP_DELAY_MS
         val sorted =
             npcBuffers.entries
+                .filter { (id, _) -> id !in deadNpcIds }
                 .filter { (_, buf) ->
                     val (pos, _, _) = interpolate(buf, renderTime)
                     val dx = pos.x.toDouble() - playerX
@@ -268,7 +287,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
     fun nearestAggroNpc(playerX: Double, playerY: Double, playerZ: Double): String? {
         val renderTime = nowMs() - INTERP_DELAY_MS
         return npcBuffers.entries
-            .filter { (id, _) -> id in aggroNpcIds }
+            .filter { (id, _) -> id in aggroNpcIds && id !in deadNpcIds }
             .minByOrNull { (_, buf) ->
                 val (pos, _, _) = interpolate(buf, renderTime)
                 val dx = pos.x.toDouble() - playerX

@@ -181,7 +181,10 @@ class StatusEffectProcessorTest {
         // Simulate many 50ms ticks without sleeping — processor ticks immediately so dtSec ≈ 0
         // but fractional damage must accumulate and eventually deal ≥1 damage.
         val processor = buildProcessor()
-        repeat(30) { Thread.sleep(50); processor.tick(listOf(session)) }
+        repeat(30) {
+            Thread.sleep(50)
+            processor.tick(listOf(session))
+        }
 
         assertTrue(session.characterData!!.currentHp < 20)
     }

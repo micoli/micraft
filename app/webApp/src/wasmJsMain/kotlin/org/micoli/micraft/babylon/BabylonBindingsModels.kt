@@ -84,6 +84,24 @@ fun jsAggroHighlightNpcModel(scene: JsAny, model: JsAny, on: Boolean): Unit =
     })()
 """)
 
+fun jsSetNpcDead(scene: JsAny, model: JsAny): Unit =
+    js(
+        """
+    (() => {
+        if (!window._deadHL) {
+            window._deadHL = new BABYLON.HighlightLayer('deadHL', scene, {isStroke:true,blurHorizontalSize:0.5,blurVerticalSize:0.5});
+            window._deadHL.innerGlow = false;
+            window._deadHL.outerGlow = true;
+        }
+        var hl = window._deadHL;
+        var root = model.root || model;
+        root.rotation.z = Math.PI / 2;
+        var meshes = root.getChildMeshes ? root.getChildMeshes() : [];
+        var col = new BABYLON.Color3(0.45, 0.45, 0.45);
+        meshes.forEach(function(m) { hl.addMesh(m, col); });
+    })()
+""")
+
 fun jsOpenNpcDialog(json: String): Unit = js("mc.openNpcDialog(json)")
 
 // ── First-person arm view model ───────────────────────────────────────────────

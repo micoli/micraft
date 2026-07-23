@@ -186,8 +186,14 @@ class NpcManager(
     suspend fun tick(world: WorldState) {
         tickEffects()
         val sessions = getSessions()
+        val now = System.currentTimeMillis()
         val rangesq = NpcConstants.UPDATE_RANGE * NpcConstants.UPDATE_RANGE
         for (instance in npcs.values) {
+            if (instance.isDead) {
+                if (now - instance.deathTimeMs >= DEATH_DESPAWN_DELAY_MS)
+                    despawnNpc(instance.state.id)
+                continue
+            }
             val pos = instance.state.pos
             val chunkPos =
                 ChunkPos(
@@ -366,6 +372,7 @@ class NpcManager(
                     log.warn("applyDamage: NPC {} not found", npcId.take(8))
                     return
                 }
+        if (instance.isDead) return
         val now = System.currentTimeMillis()
         instance.currentHp = (instance.currentHp - damage).coerceAtLeast(0)
         instance.lastDamagedAtMs = now
@@ -402,7 +409,7 @@ class NpcManager(
             log.info("NPC {} killed", instance.state.name)
             broadcastCombatLog("[m:${instance.state.name}] has been slain!")
             onNpcKilled(instance)
-            despawnNpc(npcId)
+            markNpcDead(npcId, instance, System.currentTimeMillis())
         }
     }
 
@@ -421,6 +428,7 @@ class NpcManager(
         val dtSec = (now - lastEffectTickMs) / 1000f
         lastEffectTickMs = now
         for (instance in npcs.values.toList()) {
+            if (instance.isDead) continue
             val effects = instance.activeEffects
             if (effects.isEmpty()) continue
             effects.removeAll { it.expiresAtMs <= now }
@@ -447,7 +455,7 @@ class NpcManager(
                     if (instance.currentHp <= 0) {
                         broadcastCombatLog("[m:${instance.state.name}] burns to death!")
                         onNpcKilled(instance)
-                        despawnNpc(instance.state.id)
+                        markNpcDead(instance.state.id, instance, now)
                     }
                 }
             }
@@ -460,6 +468,7 @@ class NpcManager(
     ) {
         val now = System.currentTimeMillis()
         for (instance in npcs.values) {
+            if (instance.isDead) continue
             val def = instance.definition
             val aggroRangeSq = def.aggroRange * def.aggroRange
             val deaggroMs = (def.deaggroTimeSec * 1000).toLong()
@@ -554,5 +563,25 @@ class NpcManager(
                 session.send(ServerMessage.NpcUpdate(stateWithAggro))
             }
         }
+    }
+
+    private suspend fun markNpcDead(npcId: String, instance: NpcInstance, now: Long) {
+        instance.isDead = true
+        instance.deathTimeMs = now
+        instance.aggroTarget = null
+        instance.activeEffects.clear()
+        instance.state = instance.state.copy(isDead = true, currentHp = 0)
+        getSessions()
+            .filter { it.combatState.targetId == npcId && it.combatState.targetIsNpc }
+            .forEach { session ->
+                session.combatState = session.combatState.copy(targetId = null)
+                session.send(ServerMessage.CombatTargetUpdate(null, null, 0, 0))
+            }
+        val targets = getSessions().filter { lastSentToPlayer[it.id]?.containsKey(npcId) == true }
+        targets.forEach { it.send(ServerMessage.NpcUpdate(instance.state)) }
+    }
+
+    companion object {
+        private const val DEATH_DESPAWN_DELAY_MS = 5_000L
     }
 }
