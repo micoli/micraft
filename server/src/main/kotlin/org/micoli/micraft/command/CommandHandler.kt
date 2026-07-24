@@ -34,6 +34,6 @@ interface CommandHandler {
         session: PlayerSession?,
         context: CommandContext,
     ): List<String> =
-        if (argIndex == 0) options.filter { it.startsWith(partial, ignoreCase = true) }
+        if (argIndex == 0) options.filter { it.contains(partial, ignoreCase = true) }
         else emptyList()
 }

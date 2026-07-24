@@ -27,7 +27,7 @@ class SpawnCommand : CommandHandler {
             context.npcManager
                 ?.getDefinitions()
                 ?.keys
-                ?.filter { it.startsWith(partial, ignoreCase = true) }
+                ?.filter { it.contains(partial, ignoreCase = true) }
                 ?.map { it.lowercase() } ?: emptyList()
         else emptyList()
 

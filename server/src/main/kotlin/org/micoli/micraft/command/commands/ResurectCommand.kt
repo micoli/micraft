@@ -27,7 +27,7 @@ class ResurectCommand : CommandHandler {
                 .sessions()
                 .filter { it.isDowned }
                 .map { it.state.name }
-                .filter { it.startsWith(partial, ignoreCase = true) }
+                .filter { it.contains(partial, ignoreCase = true) }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language

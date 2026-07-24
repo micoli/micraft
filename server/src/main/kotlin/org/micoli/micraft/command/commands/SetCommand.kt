@@ -26,12 +26,12 @@ class SetCommand : CommandHandler {
         context: CommandContext,
     ): List<String> =
         when (argIndex) {
-            0 -> listOf("hp", "mana").filter { it.startsWith(partial, ignoreCase = true) }
+            0 -> listOf("hp", "mana").filter { it.contains(partial, ignoreCase = true) }
             1 ->
                 context
                     .sessions()
                     .map { it.state.name }
-                    .filter { it.startsWith(partial, ignoreCase = true) }
+                    .filter { it.contains(partial, ignoreCase = true) }
             else -> emptyList()
         }
 

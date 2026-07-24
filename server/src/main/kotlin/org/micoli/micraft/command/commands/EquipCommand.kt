@@ -23,7 +23,7 @@ class EquipCommand : CommandHandler {
         context: CommandContext,
     ): List<String> =
         if (argIndex == 0)
-            context.armorRegistry().keys.filter { it.startsWith(partial, ignoreCase = true) }
+            context.armorRegistry().keys.filter { it.contains(partial, ignoreCase = true) }
         else emptyList()
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {

@@ -25,7 +25,7 @@ class GotoCommand : PluginCommand {
         val players = context.sessions().map { it.state.name }
         val npcs = context.npcManager?.getAll()?.map { it.state.name } ?: emptyList()
         val named = context.namedPoints().keys.toList()
-        return (players + npcs + named).filter { it.startsWith(partial, ignoreCase = true) }
+        return (players + npcs + named).filter { it.contains(partial, ignoreCase = true) }
     }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {

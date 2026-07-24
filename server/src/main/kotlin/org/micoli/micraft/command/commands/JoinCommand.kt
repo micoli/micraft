@@ -21,7 +21,7 @@ class JoinCommand : CommandHandler {
         context: CommandContext
     ): List<String> =
         context.chatChannelManager!!.listKnownChannels().filter {
-            it.startsWith(partial, ignoreCase = true)
+            it.contains(partial, ignoreCase = true)
         }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {

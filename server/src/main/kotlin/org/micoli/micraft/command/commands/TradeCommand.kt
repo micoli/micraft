@@ -23,7 +23,7 @@ class TradeCommand : CommandHandler {
             .sessions()
             .filter { it.state.name != session?.state?.name }
             .map { it.state.name }
-            .filter { it.startsWith(partial, ignoreCase = true) }
+            .filter { it.contains(partial, ignoreCase = true) }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val tradeManager = context.tradeManager

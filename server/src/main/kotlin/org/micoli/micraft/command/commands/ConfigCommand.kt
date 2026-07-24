@@ -20,9 +20,9 @@ class ConfigCommand : CommandHandler {
         context: CommandContext,
     ): List<String> =
         when (argIndex) {
-            0 -> listOf("get", "set").filter { it.startsWith(partial, ignoreCase = true) }
+            0 -> listOf("get", "set").filter { it.contains(partial, ignoreCase = true) }
             1 ->
-                context.configRegistry?.keys()?.filter { it.startsWith(partial, ignoreCase = true) }
+                context.configRegistry?.keys()?.filter { it.contains(partial, ignoreCase = true) }
                     ?: emptyList()
             else -> emptyList()
         }

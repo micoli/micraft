@@ -113,9 +113,9 @@ class QuestCommand : CommandHandler {
         return when (argIndex) {
             0 ->
                 listOf("list", "accept", "abandon", "status", "ui").filter {
-                    it.startsWith(partial, ignoreCase = true)
+                    it.contains(partial, ignoreCase = true)
                 }
-            1 -> qm.getDefinitions().keys.filter { it.startsWith(partial, ignoreCase = true) }
+            1 -> qm.getDefinitions().keys.filter { it.contains(partial, ignoreCase = true) }
             else -> emptyList()
         }
     }

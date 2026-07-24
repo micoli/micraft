@@ -24,7 +24,7 @@ class UnequipCommand : CommandHandler {
     ): List<String> =
         if (argIndex == 0)
             (session?.state?.armors ?: emptyList()).filter {
-                it.startsWith(partial, ignoreCase = true)
+                it.contains(partial, ignoreCase = true)
             }
         else emptyList()
 

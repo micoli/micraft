@@ -42,7 +42,7 @@ class SkinCommand : CommandHandler {
         context: CommandContext,
     ): List<String> =
         if (argIndex == 0)
-            availablePlayerSkins().filter { it.startsWith(partial, ignoreCase = true) }
+            availablePlayerSkins().filter { it.contains(partial, ignoreCase = true) }
         else emptyList()
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
