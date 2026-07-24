@@ -76,14 +76,16 @@ object BlockRegistry {
                     solid = false,
                     transparent = true,
                     minimapColor = listOf(230, 200, 50),
-                    replaceable = true),
+                    replaceable = true,
+                    minimapVisible = false),
             BlockType.WEED to
                 BlockDefinition(
                     hardness = 1f,
                     solid = false,
                     transparent = true,
                     minimapColor = listOf(70, 130, 40),
-                    replaceable = true),
+                    replaceable = true,
+                    minimapVisible = false),
             BlockType.WATER to
                 BlockDefinition(
                     hardness = -1f,

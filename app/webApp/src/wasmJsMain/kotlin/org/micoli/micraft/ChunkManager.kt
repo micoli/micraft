@@ -240,6 +240,13 @@ class ChunkManager(private val scene: JsAny) {
     }
 
     // Update chunkData immediately (for physics/raycast) and defer mesh rebuild
+    fun repushAllToMinimap() {
+        for ((_, pair) in chunkData) {
+            val (chunk, topY) = pair
+            pushMinimapChunk(chunk, topY)
+        }
+    }
+
     fun updateAndEnqueue(chunk: Chunk, topY: Int) {
         chunkData[chunk.pos] = Pair(chunk, topY)
         enqueueChunk(chunk, topY)

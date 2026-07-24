@@ -533,6 +533,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                             }
                             .toMap()
                     BlockRegistry.load(blockDefs)
+                    chunkManager.repushAllToMinimap()
                     val itemDefs =
                         msg.items.entries.associate { (key, info) ->
                             ItemType(key) to
