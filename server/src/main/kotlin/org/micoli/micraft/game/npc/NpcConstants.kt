@@ -23,4 +23,5 @@ object NpcConstants {
     // despawn
     var NPC_ZONE_SIZE = 256
     var NPC_VISIBILITY_CHECK_INTERVAL_TICKS = 20
+    var GAME_DAY_DURATION_SECONDS = 1200.0
 }

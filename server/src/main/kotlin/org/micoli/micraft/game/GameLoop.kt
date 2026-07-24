@@ -47,6 +47,7 @@ import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
+import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistry
@@ -334,6 +335,18 @@ class GameLoop(
 
     private var saveTickCounter = 0
     private var timeBroadcastCounter = 0
+
+    val gameTimeService: GameTimeService = GameTimeService(NpcConstants.GAME_DAY_DURATION_SECONDS)
+
+    private val animalInteractionProcessor =
+        AnimalInteractionProcessor(
+            npcManager = npcManager,
+            combatProcessor = combatProcessor,
+            world = world,
+            vegetationManager = vegetationManager,
+            gameTimeService = gameTimeService,
+            broadcast = sessionRegistry::broadcast,
+        )
 
     private var worldMeta: WorldMetadata? = persistence?.loadMetadata()
     private var gameTicks: Long = worldMeta?.gameTicks ?: 18_000L
@@ -745,6 +758,9 @@ class GameLoop(
         val npcSavePath =
             persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
         npcManager.load(npcSavePath)
+        persistence?.let {
+            GameTimePersistence.load(it.worldDir.resolve("game_time.yaml"), gameTimeService)
+        }
         vegetationManager.load()
         persistence?.let {
             terrainCache.prewarm(
@@ -764,6 +780,10 @@ class GameLoop(
                     flushWorld()
                     worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
                     npcManager.save(npcSavePath)
+                    persistence?.let {
+                        GameTimePersistence.save(
+                            it.worldDir.resolve("game_time.yaml"), gameTimeService)
+                    }
                 }
             }
         }
@@ -817,6 +837,9 @@ class GameLoop(
         val npcSavePath =
             persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
         npcManager.save(npcSavePath)
+        persistence?.let {
+            GameTimePersistence.save(it.worldDir.resolve("game_time.yaml"), gameTimeService)
+        }
         vegetationManager.save()
         log.info("World saved on shutdown")
     }
@@ -878,8 +901,10 @@ class GameLoop(
             }
         }
         worldItems.tickCollection(sessionRegistry.all())
+        gameTimeService.tick(TICK_SECONDS.toDouble())
         npcManager.tick(world)
         npcManager.tickAggro(sessionRegistry.all(), combatProcessor)
+        animalInteractionProcessor.tick()
         statusEffectProcessor.tick(sessionRegistry.all())
         regenProcessor.tick(sessionRegistry.all())
         weatherManager.tick(world) { msg -> sessionRegistry.all().forEach { it.send(msg) } }

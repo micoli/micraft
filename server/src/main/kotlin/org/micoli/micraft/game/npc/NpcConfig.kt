@@ -14,4 +14,5 @@ data class NpcConfig(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val updateRange: Float = 96f,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val maxSpawnAttemptsPerTick: Int = 3,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val jumpVelocity: Float = 8.0f,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val gameDayDurationSeconds: Double = 1200.0,
 )

@@ -186,9 +186,8 @@ class CombatProcessor(
             sendStatusUpdate(target, newTargetChar, theirDerived)
         }
 
-        val hitMsg = if (hit) "hits for $damage${if (isCrit) " [CRIT]" else ""}" else "misses"
         broadcastCombatLog(
-            "[p:${charData.name}] → [p:${targetChar.name}] (${msg.attackId}): $hitMsg")
+            "[p:${charData.name}] → [p:${targetChar.name}] (${msg.attackId}): ${getHitMessage(hit, isCrit, damage)}")
 
         sendStatusUpdate(session, session.characterData ?: charData, myDerived)
         session.send(buildTargetUpdate(session))
@@ -240,9 +239,8 @@ class CombatProcessor(
             npcManager.applyStatusEffect(msg.targetId, levelDef, now)
         }
 
-        val hitMsg = if (hit) "hits for $damage${if (isCrit) " [CRIT]" else ""}" else "misses"
         broadcastCombatLog(
-            "[p:${charData.name}] → [m:${npc.state.name}] (${msg.attackId}): $hitMsg")
+            "[p:${charData.name}] → [m:${npc.state.name}] (${msg.attackId}): ${getHitMessage(hit, isCrit, damage)}")
 
         sendStatusUpdate(session, session.characterData ?: charData, myDerived)
         session.send(buildTargetUpdate(session))
@@ -264,8 +262,8 @@ class CombatProcessor(
 
         data class Resolved(
             val slot: org.micoli.micraft.game.npc.NpcAttackSlot,
-            val attackDef: org.micoli.micraft.combat.AttackDefinition,
-            val levelDef: org.micoli.micraft.combat.AttackLevelDefinition,
+            val attackDef: AttackDefinition,
+            val levelDef: AttackLevelDefinition,
         )
 
         val dx = target.state.pos.x - npc.state.pos.x
@@ -351,9 +349,66 @@ class CombatProcessor(
                 ))
         }
 
-        val hitMsg = if (hit) "hits for $damage${if (isCrit) " [CRIT]" else ""}" else "misses"
         broadcastCombatLog(
-            "[m:${npc.state.name}] → [p:${targetChar.name}] (${slot.attackId}): $hitMsg")
+            "[m:${npc.state.name}] → [p:${targetChar.name}] (${slot.attackId}): ${getHitMessage(hit, isCrit, damage)}")
+    }
+
+    // ── NPC vs NPC attack ─────────────────────────────────────────────────────
+
+    suspend fun handleNpcAttackNpc(predator: NpcInstance, prey: NpcInstance) {
+        val now = System.currentTimeMillis()
+        if (predator.activeEffects.any {
+            it.effect is StatusEffect.FrozenInTime && it.expiresAtMs > now
+        })
+            return
+        val slots =
+            predator.definition.attacks.ifEmpty {
+                return
+            }
+
+        data class Resolved(
+            val slot: org.micoli.micraft.game.npc.NpcAttackSlot,
+            val levelDef: org.micoli.micraft.combat.AttackLevelDefinition,
+        )
+
+        val resolved =
+            slots.shuffled().firstNotNullOfOrNull { slot ->
+                val cooldownKey = "${slot.attackId}:${slot.level}"
+                if (now < (predator.attackCooldownsUntilMs[cooldownKey] ?: 0L))
+                    return@firstNotNullOfOrNull null
+                val aDef = attackRegistry[slot.attackId] ?: return@firstNotNullOfOrNull null
+                val lDef =
+                    aDef.levels[slot.level]
+                        ?: aDef.levels.entries.maxByOrNull { it.key }?.value
+                        ?: return@firstNotNullOfOrNull null
+                val range = lDef.rangeOverride ?: config.npcMaxAttackRange
+                val dx = prey.state.pos.x - predator.state.pos.x
+                val dz = prey.state.pos.z - predator.state.pos.z
+                if (dx * dx + dz * dz > range * range) return@firstNotNullOfOrNull null
+                Resolved(slot, lDef)
+            } ?: return
+
+        val (slot, levelDef) = resolved
+        predator.attackCooldownsUntilMs["${slot.attackId}:${slot.level}"] =
+            now + levelDef.cooldownMs
+
+        val preyAc = 10 + prey.instanceLevel / 2
+        val roll = Random.nextInt(1, 21)
+        val isCrit = roll == 20
+        val modifier = levelDef.power
+        val hit = isCrit || (roll + modifier) >= preyAc
+
+        if (hit) {
+            val raw = rollDice(levelDef.weaponDice) + levelDef.power
+            val damage = if (isCrit) raw * 2 else raw
+            npcManager.applyDamage(prey.state.id, damage, predator.state.id)
+            val hitMsg = "hits for $damage${if (isCrit) " [CRIT]" else ""}"
+            broadcastCombatLog(
+                "[m:${predator.state.name}] → [m:${prey.state.name}] (${slot.attackId}): $hitMsg")
+        } else {
+            broadcastCombatLog(
+                "[m:${predator.state.name}] → [m:${prey.state.name}] (${slot.attackId}): misses")
+        }
     }
 
     // ── Downed / death ────────────────────────────────────────────────────────
@@ -611,4 +666,10 @@ class CombatProcessor(
             ServerMessage.TargetRef(totId, totChar.name, totChar.currentHp, derived.maxHp)
         }
     }
+
+    private fun getHitMessage(hit: Boolean, isCrit: Boolean, damage: Int): String =
+        if (hit) {
+            val string = if (isCrit) " [CRIT]" else ""
+            "hits for $damage$string"
+        } else "misses"
 }

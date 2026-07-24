@@ -43,5 +43,6 @@ class NpcConfigLoader(private val path: Path) {
         NpcConstants.UPDATE_RANGE = config.updateRange
         NpcConstants.MAX_SPAWN_ATTEMPTS_PER_TICK = config.maxSpawnAttemptsPerTick
         NpcConstants.JUMP_VELOCITY = config.jumpVelocity
+        NpcConstants.GAME_DAY_DURATION_SECONDS = config.gameDayDurationSeconds
     }
 }

@@ -1,0 +1,28 @@
+behavior: animal
+width: 0.35
+height: 0.65
+wanderSpeed: 1.8
+wanderRadius: 15.0
+spawn:
+  autoSpawn: false
+  maxPerChunk: 3
+  spawnBiomes: []
+hp: 4
+aggroMode: PASSIVE
+aggroRange: 4.0
+deaggroTimeSec: 1.0
+animal:
+  diet: HERBIVORE
+  lifespanDays: 20.0
+  canReproduce: false
+  scale: 0.75
+  adultType: goat
+  baseStats:
+    strength: 2
+    dexterity: 8
+    constitution: 5
+  statsVariance: 1
+  hpRegenPerSec: 0.3
+  hungerRatePerDay: 0.1
+  hungerThresholdToHunt: 0.4
+  hungerThresholdToMate: 0.99

@@ -19,6 +19,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
     private val npcRenderedYaw = mutableMapOf<String, Float>()
     private val pendingNpcs = mutableListOf<NpcState>()
     private val npcNames = mutableMapOf<String, String>()
+    private val npcScales = mutableMapOf<String, Float>()
     private var highlightedNpcId: String? = null
     private val aggroNpcIds = mutableSetOf<String>()
     private val deadNpcIds = mutableSetOf<String>()
@@ -48,6 +49,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
 
     fun handleSpawned(npc: NpcState) {
         npcNames[npc.id] = npc.name
+        npcScales[npc.id] = npc.scale
         updateAutocomplete()
         jsSetNpcOnMinimap(npc.id, npc.pos.x, npc.pos.z)
         pushSnapshot(npc)
@@ -87,6 +89,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
 
     fun handleDespawned(id: String) {
         npcNames.remove(id)
+        npcScales.remove(id)
         updateAutocomplete()
         jsRemoveNpcFromMinimap(id)
         pendingNpcs.removeAll { it.id == id }
@@ -161,6 +164,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
         npcRenderedYaw.clear()
         pendingNpcs.clear()
         npcNames.clear()
+        npcScales.clear()
         aggroNpcIds.clear()
         deadNpcIds.clear()
         jsSetNpcNames("[]")
@@ -169,7 +173,12 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
 
     @OptIn(ExperimentalWasmJsInterop::class)
     private fun ensureMesh(npc: NpcState) {
-        npcModels.getOrPut(npc.id) { jsCreateNpcModel(scene, npc.type) ?: return }
+        val isNew = npc.id !in npcModels
+        val model = npcModels.getOrPut(npc.id) { jsCreateNpcModel(scene, npc.type) ?: return }
+        if (isNew) {
+            val scale = npcScales[npc.id] ?: 1.0f
+            if (scale != 1.0f) jsSetNpcScale(model, scale)
+        }
     }
 
     private fun pushSnapshot(npc: NpcState) {

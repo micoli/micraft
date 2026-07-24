@@ -1,0 +1,33 @@
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+behavior: animal
+width: 0.35
+height: 0.65
+wanderSpeed: 1.5
+wanderRadius: 8.0
+spawn:
+  autoSpawn: false
+  maxPerChunk: 3
+  spawnBiomes: []
+hp: 3
+aggroMode: PASSIVE
+aggroRange: 3.0
+deaggroTimeSec: 1.5
+animal:
+  diet: CARNIVORE
+  lifespanDays: 25.0
+  canReproduce: false
+  scale: 0.75
+  adultType: cat
+  baseStats:
+    strength: 3
+    dexterity: 10
+    constitution: 4
+  statsVariance: 1
+  hpRegenPerSec: 0.3
+  hungerRatePerDay: 0.11
+  hungerThresholdToHunt: 0.99
+  hungerThresholdToMate: 0.99

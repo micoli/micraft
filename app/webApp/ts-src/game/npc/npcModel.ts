@@ -57,6 +57,7 @@ export function registerNpcModel(): Pick<
   | "isNpcModelsReady"
   | "createNpcModel"
   | "setNpcTransform"
+  | "setNpcScale"
   | "disposeNpcModel"
   | "openNpcDialog"
 > {
@@ -145,6 +146,11 @@ export function registerNpcModel(): Pick<
       for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
         if (pn[bname]) pn[bname].node.rotation.x = 0;
       }
+    },
+
+    setNpcScale: (model: McPlayerModel, scale: number): void => {
+      if (!model?.root) return;
+      model.root.scaling.setAll(scale);
     },
 
     disposeNpcModel: (model: McPlayerModel): void => {

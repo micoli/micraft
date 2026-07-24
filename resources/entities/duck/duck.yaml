@@ -10,3 +10,23 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: []
+animal:
+  diet: HERBIVORE
+  lifespanDays: 15.0
+  canReproduce: true
+  gestationDays: 1.0
+  offspringType: duck_baby
+  offspringMinCount: 2
+  offspringMaxCount: 4
+  reproductionCooldownDays: 3.0
+  matingRange: 6.0
+  scale: 1.0
+  baseStats:
+    strength: 3
+    dexterity: 14
+    constitution: 8
+  statsVariance: 2
+  hpRegenPerSec: 0.5
+  hungerRatePerDay: 0.1
+  hungerThresholdToHunt: 0.4
+  hungerThresholdToMate: 0.5

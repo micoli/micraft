@@ -21,3 +21,25 @@ attacks:
     level: 1
   - attackId: poison_bite
     level: 1
+animal:
+  diet: CARNIVORE
+  lifespanDays: 25.0
+  preyTypes:
+    - duck
+  canReproduce: true
+  gestationDays: 1.5
+  offspringType: cat_baby
+  offspringMinCount: 1
+  offspringMaxCount: 3
+  reproductionCooldownDays: 4.0
+  matingRange: 8.0
+  scale: 1.0
+  baseStats:
+    strength: 8
+    dexterity: 16
+    constitution: 8
+  statsVariance: 2
+  hpRegenPerSec: 0.8
+  hungerRatePerDay: 0.09
+  hungerThresholdToHunt: 0.35
+  hungerThresholdToMate: 0.5

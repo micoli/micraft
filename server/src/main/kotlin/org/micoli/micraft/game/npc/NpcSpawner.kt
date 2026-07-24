@@ -2,6 +2,7 @@ package org.micoli.micraft.game.npc
 
 import kotlin.collections.iterator
 import kotlin.random.Random
+import org.micoli.micraft.game.npc.animal.AnimalInstanceData
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
@@ -67,7 +68,18 @@ class NpcSpawner {
                     (zoneLevel + Random.nextInt(-3, 4)).coerceIn(1, WorldConstants.RPG_LEVEL_MAX)
                 val name =
                     "${type.lowercase().replaceFirstChar { it.uppercase() }.replace('_',' ')} - ${FantasyNameGenerator.generate(type)}"
-                npcManager.spawnNpc(name, type, spawnPos, instanceLevel)
+                val instance = npcManager.spawnNpc(name, type, spawnPos, instanceLevel)
+                val animalCfg = def.animalConfig
+                if (animalCfg != null && instance.animalData == null) {
+                    val animalData =
+                        AnimalInstanceData.initial(
+                            lifespanDays = animalCfg.lifespanDays,
+                            baseStats = animalCfg.baseStats,
+                            statsVariance = animalCfg.statsVariance,
+                        )
+                    instance.animalData = animalData
+                    instance.state = instance.state.copy(animalData = animalData.toState())
+                }
                 log.debug("Auto-spawned {} at ({},{},{})", type, wx, surfaceY, wz)
                 attempts++
             }

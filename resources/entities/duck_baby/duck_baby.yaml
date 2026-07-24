@@ -1,0 +1,32 @@
+bbmodelFile: duck
+walkBoneAliases:
+  rightLeg: leg0
+  leftLeg: leg1
+behavior: animal
+width: 0.2
+height: 0.35
+wanderSpeed: 1.0
+wanderRadius: 8.0
+spawn:
+  autoSpawn: false
+  maxPerChunk: 4
+  spawnBiomes: []
+hp: 3
+aggroMode: PASSIVE
+aggroRange: 3.0
+deaggroTimeSec: 1.0
+animal:
+  diet: HERBIVORE
+  lifespanDays: 15.0
+  canReproduce: false
+  scale: 0.75
+  adultType: duck
+  baseStats:
+    strength: 1
+    dexterity: 10
+    constitution: 4
+  statsVariance: 1
+  hpRegenPerSec: 0.2
+  hungerRatePerDay: 0.12
+  hungerThresholdToHunt: 0.4
+  hungerThresholdToMate: 0.99

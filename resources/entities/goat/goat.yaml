@@ -14,3 +14,23 @@ deaggroTimeSec: 1.5
 attacks:
   - attackId: charge
     level: 1
+animal:
+  diet: HERBIVORE
+  lifespanDays: 20.0
+  canReproduce: true
+  gestationDays: 1.5
+  offspringType: goat_baby
+  offspringMinCount: 1
+  offspringMaxCount: 2
+  reproductionCooldownDays: 4.0
+  matingRange: 8.0
+  scale: 1.0
+  baseStats:
+    strength: 5
+    dexterity: 12
+    constitution: 10
+  statsVariance: 2
+  hpRegenPerSec: 1.0
+  hungerRatePerDay: 0.08
+  hungerThresholdToHunt: 0.4
+  hungerThresholdToMate: 0.5

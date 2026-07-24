@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.npc
 
+import org.micoli.micraft.game.npc.animal.AnimalYamlEntry
 import org.micoli.micraft.player.rpg.ClassResource
 
 data class NpcDefinition(
@@ -25,4 +26,5 @@ data class NpcDefinition(
     val maxMana: Int = 0,
     val maxRage: Int = 0,
     val walkBoneAliases: Map<String, String> = emptyMap(),
+    val animalConfig: AnimalYamlEntry? = null,
 )

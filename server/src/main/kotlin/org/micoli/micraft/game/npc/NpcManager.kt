@@ -13,6 +13,7 @@ import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.AttackLevelDefinition
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.combat.CombatProcessor
+import org.micoli.micraft.game.npc.animal.AnimalInstanceData
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
@@ -91,12 +92,14 @@ class NpcManager(
                                 state.copy(currentHp = it, maxHp = it)
                             }
                         else state
+                    val animalData = fixedState.animalData?.let { AnimalInstanceData.fromState(it) }
                     npcs[state.id] =
                         NpcInstance(
                             state = fixedState,
                             currentHp = fixedState.currentHp,
                             definition = def,
-                            spawnPos = state.pos)
+                            spawnPos = state.pos,
+                            animalData = animalData)
                     loaded++
                 }
                 log.info("Loaded {} NPCs from {}", loaded, savePath)
@@ -107,11 +110,58 @@ class NpcManager(
     fun save(savePath: Path) {
         runCatching {
                 savePath.parent?.createDirectories()
-                val states = npcs.values.map { it.state }
+                val states =
+                    npcs.values.map { instance ->
+                        val ad = instance.animalData
+                        if (ad != null) instance.state.copy(animalData = ad.toState())
+                        else instance.state
+                    }
                 savePath.writeText(
                     Yaml.default.encodeToString(ListSerializer(NpcState.serializer()), states))
             }
             .onFailure { e -> log.warn("Failed to save NPCs: {}", e.message) }
+    }
+
+    suspend fun killNpcByAge(npcId: String, instance: NpcInstance, now: Long) {
+        if (instance.isDead) return
+        broadcastCombatLog("[m:${instance.state.name}] has died of old age.")
+        onNpcKilled(instance)
+        markNpcDead(npcId, instance, now)
+    }
+
+    suspend fun evolveAnimal(
+        instance: NpcInstance,
+        adultType: String,
+        animalData: AnimalInstanceData
+    ) {
+        val adultDef =
+            definitions[adultType]
+                ?: run {
+                    log.warn("evolveAnimal: unknown adultType '{}'", adultType)
+                    return
+                }
+        val adultLevel = instance.instanceLevel
+        val adultMaxHp = NpcHpCalculator.computeMaxHp(adultDef, adultLevel)
+        val evolvedAnimal =
+            AnimalInstanceData(
+                gender = animalData.gender,
+                ageGameDays = animalData.ageGameDays,
+                hunger = animalData.hunger,
+                gestationRemainingDays = null,
+                lastReproductionDay = animalData.lastReproductionDay,
+                parentIds = animalData.parentIds,
+                stats = animalData.stats,
+                motherLevel = 0,
+            )
+        val pos = instance.state.pos
+        val name = instance.state.name.replace(Regex("(?i)baby\\s*"), "").trim()
+        despawnNpc(instance.state.id)
+        val adult = spawnNpc(name, adultType, pos, adultLevel)
+        adult.currentHp = adultMaxHp / 2
+        adult.animalData = evolvedAnimal
+        adult.state =
+            adult.state.copy(animalData = evolvedAnimal.toState(), currentHp = adult.currentHp)
+        log.debug("NPC {} evolved into {} lv{}", instance.state.name, adultType, adultLevel)
     }
 
     suspend fun spawnNpc(
@@ -134,7 +184,9 @@ class NpcManager(
                 yaw = 0f,
                 currentHp = spawnMaxHp,
                 maxHp = spawnMaxHp,
-                level = effectiveLevel)
+                level = effectiveLevel,
+                scale = def.animalConfig?.scale ?: 1.0f,
+            )
         val instance =
             NpcInstance(
                 state = state,

@@ -48,6 +48,8 @@ fun jsSetNpcTransform(
     isWalking: Boolean
 ): Unit = js("mc.setNpcTransform(model, x, y, z, yaw, isWalking)")
 
+fun jsSetNpcScale(model: JsAny, scale: Float): Unit = js("mc.setNpcScale(model, scale)")
+
 fun jsDisposeNpcModel(model: JsAny): Unit = js("mc.disposeNpcModel(model)")
 
 fun jsHighlightNpcModel(scene: JsAny, model: JsAny, on: Boolean): Unit =

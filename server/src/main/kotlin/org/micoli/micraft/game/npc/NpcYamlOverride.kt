@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.npc
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.game.npc.animal.AnimalYamlEntry
 import org.micoli.micraft.player.rpg.ClassResource
 
 @Serializable
@@ -24,4 +25,5 @@ data class NpcYamlOverride(
     val maxRage: Int? = null,
     val walkBoneAliases: Map<String, String>? = null,
     val bbmodelFile: String? = null,
+    val animal: AnimalYamlEntry? = null,
 )

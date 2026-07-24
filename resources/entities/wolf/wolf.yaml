@@ -24,3 +24,27 @@ attacks:
     level: 2
   - attackId: wolf_pounce
     level: 2
+animal:
+  diet: CARNIVORE
+  lifespanDays: 30.0
+  preyTypes:
+    - goat
+    - duck
+    - cat
+  canReproduce: true
+  gestationDays: 2.0
+  offspringType: wolf_baby
+  offspringMinCount: 1
+  offspringMaxCount: 3
+  reproductionCooldownDays: 5.0
+  matingRange: 10.0
+  scale: 1.0
+  baseStats:
+    strength: 14
+    dexterity: 10
+    constitution: 12
+  statsVariance: 2
+  hpRegenPerSec: 1.5
+  hungerRatePerDay: 0.1
+  hungerThresholdToHunt: 0.4
+  hungerThresholdToMate: 0.5

@@ -40,6 +40,7 @@ private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
         maxMana = o.maxMana ?: maxMana,
         maxRage = o.maxRage ?: maxRage,
         bbmodelFile = o.bbmodelFile ?: bbmodelFile,
+        animal = o.animal ?: animal,
     )
 
 class NpcRegistryLoader(
@@ -126,6 +127,7 @@ class NpcRegistryLoader(
                                     maxMana = entry.maxMana,
                                     maxRage = entry.maxRage,
                                     walkBoneAliases = entry.walkBoneAliases,
+                                    animalConfig = entry.animal,
                                 )
                         }
                         .onFailure { e -> npcLog.warn("Skipping entity '{}': {}", key, e.message) }

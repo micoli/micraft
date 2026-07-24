@@ -1,0 +1,36 @@
+walkBoneAliases:
+  rightArm: leg0
+  leftArm: leg1
+  rightLeg: leg2
+  leftLeg: leg3
+behavior: animal
+width: 0.35
+height: 0.65
+wanderSpeed: 1.5
+wanderRadius: 20.0
+spawn:
+  autoSpawn: false
+  maxPerChunk: 3
+  spawnBiomes: []
+hp: 8
+aggroMode: PASSIVE
+aggroRange: 4.0
+deaggroTimeSec: 5.0
+minLevel: 0
+classResource: RAGE
+maxRage: 30
+animal:
+  diet: CARNIVORE
+  lifespanDays: 30.0
+  canReproduce: false
+  scale: 0.75
+  adultType: wolf
+  baseStats:
+    strength: 7
+    dexterity: 8
+    constitution: 6
+  statsVariance: 1
+  hpRegenPerSec: 0.5
+  hungerRatePerDay: 0.12
+  hungerThresholdToHunt: 0.99
+  hungerThresholdToMate: 0.99
