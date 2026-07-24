@@ -45,6 +45,26 @@ export interface ClassDefinitionEntry {
   levels: Record<string, ClassLevelEntry>;
 }
 
+export interface NpcAdminDto {
+  id: string;
+  name: string;
+  type: string;
+  level: number;
+  gender: string | null;
+  currentHp: number;
+  maxHp: number;
+  isDead: boolean;
+  aggroMode: string;
+  tier: string;
+  x: number;
+  y: number;
+  z: number;
+  zone: string;
+  parentIds: string[];
+  skills: string[];
+  ageGameDays: number | null;
+}
+
 export interface WorldStatsDto {
   name: string;
   seed: number;
@@ -147,6 +167,9 @@ export const api = {
   worlds: {
     list: () => get("/api/admin/worlds").then((r) => r.json() as Promise<WorldStatsDto[]>),
     create: (name: string, seed: number) => post("/api/admin/worlds", { name, seed }),
+  },
+  npcs: {
+    list: () => get("/api/admin/npcs").then((r) => r.json() as Promise<NpcAdminDto[]>),
   },
   classes: {
     get: () => get("/api/admin/classes").then((r) => r.json() as Promise<Record<string, ClassDefinitionEntry>>),

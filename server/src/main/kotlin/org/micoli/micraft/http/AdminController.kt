@@ -26,6 +26,8 @@ import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
+import org.micoli.micraft.game.npc.NpcConstants
+import org.micoli.micraft.game.npc.NpcHpCalculator
 import org.micoli.micraft.game.world.PlayerFile
 import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
@@ -33,6 +35,27 @@ import org.micoli.micraft.player.rpg.CharacterClass
 
 @Serializable
 data class UserDto(val email: String, val displayName: String, val groups: List<String>)
+
+@Serializable
+data class NpcAdminDto(
+    val id: String,
+    val name: String,
+    val type: String,
+    val level: Int,
+    val gender: String?,
+    val currentHp: Int,
+    val maxHp: Int,
+    val isDead: Boolean,
+    val aggroMode: String,
+    val tier: String,
+    val x: Float,
+    val y: Float,
+    val z: Float,
+    val zone: String,
+    val parentIds: List<String>,
+    val skills: List<String>,
+    val ageGameDays: Double?,
+)
 
 @Serializable
 data class WorldStatsDto(
@@ -505,6 +528,42 @@ class AdminController(
                                 })
                         })
                 call.respondText(payload, ContentType.Application.Json)
+            }
+
+            // ── NPCs ─────────────────────────────────────────────────────────
+            get("/api/admin/npcs") {
+                if (!requireAdmin()) return@get
+                val dtos =
+                    gameLoop.getNpcInstances().map { npc ->
+                        val ad = npc.animalData
+                        val maxHp = NpcHpCalculator.computeMaxHp(npc.definition, npc.instanceLevel)
+                        val zoneX =
+                            Math.floorDiv(npc.state.pos.x.toInt(), NpcConstants.NPC_ZONE_SIZE)
+                        val zoneZ =
+                            Math.floorDiv(npc.state.pos.z.toInt(), NpcConstants.NPC_ZONE_SIZE)
+                        NpcAdminDto(
+                            id = npc.state.id,
+                            name = npc.state.name,
+                            type = npc.state.type,
+                            level = npc.instanceLevel,
+                            gender = ad?.gender?.name,
+                            currentHp = npc.currentHp,
+                            maxHp = maxHp,
+                            isDead = npc.isDead,
+                            aggroMode = npc.definition.aggroMode.name,
+                            tier = npc.definition.tier.name,
+                            x = npc.state.pos.x,
+                            y = npc.state.pos.y,
+                            z = npc.state.pos.z,
+                            zone = "$zoneX,$zoneZ",
+                            parentIds = ad?.parentIds?.toList() ?: emptyList(),
+                            skills = npc.definition.attacks.map { "${it.attackId} lv${it.level}" },
+                            ageGameDays = ad?.ageGameDays,
+                        )
+                    }
+                call.respondText(
+                    adminJson.encodeToString(ListSerializer(NpcAdminDto.serializer()), dtos),
+                    ContentType.Application.Json)
             }
 
             // ── Schemas ──────────────────────────────────────────────────────

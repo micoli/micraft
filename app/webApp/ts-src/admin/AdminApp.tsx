@@ -2,6 +2,7 @@ import { BrowserRouter, Link, Route, Routes, useLocation } from "react-router";
 import { cn } from "../primitives/cn";
 import { ClassesPage } from "./pages/ClassesPage";
 import { ConfigEditorPage } from "./pages/ConfigEditorPage";
+import { NpcsPage } from "./pages/NpcsPage";
 import { PlayersPage } from "./pages/PlayersPage";
 import { StatusPage } from "./pages/StatusPage";
 import { UsersPage } from "./pages/UsersPage";
@@ -35,12 +36,14 @@ const ICONS = {
   worlds: "M3 7l9-4 9 4M3 7v10l9 4m-9-14l9 4m9-4v10l-9 4m0-14v14",
   classes:
     "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
+  npcs: "M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18",
 };
 
 const NAV = [
   { path: "/admin", label: "Status", icon: ICONS.status, exact: true },
   { path: "/admin/users", label: "Users", icon: ICONS.users },
   { path: "/admin/players", label: "Players", icon: ICONS.players },
+  { path: "/admin/npcs", label: "NPCs", icon: ICONS.npcs },
   { path: "/admin/classes", label: "Classes", icon: ICONS.classes },
   { path: "/admin/config", label: "Config", icon: ICONS.config },
   { path: "/admin/worlds", label: "Worlds", icon: ICONS.worlds },
@@ -50,6 +53,7 @@ const PAGE_LABELS: Record<string, string> = {
   "/admin": "Server Status",
   "/admin/users": "Users",
   "/admin/players": "Players",
+  "/admin/npcs": "NPCs",
   "/admin/classes": "Classes & Skills",
   "/admin/config": "Config Editor",
   "/admin/worlds": "Worlds",
@@ -130,6 +134,7 @@ export function AdminApp() {
               <Route path="/admin" element={<StatusPage />} />
               <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/players" element={<PlayersPage />} />
+              <Route path="/admin/npcs" element={<NpcsPage />} />
               <Route path="/admin/classes" element={<ClassesPage />} />
               <Route path="/admin/config" element={<ConfigEditorPage />} />
               <Route path="/admin/worlds" element={<WorldsPage />} />

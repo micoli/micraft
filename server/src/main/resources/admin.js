@@ -31820,6 +31820,9 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
       list: () => get("/api/admin/worlds").then((r2) => r2.json()),
       create: (name2, seed) => post("/api/admin/worlds", { name: name2, seed })
     },
+    npcs: {
+      list: () => get("/api/admin/npcs").then((r2) => r2.json())
+    },
     classes: {
       get: () => get("/api/admin/classes").then((r2) => r2.json()),
       skills: () => get("/api/admin/skills").then((r2) => r2.json())
@@ -31885,24 +31888,17 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     if (!progression || progression.length === 0) {
       return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { className: "border border-[#2E3A4E] px-3 py-2 text-center text-[#2E3A4E]", children: "\u2014" });
     }
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { className: "border border-[#2E3A4E] px-3 py-2", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "flex flex-col gap-0.5", children: progression.map(({ playerLevel, skillLevel }) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-      "span",
-      {
-        className: "inline-flex items-center gap-1 text-[11px] font-mono text-[#8A99AF]",
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-[#3C50E0] font-semibold", children: [
-            "Lv",
-            playerLevel
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[#8A99AF]", children: "\u2192" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-emerald-400", children: [
-            "sk",
-            skillLevel
-          ] })
-        ]
-      },
-      playerLevel
-    )) }) });
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { className: "border border-[#2E3A4E] px-3 py-2", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "flex flex-col gap-0.5", children: progression.map(({ playerLevel, skillLevel }) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "inline-flex items-center gap-1 text-[11px] font-mono text-[#8A99AF]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-[#3C50E0] font-semibold", children: [
+        "Lv",
+        playerLevel
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[#8A99AF]", children: "\u2192" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-emerald-400", children: [
+        "sk",
+        skillLevel
+      ] })
+    ] }, playerLevel)) }) });
   }
   function ClassesPage() {
     const [classes, setClasses] = (0, import_react.useState)(null);
@@ -31926,31 +31922,24 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { className: "text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-4", children: "Classes" }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5", children: classNames.map((name2) => {
           const def = classes[name2];
-          return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-            "div",
-            {
-              className: "rounded-lg border border-[#2E3A4E] bg-[#0E1726] px-4 py-3",
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { className: "text-white font-semibold text-sm", children: name2 }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { className: "text-[#8A99AF] text-[10px] mt-1", children: def.classResource }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "mt-2 grid grid-cols-3 gap-x-2 gap-y-0.5 text-[10px] text-[#8A99AF]", children: [
-                  ["STR", def.strBonus],
-                  ["DEX", def.dexBonus],
-                  ["INT", def.intelBonus],
-                  ["WIS", def.wisBonus],
-                  ["CON", def.conBonus],
-                  ["CHA", def.chaBonus]
-                ].map(([stat, val]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: val > 0 ? "text-emerald-400" : "", children: stat }),
-                  val > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-emerald-400 ml-0.5", children: [
-                    "+",
-                    val
-                  ] })
-                ] }, stat)) })
-              ]
-            },
-            name2
-          );
+          return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#0E1726] px-4 py-3", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { className: "text-white font-semibold text-sm", children: name2 }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { className: "text-[#8A99AF] text-[10px] mt-1", children: def.classResource }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "mt-2 grid grid-cols-3 gap-x-2 gap-y-0.5 text-[10px] text-[#8A99AF]", children: [
+              ["STR", def.strBonus],
+              ["DEX", def.dexBonus],
+              ["INT", def.intelBonus],
+              ["WIS", def.wisBonus],
+              ["CON", def.conBonus],
+              ["CHA", def.chaBonus]
+            ].map(([stat, val]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: val > 0 ? "text-emerald-400" : "", children: stat }),
+              val > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-emerald-400 ml-0.5", children: [
+                "+",
+                val
+              ] })
+            ] }, stat)) })
+          ] }, name2);
         }) })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-5", children: [
@@ -31968,39 +31957,20 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
               name2
             ))
           ] }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("tbody", { children: skills.map((skill, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-            "tr",
-            {
-              className: i % 2 === 0 ? "bg-[#0E1726]" : "bg-[#111827]",
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("td", { className: "border border-[#2E3A4E] px-3 py-2 font-mono text-xs", children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                    "span",
-                    {
-                      className: Object.keys(skill.byClass).length === 0 ? "text-[#8A99AF]" : "text-white",
-                      children: skill.name
-                    }
-                  ),
-                  Object.keys(skill.byClass).length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "ml-2 text-[9px] text-[#8A99AF] italic", children: "unassigned" })
-                ] }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { className: "border border-[#2E3A4E] px-3 py-2 text-center", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                  "span",
-                  {
-                    className: `text-[10px] font-semibold px-1.5 py-0.5 rounded ${skill.type === "attack" ? "bg-red-900/40 text-red-300" : "bg-purple-900/40 text-purple-300"}`,
-                    children: skill.type
-                  }
-                ) }),
-                classNames.map((className) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                  ProgressionCell,
-                  {
-                    progression: skill.byClass[className]
-                  },
-                  className
-                ))
-              ]
-            },
-            skill.name
-          )) })
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("tbody", { children: skills.map((skill, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("tr", { className: i % 2 === 0 ? "bg-[#0E1726]" : "bg-[#111827]", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("td", { className: "border border-[#2E3A4E] px-3 py-2 font-mono text-xs", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: Object.keys(skill.byClass).length === 0 ? "text-[#8A99AF]" : "text-white", children: skill.name }),
+              Object.keys(skill.byClass).length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "ml-2 text-[9px] text-[#8A99AF] italic", children: "unassigned" })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { className: "border border-[#2E3A4E] px-3 py-2 text-center", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+              "span",
+              {
+                className: `text-[10px] font-semibold px-1.5 py-0.5 rounded ${skill.type === "attack" ? "bg-red-900/40 text-red-300" : "bg-purple-900/40 text-purple-300"}`,
+                children: skill.type
+              }
+            ) }),
+            classNames.map((className) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ProgressionCell, { progression: skill.byClass[className] }, className))
+          ] }, skill.name)) })
         ] }) }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { className: "mt-3 text-[10px] text-[#8A99AF]", children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[#3C50E0] font-semibold", children: "Lv" }),
@@ -82237,8 +82207,178 @@ ${end.comment}` : end.comment;
     ] });
   }
 
-  // admin/pages/PlayersPage.tsx
+  // admin/pages/NpcsPage.tsx
   var import_react3 = __toESM(require_react(), 1);
+  var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
+  function Badge({ label, color }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: `inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${color}`, children: label });
+  }
+  function tierColor(tier) {
+    switch (tier) {
+      case "ELITE":
+        return "bg-purple-900/60 text-purple-300";
+      case "BOSS":
+        return "bg-red-900/60 text-red-300";
+      case "RARE":
+        return "bg-yellow-900/60 text-yellow-300";
+      default:
+        return "bg-[#2E3A4E] text-[#8A99AF]";
+    }
+  }
+  function aggroColor(mode) {
+    switch (mode) {
+      case "AGGRESSIVE":
+        return "bg-red-900/40 text-red-400";
+      case "PASSIVE_COOPERATIVE":
+        return "bg-orange-900/40 text-orange-400";
+      default:
+        return "bg-[#1C2434] text-[#8A99AF]";
+    }
+  }
+  function HpBar({ current, max }) {
+    const pct = max > 0 ? Math.round(current / max * 100) : 0;
+    const color = pct > 50 ? "bg-emerald-500" : pct > 25 ? "bg-yellow-500" : "bg-red-500";
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-2 min-w-[80px]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex-1 h-1.5 bg-[#2E3A4E] rounded-full overflow-hidden", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: `h-full ${color} rounded-full`, style: { width: `${pct}%` } }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-[10px] text-[#8A99AF] shrink-0", children: [
+        current,
+        "/",
+        max
+      ] })
+    ] });
+  }
+  function Detail({ npc }) {
+    const teleport = `/teleport ${Math.round(npc.x)} ${Math.round(npc.y)} ${Math.round(npc.z)}`;
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "bg-[#0E1726] border-t border-[#2E3A4E] px-6 py-4 grid grid-cols-2 gap-x-8 gap-y-3 text-sm", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1", children: "Position" }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("code", { className: "text-xs text-emerald-400 font-mono select-all", children: teleport }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("p", { className: "text-[10px] text-[#8A99AF] mt-0.5", children: [
+          "x=",
+          npc.x.toFixed(1),
+          " y=",
+          npc.y.toFixed(1),
+          " z=",
+          npc.z.toFixed(1),
+          " \xB7 zone ",
+          npc.zone
+        ] })
+      ] }),
+      npc.skills.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1", children: "Skills" }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex flex-wrap gap-1", children: npc.skills.map((s) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "px-2 py-0.5 rounded bg-[#1C2434] text-[11px] text-[#8A99AF]", children: s }, s)) })
+      ] }),
+      npc.parentIds.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1", children: "Parents" }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex flex-col gap-0.5", children: npc.parentIds.map((pid) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-[11px] font-mono text-[#8A99AF]", children: [
+          pid.slice(0, 8),
+          "\u2026"
+        ] }, pid)) })
+      ] }),
+      npc.ageGameDays != null && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1", children: "Animal" }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("p", { className: "text-xs text-white", children: [
+          "Age: ",
+          npc.ageGameDays.toFixed(1),
+          " game days"
+        ] })
+      ] })
+    ] });
+  }
+  function NpcsPage() {
+    const [npcs, setNpcs] = (0, import_react3.useState)(null);
+    const [error2, setError] = (0, import_react3.useState)(null);
+    const [expandedId, setExpandedId] = (0, import_react3.useState)(null);
+    const [filter, setFilter] = (0, import_react3.useState)("");
+    const load = () => {
+      api.npcs.list().then(setNpcs).catch((e) => setError(String(e)));
+    };
+    (0, import_react3.useEffect)(() => {
+      load();
+    }, []);
+    const filtered = (npcs != null ? npcs : []).filter((n) => {
+      if (!filter) return true;
+      const q = filter.toLowerCase();
+      return n.name.toLowerCase().includes(q) || n.type.toLowerCase().includes(q) || n.zone.includes(q);
+    });
+    const alive = (npcs != null ? npcs : []).filter((n) => !n.isDead).length;
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "space-y-4", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-3", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+          "input",
+          {
+            type: "text",
+            placeholder: "Filter by name, type or zone\u2026",
+            value: filter,
+            onChange: (e) => setFilter(e.target.value),
+            className: "flex-1 max-w-xs bg-[#1C2434] border border-[#2E3A4E] rounded-lg px-3 py-1.5 text-sm text-white placeholder-[#8A99AF] outline-none focus:border-[#3C50E0]"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+          "button",
+          {
+            onClick: load,
+            className: "px-3 py-1.5 rounded-lg text-sm font-medium bg-[#3C50E0] hover:bg-[#3446c7] text-white transition-colors",
+            children: "Refresh"
+          }
+        ),
+        npcs && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-xs text-[#8A99AF]", children: [
+          alive,
+          " alive \xB7 ",
+          npcs.length,
+          " total"
+        ] })
+      ] }),
+      error2 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "text-red-400 text-sm", children: error2 }),
+      !npcs && !error2 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "text-[#8A99AF] text-sm", children: "Loading\u2026" }),
+      npcs && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "rounded-xl overflow-hidden border border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("table", { className: "w-full text-sm border-collapse", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("tr", { className: "bg-[#1C2434] text-[#8A99AF] text-xs uppercase tracking-widest", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Name" }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Type" }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Lv" }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Gender" }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Tier" }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Aggro" }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "HP" }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "px-4 py-3" })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("tbody", { children: [
+          filtered.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { colSpan: 8, className: "text-center text-[#8A99AF] py-8", children: "No NPCs match" }) }),
+          filtered.map((npc) => {
+            var _a6;
+            const expanded = expandedId === npc.id;
+            return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+                "tr",
+                {
+                  onClick: () => setExpandedId(expanded ? null : npc.id),
+                  className: `border-t border-[#2E3A4E] cursor-pointer transition-colors ${npc.isDead ? "opacity-40" : ""} ${expanded ? "bg-[#1C2434]" : "hover:bg-[#1C2434]/60"}`,
+                  children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("td", { className: "px-4 py-2.5 font-medium text-white", children: [
+                      npc.isDead && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-red-500 mr-1", children: "\u2715" }),
+                      npc.name
+                    ] }),
+                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: npc.type }),
+                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: npc.level }),
+                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: (_a6 = npc.gender) != null ? _a6 : "\u2014" }),
+                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Badge, { label: npc.tier, color: tierColor(npc.tier) }) }),
+                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Badge, { label: npc.aggroMode, color: aggroColor(npc.aggroMode) }) }),
+                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(HpBar, { current: npc.currentHp, max: npc.maxHp }) }),
+                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF] text-right", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-xs", children: expanded ? "\u25B2" : "\u25BC" }) })
+                  ]
+                },
+                npc.id
+              ),
+              expanded && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("tr", { className: "border-t border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { colSpan: 8, className: "p-0", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Detail, { npc }) }) }, npc.id + "-detail")
+            ] });
+          })
+        ] })
+      ] }) })
+    ] });
+  }
+
+  // admin/pages/PlayersPage.tsx
+  var import_react4 = __toESM(require_react(), 1);
 
   // node_modules/@radix-ui/react-tabs/dist/index.mjs
   var React28 = __toESM(require_react(), 1);
@@ -82256,7 +82396,7 @@ ${end.comment}` : end.comment;
 
   // node_modules/@radix-ui/react-context/dist/index.mjs
   var React12 = __toESM(require_react(), 1);
-  var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
   function createContextScope(scopeName, createContextScopeDeps = []) {
     let defaultContexts = [];
     function createContext32(rootComponentName, defaultContext) {
@@ -82269,7 +82409,7 @@ ${end.comment}` : end.comment;
         const _a6 = props, { scope, children } = _a6, context = __objRest(_a6, ["scope", "children"]);
         const Context2 = ((_b = scope == null ? void 0 : scope[scopeName]) == null ? void 0 : _b[index2]) || BaseContext;
         const value = React12.useMemo(() => context, Object.values(context));
-        return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Context2.Provider, { value, children });
+        return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Context2.Provider, { value, children });
       };
       Provider.displayName = rootComponentName + "Provider";
       function useContext22(consumerName, scope) {
@@ -82485,9 +82625,9 @@ ${end.comment}` : end.comment;
   var use = React14[" use ".trim().toString()];
 
   // node_modules/@radix-ui/react-collection/dist/index.mjs
-  var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
-  var React22 = __toESM(require_react(), 1);
   var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
+  var React22 = __toESM(require_react(), 1);
+  var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
   function createCollection(name2) {
     const PROVIDER_NAME = name2 + "CollectionProvider";
     const [createCollectionContext, createCollectionScope2] = createContextScope(PROVIDER_NAME);
@@ -82499,7 +82639,7 @@ ${end.comment}` : end.comment;
       const { scope, children } = props;
       const ref = React15.useRef(null);
       const itemMap = React15.useRef(/* @__PURE__ */ new Map()).current;
-      return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(CollectionProviderImpl, { scope, itemMap, collectionRef: ref, children });
+      return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(CollectionProviderImpl, { scope, itemMap, collectionRef: ref, children });
     };
     CollectionProvider.displayName = PROVIDER_NAME;
     const COLLECTION_SLOT_NAME = name2 + "CollectionSlot";
@@ -82509,7 +82649,7 @@ ${end.comment}` : end.comment;
         const { scope, children } = props;
         const context = useCollectionContext(COLLECTION_SLOT_NAME, scope);
         const composedRefs = useComposedRefs(forwardedRef, context.collectionRef);
-        return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(CollectionSlotImpl, { ref: composedRefs, children });
+        return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(CollectionSlotImpl, { ref: composedRefs, children });
       }
     );
     CollectionSlot.displayName = COLLECTION_SLOT_NAME;
@@ -82526,7 +82666,7 @@ ${end.comment}` : end.comment;
           context.itemMap.set(ref, __spreadValues({ ref }, itemData));
           return () => void context.itemMap.delete(ref);
         });
-        return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(CollectionItemSlotImpl, __spreadProps(__spreadValues({}, { [ITEM_DATA_ATTR]: "" }), { ref: composedRefs, children }));
+        return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(CollectionItemSlotImpl, __spreadProps(__spreadValues({}, { [ITEM_DATA_ATTR]: "" }), { ref: composedRefs, children }));
       }
     );
     CollectionItemSlot.displayName = ITEM_SLOT_NAME;
@@ -82573,7 +82713,7 @@ ${end.comment}` : end.comment;
   // node_modules/@radix-ui/react-primitive/dist/index.mjs
   var React18 = __toESM(require_react(), 1);
   var ReactDOM = __toESM(require_react_dom(), 1);
-  var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
   var NODES = [
     "a",
     "button",
@@ -82601,7 +82741,7 @@ ${end.comment}` : end.comment;
       if (typeof window !== "undefined") {
         window[Symbol.for("radix-ui")] = true;
       }
-      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Comp, __spreadProps(__spreadValues({}, primitiveProps), { ref: forwardedRef }));
+      return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Comp, __spreadProps(__spreadValues({}, primitiveProps), { ref: forwardedRef }));
     });
     Node2.displayName = `Primitive.${node}`;
     return __spreadProps(__spreadValues({}, primitive), { [node]: Node2 });
@@ -82724,7 +82864,7 @@ ${end.comment}` : end.comment;
 
   // node_modules/@radix-ui/react-direction/dist/index.mjs
   var React24 = __toESM(require_react(), 1);
-  var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
   var DirectionContext = React24.createContext(void 0);
   function useDirection(localDir) {
     const globalDir = React24.useContext(DirectionContext);
@@ -82732,7 +82872,7 @@ ${end.comment}` : end.comment;
   }
 
   // node_modules/@radix-ui/react-roving-focus/dist/index.mjs
-  var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
   var ENTRY_FOCUS = "rovingFocusGroup.onEntryFocus";
   var EVENT_OPTIONS = { bubbles: false, cancelable: true };
   var GROUP_NAME = "RovingFocusGroup";
@@ -82744,7 +82884,7 @@ ${end.comment}` : end.comment;
   var [RovingFocusProvider, useRovingFocusContext] = createRovingFocusGroupContext(GROUP_NAME);
   var RovingFocusGroup = React25.forwardRef(
     (props, forwardedRef) => {
-      return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Collection2.Provider, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Collection2.Slot, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(RovingFocusGroupImpl, __spreadProps(__spreadValues({}, props), { ref: forwardedRef })) }) });
+      return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Collection2.Provider, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Collection2.Slot, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(RovingFocusGroupImpl, __spreadProps(__spreadValues({}, props), { ref: forwardedRef })) }) });
     }
   );
   RovingFocusGroup.displayName = GROUP_NAME;
@@ -82791,7 +82931,7 @@ ${end.comment}` : end.comment;
         return () => node.removeEventListener(ENTRY_FOCUS, handleEntryFocus);
       }
     }, [handleEntryFocus]);
-    return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
       RovingFocusProvider,
       {
         scope: __scopeRovingFocusGroup,
@@ -82812,7 +82952,7 @@ ${end.comment}` : end.comment;
           () => setFocusableItemsCount((prevCount) => prevCount - 1),
           []
         ),
-        children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
           Primitive.div,
           __spreadProps(__spreadValues({
             tabIndex: isTabbingBackOut || focusableItemsCount === 0 ? -1 : 0,
@@ -82875,14 +83015,14 @@ ${end.comment}` : end.comment;
           return () => onFocusableItemRemove();
         }
       }, [focusable, onFocusableItemAdd, onFocusableItemRemove]);
-      return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
         Collection2.ItemSlot,
         {
           scope: __scopeRovingFocusGroup,
           id: id2,
           focusable,
           active,
-          children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+          children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
             Primitive.span,
             __spreadProps(__spreadValues({
               tabIndex: isCurrentTabStop ? 0 : -1,
@@ -83120,7 +83260,7 @@ ${end.comment}` : end.comment;
   }
 
   // node_modules/@radix-ui/react-tabs/dist/index.mjs
-  var import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
   var TABS_NAME = "Tabs";
   var [createTabsContext, createTabsScope] = createContextScope(TABS_NAME, [
     createRovingFocusGroupScope
@@ -83153,7 +83293,7 @@ ${end.comment}` : end.comment;
         defaultProp: defaultValue != null ? defaultValue : "",
         caller: TABS_NAME
       });
-      return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
         TabsProvider,
         {
           scope: __scopeTabs,
@@ -83163,7 +83303,7 @@ ${end.comment}` : end.comment;
           orientation,
           dir: direction,
           activationMode,
-          children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+          children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
             Primitive.div,
             __spreadProps(__spreadValues({
               dir: direction,
@@ -83183,7 +83323,7 @@ ${end.comment}` : end.comment;
       const _a6 = props, { __scopeTabs, loop = true } = _a6, listProps = __objRest(_a6, ["__scopeTabs", "loop"]);
       const context = useTabsContext(TAB_LIST_NAME, __scopeTabs);
       const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeTabs);
-      return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
         Root,
         __spreadProps(__spreadValues({
           asChild: true
@@ -83191,7 +83331,7 @@ ${end.comment}` : end.comment;
           orientation: context.orientation,
           dir: context.dir,
           loop,
-          children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+          children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
             Primitive.div,
             __spreadProps(__spreadValues({
               role: "tablist",
@@ -83214,14 +83354,14 @@ ${end.comment}` : end.comment;
       const triggerId = makeTriggerId(context.baseId, value);
       const contentId = makeContentId(context.baseId, value);
       const isSelected = value === context.value;
-      return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
         Item,
         __spreadProps(__spreadValues({
           asChild: true
         }, rovingFocusGroupScope), {
           focusable: !disabled,
           active: isSelected,
-          children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+          children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
             Primitive.button,
             __spreadProps(__spreadValues({
               type: "button",
@@ -83270,7 +83410,7 @@ ${end.comment}` : end.comment;
         const rAF = requestAnimationFrame(() => isMountAnimationPreventedRef.current = false);
         return () => cancelAnimationFrame(rAF);
       }, []);
-      return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Presence, { present: forceMount || isSelected, children: ({ present }) => /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Presence, { present: forceMount || isSelected, children: ({ present }) => /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
         Primitive.div,
         __spreadProps(__spreadValues({
           "data-state": isSelected ? "active" : "inactive",
@@ -83303,15 +83443,15 @@ ${end.comment}` : end.comment;
   var Content = TabsContent;
 
   // primitives/Tabs.tsx
-  var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
   var Tabs2 = Root2;
   function TabsList2(_a6) {
     var _b = _a6, { className } = _b, props = __objRest(_b, ["className"]);
-    return /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(List, __spreadValues({ className: cn("flex border-b border-white/20 gap-1", className) }, props));
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(List, __spreadValues({ className: cn("flex border-b border-white/20 gap-1", className) }, props));
   }
   function TabsTrigger2(_a6) {
     var _b = _a6, { className } = _b, props = __objRest(_b, ["className"]);
-    return /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
       Trigger,
       __spreadValues({
         className: cn(
@@ -83325,14 +83465,14 @@ ${end.comment}` : end.comment;
   }
   function TabsContent2(_a6) {
     var _b = _a6, { className } = _b, props = __objRest(_b, ["className"]);
-    return /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Content, __spreadValues({ className: cn("pt-4", className) }, props));
+    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Content, __spreadValues({ className: cn("pt-4", className) }, props));
   }
 
   // admin/pages/PlayersPage.tsx
-  var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime12 = __toESM(require_jsx_runtime(), 1);
   var CHARACTER_CLASSES = ["WARRIOR", "MAGE", "RANGER", "ROGUE", "CLERIC"];
   function SaveBtn({ saving, saved, onClick }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
       "button",
       {
         onClick,
@@ -83343,18 +83483,18 @@ ${end.comment}` : end.comment;
     );
   }
   function Field({ label, htmlFor, children }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("label", { htmlFor, className: "block text-xs font-medium text-[#8A99AF] mb-1.5", children: label }),
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("label", { htmlFor, className: "block text-xs font-medium text-[#8A99AF] mb-1.5", children: label }),
       children
     ] });
   }
   function Toggle({ value, onChange }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
       "button",
       {
         onClick: () => onChange(!value),
         className: `w-9 h-[14px] rounded-full transition-colors relative shrink-0 overflow-visible ${value ? "bg-[#3C50E0]" : "bg-[#2E3A4E]"}`,
-        children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
           "span",
           {
             className: `absolute top-1/2 -translate-y-1/2 left-0 w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-transform ${value ? "translate-x-[20px]" : "translate-x-0.5"}`
@@ -83364,9 +83504,9 @@ ${end.comment}` : end.comment;
     );
   }
   function BoolRow({ label, value, onChange }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "flex items-center justify-between py-2 border-b border-[#2E3A4E] last:border-0", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "text-sm text-[#8A99AF]", children: label }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Toggle, { value, onChange })
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex items-center justify-between py-2 border-b border-[#2E3A4E] last:border-0", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "text-sm text-[#8A99AF]", children: label }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Toggle, { value, onChange })
     ] });
   }
   var KNOWN_LOCALES = ["en", "fr", "de", "es", "ja", "zh", "pt", "ru", "it", "nl"];
@@ -83375,17 +83515,17 @@ ${end.comment}` : end.comment;
     onSave
   }) {
     const s = file.state;
-    const [skin, setSkin] = (0, import_react3.useState)(s.skin);
-    const [language2, setLanguage] = (0, import_react3.useState)(s.language);
-    const [fov, setFov] = (0, import_react3.useState)(s.fieldOfView);
-    const [shaders, setShaders] = (0, import_react3.useState)(s.shadersEnabled);
-    const [favicon, setFavicon] = (0, import_react3.useState)(s.animatedFavicon);
-    const [godMode, setGodMode] = (0, import_react3.useState)(s.godMode);
-    const [lightBoost, setLightBoost] = (0, import_react3.useState)(s.lightBoostEnabled);
-    const [saving, setSaving] = (0, import_react3.useState)(false);
-    const [saved, setSaved] = (0, import_react3.useState)(false);
-    const [availableSkins, setAvailableSkins] = (0, import_react3.useState)([]);
-    (0, import_react3.useEffect)(() => {
+    const [skin, setSkin] = (0, import_react4.useState)(s.skin);
+    const [language2, setLanguage] = (0, import_react4.useState)(s.language);
+    const [fov, setFov] = (0, import_react4.useState)(s.fieldOfView);
+    const [shaders, setShaders] = (0, import_react4.useState)(s.shadersEnabled);
+    const [favicon, setFavicon] = (0, import_react4.useState)(s.animatedFavicon);
+    const [godMode, setGodMode] = (0, import_react4.useState)(s.godMode);
+    const [lightBoost, setLightBoost] = (0, import_react4.useState)(s.lightBoostEnabled);
+    const [saving, setSaving] = (0, import_react4.useState)(false);
+    const [saved, setSaved] = (0, import_react4.useState)(false);
+    const [availableSkins, setAvailableSkins] = (0, import_react4.useState)([]);
+    (0, import_react4.useEffect)(() => {
       api.skins.list().then(setAvailableSkins).catch(() => {
       });
     }, []);
@@ -83407,11 +83547,11 @@ ${end.comment}` : end.comment;
       setTimeout(() => setSaved(false), 1500);
     };
     const selectCls = "w-full bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#3C50E0] transition-colors";
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "p-5 space-y-4", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Field, { label: "Skin", htmlFor: "skin", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("select", { id: "skin", value: skin, onChange: (e) => setSkin(e.target.value), className: selectCls, children: skinOptions.map((s2) => /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("option", { value: s2, children: s2 }, s2)) }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Field, { label: "Language", htmlFor: "lang", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("select", { id: "lang", value: language2, onChange: (e) => setLanguage(e.target.value), className: selectCls, children: langOptions.map((l) => /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("option", { value: l, children: l }, l)) }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Field, { label: `Field of View \u2014 ${fov}\xB0`, htmlFor: "fov", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "p-5 space-y-4", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Field, { label: "Skin", htmlFor: "skin", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("select", { id: "skin", value: skin, onChange: (e) => setSkin(e.target.value), className: selectCls, children: skinOptions.map((s2) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("option", { value: s2, children: s2 }, s2)) }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Field, { label: "Language", htmlFor: "lang", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("select", { id: "lang", value: language2, onChange: (e) => setLanguage(e.target.value), className: selectCls, children: langOptions.map((l) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("option", { value: l, children: l }, l)) }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Field, { label: `Field of View \u2014 ${fov}\xB0`, htmlFor: "fov", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
           "input",
           {
             id: "fov",
@@ -83424,18 +83564,18 @@ ${end.comment}` : end.comment;
             className: "w-full accent-[#3C50E0]"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "flex justify-between text-xs text-[#4A5568] mt-0.5", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { children: "30\xB0" }),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { children: "120\xB0" })
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex justify-between text-xs text-[#4A5568] mt-0.5", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { children: "30\xB0" }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { children: "120\xB0" })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "pt-1", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(BoolRow, { label: "Shaders", value: shaders, onChange: setShaders }),
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(BoolRow, { label: "Animated Favicon", value: favicon, onChange: setFavicon }),
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(BoolRow, { label: "God Mode", value: godMode, onChange: setGodMode }),
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(BoolRow, { label: "Light Boost", value: lightBoost, onChange: setLightBoost })
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "pt-1", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(BoolRow, { label: "Shaders", value: shaders, onChange: setShaders }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(BoolRow, { label: "Animated Favicon", value: favicon, onChange: setFavicon }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(BoolRow, { label: "God Mode", value: godMode, onChange: setGodMode }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(BoolRow, { label: "Light Boost", value: lightBoost, onChange: setLightBoost })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(SaveBtn, { saving, saved, onClick: save })
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(SaveBtn, { saving, saved, onClick: save })
     ] });
   }
   function KeybindingsTab({
@@ -83443,10 +83583,10 @@ ${end.comment}` : end.comment;
     onSave
   }) {
     var _a6;
-    const [bindings, setBindings] = (0, import_react3.useState)(__spreadValues({}, file.keybindings));
-    const [filter, setFilter] = (0, import_react3.useState)("");
-    const [saving, setSaving] = (0, import_react3.useState)(false);
-    const [saved, setSaved] = (0, import_react3.useState)(false);
+    const [bindings, setBindings] = (0, import_react4.useState)(__spreadValues({}, file.keybindings));
+    const [filter, setFilter] = (0, import_react4.useState)("");
+    const [saving, setSaving] = (0, import_react4.useState)(false);
+    const [saved, setSaved] = (0, import_react4.useState)(false);
     const save = async () => {
       setSaving(true);
       await onSave(bindings);
@@ -83467,8 +83607,8 @@ ${end.comment}` : end.comment;
       const grp = entry[0].split("_")[0];
       ((_a6 = groups[grp]) != null ? _a6 : groups[grp] = []).push(entry);
     }
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "p-5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "p-5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
         "input",
         {
           type: "text",
@@ -83478,13 +83618,13 @@ ${end.comment}` : end.comment;
           className: "w-full mb-4 bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#3C50E0] transition-colors"
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "space-y-0 mb-5 max-h-[48vh] overflow-y-auto", children: Object.entries(groups).map(([grp, entries]) => /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "text-[10px] uppercase tracking-widest font-semibold text-[#4A5568] py-1.5 sticky top-0 bg-[#1A222C]", children: grp }),
-        entries.map(([action, keys2]) => /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "flex items-start gap-3 py-2 border-b border-[#2E3A4E] last:border-0", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "text-xs text-[#8A99AF] w-44 shrink-0 pt-1 font-mono", children: action.replace(/_/g, " ") }),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "flex flex-wrap gap-1.5 flex-1", children: [
-            keys2.map((k, i) => /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "flex items-center gap-0.5", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: "space-y-0 mb-5 max-h-[48vh] overflow-y-auto", children: Object.entries(groups).map(([grp, entries]) => /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: "text-[10px] uppercase tracking-widest font-semibold text-[#4A5568] py-1.5 sticky top-0 bg-[#1A222C]", children: grp }),
+        entries.map(([action, keys2]) => /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex items-start gap-3 py-2 border-b border-[#2E3A4E] last:border-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "text-xs text-[#8A99AF] w-44 shrink-0 pt-1 font-mono", children: action.replace(/_/g, " ") }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex flex-wrap gap-1.5 flex-1", children: [
+            keys2.map((k, i) => /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex items-center gap-0.5", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
                 "input",
                 {
                   value: k,
@@ -83492,7 +83632,7 @@ ${end.comment}` : end.comment;
                   className: "bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white w-24 focus:outline-none focus:border-[#3C50E0]"
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
                 "button",
                 {
                   onClick: () => removeKey(action, i),
@@ -83501,7 +83641,7 @@ ${end.comment}` : end.comment;
                 }
               )
             ] }, i)),
-            /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
               "button",
               {
                 onClick: () => addKey(action),
@@ -83512,7 +83652,7 @@ ${end.comment}` : end.comment;
           ] })
         ] }, action))
       ] }, grp)) }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(SaveBtn, { saving, saved, onClick: save })
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(SaveBtn, { saving, saved, onClick: save })
     ] });
   }
   function computeDerived(s, level) {
@@ -83539,9 +83679,9 @@ ${end.comment}` : end.comment;
     setStats
   }) => (
     // const statRow = (name: keyof typeof stats, label: string) => (
-    /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "flex items-center gap-3 py-2 border-b border-[#2E3A4E] last:border-0", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "text-xs text-[#8A99AF] w-24", children: label }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex items-center gap-3 py-2 border-b border-[#2E3A4E] last:border-0", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "text-xs text-[#8A99AF] w-24", children: label }),
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
         "input",
         {
           type: "range",
@@ -83552,15 +83692,15 @@ ${end.comment}` : end.comment;
           className: "flex-1 accent-[#3C50E0]"
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "text-sm text-[#3C50E0] w-6 text-right tabular-nums font-semibold", children: stats[name2] })
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "text-sm text-[#3C50E0] w-6 text-right tabular-nums font-semibold", children: stats[name2] })
     ] })
   );
   function RpgTab({ file, onSave }) {
     const cd = file.state.characterData;
-    const [cls, setCls] = (0, import_react3.useState)(cd.characterClass);
-    const [stats, setStats] = (0, import_react3.useState)(__spreadValues({}, cd.baseStats));
-    const [saving, setSaving] = (0, import_react3.useState)(false);
-    const [saved, setSaved] = (0, import_react3.useState)(false);
+    const [cls, setCls] = (0, import_react4.useState)(cd.characterClass);
+    const [stats, setStats] = (0, import_react4.useState)(__spreadValues({}, cd.baseStats));
+    const [saving, setSaving] = (0, import_react4.useState)(false);
+    const [saved, setSaved] = (0, import_react4.useState)(false);
     const save = async () => {
       setSaving(true);
       await onSave(__spreadValues({ characterClass: cls }, stats));
@@ -83569,10 +83709,10 @@ ${end.comment}` : end.comment;
       setTimeout(() => setSaved(false), 1500);
     };
     const derived = computeDerived(stats, cd.level);
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "p-5 space-y-5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: "Class" }),
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "flex flex-wrap gap-2", children: CHARACTER_CLASSES.map((c) => /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "p-5 space-y-5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: "Class" }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: "flex flex-wrap gap-2", children: CHARACTER_CLASSES.map((c) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
           "button",
           {
             onClick: () => setCls(c),
@@ -83582,28 +83722,28 @@ ${end.comment}` : end.comment;
           c
         )) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: "Base Stats" }),
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: "Base Stats" }),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(StatRow, { name: "str", label: "Strength", stats, setStats }),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(StatRow, { name: "dex", label: "Dexterity", stats, setStats }),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(StatRow, { name: "intel", label: "Intellect", stats, setStats }),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(StatRow, { name: "wis", label: "Wisdom", stats, setStats }),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(StatRow, { name: "con", label: "Constitution", stats, setStats }),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(StatRow, { name: "cha", label: "Charisma", stats, setStats })
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: "Base Stats" }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: "Base Stats" }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(StatRow, { name: "str", label: "Strength", stats, setStats }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(StatRow, { name: "dex", label: "Dexterity", stats, setStats }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(StatRow, { name: "intel", label: "Intellect", stats, setStats }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(StatRow, { name: "wis", label: "Wisdom", stats, setStats }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(StatRow, { name: "con", label: "Constitution", stats, setStats }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(StatRow, { name: "cha", label: "Charisma", stats, setStats })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: [
           "Derived Stats ",
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("span", { className: "text-[#4A5568] normal-case font-normal", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { className: "text-[#4A5568] normal-case font-normal", children: [
             "(Lv ",
             cd.level,
             ")"
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "grid grid-cols-2 gap-x-4", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: "grid grid-cols-2 gap-x-4", children: [
           ["Max HP", derived.maxHp],
           ["Max Mana", derived.maxMana],
           ["Melee Dmg", `+${derived.meleeDmg}`],
@@ -83616,12 +83756,12 @@ ${end.comment}` : end.comment;
           ["HP Regen/s", derived.hpRegenPerSec],
           ["Mana Regen/s", derived.manaRegenPerSec],
           ["Max Tokens", derived.maxTokens]
-        ].map(([label, value]) => /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "flex justify-between py-1 border-b border-[#2E3A4E] text-xs", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "text-[#8A99AF]", children: label }),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "text-white tabular-nums font-medium", children: value })
+        ].map(([label, value]) => /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex justify-between py-1 border-b border-[#2E3A4E] text-xs", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "text-[#8A99AF]", children: label }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "text-white tabular-nums font-medium", children: value })
         ] }, String(label))) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("p", { className: "text-xs text-[#4A5568]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("p", { className: "text-xs text-[#4A5568]", children: [
         cd.currentHp,
         " / ",
         derived.maxHp,
@@ -83631,7 +83771,7 @@ ${end.comment}` : end.comment;
         derived.maxMana,
         " Mana"
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(SaveBtn, { saving, saved, onClick: save })
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(SaveBtn, { saving, saved, onClick: save })
     ] });
   }
   function PlayerDetail({
@@ -83639,12 +83779,12 @@ ${end.comment}` : end.comment;
     onBack,
     onRenamed
   }) {
-    const [file, setFile] = (0, import_react3.useState)(null);
-    const [error2, setError] = (0, import_react3.useState)(null);
-    const [renaming, setRenaming] = (0, import_react3.useState)(false);
-    const [newName, setNewName] = (0, import_react3.useState)(name2);
-    const [renameErr, setRenameErr] = (0, import_react3.useState)(null);
-    (0, import_react3.useEffect)(() => {
+    const [file, setFile] = (0, import_react4.useState)(null);
+    const [error2, setError] = (0, import_react4.useState)(null);
+    const [renaming, setRenaming] = (0, import_react4.useState)(false);
+    const [newName, setNewName] = (0, import_react4.useState)(name2);
+    const [renameErr, setRenameErr] = (0, import_react4.useState)(null);
+    (0, import_react4.useEffect)(() => {
       setFile(null);
       setNewName(name2);
       api.players.get(name2).then(setFile).catch(() => setError("Failed to load"));
@@ -83662,14 +83802,14 @@ ${end.comment}` : end.comment;
       }
       setRenaming(false);
     };
-    if (error2) return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "p-5 text-red-400 text-sm", children: error2 });
-    if (!file) return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "p-5 text-[#8A99AF] text-sm animate-pulse", children: "Loading\u2026" });
+    if (error2) return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: "p-5 text-red-400 text-sm", children: error2 });
+    if (!file) return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: "p-5 text-[#8A99AF] text-sm animate-pulse", children: "Loading\u2026" });
     const hasRpg = !!file.state.characterData;
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "flex items-center gap-3 px-5 py-3.5 border-b border-[#2E3A4E]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { onClick: onBack, className: "text-[#4A5568] hover:text-white text-sm transition-colors", children: "\u2190" }),
-        renaming ? /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "flex items-center gap-1.5 flex-1", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex items-center gap-3 px-5 py-3.5 border-b border-[#2E3A4E]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { onClick: onBack, className: "text-[#4A5568] hover:text-white text-sm transition-colors", children: "\u2190" }),
+        renaming ? /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex items-center gap-1.5 flex-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
             "input",
             {
               autoFocus: true,
@@ -83685,8 +83825,8 @@ ${end.comment}` : end.comment;
               className: "bg-[#0E1726] border border-[#3C50E0] rounded px-2 py-0.5 text-sm text-white focus:outline-none"
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", { onClick: doRename, className: "text-xs text-[#3C50E0] hover:text-white transition-colors", children: "\u2713" }),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("button", { onClick: doRename, className: "text-xs text-[#3C50E0] hover:text-white transition-colors", children: "\u2713" }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
             "button",
             {
               onClick: () => {
@@ -83697,9 +83837,9 @@ ${end.comment}` : end.comment;
               children: "\u2715"
             }
           )
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(import_jsx_runtime11.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "text-sm font-semibold text-white", children: name2 }),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(import_jsx_runtime12.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "text-sm font-semibold text-white", children: name2 }),
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
             "button",
             {
               onClick: () => setRenaming(true),
@@ -83708,9 +83848,9 @@ ${end.comment}` : end.comment;
             }
           )
         ] }),
-        renameErr && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "text-xs text-red-400", children: renameErr }),
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("span", { className: "text-[10px] font-medium bg-[#2E3A4E] text-[#8A99AF] px-2 py-0.5 rounded-full ml-auto", children: hasRpg ? `RPG \xB7 ${file.state.characterData.characterClass}` : "classic" }),
-        file.state.email && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        renameErr && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "text-xs text-red-400", children: renameErr }),
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "text-[10px] font-medium bg-[#2E3A4E] text-[#8A99AF] px-2 py-0.5 rounded-full ml-auto", children: hasRpg ? `RPG \xB7 ${file.state.characterData.characterClass}` : "classic" }),
+        file.state.email && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
           Link,
           {
             to: `/admin/users?u=${encodeURIComponent(file.state.email)}`,
@@ -83720,9 +83860,9 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(Tabs2, { defaultValue: "prefs", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)(TabsList2, { className: "px-5 border-b border-[#2E3A4E] rounded-none bg-transparent gap-1", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Tabs2, { defaultValue: "prefs", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(TabsList2, { className: "px-5 border-b border-[#2E3A4E] rounded-none bg-transparent gap-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
             TabsTrigger2,
             {
               value: "prefs",
@@ -83730,7 +83870,7 @@ ${end.comment}` : end.comment;
               children: "Preferences"
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
             TabsTrigger2,
             {
               value: "kb",
@@ -83738,7 +83878,7 @@ ${end.comment}` : end.comment;
               children: "Keybindings"
             }
           ),
-          hasRpg && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+          hasRpg && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
             TabsTrigger2,
             {
               value: "rpg",
@@ -83747,7 +83887,7 @@ ${end.comment}` : end.comment;
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(TabsContent2, { value: "prefs", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(TabsContent2, { value: "prefs", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
           PreferencesTab,
           {
             file,
@@ -83757,7 +83897,7 @@ ${end.comment}` : end.comment;
             }
           }
         ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(TabsContent2, { value: "kb", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(TabsContent2, { value: "kb", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
           KeybindingsTab,
           {
             file,
@@ -83767,7 +83907,7 @@ ${end.comment}` : end.comment;
             }
           }
         ) }),
-        hasRpg && /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(TabsContent2, { value: "rpg", children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        hasRpg && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(TabsContent2, { value: "rpg", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
           RpgTab,
           {
             file,
@@ -83782,10 +83922,10 @@ ${end.comment}` : end.comment;
   }
   function PlayersPage() {
     const [searchParams] = useSearchParams();
-    const [players, setPlayers] = (0, import_react3.useState)([]);
-    const [loading, setLoading] = (0, import_react3.useState)(true);
-    const [selected, setSelected] = (0, import_react3.useState)(searchParams.get("p"));
-    (0, import_react3.useEffect)(() => {
+    const [players, setPlayers] = (0, import_react4.useState)([]);
+    const [loading, setLoading] = (0, import_react4.useState)(true);
+    const [selected, setSelected] = (0, import_react4.useState)(searchParams.get("p"));
+    (0, import_react4.useEffect)(() => {
       api.players.list().then((p2) => {
         setPlayers(p2.sort());
         setLoading(false);
@@ -83795,10 +83935,10 @@ ${end.comment}` : end.comment;
       setPlayers((prev) => prev.map((p2) => p2 === oldName ? newName : p2).sort());
       setSelected(newName);
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "flex gap-4 h-full", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", { className: "w-52 shrink-0 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden self-start", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("p", { className: "px-4 py-3 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] border-b border-[#2E3A4E]", children: "Players" }),
-        loading ? /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("p", { className: "px-4 py-4 text-[#8A99AF] text-sm animate-pulse", children: "Loading\u2026" }) : players.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("p", { className: "px-4 py-4 text-[#4A5568] text-sm", children: "No players" }) : /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { children: players.map((p2) => /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex gap-4 h-full", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "w-52 shrink-0 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden self-start", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "px-4 py-3 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] border-b border-[#2E3A4E]", children: "Players" }),
+        loading ? /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "px-4 py-4 text-[#8A99AF] text-sm animate-pulse", children: "Loading\u2026" }) : players.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "px-4 py-4 text-[#4A5568] text-sm", children: "No players" }) : /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { children: players.map((p2) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
           "button",
           {
             onClick: () => setSelected(p2),
@@ -83808,7 +83948,7 @@ ${end.comment}` : end.comment;
           p2
         )) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "flex-1 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden self-start min-h-[200px]", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: "flex-1 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden self-start min-h-[200px]", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
         PlayerDetail,
         {
           name: selected,
@@ -83816,20 +83956,20 @@ ${end.comment}` : end.comment;
           onRenamed: (newName) => handleRenamed(selected, newName)
         },
         selected
-      ) : /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("div", { className: "p-6 text-[#4A5568] text-sm", children: "Select a player to edit" }) })
+      ) : /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: "p-6 text-[#4A5568] text-sm", children: "Select a player to edit" }) })
     ] });
   }
 
   // admin/pages/StatusPage.tsx
-  var import_react4 = __toESM(require_react(), 1);
-  var import_jsx_runtime12 = __toESM(require_jsx_runtime(), 1);
+  var import_react5 = __toESM(require_react(), 1);
+  var import_jsx_runtime13 = __toESM(require_jsx_runtime(), 1);
   function kb(bytes) {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / 1048576).toFixed(1)} MB`;
   }
   function Svg({ d, size = 22 }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
       "svg",
       {
         width: size,
@@ -83840,7 +83980,7 @@ ${end.comment}` : end.comment;
         strokeWidth: 1.8,
         strokeLinecap: "round",
         strokeLinejoin: "round",
-        children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("path", { d })
+        children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("path", { d })
       }
     );
   }
@@ -83851,34 +83991,34 @@ ${end.comment}` : end.comment;
     icon,
     color
   }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "bg-[#1A222C] rounded-xl border border-[#2E3A4E] p-5 flex items-start justify-between", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-1", children: label }),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "text-3xl font-bold text-white tabular-nums leading-none", children: value }),
-        sub && /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "text-xs text-[#8A99AF] mt-1.5", children: sub })
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "bg-[#1A222C] rounded-xl border border-[#2E3A4E] p-5 flex items-start justify-between", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("p", { className: "text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-1", children: label }),
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("p", { className: "text-3xl font-bold text-white tabular-nums leading-none", children: value }),
+        sub && /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("p", { className: "text-xs text-[#8A99AF] mt-1.5", children: sub })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: `w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${color}`, children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Svg, { d: icon, size: 20 }) })
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("div", { className: `w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${color}`, children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Svg, { d: icon, size: 20 }) })
     ] });
   }
   function Card({ title, children }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "bg-[#1A222C] rounded-xl border border-[#2E3A4E] p-5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("h3", { className: "text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-4", children: title }),
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "bg-[#1A222C] rounded-xl border border-[#2E3A4E] p-5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("h3", { className: "text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-4", children: title }),
       children
     ] });
   }
   function Row({ label, value, accent }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex justify-between items-center py-1.5 border-b border-[#2E3A4E] last:border-0 text-sm", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: "text-[#8A99AF]", children: label }),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { className: accent ? "text-[#3C50E0] font-semibold" : "text-white tabular-nums", children: value })
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "flex justify-between items-center py-1.5 border-b border-[#2E3A4E] last:border-0 text-sm", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("span", { className: "text-[#8A99AF]", children: label }),
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("span", { className: accent ? "text-[#3C50E0] font-semibold" : "text-white tabular-nums", children: value })
     ] });
   }
   function HeapBar({ used, max }) {
     const pct = max > 0 ? Math.round(used / max * 100) : 0;
     const color = pct > 85 ? "bg-red-500" : pct > 65 ? "bg-amber-400" : "bg-[#3C50E0]";
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex justify-between text-xs text-[#8A99AF] mb-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { children: "Heap" }),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("span", { children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "flex justify-between text-xs text-[#8A99AF] mb-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("span", { children: "Heap" }),
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("span", { children: [
           used,
           " MB / ",
           max,
@@ -83887,7 +84027,7 @@ ${end.comment}` : end.comment;
           "%)"
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: "w-full bg-[#2E3A4E] rounded-full h-2", children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("div", { className: `h-2 rounded-full transition-all ${color}`, style: { width: `${pct}%` } }) })
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("div", { className: "w-full bg-[#2E3A4E] rounded-full h-2", children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("div", { className: `h-2 rounded-full transition-all ${color}`, style: { width: `${pct}%` } }) })
     ] });
   }
   var I = {
@@ -83911,12 +84051,12 @@ ${end.comment}` : end.comment;
   }
   function GameTimeSetter({ snap }) {
     const { h, m } = ticksToTime(snap.gameTicks, snap.ticksPerDay || 72e3);
-    const [time, setTime] = (0, import_react4.useState)(`${pad2(h)}:${pad2(m)}`);
-    const [saving, setSaving] = (0, import_react4.useState)(false);
-    const prevRef = (0, import_react4.useRef)(`${pad2(h)}:${pad2(m)}`);
+    const [time, setTime] = (0, import_react5.useState)(`${pad2(h)}:${pad2(m)}`);
+    const [saving, setSaving] = (0, import_react5.useState)(false);
+    const prevRef = (0, import_react5.useRef)(`${pad2(h)}:${pad2(m)}`);
     const newHM = ticksToTime(snap.gameTicks, snap.ticksPerDay || 72e3);
     const newStr = `${pad2(newHM.h)}:${pad2(newHM.m)}`;
-    (0, import_react4.useLayoutEffect)(() => {
+    (0, import_react5.useLayoutEffect)(() => {
       if (newStr !== prevRef.current) {
         prevRef.current = newStr;
         setTime(newStr);
@@ -83932,8 +84072,8 @@ ${end.comment}` : end.comment;
       }
       setSaving(false);
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex items-center gap-2 mt-2", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "flex items-center gap-2 mt-2", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
         "input",
         {
           type: "time",
@@ -83942,7 +84082,7 @@ ${end.comment}` : end.comment;
           className: "bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-2 py-1 text-sm text-white focus:outline-none focus:border-[#3C50E0] transition-colors tabular-nums"
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
         "button",
         {
           onClick: save,
@@ -83954,10 +84094,10 @@ ${end.comment}` : end.comment;
     ] });
   }
   function StatusPage() {
-    const [snap, setSnap] = (0, import_react4.useState)(null);
-    const [restarting, setRestarting] = (0, import_react4.useState)(false);
-    const [error2, setError] = (0, import_react4.useState)(null);
-    (0, import_react4.useEffect)(() => {
+    const [snap, setSnap] = (0, import_react5.useState)(null);
+    const [restarting, setRestarting] = (0, import_react5.useState)(false);
+    const [error2, setError] = (0, import_react5.useState)(null);
+    (0, import_react5.useEffect)(() => {
       let alive = true;
       const poll = async () => {
         try {
@@ -83986,14 +84126,14 @@ ${end.comment}` : end.comment;
       }
       setTimeout(() => setRestarting(false), 4e3);
     };
-    if (error2) return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "text-red-400 text-sm", children: error2 });
-    if (!snap) return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "text-[#8A99AF] text-sm animate-pulse", children: "Loading\u2026" });
+    if (error2) return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("p", { className: "text-red-400 text-sm", children: error2 });
+    if (!snap) return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("p", { className: "text-[#8A99AF] text-sm animate-pulse", children: "Loading\u2026" });
     const topNpcs = Object.entries(snap.npcByType).sort((a, b) => b[1] - a[1]).slice(0, 6);
     const tpd = snap.ticksPerDay || 72e3;
     const { h, m } = ticksToTime(snap.gameTicks, tpd);
-    return /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "space-y-6", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "grid grid-cols-2 xl:grid-cols-4 gap-4", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "space-y-6", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "grid grid-cols-2 xl:grid-cols-4 gap-4", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
           StatCard,
           {
             label: "Connected players",
@@ -84003,7 +84143,7 @@ ${end.comment}` : end.comment;
             color: "bg-blue-500/20 text-blue-400"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
           StatCard,
           {
             label: "NPCs alive",
@@ -84013,7 +84153,7 @@ ${end.comment}` : end.comment;
             color: "bg-violet-500/20 text-violet-400"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
           StatCard,
           {
             label: "Loaded chunks",
@@ -84022,7 +84162,7 @@ ${end.comment}` : end.comment;
             color: "bg-emerald-500/20 text-emerald-400"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
           StatCard,
           {
             label: "Game time",
@@ -84033,40 +84173,40 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "grid grid-cols-1 lg:grid-cols-3 gap-4", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Card, { title: "NPCs by type", children: topNpcs.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "text-[#8A99AF] text-sm", children: "None" }) : topNpcs.map(([type, count3]) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Row, { label: type, value: count3 }, type)) }),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Card, { title: "World", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Row, { label: "Ground items", value: snap.worldItems }),
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Row, { label: "Active liquids", value: snap.activeLiquids }),
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Row, { label: "Pending liquid ticks", value: snap.pendingLiquidTicks }),
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Row, { label: "Growing vegetation", value: snap.activeVegetation }),
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "pt-3", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("p", { className: "text-[10px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-1", children: "Set game time" }),
-            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(GameTimeSetter, { snap })
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "grid grid-cols-1 lg:grid-cols-3 gap-4", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Card, { title: "NPCs by type", children: topNpcs.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("p", { className: "text-[#8A99AF] text-sm", children: "None" }) : topNpcs.map(([type, count3]) => /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Row, { label: type, value: count3 }, type)) }),
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Card, { title: "World", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Row, { label: "Ground items", value: snap.worldItems }),
+          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Row, { label: "Active liquids", value: snap.activeLiquids }),
+          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Row, { label: "Pending liquid ticks", value: snap.pendingLiquidTicks }),
+          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Row, { label: "Growing vegetation", value: snap.activeVegetation }),
+          /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "pt-3", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("p", { className: "text-[10px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-1", children: "Set game time" }),
+            /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(GameTimeSetter, { snap })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Card, { title: "Network", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Row, { label: "\u2193 Received", value: kb(snap.networkBytesIn) }),
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Row, { label: "\u2191 Sent", value: kb(snap.networkBytesOut) })
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Card, { title: "Network", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Row, { label: "\u2193 Received", value: kb(snap.networkBytesIn) }),
+          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Row, { label: "\u2191 Sent", value: kb(snap.networkBytesOut) })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(Card, { title: "Processor", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(HeapBar, { used: snap.heapUsedMb, max: snap.heapMaxMb }),
-          /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "mt-3 space-y-0.5", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Row, { label: "Non-heap", value: `${snap.nonHeapUsedMb} MB` }),
-            /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Row, { label: "Processors", value: snap.processors })
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(Card, { title: "Processor", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(HeapBar, { used: snap.heapUsedMb, max: snap.heapMaxMb }),
+          /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "mt-3 space-y-0.5", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Row, { label: "Non-heap", value: `${snap.nonHeapUsedMb} MB` }),
+            /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Row, { label: "Processors", value: snap.processors })
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)("div", { className: "flex items-center justify-between text-[11px] text-[#8A99AF]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsx)("span", { children: "Auto-refreshes every 5 s" }),
-        /* @__PURE__ */ (0, import_jsx_runtime12.jsxs)(
+      /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)("div", { className: "flex items-center justify-between text-[11px] text-[#8A99AF]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsx)("span", { children: "Auto-refreshes every 5 s" }),
+        /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(
           "button",
           {
             onClick: restart,
             disabled: restarting,
             className: "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2E3A4E] hover:bg-[#2E3A4E] text-[#8A99AF] hover:text-white transition-colors disabled:opacity-50",
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Svg, { d: I.restart, size: 13 }),
+              /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Svg, { d: I.restart, size: 13 }),
               restarting ? "Restarting\u2026" : "Restart server"
             ]
           }
@@ -84076,14 +84216,14 @@ ${end.comment}` : end.comment;
   }
 
   // admin/pages/UsersPage.tsx
-  var import_react7 = __toESM(require_react(), 1);
+  var import_react8 = __toESM(require_react(), 1);
 
   // node_modules/@radix-ui/react-dialog/dist/index.mjs
   var React40 = __toESM(require_react(), 1);
 
   // node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs
   var React29 = __toESM(require_react(), 1);
-  var import_jsx_runtime13 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime14 = __toESM(require_jsx_runtime(), 1);
   var DISMISSABLE_LAYER_NAME = "DismissableLayer";
   var CONTEXT_UPDATE = "dismissableLayer.update";
   var POINTER_DOWN_OUTSIDE = "dismissableLayer.pointerDownOutside";
@@ -84215,7 +84355,7 @@ ${end.comment}` : end.comment;
         document.addEventListener(CONTEXT_UPDATE, handleUpdate);
         return () => document.removeEventListener(CONTEXT_UPDATE, handleUpdate);
       }, []);
-      return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
         Primitive.div,
         __spreadProps(__spreadValues({}, layerProps), {
           ref: composedRefs,
@@ -84247,7 +84387,7 @@ ${end.comment}` : end.comment;
         };
       }
     }, [context.branches]);
-    return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Primitive.div, __spreadProps(__spreadValues({}, props), { ref: composedRefs }));
+    return /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(Primitive.div, __spreadProps(__spreadValues({}, props), { ref: composedRefs }));
   });
   DismissableLayerBranch.displayName = BRANCH_NAME;
   function useDismissableLayerSurface() {
@@ -84414,7 +84554,7 @@ ${end.comment}` : end.comment;
 
   // node_modules/@radix-ui/react-focus-scope/dist/index.mjs
   var React30 = __toESM(require_react(), 1);
-  var import_jsx_runtime14 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime15 = __toESM(require_jsx_runtime(), 1);
   var AUTOFOCUS_ON_MOUNT = "focusScope.autoFocusOnMount";
   var AUTOFOCUS_ON_UNMOUNT = "focusScope.autoFocusOnUnmount";
   var EVENT_OPTIONS2 = { bubbles: false, cancelable: true };
@@ -84537,7 +84677,7 @@ ${end.comment}` : end.comment;
       },
       [loop, trapped, focusScope.paused]
     );
-    return /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(Primitive.div, __spreadProps(__spreadValues({ tabIndex: -1 }, scopeProps), { ref: composedRefs, onKeyDown: handleKeyDown }));
+    return /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Primitive.div, __spreadProps(__spreadValues({ tabIndex: -1 }, scopeProps), { ref: composedRefs, onKeyDown: handleKeyDown }));
   });
   FocusScope.displayName = FOCUS_SCOPE_NAME;
   function focusFirst2(candidates, { select: select3 = false } = {}) {
@@ -84624,7 +84764,7 @@ ${end.comment}` : end.comment;
   // node_modules/@radix-ui/react-portal/dist/index.mjs
   var React31 = __toESM(require_react(), 1);
   var ReactDOM2 = __toESM(require_react_dom(), 1);
-  var import_jsx_runtime15 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime16 = __toESM(require_jsx_runtime(), 1);
   var PORTAL_NAME = "Portal";
   var Portal = React31.forwardRef((props, forwardedRef) => {
     var _b;
@@ -84632,7 +84772,7 @@ ${end.comment}` : end.comment;
     const [mounted, setMounted] = React31.useState(false);
     useLayoutEffect22(() => setMounted(true), []);
     const container = containerProp || mounted && ((_b = globalThis == null ? void 0 : globalThis.document) == null ? void 0 : _b.body);
-    return container ? ReactDOM2.createPortal(/* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Primitive.div, __spreadProps(__spreadValues({}, portalProps), { ref: forwardedRef })), container) : null;
+    return container ? ReactDOM2.createPortal(/* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Primitive.div, __spreadProps(__spreadValues({}, portalProps), { ref: forwardedRef })), container) : null;
   });
   Portal.displayName = PORTAL_NAME;
 
@@ -84729,9 +84869,9 @@ ${end.comment}` : end.comment;
   }
 
   // node_modules/use-callback-ref/dist/es2015/useRef.js
-  var import_react5 = __toESM(require_react());
+  var import_react6 = __toESM(require_react());
   function useCallbackRef2(initialValue, callback) {
-    var ref = (0, import_react5.useState)(function() {
+    var ref = (0, import_react6.useState)(function() {
       return {
         // value
         value: initialValue,
@@ -85516,7 +85656,7 @@ ${end.comment}` : end.comment;
   };
 
   // node_modules/@radix-ui/react-dialog/dist/index.mjs
-  var import_jsx_runtime16 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime17 = __toESM(require_jsx_runtime(), 1);
   var DIALOG_NAME = "Dialog";
   var [createDialogContext, createDialogScope] = createContextScope(DIALOG_NAME);
   var [DialogProvider, useDialogContext] = createDialogContext(DIALOG_NAME);
@@ -85537,7 +85677,7 @@ ${end.comment}` : end.comment;
       onChange: onOpenChange,
       caller: DIALOG_NAME
     });
-    return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
       DialogProvider,
       {
         scope: __scopeDialog,
@@ -85561,7 +85701,7 @@ ${end.comment}` : end.comment;
       const _a6 = props, { __scopeDialog } = _a6, triggerProps = __objRest(_a6, ["__scopeDialog"]);
       const context = useDialogContext(TRIGGER_NAME2, __scopeDialog);
       const composedTriggerRef = useComposedRefs(forwardedRef, context.triggerRef);
-      return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
         Primitive.button,
         __spreadProps(__spreadValues({
           type: "button",
@@ -85584,7 +85724,7 @@ ${end.comment}` : end.comment;
   var DialogPortal = (props) => {
     const { __scopeDialog, forceMount, children, container } = props;
     const context = useDialogContext(PORTAL_NAME2, __scopeDialog);
-    return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(PortalProvider, { scope: __scopeDialog, forceMount, children: React40.Children.map(children, (child) => /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Portal, { asChild: true, container, children: child }) })) });
+    return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(PortalProvider, { scope: __scopeDialog, forceMount, children: React40.Children.map(children, (child) => /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Portal, { asChild: true, container, children: child }) })) });
   };
   DialogPortal.displayName = PORTAL_NAME2;
   var OVERLAY_NAME = "DialogOverlay";
@@ -85593,7 +85733,7 @@ ${end.comment}` : end.comment;
       const portalContext = usePortalContext(OVERLAY_NAME, props.__scopeDialog);
       const _a6 = props, { forceMount = portalContext.forceMount } = _a6, overlayProps = __objRest(_a6, ["forceMount"]);
       const context = useDialogContext(OVERLAY_NAME, props.__scopeDialog);
-      return context.modal ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(DialogOverlayImpl, __spreadProps(__spreadValues({}, overlayProps), { ref: forwardedRef })) }) : null;
+      return context.modal ? /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(DialogOverlayImpl, __spreadProps(__spreadValues({}, overlayProps), { ref: forwardedRef })) }) : null;
     }
   );
   DialogOverlay.displayName = OVERLAY_NAME;
@@ -85607,7 +85747,7 @@ ${end.comment}` : end.comment;
       return (
         // Make sure `Content` is scrollable even when it doesn't live inside `RemoveScroll`
         // ie. when `Overlay` and `Content` are siblings
-        /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Combination_default, { as: Slot, allowPinchZoom: true, shards: [context.contentRef], children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Combination_default, { as: Slot, allowPinchZoom: true, shards: [context.contentRef], children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
           Primitive.div,
           __spreadProps(__spreadValues({
             "data-state": getState(context.open)
@@ -85625,7 +85765,7 @@ ${end.comment}` : end.comment;
       const portalContext = usePortalContext(CONTENT_NAME2, props.__scopeDialog);
       const _a6 = props, { forceMount = portalContext.forceMount } = _a6, contentProps = __objRest(_a6, ["forceMount"]);
       const context = useDialogContext(CONTENT_NAME2, props.__scopeDialog);
-      return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Presence, { present: forceMount || context.open, children: context.modal ? /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(DialogContentModal, __spreadProps(__spreadValues({}, contentProps), { ref: forwardedRef })) : /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(DialogContentNonModal, __spreadProps(__spreadValues({}, contentProps), { ref: forwardedRef })) });
+      return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Presence, { present: forceMount || context.open, children: context.modal ? /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(DialogContentModal, __spreadProps(__spreadValues({}, contentProps), { ref: forwardedRef })) : /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(DialogContentNonModal, __spreadProps(__spreadValues({}, contentProps), { ref: forwardedRef })) });
     }
   );
   DialogContent.displayName = CONTENT_NAME2;
@@ -85638,7 +85778,7 @@ ${end.comment}` : end.comment;
         const content2 = contentRef.current;
         if (content2) return hideOthers(content2);
       }, []);
-      return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
         DialogContentImpl,
         __spreadProps(__spreadValues({}, props), {
           ref: composedRefs,
@@ -85668,7 +85808,7 @@ ${end.comment}` : end.comment;
       const context = useDialogContext(CONTENT_NAME2, props.__scopeDialog);
       const hasInteractedOutsideRef = React40.useRef(false);
       const hasPointerDownOutsideRef = React40.useRef(false);
-      return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
         DialogContentImpl,
         __spreadProps(__spreadValues({}, props), {
           ref: forwardedRef,
@@ -85709,7 +85849,7 @@ ${end.comment}` : end.comment;
       const _a6 = props, { __scopeDialog, trapFocus, onOpenAutoFocus, onCloseAutoFocus } = _a6, contentProps = __objRest(_a6, ["__scopeDialog", "trapFocus", "onOpenAutoFocus", "onCloseAutoFocus"]);
       const context = useDialogContext(CONTENT_NAME2, __scopeDialog);
       useFocusGuards();
-      return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(import_jsx_runtime16.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(import_jsx_runtime17.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
         FocusScope,
         {
           asChild: true,
@@ -85717,7 +85857,7 @@ ${end.comment}` : end.comment;
           trapped: trapFocus,
           onMountAutoFocus: onOpenAutoFocus,
           onUnmountAutoFocus: onCloseAutoFocus,
-          children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+          children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
             DismissableLayer,
             __spreadProps(__spreadValues({
               role: "dialog",
@@ -85740,7 +85880,7 @@ ${end.comment}` : end.comment;
     (props, forwardedRef) => {
       const _a6 = props, { __scopeDialog } = _a6, titleProps = __objRest(_a6, ["__scopeDialog"]);
       const context = useDialogContext(TITLE_NAME, __scopeDialog);
-      return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Primitive.h2, __spreadProps(__spreadValues({ id: context.titleId }, titleProps), { ref: forwardedRef }));
+      return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Primitive.h2, __spreadProps(__spreadValues({ id: context.titleId }, titleProps), { ref: forwardedRef }));
     }
   );
   DialogTitle.displayName = TITLE_NAME;
@@ -85749,7 +85889,7 @@ ${end.comment}` : end.comment;
     (props, forwardedRef) => {
       const _a6 = props, { __scopeDialog } = _a6, descriptionProps = __objRest(_a6, ["__scopeDialog"]);
       const context = useDialogContext(DESCRIPTION_NAME, __scopeDialog);
-      return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Primitive.p, __spreadProps(__spreadValues({ id: context.descriptionId }, descriptionProps), { ref: forwardedRef }));
+      return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Primitive.p, __spreadProps(__spreadValues({ id: context.descriptionId }, descriptionProps), { ref: forwardedRef }));
     }
   );
   DialogDescription.displayName = DESCRIPTION_NAME;
@@ -85758,7 +85898,7 @@ ${end.comment}` : end.comment;
     (props, forwardedRef) => {
       const _a6 = props, { __scopeDialog } = _a6, closeProps = __objRest(_a6, ["__scopeDialog"]);
       const context = useDialogContext(CLOSE_NAME, __scopeDialog);
-      return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
         Primitive.button,
         __spreadProps(__spreadValues({
           type: "button"
@@ -85775,11 +85915,11 @@ ${end.comment}` : end.comment;
   }
 
   // primitives/Dialog.tsx
-  var import_react6 = __toESM(require_react(), 1);
-  var import_jsx_runtime17 = __toESM(require_jsx_runtime(), 1);
+  var import_react7 = __toESM(require_react(), 1);
+  var import_jsx_runtime18 = __toESM(require_jsx_runtime(), 1);
   var Dialog2 = Dialog;
   function DialogOverlay2({ className }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
       DialogOverlay,
       {
         className: cn(
@@ -85791,10 +85931,10 @@ ${end.comment}` : end.comment;
   }
   function DialogContent2(_a6) {
     var _b = _a6, { className, children, movable = false } = _b, props = __objRest(_b, ["className", "children", "movable"]);
-    const [offset, setOffset] = (0, import_react6.useState)({ x: 0, y: 0 });
-    const [isDraggingWindow, setIsDraggingWindow] = (0, import_react6.useState)(false);
-    const dragStart = (0, import_react6.useRef)(null);
-    const onMouseDown = (0, import_react6.useCallback)(
+    const [offset, setOffset] = (0, import_react7.useState)({ x: 0, y: 0 });
+    const [isDraggingWindow, setIsDraggingWindow] = (0, import_react7.useState)(false);
+    const dragStart = (0, import_react7.useRef)(null);
+    const onMouseDown = (0, import_react7.useCallback)(
       (e) => {
         if (!movable) return;
         const target = e.target;
@@ -85822,9 +85962,9 @@ ${end.comment}` : end.comment;
       },
       [movable, offset]
     );
-    return /* @__PURE__ */ (0, import_jsx_runtime17.jsxs)(DialogPortal, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(DialogOverlay2, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(DialogPortal, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(DialogOverlay2, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
         DialogContent,
         __spreadProps(__spreadValues({
           className: cn(
@@ -85847,11 +85987,11 @@ ${end.comment}` : end.comment;
   }
   function DialogTitle2(_a6) {
     var _b = _a6, { className } = _b, props = __objRest(_b, ["className"]);
-    return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(DialogTitle, __spreadValues({ className: cn("text-lg font-semibold text-white/90", className) }, props));
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(DialogTitle, __spreadValues({ className: cn("text-lg font-semibold text-white/90", className) }, props));
   }
 
   // admin/pages/UsersPage.tsx
-  var import_jsx_runtime18 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime19 = __toESM(require_jsx_runtime(), 1);
   function Btn({
     children,
     onClick,
@@ -85863,7 +86003,7 @@ ${end.comment}` : end.comment;
       ghost: "bg-transparent border border-[#2E3A4E] text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white",
       danger: "bg-red-600/10 border border-red-600/30 text-red-400 hover:bg-red-600/20"
     }[variant];
-    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
       "button",
       {
         onClick,
@@ -85879,7 +86019,7 @@ ${end.comment}` : end.comment;
     type = "text",
     placeholder
   }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
       "input",
       {
         type,
@@ -85891,8 +86031,8 @@ ${end.comment}` : end.comment;
     );
   }
   function Field2({ label, children }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-1.5", children: label }),
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-1.5", children: label }),
       children
     ] });
   }
@@ -85904,12 +86044,12 @@ ${end.comment}` : end.comment;
     noauth = false
   }) {
     var _a6, _b, _c;
-    const [email, setEmail] = (0, import_react7.useState)((_a6 = initial.email) != null ? _a6 : "");
-    const [password, setPassword] = (0, import_react7.useState)("");
-    const [displayName, setDisplayName] = (0, import_react7.useState)((_b = initial.displayName) != null ? _b : "");
-    const [groups, setGroups] = (0, import_react7.useState)(((_c = initial.groups) != null ? _c : []).join(", "));
-    const [saving, setSaving] = (0, import_react7.useState)(false);
-    const [error2, setError] = (0, import_react7.useState)(null);
+    const [email, setEmail] = (0, import_react8.useState)((_a6 = initial.email) != null ? _a6 : "");
+    const [password, setPassword] = (0, import_react8.useState)("");
+    const [displayName, setDisplayName] = (0, import_react8.useState)((_b = initial.displayName) != null ? _b : "");
+    const [groups, setGroups] = (0, import_react8.useState)(((_c = initial.groups) != null ? _c : []).join(", "));
+    const [saving, setSaving] = (0, import_react8.useState)(false);
+    const [error2, setError] = (0, import_react8.useState)(null);
     const save = async () => {
       setSaving(true);
       setError(null);
@@ -85927,31 +86067,31 @@ ${end.comment}` : end.comment;
         setSaving(false);
       }
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "space-y-4", children: [
-      isNew && /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Field2, { label: "Email", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(TextInput, { value: email, onChange: setEmail, placeholder: "user@example.com" }) }),
-      isNew && !noauth && /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Field2, { label: "Password", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(TextInput, { value: password, onChange: setPassword, type: "password" }) }),
-      !noauth && /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Field2, { label: "Display Name", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(TextInput, { value: displayName, onChange: setDisplayName, placeholder: email }) }),
-      !noauth && /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Field2, { label: "Groups (comma-separated)", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(TextInput, { value: groups, onChange: setGroups, placeholder: "admin, player" }) }),
-      error2 && /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "text-red-400 text-xs", children: error2 }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex gap-2 justify-end pt-1", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Btn, { variant: "ghost", onClick: onClose, children: "Cancel" }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Btn, { onClick: save, disabled: saving, children: saving ? "Saving\u2026" : "Save" })
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "space-y-4", children: [
+      isNew && /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Field2, { label: "Email", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(TextInput, { value: email, onChange: setEmail, placeholder: "user@example.com" }) }),
+      isNew && !noauth && /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Field2, { label: "Password", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(TextInput, { value: password, onChange: setPassword, type: "password" }) }),
+      !noauth && /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Field2, { label: "Display Name", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(TextInput, { value: displayName, onChange: setDisplayName, placeholder: email }) }),
+      !noauth && /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Field2, { label: "Groups (comma-separated)", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(TextInput, { value: groups, onChange: setGroups, placeholder: "admin, player" }) }),
+      error2 && /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-red-400 text-xs", children: error2 }),
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex gap-2 justify-end pt-1", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Btn, { variant: "ghost", onClick: onClose, children: "Cancel" }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Btn, { onClick: save, disabled: saving, children: saving ? "Saving\u2026" : "Save" })
       ] })
     ] });
   }
   function UsersPage() {
     const [searchParams] = useSearchParams();
     const highlightEmail = searchParams.get("u");
-    const highlightRef = (0, import_react7.useRef)(null);
-    const [users, setUsers] = (0, import_react7.useState)([]);
-    const [loading, setLoading] = (0, import_react7.useState)(true);
-    const [unavailable, setUnavailable] = (0, import_react7.useState)(false);
-    const [authProvider, setAuthProvider] = (0, import_react7.useState)("local");
-    const [playersByEmail, setPlayersByEmail] = (0, import_react7.useState)({});
-    const [addOpen, setAddOpen] = (0, import_react7.useState)(false);
-    const [editUser, setEditUser] = (0, import_react7.useState)(null);
-    const [deleteEmail, setDeleteEmail] = (0, import_react7.useState)(null);
-    (0, import_react7.useEffect)(() => {
+    const highlightRef = (0, import_react8.useRef)(null);
+    const [users, setUsers] = (0, import_react8.useState)([]);
+    const [loading, setLoading] = (0, import_react8.useState)(true);
+    const [unavailable, setUnavailable] = (0, import_react8.useState)(false);
+    const [authProvider, setAuthProvider] = (0, import_react8.useState)("local");
+    const [playersByEmail, setPlayersByEmail] = (0, import_react8.useState)({});
+    const [addOpen, setAddOpen] = (0, import_react8.useState)(false);
+    const [editUser, setEditUser] = (0, import_react8.useState)(null);
+    const [deleteEmail, setDeleteEmail] = (0, import_react8.useState)(null);
+    (0, import_react8.useEffect)(() => {
       if (highlightRef.current) highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }, [loading]);
     const refresh = async () => {
@@ -85979,7 +86119,7 @@ ${end.comment}` : end.comment;
         setLoading(false);
       }
     };
-    (0, import_react7.useEffect)(() => {
+    (0, import_react8.useEffect)(() => {
       void refresh();
     }, []);
     const handleAdd = async (u) => {
@@ -86009,26 +86149,26 @@ ${end.comment}` : end.comment;
       await refresh();
     };
     if (unavailable) {
-      return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "rounded-xl border border-[#2E3A4E] bg-[#1A222C] p-6 text-sm text-[#8A99AF]", children: [
+      return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "rounded-xl border border-[#2E3A4E] bg-[#1A222C] p-6 text-sm text-[#8A99AF]", children: [
         "User management requires ",
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("code", { className: "text-white", children: "auth.provider: local" }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("code", { className: "text-white", children: "auth.provider: local" }),
         " in",
         " ",
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("code", { className: "text-white", children: "data/config/server.yaml" }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("code", { className: "text-white", children: "data/config/server.yaml" }),
         "."
       ] });
     }
-    return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "space-y-5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex items-center justify-between", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("p", { className: "text-sm text-[#8A99AF]", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "space-y-5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex items-center justify-between", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("p", { className: "text-sm text-[#8A99AF]", children: [
           users.length,
           " user",
           users.length !== 1 ? "s" : ""
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Btn, { onClick: () => setAddOpen(true), children: "+ Add User" })
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Btn, { onClick: () => setAddOpen(true), children: "+ Add User" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "bg-[#1A222C] rounded-xl border border-[#2E3A4E] overflow-hidden", children: loading ? /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("p", { className: "p-6 text-[#8A99AF] text-sm animate-pulse", children: "Loading\u2026" }) : /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("table", { className: "w-full", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("tr", { className: "border-b border-[#2E3A4E]", children: (authProvider === "none" ? ["Email", "Players", ""] : ["Email", "Display Name", "Groups", "Players", ""]).map((h) => /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "bg-[#1A222C] rounded-xl border border-[#2E3A4E] overflow-hidden", children: loading ? /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "p-6 text-[#8A99AF] text-sm animate-pulse", children: "Loading\u2026" }) : /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("table", { className: "w-full", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("tr", { className: "border-b border-[#2E3A4E]", children: (authProvider === "none" ? ["Email", "Players", ""] : ["Email", "Display Name", "Groups", "Players", ""]).map((h) => /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
           "th",
           {
             className: "px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]",
@@ -86036,8 +86176,8 @@ ${end.comment}` : end.comment;
           },
           h
         )) }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("tbody", { children: [
-          users.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("tbody", { children: [
+          users.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
             "td",
             {
               colSpan: authProvider === "none" ? 3 : 5,
@@ -86048,16 +86188,16 @@ ${end.comment}` : end.comment;
           users.map((u) => {
             var _a6;
             const isHighlighted = highlightEmail && u.email.toLowerCase() === highlightEmail.toLowerCase();
-            return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(
+            return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)(
               "tr",
               {
                 ref: isHighlighted ? highlightRef : void 0,
                 className: `border-b border-[#2E3A4E] last:border-0 transition-colors ${isHighlighted ? "bg-[#3C50E0]/10 ring-1 ring-inset ring-[#3C50E0]/40" : "hover:bg-[#1F2D3D]"}`,
                 children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("td", { className: "px-5 py-3 text-sm text-[#8A99AF]", children: u.email }),
-                  authProvider !== "none" && /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(import_jsx_runtime18.Fragment, { children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("td", { className: "px-5 py-3 text-sm text-white font-medium", children: u.displayName }),
-                    /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "flex flex-wrap gap-1", children: u.groups.map((g) => /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+                  /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("td", { className: "px-5 py-3 text-sm text-[#8A99AF]", children: u.email }),
+                  authProvider !== "none" && /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)(import_jsx_runtime19.Fragment, { children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("td", { className: "px-5 py-3 text-sm text-white font-medium", children: u.displayName }),
+                    /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "flex flex-wrap gap-1", children: u.groups.map((g) => /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
                       "span",
                       {
                         className: "bg-[#3C50E0]/20 text-[#818CF8] text-[10px] font-medium px-2 py-0.5 rounded-full border border-[#3C50E0]/30",
@@ -86066,7 +86206,7 @@ ${end.comment}` : end.comment;
                       g
                     )) }) })
                   ] }),
-                  /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("div", { className: "flex flex-wrap gap-1", children: ((_a6 = playersByEmail[u.email]) != null ? _a6 : []).map((p2) => /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+                  /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "flex flex-wrap gap-1", children: ((_a6 = playersByEmail[u.email]) != null ? _a6 : []).map((p2) => /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
                     Link,
                     {
                       to: `/admin/players?p=${encodeURIComponent(p2)}`,
@@ -86075,9 +86215,9 @@ ${end.comment}` : end.comment;
                     },
                     p2
                   )) }) }),
-                  /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex gap-2 justify-end", children: [
-                    authProvider !== "none" && /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Btn, { variant: "ghost", onClick: () => setEditUser(u), children: "Edit" }),
-                    /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Btn, { variant: "danger", onClick: () => setDeleteEmail(u.email), children: "Delete" })
+                  /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex gap-2 justify-end", children: [
+                    authProvider !== "none" && /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Btn, { variant: "ghost", onClick: () => setEditUser(u), children: "Edit" }),
+                    /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Btn, { variant: "danger", onClick: () => setDeleteEmail(u.email), children: "Delete" })
                   ] }) })
                 ]
               },
@@ -86086,9 +86226,9 @@ ${end.comment}` : end.comment;
           })
         ] })
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Dialog2, { open: addOpen, onOpenChange: setAddOpen, children: /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(DialogContent2, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(DialogTitle2, { children: "Add User" }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Dialog2, { open: addOpen, onOpenChange: setAddOpen, children: /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)(DialogContent2, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(DialogTitle2, { children: "Add User" }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
           UserForm,
           {
             initial: {},
@@ -86099,9 +86239,9 @@ ${end.comment}` : end.comment;
           }
         )
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Dialog2, { open: !!editUser, onOpenChange: (o) => !o && setEditUser(null), children: /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(DialogContent2, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(DialogTitle2, { children: "Edit User" }),
-        editUser && /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Dialog2, { open: !!editUser, onOpenChange: (o) => !o && setEditUser(null), children: /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)(DialogContent2, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(DialogTitle2, { children: "Edit User" }),
+        editUser && /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
           UserForm,
           {
             initial: editUser,
@@ -86111,26 +86251,26 @@ ${end.comment}` : end.comment;
           }
         )
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Dialog2, { open: !!deleteEmail, onOpenChange: (o) => !o && setDeleteEmail(null), children: /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(DialogContent2, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(DialogTitle2, { children: "Delete User" }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("p", { className: "text-sm text-[#8A99AF] mb-5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Dialog2, { open: !!deleteEmail, onOpenChange: (o) => !o && setDeleteEmail(null), children: /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)(DialogContent2, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(DialogTitle2, { children: "Delete User" }),
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("p", { className: "text-sm text-[#8A99AF] mb-5", children: [
           "Delete ",
-          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)("span", { className: "text-white font-medium", children: deleteEmail }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "text-white font-medium", children: deleteEmail }),
           "? This cannot be undone."
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)("div", { className: "flex gap-2 justify-end", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Btn, { variant: "ghost", onClick: () => setDeleteEmail(null), children: "Cancel" }),
-          /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Btn, { variant: "danger", onClick: handleDelete, children: "Delete" })
+        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex gap-2 justify-end", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Btn, { variant: "ghost", onClick: () => setDeleteEmail(null), children: "Cancel" }),
+          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Btn, { variant: "danger", onClick: handleDelete, children: "Delete" })
         ] })
       ] }) })
     ] });
   }
 
   // admin/pages/WorldsPage.tsx
-  var import_react8 = __toESM(require_react(), 1);
-  var import_jsx_runtime19 = __toESM(require_jsx_runtime(), 1);
+  var import_react9 = __toESM(require_react(), 1);
+  var import_jsx_runtime20 = __toESM(require_jsx_runtime(), 1);
   function Icon({ d, size = 16 }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
       "svg",
       {
         width: size,
@@ -86141,7 +86281,7 @@ ${end.comment}` : end.comment;
         strokeWidth: 1.8,
         strokeLinecap: "round",
         strokeLinejoin: "round",
-        children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("path", { d })
+        children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("path", { d })
       }
     );
   }
@@ -86153,8 +86293,8 @@ ${end.comment}` : end.comment;
     add: "M12 5v14M5 12h14",
     active: "M5 13l4 4L19 7"
   };
-  function Badge({ children, color }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: `inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${color}`, children });
+  function Badge2({ children, color }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: `inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${color}`, children });
   }
   function WorldCard({ world, onRefresh: _onRefresh }) {
     const date = new Date(world.createdAt).toLocaleDateString(void 0, {
@@ -86162,48 +86302,48 @@ ${end.comment}` : end.comment;
       month: "short",
       day: "numeric"
     });
-    return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(
       "div",
       {
         className: `bg-[#1A222C] rounded-xl border p-5 transition-colors ${world.isActive ? "border-[#3C50E0]" : "border-[#2E3A4E]"}`,
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex items-start justify-between gap-3 mb-4", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex items-center gap-2.5 min-w-0", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex items-start justify-between gap-3 mb-4", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex items-center gap-2.5 min-w-0", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
                 "div",
                 {
                   className: `w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${world.isActive ? "bg-[#3C50E0]/20 text-[#3C50E0]" : "bg-[#2E3A4E] text-[#8A99AF]"}`,
-                  children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Icon, { d: I2.world, size: 18 })
+                  children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Icon, { d: I2.world, size: 18 })
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "min-w-0", children: [
-                /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-white font-semibold text-[15px] truncate", children: world.name }),
-                /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "min-w-0", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "text-white font-semibold text-[15px] truncate", children: world.name }),
+                /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
                   "Created ",
                   date
                 ] })
               ] })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex items-center gap-2 shrink-0", children: [
-              world.isActive && /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)(Badge, { color: "bg-[#3C50E0]/20 text-[#3C50E0]", children: [
-                /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Icon, { d: I2.active, size: 10 }),
-                /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("span", { className: "ml-1", children: "Active" })
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex items-center gap-2 shrink-0", children: [
+              world.isActive && /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(Badge2, { color: "bg-[#3C50E0]/20 text-[#3C50E0]", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Icon, { d: I2.active, size: 10 }),
+                /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "ml-1", children: "Active" })
               ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Badge, { color: "bg-[#2E3A4E] text-[#8A99AF]", children: world.generator })
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Badge2, { color: "bg-[#2E3A4E] text-[#8A99AF]", children: world.generator })
             ] })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "grid grid-cols-3 gap-3 p-3 bg-[#0E1726] rounded-lg", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "text-center", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: "Seed" }),
-              /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-white font-mono text-sm font-semibold tabular-nums", children: world.seed })
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "grid grid-cols-3 gap-3 p-3 bg-[#0E1726] rounded-lg", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "text-center", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: "Seed" }),
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "text-white font-mono text-sm font-semibold tabular-nums", children: world.seed })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "text-center border-x border-[#2E3A4E]", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: "Chunks" }),
-              /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-white font-semibold text-sm tabular-nums", children: world.chunkCount.toLocaleString() })
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "text-center border-x border-[#2E3A4E]", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: "Chunks" }),
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "text-white font-semibold text-sm tabular-nums", children: world.chunkCount.toLocaleString() })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "text-center", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: "Players" }),
-              /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-white font-semibold text-sm tabular-nums", children: world.playerCount })
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "text-center", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: "Players" }),
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "text-white font-semibold text-sm tabular-nums", children: world.playerCount })
             ] })
           ] })
         ]
@@ -86211,11 +86351,11 @@ ${end.comment}` : end.comment;
     );
   }
   function CreateWorldForm({ onCreated }) {
-    const [open, setOpen] = (0, import_react8.useState)(false);
-    const [name2, setName] = (0, import_react8.useState)("");
-    const [seed, setSeed] = (0, import_react8.useState)("");
-    const [saving, setSaving] = (0, import_react8.useState)(false);
-    const [error2, setError] = (0, import_react8.useState)(null);
+    const [open, setOpen] = (0, import_react9.useState)(false);
+    const [name2, setName] = (0, import_react9.useState)("");
+    const [seed, setSeed] = (0, import_react9.useState)("");
+    const [saving, setSaving] = (0, import_react9.useState)(false);
+    const [error2, setError] = (0, import_react9.useState)(null);
     const randomSeed = () => setSeed(String(Math.floor(Math.random() * 2147483647)));
     const submit = async (e) => {
       e.preventDefault();
@@ -86238,24 +86378,24 @@ ${end.comment}` : end.comment;
       }
     };
     if (!open) {
-      return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)(
+      return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(
         "button",
         {
           onClick: () => setOpen(true),
           className: "flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#3C50E0] hover:bg-[#3446c7] text-white text-sm font-medium transition-colors",
           children: [
-            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Icon, { d: I2.add, size: 16 }),
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Icon, { d: I2.add, size: 16 }),
             "Create world"
           ]
         }
       );
     }
-    return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "bg-[#1A222C] rounded-xl border border-[#3C50E0] p-5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("h3", { className: "text-white font-semibold text-[15px] mb-4", children: "New world" }),
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("form", { onSubmit: submit, className: "space-y-3", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("label", { className: "block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5", children: "Name" }),
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "bg-[#1A222C] rounded-xl border border-[#3C50E0] p-5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("h3", { className: "text-white font-semibold text-[15px] mb-4", children: "New world" }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("form", { onSubmit: submit, className: "space-y-3", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("label", { className: "block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5", children: "Name" }),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
             "input",
             {
               type: "text",
@@ -86266,10 +86406,10 @@ ${end.comment}` : end.comment;
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("label", { className: "block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5", children: "Seed" }),
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex gap-2", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("label", { className: "block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5", children: "Seed" }),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
               "input",
               {
                 type: "number",
@@ -86279,7 +86419,7 @@ ${end.comment}` : end.comment;
                 className: "flex-1 bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-3 py-2 text-sm text-white placeholder-[#4A5568] focus:outline-none focus:border-[#3C50E0] transition-colors font-mono"
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
               "button",
               {
                 type: "button",
@@ -86290,9 +86430,9 @@ ${end.comment}` : end.comment;
             )
           ] })
         ] }),
-        error2 && /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-red-400 text-xs", children: error2 }),
-        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex gap-2 pt-1", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+        error2 && /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "text-red-400 text-xs", children: error2 }),
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex gap-2 pt-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
             "button",
             {
               type: "submit",
@@ -86301,7 +86441,7 @@ ${end.comment}` : end.comment;
               children: saving ? "Creating\u2026" : "Create"
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
             "button",
             {
               type: "button",
@@ -86318,9 +86458,9 @@ ${end.comment}` : end.comment;
     ] });
   }
   function WorldsPage() {
-    const [worlds, setWorlds] = (0, import_react8.useState)(null);
-    const [error2, setError] = (0, import_react8.useState)(null);
-    const load = (0, import_react8.useCallback)(async () => {
+    const [worlds, setWorlds] = (0, import_react9.useState)(null);
+    const [error2, setError] = (0, import_react9.useState)(null);
+    const load = (0, import_react9.useCallback)(async () => {
       try {
         const data2 = await api.worlds.list();
         setWorlds(data2);
@@ -86329,30 +86469,30 @@ ${end.comment}` : end.comment;
         setError("Failed to load worlds");
       }
     }, []);
-    (0, import_react8.useEffect)(() => {
+    (0, import_react9.useEffect)(() => {
       load();
     }, [load]);
-    if (error2) return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-red-400 text-sm", children: error2 });
-    return /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "space-y-6", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { className: "flex items-center justify-between", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-[#8A99AF] text-xs", children: worlds ? `${worlds.length} world${worlds.length !== 1 ? "s" : ""}` : "\u2026" }),
-          /* @__PURE__ */ (0, import_jsx_runtime19.jsxs)("p", { className: "text-[11px] text-[#4A5568] mt-0.5", children: [
+    if (error2) return /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "text-red-400 text-sm", children: error2 });
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "space-y-6", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex items-center justify-between", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "text-[#8A99AF] text-xs", children: worlds ? `${worlds.length} world${worlds.length !== 1 ? "s" : ""}` : "\u2026" }),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("p", { className: "text-[11px] text-[#4A5568] mt-0.5", children: [
             "Switch active world via ",
-            /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("code", { className: "font-mono", children: "MICRAFT_WORLD_NAME" }),
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("code", { className: "font-mono", children: "MICRAFT_WORLD_NAME" }),
             " env var + server restart"
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(CreateWorldForm, { onCreated: load })
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(CreateWorldForm, { onCreated: load })
       ] }),
-      worlds === null ? /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-[#8A99AF] text-sm animate-pulse", children: "Loading\u2026" }) : worlds.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("p", { className: "text-[#8A99AF] text-sm", children: "No worlds found." }) : /* @__PURE__ */ (0, import_jsx_runtime19.jsx)("div", { className: "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4", children: worlds.map((w) => /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(WorldCard, { world: w, onRefresh: load }, w.name)) })
+      worlds === null ? /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "text-[#8A99AF] text-sm animate-pulse", children: "Loading\u2026" }) : worlds.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "text-[#8A99AF] text-sm", children: "No worlds found." }) : /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4", children: worlds.map((w) => /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(WorldCard, { world: w, onRefresh: load }, w.name)) })
     ] });
   }
 
   // admin/AdminApp.tsx
-  var import_jsx_runtime20 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime21 = __toESM(require_jsx_runtime(), 1);
   function Icon2({ d, size = 18 }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(
       "svg",
       {
         width: size,
@@ -86363,7 +86503,7 @@ ${end.comment}` : end.comment;
         strokeWidth: 1.8,
         strokeLinecap: "round",
         strokeLinejoin: "round",
-        children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("path", { d })
+        children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("path", { d })
       }
     );
   }
@@ -86373,12 +86513,14 @@ ${end.comment}` : end.comment;
     players: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
     config: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
     worlds: "M3 7l9-4 9 4M3 7v10l9 4m-9-14l9 4m9-4v10l-9 4m0-14v14",
-    classes: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+    classes: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
+    npcs: "M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"
   };
   var NAV = [
     { path: "/admin", label: "Status", icon: ICONS.status, exact: true },
     { path: "/admin/users", label: "Users", icon: ICONS.users },
     { path: "/admin/players", label: "Players", icon: ICONS.players },
+    { path: "/admin/npcs", label: "NPCs", icon: ICONS.npcs },
     { path: "/admin/classes", label: "Classes", icon: ICONS.classes },
     { path: "/admin/config", label: "Config", icon: ICONS.config },
     { path: "/admin/worlds", label: "Worlds", icon: ICONS.worlds }
@@ -86387,23 +86529,24 @@ ${end.comment}` : end.comment;
     "/admin": "Server Status",
     "/admin/users": "Users",
     "/admin/players": "Players",
+    "/admin/npcs": "NPCs",
     "/admin/classes": "Classes & Skills",
     "/admin/config": "Config Editor",
     "/admin/worlds": "Worlds"
   };
   function Sidebar() {
     const { pathname } = useLocation();
-    return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("aside", { className: "w-64 shrink-0 h-screen flex flex-col bg-[#1C2434] border-r border-[#2E3A4E]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "h-16 flex items-center px-6 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex items-center gap-2.5", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "w-8 h-8 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
-        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
-        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
+    return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("aside", { className: "w-64 shrink-0 h-screen flex flex-col bg-[#1C2434] border-r border-[#2E3A4E]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "h-16 flex items-center px-6 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex items-center gap-2.5", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "w-8 h-8 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("nav", { className: "flex-1 px-4 py-5 space-y-0.5 overflow-y-auto", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: "Menu" }),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("nav", { className: "flex-1 px-4 py-5 space-y-0.5 overflow-y-auto", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: "Menu" }),
         NAV.map(({ path, label, icon, exact }) => {
           const active = exact ? pathname === path : pathname.startsWith(path);
-          return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(
+          return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(
             Link,
             {
               to: path,
@@ -86412,7 +86555,7 @@ ${end.comment}` : end.comment;
                 active ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white"
               ),
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Icon2, { d: icon, size: 17 }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Icon2, { d: icon, size: 17 }) }),
                 label
               ]
             },
@@ -86420,47 +86563,48 @@ ${end.comment}` : end.comment;
           );
         })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "px-6 py-4 border-t border-[#2E3A4E] text-[10px] text-[#8A99AF]", children: "micraft admin v1" })
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "px-6 py-4 border-t border-[#2E3A4E] text-[10px] text-[#8A99AF]", children: "micraft admin v1" })
     ] });
   }
   function Header() {
     var _a6;
     const { pathname } = useLocation();
     const title = (_a6 = PAGE_LABELS[pathname]) != null ? _a6 : "Admin";
-    return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
           "Admin / ",
           title
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
         "Server online"
       ] })
     ] });
   }
   function AdminApp() {
-    return /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Sidebar, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Header, {}),
-        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(Routes, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(StatusPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(UsersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(PlayersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ClassesPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(ConfigEditorPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(WorldsPage, {}) })
+    return /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Sidebar, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Header, {}),
+        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(Routes, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(StatusPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(UsersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(PlayersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin/npcs", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(NpcsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ClassesPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ConfigEditorPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(WorldsPage, {}) })
         ] }) })
       ] })
     ] }) });
   }
 
   // admin/index.tsx
-  var import_jsx_runtime21 = __toESM(require_jsx_runtime(), 1);
-  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime21.jsx)(AdminApp, {}));
+  var import_jsx_runtime22 = __toESM(require_jsx_runtime(), 1);
+  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime22.jsx)(AdminApp, {}));
 })();
 /*! Bundled license information:
 

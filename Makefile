@@ -93,7 +93,7 @@ dev-tui:
 	$(DC_DEV) exec -it micraft pitchfork tui
 
 dev-logs:
-	@while true; do $(DC_DEV) exec -it micraft pitchfork logs server run\-lock wasm mc_bindings css css\-sync map admin --tail 2>&1 | grep -v 'DEBUG ' | scripts/colorlog.pl; sleep 2; echo "===================="; done
+	@while true; do $(DC_DEV) exec -it micraft pitchfork logs server run\-lock wasm mc_bindings css css\-sync map admin --tail 2>&1 | scripts/colorlog.pl; sleep 2; echo "===================="; done
 
 # Run any command inside the dev container: make dc CMD="./gradlew :server:test"
 ifeq ($(RUN_MODE),DOCKER)

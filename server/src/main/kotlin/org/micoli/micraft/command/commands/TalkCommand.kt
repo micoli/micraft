@@ -20,10 +20,7 @@ class TalkCommand : CommandHandler {
         session: PlayerSession?,
         context: CommandContext
     ): List<String> =
-        context
-            .sessions()
-            .map { it.state.name }
-            .filter { it.contains(partial, ignoreCase = true) }
+        context.sessions().map { it.state.name }.filter { it.contains(partial, ignoreCase = true) }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val i18n = context.i18n
