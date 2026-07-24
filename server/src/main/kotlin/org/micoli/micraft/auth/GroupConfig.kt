@@ -10,6 +10,7 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.config.isYamlEffectivelyEmpty
 import org.micoli.micraft.config.mergeConfig
 import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.yamlConfigSection
@@ -47,7 +48,7 @@ fun loadGroupsConfig(path: Path, resourcesPath: Path): GroupsConfig {
     }
     val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
     if (node == null) {
-        log.warn("groups.yaml has unparseable structure, leaving file untouched")
+        if (!originalText.isYamlEffectivelyEmpty()) log.warn("groups.yaml has unparseable structure, leaving file untouched")
         return default
     }
     val decoded =

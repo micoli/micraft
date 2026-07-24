@@ -6,6 +6,7 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import org.micoli.micraft.config.isYamlEffectivelyEmpty
 import org.micoli.micraft.config.mergeConfig
 import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.yamlConfigSection
@@ -25,7 +26,7 @@ fun loadRoadConfig(path: Path, resourcesPath: Path): RoadConfig {
     }
     val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
     if (node == null) {
-        log.warn("roads.yaml has unparseable structure, leaving file untouched")
+        if (!originalText.isYamlEffectivelyEmpty()) log.warn("roads.yaml has unparseable structure, leaving file untouched")
         return default
     }
     val decoded =

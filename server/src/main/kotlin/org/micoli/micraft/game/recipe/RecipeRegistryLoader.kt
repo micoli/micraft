@@ -9,6 +9,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
+import org.micoli.micraft.config.isYamlEffectivelyEmpty
 import org.micoli.micraft.config.mergeMapConfig
 import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.validateYamlConfig
@@ -43,7 +44,7 @@ class RecipeRegistryLoader(
                             originalText, yamlMapSection(mergedEntries(node), node)))
                 }
                 .onFailure {
-                    recipeLog.warn(
+                    if (!originalText.isYamlEffectivelyEmpty()) recipeLog.warn(
                         "recipes.yaml has unparseable structure, leaving file untouched: {}",
                         it.message)
                 }

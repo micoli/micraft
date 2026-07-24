@@ -6,6 +6,7 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import org.micoli.micraft.config.isYamlEffectivelyEmpty
 import org.micoli.micraft.config.mergeConfig
 import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.validateYamlConfig
@@ -27,7 +28,7 @@ fun loadBiomeRegistry(path: Path, resourcesPath: Path): BiomeRegistry {
     }
     val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
     if (node == null) {
-        log.warn("biomes.yaml has unparseable structure, leaving file untouched")
+        if (!originalText.isYamlEffectivelyEmpty()) log.warn("biomes.yaml has unparseable structure, leaving file untouched")
         return BiomeRegistry.from(default)
     }
     val decoded =

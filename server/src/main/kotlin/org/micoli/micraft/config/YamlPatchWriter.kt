@@ -14,6 +14,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.elementNames
 import kotlinx.serialization.serializer
 
+fun String.isYamlEffectivelyEmpty(): Boolean =
+    lines().all { it.isBlank() || it.trimStart().startsWith("#") }
+
 /**
  * Builds a [YamlSection] listing every field of [T] with its effective value from [overridden],
  * marked `present` when the matching field on [override] (a class sharing [T]'s field names, with

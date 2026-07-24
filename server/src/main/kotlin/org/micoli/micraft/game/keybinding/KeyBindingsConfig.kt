@@ -13,6 +13,7 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import org.micoli.micraft.config.YamlField
 import org.micoli.micraft.config.YamlSection
+import org.micoli.micraft.config.isYamlEffectivelyEmpty
 import org.micoli.micraft.config.presentInYaml
 import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.validateYamlConfig
@@ -96,7 +97,7 @@ fun loadKeyBindings(
                         originalText, keyBindingsSection(defaultSections, node)))
             }
             .onFailure {
-                keybindingLog.warn(
+                if (!originalText.isYamlEffectivelyEmpty()) keybindingLog.warn(
                     "keybindings.yaml has unparseable structure, leaving file untouched: {}",
                     it.message)
             }

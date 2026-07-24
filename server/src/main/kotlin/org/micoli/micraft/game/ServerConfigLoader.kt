@@ -10,6 +10,7 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.config.isYamlEffectivelyEmpty
 import org.micoli.micraft.config.mergeConfig
 import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.yamlConfigSection
@@ -107,7 +108,7 @@ fun loadServerConfig(path: Path, resourcesPath: Path): ServerConfig {
     }
     val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
     if (node == null) {
-        serverConfigLog.warn("server.yaml has unparseable structure, leaving file untouched")
+        if (!originalText.isYamlEffectivelyEmpty()) serverConfigLog.warn("server.yaml has unparseable structure, leaving file untouched")
         return default
     }
     val decoded =

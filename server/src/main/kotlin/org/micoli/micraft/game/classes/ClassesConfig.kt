@@ -9,6 +9,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import org.micoli.micraft.config.YamlSection
+import org.micoli.micraft.config.isYamlEffectivelyEmpty
 import org.micoli.micraft.config.mergeConfig
 import org.micoli.micraft.config.mergeMapConfig
 import org.micoli.micraft.config.presentInYaml
@@ -71,7 +72,7 @@ class ClassesConfig(
 
         val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
         if (node == null) {
-            log.warn("classes.yaml has unparseable structure, leaving file untouched")
+            if (!originalText.isYamlEffectivelyEmpty()) log.warn("classes.yaml has unparseable structure, leaving file untouched")
             return default
         }
 

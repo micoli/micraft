@@ -10,6 +10,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.KSerializer
 import org.micoli.micraft.combat.AttackDefinition
+import org.micoli.micraft.config.isYamlEffectivelyEmpty
 import org.micoli.micraft.config.mergeConfig
 import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.yamlConfigSection
@@ -87,7 +88,7 @@ class SkillsConfig(
                     val node =
                         runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
                     if (node == null) {
-                        log.warn(
+                        if (!originalText.isYamlEffectivelyEmpty()) log.warn(
                             "data/{}.yaml has unparseable structure, using resource default", name)
                         default
                     } else {
