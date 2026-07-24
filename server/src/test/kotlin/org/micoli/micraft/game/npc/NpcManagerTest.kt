@@ -16,6 +16,9 @@ import org.micoli.micraft.game.npc.behaviors.StaticNpcBehavior
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.player.rpg.BaseStats
+import org.micoli.micraft.player.rpg.CharacterClass
+import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.FakePlayerSession
 import org.micoli.micraft.support.testI18n
@@ -462,5 +465,27 @@ class NpcManagerTest {
         val instance = m.spawnNpc("Z", "ZOMBIE", npcPos)
         m.tickAggro(listOf(session), fakeCombatProcessor(m))
         assertEquals(session.id, instance.aggroTarget, "nearby player should be aggro target")
+    }
+
+    @Test
+    fun tickAggro_downedPlayerWithinAggroRange_doesNotAggro() = runBlocking {
+        val aggroRange = 10f
+        val npcPos = Vec3(0f, 5f, 0f)
+        val session = testSession(id = "p1", pos = Vec3(5f, 5f, 0f))
+        session.characterData =
+            CharacterData(
+                id = "p1",
+                name = "Alice",
+                characterClass = CharacterClass.WARRIOR,
+                baseStats = BaseStats(con = 10, wis = 10),
+                currentHp = 0,
+                currentMana = 0,
+            )
+        val (m, _) =
+            testNpcManager(
+                mapOf("ZOMBIE" to aggressiveDef(aggroRange = aggroRange)), nearbySession = session)
+        val instance = m.spawnNpc("Z", "ZOMBIE", npcPos)
+        m.tickAggro(listOf(session), fakeCombatProcessor(m))
+        assertNull(instance.aggroTarget, "downed player should not be aggroed")
     }
 }

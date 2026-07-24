@@ -551,6 +551,7 @@ class NpcManager(
                         val npcPos = instance.state.pos
                         val inRange =
                             sessions.firstOrNull { session ->
+                                if (session.isDowned) return@firstOrNull false
                                 val dx = session.state.pos.x - npcPos.x
                                 val dy = session.state.pos.y - npcPos.y
                                 val dz = session.state.pos.z - npcPos.z
