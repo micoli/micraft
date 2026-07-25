@@ -179,6 +179,7 @@ object ClientMessageCodec {
             clientEntry<ClientMessage.RunMacro>(), // 17
             clientEntry<ClientMessage.RunMacroContent>(), // 18
             clientEntry<ClientMessage.UseSpell>(), // 19
+            clientEntry<ClientMessage.CastAoeSpell>(), // 20
         )
 
     fun encode(msg: ClientMessage): ByteArray = encodeWith(registry, msg)

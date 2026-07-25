@@ -28,7 +28,8 @@ fun loadBiomeRegistry(path: Path, resourcesPath: Path): BiomeRegistry {
     }
     val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
     if (node == null) {
-        if (!originalText.isYamlEffectivelyEmpty()) log.warn("biomes.yaml has unparseable structure, leaving file untouched")
+        if (!originalText.isYamlEffectivelyEmpty())
+            log.warn("biomes.yaml has unparseable structure, leaving file untouched")
         return BiomeRegistry.from(default)
     }
     val decoded =

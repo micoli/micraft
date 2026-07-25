@@ -188,4 +188,28 @@ class StatusEffectProcessorTest {
 
         assertTrue(session.characterData!!.currentHp < 20)
     }
+
+    @Test
+    fun `withering player takes HP damage on tick`() = runBlocking {
+        val session = testSession(id = "a", name = "Alice")
+        session.characterData = testChar("Alice", hp = 20)
+        session.combatState.activeEffects.add(activeEffect(StatusEffect.Withering))
+
+        sleepingProcessor().tick(listOf(session))
+
+        assertTrue(session.characterData!!.currentHp < 20)
+    }
+
+    @Test
+    fun `withering player combat log contains wither`() = runBlocking {
+        val session = testSession(id = "a", name = "Alice")
+        session.characterData = testChar("Alice", hp = 20)
+        session.combatState.activeEffects.add(activeEffect(StatusEffect.Withering))
+
+        val combatLog = mutableListOf<String>()
+        sleepingProcessor(combatLog = combatLog).tick(listOf(session))
+
+        assertTrue(combatLog.isNotEmpty())
+        assertTrue(combatLog[0].contains("wither"))
+    }
 }

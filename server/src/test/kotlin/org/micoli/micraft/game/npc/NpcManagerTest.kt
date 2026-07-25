@@ -507,7 +507,8 @@ class NpcManagerTest {
                 mapOf("ZOMBIE" to aggressiveDef(aggroRange = 10f)), nearbySession = session)
         val instance = m.spawnNpc("Z", "ZOMBIE", Vec3(0f, 5f, 0f), instanceLevel = 1)
         m.tickAggro(listOf(session), fakeCombatProcessor(m))
-        assertNull(instance.aggroTarget, "player 9 levels above NPC should not be aggroed (diff=9 > 5)")
+        assertNull(
+            instance.aggroTarget, "player 9 levels above NPC should not be aggroed (diff=9 > 5)")
     }
 
     @Test

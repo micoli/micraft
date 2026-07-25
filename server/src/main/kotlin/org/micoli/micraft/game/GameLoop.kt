@@ -298,6 +298,8 @@ class GameLoop(
             armorRegistry = emptyMap(),
             combatConfig = combatConfig,
             combatProcessor = combatProcessor,
+            getSessions = sessionRegistry::all,
+            getNpcs = { npcManager.getAll() },
         ),
     private val tradeConfigLoader: TradeConfigLoader =
         TradeConfigLoader(Path.of("data/config/trade.yaml")),
@@ -472,6 +474,7 @@ class GameLoop(
     fun getWeatherZones() = weatherManager.getZones()
 
     fun getNpcInstances() = npcManager.getAll()
+
     fun getNpcManager() = npcManager
 
     fun getWorldItemCount(): Int = worldItems.itemCount()

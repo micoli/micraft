@@ -88,8 +88,10 @@ class SkillsConfig(
                     val node =
                         runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
                     if (node == null) {
-                        if (!originalText.isYamlEffectivelyEmpty()) log.warn(
-                            "data/{}.yaml has unparseable structure, using resource default", name)
+                        if (!originalText.isYamlEffectivelyEmpty())
+                            log.warn(
+                                "data/{}.yaml has unparseable structure, using resource default",
+                                name)
                         default
                     } else {
                         val decoded =

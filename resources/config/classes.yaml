@@ -46,6 +46,8 @@ classes:
             level: 1
           - attack: pyre
             level: 1
+        spells:
+          - miasme
       2:
         attacks:
           - attack: pyre
@@ -60,6 +62,8 @@ classes:
             level: 3
           - attack: freeze
             level: 2
+        spells:
+          - miasme_2
       4:
         attacks:
           - attack: frozen_in_time
@@ -78,6 +82,8 @@ classes:
             level: 4
           - attack: pyre
             level: 5
+        spells:
+          - miasme_3
   RANGER:
     strBonus: 0
     dexBonus: 2
@@ -143,7 +149,14 @@ classes:
             level: 1
           - attack: fireball
             level: 1
+        spells:
+          - miasme
       3:
         attacks:
           - attack: fireball
             level: 2
+        spells:
+          - miasme_2
+      5:
+        spells:
+          - miasme_3

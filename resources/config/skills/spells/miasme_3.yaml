@@ -1,0 +1,6 @@
+type: NECROTIC_AOE
+enabled: true
+manaCost: 45
+cooldownMs: 4500
+aoeRadius: 5.0
+maxRange: 20.0

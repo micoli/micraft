@@ -116,9 +116,12 @@ function typeColor(type: string): string {
 }
 
 function arrowPoints(yaw: number): string {
-  const adx = Math.sin(yaw), ady = -Math.cos(yaw);
-  const perpX = -ady, perpY = adx;
-  const len = 9, w = 4;
+  const adx = Math.sin(yaw),
+    ady = -Math.cos(yaw);
+  const perpX = -ady,
+    perpY = adx;
+  const len = 9,
+    w = 4;
   return [
     `${adx * len},${ady * len}`,
     `${-adx * len * 0.35 + perpX * w},${-ady * len * 0.35 + perpY * w}`,
@@ -126,19 +129,27 @@ function arrowPoints(yaw: number): string {
   ].join(" ");
 }
 
-function NpcMiniMap({ npcs, selectedId, attackLines }: { npcs: NpcAdminDto[]; selectedId: string | null; attackLines: AttackLine[] }) {
+function NpcMiniMap({
+  npcs,
+  selectedId,
+  attackLines,
+}: {
+  npcs: NpcAdminDto[];
+  selectedId: string | null;
+  attackLines: AttackLine[];
+}) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [camera, setCamera] = useState<Camera>({ x: 0, z: 0, pxPerBlock: 0.5 });
   const [dragging, setDragging] = useState(false);
   const [voronoiCells, setVoronoiCells] = useState<VoronoiCellInfo[]>([]);
   const [borderSegs, setBorderSegs] = useState<BorderSeg[]>([]);
-  const [, forceRender] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   const dragStart = useRef<{ mx: number; my: number; cx: number; cz: number } | null>(null);
 
   // Drive fade animation while there are active attack lines
   useEffect(() => {
     if (attackLines.length === 0) return;
-    const id = setInterval(() => forceRender((n) => n + 1), 40);
+    const id = setInterval(() => setNow(Date.now()), 40);
     return () => clearInterval(id);
   }, [attackLines.length]);
 
@@ -153,26 +164,37 @@ function NpcMiniMap({ npcs, selectedId, attackLines }: { npcs: NpcAdminDto[]; se
       .catch(() => {});
   }, []);
 
+  const hasCenteredRef = useRef(false);
+  const npcsMapRef = useRef(npcs);
+  useEffect(() => {
+    npcsMapRef.current = npcs;
+  }, [npcs]);
+
   // Centre initial sur le barycentre des NPCs
   useEffect(() => {
-    if (npcs.length === 0) return;
+    if (hasCenteredRef.current || npcs.length === 0) return;
+    hasCenteredRef.current = true;
     const sx = npcs.reduce((a, n) => a + n.x, 0) / npcs.length;
     const sz = npcs.reduce((a, n) => a + n.z, 0) / npcs.length;
     setCamera((c) => ({ ...c, x: sx, z: sz }));
-  }, [npcs.length > 0]);
+  }, [npcs]);
 
   // Recentre sur le NPC sélectionné
   useEffect(() => {
     if (!selectedId) return;
-    const npc = npcs.find((n) => n.id === selectedId);
+    const npc = npcsMapRef.current.find((n) => n.id === selectedId);
     if (!npc) return;
     setCamera((c) => ({ ...c, x: npc.x, z: npc.z }));
   }, [selectedId]);
 
-  const svgSize = (): [number, number] => {
+  const [svgDims, setSvgDims] = useState<[number, number]>([320, 500]);
+  useEffect(() => {
     const el = svgRef.current;
-    return el ? [el.clientWidth, el.clientHeight] : [320, 500];
-  };
+    if (!el) return;
+    const ro = new ResizeObserver(() => setSvgDims([el.clientWidth, el.clientHeight]));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
@@ -201,7 +223,7 @@ function NpcMiniMap({ npcs, selectedId, attackLines }: { npcs: NpcAdminDto[]; se
   const zoom = (factor: number) =>
     setCamera((c) => ({ ...c, pxPerBlock: Math.max(0.05, Math.min(20, c.pxPerBlock * factor)) }));
 
-  const [W, H] = svgSize();
+  const [W, H] = svgDims;
   const ppb = camera.pxPerBlock;
   const worldTransform = `matrix(${ppb},0,0,${-ppb},${W / 2 - camera.x * ppb},${H / 2 + camera.z * ppb})`;
   const voronoiPolygons = buildVoronoiPolygonPaths(borderSegs, voronoiCells);
@@ -232,7 +254,16 @@ function NpcMiniMap({ npcs, selectedId, attackLines }: { npcs: NpcAdminDto[]; se
             const [cx, cy] = w2s(cell.x, cell.z, camera, W, H);
             if (cx < -60 || cx > W + 60 || cy < -20 || cy > H + 20) return null;
             return (
-              <text key={i} x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.4)" fontSize={10} fontFamily="serif">
+              <text
+                key={i}
+                x={cx}
+                y={cy}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="rgba(255,255,255,0.4)"
+                fontSize={10}
+                fontFamily="serif"
+              >
                 {cell.name}
               </text>
             );
@@ -240,7 +271,7 @@ function NpcMiniMap({ npcs, selectedId, attackLines }: { npcs: NpcAdminDto[]; se
 
         {/* Attack lines */}
         {attackLines.map((line) => {
-          const age = Date.now() - line.ts;
+          const age = now - line.ts;
           const opacity = Math.max(0, 1 - age / ATTACK_LINE_TTL);
           if (opacity <= 0) return null;
           const [ax, ay] = w2s(line.ax, line.az, camera, W, H);
@@ -260,8 +291,15 @@ function NpcMiniMap({ npcs, selectedId, attackLines }: { npcs: NpcAdminDto[]; se
           const color = sel ? "#ffcc44" : typeColor(npc.type);
           return (
             <g key={npc.id} transform={`translate(${nx},${ny})`}>
-              {sel && <circle cx={0} cy={0} r={13} fill="none" stroke="#ffcc44" strokeWidth={1.5} strokeDasharray="3 2" />}
-              <polygon points={arrowPoints(npc.yaw)} fill={color} stroke={sel ? "#000" : "rgba(0,0,0,0.5)"} strokeWidth={0.8} />
+              {sel && (
+                <circle cx={0} cy={0} r={13} fill="none" stroke="#ffcc44" strokeWidth={1.5} strokeDasharray="3 2" />
+              )}
+              <polygon
+                points={arrowPoints(npc.yaw)}
+                fill={color}
+                stroke={sel ? "#000" : "rgba(0,0,0,0.5)"}
+                strokeWidth={0.8}
+              />
               {sel && (
                 <text x={14} y={4} fill="#ffcc44" fontSize={11} fontFamily="monospace" fontWeight="bold">
                   {npc.name}
@@ -433,7 +471,9 @@ export function NpcsPage() {
   const [filterLevelMax, setFilterLevelMax] = useState("");
   const [attackLines, setAttackLines] = useState<AttackLine[]>([]);
   const npcsRef = useRef<NpcAdminDto[] | null>(null);
-  npcsRef.current = npcs;
+  useEffect(() => {
+    npcsRef.current = npcs;
+  }, [npcs]);
 
   const load = () => {
     api.npcs
@@ -458,27 +498,60 @@ export function NpcsPage() {
             case "npcUpdate":
               return prev.map((n) =>
                 n.id === msg.id
-                  ? { ...n, x: msg.x, y: msg.y, z: msg.z, yaw: msg.yaw, currentHp: msg.currentHp, maxHp: msg.maxHp, isDead: msg.isDead }
+                  ? {
+                      ...n,
+                      x: msg.x,
+                      y: msg.y,
+                      z: msg.z,
+                      yaw: msg.yaw,
+                      currentHp: msg.currentHp,
+                      maxHp: msg.maxHp,
+                      isDead: msg.isDead,
+                    }
                   : n,
               );
             case "npcSpawned":
               if (prev.some((n) => n.id === msg.id)) {
                 return prev.map((n) =>
                   n.id === msg.id
-                    ? { ...n, x: msg.x, y: msg.y, z: msg.z, yaw: msg.yaw, currentHp: msg.currentHp, maxHp: msg.maxHp, isDead: msg.isDead }
+                    ? {
+                        ...n,
+                        x: msg.x,
+                        y: msg.y,
+                        z: msg.z,
+                        yaw: msg.yaw,
+                        currentHp: msg.currentHp,
+                        maxHp: msg.maxHp,
+                        isDead: msg.isDead,
+                      }
                     : n,
                 );
               }
               return [
                 ...prev,
                 {
-                  id: msg.id, name: msg.name, type: msg.npcType,
-                  level: 1, gender: null, currentHp: msg.currentHp, maxHp: msg.maxHp,
-                  isDead: msg.isDead, aggroMode: "NEUTRAL", tier: "NORMAL",
-                  x: msg.x, y: msg.y, z: msg.z, yaw: msg.yaw,
-                  zone: "?", parentIds: [], skills: [],
-                  ageGameDays: null, hunger: null, gestationRemainingDays: null,
-                  lastReproductionDay: null, motherLevel: null,
+                  id: msg.id,
+                  name: msg.name,
+                  type: msg.npcType,
+                  level: 1,
+                  gender: null,
+                  currentHp: msg.currentHp,
+                  maxHp: msg.maxHp,
+                  isDead: msg.isDead,
+                  aggroMode: "NEUTRAL",
+                  tier: "NORMAL",
+                  x: msg.x,
+                  y: msg.y,
+                  z: msg.z,
+                  yaw: msg.yaw,
+                  zone: "?",
+                  parentIds: [],
+                  skills: [],
+                  ageGameDays: null,
+                  hunger: null,
+                  gestationRemainingDays: null,
+                  lastReproductionDay: null,
+                  motherLevel: null,
                 },
               ];
             case "npcDespawned":
@@ -491,7 +564,14 @@ export function NpcsPage() {
                 if (target && attacker) {
                   setAttackLines((lines) => [
                     ...lines.filter((l) => Date.now() - l.ts < ATTACK_LINE_TTL),
-                    { id: `${msg.attackerId}-${msg.id}-${Date.now()}`, ax: attacker.x, az: attacker.z, bx: target.x, bz: target.z, ts: Date.now() },
+                    {
+                      id: `${msg.attackerId}-${msg.id}-${Date.now()}`,
+                      ax: attacker.x,
+                      az: attacker.z,
+                      bx: target.x,
+                      bz: target.z,
+                      ts: Date.now(),
+                    },
                   ]);
                 }
               }
@@ -503,7 +583,9 @@ export function NpcsPage() {
               return prev;
           }
         });
-      } catch (_) {}
+      } catch {
+        // ignore parse errors
+      }
     };
     return () => ws.close();
   }, []);
@@ -522,12 +604,19 @@ export function NpcsPage() {
     }
     if (filterType && n.type !== filterType) return false;
     if (filterGender) {
-      if (filterGender === "__NONE__") { if (n.gender !== null) return false; }
-      else if (n.gender !== filterGender) return false;
+      if (filterGender === "__NONE__") {
+        if (n.gender !== null) return false;
+      } else if (n.gender !== filterGender) return false;
     }
     if (filterAggro && n.aggroMode !== filterAggro) return false;
-    if (filterLevelMin !== "") { const v = parseInt(filterLevelMin); if (!isNaN(v) && n.level < v) return false; }
-    if (filterLevelMax !== "") { const v = parseInt(filterLevelMax); if (!isNaN(v) && n.level > v) return false; }
+    if (filterLevelMin !== "") {
+      const v = parseInt(filterLevelMin);
+      if (!isNaN(v) && n.level < v) return false;
+    }
+    if (filterLevelMax !== "") {
+      const v = parseInt(filterLevelMax);
+      if (!isNaN(v) && n.level > v) return false;
+    }
     return true;
   });
 
@@ -536,171 +625,175 @@ export function NpcsPage() {
   return (
     <div className="flex gap-4 items-start">
       <div className="flex-1 min-w-0 space-y-4">
-      {/* Sticky toolbar */}
-      <div className="sticky top-0 z-10 bg-[#111827] pt-1 pb-3 space-y-2">
-        {/* Row 1: search + actions */}
-        <div className="flex items-center gap-3">
-          <input
-            type="text"
-            placeholder="Name, type or zone…"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="flex-1 max-w-xs bg-[#1C2434] border border-[#2E3A4E] rounded-lg px-3 py-1.5 text-sm text-white placeholder-[#8A99AF] outline-none focus:border-[#3C50E0]"
-          />
-          <button
-            onClick={load}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-[#3C50E0] hover:bg-[#3446c7] text-white transition-colors shrink-0"
-          >
-            Refresh
-          </button>
-          {npcs && (
-            <span className="text-xs text-[#8A99AF] shrink-0">
-              {filtered.length}/{npcs.length} · {alive} alive
-            </span>
-          )}
-        </div>
-        {/* Row 2: facet filters */}
-        {npcs && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            {/* Type */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] uppercase tracking-widest text-[#8A99AF]">Type</span>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0]"
-              >
-                <option value="">All</option>
-                {types.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-            {/* Gender */}
-            {genders.length > 0 && (
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5">Gender</span>
-                {[["", "All"], ...genders.map((g) => [g, g]), ["__NONE__", "—"]].map(([val, label]) => (
-                  <button
-                    key={val}
-                    onClick={() => setFilterGender(val === filterGender ? "" : val)}
-                    className={`px-2 py-0.5 rounded text-[11px] transition-colors ${filterGender === val ? "bg-[#3C50E0] text-white" : "bg-[#1C2434] text-[#8A99AF] hover:text-white"}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
-            {/* Level range */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] uppercase tracking-widest text-[#8A99AF]">Lv</span>
-              <input
-                type="number"
-                min={1}
-                placeholder="min"
-                value={filterLevelMin}
-                onChange={(e) => setFilterLevelMin(e.target.value)}
-                className="w-14 bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0] [appearance:textfield]"
-              />
-              <span className="text-[#8A99AF] text-xs">–</span>
-              <input
-                type="number"
-                min={1}
-                placeholder="max"
-                value={filterLevelMax}
-                onChange={(e) => setFilterLevelMax(e.target.value)}
-                className="w-14 bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0] [appearance:textfield]"
-              />
-            </div>
-            {/* Aggro */}
-            {aggroModes.length > 0 && (
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5">Aggro</span>
-                {aggroModes.map((a) => (
-                  <button
-                    key={a}
-                    onClick={() => setFilterAggro(a === filterAggro ? "" : a)}
-                    className={`px-2 py-0.5 rounded text-[11px] transition-colors ${filterAggro === a ? "bg-[#3C50E0] text-white" : "bg-[#1C2434] text-[#8A99AF] hover:text-white"}`}
-                  >
-                    {a.replace("_", " ").replace("_COOPERATIVE", "")}
-                  </button>
-                ))}
-              </div>
+        {/* Sticky toolbar */}
+        <div className="sticky top-0 z-10 bg-[#111827] pt-1 pb-3 space-y-2">
+          {/* Row 1: search + actions */}
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              placeholder="Name, type or zone…"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="flex-1 max-w-xs bg-[#1C2434] border border-[#2E3A4E] rounded-lg px-3 py-1.5 text-sm text-white placeholder-[#8A99AF] outline-none focus:border-[#3C50E0]"
+            />
+            <button
+              onClick={load}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-[#3C50E0] hover:bg-[#3446c7] text-white transition-colors shrink-0"
+            >
+              Refresh
+            </button>
+            {npcs && (
+              <span className="text-xs text-[#8A99AF] shrink-0">
+                {filtered.length}/{npcs.length} · {alive} alive
+              </span>
             )}
           </div>
-        )}
-      </div>
-
-      {error && <p className="text-red-400 text-sm">{error}</p>}
-
-      {!npcs && !error && <p className="text-[#8A99AF] text-sm">Loading…</p>}
-
-      {npcs && (
-        <div className="rounded-xl overflow-hidden border border-[#2E3A4E]">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="bg-[#1C2434] text-[#8A99AF] text-xs uppercase tracking-widest">
-                <th className="text-left px-4 py-3 font-semibold">Name</th>
-                <th className="text-left px-4 py-3 font-semibold">Type</th>
-                <th className="text-left px-4 py-3 font-semibold">Lv</th>
-                <th className="text-left px-4 py-3 font-semibold">Gender</th>
-                <th className="text-left px-4 py-3 font-semibold">Tier</th>
-                <th className="text-left px-4 py-3 font-semibold">Aggro</th>
-                <th className="text-left px-4 py-3 font-semibold">HP</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="text-center text-[#8A99AF] py-8">
-                    No NPCs match
-                  </td>
-                </tr>
-              )}
-              {filtered.map((npc) => {
-                const expanded = expandedId === npc.id;
-                return (
-                  <>
-                    <tr
-                      key={npc.id}
-                      onClick={() => setExpandedId(expanded ? null : npc.id)}
-                      className={`border-t border-[#2E3A4E] cursor-pointer transition-colors ${
-                        npc.isDead ? "opacity-40" : ""
-                      } ${expanded ? "bg-[#1C2434]" : "hover:bg-[#1C2434]/60"}`}
+          {/* Row 2: facet filters */}
+          {npcs && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              {/* Type */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-widest text-[#8A99AF]">Type</span>
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0]"
+                >
+                  <option value="">All</option>
+                  {types.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* Gender */}
+              {genders.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5">Gender</span>
+                  {[["", "All"], ...genders.map((g) => [g, g]), ["__NONE__", "—"]].map(([val, label]) => (
+                    <button
+                      key={val}
+                      onClick={() => setFilterGender(val === filterGender ? "" : val)}
+                      className={`px-2 py-0.5 rounded text-[11px] transition-colors ${filterGender === val ? "bg-[#3C50E0] text-white" : "bg-[#1C2434] text-[#8A99AF] hover:text-white"}`}
                     >
-                      <td className="px-4 py-2.5 font-medium text-white">
-                        {npc.isDead && <span className="text-red-500 mr-1">✕</span>}
-                        {npc.name}
-                      </td>
-                      <td className="px-4 py-2.5 text-[#8A99AF]">{npc.type}</td>
-                      <td className="px-4 py-2.5 text-[#8A99AF]">{npc.level}</td>
-                      <td className="px-4 py-2.5 text-[#8A99AF]">{npc.gender ?? "—"}</td>
-                      <td className="px-4 py-2.5">
-                        <Badge label={npc.tier} color={tierColor(npc.tier)} />
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <Badge label={npc.aggroMode} color={aggroColor(npc.aggroMode)} />
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <HpBar current={npc.currentHp} max={npc.maxHp} />
-                      </td>
-                      <td className="px-4 py-2.5 text-[#8A99AF] text-right">
-                        <span className="text-xs">{expanded ? "▲" : "▼"}</span>
-                      </td>
-                    </tr>
-                    {expanded && (
-                      <tr key={npc.id + "-detail"} className="border-t border-[#2E3A4E]">
-                        <td colSpan={8} className="p-0">
-                          <Detail npc={npc} />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {/* Level range */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-widest text-[#8A99AF]">Lv</span>
+                <input
+                  type="number"
+                  min={1}
+                  placeholder="min"
+                  value={filterLevelMin}
+                  onChange={(e) => setFilterLevelMin(e.target.value)}
+                  className="w-14 bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0] [appearance:textfield]"
+                />
+                <span className="text-[#8A99AF] text-xs">–</span>
+                <input
+                  type="number"
+                  min={1}
+                  placeholder="max"
+                  value={filterLevelMax}
+                  onChange={(e) => setFilterLevelMax(e.target.value)}
+                  className="w-14 bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0] [appearance:textfield]"
+                />
+              </div>
+              {/* Aggro */}
+              {aggroModes.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5">Aggro</span>
+                  {aggroModes.map((a) => (
+                    <button
+                      key={a}
+                      onClick={() => setFilterAggro(a === filterAggro ? "" : a)}
+                      className={`px-2 py-0.5 rounded text-[11px] transition-colors ${filterAggro === a ? "bg-[#3C50E0] text-white" : "bg-[#1C2434] text-[#8A99AF] hover:text-white"}`}
+                    >
+                      {a.replace("_", " ").replace("_COOPERATIVE", "")}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {error && <p className="text-red-400 text-sm">{error}</p>}
+
+        {!npcs && !error && <p className="text-[#8A99AF] text-sm">Loading…</p>}
+
+        {npcs && (
+          <div className="rounded-xl overflow-hidden border border-[#2E3A4E]">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="bg-[#1C2434] text-[#8A99AF] text-xs uppercase tracking-widest">
+                  <th className="text-left px-4 py-3 font-semibold">Name</th>
+                  <th className="text-left px-4 py-3 font-semibold">Type</th>
+                  <th className="text-left px-4 py-3 font-semibold">Lv</th>
+                  <th className="text-left px-4 py-3 font-semibold">Gender</th>
+                  <th className="text-left px-4 py-3 font-semibold">Tier</th>
+                  <th className="text-left px-4 py-3 font-semibold">Aggro</th>
+                  <th className="text-left px-4 py-3 font-semibold">HP</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="text-center text-[#8A99AF] py-8">
+                      No NPCs match
+                    </td>
+                  </tr>
+                )}
+                {filtered.map((npc) => {
+                  const expanded = expandedId === npc.id;
+                  return (
+                    <>
+                      <tr
+                        key={npc.id}
+                        onClick={() => setExpandedId(expanded ? null : npc.id)}
+                        className={`border-t border-[#2E3A4E] cursor-pointer transition-colors ${
+                          npc.isDead ? "opacity-40" : ""
+                        } ${expanded ? "bg-[#1C2434]" : "hover:bg-[#1C2434]/60"}`}
+                      >
+                        <td className="px-4 py-2.5 font-medium text-white">
+                          {npc.isDead && <span className="text-red-500 mr-1">✕</span>}
+                          {npc.name}
+                        </td>
+                        <td className="px-4 py-2.5 text-[#8A99AF]">{npc.type}</td>
+                        <td className="px-4 py-2.5 text-[#8A99AF]">{npc.level}</td>
+                        <td className="px-4 py-2.5 text-[#8A99AF]">{npc.gender ?? "—"}</td>
+                        <td className="px-4 py-2.5">
+                          <Badge label={npc.tier} color={tierColor(npc.tier)} />
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <Badge label={npc.aggroMode} color={aggroColor(npc.aggroMode)} />
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <HpBar current={npc.currentHp} max={npc.maxHp} />
+                        </td>
+                        <td className="px-4 py-2.5 text-[#8A99AF] text-right">
+                          <span className="text-xs">{expanded ? "▲" : "▼"}</span>
                         </td>
                       </tr>
-                    )}
-                  </>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                      {expanded && (
+                        <tr key={npc.id + "-detail"} className="border-t border-[#2E3A4E]">
+                          <td colSpan={8} className="p-0">
+                            <Detail npc={npc} />
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
       <div className="w-80 shrink-0 sticky top-4">
         <NpcMiniMap npcs={npcs ?? []} selectedId={expandedId} attackLines={attackLines} />

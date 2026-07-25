@@ -241,7 +241,14 @@ class LocalPlayerController(
         if (slot is ShortcutSlot.Macro) {
             outMessages.trySend(ClientMessage.RunMacro(slot.macroName))
         } else if (slot is ShortcutSlot.Spell) {
-            outMessages.trySend(ClientMessage.UseSpell(spellId = slot.spellId))
+            val (tx, ty, tz) = computeAoeTarget(15f)
+            outMessages.trySend(
+                ClientMessage.CastAoeSpell(
+                    spellId = slot.spellId,
+                    targetX = tx,
+                    targetY = ty,
+                    targetZ = tz,
+                ))
         } else {
             selectSlot(index)
             if (slot is ShortcutSlot.Attack) {
@@ -988,6 +995,25 @@ class LocalPlayerController(
         localPlayerModel = null
         fpArms?.let { jsDisposeFPArms(it) }
         fpArms = null
+    }
+
+    private fun computeAoeTarget(maxDist: Float): Triple<Float, Float, Float> {
+        val ox = predX
+        val oy = predY + localStance.eyeOffset.toDouble()
+        val oz = predZ
+        val dirX = jsGetCameraDir3DX(camera).toFloat()
+        val dirY = jsGetCameraDir3DY(camera).toFloat()
+        val dirZ = jsGetCameraDir3DZ(camera).toFloat()
+        val hit = raycastBlock(maxDist)
+        return if (hit != null) {
+            Triple(hit.target.x + 0.5f, hit.target.y + 1.0f, hit.target.z + 0.5f)
+        } else {
+            Triple(
+                (ox + dirX * maxDist).toFloat(),
+                (oy + dirY * maxDist).toFloat(),
+                (oz + dirZ * maxDist).toFloat(),
+            )
+        }
     }
 
     private fun raycastBlock(maxDist: Float = 5f): RaycastResult? {

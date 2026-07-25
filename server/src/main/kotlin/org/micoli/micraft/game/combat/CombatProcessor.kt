@@ -534,6 +534,15 @@ class CombatProcessor(
     ) {
         val effect = levelDef.statusEffect ?: return
         val durationSec = levelDef.durationSec ?: effect.durationSec
+        applyStatusEffectTo(target, effect, durationSec, now)
+    }
+
+    suspend fun applyStatusEffectTo(
+        target: PlayerSession,
+        effect: StatusEffect,
+        durationSec: Float,
+        now: Long,
+    ) {
         val expiry = now + (durationSec * 1000).toLong()
         val idx =
             target.combatState.activeEffects.indexOfFirst { it.effect::class == effect::class }

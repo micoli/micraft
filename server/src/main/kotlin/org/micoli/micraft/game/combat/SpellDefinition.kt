@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 enum class SpellType {
     TOKEN_RAGE_CONSUME,
+    NECROTIC_AOE,
 }
 
 @Serializable
@@ -15,4 +16,6 @@ data class SpellDefinition(
     val manaCost: Int = 0,
     val rageCost: Int = 0,
     val cooldownMs: Long = 0L,
+    val aoeRadius: Float = 0f,
+    val maxRange: Float = 15f,
 )

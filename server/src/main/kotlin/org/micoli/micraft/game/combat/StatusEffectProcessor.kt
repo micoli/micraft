@@ -53,6 +53,7 @@ class StatusEffectProcessor(
                         }
                     }
                     is StatusEffect.Pyre -> hpDelta -= 4f * dtSec
+                    is StatusEffect.Withering -> hpDelta -= 3f * dtSec
                     else -> {}
                 }
             }
@@ -78,6 +79,7 @@ class StatusEffectProcessor(
                                 is StatusEffect.Poisoned -> "poison"
                                 is StatusEffect.Burning -> "burn"
                                 is StatusEffect.Pyre -> "pyre"
+                                is StatusEffect.Withering -> "wither"
                                 else -> null
                             }
                         }

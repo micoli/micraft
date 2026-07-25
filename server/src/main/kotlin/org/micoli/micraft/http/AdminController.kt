@@ -641,16 +641,21 @@ class AdminController(
             }
             val npcManager = gameLoop.getNpcManager()
             val listener: suspend (String) -> Unit = { json ->
-                try { send(json) } catch (_: Exception) {}
+                try {
+                    send(json)
+                } catch (_: Exception) {}
             }
             npcManager.addAdminListener(listener)
             try {
                 for (npc in gameLoop.getNpcInstances()) {
                     val s = npc.state
                     val maxHp = NpcHpCalculator.computeMaxHp(npc.definition, npc.instanceLevel)
-                    send("""{"type":"npcSpawned","id":"${s.id}","name":${s.name.adminWsJson()},"npcType":${s.type.adminWsJson()},"x":${s.pos.x},"y":${s.pos.y},"z":${s.pos.z},"yaw":${s.yaw},"currentHp":${npc.currentHp},"maxHp":$maxHp,"isDead":${npc.isDead}}""")
+                    send(
+                        """{"type":"npcSpawned","id":"${s.id}","name":${s.name.adminWsJson()},"npcType":${s.type.adminWsJson()},"x":${s.pos.x},"y":${s.pos.y},"z":${s.pos.z},"yaw":${s.yaw},"currentHp":${npc.currentHp},"maxHp":$maxHp,"isDead":${npc.isDead}}""")
                 }
-                for (frame in incoming) { /* ignore */ }
+                for (frame in incoming) {
+                    /* ignore */
+                }
             } finally {
                 npcManager.removeAdminListener(listener)
             }

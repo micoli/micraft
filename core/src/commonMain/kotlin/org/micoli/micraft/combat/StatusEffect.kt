@@ -46,6 +46,10 @@ sealed class StatusEffect {
     data object Pyre : StatusEffect() {
         override val durationSec = 8f
     }
+
+    data object Withering : StatusEffect() {
+        override val durationSec = 8f
+    }
 }
 
 object StatusEffectSerializer : KSerializer<StatusEffect> {
@@ -62,6 +66,7 @@ object StatusEffectSerializer : KSerializer<StatusEffect> {
                 StatusEffect.Frozen,
                 StatusEffect.FrozenInTime,
                 StatusEffect.Pyre,
+                StatusEffect.Withering,
             )
             .associateBy { it::class.simpleName!! }
 

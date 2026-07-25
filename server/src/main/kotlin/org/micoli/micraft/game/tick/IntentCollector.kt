@@ -68,6 +68,15 @@ class IntentCollector(
                             log.error(
                                 "handleSpell failed for {}: {}", session.id.take(8), it.message, it)
                         }
+                is ClientMessage.CastAoeSpell ->
+                    runCatching { spellProcessor?.handleCastAoeSpell(session, intent) }
+                        .onFailure {
+                            log.error(
+                                "handleCastAoeSpell failed for {}: {}",
+                                session.id.take(8),
+                                it.message,
+                                it)
+                        }
                 else -> {}
             }
         }

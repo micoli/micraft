@@ -110,4 +110,13 @@ sealed class ClientMessage {
     @ProtoId(18) @Serializable data class RunMacroContent(val script: String) : ClientMessage()
 
     @ProtoId(19) @Serializable data class UseSpell(val spellId: String) : ClientMessage()
+
+    @ProtoId(20)
+    @Serializable
+    data class CastAoeSpell(
+        val spellId: String,
+        val targetX: Float,
+        val targetY: Float,
+        val targetZ: Float,
+    ) : ClientMessage()
 }

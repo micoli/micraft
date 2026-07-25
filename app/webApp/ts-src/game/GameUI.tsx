@@ -230,6 +230,7 @@ export function GameUI() {
               manaCost: parseInt(v.manaCost ?? "0"),
               rageCost: parseInt(v.rageCost ?? "0"),
               cooldownMs: parseInt(v.cooldownMs ?? "0"),
+              aoeRadius: parseFloat(v.aoeRadius ?? "0"),
             },
           ]),
         );

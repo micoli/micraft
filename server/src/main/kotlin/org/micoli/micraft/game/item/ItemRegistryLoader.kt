@@ -44,9 +44,10 @@ class ItemRegistryLoader(
                             originalText, yamlMapSection(mergedEntries(node), node)))
                 }
                 .onFailure {
-                    if (!originalText.isYamlEffectivelyEmpty()) log.warn(
-                        "items.yaml has unparseable structure, leaving file untouched: {}",
-                        it.message)
+                    if (!originalText.isYamlEffectivelyEmpty())
+                        log.warn(
+                            "items.yaml has unparseable structure, leaving file untouched: {}",
+                            it.message)
                 }
         }
         validateYamlConfig(path, "items.schema.json")

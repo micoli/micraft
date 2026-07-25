@@ -97,9 +97,10 @@ fun loadKeyBindings(
                         originalText, keyBindingsSection(defaultSections, node)))
             }
             .onFailure {
-                if (!originalText.isYamlEffectivelyEmpty()) keybindingLog.warn(
-                    "keybindings.yaml has unparseable structure, leaving file untouched: {}",
-                    it.message)
+                if (!originalText.isYamlEffectivelyEmpty())
+                    keybindingLog.warn(
+                        "keybindings.yaml has unparseable structure, leaving file untouched: {}",
+                        it.message)
             }
     }
     return buildMap { for ((_, actions) in sections) putAll(actions) }

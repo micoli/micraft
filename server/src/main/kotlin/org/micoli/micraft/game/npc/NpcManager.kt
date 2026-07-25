@@ -58,11 +58,14 @@ class NpcManager(
     private val adminListeners = CopyOnWriteArrayList<suspend (String) -> Unit>()
 
     fun addAdminListener(listener: suspend (String) -> Unit) = adminListeners.add(listener)
+
     fun removeAdminListener(listener: suspend (String) -> Unit) = adminListeners.remove(listener)
 
     private suspend fun notifyAdmins(json: String) {
         for (l in adminListeners) {
-            try { l(json) } catch (_: Exception) {}
+            try {
+                l(json)
+            } catch (_: Exception) {}
         }
     }
 
@@ -224,7 +227,8 @@ class NpcManager(
                 }
             }
         }
-        notifyAdmins("""{"type":"npcSpawned","id":"$id","name":${name.adminJson()},"npcType":${type.adminJson()},"x":${pos.x},"y":${pos.y},"z":${pos.z},"yaw":0,"currentHp":$spawnMaxHp,"maxHp":$spawnMaxHp,"isDead":false}""")
+        notifyAdmins(
+            """{"type":"npcSpawned","id":"$id","name":${name.adminJson()},"npcType":${type.adminJson()},"x":${pos.x},"y":${pos.y},"z":${pos.z},"yaw":0,"currentHp":$spawnMaxHp,"maxHp":$spawnMaxHp,"isDead":false}""")
         log.debug(
             "NPC spawned: {} ({}) lv{} at ({},{},{})",
             name,
@@ -292,7 +296,8 @@ class NpcManager(
                         }
                     }
                 }
-                notifyAdmins("""{"type":"npcUpdate","id":"${stateWithAggro.id}","x":${stateWithAggro.pos.x},"y":${stateWithAggro.pos.y},"z":${stateWithAggro.pos.z},"yaw":${stateWithAggro.yaw},"currentHp":${stateWithAggro.currentHp},"maxHp":${stateWithAggro.maxHp},"isDead":${instance.isDead}}""")
+                notifyAdmins(
+                    """{"type":"npcUpdate","id":"${stateWithAggro.id}","x":${stateWithAggro.pos.x},"y":${stateWithAggro.pos.y},"z":${stateWithAggro.pos.z},"yaw":${stateWithAggro.yaw},"currentHp":${stateWithAggro.currentHp},"maxHp":${stateWithAggro.maxHp},"isDead":${instance.isDead}}""")
             }
         }
     }
@@ -474,7 +479,8 @@ class NpcManager(
         val maxHp = NpcHpCalculator.computeMaxHp(instance.definition, instance.instanceLevel)
         instance.state = instance.state.copy(currentHp = newHp, maxHp = maxHp)
         broadcast(ServerMessage.HealthUpdate(npcId, true, newHp, maxHp))
-        notifyAdmins("""{"type":"healthUpdate","id":"$npcId","currentHp":$newHp,"maxHp":$maxHp,"isDead":${newHp <= 0},"attackerId":"$attackerId"}""")
+        notifyAdmins(
+            """{"type":"healthUpdate","id":"$npcId","currentHp":$newHp,"maxHp":$maxHp,"isDead":${newHp <= 0},"attackerId":"$attackerId"}""")
 
         if (newHp <= 0) {
             log.info("NPC {} killed", instance.state.name)
@@ -488,6 +494,16 @@ class NpcManager(
         val instance = npcs[npcId] ?: return
         val effect = levelDef.statusEffect ?: return
         val durationSec = levelDef.durationSec ?: effect.durationSec
+        applyStatusEffectDirectly(npcId, effect, durationSec, now)
+    }
+
+    fun applyStatusEffectDirectly(
+        npcId: String,
+        effect: StatusEffect,
+        durationSec: Float,
+        now: Long
+    ) {
+        val instance = npcs[npcId] ?: return
         val expiry = now + (durationSec * 1000).toLong()
         val idx = instance.activeEffects.indexOfFirst { it.effect::class == effect::class }
         if (idx >= 0) instance.activeEffects[idx] = ActiveStatusEffect(effect, expiry)
@@ -572,7 +588,8 @@ class NpcManager(
                             sessions.firstOrNull { session ->
                                 if (session.isDowned) return@firstOrNull false
                                 val playerLevel = session.characterData?.level ?: 1
-                                if (abs(playerLevel - instance.instanceLevel) > 5) return@firstOrNull false
+                                if (abs(playerLevel - instance.instanceLevel) > 5)
+                                    return@firstOrNull false
                                 val dx = session.state.pos.x - npcPos.x
                                 val dy = session.state.pos.y - npcPos.y
                                 val dz = session.state.pos.z - npcPos.z

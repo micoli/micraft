@@ -108,7 +108,8 @@ fun loadServerConfig(path: Path, resourcesPath: Path): ServerConfig {
     }
     val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
     if (node == null) {
-        if (!originalText.isYamlEffectivelyEmpty()) serverConfigLog.warn("server.yaml has unparseable structure, leaving file untouched")
+        if (!originalText.isYamlEffectivelyEmpty())
+            serverConfigLog.warn("server.yaml has unparseable structure, leaving file untouched")
         return default
     }
     val decoded =

@@ -44,9 +44,10 @@ class RecipeRegistryLoader(
                             originalText, yamlMapSection(mergedEntries(node), node)))
                 }
                 .onFailure {
-                    if (!originalText.isYamlEffectivelyEmpty()) recipeLog.warn(
-                        "recipes.yaml has unparseable structure, leaving file untouched: {}",
-                        it.message)
+                    if (!originalText.isYamlEffectivelyEmpty())
+                        recipeLog.warn(
+                            "recipes.yaml has unparseable structure, leaving file untouched: {}",
+                            it.message)
                 }
         }
         validateYamlConfig(path, "recipes.schema.json")

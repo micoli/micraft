@@ -47,7 +47,8 @@ class WeatherConfig(
         }
         val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
         if (node == null) {
-            if (!originalText.isYamlEffectivelyEmpty()) log.warn("weather.yaml has unparseable structure, leaving file untouched")
+            if (!originalText.isYamlEffectivelyEmpty())
+                log.warn("weather.yaml has unparseable structure, leaving file untouched")
             return default
         }
         val decoded =

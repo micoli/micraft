@@ -236,9 +236,15 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
 
                         val breakJob = launch {
                             for (msg in outMessages) {
-                                val bytes = ClientMessageCodec.encode(msg)
-                                send(Frame.Binary(true, bytes))
-                                networkStats.bytesOut += bytes.size
+                                runCatching {
+                                        val bytes = ClientMessageCodec.encode(msg)
+                                        send(Frame.Binary(true, bytes))
+                                        networkStats.bytesOut += bytes.size
+                                    }
+                                    .onFailure { e ->
+                                        jsError(
+                                            "breakJob send error [${msg::class.simpleName}]: ${e::class.simpleName}: ${e.message}")
+                                    }
                             }
                         }
 
