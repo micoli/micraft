@@ -55,6 +55,10 @@ data class NpcAdminDto(
     val parentIds: List<String>,
     val skills: List<String>,
     val ageGameDays: Double?,
+    val hunger: Double?,
+    val gestationRemainingDays: Double?,
+    val lastReproductionDay: Double?,
+    val motherLevel: Int?,
 )
 
 @Serializable
@@ -559,6 +563,10 @@ class AdminController(
                             parentIds = ad?.parentIds?.toList() ?: emptyList(),
                             skills = npc.definition.attacks.map { "${it.attackId} lv${it.level}" },
                             ageGameDays = ad?.ageGameDays,
+                            hunger = ad?.hunger,
+                            gestationRemainingDays = ad?.gestationRemainingDays,
+                            lastReproductionDay = ad?.lastReproductionDay,
+                            motherLevel = ad?.motherLevel,
                         )
                     }
                 call.respondText(

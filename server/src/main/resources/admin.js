@@ -82275,12 +82275,50 @@ ${end.comment}` : end.comment;
           "\u2026"
         ] }, pid)) })
       ] }),
-      npc.ageGameDays != null && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1", children: "Animal" }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("p", { className: "text-xs text-white", children: [
-          "Age: ",
-          npc.ageGameDays.toFixed(1),
-          " game days"
+      npc.ageGameDays != null && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "col-span-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-2", children: "Animal State" }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "grid grid-cols-2 gap-x-8 gap-y-1.5", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: "Age" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-xs text-white", children: [
+              npc.ageGameDays.toFixed(1),
+              " game days"
+            ] })
+          ] }),
+          npc.hunger != null && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: "Hunger" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-1.5 flex-1", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex-1 h-1.5 bg-[#2E3A4E] rounded-full overflow-hidden max-w-[80px]", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+                "div",
+                {
+                  className: `h-full rounded-full ${npc.hunger > 0.6 ? "bg-emerald-500" : npc.hunger > 0.3 ? "bg-yellow-500" : "bg-red-500"}`,
+                  style: { width: `${Math.round(npc.hunger * 100)}%` }
+                }
+              ) }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-[10px] text-[#8A99AF]", children: [
+                Math.round(npc.hunger * 100),
+                "%"
+              ] })
+            ] })
+          ] }),
+          npc.motherLevel != null && npc.motherLevel > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: "Mother level" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-xs text-white", children: npc.motherLevel })
+          ] }),
+          npc.gestationRemainingDays != null && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: "Gestation" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-xs text-amber-400", children: [
+              npc.gestationRemainingDays.toFixed(1),
+              " days left"
+            ] })
+          ] }),
+          npc.lastReproductionDay != null && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: "Last repro." }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-xs text-[#8A99AF]", children: [
+              "day ",
+              npc.lastReproductionDay.toFixed(1)
+            ] })
+          ] })
         ] })
       ] })
     ] });

@@ -87,9 +87,46 @@ function Detail({ npc }: { npc: NpcAdminDto }) {
       )}
 
       {npc.ageGameDays != null && (
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1">Animal</p>
-          <p className="text-xs text-white">Age: {npc.ageGameDays.toFixed(1)} game days</p>
+        <div className="col-span-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-2">Animal State</p>
+          <div className="grid grid-cols-2 gap-x-8 gap-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">Age</span>
+              <span className="text-xs text-white">{npc.ageGameDays.toFixed(1)} game days</span>
+            </div>
+            {npc.hunger != null && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">Hunger</span>
+                <div className="flex items-center gap-1.5 flex-1">
+                  <div className="flex-1 h-1.5 bg-[#2E3A4E] rounded-full overflow-hidden max-w-[80px]">
+                    <div
+                      className={`h-full rounded-full ${npc.hunger > 0.6 ? "bg-emerald-500" : npc.hunger > 0.3 ? "bg-yellow-500" : "bg-red-500"}`}
+                      style={{ width: `${Math.round(npc.hunger * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-[#8A99AF]">{Math.round(npc.hunger * 100)}%</span>
+                </div>
+              </div>
+            )}
+            {npc.motherLevel != null && npc.motherLevel > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">Mother level</span>
+                <span className="text-xs text-white">{npc.motherLevel}</span>
+              </div>
+            )}
+            {npc.gestationRemainingDays != null && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">Gestation</span>
+                <span className="text-xs text-amber-400">{npc.gestationRemainingDays.toFixed(1)} days left</span>
+              </div>
+            )}
+            {npc.lastReproductionDay != null && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">Last repro.</span>
+                <span className="text-xs text-[#8A99AF]">day {npc.lastReproductionDay.toFixed(1)}</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

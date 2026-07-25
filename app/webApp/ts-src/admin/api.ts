@@ -63,6 +63,10 @@ export interface NpcAdminDto {
   parentIds: string[];
   skills: string[];
   ageGameDays: number | null;
+  hunger: number | null;
+  gestationRemainingDays: number | null;
+  lastReproductionDay: number | null;
+  motherLevel: number | null;
 }
 
 export interface WorldStatsDto {

@@ -387,6 +387,9 @@
   .z-\[2000\] {
     z-index: 2000;
   }
+  .col-span-2 {
+    grid-column: span 2 / span 2;
+  }
   .container {
     width: 100%;
     @media (width >= 40rem) {
@@ -747,6 +750,9 @@
   .max-w-\[48px\] {
     max-width: 48px;
   }
+  .max-w-\[80px\] {
+    max-width: 80px;
+  }
   .max-w-\[95vw\] {
     max-width: 95vw;
   }
@@ -999,6 +1005,9 @@
   }
   .gap-y-0\.5 {
     row-gap: calc(var(--spacing) * 0.5);
+  }
+  .gap-y-1\.5 {
+    row-gap: calc(var(--spacing) * 1.5);
   }
   .gap-y-2 {
     row-gap: calc(var(--spacing) * 2);
