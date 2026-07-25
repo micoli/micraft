@@ -275,6 +275,7 @@ export function registerChunks(): Pick<
         vd.applyToMesh(mesh, false);
         mesh.material = materials[mk] ?? null;
         mesh.isPickable = false;
+        mesh.doNotSyncBoundingInfo = true;
         mesh.refreshBoundingInfo();
         mesh.freezeWorldMatrix();
         meshes.push(mesh);

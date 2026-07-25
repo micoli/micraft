@@ -72,6 +72,7 @@ class ChunkManager(private val scene: JsAny) {
     val loadedChunks = mutableSetOf<ChunkPos>()
     val chunkData = mutableMapOf<ChunkPos, Pair<Chunk, Int>>()
     private val pendingChunks = mutableListOf<Pair<Chunk, Int>>()
+    private var pendingChunksDirty = false
     private val pendingUnloads = mutableListOf<ChunkPos>()
     private var blockMaterials: JsAny? = null
     private var shadersEnabled = true
@@ -123,6 +124,7 @@ class ChunkManager(private val scene: JsAny) {
         }
         pendingChunks.removeAll { (c, _) -> c.pos == pos }
         pendingChunks.add(0, Pair(chunk, topY)) // front = higher priority
+        pendingChunksDirty = true
     }
 
     fun drainPendingChunks(
@@ -142,8 +144,11 @@ class ChunkManager(private val scene: JsAny) {
             if (ar == null) {
                 if (jsNow() >= deadline) break
                 if (pendingChunks.isEmpty()) break
-                pendingChunks.sortBy { (chunk, _) ->
-                    meshScore(chunk.pos.cx - playerCx, chunk.pos.cz - playerCz, yaw)
+                if (pendingChunksDirty) {
+                    pendingChunks.sortBy { (chunk, _) ->
+                        meshScore(chunk.pos.cx - playerCx, chunk.pos.cz - playerCz, yaw)
+                    }
+                    pendingChunksDirty = false
                 }
                 val (chunk, topY) = pendingChunks.removeAt(0)
                 chunkData[chunk.pos] = Pair(chunk, topY)

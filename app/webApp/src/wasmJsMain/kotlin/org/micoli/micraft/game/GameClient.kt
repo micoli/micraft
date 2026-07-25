@@ -138,7 +138,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     playerCx = currentPlayerCx,
                     playerCz = currentPlayerCz,
                     yaw = currentYaw.toDouble(),
-                    budgetMs = 4.0,
+                    budgetMs = if (isInitialLoading) 4.0 else 2.0,
                 )
                 chunkManager.drainOneMinimapPush()
             }
