@@ -22,8 +22,8 @@ import org.micoli.micraft.ui.HudData
 import org.micoli.micraft.ui.McUiState
 
 private const val PRED_DT = 16.0 / 1000.0
-private const val FLY_VERTICAL_SPEED = 8f
 private const val SNAP_THRESHOLD = 0.5
+private const val FLY_VERTICAL_SPEED = 8f
 private const val DEFAULT_RECONCILE_TOLERANCE_XZ = 0.5
 private const val DEFAULT_RECONCILE_TOLERANCE_Y = 0.99
 private const val STATS_WINDOW = 1000
@@ -491,8 +491,8 @@ class LocalPlayerController(
                 xzDistances.addCapped(distXZ)
             }
             isMovingXZ && distXZ > reconcileToleranceXz -> {
-                predX += diffX * 0.05
-                predZ += diffZ * 0.05
+                predX += diffX * 0.15
+                predZ += diffZ * 0.15
                 reconcileCountXz++
                 xzDistances.addCapped(distXZ)
             }

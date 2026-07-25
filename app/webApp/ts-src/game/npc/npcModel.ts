@@ -92,7 +92,7 @@ export function registerNpcModel(): Pick<
         ),
       ).then(() => {
         window.mcState.npcModelsReady = true;
-        console.log("[MiCraft] NPC models loaded:", Object.keys(window.mcState.npcBbmodels as NpcBbmodels));
+        console.log("[MiCraft] NPC models loaded:", JSON.stringify(Object.keys(window.mcState.npcBbmodels as NpcBbmodels)));
       });
     },
 
