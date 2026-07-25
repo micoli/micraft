@@ -26,6 +26,7 @@ interface ParticleState {
   fallSpeed: number;
   spread: number;
   heightSpan: number;
+  skipFrame: boolean;
 }
 
 let rainParticles: ParticleState | null = null;
@@ -75,9 +76,9 @@ function initRainParticles(scene: Scene, count: number, color: [number, number, 
   }
 
   const matrices = new Float32Array(count * 16);
-  mesh.thinInstanceSetBuffer("matrix", matrices, 16);
+  mesh.thinInstanceSetBuffer("matrix", matrices, 16, false);
 
-  return { mesh, matrices, offsets, count, fallSpeed: 0.6, spread, heightSpan };
+  return { mesh, matrices, offsets, count, fallSpeed: 0.6, spread, heightSpan, skipFrame: false };
 }
 
 function initSnowParticles(scene: Scene, count: number): ParticleState {
@@ -97,19 +98,25 @@ function initSnowParticles(scene: Scene, count: number): ParticleState {
   }
 
   const matrices = new Float32Array(count * 16);
-  mesh.thinInstanceSetBuffer("matrix", matrices, 16);
+  mesh.thinInstanceSetBuffer("matrix", matrices, 16, false);
 
-  return { mesh, matrices, offsets, count, fallSpeed: 0.12, spread, heightSpan };
+  return { mesh, matrices, offsets, count, fallSpeed: 0.12, spread, heightSpan, skipFrame: false };
 }
 
 function updateParticles(state: ParticleState, px: number, py: number, pz: number): void {
+  // Skip every other frame — particles at 30fps are indistinguishable from 60fps
+  state.skipFrame = !state.skipFrame;
+  if (state.skipFrame) return;
+
   const { offsets, matrices, count, fallSpeed, spread, heightSpan } = state;
   const bottom = -10;
-  const driftX = (Math.random() - 0.5) * 0.02;
-  const driftZ = (Math.random() - 0.5) * 0.02;
+  // Compensate fallSpeed for 2x frame skip
+  const fs = fallSpeed * 2;
+  const driftX = (Math.random() - 0.5) * 0.04;
+  const driftZ = (Math.random() - 0.5) * 0.04;
 
   for (let i = 0; i < count; i++) {
-    offsets[i * 3 + 1] -= fallSpeed;
+    offsets[i * 3 + 1] -= fs;
     offsets[i * 3] += driftX;
     offsets[i * 3 + 2] += driftZ;
 
@@ -142,7 +149,7 @@ function updateParticles(state: ParticleState, px: number, py: number, pz: numbe
     matrices[base + 15] = 1;
   }
 
-  state.mesh.thinInstanceSetBuffer("matrix", matrices, 16);
+  state.mesh.thinInstanceBufferUpdated("matrix");
 }
 
 function hideParticles(state: ParticleState | null): void {
@@ -279,7 +286,7 @@ export function registerWeather(): Pick<McBindings, "setWeatherZones" | "updateW
         switch (zone.type) {
           case "RAIN": {
             if (!rainParticles) {
-              rainParticles = initRainParticles(scene, 2000, [0.7, 0.85, 1.0]);
+              rainParticles = initRainParticles(scene, 800, [0.7, 0.85, 1.0]);
             }
             rainParticles.mesh.setEnabled(true);
             updateParticles(rainParticles, px, py, pz);
@@ -287,7 +294,7 @@ export function registerWeather(): Pick<McBindings, "setWeatherZones" | "updateW
           }
           case "STORM": {
             if (!rainParticles) {
-              rainParticles = initRainParticles(scene, 3500, [0.6, 0.7, 0.9]);
+              rainParticles = initRainParticles(scene, 1200, [0.6, 0.7, 0.9]);
             }
             rainParticles.mesh.setEnabled(true);
             updateParticles(rainParticles, px, py, pz);
@@ -309,7 +316,7 @@ export function registerWeather(): Pick<McBindings, "setWeatherZones" | "updateW
           }
           case "SNOW": {
             if (!snowParticles) {
-              snowParticles = initSnowParticles(scene, 1500);
+              snowParticles = initSnowParticles(scene, 600);
             }
             snowParticles.mesh.setEnabled(true);
             updateParticles(snowParticles, px, py, pz);
