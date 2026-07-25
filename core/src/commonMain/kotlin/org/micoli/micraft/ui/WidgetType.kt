@@ -19,4 +19,5 @@ enum class WidgetType {
     AGGRO_INDICATORS,
     STATISTICS,
     QUEST_TRACKER,
+    BUFF_BAR,
 }

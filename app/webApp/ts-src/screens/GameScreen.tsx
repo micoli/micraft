@@ -31,6 +31,7 @@ import { AggroIndicators } from "../game/components/AggroIndicators";
 import { Statistics } from "../game/components/Statistics";
 import { QuestJournal } from "../game/components/QuestJournal";
 import { QuestTracker } from "../game/components/QuestTracker";
+import { BuffBar } from "../game/components/BuffBar";
 
 const resumePointerLock = () =>
   (
@@ -299,6 +300,7 @@ export function GameScreen() {
               layoutStyle={widgetStyle(activeLayout, "PLAYER_STATUS")}
             />
           )}
+          <BuffBar effects={state.activeEffects} layoutStyle={widgetStyle(activeLayout, "BUFF_BAR")} />
           <AggroIndicators
             npcProximity={state.npcProximity}
             layoutStyle={widgetStyle(activeLayout, "AGGRO_INDICATORS")}

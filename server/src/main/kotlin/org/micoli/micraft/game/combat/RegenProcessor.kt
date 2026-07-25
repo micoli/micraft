@@ -35,15 +35,15 @@ class RegenProcessor(
             if (session.isDowned) continue
 
             val armors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
-            val derived = DerivedStatsCalculator.compute(charData, armors)
             val classDef = config.classes[charData.characterClass.name]
             val hpFormula = classDef?.hpFormula ?: config.regen.default.hpFormula
             val manaFormula = classDef?.manaFormula ?: config.regen.default.manaFormula
             val rageFormula = classDef?.rageFormula ?: "0"
 
             val inCombat = session.combatState.targetId != null
-            val effects =
-                session.combatState.activeEffects.map { it.effect::class.simpleName ?: "" }
+            val effectNames =
+                session.combatState.activeEffects.map { it.effect::class.simpleName ?: "" }.toSet()
+            val derived = DerivedStatsCalculator.compute(charData, armors, effectNames)
             val ctx =
                 MapContext(
                     mapOf(
@@ -65,7 +65,7 @@ class RegenProcessor(
                         "level" to charData.level,
                         "hpRegenPerSec" to derived.hpRegenPerSec,
                         "manaRegenPerSec" to derived.manaRegenPerSec,
-                        "activeEffects" to effects,
+                        "activeEffects" to effectNames.toList(),
                         "dt" to dt,
                     ))
 

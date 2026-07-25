@@ -3,6 +3,7 @@ package org.micoli.micraft.command
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.GroupsConfig
+import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.chat.ChatChannelManager
@@ -51,4 +52,5 @@ data class CommandContext(
     val sendStatusUpdate: (suspend (PlayerSession) -> Unit)? = null,
     val namedPoints: () -> Map<String, Vec3> = { emptyMap() },
     val questManager: QuestManager? = null,
+    val applyBuff: (suspend (PlayerSession, StatusEffect, Float) -> Unit)? = null, // null in tests
 )

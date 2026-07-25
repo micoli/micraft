@@ -5,6 +5,7 @@ import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.auth.GroupsConfig
+import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.config.ConfigRegistry
@@ -37,6 +38,7 @@ data class CommandContextClosures(
     val reloadNpcs: (suspend () -> Unit)?,
     val reloadRbac: (() -> Unit)?,
     val armorRegistry: () -> Map<String, ArmorDefinition>,
+    val applyBuff: suspend (PlayerSession, StatusEffect, Float) -> Unit,
 )
 
 @Module
@@ -92,6 +94,7 @@ class CommandContextModule {
             tradeManager = tradeManager,
             questManager = questManager,
             namedPoints = { cavernPoints + staircasePoints },
+            applyBuff = closures.applyBuff,
         )
     }
 }

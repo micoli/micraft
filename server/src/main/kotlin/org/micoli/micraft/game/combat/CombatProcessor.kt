@@ -550,6 +550,20 @@ class CombatProcessor(
         else target.combatState.activeEffects.add(ActiveStatusEffect(effect, expiry))
         target.send(
             ServerMessage.StatusEffectUpdate(target.id, target.combatState.activeEffects.toList()))
+
+        val charData = target.characterData ?: return
+        if (effect is StatusEffect.HpBoost || effect is StatusEffect.ManaBoost) {
+            val armors = target.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
+            val effectNames =
+                target.combatState.activeEffects.map { it.effect::class.simpleName ?: "" }.toSet()
+            val derived = DerivedStatsCalculator.compute(charData, armors, effectNames)
+            val updated =
+                if (effect is StatusEffect.HpBoost) charData.copy(currentHp = derived.maxHp)
+                else charData.copy(currentMana = derived.maxMana)
+            target.characterData = updated
+            broadcastHealthUpdate(target.id, false, updated.currentHp, derived.maxHp)
+            sendStatusUpdate(target, updated, derived)
+        }
     }
 
     private suspend fun broadcastHealthUpdate(

@@ -71,6 +71,7 @@ const initial: UiState = {
   quests: {},
   questJournalOpen: false,
   questTrackerVisible: false,
+  activeEffects: [],
 };
 
 function RouterBridge({

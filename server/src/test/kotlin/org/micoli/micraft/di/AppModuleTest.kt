@@ -28,6 +28,7 @@ class AppModuleTest {
                         reloadNpcs = null,
                         reloadRbac = null,
                         armorRegistry = { emptyMap() },
+                        applyBuff = { _, _, _ -> },
                     )
                 }
             }

@@ -163,6 +163,17 @@ val WIDGET_REGISTRY: List<WidgetRegistryEntry> =
             editorLabel = "Quest Tracker",
             editorColor = "rgba(218,165,32,0.75)",
             flow = true),
+        WidgetRegistryEntry(
+            WidgetType.BUFF_BAR,
+            x = 8,
+            y = 6,
+            w = 10,
+            h = 4,
+            minW = 4,
+            minH = 2,
+            editorLabel = "Buff Bar",
+            editorColor = "rgba(180,60,180,0.75)",
+            flow = true),
     )
 
 val DEFAULT_WIDGETS: List<LayoutWidget> =

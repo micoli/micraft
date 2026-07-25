@@ -19,6 +19,11 @@ import {
   TradeData,
 } from "./types";
 
+export interface ActiveEffect {
+  name: string;
+  expiresAtMs: number;
+}
+
 export interface UiState {
   hud: HudData | null;
   notif: { msg: string; key: number } | null;
@@ -65,6 +70,7 @@ export interface UiState {
   quests: Record<string, QuestProgress>;
   questJournalOpen: boolean;
   questTrackerVisible: boolean;
+  activeEffects: ActiveEffect[];
 }
 
 const ingameMapRegistry = {
@@ -241,7 +247,13 @@ const gameRegistry = {
     ...state,
     npcProximity: payload.data,
   }),
-  status_effect_update: (state: UiState, _payload: { data: unknown }) => state,
+  status_effect_update: (
+    state: UiState,
+    payload: { data: { effects: Array<{ effect: string; expiresAtMs: number }> } },
+  ) => ({
+    ...state,
+    activeEffects: payload.data.effects.map((e) => ({ name: e.effect, expiresAtMs: e.expiresAtMs })),
+  }),
   player_downed: (state: UiState, _payload: { playerId: string }) => ({ ...state, playerDowned: true }),
   player_respawned: (state: UiState, payload: { data: { currentHp: number; currentMana: number } }) => {
     const { currentHp, currentMana } = payload.data;

@@ -64,7 +64,8 @@ class StatusEffectProcessor(
 
             if (hpDelta != 0f && !(hpDelta < 0 && session.state.godMode)) {
                 val armors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
-                val derived = DerivedStatsCalculator.compute(charData, armors)
+                val activeEffectNames = effects.map { it.effect::class.simpleName ?: "" }.toSet()
+                val derived = DerivedStatsCalculator.compute(charData, armors, activeEffectNames)
                 val pending = (pendingDotDamage[session.id] ?: 0f) - hpDelta
                 val intDamage = pending.toInt()
                 pendingDotDamage[session.id] = pending - intDamage

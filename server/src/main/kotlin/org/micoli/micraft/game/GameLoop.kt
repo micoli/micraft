@@ -397,6 +397,10 @@ class GameLoop(
             reloadNpcs = { npcManager.reloadDefinitions(npcRegistryLoader.reload()) },
             reloadRbac = reloadRbac,
             armorRegistry = { armorRegistry },
+            applyBuff = { session, effect, durationSec ->
+                combatProcessor.applyStatusEffectTo(
+                    session, effect, durationSec, System.currentTimeMillis())
+            },
         )
 
     private fun buildDefaultCommandContext(closures: CommandContextClosures): CommandContext =
@@ -430,10 +434,15 @@ class GameLoop(
             tradeManager = tradeManager,
             questManager = questManager,
             clearAccumulators = regenProcessor::clearAccumulators,
+            applyBuff = closures.applyBuff,
             sendStatusUpdate = sendStatusUpdate@{ session ->
                     val charData = session.characterData ?: return@sendStatusUpdate
                     val armors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
-                    val derived = DerivedStatsCalculator.compute(charData, armors)
+                    val effectNames =
+                        session.combatState.activeEffects
+                            .map { it.effect::class.simpleName ?: "" }
+                            .toSet()
+                    val derived = DerivedStatsCalculator.compute(charData, armors, effectNames)
                     session.send(
                         combatProcessor.makeStatusUpdate(
                             charData,
