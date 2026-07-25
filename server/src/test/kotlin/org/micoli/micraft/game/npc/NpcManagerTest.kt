@@ -488,4 +488,67 @@ class NpcManagerTest {
         m.tickAggro(listOf(session), fakeCombatProcessor(m))
         assertNull(instance.aggroTarget, "downed player should not be aggroed")
     }
+
+    @Test
+    fun tickAggro_playerLevelFarAboveNpc_doesNotAggro() = runBlocking {
+        val session = testSession(id = "p1", pos = Vec3(5f, 5f, 0f))
+        session.characterData =
+            CharacterData(
+                id = "p1",
+                name = "Alice",
+                characterClass = CharacterClass.WARRIOR,
+                baseStats = BaseStats(con = 10, wis = 10),
+                currentHp = 100,
+                currentMana = 0,
+                level = 10,
+            )
+        val (m, _) =
+            testNpcManager(
+                mapOf("ZOMBIE" to aggressiveDef(aggroRange = 10f)), nearbySession = session)
+        val instance = m.spawnNpc("Z", "ZOMBIE", Vec3(0f, 5f, 0f), instanceLevel = 1)
+        m.tickAggro(listOf(session), fakeCombatProcessor(m))
+        assertNull(instance.aggroTarget, "player 9 levels above NPC should not be aggroed (diff=9 > 5)")
+    }
+
+    @Test
+    fun tickAggro_npcLevelFarAbovePlayer_doesNotAggro() = runBlocking {
+        val session = testSession(id = "p1", pos = Vec3(5f, 5f, 0f))
+        session.characterData =
+            CharacterData(
+                id = "p1",
+                name = "Alice",
+                characterClass = CharacterClass.WARRIOR,
+                baseStats = BaseStats(con = 10, wis = 10),
+                currentHp = 100,
+                currentMana = 0,
+                level = 1,
+            )
+        val (m, _) =
+            testNpcManager(
+                mapOf("ZOMBIE" to aggressiveDef(aggroRange = 10f)), nearbySession = session)
+        val instance = m.spawnNpc("Z", "ZOMBIE", Vec3(0f, 5f, 0f), instanceLevel = 8)
+        m.tickAggro(listOf(session), fakeCombatProcessor(m))
+        assertNull(instance.aggroTarget, "NPC 7 levels above player should not aggro (diff=7 > 5)")
+    }
+
+    @Test
+    fun tickAggro_levelDifferenceExactlyFive_aggros() = runBlocking {
+        val session = testSession(id = "p1", pos = Vec3(5f, 5f, 0f))
+        session.characterData =
+            CharacterData(
+                id = "p1",
+                name = "Alice",
+                characterClass = CharacterClass.WARRIOR,
+                baseStats = BaseStats(con = 10, wis = 10),
+                currentHp = 100,
+                currentMana = 0,
+                level = 6,
+            )
+        val (m, _) =
+            testNpcManager(
+                mapOf("ZOMBIE" to aggressiveDef(aggroRange = 10f)), nearbySession = session)
+        val instance = m.spawnNpc("Z", "ZOMBIE", Vec3(0f, 5f, 0f), instanceLevel = 1)
+        m.tickAggro(listOf(session), fakeCombatProcessor(m))
+        assertEquals(session.id, instance.aggroTarget, "level diff=5 (not > 5) should still aggro")
+    }
 }

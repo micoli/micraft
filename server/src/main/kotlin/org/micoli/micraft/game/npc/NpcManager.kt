@@ -9,6 +9,7 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import kotlin.math.abs
 import kotlinx.serialization.builtins.ListSerializer
 import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.AttackLevelDefinition
@@ -570,6 +571,8 @@ class NpcManager(
                         val inRange =
                             sessions.firstOrNull { session ->
                                 if (session.isDowned) return@firstOrNull false
+                                val playerLevel = session.characterData?.level ?: 1
+                                if (abs(playerLevel - instance.instanceLevel) > 5) return@firstOrNull false
                                 val dx = session.state.pos.x - npcPos.x
                                 val dy = session.state.pos.y - npcPos.y
                                 val dz = session.state.pos.z - npcPos.z
