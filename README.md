@@ -33,33 +33,42 @@
 - **Player stances** — standing (speed 4.5, h 1.8) / sneaking (1.3, 1.5) / crawling (1.0, 0.6)
 - **Undo** — `/undo [N]` reverts last N block breaks including item collection
 - **Flying & speed** — toggleable fly mode and speed boost
+- **Crafting** — recipe panel (`/craft`), recipe unlocking (`/learnrecipe`), `RecipeRegistry` loaded from YAML; craft directly via `/docraft <recipeId> [count]`
+- **Lighting override** — `/light:on` boosts ambient light underground; `/light:off` restores natural darkness
+- **Explosion** — `/explode <radius>` destroys all blocks in a sphere (admin)
 
 ### Multiplayer & Server
 
 - **Server-authoritative** — client sends `MoveIntent`, server validates and replies `PlayerUpdate`
 - **Client-side prediction** — `GameClient` predicts XZ locally at ~60 fps and soft-corrects toward server
 - **Dynamic chunk streaming** — view radius 3 chunks, forward bias 7 chunks
-- **Chat system** — multi-channel with `/createchat`, `/join`, `/leave`, `/talk` (private)
-- **Weather zones** — rain, storm, snow, fog spawned dynamically with drift and radius
-- **NPC entities** — 4 types (SELLER, BLACK_SMITH, GOAT, DUCK) with static, interactable, and random-wander behaviors
+- **Chat system** — multi-channel with `/createchat`, `/join`, `/leave`, `/talk` (private), proximity-based `around` channel (radius 64 blocks), combat log channel
+- **Weather zones** — rain, storm, snow, fog spawned dynamically with drift and radius; `/weather-forecast` shows active zones and distance
+- **NPC entities** — multiple types (SELLER, BLACK_SMITH, GOAT, DUCK, WOLF, CAT, BEAR, POLAR_BEAR, …) with static, interactable, random-wander, and hostile-aggro behaviors; Blockbench bbmodel animations with configurable walk-bone aliases
+- **Animal lifecycle** — age in game-days, hunger meter, gestation timer, reproduction cooldown, mother level; all fields tracked and visible in admin NPC panel
 
 ### Combat & RPG
 
-- **Attack system** — attacks and spells with cooldown tracking, resource checks, and draggable action bar (`AttackPanel`)
+- **RPG classes** — character classes with STR/DEX/INT/WIS/CON/CHA base stats, class resource (mana/rage/tokens), per-level attack and spell access, HP/mana/rage formulas configurable in `classes.yaml`; derived stats computed from base + class bonus + equipped armor bonuses
+- **Attack system** — attacks and spells with cooldown tracking, resource checks, and draggable action bar (`AttackPanel`); spell processor (`SpellProcessor`) runs alongside attack processor
+- **Status effects** — `StatusEffectProcessor` applies timed buffs/debuffs; HP/mana regeneration via `RegenProcessor`
 - **Combat target frame** — HP bar + target info overlay for the focused entity (`CombatTargetFrame`)
 - **Aggro indicators** — angular proximity indicators showing nearby hostile NPCs (`AggroIndicators`)
-- **XP / level** — experience bar and level display (`XpBar`)
-- **Player status** — HP, mana, stamina bars with downed/respawn overlay (`PlayerStatusBar`, `PlayerDownedOverlay`)
-- **Quest system** — quest journal (key `J`) and persistent on-screen quest tracker widget (`QuestJournal`, `QuestTracker`)
-- **Trade** — NPC trade dialog with buy/sell slots (`Trade`)
-- **Crafting** — recipe-based crafting panel (`Craft`)
+- **XP / level** — experience bar and level display (`XpBar`); `ExperienceProcessor` handles XP gains and level-up
+- **Player status** — HP, mana, stamina bars with downed/respawn overlay (`PlayerStatusBar`, `PlayerDownedOverlay`); `/resurect [playerName]` to revive
+- **God mode** — `/god:on` / `/god:off` makes the player immune to damage (admin)
+- **Rest** — `/rest` instantly restores rage and tokens to maximum
+- **Quest system** — quest journal (key `J`) and persistent on-screen quest tracker widget (`QuestJournal`, `QuestTracker`); KILL and FETCH quest types; `/quest [list|accept|abandon|status] [id]`
+- **Player-to-player trade** — `/trade <playerName>` initiates a trade session, `/tradeoffer <tradeId> <json>` updates the offer, `/tradeaccept` / `/tradecancel` to finalise or cancel
+- **Skin customisation** — `/skin <skinName>` to switch player skin; skins defined as bbmodel presets
 - **Statistics** — toggleable performance and game-stats overlay
 
 ### Character
 
 - **Character screen** — armor equip/unequip per slot with 3-D player model preview (key `Y`, or Pause → Character)
-- **Character creation** — name + skin selection at first login (`CharacterCreationScreen`, `CharacterRPGCreationScreen`)
+- **Character creation** — name + skin selection at first login (`CharacterCreationScreen`, `CharacterRPGCreationScreen`); `/createcharacter` in-game; `/skiprpg` to opt out of the RPG system entirely
 - **Character selection** — choose or create a character on login (`CharacterSelectionScreen`)
+- **Character sheet** — `/character` shows current class, level, XP, base stats, HP/mana/rage, and equipped armor bonuses
 
 ### Pages
 
@@ -67,16 +76,20 @@
 |-----|---------|
 | `/` | Game client (Kotlin/Wasm + BabylonJS) |
 | `/map` | Live top-down SVG world map — toggleable layers (biome borders, zone names, contours, vegetation, houses, roads, chunks, weather, staircases, players, NPCs), player/NPC follow mode, zoom, fit-all |
-| `/admin` | Admin panel — server status (TPS, connected players, loaded chunks, game time, network, CPU), user management, player list, live config editor, world browser |
+| `/admin` | Admin panel — 7 pages: **Status** (TPS, connected players, loaded chunks, game time control, network, heap, CPU; server restart button), **Users** (create/update/delete local auth accounts, group assignment), **Players** (list, keybindings, preferences, RPG stats, rename), **NPCs** (live WebSocket feed with filter by type/zone/level/gender/aggro; detail panel with animal state: age, hunger, gestation, reproduction), **Classes** (RPG class definitions and per-level attack/spell access), **Worlds** (browser with seed/chunk count/creation date; create new world), **Config** (live YAML editor with JSON Schema validation) |
 
 ### Infrastructure
 
 - **Auth** — three modes: `none`, `local` (bcrypt), `oauth` (Google Authorization Code)
+- **RBAC** — group-based permissions; groups assigned via `/rbac:setgroup` / `/rbac:removegroup`; command-level `permission` field gated by session groups; disabled-commands per player stored in player state
 - **i18n** — English + French, hot-reloadable via `/reload`
-- **Plugin system** — `PluginCommand` interface; plugins discovered at runtime via ClassGraph
+- **Plugin system** — `PluginCommand` interface; plugins discovered at runtime via ClassGraph; plugins can register tick handlers and commands; UUID collision detection at startup
+- **Macro system** — `MacroExecutor` evaluates scripted macro sequences; macros accessible via `MacrosController` HTTP routes
+- **Screenshot** — `ScreenshotController` exposes a screenshot endpoint
 - **UI layout editor** — move/resize widgets on a 48×48 grid, persisted per player
 - **Shaders** — ambient occlusion, directional shading, fog toggle via `/shaders`
-- **World persistence** — chunks saved as gzip binary, players as JSON
+- **Metrics** — `MetricsController` exposes server performance metrics (heap, non-heap, tick counters, liquid/vegetation estimates)
+- **World persistence** — chunks saved as gzip binary, players as JSON; NPCs and vegetation state flushed every 600 ticks
 
 ---
 
@@ -216,29 +229,55 @@ stateDiagram-v2
 
 | Command | Usage | Description | Options / Autocomplete |
 |---------|-------|-------------|------------------------|
-| `/adduser` | `/adduser <email> <password> [displayName]` | Add a local auth user. Usage: /adduser <email> <password> [displayName] | — |
+| `/adduser` | `/adduser <email> <password> [displayName]` | Add a local auth user. (admin) | — |
+| `/character` | `/character` | Show your RPG character sheet. | — |
 | `/codex` | `/codex` | Opens the codex (blocks, items, bestiary). | — |
 | `/config` | `/config <get\|set> <key> [value]` | Get or set a runtime config value. | — |
-| `/config:reload` | `/config:reload` | Reloads block or NPC definitions from resource files. | block, npc |
-| `/createchat` | `/createChat <channelName>` | Create a new chat channel. | — |
-| `/disconnect` | `/disconnect` | Déconnecte le joueur courant. | — |
-| `/give` | `/give <itemType> [N]` | Give items to yourself. | dynamic |
+| `/config:reload` | `/config:reload` | Reloads block, NPC, or RBAC definitions from resource files. (admin) | block, npc, rbac |
+| `/craft` | `/craft` | Opens the crafting window. | — |
+| `/createchat` | `/createchat <channelName>` | Create a new chat channel. | — |
+| `/createcharacter` | `/createcharacter` | Create your RPG character (first login). | — |
+| `/disconnect` | `/disconnect` | Disconnects the current player. | — |
+| `/docraft` | `/docraft <recipeId> [count]` | Crafts a recipe directly. | dynamic |
+| `/equip` | `/equip <armorName>` | Equip an armor piece. | dynamic |
+| `/explode` | `/explode <radius>` | Destroy all blocks in a sphere around the player. (admin) | — |
+| `/give` | `/give <itemType> [N]` | Give items to yourself. (admin) | dynamic |
+| `/god:on` | `/god:on` | Enable god mode (immune to damage). (admin) | — |
+| `/god:off` | `/god:off` | Disable god mode. (admin) | — |
 | `/help` | `/help [command]` | Lists available commands. | — |
 | `/join` | `/join <channelName>` | Join a chat channel. | — |
 | `/lang` | `/lang [locale]` | Changes your language preference. | — |
 | `/layout` | `/layout <name>` | Switches to a named layout. | — |
 | `/layouts` | `/layouts` | Opens the layout editor. | — |
+| `/learnrecipe` | `/learnrecipe <recipeId>` | Teach a recipe to the player. (admin) | dynamic |
 | `/leave` | `/leave <channelName>` | Leave a chat channel. | — |
+| `/light:on` | `/light:on` | Boosts ambient light underground (cavern lighting override). | — |
+| `/light:off` | `/light:off` | Restores natural cavern darkness. | — |
+| `/map` | `/map` | Toggles the biome map overlay. | — |
 | `/preferences` | `/preferences` | Opens the preferences panel. | — |
-| `/pump` | `/pump` | Remove all connected liquid blocks in sight. | — |
+| `/pump` | `/pump` | Remove all connected liquid blocks in sight. (admin) | — |
+| `/quest` | `/quest [list\|accept\|abandon\|status] [id]` | Manage your quests. | — |
+| `/rbac:listgroups` | `/rbac:listgroups` | List all groups and their permissions. (admin) | — |
+| `/rbac:setgroup` | `/rbac:setgroup <email> <group>` | Add a group to a user. (admin) | — |
+| `/rbac:removegroup` | `/rbac:removegroup <email> <group>` | Remove a group from a user. (admin) | — |
 | `/refetch` | `/refetch` | Reloads all chunks around the player. | — |
-| `/reload` | `/reload` | Reloads configuration files without restarting the server. | resources/blocks/*.yaml — block properties + drop tables, biomes.yaml — biome definitions, i18n/*.yaml — translations |
+| `/reload` | `/reload` | Reloads configuration files without restarting the server. (admin) | resources/blocks/*.yaml, biomes.yaml, i18n/*.yaml |
+| `/rest` | `/rest` | Take a short rest: restore rage and tokens to maximum. | — |
+| `/resurect` | `/resurect [playerName]` | Resurrect a downed player (self if no name given). | — |
 | `/save` | `/save` | Saves the world and player state to disk. | — |
+| `/set` | `/set <hp\|mana> <playerName> <value>` | Set a player stat. (admin) | — |
 | `/shaders` | `/shaders [on\|off]` | Toggles visual shaders (ambient occlusion, directional shading, fog). | on, off |
-| `/spawn` | `/spawn <npc_model> [x y z]` | Spawn an NPC of the given model on the solid block you are looking at. (admin) | dynamic |
+| `/skiprpg` | `/skiprpg` | Opt out of the RPG system. | — |
+| `/skin` | `/skin <skinName>` | Changes your player skin. | dynamic |
+| `/spawn` | `/spawn <npc_model> [x y z]` | Spawn an NPC on the solid block you are looking at. (admin) | dynamic |
 | `/talk` | `/talk <playerName>` | Open a private chat with a player. | — |
-| `/time` | `/time [0-23]` | Shows or sets the in-game time. | dynamic |
+| `/time` | `/time [0-23]` | Shows or sets the in-game time. (admin) | dynamic |
+| `/trade` | `/trade <playerName>` | Initiate a trade with another player. | dynamic |
+| `/tradeaccept` | `/tradeaccept <tradeId>` | Accept the current trade offer. | — |
+| `/tradecancel` | `/tradecancel <tradeId>` | Cancel the current trade. | — |
+| `/tradeoffer` | `/tradeoffer <tradeId> <json>` | Update your trade offer (JSON map of itemType→count). | — |
 | `/undo` | `/undo [N]` | Undo the last N block breaks, restoring blocks and reversing item collection. | — |
+| `/unequip` | `/unequip <armorName>` | Remove an equipped armor piece. | dynamic |
 | `/water` | `/water [x y z]` | Place a water source on the solid block you are looking at (or x y z). (admin) | dynamic |
 | `/weather` | `/weather [rain\|storm\|snow\|fog\|none]` | Force a weather zone at your position or clear all zones. (admin) | rain, storm, snow, fog, none |
 | `/weather-forecast` | `/weather-forecast` | Shows active weather zones and their location. | — |
