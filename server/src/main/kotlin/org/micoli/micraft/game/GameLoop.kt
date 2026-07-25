@@ -472,6 +472,7 @@ class GameLoop(
     fun getWeatherZones() = weatherManager.getZones()
 
     fun getNpcInstances() = npcManager.getAll()
+    fun getNpcManager() = npcManager
 
     fun getWorldItemCount(): Int = worldItems.itemCount()
 

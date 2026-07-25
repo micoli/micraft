@@ -4,6 +4,7 @@ import com.charleskorn.kaml.Yaml
 import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.readText
@@ -52,6 +53,19 @@ class NpcManager(
     private val lastSentToPlayer = ConcurrentHashMap<String, ConcurrentHashMap<String, NpcState>>()
     private val pendingRespawns = ConcurrentHashMap<String, MutableList<PendingRespawn>>()
     private val broadCastNpcPositions = false
+
+    private val adminListeners = CopyOnWriteArrayList<suspend (String) -> Unit>()
+
+    fun addAdminListener(listener: suspend (String) -> Unit) = adminListeners.add(listener)
+    fun removeAdminListener(listener: suspend (String) -> Unit) = adminListeners.remove(listener)
+
+    private suspend fun notifyAdmins(json: String) {
+        for (l in adminListeners) {
+            try { l(json) } catch (_: Exception) {}
+        }
+    }
+
+    private fun String.adminJson() = "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
     fun loadDefinitions(defs: Map<String, NpcDefinition>) {
         definitions = defs
@@ -209,6 +223,7 @@ class NpcManager(
                 }
             }
         }
+        notifyAdmins("""{"type":"npcSpawned","id":"$id","name":${name.adminJson()},"npcType":${type.adminJson()},"x":${pos.x},"y":${pos.y},"z":${pos.z},"yaw":0,"currentHp":$spawnMaxHp,"maxHp":$spawnMaxHp,"isDead":false}""")
         log.debug(
             "NPC spawned: {} ({}) lv{} at ({},{},{})",
             name,
@@ -225,6 +240,7 @@ class NpcManager(
             val targets = getSessions().filter { lastSentToPlayer[it.id]?.containsKey(id) == true }
             lastSentToPlayer.values.forEach { it.remove(id) }
             targets.forEach { it.send(ServerMessage.NpcDespawned(id)) }
+            notifyAdmins("""{"type":"npcDespawned","id":"$id"}""")
             getSessions()
                 .filter { it.combatState.targetId == id && it.combatState.targetIsNpc }
                 .forEach { session ->
@@ -275,6 +291,7 @@ class NpcManager(
                         }
                     }
                 }
+                notifyAdmins("""{"type":"npcUpdate","id":"${stateWithAggro.id}","x":${stateWithAggro.pos.x},"y":${stateWithAggro.pos.y},"z":${stateWithAggro.pos.z},"yaw":${stateWithAggro.yaw},"currentHp":${stateWithAggro.currentHp},"maxHp":${stateWithAggro.maxHp},"isDead":${instance.isDead}}""")
             }
         }
     }
@@ -456,6 +473,7 @@ class NpcManager(
         val maxHp = NpcHpCalculator.computeMaxHp(instance.definition, instance.instanceLevel)
         instance.state = instance.state.copy(currentHp = newHp, maxHp = maxHp)
         broadcast(ServerMessage.HealthUpdate(npcId, true, newHp, maxHp))
+        notifyAdmins("""{"type":"healthUpdate","id":"$npcId","currentHp":$newHp,"maxHp":$maxHp,"isDead":${newHp <= 0},"attackerId":"$attackerId"}""")
 
         if (newHp <= 0) {
             log.info("NPC {} killed", instance.state.name)

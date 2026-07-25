@@ -4,6 +4,8 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
+import io.ktor.websocket.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
@@ -51,6 +53,7 @@ data class NpcAdminDto(
     val x: Float,
     val y: Float,
     val z: Float,
+    val yaw: Float,
     val zone: String,
     val parentIds: List<String>,
     val skills: List<String>,
@@ -559,6 +562,7 @@ class AdminController(
                             x = npc.state.pos.x,
                             y = npc.state.pos.y,
                             z = npc.state.pos.z,
+                            yaw = npc.state.yaw,
                             zone = "$zoneX,$zoneZ",
                             parentIds = ad?.parentIds?.toList() ?: emptyList(),
                             skills = npc.definition.attacks.map { "${it.attackId} lv${it.level}" },
@@ -622,6 +626,35 @@ class AdminController(
             ?.sortedWith(compareByDescending<WorldStatsDto> { it.isActive }.thenBy { it.name })
             ?: emptyList()
     }
+
+    private fun String.adminWsJson() = "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+    fun registerAdminWs(route: Route) =
+        route.webSocket("/api/admin/ws/npcs") {
+            if (tokenStore != null) {
+                val token = call.request.queryParameters["token"]
+                val auth = token?.let { tokenStore.validate(it) }
+                if (auth == null || ("*" !in auth.permissions && "admin" !in auth.permissions)) {
+                    close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Unauthorized"))
+                    return@webSocket
+                }
+            }
+            val npcManager = gameLoop.getNpcManager()
+            val listener: suspend (String) -> Unit = { json ->
+                try { send(json) } catch (_: Exception) {}
+            }
+            npcManager.addAdminListener(listener)
+            try {
+                for (npc in gameLoop.getNpcInstances()) {
+                    val s = npc.state
+                    val maxHp = NpcHpCalculator.computeMaxHp(npc.definition, npc.instanceLevel)
+                    send("""{"type":"npcSpawned","id":"${s.id}","name":${s.name.adminWsJson()},"npcType":${s.type.adminWsJson()},"x":${s.pos.x},"y":${s.pos.y},"z":${s.pos.z},"yaw":${s.yaw},"currentHp":${npc.currentHp},"maxHp":$maxHp,"isDead":${npc.isDead}}""")
+                }
+                for (frame in incoming) { /* ignore */ }
+            } finally {
+                npcManager.removeAdminListener(listener)
+            }
+        }
 
     private fun isAllowedConfigFile(filename: String): Boolean {
         if (filename.contains("..")) return false

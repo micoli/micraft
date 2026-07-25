@@ -59,6 +59,7 @@ export interface NpcAdminDto {
   x: number;
   y: number;
   z: number;
+  yaw: number;
   zone: string;
   parentIds: string[];
   skills: string[];

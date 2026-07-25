@@ -287,14 +287,16 @@ fun Application.module() {
         staticFiles("/api/models", File("resources"))
         MapController(gameLoop, tokenStore).register(this)
         MetricsController(gameLoop).register(this)
-        AdminController(
+        val adminController =
+            AdminController(
                 authProvider as? LocalAuthProvider,
                 noAuthAccountStore,
                 persistence,
                 gameLoop,
                 dataPath,
                 tokenStore)
-            .register(this)
+        adminController.register(this)
+        adminController.registerAdminWs(this)
         ChunkController(world, tokenStore, serverConfig.chunks.httpWorkers).register(this)
         get("/api/players/by-email/{email}") {
             val email =

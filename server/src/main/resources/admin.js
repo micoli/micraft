@@ -2238,9 +2238,9 @@
                   if ("string" === typeof entry.name) {
                     var JSCompiler_temp_const = info;
                     a: {
-                      var name2 = entry.name, env = entry.env, location = entry.debugLocation;
-                      if (null != location) {
-                        var childStack = formatOwnerStack(location), idx = childStack.lastIndexOf("\n"), lastLine = -1 === idx ? childStack : childStack.slice(idx + 1);
+                      var name2 = entry.name, env = entry.env, location2 = entry.debugLocation;
+                      if (null != location2) {
+                        var childStack = formatOwnerStack(location2), idx = childStack.lastIndexOf("\n"), lastLine = -1 === idx ? childStack : childStack.slice(idx + 1);
                         if (-1 !== lastLine.indexOf(name2)) {
                           var JSCompiler_inline_result = "\n" + lastLine;
                           break a;
@@ -23751,10 +23751,10 @@
               try {
                 var cookie = window.document.cookie;
                 var cookieName = encodeURIComponent(storageKey);
-                var location = cookie.indexOf(cookieName + "=");
-                if (location !== -1) {
+                var location2 = cookie.indexOf(cookieName + "=");
+                if (location2 !== -1) {
                   storedLevel = /^([^;]+)/.exec(
-                    cookie.slice(location + cookieName.length + 1)
+                    cookie.slice(location2 + cookieName.length + 1)
                   )[1];
                 }
               } catch (ignore) {
@@ -25737,20 +25737,20 @@
   function createKey() {
     return Math.random().toString(36).substring(2, 10);
   }
-  function getHistoryState(location, index2) {
+  function getHistoryState(location2, index2) {
     return {
-      usr: location.state,
-      key: location.key,
+      usr: location2.state,
+      key: location2.key,
       idx: index2,
-      masked: location.mask ? {
-        pathname: location.pathname,
-        search: location.search,
-        hash: location.hash
+      masked: location2.mask ? {
+        pathname: location2.pathname,
+        search: location2.search,
+        hash: location2.hash
       } : void 0
     };
   }
   function createLocation(current, to, state = null, key2, mask) {
-    let location = __spreadProps(__spreadValues({
+    let location2 = __spreadProps(__spreadValues({
       pathname: typeof current === "string" ? current : current.pathname,
       search: "",
       hash: ""
@@ -25763,7 +25763,7 @@
       key: to && to.key || key2 || createKey(),
       mask
     });
-    return location;
+    return location2;
   }
   function createPath({
     pathname = "/",
@@ -25820,11 +25820,11 @@
     }
     function push(to, state) {
       action = "PUSH";
-      let location = isLocation(to) ? to : createLocation(history2.location, to, state);
-      if (validateLocation) validateLocation(location, to);
+      let location2 = isLocation(to) ? to : createLocation(history2.location, to, state);
+      if (validateLocation) validateLocation(location2, to);
       index2 = getIndex() + 1;
-      let historyState = getHistoryState(location, index2);
-      let url = history2.createHref(location.mask || location);
+      let historyState = getHistoryState(location2, index2);
+      let url = history2.createHref(location2.mask || location2);
       try {
         globalHistory.pushState(historyState, "", url);
       } catch (error2) {
@@ -25839,11 +25839,11 @@
     }
     function replace22(to, state) {
       action = "REPLACE";
-      let location = isLocation(to) ? to : createLocation(history2.location, to, state);
-      if (validateLocation) validateLocation(location, to);
+      let location2 = isLocation(to) ? to : createLocation(history2.location, to, state);
+      if (validateLocation) validateLocation(location2, to);
       index2 = getIndex();
-      let historyState = getHistoryState(location, index2);
-      let url = history2.createHref(location.mask || location);
+      let historyState = getHistoryState(location2, index2);
+      let url = history2.createHref(location2.mask || location2);
       globalHistory.replaceState(historyState, "", url);
       if (v5Compat && listener) {
         listener({ action, location: history2.location, delta: 0 });
@@ -25909,8 +25909,8 @@
     return matchRoutesImpl(routes, locationArg, basename2, false);
   }
   function matchRoutesImpl(routes, locationArg, basename2, allowPartial, precomputedBranches) {
-    let location = typeof locationArg === "string" ? parsePath(locationArg) : locationArg;
-    let pathname = stripBasename(location.pathname || "/", basename2);
+    let location2 = typeof locationArg === "string" ? parsePath(locationArg) : locationArg;
+    let pathname = stripBasename(location2.pathname || "/", basename2);
     if (pathname == null) {
       return null;
     }
@@ -26416,9 +26416,9 @@
     // eslint-disable-next-line no-script-url
     "javascript:"
   ];
-  function hasInvalidProtocol(location) {
+  function hasInvalidProtocol(location2) {
     try {
-      return invalidProtocols.includes(new URL(location).protocol);
+      return invalidProtocols.includes(new URL(location2).protocol);
     } catch (e) {
       return false;
     }
@@ -26620,18 +26620,18 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
       );
     }
     let locationFromContext = useLocation();
-    let location;
+    let location2;
     if (locationArg) {
       let parsedLocationArg = typeof locationArg === "string" ? parsePath(locationArg) : locationArg;
       invariant(
         parentPathnameBase === "/" || ((_a6 = parsedLocationArg.pathname) == null ? void 0 : _a6.startsWith(parentPathnameBase)),
         `When overriding the location using \`<Routes location>\` or \`useRoutes(routes, location)\`, the location pathname must begin with the portion of the URL pathname that was matched by all parent routes. The current pathname base is "${parentPathnameBase}" but pathname "${parsedLocationArg.pathname}" was given in the \`location\` prop.`
       );
-      location = parsedLocationArg;
+      location2 = parsedLocationArg;
     } else {
-      location = locationFromContext;
+      location2 = locationFromContext;
     }
-    let pathname = location.pathname || "/";
+    let pathname = location2.pathname || "/";
     let remainingPathname = pathname;
     if (parentPathnameBase !== "/") {
       let parentSegments = parentPathnameBase.replace(/^\//, "").split("/");
@@ -26650,11 +26650,11 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     if (ENABLE_DEV_WARNINGS) {
       warning(
         parentRoute || matches2 != null,
-        `No routes matched location "${location.pathname}${location.search}${location.hash}" `
+        `No routes matched location "${location2.pathname}${location2.search}${location2.hash}" `
       );
       warning(
         matches2 == null || matches2[matches2.length - 1].route.element !== void 0 || matches2[matches2.length - 1].route.Component !== void 0 || matches2[matches2.length - 1].route.lazy !== void 0,
-        `Matched leaf route at location "${location.pathname}${location.search}${location.hash}" does not have an element or Component. This means it will render an <Outlet /> with a null value by default resulting in an "empty" page.`
+        `Matched leaf route at location "${location2.pathname}${location2.search}${location2.hash}" does not have an element or Component. This means it will render an <Outlet /> with a null value by default resulting in an "empty" page.`
       );
     }
     let renderedMatches = _renderMatches(
@@ -26698,7 +26698,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
               state: null,
               key: "default",
               mask: void 0
-            }, location),
+            }, location2),
             navigationType: "POP"
             /* Pop */
           }
@@ -27148,9 +27148,9 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
   }
   function Routes({
     children,
-    location
+    location: location2
   }) {
-    return useRoutes(createRoutesFromChildren(children), location);
+    return useRoutes(createRoutesFromChildren(children), location2);
   }
   function createRoutesFromChildren(children, parentPath = []) {
     let routes = [];
@@ -27426,7 +27426,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
       )
     );
   }
-  function getNewMatchesForLinks(page, nextMatches, currentMatches, manifest, location, mode) {
+  function getNewMatchesForLinks(page, nextMatches, currentMatches, manifest, location2, mode) {
     let isNew = (match2, index2) => {
       if (!currentMatches[index2]) return true;
       return match2.route.id !== currentMatches[index2].route.id;
@@ -27458,7 +27458,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
         if (match2.route.shouldRevalidate) {
           let routeChoice = match2.route.shouldRevalidate({
             currentUrl: new URL(
-              location.pathname + location.search + location.hash,
+              location2.pathname + location2.search + location2.hash,
               window.origin
             ),
             currentParams: ((_a6 = currentMatches[0]) == null ? void 0 : _a6.params) || {},
@@ -27662,11 +27662,11 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
       "page",
       "matches"
     ]);
-    let location = useLocation();
+    let location2 = useLocation();
     let { future } = useFrameworkContext();
     let { basename: basename2 } = useDataRouterContext2();
     let dataHrefs = React8.useMemo(() => {
-      if (page === location.pathname + location.search + location.hash) {
+      if (page === location2.pathname + location2.search + location2.hash) {
         return [];
       }
       let url = singleFetchUrl(
@@ -27692,7 +27692,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
       basename2,
       future.v8_trailingSlashAwareDataRequests,
       page,
-      location,
+      location2,
       nextMatches
     ]);
     return /* @__PURE__ */ React8.createElement(React8.Fragment, null, dataHrefs.map((href) => /* @__PURE__ */ React8.createElement("link", __spreadValues({ key: href, rel: "prefetch", as: "fetch", href }, linkProps))));
@@ -27705,7 +27705,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
       "page",
       "matches"
     ]);
-    let location = useLocation();
+    let location2 = useLocation();
     let { future, manifest, routeModules } = useFrameworkContext();
     let { basename: basename2 } = useDataRouterContext2();
     let { loaderData, matches: matches2 } = useDataRouterStateContext();
@@ -27715,10 +27715,10 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
         nextMatches,
         matches2,
         manifest,
-        location,
+        location2,
         "data"
       ),
-      [page, nextMatches, matches2, manifest, location]
+      [page, nextMatches, matches2, manifest, location2]
     );
     let newMatchesForAssets = React8.useMemo(
       () => getNewMatchesForLinks(
@@ -27726,13 +27726,13 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
         nextMatches,
         matches2,
         manifest,
-        location,
+        location2,
         "assets"
       ),
-      [page, nextMatches, matches2, manifest, location]
+      [page, nextMatches, matches2, manifest, location2]
     );
     let dataHrefs = React8.useMemo(() => {
-      if (page === location.pathname + location.search + location.hash) {
+      if (page === location2.pathname + location2.search + location2.hash) {
         return [];
       }
       let routesParams = /* @__PURE__ */ new Set();
@@ -27771,7 +27771,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
       basename2,
       future.v8_trailingSlashAwareDataRequests,
       loaderData,
-      location,
+      location2,
       manifest,
       newMatchesForData,
       nextMatches,
@@ -27927,13 +27927,13 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
       let parsed = parseToInfo(to, basename2);
       to = parsed.to;
       let href = useHref(to, { relative });
-      let location = useLocation();
+      let location2 = useLocation();
       let maskedHref = null;
       if (mask) {
         let resolved = resolveTo(
           mask,
           [],
-          location.mask ? location.mask.pathname : "/",
+          location2.mask ? location2.mask.pathname : "/",
           true
         );
         if (basename2 !== "/") {
@@ -28002,14 +28002,14 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
         "children"
       ]);
       let path = useResolvedPath(to, { relative: rest.relative });
-      let location = useLocation();
+      let location2 = useLocation();
       let routerState = React10.useContext(DataRouterStateContext);
       let { navigator: navigator2, basename: basename2 } = React10.useContext(NavigationContext);
       let isTransitioning = routerState != null && // Conditional usage is OK here because the usage of a data router is static
       // eslint-disable-next-line react-hooks/rules-of-hooks
       useViewTransitionState(path) && viewTransition === true;
       let toPathname = navigator2.encodeLocation ? navigator2.encodeLocation(path).pathname : path.pathname;
-      let locationPathname = location.pathname;
+      let locationPathname = location2.pathname;
       let nextLocationPathname = routerState && routerState.navigation && routerState.navigation.location ? routerState.navigation.location.pathname : null;
       if (!caseSensitive) {
         locationPathname = locationPathname.toLowerCase();
@@ -28138,19 +28138,19 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     ]);
     let remixContext = React10.useContext(FrameworkContext);
     let { basename: basename2 } = React10.useContext(NavigationContext);
-    let location = useLocation();
+    let location2 = useLocation();
     let matches2 = useMatches();
     useScrollRestoration({ getKey, storageKey });
     let ssrKey = React10.useMemo(
       () => {
         if (!remixContext || !getKey) return null;
         let userKey = getScrollRestorationKey(
-          location,
+          location2,
           matches2,
           basename2,
           getKey
         );
-        return userKey !== location.key ? userKey : null;
+        return userKey !== location2.key ? userKey : null;
       },
       // Nah, we only need this the first time for the SSR render
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -28216,13 +28216,13 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     useTransitions
   } = {}) {
     let navigate = useNavigate();
-    let location = useLocation();
+    let location2 = useLocation();
     let path = useResolvedPath(to, { relative });
     return React10.useCallback(
       (event) => {
         if (shouldProcessLinkClick(event, target)) {
           event.preventDefault();
-          let replace22 = replaceProp !== void 0 ? replaceProp : createPath(location) === createPath(path);
+          let replace22 = replaceProp !== void 0 ? replaceProp : createPath(location2) === createPath(path);
           let doNavigate = () => navigate(to, {
             replace: replace22,
             mask,
@@ -28240,7 +28240,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
         }
       },
       [
-        location,
+        location2,
         navigate,
         path,
         replaceProp,
@@ -28263,18 +28263,18 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     );
     let defaultSearchParamsRef = React10.useRef(createSearchParams(defaultInit));
     let hasSetSearchParamsRef = React10.useRef(false);
-    let location = useLocation();
+    let location2 = useLocation();
     let searchParams = React10.useMemo(
       () => (
         // Only merge in the defaults if we haven't yet called setSearchParams.
         // Once we call that we want those to take precedence, otherwise you can't
         // remove a param with setSearchParams({}) if it has an initial value
         getSearchParamsForLocation(
-          location.search,
+          location2.search,
           hasSetSearchParamsRef.current ? null : defaultSearchParamsRef.current
         )
       ),
-      [location.search]
+      [location2.search]
     );
     let navigate = useNavigate();
     let setSearchParams = React10.useCallback(
@@ -28342,9 +28342,9 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     invariant(routeContext, "useFormAction must be used inside a RouteContext");
     let [match2] = routeContext.matches.slice(-1);
     let path = __spreadValues({}, useResolvedPath(action ? action : ".", { relative }));
-    let location = useLocation();
+    let location2 = useLocation();
     if (action == null) {
-      path.search = location.search;
+      path.search = location2.search;
       let params = new URLSearchParams(path.search);
       let indexValues = params.getAll("index");
       let hasNakedIndexParam = indexValues.some((v) => v === "");
@@ -28365,22 +28365,22 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
   }
   var SCROLL_RESTORATION_STORAGE_KEY = "react-router-scroll-positions";
   var savedScrollPositions = {};
-  function getScrollRestorationKey(location, matches2, basename2, getKey) {
+  function getScrollRestorationKey(location2, matches2, basename2, getKey) {
     let key2 = null;
     if (getKey) {
       if (basename2 !== "/") {
         key2 = getKey(
-          __spreadProps(__spreadValues({}, location), {
-            pathname: stripBasename(location.pathname, basename2) || location.pathname
+          __spreadProps(__spreadValues({}, location2), {
+            pathname: stripBasename(location2.pathname, basename2) || location2.pathname
           }),
           matches2
         );
       } else {
-        key2 = getKey(location, matches2);
+        key2 = getKey(location2, matches2);
       }
     }
     if (key2 == null) {
-      key2 = location.key;
+      key2 = location2.key;
     }
     return key2;
   }
@@ -28397,7 +28397,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
       /* UseScrollRestoration */
     );
     let { basename: basename2 } = React10.useContext(NavigationContext);
-    let location = useLocation();
+    let location2 = useLocation();
     let matches2 = useMatches();
     let navigation2 = useNavigation();
     React10.useEffect(() => {
@@ -28409,7 +28409,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     usePageHide(
       React10.useCallback(() => {
         if (navigation2.state === "idle") {
-          let key2 = getScrollRestorationKey(location, matches2, basename2, getKey);
+          let key2 = getScrollRestorationKey(location2, matches2, basename2, getKey);
           savedScrollPositions[key2] = window.scrollY;
         }
         try {
@@ -28424,7 +28424,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
           );
         }
         window.history.scrollRestoration = "auto";
-      }, [navigation2.state, getKey, basename2, location, matches2, storageKey])
+      }, [navigation2.state, getKey, basename2, location2, matches2, storageKey])
     );
     if (typeof document !== "undefined") {
       React10.useLayoutEffect(() => {
@@ -28442,7 +28442,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
         let disableScrollRestoration = router == null ? void 0 : router.enableScrollRestoration(
           savedScrollPositions,
           () => window.scrollY,
-          getKey ? (location2, matches22) => getScrollRestorationKey(location2, matches22, basename2, getKey) : void 0
+          getKey ? (location22, matches22) => getScrollRestorationKey(location22, matches22, basename2, getKey) : void 0
         );
         return () => disableScrollRestoration && disableScrollRestoration();
       }, [router, basename2, getKey]);
@@ -28455,9 +28455,9 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
           return;
         }
         try {
-          if (location.hash) {
+          if (location2.hash) {
             let el2 = document.getElementById(
-              decodeURIComponent(location.hash.slice(1))
+              decodeURIComponent(location2.hash.slice(1))
             );
             if (el2) {
               el2.scrollIntoView();
@@ -28467,7 +28467,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
         } catch (e) {
           warning(
             false,
-            `"${location.hash.slice(
+            `"${location2.hash.slice(
               1
             )}" is not a decodable element ID. The view will not scroll to it.`
           );
@@ -28476,7 +28476,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
           return;
         }
         window.scrollTo(0, 0);
-      }, [location, restoreScrollPosition, preventScrollReset]);
+      }, [location2, restoreScrollPosition, preventScrollReset]);
     }
   }
   function usePageHide(callback, options) {
@@ -65685,8 +65685,8 @@ S ::= [ ]*
       this._contentNameIsCapturing = RegexSource.hasCaptures(this._contentName);
     }
     get debugName() {
-      const location = this.$location ? `${basename(this.$location.filename)}:${this.$location.line}` : "unknown";
-      return `${this.constructor.name}#${this.id} @ ${location}`;
+      const location2 = this.$location ? `${basename(this.$location.filename)}:${this.$location.line}` : "unknown";
+      return `${this.constructor.name}#${this.id} @ ${location2}`;
     }
     getName(lineText, captureIndices) {
       if (!this._nameIsCapturing || this._name === null || lineText === null || captureIndices === null) {
@@ -82210,6 +82210,213 @@ ${end.comment}` : end.comment;
   // admin/pages/NpcsPage.tsx
   var import_react3 = __toESM(require_react(), 1);
   var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
+  function w2s(wx, wz, cam, W, H) {
+    return [(wx - cam.x) * cam.pxPerBlock + W / 2, -(wz - cam.z) * cam.pxPerBlock + H / 2];
+  }
+  function buildVoronoiPolygonPaths(segs, cells2) {
+    var _a6, _b;
+    if (segs.length === 0 || cells2.length === 0) return [];
+    const cellSegs = /* @__PURE__ */ new Map();
+    for (const cell of cells2) cellSegs.set(cell.name, []);
+    for (const seg of segs) {
+      const mx = (seg.x1 + seg.x2) / 2;
+      const mz = (seg.z1 + seg.z2) / 2;
+      let best1 = "", best2 = "", d1 = Infinity, d2 = Infinity;
+      for (const c of cells2) {
+        const d = (c.x - mx) ** 2 + (c.z - mz) ** 2;
+        if (d < d1) {
+          d2 = d1;
+          best2 = best1;
+          d1 = d;
+          best1 = c.name;
+        } else if (d < d2) {
+          d2 = d;
+          best2 = c.name;
+        }
+      }
+      if (best1) cellSegs.get(best1).push(seg);
+      if (best2) cellSegs.get(best2).push(seg);
+    }
+    const PREC = 100;
+    const vkey = (x, z) => `${Math.round(x * PREC)},${Math.round(z * PREC)}`;
+    const result = [];
+    for (const cell of cells2) {
+      const cs = (_a6 = cellSegs.get(cell.name)) != null ? _a6 : [];
+      if (cs.length < 3) continue;
+      const coords = /* @__PURE__ */ new Map();
+      const adj = /* @__PURE__ */ new Map();
+      const addEdge = (x1, z1, x2, z2) => {
+        const k1 = vkey(x1, z1), k2 = vkey(x2, z2);
+        coords.set(k1, [x1, z1]);
+        coords.set(k2, [x2, z2]);
+        if (!adj.has(k1)) adj.set(k1, []);
+        if (!adj.has(k2)) adj.set(k2, []);
+        if (!adj.get(k1).includes(k2)) adj.get(k1).push(k2);
+        if (!adj.get(k2).includes(k1)) adj.get(k2).push(k1);
+      };
+      for (const s of cs) addEdge(s.x1, s.z1, s.x2, s.z2);
+      const startKey = adj.keys().next().value;
+      const polygon = [];
+      const visited = /* @__PURE__ */ new Set();
+      let curKey = startKey;
+      let prevKey = null;
+      while (!visited.has(curKey)) {
+        visited.add(curKey);
+        polygon.push(coords.get(curKey));
+        const next = ((_b = adj.get(curKey)) != null ? _b : []).find((k) => k !== prevKey);
+        if (!next) break;
+        prevKey = curKey;
+        curKey = next;
+      }
+      if (polygon.length >= 3) {
+        result.push({
+          name: cell.name,
+          color: cell.color,
+          path: "M" + polygon.map(([x, z]) => `${x} ${z}`).join("L") + "Z"
+        });
+      }
+    }
+    return result;
+  }
+  var ATTACK_LINE_TTL = 700;
+  function typeColor(type) {
+    let h = 0;
+    for (let i = 0; i < type.length; i++) h = h * 31 + type.charCodeAt(i) & 65535;
+    return `hsl(${h % 360},65%,60%)`;
+  }
+  function arrowPoints(yaw) {
+    const adx = Math.sin(yaw), ady = -Math.cos(yaw);
+    const perpX = -ady, perpY = adx;
+    const len = 9, w = 4;
+    return [
+      `${adx * len},${ady * len}`,
+      `${-adx * len * 0.35 + perpX * w},${-ady * len * 0.35 + perpY * w}`,
+      `${-adx * len * 0.35 - perpX * w},${-ady * len * 0.35 - perpY * w}`
+    ].join(" ");
+  }
+  function NpcMiniMap({ npcs, selectedId, attackLines }) {
+    const svgRef = (0, import_react3.useRef)(null);
+    const [camera, setCamera] = (0, import_react3.useState)({ x: 0, z: 0, pxPerBlock: 0.5 });
+    const [dragging, setDragging] = (0, import_react3.useState)(false);
+    const [voronoiCells, setVoronoiCells] = (0, import_react3.useState)([]);
+    const [borderSegs, setBorderSegs] = (0, import_react3.useState)([]);
+    const [, forceRender] = (0, import_react3.useState)(0);
+    const dragStart = (0, import_react3.useRef)(null);
+    (0, import_react3.useEffect)(() => {
+      if (attackLines.length === 0) return;
+      const id2 = setInterval(() => forceRender((n) => n + 1), 40);
+      return () => clearInterval(id2);
+    }, [attackLines.length]);
+    (0, import_react3.useEffect)(() => {
+      fetch("/api/map/voronoi?cx=0&cz=0&radius=3200").then((r2) => r2.ok ? r2.json() : []).then(setVoronoiCells).catch(() => {
+      });
+      fetch("/api/map/voronoi-borders?cx=0&cz=0&radius=3200").then((r2) => r2.ok ? r2.json() : []).then(setBorderSegs).catch(() => {
+      });
+    }, []);
+    (0, import_react3.useEffect)(() => {
+      if (npcs.length === 0) return;
+      const sx = npcs.reduce((a, n) => a + n.x, 0) / npcs.length;
+      const sz = npcs.reduce((a, n) => a + n.z, 0) / npcs.length;
+      setCamera((c) => __spreadProps(__spreadValues({}, c), { x: sx, z: sz }));
+    }, [npcs.length > 0]);
+    (0, import_react3.useEffect)(() => {
+      if (!selectedId) return;
+      const npc = npcs.find((n) => n.id === selectedId);
+      if (!npc) return;
+      setCamera((c) => __spreadProps(__spreadValues({}, c), { x: npc.x, z: npc.z }));
+    }, [selectedId]);
+    const svgSize = () => {
+      const el2 = svgRef.current;
+      return el2 ? [el2.clientWidth, el2.clientHeight] : [320, 500];
+    };
+    const handleWheel = (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      setCamera((c) => __spreadProps(__spreadValues({}, c), { pxPerBlock: Math.max(0.05, Math.min(20, c.pxPerBlock * factor)) }));
+    };
+    const handleMouseDown = (e) => {
+      setDragging(true);
+      dragStart.current = { mx: e.clientX, my: e.clientY, cx: camera.x, cz: camera.z };
+    };
+    const handleMouseMove = (e) => {
+      if (!dragging || !dragStart.current) return;
+      const dx = e.clientX - dragStart.current.mx;
+      const dy = e.clientY - dragStart.current.my;
+      setCamera((c) => __spreadProps(__spreadValues({}, c), {
+        x: dragStart.current.cx - dx / c.pxPerBlock,
+        z: dragStart.current.cz + dy / c.pxPerBlock
+      }));
+    };
+    const handleMouseUp = () => setDragging(false);
+    const zoom = (factor) => setCamera((c) => __spreadProps(__spreadValues({}, c), { pxPerBlock: Math.max(0.05, Math.min(20, c.pxPerBlock * factor)) }));
+    const [W, H] = svgSize();
+    const ppb = camera.pxPerBlock;
+    const worldTransform = `matrix(${ppb},0,0,${-ppb},${W / 2 - camera.x * ppb},${H / 2 + camera.z * ppb})`;
+    const voronoiPolygons = buildVoronoiPolygonPaths(borderSegs, voronoiCells);
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "relative rounded-xl border border-[#2E3A4E] overflow-hidden bg-[#0E1726]", style: { height: 500 }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+        "svg",
+        {
+          ref: svgRef,
+          width: "100%",
+          height: "100%",
+          style: { display: "block", background: "#111", cursor: dragging ? "grabbing" : "grab" },
+          onWheel: handleWheel,
+          onMouseDown: handleMouseDown,
+          onMouseMove: handleMouseMove,
+          onMouseUp: handleMouseUp,
+          onMouseLeave: handleMouseUp,
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("g", { transform: worldTransform, children: voronoiPolygons.map((p2, i) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: p2.path, fill: p2.color + "28", stroke: p2.color + "90", strokeWidth: 1 / ppb }, i)) }),
+            ppb >= 0.3 && voronoiCells.map((cell, i) => {
+              const [cx, cy] = w2s(cell.x, cell.z, camera, W, H);
+              if (cx < -60 || cx > W + 60 || cy < -20 || cy > H + 20) return null;
+              return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("text", { x: cx, y: cy, textAnchor: "middle", dominantBaseline: "middle", fill: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "serif", children: cell.name }, i);
+            }),
+            attackLines.map((line) => {
+              const age = Date.now() - line.ts;
+              const opacity = Math.max(0, 1 - age / ATTACK_LINE_TTL);
+              if (opacity <= 0) return null;
+              const [ax, ay] = w2s(line.ax, line.az, camera, W, H);
+              const [bx, by] = w2s(line.bx, line.bz, camera, W, H);
+              return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("g", { strokeOpacity: opacity, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: ax, y1: ay, x2: bx, y2: by, stroke: "#ff4444", strokeWidth: 3, strokeLinecap: "round" }),
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: ax, y1: ay, x2: bx, y2: by, stroke: "#ffaaaa", strokeWidth: 1, strokeLinecap: "round" })
+              ] }, line.id);
+            }),
+            npcs.map((npc) => {
+              const [nx, ny] = w2s(npc.x, npc.z, camera, W, H);
+              const sel = npc.id === selectedId;
+              const color = sel ? "#ffcc44" : typeColor(npc.type);
+              return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("g", { transform: `translate(${nx},${ny})`, children: [
+                sel && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("circle", { cx: 0, cy: 0, r: 13, fill: "none", stroke: "#ffcc44", strokeWidth: 1.5, strokeDasharray: "3 2" }),
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("polygon", { points: arrowPoints(npc.yaw), fill: color, stroke: sel ? "#000" : "rgba(0,0,0,0.5)", strokeWidth: 0.8 }),
+                sel && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("text", { x: 14, y: 4, fill: "#ffcc44", fontSize: 11, fontFamily: "monospace", fontWeight: "bold", children: npc.name })
+              ] }, npc.id);
+            })
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "absolute bottom-2 right-2 flex flex-col gap-1", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+          "button",
+          {
+            onClick: () => zoom(1.5),
+            className: "w-7 h-7 rounded bg-[#1C2434] border border-[#2E3A4E] text-white text-sm font-bold hover:bg-[#2E3A4E] transition-colors leading-none",
+            children: "+"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+          "button",
+          {
+            onClick: () => zoom(1 / 1.5),
+            className: "w-7 h-7 rounded bg-[#1C2434] border border-[#2E3A4E] text-white text-sm font-bold hover:bg-[#2E3A4E] transition-colors leading-none",
+            children: "\u2212"
+          }
+        )
+      ] })
+    ] });
+  }
   function Badge({ label, color }) {
     return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: `inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${color}`, children: label });
   }
@@ -82328,90 +82535,269 @@ ${end.comment}` : end.comment;
     const [error2, setError] = (0, import_react3.useState)(null);
     const [expandedId, setExpandedId] = (0, import_react3.useState)(null);
     const [filter, setFilter] = (0, import_react3.useState)("");
+    const [filterType, setFilterType] = (0, import_react3.useState)("");
+    const [filterGender, setFilterGender] = (0, import_react3.useState)("");
+    const [filterAggro, setFilterAggro] = (0, import_react3.useState)("");
+    const [filterLevelMin, setFilterLevelMin] = (0, import_react3.useState)("");
+    const [filterLevelMax, setFilterLevelMax] = (0, import_react3.useState)("");
+    const [attackLines, setAttackLines] = (0, import_react3.useState)([]);
+    const npcsRef = (0, import_react3.useRef)(null);
+    npcsRef.current = npcs;
     const load = () => {
       api.npcs.list().then(setNpcs).catch((e) => setError(String(e)));
     };
     (0, import_react3.useEffect)(() => {
       load();
     }, []);
+    (0, import_react3.useEffect)(() => {
+      const proto = location.protocol === "https:" ? "wss:" : "ws:";
+      const ws = new WebSocket(`${proto}//${location.host}/api/admin/ws/npcs`);
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          setNpcs((prev) => {
+            var _a6;
+            if (!prev) return prev;
+            switch (msg.type) {
+              case "npcUpdate":
+                return prev.map(
+                  (n) => n.id === msg.id ? __spreadProps(__spreadValues({}, n), { x: msg.x, y: msg.y, z: msg.z, yaw: msg.yaw, currentHp: msg.currentHp, maxHp: msg.maxHp, isDead: msg.isDead }) : n
+                );
+              case "npcSpawned":
+                if (prev.some((n) => n.id === msg.id)) {
+                  return prev.map(
+                    (n) => n.id === msg.id ? __spreadProps(__spreadValues({}, n), { x: msg.x, y: msg.y, z: msg.z, yaw: msg.yaw, currentHp: msg.currentHp, maxHp: msg.maxHp, isDead: msg.isDead }) : n
+                  );
+                }
+                return [
+                  ...prev,
+                  {
+                    id: msg.id,
+                    name: msg.name,
+                    type: msg.npcType,
+                    level: 1,
+                    gender: null,
+                    currentHp: msg.currentHp,
+                    maxHp: msg.maxHp,
+                    isDead: msg.isDead,
+                    aggroMode: "NEUTRAL",
+                    tier: "NORMAL",
+                    x: msg.x,
+                    y: msg.y,
+                    z: msg.z,
+                    yaw: msg.yaw,
+                    zone: "?",
+                    parentIds: [],
+                    skills: [],
+                    ageGameDays: null,
+                    hunger: null,
+                    gestationRemainingDays: null,
+                    lastReproductionDay: null,
+                    motherLevel: null
+                  }
+                ];
+              case "npcDespawned":
+                return prev.filter((n) => n.id !== msg.id);
+              case "healthUpdate": {
+                if (msg.attackerId) {
+                  const current = (_a6 = npcsRef.current) != null ? _a6 : prev;
+                  const target = current.find((n) => n.id === msg.id);
+                  const attacker = current.find((n) => n.id === msg.attackerId);
+                  if (target && attacker) {
+                    setAttackLines((lines) => [
+                      ...lines.filter((l) => Date.now() - l.ts < ATTACK_LINE_TTL),
+                      { id: `${msg.attackerId}-${msg.id}-${Date.now()}`, ax: attacker.x, az: attacker.z, bx: target.x, bz: target.z, ts: Date.now() }
+                    ]);
+                  }
+                }
+                return prev.map(
+                  (n) => n.id === msg.id ? __spreadProps(__spreadValues({}, n), { currentHp: msg.currentHp, maxHp: msg.maxHp, isDead: msg.isDead }) : n
+                );
+              }
+              default:
+                return prev;
+            }
+          });
+        } catch (_) {
+        }
+      };
+      return () => ws.close();
+    }, []);
+    const types2 = (0, import_react3.useMemo)(() => [...new Set((npcs != null ? npcs : []).map((n) => n.type))].sort(), [npcs]);
+    const aggroModes = (0, import_react3.useMemo)(() => [...new Set((npcs != null ? npcs : []).map((n) => n.aggroMode))].sort(), [npcs]);
+    const genders = (0, import_react3.useMemo)(
+      () => [...new Set((npcs != null ? npcs : []).map((n) => n.gender).filter(Boolean))].sort(),
+      [npcs]
+    );
     const filtered = (npcs != null ? npcs : []).filter((n) => {
-      if (!filter) return true;
-      const q = filter.toLowerCase();
-      return n.name.toLowerCase().includes(q) || n.type.toLowerCase().includes(q) || n.zone.includes(q);
+      if (filter) {
+        const q = filter.toLowerCase();
+        if (!n.name.toLowerCase().includes(q) && !n.type.toLowerCase().includes(q) && !n.zone.includes(q)) return false;
+      }
+      if (filterType && n.type !== filterType) return false;
+      if (filterGender) {
+        if (filterGender === "__NONE__") {
+          if (n.gender !== null) return false;
+        } else if (n.gender !== filterGender) return false;
+      }
+      if (filterAggro && n.aggroMode !== filterAggro) return false;
+      if (filterLevelMin !== "") {
+        const v = parseInt(filterLevelMin);
+        if (!isNaN(v) && n.level < v) return false;
+      }
+      if (filterLevelMax !== "") {
+        const v = parseInt(filterLevelMax);
+        if (!isNaN(v) && n.level > v) return false;
+      }
+      return true;
     });
     const alive = (npcs != null ? npcs : []).filter((n) => !n.isDead).length;
-    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "space-y-4", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-3", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
-          "input",
-          {
-            type: "text",
-            placeholder: "Filter by name, type or zone\u2026",
-            value: filter,
-            onChange: (e) => setFilter(e.target.value),
-            className: "flex-1 max-w-xs bg-[#1C2434] border border-[#2E3A4E] rounded-lg px-3 py-1.5 text-sm text-white placeholder-[#8A99AF] outline-none focus:border-[#3C50E0]"
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
-          "button",
-          {
-            onClick: load,
-            className: "px-3 py-1.5 rounded-lg text-sm font-medium bg-[#3C50E0] hover:bg-[#3446c7] text-white transition-colors",
-            children: "Refresh"
-          }
-        ),
-        npcs && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-xs text-[#8A99AF]", children: [
-          alive,
-          " alive \xB7 ",
-          npcs.length,
-          " total"
-        ] })
-      ] }),
-      error2 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "text-red-400 text-sm", children: error2 }),
-      !npcs && !error2 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "text-[#8A99AF] text-sm", children: "Loading\u2026" }),
-      npcs && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "rounded-xl overflow-hidden border border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("table", { className: "w-full text-sm border-collapse", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("tr", { className: "bg-[#1C2434] text-[#8A99AF] text-xs uppercase tracking-widest", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Name" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Type" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Lv" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Gender" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Tier" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Aggro" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "HP" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "px-4 py-3" })
-        ] }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("tbody", { children: [
-          filtered.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { colSpan: 8, className: "text-center text-[#8A99AF] py-8", children: "No NPCs match" }) }),
-          filtered.map((npc) => {
-            var _a6;
-            const expanded = expandedId === npc.id;
-            return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex gap-4 items-start", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex-1 min-w-0 space-y-4", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "sticky top-0 z-10 bg-[#111827] pt-1 pb-3 space-y-2", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-3", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+              "input",
+              {
+                type: "text",
+                placeholder: "Name, type or zone\u2026",
+                value: filter,
+                onChange: (e) => setFilter(e.target.value),
+                className: "flex-1 max-w-xs bg-[#1C2434] border border-[#2E3A4E] rounded-lg px-3 py-1.5 text-sm text-white placeholder-[#8A99AF] outline-none focus:border-[#3C50E0]"
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+              "button",
+              {
+                onClick: load,
+                className: "px-3 py-1.5 rounded-lg text-sm font-medium bg-[#3C50E0] hover:bg-[#3446c7] text-white transition-colors shrink-0",
+                children: "Refresh"
+              }
+            ),
+            npcs && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-xs text-[#8A99AF] shrink-0", children: [
+              filtered.length,
+              "/",
+              npcs.length,
+              " \xB7 ",
+              alive,
+              " alive"
+            ] })
+          ] }),
+          npcs && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex flex-wrap items-center gap-x-4 gap-y-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-1.5", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF]", children: "Type" }),
               /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
-                "tr",
+                "select",
                 {
-                  onClick: () => setExpandedId(expanded ? null : npc.id),
-                  className: `border-t border-[#2E3A4E] cursor-pointer transition-colors ${npc.isDead ? "opacity-40" : ""} ${expanded ? "bg-[#1C2434]" : "hover:bg-[#1C2434]/60"}`,
+                  value: filterType,
+                  onChange: (e) => setFilterType(e.target.value),
+                  className: "bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0]",
                   children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("td", { className: "px-4 py-2.5 font-medium text-white", children: [
-                      npc.isDead && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-red-500 mr-1", children: "\u2715" }),
-                      npc.name
-                    ] }),
-                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: npc.type }),
-                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: npc.level }),
-                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: (_a6 = npc.gender) != null ? _a6 : "\u2014" }),
-                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Badge, { label: npc.tier, color: tierColor(npc.tier) }) }),
-                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Badge, { label: npc.aggroMode, color: aggroColor(npc.aggroMode) }) }),
-                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(HpBar, { current: npc.currentHp, max: npc.maxHp }) }),
-                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF] text-right", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-xs", children: expanded ? "\u25B2" : "\u25BC" }) })
+                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("option", { value: "", children: "All" }),
+                    types2.map((t2) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("option", { value: t2, children: t2 }, t2))
                   ]
+                }
+              )
+            ] }),
+            genders.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-1", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5", children: "Gender" }),
+              [["", "All"], ...genders.map((g) => [g, g]), ["__NONE__", "\u2014"]].map(([val, label]) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+                "button",
+                {
+                  onClick: () => setFilterGender(val === filterGender ? "" : val),
+                  className: `px-2 py-0.5 rounded text-[11px] transition-colors ${filterGender === val ? "bg-[#3C50E0] text-white" : "bg-[#1C2434] text-[#8A99AF] hover:text-white"}`,
+                  children: label
                 },
-                npc.id
+                val
+              ))
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-1.5", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF]", children: "Lv" }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+                "input",
+                {
+                  type: "number",
+                  min: 1,
+                  placeholder: "min",
+                  value: filterLevelMin,
+                  onChange: (e) => setFilterLevelMin(e.target.value),
+                  className: "w-14 bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0] [appearance:textfield]"
+                }
               ),
-              expanded && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("tr", { className: "border-t border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { colSpan: 8, className: "p-0", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Detail, { npc }) }) }, npc.id + "-detail")
-            ] });
-          })
-        ] })
-      ] }) })
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[#8A99AF] text-xs", children: "\u2013" }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+                "input",
+                {
+                  type: "number",
+                  min: 1,
+                  placeholder: "max",
+                  value: filterLevelMax,
+                  onChange: (e) => setFilterLevelMax(e.target.value),
+                  className: "w-14 bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0] [appearance:textfield]"
+                }
+              )
+            ] }),
+            aggroModes.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-1", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5", children: "Aggro" }),
+              aggroModes.map((a) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+                "button",
+                {
+                  onClick: () => setFilterAggro(a === filterAggro ? "" : a),
+                  className: `px-2 py-0.5 rounded text-[11px] transition-colors ${filterAggro === a ? "bg-[#3C50E0] text-white" : "bg-[#1C2434] text-[#8A99AF] hover:text-white"}`,
+                  children: a.replace("_", " ").replace("_COOPERATIVE", "")
+                },
+                a
+              ))
+            ] })
+          ] })
+        ] }),
+        error2 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "text-red-400 text-sm", children: error2 }),
+        !npcs && !error2 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "text-[#8A99AF] text-sm", children: "Loading\u2026" }),
+        npcs && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "rounded-xl overflow-hidden border border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("table", { className: "w-full text-sm border-collapse", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("tr", { className: "bg-[#1C2434] text-[#8A99AF] text-xs uppercase tracking-widest", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Name" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Type" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Lv" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Gender" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Tier" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Aggro" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "HP" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "px-4 py-3" })
+          ] }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("tbody", { children: [
+            filtered.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { colSpan: 8, className: "text-center text-[#8A99AF] py-8", children: "No NPCs match" }) }),
+            filtered.map((npc) => {
+              var _a6;
+              const expanded = expandedId === npc.id;
+              return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+                  "tr",
+                  {
+                    onClick: () => setExpandedId(expanded ? null : npc.id),
+                    className: `border-t border-[#2E3A4E] cursor-pointer transition-colors ${npc.isDead ? "opacity-40" : ""} ${expanded ? "bg-[#1C2434]" : "hover:bg-[#1C2434]/60"}`,
+                    children: [
+                      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("td", { className: "px-4 py-2.5 font-medium text-white", children: [
+                        npc.isDead && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-red-500 mr-1", children: "\u2715" }),
+                        npc.name
+                      ] }),
+                      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: npc.type }),
+                      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: npc.level }),
+                      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: (_a6 = npc.gender) != null ? _a6 : "\u2014" }),
+                      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Badge, { label: npc.tier, color: tierColor(npc.tier) }) }),
+                      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Badge, { label: npc.aggroMode, color: aggroColor(npc.aggroMode) }) }),
+                      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(HpBar, { current: npc.currentHp, max: npc.maxHp }) }),
+                      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF] text-right", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-xs", children: expanded ? "\u25B2" : "\u25BC" }) })
+                    ]
+                  },
+                  npc.id
+                ),
+                expanded && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("tr", { className: "border-t border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { colSpan: 8, className: "p-0", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Detail, { npc }) }) }, npc.id + "-detail")
+              ] });
+            })
+          ] })
+        ] }) })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "w-80 shrink-0 sticky top-4", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(NpcMiniMap, { npcs: npcs != null ? npcs : [], selectedId: expandedId, attackLines }) })
     ] });
   }
 
