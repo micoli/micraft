@@ -547,6 +547,7 @@ export function NpcsPage() {
                   name: msg.name,
                   type: msg.npcType,
                   level: 1,
+                  xp: 0,
                   gender: null,
                   currentHp: msg.currentHp,
                   maxHp: msg.maxHp,
@@ -569,6 +570,8 @@ export function NpcsPage() {
               ];
             case "npcDespawned":
               return prev.filter((n) => n.id !== msg.id);
+            case "npcXpUpdate":
+              return prev.map((n) => (n.id === msg.id ? { ...n, xp: msg.xp, level: msg.level } : n));
             case "healthUpdate": {
               if (msg.attackerId) {
                 const current = npcsRef.current ?? prev;
@@ -747,6 +750,7 @@ export function NpcsPage() {
                   <th className="text-left px-4 py-3 font-semibold">Name</th>
                   <th className="text-left px-4 py-3 font-semibold">Type</th>
                   <th className="text-left px-4 py-3 font-semibold">Lv</th>
+                  <th className="text-left px-4 py-3 font-semibold">XP</th>
                   <th className="text-left px-4 py-3 font-semibold">Gender</th>
                   <th className="text-left px-4 py-3 font-semibold">Tier</th>
                   <th className="text-left px-4 py-3 font-semibold">Aggro</th>
@@ -757,7 +761,7 @@ export function NpcsPage() {
               <tbody>
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="text-center text-[#8A99AF] py-8">
+                    <td colSpan={9} className="text-center text-[#8A99AF] py-8">
                       No NPCs match
                     </td>
                   </tr>
@@ -779,6 +783,7 @@ export function NpcsPage() {
                         </td>
                         <td className="px-4 py-2.5 text-[#8A99AF]">{npc.type}</td>
                         <td className="px-4 py-2.5 text-[#8A99AF]">{npc.level}</td>
+                        <td className="px-4 py-2.5 text-[#8A99AF] font-mono">{npc.xp}</td>
                         <td className="px-4 py-2.5 text-[#8A99AF]">{npc.gender ?? "—"}</td>
                         <td className="px-4 py-2.5">
                           <Badge label={npc.tier} color={tierColor(npc.tier)} />
@@ -795,7 +800,7 @@ export function NpcsPage() {
                       </tr>
                       {expanded && (
                         <tr key={npc.id + "-detail"} className="border-t border-[#2E3A4E]">
-                          <td colSpan={8} className="p-0">
+                          <td colSpan={9} className="p-0">
                             <Detail npc={npc} />
                           </td>
                         </tr>

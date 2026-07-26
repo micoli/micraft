@@ -22,6 +22,7 @@ class NpcInstance(
     val damageContributors: MutableMap<String, Int> = mutableMapOf(),
     @Volatile var chaseTargetPos: Vec3? = null,
     @Volatile var instanceLevel: Int = 1,
+    @Volatile var xp: Int = 0,
     val activeEffects: MutableList<ActiveStatusEffect> = mutableListOf(),
     @Volatile var pendingDotDamage: Float = 0f,
     @Volatile var isDead: Boolean = false,
@@ -31,7 +32,7 @@ class NpcInstance(
     val characterClass
         get() = definition.characterClass
 
-    val maxHp: Int = definition.computeMaxHp(instanceLevel)
+    @Volatile var maxHp: Int = definition.computeMaxHp(instanceLevel)
     val maxMana: Int = DerivedStatsCalculator.compute(definition.baseStats, instanceLevel).maxMana
     val maxRage: Int = if (definition.characterClass.classResource == ClassResource.RAGE) 100 else 0
 

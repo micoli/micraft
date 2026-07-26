@@ -50,6 +50,7 @@ export interface NpcAdminDto {
   name: string;
   type: string;
   level: number;
+  xp: number;
   gender: string | null;
   currentHp: number;
   maxHp: number;

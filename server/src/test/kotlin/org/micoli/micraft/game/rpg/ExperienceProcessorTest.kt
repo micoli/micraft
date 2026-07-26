@@ -30,11 +30,15 @@ class ExperienceProcessorTest {
             group = XpGroupConfig(enabled = true, bonusPerMember = 0.10),
         )
 
-    private fun processor(sessions: List<PlayerSession> = emptyList()) =
+    private fun processor(
+        sessions: List<PlayerSession> = emptyList(),
+        combatLog: MutableList<String> = mutableListOf(),
+    ) =
         ExperienceProcessor(
             config = config,
             getSessions = { sessions },
             savePlayer = {},
+            broadcastCombatLog = { combatLog.add(it) },
         )
 
     private fun charData(xp: Int = 0, level: Int = 1) =
@@ -202,7 +206,12 @@ class ExperienceProcessorTest {
         assertTrue(session.sent.filterIsInstance<ServerMessage.XpGained>().isEmpty())
     }
 
-    private fun makeNpc(level: Int = 1, tier: NpcTier = NpcTier.COMMON): NpcInstance {
+    private fun makeNpc(
+        level: Int = 1,
+        tier: NpcTier = NpcTier.COMMON,
+        maxLevel: Int = Int.MAX_VALUE,
+        currentHp: Int = 20,
+    ): NpcInstance {
         val def =
             NpcDefinition(
                 type = "goblin",
@@ -216,6 +225,7 @@ class ExperienceProcessorTest {
                 hp = 20,
                 aggroMode = AggroMode.PASSIVE,
                 minLevel = level,
+                maxLevel = maxLevel,
                 tier = tier,
             )
         val state =
@@ -225,9 +235,70 @@ class ExperienceProcessorTest {
                 pos = Vec3(0f, 0f, 0f),
                 yaw = 0f,
                 type = "goblin",
-                currentHp = 0,
-                maxHp = 20,
+                currentHp = currentHp,
+                maxHp = def.computeMaxHp(level),
             )
-        return NpcInstance(state = state, definition = def, spawnPos = Vec3(0f, 0f, 0f))
+        return NpcInstance(
+            state = state,
+            definition = def,
+            spawnPos = Vec3(0f, 0f, 0f),
+            instanceLevel = level,
+            currentHp = currentHp,
+        )
+    }
+
+    // ── grantXpToNpc ─────────────────────────────────────────────────────────
+
+    @Test
+    fun `grantXpToNpc noLevelUp updates xp only`() = runBlocking {
+        val npc = makeNpc(level = 1)
+        val leveledUp = processor().grantXpToNpc(npc, 10)
+        assertFalse(leveledUp)
+        assertEquals(10, npc.xp)
+        assertEquals(10, npc.state.xp)
+        assertEquals(1, npc.instanceLevel)
+    }
+
+    @Test
+    fun `grantXpToNpc levelUp increments level and scales hp`() = runBlocking {
+        val npc = makeNpc(level = 1, currentHp = 20)
+        val oldMaxHp = npc.maxHp
+        val leveledUp = processor().grantXpToNpc(npc, 300)
+        assertTrue(leveledUp)
+        assertEquals(2, npc.instanceLevel)
+        assertEquals(2, npc.state.level)
+        assertTrue(npc.maxHp > oldMaxHp)
+        assertTrue(npc.currentHp > 0)
+    }
+
+    @Test
+    fun `grantXpToNpc caps at maxLevel`() = runBlocking {
+        val npc = makeNpc(level = 2, maxLevel = 2)
+        processor().grantXpToNpc(npc, 10_000)
+        assertEquals(2, npc.instanceLevel)
+    }
+
+    @Test
+    fun `grantXpToNpc levelUp broadcasts combat log`() = runBlocking {
+        val log = mutableListOf<String>()
+        val npc = makeNpc(level = 1)
+        processor(combatLog = log).grantXpToNpc(npc, 300)
+        assertTrue(log.any { it.contains("grown stronger") && it.contains("Level 2") })
+    }
+
+    @Test
+    fun `grantXpToNpcForKill commonTier gives commonPerLevel times minLevel`() = runBlocking {
+        val predator = makeNpc(level = 1)
+        val prey = makeNpc(level = 3, tier = NpcTier.COMMON)
+        processor().grantXpToNpcForKill(predator, prey)
+        assertEquals(150, predator.xp) // commonPerLevel=50 * minLevel=3
+    }
+
+    @Test
+    fun `grantXpToNpcForKill eliteTier gives elitePerLevel times minLevel`() = runBlocking {
+        val predator = makeNpc(level = 1)
+        val prey = makeNpc(level = 2, tier = NpcTier.ELITE)
+        processor().grantXpToNpcForKill(predator, prey)
+        assertEquals(400, predator.xp) // elitePerLevel=200 * minLevel=2
     }
 }

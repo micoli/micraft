@@ -13,6 +13,7 @@ class ExperienceProcessor(
     private val getSessions: () -> Collection<PlayerSession>,
     private val savePlayer: suspend (PlayerSession) -> Unit,
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit = { _, _ -> },
+    private val broadcastCombatLog: suspend (String) -> Unit = {},
 ) {
     fun computeLevel(xp: Int, thresholds: List<Int>): Int {
         var level = 1
@@ -100,6 +101,49 @@ class ExperienceProcessor(
                 leveledUp = false,
                 nextLevelXp = nextXp,
             ))
+    }
+
+    suspend fun grantXpToNpc(npc: NpcInstance, amount: Int): Boolean {
+        val thresholds = config.progression.thresholds
+        val oldLevel = npc.instanceLevel
+        val oldMaxHp = npc.definition.computeMaxHp(oldLevel)
+        val newXp = npc.xp + amount
+        val newLevel = computeLevel(newXp, thresholds).coerceAtMost(npc.definition.maxLevel)
+        val leveledUp = newLevel > oldLevel
+
+        npc.xp = newXp
+        npc.state = npc.state.copy(xp = newXp)
+
+        if (leveledUp) {
+            val newMaxHp = npc.definition.computeMaxHp(newLevel)
+            val scaledHp =
+                if (oldMaxHp > 0)
+                    (newMaxHp * (npc.currentHp.toFloat() / oldMaxHp)).toInt().coerceAtLeast(1)
+                else newMaxHp
+            npc.instanceLevel = newLevel
+            npc.maxHp = newMaxHp
+            npc.currentHp = scaledHp
+            npc.state =
+                npc.state.copy(
+                    level = newLevel,
+                    xp = newXp,
+                    currentHp = scaledHp,
+                    maxHp = newMaxHp,
+                )
+            broadcastCombatLog("[m:${npc.state.name}] has grown stronger! (Level $newLevel)")
+            log.info("NPC {} leveled up {} → {}", npc.state.name, oldLevel, newLevel)
+        }
+        return leveledUp
+    }
+
+    suspend fun grantXpToNpcForKill(predator: NpcInstance, prey: NpcInstance) {
+        val baseXp =
+            when (prey.definition.tier) {
+                NpcTier.COMMON -> config.sources.commonPerLevel
+                NpcTier.ELITE -> config.sources.elitePerLevel
+                NpcTier.BOSS -> config.sources.bossPerLevel
+            } * prey.definition.minLevel
+        grantXpToNpc(predator, baseXp)
     }
 
     suspend fun onNpcKilled(npc: NpcInstance) {

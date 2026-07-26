@@ -67,6 +67,7 @@ class CombatProcessorTest {
         classRegistry: Map<String, ClassDefinitionEntry> = emptyMap(),
         combatLog: MutableList<String> = mutableListOf(),
         subscribed: MutableList<Pair<PlayerSession, String>> = mutableListOf(),
+        onPlayerDownedByNpc: suspend (PlayerSession, String) -> Unit = { _, _ -> },
     ) =
         CombatProcessor(
             config = config,
@@ -79,6 +80,7 @@ class CombatProcessorTest {
             subscribeToChannel = { s, ch -> subscribed.add(s to ch) },
             i18n = testI18n(),
             savePlayer = {},
+            onPlayerDownedByNpc = onPlayerDownedByNpc,
         )
 
     private fun fakeNpc(power: Int = 0): NpcInstance {
@@ -683,5 +685,43 @@ class CombatProcessorTest {
         proc.handleNpcAttack(npc, target)
 
         assertTrue(target.characterData!!.currentHp < 20)
+    }
+
+    // ── onPlayerDownedByNpc ───────────────────────────────────────────────────
+
+    @Test
+    fun `handleNpcAttack downsPlayer callsOnPlayerDownedByNpc`() = runBlocking {
+        var capturedSession: PlayerSession? = null
+        var capturedNpcId: String? = null
+        val target = testSession(id = "victim")
+        target.characterData = testChar("victim", "Victim", hp = 1)
+
+        val npc = fakeNpc(power = 0)
+        buildProcessor(
+            sessions = { listOf(target) },
+            attackRegistry = mapOf("basic_attack" to guaranteedHitAttack),
+            onPlayerDownedByNpc = { session, npcId ->
+                capturedSession = session
+                capturedNpcId = npcId
+            },
+        ).handleNpcAttack(npc, target)
+
+        assertEquals(target, capturedSession)
+        assertEquals(npc.state.id, capturedNpcId)
+    }
+
+    @Test
+    fun `handleNpcAttack doesNotDownPlayer doesNotCallCallback`() = runBlocking {
+        var called = false
+        val target = testSession(id = "survivor")
+        target.characterData = testChar("survivor", "Survivor", hp = 100)
+
+        val npc = fakeNpc(power = 0)
+        buildProcessor(
+            sessions = { listOf(target) },
+            onPlayerDownedByNpc = { _, _ -> called = true },
+        ).handleNpcAttack(npc, target)
+
+        assertFalse(called)
     }
 }

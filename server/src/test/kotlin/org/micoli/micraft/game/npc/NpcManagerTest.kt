@@ -28,10 +28,16 @@ import org.micoli.micraft.support.testWorld
 private fun testNpcManager(
     defs: Map<String, NpcDefinition> = emptyMap(),
     nearbySession: FakePlayerSession? = null,
+    grantNpcKillXp: suspend (NpcInstance, NpcInstance) -> Unit = { _, _ -> },
 ): Pair<NpcManager, MutableList<ServerMessage>> {
     val broadcasts = mutableListOf<ServerMessage>()
     val sessions = if (nearbySession != null) listOf(nearbySession) else emptyList()
-    val m = NpcManager(broadcast = { broadcasts.add(it) }, getSessions = { sessions })
+    val m =
+        NpcManager(
+            broadcast = { broadcasts.add(it) },
+            getSessions = { sessions },
+            grantNpcKillXp = grantNpcKillXp,
+        )
     m.loadDefinitions(defs)
     return m to broadcasts
 }
@@ -551,5 +557,39 @@ class NpcManagerTest {
         val instance = m.spawnNpc("Z", "ZOMBIE", Vec3(0f, 5f, 0f), instanceLevel = 1)
         m.tickAggro(listOf(session), fakeCombatProcessor(m))
         assertEquals(session.id, instance.aggroTarget, "level diff=5 (not > 5) should still aggro")
+    }
+
+    @Test
+    fun applyDamage_npcAttacker_killsPrey_callsGrantNpcKillXp() = runBlocking {
+        var capturedPredator: NpcInstance? = null
+        var capturedPrey: NpcInstance? = null
+        val (m, _) =
+            testNpcManager(
+                defs = mapOf("ZOMBIE" to aggressiveDef(), "GOAT" to wanderDef()),
+                grantNpcKillXp = { predator, prey ->
+                    capturedPredator = predator
+                    capturedPrey = prey
+                },
+            )
+        val predator = m.spawnNpc("Z", "ZOMBIE", Vec3(0f, 5f, 0f))
+        val prey = m.spawnNpc("G", "GOAT", Vec3(0f, 5f, 0f))
+        m.applyDamage(prey.state.id, prey.currentHp, predator.state.id)
+        assertEquals(predator, capturedPredator)
+        assertEquals(prey, capturedPrey)
+    }
+
+    @Test
+    fun applyDamage_playerAttacker_killsNpc_doesNotCallGrantNpcKillXp() = runBlocking {
+        var called = false
+        val session = testSession(id = "player1", pos = Vec3(0f, 5f, 0f))
+        val (m, _) =
+            testNpcManager(
+                defs = mapOf("GOAT" to wanderDef()),
+                nearbySession = session,
+                grantNpcKillXp = { _, _ -> called = true },
+            )
+        val prey = m.spawnNpc("G", "GOAT", Vec3(0f, 5f, 0f))
+        m.applyDamage(prey.state.id, prey.currentHp, session.id)
+        assertFalse(called)
     }
 }

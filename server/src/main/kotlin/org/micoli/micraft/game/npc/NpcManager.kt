@@ -47,6 +47,7 @@ class NpcManager(
     private val getSessions: () -> Collection<PlayerSession> = { emptyList() },
     private val onNpcKilled: suspend (NpcInstance) -> Unit = {},
     private val broadcastCombatLog: suspend (String) -> Unit = {},
+    private val grantNpcKillXp: suspend (predator: NpcInstance, prey: NpcInstance) -> Unit = { _, _ -> },
 ) {
     private val npcs = ConcurrentHashMap<String, NpcInstance>()
     @Volatile private var definitions: Map<String, NpcDefinition> = emptyMap()
@@ -118,6 +119,7 @@ class NpcManager(
                             definition = def,
                             spawnPos = state.pos,
                             instanceLevel = fixedState.level,
+                            xp = fixedState.xp,
                             animalData = animalData)
                     loaded++
                 }
@@ -469,8 +471,10 @@ class NpcManager(
                 }
             }
         }
-        instance.damageContributors[attackerId] =
-            (instance.damageContributors[attackerId] ?: 0) + damage
+        if (getSessions().any { it.id == attackerId }) {
+            instance.damageContributors[attackerId] =
+                (instance.damageContributors[attackerId] ?: 0) + damage
+        }
 
         val newHp = instance.currentHp
         val maxHp = instance.maxHp
@@ -482,6 +486,14 @@ class NpcManager(
         if (newHp <= 0) {
             log.info("NPC {} killed", instance.state.name)
             broadcastCombatLog("[m:${instance.state.name}] has been slain!")
+            if (getSessions().none { it.id == attackerId }) {
+                val attackerNpc = npcs[attackerId]
+                if (attackerNpc != null && !attackerNpc.isDead) {
+                    grantNpcKillXp(attackerNpc, instance)
+                    notifyAdmins(
+                        """{"type":"npcXpUpdate","id":"${attackerNpc.state.id}","xp":${attackerNpc.xp},"level":${attackerNpc.instanceLevel}}""")
+                }
+            }
             onNpcKilled(instance)
             markNpcDead(npcId, instance, System.currentTimeMillis())
         }

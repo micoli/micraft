@@ -57,6 +57,7 @@ class CombatProcessor(
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit,
     @Suppress("unused") private val i18n: I18nConfig,
     private val savePlayer: suspend (PlayerSession) -> Unit,
+    private val onPlayerDownedByNpc: suspend (session: PlayerSession, killerNpcId: String) -> Unit = { _, _ -> },
 ) {
     // ── Target selection ──────────────────────────────────────────────────────
 
@@ -328,7 +329,10 @@ class CombatProcessor(
             target.characterData = newTargetChar
             broadcastHealthUpdate(target.id, false, newTargetChar.currentHp, theirDerived.maxHp)
             subscribeToChannel(target, "combat")
-            if (newTargetChar.currentHp <= 0) handlePlayerDowned(target)
+            if (newTargetChar.currentHp <= 0) {
+                handlePlayerDowned(target)
+                onPlayerDownedByNpc(target, npc.state.id)
+            }
             target.send(
                 makeStatusUpdate(
                     newTargetChar,

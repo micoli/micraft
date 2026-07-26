@@ -184,6 +184,9 @@ class GameLoopModule {
                     .filter { it.state.subscribedChannels.hasChannel("combat") }
                     .forEach { it.send(chatMsg) }
             },
+            grantNpcKillXp = { predator, prey ->
+                experienceProcessor.grantXpToNpcForKill(predator, prey)
+            },
         )
 
     @Single fun npcSpawner(): NpcSpawner = NpcSpawner()
@@ -204,6 +207,14 @@ class GameLoopModule {
             getSessions = sessionRegistry::all,
             savePlayer = playerPersister::save,
             subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
+            broadcastCombatLog = { msg ->
+                val chatMsg =
+                    ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
+                sessionRegistry
+                    .all()
+                    .filter { it.state.subscribedChannels.hasChannel("combat") }
+                    .forEach { it.send(chatMsg) }
+            },
         )
 
     @Single fun skillsConfig(): SkillsConfig = SkillsConfig()
@@ -227,6 +238,8 @@ class GameLoopModule {
         chatService: ChatService,
         i18nConfig: I18nConfig,
         playerPersister: PlayerPersister,
+        experienceProcessor: ExperienceProcessor,
+        experienceConfigData: ExperienceConfigData,
     ): CombatProcessor =
         CombatProcessor(
             config = combatConfigData,
@@ -246,6 +259,12 @@ class GameLoopModule {
             subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
             i18n = i18nConfig,
             savePlayer = playerPersister::save,
+            onPlayerDownedByNpc = { session, killerNpcId ->
+                val predator = npcManager.getInstance(killerNpcId) ?: return@CombatProcessor
+                val charData = session.characterData ?: return@CombatProcessor
+                val xpAmount = experienceConfigData.sources.commonPerLevel * charData.level
+                experienceProcessor.grantXpToNpc(predator, xpAmount)
+            },
         )
 
     @Single

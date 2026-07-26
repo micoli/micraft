@@ -15,6 +15,7 @@ data class NpcState(
     val maxHp: Int = 0,
     val aggroTargetId: String? = null,
     val level: Int = 1,
+    val xp: Int = 0,
     val isDead: Boolean = false,
     val animalData: AnimalStateData? = null,
     val scale: Float = 1.0f,
