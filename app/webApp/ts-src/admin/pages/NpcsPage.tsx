@@ -452,6 +452,19 @@ function Detail({ npc }: { npc: NpcAdminDto }) {
                 <span className="text-xs text-[#8A99AF]">day {npc.lastReproductionDay.toFixed(1)}</span>
               </div>
             )}
+            {npc.animalStats != null && (
+              <div className="col-span-2 mt-1">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1.5">Stats</p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                  {(["str", "dex", "intel", "wis", "con", "cha"] as const).map((k) => (
+                    <div key={k} className="flex items-center gap-1">
+                      <span className="text-[10px] uppercase text-[#8A99AF] w-8">{k}</span>
+                      <span className="text-xs font-mono text-white">{npc.animalStats![k]}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

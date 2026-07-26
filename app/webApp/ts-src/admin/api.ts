@@ -68,6 +68,7 @@ export interface NpcAdminDto {
   gestationRemainingDays: number | null;
   lastReproductionDay: number | null;
   motherLevel: number | null;
+  animalStats: { str: number; dex: number; intel: number; wis: number; con: number; cha: number } | null;
 }
 
 export interface WorldStatsDto {

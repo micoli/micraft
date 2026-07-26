@@ -32,6 +32,7 @@ import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.world.PlayerFile
 import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
+import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 
 @Serializable
@@ -61,6 +62,7 @@ data class NpcAdminDto(
     val gestationRemainingDays: Double?,
     val lastReproductionDay: Double?,
     val motherLevel: Int?,
+    val animalStats: BaseStats?,
 )
 
 @Serializable
@@ -570,6 +572,7 @@ class AdminController(
                             gestationRemainingDays = ad?.gestationRemainingDays,
                             lastReproductionDay = ad?.lastReproductionDay,
                             motherLevel = ad?.motherLevel,
+                            animalStats = ad?.stats,
                         )
                     }
                 call.respondText(

@@ -82294,17 +82294,21 @@ ${end.comment}` : end.comment;
       `${-adx * len * 0.35 - perpX * w},${-ady * len * 0.35 - perpY * w}`
     ].join(" ");
   }
-  function NpcMiniMap({ npcs, selectedId, attackLines }) {
+  function NpcMiniMap({
+    npcs,
+    selectedId,
+    attackLines
+  }) {
     const svgRef = (0, import_react3.useRef)(null);
     const [camera, setCamera] = (0, import_react3.useState)({ x: 0, z: 0, pxPerBlock: 0.5 });
     const [dragging, setDragging] = (0, import_react3.useState)(false);
     const [voronoiCells, setVoronoiCells] = (0, import_react3.useState)([]);
     const [borderSegs, setBorderSegs] = (0, import_react3.useState)([]);
-    const [, forceRender] = (0, import_react3.useState)(0);
+    const [now, setNow] = (0, import_react3.useState)(() => Date.now());
     const dragStart = (0, import_react3.useRef)(null);
     (0, import_react3.useEffect)(() => {
       if (attackLines.length === 0) return;
-      const id2 = setInterval(() => forceRender((n) => n + 1), 40);
+      const id2 = setInterval(() => setNow(Date.now()), 40);
       return () => clearInterval(id2);
     }, [attackLines.length]);
     (0, import_react3.useEffect)(() => {
@@ -82313,22 +82317,32 @@ ${end.comment}` : end.comment;
       fetch("/api/map/voronoi-borders?cx=0&cz=0&radius=3200").then((r2) => r2.ok ? r2.json() : []).then(setBorderSegs).catch(() => {
       });
     }, []);
+    const hasCenteredRef = (0, import_react3.useRef)(false);
+    const npcsMapRef = (0, import_react3.useRef)(npcs);
     (0, import_react3.useEffect)(() => {
-      if (npcs.length === 0) return;
+      npcsMapRef.current = npcs;
+    }, [npcs]);
+    (0, import_react3.useEffect)(() => {
+      if (hasCenteredRef.current || npcs.length === 0) return;
+      hasCenteredRef.current = true;
       const sx = npcs.reduce((a, n) => a + n.x, 0) / npcs.length;
       const sz = npcs.reduce((a, n) => a + n.z, 0) / npcs.length;
       setCamera((c) => __spreadProps(__spreadValues({}, c), { x: sx, z: sz }));
-    }, [npcs.length > 0]);
+    }, [npcs]);
     (0, import_react3.useEffect)(() => {
       if (!selectedId) return;
-      const npc = npcs.find((n) => n.id === selectedId);
+      const npc = npcsMapRef.current.find((n) => n.id === selectedId);
       if (!npc) return;
       setCamera((c) => __spreadProps(__spreadValues({}, c), { x: npc.x, z: npc.z }));
     }, [selectedId]);
-    const svgSize = () => {
+    const [svgDims, setSvgDims] = (0, import_react3.useState)([320, 500]);
+    (0, import_react3.useEffect)(() => {
       const el2 = svgRef.current;
-      return el2 ? [el2.clientWidth, el2.clientHeight] : [320, 500];
-    };
+      if (!el2) return;
+      const ro = new ResizeObserver(() => setSvgDims([el2.clientWidth, el2.clientHeight]));
+      ro.observe(el2);
+      return () => ro.disconnect();
+    }, []);
     const handleWheel = (e) => {
       e.preventDefault();
       const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
@@ -82349,7 +82363,7 @@ ${end.comment}` : end.comment;
     };
     const handleMouseUp = () => setDragging(false);
     const zoom = (factor) => setCamera((c) => __spreadProps(__spreadValues({}, c), { pxPerBlock: Math.max(0.05, Math.min(20, c.pxPerBlock * factor)) }));
-    const [W, H] = svgSize();
+    const [W, H] = svgDims;
     const ppb = camera.pxPerBlock;
     const worldTransform = `matrix(${ppb},0,0,${-ppb},${W / 2 - camera.x * ppb},${H / 2 + camera.z * ppb})`;
     const voronoiPolygons = buildVoronoiPolygonPaths(borderSegs, voronoiCells);
@@ -82371,10 +82385,23 @@ ${end.comment}` : end.comment;
             ppb >= 0.3 && voronoiCells.map((cell, i) => {
               const [cx, cy] = w2s(cell.x, cell.z, camera, W, H);
               if (cx < -60 || cx > W + 60 || cy < -20 || cy > H + 20) return null;
-              return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("text", { x: cx, y: cy, textAnchor: "middle", dominantBaseline: "middle", fill: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "serif", children: cell.name }, i);
+              return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+                "text",
+                {
+                  x: cx,
+                  y: cy,
+                  textAnchor: "middle",
+                  dominantBaseline: "middle",
+                  fill: "rgba(255,255,255,0.4)",
+                  fontSize: 10,
+                  fontFamily: "serif",
+                  children: cell.name
+                },
+                i
+              );
             }),
             attackLines.map((line) => {
-              const age = Date.now() - line.ts;
+              const age = now - line.ts;
               const opacity = Math.max(0, 1 - age / ATTACK_LINE_TTL);
               if (opacity <= 0) return null;
               const [ax, ay] = w2s(line.ax, line.az, camera, W, H);
@@ -82390,7 +82417,15 @@ ${end.comment}` : end.comment;
               const color = sel ? "#ffcc44" : typeColor(npc.type);
               return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("g", { transform: `translate(${nx},${ny})`, children: [
                 sel && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("circle", { cx: 0, cy: 0, r: 13, fill: "none", stroke: "#ffcc44", strokeWidth: 1.5, strokeDasharray: "3 2" }),
-                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("polygon", { points: arrowPoints(npc.yaw), fill: color, stroke: sel ? "#000" : "rgba(0,0,0,0.5)", strokeWidth: 0.8 }),
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+                  "polygon",
+                  {
+                    points: arrowPoints(npc.yaw),
+                    fill: color,
+                    stroke: sel ? "#000" : "rgba(0,0,0,0.5)",
+                    strokeWidth: 0.8
+                  }
+                ),
                 sel && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("text", { x: 14, y: 4, fill: "#ffcc44", fontSize: 11, fontFamily: "monospace", fontWeight: "bold", children: npc.name })
               ] }, npc.id);
             })
@@ -82525,6 +82560,13 @@ ${end.comment}` : end.comment;
               "day ",
               npc.lastReproductionDay.toFixed(1)
             ] })
+          ] }),
+          npc.animalStats != null && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "col-span-2 mt-1", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1.5", children: "Stats" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex flex-wrap gap-x-4 gap-y-1", children: ["str", "dex", "intel", "wis", "con", "cha"].map((k) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-1", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[10px] uppercase text-[#8A99AF] w-8", children: k }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-xs font-mono text-white", children: npc.animalStats[k] })
+            ] }, k)) })
           ] })
         ] })
       ] })
@@ -82542,7 +82584,9 @@ ${end.comment}` : end.comment;
     const [filterLevelMax, setFilterLevelMax] = (0, import_react3.useState)("");
     const [attackLines, setAttackLines] = (0, import_react3.useState)([]);
     const npcsRef = (0, import_react3.useRef)(null);
-    npcsRef.current = npcs;
+    (0, import_react3.useEffect)(() => {
+      npcsRef.current = npcs;
+    }, [npcs]);
     const load = () => {
       api.npcs.list().then(setNpcs).catch((e) => setError(String(e)));
     };
@@ -82561,12 +82605,28 @@ ${end.comment}` : end.comment;
             switch (msg.type) {
               case "npcUpdate":
                 return prev.map(
-                  (n) => n.id === msg.id ? __spreadProps(__spreadValues({}, n), { x: msg.x, y: msg.y, z: msg.z, yaw: msg.yaw, currentHp: msg.currentHp, maxHp: msg.maxHp, isDead: msg.isDead }) : n
+                  (n) => n.id === msg.id ? __spreadProps(__spreadValues({}, n), {
+                    x: msg.x,
+                    y: msg.y,
+                    z: msg.z,
+                    yaw: msg.yaw,
+                    currentHp: msg.currentHp,
+                    maxHp: msg.maxHp,
+                    isDead: msg.isDead
+                  }) : n
                 );
               case "npcSpawned":
                 if (prev.some((n) => n.id === msg.id)) {
                   return prev.map(
-                    (n) => n.id === msg.id ? __spreadProps(__spreadValues({}, n), { x: msg.x, y: msg.y, z: msg.z, yaw: msg.yaw, currentHp: msg.currentHp, maxHp: msg.maxHp, isDead: msg.isDead }) : n
+                    (n) => n.id === msg.id ? __spreadProps(__spreadValues({}, n), {
+                      x: msg.x,
+                      y: msg.y,
+                      z: msg.z,
+                      yaw: msg.yaw,
+                      currentHp: msg.currentHp,
+                      maxHp: msg.maxHp,
+                      isDead: msg.isDead
+                    }) : n
                   );
                 }
                 return [
@@ -82606,7 +82666,14 @@ ${end.comment}` : end.comment;
                   if (target && attacker) {
                     setAttackLines((lines) => [
                       ...lines.filter((l) => Date.now() - l.ts < ATTACK_LINE_TTL),
-                      { id: `${msg.attackerId}-${msg.id}-${Date.now()}`, ax: attacker.x, az: attacker.z, bx: target.x, bz: target.z, ts: Date.now() }
+                      {
+                        id: `${msg.attackerId}-${msg.id}-${Date.now()}`,
+                        ax: attacker.x,
+                        az: attacker.z,
+                        bx: target.x,
+                        bz: target.z,
+                        ts: Date.now()
+                      }
                     ]);
                   }
                 }
@@ -82618,7 +82685,7 @@ ${end.comment}` : end.comment;
                 return prev;
             }
           });
-        } catch (_) {
+        } catch (e) {
         }
       };
       return () => ws.close();
