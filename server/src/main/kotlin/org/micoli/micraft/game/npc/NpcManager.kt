@@ -523,6 +523,8 @@ class NpcManager(
             for (active in effects) {
                 when (active.effect) {
                     is StatusEffect.Pyre -> hpDelta -= 4f * dtSec
+                    is StatusEffect.Withering -> hpDelta -= 3f * dtSec
+                    is StatusEffect.Poisoned -> hpDelta -= 2f * dtSec
                     else -> {}
                 }
             }
@@ -540,7 +542,7 @@ class NpcManager(
                         ServerMessage.HealthUpdate(
                             instance.state.id, true, instance.currentHp, maxHp))
                     if (instance.currentHp <= 0) {
-                        broadcastCombatLog("[m:${instance.state.name}] burns to death!")
+                        broadcastCombatLog("[m:${instance.state.name}] withers to death!")
                         onNpcKilled(instance)
                         markNpcDead(instance.state.id, instance, now)
                     }

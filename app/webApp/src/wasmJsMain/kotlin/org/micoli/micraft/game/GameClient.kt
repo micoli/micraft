@@ -630,6 +630,11 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 ServerMessage.OpenQuestJournal::class,
                 typedHandler { _: ServerMessage.OpenQuestJournal -> jsOpenQuestJournal() })
             put(
+                ServerMessage.AoEEffect::class,
+                typedHandler { msg: ServerMessage.AoEEffect ->
+                    jsAoEEffect(scene, msg.x, msg.y, msg.z, msg.radius)
+                })
+            put(
                 ServerMessage.WeatherUpdate::class,
                 typedHandler { msg: ServerMessage.WeatherUpdate ->
                     jsSetWeatherZones(Json.encodeToString(msg.zones))

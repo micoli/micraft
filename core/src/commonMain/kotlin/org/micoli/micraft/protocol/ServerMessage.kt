@@ -309,6 +309,15 @@ sealed class ServerMessage {
     data class QuestUpdate(val questId: String, val progress: QuestProgress) : ServerMessage()
 
     @ProtoId(45) @Serializable object OpenQuestJournal : ServerMessage()
+
+    @ProtoId(46)
+    @Serializable
+    data class AoEEffect(
+        val x: Float,
+        val y: Float,
+        val z: Float,
+        val radius: Float,
+    ) : ServerMessage()
 }
 
 @Serializable

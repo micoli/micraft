@@ -183,6 +183,8 @@ class SpellProcessor(
                 val radiusSq = spell.aoeRadius * spell.aoeRadius
                 val effect = StatusEffect.Withering
                 val durationSec = effect.durationSec
+                val hitPlayers = mutableListOf<String>()
+                val hitNpcs = mutableListOf<String>()
 
                 for (target in getSessions()) {
                     if (target.characterData == null) continue
@@ -192,6 +194,7 @@ class SpellProcessor(
                     val ez = msg.targetZ - tp.z
                     if (ex * ex + ey * ey + ez * ez <= radiusSq) {
                         combatProcessor.applyStatusEffectTo(target, effect, durationSec, now)
+                        hitPlayers += target.state.name
                     }
                 }
 
@@ -206,8 +209,14 @@ class SpellProcessor(
                         npc.activeEffects.add(
                             org.micoli.micraft.combat.ActiveStatusEffect(
                                 effect, now + (durationSec * 1000).toLong()))
+                        hitNpcs += "${npc.state.id.take(8)}(${npc.state.name})"
                     }
                 }
+
+                log.debug("AoE hit players={} npcs={}", hitPlayers, hitNpcs)
+                val aoeMsg =
+                    ServerMessage.AoEEffect(msg.targetX, msg.targetY, msg.targetZ, spell.aoeRadius)
+                for (s in getSessions()) s.send(aoeMsg)
             }
             SpellType.TOKEN_RAGE_CONSUME -> {}
         }

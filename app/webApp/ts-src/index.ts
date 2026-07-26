@@ -21,6 +21,7 @@ import { registerMinimap, setMinimapColors } from "./game/minimap/minimap";
 import { registerSky } from "./game/sky/sky";
 import { registerWeather } from "./game/weather/weather";
 import { registerScreenshot } from "./game/screenshot/screenshot";
+import { registerAoeEffect } from "./game/effects/aoeEffect";
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import { GameUI } from "./game/GameUI";
@@ -142,6 +143,7 @@ window.mc = {
   ...registerSky(),
   ...registerWeather(),
   ...registerScreenshot(),
+  ...registerAoeEffect(),
 
   // ── Registry ────────────────────────────────────────────────────────────────
 

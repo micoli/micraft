@@ -313,6 +313,8 @@ class GameLoopModule {
         classesConfigData: ClassesConfigData,
         combatConfigData: CombatConfigData,
         combatProcessor: CombatProcessor,
+        sessionRegistry: SessionRegistry,
+        npcManager: NpcManager,
     ): SpellProcessor =
         SpellProcessor(
             spellRegistry = spells,
@@ -320,6 +322,8 @@ class GameLoopModule {
             armorRegistry = emptyMap<String, ArmorDefinition>(),
             combatConfig = combatConfigData,
             combatProcessor = combatProcessor,
+            getSessions = sessionRegistry::all,
+            getNpcs = { npcManager.getAll() },
         )
 
     @Single
