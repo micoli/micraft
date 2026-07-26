@@ -57,7 +57,9 @@ class CombatProcessor(
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit,
     @Suppress("unused") private val i18n: I18nConfig,
     private val savePlayer: suspend (PlayerSession) -> Unit,
-    private val onPlayerDownedByNpc: suspend (session: PlayerSession, killerNpcId: String) -> Unit = { _, _ -> },
+    private val onPlayerDownedByNpc: suspend (session: PlayerSession, killerNpcId: String) -> Unit =
+        { _, _ ->
+        },
 ) {
     // ── Target selection ──────────────────────────────────────────────────────
 

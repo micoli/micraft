@@ -47,7 +47,9 @@ class NpcManager(
     private val getSessions: () -> Collection<PlayerSession> = { emptyList() },
     private val onNpcKilled: suspend (NpcInstance) -> Unit = {},
     private val broadcastCombatLog: suspend (String) -> Unit = {},
-    private val grantNpcKillXp: suspend (predator: NpcInstance, prey: NpcInstance) -> Unit = { _, _ -> },
+    private val grantNpcKillXp: suspend (predator: NpcInstance, prey: NpcInstance) -> Unit =
+        { _, _ ->
+        },
 ) {
     private val npcs = ConcurrentHashMap<String, NpcInstance>()
     @Volatile private var definitions: Map<String, NpcDefinition> = emptyMap()

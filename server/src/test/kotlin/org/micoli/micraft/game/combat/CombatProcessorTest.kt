@@ -698,13 +698,14 @@ class CombatProcessorTest {
 
         val npc = fakeNpc(power = 0)
         buildProcessor(
-            sessions = { listOf(target) },
-            attackRegistry = mapOf("basic_attack" to guaranteedHitAttack),
-            onPlayerDownedByNpc = { session, npcId ->
-                capturedSession = session
-                capturedNpcId = npcId
-            },
-        ).handleNpcAttack(npc, target)
+                sessions = { listOf(target) },
+                attackRegistry = mapOf("basic_attack" to guaranteedHitAttack),
+                onPlayerDownedByNpc = { session, npcId ->
+                    capturedSession = session
+                    capturedNpcId = npcId
+                },
+            )
+            .handleNpcAttack(npc, target)
 
         assertEquals(target, capturedSession)
         assertEquals(npc.state.id, capturedNpcId)
@@ -718,9 +719,10 @@ class CombatProcessorTest {
 
         val npc = fakeNpc(power = 0)
         buildProcessor(
-            sessions = { listOf(target) },
-            onPlayerDownedByNpc = { _, _ -> called = true },
-        ).handleNpcAttack(npc, target)
+                sessions = { listOf(target) },
+                onPlayerDownedByNpc = { _, _ -> called = true },
+            )
+            .handleNpcAttack(npc, target)
 
         assertFalse(called)
     }

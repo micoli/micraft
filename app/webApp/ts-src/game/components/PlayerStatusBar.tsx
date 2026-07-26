@@ -64,7 +64,12 @@ function GcdBar({ remainingMs }: { remainingMs: number }) {
   return (
     <div className="flex items-center gap-2">
       <span className="text-[11px] text-white/60 w-6 shrink-0 ml-2">GCD</span>
-      <div className="relative flex-1 h-4 bg-black/60 rounded overflow-hidden border border-white/10">
+      <div
+        className="relative flex-1 h-4 bg-black/60 rounded overflow-hidden border border-white/10"
+        style={{
+          minWidth: "50px",
+        }}
+      >
         <div
           className="h-full rounded"
           style={{

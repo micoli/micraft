@@ -82636,6 +82636,7 @@ ${end.comment}` : end.comment;
                     name: msg.name,
                     type: msg.npcType,
                     level: 1,
+                    xp: 0,
                     gender: null,
                     currentHp: msg.currentHp,
                     maxHp: msg.maxHp,
@@ -82653,11 +82654,14 @@ ${end.comment}` : end.comment;
                     hunger: null,
                     gestationRemainingDays: null,
                     lastReproductionDay: null,
-                    motherLevel: null
+                    motherLevel: null,
+                    animalStats: null
                   }
                 ];
               case "npcDespawned":
                 return prev.filter((n) => n.id !== msg.id);
+              case "npcXpUpdate":
+                return prev.map((n) => n.id === msg.id ? __spreadProps(__spreadValues({}, n), { xp: msg.xp, level: msg.level }) : n);
               case "healthUpdate": {
                 if (msg.attackerId) {
                   const current = (_a6 = npcsRef.current) != null ? _a6 : prev;
@@ -82825,6 +82829,7 @@ ${end.comment}` : end.comment;
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Name" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Type" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Lv" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "XP" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Gender" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Tier" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: "Aggro" }),
@@ -82832,7 +82837,7 @@ ${end.comment}` : end.comment;
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("th", { className: "px-4 py-3" })
           ] }) }),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("tbody", { children: [
-            filtered.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { colSpan: 8, className: "text-center text-[#8A99AF] py-8", children: "No NPCs match" }) }),
+            filtered.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { colSpan: 9, className: "text-center text-[#8A99AF] py-8", children: "No NPCs match" }) }),
             filtered.map((npc) => {
               var _a6;
               const expanded = expandedId === npc.id;
@@ -82849,6 +82854,7 @@ ${end.comment}` : end.comment;
                       ] }),
                       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: npc.type }),
                       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: npc.level }),
+                      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF] font-mono", children: npc.xp }),
                       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: (_a6 = npc.gender) != null ? _a6 : "\u2014" }),
                       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Badge, { label: npc.tier, color: tierColor(npc.tier) }) }),
                       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Badge, { label: npc.aggroMode, color: aggroColor(npc.aggroMode) }) }),
@@ -82858,7 +82864,7 @@ ${end.comment}` : end.comment;
                   },
                   npc.id
                 ),
-                expanded && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("tr", { className: "border-t border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { colSpan: 8, className: "p-0", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Detail, { npc }) }) }, npc.id + "-detail")
+                expanded && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("tr", { className: "border-t border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { colSpan: 9, className: "p-0", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Detail, { npc }) }) }, npc.id + "-detail")
               ] });
             })
           ] })

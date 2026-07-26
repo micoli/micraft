@@ -566,6 +566,7 @@ export function NpcsPage() {
                   gestationRemainingDays: null,
                   lastReproductionDay: null,
                   motherLevel: null,
+                  animalStats: null,
                 },
               ];
             case "npcDespawned":
