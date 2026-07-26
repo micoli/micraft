@@ -17,8 +17,14 @@ aggroMode: PASSIVE_COOPERATIVE
 aggroRange: 12.0
 deaggroTimeSec: 8.0
 minLevel: 0
-classResource: MANA
-maxMana: 0
+characterClass: RANGER
+baseStats:
+  str: 14
+  dex: 12
+  intel: 8
+  wis: 10
+  con: 14
+  cha: 8
 attacks:
   - attackId: camel_kick
     level: 2

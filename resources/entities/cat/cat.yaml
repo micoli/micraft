@@ -16,6 +16,14 @@ hp: 5
 aggroMode: PASSIVE
 aggroRange: 5
 deaggroTimeSec: 2
+characterClass: ROGUE
+baseStats:
+  str: 8
+  dex: 16
+  intel: 10
+  wis: 8
+  con: 8
+  cha: 10
 attacks:
   - attackId: shadow_claw
     level: 1
@@ -35,9 +43,12 @@ animal:
   matingRange: 8.0
   scale: 1.0
   baseStats:
-    strength: 8
-    dexterity: 16
-    constitution: 8
+    str: 8
+    dex: 16
+    intel: 10
+    wis: 8
+    con: 8
+    cha: 10
   statsVariance: 2
   hpRegenPerSec: 0.8
   hungerRatePerDay: 0.09

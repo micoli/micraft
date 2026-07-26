@@ -1,7 +1,7 @@
 package org.micoli.micraft.game.npc.animal
 
 import kotlinx.serialization.Serializable
-import org.micoli.micraft.npc.NpcStatBlock
+import org.micoli.micraft.player.rpg.BaseStats
 
 @Serializable
 data class AnimalYamlEntry(
@@ -17,7 +17,7 @@ data class AnimalYamlEntry(
     val matingRange: Float = 10.0f,
     val scale: Float = 1.0f,
     val adultType: String? = null,
-    val baseStats: NpcStatBlock = NpcStatBlock(),
+    val baseStats: BaseStats = BaseStats(),
     val statsVariance: Int = 2,
     val hpRegenPerSec: Float = 2.0f,
     val manaRegenPerSec: Float = 0f,

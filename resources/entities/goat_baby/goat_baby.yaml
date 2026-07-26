@@ -11,6 +11,14 @@ hp: 4
 aggroMode: PASSIVE
 aggroRange: 4.0
 deaggroTimeSec: 1.0
+characterClass: WARRIOR
+baseStats:
+  str: 2
+  dex: 8
+  intel: 8
+  wis: 8
+  con: 5
+  cha: 6
 animal:
   diet: HERBIVORE
   lifespanDays: 20.0
@@ -18,9 +26,12 @@ animal:
   scale: 0.75
   adultType: goat
   baseStats:
-    strength: 2
-    dexterity: 8
-    constitution: 5
+    str: 2
+    dex: 8
+    intel: 8
+    wis: 8
+    con: 5
+    cha: 6
   statsVariance: 1
   hpRegenPerSec: 0.3
   hungerRatePerDay: 0.1

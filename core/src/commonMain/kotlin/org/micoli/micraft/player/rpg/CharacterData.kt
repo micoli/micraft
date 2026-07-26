@@ -19,4 +19,29 @@ data class CharacterData(
     @EncodeDefault val currentRage: Int = 0,
     @EncodeDefault val currentTokens: Int = 0,
     @EncodeDefault val restPoint: List<Vec3> = emptyList(),
-)
+) {
+    val combatant: CombatantData
+        get() =
+            CombatantData(
+                characterClass = characterClass,
+                level = level,
+                xp = xp,
+                baseStats = baseStats,
+                currentHp = currentHp,
+                currentMana = currentMana,
+                currentRage = currentRage,
+                currentTokens = currentTokens,
+            )
+
+    fun withCombatant(c: CombatantData): CharacterData =
+        copy(
+            characterClass = c.characterClass,
+            level = c.level,
+            xp = c.xp,
+            baseStats = c.baseStats,
+            currentHp = c.currentHp,
+            currentMana = c.currentMana,
+            currentRage = c.currentRage,
+            currentTokens = c.currentTokens,
+        )
+}

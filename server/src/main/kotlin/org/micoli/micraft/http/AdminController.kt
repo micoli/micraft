@@ -29,7 +29,6 @@ import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcConstants
-import org.micoli.micraft.game.npc.NpcHpCalculator
 import org.micoli.micraft.game.world.PlayerFile
 import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
@@ -543,7 +542,7 @@ class AdminController(
                 val dtos =
                     gameLoop.getNpcInstances().map { npc ->
                         val ad = npc.animalData
-                        val maxHp = NpcHpCalculator.computeMaxHp(npc.definition, npc.instanceLevel)
+                        val maxHp = npc.maxHp
                         val zoneX =
                             Math.floorDiv(npc.state.pos.x.toInt(), NpcConstants.NPC_ZONE_SIZE)
                         val zoneZ =
@@ -649,7 +648,7 @@ class AdminController(
             try {
                 for (npc in gameLoop.getNpcInstances()) {
                     val s = npc.state
-                    val maxHp = NpcHpCalculator.computeMaxHp(npc.definition, npc.instanceLevel)
+                    val maxHp = npc.maxHp
                     send(
                         """{"type":"npcSpawned","id":"${s.id}","name":${s.name.adminWsJson()},"npcType":${s.type.adminWsJson()},"x":${s.pos.x},"y":${s.pos.y},"z":${s.pos.z},"yaw":${s.yaw},"currentHp":${npc.currentHp},"maxHp":$maxHp,"isDead":${npc.isDead}}""")
                 }

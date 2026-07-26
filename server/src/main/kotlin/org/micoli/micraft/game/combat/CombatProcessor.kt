@@ -288,15 +288,15 @@ class CombatProcessor(
 
         val (slot, _, levelDef) = resolved
 
-        when (def.classResource) {
+        when (def.characterClass.classResource) {
             ClassResource.MANA -> {
-                if (def.maxMana > 0 && levelDef.manaCost > 0) {
+                if (npc.maxMana > 0 && levelDef.manaCost > 0) {
                     if (npc.currentMana < levelDef.manaCost) return
                     npc.currentMana -= levelDef.manaCost
                 }
             }
             ClassResource.RAGE -> {
-                if (def.maxRage > 0 && levelDef.rageCost > 0) {
+                if (npc.maxRage > 0 && levelDef.rageCost > 0) {
                     if (npc.currentRage < levelDef.rageCost) return
                     npc.currentRage -= levelDef.rageCost
                 }

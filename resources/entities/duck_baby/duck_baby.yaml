@@ -15,6 +15,14 @@ hp: 3
 aggroMode: PASSIVE
 aggroRange: 3.0
 deaggroTimeSec: 1.0
+characterClass: WARRIOR
+baseStats:
+  str: 1
+  dex: 10
+  intel: 8
+  wis: 8
+  con: 4
+  cha: 6
 animal:
   diet: HERBIVORE
   lifespanDays: 15.0
@@ -22,9 +30,12 @@ animal:
   scale: 0.75
   adultType: duck
   baseStats:
-    strength: 1
-    dexterity: 10
-    constitution: 4
+    str: 1
+    dex: 10
+    intel: 8
+    wis: 8
+    con: 4
+    cha: 6
   statsVariance: 1
   hpRegenPerSec: 0.2
   hungerRatePerDay: 0.12

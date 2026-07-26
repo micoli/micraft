@@ -17,8 +17,14 @@ aggroMode: AGGRESSIVE
 aggroRange: 15.0
 deaggroTimeSec: 12.0
 minLevel: 2
-classResource: RAGE
-maxRage: 80
+characterClass: WARRIOR
+baseStats:
+  str: 18
+  dex: 8
+  intel: 6
+  wis: 8
+  con: 18
+  cha: 6
 attacks:
   - attackId: polar_bear_swipe
     level: 3

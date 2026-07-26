@@ -18,8 +18,14 @@ aggroMode: AGGRESSIVE
 aggroRange: 10.0
 deaggroTimeSec: 15.0
 minLevel: 11
-classResource: RAGE
-maxRage: 80
+characterClass: WARRIOR
+baseStats:
+  str: 18
+  dex: 12
+  intel: 8
+  wis: 8
+  con: 16
+  cha: 6
 attacks:
   - attackId: wolf_bite
     level: 3

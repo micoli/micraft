@@ -106,7 +106,7 @@ class NpcManager(
                     }
                     val fixedState =
                         if (state.maxHp <= 0)
-                            NpcHpCalculator.computeMaxHp(def, state.level).let {
+                            def.computeMaxHp(state.level).let {
                                 state.copy(currentHp = it, maxHp = it)
                             }
                         else state
@@ -117,6 +117,7 @@ class NpcManager(
                             currentHp = fixedState.currentHp,
                             definition = def,
                             spawnPos = state.pos,
+                            instanceLevel = fixedState.level,
                             animalData = animalData)
                     loaded++
                 }
@@ -159,7 +160,7 @@ class NpcManager(
                     return
                 }
         val adultLevel = instance.instanceLevel
-        val adultMaxHp = NpcHpCalculator.computeMaxHp(adultDef, adultLevel)
+        val adultMaxHp = adultDef.computeMaxHp(adultLevel)
         val evolvedAnimal =
             AnimalInstanceData(
                 gender = animalData.gender,
@@ -191,7 +192,7 @@ class NpcManager(
         val def =
             definitions[type] ?: error("Unknown NPC type: '$type'. Available: ${definitions.keys}")
         val effectiveLevel = if (instanceLevel < 1) def.minLevel else instanceLevel
-        val spawnMaxHp = NpcHpCalculator.computeMaxHp(def, effectiveLevel)
+        val spawnMaxHp = def.computeMaxHp(effectiveLevel)
         val id = UUID.randomUUID().toString()
         val state =
             NpcState(
@@ -207,11 +208,7 @@ class NpcManager(
             )
         val instance =
             NpcInstance(
-                state = state,
-                currentHp = def.hp,
-                definition = def,
-                spawnPos = pos,
-                instanceLevel = effectiveLevel)
+                state = state, definition = def, spawnPos = pos, instanceLevel = effectiveLevel)
         npcs[id] = instance
         if (broadCastNpcPositions) {
             broadcast(ServerMessage.NpcSpawned(state))
@@ -476,7 +473,7 @@ class NpcManager(
             (instance.damageContributors[attackerId] ?: 0) + damage
 
         val newHp = instance.currentHp
-        val maxHp = NpcHpCalculator.computeMaxHp(instance.definition, instance.instanceLevel)
+        val maxHp = instance.maxHp
         instance.state = instance.state.copy(currentHp = newHp, maxHp = maxHp)
         broadcast(ServerMessage.HealthUpdate(npcId, true, newHp, maxHp))
         notifyAdmins(
@@ -534,8 +531,7 @@ class NpcManager(
                 if (damage > 0) {
                     instance.pendingDotDamage -= damage
                     instance.currentHp = (instance.currentHp - damage).coerceAtLeast(0)
-                    val maxHp =
-                        NpcHpCalculator.computeMaxHp(instance.definition, instance.instanceLevel)
+                    val maxHp = instance.maxHp
                     instance.state =
                         instance.state.copy(currentHp = instance.currentHp, maxHp = maxHp)
                     broadcast(
@@ -563,10 +559,10 @@ class NpcManager(
             val deaggroMs = (def.deaggroTimeSec * 1000).toLong()
             val prevAggroTarget = instance.aggroTarget
 
-            if (instance.currentMana < def.maxMana)
-                instance.currentMana = (instance.currentMana + 1).coerceAtMost(def.maxMana)
-            if (instance.aggroTarget != null && instance.currentRage < def.maxRage)
-                instance.currentRage = (instance.currentRage + 2).coerceAtMost(def.maxRage)
+            if (instance.currentMana < instance.maxMana)
+                instance.currentMana = (instance.currentMana + 1).coerceAtMost(instance.maxMana)
+            if (instance.aggroTarget != null && instance.currentRage < instance.maxRage)
+                instance.currentRage = (instance.currentRage + 2).coerceAtMost(instance.maxRage)
             else if (instance.aggroTarget == null && instance.currentRage > 0)
                 instance.currentRage = (instance.currentRage - 1).coerceAtLeast(0)
 

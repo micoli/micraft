@@ -16,6 +16,14 @@ hp: 3
 aggroMode: PASSIVE
 aggroRange: 3.0
 deaggroTimeSec: 1.5
+characterClass: ROGUE
+baseStats:
+  str: 3
+  dex: 10
+  intel: 8
+  wis: 8
+  con: 4
+  cha: 8
 animal:
   diet: CARNIVORE
   lifespanDays: 25.0
@@ -23,9 +31,12 @@ animal:
   scale: 0.75
   adultType: cat
   baseStats:
-    strength: 3
-    dexterity: 10
-    constitution: 4
+    str: 3
+    dex: 10
+    intel: 8
+    wis: 8
+    con: 4
+    cha: 8
   statsVariance: 1
   hpRegenPerSec: 0.3
   hungerRatePerDay: 0.11

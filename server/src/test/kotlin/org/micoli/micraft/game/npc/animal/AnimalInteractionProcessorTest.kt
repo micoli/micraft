@@ -17,8 +17,8 @@ import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.npc.NpcGender
-import org.micoli.micraft.npc.NpcStatBlock
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testI18n
 import org.micoli.micraft.support.testWorld
@@ -36,7 +36,7 @@ private val TEST_ANIMAL_CONFIG =
         matingRange = 5.0f,
         scale = 1.0f,
         adultType = null,
-        baseStats = NpcStatBlock(strength = 10, dexterity = 10, constitution = 10),
+        baseStats = BaseStats(str = 10, dex = 10, con = 10),
         statsVariance = 0,
         hpRegenPerSec = 5.0f,
         manaRegenPerSec = 3.0f,
@@ -75,7 +75,6 @@ private fun testAnimalDef(
         hp = 40,
         aggroMode = AggroMode.AGGRESSIVE,
         aggroRange = 8f,
-        maxMana = 20,
         animalConfig = config,
     )
 
@@ -129,7 +128,7 @@ class AnimalInteractionProcessorTest {
         instance.animalData =
             AnimalInstanceData.initial(
                 lifespanDays = 10.0,
-                baseStats = NpcStatBlock(),
+                baseStats = BaseStats(),
                 statsVariance = 0,
                 initialHunger = 0.3,
                 initialAge = 0.0,
@@ -151,7 +150,7 @@ class AnimalInteractionProcessorTest {
         instance.animalData =
             AnimalInstanceData.initial(
                 lifespanDays = null,
-                baseStats = NpcStatBlock(),
+                baseStats = BaseStats(),
                 statsVariance = 0,
                 initialAge = 9.9999,
             )
@@ -172,7 +171,7 @@ class AnimalInteractionProcessorTest {
         instance.animalData =
             AnimalInstanceData.initial(
                 lifespanDays = null,
-                baseStats = NpcStatBlock(),
+                baseStats = BaseStats(),
                 statsVariance = 0,
                 initialAge = 9999.0,
             )
@@ -189,7 +188,7 @@ class AnimalInteractionProcessorTest {
         val instance = m.spawnNpc("Rex", "wolf", Vec3(0f, 5f, 0f))
         instance.animalData =
             AnimalInstanceData.initial(
-                lifespanDays = 10.0, baseStats = NpcStatBlock(), statsVariance = 0)
+                lifespanDays = 10.0, baseStats = BaseStats(), statsVariance = 0)
         instance.lastDamagedAtMs = 0L
         val maxHp = instance.state.maxHp
         instance.currentHp = maxHp / 2
@@ -209,7 +208,7 @@ class AnimalInteractionProcessorTest {
         val instance = m.spawnNpc("Rex", "wolf", Vec3(0f, 5f, 0f))
         instance.animalData =
             AnimalInstanceData.initial(
-                lifespanDays = 10.0, baseStats = NpcStatBlock(), statsVariance = 0)
+                lifespanDays = 10.0, baseStats = BaseStats(), statsVariance = 0)
         instance.lastDamagedAtMs = System.currentTimeMillis()
         val maxHp = instance.state.maxHp
         instance.currentHp = maxHp / 2
@@ -226,7 +225,7 @@ class AnimalInteractionProcessorTest {
         val instance = m.spawnNpc("Rex", "wolf", Vec3(0f, 5f, 0f))
         instance.animalData =
             AnimalInstanceData.initial(
-                lifespanDays = 10.0, baseStats = NpcStatBlock(), statsVariance = 0)
+                lifespanDays = 10.0, baseStats = BaseStats(), statsVariance = 0)
         instance.lastDamagedAtMs = 0L
         instance.currentMana = 0
 
@@ -235,7 +234,7 @@ class AnimalInteractionProcessorTest {
 
         assertTrue(
             instance.currentMana > 0,
-            "Mana should regen when out of combat (maxMana=${instance.definition.maxMana})")
+            "Mana should regen when out of combat (maxMana=${instance.maxMana})")
     }
 
     @Test
@@ -255,7 +254,7 @@ class AnimalInteractionProcessorTest {
                 gestationRemainingDays = tinyGestation,
                 lastReproductionDay = null,
                 parentIds = mutableSetOf(),
-                stats = NpcStatBlock(),
+                stats = BaseStats(),
                 motherLevel = 0,
             )
         mother.animalData = data
@@ -287,7 +286,7 @@ class AnimalInteractionProcessorTest {
                 gestationRemainingDays = null,
                 lastReproductionDay = null,
                 parentIds = mutableSetOf(),
-                stats = NpcStatBlock(),
+                stats = BaseStats(),
                 motherLevel = motherLevel,
             )
 
@@ -306,7 +305,7 @@ class AnimalInteractionProcessorTest {
     fun animalInstanceData_initial_randomGenderAssigned() {
         val data =
             AnimalInstanceData.initial(
-                lifespanDays = 10.0, baseStats = NpcStatBlock(), statsVariance = 0)
+                lifespanDays = 10.0, baseStats = BaseStats(), statsVariance = 0)
         assertNotNull(data.gender)
     }
 
@@ -314,10 +313,10 @@ class AnimalInteractionProcessorTest {
     fun animalInstanceData_offspring_parentIdsSet() {
         val parentA =
             AnimalInstanceData.initial(
-                lifespanDays = 10.0, baseStats = NpcStatBlock(), statsVariance = 0)
+                lifespanDays = 10.0, baseStats = BaseStats(), statsVariance = 0)
         val parentB =
             AnimalInstanceData.initial(
-                lifespanDays = 10.0, baseStats = NpcStatBlock(), statsVariance = 0)
+                lifespanDays = 10.0, baseStats = BaseStats(), statsVariance = 0)
         val child =
             AnimalInstanceData.offspring(
                 parentA = parentA,
@@ -342,7 +341,7 @@ class AnimalInteractionProcessorTest {
                 gestationRemainingDays = 1.5,
                 lastReproductionDay = 7.0,
                 parentIds = mutableSetOf("id1", "id2"),
-                stats = NpcStatBlock(strength = 12, dexterity = 8, constitution = 15),
+                stats = BaseStats(str = 12, dex = 8, con = 15),
                 motherLevel = 4,
             )
         val restored = AnimalInstanceData.fromState(original.toState())

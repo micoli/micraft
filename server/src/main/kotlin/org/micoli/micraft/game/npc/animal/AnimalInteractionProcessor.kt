@@ -104,7 +104,7 @@ class AnimalInteractionProcessor(
         }
 
         if (config.manaRegenPerSec > 0f && !inCombat) {
-            val maxMana = instance.definition.maxMana
+            val maxMana = instance.maxMana
             if (maxMana > 0 && instance.currentMana < maxMana) {
                 val id = "${instance.state.id}_mana"
                 val acc = (hpRegenAccumulators[id] ?: 0f) + config.manaRegenPerSec * dt

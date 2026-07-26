@@ -1,6 +1,7 @@
 package org.micoli.micraft.npc
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.player.rpg.BaseStats
 
 @Serializable
 data class AnimalStateData(
@@ -10,6 +11,6 @@ data class AnimalStateData(
     val gestationRemainingDays: Double? = null,
     val lastReproductionDay: Double? = null,
     val parentIds: Set<String> = emptySet(),
-    val stats: NpcStatBlock = NpcStatBlock(),
+    val stats: BaseStats = BaseStats(),
     val motherLevel: Int = 0,
 )

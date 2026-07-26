@@ -17,8 +17,14 @@ aggroMode: AGGRESSIVE
 aggroRange: 6.0
 deaggroTimeSec: 10.0
 minLevel: 0
-classResource: RAGE
-maxRage: 60
+characterClass: WARRIOR
+baseStats:
+  str: 14
+  dex: 10
+  intel: 8
+  wis: 8
+  con: 12
+  cha: 6
 attacks:
   - attackId: wolf_bite
     level: 2
@@ -40,9 +46,12 @@ animal:
   matingRange: 10.0
   scale: 1.0
   baseStats:
-    strength: 14
-    dexterity: 10
-    constitution: 12
+    str: 14
+    dex: 10
+    intel: 8
+    wis: 8
+    con: 12
+    cha: 6
   statsVariance: 2
   hpRegenPerSec: 1.5
   hungerRatePerDay: 0.1

@@ -22,9 +22,12 @@ animal:
   matingRange: 6.0
   scale: 1.0
   baseStats:
-    strength: 3
-    dexterity: 14
-    constitution: 8
+    str: 3
+    dex: 14
+    intel: 8
+    wis: 8
+    con: 8
+    cha: 6
   statsVariance: 2
   hpRegenPerSec: 0.5
   hungerRatePerDay: 0.1
