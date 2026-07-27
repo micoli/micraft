@@ -2,6 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api, NpcAdminDto } from "../api";
 import type { VoronoiCellInfo } from "../../map/types";
 
+interface PlayerAdminDto {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  z: number;
+  yaw: number;
+}
+
 interface Camera {
   x: number;
   z: number;
@@ -131,10 +140,12 @@ function arrowPoints(yaw: number): string {
 
 function NpcMiniMap({
   npcs,
+  players,
   selectedId,
   attackLines,
 }: {
   npcs: NpcAdminDto[];
+  players: PlayerAdminDto[];
   selectedId: string | null;
   attackLines: AttackLine[];
 }) {
@@ -305,6 +316,25 @@ function NpcMiniMap({
                   {npc.name}
                 </text>
               )}
+            </g>
+          );
+        })}
+
+        {/* Player markers — rendered above NPCs */}
+        {players.map((p) => {
+          const [px, py] = w2s(p.x, p.z, camera, W, H);
+          const rad = 6;
+          const yawRad = (p.yaw * Math.PI) / 180;
+          const tx = Math.sin(yawRad) * (rad + 4);
+          const ty = -Math.cos(yawRad) * (rad + 4);
+          return (
+            <g key={p.id} transform={`translate(${px},${py})`}>
+              <circle cx={0} cy={0} r={rad + 3} fill="rgba(59,130,246,0.18)" stroke="#3b82f6" strokeWidth={1} />
+              <circle cx={0} cy={0} r={rad} fill="#3b82f6" stroke="#fff" strokeWidth={1.2} />
+              <line x1={0} y1={0} x2={tx} y2={ty} stroke="#fff" strokeWidth={1.5} strokeLinecap="round" />
+              <text x={rad + 6} y={4} fill="#93c5fd" fontSize={11} fontFamily="monospace" fontWeight="bold">
+                {p.name}
+              </text>
             </g>
           );
         })}
@@ -483,6 +513,7 @@ export function NpcsPage() {
   const [filterLevelMin, setFilterLevelMin] = useState("");
   const [filterLevelMax, setFilterLevelMax] = useState("");
   const [attackLines, setAttackLines] = useState<AttackLine[]>([]);
+  const [players, setPlayers] = useState<PlayerAdminDto[]>([]);
   const npcsRef = useRef<NpcAdminDto[] | null>(null);
   useEffect(() => {
     npcsRef.current = npcs;
@@ -505,6 +536,23 @@ export function NpcsPage() {
     ws.onmessage = (ev) => {
       try {
         const msg = JSON.parse(ev.data as string);
+        if (msg.type === "playerJoined") {
+          setPlayers((prev) => {
+            if (prev.some((p) => p.id === msg.id)) return prev;
+            return [...prev, { id: msg.id, name: msg.name, x: msg.x, y: msg.y, z: msg.z, yaw: msg.yaw }];
+          });
+          return;
+        }
+        if (msg.type === "playerMoved") {
+          setPlayers((prev) =>
+            prev.map((p) => (p.id === msg.id ? { ...p, x: msg.x, y: msg.y, z: msg.z, yaw: msg.yaw } : p)),
+          );
+          return;
+        }
+        if (msg.type === "playerLeft") {
+          setPlayers((prev) => prev.filter((p) => p.id !== msg.id));
+          return;
+        }
         setNpcs((prev) => {
           if (!prev) return prev;
           switch (msg.type) {
@@ -815,7 +863,7 @@ export function NpcsPage() {
         )}
       </div>
       <div className="w-80 shrink-0 sticky top-4">
-        <NpcMiniMap npcs={npcs ?? []} selectedId={expandedId} attackLines={attackLines} />
+        <NpcMiniMap npcs={npcs ?? []} players={players} selectedId={expandedId} attackLines={attackLines} />
       </div>
     </div>
   );

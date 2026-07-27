@@ -649,7 +649,13 @@ class AdminController(
                     send(json)
                 } catch (_: Exception) {}
             }
+            val playerListener: suspend (String) -> Unit = { json ->
+                try {
+                    send(json)
+                } catch (_: Exception) {}
+            }
             npcManager.addAdminListener(listener)
+            gameLoop.addPlayerAdminListener(playerListener)
             try {
                 for (npc in gameLoop.getNpcInstances()) {
                     val s = npc.state
@@ -657,11 +663,16 @@ class AdminController(
                     send(
                         """{"type":"npcSpawned","id":"${s.id}","name":${s.name.adminWsJson()},"npcType":${s.type.adminWsJson()},"x":${s.pos.x},"y":${s.pos.y},"z":${s.pos.z},"yaw":${s.yaw},"currentHp":${npc.currentHp},"maxHp":$maxHp,"isDead":${npc.isDead}}""")
                 }
+                for (state in gameLoop.getPlayerStates()) {
+                    send(
+                        """{"type":"playerJoined","id":"${state.id}","name":${state.name.adminWsJson()},"x":${state.pos.x},"y":${state.pos.y},"z":${state.pos.z},"yaw":${state.orientation.yaw}}""")
+                }
                 for (frame in incoming) {
                     /* ignore */
                 }
             } finally {
                 npcManager.removeAdminListener(listener)
+                gameLoop.removePlayerAdminListener(playerListener)
             }
         }
 

@@ -472,6 +472,23 @@ class GameLoop(
 
     fun getPlayerStates(): List<PlayerState> = sessionRegistry.all().map { it.state }
 
+    private val playerAdminListeners =
+        java.util.concurrent.CopyOnWriteArrayList<suspend (String) -> Unit>()
+
+    fun addPlayerAdminListener(listener: suspend (String) -> Unit) {
+        playerAdminListeners.add(listener)
+    }
+
+    fun removePlayerAdminListener(listener: suspend (String) -> Unit) {
+        playerAdminListeners.remove(listener)
+    }
+
+    private suspend fun broadcastPlayerAdmin(json: String) {
+        for (l in playerAdminListeners) runCatching { l(json) }
+    }
+
+    private fun String.toPlayerAdminJson() = "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
     fun getNpcStates(): List<NpcState> = npcManager.getAll().map { it.state }
 
     fun getGameTicks(): Long = gameTicks
@@ -891,6 +908,8 @@ class GameLoop(
                 session.state = newState
                 val update = ServerMessage.PlayerUpdate(newState)
                 sessionRegistry.all().forEach { it.send(update) }
+                broadcastPlayerAdmin(
+                    """{"type":"playerMoved","id":"${session.id}","name":${newState.name.toPlayerAdminJson()},"x":${newState.pos.x},"y":${newState.pos.y},"z":${newState.pos.z},"yaw":${newState.orientation.yaw}}""")
             }
             if (session.chunkMode == "websocket") {
                 chunkStreamer.checkAndRequest(session)
@@ -908,11 +927,9 @@ class GameLoop(
                     npcManager.respawnPendingInZone(zx, zz)
                     world.discoveredChunks().filterTo(adjacentChunks) { cp ->
                         Math.floorDiv(
-                            cp.cx * WorldConstants.CHUNK_SIZE, NpcConstants.NPC_ZONE_SIZE) ==
-                            zx &&
+                            cp.cx * WorldConstants.CHUNK_SIZE, NpcConstants.NPC_ZONE_SIZE) == zx &&
                             Math.floorDiv(
-                                cp.cz * WorldConstants.CHUNK_SIZE, NpcConstants.NPC_ZONE_SIZE) ==
-                                zz
+                                cp.cz * WorldConstants.CHUNK_SIZE, NpcConstants.NPC_ZONE_SIZE) == zz
                     }
                 }
                 if (adjacentChunks.isNotEmpty())
@@ -1177,6 +1194,8 @@ class GameLoop(
             }
         npcManager.sendAllTo(session)
         sessionRegistry[id] = session
+        broadcastPlayerAdmin(
+            """{"type":"playerJoined","id":"$id","name":${playerName.toPlayerAdminJson()},"x":${spawn.x},"y":${spawn.y},"z":${spawn.z},"yaw":0.0}""")
 
         try {
             socket.incoming.consumeEach { frame ->
@@ -1228,6 +1247,7 @@ class GameLoop(
                 }
             }
         } finally {
+            broadcastPlayerAdmin("""{"type":"playerLeft","id":"$id"}""")
             sessionRegistry.remove(id)
             chunkStreamer.cleanupSession(id)
             npcManager.clearPlayer(id)

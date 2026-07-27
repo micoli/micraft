@@ -82296,6 +82296,7 @@ ${end.comment}` : end.comment;
   }
   function NpcMiniMap({
     npcs,
+    players,
     selectedId,
     attackLines
   }) {
@@ -82428,6 +82429,19 @@ ${end.comment}` : end.comment;
                 ),
                 sel && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("text", { x: 14, y: 4, fill: "#ffcc44", fontSize: 11, fontFamily: "monospace", fontWeight: "bold", children: npc.name })
               ] }, npc.id);
+            }),
+            players.map((p2) => {
+              const [px, py] = w2s(p2.x, p2.z, camera, W, H);
+              const rad = 6;
+              const yawRad = p2.yaw * Math.PI / 180;
+              const tx = Math.sin(yawRad) * (rad + 4);
+              const ty = -Math.cos(yawRad) * (rad + 4);
+              return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("g", { transform: `translate(${px},${py})`, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("circle", { cx: 0, cy: 0, r: rad + 3, fill: "rgba(59,130,246,0.18)", stroke: "#3b82f6", strokeWidth: 1 }),
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("circle", { cx: 0, cy: 0, r: rad, fill: "#3b82f6", stroke: "#fff", strokeWidth: 1.2 }),
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("line", { x1: 0, y1: 0, x2: tx, y2: ty, stroke: "#fff", strokeWidth: 1.5, strokeLinecap: "round" }),
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("text", { x: rad + 6, y: 4, fill: "#93c5fd", fontSize: 11, fontFamily: "monospace", fontWeight: "bold", children: p2.name })
+              ] }, p2.id);
             })
           ]
         }
@@ -82583,6 +82597,7 @@ ${end.comment}` : end.comment;
     const [filterLevelMin, setFilterLevelMin] = (0, import_react3.useState)("");
     const [filterLevelMax, setFilterLevelMax] = (0, import_react3.useState)("");
     const [attackLines, setAttackLines] = (0, import_react3.useState)([]);
+    const [players, setPlayers] = (0, import_react3.useState)([]);
     const npcsRef = (0, import_react3.useRef)(null);
     (0, import_react3.useEffect)(() => {
       npcsRef.current = npcs;
@@ -82599,6 +82614,23 @@ ${end.comment}` : end.comment;
       ws.onmessage = (ev) => {
         try {
           const msg = JSON.parse(ev.data);
+          if (msg.type === "playerJoined") {
+            setPlayers((prev) => {
+              if (prev.some((p2) => p2.id === msg.id)) return prev;
+              return [...prev, { id: msg.id, name: msg.name, x: msg.x, y: msg.y, z: msg.z, yaw: msg.yaw }];
+            });
+            return;
+          }
+          if (msg.type === "playerMoved") {
+            setPlayers(
+              (prev) => prev.map((p2) => p2.id === msg.id ? __spreadProps(__spreadValues({}, p2), { x: msg.x, y: msg.y, z: msg.z, yaw: msg.yaw }) : p2)
+            );
+            return;
+          }
+          if (msg.type === "playerLeft") {
+            setPlayers((prev) => prev.filter((p2) => p2.id !== msg.id));
+            return;
+          }
           setNpcs((prev) => {
             var _a6;
             if (!prev) return prev;
@@ -82870,7 +82902,7 @@ ${end.comment}` : end.comment;
           ] })
         ] }) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "w-80 shrink-0 sticky top-4", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(NpcMiniMap, { npcs: npcs != null ? npcs : [], selectedId: expandedId, attackLines }) })
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "w-80 shrink-0 sticky top-4", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(NpcMiniMap, { npcs: npcs != null ? npcs : [], players, selectedId: expandedId, attackLines }) })
     ] });
   }
 
