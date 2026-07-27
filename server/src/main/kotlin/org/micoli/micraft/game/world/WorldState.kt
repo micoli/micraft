@@ -3,6 +3,7 @@ package org.micoli.micraft.game.world
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.BlockChange
 import org.slf4j.LoggerFactory
 
@@ -34,6 +35,18 @@ class WorldState(
     fun biomeDefinitionAt(wx: Int, wz: Int) = generator.biomeDefinitionAt(wx, wz)
 
     fun zoneLevelAt(wx: Int, wz: Int): Int = generator.zoneLevelAt(wx, wz)
+
+    fun getBlockBelow(pos: Vec3): BlockType {
+        return getBlockBelow(pos.x.toInt(), pos.y.toInt(), pos.z.toInt())
+    }
+
+    fun getBlockBelow(wx: Int, wy: Int, wz: Int): BlockType {
+        return getBlock(wx, (wy - 0.1f).toInt(), wz)
+    }
+
+    fun getBlock(pos: Vec3): BlockType {
+        return getBlock(pos.x.toInt(), pos.y.toInt(), pos.z.toInt())
+    }
 
     fun getBlock(wx: Int, wy: Int, wz: Int): BlockType {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return BlockType.AIR

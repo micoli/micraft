@@ -40,20 +40,18 @@ class StatusEffectProcessor(
 
             for (active in effects) {
                 when (active.effect) {
-                    is StatusEffect.Poisoned -> hpDelta -= 2f * dtSec
+                    is StatusEffect.Poisoned -> hpDelta -= active.effect.damage * dtSec
                     is StatusEffect.Burning -> {
                         val pos = session.state.pos
-                        val blockBelow =
-                            world.getBlock(pos.x.toInt(), (pos.y - 0.1f).toInt(), pos.z.toInt())
-                        if (blockBelow == BlockType.WATER) {
+                        if (world.getBlockBelow(pos) == BlockType.WATER) {
                             effects.remove(active)
                             changed = true
                         } else {
-                            hpDelta -= 3f * dtSec
+                            hpDelta -= active.effect.damage * dtSec
                         }
                     }
-                    is StatusEffect.Pyre -> hpDelta -= 4f * dtSec
-                    is StatusEffect.Withering -> hpDelta -= 3f * dtSec
+                    is StatusEffect.Pyre -> hpDelta -= active.effect.damage * dtSec
+                    is StatusEffect.Withering -> hpDelta -= active.effect.damage * dtSec
                     else -> {}
                 }
             }
@@ -73,20 +71,12 @@ class StatusEffectProcessor(
                 session.characterData = charData.copy(currentHp = newHp)
                 broadcastHealthUpdate(session.id, false, newHp, derived.maxHp)
                 if (newHp <= 0 && !session.isDowned) onPlayerDowned(session)
-                val effectNames =
-                    effects
-                        .mapNotNull {
-                            when (it.effect) {
-                                is StatusEffect.Poisoned -> "poison"
-                                is StatusEffect.Burning -> "burn"
-                                is StatusEffect.Pyre -> "pyre"
-                                is StatusEffect.Withering -> "wither"
-                                else -> null
-                            }
-                        }
-                        .distinct()
-                        .joinToString("+")
                 if (intDamage > 0) {
+                    val effectNames =
+                        effects
+                            .mapNotNull { it.effect.damageEffectName }
+                            .distinct()
+                            .joinToString("+")
                     subscribeToChannel(session, "combat")
                     broadcastCombatLog("${charData.name} takes $intDamage damage from $effectNames")
                 }

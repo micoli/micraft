@@ -212,6 +212,10 @@ kt-test:
 	$(EXEC) "./gradlew :core:jvmTest --rerun-tasks"
 	$(EXEC) "./gradlew :server:test --rerun-tasks"
 
+kt-test-info:
+	$(EXEC) "./gradlew :core:jvmTest --rerun-tasks --info"
+	$(EXEC) "./gradlew :server:test --rerun-tasks --info"
+
 kt-web-test:
 	$(EXEC) "./gradlew :app:shared:wasmJsTest"
 	$(EXEC) "./gradlew :app:shared:jsTest"

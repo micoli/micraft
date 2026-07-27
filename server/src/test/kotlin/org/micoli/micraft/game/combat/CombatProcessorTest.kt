@@ -693,13 +693,18 @@ class CombatProcessorTest {
     fun `handleNpcAttack downsPlayer callsOnPlayerDownedByNpc`() = runBlocking {
         var capturedSession: PlayerSession? = null
         var capturedNpcId: String? = null
-        val target = testSession(id = "victim")
+        val target = testSession(id = "victim", pos = Vec3(0f, 0f, 0f))
         target.characterData = testChar("victim", "Victim", hp = 1)
 
-        val npc = fakeNpc(power = 0)
+        val npc = fakeNpc()
+        val killAttack =
+            AttackDefinition(
+                damageType = DamageType.PHYSICAL,
+                levels = mapOf(1 to AttackLevelDefinition(power = 100, weaponDice = "1d4", cooldownMs = 1000)),
+            )
         buildProcessor(
                 sessions = { listOf(target) },
-                attackRegistry = mapOf("basic_attack" to guaranteedHitAttack),
+                attackRegistry = mapOf("basic_attack" to killAttack),
                 onPlayerDownedByNpc = { session, npcId ->
                     capturedSession = session
                     capturedNpcId = npcId
