@@ -209,8 +209,7 @@ ts-test-storybook:
 test: kt-test kt-web-test ts-test ts-test-storybook
 
 kt-test:
-	$(EXEC) "./gradlew :core:jvmTest --rerun-tasks"
-	$(EXEC) "./gradlew :server:test --rerun-tasks"
+	$(EXEC) "./gradlew :core:jvmTest :server:test --rerun-tasks --parallel"
 
 kt-test-info:
 	$(EXEC) "./gradlew :core:jvmTest --rerun-tasks --info"

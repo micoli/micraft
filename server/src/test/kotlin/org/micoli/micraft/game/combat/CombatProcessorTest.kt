@@ -700,7 +700,11 @@ class CombatProcessorTest {
         val killAttack =
             AttackDefinition(
                 damageType = DamageType.PHYSICAL,
-                levels = mapOf(1 to AttackLevelDefinition(power = 100, weaponDice = "1d4", cooldownMs = 1000)),
+                levels =
+                    mapOf(
+                        1 to
+                            AttackLevelDefinition(
+                                power = 100, weaponDice = "1d4", cooldownMs = 1000)),
             )
         buildProcessor(
                 sessions = { listOf(target) },

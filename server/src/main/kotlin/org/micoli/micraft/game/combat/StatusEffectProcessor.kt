@@ -2,7 +2,6 @@ package org.micoli.micraft.game.combat
 
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.armor.ArmorDefinition
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldState
@@ -60,27 +59,28 @@ class StatusEffectProcessor(
                 session.send(ServerMessage.StatusEffectUpdate(session.id, effects.toList()))
             }
 
-            if (hpDelta != 0f && !(hpDelta < 0 && session.state.godMode)) {
-                val armors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
-                val activeEffectNames = effects.map { it.effect::class.simpleName ?: "" }.toSet()
-                val derived = DerivedStatsCalculator.compute(charData, armors, activeEffectNames)
-                val pending = (pendingDotDamage[session.id] ?: 0f) - hpDelta
-                val intDamage = pending.toInt()
-                pendingDotDamage[session.id] = pending - intDamage
-                val newHp = (charData.currentHp - intDamage).coerceIn(0, derived.maxHp)
-                session.characterData = charData.copy(currentHp = newHp)
-                broadcastHealthUpdate(session.id, false, newHp, derived.maxHp)
-                if (newHp <= 0 && !session.isDowned) onPlayerDowned(session)
-                if (intDamage > 0) {
-                    val effectNames =
-                        effects
-                            .mapNotNull { it.effect.damageEffectName }
-                            .distinct()
-                            .joinToString("+")
-                    subscribeToChannel(session, "combat")
-                    broadcastCombatLog("${charData.name} takes $intDamage damage from $effectNames")
-                }
+            if (!isDamageApplicable(hpDelta, session)) {
+                continue
             }
+            val activeEffectNames = effects.map { it.effect::class.simpleName ?: "" }.toSet()
+            val derived = session.computeDerived(armorRegistry, charData, activeEffectNames)
+            val pending = (pendingDotDamage[session.id] ?: 0f) - hpDelta
+            val intDamage = pending.toInt()
+            pendingDotDamage[session.id] = pending - intDamage
+            val newHp = (charData.currentHp - intDamage).coerceIn(0, derived.maxHp)
+            session.characterData = charData.copy(currentHp = newHp)
+            broadcastHealthUpdate(session.id, false, newHp, derived.maxHp)
+            if (newHp <= 0 && !session.isDowned) onPlayerDowned(session)
+            if (intDamage <= 0) {
+                continue
+            }
+            val effectNames =
+                effects.mapNotNull { it.effect.damageEffectName }.distinct().joinToString("+")
+            subscribeToChannel(session, "combat")
+            broadcastCombatLog("${charData.name} takes $intDamage damage from $effectNames")
         }
     }
+
+    private fun isDamageApplicable(hpDelta: Float, session: PlayerSession): Boolean =
+        hpDelta != 0f && !(hpDelta < 0 && session.state.godMode)
 }

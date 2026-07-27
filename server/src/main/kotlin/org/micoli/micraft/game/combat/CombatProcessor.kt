@@ -12,7 +12,6 @@ import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.rpg.CharacterData
@@ -153,10 +152,8 @@ class CombatProcessor(
         }
         val targetChar = target.characterData ?: return
 
-        val myArmors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
-        val myDerived = DerivedStatsCalculator.compute(charData, myArmors)
-        val theirArmors = target.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
-        val theirDerived = DerivedStatsCalculator.compute(targetChar, theirArmors)
+        val myDerived = session.computeDerived(armorRegistry, charData)
+        val theirDerived = target.computeDerived(armorRegistry, targetChar)
 
         if (!deductResource(session, charData, levelDef)) {
             session.send(ServerMessage.Notification("Not enough resources"))
@@ -219,8 +216,7 @@ class CombatProcessor(
             return
         }
 
-        val myArmors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
-        val myDerived = DerivedStatsCalculator.compute(charData, myArmors)
+        val myDerived = session.computeDerived(armorRegistry, charData)
 
         if (!deductResource(session, charData, levelDef)) {
             session.send(ServerMessage.Notification("Not enough resources"))
@@ -309,8 +305,7 @@ class CombatProcessor(
         npc.attackCooldownsUntilMs["${slot.attackId}:${slot.level}"] = now + levelDef.cooldownMs
 
         val targetChar = target.characterData ?: return
-        val theirArmors = target.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
-        val theirDerived = DerivedStatsCalculator.compute(targetChar, theirArmors)
+        val theirDerived = target.computeDerived(armorRegistry, targetChar)
 
         val npcModifier = levelDef.power
         val roll = Random.nextInt(1, 21)
@@ -446,9 +441,7 @@ class CombatProcessor(
         val updated = charData.copy(currentHp = 1)
         session.characterData = updated
         session.combatState = session.combatState.copy(downingSuccesses = 0, downingFailures = 0)
-        val derived =
-            DerivedStatsCalculator.compute(
-                updated, session.state.armors.mapNotNull { armorRegistry[it]?.statBonus })
+        val derived = session.computeDerived(armorRegistry, updated)
         broadcastHealthUpdate(session.id, false, 1, derived.maxHp)
         broadcastCombatLog("[p:${charData.name}] stabilizes.")
         session.send(ServerMessage.Notification("You have stabilized!"))
@@ -456,8 +449,7 @@ class CombatProcessor(
 
     private suspend fun triggerDeath(session: PlayerSession) {
         val charData = session.characterData ?: return
-        val armors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
-        val derived = DerivedStatsCalculator.compute(charData, armors)
+        val derived = session.computeDerived(armorRegistry, charData)
         val newHp = (derived.maxHp / 2).coerceAtLeast(1)
         val newMana = (derived.maxMana / 2).coerceAtLeast(0)
         val xpLoss = (charData.xp * 0.1).toInt()
@@ -559,10 +551,9 @@ class CombatProcessor(
 
         val charData = target.characterData ?: return
         if (effect is StatusEffect.HpBoost || effect is StatusEffect.ManaBoost) {
-            val armors = target.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
             val effectNames =
                 target.combatState.activeEffects.map { it.effect::class.simpleName ?: "" }.toSet()
-            val derived = DerivedStatsCalculator.compute(charData, armors, effectNames)
+            val derived = target.computeDerived(armorRegistry, charData, effectNames)
             val updated =
                 if (effect is StatusEffect.HpBoost) charData.copy(currentHp = derived.maxHp)
                 else charData.copy(currentMana = derived.maxMana)
@@ -586,8 +577,7 @@ class CombatProcessor(
                 .find { it.id == entityId }
                 ?.let { s ->
                     val charData = s.characterData ?: return@let
-                    val armors = s.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
-                    val derived = DerivedStatsCalculator.compute(charData, armors)
+                    val derived = s.computeDerived(armorRegistry, charData)
                     s.send(
                         makeStatusUpdate(
                             charData,
@@ -666,8 +656,7 @@ class CombatProcessor(
                 getSessions().find { it.id == targetId }
                     ?: return ServerMessage.CombatTargetUpdate(targetId, "Unknown", 0, 0)
             val targetChar = targetSession.characterData
-            val armors = targetSession.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
-            val derived = targetChar?.let { DerivedStatsCalculator.compute(it, armors) }
+            val derived = targetChar?.let { targetSession.computeDerived(armorRegistry, it) }
             val tot = buildTargetOfTarget(targetSession)
             val tPos = targetSession.state.pos
             val dist = distance3(pos.x, pos.y, pos.z, tPos.x, tPos.y, tPos.z)
@@ -690,8 +679,7 @@ class CombatProcessor(
         } else {
             val totSession = getSessions().find { it.id == totId } ?: return null
             val totChar = totSession.characterData ?: return null
-            val armors = totSession.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
-            val derived = DerivedStatsCalculator.compute(totChar, armors)
+            val derived = totSession.computeDerived(armorRegistry, totChar)
             ServerMessage.TargetRef(totId, totChar.name, totChar.currentHp, derived.maxHp)
         }
     }
