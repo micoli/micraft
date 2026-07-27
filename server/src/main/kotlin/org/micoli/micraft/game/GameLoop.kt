@@ -901,18 +901,23 @@ class GameLoop(
             val lastZone = session.lastZonePos
             if (lastZone == null || lastZone.first != newZoneX || lastZone.second != newZoneZ) {
                 session.lastZonePos = Pair(newZoneX, newZoneZ)
-                npcManager.respawnPendingInZone(newZoneX, newZoneZ)
-                val zoneChunks =
-                    world.discoveredChunks().filter { cp ->
+                val adjacentChunks = mutableListOf<ChunkPos>()
+                for (dzx in -1..1) for (dzz in -1..1) {
+                    val zx = newZoneX + dzx
+                    val zz = newZoneZ + dzz
+                    npcManager.respawnPendingInZone(zx, zz)
+                    world.discoveredChunks().filterTo(adjacentChunks) { cp ->
                         Math.floorDiv(
                             cp.cx * WorldConstants.CHUNK_SIZE, NpcConstants.NPC_ZONE_SIZE) ==
-                            newZoneX &&
+                            zx &&
                             Math.floorDiv(
                                 cp.cz * WorldConstants.CHUNK_SIZE, NpcConstants.NPC_ZONE_SIZE) ==
-                                newZoneZ
+                                zz
                     }
-                if (zoneChunks.isNotEmpty())
-                    npcSpawner.trySpawn(world, npcManager, npcManager.getDefinitions(), zoneChunks)
+                }
+                if (adjacentChunks.isNotEmpty())
+                    npcSpawner.trySpawn(
+                        world, npcManager, npcManager.getDefinitions(), adjacentChunks)
             }
         }
         worldItems.tickCollection(sessionRegistry.all())
