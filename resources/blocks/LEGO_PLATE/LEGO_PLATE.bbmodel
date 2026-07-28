@@ -1,0 +1,28 @@
+{
+  "resolution": { "width": 16, "height": 16 },
+  "textures": [
+    {
+      "id": 0,
+      "name": "LEGO_PLATE",
+      "path": "api/models/blocks/LEGO_PLATE/LEGO_PLATE.png",
+      "source": ""
+    }
+  ],
+  "elements": [
+    {
+      "uuid": "plate-body",
+      "name": "body",
+      "render_type": "solid",
+      "from": [0, 0, 0],
+      "to": [16, 5, 16],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 16, 5] },
+        "north": { "texture": 0, "uv": [0, 0, 16, 5] },
+        "east":  { "texture": 0, "uv": [0, 0, 16, 5] },
+        "west":  { "texture": 0, "uv": [0, 0, 16, 5] },
+        "up":    { "texture": 0, "uv": [0, 0, 16, 16] },
+        "down":  { "texture": 0, "uv": [0, 0, 16, 16] }
+      }
+    }
+  ]
+}

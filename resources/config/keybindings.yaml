@@ -40,6 +40,9 @@ ui:
   quest_journal: ["Alt+KeyQ"]
   quest_tracking: [KeyT]
 
+building:
+  place_rotate: [KeyR]
+
 hotbar:
   slot_1: [Digit1]
   slot_2: [Digit2]

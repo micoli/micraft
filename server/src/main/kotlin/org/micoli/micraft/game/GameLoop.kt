@@ -716,6 +716,10 @@ class GameLoop(
                     liquid = def.liquid,
                     viscosity = def.viscosity,
                     minimapVisible = def.minimapVisible,
+                    rotatable = def.rotatable,
+                    hasStuds = def.hasStuds,
+                    isSlope = def.isSlope,
+                    brickSize = def.brickSize,
                 )
             }
         val items =

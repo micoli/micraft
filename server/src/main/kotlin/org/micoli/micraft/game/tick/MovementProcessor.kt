@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.tick
 
+import kotlin.math.floor
 import kotlin.math.sqrt
 import org.micoli.micraft.game.FLY_VERTICAL_SPEED
 import org.micoli.micraft.game.GRAVITY
@@ -25,7 +26,7 @@ class MovementProcessor(private val world: WorldState) {
     fun process(session: PlayerSession, input: TickInput): PlayerState {
         val old = session.state
         val w = PlayerConstants.WIDTH
-        val solid = { bx: Int, by: Int, bz: Int -> world.getBlock(bx, by, bz).isSolid }
+        val solid = { bx: Int, by: Int, bz: Int -> world.isSolidOrOccupied(bx, by, bz) }
         val rawPos = old.pos
         val recoveredY =
             if (AabbCollider.isOverlapping(
@@ -92,7 +93,8 @@ class MovementProcessor(private val world: WorldState) {
                 val resolvedDy = AabbCollider.resolveY(solid, newX, pos.y, newZ, w, h, flyDy)
                 (pos.y + resolvedDy).coerceIn(0f, WorldConstants.WORLD_MAX_Y.toFloat())
             } else {
-                applyGravity(session, newX, pos.y, newZ, h, feetBlock.isLiquid)
+                val gravityY = applyGravity(session, newX, pos.y, newZ, h, feetBlock.isLiquid)
+                snapToSlope(session, newX, gravityY, newZ)
             }
 
         return old.copy(
@@ -106,6 +108,34 @@ class MovementProcessor(private val world: WorldState) {
         )
     }
 
+    private fun snapToSlope(session: PlayerSession, cx: Float, cy: Float, cz: Float): Float {
+        val bx = floor(cx.toDouble()).toInt()
+        val bz = floor(cz.toDouble()).toInt()
+        for (dy in 0 downTo -2) {
+            val by = floor(cy.toDouble()).toInt() + dy
+            if (by < WorldConstants.WORLD_MIN_Y || by > WorldConstants.WORLD_MAX_Y) continue
+            val block = world.getBlock(bx, by, bz)
+            if (!block.isSlope) continue
+            val state = world.getState(bx, by, bz)
+            val rotation = state.toInt() and 0x03
+            val lx = (cx - bx.toFloat()).coerceIn(0f, 1f)
+            val lz = (cz - bz.toFloat()).coerceIn(0f, 1f)
+            val fraction =
+                when (rotation) {
+                    0 -> lz
+                    1 -> lx
+                    2 -> 1f - lz
+                    else -> 1f - lx
+                }
+            val surfaceY = by.toFloat() + fraction
+            if (cy >= surfaceY - 2f && cy <= surfaceY + 0.05f) {
+                if (session.vy <= 0f) session.vy = 0f
+                return surfaceY
+            }
+        }
+        return cy
+    }
+
     private fun applyGravity(
         session: PlayerSession,
         cx: Float,
@@ -115,7 +145,7 @@ class MovementProcessor(private val world: WorldState) {
         inLiquid: Boolean = false,
     ): Float {
         val w = PlayerConstants.WIDTH
-        val solid = { bx: Int, by: Int, bz: Int -> world.getBlock(bx, by, bz).isSolid }
+        val solid = { bx: Int, by: Int, bz: Int -> world.isSolidOrOccupied(bx, by, bz) }
         if (session.vy <= 0f && AabbCollider.isGrounded(solid, cx, cy, cz, w)) {
             session.vy = 0f
             // Snap to ground surface in case the player partially sank into a block

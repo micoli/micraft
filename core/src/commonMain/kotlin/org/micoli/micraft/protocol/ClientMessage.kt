@@ -47,7 +47,8 @@ sealed class ClientMessage {
 
     @ProtoId(6)
     @Serializable
-    data class BlockPlace(val pos: BlockPos, val itemType: ItemType) : ClientMessage()
+    data class BlockPlace(val pos: BlockPos, val itemType: ItemType, val state: Byte = 0) :
+        ClientMessage()
 
     @ProtoId(7)
     @Serializable

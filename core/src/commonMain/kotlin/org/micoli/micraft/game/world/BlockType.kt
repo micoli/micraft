@@ -27,6 +27,9 @@ value class BlockType(val id: String) {
     val treeAllowed: Boolean
         get() = BlockRegistry.get(this).treeAllowed
 
+    val isSlope: Boolean
+        get() = BlockRegistry.get(this).isSlope
+
     companion object {
         val AIR = BlockType("AIR")
         val BEDROCK = BlockType("BEDROCK")
@@ -48,6 +51,11 @@ value class BlockType(val id: String) {
         val SEED = BlockType("SEED")
         val SPROUT = BlockType("SPROUT")
         val SAPLING = BlockType("SAPLING")
+        val LEGO_BRICK = BlockType("LEGO_BRICK")
+        val LEGO_SLOPE = BlockType("LEGO_SLOPE")
+        val LEGO_PLATE = BlockType("LEGO_PLATE")
+        val LEGO_BRICK_2X1 = BlockType("LEGO_BRICK_2X1")
+        val LEGO_BRICK_1X2 = BlockType("LEGO_BRICK_1X2")
     }
 
     override fun toString(): String = id

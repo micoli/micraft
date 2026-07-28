@@ -14,6 +14,7 @@ import org.micoli.micraft.LocalPlayerController
 import org.micoli.micraft.RemotePlayerManager
 import org.micoli.micraft.babylon.*
 import org.micoli.micraft.game.world.BlockDefinition
+import org.micoli.micraft.game.world.BlockEntity
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
@@ -162,7 +163,12 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                     ?: continue
                             if (msg is ServerMessage.ChunkData) {
                                 chunkManager.enqueueChunk(
-                                    Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
+                                    Chunk.decodeWire(
+                                        msg.pos,
+                                        msg.topY,
+                                        msg.wireBlocks,
+                                        msg.wireStates.takeIf { it.isNotEmpty() }),
+                                    msg.topY)
                             }
                         }
                     }
@@ -385,7 +391,13 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 ServerMessage.ChunkData::class,
                 typedHandler { msg: ServerMessage.ChunkData ->
                     chunkManager.enqueueChunk(
-                        Chunk.decodeWire(msg.pos, msg.topY, msg.wireBlocks), msg.topY)
+                        Chunk.decodeWire(
+                            msg.pos,
+                            msg.topY,
+                            msg.wireBlocks,
+                            msg.wireStates.takeIf { it.isNotEmpty() },
+                            msg.entities),
+                        msg.topY)
                 })
             put(
                 ServerMessage.ShadersUpdate::class,
@@ -400,19 +412,60 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             put(
                 ServerMessage.WorldUpdate::class,
                 typedHandler { msg: ServerMessage.WorldUpdate ->
+                    // Collect affected chunk positions for re-enqueue after applying all changes
+                    val affectedChunks = mutableMapOf<ChunkPos, Pair<Chunk, Int>>()
+
                     msg.changes.forEach { change ->
                         val cx = change.pos.x.floorDiv(WorldConstants.CHUNK_SIZE)
                         val cz = change.pos.z.floorDiv(WorldConstants.CHUNK_SIZE)
                         val cp = ChunkPos(cx, cz)
-                        val (existing, existingTopY) = chunkManager.chunkData[cp] ?: return@forEach
+                        val (existing, existingTopY) =
+                            affectedChunks[cp] ?: chunkManager.chunkData[cp] ?: return@forEach
                         val lx = change.pos.x - cx * WorldConstants.CHUNK_SIZE
                         val lz = change.pos.z - cz * WorldConstants.CHUNK_SIZE
                         val updated = existing.withBlock(lx, change.pos.y, lz, change.type)
                         val newTopY =
                             if (change.type != BlockType.AIR) maxOf(existingTopY, change.pos.y)
                             else existingTopY
-                        chunkManager.updateAndEnqueue(updated, newTopY)
+                        affectedChunks[cp] = Pair(updated, newTopY)
                         if (change.type == BlockType.AIR) localController.onBlockBroken(change.pos)
+                    }
+
+                    msg.entityAdds.forEach { proto ->
+                        val cx = proto.worldX.floorDiv(WorldConstants.CHUNK_SIZE)
+                        val cz = proto.worldZ.floorDiv(WorldConstants.CHUNK_SIZE)
+                        val cp = ChunkPos(cx, cz)
+                        val (existing, topY) =
+                            affectedChunks[cp] ?: chunkManager.chunkData[cp] ?: return@forEach
+                        val localX = proto.worldX - cx * WorldConstants.CHUNK_SIZE
+                        val localZ = proto.worldZ - cz * WorldConstants.CHUNK_SIZE
+                        val masterIdx = Chunk.index(localX, proto.worldY, localZ)
+                        val entity =
+                            BlockEntity(
+                                masterIdx = masterIdx,
+                                type = BlockType(proto.type),
+                                sizeX = proto.sizeX,
+                                sizeY = proto.sizeY,
+                                sizeZ = proto.sizeZ,
+                                rotation = proto.rotation,
+                            )
+                        affectedChunks[cp] = Pair(existing.addEntity(entity), topY)
+                    }
+
+                    msg.entityRemoves.forEach { masterWorldPos ->
+                        val cx = masterWorldPos.x.floorDiv(WorldConstants.CHUNK_SIZE)
+                        val cz = masterWorldPos.z.floorDiv(WorldConstants.CHUNK_SIZE)
+                        val cp = ChunkPos(cx, cz)
+                        val (existing, topY) =
+                            affectedChunks[cp] ?: chunkManager.chunkData[cp] ?: return@forEach
+                        val localX = masterWorldPos.x - cx * WorldConstants.CHUNK_SIZE
+                        val localZ = masterWorldPos.z - cz * WorldConstants.CHUNK_SIZE
+                        val masterIdx = Chunk.index(localX, masterWorldPos.y, localZ)
+                        affectedChunks[cp] = Pair(existing.removeEntity(masterIdx), topY)
+                    }
+
+                    affectedChunks.forEach { (_, pair) ->
+                        chunkManager.updateAndEnqueue(pair.first, pair.second)
                     }
                 })
 
@@ -535,6 +588,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         liquid = info.liquid,
                                         viscosity = info.viscosity,
                                         minimapVisible = info.minimapVisible,
+                                        rotatable = info.rotatable,
+                                        hasStuds = info.hasStuds,
+                                        isSlope = info.isSlope,
+                                        brickSize = info.brickSize,
                                     )
                             }
                             .toMap()

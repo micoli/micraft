@@ -13,7 +13,7 @@ function toVertexUV(uv: [number, number, number, number], W: number, H: number):
   return [uMin, vBot, uMax, vBot, uMax, vTop, uMin, vTop];
 }
 
-function parseSingleBlockBbmodel(bbmodel: BlocksBbModel): { def: McBlockDef | null; textures: McBlockTextureDef[] } {
+function parseBlockBbmodel(bbmodel: BlocksBbModel): { def: McBlockDef | null; textures: McBlockTextureDef[] } {
   const W = bbmodel.resolution?.width ?? 16;
   const H = bbmodel.resolution?.height ?? 16;
 
@@ -25,33 +25,39 @@ function parseSingleBlockBbmodel(bbmodel: BlocksBbModel): { def: McBlockDef | nu
     biomeTint: false,
   }));
 
-  const el = bbmodel.elements[0];
-  if (!el) return { def: null, textures };
+  if (!bbmodel.elements.length) return { def: null, textures };
 
-  for (const faceKey of Object.keys(el.faces) as FaceKey[]) {
-    const face = el.faces[faceKey];
-    if (face?.biome_tint) {
-      const texDef = textures[face.texture];
-      if (texDef) texDef.biomeTint = true;
+  const renderType = (bbmodel.elements[0].render_type as McBlockDef["renderType"]) ?? "solid";
+  const allElements: McBlockElement[] = [];
+
+  for (const el of bbmodel.elements) {
+    for (const faceKey of Object.keys(el.faces) as FaceKey[]) {
+      const face = el.faces[faceKey];
+      if (face?.biome_tint) {
+        const texDef = textures[face.texture];
+        if (texDef) texDef.biomeTint = true;
+      }
     }
+
+    const elemFaces: (McBlockFaceInfo | null)[] = FACEKEY_BY_DIR.map((faceKey) => {
+      const face = el.faces[faceKey as FaceKey];
+      if (!face) return null;
+      const texDef = textures[face.texture];
+      if (!texDef) return null;
+      const uv = face.uv ?? [0, 0, W, H];
+      const matKey = face.biome_tint ? texDef.name + ":biome_tint" : texDef.name;
+      return { matKey, uv: toVertexUV(uv as [number, number, number, number], W, H) };
+    });
+
+    allElements.push({
+      from: (el.from ?? [0, 0, 0]) as [number, number, number],
+      to: (el.to ?? [16, 16, 16]) as [number, number, number],
+      faces: elemFaces,
+    });
   }
 
-  const renderType = (el.render_type as McBlockDef["renderType"]) ?? "solid";
-
-  const faces: (McBlockFaceInfo | null)[] = FACEKEY_BY_DIR.map((faceKey) => {
-    const face = el.faces[faceKey as FaceKey];
-    if (!face) return null;
-
-    const texDef = textures[face.texture];
-    if (!texDef) return null;
-
-    const uv = face.uv ?? [0, 0, W, H];
-    const matKey = face.biome_tint ? texDef.name + ":biome_tint" : texDef.name;
-
-    return { matKey, uv: toVertexUV(uv as [number, number, number, number], W, H) };
-  });
-
-  return { def: { name: el.name, renderType, faces }, textures };
+  const allElemFaces = allElements.map((e) => e.faces);
+  return { def: { name: bbmodel.elements[0].name, renderType, elements: allElements, faces: allElemFaces }, textures };
 }
 
 const WATER_MAT_KEY = "water";
@@ -77,15 +83,19 @@ export function registerBlockDefs(): Pick<
       const fetches = _registryBlocks.map((info, ordinal) => {
         if (info.name === "AIR") return Promise.resolve();
         if (info.liquid) {
-          const faces: McBlockFaceInfo[] = Array.from({ length: 6 }, () => ({ matKey: WATER_MAT_KEY, uv: LIQUID_UV }));
-          defs[ordinal] = { name: info.name, renderType: "liquid", faces };
+          const liquidFaces: McBlockFaceInfo[] = Array.from({ length: 6 }, () => ({
+            matKey: WATER_MAT_KEY,
+            uv: LIQUID_UV,
+          }));
+          const liquidElem: McBlockElement = { from: [0, 0, 0], to: [16, 16, 16], faces: liquidFaces };
+          defs[ordinal] = { name: info.name, renderType: "liquid", elements: [liquidElem], faces: [liquidFaces] };
           return Promise.resolve();
         }
         const fileName = info.modelElement || info.name;
         return fetch(`/api/models/blocks/${fileName}/${fileName}.bbmodel`)
           .then((r) => r.json())
           .then((data: BlocksBbModel) => {
-            const { def, textures } = parseSingleBlockBbmodel(data);
+            const { def, textures } = parseBlockBbmodel(data);
             defs[ordinal] = def;
             for (const t of textures) {
               if (!allTextures.has(t.name)) allTextures.set(t.name, t);
@@ -116,9 +126,10 @@ export function setRegistryBlocks(blocks: { name: string; modelElement: string; 
 
 export function getFaceTexUrl(ordinal: number, faceDir: number): string | null {
   const def = window.mc?.getBlockDef?.(ordinal) as McBlockDef | null;
-  if (!def?.faces) return null;
-  const face =
-    (def.faces[faceDir] as McBlockFaceInfo | null) ?? (def.faces as (McBlockFaceInfo | null)[]).find((f) => f != null);
+  if (!def?.faces?.length) return null;
+  // Use element 0 for preview/targeting purposes
+  const elem0 = def.faces[0];
+  const face = elem0[faceDir] ?? elem0.find((f) => f != null) ?? null;
   if (!face) return null;
   const texName = face.matKey.replace(":biome_tint", "");
   const texs: McBlockTextureDef[] = window.mc?.getBlockTextures?.() ?? [];

@@ -3,7 +3,12 @@ package org.micoli.micraft.game.world
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Chunk(val pos: ChunkPos, val blocks: ByteArray) {
+data class Chunk(
+    val pos: ChunkPos,
+    val blocks: ByteArray,
+    val states: ByteArray = ByteArray(0),
+    val entityMasters: List<BlockEntity> = emptyList(),
+) {
     companion object {
         val SIZE_X = WorldConstants.CHUNK_SIZE
         val SIZE_Z = WorldConstants.CHUNK_SIZE
@@ -12,26 +17,81 @@ data class Chunk(val pos: ChunkPos, val blocks: ByteArray) {
 
         fun index(x: Int, y: Int, z: Int) = (x * SIZE_Y * SIZE_Z) + (y * SIZE_Z) + z
 
-        fun empty(pos: ChunkPos) = Chunk(pos, ByteArray(TOTAL))
+        fun indexToXYZ(idx: Int): Triple<Int, Int, Int> {
+            val yz = SIZE_Y * SIZE_Z
+            val x = idx / yz
+            val rem = idx % yz
+            val y = rem / SIZE_Z
+            val z = rem % SIZE_Z
+            return Triple(x, y, z)
+        }
+
+        fun empty(pos: ChunkPos) = Chunk(pos, ByteArray(TOTAL), ByteArray(TOTAL))
 
         fun build(pos: ChunkPos, filler: (x: Int, y: Int, z: Int) -> BlockType): Chunk {
             val blocks = ByteArray(TOTAL)
             for (x in 0 until SIZE_X) for (y in 0 until SIZE_Y) for (z in 0 until SIZE_Z) blocks[
                 index(x, y, z)] = BlockRegistry.wireIndex(filler(x, y, z)).toByte()
-            return Chunk(pos, blocks)
+            return Chunk(pos, blocks, ByteArray(TOTAL))
+        }
+
+        /** Reconstruct entity map (all cells → entity) from master list. */
+        fun buildEntitiesMap(masters: List<BlockEntity>): Map<Int, BlockEntity> {
+            if (masters.isEmpty()) return emptyMap()
+            val map = mutableMapOf<Int, BlockEntity>()
+            for (entity in masters) {
+                val (mx, my, mz) = indexToXYZ(entity.masterIdx)
+                for (dx in 0 until entity.sizeX) for (dy in 0 until entity.sizeY) for (dz in
+                    0 until entity.sizeZ) {
+                    val nx = mx + dx
+                    val ny = my + dy
+                    val nz = mz + dz
+                    if (nx < SIZE_X && ny < SIZE_Y && nz < SIZE_Z) map[index(nx, ny, nz)] = entity
+                }
+            }
+            return map
         }
 
         /** Decode a y-major wire buffer (produced by encodeWire) back into a full Chunk. */
-        fun decodeWire(pos: ChunkPos, topY: Int, wire: ByteArray): Chunk {
+        fun decodeWire(
+            pos: ChunkPos,
+            topY: Int,
+            wire: ByteArray,
+            wireStates: ByteArray? = null,
+            entityProtos: List<org.micoli.micraft.protocol.BlockEntityProto> = emptyList(),
+        ): Chunk {
             val blocks = ByteArray(TOTAL) // AIR = 0 by default
-            for (y in 0..topY) for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) blocks[
-                index(x, y, z)] = wire[y * SIZE_X * SIZE_Z + x * SIZE_Z + z]
-            return Chunk(pos, blocks)
+            val states = ByteArray(TOTAL)
+            for (y in 0..topY) for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) {
+                val wi = y * SIZE_X * SIZE_Z + x * SIZE_Z + z
+                blocks[index(x, y, z)] = wire[wi]
+                if (wireStates != null && wi < wireStates.size)
+                    states[index(x, y, z)] = wireStates[wi]
+            }
+            val masters =
+                entityProtos.map { proto ->
+                    val chunkX = pos.cx * SIZE_X
+                    val chunkZ = pos.cz * SIZE_Z
+                    val lx = proto.worldX - chunkX
+                    val lz = proto.worldZ - chunkZ
+                    BlockEntity(
+                        masterIdx = index(lx, proto.worldY, lz),
+                        type = BlockType(proto.type),
+                        sizeX = proto.sizeX,
+                        sizeY = proto.sizeY,
+                        sizeZ = proto.sizeZ,
+                        rotation = proto.rotation,
+                    )
+                }
+            return Chunk(pos, blocks, states, masters)
         }
     }
 
     fun getBlock(x: Int, y: Int, z: Int): BlockType =
         BlockRegistry.byWireIndex(blocks[index(x, y, z)].toInt() and 0xFF)
+
+    fun getState(x: Int, y: Int, z: Int): Byte =
+        if (states.isNotEmpty()) states[index(x, y, z)] else 0
 
     /** Highest Y level containing any non-AIR block. */
     fun topY(): Int {
@@ -54,17 +114,46 @@ data class Chunk(val pos: ChunkPos, val blocks: ByteArray) {
         return wire
     }
 
-    fun withBlock(x: Int, y: Int, z: Int, type: BlockType): Chunk {
-        val newBlocks = blocks.copyOf()
-        newBlocks[index(x, y, z)] = BlockRegistry.wireIndex(type).toByte()
-        return copy(blocks = newBlocks)
+    /** Encode states in y-major order, only y=0..topY. Returns null if all states are zero. */
+    fun encodeWireStates(): ByteArray? {
+        if (states.isEmpty() || states.all { it == 0.toByte() }) return null
+        val top = topY()
+        val wire = ByteArray((top + 1) * SIZE_X * SIZE_Z)
+        for (y in 0..top) for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) wire[
+            y * SIZE_X * SIZE_Z + x * SIZE_Z + z] = states[index(x, y, z)]
+        return wire
     }
+
+    fun withBlock(x: Int, y: Int, z: Int, type: BlockType, state: Byte = 0): Chunk {
+        val newBlocks = blocks.copyOf()
+        val newStates = if (states.isNotEmpty()) states.copyOf() else ByteArray(TOTAL)
+        newBlocks[index(x, y, z)] = BlockRegistry.wireIndex(type).toByte()
+        newStates[index(x, y, z)] = state
+        return copy(blocks = newBlocks, states = newStates)
+    }
+
+    fun addEntity(entity: BlockEntity): Chunk = copy(entityMasters = entityMasters + entity)
+
+    fun removeEntity(masterIdx: Int): Chunk =
+        copy(entityMasters = entityMasters.filter { it.masterIdx != masterIdx })
+
+    fun buildEntitiesMap(): Map<Int, BlockEntity> = Companion.buildEntitiesMap(entityMasters)
+
+    fun isMasterAt(idx: Int): Boolean = entityMasters.any { it.masterIdx == idx }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Chunk) return false
-        return pos == other.pos && blocks.contentEquals(other.blocks)
+        return pos == other.pos &&
+            blocks.contentEquals(other.blocks) &&
+            states.contentEquals(other.states) &&
+            entityMasters == other.entityMasters
     }
 
-    override fun hashCode(): Int = 31 * pos.hashCode() + blocks.contentHashCode()
+    override fun hashCode(): Int {
+        var result =
+            31 * (31 * pos.hashCode() + blocks.contentHashCode()) + states.contentHashCode()
+        result = 31 * result + entityMasters.hashCode()
+        return result
+    }
 }

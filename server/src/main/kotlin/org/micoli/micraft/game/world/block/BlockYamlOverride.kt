@@ -16,4 +16,8 @@ data class BlockYamlOverride(
     val treeAllowed: Boolean? = null,
     val minimapVisible: Boolean? = null,
     val drops: List<DropEntry>? = null,
+    val rotatable: Boolean? = null,
+    val hasStuds: Boolean? = null,
+    val isSlope: Boolean? = null,
+    val brickSize: List<Int>? = null,
 )

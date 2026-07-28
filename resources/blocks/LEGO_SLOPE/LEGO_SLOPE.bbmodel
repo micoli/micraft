@@ -1,0 +1,28 @@
+{
+  "resolution": { "width": 16, "height": 16 },
+  "textures": [
+    {
+      "id": 0,
+      "name": "LEGO_SLOPE",
+      "path": "api/models/blocks/LEGO_SLOPE/LEGO_SLOPE.png",
+      "source": ""
+    }
+  ],
+  "elements": [
+    {
+      "uuid": "slope-body",
+      "name": "slope",
+      "render_type": "slope",
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 16, 16] },
+        "north": { "texture": 0, "uv": [0, 0, 16, 16] },
+        "east":  { "texture": 0, "uv": [0, 0, 16, 16] },
+        "west":  { "texture": 0, "uv": [0, 0, 16, 16] },
+        "up":    { "texture": 0, "uv": [0, 0, 16, 16] },
+        "down":  { "texture": 0, "uv": [0, 0, 16, 16] }
+      }
+    }
+  ]
+}

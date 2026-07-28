@@ -49,6 +49,8 @@ sealed class ServerMessage {
         val pos: ChunkPos,
         val topY: Int,
         val wireBlocks: ByteArray,
+        val wireStates: ByteArray = ByteArray(0),
+        val entities: List<BlockEntityProto> = emptyList(),
     ) : ServerMessage() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -59,6 +61,8 @@ sealed class ServerMessage {
             if (topY != other.topY) return false
             if (pos != other.pos) return false
             if (!wireBlocks.contentEquals(other.wireBlocks)) return false
+            if (!wireStates.contentEquals(other.wireStates)) return false
+            if (entities != other.entities) return false
 
             return true
         }
@@ -67,6 +71,8 @@ sealed class ServerMessage {
             var result = topY
             result = 31 * result + pos.hashCode()
             result = 31 * result + wireBlocks.contentHashCode()
+            result = 31 * result + wireStates.contentHashCode()
+            result = 31 * result + entities.hashCode()
             return result
         }
     }
@@ -75,7 +81,11 @@ sealed class ServerMessage {
 
     @ProtoId(4)
     @Serializable
-    data class WorldUpdate(val changes: List<BlockChange>) : ServerMessage()
+    data class WorldUpdate(
+        val changes: List<BlockChange>,
+        val entityAdds: List<BlockEntityProto> = emptyList(),
+        val entityRemoves: List<BlockPos> = emptyList(),
+    ) : ServerMessage()
 
     @ProtoId(5) @Serializable data class PlayerLeft(val playerId: String) : ServerMessage()
 
@@ -331,6 +341,22 @@ data class BlockInfo(
     val liquid: Boolean = false,
     val viscosity: Int = 0,
     val minimapVisible: Boolean = true,
+    val rotatable: Boolean = false,
+    val hasStuds: Boolean = false,
+    val isSlope: Boolean = false,
+    val brickSize: List<Int> = listOf(1, 1, 1),
+)
+
+@Serializable
+data class BlockEntityProto(
+    val worldX: Int,
+    val worldY: Int,
+    val worldZ: Int,
+    val type: String,
+    val sizeX: Int,
+    val sizeY: Int = 1,
+    val sizeZ: Int = 1,
+    val rotation: Int = 0,
 )
 
 @Serializable
@@ -349,7 +375,7 @@ data class NpcCodexInfo(
     val autoSpawn: Boolean,
 )
 
-@Serializable data class BlockChange(val pos: BlockPos, val type: BlockType)
+@Serializable data class BlockChange(val pos: BlockPos, val type: BlockType, val state: Byte = 0)
 
 @Serializable
 data class CommandInfo(

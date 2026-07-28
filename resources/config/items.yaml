@@ -81,3 +81,28 @@ WEED:
   placesBlock: WEED
   label: WED
   bg: "#468228"
+LEGO_BRICK:
+  buildable: true
+  placesBlock: LEGO_BRICK
+  label: LGO
+  bg: "#DC3232"
+LEGO_SLOPE:
+  buildable: true
+  placesBlock: LEGO_SLOPE
+  label: LSL
+  bg: "#B43232"
+LEGO_PLATE:
+  buildable: true
+  placesBlock: LEGO_PLATE
+  label: LPL
+  bg: "#C86432"
+LEGO_BRICK_2X1:
+  buildable: true
+  placesBlock: LEGO_BRICK_2X1
+  label: L2X
+  bg: "#3264DC"
+LEGO_BRICK_1X2:
+  buildable: true
+  placesBlock: LEGO_BRICK_1X2
+  label: L1X
+  bg: "#32DC64"

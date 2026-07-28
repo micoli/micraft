@@ -81,6 +81,9 @@ class ChunkManager(private val scene: JsAny) {
     // Precomputed per-wireIndex flags to avoid HashMap lookups in the hot meshing path
     private val solidByOrd = ByteArray(256)
     private val liquidByOrd = ByteArray(256)
+    private val hasStudsByOrd = ByteArray(256)
+    private val isSlopeByOrd = ByteArray(256)
+    private val isMultiCellByOrd = ByteArray(256)
     private var ordFlagsBuilt = false
     private val strideX = (WorldConstants.WORLD_MAX_Y + 1) * WorldConstants.CHUNK_SIZE
 
@@ -88,8 +91,16 @@ class ChunkManager(private val scene: JsAny) {
         if (ordFlagsBuilt) return
         for (i in 0 until 256) {
             val bt = BlockRegistry.byWireIndex(i)
+            val def = BlockRegistry.get(bt)
             solidByOrd[i] = if (bt.isSolid) 1 else 0
             liquidByOrd[i] = if (bt.isLiquid) 1 else 0
+            hasStudsByOrd[i] = if (def.hasStuds) 1 else 0
+            isSlopeByOrd[i] = if (def.isSlope) 1 else 0
+            isMultiCellByOrd[i] =
+                if (def.brickSize.size == 3 &&
+                    (def.brickSize[0] > 1 || def.brickSize[1] > 1 || def.brickSize[2] > 1))
+                    1
+                else 0
         }
         ordFlagsBuilt = true
     }
@@ -353,50 +364,80 @@ class ChunkManager(private val scene: JsAny) {
     // Returns number of faces emitted (appended to window.__mcFB via jsChunkFaceAppend)
     private fun renderRow(chunk: Chunk, topY: Int, y: Int): Int {
         val blocks = chunk.blocks
+        val states = chunk.states
+        val hasStates = states.isNotEmpty()
         val s = WorldConstants.CHUNK_SIZE
         val ox = chunk.pos.cx * s
         val oz = chunk.pos.cz * s
         var faceCount = 0
+        val entityMap = chunk.buildEntitiesMap()
         for (x in 0 until s) {
             for (z in 0 until s) {
                 // Direct ByteArray access — no getBlock(), no registry lookup
                 val idx = x * strideX + y * s + z
                 val ord = blocks[idx].toInt() and 0xFF
                 if (ord == 0) continue // AIR = wire index 0
-                val t = ord * 6
+
+                // Multi-cell entity satellite: skip (master emits geometry for whole extent)
+                val entity = entityMap[idx]
+                if (entity != null && entity.masterIdx != idx) continue
+
+                // rotation: bits 0-1 of state byte; faceMat = (ord * 4 + rotation) * 6 + fd
+                val rotation = if (hasStates) states[idx].toInt() and 0x03 else 0
+                val t = (ord * 4 + rotation) * 6
                 val wx = ox + x
                 val wz2 = oz + z
+
+                val isSlope = isSlopeByOrd[ord].toInt() != 0
+                val isMaster = entity != null // entity master → bypass culling
+                val bypassCulling = isSlope || isMaster
 
                 // top (+Y): use solidByOrd + liquidByOrd to skip redundant BlockType creation
                 val aboveOrd =
                     if (y >= WorldConstants.WORLD_MAX_Y) 0 else blocks[idx + s].toInt() and 0xFF
-                if (solidByOrd[aboveOrd].toInt() == 0 &&
-                    !(liquidByOrd[ord].toInt() != 0 && liquidByOrd[aboveOrd].toInt() != 0)) {
+                val liquid = liquidByOrd[ord].toInt() != 0
+                val liquidAbove = liquidByOrd[aboveOrd].toInt() != 0
+                // Blocks with studs or slopes: always emit top face
+                val emitTop =
+                    bypassCulling ||
+                        hasStudsByOrd[ord].toInt() != 0 ||
+                        (solidByOrd[aboveOrd].toInt() == 0 && !(liquid && liquidAbove))
+                if (emitTop) {
                     jsChunkFaceAppend(wx, y, wz2, t + 4, computeFaceAO(blocks, x, y, z, 4))
                     faceCount++
                 }
                 // bottom (-Y)
-                if (y <= 0 || solidByOrd[blocks[idx - s].toInt() and 0xFF].toInt() == 0) {
+                if (bypassCulling ||
+                    y <= 0 ||
+                    solidByOrd[blocks[idx - s].toInt() and 0xFF].toInt() == 0) {
                     jsChunkFaceAppend(wx, y, wz2, t + 5, computeFaceAO(blocks, x, y, z, 5))
                     faceCount++
                 }
                 // south (+Z)
-                if (z == s - 1 || solidByOrd[blocks[idx + 1].toInt() and 0xFF].toInt() == 0) {
+                if (bypassCulling ||
+                    z == s - 1 ||
+                    solidByOrd[blocks[idx + 1].toInt() and 0xFF].toInt() == 0) {
                     jsChunkFaceAppend(wx, y, wz2, t + 0, computeFaceAO(blocks, x, y, z, 0))
                     faceCount++
                 }
                 // north (-Z)
-                if (z == 0 || solidByOrd[blocks[idx - 1].toInt() and 0xFF].toInt() == 0) {
+                if (bypassCulling ||
+                    z == 0 ||
+                    solidByOrd[blocks[idx - 1].toInt() and 0xFF].toInt() == 0) {
                     jsChunkFaceAppend(wx, y, wz2, t + 1, computeFaceAO(blocks, x, y, z, 1))
                     faceCount++
                 }
                 // east (+X)
-                if (x == s - 1 || solidByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0) {
+                if (bypassCulling ||
+                    x == s - 1 ||
+                    solidByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0) {
                     jsChunkFaceAppend(wx, y, wz2, t + 2, computeFaceAO(blocks, x, y, z, 2))
                     faceCount++
                 }
                 // west (-X)
-                if (x == 0 || solidByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0) {
+                if (bypassCulling ||
+                    x == 0 ||
+                    solidByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0) {
                     jsChunkFaceAppend(wx, y, wz2, t + 3, computeFaceAO(blocks, x, y, z, 3))
                     faceCount++
                 }

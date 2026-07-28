@@ -92,6 +92,7 @@ class LocalPlayerController(
     var selectedSlot: Int = 0
     val shortcutBar: Array<ShortcutSlot?> = arrayOfNulls(10)
     private var hasPlacedThisClick = false
+    var placementRotation: Int = 0 // 0-3, cycled with R key
 
     private var hudX = 0.0
     private var hudY = 0.0
@@ -511,6 +512,7 @@ class LocalPlayerController(
                 event == "undo" -> outMessages.trySend(ClientMessage.Command("/undo 1"))
                 event == "fly_toggle" -> pendingFlyToggle = true
                 event == "auto_forward" -> autoAdvance = !autoAdvance
+                event == "place_rotate" -> placementRotation = (placementRotation + 1) % 4
                 event == "slot_1" -> activateSlot(0)
                 event == "slot_2" -> activateSlot(1)
                 event == "slot_3" -> activateSlot(2)
@@ -734,7 +736,8 @@ class LocalPlayerController(
             if (isBreaking && adjacent != null && !hasPlacedThisClick) {
                 hasPlacedThisClick = true
                 breakTarget = adjacent
-                outMessages.trySend(ClientMessage.BlockPlace(adjacent, selectedItem))
+                outMessages.trySend(
+                    ClientMessage.BlockPlace(adjacent, selectedItem, placementRotation.toByte()))
             } else if (!isBreaking) {
                 breakTarget = null
                 hasPlacedThisClick = false

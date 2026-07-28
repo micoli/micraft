@@ -19,6 +19,15 @@
     "vegetationHost": {"type": "boolean"},
     "treeAllowed": {"type": "boolean"},
     "minimapVisible": {"type": "boolean"},
+    "rotatable": {"type": "boolean"},
+    "hasStuds": {"type": "boolean"},
+    "brickSize": {
+      "type": "array",
+      "items": {"type": "integer", "minimum": 1},
+      "minItems": 2,
+      "maxItems": 3
+    },
+    "isSlope": {"type": "boolean"},
     "drops": {
       "type": "array",
       "items": {

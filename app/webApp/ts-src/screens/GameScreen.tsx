@@ -428,6 +428,14 @@ export function GameScreen() {
                 },
               },
               {
+                icon: "📓",
+                label: "Codex",
+                callback: () => {
+                  dispatch("pause_menu_hide");
+                  dispatch("codex_open");
+                },
+              },
+              {
                 icon: "🗺️",
                 label: "Map",
                 callback: () => {

@@ -15,4 +15,8 @@ data class BlockDefinition(
     val vegetationHost: Boolean = false,
     val treeAllowed: Boolean = true,
     val minimapVisible: Boolean = true,
+    val rotatable: Boolean = false,
+    val hasStuds: Boolean = false,
+    val isSlope: Boolean = false,
+    val brickSize: List<Int> = listOf(1, 1, 1),
 )

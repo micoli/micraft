@@ -54,7 +54,14 @@ class ChunkStreamer(private val world: WorldState) {
     suspend fun sendCenterChunkNow(session: PlayerSession, cp: ChunkPos) {
         val chunk = withContext(Dispatchers.IO) { world.getOrGenerate(cp) }
         session.loadedChunks.add(cp)
-        session.sendChunk(ServerMessage.ChunkData(chunk.pos, chunk.topY(), chunk.encodeWire()))
+        val topY = chunk.topY()
+        session.sendChunk(
+            ServerMessage.ChunkData(
+                chunk.pos,
+                topY,
+                chunk.encodeWire(),
+                chunk.encodeWireStates() ?: ByteArray(0),
+                world.chunkEntityProtos(chunk.pos)))
     }
 
     fun requestAround(session: PlayerSession, cx: Int, cz: Int) {
@@ -144,7 +151,11 @@ class ChunkStreamer(private val world: WorldState) {
             val chunk = pool[cp] ?: continue
             try {
                 session.sendChunk(
-                    ServerMessage.ChunkData(chunk.pos, chunk.topY(), chunk.encodeWire()))
+                    ServerMessage.ChunkData(
+                        chunk.pos,
+                        chunk.topY(),
+                        chunk.encodeWire(),
+                        chunk.encodeWireStates() ?: ByteArray(0)))
             } catch (e: Exception) {
                 log.debug("chunk send failed for {}: {}", session.id.take(8), e.message)
                 break

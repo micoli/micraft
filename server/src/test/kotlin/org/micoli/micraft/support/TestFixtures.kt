@@ -104,6 +104,36 @@ private val _itemRegistryInit =
             ItemType("WEED") to
                 ItemDefinition(
                     buildable = true, placesBlock = BlockType.WEED, label = "WED", bg = "#468228"),
+            ItemType("LEGO_BRICK") to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.LEGO_BRICK,
+                    label = "LGO",
+                    bg = "#DC3232"),
+            ItemType("LEGO_SLOPE") to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.LEGO_SLOPE,
+                    label = "LSL",
+                    bg = "#B43232"),
+            ItemType("LEGO_PLATE") to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.LEGO_PLATE,
+                    label = "LPL",
+                    bg = "#C86432"),
+            ItemType("LEGO_BRICK_2X1") to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.LEGO_BRICK_2X1,
+                    label = "L2X",
+                    bg = "#3264DC"),
+            ItemType("LEGO_BRICK_1X2") to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.LEGO_BRICK_1X2,
+                    label = "L1X",
+                    bg = "#32DC64"),
         ))
 
 fun testPlayerState(

@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory
 
 private val worldPersistenceLog = LoggerFactory.getLogger("WorldPersistence")
 
+private val entityJson = Json { encodeDefaults = true }
+
 private val playerJson = Json {
     encodeDefaults = true
     ignoreUnknownKeys = true
@@ -50,7 +52,27 @@ class WorldPersistence(val worldDir: Path) {
                     bytes.size)
                 return null
             }
-            Chunk(pos, bytes)
+            val statesFile = chunksDir.resolve("${pos.cx}_${pos.cz}.mcs.gz")
+            val states =
+                if (statesFile.exists())
+                    try {
+                        GZIPInputStream(statesFile.inputStream()).use { it.readBytes() }
+                    } catch (_: IOException) {
+                        ByteArray(Chunk.TOTAL)
+                    }
+                else ByteArray(Chunk.TOTAL)
+            val entityFile = chunksDir.resolve("${pos.cx}_${pos.cz}.mce.gz")
+            val entityMasters =
+                if (entityFile.exists())
+                    try {
+                        val text = GZIPInputStream(entityFile.inputStream()).use { it.readBytes() }
+                        entityJson.decodeFromString(
+                            ListSerializer(BlockEntity.serializer()), text.toString(Charsets.UTF_8))
+                    } catch (_: Exception) {
+                        emptyList()
+                    }
+                else emptyList()
+            Chunk(pos, bytes, states, entityMasters)
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to load chunk {}: {}", pos, e.message)
             null
@@ -63,6 +85,27 @@ class WorldPersistence(val worldDir: Path) {
             GZIPOutputStream(file.outputStream()).use { it.write(chunk.blocks) }
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save chunk {}: {}", pos, e.message)
+        }
+        if (chunk.states.isNotEmpty() && chunk.states.any { it != 0.toByte() }) {
+            val statesFile = chunksDir.resolve("${pos.cx}_${pos.cz}.mcs.gz")
+            try {
+                GZIPOutputStream(statesFile.outputStream()).use { it.write(chunk.states) }
+            } catch (e: IOException) {
+                worldPersistenceLog.warn("Failed to save chunk states {}: {}", pos, e.message)
+            }
+        }
+        if (chunk.entityMasters.isNotEmpty()) {
+            val entityFile = chunksDir.resolve("${pos.cx}_${pos.cz}.mce.gz")
+            try {
+                val json =
+                    entityJson.encodeToString(
+                        ListSerializer(BlockEntity.serializer()), chunk.entityMasters)
+                GZIPOutputStream(entityFile.outputStream()).use {
+                    it.write(json.toByteArray(Charsets.UTF_8))
+                }
+            } catch (e: IOException) {
+                worldPersistenceLog.warn("Failed to save chunk entities {}: {}", pos, e.message)
+            }
         }
     }
 

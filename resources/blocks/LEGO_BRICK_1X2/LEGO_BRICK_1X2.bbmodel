@@ -1,0 +1,84 @@
+{
+  "resolution": { "width": 16, "height": 16 },
+  "textures": [
+    {
+      "id": 0,
+      "name": "LEGO_BRICK_1X2",
+      "path": "api/models/blocks/LEGO_BRICK_1X2/LEGO_BRICK_1X2.png",
+      "source": ""
+    }
+  ],
+  "elements": [
+    {
+      "uuid": "body",
+      "name": "body",
+      "render_type": "solid",
+      "from": [0, 0, 0],
+      "to": [16, 16, 32],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 16, 16] },
+        "north": { "texture": 0, "uv": [0, 0, 16, 16] },
+        "east":  { "texture": 0, "uv": [0, 0, 16, 16] },
+        "west":  { "texture": 0, "uv": [0, 0, 16, 16] },
+        "up":    { "texture": 0, "uv": [0, 0, 16, 16] },
+        "down":  { "texture": 0, "uv": [0, 0, 16, 16] }
+      }
+    },
+    {
+      "uuid": "stud-0-0",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [2, 16, 2],
+      "to": [6, 19, 6],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-0-1",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [10, 16, 2],
+      "to": [14, 19, 6],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-1-0",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [2, 16, 18],
+      "to": [6, 19, 22],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-1-1",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [10, 16, 18],
+      "to": [14, 19, 22],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    }
+  ]
+}

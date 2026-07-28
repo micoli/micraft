@@ -5,6 +5,7 @@ import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.WorldActionRecord
 import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
@@ -42,9 +43,9 @@ class BlockBreaker(
                     .toDouble())
         blockBreakerLog.debug(
             "BlockBreakStart pos={} block={} dist={}", bp, block, "%.2f".format(dist))
+        val hasEntity = world.hasEntityAt(bp.x, bp.y, bp.z)
         if (dist <= MAX_INTERACTION_DISTANCE &&
-            block.hardness > 0f &&
-            block.hardness != Float.MAX_VALUE) {
+            (hasEntity || (block.hardness > 0f && block.hardness != Float.MAX_VALUE))) {
             session.breakTarget = bp
         }
     }
@@ -76,7 +77,10 @@ class BlockBreaker(
 
     suspend fun tick(session: PlayerSession) {
         val bt = session.breakTarget ?: return
-        val block = world.getBlock(bt.x, bt.y, bt.z)
+        // For entity satellite cells, resolve to master block for hardness
+        val masterPos = world.getEntityMasterWorldPos(bt.x, bt.y, bt.z)
+        val effectivePos = masterPos ?: bt
+        val block = world.getBlock(effectivePos.x, effectivePos.y, effectivePos.z)
         if (block.hardness == 0f || block.hardness == Float.MAX_VALUE) {
             session.breakTarget = null
             blockProgress.remove(bt)
@@ -95,9 +99,32 @@ class BlockBreaker(
         }
         current.ticks++
         if (current.ticks.toFloat() >= block.hardness) {
-            val change = BlockChange(bt, BlockType.AIR)
-            world.applyChange(change)
-            broadcast(ServerMessage.WorldUpdate(listOf(change)))
+            if (masterPos != null) {
+                // Remove entire entity
+                val entityDef =
+                    BlockRegistry.get(world.getBlock(masterPos.x, masterPos.y, masterPos.z))
+                val (sizeX, sizeY, sizeZ) =
+                    if (entityDef.brickSize.size == 3)
+                        Triple(
+                            entityDef.brickSize[0], entityDef.brickSize[1], entityDef.brickSize[2])
+                    else Triple(1, 1, 1)
+                val changes = mutableListOf<BlockChange>()
+                for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
+                    val cp = BlockPos(masterPos.x + dx, masterPos.y + dy, masterPos.z + dz)
+                    val existingBlock = world.getBlock(cp.x, cp.y, cp.z)
+                    if (existingBlock != BlockType.AIR) {
+                        val c = BlockChange(cp, BlockType.AIR)
+                        world.applyChange(c)
+                        changes.add(c)
+                    }
+                }
+                world.applyEntityRemove(masterPos)
+                broadcast(ServerMessage.WorldUpdate(changes, entityRemoves = listOf(masterPos)))
+            } else {
+                val change = BlockChange(bt, BlockType.AIR)
+                world.applyChange(change)
+                broadcast(ServerMessage.WorldUpdate(listOf(change)))
+            }
             activateAdjacentLiquids(bt)
             val spawned = worldItems.spawnDrops(bt, block)
             session.actionHistory.addLast(WorldActionRecord.Break(bt, block, spawned))

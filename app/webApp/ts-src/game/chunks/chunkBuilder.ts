@@ -1,26 +1,64 @@
 import type { Scene, Mesh, Material } from "@babylonjs/core";
 
-// Pre-baked vertex offsets as flat Float32Array (4 verts × 3 floats = 12 values per face).
-// Blocks are floor-aligned: integer (wx,wy,wz) is the block's lower corner, spanning [wx,wx+1]×[wy,wy+1]×[wz,wz+1].
-const MC_VERTS: Float32Array[] = [
-  new Float32Array([0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1]), // +Z south
-  new Float32Array([1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0]), // -Z north
-  new Float32Array([1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1]), // +X east
-  new Float32Array([0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0]), // -X west
-  new Float32Array([0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0]), // +Y top
-  new Float32Array([0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1]), // -Y bottom
-];
 const MC_NORMS = [
-  [0, 0, 1],
-  [0, 0, -1],
-  [1, 0, 0],
-  [-1, 0, 0],
-  [0, 1, 0],
-  [0, -1, 0],
+  [0, 0, 1], // 0 south
+  [0, 0, -1], // 1 north
+  [1, 0, 0], // 2 east
+  [-1, 0, 0], // 3 west
+  [0, 1, 0], // 4 top
+  [0, -1, 0], // 5 bottom
 ];
 const FACE_SHADES = [0.88, 0.88, 0.75, 0.75, 1.0, 0.65];
 
+// For rotation r (CW quarters), which SOURCE face provides the texture for display face fd?
+// Horizontal faces 0=south,1=north,2=east,3=west rotate; top/bottom stay.
+// rot=1 (90° CW): south←west(3), north←east(2), east←south(0), west←north(1)
+const ROT_SOURCE: number[][] = [
+  [0, 1, 2, 3, 4, 5], // rot=0: identity
+  [3, 2, 0, 1, 4, 5], // rot=1 (90° CW)
+  [1, 0, 3, 2, 4, 5], // rot=2 (180°)
+  [2, 3, 1, 0, 4, 5], // rot=3 (270° CW)
+];
+
+// Compute 4 vertices for face fd of a bbmodel element defined by from/to (0-16 coords → 0-1).
+function vertsFromElement(from: [number, number, number], to: [number, number, number], fd: number): Float32Array {
+  const [fx, fy, fz] = from.map((v) => v / 16) as [number, number, number];
+  const [tx, ty, tz] = to.map((v) => v / 16) as [number, number, number];
+  switch (fd) {
+    case 0:
+      return new Float32Array([fx, fy, tz, tx, fy, tz, tx, ty, tz, fx, ty, tz]); // south z=to
+    case 1:
+      return new Float32Array([tx, fy, fz, fx, fy, fz, fx, ty, fz, tx, ty, fz]); // north z=from
+    case 2:
+      return new Float32Array([tx, fy, tz, tx, fy, fz, tx, ty, fz, tx, ty, tz]); // east  x=to
+    case 3:
+      return new Float32Array([fx, fy, fz, fx, fy, tz, fx, ty, tz, fx, ty, fz]); // west  x=from
+    case 4:
+      return new Float32Array([fx, ty, tz, tx, ty, tz, tx, ty, fz, fx, ty, fz]); // top   y=to
+    default:
+      return new Float32Array([fx, fy, fz, tx, fy, fz, tx, fy, tz, fx, fy, tz]); // bottom y=from
+  }
+}
+
+// Rotate verts 90° CW around Y at (0.5,_,0.5): [x,y,z] → [z, y, 1-x]
+function rotateVerts90CW(v: Float32Array): Float32Array {
+  const r = new Float32Array(12);
+  for (let k = 0; k < 4; k++) {
+    r[k * 3] = v[k * 3 + 2];
+    r[k * 3 + 1] = v[k * 3 + 1];
+    r[k * 3 + 2] = 1 - v[k * 3];
+  }
+  return r;
+}
+
+function rotateVerts(v: Float32Array, rotation: number): Float32Array {
+  let r = v;
+  for (let i = 0; i < rotation; i++) r = rotateVerts90CW(r);
+  return r;
+}
+
 // --- Pre-baked per-faceMat lookup (built once when block defs are ready) ---
+// faceMat = (typeOrd * 4 + rotation) * 6 + fd
 
 interface FaceInfo {
   matKey: string;
@@ -33,7 +71,31 @@ interface FaceInfo {
   isCrossSprite: boolean;
 }
 
-let faceTable: (FaceInfo | null)[] = [];
+// faceTable[faceMat] = list of FaceInfo to emit (one per element that has this face)
+let faceTable: (FaceInfo[] | null)[] = [];
+
+const CROSS_SPRITE_VERTS = new Float32Array([0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1]);
+
+// Slope geometry for rotation=0 (ascending toward south/+Z: y=0 at north, y=1 at south).
+// Other rotations are derived by rotateVerts applied repeatedly.
+// fd: 0=south(back high wall), 1=north(none/null), 2=east triangle, 3=west triangle,
+//     4=slope top diagonal, 5=bottom flat
+const SLOPE_BASE_VERTS: (Float32Array | null)[] = [
+  new Float32Array([0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1]), // fd=0 south wall (high end)
+  null, // fd=1 north: open at low end
+  new Float32Array([1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1]), // fd=2 east triangle (degenerate quad)
+  new Float32Array([0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1]), // fd=3 west triangle (degenerate quad)
+  new Float32Array([0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0]), // fd=4 slope top diagonal
+  new Float32Array([0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1]), // fd=5 bottom flat
+];
+
+// Normals for slope faces (per fd): slope top normal is special (diagonal)
+const SLOPE_TOP_NORMS = [
+  [0, 0.7071, -0.7071], // rot=0: ascending south, outward normal up-north
+  [-0.7071, 0.7071, 0], // rot=1: ascending east, outward normal up-west
+  [0, 0.7071, 0.7071], // rot=2: ascending north, outward normal up-south
+  [0.7071, 0.7071, 0], // rot=3: ascending west, outward normal up-east
+];
 
 function buildFaceTable(): void {
   faceTable = [];
@@ -41,38 +103,81 @@ function buildFaceTable(): void {
     const blockDef = window.mc.getBlockDef(typeOrd);
     if (!blockDef) continue;
     const isCross = blockDef.renderType === "cross_sprite";
-    for (let fd = 0; fd < 6; fd++) {
-      const faceMat = typeOrd * 6 + fd;
-      if (isCross) {
-        if (fd === 0) {
-          const fi = blockDef.faces.find((f) => f != null) ?? null;
-          if (fi)
-            faceTable[faceMat] = {
+    const isSlope = blockDef.renderType === "slope";
+
+    for (let rotation = 0; rotation < 4; rotation++) {
+      for (let fd = 0; fd < 6; fd++) {
+        const faceMat = (typeOrd * 4 + rotation) * 6 + fd;
+        const infos: FaceInfo[] = [];
+
+        if (isSlope) {
+          // Slope geometry: use pre-baked base verts rotated by `rotation`
+          const baseVerts = SLOPE_BASE_VERTS[fd];
+          if (baseVerts !== null) {
+            const verts = rotation === 0 ? baseVerts : rotateVerts(baseVerts, rotation);
+            // Pick texture from element 0, faces — prefer the matching faceDir
+            const srcFd = ROT_SOURCE[rotation][fd];
+            const fi = blockDef.elements[0]?.faces[srcFd] ?? blockDef.elements[0]?.faces.find((f) => f != null) ?? null;
+            if (fi) {
+              let nx: number, ny: number, nz: number;
+              if (fd === 4) {
+                // Slope top: special diagonal normal rotated by rotation
+                [nx, ny, nz] = SLOPE_TOP_NORMS[rotation];
+              } else {
+                [nx, ny, nz] = MC_NORMS[fd];
+              }
+              infos.push({
+                matKey: fi.matKey,
+                uv: new Float32Array(fi.uv),
+                shade: fd === 4 ? 0.9 : FACE_SHADES[fd],
+                normX: nx,
+                normY: ny,
+                normZ: nz,
+                verts,
+                isCrossSprite: false,
+              });
+            }
+          }
+        } else if (isCross) {
+          // Cross sprites: only fd=0 slot, emitted as two diagonal quads; rotation ignored
+          if (fd === 0 && rotation === 0) {
+            const fi = blockDef.faces[0]?.find((f) => f != null) ?? null;
+            if (fi)
+              infos.push({
+                matKey: fi.matKey,
+                uv: new Float32Array(fi.uv),
+                shade: 0.8,
+                normX: 0,
+                normY: 1,
+                normZ: 0,
+                verts: CROSS_SPRITE_VERTS,
+                isCrossSprite: true,
+              });
+          }
+        } else {
+          for (let elemIdx = 0; elemIdx < blockDef.elements.length; elemIdx++) {
+            const elem = blockDef.elements[elemIdx];
+            // The source face key for this slot after rotation
+            const srcFd = ROT_SOURCE[rotation][fd];
+            const fi = elem.faces[srcFd];
+            if (!fi) continue;
+            const [nx, ny, nz] = MC_NORMS[fd];
+            const rawVerts = vertsFromElement(elem.from, elem.to, fd);
+            const verts = rotation === 0 ? rawVerts : rotateVerts(rawVerts, rotation);
+            infos.push({
               matKey: fi.matKey,
               uv: new Float32Array(fi.uv),
-              shade: 0.8,
-              normX: 0,
-              normY: 1,
-              normZ: 0,
-              verts: MC_VERTS[0],
-              isCrossSprite: true,
-            };
+              shade: FACE_SHADES[fd],
+              normX: nx,
+              normY: ny,
+              normZ: nz,
+              verts,
+              isCrossSprite: false,
+            });
+          }
         }
-      } else {
-        const fi = blockDef.faces[fd];
-        if (fi) {
-          const [nx, ny, nz] = MC_NORMS[fd];
-          faceTable[faceMat] = {
-            matKey: fi.matKey,
-            uv: new Float32Array(fi.uv),
-            shade: FACE_SHADES[fd],
-            normX: nx,
-            normY: ny,
-            normZ: nz,
-            verts: MC_VERTS[fd],
-            isCrossSprite: false,
-          };
-        }
+
+        if (infos.length > 0) faceTable[faceMat] = infos;
       }
     }
   }
@@ -235,17 +340,19 @@ export function registerChunks(): Pick<
           wz = fb[i + 2],
           faceMat = fb[i + 3],
           ao = fb[i + 4];
-        const info = faceTable[faceMat];
-        if (!info) continue;
-        let g = grp[info.matKey];
-        if (!g) {
-          g = acquireGroup();
-          grp[info.matKey] = g;
-        }
-        if (info.isCrossSprite) {
-          emitCrossSprite(wx, wy, wz, g, info.uv, ao);
-        } else {
-          emitQuad(g, wx, wy, wz, info.verts, info.normX, info.normY, info.normZ, info.uv, info.shade, ao);
+        const infos = faceTable[faceMat];
+        if (!infos) continue;
+        for (const info of infos) {
+          let g = grp[info.matKey];
+          if (!g) {
+            g = acquireGroup();
+            grp[info.matKey] = g;
+          }
+          if (info.isCrossSprite) {
+            emitCrossSprite(wx, wy, wz, g, info.uv, ao);
+          } else {
+            emitQuad(g, wx, wy, wz, info.verts, info.normX, info.normY, info.normZ, info.uv, info.shade, ao);
+          }
         }
       }
       return ((endI - startI) / 5) | 0;

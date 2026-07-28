@@ -121,10 +121,19 @@ declare global {
     uv: number[]; // 8 floats: [u0,v0, u1,v1, u2,v2, u3,v3]
   }
 
+  interface McBlockElement {
+    from: [number, number, number]; // bbmodel coords 0-16
+    to: [number, number, number];
+    faces: (McBlockFaceInfo | null)[]; // indexed by faceDir (0=south..5=bottom)
+  }
+
   interface McBlockDef {
     name: string;
-    renderType: "solid" | "leaves" | "cross_sprite" | "liquid";
-    faces: (McBlockFaceInfo | null)[];
+    renderType: "solid" | "leaves" | "cross_sprite" | "liquid" | "slope";
+    // Per-element geometry; faces[elemIdx] = McBlockElement.faces for backward compat lookup
+    elements: McBlockElement[];
+    // Shortcut: faces[elemIdx][faceDir] — same data as elements[elemIdx].faces
+    faces: (McBlockFaceInfo | null)[][];
   }
 
   interface McBlockTextureDef {

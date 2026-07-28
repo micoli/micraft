@@ -7,10 +7,12 @@ import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.WorldActionRecord
 import org.micoli.micraft.game.session.toSlotMap
+import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.BlockChange
+import org.micoli.micraft.protocol.BlockEntityProto
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
@@ -60,9 +62,62 @@ class BlockPlacer(
             return
         }
 
-        val change = BlockChange(pos, blockType)
+        val def = blockType.let { BlockRegistry.get(it) }
+        val (sizeX, sizeY, sizeZ) =
+            if (def.brickSize.size == 3)
+                Triple(def.brickSize[0], def.brickSize[1], def.brickSize[2])
+            else Triple(1, 1, 1)
+
+        val isMultiCell = sizeX > 1 || sizeY > 1 || sizeZ > 1
+        if (isMultiCell) {
+            // Validate all satellite cells are free
+            for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
+                if (dx == 0 && dy == 0 && dz == 0) continue
+                val cx = pos.x + dx
+                val cy = pos.y + dy
+                val cz = pos.z + dz
+                val cellBlock = world.getBlock(cx, cy, cz)
+                if (!cellBlock.isReplaceable) {
+                    blockPlacerLog.debug(
+                        "BlockPlace rejected: multi-cell pos={},{},{} occupied by {}",
+                        cx,
+                        cy,
+                        cz,
+                        cellBlock)
+                    return
+                }
+                if (world.hasEntityAt(cx, cy, cz)) {
+                    blockPlacerLog.debug(
+                        "BlockPlace rejected: multi-cell pos={},{},{} has entity", cx, cy, cz)
+                    return
+                }
+            }
+        }
+        if (world.hasEntityAt(pos.x, pos.y, pos.z)) {
+            blockPlacerLog.debug("BlockPlace rejected: pos={} has entity", pos)
+            return
+        }
+
+        val change = BlockChange(pos, blockType, intent.state)
         world.applyChange(change)
-        broadcast(ServerMessage.WorldUpdate(listOf(change)))
+
+        if (isMultiCell) {
+            val proto =
+                BlockEntityProto(
+                    worldX = pos.x,
+                    worldY = pos.y,
+                    worldZ = pos.z,
+                    type = blockType.id,
+                    sizeX = sizeX,
+                    sizeY = sizeY,
+                    sizeZ = sizeZ,
+                    rotation = intent.state.toInt() and 0x03,
+                )
+            world.applyEntityAdd(proto)
+            broadcast(ServerMessage.WorldUpdate(listOf(change), entityAdds = listOf(proto)))
+        } else {
+            broadcast(ServerMessage.WorldUpdate(listOf(change)))
+        }
         vegetationManager?.tryActivate(pos, blockType)
 
         val remaining = count - 1

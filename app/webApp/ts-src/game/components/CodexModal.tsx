@@ -114,49 +114,137 @@ function Block3DPreview({ ordinal }: { ordinal: number }) {
     const B = window.BABYLON;
     if (!B) return;
 
+    const blockDef = window.mc?.getBlockDef?.(ordinal) as McBlockDef | null;
+    const elements = blockDef?.elements ?? [];
+
+    // Center on body element (elem 0); camera radius scales with body size.
+    const body = elements[0];
+    const bf = body?.from ?? ([0, 0, 0] as [number, number, number]);
+    const bt = body?.to ?? ([16, 16, 16] as [number, number, number]);
+    const bW = (bt[0] - bf[0]) / 16,
+      bH = (bt[1] - bf[1]) / 16,
+      bD = (bt[2] - bf[2]) / 16;
+    const cx = (bf[0] + bt[0]) / 2 / 16;
+    const cy = (bf[1] + bt[1]) / 2 / 16;
+    const cz = (bf[2] + bt[2]) / 2 / 16;
+
     const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
     const scene = new B.Scene(engine);
     scene.clearColor = new B.Color4(0.08, 0.08, 0.08, 0);
 
-    new B.ArcRotateCamera("cam", -Math.PI * 0.25, Math.PI / 3.5, 2.5, B.Vector3.Zero(), scene);
+    const cam = new B.ArcRotateCamera("cam", -Math.PI * 0.25, Math.PI / 3.5, 2.5, B.Vector3.Zero(), scene);
+    cam.radius = Math.max(2.5, Math.max(bW, bH, bD) * 2.2);
     const light = new B.HemisphericLight("light", new B.Vector3(1, 2, 1), scene);
     light.intensity = 1.0;
     light.groundColor = new B.Color3(0.25, 0.25, 0.25);
 
     const root = new B.TransformNode("root", scene);
 
-    // 6 explicit planes — avoids BJS box UV quirks on side faces.
-    // faceDir: 0=south(+Z), 1=north(-Z), 2=east(+X), 3=west(-X), 4=up(+Y), 5=down(-Y)
-    // rotY first, then rotX — applied in Euler XYZ order by BJS (intrinsic).
-    const FACES = [
-      { dir: 0, x: 0, y: 0, z: 0.5, rx: 0, ry: Math.PI }, // south
-      { dir: 1, x: 0, y: 0, z: -0.5, rx: 0, ry: 0 }, // north
-      { dir: 2, x: 0.5, y: 0, z: 0, rx: 0, ry: -Math.PI / 2 }, // east
-      { dir: 3, x: -0.5, y: 0, z: 0, rx: 0, ry: Math.PI / 2 }, // west
-      { dir: 4, x: 0, y: 0.5, z: 0, rx: Math.PI / 2, ry: 0 }, // up
-      { dir: 5, x: 0, y: -0.5, z: 0, rx: -Math.PI / 2, ry: 0 }, // down
-    ];
-
-    const fallback = getFaceTexUrl(ordinal, 4) ?? getFaceTexUrl(ordinal, 0);
+    // Resolve texture URL from matKey
+    const texs: McBlockTextureDef[] = window.mc?.getBlockTextures?.() ?? [];
     const matCache = new Map<string, StandardMaterial>();
-
-    for (const { dir, x, y, z, rx, ry } of FACES) {
-      const url = getFaceTexUrl(ordinal, dir) ?? fallback;
-      if (!url) continue;
-
-      if (!matCache.has(url)) {
-        const mat = new B.StandardMaterial("m_" + url, scene);
+    const getUrl = (matKey: string): string | null => {
+      const name = matKey.replace(":biome_tint", "");
+      return texs.find((t) => t.name === name)?.url ?? null;
+    };
+    const ensureMat = (url: string, twoSided = false) => {
+      const key = twoSided ? url + "_2s" : url;
+      if (!matCache.has(key)) {
+        const mat = new B.StandardMaterial("m_" + key, scene);
         mat.diffuseTexture = new B.Texture(url, scene, false, true, B.Texture.NEAREST_SAMPLINGMODE);
         mat.specularColor = new B.Color3(0, 0, 0);
-        mat.backFaceCulling = true;
-        matCache.set(url, mat);
+        mat.backFaceCulling = !twoSided;
+        matCache.set(key, mat);
+      }
+      return matCache.get(key)!;
+    };
+
+    // Slope face verts: rotation=0, [0,1] normalized, 4 verts as flat xyz*4.
+    // Same layout as chunkBuilder SLOPE_BASE_VERTS.
+    const SLOPE_VERTS: (number[] | null)[] = [
+      [0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1], // fd=0 south wall
+      null, // fd=1 north: open
+      [1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1], // fd=2 east triangle
+      [0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1], // fd=3 west triangle
+      [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0], // fd=4 top diagonal
+      [0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1], // fd=5 bottom flat
+    ];
+
+    const isSlope = blockDef?.renderType === "slope";
+
+    for (let ei = 0; ei < elements.length; ei++) {
+      const elem = elements[ei];
+      const f = elem.from,
+        t = elem.to;
+      const x0 = f[0] / 16,
+        y0 = f[1] / 16,
+        z0 = f[2] / 16;
+      const x1 = t[0] / 16,
+        y1 = t[1] / 16,
+        z1 = t[2] / 16;
+      const W = x1 - x0,
+        H = y1 - y0,
+        D = z1 - z0;
+      const mx = (x0 + x1) / 2,
+        my = (y0 + y1) / 2,
+        mz = (z0 + z1) / 2;
+
+      if (!isSlope) {
+        // Solid closed box — no hollow interior.
+        // Use first available face texture (all Lego faces share the same texture).
+        const firstFace = elem.faces.find((fi) => fi != null);
+        const url = firstFace ? getUrl(firstFace.matKey) : null;
+        if (!url) continue;
+        const box = B.MeshBuilder.CreateBox(`e${ei}`, { width: W, height: H, depth: D }, scene);
+        box.parent = root;
+        box.position = new B.Vector3(mx - cx, my - cy, mz - cz);
+        box.material = ensureMat(url, false);
+        continue;
       }
 
-      const plane = B.MeshBuilder.CreatePlane("f" + dir, { size: 1 }, scene);
-      plane.parent = root;
-      plane.position = new B.Vector3(x, y, z);
-      plane.rotation = new B.Vector3(rx, ry, 0);
-      plane.material = matCache.get(url) ?? null;
+      // Slope: VertexData quads from SLOPE_VERTS, two-sided so all faces show during rotation.
+      for (let dir = 0; dir < 6; dir++) {
+        const faceInfo = elem.faces[dir];
+        if (!faceInfo) continue;
+        const url = getUrl(faceInfo.matKey);
+        if (!url) continue;
+
+        const raw = SLOPE_VERTS[dir];
+        if (!raw) continue;
+        const verts: number[] = [];
+        for (let i = 0; i < 12; i += 3) {
+          verts.push(x0 + raw[i] * W, y0 + raw[i + 1] * H, z0 + raw[i + 2] * D);
+        }
+
+        const positions = [
+          verts[0] - cx,
+          verts[1] - cy,
+          verts[2] - cz,
+          verts[3] - cx,
+          verts[4] - cy,
+          verts[5] - cz,
+          verts[6] - cx,
+          verts[7] - cy,
+          verts[8] - cz,
+          verts[9] - cx,
+          verts[10] - cy,
+          verts[11] - cz,
+        ];
+        const indices = [0, 1, 2, 0, 2, 3];
+        const normals: number[] = [];
+        B.VertexData.ComputeNormals(positions, indices, normals);
+
+        const vd = new B.VertexData();
+        vd.positions = positions;
+        vd.indices = indices;
+        vd.normals = normals;
+        vd.uvs = faceInfo.uv;
+
+        const mesh = new B.Mesh(`e${ei}f${dir}`, scene);
+        mesh.parent = root;
+        vd.applyToMesh(mesh);
+        mesh.material = ensureMat(url, true);
+      }
     }
 
     let angle = 0;

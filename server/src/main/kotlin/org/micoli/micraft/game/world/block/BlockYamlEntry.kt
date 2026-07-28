@@ -16,4 +16,8 @@ data class BlockYamlEntry(
     val treeAllowed: Boolean = true,
     val minimapVisible: Boolean = true,
     val drops: List<DropEntry> = emptyList(),
+    val rotatable: Boolean = false,
+    val hasStuds: Boolean = false,
+    val isSlope: Boolean = false,
+    val brickSize: List<Int> = listOf(1, 1, 1),
 )

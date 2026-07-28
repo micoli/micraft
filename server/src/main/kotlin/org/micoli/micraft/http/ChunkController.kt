@@ -42,7 +42,13 @@ class ChunkController(
                             return@get
                         }
                 val chunk = withContext(dispatcher) { world.getOrGenerate(ChunkPos(cx, cz)) }
-                val msg = ServerMessage.ChunkData(chunk.pos, chunk.topY(), chunk.encodeWire())
+                val msg =
+                    ServerMessage.ChunkData(
+                        chunk.pos,
+                        chunk.topY(),
+                        chunk.encodeWire(),
+                        chunk.encodeWireStates() ?: ByteArray(0),
+                        world.chunkEntityProtos(chunk.pos))
                 call.respondBytes(
                     ServerMessageCodec.encode(msg), ContentType.Application.OctetStream)
             }

@@ -4,8 +4,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import org.micoli.micraft.game.world.BlockDefinition
+import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.support.testSession
 import org.micoli.micraft.support.testWorld
 
@@ -168,5 +173,47 @@ class MovementProcessorTest {
         session.state = session.state.copy(speedMultiplier = 0.5f)
         val result = processor.process(session, noInput(speedDown = true))
         assertEquals(0.5f, result.speedMultiplier)
+    }
+
+    private fun registerSlope() {
+        BlockRegistry.load(
+            mapOf(
+                BlockType.LEGO_SLOPE to
+                    BlockDefinition(
+                        hardness = 1f,
+                        solid = false,
+                        replaceable = false,
+                        isSlope = true,
+                    )))
+    }
+
+    @Test
+    fun slope_rot0_snapsPlayerToSurface() {
+        registerSlope()
+        val world = testWorld()
+        // Place slope at (8, 5, 8) with rotation=0 (ascending south)
+        world.applyChange(BlockChange(BlockPos(8, 5, 8), BlockType.LEGO_SLOPE, 0))
+        val processor = MovementProcessor(world)
+        // Player at center of slope cell (z=0.5 → surfaceY = 5 + 0.5 = 5.5)
+        val session = testSession(pos = Vec3(8.5f, 5.5f, 8.5f))
+        session.vy = -1f
+        val result = processor.process(session, noInput())
+        // Y should be near the slope surface (5.5), not fallen through
+        assertTrue(result.pos.y >= 5.4f, "Player should stay on slope surface, got ${result.pos.y}")
+    }
+
+    @Test
+    fun slope_playerAbove_notSnapped() {
+        registerSlope()
+        val world = testWorld()
+        world.applyChange(BlockChange(BlockPos(8, 5, 8), BlockType.LEGO_SLOPE, 0))
+        val processor = MovementProcessor(world)
+        // Player high above slope: should not be snapped
+        val session = testSession(pos = Vec3(8.5f, 20f, 8.5f))
+        session.vy = 0f
+        val result = processor.process(session, noInput())
+        assertTrue(result.pos.y < 20f, "Gravity should pull player down, got ${result.pos.y}")
+        assertTrue(
+            result.pos.y > 10f, "Player too high to snap to slope at y=5, got ${result.pos.y}")
     }
 }
