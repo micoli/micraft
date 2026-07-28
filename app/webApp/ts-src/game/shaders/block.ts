@@ -12,6 +12,7 @@ varying vec2 vUv;
 varying vec4 vColor;
 varying float vFogDepth;
 varying vec3 vWorldPos;
+varying vec3 vNormal;
 
 void main() {
   vec4 worldPos = world * vec4(position, 1.0);
@@ -20,6 +21,7 @@ void main() {
   vColor = color;
   vFogDepth = (view * worldPos).z;
   vWorldPos = worldPos.xyz;
+  vNormal = normalize((world * vec4(normal, 0.0)).xyz);
 }
 `;
 
@@ -61,6 +63,7 @@ varying vec2 vUv;
 varying vec4 vColor;
 varying float vFogDepth;
 varying vec3 vWorldPos;
+varying vec3 vNormal;
 
 void main() {
   vec4 texColor = texture2D(textureSampler, vUv);
@@ -78,6 +81,21 @@ void main() {
   float att = clamp(1.0 - dist / 18.0, 0.0, 1.0);
   att = att * att;
   color += texColor.rgb * tint * att * playerLightIntensity;
+
+  // Plastic/LEGO effect: vColor.a > 1.5 flags plastic blocks
+  float isPlastic = step(1.5, vColor.a);
+  if (isPlastic > 0.5) {
+    // Saturation boost: vivid LEGO colors
+    float luma = dot(color, vec3(0.299, 0.587, 0.114));
+    color = mix(vec3(luma), color, 1.35);
+
+    // Phong specular from fixed sun direction
+    vec3 sunDir = normalize(vec3(1.0, 2.0, 0.5));
+    float spec = pow(max(0.0, dot(vNormal, sunDir)), 24.0) * 0.45 * shadersEnabled;
+    // Top-face sheen
+    float sheen = max(0.0, vNormal.y) * 0.12 * shadersEnabled;
+    color += vec3(spec + sheen);
+  }
 
   // Fog linéaire (joueur dans une zone fog)
   float fogFactor = clamp((fogEnd - vFogDepth) / (fogEnd - fogStart), 0.0, 1.0);

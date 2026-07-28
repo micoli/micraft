@@ -70,6 +70,7 @@ interface FaceInfo {
   normZ: number;
   verts: Float32Array;
   isCrossSprite: boolean;
+  isPlastic: boolean;
 }
 
 // faceTable[faceMat] = list of FaceInfo to emit (one per element that has this face)
@@ -105,6 +106,7 @@ function buildFaceTable(): void {
     if (!blockDef) continue;
     const isCross = blockDef.renderType === "cross_sprite";
     const isSlope = blockDef.renderType === "slope";
+    const isPlastic = blockDef.hasStuds === true;
 
     for (let rotation = 0; rotation < 4; rotation++) {
       for (let fd = 0; fd < 6; fd++) {
@@ -136,6 +138,7 @@ function buildFaceTable(): void {
                 normZ: nz,
                 verts,
                 isCrossSprite: false,
+                isPlastic,
               });
             }
           }
@@ -153,6 +156,7 @@ function buildFaceTable(): void {
                 normZ: 0,
                 verts: CROSS_SPRITE_VERTS,
                 isCrossSprite: true,
+                isPlastic,
               });
           }
         } else {
@@ -174,6 +178,7 @@ function buildFaceTable(): void {
               normZ: nz,
               verts,
               isCrossSprite: false,
+              isPlastic,
             });
           }
         }
@@ -236,6 +241,7 @@ function emitQuad(
   uv: Float32Array,
   shade: number,
   ao: number,
+  isPlastic = false,
 ): void {
   if (g.v + 4 > GROUP_MAX_VERTS) return; // safety guard
   const baseV = g.v;
@@ -243,6 +249,7 @@ function emitQuad(
   let ni = baseV * 3;
   let ui = baseV * 2;
   let ci = baseV * 4;
+  const alphaFlag = isPlastic ? 2.0 : 1.0;
   for (let k = 0; k < 4; k++) {
     const vk = k * 3;
     g.p[pi++] = wx + verts[vk];
@@ -258,7 +265,7 @@ function emitQuad(
     g.c[ci++] = b;
     g.c[ci++] = b;
     g.c[ci++] = b;
-    g.c[ci++] = 1.0;
+    g.c[ci++] = alphaFlag;
   }
   let ii = g.ic;
   g.i[ii++] = baseV;
@@ -348,7 +355,7 @@ export function buildBlockPreviewMeshes(scene: Scene, typeOrd: number, rotation:
       if (info.isCrossSprite) {
         emitCrossSprite(0, 0, 0, g, info.uv, 0);
       } else {
-        emitQuad(g, 0, 0, 0, info.verts, info.normX, info.normY, info.normZ, info.uv, info.shade, 0);
+        emitQuad(g, 0, 0, 0, info.verts, info.normX, info.normY, info.normZ, info.uv, info.shade, 0, info.isPlastic);
       }
     }
   }
@@ -425,7 +432,20 @@ export function registerChunks(): Pick<
           if (info.isCrossSprite) {
             emitCrossSprite(wx, wy, wz, g, info.uv, ao);
           } else {
-            emitQuad(g, wx, wy, wz, info.verts, info.normX, info.normY, info.normZ, info.uv, info.shade, ao);
+            emitQuad(
+              g,
+              wx,
+              wy,
+              wz,
+              info.verts,
+              info.normX,
+              info.normY,
+              info.normZ,
+              info.uv,
+              info.shade,
+              ao,
+              info.isPlastic,
+            );
           }
         }
       }

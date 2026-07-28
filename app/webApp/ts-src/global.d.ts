@@ -130,6 +130,7 @@ declare global {
   interface McBlockDef {
     name: string;
     renderType: "solid" | "leaves" | "cross_sprite" | "liquid" | "slope";
+    hasStuds?: boolean;
     // Per-element geometry; faces[elemIdx] = McBlockElement.faces for backward compat lookup
     elements: McBlockElement[];
     // Shortcut: faces[elemIdx][faceDir] — same data as elements[elemIdx].faces

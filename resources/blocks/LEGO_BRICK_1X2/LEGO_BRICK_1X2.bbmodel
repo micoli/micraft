@@ -25,7 +25,7 @@
       }
     },
     {
-      "uuid": "stud-0-0",
+      "uuid": "stud-0-0-0",
       "name": "stud",
       "render_type": "solid",
       "from": [2, 16, 2],
@@ -39,7 +39,7 @@
       }
     },
     {
-      "uuid": "stud-0-1",
+      "uuid": "stud-0-1-0",
       "name": "stud",
       "render_type": "solid",
       "from": [10, 16, 2],
@@ -53,7 +53,35 @@
       }
     },
     {
-      "uuid": "stud-1-0",
+      "uuid": "stud-0-0-1",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [2, 16, 10],
+      "to": [6, 19, 14],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-0-1-1",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [10, 16, 10],
+      "to": [14, 19, 14],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-1-0-0",
       "name": "stud",
       "render_type": "solid",
       "from": [2, 16, 18],
@@ -67,11 +95,39 @@
       }
     },
     {
-      "uuid": "stud-1-1",
+      "uuid": "stud-1-1-0",
       "name": "stud",
       "render_type": "solid",
       "from": [10, 16, 18],
       "to": [14, 19, 22],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-1-0-1",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [2, 16, 26],
+      "to": [6, 19, 30],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-1-1-1",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [10, 16, 26],
+      "to": [14, 19, 30],
       "faces": {
         "south": { "texture": 0, "uv": [0, 0, 4, 3] },
         "north": { "texture": 0, "uv": [0, 0, 4, 3] },

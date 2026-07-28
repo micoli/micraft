@@ -67,7 +67,7 @@ let _blockDefs: (McBlockDef | null)[] | null = null;
 let _blockTextures: McBlockTextureDef[] | null = null;
 
 // Loaded from RegistrySync — ordinal-indexed list of block infos
-let _registryBlocks: { name: string; modelElement: string; liquid?: boolean }[] | null = null;
+let _registryBlocks: { name: string; modelElement: string; liquid?: boolean; hasStuds?: boolean }[] | null = null;
 
 export function registerBlockDefs(): Pick<
   McBindings,
@@ -96,6 +96,7 @@ export function registerBlockDefs(): Pick<
           .then((r) => r.json())
           .then((data: BlocksBbModel) => {
             const { def, textures } = parseBlockBbmodel(data);
+            if (def && info.hasStuds) def.hasStuds = true;
             defs[ordinal] = def;
             for (const t of textures) {
               if (!allTextures.has(t.name)) allTextures.set(t.name, t);
@@ -120,7 +121,9 @@ export function registerBlockDefs(): Pick<
 }
 
 // Called from setBlockRegistry (set up in index.ts) before initBlockDefs
-export function setRegistryBlocks(blocks: { name: string; modelElement: string; liquid?: boolean }[]): void {
+export function setRegistryBlocks(
+  blocks: { name: string; modelElement: string; liquid?: boolean; hasStuds?: boolean }[],
+): void {
   _registryBlocks = blocks;
 }
 
