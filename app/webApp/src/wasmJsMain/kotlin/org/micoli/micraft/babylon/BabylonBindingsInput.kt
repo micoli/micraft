@@ -80,6 +80,13 @@ fun jsShowBreakOverlay(scene: JsAny, x: Int, y: Int, z: Int, progress: Double): 
 
 fun jsHideBreakOverlay(): Unit = js("mc.hideBreakOverlay()")
 
+fun jsShowBlockPreview(scene: JsAny, x: Int, y: Int, z: Int, typeOrd: Int, rotation: Int): Unit =
+    js("mc.showBlockPreview(scene, x, y, z, typeOrd, rotation)")
+
+fun jsHideBlockPreview(): Unit = js("mc.hideBlockPreview()")
+
+fun jsSetPlacementRotation(rotation: Int): Unit = js("mc.setPlacementRotation(rotation)")
+
 // ── Event queue ───────────────────────────────────────────────────────────────
 
 fun jsConsumeEvents(): JsAny = js("mc.consumeEvents()")

@@ -234,4 +234,19 @@ class BlockPlacerTest {
         assertEquals(null, session.shortcutBar[1])
         assertTrue(session.sent.isEmpty())
     }
+
+    @Test
+    fun place_withRotation_storesStateInWorldAndBroadcasts() = runBlocking {
+        val broadcasts = mutableListOf<ServerMessage>()
+        val world = testWorld()
+        val placer = placer(broadcasts = broadcasts, world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("COBBLESTONE")] = 1
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("COBBLESTONE"), state = 2))
+        assertEquals(2.toByte(), world.getState(8, 7, 8))
+        val update = broadcasts.filterIsInstance<ServerMessage.WorldUpdate>().first()
+        assertEquals(2.toByte(), update.changes.first().state)
+    }
 }

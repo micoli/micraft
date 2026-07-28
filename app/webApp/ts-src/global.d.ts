@@ -195,6 +195,7 @@ declare global {
     hemiLight: InstanceType<typeof BABYLON.HemisphericLight> | null;
     targetMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     breakMesh: (InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string }) | null;
+    ghostMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     chunks: Record<string, InstanceType<typeof BABYLON.AbstractMesh>[]>;
     currentFPArms: McFPArms | null;
     blockMaterials: Record<string, ShaderMaterial | StandardMaterial> | undefined;
@@ -302,6 +303,9 @@ declare global {
     hideTargetOutline(): void;
     showBreakOverlay(scene: Scene, x: number, y: number, z: number, alpha: number): void;
     hideBreakOverlay(): void;
+    showBlockPreview(scene: Scene, x: number, y: number, z: number, typeOrd: number, rotation: number): void;
+    hideBlockPreview(): void;
+    setPlacementRotation(rotation: number): void;
     // Chunk builder
     chunkBegin(cx: number, cz: number): void;
     chunkFace(wx: number, wy: number, wz: number, faceMat: number, ao: number): void;

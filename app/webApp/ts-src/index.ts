@@ -12,6 +12,7 @@ import { registerMouse } from "./game/input/mouse";
 import { registerCamera } from "./game/camera/camera";
 import { registerTargeting } from "./game/targeting/targeting";
 import { registerCombatTargetHighlight } from "./game/targeting/targetHighlight";
+import { registerGhostBlock } from "./game/targeting/ghostBlock";
 import { registerChunks } from "./game/chunks/chunkBuilder";
 import { registerPlayerModel } from "./game/player/playerModel";
 import { registerFPArms } from "./game/player/fpArms";
@@ -67,6 +68,7 @@ window.mcState = {
   hemiLight: null,
   targetMesh: null,
   breakMesh: null,
+  ghostMesh: null,
   chunks: {},
   currentFPArms: null,
   blockMaterials: undefined,
@@ -134,6 +136,7 @@ window.mc = {
   ...registerCamera(),
   ...registerTargeting(),
   ...registerCombatTargetHighlight(),
+  ...registerGhostBlock(),
   ...registerChunks(),
   ...registerPlayerModel(),
   ...registerFPArms(),

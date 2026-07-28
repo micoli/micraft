@@ -1,4 +1,5 @@
-import type { Scene, Mesh, Material } from "@babylonjs/core";
+import type { Scene, Mesh, Material, ShaderMaterial } from "@babylonjs/core";
+import { BLOCK_VERT, BLOCK_GHOST_FRAG } from "../shaders/block";
 
 const MC_NORMS = [
   [0, 0, 1], // 0 south
@@ -299,6 +300,79 @@ function disposeChunk(key: string): void {
     (meshes as InstanceType<typeof BABYLON.AbstractMesh>[]).forEach((m) => m.dispose());
     delete window.mcState.chunks[key];
   }
+}
+
+const ghostMatCache: Record<string, ShaderMaterial> = {};
+
+function getOrCreateGhostMat(scene: Scene, matKey: string): ShaderMaterial | null {
+  if (ghostMatCache[matKey]) return ghostMatCache[matKey];
+  const textures = window.mc.getBlockTextures();
+  const baseName = matKey.replace(":biome_tint", "");
+  const texDef = textures.find((t) => t.name === baseName);
+  if (!texDef) return null;
+  const isBiomeTint = matKey.endsWith(":biome_tint");
+  const [tr, tg, tb] = isBiomeTint ? [0.47, 0.75, 0.35] : (texDef.tint ?? [1, 1, 1]);
+  const mat = new BABYLON.ShaderMaterial(
+    "ghost_" + matKey,
+    scene,
+    { vertexSource: BLOCK_VERT, fragmentSource: BLOCK_GHOST_FRAG },
+    {
+      attributes: ["position", "normal", "uv", "color"],
+      uniforms: ["worldViewProjection", "tint"],
+      samplers: ["textureSampler"],
+    },
+  );
+  const tex = new BABYLON.Texture(texDef.url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
+  mat.setTexture("textureSampler", tex);
+  mat.setVector3("tint", new BABYLON.Vector3(tr, tg, tb));
+  mat.backFaceCulling = false;
+  mat.needAlphaBlending = () => true;
+  mat.zOffset = -2;
+  mat.zOffsetUnits = -4;
+  ghostMatCache[matKey] = mat;
+  return mat;
+}
+
+export function buildBlockPreviewMeshes(scene: Scene, typeOrd: number, rotation: number): Mesh[] {
+  if (!window.mc.isBlockDefsReady()) return [];
+
+  const groups: Record<string, FaceGroup> = {};
+
+  for (let fd = 0; fd < 6; fd++) {
+    const faceMat = (typeOrd * 4 + rotation) * 6 + fd;
+    const infos = faceTable[faceMat];
+    if (!infos) continue;
+    for (const info of infos) {
+      if (!groups[info.matKey]) groups[info.matKey] = acquireGroup();
+      const g = groups[info.matKey];
+      if (info.isCrossSprite) {
+        emitCrossSprite(0, 0, 0, g, info.uv, 0);
+      } else {
+        emitQuad(g, 0, 0, 0, info.verts, info.normX, info.normY, info.normZ, info.uv, info.shade, 0);
+      }
+    }
+  }
+
+  const meshes: Mesh[] = [];
+  for (const [mk, g] of Object.entries(groups)) {
+    if (g.v === 0) {
+      releaseGroup(g);
+      continue;
+    }
+    const mesh = new BABYLON.Mesh("ghostBlock_" + mk, scene) as Mesh;
+    const vd = new BABYLON.VertexData();
+    vd.positions = g.p.subarray(0, g.v * 3);
+    vd.normals = g.n.subarray(0, g.v * 3);
+    vd.uvs = g.u.subarray(0, g.v * 2);
+    vd.colors = g.c.subarray(0, g.v * 4);
+    vd.indices = g.i.subarray(0, g.ic);
+    vd.applyToMesh(mesh, false);
+    mesh.material = getOrCreateGhostMat(scene, mk);
+    mesh.isPickable = false;
+    meshes.push(mesh);
+    releaseGroup(g);
+  }
+  return meshes;
 }
 
 export function registerChunks(): Pick<

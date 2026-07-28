@@ -23,6 +23,22 @@ void main() {
 }
 `;
 
+export const BLOCK_GHOST_FRAG = `
+precision highp float;
+
+uniform sampler2D textureSampler;
+uniform vec3 tint;
+
+varying vec2 vUv;
+varying vec4 vColor;
+
+void main() {
+  vec4 texColor = texture2D(textureSampler, vUv);
+  if (texColor.a < 0.1) discard;
+  gl_FragColor = vec4(texColor.rgb * tint * vColor.rgb, 0.5);
+}
+`;
+
 export const BLOCK_FRAG = `
 precision highp float;
 

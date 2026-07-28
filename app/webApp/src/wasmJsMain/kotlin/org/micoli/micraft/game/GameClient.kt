@@ -423,7 +423,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                             affectedChunks[cp] ?: chunkManager.chunkData[cp] ?: return@forEach
                         val lx = change.pos.x - cx * WorldConstants.CHUNK_SIZE
                         val lz = change.pos.z - cz * WorldConstants.CHUNK_SIZE
-                        val updated = existing.withBlock(lx, change.pos.y, lz, change.type)
+                        val updated =
+                            existing.withBlock(lx, change.pos.y, lz, change.type, change.state)
                         val newTopY =
                             if (change.type != BlockType.AIR) maxOf(existingTopY, change.pos.y)
                             else existingTopY

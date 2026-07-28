@@ -7,6 +7,7 @@ import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.game.NetworkStats
 import org.micoli.micraft.game.NpcManager
 import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.PlayerConstants
@@ -93,6 +94,9 @@ class LocalPlayerController(
     val shortcutBar: Array<ShortcutSlot?> = arrayOfNulls(10)
     private var hasPlacedThisClick = false
     var placementRotation: Int = 0 // 0-3, cycled with R key
+    private var ghostAdjacentPos: BlockPos? = null
+    private var lastGhostRotation: Int = -1
+    private var lastMinimapPlacementRot: Int = -2
 
     private var hudX = 0.0
     private var hudY = 0.0
@@ -733,6 +737,20 @@ class LocalPlayerController(
 
         if (isPlaceMode) {
             val adjacent = rayResult?.adjacent
+
+            if (adjacent != ghostAdjacentPos || placementRotation != lastGhostRotation) {
+                ghostAdjacentPos = adjacent
+                lastGhostRotation = placementRotation
+                if (adjacent != null) {
+                    val typeOrd =
+                        selectedItem.placesBlock?.let { BlockRegistry.wireIndex(it) } ?: -1
+                    jsShowBlockPreview(
+                        scene, adjacent.x, adjacent.y, adjacent.z, typeOrd, placementRotation)
+                } else {
+                    jsHideBlockPreview()
+                }
+            }
+
             if (isBreaking && adjacent != null && !hasPlacedThisClick) {
                 hasPlacedThisClick = true
                 breakTarget = adjacent
@@ -743,6 +761,10 @@ class LocalPlayerController(
                 hasPlacedThisClick = false
             }
         } else {
+            if (ghostAdjacentPos != null) {
+                ghostAdjacentPos = null
+                jsHideBlockPreview()
+            }
             if (isBreaking && target != null) {
                 if (target != breakTarget) {
                     breakTarget = target
@@ -754,6 +776,12 @@ class LocalPlayerController(
                 jsHideBreakOverlay()
                 outMessages.trySend(ClientMessage.BlockBreakStop)
             }
+        }
+
+        val newMinimapRot = if (isPlaceMode) placementRotation else -1
+        if (newMinimapRot != lastMinimapPlacementRot) {
+            lastMinimapPlacementRot = newMinimapRot
+            jsSetPlacementRotation(newMinimapRot)
         }
 
         fpsFrameCount++

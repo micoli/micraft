@@ -174,6 +174,7 @@ interface MinimapWeatherZone {
   intensity: number;
 }
 let weatherZones: MinimapWeatherZone[] = [];
+let currentPlacementRotation = -1;
 
 const WEATHER_COLORS: Record<string, string> = {
   RAIN: "rgba(80,120,255,0.25)",
@@ -210,6 +211,7 @@ export function registerMinimap(): Pick<
   | "setPlayerOnMinimap"
   | "removePlayerFromMinimap"
   | "setMinimapWeather"
+  | "setPlacementRotation"
   | "drawMinimap"
 > {
   return {
@@ -272,6 +274,10 @@ export function registerMinimap(): Pick<
       } catch {
         weatherZones = [];
       }
+    },
+
+    setPlacementRotation: (rotation: number): void => {
+      currentPlacementRotation = rotation;
     },
 
     drawMinimap: (playerX: number, playerZ: number, playerYaw: number): void => {
@@ -514,6 +520,35 @@ export function registerMinimap(): Pick<
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 1;
       ctx.stroke();
+
+      // Placement rotation arrow (ring around player, visible in place mode)
+      if (currentPlacementRotation >= 0) {
+        const rotAngle = currentPlacementRotation * (Math.PI / 2);
+        const rdx = Math.sin(rotAngle);
+        const rdy = -Math.cos(rotAngle);
+        const ringR = 15;
+        const rLen = 6;
+        const rWidth = 3;
+        const rBase = { x: cx + rdx * ringR, y: cy + rdy * ringR };
+        const rtipX = rBase.x + rdx * rLen;
+        const rtipY = rBase.y + rdy * rLen;
+        const rperpX = -rdy;
+        const rperpY = rdx;
+        const rb1x = rBase.x - rdx * rLen * 0.4 + rperpX * rWidth;
+        const rb1y = rBase.y - rdy * rLen * 0.4 + rperpY * rWidth;
+        const rb2x = rBase.x - rdx * rLen * 0.4 - rperpX * rWidth;
+        const rb2y = rBase.y - rdy * rLen * 0.4 - rperpY * rWidth;
+        ctx.fillStyle = "#ffee00";
+        ctx.beginPath();
+        ctx.moveTo(rtipX, rtipY);
+        ctx.lineTo(rb1x, rb1y);
+        ctx.lineTo(rb2x, rb2y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
 
       const gameTime: string = window.mcState.minimapGameTime ?? "";
       const playerY: number = window.mcState.minimapY ?? 0;

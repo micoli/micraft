@@ -159,6 +159,9 @@ export function registerKeyboard(): Pick<
         if (b.minimap_zoom_in?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomIn?.();
         if (b.minimap_zoom_out?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomOut?.();
         if (b.ingame_map?.some((k) => matchesEvent(k, e))) window.mc?.IngameMap?.();
+        if (b.fly_toggle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("fly_toggle");
+        if (b.auto_forward?.some((k) => matchesEvent(k, e))) window.mcState.events.push("auto_forward");
+        if (b.place_rotate?.some((k) => matchesEvent(k, e))) window.mcState.events.push("place_rotate");
         if (b.combat_target_cycle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_target_cycle");
         if (b.combat_attack?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_attack");
         if (b.screenshot?.some((k) => matchesEvent(k, e))) window.mcState.events.push("screenshot");
