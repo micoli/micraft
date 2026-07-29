@@ -6,6 +6,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
@@ -132,44 +133,20 @@ class AdminController(
         route.apply {
             // ── Static assets ────────────────────────────────────────────────
             get("/admin/{...}") {
-                val html =
-                    AdminController::class
-                        .java
-                        .classLoader
-                        .getResourceAsStream("admin.html")!!
-                        .bufferedReader()
-                        .readText()
-                call.respondText(html, ContentType.Text.Html)
+                call.respondFile(File("server/src/main/resources/admin.html"))
             }
             get("/admin") {
-                val html =
-                    AdminController::class
-                        .java
-                        .classLoader
-                        .getResourceAsStream("admin.html")!!
-                        .bufferedReader()
-                        .readText()
-                call.respondText(html, ContentType.Text.Html)
+                call.respondFile(File("server/src/main/resources/admin.html"))
             }
             get("/admin.js") {
-                val js =
-                    AdminController::class
-                        .java
-                        .classLoader
-                        .getResourceAsStream("admin.js")
-                        ?.bufferedReader()
-                        ?.readText() ?: ""
-                call.respondText(js, ContentType.Text.JavaScript)
+                val f = File("server/src/main/resources/admin.js")
+                if (f.exists()) call.respondFile(f)
+                else call.respond(HttpStatusCode.NotFound)
             }
             get("/admin.css") {
-                val css =
-                    AdminController::class
-                        .java
-                        .classLoader
-                        .getResourceAsStream("admin.css")
-                        ?.bufferedReader()
-                        ?.readText() ?: ""
-                call.respondText(css, ContentType.Text.CSS)
+                val f = File("server/src/main/resources/admin.css")
+                if (f.exists()) call.respondFile(f)
+                else call.respond(HttpStatusCode.NotFound)
             }
 
             // ── Status ───────────────────────────────────────────────────────

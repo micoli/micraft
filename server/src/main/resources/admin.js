@@ -87018,10 +87018,293 @@ ${end.comment}` : end.comment;
     ] });
   }
 
-  // admin/AdminApp.tsx
+  // admin/pages/GameAssetsPage.tsx
+  var import_react11 = __toESM(require_react(), 1);
+
+  // admin/components/ModelViewer.tsx
+  var import_react10 = __toESM(require_react(), 1);
   var import_jsx_runtime21 = __toESM(require_jsx_runtime(), 1);
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) {
+        resolve();
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = src;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error(`Failed to load ${src}`));
+      document.head.appendChild(s);
+    });
+  }
+  async function ensureBabylon() {
+    var _a6, _b;
+    if (!window.BABYLON) await loadScript("/babylon.js");
+    if (!((_a6 = window.BABYLON) == null ? void 0 : _a6.OBJFileLoader) && !((_b = window.BABYLON) == null ? void 0 : _b.GLTFFileLoader)) {
+      await loadScript("/babylonjs.loaders.js");
+    }
+  }
+  function ModelViewer({ url, format: format2 }) {
+    const canvasRef = (0, import_react10.useRef)(null);
+    const [animGroups, setAnimGroups] = (0, import_react10.useState)([]);
+    const [playingIdx, setPlayingIdx] = (0, import_react10.useState)(null);
+    const engineRef = (0, import_react10.useRef)(null);
+    const groupsRef = (0, import_react10.useRef)([]);
+    (0, import_react10.useEffect)(() => {
+      if (!url) return;
+      if (format2 === "fbx") return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      let disposed = false;
+      ensureBabylon().then(() => {
+        if (disposed) return;
+        const B = window.BABYLON;
+        const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: false, antialias: true });
+        const scene = new B.Scene(engine);
+        scene.clearColor = new B.Color4(0.08, 0.08, 0.1, 1);
+        const camera = new B.ArcRotateCamera("cam", -Math.PI / 2, Math.PI / 3, 4, B.Vector3.Zero(), scene);
+        camera.attachControl(canvas, true);
+        camera.lowerRadiusLimit = 0.5;
+        const light = new B.HemisphericLight("light", new B.Vector3(0, 1, 0), scene);
+        light.intensity = 1.2;
+        light.groundColor = new B.Color3(0.15, 0.15, 0.2);
+        new B.DirectionalLight("dir", new B.Vector3(-1, -2, -1), scene).intensity = 0.6;
+        const ext = "." + url.split(".").pop().toLowerCase();
+        const rootUrl = url.substring(0, url.lastIndexOf("/") + 1);
+        B.SceneLoader.OnPluginActivatedObservable.addOnce((loader) => {
+          if (loader.preprocessUrlAsync) {
+            const orig = loader.preprocessUrlAsync.bind(loader);
+            loader.preprocessUrlAsync = (texUrl) => {
+              var _a6;
+              if (/^https?:\/\//i.test(texUrl)) return orig(texUrl);
+              const filename = (_a6 = texUrl.replace(/\\/g, "/").split("/").pop()) != null ? _a6 : texUrl;
+              return Promise.resolve(rootUrl + encodeURIComponent(filename));
+            };
+          }
+        });
+        const loadPromise = ext === ".glb" ? fetch(url).then((r2) => {
+          if (!r2.ok) throw new Error(`HTTP ${r2.status}`);
+          return r2.arrayBuffer();
+        }).then((buf) => B.SceneLoader.ImportMeshAsync("", rootUrl, new Uint8Array(buf), scene, null, ext)) : B.SceneLoader.ImportMeshAsync("", rootUrl, url.split("/").pop(), scene, null, ext);
+        loadPromise.then((result) => {
+          var _a6, _b;
+          if (disposed || !result) return;
+          const meshes = (_a6 = result.meshes) != null ? _a6 : [];
+          if (meshes.length > 0) {
+            let min = new B.Vector3(Infinity, Infinity, Infinity);
+            let max = new B.Vector3(-Infinity, -Infinity, -Infinity);
+            meshes.forEach((m) => {
+              if (!m.getBoundingInfo) return;
+              const b = m.getBoundingInfo().boundingBox;
+              min = B.Vector3.Minimize(min, b.minimumWorld);
+              max = B.Vector3.Maximize(max, b.maximumWorld);
+            });
+            const center = B.Vector3.Center(min, max);
+            const size = max.subtract(min).length();
+            camera.target = center;
+            camera.radius = size * 1.2;
+            camera.lowerRadiusLimit = size * 0.1;
+          }
+          const groups = (_b = result.animationGroups) != null ? _b : [];
+          groupsRef.current = groups;
+          setAnimGroups(groups.map((g) => g.name));
+          if (groups.length > 0) {
+            groups[0].start(true);
+            setPlayingIdx(0);
+          }
+        }).catch(console.error);
+        engineRef.current = engine;
+        engine.runRenderLoop(() => scene.render());
+        const onResize = () => engine.resize();
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+      }).catch(console.error);
+      return () => {
+        disposed = true;
+        groupsRef.current = [];
+        setAnimGroups([]);
+        setPlayingIdx(null);
+        if (engineRef.current) {
+          engineRef.current.dispose();
+          engineRef.current = null;
+        }
+      };
+    }, [url]);
+    const toggleAnim = (idx) => {
+      var _a6;
+      const groups = groupsRef.current;
+      if (!groups.length) return;
+      if (playingIdx === idx) {
+        groups[idx].stop();
+        setPlayingIdx(null);
+      } else {
+        if (playingIdx !== null) (_a6 = groups[playingIdx]) == null ? void 0 : _a6.stop();
+        groups[idx].start(true);
+        setPlayingIdx(idx);
+      }
+    };
+    if (!url) {
+      return /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#8A99AF] text-sm", children: "Select an asset to preview" });
+    }
+    if (format2 === "fbx") {
+      return /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#8A99AF] text-sm", children: "FBX not supported by BabylonJS \u2014 use GLB/GLTF equivalent" });
+    }
+    return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex-1 flex flex-col overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("canvas", { ref: canvasRef, className: "flex-1 w-full min-h-0 block" }),
+      animGroups.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "shrink-0 px-4 py-2 border-t border-[#2E3A4E] flex flex-wrap gap-2", children: animGroups.map((name2, i) => /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(
+        "button",
+        {
+          onClick: () => toggleAnim(i),
+          className: `px-3 py-1 rounded text-xs font-mono border transition-colors ${playingIdx === i ? "bg-[#3C50E0] border-[#3C50E0] text-white" : "bg-[#1A222C] border-[#2E3A4E] text-[#8A99AF] hover:border-[#3C50E0] hover:text-white"}`,
+          children: [
+            playingIdx === i ? "\u25A0 " : "\u25B6 ",
+            name2
+          ]
+        },
+        i
+      )) })
+    ] });
+  }
+
+  // admin/pages/GameAssetsPage.tsx
+  var import_jsx_runtime22 = __toESM(require_jsx_runtime(), 1);
+  function buildTree2(assets) {
+    const tree = {};
+    for (const a of assets) {
+      const parts = a.path.split("/");
+      const subfolder = parts.length > 3 ? parts.slice(1, -1).join("/") : a.pack;
+      if (!tree[a.pack]) tree[a.pack] = {};
+      if (!tree[a.pack][subfolder]) tree[a.pack][subfolder] = [];
+      tree[a.pack][subfolder].push(a);
+    }
+    return tree;
+  }
+  var FORMAT_BADGE = {
+    glb: "bg-emerald-500/20 text-emerald-400",
+    gltf: "bg-blue-500/20 text-blue-400",
+    fbx: "bg-orange-500/20 text-orange-400"
+  };
+  function GameAssetsPage() {
+    var _a6;
+    const [assets, setAssets] = (0, import_react11.useState)([]);
+    const [error2, setError] = (0, import_react11.useState)(null);
+    const [selected, setSelected] = (0, import_react11.useState)(null);
+    const [expandedPacks, setExpandedPacks] = (0, import_react11.useState)(/* @__PURE__ */ new Set());
+    const [expandedFolders, setExpandedFolders] = (0, import_react11.useState)(/* @__PURE__ */ new Set());
+    (0, import_react11.useEffect)(() => {
+      fetch("/api/game-assets").then((r2) => r2.json()).then((data2) => {
+        setAssets(data2);
+        if (data2.length > 0) {
+          const packs = [...new Set(data2.map((a) => a.pack))];
+          setExpandedPacks(new Set(packs.slice(0, 1)));
+        }
+      }).catch(() => setError("Failed to load asset list"));
+    }, []);
+    const tree = buildTree2(assets);
+    const togglePack = (pack) => {
+      setExpandedPacks((prev) => {
+        const next = new Set(prev);
+        next.has(pack) ? next.delete(pack) : next.add(pack);
+        return next;
+      });
+    };
+    const toggleFolder = (key2) => {
+      setExpandedFolders((prev) => {
+        const next = new Set(prev);
+        next.has(key2) ? next.delete(key2) : next.add(key2);
+        return next;
+      });
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "flex h-full overflow-hidden -m-6", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("aside", { className: "w-72 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "px-4 py-3 border-b border-[#2E3A4E] text-xs font-semibold uppercase tracking-widest text-[#8A99AF]", children: [
+          assets.length,
+          " assets"
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "flex-1 overflow-y-auto py-2", children: [
+          error2 && /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("div", { className: "px-4 py-2 text-red-400 text-xs", children: error2 }),
+          Object.entries(tree).map(([pack, folders]) => /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)(
+              "button",
+              {
+                onClick: () => togglePack(pack),
+                className: "w-full flex items-center gap-2 px-3 py-1.5 text-left text-[11px] font-semibold text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E] uppercase tracking-wide",
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("span", { className: "text-[9px]", children: expandedPacks.has(pack) ? "\u25BC" : "\u25B6" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("span", { className: "truncate", children: pack.replace(/_/g, " ") })
+                ]
+              }
+            ),
+            expandedPacks.has(pack) && Object.entries(folders).map(([folder, items]) => {
+              var _a7;
+              const label = (_a7 = folder.split("/").pop()) != null ? _a7 : folder;
+              const key2 = `${pack}/${folder}`;
+              return /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)(
+                  "button",
+                  {
+                    onClick: () => toggleFolder(key2),
+                    className: "w-full flex items-center gap-2 pl-6 pr-3 py-1 text-left text-[11px] text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E]",
+                    children: [
+                      /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("span", { className: "text-[9px]", children: expandedFolders.has(key2) ? "\u25BC" : "\u25B6" }),
+                      /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("span", { className: "truncate", children: label }),
+                      /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("span", { className: "ml-auto text-[9px] opacity-50", children: items.length })
+                    ]
+                  }
+                ),
+                expandedFolders.has(key2) && items.map((a) => {
+                  var _a8;
+                  return /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)(
+                    "button",
+                    {
+                      onClick: () => setSelected(a),
+                      className: `w-full flex items-center gap-2 pl-10 pr-3 py-1 text-left text-xs transition-colors ${(selected == null ? void 0 : selected.path) === a.path ? "bg-[#3C50E0]/20 text-white" : "text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E]"}`,
+                      children: [
+                        /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("span", { className: "truncate", children: a.name }),
+                        /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
+                          "span",
+                          {
+                            className: `ml-auto shrink-0 px-1.5 py-0.5 rounded text-[9px] font-mono ${(_a8 = FORMAT_BADGE[a.format]) != null ? _a8 : "bg-white/10 text-white/50"}`,
+                            children: a.format
+                          }
+                        )
+                      ]
+                    },
+                    a.path
+                  );
+                })
+              ] }, folder);
+            })
+          ] }, pack))
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "flex-1 flex flex-col overflow-hidden", children: [
+        selected && /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "shrink-0 px-4 py-2 border-b border-[#2E3A4E] flex items-center gap-3 text-xs text-[#8A99AF]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("span", { className: "text-white font-medium", children: selected.name }),
+          /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
+            "span",
+            {
+              className: `px-1.5 py-0.5 rounded font-mono ${(_a6 = FORMAT_BADGE[selected.format]) != null ? _a6 : "bg-white/10 text-white/50"}`,
+              children: selected.format
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("span", { className: "ml-auto opacity-50 font-mono truncate", children: selected.path })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
+          ModelViewer,
+          {
+            format: selected == null ? void 0 : selected.format,
+            url: selected ? "/api/game-assets/file/" + selected.path.replace(/^game-assets\//, "").split("/").map(encodeURIComponent).join("/") : null
+          }
+        )
+      ] })
+    ] });
+  }
+
+  // admin/AdminApp.tsx
+  var import_jsx_runtime23 = __toESM(require_jsx_runtime(), 1);
   function Icon2({ d, size = 18 }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(
       "svg",
       {
         width: size,
@@ -87032,7 +87315,7 @@ ${end.comment}` : end.comment;
         strokeWidth: 1.8,
         strokeLinecap: "round",
         strokeLinejoin: "round",
-        children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("path", { d })
+        children: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("path", { d })
       }
     );
   }
