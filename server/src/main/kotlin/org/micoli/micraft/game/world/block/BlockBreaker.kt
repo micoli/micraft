@@ -33,21 +33,24 @@ class BlockBreaker(
     private val blockProgress = LinkedHashMap<BlockPos, BlockBreakEntry>()
 
     fun handleStart(session: PlayerSession, intent: ClientMessage.BlockBreakStart) {
-        val bp = intent.pos
-        val block = world.getBlock(bp.x, bp.y, bp.z)
+        val rawBp = intent.pos
+        val block = world.getBlock(rawBp.x, rawBp.y, rawBp.z)
         val eyeY = session.state.pos.y + session.state.stance.eyeOffset
         val dist =
             sqrt(
-                ((bp.x + 0.5f - session.state.pos.x) * (bp.x + 0.5f - session.state.pos.x) +
-                        (bp.y + 0.5f - eyeY) * (bp.y + 0.5f - eyeY) +
-                        (bp.z + 0.5f - session.state.pos.z) * (bp.z + 0.5f - session.state.pos.z))
+                ((rawBp.x + 0.5f - session.state.pos.x) * (rawBp.x + 0.5f - session.state.pos.x) +
+                        (rawBp.y + 0.5f - eyeY) * (rawBp.y + 0.5f - eyeY) +
+                        (rawBp.z + 0.5f - session.state.pos.z) *
+                            (rawBp.z + 0.5f - session.state.pos.z))
                     .toDouble())
+        val hasEntity = world.hasEntityAt(rawBp.x, rawBp.y, rawBp.z)
         blockBreakerLog.debug(
-            "BlockBreakStart pos={} block={} dist={}", bp, block, "%.2f".format(dist))
-        val hasEntity = world.hasEntityAt(bp.x, bp.y, bp.z)
+            "BlockBreakStart pos={} block={} dist={}", rawBp, block, "%.2f".format(dist))
         if (dist <= MAX_INTERACTION_DISTANCE &&
             (hasEntity || (block.hardness > 0f && block.hardness != Float.MAX_VALUE))) {
-            session.breakTarget = bp
+            // Resolve satellite → master so blockProgress key is consistent
+            val masterPos = world.getEntityMasterWorldPos(rawBp.x, rawBp.y, rawBp.z)
+            session.breakTarget = masterPos ?: rawBp
         }
     }
 

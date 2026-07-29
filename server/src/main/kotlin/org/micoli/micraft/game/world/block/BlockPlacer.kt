@@ -7,6 +7,7 @@ import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.WorldActionRecord
 import org.micoli.micraft.game.session.toPageMap
+import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldState
@@ -29,7 +30,7 @@ class BlockPlacer(
     private val attackRegistry: Map<String, AttackDefinition> = emptyMap(),
 ) {
     suspend fun handlePlace(session: PlayerSession, intent: ClientMessage.BlockPlace) {
-        val pos = intent.pos
+        val rawPos = intent.pos
         val itemType = intent.itemType
 
         val blockType = itemType.placesBlock
@@ -47,9 +48,10 @@ class BlockPlacer(
         val eyeY = session.state.pos.y + session.state.stance.eyeOffset
         val dist =
             sqrt(
-                ((pos.x + 0.5f - session.state.pos.x) * (pos.x + 0.5f - session.state.pos.x) +
-                        (pos.y + 0.5f - eyeY) * (pos.y + 0.5f - eyeY) +
-                        (pos.z + 0.5f - session.state.pos.z) * (pos.z + 0.5f - session.state.pos.z))
+                ((rawPos.x + 0.5f - session.state.pos.x) * (rawPos.x + 0.5f - session.state.pos.x) +
+                        (rawPos.y + 0.5f - eyeY) * (rawPos.y + 0.5f - eyeY) +
+                        (rawPos.z + 0.5f - session.state.pos.z) *
+                            (rawPos.z + 0.5f - session.state.pos.z))
                     .toDouble())
         if (dist > MAX_INTERACTION_DISTANCE) {
             blockPlacerLog.debug(
@@ -64,6 +66,59 @@ class BlockPlacer(
             else Triple(1, 1, 1)
 
         val isFractional = def.heightFraction < 1.0f
+
+        // For solid multi-cell entities: redirect placement to master when clicking a satellite top
+        val belowMaster =
+            if (!isFractional) world.getEntityMasterWorldPos(rawPos.x, rawPos.y - 1, rawPos.z)
+            else null
+        val solidPos =
+            if (belowMaster != null &&
+                belowMaster != BlockPos(rawPos.x, rawPos.y - 1, rawPos.z) &&
+                BlockRegistry.get(world.getBlock(belowMaster.x, belowMaster.y, belowMaster.z))
+                    .heightFraction >= 1.0f) {
+                BlockPos(belowMaster.x, rawPos.y, belowMaster.z)
+            } else rawPos
+
+        // For fractional plates: redirect to fractional master for sub-voxel stacking.
+        // Handles two cases:
+        //   (a) pos is a satellite of a fractional entity (click from side) → master
+        //   (b) pos is AIR above a plate stud (click from top) → plate master at y-1
+        val pos =
+            if (isFractional) {
+                val directMaster = world.getEntityMasterWorldPos(solidPos.x, solidPos.y, solidPos.z)
+                when {
+                    directMaster != null -> {
+                        val masterOffsets =
+                            world.getFractionalYOffsetsAt(
+                                directMaster.x, directMaster.y, directMaster.z)
+                        if (masterOffsets.isNotEmpty() && masterOffsets.size < 3) directMaster
+                        else solidPos
+                    }
+                    solidPos.y > 0 &&
+                        world.getBlock(solidPos.x, solidPos.y, solidPos.z) == BlockType.AIR -> {
+                        val belowY = solidPos.y - 1
+                        val directOffsets =
+                            world.getFractionalYOffsetsAt(solidPos.x, belowY, solidPos.z)
+                        when {
+                            directOffsets.isNotEmpty() && directOffsets.size < 3 ->
+                                BlockPos(solidPos.x, belowY, solidPos.z)
+                            else -> {
+                                val satMaster =
+                                    world.getEntityMasterWorldPos(solidPos.x, belowY, solidPos.z)
+                                if (satMaster != null) {
+                                    val masterOffsets =
+                                        world.getFractionalYOffsetsAt(
+                                            satMaster.x, satMaster.y, satMaster.z)
+                                    if (masterOffsets.isNotEmpty() && masterOffsets.size < 3)
+                                        satMaster
+                                    else solidPos
+                                } else solidPos
+                            }
+                        }
+                    }
+                    else -> solidPos
+                }
+            } else solidPos
 
         if (isFractional) {
             // Fractional block (plate): stacking allowed — cell may already contain a plate
@@ -173,10 +228,21 @@ class BlockPlacer(
                 return
             }
 
-            val change = BlockChange(pos, blockType, intent.state)
-            world.applyChange(change)
+            val changes = mutableListOf<BlockChange>()
+            val masterChange = BlockChange(pos, blockType, intent.state)
+            world.applyChange(masterChange)
+            changes.add(masterChange)
 
             if (isMultiCell) {
+                // Write block type to satellite cells so raycast can detect them
+                for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
+                    if (dx == 0 && dy == 0 && dz == 0) continue
+                    val satChange =
+                        BlockChange(
+                            BlockPos(pos.x + dx, pos.y + dy, pos.z + dz), blockType, intent.state)
+                    world.applyChange(satChange)
+                    changes.add(satChange)
+                }
                 val proto =
                     BlockEntityProto(
                         worldX = pos.x,
@@ -189,9 +255,9 @@ class BlockPlacer(
                         rotation = intent.state.toInt() and 0x03,
                     )
                 world.applyEntityAdd(proto)
-                broadcast(ServerMessage.WorldUpdate(listOf(change), entityAdds = listOf(proto)))
+                broadcast(ServerMessage.WorldUpdate(changes, entityAdds = listOf(proto)))
             } else {
-                broadcast(ServerMessage.WorldUpdate(listOf(change)))
+                broadcast(ServerMessage.WorldUpdate(changes))
             }
         }
         vegetationManager?.tryActivate(pos, blockType)

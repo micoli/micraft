@@ -305,4 +305,58 @@ class BlockEntityTest {
         assertFalse(world.hasEntityAt(8, 7, 8), "Master entity should be gone")
         assertFalse(world.hasEntityAt(9, 7, 8), "Satellite entity should be gone")
     }
+
+    @Test
+    fun place_multiCell_satelliteCellHasBlockType() = runBlocking {
+        registerMultiBlock()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_BRICK_2X1")] = 1
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("LEGO_BRICK_2X1")))
+        assertEquals(
+            BlockType("LEGO_BRICK_2X1"),
+            world.getBlock(9, 7, 8),
+            "Satellite cell should have block type for raycast detection")
+    }
+
+    @Test
+    fun place_on_satellite_top_redirectsToMaster() = runBlocking {
+        registerMultiBlock()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_BRICK_2X1")] = 1
+        // Place 2x1 entity: master at (8,7,8), satellite at (9,7,8)
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("LEGO_BRICK_2X1")))
+        // Place a 1x1 block above the satellite — should redirect to above master
+        session.inventory[ItemType("LEGO_BRICK")] = 1
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(9, 8, 8), ItemType("LEGO_BRICK")))
+        assertEquals(
+            BlockType("LEGO_BRICK"),
+            world.getBlock(8, 8, 8),
+            "Block should be placed above master, not above satellite")
+        assertEquals(
+            BlockType.AIR, world.getBlock(9, 8, 8), "Satellite top position should remain empty")
+    }
+
+    @Test
+    fun break_entitySatelliteCell_clearsAllBlockTypes() = runBlocking {
+        registerMultiBlock()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_BRICK_2X1")] = 1
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("LEGO_BRICK_2X1")))
+        val breaker = breaker(world = world)
+        breaker.handleStart(session, ClientMessage.BlockBreakStart(BlockPos(9, 7, 8)))
+        breaker.tick(session)
+        assertEquals(BlockType.AIR, world.getBlock(8, 7, 8), "Master block type should be cleared")
+        assertEquals(
+            BlockType.AIR, world.getBlock(9, 7, 8), "Satellite block type should be cleared")
+    }
 }

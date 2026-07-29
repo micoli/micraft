@@ -765,7 +765,20 @@ class LocalPlayerController(
         val isPlaceMode = selectedItem != null && selectedItem.buildable
 
         if (isPlaceMode) {
-            val adjacent = rayResult?.adjacent
+            val rawAdjacent = rayResult?.adjacent
+            val isFractionalItem =
+                selectedItem.placesBlock?.let { BlockRegistry.get(it).heightFraction < 1.0f }
+                    ?: false
+            // Redirect ghost for fractional plates only on lateral clicks (satellite → master).
+            // Above-stud clicks (rawAdjacent.y > target.y) keep ghost at y+1 so it appears
+            // above the existing plates; the server handles the actual sub-voxel stacking.
+            val adjacent =
+                if (isFractionalItem &&
+                    rawAdjacent != null &&
+                    target != null &&
+                    rawAdjacent.y == target.y)
+                    chunkManager.resolveFractionalPlacementPos(rawAdjacent)
+                else rawAdjacent
 
             if (adjacent != ghostAdjacentPos || placementRotation != lastGhostRotation) {
                 ghostAdjacentPos = adjacent

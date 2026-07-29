@@ -2,6 +2,7 @@ package org.micoli.micraft
 
 import kotlin.math.*
 import org.micoli.micraft.babylon.*
+import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
@@ -233,6 +234,46 @@ class ChunkManager(private val scene: JsAny) {
         val lx = wx - cx * WorldConstants.CHUNK_SIZE
         val lz = wz - cz * WorldConstants.CHUNK_SIZE
         return chunk.getBlock(lx, wy, lz)
+    }
+
+    /**
+     * Returns (masterWorldPos, usedSlotCount) if a fractional plate entity covers (wx,wy,wz)
+     * (either as master or satellite). Returns null if no fractional entity is at this position.
+     */
+    fun getFractionalInfoAt(wx: Int, wy: Int, wz: Int): Pair<BlockPos, Int>? {
+        if (wy < 0 || wy > WorldConstants.WORLD_MAX_Y) return null
+        val cx = wx.floorDiv(WorldConstants.CHUNK_SIZE)
+        val cz = wz.floorDiv(WorldConstants.CHUNK_SIZE)
+        val (chunk, _) = chunkData[ChunkPos(cx, cz)] ?: return null
+        val lx = wx - cx * WorldConstants.CHUNK_SIZE
+        val lz = wz - cz * WorldConstants.CHUNK_SIZE
+        val idx = Chunk.index(lx, wy, lz)
+        val entity = chunk.buildEntitiesMap()[idx] ?: return null
+        if (BlockRegistry.get(entity.type).heightFraction >= 1.0f) return null
+        val (mx, my, mz) = Chunk.indexToXYZ(entity.masterIdx)
+        val masterWx = cx * WorldConstants.CHUNK_SIZE + mx
+        val masterWz = cz * WorldConstants.CHUNK_SIZE + mz
+        val usedCount =
+            chunk.entityMasters.count {
+                it.masterIdx == entity.masterIdx && BlockRegistry.get(it.type).heightFraction < 1.0f
+            }
+        return Pair(BlockPos(masterWx, my, masterWz), usedCount)
+    }
+
+    /**
+     * Computes the effective placement position for a fractional plate, mirroring server redirect:
+     * (a) pos covers a fractional satellite/master with free slots → master (b) pos is AIR and y-1
+     * has a fractional plate with free slots → that plate's master
+     */
+    fun resolveFractionalPlacementPos(pos: BlockPos): BlockPos {
+        val directInfo = getFractionalInfoAt(pos.x, pos.y, pos.z)
+        if (directInfo != null && directInfo.second < 3) return directInfo.first
+        if (getBlockAtWorld(pos.x, pos.y, pos.z) == BlockType.AIR && pos.y > 0) {
+            val belowY = pos.y - 1
+            val belowInfo = getFractionalInfoAt(pos.x, belowY, pos.z)
+            if (belowInfo != null && belowInfo.second < 3) return belowInfo.first
+        }
+        return pos
     }
 
     // Synchronous full re-render (WorldUpdate block changes) — old mesh stays until done
