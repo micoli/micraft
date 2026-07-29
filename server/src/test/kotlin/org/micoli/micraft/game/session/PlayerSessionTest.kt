@@ -73,7 +73,7 @@ class PlayerSessionTest {
     @Test
     fun shortcutBar_initiallyAllNull() {
         val session = testSession()
-        assertTrue(session.shortcutBar.all { it == null })
-        assertEquals(10, session.shortcutBar.size)
+        assertEquals(10, session.shortcutBarPages.size)
+        assertTrue(session.shortcutBarPages.all { page -> page.all { it == null } })
     }
 }

@@ -6,7 +6,7 @@ import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.WorldActionRecord
-import org.micoli.micraft.game.session.toSlotMap
+import org.micoli.micraft.game.session.toPageMap
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.vegetation.VegetationManager
@@ -133,9 +133,14 @@ class BlockPlacer(
     }
 
     suspend fun handleShortcutBarSet(session: PlayerSession, intent: ClientMessage.ShortcutBarSet) {
+        val page = intent.page
         val slot = intent.slot
         val content = intent.content
 
+        if (page !in 0..9) {
+            blockPlacerLog.debug("ShortcutBarSet rejected: page {} out of range 0..9", page)
+            return
+        }
         if (slot !in 1..9) {
             blockPlacerLog.debug("ShortcutBarSet rejected: slot {} out of range 1..9", slot)
             return
@@ -166,8 +171,8 @@ class BlockPlacer(
             null -> {}
         }
 
-        session.shortcutBar[slot] = content
+        session.shortcutBarPages[page][slot] = content
         savePlayer(session)
-        session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toSlotMap()))
+        session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBarPages.toPageMap()))
     }
 }

@@ -13,18 +13,54 @@ export function useShortcutBar(
   });
 
   useEffect(() => {
+    function matchesBinding(e: KeyboardEvent, binding: string): boolean {
+      const parts = binding.split("+");
+      const key = parts[parts.length - 1];
+      const needsCtrl = parts.includes("Ctrl");
+      const needsShift = parts.includes("Shift");
+      const needsAlt = parts.includes("Alt");
+      return (
+        (key === e.code || key === e.key) &&
+        e.ctrlKey === needsCtrl &&
+        e.shiftKey === needsShift &&
+        e.altKey === needsAlt
+      );
+    }
+
     function onKeyDown(e: KeyboardEvent) {
       const bindings = window.mcState?.bindings;
       if (!bindings) return;
       for (let i = 0; i < 10; i++) {
         const action = `slot_${i + 1}`;
         const keys: string[] = bindings[action] ?? [];
-        if (keys.some((k) => k === e.code || k === e.key)) {
+        if (keys.some((k) => matchesBinding(e, k))) {
           const slot = slotsRef.current[i];
           if (slot?.kind === "attack" || slot?.kind === "macro") {
             setPressedSlot(i);
             setTimeout(() => setPressedSlot(null), 150);
           }
+          break;
+        }
+      }
+      const pageActions = [
+        "shortcut_page_prev",
+        "shortcut_page_next",
+        "shortcut_page_1",
+        "shortcut_page_2",
+        "shortcut_page_3",
+        "shortcut_page_4",
+        "shortcut_page_5",
+        "shortcut_page_6",
+        "shortcut_page_7",
+        "shortcut_page_8",
+        "shortcut_page_9",
+        "shortcut_page_10",
+      ];
+      for (const action of pageActions) {
+        const keys: string[] = bindings[action] ?? [];
+        if (keys.some((k) => matchesBinding(e, k))) {
+          e.preventDefault();
+          window.mcState?.events?.push(action);
           break;
         }
       }

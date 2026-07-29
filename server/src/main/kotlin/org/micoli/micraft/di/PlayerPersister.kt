@@ -13,7 +13,7 @@ class PlayerPersister(private val persistence: WorldPersistence?) {
             session.state.name,
             session.state.copy(
                 inventory = session.inventory.toMap(),
-                shortcutBar = session.shortcutBar.toList(),
+                shortcutBarPages = session.shortcutBarPages.map { it.toList() },
                 knownRecipes = session.knownRecipes.toSet(),
                 characterData = session.characterData,
             ),

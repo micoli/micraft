@@ -124,7 +124,8 @@ sealed class ServerMessage {
 
     @ProtoId(14)
     @Serializable
-    data class ShortcutBarUpdate(val slots: Map<Int, ShortcutSlot> = emptyMap()) : ServerMessage()
+    data class ShortcutBarUpdate(val pages: Map<Int, Map<Int, ShortcutSlot>> = emptyMap()) :
+        ServerMessage()
 
     @ProtoId(15)
     @Serializable

@@ -30,6 +30,7 @@ data class PlayerState(
     val language: String = "en",
     val shadersEnabled: Boolean = true,
     val shortcutBar: List<ShortcutSlot?> = List(10) { null },
+    val shortcutBarPages: List<List<ShortcutSlot?>> = List(10) { List(10) { null } },
     val layouts: List<GameLayout> = listOf(defaultLayout()),
     val activeLayout: String = "default",
     val subscribedChannels: List<ChannelSubscription> =

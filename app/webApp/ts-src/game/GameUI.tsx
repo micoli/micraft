@@ -43,6 +43,8 @@ const initial: UiState = {
   healthBarVisible: true,
   shortcutBar: Array(10).fill(null),
   selectedSlot: 0,
+  currentPage: 0,
+  nonEmptyPages: [],
   consoleOpen: false,
   disconnectMsg: null,
   chunkLoading: null,

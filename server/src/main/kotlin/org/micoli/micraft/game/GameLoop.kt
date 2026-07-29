@@ -57,7 +57,7 @@ import org.micoli.micraft.game.rpg.ExperienceConfig
 import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.session.NetworkStats
 import org.micoli.micraft.game.session.PlayerSession
-import org.micoli.micraft.game.session.toSlotMap
+import org.micoli.micraft.game.session.toPageMap
 import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.IntentCollector
 import org.micoli.micraft.game.tick.MovementProcessor
@@ -1118,8 +1118,16 @@ class GameLoop(
                 permissions = sessionPermissions,
                 chunkMode = chunkSection.transport)
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
-        saved?.shortcutBar?.forEachIndexed { i, item ->
-            if (i in 0..9) session.shortcutBar[i] = item
+        saved?.shortcutBarPages?.forEachIndexed { page, pageSlots ->
+            if (page in 0..9)
+                pageSlots.forEachIndexed { i, item ->
+                    if (i in 0..9) session.shortcutBarPages[page][i] = item
+                }
+        }
+        if (session.shortcutBarPages[0].all { it == null }) {
+            saved?.shortcutBar?.forEachIndexed { i, item ->
+                if (i in 0..9) session.shortcutBarPages[0][i] = item
+            }
         }
         session.characterData = saved?.characterData
         log.info(
@@ -1153,7 +1161,7 @@ class GameLoop(
         chatService.onPlayerConnect(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         questManager?.sendQuestSync(session)
-        session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBar.toSlotMap()))
+        session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBarPages.toPageMap()))
         session.send(ServerMessage.TimeUpdate(gameTicks))
         val charData = session.characterData
         if (charData != null) {

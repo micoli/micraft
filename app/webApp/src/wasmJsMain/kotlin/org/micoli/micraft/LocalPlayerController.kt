@@ -91,7 +91,8 @@ class LocalPlayerController(
     private var breakTarget: BlockPos? = null
     private var hoverTarget: BlockPos? = null
     var selectedSlot: Int = 0
-    val shortcutBar: Array<ShortcutSlot?> = arrayOfNulls(10)
+    var currentPage: Int = 0
+    val shortcutBarPages: Array<Array<ShortcutSlot?>> = Array(10) { arrayOfNulls(10) }
     private var hasPlacedThisClick = false
     var placementRotation: Int = 0 // 0-3, cycled with R key
     private var ghostAdjacentPos: BlockPos? = null
@@ -241,8 +242,21 @@ class LocalPlayerController(
         chunkManager.applyBiomeGrassTint(state.biome)
     }
 
+    fun cyclePage(direction: Int) {
+        val nonEmpty = (0..9).filter { p -> shortcutBarPages[p].drop(1).any { it != null } }
+        if (nonEmpty.isEmpty()) return
+        val idx = nonEmpty.indexOf(currentPage).coerceAtLeast(0)
+        currentPage = nonEmpty[(idx + direction + nonEmpty.size) % nonEmpty.size]
+        syncShortcutBarToUi()
+    }
+
+    fun goToPage(page: Int) {
+        currentPage = page.coerceIn(0, 9)
+        syncShortcutBarToUi()
+    }
+
     fun activateSlot(index: Int) {
-        val slot = shortcutBar.getOrNull(index)
+        val slot = shortcutBarPages[currentPage].getOrNull(index)
         if (slot is ShortcutSlot.Macro) {
             outMessages.trySend(ClientMessage.RunMacro(slot.macroName))
         } else if (slot is ShortcutSlot.Spell) {
@@ -280,8 +294,9 @@ class LocalPlayerController(
     }
 
     fun syncShortcutBarToUi() {
+        val currentSlots = shortcutBarPages[currentPage]
         val slotsJson =
-            shortcutBar.joinToString(",") { slot ->
+            currentSlots.joinToString(",") { slot ->
                 when (slot) {
                     is ShortcutSlot.Item -> """{"kind":"item","id":"${slot.itemType.id}"}"""
                     is ShortcutSlot.Attack ->
@@ -291,7 +306,10 @@ class LocalPlayerController(
                     null -> "null"
                 }
             }
-        jsUpdateShortcutBar("{\"slots\":[$slotsJson],\"selected\":$selectedSlot}")
+        val nonEmptyPages = (0..9).filter { p -> shortcutBarPages[p].drop(1).any { it != null } }
+        val nonEmptyJson = nonEmptyPages.joinToString(",")
+        jsUpdateShortcutBar(
+            "{\"slots\":[$slotsJson],\"selected\":$selectedSlot,\"page\":$currentPage,\"nonEmptyPages\":[$nonEmptyJson]}")
         jsSetSelectedSlot(selectedSlot)
     }
 
@@ -527,6 +545,12 @@ class LocalPlayerController(
                 event == "slot_8" -> activateSlot(7)
                 event == "slot_9" -> activateSlot(8)
                 event == "slot_10" -> activateSlot(9)
+                event == "shortcut_page_prev" -> cyclePage(-1)
+                event == "shortcut_page_next" -> cyclePage(1)
+                event.startsWith("shortcut_page_") -> {
+                    val n = event.removePrefix("shortcut_page_").toIntOrNull()
+                    if (n != null && n in 1..10) goToPage(n - 1)
+                }
                 event == "combat_target_cycle" -> {
                     val next =
                         npcManager.cycleNearestNpc(
@@ -541,7 +565,9 @@ class LocalPlayerController(
                 }
                 event == "combat_attack" -> {
                     val targetId = currentCombatTargetId ?: return@repeat
-                    val slot = shortcutBar.getOrNull(selectedSlot) as? ShortcutSlot.Attack
+                    val slot =
+                        shortcutBarPages[currentPage].getOrNull(selectedSlot)
+                            as? ShortcutSlot.Attack
                     outMessages.trySend(
                         ClientMessage.AttackTarget(
                             targetId = targetId,
@@ -648,9 +674,11 @@ class LocalPlayerController(
                             kind == "spell" && id != null -> ShortcutSlot.Spell(id)
                             else -> null
                         }
-                    shortcutBar[slotMatch] = content
+                    shortcutBarPages[currentPage][slotMatch] = content
                     syncShortcutBarToUi()
-                    outMessages.trySend(ClientMessage.ShortcutBarSet(slotMatch, content))
+                    outMessages.trySend(
+                        ClientMessage.ShortcutBarSet(
+                            page = currentPage, slot = slotMatch, content = content))
                 }
             }
         }
@@ -731,7 +759,8 @@ class LocalPlayerController(
         }
 
         val isBreaking = jsIsBreaking()
-        val selectedSlotContent = if (selectedSlot > 0) shortcutBar[selectedSlot] else null
+        val selectedSlotContent =
+            if (selectedSlot > 0) shortcutBarPages[currentPage][selectedSlot] else null
         val selectedItem = (selectedSlotContent as? ShortcutSlot.Item)?.itemType
         val isPlaceMode = selectedItem != null && selectedItem.buildable
 

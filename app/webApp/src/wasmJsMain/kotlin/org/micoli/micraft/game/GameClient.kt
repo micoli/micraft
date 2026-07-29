@@ -501,9 +501,13 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             put(
                 ServerMessage.ShortcutBarUpdate::class,
                 typedHandler { msg: ServerMessage.ShortcutBarUpdate ->
-                    for (i in 0..9) localController.shortcutBar[i] = null
-                    msg.slots.forEach { (i, item) ->
-                        if (i in 0..9) localController.shortcutBar[i] = item
+                    for (page in 0..9) for (i in 0..9) localController.shortcutBarPages[page][i] =
+                        null
+                    msg.pages.forEach { (page, slots) ->
+                        if (page in 0..9)
+                            slots.forEach { (i, item) ->
+                                if (i in 0..9) localController.shortcutBarPages[page][i] = item
+                            }
                     }
                     localController.syncShortcutBarToUi()
                 })

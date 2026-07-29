@@ -52,7 +52,8 @@ sealed class ClientMessage {
 
     @ProtoId(7)
     @Serializable
-    data class ShortcutBarSet(val slot: Int, val content: ShortcutSlot?) : ClientMessage()
+    data class ShortcutBarSet(val page: Int = 0, val slot: Int, val content: ShortcutSlot?) :
+        ClientMessage()
 
     @ProtoId(8)
     @Serializable

@@ -11,6 +11,8 @@ interface Props {
   spellMeta?: Record<string, SpellMeta>;
   slots: (ShortcutSlot | null)[];
   selectedSlot: number;
+  currentPage?: number;
+  nonEmptyPages?: number[];
   onSlotDrop: (slot: number, content: ShortcutSlot | null) => void;
   layoutStyle?: React.CSSProperties;
   macros?: Record<string, string>;
@@ -25,6 +27,8 @@ export function ShortcutBar({
   spellMeta = {},
   slots,
   selectedSlot,
+  currentPage = 0,
+  nonEmptyPages = [],
   onSlotDrop,
   layoutStyle,
   macros: _macros,
@@ -47,7 +51,7 @@ export function ShortcutBar({
   return (
     <div
       className={cn(
-        "flex gap-1 pointer-events-auto z-[999] bg-black/60 border border-white/20 rounded-md py-1.5 px-2.5 items-center justify-center",
+        "relative flex gap-1 pointer-events-auto z-[999] bg-black/60 border border-white/20 rounded-md py-1.5 px-2.5 items-center justify-center",
         !layoutStyle && "fixed bottom-5 left-1/2 -translate-x-1/2",
       )}
       style={layoutStyle}
@@ -162,6 +166,16 @@ export function ShortcutBar({
           </div>
         );
       })}
+      {nonEmptyPages.length > 1 && (
+        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-1">
+          {nonEmptyPages.map((p) => (
+            <div
+              key={p}
+              className={cn("w-1.5 h-1.5 rounded-full", p === currentPage ? "bg-yellow-400" : "bg-white/40")}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

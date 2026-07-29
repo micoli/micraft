@@ -42,6 +42,8 @@ export interface UiState {
   healthBarVisible: boolean;
   shortcutBar: (ShortcutSlot | null)[];
   selectedSlot: number;
+  currentPage: number;
+  nonEmptyPages: number[];
   consoleOpen: boolean;
   disconnectMsg: string | null;
   chunkLoading: { meshed: number; downloaded: number; total: number } | null;
@@ -277,10 +279,15 @@ const globalRegistry = {
     notif: { msg: payload.msg, key: ++notificationsKey },
   }),
   inventory: (state: UiState, payload: { data: Record<string, number> }) => ({ ...state, inventory: payload.data }),
-  shortcut_bar_update: (state: UiState, payload: { data: { slots: (ShortcutSlot | null)[]; selected: number } }) => ({
+  shortcut_bar_update: (
+    state: UiState,
+    payload: { data: { slots: (ShortcutSlot | null)[]; selected: number; page?: number; nonEmptyPages?: number[] } },
+  ) => ({
     ...state,
     shortcutBar: payload.data.slots,
     selectedSlot: payload.data.selected,
+    currentPage: payload.data.page ?? state.currentPage,
+    nonEmptyPages: payload.data.nonEmptyPages ?? state.nonEmptyPages,
   }),
   slot_select: (state: UiState, payload: { slot: number }) => ({ ...state, selectedSlot: payload.slot }),
   craft_sync: (state: UiState, payload: { recipes: Record<string, RecipeDefinition>; knownRecipes: string[] }) => ({

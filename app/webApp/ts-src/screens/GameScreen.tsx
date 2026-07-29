@@ -257,6 +257,8 @@ export function GameScreen() {
             spellMeta={state.spellMeta}
             slots={state.shortcutBar}
             selectedSlot={state.selectedSlot}
+            currentPage={state.currentPage}
+            nonEmptyPages={state.nonEmptyPages}
             macros={state.preferences?.macros ?? {}}
             macroIcons={state.preferences?.macroIcons ?? {}}
             onSlotDrop={(slot, content) => {

@@ -18,6 +18,13 @@ import org.micoli.micraft.protocol.ServerMessageCodec
 fun List<ShortcutSlot?>.toSlotMap(): Map<Int, ShortcutSlot> =
     mapIndexedNotNull { i, t -> t?.let { i to it } }.toMap()
 
+fun Array<MutableList<ShortcutSlot?>>.toPageMap(): Map<Int, Map<Int, ShortcutSlot>> =
+    mapIndexedNotNull { page, slots ->
+            val nonNull = slots.toSlotMap()
+            if (nonNull.isEmpty()) null else page to nonNull
+        }
+        .toMap()
+
 fun PlayerSession.hasPermission(perm: String): Boolean = "*" in permissions || perm in permissions
 
 open class PlayerSession(
@@ -38,7 +45,7 @@ open class PlayerSession(
     @Volatile var breakTarget: BlockPos? = null
     val inventory: MutableMap<ItemType, Int> = ConcurrentHashMap()
     val actionHistory: ArrayDeque<WorldActionRecord> = ArrayDeque()
-    val shortcutBar: MutableList<ShortcutSlot?> = MutableList(10) { null }
+    val shortcutBarPages: Array<MutableList<ShortcutSlot?>> = Array(10) { MutableList(10) { null } }
     val knownRecipes: MutableSet<String> =
         Collections.newSetFromMap(ConcurrentHashMap<String, Boolean>()).also {
             it.addAll(state.knownRecipes)

@@ -155,9 +155,11 @@ class BlockPlacerTest {
         val saved = mutableListOf<PlayerSession>()
         val placer = placer(saved = saved)
         val session = testSession()
-        val intent = ClientMessage.ShortcutBarSet(2, ShortcutSlot.Item(ItemType("COBBLESTONE")))
+        val intent =
+            ClientMessage.ShortcutBarSet(
+                page = 0, slot = 2, content = ShortcutSlot.Item(ItemType("COBBLESTONE")))
         placer.handleShortcutBarSet(session, intent)
-        assertEquals(ShortcutSlot.Item(ItemType("COBBLESTONE")), session.shortcutBar[2])
+        assertEquals(ShortcutSlot.Item(ItemType("COBBLESTONE")), session.shortcutBarPages[0][2])
         assertTrue(session.sent.any { it is ServerMessage.ShortcutBarUpdate })
         assertEquals(1, saved.size)
     }
@@ -167,9 +169,11 @@ class BlockPlacerTest {
         val placer = placer()
         val session = testSession()
         placer.handleShortcutBarSet(
-            session, ClientMessage.ShortcutBarSet(0, ShortcutSlot.Item(ItemType("COBBLESTONE"))))
+            session,
+            ClientMessage.ShortcutBarSet(
+                page = 0, slot = 0, content = ShortcutSlot.Item(ItemType("COBBLESTONE"))))
         // slot 0 = hand slot, must stay null
-        assertEquals(null, session.shortcutBar[0])
+        assertEquals(null, session.shortcutBarPages[0][0])
         assertTrue(session.sent.isEmpty())
     }
 
@@ -178,8 +182,10 @@ class BlockPlacerTest {
         val placer = placer()
         val session = testSession()
         placer.handleShortcutBarSet(
-            session, ClientMessage.ShortcutBarSet(1, ShortcutSlot.Item(ItemType("SNOWBALL"))))
-        assertEquals(null, session.shortcutBar[1])
+            session,
+            ClientMessage.ShortcutBarSet(
+                page = 0, slot = 1, content = ShortcutSlot.Item(ItemType("SNOWBALL"))))
+        assertEquals(null, session.shortcutBarPages[0][1])
         assertTrue(session.sent.isEmpty())
     }
 
@@ -187,9 +193,10 @@ class BlockPlacerTest {
     fun shortcutBarSet_null_clearsSlot() = runBlocking {
         val placer = placer()
         val session = testSession()
-        session.shortcutBar[3] = ShortcutSlot.Item(ItemType("DIRT"))
-        placer.handleShortcutBarSet(session, ClientMessage.ShortcutBarSet(3, null))
-        assertEquals(null, session.shortcutBar[3])
+        session.shortcutBarPages[0][3] = ShortcutSlot.Item(ItemType("DIRT"))
+        placer.handleShortcutBarSet(
+            session, ClientMessage.ShortcutBarSet(page = 0, slot = 3, content = null))
+        assertEquals(null, session.shortcutBarPages[0][3])
         assertTrue(session.sent.any { it is ServerMessage.ShortcutBarUpdate })
     }
 
@@ -200,8 +207,10 @@ class BlockPlacerTest {
         val placer = BlockPlacer(testWorld(), {}, { saved.add(it) }, attackRegistry = registry)
         val session = testSession()
         placer.handleShortcutBarSet(
-            session, ClientMessage.ShortcutBarSet(1, ShortcutSlot.Attack("fireball")))
-        assertEquals(ShortcutSlot.Attack("fireball"), session.shortcutBar[1])
+            session,
+            ClientMessage.ShortcutBarSet(
+                page = 0, slot = 1, content = ShortcutSlot.Attack("fireball")))
+        assertEquals(ShortcutSlot.Attack("fireball"), session.shortcutBarPages[0][1])
         assertTrue(session.sent.any { it is ServerMessage.ShortcutBarUpdate })
     }
 
@@ -210,8 +219,10 @@ class BlockPlacerTest {
         val placer = placer()
         val session = testSession()
         placer.handleShortcutBarSet(
-            session, ClientMessage.ShortcutBarSet(1, ShortcutSlot.Attack("unknown_spell")))
-        assertEquals(null, session.shortcutBar[1])
+            session,
+            ClientMessage.ShortcutBarSet(
+                page = 0, slot = 1, content = ShortcutSlot.Attack("unknown_spell")))
+        assertEquals(null, session.shortcutBarPages[0][1])
         assertTrue(session.sent.isEmpty())
     }
 
@@ -220,8 +231,10 @@ class BlockPlacerTest {
         val placer = placer()
         val session = testSession()
         placer.handleShortcutBarSet(
-            session, ClientMessage.ShortcutBarSet(1, ShortcutSlot.Macro("myMacro")))
-        assertEquals(ShortcutSlot.Macro("myMacro"), session.shortcutBar[1])
+            session,
+            ClientMessage.ShortcutBarSet(
+                page = 0, slot = 1, content = ShortcutSlot.Macro("myMacro")))
+        assertEquals(ShortcutSlot.Macro("myMacro"), session.shortcutBarPages[0][1])
         assertTrue(session.sent.any { it is ServerMessage.ShortcutBarUpdate })
     }
 
@@ -230,8 +243,9 @@ class BlockPlacerTest {
         val placer = placer()
         val session = testSession()
         placer.handleShortcutBarSet(
-            session, ClientMessage.ShortcutBarSet(1, ShortcutSlot.Macro("   ")))
-        assertEquals(null, session.shortcutBar[1])
+            session,
+            ClientMessage.ShortcutBarSet(page = 0, slot = 1, content = ShortcutSlot.Macro("   ")))
+        assertEquals(null, session.shortcutBarPages[0][1])
         assertTrue(session.sent.isEmpty())
     }
 
