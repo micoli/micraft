@@ -85,6 +85,7 @@ sealed class ServerMessage {
         val changes: List<BlockChange>,
         val entityAdds: List<BlockEntityProto> = emptyList(),
         val entityRemoves: List<BlockPos> = emptyList(),
+        val entityRemovesAt: List<EntityRemoveAt> = emptyList(),
     ) : ServerMessage()
 
     @ProtoId(5) @Serializable data class PlayerLeft(val playerId: String) : ServerMessage()
@@ -346,6 +347,7 @@ data class BlockInfo(
     val hasStuds: Boolean = false,
     val isSlope: Boolean = false,
     val brickSize: List<Int> = listOf(1, 1, 1),
+    val heightFraction: Float = 1.0f,
 )
 
 @Serializable
@@ -358,7 +360,10 @@ data class BlockEntityProto(
     val sizeY: Int = 1,
     val sizeZ: Int = 1,
     val rotation: Int = 0,
+    val yOffset: Int = 0,
 )
+
+@Serializable data class EntityRemoveAt(val pos: BlockPos, val yOffset: Int = 0)
 
 @Serializable
 data class ItemInfo(

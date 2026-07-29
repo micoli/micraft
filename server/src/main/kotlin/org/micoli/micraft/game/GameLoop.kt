@@ -720,6 +720,7 @@ class GameLoop(
                     hasStuds = def.hasStuds,
                     isSlope = def.isSlope,
                     brickSize = def.brickSize,
+                    heightFraction = def.heightFraction,
                 )
             }
         val items =

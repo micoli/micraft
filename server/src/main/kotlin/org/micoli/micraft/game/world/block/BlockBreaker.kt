@@ -14,6 +14,7 @@ import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.ClientMessage
+import org.micoli.micraft.protocol.EntityRemoveAt
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
@@ -80,7 +81,16 @@ class BlockBreaker(
         // For entity satellite cells, resolve to master block for hardness
         val masterPos = world.getEntityMasterWorldPos(bt.x, bt.y, bt.z)
         val effectivePos = masterPos ?: bt
-        val block = world.getBlock(effectivePos.x, effectivePos.y, effectivePos.z)
+        val topmostFractional =
+            if (masterPos != null)
+                world.getTopmostFractionalEntityAt(masterPos.x, masterPos.y, masterPos.z)
+            else null
+        val blockAtPos = world.getBlock(effectivePos.x, effectivePos.y, effectivePos.z)
+        // When block type is AIR but a fractional entity (yOffset>0 only) is present, use entity
+        // type for hardness
+        val block =
+            if (blockAtPos == BlockType.AIR && topmostFractional != null) topmostFractional.type
+            else blockAtPos
         if (block.hardness == 0f || block.hardness == Float.MAX_VALUE) {
             session.breakTarget = null
             blockProgress.remove(bt)
@@ -100,26 +110,44 @@ class BlockBreaker(
         current.ticks++
         if (current.ticks.toFloat() >= block.hardness) {
             if (masterPos != null) {
-                // Remove entire entity
-                val entityDef =
-                    BlockRegistry.get(world.getBlock(masterPos.x, masterPos.y, masterPos.z))
-                val (sizeX, sizeY, sizeZ) =
-                    if (entityDef.brickSize.size == 3)
-                        Triple(
-                            entityDef.brickSize[0], entityDef.brickSize[1], entityDef.brickSize[2])
-                    else Triple(1, 1, 1)
-                val changes = mutableListOf<BlockChange>()
-                for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
-                    val cp = BlockPos(masterPos.x + dx, masterPos.y + dy, masterPos.z + dz)
-                    val existingBlock = world.getBlock(cp.x, cp.y, cp.z)
-                    if (existingBlock != BlockType.AIR) {
-                        val c = BlockChange(cp, BlockType.AIR)
+                if (topmostFractional != null) {
+                    // Fractional entity: remove only the topmost plate
+                    val spec = EntityRemoveAt(masterPos, topmostFractional.yOffset)
+                    world.applyEntityRemoveAt(spec)
+                    val changes = mutableListOf<BlockChange>()
+                    // If topmost was yOffset=0 AND no more plates remain → clear block type
+                    val remaining =
+                        world.getFractionalYOffsetsAt(masterPos.x, masterPos.y, masterPos.z)
+                    if (topmostFractional.yOffset == 0 && remaining.isEmpty()) {
+                        val c = BlockChange(masterPos, BlockType.AIR)
                         world.applyChange(c)
                         changes.add(c)
                     }
+                    broadcast(ServerMessage.WorldUpdate(changes, entityRemovesAt = listOf(spec)))
+                } else {
+                    // Regular multi-cell entity: remove entire entity + all cell block types
+                    val entityDef =
+                        BlockRegistry.get(world.getBlock(masterPos.x, masterPos.y, masterPos.z))
+                    val (sizeX, sizeY, sizeZ) =
+                        if (entityDef.brickSize.size == 3)
+                            Triple(
+                                entityDef.brickSize[0],
+                                entityDef.brickSize[1],
+                                entityDef.brickSize[2])
+                        else Triple(1, 1, 1)
+                    val changes = mutableListOf<BlockChange>()
+                    for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
+                        val cp = BlockPos(masterPos.x + dx, masterPos.y + dy, masterPos.z + dz)
+                        val existingBlock = world.getBlock(cp.x, cp.y, cp.z)
+                        if (existingBlock != BlockType.AIR) {
+                            val c = BlockChange(cp, BlockType.AIR)
+                            world.applyChange(c)
+                            changes.add(c)
+                        }
+                    }
+                    world.applyEntityRemove(masterPos)
+                    broadcast(ServerMessage.WorldUpdate(changes, entityRemoves = listOf(masterPos)))
                 }
-                world.applyEntityRemove(masterPos)
-                broadcast(ServerMessage.WorldUpdate(changes, entityRemoves = listOf(masterPos)))
             } else {
                 val change = BlockChange(bt, BlockType.AIR)
                 world.applyChange(change)

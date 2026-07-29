@@ -8,6 +8,7 @@ import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.WorldActionRecord
 import org.micoli.micraft.game.session.toPageMap
 import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.player.eyeOffset
@@ -56,52 +57,66 @@ class BlockPlacer(
             return
         }
 
-        val existing = world.getBlock(pos.x, pos.y, pos.z)
-        if (!existing.isReplaceable) {
-            blockPlacerLog.debug("BlockPlace rejected: pos={} is {}", pos, existing)
-            return
-        }
-
         val def = blockType.let { BlockRegistry.get(it) }
         val (sizeX, sizeY, sizeZ) =
             if (def.brickSize.size == 3)
                 Triple(def.brickSize[0], def.brickSize[1], def.brickSize[2])
             else Triple(1, 1, 1)
 
-        val isMultiCell = sizeX > 1 || sizeY > 1 || sizeZ > 1
-        if (isMultiCell) {
-            // Validate all satellite cells are free
-            for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
-                if (dx == 0 && dy == 0 && dz == 0) continue
-                val cx = pos.x + dx
-                val cy = pos.y + dy
-                val cz = pos.z + dz
-                val cellBlock = world.getBlock(cx, cy, cz)
-                if (!cellBlock.isReplaceable) {
-                    blockPlacerLog.debug(
-                        "BlockPlace rejected: multi-cell pos={},{},{} occupied by {}",
-                        cx,
-                        cy,
-                        cz,
-                        cellBlock)
-                    return
-                }
-                if (world.hasEntityAt(cx, cy, cz)) {
-                    blockPlacerLog.debug(
-                        "BlockPlace rejected: multi-cell pos={},{},{} has entity", cx, cy, cz)
-                    return
+        val isFractional = def.heightFraction < 1.0f
+
+        if (isFractional) {
+            // Fractional block (plate): stacking allowed — cell may already contain a plate
+            val existing = world.getBlock(pos.x, pos.y, pos.z)
+            if (existing != BlockType.AIR && BlockRegistry.get(existing).heightFraction >= 1.0f) {
+                blockPlacerLog.debug(
+                    "BlockPlace rejected: pos={} has solid non-fractional block", pos)
+                return
+            }
+            val usedOffsets = world.getFractionalYOffsetsAt(pos.x, pos.y, pos.z)
+            // If hasEntityAt is true but no fractional masters → non-plate entity/satellite present
+            if (world.hasEntityAt(pos.x, pos.y, pos.z) && usedOffsets.isEmpty()) {
+                blockPlacerLog.debug("BlockPlace rejected: pos={} has non-plate entity", pos)
+                return
+            }
+            val nextOffset = (0..2).firstOrNull { it !in usedOffsets }
+            if (nextOffset == null) {
+                blockPlacerLog.debug("BlockPlace rejected: pos={} plate cell full", pos)
+                return
+            }
+            // Validate satellite cells for multi-cell footprint
+            val isMultiCellFootprint = sizeX > 1 || sizeZ > 1
+            if (isMultiCellFootprint) {
+                for (dx in 0 until sizeX) for (dz in 0 until sizeZ) {
+                    if (dx == 0 && dz == 0) continue
+                    val cx = pos.x + dx
+                    val cz = pos.z + dz
+                    val satBlock = world.getBlock(cx, pos.y, cz)
+                    // Reject if cell has a solid non-fractional block
+                    if (satBlock != BlockType.AIR &&
+                        BlockRegistry.get(satBlock).heightFraction >= 1.0f) {
+                        blockPlacerLog.debug(
+                            "BlockPlace rejected: plate satellite {},{},{} has solid block",
+                            cx,
+                            pos.y,
+                            cz)
+                        return
+                    }
+                    // Reject only if entity at satellite belongs to a DIFFERENT master
+                    val satMasterPos = world.getEntityMasterWorldPos(cx, pos.y, cz)
+                    if (satMasterPos != null && satMasterPos != pos) {
+                        blockPlacerLog.debug(
+                            "BlockPlace rejected: plate satellite {},{},{} has entity from different master",
+                            cx,
+                            pos.y,
+                            cz)
+                        return
+                    }
+                    // If satMasterPos == pos: satellite of our plate at a previous yOffset →
+                    // nextOffset
+                    // not in usedOffsets (already validated above for master cell)
                 }
             }
-        }
-        if (world.hasEntityAt(pos.x, pos.y, pos.z)) {
-            blockPlacerLog.debug("BlockPlace rejected: pos={} has entity", pos)
-            return
-        }
-
-        val change = BlockChange(pos, blockType, intent.state)
-        world.applyChange(change)
-
-        if (isMultiCell) {
             val proto =
                 BlockEntityProto(
                     worldX = pos.x,
@@ -109,14 +124,75 @@ class BlockPlacer(
                     worldZ = pos.z,
                     type = blockType.id,
                     sizeX = sizeX,
-                    sizeY = sizeY,
+                    sizeY = 1,
                     sizeZ = sizeZ,
                     rotation = intent.state.toInt() and 0x03,
+                    yOffset = nextOffset,
                 )
+            val changes = mutableListOf<BlockChange>()
+            if (nextOffset == 0) {
+                // First plate at this cell: set block type so main renderer sees it
+                val change = BlockChange(pos, blockType, intent.state)
+                world.applyChange(change)
+                changes.add(change)
+            }
             world.applyEntityAdd(proto)
-            broadcast(ServerMessage.WorldUpdate(listOf(change), entityAdds = listOf(proto)))
+            broadcast(ServerMessage.WorldUpdate(changes, entityAdds = listOf(proto)))
         } else {
-            broadcast(ServerMessage.WorldUpdate(listOf(change)))
+            val existing = world.getBlock(pos.x, pos.y, pos.z)
+            if (!existing.isReplaceable) {
+                blockPlacerLog.debug("BlockPlace rejected: pos={} is {}", pos, existing)
+                return
+            }
+            val isMultiCell = sizeX > 1 || sizeY > 1 || sizeZ > 1
+            if (isMultiCell) {
+                for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
+                    if (dx == 0 && dy == 0 && dz == 0) continue
+                    val cx = pos.x + dx
+                    val cy = pos.y + dy
+                    val cz = pos.z + dz
+                    val cellBlock = world.getBlock(cx, cy, cz)
+                    if (!cellBlock.isReplaceable) {
+                        blockPlacerLog.debug(
+                            "BlockPlace rejected: multi-cell pos={},{},{} occupied by {}",
+                            cx,
+                            cy,
+                            cz,
+                            cellBlock)
+                        return
+                    }
+                    if (world.hasEntityAt(cx, cy, cz)) {
+                        blockPlacerLog.debug(
+                            "BlockPlace rejected: multi-cell pos={},{},{} has entity", cx, cy, cz)
+                        return
+                    }
+                }
+            }
+            if (world.hasEntityAt(pos.x, pos.y, pos.z)) {
+                blockPlacerLog.debug("BlockPlace rejected: pos={} has entity", pos)
+                return
+            }
+
+            val change = BlockChange(pos, blockType, intent.state)
+            world.applyChange(change)
+
+            if (isMultiCell) {
+                val proto =
+                    BlockEntityProto(
+                        worldX = pos.x,
+                        worldY = pos.y,
+                        worldZ = pos.z,
+                        type = blockType.id,
+                        sizeX = sizeX,
+                        sizeY = sizeY,
+                        sizeZ = sizeZ,
+                        rotation = intent.state.toInt() and 0x03,
+                    )
+                world.applyEntityAdd(proto)
+                broadcast(ServerMessage.WorldUpdate(listOf(change), entityAdds = listOf(proto)))
+            } else {
+                broadcast(ServerMessage.WorldUpdate(listOf(change)))
+            }
         }
         vegetationManager?.tryActivate(pos, blockType)
 

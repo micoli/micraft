@@ -417,10 +417,12 @@ export function registerChunks(): Pick<
       const grp = buf.groups;
       for (let i = startI; i < endI; i += 5) {
         const wx = fb[i],
-          wy = fb[i + 1],
           wz = fb[i + 2],
-          faceMat = fb[i + 3],
-          ao = fb[i + 4];
+          faceMat = fb[i + 3];
+        const aoPacked = fb[i + 4];
+        const ao = aoPacked & 0xffff;
+        const yOff = (aoPacked >>> 16) & 0x3;
+        const wy = fb[i + 1] + (yOff === 0 ? 0 : yOff / 3);
         const infos = faceTable[faceMat];
         if (!infos) continue;
         for (const info of infos) {

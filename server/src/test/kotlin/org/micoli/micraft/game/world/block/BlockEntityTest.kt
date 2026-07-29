@@ -55,6 +55,14 @@ class BlockEntityTest {
                         brickSize = listOf(2, 1, 1),
                     ),
                 BlockType("LEGO_BRICK") to BlockDefinition(hardness = 1f, solid = true),
+                BlockType("LEGO_PLATE_2X2") to
+                    BlockDefinition(
+                        hardness = 1f,
+                        solid = true,
+                        replaceable = false,
+                        brickSize = listOf(2, 1, 2),
+                        heightFraction = 0.333f,
+                    ),
             ))
     }
 
@@ -147,6 +155,137 @@ class BlockEntityTest {
         val update = breakBroadcasts.filterIsInstance<ServerMessage.WorldUpdate>().firstOrNull()
         assertFalse(
             update?.entityRemoves.isNullOrEmpty(), "WorldUpdate should contain entityRemoves")
+    }
+
+    @Test
+    fun place_plate_yOffset0_setsBlockTypeAndEntity() = runBlocking {
+        registerMultiBlock()
+        val world = testWorld()
+        val broadcasts = mutableListOf<ServerMessage>()
+        val placer = placer(broadcasts, world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_PLATE_2X2")] = 3
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("LEGO_PLATE_2X2")))
+        assertTrue(world.hasEntityAt(8, 7, 8), "Master cell should have entity")
+        assertEquals(
+            BlockType.LEGO_PLATE_2X2,
+            world.getBlock(8, 7, 8),
+            "Block type should be set at yOffset=0")
+        val offsets = world.getFractionalYOffsetsAt(8, 7, 8)
+        assertTrue(0 in offsets, "yOffset=0 should be registered")
+    }
+
+    @Test
+    fun place_plate_yOffset1_entityOnlyNoBlockChange() = runBlocking {
+        registerMultiBlock()
+        val world = testWorld()
+        val broadcasts = mutableListOf<ServerMessage>()
+        val placer = placer(broadcasts, world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_PLATE_2X2")] = 3
+        // Place first plate (yOffset=0)
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("LEGO_PLATE_2X2")))
+        val broadcastCountAfterFirst = broadcasts.size
+        // Place second plate (yOffset=1)
+        session.inventory[ItemType("LEGO_PLATE_2X2")] = 2
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("LEGO_PLATE_2X2")))
+        val update =
+            broadcasts
+                .drop(broadcastCountAfterFirst)
+                .filterIsInstance<ServerMessage.WorldUpdate>()
+                .firstOrNull()
+        assertFalse(update?.entityAdds.isNullOrEmpty(), "Second plate should add entity")
+        assertTrue(
+            update!!.changes.isEmpty(), "Second plate (yOffset=1) should not produce block change")
+        val offsets = world.getFractionalYOffsetsAt(8, 7, 8)
+        assertTrue(1 in offsets, "yOffset=1 should be registered")
+    }
+
+    @Test
+    fun place_plate_thirdStack_yOffset2_success() = runBlocking {
+        registerMultiBlock()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_PLATE_2X2")] = 3
+        repeat(3) {
+            session.inventory[ItemType("LEGO_PLATE_2X2")] = 3 - it
+            placer.handlePlace(
+                session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("LEGO_PLATE_2X2")))
+        }
+        val offsets = world.getFractionalYOffsetsAt(8, 7, 8)
+        assertTrue(offsets.containsAll(listOf(0, 1, 2)), "All 3 yOffsets should be occupied")
+    }
+
+    @Test
+    fun place_plate_fourthStack_rejected_cellFull() = runBlocking {
+        registerMultiBlock()
+        val world = testWorld()
+        val broadcasts = mutableListOf<ServerMessage>()
+        val placer = placer(broadcasts, world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        // Fill all 3 slots
+        repeat(3) {
+            session.inventory[ItemType("LEGO_PLATE_2X2")] = 3 - it
+            placer.handlePlace(
+                session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("LEGO_PLATE_2X2")))
+        }
+        val countAfterThree = broadcasts.size
+        // Try 4th
+        session.inventory[ItemType("LEGO_PLATE_2X2")] = 1
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("LEGO_PLATE_2X2")))
+        assertEquals(countAfterThree, broadcasts.size, "4th plate should be rejected")
+    }
+
+    @Test
+    fun break_topPlate_removesHighestYOffset() = runBlocking {
+        registerMultiBlock()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        // Place 2 plates
+        repeat(2) {
+            session.inventory[ItemType("LEGO_PLATE_2X2")] = 2 - it
+            placer.handlePlace(
+                session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("LEGO_PLATE_2X2")))
+        }
+        val breakBroadcasts = mutableListOf<ServerMessage>()
+        val breaker = breaker(breakBroadcasts, world)
+        breaker.handleStart(session, ClientMessage.BlockBreakStart(BlockPos(8, 7, 8)))
+        breaker.tick(session)
+        val offsets = world.getFractionalYOffsetsAt(8, 7, 8)
+        assertFalse(1 in offsets, "yOffset=1 (top) should be removed")
+        assertTrue(0 in offsets, "yOffset=0 (bottom) should remain")
+        val update = breakBroadcasts.filterIsInstance<ServerMessage.WorldUpdate>().firstOrNull()
+        assertFalse(
+            update?.entityRemovesAt.isNullOrEmpty(), "WorldUpdate should contain entityRemovesAt")
+    }
+
+    @Test
+    fun break_lastPlate_removesBlockType() = runBlocking {
+        registerMultiBlock()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_PLATE_2X2")] = 1
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("LEGO_PLATE_2X2")))
+        assertEquals(
+            BlockType.LEGO_PLATE_2X2, world.getBlock(8, 7, 8), "Block type set before break")
+
+        val breakBroadcasts = mutableListOf<ServerMessage>()
+        val breaker = breaker(breakBroadcasts, world)
+        breaker.handleStart(session, ClientMessage.BlockBreakStart(BlockPos(8, 7, 8)))
+        breaker.tick(session)
+        assertEquals(
+            BlockType.AIR,
+            world.getBlock(8, 7, 8),
+            "Block type should be AIR after last plate removed")
+        assertFalse(world.hasEntityAt(8, 7, 8), "No entity should remain")
     }
 
     @Test

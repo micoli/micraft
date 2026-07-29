@@ -1,0 +1,252 @@
+{
+  "resolution": { "width": 16, "height": 16 },
+  "textures": [
+    {
+      "id": 0,
+      "name": "LEGO_PLATE_2X2",
+      "path": "api/models/blocks/LEGO_PLATE_2X2/LEGO_PLATE_2X2.png",
+      "source": ""
+    }
+  ],
+  "elements": [
+    {
+      "uuid": "lego-body",
+      "name": "body",
+      "render_type": "solid",
+      "from": [0, 0, 0],
+      "to": [32, 5, 32],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 16, 16] },
+        "north": { "texture": 0, "uv": [0, 0, 16, 16] },
+        "east":  { "texture": 0, "uv": [0, 0, 16, 16] },
+        "west":  { "texture": 0, "uv": [0, 0, 16, 16] },
+        "up":    { "texture": 0, "uv": [0, 0, 16, 16] },
+        "down":  { "texture": 0, "uv": [0, 0, 16, 16] }
+      }
+    },
+    {
+      "uuid": "stud-0-0",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [2, 5, 2],
+      "to": [6, 8, 6],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-1-0",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [10, 5, 2],
+      "to": [14, 8, 6],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-2-0",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [18, 5, 2],
+      "to": [22, 8, 6],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-3-0",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [26, 5, 2],
+      "to": [30, 8, 6],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-0-1",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [2, 5, 10],
+      "to": [6, 8, 14],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-1-1",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [10, 5, 10],
+      "to": [14, 8, 14],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-2-1",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [18, 5, 10],
+      "to": [22, 8, 14],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-3-1",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [26, 5, 10],
+      "to": [30, 8, 14],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-0-2",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [2, 5, 18],
+      "to": [6, 8, 22],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-1-2",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [10, 5, 18],
+      "to": [14, 8, 22],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-2-2",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [18, 5, 18],
+      "to": [22, 8, 22],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-3-2",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [26, 5, 18],
+      "to": [30, 8, 22],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-0-3",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [2, 5, 26],
+      "to": [6, 8, 30],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-1-3",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [10, 5, 26],
+      "to": [14, 8, 30],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-2-3",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [18, 5, 26],
+      "to": [22, 8, 30],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    },
+    {
+      "uuid": "stud-3-3",
+      "name": "stud",
+      "render_type": "solid",
+      "from": [26, 5, 26],
+      "to": [30, 8, 30],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
+        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
+        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
+      }
+    }
+  ]
+}

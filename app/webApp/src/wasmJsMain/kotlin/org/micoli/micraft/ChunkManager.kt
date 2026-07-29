@@ -175,6 +175,7 @@ class ChunkManager(private val scene: JsAny) {
                     ar.faces += renderRow(ar.chunk, ar.topY, ar.nextY)
                     ar.nextY++
                     if (ar.nextY > ar.topY) {
+                        ar.faces += renderFractionalEntities(ar.chunk)
                         ar.faceCount = jsGetFaceCount()
                     }
                 }
@@ -246,6 +247,7 @@ class ChunkManager(private val scene: JsAny) {
         chunkData[chunk.pos] = Pair(chunk, topY)
         jsChunkBegin(chunk.pos.cx, chunk.pos.cz)
         for (y in 0..topY) renderRow(chunk, topY, y)
+        renderFractionalEntities(chunk)
         // Drain face buffer before GPU upload (same as async Phase 2)
         val faceCount = jsGetFaceCount()
         var cursor = 0
@@ -441,6 +443,28 @@ class ChunkManager(private val scene: JsAny) {
                     jsChunkFaceAppend(wx, y, wz2, t + 3, computeFaceAO(blocks, x, y, z, 3))
                     faceCount++
                 }
+            }
+        }
+        return faceCount
+    }
+
+    // Second-pass render: emit faces for fractional entities (yOffset > 0) that have no block type.
+    private fun renderFractionalEntities(chunk: Chunk): Int {
+        val s = WorldConstants.CHUNK_SIZE
+        val ox = chunk.pos.cx * s
+        val oz = chunk.pos.cz * s
+        var faceCount = 0
+        for (entity in chunk.entityMasters) {
+            if (entity.yOffset == 0) continue
+            val (mx, my, mz) = Chunk.indexToXYZ(entity.masterIdx)
+            val ord = BlockRegistry.wireIndex(entity.type)
+            if (ord == 0) continue
+            val t = (ord * 4 + entity.rotation) * 6
+            val wx = ox + mx
+            val wz2 = oz + mz
+            for (fd in 0..5) {
+                jsChunkFaceAppendYOffset(wx, my, wz2, entity.yOffset, t + fd, 0)
+                faceCount++
             }
         }
         return faceCount

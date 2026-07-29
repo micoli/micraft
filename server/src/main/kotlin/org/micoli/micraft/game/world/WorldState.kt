@@ -6,6 +6,7 @@ import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGen
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.BlockEntityProto
+import org.micoli.micraft.protocol.EntityRemoveAt
 import org.slf4j.LoggerFactory
 
 class WorldState(
@@ -130,6 +131,7 @@ class WorldState(
                 sizeY = proto.sizeY,
                 sizeZ = proto.sizeZ,
                 rotation = proto.rotation,
+                yOffset = proto.yOffset,
             )
         chunks[cPos] = chunk.addEntity(entity)
         dirtyChunks.add(cPos)
@@ -144,6 +146,53 @@ class WorldState(
         val chunk = chunks[cPos] ?: return
         val masterIdx = Chunk.index(localX, worldMasterPos.y, localZ)
         chunks[cPos] = chunk.removeEntity(masterIdx)
+        dirtyChunks.add(cPos)
+    }
+
+    /** Returns yOffsets of all fractional entities whose master is at this world position. */
+    fun getFractionalYOffsetsAt(wx: Int, wy: Int, wz: Int): List<Int> {
+        if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return emptyList()
+        val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
+        val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
+        val localX = Math.floorMod(wx, WorldConstants.CHUNK_SIZE)
+        val localZ = Math.floorMod(wz, WorldConstants.CHUNK_SIZE)
+        val cPos = ChunkPos(chunkX, chunkZ)
+        val chunk = chunks[cPos] ?: return emptyList()
+        val masterIdx = Chunk.index(localX, wy, localZ)
+        return chunk.entityMasters
+            .filter {
+                it.masterIdx == masterIdx && BlockRegistry.get(it.type).heightFraction < 1.0f
+            }
+            .map { it.yOffset }
+    }
+
+    /** Returns the topmost (highest yOffset) fractional entity master at this world position. */
+    fun getTopmostFractionalEntityAt(wx: Int, wy: Int, wz: Int): BlockEntity? {
+        if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return null
+        val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
+        val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
+        val localX = Math.floorMod(wx, WorldConstants.CHUNK_SIZE)
+        val localZ = Math.floorMod(wz, WorldConstants.CHUNK_SIZE)
+        val cPos = ChunkPos(chunkX, chunkZ)
+        val chunk = chunks[cPos] ?: return null
+        val masterIdx = Chunk.index(localX, wy, localZ)
+        return chunk.entityMasters
+            .filter {
+                it.masterIdx == masterIdx && BlockRegistry.get(it.type).heightFraction < 1.0f
+            }
+            .maxByOrNull { it.yOffset }
+    }
+
+    /** Removes the specific fractional entity (by masterIdx + yOffset) from its chunk. */
+    fun applyEntityRemoveAt(spec: EntityRemoveAt) {
+        val chunkX = Math.floorDiv(spec.pos.x, WorldConstants.CHUNK_SIZE)
+        val chunkZ = Math.floorDiv(spec.pos.z, WorldConstants.CHUNK_SIZE)
+        val localX = Math.floorMod(spec.pos.x, WorldConstants.CHUNK_SIZE)
+        val localZ = Math.floorMod(spec.pos.z, WorldConstants.CHUNK_SIZE)
+        val cPos = ChunkPos(chunkX, chunkZ)
+        val chunk = chunks[cPos] ?: return
+        val masterIdx = Chunk.index(localX, spec.pos.y, localZ)
+        chunks[cPos] = chunk.removeEntityAt(masterIdx, spec.yOffset)
         dirtyChunks.add(cPos)
     }
 
@@ -180,6 +229,7 @@ class WorldState(
                 sizeY = e.sizeY,
                 sizeZ = e.sizeZ,
                 rotation = e.rotation,
+                yOffset = e.yOffset,
             )
         }
     }

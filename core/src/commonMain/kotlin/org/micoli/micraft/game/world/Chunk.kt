@@ -81,6 +81,7 @@ data class Chunk(
                         sizeY = proto.sizeY,
                         sizeZ = proto.sizeZ,
                         rotation = proto.rotation,
+                        yOffset = proto.yOffset,
                     )
                 }
             return Chunk(pos, blocks, states, masters)
@@ -136,6 +137,11 @@ data class Chunk(
 
     fun removeEntity(masterIdx: Int): Chunk =
         copy(entityMasters = entityMasters.filter { it.masterIdx != masterIdx })
+
+    fun removeEntityAt(masterIdx: Int, yOffset: Int): Chunk =
+        copy(
+            entityMasters =
+                entityMasters.filter { !(it.masterIdx == masterIdx && it.yOffset == yOffset) })
 
     fun buildEntitiesMap(): Map<Int, BlockEntity> = Companion.buildEntitiesMap(entityMasters)
 

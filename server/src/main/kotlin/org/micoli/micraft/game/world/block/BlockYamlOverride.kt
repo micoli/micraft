@@ -20,4 +20,5 @@ data class BlockYamlOverride(
     val hasStuds: Boolean? = null,
     val isSlope: Boolean? = null,
     val brickSize: List<Int>? = null,
+    val heightFraction: Float? = null,
 )

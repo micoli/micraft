@@ -56,6 +56,8 @@ value class BlockType(val id: String) {
         val LEGO_PLATE = BlockType("LEGO_PLATE")
         val LEGO_BRICK_2X1 = BlockType("LEGO_BRICK_2X1")
         val LEGO_BRICK_1X2 = BlockType("LEGO_BRICK_1X2")
+        val LEGO_PLATE_2X2 = BlockType("LEGO_PLATE_2X2")
+        val LEGO_PLATE_2X4 = BlockType("LEGO_PLATE_2X4")
     }
 
     override fun toString(): String = id

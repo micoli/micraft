@@ -54,6 +54,12 @@ fun jsChunkFaceAppend(wx: Int, wy: Int, wz: Int, faceMat: Int, ao: Int): Unit =
     js(
         "{const i=window.__mcFI;window.__mcFB[i]=wx;window.__mcFB[i+1]=wy;window.__mcFB[i+2]=wz;window.__mcFB[i+3]=faceMat;window.__mcFB[i+4]=ao;window.__mcFI=i+5}")
 
+// Like jsChunkFaceAppend but packs yOffset (0..2) into bits 16-17 of ao so chunkProcessFaces
+// can shift geometry by yOffset/3 within the cell.
+fun jsChunkFaceAppendYOffset(wx: Int, wy: Int, wz: Int, yOffset: Int, faceMat: Int, ao: Int): Unit =
+    js(
+        "{const i=window.__mcFI;window.__mcFB[i]=wx;window.__mcFB[i+1]=wy;window.__mcFB[i+2]=wz;window.__mcFB[i+3]=faceMat;window.__mcFB[i+4]=(ao|(yOffset<<16));window.__mcFI=i+5}")
+
 // Process a budget slice of __mcFB into FaceGroups; returns faces processed.
 fun jsChunkProcessFaces(cursor: Int, maxFaces: Int): Int =
     js("mc.chunkProcessFaces(cursor, maxFaces)")

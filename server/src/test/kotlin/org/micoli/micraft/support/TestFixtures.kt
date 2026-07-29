@@ -134,6 +134,18 @@ private val _itemRegistryInit =
                     placesBlock = BlockType.LEGO_BRICK_1X2,
                     label = "L1X",
                     bg = "#32DC64"),
+            ItemType("LEGO_PLATE_2X2") to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.LEGO_PLATE_2X2,
+                    label = "P22",
+                    bg = "#B450B4"),
+            ItemType("LEGO_PLATE_2X4") to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.LEGO_PLATE_2X4,
+                    label = "P24",
+                    bg = "#50B450"),
         ))
 
 fun testPlayerState(

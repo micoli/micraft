@@ -10,4 +10,5 @@ data class BlockEntity(
     val sizeY: Int = 1,
     val sizeZ: Int = 1,
     val rotation: Int = 0,
+    val yOffset: Int = 0,
 )

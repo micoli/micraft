@@ -106,3 +106,13 @@ LEGO_BRICK_1X2:
   placesBlock: LEGO_BRICK_1X2
   label: L1X
   bg: "#32DC64"
+LEGO_PLATE_2X2:
+  buildable: true
+  placesBlock: LEGO_PLATE_2X2
+  label: P22
+  bg: "#B450B4"
+LEGO_PLATE_2X4:
+  buildable: true
+  placesBlock: LEGO_PLATE_2X4
+  label: P24
+  bg: "#50B450"

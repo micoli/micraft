@@ -449,6 +449,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                 sizeY = proto.sizeY,
                                 sizeZ = proto.sizeZ,
                                 rotation = proto.rotation,
+                                yOffset = proto.yOffset,
                             )
                         affectedChunks[cp] = Pair(existing.addEntity(entity), topY)
                     }
@@ -463,6 +464,19 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         val localZ = masterWorldPos.z - cz * WorldConstants.CHUNK_SIZE
                         val masterIdx = Chunk.index(localX, masterWorldPos.y, localZ)
                         affectedChunks[cp] = Pair(existing.removeEntity(masterIdx), topY)
+                    }
+
+                    msg.entityRemovesAt.forEach { spec ->
+                        val cx = spec.pos.x.floorDiv(WorldConstants.CHUNK_SIZE)
+                        val cz = spec.pos.z.floorDiv(WorldConstants.CHUNK_SIZE)
+                        val cp = ChunkPos(cx, cz)
+                        val (existing, topY) =
+                            affectedChunks[cp] ?: chunkManager.chunkData[cp] ?: return@forEach
+                        val localX = spec.pos.x - cx * WorldConstants.CHUNK_SIZE
+                        val localZ = spec.pos.z - cz * WorldConstants.CHUNK_SIZE
+                        val masterIdx = Chunk.index(localX, spec.pos.y, localZ)
+                        affectedChunks[cp] =
+                            Pair(existing.removeEntityAt(masterIdx, spec.yOffset), topY)
                     }
 
                     affectedChunks.forEach { (_, pair) ->
@@ -597,6 +611,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         hasStuds = info.hasStuds,
                                         isSlope = info.isSlope,
                                         brickSize = info.brickSize,
+                                        heightFraction = info.heightFraction,
                                     )
                             }
                             .toMap()
