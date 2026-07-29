@@ -314,3 +314,22 @@ async function mountUI() {
   createRoot(uiRoot).render(createElement(GameUI));
 }
 mountUI();
+
+window.addEventListener("unhandledrejection", (event) => {
+  const err = event.reason;
+  if (!(err instanceof TypeError) || !/WebAssembly/i.test(err.message)) return;
+  const probe = (): void => {
+    fetch("/api/assets/manifest")
+      .then(() => window.location.reload())
+      .catch(() => setTimeout(probe, 2000));
+  };
+  const tryShow = () => {
+    if (window.mc?.showDisconnectedOverlay) {
+      window.mc.showDisconnectedOverlay("Chargement WASM...");
+      setTimeout(probe, 1500);
+    } else {
+      setTimeout(tryShow, 200);
+    }
+  };
+  tryShow();
+});
