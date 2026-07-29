@@ -5,7 +5,8 @@
   "scripts": {
     "gen-plugins": "node scripts/gen-plugins-index.mjs",
     "copy:babylon": "cp node_modules/babylonjs/babylon.js ${MC_OUT_BABYLON:-../src/wasmJsMain/resources/babylon.js}",
-    "build": "npm run copy:babylon && node scripts/gen-plugins-index.mjs && esbuild index.ts --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --alias:@plugins=../../../plugins $MC_ESBUILD_FLAGS --outfile=${MC_OUT_JS:-../src/wasmJsMain/resources/mc_bindings.js}",
+    "copy:babylon-loaders": "cp node_modules/babylonjs-loaders/babylonjs.loaders.js ${MC_OUT_BABYLON_LOADERS:-../src/wasmJsMain/resources/babylonjs.loaders.js}",
+    "build": "npm run copy:babylon && npm run copy:babylon-loaders && node scripts/gen-plugins-index.mjs && esbuild index.ts --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --alias:@plugins=../../../plugins $MC_ESBUILD_FLAGS --outfile=${MC_OUT_JS:-../src/wasmJsMain/resources/mc_bindings.js}",
     "build:css": "tailwindcss -i ./styles/main.css -o ${MC_OUT_CSS:-../src/wasmJsMain/resources/main.css} ${MC_TW_FLAGS:---minify}",
     "typecheck": "tsc --noEmit",
     "watch:mc_bindings": "node scripts/gen-plugins-index.mjs && esbuild index.ts --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --alias:@plugins=../../../plugins --outfile=${MC_OUT_JS:-../src/wasmJsMain/resources/mc_bindings.js} --watch=forever",
@@ -64,6 +65,7 @@
     "@vitejs/plugin-react": "^5.2.0",
     "@vitest/ui": "^4.1.10",
     "babylonjs": "7.48.0",
+    "babylonjs-loaders": "7.48.0",
     "esbuild": "0.21.5",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
@@ -84,6 +86,7 @@
     "@parcel/watcher@2.5.1": true,
     "@swc/core@1.15.43": true,
     "babylonjs@7.48.0": true,
+    "babylonjs-loaders@7.48.0": true,
     "esbuild@0.21.5": true,
     "esbuild@0.25.12": true
   }

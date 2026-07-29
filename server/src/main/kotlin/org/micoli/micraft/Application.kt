@@ -85,6 +85,7 @@ import org.micoli.micraft.http.AssetNotifyController
 import org.micoli.micraft.http.AttacksController
 import org.micoli.micraft.http.AutocompleteController
 import org.micoli.micraft.http.BiomesController
+import org.micoli.micraft.http.GameAssetsController
 import org.micoli.micraft.http.CharacterController
 import org.micoli.micraft.http.ChunkController
 import org.micoli.micraft.http.I18nController
@@ -283,6 +284,7 @@ fun Application.module() {
         CharacterController(persistence).register(this)
         SkinsController().register(this)
         ArmorsController(dataPath).register(this)
+        GameAssetsController().register(this)
         QuestsController(questManager).register(this)
         staticFiles("/api/models", File("resources"))
         MapController(gameLoop, tokenStore).register(this)

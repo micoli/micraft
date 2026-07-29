@@ -87326,7 +87326,8 @@ ${end.comment}` : end.comment;
     config: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
     worlds: "M3 7l9-4 9 4M3 7v10l9 4m-9-14l9 4m9-4v10l-9 4m0-14v14",
     classes: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
-    npcs: "M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"
+    npcs: "M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18",
+    gameAssets: "M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"
   };
   var NAV = [
     { path: "/admin", label: "Status", icon: ICONS.status, exact: true },
@@ -87335,7 +87336,8 @@ ${end.comment}` : end.comment;
     { path: "/admin/npcs", label: "NPCs", icon: ICONS.npcs },
     { path: "/admin/classes", label: "Classes", icon: ICONS.classes },
     { path: "/admin/config", label: "Config", icon: ICONS.config },
-    { path: "/admin/worlds", label: "Worlds", icon: ICONS.worlds }
+    { path: "/admin/worlds", label: "Worlds", icon: ICONS.worlds },
+    { path: "/admin/game-assets", label: "Game Assets", icon: ICONS.gameAssets }
   ];
   var PAGE_LABELS = {
     "/admin": "Server Status",
@@ -87344,21 +87346,22 @@ ${end.comment}` : end.comment;
     "/admin/npcs": "NPCs",
     "/admin/classes": "Classes & Skills",
     "/admin/config": "Config Editor",
-    "/admin/worlds": "Worlds"
+    "/admin/worlds": "Worlds",
+    "/admin/game-assets": "Game Assets"
   };
   function Sidebar() {
     const { pathname } = useLocation();
-    return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("aside", { className: "w-64 shrink-0 h-screen flex flex-col bg-[#1C2434] border-r border-[#2E3A4E]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "h-16 flex items-center px-6 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex items-center gap-2.5", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "w-8 h-8 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
+    return /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("aside", { className: "w-64 shrink-0 h-screen flex flex-col bg-[#1C2434] border-r border-[#2E3A4E]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("div", { className: "h-16 flex items-center px-6 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { className: "flex items-center gap-2.5", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("div", { className: "w-8 h-8 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
+        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
+        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("nav", { className: "flex-1 px-4 py-5 space-y-0.5 overflow-y-auto", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: "Menu" }),
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("nav", { className: "flex-1 px-4 py-5 space-y-0.5 overflow-y-auto", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: "Menu" }),
         NAV.map(({ path, label, icon, exact }) => {
           const active = exact ? pathname === path : pathname.startsWith(path);
-          return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(
+          return /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)(
             Link,
             {
               to: path,
@@ -87367,7 +87370,7 @@ ${end.comment}` : end.comment;
                 active ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white"
               ),
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Icon2, { d: icon, size: 17 }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Icon2, { d: icon, size: 17 }) }),
                 label
               ]
             },
@@ -87375,48 +87378,49 @@ ${end.comment}` : end.comment;
           );
         })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "px-6 py-4 border-t border-[#2E3A4E] text-[10px] text-[#8A99AF]", children: "micraft admin v1" })
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("div", { className: "px-6 py-4 border-t border-[#2E3A4E] text-[10px] text-[#8A99AF]", children: "micraft admin v1" })
     ] });
   }
   function Header() {
     var _a6;
     const { pathname } = useLocation();
     const title = (_a6 = PAGE_LABELS[pathname]) != null ? _a6 : "Admin";
-    return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
           "Admin / ",
           title
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
+        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
         "Server online"
       ] })
     ] });
   }
   function AdminApp() {
-    return /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Sidebar, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Header, {}),
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(Routes, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(StatusPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(UsersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(PlayersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin/npcs", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(NpcsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ClassesPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(ConfigEditorPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(WorldsPage, {}) })
+    return /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Sidebar, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Header, {}),
+        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)(Routes, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(StatusPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(UsersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(PlayersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/npcs", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(NpcsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(ClassesPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(ConfigEditorPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(WorldsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/game-assets", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(GameAssetsPage, {}) })
         ] }) })
       ] })
     ] }) });
   }
 
   // admin/index.tsx
-  var import_jsx_runtime22 = __toESM(require_jsx_runtime(), 1);
-  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime22.jsx)(AdminApp, {}));
+  var import_jsx_runtime24 = __toESM(require_jsx_runtime(), 1);
+  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime24.jsx)(AdminApp, {}));
 })();
 /*! Bundled license information:
 

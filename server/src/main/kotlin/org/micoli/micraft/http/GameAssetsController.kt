@@ -1,0 +1,66 @@
+package org.micoli.micraft.http
+
+import io.ktor.http.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import java.io.File
+
+class GameAssetsController {
+    data class AssetEntry(val pack: String, val name: String, val path: String, val format: String)
+
+    private val extensions = setOf("glb", "gltf", "fbx")
+    private val root = File("resources/game-assets")
+
+    private val contentTypeByExt = mapOf(
+        "glb"  to ContentType("model", "gltf-binary"),
+        "gltf" to ContentType("model", "gltf+json"),
+        "fbx"  to ContentType.Application.OctetStream,
+        "png"  to ContentType.Image.PNG,
+        "jpg"  to ContentType.Image.JPEG,
+        "jpeg" to ContentType.Image.JPEG,
+        "ktx"  to ContentType.Application.OctetStream,
+        "dds"  to ContentType.Application.OctetStream,
+        "bin"  to ContentType.Application.OctetStream,
+    )
+
+    fun register(route: Route) =
+        route.apply {
+            get("/api/game-assets") {
+                val assets = mutableListOf<AssetEntry>()
+                if (root.exists()) {
+                    root.listFiles()?.filter { it.isDirectory && !it.name.startsWith(".") }?.forEach { packDir ->
+                        packDir
+                            .walkTopDown()
+                            .filter { it.isFile && it.name.extension.lowercase() in extensions && !it.path.contains("__MACOSX") }
+                            .forEach { file ->
+                                val rel = file.relativeTo(File("resources")).path.replace("\\", "/")
+                                assets.add(AssetEntry(packDir.name, file.nameWithoutExtension, rel, file.name.extension.lowercase()))
+                            }
+                    }
+                }
+                val json = buildString {
+                    append("[")
+                    assets.forEachIndexed { i, a ->
+                        if (i > 0) append(",")
+                        append("""{"pack":${a.pack.toJson()},"name":${a.name.toJson()},"path":${a.path.toJson()},"format":${a.format.toJson()}}""")
+                    }
+                    append("]")
+                }
+                call.respondText(json, ContentType.Application.Json)
+            }
+
+            get("/api/game-assets/file/{path...}") {
+                val relPath = call.parameters.getAll("path")?.joinToString("/")
+                    ?: return@get call.respond(HttpStatusCode.BadRequest)
+                val file = File("resources/game-assets/$relPath")
+                if (!file.exists() || !file.canonicalPath.startsWith(root.canonicalPath)) {
+                    return@get call.respond(HttpStatusCode.NotFound)
+                }
+                val ct = contentTypeByExt[file.extension.lowercase()] ?: ContentType.Application.OctetStream
+                call.respondBytes(file.readBytes(), ct)
+            }
+        }
+
+    private fun String.toJson() = "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
+    private val String.extension get() = substringAfterLast('.', "")
+}
