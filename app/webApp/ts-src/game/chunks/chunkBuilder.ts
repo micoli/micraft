@@ -293,6 +293,12 @@ function emitCrossSprite(wx: number, wy: number, wz: number, g: FaceGroup, uv: F
 
 const FACE_BUF_SLOTS = 600_000; // 5 ints × up to 120k faces per chunk
 
+// Y-slab height for sub-chunk mesh splitting. Each material×slab combo becomes its own
+// BabylonJS mesh, giving the engine a tight bounding box per slab for frustum culling.
+// With SLAB_HEIGHT=16, a world of topY≈128 produces 8 slabs — only the 2-3 slabs in the
+// camera frustum are rendered, saving 60-70% of vertex work for underground/angled views.
+const SLAB_HEIGHT = 16;
+
 // --- Chunk state ---
 
 interface ChunkBuf {
@@ -425,11 +431,13 @@ export function registerChunks(): Pick<
         const wy = fb[i + 1] + (yOff === 0 ? 0 : yOff / 3);
         const infos = faceTable[faceMat];
         if (!infos) continue;
+        const yBand = Math.floor(wy / SLAB_HEIGHT);
         for (const info of infos) {
-          let g = grp[info.matKey];
+          const groupKey = `${info.matKey}|${yBand}`;
+          let g = grp[groupKey];
           if (!g) {
             g = acquireGroup();
-            grp[info.matKey] = g;
+            grp[groupKey] = g;
           }
           if (info.isCrossSprite) {
             emitCrossSprite(wx, wy, wz, g, info.uv, ao);
@@ -462,13 +470,15 @@ export function registerChunks(): Pick<
       disposeChunk(buf.key);
 
       const meshes: Mesh[] = [];
-      for (const mk of Object.keys(buf.groups)) {
-        const g = buf.groups[mk];
+      for (const groupKey of Object.keys(buf.groups)) {
+        const g = buf.groups[groupKey];
         if (g.v === 0) {
           releaseGroup(g);
           continue;
         }
-        const mesh = new BABYLON.Mesh(`ck${buf.key}${mk}`, scene);
+        // groupKey = "matKey|yBand" — extract matKey for material lookup
+        const matKey = groupKey.slice(0, groupKey.lastIndexOf("|"));
+        const mesh = new BABYLON.Mesh(`ck${buf.key}${groupKey}`, scene);
         const vd = new BABYLON.VertexData();
         vd.positions = g.p.subarray(0, g.v * 3);
         vd.normals = g.n.subarray(0, g.v * 3);
@@ -476,7 +486,7 @@ export function registerChunks(): Pick<
         vd.colors = g.c.subarray(0, g.v * 4);
         vd.indices = g.i.subarray(0, g.ic);
         vd.applyToMesh(mesh, false);
-        mesh.material = materials[mk] ?? null;
+        mesh.material = materials[matKey] ?? null;
         mesh.isPickable = false;
         mesh.doNotSyncBoundingInfo = true;
         mesh.refreshBoundingInfo();
