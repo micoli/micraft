@@ -9,6 +9,7 @@ data class BlockYamlEntry(
     val transparent: Boolean = false,
     val minimapColor: List<Int> = listOf(128, 128, 128),
     val modelElement: String = "",
+    val gltfModel: String = "",
     val liquid: Boolean = false,
     val viscosity: Int = 0,
     val replaceable: Boolean = false,

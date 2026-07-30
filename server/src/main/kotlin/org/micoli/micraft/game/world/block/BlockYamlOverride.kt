@@ -9,6 +9,7 @@ data class BlockYamlOverride(
     val transparent: Boolean? = null,
     val minimapColor: List<Int>? = null,
     val modelElement: String? = null,
+    val gltfModel: String? = null,
     val liquid: Boolean? = null,
     val viscosity: Int? = null,
     val replaceable: Boolean? = null,

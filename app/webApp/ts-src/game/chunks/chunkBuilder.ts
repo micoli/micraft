@@ -76,6 +76,43 @@ interface FaceInfo {
 // faceTable[faceMat] = list of FaceInfo to emit (one per element that has this face)
 let faceTable: (FaceInfo[] | null)[] = [];
 
+// gltfTypeTable[typeOrd] = gltf asset path for blocks rendered as GLTF instances
+const gltfTypeTable: Record<number, string> = {};
+
+// Cache of loaded GLTF source meshes (hidden, used for instancing). Keyed by gltfPath.
+const gltfMeshCache: Map<string, InstanceType<typeof BABYLON.Mesh>[]> = new Map();
+
+async function loadGltfSources(
+  gltfPath: string,
+  scene: InstanceType<typeof BABYLON.Scene>,
+): Promise<InstanceType<typeof BABYLON.Mesh>[]> {
+  if (gltfMeshCache.has(gltfPath)) return gltfMeshCache.get(gltfPath)!;
+  const parts = gltfPath.split("/");
+  const fileName = parts.pop()!;
+  const baseUrl = `/api/game-assets/file/${parts.join("/")}/`;
+  const result = await (BABYLON.SceneLoader as any).ImportMeshAsync("", baseUrl, fileName, scene);
+  // BabylonJS GLTF loader creates a __root__ TransformNode with scaling.x=-1 to convert
+  // from GLTF right-handed to BabylonJS left-handed coords. Instances don't inherit that
+  // parent, so we bake the transform into vertex positions/normals before instancing.
+  const sources = (result.meshes as InstanceType<typeof BABYLON.AbstractMesh>[])
+    .filter((m) => (m as any).getTotalVertices?.() > 0)
+    .map((m) => {
+      const mesh = m as InstanceType<typeof BABYLON.Mesh>;
+      mesh.setParent(null); // folds __root__ scaling(-1,1,1) into local transform
+      (mesh as any).bakeCurrentTransformIntoVertices?.();
+      mesh.position.setAll(0);
+      mesh.rotationQuaternion = null;
+      mesh.rotation.setAll(0);
+      mesh.scaling.setAll(1);
+      mesh.isVisible = false;
+      mesh.isPickable = false;
+      return mesh;
+    });
+  result.transformNodes?.forEach((n: any) => n.dispose?.());
+  gltfMeshCache.set(gltfPath, sources);
+  return sources;
+}
+
 const CROSS_SPRITE_VERTS = new Float32Array([0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1]);
 
 // Slope geometry for rotation=0 (ascending toward south/+Z: y=0 at north, y=1 at south).
@@ -104,6 +141,10 @@ function buildFaceTable(): void {
   for (let typeOrd = 0; typeOrd < 512; typeOrd++) {
     const blockDef = window.mc.getBlockDef(typeOrd);
     if (!blockDef) continue;
+    if (blockDef.renderType === "gltf") {
+      if (blockDef.gltfPath) gltfTypeTable[typeOrd] = blockDef.gltfPath;
+      continue;
+    }
     const isCross = blockDef.renderType === "cross_sprite";
     const isSlope = blockDef.renderType === "slope";
     const isPlastic = blockDef.hasStuds === true;
@@ -304,6 +345,7 @@ const SLAB_HEIGHT = 16;
 interface ChunkBuf {
   key: string;
   groups: Record<string, FaceGroup>;
+  gltfPositions: Record<number, Set<string>>; // typeOrd → Set of "wx,wy,wz" keys
 }
 let __mcBuf: ChunkBuf | null = null;
 
@@ -402,7 +444,7 @@ export function registerChunks(): Pick<
       if (__mcBuf) {
         for (const mk of Object.keys(__mcBuf.groups)) releaseGroup(__mcBuf.groups[mk]);
       }
-      __mcBuf = { key: `${cx},${cz}`, groups: {} };
+      __mcBuf = { key: `${cx},${cz}`, groups: {}, gltfPositions: {} };
       if (!window.__mcFB) window.__mcFB = new Int32Array(FACE_BUF_SLOTS);
       window.__mcFI = 0;
     },
@@ -430,7 +472,15 @@ export function registerChunks(): Pick<
         const yOff = (aoPacked >>> 16) & 0x3;
         const wy = fb[i + 1] + (yOff === 0 ? 0 : yOff / 3);
         const infos = faceTable[faceMat];
-        if (!infos) continue;
+        if (!infos) {
+          const typeOrd = (faceMat / 24) | 0;
+          if (gltfTypeTable[typeOrd] !== undefined) {
+            const posKey = `${fb[i]},${fb[i + 1]},${fb[i + 2]}`;
+            if (!buf.gltfPositions[typeOrd]) buf.gltfPositions[typeOrd] = new Set();
+            buf.gltfPositions[typeOrd].add(posKey);
+          }
+          continue;
+        }
         const yBand = Math.floor(wy / SLAB_HEIGHT);
         for (const info of infos) {
           const groupKey = `${info.matKey}|${yBand}`;
@@ -495,6 +545,33 @@ export function registerChunks(): Pick<
         releaseGroup(g);
       }
       window.mcState.chunks[buf.key] = meshes;
+
+      const gltfEntries = Object.entries(buf.gltfPositions);
+      if (gltfEntries.length > 0) {
+        const chunkKey = buf.key;
+        (async () => {
+          for (const [typeOrdStr, posSet] of gltfEntries) {
+            const gltfPath = gltfTypeTable[Number(typeOrdStr)];
+            if (!gltfPath) continue;
+            const sources = await loadGltfSources(gltfPath, scene);
+            if (!window.mcState.chunks[chunkKey]) continue; // chunk disposed during async load
+            const instances: InstanceType<typeof BABYLON.AbstractMesh>[] = [];
+            for (const posKey of posSet) {
+              const [wx, wy, wz] = posKey.split(",").map(Number);
+              for (const src of sources) {
+                const inst = src.createInstance(`gltfi_${chunkKey}_${posKey}`);
+                inst.position.set(wx, wy, wz + 1);
+//                 inst.position.set(wx, wy, wz);
+                inst.scaling.setAll(0.80);
+                inst.isPickable = false;
+                instances.push(inst);
+              }
+            }
+            const existing = window.mcState.chunks[chunkKey] as InstanceType<typeof BABYLON.AbstractMesh>[];
+            window.mcState.chunks[chunkKey] = [...existing, ...instances];
+          }
+        })();
+      }
     },
   };
 }

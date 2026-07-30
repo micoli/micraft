@@ -713,6 +713,7 @@ class GameLoop(
                     transparent = def.transparent,
                     minimapColor = def.minimapColor,
                     modelElement = def.modelElement,
+                    gltfModel = def.gltfModel,
                     liquid = def.liquid,
                     viscosity = def.viscosity,
                     minimapVisible = def.minimapVisible,

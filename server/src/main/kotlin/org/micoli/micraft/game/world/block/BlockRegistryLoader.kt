@@ -122,6 +122,7 @@ class BlockRegistryLoader(
                     transparent = entry.transparent,
                     minimapColor = entry.minimapColor,
                     modelElement = entry.modelElement,
+                    gltfModel = entry.gltfModel,
                     liquid = entry.liquid,
                     viscosity = entry.viscosity,
                     replaceable = entry.replaceable,

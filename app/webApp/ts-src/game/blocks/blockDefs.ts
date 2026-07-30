@@ -67,7 +67,7 @@ let _blockDefs: (McBlockDef | null)[] | null = null;
 let _blockTextures: McBlockTextureDef[] | null = null;
 
 // Loaded from RegistrySync — ordinal-indexed list of block infos
-let _registryBlocks: { name: string; modelElement: string; liquid?: boolean; hasStuds?: boolean }[] | null = null;
+let _registryBlocks: { name: string; modelElement: string; gltfModel?: string; liquid?: boolean; hasStuds?: boolean }[] | null = null;
 
 export function registerBlockDefs(): Pick<
   McBindings,
@@ -82,6 +82,10 @@ export function registerBlockDefs(): Pick<
 
       const fetches = _registryBlocks.map((info, ordinal) => {
         if (info.name === "AIR") return Promise.resolve();
+        if (info.gltfModel) {
+          defs[ordinal] = { name: info.name, renderType: "gltf", gltfPath: info.gltfModel, elements: [], faces: [] };
+          return Promise.resolve();
+        }
         if (info.liquid) {
           const liquidFaces: McBlockFaceInfo[] = Array.from({ length: 6 }, () => ({
             matKey: WATER_MAT_KEY,
@@ -122,7 +126,7 @@ export function registerBlockDefs(): Pick<
 
 // Called from setBlockRegistry (set up in index.ts) before initBlockDefs
 export function setRegistryBlocks(
-  blocks: { name: string; modelElement: string; liquid?: boolean; hasStuds?: boolean }[],
+  blocks: { name: string; modelElement: string; gltfModel?: string; liquid?: boolean; hasStuds?: boolean }[],
 ): void {
   _registryBlocks = blocks;
 }

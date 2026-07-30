@@ -6,6 +6,7 @@ minimapColor:
 - 92
 - 46
 modelElement: ""
+#gltfModel: "KayKit_BlockBits_1.0_FREE/Assets/gltf/dirt_with_grass.gltf"
 liquid: false
 viscosity: 0
 replaceable: false

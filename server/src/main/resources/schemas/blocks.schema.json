@@ -13,6 +13,7 @@
       "maxItems": 3
     },
     "modelElement": {"type": "string"},
+    "gltfModel": {"type": "string"},
     "liquid": {"type": "boolean"},
     "viscosity": {"type": "integer", "minimum": 0},
     "replaceable": {"type": "boolean"},

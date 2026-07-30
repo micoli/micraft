@@ -340,6 +340,7 @@ data class BlockInfo(
     val transparent: Boolean,
     val minimapColor: List<Int>,
     val modelElement: String,
+    val gltfModel: String = "",
     val liquid: Boolean = false,
     val viscosity: Int = 0,
     val minimapVisible: Boolean = true,

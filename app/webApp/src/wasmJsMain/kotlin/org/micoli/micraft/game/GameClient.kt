@@ -604,6 +604,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         transparent = info.transparent,
                                         minimapColor = info.minimapColor,
                                         modelElement = info.modelElement,
+                                        gltfModel = info.gltfModel,
                                         liquid = info.liquid,
                                         viscosity = info.viscosity,
                                         minimapVisible = info.minimapVisible,
