@@ -51,8 +51,8 @@ export function ShortcutBar({
   return (
     <div
       className={cn(
-        "relative flex gap-1 pointer-events-auto z-[999] bg-black/60 border border-white/20 rounded-md py-1.5 px-2.5 items-center justify-center",
-        !layoutStyle && "fixed bottom-5 left-1/2 -translate-x-1/2",
+        "relative flex flex-wrap gap-1 pointer-events-auto z-[999] rounded-md py-1.5 px-2.5 items-center justify-center",
+        !layoutStyle && "fixed bottom-5 left-1/2 -translate-x-1/2 bg-black/60",
       )}
       style={layoutStyle}
       onDragOver={(e) => e.preventDefault()}
@@ -156,11 +156,9 @@ export function ShortcutBar({
                   }}
                 />
                 <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px]">{itemMeta_.label}</div>
-                {count > 0 && (
-                  <div className="absolute bottom-0.5 right-1 text-white font-mono font-bold text-[9px] [text-shadow:1px_1px_0_#000]">
-                    {count}
-                  </div>
-                )}
+                <div className="absolute bottom-0.5 right-1 font-mono font-bold text-[9px] [text-shadow:1px_1px_0_#000]">
+                  {count > 0 ? <span className="text-white">{count}</span> : <span className="text-red-500/80">⊘</span>}
+                </div>
               </>
             ) : null}
           </div>
