@@ -133,6 +133,16 @@ export function setRegistryBlocks(
   _registryBlocks = blocks;
 }
 
+export function getBlockOrdinalByName(blockName: string): number | null {
+  if (!_registryBlocks) return null;
+  const ordinal = _registryBlocks.findIndex((b) => b.name === blockName);
+  return ordinal === -1 ? null : ordinal;
+}
+
+export function getRegistryBlockCount(): number {
+  return _registryBlocks?.length ?? 0;
+}
+
 export function getFaceTexUrl(ordinal: number, faceDir: number): string | null {
   const def = window.mc?.getBlockDef?.(ordinal) as McBlockDef | null;
   if (!def?.faces?.length) return null;

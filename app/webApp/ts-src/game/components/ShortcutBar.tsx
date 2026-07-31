@@ -1,8 +1,10 @@
 import { cn } from "../../primitives/cn";
+import { getBlockOrdinalByName } from "../blocks/blockDefs";
 import { useShortcutBar } from "../hooks/useShortcutBar";
 import { ShortcutSlot, AttackMeta, SpellMeta } from "../types";
 import { UiState } from "../UIReducer";
 import { damageTypeColor, AttackCooldownOverlay } from "./AttackPanel";
+import { CssBlockCube, useBlockDefsReady, useBlockPreviews } from "../shared/BlockPreview";
 
 interface Props {
   inventory: Record<string, number>;
@@ -35,6 +37,8 @@ export function ShortcutBar({
   macroIcons,
   playerStatus,
 }: Props) {
+  const defsReady = useBlockDefsReady();
+  const getPreview = useBlockPreviews();
   const {
     dragOver,
     pressedSlot,
@@ -76,6 +80,7 @@ export function ShortcutBar({
         const spellDef = isSpell ? spellMeta[slot!.id] : null;
         const itemMeta_ = slot?.kind === "item" ? itemMeta[slot.id] : null;
         const count = slot?.kind === "item" ? (inventory[slot.id] ?? 0) : 0;
+        const itemOrdinal = slot?.kind === "item" ? getBlockOrdinalByName(slot.id) : null;
 
         const slotHasCd = isAttack && (playerStatus?.attackCooldownsRemainingMs?.[slot!.id] ?? 0) > 0;
         return (
@@ -148,13 +153,24 @@ export function ShortcutBar({
               </>
             ) : itemMeta_ ? (
               <>
-                <div
-                  className="w-[26px] h-[26px] rounded-sm"
-                  style={{
-                    background: itemMeta_.bg,
-                    boxShadow: "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
-                  }}
-                />
+                {itemOrdinal != null && getPreview(itemOrdinal) ? (
+                  <img
+                    src={getPreview(itemOrdinal)!}
+                    width={40}
+                    height={40}
+                    style={{ imageRendering: "pixelated", display: "block" }}
+                  />
+                ) : itemOrdinal != null && defsReady ? (
+                  <CssBlockCube ordinal={itemOrdinal} size={26} />
+                ) : (
+                  <div
+                    className="w-[26px] h-[26px] rounded-sm"
+                    style={{
+                      background: itemMeta_.bg,
+                      boxShadow: "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
+                    }}
+                  />
+                )}
                 <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px]">{itemMeta_.label}</div>
                 <div className="absolute bottom-0.5 right-1 font-mono font-bold text-[9px] [text-shadow:1px_1px_0_#000]">
                   {count > 0 ? <span className="text-white">{count}</span> : <span className="text-red-500/80">⊘</span>}

@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
+import { startPreloading } from "../game/shared/blockPreviewCache";
 import { getStoredToken, getLastLang, getAccountEmail, getLastPlayer } from "../lib/authStorage";
 import { GameLayout, ChannelSubscription } from "../game/types";
 import { NpcDialog } from "../game/npc/NpcDialog";
@@ -58,6 +59,10 @@ export function GameScreen() {
   const { accountEmail: encodedEmail } = useParams<{ accountEmail: string; charId: string }>();
   const navigate = useNavigate();
   const reconnectAttempted = useRef(false);
+
+  useEffect(() => {
+    startPreloading();
+  }, []);
 
   useEffect(() => {
     if (reconnectAttempted.current || !encodedEmail) return;

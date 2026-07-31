@@ -167,9 +167,14 @@ export function registerKeyboard(): Pick<
         if (b.screenshot?.some((k) => matchesEvent(k, e))) window.mcState.events.push("screenshot");
         if (b.quest_journal?.some((k) => matchesEvent(k, e))) window.mc?.openQuestJournal?.();
         if (b.quest_tracking?.some((k) => matchesEvent(k, e))) window.mc?.toggleQuestTracker?.();
-        for (let s = 1; s <= 10; s++) {
-          const key = `slot_${s}` as string;
-          if (b[key]?.some((k: string) => matchesEvent(k, e))) window.mcState.events.push(key);
+        const pageActionMatched = Array.from({ length: 12 }, (_, i) =>
+          i < 10 ? `shortcut_page_${i + 1}` : i === 10 ? "shortcut_page_prev" : "shortcut_page_next",
+        ).some((action) => b[action]?.some((k: string) => matchesEvent(k, e)));
+        if (!pageActionMatched) {
+          for (let s = 1; s <= 10; s++) {
+            const key = `slot_${s}` as string;
+            if (b[key]?.some((k: string) => matchesEvent(k, e))) window.mcState.events.push(key);
+          }
         }
         if (Object.values(b).some((keys) => keys.some((k) => matchesEvent(k, e)))) e.preventDefault();
 
