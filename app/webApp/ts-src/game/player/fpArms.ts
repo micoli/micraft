@@ -119,8 +119,9 @@ export function registerFPArms(): Pick<
         }
         const bone = fpArms.walkAnim[p.name];
         if (bone) {
-          const t = (Date.now() % (bone.length * 1000)) / (bone.length * 1000);
-          p.node.rotation.x = interpAxis(bone.keyframes, t, "x") * DEG;
+          const animLen = Math.max(bone.length, 1e-3);
+          const tSec = (Date.now() % (animLen * 1000)) / 1000;
+          p.node.rotation.x = interpAxis(bone.keyframes, tSec, "x") * DEG;
         } else {
           p.node.rotation.x = 0;
         }

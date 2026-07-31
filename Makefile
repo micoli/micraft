@@ -185,6 +185,9 @@ ts-code-standard: npm-format ts-typecheck ts-lint
 check-configuration:
 	$(EXEC) "./gradlew :server:validateConfig"
 
+dev-extract-kay-animations:
+	$(EXEC) "./gradlew :extractKayKitAnimations"
+
 spotless-apply:
 	$(EXEC) "./gradlew :spotlessApply"
 

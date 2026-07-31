@@ -136,13 +136,15 @@ export function registerNpcModel(): Pick<
       const PROC_PHASE: Record<string, number> = { rightArm: 0, leftArm: Math.PI, rightLeg: Math.PI, leftLeg: 0 };
 
       if (isWalking) {
-        const animLen = wa["rightArm"]?.length ?? 1;
-        const t = (Date.now() % (animLen * 1000)) / (animLen * 1000);
+        const animLen = Math.max(wa["rightArm"]?.length ?? 1, 1e-3);
+        // interpAxis samples in clip seconds; the procedural fallback wants a normalised 0..1 phase.
+        const tSec = (Date.now() % (animLen * 1000)) / 1000;
+        const phase = tSec / animLen;
         for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
           if (!pn[bname]) continue;
           pn[bname].node.rotation.x = wa[bname]
-            ? interpAxis(wa[bname].keyframes, t, "x") * DEG
-            : PROC_AMP * DEG * Math.sin(t * 2 * Math.PI + (PROC_PHASE[bname] ?? 0));
+            ? interpAxis(wa[bname].keyframes, tSec, "x") * DEG
+            : PROC_AMP * DEG * Math.sin(phase * 2 * Math.PI + (PROC_PHASE[bname] ?? 0));
         }
         return;
       }

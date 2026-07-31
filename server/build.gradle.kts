@@ -85,6 +85,16 @@ tasks.register<JavaExec>("validateConfig") {
     workingDir = rootProject.projectDir
 }
 
+tasks.register<JavaExec>("extractKayKitAnimations") {
+    group = "tools"
+    description =
+        "Extract KayKit GLB animations into player bbmodel files (merges by animation name: " +
+            "same-name animations are overwritten, hand-authored ones are kept)."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.tools.ExtractKayKitAnimationsKt")
+    workingDir = rootProject.projectDir
+}
+
 group = "org.micoli.micraft"
 
 version = "1.0.0"

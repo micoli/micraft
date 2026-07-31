@@ -1,7 +1,8 @@
 import type { Texture } from "@babylonjs/core";
-import { forwardRef, useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
+import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
 import { getFaceTexUrl } from "../blocks/blockDefs";
 import { Block3DPreview, CssBlockCube, useBlockDefsReady, useBlockPreviews } from "../shared/BlockPreview";
+import { interpAxis } from "../player/playerModel";
 
 interface BlockEntry {
   ordinal: number;
@@ -30,12 +31,42 @@ interface NpcEntry {
   autoSpawn: boolean;
 }
 
-type CodexTab = "bestiary" | "blocks" | "items" | "skins";
+type CodexTab = "bestiary" | "blocks" | "items" | "skins" | "animations";
 type Selection =
   | { kind: "block"; ordinal: number }
   | { kind: "item"; name: string }
   | { kind: "npc"; npcType: string }
-  | { kind: "skin"; name: string };
+  | { kind: "skin"; name: string }
+  | { kind: "animation"; fullName: string };
+
+interface AnimationEntry {
+  fullName: string;
+  length: number;
+  boneCount: number;
+}
+
+function animDisplayName(fullName: string): string {
+  return fullName.replace("animation.default_player.", "").replace(/_/g, " ");
+}
+
+function animEmoji(fullName: string): string {
+  const n = fullName.replace("animation.default_player.", "").toLowerCase();
+  if (n.startsWith("walking") || n.startsWith("running")) return "🚶";
+  if (n.startsWith("jump")) return "🦘";
+  if (n.startsWith("idle") || n.startsWith("spawn")) return "💤";
+  if (n.startsWith("death") || n.startsWith("skeletons_death")) return "💀";
+  if (n.startsWith("hit")) return "💥";
+  if (n.startsWith("melee")) return "⚔️";
+  if (n.startsWith("ranged") || n.startsWith("bow") || n.startsWith("magic")) return "🏹";
+  if (n.startsWith("fishing")) return "🎣";
+  if (n.startsWith("chop") || n.startsWith("dig") || n.startsWith("hammer") || n.startsWith("pickaxe") || n.startsWith("saw")) return "⛏️";
+  if (n.startsWith("skeletons")) return "💀";
+  if (n.startsWith("crawling") || n.startsWith("sneaking")) return "🤫";
+  if (n.startsWith("sit") || n.startsWith("lie") || n.startsWith("push") || n.startsWith("cheering") || n.startsWith("waving")) return "💃";
+  if (n.startsWith("dodge")) return "💨";
+  if (n.startsWith("interact") || n.startsWith("pickup") || n.startsWith("use") || n.startsWith("throw") || n.startsWith("work")) return "✋";
+  return "▶";
+}
 
 interface Props {
   open: boolean;
@@ -691,6 +722,176 @@ function SkinDetail({ name }: { name: string }) {
   );
 }
 
+const AnimationCard = forwardRef<HTMLDivElement, { anim: AnimationEntry; selected: boolean; onClick: () => void }>(
+  function AnimationCard({ anim, selected, onClick }, ref) {
+    const display = animDisplayName(anim.fullName);
+    return (
+      <div
+        ref={ref}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "6px 4px",
+          cursor: "pointer",
+          borderRadius: 6,
+          border: `2px solid ${selected ? "#7aac7a" : "transparent"}`,
+          background: selected ? "rgba(122,172,122,0.12)" : "transparent",
+          gap: 2,
+          width: 80,
+        }}
+        onClick={onClick}
+        title={display}
+      >
+        <div
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 6,
+            background: "#1e1e1e",
+            border: "1px solid #333",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 18,
+          }}
+        >
+          {animEmoji(anim.fullName)}
+        </div>
+        <span
+          style={{
+            fontSize: 9,
+            color: "#ccc",
+            textAlign: "center",
+            wordBreak: "break-all",
+            lineHeight: 1.2,
+            maxHeight: 28,
+            overflow: "hidden",
+          }}
+        >
+          {display}
+        </span>
+        <span style={{ fontSize: 8, color: "#555" }}>{anim.length.toFixed(2)}s</span>
+      </div>
+    );
+  },
+);
+
+function AnimationModelPreview({ skin, animFullName }: { skin: string; animFullName: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ready = usePlayerModelReady(skin);
+  const animRef = useRef(animFullName);
+  useLayoutEffect(() => {
+    animRef.current = animFullName;
+  });
+
+  useEffect(() => {
+    if (!ready) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const B = window.BABYLON;
+    if (!B) return;
+
+    const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
+    const scene = new B.Scene(engine);
+    scene.clearColor = new B.Color4(0.08, 0.08, 0.08, 0);
+    new B.ArcRotateCamera("cam", -Math.PI * 0.25, Math.PI / 3.2, 3.0, new B.Vector3(0, 0.9, 0), scene);
+    const light = new B.HemisphericLight("light", new B.Vector3(1, 2, 0.5), scene);
+    light.intensity = 1.1;
+    light.groundColor = new B.Color3(0.2, 0.2, 0.2);
+
+    const model = window.mc.createPlayerModelNow?.(scene, skin) ?? null;
+
+    const bbmodel = window.mcState?.playerBbmodels?.[skin];
+    const uuidToName: Record<string, string> = {};
+    bbmodel?.groups.forEach((g) => {
+      uuidToName[g.uuid] = g.name;
+    });
+
+    const DEG = Math.PI / 180;
+    let angle = 0;
+
+    scene.onBeforeRenderObservable.add(() => {
+      angle += 0.015;
+      if (!model || !bbmodel) return;
+
+      for (const boneName of Object.keys(model.pivotNodes)) {
+        const entry = model.pivotNodes[boneName];
+        entry.node.rotation.x = 0;
+        entry.node.rotation.y = 0;
+        entry.node.rotation.z = 0;
+      }
+      model.root.rotation.y = angle;
+
+      const animDef = bbmodel.animations?.find((a) => a.name === animRef.current);
+      if (!animDef) return;
+
+      const length = animDef.length || 1;
+      const t = (Date.now() % (length * 1000)) / (length * 1000);
+
+      for (const [uuid, animator] of Object.entries(animDef.animators)) {
+        const boneName = uuidToName[uuid];
+        if (!boneName) continue;
+        const pivot = model.pivotNodes[boneName];
+        if (!pivot) continue;
+        const kfs = animator.keyframes?.filter((k) => k.channel === "rotation") ?? [];
+        if (kfs.length === 0) continue;
+        const limbBones = ["rightArm", "leftArm", "rightLeg", "leftLeg"];
+        if (limbBones.includes(boneName)) {
+          pivot.node.rotation.x = interpAxis(kfs, t, "x") * DEG;
+          pivot.node.rotation.y = 0;
+          pivot.node.rotation.z = 0;
+        } else {
+          pivot.node.rotation.x = interpAxis(kfs, t, "x") * DEG;
+          pivot.node.rotation.y = interpAxis(kfs, t, "y") * DEG;
+          pivot.node.rotation.z = interpAxis(kfs, t, "z") * DEG;
+        }
+      }
+    });
+
+    engine.runRenderLoop(() => scene.render());
+    return () => {
+      if (model) window.mc.disposePlayerModel?.(model);
+      engine.dispose();
+    };
+  }, [ready, skin]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={160}
+      height={220}
+      style={{ display: "block", width: 160, height: 220, borderRadius: 6, background: "#111" }}
+    />
+  );
+}
+
+function AnimationDetail({ anim }: { anim: AnimationEntry }) {
+  const display = animDisplayName(anim.fullName);
+  const row = (label: string, value: string) => (
+    <div
+      key={label}
+      style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px solid #2a2a2a" }}
+    >
+      <span style={{ color: "#888", fontSize: 12 }}>{label}</span>
+      <span style={{ color: "#ddd", fontSize: 12 }}>{value}</span>
+    </div>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 8 }}>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <AnimationModelPreview skin="player" animFullName={anim.fullName} />
+      </div>
+      <div style={{ fontSize: 13, fontWeight: "bold", color: "#eee", textAlign: "center" }}>{display}</div>
+      <div>
+        {row("Durée", `${anim.length.toFixed(3)} s`)}
+        {row("Os animés", String(anim.boneCount))}
+      </div>
+    </div>
+  );
+}
+
 export function CodexModal({ open, onClose }: Props) {
   const [tab, setTab] = useState<CodexTab>("bestiary");
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -725,19 +926,37 @@ export function CodexModal({ open, onClose }: Props) {
     .map(([type, info]: [string, unknown]) => ({ type, ...(info as Omit<NpcEntry, "type">) }))
     .sort((a: NpcEntry, b: NpcEntry) => a.type.localeCompare(b.type));
 
+  const allAnimations: AnimationEntry[] = useMemo(() => {
+    const bbmodel = window.mcState?.playerBbmodels?.["player"];
+    if (!bbmodel?.animations) return [];
+    return bbmodel.animations.map((anim) => ({
+      fullName: anim.name,
+      length: anim.length,
+      boneCount: Object.values(anim.animators).filter(
+        (a) => (a.keyframes?.filter((k) => k.channel === "rotation")?.length ?? 0) > 0,
+      ).length,
+    }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const filteredBlocks = allBlocks.filter((b) => b.name.toLowerCase().includes(filter.toLowerCase()));
   const filteredItems = allItems.filter((it) => it.name.toLowerCase().includes(filter.toLowerCase()));
   const filteredNpcs = allNpcs.filter((n) => n.type.toLowerCase().includes(filter.toLowerCase()));
   const filteredSkins = allSkins.filter((s) => s.toLowerCase().includes(filter.toLowerCase()));
+  const filteredAnimations = allAnimations.filter((a) =>
+    animDisplayName(a.fullName).toLowerCase().includes(filter.toLowerCase()),
+  );
 
-  const currentList: (BlockEntry | ItemEntry | NpcEntry | string)[] =
+  const currentList: (BlockEntry | ItemEntry | NpcEntry | string | AnimationEntry)[] =
     tab === "bestiary"
       ? filteredNpcs
       : tab === "blocks"
         ? filteredBlocks
         : tab === "items"
           ? filteredItems
-          : filteredSkins;
+          : tab === "skins"
+            ? filteredSkins
+            : filteredAnimations;
 
   const currentIdx =
     selection === null
@@ -748,7 +967,11 @@ export function CodexModal({ open, onClose }: Props) {
           ? filteredBlocks.findIndex((b) => b.ordinal === (selection as { kind: "block"; ordinal: number }).ordinal)
           : tab === "items"
             ? filteredItems.findIndex((it) => it.name === (selection as { kind: "item"; name: string }).name)
-            : filteredSkins.findIndex((s) => s === (selection as { kind: "skin"; name: string }).name);
+            : tab === "skins"
+              ? filteredSkins.findIndex((s) => s === (selection as { kind: "skin"; name: string }).name)
+              : filteredAnimations.findIndex(
+                  (a) => a.fullName === (selection as { kind: "animation"; fullName: string }).fullName,
+                );
 
   useEffect(() => {
     if (!open) return;
@@ -759,7 +982,8 @@ export function CodexModal({ open, onClose }: Props) {
       if (tab === "bestiary") setSelection({ kind: "npc", npcType: (item as NpcEntry).type });
       else if (tab === "blocks") setSelection({ kind: "block", ordinal: (item as BlockEntry).ordinal });
       else if (tab === "items") setSelection({ kind: "item", name: (item as ItemEntry).name });
-      else setSelection({ kind: "skin", name: item as string });
+      else if (tab === "skins") setSelection({ kind: "skin", name: item as string });
+      else setSelection({ kind: "animation", fullName: (item as AnimationEntry).fullName });
     };
 
     const handler = (e: KeyboardEvent) => {
@@ -803,7 +1027,9 @@ export function CodexModal({ open, onClose }: Props) {
           ? (item as BlockEntry).ordinal
           : tab === "items"
             ? (item as ItemEntry).name
-            : (item as string);
+            : tab === "animations"
+              ? (item as AnimationEntry).fullName
+              : (item as string);
     itemRefsMap.current.get(key)?.scrollIntoView({ block: "nearest" });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- currentList derives from state already captured by currentIdx/tab
   }, [open, currentIdx, tab]);
@@ -815,6 +1041,7 @@ export function CodexModal({ open, onClose }: Props) {
     blocks: `Blocs (${allBlocks.length})`,
     items: `Items (${allItems.length})`,
     skins: `Skins (${allSkins.length})`,
+    animations: `Animations (${allAnimations.length})`,
   };
 
   const overlay: React.CSSProperties = {
@@ -914,7 +1141,7 @@ export function CodexModal({ open, onClose }: Props) {
         </div>
 
         <div style={tabBar}>
-          {(["bestiary", "blocks", "items", "skins"] as CodexTab[]).map((t) => (
+          {(["bestiary", "blocks", "items", "skins", "animations"] as CodexTab[]).map((t) => (
             <button
               key={t}
               style={{
@@ -1015,6 +1242,18 @@ export function CodexModal({ open, onClose }: Props) {
                     onClick={() => setSelection({ kind: "skin", name: skin })}
                   />
                 ))}
+              {tab === "animations" &&
+                filteredAnimations.map((anim) => (
+                  <AnimationCard
+                    key={anim.fullName}
+                    ref={(el) => {
+                      itemRefsMap.current.set(anim.fullName, el);
+                    }}
+                    anim={anim}
+                    selected={selection?.kind === "animation" && selection.fullName === anim.fullName}
+                    onClick={() => setSelection({ kind: "animation", fullName: anim.fullName })}
+                  />
+                ))}
             </div>
           </div>
 
@@ -1043,6 +1282,11 @@ export function CodexModal({ open, onClose }: Props) {
                 return npc ? <NpcDetail npc={npc} /> : null;
               })()}
             {selection?.kind === "skin" && <SkinDetail name={selection.name} />}
+            {selection?.kind === "animation" &&
+              (() => {
+                const anim = allAnimations.find((a) => a.fullName === selection.fullName);
+                return anim ? <AnimationDetail anim={anim} /> : null;
+              })()}
           </div>
         </div>
       </div>

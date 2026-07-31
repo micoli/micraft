@@ -1,6 +1,7 @@
 import type { Scene, Vector4 } from "@babylonjs/core";
 
-// Linear interpolation between two bbmodel keyframes at normalised time t ∈ [0,1].
+// Linear interpolation between two bbmodel keyframes. `t` is clip-relative time in SECONDS, on the
+// same scale as `keyframe.time` and the animation `length` — not a normalised 0..1 phase.
 export function interpAxis(keyframes: BbModelKeyframe[], t: number, axis: string): number {
   if (!keyframes || keyframes.length === 0) return 0;
   if (keyframes.length === 1) return parseFloat(String(keyframes[0].data_points[0][axis] ?? 0));
@@ -71,6 +72,8 @@ function extractWalkAnim(
   bones: readonly string[],
 ): Record<string, { keyframes: BbModelKeyframe[]; length: number }> {
   const walkAnimDef =
+    bbmodel.animations?.find((a) => a.name?.toLowerCase().endsWith("walking_a")) ??
+    bbmodel.animations?.find((a) => a.name?.toLowerCase().includes("walking")) ??
     bbmodel.animations?.find((a) => a.name?.toLowerCase().includes("walk")) ??
     bbmodel.animations?.find((a) => Object.keys(a.animators).length > 1);
   if (!walkAnimDef) return {};
@@ -136,19 +139,19 @@ export function registerPlayerModel(): Pick<
       groupMap[g.uuid] = g;
     });
 
-    // Map each element UUID to its direct parent group UUID
+    // Map each element UUID to its direct parent group UUID, and each group UUID to its parent group UUID
     const elToGroupUuid: Record<string, string | null> = {};
-    function walkOutliner(nodes: BbModel["outliner"], parentUuid: string | null): void {
+    const groupToParentGroupUuid: Record<string, string | null> = {};
+    function walkOutliner(nodes: BbModel["outliner"], parentGroupUuid: string | null): void {
       if (!nodes) return;
       for (const node of nodes) {
         if (typeof node === "string") {
-          elToGroupUuid[node] = parentUuid;
+          elToGroupUuid[node] = parentGroupUuid;
           continue;
         }
-        walkOutliner(
-          (node as { uuid: string; children?: BbModel["outliner"] }).children ?? [],
-          (node as { uuid: string }).uuid,
-        );
+        const groupNode = node as { uuid: string; children?: BbModel["outliner"] };
+        groupToParentGroupUuid[groupNode.uuid] = parentGroupUuid;
+        walkOutliner(groupNode.children ?? [], groupNode.uuid);
       }
     }
     walkOutliner(bbmodel.outliner, null);
@@ -162,7 +165,7 @@ export function registerPlayerModel(): Pick<
       for (const [role, actual] of Object.entries(boneAliases)) reverseAliases[actual] = role;
     }
 
-    // Create a TransformNode for every group (applying its base rotation)
+    // Create a TransformNode for every group (applying its base rotation); parent to root initially
     const allGroupNodes: Record<
       string,
       { node: InstanceType<typeof BABYLON.TransformNode>; origin: [number, number, number] }
@@ -174,13 +177,24 @@ export function registerPlayerModel(): Pick<
       if (g.rotation)
         node.rotation = new BABYLON.Vector3(g.rotation[0] * DEG, g.rotation[1] * DEG, g.rotation[2] * DEG);
       allGroupNodes[g.uuid] = { node, origin: g.origin };
-      if ((ANIM_GROUPS as readonly string[]).includes(g.name)) {
-        pivotNodes[g.name as AnimGroupName] = { node, origin: g.origin };
-      }
+      // Register every group so animations can drive any bone
+      pivotNodes[g.name] = { node, origin: g.origin };
       const aliasName = reverseAliases[g.name];
-      if (aliasName && (ANIM_GROUPS as readonly string[]).includes(aliasName)) {
-        pivotNodes[aliasName as AnimGroupName] = { node, origin: g.origin };
-      }
+      if (aliasName) pivotNodes[aliasName] = { node, origin: g.origin };
+    });
+
+    // Re-parent groups to match the outliner hierarchy (enables child bones to follow parent rotations)
+    bbmodel.groups.forEach((g) => {
+      const parentGroupUuid = groupToParentGroupUuid[g.uuid];
+      if (!parentGroupUuid || !allGroupNodes[parentGroupUuid]) return;
+      const child = allGroupNodes[g.uuid];
+      const parent = allGroupNodes[parentGroupUuid];
+      child.node.parent = parent.node;
+      child.node.position = new BABYLON.Vector3(
+        (g.origin[0] - parent.origin[0]) * SCALE,
+        (g.origin[1] - parent.origin[1]) * SCALE,
+        (g.origin[2] - parent.origin[2]) * SCALE,
+      );
     });
 
     for (const el of bbmodel.elements) {
@@ -269,16 +283,16 @@ export function registerPlayerModel(): Pick<
       const wa = model.walkAnim ?? {};
 
       if (isWalking) {
-        const animLen = wa["rightArm"]?.length ?? 1;
-        const t = (Date.now() % (animLen * 1000)) / (animLen * 1000);
+        const animLen = Math.max(wa["rightArm"]?.length ?? 1, 1e-3);
+        const tSec = (Date.now() % (animLen * 1000)) / 1000;
         for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
           if (!pn[bname]) continue;
-          pn[bname].node.rotation.x = (wa[bname] ? interpAxis(wa[bname].keyframes, t, "x") : 0) * DEG;
+          pn[bname].node.rotation.x = (wa[bname] ? interpAxis(wa[bname].keyframes, tSec, "x") : 0) * DEG;
         }
         if (headPivot) {
           const hb = wa["head"];
-          headPivot.rotation.x = headPitch + (hb ? interpAxis(hb.keyframes, t, "x") : 0) * DEG;
-          headPivot.rotation.y = (hb ? interpAxis(hb.keyframes, t, "y") : 0) * DEG;
+          headPivot.rotation.x = headPitch + (hb ? interpAxis(hb.keyframes, tSec, "x") : 0) * DEG;
+          headPivot.rotation.y = (hb ? interpAxis(hb.keyframes, tSec, "y") : 0) * DEG;
         }
       } else {
         for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
