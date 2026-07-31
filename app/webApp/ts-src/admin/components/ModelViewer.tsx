@@ -1,10 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
-
-declare global {
-  interface Window {
-    BABYLON: any;
-  }
-}
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -22,7 +17,7 @@ function loadScript(src: string): Promise<void> {
 
 async function ensureBabylon(): Promise<void> {
   if (!window.BABYLON) await loadScript("/babylon.js");
-  if (!window.BABYLON?.OBJFileLoader && !window.BABYLON?.GLTFFileLoader) {
+  if (!(window.BABYLON as any)?.OBJFileLoader && !(window.BABYLON as any)?.GLTFFileLoader) {
     await loadScript("/babylonjs.loaders.js");
   }
 }
@@ -50,7 +45,7 @@ export function ModelViewer({ url, format }: Props) {
     ensureBabylon()
       .then(() => {
         if (disposed) return;
-        const B = window.BABYLON;
+        const B = window.BABYLON as any;
 
         const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: false, antialias: true });
         const scene = new B.Scene(engine);
@@ -82,7 +77,10 @@ export function ModelViewer({ url, format }: Props) {
         const loadPromise =
           ext === ".glb"
             ? fetch(url)
-                .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.arrayBuffer(); })
+                .then((r) => {
+                  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                  return r.arrayBuffer();
+                })
                 .then((buf) => B.SceneLoader.ImportMeshAsync("", rootUrl, new Uint8Array(buf), scene, null, ext))
             : B.SceneLoader.ImportMeshAsync("", rootUrl, url.split("/").pop(), scene, null, ext);
 
@@ -135,7 +133,7 @@ export function ModelViewer({ url, format }: Props) {
         engineRef.current = null;
       }
     };
-  }, [url]);
+  }, [url, format]);
 
   const toggleAnim = (idx: number) => {
     const groups = groupsRef.current;
@@ -152,9 +150,7 @@ export function ModelViewer({ url, format }: Props) {
 
   if (!url) {
     return (
-      <div className="flex-1 flex items-center justify-center text-[#8A99AF] text-sm">
-        Select an asset to preview
-      </div>
+      <div className="flex-1 flex items-center justify-center text-[#8A99AF] text-sm">Select an asset to preview</div>
     );
   }
 
@@ -181,7 +177,8 @@ export function ModelViewer({ url, format }: Props) {
                   : "bg-[#1A222C] border-[#2E3A4E] text-[#8A99AF] hover:border-[#3C50E0] hover:text-white"
               }`}
             >
-              {playingIdx === i ? "■ " : "▶ "}{name}
+              {playingIdx === i ? "■ " : "▶ "}
+              {name}
             </button>
           ))}
         </div>

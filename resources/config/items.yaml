@@ -91,6 +91,11 @@ LEGO_SLOPE:
   placesBlock: LEGO_SLOPE
   label: LSL
   bg: "#B43232"
+LEGO_CORNER:
+  buildable: true
+  placesBlock: LEGO_CORNER
+  label: LCR
+  bg: "#DC5050"
 LEGO_PLATE:
   buildable: true
   placesBlock: LEGO_PLATE

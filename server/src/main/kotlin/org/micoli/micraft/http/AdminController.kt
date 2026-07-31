@@ -132,21 +132,15 @@ class AdminController(
     fun register(route: Route) =
         route.apply {
             // ── Static assets ────────────────────────────────────────────────
-            get("/admin/{...}") {
-                call.respondFile(File("server/src/main/resources/admin.html"))
-            }
-            get("/admin") {
-                call.respondFile(File("server/src/main/resources/admin.html"))
-            }
+            get("/admin/{...}") { call.respondFile(File("server/src/main/resources/admin.html")) }
+            get("/admin") { call.respondFile(File("server/src/main/resources/admin.html")) }
             get("/admin.js") {
                 val f = File("server/src/main/resources/admin.js")
-                if (f.exists()) call.respondFile(f)
-                else call.respond(HttpStatusCode.NotFound)
+                if (f.exists()) call.respondFile(f) else call.respond(HttpStatusCode.NotFound)
             }
             get("/admin.css") {
                 val f = File("server/src/main/resources/admin.css")
-                if (f.exists()) call.respondFile(f)
-                else call.respond(HttpStatusCode.NotFound)
+                if (f.exists()) call.respondFile(f) else call.respond(HttpStatusCode.NotFound)
             }
 
             // ── Status ───────────────────────────────────────────────────────

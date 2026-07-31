@@ -85,9 +85,9 @@ import org.micoli.micraft.http.AssetNotifyController
 import org.micoli.micraft.http.AttacksController
 import org.micoli.micraft.http.AutocompleteController
 import org.micoli.micraft.http.BiomesController
-import org.micoli.micraft.http.GameAssetsController
 import org.micoli.micraft.http.CharacterController
 import org.micoli.micraft.http.ChunkController
+import org.micoli.micraft.http.GameAssetsController
 import org.micoli.micraft.http.I18nController
 import org.micoli.micraft.http.ItemsController
 import org.micoli.micraft.http.KeybindingsController

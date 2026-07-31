@@ -129,7 +129,7 @@ declare global {
 
   interface McBlockDef {
     name: string;
-    renderType: "solid" | "leaves" | "cross_sprite" | "liquid" | "slope" | "gltf";
+    renderType: "solid" | "leaves" | "cross_sprite" | "liquid" | "slope" | "corner" | "gltf";
     gltfPath?: string;
     hasStuds?: boolean;
     // Per-element geometry; faces[elemIdx] = McBlockElement.faces for backward compat lookup

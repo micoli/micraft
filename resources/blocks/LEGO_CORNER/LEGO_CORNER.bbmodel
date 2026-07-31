@@ -1,0 +1,28 @@
+{
+  "resolution": { "width": 16, "height": 16 },
+  "textures": [
+    {
+      "id": 0,
+      "name": "LEGO_CORNER",
+      "path": "api/models/blocks/LEGO_CORNER/LEGO_CORNER.png",
+      "source": ""
+    }
+  ],
+  "elements": [
+    {
+      "uuid": "corner-body",
+      "name": "corner",
+      "render_type": "corner",
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "south": { "texture": 0, "uv": [0, 0, 16, 16] },
+        "north": { "texture": 0, "uv": [0, 0, 16, 16] },
+        "east":  { "texture": 0, "uv": [0, 0, 16, 16] },
+        "west":  { "texture": 0, "uv": [0, 0, 16, 16] },
+        "up":    { "texture": 0, "uv": [0, 0, 16, 16] },
+        "down":  { "texture": 0, "uv": [0, 0, 16, 16] }
+      }
+    }
+  ]
+}

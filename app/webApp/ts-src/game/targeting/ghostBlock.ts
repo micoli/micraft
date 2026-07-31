@@ -33,7 +33,16 @@ export function registerGhostBlock(): Pick<McBindings, "showBlockPreview" | "hid
       disposeGhost();
 
       const meshes = buildBlockPreviewMeshes(scene, typeOrd, rotation);
-      if (meshes.length === 0) return;
+      if (meshes.length === 0) {
+        console.warn(
+          "[MiCraft] Ghost: no preview mesh for typeOrd=" +
+            typeOrd +
+            " rot=" +
+            rotation +
+            " (block not in faceTable or defs not ready)",
+        );
+        return;
+      }
 
       const pos = new BABYLON.Vector3(x, y, z);
       for (const m of meshes) m.position = pos;

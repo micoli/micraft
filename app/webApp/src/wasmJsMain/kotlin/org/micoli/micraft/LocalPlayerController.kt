@@ -786,6 +786,9 @@ class LocalPlayerController(
                 if (adjacent != null) {
                     val typeOrd =
                         selectedItem.placesBlock?.let { BlockRegistry.wireIndex(it) } ?: -1
+                    if (typeOrd < 0)
+                        jsWarn(
+                            "Ghost: block '${selectedItem.placesBlock?.id}' not in registry (wireIndex=-1)")
                     jsShowBlockPreview(
                         scene, adjacent.x, adjacent.y, adjacent.z, typeOrd, placementRotation)
                 } else {

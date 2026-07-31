@@ -67,7 +67,9 @@ let _blockDefs: (McBlockDef | null)[] | null = null;
 let _blockTextures: McBlockTextureDef[] | null = null;
 
 // Loaded from RegistrySync — ordinal-indexed list of block infos
-let _registryBlocks: { name: string; modelElement: string; gltfModel?: string; liquid?: boolean; hasStuds?: boolean }[] | null = null;
+let _registryBlocks:
+  | { name: string; modelElement: string; gltfModel?: string; liquid?: boolean; hasStuds?: boolean }[]
+  | null = null;
 
 export function registerBlockDefs(): Pick<
   McBindings,

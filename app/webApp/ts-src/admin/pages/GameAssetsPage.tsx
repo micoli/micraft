@@ -53,7 +53,8 @@ export function GameAssetsPage() {
   const togglePack = (pack: string) => {
     setExpandedPacks((prev) => {
       const next = new Set(prev);
-      next.has(pack) ? next.delete(pack) : next.add(pack);
+      if (next.has(pack)) next.delete(pack);
+      else next.add(pack);
       return next;
     });
   };
@@ -61,7 +62,8 @@ export function GameAssetsPage() {
   const toggleFolder = (key: string) => {
     setExpandedFolders((prev) => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
@@ -139,18 +141,18 @@ export function GameAssetsPage() {
           </div>
         )}
         <ModelViewer
-            format={selected?.format}
-            url={
-              selected
-                ? "/api/game-assets/file/" +
-                  selected.path
-                    .replace(/^game-assets\//, "")
-                    .split("/")
-                    .map(encodeURIComponent)
-                    .join("/")
-                : null
-            }
-          />
+          format={selected?.format}
+          url={
+            selected
+              ? "/api/game-assets/file/" +
+                selected.path
+                  .replace(/^game-assets\//, "")
+                  .split("/")
+                  .map(encodeURIComponent)
+                  .join("/")
+              : null
+          }
+        />
       </div>
     </div>
   );

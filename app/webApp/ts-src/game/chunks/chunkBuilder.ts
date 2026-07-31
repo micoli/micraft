@@ -1,4 +1,12 @@
-import type { Scene, Mesh, Material, ShaderMaterial } from "@babylonjs/core";
+import type {
+  Scene,
+  Mesh,
+  Material,
+  ShaderMaterial,
+  ISceneLoaderAsyncResult,
+  AbstractMesh,
+  TransformNode,
+} from "@babylonjs/core";
 import { BLOCK_VERT, BLOCK_GHOST_FRAG } from "../shaders/block";
 
 const MC_NORMS = [
@@ -82,24 +90,21 @@ const gltfTypeTable: Record<number, string> = {};
 // Cache of loaded GLTF source meshes (hidden, used for instancing). Keyed by gltfPath.
 const gltfMeshCache: Map<string, InstanceType<typeof BABYLON.Mesh>[]> = new Map();
 
-async function loadGltfSources(
-  gltfPath: string,
-  scene: InstanceType<typeof BABYLON.Scene>,
-): Promise<InstanceType<typeof BABYLON.Mesh>[]> {
+async function loadGltfSources(gltfPath: string, scene: InstanceType<typeof BABYLON.Scene>): Promise<Mesh[]> {
   if (gltfMeshCache.has(gltfPath)) return gltfMeshCache.get(gltfPath)!;
   const parts = gltfPath.split("/");
   const fileName = parts.pop()!;
   const baseUrl = `/api/game-assets/file/${parts.join("/")}/`;
-  const result = await (BABYLON.SceneLoader as any).ImportMeshAsync("", baseUrl, fileName, scene);
+  const result: ISceneLoaderAsyncResult = await BABYLON.SceneLoader.ImportMeshAsync("", baseUrl, fileName, scene);
   // BabylonJS GLTF loader creates a __root__ TransformNode with scaling.x=-1 to convert
   // from GLTF right-handed to BabylonJS left-handed coords. Instances don't inherit that
   // parent, so we bake the transform into vertex positions/normals before instancing.
-  const sources = (result.meshes as InstanceType<typeof BABYLON.AbstractMesh>[])
-    .filter((m) => (m as any).getTotalVertices?.() > 0)
-    .map((m) => {
-      const mesh = m as InstanceType<typeof BABYLON.Mesh>;
+  const sources = result.meshes
+    .filter((m: AbstractMesh) => m.getTotalVertices() > 0)
+    .map((m: AbstractMesh) => {
+      const mesh = m as Mesh;
       mesh.setParent(null); // folds __root__ scaling(-1,1,1) into local transform
-      (mesh as any).bakeCurrentTransformIntoVertices?.();
+      mesh.bakeCurrentTransformIntoVertices();
       mesh.position.setAll(0);
       mesh.rotationQuaternion = null;
       mesh.rotation.setAll(0);
@@ -108,7 +113,7 @@ async function loadGltfSources(
       mesh.isPickable = false;
       return mesh;
     });
-  result.transformNodes?.forEach((n: any) => n.dispose?.());
+  result.transformNodes.forEach((n: TransformNode) => n.dispose());
   gltfMeshCache.set(gltfPath, sources);
   return sources;
 }
@@ -136,6 +141,28 @@ const SLOPE_TOP_NORMS = [
   [0.7071, 0.7071, 0], // rot=3: ascending west, outward normal up-east
 ];
 
+// Corner (vertical triangular prism): right angle at NW for rotation=0.
+// Top view (XZ): right triangle with vertices NW(0,0), NE(1,0), SW(0,1). Full height.
+// fd=0 repurposed as the 45° diagonal vertical wall (NE→SW face).
+// fd=1=north full wall, fd=2=null(open east), fd=3=west full wall.
+// fd=4=top triangle (degenerate quad), fd=5=bottom triangle (degenerate quad).
+const CORNER_BASE_VERTS: (Float32Array | null)[] = [
+  new Float32Array([1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0]), // fd=0 diagonal 45° wall
+  new Float32Array([1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0]), // fd=1 north wall (full)
+  null, // fd=2 east: open (no face)
+  new Float32Array([0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0]), // fd=3 west wall (full)
+  new Float32Array([0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0]), // fd=4 top triangle (degenerate)
+  new Float32Array([0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1]), // fd=5 bottom triangle (degenerate)
+];
+
+// Outward normal of fd=0 diagonal wall per rotation (points away from the right-angle corner)
+const CORNER_DIAG_NORMS = [
+  [0.7071, 0, 0.7071], // rot=0: right angle NW, open toward SE
+  [-0.7071, 0, 0.7071], // rot=1: right angle NE, open toward SW
+  [-0.7071, 0, -0.7071], // rot=2: right angle SE, open toward NW
+  [0.7071, 0, -0.7071], // rot=3: right angle SW, open toward NE
+];
+
 function buildFaceTable(): void {
   faceTable = [];
   for (let typeOrd = 0; typeOrd < 512; typeOrd++) {
@@ -147,6 +174,7 @@ function buildFaceTable(): void {
     }
     const isCross = blockDef.renderType === "cross_sprite";
     const isSlope = blockDef.renderType === "slope";
+    const isCorner = blockDef.renderType === "corner";
     const isPlastic = blockDef.hasStuds === true;
 
     for (let rotation = 0; rotation < 4; rotation++) {
@@ -154,7 +182,33 @@ function buildFaceTable(): void {
         const faceMat = (typeOrd * 4 + rotation) * 6 + fd;
         const infos: FaceInfo[] = [];
 
-        if (isSlope) {
+        if (isCorner) {
+          const baseVerts = CORNER_BASE_VERTS[fd];
+          if (baseVerts !== null) {
+            const verts = rotation === 0 ? baseVerts : rotateVerts(baseVerts, rotation);
+            const srcFd = ROT_SOURCE[rotation][fd];
+            const fi = blockDef.elements[0]?.faces[srcFd] ?? blockDef.elements[0]?.faces.find((f) => f != null) ?? null;
+            if (fi) {
+              let nx: number, ny: number, nz: number;
+              if (fd === 0) {
+                [nx, ny, nz] = CORNER_DIAG_NORMS[rotation];
+              } else {
+                [nx, ny, nz] = MC_NORMS[fd];
+              }
+              infos.push({
+                matKey: fi.matKey,
+                uv: new Float32Array(fi.uv),
+                shade: fd === 0 ? 0.85 : FACE_SHADES[fd],
+                normX: nx,
+                normY: ny,
+                normZ: nz,
+                verts,
+                isCrossSprite: false,
+                isPlastic,
+              });
+            }
+          }
+        } else if (isSlope) {
           // Slope geometry: use pre-baked base verts rotated by `rotation`
           const baseVerts = SLOPE_BASE_VERTS[fd];
           if (baseVerts !== null) {
@@ -389,7 +443,14 @@ function getOrCreateGhostMat(scene: Scene, matKey: string): ShaderMaterial | nul
 }
 
 export function buildBlockPreviewMeshes(scene: Scene, typeOrd: number, rotation: number): Mesh[] {
-  if (!window.mc.isBlockDefsReady()) return [];
+  if (!window.mc.isBlockDefsReady()) {
+    console.warn("[MiCraft] Ghost: block defs not ready yet (typeOrd=" + typeOrd + ")");
+    return [];
+  }
+  if (faceTable.length === 0) {
+    console.warn("[MiCraft] Ghost: faceTable empty — no chunk rendered yet? (typeOrd=" + typeOrd + ")");
+    buildFaceTable();
+  }
 
   const groups: Record<string, FaceGroup> = {};
 
@@ -561,8 +622,8 @@ export function registerChunks(): Pick<
               for (const src of sources) {
                 const inst = src.createInstance(`gltfi_${chunkKey}_${posKey}`);
                 inst.position.set(wx, wy, wz + 1);
-//                 inst.position.set(wx, wy, wz);
-                inst.scaling.setAll(0.80);
+                //                 inst.position.set(wx, wy, wz);
+                inst.scaling.setAll(0.8);
                 inst.isPickable = false;
                 instances.push(inst);
               }

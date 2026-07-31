@@ -30,6 +30,9 @@ value class BlockType(val id: String) {
     val isSlope: Boolean
         get() = BlockRegistry.get(this).isSlope
 
+    val isCorner: Boolean
+        get() = BlockRegistry.get(this).isCorner
+
     companion object {
         val AIR = BlockType("AIR")
         val BEDROCK = BlockType("BEDROCK")
@@ -54,6 +57,7 @@ value class BlockType(val id: String) {
         val LEGO_BRICK = BlockType("LEGO_BRICK")
         val LEGO_SLOPE = BlockType("LEGO_SLOPE")
         val LEGO_PLATE = BlockType("LEGO_PLATE")
+        val LEGO_CORNER = BlockType("LEGO_CORNER")
         val LEGO_BRICK_2X1 = BlockType("LEGO_BRICK_2X1")
         val LEGO_BRICK_1X2 = BlockType("LEGO_BRICK_1X2")
         val LEGO_PLATE_2X2 = BlockType("LEGO_PLATE_2X2")
