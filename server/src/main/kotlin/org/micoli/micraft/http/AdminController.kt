@@ -523,9 +523,9 @@ class AdminController(
                         val ad = npc.animalData
                         val maxHp = npc.maxHp
                         val zoneX =
-                            Math.floorDiv(npc.state.pos.x.toInt(), NpcConstants.NPC_ZONE_SIZE)
+                            Math.floorDiv(npc.state.pos.x.toInt(), NpcConstants.live.npcZoneSize)
                         val zoneZ =
-                            Math.floorDiv(npc.state.pos.z.toInt(), NpcConstants.NPC_ZONE_SIZE)
+                            Math.floorDiv(npc.state.pos.z.toInt(), NpcConstants.live.npcZoneSize)
                         NpcAdminDto(
                             id = npc.state.id,
                             name = npc.state.name,

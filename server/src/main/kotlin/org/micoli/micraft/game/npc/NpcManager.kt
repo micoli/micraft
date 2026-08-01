@@ -50,7 +50,26 @@ class NpcManager(
     private val grantNpcKillXp: suspend (predator: NpcInstance, prey: NpcInstance) -> Unit =
         { _, _ ->
         },
+    /**
+     * Tick context in force for this world. Re-read on every use so `/reload` keeps working on the
+     * live server; the world simulator passes a fixed context instead.
+     */
+    private val ctxOf: () -> NpcTickContext = { NpcTickContext.live },
 ) {
+    private val ctx: NpcTickContext
+        get() = ctxOf()
+
+    private val tuning: NpcTuning
+        get() = ctxOf().tuning
+
+    /**
+     * Random source handed to a freshly spawned NPC. Drawn from the world's source at spawn time:
+     * spawn order is deterministic, so each NPC gets a stable seed even though the NPC map is
+     * iterated in an arbitrary order afterwards.
+     */
+    private fun childRandom(): kotlin.random.Random =
+        kotlin.random.Random(ctxOf().random.nextLong())
+
     private val npcs = ConcurrentHashMap<String, NpcInstance>()
     @Volatile private var definitions: Map<String, NpcDefinition> = emptyMap()
     private var lastEffectTickMs = System.currentTimeMillis()
@@ -122,7 +141,9 @@ class NpcManager(
                             spawnPos = state.pos,
                             instanceLevel = fixedState.level,
                             xp = fixedState.xp,
-                            animalData = animalData)
+                            animalData = animalData,
+                            tuning = tuning,
+                            random = childRandom())
                     loaded++
                 }
                 log.info("Loaded {} NPCs from {}", loaded, savePath)
@@ -212,13 +233,18 @@ class NpcManager(
             )
         val instance =
             NpcInstance(
-                state = state, definition = def, spawnPos = pos, instanceLevel = effectiveLevel)
+                state = state,
+                definition = def,
+                spawnPos = pos,
+                instanceLevel = effectiveLevel,
+                tuning = tuning,
+                random = childRandom())
         npcs[id] = instance
         if (broadCastNpcPositions) {
             broadcast(ServerMessage.NpcSpawned(state))
         } else {
             val stateWithAggro = state.copy(aggroTargetId = null)
-            val rangesq = NpcConstants.UPDATE_RANGE * NpcConstants.UPDATE_RANGE
+            val rangesq = tuning.updateRange * tuning.updateRange
             for (s in getSessions()) {
                 val dx = s.state.pos.x - pos.x
                 val dz = s.state.pos.z - pos.z
@@ -261,7 +287,7 @@ class NpcManager(
         tickEffects()
         val sessions = getSessions()
         val now = System.currentTimeMillis()
-        val rangesq = NpcConstants.UPDATE_RANGE * NpcConstants.UPDATE_RANGE
+        val rangesq = tuning.updateRange * tuning.updateRange
         for (instance in npcs.values) {
             if (instance.isDead) {
                 if (now - instance.deathTimeMs >= DEATH_DESPAWN_DELAY_MS)
@@ -280,7 +306,9 @@ class NpcManager(
                     sessions.find { it.id == targetId }?.state?.pos
                 }
             val before = instance.state
-            val changed = instance.definition.behavior.tick(instance, world)
+            val changed =
+                instance.definition.behavior.tick(
+                    instance, world, ctx.copy(random = instance.random))
             if (changed && instance.state != before) {
                 val roundedState = instance.state.round1()
                 val stateWithAggro = roundedState.copy(aggroTargetId = instance.aggroTarget)
@@ -304,7 +332,7 @@ class NpcManager(
     }
 
     suspend fun tickVisibility(sessions: Collection<PlayerSession>) {
-        val rangesq = NpcConstants.UPDATE_RANGE * NpcConstants.UPDATE_RANGE
+        val rangesq = tuning.updateRange * tuning.updateRange
         for (session in sessions) {
             val playerPos = session.state.pos
             val known = lastSentToPlayer.getOrPut(session.id) { ConcurrentHashMap() }
@@ -335,7 +363,7 @@ class NpcManager(
     }
 
     suspend fun despawnOrphanedNpcs(sessions: Collection<PlayerSession>) {
-        val zoneSizeSq = NpcConstants.NPC_ZONE_SIZE.toFloat().let { it * it }
+        val zoneSizeSq = tuning.npcZoneSize.toFloat().let { it * it }
         val orphans =
             npcs.values.filter { npc ->
                 sessions.none { s ->
@@ -367,8 +395,8 @@ class NpcManager(
     }
 
     fun zoneKey(wx: Float, wz: Float): String {
-        val zx = Math.floorDiv(wx.toInt(), NpcConstants.NPC_ZONE_SIZE)
-        val zz = Math.floorDiv(wz.toInt(), NpcConstants.NPC_ZONE_SIZE)
+        val zx = Math.floorDiv(wx.toInt(), tuning.npcZoneSize)
+        val zz = Math.floorDiv(wz.toInt(), tuning.npcZoneSize)
         return "$zx,$zz"
     }
 
@@ -376,10 +404,10 @@ class NpcManager(
         val parts = zoneKey.split(",")
         val zx = parts[0].toInt()
         val zz = parts[1].toInt()
-        val minX = zx * NpcConstants.NPC_ZONE_SIZE.toFloat()
-        val maxX = minX + NpcConstants.NPC_ZONE_SIZE
-        val minZ = zz * NpcConstants.NPC_ZONE_SIZE.toFloat()
-        val maxZ = minZ + NpcConstants.NPC_ZONE_SIZE
+        val minX = zx * tuning.npcZoneSize.toFloat()
+        val maxX = minX + tuning.npcZoneSize
+        val minZ = zz * tuning.npcZoneSize.toFloat()
+        val maxZ = minZ + tuning.npcZoneSize
         return npcs.values.count {
             it.state.pos.x >= minX &&
                 it.state.pos.x < maxX &&
@@ -394,12 +422,12 @@ class NpcManager(
 
     suspend fun handleInteract(session: PlayerSession, npcId: String) {
         val instance = npcs[npcId] ?: return
-        instance.definition.behavior.onInteract(instance, session) { msg -> session.send(msg) }
+        instance.definition.behavior.onInteract(instance, session, ctx) { msg -> session.send(msg) }
     }
 
     suspend fun sendAllTo(session: PlayerSession) {
         log.info("sendAllTo {}: {} NPCs in memory", session.id.take(8), npcs.size)
-        val rangesq = NpcConstants.UPDATE_RANGE * NpcConstants.UPDATE_RANGE
+        val rangesq = tuning.updateRange * tuning.updateRange
         val playerPos = session.state.pos
         val playerStates = lastSentToPlayer.getOrPut(session.id) { ConcurrentHashMap() }
         var sent = 0
@@ -655,7 +683,7 @@ class NpcManager(
         sessions: Collection<PlayerSession>,
     ) {
         val stateWithAggro = instance.state.round1().copy(aggroTargetId = instance.aggroTarget)
-        val rangesq = NpcConstants.UPDATE_RANGE * NpcConstants.UPDATE_RANGE
+        val rangesq = tuning.updateRange * tuning.updateRange
         val pos = stateWithAggro.pos
         for (session in sessions) {
             val dx = session.state.pos.x - pos.x

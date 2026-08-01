@@ -7,6 +7,7 @@ import org.micoli.micraft.game.npc.NpcBehavior
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcSpawnConfig
+import org.micoli.micraft.game.npc.NpcTickContext
 import org.micoli.micraft.game.npc.NpcTier
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.WorldState
@@ -14,11 +15,12 @@ import org.micoli.micraft.protocol.ServerMessage
 
 private val stubBehavior =
     object : NpcBehavior {
-        override fun tick(instance: NpcInstance, world: WorldState) = false
+        override fun tick(instance: NpcInstance, world: WorldState, ctx: NpcTickContext) = false
 
         override suspend fun onInteract(
             instance: NpcInstance,
             session: PlayerSession,
+            ctx: NpcTickContext,
             send: suspend (ServerMessage) -> Unit
         ) {}
     }

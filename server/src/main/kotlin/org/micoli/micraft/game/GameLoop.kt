@@ -47,6 +47,7 @@ import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
+import org.micoli.micraft.game.npc.NpcTickPipeline
 import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
@@ -340,7 +341,7 @@ class GameLoop(
     private var saveTickCounter = 0
     private var timeBroadcastCounter = 0
 
-    val gameTimeService: GameTimeService = GameTimeService(NpcConstants.GAME_DAY_DURATION_SECONDS)
+    val gameTimeService: GameTimeService = GameTimeService(NpcConstants.live.gameDayDurationSeconds)
 
     private val animalInteractionProcessor =
         AnimalInteractionProcessor(
@@ -352,6 +353,14 @@ class GameLoop(
             broadcast = sessionRegistry::broadcast,
         )
 
+    /** Owns the NPC tick order; shared with the admin world simulator. */
+    private val npcTickPipeline =
+        NpcTickPipeline(
+            npcManager = npcManager,
+            npcSpawner = npcSpawner,
+            animals = animalInteractionProcessor,
+        )
+
     private var worldMeta: WorldMetadata? = persistence?.loadMetadata()
     private var gameTicks: Long = worldMeta?.gameTicks ?: 18_000L
 
@@ -360,7 +369,6 @@ class GameLoop(
     private val pluginTickHandlers: MutableList<TickHandler> = mutableListOf()
 
     private var armorRegistry: Map<String, ArmorDefinition> = emptyMap()
-    private var npcVisibilityCheckTickCounter = 0
     private var targetDistanceTickCounter = 0
 
     private val commandContextClosures =
@@ -837,30 +845,7 @@ class GameLoop(
         app.launch {
             while (isActive) {
                 delay(NPC_LIFECYCLE_INTERVAL_MS)
-                runCatching {
-                        val activeSessions = sessionRegistry.all()
-                        npcManager.despawnOrphanedNpcs(activeSessions)
-                        val nearChunks =
-                            if (activeSessions.isEmpty()) emptyList()
-                            else {
-                                val halfZone =
-                                    NpcConstants.NPC_ZONE_SIZE / WorldConstants.CHUNK_SIZE
-                                world.discoveredChunks().filter { cp ->
-                                    activeSessions.any { s ->
-                                        val pcx =
-                                            Math.floorDiv(
-                                                s.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE)
-                                        val pcz =
-                                            Math.floorDiv(
-                                                s.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE)
-                                        Math.abs(cp.cx - pcx) <= halfZone &&
-                                            Math.abs(cp.cz - pcz) <= halfZone
-                                    }
-                                }
-                            }
-                        npcSpawner.trySpawn(
-                            world, npcManager, npcManager.getDefinitions(), nearChunks)
-                    }
+                runCatching { npcTickPipeline.lifecycle(world, sessionRegistry.all()) }
                     .onFailure { log.error("npc lifecycle error: {}", it.message, it) }
             }
         }
@@ -930,43 +915,22 @@ class GameLoop(
                 chunkStreamer.checkAndRequest(session)
                 chunkStreamer.deliverReady(session)
             }
-            val newZoneX = Math.floorDiv(session.state.pos.x.toInt(), NpcConstants.NPC_ZONE_SIZE)
-            val newZoneZ = Math.floorDiv(session.state.pos.z.toInt(), NpcConstants.NPC_ZONE_SIZE)
+            val (newZoneX, newZoneZ) =
+                npcTickPipeline.zoneOf(session.state.pos.x, session.state.pos.z)
             val lastZone = session.lastZonePos
             if (lastZone == null || lastZone.first != newZoneX || lastZone.second != newZoneZ) {
                 session.lastZonePos = Pair(newZoneX, newZoneZ)
-                val adjacentChunks = mutableListOf<ChunkPos>()
-                for (dzx in -1..1) for (dzz in -1..1) {
-                    val zx = newZoneX + dzx
-                    val zz = newZoneZ + dzz
-                    npcManager.respawnPendingInZone(zx, zz)
-                    world.discoveredChunks().filterTo(adjacentChunks) { cp ->
-                        Math.floorDiv(
-                            cp.cx * WorldConstants.CHUNK_SIZE, NpcConstants.NPC_ZONE_SIZE) == zx &&
-                            Math.floorDiv(
-                                cp.cz * WorldConstants.CHUNK_SIZE, NpcConstants.NPC_ZONE_SIZE) == zz
-                    }
-                }
-                if (adjacentChunks.isNotEmpty())
-                    npcSpawner.trySpawn(
-                        world, npcManager, npcManager.getDefinitions(), adjacentChunks)
+                npcTickPipeline.onZoneCrossed(world, newZoneX, newZoneZ)
             }
         }
         worldItems.tickCollection(sessionRegistry.all())
         gameTimeService.tick(TICK_SECONDS.toDouble())
-        npcManager.tick(world)
-        npcManager.tickAggro(sessionRegistry.all(), combatProcessor)
-        animalInteractionProcessor.tick()
+        npcTickPipeline.tick(world, sessionRegistry.all(), combatProcessor)
         statusEffectProcessor.tick(sessionRegistry.all())
         regenProcessor.tick(sessionRegistry.all())
         weatherManager.tick(world) { msg -> sessionRegistry.all().forEach { it.send(msg) } }
         liquidManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
         vegetationManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
-        npcVisibilityCheckTickCounter++
-        if (npcVisibilityCheckTickCounter >= NpcConstants.NPC_VISIBILITY_CHECK_INTERVAL_TICKS) {
-            npcVisibilityCheckTickCounter = 0
-            npcManager.tickVisibility(sessionRegistry.all())
-        }
         targetDistanceTickCounter++
         if (targetDistanceTickCounter >= TARGET_DISTANCE_REFRESH_TICKS) {
             targetDistanceTickCounter = 0
@@ -1274,7 +1238,7 @@ class GameLoop(
             sessionRegistry.remove(id)
             chunkStreamer.cleanupSession(id)
             npcManager.clearPlayer(id)
-            npcManager.despawnOrphanedNpcs(sessionRegistry.all())
+            npcTickPipeline.onPlayerDisconnected(sessionRegistry.all())
             tradeManager.onPlayerDisconnect(id)
             savePlayer(session)
             log.info(

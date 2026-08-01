@@ -43,6 +43,41 @@ private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
         animal = o.animal ?: animal,
     )
 
+/**
+ * Apply a data override on an already-built definition. Used by the admin world simulator, which
+ * receives the live registry and layers instance-scoped rules on top without touching any file.
+ */
+fun NpcDefinition.applyOverride(o: NpcYamlOverride): NpcDefinition =
+    copy(
+        behavior = o.behavior?.let { NpcBehaviorRegistry.get(it) } ?: behavior,
+        behaviorKey = o.behavior ?: behaviorKey,
+        bbmodelFile = o.bbmodelFile ?: bbmodelFile,
+        width = o.width ?: width,
+        height = o.height ?: height,
+        wanderSpeed = o.wanderSpeed ?: wanderSpeed,
+        wanderRadius = o.wanderRadius ?: wanderRadius,
+        spawn =
+            o.spawn?.let {
+                spawn.copy(
+                    autoSpawn = it.autoSpawn ?: spawn.autoSpawn,
+                    maxPerChunk = it.maxPerChunk ?: spawn.maxPerChunk,
+                    spawnBiomes = it.spawnBiomes ?: spawn.spawnBiomes,
+                )
+            } ?: spawn,
+        hp = o.hp ?: hp,
+        aggroMode = o.aggroMode ?: aggroMode,
+        aggroRange = o.aggroRange ?: aggroRange,
+        deaggroTimeSec = o.deaggroTimeSec ?: deaggroTimeSec,
+        attacks = o.attacks ?: attacks,
+        spells = o.spells ?: spells,
+        minLevel = o.minLevel ?: minLevel,
+        maxLevel = o.maxLevel ?: maxLevel,
+        characterClass = o.characterClass ?: characterClass,
+        baseStats = o.baseStats ?: baseStats,
+        xpReward = o.xpReward ?: xpReward,
+        animalConfig = o.animal ?: animalConfig,
+    )
+
 class NpcRegistryLoader(
     private val resourcesEntityPath: Path,
     private val dataEntityPath: Path,

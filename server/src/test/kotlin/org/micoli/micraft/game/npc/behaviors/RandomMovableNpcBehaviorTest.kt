@@ -121,7 +121,8 @@ class RandomMovableNpcBehaviorTest {
         repeat(10) {
             RandomMovableNpcBehavior().tick(instance, world)
             val delta = abs(instance.state.yaw - prevYaw)
-            if (delta > 0f && delta <= NpcConstants.YAW_TURN_SPEED + 0.001f) anyGradualStep = true
+            if (delta > 0f && delta <= NpcConstants.live.yawTurnSpeed + 0.001f)
+                anyGradualStep = true
             prevYaw = instance.state.yaw
         }
         assertTrue(anyGradualStep, "yaw should interpolate gradually, not snap")
@@ -134,8 +135,8 @@ class RandomMovableNpcBehaviorTest {
         val spawn = Vec3(8.5f, (floorY + 1).toFloat(), 8.5f)
         val instance = instanceAt(spawn)
         instance.vy = 0f
-        instance.wanderPhase = WanderPhase.Decel(8.5f, 8.5f, NpcConstants.WANDER_DECEL_TICKS, 1f)
-        repeat(NpcConstants.WANDER_DECEL_TICKS + 1) {
+        instance.wanderPhase = WanderPhase.Decel(8.5f, 8.5f, NpcConstants.live.wanderDecelTicks, 1f)
+        repeat(NpcConstants.live.wanderDecelTicks + 1) {
             RandomMovableNpcBehavior().tick(instance, world)
         }
         assertTrue(instance.wanderPhase is WanderPhase.Pausing, "should enter Pausing after Decel")

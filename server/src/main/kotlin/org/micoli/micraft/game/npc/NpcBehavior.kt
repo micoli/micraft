@@ -5,11 +5,16 @@ import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.protocol.ServerMessage
 
 interface NpcBehavior {
-    fun tick(instance: NpcInstance, world: WorldState): Boolean
+    fun tick(
+        instance: NpcInstance,
+        world: WorldState,
+        ctx: NpcTickContext = NpcTickContext.live
+    ): Boolean
 
     suspend fun onInteract(
         instance: NpcInstance,
         session: PlayerSession,
-        send: suspend (ServerMessage) -> Unit
+        ctx: NpcTickContext = NpcTickContext.live,
+        send: suspend (ServerMessage) -> Unit,
     ) {}
 }

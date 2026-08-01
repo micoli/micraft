@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.npc
 
+import kotlin.random.Random
 import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.game.npc.animal.AnimalInstanceData
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
@@ -28,6 +29,13 @@ class NpcInstance(
     @Volatile var isDead: Boolean = false,
     @Volatile var deathTimeMs: Long = 0L,
     @Volatile var animalData: AnimalInstanceData? = null,
+    tuning: NpcTuning = NpcConstants.live,
+    /**
+     * Per-NPC random source. Derived from the world's seed at spawn time so an NPC's evolution does
+     * not depend on the order the (concurrent) NPC map happens to be iterated in — that is what
+     * makes a seeded simulation reproducible.
+     */
+    val random: Random = Random,
 ) {
     val characterClass
         get() = definition.characterClass
@@ -37,7 +45,7 @@ class NpcInstance(
     val maxRage: Int = if (definition.characterClass.classResource == ClassResource.RAGE) 100 else 0
 
     var wanderPhase: WanderPhase =
-        WanderPhase.Moving(spawnPos.x, spawnPos.z, 1f, NpcConstants.WANDER_STEP_TICKS_MAX)
+        WanderPhase.Moving(spawnPos.x, spawnPos.z, 1f, tuning.wanderStepTicksMax)
     val wanderWaypoints: ArrayDeque<Pair<Float, Float>> = ArrayDeque()
 
     init {

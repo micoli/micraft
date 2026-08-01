@@ -5,13 +5,12 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
-import kotlin.random.Random
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.TICK_SECONDS
 import org.micoli.micraft.game.npc.NpcBehavior
-import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcPhysics
+import org.micoli.micraft.game.npc.NpcTickContext
 import org.micoli.micraft.game.npc.WanderPhase
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.physics.AabbCollider
@@ -19,7 +18,7 @@ import org.micoli.micraft.player.Vec3
 
 class RandomMovableNpcBehavior : NpcBehavior {
 
-    override fun tick(instance: NpcInstance, world: WorldState): Boolean {
+    override fun tick(instance: NpcInstance, world: WorldState, ctx: NpcTickContext): Boolean {
         var changed = NpcPhysics.applyGravity(instance, world)
         val now = System.currentTimeMillis()
         val isFrozen =
@@ -30,12 +29,17 @@ class RandomMovableNpcBehavior : NpcBehavior {
         if (isFrozen) return changed
         val chaseTarget = instance.chaseTargetPos
         changed =
-            if (chaseTarget != null) tickChase(instance, world, chaseTarget) || changed
-            else tickWander(instance, world) || changed
+            if (chaseTarget != null) tickChase(instance, world, chaseTarget, ctx) || changed
+            else tickWander(instance, world, ctx) || changed
         return changed
     }
 
-    private fun tickChase(instance: NpcInstance, world: WorldState, targetPos: Vec3): Boolean {
+    private fun tickChase(
+        instance: NpcInstance,
+        world: WorldState,
+        targetPos: Vec3,
+        ctx: NpcTickContext,
+    ): Boolean {
         val def = instance.definition
         val pos = instance.state.pos
         val sp = instance.spawnPos
@@ -63,17 +67,26 @@ class RandomMovableNpcBehavior : NpcBehavior {
         }
 
         return applyMovement(
-            instance, world, effectiveTarget.x, effectiveTarget.z, def.wanderSpeed * TICK_SECONDS)
+            instance,
+            world,
+            effectiveTarget.x,
+            effectiveTarget.z,
+            def.wanderSpeed * TICK_SECONDS,
+            ctx)
     }
 
-    private fun tickWander(instance: NpcInstance, world: WorldState): Boolean =
+    private fun tickWander(instance: NpcInstance, world: WorldState, ctx: NpcTickContext): Boolean =
         when (val phase = instance.wanderPhase) {
-            is WanderPhase.Pausing -> tickPausing(instance, phase)
-            is WanderPhase.Moving -> tickMoving(instance, world, phase)
-            is WanderPhase.Decel -> tickDecel(instance, world, phase)
+            is WanderPhase.Pausing -> tickPausing(instance, phase, ctx)
+            is WanderPhase.Moving -> tickMoving(instance, world, phase, ctx)
+            is WanderPhase.Decel -> tickDecel(instance, world, phase, ctx)
         }
 
-    private fun tickPausing(instance: NpcInstance, phase: WanderPhase.Pausing): Boolean {
+    private fun tickPausing(
+        instance: NpcInstance,
+        phase: WanderPhase.Pausing,
+        ctx: NpcTickContext,
+    ): Boolean {
         var changed = false
         if (instance.state.vel.x != 0f || instance.state.vel.z != 0f) {
             instance.velocity = Vec3(0f, instance.velocity.y, 0f)
@@ -85,14 +98,14 @@ class RandomMovableNpcBehavior : NpcBehavior {
         val newLookYaw: Float
         val newChangeTicks: Int
         if (newLookChangeTicks <= 0) {
-            newLookYaw = Random.nextFloat() * 2f * PI.toFloat()
-            newChangeTicks = NpcConstants.LOOK_AROUND_CHANGE_TICKS
+            newLookYaw = ctx.random.nextFloat() * 2f * PI.toFloat()
+            newChangeTicks = ctx.tuning.lookAroundChangeTicks
         } else {
             newLookYaw = phase.lookYaw
             newChangeTicks = newLookChangeTicks
         }
 
-        val newYaw = lerpYaw(instance.state.yaw, newLookYaw, NpcConstants.LOOK_AROUND_SPEED)
+        val newYaw = lerpYaw(instance.state.yaw, newLookYaw, ctx.tuning.lookAroundSpeed)
         if (newYaw != instance.state.yaw) {
             instance.state = instance.state.copy(yaw = newYaw)
             changed = true
@@ -100,7 +113,7 @@ class RandomMovableNpcBehavior : NpcBehavior {
 
         val newRemainingTicks = phase.remainingTicks - 1
         if (newRemainingTicks <= 0) {
-            enqueueWaypointChain(instance)
+            enqueueWaypointChain(instance, ctx)
         } else {
             instance.wanderPhase =
                 phase.copy(
@@ -116,7 +129,8 @@ class RandomMovableNpcBehavior : NpcBehavior {
     private fun tickMoving(
         instance: NpcInstance,
         world: WorldState,
-        phase: WanderPhase.Moving
+        phase: WanderPhase.Moving,
+        ctx: NpcTickContext,
     ): Boolean {
         val pos = instance.state.pos
         val dx = phase.targetX - pos.x
@@ -124,14 +138,14 @@ class RandomMovableNpcBehavior : NpcBehavior {
         val dist = sqrt((dx * dx + dz * dz).toDouble()).toFloat()
 
         if (phase.remainingTicks <= 0 && instance.vy == 0f) {
-            pickFreshWaypointChain(instance)
+            pickFreshWaypointChain(instance, ctx)
             return false
         }
 
         if (dist < 0.8f) {
             instance.wanderPhase =
                 WanderPhase.Decel(
-                    phase.targetX, phase.targetZ, NpcConstants.WANDER_DECEL_TICKS, phase.speedMult)
+                    phase.targetX, phase.targetZ, ctx.tuning.wanderDecelTicks, phase.speedMult)
             return false
         }
 
@@ -143,26 +157,27 @@ class RandomMovableNpcBehavior : NpcBehavior {
             phase.targetX,
             phase.targetZ,
             speed,
-            onBlocked = { pickFreshWaypointChain(instance) })
+            ctx,
+            onBlocked = { pickFreshWaypointChain(instance, ctx) })
     }
 
     private fun tickDecel(
         instance: NpcInstance,
         world: WorldState,
-        phase: WanderPhase.Decel
+        phase: WanderPhase.Decel,
+        ctx: NpcTickContext,
     ): Boolean {
         val newRemainingTicks = phase.remainingTicks - 1
         if (newRemainingTicks <= 0) {
             if (instance.wanderWaypoints.isNotEmpty()) {
-                instance.wanderPhase = popNextMoving(instance)
+                instance.wanderPhase = popNextMoving(instance, ctx)
             } else {
                 val pauseTicks =
-                    Random.nextInt(
-                        NpcConstants.WANDER_PAUSE_TICKS_MIN,
-                        NpcConstants.WANDER_PAUSE_TICKS_MAX + 1)
+                    ctx.random.nextInt(
+                        ctx.tuning.wanderPauseTicksMin, ctx.tuning.wanderPauseTicksMax + 1)
                 instance.wanderPhase =
                     WanderPhase.Pausing(
-                        pauseTicks, instance.state.yaw, NpcConstants.LOOK_AROUND_CHANGE_TICKS)
+                        pauseTicks, instance.state.yaw, ctx.tuning.lookAroundChangeTicks)
             }
             if (instance.state.vel.x != 0f || instance.state.vel.z != 0f) {
                 instance.velocity = Vec3(0f, instance.velocity.y, 0f)
@@ -173,9 +188,9 @@ class RandomMovableNpcBehavior : NpcBehavior {
         }
 
         instance.wanderPhase = phase.copy(remainingTicks = newRemainingTicks)
-        val fraction = newRemainingTicks.toFloat() / NpcConstants.WANDER_DECEL_TICKS.toFloat()
+        val fraction = newRemainingTicks.toFloat() / ctx.tuning.wanderDecelTicks.toFloat()
         val speed = instance.definition.wanderSpeed * phase.speedMult * fraction * TICK_SECONDS
-        return applyMovement(instance, world, phase.targetX, phase.targetZ, speed)
+        return applyMovement(instance, world, phase.targetX, phase.targetZ, speed, ctx)
     }
 
     private fun applyMovement(
@@ -184,6 +199,7 @@ class RandomMovableNpcBehavior : NpcBehavior {
         targetX: Float,
         targetZ: Float,
         speed: Float,
+        ctx: NpcTickContext,
         onBlocked: (() -> Unit)? = null,
     ): Boolean {
         val def = instance.definition
@@ -228,7 +244,7 @@ class RandomMovableNpcBehavior : NpcBehavior {
                     def.height,
                     nz * jumpCheckSpeed)
             if (rdxAbove != 0f || rdzAbove != 0f) {
-                instance.vy = NpcConstants.JUMP_VELOCITY
+                instance.vy = ctx.tuning.jumpVelocity
                 return true
             }
         }
@@ -246,7 +262,7 @@ class RandomMovableNpcBehavior : NpcBehavior {
         }
 
         val targetYaw = atan2(nx.toDouble(), nz.toDouble()).toFloat()
-        val newYaw = lerpYaw(instance.state.yaw, targetYaw, NpcConstants.YAW_TURN_SPEED)
+        val newYaw = lerpYaw(instance.state.yaw, targetYaw, ctx.tuning.yawTurnSpeed)
         instance.velocity =
             Vec3((newX - pos.x) / TICK_SECONDS, instance.velocity.y, resolvedDz / TICK_SECONDS)
         instance.state =
@@ -266,48 +282,48 @@ class RandomMovableNpcBehavior : NpcBehavior {
         return current + delta.coerceIn(-speed, speed)
     }
 
-    private fun enqueueWaypointChain(instance: NpcInstance) {
+    private fun enqueueWaypointChain(instance: NpcInstance, ctx: NpcTickContext) {
         val n =
-            Random.nextInt(
-                NpcConstants.WANDER_WAYPOINT_COUNT_MIN, NpcConstants.WANDER_WAYPOINT_COUNT_MAX + 1)
+            ctx.random.nextInt(
+                ctx.tuning.wanderWaypointCountMin, ctx.tuning.wanderWaypointCountMax + 1)
         var angle = instance.state.yaw
         val radius = instance.definition.wanderRadius
         val spread = PI.toFloat() * 1.5f
         repeat(n) {
-            angle += Random.nextFloat() * spread - spread / 2f
-            val r = Random.nextFloat() * radius
+            angle += ctx.random.nextFloat() * spread - spread / 2f
+            val r = ctx.random.nextFloat() * radius
             instance.wanderWaypoints.addLast(
                 Pair(
                     instance.spawnPos.x + r * sin(angle),
                     instance.spawnPos.z + r * cos(angle),
                 ))
         }
-        instance.wanderPhase = popNextMoving(instance)
+        instance.wanderPhase = popNextMoving(instance, ctx)
     }
 
-    private fun pickFreshWaypointChain(instance: NpcInstance) {
+    private fun pickFreshWaypointChain(instance: NpcInstance, ctx: NpcTickContext) {
         val n =
-            Random.nextInt(
-                NpcConstants.WANDER_WAYPOINT_COUNT_MIN, NpcConstants.WANDER_WAYPOINT_COUNT_MAX + 1)
+            ctx.random.nextInt(
+                ctx.tuning.wanderWaypointCountMin, ctx.tuning.wanderWaypointCountMax + 1)
         val radius = instance.definition.wanderRadius
         repeat(n) {
-            val angle = Random.nextFloat() * 2f * PI.toFloat()
-            val r = Random.nextFloat() * radius
+            val angle = ctx.random.nextFloat() * 2f * PI.toFloat()
+            val r = ctx.random.nextFloat() * radius
             instance.wanderWaypoints.addLast(
                 Pair(
                     instance.spawnPos.x + r * sin(angle),
                     instance.spawnPos.z + r * cos(angle),
                 ))
         }
-        instance.wanderPhase = popNextMoving(instance)
+        instance.wanderPhase = popNextMoving(instance, ctx)
     }
 
-    private fun popNextMoving(instance: NpcInstance): WanderPhase.Moving {
+    private fun popNextMoving(instance: NpcInstance, ctx: NpcTickContext): WanderPhase.Moving {
         val (tx, tz) = instance.wanderWaypoints.removeFirst()
         val speedMult =
-            Random.nextFloat() *
-                (NpcConstants.WANDER_SPEED_MULT_MAX - NpcConstants.WANDER_SPEED_MULT_MIN) +
-                NpcConstants.WANDER_SPEED_MULT_MIN
-        return WanderPhase.Moving(tx, tz, speedMult, NpcConstants.WANDER_STEP_TICKS_MAX)
+            ctx.random.nextFloat() *
+                (ctx.tuning.wanderSpeedMultMax - ctx.tuning.wanderSpeedMultMin) +
+                ctx.tuning.wanderSpeedMultMin
+        return WanderPhase.Moving(tx, tz, speedMult, ctx.tuning.wanderStepTicksMax)
     }
 }

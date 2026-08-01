@@ -1,12 +1,12 @@
 package org.micoli.micraft.game.npc.animal
 
-import kotlin.random.Random
 import org.micoli.micraft.game.GameTimeService
 import org.micoli.micraft.game.TICK_SECONDS
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.npc.FantasyNameGenerator
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.npc.NpcTickContext
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.vegetation.VegetationManager
@@ -26,9 +26,29 @@ class AnimalInteractionProcessor(
     private val vegetationManager: VegetationManager,
     private val gameTimeService: GameTimeService,
     private val broadcast: suspend (ServerMessage) -> Unit,
+    private val ctxOf: () -> NpcTickContext = { NpcTickContext.live },
+    /** Lifecycle sink; no-op on the live server, wired to the event log by the world simulator. */
+    private val onEvent: (AnimalEvent) -> Unit = {},
 ) {
     private var slowTickCounter = 0
     private val hpRegenAccumulators = mutableMapOf<String, Float>()
+
+    private fun emit(
+        type: AnimalEventType,
+        instance: NpcInstance,
+        other: NpcInstance? = null,
+        value: Double? = null,
+    ) =
+        onEvent(
+            AnimalEvent(
+                type = type,
+                npcId = instance.state.id,
+                npcName = instance.state.name,
+                npcType = instance.state.type,
+                otherId = other?.state?.id,
+                otherName = other?.state?.name,
+                value = value,
+            ))
 
     suspend fun tick() {
         val dt = TICK_SECONDS.toDouble()
@@ -42,13 +62,19 @@ class AnimalInteractionProcessor(
             val config = instance.definition.animalConfig ?: continue
 
             animal.ageGameDays += dtDays
+            val hungerBefore = animal.hunger
             animal.hunger = (animal.hunger + config.hungerRatePerDay * dtDays).coerceAtMost(1.0)
+            if (hungerBefore < config.hungerThresholdToHunt &&
+                animal.hunger >= config.hungerThresholdToHunt) {
+                emit(AnimalEventType.HUNGRY, instance, value = animal.hunger)
+            }
 
             tickHpRegen(instance, animal, config, dt.toFloat(), now)
 
             if (config.lifespanDays != null && animal.ageGameDays >= config.lifespanDays) {
                 log.debug(
                     "NPC {} died of old age (age={:.1f})", instance.state.name, animal.ageGameDays)
+                emit(AnimalEventType.AGE_DEATH, instance, value = animal.ageGameDays)
                 npcManager.killNpcByAge(instance.state.id, instance, now)
                 continue
             }
@@ -56,6 +82,11 @@ class AnimalInteractionProcessor(
             if (config.adultType != null &&
                 animal.motherLevel > 0 &&
                 instance.instanceLevel >= animal.motherLevel) {
+                emit(
+                    AnimalEventType.EVOLVE,
+                    instance,
+                    value = instance.instanceLevel.toDouble(),
+                )
                 npcManager.evolveAnimal(instance, config.adultType, animal)
                 continue
             }
@@ -218,6 +249,7 @@ class AnimalInteractionProcessor(
                 combatProcessor.handleNpcAttackNpc(instance, prey)
                 if (prey.isDead) {
                     animal.hunger = (animal.hunger - config.feedHungerReduction).coerceAtLeast(0.0)
+                    emit(AnimalEventType.FED, instance, other = prey, value = animal.hunger)
                     animal.preyTargetId = null
                     animal.preyTargetPos = null
                 }
@@ -253,7 +285,7 @@ class AnimalInteractionProcessor(
                             val fdx = bxf - pos.x
                             val fdz = bzf - pos.z
                             if (fdx * fdx + fdz * fdz <= EAT_RANGE_SQ) {
-                                consumeVegetation(bx, by, bz, block, animal, config)
+                                consumeVegetation(bx, by, bz, block, instance, animal, config)
                             } else {
                                 animal.preyTargetPos =
                                     org.micoli.micraft.player.Vec3(bxf, pos.y, bzf)
@@ -275,6 +307,7 @@ class AnimalInteractionProcessor(
         by: Int,
         bz: Int,
         block: BlockType,
+        instance: NpcInstance,
         animal: AnimalInstanceData,
         config: AnimalYamlEntry
     ) {
@@ -285,6 +318,7 @@ class AnimalInteractionProcessor(
         vegetationManager.deactivate(blockPos)
         vegetationManager.tryActivate(blockPos, block)
         animal.hunger = (animal.hunger - config.feedHungerReduction).coerceAtLeast(0.0)
+        emit(AnimalEventType.FED, instance, value = animal.hunger)
         animal.preyTargetPos = null
     }
 
@@ -320,6 +354,12 @@ class AnimalInteractionProcessor(
                     femaleAnimal.lastReproductionDay = currentDay
                     male.second.lastReproductionDay = currentDay
                     log.debug("NPC {} and {} mating", instance.state.name, mate.state.name)
+                    emit(AnimalEventType.MATING, instance, other = mate)
+                    emit(
+                        AnimalEventType.GESTATION_START,
+                        female.first,
+                        other = male.first,
+                        value = femaleConfig.gestationDays)
                 }
                 animal.mateTargetId = null
                 animal.mateTargetPos = null
@@ -337,7 +377,8 @@ class AnimalInteractionProcessor(
     ) {
         val fatherAnimal = mother.animalData ?: return
         val offspringType = config.offspringType ?: return
-        val count = Random.nextInt(config.offspringMinCount, config.offspringMaxCount + 1)
+        val random = ctxOf().random
+        val count = random.nextInt(config.offspringMinCount, config.offspringMaxCount + 1)
         val zoneLevel = world.zoneLevelAt(mother.state.pos.x.toInt(), mother.state.pos.z.toInt())
 
         val mateInstance = fatherAnimal.mateTargetId?.let { npcManager.getInstance(it) }
@@ -362,14 +403,15 @@ class AnimalInteractionProcessor(
                 "${offspringType.replace('_', ' ').replaceFirstChar { it.uppercase() }} - ${FantasyNameGenerator.generate(offspringType)}"
             val offset =
                 org.micoli.micraft.player.Vec3(
-                    mother.state.pos.x + Random.nextFloat() * 2f - 1f,
+                    mother.state.pos.x + random.nextFloat() * 2f - 1f,
                     mother.state.pos.y,
-                    mother.state.pos.z + Random.nextFloat() * 2f - 1f,
+                    mother.state.pos.z + random.nextFloat() * 2f - 1f,
                 )
             val spawned = npcManager.spawnNpc(name, offspringType, offset, offspringLevel)
             spawned.animalData = offspringAnimal
             spawned.state = spawned.state.copy(animalData = offspringAnimal.toState())
             log.debug("Spawned offspring {} lv{}", name, offspringLevel)
+            emit(AnimalEventType.BIRTH, spawned, other = mother, value = offspringLevel.toDouble())
         }
     }
 

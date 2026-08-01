@@ -1,7 +1,6 @@
 package org.micoli.micraft.game.npc
 
 import kotlin.collections.iterator
-import kotlin.random.Random
 import org.micoli.micraft.game.npc.animal.AnimalInstanceData
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
@@ -19,9 +18,10 @@ class NpcSpawner {
         npcManager: NpcManager,
         definitions: Map<String, NpcDefinition>,
         loadedChunks: Collection<ChunkPos>,
+        ctx: NpcTickContext = NpcTickContext.live,
     ) {
         if (loadedChunks.isEmpty()) return
-        val chunkList = loadedChunks.toList().shuffled()
+        val chunkList = loadedChunks.toList().shuffled(ctx.random)
 
         for ((type, def) in definitions) {
             val spawn = def.spawn
@@ -29,15 +29,15 @@ class NpcSpawner {
 
             var attempts = 0
             for (chunkPos in chunkList) {
-                if (attempts >= NpcConstants.MAX_SPAWN_ATTEMPTS_PER_TICK) break
+                if (attempts >= ctx.tuning.maxSpawnAttemptsPerTick) break
                 if (npcManager.countByTypeInChunk(type, chunkPos) >= spawn.maxPerChunk) continue
 
                 val wx =
                     chunkPos.cx * WorldConstants.CHUNK_SIZE +
-                        Random.nextInt(WorldConstants.CHUNK_SIZE)
+                        ctx.random.nextInt(WorldConstants.CHUNK_SIZE)
                 val wz =
                     chunkPos.cz * WorldConstants.CHUNK_SIZE +
-                        Random.nextInt(WorldConstants.CHUNK_SIZE)
+                        ctx.random.nextInt(WorldConstants.CHUNK_SIZE)
 
                 val biomeDef = world.biomeDefinitionAt(wx, wz)
                 if (spawn.spawnBiomes.isNotEmpty() && biomeDef?.id !in spawn.spawnBiomes) continue
@@ -65,7 +65,8 @@ class NpcSpawner {
                 val zoneLevel = world.zoneLevelAt(wx, wz)
                 if (zoneLevel < def.minLevel || zoneLevel > def.maxLevel) continue
                 val instanceLevel =
-                    (zoneLevel + Random.nextInt(-3, 4)).coerceIn(1, WorldConstants.RPG_LEVEL_MAX)
+                    (zoneLevel + ctx.random.nextInt(-3, 4)).coerceIn(
+                        1, WorldConstants.RPG_LEVEL_MAX)
                 val name =
                     "${type.lowercase().replaceFirstChar { it.uppercase() }.replace('_',' ')} - ${FantasyNameGenerator.generate(type)}"
                 val instance = npcManager.spawnNpc(name, type, spawnPos, instanceLevel)

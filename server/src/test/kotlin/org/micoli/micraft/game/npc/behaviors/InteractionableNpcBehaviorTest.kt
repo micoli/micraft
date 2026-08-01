@@ -43,7 +43,7 @@ class InteractionableNpcBehaviorTest {
     @Test
     fun onInteract_outOfRange_sendsNothing() = runBlocking {
         val instance = instanceAt(Vec3(8f, 4f, 8f))
-        val farPos = Vec3(8f + NpcConstants.INTERACTION_RANGE + 10f, 4f, 8f)
+        val farPos = Vec3(8f + NpcConstants.live.interactionRange + 10f, 4f, 8f)
         val session = testSession(pos = farPos)
         val sent = mutableListOf<ServerMessage>()
         InteractionableNpcBehavior().onInteract(instance, session) { sent.add(it) }

@@ -36,13 +36,16 @@ class NpcConfigLoader(private val path: Path) {
     fun reload(): NpcConfig = load()
 
     private fun applyConfig(config: NpcConfig) {
-        NpcConstants.WANDER_PAUSE_TICKS_MIN = config.wanderPauseTicksMin
-        NpcConstants.WANDER_PAUSE_TICKS_MAX = config.wanderPauseTicksMax
-        NpcConstants.WANDER_STEP_TICKS_MAX = config.wanderStepTicksMax
-        NpcConstants.INTERACTION_RANGE = config.interactionRange
-        NpcConstants.UPDATE_RANGE = config.updateRange
-        NpcConstants.MAX_SPAWN_ATTEMPTS_PER_TICK = config.maxSpawnAttemptsPerTick
-        NpcConstants.JUMP_VELOCITY = config.jumpVelocity
-        NpcConstants.GAME_DAY_DURATION_SECONDS = config.gameDayDurationSeconds
+        NpcConstants.live =
+            NpcConstants.live.copy(
+                wanderPauseTicksMin = config.wanderPauseTicksMin,
+                wanderPauseTicksMax = config.wanderPauseTicksMax,
+                wanderStepTicksMax = config.wanderStepTicksMax,
+                interactionRange = config.interactionRange,
+                updateRange = config.updateRange,
+                maxSpawnAttemptsPerTick = config.maxSpawnAttemptsPerTick,
+                jumpVelocity = config.jumpVelocity,
+                gameDayDurationSeconds = config.gameDayDurationSeconds,
+            )
     }
 }
