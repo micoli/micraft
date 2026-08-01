@@ -610,8 +610,6 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         minimapVisible = info.minimapVisible,
                                         rotatable = info.rotatable,
                                         hasStuds = info.hasStuds,
-                                        isSlope = info.isSlope,
-                                        isCorner = info.isCorner,
                                         brickSize = info.brickSize,
                                         heightFraction = info.heightFraction,
                                     )

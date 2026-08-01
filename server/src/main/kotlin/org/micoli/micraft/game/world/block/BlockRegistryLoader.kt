@@ -131,8 +131,6 @@ class BlockRegistryLoader(
                     minimapVisible = entry.minimapVisible,
                     rotatable = entry.rotatable,
                     hasStuds = entry.hasStuds,
-                    isSlope = entry.isSlope,
-                    isCorner = entry.isCorner,
                     brickSize = entry.brickSize,
                     heightFraction = entry.heightFraction,
                 )

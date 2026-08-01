@@ -120,49 +120,6 @@ async function loadGltfSources(gltfPath: string, scene: InstanceType<typeof BABY
 
 const CROSS_SPRITE_VERTS = new Float32Array([0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1]);
 
-// Slope geometry for rotation=0 (ascending toward south/+Z: y=0 at north, y=1 at south).
-// Other rotations are derived by rotateVerts applied repeatedly.
-// fd: 0=south(back high wall), 1=north(none/null), 2=east triangle, 3=west triangle,
-//     4=slope top diagonal, 5=bottom flat
-const SLOPE_BASE_VERTS: (Float32Array | null)[] = [
-  new Float32Array([0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1]), // fd=0 south wall (high end)
-  null, // fd=1 north: open at low end
-  new Float32Array([1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1]), // fd=2 east triangle (degenerate quad)
-  new Float32Array([0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1]), // fd=3 west triangle (degenerate quad)
-  new Float32Array([0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0]), // fd=4 slope top diagonal
-  new Float32Array([0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1]), // fd=5 bottom flat
-];
-
-// Normals for slope faces (per fd): slope top normal is special (diagonal)
-const SLOPE_TOP_NORMS = [
-  [0, 0.7071, -0.7071], // rot=0: ascending south, outward normal up-north
-  [-0.7071, 0.7071, 0], // rot=1: ascending east, outward normal up-west
-  [0, 0.7071, 0.7071], // rot=2: ascending north, outward normal up-south
-  [0.7071, 0.7071, 0], // rot=3: ascending west, outward normal up-east
-];
-
-// Corner (vertical triangular prism): right angle at NW for rotation=0.
-// Top view (XZ): right triangle with vertices NW(0,0), NE(1,0), SW(0,1). Full height.
-// fd=0 repurposed as the 45° diagonal vertical wall (NE→SW face).
-// fd=1=north full wall, fd=2=null(open east), fd=3=west full wall.
-// fd=4=top triangle (degenerate quad), fd=5=bottom triangle (degenerate quad).
-const CORNER_BASE_VERTS: (Float32Array | null)[] = [
-  new Float32Array([1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0]), // fd=0 diagonal 45° wall
-  new Float32Array([1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0]), // fd=1 north wall (full)
-  null, // fd=2 east: open (no face)
-  new Float32Array([0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0]), // fd=3 west wall (full)
-  new Float32Array([0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0]), // fd=4 top triangle (degenerate)
-  new Float32Array([0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1]), // fd=5 bottom triangle (degenerate)
-];
-
-// Outward normal of fd=0 diagonal wall per rotation (points away from the right-angle corner)
-const CORNER_DIAG_NORMS = [
-  [0.7071, 0, 0.7071], // rot=0: right angle NW, open toward SE
-  [-0.7071, 0, 0.7071], // rot=1: right angle NE, open toward SW
-  [-0.7071, 0, -0.7071], // rot=2: right angle SE, open toward NW
-  [0.7071, 0, -0.7071], // rot=3: right angle SW, open toward NE
-];
-
 function buildFaceTable(): void {
   faceTable = [];
   for (let typeOrd = 0; typeOrd < 512; typeOrd++) {
@@ -173,8 +130,6 @@ function buildFaceTable(): void {
       continue;
     }
     const isCross = blockDef.renderType === "cross_sprite";
-    const isSlope = blockDef.renderType === "slope";
-    const isCorner = blockDef.renderType === "corner";
     const isPlastic = blockDef.hasStuds === true;
 
     for (let rotation = 0; rotation < 4; rotation++) {
@@ -182,62 +137,7 @@ function buildFaceTable(): void {
         const faceMat = (typeOrd * 4 + rotation) * 6 + fd;
         const infos: FaceInfo[] = [];
 
-        if (isCorner) {
-          const baseVerts = CORNER_BASE_VERTS[fd];
-          if (baseVerts !== null) {
-            const verts = rotation === 0 ? baseVerts : rotateVerts(baseVerts, rotation);
-            const srcFd = ROT_SOURCE[rotation][fd];
-            const fi = blockDef.elements[0]?.faces[srcFd] ?? blockDef.elements[0]?.faces.find((f) => f != null) ?? null;
-            if (fi) {
-              let nx: number, ny: number, nz: number;
-              if (fd === 0) {
-                [nx, ny, nz] = CORNER_DIAG_NORMS[rotation];
-              } else {
-                [nx, ny, nz] = MC_NORMS[fd];
-              }
-              infos.push({
-                matKey: fi.matKey,
-                uv: new Float32Array(fi.uv),
-                shade: fd === 0 ? 0.85 : FACE_SHADES[fd],
-                normX: nx,
-                normY: ny,
-                normZ: nz,
-                verts,
-                isCrossSprite: false,
-                isPlastic,
-              });
-            }
-          }
-        } else if (isSlope) {
-          // Slope geometry: use pre-baked base verts rotated by `rotation`
-          const baseVerts = SLOPE_BASE_VERTS[fd];
-          if (baseVerts !== null) {
-            const verts = rotation === 0 ? baseVerts : rotateVerts(baseVerts, rotation);
-            // Pick texture from element 0, faces — prefer the matching faceDir
-            const srcFd = ROT_SOURCE[rotation][fd];
-            const fi = blockDef.elements[0]?.faces[srcFd] ?? blockDef.elements[0]?.faces.find((f) => f != null) ?? null;
-            if (fi) {
-              let nx: number, ny: number, nz: number;
-              if (fd === 4) {
-                // Slope top: special diagonal normal rotated by rotation
-                [nx, ny, nz] = SLOPE_TOP_NORMS[rotation];
-              } else {
-                [nx, ny, nz] = MC_NORMS[fd];
-              }
-              infos.push({
-                matKey: fi.matKey,
-                uv: new Float32Array(fi.uv),
-                shade: fd === 4 ? 0.9 : FACE_SHADES[fd],
-                normX: nx,
-                normY: ny,
-                normZ: nz,
-                verts,
-                isCrossSprite: false,
-                isPlastic,
-              });
-            }
-          }
-        } else if (isCross) {
+        if (isCross) {
           // Cross sprites: only fd=0 slot, emitted as two diagonal quads; rotation ignored
           if (fd === 0 && rotation === 0) {
             const fi = blockDef.faces[0]?.find((f) => f != null) ?? null;

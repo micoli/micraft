@@ -18,8 +18,6 @@ data class BlockDefinition(
     val minimapVisible: Boolean = true,
     val rotatable: Boolean = false,
     val hasStuds: Boolean = false,
-    val isSlope: Boolean = false,
-    val isCorner: Boolean = false,
     val brickSize: List<Int> = listOf(1, 1, 1),
     val heightFraction: Float = 1.0f,
 )

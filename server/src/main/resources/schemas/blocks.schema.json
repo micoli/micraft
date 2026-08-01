@@ -28,8 +28,6 @@
       "minItems": 2,
       "maxItems": 3
     },
-    "isSlope": {"type": "boolean"},
-    "isCorner": {"type": "boolean"},
     "heightFraction": {"type": "number", "minimum": 0, "maximum": 1},
     "drops": {
       "type": "array",

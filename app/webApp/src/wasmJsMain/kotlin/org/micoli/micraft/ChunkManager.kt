@@ -83,8 +83,6 @@ class ChunkManager(private val scene: JsAny) {
     private val solidByOrd = ByteArray(256)
     private val liquidByOrd = ByteArray(256)
     private val hasStudsByOrd = ByteArray(256)
-    private val isSlopeByOrd = ByteArray(256)
-    private val isCornerByOrd = ByteArray(256)
     private val isMultiCellByOrd = ByteArray(256)
     private var ordFlagsBuilt = false
     private val strideX = (WorldConstants.WORLD_MAX_Y + 1) * WorldConstants.CHUNK_SIZE
@@ -97,8 +95,6 @@ class ChunkManager(private val scene: JsAny) {
             solidByOrd[i] = if (bt.isSolid) 1 else 0
             liquidByOrd[i] = if (bt.isLiquid) 1 else 0
             hasStudsByOrd[i] = if (def.hasStuds) 1 else 0
-            isSlopeByOrd[i] = if (def.isSlope) 1 else 0
-            isCornerByOrd[i] = if (def.isCorner) 1 else 0
             isMultiCellByOrd[i] =
                 if (def.brickSize.size == 3 &&
                     (def.brickSize[0] > 1 || def.brickSize[1] > 1 || def.brickSize[2] > 1))
@@ -433,10 +429,8 @@ class ChunkManager(private val scene: JsAny) {
                 val wx = ox + x
                 val wz2 = oz + z
 
-                val isSlope = isSlopeByOrd[ord].toInt() != 0
-                val isCorner = isCornerByOrd[ord].toInt() != 0
                 val isMaster = entity != null // entity master → bypass culling
-                val bypassCulling = isSlope || isCorner || isMaster
+                val bypassCulling = isMaster
 
                 // top (+Y): use solidByOrd + liquidByOrd to skip redundant BlockType creation
                 val aboveOrd =

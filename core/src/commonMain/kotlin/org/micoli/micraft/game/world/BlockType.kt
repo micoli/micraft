@@ -27,12 +27,6 @@ value class BlockType(val id: String) {
     val treeAllowed: Boolean
         get() = BlockRegistry.get(this).treeAllowed
 
-    val isSlope: Boolean
-        get() = BlockRegistry.get(this).isSlope
-
-    val isCorner: Boolean
-        get() = BlockRegistry.get(this).isCorner
-
     companion object {
         val AIR = BlockType("AIR")
         val BEDROCK = BlockType("BEDROCK")

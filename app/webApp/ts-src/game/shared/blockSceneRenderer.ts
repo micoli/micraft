@@ -72,9 +72,6 @@ export function setupBlockScene(scene: Scene, ordinal: number): TransformNode {
   };
 
   const isCrossSprite = blockDef?.renderType === "cross_sprite";
-  const isSlope = blockDef?.renderType === "slope";
-  const isCorner = blockDef?.renderType === "corner";
-  const customVerts = isSlope ? SLOPE_VERTS : isCorner ? CORNER_VERTS : null;
 
   if (isCrossSprite) {
     const fi = blockDef!.faces[0]?.find((f) => f != null) ?? null;
@@ -134,58 +131,13 @@ export function setupBlockScene(scene: Scene, ordinal: number): TransformNode {
       my = (y0 + y1) / 2,
       mz = (z0 + z1) / 2;
 
-    if (!customVerts) {
-      const firstFace = elem.faces.find((fi) => fi != null);
-      const url = firstFace ? getUrl(firstFace.matKey) : null;
-      if (!url) continue;
-      const box = B.MeshBuilder.CreateBox(`e${ei}`, { width: W, height: H, depth: D }, scene);
-      box.parent = root;
-      box.position = new B.Vector3(mx - cx, my - cy, mz - cz);
-      box.material = ensureMat(url, false);
-      continue;
-    }
-
-    for (let dir = 0; dir < 6; dir++) {
-      const faceInfo = elem.faces[dir];
-      if (!faceInfo) continue;
-      const url = getUrl(faceInfo.matKey);
-      if (!url) continue;
-      const raw = customVerts[dir];
-      if (!raw) continue;
-
-      const verts: number[] = [];
-      for (let i = 0; i < 12; i += 3) {
-        verts.push(x0 + raw[i] * W, y0 + raw[i + 1] * H, z0 + raw[i + 2] * D);
-      }
-      const positions = [
-        verts[0] - cx,
-        verts[1] - cy,
-        verts[2] - cz,
-        verts[3] - cx,
-        verts[4] - cy,
-        verts[5] - cz,
-        verts[6] - cx,
-        verts[7] - cy,
-        verts[8] - cz,
-        verts[9] - cx,
-        verts[10] - cy,
-        verts[11] - cz,
-      ];
-      const indices = [0, 1, 2, 0, 2, 3];
-      const normals: number[] = [];
-      B.VertexData.ComputeNormals(positions, indices, normals);
-
-      const vd = new B.VertexData();
-      vd.positions = positions;
-      vd.indices = indices;
-      vd.normals = normals;
-      vd.uvs = faceInfo.uv;
-
-      const mesh = new B.Mesh(`e${ei}f${dir}`, scene);
-      mesh.parent = root;
-      vd.applyToMesh(mesh);
-      mesh.material = ensureMat(url, true);
-    }
+    const firstFace = elem.faces.find((fi) => fi != null);
+    const url = firstFace ? getUrl(firstFace.matKey) : null;
+    if (!url) continue;
+    const box = B.MeshBuilder.CreateBox(`e${ei}`, { width: W, height: H, depth: D }, scene);
+    box.parent = root;
+    box.position = new B.Vector3(mx - cx, my - cy, mz - cz);
+    box.material = ensureMat(url, false);
   }
 
   return root;

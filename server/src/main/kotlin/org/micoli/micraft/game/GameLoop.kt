@@ -719,8 +719,6 @@ class GameLoop(
                     minimapVisible = def.minimapVisible,
                     rotatable = def.rotatable,
                     hasStuds = def.hasStuds,
-                    isSlope = def.isSlope,
-                    isCorner = def.isCorner,
                     brickSize = def.brickSize,
                     heightFraction = def.heightFraction,
                 )

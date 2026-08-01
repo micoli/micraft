@@ -183,7 +183,6 @@ class MovementProcessorTest {
                         hardness = 1f,
                         solid = false,
                         replaceable = false,
-                        isSlope = true,
                     )))
     }
 
