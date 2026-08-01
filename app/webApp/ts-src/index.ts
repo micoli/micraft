@@ -6,7 +6,7 @@ import { registerAutoUpdate } from "./lib/autoUpdate";
 import { registerUtils } from "./game/utils/utils";
 import { registerEngine } from "./game/engine/engine";
 import { registerMaterials } from "./game/materials/materials";
-import { registerBlockDefs, setRegistryBlocks } from "./game/blocks/blockDefs";
+import { registerBlockDefs, setRegistryBlocks, setRegistryItems, setPlainColors } from "./game/blocks/blockDefs";
 import { registerKeyboard } from "./game/input/keyboard";
 import { registerMouse } from "./game/input/mouse";
 import { registerCamera } from "./game/camera/camera";
@@ -170,7 +170,20 @@ window.mc = {
   },
 
   setItemRegistry: (json: string) => {
-    window.mcState.codexItems = JSON.parse(json);
+    const items = JSON.parse(json);
+    window.mcState.codexItems = items;
+    setRegistryItems(items);
+  },
+
+  // Called before setBlockRegistry: plain-color materials are built from this palette.
+  setPlainColors: (json: string) => {
+    const raw = JSON.parse(json) as { name: string; hex: string }[];
+    setPlainColors(
+      raw.map(({ name, hex }) => {
+        const n = parseInt(hex, 16);
+        return { name, hex, r: (n >> 16) & 0xff, g: (n >> 8) & 0xff, b: n & 0xff };
+      }),
+    );
   },
 
   setNpcDefinitions: (json: string) => {

@@ -9,7 +9,10 @@ import org.micoli.micraft.game.session.WorldActionRecord
 import org.micoli.micraft.game.session.toPageMap
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.ItemRegistry
+import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.player.eyeOffset
@@ -60,6 +63,15 @@ class BlockPlacer(
         }
 
         val def = blockType.let { BlockRegistry.get(it) }
+
+        // Color comes from the item definition, never from the client-sent state byte.
+        val colorIndex =
+            if (def.plainColorable)
+                PlainColorRegistry.indexOf(ItemRegistry.get(itemType).plainColor)
+            else 0
+        val rotation = BlockState.rotation(intent.state)
+        val state = BlockState.pack(rotation, colorIndex)
+
         val (sizeX, sizeY, sizeZ) =
             if (def.brickSize.size == 3)
                 Triple(def.brickSize[0], def.brickSize[1], def.brickSize[2])
@@ -181,13 +193,14 @@ class BlockPlacer(
                     sizeX = sizeX,
                     sizeY = 1,
                     sizeZ = sizeZ,
-                    rotation = intent.state.toInt() and 0x03,
+                    rotation = rotation,
                     yOffset = nextOffset,
+                    colorIndex = colorIndex,
                 )
             val changes = mutableListOf<BlockChange>()
             if (nextOffset == 0) {
                 // First plate at this cell: set block type so main renderer sees it
-                val change = BlockChange(pos, blockType, intent.state)
+                val change = BlockChange(pos, blockType, state)
                 world.applyChange(change)
                 changes.add(change)
             }
@@ -229,7 +242,7 @@ class BlockPlacer(
             }
 
             val changes = mutableListOf<BlockChange>()
-            val masterChange = BlockChange(pos, blockType, intent.state)
+            val masterChange = BlockChange(pos, blockType, state)
             world.applyChange(masterChange)
             changes.add(masterChange)
 
@@ -238,8 +251,7 @@ class BlockPlacer(
                 for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
                     if (dx == 0 && dy == 0 && dz == 0) continue
                     val satChange =
-                        BlockChange(
-                            BlockPos(pos.x + dx, pos.y + dy, pos.z + dz), blockType, intent.state)
+                        BlockChange(BlockPos(pos.x + dx, pos.y + dy, pos.z + dz), blockType, state)
                     world.applyChange(satChange)
                     changes.add(satChange)
                 }
@@ -252,7 +264,8 @@ class BlockPlacer(
                         sizeX = sizeX,
                         sizeY = sizeY,
                         sizeZ = sizeZ,
-                        rotation = intent.state.toInt() and 0x03,
+                        rotation = rotation,
+                        colorIndex = colorIndex,
                     )
                 world.applyEntityAdd(proto)
                 broadcast(ServerMessage.WorldUpdate(changes, entityAdds = listOf(proto)))

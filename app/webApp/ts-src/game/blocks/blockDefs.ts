@@ -63,6 +63,49 @@ function parseBlockBbmodel(bbmodel: BlocksBbModel): { def: McBlockDef | null; te
 const WATER_MAT_KEY = "water";
 const LIQUID_UV = [0, 0, 1, 0, 1, 1, 0, 1];
 
+// --- Plain colors (texture-less block variants) ---
+// Palette received via RegistrySync; index 0 is the "untinted" sentinel, so entry i of this list
+// is color index i + 1 (the value stored in bits 2-7 of a block's state byte).
+let _plainColors: McPlainColor[] = [];
+
+export function setPlainColors(colors: McPlainColor[]): void {
+  _plainColors = colors;
+}
+
+export function getPlainColors(): McPlainColor[] {
+  return _plainColors;
+}
+
+/** Material key for a plain-colored face, e.g. "plain:0055BF". */
+export function plainMatKey(colorIdx: number): string | null {
+  const color = _plainColors[colorIdx - 1];
+  return color ? "plain:" + color.hex : null;
+}
+
+export function plainColorHex(colorName: string | null | undefined): string | null {
+  if (!colorName) return null;
+  return _plainColors.find((c) => c.name === colorName)?.hex ?? null;
+}
+
+// Loaded from RegistrySync — needed to map an item back to the block (and color) it places
+let _registryItems: Record<string, { placesBlock?: string | null; plainColor?: string | null }> = {};
+
+export function setRegistryItems(items: typeof _registryItems): void {
+  _registryItems = items;
+}
+
+/**
+ * How an item should be drawn: the ordinal of the block it places, plus its plain color when it is
+ * a generated color variant (item ids and block ids differ for those, e.g. LEGO_BRICK_BLUE).
+ */
+export function getItemVisual(itemId: string): { ordinal: number | null; colorHex: string | null } {
+  const info = _registryItems[itemId];
+  return {
+    ordinal: getBlockOrdinalByName(info?.placesBlock ?? itemId),
+    colorHex: plainColorHex(info?.plainColor),
+  };
+}
+
 let _blockDefs: (McBlockDef | null)[] | null = null;
 let _blockTextures: McBlockTextureDef[] | null = null;
 
@@ -73,9 +116,11 @@ let _registryBlocks:
 
 export function registerBlockDefs(): Pick<
   McBindings,
-  "initBlockDefs" | "isBlockDefsReady" | "getBlockDef" | "getBlockTextures"
+  "initBlockDefs" | "isBlockDefsReady" | "getBlockDef" | "getBlockTextures" | "getPlainColors"
 > {
   return {
+    getPlainColors: (): McPlainColor[] => _plainColors,
+
     initBlockDefs: () => {
       if (!_registryBlocks) return;
 

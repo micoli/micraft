@@ -42,6 +42,8 @@ fun jsSetBlockRegistry(json: String): Unit = js("mc.setBlockRegistry(json)")
 
 fun jsSetItemRegistry(json: String): Unit = js("mc.setItemRegistry(json)")
 
+fun jsSetPlainColors(json: String): Unit = js("mc.setPlainColors(json)")
+
 fun jsSetNpcDefinitions(json: String): Unit = js("mc.setNpcDefinitions(json)")
 
 fun jsReloadAttackMeta(): Unit = js("mc.reloadAttackMeta()")

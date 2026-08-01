@@ -21,8 +21,12 @@ class WorldItemManager(
 ) {
     private val items = ConcurrentHashMap<String, WorldItem>()
 
-    suspend fun spawnDrops(blockPos: BlockPos, blockType: BlockType): List<WorldItem> {
-        val drops = dropConfig.rollDrops(blockType)
+    suspend fun spawnDrops(
+        blockPos: BlockPos,
+        blockType: BlockType,
+        colorIndex: Int = 0,
+    ): List<WorldItem> {
+        val drops = dropConfig.rollDrops(blockType, colorIndex)
         if (drops.isEmpty()) return emptyList()
         val center = Vec3(blockPos.x + 0.5f, blockPos.y + 0.5f, blockPos.z + 0.5f)
         val spawned =

@@ -31,6 +31,7 @@ import org.micoli.micraft.di.OptionalTokenStore
 import org.micoli.micraft.di.OptionalWorldPersistence
 import org.micoli.micraft.di.PlayerPersister
 import org.micoli.micraft.di.SessionRegistry
+import org.micoli.micraft.di.loadRegistries
 import org.micoli.micraft.game.GameConfig
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.ServerConfig
@@ -51,6 +52,7 @@ import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
+import org.micoli.micraft.game.plaincolor.PlainColorRegistryLoader
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
@@ -60,8 +62,6 @@ import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.MovementProcessor
 import org.micoli.micraft.game.trade.TradeConfigLoader
 import org.micoli.micraft.game.trade.TradeManager
-import org.micoli.micraft.game.world.BlockRegistry
-import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.biome.BiomeRegistry
@@ -128,6 +128,7 @@ fun Application.module() {
     val persistence = get<OptionalWorldPersistence>().value
     val blockRegistryLoader = get<BlockRegistryLoader>()
     val itemRegistryLoader = get<ItemRegistryLoader>()
+    val plainColorRegistryLoader = get<PlainColorRegistryLoader>()
 
     val biomeFile = Path.of(dataPath + "/config/biomes.yaml")
     val biomeResourcesFile = resourcesConfigDir.resolve("biomes.yaml")
@@ -149,8 +150,7 @@ fun Application.module() {
         } else null
 
     val reloadRegistries: () -> Unit = {
-        BlockRegistry.load(blockRegistryLoader.reload())
-        ItemRegistry.load(itemRegistryLoader.reload())
+        loadRegistries(blockRegistryLoader, itemRegistryLoader, plainColorRegistryLoader)
     }
 
     val reloadGameConfigLambda: () -> Unit = {

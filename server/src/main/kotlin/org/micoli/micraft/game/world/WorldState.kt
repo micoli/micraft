@@ -132,6 +132,7 @@ class WorldState(
                 sizeZ = proto.sizeZ,
                 rotation = proto.rotation,
                 yOffset = proto.yOffset,
+                colorIndex = proto.colorIndex,
             )
         chunks[cPos] = chunk.addEntity(entity)
         dirtyChunks.add(cPos)
@@ -230,6 +231,7 @@ class WorldState(
                 sizeZ = e.sizeZ,
                 rotation = e.rotation,
                 yOffset = e.yOffset,
+                colorIndex = e.colorIndex,
             )
         }
     }

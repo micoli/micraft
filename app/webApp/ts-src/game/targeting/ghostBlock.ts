@@ -13,13 +13,21 @@ function disposeGhost(): void {
 
 export function registerGhostBlock(): Pick<McBindings, "showBlockPreview" | "hideBlockPreview"> {
   return {
-    showBlockPreview: (scene: Scene, x: number, y: number, z: number, typeOrd: number, rotation: number): void => {
+    showBlockPreview: (
+      scene: Scene,
+      x: number,
+      y: number,
+      z: number,
+      typeOrd: number,
+      rotation: number,
+      colorIdx = 0,
+    ): void => {
       if (typeOrd < 0) {
         disposeGhost();
         return;
       }
 
-      const geoKey = `${typeOrd},${rotation}`;
+      const geoKey = `${typeOrd},${rotation},${colorIdx}`;
       const existing = window.mcState.ghostMesh as GhostAnchor | null;
 
       if (existing && existing._gGeoKey === geoKey) {
@@ -32,7 +40,7 @@ export function registerGhostBlock(): Pick<McBindings, "showBlockPreview" | "hid
 
       disposeGhost();
 
-      const meshes = buildBlockPreviewMeshes(scene, typeOrd, rotation);
+      const meshes = buildBlockPreviewMeshes(scene, typeOrd, rotation, colorIdx);
       if (meshes.length === 0) {
         console.warn(
           "[MiCraft] Ghost: no preview mesh for typeOrd=" +

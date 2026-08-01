@@ -20,4 +20,6 @@ data class BlockDefinition(
     val hasStuds: Boolean = false,
     val brickSize: List<Int> = listOf(1, 1, 1),
     val heightFraction: Float = 1.0f,
+    /** When true, the block can be placed in any palette color (see [PlainColorRegistry]). */
+    val plainColorable: Boolean = false,
 )

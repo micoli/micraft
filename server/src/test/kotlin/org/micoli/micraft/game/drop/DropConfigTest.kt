@@ -6,8 +6,14 @@ import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import org.micoli.micraft.game.world.BlockDefinition
+import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.ItemDefinition
+import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.game.world.PlainColor
+import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
 
 class DropConfigTest {
@@ -96,6 +102,58 @@ class DropConfigTest {
         repeat(10) {
             val drops = config.rollDrops(BlockType.DIRT)
             assertEquals(3, drops[0].second)
+        }
+    }
+
+    @Test
+    fun colorIndex_remapsDropToTheMatchingColorVariant() {
+        val savedBlocks = BlockRegistry.all().associateWith { BlockRegistry.get(it) }
+        val savedItems = ItemRegistry.keys().associateWith { ItemRegistry.get(it) }
+        val brick = BlockType("LEGO_BRICK")
+        try {
+            PlainColorRegistry.load(listOf(PlainColor("blue", 0, 85, 191)))
+            BlockRegistry.load(savedBlocks + mapOf(brick to BlockDefinition(plainColorable = true)))
+            ItemRegistry.load(
+                savedItems +
+                    mapOf(
+                        ItemType("LEGO_BRICK") to ItemDefinition(buildable = true),
+                        ItemType("LEGO_BRICK_BLUE") to
+                            ItemDefinition(buildable = true, plainColor = "blue")))
+            val config =
+                configWith(
+                    mapOf(
+                        "LEGO_BRICK" to
+                            baseYaml(
+                                "plainColorable: true\ndrops:\n- item: LEGO_BRICK\n  dropRate: 100\n")))
+
+            assertEquals(
+                ItemType("LEGO_BRICK_BLUE"), config.rollDrops(brick, colorIndex = 1).single().first)
+            assertEquals(ItemType("LEGO_BRICK"), config.rollDrops(brick).single().first)
+        } finally {
+            BlockRegistry.load(savedBlocks)
+            ItemRegistry.load(savedItems)
+            PlainColorRegistry.load(emptyList())
+        }
+    }
+
+    @Test
+    fun colorIndex_withoutVariantItem_fallsBackToBaseItem() {
+        val savedBlocks = BlockRegistry.all().associateWith { BlockRegistry.get(it) }
+        val brick = BlockType("LEGO_BRICK")
+        try {
+            PlainColorRegistry.load(listOf(PlainColor("blue", 0, 85, 191)))
+            BlockRegistry.load(savedBlocks + mapOf(brick to BlockDefinition(plainColorable = true)))
+            val config =
+                configWith(
+                    mapOf(
+                        "LEGO_BRICK" to
+                            baseYaml(
+                                "plainColorable: true\ndrops:\n- item: COBBLESTONE\n  dropRate: 100\n")))
+            assertEquals(
+                ItemType("COBBLESTONE"), config.rollDrops(brick, colorIndex = 1).single().first)
+        } finally {
+            BlockRegistry.load(savedBlocks)
+            PlainColorRegistry.load(emptyList())
         }
     }
 

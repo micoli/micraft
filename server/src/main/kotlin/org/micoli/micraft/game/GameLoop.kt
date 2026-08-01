@@ -66,6 +66,7 @@ import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.ItemRegistry
+import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldMetadata
@@ -97,6 +98,7 @@ import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.CommandInfo
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
+import org.micoli.micraft.protocol.PlainColorInfo
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.ui.defaultLayout
 import org.micoli.micraft.ui.validateLayouts
@@ -721,13 +723,20 @@ class GameLoop(
                     hasStuds = def.hasStuds,
                     brickSize = def.brickSize,
                     heightFraction = def.heightFraction,
+                    plainColorable = def.plainColorable,
                 )
             }
         val items =
             ItemRegistry.keys().associate { type ->
                 val def = ItemRegistry.get(type)
-                type.id to ItemInfo(buildable = def.buildable, placesBlock = def.placesBlock?.id)
+                type.id to
+                    ItemInfo(
+                        buildable = def.buildable,
+                        placesBlock = def.placesBlock?.id,
+                        plainColor = def.plainColor,
+                    )
             }
+        val plainColors = PlainColorRegistry.all().map { PlainColorInfo(it.name, it.hex()) }
         val npcs = npcManager.getDefinitions().map { (key, def) -> key to def.bbmodelFile }.toMap()
         val npcDefinitions =
             npcManager
@@ -749,7 +758,8 @@ class GameLoop(
                 .getDefinitions()
                 .filter { it.value.walkBoneAliases.isNotEmpty() }
                 .mapValues { it.value.walkBoneAliases }
-        return ServerMessage.RegistrySync(blocks, items, npcs, npcDefinitions, npcWalkBones)
+        return ServerMessage.RegistrySync(
+            blocks, items, npcs, npcDefinitions, npcWalkBones, plainColors)
     }
 
     private val reloadCoordinator =

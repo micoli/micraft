@@ -131,6 +131,30 @@ class BlockRegistryLoaderTest {
     }
 
     @Test
+    fun plainColorable_defaultsToFalse_andIsReadFromYaml() {
+        val (loader) =
+            loaderWithBlocks(
+                mapOf(
+                    "STONE" to "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n",
+                    "LEGO_BRICK" to
+                        "hardness: 1\nsolid: true\nminimapColor: [220, 50, 50]\nplainColorable: true\n",
+                ))
+        val result = loader.load()
+        assertEquals(false, result[BlockType.STONE]?.plainColorable)
+        assertEquals(true, result[BlockType("LEGO_BRICK")]?.plainColorable)
+    }
+
+    @Test
+    fun plainColorable_canBeToggledByDataOverride() {
+        val (loader) =
+            loaderWithBlocks(
+                blocks = mapOf("STONE" to "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n"),
+                overrides = mapOf("STONE" to "plainColorable: true\n"),
+            )
+        assertEquals(true, loader.load()[BlockType.STONE]?.plainColorable)
+    }
+
+    @Test
     fun newFields_explicitValues() {
         val (loader) =
             loaderWithBlocks(

@@ -133,6 +133,7 @@ class BlockRegistryLoader(
                     hasStuds = entry.hasStuds,
                     brickSize = entry.brickSize,
                     heightFraction = entry.heightFraction,
+                    plainColorable = entry.plainColorable,
                 )
             }
         log.info("Block registry loaded: {} block types", result.size)

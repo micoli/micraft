@@ -24,20 +24,29 @@ export function useBlockDefsReady(): boolean {
   return ready;
 }
 
-export function CssBlockCube({ ordinal, size }: { ordinal: number; size: number }) {
+export function CssBlockCube({
+  ordinal,
+  size,
+  colorHex,
+}: {
+  ordinal: number;
+  size: number;
+  /** "RRGGBB" (no '#'): renders plain color instead of the block texture. */
+  colorHex?: string | null;
+}) {
   const S = size;
   const H = Math.round(S / 2);
 
-  const topUrl = getFaceTexUrl(ordinal, 4);
-  const frontUrl = getFaceTexUrl(ordinal, 0);
-  const rightUrl = getFaceTexUrl(ordinal, 2);
+  const topUrl = colorHex ? null : getFaceTexUrl(ordinal, 4);
+  const frontUrl = colorHex ? null : getFaceTexUrl(ordinal, 0);
+  const rightUrl = colorHex ? null : getFaceTexUrl(ordinal, 2);
 
   const face = (brightness: number, transform: string, texUrl: string | null): React.CSSProperties => ({
     position: "absolute",
     width: S,
     height: S,
     backgroundImage: texUrl ? `url(${texUrl})` : undefined,
-    backgroundColor: texUrl ? undefined : "#666",
+    backgroundColor: texUrl ? undefined : colorHex ? `#${colorHex}` : "#666",
     backgroundSize: "100% 100%",
     imageRendering: "pixelated",
     transform,
@@ -77,10 +86,13 @@ export function Block3DPreview({
   ordinal,
   size = 160,
   animate = true,
+  colorHex,
 }: {
   ordinal: number;
   size?: number;
   animate?: boolean;
+  /** "RRGGBB" (no '#'): renders plain color instead of the block texture. */
+  colorHex?: string | null;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -98,7 +110,7 @@ export function Block3DPreview({
     const scene = new B.Scene(engine);
     scene.clearColor = new B.Color4(0.08, 0.08, 0.08, 0);
 
-    const root = setupBlockScene(scene, ordinal);
+    const root = setupBlockScene(scene, ordinal, colorHex);
 
     if (animate) {
       scene.onBeforeRenderObservable.add(() => {
@@ -112,7 +124,7 @@ export function Block3DPreview({
     }
 
     return () => engine.dispose();
-  }, [ordinal, animate]);
+  }, [ordinal, animate, colorHex]);
 
   return (
     <canvas

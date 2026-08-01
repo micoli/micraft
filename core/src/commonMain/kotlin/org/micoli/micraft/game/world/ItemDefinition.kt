@@ -8,4 +8,6 @@ data class ItemDefinition(
     val placesBlock: BlockType? = null,
     val label: String = "",
     val bg: String = "",
+    /** Palette color name this item places the block in; null = untinted (textured) variant. */
+    val plainColor: String? = null,
 )

@@ -6,6 +6,7 @@ import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.WorldActionRecord
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
@@ -94,6 +95,11 @@ class BlockBreaker(
         val block =
             if (blockAtPos == BlockType.AIR && topmostFractional != null) topmostFractional.type
             else blockAtPos
+        // Read before the block is cleared: drives which color variant the drops use.
+        val brokenColorIndex =
+            topmostFractional?.colorIndex
+                ?: BlockState.colorIndex(
+                    world.getState(effectivePos.x, effectivePos.y, effectivePos.z))
         if (block.hardness == 0f || block.hardness == Float.MAX_VALUE) {
             session.breakTarget = null
             blockProgress.remove(bt)
@@ -157,7 +163,7 @@ class BlockBreaker(
                 broadcast(ServerMessage.WorldUpdate(listOf(change)))
             }
             activateAdjacentLiquids(bt)
-            val spawned = worldItems.spawnDrops(bt, block)
+            val spawned = worldItems.spawnDrops(bt, block, brokenColorIndex)
             session.actionHistory.addLast(WorldActionRecord.Break(bt, block, spawned))
             if (session.actionHistory.size > MAX_UNDO_HISTORY) session.actionHistory.removeFirst()
             session.breakTarget = null

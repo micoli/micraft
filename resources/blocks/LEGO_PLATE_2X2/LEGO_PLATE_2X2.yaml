@@ -13,3 +13,4 @@ rotatable: true
 hasStuds: true
 brickSize: [2, 1, 2]
 heightFraction: 0.333
+plainColorable: true

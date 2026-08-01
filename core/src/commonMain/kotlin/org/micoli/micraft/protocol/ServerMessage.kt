@@ -158,6 +158,7 @@ sealed class ServerMessage {
         val npcs: Map<String, String> = emptyMap(),
         val npcDefinitions: Map<String, NpcCodexInfo> = emptyMap(),
         val npcWalkBones: Map<String, Map<String, String>> = emptyMap(),
+        val plainColors: List<PlainColorInfo> = emptyList(),
     ) : ServerMessage()
 
     @ProtoId(20) @Serializable data class NpcSpawned(val npc: NpcState) : ServerMessage()
@@ -348,7 +349,11 @@ data class BlockInfo(
     val hasStuds: Boolean = false,
     val brickSize: List<Int> = listOf(1, 1, 1),
     val heightFraction: Float = 1.0f,
+    val plainColorable: Boolean = false,
 )
+
+/** Palette entry; its position in [ServerMessage.RegistrySync.plainColors] is colorIndex - 1. */
+@Serializable data class PlainColorInfo(val name: String, val hex: String)
 
 @Serializable
 data class BlockEntityProto(
@@ -361,6 +366,7 @@ data class BlockEntityProto(
     val sizeZ: Int = 1,
     val rotation: Int = 0,
     val yOffset: Int = 0,
+    val colorIndex: Int = 0,
 )
 
 @Serializable data class EntityRemoveAt(val pos: BlockPos, val yOffset: Int = 0)
@@ -369,6 +375,7 @@ data class BlockEntityProto(
 data class ItemInfo(
     val buildable: Boolean,
     val placesBlock: String? = null,
+    val plainColor: String? = null,
 )
 
 @Serializable

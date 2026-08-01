@@ -22,6 +22,8 @@ import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.ItemDefinition
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.game.world.PlainColor
+import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
@@ -451,6 +453,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                 sizeZ = proto.sizeZ,
                                 rotation = proto.rotation,
                                 yOffset = proto.yOffset,
+                                colorIndex = proto.colorIndex,
                             )
                         affectedChunks[cp] = Pair(existing.addEntity(entity), topY)
                     }
@@ -613,9 +616,12 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         hasStuds = info.hasStuds,
                                         brickSize = info.brickSize,
                                         heightFraction = info.heightFraction,
+                                        plainColorable = info.plainColorable,
                                     )
                             }
                             .toMap()
+                    PlainColorRegistry.load(
+                        msg.plainColors.mapNotNull { PlainColor.fromHex(it.name, it.hex) })
                     BlockRegistry.load(blockDefs)
                     chunkManager.repushAllToMinimap()
                     val itemDefs =
@@ -627,9 +633,11 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         info.placesBlock?.let {
                                             runCatching { BlockType(it) }.getOrNull()
                                         },
+                                    plainColor = info.plainColor,
                                 )
                         }
                     ItemRegistry.load(itemDefs)
+                    jsSetPlainColors(Json.encodeToString(msg.plainColors))
                     jsSetBlockRegistry(Json.encodeToString(msg.blocks))
                     jsSetItemRegistry(Json.encodeToString(msg.items))
                     if (msg.npcs.isNotEmpty()) jsInitNpcModels(Json.encodeToString(msg.npcs))

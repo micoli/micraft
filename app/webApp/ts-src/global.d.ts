@@ -146,6 +146,16 @@ declare global {
     biomeTint?: boolean;
   }
 
+  // Palette entry for texture-less blocks. Its index in getPlainColors() + 1 is the value stored
+  // in bits 2-7 of a block's state byte.
+  interface McPlainColor {
+    name: string;
+    hex: string;
+    r: number;
+    g: number;
+    b: number;
+  }
+
   interface McPlayerModel {
     root: InstanceType<typeof BABYLON.TransformNode>;
     headNode: InstanceType<typeof BABYLON.TransformNode> | null;
@@ -255,11 +265,13 @@ declare global {
     isBlockDefsReady(): boolean;
     getBlockDef(ordinal: number): McBlockDef | null;
     getBlockTextures(): McBlockTextureDef[];
+    getPlainColors(): McPlainColor[];
     createBlockMaterials(scene: Scene): Record<string, ShaderMaterial | StandardMaterial>;
     setGrassTint(r: number, g: number, b: number): void;
     // Registry
     setBlockRegistry(json: string): void;
     setItemRegistry(json: string): void;
+    setPlainColors(json: string): void;
     setNpcDefinitions(json: string): void;
     // Materials
     createTextureMaterial(name: string, url: string, scene: Scene): StandardMaterial;
@@ -306,7 +318,15 @@ declare global {
     hideTargetOutline(): void;
     showBreakOverlay(scene: Scene, x: number, y: number, z: number, alpha: number): void;
     hideBreakOverlay(): void;
-    showBlockPreview(scene: Scene, x: number, y: number, z: number, typeOrd: number, rotation: number): void;
+    showBlockPreview(
+      scene: Scene,
+      x: number,
+      y: number,
+      z: number,
+      typeOrd: number,
+      rotation: number,
+      colorIdx?: number,
+    ): void;
     hideBlockPreview(): void;
     setPlacementRotation(rotation: number): void;
     // Chunk builder

@@ -1,6 +1,6 @@
 import type { Texture } from "@babylonjs/core";
 import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
-import { getFaceTexUrl } from "../blocks/blockDefs";
+import { getFaceTexUrl, plainColorHex } from "../blocks/blockDefs";
 import { Block3DPreview, CssBlockCube, useBlockDefsReady, useBlockPreviews } from "../shared/BlockPreview";
 import { animDisplayName, animEmoji, animationsFromBbmodel } from "../../lib/animationHelpers";
 import type { AnimationEntry } from "../../lib/animationHelpers";
@@ -21,6 +21,7 @@ interface ItemEntry {
   name: string;
   buildable: boolean;
   placesBlock: string | null;
+  plainColor?: string | null;
 }
 
 interface NpcEntry {
@@ -303,6 +304,7 @@ function BlockDetail({
 
 function ItemDetail({ item, blocks, defsReady }: { item: ItemEntry; blocks: BlockEntry[]; defsReady: boolean }) {
   const linkedBlock = item.placesBlock ? blocks.find((b) => b.name === item.placesBlock) : null;
+  const colorHex = plainColorHex(item.plainColor);
 
   const row = (label: string, value: string) => (
     <div
@@ -318,7 +320,7 @@ function ItemDetail({ item, blocks, defsReady }: { item: ItemEntry; blocks: Bloc
     <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 8 }}>
       <div style={{ display: "flex", justifyContent: "center" }}>
         {defsReady && linkedBlock ? (
-          <Block3DPreview ordinal={linkedBlock.ordinal} />
+          <Block3DPreview ordinal={linkedBlock.ordinal} colorHex={colorHex} />
         ) : (
           <div
             style={{
@@ -342,6 +344,7 @@ function ItemDetail({ item, blocks, defsReady }: { item: ItemEntry; blocks: Bloc
       <div>
         {row("Posable", item.buildable ? "oui" : "non")}
         {row("Place le bloc", item.placesBlock ? item.placesBlock.replace(/_/g, " ") : "—")}
+        {item.plainColor ? row("Couleur", `${item.plainColor} (#${colorHex ?? "??????"})`) : null}
       </div>
     </div>
   );

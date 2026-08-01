@@ -4,6 +4,7 @@ import kotlin.math.*
 import org.micoli.micraft.babylon.*
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
@@ -58,6 +59,9 @@ private val AO_NEIGHBORS: Array<Array<Array<IntArray>>> =
 
 // Faces processed per Phase-2 budget slice. At ~200–400ns/face this targets ~1–2ms/slice.
 private const val FACE_SLICE_SIZE = 5_000
+
+// Plain color index rides in bits 18-23 of the ao int (bits 0-15 = AO, 16-17 = yOffset).
+private const val COLOR_SHIFT = 18
 
 private data class ChunkRender(
     val chunk: Chunk,
@@ -423,8 +427,11 @@ class ChunkManager(private val scene: JsAny) {
                 val entity = entityMap[idx]
                 if (entity != null && entity.masterIdx != idx) continue
 
-                // rotation: bits 0-1 of state byte; faceMat = (ord * 4 + rotation) * 6 + fd
-                val rotation = if (hasStates) states[idx].toInt() and 0x03 else 0
+                // state byte: bits 0-1 rotation, bits 2-7 plain color index
+                // faceMat = (ord * 4 + rotation) * 6 + fd; color rides in ao bits 18-23
+                val state = if (hasStates) states[idx] else 0
+                val rotation = BlockState.rotation(state)
+                val colorBits = BlockState.colorIndex(state) shl COLOR_SHIFT
                 val t = (ord * 4 + rotation) * 6
                 val wx = ox + x
                 val wz2 = oz + z
@@ -443,42 +450,48 @@ class ChunkManager(private val scene: JsAny) {
                         hasStudsByOrd[ord].toInt() != 0 ||
                         (solidByOrd[aboveOrd].toInt() == 0 && !(liquid && liquidAbove))
                 if (emitTop) {
-                    jsChunkFaceAppend(wx, y, wz2, t + 4, computeFaceAO(blocks, x, y, z, 4))
+                    jsChunkFaceAppend(
+                        wx, y, wz2, t + 4, computeFaceAO(blocks, x, y, z, 4) or colorBits)
                     faceCount++
                 }
                 // bottom (-Y)
                 if (bypassCulling ||
                     y <= 0 ||
                     solidByOrd[blocks[idx - s].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFaceAppend(wx, y, wz2, t + 5, computeFaceAO(blocks, x, y, z, 5))
+                    jsChunkFaceAppend(
+                        wx, y, wz2, t + 5, computeFaceAO(blocks, x, y, z, 5) or colorBits)
                     faceCount++
                 }
                 // south (+Z)
                 if (bypassCulling ||
                     z == s - 1 ||
                     solidByOrd[blocks[idx + 1].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFaceAppend(wx, y, wz2, t + 0, computeFaceAO(blocks, x, y, z, 0))
+                    jsChunkFaceAppend(
+                        wx, y, wz2, t + 0, computeFaceAO(blocks, x, y, z, 0) or colorBits)
                     faceCount++
                 }
                 // north (-Z)
                 if (bypassCulling ||
                     z == 0 ||
                     solidByOrd[blocks[idx - 1].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFaceAppend(wx, y, wz2, t + 1, computeFaceAO(blocks, x, y, z, 1))
+                    jsChunkFaceAppend(
+                        wx, y, wz2, t + 1, computeFaceAO(blocks, x, y, z, 1) or colorBits)
                     faceCount++
                 }
                 // east (+X)
                 if (bypassCulling ||
                     x == s - 1 ||
                     solidByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFaceAppend(wx, y, wz2, t + 2, computeFaceAO(blocks, x, y, z, 2))
+                    jsChunkFaceAppend(
+                        wx, y, wz2, t + 2, computeFaceAO(blocks, x, y, z, 2) or colorBits)
                     faceCount++
                 }
                 // west (-X)
                 if (bypassCulling ||
                     x == 0 ||
                     solidByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFaceAppend(wx, y, wz2, t + 3, computeFaceAO(blocks, x, y, z, 3))
+                    jsChunkFaceAppend(
+                        wx, y, wz2, t + 3, computeFaceAO(blocks, x, y, z, 3) or colorBits)
                     faceCount++
                 }
             }
@@ -498,10 +511,11 @@ class ChunkManager(private val scene: JsAny) {
             val ord = BlockRegistry.wireIndex(entity.type)
             if (ord == 0) continue
             val t = (ord * 4 + entity.rotation) * 6
+            val colorBits = entity.colorIndex shl COLOR_SHIFT
             val wx = ox + mx
             val wz2 = oz + mz
             for (fd in 0..5) {
-                jsChunkFaceAppendYOffset(wx, my, wz2, entity.yOffset, t + fd, 0)
+                jsChunkFaceAppendYOffset(wx, my, wz2, entity.yOffset, t + fd, colorBits)
                 faceCount++
             }
         }

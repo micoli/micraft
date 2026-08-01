@@ -5,9 +5,29 @@ import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
 import org.micoli.micraft.dataPath
 import org.micoli.micraft.game.item.ItemRegistryLoader
+import org.micoli.micraft.game.item.expandPlainColorItems
+import org.micoli.micraft.game.plaincolor.PlainColorRegistryLoader
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ItemRegistry
+import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
+
+/**
+ * Single load sequence shared by bootstrap and `/reload`: palette first (blocks reference it
+ * through their generated items), then blocks, then items expanded with one variant per colorable
+ * block × color.
+ */
+fun loadRegistries(
+    blockRegistryLoader: BlockRegistryLoader,
+    itemRegistryLoader: ItemRegistryLoader,
+    plainColorRegistryLoader: PlainColorRegistryLoader,
+) {
+    PlainColorRegistry.load(plainColorRegistryLoader.load())
+    val blocks = blockRegistryLoader.load()
+    BlockRegistry.load(blocks)
+    ItemRegistry.load(
+        expandPlainColorItems(itemRegistryLoader.load(), blocks, PlainColorRegistry.all()))
+}
 
 @Module
 class RegistryModule {
@@ -25,13 +45,20 @@ class RegistryModule {
             Path.of("resources/config/items.yaml"),
         )
 
+    @Single
+    fun plainColorRegistryLoader(): PlainColorRegistryLoader =
+        PlainColorRegistryLoader(
+            Path.of("$dataPath/config/plain_colors.yaml"),
+            Path.of("resources/config/plain_colors.yaml"),
+        )
+
     @Single(createdAtStart = true)
     fun registryBootstrap(
         blockRegistryLoader: BlockRegistryLoader,
         itemRegistryLoader: ItemRegistryLoader,
+        plainColorRegistryLoader: PlainColorRegistryLoader,
     ): RegistryBootstrapResult {
-        BlockRegistry.load(blockRegistryLoader.load())
-        ItemRegistry.load(itemRegistryLoader.load())
+        loadRegistries(blockRegistryLoader, itemRegistryLoader, plainColorRegistryLoader)
         return RegistryBootstrapResult()
     }
 }

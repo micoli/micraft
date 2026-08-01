@@ -11,3 +11,4 @@ treeAllowed: false
 minimapVisible: true
 rotatable: true
 hasStuds: true
+plainColorable: true

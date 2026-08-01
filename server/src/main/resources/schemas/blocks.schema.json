@@ -29,6 +29,7 @@
       "maxItems": 3
     },
     "heightFraction": {"type": "number", "minimum": 0, "maximum": 1},
+    "plainColorable": {"type": "boolean"},
     "drops": {
       "type": "array",
       "items": {

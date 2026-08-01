@@ -10,6 +10,7 @@ import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ItemRegistry
+import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.physics.AabbCollider
@@ -96,6 +97,7 @@ class LocalPlayerController(
     var placementRotation: Int = 0 // 0-3, cycled with R key
     private var ghostAdjacentPos: BlockPos? = null
     private var lastGhostRotation: Int = -1
+    private var lastGhostColorIdx: Int = -1
     private var lastMinimapPlacementRot: Int = -2
 
     private var hudX = 0.0
@@ -790,9 +792,17 @@ class LocalPlayerController(
                     chunkManager.resolveFractionalPlacementPos(rawAdjacent)
                 else rawAdjacent
 
-            if (adjacent != ghostAdjacentPos || placementRotation != lastGhostRotation) {
+            val ghostColorIdx =
+                if (selectedItem.placesBlock?.let { BlockRegistry.get(it).plainColorable } == true)
+                    PlainColorRegistry.indexOf(ItemRegistry.get(selectedItem).plainColor)
+                else 0
+
+            if (adjacent != ghostAdjacentPos ||
+                placementRotation != lastGhostRotation ||
+                ghostColorIdx != lastGhostColorIdx) {
                 ghostAdjacentPos = adjacent
                 lastGhostRotation = placementRotation
+                lastGhostColorIdx = ghostColorIdx
                 if (adjacent != null) {
                     val typeOrd =
                         selectedItem.placesBlock?.let { BlockRegistry.wireIndex(it) } ?: -1
@@ -800,7 +810,14 @@ class LocalPlayerController(
                         jsWarn(
                             "Ghost: block '${selectedItem.placesBlock?.id}' not in registry (wireIndex=-1)")
                     jsShowBlockPreview(
-                        scene, adjacent.x, adjacent.y, adjacent.z, typeOrd, placementRotation)
+                        scene,
+                        adjacent.x,
+                        adjacent.y,
+                        adjacent.z,
+                        typeOrd,
+                        placementRotation,
+                        ghostColorIdx,
+                    )
                 } else {
                     jsHideBlockPreview()
                 }

@@ -8,6 +8,8 @@ import type {
   TransformNode,
 } from "@babylonjs/core";
 import { BLOCK_VERT, BLOCK_GHOST_FRAG } from "../shaders/block";
+import { plainMatKey } from "../blocks/blockDefs";
+import { WHITE_PIXEL_URL } from "../materials/whitePixel";
 
 const MC_NORMS = [
   [0, 0, 1], // 0 south
@@ -315,12 +317,23 @@ const ghostMatCache: Record<string, ShaderMaterial> = {};
 
 function getOrCreateGhostMat(scene: Scene, matKey: string): ShaderMaterial | null {
   if (ghostMatCache[matKey]) return ghostMatCache[matKey];
-  const textures = window.mc.getBlockTextures();
-  const baseName = matKey.replace(":biome_tint", "");
-  const texDef = textures.find((t) => t.name === baseName);
-  if (!texDef) return null;
-  const isBiomeTint = matKey.endsWith(":biome_tint");
-  const [tr, tg, tb] = isBiomeTint ? [0.47, 0.75, 0.35] : (texDef.tint ?? [1, 1, 1]);
+  let url: string;
+  let tr: number, tg: number, tb: number;
+  if (matKey.startsWith("plain:")) {
+    // Plain color: flat white texture tinted by the color, same trick as createBlockMaterials
+    const color = window.mc.getPlainColors().find((c) => "plain:" + c.hex === matKey);
+    if (!color) return null;
+    url = WHITE_PIXEL_URL;
+    [tr, tg, tb] = [color.r / 255, color.g / 255, color.b / 255];
+  } else {
+    const textures = window.mc.getBlockTextures();
+    const baseName = matKey.replace(":biome_tint", "");
+    const texDef = textures.find((t) => t.name === baseName);
+    if (!texDef) return null;
+    url = texDef.url;
+    const isBiomeTint = matKey.endsWith(":biome_tint");
+    [tr, tg, tb] = isBiomeTint ? [0.47, 0.75, 0.35] : (texDef.tint ?? [1, 1, 1]);
+  }
   const mat = new BABYLON.ShaderMaterial(
     "ghost_" + matKey,
     scene,
@@ -331,7 +344,7 @@ function getOrCreateGhostMat(scene: Scene, matKey: string): ShaderMaterial | nul
       samplers: ["textureSampler"],
     },
   );
-  const tex = new BABYLON.Texture(texDef.url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
+  const tex = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
   mat.setTexture("textureSampler", tex);
   mat.setVector3("tint", new BABYLON.Vector3(tr, tg, tb));
   mat.backFaceCulling = false;
@@ -342,7 +355,7 @@ function getOrCreateGhostMat(scene: Scene, matKey: string): ShaderMaterial | nul
   return mat;
 }
 
-export function buildBlockPreviewMeshes(scene: Scene, typeOrd: number, rotation: number): Mesh[] {
+export function buildBlockPreviewMeshes(scene: Scene, typeOrd: number, rotation: number, colorIdx = 0): Mesh[] {
   if (!window.mc.isBlockDefsReady()) {
     console.warn("[MiCraft] Ghost: block defs not ready yet (typeOrd=" + typeOrd + ")");
     return [];
@@ -353,14 +366,16 @@ export function buildBlockPreviewMeshes(scene: Scene, typeOrd: number, rotation:
   }
 
   const groups: Record<string, FaceGroup> = {};
+  const plainKey = colorIdx > 0 ? plainMatKey(colorIdx) : null;
 
   for (let fd = 0; fd < 6; fd++) {
     const faceMat = (typeOrd * 4 + rotation) * 6 + fd;
     const infos = faceTable[faceMat];
     if (!infos) continue;
     for (const info of infos) {
-      if (!groups[info.matKey]) groups[info.matKey] = acquireGroup();
-      const g = groups[info.matKey];
+      const matKey = plainKey ?? info.matKey;
+      if (!groups[matKey]) groups[matKey] = acquireGroup();
+      const g = groups[matKey];
       if (info.isCrossSprite) {
         emitCrossSprite(0, 0, 0, g, info.uv, 0);
       } else {
@@ -431,6 +446,8 @@ export function registerChunks(): Pick<
         const aoPacked = fb[i + 4];
         const ao = aoPacked & 0xffff;
         const yOff = (aoPacked >>> 16) & 0x3;
+        const colorIdx = (aoPacked >>> 18) & 0x3f;
+        const plainKey = colorIdx > 0 ? plainMatKey(colorIdx) : null;
         const wy = fb[i + 1] + (yOff === 0 ? 0 : yOff / 3);
         const infos = faceTable[faceMat];
         if (!infos) {
@@ -444,7 +461,7 @@ export function registerChunks(): Pick<
         }
         const yBand = Math.floor(wy / SLAB_HEIGHT);
         for (const info of infos) {
-          const groupKey = `${info.matKey}|${yBand}`;
+          const groupKey = `${plainKey ?? info.matKey}|${yBand}`;
           let g = grp[groupKey];
           if (!g) {
             g = acquireGroup();

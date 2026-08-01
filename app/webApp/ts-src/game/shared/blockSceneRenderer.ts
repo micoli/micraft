@@ -22,8 +22,10 @@ export const CORNER_VERTS: (number[] | null)[] = [
  * Builds camera, light, and block meshes into an existing scene.
  * Returns the root TransformNode (useful for animation).
  * Caller owns engine + scene lifecycle.
+ *
+ * [colorHex] ("RRGGBB", no '#') renders the block in plain color instead of its texture.
  */
-export function setupBlockScene(scene: Scene, ordinal: number): TransformNode {
+export function setupBlockScene(scene: Scene, ordinal: number, colorHex?: string | null): TransformNode {
   const B = window.BABYLON!;
 
   const blockDef = window.mc?.getBlockDef?.(ordinal) as McBlockDef | null;
@@ -70,6 +72,14 @@ export function setupBlockScene(scene: Scene, ordinal: number): TransformNode {
     }
     return matCache.get(key)!;
   };
+
+  let plainMat: StandardMaterial | null = null;
+  if (colorHex) {
+    const n = parseInt(colorHex, 16);
+    plainMat = new B.StandardMaterial("m_plain_" + colorHex, scene);
+    plainMat.diffuseColor = new B.Color3(((n >> 16) & 0xff) / 255, ((n >> 8) & 0xff) / 255, (n & 0xff) / 255);
+    plainMat.specularColor = new B.Color3(0.1, 0.1, 0.1);
+  }
 
   const isCrossSprite = blockDef?.renderType === "cross_sprite";
 
@@ -133,11 +143,12 @@ export function setupBlockScene(scene: Scene, ordinal: number): TransformNode {
 
     const firstFace = elem.faces.find((fi) => fi != null);
     const url = firstFace ? getUrl(firstFace.matKey) : null;
-    if (!url) continue;
+    const mat = plainMat ?? (url ? ensureMat(url, false) : null);
+    if (!mat) continue;
     const box = B.MeshBuilder.CreateBox(`e${ei}`, { width: W, height: H, depth: D }, scene);
     box.parent = root;
     box.position = new B.Vector3(mx - cx, my - cy, mz - cz);
-    box.material = ensureMat(url, false);
+    box.material = mat;
   }
 
   return root;

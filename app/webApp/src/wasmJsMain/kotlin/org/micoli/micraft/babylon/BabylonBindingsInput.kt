@@ -80,8 +80,15 @@ fun jsShowBreakOverlay(scene: JsAny, x: Int, y: Int, z: Int, progress: Double): 
 
 fun jsHideBreakOverlay(): Unit = js("mc.hideBreakOverlay()")
 
-fun jsShowBlockPreview(scene: JsAny, x: Int, y: Int, z: Int, typeOrd: Int, rotation: Int): Unit =
-    js("mc.showBlockPreview(scene, x, y, z, typeOrd, rotation)")
+fun jsShowBlockPreview(
+    scene: JsAny,
+    x: Int,
+    y: Int,
+    z: Int,
+    typeOrd: Int,
+    rotation: Int,
+    colorIdx: Int,
+): Unit = js("mc.showBlockPreview(scene, x, y, z, typeOrd, rotation, colorIdx)")
 
 fun jsHideBlockPreview(): Unit = js("mc.hideBlockPreview()")
 

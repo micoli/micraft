@@ -1,5 +1,5 @@
 import { cn } from "../../primitives/cn";
-import { getBlockOrdinalByName } from "../blocks/blockDefs";
+import { getItemVisual } from "../blocks/blockDefs";
 import { useShortcutBar } from "../hooks/useShortcutBar";
 import { ShortcutSlot, AttackMeta, SpellMeta } from "../types";
 import { UiState } from "../UIReducer";
@@ -80,7 +80,9 @@ export function ShortcutBar({
         const spellDef = isSpell ? spellMeta[slot!.id] : null;
         const itemMeta_ = slot?.kind === "item" ? itemMeta[slot.id] : null;
         const count = slot?.kind === "item" ? (inventory[slot.id] ?? 0) : 0;
-        const itemOrdinal = slot?.kind === "item" ? getBlockOrdinalByName(slot.id) : null;
+        const itemVisual = slot?.kind === "item" ? getItemVisual(slot.id) : null;
+        const itemOrdinal = itemVisual?.ordinal ?? null;
+        const itemColorHex = itemVisual?.colorHex ?? null;
 
         const slotHasCd = isAttack && (playerStatus?.attackCooldownsRemainingMs?.[slot!.id] ?? 0) > 0;
         return (
@@ -153,7 +155,8 @@ export function ShortcutBar({
               </>
             ) : itemMeta_ ? (
               <>
-                {itemOrdinal != null && getPreview(itemOrdinal) ? (
+                {/* Cached bitmap previews are textured, so color variants use the CSS cube instead */}
+                {itemOrdinal != null && itemColorHex == null && getPreview(itemOrdinal) ? (
                   <img
                     src={getPreview(itemOrdinal)!}
                     width={40}
@@ -161,7 +164,7 @@ export function ShortcutBar({
                     style={{ imageRendering: "pixelated", display: "block" }}
                   />
                 ) : itemOrdinal != null && defsReady ? (
-                  <CssBlockCube ordinal={itemOrdinal} size={26} />
+                  <CssBlockCube ordinal={itemOrdinal} size={26} colorHex={itemColorHex} />
                 ) : (
                   <div
                     className="w-[26px] h-[26px] rounded-sm"

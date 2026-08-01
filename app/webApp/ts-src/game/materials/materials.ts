@@ -1,5 +1,6 @@
 import type { Scene, ShaderMaterial, StandardMaterial } from "@babylonjs/core";
 import { BLOCK_VERT, BLOCK_FRAG } from "../shaders/block";
+import { WHITE_PIXEL_URL } from "./whitePixel";
 
 export function registerMaterials(): Pick<
   McBindings,
@@ -111,6 +112,15 @@ export function registerMaterials(): Pick<
         mat.forceDepthWrite = true;
         return mat;
       };
+
+      // Plain colors reuse the block shader with a 1×1 white texture: the `tint` uniform
+      // (already multiplied into texColor) paints every face a flat color, so studs still get
+      // AO, face shading and the plastic highlight from the vertex colors.
+      for (const color of window.mc.getPlainColors()) {
+        const key = "plain:" + color.hex;
+        if (mats[key]) continue;
+        mats[key] = makeMat(key, WHITE_PIXEL_URL, color.r / 255, color.g / 255, color.b / 255);
+      }
 
       for (const t of textures) {
         const [tr, tg, tb] = t.tint ?? [1, 1, 1];

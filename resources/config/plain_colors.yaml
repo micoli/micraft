@@ -1,0 +1,26 @@
+# Palette of plain (texture-less) colors usable by any block declaring `plainColorable: true`.
+# One item per (colorable block × color) is generated at runtime, e.g. LEGO_BRICK_BLUE.
+# Max 63 colors (the color index lives in bits 2-7 of the per-block state byte).
+# Order matters: a color's position is its stored index, so always APPEND new colors at the end —
+# inserting or removing one recolors every already-placed block after it.
+plainColors:
+  white: "F2F2F2"
+  light_gray: "A3A2A4"
+  dark_gray: "635F61"
+  black: "1B2A34"
+  red: "C4281B"
+  dark_red: "720E0F"
+  orange: "FE8A18"
+  yellow: "F2CD37"
+  lime: "BBE90B"
+  green: "237841"
+  bright_green: "4B9F4A"
+  dark_turquoise: "008F9B"
+  blue: "0055BF"
+  light_blue: "9FC3E9"
+  dark_blue: "0A3463"
+  purple: "81007B"
+  magenta: "C870A0"
+  pink: "FC97AC"
+  brown: "583927"
+  tan: "E4CD9E"

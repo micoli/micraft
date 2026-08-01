@@ -1,8 +1,11 @@
 package org.micoli.micraft.game.drop
 
 import kotlin.random.Random
+import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
 import org.micoli.micraft.game.world.block.DropEntry
 import org.slf4j.LoggerFactory
@@ -26,15 +29,30 @@ class DropConfig(private val blockRegistryLoader: BlockRegistryLoader) {
         return table.size
     }
 
-    fun rollDrops(blockType: BlockType): List<Pair<ItemType, Int>> {
+    /**
+     * [colorIndex] > 0 redirects each drop to its plain-color variant item (e.g. `LEGO_BRICK` →
+     * `LEGO_BRICK_BLUE`) so breaking a colored block returns the same color. Falls back to the base
+     * item when no such variant exists.
+     */
+    fun rollDrops(blockType: BlockType, colorIndex: Int = 0): List<Pair<ItemType, Int>> {
         val entries = table[blockType] ?: return emptyList()
+        val colorSuffix =
+            if (colorIndex > 0 && BlockRegistry.get(blockType).plainColorable)
+                PlainColorRegistry.byIndex(colorIndex)?.name?.uppercase()
+            else null
         return entries.mapNotNull { entry ->
             if (Random.nextInt(100) < entry.dropRate) {
                 val count =
                     if (entry.minCount == entry.maxCount) entry.minCount
                     else entry.minCount + Random.nextInt(entry.maxCount - entry.minCount + 1)
-                entry.item to count
+                colorVariant(entry.item, colorSuffix) to count
             } else null
         }
+    }
+
+    private fun colorVariant(item: ItemType, colorSuffix: String?): ItemType {
+        if (colorSuffix == null) return item
+        val variant = ItemType("${item.id}_$colorSuffix")
+        return if (ItemRegistry.keys().contains(variant)) variant else item
     }
 }

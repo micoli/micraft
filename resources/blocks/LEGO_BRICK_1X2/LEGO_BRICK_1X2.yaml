@@ -12,3 +12,4 @@ minimapVisible: true
 rotatable: true
 hasStuds: true
 brickSize: [1, 1, 2]
+plainColorable: true

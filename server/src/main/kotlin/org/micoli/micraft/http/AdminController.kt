@@ -573,6 +573,7 @@ class AdminController(
                             modelElement = def.modelElement,
                             gltfModel = def.gltfModel,
                             liquid = def.liquid,
+                            plainColorable = def.plainColorable,
                         )
                     }
                 call.respondText(
@@ -607,7 +608,11 @@ class AdminController(
                     ItemRegistry.keys().associate { type ->
                         val def = ItemRegistry.get(type)
                         type.id to
-                            ItemInfo(buildable = def.buildable, placesBlock = def.placesBlock?.id)
+                            ItemInfo(
+                                buildable = def.buildable,
+                                placesBlock = def.placesBlock?.id,
+                                plainColor = def.plainColor,
+                            )
                     }
                 call.respondText(
                     Json.encodeToString(

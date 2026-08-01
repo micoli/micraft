@@ -82,6 +82,7 @@ data class Chunk(
                         sizeZ = proto.sizeZ,
                         rotation = proto.rotation,
                         yOffset = proto.yOffset,
+                        colorIndex = proto.colorIndex,
                     )
                 }
             return Chunk(pos, blocks, states, masters)
