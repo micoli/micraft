@@ -1,5 +1,24 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- the world simulator drives the same game systems as the live world and would bury this
+             log under its spawn/death/regrowth chatter -->
+        <filter class="org.micoli.micraft.simulation.SimulationLogFilter"/>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="SIMULATION" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>data/logs/simulation.log</file>
+        <filter class="org.micoli.micraft.simulation.SimulationOnlyLogFilter"/>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>data/logs/simulation.%i.log</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>3</maxIndex>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>10MB</maxFileSize>
+        </triggeringPolicy>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
@@ -7,6 +26,7 @@
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
+        <appender-ref ref="SIMULATION"/>
     </root>
 
     <logger name="org.micoli.micraft" level="DEBUG"/>

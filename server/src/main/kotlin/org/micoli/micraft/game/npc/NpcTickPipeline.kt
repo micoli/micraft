@@ -20,6 +20,8 @@ class NpcTickPipeline(
     private val npcSpawner: NpcSpawner,
     private val animals: AnimalInteractionProcessor,
     private val ctxOf: () -> NpcTickContext = { NpcTickContext.live },
+    /** Veto on auto-spawning; the admin simulator refuses past its population ceiling. */
+    private val canSpawn: () -> Boolean = { true },
 ) {
     private var visibilityTickCounter = 0
 
@@ -54,7 +56,12 @@ class NpcTickPipeline(
     suspend fun lifecycle(world: WorldState, sessions: Collection<PlayerSession>) {
         npcManager.despawnOrphanedNpcs(sessions)
         npcSpawner.trySpawn(
-            world, npcManager, npcManager.getDefinitions(), nearChunks(world, sessions), ctx)
+            world,
+            npcManager,
+            npcManager.getDefinitions(),
+            nearChunks(world, sessions),
+            ctx,
+            canSpawn)
     }
 
     /** Zone cell a world position falls into. */
@@ -80,7 +87,8 @@ class NpcTickPipeline(
             }
         }
         if (adjacentChunks.isNotEmpty()) {
-            npcSpawner.trySpawn(world, npcManager, npcManager.getDefinitions(), adjacentChunks, ctx)
+            npcSpawner.trySpawn(
+                world, npcManager, npcManager.getDefinitions(), adjacentChunks, ctx, canSpawn)
         }
     }
 

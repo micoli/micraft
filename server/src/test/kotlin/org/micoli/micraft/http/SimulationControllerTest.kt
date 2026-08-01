@@ -1,5 +1,6 @@
 package org.micoli.micraft.http
 
+import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.request.get
@@ -55,6 +56,20 @@ private fun deps() =
         vegetationConfig = VegetationConfig(),
     )
 
+/** Read frames until one contains [needle]; null when the socket goes quiet first. */
+private suspend fun DefaultClientWebSocketSession.awaitContaining(
+    needle: String,
+    timeoutMs: Long = 10_000,
+): String? =
+    withTimeoutOrNull(timeoutMs) {
+        var found: String? = null
+        while (found == null) {
+            val text = (incoming.receive() as? Frame.Text)?.readText() ?: continue
+            if (text.contains(needle)) found = text
+        }
+        found
+    }
+
 class SimulationControllerTest {
 
     private val scope = CoroutineScope(Dispatchers.Default)
@@ -65,6 +80,16 @@ class SimulationControllerTest {
             npcTypesProvider = { listOf("walker") },
             tokenStore = tokenStore,
         )
+
+    @Test
+    fun frameCadence_slowsDownAsThePopulationGrows() {
+        val quiet = SimulationController.frameIntervalFor(50)
+        val busy = SimulationController.frameIntervalFor(500)
+        val crowded = SimulationController.frameIntervalFor(3_000)
+        assertEquals(50L, quiet, "a quiet arena stays at ~20 fps")
+        assertTrue(busy > quiet, "a busier arena must push less often")
+        assertTrue(crowded > busy, "a crowded arena must push even less often")
+    }
 
     @Test
     fun defaults_requireAdminToken() = testApplication {
@@ -168,6 +193,73 @@ class SimulationControllerTest {
                     found
                 }
             assertTrue(error != null, "an invalid command must be reported")
+        }
+    }
+
+    @Test
+    fun ws_announcesRunningSimulationsOnConnect() = testApplication {
+        val store = TokenStore(scope)
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        application {
+            install(WebSockets)
+            routing { controller(store).registerWs(this) }
+        }
+        val client = createClient { install(ClientWebSockets) }
+
+        client.webSocket("/api/admin/ws/simulation?token=$token") {
+            val listing = awaitContaining("\"simulations\"")
+            assertTrue(listing != null, "a fresh socket must learn what is already running")
+        }
+    }
+
+    @Test
+    fun ws_secondSocketCanAttachToARunningSimulation() = testApplication {
+        val store = TokenStore(scope)
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        val registry = SimulationRegistry { deps() }
+        val simController =
+            SimulationController(
+                registry = registry, npcTypesProvider = { listOf("walker") }, tokenStore = store)
+        application {
+            install(WebSockets)
+            routing { simController.registerWs(this) }
+        }
+        val client = createClient { install(ClientWebSockets) }
+
+        // first admin starts an arena
+        client.webSocket("/api/admin/ws/simulation?token=$token") {
+            send(INIT_COMMAND)
+            assertTrue(awaitContaining("\"snapshot\"") != null)
+        }
+        // the arena outlives its creator's socket
+        val running = registry.list()
+        assertEquals(1, running.size, "closing a tab must not stop the arena")
+
+        // second admin attaches to it
+        client.webSocket("/api/admin/ws/simulation?token=$token") {
+            send("""{"t":"attach","simulationId":"${running.first().id}"}""")
+            val snapshot = awaitContaining("\"snapshot\"")
+            assertTrue(snapshot != null, "attaching must answer with the arena's snapshot")
+            assertTrue(
+                snapshot.contains(running.first().id),
+                "the snapshot must say which arena it belongs to")
+        }
+        registry.stopAll()
+    }
+
+    @Test
+    fun ws_attachingToNothing_isReported() = testApplication {
+        val store = TokenStore(scope)
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        application {
+            install(WebSockets)
+            routing { controller(store).registerWs(this) }
+        }
+        val client = createClient { install(ClientWebSockets) }
+
+        client.webSocket("/api/admin/ws/simulation?token=$token") {
+            send("""{"t":"attach","simulationId":"does-not-exist"}""")
+            assertTrue(awaitContaining("\"error\"") != null)
         }
     }
 

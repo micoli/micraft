@@ -19,6 +19,7 @@ class NpcSpawner {
         definitions: Map<String, NpcDefinition>,
         loadedChunks: Collection<ChunkPos>,
         ctx: NpcTickContext = NpcTickContext.live,
+        canSpawn: () -> Boolean = { true },
     ) {
         if (loadedChunks.isEmpty()) return
         val chunkList = loadedChunks.toList().shuffled(ctx.random)
@@ -30,6 +31,7 @@ class NpcSpawner {
             var attempts = 0
             for (chunkPos in chunkList) {
                 if (attempts >= ctx.tuning.maxSpawnAttemptsPerTick) break
+                if (!canSpawn()) return
                 if (npcManager.countByTypeInChunk(type, chunkPos) >= spawn.maxPerChunk) continue
 
                 val wx =

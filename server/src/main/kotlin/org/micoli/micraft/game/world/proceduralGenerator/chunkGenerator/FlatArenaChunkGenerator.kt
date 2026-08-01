@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator
 
+import kotlin.math.abs
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
@@ -24,6 +25,13 @@ class FlatArenaChunkGenerator(
     private val biomeId: String = "plains",
     private val maxNpcs: Int = 0,
     private val zoneLevel: Int = 5,
+    /**
+     * Share of ground cells carrying a FLOWER or WEED. Herbivores graze those blocks
+     * ([org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor] only eats FLOWER and WEED),
+     * so a bare floor starves them.
+     */
+    private val vegetationDensity: Double = 0.08,
+    private val vegetationSeed: Long = 1L,
 ) : ChunkGenerator {
 
     private val biome =
@@ -53,15 +61,37 @@ class FlatArenaChunkGenerator(
             val wx = pos.cx * WorldConstants.CHUNK_SIZE + lx
             val wz = pos.cz * WorldConstants.CHUNK_SIZE + lz
             val onWall = wx == -halfSize || wx == halfSize || wz == -halfSize || wz == halfSize
+            val outside = abs(wx) > halfSize || abs(wz) > halfSize
             when {
+                outside -> BlockType.AIR
                 y == 0 -> BlockType.BEDROCK
                 y < groundY - 2 -> BlockType.STONE
                 y < groundY -> BlockType.DIRT
                 y == groundY -> BlockType.GRASS
                 onWall && y <= groundY + wallHeight -> BlockType.BEDROCK
+                y == groundY + 1 -> vegetationAt(wx, wz)
                 else -> BlockType.AIR
             }
         }
+
+    /** True when this world position lies inside the walls, walls excluded. */
+    fun isInsideArena(x: Float, z: Float): Boolean =
+        abs(x) < halfSize.toFloat() && abs(z) < halfSize.toFloat()
+
+    /**
+     * Deterministic from the world position, so chunk generation stays pure and an arena rebuilt
+     * from the same seed carries the same food.
+     */
+    private fun vegetationAt(wx: Int, wz: Int): BlockType {
+        if (vegetationDensity <= 0.0) return BlockType.AIR
+        var hash = wx * 73_856_093L xor wz * 19_349_663L xor vegetationSeed * 83_492_791L
+        hash = hash xor (hash ushr 29)
+        hash *= -0x7ee3623a03d3c83fL
+        hash = hash xor (hash ushr 32)
+        val unit = (hash ushr 11).toDouble() / (1L shl 53).toDouble()
+        if (unit >= vegetationDensity) return BlockType.AIR
+        return if (unit * 3 < vegetationDensity) BlockType.FLOWER else BlockType.WEED
+    }
 
     override fun biomeAt(wx: Int, wz: Int): String = biomeId
 

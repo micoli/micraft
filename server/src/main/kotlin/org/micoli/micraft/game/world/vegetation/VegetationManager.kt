@@ -24,8 +24,27 @@ class VegetationManager(
     private val savePath: Path,
 ) {
     private val activeBlocks: ConcurrentHashMap<BlockPos, GrowingBlock> = ConcurrentHashMap()
+    private val regrowing: ConcurrentHashMap<BlockPos, PendingRegrowth> = ConcurrentHashMap()
     private var checkTickCounter = 0
     private val random = Random.Default
+
+    /**
+     * A grazing animal ate the plant at [pos]. Schedule what grows back there, per the configured
+     * [RegrowthRule]s. No matching rule means that plant simply does not come back.
+     */
+    fun onGrazed(pos: BlockPos, grazed: BlockType) {
+        val rule = config.data.regrowth.firstOrNull { it.grazed == grazed.id } ?: return
+        if (rule.requiresVegetationHost) {
+            val belowY = pos.y - 1
+            if (belowY < 0 || !world.getBlockIfLoaded(pos.x, belowY, pos.z).isVegetationHost) return
+        }
+        val ticks = random.nextInt(rule.minTicks, rule.maxTicks + 1)
+        regrowing[pos] = PendingRegrowth(pos, rule.regrows, 0, ticks)
+        vegetationManagerLog.debug(
+            "VegetationManager: {} grazed, {} regrows in {} ticks", pos, rule.regrows, ticks)
+    }
+
+    fun regrowingCount(): Int = regrowing.size
 
     fun tryActivate(pos: BlockPos, blockType: BlockType) {
         val matchingChains =
@@ -61,12 +80,13 @@ class VegetationManager(
     }
 
     suspend fun tick(broadcast: suspend (ServerMessage) -> Unit) {
-        if (!config.data.enabled || activeBlocks.isEmpty()) return
+        if (!config.data.enabled || (activeBlocks.isEmpty() && regrowing.isEmpty())) return
         checkTickCounter++
         if (checkTickCounter < config.data.growthCheckIntervalTicks) return
         checkTickCounter = 0
 
         val changes = mutableListOf<BlockChange>()
+        changes.addAll(advanceRegrowth())
         val toAdvance = mutableListOf<BlockPos>()
         val toDeactivate = mutableListOf<BlockPos>()
 
@@ -119,6 +139,30 @@ class VegetationManager(
         }
     }
 
+    /** Put back the plants whose delay has elapsed, skipping cells something else now occupies. */
+    private fun advanceRegrowth(): List<BlockChange> {
+        if (regrowing.isEmpty()) return emptyList()
+        val changes = mutableListOf<BlockChange>()
+        val interval = config.data.growthCheckIntervalTicks
+        for ((pos, pending) in regrowing) {
+            val current = world.getBlockIfLoaded(pos.x, pos.y, pos.z)
+            if (current != BlockType.AIR && !current.isReplaceable) {
+                regrowing.remove(pos)
+                continue
+            }
+            val accumulated = pending.ticksAccumulated + interval
+            if (accumulated < pending.ticksRequired) {
+                regrowing[pos] = pending.copy(ticksAccumulated = accumulated)
+                continue
+            }
+            regrowing.remove(pos)
+            val change = BlockChange(pos, BlockType(pending.block))
+            world.applyChange(change)
+            changes.add(change)
+        }
+        return changes
+    }
+
     private fun spawnTree(pos: BlockPos, chain: GrowthChain): List<BlockChange> {
         val surfaceY = pos.y - 1
         val treeBlocks =
@@ -162,9 +206,11 @@ class VegetationManager(
                 val state =
                     Yaml.default.decodeFromString(VegetationState.serializer(), savePath.readText())
                 state.blocks.forEach { activeBlocks[it.pos] = it }
+                state.regrowing.forEach { regrowing[it.pos] = it }
                 vegetationManagerLog.info(
-                    "VegetationManager: loaded {} growing blocks from {}",
+                    "VegetationManager: loaded {} growing blocks and {} regrowing cells from {}",
                     state.blocks.size,
+                    state.regrowing.size,
                     savePath)
             }
             .onFailure { e ->
@@ -176,7 +222,7 @@ class VegetationManager(
     fun save() {
         runCatching {
                 savePath.parent?.createDirectories()
-                val state = VegetationState(activeBlocks.values.toList())
+                val state = VegetationState(activeBlocks.values.toList(), regrowing.values.toList())
                 savePath.writeText(Yaml.default.encodeToString(VegetationState.serializer(), state))
             }
             .onFailure { e ->

@@ -8,6 +8,34 @@ import org.micoli.micraft.player.rpg.BaseStats
 
 // ── Wire DTOs ─────────────────────────────────────────────────────────────────
 
+/** World-space rectangle the client is currently looking at. */
+@Serializable
+data class SimViewport(
+    val minX: Float,
+    val minZ: Float,
+    val maxX: Float,
+    val maxZ: Float,
+) {
+    fun contains(x: Float, z: Float): Boolean = x >= minX && x <= maxX && z >= minZ && z <= maxZ
+}
+
+/** One running arena, as shown in the "simulations en cours" list. */
+@Serializable
+data class SimulationInfo(
+    val id: String,
+    val name: String,
+    val halfSize: Int,
+    val viewers: Int,
+    val startedAtMs: Long,
+    val tick: Long,
+    val gameDay: Double,
+    val npcCount: Int,
+    val populationCap: Int,
+    val configuredTps: Int,
+    val realTps: Double,
+    val paused: Boolean,
+)
+
 @Serializable
 data class SimArenaDto(
     val halfSize: Int,
@@ -53,6 +81,11 @@ data class SimStatsDto(
     val realTps: Double,
     val npcCount: Int,
     val paused: Boolean,
+    /** Grazing food standing in the arena, and cells waiting to grow back. */
+    val foodBlocks: Int = 0,
+    val regrowingCells: Int = 0,
+    /** Population ceiling in force; spawns are refused at this count. 0 = none. */
+    val populationCap: Int = 0,
 )
 
 @Serializable
@@ -86,7 +119,18 @@ data class SimNpcDetailDto(
 
 @Serializable
 sealed class SimCommand {
-    @Serializable @SerialName("init") data class Init(val config: SimulationConfig) : SimCommand()
+    @Serializable
+    @SerialName("init")
+    data class Init(val config: SimulationConfig, val name: String = "") : SimCommand()
+
+    /** Ask for the running arenas; the answer is a [SimMessage.Simulations]. */
+    @Serializable @SerialName("list") data object ListSimulations : SimCommand()
+
+    /** Watch an arena someone else started. */
+    @Serializable @SerialName("attach") data class Attach(val simulationId: String) : SimCommand()
+
+    /** Stop watching without stopping the arena. */
+    @Serializable @SerialName("detach") data object Detach : SimCommand()
 
     @Serializable @SerialName("stop") data object Stop : SimCommand()
 
@@ -118,6 +162,10 @@ sealed class SimCommand {
         val jump: Boolean = false,
     ) : SimCommand()
 
+    @Serializable
+    @SerialName("viewport")
+    data class Viewport(val viewport: SimViewport?) : SimCommand()
+
     @Serializable @SerialName("tuning") data class Tuning(val tuning: NpcTuning) : SimCommand()
 
     @Serializable
@@ -132,12 +180,22 @@ sealed class SimMessage {
     @Serializable
     @SerialName("snapshot")
     data class Snapshot(
+        val simulationId: String,
         val arena: SimArenaDto,
         val config: SimulationConfig,
         val npcs: List<SimNpcDto>,
         val players: List<SimPlayerDto>,
         val stats: SimStatsDto,
         val events: List<SimEvent>,
+        /** Some NPCs were left out of `npcs` to keep the frame small. */
+        val truncated: Boolean = false,
+        /** Grazing food as flat `[x, z, isFlower]` triples. */
+        val food: List<Int> = emptyList(),
+        val foodVersion: Int = 0,
+        /**
+         * Whole retained history, so a socket attaching mid-run gets the charts already populated.
+         */
+        val metrics: SimMetricsDto? = null,
     ) : SimMessage()
 
     @Serializable
@@ -147,11 +205,25 @@ sealed class SimMessage {
         val players: List<SimPlayerDto>,
         val stats: SimStatsDto,
         val events: List<SimEvent>,
+        val truncated: Boolean = false,
+        /** Only present when the food changed since the last frame. */
+        val food: List<Int>? = null,
+        val foodVersion: Int = 0,
+        /**
+         * Buckets touched since the last push, oldest first — the last one is still open and will
+         * be sent again. Absent on most frames: the charts refresh far slower than the arena moves.
+         */
+        val metrics: SimMetricsDto? = null,
     ) : SimMessage()
 
     @Serializable
     @SerialName("npcDetail")
     data class NpcDetail(val detail: SimNpcDetailDto) : SimMessage()
+
+    @Serializable
+    @SerialName("simulations")
+    data class Simulations(val simulations: List<SimulationInfo>, val attachedId: String? = null) :
+        SimMessage()
 
     @Serializable @SerialName("stopped") data object Stopped : SimMessage()
 

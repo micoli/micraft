@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Routes, useLocation } from "react-router";
 import { cn } from "../primitives/cn";
+import { loadSidebarCollapsed, saveSidebarCollapsed } from "./sidebar";
 import { ClassesPage } from "./pages/ClassesPage";
 import { ConfigEditorPage } from "./pages/ConfigEditorPage";
 import { NpcsPage } from "./pages/NpcsPage";
@@ -9,6 +11,7 @@ import { UsersPage } from "./pages/UsersPage";
 import { WorldsPage } from "./pages/WorldsPage";
 import { GameAssetsPage } from "./pages/GameAssetsPage";
 import { AdministrationPage } from "./pages/AdministrationPage";
+import { WorldSimulatorPage } from "./pages/WorldSimulatorPage";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 function Icon({ d, size = 18 }: { d: string; size?: number }) {
@@ -41,6 +44,7 @@ const ICONS = {
   npcs: "M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18",
   gameAssets: "M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9",
   administration: "M4 6h16M4 10h16M4 14h8M4 18h8",
+  simulator: "M4 4h16v16H4zM8 8v8m8-8v8m-4-6a2 2 0 100 4 2 2 0 000-4z",
 };
 
 const NAV = [
@@ -53,6 +57,7 @@ const NAV = [
   { path: "/admin/worlds", label: "Worlds", icon: ICONS.worlds },
   { path: "/admin/game-assets", label: "Game Assets", icon: ICONS.gameAssets },
   { path: "/admin/administration", label: "Administration", icon: ICONS.administration },
+  { path: "/admin/world-simulator", label: "Simulateur monde", icon: ICONS.simulator },
 ];
 
 const PAGE_LABELS: Record<string, string> = {
@@ -65,48 +70,82 @@ const PAGE_LABELS: Record<string, string> = {
   "/admin/worlds": "Worlds",
   "/admin/game-assets": "Game Assets",
   "/admin/administration": "Administration",
+  "/admin/world-simulator": "Simulateur de monde",
 };
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
-function Sidebar() {
+function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const { pathname } = useLocation();
   return (
-    <aside className="w-64 shrink-0 h-screen flex flex-col bg-[#1C2434] border-r border-[#2E3A4E]">
+    <aside
+      className={cn(
+        "shrink-0 h-screen flex flex-col bg-[#1C2434] border-r border-[#2E3A4E] transition-[width] duration-150",
+        collapsed ? "w-16" : "w-64",
+      )}
+    >
       {/* Logo */}
-      <div className="h-16 flex items-center px-6 border-b border-[#2E3A4E]">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold">
+      <div className={cn("h-16 flex items-center border-b border-[#2E3A4E]", collapsed ? "px-3" : "px-6")}>
+        <div className="flex items-center gap-2.5 overflow-hidden">
+          <div className="w-8 h-8 shrink-0 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold">
             MC
           </div>
-          <span className="text-white font-semibold text-[15px] tracking-wide">MicCraft</span>
-          <span className="text-[#8A99AF] text-xs font-normal mt-0.5">Admin</span>
+          {!collapsed && (
+            <>
+              <span className="text-white font-semibold text-[15px] tracking-wide">MicCraft</span>
+              <span className="text-[#8A99AF] text-xs font-normal mt-0.5">Admin</span>
+            </>
+          )}
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-4 py-5 space-y-0.5 overflow-y-auto">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3">Menu</p>
+      <nav className={cn("flex-1 py-5 space-y-0.5 overflow-y-auto", collapsed ? "px-2" : "px-4")}>
+        {!collapsed && (
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3">Menu</p>
+        )}
         {NAV.map(({ path, label, icon, exact }) => {
           const active = exact ? pathname === path : pathname.startsWith(path);
           return (
             <Link
               key={path}
               to={path}
+              // the label is the only thing that goes away, so it becomes the tooltip: a column of
+              // unlabelled icons is otherwise a memory test
+              title={collapsed ? label : undefined}
+              aria-label={label}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150",
+                "flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150",
+                collapsed ? "justify-center px-0" : "px-3",
                 active ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white",
               )}
             >
               <span className={active ? "text-white" : "text-[#8A99AF]"}>
                 <Icon d={icon} size={17} />
               </span>
-              {label}
+              {!collapsed && label}
             </Link>
           );
         })}
       </nav>
 
-      <div className="px-6 py-4 border-t border-[#2E3A4E] text-[10px] text-[#8A99AF]">micraft admin v1</div>
+      <div
+        className={cn(
+          "border-t border-[#2E3A4E] flex items-center gap-2 py-3 text-[10px] text-[#8A99AF]",
+          collapsed ? "px-2 justify-center" : "px-6",
+        )}
+      >
+        {!collapsed && <span className="flex-1">micraft admin v1</span>}
+        <button
+          type="button"
+          onClick={onToggle}
+          title={collapsed ? "Déplier le menu" : "Replier le menu"}
+          aria-label={collapsed ? "Déplier le menu" : "Replier le menu"}
+          aria-expanded={!collapsed}
+          className="flex h-7 w-7 items-center justify-center rounded border border-[#2E3A4E] text-[#C7D2FE] hover:bg-[#3C50E0]/60 hover:text-white"
+        >
+          <Icon d={collapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"} size={15} />
+        </button>
+      </div>
     </aside>
   );
 }
@@ -131,10 +170,14 @@ function Header() {
 
 // ── Shell ─────────────────────────────────────────────────────────────────────
 export function AdminApp() {
+  const [collapsed, setCollapsed] = useState(() => loadSidebarCollapsed());
+
+  useEffect(() => saveSidebarCollapsed(collapsed), [collapsed]);
+
   return (
     <BrowserRouter>
       <div className="flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans">
-        <Sidebar />
+        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((current) => !current)} />
         <div className="flex flex-col flex-1 overflow-hidden">
           <Header />
           <main className="flex-1 overflow-auto p-6">
@@ -148,6 +191,7 @@ export function AdminApp() {
               <Route path="/admin/worlds" element={<WorldsPage />} />
               <Route path="/admin/game-assets" element={<GameAssetsPage />} />
               <Route path="/admin/administration" element={<AdministrationPage />} />
+              <Route path="/admin/world-simulator" element={<WorldSimulatorPage />} />
             </Routes>
           </main>
         </div>

@@ -2,16 +2,21 @@ package org.micoli.micraft.simulation
 
 import java.nio.file.Path
 import java.util.UUID
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 import kotlin.random.Random
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -39,6 +44,7 @@ import org.micoli.micraft.game.npc.animal.AnimalInstanceData
 import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
 import org.micoli.micraft.game.npc.applyOverride
 import org.micoli.micraft.game.tick.MovementProcessor
+import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
@@ -48,6 +54,7 @@ import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(WorldSimulator::class.java)
@@ -87,6 +94,8 @@ class WorldSimulator(
             wallHeight = config.wallHeight,
             maxNpcs = config.maxNpcs,
             zoneLevel = config.zoneLevel,
+            vegetationDensity = config.vegetationDensity,
+            vegetationSeed = config.seed,
         )
 
     val world = WorldState(generator, persistence = null)
@@ -99,6 +108,8 @@ class WorldSimulator(
         get() = NpcTickContext(tuning, random)
 
     val events = SimEventLog(EVENT_HISTORY)
+
+    val metrics = SimMetrics()
 
     private val sessions = mutableListOf<SimPlayerSession>()
 
@@ -144,9 +155,10 @@ class WorldSimulator(
             world = world,
             vegetationManager = vegetationManager,
             gameTimeService = gameTimeService,
-            broadcast = {},
+            broadcast = { message -> onWorldUpdate(message) },
             ctxOf = { ctx },
             onEvent = { event -> logAnimalEvent(event) },
+            canSpawn = ::belowPopulationCap,
         )
 
     private val pipeline =
@@ -155,6 +167,7 @@ class WorldSimulator(
             npcSpawner = npcSpawner,
             animals = animals,
             ctxOf = { ctx },
+            canSpawn = ::belowPopulationCap,
         )
 
     private val movementProcessor = MovementProcessor(world)
@@ -172,31 +185,155 @@ class WorldSimulator(
     private var tpsWindowTicks = 0L
 
     private var scope: CoroutineScope? = null
+    private var workers: ExecutorService? = null
+    private var dispatcher: CoroutineDispatcher? = null
 
     val paused: Boolean
         get() = ticksPerSecond <= 0
+
+    @Volatile private var capReported = false
+
+    @Volatile private var foodCache = 0
+    @Volatile private var foodCacheAtMs = 0L
+    @Volatile private var foodPositions: List<Int> = emptyList()
+    @Volatile private var foodPositionsAtVersion = -1
+
+    /** Bumped whenever a grazing cell changes, so the client only re-fetches the food then. */
+    @Volatile
+    var foodVersion = 0
+        private set
+
+    /**
+     * Safety net: nothing should be able to leave the walls now that the outside is void, but an
+     * NPC squeezed through a corner would otherwise fall forever and keep showing on the map. Put
+     * it back on the floor near the wall it left.
+     */
+    private fun containStrays() {
+        val limit = config.halfSize - 1f
+        for (instance in npcManager.getAll()) {
+            val pos = instance.state.pos
+            if (generator.isInsideArena(pos.x, pos.z) && pos.y >= config.groundY) continue
+            val fixed =
+                Vec3(
+                    pos.x.coerceIn(-limit, limit),
+                    config.groundY + 1f,
+                    pos.z.coerceIn(-limit, limit),
+                )
+            instance.state = instance.state.copy(pos = fixed, vel = Vec3(0f, 0f, 0f))
+            instance.vy = 0f
+            instance.velocity = Vec3(0f, 0f, 0f)
+            strays++
+        }
+    }
+
+    /** How many times an NPC had to be put back inside; 0 is the expected value. */
+    @Volatile
+    var strays: Int = 0
+        private set
+
+    /** Grazing removes a plant and regrowth puts it back; both broadcast the change. */
+    private fun onWorldUpdate(message: ServerMessage) {
+        if (message !is ServerMessage.WorldUpdate) return
+        if (message.changes.any { it.type in FOOD_BLOCKS || it.type == BlockType.AIR }) {
+            foodVersion++
+        }
+    }
+
+    /**
+     * Grazing food as flat `[x, z, x, z, …]` pairs — the flat form is markedly smaller on the wire
+     * than a list of objects, and the arena can hold thousands of plants.
+     */
+    fun foodPositions(): List<Int> {
+        if (foodPositionsAtVersion != foodVersion) {
+            foodPositions = scanFoodPositions()
+            foodPositionsAtVersion = foodVersion
+        }
+        return foodPositions
+    }
+
+    private fun scanFoodPositions(): List<Int> {
+        val range = config.halfSize - 1
+        val y = config.groundY + 1
+        val out = ArrayList<Int>(1024)
+        for (x in -range..range) for (z in -range..range) {
+            val block = world.getBlockIfLoaded(x, y, z)
+            if (block in FOOD_BLOCKS) {
+                out.add(x)
+                out.add(z)
+                out.add(if (block == BlockType.FLOWER) 1 else 0)
+            }
+        }
+        return out
+    }
+
+    /**
+     * Grazing food standing in the arena. Scanning the floor costs a pass over every cell, so the
+     * result is cached: the frame pusher asks for it 20 times a second.
+     */
+    fun foodBlockCount(): Int {
+        val now = System.currentTimeMillis()
+        if (now - foodCacheAtMs > FOOD_COUNT_TTL_MS) {
+            foodCache = countFoodBlocks()
+            foodCacheAtMs = now
+        }
+        return foodCache
+    }
+
+    /** Cells grazed bare that the game will replant. */
+    fun regrowingCount(): Int = vegetationManager.regrowingCount()
+
+    /** False once the arena is full; births and auto-spawn are refused from then on. */
+    fun belowPopulationCap(): Boolean {
+        val cap = config.populationCap
+        if (cap <= 0) return true
+        if (npcManager.getAll().size < cap) {
+            capReported = false
+            return true
+        }
+        if (!capReported) {
+            capReported = true
+            logEvent(SimEventType.SYSTEM, "plafond de population atteint ($cap) — spawns suspendus")
+        }
+        return false
+    }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     /** Build the arena, apply definition overrides, place players and the initial NPC batch. */
     suspend fun start() {
-        npcManager.loadDefinitions(overriddenDefinitions(config.npcDefinitionOverrides))
-        pregenerateArena()
-        npcManager.addAdminListener { json -> logNpcManagerEvent(json) }
-        config.players.forEach { spec -> addPlayer(spec) }
-        config.initialSpawns.forEach { spawn ->
-            repeat(spawn.count) { spawnAtRandom(spawn.type, spawn.level) }
+        // Own threads, named so logging can be told apart: the simulator drives the very same game
+        // systems as the live world, and their output would otherwise flood the server log.
+        val threadCounter = AtomicInteger(0)
+        val executor =
+            Executors.newSingleThreadExecutor { runnable ->
+                Thread(runnable, "$SIMULATION_THREAD_PREFIX-${threadCounter.incrementAndGet()}")
+                    .apply { isDaemon = true }
+            }
+        workers = executor
+        val simDispatcher = executor.asCoroutineDispatcher().also { dispatcher = it }
+
+        withContext(simDispatcher) {
+            npcManager.loadDefinitions(overriddenDefinitions(config.npcDefinitionOverrides))
+            pregenerateArena()
+            npcManager.addAdminListener { json -> logNpcManagerEvent(json) }
+            config.players.forEach { spec -> addPlayer(spec) }
+            config.initialSpawns.forEach { spawn ->
+                repeat(spawn.count) { spawnAtRandom(spawn.type, spawn.level) }
+            }
         }
         logEvent(
             SimEventType.SYSTEM,
             "arène ${config.halfSize * 2}×${config.halfSize * 2} prête — ${npcManager.getAll().size} NPC, ${sessions.size} joueur(s)")
-        val loop = CoroutineScope(Dispatchers.Default + SupervisorJob()).also { scope = it }
+        val loop = CoroutineScope(simDispatcher + SupervisorJob()).also { scope = it }
         loop.launch { runLoop() }
     }
 
     fun stop() {
         scope?.cancel()
         scope = null
+        dispatcher = null
+        workers?.shutdownNow()
+        workers = null
     }
 
     private suspend fun runLoop() {
@@ -223,9 +360,20 @@ class WorldSimulator(
 
     /** Advance [count] ticks by hand; used by the step buttons while paused. */
     suspend fun stepOnce(count: Int = 1) {
-        repeat(count.coerceIn(1, MAX_MANUAL_STEPS)) {
-            runCatching { step() }.onFailure { logStepFailure(it) }
+        onSimulationThread {
+            repeat(count.coerceIn(1, MAX_MANUAL_STEPS)) {
+                runCatching { step() }.onFailure { logStepFailure(it) }
+            }
         }
+    }
+
+    /**
+     * Run [block] on the simulation's own thread when it has one. Keeps the arena single-threaded
+     * and keeps its logging out of the server log, whichever socket triggered the action.
+     */
+    private suspend fun <T> onSimulationThread(block: suspend () -> T): T {
+        val simDispatcher = dispatcher ?: return block()
+        return withContext(simDispatcher) { block() }
     }
 
     /**
@@ -239,7 +387,11 @@ class WorldSimulator(
             if (newState != session.state) session.state = newState
         }
         gameTimeService.tick(TICK_SECONDS.toDouble())
+        metrics.sample(gameTimeService.currentGameDay, tick) { aliveByType() }
         pipeline.tick(world, sessions.toList(), combatProcessor)
+        containStrays()
+        // game-owned system: regrows what the herbivores grazed
+        vegetationManager.tick { message -> onWorldUpdate(message) }
         if (config.autoSpawnEnabled &&
             sessions.isNotEmpty() &&
             tick % LIFECYCLE_INTERVAL_TICKS == 0L) {
@@ -271,9 +423,11 @@ class WorldSimulator(
     }
 
     suspend fun spawn(type: String, x: Float, z: Float, count: Int = 1, level: Int? = null) {
-        repeat(count.coerceIn(1, MAX_SPAWN_BATCH)) {
-            val pos = Vec3(clamp(x), config.groundY + 1f, clamp(z))
-            spawnAt(type, pos, level)
+        onSimulationThread {
+            repeat(count.coerceIn(1, MAX_SPAWN_BATCH)) {
+                val pos = Vec3(clamp(x), config.groundY + 1f, clamp(z))
+                spawnAt(type, pos, level)
+            }
         }
     }
 
@@ -288,6 +442,8 @@ class WorldSimulator(
             logEvent(SimEventType.SYSTEM, "type NPC inconnu: $type")
             return null
         }
+        // a manual spawn must not break the ceiling either, or the invariant is worthless
+        if (!belowPopulationCap()) return null
         val instance = npcManager.spawnNpc(name, type, pos, level ?: config.zoneLevel)
         val animalCfg = instance.definition.animalConfig
         if (animalCfg != null && instance.animalData == null) {
@@ -316,6 +472,13 @@ class WorldSimulator(
 
     fun arenaDto() = SimArenaDto(config.halfSize, config.groundY, config.wallHeight)
 
+    /** Standing population per NPC type; the gauge behind the "vivants" chart. */
+    fun aliveByType(): Map<String, Int> =
+        npcManager.getAll().groupingBy { it.state.type }.eachCount()
+
+    /** Whole retained series. [SimMetrics.since] is what frames use. */
+    fun metricsDto() = SimMetricsDto(metrics.bucketGameDays, metrics.snapshot())
+
     fun statsDto() =
         SimStatsDto(
             tick = tick,
@@ -324,9 +487,36 @@ class WorldSimulator(
             realTps = realTps,
             npcCount = npcManager.getAll().size,
             paused = paused,
+            foodBlocks = foodBlockCount(),
+            regrowingCells = regrowingCount(),
+            populationCap = config.populationCap,
         )
 
-    fun npcDtos(): List<SimNpcDto> = npcManager.getAll().map { it.toDto() }
+    /**
+     * NPCs to send in a frame. Pushing a few thousand of them 20 times a second is what actually
+     * makes the page unusable, so the payload is restricted to what the client is looking at and
+     * hard-capped. [statsDto] still reports the real population.
+     */
+    fun npcDtos(viewport: SimViewport? = null): List<SimNpcDto> {
+        val all = npcManager.getAll()
+        val visible =
+            if (viewport == null) all
+            else all.filter { viewport.contains(it.state.pos.x, it.state.pos.z) }
+        val capped =
+            if (config.maxNpcsPerFrame > 0 && visible.size > config.maxNpcsPerFrame)
+                visible.take(config.maxNpcsPerFrame)
+            else visible
+        return capped.map { it.toDto() }
+    }
+
+    /** True when the last frame had to drop NPCs from the payload. */
+    fun isTruncated(viewport: SimViewport?): Boolean {
+        if (config.maxNpcsPerFrame <= 0) return false
+        val visible =
+            if (viewport == null) npcManager.getAll().size
+            else npcManager.getAll().count { viewport.contains(it.state.pos.x, it.state.pos.z) }
+        return visible > config.maxNpcsPerFrame
+    }
 
     fun playerDtos(): List<SimPlayerDto> =
         sessions.map {
@@ -390,9 +580,19 @@ class WorldSimulator(
             world.getOrGenerate(ChunkPos(cx, cz))
         }
         log.info(
-            "Simulator arena pregenerated: {} chunks, halfSize={}",
+            "Simulator arena pregenerated: {} chunks, halfSize={}, grazing food={}",
             world.loadedChunkCount(),
-            config.halfSize)
+            config.halfSize,
+            foodBlockCount())
+    }
+
+    private fun countFoodBlocks(): Int {
+        val range = config.halfSize - 1
+        var count = 0
+        for (x in -range..range) for (z in -range..range) {
+            if (world.getBlockIfLoaded(x, config.groundY + 1, z) in FOOD_BLOCKS) count++
+        }
+        return count
     }
 
     private fun addPlayer(spec: SimPlayerSpec) {
@@ -439,10 +639,10 @@ class WorldSimulator(
             id = state.id,
             name = state.name,
             type = state.type,
-            x = state.pos.x,
-            y = state.pos.y,
-            z = state.pos.z,
-            yaw = state.yaw,
+            x = state.pos.x.round2(),
+            y = state.pos.y.round2(),
+            z = state.pos.z.round2(),
+            yaw = state.yaw.round2(),
             currentHp = currentHp,
             maxHp = maxHp,
             level = instanceLevel,
@@ -457,6 +657,15 @@ class WorldSimulator(
 
     // ── Event plumbing ────────────────────────────────────────────────────────
 
+    /**
+     * The one way an event enters the arena's history. Everything funnels through here so the
+     * charts cannot silently miss a category: a new event kind is counted the moment it is logged,
+     * with no second list to remember to update.
+     */
+    private fun record(event: SimEvent) {
+        metrics.record(events.add(event))
+    }
+
     private fun logEvent(
         type: SimEventType,
         message: String,
@@ -464,7 +673,7 @@ class WorldSimulator(
         other: NpcInstance? = null,
         value: Double? = null,
     ) {
-        events.add(
+        record(
             SimEvent(
                 seq = 0L,
                 tick = tick,
@@ -508,7 +717,7 @@ class WorldSimulator(
                 AnimalEventType.AGE_DEATH ->
                     "$who meurt de vieillesse (${event.value.days()} jours)"
             }
-        events.add(
+        record(
             SimEvent(
                 seq = 0L,
                 tick = tick,
@@ -551,15 +760,14 @@ class WorldSimulator(
         val name = obj["name"]?.jsonPrimitive?.content
         when (kind) {
             "npcSpawned" ->
-                events.add(baseEvent(SimEventType.SPAWN, "apparition de ${name ?: id}", id, name))
+                record(baseEvent(SimEventType.SPAWN, "apparition de ${name ?: id}", id, name))
             "npcDespawned" ->
-                events.add(
-                    baseEvent(SimEventType.DESPAWN, "disparition de ${id?.take(8)}", id, name))
+                record(baseEvent(SimEventType.DESPAWN, "disparition de ${id?.take(8)}", id, name))
             "healthUpdate" -> {
                 val hp = obj["currentHp"]?.jsonPrimitive?.content
                 val maxHp = obj["maxHp"]?.jsonPrimitive?.content
                 val target = npcManager.getInstance(id ?: "")
-                events.add(
+                record(
                     baseEvent(
                         SimEventType.DAMAGE,
                         "${target?.state?.name ?: id?.take(8)} — $hp/$maxHp pv",
@@ -587,6 +795,8 @@ class WorldSimulator(
 
     companion object {
         const val EVENT_HISTORY = 300
+        private val FOOD_BLOCKS = setOf(BlockType.FLOWER, BlockType.WEED)
+        private const val FOOD_COUNT_TTL_MS = 500L
         private const val MAX_TPS = 5_000
         private const val MAX_WAKEUPS_PER_SECOND = 100
         private const val PAUSED_POLL_MS = 50L
@@ -596,6 +806,8 @@ class WorldSimulator(
         private val LIFECYCLE_INTERVAL_TICKS = max(1L, 5_000L / TICK_MS)
     }
 }
+
+private fun Float.round2(): Float = Math.round(this * 100f) / 100f
 
 private fun Double?.pct(): String = this?.let { "${(it * 100).toInt()}%" } ?: "?"
 

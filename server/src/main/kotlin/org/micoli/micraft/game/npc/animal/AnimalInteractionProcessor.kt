@@ -27,6 +27,11 @@ class AnimalInteractionProcessor(
     private val gameTimeService: GameTimeService,
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val ctxOf: () -> NpcTickContext = { NpcTickContext.live },
+    /**
+     * Veto on creating new life. Reproduction is exponential; a bounded world (the admin simulator)
+     * needs to refuse births past its ceiling. Always true on the live server.
+     */
+    private val canSpawn: () -> Boolean = { true },
     /** Lifecycle sink; no-op on the live server, wired to the event log by the world simulator. */
     private val onEvent: (AnimalEvent) -> Unit = {},
 ) {
@@ -271,33 +276,45 @@ class AnimalInteractionProcessor(
             val cy = pos.y.toInt()
             val cz = pos.z.toInt()
 
-            var found = false
-            outer@ for (dy in -1..2) {
+            // Nearest plant, not the first one the scan happens to meet: picking by scan order made
+            // the target jump between plants as the animal moved, so it never actually arrived.
+            var bestX = 0
+            var bestY = 0
+            var bestZ = 0
+            var bestBlock: BlockType? = null
+            var bestDistSq = Float.MAX_VALUE
+            for (dy in -1..2) {
                 for (dx in -radius..radius) {
                     for (dz in -radius..radius) {
                         val bx = cx + dx
                         val by = cy + dy
                         val bz = cz + dz
                         val block = world.getBlockIfLoaded(bx, by, bz)
-                        if (block.id in FOOD_BLOCK_TYPES) {
-                            val bxf = bx.toFloat() + 0.5f
-                            val bzf = bz.toFloat() + 0.5f
-                            val fdx = bxf - pos.x
-                            val fdz = bzf - pos.z
-                            if (fdx * fdx + fdz * fdz <= EAT_RANGE_SQ) {
-                                consumeVegetation(bx, by, bz, block, instance, animal, config)
-                            } else {
-                                animal.preyTargetPos =
-                                    org.micoli.micraft.player.Vec3(bxf, pos.y, bzf)
-                            }
-                            found = true
-                            break@outer
+                        if (block.id !in FOOD_BLOCK_TYPES) continue
+                        val fdx = bx.toFloat() + 0.5f - pos.x
+                        val fdz = bz.toFloat() + 0.5f - pos.z
+                        val distSq = fdx * fdx + fdz * fdz
+                        if (distSq < bestDistSq) {
+                            bestDistSq = distSq
+                            bestX = bx
+                            bestY = by
+                            bestZ = bz
+                            bestBlock = block
                         }
                     }
                 }
             }
-            if (!found) {
+            val target = bestBlock
+            if (target == null) {
                 animal.preyTargetPos = null
+                continue
+            }
+            if (bestDistSq <= EAT_RANGE_SQ) {
+                consumeVegetation(bestX, bestY, bestZ, target, instance, animal, config)
+            } else {
+                animal.preyTargetPos =
+                    org.micoli.micraft.player.Vec3(
+                        bestX.toFloat() + 0.5f, pos.y, bestZ.toFloat() + 0.5f)
             }
         }
     }
@@ -316,7 +333,7 @@ class AnimalInteractionProcessor(
         world.applyChange(change)
         broadcast(ServerMessage.WorldUpdate(listOf(change)))
         vegetationManager.deactivate(blockPos)
-        vegetationManager.tryActivate(blockPos, block)
+        vegetationManager.onGrazed(blockPos, block)
         animal.hunger = (animal.hunger - config.feedHungerReduction).coerceAtLeast(0.0)
         emit(AnimalEventType.FED, instance, value = animal.hunger)
         animal.preyTargetPos = null
@@ -377,6 +394,10 @@ class AnimalInteractionProcessor(
     ) {
         val fatherAnimal = mother.animalData ?: return
         val offspringType = config.offspringType ?: return
+        if (!canSpawn()) {
+            log.debug("Offspring of {} refused: population ceiling reached", mother.state.name)
+            return
+        }
         val random = ctxOf().random
         val count = random.nextInt(config.offspringMinCount, config.offspringMaxCount + 1)
         val zoneLevel = world.zoneLevelAt(mother.state.pos.x.toInt(), mother.state.pos.z.toInt())
@@ -390,6 +411,7 @@ class AnimalInteractionProcessor(
         val offspringLevel = avgLevel.coerceAtMost(zoneLevel)
 
         repeat(count) {
+            if (!canSpawn()) return@repeat
             val offspringAnimal =
                 AnimalInstanceData.offspring(
                     parentA = motherAnimal,

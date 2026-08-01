@@ -25670,6 +25670,9 @@
   // admin/index.tsx
   var import_client = __toESM(require_client(), 1);
 
+  // admin/AdminApp.tsx
+  var import_react22 = __toESM(require_react(), 1);
+
   // node_modules/react-router/dist/development/chunk-KS7C4IRE.mjs
   var React = __toESM(require_react(), 1);
   var React2 = __toESM(require_react(), 1);
@@ -26145,18 +26148,18 @@
     let pathnameBase = matchedPathname.replace(/(.)\/+$/, "$1");
     let captureGroups = match2.slice(1);
     let params = compiledParams.reduce(
-      (memo2, { paramName, isOptional }, index2) => {
+      (memo22, { paramName, isOptional }, index2) => {
         if (paramName === "*") {
           let splatValue = captureGroups[index2] || "";
           pathnameBase = matchedPathname.slice(0, matchedPathname.length - splatValue.length).replace(/(.)\/+$/, "$1");
         }
         const value = captureGroups[index2];
         if (isOptional && !value) {
-          memo2[paramName] = void 0;
+          memo22[paramName] = void 0;
         } else {
-          memo2[paramName] = (value || "").replace(/%2F/g, "/");
+          memo22[paramName] = (value || "").replace(/%2F/g, "/");
         }
-        return memo2;
+        return memo22;
       },
       {}
     );
@@ -27227,9 +27230,9 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
   }
   function createSearchParams(init = "") {
     return new URLSearchParams(
-      typeof init === "string" || Array.isArray(init) || init instanceof URLSearchParams ? init : Object.keys(init).reduce((memo2, key2) => {
+      typeof init === "string" || Array.isArray(init) || init instanceof URLSearchParams ? init : Object.keys(init).reduce((memo22, key2) => {
         let value = init[key2];
-        return memo2.concat(
+        return memo22.concat(
           Array.isArray(value) ? value.map((v) => [key2, v]) : [[key2, value]]
         );
       }, [])
@@ -31779,6 +31782,22 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
   // primitives/cn.ts
   function cn(...inputs) {
     return twMerge(clsx(inputs));
+  }
+
+  // admin/sidebar.ts
+  var SIDEBAR_STORAGE_KEY = "micraft-admin-sidebar-collapsed";
+  function loadSidebarCollapsed() {
+    try {
+      return localStorage.getItem(SIDEBAR_STORAGE_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+  function saveSidebarCollapsed(collapsed) {
+    try {
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, collapsed ? "1" : "0");
+    } catch (e) {
+    }
   }
 
   // admin/pages/ClassesPage.tsx
@@ -86471,7 +86490,7 @@ ${end.comment}` : end.comment;
     );
   }
   function DialogContent2(_a6) {
-    var _b = _a6, { className, children, movable = false } = _b, props = __objRest(_b, ["className", "children", "movable"]);
+    var _b = _a6, { className, overlayClassName, children, movable = false } = _b, props = __objRest(_b, ["className", "overlayClassName", "children", "movable"]);
     const [offset, setOffset] = (0, import_react7.useState)({ x: 0, y: 0 });
     const [isDraggingWindow, setIsDraggingWindow] = (0, import_react7.useState)(false);
     const dragStart = (0, import_react7.useRef)(null);
@@ -86504,7 +86523,7 @@ ${end.comment}` : end.comment;
       [movable, offset]
     );
     return /* @__PURE__ */ (0, import_jsx_runtime18.jsxs)(DialogPortal, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(DialogOverlay2, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(DialogOverlay2, { className: overlayClassName }),
       /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
         DialogContent,
         __spreadProps(__spreadValues({
@@ -87807,11 +87826,11 @@ ${end.comment}` : end.comment;
     }, [selected]);
     const entries = Object.entries(types2).filter(([name2]) => name2.toLowerCase().includes(filter.toLowerCase())).sort(([a], [b]) => a.localeCompare(b)).map(([name2, dto]) => ({ name: name2, dto }));
     const [selectedAnim, setSelectedAnim] = (0, import_react13.useState)(null);
-    const anims = bbmodel ? animationsFromBbmodel(bbmodel) : [];
+    const anims = (0, import_react13.useMemo)(() => bbmodel ? animationsFromBbmodel(bbmodel) : [], [bbmodel]);
     (0, import_react13.useEffect)(() => {
       if (anims.length > 0) setSelectedAnim(anims[0].fullName);
       else setSelectedAnim(null);
-    }, [bbmodel]);
+    }, [anims]);
     return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
       /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("aside", { className: "w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
         /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "px-3 py-2 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
@@ -87879,12 +87898,12 @@ ${end.comment}` : end.comment;
       }
       api.skins.bbmodel(selected).then(setBbmodel).catch(() => setBbmodel(null));
     }, [selected]);
-    const anims = bbmodel ? animationsFromBbmodel(bbmodel) : [];
+    const anims = (0, import_react13.useMemo)(() => bbmodel ? animationsFromBbmodel(bbmodel) : [], [bbmodel]);
     (0, import_react13.useEffect)(() => {
       var _a6, _b, _c;
       const walk = anims.find((a) => a.fullName.toLowerCase().includes("walking"));
       setSelectedAnim((_c = (_b = walk == null ? void 0 : walk.fullName) != null ? _b : (_a6 = anims[0]) == null ? void 0 : _a6.fullName) != null ? _c : null);
-    }, [bbmodel]);
+    }, [anims]);
     const filtered = skins.filter((s) => s.toLowerCase().includes(filter.toLowerCase())).sort();
     return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
       /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("aside", { className: "w-48 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
@@ -88019,10 +88038,2410 @@ ${end.comment}` : end.comment;
     ] });
   }
 
-  // admin/AdminApp.tsx
+  // admin/pages/WorldSimulatorPage.tsx
+  var import_react21 = __toESM(require_react(), 1);
+
+  // admin/simulator/ArenaCanvasRenderer.tsx
+  var import_react15 = __toESM(require_react(), 1);
+
+  // admin/simulator/arenaView.ts
+  var import_react14 = __toESM(require_react(), 1);
+  var LAYER_STORAGE_KEY = "micraft-simulator-layers-v2";
+  var LAYER_KEYS = ["food", "grid", "aggro", "hunger", "gestation", "names", "players"];
+  var LAYER_DEFAULTS = {
+    food: true,
+    grid: true,
+    aggro: true,
+    hunger: true,
+    gestation: true,
+    names: false,
+    players: true
+  };
+  var LAYER_LABELS = {
+    food: "Brout (herbivores)",
+    grid: "Grille",
+    aggro: "Lignes d'aggro",
+    hunger: "Barre de faim",
+    gestation: "Anneau de gestation",
+    names: "Noms",
+    players: "Joueurs"
+  };
+  function loadLayers() {
+    try {
+      const raw2 = localStorage.getItem(LAYER_STORAGE_KEY);
+      return raw2 ? __spreadValues(__spreadValues({}, LAYER_DEFAULTS), JSON.parse(raw2)) : LAYER_DEFAULTS;
+    } catch (e) {
+      return LAYER_DEFAULTS;
+    }
+  }
+  function saveLayers(layers) {
+    try {
+      localStorage.setItem(LAYER_STORAGE_KEY, JSON.stringify(layers));
+    } catch (e) {
+    }
+  }
+  var RENDERER_STORAGE_KEY = "micraft-simulator-renderer";
+  function loadRenderer() {
+    try {
+      return localStorage.getItem(RENDERER_STORAGE_KEY) === "canvas" ? "canvas" : "svg";
+    } catch (e) {
+      return "svg";
+    }
+  }
+  function saveRenderer(kind) {
+    try {
+      localStorage.setItem(RENDERER_STORAGE_KEY, kind);
+    } catch (e) {
+    }
+  }
+  var MIN_PPB = 0.5;
+  var MAX_PPB = 64;
+  var INITIAL_CAMERA = { x: 0, z: 0, pxPerBlock: 3 };
+  var VIEWPORT_MARGIN_BLOCKS = 8;
+  var FIT_PADDING_BLOCKS = 8;
+  function fitScale(width, height, arenaHalfSize) {
+    if (width <= 1 || height <= 1) return INITIAL_CAMERA.pxPerBlock;
+    const span = arenaHalfSize * 2 + FIT_PADDING_BLOCKS;
+    return Math.min(MAX_PPB, Math.max(MIN_PPB, Math.min(width, height) / span));
+  }
+  function useArenaCamera(arenaHalfSize) {
+    const cameraRef = (0, import_react14.useRef)(INITIAL_CAMERA);
+    const dragRef = (0, import_react14.useRef)(null);
+    const frameRef = (0, import_react14.useRef)(null);
+    const fittedRef = (0, import_react14.useRef)(false);
+    const [size, setSize] = (0, import_react14.useState)({ w: 800, h: 600 });
+    const [element2, setElement] = (0, import_react14.useState)(null);
+    const [camera, setCamera] = (0, import_react14.useState)(INITIAL_CAMERA);
+    const [panning, setPanning] = (0, import_react14.useState)(false);
+    const redraw = (0, import_react14.useCallback)(() => {
+      if (frameRef.current !== null) return;
+      frameRef.current = requestAnimationFrame(() => {
+        frameRef.current = null;
+        setCamera(cameraRef.current);
+      });
+    }, []);
+    (0, import_react14.useEffect)(
+      () => () => {
+        if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+      },
+      []
+    );
+    (0, import_react14.useEffect)(() => {
+      if (!element2) return;
+      const measure = () => {
+        const rect = element2.getBoundingClientRect();
+        setSize({ w: Math.max(1, rect.width), h: Math.max(1, rect.height) });
+      };
+      measure();
+      const observer = new ResizeObserver(measure);
+      observer.observe(element2);
+      return () => observer.disconnect();
+    }, [element2]);
+    const fitAll = (0, import_react14.useCallback)(() => {
+      cameraRef.current = { x: 0, z: 0, pxPerBlock: fitScale(size.w, size.h, arenaHalfSize) };
+      redraw();
+    }, [arenaHalfSize, size.w, size.h, redraw]);
+    (0, import_react14.useEffect)(() => {
+      if (fittedRef.current || size.w <= 1) return;
+      fittedRef.current = true;
+      fitAll();
+    }, [size.w, fitAll]);
+    const cam = camera;
+    const ppb = cam.pxPerBlock;
+    const { w: W, h: H } = size;
+    const w2s2 = (0, import_react14.useCallback)(
+      (wx, wz) => [(wx - cam.x) * ppb + W / 2, -(wz - cam.z) * ppb + H / 2],
+      [cam.x, cam.z, ppb, W, H]
+    );
+    const s2w = (0, import_react14.useCallback)(
+      (sx, sy) => [(sx - W / 2) / ppb + cam.x, -(sy - H / 2) / ppb + cam.z],
+      [cam.x, cam.z, ppb, W, H]
+    );
+    const onWheel = (e) => {
+      e.preventDefault();
+      const rect = element2 == null ? void 0 : element2.getBoundingClientRect();
+      if (!rect) return;
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
+      const next = Math.min(MAX_PPB, Math.max(MIN_PPB, ppb * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+      const [wx, wz] = s2w(sx, sy);
+      cameraRef.current = {
+        pxPerBlock: next,
+        x: wx - (sx - W / 2) / next,
+        z: wz + (sy - H / 2) / next
+      };
+      redraw();
+    };
+    const zoomBy = (factor) => {
+      const next = Math.min(MAX_PPB, Math.max(MIN_PPB, ppb * factor));
+      if (next === ppb) return;
+      cameraRef.current = __spreadProps(__spreadValues({}, cameraRef.current), { pxPerBlock: next });
+      redraw();
+    };
+    const onMouseDown = (e) => {
+      dragRef.current = { x: cam.x, z: cam.z, sx: e.clientX, sy: e.clientY };
+      setPanning(true);
+    };
+    const onPanMove = (e) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      cameraRef.current = __spreadProps(__spreadValues({}, cameraRef.current), {
+        x: drag.x - (e.clientX - drag.sx) / ppb,
+        z: drag.z + (e.clientY - drag.sy) / ppb
+      });
+      redraw();
+    };
+    const endPan = () => {
+      dragRef.current = null;
+      setPanning(false);
+    };
+    return {
+      camera,
+      width: W,
+      height: H,
+      w2s: w2s2,
+      s2w,
+      worldTransform: `matrix(${ppb},0,0,${-ppb},${W / 2 - cam.x * ppb},${H / 2 + cam.z * ppb})`,
+      visibleBounds: {
+        minX: cam.x - W / (2 * ppb) - VIEWPORT_MARGIN_BLOCKS,
+        maxX: cam.x + W / (2 * ppb) + VIEWPORT_MARGIN_BLOCKS,
+        minZ: cam.z - H / (2 * ppb) - VIEWPORT_MARGIN_BLOCKS,
+        maxZ: cam.z + H / (2 * ppb) + VIEWPORT_MARGIN_BLOCKS
+      },
+      onElement: setElement,
+      onWheel,
+      zoomBy,
+      fitAll,
+      onMouseDown,
+      onPanMove,
+      endPan,
+      panning
+    };
+  }
+  var FOOD_OPACITY = 0.35;
+  function markerRadiusFor(pxPerBlock) {
+    return Math.max(3, Math.min(9, pxPerBlock * 0.7));
+  }
+  function gridLinesFor(halfSize, pxPerBlock) {
+    const step2 = Math.max(10, Math.pow(10, Math.ceil(Math.log10(60 / pxPerBlock))));
+    const lines = [];
+    for (let g = -halfSize; g <= halfSize; g += step2) lines.push(g);
+    return lines;
+  }
+  function hitRadiusFor(pxPerBlock) {
+    return markerRadiusFor(pxPerBlock) + 4;
+  }
+  function pickNpcAt(npcs, w2s2, pointerX, pointerY, pxPerBlock) {
+    const radius = hitRadiusFor(pxPerBlock);
+    let best = null;
+    let bestDistSq = radius * radius;
+    for (const npc of npcs) {
+      const [nx, ny] = w2s2(npc.x, npc.z);
+      const distSq = (nx - pointerX) * (nx - pointerX) + (ny - pointerY) * (ny - pointerY);
+      if (distSq <= bestDistSq) {
+        bestDistSq = distSq;
+        best = { npc, sx: nx, sy: ny };
+      }
+    }
+    return best;
+  }
+
+  // admin/simulator/NpcTooltip.tsx
   var import_jsx_runtime25 = __toESM(require_jsx_runtime(), 1);
+  function NpcTooltip({ hover }) {
+    const { npc, sx, sy } = hover;
+    return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)(
+      "div",
+      {
+        className: "pointer-events-none absolute z-10 rounded-md border border-[#2E3A4E] bg-[#1A222C] px-2.5 py-1.5 text-[11px] text-white shadow-lg",
+        style: { left: sx + 14, top: sy + 10 },
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "font-semibold", children: npc.name }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "text-[#8A99AF]", children: [
+            npc.type,
+            " \xB7 niveau ",
+            npc.level
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { children: [
+            npc.currentHp,
+            "/",
+            npc.maxHp,
+            " pv",
+            npc.gender ? ` \xB7 ${npc.gender === "FEMALE" ? "\u2640" : "\u2642"}` : ""
+          ] }),
+          npc.hunger != null && /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "text-[#FACC15]", children: [
+            "sati\xE9t\xE9 ",
+            Math.round((1 - npc.hunger) * 100),
+            "%"
+          ] }),
+          npc.gestationRemainingDays != null && /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "text-[#E879F9]", children: [
+            "gestation ",
+            npc.gestationRemainingDays.toFixed(2),
+            " j"
+          ] }),
+          npc.isDead && /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "text-[#EF4444]", children: "mort" })
+        ]
+      }
+    );
+  }
+  function ArenaHint({
+    halfSize,
+    pxPerBlock,
+    renderer: renderer2
+  }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "absolute bottom-2 left-2 rounded bg-[#1A222C]/80 px-2 py-1 text-[10px] text-[#8A99AF]", children: [
+      halfSize * 2,
+      "\xD7",
+      halfSize * 2,
+      " blocs \xB7 ",
+      pxPerBlock.toFixed(1),
+      " px/bloc \xB7 ",
+      renderer2,
+      " \xB7 molette = zoom, glisser = d\xE9placer"
+    ] });
+  }
+
+  // admin/simulator/types.ts
+  var TUNING_FIELDS = [
+    { key: "wanderPauseTicksMin", label: "Pause errance min (ticks)", step: 1 },
+    { key: "wanderPauseTicksMax", label: "Pause errance max (ticks)", step: 1 },
+    { key: "wanderStepTicksMax", label: "Dur\xE9e max d'un pas (ticks)", step: 1 },
+    { key: "wanderDecelTicks", label: "D\xE9c\xE9l\xE9ration (ticks)", step: 1 },
+    { key: "wanderSpeedMultMin", label: "Multiplicateur vitesse min", step: 0.05 },
+    { key: "wanderSpeedMultMax", label: "Multiplicateur vitesse max", step: 0.05 },
+    { key: "wanderWaypointCountMin", label: "Waypoints min", step: 1 },
+    { key: "wanderWaypointCountMax", label: "Waypoints max", step: 1 },
+    { key: "yawTurnSpeed", label: "Vitesse de rotation", step: 0.01 },
+    { key: "lookAroundSpeed", label: "Vitesse du regard", step: 0.01 },
+    { key: "lookAroundChangeTicks", label: "Changement de regard (ticks)", step: 1 },
+    { key: "jumpVelocity", label: "Vitesse de saut", step: 0.5 },
+    { key: "interactionRange", label: "Port\xE9e d'interaction", step: 0.5 },
+    { key: "updateRange", label: "Port\xE9e de mise \xE0 jour", step: 4 },
+    { key: "maxSpawnAttemptsPerTick", label: "Tentatives de spawn / tick", step: 1 },
+    { key: "npcZoneSize", label: "Taille de zone (blocs)", step: 16 },
+    { key: "npcVisibilityCheckIntervalTicks", label: "Contr\xF4le visibilit\xE9 (ticks)", step: 1 },
+    { key: "gameDayDurationSeconds", label: "Dur\xE9e d'un jour (s)", step: 10 }
+  ];
+  var DEFAULT_POPULATION_CAP = 1e3;
+  var MAX_NPCS_PER_FRAME_CEILING = 2e3;
+  function frameCapFor(populationCap) {
+    if (populationCap <= 0) return MAX_NPCS_PER_FRAME_CEILING;
+    return Math.min(populationCap, MAX_NPCS_PER_FRAME_CEILING);
+  }
+  var EVENT_HISTORY = 300;
+  var EVENT_COLORS = {
+    SPAWN: "#38BDF8",
+    DESPAWN: "#64748B",
+    ATTACK: "#FB923C",
+    DAMAGE: "#F87171",
+    DEATH: "#EF4444",
+    AGE_DEATH: "#A78BFA",
+    AGGRO_GAIN: "#F59E0B",
+    AGGRO_LOST: "#94A3B8",
+    HUNGRY: "#FACC15",
+    FED: "#4ADE80",
+    MATING: "#F472B6",
+    GESTATION_START: "#E879F9",
+    BIRTH: "#22D3EE",
+    EVOLVE: "#818CF8",
+    SYSTEM: "#8A99AF"
+  };
+  var EVENT_LABELS = {
+    SPAWN: "apparition",
+    DESPAWN: "disparition",
+    ATTACK: "attaque",
+    DAMAGE: "d\xE9g\xE2ts",
+    DEATH: "mort",
+    AGE_DEATH: "vieillesse",
+    AGGRO_GAIN: "col\xE8re",
+    AGGRO_LOST: "calme",
+    HUNGRY: "faim",
+    FED: "sati\xE9t\xE9",
+    MATING: "accouplement",
+    GESTATION_START: "gestation",
+    BIRTH: "naissance",
+    EVOLVE: "\xE9volution",
+    SYSTEM: "syst\xE8me"
+  };
+  var ALL_NPC_TYPES = "*";
+  function filterEvents(events, activeTypes, npcType = ALL_NPC_TYPES, newestFirst = false) {
+    const kept = events.filter(
+      (event) => activeTypes.has(event.type) && (npcType === ALL_NPC_TYPES || event.npcType === npcType)
+    );
+    return newestFirst ? kept.reverse() : kept;
+  }
+  function npcTypesInEvents(events) {
+    const types2 = /* @__PURE__ */ new Set();
+    for (const event of events) if (event.npcType) types2.add(event.npcType);
+    return [...types2].sort();
+  }
+  function npcColor(type) {
+    let hash = 0;
+    for (let i = 0; i < type.length; i++) hash = hash * 31 + type.charCodeAt(i) | 0;
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue} 70% 60%)`;
+  }
+
+  // admin/simulator/ArenaCanvasRenderer.tsx
+  var import_jsx_runtime26 = __toESM(require_jsx_runtime(), 1);
+  function ArenaCanvasRenderer({ arena, food, npcs, players, layers, selectedId, onSelect, view }) {
+    const canvasRef = (0, import_react15.useRef)(null);
+    const [hover, setHover] = (0, import_react15.useState)(null);
+    const { onElement } = view;
+    (0, import_react15.useEffect)(() => onElement(canvasRef.current), [onElement]);
+    const ppb = view.camera.pxPerBlock;
+    const half = arena.halfSize;
+    const { width: W, height: H } = view;
+    const pick = (sx, sy) => pickNpcAt(npcs, view.w2s, sx, sy, ppb);
+    const pointerAt = (e) => {
+      var _a6;
+      const rect = (_a6 = canvasRef.current) == null ? void 0 : _a6.getBoundingClientRect();
+      if (!rect) return null;
+      return [e.clientX - rect.left, e.clientY - rect.top];
+    };
+    (0, import_react15.useEffect)(() => {
+      var _a6, _b;
+      const canvas = canvasRef.current;
+      if (!canvas || W <= 1 || H <= 1) return;
+      const dpr = window.devicePixelRatio || 1;
+      if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
+        canvas.width = Math.round(W * dpr);
+        canvas.height = Math.round(H * dpr);
+      }
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "#0B1220";
+      ctx.fillRect(0, 0, W, H);
+      const [fx, fy] = view.w2s(-half, half);
+      const side = half * 2 * ppb;
+      ctx.fillStyle = "#16233A";
+      ctx.fillRect(fx, fy, side, side);
+      ctx.strokeStyle = "#4B5C7B";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(fx, fy, side, side);
+      if (layers.food && food.length > 0) {
+        const cell = Math.max(1, ppb);
+        for (const isFlower of [0, 1]) {
+          ctx.fillStyle = isFlower === 1 ? "#DB2777" : "#3F6212";
+          ctx.globalAlpha = FOOD_OPACITY;
+          for (let i = 0; i + 2 < food.length; i += 3) {
+            if (food[i + 2] !== isFlower) continue;
+            const [px, py] = view.w2s(food[i], food[i + 1] + 1);
+            if (px < -cell || py < -cell || px > W || py > H) continue;
+            ctx.fillRect(px, py, cell, cell);
+          }
+        }
+        ctx.globalAlpha = 1;
+      }
+      if (layers.grid) {
+        ctx.strokeStyle = "#22314C";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (const g of gridLinesFor(half, ppb)) {
+          const [gx] = view.w2s(g, 0);
+          const [, gy] = view.w2s(0, g);
+          ctx.moveTo(gx, fy);
+          ctx.lineTo(gx, fy + side);
+          ctx.moveTo(fx, gy);
+          ctx.lineTo(fx + side, gy);
+        }
+        ctx.stroke();
+      }
+      const npcById = new Map(npcs.map((n) => [n.id, n]));
+      if (layers.aggro) {
+        ctx.strokeStyle = "#F59E0B";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        for (const npc of npcs) {
+          if (!npc.aggroTargetId) continue;
+          const target = npcById.get(npc.aggroTargetId);
+          const targetPlayer = players.find((p2) => p2.id === npc.aggroTargetId);
+          const tx = (_a6 = target == null ? void 0 : target.x) != null ? _a6 : targetPlayer == null ? void 0 : targetPlayer.x;
+          const tz = (_b = target == null ? void 0 : target.z) != null ? _b : targetPlayer == null ? void 0 : targetPlayer.z;
+          if (tx === void 0 || tz === void 0) continue;
+          const [ax, ay] = view.w2s(npc.x, npc.z);
+          const [bx, by] = view.w2s(tx, tz);
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(bx, by);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      const markerRadius = markerRadiusFor(ppb);
+      const showNames = layers.names && ppb > 2.5;
+      if (showNames) {
+        ctx.font = "9px ui-sans-serif, system-ui, sans-serif";
+        ctx.textAlign = "center";
+      }
+      for (const npc of npcs) {
+        const [sx, sy] = view.w2s(npc.x, npc.z);
+        if (sx < -40 || sy < -40 || sx > W + 40 || sy > H + 40) continue;
+        const color = npcColor(npc.type);
+        if (layers.gestation && npc.gestationRemainingDays != null) {
+          ctx.strokeStyle = "#E879F9";
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([3, 2]);
+          ctx.beginPath();
+          ctx.arc(sx, sy, markerRadius + 4, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        ctx.globalAlpha = npc.isDead ? 0.5 : 1;
+        ctx.fillStyle = npc.isDead ? "#475569" : color;
+        ctx.beginPath();
+        ctx.arc(sx, sy, markerRadius, 0, Math.PI * 2);
+        ctx.fill();
+        const selected = npc.id === selectedId;
+        ctx.strokeStyle = selected ? "#FFFFFF" : "#0B1220";
+        ctx.lineWidth = selected ? 2 : 1;
+        ctx.stroke();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(sx + Math.sin(npc.yaw) * (markerRadius + 5), sy - Math.cos(npc.yaw) * (markerRadius + 5));
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        if (layers.hunger && npc.hunger != null) {
+          const barX = sx - markerRadius;
+          const barY = sy + markerRadius + 3;
+          ctx.fillStyle = "#1E293B";
+          ctx.fillRect(barX, barY, markerRadius * 2, 2);
+          ctx.fillStyle = "#FACC15";
+          ctx.fillRect(barX, barY, markerRadius * 2 * npc.hunger, 2);
+        }
+        if (showNames) {
+          const hpRatio = npc.maxHp > 0 ? npc.currentHp / npc.maxHp : 1;
+          ctx.fillStyle = "#8A99AF";
+          ctx.fillText(`${npc.name.split(" - ")[0]} ${Math.round(hpRatio * 100)}%`, sx, sy - markerRadius - 5);
+        }
+      }
+      if (layers.players) {
+        ctx.font = "10px ui-sans-serif, system-ui, sans-serif";
+        ctx.textAlign = "center";
+        for (const player of players) {
+          const [sx, sy] = view.w2s(player.x, player.z);
+          ctx.fillStyle = "#3C50E0";
+          ctx.fillRect(sx - 6, sy - 6, 12, 12);
+          ctx.strokeStyle = "#FFFFFF";
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(sx - 6, sy - 6, 12, 12);
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx + Math.sin(player.yaw) * 12, sy - Math.cos(player.yaw) * 12);
+          ctx.stroke();
+          ctx.fillStyle = "#C7D2FE";
+          ctx.fillText(player.name, sx, sy - 10);
+        }
+      }
+    }, [arena, food, npcs, players, layers, selectedId, view, ppb, half, W, H]);
+    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "relative h-full w-full", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+        "canvas",
+        {
+          ref: canvasRef,
+          className: "h-full w-full cursor-grab bg-[#0B1220]",
+          style: { width: "100%", height: "100%" },
+          onWheel: view.onWheel,
+          onMouseDown: view.onMouseDown,
+          onMouseMove: (e) => {
+            view.onPanMove(e);
+            const pointer = pointerAt(e);
+            if (!pointer) return;
+            setHover(view.panning ? null : pick(pointer[0], pointer[1]));
+          },
+          onMouseUp: view.endPan,
+          onMouseLeave: () => {
+            view.endPan();
+            setHover(null);
+          },
+          onClick: (e) => {
+            const pointer = pointerAt(e);
+            if (!pointer) return;
+            const picked = pick(pointer[0], pointer[1]);
+            if (picked) onSelect(picked.npc.id);
+          }
+        }
+      ),
+      hover && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(NpcTooltip, { hover }),
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ArenaHint, { halfSize: half, pxPerBlock: ppb, renderer: "Canvas" })
+    ] });
+  }
+
+  // admin/simulator/ArenaControls.tsx
+  var import_jsx_runtime27 = __toESM(require_jsx_runtime(), 1);
+  var ZOOM_STEP = 1.4;
+  var BUTTON = "flex h-7 w-7 items-center justify-center rounded bg-[#1A222C]/90 text-[13px] text-[#C7D2FE] border border-[#2E3A4E] hover:bg-[#3C50E0]/70 hover:text-white";
+  var ICON = "h-3.5 w-3.5";
+  var RENDERERS = [
+    {
+      kind: "svg",
+      title: "SVG : un n\u0153ud DOM par NPC, inspectable",
+      icon: /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("svg", { viewBox: "0 0 16 16", className: ICON, fill: "none", stroke: "currentColor", strokeWidth: 1.4, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("path", { d: "M3 12c2-6 8-6 10 0", strokeLinecap: "round" }),
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("rect", { x: "1.5", y: "10.5", width: "3", height: "3", rx: "0.5", fill: "currentColor", stroke: "none" }),
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("rect", { x: "11.5", y: "10.5", width: "3", height: "3", rx: "0.5", fill: "currentColor", stroke: "none" })
+      ] })
+    },
+    {
+      kind: "canvas",
+      title: "Canvas : un seul n\u0153ud, tient les ar\xE8nes tr\xE8s peupl\xE9es",
+      icon: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("svg", { viewBox: "0 0 16 16", className: ICON, fill: "currentColor", stroke: "none", children: [2, 6.5, 11].map(
+        (x) => [2, 6.5, 11].map((y) => /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("rect", { x, y, width: 3, height: 3, rx: 0.4 }, `${x}-${y}`))
+      ) })
+    }
+  ];
+  function ArenaControls({ renderer: renderer2, onRenderer, onZoom, onFitAll }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "absolute right-2 top-2 z-10 flex flex-col items-end gap-1.5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "flex flex-col gap-1", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("button", { type: "button", title: "Zoomer", onClick: () => onZoom(ZOOM_STEP), className: BUTTON, children: "+" }),
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("button", { type: "button", title: "D\xE9zoomer", onClick: () => onZoom(1 / ZOOM_STEP), className: BUTTON, children: "\u2212" }),
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("button", { type: "button", title: "Voir toute l'ar\xE8ne", onClick: onFitAll, className: BUTTON, children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("svg", { viewBox: "0 0 16 16", className: "h-3.5 w-3.5", fill: "none", stroke: "currentColor", strokeWidth: 1.6, children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("path", { d: "M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4", strokeLinecap: "round" }) }) })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "flex flex-col overflow-hidden rounded border border-[#2E3A4E]", children: RENDERERS.map(({ kind, title, icon }) => /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(
+        "button",
+        {
+          type: "button",
+          onClick: () => onRenderer(kind),
+          title,
+          "aria-label": title,
+          "aria-pressed": renderer2 === kind,
+          className: "flex h-7 w-7 items-center justify-center transition-colors " + (renderer2 === kind ? "bg-[#3C50E0] text-white" : "bg-[#1A222C]/90 text-[#8A99AF] hover:text-white"),
+          children: icon
+        },
+        kind
+      )) })
+    ] });
+  }
+
+  // admin/simulator/ArenaSvgRenderer.tsx
+  var import_react16 = __toESM(require_react(), 1);
+  var import_jsx_runtime28 = __toESM(require_jsx_runtime(), 1);
+  function ArenaSvgRenderer({ arena, food, npcs, players, layers, selectedId, onSelect, view }) {
+    const [hover, setHover] = (0, import_react16.useState)(null);
+    const svgRef = (0, import_react16.useRef)(null);
+    const { onElement } = view;
+    (0, import_react16.useEffect)(() => onElement(svgRef.current), [onElement]);
+    const ppb = view.camera.pxPerBlock;
+    const half = arena.halfSize;
+    const markerRadius = markerRadiusFor(ppb);
+    const gridLines = gridLinesFor(half, ppb);
+    const npcById = new Map(npcs.map((n) => [n.id, n]));
+    return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "relative h-full w-full", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(
+        "svg",
+        {
+          ref: svgRef,
+          className: "h-full w-full cursor-grab bg-[#0B1220]",
+          onWheel: view.onWheel,
+          onMouseDown: view.onMouseDown,
+          onMouseMove: view.onPanMove,
+          onMouseUp: view.endPan,
+          onMouseLeave: () => {
+            view.endPan();
+            setHover(null);
+          },
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("g", { transform: view.worldTransform, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("rect", { x: -half, y: -half, width: half * 2, height: half * 2, fill: "#16233A" }),
+              /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+                "rect",
+                {
+                  x: -half,
+                  y: -half,
+                  width: half * 2,
+                  height: half * 2,
+                  fill: "none",
+                  stroke: "#4B5C7B",
+                  strokeWidth: Math.max(0.5, 2 / ppb)
+                }
+              ),
+              layers.food && (() => {
+                let weeds = "";
+                let flowers = "";
+                for (let i = 0; i + 2 < food.length; i += 3) {
+                  const cell = `M${food[i]} ${food[i + 1]}h1v1h-1z`;
+                  if (food[i + 2] === 1) flowers += cell;
+                  else weeds += cell;
+                }
+                return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(import_jsx_runtime28.Fragment, { children: [
+                  weeds && /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("path", { d: weeds, fill: "#3F6212", opacity: FOOD_OPACITY }),
+                  flowers && /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("path", { d: flowers, fill: "#DB2777", opacity: FOOD_OPACITY })
+                ] });
+              })(),
+              layers.grid && gridLines.map((g) => /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("g", { stroke: "#22314C", strokeWidth: 1 / ppb, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("line", { x1: g, y1: -half, x2: g, y2: half }),
+                /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("line", { x1: -half, y1: g, x2: half, y2: g })
+              ] }, `grid-${g}`)),
+              layers.aggro && npcs.map((npc) => {
+                var _a6, _b;
+                if (!npc.aggroTargetId) return null;
+                const target = npcById.get(npc.aggroTargetId);
+                const targetPlayer = players.find((p2) => p2.id === npc.aggroTargetId);
+                const tx = (_a6 = target == null ? void 0 : target.x) != null ? _a6 : targetPlayer == null ? void 0 : targetPlayer.x;
+                const tz = (_b = target == null ? void 0 : target.z) != null ? _b : targetPlayer == null ? void 0 : targetPlayer.z;
+                if (tx === void 0 || tz === void 0) return null;
+                return /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+                  "line",
+                  {
+                    x1: npc.x,
+                    y1: npc.z,
+                    x2: tx,
+                    y2: tz,
+                    stroke: "#F59E0B",
+                    strokeWidth: 1.5 / ppb,
+                    strokeDasharray: `${4 / ppb} ${3 / ppb}`
+                  },
+                  `aggro-${npc.id}`
+                );
+              })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("g", { children: [
+              npcs.map((npc) => {
+                const [sx, sy] = view.w2s(npc.x, npc.z);
+                const color = npcColor(npc.type);
+                const selected = npc.id === selectedId;
+                const hpRatio = npc.maxHp > 0 ? npc.currentHp / npc.maxHp : 1;
+                return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(
+                  "g",
+                  {
+                    transform: `translate(${sx},${sy})`,
+                    onMouseEnter: () => setHover({ npc, sx, sy }),
+                    onMouseLeave: () => setHover(null),
+                    onClick: (e) => {
+                      e.stopPropagation();
+                      onSelect(npc.id);
+                    },
+                    style: { cursor: "pointer" },
+                    children: [
+                      npc.gestationRemainingDays != null && layers.gestation && /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("circle", { r: markerRadius + 4, fill: "none", stroke: "#E879F9", strokeWidth: 1.5, strokeDasharray: "3 2" }),
+                      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+                        "circle",
+                        {
+                          r: markerRadius,
+                          fill: npc.isDead ? "#475569" : color,
+                          stroke: selected ? "#FFFFFF" : "#0B1220",
+                          strokeWidth: selected ? 2 : 1,
+                          opacity: npc.isDead ? 0.5 : 1
+                        }
+                      ),
+                      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+                        "line",
+                        {
+                          x1: 0,
+                          y1: 0,
+                          x2: Math.sin(npc.yaw) * (markerRadius + 5),
+                          y2: -Math.cos(npc.yaw) * (markerRadius + 5),
+                          stroke: color,
+                          strokeWidth: 1.5
+                        }
+                      ),
+                      layers.hunger && npc.hunger != null && /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("g", { transform: `translate(${-markerRadius},${markerRadius + 3})`, children: [
+                        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("rect", { width: markerRadius * 2, height: 2, fill: "#1E293B" }),
+                        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("rect", { width: markerRadius * 2 * npc.hunger, height: 2, fill: "#FACC15" })
+                      ] }),
+                      layers.names && ppb > 2.5 && /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)(
+                        "text",
+                        {
+                          y: -markerRadius - 5,
+                          textAnchor: "middle",
+                          fontSize: 9,
+                          fill: "#8A99AF",
+                          style: { pointerEvents: "none" },
+                          children: [
+                            npc.name.split(" - ")[0],
+                            " ",
+                            Math.round(hpRatio * 100),
+                            "%"
+                          ]
+                        }
+                      )
+                    ]
+                  },
+                  npc.id
+                );
+              }),
+              layers.players && players.map((player) => {
+                const [sx, sy] = view.w2s(player.x, player.z);
+                return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("g", { transform: `translate(${sx},${sy})`, children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("rect", { x: -6, y: -6, width: 12, height: 12, fill: "#3C50E0", stroke: "#FFFFFF", strokeWidth: 1.5 }),
+                  /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+                    "line",
+                    {
+                      x1: 0,
+                      y1: 0,
+                      x2: Math.sin(player.yaw) * 12,
+                      y2: -Math.cos(player.yaw) * 12,
+                      stroke: "#FFFFFF",
+                      strokeWidth: 1.5
+                    }
+                  ),
+                  /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("text", { y: -10, textAnchor: "middle", fontSize: 10, fill: "#C7D2FE", children: player.name })
+                ] }, player.id);
+              })
+            ] })
+          ]
+        }
+      ),
+      hover && /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(NpcTooltip, { hover }),
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(ArenaHint, { halfSize: half, pxPerBlock: ppb, renderer: "SVG" })
+    ] });
+  }
+
+  // admin/simulator/Card.tsx
+  var import_jsx_runtime29 = __toESM(require_jsx_runtime(), 1);
+  function Card2({ title, children, collapsed, onCollapsed, summary }) {
+    const foldable2 = collapsed !== void 0 && onCollapsed !== void 0;
+    const folded = foldable2 && collapsed;
+    const heading3 = /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)(import_jsx_runtime29.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: title }),
+      folded && summary && /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { className: "truncate text-[10px] text-[#4A5568]", children: summary }),
+      foldable2 && /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("span", { className: "text-[10px] text-[#8A99AF]", children: folded ? "\u25B8" : "\u25BE" })
+    ] });
+    return /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
+      foldable2 ? /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(
+        "button",
+        {
+          type: "button",
+          "aria-expanded": !folded,
+          onClick: () => onCollapsed(!collapsed),
+          className: "flex w-full items-center gap-2 text-left hover:opacity-80" + (folded ? "" : " mb-2"),
+          children: heading3
+        }
+      ) : /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("div", { className: "mb-2 flex items-center gap-2", children: heading3 }),
+      !folded && children
+    ] });
+  }
+
+  // admin/simulator/EventLogPanel.tsx
+  var import_react17 = __toESM(require_react(), 1);
+  var import_jsx_runtime30 = __toESM(require_jsx_runtime(), 1);
+  var FILTER_GROUPS = [
+    { label: "Combat", types: ["ATTACK", "DAMAGE", "DEATH", "AGGRO_GAIN", "AGGRO_LOST"] },
+    { label: "Faim", types: ["HUNGRY", "FED"] },
+    { label: "Reproduction", types: ["MATING", "GESTATION_START", "BIRTH", "EVOLVE"] },
+    { label: "Cycle de vie", types: ["SPAWN", "DESPAWN", "AGE_DEATH"] },
+    { label: "Syst\xE8me", types: ["SYSTEM"] }
+  ];
+  var EventLogPanel = (0, import_react17.memo)(function EventLogPanel2({ events, onSelect }) {
+    var _a6, _b;
+    const [enabled, setEnabled] = (0, import_react17.useState)(
+      () => FILTER_GROUPS.reduce((acc, g) => __spreadProps(__spreadValues({}, acc), { [g.label]: true }), {})
+    );
+    const [npcType, setNpcType] = (0, import_react17.useState)(ALL_NPC_TYPES);
+    const [autoScroll, setAutoScroll] = (0, import_react17.useState)(true);
+    const listRef = (0, import_react17.useRef)(null);
+    const activeTypes = (0, import_react17.useMemo)(() => {
+      const set4 = /* @__PURE__ */ new Set();
+      FILTER_GROUPS.forEach((g) => {
+        if (enabled[g.label]) g.types.forEach((t2) => set4.add(t2));
+      });
+      return set4;
+    }, [enabled]);
+    const npcTypes = (0, import_react17.useMemo)(() => npcTypesInEvents(events), [events]);
+    const visible = (0, import_react17.useMemo)(() => filterEvents(events, activeTypes, npcType, true), [events, activeTypes, npcType]);
+    const newestSeq = (_b = (_a6 = visible[0]) == null ? void 0 : _a6.seq) != null ? _b : 0;
+    (0, import_react17.useEffect)(() => {
+      if (autoScroll && listRef.current) listRef.current.scrollTop = 0;
+    }, [newestSeq, autoScroll]);
+    return /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("div", { className: "flex h-full flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("div", { className: "mb-2 flex flex-wrap items-center gap-1.5", children: [
+        FILTER_GROUPS.map((group) => /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: () => setEnabled((s) => __spreadProps(__spreadValues({}, s), { [group.label]: !s[group.label] })),
+            className: "rounded px-2 py-0.5 text-[10px] font-medium transition-colors " + (enabled[group.label] ? "bg-[#3C50E0] text-white" : "bg-[#2E3A4E] text-[#8A99AF] hover:text-white"),
+            children: group.label
+          },
+          group.label
+        )),
+        /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(
+          "select",
+          {
+            value: npcType,
+            onChange: (e) => setNpcType(e.target.value),
+            title: "Filtrer par type de NPC",
+            className: "rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-0.5 text-[10px] text-white",
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("option", { value: ALL_NPC_TYPES, children: "tous les types" }),
+              npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("option", { value: type, children: type }, type))
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("label", { className: "ml-auto flex items-center gap-1.5 text-[10px] text-[#8A99AF]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
+            "input",
+            {
+              type: "checkbox",
+              checked: autoScroll,
+              onChange: (e) => setAutoScroll(e.target.checked),
+              className: "accent-[#3C50E0]"
+            }
+          ),
+          "suivre les derniers"
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(
+        "div",
+        {
+          ref: listRef,
+          className: "flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-1.5 font-mono text-[11px] leading-relaxed",
+          children: [
+            visible.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("p", { className: "p-2 text-[#8A99AF]", children: "Aucun \xE9v\xE8nement \u2014 d\xE9marre la simulation." }),
+            visible.map((event) => /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(
+              "div",
+              {
+                onClick: () => event.npcId && onSelect(event.npcId),
+                className: "flex gap-2 rounded px-1 py-0.5 " + (event.npcId ? "cursor-pointer hover:bg-[#1A222C]" : ""),
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("span", { className: "w-24 shrink-0 text-[#4A5568]", children: [
+                    "t",
+                    event.tick,
+                    " j",
+                    event.gameDay.toFixed(2)
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("span", { className: "w-24 shrink-0", style: { color: EVENT_COLORS[event.type] }, children: EVENT_LABELS[event.type] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("span", { className: "text-[#CBD5E1]", children: event.message })
+                ]
+              },
+              event.seq
+            ))
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("p", { className: "mt-1.5 text-[10px] text-[#8A99AF]", children: [
+        visible.length,
+        " ligne(s) affich\xE9e(s) \xB7 historique conserv\xE9 : ",
+        events.length,
+        "/300 \xB7 rafra\xEEchi toutes les 500 ms"
+      ] })
+    ] });
+  });
+
+  // admin/simulator/MetricsPanel.tsx
+  var import_react18 = __toESM(require_react(), 1);
+
+  // admin/simulator/metrics.ts
+  var METRIC_HISTORY = 240;
+  var COUNTER_SERIES = [
+    { key: "attacks", label: "attaques", color: "#FB923C" },
+    { key: "gestations", label: "gestations", color: "#E879F9" },
+    { key: "births", label: "naissances", color: "#22D3EE" },
+    { key: "matings", label: "accouplements", color: "#F472B6" },
+    { key: "spawns", label: "apparitions", color: "#38BDF8" },
+    { key: "fed", label: "repas", color: "#4ADE80" },
+    { key: "hungry", label: "faims", color: "#FACC15" },
+    { key: "evolutions", label: "\xE9volutions", color: "#818CF8" }
+  ];
+  function mergeBuckets(previous, incoming, capacity = METRIC_HISTORY) {
+    if (incoming.length === 0) return previous;
+    const byIndex = /* @__PURE__ */ new Map();
+    for (const bucket of previous) byIndex.set(bucket.index, bucket);
+    for (const bucket of incoming) byIndex.set(bucket.index, bucket);
+    const merged = [...byIndex.values()].sort((a, b) => a.index - b.index);
+    return merged.length > capacity ? merged.slice(merged.length - capacity) : merged;
+  }
+  function replaceBuckets(metrics) {
+    return metrics ? mergeBuckets([], metrics.buckets) : [];
+  }
+  var DEFAULT_WINDOW_GAME_DAYS = 10;
+  var WINDOW_OPTIONS = [
+    { days: 10, label: "10 j" },
+    { days: 30, label: "30 j" },
+    { days: 0, label: "tout" }
+  ];
+  function slotsFor(bucketGameDays, windowGameDays) {
+    if (windowGameDays <= 0 || bucketGameDays <= 0) return null;
+    return Math.max(1, Math.round(windowGameDays / bucketGameDays));
+  }
+  function windowOf(buckets2, slots) {
+    if (slots === null || buckets2.length <= slots) return buckets2;
+    return buckets2.slice(buckets2.length - slots);
+  }
+  var pickDeaths = (bucket) => bucket.deathsByType;
+  var pickAlive = (bucket) => bucket.aliveByType;
+  function stackKeys(buckets2, pick) {
+    var _a6;
+    const totals = /* @__PURE__ */ new Map();
+    for (const bucket of buckets2) {
+      for (const [type, value] of Object.entries(pick(bucket))) {
+        totals.set(type, ((_a6 = totals.get(type)) != null ? _a6 : 0) + value);
+      }
+    }
+    return [...totals.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([type]) => type);
+  }
+  function stackedColumns(buckets2, pick, keys2) {
+    return buckets2.map((bucket) => {
+      var _a6;
+      const values = pick(bucket);
+      const segments = [];
+      let cursor = 0;
+      for (const key2 of keys2) {
+        const value = (_a6 = values[key2]) != null ? _a6 : 0;
+        if (value <= 0) continue;
+        segments.push({ key: key2, from: cursor, to: cursor + value });
+        cursor += value;
+      }
+      return { index: bucket.index, startGameDay: bucket.startGameDay, total: cursor, segments };
+    });
+  }
+  function maxTotal(columns) {
+    return columns.reduce((max, column) => Math.max(max, column.total), 0);
+  }
+  function niceMax(value) {
+    if (value <= 0) return 1;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(value)));
+    for (const step2 of [1, 2, 5, 10]) {
+      const candidate = step2 * magnitude;
+      if (candidate >= value) return candidate;
+    }
+    return 10 * magnitude;
+  }
+  function counterValues(buckets2, key2) {
+    return buckets2.map((bucket) => bucket[key2]);
+  }
+  function linePoints(values, width, height, max, slots = null) {
+    if (values.length === 0) return "";
+    const scale = (value) => height - value / max * height;
+    const columns = slots != null ? slots : values.length;
+    if (columns <= 1) return `0,${scale(values[0])} ${width},${scale(values[0])}`;
+    const step2 = width / (columns - 1);
+    if (values.length === 1) return `0,${scale(values[0])} ${step2},${scale(values[0])}`;
+    return values.map((value, i) => `${i * step2},${scale(value)}`).join(" ");
+  }
+  function columnAt(fraction, count3) {
+    if (count3 <= 0) return null;
+    const index2 = Math.floor(fraction * count3);
+    return Math.min(count3 - 1, Math.max(0, index2));
+  }
+  function tooltipRows(column) {
+    return column.segments.map((segment) => ({ key: segment.key, value: segment.to - segment.from })).sort((a, b) => b.value - a.value || a.key.localeCompare(b.key));
+  }
+  function counterRowsAt(bucket, series) {
+    if (!bucket) return [];
+    return series.map((entry) => ({ series: entry, value: bucket[entry.key] })).filter((row) => row.value > 0).sort((a, b) => b.value - a.value || a.series.label.localeCompare(b.series.label));
+  }
+  function dayLabel(startGameDay) {
+    return `j ${startGameDay.toFixed(2).replace(/\.?0+$/, "")}`;
+  }
+
+  // admin/simulator/MetricsPanel.tsx
+  var import_jsx_runtime31 = __toESM(require_jsx_runtime(), 1);
+  var BOX_W = 300;
+  var BOX_H = 90;
+  function ChartFrame({
+    title,
+    hint,
+    children,
+    legend
+  }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-2.5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "mb-1 flex items-baseline gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("p", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: title }),
+        /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: hint })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("div", { className: "relative rounded bg-[#0E1726] p-1.5", children }),
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("div", { className: "mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5", children: legend })
+    ] });
+  }
+  function LegendDot({ color, label, value }) {
+    const idle = value === 0;
+    return /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("span", { className: "flex items-center gap-1 text-[10px] text-[#8A99AF]" + (idle ? " opacity-20" : ""), children: [
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "inline-block h-2 w-2 rounded-sm", style: { background: color } }),
+      label,
+      value !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "text-white", children: value })
+    ] });
+  }
+  function HoverCard({
+    x,
+    y,
+    title,
+    summary,
+    rows
+  }) {
+    const flip = x > 190;
+    return /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)(
+      "div",
+      {
+        className: "pointer-events-none absolute z-10 min-w-[110px] rounded-md border border-[#2E3A4E] bg-[#1A222C] px-2 py-1.5 text-[10px] shadow-lg",
+        style: { left: flip ? void 0 : x + 12, right: flip ? 8 : void 0, top: y + 8 },
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "mb-1 flex items-baseline gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "font-semibold text-white", children: title }),
+            /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "text-[#8A99AF]", children: summary })
+          ] }),
+          rows.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("div", { className: "text-[#4A5568]", children: "rien" }),
+          rows.map((row) => /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "flex items-center gap-1.5", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "inline-block h-2 w-2 shrink-0 rounded-sm", style: { background: row.color } }),
+            /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "flex-1 text-[#8A99AF]", children: row.label }),
+            /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "text-white", children: row.value })
+          ] }, row.label))
+        ]
+      }
+    );
+  }
+  function HoverGuide({ x, width }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("rect", { x, y: 0, width: Math.max(width, 0.8), height: BOX_H, fill: "#C7D2FE", opacity: 0.12 });
+  }
+  function StackedByType({
+    title,
+    hint,
+    unit,
+    buckets: buckets2,
+    pick,
+    slots
+  }) {
+    var _a6;
+    const keys2 = (0, import_react18.useMemo)(() => stackKeys(buckets2, pick), [buckets2, pick]);
+    const columns = (0, import_react18.useMemo)(() => stackedColumns(buckets2, pick, keys2), [buckets2, pick, keys2]);
+    const top2 = niceMax(maxTotal(columns));
+    const barWidth = BOX_W / (slots != null ? slots : Math.max(1, columns.length));
+    const latest = columns[columns.length - 1];
+    const [hover, setHover] = (0, import_react18.useState)(null);
+    const onMove = (event) => {
+      const box = event.currentTarget.getBoundingClientRect();
+      const index2 = columnAt((event.clientX - box.left) / box.width, slots != null ? slots : columns.length);
+      if (index2 === null) return;
+      setHover({ index: index2, x: event.clientX - box.left, y: event.clientY - box.top });
+    };
+    const hovered = hover ? (_a6 = columns[hover.index]) != null ? _a6 : null : null;
+    return /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)(
+      ChartFrame,
+      {
+        title,
+        hint,
+        legend: keys2.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: "rien pour l'instant" }) : keys2.map((key2) => {
+          var _a7;
+          return /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
+            LegendDot,
+            {
+              color: npcColor(key2),
+              label: key2,
+              value: latest ? (_a7 = pick(buckets2[buckets2.length - 1])[key2]) != null ? _a7 : 0 : 0
+            },
+            key2
+          );
+        }),
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)(
+            "svg",
+            {
+              viewBox: `0 0 ${BOX_W} ${BOX_H}`,
+              preserveAspectRatio: "none",
+              className: "h-[90px] w-full",
+              onMouseMove: onMove,
+              onMouseLeave: () => setHover(null),
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("line", { x1: 0, y1: BOX_H, x2: BOX_W, y2: BOX_H, stroke: "#2E3A4E", strokeWidth: 0.5 }),
+                hover && hovered && /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(HoverGuide, { x: hover.index * barWidth, width: barWidth }),
+                columns.map(
+                  (column, i) => column.segments.map((segment) => /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
+                    "rect",
+                    {
+                      x: i * barWidth,
+                      y: BOX_H - segment.to / top2 * BOX_H,
+                      width: Math.max(barWidth - 0.3, 0.4),
+                      height: (segment.to - segment.from) / top2 * BOX_H,
+                      fill: npcColor(segment.key)
+                    },
+                    `${column.index}-${segment.key}`
+                  ))
+                )
+              ]
+            }
+          ),
+          hover && hovered && /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
+            HoverCard,
+            {
+              x: hover.x,
+              y: hover.y,
+              title: dayLabel(hovered.startGameDay),
+              summary: `${hovered.total} ${unit}`,
+              rows: tooltipRows(hovered).map((row) => ({
+                label: row.key,
+                color: npcColor(row.key),
+                value: row.value
+              }))
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "mt-0.5 flex justify-between text-[9px] text-[#4A5568]", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { children: columns.length > 0 ? dayLabel(columns[0].startGameDay) : "\u2014" }),
+            /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("span", { children: [
+              "max ",
+              top2
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { children: latest ? dayLabel(latest.startGameDay) : "\u2014" })
+          ] })
+        ]
+      }
+    );
+  }
+  function Counters({ buckets: buckets2, slots }) {
+    var _a6;
+    const [hidden, setHidden] = (0, import_react18.useState)(/* @__PURE__ */ new Set());
+    const all2 = (0, import_react18.useMemo)(
+      () => COUNTER_SERIES.map((series) => ({ series, values: counterValues(buckets2, series.key) })),
+      [buckets2]
+    );
+    const lines = all2.filter((line) => !hidden.has(line.series.key));
+    const top2 = niceMax(Math.max(0, ...lines.flatMap((line) => line.values)));
+    const last = buckets2[buckets2.length - 1];
+    const toggle = (key2) => setHidden((current) => {
+      const next = new Set(current);
+      if (next.has(key2)) next.delete(key2);
+      else next.add(key2);
+      return next;
+    });
+    const [hover, setHover] = (0, import_react18.useState)(null);
+    const slotWidth = BOX_W / (slots != null ? slots : Math.max(1, buckets2.length));
+    const onMove = (event) => {
+      const box = event.currentTarget.getBoundingClientRect();
+      const index2 = columnAt((event.clientX - box.left) / box.width, slots != null ? slots : buckets2.length);
+      if (index2 === null) return;
+      setHover({ index: index2, x: event.clientX - box.left, y: event.clientY - box.top });
+    };
+    const hoveredBucket = hover ? (_a6 = buckets2[hover.index]) != null ? _a6 : null : null;
+    const hoveredRows = counterRowsAt(
+      hoveredBucket != null ? hoveredBucket : void 0,
+      lines.map((line) => line.series)
+    );
+    return /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)(
+      ChartFrame,
+      {
+        title: "\xC9v\xE8nements par tranche",
+        hint: `max ${top2}`,
+        legend: COUNTER_SERIES.map((series) => /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: () => toggle(series.key),
+            title: hidden.has(series.key) ? "afficher" : "masquer",
+            className: "cursor-pointer" + (hidden.has(series.key) ? " opacity-30" : ""),
+            children: /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(LegendDot, { color: series.color, label: series.label, value: last ? last[series.key] : 0 })
+          },
+          series.key
+        )),
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)(
+            "svg",
+            {
+              viewBox: `0 0 ${BOX_W} ${BOX_H}`,
+              preserveAspectRatio: "none",
+              className: "h-[90px] w-full",
+              onMouseMove: onMove,
+              onMouseLeave: () => setHover(null),
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("line", { x1: 0, y1: BOX_H, x2: BOX_W, y2: BOX_H, stroke: "#2E3A4E", strokeWidth: 0.5 }),
+                hover && hoveredBucket && /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(HoverGuide, { x: hover.index * slotWidth, width: slotWidth }),
+                lines.map((line) => /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
+                  "polyline",
+                  {
+                    points: linePoints(line.values, BOX_W, BOX_H, top2, slots),
+                    fill: "none",
+                    stroke: line.series.color,
+                    strokeWidth: 1,
+                    vectorEffect: "non-scaling-stroke"
+                  },
+                  line.series.key
+                ))
+              ]
+            }
+          ),
+          hover && hoveredBucket && /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
+            HoverCard,
+            {
+              x: hover.x,
+              y: hover.y,
+              title: dayLabel(hoveredBucket.startGameDay),
+              summary: `${hoveredRows.reduce((sum, row) => sum + row.value, 0)} \xE9v\xE8nements`,
+              rows: hoveredRows.map((row) => ({
+                label: row.series.label,
+                color: row.series.color,
+                value: row.value
+              }))
+            }
+          )
+        ]
+      }
+    );
+  }
+  var MetricsPanel = (0, import_react18.memo)(function MetricsPanel2({ buckets: buckets2, bucketGameDays }) {
+    const [windowDays, setWindowDays] = (0, import_react18.useState)(DEFAULT_WINDOW_GAME_DAYS);
+    const slots = slotsFor(bucketGameDays, windowDays);
+    const visible = (0, import_react18.useMemo)(() => windowOf(buckets2, slots), [buckets2, slots]);
+    const selector = /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "flex shrink-0 items-center gap-1", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: "fen\xEAtre" }),
+      WINDOW_OPTIONS.map((option2) => /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
+        "button",
+        {
+          type: "button",
+          onClick: () => setWindowDays(option2.days),
+          className: "rounded px-1.5 py-0.5 text-[10px] " + (windowDays === option2.days ? "bg-[#3C50E0] text-white" : "bg-[#2E3A4E] text-[#8A99AF] hover:text-white"),
+          children: option2.label
+        },
+        option2.days
+      )),
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("span", { className: "ml-auto text-[10px] text-[#4A5568]", children: [
+        buckets2.length,
+        " tranches en m\xE9moire"
+      ] })
+    ] });
+    if (buckets2.length === 0) {
+      return /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: "Aucune donn\xE9e. Les graphiques se remplissent d\xE8s que la simulation avance." });
+    }
+    const hint = `tranche de ${bucketGameDays} j`;
+    return /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "flex h-full flex-col gap-2 overflow-auto", children: [
+      selector,
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
+        StackedByType,
+        {
+          title: "Vivants par type",
+          hint,
+          unit: "vivants",
+          buckets: visible,
+          pick: pickAlive,
+          slots
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
+        StackedByType,
+        {
+          title: "Morts par type",
+          hint,
+          unit: "morts",
+          buckets: visible,
+          pick: pickDeaths,
+          slots
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(Counters, { buckets: visible, slots }),
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("p", { className: "text-[10px] leading-relaxed text-[#4A5568]", children: "L'axe du temps est en jours de jeu, pas en temps r\xE9el : deux runs \xE0 des vitesses diff\xE9rentes restent comparables. \xAB Vivants \xBB est un relev\xE9 de population, les autres s\xE9ries sont des totaux par tranche. La fen\xEAtre d\xE9file vers la droite ; rien n'est perdu, \xAB tout \xBB revient sur l'historique complet." })
+    ] });
+  });
+
+  // admin/simulator/SimPlayerPad.tsx
+  var import_jsx_runtime32 = __toESM(require_jsx_runtime(), 1);
+  var KEY = "flex h-5 w-6 items-center justify-center rounded bg-[#2E3A4E] text-[10px] text-[#C7D2FE] hover:bg-[#3C50E0]/60";
+  function SimPlayerPad({ players, onInput }) {
+    if (players.length === 0) return null;
+    return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("div", { className: "flex shrink-0 items-start gap-3 border-l border-[#2E3A4E] pl-3", children: players.map((player) => /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("p", { className: "mb-1 truncate text-[10px] text-[#8A99AF]", title: player.name, children: player.name }),
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "grid grid-cols-3 gap-0.5", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", {}),
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("button", { type: "button", title: "avancer", onClick: () => onInput(player.name, 0, 1, 0, false), className: KEY, children: "\u2191" }),
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", {}),
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+          "button",
+          {
+            type: "button",
+            title: "gauche",
+            onClick: () => onInput(player.name, -1, 0, -Math.PI / 2, false),
+            className: KEY,
+            children: "\u2190"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("button", { type: "button", title: "saut", onClick: () => onInput(player.name, 0, 0, 0, true), className: KEY, children: "\u2912" }),
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+          "button",
+          {
+            type: "button",
+            title: "droite",
+            onClick: () => onInput(player.name, 1, 0, Math.PI / 2, false),
+            className: KEY,
+            children: "\u2192"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", {}),
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+          "button",
+          {
+            type: "button",
+            title: "reculer",
+            onClick: () => onInput(player.name, 0, -1, Math.PI, false),
+            className: KEY,
+            children: "\u2193"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", {})
+      ] })
+    ] }, player.id)) });
+  }
+
+  // admin/simulator/SimulationList.tsx
+  var import_jsx_runtime33 = __toESM(require_jsx_runtime(), 1);
+  function SimulationList({ simulations, attachedId, onAttach, onRefresh }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("p", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: "Simulations en cours" }),
+        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: onRefresh,
+            className: "rounded bg-[#2E3A4E] px-2 py-0.5 text-[10px] text-[#C7D2FE] hover:bg-[#3C50E0]/60",
+            children: "Rafra\xEEchir"
+          }
+        )
+      ] }),
+      simulations.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: "Aucune \u2014 \xAB D\xE9marrer \xBB en cr\xE9e une." }),
+      simulations.map((simulation) => {
+        const attached = simulation.id === attachedId;
+        return /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+          "div",
+          {
+            className: "mb-1.5 rounded border p-2 last:mb-0 " + (attached ? "border-[#3C50E0] bg-[#3C50E0]/10" : "border-[#2E3A4E] bg-[#0E1726]"),
+            children: /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "flex items-start gap-2", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "min-w-0 flex-1", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("p", { className: "truncate text-[11px] font-medium text-white", title: simulation.name, children: simulation.name }),
+                /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("p", { className: "text-[10px] text-[#8A99AF]", children: [
+                  simulation.npcCount,
+                  simulation.populationCap > 0 ? `/${simulation.populationCap}` : "",
+                  " NPC \xB7 jour",
+                  " ",
+                  simulation.gameDay.toFixed(1),
+                  " \xB7",
+                  " ",
+                  simulation.paused ? "en pause" : `${Math.round(simulation.realTps)} t/s`
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("p", { className: "text-[10px] text-[#4A5568]", children: [
+                  simulation.halfSize * 2,
+                  "\xD7",
+                  simulation.halfSize * 2,
+                  " blocs \xB7 ",
+                  simulation.viewers,
+                  " spectateur(s) \xB7",
+                  " ",
+                  simulation.id.slice(0, 8)
+                ] })
+              ] }),
+              attached ? /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { className: "shrink-0 rounded bg-[#3C50E0] px-2 py-0.5 text-[10px] text-white", children: "suivie" }) : /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => onAttach(simulation.id),
+                  className: "shrink-0 rounded bg-[#2E3A4E] px-2 py-0.5 text-[10px] text-[#C7D2FE] hover:bg-[#3C50E0]/60",
+                  children: "Se connecter"
+                }
+              )
+            ] })
+          },
+          simulation.id
+        );
+      })
+    ] });
+  }
+
+  // admin/simulator/RulesEditor.tsx
+  var import_react19 = __toESM(require_react(), 1);
+  var import_jsx_runtime34 = __toESM(require_jsx_runtime(), 1);
+  function TuningEditor({ value, base: base3, onChange, onApply }) {
+    const changed = (key2) => base3 != null && base3[key2] !== value[key2];
+    const changedCount = base3 ? TUNING_FIELDS.filter((f) => changed(f.key)).length : 0;
+    return /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "flex h-full flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: changedCount === 0 ? "identique aux r\xE8gles du serveur live" : `${changedCount} r\xE8gle(s) surcharg\xE9e(s) par rapport au live` }),
+        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+          "button",
+          {
+            type: "button",
+            disabled: !base3,
+            onClick: () => base3 && onChange(__spreadValues({}, base3)),
+            className: "ml-auto rounded bg-[#2E3A4E] px-2 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40",
+            children: "R\xE9initialiser sur le live"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: onApply,
+            className: "rounded bg-[#3C50E0] px-2.5 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80",
+            children: "Appliquer \xE0 chaud"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("div", { className: "flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-2", children: TUNING_FIELDS.map((field) => /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("label", { className: "flex items-center gap-2 border-b border-[#1A222C] py-1 last:border-0", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("span", { className: "flex-1 text-[11px] " + (changed(field.key) ? "text-[#FACC15]" : "text-[#8A99AF]"), children: [
+          field.label,
+          changed(field.key) && base3 && /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("span", { className: "ml-1 text-[10px] text-[#4A5568]", children: [
+            "(live: ",
+            String(base3[field.key]),
+            ")"
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+          "input",
+          {
+            type: "number",
+            step: field.step,
+            value: value[field.key],
+            onChange: (e) => onChange(__spreadProps(__spreadValues({}, value), { [field.key]: Number(e.target.value) })),
+            className: "w-28 rounded border border-[#2E3A4E] bg-[#1A222C] px-2 py-1 text-right text-[11px] text-white"
+          }
+        )
+      ] }, field.key)) })
+    ] });
+  }
+  var OVERRIDE_TEMPLATE = `{
+  "wolf": {
+    "wanderSpeed": 6.0,
+    "animal": null
+  }
+}`;
+  function OverridesEditor({ npcTypes, onApply }) {
+    const container = (0, import_react19.useRef)(null);
+    const viewRef = (0, import_react19.useRef)(null);
+    const [error2, setError] = (0, import_react19.useState)(null);
+    (0, import_react19.useEffect)(() => {
+      if (!container.current) return;
+      const view = new EditorView({
+        doc: "{}",
+        extensions: [
+          basicSetup,
+          EditorView.theme({
+            "&": { height: "100%", background: "#0E1726", color: "#CBD5E1" },
+            ".cm-content": { fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: "12px" },
+            ".cm-gutters": {
+              background: "#0E1726",
+              borderRight: "1px solid #2E3A4E",
+              color: "#4A5568"
+            },
+            ".cm-activeLine": { background: "#1A222C" },
+            ".cm-activeLineGutter": { background: "#1A222C" }
+          })
+        ],
+        parent: container.current
+      });
+      viewRef.current = view;
+      return () => {
+        view.destroy();
+        viewRef.current = null;
+      };
+    }, []);
+    const apply = () => {
+      var _a6, _b;
+      const text3 = (_b = (_a6 = viewRef.current) == null ? void 0 : _a6.state.doc.toString()) != null ? _b : "{}";
+      try {
+        const parsed = JSON.parse(text3);
+        const unknown2 = Object.keys(parsed).filter((k) => !npcTypes.includes(k));
+        if (unknown2.length > 0) {
+          setError(`type(s) NPC inconnu(s) : ${unknown2.join(", ")}`);
+          return;
+        }
+        setError(null);
+        onApply(parsed);
+      } catch (e) {
+        setError(`JSON invalide : ${e.message}`);
+      }
+    };
+    const insertTemplate = () => {
+      const view = viewRef.current;
+      if (!view) return;
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: OVERRIDE_TEMPLATE }
+      });
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "flex h-full flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: "Surcharges par type \u2014 actives au prochain spawn" }),
+        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: insertTemplate,
+            className: "ml-auto rounded bg-[#2E3A4E] px-2 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60",
+            children: "Exemple"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: apply,
+            className: "rounded bg-[#3C50E0] px-2.5 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80",
+            children: "Appliquer"
+          }
+        )
+      ] }),
+      error2 && /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("p", { className: "mb-2 rounded border border-red-500/40 bg-red-500/10 px-2 py-1 text-[11px] text-red-300", children: error2 }),
+      /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("div", { ref: container, className: "flex-1 overflow-hidden rounded border border-[#2E3A4E]" }),
+      /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("p", { className: "mt-1.5 text-[10px] text-[#8A99AF]", children: [
+        "Types disponibles : ",
+        npcTypes.join(", ") || "\u2014"
+      ] })
+    ] });
+  }
+
+  // admin/simulator/Timeline.tsx
+  var import_jsx_runtime35 = __toESM(require_jsx_runtime(), 1);
+  var PRESETS = [
+    { label: "\u23F8", tps: 0, title: "pause" },
+    { label: "\xD71", tps: 20, title: "temps r\xE9el (20 ticks/s)" },
+    { label: "\xD75", tps: 100, title: "5 fois plus vite" },
+    { label: "\xD720", tps: 400, title: "20 fois plus vite" },
+    { label: "\xD7100", tps: 2e3, title: "100 fois plus vite" },
+    { label: "max", tps: 5e3, title: "au plus vite" }
+  ];
+  function Timeline({ stats, disabled, onSpeed, onStep }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "mb-2 flex items-center justify-between", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("span", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: "Timeline" }),
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("span", { className: "text-[11px] text-[#8A99AF]", children: [
+          "tick ",
+          /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("span", { className: "text-white", children: stats.tick.toLocaleString("fr-FR") }),
+          " \xB7 jour",
+          " ",
+          /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("span", { className: "text-white", children: stats.gameDay.toFixed(2) }),
+          " \xB7",
+          " ",
+          /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("span", { className: stats.paused ? "text-[#FACC15]" : "text-emerald-400", children: stats.paused ? "en pause" : `${stats.realTps.toFixed(0)} ticks/s r\xE9els` })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "mb-2 flex flex-wrap gap-1.5", children: [
+        PRESETS.map((preset) => /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
+          "button",
+          {
+            type: "button",
+            title: preset.title,
+            disabled,
+            onClick: () => onSpeed(preset.tps),
+            className: "rounded px-2.5 py-1 text-[11px] font-medium transition-colors disabled:opacity-40 " + (stats.configuredTps === preset.tps ? "bg-[#3C50E0] text-white" : "bg-[#2E3A4E] text-[#C7D2FE] hover:bg-[#3C50E0]/60"),
+            children: preset.label
+          },
+          preset.label
+        )),
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
+          "button",
+          {
+            type: "button",
+            disabled,
+            onClick: () => onStep(1),
+            className: "rounded bg-[#2E3A4E] px-2.5 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40",
+            children: "+1 tick"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
+          "button",
+          {
+            type: "button",
+            disabled,
+            onClick: () => onStep(100),
+            className: "rounded bg-[#2E3A4E] px-2.5 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40",
+            children: "+100 ticks"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("label", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("span", { className: "w-20 shrink-0", children: "vitesse fine" }),
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
+          "input",
+          {
+            type: "range",
+            min: 0,
+            max: 5e3,
+            step: 20,
+            value: stats.configuredTps,
+            disabled,
+            onChange: (e) => onSpeed(Number(e.target.value)),
+            className: "flex-1 accent-[#3C50E0]"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("span", { className: "w-24 shrink-0 text-right text-white", children: [
+          stats.configuredTps,
+          " t/s"
+        ] })
+      ] })
+    ] });
+  }
+
+  // admin/simulator/useSimulation.ts
+  var import_react20 = __toESM(require_react(), 1);
+  var EVENT_PUBLISH_INTERVAL_MS = 500;
+  var DEFAULT_BUCKET_GAME_DAYS = 0.25;
+  var EMPTY_STATS = {
+    tick: 0,
+    gameDay: 0,
+    configuredTps: 0,
+    realTps: 0,
+    npcCount: 0,
+    paused: true,
+    foodBlocks: 0,
+    regrowingCells: 0,
+    populationCap: 0
+  };
+  var EMPTY_SNAPSHOT = {
+    running: false,
+    truncated: false,
+    food: [],
+    arena: null,
+    config: null,
+    npcs: [],
+    players: [],
+    stats: EMPTY_STATS
+  };
+  function wsUrl() {
+    const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const token = sessionStorage.getItem("micraft-auth-token");
+    const query2 = token ? `?token=${encodeURIComponent(token)}` : "";
+    return `${proto}//${window.location.host}/api/admin/ws/simulation${query2}`;
+  }
+  function useSimulation() {
+    const socketRef = (0, import_react20.useRef)(null);
+    const npcsRef = (0, import_react20.useRef)([]);
+    const playersRef = (0, import_react20.useRef)([]);
+    const statsRef = (0, import_react20.useRef)(EMPTY_STATS);
+    const eventsRef = (0, import_react20.useRef)([]);
+    const arenaRef = (0, import_react20.useRef)(null);
+    const configRef = (0, import_react20.useRef)(null);
+    const runningRef = (0, import_react20.useRef)(false);
+    const truncatedRef = (0, import_react20.useRef)(false);
+    const foodRef = (0, import_react20.useRef)([]);
+    const frameRef = (0, import_react20.useRef)(null);
+    const viewportRef = (0, import_react20.useRef)("");
+    const eventRevisionRef = (0, import_react20.useRef)(0);
+    const [snapshot, setSnapshot] = (0, import_react20.useState)(EMPTY_SNAPSHOT);
+    const [connected, setConnected] = (0, import_react20.useState)(false);
+    const [detail, setDetail] = (0, import_react20.useState)(null);
+    const [defaults3, setDefaults] = (0, import_react20.useState)(null);
+    const [error2, setError] = (0, import_react20.useState)(null);
+    const [events, setEvents] = (0, import_react20.useState)([]);
+    const [metrics, setMetrics] = (0, import_react20.useState)({
+      bucketGameDays: DEFAULT_BUCKET_GAME_DAYS,
+      buckets: []
+    });
+    const [simulations, setSimulations] = (0, import_react20.useState)([]);
+    const [simulationId, setSimulationId] = (0, import_react20.useState)(null);
+    const publish = (0, import_react20.useCallback)(() => {
+      if (frameRef.current !== null) return;
+      frameRef.current = requestAnimationFrame(() => {
+        frameRef.current = null;
+        setSnapshot({
+          running: runningRef.current,
+          truncated: truncatedRef.current,
+          food: foodRef.current,
+          arena: arenaRef.current,
+          config: configRef.current,
+          npcs: npcsRef.current,
+          players: playersRef.current,
+          stats: statsRef.current
+        });
+      });
+    }, []);
+    const pushEvents = (0, import_react20.useCallback)((incoming) => {
+      if (incoming.length === 0) return;
+      const merged = eventsRef.current.concat(incoming);
+      eventsRef.current = merged.length > EVENT_HISTORY ? merged.slice(merged.length - EVENT_HISTORY) : merged;
+      eventRevisionRef.current++;
+    }, []);
+    (0, import_react20.useEffect)(() => {
+      let shownRevision = -1;
+      const timer = setInterval(() => {
+        if (eventRevisionRef.current === shownRevision) return;
+        shownRevision = eventRevisionRef.current;
+        setEvents(eventsRef.current);
+      }, EVENT_PUBLISH_INTERVAL_MS);
+      return () => clearInterval(timer);
+    }, []);
+    (0, import_react20.useEffect)(() => {
+      const headers = {};
+      const token = sessionStorage.getItem("micraft-auth-token");
+      if (token) headers.Authorization = `Bearer ${token}`;
+      fetch("/api/admin/simulation/defaults", { headers }).then((r2) => r2.ok ? r2.json() : null).then((d) => d && setDefaults(d)).catch(() => setError("impossible de charger les valeurs par d\xE9faut"));
+    }, []);
+    (0, import_react20.useEffect)(() => {
+      const socket = new WebSocket(wsUrl());
+      socketRef.current = socket;
+      socket.onopen = () => setConnected(true);
+      socket.onclose = () => {
+        setConnected(false);
+        runningRef.current = false;
+        publish();
+      };
+      socket.onerror = () => setError("connexion au simulateur perdue");
+      socket.onmessage = (event) => {
+        var _a6, _b, _c, _d, _e, _f;
+        let message;
+        try {
+          message = JSON.parse(event.data);
+        } catch (e) {
+          return;
+        }
+        switch (message.t) {
+          case "snapshot":
+            setSimulationId(message.simulationId);
+            arenaRef.current = message.arena;
+            configRef.current = message.config;
+            npcsRef.current = message.npcs;
+            playersRef.current = message.players;
+            statsRef.current = message.stats;
+            eventsRef.current = message.events.slice(-EVENT_HISTORY);
+            eventRevisionRef.current++;
+            setEvents(eventsRef.current);
+            truncatedRef.current = (_a6 = message.truncated) != null ? _a6 : false;
+            foodRef.current = (_b = message.food) != null ? _b : [];
+            setMetrics({
+              bucketGameDays: (_d = (_c = message.metrics) == null ? void 0 : _c.bucketGameDays) != null ? _d : DEFAULT_BUCKET_GAME_DAYS,
+              buckets: replaceBuckets(message.metrics)
+            });
+            runningRef.current = true;
+            setError(null);
+            publish();
+            break;
+          case "frame":
+            npcsRef.current = message.npcs;
+            playersRef.current = message.players;
+            statsRef.current = message.stats;
+            truncatedRef.current = (_e = message.truncated) != null ? _e : false;
+            if (message.food) foodRef.current = message.food;
+            if (message.metrics) {
+              const incoming = message.metrics;
+              setMetrics((current) => ({
+                bucketGameDays: incoming.bucketGameDays,
+                buckets: mergeBuckets(current.buckets, incoming.buckets)
+              }));
+            }
+            pushEvents(message.events);
+            publish();
+            break;
+          case "simulations":
+            setSimulations(message.simulations);
+            setSimulationId((_f = message.attachedId) != null ? _f : null);
+            break;
+          case "npcDetail":
+            setDetail(message.detail);
+            break;
+          case "stopped":
+            setSimulationId(null);
+            runningRef.current = false;
+            npcsRef.current = [];
+            playersRef.current = [];
+            foodRef.current = [];
+            eventsRef.current = [];
+            setEvents([]);
+            setMetrics({ bucketGameDays: DEFAULT_BUCKET_GAME_DAYS, buckets: [] });
+            statsRef.current = EMPTY_STATS;
+            publish();
+            break;
+          case "error":
+            setError(message.message);
+            break;
+        }
+      };
+      return () => {
+        if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+        socket.close();
+        socketRef.current = null;
+      };
+    }, [pushEvents, publish]);
+    const setViewport = (0, import_react20.useCallback)((viewport) => {
+      const key2 = viewport ? `${Math.round(viewport.minX)},${Math.round(viewport.minZ)},${Math.round(viewport.maxX)},${Math.round(viewport.maxZ)}` : "";
+      if (key2 === viewportRef.current) return;
+      viewportRef.current = key2;
+      const socket = socketRef.current;
+      if ((socket == null ? void 0 : socket.readyState) === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ t: "viewport", viewport }));
+      }
+    }, []);
+    const send = (0, import_react20.useCallback)((payload) => {
+      const socket = socketRef.current;
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        setError("simulateur non connect\xE9");
+        return;
+      }
+      socket.send(JSON.stringify(payload));
+    }, []);
+    return {
+      connected,
+      running: snapshot.running,
+      arena: snapshot.arena,
+      config: snapshot.config,
+      npcs: snapshot.npcs,
+      players: snapshot.players,
+      stats: snapshot.stats,
+      events,
+      metrics: metrics.buckets,
+      bucketGameDays: metrics.bucketGameDays,
+      food: snapshot.food,
+      truncated: snapshot.truncated,
+      simulations,
+      simulationId,
+      detail,
+      defaults: defaults3,
+      error: error2,
+      init: (config3, name2) => send({ t: "init", config: config3, name: name2 != null ? name2 : "" }),
+      stop: () => send({ t: "stop" }),
+      restart: () => send({ t: "restart" }),
+      setSpeed: (ticksPerSecond) => send({ t: "speed", ticksPerSecond }),
+      step: (count3) => send({ t: "step", count: count3 }),
+      inspect: (npcId) => send({ t: "inspect", npcId }),
+      clearDetail: () => setDetail(null),
+      spawn: (type, x, z, count3, level) => send({ t: "spawn", type, x, z, count: count3, level: level != null ? level : null }),
+      applyTuning: (tuning) => send({ t: "tuning", tuning }),
+      applyOverrides: (overrides2) => send({ t: "defs", overrides: overrides2 }),
+      playerInput: (name2, dx, dz, yaw, jump) => send({ t: "playerInput", name: name2, dx, dz, yaw, jump }),
+      setViewport,
+      attach: (id2) => send({ t: "attach", simulationId: id2 }),
+      detach: () => send({ t: "detach" }),
+      refreshSimulations: () => send({ t: "list" })
+    };
+  }
+
+  // admin/pages/WorldSimulatorPage.tsx
+  var import_jsx_runtime36 = __toESM(require_jsx_runtime(), 1);
+  var TAB_LABELS2 = {
+    charts: "Graphiques",
+    log: "Journal",
+    npc: "NPC",
+    rules: "R\xE8gles NPC",
+    manager: "Types & spawns"
+  };
+  var DEFAULT_ARENA = { halfSize: 100, groundY: 7, wallHeight: 4 };
+  function baseConfig(tuning) {
+    return __spreadProps(__spreadValues({}, DEFAULT_ARENA), {
+      ticksPerSecond: 200,
+      seed: 42,
+      zoneLevel: 5,
+      maxNpcs: 0,
+      populationCap: DEFAULT_POPULATION_CAP,
+      maxNpcsPerFrame: frameCapFor(DEFAULT_POPULATION_CAP),
+      vegetationDensity: 0.08,
+      gameDayDurationSeconds: 60,
+      npcTuning: tuning,
+      npcDefinitionOverrides: {},
+      initialSpawns: [],
+      players: [{ name: "observateur", x: 0, z: 0 }],
+      autoSpawnEnabled: true
+    });
+  }
+  function Row2({ label, children }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("label", { className: "mb-1.5 flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "flex-1", children: label }),
+      children
+    ] });
+  }
+  var DISABLED = " disabled:cursor-not-allowed disabled:opacity-40";
+  var numberInput = "w-24 rounded border border-[#2E3A4E] bg-[#0E1726] px-2 py-1 text-right text-[11px] text-white" + DISABLED;
+  var smallNumberInput = "w-16 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-0.5 text-right text-[11px] text-white" + DISABLED;
+  function WorldSimulatorPage() {
+    var _a6, _b, _c, _d, _e, _f;
+    const sim = useSimulation();
+    const [tab, setTab] = (0, import_react21.useState)("charts");
+    const [layers, setLayers] = (0, import_react21.useState)(() => loadLayers());
+    const [renderer2, setRenderer] = (0, import_react21.useState)(() => loadRenderer());
+    const [selectedId, setSelectedId] = (0, import_react21.useState)(null);
+    const [halfSize, setHalfSize] = (0, import_react21.useState)(DEFAULT_ARENA.halfSize);
+    const [seed, setSeed] = (0, import_react21.useState)(42);
+    const [dayDuration, setDayDuration] = (0, import_react21.useState)(60);
+    const [zoneLevel, setZoneLevel] = (0, import_react21.useState)(5);
+    const [autoSpawn, setAutoSpawn] = (0, import_react21.useState)(true);
+    const [populationCap, setPopulationCap] = (0, import_react21.useState)(DEFAULT_POPULATION_CAP);
+    const [vegetationDensity, setVegetationDensity] = (0, import_react21.useState)(0.08);
+    const [simulationName, setSimulationName] = (0, import_react21.useState)("");
+    const [spawns, setSpawns] = (0, import_react21.useState)([]);
+    const [tuning, setTuning] = (0, import_react21.useState)(null);
+    const [spawnType, setSpawnType] = (0, import_react21.useState)("");
+    const [spawnCount, setSpawnCount] = (0, import_react21.useState)(1);
+    const [liveSpawnType, setLiveSpawnType] = (0, import_react21.useState)("");
+    const [liveSpawnCount, setLiveSpawnCount] = (0, import_react21.useState)(1);
+    const npcTypes = (_b = (_a6 = sim.defaults) == null ? void 0 : _a6.npcTypes) != null ? _b : [];
+    const locked = sim.simulationId !== null;
+    const [arenaFolded, setArenaFolded] = (0, import_react21.useState)(false);
+    const [spawnsFolded, setSpawnsFolded] = (0, import_react21.useState)(false);
+    (0, import_react21.useEffect)(() => {
+      setArenaFolded(locked);
+      setSpawnsFolded(locked);
+    }, [locked]);
+    (0, import_react21.useEffect)(() => {
+      if (sim.defaults && tuning == null) setTuning(sim.defaults.tuning);
+      if (sim.defaults && sim.defaults.npcTypes.length > 0) {
+        const first = sim.defaults.npcTypes[0];
+        if (spawnType === "") setSpawnType(first);
+        if (liveSpawnType === "") setLiveSpawnType(first);
+      }
+    }, [sim.defaults, tuning, spawnType, liveSpawnType]);
+    const spawnSummary = spawns.length === 0 ? "aucun" : `${spawns.length} lot(s) \xB7 ${spawns.reduce((sum, spawn) => sum + spawn.count, 0)} NPC`;
+    (0, import_react21.useEffect)(() => saveLayers(layers), [layers]);
+    (0, import_react21.useEffect)(() => saveRenderer(renderer2), [renderer2]);
+    (0, import_react21.useEffect)(() => {
+      if (sim.detail) setSelectedId(sim.detail.npc.id);
+    }, [sim.detail]);
+    const arena = (_c = sim.arena) != null ? _c : null;
+    const view = useArenaCamera((_d = arena == null ? void 0 : arena.halfSize) != null ? _d : DEFAULT_ARENA.halfSize);
+    const bounds = view.visibleBounds;
+    const { running: simRunning, setViewport } = sim;
+    (0, import_react21.useEffect)(() => {
+      if (!simRunning) return;
+      setViewport(bounds);
+    }, [simRunning, setViewport, bounds]);
+    const byType = (0, import_react21.useMemo)(() => {
+      const counts = /* @__PURE__ */ new Map();
+      sim.npcs.forEach((n) => {
+        var _a7;
+        return counts.set(n.type, ((_a7 = counts.get(n.type)) != null ? _a7 : 0) + 1);
+      });
+      return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+    }, [sim.npcs]);
+    const start = () => {
+      if (!tuning) return;
+      sim.init(
+        __spreadProps(__spreadValues({}, baseConfig(tuning)), {
+          halfSize,
+          seed,
+          zoneLevel,
+          gameDayDurationSeconds: dayDuration,
+          npcTuning: __spreadProps(__spreadValues({}, tuning), { gameDayDurationSeconds: dayDuration }),
+          initialSpawns: spawns,
+          autoSpawnEnabled: autoSpawn,
+          populationCap,
+          maxNpcsPerFrame: frameCapFor(populationCap),
+          vegetationDensity
+        }),
+        simulationName
+      );
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "-m-6 flex h-[calc(100vh-4rem)] flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "flex shrink-0 items-center gap-2 border-b border-[#2E3A4E] bg-[#1A222C] px-4 py-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "inline-block h-2 w-2 rounded-full " + (sim.connected ? "bg-emerald-400" : "bg-red-400") }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: sim.connected ? "simulateur connect\xE9" : "d\xE9connect\xE9" }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: start,
+            disabled: !sim.connected || !tuning,
+            className: "ml-3 rounded bg-[#3C50E0] px-3 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80 disabled:opacity-40",
+            children: "D\xE9marrer"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: sim.restart,
+            disabled: !sim.running,
+            className: "rounded bg-[#2E3A4E] px-3 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40",
+            children: "Red\xE9marrage rapide"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: sim.detach,
+            disabled: !sim.simulationId,
+            title: "Arr\xEAte de suivre sans fermer la simulation",
+            className: "rounded bg-[#2E3A4E] px-3 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40",
+            children: "Se d\xE9connecter"
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: sim.stop,
+            disabled: !sim.simulationId,
+            title: "Ferme la simulation pour tous les spectateurs",
+            className: "rounded bg-[#2E3A4E] px-3 py-1 text-[11px] text-[#C7D2FE] hover:bg-red-500/60 disabled:opacity-40",
+            children: "Fermer"
+          }
+        ),
+        sim.error && /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "ml-3 text-[11px] text-red-300", children: sim.error }),
+        sim.truncated && /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "ml-3 rounded bg-[#FACC15]/15 px-2 py-0.5 text-[11px] text-[#FACC15]", children: "affichage partiel \u2014 zoome pour voir moins de NPC \xE0 la fois" }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("span", { className: "ml-auto text-[11px] text-[#8A99AF]", children: [
+          sim.npcs.length,
+          "/",
+          sim.stats.npcCount,
+          " NPC affich\xE9s",
+          sim.stats.populationCap > 0 ? ` / ${sim.stats.populationCap} max` : "",
+          " \xB7 ",
+          sim.players.length,
+          " joueur(s) \xB7 brout ",
+          sim.stats.foodBlocks,
+          sim.stats.regrowingCells > 0 ? ` (+${sim.stats.regrowingCells} en repousse)` : ""
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "flex min-h-0 flex-1", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "w-72 shrink-0 space-y-3 overflow-auto border-r border-[#2E3A4E] p-3", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+            SimulationList,
+            {
+              simulations: sim.simulations,
+              attachedId: sim.simulationId,
+              onAttach: sim.attach,
+              onRefresh: sim.refreshSimulations
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)(
+            Card2,
+            {
+              title: "Ar\xE8ne",
+              collapsed: arenaFolded,
+              onCollapsed: setArenaFolded,
+              summary: `${halfSize * 2}\xD7${halfSize * 2} \xB7 seed ${seed} \xB7 jour ${dayDuration} s`,
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(Row2, { label: "Nom (optionnel)", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                  "input",
+                  {
+                    type: "text",
+                    value: simulationName,
+                    onChange: (e) => setSimulationName(e.target.value),
+                    placeholder: "auto",
+                    disabled: locked,
+                    className: "w-32 rounded border border-[#2E3A4E] bg-[#0E1726] px-2 py-1 text-[11px] text-white" + DISABLED
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(Row2, { label: "Demi-taille (blocs)", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    step: 10,
+                    min: 10,
+                    value: halfSize,
+                    onChange: (e) => setHalfSize(Number(e.target.value)),
+                    disabled: locked,
+                    className: numberInput
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(Row2, { label: "Seed", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    value: seed,
+                    onChange: (e) => setSeed(Number(e.target.value)),
+                    disabled: locked,
+                    className: numberInput
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(Row2, { label: "Dur\xE9e d'un jour (s)", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    step: 5,
+                    min: 1,
+                    value: dayDuration,
+                    onChange: (e) => setDayDuration(Number(e.target.value)),
+                    disabled: locked,
+                    className: numberInput
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(Row2, { label: "Niveau de zone", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    min: 1,
+                    value: zoneLevel,
+                    onChange: (e) => setZoneLevel(Number(e.target.value)),
+                    disabled: locked,
+                    className: numberInput
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(Row2, { label: "Plafond de population", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    step: 100,
+                    min: 0,
+                    value: populationCap,
+                    onChange: (e) => setPopulationCap(Number(e.target.value)),
+                    disabled: locked,
+                    className: numberInput
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(Row2, { label: "Densit\xE9 de v\xE9g\xE9tation", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    step: 0.01,
+                    min: 0,
+                    max: 1,
+                    value: vegetationDensity,
+                    onChange: (e) => setVegetationDensity(Number(e.target.value)),
+                    disabled: locked,
+                    className: numberInput
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(Row2, { label: "Spawner automatique", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                  "input",
+                  {
+                    type: "checkbox",
+                    checked: autoSpawn,
+                    onChange: (e) => setAutoSpawn(e.target.checked),
+                    disabled: locked,
+                    className: "accent-[#3C50E0]" + DISABLED
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("p", { className: "text-[10px] text-[#4A5568]", children: [
+                  "Plafond 0 = illimit\xE9, mais la reproduction est exponentielle.",
+                  " ",
+                  locked ? "R\xE9glages verrouill\xE9s : ils ne s'appliquent qu'\xE0 la cr\xE9ation. \xAB Se d\xE9connecter \xBB ou \xAB Fermer \xBB pour en configurer une autre." : "Ces r\xE9glages s'appliquent \xE0 la cr\xE9ation de l'ar\xE8ne."
+                ] })
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)(
+            Card2,
+            {
+              title: "Peuplement initial",
+              collapsed: spawnsFolded,
+              onCollapsed: setSpawnsFolded,
+              summary: spawnSummary,
+              children: [
+                spawns.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("p", { className: "mb-2 text-[11px] text-[#4A5568]", children: "Aucun" }),
+                spawns.map((spawn, index2) => /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "mb-1.5 flex items-center gap-1.5", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "flex-1 text-[11px] text-white", children: spawn.type }),
+                  /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                    "input",
+                    {
+                      type: "number",
+                      min: 1,
+                      value: spawn.count,
+                      onChange: (e) => setSpawns((s) => s.map((v, i) => i === index2 ? __spreadProps(__spreadValues({}, v), { count: Number(e.target.value) }) : v)),
+                      disabled: locked,
+                      className: smallNumberInput
+                    }
+                  ),
+                  /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                    "button",
+                    {
+                      type: "button",
+                      disabled: locked,
+                      onClick: () => setSpawns((s) => s.filter((_, i) => i !== index2)),
+                      className: "rounded bg-[#2E3A4E] px-1.5 text-[11px] text-[#8A99AF] hover:text-red-300" + DISABLED,
+                      children: "\xD7"
+                    }
+                  )
+                ] }, `${spawn.type}-${index2}`)),
+                /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "mt-2 flex items-center gap-1.5", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                    "select",
+                    {
+                      value: spawnType,
+                      onChange: (e) => setSpawnType(e.target.value),
+                      disabled: locked,
+                      className: "flex-1 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-1 text-[11px] text-white" + DISABLED,
+                      children: npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("option", { value: type, children: type }, type))
+                    }
+                  ),
+                  /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                    "input",
+                    {
+                      type: "number",
+                      min: 1,
+                      value: spawnCount,
+                      onChange: (e) => setSpawnCount(Number(e.target.value)),
+                      disabled: locked,
+                      className: smallNumberInput
+                    }
+                  ),
+                  /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                    "button",
+                    {
+                      type: "button",
+                      disabled: locked || !spawnType,
+                      onClick: () => setSpawns((s) => [...s, { type: spawnType, count: spawnCount, level: null }]),
+                      className: "rounded bg-[#2E3A4E] px-2 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60" + DISABLED,
+                      children: "+"
+                    }
+                  )
+                ] })
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)(Card2, { title: "Spawn imm\xE9diat", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "flex items-center gap-1.5", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                "select",
+                {
+                  value: liveSpawnType,
+                  onChange: (e) => setLiveSpawnType(e.target.value),
+                  className: "flex-1 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-1 text-[11px] text-white",
+                  children: npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("option", { value: type, children: type }, type))
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                "input",
+                {
+                  type: "number",
+                  min: 1,
+                  value: liveSpawnCount,
+                  onChange: (e) => setLiveSpawnCount(Number(e.target.value)),
+                  className: "w-16 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-0.5 text-right text-[11px] text-white"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+              "button",
+              {
+                type: "button",
+                disabled: !sim.running || !liveSpawnType,
+                onClick: () => sim.spawn(liveSpawnType, 0, 0, liveSpawnCount, null),
+                className: "mt-2 w-full rounded bg-[#2E3A4E] px-2 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40",
+                children: "Spawner maintenant au centre"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(Card2, { title: "Calques", children: LAYER_KEYS.map((key2) => /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(Row2, { label: LAYER_LABELS[key2], children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+            "input",
+            {
+              type: "checkbox",
+              checked: layers[key2],
+              onChange: (e) => setLayers((s) => __spreadProps(__spreadValues({}, s), { [key2]: e.target.checked })),
+              className: "accent-[#3C50E0]"
+            }
+          ) }, key2)) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "flex min-w-0 flex-1 flex-col", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "relative min-h-0 flex-1", children: [
+            arena && /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(ArenaControls, { renderer: renderer2, onRenderer: setRenderer, onZoom: view.zoomBy, onFitAll: view.fitAll }),
+            arena ? (() => {
+              const Renderer2 = renderer2 === "canvas" ? ArenaCanvasRenderer : ArenaSvgRenderer;
+              return /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+                Renderer2,
+                {
+                  arena,
+                  food: sim.food,
+                  npcs: sim.npcs,
+                  players: sim.players,
+                  layers,
+                  selectedId,
+                  view,
+                  onSelect: (id2) => {
+                    setSelectedId(id2);
+                    setTab("npc");
+                    sim.inspect(id2);
+                  }
+                }
+              );
+            })() : /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "flex h-full items-center justify-center text-[12px] text-[#4A5568]", children: "Aucune simulation. R\xE8gle l'ar\xE8ne puis \xAB D\xE9marrer \xBB." })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "flex shrink-0 items-start gap-3 border-t border-[#2E3A4E] p-3", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "min-w-0 flex-1", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(Timeline, { stats: sim.stats, disabled: !sim.running, onSpeed: sim.setSpeed, onStep: sim.step }) }),
+            /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(SimPlayerPad, { players: sim.players, onInput: sim.playerInput })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "flex w-[26rem] shrink-0 flex-col border-l border-[#2E3A4E]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "flex shrink-0 gap-1 border-b border-[#2E3A4E] bg-[#1A222C] px-2 py-1.5", children: Object.keys(TAB_LABELS2).map((key2) => /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+            "button",
+            {
+              type: "button",
+              onClick: () => setTab(key2),
+              className: "rounded px-2.5 py-1 text-[11px] font-medium transition-colors " + (tab === key2 ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white"),
+              children: TAB_LABELS2[key2]
+            },
+            key2
+          )) }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "min-h-0 flex-1 overflow-hidden p-3", children: [
+            tab === "charts" && /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(MetricsPanel, { buckets: sim.metrics, bucketGameDays: sim.bucketGameDays }),
+            tab === "log" && /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+              EventLogPanel,
+              {
+                events: sim.events,
+                onSelect: (id2) => {
+                  setSelectedId(id2);
+                  sim.inspect(id2);
+                  setTab("npc");
+                }
+              }
+            ),
+            tab === "npc" && /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(NpcDetailPanel, { sim }),
+            tab === "rules" && tuning && /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+              TuningEditor,
+              {
+                value: tuning,
+                base: (_f = (_e = sim.defaults) == null ? void 0 : _e.tuning) != null ? _f : null,
+                onChange: setTuning,
+                onApply: () => sim.applyTuning(tuning)
+              }
+            ),
+            tab === "manager" && /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "flex h-full flex-col gap-3", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("p", { className: "mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: "Population" }),
+                byType.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: "Vide" }),
+                byType.map(([type, count3]) => /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "flex items-center gap-2 py-0.5 text-[11px]", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "inline-block h-2.5 w-2.5 rounded-full", style: { background: npcColor(type) } }),
+                  /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "flex-1 text-white", children: type }),
+                  /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "text-[#8A99AF]", children: count3 })
+                ] }, type))
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "min-h-0 flex-1", children: /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(OverridesEditor, { npcTypes, onApply: sim.applyOverrides }) })
+            ] })
+          ] })
+        ] })
+      ] })
+    ] });
+  }
+  function NpcDetailPanel({ sim }) {
+    var _a6, _b, _c, _d, _e;
+    const detail = sim.detail;
+    if (!detail) {
+      return /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: "Clique un NPC dans l'ar\xE8ne (ou une ligne du journal) pour voir son d\xE9tail." });
+    }
+    const npc = detail.npc;
+    const rows = [
+      ["Type", npc.type],
+      ["Niveau", `${npc.level} (${detail.xp} xp)`],
+      ["Points de vie", `${npc.currentHp}/${npc.maxHp}`],
+      ["Mana", `${detail.currentMana}/${detail.maxMana}`],
+      ["Comportement", detail.behaviorKey],
+      ["Aggro", `${detail.aggroMode} \u2014 port\xE9e ${detail.aggroRange}`],
+      ["Cible d'aggro", (_a6 = npc.aggroTargetId) != null ? _a6 : "\u2014"],
+      ["Classe", detail.characterClass],
+      ["Vitesse / rayon", `${detail.wanderSpeed} / ${detail.wanderRadius}`],
+      ["Gabarit", `${detail.width} \xD7 ${detail.height}`],
+      ["Phase d'errance", detail.wanderPhase],
+      ["Position", `${npc.x.toFixed(2)}, ${npc.y.toFixed(2)}, ${npc.z.toFixed(2)}`],
+      ["Point d'apparition", `${detail.spawnX.toFixed(1)}, ${detail.spawnZ.toFixed(1)}`],
+      ["Attaques", detail.attacks.join(", ") || "\u2014"],
+      ["Sorts", detail.spells.join(", ") || "\u2014"],
+      ["Effets actifs", detail.activeEffects.join(", ") || "\u2014"],
+      ["R\xE9gime", (_b = detail.diet) != null ? _b : "\u2014"],
+      ["Sexe", (_c = npc.gender) != null ? _c : "\u2014"],
+      ["\xC2ge (jours)", npc.ageGameDays != null ? npc.ageGameDays.toFixed(2) : "\u2014"],
+      ["Faim", npc.hunger != null ? `${Math.round(npc.hunger * 100)}%` : "\u2014"],
+      ["Gestation", npc.gestationRemainingDays != null ? `${npc.gestationRemainingDays.toFixed(2)} j` : "\u2014"],
+      ["Proie vis\xE9e", (_d = detail.preyTargetId) != null ? _d : "\u2014"],
+      ["Partenaire vis\xE9", (_e = detail.mateTargetId) != null ? _e : "\u2014"],
+      ["Parents", detail.parentIds.length ? detail.parentIds.map((p2) => p2.slice(0, 8)).join(", ") : "\u2014"]
+    ];
+    return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "flex h-full flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "inline-block h-3 w-3 rounded-full", style: { background: npcColor(npc.type) } }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "flex-1 truncate text-[12px] font-semibold text-white", children: npc.name }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: () => sim.inspect(npc.id),
+            className: "rounded bg-[#2E3A4E] px-2 py-0.5 text-[10px] text-[#C7D2FE] hover:bg-[#3C50E0]/60",
+            children: "Rafra\xEEchir"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-2", children: [
+        rows.map(([label, value]) => /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "flex gap-2 border-b border-[#1A222C] py-1 text-[11px] last:border-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "w-40 shrink-0 text-[#8A99AF]", children: label }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "break-all text-white", children: value })
+        ] }, label)),
+        detail.baseStats && /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "mt-2 text-[11px]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("p", { className: "mb-1 text-[#8A99AF]", children: "Statistiques de base" }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "flex flex-wrap gap-2", children: Object.entries(detail.baseStats).map(([stat, value]) => /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("span", { className: "rounded bg-[#1A222C] px-1.5 py-0.5 text-white", children: [
+            stat,
+            " ",
+            value
+          ] }, stat)) })
+        ] })
+      ] })
+    ] });
+  }
+
+  // admin/AdminApp.tsx
+  var import_jsx_runtime37 = __toESM(require_jsx_runtime(), 1);
   function Icon2({ d, size = 18 }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
       "svg",
       {
         width: size,
@@ -88033,7 +90452,7 @@ ${end.comment}` : end.comment;
         strokeWidth: 1.8,
         strokeLinecap: "round",
         strokeLinejoin: "round",
-        children: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("path", { d })
+        children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("path", { d })
       }
     );
   }
@@ -88046,7 +90465,8 @@ ${end.comment}` : end.comment;
     classes: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
     npcs: "M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18",
     gameAssets: "M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9",
-    administration: "M4 6h16M4 10h16M4 14h8M4 18h8"
+    administration: "M4 6h16M4 10h16M4 14h8M4 18h8",
+    simulator: "M4 4h16v16H4zM8 8v8m8-8v8m-4-6a2 2 0 100 4 2 2 0 000-4z"
   };
   var NAV = [
     { path: "/admin", label: "Status", icon: ICONS.status, exact: true },
@@ -88057,7 +90477,8 @@ ${end.comment}` : end.comment;
     { path: "/admin/config", label: "Config", icon: ICONS.config },
     { path: "/admin/worlds", label: "Worlds", icon: ICONS.worlds },
     { path: "/admin/game-assets", label: "Game Assets", icon: ICONS.gameAssets },
-    { path: "/admin/administration", label: "Administration", icon: ICONS.administration }
+    { path: "/admin/administration", label: "Administration", icon: ICONS.administration },
+    { path: "/admin/world-simulator", label: "Simulateur monde", icon: ICONS.simulator }
   ];
   var PAGE_LABELS = {
     "/admin": "Server Status",
@@ -88068,81 +90489,122 @@ ${end.comment}` : end.comment;
     "/admin/config": "Config Editor",
     "/admin/worlds": "Worlds",
     "/admin/game-assets": "Game Assets",
-    "/admin/administration": "Administration"
+    "/admin/administration": "Administration",
+    "/admin/world-simulator": "Simulateur de monde"
   };
-  function Sidebar() {
+  function Sidebar({ collapsed, onToggle }) {
     const { pathname } = useLocation();
-    return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("aside", { className: "w-64 shrink-0 h-screen flex flex-col bg-[#1C2434] border-r border-[#2E3A4E]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "h-16 flex items-center px-6 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "flex items-center gap-2.5", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "w-8 h-8 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
-      ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("nav", { className: "flex-1 px-4 py-5 space-y-0.5 overflow-y-auto", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: "Menu" }),
-        NAV.map(({ path, label, icon, exact }) => {
-          const active = exact ? pathname === path : pathname.startsWith(path);
-          return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)(
-            Link,
+    return /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)(
+      "aside",
+      {
+        className: cn(
+          "shrink-0 h-screen flex flex-col bg-[#1C2434] border-r border-[#2E3A4E] transition-[width] duration-150",
+          collapsed ? "w-16" : "w-64"
+        ),
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: cn("h-16 flex items-center border-b border-[#2E3A4E]", collapsed ? "px-3" : "px-6"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex items-center gap-2.5 overflow-hidden", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "w-8 h-8 shrink-0 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
+            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)(import_jsx_runtime37.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
+              /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
+            ] })
+          ] }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("nav", { className: cn("flex-1 py-5 space-y-0.5 overflow-y-auto", collapsed ? "px-2" : "px-4"), children: [
+            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: "Menu" }),
+            NAV.map(({ path, label, icon, exact }) => {
+              const active = exact ? pathname === path : pathname.startsWith(path);
+              return /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)(
+                Link,
+                {
+                  to: path,
+                  title: collapsed ? label : void 0,
+                  "aria-label": label,
+                  className: cn(
+                    "flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150",
+                    collapsed ? "justify-center px-0" : "px-3",
+                    active ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white"
+                  ),
+                  children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Icon2, { d: icon, size: 17 }) }),
+                    !collapsed && label
+                  ]
+                },
+                path
+              );
+            })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)(
+            "div",
             {
-              to: path,
               className: cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150",
-                active ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white"
+                "border-t border-[#2E3A4E] flex items-center gap-2 py-3 text-[10px] text-[#8A99AF]",
+                collapsed ? "px-2 justify-center" : "px-6"
               ),
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Icon2, { d: icon, size: 17 }) }),
-                label
+                !collapsed && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "flex-1", children: "micraft admin v1" }),
+                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: onToggle,
+                    title: collapsed ? "D\xE9plier le menu" : "Replier le menu",
+                    "aria-label": collapsed ? "D\xE9plier le menu" : "Replier le menu",
+                    "aria-expanded": !collapsed,
+                    className: "flex h-7 w-7 items-center justify-center rounded border border-[#2E3A4E] text-[#C7D2FE] hover:bg-[#3C50E0]/60 hover:text-white",
+                    children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Icon2, { d: collapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7", size: 15 })
+                  }
+                )
               ]
-            },
-            path
-          );
-        })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "px-6 py-4 border-t border-[#2E3A4E] text-[10px] text-[#8A99AF]", children: "micraft admin v1" })
-    ] });
+            }
+          )
+        ]
+      }
+    );
   }
   function Header() {
     var _a6;
     const { pathname } = useLocation();
     const title = (_a6 = PAGE_LABELS[pathname]) != null ? _a6 : "Admin";
-    return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
           "Admin / ",
           title
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
+      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
         "Server online"
       ] })
     ] });
   }
   function AdminApp() {
-    return /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Sidebar, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Header, {}),
-        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)(Routes, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(StatusPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(UsersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(PlayersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/npcs", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(NpcsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(ClassesPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(ConfigEditorPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(WorldsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/game-assets", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(GameAssetsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/administration", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(AdministrationPage, {}) })
+    const [collapsed, setCollapsed] = (0, import_react22.useState)(() => loadSidebarCollapsed());
+    (0, import_react22.useEffect)(() => saveSidebarCollapsed(collapsed), [collapsed]);
+    return /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Sidebar, { collapsed, onToggle: () => setCollapsed((current) => !current) }),
+      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Header, {}),
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)(Routes, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(StatusPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(UsersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(PlayersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Route, { path: "/admin/npcs", element: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(NpcsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(ClassesPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(ConfigEditorPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(WorldsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Route, { path: "/admin/game-assets", element: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(GameAssetsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Route, { path: "/admin/administration", element: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(AdministrationPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Route, { path: "/admin/world-simulator", element: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(WorldSimulatorPage, {}) })
         ] }) })
       ] })
     ] }) });
   }
 
   // admin/index.tsx
-  var import_jsx_runtime26 = __toESM(require_jsx_runtime(), 1);
-  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime26.jsx)(AdminApp, {}));
+  var import_jsx_runtime38 = __toESM(require_jsx_runtime(), 1);
+  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime38.jsx)(AdminApp, {}));
 })();
 /*! Bundled license information:
 
