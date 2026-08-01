@@ -31828,7 +31828,19 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
       skills: () => get("/api/admin/skills").then((r2) => r2.json())
     },
     skins: {
-      list: () => get("/api/skins").then((r2) => r2.json())
+      list: () => get("/api/skins").then((r2) => r2.json()),
+      bbmodel: (skin) => fetch(`/api/models/skins/${encodeURIComponent(skin)}/${encodeURIComponent(skin)}.bbmodel`).then(
+        (r2) => r2.json()
+      )
+    },
+    blocks: {
+      list: () => get("/api/admin/blocks").then((r2) => r2.json())
+    },
+    npcTypes: {
+      list: () => get("/api/admin/npc-types").then((r2) => r2.json())
+    },
+    items: {
+      list: () => get("/api/admin/items").then((r2) => r2.json())
     },
     configs: {
       list: () => get("/api/admin/configs").then((r2) => r2.json()),
@@ -87129,7 +87141,7 @@ ${end.comment}` : end.comment;
           engineRef.current = null;
         }
       };
-    }, [url]);
+    }, [url, format2]);
     const toggleAnim = (idx) => {
       var _a6;
       const groups = groupsRef.current;
@@ -87204,14 +87216,16 @@ ${end.comment}` : end.comment;
     const togglePack = (pack) => {
       setExpandedPacks((prev) => {
         const next = new Set(prev);
-        next.has(pack) ? next.delete(pack) : next.add(pack);
+        if (next.has(pack)) next.delete(pack);
+        else next.add(pack);
         return next;
       });
     };
     const toggleFolder = (key2) => {
       setExpandedFolders((prev) => {
         const next = new Set(prev);
-        next.has(key2) ? next.delete(key2) : next.add(key2);
+        if (next.has(key2)) next.delete(key2);
+        else next.add(key2);
         return next;
       });
     };
@@ -87301,10 +87315,714 @@ ${end.comment}` : end.comment;
     ] });
   }
 
-  // admin/AdminApp.tsx
+  // admin/pages/AdministrationPage.tsx
+  var import_react13 = __toESM(require_react(), 1);
+
+  // admin/components/BbmodelAnimationViewer.tsx
+  var import_react12 = __toESM(require_react(), 1);
+
+  // game/player/playerModel.ts
+  function interpAxis(keyframes, t2, axis) {
+    var _a6, _b, _c, _d;
+    if (!keyframes || keyframes.length === 0) return 0;
+    if (keyframes.length === 1) return parseFloat(String((_a6 = keyframes[0].data_points[0][axis]) != null ? _a6 : 0));
+    let prev = keyframes[0], next = keyframes[keyframes.length - 1];
+    for (let i = 0; i < keyframes.length - 1; i++) {
+      if (t2 >= keyframes[i].time && t2 <= keyframes[i + 1].time) {
+        prev = keyframes[i];
+        next = keyframes[i + 1];
+        break;
+      }
+    }
+    if (prev === next) return parseFloat(String((_b = prev.data_points[0][axis]) != null ? _b : 0));
+    const span = next.time - prev.time;
+    const f = span <= 0 ? 0 : (t2 - prev.time) / span;
+    const v0 = parseFloat(String((_c = prev.data_points[0][axis]) != null ? _c : 0));
+    const v1 = parseFloat(String((_d = next.data_points[0][axis]) != null ? _d : 0));
+    return v0 + (v1 - v0) * f;
+  }
+
+  // admin/components/BbmodelAnimationViewer.tsx
   var import_jsx_runtime23 = __toESM(require_jsx_runtime(), 1);
+  function loadScript2(src) {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) {
+        resolve();
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = src;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error(`Failed: ${src}`));
+      document.head.appendChild(s);
+    });
+  }
+  async function ensureBabylon2() {
+    if (!window.BABYLON) await loadScript2("/babylon.js");
+  }
+  function skinUV(B, face, W, H) {
+    if (!(face == null ? void 0 : face.uv)) return new B.Vector4(0, 0, 0, 0);
+    const [x0, y0, x1, y1] = face.uv;
+    return new B.Vector4(Math.min(x0, x1) / W, 1 - Math.max(y0, y1) / H, Math.max(x0, x1) / W, 1 - Math.min(y0, y1) / H);
+  }
+  function skinFaceUV(B, el2, W, H) {
+    const faces = el2.faces;
+    if (el2.box_uv && el2.uv_offset) {
+      const bw = Math.round(Math.abs(el2.to[0] - el2.from[0]));
+      const bh = Math.round(Math.abs(el2.to[1] - el2.from[1]));
+      const bd = Math.round(Math.abs(el2.to[2] - el2.from[2]));
+      const [u, v] = el2.uv_offset;
+      const fake = (x0, y0, x1, y1) => ({ uv: [x0, y0, x1, y1] });
+      return [
+        skinUV(B, fake(u + 2 * bd + bw, v + bd, u + 2 * bd + 2 * bw, v + bd + bh), W, H),
+        skinUV(B, fake(u + bd, v + bd, u + bd + bw, v + bd + bh), W, H),
+        skinUV(B, fake(u, v + bd, u + bd, v + bd + bh), W, H),
+        skinUV(B, fake(u + bd + bw, v + bd, u + 2 * bd + bw, v + bd + bh), W, H),
+        skinUV(B, fake(u + bd, v, u + bd + bw, v + bd), W, H),
+        skinUV(B, fake(u + bd + bw, v, u + bd + 2 * bw, v + bd), W, H)
+      ];
+    }
+    return [
+      skinUV(B, faces == null ? void 0 : faces.south, W, H),
+      skinUV(B, faces == null ? void 0 : faces.north, W, H),
+      skinUV(B, faces == null ? void 0 : faces.east, W, H),
+      skinUV(B, faces == null ? void 0 : faces.west, W, H),
+      skinUV(B, faces == null ? void 0 : faces.up, W, H),
+      skinUV(B, faces == null ? void 0 : faces.down, W, H)
+    ];
+  }
+  function buildModel(B, bbmodel, scene) {
+    var _a6, _b;
+    const SCALE = 1 / 16;
+    const DEG2 = Math.PI / 180;
+    const W = bbmodel.resolution.width;
+    const H = bbmodel.resolution.height;
+    let mat = null;
+    if (((_a6 = bbmodel.textures) == null ? void 0 : _a6.length) > 0) {
+      const src = bbmodel.textures[0].source;
+      const tex = new B.Texture(src, scene, true, true, B.Texture.NEAREST_SAMPLINGMODE);
+      tex.hasAlpha = false;
+      tex.wrapU = B.Texture.CLAMP_ADDRESSMODE;
+      tex.wrapV = B.Texture.CLAMP_ADDRESSMODE;
+      mat = new B.StandardMaterial("skinMat", scene);
+      mat.diffuseTexture = tex;
+      mat.specularColor = new B.Color3(0, 0, 0);
+    }
+    const groupMap = {};
+    bbmodel.groups.forEach((g) => {
+      groupMap[g.uuid] = g;
+    });
+    const elToGroupUuid = {};
+    const groupToParentGroupUuid = {};
+    function walkOutliner(nodes, parentUuid) {
+      var _a7;
+      for (const node of nodes) {
+        if (typeof node === "string") {
+          elToGroupUuid[node] = parentUuid;
+          continue;
+        }
+        groupToParentGroupUuid[node.uuid] = parentUuid;
+        walkOutliner((_a7 = node.children) != null ? _a7 : [], node.uuid);
+      }
+    }
+    walkOutliner((_b = bbmodel.outliner) != null ? _b : [], null);
+    const root2 = new B.TransformNode("playerRoot", scene);
+    const pivotNodes = {};
+    const allGroupNodes = {};
+    bbmodel.groups.forEach((g) => {
+      const node = new B.TransformNode(`grp_${g.name}`, scene);
+      node.parent = root2;
+      node.position = new B.Vector3(g.origin[0] * SCALE, g.origin[1] * SCALE, g.origin[2] * SCALE);
+      if (g.rotation) node.rotation = new B.Vector3(g.rotation[0] * DEG2, g.rotation[1] * DEG2, g.rotation[2] * DEG2);
+      allGroupNodes[g.uuid] = { node, origin: g.origin };
+      pivotNodes[g.name] = { node, origin: g.origin };
+    });
+    bbmodel.groups.forEach((g) => {
+      const parentUuid = groupToParentGroupUuid[g.uuid];
+      if (!parentUuid || !allGroupNodes[parentUuid]) return;
+      const child = allGroupNodes[g.uuid];
+      const parent = allGroupNodes[parentUuid];
+      child.node.parent = parent.node;
+      child.node.position = new B.Vector3(
+        (g.origin[0] - parent.origin[0]) * SCALE,
+        (g.origin[1] - parent.origin[1]) * SCALE,
+        (g.origin[2] - parent.origin[2]) * SCALE
+      );
+    });
+    for (const el2 of bbmodel.elements) {
+      const [fx, fy, fz] = el2.from, [tx, ty, tz] = el2.to;
+      if (Math.abs(tx - fx) < 1e-3 || Math.abs(ty - fy) < 1e-3 || Math.abs(tz - fz) < 1e-3) continue;
+      const mesh = B.MeshBuilder.CreateBox(
+        el2.name,
+        {
+          width: Math.abs(tx - fx) * SCALE,
+          height: Math.abs(ty - fy) * SCALE,
+          depth: Math.abs(tz - fz) * SCALE,
+          faceUV: skinFaceUV(B, el2, W, H)
+        },
+        scene
+      );
+      if (mat) mesh.material = mat;
+      mesh.isPickable = false;
+      const cx = (fx + tx) / 2 * SCALE, cy = (fy + ty) / 2 * SCALE, cz = (fz + tz) / 2 * SCALE;
+      const groupUuid = elToGroupUuid[el2.uuid];
+      const pg = groupUuid ? allGroupNodes[groupUuid] : null;
+      if (pg) {
+        mesh.parent = pg.node;
+        mesh.position = new B.Vector3(cx - pg.origin[0] * SCALE, cy - pg.origin[1] * SCALE, cz - pg.origin[2] * SCALE);
+      } else {
+        mesh.parent = root2;
+        mesh.position = new B.Vector3(cx, cy, cz);
+      }
+    }
+    return { root: root2, pivotNodes };
+  }
+  var DEG = Math.PI / 180;
+  function BbmodelAnimationViewer({
+    bbmodel,
+    animFullName,
+    width = 200,
+    height = 280
+  }) {
+    const canvasRef = (0, import_react12.useRef)(null);
+    const overlayRef = (0, import_react12.useRef)(null);
+    const engineRef = (0, import_react12.useRef)(null);
+    const animRef = (0, import_react12.useRef)(animFullName);
+    (0, import_react12.useLayoutEffect)(() => {
+      animRef.current = animFullName;
+    });
+    (0, import_react12.useEffect)(() => {
+      if (!bbmodel) return;
+      const canvas = canvasRef.current;
+      const overlay = overlayRef.current;
+      if (!canvas || !overlay) return;
+      let disposed = false;
+      let removeListeners = null;
+      ensureBabylon2().then(() => {
+        if (disposed) return;
+        const B = window.BABYLON;
+        const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
+        const scene = new B.Scene(engine);
+        scene.clearColor = new B.Color4(0.08, 0.08, 0.08, 0);
+        const camera = new B.ArcRotateCamera(
+          "cam",
+          -Math.PI * 0.25,
+          Math.PI / 3.2,
+          3,
+          new B.Vector3(0, 0.9, 0),
+          scene
+        );
+        camera.inputs.clear();
+        const light = new B.HemisphericLight("light", new B.Vector3(1, 2, 0.5), scene);
+        light.intensity = 1.1;
+        light.groundColor = new B.Color3(0.2, 0.2, 0.2);
+        const model = buildModel(B, bbmodel, scene);
+        const uuidToName = {};
+        bbmodel.groups.forEach((g) => {
+          uuidToName[g.uuid] = g.name;
+        });
+        let angle = 0, autoRotate = true, lastInteraction = 0;
+        let isDragging = false, dragStartX = 0, dragStartAngle = 0;
+        const onMouseDown = (e) => {
+          isDragging = true;
+          dragStartX = e.clientX;
+          dragStartAngle = angle;
+          lastInteraction = Date.now();
+          autoRotate = false;
+          overlay.style.cursor = "grabbing";
+        };
+        const onMouseMove = (e) => {
+          if (!isDragging) return;
+          angle = dragStartAngle - (e.clientX - dragStartX) * 0.02;
+          lastInteraction = Date.now();
+        };
+        const onMouseUp = () => {
+          isDragging = false;
+          lastInteraction = Date.now();
+          overlay.style.cursor = "grab";
+        };
+        overlay.addEventListener("mousedown", onMouseDown);
+        overlay.addEventListener("mousemove", onMouseMove);
+        overlay.addEventListener("mouseup", onMouseUp);
+        overlay.addEventListener("mouseleave", onMouseUp);
+        removeListeners = () => {
+          overlay.removeEventListener("mousedown", onMouseDown);
+          overlay.removeEventListener("mousemove", onMouseMove);
+          overlay.removeEventListener("mouseup", onMouseUp);
+          overlay.removeEventListener("mouseleave", onMouseUp);
+        };
+        function eulerXYZToQuat(rx, ry, rz) {
+          const cx = Math.cos(rx / 2), sx = Math.sin(rx / 2);
+          const cy = Math.cos(ry / 2), sy = Math.sin(ry / 2);
+          const cz = Math.cos(rz / 2), sz = Math.sin(rz / 2);
+          return new B.Quaternion(
+            cz * cy * sx - sz * sy * cx,
+            cz * sy * cx + sz * cy * sx,
+            -cz * sy * sx + sz * cy * cx,
+            cz * cy * cx + sz * sy * sx
+          );
+        }
+        scene.onBeforeRenderObservable.add(() => {
+          var _a6, _b, _c;
+          if (autoRotate) angle += 0.015;
+          else if (Date.now() - lastInteraction > 3e4) autoRotate = true;
+          model.root.rotation.y = angle;
+          for (const boneName of Object.keys(model.pivotNodes)) {
+            const entry = model.pivotNodes[boneName];
+            entry.node.rotationQuaternion = null;
+            entry.node.rotation.x = 0;
+            entry.node.rotation.y = 0;
+            entry.node.rotation.z = 0;
+          }
+          const animDef = (_a6 = bbmodel.animations) == null ? void 0 : _a6.find((a) => a.name === animRef.current);
+          if (!animDef) return;
+          const length = animDef.length || 1;
+          const tSec = Date.now() % (length * 1e3) / (length * 1e3) * length;
+          for (const [uuid, animator] of Object.entries(animDef.animators)) {
+            const boneName = uuidToName[uuid];
+            if (!boneName) continue;
+            const pivot = model.pivotNodes[boneName];
+            if (!pivot) continue;
+            const kfs = (_c = (_b = animator.keyframes) == null ? void 0 : _b.filter((k) => k.channel === "rotation")) != null ? _c : [];
+            if (!kfs.length) continue;
+            pivot.node.rotationQuaternion = eulerXYZToQuat(
+              interpAxis(kfs, tSec, "x") * DEG,
+              interpAxis(kfs, tSec, "y") * DEG,
+              interpAxis(kfs, tSec, "z") * DEG
+            );
+          }
+        });
+        engine.runRenderLoop(() => scene.render());
+        engineRef.current = engine;
+        if (disposed) {
+          removeListeners == null ? void 0 : removeListeners();
+          model.root.getChildMeshes(true).forEach((m) => m.dispose());
+          Object.values(model.pivotNodes).forEach((p2) => p2.node.dispose());
+          model.root.dispose();
+          engine.dispose();
+          engineRef.current = null;
+        }
+      }).catch(console.error);
+      return () => {
+        disposed = true;
+        removeListeners == null ? void 0 : removeListeners();
+        if (engineRef.current) {
+          engineRef.current.dispose();
+          engineRef.current = null;
+        }
+      };
+    }, [bbmodel]);
+    return /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { style: { position: "relative", display: "inline-block" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(
+        "canvas",
+        {
+          ref: canvasRef,
+          width: width * 2,
+          height: height * 2,
+          style: { display: "block", width, height, borderRadius: 6, background: "#0e1726" }
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(
+        "div",
+        {
+          ref: overlayRef,
+          style: { position: "absolute", inset: 0, cursor: "grab", userSelect: "none", borderRadius: 6 }
+        }
+      )
+    ] });
+  }
+
+  // lib/animationHelpers.ts
+  function animDisplayName(fullName) {
+    return fullName.replace("animation.default_player.", "").replace(/_/g, " ");
+  }
+  function animEmoji(fullName) {
+    const n = fullName.replace("animation.default_player.", "").toLowerCase();
+    if (n.startsWith("walking") || n.startsWith("running")) return "\u{1F6B6}";
+    if (n.startsWith("jump")) return "\u{1F998}";
+    if (n.startsWith("idle") || n.startsWith("spawn")) return "\u{1F4A4}";
+    if (n.startsWith("death") || n.startsWith("skeletons_death")) return "\u{1F480}";
+    if (n.startsWith("hit")) return "\u{1F4A5}";
+    if (n.startsWith("melee")) return "\u2694\uFE0F";
+    if (n.startsWith("ranged") || n.startsWith("bow") || n.startsWith("magic")) return "\u{1F3F9}";
+    if (n.startsWith("fishing")) return "\u{1F3A3}";
+    if (n.startsWith("chop") || n.startsWith("dig") || n.startsWith("hammer") || n.startsWith("pickaxe") || n.startsWith("saw"))
+      return "\u26CF\uFE0F";
+    if (n.startsWith("skeletons")) return "\u{1F480}";
+    if (n.startsWith("crawling") || n.startsWith("sneaking")) return "\u{1F92B}";
+    if (n.startsWith("sit") || n.startsWith("lie") || n.startsWith("push") || n.startsWith("cheering") || n.startsWith("waving"))
+      return "\u{1F483}";
+    if (n.startsWith("dodge")) return "\u{1F4A8}";
+    if (n.startsWith("interact") || n.startsWith("pickup") || n.startsWith("use") || n.startsWith("throw") || n.startsWith("work"))
+      return "\u270B";
+    return "\u25B6";
+  }
+  function animationsFromBbmodel(bbmodel) {
+    if (!(bbmodel == null ? void 0 : bbmodel.animations)) return [];
+    return bbmodel.animations.map((anim) => ({
+      fullName: anim.name,
+      length: anim.length,
+      boneCount: Object.values(anim.animators).filter(
+        (a) => {
+          var _a6, _b, _c;
+          return ((_c = (_b = (_a6 = a.keyframes) == null ? void 0 : _a6.filter((k) => k.channel === "rotation")) == null ? void 0 : _b.length) != null ? _c : 0) > 0;
+        }
+      ).length
+    }));
+  }
+
+  // admin/pages/AdministrationPage.tsx
+  var import_jsx_runtime24 = __toESM(require_jsx_runtime(), 1);
+  var TAB_LABELS = {
+    blocks: "Blocs",
+    items: "Items",
+    bestiary: "Bestiaire",
+    skins: "Skins",
+    animations: "Animations"
+  };
+  function SidebarList({
+    items,
+    selected,
+    getKey,
+    getLabel,
+    onSelect
+  }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "flex-1 overflow-y-auto py-2", children: items.map((item) => {
+      const key2 = getKey(item);
+      const isSelected = selected ? getKey(selected) === key2 : false;
+      return /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+        "button",
+        {
+          onClick: () => onSelect(item),
+          className: `w-full text-left px-4 py-2 text-sm truncate transition-colors ${isSelected ? "bg-[#3C50E0]/20 text-white" : "text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E]"}`,
+          children: getLabel(item)
+        },
+        key2
+      );
+    }) });
+  }
+  function EmptyDetail({ message }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#8A99AF] text-sm", children: message });
+  }
+  function PropRow({ label, value }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex justify-between py-2 border-b border-[#2E3A4E] text-sm", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { className: "text-[#8A99AF]", children: label }),
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { className: "text-white font-mono", children: String(value) })
+    ] });
+  }
+  function BlocksTab() {
+    const [blocks, setBlocks] = (0, import_react13.useState)([]);
+    const [selected, setSelected] = (0, import_react13.useState)(null);
+    const [filter, setFilter] = (0, import_react13.useState)("");
+    (0, import_react13.useEffect)(() => {
+      api.blocks.list().then((b) => setBlocks(b.filter((x) => x.name !== "AIR"))).catch(console.error);
+    }, []);
+    const filtered = blocks.filter((b) => b.name.toLowerCase().includes(filter.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name));
+    return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("aside", { className: "w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "px-3 py-2 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+          "input",
+          {
+            className: "w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none",
+            placeholder: "Filtrer\u2026",
+            value: filter,
+            onChange: (e) => setFilter(e.target.value)
+          }
+        ) }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+          SidebarList,
+          {
+            items: filtered,
+            selected,
+            getKey: (b) => b.name,
+            getLabel: (b) => b.name.replace(/_/g, " "),
+            onSelect: setSelected
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "max-w-sm", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "w-12 h-12 rounded mb-4", style: { background: `rgb(${selected.minimapColor.join(",")})` } }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: selected.name.replace(/_/g, " ") }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Duret\xE9", value: selected.hardness === -1 ? "\u221E" : selected.hardness }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Solide", value: selected.solid ? "oui" : "non" }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Transparent", value: selected.transparent ? "oui" : "non" }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Liquide", value: selected.liquid ? "oui" : "non" }),
+        selected.modelElement && /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Mod\xE8le", value: selected.modelElement })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(EmptyDetail, { message: "S\xE9lectionner un bloc" }) })
+    ] });
+  }
+  function ItemsTab() {
+    const [items, setItems] = (0, import_react13.useState)({});
+    const [selected, setSelected] = (0, import_react13.useState)(null);
+    const [filter, setFilter] = (0, import_react13.useState)("");
+    (0, import_react13.useEffect)(() => {
+      api.items.list().then(setItems).catch(console.error);
+    }, []);
+    const entries = Object.entries(items).filter(([name2]) => name2.toLowerCase().includes(filter.toLowerCase())).sort(([a], [b]) => a.localeCompare(b)).map(([name2, dto]) => ({ name: name2, dto }));
+    return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("aside", { className: "w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "px-3 py-2 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+          "input",
+          {
+            className: "w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none",
+            placeholder: "Filtrer\u2026",
+            value: filter,
+            onChange: (e) => setFilter(e.target.value)
+          }
+        ) }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+          SidebarList,
+          {
+            items: entries,
+            selected,
+            getKey: (e) => e.name,
+            getLabel: (e) => e.name.replace(/_/g, " "),
+            onSelect: setSelected
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "max-w-sm", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "w-12 h-12 rounded mb-4 bg-[#6a5acd] flex items-center justify-center text-2xl", children: "\u2726" }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: selected.name.replace(/_/g, " ") }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Constructible", value: selected.dto.buildable ? "oui" : "non" }),
+        selected.dto.placesBlock && /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Pose le bloc", value: selected.dto.placesBlock })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(EmptyDetail, { message: "S\xE9lectionner un item" }) })
+    ] });
+  }
+  function BestiaryTab() {
+    const [types2, setTypes] = (0, import_react13.useState)({});
+    const [selected, setSelected] = (0, import_react13.useState)(null);
+    const [filter, setFilter] = (0, import_react13.useState)("");
+    const [bbmodel, setBbmodel] = (0, import_react13.useState)(null);
+    (0, import_react13.useEffect)(() => {
+      api.npcTypes.list().then(setTypes).catch(console.error);
+    }, []);
+    (0, import_react13.useEffect)(() => {
+      if (!selected) {
+        setBbmodel(null);
+        return;
+      }
+      const skinName = selected.dto.bbmodelFile.replace(".bbmodel", "");
+      api.skins.bbmodel(skinName).then(setBbmodel).catch(() => setBbmodel(null));
+    }, [selected]);
+    const entries = Object.entries(types2).filter(([name2]) => name2.toLowerCase().includes(filter.toLowerCase())).sort(([a], [b]) => a.localeCompare(b)).map(([name2, dto]) => ({ name: name2, dto }));
+    const [selectedAnim, setSelectedAnim] = (0, import_react13.useState)(null);
+    const anims = bbmodel ? animationsFromBbmodel(bbmodel) : [];
+    (0, import_react13.useEffect)(() => {
+      if (anims.length > 0) setSelectedAnim(anims[0].fullName);
+      else setSelectedAnim(null);
+    }, [bbmodel]);
+    return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("aside", { className: "w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "px-3 py-2 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+          "input",
+          {
+            className: "w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none",
+            placeholder: "Filtrer\u2026",
+            value: filter,
+            onChange: (e) => setFilter(e.target.value)
+          }
+        ) }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+          SidebarList,
+          {
+            items: entries,
+            selected,
+            getKey: (e) => e.name,
+            getLabel: (e) => e.name,
+            onSelect: setSelected
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex gap-6", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(BbmodelAnimationViewer, { bbmodel, animFullName: selectedAnim != null ? selectedAnim : "", width: 360, height: 460 }),
+          anims.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+            "select",
+            {
+              className: "mt-2 w-full bg-[#1A222C] border border-[#2E3A4E] text-[#8A99AF] text-xs rounded px-2 py-1 outline-none",
+              value: selectedAnim != null ? selectedAnim : "",
+              onChange: (e) => setSelectedAnim(e.target.value),
+              children: anims.map((a) => /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("option", { value: a.fullName, children: [
+                animEmoji(a.fullName),
+                " ",
+                animDisplayName(a.fullName)
+              ] }, a.fullName))
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: selected.name }),
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Comportement", value: selected.dto.behaviorKey }),
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Mod\xE8le", value: selected.dto.bbmodelFile }),
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Largeur", value: selected.dto.width }),
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Hauteur", value: selected.dto.height }),
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Vitesse", value: selected.dto.wanderSpeed }),
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Auto-spawn", value: selected.dto.autoSpawn ? "oui" : "non" })
+        ] })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(EmptyDetail, { message: "S\xE9lectionner un type de NPC" }) })
+    ] });
+  }
+  function SkinsTab() {
+    const [skins, setSkins] = (0, import_react13.useState)([]);
+    const [selected, setSelected] = (0, import_react13.useState)(null);
+    const [bbmodel, setBbmodel] = (0, import_react13.useState)(null);
+    const [filter, setFilter] = (0, import_react13.useState)("");
+    const [selectedAnim, setSelectedAnim] = (0, import_react13.useState)(null);
+    (0, import_react13.useEffect)(() => {
+      api.skins.list().then(setSkins).catch(console.error);
+    }, []);
+    (0, import_react13.useEffect)(() => {
+      if (!selected) {
+        setBbmodel(null);
+        return;
+      }
+      api.skins.bbmodel(selected).then(setBbmodel).catch(() => setBbmodel(null));
+    }, [selected]);
+    const anims = bbmodel ? animationsFromBbmodel(bbmodel) : [];
+    (0, import_react13.useEffect)(() => {
+      var _a6, _b, _c;
+      const walk = anims.find((a) => a.fullName.toLowerCase().includes("walking"));
+      setSelectedAnim((_c = (_b = walk == null ? void 0 : walk.fullName) != null ? _b : (_a6 = anims[0]) == null ? void 0 : _a6.fullName) != null ? _c : null);
+    }, [bbmodel]);
+    const filtered = skins.filter((s) => s.toLowerCase().includes(filter.toLowerCase())).sort();
+    return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("aside", { className: "w-48 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "px-3 py-2 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+          "input",
+          {
+            className: "w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none",
+            placeholder: "Filtrer\u2026",
+            value: filter,
+            onChange: (e) => setFilter(e.target.value)
+          }
+        ) }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+          SidebarList,
+          {
+            items: filtered,
+            selected,
+            getKey: (s) => s,
+            getLabel: (s) => s.replace(/_/g, " "),
+            onSelect: setSelected
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex gap-6", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(BbmodelAnimationViewer, { bbmodel, animFullName: selectedAnim != null ? selectedAnim : "", width: 360, height: 460 }),
+          anims.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+            "select",
+            {
+              className: "mt-2 w-full bg-[#1A222C] border border-[#2E3A4E] text-[#8A99AF] text-xs rounded px-2 py-1 outline-none",
+              value: selectedAnim != null ? selectedAnim : "",
+              onChange: (e) => setSelectedAnim(e.target.value),
+              children: anims.map((a) => /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("option", { value: a.fullName, children: [
+                animEmoji(a.fullName),
+                " ",
+                animDisplayName(a.fullName)
+              ] }, a.fullName))
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: selected.replace(/_/g, " ") }),
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Animations", value: anims.length })
+        ] })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(EmptyDetail, { message: "S\xE9lectionner un skin" }) })
+    ] });
+  }
+  function AnimationsTab() {
+    const [skins, setSkins] = (0, import_react13.useState)([]);
+    const [selectedSkin, setSelectedSkin] = (0, import_react13.useState)("articulated");
+    const [bbmodel, setBbmodel] = (0, import_react13.useState)(null);
+    const [selectedAnim, setSelectedAnim] = (0, import_react13.useState)(null);
+    const [filter, setFilter] = (0, import_react13.useState)("");
+    (0, import_react13.useEffect)(() => {
+      api.skins.list().then(setSkins).catch(console.error);
+    }, []);
+    const loadBbmodel = (0, import_react13.useCallback)((skin) => {
+      api.skins.bbmodel(skin).then(setBbmodel).catch(() => setBbmodel(null));
+    }, []);
+    (0, import_react13.useEffect)(() => {
+      loadBbmodel(selectedSkin);
+    }, [selectedSkin, loadBbmodel]);
+    const anims = bbmodel ? animationsFromBbmodel(bbmodel) : [];
+    const filtered = anims.filter((a) => animDisplayName(a.fullName).toLowerCase().includes(filter.toLowerCase()));
+    return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("aside", { className: "w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "px-3 py-2 border-b border-[#2E3A4E] space-y-2", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+            "select",
+            {
+              className: "w-full bg-[#1A222C] border border-[#2E3A4E] text-[#8A99AF] text-xs rounded px-2 py-1 outline-none",
+              value: selectedSkin,
+              onChange: (e) => {
+                setSelectedSkin(e.target.value);
+                setSelectedAnim(null);
+              },
+              children: skins.map((s) => /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("option", { value: s, children: s }, s))
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+            "input",
+            {
+              className: "w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none",
+              placeholder: "Filtrer\u2026",
+              value: filter,
+              onChange: (e) => setFilter(e.target.value)
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+          SidebarList,
+          {
+            items: filtered,
+            selected: selectedAnim,
+            getKey: (a) => a.fullName,
+            getLabel: (a) => `${animEmoji(a.fullName)} ${animDisplayName(a.fullName)}`,
+            onSelect: setSelectedAnim
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selectedAnim ? /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex gap-6", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(BbmodelAnimationViewer, { bbmodel, animFullName: selectedAnim.fullName, width: 360, height: 460 }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: animDisplayName(selectedAnim.fullName) }),
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Skin", value: selectedSkin }),
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Dur\xE9e", value: `${selectedAnim.length.toFixed(3)} s` }),
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "Os anim\xE9s", value: selectedAnim.boneCount }),
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(PropRow, { label: "ID complet", value: selectedAnim.fullName })
+        ] })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(EmptyDetail, { message: "S\xE9lectionner une animation" }) })
+    ] });
+  }
+  function AdministrationPage() {
+    const [tab, setTab] = (0, import_react13.useState)("blocks");
+    return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex flex-col h-full overflow-hidden -m-6", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "shrink-0 flex border-b border-[#2E3A4E] px-6 bg-[#1A222C]", children: Object.keys(TAB_LABELS).map((t2) => /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+        "button",
+        {
+          onClick: () => setTab(t2),
+          className: `px-4 py-3 text-sm font-medium border-b-2 transition-colors ${tab === t2 ? "border-[#3C50E0] text-white" : "border-transparent text-[#8A99AF] hover:text-white"}`,
+          children: TAB_LABELS[t2]
+        },
+        t2
+      )) }),
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex-1 overflow-hidden", children: [
+        tab === "blocks" && /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(BlocksTab, {}),
+        tab === "items" && /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(ItemsTab, {}),
+        tab === "bestiary" && /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(BestiaryTab, {}),
+        tab === "skins" && /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(SkinsTab, {}),
+        tab === "animations" && /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(AnimationsTab, {})
+      ] })
+    ] });
+  }
+
+  // admin/AdminApp.tsx
+  var import_jsx_runtime25 = __toESM(require_jsx_runtime(), 1);
   function Icon2({ d, size = 18 }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
       "svg",
       {
         width: size,
@@ -87315,7 +88033,7 @@ ${end.comment}` : end.comment;
         strokeWidth: 1.8,
         strokeLinecap: "round",
         strokeLinejoin: "round",
-        children: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("path", { d })
+        children: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("path", { d })
       }
     );
   }
@@ -87327,7 +88045,8 @@ ${end.comment}` : end.comment;
     worlds: "M3 7l9-4 9 4M3 7v10l9 4m-9-14l9 4m9-4v10l-9 4m0-14v14",
     classes: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
     npcs: "M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18",
-    gameAssets: "M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"
+    gameAssets: "M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9",
+    administration: "M4 6h16M4 10h16M4 14h8M4 18h8"
   };
   var NAV = [
     { path: "/admin", label: "Status", icon: ICONS.status, exact: true },
@@ -87337,7 +88056,8 @@ ${end.comment}` : end.comment;
     { path: "/admin/classes", label: "Classes", icon: ICONS.classes },
     { path: "/admin/config", label: "Config", icon: ICONS.config },
     { path: "/admin/worlds", label: "Worlds", icon: ICONS.worlds },
-    { path: "/admin/game-assets", label: "Game Assets", icon: ICONS.gameAssets }
+    { path: "/admin/game-assets", label: "Game Assets", icon: ICONS.gameAssets },
+    { path: "/admin/administration", label: "Administration", icon: ICONS.administration }
   ];
   var PAGE_LABELS = {
     "/admin": "Server Status",
@@ -87347,21 +88067,22 @@ ${end.comment}` : end.comment;
     "/admin/classes": "Classes & Skills",
     "/admin/config": "Config Editor",
     "/admin/worlds": "Worlds",
-    "/admin/game-assets": "Game Assets"
+    "/admin/game-assets": "Game Assets",
+    "/admin/administration": "Administration"
   };
   function Sidebar() {
     const { pathname } = useLocation();
-    return /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("aside", { className: "w-64 shrink-0 h-screen flex flex-col bg-[#1C2434] border-r border-[#2E3A4E]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("div", { className: "h-16 flex items-center px-6 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { className: "flex items-center gap-2.5", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("div", { className: "w-8 h-8 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
-        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
-        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
+    return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("aside", { className: "w-64 shrink-0 h-screen flex flex-col bg-[#1C2434] border-r border-[#2E3A4E]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "h-16 flex items-center px-6 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "flex items-center gap-2.5", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "w-8 h-8 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
+        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
+        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("nav", { className: "flex-1 px-4 py-5 space-y-0.5 overflow-y-auto", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: "Menu" }),
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("nav", { className: "flex-1 px-4 py-5 space-y-0.5 overflow-y-auto", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: "Menu" }),
         NAV.map(({ path, label, icon, exact }) => {
           const active = exact ? pathname === path : pathname.startsWith(path);
-          return /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)(
+          return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)(
             Link,
             {
               to: path,
@@ -87370,7 +88091,7 @@ ${end.comment}` : end.comment;
                 active ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white"
               ),
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Icon2, { d: icon, size: 17 }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Icon2, { d: icon, size: 17 }) }),
                 label
               ]
             },
@@ -87378,49 +88099,50 @@ ${end.comment}` : end.comment;
           );
         })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("div", { className: "px-6 py-4 border-t border-[#2E3A4E] text-[10px] text-[#8A99AF]", children: "micraft admin v1" })
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("div", { className: "px-6 py-4 border-t border-[#2E3A4E] text-[10px] text-[#8A99AF]", children: "micraft admin v1" })
     ] });
   }
   function Header() {
     var _a6;
     const { pathname } = useLocation();
     const title = (_a6 = PAGE_LABELS[pathname]) != null ? _a6 : "Admin";
-    return /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
           "Admin / ",
           title
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
+        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
         "Server online"
       ] })
     ] });
   }
   function AdminApp() {
-    return /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Sidebar, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Header, {}),
-        /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)(Routes, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(StatusPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(UsersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(PlayersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/npcs", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(NpcsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(ClassesPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(ConfigEditorPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(WorldsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Route, { path: "/admin/game-assets", element: /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(GameAssetsPage, {}) })
+    return /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Sidebar, {}),
+      /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Header, {}),
+        /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)(Routes, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(StatusPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(UsersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(PlayersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/npcs", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(NpcsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(ClassesPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(ConfigEditorPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(WorldsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/game-assets", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(GameAssetsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(Route, { path: "/admin/administration", element: /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(AdministrationPage, {}) })
         ] }) })
       ] })
     ] }) });
   }
 
   // admin/index.tsx
-  var import_jsx_runtime24 = __toESM(require_jsx_runtime(), 1);
-  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime24.jsx)(AdminApp, {}));
+  var import_jsx_runtime26 = __toESM(require_jsx_runtime(), 1);
+  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime26.jsx)(AdminApp, {}));
 })();
 /*! Bundled license information:
 

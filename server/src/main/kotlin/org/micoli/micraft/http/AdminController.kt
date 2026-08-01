@@ -30,11 +30,16 @@ import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcConstants
+import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.PlayerFile
 import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
+import org.micoli.micraft.protocol.BlockInfo
+import org.micoli.micraft.protocol.ItemInfo
+import org.micoli.micraft.protocol.NpcCodexInfo
 
 @Serializable
 data class UserDto(val email: String, val displayName: String, val groups: List<String>)
@@ -550,6 +555,63 @@ class AdminController(
                     }
                 call.respondText(
                     adminJson.encodeToString(ListSerializer(NpcAdminDto.serializer()), dtos),
+                    ContentType.Application.Json)
+            }
+
+            // ── Blocks ───────────────────────────────────────────────────────
+            get("/api/admin/blocks") {
+                if (!requireAdmin()) return@get
+                val blocks =
+                    BlockRegistry.all().map { type ->
+                        val def = BlockRegistry.get(type)
+                        BlockInfo(
+                            name = type.id,
+                            hardness = def.hardness,
+                            solid = def.solid,
+                            transparent = def.transparent,
+                            minimapColor = def.minimapColor,
+                            modelElement = def.modelElement,
+                            gltfModel = def.gltfModel,
+                            liquid = def.liquid,
+                        )
+                    }
+                call.respondText(
+                    Json.encodeToString(ListSerializer(BlockInfo.serializer()), blocks),
+                    ContentType.Application.Json)
+            }
+
+            // ── NPC types ─────────────────────────────────────────────────────
+            get("/api/admin/npc-types") {
+                if (!requireAdmin()) return@get
+                val types =
+                    gameLoop.getNpcManager().getDefinitions().mapValues { (_, def) ->
+                        NpcCodexInfo(
+                            bbmodelFile = def.bbmodelFile,
+                            behaviorKey = def.behaviorKey,
+                            width = def.width,
+                            height = def.height,
+                            wanderSpeed = def.wanderSpeed,
+                            autoSpawn = def.spawn.autoSpawn,
+                        )
+                    }
+                call.respondText(
+                    Json.encodeToString(
+                        MapSerializer(String.serializer(), NpcCodexInfo.serializer()), types),
+                    ContentType.Application.Json)
+            }
+
+            // ── Items ─────────────────────────────────────────────────────────
+            get("/api/admin/items") {
+                if (!requireAdmin()) return@get
+                val items =
+                    ItemRegistry.keys().associate { type ->
+                        val def = ItemRegistry.get(type)
+                        type.id to
+                            ItemInfo(buildable = def.buildable, placesBlock = def.placesBlock?.id)
+                    }
+                call.respondText(
+                    Json.encodeToString(
+                        MapSerializer(String.serializer(), ItemInfo.serializer()), items),
                     ContentType.Application.Json)
             }
 

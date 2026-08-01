@@ -65,7 +65,6 @@ function skinFaceUV(el: BbModelElement, W: number, H: number): Vector4[] {
 }
 
 const ANIM_GROUPS = ["head", "rightArm", "leftArm", "rightLeg", "leftLeg"] as const;
-type AnimGroupName = (typeof ANIM_GROUPS)[number];
 
 function extractWalkAnim(
   bbmodel: BbModel,

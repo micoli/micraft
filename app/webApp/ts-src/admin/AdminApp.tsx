@@ -8,6 +8,7 @@ import { StatusPage } from "./pages/StatusPage";
 import { UsersPage } from "./pages/UsersPage";
 import { WorldsPage } from "./pages/WorldsPage";
 import { GameAssetsPage } from "./pages/GameAssetsPage";
+import { AdministrationPage } from "./pages/AdministrationPage";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 function Icon({ d, size = 18 }: { d: string; size?: number }) {
@@ -39,6 +40,7 @@ const ICONS = {
     "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
   npcs: "M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18",
   gameAssets: "M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9",
+  administration: "M4 6h16M4 10h16M4 14h8M4 18h8",
 };
 
 const NAV = [
@@ -50,6 +52,7 @@ const NAV = [
   { path: "/admin/config", label: "Config", icon: ICONS.config },
   { path: "/admin/worlds", label: "Worlds", icon: ICONS.worlds },
   { path: "/admin/game-assets", label: "Game Assets", icon: ICONS.gameAssets },
+  { path: "/admin/administration", label: "Administration", icon: ICONS.administration },
 ];
 
 const PAGE_LABELS: Record<string, string> = {
@@ -61,6 +64,7 @@ const PAGE_LABELS: Record<string, string> = {
   "/admin/config": "Config Editor",
   "/admin/worlds": "Worlds",
   "/admin/game-assets": "Game Assets",
+  "/admin/administration": "Administration",
 };
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -143,6 +147,7 @@ export function AdminApp() {
               <Route path="/admin/config" element={<ConfigEditorPage />} />
               <Route path="/admin/worlds" element={<WorldsPage />} />
               <Route path="/admin/game-assets" element={<GameAssetsPage />} />
+              <Route path="/admin/administration" element={<AdministrationPage />} />
             </Routes>
           </main>
         </div>

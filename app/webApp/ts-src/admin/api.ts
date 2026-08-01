@@ -1,3 +1,27 @@
+export interface BlockInfoDto {
+  name: string;
+  hardness: number;
+  solid: boolean;
+  transparent: boolean;
+  minimapColor: [number, number, number];
+  modelElement: string;
+  liquid: boolean;
+}
+
+export interface NpcTypeDto {
+  bbmodelFile: string;
+  behaviorKey: string;
+  width: number;
+  height: number;
+  wanderSpeed: number;
+  autoSpawn: boolean;
+}
+
+export interface ItemDto {
+  buildable: boolean;
+  placesBlock: string | null;
+}
+
 export interface StatusSnapshot {
   connectedPlayers: number;
   playerNames: string[];
@@ -184,6 +208,19 @@ export const api = {
   },
   skins: {
     list: () => get("/api/skins").then((r) => r.json() as Promise<string[]>),
+    bbmodel: (skin: string) =>
+      fetch(`/api/models/skins/${encodeURIComponent(skin)}/${encodeURIComponent(skin)}.bbmodel`).then(
+        (r) => r.json() as Promise<BbModel>,
+      ),
+  },
+  blocks: {
+    list: () => get("/api/admin/blocks").then((r) => r.json() as Promise<BlockInfoDto[]>),
+  },
+  npcTypes: {
+    list: () => get("/api/admin/npc-types").then((r) => r.json() as Promise<Record<string, NpcTypeDto>>),
+  },
+  items: {
+    list: () => get("/api/admin/items").then((r) => r.json() as Promise<Record<string, ItemDto>>),
   },
   configs: {
     list: () => get("/api/admin/configs").then((r) => r.json() as Promise<string[]>),

@@ -2,7 +2,9 @@ import type { Texture } from "@babylonjs/core";
 import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
 import { getFaceTexUrl } from "../blocks/blockDefs";
 import { Block3DPreview, CssBlockCube, useBlockDefsReady, useBlockPreviews } from "../shared/BlockPreview";
-import { interpAxis } from "../player/playerModel";
+import { animDisplayName, animEmoji, animationsFromBbmodel } from "../../lib/animationHelpers";
+import type { AnimationEntry } from "../../lib/animationHelpers";
+import { BbmodelAnimationViewer } from "../../admin/components/BbmodelAnimationViewer";
 
 interface BlockEntry {
   ordinal: number;
@@ -38,35 +40,6 @@ type Selection =
   | { kind: "npc"; npcType: string }
   | { kind: "skin"; name: string }
   | { kind: "animation"; fullName: string };
-
-interface AnimationEntry {
-  fullName: string;
-  length: number;
-  boneCount: number;
-}
-
-function animDisplayName(fullName: string): string {
-  return fullName.replace("animation.default_player.", "").replace(/_/g, " ");
-}
-
-function animEmoji(fullName: string): string {
-  const n = fullName.replace("animation.default_player.", "").toLowerCase();
-  if (n.startsWith("walking") || n.startsWith("running")) return "🚶";
-  if (n.startsWith("jump")) return "🦘";
-  if (n.startsWith("idle") || n.startsWith("spawn")) return "💤";
-  if (n.startsWith("death") || n.startsWith("skeletons_death")) return "💀";
-  if (n.startsWith("hit")) return "💥";
-  if (n.startsWith("melee")) return "⚔️";
-  if (n.startsWith("ranged") || n.startsWith("bow") || n.startsWith("magic")) return "🏹";
-  if (n.startsWith("fishing")) return "🎣";
-  if (n.startsWith("chop") || n.startsWith("dig") || n.startsWith("hammer") || n.startsWith("pickaxe") || n.startsWith("saw")) return "⛏️";
-  if (n.startsWith("skeletons")) return "💀";
-  if (n.startsWith("crawling") || n.startsWith("sneaking")) return "🤫";
-  if (n.startsWith("sit") || n.startsWith("lie") || n.startsWith("push") || n.startsWith("cheering") || n.startsWith("waving")) return "💃";
-  if (n.startsWith("dodge")) return "💨";
-  if (n.startsWith("interact") || n.startsWith("pickup") || n.startsWith("use") || n.startsWith("throw") || n.startsWith("work")) return "✋";
-  return "▶";
-}
 
 interface Props {
   open: boolean;
@@ -107,6 +80,7 @@ const BlockCard = forwardRef<
     <div ref={ref} style={cardStyle} onClick={onClick} title={block.name}>
       {getPreview(block.ordinal) ? (
         <img
+          alt="preview"
           src={getPreview(block.ordinal)!}
           width={48}
           height={48}
@@ -166,6 +140,7 @@ const ItemCard = forwardRef<
     <div ref={ref} style={cardStyle} onClick={onClick} title={item.name}>
       {linkedBlock && getPreview(linkedBlock.ordinal) ? (
         <img
+          alt="preview"
           src={getPreview(linkedBlock.ordinal)!}
           width={48}
           height={48}
@@ -777,97 +752,9 @@ const AnimationCard = forwardRef<HTMLDivElement, { anim: AnimationEntry; selecte
   },
 );
 
-function AnimationModelPreview({ skin, animFullName }: { skin: string; animFullName: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const ready = usePlayerModelReady(skin);
-  const animRef = useRef(animFullName);
-  useLayoutEffect(() => {
-    animRef.current = animFullName;
-  });
-
-  useEffect(() => {
-    if (!ready) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const B = window.BABYLON;
-    if (!B) return;
-
-    const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
-    const scene = new B.Scene(engine);
-    scene.clearColor = new B.Color4(0.08, 0.08, 0.08, 0);
-    new B.ArcRotateCamera("cam", -Math.PI * 0.25, Math.PI / 3.2, 3.0, new B.Vector3(0, 0.9, 0), scene);
-    const light = new B.HemisphericLight("light", new B.Vector3(1, 2, 0.5), scene);
-    light.intensity = 1.1;
-    light.groundColor = new B.Color3(0.2, 0.2, 0.2);
-
-    const model = window.mc.createPlayerModelNow?.(scene, skin) ?? null;
-
-    const bbmodel = window.mcState?.playerBbmodels?.[skin];
-    const uuidToName: Record<string, string> = {};
-    bbmodel?.groups.forEach((g) => {
-      uuidToName[g.uuid] = g.name;
-    });
-
-    const DEG = Math.PI / 180;
-    let angle = 0;
-
-    scene.onBeforeRenderObservable.add(() => {
-      angle += 0.015;
-      if (!model || !bbmodel) return;
-
-      for (const boneName of Object.keys(model.pivotNodes)) {
-        const entry = model.pivotNodes[boneName];
-        entry.node.rotation.x = 0;
-        entry.node.rotation.y = 0;
-        entry.node.rotation.z = 0;
-      }
-      model.root.rotation.y = angle;
-
-      const animDef = bbmodel.animations?.find((a) => a.name === animRef.current);
-      if (!animDef) return;
-
-      const length = animDef.length || 1;
-      const t = (Date.now() % (length * 1000)) / (length * 1000);
-
-      for (const [uuid, animator] of Object.entries(animDef.animators)) {
-        const boneName = uuidToName[uuid];
-        if (!boneName) continue;
-        const pivot = model.pivotNodes[boneName];
-        if (!pivot) continue;
-        const kfs = animator.keyframes?.filter((k) => k.channel === "rotation") ?? [];
-        if (kfs.length === 0) continue;
-        const limbBones = ["rightArm", "leftArm", "rightLeg", "leftLeg"];
-        if (limbBones.includes(boneName)) {
-          pivot.node.rotation.x = interpAxis(kfs, t, "x") * DEG;
-          pivot.node.rotation.y = 0;
-          pivot.node.rotation.z = 0;
-        } else {
-          pivot.node.rotation.x = interpAxis(kfs, t, "x") * DEG;
-          pivot.node.rotation.y = interpAxis(kfs, t, "y") * DEG;
-          pivot.node.rotation.z = interpAxis(kfs, t, "z") * DEG;
-        }
-      }
-    });
-
-    engine.runRenderLoop(() => scene.render());
-    return () => {
-      if (model) window.mc.disposePlayerModel?.(model);
-      engine.dispose();
-    };
-  }, [ready, skin]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      width={160}
-      height={220}
-      style={{ display: "block", width: 160, height: 220, borderRadius: 6, background: "#111" }}
-    />
-  );
-}
-
-function AnimationDetail({ anim }: { anim: AnimationEntry }) {
+function AnimationDetail({ anim, skin }: { anim: AnimationEntry; skin: string }) {
   const display = animDisplayName(anim.fullName);
+  const bbmodel = window.mcState?.playerBbmodels?.[skin] ?? null;
   const row = (label: string, value: string) => (
     <div
       key={label}
@@ -881,7 +768,7 @@ function AnimationDetail({ anim }: { anim: AnimationEntry }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 8 }}>
       <div style={{ display: "flex", justifyContent: "center" }}>
-        <AnimationModelPreview skin="player" animFullName={anim.fullName} />
+        <BbmodelAnimationViewer bbmodel={bbmodel} animFullName={anim.fullName} width={160} height={220} />
       </div>
       <div style={{ fontSize: 13, fontWeight: "bold", color: "#eee", textAlign: "center" }}>{display}</div>
       <div>
@@ -897,6 +784,7 @@ export function CodexModal({ open, onClose }: Props) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [filter, setFilter] = useState("");
   const [allSkins, setAllSkins] = useState<string[]>([]);
+  const [selectedAnimSkin, setSelectedAnimSkin] = useState("player");
   const defsReady = useBlockDefsReady();
   const getPreview = useBlockPreviews();
 
@@ -908,7 +796,7 @@ export function CodexModal({ open, onClose }: Props) {
   }, []);
 
   useEffect(() => {
-    if (open && tab === "skins" && allSkins.length === 0) fetchSkins();
+    if (open && (tab === "skins" || tab === "animations") && allSkins.length === 0) fetchSkins();
   }, [open, tab, allSkins.length, fetchSkins]);
   const gridRef = useRef<HTMLDivElement>(null);
   const itemRefsMap = useRef<Map<string | number, HTMLDivElement | null>>(new Map());
@@ -927,17 +815,10 @@ export function CodexModal({ open, onClose }: Props) {
     .sort((a: NpcEntry, b: NpcEntry) => a.type.localeCompare(b.type));
 
   const allAnimations: AnimationEntry[] = useMemo(() => {
-    const bbmodel = window.mcState?.playerBbmodels?.["player"];
-    if (!bbmodel?.animations) return [];
-    return bbmodel.animations.map((anim) => ({
-      fullName: anim.name,
-      length: anim.length,
-      boneCount: Object.values(anim.animators).filter(
-        (a) => (a.keyframes?.filter((k) => k.channel === "rotation")?.length ?? 0) > 0,
-      ).length,
-    }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+    if (!open) return [];
+    const bbmodel = window.mcState?.playerBbmodels?.[selectedAnimSkin];
+    return animationsFromBbmodel(bbmodel!);
+  }, [open, selectedAnimSkin]);
 
   const filteredBlocks = allBlocks.filter((b) => b.name.toLowerCase().includes(filter.toLowerCase()));
   const filteredItems = allItems.filter((it) => it.name.toLowerCase().includes(filter.toLowerCase()));
@@ -1109,7 +990,7 @@ export function CodexModal({ open, onClose }: Props) {
   };
 
   const detail: React.CSSProperties = {
-    width: 220,
+    width: 320,
     flexShrink: 0,
     borderLeft: "1px solid #2a2a2a",
     overflowY: "auto",
@@ -1188,6 +1069,31 @@ export function CodexModal({ open, onClose }: Props) {
                 }}
               />
             </div>
+            {tab === "animations" && allSkins.length > 1 && (
+              <div style={{ padding: "4px 12px 4px", flexShrink: 0, display: "flex", gap: 4, flexWrap: "wrap" }}>
+                {allSkins.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      setSelectedAnimSkin(s);
+                      setSelection(null);
+                    }}
+                    style={{
+                      background: selectedAnimSkin === s ? "#2a3a2a" : "#1e1e1e",
+                      border: `1px solid ${selectedAnimSkin === s ? "#7aac7a" : "#3a3a3a"}`,
+                      borderRadius: 4,
+                      color: selectedAnimSkin === s ? "#7aac7a" : "#888",
+                      fontFamily: "monospace",
+                      fontSize: 11,
+                      padding: "3px 8px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
             <div ref={gridRef} style={grid}>
               {tab === "bestiary" &&
                 filteredNpcs.map((npc) => (
@@ -1285,7 +1191,7 @@ export function CodexModal({ open, onClose }: Props) {
             {selection?.kind === "animation" &&
               (() => {
                 const anim = allAnimations.find((a) => a.fullName === selection.fullName);
-                return anim ? <AnimationDetail anim={anim} /> : null;
+                return anim ? <AnimationDetail anim={anim} skin={selectedAnimSkin} /> : null;
               })()}
           </div>
         </div>
