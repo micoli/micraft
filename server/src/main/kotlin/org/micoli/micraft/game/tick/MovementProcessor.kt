@@ -114,24 +114,24 @@ class MovementProcessor(private val world: WorldState) {
         for (dy in 0 downTo -2) {
             val by = floor(cy.toDouble()).toInt() + dy
             if (by < WorldConstants.WORLD_MIN_Y || by > WorldConstants.WORLD_MAX_Y) continue
-            //if (!block.isSlope) continue
-            //val block = world.getBlock(bx, by, bz)
-            //val state = world.getState(bx, by, bz)
-            //val rotation = state.toInt() and 0x03
-            //val lx = (cx - bx.toFloat()).coerceIn(0f, 1f)
-            //val lz = (cz - bz.toFloat()).coerceIn(0f, 1f)
-            //val fraction =
+            // if (!block.isSlope) continue
+            // val block = world.getBlock(bx, by, bz)
+            // val state = world.getState(bx, by, bz)
+            // val rotation = state.toInt() and 0x03
+            // val lx = (cx - bx.toFloat()).coerceIn(0f, 1f)
+            // val lz = (cz - bz.toFloat()).coerceIn(0f, 1f)
+            // val fraction =
             //    when (rotation) {
             //        0 -> lz
             //        1 -> lx
             //        2 -> 1f - lz
             //        else -> 1f - lx
             //    }
-            //val surfaceY = by.toFloat() + fraction
-            //if (cy >= surfaceY - 2f && cy <= surfaceY + 0.05f) {
+            // val surfaceY = by.toFloat() + fraction
+            // if (cy >= surfaceY - 2f && cy <= surfaceY + 0.05f) {
             //    if (session.vy <= 0f) session.vy = 0f
             //    return surfaceY
-            //}
+            // }
         }
         return cy
     }

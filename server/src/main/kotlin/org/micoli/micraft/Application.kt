@@ -282,7 +282,7 @@ fun Application.module() {
         PlayerArmorsController(persistence).register(this)
         PlayerRpgController(persistence).register(this)
         CharacterController(persistence).register(this)
-        SkinsController().register(this)
+        SkinsController(dataPath).register(this)
         ArmorsController(dataPath).register(this)
         GameAssetsController().register(this)
         QuestsController(questManager).register(this)

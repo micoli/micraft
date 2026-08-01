@@ -106,18 +106,17 @@ fun jsSetNpcDead(scene: JsAny, model: JsAny): Unit =
 
 fun jsOpenNpcDialog(json: String): Unit = js("mc.openNpcDialog(json)")
 
-// ── First-person arm view model ───────────────────────────────────────────────
+// ── First person ──────────────────────────────────────────────────────────────
 
-fun jsCreateFPArms(camera: JsAny, scene: JsAny, skin: String): JsAny? =
-    js("mc.createFPArms(scene, camera, skin)")
+fun jsSetPlayerFirstPerson(model: JsAny, skin: String, enabled: Boolean): Unit =
+    js("mc.setPlayerFirstPerson(model, skin, enabled)")
 
-fun jsUpdateFPArms(fpArms: JsAny, isWalking: Boolean): Unit =
-    js("mc.updateFPArms(fpArms, isWalking)")
+fun jsInitSkinConfig(skin: String): Unit = js("mc.initSkinConfig(skin)")
 
-fun jsSetFPArmsVisible(fpArms: JsAny, visible: Boolean): Unit =
-    js("mc.setFPArmsVisible(fpArms, visible)")
+fun jsIsSkinConfigReady(skin: String): Boolean = js("mc.isSkinConfigReady(skin)")
 
-fun jsDisposeFPArms(fpArms: JsAny): Unit = js("mc.disposeFPArms(fpArms)")
+/** Eye height above the feet, in blocks; 0 when the skin declares no eye anchor. */
+fun jsGetSkinEyeHeight(skin: String): Double = js("mc.getSkinEyeHeight(skin)")
 
 // ── Armor overlay ─────────────────────────────────────────────────────────────
 

@@ -15,7 +15,7 @@ import { registerCombatTargetHighlight } from "./game/targeting/targetHighlight"
 import { registerGhostBlock } from "./game/targeting/ghostBlock";
 import { registerChunks } from "./game/chunks/chunkBuilder";
 import { registerPlayerModel } from "./game/player/playerModel";
-import { registerFPArms } from "./game/player/fpArms";
+import { registerSkinConfig } from "./game/player/skinConfig";
 import { registerArmorOverlay } from "./game/player/armorOverlay";
 import { registerNpcModel } from "./game/npc/npcModel";
 import { registerMinimap, setMinimapColors } from "./game/minimap/minimap";
@@ -60,6 +60,7 @@ window.mcState = {
   npcWalkBones: {},
   armorBbmodels: {},
   npcModelsReady: false,
+  skinConfigs: {},
   skinMatCache: {},
   skinUV: () => undefined as unknown as Vector4,
   skinFaceUV: () => [],
@@ -70,7 +71,6 @@ window.mcState = {
   breakMesh: null,
   ghostMesh: null,
   chunks: {},
-  currentFPArms: null,
   blockMaterials: undefined,
   renderPipeline: null,
   camState: null,
@@ -139,7 +139,7 @@ window.mc = {
   ...registerGhostBlock(),
   ...registerChunks(),
   ...registerPlayerModel(),
-  ...registerFPArms(),
+  ...registerSkinConfig(),
   ...registerArmorOverlay(),
   ...registerNpcModel(),
   ...registerMinimap(),

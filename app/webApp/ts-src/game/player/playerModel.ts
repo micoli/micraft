@@ -103,6 +103,7 @@ export function registerPlayerModel(): Pick<
   | "setPlayerTransform"
   | "setPlayerVisible"
   | "setPlayerAlpha"
+  | "setPlayerFirstPerson"
   | "disposePlayerModel"
 > {
   window.mcState.skinUV = skinUV;
@@ -312,6 +313,21 @@ export function registerPlayerModel(): Pick<
       model.root.getChildMeshes(true).forEach((m) => {
         m.visibility = alpha;
       });
+    },
+
+    // First person shows the player's own body, minus the bones listed in the skin config
+    // (head + helmet), since the camera sits inside the head. Re-applied every frame so
+    // armor pieces attached later are covered too.
+    setPlayerFirstPerson: (model: McPlayerModel, skin: string, enabled: boolean): void => {
+      const hidden = enabled ? (window.mcState.skinConfigs[skin]?.firstPersonHiddenBones ?? []) : [];
+      model.root.getChildMeshes(false).forEach((m) => {
+        m.isVisible = true;
+      });
+      for (const bone of hidden) {
+        model.pivotNodes[bone]?.node.getChildMeshes(false).forEach((m) => {
+          m.isVisible = false;
+        });
+      }
     },
 
     disposePlayerModel: (model: McPlayerModel): void => {

@@ -1,0 +1,15 @@
+# First-person camera anchor for this skin.
+#
+# Coordinates are bbmodel pixels (16 px = 1 block) in model space, feet at y = 0.
+# The camera is placed at the middle of the head, at eye height:
+#   head element spans y 24 → 32, x/z -4 → 4, so its centre is (0, 28, 0);
+#   the eyes are painted one half-pixel below the centre line of the front face.
+eyes:
+  x: 0.0
+  y: 27.5
+  z: 0.0
+
+# Bones hidden (with their whole subtree) while the local player is in first person,
+# so the player's own head and helmet never obstruct the camera.
+firstPersonHiddenBones:
+  - head

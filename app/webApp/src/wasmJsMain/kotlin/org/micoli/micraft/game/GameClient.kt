@@ -89,6 +89,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         jsSetupFog(scene, SKY_R, SKY_G, SKY_B)
         jsSetupRenderPipeline(scene, camera)
         jsInitPlayerModel("player")
+        jsInitSkinConfig("player")
         jsInitBlockDefs()
     }
 

@@ -84,7 +84,6 @@ class LocalPlayerController(
     var disconnectRequested = false
 
     @OptIn(ExperimentalWasmJsInterop::class) var localPlayerModel: JsAny? = null
-    @OptIn(ExperimentalWasmJsInterop::class) var fpArms: JsAny? = null
 
     var currentCombatTargetId: String? = null
     var autoTargetEnabled: Boolean = true
@@ -169,6 +168,19 @@ class LocalPlayerController(
         return "$count/$total ($pct%) avg=${avg.r3()} ±${std.r3()}"
     }
 
+    /**
+     * Height of the camera above the feet. Uses the skin's eye anchor
+     * (`resources/skins/<skin>/<skin>.yaml`) when the skin declares one — the camera then sits at
+     * the middle of the head, at eye level — scaled by the stance so sneaking and crawling still
+     * lower the view. Falls back to the stance eye offset for skins without a yaml.
+     */
+    private fun cameraEyeOffset(): Double {
+        val skinEyeHeight =
+            if (jsIsSkinConfigReady(localSkin)) jsGetSkinEyeHeight(localSkin) else 0.0
+        if (skinEyeHeight <= 0.0) return localStance.eyeOffset.toDouble()
+        return skinEyeHeight * (localStance.eyeOffset / PlayerConstants.EYE_OFFSET_STANDING)
+    }
+
     fun setViewMode(mode: String) {
         viewMode = ViewMode.entries.firstOrNull { it.name == mode } ?: ViewMode.FIRST_PERSON
     }
@@ -180,10 +192,9 @@ class LocalPlayerController(
         if (state.skin != localSkin) {
             localSkin = state.skin
             jsInitPlayerModel(localSkin)
+            jsInitSkinConfig(localSkin)
             localPlayerModel?.let { jsDisposePlayerModel(it) }
             localPlayerModel = null
-            fpArms?.let { jsDisposeFPArms(it) }
-            fpArms = null
             localArmorsAttached = emptyList()
         }
         if (state.armors != localArmors) {
@@ -203,7 +214,7 @@ class LocalPlayerController(
             prevPredX = serverX
             prevPredY = serverY
             prevPredZ = serverZ
-            prevEyeOffset = localStance.eyeOffset.toDouble()
+            prevEyeOffset = cameraEyeOffset()
             hasPrediction = true
             jsSetCameraRotationY(camera, state.orientation.yaw.toDouble())
             jsSetCameraRotationX(camera, state.orientation.pitch.toDouble())
@@ -683,14 +694,9 @@ class LocalPlayerController(
             }
         }
 
-        if (jsIsPlayerBbmodelReady(localSkin)) {
-            if (localPlayerModel == null) {
-                localPlayerModel = jsCreatePlayerModelNow(scene, localSkin)
-                jsSetPlayerVisible(localPlayerModel!!, false)
-            }
-            if (fpArms == null) {
-                fpArms = jsCreateFPArms(camera, scene, localSkin)
-            }
+        if (jsIsPlayerBbmodelReady(localSkin) && localPlayerModel == null) {
+            localPlayerModel = jsCreatePlayerModelNow(scene, localSkin)
+            jsSetPlayerVisible(localPlayerModel!!, false)
         }
         localPlayerModel?.let { model ->
             if (localArmors != localArmorsAttached) {
@@ -705,7 +711,7 @@ class LocalPlayerController(
         val yaw = jsGetCameraRotationY(camera)
         val pitch = jsGetCameraRotationX(camera)
 
-        val eyeOffset = localStance.eyeOffset.toDouble()
+        val eyeOffset = cameraEyeOffset()
         if (viewMode == ViewMode.THIRD_PERSON) {
             val dist = 3.0
             val camX = predX - kotlin.math.sin(yaw) * dist
@@ -716,10 +722,11 @@ class LocalPlayerController(
             localPlayerModel?.let {
                 jsSetPlayerTransform(
                     it, predX, predY, predZ, yaw.toFloat(), pitch.toFloat(), isMovingXZ)
+                jsSetPlayerFirstPerson(it, localSkin, false)
                 jsSetPlayerVisible(it, true)
             }
-            fpArms?.let { jsSetFPArmsVisible(it, false) }
         } else {
+            // Camera sits at the middle of the head, at the skin's eye height.
             jsSetCameraInterpolationState(
                 prevPredX,
                 prevPredY + prevEyeOffset,
@@ -728,11 +735,14 @@ class LocalPlayerController(
                 predY + eyeOffset,
                 predZ,
                 lastTickMs)
-            localPlayerModel?.let { jsSetPlayerVisible(it, false) }
-            val showArms = viewMode == ViewMode.FIRST_PERSON
-            fpArms?.let {
-                if (showArms) jsUpdateFPArms(it, isMovingXZ)
-                jsSetFPArmsVisible(it, showArms)
+            val showBody = viewMode == ViewMode.FIRST_PERSON
+            localPlayerModel?.let {
+                if (showBody) {
+                    jsSetPlayerTransform(
+                        it, predX, predY, predZ, yaw.toFloat(), pitch.toFloat(), isMovingXZ)
+                    jsSetPlayerFirstPerson(it, localSkin, true)
+                }
+                jsSetPlayerVisible(it, showBody)
             }
         }
         prevPredX = predX
@@ -938,7 +948,7 @@ class LocalPlayerController(
     var nearestRemoteLightBoost: (() -> Triple<Double, Double, Double>?)? = null
 
     private fun updateCaveLighting() {
-        val eyeYInt = (predY + localStance.eyeOffset).toInt()
+        val eyeYInt = (predY + cameraEyeOffset()).toInt()
         val wx = predX.toInt()
         val wz = predZ.toInt()
         val underground =
@@ -954,7 +964,7 @@ class LocalPlayerController(
         caveLightTarget = if (underground) 0.3 else 1.0
         caveLightCurrent += (caveLightTarget - caveLightCurrent) * 0.05
         jsSetCaveFactor(caveLightCurrent)
-        val eyeY = predY + localStance.eyeOffset
+        val eyeY = predY + cameraEyeOffset()
         val remoteBoost = if (!lightBoostEnabled) nearestRemoteLightBoost?.invoke() else null
         val lightX = remoteBoost?.first ?: predX
         val lightY = remoteBoost?.second ?: eyeY
@@ -1069,13 +1079,11 @@ class LocalPlayerController(
         jsHideTargetOutline()
         localPlayerModel?.let { jsDisposePlayerModel(it) }
         localPlayerModel = null
-        fpArms?.let { jsDisposeFPArms(it) }
-        fpArms = null
     }
 
     private fun computeAoeTarget(maxDist: Float): Triple<Float, Float, Float> {
         val ox = predX
-        val oy = predY + localStance.eyeOffset.toDouble()
+        val oy = predY + cameraEyeOffset()
         val oz = predZ
         val dirX = jsGetCameraDir3DX(camera).toFloat()
         val dirY = jsGetCameraDir3DY(camera).toFloat()
@@ -1094,7 +1102,7 @@ class LocalPlayerController(
 
     private fun raycastBlock(maxDist: Float = 5f): RaycastResult? {
         val ox = predX
-        val oy = predY + localStance.eyeOffset.toDouble()
+        val oy = predY + cameraEyeOffset()
         val oz = predZ
         val dx = jsGetCameraDir3DX(camera).toFloat()
         val dy = jsGetCameraDir3DY(camera).toFloat()

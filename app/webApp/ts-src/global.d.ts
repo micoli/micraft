@@ -162,10 +162,11 @@ declare global {
     _lightBoost?: { orb: Mesh; light: PointLight } | null;
   }
 
-  interface McFPArms {
-    pivots: Array<{ node: InstanceType<typeof BABYLON.TransformNode>; name: string }>;
-    meshes: Array<InstanceType<typeof BABYLON.AbstractMesh>>;
-    walkAnim: Record<string, { keyframes: BbModelKeyframe[]; length: number }>;
+  // Served by GET /api/skins/{name}/config — see resources/skins/<name>/<name>.yaml.
+  // `eyes` is in bbmodel pixels (16 px = 1 block), model space, feet at y = 0.
+  interface McSkinConfig {
+    eyes: { x: number; y: number; z: number };
+    firstPersonHiddenBones: string[];
   }
 
   // ── McState: all private JS-side runtime state ────────────────────────────────
@@ -189,6 +190,7 @@ declare global {
     npcWalkBones: Record<string, Record<string, string>>;
     armorBbmodels: Record<string, BbModel>;
     npcModelsReady: boolean;
+    skinConfigs: Record<string, McSkinConfig | null>;
     skinMatCache: Record<string, import("@babylonjs/core").StandardMaterial>;
     skinUV: (face: BbModelFace | undefined, W: number, H: number) => Vector4;
     skinFaceUV: (el: BbModelElement, W: number, H: number) => Vector4[];
@@ -199,7 +201,6 @@ declare global {
     breakMesh: (InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string }) | null;
     ghostMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     chunks: Record<string, InstanceType<typeof BABYLON.AbstractMesh>[]>;
-    currentFPArms: McFPArms | null;
     blockMaterials: Record<string, ShaderMaterial | StandardMaterial> | undefined;
     renderPipeline: unknown;
     camState: { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number; t: number } | null;
@@ -335,13 +336,12 @@ declare global {
     ): void;
     setPlayerVisible(model: McPlayerModel, visible: boolean): void;
     setPlayerAlpha(model: McPlayerModel, alpha: number): void;
+    setPlayerFirstPerson(model: McPlayerModel, skin: string, enabled: boolean): void;
     disposePlayerModel(model: McPlayerModel): void;
-    // FP arms
-    createFPArms(scene: Scene, camera: Camera, skin: string): McFPArms | null;
-    updateFPArms(fpArms: McFPArms, isWalking: boolean): void;
-    setFPArmsVisible(fpArms: McFPArms, visible: boolean): void;
-    disposeFPArms(fpArms: McFPArms): void;
-    debugFPArms(x?: number, y?: number, z?: number): void;
+    // Skin config (eye anchor, first-person hidden bones)
+    initSkinConfig(skin: string): void;
+    isSkinConfigReady(skin: string): boolean;
+    getSkinEyeHeight(skin: string): number;
     // Armor
     initArmorModel(name: string): void;
     isArmorModelReady(name: string): boolean;
