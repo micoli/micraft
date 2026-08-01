@@ -24,7 +24,8 @@ export function PauseMenu({ open, onClose, items }: PauseMenuProps) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
-        className="min-w-[220px] p-8 flex flex-col gap-3"
+        className="min-w-[220px] p-8 flex flex-col gap-3 z-[2001]"
+        overlayClassName="z-[2000]"
         onEscapeKeyDown={(e) => e.preventDefault()}
         onKeyDown={(e) => {
           if (e.key === "Escape") {

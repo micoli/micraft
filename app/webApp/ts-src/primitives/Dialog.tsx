@@ -23,11 +23,12 @@ function DialogOverlay({ className }: DialogOverlayProps) {
 
 interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof RadixDialog.Content> {
   className?: string;
+  overlayClassName?: string;
   children: React.ReactNode;
   movable?: boolean;
 }
 
-function DialogContent({ className, children, movable = false, ...props }: DialogContentProps) {
+function DialogContent({ className, overlayClassName, children, movable = false, ...props }: DialogContentProps) {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDraggingWindow, setIsDraggingWindow] = useState(false);
   const dragStart = useRef<{ mx: number; my: number; ox: number; oy: number } | null>(null);
@@ -64,7 +65,7 @@ function DialogContent({ className, children, movable = false, ...props }: Dialo
 
   return (
     <RadixDialog.Portal>
-      <DialogOverlay />
+      <DialogOverlay className={overlayClassName} />
       <RadixDialog.Content
         className={cn(
           "fixed left-1/2 top-1/2 z-[901] -translate-x-1/2 -translate-y-1/2",
