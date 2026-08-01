@@ -101,8 +101,11 @@ import org.micoli.micraft.http.PlayerSkinController
 import org.micoli.micraft.http.QuestsController
 import org.micoli.micraft.http.ScreenshotController
 import org.micoli.micraft.http.ServerInfoController
+import org.micoli.micraft.http.SimulationController
 import org.micoli.micraft.http.SkinsController
 import org.micoli.micraft.http.TerrainCache
+import org.micoli.micraft.simulation.SimulationDeps
+import org.micoli.micraft.simulation.SimulationRegistry
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("Application")
@@ -249,6 +252,26 @@ fun Application.module() {
 
     val questManager = get<QuestManager>()
 
+    // Resolved here, not inside `routing {}`: there `get(...)` binds to the Routing DSL instead of
+    // the Koin container. The lambda re-reads the live NPC registry on every simulation start.
+    val combatConfigData = get<CombatConfigData>()
+    val simulationAttackRegistry =
+        get<Map<String, org.micoli.micraft.combat.AttackDefinition>>(named("attacks"))
+    val armorRegistryLoader = get<ArmorRegistryLoader>()
+    val simulationI18n = get<I18nConfig>()
+    val simulationVegetationConfig = get<VegetationConfig>()
+    val simulationRegistry = SimulationRegistry {
+        SimulationDeps(
+            definitions = gameLoop.getNpcManager().getDefinitions(),
+            combatConfig = combatConfigData,
+            attackRegistry = simulationAttackRegistry,
+            armorRegistry = armorRegistryLoader.load(),
+            classRegistry = gameLoop.classRegistry,
+            i18n = simulationI18n,
+            vegetationConfig = simulationVegetationConfig,
+        )
+    }
+
     routing {
         // MICRAFT_WEB_DIST points directly at the served executable dir
         // (…/kotlin-webpack/wasmJs/developmentExecutable or …/productionExecutable).
@@ -299,6 +322,14 @@ fun Application.module() {
                 tokenStore)
         adminController.register(this)
         adminController.registerAdminWs(this)
+        val simulationController =
+            SimulationController(
+                registry = simulationRegistry,
+                npcTypesProvider = { gameLoop.getNpcManager().getDefinitions().keys.sorted() },
+                tokenStore = tokenStore,
+            )
+        simulationController.register(this)
+        simulationController.registerWs(this)
         ChunkController(world, tokenStore, serverConfig.chunks.httpWorkers).register(this)
         get("/api/players/by-email/{email}") {
             val email =
