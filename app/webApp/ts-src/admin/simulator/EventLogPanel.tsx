@@ -19,6 +19,11 @@ const FILTER_GROUPS: { key: string; labelKey: TranslationKey; types: SimEventTyp
     labelKey: "sim.eventGroup.combat",
     types: ["ATTACK", "DAMAGE", "DEATH", "AGGRO_GAIN", "AGGRO_LOST"],
   },
+  {
+    key: "pack",
+    labelKey: "sim.eventGroup.pack",
+    types: ["PACK_CALL", "PACK_JOIN", "PACK_ENGAGE", "PACK_DISBAND"],
+  },
   { key: "hunger", labelKey: "sim.eventGroup.hunger", types: ["HUNGRY", "FED"] },
   {
     key: "reproduction",

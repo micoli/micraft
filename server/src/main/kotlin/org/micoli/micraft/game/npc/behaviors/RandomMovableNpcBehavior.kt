@@ -47,13 +47,19 @@ class RandomMovableNpcBehavior : NpcBehavior {
         val pos = instance.state.pos
         val sp = instance.spawnPos
 
+        // A pack hunt runs much further than an NPC's own eyesight, so members get the wider pack
+        // leash instead of the aggro range.
+        val leash =
+            if (instance.packId != null) def.packConfig?.chaseRadius ?: def.aggroRange
+            else def.aggroRange
+
         val dtx = targetPos.x - sp.x
         val dtz = targetPos.z - sp.z
         val distFromSpawnSq = dtx * dtx + dtz * dtz
         val effectiveTarget =
-            if (distFromSpawnSq > def.aggroRange * def.aggroRange) {
+            if (distFromSpawnSq > leash * leash) {
                 val d = sqrt(distFromSpawnSq.toDouble()).toFloat()
-                Vec3(sp.x + dtx / d * def.aggroRange, targetPos.y, sp.z + dtz / d * def.aggroRange)
+                Vec3(sp.x + dtx / d * leash, targetPos.y, sp.z + dtz / d * leash)
             } else targetPos
 
         val dx = effectiveTarget.x - pos.x

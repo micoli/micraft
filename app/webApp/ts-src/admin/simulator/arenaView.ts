@@ -8,9 +8,9 @@ import type { TranslationKey } from "../i18n";
  * already visited the page. Bumping the suffix hands out the new defaults once, at the cost of
  * dropping previous layer choices — cheap, since layers are a per-session view setting.
  */
-const LAYER_STORAGE_KEY = "micraft-simulator-layers-v2";
+const LAYER_STORAGE_KEY = "micraft-simulator-layers-v3";
 
-export const LAYER_KEYS = ["food", "grid", "aggro", "hunger", "gestation", "names", "players"] as const;
+export const LAYER_KEYS = ["food", "grid", "aggro", "pack", "hunger", "gestation", "names", "players"] as const;
 export type LayerKey = (typeof LAYER_KEYS)[number];
 export type Layers = Record<LayerKey, boolean>;
 
@@ -22,6 +22,7 @@ export const LAYER_DEFAULTS: Layers = {
   food: true,
   grid: true,
   aggro: true,
+  pack: true,
   hunger: true,
   gestation: true,
   names: false,
@@ -32,6 +33,7 @@ export const LAYER_LABEL_KEYS: Record<LayerKey, TranslationKey> = {
   food: "sim.layers.food",
   grid: "sim.layers.grid",
   aggro: "sim.layers.aggro",
+  pack: "sim.layers.pack",
   hunger: "sim.layers.hunger",
   gestation: "sim.layers.gestation",
   names: "sim.layers.names",

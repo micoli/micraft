@@ -446,6 +446,58 @@ class NpcManagerTest {
     }
 
     @Test
+    fun applyDamage_fromAnotherNpc_makesTheVictimRetaliate() = runBlocking {
+        val (m, _) = testNpcManager(mapOf("ZOMBIE" to aggressiveDef()))
+        val victim = m.spawnNpc("Bear", "ZOMBIE", Vec3(0f, 5f, 0f))
+        val attacker = m.spawnNpc("Wolf", "ZOMBIE", Vec3(2f, 5f, 0f))
+
+        m.applyDamage(victim.state.id, 3, attacker.state.id)
+
+        assertEquals(attacker.state.id, victim.npcAggroTarget)
+        assertNull(victim.aggroTarget, "an NPC attacker must not land in the player aggro slot")
+    }
+
+    @Test
+    fun applyDamage_fromAnotherNpc_notifiesThePackHook() = runBlocking {
+        val (m, _) = testNpcManager(mapOf("ZOMBIE" to aggressiveDef()))
+        val seen = mutableListOf<Pair<String, String>>()
+        m.setNpcDamagedByNpcHook { victim, attacker ->
+            seen += victim.state.name to attacker.state.name
+        }
+        val victim = m.spawnNpc("Bear", "ZOMBIE", Vec3(0f, 5f, 0f))
+        val attacker = m.spawnNpc("Wolf", "ZOMBIE", Vec3(2f, 5f, 0f))
+
+        m.applyDamage(victim.state.id, 3, attacker.state.id)
+
+        assertEquals(listOf("Bear" to "Wolf"), seen)
+    }
+
+    @Test
+    fun tickAggro_npcTargetOutOfReach_isDropped() = runBlocking {
+        val (m, _) = testNpcManager(mapOf("ZOMBIE" to aggressiveDef(aggroRange = 5f)))
+        val hunter = m.spawnNpc("Wolf", "ZOMBIE", Vec3(0f, 5f, 0f))
+        val quarry = m.spawnNpc("Bear", "ZOMBIE", Vec3(100f, 5f, 0f))
+        hunter.npcAggroTarget = quarry.state.id
+
+        m.tickAggro(emptyList(), fakeCombatProcessor(m))
+
+        assertNull(hunter.npcAggroTarget, "past twice the aggro range the hunt is called off")
+    }
+
+    @Test
+    fun tickAggro_deadNpcTarget_isDropped() = runBlocking {
+        val (m, _) = testNpcManager(mapOf("ZOMBIE" to aggressiveDef()))
+        val hunter = m.spawnNpc("Wolf", "ZOMBIE", Vec3(0f, 5f, 0f))
+        val quarry = m.spawnNpc("Bear", "ZOMBIE", Vec3(2f, 5f, 0f))
+        hunter.npcAggroTarget = quarry.state.id
+        quarry.isDead = true
+
+        m.tickAggro(emptyList(), fakeCombatProcessor(m))
+
+        assertNull(hunter.npcAggroTarget)
+    }
+
+    @Test
     fun tickAggro_playerElevatedBeyondAggroRange_doesNotAggro() = runBlocking {
         val aggroRange = 10f
         val npcPos = Vec3(0f, 5f, 0f)

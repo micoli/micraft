@@ -2,6 +2,7 @@ package org.micoli.micraft.game.npc
 
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.game.npc.animal.AnimalYamlEntry
+import org.micoli.micraft.game.npc.pack.PackConfig
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 
@@ -27,4 +28,5 @@ data class NpcYamlEntry(
     val walkBoneAliases: Map<String, String> = emptyMap(),
     val bbmodelFile: String? = null,
     val animal: AnimalYamlEntry? = null,
+    val pack: PackConfig? = null,
 )

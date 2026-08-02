@@ -18,6 +18,10 @@ enum class SimEventType {
     GESTATION_START,
     BIRTH,
     EVOLVE,
+    PACK_CALL,
+    PACK_JOIN,
+    PACK_ENGAGE,
+    PACK_DISBAND,
     SYSTEM,
 }
 

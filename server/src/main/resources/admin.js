@@ -32047,6 +32047,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.controls.fitAll": "Fit the whole arena",
     // ── Simulator — event log ───────────────────────────────────────────────────
     "sim.eventGroup.combat": "Combat",
+    "sim.eventGroup.pack": "Packs",
     "sim.eventGroup.hunger": "Hunger",
     "sim.eventGroup.reproduction": "Reproduction",
     "sim.eventGroup.lifecycle": "Life cycle",
@@ -32070,6 +32071,10 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.event.GESTATION_START": "gestation",
     "sim.event.BIRTH": "birth",
     "sim.event.EVOLVE": "evolution",
+    "sim.event.PACK_CALL": "pack call",
+    "sim.event.PACK_JOIN": "pack join",
+    "sim.event.PACK_ENGAGE": "pack attack",
+    "sim.event.PACK_DISBAND": "pack disband",
     "sim.event.SYSTEM": "system",
     // ── Simulator — timeline ────────────────────────────────────────────────────
     "sim.timeline.title": "Timeline",
@@ -32149,6 +32154,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.layers.food": "Grazing (herbivores)",
     "sim.layers.grid": "Grid",
     "sim.layers.aggro": "Aggro lines",
+    "sim.layers.pack": "Pack hunts",
     "sim.layers.hunger": "Hunger bar",
     "sim.layers.gestation": "Gestation ring",
     "sim.layers.names": "Names",
@@ -32235,6 +32241,10 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.detail.gestationValue": "{0} d",
     "sim.detail.preyTarget": "Prey target",
     "sim.detail.mateTarget": "Mate target",
+    "sim.detail.pack": "Pack",
+    "sim.detail.packRallying": "rallying ({0} members)",
+    "sim.detail.packEngaged": "engaged ({0} members)",
+    "sim.detail.npcTarget": "NPC target",
     "sim.detail.parents": "Parents",
     "sim.detail.baseStats": "Base statistics",
     "sim.error.defaults": "could not load the default values",
@@ -32502,6 +32512,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.controls.fitAll": "Voir toute l'ar\xE8ne",
     // ── Simulator — event log ───────────────────────────────────────────────────
     "sim.eventGroup.combat": "Combat",
+    "sim.eventGroup.pack": "Meutes",
     "sim.eventGroup.hunger": "Faim",
     "sim.eventGroup.reproduction": "Reproduction",
     "sim.eventGroup.lifecycle": "Cycle de vie",
@@ -32525,6 +32536,10 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.event.GESTATION_START": "gestation",
     "sim.event.BIRTH": "naissance",
     "sim.event.EVOLVE": "\xE9volution",
+    "sim.event.PACK_CALL": "appel de meute",
+    "sim.event.PACK_JOIN": "ralliement",
+    "sim.event.PACK_ENGAGE": "assaut de meute",
+    "sim.event.PACK_DISBAND": "dispersion",
     "sim.event.SYSTEM": "syst\xE8me",
     // ── Simulator — timeline ────────────────────────────────────────────────────
     "sim.timeline.title": "Timeline",
@@ -32604,6 +32619,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.layers.food": "Brout (herbivores)",
     "sim.layers.grid": "Grille",
     "sim.layers.aggro": "Lignes d'aggro",
+    "sim.layers.pack": "Chasses en meute",
     "sim.layers.hunger": "Barre de faim",
     "sim.layers.gestation": "Anneau de gestation",
     "sim.layers.names": "Noms",
@@ -32690,6 +32706,10 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.detail.gestationValue": "{0} j",
     "sim.detail.preyTarget": "Proie vis\xE9e",
     "sim.detail.mateTarget": "Partenaire vis\xE9",
+    "sim.detail.pack": "Meute",
+    "sim.detail.packRallying": "ralliement ({0} membres)",
+    "sim.detail.packEngaged": "engag\xE9e ({0} membres)",
+    "sim.detail.npcTarget": "Cible PNJ",
     "sim.detail.parents": "Parents",
     "sim.detail.baseStats": "Statistiques de base",
     "sim.error.defaults": "impossible de charger les valeurs par d\xE9faut",
@@ -89044,12 +89064,13 @@ ${end.comment}` : end.comment;
 
   // admin/simulator/arenaView.ts
   var import_react15 = __toESM(require_react(), 1);
-  var LAYER_STORAGE_KEY = "micraft-simulator-layers-v2";
-  var LAYER_KEYS = ["food", "grid", "aggro", "hunger", "gestation", "names", "players"];
+  var LAYER_STORAGE_KEY = "micraft-simulator-layers-v3";
+  var LAYER_KEYS = ["food", "grid", "aggro", "pack", "hunger", "gestation", "names", "players"];
   var LAYER_DEFAULTS = {
     food: true,
     grid: true,
     aggro: true,
+    pack: true,
     hunger: true,
     gestation: true,
     names: false,
@@ -89059,6 +89080,7 @@ ${end.comment}` : end.comment;
     food: "sim.layers.food",
     grid: "sim.layers.grid",
     aggro: "sim.layers.aggro",
+    pack: "sim.layers.pack",
     hunger: "sim.layers.hunger",
     gestation: "sim.layers.gestation",
     names: "sim.layers.names",
@@ -89325,6 +89347,10 @@ ${end.comment}` : end.comment;
     GESTATION_START: "#E879F9",
     BIRTH: "#22D3EE",
     EVOLVE: "#818CF8",
+    PACK_CALL: "#F97316",
+    PACK_JOIN: "#FDBA74",
+    PACK_ENGAGE: "#DC2626",
+    PACK_DISBAND: "#9CA3AF",
     SYSTEM: "#8A99AF"
   };
   var EVENT_LABEL_KEYS = {
@@ -89342,6 +89368,10 @@ ${end.comment}` : end.comment;
     GESTATION_START: "sim.event.GESTATION_START",
     BIRTH: "sim.event.BIRTH",
     EVOLVE: "sim.event.EVOLVE",
+    PACK_CALL: "sim.event.PACK_CALL",
+    PACK_JOIN: "sim.event.PACK_JOIN",
+    PACK_ENGAGE: "sim.event.PACK_ENGAGE",
+    PACK_DISBAND: "sim.event.PACK_DISBAND",
     SYSTEM: "sim.event.SYSTEM"
   };
   var ALL_NPC_TYPES = "*";
@@ -89422,6 +89452,12 @@ ${end.comment}` : end.comment;
 
   // admin/simulator/ArenaCanvasRenderer.tsx
   var import_jsx_runtime28 = __toESM(require_jsx_runtime(), 1);
+  var PACK_RING = 6;
+  function packColor(packId) {
+    let hash = 0;
+    for (let i = 0; i < packId.length; i++) hash = hash * 31 + packId.charCodeAt(i) | 0;
+    return `hsl(${Math.abs(hash) % 360}, 85%, 62%)`;
+  }
   function ArenaCanvasRenderer({ arena, food, npcs, players, layers, selectedId, onSelect, view }) {
     const canvasRef = (0, import_react16.useRef)(null);
     const [hover, setHover] = (0, import_react16.useState)(null);
@@ -89508,6 +89544,33 @@ ${end.comment}` : end.comment;
         }
         ctx.stroke();
         ctx.setLineDash([]);
+      }
+      if (layers.pack) {
+        const npcById = new Map(npcs.map((n) => [n.id, n]));
+        const byPack = /* @__PURE__ */ new Map();
+        for (const npc of npcs) {
+          if (!npc.packId) continue;
+          const members = byPack.get(npc.packId);
+          if (members) members.push(npc);
+          else byPack.set(npc.packId, [npc]);
+        }
+        ctx.lineWidth = 1.5;
+        for (const [packId, members] of byPack) {
+          const target = members.map((m) => m.npcTargetId).find((id2) => id2 && npcById.get(id2));
+          ctx.strokeStyle = packColor(packId);
+          ctx.beginPath();
+          for (const member of members) {
+            const [ax, ay] = view.w2s(member.x, member.z);
+            ctx.moveTo(ax + PACK_RING, ay);
+            ctx.arc(ax, ay, PACK_RING, 0, Math.PI * 2);
+            const quarry = target ? npcById.get(target) : void 0;
+            if (!quarry) continue;
+            const [bx, by] = view.w2s(quarry.x, quarry.z);
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(bx, by);
+          }
+          ctx.stroke();
+        }
       }
       const markerRadius = markerRadiusFor(ppb);
       const showNames = layers.names && ppb > 2.5;
@@ -89665,6 +89728,11 @@ ${end.comment}` : end.comment;
       key: "combat",
       labelKey: "sim.eventGroup.combat",
       types: ["ATTACK", "DAMAGE", "DEATH", "AGGRO_GAIN", "AGGRO_LOST"]
+    },
+    {
+      key: "pack",
+      labelKey: "sim.eventGroup.pack",
+      types: ["PACK_CALL", "PACK_JOIN", "PACK_ENGAGE", "PACK_DISBAND"]
     },
     { key: "hunger", labelKey: "sim.eventGroup.hunger", types: ["HUNGRY", "FED"] },
     {
@@ -91385,7 +91453,7 @@ ${end.comment}` : end.comment;
     ] });
   }
   function NpcDetailPanel({ sim }) {
-    var _a6, _b, _c, _d, _e;
+    var _a6, _b, _c, _d, _e, _f, _g, _h;
     const t2 = useT();
     const detail = sim.detail;
     if (!detail) {
@@ -91419,6 +91487,11 @@ ${end.comment}` : end.comment;
       ],
       [t2("sim.detail.preyTarget"), (_d = detail.preyTargetId) != null ? _d : "\u2014"],
       [t2("sim.detail.mateTarget"), (_e = detail.mateTargetId) != null ? _e : "\u2014"],
+      [
+        t2("sim.detail.pack"),
+        npc.packId ? t2(detail.packEngaged ? "sim.detail.packEngaged" : "sim.detail.packRallying", String((_f = detail.packSize) != null ? _f : 1)) : "\u2014"
+      ],
+      [t2("sim.detail.npcTarget"), (_h = (_g = npc.npcTargetId) == null ? void 0 : _g.slice(0, 8)) != null ? _h : "\u2014"],
       [t2("sim.detail.parents"), detail.parentIds.length ? detail.parentIds.map((p2) => p2.slice(0, 8)).join(", ") : "\u2014"]
     ];
     return /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex h-full flex-col", children: [

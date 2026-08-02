@@ -49,6 +49,7 @@ import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
 import org.micoli.micraft.game.npc.NpcTickPipeline
 import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
+import org.micoli.micraft.game.npc.pack.PackCoordinator
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistry
@@ -353,12 +354,27 @@ class GameLoop(
             broadcast = sessionRegistry::broadcast,
         )
 
+    private val packCoordinator =
+        PackCoordinator(
+                npcManager = npcManager,
+                broadcastCombatLog = { msg ->
+                    val chatMsg =
+                        ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
+                    sessionRegistry
+                        .all()
+                        .filter { it.state.subscribedChannels.hasChannel("combat") }
+                        .forEach { it.send(chatMsg) }
+                },
+            )
+            .also { npcManager.setNpcDamagedByNpcHook(it::onNpcDamagedByNpc) }
+
     /** Owns the NPC tick order; shared with the admin world simulator. */
     private val npcTickPipeline =
         NpcTickPipeline(
             npcManager = npcManager,
             npcSpawner = npcSpawner,
             animals = animalInteractionProcessor,
+            packs = packCoordinator,
         )
 
     private var worldMeta: WorldMetadata? = persistence?.loadMetadata()

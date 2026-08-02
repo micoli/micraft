@@ -175,13 +175,18 @@ class MovementProcessorTest {
         assertEquals(0.5f, result.speedMultiplier)
     }
 
+    /**
+     * The slope must be registered solid: these tests assert the player is carried by it. Declaring
+     * it non-solid only ever passed when a later registry load happened to overwrite this one —
+     * which made the outcome depend on the order the test classes ran in.
+     */
     private fun registerSlope() {
         BlockRegistry.load(
             mapOf(
                 BlockType.LEGO_SLOPE to
                     BlockDefinition(
                         hardness = 1f,
-                        solid = false,
+                        solid = true,
                         replaceable = false,
                     )))
     }

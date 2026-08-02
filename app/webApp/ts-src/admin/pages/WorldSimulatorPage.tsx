@@ -597,6 +597,13 @@ function NpcDetailPanel({ sim }: { sim: ReturnType<typeof useSimulation> }) {
     ],
     [t("sim.detail.preyTarget"), detail.preyTargetId ?? "—"],
     [t("sim.detail.mateTarget"), detail.mateTargetId ?? "—"],
+    [
+      t("sim.detail.pack"),
+      npc.packId
+        ? t(detail.packEngaged ? "sim.detail.packEngaged" : "sim.detail.packRallying", String(detail.packSize ?? 1))
+        : "—",
+    ],
+    [t("sim.detail.npcTarget"), npc.npcTargetId?.slice(0, 8) ?? "—"],
     [t("sim.detail.parents"), detail.parentIds.length ? detail.parentIds.map((p) => p.slice(0, 8)).join(", ") : "—"],
   ];
 

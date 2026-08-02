@@ -57,6 +57,9 @@ data class SimNpcDto(
     val level: Int,
     val isDead: Boolean,
     val aggroTargetId: String? = null,
+    /** Pack this NPC hunts with, and the NPC it is hunting. */
+    val packId: String? = null,
+    val npcTargetId: String? = null,
     val gender: String? = null,
     val hunger: Double? = null,
     val gestationRemainingDays: Double? = null,
@@ -111,6 +114,8 @@ data class SimNpcDetailDto(
     val parentIds: List<String> = emptyList(),
     val preyTargetId: String? = null,
     val mateTargetId: String? = null,
+    val packSize: Int? = null,
+    val packEngaged: Boolean? = null,
     val diet: String? = null,
     val activeEffects: List<String> = emptyList(),
 )

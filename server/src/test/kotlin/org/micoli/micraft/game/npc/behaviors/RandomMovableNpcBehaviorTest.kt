@@ -8,6 +8,7 @@ import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.WanderPhase
+import org.micoli.micraft.game.npc.pack.PackConfig
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.support.testWorld
@@ -19,6 +20,7 @@ class RandomMovableNpcBehaviorTest {
         wanderRadius: Float = 12f,
         wanderSpeed: Float = 3f,
         aggroRange: Float = 12f,
+        pack: PackConfig? = null,
     ): NpcInstance {
         val def =
             NpcDefinition(
@@ -30,6 +32,7 @@ class RandomMovableNpcBehaviorTest {
                 wanderSpeed = wanderSpeed,
                 wanderRadius = wanderRadius,
                 aggroRange = aggroRange,
+                packConfig = pack,
             )
         return NpcInstance(
             state = NpcState(id = "1", name = "Goat", type = "GOAT", pos = pos, yaw = 0f),
@@ -176,5 +179,31 @@ class RandomMovableNpcBehaviorTest {
         val dz = instance.state.pos.z - spawn.z
         val dist = sqrt((dx * dx + dz * dz).toDouble())
         assertTrue(dist <= aggroRange + 0.5, "npc should not exceed aggroRange from spawn: $dist")
+    }
+
+    @Test
+    fun tick_packMember_chasesOutToThePackLeashInsteadOfTheAggroRange() {
+        val floorY = 4
+        val world =
+            testWorld(
+                *(0..40).flatMap { x -> (0..40).map { z -> Triple(x, floorY, z) } }.toTypedArray())
+        val aggroRange = 6f
+        val spawn = Vec3(10.5f, (floorY + 1).toFloat(), 10.5f)
+        val instance =
+            instanceAt(
+                spawn,
+                wanderRadius = 5f,
+                aggroRange = aggroRange,
+                pack = PackConfig(chaseRadius = 18f, hostileTypes = listOf("bear")),
+            )
+        instance.vy = 0f
+        instance.packId = "pack-1"
+        instance.chaseTargetPos = Vec3(30.5f, (floorY + 1).toFloat(), 10.5f)
+        repeat(300) { RandomMovableNpcBehavior().tick(instance, world) }
+        val dx = instance.state.pos.x - spawn.x
+        val dz = instance.state.pos.z - spawn.z
+        val dist = sqrt((dx * dx + dz * dz).toDouble())
+        assertTrue(dist > aggroRange + 1, "a pack member should out-run its own aggro range: $dist")
+        assertTrue(dist <= 18f + 0.5, "but never past the pack leash: $dist")
     }
 }

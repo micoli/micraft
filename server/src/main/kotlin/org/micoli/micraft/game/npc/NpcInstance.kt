@@ -18,6 +18,16 @@ class NpcInstance(
     @Volatile var currentMana: Int = -1,
     @Volatile var currentRage: Int = 0,
     @Volatile var aggroTarget: String? = null,
+    /**
+     * Target that is another NPC, kept apart from [aggroTarget] on purpose: the player aggro code
+     * clears [aggroTarget] as soon as it no longer resolves to a session.
+     */
+    @Volatile var npcAggroTarget: String? = null,
+    @Volatile var packId: String? = null,
+    /** Where a pack member converges while the pack is still short of its quorum. */
+    @Volatile var packRallyPos: Vec3? = null,
+    /** Set when a pack disbands; silences this NPC for `callCooldownSec`. */
+    @Volatile var lastPackCallMs: Long = 0L,
     @Volatile var lastDamagedAtMs: Long = 0L,
     val attackCooldownsUntilMs: MutableMap<String, Long> = mutableMapOf(),
     val damageContributors: MutableMap<String, Int> = mutableMapOf(),

@@ -280,6 +280,7 @@ export const en = {
 
   // ── Simulator — event log ───────────────────────────────────────────────────
   "sim.eventGroup.combat": "Combat",
+  "sim.eventGroup.pack": "Packs",
   "sim.eventGroup.hunger": "Hunger",
   "sim.eventGroup.reproduction": "Reproduction",
   "sim.eventGroup.lifecycle": "Life cycle",
@@ -304,6 +305,10 @@ export const en = {
   "sim.event.GESTATION_START": "gestation",
   "sim.event.BIRTH": "birth",
   "sim.event.EVOLVE": "evolution",
+  "sim.event.PACK_CALL": "pack call",
+  "sim.event.PACK_JOIN": "pack join",
+  "sim.event.PACK_ENGAGE": "pack attack",
+  "sim.event.PACK_DISBAND": "pack disband",
   "sim.event.SYSTEM": "system",
 
   // ── Simulator — timeline ────────────────────────────────────────────────────
@@ -393,6 +398,7 @@ export const en = {
   "sim.layers.food": "Grazing (herbivores)",
   "sim.layers.grid": "Grid",
   "sim.layers.aggro": "Aggro lines",
+  "sim.layers.pack": "Pack hunts",
   "sim.layers.hunger": "Hunger bar",
   "sim.layers.gestation": "Gestation ring",
   "sim.layers.names": "Names",
@@ -486,6 +492,10 @@ export const en = {
   "sim.detail.gestationValue": "{0} d",
   "sim.detail.preyTarget": "Prey target",
   "sim.detail.mateTarget": "Mate target",
+  "sim.detail.pack": "Pack",
+  "sim.detail.packRallying": "rallying ({0} members)",
+  "sim.detail.packEngaged": "engaged ({0} members)",
+  "sim.detail.npcTarget": "NPC target",
   "sim.detail.parents": "Parents",
   "sim.detail.baseStats": "Base statistics",
 

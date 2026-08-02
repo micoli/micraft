@@ -33,3 +33,15 @@ attacks:
     level: 3
   - attackId: venomous_fang
     level: 2
+pack:
+  extendPackType:
+    - wolf
+  callRadius: 30.0
+  relayHops: 3
+  maxSize: 6
+  minSizeToEngage: 2
+  callCooldownSec: 20.0
+  rallyTimeoutSec: 20.0
+  chaseRadius: 45.0
+  hostileTypes:
+    - polar_bear

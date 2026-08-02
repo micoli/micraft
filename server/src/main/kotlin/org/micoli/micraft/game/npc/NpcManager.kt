@@ -55,6 +55,12 @@ class NpcManager(
      * live server; the world simulator passes a fixed context instead.
      */
     private val ctxOf: () -> NpcTickContext = { NpcTickContext.live },
+    /**
+     * Notified when an NPC is hurt by another NPC. Wired to the pack coordinator, as a lambda so
+     * that the coordinator can depend on this manager without a cycle.
+     */
+    private var onNpcDamagedByNpc: (victim: NpcInstance, attacker: NpcInstance) -> Unit = { _, _ ->
+    },
 ) {
     private val ctx: NpcTickContext
         get() = ctxOf()
@@ -301,10 +307,16 @@ class NpcManager(
                     Math.floorDiv(pos.z.toInt(), WorldConstants.CHUNK_SIZE),
                 )
             if (world.getChunkIfDiscovered(chunkPos) == null) continue
+            // Player target wins; an NPC target (pack hunt, retaliation) is the fallback. Left null
+            // otherwise so the animal behaviour can install its prey/mate target.
             instance.chaseTargetPos =
                 instance.aggroTarget?.let { targetId ->
                     sessions.find { it.id == targetId }?.state?.pos
                 }
+                    ?: instance.npcAggroTarget?.let { targetId ->
+                        npcs[targetId]?.takeIf { !it.isDead }?.state?.pos
+                    }
+                    ?: instance.packRallyPos
             val before = instance.state
             val changed =
                 instance.definition.behavior.tick(
@@ -469,6 +481,11 @@ class NpcManager(
 
     fun getInstance(id: String): NpcInstance? = npcs[id]
 
+    /** Late-bound because the pack coordinator is built from this manager. */
+    fun setNpcDamagedByNpcHook(hook: (victim: NpcInstance, attacker: NpcInstance) -> Unit) {
+        onNpcDamagedByNpc = hook
+    }
+
     suspend fun applyDamage(npcId: String, damage: Int, attackerId: String) {
         val instance =
             npcs[npcId]
@@ -480,7 +497,17 @@ class NpcManager(
         val now = System.currentTimeMillis()
         instance.currentHp = (instance.currentHp - damage).coerceAtLeast(0)
         instance.lastDamagedAtMs = now
-        if (instance.aggroTarget == null) {
+        val attackerNpcInstance = npcs[attackerId]
+        if (attackerNpcInstance != null) {
+            // Hurt by another NPC: a separate target field, otherwise tickAggro would drop it on
+            // the next tick when the id fails to resolve to a session.
+            if (instance.npcAggroTarget == null && instance.aggroTarget == null) {
+                instance.npcAggroTarget = attackerId
+                broadcastCombatLog(
+                    "[m:${instance.state.name}] turns on [m:${attackerNpcInstance.state.name}]!")
+            }
+            onNpcDamagedByNpc(instance, attackerNpcInstance)
+        } else if (instance.aggroTarget == null) {
             instance.aggroTarget = attackerId
             val attackerName = getSessions().find { it.id == attackerId }?.state?.name ?: "?"
             broadcastCombatLog("[m:${instance.state.name}] targets [p:$attackerName]!")
@@ -668,7 +695,11 @@ class NpcManager(
                 broadcastAggroUpdate(instance, sessions)
             }
 
-            val aggroTargetId = instance.aggroTarget ?: continue
+            val aggroTargetId = instance.aggroTarget
+            if (aggroTargetId == null) {
+                tickNpcTarget(instance, now, deaggroMs, aggroRangeSq, combatProcessor)
+                continue
+            }
             val targetSession = sessions.find { it.id == aggroTargetId } ?: continue
             if (targetSession.isDowned) {
                 instance.aggroTarget = null
@@ -676,6 +707,42 @@ class NpcManager(
             }
             combatProcessor.handleNpcAttack(instance, targetSession)
         }
+    }
+
+    /**
+     * Chase and hit an NPC target — pack hunt or retaliation. Same leash rules as the player case:
+     * given up past twice the aggro range once the NPC has been left alone long enough.
+     */
+    private suspend fun tickNpcTarget(
+        instance: NpcInstance,
+        now: Long,
+        deaggroMs: Long,
+        aggroRangeSq: Float,
+        combatProcessor: CombatProcessor,
+    ) {
+        val targetId = instance.npcAggroTarget ?: return
+        val target = npcs[targetId]
+        if (target == null || target.isDead) {
+            instance.npcAggroTarget = null
+            return
+        }
+        val pos = instance.state.pos
+        val dx = target.state.pos.x - pos.x
+        val dy = target.state.pos.y - pos.y
+        val dz = target.state.pos.z - pos.z
+        // A pack member is allowed to follow its quarry as far as its pack leash, not just twice
+        // its own aggro range — a wolf only sees 6 blocks but hunts a bear much further out.
+        val giveUpSq =
+            instance.definition.packConfig
+                ?.takeIf { instance.packId != null }
+                ?.let { it.chaseRadius * it.chaseRadius } ?: (aggroRangeSq * 4)
+        if (dx * dx + dy * dy + dz * dz > giveUpSq && now - instance.lastDamagedAtMs > deaggroMs) {
+            instance.npcAggroTarget = null
+            broadcastCombatLog(
+                "[m:${instance.state.name}] loses interest in [m:${target.state.name}].")
+            return
+        }
+        combatProcessor.handleNpcAttackNpc(instance, target)
     }
 
     private suspend fun broadcastAggroUpdate(

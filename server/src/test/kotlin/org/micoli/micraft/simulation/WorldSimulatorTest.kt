@@ -12,6 +12,7 @@ import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcYamlOverride
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
+import org.micoli.micraft.game.npc.pack.PackConfig
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.support.testI18n
@@ -33,9 +34,31 @@ private fun walkerDef() =
         aggroRange = 400f,
     )
 
+private fun hunterDef() =
+    NpcDefinition(
+        type = "hunter",
+        behavior = RandomMovableNpcBehavior(),
+        behaviorKey = "random_movable",
+        bbmodelFile = "hunter",
+        width = 0.6f,
+        height = 1.8f,
+        wanderSpeed = 4f,
+        wanderRadius = 12f,
+        hp = 20,
+        aggroMode = AggroMode.AGGRESSIVE,
+        aggroRange = 40f,
+        packConfig =
+            PackConfig(
+                callRadius = 60f,
+                minSizeToEngage = 2,
+                chaseRadius = 80f,
+                hostileTypes = listOf("walker"),
+            ),
+    )
+
 private fun testDeps() =
     SimulationDeps(
-        definitions = mapOf("walker" to walkerDef()),
+        definitions = mapOf("walker" to walkerDef(), "hunter" to hunterDef()),
         combatConfig = CombatConfigData(),
         attackRegistry = emptyMap(),
         armorRegistry = emptyMap(),
@@ -122,6 +145,53 @@ class WorldSimulatorTest {
         } finally {
             sim.stop()
         }
+    }
+
+    @Test
+    fun packHunt_isRecordedInTheEventLog() = runBlocking {
+        val sim =
+            simulator(
+                testConfig(
+                    spawns = listOf(SimSpawn("walker", count = 1), SimSpawn("hunter", count = 3))))
+        try {
+            sim.start()
+            sim.stepOnce(60)
+            val packEvents =
+                sim.events.snapshot().filter {
+                    it.type in
+                        setOf(
+                            SimEventType.PACK_CALL,
+                            SimEventType.PACK_JOIN,
+                            SimEventType.PACK_ENGAGE)
+                }
+            assertTrue(packEvents.any { it.type == SimEventType.PACK_CALL }, "a call is expected")
+            assertTrue(packEvents.any { it.type == SimEventType.PACK_JOIN }, "kin should answer")
+            assertTrue(sim.npcDtos().any { it.packId != null }, "members carry their pack id")
+        } finally {
+            sim.stop()
+        }
+    }
+
+    @Test
+    fun packHunt_isReproducibleForAGivenSeed() = runBlocking {
+        fun run(): List<String> = runBlocking {
+            val sim =
+                simulator(
+                    testConfig(
+                        spawns =
+                            listOf(SimSpawn("walker", count = 1), SimSpawn("hunter", count = 3))))
+            try {
+                sim.start()
+                sim.stepOnce(60)
+                sim.events
+                    .snapshot()
+                    .filter { it.type.name.startsWith("PACK_") }
+                    .map { "${it.type}" }
+            } finally {
+                sim.stop()
+            }
+        }
+        assertEquals(run(), run())
     }
 
     @Test

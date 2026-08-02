@@ -43,6 +43,9 @@ import org.micoli.micraft.game.npc.animal.AnimalEventType
 import org.micoli.micraft.game.npc.animal.AnimalInstanceData
 import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
 import org.micoli.micraft.game.npc.applyOverride
+import org.micoli.micraft.game.npc.pack.PackCoordinator
+import org.micoli.micraft.game.npc.pack.PackEvent
+import org.micoli.micraft.game.npc.pack.PackEventType
 import org.micoli.micraft.game.tick.MovementProcessor
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ChunkPos
@@ -161,11 +164,20 @@ class WorldSimulator(
             canSpawn = ::belowPopulationCap,
         )
 
+    private val packCoordinator =
+        PackCoordinator(
+                npcManager = npcManager,
+                broadcastCombatLog = { line -> logCombatLine(line) },
+                onEvent = { event -> logPackEvent(event) },
+            )
+            .also { npcManager.setNpcDamagedByNpcHook(it::onNpcDamagedByNpc) }
+
     private val pipeline =
         NpcTickPipeline(
             npcManager = npcManager,
             npcSpawner = npcSpawner,
             animals = animals,
+            packs = packCoordinator,
             ctxOf = { ctx },
             canSpawn = ::belowPopulationCap,
         )
@@ -549,6 +561,7 @@ class WorldSimulator(
         val instance = npcManager.getInstance(npcId) ?: return null
         val def = instance.definition
         val animal = instance.animalData
+        val pack = instance.packId?.let { packCoordinator.packOf(instance.state.id) }
         return SimNpcDetailDto(
             npc = instance.toDto(),
             behaviorKey = def.behaviorKey,
@@ -571,6 +584,8 @@ class WorldSimulator(
             parentIds = animal?.parentIds?.toList() ?: emptyList(),
             preyTargetId = animal?.preyTargetId,
             mateTargetId = animal?.mateTargetId,
+            packSize = pack?.memberIds?.size,
+            packEngaged = pack?.engaged,
             diet = def.animalConfig?.diet?.name,
             activeEffects = instance.activeEffects.map { it.effect::class.simpleName ?: "?" },
         )
@@ -663,6 +678,8 @@ class WorldSimulator(
             level = instanceLevel,
             isDead = isDead,
             aggroTargetId = aggroTarget,
+            packId = packId,
+            npcTargetId = npcAggroTarget,
             gender = animal?.gender?.name,
             hunger = animal?.hunger,
             gestationRemainingDays = animal?.gestationRemainingDays,
@@ -748,6 +765,40 @@ class WorldSimulator(
             ))
     }
 
+    private fun logPackEvent(event: PackEvent) {
+        val who = event.npcName
+        val prey = event.otherName ?: "?"
+        val size = event.value.int()
+        val type =
+            when (event.type) {
+                PackEventType.PACK_CALL -> SimEventType.PACK_CALL
+                PackEventType.PACK_JOIN -> SimEventType.PACK_JOIN
+                PackEventType.PACK_ENGAGE -> SimEventType.PACK_ENGAGE
+                PackEventType.PACK_DISBAND -> SimEventType.PACK_DISBAND
+            }
+        val message =
+            when (event.type) {
+                PackEventType.PACK_CALL -> "$who appelle la meute contre $prey"
+                PackEventType.PACK_JOIN -> "$who rejoint la meute ($size membres)"
+                PackEventType.PACK_ENGAGE -> "la meute engage $prey ($size membres)"
+                PackEventType.PACK_DISBAND -> "la meute de $who se disperse"
+            }
+        record(
+            SimEvent(
+                seq = 0L,
+                tick = tick,
+                gameDay = gameTimeService.currentGameDay,
+                type = type,
+                message = message,
+                npcId = event.npcId,
+                npcName = event.npcName,
+                npcType = event.npcType,
+                otherId = event.otherId,
+                otherName = event.otherName,
+                value = event.value,
+            ))
+    }
+
     /**
      * Combat-log lines are chat strings with `[m:NAME]` / `[p:NAME]` markers. Deaths and old age
      * already arrive as typed events (kill hook, animal hook), so those lines are dropped here
@@ -759,8 +810,11 @@ class WorldSimulator(
             when {
                 clean.contains("old age") ||
                     clean.contains("slain") ||
-                    clean.contains("withers to death") -> return
-                clean.contains("targets") -> SimEventType.AGGRO_GAIN
+                    clean.contains("withers to death") ||
+                    // already recorded as typed PACK_* events
+                    clean.contains("howls for the pack") ||
+                    clean.contains("closes in on") -> return
+                clean.contains("targets") || clean.contains("turns on") -> SimEventType.AGGRO_GAIN
                 clean.contains("loses interest") -> SimEventType.AGGRO_LOST
                 else -> SimEventType.ATTACK
             }

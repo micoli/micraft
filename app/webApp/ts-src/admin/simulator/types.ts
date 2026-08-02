@@ -144,6 +144,8 @@ export interface SimNpc {
   level: number;
   isDead: boolean;
   aggroTargetId?: string | null;
+  packId?: string | null;
+  npcTargetId?: string | null;
   gender?: string | null;
   hunger?: number | null;
   gestationRemainingDays?: number | null;
@@ -186,6 +188,10 @@ export type SimEventType =
   | "GESTATION_START"
   | "BIRTH"
   | "EVOLVE"
+  | "PACK_CALL"
+  | "PACK_JOIN"
+  | "PACK_ENGAGE"
+  | "PACK_DISBAND"
   | "SYSTEM";
 
 export interface SimEvent {
@@ -224,6 +230,8 @@ export interface SimNpcDetail {
   parentIds: string[];
   preyTargetId?: string | null;
   mateTargetId?: string | null;
+  packSize?: number | null;
+  packEngaged?: boolean | null;
   diet?: string | null;
   activeEffects: string[];
 }
@@ -311,6 +319,10 @@ export const EVENT_COLORS: Record<SimEventType, string> = {
   GESTATION_START: "#E879F9",
   BIRTH: "#22D3EE",
   EVOLVE: "#818CF8",
+  PACK_CALL: "#F97316",
+  PACK_JOIN: "#FDBA74",
+  PACK_ENGAGE: "#DC2626",
+  PACK_DISBAND: "#9CA3AF",
   SYSTEM: "#8A99AF",
 };
 
@@ -329,6 +341,10 @@ export const EVENT_LABEL_KEYS: Record<SimEventType, TranslationKey> = {
   GESTATION_START: "sim.event.GESTATION_START",
   BIRTH: "sim.event.BIRTH",
   EVOLVE: "sim.event.EVOLVE",
+  PACK_CALL: "sim.event.PACK_CALL",
+  PACK_JOIN: "sim.event.PACK_JOIN",
+  PACK_ENGAGE: "sim.event.PACK_ENGAGE",
+  PACK_DISBAND: "sim.event.PACK_DISBAND",
   SYSTEM: "sim.event.SYSTEM",
 };
 

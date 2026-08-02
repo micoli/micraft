@@ -24,6 +24,8 @@ private val GUARDED_CALLS =
         "npcSpawner.trySpawn(",
         "animals.tick(",
         "animalInteractionProcessor.tick(",
+        "packs?.tick(",
+        "packCoordinator.tick(",
     )
 
 private const val OWNER = "NpcTickPipeline.kt"
@@ -75,6 +77,7 @@ class NpcTickOwnershipTest {
                 "npcManager.tickAggro(",
                 "npcManager.tickVisibility(",
                 "animals.tick(",
+                "packs?.tick(",
                 "npcSpawner.trySpawn(",
             )
             .forEach { call -> assertTrue(pipeline.contains(call), "$OWNER should own $call") }

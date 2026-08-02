@@ -41,6 +41,7 @@ private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
         xpReward = o.xpReward ?: xpReward,
         bbmodelFile = o.bbmodelFile ?: bbmodelFile,
         animal = o.animal ?: animal,
+        pack = o.pack ?: pack,
     )
 
 /**
@@ -76,6 +77,7 @@ fun NpcDefinition.applyOverride(o: NpcYamlOverride): NpcDefinition =
         baseStats = o.baseStats ?: baseStats,
         xpReward = o.xpReward ?: xpReward,
         animalConfig = o.animal ?: animalConfig,
+        packConfig = o.pack ?: packConfig,
     )
 
 class NpcRegistryLoader(
@@ -163,6 +165,7 @@ class NpcRegistryLoader(
                                     xpReward = entry.xpReward,
                                     walkBoneAliases = entry.walkBoneAliases,
                                     animalConfig = entry.animal,
+                                    packConfig = entry.pack,
                                 )
                         }
                         .onFailure { e -> npcLog.warn("Skipping entity '{}': {}", key, e.message) }

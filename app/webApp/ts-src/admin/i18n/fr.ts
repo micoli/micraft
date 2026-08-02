@@ -275,6 +275,7 @@ export const fr: Record<TranslationKey, string> = {
 
   // ── Simulator — event log ───────────────────────────────────────────────────
   "sim.eventGroup.combat": "Combat",
+  "sim.eventGroup.pack": "Meutes",
   "sim.eventGroup.hunger": "Faim",
   "sim.eventGroup.reproduction": "Reproduction",
   "sim.eventGroup.lifecycle": "Cycle de vie",
@@ -299,6 +300,10 @@ export const fr: Record<TranslationKey, string> = {
   "sim.event.GESTATION_START": "gestation",
   "sim.event.BIRTH": "naissance",
   "sim.event.EVOLVE": "évolution",
+  "sim.event.PACK_CALL": "appel de meute",
+  "sim.event.PACK_JOIN": "ralliement",
+  "sim.event.PACK_ENGAGE": "assaut de meute",
+  "sim.event.PACK_DISBAND": "dispersion",
   "sim.event.SYSTEM": "système",
 
   // ── Simulator — timeline ────────────────────────────────────────────────────
@@ -389,6 +394,7 @@ export const fr: Record<TranslationKey, string> = {
   "sim.layers.food": "Brout (herbivores)",
   "sim.layers.grid": "Grille",
   "sim.layers.aggro": "Lignes d'aggro",
+  "sim.layers.pack": "Chasses en meute",
   "sim.layers.hunger": "Barre de faim",
   "sim.layers.gestation": "Anneau de gestation",
   "sim.layers.names": "Noms",
@@ -483,6 +489,10 @@ export const fr: Record<TranslationKey, string> = {
   "sim.detail.gestationValue": "{0} j",
   "sim.detail.preyTarget": "Proie visée",
   "sim.detail.mateTarget": "Partenaire visé",
+  "sim.detail.pack": "Meute",
+  "sim.detail.packRallying": "ralliement ({0} membres)",
+  "sim.detail.packEngaged": "engagée ({0} membres)",
+  "sim.detail.npcTarget": "Cible PNJ",
   "sim.detail.parents": "Parents",
   "sim.detail.baseStats": "Statistiques de base",
 

@@ -3,6 +3,16 @@ import { FOOD_OPACITY, gridLinesFor, markerRadiusFor, pickNpcAt, type ArenaCamer
 import { ArenaHint, NpcTooltip, type HoverTarget } from "./NpcTooltip";
 import { npcColor, type SimArena, type SimNpc, type SimPlayer } from "./types";
 
+/** Radius of the ring drawn around a pack member, in screen pixels. */
+const PACK_RING = 6;
+
+/** Stable hue per pack id, so a hunt keeps its colour for as long as it lasts. */
+function packColor(packId: string): string {
+  let hash = 0;
+  for (let i = 0; i < packId.length; i++) hash = (hash * 31 + packId.charCodeAt(i)) | 0;
+  return `hsl(${Math.abs(hash) % 360}, 85%, 62%)`;
+}
+
 interface Props {
   arena: SimArena;
   /** Grazing food as flat [x, z, isFlower] triples. */
@@ -119,6 +129,35 @@ export function ArenaCanvasRenderer({ arena, food, npcs, players, layers, select
       }
       ctx.stroke();
       ctx.setLineDash([]);
+    }
+
+    if (layers.pack) {
+      // One hue per pack so two hunts crossing the same ground stay tellable apart.
+      const npcById = new Map(npcs.map((n) => [n.id, n]));
+      const byPack = new Map<string, SimNpc[]>();
+      for (const npc of npcs) {
+        if (!npc.packId) continue;
+        const members = byPack.get(npc.packId);
+        if (members) members.push(npc);
+        else byPack.set(npc.packId, [npc]);
+      }
+      ctx.lineWidth = 1.5;
+      for (const [packId, members] of byPack) {
+        const target = members.map((m) => m.npcTargetId).find((id) => id && npcById.get(id));
+        ctx.strokeStyle = packColor(packId);
+        ctx.beginPath();
+        for (const member of members) {
+          const [ax, ay] = view.w2s(member.x, member.z);
+          ctx.moveTo(ax + PACK_RING, ay);
+          ctx.arc(ax, ay, PACK_RING, 0, Math.PI * 2);
+          const quarry = target ? npcById.get(target) : undefined;
+          if (!quarry) continue;
+          const [bx, by] = view.w2s(quarry.x, quarry.z);
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(bx, by);
+        }
+        ctx.stroke();
+      }
     }
 
     const markerRadius = markerRadiusFor(ppb);

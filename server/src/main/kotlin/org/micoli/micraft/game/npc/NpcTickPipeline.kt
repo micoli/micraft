@@ -2,6 +2,7 @@ package org.micoli.micraft.game.npc
 
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
+import org.micoli.micraft.game.npc.pack.PackCoordinator
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
@@ -19,6 +20,7 @@ class NpcTickPipeline(
     private val npcManager: NpcManager,
     private val npcSpawner: NpcSpawner,
     private val animals: AnimalInteractionProcessor,
+    private val packs: PackCoordinator? = null,
     private val ctxOf: () -> NpcTickContext = { NpcTickContext.live },
     /** Veto on auto-spawning; the admin simulator refuses past its population ceiling. */
     private val canSpawn: () -> Boolean = { true },
@@ -35,6 +37,8 @@ class NpcTickPipeline(
         combatProcessor: CombatProcessor,
     ) {
         npcManager.tick(world)
+        // Before tickAggro so a target picked this tick is acted on in the same tick.
+        packs?.tick()
         npcManager.tickAggro(sessions, combatProcessor)
         animals.tick()
         visibilityTickCounter++
