@@ -12,7 +12,7 @@ endif
 
 .ONESHELL:
 
-.PHONY: dev-up dev-down dev-restart dev-logs dc shell npm-format \
+.PHONY: dev-up dev-down dev-restart dev-logs dc shell npm-format quick-code-standard \
         dev-restart-server dev-restart-clean-server \
         dev-task-stop dev-task-start dev-task-restart \
         dev-nuke-wasm dev-reset dev-reset-wasm dev-nuke wasm-watch \
@@ -116,6 +116,12 @@ endif
 # Format TypeScript sources (runs npm run format in ts-src)
 npm-format:
 	$(EXEC) "cd app/webApp/ts-src && npm run format"
+
+# Apply coding standards (spotless + prettier + eslint) to files modified since HEAD only.
+# The file list is computed here because the dev container has no git binary.
+quick-code-standard:
+	@files=$$({ git diff --name-only HEAD; git ls-files --others --exclude-standard; } | sort -u | tr '\n' ' '); \
+	$(EXEC) "bash scripts/quick-code-standard.sh $$files"
 
 # Detect what changed, build in order (JS/CSS → WASM → server), restart, browser auto-reloads
 build:
@@ -248,6 +254,7 @@ help:
 	@echo "  make dc CMD=\"pitchfork logs server\"  tail server log"
 	@echo "  make dc CMD=\"pitchfork tui\"          live dashboard (interactive)"
 	@echo "  make npm-format           run prettier in ts-src"
+	@echo "  make quick-code-standard  spotless + prettier + eslint, only on files modified since HEAD"
 	@echo "  make build                detect changes + rebuild (JS→WASM→server) + restart + browser auto-reloads"
 	@echo "  make build-all            force full rebuild: WASM + JS/CSS + server (ignores change detection)"
 	@echo "  make build-client         recompile wasm + js bundle (build-wasm + build-js)"

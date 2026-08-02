@@ -274,6 +274,10 @@ tasks.register("devDebug") {
 spotless {
     isEnforceCheck = false
 
+    // `-PspotlessRatchet=<git-ref>` restricts formatting to files changed since that ref, which is
+    // what `make quick-code-standard` uses to stay fast. Unset = format everything.
+    (findProperty("spotlessRatchet") as String?)?.let { ratchetFrom(it) }
+
     kotlin {
         target("**/*.kt", "**/*.kts")
         ktfmt("0.51").kotlinlangStyle()
