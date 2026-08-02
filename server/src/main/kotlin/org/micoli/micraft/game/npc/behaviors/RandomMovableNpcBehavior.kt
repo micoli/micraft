@@ -48,13 +48,15 @@ class RandomMovableNpcBehavior : NpcBehavior {
         val pos = instance.state.pos
         val sp = instance.spawnPos
 
-        // A pack hunt runs much further than an NPC's own eyesight, so members get the wider pack
+        // A pack hunt runs much further than a NPC's own eyesight, so members get the wider pack
         // leash instead of the aggro range. An animal errand (prey, food, a mate) says how far it
-        // may roam through `chaseLeash`; without one, eyesight is the limit.
+        // may roam through `chaseLeash`; without one, the patrol zone (wanderRadius) is the limit
+        // so a wolf hunting prey 20 blocks from spawn can still chase a player within its full
+        // patrol area rather than being forced back to 6 blocks from spawn.
         val leash =
             instance.chaseLeash
                 ?: if (instance.packId != null) def.packConfig?.chaseRadius ?: def.aggroRange
-                else def.aggroRange
+                else maxOf(def.aggroRange, def.wanderRadius)
 
         val dtx = targetPos.x - sp.x
         val dtz = targetPos.z - sp.z

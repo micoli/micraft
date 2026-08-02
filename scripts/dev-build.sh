@@ -19,11 +19,11 @@ else
     JS_CHANGES=$(find app/webApp/ts-src -newer "$LAST_BUILD" \
         \( -name "*.ts" -o -name "*.tsx" -o -name "*.css" \) \
         -not -path "*/node_modules/*" -not -path "*storybook*" -not -path "*__tests__*" \
-        2>/dev/null | head -1)
+        -print -quit 2>/dev/null)
     WASM_CHANGES=$(find app/webApp/src/wasmJsMain core/src/commonMain -newer "$LAST_BUILD" \
-        -name "*.kt" 2>/dev/null | head -1)
+        -name "*.kt" -print -quit 2>/dev/null)
     SERVER_CHANGES=$(find server/src/main core/src/commonMain -newer "$LAST_BUILD" \
-        \( -name "*.kt" -o -name "*.yaml" -o -name "*.json" \) 2>/dev/null | head -1)
+        \( -name "*.kt" -o -name "*.yaml" -o -name "*.json" \) -print -quit 2>/dev/null)
 
     [ -n "$JS_CHANGES" ]     && BUILD_JS=true
     [ -n "$WASM_CHANGES" ]   && BUILD_WASM=true

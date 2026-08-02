@@ -570,7 +570,7 @@ class NpcManagerTest {
     }
 
     @Test
-    fun tickAggro_npcLevelFarAbovePlayer_doesNotAggro() = runBlocking {
+    fun tickAggro_npcLevelFarAbovePlayer_doesAggro() = runBlocking {
         val session = testSession(id = "p1", pos = Vec3(5f, 5f, 0f))
         session.characterData =
             CharacterData(
@@ -587,7 +587,9 @@ class NpcManagerTest {
                 mapOf("ZOMBIE" to aggressiveDef(aggroRange = 10f)), nearbySession = session)
         val instance = m.spawnNpc("Z", "ZOMBIE", Vec3(0f, 5f, 0f), instanceLevel = 8)
         m.tickAggro(listOf(session), fakeCombatProcessor(m))
-        assertNull(instance.aggroTarget, "NPC 7 levels above player should not aggro (diff=7 > 5)")
+        assertTrue(
+            instance.aggroTarget != null,
+            "NPC above player level must still aggro (high-level mob is dangerous to low-level player)")
     }
 
     @Test

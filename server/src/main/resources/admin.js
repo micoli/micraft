@@ -90039,15 +90039,18 @@ ${end.comment}` : end.comment;
         counters
       },
       slices: buckets2.map((bucket) => {
-        var _a7, _b2, _c2;
+        var _a7, _b2, _c2, _d2, _e2, _f2;
         return {
           gameDay: bucket.startGameDay,
           tick: bucket.tick,
           alive: bucket.aliveByType,
           deaths: bucket.deathsByType,
-          ageDeaths: (_a7 = bucket.ageDeathsByType) != null ? _a7 : {},
-          kills: (_b2 = bucket.killDeathsByType) != null ? _b2 : {},
-          starvations: (_c2 = bucket.starvationsByType) != null ? _c2 : {},
+          meanHunger: (_a7 = bucket.meanHungerByType) != null ? _a7 : {},
+          starvingShare: (_b2 = bucket.starvingShareByType) != null ? _b2 : {},
+          adultShare: (_c2 = bucket.adultShareByType) != null ? _c2 : {},
+          ageDeaths: (_d2 = bucket.ageDeathsByType) != null ? _d2 : {},
+          kills: (_e2 = bucket.killDeathsByType) != null ? _e2 : {},
+          starvations: (_f2 = bucket.starvationsByType) != null ? _f2 : {},
           counters: Object.fromEntries(COUNTER_SERIES.map((series) => [series.key, bucket[series.key]]))
         };
       })

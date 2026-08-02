@@ -52,6 +52,7 @@ import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
+import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.plaincolor.PlainColorRegistryLoader
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
@@ -218,6 +219,7 @@ fun Application.module() {
             armorRegistryLoader = get<ArmorRegistryLoader>(),
             npcConfigLoader = get<NpcConfigLoader>(),
             npcRegistryLoader = get<NpcRegistryLoader>(),
+            npcSubsystemFactory = get<NpcSubsystemFactory>(),
             npcManager = get<NpcManager>(),
             npcSpawner = get<NpcSpawner>(),
             combatConfig = get<CombatConfigData>(),

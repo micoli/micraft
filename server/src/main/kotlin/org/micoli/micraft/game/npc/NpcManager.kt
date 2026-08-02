@@ -740,7 +740,7 @@ class NpcManager(
                             sessions.firstOrNull { session ->
                                 if (session.isDowned) return@firstOrNull false
                                 val playerLevel = session.characterData?.level ?: 1
-                                if (abs(playerLevel - instance.instanceLevel) > 5)
+                                if (playerLevel - instance.instanceLevel > 5)
                                     return@firstOrNull false
                                 val dx = session.state.pos.x - npcPos.x
                                 val dy = session.state.pos.y - npcPos.y

@@ -9,8 +9,8 @@ import kotlin.test.assertTrue
 /**
  * The regrowth rules the game actually ships.
  *
- * `data/config/` is gitignored, so the shipped values are the code defaults; the yaml is only a local
- * override. Asserting the defaults is therefore asserting what every install gets.
+ * `data/config/` is gitignored, so the shipped values are the code defaults; the yaml is only a
+ * local override. Asserting the defaults is therefore asserting what every install gets.
  *
  * `data/config/vegetation.yaml` was entirely commented out, so the code defaults were in force and
  * editing the file changed nothing. Now that herbivores walk to their food and starve without it,
