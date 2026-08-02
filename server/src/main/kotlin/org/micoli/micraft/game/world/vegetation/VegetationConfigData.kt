@@ -16,6 +16,8 @@ data class VegetationConfigData(
 
 private val DEFAULT_REGROWTH =
     listOf(
-        RegrowthRule(grazed = "WEED", regrows = "WEED", minTicks = 600, maxTicks = 2_400),
-        RegrowthRule(grazed = "FLOWER", regrows = "FLOWER", minTicks = 1_200, maxTicks = 4_800),
+        // Halved: herbivores now walk to their food and starve without it, so a meadow that comes
+        // back slowly is a herbivore population that collapses rather than one that is regulated.
+        RegrowthRule(grazed = "WEED", regrows = "WEED", minTicks = 300, maxTicks = 1_200),
+        RegrowthRule(grazed = "FLOWER", regrows = "FLOWER", minTicks = 600, maxTicks = 2_400),
     )

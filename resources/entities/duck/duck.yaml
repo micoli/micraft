@@ -10,6 +10,9 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: []
+  # world-wide ceiling; the floor below is what the spawner restocks up to
+  maxTotal: 200
+  minTotal: 40
 animal:
   diet: HERBIVORE
   lifespanDays: 15.0

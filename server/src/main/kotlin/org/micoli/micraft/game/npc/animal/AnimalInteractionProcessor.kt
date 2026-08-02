@@ -579,10 +579,6 @@ class AnimalInteractionProcessor(
     ) {
         val fatherAnimal = mother.animalData ?: return
         val offspringType = config.offspringType ?: return
-        if (!canSpawn()) {
-            log.debug("Offspring of {} refused: population ceiling reached", mother.state.name)
-            return
-        }
         val random = ctxOf().random
         val count = random.nextInt(config.offspringMinCount, config.offspringMaxCount + 1)
         val zoneLevel = world.zoneLevelAt(mother.state.pos.x.toInt(), mother.state.pos.z.toInt())

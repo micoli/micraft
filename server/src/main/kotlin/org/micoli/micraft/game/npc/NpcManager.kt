@@ -510,6 +510,24 @@ class NpcManager(
 
     fun countByType(type: String): Int = npcs.values.count { it.state.type == type }
 
+    /**
+     * Living population per type, in one pass.
+     *
+     * The spawner needs a count for every type it considers, and [countByType] walks the whole map
+     * each time — one grouping pass instead of one scan per type per spawn attempt.
+     * Dead-but-not-yet despawned NPCs are excluded: a quota is about how many are alive, and
+     * corpses linger for five seconds.
+     */
+    fun countsByType(): Map<String, Int> {
+        val counts = HashMap<String, Int>()
+        for (instance in npcs.values) {
+            if (instance.isDead) continue
+            val type = instance.state.type
+            counts[type] = (counts[type] ?: 0) + 1
+        }
+        return counts
+    }
+
     fun countByTypeInChunk(type: String, chunkPos: ChunkPos): Int {
         val minX = chunkPos.cx * WorldConstants.CHUNK_SIZE.toFloat()
         val maxX = minX + WorldConstants.CHUNK_SIZE

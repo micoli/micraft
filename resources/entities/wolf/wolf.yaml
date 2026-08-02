@@ -12,6 +12,9 @@ spawn:
   autoSpawn: true
   maxPerChunk: 3
   spawnBiomes: []
+  # world-wide ceiling; the floor below is what the spawner restocks up to
+  maxTotal: 60
+  minTotal: 10
 hp: 18
 aggroMode: AGGRESSIVE
 aggroRange: 6.0
@@ -33,10 +36,13 @@ attacks:
 pack:
   extendPackType:
     - wolf_veteran
-  callRadius: 25.0
+  # a wider call: the pack has to gather before the prey walks off
+  callRadius: 40.0
   relayHops: 3
-  maxSize: 6
-  minSizeToEngage: 3
+  maxSize: 8
+  # 3 wolves (18 hp each) lose to a polar bear (40 hp, 14/16-power strikes); 5 with a veteran do
+  # not. A quorum that cannot win is a quorum that never kills — 568 packs formed for 8 bear kills.
+  minSizeToEngage: 5
   callCooldownSec: 20.0
   rallyTimeoutSec: 20.0
   chaseRadius: 45.0

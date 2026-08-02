@@ -13,11 +13,15 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: []
+  # the pack anchor stays rare: a handful in the world, never a population
+  maxTotal: 12
+  minTotal: 3
 hp: 35
 aggroMode: AGGRESSIVE
 aggroRange: 10.0
 deaggroTimeSec: 15.0
-minLevel: 11
+# Was 11, which no zone of level 5 could ever reach: the pack's heavy anchor simply never spawned.
+minLevel: 5
 characterClass: WARRIOR
 baseStats:
   str: 18
@@ -39,7 +43,7 @@ pack:
   callRadius: 30.0
   relayHops: 3
   maxSize: 6
-  minSizeToEngage: 2
+  minSizeToEngage: 3
   callCooldownSec: 20.0
   rallyTimeoutSec: 20.0
   chaseRadius: 45.0

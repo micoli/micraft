@@ -15,6 +15,8 @@ private fun wanderDef(
     autoSpawn: Boolean = true,
     maxPerChunk: Int = 2,
     spawnBiomes: List<String> = emptyList(),
+    maxTotal: Int = 0,
+    minTotal: Int = 0,
 ): NpcDefinition =
     NpcDefinition(
         type = type,
@@ -26,7 +28,12 @@ private fun wanderDef(
         wanderRadius = 8f,
         spawn =
             NpcSpawnConfig(
-                autoSpawn = autoSpawn, maxPerChunk = maxPerChunk, spawnBiomes = spawnBiomes),
+                autoSpawn = autoSpawn,
+                maxPerChunk = maxPerChunk,
+                spawnBiomes = spawnBiomes,
+                maxTotal = maxTotal,
+                minTotal = minTotal,
+            ),
     )
 
 private fun staticDef(
@@ -162,5 +169,71 @@ class NpcSpawnerTest {
         val m = testManager(mapOf("GOAT" to wanderDef()))
         NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks())
         assertTrue(m.getAll().isEmpty())
+    }
+
+    // ── per-type quotas ───────────────────────────────────────────────────────
+
+    @Test
+    fun trySpawn_respectsMaxTotalAcrossChunks() = runBlocking {
+        val world = solidFloorWorld()
+        val m = testManager(mapOf("GOAT" to wanderDef(maxTotal = 3, maxPerChunk = 10)))
+        val spawner = NpcSpawner()
+
+        // several passes: the ceiling has to hold over time, not only within one call
+        repeat(10) { spawner.trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
+
+        assertTrue(m.countByType("GOAT") <= 3, "was ${m.countByType("GOAT")}")
+    }
+
+    @Test
+    fun trySpawn_stopsAtMinTotalEvenWithChunkRoomLeft() = runBlocking {
+        val world = solidFloorWorld()
+        val m = testManager(mapOf("GOAT" to wanderDef(minTotal = 2, maxPerChunk = 10)))
+        val spawner = NpcSpawner()
+
+        repeat(10) { spawner.trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
+
+        // the floor is a restocking target, not a budget to spend: above it, births take over
+        assertTrue(m.countByType("GOAT") == 2, "was ${m.countByType("GOAT")}")
+    }
+
+    @Test
+    fun trySpawn_restocksBackUpToTheFloor() = runBlocking {
+        val world = solidFloorWorld()
+        val m = testManager(mapOf("GOAT" to wanderDef(minTotal = 3, maxPerChunk = 10)))
+        val spawner = NpcSpawner()
+        repeat(10) { spawner.trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
+        m.getAll().first().let { m.despawnNpc(it.state.id) }
+        assertTrue(m.countByType("GOAT") == 2)
+
+        repeat(10) { spawner.trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
+
+        assertTrue(m.countByType("GOAT") == 3, "the net must refill: ${m.countByType("GOAT")}")
+    }
+
+    @Test
+    fun trySpawn_zeroQuotas_keepTheOldBehaviour() = runBlocking {
+        val world = solidFloorWorld()
+        val m = testManager(mapOf("GOAT" to wanderDef(maxTotal = 0, minTotal = 0, maxPerChunk = 2)))
+        val spawner = NpcSpawner()
+
+        repeat(10) { spawner.trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
+
+        // unquotaed, the spawner still fills up to the per-chunk cap as it always did
+        assertTrue(m.countByType("GOAT") > 3, "was ${m.countByType("GOAT")}")
+    }
+
+    @Test
+    fun countsByType_matchesCountByType_andIgnoresTheDead() = runBlocking {
+        val world = solidFloorWorld()
+        val m = testManager(mapOf("GOAT" to wanderDef(), "SELLER" to staticDef()))
+        NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks())
+        m.getAll().first().isDead = true
+
+        val counts = m.countsByType()
+
+        val living = m.getAll().count { it.state.type == "GOAT" && !it.isDead }
+        assertTrue(counts["GOAT"] == living, "${counts["GOAT"]} vs $living")
+        assertTrue(counts["GOAT"]!! < m.countByType("GOAT"), "the dead one must be excluded")
     }
 }

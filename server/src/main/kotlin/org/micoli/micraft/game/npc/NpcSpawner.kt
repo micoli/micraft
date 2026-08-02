@@ -1,7 +1,6 @@
 package org.micoli.micraft.game.npc
 
 import kotlin.collections.iterator
-import org.micoli.micraft.game.npc.animal.AnimalInstanceData
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
@@ -24,9 +23,21 @@ class NpcSpawner {
         if (loadedChunks.isEmpty()) return
         val chunkList = loadedChunks.toList().shuffled(ctx.random)
 
+        // One pass for every type, then kept up to date locally: the per-type quotas below would
+        // otherwise rescan the whole NPC map for each type on each chunk attempt.
+        val counts = npcManager.countsByType().toMutableMap()
+
         for ((type, def) in definitions) {
             val spawn = def.spawn
             if (!spawn.autoSpawn) continue
+
+            val alive = counts[type] ?: 0
+            if (spawn.maxTotal > 0 && alive >= spawn.maxTotal) continue
+            // A floor turns the spawner into a restocker: above it, new life has to be born.
+            // Without
+            // one it keeps filling whatever room the chunks leave, which is how spawning came to
+            // outweigh reproduction almost four to one.
+            if (spawn.minTotal > 0 && alive >= spawn.minTotal) continue
 
             var attempts = 0
             for (chunkPos in chunkList) {
@@ -71,20 +82,16 @@ class NpcSpawner {
                         1, WorldConstants.RPG_LEVEL_MAX)
                 val name =
                     "${type.lowercase().replaceFirstChar { it.uppercase() }.replace('_',' ')} - ${FantasyNameGenerator.generate(type)}"
-                val instance = npcManager.spawnNpc(name, type, spawnPos, instanceLevel)
-                val animalCfg = def.animalConfig
-                if (animalCfg != null && instance.animalData == null) {
-                    val animalData =
-                        AnimalInstanceData.initial(
-                            lifespanDays = animalCfg.lifespanDays,
-                            baseStats = animalCfg.baseStats,
-                            statsVariance = animalCfg.statsVariance,
-                        )
-                    instance.animalData = animalData
-                    instance.state = instance.state.copy(animalData = animalData.toState())
-                }
+                // the animal record comes with the spawn now — see NpcManager.spawnNpc
+                npcManager.spawnNpc(name, type, spawnPos, instanceLevel)
+                val nowAlive = (counts[type] ?: 0) + 1
+                counts[type] = nowAlive
                 log.debug("Auto-spawned {} at ({},{},{})", type, wx, surfaceY, wz)
                 attempts++
+                // re-checked inside the loop: several chunks are tried per type per pass, and the
+                // quota must hold across them, not only on entry
+                if (spawn.maxTotal > 0 && nowAlive >= spawn.maxTotal) break
+                if (spawn.minTotal > 0 && nowAlive >= spawn.minTotal) break
             }
         }
     }

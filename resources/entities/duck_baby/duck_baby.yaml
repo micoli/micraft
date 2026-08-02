@@ -11,6 +11,9 @@ spawn:
   autoSpawn: false
   maxPerChunk: 4
   spawnBiomes: []
+  # world-wide ceiling; the floor below is what the spawner restocks up to
+  maxTotal: 200
+  minTotal: 0
 hp: 3
 aggroMode: PASSIVE
 aggroRange: 3.0
