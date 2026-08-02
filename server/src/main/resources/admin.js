@@ -32063,12 +32063,14 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.event.DAMAGE": "damage",
     "sim.event.DEATH": "death",
     "sim.event.AGE_DEATH": "old age",
+    "sim.event.STARVATION": "starvation",
     "sim.event.AGGRO_GAIN": "anger",
     "sim.event.AGGRO_LOST": "calm",
     "sim.event.HUNGRY": "hunger",
     "sim.event.FED": "satiety",
     "sim.event.MATING": "mating",
     "sim.event.GESTATION_START": "gestation",
+    "sim.event.BIRTH_BLOCKED": "birth blocked",
     "sim.event.BIRTH": "birth",
     "sim.event.EVOLVE": "evolution",
     "sim.event.PACK_CALL": "pack call",
@@ -32097,6 +32099,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.counter.attacks": "attacks",
     "sim.counter.gestations": "gestations",
     "sim.counter.births": "births",
+    "sim.counter.birthsBlocked": "births blocked",
     "sim.counter.matings": "matings",
     "sim.counter.spawns": "spawns",
     "sim.counter.fed": "meals",
@@ -32528,12 +32531,14 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.event.DAMAGE": "d\xE9g\xE2ts",
     "sim.event.DEATH": "mort",
     "sim.event.AGE_DEATH": "vieillesse",
+    "sim.event.STARVATION": "famine",
     "sim.event.AGGRO_GAIN": "col\xE8re",
     "sim.event.AGGRO_LOST": "calme",
     "sim.event.HUNGRY": "faim",
     "sim.event.FED": "sati\xE9t\xE9",
     "sim.event.MATING": "accouplement",
     "sim.event.GESTATION_START": "gestation",
+    "sim.event.BIRTH_BLOCKED": "naissance refus\xE9e",
     "sim.event.BIRTH": "naissance",
     "sim.event.EVOLVE": "\xE9volution",
     "sim.event.PACK_CALL": "appel de meute",
@@ -32562,6 +32567,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.counter.attacks": "attaques",
     "sim.counter.gestations": "gestations",
     "sim.counter.births": "naissances",
+    "sim.counter.birthsBlocked": "naissances refus\xE9es",
     "sim.counter.matings": "accouplements",
     "sim.counter.spawns": "apparitions",
     "sim.counter.fed": "repas",
@@ -89339,6 +89345,7 @@ ${end.comment}` : end.comment;
     DAMAGE: "#F87171",
     DEATH: "#EF4444",
     AGE_DEATH: "#A78BFA",
+    STARVATION: "#B45309",
     AGGRO_GAIN: "#F59E0B",
     AGGRO_LOST: "#94A3B8",
     HUNGRY: "#FACC15",
@@ -89346,6 +89353,7 @@ ${end.comment}` : end.comment;
     MATING: "#F472B6",
     GESTATION_START: "#E879F9",
     BIRTH: "#22D3EE",
+    BIRTH_BLOCKED: "#78716C",
     EVOLVE: "#818CF8",
     PACK_CALL: "#F97316",
     PACK_JOIN: "#FDBA74",
@@ -89360,6 +89368,7 @@ ${end.comment}` : end.comment;
     DAMAGE: "sim.event.DAMAGE",
     DEATH: "sim.event.DEATH",
     AGE_DEATH: "sim.event.AGE_DEATH",
+    STARVATION: "sim.event.STARVATION",
     AGGRO_GAIN: "sim.event.AGGRO_GAIN",
     AGGRO_LOST: "sim.event.AGGRO_LOST",
     HUNGRY: "sim.event.HUNGRY",
@@ -89367,6 +89376,7 @@ ${end.comment}` : end.comment;
     MATING: "sim.event.MATING",
     GESTATION_START: "sim.event.GESTATION_START",
     BIRTH: "sim.event.BIRTH",
+    BIRTH_BLOCKED: "sim.event.BIRTH_BLOCKED",
     EVOLVE: "sim.event.EVOLVE",
     PACK_CALL: "sim.event.PACK_CALL",
     PACK_JOIN: "sim.event.PACK_JOIN",
@@ -89738,9 +89748,9 @@ ${end.comment}` : end.comment;
     {
       key: "reproduction",
       labelKey: "sim.eventGroup.reproduction",
-      types: ["MATING", "GESTATION_START", "BIRTH", "EVOLVE"]
+      types: ["MATING", "GESTATION_START", "BIRTH", "BIRTH_BLOCKED", "EVOLVE"]
     },
-    { key: "lifecycle", labelKey: "sim.eventGroup.lifecycle", types: ["SPAWN", "DESPAWN", "AGE_DEATH"] },
+    { key: "lifecycle", labelKey: "sim.eventGroup.lifecycle", types: ["SPAWN", "DESPAWN", "AGE_DEATH", "STARVATION"] },
     { key: "system", labelKey: "sim.eventGroup.system", types: ["SYSTEM"] }
   ];
   var EventLogPanel = (0, import_react17.memo)(function EventLogPanel2({ events, onSelect }) {
@@ -89844,6 +89854,7 @@ ${end.comment}` : end.comment;
     { key: "attacks", labelKey: "sim.counter.attacks", color: "#FB923C" },
     { key: "gestations", labelKey: "sim.counter.gestations", color: "#E879F9" },
     { key: "births", labelKey: "sim.counter.births", color: "#22D3EE" },
+    { key: "birthsBlocked", labelKey: "sim.counter.birthsBlocked", color: "#78716C" },
     { key: "matings", labelKey: "sim.counter.matings", color: "#F472B6" },
     { key: "spawns", labelKey: "sim.counter.spawns", color: "#38BDF8" },
     { key: "fed", labelKey: "sim.counter.fed", color: "#4ADE80" },
@@ -89945,7 +89956,7 @@ ${end.comment}` : end.comment;
   }
   var emptyCounters = () => Object.fromEntries(COUNTER_SERIES.map((series) => [series.key, 0]));
   function buildMetricsExport(buckets2, bucketGameDays, config3) {
-    var _a6, _b, _c;
+    var _a6, _b, _c, _d, _e, _f, _g, _h;
     const first = buckets2[0];
     const last = buckets2[buckets2.length - 1];
     const counters = emptyCounters();
@@ -89956,7 +89967,18 @@ ${end.comment}` : end.comment;
     const of = (type) => {
       const existing = seen.get(type);
       if (existing) return existing;
-      const fresh = { peak: 0, final: 0, sum: 0, slices: 0, deaths: 0 };
+      const fresh = {
+        peak: 0,
+        final: 0,
+        sum: 0,
+        slices: 0,
+        deaths: 0,
+        ageDeaths: 0,
+        kills: 0,
+        starvations: 0,
+        births: 0,
+        evolutions: 0
+      };
       seen.set(type, fresh);
       return fresh;
     };
@@ -89969,6 +89991,11 @@ ${end.comment}` : end.comment;
         totals.final = alive;
       }
       for (const [type, deaths] of Object.entries(bucket.deathsByType)) of(type).deaths += deaths;
+      for (const [type, n] of Object.entries((_a6 = bucket.ageDeathsByType) != null ? _a6 : {})) of(type).ageDeaths += n;
+      for (const [type, n] of Object.entries((_b = bucket.killDeathsByType) != null ? _b : {})) of(type).kills += n;
+      for (const [type, n] of Object.entries((_c = bucket.starvationsByType) != null ? _c : {})) of(type).starvations += n;
+      for (const [type, n] of Object.entries((_d = bucket.birthsByType) != null ? _d : {})) of(type).births += n;
+      for (const [type, n] of Object.entries((_e = bucket.evolutionsByType) != null ? _e : {})) of(type).evolutions += n;
     }
     return {
       format: "micraft.simulation.metrics",
@@ -89989,11 +90016,11 @@ ${end.comment}` : end.comment;
       span: {
         bucketGameDays,
         slices: buckets2.length,
-        firstGameDay: (_a6 = first == null ? void 0 : first.startGameDay) != null ? _a6 : 0,
-        lastGameDay: (_b = last == null ? void 0 : last.startGameDay) != null ? _b : 0,
+        firstGameDay: (_f = first == null ? void 0 : first.startGameDay) != null ? _f : 0,
+        lastGameDay: (_g = last == null ? void 0 : last.startGameDay) != null ? _g : 0,
         // a slice covers its own width, so the span runs to the end of the last one
         gameDays: buckets2.length === 0 ? 0 : last.startGameDay - first.startGameDay + bucketGameDays,
-        lastTick: (_c = last == null ? void 0 : last.tick) != null ? _c : 0
+        lastTick: (_h = last == null ? void 0 : last.tick) != null ? _h : 0
       },
       totals: {
         byType: [...seen.entries()].map(([type, totals]) => ({
@@ -90002,17 +90029,28 @@ ${end.comment}` : end.comment;
           finalAlive: totals.final,
           meanAlive: totals.slices > 0 ? Number((totals.sum / totals.slices).toFixed(2)) : 0,
           deaths: totals.deaths,
+          ageDeaths: totals.ageDeaths,
+          kills: totals.kills,
+          starvations: totals.starvations,
+          births: totals.births,
+          evolutions: totals.evolutions,
           slicesPresent: totals.slices
         })).sort((a, b) => b.peakAlive - a.peakAlive || a.type.localeCompare(b.type)),
         counters
       },
-      slices: buckets2.map((bucket) => ({
-        gameDay: bucket.startGameDay,
-        tick: bucket.tick,
-        alive: bucket.aliveByType,
-        deaths: bucket.deathsByType,
-        counters: Object.fromEntries(COUNTER_SERIES.map((series) => [series.key, bucket[series.key]]))
-      }))
+      slices: buckets2.map((bucket) => {
+        var _a7, _b2, _c2;
+        return {
+          gameDay: bucket.startGameDay,
+          tick: bucket.tick,
+          alive: bucket.aliveByType,
+          deaths: bucket.deathsByType,
+          ageDeaths: (_a7 = bucket.ageDeathsByType) != null ? _a7 : {},
+          kills: (_b2 = bucket.killDeathsByType) != null ? _b2 : {},
+          starvations: (_c2 = bucket.starvationsByType) != null ? _c2 : {},
+          counters: Object.fromEntries(COUNTER_SERIES.map((series) => [series.key, bucket[series.key]]))
+        };
+      })
     };
   }
 
