@@ -211,7 +211,7 @@ class RandomMovableNpcBehavior : NpcBehavior {
         world: WorldState,
         targetX: Float,
         targetZ: Float,
-        speed: Float,
+        requestedSpeed: Float,
         ctx: NpcTickContext,
         onBlocked: ((blockedDirX: Float, blockedDirZ: Float) -> Unit)? = null,
     ): Boolean {
@@ -222,6 +222,10 @@ class RandomMovableNpcBehavior : NpcBehavior {
         val dist = sqrt((dx * dx + dz * dz).toDouble()).toFloat()
         if (dist < 0.01f) return false
 
+        // Single choke point for the condition multiplier: chase, wander and decel all arrive here,
+        // so a starving animal drags in every one of them. The jump probe below deliberately keeps
+        // the unscaled speed — it asks "is there a wall", not "how fast am I".
+        val speed = requestedSpeed * instance.speedMultiplier
         val nx = dx / dist
         val nz = dz / dist
         val solid = { bx: Int, by: Int, bz: Int -> world.getBlockIfLoaded(bx, by, bz).isSolid }

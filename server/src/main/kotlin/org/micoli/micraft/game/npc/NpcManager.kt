@@ -20,6 +20,7 @@ import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.npc.NpcDeathCause
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
@@ -45,7 +46,12 @@ data class PendingRespawn(
 class NpcManager(
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val getSessions: () -> Collection<PlayerSession> = { emptyList() },
-    private val onNpcKilled: suspend (NpcInstance) -> Unit = {},
+    /**
+     * Notified once per death, with the reason. This manager is the *only* emitter of a death: an
+     * animal reaching its lifespan reports it through here rather than raising its own event, so a
+     * single death can never be counted twice.
+     */
+    private val onNpcKilled: suspend (NpcInstance, NpcDeathCause) -> Unit = { _, _ -> },
     private val broadcastCombatLog: suspend (String) -> Unit = {},
     private val grantNpcKillXp: suspend (predator: NpcInstance, prey: NpcInstance) -> Unit =
         { _, _ ->
@@ -75,6 +81,22 @@ class NpcManager(
      */
     private fun childRandom(): kotlin.random.Random =
         kotlin.random.Random(ctxOf().random.nextLong())
+
+    /**
+     * Id for a freshly spawned NPC, drawn from the world's random source rather than
+     * `UUID.randomUUID()`.
+     *
+     * The id is not just a label: [HibernationConfig.offsetFor] phases an NPC's sleep window off
+     * it, and it decides the iteration order of the NPC map, which in turn decides which of two
+     * grazers reaches a flower first. Taken from the global source, a seeded world was therefore
+     * not reproducible at all — two runs of the same seed diverged, and the simulator's `seed`
+     * setting was advertising a guarantee it could not keep. On the live server the source is
+     * unseeded, so ids stay as random as before.
+     */
+    private fun nextNpcId(): String {
+        val random = ctxOf().random
+        return UUID(random.nextLong(), random.nextLong()).toString()
+    }
 
     private val npcs = ConcurrentHashMap<String, NpcInstance>()
     @Volatile private var definitions: Map<String, NpcDefinition> = emptyMap()
@@ -175,7 +197,14 @@ class NpcManager(
     suspend fun killNpcByAge(npcId: String, instance: NpcInstance, now: Long) {
         if (instance.isDead) return
         broadcastCombatLog("[m:${instance.state.name}] has died of old age.")
-        onNpcKilled(instance)
+        onNpcKilled(instance, NpcDeathCause.OLD_AGE)
+        markNpcDead(npcId, instance, now)
+    }
+
+    suspend fun killNpcByStarvation(npcId: String, instance: NpcInstance, now: Long) {
+        if (instance.isDead) return
+        broadcastCombatLog("[m:${instance.state.name}] has starved to death.")
+        onNpcKilled(instance, NpcDeathCause.STARVATION)
         markNpcDead(npcId, instance, now)
     }
 
@@ -206,11 +235,9 @@ class NpcManager(
         val pos = instance.state.pos
         val name = instance.state.name.replace(Regex("(?i)baby\\s*"), "").trim()
         despawnNpc(instance.state.id)
-        val adult = spawnNpc(name, adultType, pos, adultLevel)
+        val adult = spawnNpc(name, adultType, pos, adultLevel, animalData = evolvedAnimal)
         adult.currentHp = adultMaxHp / 2
-        adult.animalData = evolvedAnimal
-        adult.state =
-            adult.state.copy(animalData = evolvedAnimal.toState(), currentHp = adult.currentHp)
+        adult.state = adult.state.copy(currentHp = adult.currentHp)
         log.debug("NPC {} evolved into {} lv{}", instance.state.name, adultType, adultLevel)
     }
 
@@ -218,13 +245,20 @@ class NpcManager(
         name: String,
         type: String,
         pos: Vec3,
-        instanceLevel: Int = -1
+        instanceLevel: Int = -1,
+        /**
+         * Animal record to carry over — a newborn's inherited stats, or an evolving baby's age and
+         * hunger. Left null, a type with an `animal:` block gets a fresh one; passing it here
+         * rather than overwriting afterwards keeps the spawn from burning random draws it would
+         * discard, which would shift every later draw in a seeded run.
+         */
+        animalData: AnimalInstanceData? = null,
     ): NpcInstance {
         val def =
             definitions[type] ?: error("Unknown NPC type: '$type'. Available: ${definitions.keys}")
         val effectiveLevel = if (instanceLevel < 1) def.minLevel else instanceLevel
         val spawnMaxHp = def.computeMaxHp(effectiveLevel)
-        val id = UUID.randomUUID().toString()
+        val id = nextNpcId()
         val state =
             NpcState(
                 id = id,
@@ -245,6 +279,22 @@ class NpcManager(
                 instanceLevel = effectiveLevel,
                 tuning = tuning,
                 random = childRandom())
+        // Attached here rather than by each caller: a spawn that skipped this — a console spawn, a
+        // persisted NPC, a manual arena spawn — produced an animal with no lifecycle record, so it
+        // never aged, never got hungry and never reproduced. Immortal by omission.
+        val animalCfg = def.animalConfig
+        if (animalCfg != null) {
+            val data =
+                animalData
+                    ?: AnimalInstanceData.initial(
+                        lifespanDays = animalCfg.lifespanDays,
+                        baseStats = animalCfg.baseStats,
+                        statsVariance = animalCfg.statsVariance,
+                        random = instance.random,
+                    )
+            instance.animalData = data
+            instance.state = instance.state.copy(animalData = data.toState())
+        }
         npcs[id] = instance
         if (broadCastNpcPositions) {
             broadcast(ServerMessage.NpcSpawned(state))
@@ -559,7 +609,7 @@ class NpcManager(
                         """{"type":"npcXpUpdate","id":"${attackerNpc.state.id}","xp":${attackerNpc.xp},"level":${attackerNpc.instanceLevel}}""")
                 }
             }
-            onNpcKilled(instance)
+            onNpcKilled(instance, NpcDeathCause.KILLED)
             markNpcDead(npcId, instance, System.currentTimeMillis())
         }
     }
@@ -616,7 +666,7 @@ class NpcManager(
                             instance.state.id, true, instance.currentHp, maxHp))
                     if (instance.currentHp <= 0) {
                         broadcastCombatLog("[m:${instance.state.name}] withers to death!")
-                        onNpcKilled(instance)
+                        onNpcKilled(instance, NpcDeathCause.KILLED)
                         markNpcDead(instance.state.id, instance, now)
                     }
                 }

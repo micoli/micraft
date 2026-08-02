@@ -327,6 +327,76 @@ class CombatProcessorTest {
         assertEquals(1, combatLog.size)
     }
 
+    // ── condition multiplier ──────────────────────────────────────────────────
+
+    /**
+     * A weakened NPC hits for less. Only on the NPC-initiated paths: `resolveAttack`, which serves
+     * player attacks, never sees the multiplier, so a starving wolf cannot weaken a player's sword.
+     */
+    @Test
+    fun `handleNpcAttack scales damage by the attacker's condition`() = runBlocking {
+        suspend fun damageDealtWith(multiplier: Float): Int {
+            val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
+            target.characterData = testChar("b", "Bob", hp = 500)
+            val flatAttack =
+                AttackDefinition(
+                    damageType = DamageType.PHYSICAL,
+                    levels =
+                        mapOf(
+                            1 to
+                                AttackLevelDefinition(
+                                    // 1d1: the roll cannot vary, so the only variable is the
+                                    // multiplier
+                                    power = 100,
+                                    weaponDice = "1d1",
+                                    cooldownMs = 1000)))
+            val proc =
+                buildProcessor(
+                    sessions = { listOf(target) },
+                    attackRegistry = mapOf("basic_attack" to flatAttack),
+                )
+            val npc = fakeNpc().also { it.damageMultiplier = multiplier }
+
+            proc.handleNpcAttack(npc, target)
+
+            return 500 - target.characterData!!.currentHp
+        }
+
+        val healthy = damageDealtWith(1f)
+        val starving = damageDealtWith(0.5f)
+        assertTrue(healthy > 0, "the baseline must actually land")
+        // crits double the roll, so compare loosely rather than pinning an exact figure
+        assertTrue(
+            starving < healthy, "a starving attacker must hit for less: $starving vs $healthy")
+    }
+
+    @Test
+    fun `a crushed multiplier still leaves a hit worth one point`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
+        target.characterData = testChar("b", "Bob", hp = 20)
+        // `guaranteedHitAttack` has power 0 — it is only guaranteed for a *player* whose strength
+        // carries the roll. An NPC needs its own power for the hit to be certain.
+        val alwaysHits =
+            AttackDefinition(
+                damageType = DamageType.PHYSICAL,
+                levels =
+                    mapOf(
+                        1 to
+                            AttackLevelDefinition(
+                                power = 100, weaponDice = "1d4", cooldownMs = 1000)))
+        val proc =
+            buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry = mapOf("basic_attack" to alwaysHits),
+            )
+        val npc = fakeNpc().also { it.damageMultiplier = 0f }
+
+        proc.handleNpcAttack(npc, target)
+
+        // a landed blow doing literally nothing reads as a bug rather than as weakness
+        assertEquals(19, target.characterData!!.currentHp, "the floor is exactly one point")
+    }
+
     // ── handleNpcAttack ───────────────────────────────────────────────────────
 
     @Test

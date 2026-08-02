@@ -13,7 +13,7 @@ export const METRIC_HISTORY = 240;
 
 /** A counter series the charts can draw. */
 export interface CounterSeries {
-  key: "attacks" | "gestations" | "births" | "matings" | "spawns" | "fed" | "hungry" | "evolutions";
+  key: "attacks" | "gestations" | "births" | "birthsBlocked" | "matings" | "spawns" | "fed" | "hungry" | "evolutions";
   labelKey: TranslationKey;
   color: string;
 }
@@ -22,6 +22,7 @@ export const COUNTER_SERIES: CounterSeries[] = [
   { key: "attacks", labelKey: "sim.counter.attacks", color: "#FB923C" },
   { key: "gestations", labelKey: "sim.counter.gestations", color: "#E879F9" },
   { key: "births", labelKey: "sim.counter.births", color: "#22D3EE" },
+  { key: "birthsBlocked", labelKey: "sim.counter.birthsBlocked", color: "#78716C" },
   { key: "matings", labelKey: "sim.counter.matings", color: "#F472B6" },
   { key: "spawns", labelKey: "sim.counter.spawns", color: "#38BDF8" },
   { key: "fed", labelKey: "sim.counter.fed", color: "#4ADE80" },
@@ -89,7 +90,13 @@ export function windowOf(buckets: readonly SimMetricBucket[], slots: number | nu
 export type TypedPick = (bucket: SimMetricBucket) => Record<string, number>;
 
 export const pickDeaths: TypedPick = (bucket) => bucket.deathsByType;
+export const pickAgeDeaths: TypedPick = (bucket) => bucket.ageDeathsByType;
+export const pickKillDeaths: TypedPick = (bucket) => bucket.killDeathsByType;
+export const pickStarvations: TypedPick = (bucket) => bucket.starvationsByType;
 export const pickAlive: TypedPick = (bucket) => bucket.aliveByType;
+export const pickMeanHunger: TypedPick = (bucket) => bucket.meanHungerByType ?? {};
+export const pickStarvingShare: TypedPick = (bucket) => bucket.starvingShareByType ?? {};
+export const pickAdultShare: TypedPick = (bucket) => bucket.adultShareByType ?? {};
 
 /**
  * NPC types present in the series, in palette order.
@@ -280,7 +287,13 @@ export interface MetricsExportTypeTotals {
   finalAlive: number;
   /** Mean population over the slices where it was present. */
   meanAlive: number;
+  /** Every death of this type, whatever the cause — the sum of the three below. */
   deaths: number;
+  ageDeaths: number;
+  kills: number;
+  starvations: number;
+  births: number;
+  evolutions: number;
   /** Slices the type was alive in, out of the exported span. */
   slicesPresent: number;
 }
@@ -306,7 +319,13 @@ export interface MetricsExport {
     gameDay: number;
     tick: number;
     alive: Record<string, number>;
+    meanHunger: Record<string, number>;
+    starvingShare: Record<string, number>;
+    adultShare: Record<string, number>;
     deaths: Record<string, number>;
+    ageDeaths: Record<string, number>;
+    kills: Record<string, number>;
+    starvations: Record<string, number>;
     counters: Record<CounterSeries["key"], number>;
   }[];
 }
@@ -339,11 +358,36 @@ export function buildMetricsExport(
   }
 
   // one pass per type rather than per bucket per type: the history holds a few hundred slices
-  const seen = new Map<string, { peak: number; final: number; sum: number; slices: number; deaths: number }>();
+  const seen = new Map<
+    string,
+    {
+      peak: number;
+      final: number;
+      sum: number;
+      slices: number;
+      deaths: number;
+      ageDeaths: number;
+      kills: number;
+      starvations: number;
+      births: number;
+      evolutions: number;
+    }
+  >();
   const of = (type: string) => {
     const existing = seen.get(type);
     if (existing) return existing;
-    const fresh = { peak: 0, final: 0, sum: 0, slices: 0, deaths: 0 };
+    const fresh = {
+      peak: 0,
+      final: 0,
+      sum: 0,
+      slices: 0,
+      deaths: 0,
+      ageDeaths: 0,
+      kills: 0,
+      starvations: 0,
+      births: 0,
+      evolutions: 0,
+    };
     seen.set(type, fresh);
     return fresh;
   };
@@ -357,6 +401,14 @@ export function buildMetricsExport(
       totals.final = alive;
     }
     for (const [type, deaths] of Object.entries(bucket.deathsByType)) of(type).deaths += deaths;
+    // and per cause: "the wolves ate everything" and "everything died of old age" are opposite
+    // balance problems that a single deaths column cannot tell apart. Read defensively — a bucket
+    // recorded before the split carries the total only.
+    for (const [type, n] of Object.entries(bucket.ageDeathsByType ?? {})) of(type).ageDeaths += n;
+    for (const [type, n] of Object.entries(bucket.killDeathsByType ?? {})) of(type).kills += n;
+    for (const [type, n] of Object.entries(bucket.starvationsByType ?? {})) of(type).starvations += n;
+    for (const [type, n] of Object.entries(bucket.birthsByType ?? {})) of(type).births += n;
+    for (const [type, n] of Object.entries(bucket.evolutionsByType ?? {})) of(type).evolutions += n;
   }
 
   return {
@@ -394,6 +446,11 @@ export function buildMetricsExport(
           finalAlive: totals.final,
           meanAlive: totals.slices > 0 ? Number((totals.sum / totals.slices).toFixed(2)) : 0,
           deaths: totals.deaths,
+          ageDeaths: totals.ageDeaths,
+          kills: totals.kills,
+          starvations: totals.starvations,
+          births: totals.births,
+          evolutions: totals.evolutions,
           slicesPresent: totals.slices,
         }))
         .sort((a, b) => b.peakAlive - a.peakAlive || a.type.localeCompare(b.type)),
@@ -404,6 +461,12 @@ export function buildMetricsExport(
       tick: bucket.tick,
       alive: bucket.aliveByType,
       deaths: bucket.deathsByType,
+      meanHunger: bucket.meanHungerByType ?? {},
+      starvingShare: bucket.starvingShareByType ?? {},
+      adultShare: bucket.adultShareByType ?? {},
+      ageDeaths: bucket.ageDeathsByType ?? {},
+      kills: bucket.killDeathsByType ?? {},
+      starvations: bucket.starvationsByType ?? {},
       counters: Object.fromEntries(COUNTER_SERIES.map((series) => [series.key, bucket[series.key]])) as Record<
         CounterSeries["key"],
         number

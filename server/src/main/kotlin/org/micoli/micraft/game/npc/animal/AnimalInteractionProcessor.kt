@@ -74,12 +74,28 @@ class AnimalInteractionProcessor(
                 emit(AnimalEventType.HUNGRY, instance, value = animal.hunger)
             }
 
+            val starving = animal.hunger >= config.starvationThreshold
+            animal.starvingDays = if (starving) animal.starvingDays + dtDays else 0.0
+            applyConditionMultipliers(instance, animal, config, starving)
+
             tickHpRegen(instance, animal, config, dt.toFloat(), now)
+
+            if (starving &&
+                config.starvationDeathDays > 0.0 &&
+                animal.starvingDays >= config.starvationDeathDays) {
+                log.debug(
+                    "NPC {} starved to death after {} game days",
+                    instance.state.name,
+                    animal.starvingDays)
+                npcManager.killNpcByStarvation(instance.state.id, instance, now)
+                continue
+            }
 
             if (config.lifespanDays != null && animal.ageGameDays >= config.lifespanDays) {
                 log.debug(
-                    "NPC {} died of old age (age={:.1f})", instance.state.name, animal.ageGameDays)
-                emit(AnimalEventType.AGE_DEATH, instance, value = animal.ageGameDays)
+                    "NPC {} died of old age (age={})", instance.state.name, animal.ageGameDays)
+                // No AGE_DEATH event here: NpcManager reports every death, cause included. Emitting
+                // one from both places is what made old-age deaths count twice in the metrics.
                 npcManager.killNpcByAge(instance.state.id, instance, now)
                 continue
             }
@@ -116,6 +132,33 @@ class AnimalInteractionProcessor(
         }
     }
 
+    /**
+     * The animal's condition, folded into the two multipliers every reader consumes.
+     *
+     * Multiplicative, so a starving pregnant female carries both penalties — which is the point:
+     * her condition is worse than either one alone, and that is what makes her a reachable target
+     * for a wolf pack that could not touch a healthy adult.
+     */
+    private fun applyConditionMultipliers(
+        instance: NpcInstance,
+        animal: AnimalInstanceData,
+        config: AnimalYamlEntry,
+        starving: Boolean,
+    ) {
+        var speed = 1f
+        var damage = 1f
+        if (starving) {
+            speed *= config.starvationSpeedMultiplier
+            damage *= config.starvationAttackMultiplier
+        }
+        if (animal.gestationRemainingDays != null) {
+            speed *= config.gestationSpeedMultiplier
+            damage *= config.gestationAttackMultiplier
+        }
+        instance.speedMultiplier = speed
+        instance.damageMultiplier = damage
+    }
+
     private fun tickHpRegen(
         instance: NpcInstance,
         animal: AnimalInstanceData,
@@ -126,7 +169,12 @@ class AnimalInteractionProcessor(
         val combatExitMs = (config.combatExitDelaySec * 1000).toLong()
         val inCombat = now - instance.lastDamagedAtMs < combatExitMs
 
-        if (config.hpRegenPerSec > 0f && !inCombat) {
+        // Regeneration is fed by food. Without this gate a hungry goat out of combat healed 60 hp a
+        // minute while starvation took 3 — so no animal could ever actually weaken, and the whole
+        // starvation mechanic would be dead code.
+        val hungry = animal.hunger >= config.hungerThresholdToHunt
+
+        if (config.hpRegenPerSec > 0f && !inCombat && !hungry) {
             val maxHp = instance.state.maxHp
             if (instance.currentHp < maxHp) {
                 val acc = (hpRegenAccumulators[instance.state.id] ?: 0f) + config.hpRegenPerSec * dt
@@ -153,6 +201,30 @@ class AnimalInteractionProcessor(
         }
     }
 
+    /**
+     * Which types hunt a given type, derived from every `preyTypes` list.
+     *
+     * Rebuilt only when the definition map is swapped (`/reload`), not per tick: it is a pure
+     * function of the registry, and a prey animal needs it on every slow tick.
+     */
+    private var predatorsByPrey: Map<String, Set<String>> = emptyMap()
+    private var predatorIndexSource: Map<String, org.micoli.micraft.game.npc.NpcDefinition>? = null
+
+    private fun predatorsOf(type: String): Set<String> {
+        val definitions = npcManager.getDefinitions()
+        if (definitions !== predatorIndexSource) {
+            val index = mutableMapOf<String, MutableSet<String>>()
+            for ((predator, def) in definitions) {
+                for (prey in def.animalConfig?.preyTypes.orEmpty()) {
+                    index.getOrPut(prey) { mutableSetOf() }.add(predator)
+                }
+            }
+            predatorsByPrey = index
+            predatorIndexSource = definitions
+        }
+        return predatorsByPrey[type].orEmpty()
+    }
+
     private suspend fun slowTick(currentDay: Double) {
         val allAnimal = npcManager.getAll().filter { !it.isDead && it.animalData != null }
 
@@ -160,6 +232,91 @@ class AnimalInteractionProcessor(
         tickPredation(allAnimal)
         tickHerbivoreFeeding(allAnimal)
         tickMating(allAnimal, currentDay)
+    }
+
+    /**
+     * Point each threatened animal away from its nearest predator.
+     *
+     * The flight point is placed at `fleeRadius` in the opposite direction, so the animal keeps
+     * running while the predator is close and stops as soon as the threat leaves — no timer to
+     * tune.
+     */
+    private fun updateFlight(allAnimal: List<NpcInstance>) {
+        for (instance in allAnimal) {
+            val animal = instance.animalData ?: continue
+            val config = instance.definition.animalConfig ?: continue
+            if (config.fleeRadius <= 0f) {
+                animal.fleeTargetPos = null
+                continue
+            }
+            val predators = predatorsOf(instance.state.type)
+            if (predators.isEmpty()) {
+                animal.fleeTargetPos = null
+                continue
+            }
+
+            val pos = instance.state.pos
+            val fleeSq = config.fleeRadius * config.fleeRadius
+            var nearest: NpcInstance? = null
+            var nearestSq = Float.MAX_VALUE
+            for (candidate in allAnimal) {
+                if (candidate.state.type !in predators || candidate.isDead) continue
+                val dx = candidate.state.pos.x - pos.x
+                val dz = candidate.state.pos.z - pos.z
+                val distSq = dx * dx + dz * dz
+                if (distSq <= fleeSq && distSq < nearestSq) {
+                    nearestSq = distSq
+                    nearest = candidate
+                }
+            }
+
+            val threat = nearest
+            if (threat == null) {
+                animal.fleeTargetPos = null
+                continue
+            }
+            val dx = pos.x - threat.state.pos.x
+            val dz = pos.z - threat.state.pos.z
+            val dist = kotlin.math.sqrt((dx * dx + dz * dz).toDouble()).toFloat()
+            // Standing exactly on the predator gives no direction to run in; anywhere is better
+            // than
+            // dividing by zero, so keep the previous point and let the next tick sort it out.
+            if (dist < 0.01f) continue
+            animal.fleeTargetPos =
+                org.micoli.micraft.player.Vec3(
+                    pos.x + dx / dist * config.fleeRadius,
+                    pos.y,
+                    pos.z + dz / dist * config.fleeRadius,
+                )
+        }
+    }
+
+    /**
+     * Whether [instance] already has too many of its own kind nearby to breed.
+     *
+     * Counts the animal itself out. A herd hits its local limit and stops growing *there* while the
+     * same species keeps breeding elsewhere — which is what a population regulated by its
+     * surroundings looks like, as opposed to one held down by a world-wide number.
+     */
+    private fun isCrowded(
+        instance: NpcInstance,
+        config: AnimalYamlEntry,
+        allAnimal: List<NpcInstance>,
+    ): Boolean {
+        if (config.maxLocalDensity <= 0) return false
+        val pos = instance.state.pos
+        val radiusSq = config.densityRadius * config.densityRadius
+        var neighbours = 0
+        for (candidate in allAnimal) {
+            if (candidate.state.id == instance.state.id) continue
+            if (candidate.state.type != instance.state.type || candidate.isDead) continue
+            val dx = candidate.state.pos.x - pos.x
+            val dz = candidate.state.pos.z - pos.z
+            if (dx * dx + dz * dz > radiusSq) continue
+            neighbours++
+            if (neighbours >= config.maxLocalDensity) return true
+        }
+        return false
     }
 
     private fun updateTargets(allAnimal: List<NpcInstance>, currentDay: Double) {
@@ -192,9 +349,20 @@ class AnimalInteractionProcessor(
             } else {
                 animal.preyTargetId = null
                 animal.preyTargetPos = null
+                if (animal.hunger < config.hungerThresholdToHunt) animal.foodTargetPos = null
             }
 
+            // Starvation sterility is stated separately from `hungerThresholdToMate` even though
+            // the
+            // default threshold already implies it: the two are independent knobs, and a tuning
+            // pass
+            // that raises the mating threshold must not quietly make starving animals fertile.
+            val sterileFromHunger =
+                config.starvationSterile && animal.hunger >= config.starvationThreshold
+            val crowded = isCrowded(instance, config, allAnimal)
             if (config.canReproduce &&
+                !sterileFromHunger &&
+                !crowded &&
                 animal.hunger < config.hungerThresholdToMate &&
                 animal.gestationRemainingDays == null &&
                 animal.mateTargetId == null) {
@@ -411,7 +579,16 @@ class AnimalInteractionProcessor(
         val offspringLevel = avgLevel.coerceAtMost(zoneLevel)
 
         repeat(count) {
-            if (!canSpawn()) return@repeat
+            if (!canSpawn()) {
+                // Counted, not silently dropped: a gestation that produced nothing because the
+                // world
+                // was full is the signal that the population ceiling — and not the ecology — is
+                // what
+                // regulates the arena.
+                log.debug("Offspring of {} refused: population ceiling reached", mother.state.name)
+                emit(AnimalEventType.BIRTH_BLOCKED, mother)
+                return@repeat
+            }
             val offspringAnimal =
                 AnimalInstanceData.offspring(
                     parentA = motherAnimal,
@@ -420,6 +597,7 @@ class AnimalInteractionProcessor(
                     parentAId = mother.state.id,
                     parentBId = fatherId,
                     motherLevel = mother.instanceLevel,
+                    random = random,
                 )
             val name =
                 "${offspringType.replace('_', ' ').replaceFirstChar { it.uppercase() }} - ${FantasyNameGenerator.generate(offspringType)}"
@@ -429,9 +607,9 @@ class AnimalInteractionProcessor(
                     mother.state.pos.y,
                     mother.state.pos.z + random.nextFloat() * 2f - 1f,
                 )
-            val spawned = npcManager.spawnNpc(name, offspringType, offset, offspringLevel)
-            spawned.animalData = offspringAnimal
-            spawned.state = spawned.state.copy(animalData = offspringAnimal.toState())
+            val spawned =
+                npcManager.spawnNpc(
+                    name, offspringType, offset, offspringLevel, animalData = offspringAnimal)
             log.debug("Spawned offspring {} lv{}", name, offspringLevel)
             emit(AnimalEventType.BIRTH, spawned, other = mother, value = offspringLevel.toDouble())
         }

@@ -23,5 +23,9 @@ enum class AnimalEventType {
     GESTATION_START,
     BIRTH,
     EVOLVE,
-    AGE_DEATH,
+    /**
+     * An offspring that was conceived but never born. Deaths are reported by `NpcManager` instead —
+     * see [AnimalInteractionProcessor] — so there is deliberately no death type in this enum.
+     */
+    BIRTH_BLOCKED,
 }

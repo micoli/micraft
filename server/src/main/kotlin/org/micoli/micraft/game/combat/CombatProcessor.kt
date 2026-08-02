@@ -31,6 +31,17 @@ private fun rollDice(spec: String): Int {
     return (1..count).sumOf { Random.nextInt(1, sides + 1) }
 }
 
+/**
+ * [raw] scaled by the attacker's condition (starving, pregnant), floored at 1.
+ *
+ * Only on the two NPC-initiated paths. Player damage goes through `resolveAttack`, which never sees
+ * this — an NPC condition must not leak into what a player hits for.
+ */
+private fun scaleNpcDamage(raw: Int, attacker: NpcInstance): Int {
+    val scaled = (raw * attacker.damageMultiplier).toInt()
+    return scaled.coerceAtLeast(1)
+}
+
 private fun distance3(
     x1: Float,
     y1: Float,
@@ -315,7 +326,9 @@ class CombatProcessor(
         val damage: Int
         if (hit && !target.state.godMode) {
             val raw = rollDice(levelDef.weaponDice) + levelDef.power
-            damage = if (isCrit) raw * 2 else raw
+            // Condition multiplier, never below 1 damage on a hit: a starving predator hits weakly
+            // but a landed blow that does nothing reads as a bug rather than as weakness.
+            damage = scaleNpcDamage(if (isCrit) raw * 2 else raw, npc)
             var newTargetChar =
                 targetChar.copy(currentHp = (targetChar.currentHp - damage).coerceAtLeast(0))
             if (targetChar.characterClass.classResource == ClassResource.RAGE) {
@@ -401,7 +414,7 @@ class CombatProcessor(
 
         if (hit) {
             val raw = rollDice(levelDef.weaponDice) + levelDef.power
-            val damage = if (isCrit) raw * 2 else raw
+            val damage = scaleNpcDamage(if (isCrit) raw * 2 else raw, predator)
             npcManager.applyDamage(prey.state.id, damage, predator.state.id)
             val hitMsg = "hits for $damage${if (isCrit) " [CRIT]" else ""}"
             broadcastCombatLog(

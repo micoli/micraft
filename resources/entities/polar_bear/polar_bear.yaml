@@ -36,3 +36,48 @@ attacks:
     level: 2
   - attackId: ice_claw
     level: 2
+animal:
+  diet: CARNIVORE
+  # mortal at last: with no animal block it never aged, never hungered and nothing preyed on it,
+  # so it ratcheted to exactly half the arena's population and never lost a single member
+  lifespanDays: 40.0
+  preyTypes: [goat, duck, cat, wolf_baby]
+  # a full cycle is gestation + cooldown = 20 days for one cub, against 5.5 days for 1-3 kittens:
+  # roughly fifteen times slower, so the apex reproduces without running away
+  canReproduce: true
+  gestationDays: 6.0
+  offspringType: polar_bear_cub
+  offspringMinCount: 1
+  offspringMaxCount: 1
+  reproductionCooldownDays: 14.0
+  matingRange: 20.0
+  matingContactRange: 3.0
+  baseStats:
+    str: 18
+    dex: 8
+    intel: 6
+    wis: 8
+    con: 18
+    cha: 6
+  statsVariance: 2
+  hpRegenPerSec: 0.5
+  combatExitDelaySec: 20.0
+  foodSearchRadius: 30.0
+  roamRadius: 50.0
+  hungerRatePerDay: 0.05
+  feedHungerReduction: 0.5
+  hungerThresholdToHunt: 0.35
+  hungerThresholdToMate: 0.4
+  # stops breeding where the herd is already dense, not world-wide
+  maxLocalDensity: 3
+  densityRadius: 24.0
+  # ── Starvation ──
+  starvationThreshold: 1.0
+  starvationAttackMultiplier: 0.5
+  starvationSpeedMultiplier: 0.2
+  starvationSterile: true
+  # a big animal lasts longer without food than a duck does
+  starvationDeathDays: 5.0
+  # ── Gestation ──
+  gestationAttackMultiplier: 0.6
+  gestationSpeedMultiplier: 0.7

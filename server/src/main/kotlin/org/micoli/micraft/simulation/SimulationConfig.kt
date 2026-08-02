@@ -1,6 +1,7 @@
 package org.micoli.micraft.simulation
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcTuning
 import org.micoli.micraft.game.npc.NpcYamlOverride
 
@@ -64,7 +65,14 @@ data class SimulationConfig(
      * the charts, the event log and every NPC are only inspectable while the arena is still there.
      */
     val maxGameDays: Double = 0.0,
-    val npcTuning: NpcTuning = NpcTuning(),
+    /**
+     * Defaults to whatever the running server is using, not to the code defaults.
+     *
+     * The admin UI prefills this from `NpcConstants.live`, but a config posted without it used to
+     * fall back to `NpcTuning()` — so an arena could silently run on different tunables than the
+     * game it was meant to describe.
+     */
+    val npcTuning: NpcTuning = NpcConstants.live,
     val npcDefinitionOverrides: Map<String, NpcYamlOverride> = emptyMap(),
     val initialSpawns: List<SimSpawn> = emptyList(),
     val players: List<SimPlayerSpec> = emptyList(),

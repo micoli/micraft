@@ -3,6 +3,16 @@ package org.micoli.micraft.simulation
 import kotlin.math.floor
 import kotlinx.serialization.Serializable
 
+private fun HashMap<String, Int>.bump(type: String) {
+    this[type] = (this[type] ?: 0) + 1
+}
+
+private fun sumByType(vararg maps: Map<String, Int>): Map<String, Int> {
+    val total = HashMap<String, Int>()
+    for (map in maps) for ((type, count) in map) total[type] = (total[type] ?: 0) + count
+    return total
+}
+
 /**
  * One slice of arena history.
  *
@@ -15,16 +25,52 @@ data class SimMetricBucket(
     val index: Long,
     val startGameDay: Double,
     val tick: Long,
+    /** Every death, whatever the cause — the sum of the three maps below. */
     val deathsByType: Map<String, Int> = emptyMap(),
+    val ageDeathsByType: Map<String, Int> = emptyMap(),
+    val killDeathsByType: Map<String, Int> = emptyMap(),
+    val starvationsByType: Map<String, Int> = emptyMap(),
+    val birthsByType: Map<String, Int> = emptyMap(),
+    val evolutionsByType: Map<String, Int> = emptyMap(),
     val aliveByType: Map<String, Int> = emptyMap(),
+    /**
+     * Condition of the standing population, per type — gauges, like [aliveByType].
+     *
+     * These are what turn "the population fell" into a reason. Hunger pegged at 1.0 across a whole
+     * species says the food base is gone; an adult share near zero says nothing is growing up. Both
+     * were true in the 60-day run and neither was visible on any chart.
+     */
+    val meanHungerByType: Map<String, Double> = emptyMap(),
+    /** Mean age as a fraction of the type's lifespan; 0 when it has none. */
+    val meanAgeRatioByType: Map<String, Double> = emptyMap(),
+    /** Share of the type that is adult (has no `adultType` to grow into). */
+    val adultShareByType: Map<String, Double> = emptyMap(),
+    val starvingShareByType: Map<String, Double> = emptyMap(),
+    val pregnantShareByType: Map<String, Double> = emptyMap(),
     val attacks: Int = 0,
     val gestations: Int = 0,
     val births: Int = 0,
+    val birthsBlocked: Int = 0,
     val matings: Int = 0,
     val spawns: Int = 0,
     val fed: Int = 0,
     val hungry: Int = 0,
     val evolutions: Int = 0,
+)
+
+/**
+ * The standing population and its condition, sampled together.
+ *
+ * One object because it comes from one pass over the NPCs: counting a few thousand of them five
+ * times to fill five maps would cost more than the whole metric is worth.
+ */
+class PopulationSample(
+    val aliveByType: Map<String, Int> = emptyMap(),
+    val meanHungerByType: Map<String, Double> = emptyMap(),
+    val meanAgeRatioByType: Map<String, Double> = emptyMap(),
+    val adultShareByType: Map<String, Double> = emptyMap(),
+    val starvingShareByType: Map<String, Double> = emptyMap(),
+    val pregnantShareByType: Map<String, Double> = emptyMap(),
 )
 
 @Serializable
@@ -49,11 +95,16 @@ class SimMetrics(
 ) {
     private class Slice(val index: Long, val startGameDay: Double) {
         var tick = 0L
-        val deaths = HashMap<String, Int>()
-        var alive: Map<String, Int> = emptyMap()
+        val ageDeaths = HashMap<String, Int>()
+        val killDeaths = HashMap<String, Int>()
+        val starvations = HashMap<String, Int>()
+        val birthsPerType = HashMap<String, Int>()
+        val evolutionsPerType = HashMap<String, Int>()
+        var population: PopulationSample = PopulationSample()
         var attacks = 0
         var gestations = 0
         var births = 0
+        var birthsBlocked = 0
         var matings = 0
         var spawns = 0
         var fed = 0
@@ -65,11 +116,22 @@ class SimMetrics(
                 index = index,
                 startGameDay = startGameDay,
                 tick = tick,
-                deathsByType = deaths.toMap(),
-                aliveByType = alive,
+                deathsByType = sumByType(ageDeaths, killDeaths, starvations),
+                ageDeathsByType = ageDeaths.toMap(),
+                killDeathsByType = killDeaths.toMap(),
+                starvationsByType = starvations.toMap(),
+                birthsByType = birthsPerType.toMap(),
+                evolutionsByType = evolutionsPerType.toMap(),
+                aliveByType = population.aliveByType,
+                meanHungerByType = population.meanHungerByType,
+                meanAgeRatioByType = population.meanAgeRatioByType,
+                adultShareByType = population.adultShareByType,
+                starvingShareByType = population.starvingShareByType,
+                pregnantShareByType = population.pregnantShareByType,
                 attacks = attacks,
                 gestations = gestations,
                 births = births,
+                birthsBlocked = birthsBlocked,
                 matings = matings,
                 spawns = spawns,
                 fed = fed,
@@ -88,20 +150,26 @@ class SimMetrics(
     @Synchronized
     fun record(event: SimEvent) {
         val slice = sliceFor(event.gameDay, event.tick) ?: return
+        val npcType = event.npcType ?: UNKNOWN_TYPE
         when (event.type) {
-            SimEventType.DEATH,
-            SimEventType.AGE_DEATH -> {
-                val type = event.npcType ?: UNKNOWN_TYPE
-                slice.deaths[type] = (slice.deaths[type] ?: 0) + 1
-            }
+            SimEventType.DEATH -> slice.killDeaths.bump(npcType)
+            SimEventType.AGE_DEATH -> slice.ageDeaths.bump(npcType)
+            SimEventType.STARVATION -> slice.starvations.bump(npcType)
             SimEventType.ATTACK -> slice.attacks++
             SimEventType.GESTATION_START -> slice.gestations++
-            SimEventType.BIRTH -> slice.births++
+            SimEventType.BIRTH -> {
+                slice.births++
+                slice.birthsPerType.bump(npcType)
+            }
+            SimEventType.BIRTH_BLOCKED -> slice.birthsBlocked++
             SimEventType.MATING -> slice.matings++
             SimEventType.SPAWN -> slice.spawns++
             SimEventType.FED -> slice.fed++
             SimEventType.HUNGRY -> slice.hungry++
-            SimEventType.EVOLVE -> slice.evolutions++
+            SimEventType.EVOLVE -> {
+                slice.evolutions++
+                slice.evolutionsPerType.bump(npcType)
+            }
             else -> Unit
         }
     }
@@ -117,14 +185,14 @@ class SimMetrics(
         gameDay: Double,
         tick: Long,
         nowMs: Long = System.currentTimeMillis(),
-        aliveByType: () -> Map<String, Int>,
+        population: () -> PopulationSample,
     ) {
         val known = slices.lastOrNull()?.index
         val slice = sliceFor(gameDay, tick) ?: return
         val opened = slice.index != known
         if (!opened && nowMs - lastSampleMs < SAMPLE_MIN_MS) return
         lastSampleMs = nowMs
-        slice.alive = aliveByType()
+        slice.population = population()
     }
 
     @Synchronized fun snapshot(): List<SimMetricBucket> = slices.map { it.toDto() }
@@ -158,7 +226,7 @@ class SimMetrics(
         if (last != null && index < last.index) return slices.find { it.index == index }
         val slice = Slice(index, index * bucketGameDays).also { it.tick = tick }
         // a new slice inherits the population: nothing died just because a bucket rolled over
-        slice.alive = last?.alive ?: emptyMap()
+        slice.population = last?.population ?: PopulationSample()
         slices.addLast(slice)
         while (slices.size > capacity) slices.removeFirst()
         return slice

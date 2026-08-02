@@ -39,6 +39,54 @@ class SimMetricsTest {
         assertEquals(mapOf("goat" to 2, "wolf" to 1), bucket.deathsByType)
     }
 
+    /**
+     * Old age, predation and starvation are opposite balance problems: a single `deathsByType`
+     * series cannot tell "the wolves are eating everything" from "everything is dying of old age".
+     */
+    @Test
+    fun deathsAreAlsoSplitPerCause() {
+        val metrics = SimMetrics(bucketGameDays = 1.0)
+        metrics.record(event(SimEventType.DEATH, 0.1, npcType = "goat"))
+        metrics.record(event(SimEventType.AGE_DEATH, 0.2, npcType = "goat"))
+        metrics.record(event(SimEventType.AGE_DEATH, 0.3, npcType = "wolf"))
+        metrics.record(event(SimEventType.STARVATION, 0.4, npcType = "wolf"))
+
+        val bucket = metrics.snapshot().single()
+        assertEquals(mapOf("goat" to 1), bucket.killDeathsByType)
+        assertEquals(mapOf("goat" to 1, "wolf" to 1), bucket.ageDeathsByType)
+        assertEquals(mapOf("wolf" to 1), bucket.starvationsByType)
+    }
+
+    @Test
+    fun deathsByType_isTheSumOfTheThreeCauses() {
+        val metrics = SimMetrics(bucketGameDays = 1.0)
+        metrics.record(event(SimEventType.DEATH, 0.1, npcType = "goat"))
+        metrics.record(event(SimEventType.AGE_DEATH, 0.2, npcType = "goat"))
+        metrics.record(event(SimEventType.STARVATION, 0.3, npcType = "goat"))
+
+        val bucket = metrics.snapshot().single()
+        val perCause =
+            bucket.ageDeathsByType.values.sum() +
+                bucket.killDeathsByType.values.sum() +
+                bucket.starvationsByType.values.sum()
+        assertEquals(perCause, bucket.deathsByType.values.sum())
+        assertEquals(mapOf("goat" to 3), bucket.deathsByType)
+    }
+
+    @Test
+    fun blockedBirthsHaveTheirOwnCounter() {
+        val metrics = SimMetrics(bucketGameDays = 1.0)
+        metrics.record(event(SimEventType.BIRTH, 0.1, npcType = "goat"))
+        metrics.record(event(SimEventType.BIRTH_BLOCKED, 0.2, npcType = "goat"))
+        metrics.record(event(SimEventType.BIRTH_BLOCKED, 0.3, npcType = "goat"))
+
+        val bucket = metrics.snapshot().single()
+        assertEquals(1, bucket.births)
+        // a birth refused by the population ceiling must never read as a birth
+        assertEquals(2, bucket.birthsBlocked)
+        assertTrue(bucket.deathsByType.isEmpty())
+    }
+
     @Test
     fun aDeathWithNoKnownType_isStillCounted() {
         val metrics = SimMetrics(bucketGameDays = 1.0)
@@ -89,32 +137,38 @@ class SimMetricsTest {
         var calls = 0
         val alive = {
             calls++
-            mapOf("goat" to 3)
+            PopulationSample(aliveByType = mapOf("goat" to 3))
         }
 
         // same bucket, same instant: sampling every tick would cost a full population scan per tick
-        metrics.sample(0.10, tick = 1, nowMs = 1_000L, aliveByType = alive)
-        metrics.sample(0.11, tick = 2, nowMs = 1_000L, aliveByType = alive)
-        metrics.sample(0.12, tick = 3, nowMs = 1_010L, aliveByType = alive)
+        metrics.sample(0.10, tick = 1, nowMs = 1_000L, population = alive)
+        metrics.sample(0.11, tick = 2, nowMs = 1_000L, population = alive)
+        metrics.sample(0.12, tick = 3, nowMs = 1_010L, population = alive)
         assertEquals(1, calls)
 
         // new bucket: sampled again whatever the clock says
-        metrics.sample(0.30, tick = 4, nowMs = 1_010L, aliveByType = alive)
+        metrics.sample(0.30, tick = 4, nowMs = 1_010L, population = alive)
         assertEquals(2, calls)
     }
 
     @Test
     fun theOpenBucketKeepsRefreshing_soTheChartHeadMoves() {
         val metrics = SimMetrics(bucketGameDays = 1.0)
-        metrics.sample(0.1, tick = 1, nowMs = 0L) { mapOf("goat" to 2) }
-        metrics.sample(0.2, tick = 2, nowMs = 5_000L) { mapOf("goat" to 9) }
+        metrics.sample(0.1, tick = 1, nowMs = 0L) {
+            PopulationSample(aliveByType = mapOf("goat" to 2))
+        }
+        metrics.sample(0.2, tick = 2, nowMs = 5_000L) {
+            PopulationSample(aliveByType = mapOf("goat" to 9))
+        }
         assertEquals(mapOf("goat" to 9), metrics.snapshot().single().aliveByType)
     }
 
     @Test
     fun aNewBucketInheritsThePopulation() {
         val metrics = SimMetrics(bucketGameDays = 0.25)
-        metrics.sample(0.1, tick = 1, nowMs = 0L) { mapOf("goat" to 4) }
+        metrics.sample(0.1, tick = 1, nowMs = 0L) {
+            PopulationSample(aliveByType = mapOf("goat" to 4))
+        }
         metrics.record(event(SimEventType.ATTACK, 0.4))
         // nothing died just because a bucket rolled over: a zero here would draw a gap in the chart
         assertEquals(mapOf("goat" to 4), metrics.snapshot().last().aliveByType)

@@ -22,31 +22,29 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.combat.AttackDefinition
-import org.micoli.micraft.game.GameTimeService
-import org.micoli.micraft.game.TICK_MS
 import org.micoli.micraft.game.TICK_SECONDS
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.CombatProcessor
+import org.micoli.micraft.game.combat.SpellDefinition
 import org.micoli.micraft.game.npc.FantasyNameGenerator
-import org.micoli.micraft.game.npc.HibernationProcessor
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
-import org.micoli.micraft.game.npc.NpcSpawner
+import org.micoli.micraft.game.npc.NpcSubsystemFactory
+import org.micoli.micraft.game.npc.NpcSubsystemHooks
 import org.micoli.micraft.game.npc.NpcTickContext
 import org.micoli.micraft.game.npc.NpcTickPipeline
 import org.micoli.micraft.game.npc.NpcTuning
 import org.micoli.micraft.game.npc.NpcYamlOverride
 import org.micoli.micraft.game.npc.animal.AnimalEvent
 import org.micoli.micraft.game.npc.animal.AnimalEventType
-import org.micoli.micraft.game.npc.animal.AnimalInstanceData
-import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
 import org.micoli.micraft.game.npc.applyOverride
-import org.micoli.micraft.game.npc.pack.PackCoordinator
 import org.micoli.micraft.game.npc.pack.PackEvent
 import org.micoli.micraft.game.npc.pack.PackEventType
+import org.micoli.micraft.game.rpg.ExperienceConfigData
+import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.tick.MovementProcessor
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ChunkPos
@@ -55,6 +53,7 @@ import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.FlatArenaChunkGenerator
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
+import org.micoli.micraft.npc.NpcDeathCause
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
@@ -77,15 +76,30 @@ class SimulationDeps(
     val classRegistry: Map<String, ClassDefinitionEntry>,
     val i18n: I18nConfig,
     val vegetationConfig: VegetationConfig,
+    /** Needed for NPC kill XP, without which no NPC ever gains a level. */
+    val experienceConfig: ExperienceConfigData = ExperienceConfigData(),
+    val spellRegistry: Map<String, SpellDefinition> = emptyMap(),
 )
 
 /**
  * A disposable, fully in-memory world for observing NPC rules at high speed.
  *
  * Everything is instance-scoped: its own [WorldState] with no persistence, its own [NpcManager],
- * its own [NpcTuning] and definition overrides. The NPC tick order itself is *not* reimplemented —
- * it is delegated to [NpcTickPipeline], the same object the live game loop drives, so behaviour
- * cannot drift between the two.
+ * its own [NpcTuning] and definition overrides. Neither the NPC tick order nor its wiring is
+ * reimplemented — the order comes from [NpcTickPipeline] and the wiring from [NpcSubsystemFactory],
+ * the same two the live game loop uses, so behaviour cannot drift between them.
+ *
+ * **What this arena deliberately does not simulate**, so that an absence is a decision rather than
+ * an oversight:
+ * - Terrain. A flat walled arena instead of the biome generator; that is the point of it. The walls
+ *   are visible in the results — a fleeing animal can be cornered against one.
+ * - Player-facing systems: status effects on players, regeneration, spells, weather, liquids, item
+ *   drops, quests, trade, chunk streaming, persistence. None of them touch the NPC ecology.
+ * - Player disconnection. Arena players are placed at start and never leave, so
+ *   `NpcTickPipeline.onPlayerDisconnected` has nothing to report; orphan despawn is still exercised
+ *   through the slow lane.
+ *
+ * NPC status effects, hibernation, packs, XP and the whole animal lifecycle *are* simulated.
  */
 class WorldSimulator(
     val config: SimulationConfig,
@@ -104,8 +118,6 @@ class WorldSimulator(
 
     val world = WorldState(generator, persistence = null)
 
-    private val gameTimeService = GameTimeService(config.gameDayDurationSeconds)
-
     @Volatile private var tuning: NpcTuning = config.npcTuning
     private val random = Random(config.seed)
     private val ctx: NpcTickContext
@@ -117,18 +129,76 @@ class WorldSimulator(
 
     private val sessions = mutableListOf<SimPlayerSession>()
 
-    private val npcManager =
-        NpcManager(
-            broadcast = {},
+    /**
+     * The XP ledger. Wired here for the same reason as everything else in [hooks]: without it no
+     * NPC ever gains a level, so the XP branch of baby-to-adult growth can never fire and the arena
+     * reports a world where nothing grows up.
+     */
+    private val experienceProcessor =
+        ExperienceProcessor(
+            config = deps.experienceConfig,
             getSessions = { sessions.toList() },
-            onNpcKilled = { instance ->
-                logEvent(SimEventType.DEATH, "mort de ${instance.state.name}", instance)
-            },
+            savePlayer = {},
+            subscribeToChannel = { _, _ -> },
             broadcastCombatLog = { text -> logCombatLine(text) },
-            ctxOf = { ctx },
         )
 
-    private val npcSpawner = NpcSpawner()
+    private val hooks =
+        NpcSubsystemHooks(
+            broadcast = {},
+            broadcastWorldUpdate = { message -> onWorldUpdate(message) },
+            getSessions = { sessions.toList() },
+            broadcastCombatLog = { text -> logCombatLine(text) },
+            onNpcKilled = { instance, cause ->
+                val animal = instance.animalData
+                when (cause) {
+                    NpcDeathCause.KILLED ->
+                        logEvent(SimEventType.DEATH, "mort de ${instance.state.name}", instance)
+                    NpcDeathCause.OLD_AGE ->
+                        logEvent(
+                            SimEventType.AGE_DEATH,
+                            "${instance.state.name} meurt de vieillesse",
+                            instance,
+                            value = animal?.ageGameDays,
+                        )
+                    NpcDeathCause.STARVATION ->
+                        logEvent(
+                            SimEventType.STARVATION,
+                            "${instance.state.name} meurt de faim",
+                            instance,
+                            value = animal?.hunger,
+                        )
+                }
+            },
+            grantNpcKillXp = { predator, prey ->
+                experienceProcessor.grantXpToNpcForKill(predator, prey)
+            },
+            ctxOf = { ctx },
+            canSpawn = ::belowPopulationCap,
+            onAnimalEvent = { event -> logAnimalEvent(event) },
+            onPackEvent = { event -> logPackEvent(event) },
+        )
+
+    private val vegetationManager =
+        VegetationManager(
+            world,
+            deps.vegetationConfig,
+            // never saved: the simulated world is discarded on stop
+            savePath = Path.of("data/world/.simulator/vegetation_state.yaml"),
+        )
+
+    /** Same wiring the live server uses — see [NpcSubsystemFactory]. */
+    private val npcSubsystemFactory =
+        NpcSubsystemFactory(
+            hooks = hooks,
+            world = world,
+            vegetationManager = vegetationManager,
+            gameDayDurationSecondsOf = { config.gameDayDurationSeconds },
+        )
+
+    private val npcManager = npcSubsystemFactory.npcManager
+
+    private val npcSpawner = npcSubsystemFactory.npcSpawner
 
     private val combatProcessor =
         CombatProcessor(
@@ -142,51 +212,25 @@ class WorldSimulator(
             subscribeToChannel = { _, _ -> },
             i18n = deps.i18n,
             savePlayer = {},
+            onPlayerDownedByNpc = { session, killerNpcId ->
+                val predator = npcManager.getInstance(killerNpcId)
+                val charData = session.characterData
+                if (predator != null && charData != null) {
+                    experienceProcessor.grantXpToNpc(
+                        predator, deps.experienceConfig.sources.commonPerLevel * charData.level)
+                }
+            },
         )
 
-    private val vegetationManager =
-        VegetationManager(
-            world,
-            deps.vegetationConfig,
-            // never saved: the simulated world is discarded on stop
-            savePath = Path.of("data/world/.simulator/vegetation_state.yaml"),
-        )
+    private val npcSubsystem = npcSubsystemFactory.build(combatProcessor)
 
-    private val animals =
-        AnimalInteractionProcessor(
-            npcManager = npcManager,
-            combatProcessor = combatProcessor,
-            world = world,
-            vegetationManager = vegetationManager,
-            gameTimeService = gameTimeService,
-            broadcast = { message -> onWorldUpdate(message) },
-            ctxOf = { ctx },
-            onEvent = { event -> logAnimalEvent(event) },
-            canSpawn = ::belowPopulationCap,
-        )
+    private val gameTimeService = npcSubsystem.gameTimeService
 
-    private val packCoordinator =
-        PackCoordinator(
-                npcManager = npcManager,
-                broadcastCombatLog = { line -> logCombatLine(line) },
-                onEvent = { event -> logPackEvent(event) },
-            )
-            .also { npcManager.setNpcDamagedByNpcHook(it::onNpcDamagedByNpc) }
+    private val animals = npcSubsystem.animals
 
-    private val pipeline =
-        NpcTickPipeline(
-            npcManager = npcManager,
-            npcSpawner = npcSpawner,
-            animals = animals,
-            packs = packCoordinator,
-            hibernation =
-                HibernationProcessor(
-                    npcManager = npcManager,
-                    gameDay = { gameTimeService.currentGameDay },
-                ),
-            ctxOf = { ctx },
-            canSpawn = ::belowPopulationCap,
-        )
+    private val packCoordinator = npcSubsystem.packs
+
+    private val pipeline = npcSubsystem.pipeline
 
     private val movementProcessor = MovementProcessor(world)
 
@@ -333,6 +377,9 @@ class WorldSimulator(
         withContext(simDispatcher) {
             npcManager.loadDefinitions(overriddenDefinitions(config.npcDefinitionOverrides))
             pregenerateArena()
+            // the live server does this in start(); skipping it left the arena's regrowth queue
+            // starting from a state the game never starts from
+            vegetationManager.load()
             npcManager.addAdminListener { json -> logNpcManagerEvent(json) }
             config.players.forEach { spec -> addPlayer(spec) }
             config.initialSpawns.forEach { spawn ->
@@ -403,19 +450,29 @@ class WorldSimulator(
         for (session in sessions) {
             val newState = movementProcessor.process(session, session.takeInput())
             if (newState != session.state) session.state = newState
+            // the live loop does this per session per tick; without it `respawnPendingInZone` and
+            // the
+            // zone-triggered spawn pass are never exercised in the arena
+            val zone = pipeline.zoneOf(session.state.pos.x, session.state.pos.z)
+            if (session.lastZonePos != zone) {
+                session.lastZonePos = zone
+                pipeline.onZoneCrossed(world, zone.first, zone.second)
+            }
         }
         gameTimeService.tick(TICK_SECONDS.toDouble())
-        metrics.sample(gameTimeService.currentGameDay, tick) { aliveByType() }
+        metrics.sample(gameTimeService.currentGameDay, tick) { populationSample() }
         pipeline.tick(world, sessions.toList(), combatProcessor)
-        containStrays()
         // game-owned system: regrows what the herbivores grazed
         vegetationManager.tick { message -> onWorldUpdate(message) }
         if (config.autoSpawnEnabled &&
             sessions.isNotEmpty() &&
-            tick % LIFECYCLE_INTERVAL_TICKS == 0L) {
+            tick % NpcSubsystemFactory.LIFECYCLE_INTERVAL_TICKS == 0L) {
             // needs a player nearby, like the real spawner does
             pipeline.lifecycle(world, sessions.toList())
         }
+        // Arena-only, and deliberately last: the flat arena has walls the real world does not, so
+        // nothing may read a contained position as if the simulation had produced it.
+        containStrays()
         enforceRunLimit()
     }
 
@@ -477,19 +534,8 @@ class WorldSimulator(
         }
         // a manual spawn must not break the ceiling either, or the invariant is worthless
         if (!belowPopulationCap()) return null
-        val instance = npcManager.spawnNpc(name, type, pos, level ?: config.zoneLevel)
-        val animalCfg = instance.definition.animalConfig
-        if (animalCfg != null && instance.animalData == null) {
-            val data =
-                AnimalInstanceData.initial(
-                    lifespanDays = animalCfg.lifespanDays,
-                    baseStats = animalCfg.baseStats,
-                    statsVariance = animalCfg.statsVariance,
-                )
-            instance.animalData = data
-            instance.state = instance.state.copy(animalData = data.toState())
-        }
-        return instance
+        // the animal record comes with the spawn now — see NpcManager.spawnNpc
+        return npcManager.spawnNpc(name, type, pos, level ?: config.zoneLevel)
     }
 
     /** Live NPC instances, for inspection and assertions. */
@@ -507,7 +553,60 @@ class WorldSimulator(
 
     /** Standing population per NPC type; the gauge behind the "vivants" chart. */
     fun aliveByType(): Map<String, Int> =
-        npcManager.getAll().groupingBy { it.state.type }.eachCount()
+        npcManager.getAll().filter { !it.isDead }.groupingBy { it.state.type }.eachCount()
+
+    /**
+     * The standing population and its condition, in one pass.
+     *
+     * Condition is what makes a population chart diagnosable. "Cats fell from 300 to 1" says
+     * nothing on its own; "their mean hunger sat at 1.0 and no cat was ever adult" names the cause.
+     * Computed together because it is one walk over the NPC map, called a few times a second at
+     * most.
+     */
+    fun populationSample(): PopulationSample {
+        val alive = HashMap<String, Int>()
+        val hungerSum = HashMap<String, Double>()
+        val ageRatioSum = HashMap<String, Double>()
+        val adults = HashMap<String, Int>()
+        val starving = HashMap<String, Int>()
+        val pregnant = HashMap<String, Int>()
+
+        for (instance in npcManager.getAll()) {
+            if (instance.isDead) continue
+            val type = instance.state.type
+            alive[type] = (alive[type] ?: 0) + 1
+            val animal = instance.animalData ?: continue
+            val config = instance.definition.animalConfig ?: continue
+
+            hungerSum[type] = (hungerSum[type] ?: 0.0) + animal.hunger
+            val lifespan = config.lifespanDays
+            if (lifespan != null && lifespan > 0.0) {
+                ageRatioSum[type] = (ageRatioSum[type] ?: 0.0) + animal.ageGameDays / lifespan
+            }
+            // "adult" means it has nothing left to grow into, which is what a renewing population
+            // needs to keep a share of
+            if (config.adultType == null) adults[type] = (adults[type] ?: 0) + 1
+            if (animal.hunger >= config.starvationThreshold) {
+                starving[type] = (starving[type] ?: 0) + 1
+            }
+            if (animal.gestationRemainingDays != null) pregnant[type] = (pregnant[type] ?: 0) + 1
+        }
+
+        fun ratios(sums: Map<String, out Number>): Map<String, Double> =
+            sums.mapValues { (type, sum) ->
+                val n = alive[type] ?: 0
+                if (n == 0) 0.0 else sum.toDouble() / n
+            }
+
+        return PopulationSample(
+            aliveByType = alive.toMap(),
+            meanHungerByType = ratios(hungerSum),
+            meanAgeRatioByType = ratios(ageRatioSum),
+            adultShareByType = ratios(adults),
+            starvingShareByType = ratios(starving),
+            pregnantShareByType = ratios(pregnant),
+        )
+    }
 
     /** Whole retained series. [SimMetrics.since] is what frames use. */
     fun metricsDto() = SimMetricsDto(metrics.bucketGameDays, metrics.snapshot())
@@ -738,7 +837,7 @@ class WorldSimulator(
                 AnimalEventType.GESTATION_START -> SimEventType.GESTATION_START
                 AnimalEventType.BIRTH -> SimEventType.BIRTH
                 AnimalEventType.EVOLVE -> SimEventType.EVOLVE
-                AnimalEventType.AGE_DEATH -> SimEventType.AGE_DEATH
+                AnimalEventType.BIRTH_BLOCKED -> SimEventType.BIRTH_BLOCKED
             }
         val message =
             when (event.type) {
@@ -752,8 +851,8 @@ class WorldSimulator(
                 AnimalEventType.BIRTH ->
                     "naissance de $who (mère $other, niveau ${event.value.int()})"
                 AnimalEventType.EVOLVE -> "$who devient adulte (niveau ${event.value.int()})"
-                AnimalEventType.AGE_DEATH ->
-                    "$who meurt de vieillesse (${event.value.days()} jours)"
+                AnimalEventType.BIRTH_BLOCKED ->
+                    "naissance refusée chez $who — plafond de population atteint"
             }
         record(
             SimEvent(
@@ -806,8 +905,8 @@ class WorldSimulator(
     }
 
     /**
-     * Combat-log lines are chat strings with `[m:NAME]` / `[p:NAME]` markers. Deaths and old age
-     * already arrive as typed events (kill hook, animal hook), so those lines are dropped here
+     * Combat-log lines are chat strings with `[m:NAME]` / `[p:NAME]` markers. Every death already
+     * arrives as a typed event from the kill hook, cause included, so those lines are dropped here
      * rather than logged twice.
      */
     private fun logCombatLine(text: String) {
@@ -817,6 +916,7 @@ class WorldSimulator(
                 clean.contains("old age") ||
                     clean.contains("slain") ||
                     clean.contains("withers to death") ||
+                    clean.contains("starved to death") ||
                     // already recorded as typed PACK_* events
                     clean.contains("howls for the pack") ||
                     clean.contains("closes in on") -> return
@@ -878,7 +978,6 @@ class WorldSimulator(
         private const val TPS_WINDOW_MS = 500L
         private const val MAX_MANUAL_STEPS = 10_000
         private const val MAX_SPAWN_BATCH = 200
-        private val LIFECYCLE_INTERVAL_TICKS = max(1L, 5_000L / TICK_MS)
     }
 }
 

@@ -28,9 +28,9 @@ const FILTER_GROUPS: { key: string; labelKey: TranslationKey; types: SimEventTyp
   {
     key: "reproduction",
     labelKey: "sim.eventGroup.reproduction",
-    types: ["MATING", "GESTATION_START", "BIRTH", "EVOLVE"],
+    types: ["MATING", "GESTATION_START", "BIRTH", "BIRTH_BLOCKED", "EVOLVE"],
   },
-  { key: "lifecycle", labelKey: "sim.eventGroup.lifecycle", types: ["SPAWN", "DESPAWN", "AGE_DEATH"] },
+  { key: "lifecycle", labelKey: "sim.eventGroup.lifecycle", types: ["SPAWN", "DESPAWN", "AGE_DEATH", "STARVATION"] },
   { key: "system", labelKey: "sim.eventGroup.system", types: ["SYSTEM"] },
 ];
 

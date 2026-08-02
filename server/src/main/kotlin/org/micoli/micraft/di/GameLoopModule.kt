@@ -24,9 +24,12 @@ import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
 import org.micoli.micraft.game.npc.NpcConfigLoader
+import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
+import org.micoli.micraft.game.npc.NpcSubsystemFactory
+import org.micoli.micraft.game.npc.NpcSubsystemHooks
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
@@ -50,6 +53,7 @@ import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.game.world.weather.WeatherConfig
 import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.http.TerrainCache
+import org.micoli.micraft.npc.NpcDeathCause
 import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -153,6 +157,18 @@ class GameLoopModule {
             dataArmorsPath = Path.of("data/resources/armors"),
         )
 
+    /**
+     * Armour definitions as the combat maths sees them.
+     *
+     * These were `emptyMap()` in every processor, so equipping armour changed a player's appearance
+     * and nothing else — the registry was loaded and then ignored. Read once at wiring time, which
+     * means `/reload` does not reach the combat maths; that is unchanged from before, where nothing
+     * reached it at all.
+     */
+    @Single
+    fun armorRegistry(armorRegistryLoader: ArmorRegistryLoader): Map<String, ArmorDefinition> =
+        armorRegistryLoader.load()
+
     @Single
     fun npcConfigLoader(): NpcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml"))
 
@@ -163,18 +179,27 @@ class GameLoopModule {
             dataEntityPath = Path.of("data/resources/entities"),
         )
 
+    /**
+     * The live host's side of the NPC wiring. The admin world simulator builds the same object with
+     * its own hooks, which is what makes a simulated run comparable to the real game.
+     */
     @Single
-    fun npcManager(
+    fun npcSubsystemHooks(
         sessionRegistry: SessionRegistry,
         experienceProcessor: ExperienceProcessor,
         questManager: QuestManager,
-    ): NpcManager =
-        NpcManager(
+    ): NpcSubsystemHooks =
+        NpcSubsystemHooks(
             broadcast = sessionRegistry::broadcast,
+            broadcastWorldUpdate = sessionRegistry::broadcast,
             getSessions = sessionRegistry::all,
-            onNpcKilled = { npc ->
-                experienceProcessor.onNpcKilled(npc)
-                questManager.onNpcKilled(npc)
+            // XP and quest credit only for a death someone actually caused: an animal that a player
+            // wounded and then outlived must not pay out when it dies of old age or starvation.
+            onNpcKilled = { npc, cause ->
+                if (cause == NpcDeathCause.KILLED) {
+                    experienceProcessor.onNpcKilled(npc)
+                    questManager.onNpcKilled(npc)
+                }
             },
             broadcastCombatLog = { msg ->
                 val chatMsg =
@@ -189,7 +214,27 @@ class GameLoopModule {
             },
         )
 
-    @Single fun npcSpawner(): NpcSpawner = NpcSpawner()
+    @Single
+    fun npcSubsystemFactory(
+        hooks: NpcSubsystemHooks,
+        worldState: WorldState,
+        vegetationManager: VegetationManager,
+    ): NpcSubsystemFactory =
+        NpcSubsystemFactory(
+            hooks = hooks,
+            world = worldState,
+            vegetationManager = vegetationManager,
+            // read lazily: npc.yaml is only loaded once GameLoop.start() runs
+            gameDayDurationSecondsOf = { NpcConstants.live.gameDayDurationSeconds },
+        )
+
+    @Single
+    fun npcManager(npcSubsystemFactory: NpcSubsystemFactory): NpcManager =
+        npcSubsystemFactory.npcManager
+
+    @Single
+    fun npcSpawner(npcSubsystemFactory: NpcSubsystemFactory): NpcSpawner =
+        npcSubsystemFactory.npcSpawner
 
     @Single fun combatConfigData(): CombatConfigData = CombatConfig().data
 
@@ -231,6 +276,7 @@ class GameLoopModule {
     @Single
     fun combatProcessor(
         combatConfigData: CombatConfigData,
+        armorRegistry: Map<String, ArmorDefinition>,
         @Named("attacks") attacks: Map<String, AttackDefinition>,
         classesConfigData: ClassesConfigData,
         npcManager: NpcManager,
@@ -244,7 +290,7 @@ class GameLoopModule {
         CombatProcessor(
             config = combatConfigData,
             attackRegistry = attacks,
-            armorRegistry = emptyMap<String, ArmorDefinition>(),
+            armorRegistry = armorRegistry,
             classRegistry = classesConfigData.classes,
             npcManager = npcManager,
             getSessions = sessionRegistry::all,
@@ -269,13 +315,14 @@ class GameLoopModule {
 
     @Single
     fun statusEffectProcessor(
+        armorRegistry: Map<String, ArmorDefinition>,
         worldState: WorldState,
         sessionRegistry: SessionRegistry,
         combatProcessor: CombatProcessor,
         chatService: ChatService,
     ): StatusEffectProcessor =
         StatusEffectProcessor(
-            armorRegistry = emptyMap<String, ArmorDefinition>(),
+            armorRegistry = armorRegistry,
             world = worldState,
             broadcastHealthUpdate = { id, isNpc, hp, maxHp ->
                 sessionRegistry.all().forEach {
@@ -315,6 +362,7 @@ class GameLoopModule {
 
     @Single
     fun regenProcessor(
+        armorRegistry: Map<String, ArmorDefinition>,
         classesConfigData: ClassesConfigData,
         combatConfigData: CombatConfigData,
         combatProcessor: CombatProcessor,
@@ -322,12 +370,13 @@ class GameLoopModule {
         RegenProcessor(
             config = classesConfigData,
             maxRage = combatConfigData.maxRage,
-            armorRegistry = emptyMap<String, ArmorDefinition>(),
+            armorRegistry = armorRegistry,
             combatProcessor = combatProcessor,
         )
 
     @Single
     fun spellProcessor(
+        armorRegistry: Map<String, ArmorDefinition>,
         @Named("spells") spells: Map<String, SpellDefinition>,
         classesConfigData: ClassesConfigData,
         combatConfigData: CombatConfigData,
@@ -338,7 +387,7 @@ class GameLoopModule {
         SpellProcessor(
             spellRegistry = spells,
             classRegistry = classesConfigData.classes,
-            armorRegistry = emptyMap<String, ArmorDefinition>(),
+            armorRegistry = armorRegistry,
             combatConfig = combatConfigData,
             combatProcessor = combatProcessor,
             getSessions = sessionRegistry::all,

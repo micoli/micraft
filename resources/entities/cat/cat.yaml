@@ -54,3 +54,17 @@ animal:
   hungerRatePerDay: 0.09
   hungerThresholdToHunt: 0.35
   hungerThresholdToMate: 0.5
+  # stops breeding where the herd is already dense, not world-wide
+  maxLocalDensity: 15
+  densityRadius: 24.0
+  # runs from whatever eats it, at this distance
+  fleeRadius: 10.0
+  # ── Starvation ──
+  starvationThreshold: 1.0
+  starvationAttackMultiplier: 0.5
+  starvationSpeedMultiplier: 0.2
+  starvationSterile: true
+  starvationDeathDays: 3.0
+  # ── Gestation ──
+  gestationAttackMultiplier: 0.6
+  gestationSpeedMultiplier: 0.7

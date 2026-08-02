@@ -43,15 +43,13 @@ import org.micoli.micraft.game.drop.DropConfig
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
 import org.micoli.micraft.game.macro.MacroContext
 import org.micoli.micraft.game.macro.MacroExecutor
-import org.micoli.micraft.game.npc.HibernationProcessor
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
-import org.micoli.micraft.game.npc.NpcTickPipeline
-import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
-import org.micoli.micraft.game.npc.pack.PackCoordinator
+import org.micoli.micraft.game.npc.NpcSubsystemFactory
+import org.micoli.micraft.game.npc.NpcSubsystemHooks
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistry
@@ -169,7 +167,6 @@ fun validatePluginSystemIds(commands: Map<String, CommandHandler>, plugins: List
 }
 
 private const val TARGET_DISTANCE_REFRESH_TICKS = 5
-private const val NPC_LIFECYCLE_INTERVAL_MS = 5_000L
 
 class GameLoop(
     private val world: WorldState,
@@ -226,9 +223,27 @@ class GameLoop(
             resourcesEntityPath = Path.of("resources/entities"),
             dataEntityPath = Path.of("data/resources/entities"),
         ),
-    private val npcManager: NpcManager =
-        NpcManager(broadcast = sessionRegistry::broadcast, getSessions = sessionRegistry::all),
-    private val npcSpawner: NpcSpawner = NpcSpawner(),
+    /**
+     * The single wiring of the NPC subsystem, shared with the admin world simulator.
+     *
+     * The default here is deliberately hook-poor — it is what a test that does not care gets. The
+     * real server passes the Koin-provided factory, which carries XP, quest credit and chat
+     * fan-out.
+     */
+    private val npcSubsystemFactory: NpcSubsystemFactory =
+        NpcSubsystemFactory(
+            hooks =
+                NpcSubsystemHooks(
+                    broadcast = sessionRegistry::broadcast,
+                    broadcastWorldUpdate = sessionRegistry::broadcast,
+                    getSessions = sessionRegistry::all,
+                ),
+            world = world,
+            vegetationManager = vegetationManager,
+            gameDayDurationSecondsOf = { NpcConstants.live.gameDayDurationSeconds },
+        ),
+    private val npcManager: NpcManager = npcSubsystemFactory.npcManager,
+    private val npcSpawner: NpcSpawner = npcSubsystemFactory.npcSpawner,
     private val combatConfig: CombatConfigData = CombatConfig().data,
     val attackRegistry: Map<String, AttackDefinition> = SkillsConfig().data.attacks,
     val spellRegistry: Map<String, SpellDefinition> = SkillsConfig().data.spells,
@@ -237,7 +252,7 @@ class GameLoop(
         CombatProcessor(
             config = combatConfig,
             attackRegistry = attackRegistry,
-            armorRegistry = emptyMap(),
+            armorRegistry = armorRegistryLoader.load(),
             classRegistry = classesData.classes,
             npcManager = npcManager,
             getSessions = sessionRegistry::all,
@@ -255,7 +270,7 @@ class GameLoop(
         ),
     private val statusEffectProcessor: StatusEffectProcessor =
         StatusEffectProcessor(
-            armorRegistry = emptyMap(),
+            armorRegistry = armorRegistryLoader.load(),
             world = world,
             broadcastHealthUpdate = { id, isNpc, hp, maxHp ->
                 sessionRegistry.all().forEach {
@@ -295,14 +310,14 @@ class GameLoop(
         RegenProcessor(
             config = ClassesConfig().data,
             maxRage = combatConfig.maxRage,
-            armorRegistry = emptyMap(),
+            armorRegistry = armorRegistryLoader.load(),
             combatProcessor = combatProcessor,
         ),
     private val spellProcessor: SpellProcessor =
         SpellProcessor(
             spellRegistry = spellRegistry,
             classRegistry = classesData.classes,
-            armorRegistry = emptyMap(),
+            armorRegistry = armorRegistryLoader.load(),
             combatConfig = combatConfig,
             combatProcessor = combatProcessor,
             getSessions = sessionRegistry::all,
@@ -345,45 +360,23 @@ class GameLoop(
     private var saveTickCounter = 0
     private var timeBroadcastCounter = 0
 
-    val gameTimeService: GameTimeService = GameTimeService(NpcConstants.live.gameDayDurationSeconds)
+    /**
+     * The NPC subsystem, wired by the shared factory rather than here.
+     *
+     * The admin world simulator builds the same object from the same factory, which is what makes a
+     * simulated run describe this game. Wiring it a second time here is how the simulator ended up
+     * without kill XP, without the population veto and with its own tick cadence.
+     */
+    private val npcSubsystem = npcSubsystemFactory.build(combatProcessor)
 
-    private val animalInteractionProcessor =
-        AnimalInteractionProcessor(
-            npcManager = npcManager,
-            combatProcessor = combatProcessor,
-            world = world,
-            vegetationManager = vegetationManager,
-            gameTimeService = gameTimeService,
-            broadcast = sessionRegistry::broadcast,
-        )
+    val gameTimeService: GameTimeService = npcSubsystem.gameTimeService
 
-    private val packCoordinator =
-        PackCoordinator(
-                npcManager = npcManager,
-                broadcastCombatLog = { msg ->
-                    val chatMsg =
-                        ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg)
-                    sessionRegistry
-                        .all()
-                        .filter { it.state.subscribedChannels.hasChannel("combat") }
-                        .forEach { it.send(chatMsg) }
-                },
-            )
-            .also { npcManager.setNpcDamagedByNpcHook(it::onNpcDamagedByNpc) }
+    private val animalInteractionProcessor = npcSubsystem.animals
+
+    private val packCoordinator = npcSubsystem.packs
 
     /** Owns the NPC tick order; shared with the admin world simulator. */
-    private val npcTickPipeline =
-        NpcTickPipeline(
-            npcManager = npcManager,
-            npcSpawner = npcSpawner,
-            animals = animalInteractionProcessor,
-            packs = packCoordinator,
-            hibernation =
-                HibernationProcessor(
-                    npcManager = npcManager,
-                    gameDay = { gameTimeService.currentGameDay },
-                ),
-        )
+    private val npcTickPipeline = npcSubsystem.pipeline
 
     private var worldMeta: WorldMetadata? = persistence?.loadMetadata()
     private var gameTicks: Long = worldMeta?.gameTicks ?: 18_000L
@@ -394,6 +387,7 @@ class GameLoop(
 
     private var armorRegistry: Map<String, ArmorDefinition> = emptyMap()
     private var targetDistanceTickCounter = 0
+    private var npcLifecycleTickCounter = 0
 
     private val commandContextClosures =
         CommandContextClosures(
@@ -866,13 +860,6 @@ class GameLoop(
                 }
             }
         }
-        app.launch {
-            while (isActive) {
-                delay(NPC_LIFECYCLE_INTERVAL_MS)
-                runCatching { npcTickPipeline.lifecycle(world, sessionRegistry.all()) }
-                    .onFailure { log.error("npc lifecycle error: {}", it.message, it) }
-            }
-        }
     }
 
     fun shutdown() {
@@ -950,6 +937,15 @@ class GameLoop(
         worldItems.tickCollection(sessionRegistry.all())
         gameTimeService.tick(TICK_SECONDS.toDouble())
         npcTickPipeline.tick(world, sessionRegistry.all(), combatProcessor)
+        // In the tick, not in a wall-clock coroutine of its own: driving the slow lane from a
+        // separate 5 s loop raced the main tick and gave the same arena a different spawn rate
+        // depending on whether the live server or the simulator was running it.
+        npcLifecycleTickCounter++
+        if (npcLifecycleTickCounter >= NpcSubsystemFactory.LIFECYCLE_INTERVAL_TICKS) {
+            npcLifecycleTickCounter = 0
+            runCatching { npcTickPipeline.lifecycle(world, sessionRegistry.all()) }
+                .onFailure { log.error("npc lifecycle error: {}", it.message, it) }
+        }
         statusEffectProcessor.tick(sessionRegistry.all())
         regenProcessor.tick(sessionRegistry.all())
         weatherManager.tick(world) { msg -> sessionRegistry.all().forEach { it.send(msg) } }

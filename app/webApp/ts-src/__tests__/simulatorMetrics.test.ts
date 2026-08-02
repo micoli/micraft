@@ -35,10 +35,21 @@ function bucket(index: number, over: Partial<SimMetricBucket> = {}): SimMetricBu
     startGameDay: index * 0.25,
     tick: index * 100,
     deathsByType: {},
+    ageDeathsByType: {},
+    killDeathsByType: {},
+    starvationsByType: {},
+    birthsByType: {},
+    evolutionsByType: {},
     aliveByType: {},
+    meanHungerByType: {},
+    meanAgeRatioByType: {},
+    adultShareByType: {},
+    starvingShareByType: {},
+    pregnantShareByType: {},
     attacks: 0,
     gestations: 0,
     births: 0,
+    birthsBlocked: 0,
     matings: 0,
     spawns: 0,
     fed: 0,
@@ -385,7 +396,62 @@ describe("buildMetricsExport", () => {
       config,
     );
     const goat = out.totals.byType.find((entry) => entry.type === "goat");
-    expect(goat).toEqual({ type: "goat", peakAlive: 6, finalAlive: 4, meanAlive: 4, deaths: 3, slicesPresent: 3 });
+    expect(goat).toEqual({
+      type: "goat",
+      peakAlive: 6,
+      finalAlive: 4,
+      meanAlive: 4,
+      deaths: 3,
+      ageDeaths: 0,
+      kills: 0,
+      starvations: 0,
+      births: 0,
+      evolutions: 0,
+      slicesPresent: 3,
+    });
+  });
+
+  it("splits deaths per cause, which is what a balance pass reads", () => {
+    const out = buildMetricsExport(
+      [
+        bucket(1, {
+          aliveByType: { goat: 5 },
+          deathsByType: { goat: 3 },
+          ageDeathsByType: { goat: 1 },
+          killDeathsByType: { goat: 1 },
+          starvationsByType: { goat: 1 },
+          birthsByType: { goat_baby: 2 },
+          evolutionsByType: { goat_baby: 1 },
+        }),
+      ],
+      0.25,
+      config,
+    );
+    const goat = out.totals.byType.find((entry) => entry.type === "goat");
+    expect(goat?.deaths).toBe(3);
+    expect(goat?.ageDeaths).toBe(1);
+    expect(goat?.kills).toBe(1);
+    expect(goat?.starvations).toBe(1);
+
+    const baby = out.totals.byType.find((entry) => entry.type === "goat_baby");
+    expect(baby?.births).toBe(2);
+    expect(baby?.evolutions).toBe(1);
+
+    expect(out.slices[0].ageDeaths).toEqual({ goat: 1 });
+    expect(out.slices[0].starvations).toEqual({ goat: 1 });
+  });
+
+  it("keeps reading a bucket recorded before the cause split", () => {
+    // deathsByType stays the source of the total, so an older export still summarises
+    const legacy = { ...bucket(1, { deathsByType: { wolf: 2 } }) } as Partial<SimMetricBucket>;
+    delete legacy.ageDeathsByType;
+    delete legacy.killDeathsByType;
+    delete legacy.starvationsByType;
+
+    const out = buildMetricsExport([legacy as SimMetricBucket], 0.25, config);
+    const wolf = out.totals.byType.find((entry) => entry.type === "wolf");
+    expect(wolf?.deaths).toBe(2);
+    expect(wolf?.ageDeaths).toBe(0);
   });
 
   it("keeps a type that only ever died, so a wipe-out is still visible", () => {

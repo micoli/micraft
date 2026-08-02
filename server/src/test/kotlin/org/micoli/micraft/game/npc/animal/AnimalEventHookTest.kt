@@ -10,9 +10,11 @@ import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.npc.AggroMode
 import org.micoli.micraft.game.npc.NpcDefinition
+import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
+import org.micoli.micraft.npc.NpcDeathCause
 import org.micoli.micraft.npc.NpcGender
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.rpg.BaseStats
@@ -92,8 +94,13 @@ private fun processor(
     )
 }
 
-private fun manager(defs: Map<String, NpcDefinition>): NpcManager =
-    NpcManager(broadcast = {}, getSessions = { emptyList() }).apply { loadDefinitions(defs) }
+private fun manager(
+    defs: Map<String, NpcDefinition>,
+    onNpcKilled: suspend (NpcInstance, NpcDeathCause) -> Unit = { _, _ -> },
+): NpcManager =
+    NpcManager(broadcast = {}, getSessions = { emptyList() }, onNpcKilled = onNpcKilled).apply {
+        loadDefinitions(defs)
+    }
 
 class AnimalEventHookTest {
 
@@ -149,10 +156,19 @@ class AnimalEventHookTest {
         assertEquals("goat_baby", birth.npcType)
     }
 
+    /**
+     * Old age is reported *once*, by the kill hook, with its cause — not as an animal event as
+     * well. Emitting from both places is what made the simulator count every natural death twice.
+     */
     @Test
-    fun oldAge_emitsAgeDeath() = runBlocking {
+    fun oldAge_isReportedOnceByTheKillHook() = runBlocking {
+        val causes = mutableListOf<NpcDeathCause>()
         // lifespan comes from the definition, not from the instance
-        val m = manager(mapOf("goat" to goatDef(config = HOOK_CONFIG.copy(lifespanDays = 1.0))))
+        val m =
+            manager(mapOf("goat" to goatDef(config = HOOK_CONFIG.copy(lifespanDays = 1.0)))) { _, c
+                ->
+                causes.add(c)
+            }
         val goat = m.spawnNpc("Ancient", "goat", Vec3(0f, 5f, 0f))
         goat.animalData =
             AnimalInstanceData.initial(
@@ -166,7 +182,13 @@ class AnimalEventHookTest {
 
         repeat(10) { p.tick() }
 
-        assertTrue(rec.types().contains(AnimalEventType.AGE_DEATH))
+        assertEquals(listOf(NpcDeathCause.OLD_AGE), causes, "exactly one death, cause OLD_AGE")
+        assertTrue(goat.isDead)
+        // the animal hook reports lifecycle only (hunger here); a death reported from both sides is
+        // what used to double-count natural deaths
+        assertTrue(
+            rec.types().none { it == AnimalEventType.BIRTH || it == AnimalEventType.EVOLVE },
+            "unexpected lifecycle events: ${rec.types()}")
     }
 
     @Test

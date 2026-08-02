@@ -180,6 +180,7 @@ export type SimEventType =
   | "DAMAGE"
   | "DEATH"
   | "AGE_DEATH"
+  | "STARVATION"
   | "AGGRO_GAIN"
   | "AGGRO_LOST"
   | "HUNGRY"
@@ -187,6 +188,7 @@ export type SimEventType =
   | "MATING"
   | "GESTATION_START"
   | "BIRTH"
+  | "BIRTH_BLOCKED"
   | "EVOLVE"
   | "PACK_CALL"
   | "PACK_JOIN"
@@ -244,11 +246,24 @@ export interface SimMetricBucket {
   index: number;
   startGameDay: number;
   tick: number;
+  /** Every death, whatever the cause — the sum of the three maps below. */
   deathsByType: Record<string, number>;
+  ageDeathsByType: Record<string, number>;
+  killDeathsByType: Record<string, number>;
+  starvationsByType: Record<string, number>;
+  birthsByType: Record<string, number>;
+  evolutionsByType: Record<string, number>;
   aliveByType: Record<string, number>;
+  /** Condition of the standing population, per type. Sparse: a missing row means zero. */
+  meanHungerByType: Record<string, number>;
+  meanAgeRatioByType: Record<string, number>;
+  adultShareByType: Record<string, number>;
+  starvingShareByType: Record<string, number>;
+  pregnantShareByType: Record<string, number>;
   attacks: number;
   gestations: number;
   births: number;
+  birthsBlocked: number;
   matings: number;
   spawns: number;
   fed: number;
@@ -311,6 +326,7 @@ export const EVENT_COLORS: Record<SimEventType, string> = {
   DAMAGE: "#F87171",
   DEATH: "#EF4444",
   AGE_DEATH: "#A78BFA",
+  STARVATION: "#B45309",
   AGGRO_GAIN: "#F59E0B",
   AGGRO_LOST: "#94A3B8",
   HUNGRY: "#FACC15",
@@ -318,6 +334,7 @@ export const EVENT_COLORS: Record<SimEventType, string> = {
   MATING: "#F472B6",
   GESTATION_START: "#E879F9",
   BIRTH: "#22D3EE",
+  BIRTH_BLOCKED: "#78716C",
   EVOLVE: "#818CF8",
   PACK_CALL: "#F97316",
   PACK_JOIN: "#FDBA74",
@@ -333,6 +350,7 @@ export const EVENT_LABEL_KEYS: Record<SimEventType, TranslationKey> = {
   DAMAGE: "sim.event.DAMAGE",
   DEATH: "sim.event.DEATH",
   AGE_DEATH: "sim.event.AGE_DEATH",
+  STARVATION: "sim.event.STARVATION",
   AGGRO_GAIN: "sim.event.AGGRO_GAIN",
   AGGRO_LOST: "sim.event.AGGRO_LOST",
   HUNGRY: "sim.event.HUNGRY",
@@ -340,6 +358,7 @@ export const EVENT_LABEL_KEYS: Record<SimEventType, TranslationKey> = {
   MATING: "sim.event.MATING",
   GESTATION_START: "sim.event.GESTATION_START",
   BIRTH: "sim.event.BIRTH",
+  BIRTH_BLOCKED: "sim.event.BIRTH_BLOCKED",
   EVOLVE: "sim.event.EVOLVE",
   PACK_CALL: "sim.event.PACK_CALL",
   PACK_JOIN: "sim.event.PACK_JOIN",

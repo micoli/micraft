@@ -41,3 +41,14 @@ animal:
   hungerRatePerDay: 0.12
   hungerThresholdToHunt: 0.4
   hungerThresholdToMate: 0.99
+  # runs from whatever eats it, at this distance
+  fleeRadius: 14.0
+  # ── Starvation ──
+  starvationThreshold: 1.0
+  starvationAttackMultiplier: 0.5
+  starvationSpeedMultiplier: 0.2
+  starvationSterile: true
+  starvationDeathDays: 1.5
+  # ── Gestation ──
+  gestationAttackMultiplier: 1.0
+  gestationSpeedMultiplier: 1.0

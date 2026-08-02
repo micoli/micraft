@@ -56,6 +56,7 @@ import org.micoli.micraft.game.plaincolor.PlainColorRegistryLoader
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
+import org.micoli.micraft.game.rpg.ExperienceConfigData
 import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.session.NetworkStats
 import org.micoli.micraft.game.tick.ChunkStreamer
@@ -260,6 +261,9 @@ fun Application.module() {
     val armorRegistryLoader = get<ArmorRegistryLoader>()
     val simulationI18n = get<I18nConfig>()
     val simulationVegetationConfig = get<VegetationConfig>()
+    val simulationExperienceConfig = get<ExperienceConfigData>()
+    val simulationSpellRegistry =
+        get<Map<String, org.micoli.micraft.game.combat.SpellDefinition>>(named("spells"))
     val simulationRegistry = SimulationRegistry {
         SimulationDeps(
             definitions = gameLoop.getNpcManager().getDefinitions(),
@@ -269,6 +273,8 @@ fun Application.module() {
             classRegistry = gameLoop.classRegistry,
             i18n = simulationI18n,
             vegetationConfig = simulationVegetationConfig,
+            experienceConfig = simulationExperienceConfig,
+            spellRegistry = simulationSpellRegistry,
         )
     }
 
