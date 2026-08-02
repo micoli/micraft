@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Routes, useLocation } from "react-router";
 import { cn } from "../primitives/cn";
+import { LanguageSelector } from "./components/LanguageSelector";
+import { I18nProvider, useT, type TranslationKey } from "./i18n";
 import { loadSidebarCollapsed, saveSidebarCollapsed } from "./sidebar";
 import { ClassesPage } from "./pages/ClassesPage";
 import { ConfigEditorPage } from "./pages/ConfigEditorPage";
@@ -47,35 +49,36 @@ const ICONS = {
   simulator: "M4 4h16v16H4zM8 8v8m8-8v8m-4-6a2 2 0 100 4 2 2 0 000-4z",
 };
 
-const NAV = [
-  { path: "/admin", label: "Status", icon: ICONS.status, exact: true },
-  { path: "/admin/users", label: "Users", icon: ICONS.users },
-  { path: "/admin/players", label: "Players", icon: ICONS.players },
-  { path: "/admin/npcs", label: "NPCs", icon: ICONS.npcs },
-  { path: "/admin/classes", label: "Classes", icon: ICONS.classes },
-  { path: "/admin/config", label: "Config", icon: ICONS.config },
-  { path: "/admin/worlds", label: "Worlds", icon: ICONS.worlds },
-  { path: "/admin/game-assets", label: "Game Assets", icon: ICONS.gameAssets },
-  { path: "/admin/administration", label: "Administration", icon: ICONS.administration },
-  { path: "/admin/world-simulator", label: "Simulateur monde", icon: ICONS.simulator },
+const NAV: { path: string; labelKey: TranslationKey; icon: string; exact?: boolean }[] = [
+  { path: "/admin", labelKey: "nav.status", icon: ICONS.status, exact: true },
+  { path: "/admin/users", labelKey: "nav.users", icon: ICONS.users },
+  { path: "/admin/players", labelKey: "nav.players", icon: ICONS.players },
+  { path: "/admin/npcs", labelKey: "nav.npcs", icon: ICONS.npcs },
+  { path: "/admin/classes", labelKey: "nav.classes", icon: ICONS.classes },
+  { path: "/admin/config", labelKey: "nav.config", icon: ICONS.config },
+  { path: "/admin/worlds", labelKey: "nav.worlds", icon: ICONS.worlds },
+  { path: "/admin/game-assets", labelKey: "nav.gameAssets", icon: ICONS.gameAssets },
+  { path: "/admin/administration", labelKey: "nav.administration", icon: ICONS.administration },
+  { path: "/admin/world-simulator", labelKey: "nav.worldSimulator", icon: ICONS.simulator },
 ];
 
-const PAGE_LABELS: Record<string, string> = {
-  "/admin": "Server Status",
-  "/admin/users": "Users",
-  "/admin/players": "Players",
-  "/admin/npcs": "NPCs",
-  "/admin/classes": "Classes & Skills",
-  "/admin/config": "Config Editor",
-  "/admin/worlds": "Worlds",
-  "/admin/game-assets": "Game Assets",
-  "/admin/administration": "Administration",
-  "/admin/world-simulator": "Simulateur de monde",
+const PAGE_LABEL_KEYS: Record<string, TranslationKey> = {
+  "/admin": "page.status",
+  "/admin/users": "page.users",
+  "/admin/players": "page.players",
+  "/admin/npcs": "page.npcs",
+  "/admin/classes": "page.classes",
+  "/admin/config": "page.config",
+  "/admin/worlds": "page.worlds",
+  "/admin/game-assets": "page.gameAssets",
+  "/admin/administration": "page.administration",
+  "/admin/world-simulator": "page.worldSimulator",
 };
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const { pathname } = useLocation();
+  const t = useT();
   return (
     <aside
       className={cn(
@@ -101,10 +104,13 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       {/* Nav */}
       <nav className={cn("flex-1 py-5 space-y-0.5 overflow-y-auto", collapsed ? "px-2" : "px-4")}>
         {!collapsed && (
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3">Menu</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3">
+            {t("shell.menu")}
+          </p>
         )}
-        {NAV.map(({ path, label, icon, exact }) => {
+        {NAV.map(({ path, labelKey, icon, exact }) => {
           const active = exact ? pathname === path : pathname.startsWith(path);
+          const label = t(labelKey);
           return (
             <Link
               key={path}
@@ -128,18 +134,20 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         })}
       </nav>
 
+      <LanguageSelector collapsed={collapsed} />
+
       <div
         className={cn(
           "border-t border-[#2E3A4E] flex items-center gap-2 py-3 text-[10px] text-[#8A99AF]",
           collapsed ? "px-2 justify-center" : "px-6",
         )}
       >
-        {!collapsed && <span className="flex-1">micraft admin v1</span>}
+        {!collapsed && <span className="flex-1">{t("shell.version")}</span>}
         <button
           type="button"
           onClick={onToggle}
-          title={collapsed ? "Déplier le menu" : "Replier le menu"}
-          aria-label={collapsed ? "Déplier le menu" : "Replier le menu"}
+          title={t(collapsed ? "shell.expandMenu" : "shell.collapseMenu")}
+          aria-label={t(collapsed ? "shell.expandMenu" : "shell.collapseMenu")}
           aria-expanded={!collapsed}
           className="flex h-7 w-7 items-center justify-center rounded border border-[#2E3A4E] text-[#C7D2FE] hover:bg-[#3C50E0]/60 hover:text-white"
         >
@@ -153,16 +161,20 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
 // ── Header ────────────────────────────────────────────────────────────────────
 function Header() {
   const { pathname } = useLocation();
-  const title = PAGE_LABELS[pathname] ?? "Admin";
+  const t = useT();
+  const labelKey = PAGE_LABEL_KEYS[pathname];
+  const title = labelKey ? t(labelKey) : t("shell.admin");
   return (
     <header className="h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]">
       <div>
-        <p className="text-[11px] text-[#8A99AF]">Admin / {title}</p>
+        <p className="text-[11px] text-[#8A99AF]">
+          {t("shell.admin")} / {title}
+        </p>
         <h1 className="text-white font-semibold text-[15px] leading-tight">{title}</h1>
       </div>
       <div className="flex items-center gap-2 text-[11px] text-[#8A99AF]">
         <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-        Server online
+        {t("shell.serverOnline")}
       </div>
     </header>
   );
@@ -175,27 +187,29 @@ export function AdminApp() {
   useEffect(() => saveSidebarCollapsed(collapsed), [collapsed]);
 
   return (
-    <BrowserRouter>
-      <div className="flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans">
-        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((current) => !current)} />
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <Header />
-          <main className="flex-1 overflow-auto p-6">
-            <Routes>
-              <Route path="/admin" element={<StatusPage />} />
-              <Route path="/admin/users" element={<UsersPage />} />
-              <Route path="/admin/players" element={<PlayersPage />} />
-              <Route path="/admin/npcs" element={<NpcsPage />} />
-              <Route path="/admin/classes" element={<ClassesPage />} />
-              <Route path="/admin/config" element={<ConfigEditorPage />} />
-              <Route path="/admin/worlds" element={<WorldsPage />} />
-              <Route path="/admin/game-assets" element={<GameAssetsPage />} />
-              <Route path="/admin/administration" element={<AdministrationPage />} />
-              <Route path="/admin/world-simulator" element={<WorldSimulatorPage />} />
-            </Routes>
-          </main>
+    <I18nProvider>
+      <BrowserRouter>
+        <div className="flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans">
+          <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((current) => !current)} />
+          <div className="flex flex-col flex-1 overflow-hidden">
+            <Header />
+            <main className="flex-1 overflow-auto p-6">
+              <Routes>
+                <Route path="/admin" element={<StatusPage />} />
+                <Route path="/admin/users" element={<UsersPage />} />
+                <Route path="/admin/players" element={<PlayersPage />} />
+                <Route path="/admin/npcs" element={<NpcsPage />} />
+                <Route path="/admin/classes" element={<ClassesPage />} />
+                <Route path="/admin/config" element={<ConfigEditorPage />} />
+                <Route path="/admin/worlds" element={<WorldsPage />} />
+                <Route path="/admin/game-assets" element={<GameAssetsPage />} />
+                <Route path="/admin/administration" element={<AdministrationPage />} />
+                <Route path="/admin/world-simulator" element={<WorldSimulatorPage />} />
+              </Routes>
+            </main>
+          </div>
         </div>
-      </div>
-    </BrowserRouter>
+      </BrowserRouter>
+    </I18nProvider>
   );
 }

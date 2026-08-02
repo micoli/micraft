@@ -20,6 +20,7 @@ import {
   type CounterSeries,
   type TypedPick,
 } from "./metrics";
+import { useT } from "../i18n";
 import { npcColor, type SimMetricBucket } from "./types";
 
 interface Props {
@@ -80,12 +81,14 @@ function HoverCard({
   title,
   summary,
   rows,
+  emptyLabel,
 }: {
   x: number;
   y: number;
   title: string;
   summary: string;
   rows: CardRow[];
+  emptyLabel: string;
 }) {
   // flipped to the left of the pointer near the right edge, where a card would be clipped otherwise
   const flip = x > 190;
@@ -98,7 +101,7 @@ function HoverCard({
         <span className="font-semibold text-white">{title}</span>
         <span className="text-[#8A99AF]">{summary}</span>
       </div>
-      {rows.length === 0 && <div className="text-[#4A5568]">rien</div>}
+      {rows.length === 0 && <div className="text-[#4A5568]">{emptyLabel}</div>}
       {rows.map((row) => (
         <div key={row.label} className="flex items-center gap-1.5">
           <span className="inline-block h-2 w-2 shrink-0 rounded-sm" style={{ background: row.color }} />
@@ -145,6 +148,8 @@ function StackedByType({
   /** Column slots of the window, or null to fit the retained history. */
   slots: number | null;
 }) {
+  const t = useT();
+  const dayAbbrev = t("sim.metrics.dayAbbrev");
   const keys = useMemo(() => stackKeys(buckets, pick), [buckets, pick]);
   const columns = useMemo(() => stackedColumns(buckets, pick, keys), [buckets, pick, keys]);
   const top = niceMax(maxTotal(columns));
@@ -175,7 +180,7 @@ function StackedByType({
       hint={hint}
       legend={
         keys.length === 0 ? (
-          <span className="text-[10px] text-[#4A5568]">rien pour l&apos;instant</span>
+          <span className="text-[10px] text-[#4A5568]">{t("sim.metrics.nothingYet")}</span>
         ) : (
           keys.map((key) => (
             <LegendDot
@@ -214,8 +219,9 @@ function StackedByType({
         <HoverCard
           x={hover.x}
           y={hover.y}
-          title={dayLabel(hovered.startGameDay)}
+          title={dayLabel(hovered.startGameDay, dayAbbrev)}
           summary={`${hovered.total} ${unit}`}
+          emptyLabel={t("sim.metrics.nothing")}
           rows={tooltipRows(hovered).map((row) => ({
             label: row.key,
             color: npcColor(row.key),
@@ -224,9 +230,9 @@ function StackedByType({
         />
       )}
       <div className="mt-0.5 flex justify-between text-[9px] text-[#4A5568]">
-        <span>{columns.length > 0 ? dayLabel(columns[0].startGameDay) : "—"}</span>
-        <span>max {top}</span>
-        <span>{latest ? dayLabel(latest.startGameDay) : "—"}</span>
+        <span>{columns.length > 0 ? dayLabel(columns[0].startGameDay, dayAbbrev) : "—"}</span>
+        <span>{t("sim.metrics.max", top)}</span>
+        <span>{latest ? dayLabel(latest.startGameDay, dayAbbrev) : "—"}</span>
       </div>
     </ChartFrame>
   );
@@ -234,6 +240,8 @@ function StackedByType({
 
 /** Multi-line chart over the counter series, with per-series toggles. */
 function Counters({ buckets, slots }: { buckets: SimMetricBucket[]; slots: number | null }) {
+  const t = useT();
+  const dayAbbrev = t("sim.metrics.dayAbbrev");
   const [hidden, setHidden] = useState<ReadonlySet<CounterSeries["key"]>>(new Set());
 
   // every series is computed, then filtered for display: toggling a legend entry is a render concern
@@ -276,17 +284,17 @@ function Counters({ buckets, slots }: { buckets: SimMetricBucket[]; slots: numbe
 
   return (
     <ChartFrame
-      title="Évènements par tranche"
-      hint={`max ${top}`}
+      title={t("sim.metrics.eventsPerSlice")}
+      hint={t("sim.metrics.max", top)}
       legend={COUNTER_SERIES.map((series) => (
         <button
           key={series.key}
           type="button"
           onClick={() => toggle(series.key)}
-          title={hidden.has(series.key) ? "afficher" : "masquer"}
+          title={t(hidden.has(series.key) ? "sim.metrics.show" : "sim.metrics.hide")}
           className={"cursor-pointer" + (hidden.has(series.key) ? " opacity-30" : "")}
         >
-          <LegendDot color={series.color} label={series.label} value={last ? last[series.key] : 0} />
+          <LegendDot color={series.color} label={t(series.labelKey)} value={last ? last[series.key] : 0} />
         </button>
       ))}
     >
@@ -314,10 +322,14 @@ function Counters({ buckets, slots }: { buckets: SimMetricBucket[]; slots: numbe
         <HoverCard
           x={hover.x}
           y={hover.y}
-          title={dayLabel(hoveredBucket.startGameDay)}
-          summary={`${hoveredRows.reduce((sum, row) => sum + row.value, 0)} évènements`}
+          title={dayLabel(hoveredBucket.startGameDay, dayAbbrev)}
+          summary={t(
+            "sim.metrics.unitEvents",
+            hoveredRows.reduce((sum, row) => sum + row.value, 0),
+          )}
+          emptyLabel={t("sim.metrics.nothing")}
           rows={hoveredRows.map((row) => ({
-            label: row.series.label,
+            label: t(row.series.labelKey),
             color: row.series.color,
             value: row.value,
           }))}
@@ -332,14 +344,15 @@ function Counters({ buckets, slots }: { buckets: SimMetricBucket[]; slots: numbe
  * frames twenty times a second, and re-stacking the series on every frame would be wasted work.
  */
 export const MetricsPanel = memo(function MetricsPanel({ buckets, bucketGameDays }: Props) {
+  const t = useT();
   const [windowDays, setWindowDays] = useState(DEFAULT_WINDOW_GAME_DAYS);
   const slots = slotsFor(bucketGameDays, windowDays);
-  // the rest of the history stays in `buckets`, off-screen to the left, and comes back with "tout"
+  // the rest of the history stays in `buckets`, off-screen to the left, and comes back with "all"
   const visible = useMemo(() => windowOf(buckets, slots), [buckets, slots]);
 
   const selector = (
     <div className="flex shrink-0 items-center gap-1">
-      <span className="text-[10px] text-[#4A5568]">fenêtre</span>
+      <span className="text-[10px] text-[#4A5568]">{t("sim.metrics.window")}</span>
       {WINDOW_OPTIONS.map((option) => (
         <button
           key={option.days}
@@ -350,47 +363,39 @@ export const MetricsPanel = memo(function MetricsPanel({ buckets, bucketGameDays
             (windowDays === option.days ? "bg-[#3C50E0] text-white" : "bg-[#2E3A4E] text-[#8A99AF] hover:text-white")
           }
         >
-          {option.label}
+          {t(option.labelKey)}
         </button>
       ))}
-      <span className="ml-auto text-[10px] text-[#4A5568]">{buckets.length} tranches en mémoire</span>
+      <span className="ml-auto text-[10px] text-[#4A5568]">{t("sim.metrics.slicesInMemory", buckets.length)}</span>
     </div>
   );
 
   if (buckets.length === 0) {
-    return (
-      <p className="text-[11px] text-[#4A5568]">
-        Aucune donnée. Les graphiques se remplissent dès que la simulation avance.
-      </p>
-    );
+    return <p className="text-[11px] text-[#4A5568]">{t("sim.metrics.noData")}</p>;
   }
-  const hint = `tranche de ${bucketGameDays} j`;
+  const hint = t("sim.metrics.sliceHint", bucketGameDays);
 
   return (
     <div className="flex h-full flex-col gap-2 overflow-auto">
       {selector}
       <StackedByType
-        title="Vivants par type"
+        title={t("sim.metrics.aliveByType")}
         hint={hint}
-        unit="vivants"
+        unit={t("sim.metrics.unitAlive")}
         buckets={visible}
         pick={pickAlive}
         slots={slots}
       />
       <StackedByType
-        title="Morts par type"
+        title={t("sim.metrics.deathsByType")}
         hint={hint}
-        unit="morts"
+        unit={t("sim.metrics.unitDeaths")}
         buckets={visible}
         pick={pickDeaths}
         slots={slots}
       />
       <Counters buckets={visible} slots={slots} />
-      <p className="text-[10px] leading-relaxed text-[#4A5568]">
-        L&apos;axe du temps est en jours de jeu, pas en temps réel : deux runs à des vitesses différentes restent
-        comparables. « Vivants » est un relevé de population, les autres séries sont des totaux par tranche. La fenêtre
-        défile vers la droite ; rien n&apos;est perdu, « tout » revient sur l&apos;historique complet.
-      </p>
+      <p className="text-[10px] leading-relaxed text-[#4A5568]">{t("sim.metrics.footnote")}</p>
     </div>
   );
 });

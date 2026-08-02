@@ -2,18 +2,20 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../primitives/Tabs";
 import { api, BaseStats, PlayerFile } from "../api";
+import { useT, type TranslationKey } from "../i18n";
 
 const CHARACTER_CLASSES = ["WARRIOR", "MAGE", "RANGER", "ROGUE", "CLERIC"];
 
 // ── Shared design atoms ───────────────────────────────────────────────────────
 function SaveBtn({ saving, saved, onClick }: { saving: boolean; saved: boolean; onClick: () => void }) {
+  const t = useT();
   return (
     <button
       onClick={onClick}
       disabled={saving}
       className="px-4 py-1.5 rounded-lg text-sm font-medium bg-[#3C50E0] hover:bg-[#3446c7] text-white transition-colors disabled:opacity-50"
     >
-      {saving ? "Saving…" : saved ? "Saved ✓" : "Save"}
+      {saving ? t("common.saving") : saved ? t("common.saved") : t("common.save")}
     </button>
   );
 }
@@ -61,6 +63,7 @@ function PreferencesTab({
   file: PlayerFile;
   onSave: (prefs: Partial<PlayerFile["state"]>) => Promise<void>;
 }) {
+  const t = useT();
   const s = file.state;
   const [skin, setSkin] = useState(s.skin);
   const [language, setLanguage] = useState(s.language);
@@ -104,7 +107,7 @@ function PreferencesTab({
 
   return (
     <div className="p-5 space-y-4">
-      <Field label="Skin" htmlFor="skin">
+      <Field label={t("players.skin")} htmlFor="skin">
         <select id="skin" value={skin} onChange={(e) => setSkin(e.target.value)} className={selectCls}>
           {skinOptions.map((s) => (
             <option key={s} value={s}>
@@ -113,7 +116,7 @@ function PreferencesTab({
           ))}
         </select>
       </Field>
-      <Field label="Language" htmlFor="lang">
+      <Field label={t("players.language")} htmlFor="lang">
         <select id="lang" value={language} onChange={(e) => setLanguage(e.target.value)} className={selectCls}>
           {langOptions.map((l) => (
             <option key={l} value={l}>
@@ -122,7 +125,7 @@ function PreferencesTab({
           ))}
         </select>
       </Field>
-      <Field label={`Field of View — ${fov}°`} htmlFor="fov">
+      <Field label={t("players.fieldOfView", fov)} htmlFor="fov">
         <input
           id="fov"
           type="range"
@@ -139,10 +142,10 @@ function PreferencesTab({
         </div>
       </Field>
       <div className="pt-1">
-        <BoolRow label="Shaders" value={shaders} onChange={setShaders} />
-        <BoolRow label="Animated Favicon" value={favicon} onChange={setFavicon} />
-        <BoolRow label="God Mode" value={godMode} onChange={setGodMode} />
-        <BoolRow label="Light Boost" value={lightBoost} onChange={setLightBoost} />
+        <BoolRow label={t("players.shaders")} value={shaders} onChange={setShaders} />
+        <BoolRow label={t("players.animatedFavicon")} value={favicon} onChange={setFavicon} />
+        <BoolRow label={t("players.godMode")} value={godMode} onChange={setGodMode} />
+        <BoolRow label={t("players.lightBoost")} value={lightBoost} onChange={setLightBoost} />
       </div>
       <SaveBtn saving={saving} saved={saved} onClick={save} />
     </div>
@@ -156,6 +159,7 @@ function KeybindingsTab({
   file: PlayerFile;
   onSave: (kb: Record<string, string[]>) => Promise<void>;
 }) {
+  const t = useT();
   const [bindings, setBindings] = useState<Record<string, string[]>>({ ...file.keybindings });
   const [filter, setFilter] = useState("");
   const [saving, setSaving] = useState(false);
@@ -192,7 +196,7 @@ function KeybindingsTab({
         type="text"
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
-        placeholder="Filter actions…"
+        placeholder={t("players.filterActions")}
         className="w-full mb-4 bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#3C50E0] transition-colors"
       />
       <div className="space-y-0 mb-5 max-h-[48vh] overflow-y-auto">
@@ -281,6 +285,7 @@ const StatRow = ({
 );
 
 function RpgTab({ file, onSave }: { file: PlayerFile; onSave: (rpg: Record<string, unknown>) => Promise<void> }) {
+  const t = useT();
   const cd = file.state.characterData!;
   const [cls, setCls] = useState(cd.characterClass);
   const [stats, setStats] = useState({ ...cd.baseStats });
@@ -300,7 +305,7 @@ function RpgTab({ file, onSave }: { file: PlayerFile; onSave: (rpg: Record<strin
   return (
     <div className="p-5 space-y-5">
       <div>
-        <p className="text-xs font-medium text-[#8A99AF] mb-2">Class</p>
+        <p className="text-xs font-medium text-[#8A99AF] mb-2">{t("players.class")}</p>
         <div className="flex flex-wrap gap-2">
           {CHARACTER_CLASSES.map((c) => (
             <button
@@ -318,37 +323,33 @@ function RpgTab({ file, onSave }: { file: PlayerFile; onSave: (rpg: Record<strin
         </div>
       </div>
       <div>
-        <p className="text-xs font-medium text-[#8A99AF] mb-2">Base Stats</p>
-        {
-          <div>
-            <p className="text-xs font-medium text-[#8A99AF] mb-2">Base Stats</p>
-            <StatRow name="str" label="Strength" stats={stats} setStats={setStats} />
-            <StatRow name="dex" label="Dexterity" stats={stats} setStats={setStats} />
-            <StatRow name="intel" label="Intellect" stats={stats} setStats={setStats} />
-            <StatRow name="wis" label="Wisdom" stats={stats} setStats={setStats} />
-            <StatRow name="con" label="Constitution" stats={stats} setStats={setStats} />
-            <StatRow name="cha" label="Charisma" stats={stats} setStats={setStats} />
-          </div>
-        }
+        <p className="text-xs font-medium text-[#8A99AF] mb-2">{t("players.baseStats")}</p>
+        <StatRow name="str" label={t("players.strength")} stats={stats} setStats={setStats} />
+        <StatRow name="dex" label={t("players.dexterity")} stats={stats} setStats={setStats} />
+        <StatRow name="intel" label={t("players.intellect")} stats={stats} setStats={setStats} />
+        <StatRow name="wis" label={t("players.wisdom")} stats={stats} setStats={setStats} />
+        <StatRow name="con" label={t("players.constitution")} stats={stats} setStats={setStats} />
+        <StatRow name="cha" label={t("players.charisma")} stats={stats} setStats={setStats} />
       </div>
       <div>
         <p className="text-xs font-medium text-[#8A99AF] mb-2">
-          Derived Stats <span className="text-[#4A5568] normal-case font-normal">(Lv {cd.level})</span>
+          {t("players.derivedStats")}{" "}
+          <span className="text-[#4A5568] normal-case font-normal">{t("players.derivedLevel", cd.level)}</span>
         </p>
         <div className="grid grid-cols-2 gap-x-4">
           {[
-            ["Max HP", derived.maxHp],
-            ["Max Mana", derived.maxMana],
-            ["Melee Dmg", `+${derived.meleeDmg}`],
-            ["Ranged Dmg", `+${derived.rangedDmg}`],
-            ["Spell Dmg", `+${derived.spellDmg}`],
-            ["Crit Chance", `${derived.critChancePct}%`],
-            ["Dodge", `${derived.dodgePct}%`],
-            ["Magic Resist", `${derived.magicResistPct}%`],
-            ["Armor Class", derived.armorClass],
-            ["HP Regen/s", derived.hpRegenPerSec],
-            ["Mana Regen/s", derived.manaRegenPerSec],
-            ["Max Tokens", derived.maxTokens],
+            [t("players.maxHp"), derived.maxHp],
+            [t("players.maxMana"), derived.maxMana],
+            [t("players.meleeDmg"), `+${derived.meleeDmg}`],
+            [t("players.rangedDmg"), `+${derived.rangedDmg}`],
+            [t("players.spellDmg"), `+${derived.spellDmg}`],
+            [t("players.critChance"), `${derived.critChancePct}%`],
+            [t("players.dodge"), `${derived.dodgePct}%`],
+            [t("players.magicResist"), `${derived.magicResistPct}%`],
+            [t("players.armorClass"), derived.armorClass],
+            [t("players.hpRegen"), derived.hpRegenPerSec],
+            [t("players.manaRegen"), derived.manaRegenPerSec],
+            [t("players.maxTokens"), derived.maxTokens],
           ].map(([label, value]) => (
             <div key={String(label)} className="flex justify-between py-1 border-b border-[#2E3A4E] text-xs">
               <span className="text-[#8A99AF]">{label}</span>
@@ -358,7 +359,7 @@ function RpgTab({ file, onSave }: { file: PlayerFile; onSave: (rpg: Record<strin
         </div>
       </div>
       <p className="text-xs text-[#4A5568]">
-        {cd.currentHp} / {derived.maxHp} HP · {cd.currentMana} / {derived.maxMana} Mana
+        {t("players.hpManaSummary", cd.currentHp, derived.maxHp, cd.currentMana, derived.maxMana)}
       </p>
       <SaveBtn saving={saving} saved={saved} onClick={save} />
     </div>
@@ -375,8 +376,9 @@ function PlayerDetail({
   onBack: () => void;
   onRenamed: (newName: string) => void;
 }) {
+  const t = useT();
   const [file, setFile] = useState<PlayerFile | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState(name);
   const [renameErr, setRenameErr] = useState<string | null>(null);
@@ -387,7 +389,7 @@ function PlayerDetail({
     api.players
       .get(name)
       .then(setFile)
-      .catch(() => setError("Failed to load"));
+      .catch(() => setErrorKey("players.failedToLoad"));
   }, [name]);
 
   const doRename = async () => {
@@ -399,13 +401,13 @@ function PlayerDetail({
     if (r.ok) {
       onRenamed(newName);
     } else {
-      setRenameErr("Rename failed");
+      setRenameErr(t("players.renameFailed"));
     }
     setRenaming(false);
   };
 
-  if (error) return <div className="p-5 text-red-400 text-sm">{error}</div>;
-  if (!file) return <div className="p-5 text-[#8A99AF] text-sm animate-pulse">Loading…</div>;
+  if (errorKey) return <div className="p-5 text-red-400 text-sm">{t(errorKey)}</div>;
+  if (!file) return <div className="p-5 text-[#8A99AF] text-sm animate-pulse">{t("common.loading")}</div>;
 
   const hasRpg = !!file.state.characterData;
 
@@ -456,13 +458,13 @@ function PlayerDetail({
         )}
         {renameErr && <span className="text-xs text-red-400">{renameErr}</span>}
         <span className="text-[10px] font-medium bg-[#2E3A4E] text-[#8A99AF] px-2 py-0.5 rounded-full ml-auto">
-          {hasRpg ? `RPG · ${file.state.characterData!.characterClass}` : "classic"}
+          {hasRpg ? t("players.rpgClass", file.state.characterData!.characterClass) : t("players.classic")}
         </span>
         {file.state.email && (
           <Link
             to={`/admin/users?u=${encodeURIComponent(file.state.email)}`}
             className="text-[10px] text-[#818CF8] hover:text-white transition-colors font-mono truncate max-w-[180px]"
-            title={`Owner: ${file.state.email}`}
+            title={t("players.owner", file.state.email)}
           >
             {file.state.email}
           </Link>
@@ -474,20 +476,20 @@ function PlayerDetail({
             value="prefs"
             className="text-xs data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-[#3C50E0] rounded-none pb-2 px-1 text-[#8A99AF] transition-colors"
           >
-            Preferences
+            {t("players.tabPreferences")}
           </TabsTrigger>
           <TabsTrigger
             value="kb"
             className="text-xs data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-[#3C50E0] rounded-none pb-2 px-1 text-[#8A99AF] transition-colors"
           >
-            Keybindings
+            {t("players.tabKeybindings")}
           </TabsTrigger>
           {hasRpg && (
             <TabsTrigger
               value="rpg"
               className="text-xs data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-[#3C50E0] rounded-none pb-2 px-1 text-[#8A99AF] transition-colors"
             >
-              RPG
+              {t("players.tabRpg")}
             </TabsTrigger>
           )}
         </TabsList>
@@ -496,7 +498,7 @@ function PlayerDetail({
             file={file}
             onSave={async (prefs) => {
               const r = await api.players.savePreferences(name, prefs);
-              if (!r.ok) throw new Error("Save failed");
+              if (!r.ok) throw new Error(t("common.saveFailed"));
             }}
           />
         </TabsContent>
@@ -505,7 +507,7 @@ function PlayerDetail({
             file={file}
             onSave={async (kb) => {
               const r = await api.players.saveKeybindings(name, kb);
-              if (!r.ok) throw new Error("Save failed");
+              if (!r.ok) throw new Error(t("common.saveFailed"));
             }}
           />
         </TabsContent>
@@ -515,7 +517,7 @@ function PlayerDetail({
               file={file}
               onSave={async (rpg) => {
                 const r = await api.players.saveRpg(name, rpg as Parameters<typeof api.players.saveRpg>[1]);
-                if (!r.ok) throw new Error("Save failed");
+                if (!r.ok) throw new Error(t("common.saveFailed"));
               }}
             />
           </TabsContent>
@@ -527,6 +529,7 @@ function PlayerDetail({
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function PlayersPage() {
+  const t = useT();
   const [searchParams] = useSearchParams();
   const [players, setPlayers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -549,12 +552,12 @@ export function PlayersPage() {
       {/* List */}
       <div className="w-52 shrink-0 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden self-start">
         <p className="px-4 py-3 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] border-b border-[#2E3A4E]">
-          Players
+          {t("players.title")}
         </p>
         {loading ? (
-          <p className="px-4 py-4 text-[#8A99AF] text-sm animate-pulse">Loading…</p>
+          <p className="px-4 py-4 text-[#8A99AF] text-sm animate-pulse">{t("common.loading")}</p>
         ) : players.length === 0 ? (
-          <p className="px-4 py-4 text-[#4A5568] text-sm">No players</p>
+          <p className="px-4 py-4 text-[#4A5568] text-sm">{t("players.none")}</p>
         ) : (
           <div>
             {players.map((p) => (
@@ -584,7 +587,7 @@ export function PlayersPage() {
             onRenamed={(newName) => handleRenamed(selected, newName)}
           />
         ) : (
-          <div className="p-6 text-[#4A5568] text-sm">Select a player to edit</div>
+          <div className="p-6 text-[#4A5568] text-sm">{t("players.selectToEdit")}</div>
         )}
       </div>
     </div>

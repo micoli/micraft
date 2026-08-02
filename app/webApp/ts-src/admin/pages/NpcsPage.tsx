@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, NpcAdminDto } from "../api";
 import type { VoronoiCellInfo } from "../../map/types";
+import { useT, type Translate } from "../i18n";
 
 interface PlayerAdminDto {
   id: string;
@@ -181,7 +182,7 @@ function NpcMiniMap({
     npcsMapRef.current = npcs;
   }, [npcs]);
 
-  // Centre initial sur le barycentre des NPCs
+  // Centre on the NPC barycentre for the first frame
   useEffect(() => {
     if (hasCenteredRef.current || npcs.length === 0) return;
     hasCenteredRef.current = true;
@@ -190,7 +191,7 @@ function NpcMiniMap({
     setCamera((c) => ({ ...c, x: sx, z: sz }));
   }, [npcs]);
 
-  // Recentre sur le NPC sélectionné
+  // Re-centre on the selected NPC
   useEffect(() => {
     if (!selectedId) return;
     const npc = npcsMapRef.current.find((n) => n.id === selectedId);
@@ -404,21 +405,21 @@ function HpBar({ current, max }: { current: number; max: number }) {
   );
 }
 
-function Detail({ npc }: { npc: NpcAdminDto }) {
+function Detail({ npc, t }: { npc: NpcAdminDto; t: Translate }) {
   const teleport = `/teleport ${Math.round(npc.x)} ${Math.round(npc.y)} ${Math.round(npc.z)}`;
   return (
     <div className="bg-[#0E1726] border-t border-[#2E3A4E] px-6 py-4 grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1">Position</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1">{t("npcs.position")}</p>
         <code className="text-xs text-emerald-400 font-mono select-all">{teleport}</code>
         <p className="text-[10px] text-[#8A99AF] mt-0.5">
-          x={npc.x.toFixed(1)} y={npc.y.toFixed(1)} z={npc.z.toFixed(1)} · zone {npc.zone}
+          {t("npcs.coords", npc.x.toFixed(1), npc.y.toFixed(1), npc.z.toFixed(1), npc.zone)}
         </p>
       </div>
 
       {npc.skills.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1">Skills</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1">{t("npcs.skills")}</p>
           <div className="flex flex-wrap gap-1">
             {npc.skills.map((s) => (
               <span key={s} className="px-2 py-0.5 rounded bg-[#1C2434] text-[11px] text-[#8A99AF]">
@@ -431,7 +432,7 @@ function Detail({ npc }: { npc: NpcAdminDto }) {
 
       {npc.parentIds.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1">Parents</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1">{t("npcs.parents")}</p>
           <div className="flex flex-col gap-0.5">
             {npc.parentIds.map((pid) => (
               <span key={pid} className="text-[11px] font-mono text-[#8A99AF]">
@@ -444,15 +445,17 @@ function Detail({ npc }: { npc: NpcAdminDto }) {
 
       {npc.ageGameDays != null && (
         <div className="col-span-2">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-2">Animal State</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-2">
+            {t("npcs.animalState")}
+          </p>
           <div className="grid grid-cols-2 gap-x-8 gap-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">Age</span>
-              <span className="text-xs text-white">{npc.ageGameDays.toFixed(1)} game days</span>
+              <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">{t("npcs.age")}</span>
+              <span className="text-xs text-white">{t("npcs.gameDays", npc.ageGameDays.toFixed(1))}</span>
             </div>
             {npc.hunger != null && (
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">Hunger</span>
+                <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">{t("npcs.hunger")}</span>
                 <div className="flex items-center gap-1.5 flex-1">
                   <div className="flex-1 h-1.5 bg-[#2E3A4E] rounded-full overflow-hidden max-w-[80px]">
                     <div
@@ -466,25 +469,29 @@ function Detail({ npc }: { npc: NpcAdminDto }) {
             )}
             {npc.motherLevel != null && npc.motherLevel > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">Mother level</span>
+                <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">{t("npcs.motherLevel")}</span>
                 <span className="text-xs text-white">{npc.motherLevel}</span>
               </div>
             )}
             {npc.gestationRemainingDays != null && (
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">Gestation</span>
-                <span className="text-xs text-amber-400">{npc.gestationRemainingDays.toFixed(1)} days left</span>
+                <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">{t("npcs.gestation")}</span>
+                <span className="text-xs text-amber-400">
+                  {t("npcs.daysLeft", npc.gestationRemainingDays.toFixed(1))}
+                </span>
               </div>
             )}
             {npc.lastReproductionDay != null && (
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">Last repro.</span>
-                <span className="text-xs text-[#8A99AF]">day {npc.lastReproductionDay.toFixed(1)}</span>
+                <span className="text-[10px] text-[#8A99AF] w-24 shrink-0">{t("npcs.lastRepro")}</span>
+                <span className="text-xs text-[#8A99AF]">{t("npcs.dayValue", npc.lastReproductionDay.toFixed(1))}</span>
               </div>
             )}
             {npc.animalStats != null && (
               <div className="col-span-2 mt-1">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1.5">Stats</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1.5">
+                  {t("npcs.stats")}
+                </p>
                 <div className="flex flex-wrap gap-x-4 gap-y-1">
                   {(["str", "dex", "intel", "wis", "con", "cha"] as const).map((k) => (
                     <div key={k} className="flex items-center gap-1">
@@ -503,6 +510,7 @@ function Detail({ npc }: { npc: NpcAdminDto }) {
 }
 
 export function NpcsPage() {
+  const t = useT();
   const [npcs, setNpcs] = useState<NpcAdminDto[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -696,7 +704,7 @@ export function NpcsPage() {
           <div className="flex items-center gap-3">
             <input
               type="text"
-              placeholder="Name, type or zone…"
+              placeholder={t("npcs.searchPlaceholder")}
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               className="flex-1 max-w-xs bg-[#1C2434] border border-[#2E3A4E] rounded-lg px-3 py-1.5 text-sm text-white placeholder-[#8A99AF] outline-none focus:border-[#3C50E0]"
@@ -705,11 +713,11 @@ export function NpcsPage() {
               onClick={load}
               className="px-3 py-1.5 rounded-lg text-sm font-medium bg-[#3C50E0] hover:bg-[#3446c7] text-white transition-colors shrink-0"
             >
-              Refresh
+              {t("common.refresh")}
             </button>
             {npcs && (
               <span className="text-xs text-[#8A99AF] shrink-0">
-                {filtered.length}/{npcs.length} · {alive} alive
+                {t("npcs.countSummary", filtered.length, npcs.length, alive)}
               </span>
             )}
           </div>
@@ -718,13 +726,13 @@ export function NpcsPage() {
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               {/* Type */}
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] uppercase tracking-widest text-[#8A99AF]">Type</span>
+                <span className="text-[10px] uppercase tracking-widest text-[#8A99AF]">{t("npcs.type")}</span>
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                   className="bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0]"
                 >
-                  <option value="">All</option>
+                  <option value="">{t("npcs.all")}</option>
                   {types.map((t) => (
                     <option key={t} value={t}>
                       {t}
@@ -735,8 +743,10 @@ export function NpcsPage() {
               {/* Gender */}
               {genders.length > 0 && (
                 <div className="flex items-center gap-1">
-                  <span className="text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5">Gender</span>
-                  {[["", "All"], ...genders.map((g) => [g, g]), ["__NONE__", "—"]].map(([val, label]) => (
+                  <span className="text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5">
+                    {t("npcs.gender")}
+                  </span>
+                  {[["", t("npcs.all")], ...genders.map((g) => [g, g]), ["__NONE__", "—"]].map(([val, label]) => (
                     <button
                       key={val}
                       onClick={() => setFilterGender(val === filterGender ? "" : val)}
@@ -749,11 +759,11 @@ export function NpcsPage() {
               )}
               {/* Level range */}
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] uppercase tracking-widest text-[#8A99AF]">Lv</span>
+                <span className="text-[10px] uppercase tracking-widest text-[#8A99AF]">{t("npcs.levelShort")}</span>
                 <input
                   type="number"
                   min={1}
-                  placeholder="min"
+                  placeholder={t("npcs.min")}
                   value={filterLevelMin}
                   onChange={(e) => setFilterLevelMin(e.target.value)}
                   className="w-14 bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0] [appearance:textfield]"
@@ -762,7 +772,7 @@ export function NpcsPage() {
                 <input
                   type="number"
                   min={1}
-                  placeholder="max"
+                  placeholder={t("npcs.max")}
                   value={filterLevelMax}
                   onChange={(e) => setFilterLevelMax(e.target.value)}
                   className="w-14 bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0] [appearance:textfield]"
@@ -771,7 +781,7 @@ export function NpcsPage() {
               {/* Aggro */}
               {aggroModes.length > 0 && (
                 <div className="flex items-center gap-1">
-                  <span className="text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5">Aggro</span>
+                  <span className="text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5">{t("npcs.aggro")}</span>
                   {aggroModes.map((a) => (
                     <button
                       key={a}
@@ -789,21 +799,21 @@ export function NpcsPage() {
 
         {error && <p className="text-red-400 text-sm">{error}</p>}
 
-        {!npcs && !error && <p className="text-[#8A99AF] text-sm">Loading…</p>}
+        {!npcs && !error && <p className="text-[#8A99AF] text-sm">{t("common.loading")}</p>}
 
         {npcs && (
           <div className="rounded-xl overflow-hidden border border-[#2E3A4E]">
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="bg-[#1C2434] text-[#8A99AF] text-xs uppercase tracking-widest">
-                  <th className="text-left px-4 py-3 font-semibold">Name</th>
-                  <th className="text-left px-4 py-3 font-semibold">Type</th>
-                  <th className="text-left px-4 py-3 font-semibold">Lv</th>
-                  <th className="text-left px-4 py-3 font-semibold">XP</th>
-                  <th className="text-left px-4 py-3 font-semibold">Gender</th>
-                  <th className="text-left px-4 py-3 font-semibold">Tier</th>
-                  <th className="text-left px-4 py-3 font-semibold">Aggro</th>
-                  <th className="text-left px-4 py-3 font-semibold">HP</th>
+                  <th className="text-left px-4 py-3 font-semibold">{t("npcs.colName")}</th>
+                  <th className="text-left px-4 py-3 font-semibold">{t("npcs.type")}</th>
+                  <th className="text-left px-4 py-3 font-semibold">{t("npcs.levelShort")}</th>
+                  <th className="text-left px-4 py-3 font-semibold">{t("npcs.colXp")}</th>
+                  <th className="text-left px-4 py-3 font-semibold">{t("npcs.gender")}</th>
+                  <th className="text-left px-4 py-3 font-semibold">{t("npcs.colTier")}</th>
+                  <th className="text-left px-4 py-3 font-semibold">{t("npcs.aggro")}</th>
+                  <th className="text-left px-4 py-3 font-semibold">{t("npcs.colHp")}</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -811,7 +821,7 @@ export function NpcsPage() {
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={9} className="text-center text-[#8A99AF] py-8">
-                      No NPCs match
+                      {t("npcs.noMatch")}
                     </td>
                   </tr>
                 )}
@@ -850,7 +860,7 @@ export function NpcsPage() {
                       {expanded && (
                         <tr key={npc.id + "-detail"} className="border-t border-[#2E3A4E]">
                           <td colSpan={9} className="p-0">
-                            <Detail npc={npc} />
+                            <Detail npc={npc} t={t} />
                           </td>
                         </tr>
                       )}

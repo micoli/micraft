@@ -1,20 +1,32 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { useT, type TranslationKey } from "../i18n";
 import {
   ALL_NPC_TYPES,
   EVENT_COLORS,
-  EVENT_LABELS,
+  EVENT_LABEL_KEYS,
+  EVENT_HISTORY,
   filterEvents,
   npcTypesInEvents,
   type SimEvent,
   type SimEventType,
 } from "./types";
 
-const FILTER_GROUPS: { label: string; types: SimEventType[] }[] = [
-  { label: "Combat", types: ["ATTACK", "DAMAGE", "DEATH", "AGGRO_GAIN", "AGGRO_LOST"] },
-  { label: "Faim", types: ["HUNGRY", "FED"] },
-  { label: "Reproduction", types: ["MATING", "GESTATION_START", "BIRTH", "EVOLVE"] },
-  { label: "Cycle de vie", types: ["SPAWN", "DESPAWN", "AGE_DEATH"] },
-  { label: "Système", types: ["SYSTEM"] },
+// Grouped by key, not by label: the enabled-set is persisted in component state across a locale
+// change, and keying it on rendered text would reset every filter when the language switches.
+const FILTER_GROUPS: { key: string; labelKey: TranslationKey; types: SimEventType[] }[] = [
+  {
+    key: "combat",
+    labelKey: "sim.eventGroup.combat",
+    types: ["ATTACK", "DAMAGE", "DEATH", "AGGRO_GAIN", "AGGRO_LOST"],
+  },
+  { key: "hunger", labelKey: "sim.eventGroup.hunger", types: ["HUNGRY", "FED"] },
+  {
+    key: "reproduction",
+    labelKey: "sim.eventGroup.reproduction",
+    types: ["MATING", "GESTATION_START", "BIRTH", "EVOLVE"],
+  },
+  { key: "lifecycle", labelKey: "sim.eventGroup.lifecycle", types: ["SPAWN", "DESPAWN", "AGE_DEATH"] },
+  { key: "system", labelKey: "sim.eventGroup.system", types: ["SYSTEM"] },
 ];
 
 interface Props {
@@ -27,8 +39,9 @@ interface Props {
  * re-renders on every frame, this only needs to when the events actually change.
  */
 export const EventLogPanel = memo(function EventLogPanel({ events, onSelect }: Props) {
+  const t = useT();
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() =>
-    FILTER_GROUPS.reduce((acc, g) => ({ ...acc, [g.label]: true }), {}),
+    FILTER_GROUPS.reduce((acc, g) => ({ ...acc, [g.key]: true }), {}),
   );
   const [npcType, setNpcType] = useState<string>(ALL_NPC_TYPES);
   const [autoScroll, setAutoScroll] = useState(true);
@@ -37,7 +50,7 @@ export const EventLogPanel = memo(function EventLogPanel({ events, onSelect }: P
   const activeTypes = useMemo(() => {
     const set = new Set<SimEventType>();
     FILTER_GROUPS.forEach((g) => {
-      if (enabled[g.label]) g.types.forEach((t) => set.add(t));
+      if (enabled[g.key]) g.types.forEach((type) => set.add(type));
     });
     return set;
   }, [enabled]);
@@ -58,24 +71,24 @@ export const EventLogPanel = memo(function EventLogPanel({ events, onSelect }: P
       <div className="mb-2 flex flex-wrap items-center gap-1.5">
         {FILTER_GROUPS.map((group) => (
           <button
-            key={group.label}
+            key={group.key}
             type="button"
-            onClick={() => setEnabled((s) => ({ ...s, [group.label]: !s[group.label] }))}
+            onClick={() => setEnabled((s) => ({ ...s, [group.key]: !s[group.key] }))}
             className={
               "rounded px-2 py-0.5 text-[10px] font-medium transition-colors " +
-              (enabled[group.label] ? "bg-[#3C50E0] text-white" : "bg-[#2E3A4E] text-[#8A99AF] hover:text-white")
+              (enabled[group.key] ? "bg-[#3C50E0] text-white" : "bg-[#2E3A4E] text-[#8A99AF] hover:text-white")
             }
           >
-            {group.label}
+            {t(group.labelKey)}
           </button>
         ))}
         <select
           value={npcType}
           onChange={(e) => setNpcType(e.target.value)}
-          title="Filtrer par type de NPC"
+          title={t("sim.eventLog.filterByType")}
           className="rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-0.5 text-[10px] text-white"
         >
-          <option value={ALL_NPC_TYPES}>tous les types</option>
+          <option value={ALL_NPC_TYPES}>{t("sim.eventLog.allTypes")}</option>
           {npcTypes.map((type) => (
             <option key={type} value={type}>
               {type}
@@ -89,7 +102,7 @@ export const EventLogPanel = memo(function EventLogPanel({ events, onSelect }: P
             onChange={(e) => setAutoScroll(e.target.checked)}
             className="accent-[#3C50E0]"
           />
-          suivre les derniers
+          {t("sim.eventLog.followLatest")}
         </label>
       </div>
 
@@ -97,7 +110,7 @@ export const EventLogPanel = memo(function EventLogPanel({ events, onSelect }: P
         ref={listRef}
         className="flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-1.5 font-mono text-[11px] leading-relaxed"
       >
-        {visible.length === 0 && <p className="p-2 text-[#8A99AF]">Aucun évènement — démarre la simulation.</p>}
+        {visible.length === 0 && <p className="p-2 text-[#8A99AF]">{t("sim.eventLog.empty")}</p>}
         {visible.map((event) => (
           <div
             key={event.seq}
@@ -108,7 +121,7 @@ export const EventLogPanel = memo(function EventLogPanel({ events, onSelect }: P
               t{event.tick} j{event.gameDay.toFixed(2)}
             </span>
             <span className="w-24 shrink-0" style={{ color: EVENT_COLORS[event.type] }}>
-              {EVENT_LABELS[event.type]}
+              {t(EVENT_LABEL_KEYS[event.type])}
             </span>
             <span className="text-[#CBD5E1]">{event.message}</span>
           </div>
@@ -116,7 +129,7 @@ export const EventLogPanel = memo(function EventLogPanel({ events, onSelect }: P
       </div>
 
       <p className="mt-1.5 text-[10px] text-[#8A99AF]">
-        {visible.length} ligne(s) affichée(s) · historique conservé : {events.length}/300 · rafraîchi toutes les 500 ms
+        {t("sim.eventLog.footer", visible.length, events.length, EVENT_HISTORY)}
       </p>
     </div>
   );

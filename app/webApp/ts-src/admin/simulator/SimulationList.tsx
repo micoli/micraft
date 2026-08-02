@@ -1,3 +1,4 @@
+import { useT } from "../i18n";
 import type { SimulationInfo } from "./types";
 
 interface Props {
@@ -12,22 +13,23 @@ interface Props {
  * this is how you get back to one — or watch the same one as a colleague.
  */
 export function SimulationList({ simulations, attachedId, onAttach, onRefresh }: Props) {
+  const t = useT();
   return (
     <div className="rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3">
       <div className="mb-2 flex items-center gap-2">
         <p className="flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]">
-          Simulations en cours
+          {t("sim.list.title")}
         </p>
         <button
           type="button"
           onClick={onRefresh}
           className="rounded bg-[#2E3A4E] px-2 py-0.5 text-[10px] text-[#C7D2FE] hover:bg-[#3C50E0]/60"
         >
-          Rafraîchir
+          {t("common.refresh")}
         </button>
       </div>
 
-      {simulations.length === 0 && <p className="text-[11px] text-[#4A5568]">Aucune — « Démarrer » en crée une.</p>}
+      {simulations.length === 0 && <p className="text-[11px] text-[#4A5568]">{t("sim.list.empty")}</p>}
 
       {simulations.map((simulation) => {
         const attached = simulation.id === attachedId;
@@ -45,25 +47,36 @@ export function SimulationList({ simulations, attachedId, onAttach, onRefresh }:
                   {simulation.name}
                 </p>
                 <p className="text-[10px] text-[#8A99AF]">
-                  {simulation.npcCount}
-                  {simulation.populationCap > 0 ? `/${simulation.populationCap}` : ""} NPC · jour{" "}
-                  {simulation.gameDay.toFixed(1)} ·{" "}
-                  {simulation.paused ? "en pause" : `${Math.round(simulation.realTps)} t/s`}
+                  {t(
+                    "sim.list.stats",
+                    `${simulation.npcCount}${simulation.populationCap > 0 ? `/${simulation.populationCap}` : ""}`,
+                    simulation.gameDay.toFixed(1),
+                    simulation.paused
+                      ? t("sim.timeline.paused")
+                      : t("sim.timeline.tps", Math.round(simulation.realTps)),
+                  )}
                 </p>
                 <p className="text-[10px] text-[#4A5568]">
-                  {simulation.halfSize * 2}×{simulation.halfSize * 2} blocs · {simulation.viewers} spectateur(s) ·{" "}
-                  {simulation.id.slice(0, 8)}
+                  {t(
+                    "sim.list.geometry",
+                    simulation.halfSize * 2,
+                    simulation.halfSize * 2,
+                    simulation.viewers,
+                    simulation.id.slice(0, 8),
+                  )}
                 </p>
               </div>
               {attached ? (
-                <span className="shrink-0 rounded bg-[#3C50E0] px-2 py-0.5 text-[10px] text-white">suivie</span>
+                <span className="shrink-0 rounded bg-[#3C50E0] px-2 py-0.5 text-[10px] text-white">
+                  {t("sim.list.viewing")}
+                </span>
               ) : (
                 <button
                   type="button"
                   onClick={() => onAttach(simulation.id)}
                   className="shrink-0 rounded bg-[#2E3A4E] px-2 py-0.5 text-[10px] text-[#C7D2FE] hover:bg-[#3C50E0]/60"
                 >
-                  Se connecter
+                  {t("sim.list.connect")}
                 </button>
               )}
             </div>

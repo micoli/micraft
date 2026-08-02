@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, WorldStatsDto } from "../api";
+import { useI18n, useT, type TranslationKey } from "../i18n";
 
 function Icon({ d, size = 16 }: { d: string; size?: number }) {
   return (
@@ -36,7 +37,8 @@ function Badge({ children, color }: { children: React.ReactNode; color: string }
 }
 
 function WorldCard({ world, onRefresh: _onRefresh }: { world: WorldStatsDto; onRefresh: () => void }) {
-  const date = new Date(world.createdAt).toLocaleDateString(undefined, {
+  const { locale, t } = useI18n();
+  const date = new Date(world.createdAt).toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -58,14 +60,14 @@ function WorldCard({ world, onRefresh: _onRefresh }: { world: WorldStatsDto; onR
           </div>
           <div className="min-w-0">
             <p className="text-white font-semibold text-[15px] truncate">{world.name}</p>
-            <p className="text-[11px] text-[#8A99AF]">Created {date}</p>
+            <p className="text-[11px] text-[#8A99AF]">{t("worlds.created", date)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {world.isActive && (
             <Badge color="bg-[#3C50E0]/20 text-[#3C50E0]">
               <Icon d={I.active} size={10} />
-              <span className="ml-1">Active</span>
+              <span className="ml-1">{t("worlds.active")}</span>
             </Badge>
           )}
           <Badge color="bg-[#2E3A4E] text-[#8A99AF]">{world.generator}</Badge>
@@ -73,15 +75,15 @@ function WorldCard({ world, onRefresh: _onRefresh }: { world: WorldStatsDto; onR
       </div>
       <div className="grid grid-cols-3 gap-3 p-3 bg-[#0E1726] rounded-lg">
         <div className="text-center">
-          <p className="text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1">Seed</p>
+          <p className="text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1">{t("worlds.seed")}</p>
           <p className="text-white font-mono text-sm font-semibold tabular-nums">{world.seed}</p>
         </div>
         <div className="text-center border-x border-[#2E3A4E]">
-          <p className="text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1">Chunks</p>
+          <p className="text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1">{t("worlds.chunks")}</p>
           <p className="text-white font-semibold text-sm tabular-nums">{world.chunkCount.toLocaleString()}</p>
         </div>
         <div className="text-center">
-          <p className="text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1">Players</p>
+          <p className="text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1">{t("worlds.players")}</p>
           <p className="text-white font-semibold text-sm tabular-nums">{world.playerCount}</p>
         </div>
       </div>
@@ -90,6 +92,7 @@ function WorldCard({ world, onRefresh: _onRefresh }: { world: WorldStatsDto; onR
 }
 
 function CreateWorldForm({ onCreated }: { onCreated: () => void }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [seed, setSeed] = useState("");
@@ -101,15 +104,15 @@ function CreateWorldForm({ onCreated }: { onCreated: () => void }) {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!name.trim()) return setError("Name required");
-    if (!/^[a-zA-Z0-9_-]+$/.test(name)) return setError("Name: letters, digits, _ and - only");
+    if (!name.trim()) return setError(t("worlds.nameRequired"));
+    if (!/^[a-zA-Z0-9_-]+$/.test(name)) return setError(t("worlds.nameRule"));
     const seedNum = seed === "" ? 42 : Number(seed);
-    if (isNaN(seedNum)) return setError("Seed must be a number");
+    if (isNaN(seedNum)) return setError(t("worlds.seedMustBeNumber"));
     setSaving(true);
     try {
       const r = await api.worlds.create(name.trim(), seedNum);
-      if (r.status === 409) return setError("World already exists");
-      if (!r.ok) return setError("Server error");
+      if (r.status === 409) return setError(t("worlds.alreadyExists"));
+      if (!r.ok) return setError(t("worlds.serverError"));
       setName("");
       setSeed("");
       setOpen(false);
@@ -126,27 +129,31 @@ function CreateWorldForm({ onCreated }: { onCreated: () => void }) {
         className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#3C50E0] hover:bg-[#3446c7] text-white text-sm font-medium transition-colors"
       >
         <Icon d={I.add} size={16} />
-        Create world
+        {t("worlds.create")}
       </button>
     );
   }
 
   return (
     <div className="bg-[#1A222C] rounded-xl border border-[#3C50E0] p-5">
-      <h3 className="text-white font-semibold text-[15px] mb-4">New world</h3>
+      <h3 className="text-white font-semibold text-[15px] mb-4">{t("worlds.newWorld")}</h3>
       <form onSubmit={submit} className="space-y-3">
         <div>
-          <label className="block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5">Name</label>
+          <label className="block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5">
+            {t("worlds.name")}
+          </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="my_world"
+            placeholder={t("worlds.namePlaceholder")}
             className="w-full bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-3 py-2 text-sm text-white placeholder-[#4A5568] focus:outline-none focus:border-[#3C50E0] transition-colors"
           />
         </div>
         <div>
-          <label className="block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5">Seed</label>
+          <label className="block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5">
+            {t("worlds.seed")}
+          </label>
           <div className="flex gap-2">
             <input
               type="number"
@@ -160,7 +167,7 @@ function CreateWorldForm({ onCreated }: { onCreated: () => void }) {
               onClick={randomSeed}
               className="px-3 py-2 rounded-lg border border-[#2E3A4E] text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E] text-xs transition-colors"
             >
-              Random
+              {t("worlds.random")}
             </button>
           </div>
         </div>
@@ -171,7 +178,7 @@ function CreateWorldForm({ onCreated }: { onCreated: () => void }) {
             disabled={saving}
             className="flex-1 py-2 rounded-lg bg-[#3C50E0] hover:bg-[#3446c7] text-white text-sm font-medium transition-colors disabled:opacity-50"
           >
-            {saving ? "Creating…" : "Create"}
+            {saving ? t("worlds.creating") : t("worlds.createShort")}
           </button>
           <button
             type="button"
@@ -181,7 +188,7 @@ function CreateWorldForm({ onCreated }: { onCreated: () => void }) {
             }}
             className="px-4 py-2 rounded-lg border border-[#2E3A4E] text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E] text-sm transition-colors"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
         </div>
       </form>
@@ -190,16 +197,17 @@ function CreateWorldForm({ onCreated }: { onCreated: () => void }) {
 }
 
 export function WorldsPage() {
+  const t = useT();
   const [worlds, setWorlds] = useState<WorldStatsDto[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
 
   const load = useCallback(async () => {
     try {
       const data = await api.worlds.list();
       setWorlds(data);
-      setError(null);
+      setErrorKey(null);
     } catch {
-      setError("Failed to load worlds");
+      setErrorKey("worlds.failedToLoad");
     }
   }, []);
 
@@ -207,26 +215,27 @@ export function WorldsPage() {
     load();
   }, [load]);
 
-  if (error) return <p className="text-red-400 text-sm">{error}</p>;
+  if (errorKey) return <p className="text-red-400 text-sm">{t(errorKey)}</p>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[#8A99AF] text-xs">
-            {worlds ? `${worlds.length} world${worlds.length !== 1 ? "s" : ""}` : "…"}
+            {worlds ? t(worlds.length === 1 ? "worlds.countOne" : "worlds.countMany", worlds.length) : "…"}
           </p>
           <p className="text-[11px] text-[#4A5568] mt-0.5">
-            Switch active world via <code className="font-mono">MICRAFT_WORLD_NAME</code> env var + server restart
+            {t("worlds.switchHintBefore")} <code className="font-mono">MICRAFT_WORLD_NAME</code>{" "}
+            {t("worlds.switchHintAfter")}
           </p>
         </div>
         <CreateWorldForm onCreated={load} />
       </div>
 
       {worlds === null ? (
-        <p className="text-[#8A99AF] text-sm animate-pulse">Loading…</p>
+        <p className="text-[#8A99AF] text-sm animate-pulse">{t("common.loading")}</p>
       ) : worlds.length === 0 ? (
-        <p className="text-[#8A99AF] text-sm">No worlds found.</p>
+        <p className="text-[#8A99AF] text-sm">{t("worlds.none")}</p>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {worlds.map((w) => (

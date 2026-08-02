@@ -1,6 +1,8 @@
 // Mirrors of the Kotlin @Serializable DTOs in
 // server/src/main/kotlin/org/micoli/micraft/simulation/SimulationProtocol.kt
 
+import type { TranslationKey } from "../i18n";
+
 export interface NpcTuning {
   wanderPauseTicksMin: number;
   wanderPauseTicksMax: number;
@@ -22,25 +24,25 @@ export interface NpcTuning {
   gameDayDurationSeconds: number;
 }
 
-export const TUNING_FIELDS: { key: keyof NpcTuning; label: string; step: number }[] = [
-  { key: "wanderPauseTicksMin", label: "Pause errance min (ticks)", step: 1 },
-  { key: "wanderPauseTicksMax", label: "Pause errance max (ticks)", step: 1 },
-  { key: "wanderStepTicksMax", label: "Durée max d'un pas (ticks)", step: 1 },
-  { key: "wanderDecelTicks", label: "Décélération (ticks)", step: 1 },
-  { key: "wanderSpeedMultMin", label: "Multiplicateur vitesse min", step: 0.05 },
-  { key: "wanderSpeedMultMax", label: "Multiplicateur vitesse max", step: 0.05 },
-  { key: "wanderWaypointCountMin", label: "Waypoints min", step: 1 },
-  { key: "wanderWaypointCountMax", label: "Waypoints max", step: 1 },
-  { key: "yawTurnSpeed", label: "Vitesse de rotation", step: 0.01 },
-  { key: "lookAroundSpeed", label: "Vitesse du regard", step: 0.01 },
-  { key: "lookAroundChangeTicks", label: "Changement de regard (ticks)", step: 1 },
-  { key: "jumpVelocity", label: "Vitesse de saut", step: 0.5 },
-  { key: "interactionRange", label: "Portée d'interaction", step: 0.5 },
-  { key: "updateRange", label: "Portée de mise à jour", step: 4 },
-  { key: "maxSpawnAttemptsPerTick", label: "Tentatives de spawn / tick", step: 1 },
-  { key: "npcZoneSize", label: "Taille de zone (blocs)", step: 16 },
-  { key: "npcVisibilityCheckIntervalTicks", label: "Contrôle visibilité (ticks)", step: 1 },
-  { key: "gameDayDurationSeconds", label: "Durée d'un jour (s)", step: 10 },
+export const TUNING_FIELDS: { key: keyof NpcTuning; labelKey: TranslationKey; step: number }[] = [
+  { key: "wanderPauseTicksMin", labelKey: "sim.tuning.wanderPauseTicksMin", step: 1 },
+  { key: "wanderPauseTicksMax", labelKey: "sim.tuning.wanderPauseTicksMax", step: 1 },
+  { key: "wanderStepTicksMax", labelKey: "sim.tuning.wanderStepTicksMax", step: 1 },
+  { key: "wanderDecelTicks", labelKey: "sim.tuning.wanderDecelTicks", step: 1 },
+  { key: "wanderSpeedMultMin", labelKey: "sim.tuning.wanderSpeedMultMin", step: 0.05 },
+  { key: "wanderSpeedMultMax", labelKey: "sim.tuning.wanderSpeedMultMax", step: 0.05 },
+  { key: "wanderWaypointCountMin", labelKey: "sim.tuning.wanderWaypointCountMin", step: 1 },
+  { key: "wanderWaypointCountMax", labelKey: "sim.tuning.wanderWaypointCountMax", step: 1 },
+  { key: "yawTurnSpeed", labelKey: "sim.tuning.yawTurnSpeed", step: 0.01 },
+  { key: "lookAroundSpeed", labelKey: "sim.tuning.lookAroundSpeed", step: 0.01 },
+  { key: "lookAroundChangeTicks", labelKey: "sim.tuning.lookAroundChangeTicks", step: 1 },
+  { key: "jumpVelocity", labelKey: "sim.tuning.jumpVelocity", step: 0.5 },
+  { key: "interactionRange", labelKey: "sim.tuning.interactionRange", step: 0.5 },
+  { key: "updateRange", labelKey: "sim.tuning.updateRange", step: 4 },
+  { key: "maxSpawnAttemptsPerTick", labelKey: "sim.tuning.maxSpawnAttemptsPerTick", step: 1 },
+  { key: "npcZoneSize", labelKey: "sim.tuning.npcZoneSize", step: 16 },
+  { key: "npcVisibilityCheckIntervalTicks", labelKey: "sim.tuning.npcVisibilityCheckIntervalTicks", step: 1 },
+  { key: "gameDayDurationSeconds", labelKey: "sim.tuning.gameDayDurationSeconds", step: 10 },
 ];
 
 export interface SimSpawn {
@@ -310,22 +312,22 @@ export const EVENT_COLORS: Record<SimEventType, string> = {
   SYSTEM: "#8A99AF",
 };
 
-export const EVENT_LABELS: Record<SimEventType, string> = {
-  SPAWN: "apparition",
-  DESPAWN: "disparition",
-  ATTACK: "attaque",
-  DAMAGE: "dégâts",
-  DEATH: "mort",
-  AGE_DEATH: "vieillesse",
-  AGGRO_GAIN: "colère",
-  AGGRO_LOST: "calme",
-  HUNGRY: "faim",
-  FED: "satiété",
-  MATING: "accouplement",
-  GESTATION_START: "gestation",
-  BIRTH: "naissance",
-  EVOLVE: "évolution",
-  SYSTEM: "système",
+export const EVENT_LABEL_KEYS: Record<SimEventType, TranslationKey> = {
+  SPAWN: "sim.event.SPAWN",
+  DESPAWN: "sim.event.DESPAWN",
+  ATTACK: "sim.event.ATTACK",
+  DAMAGE: "sim.event.DAMAGE",
+  DEATH: "sim.event.DEATH",
+  AGE_DEATH: "sim.event.AGE_DEATH",
+  AGGRO_GAIN: "sim.event.AGGRO_GAIN",
+  AGGRO_LOST: "sim.event.AGGRO_LOST",
+  HUNGRY: "sim.event.HUNGRY",
+  FED: "sim.event.FED",
+  MATING: "sim.event.MATING",
+  GESTATION_START: "sim.event.GESTATION_START",
+  BIRTH: "sim.event.BIRTH",
+  EVOLVE: "sim.event.EVOLVE",
+  SYSTEM: "sim.event.SYSTEM",
 };
 
 /** Sentinel for "no NPC-type filter" in the event log. */

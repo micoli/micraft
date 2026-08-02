@@ -1,3 +1,4 @@
+import type { TranslationKey } from "../i18n";
 import type { SimMetricBucket, SimMetrics } from "./types";
 
 /** Same ceiling as the server keeps, so the client never holds more history than exists. */
@@ -6,19 +7,19 @@ export const METRIC_HISTORY = 240;
 /** A counter series the charts can draw. */
 export interface CounterSeries {
   key: "attacks" | "gestations" | "births" | "matings" | "spawns" | "fed" | "hungry" | "evolutions";
-  label: string;
+  labelKey: TranslationKey;
   color: string;
 }
 
 export const COUNTER_SERIES: CounterSeries[] = [
-  { key: "attacks", label: "attaques", color: "#FB923C" },
-  { key: "gestations", label: "gestations", color: "#E879F9" },
-  { key: "births", label: "naissances", color: "#22D3EE" },
-  { key: "matings", label: "accouplements", color: "#F472B6" },
-  { key: "spawns", label: "apparitions", color: "#38BDF8" },
-  { key: "fed", label: "repas", color: "#4ADE80" },
-  { key: "hungry", label: "faims", color: "#FACC15" },
-  { key: "evolutions", label: "évolutions", color: "#818CF8" },
+  { key: "attacks", labelKey: "sim.counter.attacks", color: "#FB923C" },
+  { key: "gestations", labelKey: "sim.counter.gestations", color: "#E879F9" },
+  { key: "births", labelKey: "sim.counter.births", color: "#22D3EE" },
+  { key: "matings", labelKey: "sim.counter.matings", color: "#F472B6" },
+  { key: "spawns", labelKey: "sim.counter.spawns", color: "#38BDF8" },
+  { key: "fed", labelKey: "sim.counter.fed", color: "#4ADE80" },
+  { key: "hungry", labelKey: "sim.counter.hungry", color: "#FACC15" },
+  { key: "evolutions", labelKey: "sim.counter.evolutions", color: "#818CF8" },
 ];
 
 /**
@@ -49,10 +50,10 @@ export function replaceBuckets(metrics: SimMetrics | null | undefined): SimMetri
 export const DEFAULT_WINDOW_GAME_DAYS = 10;
 
 /** 0 = the whole retained history. */
-export const WINDOW_OPTIONS: { days: number; label: string }[] = [
-  { days: 10, label: "10 j" },
-  { days: 30, label: "30 j" },
-  { days: 0, label: "tout" },
+export const WINDOW_OPTIONS: { days: number; labelKey: TranslationKey }[] = [
+  { days: 10, labelKey: "sim.metrics.window10" },
+  { days: 30, labelKey: "sim.metrics.window30" },
+  { days: 0, labelKey: "sim.metrics.windowAll" },
 ];
 
 /**
@@ -221,13 +222,19 @@ export function counterRowsAt(
   series: readonly CounterSeries[],
 ): { series: CounterSeries; value: number }[] {
   if (!bucket) return [];
-  return series
-    .map((entry) => ({ series: entry, value: bucket[entry.key] }))
-    .filter((row) => row.value > 0)
-    .sort((a, b) => b.value - a.value || a.series.label.localeCompare(b.series.label));
+  return (
+    series
+      .map((entry) => ({ series: entry, value: bucket[entry.key] }))
+      .filter((row) => row.value > 0)
+      // ties broken on the key, not the rendered label: the order must not change with the locale
+      .sort((a, b) => b.value - a.value || a.series.key.localeCompare(b.series.key))
+  );
 }
 
-/** Game-day label for a bucket, e.g. `j 12.5`. */
-export function dayLabel(startGameDay: number): string {
-  return `j ${startGameDay.toFixed(2).replace(/\.?0+$/, "")}`;
+/**
+ * Game-day label for a bucket, e.g. `d 12.5`. [dayAbbrev] is the translated one-letter day marker —
+ * passed in rather than looked up, so this stays a pure function the charts can call per column.
+ */
+export function dayLabel(startGameDay: number, dayAbbrev: string = "d"): string {
+  return `${dayAbbrev} ${startGameDay.toFixed(2).replace(/\.?0+$/, "")}`;
 }

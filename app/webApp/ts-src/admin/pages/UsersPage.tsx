@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
 import { api, UserDto } from "../api";
+import { useT } from "../i18n";
 
 // ── Design primitives ─────────────────────────────────────────────────────────
 function Btn({
@@ -82,6 +83,7 @@ function UserForm({
   const [groups, setGroups] = useState((initial.groups ?? []).join(", "));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useT();
 
   const save = async () => {
     setSaving(true);
@@ -98,7 +100,7 @@ function UserForm({
       });
       onClose();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Error");
+      setError(e instanceof Error ? e.message : t("common.error"));
     } finally {
       setSaving(false);
     }
@@ -107,32 +109,32 @@ function UserForm({
   return (
     <div className="space-y-4">
       {isNew && (
-        <Field label="Email">
-          <TextInput value={email} onChange={setEmail} placeholder="user@example.com" />
+        <Field label={t("users.email")}>
+          <TextInput value={email} onChange={setEmail} placeholder={t("users.emailPlaceholder")} />
         </Field>
       )}
       {isNew && !noauth && (
-        <Field label="Password">
+        <Field label={t("users.password")}>
           <TextInput value={password} onChange={setPassword} type="password" />
         </Field>
       )}
       {!noauth && (
-        <Field label="Display Name">
+        <Field label={t("users.displayName")}>
           <TextInput value={displayName} onChange={setDisplayName} placeholder={email} />
         </Field>
       )}
       {!noauth && (
-        <Field label="Groups (comma-separated)">
-          <TextInput value={groups} onChange={setGroups} placeholder="admin, player" />
+        <Field label={t("users.groupsField")}>
+          <TextInput value={groups} onChange={setGroups} placeholder={t("users.groupsPlaceholder")} />
         </Field>
       )}
       {error && <p className="text-red-400 text-xs">{error}</p>}
       <div className="flex gap-2 justify-end pt-1">
         <Btn variant="ghost" onClick={onClose}>
-          Cancel
+          {t("common.cancel")}
         </Btn>
         <Btn onClick={save} disabled={saving}>
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("common.saving") : t("common.save")}
         </Btn>
       </div>
     </div>
@@ -141,6 +143,7 @@ function UserForm({
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function UsersPage() {
+  const t = useT();
   const [searchParams] = useSearchParams();
   const highlightEmail = searchParams.get("u");
   const highlightRef = useRef<HTMLTableRowElement>(null);
@@ -193,7 +196,7 @@ export function UsersPage() {
       displayName: u.displayName,
       groups: u.groups,
     });
-    if (!r.ok) throw new Error(`Server error: ${r.status}`);
+    if (!r.ok) throw new Error(t("common.serverError", r.status));
     await refresh();
   };
 
@@ -203,7 +206,7 @@ export function UsersPage() {
       displayName: u.displayName,
       groups: u.groups,
     });
-    if (!r.ok) throw new Error(`Server error: ${r.status}`);
+    if (!r.ok) throw new Error(t("common.serverError", r.status));
     await refresh();
   };
 
@@ -217,8 +220,8 @@ export function UsersPage() {
   if (unavailable) {
     return (
       <div className="rounded-xl border border-[#2E3A4E] bg-[#1A222C] p-6 text-sm text-[#8A99AF]">
-        User management requires <code className="text-white">auth.provider: local</code> in{" "}
-        <code className="text-white">data/config/server.yaml</code>.
+        {t("users.requiresLocalBefore")} <code className="text-white">auth.provider: local</code>{" "}
+        {t("users.requiresLocalBetween")} <code className="text-white">data/config/server.yaml</code>.
       </div>
     );
   }
@@ -227,21 +230,21 @@ export function UsersPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <p className="text-sm text-[#8A99AF]">
-          {users.length} user{users.length !== 1 ? "s" : ""}
+          {t(users.length === 1 ? "users.countOne" : "users.countMany", users.length)}
         </p>
-        <Btn onClick={() => setAddOpen(true)}>+ Add User</Btn>
+        <Btn onClick={() => setAddOpen(true)}>{t("users.add")}</Btn>
       </div>
 
       <div className="bg-[#1A222C] rounded-xl border border-[#2E3A4E] overflow-hidden">
         {loading ? (
-          <p className="p-6 text-[#8A99AF] text-sm animate-pulse">Loading…</p>
+          <p className="p-6 text-[#8A99AF] text-sm animate-pulse">{t("common.loading")}</p>
         ) : (
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#2E3A4E]">
                 {(authProvider === "none"
-                  ? ["Email", "Players", ""]
-                  : ["Email", "Display Name", "Groups", "Players", ""]
+                  ? [t("users.email"), t("users.players"), ""]
+                  : [t("users.email"), t("users.displayName"), t("users.groups"), t("users.players"), ""]
                 ).map((h) => (
                   <th
                     key={h}
@@ -259,7 +262,7 @@ export function UsersPage() {
                     colSpan={authProvider === "none" ? 3 : 5}
                     className="px-5 py-8 text-[#8A99AF] text-sm text-center"
                   >
-                    No users configured
+                    {t("users.none")}
                   </td>
                 </tr>
               )}
@@ -306,11 +309,11 @@ export function UsersPage() {
                       <div className="flex gap-2 justify-end">
                         {authProvider !== "none" && (
                           <Btn variant="ghost" onClick={() => setEditUser(u)}>
-                            Edit
+                            {t("common.edit")}
                           </Btn>
                         )}
                         <Btn variant="danger" onClick={() => setDeleteEmail(u.email)}>
-                          Delete
+                          {t("common.delete")}
                         </Btn>
                       </div>
                     </td>
@@ -325,7 +328,7 @@ export function UsersPage() {
       {/* Dialogs */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent>
-          <DialogTitle>Add User</DialogTitle>
+          <DialogTitle>{t("users.addTitle")}</DialogTitle>
           <UserForm
             initial={{}}
             isNew
@@ -338,7 +341,7 @@ export function UsersPage() {
 
       <Dialog open={!!editUser} onOpenChange={(o) => !o && setEditUser(null)}>
         <DialogContent>
-          <DialogTitle>Edit User</DialogTitle>
+          <DialogTitle>{t("users.editTitle")}</DialogTitle>
           {editUser && (
             <UserForm
               initial={editUser}
@@ -352,16 +355,17 @@ export function UsersPage() {
 
       <Dialog open={!!deleteEmail} onOpenChange={(o) => !o && setDeleteEmail(null)}>
         <DialogContent>
-          <DialogTitle>Delete User</DialogTitle>
+          <DialogTitle>{t("users.deleteTitle")}</DialogTitle>
           <p className="text-sm text-[#8A99AF] mb-5">
-            Delete <span className="text-white font-medium">{deleteEmail}</span>? This cannot be undone.
+            {t("users.deleteConfirmBefore")} <span className="text-white font-medium">{deleteEmail}</span>
+            {t("users.deleteConfirmAfter")}
           </p>
           <div className="flex gap-2 justify-end">
             <Btn variant="ghost" onClick={() => setDeleteEmail(null)}>
-              Cancel
+              {t("common.cancel")}
             </Btn>
             <Btn variant="danger" onClick={handleDelete}>
-              Delete
+              {t("common.delete")}
             </Btn>
           </div>
         </DialogContent>

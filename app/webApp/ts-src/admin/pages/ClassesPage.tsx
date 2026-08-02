@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, ClassDefinitionEntry } from "../api";
+import { useT, type TranslationKey } from "../i18n";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -93,9 +94,10 @@ function ProgressionCell({ progression }: { progression: SkillProgression[] | un
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export function ClassesPage() {
+  const t = useT();
   const [classes, setClasses] = useState<Record<string, ClassDefinitionEntry> | null>(null);
   const [allSkills, setAllSkills] = useState<{ attacks: string[]; spells: string[] } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
 
   useEffect(() => {
     Promise.all([api.classes.get(), api.classes.skills()])
@@ -103,15 +105,19 @@ export function ClassesPage() {
         setClasses(c);
         setAllSkills(s);
       })
-      .catch(() => setError("Failed to load classes"));
+      .catch(() => setErrorKey("classes.failedToLoad"));
   }, []);
 
-  if (error) {
-    return <p className="text-red-400 text-sm">{error}</p>;
+  if (errorKey) {
+    return <p className="text-red-400 text-sm">{t(errorKey)}</p>;
   }
 
   if (!classes || !allSkills) {
-    return <div className="flex items-center justify-center h-40 text-[#8A99AF] text-sm animate-pulse">Loading…</div>;
+    return (
+      <div className="flex items-center justify-center h-40 text-[#8A99AF] text-sm animate-pulse">
+        {t("common.loading")}
+      </div>
+    );
   }
 
   const { skills, classNames } = buildMatrix(classes, allSkills.attacks, allSkills.spells);
@@ -121,7 +127,9 @@ export function ClassesPage() {
       <div className="bg-[#1A222C] rounded-xl border border-[#2E3A4E] overflow-hidden">
         {/* Class summary cards */}
         <div className="p-5 border-b border-[#2E3A4E]">
-          <p className="text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-4">Classes</p>
+          <p className="text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-4">
+            {t("classes.classes")}
+          </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {classNames.map((name) => {
               const def = classes[name];
@@ -154,16 +162,18 @@ export function ClassesPage() {
 
         {/* Progression matrix */}
         <div className="p-5">
-          <p className="text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-4">Skill Progression</p>
+          <p className="text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-4">
+            {t("classes.skillProgression")}
+          </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="text-left">
                   <th className="border border-[#2E3A4E] bg-[#0E1726] px-3 py-2 text-[#8A99AF] text-[11px] uppercase tracking-wider font-semibold w-36">
-                    Skill
+                    {t("classes.skill")}
                   </th>
                   <th className="border border-[#2E3A4E] bg-[#0E1726] px-3 py-2 text-[#8A99AF] text-[11px] uppercase tracking-wider font-semibold w-16 text-center">
-                    Type
+                    {t("classes.type")}
                   </th>
                   {classNames.map((name) => (
                     <th
@@ -183,7 +193,7 @@ export function ClassesPage() {
                         {skill.name}
                       </span>
                       {Object.keys(skill.byClass).length === 0 && (
-                        <span className="ml-2 text-[9px] text-[#8A99AF] italic">unassigned</span>
+                        <span className="ml-2 text-[9px] text-[#8A99AF] italic">{t("classes.unassigned")}</span>
                       )}
                     </td>
                     <td className="border border-[#2E3A4E] px-3 py-2 text-center">
@@ -204,8 +214,8 @@ export function ClassesPage() {
             </table>
           </div>
           <p className="mt-3 text-[10px] text-[#8A99AF]">
-            <span className="text-[#3C50E0] font-semibold">Lv</span> = player level unlock &nbsp;·&nbsp;
-            <span className="text-emerald-400">sk</span> = skill level granted
+            <span className="text-[#3C50E0] font-semibold">Lv</span> {t("classes.legendLevel")} &nbsp;·&nbsp;
+            <span className="text-emerald-400">sk</span> {t("classes.legendSkill")}
           </p>
         </div>
       </div>

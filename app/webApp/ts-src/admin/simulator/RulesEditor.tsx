@@ -1,5 +1,6 @@
 import { basicSetup, EditorView } from "codemirror";
 import { useEffect, useRef, useState } from "react";
+import { useT } from "../i18n";
 import { TUNING_FIELDS, type NpcTuning } from "./types";
 
 // ── NPC manager tunables ──────────────────────────────────────────────────────
@@ -18,6 +19,7 @@ interface TuningProps {
  * override is always visible and never an oversight.
  */
 export function TuningEditor({ value, base, onChange, onApply }: TuningProps) {
+  const t = useT();
   const changed = (key: keyof NpcTuning) => base != null && base[key] !== value[key];
   const changedCount = base ? TUNING_FIELDS.filter((f) => changed(f.key)).length : 0;
 
@@ -25,9 +27,7 @@ export function TuningEditor({ value, base, onChange, onApply }: TuningProps) {
     <div className="flex h-full flex-col">
       <div className="mb-2 flex items-center gap-2">
         <span className="text-[11px] text-[#8A99AF]">
-          {changedCount === 0
-            ? "identique aux règles du serveur live"
-            : `${changedCount} règle(s) surchargée(s) par rapport au live`}
+          {changedCount === 0 ? t("sim.rules.identical") : t("sim.rules.overridden", changedCount)}
         </span>
         <button
           type="button"
@@ -35,14 +35,14 @@ export function TuningEditor({ value, base, onChange, onApply }: TuningProps) {
           onClick={() => base && onChange({ ...base })}
           className="ml-auto rounded bg-[#2E3A4E] px-2 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40"
         >
-          Réinitialiser sur le live
+          {t("sim.rules.resetToLive")}
         </button>
         <button
           type="button"
           onClick={onApply}
           className="rounded bg-[#3C50E0] px-2.5 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80"
         >
-          Appliquer à chaud
+          {t("sim.rules.applyHot")}
         </button>
       </div>
 
@@ -50,9 +50,11 @@ export function TuningEditor({ value, base, onChange, onApply }: TuningProps) {
         {TUNING_FIELDS.map((field) => (
           <label key={field.key} className="flex items-center gap-2 border-b border-[#1A222C] py-1 last:border-0">
             <span className={"flex-1 text-[11px] " + (changed(field.key) ? "text-[#FACC15]" : "text-[#8A99AF]")}>
-              {field.label}
+              {t(field.labelKey)}
               {changed(field.key) && base && (
-                <span className="ml-1 text-[10px] text-[#4A5568]">(live: {String(base[field.key])})</span>
+                <span className="ml-1 text-[10px] text-[#4A5568]">
+                  {t("sim.rules.liveValue", String(base[field.key]))}
+                </span>
               )}
             </span>
             <input
@@ -88,6 +90,7 @@ const OVERRIDE_TEMPLATE = `{
  * afterwards: live instances keep their definition until they respawn, exactly as on the live server.
  */
 export function OverridesEditor({ npcTypes, onApply }: OverridesProps) {
+  const t = useT();
   const container = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -125,13 +128,13 @@ export function OverridesEditor({ npcTypes, onApply }: OverridesProps) {
       const parsed = JSON.parse(text) as Record<string, unknown>;
       const unknown = Object.keys(parsed).filter((k) => !npcTypes.includes(k));
       if (unknown.length > 0) {
-        setError(`type(s) NPC inconnu(s) : ${unknown.join(", ")}`);
+        setError(t("sim.rules.unknownTypes", unknown.join(", ")));
         return;
       }
       setError(null);
       onApply(parsed);
     } catch (e) {
-      setError(`JSON invalide : ${(e as Error).message}`);
+      setError(t("sim.rules.invalidJson", (e as Error).message));
     }
   };
 
@@ -146,20 +149,20 @@ export function OverridesEditor({ npcTypes, onApply }: OverridesProps) {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-2 flex items-center gap-2">
-        <span className="text-[11px] text-[#8A99AF]">Surcharges par type — actives au prochain spawn</span>
+        <span className="text-[11px] text-[#8A99AF]">{t("sim.rules.overridesHint")}</span>
         <button
           type="button"
           onClick={insertTemplate}
           className="ml-auto rounded bg-[#2E3A4E] px-2 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60"
         >
-          Exemple
+          {t("sim.rules.example")}
         </button>
         <button
           type="button"
           onClick={apply}
           className="rounded bg-[#3C50E0] px-2.5 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80"
         >
-          Appliquer
+          {t("sim.rules.apply")}
         </button>
       </div>
       {error && (
@@ -168,7 +171,7 @@ export function OverridesEditor({ npcTypes, onApply }: OverridesProps) {
         </p>
       )}
       <div ref={container} className="flex-1 overflow-hidden rounded border border-[#2E3A4E]" />
-      <p className="mt-1.5 text-[10px] text-[#8A99AF]">Types disponibles : {npcTypes.join(", ") || "—"}</p>
+      <p className="mt-1.5 text-[10px] text-[#8A99AF]">{t("sim.rules.availableTypes", npcTypes.join(", ") || "—")}</p>
     </div>
   );
 }

@@ -3,9 +3,10 @@ import { ArenaCanvasRenderer } from "../simulator/ArenaCanvasRenderer";
 import { ArenaControls } from "../simulator/ArenaControls";
 import { ArenaSvgRenderer } from "../simulator/ArenaSvgRenderer";
 import { Card } from "../simulator/Card";
+import { useT, type Translate, type TranslationKey } from "../i18n";
 import {
   LAYER_KEYS,
-  LAYER_LABELS,
+  LAYER_LABEL_KEYS,
   loadLayers,
   loadRenderer,
   saveLayers,
@@ -33,12 +34,12 @@ import { useSimulation } from "../simulator/useSimulation";
 type Tab = "charts" | "log" | "npc" | "rules" | "manager";
 
 // insertion order drives the tab strip; charts first, and it is the tab the page opens on
-const TAB_LABELS: Record<Tab, string> = {
-  charts: "Graphiques",
-  log: "Journal",
-  npc: "NPC",
-  rules: "Règles NPC",
-  manager: "Types & spawns",
+const TAB_LABEL_KEYS: Record<Tab, TranslationKey> = {
+  charts: "sim.tab.charts",
+  log: "sim.tab.log",
+  npc: "sim.tab.npc",
+  rules: "sim.tab.rules",
+  manager: "sim.tab.manager",
 };
 
 const DEFAULT_ARENA = { halfSize: 100, groundY: 7, wallHeight: 4 };
@@ -57,7 +58,8 @@ function baseConfig(tuning: NpcTuning): SimulationConfig {
     npcTuning: tuning,
     npcDefinitionOverrides: {},
     initialSpawns: [],
-    players: [{ name: "observateur", x: 0, z: 0 }],
+    // an identifier the server echoes back, not display copy: it stays put whatever the UI locale is
+    players: [{ name: "observer", x: 0, z: 0 }],
     autoSpawnEnabled: true,
   };
 }
@@ -84,6 +86,7 @@ const smallNumberInput =
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export function WorldSimulatorPage() {
+  const t = useT();
   const sim = useSimulation();
   const [tab, setTab] = useState<Tab>("charts");
   const [layers, setLayers] = useState<Layers>(() => loadLayers());
@@ -131,8 +134,12 @@ export function WorldSimulatorPage() {
   // Shown in the folded header, so folding the panel does not hide what the arena will start with.
   const spawnSummary =
     spawns.length === 0
-      ? "aucun"
-      : `${spawns.length} lot(s) · ${spawns.reduce((sum, spawn) => sum + spawn.count, 0)} NPC`;
+      ? t("sim.page.spawnSummaryNone")
+      : t(
+          "sim.page.spawnSummary",
+          spawns.length,
+          spawns.reduce((sum, spawn) => sum + spawn.count, 0),
+        );
 
   useEffect(() => saveLayers(layers), [layers]);
 
@@ -184,14 +191,16 @@ export function WorldSimulatorPage() {
       {/* toolbar */}
       <div className="flex shrink-0 items-center gap-2 border-b border-[#2E3A4E] bg-[#1A222C] px-4 py-2">
         <span className={"inline-block h-2 w-2 rounded-full " + (sim.connected ? "bg-emerald-400" : "bg-red-400")} />
-        <span className="text-[11px] text-[#8A99AF]">{sim.connected ? "simulateur connecté" : "déconnecté"}</span>
+        <span className="text-[11px] text-[#8A99AF]">
+          {t(sim.connected ? "sim.page.connected" : "sim.page.disconnected")}
+        </span>
         <button
           type="button"
           onClick={start}
           disabled={!sim.connected || !tuning}
           className="ml-3 rounded bg-[#3C50E0] px-3 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80 disabled:opacity-40"
         >
-          Démarrer
+          {t("sim.page.start")}
         </button>
         <button
           type="button"
@@ -199,37 +208,37 @@ export function WorldSimulatorPage() {
           disabled={!sim.running}
           className="rounded bg-[#2E3A4E] px-3 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40"
         >
-          Redémarrage rapide
+          {t("sim.page.quickRestart")}
         </button>
         <button
           type="button"
           onClick={sim.detach}
           disabled={!sim.simulationId}
-          title="Arrête de suivre sans fermer la simulation"
+          title={t("sim.page.detachTitle")}
           className="rounded bg-[#2E3A4E] px-3 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40"
         >
-          Se déconnecter
+          {t("sim.page.detach")}
         </button>
         <button
           type="button"
           onClick={sim.stop}
           disabled={!sim.simulationId}
-          title="Ferme la simulation pour tous les spectateurs"
+          title={t("sim.page.closeTitle")}
           className="rounded bg-[#2E3A4E] px-3 py-1 text-[11px] text-[#C7D2FE] hover:bg-red-500/60 disabled:opacity-40"
         >
-          Fermer
+          {t("sim.page.close")}
         </button>
         {sim.error && <span className="ml-3 text-[11px] text-red-300">{sim.error}</span>}
         {sim.truncated && (
           <span className="ml-3 rounded bg-[#FACC15]/15 px-2 py-0.5 text-[11px] text-[#FACC15]">
-            affichage partiel — zoome pour voir moins de NPC à la fois
+            {t("sim.page.truncated")}
           </span>
         )}
         <span className="ml-auto text-[11px] text-[#8A99AF]">
-          {sim.npcs.length}/{sim.stats.npcCount} NPC affichés
-          {sim.stats.populationCap > 0 ? ` / ${sim.stats.populationCap} max` : ""} · {sim.players.length} joueur(s) ·
-          brout {sim.stats.foodBlocks}
-          {sim.stats.regrowingCells > 0 ? ` (+${sim.stats.regrowingCells} en repousse)` : ""}
+          {t("sim.page.shownNpcs", sim.npcs.length, sim.stats.npcCount)}
+          {sim.stats.populationCap > 0 ? t("sim.page.populationCap", sim.stats.populationCap) : ""} ·{" "}
+          {t("sim.page.playersAndFood", sim.players.length, sim.stats.foodBlocks)}
+          {sim.stats.regrowingCells > 0 ? t("sim.page.regrowing", sim.stats.regrowingCells) : ""}
         </span>
       </div>
 
@@ -244,24 +253,24 @@ export function WorldSimulatorPage() {
           />
 
           <Card
-            title="Arène"
+            title={t("sim.page.arena")}
             collapsed={arenaFolded}
             onCollapsed={setArenaFolded}
-            summary={`${halfSize * 2}×${halfSize * 2} · seed ${seed} · jour ${dayDuration} s`}
+            summary={t("sim.page.arenaSummary", halfSize * 2, halfSize * 2, seed, dayDuration)}
           >
-            <Row label="Nom (optionnel)">
+            <Row label={t("sim.page.nameOptional")}>
               <input
                 type="text"
                 value={simulationName}
                 onChange={(e) => setSimulationName(e.target.value)}
-                placeholder="auto"
+                placeholder={t("sim.page.auto")}
                 disabled={locked}
                 className={
                   "w-32 rounded border border-[#2E3A4E] bg-[#0E1726] px-2 py-1 text-[11px] text-white" + DISABLED
                 }
               />
             </Row>
-            <Row label="Demi-taille (blocs)">
+            <Row label={t("sim.page.halfSize")}>
               <input
                 type="number"
                 step={10}
@@ -272,7 +281,7 @@ export function WorldSimulatorPage() {
                 className={numberInput}
               />
             </Row>
-            <Row label="Seed">
+            <Row label={t("sim.page.seed")}>
               <input
                 type="number"
                 value={seed}
@@ -281,7 +290,7 @@ export function WorldSimulatorPage() {
                 className={numberInput}
               />
             </Row>
-            <Row label="Durée d'un jour (s)">
+            <Row label={t("sim.page.dayDuration")}>
               <input
                 type="number"
                 step={5}
@@ -292,7 +301,7 @@ export function WorldSimulatorPage() {
                 className={numberInput}
               />
             </Row>
-            <Row label="Niveau de zone">
+            <Row label={t("sim.page.zoneLevel")}>
               <input
                 type="number"
                 min={1}
@@ -302,7 +311,7 @@ export function WorldSimulatorPage() {
                 className={numberInput}
               />
             </Row>
-            <Row label="Plafond de population">
+            <Row label={t("sim.page.populationCapLabel")}>
               <input
                 type="number"
                 step={100}
@@ -313,7 +322,7 @@ export function WorldSimulatorPage() {
                 className={numberInput}
               />
             </Row>
-            <Row label="Densité de végétation">
+            <Row label={t("sim.page.vegetationDensity")}>
               <input
                 type="number"
                 step={0.01}
@@ -325,7 +334,7 @@ export function WorldSimulatorPage() {
                 className={numberInput}
               />
             </Row>
-            <Row label="Spawner automatique">
+            <Row label={t("sim.page.autoSpawner")}>
               <input
                 type="checkbox"
                 checked={autoSpawn}
@@ -335,20 +344,17 @@ export function WorldSimulatorPage() {
               />
             </Row>
             <p className="text-[10px] text-[#4A5568]">
-              Plafond 0 = illimité, mais la reproduction est exponentielle.{" "}
-              {locked
-                ? "Réglages verrouillés : ils ne s'appliquent qu'à la création. « Se déconnecter » ou « Fermer » pour en configurer une autre."
-                : "Ces réglages s'appliquent à la création de l'arène."}
+              {t("sim.page.capHint")} {t(locked ? "sim.page.lockedHint" : "sim.page.unlockedHint")}
             </p>
           </Card>
 
           <Card
-            title="Peuplement initial"
+            title={t("sim.page.initialPopulation")}
             collapsed={spawnsFolded}
             onCollapsed={setSpawnsFolded}
             summary={spawnSummary}
           >
-            {spawns.length === 0 && <p className="mb-2 text-[11px] text-[#4A5568]">Aucun</p>}
+            {spawns.length === 0 && <p className="mb-2 text-[11px] text-[#4A5568]">{t("sim.page.noSpawns")}</p>}
             {spawns.map((spawn, index) => (
               <div key={`${spawn.type}-${index}`} className="mb-1.5 flex items-center gap-1.5">
                 <span className="flex-1 text-[11px] text-white">{spawn.type}</span>
@@ -408,7 +414,7 @@ export function WorldSimulatorPage() {
 
           {/* Its own card, not folded with the initial population: this acts on a running arena, and
               hiding it whenever one is attached would bury the only control that still does anything. */}
-          <Card title="Spawn immédiat">
+          <Card title={t("sim.page.instantSpawn")}>
             <div className="flex items-center gap-1.5">
               <select
                 value={liveSpawnType}
@@ -435,13 +441,13 @@ export function WorldSimulatorPage() {
               onClick={() => sim.spawn(liveSpawnType, 0, 0, liveSpawnCount, null)}
               className="mt-2 w-full rounded bg-[#2E3A4E] px-2 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40"
             >
-              Spawner maintenant au centre
+              {t("sim.page.spawnNow")}
             </button>
           </Card>
 
-          <Card title="Calques">
+          <Card title={t("sim.page.layers")}>
             {LAYER_KEYS.map((key) => (
-              <Row key={key} label={LAYER_LABELS[key]}>
+              <Row key={key} label={t(LAYER_LABEL_KEYS[key])}>
                 <input
                   type="checkbox"
                   checked={layers[key]}
@@ -481,7 +487,7 @@ export function WorldSimulatorPage() {
               })()
             ) : (
               <div className="flex h-full items-center justify-center text-[12px] text-[#4A5568]">
-                Aucune simulation. Règle l&apos;arène puis « Démarrer ».
+                {t("sim.page.noSimulation")}
               </div>
             )}
           </div>
@@ -497,7 +503,7 @@ export function WorldSimulatorPage() {
         {/* right: tabs */}
         <div className="flex w-[26rem] shrink-0 flex-col border-l border-[#2E3A4E]">
           <div className="flex shrink-0 gap-1 border-b border-[#2E3A4E] bg-[#1A222C] px-2 py-1.5">
-            {(Object.keys(TAB_LABELS) as Tab[]).map((key) => (
+            {(Object.keys(TAB_LABEL_KEYS) as Tab[]).map((key) => (
               <button
                 key={key}
                 type="button"
@@ -507,7 +513,7 @@ export function WorldSimulatorPage() {
                   (tab === key ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white")
                 }
               >
-                {TAB_LABELS[key]}
+                {t(TAB_LABEL_KEYS[key])}
               </button>
             ))}
           </div>
@@ -541,9 +547,9 @@ export function WorldSimulatorPage() {
               <div className="flex h-full flex-col gap-3">
                 <div>
                   <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]">
-                    Population
+                    {t("sim.page.population")}
                   </p>
-                  {byType.length === 0 && <p className="text-[11px] text-[#4A5568]">Vide</p>}
+                  {byType.length === 0 && <p className="text-[11px] text-[#4A5568]">{t("sim.page.populationEmpty")}</p>}
                   {byType.map(([type, count]) => (
                     <div key={type} className="flex items-center gap-2 py-0.5 text-[11px]">
                       <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: npcColor(type) }} />
@@ -567,40 +573,40 @@ export function WorldSimulatorPage() {
 // ── NPC detail ────────────────────────────────────────────────────────────────
 
 function NpcDetailPanel({ sim }: { sim: ReturnType<typeof useSimulation> }) {
+  const t: Translate = useT();
   const detail = sim.detail;
   if (!detail) {
-    return (
-      <p className="text-[11px] text-[#4A5568]">
-        Clique un NPC dans l&apos;arène (ou une ligne du journal) pour voir son détail.
-      </p>
-    );
+    return <p className="text-[11px] text-[#4A5568]">{t("sim.detail.hint")}</p>;
   }
   const npc = detail.npc;
   const rows: [string, string][] = [
-    ["Type", npc.type],
-    ["Niveau", `${npc.level} (${detail.xp} xp)`],
-    ["Points de vie", `${npc.currentHp}/${npc.maxHp}`],
-    ["Mana", `${detail.currentMana}/${detail.maxMana}`],
-    ["Comportement", detail.behaviorKey],
-    ["Aggro", `${detail.aggroMode} — portée ${detail.aggroRange}`],
-    ["Cible d'aggro", npc.aggroTargetId ?? "—"],
-    ["Classe", detail.characterClass],
-    ["Vitesse / rayon", `${detail.wanderSpeed} / ${detail.wanderRadius}`],
-    ["Gabarit", `${detail.width} × ${detail.height}`],
-    ["Phase d'errance", detail.wanderPhase],
-    ["Position", `${npc.x.toFixed(2)}, ${npc.y.toFixed(2)}, ${npc.z.toFixed(2)}`],
-    ["Point d'apparition", `${detail.spawnX.toFixed(1)}, ${detail.spawnZ.toFixed(1)}`],
-    ["Attaques", detail.attacks.join(", ") || "—"],
-    ["Sorts", detail.spells.join(", ") || "—"],
-    ["Effets actifs", detail.activeEffects.join(", ") || "—"],
-    ["Régime", detail.diet ?? "—"],
-    ["Sexe", npc.gender ?? "—"],
-    ["Âge (jours)", npc.ageGameDays != null ? npc.ageGameDays.toFixed(2) : "—"],
-    ["Faim", npc.hunger != null ? `${Math.round(npc.hunger * 100)}%` : "—"],
-    ["Gestation", npc.gestationRemainingDays != null ? `${npc.gestationRemainingDays.toFixed(2)} j` : "—"],
-    ["Proie visée", detail.preyTargetId ?? "—"],
-    ["Partenaire visé", detail.mateTargetId ?? "—"],
-    ["Parents", detail.parentIds.length ? detail.parentIds.map((p) => p.slice(0, 8)).join(", ") : "—"],
+    [t("sim.detail.type"), npc.type],
+    [t("sim.detail.level"), t("sim.detail.levelValue", npc.level, detail.xp)],
+    [t("sim.detail.hitPoints"), `${npc.currentHp}/${npc.maxHp}`],
+    [t("sim.detail.mana"), `${detail.currentMana}/${detail.maxMana}`],
+    [t("sim.detail.behavior"), detail.behaviorKey],
+    [t("sim.detail.aggro"), t("sim.detail.aggroValue", detail.aggroMode, detail.aggroRange)],
+    [t("sim.detail.aggroTarget"), npc.aggroTargetId ?? "—"],
+    [t("sim.detail.class"), detail.characterClass],
+    [t("sim.detail.speedRadius"), `${detail.wanderSpeed} / ${detail.wanderRadius}`],
+    [t("sim.detail.size"), `${detail.width} × ${detail.height}`],
+    [t("sim.detail.wanderPhase"), detail.wanderPhase],
+    [t("sim.detail.position"), `${npc.x.toFixed(2)}, ${npc.y.toFixed(2)}, ${npc.z.toFixed(2)}`],
+    [t("sim.detail.spawnPoint"), `${detail.spawnX.toFixed(1)}, ${detail.spawnZ.toFixed(1)}`],
+    [t("sim.detail.attacks"), detail.attacks.join(", ") || "—"],
+    [t("sim.detail.spells"), detail.spells.join(", ") || "—"],
+    [t("sim.detail.activeEffects"), detail.activeEffects.join(", ") || "—"],
+    [t("sim.detail.diet"), detail.diet ?? "—"],
+    [t("sim.detail.gender"), npc.gender ?? "—"],
+    [t("sim.detail.ageDays"), npc.ageGameDays != null ? npc.ageGameDays.toFixed(2) : "—"],
+    [t("sim.detail.hunger"), npc.hunger != null ? `${Math.round(npc.hunger * 100)}%` : "—"],
+    [
+      t("sim.detail.gestation"),
+      npc.gestationRemainingDays != null ? t("sim.detail.gestationValue", npc.gestationRemainingDays.toFixed(2)) : "—",
+    ],
+    [t("sim.detail.preyTarget"), detail.preyTargetId ?? "—"],
+    [t("sim.detail.mateTarget"), detail.mateTargetId ?? "—"],
+    [t("sim.detail.parents"), detail.parentIds.length ? detail.parentIds.map((p) => p.slice(0, 8)).join(", ") : "—"],
   ];
 
   return (
@@ -613,7 +619,7 @@ function NpcDetailPanel({ sim }: { sim: ReturnType<typeof useSimulation> }) {
           onClick={() => sim.inspect(npc.id)}
           className="rounded bg-[#2E3A4E] px-2 py-0.5 text-[10px] text-[#C7D2FE] hover:bg-[#3C50E0]/60"
         >
-          Rafraîchir
+          {t("common.refresh")}
         </button>
       </div>
       <div className="flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-2">
@@ -625,7 +631,7 @@ function NpcDetailPanel({ sim }: { sim: ReturnType<typeof useSimulation> }) {
         ))}
         {detail.baseStats && (
           <div className="mt-2 text-[11px]">
-            <p className="mb-1 text-[#8A99AF]">Statistiques de base</p>
+            <p className="mb-1 text-[#8A99AF]">{t("sim.detail.baseStats")}</p>
             <div className="flex flex-wrap gap-2">
               {Object.entries(detail.baseStats).map(([stat, value]) => (
                 <span key={stat} className="rounded bg-[#1A222C] px-1.5 py-0.5 text-white">

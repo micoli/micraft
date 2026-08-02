@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useT } from "../i18n";
 import { mergeBuckets, replaceBuckets } from "./metrics";
 import {
   EVENT_HISTORY,
@@ -154,6 +155,14 @@ export function useSimulation(): SimulationState {
   const [simulations, setSimulations] = useState<SimulationInfo[]>([]);
   const [simulationId, setSimulationId] = useState<string | null>(null);
 
+  // Held in a ref rather than listed as an effect dependency: the socket effect must not tear down
+  // and reconnect the arena just because the operator switched the UI language.
+  const t = useT();
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
+
   const publish = useCallback(() => {
     if (frameRef.current !== null) return;
     frameRef.current = requestAnimationFrame(() => {
@@ -196,7 +205,7 @@ export function useSimulation(): SimulationState {
     fetch("/api/admin/simulation/defaults", { headers })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => d && setDefaults(d as SimulationDefaults))
-      .catch(() => setError("impossible de charger les valeurs par défaut"));
+      .catch(() => setError(tRef.current("sim.error.defaults")));
   }, []);
 
   useEffect(() => {
@@ -208,7 +217,7 @@ export function useSimulation(): SimulationState {
       runningRef.current = false;
       publish();
     };
-    socket.onerror = () => setError("connexion au simulateur perdue");
+    socket.onerror = () => setError(tRef.current("sim.error.connectionLost"));
     socket.onmessage = (event) => {
       let message: SimMessage;
       try {
@@ -302,7 +311,7 @@ export function useSimulation(): SimulationState {
   const send = useCallback((payload: unknown) => {
     const socket = socketRef.current;
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-      setError("simulateur non connecté");
+      setError(tRef.current("sim.error.notConnected"));
       return;
     }
     socket.send(JSON.stringify(payload));

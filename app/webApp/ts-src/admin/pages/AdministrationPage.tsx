@@ -2,15 +2,16 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { api, type BlockInfoDto, type NpcTypeDto, type ItemDto } from "../api";
 import { BbmodelAnimationViewer } from "../components/BbmodelAnimationViewer";
 import { animDisplayName, animEmoji, animationsFromBbmodel, type AnimationEntry } from "../../lib/animationHelpers";
+import { useT, type TranslationKey } from "../i18n";
 
 type AdminTab = "blocks" | "items" | "bestiary" | "skins" | "animations";
 
-const TAB_LABELS: Record<AdminTab, string> = {
-  blocks: "Blocs",
-  items: "Items",
-  bestiary: "Bestiaire",
-  skins: "Skins",
-  animations: "Animations",
+const TAB_LABEL_KEYS: Record<AdminTab, TranslationKey> = {
+  blocks: "administration.tabBlocks",
+  items: "administration.tabItems",
+  bestiary: "administration.tabBestiary",
+  skins: "administration.tabSkins",
+  animations: "administration.tabAnimations",
 };
 
 // ── Shared list sidebar ───────────────────────────────────────────────────────
@@ -63,6 +64,7 @@ function PropRow({ label, value }: { label: string; value: string | number | boo
 
 // ── Blocks tab ────────────────────────────────────────────────────────────────
 function BlocksTab() {
+  const t = useT();
   const [blocks, setBlocks] = useState<BlockInfoDto[]>([]);
   const [selected, setSelected] = useState<BlockInfoDto | null>(null);
   const [filter, setFilter] = useState("");
@@ -84,7 +86,7 @@ function BlocksTab() {
         <div className="px-3 py-2 border-b border-[#2E3A4E]">
           <input
             className="w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none"
-            placeholder="Filtrer…"
+            placeholder={t("administration.filter")}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
@@ -102,14 +104,17 @@ function BlocksTab() {
           <div className="max-w-sm">
             <div className="w-12 h-12 rounded mb-4" style={{ background: `rgb(${selected.minimapColor.join(",")})` }} />
             <h2 className="text-white font-semibold text-base mb-4">{selected.name.replace(/_/g, " ")}</h2>
-            <PropRow label="Dureté" value={selected.hardness === -1 ? "∞" : selected.hardness} />
-            <PropRow label="Solide" value={selected.solid ? "oui" : "non"} />
-            <PropRow label="Transparent" value={selected.transparent ? "oui" : "non"} />
-            <PropRow label="Liquide" value={selected.liquid ? "oui" : "non"} />
-            {selected.modelElement && <PropRow label="Modèle" value={selected.modelElement} />}
+            <PropRow label={t("administration.hardness")} value={selected.hardness === -1 ? "∞" : selected.hardness} />
+            <PropRow label={t("administration.solid")} value={t(selected.solid ? "common.yes" : "common.no")} />
+            <PropRow
+              label={t("administration.transparent")}
+              value={t(selected.transparent ? "common.yes" : "common.no")}
+            />
+            <PropRow label={t("administration.liquid")} value={t(selected.liquid ? "common.yes" : "common.no")} />
+            {selected.modelElement && <PropRow label={t("administration.model")} value={selected.modelElement} />}
           </div>
         ) : (
-          <EmptyDetail message="Sélectionner un bloc" />
+          <EmptyDetail message={t("administration.selectBlock")} />
         )}
       </div>
     </div>
@@ -118,6 +123,7 @@ function BlocksTab() {
 
 // ── Items tab ─────────────────────────────────────────────────────────────────
 function ItemsTab() {
+  const t = useT();
   const [items, setItems] = useState<Record<string, ItemDto>>({});
   const [selected, setSelected] = useState<{ name: string; dto: ItemDto } | null>(null);
   const [filter, setFilter] = useState("");
@@ -137,7 +143,7 @@ function ItemsTab() {
         <div className="px-3 py-2 border-b border-[#2E3A4E]">
           <input
             className="w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none"
-            placeholder="Filtrer…"
+            placeholder={t("administration.filter")}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
@@ -155,11 +161,16 @@ function ItemsTab() {
           <div className="max-w-sm">
             <div className="w-12 h-12 rounded mb-4 bg-[#6a5acd] flex items-center justify-center text-2xl">✦</div>
             <h2 className="text-white font-semibold text-base mb-4">{selected.name.replace(/_/g, " ")}</h2>
-            <PropRow label="Constructible" value={selected.dto.buildable ? "oui" : "non"} />
-            {selected.dto.placesBlock && <PropRow label="Pose le bloc" value={selected.dto.placesBlock} />}
+            <PropRow
+              label={t("administration.buildable")}
+              value={t(selected.dto.buildable ? "common.yes" : "common.no")}
+            />
+            {selected.dto.placesBlock && (
+              <PropRow label={t("administration.placesBlock")} value={selected.dto.placesBlock} />
+            )}
           </div>
         ) : (
-          <EmptyDetail message="Sélectionner un item" />
+          <EmptyDetail message={t("administration.selectItem")} />
         )}
       </div>
     </div>
@@ -168,6 +179,7 @@ function ItemsTab() {
 
 // ── Bestiary tab ──────────────────────────────────────────────────────────────
 function BestiaryTab() {
+  const t = useT();
   const [types, setTypes] = useState<Record<string, NpcTypeDto>>({});
   const [selected, setSelected] = useState<{ name: string; dto: NpcTypeDto } | null>(null);
   const [filter, setFilter] = useState("");
@@ -208,7 +220,7 @@ function BestiaryTab() {
         <div className="px-3 py-2 border-b border-[#2E3A4E]">
           <input
             className="w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none"
-            placeholder="Filtrer…"
+            placeholder={t("administration.filter")}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
@@ -242,16 +254,19 @@ function BestiaryTab() {
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-white font-semibold text-base mb-4">{selected.name}</h2>
-              <PropRow label="Comportement" value={selected.dto.behaviorKey} />
-              <PropRow label="Modèle" value={selected.dto.bbmodelFile} />
-              <PropRow label="Largeur" value={selected.dto.width} />
-              <PropRow label="Hauteur" value={selected.dto.height} />
-              <PropRow label="Vitesse" value={selected.dto.wanderSpeed} />
-              <PropRow label="Auto-spawn" value={selected.dto.autoSpawn ? "oui" : "non"} />
+              <PropRow label={t("administration.behavior")} value={selected.dto.behaviorKey} />
+              <PropRow label={t("administration.model")} value={selected.dto.bbmodelFile} />
+              <PropRow label={t("administration.width")} value={selected.dto.width} />
+              <PropRow label={t("administration.height")} value={selected.dto.height} />
+              <PropRow label={t("administration.speed")} value={selected.dto.wanderSpeed} />
+              <PropRow
+                label={t("administration.autoSpawn")}
+                value={t(selected.dto.autoSpawn ? "common.yes" : "common.no")}
+              />
             </div>
           </div>
         ) : (
-          <EmptyDetail message="Sélectionner un type de NPC" />
+          <EmptyDetail message={t("administration.selectNpcType")} />
         )}
       </div>
     </div>
@@ -260,6 +275,7 @@ function BestiaryTab() {
 
 // ── Skins tab ─────────────────────────────────────────────────────────────────
 function SkinsTab() {
+  const t = useT();
   const [skins, setSkins] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [bbmodel, setBbmodel] = useState<BbModel | null>(null);
@@ -296,7 +312,7 @@ function SkinsTab() {
         <div className="px-3 py-2 border-b border-[#2E3A4E]">
           <input
             className="w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none"
-            placeholder="Filtrer…"
+            placeholder={t("administration.filter")}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
@@ -330,11 +346,11 @@ function SkinsTab() {
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-white font-semibold text-base mb-4">{selected.replace(/_/g, " ")}</h2>
-              <PropRow label="Animations" value={anims.length} />
+              <PropRow label={t("administration.animations")} value={anims.length} />
             </div>
           </div>
         ) : (
-          <EmptyDetail message="Sélectionner un skin" />
+          <EmptyDetail message={t("administration.selectSkin")} />
         )}
       </div>
     </div>
@@ -343,6 +359,7 @@ function SkinsTab() {
 
 // ── Animations tab ────────────────────────────────────────────────────────────
 function AnimationsTab() {
+  const t = useT();
   const [skins, setSkins] = useState<string[]>([]);
   const [selectedSkin, setSelectedSkin] = useState("articulated");
   const [bbmodel, setBbmodel] = useState<BbModel | null>(null);
@@ -387,7 +404,7 @@ function AnimationsTab() {
           </select>
           <input
             className="w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none"
-            placeholder="Filtrer…"
+            placeholder={t("administration.filter")}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
@@ -406,14 +423,14 @@ function AnimationsTab() {
             <BbmodelAnimationViewer bbmodel={bbmodel} animFullName={selectedAnim.fullName} width={360} height={460} />
             <div className="flex-1 min-w-0">
               <h2 className="text-white font-semibold text-base mb-4">{animDisplayName(selectedAnim.fullName)}</h2>
-              <PropRow label="Skin" value={selectedSkin} />
-              <PropRow label="Durée" value={`${selectedAnim.length.toFixed(3)} s`} />
-              <PropRow label="Os animés" value={selectedAnim.boneCount} />
-              <PropRow label="ID complet" value={selectedAnim.fullName} />
+              <PropRow label={t("administration.skin")} value={selectedSkin} />
+              <PropRow label={t("administration.duration")} value={`${selectedAnim.length.toFixed(3)} s`} />
+              <PropRow label={t("administration.animatedBones")} value={selectedAnim.boneCount} />
+              <PropRow label={t("administration.fullId")} value={selectedAnim.fullName} />
             </div>
           </div>
         ) : (
-          <EmptyDetail message="Sélectionner une animation" />
+          <EmptyDetail message={t("administration.selectAnimation")} />
         )}
       </div>
     </div>
@@ -422,21 +439,22 @@ function AnimationsTab() {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function AdministrationPage() {
+  const t = useT();
   const [tab, setTab] = useState<AdminTab>("blocks");
 
   return (
     <div className="flex flex-col h-full overflow-hidden -m-6">
       {/* Tab bar */}
       <div className="shrink-0 flex border-b border-[#2E3A4E] px-6 bg-[#1A222C]">
-        {(Object.keys(TAB_LABELS) as AdminTab[]).map((t) => (
+        {(Object.keys(TAB_LABEL_KEYS) as AdminTab[]).map((key) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={key}
+            onClick={() => setTab(key)}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-              tab === t ? "border-[#3C50E0] text-white" : "border-transparent text-[#8A99AF] hover:text-white"
+              tab === key ? "border-[#3C50E0] text-white" : "border-transparent text-[#8A99AF] hover:text-white"
             }`}
           >
-            {TAB_LABELS[t]}
+            {t(TAB_LABEL_KEYS[key])}
           </button>
         ))}
       </div>

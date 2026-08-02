@@ -304,8 +304,12 @@ describe("counterRowsAt", () => {
 
 describe("dayLabel", () => {
   it("trims trailing zeroes", () => {
-    expect(dayLabel(3)).toBe("j 3");
-    expect(dayLabel(3.5)).toBe("j 3.5");
-    expect(dayLabel(3.25)).toBe("j 3.25");
+    expect(dayLabel(3)).toBe("d 3");
+    expect(dayLabel(3.5)).toBe("d 3.5");
+    expect(dayLabel(3.25)).toBe("d 3.25");
+  });
+
+  it("takes the day marker from the caller, so the charts follow the UI locale", () => {
+    expect(dayLabel(3.5, "j")).toBe("j 3.5");
   });
 });

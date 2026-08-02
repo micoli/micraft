@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ModelViewer } from "../components/ModelViewer";
+import { useT, type TranslationKey } from "../i18n";
 
 interface AssetEntry {
   pack: string;
@@ -29,8 +30,9 @@ const FORMAT_BADGE: Record<string, string> = {
 };
 
 export function GameAssetsPage() {
+  const t = useT();
   const [assets, setAssets] = useState<AssetEntry[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
   const [selected, setSelected] = useState<AssetEntry | null>(null);
   const [expandedPacks, setExpandedPacks] = useState<Set<string>>(new Set());
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
@@ -45,7 +47,7 @@ export function GameAssetsPage() {
           setExpandedPacks(new Set(packs.slice(0, 1)));
         }
       })
-      .catch(() => setError("Failed to load asset list"));
+      .catch(() => setErrorKey("assets.failedToLoad"));
   }, []);
 
   const tree = buildTree(assets);
@@ -73,10 +75,10 @@ export function GameAssetsPage() {
       {/* Sidebar */}
       <aside className="w-72 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden">
         <div className="px-4 py-3 border-b border-[#2E3A4E] text-xs font-semibold uppercase tracking-widest text-[#8A99AF]">
-          {assets.length} assets
+          {t("assets.count", assets.length)}
         </div>
         <div className="flex-1 overflow-y-auto py-2">
-          {error && <div className="px-4 py-2 text-red-400 text-xs">{error}</div>}
+          {errorKey && <div className="px-4 py-2 text-red-400 text-xs">{t(errorKey)}</div>}
           {Object.entries(tree).map(([pack, folders]) => (
             <div key={pack}>
               <button

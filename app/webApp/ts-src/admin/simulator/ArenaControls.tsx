@@ -1,3 +1,4 @@
+import { useT, type TranslationKey } from "../i18n";
 import type { RendererKind } from "./arenaView";
 
 interface Props {
@@ -19,10 +20,10 @@ const ICON = "h-3.5 w-3.5";
  * The two renderers, told apart by what they actually are: a vector path with its handles versus a
  * grid of pixels. Text labels cost width on top of the map they overlay.
  */
-const RENDERERS: { kind: RendererKind; title: string; icon: React.ReactNode }[] = [
+const RENDERERS: { kind: RendererKind; titleKey: TranslationKey; icon: React.ReactNode }[] = [
   {
     kind: "svg",
-    title: "SVG : un nœud DOM par NPC, inspectable",
+    titleKey: "sim.controls.svg",
     icon: (
       <svg viewBox="0 0 16 16" className={ICON} fill="none" stroke="currentColor" strokeWidth={1.4}>
         {/* a curve with its control handles: the vector view */}
@@ -34,7 +35,7 @@ const RENDERERS: { kind: RendererKind; title: string; icon: React.ReactNode }[] 
   },
   {
     kind: "canvas",
-    title: "Canvas : un seul nœud, tient les arènes très peuplées",
+    titleKey: "sim.controls.canvas",
     icon: (
       <svg viewBox="0 0 16 16" className={ICON} fill="currentColor" stroke="none">
         {/* a pixel grid: the raster view */}
@@ -48,16 +49,22 @@ const RENDERERS: { kind: RendererKind; title: string; icon: React.ReactNode }[] 
 
 /** Zoom and renderer choice, overlaid on the arena itself rather than parked in a side panel. */
 export function ArenaControls({ renderer, onRenderer, onZoom, onFitAll }: Props) {
+  const t = useT();
   return (
     <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1.5">
       <div className="flex flex-col gap-1">
-        <button type="button" title="Zoomer" onClick={() => onZoom(ZOOM_STEP)} className={BUTTON}>
+        <button type="button" title={t("sim.controls.zoomIn")} onClick={() => onZoom(ZOOM_STEP)} className={BUTTON}>
           +
         </button>
-        <button type="button" title="Dézoomer" onClick={() => onZoom(1 / ZOOM_STEP)} className={BUTTON}>
+        <button
+          type="button"
+          title={t("sim.controls.zoomOut")}
+          onClick={() => onZoom(1 / ZOOM_STEP)}
+          className={BUTTON}
+        >
           −
         </button>
-        <button type="button" title="Voir toute l'arène" onClick={onFitAll} className={BUTTON}>
+        <button type="button" title={t("sim.controls.fitAll")} onClick={onFitAll} className={BUTTON}>
           {/* four inward corners: the usual "fit to view" mark */}
           <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.6}>
             <path d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4" strokeLinecap="round" />
@@ -67,14 +74,14 @@ export function ArenaControls({ renderer, onRenderer, onZoom, onFitAll }: Props)
 
       {/* stacked, so the whole overlay is one narrow column with the zoom buttons */}
       <div className="flex flex-col overflow-hidden rounded border border-[#2E3A4E]">
-        {RENDERERS.map(({ kind, title, icon }) => (
+        {RENDERERS.map(({ kind, titleKey, icon }) => (
           <button
             key={kind}
             type="button"
             onClick={() => onRenderer(kind)}
             // the icons carry no words, so the explanation lives in the tooltip
-            title={title}
-            aria-label={title}
+            title={t(titleKey)}
+            aria-label={t(titleKey)}
             aria-pressed={renderer === kind}
             className={
               "flex h-7 w-7 items-center justify-center transition-colors " +

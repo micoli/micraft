@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { api, StatusSnapshot } from "../api";
+import { useT, type Translate, type TranslationKey } from "../i18n";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function kb(bytes: number) {
@@ -74,13 +75,13 @@ function Row({ label, value, accent }: { label: string; value: string | number; 
 }
 
 // ── Heap bar ──────────────────────────────────────────────────────────────────
-function HeapBar({ used, max }: { used: number; max: number }) {
+function HeapBar({ used, max, label }: { used: number; max: number; label: string }) {
   const pct = max > 0 ? Math.round((used / max) * 100) : 0;
   const color = pct > 85 ? "bg-red-500" : pct > 65 ? "bg-amber-400" : "bg-[#3C50E0]";
   return (
     <div>
       <div className="flex justify-between text-xs text-[#8A99AF] mb-2">
-        <span>Heap</span>
+        <span>{label}</span>
         <span>
           {used} MB / {max} MB ({pct}%)
         </span>
@@ -117,7 +118,7 @@ function pad2(n: number) {
 }
 
 // ── Game Time setter ──────────────────────────────────────────────────────────
-function GameTimeSetter({ snap }: { snap: StatusSnapshot }) {
+function GameTimeSetter({ snap, t }: { snap: StatusSnapshot; t: Translate }) {
   const { h, m } = ticksToTime(snap.gameTicks, snap.ticksPerDay || 72000);
   const [time, setTime] = useState(`${pad2(h)}:${pad2(m)}`);
   const [saving, setSaving] = useState(false);
@@ -157,7 +158,7 @@ function GameTimeSetter({ snap }: { snap: StatusSnapshot }) {
         disabled={saving}
         className="px-3 py-1 rounded-lg text-xs font-medium bg-[#3C50E0] hover:bg-[#3446c7] text-white transition-colors disabled:opacity-50"
       >
-        {saving ? "…" : "Set"}
+        {saving ? "…" : t("status.set")}
       </button>
     </div>
   );
@@ -165,9 +166,10 @@ function GameTimeSetter({ snap }: { snap: StatusSnapshot }) {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 export function StatusPage() {
+  const t = useT();
   const [snap, setSnap] = useState<StatusSnapshot | null>(null);
   const [restarting, setRestarting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -176,10 +178,10 @@ export function StatusPage() {
         const s = await api.status.get();
         if (alive) {
           setSnap(s);
-          setError(null);
+          setErrorKey(null);
         }
       } catch {
-        if (alive) setError("Server unreachable");
+        if (alive) setErrorKey("status.unreachable");
       }
     };
     poll();
@@ -191,7 +193,7 @@ export function StatusPage() {
   }, []);
 
   const restart = async () => {
-    if (!confirm("Restart server?")) return;
+    if (!confirm(t("status.confirmRestart"))) return;
     setRestarting(true);
     try {
       await api.status.restart();
@@ -201,8 +203,8 @@ export function StatusPage() {
     setTimeout(() => setRestarting(false), 4000);
   };
 
-  if (error) return <p className="text-red-400 text-sm">{error}</p>;
-  if (!snap) return <p className="text-[#8A99AF] text-sm animate-pulse">Loading…</p>;
+  if (errorKey) return <p className="text-red-400 text-sm">{t(errorKey)}</p>;
+  if (!snap) return <p className="text-[#8A99AF] text-sm animate-pulse">{t("common.loading")}</p>;
 
   const topNpcs = Object.entries(snap.npcByType)
     .sort((a, b) => b[1] - a[1])
@@ -215,29 +217,29 @@ export function StatusPage() {
       {/* Top stat row */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
-          label="Connected players"
+          label={t("status.connectedPlayers")}
           value={snap.connectedPlayers}
-          sub={snap.playerNames.join(", ") || "none"}
+          sub={snap.playerNames.join(", ") || t("status.noPlayers")}
           icon={I.users}
           color="bg-blue-500/20 text-blue-400"
         />
         <StatCard
-          label="NPCs alive"
+          label={t("status.npcsAlive")}
           value={snap.npcTotal}
-          sub={`est. ${kb(snap.npcEstBytes)}`}
+          sub={t("status.estimated", kb(snap.npcEstBytes))}
           icon={I.npc}
           color="bg-violet-500/20 text-violet-400"
         />
         <StatCard
-          label="Loaded chunks"
+          label={t("status.loadedChunks")}
           value={snap.loadedChunks}
           icon={I.chunk}
           color="bg-emerald-500/20 text-emerald-400"
         />
         <StatCard
-          label="Game time"
+          label={t("status.gameTime")}
           value={`${pad2(h)}:${pad2(m)}`}
-          sub={`tick ${snap.gameTicks.toLocaleString()}`}
+          sub={t("status.tickValue", snap.gameTicks.toLocaleString())}
           icon={I.tick}
           color="bg-amber-500/20 text-amber-400"
         />
@@ -246,52 +248,54 @@ export function StatusPage() {
       {/* Middle row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* NPC breakdown */}
-        <Card title="NPCs by type">
+        <Card title={t("status.npcsByType")}>
           {topNpcs.length === 0 ? (
-            <p className="text-[#8A99AF] text-sm">None</p>
+            <p className="text-[#8A99AF] text-sm">{t("status.noneCapitalised")}</p>
           ) : (
             topNpcs.map(([type, count]) => <Row key={type} label={type} value={count} />)
           )}
         </Card>
 
         {/* World */}
-        <Card title="World">
-          <Row label="Ground items" value={snap.worldItems} />
-          <Row label="Active liquids" value={snap.activeLiquids} />
-          <Row label="Pending liquid ticks" value={snap.pendingLiquidTicks} />
-          <Row label="Growing vegetation" value={snap.activeVegetation} />
+        <Card title={t("status.world")}>
+          <Row label={t("status.groundItems")} value={snap.worldItems} />
+          <Row label={t("status.activeLiquids")} value={snap.activeLiquids} />
+          <Row label={t("status.pendingLiquidTicks")} value={snap.pendingLiquidTicks} />
+          <Row label={t("status.growingVegetation")} value={snap.activeVegetation} />
           <div className="pt-3">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-1">Set game time</p>
-            <GameTimeSetter snap={snap} />
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-1">
+              {t("status.setGameTime")}
+            </p>
+            <GameTimeSetter snap={snap} t={t} />
           </div>
         </Card>
 
         {/* Network */}
-        <Card title="Network">
-          <Row label="↓ Received" value={kb(snap.networkBytesIn)} />
-          <Row label="↑ Sent" value={kb(snap.networkBytesOut)} />
+        <Card title={t("status.network")}>
+          <Row label={t("status.received")} value={kb(snap.networkBytesIn)} />
+          <Row label={t("status.sent")} value={kb(snap.networkBytesOut)} />
         </Card>
 
         {/* Processor */}
-        <Card title="Processor">
-          <HeapBar used={snap.heapUsedMb} max={snap.heapMaxMb} />
+        <Card title={t("status.processor")}>
+          <HeapBar used={snap.heapUsedMb} max={snap.heapMaxMb} label={t("status.heap")} />
           <div className="mt-3 space-y-0.5">
-            <Row label="Non-heap" value={`${snap.nonHeapUsedMb} MB`} />
-            <Row label="Processors" value={snap.processors} />
+            <Row label={t("status.nonHeap")} value={`${snap.nonHeapUsedMb} MB`} />
+            <Row label={t("status.processors")} value={snap.processors} />
           </div>
         </Card>
       </div>
 
       {/* Footer row */}
       <div className="flex items-center justify-between text-[11px] text-[#8A99AF]">
-        <span>Auto-refreshes every 5 s</span>
+        <span>{t("status.autoRefresh")}</span>
         <button
           onClick={restart}
           disabled={restarting}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2E3A4E] hover:bg-[#2E3A4E] text-[#8A99AF] hover:text-white transition-colors disabled:opacity-50"
         >
           <Svg d={I.restart} size={13} />
-          {restarting ? "Restarting…" : "Restart server"}
+          {restarting ? t("status.restarting") : t("status.restartServer")}
         </button>
       </div>
     </div>

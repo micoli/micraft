@@ -1,3 +1,4 @@
+import { useT } from "../i18n";
 import type { SimNpc } from "./types";
 
 export interface HoverTarget {
@@ -8,6 +9,7 @@ export interface HoverTarget {
 
 /** Light hover card, identical in the SVG and canvas views. */
 export function NpcTooltip({ hover }: { hover: HoverTarget }) {
+  const t = useT();
   const { npc, sx, sy } = hover;
   return (
     <div
@@ -16,17 +18,19 @@ export function NpcTooltip({ hover }: { hover: HoverTarget }) {
     >
       <div className="font-semibold">{npc.name}</div>
       <div className="text-[#8A99AF]">
-        {npc.type} · niveau {npc.level}
+        {npc.type} · {t("sim.tooltip.level", npc.level)}
       </div>
       <div>
-        {npc.currentHp}/{npc.maxHp} pv
+        {npc.currentHp}/{npc.maxHp} {t("sim.tooltip.hp")}
         {npc.gender ? ` · ${npc.gender === "FEMALE" ? "♀" : "♂"}` : ""}
       </div>
-      {npc.hunger != null && <div className="text-[#FACC15]">satiété {Math.round((1 - npc.hunger) * 100)}%</div>}
-      {npc.gestationRemainingDays != null && (
-        <div className="text-[#E879F9]">gestation {npc.gestationRemainingDays.toFixed(2)} j</div>
+      {npc.hunger != null && (
+        <div className="text-[#FACC15]">{t("sim.tooltip.satiety", Math.round((1 - npc.hunger) * 100))}</div>
       )}
-      {npc.isDead && <div className="text-[#EF4444]">mort</div>}
+      {npc.gestationRemainingDays != null && (
+        <div className="text-[#E879F9]">{t("sim.tooltip.gestation", npc.gestationRemainingDays.toFixed(2))}</div>
+      )}
+      {npc.isDead && <div className="text-[#EF4444]">{t("sim.tooltip.dead")}</div>}
     </div>
   );
 }
@@ -41,10 +45,10 @@ export function ArenaHint({
   pxPerBlock: number;
   renderer: string;
 }) {
+  const t = useT();
   return (
     <div className="absolute bottom-2 left-2 rounded bg-[#1A222C]/80 px-2 py-1 text-[10px] text-[#8A99AF]">
-      {halfSize * 2}×{halfSize * 2} blocs · {pxPerBlock.toFixed(1)} px/bloc · {renderer} · molette = zoom, glisser =
-      déplacer
+      {t("sim.hint", halfSize * 2, halfSize * 2, pxPerBlock.toFixed(1), renderer)}
     </div>
   );
 }

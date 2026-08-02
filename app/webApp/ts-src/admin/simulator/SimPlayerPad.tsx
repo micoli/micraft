@@ -1,3 +1,4 @@
+import { useT } from "../i18n";
 import type { SimPlayer } from "./types";
 
 interface Props {
@@ -16,6 +17,7 @@ const KEY =
  * are there and not in the left column.
  */
 export function SimPlayerPad({ players, onInput }: Props) {
+  const t = useT();
   if (players.length === 0) return null;
 
   return (
@@ -27,24 +29,34 @@ export function SimPlayerPad({ players, onInput }: Props) {
           </p>
           <div className="grid grid-cols-3 gap-0.5">
             <span />
-            <button type="button" title="avancer" onClick={() => onInput(player.name, 0, 1, 0, false)} className={KEY}>
+            <button
+              type="button"
+              title={t("sim.pad.forward")}
+              onClick={() => onInput(player.name, 0, 1, 0, false)}
+              className={KEY}
+            >
               ↑
             </button>
             <span />
             <button
               type="button"
-              title="gauche"
+              title={t("sim.pad.left")}
               onClick={() => onInput(player.name, -1, 0, -Math.PI / 2, false)}
               className={KEY}
             >
               ←
             </button>
-            <button type="button" title="saut" onClick={() => onInput(player.name, 0, 0, 0, true)} className={KEY}>
+            <button
+              type="button"
+              title={t("sim.pad.jump")}
+              onClick={() => onInput(player.name, 0, 0, 0, true)}
+              className={KEY}
+            >
               ⤒
             </button>
             <button
               type="button"
-              title="droite"
+              title={t("sim.pad.right")}
               onClick={() => onInput(player.name, 1, 0, Math.PI / 2, false)}
               className={KEY}
             >
@@ -53,7 +65,7 @@ export function SimPlayerPad({ players, onInput }: Props) {
             <span />
             <button
               type="button"
-              title="reculer"
+              title={t("sim.pad.backward")}
               onClick={() => onInput(player.name, 0, -1, Math.PI, false)}
               className={KEY}
             >

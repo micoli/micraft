@@ -2,6 +2,7 @@ import { basicSetup, EditorView } from "codemirror";
 import { yamlSchema } from "codemirror-json-schema/yaml";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
+import { useT } from "../i18n";
 
 const SCHEMA_MAP: Record<string, string> = {
   "server.yaml": "server.schema.json",
@@ -76,6 +77,7 @@ function Editor({
 }
 
 export function ConfigEditorPage() {
+  const t = useT();
   const [files, setFiles] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [content, setContent] = useState<string>("");
@@ -98,7 +100,7 @@ export function ConfigEditorPage() {
       setContent(text);
       setEditedContent(text);
     } catch {
-      setError("Failed to load file");
+      setError(t("config.failedToLoad"));
     }
     const schemaFile = SCHEMA_MAP[filename];
     if (schemaFile) {
@@ -115,11 +117,11 @@ export function ConfigEditorPage() {
     setError(null);
     try {
       const r = await api.configs.save(selected, editedContent);
-      if (!r.ok) throw new Error(`Server error: ${r.status}`);
+      if (!r.ok) throw new Error(t("common.serverError", r.status));
       setSaved(true);
       setTimeout(() => setSaved(false), 1500);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Save failed");
+      setError(e instanceof Error ? e.message : t("common.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -130,10 +132,10 @@ export function ConfigEditorPage() {
       {/* File list */}
       <div className="w-52 shrink-0 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden self-start">
         <p className="px-4 py-3 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] border-b border-[#2E3A4E]">
-          Config Files
+          {t("config.files")}
         </p>
         {files.length === 0 ? (
-          <p className="px-4 py-4 text-[#4A5568] text-sm animate-pulse">Loading…</p>
+          <p className="px-4 py-4 text-[#4A5568] text-sm animate-pulse">{t("common.loading")}</p>
         ) : (
           <div>
             {files.map((f) => (
@@ -163,7 +165,7 @@ export function ConfigEditorPage() {
                 <span className="text-xs font-mono text-[#8A99AF]">{selected}</span>
                 {SCHEMA_MAP[selected] && (
                   <span className="text-[10px] font-semibold bg-[#3C50E0]/20 text-[#818CF8] border border-[#3C50E0]/30 rounded px-1.5 py-0.5">
-                    schema
+                    {t("config.schema")}
                   </span>
                 )}
               </div>
@@ -174,16 +176,14 @@ export function ConfigEditorPage() {
                   disabled={saving}
                   className="px-3 py-1 rounded-lg text-xs font-medium bg-[#3C50E0] hover:bg-[#3446c7] text-white transition-colors disabled:opacity-50"
                 >
-                  {saving ? "Saving…" : saved ? "Saved ✓" : "Save"}
+                  {saving ? t("common.saving") : saved ? t("common.saved") : t("common.save")}
                 </button>
               </div>
             </div>
             <Editor key={selected} content={content} schema={schema} onChange={setEditedContent} />
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-[#4A5568] text-sm">
-            Select a config file to edit
-          </div>
+          <div className="flex-1 flex items-center justify-center text-[#4A5568] text-sm">{t("config.selectFile")}</div>
         )}
       </div>
     </div>

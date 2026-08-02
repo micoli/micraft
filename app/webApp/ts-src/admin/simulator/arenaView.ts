@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { TranslationKey } from "../i18n";
 
 // ── Layers ────────────────────────────────────────────────────────────────────
 
@@ -27,14 +28,14 @@ export const LAYER_DEFAULTS: Layers = {
   players: true,
 };
 
-export const LAYER_LABELS: Record<LayerKey, string> = {
-  food: "Brout (herbivores)",
-  grid: "Grille",
-  aggro: "Lignes d'aggro",
-  hunger: "Barre de faim",
-  gestation: "Anneau de gestation",
-  names: "Noms",
-  players: "Joueurs",
+export const LAYER_LABEL_KEYS: Record<LayerKey, TranslationKey> = {
+  food: "sim.layers.food",
+  grid: "sim.layers.grid",
+  aggro: "sim.layers.aggro",
+  hunger: "sim.layers.hunger",
+  gestation: "sim.layers.gestation",
+  names: "sim.layers.names",
+  players: "sim.layers.players",
 };
 
 export function loadLayers(): Layers {
