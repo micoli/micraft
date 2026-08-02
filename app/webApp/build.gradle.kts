@@ -18,6 +18,9 @@ val tsBuild by
             fileTree("ts-src") {
                 exclude(
                     "package.json",
+                    // Regenerated with a fresh timestamp by `npm run build` itself: leaving it in
+                    // the inputs makes this task invalidate itself on every single build.
+                    "buildConfig.ts",
                     "node_modules/**",
                     ".storybook/**",
                     ".stories/**",
@@ -41,9 +44,14 @@ val generateBuildConfig by
     tasks.registering {
         val genDir = File(projectDir, buildConfigGenDir)
         val outFile = File(genDir, "BuildConfig.kt")
+        // Track the sources the timestamp is meant to describe, so it is refreshed exactly when
+        // there is a new build to stamp. Regenerating unconditionally would rewrite BuildConfig.kt
+        // on every invocation and force a full Kotlin/Wasm recompile even with no code change.
+        inputs.files(
+            fileTree("src/wasmJsMain/kotlin"), fileTree("${rootProject.projectDir}/core/src"))
         outputs.file(outFile)
-        outputs.upToDateWhen { false }
-        // No inputs → cache key is always identical → build cache would restore stale timestamp.
+        // Identical sources can still come from different checkouts; a restored cache entry would
+        // carry someone else's timestamp.
         outputs.cacheIf { false }
         doLast {
             val ts =

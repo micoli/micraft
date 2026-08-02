@@ -134,7 +134,7 @@ build-wasm:
 		echo "[wasm] watcher running — triggering rebuild via source change…"; \
 		$(EXEC) "f=app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/WasmBuildTrigger.kt; echo 'package org.micoli.micraft' > \$$f; echo \"// wasm-trigger $$(date +%s)\" >> \$$f"; \
 	else \
-		$(EXEC) "./gradlew :app:webApp:copyResourcesToWebDist --rerun-tasks"; \
+		$(EXEC) "./gradlew :app:webApp:copyResourcesToWebDist"; \
 	fi
 # Start the WASM continuous watcher (opt-in; use when iterating heavily on Kotlin/WASM code)
 wasm-watch:
