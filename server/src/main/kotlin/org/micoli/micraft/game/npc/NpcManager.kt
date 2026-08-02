@@ -497,17 +497,25 @@ class NpcManager(
         val now = System.currentTimeMillis()
         instance.currentHp = (instance.currentHp - damage).coerceAtLeast(0)
         instance.lastDamagedAtMs = now
+        if (instance.hibernating && instance.definition.hibernation?.wakeOnDamage == true) {
+            instance.hibernating = false
+            instance.hibernationWakeForced = true
+            broadcastCombatLog("[m:${instance.state.name}] wakes up from its hibernation!")
+        }
         val attackerNpcInstance = npcs[attackerId]
         if (attackerNpcInstance != null) {
             // Hurt by another NPC: a separate target field, otherwise tickAggro would drop it on
             // the next tick when the id fails to resolve to a session.
-            if (instance.npcAggroTarget == null && instance.aggroTarget == null) {
+            if (instance.npcAggroTarget == null &&
+                instance.aggroTarget == null &&
+                !instance.hibernating) {
                 instance.npcAggroTarget = attackerId
                 broadcastCombatLog(
                     "[m:${instance.state.name}] turns on [m:${attackerNpcInstance.state.name}]!")
             }
             onNpcDamagedByNpc(instance, attackerNpcInstance)
-        } else if (instance.aggroTarget == null) {
+        } else if (instance.aggroTarget == null && !instance.hibernating) {
+            // A hibernating NPC that keeps sleeping through the hit retaliates against nobody.
             instance.aggroTarget = attackerId
             val attackerName = getSessions().find { it.id == attackerId }?.state?.name ?: "?"
             broadcastCombatLog("[m:${instance.state.name}] targets [p:$attackerName]!")
@@ -623,6 +631,15 @@ class NpcManager(
         val now = System.currentTimeMillis()
         for (instance in npcs.values) {
             if (instance.isDead) continue
+            if (instance.hibernating) {
+                // Asleep: drops whatever it was after and acquires nothing new.
+                if (instance.aggroTarget != null || instance.npcAggroTarget != null) {
+                    instance.aggroTarget = null
+                    instance.npcAggroTarget = null
+                    broadcastAggroUpdate(instance, sessions)
+                }
+                continue
+            }
             val def = instance.definition
             val aggroRangeSq = def.aggroRange * def.aggroRange
             val deaggroMs = (def.deaggroTimeSec * 1000).toLong()

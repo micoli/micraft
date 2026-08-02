@@ -30,6 +30,7 @@ import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.npc.FantasyNameGenerator
+import org.micoli.micraft.game.npc.HibernationProcessor
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
@@ -178,6 +179,11 @@ class WorldSimulator(
             npcSpawner = npcSpawner,
             animals = animals,
             packs = packCoordinator,
+            hibernation =
+                HibernationProcessor(
+                    npcManager = npcManager,
+                    gameDay = { gameTimeService.currentGameDay },
+                ),
             ctxOf = { ctx },
             canSpawn = ::belowPopulationCap,
         )

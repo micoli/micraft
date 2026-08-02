@@ -23,6 +23,7 @@ class RandomMovableNpcBehavior : NpcBehavior {
 
     override fun tick(instance: NpcInstance, world: WorldState, ctx: NpcTickContext): Boolean {
         var changed = NpcPhysics.applyGravity(instance, world)
+        if (instance.hibernating) return changed
         val now = System.currentTimeMillis()
         val isFrozen =
             instance.activeEffects.any {

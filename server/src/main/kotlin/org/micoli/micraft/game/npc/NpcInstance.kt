@@ -39,6 +39,10 @@ class NpcInstance(
     @Volatile var isDead: Boolean = false,
     @Volatile var deathTimeMs: Long = 0L,
     @Volatile var animalData: AnimalInstanceData? = null,
+    /** Asleep for the current hibernation window: no movement, no aggro. */
+    @Volatile var hibernating: Boolean = false,
+    /** Woken by a hit: stays awake until the current hibernation window is over. */
+    @Volatile var hibernationWakeForced: Boolean = false,
     tuning: NpcTuning = NpcConstants.live,
     /**
      * Per-NPC random source. Derived from the world's seed at spawn time so an NPC's evolution does

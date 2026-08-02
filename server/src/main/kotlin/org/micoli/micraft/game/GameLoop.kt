@@ -43,6 +43,7 @@ import org.micoli.micraft.game.drop.DropConfig
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
 import org.micoli.micraft.game.macro.MacroContext
 import org.micoli.micraft.game.macro.MacroExecutor
+import org.micoli.micraft.game.npc.HibernationProcessor
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcManager
@@ -377,6 +378,11 @@ class GameLoop(
             npcSpawner = npcSpawner,
             animals = animalInteractionProcessor,
             packs = packCoordinator,
+            hibernation =
+                HibernationProcessor(
+                    npcManager = npcManager,
+                    gameDay = { gameTimeService.currentGameDay },
+                ),
         )
 
     private var worldMeta: WorldMetadata? = persistence?.loadMetadata()

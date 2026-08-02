@@ -21,6 +21,7 @@ class NpcTickPipeline(
     private val npcSpawner: NpcSpawner,
     private val animals: AnimalInteractionProcessor,
     private val packs: PackCoordinator? = null,
+    private val hibernation: HibernationProcessor? = null,
     private val ctxOf: () -> NpcTickContext = { NpcTickContext.live },
     /** Veto on auto-spawning; the admin simulator refuses past its population ceiling. */
     private val canSpawn: () -> Boolean = { true },
@@ -36,6 +37,8 @@ class NpcTickPipeline(
         sessions: Collection<PlayerSession>,
         combatProcessor: CombatProcessor,
     ) {
+        // First: a sleeping NPC must be flagged before the behavior and aggro passes read it.
+        hibernation?.tick()
         npcManager.tick(world)
         // Before tickAggro so a target picked this tick is acted on in the same tick.
         packs?.tick()

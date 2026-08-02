@@ -30,6 +30,7 @@ data class NpcDefinition(
     val walkBoneAliases: Map<String, String> = emptyMap(),
     val animalConfig: AnimalYamlEntry? = null,
     val packConfig: PackConfig? = null,
+    val hibernation: HibernationConfig? = null,
 ) {
     fun computeMaxHp(level: Int): Int =
         (hp + (level - minLevel).coerceAtLeast(0) * hp / 10).coerceAtLeast(1)

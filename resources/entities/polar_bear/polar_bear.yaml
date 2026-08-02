@@ -25,6 +25,10 @@ baseStats:
   wis: 8
   con: 18
   cha: 6
+hibernation:
+  hoursPerCycle: 8.0
+  cycleDays: 3.0
+  wakeOnDamage: true
 attacks:
   - attackId: polar_bear_swipe
     level: 3

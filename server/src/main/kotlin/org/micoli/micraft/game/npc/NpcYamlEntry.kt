@@ -29,4 +29,5 @@ data class NpcYamlEntry(
     val bbmodelFile: String? = null,
     val animal: AnimalYamlEntry? = null,
     val pack: PackConfig? = null,
+    val hibernation: HibernationConfig? = null,
 )
