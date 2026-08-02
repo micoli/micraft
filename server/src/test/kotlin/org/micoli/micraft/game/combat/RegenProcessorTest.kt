@@ -20,6 +20,9 @@ import org.micoli.micraft.support.testSession
 
 class RegenProcessorTest {
 
+    /** Virtual clock: lets tests advance time without sleeping. */
+    private var clock = 0L
+
     private fun testChar(
         hp: Int = 5,
         maxHpCon: Int = 12,
@@ -70,6 +73,7 @@ class RegenProcessorTest {
             maxRage = 100,
             armorRegistry = emptyMap(),
             combatProcessor = buildCombatProcessor(),
+            nowMs = { clock },
         )
     }
 
@@ -78,7 +82,7 @@ class RegenProcessorTest {
         val session = testSession()
         session.characterData = testChar(hp = 1)
         val processor = buildProcessor(hpFormula = "10.0")
-        Thread.sleep(150)
+        clock += 150
         processor.tick(listOf(session))
         assertTrue(session.characterData!!.currentHp > 1)
     }
@@ -88,7 +92,7 @@ class RegenProcessorTest {
         val session = testSession()
         session.characterData = testChar(mana = 1)
         val processor = buildProcessor(manaFormula = "5.0")
-        Thread.sleep(150)
+        clock += 150
         processor.tick(listOf(session))
         assertTrue(session.characterData!!.currentMana > 1)
     }
@@ -99,7 +103,7 @@ class RegenProcessorTest {
         val char = testChar(hp = 10, maxHpCon = 12)
         session.characterData = char
         val processor = buildProcessor(hpFormula = "999.0")
-        Thread.sleep(150)
+        clock += 150
         processor.tick(listOf(session))
         val derived = DerivedStatsCalculator.compute(session.characterData!!)
         assertTrue(session.characterData!!.currentHp <= derived.maxHp)
@@ -110,7 +114,7 @@ class RegenProcessorTest {
         val session = testSession()
         session.characterData = testChar(hp = 0)
         val processor = buildProcessor(hpFormula = "10.0")
-        Thread.sleep(150)
+        clock += 150
         processor.tick(listOf(session))
         assertEquals(0, session.characterData!!.currentHp)
     }
@@ -122,7 +126,7 @@ class RegenProcessorTest {
         session.characterData = char
         // Zero formula — nothing changes
         val processor = buildProcessor(hpFormula = "0", manaFormula = "0")
-        Thread.sleep(150)
+        clock += 150
         processor.tick(listOf(session))
         assertTrue(session.sent.filterIsInstance<ServerMessage.PlayerStatusUpdate>().isEmpty())
     }
@@ -132,7 +136,7 @@ class RegenProcessorTest {
         val session = testSession()
         session.characterData = testChar(hp = 1)
         val processor = buildProcessor(hpFormula = "10.0", manaFormula = "0")
-        Thread.sleep(150)
+        clock += 150
         processor.tick(listOf(session))
         assertTrue(session.sent.filterIsInstance<ServerMessage.PlayerStatusUpdate>().isNotEmpty())
     }
@@ -152,7 +156,7 @@ class RegenProcessorTest {
         val session = testSession()
         session.characterData = testChar(hp = 5)
         val processor = buildProcessor(hpFormula = "!!!invalid!!!")
-        Thread.sleep(150)
+        clock += 150
         processor.tick(listOf(session))
         assertEquals(5, session.characterData!!.currentHp)
     }
@@ -174,8 +178,9 @@ class RegenProcessorTest {
                 maxRage = 100,
                 armorRegistry = emptyMap(),
                 combatProcessor = buildCombatProcessor(),
+                nowMs = { clock },
             )
-        Thread.sleep(150)
+        clock += 150
         processor.tick(listOf(session))
         assertTrue(session.characterData!!.currentHp > 1)
     }
@@ -192,7 +197,7 @@ class RegenProcessorTest {
         // Formula returns 0 if Poisoned, else 10
         val processor =
             buildProcessor(hpFormula = "activeEffects.contains(\"Poisoned\") ? 0 : 10.0")
-        Thread.sleep(150)
+        clock += 150
         processor.tick(listOf(session))
         // Poisoned → no regen
         assertEquals(1, session.characterData!!.currentHp)

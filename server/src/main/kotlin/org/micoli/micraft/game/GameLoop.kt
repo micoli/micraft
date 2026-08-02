@@ -1,6 +1,7 @@
 package org.micoli.micraft.game
 
 import io.github.classgraph.ClassGraph
+import io.github.classgraph.ScanResult
 import io.ktor.server.application.*
 import io.ktor.websocket.*
 import java.nio.file.Path
@@ -108,42 +109,43 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("GameLoop")
 
-fun discoverCommandHandlers(): Map<String, CommandHandler> =
-    ClassGraph().enableClassInfo().acceptPackages("org.micoli.micraft").scan().use { result ->
-        result
-            .getClassesImplementing(CommandHandler::class.java)
-            .filter { !it.isAbstract && !it.isInterface }
-            .mapNotNull { info ->
-                runCatching {
-                        @Suppress("UNCHECKED_CAST")
-                        (info.loadClass() as Class<CommandHandler>)
-                            .getDeclaredConstructor()
-                            .newInstance()
-                    }
-                    .onFailure { e ->
-                        log.warn("Failed to load command handler {}: {}", info.name, e.message)
-                    }
-                    .getOrNull()
-            }
-            .associateBy { it.command }
-    }
+private class ClasspathDiscovery(
+    val commandHandlers: Map<String, CommandHandler>,
+    val plugins: List<Plugin>,
+)
 
-fun discoverPlugins(): List<Plugin> =
+/**
+ * Scanning the classpath costs ~hundreds of ms, so both discoveries share a single scan performed
+ * once per JVM. Command handlers and plugins are stateless, and [GameLoop] copies the handler map
+ * before registering plugin commands into it, so sharing the instances is safe.
+ */
+private val classpathDiscovery: ClasspathDiscovery by lazy {
     ClassGraph().enableClassInfo().acceptPackages("org.micoli.micraft").scan().use { result ->
-        result
-            .getClassesImplementing(Plugin::class.java)
-            .filter { !it.isAbstract && !it.isInterface }
-            .mapNotNull { info ->
-                runCatching {
-                        @Suppress("UNCHECKED_CAST")
-                        (info.loadClass() as Class<Plugin>).getDeclaredConstructor().newInstance()
-                    }
-                    .onFailure { e ->
-                        log.warn("Failed to load plugin {}: {}", info.name, e.message)
-                    }
-                    .getOrNull()
-            }
+        ClasspathDiscovery(
+            commandHandlers =
+                result.instantiateImplementations<CommandHandler>("command handler").associateBy {
+                    it.command
+                },
+            plugins = result.instantiateImplementations<Plugin>("plugin"),
+        )
     }
+}
+
+private inline fun <reified T : Any> ScanResult.instantiateImplementations(kind: String): List<T> =
+    getClassesImplementing(T::class.java)
+        .filter { !it.isAbstract && !it.isInterface }
+        .mapNotNull { info ->
+            runCatching {
+                    @Suppress("UNCHECKED_CAST")
+                    (info.loadClass() as Class<T>).getDeclaredConstructor().newInstance()
+                }
+                .onFailure { e -> log.warn("Failed to load {} {}: {}", kind, info.name, e.message) }
+                .getOrNull()
+        }
+
+fun discoverCommandHandlers(): Map<String, CommandHandler> = classpathDiscovery.commandHandlers
+
+fun discoverPlugins(): List<Plugin> = classpathDiscovery.plugins
 
 fun validatePluginSystemIds(commands: Map<String, CommandHandler>, plugins: List<Plugin>) {
     val commandDupes = commands.values.groupBy { it.id }.filter { it.value.size > 1 }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.micoli.micraft.support.testAuthProvider
 
 class AuthRoutesTest {
 
@@ -32,7 +33,7 @@ class AuthRoutesTest {
     fun `login success returns token`() = testApplication {
         val tmp = Files.createTempFile("micraft-users", ".yaml")
         tmp.toFile().writeText("users: []\n")
-        val provider = LocalAuthProvider(tmp, GroupsConfig())
+        val provider = testAuthProvider(tmp, GroupsConfig())
         provider.addUser("alice@test.com", "pass1234", "Alice")
         val store = TokenStore(scope)
 
@@ -57,7 +58,7 @@ class AuthRoutesTest {
     fun `login wrong password returns 401`() = testApplication {
         val tmp = Files.createTempFile("micraft-users", ".yaml")
         tmp.toFile().writeText("users: []\n")
-        val provider = LocalAuthProvider(tmp, GroupsConfig())
+        val provider = testAuthProvider(tmp, GroupsConfig())
         provider.addUser("bob@test.com", "correct", "Bob")
         val store = TokenStore(scope)
 

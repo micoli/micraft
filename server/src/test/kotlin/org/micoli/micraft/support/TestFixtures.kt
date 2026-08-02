@@ -4,6 +4,7 @@ import java.nio.file.Path
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.GroupsConfig
+import org.micoli.micraft.auth.LocalAuthProvider
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.armor.ArmorDefinition
@@ -208,8 +209,24 @@ fun testWorld(vararg solid: Triple<Int, Int, Int>): WorldState {
 
 private val testProjectRoot: Path = Path.of(System.getProperty("projectDir", ".."))
 
-fun testI18n(): I18nConfig =
+/**
+ * bcrypt is deliberately slow; at the production cost it dominates the auth tests' runtime. Cost 4
+ * exercises the exact same code path for a fraction of the work.
+ */
+const val TEST_BCRYPT_COST = 4
+
+fun testAuthProvider(usersFile: Path, groups: GroupsConfig = GroupsConfig()): LocalAuthProvider =
+    LocalAuthProvider(usersFile, groups, bcryptCost = TEST_BCRYPT_COST)
+
+/**
+ * Loading every i18n YAML costs real time and [testI18n] is a default argument of [testContext], so
+ * it would otherwise be re-read on hundreds of call sites. Tests only read translations.
+ */
+private val sharedTestI18n: I18nConfig by lazy {
     I18nConfig.fromClasspath(pluginsRoot = testProjectRoot.resolve("plugins"))
+}
+
+fun testI18n(): I18nConfig = sharedTestI18n
 
 fun testContext(
     world: WorldState = testWorld(),

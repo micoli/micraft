@@ -9,8 +9,14 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import org.micoli.micraft.config.validateYamlConfig
 
-class LocalAuthProvider(private val usersFile: Path, @Volatile var groupsConfig: GroupsConfig) :
-    AuthProvider {
+/** bcrypt work factor. Never lower this in production — only tests may pass a cheaper cost. */
+const val DEFAULT_BCRYPT_COST = 12
+
+class LocalAuthProvider(
+    private val usersFile: Path,
+    @Volatile var groupsConfig: GroupsConfig,
+    private val bcryptCost: Int = DEFAULT_BCRYPT_COST,
+) : AuthProvider {
     private fun load(): UsersConfig =
         if (usersFile.exists())
             runCatching {
@@ -43,7 +49,7 @@ class LocalAuthProvider(private val usersFile: Path, @Volatile var groupsConfig:
         val config = load()
         if (config.users.any { it.email.equals(email, ignoreCase = true) })
             error("User already exists: $email")
-        val hash = BCrypt.withDefaults().hashToString(12, password.toCharArray())
+        val hash = BCrypt.withDefaults().hashToString(bcryptCost, password.toCharArray())
         val updated =
             config.copy(users = config.users + UserEntry(email, hash, displayName, groups))
         usersFile.parent?.createDirectories()

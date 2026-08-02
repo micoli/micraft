@@ -7,6 +7,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.support.testAuthProvider
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 
@@ -15,7 +16,7 @@ class AddUserCommandTest {
     private fun setupProvider(): LocalAuthProvider {
         val tmp = Files.createTempFile("micraft-users", ".yaml")
         tmp.toFile().writeText("users: []\n")
-        return LocalAuthProvider(tmp, GroupsConfig())
+        return testAuthProvider(tmp, GroupsConfig())
     }
 
     @Test

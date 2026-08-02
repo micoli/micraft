@@ -16,6 +16,9 @@ import org.micoli.micraft.support.testWorld
 
 class StatusEffectProcessorTest {
 
+    /** Virtual clock: lets tests advance time without sleeping. */
+    private var clock = 1_000L
+
     private fun testChar(name: String, hp: Int = 20) =
         CharacterData(
             id = "test",
@@ -39,19 +42,20 @@ class StatusEffectProcessorTest {
             },
             broadcastCombatLog = { combatLog.add(it) },
             subscribeToChannel = { s, ch -> subscribed.add(s to ch) },
+            nowMs = { clock },
         )
 
     private fun activeEffect(effect: StatusEffect, durationMs: Long = 60_000L) =
-        ActiveStatusEffect(effect = effect, expiresAtMs = System.currentTimeMillis() + durationMs)
+        ActiveStatusEffect(effect = effect, expiresAtMs = clock + durationMs)
 
-    // Create processor, sleep 600ms so dtSec ≈ 0.6 → hpDelta = -1.2f → dmg = 1 > 0 on first tick.
-    private fun sleepingProcessor(
+    // Create processor, advance 600ms so dtSec ≈ 0.6 → hpDelta = -1.2f → dmg = 1 > 0 on first tick.
+    private fun agedProcessor(
         combatLog: MutableList<String> = mutableListOf(),
         subscribed: MutableList<Pair<PlayerSession, String>> = mutableListOf(),
         healthUpdates: MutableList<Triple<String, Int, Int>> = mutableListOf(),
     ): StatusEffectProcessor {
         val p = buildProcessor(combatLog, subscribed, healthUpdates)
-        Thread.sleep(600)
+        clock += 600
         return p
     }
 
@@ -61,7 +65,7 @@ class StatusEffectProcessorTest {
         session.characterData = testChar("Alice", hp = 20)
         session.combatState.activeEffects.add(activeEffect(StatusEffect.Poisoned))
 
-        sleepingProcessor().tick(listOf(session))
+        agedProcessor().tick(listOf(session))
 
         assertTrue(session.characterData!!.currentHp < 20)
     }
@@ -73,7 +77,7 @@ class StatusEffectProcessorTest {
         session.combatState.activeEffects.add(activeEffect(StatusEffect.Poisoned))
 
         val subscribed = mutableListOf<Pair<PlayerSession, String>>()
-        sleepingProcessor(subscribed = subscribed).tick(listOf(session))
+        agedProcessor(subscribed = subscribed).tick(listOf(session))
 
         assertTrue(subscribed.any { (s, ch) -> s.id == "a" && ch == "combat" })
     }
@@ -85,7 +89,7 @@ class StatusEffectProcessorTest {
         session.combatState.activeEffects.add(activeEffect(StatusEffect.Poisoned))
 
         val combatLog = mutableListOf<String>()
-        sleepingProcessor(combatLog = combatLog).tick(listOf(session))
+        agedProcessor(combatLog = combatLog).tick(listOf(session))
 
         assertTrue(combatLog.isNotEmpty())
         assertTrue(combatLog[0].contains("Alice"))
@@ -143,7 +147,7 @@ class StatusEffectProcessorTest {
         session.state = session.state.copy(godMode = true)
         session.combatState.activeEffects.add(activeEffect(StatusEffect.Poisoned))
 
-        sleepingProcessor().tick(listOf(session))
+        agedProcessor().tick(listOf(session))
 
         assertEquals(20, session.characterData!!.currentHp)
     }
@@ -154,7 +158,7 @@ class StatusEffectProcessorTest {
         session.characterData = testChar("Alice", hp = 20)
         session.combatState.activeEffects.add(activeEffect(StatusEffect.Pyre))
 
-        sleepingProcessor().tick(listOf(session))
+        agedProcessor().tick(listOf(session))
 
         assertTrue(session.characterData!!.currentHp < 20)
     }
@@ -166,7 +170,7 @@ class StatusEffectProcessorTest {
         session.combatState.activeEffects.add(activeEffect(StatusEffect.Pyre))
 
         val combatLog = mutableListOf<String>()
-        sleepingProcessor(combatLog = combatLog).tick(listOf(session))
+        agedProcessor(combatLog = combatLog).tick(listOf(session))
 
         assertTrue(combatLog.isNotEmpty())
         assertTrue(combatLog[0].contains("pyre"))
@@ -178,11 +182,11 @@ class StatusEffectProcessorTest {
         session.characterData = testChar("Alice", hp = 20)
         session.combatState.activeEffects.add(activeEffect(StatusEffect.Pyre))
 
-        // Simulate many 50ms ticks without sleeping — processor ticks immediately so dtSec ≈ 0
-        // but fractional damage must accumulate and eventually deal ≥1 damage.
+        // Simulate many 50ms ticks — each deals well under 1 HP, but fractional damage must
+        // accumulate and eventually deal ≥1 damage.
         val processor = buildProcessor()
         repeat(30) {
-            Thread.sleep(50)
+            clock += 50
             processor.tick(listOf(session))
         }
 
@@ -195,7 +199,7 @@ class StatusEffectProcessorTest {
         session.characterData = testChar("Alice", hp = 20)
         session.combatState.activeEffects.add(activeEffect(StatusEffect.Withering))
 
-        sleepingProcessor().tick(listOf(session))
+        agedProcessor().tick(listOf(session))
 
         assertTrue(session.characterData!!.currentHp < 20)
     }
@@ -207,7 +211,7 @@ class StatusEffectProcessorTest {
         session.combatState.activeEffects.add(activeEffect(StatusEffect.Withering))
 
         val combatLog = mutableListOf<String>()
-        sleepingProcessor(combatLog = combatLog).tick(listOf(session))
+        agedProcessor(combatLog = combatLog).tick(listOf(session))
 
         assertTrue(combatLog.isNotEmpty())
         assertTrue(combatLog[0].contains("wither"))

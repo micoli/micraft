@@ -6,6 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.support.testAuthProvider
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 
@@ -20,7 +21,7 @@ class RbacCommandTest {
                         GroupEntry("player", listOf("action.break")),
                         GroupEntry("moderator", listOf("give")),
                     ))
-        val provider = LocalAuthProvider(usersFile, groupsConfig)
+        val provider = testAuthProvider(usersFile, groupsConfig)
         provider.addUser("alice@test.com", "pass", "Alice", listOf("player"))
         return provider
     }

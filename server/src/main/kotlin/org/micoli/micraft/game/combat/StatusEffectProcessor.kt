@@ -17,12 +17,13 @@ class StatusEffectProcessor(
     private val broadcastCombatLog: suspend (String) -> Unit,
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit,
     private val onPlayerDowned: suspend (PlayerSession) -> Unit = {},
+    private val nowMs: () -> Long = System::currentTimeMillis,
 ) {
-    private var lastTickMs = System.currentTimeMillis()
+    private var lastTickMs = nowMs()
     private val pendingDotDamage = mutableMapOf<String, Float>()
 
     suspend fun tick(sessions: Collection<PlayerSession>) {
-        val now = System.currentTimeMillis()
+        val now = nowMs()
         val dtSec = (now - lastTickMs) / 1000f
         lastTickMs = now
 

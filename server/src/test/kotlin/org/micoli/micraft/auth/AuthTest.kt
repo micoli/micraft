@@ -8,6 +8,7 @@ import kotlin.test.assertNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.support.testAuthProvider
 
 class AuthTest {
 
@@ -18,7 +19,7 @@ class AuthTest {
         runBlocking<Unit> {
             val tmp = Files.createTempFile("micraft-users", ".yaml")
             tmp.toFile().writeText("users: []\n")
-            val provider = LocalAuthProvider(tmp, GroupsConfig())
+            val provider = testAuthProvider(tmp, GroupsConfig())
             provider.addUser("test@example.com", "secret123", "Test User")
 
             val result = provider.login("test@example.com", "secret123")
@@ -34,7 +35,7 @@ class AuthTest {
         runBlocking<Unit> {
             val tmp = Files.createTempFile("micraft-users", ".yaml")
             tmp.toFile().writeText("users: []\n")
-            val provider = LocalAuthProvider(tmp, GroupsConfig())
+            val provider = testAuthProvider(tmp, GroupsConfig())
             provider.addUser("user@example.com", "correct", "User")
 
             val result = provider.login("user@example.com", "wrong")
@@ -48,7 +49,7 @@ class AuthTest {
         runBlocking<Unit> {
             val tmp = Files.createTempFile("micraft-users", ".yaml")
             tmp.toFile().writeText("users: []\n")
-            val provider = LocalAuthProvider(tmp, GroupsConfig())
+            val provider = testAuthProvider(tmp, GroupsConfig())
 
             val result = provider.login("nobody@example.com", "any")
             assertNull(result)
@@ -81,7 +82,7 @@ class AuthTest {
         runBlocking<Unit> {
             val tmp = Files.createTempFile("micraft-users", ".yaml")
             tmp.toFile().writeText("users: []\n")
-            val provider = LocalAuthProvider(tmp, GroupsConfig())
+            val provider = testAuthProvider(tmp, GroupsConfig())
             provider.addUser("Case@Example.COM", "pass", "User")
             assertNotNull(provider.login("case@example.com", "pass"))
             assertNotNull(provider.login("CASE@EXAMPLE.COM", "pass"))
@@ -104,7 +105,7 @@ class AuthTest {
                 GroupsConfig(
                     groups = listOf(GroupEntry("admins", listOf("admin.kick", "admin.ban"))),
                 )
-            val provider = LocalAuthProvider(tmp, groups)
+            val provider = testAuthProvider(tmp, groups)
             provider.addUser("admin@example.com", "pass", "Admin", listOf("admins"))
             val result = provider.login("admin@example.com", "pass")
             assertNotNull(result)

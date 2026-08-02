@@ -16,15 +16,16 @@ class RegenProcessor(
     private val maxRage: Int,
     private val armorRegistry: Map<String, ArmorDefinition>,
     private val combatProcessor: CombatProcessor,
+    private val nowMs: () -> Long = System::currentTimeMillis,
 ) {
-    private var lastTickMs = System.currentTimeMillis()
+    private var lastTickMs = nowMs()
     private val jexl = JexlBuilder().silent(false).strict(true).create()
     private val tokenAccumulators = mutableMapOf<String, Float>()
     private val hpAccumulators = mutableMapOf<String, Float>()
     private val manaAccumulators = mutableMapOf<String, Float>()
 
     suspend fun tick(sessions: Collection<PlayerSession>) {
-        val now = System.currentTimeMillis()
+        val now = nowMs()
         val elapsed = now - lastTickMs
         if (elapsed < config.regen.regenIntervalMs) return
         val dt = elapsed / 1000f
