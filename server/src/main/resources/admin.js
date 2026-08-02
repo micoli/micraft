@@ -25671,7 +25671,7 @@
   var import_client = __toESM(require_client(), 1);
 
   // admin/AdminApp.tsx
-  var import_react23 = __toESM(require_react(), 1);
+  var import_react22 = __toESM(require_react(), 1);
 
   // node_modules/react-router/dist/development/chunk-KS7C4IRE.mjs
   var React = __toESM(require_react(), 1);
@@ -32042,8 +32042,6 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.tuning.npcVisibilityCheckIntervalTicks": "Visibility check (ticks)",
     "sim.tuning.gameDayDurationSeconds": "Day duration (s)",
     // ── Simulator — arena controls ──────────────────────────────────────────────
-    "sim.controls.svg": "SVG: one DOM node per NPC, inspectable",
-    "sim.controls.canvas": "Canvas: a single node, holds up in very crowded arenas",
     "sim.controls.zoomIn": "Zoom in",
     "sim.controls.zoomOut": "Zoom out",
     "sim.controls.fitAll": "Fit the whole arena",
@@ -32138,6 +32136,12 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.list.connect": "Connect",
     "sim.list.stats": "{0} NPC \xB7 day {1} \xB7 {2}",
     "sim.list.geometry": "{0}\xD7{1} blocks \xB7 {2} viewer(s) \xB7 {3}",
+    "sim.list.restart": "Restart",
+    "sim.list.restartTitle": "Rebuild this simulation from its own settings",
+    "sim.list.detach": "Detach",
+    "sim.list.detachTitle": "Stop following without closing the simulation",
+    "sim.list.close": "Close",
+    "sim.list.closeTitle": "Close the simulation for every viewer",
     // ── Simulator — layers ──────────────────────────────────────────────────────
     "sim.layers.food": "Grazing (herbivores)",
     "sim.layers.grid": "Grid",
@@ -32152,7 +32156,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.tooltip.satiety": "satiety {0}%",
     "sim.tooltip.gestation": "gestation {0} d",
     "sim.tooltip.dead": "dead",
-    "sim.hint": "{0}\xD7{1} blocks \xB7 {2} px/block \xB7 {3} \xB7 wheel = zoom, drag = pan",
+    "sim.hint": "{0}\xD7{1} blocks \xB7 {2} px/block \xB7 wheel = zoom, drag = pan",
     "sim.pad.forward": "forward",
     "sim.pad.left": "left",
     "sim.pad.jump": "jump",
@@ -32167,11 +32171,6 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.page.connected": "simulator connected",
     "sim.page.disconnected": "disconnected",
     "sim.page.start": "Start",
-    "sim.page.quickRestart": "Quick restart",
-    "sim.page.detach": "Detach",
-    "sim.page.detachTitle": "Stop following without closing the simulation",
-    "sim.page.close": "Close",
-    "sim.page.closeTitle": "Close the simulation for every viewer",
     "sim.page.truncated": "partial view \u2014 zoom in to see fewer NPCs at a time",
     "sim.page.shownNpcs": "{0}/{1} NPCs shown",
     "sim.page.populationCap": " / {0} max",
@@ -32490,8 +32489,6 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.tuning.npcVisibilityCheckIntervalTicks": "Contr\xF4le visibilit\xE9 (ticks)",
     "sim.tuning.gameDayDurationSeconds": "Dur\xE9e d'un jour (s)",
     // ── Simulator — arena controls ──────────────────────────────────────────────
-    "sim.controls.svg": "SVG : un n\u0153ud DOM par NPC, inspectable",
-    "sim.controls.canvas": "Canvas : un seul n\u0153ud, tient les ar\xE8nes tr\xE8s peupl\xE9es",
     "sim.controls.zoomIn": "Zoomer",
     "sim.controls.zoomOut": "D\xE9zoomer",
     "sim.controls.fitAll": "Voir toute l'ar\xE8ne",
@@ -32586,6 +32583,12 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.list.connect": "Se connecter",
     "sim.list.stats": "{0} NPC \xB7 jour {1} \xB7 {2}",
     "sim.list.geometry": "{0}\xD7{1} blocs \xB7 {2} spectateur(s) \xB7 {3}",
+    "sim.list.restart": "Red\xE9marrer",
+    "sim.list.restartTitle": "Reconstruit cette simulation \xE0 partir de ses propres r\xE9glages",
+    "sim.list.detach": "Se d\xE9connecter",
+    "sim.list.detachTitle": "Arr\xEAte de suivre sans fermer la simulation",
+    "sim.list.close": "Fermer",
+    "sim.list.closeTitle": "Ferme la simulation pour tous les spectateurs",
     // ── Simulator — layers ──────────────────────────────────────────────────────
     "sim.layers.food": "Brout (herbivores)",
     "sim.layers.grid": "Grille",
@@ -32600,7 +32603,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.tooltip.satiety": "sati\xE9t\xE9 {0}%",
     "sim.tooltip.gestation": "gestation {0} j",
     "sim.tooltip.dead": "mort",
-    "sim.hint": "{0}\xD7{1} blocs \xB7 {2} px/bloc \xB7 {3} \xB7 molette = zoom, glisser = d\xE9placer",
+    "sim.hint": "{0}\xD7{1} blocs \xB7 {2} px/bloc \xB7 molette = zoom, glisser = d\xE9placer",
     "sim.pad.forward": "avancer",
     "sim.pad.left": "gauche",
     "sim.pad.jump": "saut",
@@ -32615,11 +32618,6 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.page.connected": "simulateur connect\xE9",
     "sim.page.disconnected": "d\xE9connect\xE9",
     "sim.page.start": "D\xE9marrer",
-    "sim.page.quickRestart": "Red\xE9marrage rapide",
-    "sim.page.detach": "Se d\xE9connecter",
-    "sim.page.detachTitle": "Arr\xEAte de suivre sans fermer la simulation",
-    "sim.page.close": "Fermer",
-    "sim.page.closeTitle": "Ferme la simulation pour tous les spectateurs",
     "sim.page.truncated": "affichage partiel \u2014 zoome pour voir moins de NPC \xE0 la fois",
     "sim.page.shownNpcs": "{0}/{1} NPC affich\xE9s",
     "sim.page.populationCap": " / {0} max",
@@ -89023,7 +89021,7 @@ ${end.comment}` : end.comment;
   }
 
   // admin/pages/WorldSimulatorPage.tsx
-  var import_react22 = __toESM(require_react(), 1);
+  var import_react21 = __toESM(require_react(), 1);
 
   // admin/simulator/ArenaCanvasRenderer.tsx
   var import_react16 = __toESM(require_react(), 1);
@@ -89061,20 +89059,6 @@ ${end.comment}` : end.comment;
   function saveLayers(layers) {
     try {
       localStorage.setItem(LAYER_STORAGE_KEY, JSON.stringify(layers));
-    } catch (e) {
-    }
-  }
-  var RENDERER_STORAGE_KEY = "micraft-simulator-renderer";
-  function loadRenderer() {
-    try {
-      return localStorage.getItem(RENDERER_STORAGE_KEY) === "canvas" ? "canvas" : "svg";
-    } catch (e) {
-      return "svg";
-    }
-  }
-  function saveRenderer(kind) {
-    try {
-      localStorage.setItem(RENDERER_STORAGE_KEY, kind);
     } catch (e) {
     }
   }
@@ -89137,70 +89121,85 @@ ${end.comment}` : end.comment;
       (wx, wz) => [(wx - cam.x) * ppb + W / 2, -(wz - cam.z) * ppb + H / 2],
       [cam.x, cam.z, ppb, W, H]
     );
-    const s2w = (0, import_react15.useCallback)(
-      (sx, sy) => [(sx - W / 2) / ppb + cam.x, -(sy - H / 2) / ppb + cam.z],
-      [cam.x, cam.z, ppb, W, H]
+    const onWheel = (0, import_react15.useCallback)(
+      (e) => {
+        e.preventDefault();
+        const rect = element2 == null ? void 0 : element2.getBoundingClientRect();
+        if (!rect) return;
+        const live = cameraRef.current;
+        const sx = e.clientX - rect.left;
+        const sy = e.clientY - rect.top;
+        const next = Math.min(MAX_PPB, Math.max(MIN_PPB, live.pxPerBlock * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+        const wx = (sx - W / 2) / live.pxPerBlock + live.x;
+        const wz = -(sy - H / 2) / live.pxPerBlock + live.z;
+        cameraRef.current = {
+          pxPerBlock: next,
+          x: wx - (sx - W / 2) / next,
+          z: wz + (sy - H / 2) / next
+        };
+        redraw();
+      },
+      [element2, W, H, redraw]
     );
-    const onWheel = (e) => {
-      e.preventDefault();
-      const rect = element2 == null ? void 0 : element2.getBoundingClientRect();
-      if (!rect) return;
-      const sx = e.clientX - rect.left;
-      const sy = e.clientY - rect.top;
-      const next = Math.min(MAX_PPB, Math.max(MIN_PPB, ppb * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
-      const [wx, wz] = s2w(sx, sy);
-      cameraRef.current = {
-        pxPerBlock: next,
-        x: wx - (sx - W / 2) / next,
-        z: wz + (sy - H / 2) / next
-      };
-      redraw();
-    };
-    const zoomBy = (factor) => {
-      const next = Math.min(MAX_PPB, Math.max(MIN_PPB, ppb * factor));
-      if (next === ppb) return;
-      cameraRef.current = __spreadProps(__spreadValues({}, cameraRef.current), { pxPerBlock: next });
-      redraw();
-    };
-    const onMouseDown = (e) => {
-      dragRef.current = { x: cam.x, z: cam.z, sx: e.clientX, sy: e.clientY };
+    const zoomBy = (0, import_react15.useCallback)(
+      (factor) => {
+        const live = cameraRef.current;
+        const next = Math.min(MAX_PPB, Math.max(MIN_PPB, live.pxPerBlock * factor));
+        if (next === live.pxPerBlock) return;
+        cameraRef.current = __spreadProps(__spreadValues({}, live), { pxPerBlock: next });
+        redraw();
+      },
+      [redraw]
+    );
+    const onMouseDown = (0, import_react15.useCallback)((e) => {
+      const live = cameraRef.current;
+      dragRef.current = { x: live.x, z: live.z, sx: e.clientX, sy: e.clientY };
       setPanning(true);
-    };
-    const onPanMove = (e) => {
-      const drag = dragRef.current;
-      if (!drag) return;
-      cameraRef.current = __spreadProps(__spreadValues({}, cameraRef.current), {
-        x: drag.x - (e.clientX - drag.sx) / ppb,
-        z: drag.z + (e.clientY - drag.sy) / ppb
-      });
-      redraw();
-    };
-    const endPan = () => {
+    }, []);
+    const onPanMove = (0, import_react15.useCallback)(
+      (e) => {
+        const drag = dragRef.current;
+        if (!drag) return;
+        const live = cameraRef.current;
+        cameraRef.current = __spreadProps(__spreadValues({}, live), {
+          x: drag.x - (e.clientX - drag.sx) / live.pxPerBlock,
+          z: drag.z + (e.clientY - drag.sy) / live.pxPerBlock
+        });
+        redraw();
+      },
+      [redraw]
+    );
+    const endPan = (0, import_react15.useCallback)(() => {
       dragRef.current = null;
       setPanning(false);
-    };
-    return {
-      camera,
-      width: W,
-      height: H,
-      w2s: w2s2,
-      s2w,
-      worldTransform: `matrix(${ppb},0,0,${-ppb},${W / 2 - cam.x * ppb},${H / 2 + cam.z * ppb})`,
-      visibleBounds: {
+    }, []);
+    const visibleBounds = (0, import_react15.useMemo)(
+      () => ({
         minX: cam.x - W / (2 * ppb) - VIEWPORT_MARGIN_BLOCKS,
         maxX: cam.x + W / (2 * ppb) + VIEWPORT_MARGIN_BLOCKS,
         minZ: cam.z - H / (2 * ppb) - VIEWPORT_MARGIN_BLOCKS,
         maxZ: cam.z + H / (2 * ppb) + VIEWPORT_MARGIN_BLOCKS
-      },
-      onElement: setElement,
-      onWheel,
-      zoomBy,
-      fitAll,
-      onMouseDown,
-      onPanMove,
-      endPan,
-      panning
-    };
+      }),
+      [cam.x, cam.z, ppb, W, H]
+    );
+    return (0, import_react15.useMemo)(
+      () => ({
+        camera,
+        width: W,
+        height: H,
+        w2s: w2s2,
+        visibleBounds,
+        onElement: setElement,
+        onWheel,
+        zoomBy,
+        fitAll,
+        onMouseDown,
+        onPanMove,
+        endPan,
+        panning
+      }),
+      [camera, W, H, w2s2, visibleBounds, onWheel, zoomBy, fitAll, onMouseDown, onPanMove, endPan, panning]
+    );
   }
   var FOOD_OPACITY = 0.35;
   function markerRadiusFor(pxPerBlock) {
@@ -89262,13 +89261,9 @@ ${end.comment}` : end.comment;
       }
     );
   }
-  function ArenaHint({
-    halfSize,
-    pxPerBlock,
-    renderer: renderer2
-  }) {
+  function ArenaHint({ halfSize, pxPerBlock }) {
     const t2 = useT();
-    return /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "absolute bottom-2 left-2 rounded bg-[#1A222C]/80 px-2 py-1 text-[10px] text-[#8A99AF]", children: t2("sim.hint", halfSize * 2, halfSize * 2, pxPerBlock.toFixed(1), renderer2) });
+    return /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "absolute bottom-2 left-2 rounded bg-[#1A222C]/80 px-2 py-1 text-[10px] text-[#8A99AF]", children: t2("sim.hint", halfSize * 2, halfSize * 2, pxPerBlock.toFixed(1)) });
   }
 
   // admin/simulator/types.ts
@@ -89419,8 +89414,9 @@ ${end.comment}` : end.comment;
         }
         ctx.stroke();
       }
-      const npcById = new Map(npcs.map((n) => [n.id, n]));
       if (layers.aggro) {
+        const npcById = new Map(npcs.map((n) => [n.id, n]));
+        const playerById = new Map(players.map((p2) => [p2.id, p2]));
         ctx.strokeStyle = "#F59E0B";
         ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 3]);
@@ -89428,7 +89424,7 @@ ${end.comment}` : end.comment;
         for (const npc of npcs) {
           if (!npc.aggroTargetId) continue;
           const target = npcById.get(npc.aggroTargetId);
-          const targetPlayer = players.find((p2) => p2.id === npc.aggroTargetId);
+          const targetPlayer = playerById.get(npc.aggroTargetId);
           const tx = (_a6 = target == null ? void 0 : target.x) != null ? _a6 : targetPlayer == null ? void 0 : targetPlayer.x;
           const tz = (_b = target == null ? void 0 : target.z) != null ? _b : targetPlayer == null ? void 0 : targetPlayer.z;
           if (tx === void 0 || tz === void 0) continue;
@@ -89537,7 +89533,7 @@ ${end.comment}` : end.comment;
         }
       ),
       hover && /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(NpcTooltip, { hover }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(ArenaHint, { halfSize: half, pxPerBlock: ppb, renderer: "Canvas" })
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(ArenaHint, { halfSize: half, pxPerBlock: ppb })
     ] });
   }
 
@@ -89545,244 +89541,36 @@ ${end.comment}` : end.comment;
   var import_jsx_runtime29 = __toESM(require_jsx_runtime(), 1);
   var ZOOM_STEP = 1.4;
   var BUTTON = "flex h-7 w-7 items-center justify-center rounded bg-[#1A222C]/90 text-[13px] text-[#C7D2FE] border border-[#2E3A4E] hover:bg-[#3C50E0]/70 hover:text-white";
-  var ICON = "h-3.5 w-3.5";
-  var RENDERERS = [
-    {
-      kind: "svg",
-      titleKey: "sim.controls.svg",
-      icon: /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("svg", { viewBox: "0 0 16 16", className: ICON, fill: "none", stroke: "currentColor", strokeWidth: 1.4, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("path", { d: "M3 12c2-6 8-6 10 0", strokeLinecap: "round" }),
-        /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("rect", { x: "1.5", y: "10.5", width: "3", height: "3", rx: "0.5", fill: "currentColor", stroke: "none" }),
-        /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("rect", { x: "11.5", y: "10.5", width: "3", height: "3", rx: "0.5", fill: "currentColor", stroke: "none" })
-      ] })
-    },
-    {
-      kind: "canvas",
-      titleKey: "sim.controls.canvas",
-      icon: /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("svg", { viewBox: "0 0 16 16", className: ICON, fill: "currentColor", stroke: "none", children: [2, 6.5, 11].map(
-        (x) => [2, 6.5, 11].map((y) => /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("rect", { x, y, width: 3, height: 3, rx: 0.4 }, `${x}-${y}`))
-      ) })
-    }
-  ];
-  function ArenaControls({ renderer: renderer2, onRenderer, onZoom, onFitAll }) {
+  function ArenaControls({ onZoom, onFitAll }) {
     const t2 = useT();
-    return /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("div", { className: "absolute right-2 top-2 z-10 flex flex-col items-end gap-1.5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("div", { className: "flex flex-col gap-1", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("button", { type: "button", title: t2("sim.controls.zoomIn"), onClick: () => onZoom(ZOOM_STEP), className: BUTTON, children: "+" }),
-        /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(
-          "button",
-          {
-            type: "button",
-            title: t2("sim.controls.zoomOut"),
-            onClick: () => onZoom(1 / ZOOM_STEP),
-            className: BUTTON,
-            children: "\u2212"
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("button", { type: "button", title: t2("sim.controls.fitAll"), onClick: onFitAll, className: BUTTON, children: /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("svg", { viewBox: "0 0 16 16", className: "h-3.5 w-3.5", fill: "none", stroke: "currentColor", strokeWidth: 1.6, children: /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("path", { d: "M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4", strokeLinecap: "round" }) }) })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("div", { className: "flex flex-col overflow-hidden rounded border border-[#2E3A4E]", children: RENDERERS.map(({ kind, titleKey, icon }) => /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("div", { className: "absolute right-2 top-2 z-10 flex flex-col items-end gap-1.5", children: /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("div", { className: "flex flex-col gap-1", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("button", { type: "button", title: t2("sim.controls.zoomIn"), onClick: () => onZoom(ZOOM_STEP), className: BUTTON, children: "+" }),
+      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(
         "button",
         {
           type: "button",
-          onClick: () => onRenderer(kind),
-          title: t2(titleKey),
-          "aria-label": t2(titleKey),
-          "aria-pressed": renderer2 === kind,
-          className: "flex h-7 w-7 items-center justify-center transition-colors " + (renderer2 === kind ? "bg-[#3C50E0] text-white" : "bg-[#1A222C]/90 text-[#8A99AF] hover:text-white"),
-          children: icon
-        },
-        kind
-      )) })
-    ] });
-  }
-
-  // admin/simulator/ArenaSvgRenderer.tsx
-  var import_react17 = __toESM(require_react(), 1);
-  var import_jsx_runtime30 = __toESM(require_jsx_runtime(), 1);
-  function ArenaSvgRenderer({ arena, food, npcs, players, layers, selectedId, onSelect, view }) {
-    const [hover, setHover] = (0, import_react17.useState)(null);
-    const svgRef = (0, import_react17.useRef)(null);
-    const { onElement } = view;
-    (0, import_react17.useEffect)(() => onElement(svgRef.current), [onElement]);
-    const ppb = view.camera.pxPerBlock;
-    const half = arena.halfSize;
-    const markerRadius = markerRadiusFor(ppb);
-    const gridLines = gridLinesFor(half, ppb);
-    const npcById = new Map(npcs.map((n) => [n.id, n]));
-    return /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("div", { className: "relative h-full w-full", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(
-        "svg",
-        {
-          ref: svgRef,
-          className: "h-full w-full cursor-grab bg-[#0B1220]",
-          onWheel: view.onWheel,
-          onMouseDown: view.onMouseDown,
-          onMouseMove: view.onPanMove,
-          onMouseUp: view.endPan,
-          onMouseLeave: () => {
-            view.endPan();
-            setHover(null);
-          },
-          children: [
-            /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("g", { transform: view.worldTransform, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("rect", { x: -half, y: -half, width: half * 2, height: half * 2, fill: "#16233A" }),
-              /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
-                "rect",
-                {
-                  x: -half,
-                  y: -half,
-                  width: half * 2,
-                  height: half * 2,
-                  fill: "none",
-                  stroke: "#4B5C7B",
-                  strokeWidth: Math.max(0.5, 2 / ppb)
-                }
-              ),
-              layers.food && (() => {
-                let weeds = "";
-                let flowers = "";
-                for (let i = 0; i + 2 < food.length; i += 3) {
-                  const cell = `M${food[i]} ${food[i + 1]}h1v1h-1z`;
-                  if (food[i + 2] === 1) flowers += cell;
-                  else weeds += cell;
-                }
-                return /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(import_jsx_runtime30.Fragment, { children: [
-                  weeds && /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("path", { d: weeds, fill: "#3F6212", opacity: FOOD_OPACITY }),
-                  flowers && /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("path", { d: flowers, fill: "#DB2777", opacity: FOOD_OPACITY })
-                ] });
-              })(),
-              layers.grid && gridLines.map((g) => /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("g", { stroke: "#22314C", strokeWidth: 1 / ppb, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("line", { x1: g, y1: -half, x2: g, y2: half }),
-                /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("line", { x1: -half, y1: g, x2: half, y2: g })
-              ] }, `grid-${g}`)),
-              layers.aggro && npcs.map((npc) => {
-                var _a6, _b;
-                if (!npc.aggroTargetId) return null;
-                const target = npcById.get(npc.aggroTargetId);
-                const targetPlayer = players.find((p2) => p2.id === npc.aggroTargetId);
-                const tx = (_a6 = target == null ? void 0 : target.x) != null ? _a6 : targetPlayer == null ? void 0 : targetPlayer.x;
-                const tz = (_b = target == null ? void 0 : target.z) != null ? _b : targetPlayer == null ? void 0 : targetPlayer.z;
-                if (tx === void 0 || tz === void 0) return null;
-                return /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
-                  "line",
-                  {
-                    x1: npc.x,
-                    y1: npc.z,
-                    x2: tx,
-                    y2: tz,
-                    stroke: "#F59E0B",
-                    strokeWidth: 1.5 / ppb,
-                    strokeDasharray: `${4 / ppb} ${3 / ppb}`
-                  },
-                  `aggro-${npc.id}`
-                );
-              })
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("g", { children: [
-              npcs.map((npc) => {
-                const [sx, sy] = view.w2s(npc.x, npc.z);
-                const color = npcColor(npc.type);
-                const selected = npc.id === selectedId;
-                const hpRatio = npc.maxHp > 0 ? npc.currentHp / npc.maxHp : 1;
-                return /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(
-                  "g",
-                  {
-                    transform: `translate(${sx},${sy})`,
-                    onMouseEnter: () => setHover({ npc, sx, sy }),
-                    onMouseLeave: () => setHover(null),
-                    onClick: (e) => {
-                      e.stopPropagation();
-                      onSelect(npc.id);
-                    },
-                    style: { cursor: "pointer" },
-                    children: [
-                      npc.gestationRemainingDays != null && layers.gestation && /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("circle", { r: markerRadius + 4, fill: "none", stroke: "#E879F9", strokeWidth: 1.5, strokeDasharray: "3 2" }),
-                      /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
-                        "circle",
-                        {
-                          r: markerRadius,
-                          fill: npc.isDead ? "#475569" : color,
-                          stroke: selected ? "#FFFFFF" : "#0B1220",
-                          strokeWidth: selected ? 2 : 1,
-                          opacity: npc.isDead ? 0.5 : 1
-                        }
-                      ),
-                      /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
-                        "line",
-                        {
-                          x1: 0,
-                          y1: 0,
-                          x2: Math.sin(npc.yaw) * (markerRadius + 5),
-                          y2: -Math.cos(npc.yaw) * (markerRadius + 5),
-                          stroke: color,
-                          strokeWidth: 1.5
-                        }
-                      ),
-                      layers.hunger && npc.hunger != null && /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("g", { transform: `translate(${-markerRadius},${markerRadius + 3})`, children: [
-                        /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("rect", { width: markerRadius * 2, height: 2, fill: "#1E293B" }),
-                        /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("rect", { width: markerRadius * 2 * npc.hunger, height: 2, fill: "#FACC15" })
-                      ] }),
-                      layers.names && ppb > 2.5 && /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(
-                        "text",
-                        {
-                          y: -markerRadius - 5,
-                          textAnchor: "middle",
-                          fontSize: 9,
-                          fill: "#8A99AF",
-                          style: { pointerEvents: "none" },
-                          children: [
-                            npc.name.split(" - ")[0],
-                            " ",
-                            Math.round(hpRatio * 100),
-                            "%"
-                          ]
-                        }
-                      )
-                    ]
-                  },
-                  npc.id
-                );
-              }),
-              layers.players && players.map((player) => {
-                const [sx, sy] = view.w2s(player.x, player.z);
-                return /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("g", { transform: `translate(${sx},${sy})`, children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("rect", { x: -6, y: -6, width: 12, height: 12, fill: "#3C50E0", stroke: "#FFFFFF", strokeWidth: 1.5 }),
-                  /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
-                    "line",
-                    {
-                      x1: 0,
-                      y1: 0,
-                      x2: Math.sin(player.yaw) * 12,
-                      y2: -Math.cos(player.yaw) * 12,
-                      stroke: "#FFFFFF",
-                      strokeWidth: 1.5
-                    }
-                  ),
-                  /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("text", { y: -10, textAnchor: "middle", fontSize: 10, fill: "#C7D2FE", children: player.name })
-                ] }, player.id);
-              })
-            ] })
-          ]
+          title: t2("sim.controls.zoomOut"),
+          onClick: () => onZoom(1 / ZOOM_STEP),
+          className: BUTTON,
+          children: "\u2212"
         }
       ),
-      hover && /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(NpcTooltip, { hover }),
-      /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(ArenaHint, { halfSize: half, pxPerBlock: ppb, renderer: "SVG" })
-    ] });
+      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("button", { type: "button", title: t2("sim.controls.fitAll"), onClick: onFitAll, className: BUTTON, children: /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("svg", { viewBox: "0 0 16 16", className: "h-3.5 w-3.5", fill: "none", stroke: "currentColor", strokeWidth: 1.6, children: /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("path", { d: "M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4", strokeLinecap: "round" }) }) })
+    ] }) });
   }
 
   // admin/simulator/Card.tsx
-  var import_jsx_runtime31 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime30 = __toESM(require_jsx_runtime(), 1);
   function Card2({ title, children, collapsed, onCollapsed, summary }) {
     const foldable2 = collapsed !== void 0 && onCollapsed !== void 0;
     const folded = foldable2 && collapsed;
-    const heading3 = /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)(import_jsx_runtime31.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: title }),
-      folded && summary && /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "truncate text-[10px] text-[#4A5568]", children: summary }),
-      foldable2 && /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "text-[10px] text-[#8A99AF]", children: folded ? "\u25B8" : "\u25BE" })
+    const heading3 = /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(import_jsx_runtime30.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("span", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: title }),
+      folded && summary && /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("span", { className: "truncate text-[10px] text-[#4A5568]", children: summary }),
+      foldable2 && /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("span", { className: "text-[10px] text-[#8A99AF]", children: folded ? "\u25B8" : "\u25BE" })
     ] });
-    return /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
-      foldable2 ? /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
+      foldable2 ? /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
         "button",
         {
           type: "button",
@@ -89791,14 +89579,14 @@ ${end.comment}` : end.comment;
           className: "flex w-full items-center gap-2 text-left hover:opacity-80" + (folded ? "" : " mb-2"),
           children: heading3
         }
-      ) : /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("div", { className: "mb-2 flex items-center gap-2", children: heading3 }),
+      ) : /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("div", { className: "mb-2 flex items-center gap-2", children: heading3 }),
       !folded && children
     ] });
   }
 
   // admin/simulator/EventLogPanel.tsx
-  var import_react18 = __toESM(require_react(), 1);
-  var import_jsx_runtime32 = __toESM(require_jsx_runtime(), 1);
+  var import_react17 = __toESM(require_react(), 1);
+  var import_jsx_runtime31 = __toESM(require_jsx_runtime(), 1);
   var FILTER_GROUPS = [
     {
       key: "combat",
@@ -89814,31 +89602,31 @@ ${end.comment}` : end.comment;
     { key: "lifecycle", labelKey: "sim.eventGroup.lifecycle", types: ["SPAWN", "DESPAWN", "AGE_DEATH"] },
     { key: "system", labelKey: "sim.eventGroup.system", types: ["SYSTEM"] }
   ];
-  var EventLogPanel = (0, import_react18.memo)(function EventLogPanel2({ events, onSelect }) {
+  var EventLogPanel = (0, import_react17.memo)(function EventLogPanel2({ events, onSelect }) {
     var _a6, _b;
     const t2 = useT();
-    const [enabled, setEnabled] = (0, import_react18.useState)(
+    const [enabled, setEnabled] = (0, import_react17.useState)(
       () => FILTER_GROUPS.reduce((acc, g) => __spreadProps(__spreadValues({}, acc), { [g.key]: true }), {})
     );
-    const [npcType, setNpcType] = (0, import_react18.useState)(ALL_NPC_TYPES);
-    const [autoScroll, setAutoScroll] = (0, import_react18.useState)(true);
-    const listRef = (0, import_react18.useRef)(null);
-    const activeTypes = (0, import_react18.useMemo)(() => {
+    const [npcType, setNpcType] = (0, import_react17.useState)(ALL_NPC_TYPES);
+    const [autoScroll, setAutoScroll] = (0, import_react17.useState)(true);
+    const listRef = (0, import_react17.useRef)(null);
+    const activeTypes = (0, import_react17.useMemo)(() => {
       const set4 = /* @__PURE__ */ new Set();
       FILTER_GROUPS.forEach((g) => {
         if (enabled[g.key]) g.types.forEach((type) => set4.add(type));
       });
       return set4;
     }, [enabled]);
-    const npcTypes = (0, import_react18.useMemo)(() => npcTypesInEvents(events), [events]);
-    const visible = (0, import_react18.useMemo)(() => filterEvents(events, activeTypes, npcType, true), [events, activeTypes, npcType]);
+    const npcTypes = (0, import_react17.useMemo)(() => npcTypesInEvents(events), [events]);
+    const visible = (0, import_react17.useMemo)(() => filterEvents(events, activeTypes, npcType, true), [events, activeTypes, npcType]);
     const newestSeq = (_b = (_a6 = visible[0]) == null ? void 0 : _a6.seq) != null ? _b : 0;
-    (0, import_react18.useEffect)(() => {
+    (0, import_react17.useEffect)(() => {
       if (autoScroll && listRef.current) listRef.current.scrollTop = 0;
     }, [newestSeq, autoScroll]);
-    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "flex h-full flex-col", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "mb-2 flex flex-wrap items-center gap-1.5", children: [
-        FILTER_GROUPS.map((group) => /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "flex h-full flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "mb-2 flex flex-wrap items-center gap-1.5", children: [
+        FILTER_GROUPS.map((group) => /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
           "button",
           {
             type: "button",
@@ -89848,7 +89636,7 @@ ${end.comment}` : end.comment;
           },
           group.key
         )),
-        /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)(
+        /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)(
           "select",
           {
             value: npcType,
@@ -89856,13 +89644,13 @@ ${end.comment}` : end.comment;
             title: t2("sim.eventLog.filterByType"),
             className: "rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-0.5 text-[10px] text-white",
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("option", { value: ALL_NPC_TYPES, children: t2("sim.eventLog.allTypes") }),
-              npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("option", { value: type, children: type }, type))
+              /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("option", { value: ALL_NPC_TYPES, children: t2("sim.eventLog.allTypes") }),
+              npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("option", { value: type, children: type }, type))
             ]
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("label", { className: "ml-auto flex items-center gap-1.5 text-[10px] text-[#8A99AF]", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("label", { className: "ml-auto flex items-center gap-1.5 text-[10px] text-[#8A99AF]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
             "input",
             {
               type: "checkbox",
@@ -89874,27 +89662,27 @@ ${end.comment}` : end.comment;
           t2("sim.eventLog.followLatest")
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)(
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)(
         "div",
         {
           ref: listRef,
           className: "flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-1.5 font-mono text-[11px] leading-relaxed",
           children: [
-            visible.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("p", { className: "p-2 text-[#8A99AF]", children: t2("sim.eventLog.empty") }),
-            visible.map((event) => /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)(
+            visible.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("p", { className: "p-2 text-[#8A99AF]", children: t2("sim.eventLog.empty") }),
+            visible.map((event) => /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)(
               "div",
               {
                 onClick: () => event.npcId && onSelect(event.npcId),
                 className: "flex gap-2 rounded px-1 py-0.5 " + (event.npcId ? "cursor-pointer hover:bg-[#1A222C]" : ""),
                 children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("span", { className: "w-24 shrink-0 text-[#4A5568]", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("span", { className: "w-24 shrink-0 text-[#4A5568]", children: [
                     "t",
                     event.tick,
                     " j",
                     event.gameDay.toFixed(2)
                   ] }),
-                  /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "w-24 shrink-0", style: { color: EVENT_COLORS[event.type] }, children: t2(EVENT_LABEL_KEYS[event.type]) }),
-                  /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-[#CBD5E1]", children: event.message })
+                  /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "w-24 shrink-0", style: { color: EVENT_COLORS[event.type] }, children: t2(EVENT_LABEL_KEYS[event.type]) }),
+                  /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "text-[#CBD5E1]", children: event.message })
                 ]
               },
               event.seq
@@ -89902,12 +89690,12 @@ ${end.comment}` : end.comment;
           ]
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("p", { className: "mt-1.5 text-[10px] text-[#8A99AF]", children: t2("sim.eventLog.footer", visible.length, events.length, EVENT_HISTORY) })
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("p", { className: "mt-1.5 text-[10px] text-[#8A99AF]", children: t2("sim.eventLog.footer", visible.length, events.length, EVENT_HISTORY) })
     ] });
   });
 
   // admin/simulator/MetricsPanel.tsx
-  var import_react19 = __toESM(require_react(), 1);
+  var import_react18 = __toESM(require_react(), 1);
 
   // admin/simulator/metrics.ts
   var METRIC_HISTORY = 240;
@@ -90014,7 +89802,7 @@ ${end.comment}` : end.comment;
   }
 
   // admin/simulator/MetricsPanel.tsx
-  var import_jsx_runtime33 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime32 = __toESM(require_jsx_runtime(), 1);
   var BOX_W = 300;
   var BOX_H = 90;
   function ChartFrame({
@@ -90023,21 +89811,21 @@ ${end.comment}` : end.comment;
     children,
     legend
   }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-2.5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "mb-1 flex items-baseline gap-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("p", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: title }),
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: hint })
+    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-2.5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "mb-1 flex items-baseline gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("p", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: title }),
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: hint })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { className: "relative rounded bg-[#0E1726] p-1.5", children }),
-      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { className: "mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5", children: legend })
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("div", { className: "relative rounded bg-[#0E1726] p-1.5", children }),
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("div", { className: "mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5", children: legend })
     ] });
   }
   function LegendDot({ color, label, value }) {
     const idle = value === 0;
-    return /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("span", { className: "flex items-center gap-1 text-[10px] text-[#8A99AF]" + (idle ? " opacity-20" : ""), children: [
-      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { className: "inline-block h-2 w-2 rounded-sm", style: { background: color } }),
+    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("span", { className: "flex items-center gap-1 text-[10px] text-[#8A99AF]" + (idle ? " opacity-20" : ""), children: [
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "inline-block h-2 w-2 rounded-sm", style: { background: color } }),
       label,
-      value !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { className: "text-white", children: value })
+      value !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-white", children: value })
     ] });
   }
   function HoverCard({
@@ -90049,28 +89837,28 @@ ${end.comment}` : end.comment;
     emptyLabel
   }) {
     const flip = x > 190;
-    return /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)(
       "div",
       {
         className: "pointer-events-none absolute z-10 min-w-[110px] rounded-md border border-[#2E3A4E] bg-[#1A222C] px-2 py-1.5 text-[10px] shadow-lg",
         style: { left: flip ? void 0 : x + 12, right: flip ? 8 : void 0, top: y + 8 },
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "mb-1 flex items-baseline gap-2", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { className: "font-semibold text-white", children: title }),
-            /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { className: "text-[#8A99AF]", children: summary })
+          /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "mb-1 flex items-baseline gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "font-semibold text-white", children: title }),
+            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-[#8A99AF]", children: summary })
           ] }),
-          rows.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { className: "text-[#4A5568]", children: emptyLabel }),
-          rows.map((row) => /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "flex items-center gap-1.5", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { className: "inline-block h-2 w-2 shrink-0 rounded-sm", style: { background: row.color } }),
-            /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { className: "flex-1 text-[#8A99AF]", children: row.label }),
-            /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { className: "text-white", children: row.value })
+          rows.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("div", { className: "text-[#4A5568]", children: emptyLabel }),
+          rows.map((row) => /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "flex items-center gap-1.5", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "inline-block h-2 w-2 shrink-0 rounded-sm", style: { background: row.color } }),
+            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "flex-1 text-[#8A99AF]", children: row.label }),
+            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-white", children: row.value })
           ] }, row.label))
         ]
       }
     );
   }
   function HoverGuide({ x, width }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("rect", { x, y: 0, width: Math.max(width, 0.8), height: BOX_H, fill: "#C7D2FE", opacity: 0.12 });
+    return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("rect", { x, y: 0, width: Math.max(width, 0.8), height: BOX_H, fill: "#C7D2FE", opacity: 0.12 });
   }
   function StackedByType({
     title,
@@ -90083,12 +89871,12 @@ ${end.comment}` : end.comment;
     var _a6;
     const t2 = useT();
     const dayAbbrev = t2("sim.metrics.dayAbbrev");
-    const keys2 = (0, import_react19.useMemo)(() => stackKeys(buckets2, pick), [buckets2, pick]);
-    const columns = (0, import_react19.useMemo)(() => stackedColumns(buckets2, pick, keys2), [buckets2, pick, keys2]);
+    const keys2 = (0, import_react18.useMemo)(() => stackKeys(buckets2, pick), [buckets2, pick]);
+    const columns = (0, import_react18.useMemo)(() => stackedColumns(buckets2, pick, keys2), [buckets2, pick, keys2]);
     const top2 = niceMax(maxTotal(columns));
     const barWidth = BOX_W / (slots != null ? slots : Math.max(1, columns.length));
     const latest = columns[columns.length - 1];
-    const [hover, setHover] = (0, import_react19.useState)(null);
+    const [hover, setHover] = (0, import_react18.useState)(null);
     const onMove = (event) => {
       const box = event.currentTarget.getBoundingClientRect();
       const index2 = columnAt((event.clientX - box.left) / box.width, slots != null ? slots : columns.length);
@@ -90096,14 +89884,14 @@ ${end.comment}` : end.comment;
       setHover({ index: index2, x: event.clientX - box.left, y: event.clientY - box.top });
     };
     const hovered = hover ? (_a6 = columns[hover.index]) != null ? _a6 : null : null;
-    return /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)(
       ChartFrame,
       {
         title,
         hint,
-        legend: keys2.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: t2("sim.metrics.nothingYet") }) : keys2.map((key2) => {
+        legend: keys2.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: t2("sim.metrics.nothingYet") }) : keys2.map((key2) => {
           var _a7;
-          return /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+          return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
             LegendDot,
             {
               color: npcColor(key2),
@@ -90114,7 +89902,7 @@ ${end.comment}` : end.comment;
           );
         }),
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)(
+          /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)(
             "svg",
             {
               viewBox: `0 0 ${BOX_W} ${BOX_H}`,
@@ -90123,10 +89911,10 @@ ${end.comment}` : end.comment;
               onMouseMove: onMove,
               onMouseLeave: () => setHover(null),
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("line", { x1: 0, y1: BOX_H, x2: BOX_W, y2: BOX_H, stroke: "#2E3A4E", strokeWidth: 0.5 }),
-                hover && hovered && /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(HoverGuide, { x: hover.index * barWidth, width: barWidth }),
+                /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("line", { x1: 0, y1: BOX_H, x2: BOX_W, y2: BOX_H, stroke: "#2E3A4E", strokeWidth: 0.5 }),
+                hover && hovered && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(HoverGuide, { x: hover.index * barWidth, width: barWidth }),
                 columns.map(
-                  (column, i) => column.segments.map((segment) => /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+                  (column, i) => column.segments.map((segment) => /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
                     "rect",
                     {
                       x: i * barWidth,
@@ -90141,7 +89929,7 @@ ${end.comment}` : end.comment;
               ]
             }
           ),
-          hover && hovered && /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+          hover && hovered && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
             HoverCard,
             {
               x: hover.x,
@@ -90156,10 +89944,10 @@ ${end.comment}` : end.comment;
               }))
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "mt-0.5 flex justify-between text-[9px] text-[#4A5568]", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { children: columns.length > 0 ? dayLabel(columns[0].startGameDay, dayAbbrev) : "\u2014" }),
-            /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { children: t2("sim.metrics.max", top2) }),
-            /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { children: latest ? dayLabel(latest.startGameDay, dayAbbrev) : "\u2014" })
+          /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "mt-0.5 flex justify-between text-[9px] text-[#4A5568]", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { children: columns.length > 0 ? dayLabel(columns[0].startGameDay, dayAbbrev) : "\u2014" }),
+            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { children: t2("sim.metrics.max", top2) }),
+            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { children: latest ? dayLabel(latest.startGameDay, dayAbbrev) : "\u2014" })
           ] })
         ]
       }
@@ -90169,8 +89957,8 @@ ${end.comment}` : end.comment;
     var _a6;
     const t2 = useT();
     const dayAbbrev = t2("sim.metrics.dayAbbrev");
-    const [hidden, setHidden] = (0, import_react19.useState)(/* @__PURE__ */ new Set());
-    const all2 = (0, import_react19.useMemo)(
+    const [hidden, setHidden] = (0, import_react18.useState)(/* @__PURE__ */ new Set());
+    const all2 = (0, import_react18.useMemo)(
       () => COUNTER_SERIES.map((series) => ({ series, values: counterValues(buckets2, series.key) })),
       [buckets2]
     );
@@ -90183,7 +89971,7 @@ ${end.comment}` : end.comment;
       else next.add(key2);
       return next;
     });
-    const [hover, setHover] = (0, import_react19.useState)(null);
+    const [hover, setHover] = (0, import_react18.useState)(null);
     const slotWidth = BOX_W / (slots != null ? slots : Math.max(1, buckets2.length));
     const onMove = (event) => {
       const box = event.currentTarget.getBoundingClientRect();
@@ -90196,24 +89984,24 @@ ${end.comment}` : end.comment;
       hoveredBucket != null ? hoveredBucket : void 0,
       lines.map((line) => line.series)
     );
-    return /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)(
       ChartFrame,
       {
         title: t2("sim.metrics.eventsPerSlice"),
         hint: t2("sim.metrics.max", top2),
-        legend: COUNTER_SERIES.map((series) => /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+        legend: COUNTER_SERIES.map((series) => /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
           "button",
           {
             type: "button",
             onClick: () => toggle(series.key),
             title: t2(hidden.has(series.key) ? "sim.metrics.show" : "sim.metrics.hide"),
             className: "cursor-pointer" + (hidden.has(series.key) ? " opacity-30" : ""),
-            children: /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(LegendDot, { color: series.color, label: t2(series.labelKey), value: last ? last[series.key] : 0 })
+            children: /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(LegendDot, { color: series.color, label: t2(series.labelKey), value: last ? last[series.key] : 0 })
           },
           series.key
         )),
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)(
+          /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)(
             "svg",
             {
               viewBox: `0 0 ${BOX_W} ${BOX_H}`,
@@ -90222,9 +90010,9 @@ ${end.comment}` : end.comment;
               onMouseMove: onMove,
               onMouseLeave: () => setHover(null),
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("line", { x1: 0, y1: BOX_H, x2: BOX_W, y2: BOX_H, stroke: "#2E3A4E", strokeWidth: 0.5 }),
-                hover && hoveredBucket && /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(HoverGuide, { x: hover.index * slotWidth, width: slotWidth }),
-                lines.map((line) => /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("line", { x1: 0, y1: BOX_H, x2: BOX_W, y2: BOX_H, stroke: "#2E3A4E", strokeWidth: 0.5 }),
+                hover && hoveredBucket && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(HoverGuide, { x: hover.index * slotWidth, width: slotWidth }),
+                lines.map((line) => /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
                   "polyline",
                   {
                     points: linePoints(line.values, BOX_W, BOX_H, top2, slots),
@@ -90238,7 +90026,7 @@ ${end.comment}` : end.comment;
               ]
             }
           ),
-          hover && hoveredBucket && /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+          hover && hoveredBucket && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
             HoverCard,
             {
               x: hover.x,
@@ -90260,14 +90048,14 @@ ${end.comment}` : end.comment;
       }
     );
   }
-  var MetricsPanel = (0, import_react19.memo)(function MetricsPanel2({ buckets: buckets2, bucketGameDays }) {
+  var MetricsPanel = (0, import_react18.memo)(function MetricsPanel2({ buckets: buckets2, bucketGameDays }) {
     const t2 = useT();
-    const [windowDays, setWindowDays] = (0, import_react19.useState)(DEFAULT_WINDOW_GAME_DAYS);
+    const [windowDays, setWindowDays] = (0, import_react18.useState)(DEFAULT_WINDOW_GAME_DAYS);
     const slots = slotsFor(bucketGameDays, windowDays);
-    const visible = (0, import_react19.useMemo)(() => windowOf(buckets2, slots), [buckets2, slots]);
-    const selector = /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "flex shrink-0 items-center gap-1", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: t2("sim.metrics.window") }),
-      WINDOW_OPTIONS.map((option2) => /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+    const visible = (0, import_react18.useMemo)(() => windowOf(buckets2, slots), [buckets2, slots]);
+    const selector = /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "flex shrink-0 items-center gap-1", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: t2("sim.metrics.window") }),
+      WINDOW_OPTIONS.map((option2) => /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
         "button",
         {
           type: "button",
@@ -90277,15 +90065,15 @@ ${end.comment}` : end.comment;
         },
         option2.days
       )),
-      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", { className: "ml-auto text-[10px] text-[#4A5568]", children: t2("sim.metrics.slicesInMemory", buckets2.length) })
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "ml-auto text-[10px] text-[#4A5568]", children: t2("sim.metrics.slicesInMemory", buckets2.length) })
     ] });
     if (buckets2.length === 0) {
-      return /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.metrics.noData") });
+      return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.metrics.noData") });
     }
     const hint = t2("sim.metrics.sliceHint", bucketGameDays);
-    return /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "flex h-full flex-col gap-2 overflow-auto", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "flex h-full flex-col gap-2 overflow-auto", children: [
       selector,
-      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
         StackedByType,
         {
           title: t2("sim.metrics.aliveByType"),
@@ -90296,7 +90084,7 @@ ${end.comment}` : end.comment;
           slots
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
         StackedByType,
         {
           title: t2("sim.metrics.deathsByType"),
@@ -90307,22 +90095,22 @@ ${end.comment}` : end.comment;
           slots
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(Counters, { buckets: visible, slots }),
-      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("p", { className: "text-[10px] leading-relaxed text-[#4A5568]", children: t2("sim.metrics.footnote") })
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(Counters, { buckets: visible, slots }),
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("p", { className: "text-[10px] leading-relaxed text-[#4A5568]", children: t2("sim.metrics.footnote") })
     ] });
   });
 
   // admin/simulator/SimPlayerPad.tsx
-  var import_jsx_runtime34 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime33 = __toESM(require_jsx_runtime(), 1);
   var KEY = "flex h-5 w-6 items-center justify-center rounded bg-[#2E3A4E] text-[10px] text-[#C7D2FE] hover:bg-[#3C50E0]/60";
   function SimPlayerPad({ players, onInput }) {
     const t2 = useT();
     if (players.length === 0) return null;
-    return /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("div", { className: "flex shrink-0 items-start gap-3 border-l border-[#2E3A4E] pl-3", children: players.map((player) => /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("p", { className: "mb-1 truncate text-[10px] text-[#8A99AF]", title: player.name, children: player.name }),
-      /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "grid grid-cols-3 gap-0.5", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("span", {}),
-        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { className: "flex shrink-0 items-start gap-3 border-l border-[#2E3A4E] pl-3", children: players.map((player) => /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("p", { className: "mb-1 truncate text-[10px] text-[#8A99AF]", title: player.name, children: player.name }),
+      /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "grid grid-cols-3 gap-0.5", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", {}),
+        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
           "button",
           {
             type: "button",
@@ -90332,8 +90120,8 @@ ${end.comment}` : end.comment;
             children: "\u2191"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("span", {}),
-        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", {}),
+        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
           "button",
           {
             type: "button",
@@ -90343,7 +90131,7 @@ ${end.comment}` : end.comment;
             children: "\u2190"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
           "button",
           {
             type: "button",
@@ -90353,7 +90141,7 @@ ${end.comment}` : end.comment;
             children: "\u2912"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
           "button",
           {
             type: "button",
@@ -90363,8 +90151,8 @@ ${end.comment}` : end.comment;
             children: "\u2192"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("span", {}),
-        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", {}),
+        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
           "button",
           {
             type: "button",
@@ -90374,19 +90162,20 @@ ${end.comment}` : end.comment;
             children: "\u2193"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("span", {})
+        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", {})
       ] })
     ] }, player.id)) });
   }
 
   // admin/simulator/SimulationList.tsx
-  var import_jsx_runtime35 = __toESM(require_jsx_runtime(), 1);
-  function SimulationList({ simulations, attachedId, onAttach, onRefresh }) {
+  var import_jsx_runtime34 = __toESM(require_jsx_runtime(), 1);
+  var ROW_BUTTON = "rounded px-2 py-0.5 text-[10px] text-[#C7D2FE] bg-[#2E3A4E] hover:bg-[#3C50E0]/60";
+  function SimulationList({ simulations, attachedId, onAttach, onDetach, onRestart, onClose, onRefresh }) {
     const t2 = useT();
-    return /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("p", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("sim.list.title") }),
-        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("p", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("sim.list.title") }),
+        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
           "button",
           {
             type: "button",
@@ -90396,40 +90185,65 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      simulations.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.list.empty") }),
+      simulations.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.list.empty") }),
       simulations.map((simulation) => {
         const attached = simulation.id === attachedId;
-        return /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
+        return /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)(
           "div",
           {
             className: "mb-1.5 rounded border p-2 last:mb-0 " + (attached ? "border-[#3C50E0] bg-[#3C50E0]/10" : "border-[#2E3A4E] bg-[#0E1726]"),
-            children: /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "flex items-start gap-2", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "min-w-0 flex-1", children: [
-                /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("p", { className: "truncate text-[11px] font-medium text-white", title: simulation.name, children: simulation.name }),
-                /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("p", { className: "text-[10px] text-[#8A99AF]", children: t2(
-                  "sim.list.stats",
-                  `${simulation.npcCount}${simulation.populationCap > 0 ? `/${simulation.populationCap}` : ""}`,
-                  simulation.gameDay.toFixed(1),
-                  simulation.paused ? t2("sim.timeline.paused") : t2("sim.timeline.tps", Math.round(simulation.realTps))
-                ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("p", { className: "text-[10px] text-[#4A5568]", children: t2(
-                  "sim.list.geometry",
-                  simulation.halfSize * 2,
-                  simulation.halfSize * 2,
-                  simulation.viewers,
-                  simulation.id.slice(0, 8)
-                ) })
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "flex items-start gap-2", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "min-w-0 flex-1", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("p", { className: "truncate text-[11px] font-medium text-white", title: simulation.name, children: simulation.name }),
+                  /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("p", { className: "text-[10px] text-[#8A99AF]", children: t2(
+                    "sim.list.stats",
+                    `${simulation.npcCount}${simulation.populationCap > 0 ? `/${simulation.populationCap}` : ""}`,
+                    simulation.gameDay.toFixed(1),
+                    simulation.paused ? t2("sim.timeline.paused") : t2("sim.timeline.tps", Math.round(simulation.realTps))
+                  ) }),
+                  /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("p", { className: "text-[10px] text-[#4A5568]", children: t2(
+                    "sim.list.geometry",
+                    simulation.halfSize * 2,
+                    simulation.halfSize * 2,
+                    simulation.viewers,
+                    simulation.id.slice(0, 8)
+                  ) })
+                ] }),
+                attached ? /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("span", { className: "shrink-0 rounded bg-[#3C50E0] px-2 py-0.5 text-[10px] text-white", children: t2("sim.list.viewing") }) : /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => onAttach(simulation.id),
+                    className: "shrink-0 rounded bg-[#2E3A4E] px-2 py-0.5 text-[10px] text-[#C7D2FE] hover:bg-[#3C50E0]/60",
+                    children: t2("sim.list.connect")
+                  }
+                )
               ] }),
-              attached ? /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("span", { className: "shrink-0 rounded bg-[#3C50E0] px-2 py-0.5 text-[10px] text-white", children: t2("sim.list.viewing") }) : /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
-                "button",
-                {
-                  type: "button",
-                  onClick: () => onAttach(simulation.id),
-                  className: "shrink-0 rounded bg-[#2E3A4E] px-2 py-0.5 text-[10px] text-[#C7D2FE] hover:bg-[#3C50E0]/60",
-                  children: t2("sim.list.connect")
-                }
-              )
-            ] })
+              /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "mt-2 flex flex-wrap gap-1 border-t border-[#2E3A4E] pt-2", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+                  "button",
+                  {
+                    type: "button",
+                    title: t2("sim.list.restartTitle"),
+                    onClick: () => onRestart(simulation.id),
+                    className: ROW_BUTTON,
+                    children: t2("sim.list.restart")
+                  }
+                ),
+                attached && /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("button", { type: "button", title: t2("sim.list.detachTitle"), onClick: onDetach, className: ROW_BUTTON, children: t2("sim.list.detach") }),
+                /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+                  "button",
+                  {
+                    type: "button",
+                    title: t2("sim.list.closeTitle"),
+                    onClick: () => onClose(simulation.id),
+                    className: "rounded bg-[#2E3A4E] px-2 py-0.5 text-[10px] text-[#C7D2FE] hover:bg-red-500/60",
+                    children: t2("sim.list.close")
+                  }
+                )
+              ] })
+            ]
           },
           simulation.id
         );
@@ -90438,16 +90252,16 @@ ${end.comment}` : end.comment;
   }
 
   // admin/simulator/RulesEditor.tsx
-  var import_react20 = __toESM(require_react(), 1);
-  var import_jsx_runtime36 = __toESM(require_jsx_runtime(), 1);
+  var import_react19 = __toESM(require_react(), 1);
+  var import_jsx_runtime35 = __toESM(require_jsx_runtime(), 1);
   function TuningEditor({ value, base: base3, onChange, onApply }) {
     const t2 = useT();
     const changed = (key2) => base3 != null && base3[key2] !== value[key2];
     const changedCount = base3 ? TUNING_FIELDS.filter((f) => changed(f.key)).length : 0;
-    return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "flex h-full flex-col", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: changedCount === 0 ? t2("sim.rules.identical") : t2("sim.rules.overridden", changedCount) }),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "flex h-full flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: changedCount === 0 ? t2("sim.rules.identical") : t2("sim.rules.overridden", changedCount) }),
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
           "button",
           {
             type: "button",
@@ -90457,7 +90271,7 @@ ${end.comment}` : end.comment;
             children: t2("sim.rules.resetToLive")
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
           "button",
           {
             type: "button",
@@ -90467,12 +90281,12 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { className: "flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-2", children: TUNING_FIELDS.map((field) => /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("label", { className: "flex items-center gap-2 border-b border-[#1A222C] py-1 last:border-0", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("span", { className: "flex-1 text-[11px] " + (changed(field.key) ? "text-[#FACC15]" : "text-[#8A99AF]"), children: [
+      /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("div", { className: "flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-2", children: TUNING_FIELDS.map((field) => /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("label", { className: "flex items-center gap-2 border-b border-[#1A222C] py-1 last:border-0", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("span", { className: "flex-1 text-[11px] " + (changed(field.key) ? "text-[#FACC15]" : "text-[#8A99AF]"), children: [
           t2(field.labelKey),
-          changed(field.key) && base3 && /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "ml-1 text-[10px] text-[#4A5568]", children: t2("sim.rules.liveValue", String(base3[field.key])) })
+          changed(field.key) && base3 && /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("span", { className: "ml-1 text-[10px] text-[#4A5568]", children: t2("sim.rules.liveValue", String(base3[field.key])) })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
           "input",
           {
             type: "number",
@@ -90493,10 +90307,10 @@ ${end.comment}` : end.comment;
 }`;
   function OverridesEditor({ npcTypes, onApply }) {
     const t2 = useT();
-    const container = (0, import_react20.useRef)(null);
-    const viewRef = (0, import_react20.useRef)(null);
-    const [error2, setError] = (0, import_react20.useState)(null);
-    (0, import_react20.useEffect)(() => {
+    const container = (0, import_react19.useRef)(null);
+    const viewRef = (0, import_react19.useRef)(null);
+    const [error2, setError] = (0, import_react19.useState)(null);
+    (0, import_react19.useEffect)(() => {
       if (!container.current) return;
       const view = new EditorView({
         doc: "{}",
@@ -90545,10 +90359,10 @@ ${end.comment}` : end.comment;
         changes: { from: 0, to: view.state.doc.length, insert: OVERRIDE_TEMPLATE }
       });
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "flex h-full flex-col", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: t2("sim.rules.overridesHint") }),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "flex h-full flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: t2("sim.rules.overridesHint") }),
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
           "button",
           {
             type: "button",
@@ -90557,7 +90371,7 @@ ${end.comment}` : end.comment;
             children: t2("sim.rules.example")
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
           "button",
           {
             type: "button",
@@ -90567,14 +90381,14 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      error2 && /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("p", { className: "mb-2 rounded border border-red-500/40 bg-red-500/10 px-2 py-1 text-[11px] text-red-300", children: error2 }),
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("div", { ref: container, className: "flex-1 overflow-hidden rounded border border-[#2E3A4E]" }),
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("p", { className: "mt-1.5 text-[10px] text-[#8A99AF]", children: t2("sim.rules.availableTypes", npcTypes.join(", ") || "\u2014") })
+      error2 && /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("p", { className: "mb-2 rounded border border-red-500/40 bg-red-500/10 px-2 py-1 text-[11px] text-red-300", children: error2 }),
+      /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("div", { ref: container, className: "flex-1 overflow-hidden rounded border border-[#2E3A4E]" }),
+      /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("p", { className: "mt-1.5 text-[10px] text-[#8A99AF]", children: t2("sim.rules.availableTypes", npcTypes.join(", ") || "\u2014") })
     ] });
   }
 
   // admin/simulator/Timeline.tsx
-  var import_jsx_runtime37 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime36 = __toESM(require_jsx_runtime(), 1);
   var PRESETS = [
     { label: "\u23F8", tps: 0, titleKey: "sim.timeline.presetPause" },
     { label: "\xD71", tps: 20, titleKey: "sim.timeline.presetRealtime" },
@@ -90585,27 +90399,27 @@ ${end.comment}` : end.comment;
   ];
   function Timeline({ stats, disabled, onSpeed, onStep }) {
     const { locale, t: t2 } = useI18n();
-    return /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "mb-2 flex items-center justify-between", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("sim.timeline.title") }),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("span", { className: "text-[11px] text-[#8A99AF]", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "mb-2 flex items-center justify-between", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("sim.timeline.title") }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("span", { className: "text-[11px] text-[#8A99AF]", children: [
           t2("sim.timeline.tick"),
           " ",
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "text-white", children: stats.tick.toLocaleString(locale) }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "text-white", children: stats.tick.toLocaleString(locale) }),
           " \xB7",
           " ",
           t2("sim.timeline.day"),
           " ",
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "text-white", children: stats.gameDay.toFixed(2) }),
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "text-white", children: stats.gameDay.toFixed(2) }),
           " \xB7",
           " ",
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: stats.paused ? "text-[#FACC15]" : "text-emerald-400", children: stats.paused ? t2("sim.timeline.paused") : t2("sim.timeline.realTps", stats.realTps.toFixed(0)) })
+          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: stats.paused ? "text-[#FACC15]" : "text-emerald-400", children: stats.paused ? t2("sim.timeline.paused") : t2("sim.timeline.realTps", stats.realTps.toFixed(0)) })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "mb-2 flex flex-wrap gap-1.5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "mb-2 flex flex-wrap gap-1.5", children: [
         PRESETS.map((preset) => {
           var _a6;
-          return /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
+          return /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
             "button",
             {
               type: "button",
@@ -90618,7 +90432,7 @@ ${end.comment}` : end.comment;
             preset.tps
           );
         }),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
           "button",
           {
             type: "button",
@@ -90628,7 +90442,7 @@ ${end.comment}` : end.comment;
             children: t2("sim.timeline.stepOne")
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
           "button",
           {
             type: "button",
@@ -90639,9 +90453,9 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("label", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "w-20 shrink-0", children: t2("sim.timeline.fineSpeed") }),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("label", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "w-20 shrink-0", children: t2("sim.timeline.fineSpeed") }),
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
           "input",
           {
             type: "range",
@@ -90654,13 +90468,13 @@ ${end.comment}` : end.comment;
             className: "flex-1 accent-[#3C50E0]"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "w-24 shrink-0 text-right text-white", children: t2("sim.timeline.tps", stats.configuredTps) })
+        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "w-24 shrink-0 text-right text-white", children: t2("sim.timeline.tps", stats.configuredTps) })
       ] })
     ] });
   }
 
   // admin/simulator/useSimulation.ts
-  var import_react21 = __toESM(require_react(), 1);
+  var import_react20 = __toESM(require_react(), 1);
   var EVENT_PUBLISH_INTERVAL_MS = 500;
   var DEFAULT_BUCKET_GAME_DAYS = 0.25;
   var EMPTY_STATS = {
@@ -90691,37 +90505,37 @@ ${end.comment}` : end.comment;
     return `${proto}//${window.location.host}/api/admin/ws/simulation${query2}`;
   }
   function useSimulation() {
-    const socketRef = (0, import_react21.useRef)(null);
-    const npcsRef = (0, import_react21.useRef)([]);
-    const playersRef = (0, import_react21.useRef)([]);
-    const statsRef = (0, import_react21.useRef)(EMPTY_STATS);
-    const eventsRef = (0, import_react21.useRef)([]);
-    const arenaRef = (0, import_react21.useRef)(null);
-    const configRef = (0, import_react21.useRef)(null);
-    const runningRef = (0, import_react21.useRef)(false);
-    const truncatedRef = (0, import_react21.useRef)(false);
-    const foodRef = (0, import_react21.useRef)([]);
-    const frameRef = (0, import_react21.useRef)(null);
-    const viewportRef = (0, import_react21.useRef)("");
-    const eventRevisionRef = (0, import_react21.useRef)(0);
-    const [snapshot, setSnapshot] = (0, import_react21.useState)(EMPTY_SNAPSHOT);
-    const [connected, setConnected] = (0, import_react21.useState)(false);
-    const [detail, setDetail] = (0, import_react21.useState)(null);
-    const [defaults3, setDefaults] = (0, import_react21.useState)(null);
-    const [error2, setError] = (0, import_react21.useState)(null);
-    const [events, setEvents] = (0, import_react21.useState)([]);
-    const [metrics, setMetrics] = (0, import_react21.useState)({
+    const socketRef = (0, import_react20.useRef)(null);
+    const npcsRef = (0, import_react20.useRef)([]);
+    const playersRef = (0, import_react20.useRef)([]);
+    const statsRef = (0, import_react20.useRef)(EMPTY_STATS);
+    const eventsRef = (0, import_react20.useRef)([]);
+    const arenaRef = (0, import_react20.useRef)(null);
+    const configRef = (0, import_react20.useRef)(null);
+    const runningRef = (0, import_react20.useRef)(false);
+    const truncatedRef = (0, import_react20.useRef)(false);
+    const foodRef = (0, import_react20.useRef)([]);
+    const frameRef = (0, import_react20.useRef)(null);
+    const viewportRef = (0, import_react20.useRef)("");
+    const eventRevisionRef = (0, import_react20.useRef)(0);
+    const [snapshot, setSnapshot] = (0, import_react20.useState)(EMPTY_SNAPSHOT);
+    const [connected, setConnected] = (0, import_react20.useState)(false);
+    const [detail, setDetail] = (0, import_react20.useState)(null);
+    const [defaults3, setDefaults] = (0, import_react20.useState)(null);
+    const [error2, setError] = (0, import_react20.useState)(null);
+    const [events, setEvents] = (0, import_react20.useState)([]);
+    const [metrics, setMetrics] = (0, import_react20.useState)({
       bucketGameDays: DEFAULT_BUCKET_GAME_DAYS,
       buckets: []
     });
-    const [simulations, setSimulations] = (0, import_react21.useState)([]);
-    const [simulationId, setSimulationId] = (0, import_react21.useState)(null);
+    const [simulations, setSimulations] = (0, import_react20.useState)([]);
+    const [simulationId, setSimulationId] = (0, import_react20.useState)(null);
     const t2 = useT();
-    const tRef = (0, import_react21.useRef)(t2);
-    (0, import_react21.useEffect)(() => {
+    const tRef = (0, import_react20.useRef)(t2);
+    (0, import_react20.useEffect)(() => {
       tRef.current = t2;
     }, [t2]);
-    const publish = (0, import_react21.useCallback)(() => {
+    const publish = (0, import_react20.useCallback)(() => {
       if (frameRef.current !== null) return;
       frameRef.current = requestAnimationFrame(() => {
         frameRef.current = null;
@@ -90737,13 +90551,13 @@ ${end.comment}` : end.comment;
         });
       });
     }, []);
-    const pushEvents = (0, import_react21.useCallback)((incoming) => {
+    const pushEvents = (0, import_react20.useCallback)((incoming) => {
       if (incoming.length === 0) return;
       const merged = eventsRef.current.concat(incoming);
       eventsRef.current = merged.length > EVENT_HISTORY ? merged.slice(merged.length - EVENT_HISTORY) : merged;
       eventRevisionRef.current++;
     }, []);
-    (0, import_react21.useEffect)(() => {
+    (0, import_react20.useEffect)(() => {
       let shownRevision = -1;
       const timer = setInterval(() => {
         if (eventRevisionRef.current === shownRevision) return;
@@ -90752,13 +90566,13 @@ ${end.comment}` : end.comment;
       }, EVENT_PUBLISH_INTERVAL_MS);
       return () => clearInterval(timer);
     }, []);
-    (0, import_react21.useEffect)(() => {
+    (0, import_react20.useEffect)(() => {
       const headers = {};
       const token = sessionStorage.getItem("micraft-auth-token");
       if (token) headers.Authorization = `Bearer ${token}`;
       fetch("/api/admin/simulation/defaults", { headers }).then((r2) => r2.ok ? r2.json() : null).then((d) => d && setDefaults(d)).catch(() => setError(tRef.current("sim.error.defaults")));
     }, []);
-    (0, import_react21.useEffect)(() => {
+    (0, import_react20.useEffect)(() => {
       const socket = new WebSocket(wsUrl());
       socketRef.current = socket;
       socket.onopen = () => setConnected(true);
@@ -90843,7 +90657,7 @@ ${end.comment}` : end.comment;
         socketRef.current = null;
       };
     }, [pushEvents, publish]);
-    const setViewport = (0, import_react21.useCallback)((viewport) => {
+    const setViewport = (0, import_react20.useCallback)((viewport) => {
       const key2 = viewport ? `${Math.round(viewport.minX)},${Math.round(viewport.minZ)},${Math.round(viewport.maxX)},${Math.round(viewport.maxZ)}` : "";
       if (key2 === viewportRef.current) return;
       viewportRef.current = key2;
@@ -90852,7 +90666,7 @@ ${end.comment}` : end.comment;
         socket.send(JSON.stringify({ t: "viewport", viewport }));
       }
     }, []);
-    const send = (0, import_react21.useCallback)((payload) => {
+    const send = (0, import_react20.useCallback)((payload) => {
       const socket = socketRef.current;
       if (!socket || socket.readyState !== WebSocket.OPEN) {
         setError(tRef.current("sim.error.notConnected"));
@@ -90860,44 +90674,54 @@ ${end.comment}` : end.comment;
       }
       socket.send(JSON.stringify(payload));
     }, []);
-    return {
-      connected,
-      running: snapshot.running,
-      arena: snapshot.arena,
-      config: snapshot.config,
-      npcs: snapshot.npcs,
-      players: snapshot.players,
-      stats: snapshot.stats,
-      events,
-      metrics: metrics.buckets,
-      bucketGameDays: metrics.bucketGameDays,
-      food: snapshot.food,
-      truncated: snapshot.truncated,
-      simulations,
-      simulationId,
-      detail,
-      defaults: defaults3,
-      error: error2,
-      init: (config3, name2) => send({ t: "init", config: config3, name: name2 != null ? name2 : "" }),
-      stop: () => send({ t: "stop" }),
-      restart: () => send({ t: "restart" }),
-      setSpeed: (ticksPerSecond) => send({ t: "speed", ticksPerSecond }),
-      step: (count3) => send({ t: "step", count: count3 }),
-      inspect: (npcId) => send({ t: "inspect", npcId }),
-      clearDetail: () => setDetail(null),
-      spawn: (type, x, z, count3, level) => send({ t: "spawn", type, x, z, count: count3, level: level != null ? level : null }),
-      applyTuning: (tuning) => send({ t: "tuning", tuning }),
-      applyOverrides: (overrides2) => send({ t: "defs", overrides: overrides2 }),
-      playerInput: (name2, dx, dz, yaw, jump) => send({ t: "playerInput", name: name2, dx, dz, yaw, jump }),
-      setViewport,
-      attach: (id2) => send({ t: "attach", simulationId: id2 }),
-      detach: () => send({ t: "detach" }),
-      refreshSimulations: () => send({ t: "list" })
-    };
+    const actions = (0, import_react20.useMemo)(
+      () => ({
+        init: (config3, name2) => send({ t: "init", config: config3, name: name2 != null ? name2 : "" }),
+        // no id = the arena this socket watches, so the panels that only know about "the current one"
+        // keep working
+        stop: (simulationId2) => send({ t: "stop", simulationId: simulationId2 != null ? simulationId2 : null }),
+        restart: (simulationId2) => send({ t: "restart", simulationId: simulationId2 != null ? simulationId2 : null }),
+        setSpeed: (ticksPerSecond) => send({ t: "speed", ticksPerSecond }),
+        step: (count3) => send({ t: "step", count: count3 }),
+        inspect: (npcId) => send({ t: "inspect", npcId }),
+        clearDetail: () => setDetail(null),
+        spawn: (type, x, z, count3, level) => send({ t: "spawn", type, x, z, count: count3, level: level != null ? level : null }),
+        applyTuning: (tuning) => send({ t: "tuning", tuning }),
+        applyOverrides: (overrides2) => send({ t: "defs", overrides: overrides2 }),
+        playerInput: (name2, dx, dz, yaw, jump) => send({ t: "playerInput", name: name2, dx, dz, yaw, jump }),
+        attach: (id2) => send({ t: "attach", simulationId: id2 }),
+        detach: () => send({ t: "detach" }),
+        refreshSimulations: () => send({ t: "list" })
+      }),
+      [send]
+    );
+    return (0, import_react20.useMemo)(
+      () => __spreadValues({
+        connected,
+        running: snapshot.running,
+        arena: snapshot.arena,
+        config: snapshot.config,
+        npcs: snapshot.npcs,
+        players: snapshot.players,
+        stats: snapshot.stats,
+        events,
+        metrics: metrics.buckets,
+        bucketGameDays: metrics.bucketGameDays,
+        food: snapshot.food,
+        truncated: snapshot.truncated,
+        simulations,
+        simulationId,
+        detail,
+        defaults: defaults3,
+        error: error2,
+        setViewport
+      }, actions),
+      [connected, snapshot, events, metrics, simulations, simulationId, detail, defaults3, error2, setViewport, actions]
+    );
   }
 
   // admin/pages/WorldSimulatorPage.tsx
-  var import_jsx_runtime38 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime37 = __toESM(require_jsx_runtime(), 1);
   var TAB_LABEL_KEYS2 = {
     charts: "sim.tab.charts",
     log: "sim.tab.log",
@@ -90925,8 +90749,8 @@ ${end.comment}` : end.comment;
     });
   }
   function Row2({ label, children }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("label", { className: "mb-1.5 flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "flex-1", children: label }),
+    return /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("label", { className: "mb-1.5 flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "flex-1", children: label }),
       children
     ] });
   }
@@ -90937,33 +90761,32 @@ ${end.comment}` : end.comment;
     var _a6, _b, _c, _d, _e, _f;
     const t2 = useT();
     const sim = useSimulation();
-    const [tab, setTab] = (0, import_react22.useState)("charts");
-    const [layers, setLayers] = (0, import_react22.useState)(() => loadLayers());
-    const [renderer2, setRenderer] = (0, import_react22.useState)(() => loadRenderer());
-    const [selectedId, setSelectedId] = (0, import_react22.useState)(null);
-    const [halfSize, setHalfSize] = (0, import_react22.useState)(DEFAULT_ARENA.halfSize);
-    const [seed, setSeed] = (0, import_react22.useState)(42);
-    const [dayDuration, setDayDuration] = (0, import_react22.useState)(60);
-    const [zoneLevel, setZoneLevel] = (0, import_react22.useState)(5);
-    const [autoSpawn, setAutoSpawn] = (0, import_react22.useState)(true);
-    const [populationCap, setPopulationCap] = (0, import_react22.useState)(DEFAULT_POPULATION_CAP);
-    const [vegetationDensity, setVegetationDensity] = (0, import_react22.useState)(0.08);
-    const [simulationName, setSimulationName] = (0, import_react22.useState)("");
-    const [spawns, setSpawns] = (0, import_react22.useState)([]);
-    const [tuning, setTuning] = (0, import_react22.useState)(null);
-    const [spawnType, setSpawnType] = (0, import_react22.useState)("");
-    const [spawnCount, setSpawnCount] = (0, import_react22.useState)(1);
-    const [liveSpawnType, setLiveSpawnType] = (0, import_react22.useState)("");
-    const [liveSpawnCount, setLiveSpawnCount] = (0, import_react22.useState)(1);
+    const [tab, setTab] = (0, import_react21.useState)("charts");
+    const [layers, setLayers] = (0, import_react21.useState)(() => loadLayers());
+    const [selectedId, setSelectedId] = (0, import_react21.useState)(null);
+    const [halfSize, setHalfSize] = (0, import_react21.useState)(DEFAULT_ARENA.halfSize);
+    const [seed, setSeed] = (0, import_react21.useState)(42);
+    const [dayDuration, setDayDuration] = (0, import_react21.useState)(60);
+    const [zoneLevel, setZoneLevel] = (0, import_react21.useState)(5);
+    const [autoSpawn, setAutoSpawn] = (0, import_react21.useState)(true);
+    const [populationCap, setPopulationCap] = (0, import_react21.useState)(DEFAULT_POPULATION_CAP);
+    const [vegetationDensity, setVegetationDensity] = (0, import_react21.useState)(0.08);
+    const [simulationName, setSimulationName] = (0, import_react21.useState)("");
+    const [spawns, setSpawns] = (0, import_react21.useState)([]);
+    const [tuning, setTuning] = (0, import_react21.useState)(null);
+    const [spawnType, setSpawnType] = (0, import_react21.useState)("");
+    const [spawnCount, setSpawnCount] = (0, import_react21.useState)(1);
+    const [liveSpawnType, setLiveSpawnType] = (0, import_react21.useState)("");
+    const [liveSpawnCount, setLiveSpawnCount] = (0, import_react21.useState)(1);
     const npcTypes = (_b = (_a6 = sim.defaults) == null ? void 0 : _a6.npcTypes) != null ? _b : [];
     const locked = sim.simulationId !== null;
-    const [arenaFolded, setArenaFolded] = (0, import_react22.useState)(false);
-    const [spawnsFolded, setSpawnsFolded] = (0, import_react22.useState)(false);
-    (0, import_react22.useEffect)(() => {
+    const [arenaFolded, setArenaFolded] = (0, import_react21.useState)(false);
+    const [spawnsFolded, setSpawnsFolded] = (0, import_react21.useState)(false);
+    (0, import_react21.useEffect)(() => {
       setArenaFolded(locked);
       setSpawnsFolded(locked);
     }, [locked]);
-    (0, import_react22.useEffect)(() => {
+    (0, import_react21.useEffect)(() => {
       if (sim.defaults && tuning == null) setTuning(sim.defaults.tuning);
       if (sim.defaults && sim.defaults.npcTypes.length > 0) {
         const first = sim.defaults.npcTypes[0];
@@ -90976,20 +90799,28 @@ ${end.comment}` : end.comment;
       spawns.length,
       spawns.reduce((sum, spawn) => sum + spawn.count, 0)
     );
-    (0, import_react22.useEffect)(() => saveLayers(layers), [layers]);
-    (0, import_react22.useEffect)(() => saveRenderer(renderer2), [renderer2]);
-    (0, import_react22.useEffect)(() => {
+    (0, import_react21.useEffect)(() => saveLayers(layers), [layers]);
+    (0, import_react21.useEffect)(() => {
       if (sim.detail) setSelectedId(sim.detail.npc.id);
     }, [sim.detail]);
     const arena = (_c = sim.arena) != null ? _c : null;
     const view = useArenaCamera((_d = arena == null ? void 0 : arena.halfSize) != null ? _d : DEFAULT_ARENA.halfSize);
     const bounds = view.visibleBounds;
     const { running: simRunning, setViewport } = sim;
-    (0, import_react22.useEffect)(() => {
+    (0, import_react21.useEffect)(() => {
       if (!simRunning) return;
       setViewport(bounds);
     }, [simRunning, setViewport, bounds]);
-    const byType = (0, import_react22.useMemo)(() => {
+    const { inspect } = sim;
+    const selectNpc = (0, import_react21.useCallback)(
+      (npcId) => {
+        setSelectedId(npcId);
+        setTab("npc");
+        inspect(npcId);
+      },
+      [inspect]
+    );
+    const byType = (0, import_react21.useMemo)(() => {
       const counts = /* @__PURE__ */ new Map();
       sim.npcs.forEach((n) => {
         var _a7;
@@ -91015,11 +90846,11 @@ ${end.comment}` : end.comment;
         simulationName
       );
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "-m-6 flex h-[calc(100vh-4rem)] flex-col", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex shrink-0 items-center gap-2 border-b border-[#2E3A4E] bg-[#1A222C] px-4 py-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "inline-block h-2 w-2 rounded-full " + (sim.connected ? "bg-emerald-400" : "bg-red-400") }),
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: t2(sim.connected ? "sim.page.connected" : "sim.page.disconnected") }),
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "-m-6 flex h-[calc(100vh-4rem)] flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex shrink-0 items-center gap-2 border-b border-[#2E3A4E] bg-[#1A222C] px-4 py-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "inline-block h-2 w-2 rounded-full " + (sim.connected ? "bg-emerald-400" : "bg-red-400") }),
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: t2(sim.connected ? "sim.page.connected" : "sim.page.disconnected") }),
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
           "button",
           {
             type: "button",
@@ -91029,41 +90860,9 @@ ${end.comment}` : end.comment;
             children: t2("sim.page.start")
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
-          "button",
-          {
-            type: "button",
-            onClick: sim.restart,
-            disabled: !sim.running,
-            className: "rounded bg-[#2E3A4E] px-3 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40",
-            children: t2("sim.page.quickRestart")
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
-          "button",
-          {
-            type: "button",
-            onClick: sim.detach,
-            disabled: !sim.simulationId,
-            title: t2("sim.page.detachTitle"),
-            className: "rounded bg-[#2E3A4E] px-3 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40",
-            children: t2("sim.page.detach")
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
-          "button",
-          {
-            type: "button",
-            onClick: sim.stop,
-            disabled: !sim.simulationId,
-            title: t2("sim.page.closeTitle"),
-            className: "rounded bg-[#2E3A4E] px-3 py-1 text-[11px] text-[#C7D2FE] hover:bg-red-500/60 disabled:opacity-40",
-            children: t2("sim.page.close")
-          }
-        ),
-        sim.error && /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "ml-3 text-[11px] text-red-300", children: sim.error }),
-        sim.truncated && /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "ml-3 rounded bg-[#FACC15]/15 px-2 py-0.5 text-[11px] text-[#FACC15]", children: t2("sim.page.truncated") }),
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("span", { className: "ml-auto text-[11px] text-[#8A99AF]", children: [
+        sim.error && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "ml-3 text-[11px] text-red-300", children: sim.error }),
+        sim.truncated && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "ml-3 rounded bg-[#FACC15]/15 px-2 py-0.5 text-[11px] text-[#FACC15]", children: t2("sim.page.truncated") }),
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("span", { className: "ml-auto text-[11px] text-[#8A99AF]", children: [
           t2("sim.page.shownNpcs", sim.npcs.length, sim.stats.npcCount),
           sim.stats.populationCap > 0 ? t2("sim.page.populationCap", sim.stats.populationCap) : "",
           " \xB7",
@@ -91072,18 +90871,21 @@ ${end.comment}` : end.comment;
           sim.stats.regrowingCells > 0 ? t2("sim.page.regrowing", sim.stats.regrowingCells) : ""
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex min-h-0 flex-1", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "w-72 shrink-0 space-y-3 overflow-auto border-r border-[#2E3A4E] p-3", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex min-h-0 flex-1", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "w-72 shrink-0 space-y-3 overflow-auto border-r border-[#2E3A4E] p-3", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
             SimulationList,
             {
               simulations: sim.simulations,
               attachedId: sim.simulationId,
               onAttach: sim.attach,
+              onDetach: sim.detach,
+              onRestart: sim.restart,
+              onClose: sim.stop,
               onRefresh: sim.refreshSimulations
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)(
             Card2,
             {
               title: t2("sim.page.arena"),
@@ -91091,7 +90893,7 @@ ${end.comment}` : end.comment;
               onCollapsed: setArenaFolded,
               summary: t2("sim.page.arenaSummary", halfSize * 2, halfSize * 2, seed, dayDuration),
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Row2, { label: t2("sim.page.nameOptional"), children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.nameOptional"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                   "input",
                   {
                     type: "text",
@@ -91102,7 +90904,7 @@ ${end.comment}` : end.comment;
                     className: "w-32 rounded border border-[#2E3A4E] bg-[#0E1726] px-2 py-1 text-[11px] text-white" + DISABLED
                   }
                 ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Row2, { label: t2("sim.page.halfSize"), children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.halfSize"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                   "input",
                   {
                     type: "number",
@@ -91114,7 +90916,7 @@ ${end.comment}` : end.comment;
                     className: numberInput
                   }
                 ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Row2, { label: t2("sim.page.seed"), children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.seed"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                   "input",
                   {
                     type: "number",
@@ -91124,7 +90926,7 @@ ${end.comment}` : end.comment;
                     className: numberInput
                   }
                 ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Row2, { label: t2("sim.page.dayDuration"), children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.dayDuration"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                   "input",
                   {
                     type: "number",
@@ -91136,7 +90938,7 @@ ${end.comment}` : end.comment;
                     className: numberInput
                   }
                 ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Row2, { label: t2("sim.page.zoneLevel"), children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.zoneLevel"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                   "input",
                   {
                     type: "number",
@@ -91147,7 +90949,7 @@ ${end.comment}` : end.comment;
                     className: numberInput
                   }
                 ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Row2, { label: t2("sim.page.populationCapLabel"), children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.populationCapLabel"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                   "input",
                   {
                     type: "number",
@@ -91159,7 +90961,7 @@ ${end.comment}` : end.comment;
                     className: numberInput
                   }
                 ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Row2, { label: t2("sim.page.vegetationDensity"), children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.vegetationDensity"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                   "input",
                   {
                     type: "number",
@@ -91172,7 +90974,7 @@ ${end.comment}` : end.comment;
                     className: numberInput
                   }
                 ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Row2, { label: t2("sim.page.autoSpawner"), children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.autoSpawner"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                   "input",
                   {
                     type: "checkbox",
@@ -91182,7 +90984,7 @@ ${end.comment}` : end.comment;
                     className: "accent-[#3C50E0]" + DISABLED
                   }
                 ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("p", { className: "text-[10px] text-[#4A5568]", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("p", { className: "text-[10px] text-[#4A5568]", children: [
                   t2("sim.page.capHint"),
                   " ",
                   t2(locked ? "sim.page.lockedHint" : "sim.page.unlockedHint")
@@ -91190,7 +90992,7 @@ ${end.comment}` : end.comment;
               ]
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)(
             Card2,
             {
               title: t2("sim.page.initialPopulation"),
@@ -91198,10 +91000,10 @@ ${end.comment}` : end.comment;
               onCollapsed: setSpawnsFolded,
               summary: spawnSummary,
               children: [
-                spawns.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("p", { className: "mb-2 text-[11px] text-[#4A5568]", children: t2("sim.page.noSpawns") }),
-                spawns.map((spawn, index2) => /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "mb-1.5 flex items-center gap-1.5", children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "flex-1 text-[11px] text-white", children: spawn.type }),
-                  /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                spawns.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("p", { className: "mb-2 text-[11px] text-[#4A5568]", children: t2("sim.page.noSpawns") }),
+                spawns.map((spawn, index2) => /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "mb-1.5 flex items-center gap-1.5", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "flex-1 text-[11px] text-white", children: spawn.type }),
+                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                     "input",
                     {
                       type: "number",
@@ -91212,7 +91014,7 @@ ${end.comment}` : end.comment;
                       className: smallNumberInput
                     }
                   ),
-                  /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                     "button",
                     {
                       type: "button",
@@ -91223,18 +91025,18 @@ ${end.comment}` : end.comment;
                     }
                   )
                 ] }, `${spawn.type}-${index2}`)),
-                /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "mt-2 flex items-center gap-1.5", children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "mt-2 flex items-center gap-1.5", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                     "select",
                     {
                       value: spawnType,
                       onChange: (e) => setSpawnType(e.target.value),
                       disabled: locked,
                       className: "flex-1 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-1 text-[11px] text-white" + DISABLED,
-                      children: npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("option", { value: type, children: type }, type))
+                      children: npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("option", { value: type, children: type }, type))
                     }
                   ),
-                  /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                     "input",
                     {
                       type: "number",
@@ -91245,7 +91047,7 @@ ${end.comment}` : end.comment;
                       className: smallNumberInput
                     }
                   ),
-                  /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                     "button",
                     {
                       type: "button",
@@ -91259,18 +91061,18 @@ ${end.comment}` : end.comment;
               ]
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(Card2, { title: t2("sim.page.instantSpawn"), children: [
-            /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex items-center gap-1.5", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)(Card2, { title: t2("sim.page.instantSpawn"), children: [
+            /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex items-center gap-1.5", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                 "select",
                 {
                   value: liveSpawnType,
                   onChange: (e) => setLiveSpawnType(e.target.value),
                   className: "flex-1 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-1 text-[11px] text-white",
-                  children: npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("option", { value: type, children: type }, type))
+                  children: npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("option", { value: type, children: type }, type))
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
                 "input",
                 {
                   type: "number",
@@ -91281,7 +91083,7 @@ ${end.comment}` : end.comment;
                 }
               )
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
               "button",
               {
                 type: "button",
@@ -91292,7 +91094,7 @@ ${end.comment}` : end.comment;
               }
             )
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Card2, { title: t2("sim.page.layers"), children: LAYER_KEYS.map((key2) => /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Row2, { label: t2(LAYER_LABEL_KEYS[key2]), children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Card2, { title: t2("sim.page.layers"), children: LAYER_KEYS.map((key2) => /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2(LAYER_LABEL_KEYS[key2]), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
             "input",
             {
               type: "checkbox",
@@ -91302,37 +91104,30 @@ ${end.comment}` : end.comment;
             }
           ) }, key2)) })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex min-w-0 flex-1 flex-col", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "relative min-h-0 flex-1", children: [
-            arena && /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(ArenaControls, { renderer: renderer2, onRenderer: setRenderer, onZoom: view.zoomBy, onFitAll: view.fitAll }),
-            arena ? (() => {
-              const Renderer2 = renderer2 === "canvas" ? ArenaCanvasRenderer : ArenaSvgRenderer;
-              return /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
-                Renderer2,
-                {
-                  arena,
-                  food: sim.food,
-                  npcs: sim.npcs,
-                  players: sim.players,
-                  layers,
-                  selectedId,
-                  view,
-                  onSelect: (id2) => {
-                    setSelectedId(id2);
-                    setTab("npc");
-                    sim.inspect(id2);
-                  }
-                }
-              );
-            })() : /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { className: "flex h-full items-center justify-center text-[12px] text-[#4A5568]", children: t2("sim.page.noSimulation") })
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex min-w-0 flex-1 flex-col", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "relative min-h-0 flex-1", children: [
+            arena && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(ArenaControls, { onZoom: view.zoomBy, onFitAll: view.fitAll }),
+            arena ? /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
+              ArenaCanvasRenderer,
+              {
+                arena,
+                food: sim.food,
+                npcs: sim.npcs,
+                players: sim.players,
+                layers,
+                selectedId,
+                view,
+                onSelect: selectNpc
+              }
+            ) : /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "flex h-full items-center justify-center text-[12px] text-[#4A5568]", children: t2("sim.page.noSimulation") })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex shrink-0 items-start gap-3 border-t border-[#2E3A4E] p-3", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { className: "min-w-0 flex-1", children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Timeline, { stats: sim.stats, disabled: !sim.running, onSpeed: sim.setSpeed, onStep: sim.step }) }),
-            /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(SimPlayerPad, { players: sim.players, onInput: sim.playerInput })
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex shrink-0 items-start gap-3 border-t border-[#2E3A4E] p-3", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "min-w-0 flex-1", children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Timeline, { stats: sim.stats, disabled: !sim.running, onSpeed: sim.setSpeed, onStep: sim.step }) }),
+            /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(SimPlayerPad, { players: sim.players, onInput: sim.playerInput })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex w-[26rem] shrink-0 flex-col border-l border-[#2E3A4E]", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { className: "flex shrink-0 gap-1 border-b border-[#2E3A4E] bg-[#1A222C] px-2 py-1.5", children: Object.keys(TAB_LABEL_KEYS2).map((key2) => /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex w-[26rem] shrink-0 flex-col border-l border-[#2E3A4E]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "flex shrink-0 gap-1 border-b border-[#2E3A4E] bg-[#1A222C] px-2 py-1.5", children: Object.keys(TAB_LABEL_KEYS2).map((key2) => /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
             "button",
             {
               type: "button",
@@ -91342,21 +91137,11 @@ ${end.comment}` : end.comment;
             },
             key2
           )) }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "min-h-0 flex-1 overflow-hidden p-3", children: [
-            tab === "charts" && /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(MetricsPanel, { buckets: sim.metrics, bucketGameDays: sim.bucketGameDays }),
-            tab === "log" && /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
-              EventLogPanel,
-              {
-                events: sim.events,
-                onSelect: (id2) => {
-                  setSelectedId(id2);
-                  sim.inspect(id2);
-                  setTab("npc");
-                }
-              }
-            ),
-            tab === "npc" && /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(NpcDetailPanel, { sim }),
-            tab === "rules" && tuning && /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "min-h-0 flex-1 overflow-hidden p-3", children: [
+            tab === "charts" && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(MetricsPanel, { buckets: sim.metrics, bucketGameDays: sim.bucketGameDays }),
+            tab === "log" && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(EventLogPanel, { events: sim.events, onSelect: selectNpc }),
+            tab === "npc" && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(NpcDetailPanel, { sim }),
+            tab === "rules" && tuning && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
               TuningEditor,
               {
                 value: tuning,
@@ -91365,17 +91150,17 @@ ${end.comment}` : end.comment;
                 onApply: () => sim.applyTuning(tuning)
               }
             ),
-            tab === "manager" && /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex h-full flex-col gap-3", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { children: [
-                /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("p", { className: "mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("sim.page.population") }),
-                byType.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.page.populationEmpty") }),
-                byType.map(([type, count3]) => /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex items-center gap-2 py-0.5 text-[11px]", children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "inline-block h-2.5 w-2.5 rounded-full", style: { background: npcColor(type) } }),
-                  /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "flex-1 text-white", children: type }),
-                  /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "text-[#8A99AF]", children: count3 })
+            tab === "manager" && /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex h-full flex-col gap-3", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("p", { className: "mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("sim.page.population") }),
+                byType.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.page.populationEmpty") }),
+                byType.map(([type, count3]) => /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex items-center gap-2 py-0.5 text-[11px]", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "inline-block h-2.5 w-2.5 rounded-full", style: { background: npcColor(type) } }),
+                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "flex-1 text-white", children: type }),
+                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "text-[#8A99AF]", children: count3 })
                 ] }, type))
               ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { className: "min-h-0 flex-1", children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(OverridesEditor, { npcTypes, onApply: sim.applyOverrides }) })
+              /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "min-h-0 flex-1", children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(OverridesEditor, { npcTypes, onApply: sim.applyOverrides }) })
             ] })
           ] })
         ] })
@@ -91387,7 +91172,7 @@ ${end.comment}` : end.comment;
     const t2 = useT();
     const detail = sim.detail;
     if (!detail) {
-      return /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.detail.hint") });
+      return /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.detail.hint") });
     }
     const npc = detail.npc;
     const rows = [
@@ -91419,11 +91204,11 @@ ${end.comment}` : end.comment;
       [t2("sim.detail.mateTarget"), (_e = detail.mateTargetId) != null ? _e : "\u2014"],
       [t2("sim.detail.parents"), detail.parentIds.length ? detail.parentIds.map((p2) => p2.slice(0, 8)).join(", ") : "\u2014"]
     ];
-    return /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex h-full flex-col", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "inline-block h-3 w-3 rounded-full", style: { background: npcColor(npc.type) } }),
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "flex-1 truncate text-[12px] font-semibold text-white", children: npc.name }),
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex h-full flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "inline-block h-3 w-3 rounded-full", style: { background: npcColor(npc.type) } }),
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "flex-1 truncate text-[12px] font-semibold text-white", children: npc.name }),
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
           "button",
           {
             type: "button",
@@ -91433,14 +91218,14 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-2", children: [
-        rows.map(([label, value]) => /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex gap-2 border-b border-[#1A222C] py-1 text-[11px] last:border-0", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "w-40 shrink-0 text-[#8A99AF]", children: label }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "break-all text-white", children: value })
+      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-2", children: [
+        rows.map(([label, value]) => /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex gap-2 border-b border-[#1A222C] py-1 text-[11px] last:border-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "w-40 shrink-0 text-[#8A99AF]", children: label }),
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "break-all text-white", children: value })
         ] }, label)),
-        detail.baseStats && /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "mt-2 text-[11px]", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("p", { className: "mb-1 text-[#8A99AF]", children: t2("sim.detail.baseStats") }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { className: "flex flex-wrap gap-2", children: Object.entries(detail.baseStats).map(([stat, value]) => /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("span", { className: "rounded bg-[#1A222C] px-1.5 py-0.5 text-white", children: [
+        detail.baseStats && /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "mt-2 text-[11px]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("p", { className: "mb-1 text-[#8A99AF]", children: t2("sim.detail.baseStats") }),
+          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "flex flex-wrap gap-2", children: Object.entries(detail.baseStats).map(([stat, value]) => /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("span", { className: "rounded bg-[#1A222C] px-1.5 py-0.5 text-white", children: [
             stat,
             " ",
             value
@@ -91451,9 +91236,9 @@ ${end.comment}` : end.comment;
   }
 
   // admin/AdminApp.tsx
-  var import_jsx_runtime39 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime38 = __toESM(require_jsx_runtime(), 1);
   function Icon2({ d, size = 18 }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
       "svg",
       {
         width: size,
@@ -91464,7 +91249,7 @@ ${end.comment}` : end.comment;
         strokeWidth: 1.8,
         strokeLinecap: "round",
         strokeLinejoin: "round",
-        children: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("path", { d })
+        children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("path", { d })
       }
     );
   }
@@ -91507,7 +91292,7 @@ ${end.comment}` : end.comment;
   function Sidebar({ collapsed, onToggle }) {
     const { pathname } = useLocation();
     const t2 = useT();
-    return /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(
       "aside",
       {
         className: cn(
@@ -91515,19 +91300,19 @@ ${end.comment}` : end.comment;
           collapsed ? "w-16" : "w-64"
         ),
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: cn("h-16 flex items-center border-b border-[#2E3A4E]", collapsed ? "px-3" : "px-6"), children: /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "flex items-center gap-2.5 overflow-hidden", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "w-8 h-8 shrink-0 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
-            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(import_jsx_runtime39.Fragment, { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
-              /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { className: cn("h-16 flex items-center border-b border-[#2E3A4E]", collapsed ? "px-3" : "px-6"), children: /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex items-center gap-2.5 overflow-hidden", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { className: "w-8 h-8 shrink-0 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
+            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(import_jsx_runtime38.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
+              /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
             ] })
           ] }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("nav", { className: cn("flex-1 py-5 space-y-0.5 overflow-y-auto", collapsed ? "px-2" : "px-4"), children: [
-            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: t2("shell.menu") }),
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("nav", { className: cn("flex-1 py-5 space-y-0.5 overflow-y-auto", collapsed ? "px-2" : "px-4"), children: [
+            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: t2("shell.menu") }),
             NAV.map(({ path, labelKey, icon, exact }) => {
               const active = exact ? pathname === path : pathname.startsWith(path);
               const label = t2(labelKey);
-              return /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(
+              return /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(
                 Link,
                 {
                   to: path,
@@ -91539,7 +91324,7 @@ ${end.comment}` : end.comment;
                     active ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white"
                   ),
                   children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Icon2, { d: icon, size: 17 }) }),
+                    /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Icon2, { d: icon, size: 17 }) }),
                     !collapsed && label
                   ]
                 },
@@ -91547,8 +91332,8 @@ ${end.comment}` : end.comment;
               );
             })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(LanguageSelector, { collapsed }),
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(LanguageSelector, { collapsed }),
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(
             "div",
             {
               className: cn(
@@ -91556,8 +91341,8 @@ ${end.comment}` : end.comment;
                 collapsed ? "px-2 justify-center" : "px-6"
               ),
               children: [
-                !collapsed && /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "flex-1", children: t2("shell.version") }),
-                /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
+                !collapsed && /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "flex-1", children: t2("shell.version") }),
+                /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
                   "button",
                   {
                     type: "button",
@@ -91566,7 +91351,7 @@ ${end.comment}` : end.comment;
                     "aria-label": t2(collapsed ? "shell.expandMenu" : "shell.collapseMenu"),
                     "aria-expanded": !collapsed,
                     className: "flex h-7 w-7 items-center justify-center rounded border border-[#2E3A4E] text-[#C7D2FE] hover:bg-[#3C50E0]/60 hover:text-white",
-                    children: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Icon2, { d: collapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7", size: 15 })
+                    children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Icon2, { d: collapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7", size: 15 })
                   }
                 )
               ]
@@ -91581,47 +91366,47 @@ ${end.comment}` : end.comment;
     const t2 = useT();
     const labelKey = PAGE_LABEL_KEYS[pathname];
     const title = labelKey ? t2(labelKey) : t2("shell.admin");
-    return /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
           t2("shell.admin"),
           " / ",
           title
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
+        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
+      /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
         t2("shell.serverOnline")
       ] })
     ] });
   }
   function AdminApp() {
-    const [collapsed, setCollapsed] = (0, import_react23.useState)(() => loadSidebarCollapsed());
-    (0, import_react23.useEffect)(() => saveSidebarCollapsed(collapsed), [collapsed]);
-    return /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(I18nProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Sidebar, { collapsed, onToggle: () => setCollapsed((current) => !current) }),
-      /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Header, {}),
-        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(Routes, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(StatusPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(UsersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(PlayersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Route, { path: "/admin/npcs", element: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(NpcsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(ClassesPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(ConfigEditorPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(WorldsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Route, { path: "/admin/game-assets", element: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(GameAssetsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Route, { path: "/admin/administration", element: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(AdministrationPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Route, { path: "/admin/world-simulator", element: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(WorldSimulatorPage, {}) })
+    const [collapsed, setCollapsed] = (0, import_react22.useState)(() => loadSidebarCollapsed());
+    (0, import_react22.useEffect)(() => saveSidebarCollapsed(collapsed), [collapsed]);
+    return /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(I18nProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Sidebar, { collapsed, onToggle: () => setCollapsed((current) => !current) }),
+      /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Header, {}),
+        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(Routes, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(StatusPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(UsersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(PlayersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/npcs", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(NpcsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(ClassesPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(ConfigEditorPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(WorldsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/game-assets", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(GameAssetsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/administration", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(AdministrationPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/world-simulator", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(WorldSimulatorPage, {}) })
         ] }) })
       ] })
     ] }) }) });
   }
 
   // admin/index.tsx
-  var import_jsx_runtime40 = __toESM(require_jsx_runtime(), 1);
-  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime40.jsx)(AdminApp, {}));
+  var import_jsx_runtime39 = __toESM(require_jsx_runtime(), 1);
+  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime39.jsx)(AdminApp, {}));
 })();
 /*! Bundled license information:
 

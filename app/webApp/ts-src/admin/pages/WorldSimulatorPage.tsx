@@ -1,19 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArenaCanvasRenderer } from "../simulator/ArenaCanvasRenderer";
 import { ArenaControls } from "../simulator/ArenaControls";
-import { ArenaSvgRenderer } from "../simulator/ArenaSvgRenderer";
 import { Card } from "../simulator/Card";
 import { useT, type Translate, type TranslationKey } from "../i18n";
 import {
   LAYER_KEYS,
   LAYER_LABEL_KEYS,
   loadLayers,
-  loadRenderer,
   saveLayers,
-  saveRenderer,
   useArenaCamera,
   type Layers,
-  type RendererKind,
 } from "../simulator/arenaView";
 import { EventLogPanel } from "../simulator/EventLogPanel";
 import { MetricsPanel } from "../simulator/MetricsPanel";
@@ -90,7 +86,6 @@ export function WorldSimulatorPage() {
   const sim = useSimulation();
   const [tab, setTab] = useState<Tab>("charts");
   const [layers, setLayers] = useState<Layers>(() => loadLayers());
-  const [renderer, setRenderer] = useState<RendererKind>(() => loadRenderer());
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const [halfSize, setHalfSize] = useState(DEFAULT_ARENA.halfSize);
@@ -143,8 +138,6 @@ export function WorldSimulatorPage() {
 
   useEffect(() => saveLayers(layers), [layers]);
 
-  useEffect(() => saveRenderer(renderer), [renderer]);
-
   useEffect(() => {
     if (sim.detail) setSelectedId(sim.detail.npc.id);
   }, [sim.detail]);
@@ -160,6 +153,18 @@ export function WorldSimulatorPage() {
     if (!simRunning) return;
     setViewport(bounds);
   }, [simRunning, setViewport, bounds]);
+  // Stable: the arena re-renders at frame rate, and a fresh callback on each of those frames would
+  // defeat any memoisation the renderer relies on.
+  const { inspect } = sim;
+  const selectNpc = useCallback(
+    (npcId: string) => {
+      setSelectedId(npcId);
+      setTab("npc");
+      inspect(npcId);
+    },
+    [inspect],
+  );
+
   const byType = useMemo(() => {
     const counts = new Map<string, number>();
     sim.npcs.forEach((n) => counts.set(n.type, (counts.get(n.type) ?? 0) + 1));
@@ -202,32 +207,8 @@ export function WorldSimulatorPage() {
         >
           {t("sim.page.start")}
         </button>
-        <button
-          type="button"
-          onClick={sim.restart}
-          disabled={!sim.running}
-          className="rounded bg-[#2E3A4E] px-3 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40"
-        >
-          {t("sim.page.quickRestart")}
-        </button>
-        <button
-          type="button"
-          onClick={sim.detach}
-          disabled={!sim.simulationId}
-          title={t("sim.page.detachTitle")}
-          className="rounded bg-[#2E3A4E] px-3 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40"
-        >
-          {t("sim.page.detach")}
-        </button>
-        <button
-          type="button"
-          onClick={sim.stop}
-          disabled={!sim.simulationId}
-          title={t("sim.page.closeTitle")}
-          className="rounded bg-[#2E3A4E] px-3 py-1 text-[11px] text-[#C7D2FE] hover:bg-red-500/60 disabled:opacity-40"
-        >
-          {t("sim.page.close")}
-        </button>
+        {/* the toolbar only creates arenas; restarting, detaching and closing target one arena in
+            particular, so they live on its row in the list */}
         {sim.error && <span className="ml-3 text-[11px] text-red-300">{sim.error}</span>}
         {sim.truncated && (
           <span className="ml-3 rounded bg-[#FACC15]/15 px-2 py-0.5 text-[11px] text-[#FACC15]">
@@ -249,6 +230,9 @@ export function WorldSimulatorPage() {
             simulations={sim.simulations}
             attachedId={sim.simulationId}
             onAttach={sim.attach}
+            onDetach={sim.detach}
+            onRestart={sim.restart}
+            onClose={sim.stop}
             onRefresh={sim.refreshSimulations}
           />
 
@@ -462,29 +446,18 @@ export function WorldSimulatorPage() {
         {/* center: arena + timeline */}
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="relative min-h-0 flex-1">
-            {arena && (
-              <ArenaControls renderer={renderer} onRenderer={setRenderer} onZoom={view.zoomBy} onFitAll={view.fitAll} />
-            )}
+            {arena && <ArenaControls onZoom={view.zoomBy} onFitAll={view.fitAll} />}
             {arena ? (
-              (() => {
-                const Renderer = renderer === "canvas" ? ArenaCanvasRenderer : ArenaSvgRenderer;
-                return (
-                  <Renderer
-                    arena={arena}
-                    food={sim.food}
-                    npcs={sim.npcs}
-                    players={sim.players}
-                    layers={layers}
-                    selectedId={selectedId}
-                    view={view}
-                    onSelect={(id) => {
-                      setSelectedId(id);
-                      setTab("npc");
-                      sim.inspect(id);
-                    }}
-                  />
-                );
-              })()
+              <ArenaCanvasRenderer
+                arena={arena}
+                food={sim.food}
+                npcs={sim.npcs}
+                players={sim.players}
+                layers={layers}
+                selectedId={selectedId}
+                view={view}
+                onSelect={selectNpc}
+              />
             ) : (
               <div className="flex h-full items-center justify-center text-[12px] text-[#4A5568]">
                 {t("sim.page.noSimulation")}
@@ -521,16 +494,7 @@ export function WorldSimulatorPage() {
           <div className="min-h-0 flex-1 overflow-hidden p-3">
             {tab === "charts" && <MetricsPanel buckets={sim.metrics} bucketGameDays={sim.bucketGameDays} />}
 
-            {tab === "log" && (
-              <EventLogPanel
-                events={sim.events}
-                onSelect={(id) => {
-                  setSelectedId(id);
-                  sim.inspect(id);
-                  setTab("npc");
-                }}
-              />
-            )}
+            {tab === "log" && <EventLogPanel events={sim.events} onSelect={selectNpc} />}
 
             {tab === "npc" && <NpcDetailPanel sim={sim} />}
 

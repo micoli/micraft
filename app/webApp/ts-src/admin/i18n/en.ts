@@ -274,8 +274,6 @@ export const en = {
   "sim.tuning.gameDayDurationSeconds": "Day duration (s)",
 
   // ── Simulator — arena controls ──────────────────────────────────────────────
-  "sim.controls.svg": "SVG: one DOM node per NPC, inspectable",
-  "sim.controls.canvas": "Canvas: a single node, holds up in very crowded arenas",
   "sim.controls.zoomIn": "Zoom in",
   "sim.controls.zoomOut": "Zoom out",
   "sim.controls.fitAll": "Fit the whole arena",
@@ -380,6 +378,12 @@ export const en = {
   "sim.list.connect": "Connect",
   "sim.list.stats": "{0} NPC · day {1} · {2}",
   "sim.list.geometry": "{0}×{1} blocks · {2} viewer(s) · {3}",
+  "sim.list.restart": "Restart",
+  "sim.list.restartTitle": "Rebuild this simulation from its own settings",
+  "sim.list.detach": "Detach",
+  "sim.list.detachTitle": "Stop following without closing the simulation",
+  "sim.list.close": "Close",
+  "sim.list.closeTitle": "Close the simulation for every viewer",
 
   // ── Simulator — layers ──────────────────────────────────────────────────────
   "sim.layers.food": "Grazing (herbivores)",
@@ -396,7 +400,7 @@ export const en = {
   "sim.tooltip.satiety": "satiety {0}%",
   "sim.tooltip.gestation": "gestation {0} d",
   "sim.tooltip.dead": "dead",
-  "sim.hint": "{0}×{1} blocks · {2} px/block · {3} · wheel = zoom, drag = pan",
+  "sim.hint": "{0}×{1} blocks · {2} px/block · wheel = zoom, drag = pan",
 
   "sim.pad.forward": "forward",
   "sim.pad.left": "left",
@@ -414,11 +418,6 @@ export const en = {
   "sim.page.connected": "simulator connected",
   "sim.page.disconnected": "disconnected",
   "sim.page.start": "Start",
-  "sim.page.quickRestart": "Quick restart",
-  "sim.page.detach": "Detach",
-  "sim.page.detachTitle": "Stop following without closing the simulation",
-  "sim.page.close": "Close",
-  "sim.page.closeTitle": "Close the simulation for every viewer",
   "sim.page.truncated": "partial view — zoom in to see fewer NPCs at a time",
   "sim.page.shownNpcs": "{0}/{1} NPCs shown",
   "sim.page.populationCap": " / {0} max",

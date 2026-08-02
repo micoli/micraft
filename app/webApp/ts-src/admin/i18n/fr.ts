@@ -269,8 +269,6 @@ export const fr: Record<TranslationKey, string> = {
   "sim.tuning.gameDayDurationSeconds": "Durée d'un jour (s)",
 
   // ── Simulator — arena controls ──────────────────────────────────────────────
-  "sim.controls.svg": "SVG : un nœud DOM par NPC, inspectable",
-  "sim.controls.canvas": "Canvas : un seul nœud, tient les arènes très peuplées",
   "sim.controls.zoomIn": "Zoomer",
   "sim.controls.zoomOut": "Dézoomer",
   "sim.controls.fitAll": "Voir toute l'arène",
@@ -376,6 +374,12 @@ export const fr: Record<TranslationKey, string> = {
   "sim.list.connect": "Se connecter",
   "sim.list.stats": "{0} NPC · jour {1} · {2}",
   "sim.list.geometry": "{0}×{1} blocs · {2} spectateur(s) · {3}",
+  "sim.list.restart": "Redémarrer",
+  "sim.list.restartTitle": "Reconstruit cette simulation à partir de ses propres réglages",
+  "sim.list.detach": "Se déconnecter",
+  "sim.list.detachTitle": "Arrête de suivre sans fermer la simulation",
+  "sim.list.close": "Fermer",
+  "sim.list.closeTitle": "Ferme la simulation pour tous les spectateurs",
 
   // ── Simulator — layers ──────────────────────────────────────────────────────
   "sim.layers.food": "Brout (herbivores)",
@@ -392,7 +396,7 @@ export const fr: Record<TranslationKey, string> = {
   "sim.tooltip.satiety": "satiété {0}%",
   "sim.tooltip.gestation": "gestation {0} j",
   "sim.tooltip.dead": "mort",
-  "sim.hint": "{0}×{1} blocs · {2} px/bloc · {3} · molette = zoom, glisser = déplacer",
+  "sim.hint": "{0}×{1} blocs · {2} px/bloc · molette = zoom, glisser = déplacer",
 
   "sim.pad.forward": "avancer",
   "sim.pad.left": "gauche",
@@ -410,11 +414,6 @@ export const fr: Record<TranslationKey, string> = {
   "sim.page.connected": "simulateur connecté",
   "sim.page.disconnected": "déconnecté",
   "sim.page.start": "Démarrer",
-  "sim.page.quickRestart": "Redémarrage rapide",
-  "sim.page.detach": "Se déconnecter",
-  "sim.page.detachTitle": "Arrête de suivre sans fermer la simulation",
-  "sim.page.close": "Fermer",
-  "sim.page.closeTitle": "Ferme la simulation pour tous les spectateurs",
   "sim.page.truncated": "affichage partiel — zoome pour voir moins de NPC à la fois",
   "sim.page.shownNpcs": "{0}/{1} NPC affichés",
   "sim.page.populationCap": " / {0} max",

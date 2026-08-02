@@ -132,9 +132,18 @@ sealed class SimCommand {
     /** Stop watching without stopping the arena. */
     @Serializable @SerialName("detach") data object Detach : SimCommand()
 
-    @Serializable @SerialName("stop") data object Stop : SimCommand()
+    /**
+     * Close an arena. The list lets an operator close any of them, not only the one this socket
+     * watches, so the target is explicit; a null id keeps meaning "the one I am attached to".
+     */
+    @Serializable
+    @SerialName("stop")
+    data class Stop(val simulationId: String? = null) : SimCommand()
 
-    @Serializable @SerialName("restart") data object Restart : SimCommand()
+    /** Rebuild an arena from its own config. Same targeting rule as [Stop]. */
+    @Serializable
+    @SerialName("restart")
+    data class Restart(val simulationId: String? = null) : SimCommand()
 
     @Serializable @SerialName("speed") data class Speed(val ticksPerSecond: Int) : SimCommand()
 

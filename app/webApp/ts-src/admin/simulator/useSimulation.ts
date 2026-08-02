@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { mergeBuckets, replaceBuckets } from "./metrics";
 import {
@@ -85,8 +85,10 @@ export interface SimulationState {
   defaults: SimulationDefaults | null;
   error: string | null;
   init: (config: SimulationConfig, name?: string) => void;
-  stop: () => void;
-  restart: () => void;
+  /** Close an arena for everyone; defaults to the attached one. */
+  stop: (simulationId?: string) => void;
+  /** Rebuild an arena from its own config; defaults to the attached one. */
+  restart: (simulationId?: string) => void;
   setSpeed: (ticksPerSecond: number) => void;
   step: (count: number) => void;
   inspect: (npcId: string) => void;
@@ -317,38 +319,58 @@ export function useSimulation(): SimulationState {
     socket.send(JSON.stringify(payload));
   }, []);
 
-  return {
-    connected,
-    running: snapshot.running,
-    arena: snapshot.arena,
-    config: snapshot.config,
-    npcs: snapshot.npcs,
-    players: snapshot.players,
-    stats: snapshot.stats,
-    events,
-    metrics: metrics.buckets,
-    bucketGameDays: metrics.bucketGameDays,
-    food: snapshot.food,
-    truncated: snapshot.truncated,
-    simulations,
-    simulationId,
-    detail,
-    defaults,
-    error,
-    init: (config, name) => send({ t: "init", config, name: name ?? "" }),
-    stop: () => send({ t: "stop" }),
-    restart: () => send({ t: "restart" }),
-    setSpeed: (ticksPerSecond) => send({ t: "speed", ticksPerSecond }),
-    step: (count) => send({ t: "step", count }),
-    inspect: (npcId) => send({ t: "inspect", npcId }),
-    clearDetail: () => setDetail(null),
-    spawn: (type, x, z, count, level) => send({ t: "spawn", type, x, z, count, level: level ?? null }),
-    applyTuning: (tuning) => send({ t: "tuning", tuning }),
-    applyOverrides: (overrides) => send({ t: "defs", overrides }),
-    playerInput: (name, dx, dz, yaw, jump) => send({ t: "playerInput", name, dx, dz, yaw, jump }),
-    setViewport,
-    attach: (id) => send({ t: "attach", simulationId: id }),
-    detach: () => send({ t: "detach" }),
-    refreshSimulations: () => send({ t: "list" }),
-  };
+  /**
+   * Every action in one memoised bag. They all close over nothing but the stable [send], so the
+   * whole group keeps one identity for the lifetime of the page. Frames arrive dozens of times a
+   * second; rebuilding these arrows on each of them would hand every child new props and make
+   * memoising anything downstream pointless.
+   */
+  const actions = useMemo(
+    () => ({
+      init: (config: SimulationConfig, name?: string) => send({ t: "init", config, name: name ?? "" }),
+      // no id = the arena this socket watches, so the panels that only know about "the current one"
+      // keep working
+      stop: (simulationId?: string) => send({ t: "stop", simulationId: simulationId ?? null }),
+      restart: (simulationId?: string) => send({ t: "restart", simulationId: simulationId ?? null }),
+      setSpeed: (ticksPerSecond: number) => send({ t: "speed", ticksPerSecond }),
+      step: (count: number) => send({ t: "step", count }),
+      inspect: (npcId: string) => send({ t: "inspect", npcId }),
+      clearDetail: () => setDetail(null),
+      spawn: (type: string, x: number, z: number, count: number, level?: number | null) =>
+        send({ t: "spawn", type, x, z, count, level: level ?? null }),
+      applyTuning: (tuning: NpcTuning) => send({ t: "tuning", tuning }),
+      applyOverrides: (overrides: Record<string, unknown>) => send({ t: "defs", overrides }),
+      playerInput: (name: string, dx: number, dz: number, yaw: number, jump: boolean) =>
+        send({ t: "playerInput", name, dx, dz, yaw, jump }),
+      attach: (id: string) => send({ t: "attach", simulationId: id }),
+      detach: () => send({ t: "detach" }),
+      refreshSimulations: () => send({ t: "list" }),
+    }),
+    [send],
+  );
+
+  return useMemo(
+    () => ({
+      connected,
+      running: snapshot.running,
+      arena: snapshot.arena,
+      config: snapshot.config,
+      npcs: snapshot.npcs,
+      players: snapshot.players,
+      stats: snapshot.stats,
+      events,
+      metrics: metrics.buckets,
+      bucketGameDays: metrics.bucketGameDays,
+      food: snapshot.food,
+      truncated: snapshot.truncated,
+      simulations,
+      simulationId,
+      detail,
+      defaults,
+      error,
+      setViewport,
+      ...actions,
+    }),
+    [connected, snapshot, events, metrics, simulations, simulationId, detail, defaults, error, setViewport, actions],
+  );
 }

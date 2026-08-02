@@ -16,9 +16,10 @@ interface Props {
 }
 
 /**
- * Same view as [ArenaSvgRenderer] drawn on a single canvas: no DOM node per NPC, so a crowded arena
- * stays smooth. Hover and click cannot use DOM events here — the pointer position is hit-tested
- * against the marker positions instead.
+ * Top-down 2D view of the arena, drawn on a single canvas. Deliberately not SVG: a node per NPC
+ * means thousands of DOM nodes and their listener closures rebuilt at frame rate, which buries the
+ * browser in cycle collection long before the drawing itself costs anything. Hover and click cannot
+ * use DOM events here — the pointer position is hit-tested against the marker positions instead.
  */
 export function ArenaCanvasRenderer({ arena, food, npcs, players, layers, selectedId, onSelect, view }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -95,9 +96,11 @@ export function ArenaCanvasRenderer({ arena, food, npcs, players, layers, select
       ctx.stroke();
     }
 
-    const npcById = new Map(npcs.map((n) => [n.id, n]));
-
     if (layers.aggro) {
+      // indexed once: resolving each target by scanning the arrays is quadratic, and the arena
+      // routinely holds hundreds of NPCs
+      const npcById = new Map(npcs.map((n) => [n.id, n]));
+      const playerById = new Map(players.map((p) => [p.id, p]));
       ctx.strokeStyle = "#F59E0B";
       ctx.lineWidth = 1.5;
       ctx.setLineDash([4, 3]);
@@ -105,7 +108,7 @@ export function ArenaCanvasRenderer({ arena, food, npcs, players, layers, select
       for (const npc of npcs) {
         if (!npc.aggroTargetId) continue;
         const target = npcById.get(npc.aggroTargetId);
-        const targetPlayer = players.find((p) => p.id === npc.aggroTargetId);
+        const targetPlayer = playerById.get(npc.aggroTargetId);
         const tx = target?.x ?? targetPlayer?.x;
         const tz = target?.z ?? targetPlayer?.z;
         if (tx === undefined || tz === undefined) continue;
@@ -225,7 +228,7 @@ export function ArenaCanvasRenderer({ arena, food, npcs, players, layers, select
       />
 
       {hover && <NpcTooltip hover={hover} />}
-      <ArenaHint halfSize={half} pxPerBlock={ppb} renderer="Canvas" />
+      <ArenaHint halfSize={half} pxPerBlock={ppb} />
     </div>
   );
 }

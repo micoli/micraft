@@ -5,14 +5,23 @@ interface Props {
   simulations: SimulationInfo[];
   attachedId: string | null;
   onAttach: (id: string) => void;
+  onDetach: () => void;
+  onRestart: (id: string) => void;
+  onClose: (id: string) => void;
   onRefresh: () => void;
 }
+
+const ROW_BUTTON = "rounded px-2 py-0.5 text-[10px] text-[#C7D2FE] bg-[#2E3A4E] hover:bg-[#3C50E0]/60";
 
 /**
  * Arenas running on the server, whoever started them. An arena outlives the tab that created it, so
  * this is how you get back to one — or watch the same one as a colleague.
+ *
+ * Every action that targets one arena lives on its own row. Parking them in the page toolbar made
+ * them read as "restart"/"close" in the absolute, when they only ever applied to whichever arena
+ * happened to be attached.
  */
-export function SimulationList({ simulations, attachedId, onAttach, onRefresh }: Props) {
+export function SimulationList({ simulations, attachedId, onAttach, onDetach, onRestart, onClose, onRefresh }: Props) {
   const t = useT();
   return (
     <div className="rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3">
@@ -79,6 +88,32 @@ export function SimulationList({ simulations, attachedId, onAttach, onRefresh }:
                   {t("sim.list.connect")}
                 </button>
               )}
+            </div>
+
+            <div className="mt-2 flex flex-wrap gap-1 border-t border-[#2E3A4E] pt-2">
+              <button
+                type="button"
+                title={t("sim.list.restartTitle")}
+                onClick={() => onRestart(simulation.id)}
+                className={ROW_BUTTON}
+              >
+                {t("sim.list.restart")}
+              </button>
+              {/* detaching is about this socket, not the arena: it only means anything on the one
+                  being watched */}
+              {attached && (
+                <button type="button" title={t("sim.list.detachTitle")} onClick={onDetach} className={ROW_BUTTON}>
+                  {t("sim.list.detach")}
+                </button>
+              )}
+              <button
+                type="button"
+                title={t("sim.list.closeTitle")}
+                onClick={() => onClose(simulation.id)}
+                className="rounded bg-[#2E3A4E] px-2 py-0.5 text-[10px] text-[#C7D2FE] hover:bg-red-500/60"
+              >
+                {t("sim.list.close")}
+              </button>
             </div>
           </div>
         );

@@ -239,19 +239,29 @@ class SimulationController(
                             pushSimulations()
                         }
                         is SimCommand.Restart -> {
-                            val id = attachedId
+                            val id = command.simulationId ?: attachedId
                             val simulator = id?.let { registry.restart(it) }
                             if (id == null || simulator == null)
                                 push(SimMessage.Error("aucune simulation à redémarrer"))
-                            else {
+                            else if (id == attachedId) {
+                                // the arena is a new object with a new event log: the cursors this
+                                // socket kept point at the previous one
                                 lastEventSeq = 0L
                                 pushSnapshot(id, simulator)
-                            }
+                            } else pushSimulations()
                         }
                         is SimCommand.Stop -> {
-                            attachedId?.let { registry.stop(it) }
-                            attachedId = null
-                            push(SimMessage.Stopped)
+                            val id = command.simulationId ?: attachedId
+                            if (id == null) push(SimMessage.Error("aucune simulation à fermer"))
+                            else {
+                                registry.stop(id)
+                                // closing an arena this socket only had in its list leaves the one
+                                // it watches alone
+                                if (id == attachedId) {
+                                    detach()
+                                    push(SimMessage.Stopped)
+                                }
+                            }
                             pushSimulations()
                         }
                         is SimCommand.Speed ->

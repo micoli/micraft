@@ -16,9 +16,12 @@ import io.ktor.websocket.readText
 import io.ktor.websocket.send
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import org.micoli.micraft.auth.AuthResult
 import org.micoli.micraft.auth.TokenStore
@@ -55,6 +58,13 @@ private fun deps() =
         i18n = testI18n(),
         vegetationConfig = VegetationConfig(),
     )
+
+/** Poll until [condition] holds; false when it never does. */
+private suspend fun awaitTrue(timeoutMs: Long = 5_000, condition: () -> Boolean): Boolean =
+    withTimeoutOrNull(timeoutMs) {
+        while (!condition()) delay(20)
+        true
+    } ?: false
 
 /** Read frames until one contains [needle]; null when the socket goes quiet first. */
 private suspend fun DefaultClientWebSocketSession.awaitContaining(
@@ -295,5 +305,76 @@ class SimulationControllerTest {
             }
             assertEquals(0, registry.count, "stopping must free the arena")
         }
+    }
+
+    @Test
+    fun ws_stop_closesTheTargetedArena_andLeavesTheAttachedOneAlone() = testApplication {
+        val store = TokenStore(scope)
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        val registry = SimulationRegistry { deps() }
+        val simController =
+            SimulationController(
+                registry = registry, npcTypesProvider = { listOf("walker") }, tokenStore = store)
+        application {
+            install(WebSockets)
+            routing { simController.registerWs(this) }
+        }
+        val client = createClient { install(ClientWebSockets) }
+
+        // arena A: started from a socket that then goes away, so nothing is attached to it
+        client.webSocket("/api/admin/ws/simulation?token=$token") {
+            send(INIT_COMMAND)
+            assertNotNull(awaitContaining("\"snapshot\""))
+        }
+        val idA = registry.list().single().id
+
+        client.webSocket("/api/admin/ws/simulation?token=$token") {
+            // arena B: this socket is attached to it
+            send(INIT_COMMAND)
+            assertNotNull(awaitContaining("\"snapshot\""))
+            val idB = registry.list().first { it.id != idA }.id
+            assertEquals(2, registry.count)
+
+            send("""{"t":"stop","simulationId":"$idA"}""")
+            assertTrue(awaitTrue { registry[idA] == null }, "the targeted arena must be closed")
+            assertNotNull(registry[idB], "the attached arena must survive closing another one")
+        }
+        registry.stopAll()
+    }
+
+    @Test
+    fun ws_restart_rebuildsTheTargetedArena_notTheAttachedOne() = testApplication {
+        val store = TokenStore(scope)
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        val registry = SimulationRegistry { deps() }
+        val simController =
+            SimulationController(
+                registry = registry, npcTypesProvider = { listOf("walker") }, tokenStore = store)
+        application {
+            install(WebSockets)
+            routing { simController.registerWs(this) }
+        }
+        val client = createClient { install(ClientWebSockets) }
+
+        client.webSocket("/api/admin/ws/simulation?token=$token") {
+            send(INIT_COMMAND)
+            assertNotNull(awaitContaining("\"snapshot\""))
+        }
+        val idA = registry.list().single().id
+        val simulatorA = registry[idA]
+
+        client.webSocket("/api/admin/ws/simulation?token=$token") {
+            send(INIT_COMMAND)
+            assertNotNull(awaitContaining("\"snapshot\""))
+            val idB = registry.list().first { it.id != idA }.id
+            val simulatorB = registry[idB]
+
+            send("""{"t":"restart","simulationId":"$idA"}""")
+            // a restart swaps the arena behind the id, so identity is what tells them apart
+            assertTrue(
+                awaitTrue { registry[idA] !== simulatorA }, "the targeted arena must be rebuilt")
+            assertSame(simulatorB, registry[idB], "the attached arena must be left alone")
+        }
+        registry.stopAll()
     }
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TranslationKey } from "../i18n";
 
 // ── Layers ────────────────────────────────────────────────────────────────────
@@ -55,28 +55,6 @@ export function saveLayers(layers: Layers) {
   }
 }
 
-// ── Renderer choice ───────────────────────────────────────────────────────────
-
-const RENDERER_STORAGE_KEY = "micraft-simulator-renderer";
-
-export type RendererKind = "svg" | "canvas";
-
-export function loadRenderer(): RendererKind {
-  try {
-    return localStorage.getItem(RENDERER_STORAGE_KEY) === "canvas" ? "canvas" : "svg";
-  } catch {
-    return "svg";
-  }
-}
-
-export function saveRenderer(kind: RendererKind) {
-  try {
-    localStorage.setItem(RENDERER_STORAGE_KEY, kind);
-  } catch {
-    /* storage unavailable — choice stays session-only */
-  }
-}
-
 // ── Camera ────────────────────────────────────────────────────────────────────
 
 export interface Camera {
@@ -91,10 +69,6 @@ export interface ArenaCamera {
   height: number;
   /** world (x, z) → screen pixels, with the Z flip so Z+ points up. */
   w2s: (wx: number, wz: number) => [number, number];
-  /** screen pixels → world (x, z). */
-  s2w: (sx: number, sy: number) => [number, number];
-  /** SVG matrix that puts a group in world space. */
-  worldTransform: string;
   /** World rectangle currently on screen, with a margin so markers near the edge stay drawn. */
   visibleBounds: { minX: number; minZ: number; maxX: number; maxZ: number };
   /**
@@ -135,8 +109,13 @@ export function fitScale(width: number, height: number, arenaHalfSize: number): 
 }
 
 /**
- * Pan/zoom camera over the arena, shared by both renderers so the SVG and canvas views cannot drift
- * apart. Mutations live in a ref and a requestAnimationFrame turns them into a single re-render.
+ * Pan/zoom camera over the arena. Mutations live in a ref and a requestAnimationFrame turns them
+ * into a single re-render.
+ *
+ * Everything handed back is memoised, including the object itself: the arena re-renders at frame
+ * rate, and a camera that looked new on every one of those frames would re-run the canvas draw
+ * effect and the viewport effect for nothing. The identity must change only when the camera, the
+ * measured size, or the pan state actually changes.
  */
 export function useArenaCamera(arenaHalfSize: number): ArenaCamera {
   const cameraRef = useRef<Camera>(INITIAL_CAMERA);
@@ -199,79 +178,97 @@ export function useArenaCamera(arenaHalfSize: number): ArenaCamera {
     [cam.x, cam.z, ppb, W, H],
   );
 
-  const s2w = useCallback(
-    (sx: number, sy: number): [number, number] => [(sx - W / 2) / ppb + cam.x, -(sy - H / 2) / ppb + cam.z],
-    [cam.x, cam.z, ppb, W, H],
+  // The pointer handlers read cameraRef rather than the published camera: the ref is the live value
+  // — the state trails it by up to one frame — and it keeps them out of the memo dependencies, so
+  // dragging does not hand out a new handler on every published frame.
+  const onWheel = useCallback(
+    (e: React.WheelEvent) => {
+      e.preventDefault();
+      const rect = element?.getBoundingClientRect();
+      if (!rect) return;
+      const live = cameraRef.current;
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
+      const next = Math.min(MAX_PPB, Math.max(MIN_PPB, live.pxPerBlock * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+      // keep the world point under the cursor fixed
+      const wx = (sx - W / 2) / live.pxPerBlock + live.x;
+      const wz = -(sy - H / 2) / live.pxPerBlock + live.z;
+      cameraRef.current = {
+        pxPerBlock: next,
+        x: wx - (sx - W / 2) / next,
+        z: wz + (sy - H / 2) / next,
+      };
+      redraw();
+    },
+    [element, W, H, redraw],
   );
 
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const rect = element?.getBoundingClientRect();
-    if (!rect) return;
-    const sx = e.clientX - rect.left;
-    const sy = e.clientY - rect.top;
-    const next = Math.min(MAX_PPB, Math.max(MIN_PPB, ppb * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
-    // keep the world point under the cursor fixed
-    const [wx, wz] = s2w(sx, sy);
-    cameraRef.current = {
-      pxPerBlock: next,
-      x: wx - (sx - W / 2) / next,
-      z: wz + (sy - H / 2) / next,
-    };
-    redraw();
-  };
-
   /** Same clamp as the wheel, but centred on the viewport: the middle of the view stays put. */
-  const zoomBy = (factor: number) => {
-    const next = Math.min(MAX_PPB, Math.max(MIN_PPB, ppb * factor));
-    if (next === ppb) return;
-    cameraRef.current = { ...cameraRef.current, pxPerBlock: next };
-    redraw();
-  };
+  const zoomBy = useCallback(
+    (factor: number) => {
+      const live = cameraRef.current;
+      const next = Math.min(MAX_PPB, Math.max(MIN_PPB, live.pxPerBlock * factor));
+      if (next === live.pxPerBlock) return;
+      cameraRef.current = { ...live, pxPerBlock: next };
+      redraw();
+    },
+    [redraw],
+  );
 
-  const onMouseDown = (e: React.MouseEvent) => {
-    dragRef.current = { x: cam.x, z: cam.z, sx: e.clientX, sy: e.clientY };
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    const live = cameraRef.current;
+    dragRef.current = { x: live.x, z: live.z, sx: e.clientX, sy: e.clientY };
     setPanning(true);
-  };
+  }, []);
 
-  const onPanMove = (e: React.MouseEvent) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    cameraRef.current = {
-      ...cameraRef.current,
-      x: drag.x - (e.clientX - drag.sx) / ppb,
-      z: drag.z + (e.clientY - drag.sy) / ppb,
-    };
-    redraw();
-  };
+  const onPanMove = useCallback(
+    (e: React.MouseEvent) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const live = cameraRef.current;
+      cameraRef.current = {
+        ...live,
+        x: drag.x - (e.clientX - drag.sx) / live.pxPerBlock,
+        z: drag.z + (e.clientY - drag.sy) / live.pxPerBlock,
+      };
+      redraw();
+    },
+    [redraw],
+  );
 
-  const endPan = () => {
+  const endPan = useCallback(() => {
     dragRef.current = null;
     setPanning(false);
-  };
+  }, []);
 
-  return {
-    camera,
-    width: W,
-    height: H,
-    w2s,
-    s2w,
-    worldTransform: `matrix(${ppb},0,0,${-ppb},${W / 2 - cam.x * ppb},${H / 2 + cam.z * ppb})`,
-    visibleBounds: {
+  const visibleBounds = useMemo(
+    () => ({
       minX: cam.x - W / (2 * ppb) - VIEWPORT_MARGIN_BLOCKS,
       maxX: cam.x + W / (2 * ppb) + VIEWPORT_MARGIN_BLOCKS,
       minZ: cam.z - H / (2 * ppb) - VIEWPORT_MARGIN_BLOCKS,
       maxZ: cam.z + H / (2 * ppb) + VIEWPORT_MARGIN_BLOCKS,
-    },
-    onElement: setElement,
-    onWheel,
-    zoomBy,
-    fitAll,
-    onMouseDown,
-    onPanMove,
-    endPan,
-    panning,
-  };
+    }),
+    [cam.x, cam.z, ppb, W, H],
+  );
+
+  return useMemo(
+    () => ({
+      camera,
+      width: W,
+      height: H,
+      w2s,
+      visibleBounds,
+      onElement: setElement,
+      onWheel,
+      zoomBy,
+      fitAll,
+      onMouseDown,
+      onPanMove,
+      endPan,
+      panning,
+    }),
+    [camera, W, H, w2s, visibleBounds, onWheel, zoomBy, fitAll, onMouseDown, onPanMove, endPan, panning],
+  );
 }
 
 // ── Shared drawing metrics ────────────────────────────────────────────────────

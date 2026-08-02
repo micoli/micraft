@@ -7,7 +7,7 @@ export interface HoverTarget {
   sy: number;
 }
 
-/** Light hover card, identical in the SVG and canvas views. */
+/** Light hover card over the arena. */
 export function NpcTooltip({ hover }: { hover: HoverTarget }) {
   const t = useT();
   const { npc, sx, sy } = hover;
@@ -35,20 +35,12 @@ export function NpcTooltip({ hover }: { hover: HoverTarget }) {
   );
 }
 
-/** Bottom-left hint shared by both renderers. */
-export function ArenaHint({
-  halfSize,
-  pxPerBlock,
-  renderer,
-}: {
-  halfSize: number;
-  pxPerBlock: number;
-  renderer: string;
-}) {
+/** Bottom-left hint: arena size, scale, and what the mouse does. */
+export function ArenaHint({ halfSize, pxPerBlock }: { halfSize: number; pxPerBlock: number }) {
   const t = useT();
   return (
     <div className="absolute bottom-2 left-2 rounded bg-[#1A222C]/80 px-2 py-1 text-[10px] text-[#8A99AF]">
-      {t("sim.hint", halfSize * 2, halfSize * 2, pxPerBlock.toFixed(1), renderer)}
+      {t("sim.hint", halfSize * 2, halfSize * 2, pxPerBlock.toFixed(1))}
     </div>
   );
 }
