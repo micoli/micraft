@@ -52,6 +52,13 @@ if $BUILD_JS; then
     MC_OUT_MAP_JS="$BUILD_WEB/map.js" npm run build:map
     MC_OUT_ADMIN_JS="$BUILD_WEB/admin.js" npm run build:admin
 
+    # The admin page is served from server/src/main/resources/admin.{js,css} (AdminController reads
+    # those paths directly), not from the web dist above — so the bundles have to be emitted there as
+    # well, or `make build` leaves /admin on a stale bundle. Default script outputs point there.
+    echo "[build] Building admin bundle into server resources..."
+    npm run build:admin
+    npm run build:admin:css
+
     cd /workspace
     echo "[build] JS/CSS done"
 fi
