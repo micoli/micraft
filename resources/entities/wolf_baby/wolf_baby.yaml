@@ -31,6 +31,8 @@ animal:
   canReproduce: false
   scale: 0.75
   adultType: wolf
+  # game days before it becomes its adultType
+  growthDays: 5.0
   baseStats:
     str: 7
     dex: 8

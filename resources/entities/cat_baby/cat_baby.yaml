@@ -30,6 +30,8 @@ animal:
   canReproduce: false
   scale: 0.75
   adultType: cat
+  # game days before it becomes its adultType
+  growthDays: 4.0
   baseStats:
     str: 3
     dex: 10

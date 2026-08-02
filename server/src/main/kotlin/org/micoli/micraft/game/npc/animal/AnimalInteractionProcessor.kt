@@ -100,9 +100,14 @@ class AnimalInteractionProcessor(
                 continue
             }
 
-            if (config.adultType != null &&
-                animal.motherLevel > 0 &&
-                instance.instanceLevel >= animal.motherLevel) {
+            // Two ways to grow up. The age timer is the one that carries a population: a baby that
+            // has to earn a level first never gets there — it is passive and has no attacks — so
+            // every birth used to end in an old-age death without a single adult being replaced.
+            // The level branch is kept so an NPC that does gain levels still matures early.
+            val grownByAge = config.growthDays != null && animal.ageGameDays >= config.growthDays
+            val grownByLevel =
+                animal.motherLevel > 0 && instance.instanceLevel >= animal.motherLevel
+            if (config.adultType != null && (grownByAge || grownByLevel)) {
                 emit(
                     AnimalEventType.EVOLVE,
                     instance,

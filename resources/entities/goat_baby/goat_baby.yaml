@@ -25,6 +25,8 @@ animal:
   canReproduce: false
   scale: 0.75
   adultType: goat
+  # game days before it becomes its adultType
+  growthDays: 3.0
   baseStats:
     str: 2
     dex: 8

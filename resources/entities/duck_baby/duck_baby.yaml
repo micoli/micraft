@@ -29,6 +29,8 @@ animal:
   canReproduce: false
   scale: 0.75
   adultType: duck
+  # game days before it becomes its adultType
+  growthDays: 2.5
   baseStats:
     str: 1
     dex: 10
