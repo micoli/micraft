@@ -32,6 +32,22 @@ class NpcInstance(
     val attackCooldownsUntilMs: MutableMap<String, Long> = mutableMapOf(),
     val damageContributors: MutableMap<String, Int> = mutableMapOf(),
     @Volatile var chaseTargetPos: Vec3? = null,
+    /**
+     * Leash radius in force for the current [chaseTargetPos], or null for the default (pack radius,
+     * else `aggroRange`). Set by the animal behaviour when the target is prey, food or a mate:
+     * those errands legitimately go further from home than an animal's eyesight.
+     */
+    @Volatile var chaseLeash: Float? = null,
+    /**
+     * Multiplier on movement speed, and on outgoing damage, from the animal's condition — starving,
+     * pregnant, or both at once.
+     *
+     * Recomputed once per tick by the animal processor, which is the single place that knows the
+     * condition; every reader just multiplies. 1f means "nothing wrong", which is also what a
+     * non-animal NPC always reports.
+     */
+    @Volatile var speedMultiplier: Float = 1f,
+    @Volatile var damageMultiplier: Float = 1f,
     @Volatile var instanceLevel: Int = 1,
     @Volatile var xp: Int = 0,
     val activeEffects: MutableList<ActiveStatusEffect> = mutableListOf(),

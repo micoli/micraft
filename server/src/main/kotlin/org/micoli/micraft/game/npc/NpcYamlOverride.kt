@@ -1,8 +1,8 @@
 package org.micoli.micraft.game.npc
 
 import kotlinx.serialization.Serializable
-import org.micoli.micraft.game.npc.animal.AnimalYamlEntry
-import org.micoli.micraft.game.npc.pack.PackConfig
+import org.micoli.micraft.game.npc.animal.AnimalYamlOverride
+import org.micoli.micraft.game.npc.pack.PackConfigOverride
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 
@@ -27,7 +27,11 @@ data class NpcYamlOverride(
     val xpReward: Int? = null,
     val walkBoneAliases: Map<String, String>? = null,
     val bbmodelFile: String? = null,
-    val animal: AnimalYamlEntry? = null,
-    val pack: PackConfig? = null,
+    /**
+     * Merged field by field, not swapped wholesale: an override that only shortens a lifespan must
+     * leave the diet and the prey list alone.
+     */
+    val animal: AnimalYamlOverride? = null,
+    val pack: PackConfigOverride? = null,
     val hibernation: HibernationConfig? = null,
 )

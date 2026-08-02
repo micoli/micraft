@@ -9,8 +9,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import org.micoli.micraft.game.npc.animal.AnimalYamlEntry
+import org.micoli.micraft.game.npc.animal.AnimalYamlOverride
+import org.micoli.micraft.game.npc.animal.NpcDiet
 import org.micoli.micraft.game.npc.behaviors.InteractionableNpcBehavior
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
+import org.micoli.micraft.game.npc.pack.PackConfig
+import org.micoli.micraft.game.npc.pack.PackConfigOverride
 
 class NpcRegistryLoaderTest {
 
@@ -325,6 +330,164 @@ class NpcRegistryLoaderTest {
                             """
                                 .trimIndent()))
         assertFalse(dataDir.resolve("npc_goat/npc_goat.yaml").toFile().exists())
+    }
+
+    /**
+     * The `animal:` block used to be swapped wholesale, so an override touching one field reset
+     * every other one to its code default — an override without `lifespanDays` made the species
+     * immortal, which quietly invalidated every balancing experiment.
+     */
+    @Test
+    fun animalOverride_mergesFieldByField() {
+        val (loader) =
+            loaderWithNpcs(
+                npcs =
+                    mapOf(
+                        "wolf" to
+                            """
+                            behavior: animal
+                            width: 0.5
+                            height: 0.9
+                            wanderSpeed: 2.0
+                            wanderRadius: 55.0
+                            hp: 18
+                            animal:
+                              diet: CARNIVORE
+                              lifespanDays: 30.0
+                              preyTypes: [goat, duck]
+                              canReproduce: true
+                              hungerRatePerDay: 0.10
+                              hungerThresholdToHunt: 0.4
+                            """
+                                .trimIndent()),
+                overrides =
+                    mapOf(
+                        "wolf" to
+                            """
+                            animal:
+                              lifespanDays: 12.0
+                            """
+                                .trimIndent()),
+            )
+
+        val animal = assertNotNull(loader.load()["wolf"]?.animalConfig)
+        assertEquals(12.0, animal.lifespanDays, "the overridden field wins")
+        assertEquals(listOf("goat", "duck"), animal.preyTypes, "untouched fields survive")
+        assertEquals(0.10, animal.hungerRatePerDay)
+        assertEquals(0.4, animal.hungerThresholdToHunt)
+        assertTrue(animal.canReproduce)
+    }
+
+    @Test
+    fun packOverride_mergesFieldByField() {
+        val (loader) =
+            loaderWithNpcs(
+                npcs =
+                    mapOf(
+                        "wolf" to
+                            """
+                            behavior: animal
+                            width: 0.5
+                            height: 0.9
+                            wanderSpeed: 2.0
+                            wanderRadius: 55.0
+                            pack:
+                              extendPackType: [wolf_veteran]
+                              minSizeToEngage: 3
+                              hostileTypes: [polar_bear]
+                            """
+                                .trimIndent()),
+                overrides =
+                    mapOf(
+                        "wolf" to
+                            """
+                            pack:
+                              minSizeToEngage: 5
+                            """
+                                .trimIndent()),
+            )
+
+        val pack = assertNotNull(loader.load()["wolf"]?.packConfig)
+        assertEquals(5, pack.minSizeToEngage)
+        // wiping this would silently stop the species pack-hunting at all
+        assertEquals(listOf("polar_bear"), pack.hostileTypes)
+        assertEquals(listOf("wolf_veteran"), pack.extendPackType)
+    }
+
+    /** A type with no `animal:` block can be given one from an override alone. */
+    @Test
+    fun animalOverride_onATypeWithoutAnAnimalBlock_fallsBackToTheEntryDefaults() {
+        val (loader) =
+            loaderWithNpcs(
+                npcs =
+                    mapOf(
+                        "polar_bear" to
+                            """
+                            behavior: random_movable
+                            width: 0.5
+                            height: 0.9
+                            wanderSpeed: 2.0
+                            wanderRadius: 32.0
+                            hp: 40
+                            """
+                                .trimIndent()),
+                overrides =
+                    mapOf(
+                        "polar_bear" to
+                            """
+                            animal:
+                              diet: CARNIVORE
+                              lifespanDays: 40.0
+                            """
+                                .trimIndent()),
+            )
+
+        val animal = assertNotNull(loader.load()["polar_bear"]?.animalConfig)
+        assertEquals(40.0, animal.lifespanDays)
+        assertEquals(0.08, animal.hungerRatePerDay, "unset fields take the entry default")
+    }
+
+    /**
+     * The other override path: the world simulator layers rules on an already-built definition
+     * rather than on raw YAML. Both must merge the same way, or a tuning experiment behaves
+     * differently depending on whether it came from a file or from the admin UI.
+     */
+    @Test
+    fun definitionOverride_mergesTheAnimalBlockFieldByField() {
+        val base =
+            NpcDefinition(
+                type = "wolf",
+                behavior = RandomMovableNpcBehavior(),
+                bbmodelFile = "wolf",
+                width = 0.5f,
+                height = 0.9f,
+                wanderSpeed = 2f,
+                wanderRadius = 55f,
+                hp = 18,
+                animalConfig =
+                    AnimalYamlEntry(
+                        diet = NpcDiet.CARNIVORE,
+                        lifespanDays = 30.0,
+                        preyTypes = listOf("goat", "duck"),
+                        canReproduce = true,
+                        hungerRatePerDay = 0.10,
+                    ),
+                packConfig = PackConfig(minSizeToEngage = 3, hostileTypes = listOf("polar_bear")),
+            )
+
+        val merged =
+            base.applyOverride(
+                NpcYamlOverride(
+                    animal = AnimalYamlOverride(lifespanDays = 12.0),
+                    pack = PackConfigOverride(minSizeToEngage = 5),
+                ))
+
+        val animal = assertNotNull(merged.animalConfig)
+        assertEquals(12.0, animal.lifespanDays)
+        assertEquals(listOf("goat", "duck"), animal.preyTypes)
+        assertEquals(0.10, animal.hungerRatePerDay)
+        assertEquals(5, assertNotNull(merged.packConfig).minSizeToEngage)
+        assertEquals(listOf("polar_bear"), merged.packConfig?.hostileTypes)
     }
 }
 

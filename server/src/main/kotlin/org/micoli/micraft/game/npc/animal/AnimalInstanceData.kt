@@ -19,6 +19,26 @@ class AnimalInstanceData(
     @Volatile var preyTargetPos: Vec3? = null,
     @Volatile var mateTargetId: String? = null,
     @Volatile var mateTargetPos: Vec3? = null,
+    /**
+     * Grazing block this animal is heading for.
+     *
+     * Feeding used to consume only what was already within 2.5 blocks, so a herbivore starved
+     * beside a meadow it never walked to. Nothing was pulling it there because no goal position
+     * existed.
+     */
+    @Volatile var foodTargetPos: Vec3? = null,
+    /** Where to run to, away from the nearest predator. Overrides every other errand. */
+    @Volatile var fleeTargetPos: Vec3? = null,
+    /**
+     * Game days spent continuously starving; 0 when the animal is not starving.
+     *
+     * Accumulated like [ageGameDays] rather than derived from a start date, so it measures time the
+     * animal actually lived through and does not depend on when the world clock is advanced
+     * relative to this pass. Hunger itself stays clamped at 1.0 — bounded and serializable — and
+     * this is the timer that turns "has been starving a while" into a death. Reset to 0 as soon as
+     * it eats: recovery is complete, not partial.
+     */
+    @Volatile var starvingDays: Double = 0.0,
     @Volatile var hpRegenAccumulator: Float = 0f,
 ) {
     fun toState(): AnimalStateData =
@@ -46,6 +66,14 @@ class AnimalInstanceData(
                 motherLevel = state.motherLevel,
             )
 
+        /**
+         * A freshly spawned animal.
+         *
+         * [random] defaults to the global source only for callers that genuinely do not have one.
+         * Pass the NPC's own source wherever it exists: gender, starting age, hunger and stat
+         * spread all come from here, so drawing them globally makes a seeded run irreproducible —
+         * the simulator advertised a seed while its animals were rolled off `Random.Default`.
+         */
         fun initial(
             lifespanDays: Double?,
             baseStats: BaseStats,
@@ -54,35 +82,36 @@ class AnimalInstanceData(
             motherLevel: Int = 0,
             initialHunger: Double? = null,
             initialAge: Double? = null,
+            random: Random = Random,
         ): AnimalInstanceData {
             val age =
                 initialAge
-                    ?: if (lifespanDays != null) Random.nextDouble(0.0, lifespanDays * 0.5) else 0.0
+                    ?: if (lifespanDays != null) random.nextDouble(0.0, lifespanDays * 0.5) else 0.0
             val stats =
                 BaseStats(
                     str =
-                        (baseStats.str + Random.nextInt(-statsVariance, statsVariance + 1))
+                        (baseStats.str + random.nextInt(-statsVariance, statsVariance + 1))
                             .coerceAtLeast(1),
                     dex =
-                        (baseStats.dex + Random.nextInt(-statsVariance, statsVariance + 1))
+                        (baseStats.dex + random.nextInt(-statsVariance, statsVariance + 1))
                             .coerceAtLeast(1),
                     intel =
-                        (baseStats.intel + Random.nextInt(-statsVariance, statsVariance + 1))
+                        (baseStats.intel + random.nextInt(-statsVariance, statsVariance + 1))
                             .coerceAtLeast(1),
                     wis =
-                        (baseStats.wis + Random.nextInt(-statsVariance, statsVariance + 1))
+                        (baseStats.wis + random.nextInt(-statsVariance, statsVariance + 1))
                             .coerceAtLeast(1),
                     con =
-                        (baseStats.con + Random.nextInt(-statsVariance, statsVariance + 1))
+                        (baseStats.con + random.nextInt(-statsVariance, statsVariance + 1))
                             .coerceAtLeast(1),
                     cha =
-                        (baseStats.cha + Random.nextInt(-statsVariance, statsVariance + 1))
+                        (baseStats.cha + random.nextInt(-statsVariance, statsVariance + 1))
                             .coerceAtLeast(1),
                 )
             return AnimalInstanceData(
-                gender = if (Random.nextBoolean()) NpcGender.MALE else NpcGender.FEMALE,
+                gender = if (random.nextBoolean()) NpcGender.MALE else NpcGender.FEMALE,
                 ageGameDays = age,
-                hunger = initialHunger ?: Random.nextDouble(0.1, 0.5),
+                hunger = initialHunger ?: random.nextDouble(0.1, 0.5),
                 gestationRemainingDays = null,
                 lastReproductionDay = null,
                 parentIds = parentIds.toMutableSet(),
@@ -98,6 +127,7 @@ class AnimalInstanceData(
             parentAId: String,
             parentBId: String,
             motherLevel: Int,
+            random: Random = Random,
         ): AnimalInstanceData {
             val avgStr = (parentA.stats.str + parentB.stats.str) / 2
             val avgDex = (parentA.stats.dex + parentB.stats.dex) / 2
@@ -108,26 +138,26 @@ class AnimalInstanceData(
             val stats =
                 BaseStats(
                     str =
-                        (avgStr + Random.nextInt(-statsVariance, statsVariance + 1)).coerceAtLeast(
+                        (avgStr + random.nextInt(-statsVariance, statsVariance + 1)).coerceAtLeast(
                             1),
                     dex =
-                        (avgDex + Random.nextInt(-statsVariance, statsVariance + 1)).coerceAtLeast(
+                        (avgDex + random.nextInt(-statsVariance, statsVariance + 1)).coerceAtLeast(
                             1),
                     intel =
-                        (avgIntel + Random.nextInt(-statsVariance, statsVariance + 1))
+                        (avgIntel + random.nextInt(-statsVariance, statsVariance + 1))
                             .coerceAtLeast(1),
                     wis =
-                        (avgWis + Random.nextInt(-statsVariance, statsVariance + 1)).coerceAtLeast(
+                        (avgWis + random.nextInt(-statsVariance, statsVariance + 1)).coerceAtLeast(
                             1),
                     con =
-                        (avgCon + Random.nextInt(-statsVariance, statsVariance + 1)).coerceAtLeast(
+                        (avgCon + random.nextInt(-statsVariance, statsVariance + 1)).coerceAtLeast(
                             1),
                     cha =
-                        (avgCha + Random.nextInt(-statsVariance, statsVariance + 1)).coerceAtLeast(
+                        (avgCha + random.nextInt(-statsVariance, statsVariance + 1)).coerceAtLeast(
                             1),
                 )
             return AnimalInstanceData(
-                gender = if (Random.nextBoolean()) NpcGender.MALE else NpcGender.FEMALE,
+                gender = if (random.nextBoolean()) NpcGender.MALE else NpcGender.FEMALE,
                 ageGameDays = 0.0,
                 hunger = 0.2,
                 gestationRemainingDays = null,

@@ -9,6 +9,10 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.yamlOverrideSection
+import org.micoli.micraft.game.npc.animal.applyOverride
+import org.micoli.micraft.game.npc.animal.toEntry
+import org.micoli.micraft.game.npc.pack.applyOverride
+import org.micoli.micraft.game.npc.pack.toConfig
 import org.slf4j.LoggerFactory
 
 private val npcLog = LoggerFactory.getLogger("NpcRegistryLoader")
@@ -18,6 +22,8 @@ private fun NpcSpawnConfigRaw.applyOverride(o: NpcSpawnConfigRawOverride) =
         autoSpawn = o.autoSpawn ?: autoSpawn,
         maxPerChunk = o.maxPerChunk ?: maxPerChunk,
         spawnBiomes = o.spawnBiomes ?: spawnBiomes,
+        maxTotal = o.maxTotal ?: maxTotal,
+        minTotal = o.minTotal ?: minTotal,
     )
 
 private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
@@ -40,8 +46,8 @@ private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
         baseStats = o.baseStats ?: baseStats,
         xpReward = o.xpReward ?: xpReward,
         bbmodelFile = o.bbmodelFile ?: bbmodelFile,
-        animal = o.animal ?: animal,
-        pack = o.pack ?: pack,
+        animal = o.animal?.let { animal?.applyOverride(it) ?: it.toEntry() } ?: animal,
+        pack = o.pack?.let { pack?.applyOverride(it) ?: it.toConfig() } ?: pack,
         hibernation = o.hibernation ?: hibernation,
     )
 
@@ -64,6 +70,8 @@ fun NpcDefinition.applyOverride(o: NpcYamlOverride): NpcDefinition =
                     autoSpawn = it.autoSpawn ?: spawn.autoSpawn,
                     maxPerChunk = it.maxPerChunk ?: spawn.maxPerChunk,
                     spawnBiomes = it.spawnBiomes ?: spawn.spawnBiomes,
+                    maxTotal = it.maxTotal ?: spawn.maxTotal,
+                    minTotal = it.minTotal ?: spawn.minTotal,
                 )
             } ?: spawn,
         hp = o.hp ?: hp,
@@ -77,8 +85,9 @@ fun NpcDefinition.applyOverride(o: NpcYamlOverride): NpcDefinition =
         characterClass = o.characterClass ?: characterClass,
         baseStats = o.baseStats ?: baseStats,
         xpReward = o.xpReward ?: xpReward,
-        animalConfig = o.animal ?: animalConfig,
-        packConfig = o.pack ?: packConfig,
+        animalConfig =
+            o.animal?.let { animalConfig?.applyOverride(it) ?: it.toEntry() } ?: animalConfig,
+        packConfig = o.pack?.let { packConfig?.applyOverride(it) ?: it.toConfig() } ?: packConfig,
         hibernation = o.hibernation ?: hibernation,
     )
 
@@ -153,6 +162,8 @@ class NpcRegistryLoader(
                                             autoSpawn = entry.spawn.autoSpawn,
                                             maxPerChunk = entry.spawn.maxPerChunk,
                                             spawnBiomes = entry.spawn.spawnBiomes,
+                                            maxTotal = entry.spawn.maxTotal,
+                                            minTotal = entry.spawn.minTotal,
                                         ),
                                     hp = entry.hp,
                                     aggroMode = entry.aggroMode,
