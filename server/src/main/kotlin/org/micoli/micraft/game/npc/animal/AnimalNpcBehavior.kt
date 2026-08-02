@@ -12,7 +12,18 @@ class AnimalNpcBehavior : NpcBehavior {
     override fun tick(instance: NpcInstance, world: WorldState, ctx: NpcTickContext): Boolean {
         val animal = instance.animalData
         if (animal != null && instance.chaseTargetPos == null) {
-            instance.chaseTargetPos = animal.preyTargetPos ?: animal.mateTargetPos
+            // Flight first: nothing an animal wants is worth being eaten for. Then food before a
+            // mate — one too hungry to breed has nothing to gain from courtship anyway, and
+            // `hungerThresholdToMate` already refuses it.
+            val errand =
+                animal.fleeTargetPos
+                    ?: animal.preyTargetPos
+                    ?: animal.foodTargetPos
+                    ?: animal.mateTargetPos
+            instance.chaseTargetPos = errand
+            // An errand is allowed to leave the home range; aggro and pack keep their own leashes.
+            instance.chaseLeash =
+                if (errand != null) instance.definition.animalConfig?.roamRadius else null
         }
         return movable.tick(instance, world, ctx)
     }

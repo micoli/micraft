@@ -3,7 +3,7 @@ walkBoneAliases:
   leftArm: leg1
   rightLeg: leg2
   leftLeg: leg3
-behavior: random_movable
+behavior: animal
 width: 0.5
 height: 0.9
 wanderSpeed: 2.0

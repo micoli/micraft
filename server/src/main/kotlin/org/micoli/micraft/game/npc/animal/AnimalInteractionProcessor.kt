@@ -233,6 +233,7 @@ class AnimalInteractionProcessor(
     private suspend fun slowTick(currentDay: Double) {
         val allAnimal = npcManager.getAll().filter { !it.isDead && it.animalData != null }
 
+        updateFlight(allAnimal)
         updateTargets(allAnimal, currentDay)
         tickPredation(allAnimal)
         tickHerbivoreFeeding(allAnimal)
@@ -479,13 +480,19 @@ class AnimalInteractionProcessor(
             }
             val target = bestBlock
             if (target == null) {
-                animal.preyTargetPos = null
+                animal.foodTargetPos = null
                 continue
             }
             if (bestDistSq <= EAT_RANGE_SQ) {
+                animal.foodTargetPos = null
                 consumeVegetation(bestX, bestY, bestZ, target, instance, animal, config)
             } else {
-                animal.preyTargetPos =
+                // Its own field, not `preyTargetPos`: a herbivore borrowing the predator's slot
+                // only
+                // worked because `updateTargets` happened to clear it first, and it made "walking
+                // to
+                // a meadow" indistinguishable from "hunting" everywhere else in the code.
+                animal.foodTargetPos =
                     org.micoli.micraft.player.Vec3(
                         bestX.toFloat() + 0.5f, pos.y, bestZ.toFloat() + 0.5f)
             }
@@ -530,7 +537,12 @@ class AnimalInteractionProcessor(
 
             mate.animalData?.mateTargetPos = mate.state.pos
 
-            if (distSq <= MATING_RANGE_SQ) {
+            // Contact range, not the selection range: `matingRange` says how far a partner is worth
+            // walking to (6–10 blocks), and using it here would have pairs conceiving across a
+            // field.
+            val contact =
+                instance.definition.animalConfig?.matingContactRange ?: DEFAULT_MATING_CONTACT_RANGE
+            if (distSq <= contact * contact) {
                 val female =
                     if (animal.gender == NpcGender.FEMALE) Pair(instance, animal)
                     else Pair(mate, mateAnimal)
@@ -626,7 +638,7 @@ class AnimalInteractionProcessor(
 
     companion object {
         private const val SLOW_TICK_INTERVAL = 20
-        private const val MATING_RANGE_SQ = 3.0f * 3.0f
+        private const val DEFAULT_MATING_CONTACT_RANGE = 2.5f
         private const val EAT_RANGE_SQ = 2.5f * 2.5f
     }
 }
