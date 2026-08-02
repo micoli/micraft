@@ -286,4 +286,36 @@ class WorldSimulatorTest {
             run(),
             "a seeded simulation must be reproducible, otherwise rule comparisons are meaningless")
     }
+
+    @Test
+    fun maxGameDays_pausesTheArenaOnceTheSpanIsRun() = runBlocking {
+        // running, not paused: the limit only ever fires on an arena that is actually advancing
+        val sim = simulator(testConfig().copy(ticksPerSecond = 100, maxGameDays = 0.5))
+        try {
+            sim.start()
+            sim.stepOnce(200)
+            assertTrue(sim.paused, "the arena must park itself once its span is run")
+            assertTrue(
+                sim.statsDto().gameDay >= 0.5,
+                "it must park at the limit, not before: ${sim.statsDto().gameDay}")
+            // paused, not closed — the charts and the event log are the point of a bounded run
+            assertTrue(sim.npcDtos().isNotEmpty() || sim.statsDto().npcCount == 0)
+        } finally {
+            sim.stop()
+        }
+    }
+
+    @Test
+    fun maxGameDays_zeroRunsOn() = runBlocking {
+        val sim = simulator(testConfig().copy(ticksPerSecond = 100, maxGameDays = 0.0))
+        try {
+            sim.start()
+            sim.stepOnce(200)
+            assertTrue(
+                sim.statsDto().gameDay > 0.5, "the clock must have moved past any short span")
+            assertTrue(!sim.paused, "no limit means run until someone stops it")
+        } finally {
+            sim.stop()
+        }
+    }
 }

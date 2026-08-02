@@ -398,6 +398,21 @@ class WorldSimulator(
             // needs a player nearby, like the real spawner does
             pipeline.lifecycle(world, sessions.toList())
         }
+        enforceRunLimit()
+    }
+
+    /**
+     * Park the arena once it has run its configured span. Already paused means either the operator
+     * did it or the limit fired earlier, and a manual step past the mark is deliberate — neither
+     * should be fought over.
+     */
+    private fun enforceRunLimit() {
+        val limit = config.maxGameDays
+        if (limit <= 0.0 || paused) return
+        if (gameTimeService.currentGameDay < limit) return
+        ticksPerSecond = 0
+        logEvent(
+            SimEventType.SYSTEM, "limite de $limit jours de jeu atteinte — simulation en pause")
     }
 
     // ── Commands ──────────────────────────────────────────────────────────────

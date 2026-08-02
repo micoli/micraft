@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   COUNTER_SERIES,
+  buildMetricsExport,
   columnAt,
   counterRowsAt,
   counterValues,
@@ -22,7 +23,10 @@ import {
   DEFAULT_POPULATION_CAP,
   MAX_NPCS_PER_FRAME_CEILING,
   frameCapFor,
+  npcColorSlot,
+  resetNpcColors,
   type SimMetricBucket,
+  type SimulationConfig,
 } from "../admin/simulator/types";
 
 function bucket(index: number, over: Partial<SimMetricBucket> = {}): SimMetricBucket {
@@ -86,17 +90,27 @@ describe("replaceBuckets", () => {
 });
 
 describe("stackKeys", () => {
-  it("orders types by total, biggest first", () => {
+  beforeEach(() => resetNpcColors());
+
+  it("orders types by palette slot, so touching segments are palette-neighbours", () => {
     const buckets = [
       bucket(1, { deathsByType: { goat: 1, wolf: 5 } }),
       bucket(2, { deathsByType: { goat: 2, rabbit: 1 } }),
     ];
-    expect(stackKeys(buckets, pickDeaths)).toEqual(["wolf", "goat", "rabbit"]);
+    // goat and wolf claim their slots from the first bucket, rabbit from the second
+    expect(stackKeys(buckets, pickDeaths)).toEqual(["goat", "wolf", "rabbit"]);
   });
 
-  it("breaks ties by name so the stack order cannot flicker", () => {
-    const buckets = [bucket(1, { aliveByType: { wolf: 2, goat: 2 } })];
-    expect(stackKeys(buckets, pickAlive)).toEqual(["goat", "wolf"]);
+  it("keeps its order when the populations trade places", () => {
+    const early = [bucket(1, { aliveByType: { goat: 1, wolf: 9 } })];
+    const later = [bucket(1, { aliveByType: { goat: 9, wolf: 1 } })];
+    expect(stackKeys(early, pickAlive)).toEqual(stackKeys(later, pickAlive));
+  });
+
+  it("gives every type a distinct slot", () => {
+    const buckets = [bucket(1, { aliveByType: { goat: 1, wolf: 1, rabbit: 1 } })];
+    const slots = stackKeys(buckets, pickAlive).map(npcColorSlot);
+    expect(new Set(slots).size).toBe(3);
   });
 
   it("is empty when nothing was recorded", () => {
@@ -311,5 +325,90 @@ describe("dayLabel", () => {
 
   it("takes the day marker from the caller, so the charts follow the UI locale", () => {
     expect(dayLabel(3.5, "j")).toBe("j 3.5");
+  });
+});
+
+describe("buildMetricsExport", () => {
+  const config: SimulationConfig = {
+    halfSize: 40,
+    groundY: 7,
+    wallHeight: 4,
+    ticksPerSecond: 200,
+    seed: 7,
+    zoneLevel: 3,
+    maxNpcs: 0,
+    populationCap: 500,
+    maxNpcsPerFrame: 500,
+    vegetationDensity: 0.05,
+    gameDayDurationSeconds: 60,
+    maxGameDays: 30,
+    npcTuning: {} as never,
+    npcDefinitionOverrides: {},
+    initialSpawns: [{ type: "goat", count: 4 }],
+    players: [],
+    autoSpawnEnabled: true,
+  };
+
+  it("carries the arena settings, so a run can be read without them being retyped", () => {
+    const out = buildMetricsExport([bucket(1)], 0.25, config);
+    expect(out.setup?.seed).toBe(7);
+    expect(out.setup?.maxGameDays).toBe(30);
+    expect(out.setup?.initialSpawns).toEqual([{ type: "goat", count: 4 }]);
+  });
+
+  it("reports no setup when nothing is attached yet", () => {
+    expect(buildMetricsExport([bucket(1)], 0.25, null).setup).toBeNull();
+  });
+
+  it("spans to the end of the last slice, not to its start", () => {
+    // three 0.25-day slices starting at 0.25 cover 0.25 → 1.00
+    const out = buildMetricsExport([bucket(1), bucket(2), bucket(3)], 0.25, config);
+    expect(out.span.slices).toBe(3);
+    expect(out.span.gameDays).toBeCloseTo(0.75);
+  });
+
+  it("sums the counters over the whole history", () => {
+    const out = buildMetricsExport([bucket(1, { births: 2 }), bucket(2, { births: 3, attacks: 1 })], 0.25, config);
+    expect(out.totals.counters.births).toBe(5);
+    expect(out.totals.counters.attacks).toBe(1);
+    expect(out.totals.counters.evolutions).toBe(0);
+  });
+
+  it("summarises each type: peak, final, mean and deaths", () => {
+    const out = buildMetricsExport(
+      [
+        bucket(1, { aliveByType: { goat: 2 }, deathsByType: { goat: 1 } }),
+        bucket(2, { aliveByType: { goat: 6 } }),
+        bucket(3, { aliveByType: { goat: 4 }, deathsByType: { goat: 2 } }),
+      ],
+      0.25,
+      config,
+    );
+    const goat = out.totals.byType.find((entry) => entry.type === "goat");
+    expect(goat).toEqual({ type: "goat", peakAlive: 6, finalAlive: 4, meanAlive: 4, deaths: 3, slicesPresent: 3 });
+  });
+
+  it("keeps a type that only ever died, so a wipe-out is still visible", () => {
+    const out = buildMetricsExport([bucket(1, { deathsByType: { wolf: 3 } })], 0.25, config);
+    const wolf = out.totals.byType.find((entry) => entry.type === "wolf");
+    expect(wolf?.deaths).toBe(3);
+    expect(wolf?.peakAlive).toBe(0);
+  });
+
+  it("emits one slice per bucket, oldest first", () => {
+    const out = buildMetricsExport([bucket(1, { aliveByType: { goat: 1 } }), bucket(2)], 0.25, config);
+    expect(out.slices.map((s) => s.tick)).toEqual([100, 200]);
+    expect(out.slices[0].alive).toEqual({ goat: 1 });
+  });
+
+  it("survives an empty history rather than reporting a negative span", () => {
+    const out = buildMetricsExport([], 0.25, config);
+    expect(out.span).toMatchObject({ slices: 0, gameDays: 0, lastTick: 0 });
+    expect(out.totals.byType).toEqual([]);
+  });
+
+  it("round-trips through JSON, which is the whole point", () => {
+    const out = buildMetricsExport([bucket(1, { aliveByType: { goat: 1 } })], 0.25, config);
+    expect(JSON.parse(JSON.stringify(out))).toEqual(out);
   });
 });

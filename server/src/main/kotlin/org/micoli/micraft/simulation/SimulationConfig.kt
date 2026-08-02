@@ -57,6 +57,13 @@ data class SimulationConfig(
     val vegetationDensity: Double = 0.08,
     /** Shortens a game day so gestation and lifespan land in seconds instead of hours. */
     val gameDayDurationSeconds: Double = 60.0,
+    /**
+     * Game days to run before pausing. 0 = run until someone stops it.
+     *
+     * Pausing rather than closing: the point of a bounded run is to read what came out of it, and
+     * the charts, the event log and every NPC are only inspectable while the arena is still there.
+     */
+    val maxGameDays: Double = 0.0,
     val npcTuning: NpcTuning = NpcTuning(),
     val npcDefinitionOverrides: Map<String, NpcYamlOverride> = emptyMap(),
     val initialSpawns: List<SimSpawn> = emptyList(),

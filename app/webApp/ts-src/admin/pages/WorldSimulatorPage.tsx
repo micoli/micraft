@@ -40,6 +40,14 @@ const TAB_LABEL_KEYS: Record<Tab, TranslationKey> = {
 
 const DEFAULT_ARENA = { halfSize: 100, groundY: 7, wallHeight: 4 };
 
+/** How long a run lasts, in game days. 0 = until someone stops it. */
+const RUN_LENGTHS: { days: number; labelKey: TranslationKey }[] = [
+  { days: 30, labelKey: "sim.page.runDays30" },
+  { days: 60, labelKey: "sim.page.runDays60" },
+  { days: 120, labelKey: "sim.page.runDays120" },
+  { days: 0, labelKey: "sim.page.runForever" },
+];
+
 function baseConfig(tuning: NpcTuning): SimulationConfig {
   return {
     ...DEFAULT_ARENA,
@@ -51,6 +59,7 @@ function baseConfig(tuning: NpcTuning): SimulationConfig {
     maxNpcsPerFrame: frameCapFor(DEFAULT_POPULATION_CAP),
     vegetationDensity: 0.08,
     gameDayDurationSeconds: 60,
+    maxGameDays: 0,
     npcTuning: tuning,
     npcDefinitionOverrides: {},
     initialSpawns: [],
@@ -102,6 +111,7 @@ export function WorldSimulatorPage() {
   const [spawnCount, setSpawnCount] = useState(1);
   const [liveSpawnType, setLiveSpawnType] = useState("");
   const [liveSpawnCount, setLiveSpawnCount] = useState(1);
+  const [runDays, setRunDays] = useState(RUN_LENGTHS[0].days);
 
   const npcTypes = sim.defaults?.npcTypes ?? [];
   // The server holds its config as an immutable value: these only ever apply to a new arena, so
@@ -180,6 +190,7 @@ export function WorldSimulatorPage() {
         seed,
         zoneLevel,
         gameDayDurationSeconds: dayDuration,
+        maxGameDays: runDays,
         npcTuning: { ...tuning, gameDayDurationSeconds: dayDuration },
         initialSpawns: spawns,
         autoSpawnEnabled: autoSpawn,
@@ -207,6 +218,20 @@ export function WorldSimulatorPage() {
         >
           {t("sim.page.start")}
         </button>
+        {/* the span belongs with Start: it is decided when the arena is created and read-only after */}
+        <select
+          value={runDays}
+          onChange={(e) => setRunDays(Number(e.target.value))}
+          title={t("sim.page.runLengthTitle")}
+          aria-label={t("sim.page.runLengthTitle")}
+          className="rounded border border-[#2E3A4E] bg-[#0E1726] px-2 py-1 text-[11px] text-white"
+        >
+          {RUN_LENGTHS.map((option) => (
+            <option key={option.days} value={option.days}>
+              {t(option.labelKey)}
+            </option>
+          ))}
+        </select>
         {/* the toolbar only creates arenas; restarting, detaching and closing target one arena in
             particular, so they live on its row in the list */}
         {sim.error && <span className="ml-3 text-[11px] text-red-300">{sim.error}</span>}
@@ -492,7 +517,9 @@ export function WorldSimulatorPage() {
           </div>
 
           <div className="min-h-0 flex-1 overflow-hidden p-3">
-            {tab === "charts" && <MetricsPanel buckets={sim.metrics} bucketGameDays={sim.bucketGameDays} />}
+            {tab === "charts" && (
+              <MetricsPanel buckets={sim.metrics} bucketGameDays={sim.bucketGameDays} config={sim.config} />
+            )}
 
             {tab === "log" && <EventLogPanel events={sim.events} onSelect={selectNpc} />}
 

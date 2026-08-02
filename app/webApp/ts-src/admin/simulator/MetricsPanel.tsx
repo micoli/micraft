@@ -1,8 +1,9 @@
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import {
   COUNTER_SERIES,
   DEFAULT_WINDOW_GAME_DAYS,
   WINDOW_OPTIONS,
+  buildMetricsExport,
   columnAt,
   counterRowsAt,
   counterValues,
@@ -21,15 +22,83 @@ import {
   type TypedPick,
 } from "./metrics";
 import { useT } from "../i18n";
-import { npcColor, type SimMetricBucket } from "./types";
+import { npcColor, type SimMetricBucket, type SimulationConfig } from "./types";
 
 interface Props {
   buckets: SimMetricBucket[];
   bucketGameDays: number;
+  /** The attached arena's settings, exported alongside the series. Null before the first snapshot. */
+  config: SimulationConfig | null;
+}
+
+/** How long the button keeps saying it copied. */
+const COPIED_FEEDBACK_MS = 2_000;
+
+/**
+ * Hand the whole history to the clipboard as JSON, one click.
+ *
+ * The clipboard rather than a download, because the point is to paste the run into a conversation and
+ * ask why the wolves ate everything. A download is the fallback: writing the clipboard needs a secure
+ * origin and a permission, and neither is guaranteed for an admin page served over plain HTTP.
+ */
+function ExportButton({ buckets, bucketGameDays, config }: Props) {
+  const t = useT();
+  const [copied, setCopied] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    },
+    [],
+  );
+
+  const flashCopied = () => {
+    setCopied(true);
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS);
+  };
+
+  const download = (json: string) => {
+    const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "micraft-simulation-metrics.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportAll = () => {
+    const json = JSON.stringify(buildMetricsExport(buckets, bucketGameDays, config), null, 2);
+    const clipboard = navigator.clipboard;
+    if (!clipboard) {
+      download(json);
+      return;
+    }
+    clipboard.writeText(json).then(flashCopied, () => download(json));
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={exportAll}
+      disabled={buckets.length === 0}
+      title={t("sim.metrics.exportTitle")}
+      className={
+        "rounded px-1.5 py-0.5 text-[10px] disabled:opacity-40 " +
+        (copied ? "bg-emerald-500/80 text-white" : "bg-[#2E3A4E] text-[#C7D2FE] hover:bg-[#3C50E0]/60")
+      }
+    >
+      {t(copied ? "sim.metrics.exportCopied" : "sim.metrics.export")}
+    </button>
+  );
 }
 
 const BOX_W = 300;
 const BOX_H = 90;
+
+/** Surface showing between two stacked segments. The box is 90 units tall over 90 px, so this is px. */
+const SEGMENT_GAP = 1.5;
 
 function ChartFrame({
   title,
@@ -203,16 +272,21 @@ function StackedByType({
         <line x1={0} y1={BOX_H} x2={BOX_W} y2={BOX_H} stroke="#2E3A4E" strokeWidth={0.5} />
         {hover && hovered && <HoverGuide x={hover.index * barWidth} width={barWidth} />}
         {columns.map((column, i) =>
-          column.segments.map((segment) => (
-            <rect
-              key={`${column.index}-${segment.key}`}
-              x={i * barWidth}
-              y={BOX_H - (segment.to / top) * BOX_H}
-              width={Math.max(barWidth - 0.3, 0.4)}
-              height={((segment.to - segment.from) / top) * BOX_H}
-              fill={npcColor(segment.key)}
-            />
-          )),
+          column.segments.map((segment) => {
+            const height = ((segment.to - segment.from) / top) * BOX_H;
+            return (
+              <rect
+                key={`${column.index}-${segment.key}`}
+                x={i * barWidth}
+                y={BOX_H - (segment.to / top) * BOX_H}
+                width={Math.max(barWidth - 0.3, 0.4)}
+                // a sliver of the surface between segments, so the boundary reads even when two
+                // neighbours are close in colour — but never at the price of hiding a thin segment
+                height={height > SEGMENT_GAP * 2 ? height - SEGMENT_GAP : height}
+                fill={npcColor(segment.key)}
+              />
+            );
+          }),
         )}
       </svg>
       {hover && hovered && (
@@ -343,7 +417,7 @@ function Counters({ buckets, slots }: { buckets: SimMetricBucket[]; slots: numbe
  * Charts of the arena's history. Memoized: the buckets change once a second while the arena pushes
  * frames twenty times a second, and re-stacking the series on every frame would be wasted work.
  */
-export const MetricsPanel = memo(function MetricsPanel({ buckets, bucketGameDays }: Props) {
+export const MetricsPanel = memo(function MetricsPanel({ buckets, bucketGameDays, config }: Props) {
   const t = useT();
   const [windowDays, setWindowDays] = useState(DEFAULT_WINDOW_GAME_DAYS);
   const slots = slotsFor(bucketGameDays, windowDays);
@@ -367,6 +441,9 @@ export const MetricsPanel = memo(function MetricsPanel({ buckets, bucketGameDays
         </button>
       ))}
       <span className="ml-auto text-[10px] text-[#4A5568]">{t("sim.metrics.slicesInMemory", buckets.length)}</span>
+      {/* next to the window selector, but deliberately not bound to it: the export is the whole
+          history, whatever slice of it is on screen */}
+      <ExportButton buckets={buckets} bucketGameDays={bucketGameDays} config={config} />
     </div>
   );
 

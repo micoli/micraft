@@ -1,5 +1,12 @@
 import type { TranslationKey } from "../i18n";
-import type { SimMetricBucket, SimMetrics } from "./types";
+import {
+  npcColorSlot,
+  type NpcTuning,
+  type SimMetricBucket,
+  type SimMetrics,
+  type SimSpawn,
+  type SimulationConfig,
+} from "./types";
 
 /** Same ceiling as the server keeps, so the client never holds more history than exists. */
 export const METRIC_HISTORY = 240;
@@ -85,20 +92,27 @@ export const pickDeaths: TypedPick = (bucket) => bucket.deathsByType;
 export const pickAlive: TypedPick = (bucket) => bucket.aliveByType;
 
 /**
- * NPC types present in the series, biggest total first.
+ * NPC types present in the series, in palette order.
  *
- * Ordering by total, not alphabetically: the stack is drawn in this order, so the dominant type sits
- * at the bottom and the thin ones stay visible on top instead of being shuffled around as the run
- * goes on. Ties fall back to the name so the order cannot flicker between two equal types.
+ * The stack is drawn in this order, so this is what decides which segments end up touching — and the
+ * palette only guarantees that *neighbouring* slots are easy to tell apart. Ordering by slot is
+ * therefore what makes the guarantee real on screen.
+ *
+ * It also rules out the alternative, ordering by total: that would make a type's position, and with
+ * it the colour of its neighbours, depend on how the run is going, repainting the chart as the
+ * populations trade places. Slots never move once handed out.
  */
 export function stackKeys(buckets: readonly SimMetricBucket[], pick: TypedPick): string[] {
-  const totals = new Map<string, number>();
+  const present = new Set<string>();
   for (const bucket of buckets) {
-    for (const [type, value] of Object.entries(pick(bucket))) {
-      totals.set(type, (totals.get(type) ?? 0) + value);
-    }
+    for (const type of Object.keys(pick(bucket))) present.add(type);
   }
-  return [...totals.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([type]) => type);
+  const keys = [...present];
+  // Claim the slots before sorting, never inside the comparator: a type new to the palette takes the
+  // next free slot on its first lookup, and the order in which sort() visits elements is not
+  // specified — claiming there would make the result depend on the engine.
+  const slots = new Map(keys.map((type) => [type, npcColorSlot(type)]));
+  return keys.sort((a, b) => (slots.get(a) ?? 0) - (slots.get(b) ?? 0));
 }
 
 export interface StackSegment {
@@ -237,4 +251,163 @@ export function counterRowsAt(
  */
 export function dayLabel(startGameDay: number, dayAbbrev: string = "d"): string {
   return `${dayAbbrev} ${startGameDay.toFixed(2).replace(/\.?0+$/, "")}`;
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+
+/** What the arena was set up with, so a run can be read without guessing its rules. */
+export interface MetricsExportSetup {
+  halfSize: number;
+  seed: number;
+  zoneLevel: number;
+  gameDayDurationSeconds: number;
+  /** Game days the run was bounded to; 0 = unbounded. */
+  maxGameDays: number;
+  populationCap: number;
+  vegetationDensity: number;
+  autoSpawnEnabled: boolean;
+  initialSpawns: SimSpawn[];
+  npcTuning: NpcTuning;
+  npcDefinitionOverrides: Record<string, unknown>;
+}
+
+/** Per-type outcome of a run, which is what a balancing pass actually reads. */
+export interface MetricsExportTypeTotals {
+  type: string;
+  /** Highest population the type reached in any one slice. */
+  peakAlive: number;
+  /** Population in the last slice it appeared in. */
+  finalAlive: number;
+  /** Mean population over the slices where it was present. */
+  meanAlive: number;
+  deaths: number;
+  /** Slices the type was alive in, out of the exported span. */
+  slicesPresent: number;
+}
+
+export interface MetricsExport {
+  format: "micraft.simulation.metrics";
+  version: 1;
+  setup: MetricsExportSetup | null;
+  span: {
+    bucketGameDays: number;
+    slices: number;
+    firstGameDay: number;
+    lastGameDay: number;
+    gameDays: number;
+    lastTick: number;
+  };
+  totals: {
+    byType: MetricsExportTypeTotals[];
+    counters: Record<CounterSeries["key"], number>;
+  };
+  /** One entry per time slice, oldest first — the three charts, as numbers. */
+  slices: {
+    gameDay: number;
+    tick: number;
+    alive: Record<string, number>;
+    deaths: Record<string, number>;
+    counters: Record<CounterSeries["key"], number>;
+  }[];
+}
+
+const emptyCounters = (): Record<CounterSeries["key"], number> =>
+  Object.fromEntries(COUNTER_SERIES.map((series) => [series.key, 0])) as Record<CounterSeries["key"], number>;
+
+/**
+ * Everything the three charts are drawn from, as one JSON-ready object.
+ *
+ * Written for a reader rather than for a plotter: the raw slices are there, but so are the setup that
+ * produced them and the per-type totals, because "wolves wiped out the goats" is a question about the
+ * tuning that was in force, not about a series of pixels. Whoever reads this back cannot see the
+ * screen — the numbers have to carry their own context.
+ *
+ * The whole retained history is exported, not the window on screen: narrowing the view is a reading
+ * aid, and silently exporting less than was asked for would be a trap.
+ */
+export function buildMetricsExport(
+  buckets: readonly SimMetricBucket[],
+  bucketGameDays: number,
+  config: SimulationConfig | null,
+): MetricsExport {
+  const first = buckets[0];
+  const last = buckets[buckets.length - 1];
+
+  const counters = emptyCounters();
+  for (const bucket of buckets) {
+    for (const series of COUNTER_SERIES) counters[series.key] += bucket[series.key];
+  }
+
+  // one pass per type rather than per bucket per type: the history holds a few hundred slices
+  const seen = new Map<string, { peak: number; final: number; sum: number; slices: number; deaths: number }>();
+  const of = (type: string) => {
+    const existing = seen.get(type);
+    if (existing) return existing;
+    const fresh = { peak: 0, final: 0, sum: 0, slices: 0, deaths: 0 };
+    seen.set(type, fresh);
+    return fresh;
+  };
+  for (const bucket of buckets) {
+    for (const [type, alive] of Object.entries(bucket.aliveByType)) {
+      const totals = of(type);
+      totals.peak = Math.max(totals.peak, alive);
+      totals.sum += alive;
+      totals.slices++;
+      // the last slice the type was actually in, not the last slice of the run
+      totals.final = alive;
+    }
+    for (const [type, deaths] of Object.entries(bucket.deathsByType)) of(type).deaths += deaths;
+  }
+
+  return {
+    format: "micraft.simulation.metrics",
+    version: 1,
+    setup: config
+      ? {
+          halfSize: config.halfSize,
+          seed: config.seed,
+          zoneLevel: config.zoneLevel,
+          gameDayDurationSeconds: config.gameDayDurationSeconds,
+          maxGameDays: config.maxGameDays,
+          populationCap: config.populationCap,
+          vegetationDensity: config.vegetationDensity,
+          autoSpawnEnabled: config.autoSpawnEnabled,
+          initialSpawns: config.initialSpawns,
+          npcTuning: config.npcTuning,
+          npcDefinitionOverrides: config.npcDefinitionOverrides,
+        }
+      : null,
+    span: {
+      bucketGameDays,
+      slices: buckets.length,
+      firstGameDay: first?.startGameDay ?? 0,
+      lastGameDay: last?.startGameDay ?? 0,
+      // a slice covers its own width, so the span runs to the end of the last one
+      gameDays: buckets.length === 0 ? 0 : last.startGameDay - first.startGameDay + bucketGameDays,
+      lastTick: last?.tick ?? 0,
+    },
+    totals: {
+      byType: [...seen.entries()]
+        .map(([type, totals]) => ({
+          type,
+          peakAlive: totals.peak,
+          finalAlive: totals.final,
+          meanAlive: totals.slices > 0 ? Number((totals.sum / totals.slices).toFixed(2)) : 0,
+          deaths: totals.deaths,
+          slicesPresent: totals.slices,
+        }))
+        .sort((a, b) => b.peakAlive - a.peakAlive || a.type.localeCompare(b.type)),
+      counters,
+    },
+    slices: buckets.map((bucket) => ({
+      gameDay: bucket.startGameDay,
+      tick: bucket.tick,
+      alive: bucket.aliveByType,
+      deaths: bucket.deathsByType,
+      counters: Object.fromEntries(COUNTER_SERIES.map((series) => [series.key, bucket[series.key]])) as Record<
+        CounterSeries["key"],
+        number
+      >,
+    })),
+  };
 }

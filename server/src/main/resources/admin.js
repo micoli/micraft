@@ -32102,6 +32102,9 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.metrics.windowAll": "all",
     "sim.metrics.window": "window",
     "sim.metrics.slicesInMemory": "{0} slices in memory",
+    "sim.metrics.export": "Export JSON",
+    "sim.metrics.exportCopied": "Copied \u2713",
+    "sim.metrics.exportTitle": "Copy every chart, plus the arena settings, as JSON \u2014 the whole history, not just the window shown",
     "sim.metrics.noData": "No data yet. The charts fill in as the simulation advances.",
     "sim.metrics.sliceHint": "{0} d slice",
     "sim.metrics.aliveByType": "Alive by type",
@@ -32171,6 +32174,11 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.page.connected": "simulator connected",
     "sim.page.disconnected": "disconnected",
     "sim.page.start": "Start",
+    "sim.page.runDays30": "30 game days",
+    "sim.page.runDays60": "60 game days",
+    "sim.page.runDays120": "120 game days",
+    "sim.page.runForever": "Indefinitely",
+    "sim.page.runLengthTitle": "How long the new simulation runs before pausing",
     "sim.page.truncated": "partial view \u2014 zoom in to see fewer NPCs at a time",
     "sim.page.shownNpcs": "{0}/{1} NPCs shown",
     "sim.page.populationCap": " / {0} max",
@@ -32549,6 +32557,9 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.metrics.windowAll": "tout",
     "sim.metrics.window": "fen\xEAtre",
     "sim.metrics.slicesInMemory": "{0} tranches en m\xE9moire",
+    "sim.metrics.export": "Exporter JSON",
+    "sim.metrics.exportCopied": "Copi\xE9 \u2713",
+    "sim.metrics.exportTitle": "Copie tous les graphes, plus les r\xE9glages de l'ar\xE8ne, en JSON \u2014 tout l'historique, pas seulement la fen\xEAtre affich\xE9e",
     "sim.metrics.noData": "Aucune donn\xE9e. Les graphiques se remplissent d\xE8s que la simulation avance.",
     "sim.metrics.sliceHint": "tranche de {0} j",
     "sim.metrics.aliveByType": "Vivants par type",
@@ -32618,6 +32629,11 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.page.connected": "simulateur connect\xE9",
     "sim.page.disconnected": "d\xE9connect\xE9",
     "sim.page.start": "D\xE9marrer",
+    "sim.page.runDays30": "30 jours de jeu",
+    "sim.page.runDays60": "60 jours de jeu",
+    "sim.page.runDays120": "120 jours de jeu",
+    "sim.page.runForever": "Ind\xE9finiment",
+    "sim.page.runLengthTitle": "Dur\xE9e de la nouvelle simulation avant mise en pause",
     "sim.page.truncated": "affichage partiel \u2014 zoome pour voir moins de NPC \xE0 la fois",
     "sim.page.shownNpcs": "{0}/{1} NPC affich\xE9s",
     "sim.page.populationCap": " / {0} max",
@@ -89340,11 +89356,68 @@ ${end.comment}` : end.comment;
     for (const event of events) if (event.npcType) types2.add(event.npcType);
     return [...types2].sort();
   }
+  var NPC_PALETTE = [
+    "#00977a",
+    "#9d60cf",
+    "#968100",
+    "#6b72e4",
+    "#e65e78",
+    "#477ce6",
+    "#bf3e22",
+    "#00a6b5",
+    "#bf3948",
+    "#008dbf",
+    "#d44d50",
+    "#0077b9",
+    "#e86158",
+    "#7059cc",
+    "#679200",
+    "#be52a5",
+    "#359930",
+    "#af58bc",
+    "#318604",
+    "#d562b1",
+    "#777500",
+    "#e05e95",
+    "#5463d2",
+    "#b56f00",
+    "#8382f7",
+    "#008565",
+    "#c668c9",
+    "#6ba61f",
+    "#b43c81",
+    "#a59400",
+    "#bc3966",
+    "#009ede",
+    "#946700",
+    "#b470de",
+    "#009a5e",
+    "#9949ae",
+    "#387100",
+    "#ca4d8b",
+    "#0086db",
+    "#d14b6f",
+    "#2f95f6",
+    "#a84199",
+    "#39ad4d",
+    "#8769dc",
+    "#d2532a",
+    "#296dd1",
+    "#da7300",
+    "#8751c0",
+    "#00ab90",
+    "#b25000"
+  ];
+  var npcSlots = /* @__PURE__ */ new Map();
   function npcColor(type) {
-    let hash = 0;
-    for (let i = 0; i < type.length; i++) hash = hash * 31 + type.charCodeAt(i) | 0;
-    const hue = Math.abs(hash) % 360;
-    return `hsl(${hue} 70% 60%)`;
+    return NPC_PALETTE[npcColorSlot(type)];
+  }
+  function npcColorSlot(type) {
+    const known = npcSlots.get(type);
+    if (known !== void 0) return known;
+    const slot = npcSlots.size % NPC_PALETTE.length;
+    npcSlots.set(type, slot);
+    return slot;
   }
 
   // admin/simulator/ArenaCanvasRenderer.tsx
@@ -89737,14 +89810,16 @@ ${end.comment}` : end.comment;
   var pickDeaths = (bucket) => bucket.deathsByType;
   var pickAlive = (bucket) => bucket.aliveByType;
   function stackKeys(buckets2, pick) {
-    var _a6;
-    const totals = /* @__PURE__ */ new Map();
+    const present = /* @__PURE__ */ new Set();
     for (const bucket of buckets2) {
-      for (const [type, value] of Object.entries(pick(bucket))) {
-        totals.set(type, ((_a6 = totals.get(type)) != null ? _a6 : 0) + value);
-      }
+      for (const type of Object.keys(pick(bucket))) present.add(type);
     }
-    return [...totals.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([type]) => type);
+    const keys2 = [...present];
+    const slots = new Map(keys2.map((type) => [type, npcColorSlot(type)]));
+    return keys2.sort((a, b) => {
+      var _a6, _b;
+      return ((_a6 = slots.get(a)) != null ? _a6 : 0) - ((_b = slots.get(b)) != null ? _b : 0);
+    });
   }
   function stackedColumns(buckets2, pick, keys2) {
     return buckets2.map((bucket) => {
@@ -89800,11 +89875,129 @@ ${end.comment}` : end.comment;
   function dayLabel(startGameDay, dayAbbrev = "d") {
     return `${dayAbbrev} ${startGameDay.toFixed(2).replace(/\.?0+$/, "")}`;
   }
+  var emptyCounters = () => Object.fromEntries(COUNTER_SERIES.map((series) => [series.key, 0]));
+  function buildMetricsExport(buckets2, bucketGameDays, config3) {
+    var _a6, _b, _c;
+    const first = buckets2[0];
+    const last = buckets2[buckets2.length - 1];
+    const counters = emptyCounters();
+    for (const bucket of buckets2) {
+      for (const series of COUNTER_SERIES) counters[series.key] += bucket[series.key];
+    }
+    const seen = /* @__PURE__ */ new Map();
+    const of = (type) => {
+      const existing = seen.get(type);
+      if (existing) return existing;
+      const fresh = { peak: 0, final: 0, sum: 0, slices: 0, deaths: 0 };
+      seen.set(type, fresh);
+      return fresh;
+    };
+    for (const bucket of buckets2) {
+      for (const [type, alive] of Object.entries(bucket.aliveByType)) {
+        const totals = of(type);
+        totals.peak = Math.max(totals.peak, alive);
+        totals.sum += alive;
+        totals.slices++;
+        totals.final = alive;
+      }
+      for (const [type, deaths] of Object.entries(bucket.deathsByType)) of(type).deaths += deaths;
+    }
+    return {
+      format: "micraft.simulation.metrics",
+      version: 1,
+      setup: config3 ? {
+        halfSize: config3.halfSize,
+        seed: config3.seed,
+        zoneLevel: config3.zoneLevel,
+        gameDayDurationSeconds: config3.gameDayDurationSeconds,
+        maxGameDays: config3.maxGameDays,
+        populationCap: config3.populationCap,
+        vegetationDensity: config3.vegetationDensity,
+        autoSpawnEnabled: config3.autoSpawnEnabled,
+        initialSpawns: config3.initialSpawns,
+        npcTuning: config3.npcTuning,
+        npcDefinitionOverrides: config3.npcDefinitionOverrides
+      } : null,
+      span: {
+        bucketGameDays,
+        slices: buckets2.length,
+        firstGameDay: (_a6 = first == null ? void 0 : first.startGameDay) != null ? _a6 : 0,
+        lastGameDay: (_b = last == null ? void 0 : last.startGameDay) != null ? _b : 0,
+        // a slice covers its own width, so the span runs to the end of the last one
+        gameDays: buckets2.length === 0 ? 0 : last.startGameDay - first.startGameDay + bucketGameDays,
+        lastTick: (_c = last == null ? void 0 : last.tick) != null ? _c : 0
+      },
+      totals: {
+        byType: [...seen.entries()].map(([type, totals]) => ({
+          type,
+          peakAlive: totals.peak,
+          finalAlive: totals.final,
+          meanAlive: totals.slices > 0 ? Number((totals.sum / totals.slices).toFixed(2)) : 0,
+          deaths: totals.deaths,
+          slicesPresent: totals.slices
+        })).sort((a, b) => b.peakAlive - a.peakAlive || a.type.localeCompare(b.type)),
+        counters
+      },
+      slices: buckets2.map((bucket) => ({
+        gameDay: bucket.startGameDay,
+        tick: bucket.tick,
+        alive: bucket.aliveByType,
+        deaths: bucket.deathsByType,
+        counters: Object.fromEntries(COUNTER_SERIES.map((series) => [series.key, bucket[series.key]]))
+      }))
+    };
+  }
 
   // admin/simulator/MetricsPanel.tsx
   var import_jsx_runtime32 = __toESM(require_jsx_runtime(), 1);
+  var COPIED_FEEDBACK_MS = 2e3;
+  function ExportButton({ buckets: buckets2, bucketGameDays, config: config3 }) {
+    const t2 = useT();
+    const [copied, setCopied] = (0, import_react18.useState)(false);
+    const timerRef = (0, import_react18.useRef)(null);
+    (0, import_react18.useEffect)(
+      () => () => {
+        if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+      },
+      []
+    );
+    const flashCopied = () => {
+      setCopied(true);
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+      timerRef.current = window.setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS);
+    };
+    const download = (json) => {
+      const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+      const link2 = document.createElement("a");
+      link2.href = url;
+      link2.download = "micraft-simulation-metrics.json";
+      link2.click();
+      URL.revokeObjectURL(url);
+    };
+    const exportAll = () => {
+      const json = JSON.stringify(buildMetricsExport(buckets2, bucketGameDays, config3), null, 2);
+      const clipboard = navigator.clipboard;
+      if (!clipboard) {
+        download(json);
+        return;
+      }
+      clipboard.writeText(json).then(flashCopied, () => download(json));
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+      "button",
+      {
+        type: "button",
+        onClick: exportAll,
+        disabled: buckets2.length === 0,
+        title: t2("sim.metrics.exportTitle"),
+        className: "rounded px-1.5 py-0.5 text-[10px] disabled:opacity-40 " + (copied ? "bg-emerald-500/80 text-white" : "bg-[#2E3A4E] text-[#C7D2FE] hover:bg-[#3C50E0]/60"),
+        children: t2(copied ? "sim.metrics.exportCopied" : "sim.metrics.export")
+      }
+    );
+  }
   var BOX_W = 300;
   var BOX_H = 90;
+  var SEGMENT_GAP = 1.5;
   function ChartFrame({
     title,
     hint,
@@ -89914,17 +90107,20 @@ ${end.comment}` : end.comment;
                 /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("line", { x1: 0, y1: BOX_H, x2: BOX_W, y2: BOX_H, stroke: "#2E3A4E", strokeWidth: 0.5 }),
                 hover && hovered && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(HoverGuide, { x: hover.index * barWidth, width: barWidth }),
                 columns.map(
-                  (column, i) => column.segments.map((segment) => /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
-                    "rect",
-                    {
-                      x: i * barWidth,
-                      y: BOX_H - segment.to / top2 * BOX_H,
-                      width: Math.max(barWidth - 0.3, 0.4),
-                      height: (segment.to - segment.from) / top2 * BOX_H,
-                      fill: npcColor(segment.key)
-                    },
-                    `${column.index}-${segment.key}`
-                  ))
+                  (column, i) => column.segments.map((segment) => {
+                    const height = (segment.to - segment.from) / top2 * BOX_H;
+                    return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+                      "rect",
+                      {
+                        x: i * barWidth,
+                        y: BOX_H - segment.to / top2 * BOX_H,
+                        width: Math.max(barWidth - 0.3, 0.4),
+                        height: height > SEGMENT_GAP * 2 ? height - SEGMENT_GAP : height,
+                        fill: npcColor(segment.key)
+                      },
+                      `${column.index}-${segment.key}`
+                    );
+                  })
                 )
               ]
             }
@@ -90048,7 +90244,7 @@ ${end.comment}` : end.comment;
       }
     );
   }
-  var MetricsPanel = (0, import_react18.memo)(function MetricsPanel2({ buckets: buckets2, bucketGameDays }) {
+  var MetricsPanel = (0, import_react18.memo)(function MetricsPanel2({ buckets: buckets2, bucketGameDays, config: config3 }) {
     const t2 = useT();
     const [windowDays, setWindowDays] = (0, import_react18.useState)(DEFAULT_WINDOW_GAME_DAYS);
     const slots = slotsFor(bucketGameDays, windowDays);
@@ -90065,7 +90261,8 @@ ${end.comment}` : end.comment;
         },
         option2.days
       )),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "ml-auto text-[10px] text-[#4A5568]", children: t2("sim.metrics.slicesInMemory", buckets2.length) })
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "ml-auto text-[10px] text-[#4A5568]", children: t2("sim.metrics.slicesInMemory", buckets2.length) }),
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(ExportButton, { buckets: buckets2, bucketGameDays, config: config3 })
     ] });
     if (buckets2.length === 0) {
       return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.metrics.noData") });
@@ -90730,6 +90927,12 @@ ${end.comment}` : end.comment;
     manager: "sim.tab.manager"
   };
   var DEFAULT_ARENA = { halfSize: 100, groundY: 7, wallHeight: 4 };
+  var RUN_LENGTHS = [
+    { days: 30, labelKey: "sim.page.runDays30" },
+    { days: 60, labelKey: "sim.page.runDays60" },
+    { days: 120, labelKey: "sim.page.runDays120" },
+    { days: 0, labelKey: "sim.page.runForever" }
+  ];
   function baseConfig(tuning) {
     return __spreadProps(__spreadValues({}, DEFAULT_ARENA), {
       ticksPerSecond: 200,
@@ -90740,6 +90943,7 @@ ${end.comment}` : end.comment;
       maxNpcsPerFrame: frameCapFor(DEFAULT_POPULATION_CAP),
       vegetationDensity: 0.08,
       gameDayDurationSeconds: 60,
+      maxGameDays: 0,
       npcTuning: tuning,
       npcDefinitionOverrides: {},
       initialSpawns: [],
@@ -90778,6 +90982,7 @@ ${end.comment}` : end.comment;
     const [spawnCount, setSpawnCount] = (0, import_react21.useState)(1);
     const [liveSpawnType, setLiveSpawnType] = (0, import_react21.useState)("");
     const [liveSpawnCount, setLiveSpawnCount] = (0, import_react21.useState)(1);
+    const [runDays, setRunDays] = (0, import_react21.useState)(RUN_LENGTHS[0].days);
     const npcTypes = (_b = (_a6 = sim.defaults) == null ? void 0 : _a6.npcTypes) != null ? _b : [];
     const locked = sim.simulationId !== null;
     const [arenaFolded, setArenaFolded] = (0, import_react21.useState)(false);
@@ -90836,6 +91041,7 @@ ${end.comment}` : end.comment;
           seed,
           zoneLevel,
           gameDayDurationSeconds: dayDuration,
+          maxGameDays: runDays,
           npcTuning: __spreadProps(__spreadValues({}, tuning), { gameDayDurationSeconds: dayDuration }),
           initialSpawns: spawns,
           autoSpawnEnabled: autoSpawn,
@@ -90858,6 +91064,17 @@ ${end.comment}` : end.comment;
             disabled: !sim.connected || !tuning,
             className: "ml-3 rounded bg-[#3C50E0] px-3 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80 disabled:opacity-40",
             children: t2("sim.page.start")
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
+          "select",
+          {
+            value: runDays,
+            onChange: (e) => setRunDays(Number(e.target.value)),
+            title: t2("sim.page.runLengthTitle"),
+            "aria-label": t2("sim.page.runLengthTitle"),
+            className: "rounded border border-[#2E3A4E] bg-[#0E1726] px-2 py-1 text-[11px] text-white",
+            children: RUN_LENGTHS.map((option2) => /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("option", { value: option2.days, children: t2(option2.labelKey) }, option2.days))
           }
         ),
         sim.error && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "ml-3 text-[11px] text-red-300", children: sim.error }),
@@ -91138,7 +91355,7 @@ ${end.comment}` : end.comment;
             key2
           )) }),
           /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "min-h-0 flex-1 overflow-hidden p-3", children: [
-            tab === "charts" && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(MetricsPanel, { buckets: sim.metrics, bucketGameDays: sim.bucketGameDays }),
+            tab === "charts" && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(MetricsPanel, { buckets: sim.metrics, bucketGameDays: sim.bucketGameDays, config: sim.config }),
             tab === "log" && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(EventLogPanel, { events: sim.events, onSelect: selectNpc }),
             tab === "npc" && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(NpcDetailPanel, { sim }),
             tab === "rules" && tuning && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
