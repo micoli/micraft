@@ -22,6 +22,13 @@ import {
 /** How often the event log is refreshed, whatever the arena's tick rate. */
 const EVENT_PUBLISH_INTERVAL_MS = 500;
 
+/**
+ * Max rate at which WS frame data is flushed into React state. The arena sends frames far faster
+ * than the eye can track; throttling the snapshot publish cuts React re-renders (and the cyclic
+ * fiber garbage the cycle collector has to clean up) without changing what the user sees.
+ */
+const SNAPSHOT_INTERVAL_MS = 50; // 20 fps
+
 /** Matches SimMetrics.DEFAULT_BUCKET_GAME_DAYS; only used before the first payload arrives. */
 const DEFAULT_BUCKET_GAME_DAYS = 0.25;
 
@@ -129,13 +136,14 @@ export function useSimulation(): SimulationState {
   const runningRef = useRef(false);
   const truncatedRef = useRef(false);
   const foodRef = useRef<number[]>([]);
-  const frameRef = useRef<number | null>(null);
+  const snapshotDirtyRef = useRef(false);
   const viewportRef = useRef<string>("");
   /** Bumped on every batch of incoming events; the log publisher compares it to what it showed. */
   const eventRevisionRef = useRef(0);
 
-  // Frames land in the refs above, then one rAF publishes them here. Reading a ref during render is
-  // both a lint error and a correctness trap; the published snapshot is what components consume.
+  // Frames land in the refs above; a fixed-interval timer publishes them into state. Reading a ref
+  // during render is both a lint error and a correctness trap; the published snapshot is what
+  // components consume.
   const [snapshot, setSnapshot] = useState<Snapshot>(EMPTY_SNAPSHOT);
   const [connected, setConnected] = useState(false);
   const [detail, setDetail] = useState<SimNpcDetail | null>(null);
@@ -166,9 +174,17 @@ export function useSimulation(): SimulationState {
   }, [t]);
 
   const publish = useCallback(() => {
-    if (frameRef.current !== null) return;
-    frameRef.current = requestAnimationFrame(() => {
-      frameRef.current = null;
+    snapshotDirtyRef.current = true;
+  }, []);
+
+  // Flush snapshot state on a fixed cadence rather than per WS frame. Frames can arrive dozens of
+  // times a second; publishing each one into React state churns the fiber tree at the same rate and
+  // fills the cycle collector with short-lived cyclic objects (parent→child→return pointers), which
+  // is what causes the UI to freeze. 20 fps is plenty for a simulation view.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (!snapshotDirtyRef.current) return;
+      snapshotDirtyRef.current = false;
       setSnapshot({
         running: runningRef.current,
         truncated: truncatedRef.current,
@@ -179,7 +195,8 @@ export function useSimulation(): SimulationState {
         players: playersRef.current,
         stats: statsRef.current,
       });
-    });
+    }, SNAPSHOT_INTERVAL_MS);
+    return () => clearInterval(timer);
   }, []);
 
   const pushEvents = useCallback((incoming: SimEvent[]) => {
@@ -292,7 +309,6 @@ export function useSimulation(): SimulationState {
       }
     };
     return () => {
-      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
       socket.close();
       socketRef.current = null;
     };

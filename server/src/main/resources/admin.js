@@ -90888,6 +90888,7 @@ ${end.comment}` : end.comment;
   // admin/simulator/useSimulation.ts
   var import_react20 = __toESM(require_react(), 1);
   var EVENT_PUBLISH_INTERVAL_MS = 500;
+  var SNAPSHOT_INTERVAL_MS = 50;
   var DEFAULT_BUCKET_GAME_DAYS = 0.25;
   var EMPTY_STATS = {
     tick: 0,
@@ -90927,7 +90928,7 @@ ${end.comment}` : end.comment;
     const runningRef = (0, import_react20.useRef)(false);
     const truncatedRef = (0, import_react20.useRef)(false);
     const foodRef = (0, import_react20.useRef)([]);
-    const frameRef = (0, import_react20.useRef)(null);
+    const snapshotDirtyRef = (0, import_react20.useRef)(false);
     const viewportRef = (0, import_react20.useRef)("");
     const eventRevisionRef = (0, import_react20.useRef)(0);
     const [snapshot, setSnapshot] = (0, import_react20.useState)(EMPTY_SNAPSHOT);
@@ -90948,9 +90949,12 @@ ${end.comment}` : end.comment;
       tRef.current = t2;
     }, [t2]);
     const publish = (0, import_react20.useCallback)(() => {
-      if (frameRef.current !== null) return;
-      frameRef.current = requestAnimationFrame(() => {
-        frameRef.current = null;
+      snapshotDirtyRef.current = true;
+    }, []);
+    (0, import_react20.useEffect)(() => {
+      const timer = setInterval(() => {
+        if (!snapshotDirtyRef.current) return;
+        snapshotDirtyRef.current = false;
         setSnapshot({
           running: runningRef.current,
           truncated: truncatedRef.current,
@@ -90961,7 +90965,8 @@ ${end.comment}` : end.comment;
           players: playersRef.current,
           stats: statsRef.current
         });
-      });
+      }, SNAPSHOT_INTERVAL_MS);
+      return () => clearInterval(timer);
     }, []);
     const pushEvents = (0, import_react20.useCallback)((incoming) => {
       if (incoming.length === 0) return;
@@ -91064,7 +91069,6 @@ ${end.comment}` : end.comment;
         }
       };
       return () => {
-        if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
         socket.close();
         socketRef.current = null;
       };
