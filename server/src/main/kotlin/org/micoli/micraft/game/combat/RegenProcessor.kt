@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger("RegenProcessor")
 
 class RegenProcessor(
-    private val config: ClassesConfigData,
-    private val maxRage: Int,
-    private val armorRegistry: Map<String, ArmorDefinition>,
+    @Volatile private var config: ClassesConfigData,
+    @Volatile private var maxRage: Int,
+    @Volatile private var armorRegistry: Map<String, ArmorDefinition>,
     private val combatProcessor: CombatProcessor,
     private val nowMs: () -> Long = System::currentTimeMillis,
 ) {
@@ -135,4 +135,14 @@ class RegenProcessor(
                 log.warn("Regen formula '{}' failed: {}", formula, e.message)
                 0.0
             }
+
+    fun reload(
+        config: ClassesConfigData,
+        maxRage: Int,
+        armorRegistry: Map<String, ArmorDefinition>
+    ) {
+        this.config = config
+        this.maxRage = maxRage
+        this.armorRegistry = armorRegistry
+    }
 }

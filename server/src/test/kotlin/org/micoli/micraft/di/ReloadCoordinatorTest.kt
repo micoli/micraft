@@ -27,6 +27,9 @@ class ReloadCoordinatorTest {
         reloadBiomes: (() -> ChunkGenerator)? = null,
         reloadRegistries: (() -> Unit)? = null,
         reloadGameConfig: (() -> Unit)? = null,
+        reloadRbac: (() -> Unit)? = null,
+        reloadArmorRegistry: (() -> Unit)? = null,
+        reloadRecipeRegistry: (() -> Unit)? = null,
         sessionRegistry: SessionRegistry = SessionRegistry(),
     ): ReloadCoordinator {
         val emptyResources = createTempDirectory("reload-resources")
@@ -50,6 +53,9 @@ class ReloadCoordinatorTest {
                     world,
                     VegetationConfig(emptyData.resolve("vegetation.yaml")),
                     emptyData.resolve("vegetation-save.json")),
+            reloadRbac = reloadRbac,
+            reloadArmorRegistry = reloadArmorRegistry,
+            reloadRecipeRegistry = reloadRecipeRegistry,
         )
     }
 
@@ -124,5 +130,36 @@ class ReloadCoordinatorTest {
         coordinator.reload("en")
         assertFalse(session.sent.any { it is ServerMessage.RegistrySync })
         assertFalse(session.sent.any { it is ServerMessage.GameConfigSync })
+    }
+
+    @Test
+    fun reload_invokesReloadRbacWhenProvided() = runBlocking {
+        var invoked = false
+        val coordinator = buildCoordinator(reloadRbac = { invoked = true })
+        coordinator.reload("en")
+        assertTrue(invoked)
+    }
+
+    @Test
+    fun reload_withoutReloadRbac_doesNotInvokeHook() = runBlocking {
+        val coordinator = buildCoordinator(reloadRbac = null)
+        val summary = coordinator.reload("en")
+        assertTrue(summary.isNotEmpty())
+    }
+
+    @Test
+    fun reload_invokesReloadArmorRegistryWhenProvided() = runBlocking {
+        var invoked = false
+        val coordinator = buildCoordinator(reloadArmorRegistry = { invoked = true })
+        coordinator.reload("en")
+        assertTrue(invoked)
+    }
+
+    @Test
+    fun reload_invokesReloadRecipeRegistryWhenProvided() = runBlocking {
+        var invoked = false
+        val coordinator = buildCoordinator(reloadRecipeRegistry = { invoked = true })
+        coordinator.reload("en")
+        assertTrue(invoked)
     }
 }

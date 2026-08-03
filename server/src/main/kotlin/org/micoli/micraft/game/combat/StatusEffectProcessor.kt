@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger("StatusEffectProcessor")
 
 class StatusEffectProcessor(
-    private val armorRegistry: Map<String, ArmorDefinition>,
+    @Volatile private var armorRegistry: Map<String, ArmorDefinition>,
     private val world: WorldState,
     private val broadcastHealthUpdate: suspend (String, Boolean, Int, Int) -> Unit,
     private val broadcastCombatLog: suspend (String) -> Unit,
@@ -84,4 +84,8 @@ class StatusEffectProcessor(
 
     private fun isDamageApplicable(hpDelta: Float, session: PlayerSession): Boolean =
         hpDelta != 0f && !(hpDelta < 0 && session.state.godMode)
+
+    fun reload(armorRegistry: Map<String, ArmorDefinition>) {
+        this.armorRegistry = armorRegistry
+    }
 }

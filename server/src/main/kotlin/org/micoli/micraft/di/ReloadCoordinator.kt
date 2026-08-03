@@ -38,6 +38,10 @@ class ReloadCoordinator(
     private val vegetationManager: VegetationManager,
     private val questManager: QuestManager? = null,
     private val questRegistryLoader: QuestRegistryLoader? = null,
+    private val reloadRbac: (() -> Unit)? = null,
+    private val reloadArmorRegistry: (() -> Unit)? = null,
+    private val reloadRecipeRegistry: (() -> Unit)? = null,
+    private val reloadCombatSystems: (() -> Unit)? = null,
 ) {
     suspend fun reload(lang: String): String {
         val lines = mutableListOf<String>()
@@ -72,6 +76,22 @@ class ReloadCoordinator(
         val newVegetationConfig = VegetationConfig(Path.of("data/config/vegetation.yaml"))
         vegetationManager.reload(newVegetationConfig)
         lines += i18n.t(lang, "reload:server:vegetation", newVegetationConfig.data.chains.size)
+        if (reloadArmorRegistry != null) {
+            reloadArmorRegistry.invoke()
+            lines += i18n.t(lang, "reload:server:armor")
+        }
+        if (reloadRecipeRegistry != null) {
+            reloadRecipeRegistry.invoke()
+            lines += i18n.t(lang, "reload:server:recipes")
+        }
+        if (reloadRbac != null) {
+            reloadRbac.invoke()
+            lines += i18n.t(lang, "reload:server:rbac")
+        }
+        if (reloadCombatSystems != null) {
+            reloadCombatSystems.invoke()
+            lines += i18n.t(lang, "reload:server:combat_systems")
+        }
         return lines.joinToString(", ")
     }
 }

@@ -90209,16 +90209,15 @@ ${end.comment}` : end.comment;
     }, [keys2, buckets2, pick]);
     const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0);
     if (grandTotal === 0) return null;
-    let angle = -Math.PI / 2;
     const slices = keys2.map((key2) => {
       var _a6;
       return { key: key2, value: (_a6 = totals[key2]) != null ? _a6 : 0 };
-    }).filter((e) => e.value > 0).map((e) => {
+    }).filter((e) => e.value > 0).reduce((acc, e) => {
+      const prevAngle = acc.length > 0 ? acc[acc.length - 1].end : -Math.PI / 2;
       const sweep = e.value / grandTotal * 2 * Math.PI;
-      const start = angle;
-      angle += sweep;
-      return { key: e.key, value: e.value, start, end: angle, sweep };
-    });
+      acc.push({ key: e.key, value: e.value, start: prevAngle, end: prevAngle + sweep, sweep });
+      return acc;
+    }, []);
     return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("svg", { viewBox: "0 0 80 90", className: "h-[90px] w-[80px] shrink-0 rounded bg-[#0E1726]", children: [
       slices.map(({ key: key2, start, end, sweep }) => {
         if (sweep >= 2 * Math.PI - 1e-3) {

@@ -30,7 +30,7 @@ class BlockPlacer(
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val savePlayer: (PlayerSession) -> Unit,
     private val vegetationManager: VegetationManager? = null,
-    private val attackRegistry: Map<String, AttackDefinition> = emptyMap(),
+    @Volatile private var attackRegistry: Map<String, AttackDefinition> = emptyMap(),
 ) {
     suspend fun handlePlace(session: PlayerSession, intent: ClientMessage.BlockPlace) {
         val rawPos = intent.pos
@@ -329,5 +329,9 @@ class BlockPlacer(
         session.shortcutBarPages[page][slot] = content
         savePlayer(session)
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBarPages.toPageMap()))
+    }
+
+    fun reload(attackRegistry: Map<String, AttackDefinition>) {
+        this.attackRegistry = attackRegistry
     }
 }

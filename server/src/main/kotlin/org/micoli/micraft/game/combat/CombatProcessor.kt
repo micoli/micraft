@@ -57,10 +57,10 @@ private fun distance3(
 }
 
 class CombatProcessor(
-    private val config: CombatConfigData,
-    private val attackRegistry: Map<String, AttackDefinition>,
-    private val armorRegistry: Map<String, ArmorDefinition>,
-    private val classRegistry: Map<String, ClassDefinitionEntry>,
+    @Volatile private var config: CombatConfigData,
+    @Volatile private var attackRegistry: Map<String, AttackDefinition>,
+    @Volatile private var armorRegistry: Map<String, ArmorDefinition>,
+    @Volatile private var classRegistry: Map<String, ClassDefinitionEntry>,
     private val npcManager: NpcManager,
     private val getSessions: () -> Collection<PlayerSession>,
     private val broadcastCombatLog: suspend (String) -> Unit,
@@ -702,4 +702,16 @@ class CombatProcessor(
             val string = if (isCrit) " [CRIT]" else ""
             "hits for $damage$string"
         } else "misses"
+
+    fun reload(
+        config: CombatConfigData,
+        attackRegistry: Map<String, AttackDefinition>,
+        armorRegistry: Map<String, ArmorDefinition>,
+        classRegistry: Map<String, ClassDefinitionEntry>,
+    ) {
+        this.config = config
+        this.attackRegistry = attackRegistry
+        this.armorRegistry = armorRegistry
+        this.classRegistry = classRegistry
+    }
 }

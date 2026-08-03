@@ -27,6 +27,10 @@ reload:
     i18n: "i18n: {0} locales"
     weather: "Weather: {0} types"
     vegetation: "Vegetation: {0} chains"
+    armor: "Armor registry reloaded"
+    recipes: "Recipe registry reloaded"
+    rbac: "RBAC groups reloaded"
+    combat_systems: "Combat/skills/classes/XP reloaded"
 undo:
   server:
     nothing: "Nothing to undo."

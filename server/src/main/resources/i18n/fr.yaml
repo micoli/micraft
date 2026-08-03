@@ -27,6 +27,10 @@ reload:
     i18n: "i18n : {0} langues"
     weather: "Météo : {0} types"
     vegetation: "Végétation : {0} chaînes"
+    armor: "Registre armures rechargé"
+    recipes: "Registre recettes rechargé"
+    rbac: "Groupes RBAC rechargés"
+    combat_systems: "Combat/compétences/classes/XP rechargés"
 undo:
   server:
     nothing: "Rien à annuler."

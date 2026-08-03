@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger("org.micoli.micraft.rpg.ExperienceProcessor")
 
 class ExperienceProcessor(
-    private val config: ExperienceConfigData,
+    @Volatile private var config: ExperienceConfigData,
     private val getSessions: () -> Collection<PlayerSession>,
     private val savePlayer: suspend (PlayerSession) -> Unit,
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit = { _, _ -> },
@@ -216,5 +216,9 @@ class ExperienceProcessor(
             }
             grantXp(session, shareXp)
         }
+    }
+
+    fun reload(config: ExperienceConfigData) {
+        this.config = config
     }
 }

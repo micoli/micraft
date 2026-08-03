@@ -236,9 +236,15 @@ class GameLoopModule {
     fun npcSpawner(npcSubsystemFactory: NpcSubsystemFactory): NpcSpawner =
         npcSubsystemFactory.npcSpawner
 
-    @Single fun combatConfigData(): CombatConfigData = CombatConfig().data
+    @Single fun combatConfig(): CombatConfig = CombatConfig()
 
-    @Single fun experienceConfigData(): ExperienceConfigData = ExperienceConfig().data
+    @Single fun combatConfigData(combatConfig: CombatConfig): CombatConfigData = combatConfig.data
+
+    @Single fun experienceConfig(): ExperienceConfig = ExperienceConfig()
+
+    @Single
+    fun experienceConfigData(experienceConfig: ExperienceConfig): ExperienceConfigData =
+        experienceConfig.data
 
     @Single
     fun experienceProcessor(
@@ -358,7 +364,10 @@ class GameLoopModule {
             onPlayerDowned = { session -> combatProcessor.handlePlayerDowned(session) },
         )
 
-    @Single fun classesConfigData(): ClassesConfigData = ClassesConfig().data
+    @Single fun classesConfig(): ClassesConfig = ClassesConfig()
+
+    @Single
+    fun classesConfigData(classesConfig: ClassesConfig): ClassesConfigData = classesConfig.data
 
     @Single
     fun regenProcessor(

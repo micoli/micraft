@@ -15,10 +15,10 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger("SpellProcessor")
 
 class SpellProcessor(
-    private val spellRegistry: Map<String, SpellDefinition>,
-    private val classRegistry: Map<String, ClassDefinitionEntry>,
-    private val armorRegistry: Map<String, ArmorDefinition>,
-    private val combatConfig: CombatConfigData,
+    @Volatile private var spellRegistry: Map<String, SpellDefinition>,
+    @Volatile private var classRegistry: Map<String, ClassDefinitionEntry>,
+    @Volatile private var armorRegistry: Map<String, ArmorDefinition>,
+    @Volatile private var combatConfig: CombatConfigData,
     private val combatProcessor: CombatProcessor,
     private val getSessions: () -> Collection<PlayerSession> = { emptyList() },
     private val getNpcs: () -> Collection<NpcInstance> = { emptyList() },
@@ -234,5 +234,17 @@ class SpellProcessor(
                 session.combatState.attackCooldownUntilMs,
                 session.combatState.attackCooldownsUntilMs,
             ))
+    }
+
+    fun reload(
+        spellRegistry: Map<String, SpellDefinition>,
+        classRegistry: Map<String, ClassDefinitionEntry>,
+        armorRegistry: Map<String, ArmorDefinition>,
+        combatConfig: CombatConfigData,
+    ) {
+        this.spellRegistry = spellRegistry
+        this.classRegistry = classRegistry
+        this.armorRegistry = armorRegistry
+        this.combatConfig = combatConfig
     }
 }

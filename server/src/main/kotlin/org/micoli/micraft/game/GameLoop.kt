@@ -248,6 +248,10 @@ class GameLoop(
     val attackRegistry: Map<String, AttackDefinition> = SkillsConfig().data.attacks,
     val spellRegistry: Map<String, SpellDefinition> = SkillsConfig().data.spells,
     private val classesData: ClassesConfigData = ClassesConfig().data,
+    private val combatConfigLoader: CombatConfig? = null,
+    private val skillsConfigLoader: SkillsConfig? = null,
+    private val classesConfigLoader: ClassesConfig? = null,
+    private val experienceConfigLoader: ExperienceConfig? = null,
     private val combatProcessor: CombatProcessor =
         CombatProcessor(
             config = combatConfig,
@@ -354,6 +358,22 @@ class GameLoop(
 ) {
     val classRegistry: Map<String, org.micoli.micraft.game.classes.ClassDefinitionEntry>
         get() = classesData.classes
+
+    private fun reloadCombatSystems() {
+        val newCombat = combatConfigLoader?.reload() ?: combatConfig
+        val newSkills = skillsConfigLoader?.reload()
+        val newClasses = classesConfigLoader?.reload() ?: classesData
+        val newExperience = experienceConfigLoader?.reload()
+        val freshArmor = armorRegistry
+        combatProcessor.reload(
+            newCombat, newSkills?.attacks ?: attackRegistry, freshArmor, newClasses.classes)
+        regenProcessor.reload(newClasses, newCombat.maxRage, freshArmor)
+        spellProcessor.reload(
+            newSkills?.spells ?: spellRegistry, newClasses.classes, freshArmor, newCombat)
+        statusEffectProcessor.reload(freshArmor)
+        if (newExperience != null) experienceProcessor.reload(newExperience)
+        if (newSkills != null) blockPlacer.reload(newSkills.attacks)
+    }
 
     private val macroExecutor = MacroExecutor()
 
@@ -805,6 +825,24 @@ class GameLoop(
             vegetationManager = vegetationManager,
             questManager = questManager,
             questRegistryLoader = questRegistryLoader,
+            reloadRbac = reloadRbac,
+            reloadArmorRegistry = {
+                armorRegistry = armorRegistryLoader.load()
+                val freshArmor = armorRegistry
+                combatProcessor.reload(
+                    combatConfig, attackRegistry, freshArmor, classesData.classes)
+                regenProcessor.reload(classesData, combatConfig.maxRage, freshArmor)
+                spellProcessor.reload(spellRegistry, classesData.classes, freshArmor, combatConfig)
+                statusEffectProcessor.reload(freshArmor)
+            },
+            reloadRecipeRegistry = { RecipeRegistry.load(recipeRegistryLoader.load()) },
+            reloadCombatSystems =
+                if (combatConfigLoader != null ||
+                    skillsConfigLoader != null ||
+                    classesConfigLoader != null ||
+                    experienceConfigLoader != null)
+                    ::reloadCombatSystems
+                else null,
         )
 
     private suspend fun reload(lang: String): String = reloadCoordinator.reload(lang)
