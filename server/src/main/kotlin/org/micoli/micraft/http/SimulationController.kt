@@ -20,6 +20,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.npc.NpcConstants
+import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcTuning
 import org.micoli.micraft.simulation.SimCommand
 import org.micoli.micraft.simulation.SimMessage
@@ -54,6 +55,7 @@ data class SimulationDefaultsDto(
 class SimulationController(
     private val registry: SimulationRegistry,
     private val npcTypesProvider: () -> List<String>,
+    private val npcRegistryLoader: NpcRegistryLoader,
     private val tokenStore: TokenStore? = null,
 ) {
     private suspend fun RoutingContext.requireAdmin(): Boolean {
@@ -282,6 +284,9 @@ class SimulationController(
                         is SimCommand.Tuning -> registry[attachedId]?.setTuning(command.tuning)
                         is SimCommand.Defs ->
                             registry[attachedId]?.applyDefinitionOverrides(command.overrides)
+                        is SimCommand.ReloadEntityDefs ->
+                            registry[attachedId]?.reloadEntityDefinitions(
+                                npcRegistryLoader.reload())
                     }
                 }
             } finally {

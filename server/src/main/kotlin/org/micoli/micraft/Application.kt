@@ -280,6 +280,8 @@ fun Application.module() {
         )
     }
 
+    val npcRegistryLoaderForSim = get<NpcRegistryLoader>()
+
     routing {
         // MICRAFT_WEB_DIST points directly at the served executable dir
         // (…/kotlin-webpack/wasmJs/developmentExecutable or …/productionExecutable).
@@ -335,6 +337,7 @@ fun Application.module() {
             SimulationController(
                 registry = simulationRegistry,
                 npcTypesProvider = { gameLoop.getNpcManager().getDefinitions().keys.sorted() },
+                npcRegistryLoader = npcRegistryLoaderForSim,
                 tokenStore = tokenStore,
             )
         simulationController.register(this)

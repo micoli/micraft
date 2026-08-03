@@ -165,7 +165,10 @@ class AnimalEventHookTest {
         val causes = mutableListOf<NpcDeathCause>()
         // lifespan comes from the definition, not from the instance
         val m =
-            manager(mapOf("goat" to goatDef(config = HOOK_CONFIG.copy(lifespanDays = 1.0)))) { _, c, _ ->
+            manager(mapOf("goat" to goatDef(config = HOOK_CONFIG.copy(lifespanDays = 1.0)))) {
+                _,
+                c,
+                _ ->
                 causes.add(c)
             }
         val goat = m.spawnNpc("Ancient", "goat", Vec3(0f, 5f, 0f))

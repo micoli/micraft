@@ -15,7 +15,7 @@ spawn:
   spawnBiomes: []
   # the pack anchor stays rare: a handful in the world, never a population
   maxTotal: 12
-  minTotal: 3
+  minTotal: 9
 hp: 35
 aggroMode: AGGRESSIVE
 aggroRange: 10.0

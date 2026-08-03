@@ -526,6 +526,15 @@ class WorldSimulator(
             "définitions surchargées (${overrides.size}) — actif au prochain spawn")
     }
 
+    /** Swap in freshly-loaded entity definitions without stopping the arena. */
+    fun reloadEntityDefinitions(newDefs: Map<String, NpcDefinition>) {
+        baseDefinitions = newDefs
+        npcManager.loadDefinitions(overriddenDefinitions(config.npcDefinitionOverrides))
+        logEvent(
+            SimEventType.SYSTEM,
+            "définitions YAML rechargées (${newDefs.size} types) — actif au prochain spawn")
+    }
+
     suspend fun spawn(type: String, x: Float, z: Float, count: Int = 1, level: Int? = null) {
         onSimulationThread {
             repeat(count.coerceIn(1, MAX_SPAWN_BATCH)) {
@@ -721,7 +730,7 @@ class WorldSimulator(
             overrides[type]?.let { def.applyOverride(it) } ?: def
         }
 
-    private val baseDefinitions: Map<String, NpcDefinition> = deps.definitions
+    @Volatile private var baseDefinitions: Map<String, NpcDefinition> = deps.definitions
 
     private fun pregenerateArena() {
         val chunkRadius = config.halfSize / WorldConstants.CHUNK_SIZE + 1

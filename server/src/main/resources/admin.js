@@ -32219,6 +32219,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.page.spawnSummary": "{0} batch(es) \xB7 {1} NPC",
     "sim.page.instantSpawn": "Instant spawn",
     "sim.page.spawnNow": "Spawn now at the centre",
+    "sim.page.reloadEntityDefs": "Reload entity YAMLs",
     "sim.page.layers": "Layers",
     "sim.page.noSimulation": "No simulation. Set up the arena, then \u201CStart\u201D.",
     "sim.page.population": "Population",
@@ -32693,6 +32694,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.page.spawnSummary": "{0} lot(s) \xB7 {1} NPC",
     "sim.page.instantSpawn": "Spawn imm\xE9diat",
     "sim.page.spawnNow": "Spawner maintenant au centre",
+    "sim.page.reloadEntityDefs": "Recharger les YAML d'entit\xE9s",
     "sim.page.layers": "Calques",
     "sim.page.noSimulation": "Aucune simulation. R\xE8gle l'ar\xE8ne puis \xAB D\xE9marrer \xBB.",
     "sim.page.population": "Population",
@@ -91104,6 +91106,7 @@ ${end.comment}` : end.comment;
         spawn: (type, x, z, count3, level) => send({ t: "spawn", type, x, z, count: count3, level: level != null ? level : null }),
         applyTuning: (tuning) => send({ t: "tuning", tuning }),
         applyOverrides: (overrides2) => send({ t: "defs", overrides: overrides2 }),
+        reloadEntityDefs: () => send({ t: "reloadEntityDefs" }),
         playerInput: (name2, dx, dz, yaw, jump) => send({ t: "playerInput", name: name2, dx, dz, yaw, jump }),
         attach: (id2) => send({ t: "attach", simulationId: id2 }),
         detach: () => send({ t: "detach" }),
@@ -91275,6 +91278,16 @@ ${end.comment}` : end.comment;
       /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex shrink-0 items-center gap-2 border-b border-[#2E3A4E] bg-[#1A222C] px-4 py-2", children: [
         /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "inline-block h-2 w-2 rounded-full " + (sim.connected ? "bg-emerald-400" : "bg-red-400") }),
         /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: t2(sim.connected ? "sim.page.connected" : "sim.page.disconnected") }),
+        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
+          "button",
+          {
+            type: "button",
+            disabled: !sim.running,
+            onClick: () => sim.reloadEntityDefs(),
+            className: "ml-3 rounded bg-[#3C50E0] px-3 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80 disabled:opacity-40",
+            children: t2("sim.page.reloadEntityDefs")
+          }
+        ),
         /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
           "button",
           {

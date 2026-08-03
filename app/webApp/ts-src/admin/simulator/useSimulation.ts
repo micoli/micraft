@@ -103,6 +103,7 @@ export interface SimulationState {
   spawn: (type: string, x: number, z: number, count: number, level?: number | null) => void;
   applyTuning: (tuning: NpcTuning) => void;
   applyOverrides: (overrides: Record<string, unknown>) => void;
+  reloadEntityDefs: () => void;
   playerInput: (name: string, dx: number, dz: number, yaw: number, jump: boolean) => void;
   /** Tell the server which world rectangle is on screen, so it only sends what is visible. */
   setViewport: (viewport: SimViewport | null) => void;
@@ -356,6 +357,7 @@ export function useSimulation(): SimulationState {
         send({ t: "spawn", type, x, z, count, level: level ?? null }),
       applyTuning: (tuning: NpcTuning) => send({ t: "tuning", tuning }),
       applyOverrides: (overrides: Record<string, unknown>) => send({ t: "defs", overrides }),
+      reloadEntityDefs: () => send({ t: "reloadEntityDefs" }),
       playerInput: (name: string, dx: number, dz: number, yaw: number, jump: boolean) =>
         send({ t: "playerInput", name, dx, dz, yaw, jump }),
       attach: (id: string) => send({ t: "attach", simulationId: id }),

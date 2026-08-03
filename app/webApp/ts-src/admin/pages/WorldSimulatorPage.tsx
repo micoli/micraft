@@ -212,6 +212,14 @@ export function WorldSimulatorPage() {
         </span>
         <button
           type="button"
+          disabled={!sim.running}
+          onClick={() => sim.reloadEntityDefs()}
+          className="ml-3 rounded bg-[#3C50E0] px-3 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80 disabled:opacity-40"
+        >
+          {t("sim.page.reloadEntityDefs")}
+        </button>
+        <button
+          type="button"
           onClick={start}
           disabled={!sim.connected || !tuning}
           className="ml-3 rounded bg-[#3C50E0] px-3 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80 disabled:opacity-40"

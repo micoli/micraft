@@ -27,6 +27,7 @@ import org.micoli.micraft.auth.AuthResult
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.npc.NpcDefinition
+import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.simulation.SimulationDeps
@@ -84,10 +85,17 @@ class SimulationControllerTest {
 
     private val scope = CoroutineScope(Dispatchers.Default)
 
+    private val emptyNpcRegistryLoader =
+        NpcRegistryLoader(
+            resourcesEntityPath = java.nio.file.Path.of("nonexistent-entities"),
+            dataEntityPath = java.nio.file.Path.of("nonexistent-data-entities"),
+        )
+
     private fun controller(tokenStore: TokenStore?) =
         SimulationController(
             registry = SimulationRegistry { deps() },
             npcTypesProvider = { listOf("walker") },
+            npcRegistryLoader = emptyNpcRegistryLoader,
             tokenStore = tokenStore,
         )
 
@@ -229,7 +237,10 @@ class SimulationControllerTest {
         val registry = SimulationRegistry { deps() }
         val simController =
             SimulationController(
-                registry = registry, npcTypesProvider = { listOf("walker") }, tokenStore = store)
+                registry = registry,
+                npcTypesProvider = { listOf("walker") },
+                npcRegistryLoader = emptyNpcRegistryLoader,
+                tokenStore = store)
         application {
             install(WebSockets)
             routing { simController.registerWs(this) }
@@ -280,7 +291,10 @@ class SimulationControllerTest {
         val registry = SimulationRegistry { deps() }
         val simController =
             SimulationController(
-                registry = registry, npcTypesProvider = { listOf("walker") }, tokenStore = store)
+                registry = registry,
+                npcTypesProvider = { listOf("walker") },
+                npcRegistryLoader = emptyNpcRegistryLoader,
+                tokenStore = store)
         application {
             install(WebSockets)
             routing { simController.registerWs(this) }
@@ -314,7 +328,10 @@ class SimulationControllerTest {
         val registry = SimulationRegistry { deps() }
         val simController =
             SimulationController(
-                registry = registry, npcTypesProvider = { listOf("walker") }, tokenStore = store)
+                registry = registry,
+                npcTypesProvider = { listOf("walker") },
+                npcRegistryLoader = emptyNpcRegistryLoader,
+                tokenStore = store)
         application {
             install(WebSockets)
             routing { simController.registerWs(this) }
@@ -349,7 +366,10 @@ class SimulationControllerTest {
         val registry = SimulationRegistry { deps() }
         val simController =
             SimulationController(
-                registry = registry, npcTypesProvider = { listOf("walker") }, tokenStore = store)
+                registry = registry,
+                npcTypesProvider = { listOf("walker") },
+                npcRegistryLoader = emptyNpcRegistryLoader,
+                tokenStore = store)
         application {
             install(WebSockets)
             routing { simController.registerWs(this) }

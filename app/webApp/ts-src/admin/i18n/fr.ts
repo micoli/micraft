@@ -466,6 +466,7 @@ export const fr: Record<TranslationKey, string> = {
   "sim.page.spawnSummary": "{0} lot(s) · {1} NPC",
   "sim.page.instantSpawn": "Spawn immédiat",
   "sim.page.spawnNow": "Spawner maintenant au centre",
+  "sim.page.reloadEntityDefs": "Recharger les YAML d'entités",
   "sim.page.layers": "Calques",
   "sim.page.noSimulation": "Aucune simulation. Règle l'arène puis « Démarrer ».",
   "sim.page.population": "Population",

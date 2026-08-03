@@ -14,7 +14,7 @@ spawn:
   spawnBiomes: []
   # world-wide ceiling; the floor below is what the spawner restocks up to
   maxTotal: 60
-  minTotal: 10
+  minTotal: 45
 hp: 18
 aggroMode: AGGRESSIVE
 aggroRange: 6.0

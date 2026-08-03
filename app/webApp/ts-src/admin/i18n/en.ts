@@ -469,6 +469,7 @@ export const en = {
   "sim.page.spawnSummary": "{0} batch(es) · {1} NPC",
   "sim.page.instantSpawn": "Instant spawn",
   "sim.page.spawnNow": "Spawn now at the centre",
+  "sim.page.reloadEntityDefs": "Reload entity YAMLs",
   "sim.page.layers": "Layers",
   "sim.page.noSimulation": "No simulation. Set up the arena, then “Start”.",
   "sim.page.population": "Population",

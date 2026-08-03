@@ -185,6 +185,9 @@ sealed class SimCommand {
     @Serializable
     @SerialName("defs")
     data class Defs(val overrides: Map<String, NpcYamlOverride>) : SimCommand()
+
+    /** Reload NPC entity YAML files from disk without restarting the arena. */
+    @Serializable @SerialName("reloadEntityDefs") data object ReloadEntityDefs : SimCommand()
 }
 
 // ── Server → client ───────────────────────────────────────────────────────────

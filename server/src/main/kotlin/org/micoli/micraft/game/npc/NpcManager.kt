@@ -51,7 +51,9 @@ class NpcManager(
      * animal reaching its lifespan reports it through here rather than raising its own event, so a
      * single death can never be counted twice.
      */
-    private val onNpcKilled: suspend (NpcInstance, NpcDeathCause, NpcInstance?) -> Unit = { _, _, _ -> },
+    private val onNpcKilled: suspend (NpcInstance, NpcDeathCause, NpcInstance?) -> Unit =
+        { _, _, _ ->
+        },
     private val broadcastCombatLog: suspend (String) -> Unit = {},
     private val grantNpcKillXp: suspend (predator: NpcInstance, prey: NpcInstance) -> Unit =
         { _, _ ->
