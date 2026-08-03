@@ -32073,6 +32073,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.event.BIRTH_BLOCKED": "birth blocked",
     "sim.event.BIRTH": "birth",
     "sim.event.EVOLVE": "evolution",
+    "sim.event.LEVEL_UP": "level-up",
     "sim.event.PACK_CALL": "pack call",
     "sim.event.PACK_JOIN": "pack join",
     "sim.event.PACK_ENGAGE": "pack attack",
@@ -32117,6 +32118,11 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.metrics.sliceHint": "{0} d slice",
     "sim.metrics.aliveByType": "Alive by type",
     "sim.metrics.deathsByType": "Deaths by type",
+    "sim.metrics.deathsByKillerType": "Kills by killer type",
+    "sim.metrics.levelUpsByType": "Baby\u2192adult by type",
+    "sim.metrics.unitLevelUps": "evolutions",
+    "sim.metrics.xpLevelUpsByType": "XP level-ups by type",
+    "sim.metrics.unitXpLevelUps": "level-ups",
     "sim.metrics.eventsPerSlice": "Events per slice",
     "sim.metrics.unitAlive": "alive",
     "sim.metrics.unitDeaths": "deaths",
@@ -32541,6 +32547,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.event.BIRTH_BLOCKED": "naissance refus\xE9e",
     "sim.event.BIRTH": "naissance",
     "sim.event.EVOLVE": "\xE9volution",
+    "sim.event.LEVEL_UP": "mont\xE9e de niveau",
     "sim.event.PACK_CALL": "appel de meute",
     "sim.event.PACK_JOIN": "ralliement",
     "sim.event.PACK_ENGAGE": "assaut de meute",
@@ -32585,6 +32592,11 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "sim.metrics.sliceHint": "tranche de {0} j",
     "sim.metrics.aliveByType": "Vivants par type",
     "sim.metrics.deathsByType": "Morts par type",
+    "sim.metrics.deathsByKillerType": "Kills par type de tueur",
+    "sim.metrics.levelUpsByType": "Baby\u2192adulte par type",
+    "sim.metrics.unitLevelUps": "\xE9volutions",
+    "sim.metrics.xpLevelUpsByType": "Mont\xE9es de niveau (XP) par type",
+    "sim.metrics.unitXpLevelUps": "mont\xE9es de niveau",
     "sim.metrics.eventsPerSlice": "\xC9v\xE8nements par tranche",
     "sim.metrics.unitAlive": "vivants",
     "sim.metrics.unitDeaths": "morts",
@@ -89355,6 +89367,7 @@ ${end.comment}` : end.comment;
     BIRTH: "#22D3EE",
     BIRTH_BLOCKED: "#78716C",
     EVOLVE: "#818CF8",
+    LEVEL_UP: "#A78BFA",
     PACK_CALL: "#F97316",
     PACK_JOIN: "#FDBA74",
     PACK_ENGAGE: "#DC2626",
@@ -89378,6 +89391,7 @@ ${end.comment}` : end.comment;
     BIRTH: "sim.event.BIRTH",
     BIRTH_BLOCKED: "sim.event.BIRTH_BLOCKED",
     EVOLVE: "sim.event.EVOLVE",
+    LEVEL_UP: "sim.event.LEVEL_UP",
     PACK_CALL: "sim.event.PACK_CALL",
     PACK_JOIN: "sim.event.PACK_JOIN",
     PACK_ENGAGE: "sim.event.PACK_ENGAGE",
@@ -89757,7 +89771,7 @@ ${end.comment}` : end.comment;
     var _a6, _b;
     const t2 = useT();
     const [enabled, setEnabled] = (0, import_react17.useState)(
-      () => FILTER_GROUPS.reduce((acc, g) => __spreadProps(__spreadValues({}, acc), { [g.key]: true }), {})
+      () => FILTER_GROUPS.reduce((acc, g) => __spreadProps(__spreadValues({}, acc), { [g.key]: false }), {})
     );
     const [npcType, setNpcType] = (0, import_react17.useState)(ALL_NPC_TYPES);
     const [autoScroll, setAutoScroll] = (0, import_react17.useState)(true);
@@ -89887,6 +89901,18 @@ ${end.comment}` : end.comment;
     return buckets2.slice(buckets2.length - slots);
   }
   var pickDeaths = (bucket) => bucket.deathsByType;
+  var pickKillers = (bucket) => {
+    var _a6;
+    return (_a6 = bucket.killsByKillerType) != null ? _a6 : {};
+  };
+  var pickEvolutions = (bucket) => {
+    var _a6;
+    return (_a6 = bucket.evolutionsByType) != null ? _a6 : {};
+  };
+  var pickLevelUps = (bucket) => {
+    var _a6;
+    return (_a6 = bucket.levelUpsByType) != null ? _a6 : {};
+  };
   var pickAlive = (bucket) => bucket.aliveByType;
   function stackKeys(buckets2, pick) {
     const present = /* @__PURE__ */ new Set();
@@ -90111,14 +90137,18 @@ ${end.comment}` : end.comment;
     title,
     hint,
     children,
-    legend
+    legend,
+    aside
   }) {
     return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-2.5", children: [
       /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "mb-1 flex items-baseline gap-2", children: [
         /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("p", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: title }),
         /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: hint })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("div", { className: "relative rounded bg-[#0E1726] p-1.5", children }),
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "flex items-start gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("div", { className: "relative min-w-0 flex-1 rounded bg-[#0E1726] p-1.5", children }),
+        aside
+      ] }),
       /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("div", { className: "mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5", children: legend })
     ] });
   }
@@ -90162,6 +90192,48 @@ ${end.comment}` : end.comment;
   function HoverGuide({ x, width }) {
     return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("rect", { x, y: 0, width: Math.max(width, 0.8), height: BOX_H, fill: "#C7D2FE", opacity: 0.12 });
   }
+  var PIE_R = 35;
+  var PIE_CX = 40;
+  var PIE_CY = 45;
+  function PieChart({ keys: keys2, buckets: buckets2, pick }) {
+    const totals = (0, import_react18.useMemo)(() => {
+      var _a6, _b;
+      const map3 = {};
+      for (const bucket of buckets2) {
+        const data2 = pick(bucket);
+        for (const key2 of keys2) map3[key2] = ((_a6 = map3[key2]) != null ? _a6 : 0) + ((_b = data2[key2]) != null ? _b : 0);
+      }
+      return map3;
+    }, [keys2, buckets2, pick]);
+    const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0);
+    if (grandTotal === 0) return null;
+    let angle = -Math.PI / 2;
+    const slices = keys2.map((key2) => {
+      var _a6;
+      return { key: key2, value: (_a6 = totals[key2]) != null ? _a6 : 0 };
+    }).filter((e) => e.value > 0).map((e) => {
+      const sweep = e.value / grandTotal * 2 * Math.PI;
+      const start = angle;
+      angle += sweep;
+      return { key: e.key, value: e.value, start, end: angle, sweep };
+    });
+    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("svg", { viewBox: "0 0 80 90", className: "h-[90px] w-[80px] shrink-0 rounded bg-[#0E1726]", children: [
+      slices.map(({ key: key2, start, end, sweep }) => {
+        if (sweep >= 2 * Math.PI - 1e-3) {
+          return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("circle", { cx: PIE_CX, cy: PIE_CY, r: PIE_R, fill: npcColor(key2) }, key2);
+        }
+        const x1 = PIE_CX + PIE_R * Math.cos(start);
+        const y1 = PIE_CY + PIE_R * Math.sin(start);
+        const x2 = PIE_CX + PIE_R * Math.cos(end);
+        const y2 = PIE_CY + PIE_R * Math.sin(end);
+        const large = sweep > Math.PI ? 1 : 0;
+        const d = `M ${PIE_CX} ${PIE_CY} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${PIE_R} ${PIE_R} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
+        return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("path", { d, fill: npcColor(key2) }, key2);
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("circle", { cx: PIE_CX, cy: PIE_CY, r: PIE_R * 0.45, fill: "#0E1726" }),
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("text", { x: PIE_CX, y: PIE_CY + 3, textAnchor: "middle", fill: "#8A99AF", fontSize: 9, children: grandTotal })
+    ] });
+  }
   function StackedByType({
     title,
     hint,
@@ -90191,6 +90263,7 @@ ${end.comment}` : end.comment;
       {
         title,
         hint,
+        aside: keys2.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(PieChart, { keys: keys2, buckets: buckets2, pick }) : void 0,
         legend: keys2.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: t2("sim.metrics.nothingYet") }) : keys2.map((key2) => {
           var _a7;
           return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
@@ -90398,6 +90471,39 @@ ${end.comment}` : end.comment;
           unit: t2("sim.metrics.unitDeaths"),
           buckets: visible,
           pick: pickDeaths,
+          slots
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+        StackedByType,
+        {
+          title: t2("sim.metrics.deathsByKillerType"),
+          hint,
+          unit: t2("sim.metrics.unitDeaths"),
+          buckets: visible,
+          pick: pickKillers,
+          slots
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+        StackedByType,
+        {
+          title: t2("sim.metrics.levelUpsByType"),
+          hint,
+          unit: t2("sim.metrics.unitLevelUps"),
+          buckets: visible,
+          pick: pickEvolutions,
+          slots
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+        StackedByType,
+        {
+          title: t2("sim.metrics.xpLevelUpsByType"),
+          hint,
+          unit: t2("sim.metrics.unitXpLevelUps"),
+          buckets: visible,
+          pick: pickLevelUps,
           slots
         }
       ),

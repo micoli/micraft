@@ -34,8 +34,8 @@ data class NpcSubsystemHooks(
     val broadcastWorldUpdate: suspend (ServerMessage) -> Unit = {},
     val getSessions: () -> Collection<PlayerSession> = { emptyList() },
     val broadcastCombatLog: suspend (String) -> Unit = {},
-    /** One call per death, cause included. */
-    val onNpcKilled: suspend (NpcInstance, NpcDeathCause) -> Unit = { _, _ -> },
+    /** One call per death, cause and killer (null for non-combat deaths) included. */
+    val onNpcKilled: suspend (NpcInstance, NpcDeathCause, NpcInstance?) -> Unit = { _, _, _ -> },
     /** XP to a predator NPC for killing another NPC — what lets an NPC gain levels at all. */
     val grantNpcKillXp: suspend (predator: NpcInstance, prey: NpcInstance) -> Unit = { _, _ -> },
     /** Tick context (tuning + RNG). Re-read on every use so `/reload` keeps working. */

@@ -13,6 +13,9 @@ import {
   niceMax,
   pickAlive,
   pickDeaths,
+  pickEvolutions,
+  pickKillers,
+  pickLevelUps,
   slotsFor,
   stackKeys,
   stackedColumns,
@@ -105,11 +108,13 @@ function ChartFrame({
   hint,
   children,
   legend,
+  aside,
 }: {
   title: string;
   hint: string;
   children: React.ReactNode;
   legend: React.ReactNode;
+  aside?: React.ReactNode;
 }) {
   return (
     <div className="rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-2.5">
@@ -117,8 +122,11 @@ function ChartFrame({
         <p className="flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]">{title}</p>
         <span className="text-[10px] text-[#4A5568]">{hint}</span>
       </div>
-      {/* relative: hover cards are positioned against this box */}
-      <div className="relative rounded bg-[#0E1726] p-1.5">{children}</div>
+      <div className="flex items-start gap-2">
+        {/* relative: hover cards are positioned against this box */}
+        <div className="relative min-w-0 flex-1 rounded bg-[#0E1726] p-1.5">{children}</div>
+        {aside}
+      </div>
       <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">{legend}</div>
     </div>
   );
@@ -198,6 +206,56 @@ function HoverGuide({ x, width }: { x: number; width: number }) {
   return <rect x={x} y={0} width={Math.max(width, 0.8)} height={BOX_H} fill="#C7D2FE" opacity={0.12} />;
 }
 
+const PIE_R = 35;
+const PIE_CX = 40;
+const PIE_CY = 45;
+
+/** Donut-style pie showing totals by type over the visible window. */
+function PieChart({ keys, buckets, pick }: { keys: string[]; buckets: SimMetricBucket[]; pick: TypedPick }) {
+  const totals = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const bucket of buckets) {
+      const data = pick(bucket);
+      for (const key of keys) map[key] = (map[key] ?? 0) + (data[key] ?? 0);
+    }
+    return map;
+  }, [keys, buckets, pick]);
+
+  const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0);
+  if (grandTotal === 0) return null;
+
+  const slices = keys
+    .map((key) => ({ key, value: totals[key] ?? 0 }))
+    .filter((e) => e.value > 0)
+    .reduce<{ key: string; value: number; start: number; end: number; sweep: number }[]>((acc, e) => {
+      const prevAngle = acc.length > 0 ? acc[acc.length - 1].end : -Math.PI / 2;
+      const sweep = (e.value / grandTotal) * 2 * Math.PI;
+      acc.push({ key: e.key, value: e.value, start: prevAngle, end: prevAngle + sweep, sweep });
+      return acc;
+    }, []);
+
+  return (
+    <svg viewBox="0 0 80 90" className="h-[90px] w-[80px] shrink-0 rounded bg-[#0E1726]">
+      {slices.map(({ key, start, end, sweep }) => {
+        if (sweep >= 2 * Math.PI - 0.001) {
+          return <circle key={key} cx={PIE_CX} cy={PIE_CY} r={PIE_R} fill={npcColor(key)} />;
+        }
+        const x1 = PIE_CX + PIE_R * Math.cos(start);
+        const y1 = PIE_CY + PIE_R * Math.sin(start);
+        const x2 = PIE_CX + PIE_R * Math.cos(end);
+        const y2 = PIE_CY + PIE_R * Math.sin(end);
+        const large = sweep > Math.PI ? 1 : 0;
+        const d = `M ${PIE_CX} ${PIE_CY} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${PIE_R} ${PIE_R} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
+        return <path key={key} d={d} fill={npcColor(key)} />;
+      })}
+      <circle cx={PIE_CX} cy={PIE_CY} r={PIE_R * 0.45} fill="#0E1726" />
+      <text x={PIE_CX} y={PIE_CY + 3} textAnchor="middle" fill="#8A99AF" fontSize={9}>
+        {grandTotal}
+      </text>
+    </svg>
+  );
+}
+
 /** Stacked bars per NPC type — one column per time slice. */
 function StackedByType({
   title,
@@ -247,6 +305,7 @@ function StackedByType({
     <ChartFrame
       title={title}
       hint={hint}
+      aside={keys.length > 0 ? <PieChart keys={keys} buckets={buckets} pick={pick} /> : undefined}
       legend={
         keys.length === 0 ? (
           <span className="text-[10px] text-[#4A5568]">{t("sim.metrics.nothingYet")}</span>
@@ -469,6 +528,30 @@ export const MetricsPanel = memo(function MetricsPanel({ buckets, bucketGameDays
         unit={t("sim.metrics.unitDeaths")}
         buckets={visible}
         pick={pickDeaths}
+        slots={slots}
+      />
+      <StackedByType
+        title={t("sim.metrics.deathsByKillerType")}
+        hint={hint}
+        unit={t("sim.metrics.unitDeaths")}
+        buckets={visible}
+        pick={pickKillers}
+        slots={slots}
+      />
+      <StackedByType
+        title={t("sim.metrics.levelUpsByType")}
+        hint={hint}
+        unit={t("sim.metrics.unitLevelUps")}
+        buckets={visible}
+        pick={pickEvolutions}
+        slots={slots}
+      />
+      <StackedByType
+        title={t("sim.metrics.xpLevelUpsByType")}
+        hint={hint}
+        unit={t("sim.metrics.unitXpLevelUps")}
+        buckets={visible}
+        pick={pickLevelUps}
         slots={slots}
       />
       <Counters buckets={visible} slots={slots} />

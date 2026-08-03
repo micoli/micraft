@@ -46,7 +46,7 @@ interface Props {
 export const EventLogPanel = memo(function EventLogPanel({ events, onSelect }: Props) {
   const t = useT();
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() =>
-    FILTER_GROUPS.reduce((acc, g) => ({ ...acc, [g.key]: true }), {}),
+    FILTER_GROUPS.reduce((acc, g) => ({ ...acc, [g.key]: false }), {}),
   );
   const [npcType, setNpcType] = useState<string>(ALL_NPC_TYPES);
   const [autoScroll, setAutoScroll] = useState(true);

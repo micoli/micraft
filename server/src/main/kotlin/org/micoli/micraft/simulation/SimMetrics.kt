@@ -29,9 +29,12 @@ data class SimMetricBucket(
     val deathsByType: Map<String, Int> = emptyMap(),
     val ageDeathsByType: Map<String, Int> = emptyMap(),
     val killDeathsByType: Map<String, Int> = emptyMap(),
+    /** For KILLED deaths only: keyed by the killer's NPC type. */
+    val killsByKillerType: Map<String, Int> = emptyMap(),
     val starvationsByType: Map<String, Int> = emptyMap(),
     val birthsByType: Map<String, Int> = emptyMap(),
     val evolutionsByType: Map<String, Int> = emptyMap(),
+    val levelUpsByType: Map<String, Int> = emptyMap(),
     val aliveByType: Map<String, Int> = emptyMap(),
     /**
      * Condition of the standing population, per type — gauges, like [aliveByType].
@@ -97,9 +100,11 @@ class SimMetrics(
         var tick = 0L
         val ageDeaths = HashMap<String, Int>()
         val killDeaths = HashMap<String, Int>()
+        val killsByKillerType = HashMap<String, Int>()
         val starvations = HashMap<String, Int>()
         val birthsPerType = HashMap<String, Int>()
         val evolutionsPerType = HashMap<String, Int>()
+        val levelUpsPerType = HashMap<String, Int>()
         var population: PopulationSample = PopulationSample()
         var attacks = 0
         var gestations = 0
@@ -119,9 +124,11 @@ class SimMetrics(
                 deathsByType = sumByType(ageDeaths, killDeaths, starvations),
                 ageDeathsByType = ageDeaths.toMap(),
                 killDeathsByType = killDeaths.toMap(),
+                killsByKillerType = killsByKillerType.toMap(),
                 starvationsByType = starvations.toMap(),
                 birthsByType = birthsPerType.toMap(),
                 evolutionsByType = evolutionsPerType.toMap(),
+                levelUpsByType = levelUpsPerType.toMap(),
                 aliveByType = population.aliveByType,
                 meanHungerByType = population.meanHungerByType,
                 meanAgeRatioByType = population.meanAgeRatioByType,
@@ -152,7 +159,10 @@ class SimMetrics(
         val slice = sliceFor(event.gameDay, event.tick) ?: return
         val npcType = event.npcType ?: UNKNOWN_TYPE
         when (event.type) {
-            SimEventType.DEATH -> slice.killDeaths.bump(npcType)
+            SimEventType.DEATH -> {
+                slice.killDeaths.bump(npcType)
+                event.otherType?.let { slice.killsByKillerType.bump(it) }
+            }
             SimEventType.AGE_DEATH -> slice.ageDeaths.bump(npcType)
             SimEventType.STARVATION -> slice.starvations.bump(npcType)
             SimEventType.ATTACK -> slice.attacks++
@@ -170,6 +180,7 @@ class SimMetrics(
                 slice.evolutions++
                 slice.evolutionsPerType.bump(npcType)
             }
+            SimEventType.LEVEL_UP -> slice.levelUpsPerType.bump(npcType)
             else -> Unit
         }
     }

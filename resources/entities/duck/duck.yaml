@@ -17,7 +17,7 @@ animal:
   diet: HERBIVORE
   lifespanDays: 15.0
   canReproduce: true
-  gestationDays: 1.0
+  gestationDays: 5.0
   offspringType: duck_baby
   offspringMinCount: 2
   offspringMaxCount: 4

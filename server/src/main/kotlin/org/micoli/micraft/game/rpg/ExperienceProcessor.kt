@@ -14,6 +14,7 @@ class ExperienceProcessor(
     private val savePlayer: suspend (PlayerSession) -> Unit,
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit = { _, _ -> },
     private val broadcastCombatLog: suspend (String) -> Unit = {},
+    private val onNpcLevelUp: suspend (NpcInstance, Int) -> Unit = { _, _ -> },
 ) {
     fun computeLevel(xp: Int, thresholds: List<Int>): Int {
         var level = 1
@@ -132,6 +133,7 @@ class ExperienceProcessor(
                 )
             broadcastCombatLog("[m:${npc.state.name}] has grown stronger! (Level $newLevel)")
             log.info("NPC {} leveled up {} → {}", npc.state.name, oldLevel, newLevel)
+            onNpcLevelUp(npc, newLevel)
         }
         return leveledUp
     }

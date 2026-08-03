@@ -51,7 +51,7 @@ class NpcManager(
      * animal reaching its lifespan reports it through here rather than raising its own event, so a
      * single death can never be counted twice.
      */
-    private val onNpcKilled: suspend (NpcInstance, NpcDeathCause) -> Unit = { _, _ -> },
+    private val onNpcKilled: suspend (NpcInstance, NpcDeathCause, NpcInstance?) -> Unit = { _, _, _ -> },
     private val broadcastCombatLog: suspend (String) -> Unit = {},
     private val grantNpcKillXp: suspend (predator: NpcInstance, prey: NpcInstance) -> Unit =
         { _, _ ->
@@ -197,14 +197,14 @@ class NpcManager(
     suspend fun killNpcByAge(npcId: String, instance: NpcInstance, now: Long) {
         if (instance.isDead) return
         broadcastCombatLog("[m:${instance.state.name}] has died of old age.")
-        onNpcKilled(instance, NpcDeathCause.OLD_AGE)
+        onNpcKilled(instance, NpcDeathCause.OLD_AGE, null)
         markNpcDead(npcId, instance, now)
     }
 
     suspend fun killNpcByStarvation(npcId: String, instance: NpcInstance, now: Long) {
         if (instance.isDead) return
         broadcastCombatLog("[m:${instance.state.name}] has starved to death.")
-        onNpcKilled(instance, NpcDeathCause.STARVATION)
+        onNpcKilled(instance, NpcDeathCause.STARVATION, null)
         markNpcDead(npcId, instance, now)
     }
 
@@ -619,15 +619,15 @@ class NpcManager(
         if (newHp <= 0) {
             log.info("NPC {} killed", instance.state.name)
             broadcastCombatLog("[m:${instance.state.name}] has been slain!")
+            val killerNpc = npcs[attackerId]
             if (getSessions().none { it.id == attackerId }) {
-                val attackerNpc = npcs[attackerId]
-                if (attackerNpc != null && !attackerNpc.isDead) {
-                    grantNpcKillXp(attackerNpc, instance)
+                if (killerNpc != null && !killerNpc.isDead) {
+                    grantNpcKillXp(killerNpc, instance)
                     notifyAdmins(
-                        """{"type":"npcXpUpdate","id":"${attackerNpc.state.id}","xp":${attackerNpc.xp},"level":${attackerNpc.instanceLevel}}""")
+                        """{"type":"npcXpUpdate","id":"${killerNpc.state.id}","xp":${killerNpc.xp},"level":${killerNpc.instanceLevel}}""")
                 }
             }
-            onNpcKilled(instance, NpcDeathCause.KILLED)
+            onNpcKilled(instance, NpcDeathCause.KILLED, killerNpc)
             markNpcDead(npcId, instance, System.currentTimeMillis())
         }
     }
@@ -684,7 +684,7 @@ class NpcManager(
                             instance.state.id, true, instance.currentHp, maxHp))
                     if (instance.currentHp <= 0) {
                         broadcastCombatLog("[m:${instance.state.name}] withers to death!")
-                        onNpcKilled(instance, NpcDeathCause.KILLED)
+                        onNpcKilled(instance, NpcDeathCause.KILLED, null)
                         markNpcDead(instance.state.id, instance, now)
                     }
                 }

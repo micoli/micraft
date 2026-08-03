@@ -141,6 +141,14 @@ class WorldSimulator(
             savePlayer = {},
             subscribeToChannel = { _, _ -> },
             broadcastCombatLog = { text -> logCombatLine(text) },
+            onNpcLevelUp = { npc, newLevel ->
+                logEvent(
+                    SimEventType.LEVEL_UP,
+                    "${npc.state.name} monte au niveau $newLevel",
+                    npc,
+                    value = newLevel.toDouble(),
+                )
+            },
         )
 
     private val hooks =
@@ -149,11 +157,17 @@ class WorldSimulator(
             broadcastWorldUpdate = { message -> onWorldUpdate(message) },
             getSessions = { sessions.toList() },
             broadcastCombatLog = { text -> logCombatLine(text) },
-            onNpcKilled = { instance, cause ->
+            onNpcKilled = { instance, cause, killer ->
                 val animal = instance.animalData
                 when (cause) {
                     NpcDeathCause.KILLED ->
-                        logEvent(SimEventType.DEATH, "mort de ${instance.state.name}", instance)
+                        logEvent(
+                            SimEventType.DEATH,
+                            "mort de ${instance.state.name}" +
+                                (killer?.let { " (tué par ${it.state.name})" } ?: ""),
+                            instance,
+                            other = killer,
+                        )
                     NpcDeathCause.OLD_AGE ->
                         logEvent(
                             SimEventType.AGE_DEATH,
@@ -822,6 +836,7 @@ class WorldSimulator(
                 npcType = instance?.state?.type,
                 otherId = other?.state?.id,
                 otherName = other?.state?.name,
+                otherType = other?.state?.type,
                 value = value,
             ))
     }

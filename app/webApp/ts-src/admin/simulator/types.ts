@@ -190,6 +190,7 @@ export type SimEventType =
   | "BIRTH"
   | "BIRTH_BLOCKED"
   | "EVOLVE"
+  | "LEVEL_UP"
   | "PACK_CALL"
   | "PACK_JOIN"
   | "PACK_ENGAGE"
@@ -250,6 +251,9 @@ export interface SimMetricBucket {
   deathsByType: Record<string, number>;
   ageDeathsByType: Record<string, number>;
   killDeathsByType: Record<string, number>;
+  /** For combat kills only: keyed by the killer's NPC type. */
+  killsByKillerType: Record<string, number>;
+  levelUpsByType: Record<string, number>;
   starvationsByType: Record<string, number>;
   birthsByType: Record<string, number>;
   evolutionsByType: Record<string, number>;
@@ -336,6 +340,7 @@ export const EVENT_COLORS: Record<SimEventType, string> = {
   BIRTH: "#22D3EE",
   BIRTH_BLOCKED: "#78716C",
   EVOLVE: "#818CF8",
+  LEVEL_UP: "#A78BFA",
   PACK_CALL: "#F97316",
   PACK_JOIN: "#FDBA74",
   PACK_ENGAGE: "#DC2626",
@@ -360,6 +365,7 @@ export const EVENT_LABEL_KEYS: Record<SimEventType, TranslationKey> = {
   BIRTH: "sim.event.BIRTH",
   BIRTH_BLOCKED: "sim.event.BIRTH_BLOCKED",
   EVOLVE: "sim.event.EVOLVE",
+  LEVEL_UP: "sim.event.LEVEL_UP",
   PACK_CALL: "sim.event.PACK_CALL",
   PACK_JOIN: "sim.event.PACK_JOIN",
   PACK_ENGAGE: "sim.event.PACK_ENGAGE",

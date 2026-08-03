@@ -78,7 +78,7 @@ private fun managerReporting(
     NpcManager(
             broadcast = {},
             getSessions = { emptyList() },
-            onNpcKilled = { _, cause -> causes.add(cause) },
+            onNpcKilled = { _, cause, _ -> causes.add(cause) },
         )
         .apply { loadDefinitions(mapOf(def.type to def)) }
 

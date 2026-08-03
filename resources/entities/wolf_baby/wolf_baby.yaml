@@ -28,6 +28,9 @@ baseStats:
   wis: 8
   con: 6
   cha: 6
+attacks:
+  - attackId: wolf_bite
+    level: 1
 animal:
   diet: CARNIVORE
   lifespanDays: 30.0
@@ -36,6 +39,9 @@ animal:
   adultType: wolf
   # game days before it becomes its adultType
   growthDays: 5.0
+  preyTypes:
+    - goat
+    - duck
   baseStats:
     str: 7
     dex: 8
@@ -46,7 +52,7 @@ animal:
   statsVariance: 1
   hpRegenPerSec: 0.5
   hungerRatePerDay: 0.12
-  hungerThresholdToHunt: 0.99
+  hungerThresholdToHunt: 0.70
   hungerThresholdToMate: 0.99
   # runs from whatever eats it, at this distance
   fleeRadius: 14.0

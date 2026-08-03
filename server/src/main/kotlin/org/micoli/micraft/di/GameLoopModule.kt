@@ -195,7 +195,7 @@ class GameLoopModule {
             getSessions = sessionRegistry::all,
             // XP and quest credit only for a death someone actually caused: an animal that a player
             // wounded and then outlived must not pay out when it dies of old age or starvation.
-            onNpcKilled = { npc, cause ->
+            onNpcKilled = { npc, cause, _ ->
                 if (cause == NpcDeathCause.KILLED) {
                     experienceProcessor.onNpcKilled(npc)
                     questManager.onNpcKilled(npc)

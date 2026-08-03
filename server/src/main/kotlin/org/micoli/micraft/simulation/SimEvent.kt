@@ -20,6 +20,7 @@ enum class SimEventType {
     BIRTH,
     BIRTH_BLOCKED,
     EVOLVE,
+    LEVEL_UP,
     PACK_CALL,
     PACK_JOIN,
     PACK_ENGAGE,
@@ -39,6 +40,7 @@ data class SimEvent(
     val npcType: String? = null,
     val otherId: String? = null,
     val otherName: String? = null,
+    val otherType: String? = null,
     val value: Double? = null,
 )
 
