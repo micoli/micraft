@@ -2,9 +2,9 @@
 # Sequential dev build: detects what changed, rebuilds in order, restarts server.
 # Usage: dev-build.sh [--force]   (--force rebuilds everything regardless of changes)
 set -euo pipefail
-cd /workspace
+cd "$(dirname "$0")/.."
 
-LAST_BUILD=/workspace/.last-build
+LAST_BUILD=.last-build
 FORCE=false
 [ "${1:-}" = "--force" ] && FORCE=true
 
@@ -37,12 +37,12 @@ if ! $BUILD_JS && ! $BUILD_WASM && ! $BUILD_SERVER; then
     exit 0
 fi
 
-BUILD_WEB=/workspace/app/webApp/build/web
+BUILD_WEB=app/webApp/build/web
 
 # ── 1. JS / CSS ────────────────────────────────────────────────────────────────
 if $BUILD_JS; then
     echo "[build] Building JS/CSS..."
-    cd /workspace/app/webApp/ts-src
+    cd app/webApp/ts-src
 
     MC_OUT_JS="$BUILD_WEB/mc_bindings.js" npm run build
     MC_OUT_CSS="$BUILD_WEB/main.css" npm run build:css
@@ -59,7 +59,7 @@ if $BUILD_JS; then
     npm run build:admin
     npm run build:admin:css
 
-    cd /workspace
+    cd ../../..
     echo "[build] JS/CSS done"
 fi
 

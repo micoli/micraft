@@ -6,54 +6,54 @@ bind_port = 3120
 bind_address = "0.0.0.0"
 
 [daemons.server]
-run = "bash -c './gradlew :server:installDist :app:webApp:copyStaticToWebDist --console=plain && MICRAFT_WEB_DIST=/workspace/app/webApp/build/web /workspace/server/build/install/server/bin/server'"
-dir = "/workspace"
+run = "bash -c './gradlew :server:installDist :app:webApp:copyStaticToWebDist --console=plain && MICRAFT_WEB_DIST=app/webApp/build/web server/build/install/server/bin/server'"
+dir = "."
 ready-port = 8080
 retry = true
 boot_start = true
 
 [daemons.run-lock]
 run = "pitchfork restart server"
-dir = "/workspace"
+dir = "."
 watch = ["run.lock"]
 
 [daemons.wasm]
 run = "./gradlew :app:webApp:copyResourcesToWebDist --continuous --console=plain --no-build-cache"
-dir = "/workspace"
+dir = "."
 depends = ["server"]
 boot_start = false
 
 [daemons.mc_bindings]
 run = "npm run watch:mc_bindings"
-dir = "/workspace/app/webApp/ts-src"
-env = { MC_OUT_JS="/workspace/app/webApp/build/web/mc_bindings.js"}
+dir = "app/webApp/ts-src"
+env = { MC_OUT_JS="../build/web/mc_bindings.js"}
 depends = ["server"]
 boot_start = false
 
 [daemons.css]
 run = "npm run watch:css"
-dir = "/workspace/app/webApp/ts-src"
-env = {MC_OUT_CSS="/workspace/app/webApp/build/web/main.css"}
+dir = "app/webApp/ts-src"
+env = {MC_OUT_CSS="../build/web/main.css"}
 depends = ["server"]
 boot_start = false
 
 [daemons.css-sync]
 run = "npm run watch:css:sync"
-dir = "/workspace/app/webApp/ts-src"
-env = {MC_OUT_CSS="/workspace/app/webApp/build/web/main.css", MC_OUT_MAP_CSS="/workspace/app/webApp/build/web/map.css", MC_OUT_ADMIN_CSS="/workspace/app/webApp/build/web/admin.css"}
+dir = "app/webApp/ts-src"
+env = {MC_OUT_CSS="../build/web/main.css", MC_OUT_MAP_CSS="../build/web/map.css", MC_OUT_ADMIN_CSS="../build/web/admin.css"}
 depends = ["css"]
 boot_start = false
 
 [daemons.map]
 run = "npm run watch:map"
-dir = "/workspace/app/webApp/ts-src"
-env = { MC_OUT_MAP_JS="/workspace/app/webApp/build/web/map.js" }
+dir = "app/webApp/ts-src"
+env = { MC_OUT_MAP_JS="../build/web/map.js" }
 depends = ["server"]
 boot_start = false
 
 [daemons.admin]
 run = "npm run watch:admin"
-dir = "/workspace/app/webApp/ts-src"
-env = { MC_OUT_ADMIN_JS="/workspace/app/webApp/build/web/admin.js" }
+dir = "app/webApp/ts-src"
+env = { MC_OUT_ADMIN_JS="../build/web/admin.js" }
 depends = ["server"]
 boot_start = false

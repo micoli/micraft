@@ -1,3 +1,4 @@
+.env
 !gradle/wrapper/gradle-wrapper.jar
 jar-plugins/*
 run.lock

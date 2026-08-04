@@ -5,9 +5,13 @@ DC_DEV  = docker compose -f docker-compose.dev.yml
 DC_PROD = docker compose -f docker-compose.prod.yml
 
 ifeq ($(RUN_MODE),DOCKER)
-  EXEC = $(DC_DEV) exec micraft bash -c
+  EXEC         = $(DC_DEV) exec micraft bash -c
+  PITCHFORK    = $(DC_DEV) exec micraft pitchfork
+  PITCHFORK_IT = $(DC_DEV) exec -it micraft pitchfork
 else
-  EXEC = bash -c
+  EXEC         = bash -c
+  PITCHFORK    = pitchfork
+  PITCHFORK_IT = pitchfork
 endif
 
 .ONESHELL:
@@ -25,39 +29,51 @@ endif
 dev-patch-resource-defaults:
 	$(EXEC) "./gradlew :server:patchResourceDefaults"
 
+ifeq ($(RUN_MODE),DOCKER)
 dev-up:
 	$(DC_DEV) up --build -d
-
 dev-down:
 	$(DC_DEV) down
-
-dev-restart-server:
-	$(DC_DEV) exec micraft pitchfork restart server
-
-dev-restart-clean-server:
-	$(EXEC) "rm data/world/default_world/*.json data/world/default_world/chunks/* data/config/*/* || true"
-	$(DC_DEV) exec micraft pitchfork restart server
-
 dev-restart:
 	make dev-down
 	make dev-up
+else
+dev-up:
+	$(PITCHFORK) start -l
+dev-down:
+	$(PITCHFORK) stop -l
+dev-restart:
+	$(PITCHFORK) restart -l
+endif
+
+dev-restart-server:
+	$(PITCHFORK) restart server
+
+dev-restart-clean-server:
+	$(EXEC) "rm data/world/default_world/*.json data/world/default_world/chunks/* data/config/*/* || true"
+	$(PITCHFORK) restart server
 
 # Nuclear: destroy all named build volumes + full restart (clean slate)
 dev-nuke:
 	$(DC_DEV) down -v
 	$(DC_DEV) up --build -d
 
+ifeq ($(RUN_MODE),DOCKER)
 dev-shell:
 	$(DC_DEV) exec -it micraft bash
+else
+dev-shell:
+	bash
+endif
 
 dev-task-stop:
-	$(DC_DEV) exec micraft pitchfork stop -l
+	$(PITCHFORK) stop -l
 
 dev-task-start:
-	$(DC_DEV) exec micraft pitchfork start -l
+	$(PITCHFORK) start -l
 
 dev-task-restart:
-	$(DC_DEV) exec micraft pitchfork restart -l
+	$(PITCHFORK) restart -l
 
 # Nuke WASM + core klib caches in-container — no container restart needed
 # Use when wasm build produces proto decode errors or stale output after core type changes
@@ -80,20 +96,20 @@ dev-reset-wasm: dev-nuke-wasm build-wasm
 # Replaces: dev-down + docker volume rm + dev-up (faster, no volume teardown needed)
 # Note: does NOT clear build/web/ (served assets) or gradle-home/node_modules
 dev-reset:
-	$(DC_DEV) exec micraft pitchfork stop -l
+	$(PITCHFORK) stop -l
 	$(EXEC) "rm -rf \
 	  /workspace/core/build \
 	  /workspace/server/build \
 	  /workspace/app/shared/build \
 	  /workspace/app/webApp/build/klib \
 	  /workspace/app/webApp/build/compileSync"
-	$(DC_DEV) exec micraft pitchfork start -l
+	$(PITCHFORK) start -l
 
 dev-tui:
-	$(DC_DEV) exec -it micraft pitchfork tui
+	$(PITCHFORK_IT) tui
 
 dev-logs:
-	@while true; do $(DC_DEV) exec -it micraft pitchfork logs server run\-lock wasm mc_bindings css css\-sync map admin --tail 2>&1 | scripts/colorlog.pl; sleep 2; echo "===================="; done
+	@while true; do $(PITCHFORK_IT) logs server run\-lock wasm mc_bindings css css\-sync map admin --tail 2>&1 | scripts/colorlog.pl; sleep 2; echo "===================="; done
 
 # Run any command inside the dev container: make dc CMD="./gradlew :server:test"
 ifeq ($(RUN_MODE),DOCKER)
@@ -125,7 +141,7 @@ quick-code-standard:
 
 # Detect what changed, build in order (JS/CSS → WASM → server), restart, browser auto-reloads
 build:
-	$(EXEC) "bash /workspace/scripts/dev-build.sh"
+	$(EXEC) "bash ./scripts/dev-build.sh"
 
 # Force full rebuild: WASM + JS/CSS + server (ignores change detection)
 build-all:
@@ -136,7 +152,7 @@ build-client: build-js build-wasm
 # When the pitchfork wasm watcher is running, trigger via source file touch to avoid
 # Gradle project lock contention. Otherwise run a one-shot build.
 build-wasm:
-	@if $(DC_DEV) exec micraft pitchfork status wasm 2>/dev/null | grep -qi "running"; then \
+	@if $(PITCHFORK) status wasm 2>/dev/null | grep -qi "running"; then \
 		echo "[wasm] watcher running — triggering rebuild via source change…"; \
 		$(EXEC) "f=app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/WasmBuildTrigger.kt; echo 'package org.micoli.micraft' > \$$f; echo \"// wasm-trigger $$(date +%s)\" >> \$$f"; \
 	else \
@@ -144,7 +160,7 @@ build-wasm:
 	fi
 # Start the WASM continuous watcher (opt-in; use when iterating heavily on Kotlin/WASM code)
 wasm-watch:
-	$(DC_DEV) exec micraft pitchfork start wasm
+	$(PITCHFORK) start wasm
 
 # Explicitly trigger the --continuous wasm watcher (use when wasm-watch is running).
 trigger-wasm:
