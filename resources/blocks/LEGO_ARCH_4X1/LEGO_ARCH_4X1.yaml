@@ -1,0 +1,15 @@
+hardness: 4.0
+solid: false
+transparent: false
+minimapColor: [50, 100, 220]
+modelElement: ""
+liquid: false
+viscosity: 0
+replaceable: false
+vegetationHost: false
+treeAllowed: false
+minimapVisible: true
+rotatable: true
+hasStuds: true
+brickSize: [2, 1, 0.5]
+plainColorable: true

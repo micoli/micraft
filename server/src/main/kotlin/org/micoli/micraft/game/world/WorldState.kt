@@ -132,6 +132,8 @@ class WorldState(
                 sizeZ = proto.sizeZ,
                 rotation = proto.rotation,
                 yOffset = proto.yOffset,
+                xOffset = proto.xOffset,
+                zOffset = proto.zOffset,
                 colorIndex = proto.colorIndex,
             )
         chunks[cPos] = chunk.addEntity(entity)
@@ -148,6 +150,47 @@ class WorldState(
         val masterIdx = Chunk.index(localX, worldMasterPos.y, localZ)
         chunks[cPos] = chunk.removeEntity(masterIdx)
         dirtyChunks.add(cPos)
+    }
+
+    /** Returns (xOffset, zOffset) pairs of all XZ-fractional entities at this world position. */
+    fun getXZOffsetsAt(wx: Int, wy: Int, wz: Int): List<Pair<Int, Int>> {
+        if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return emptyList()
+        val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
+        val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
+        val localX = Math.floorMod(wx, WorldConstants.CHUNK_SIZE)
+        val localZ = Math.floorMod(wz, WorldConstants.CHUNK_SIZE)
+        val cPos = ChunkPos(chunkX, chunkZ)
+        val chunk = chunks[cPos] ?: return emptyList()
+        val masterIdx = Chunk.index(localX, wy, localZ)
+        return chunk.entityMasters
+            .filter {
+                it.masterIdx == masterIdx &&
+                    (it.xOffset > 0 || it.zOffset > 0 || isXZFractional(it.type))
+            }
+            .map { it.xOffset to it.zOffset }
+    }
+
+    private fun isXZFractional(type: BlockType): Boolean {
+        val def = BlockRegistry.get(type)
+        return def.brickSize.getOrElse(0) { 1f } < 1.0f || def.brickSize.getOrElse(2) { 1f } < 1.0f
+    }
+
+    /**
+     * Returns the last-placed XZ-fractional entity at this world position (highest
+     * xOffset/zOffset).
+     */
+    fun getLastXZFractionalEntityAt(wx: Int, wy: Int, wz: Int): BlockEntity? {
+        if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return null
+        val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
+        val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
+        val localX = Math.floorMod(wx, WorldConstants.CHUNK_SIZE)
+        val localZ = Math.floorMod(wz, WorldConstants.CHUNK_SIZE)
+        val cPos = ChunkPos(chunkX, chunkZ)
+        val chunk = chunks[cPos] ?: return null
+        val masterIdx = Chunk.index(localX, wy, localZ)
+        return chunk.entityMasters
+            .filter { it.masterIdx == masterIdx && isXZFractional(it.type) }
+            .maxWithOrNull(compareBy({ it.xOffset }, { it.zOffset }))
     }
 
     /** Returns yOffsets of all fractional entities whose master is at this world position. */
@@ -193,7 +236,7 @@ class WorldState(
         val cPos = ChunkPos(chunkX, chunkZ)
         val chunk = chunks[cPos] ?: return
         val masterIdx = Chunk.index(localX, spec.pos.y, localZ)
-        chunks[cPos] = chunk.removeEntityAt(masterIdx, spec.yOffset)
+        chunks[cPos] = chunk.removeEntityAt(masterIdx, spec.yOffset, spec.xOffset, spec.zOffset)
         dirtyChunks.add(cPos)
     }
 
@@ -231,6 +274,8 @@ class WorldState(
                 sizeZ = e.sizeZ,
                 rotation = e.rotation,
                 yOffset = e.yOffset,
+                xOffset = e.xOffset,
+                zOffset = e.zOffset,
                 colorIndex = e.colorIndex,
             )
         }

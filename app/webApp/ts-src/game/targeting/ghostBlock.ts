@@ -21,6 +21,8 @@ export function registerGhostBlock(): Pick<McBindings, "showBlockPreview" | "hid
       typeOrd: number,
       rotation: number,
       colorIdx = 0,
+      xOffset = 0,
+      zOffset = 0,
     ): void => {
       if (typeOrd < 0) {
         disposeGhost();
@@ -30,8 +32,17 @@ export function registerGhostBlock(): Pick<McBindings, "showBlockPreview" | "hid
       const geoKey = `${typeOrd},${rotation},${colorIdx}`;
       const existing = window.mcState.ghostMesh as GhostAnchor | null;
 
+      // Compute sub-voxel position offset from brickSize fractions
+      const blockDef = window.mc.getBlockDef(typeOrd);
+      const bs = blockDef?.brickSize ?? [1, 1, 1];
+      // Offsets are world-space (client already accounts for rotation in effectiveFracX/Z)
+      const fracX = bs[0] < 1 ? bs[0] : bs[0] > 1 ? 0.5 : 0;
+      const fracZ = bs[2] < 1 ? bs[2] : bs[2] > 1 ? 0.5 : 0;
+      const offsetX = xOffset * fracX;
+      const offsetZ = zOffset * fracZ;
+
       if (existing && existing._gGeoKey === geoKey) {
-        const pos = new BABYLON.Vector3(x, y, z);
+        const pos = new BABYLON.Vector3(x + offsetX, y, z + offsetZ);
         (existing._gMeshes ?? [existing]).forEach((m) => {
           m.position = pos;
         });
@@ -52,7 +63,7 @@ export function registerGhostBlock(): Pick<McBindings, "showBlockPreview" | "hid
         return;
       }
 
-      const pos = new BABYLON.Vector3(x, y, z);
+      const pos = new BABYLON.Vector3(x + offsetX, y, z + offsetZ);
       for (const m of meshes) m.position = pos;
 
       const anchor = meshes[0] as GhostAnchor;

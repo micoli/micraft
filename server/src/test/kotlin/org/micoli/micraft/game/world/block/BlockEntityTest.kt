@@ -52,7 +52,7 @@ class BlockEntityTest {
                         hardness = 1f,
                         solid = true,
                         replaceable = false,
-                        brickSize = listOf(2, 1, 1),
+                        brickSize = listOf(2f, 1f, 1f),
                     ),
                 BlockType("LEGO_BRICK") to BlockDefinition(hardness = 1f, solid = true),
                 BlockType("LEGO_PLATE_2X2") to
@@ -60,7 +60,7 @@ class BlockEntityTest {
                         hardness = 1f,
                         solid = true,
                         replaceable = false,
-                        brickSize = listOf(2, 1, 2),
+                        brickSize = listOf(2f, 1f, 2f),
                         heightFraction = 0.333f,
                     ),
             ))
@@ -358,5 +358,150 @@ class BlockEntityTest {
         assertEquals(BlockType.AIR, world.getBlock(8, 7, 8), "Master block type should be cleared")
         assertEquals(
             BlockType.AIR, world.getBlock(9, 7, 8), "Satellite block type should be cleared")
+    }
+
+    // ── XZ-fractional (arch / 0.5-wide) tests ────────────────────────────────────
+
+    private fun registerXZFractional() {
+        BlockRegistry.load(
+            mapOf(
+                BlockType("LEGO_ARCH_4X1") to
+                    BlockDefinition(
+                        hardness = 1f,
+                        solid = false,
+                        replaceable = false,
+                        brickSize = listOf(2f, 1f, 0.5f),
+                    ),
+            ))
+    }
+
+    @Test
+    fun place_xzFractional_slot0_createsEntity() = runBlocking {
+        registerXZFractional()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_ARCH_4X1")] = 2
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_ARCH_4X1"), 0, xOffset = 0, zOffset = 0))
+        assertTrue(world.hasEntityAt(8, 7, 8), "zOffset=0 arch should register entity at (8,7,8)")
+        assertEquals(
+            BlockType("LEGO_ARCH_4X1"),
+            world.getBlock(8, 7, 8),
+            "Block type should be set for slot 0")
+    }
+
+    @Test
+    fun place_xzFractional_twoSideBySide_coexist() = runBlocking {
+        registerXZFractional()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_ARCH_4X1")] = 2
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_ARCH_4X1"), 0, xOffset = 0, zOffset = 0))
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_ARCH_4X1"), 0, xOffset = 0, zOffset = 1))
+        val entities = world.getXZOffsetsAt(8, 7, 8)
+        assertEquals(2, entities.size, "Two arches should coexist at same voxel")
+    }
+
+    @Test
+    fun place_xzFractional_duplicateSlot_rejected() = runBlocking {
+        registerXZFractional()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_ARCH_4X1")] = 3
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_ARCH_4X1"), 0, xOffset = 0, zOffset = 0))
+        val inventoryBefore = session.inventory[ItemType("LEGO_ARCH_4X1")] ?: 0
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_ARCH_4X1"), 0, xOffset = 0, zOffset = 0))
+        val inventoryAfter = session.inventory[ItemType("LEGO_ARCH_4X1")] ?: 0
+        assertEquals(inventoryBefore, inventoryAfter, "Duplicate slot placement should be rejected")
+        val entities = world.getXZOffsetsAt(8, 7, 8)
+        assertEquals(1, entities.size, "Only one arch should exist after duplicate attempt")
+    }
+
+    @Test
+    fun place_xzFractional_allSlotsFull_thirdRejected() = runBlocking {
+        registerXZFractional()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_ARCH_4X1")] = 3
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_ARCH_4X1"), 0, xOffset = 0, zOffset = 0))
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_ARCH_4X1"), 0, xOffset = 0, zOffset = 1))
+        val inventoryBefore = session.inventory[ItemType("LEGO_ARCH_4X1")] ?: 0
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_ARCH_4X1"), 0, xOffset = 0, zOffset = 0))
+        val inventoryAfter = session.inventory[ItemType("LEGO_ARCH_4X1")] ?: 0
+        assertEquals(inventoryBefore, inventoryAfter, "Third arch in full voxel should be rejected")
+    }
+
+    @Test
+    fun break_xzFractional_lastSlot_removesEntityAndClearsBlock() = runBlocking {
+        registerXZFractional()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_ARCH_4X1")] = 1
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_ARCH_4X1"), 0, xOffset = 0, zOffset = 0))
+
+        val breaker = breaker(world = world)
+        breaker.handleStart(session, ClientMessage.BlockBreakStart(BlockPos(8, 7, 8)))
+        breaker.tick(session)
+        assertFalse(world.hasEntityAt(8, 7, 8), "Entity should be removed after break")
+        assertEquals(
+            BlockType.AIR, world.getBlock(8, 7, 8), "Block should be AIR after last arch removed")
+    }
+
+    @Test
+    fun break_xzFractional_firstOfTwo_blockTypeRemains() = runBlocking {
+        registerXZFractional()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_ARCH_4X1")] = 2
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_ARCH_4X1"), 0, xOffset = 0, zOffset = 0))
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_ARCH_4X1"), 0, xOffset = 0, zOffset = 1))
+
+        val breaker = breaker(world = world)
+        breaker.handleStart(session, ClientMessage.BlockBreakStart(BlockPos(8, 7, 8)))
+        breaker.tick(session)
+        val remaining = world.getXZOffsetsAt(8, 7, 8)
+        assertEquals(1, remaining.size, "One arch should remain after breaking first-of-two")
+        assertEquals(
+            BlockType("LEGO_ARCH_4X1"),
+            world.getBlock(8, 7, 8),
+            "Block type should remain while second arch still in voxel")
     }
 }

@@ -86,6 +86,9 @@ interface FaceInfo {
 // faceTable[faceMat] = list of FaceInfo to emit (one per element that has this face)
 let faceTable: (FaceInfo[] | null)[] = [];
 
+// brickFracTable[typeOrd] = [fracX, fracZ] — sub-voxel fractions for XZ-offset rendering
+let brickFracTable: [number, number][] = [];
+
 // gltfTypeTable[typeOrd] = gltf asset path for blocks rendered as GLTF instances
 const gltfTypeTable: Record<number, string> = {};
 
@@ -124,9 +127,12 @@ const CROSS_SPRITE_VERTS = new Float32Array([0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1]
 
 function buildFaceTable(): void {
   faceTable = [];
+  brickFracTable = [];
   for (let typeOrd = 0; typeOrd < 512; typeOrd++) {
     const blockDef = window.mc.getBlockDef(typeOrd);
     if (!blockDef) continue;
+    const bs = blockDef.brickSize ?? [1, 1, 1];
+    brickFracTable[typeOrd] = [bs[0] < 1 ? bs[0] : bs[0] > 1 ? 0.5 : 0, bs[2] < 1 ? bs[2] : bs[2] > 1 ? 0.5 : 0];
     if (blockDef.renderType === "gltf") {
       if (blockDef.gltfPath) gltfTypeTable[typeOrd] = blockDef.gltfPath;
       continue;
@@ -165,7 +171,25 @@ function buildFaceTable(): void {
             if (!fi) continue;
             const [nx, ny, nz] = MC_NORMS[fd];
             const rawVerts = vertsFromElement(elem.from, elem.to, fd);
-            const verts = rotation === 0 ? rawVerts : rotateVerts(rawVerts, rotation);
+            let verts = rotation === 0 ? rawVerts : rotateVerts(rawVerts, rotation);
+            // rotateVerts90CW pivots around (0.5,_,0.5) — only correct for 1×1 blocks.
+            // Compensate vertex positions for non-unit footprints so the rotated mesh
+            // aligns with its placement voxel corner (fixes ghost and placed-block rendering).
+            if (rotation > 0 && (bs[0] !== 1 || bs[2] !== 1)) {
+              const sX = bs[0],
+                sZ = bs[2];
+              const cx = rotation === 2 ? sX - 1 : rotation === 3 ? sZ - 1 : 0;
+              const cz = rotation === 1 ? sX - 1 : rotation === 2 ? sZ - 1 : 0;
+              if (cx !== 0 || cz !== 0) {
+                const cv = new Float32Array(12);
+                for (let k = 0; k < 4; k++) {
+                  cv[k * 3] = verts[k * 3] + cx;
+                  cv[k * 3 + 1] = verts[k * 3 + 1];
+                  cv[k * 3 + 2] = verts[k * 3 + 2] + cz;
+                }
+                verts = cv;
+              }
+            }
             infos.push({
               matKey: fi.matKey,
               uv: new Float32Array(fi.uv),
@@ -440,15 +464,23 @@ export function registerChunks(): Pick<
       const endI = Math.min(startI + maxFaces * 5, fi);
       const grp = buf.groups;
       for (let i = startI; i < endI; i += 5) {
-        const wx = fb[i],
-          wz = fb[i + 2],
-          faceMat = fb[i + 3];
+        let wx = fb[i],
+          wz = fb[i + 2];
+        const faceMat = fb[i + 3];
         const aoPacked = fb[i + 4];
         const ao = aoPacked & 0xffff;
         const yOff = (aoPacked >>> 16) & 0x3;
         const colorIdx = (aoPacked >>> 18) & 0x3f;
+        const xOff = (aoPacked >>> 24) & 0x3;
+        const zOff = (aoPacked >>> 26) & 0x3;
         const plainKey = colorIdx > 0 ? plainMatKey(colorIdx) : null;
         const wy = fb[i + 1] + (yOff === 0 ? 0 : yOff / 3);
+        if (xOff || zOff) {
+          const typeOrd = (faceMat / 24) | 0;
+          const frac = brickFracTable[typeOrd] ?? [1, 1];
+          wx += xOff * frac[0];
+          wz += zOff * frac[1];
+        }
         const infos = faceTable[faceMat];
         if (!infos) {
           const typeOrd = (faceMat / 24) | 0;

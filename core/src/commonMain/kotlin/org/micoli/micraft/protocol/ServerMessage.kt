@@ -347,7 +347,7 @@ data class BlockInfo(
     val minimapVisible: Boolean = true,
     val rotatable: Boolean = false,
     val hasStuds: Boolean = false,
-    val brickSize: List<Int> = listOf(1, 1, 1),
+    val brickSize: List<Float> = listOf(1f, 1f, 1f),
     val heightFraction: Float = 1.0f,
     val plainColorable: Boolean = false,
 )
@@ -366,10 +366,18 @@ data class BlockEntityProto(
     val sizeZ: Int = 1,
     val rotation: Int = 0,
     val yOffset: Int = 0,
+    val xOffset: Int = 0,
+    val zOffset: Int = 0,
     val colorIndex: Int = 0,
 )
 
-@Serializable data class EntityRemoveAt(val pos: BlockPos, val yOffset: Int = 0)
+@Serializable
+data class EntityRemoveAt(
+    val pos: BlockPos,
+    val yOffset: Int = 0,
+    val xOffset: Int = 0,
+    val zOffset: Int = 0
+)
 
 @Serializable
 data class ItemInfo(

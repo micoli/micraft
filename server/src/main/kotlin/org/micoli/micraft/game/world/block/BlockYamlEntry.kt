@@ -19,7 +19,7 @@ data class BlockYamlEntry(
     val drops: List<DropEntry> = emptyList(),
     val rotatable: Boolean = false,
     val hasStuds: Boolean = false,
-    val brickSize: List<Int> = listOf(1, 1, 1),
+    val brickSize: List<Float> = listOf(1f, 1f, 1f),
     val heightFraction: Float = 1.0f,
     val plainColorable: Boolean = false,
 )

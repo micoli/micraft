@@ -55,13 +55,28 @@ fun jsChunkFaceAppend(wx: Int, wy: Int, wz: Int, faceMat: Int, ao: Int): Unit =
         "{const i=window.__mcFI;window.__mcFB[i]=wx;window.__mcFB[i+1]=wy;window.__mcFB[i+2]=wz;window.__mcFB[i+3]=faceMat;window.__mcFB[i+4]=ao;window.__mcFI=i+5}")
 
 // The ao int is a bitfield: bits 0-15 = per-vertex AO levels, bits 16-17 = yOffset,
-// bits 18-23 = plain color index (0 = textured).
+// bits 18-23 = plain color index (0 = textured), bits 24-25 = xOffset, bits 26-27 = zOffset.
 //
 // Like jsChunkFaceAppend but packs yOffset (0..2) into bits 16-17 of ao so chunkProcessFaces
 // can shift geometry by yOffset/3 within the cell.
 fun jsChunkFaceAppendYOffset(wx: Int, wy: Int, wz: Int, yOffset: Int, faceMat: Int, ao: Int): Unit =
     js(
         "{const i=window.__mcFI;window.__mcFB[i]=wx;window.__mcFB[i+1]=wy;window.__mcFB[i+2]=wz;window.__mcFB[i+3]=faceMat;window.__mcFB[i+4]=(ao|(yOffset<<16));window.__mcFI=i+5}")
+
+// Packs yOffset, xOffset and zOffset into ao bitfield alongside AO+color bits.
+// xOffset packed into bits 24-25, zOffset into bits 26-27.
+fun jsChunkFaceAppendXZOffset(
+    wx: Int,
+    wy: Int,
+    wz: Int,
+    yOffset: Int,
+    xOffset: Int,
+    zOffset: Int,
+    faceMat: Int,
+    ao: Int
+): Unit =
+    js(
+        "{const i=window.__mcFI;window.__mcFB[i]=wx;window.__mcFB[i+1]=wy;window.__mcFB[i+2]=wz;window.__mcFB[i+3]=faceMat;window.__mcFB[i+4]=(ao|(yOffset<<16)|(xOffset<<24)|(zOffset<<26));window.__mcFI=i+5}")
 
 // Process a budget slice of __mcFB into FaceGroups; returns faces processed.
 fun jsChunkProcessFaces(cursor: Int, maxFaces: Int): Int =

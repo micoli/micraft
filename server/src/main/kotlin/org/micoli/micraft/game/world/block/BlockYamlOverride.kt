@@ -19,7 +19,7 @@ data class BlockYamlOverride(
     val drops: List<DropEntry>? = null,
     val rotatable: Boolean? = null,
     val hasStuds: Boolean? = null,
-    val brickSize: List<Int>? = null,
+    val brickSize: List<Float>? = null,
     val heightFraction: Float? = null,
     val plainColorable: Boolean? = null,
 )

@@ -16,6 +16,6 @@ internal var SPAWN_X = 8f
 internal var SPAWN_Y = 200f
 internal var SPAWN_Z = 8f
 
-internal var MAX_INTERACTION_DISTANCE = 7.0
+internal var MAX_INTERACTION_DISTANCE = 14.0
 internal var RECONCILE_TOLERANCE_XZ = 0.5
 internal var RECONCILE_TOLERANCE_Y = 0.99

@@ -70,8 +70,17 @@ fun jsDisableCameraKeyboard(camera: JsAny): Unit =
 
 // ── Target / break overlays ───────────────────────────────────────────────────
 
-fun jsShowTargetOutline(scene: JsAny, x: Int, y: Int, z: Int, breakable: Boolean): Unit =
-    js("mc.showTargetOutline(scene, x, y, z, breakable)")
+fun jsShowTargetOutline(
+    scene: JsAny,
+    x: Int,
+    y: Int,
+    z: Int,
+    breakable: Boolean,
+    typeOrd: Int = -1,
+    rotation: Int = 0,
+    xOff: Int = 0,
+    zOff: Int = 0
+): Unit = js("mc.showTargetOutline(scene, x, y, z, breakable, typeOrd, rotation, xOff, zOff)")
 
 fun jsHideTargetOutline(): Unit = js("mc.hideTargetOutline()")
 
@@ -88,7 +97,9 @@ fun jsShowBlockPreview(
     typeOrd: Int,
     rotation: Int,
     colorIdx: Int,
-): Unit = js("mc.showBlockPreview(scene, x, y, z, typeOrd, rotation, colorIdx)")
+    xOffset: Int = 0,
+    zOffset: Int = 0,
+): Unit = js("mc.showBlockPreview(scene, x, y, z, typeOrd, rotation, colorIdx, xOffset, zOffset)")
 
 fun jsHideBlockPreview(): Unit = js("mc.hideBlockPreview()")
 

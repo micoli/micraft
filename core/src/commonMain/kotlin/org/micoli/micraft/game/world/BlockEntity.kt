@@ -11,5 +11,7 @@ data class BlockEntity(
     val sizeZ: Int = 1,
     val rotation: Int = 0,
     val yOffset: Int = 0,
+    val xOffset: Int = 0,
+    val zOffset: Int = 0,
     val colorIndex: Int = 0,
 )

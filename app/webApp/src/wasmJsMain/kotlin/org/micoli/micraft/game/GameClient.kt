@@ -453,6 +453,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                 sizeZ = proto.sizeZ,
                                 rotation = proto.rotation,
                                 yOffset = proto.yOffset,
+                                xOffset = proto.xOffset,
+                                zOffset = proto.zOffset,
                                 colorIndex = proto.colorIndex,
                             )
                         affectedChunks[cp] = Pair(existing.addEntity(entity), topY)
@@ -480,7 +482,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         val localZ = spec.pos.z - cz * WorldConstants.CHUNK_SIZE
                         val masterIdx = Chunk.index(localX, spec.pos.y, localZ)
                         affectedChunks[cp] =
-                            Pair(existing.removeEntityAt(masterIdx, spec.yOffset), topY)
+                            Pair(
+                                existing.removeEntityAt(
+                                    masterIdx, spec.yOffset, spec.xOffset, spec.zOffset),
+                                topY)
                     }
 
                     affectedChunks.forEach { (_, pair) ->

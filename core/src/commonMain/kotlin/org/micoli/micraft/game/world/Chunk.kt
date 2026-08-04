@@ -82,6 +82,8 @@ data class Chunk(
                         sizeZ = proto.sizeZ,
                         rotation = proto.rotation,
                         yOffset = proto.yOffset,
+                        xOffset = proto.xOffset,
+                        zOffset = proto.zOffset,
                         colorIndex = proto.colorIndex,
                     )
                 }
@@ -139,10 +141,15 @@ data class Chunk(
     fun removeEntity(masterIdx: Int): Chunk =
         copy(entityMasters = entityMasters.filter { it.masterIdx != masterIdx })
 
-    fun removeEntityAt(masterIdx: Int, yOffset: Int): Chunk =
+    fun removeEntityAt(masterIdx: Int, yOffset: Int, xOffset: Int = 0, zOffset: Int = 0): Chunk =
         copy(
             entityMasters =
-                entityMasters.filter { !(it.masterIdx == masterIdx && it.yOffset == yOffset) })
+                entityMasters.filter {
+                    !(it.masterIdx == masterIdx &&
+                        it.yOffset == yOffset &&
+                        it.xOffset == xOffset &&
+                        it.zOffset == zOffset)
+                })
 
     fun buildEntitiesMap(): Map<Int, BlockEntity> = Companion.buildEntitiesMap(entityMasters)
 

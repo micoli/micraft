@@ -43,7 +43,12 @@ private enum class ViewMode {
     fun next(): ViewMode = entries[(ordinal + 1) % entries.size]
 }
 
-private data class RaycastResult(val target: BlockPos, val adjacent: BlockPos)
+private data class RaycastResult(
+    val target: BlockPos,
+    val adjacent: BlockPos,
+    val hitX: Float = 0f,
+    val hitZ: Float = 0f
+)
 
 class LocalPlayerController(
     private val scene: JsAny,
@@ -98,6 +103,8 @@ class LocalPlayerController(
     private var ghostAdjacentPos: BlockPos? = null
     private var lastGhostRotation: Int = -1
     private var lastGhostColorIdx: Int = -1
+    private var lastGhostXOffset: Int = -1
+    private var lastGhostZOffset: Int = -1
     private var lastMinimapPlacementRot: Int = -2
 
     private var hudX = 0.0
@@ -797,12 +804,52 @@ class LocalPlayerController(
                     PlainColorRegistry.indexOf(ItemRegistry.get(selectedItem).plainColor)
                 else 0
 
+            // Compute XZ sub-voxel slot from hit position within adjacent voxel
+            val blockDef = selectedItem.placesBlock?.let { BlockRegistry.get(it) }
+            val brickSizeX = blockDef?.brickSize?.getOrElse(0) { 1f } ?: 1f
+            val brickSizeZ = blockDef?.brickSize?.getOrElse(2) { 1f } ?: 1f
+            val effectiveFracX = if (placementRotation % 2 == 0) brickSizeX else brickSizeZ
+            val effectiveFracZ = if (placementRotation % 2 == 0) brickSizeZ else brickSizeX
+            val ghostXOffset: Int
+            val ghostZOffset: Int
+            val studStepX =
+                when {
+                    effectiveFracX < 1.0f -> effectiveFracX
+                    effectiveFracX > 1.0f -> 0.5f // multi-voxel LEGO: 1-stud (0.5-block) precision
+                    else -> 0f
+                }
+            val studStepZ =
+                when {
+                    effectiveFracZ < 1.0f -> effectiveFracZ
+                    effectiveFracZ > 1.0f -> 0.5f
+                    else -> 0f
+                }
+            if (adjacent != null && (studStepX > 0f || studStepZ > 0f)) {
+                val hitX = rayResult?.hitX ?: 0f
+                val hitZ = rayResult?.hitZ ?: 0f
+                val fracX = (hitX - adjacent.x).coerceIn(0f, 0.9999f)
+                val fracZ = (hitZ - adjacent.z).coerceIn(0f, 0.9999f)
+                ghostXOffset =
+                    if (studStepX > 0f) kotlin.math.floor(fracX / studStepX).toInt().coerceIn(0, 1)
+                    else 0
+                ghostZOffset =
+                    if (studStepZ > 0f) kotlin.math.floor(fracZ / studStepZ).toInt().coerceIn(0, 1)
+                    else 0
+            } else {
+                ghostXOffset = 0
+                ghostZOffset = 0
+            }
+
             if (adjacent != ghostAdjacentPos ||
                 placementRotation != lastGhostRotation ||
-                ghostColorIdx != lastGhostColorIdx) {
+                ghostColorIdx != lastGhostColorIdx ||
+                ghostXOffset != lastGhostXOffset ||
+                ghostZOffset != lastGhostZOffset) {
                 ghostAdjacentPos = adjacent
                 lastGhostRotation = placementRotation
                 lastGhostColorIdx = ghostColorIdx
+                lastGhostXOffset = ghostXOffset
+                lastGhostZOffset = ghostZOffset
                 if (adjacent != null) {
                     val typeOrd =
                         selectedItem.placesBlock?.let { BlockRegistry.wireIndex(it) } ?: -1
@@ -817,7 +864,24 @@ class LocalPlayerController(
                         typeOrd,
                         placementRotation,
                         ghostColorIdx,
+                        ghostXOffset,
+                        ghostZOffset,
                     )
+                    // Show placement wireframe at adjacent+offset (arch-shaped, not 1×1 target
+                    // cube)
+                    if (blockDef?.brickSize?.let { bs -> bs[0] != 1f || bs[2] != 1f } == true) {
+                        jsShowTargetOutline(
+                            scene,
+                            adjacent.x,
+                            adjacent.y,
+                            adjacent.z,
+                            true,
+                            typeOrd,
+                            placementRotation,
+                            ghostXOffset,
+                            ghostZOffset,
+                        )
+                    }
                 } else {
                     jsHideBlockPreview()
                 }
@@ -827,7 +891,12 @@ class LocalPlayerController(
                 hasPlacedThisClick = true
                 breakTarget = adjacent
                 outMessages.trySend(
-                    ClientMessage.BlockPlace(adjacent, selectedItem, placementRotation.toByte()))
+                    ClientMessage.BlockPlace(
+                        adjacent,
+                        selectedItem,
+                        placementRotation.toByte(),
+                        ghostXOffset.toByte(),
+                        ghostZOffset.toByte()))
             } else if (!isBreaking) {
                 breakTarget = null
                 hasPlacedThisClick = false
@@ -1156,7 +1225,33 @@ class LocalPlayerController(
             if (chunkManager.getBlockAtWorld(bx, by, bz) != BlockType.AIR) {
                 if (by < 0 || by > WorldConstants.WORLD_MAX_Y) return null
                 val adjY = prevBy.coerceIn(0, WorldConstants.WORLD_MAX_Y)
-                return RaycastResult(BlockPos(bx, by, bz), BlockPos(prevBx, adjY, prevBz))
+                val hitX: Float
+                val hitZ: Float
+                val oxf = ox.toFloat()
+                val oyf = oy.toFloat()
+                val ozf = oz.toFloat()
+                when {
+                    bx != prevBx -> {
+                        val faceX = if (bx > prevBx) bx.toFloat() else (bx + 1).toFloat()
+                        val tHit = if (dx != 0f) (faceX - oxf) / dx else 0f
+                        hitX = faceX
+                        hitZ = ozf + dz * tHit
+                    }
+                    bz != prevBz -> {
+                        val faceZ = if (bz > prevBz) bz.toFloat() else (bz + 1).toFloat()
+                        val tHit = if (dz != 0f) (faceZ - ozf) / dz else 0f
+                        hitX = oxf + dx * tHit
+                        hitZ = faceZ
+                    }
+                    else -> {
+                        val faceY = if (by > prevBy) by.toFloat() else (by + 1).toFloat()
+                        val tHit = if (dy != 0f) (faceY - oyf) / dy else 0f
+                        hitX = oxf + dx * tHit
+                        hitZ = ozf + dz * tHit
+                    }
+                }
+                return RaycastResult(
+                    BlockPos(bx, by, bz), BlockPos(prevBx, adjY, prevBz), hitX, hitZ)
             }
             prevBx = bx
             prevBy = by

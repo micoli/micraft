@@ -111,7 +111,14 @@ let _blockTextures: McBlockTextureDef[] | null = null;
 
 // Loaded from RegistrySync — ordinal-indexed list of block infos
 let _registryBlocks:
-  | { name: string; modelElement: string; gltfModel?: string; liquid?: boolean; hasStuds?: boolean }[]
+  | {
+      name: string;
+      modelElement: string;
+      gltfModel?: string;
+      liquid?: boolean;
+      hasStuds?: boolean;
+      brickSize?: [number, number, number];
+    }[]
   | null = null;
 
 export function registerBlockDefs(): Pick<
@@ -130,7 +137,14 @@ export function registerBlockDefs(): Pick<
       const fetches = _registryBlocks.map((info, ordinal) => {
         if (info.name === "AIR") return Promise.resolve();
         if (info.gltfModel) {
-          defs[ordinal] = { name: info.name, renderType: "gltf", gltfPath: info.gltfModel, elements: [], faces: [] };
+          defs[ordinal] = {
+            name: info.name,
+            renderType: "gltf",
+            gltfPath: info.gltfModel,
+            elements: [],
+            faces: [],
+            brickSize: info.brickSize,
+          };
           return Promise.resolve();
         }
         if (info.liquid) {
@@ -139,7 +153,13 @@ export function registerBlockDefs(): Pick<
             uv: LIQUID_UV,
           }));
           const liquidElem: McBlockElement = { from: [0, 0, 0], to: [16, 16, 16], faces: liquidFaces };
-          defs[ordinal] = { name: info.name, renderType: "liquid", elements: [liquidElem], faces: [liquidFaces] };
+          defs[ordinal] = {
+            name: info.name,
+            renderType: "liquid",
+            elements: [liquidElem],
+            faces: [liquidFaces],
+            brickSize: info.brickSize,
+          };
           return Promise.resolve();
         }
         const fileName = info.modelElement || info.name;
@@ -148,6 +168,7 @@ export function registerBlockDefs(): Pick<
           .then((data: BlocksBbModel) => {
             const { def, textures } = parseBlockBbmodel(data);
             if (def && info.hasStuds) def.hasStuds = true;
+            if (def && info.brickSize) def.brickSize = info.brickSize;
             defs[ordinal] = def;
             for (const t of textures) {
               if (!allTextures.has(t.name)) allTextures.set(t.name, t);
@@ -173,7 +194,14 @@ export function registerBlockDefs(): Pick<
 
 // Called from setBlockRegistry (set up in index.ts) before initBlockDefs
 export function setRegistryBlocks(
-  blocks: { name: string; modelElement: string; gltfModel?: string; liquid?: boolean; hasStuds?: boolean }[],
+  blocks: {
+    name: string;
+    modelElement: string;
+    gltfModel?: string;
+    liquid?: boolean;
+    hasStuds?: boolean;
+    brickSize?: [number, number, number];
+  }[],
 ): void {
   _registryBlocks = blocks;
 }

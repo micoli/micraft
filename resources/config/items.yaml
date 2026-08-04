@@ -121,3 +121,13 @@ LEGO_PLATE_2X4:
   placesBlock: LEGO_PLATE_2X4
   label: P24
   bg: "#50B450"
+LEGO_ARCH_4X1:
+  buildable: true
+  placesBlock: LEGO_ARCH_4X1
+  label: A4X
+  bg: "#DC9632"
+LEGO_ARCH_8X2:
+  buildable: true
+  placesBlock: LEGO_ARCH_8X2
+  label: A84X
+  bg: "#DC9632"

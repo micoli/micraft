@@ -1,5 +1,7 @@
 package org.micoli.micraft.game.world.block
 
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.sqrt
 import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.combat.ShortcutSlot
@@ -72,10 +74,25 @@ class BlockPlacer(
         val rotation = BlockState.rotation(intent.state)
         val state = BlockState.pack(rotation, colorIndex)
 
-        val (sizeX, sizeY, sizeZ) =
-            if (def.brickSize.size == 3)
-                Triple(def.brickSize[0], def.brickSize[1], def.brickSize[2])
-            else Triple(1, 1, 1)
+        val brickSizeX = def.brickSize.getOrElse(0) { 1f }
+        val brickSizeY = def.brickSize.getOrElse(1) { 1f }
+        val brickSizeZ = def.brickSize.getOrElse(2) { 1f }
+
+        // Swap X/Z for 90°/270° rotations
+        val effectiveSizeX = if (rotation % 2 == 0) brickSizeX else brickSizeZ
+        val effectiveSizeZ = if (rotation % 2 == 0) brickSizeZ else brickSizeX
+
+        val sizeX = ceil(effectiveSizeX).toInt().coerceAtLeast(1)
+        val sizeY = ceil(brickSizeY).toInt().coerceAtLeast(1)
+        val sizeZ = ceil(effectiveSizeZ).toInt().coerceAtLeast(1)
+
+        val slotsX = if (effectiveSizeX < 1.0f) floor(1.0f / effectiveSizeX).toInt() else 1
+        val slotsZ = if (effectiveSizeZ < 1.0f) floor(1.0f / effectiveSizeZ).toInt() else 1
+        val isXZFractional = slotsX > 1 || slotsZ > 1
+
+        // Client computes world-space offsets (effectiveFracX already accounts for rotation)
+        val xOffset = intent.xOffset.toInt() and 0xFF
+        val zOffset = intent.zOffset.toInt() and 0xFF
 
         val isFractional = def.heightFraction < 1.0f
 
@@ -132,7 +149,92 @@ class BlockPlacer(
                 }
             } else solidPos
 
-        if (isFractional) {
+        if (isXZFractional) {
+            // XZ-fractional block (e.g. arch): multiple fit per voxel along X or Z axis
+            val existing = world.getBlock(pos.x, pos.y, pos.z)
+            // Master cell must be empty or already occupied by the same block type
+            if (existing != BlockType.AIR && existing != blockType) {
+                blockPlacerLog.debug(
+                    "BlockPlace rejected: XZ-frac pos={} has different block {}", pos, existing)
+                return
+            }
+            val usedSlots = world.getXZOffsetsAt(pos.x, pos.y, pos.z)
+            // For sub-voxel axes (slots > 1), validate slot index; for long axes (slots == 1),
+            // xOffset/zOffset is a stud-position (0 = flush, 1 = +0.5 block) — range check skipped
+            if ((slotsX > 1 && xOffset >= slotsX) || (slotsZ > 1 && zOffset >= slotsZ)) {
+                blockPlacerLog.debug(
+                    "BlockPlace rejected: XZ-frac offset {},{} out of slots {},{}",
+                    xOffset,
+                    zOffset,
+                    slotsX,
+                    slotsZ)
+                return
+            }
+            // Collision key normalizes long-axis stud positions to 0 (only one brick per slot pair)
+            val slotKeyX = if (slotsX > 1) xOffset else 0
+            val slotKeyZ = if (slotsZ > 1) zOffset else 0
+            val slotOccupied =
+                usedSlots.any { (storedX, storedZ) ->
+                    (if (slotsX > 1) storedX else 0) == slotKeyX &&
+                        (if (slotsZ > 1) storedZ else 0) == slotKeyZ
+                }
+            if (slotOccupied) {
+                blockPlacerLog.debug(
+                    "BlockPlace rejected: XZ-frac slot {},{} already occupied", slotKeyX, slotKeyZ)
+                return
+            }
+            // Validate satellite cells (full cells spanning integer multiples)
+            if (sizeX > 1 || sizeZ > 1) {
+                for (dx in 0 until sizeX) for (dz in 0 until sizeZ) {
+                    if (dx == 0 && dz == 0) continue
+                    val cx = pos.x + dx
+                    val cz = pos.z + dz
+                    val satBlock = world.getBlock(cx, pos.y, cz)
+                    if (satBlock != BlockType.AIR && satBlock != blockType) {
+                        blockPlacerLog.debug(
+                            "BlockPlace rejected: XZ-frac satellite {},{},{} has block {}",
+                            cx,
+                            pos.y,
+                            cz,
+                            satBlock)
+                        return
+                    }
+                }
+            }
+            val changes = mutableListOf<BlockChange>()
+            val isFirstAtCell = existing == BlockType.AIR
+            if (isFirstAtCell) {
+                val masterChange = BlockChange(pos, blockType, state)
+                world.applyChange(masterChange)
+                changes.add(masterChange)
+                if (sizeX > 1 || sizeZ > 1) {
+                    for (dx in 0 until sizeX) for (dz in 0 until sizeZ) {
+                        if (dx == 0 && dz == 0) continue
+                        val satChange =
+                            BlockChange(BlockPos(pos.x + dx, pos.y, pos.z + dz), blockType, state)
+                        world.applyChange(satChange)
+                        changes.add(satChange)
+                    }
+                }
+            }
+            val proto =
+                BlockEntityProto(
+                    worldX = pos.x,
+                    worldY = pos.y,
+                    worldZ = pos.z,
+                    type = blockType.id,
+                    sizeX = sizeX,
+                    sizeY = sizeY,
+                    sizeZ = sizeZ,
+                    rotation = rotation,
+                    yOffset = 0,
+                    xOffset = xOffset,
+                    zOffset = zOffset,
+                    colorIndex = colorIndex,
+                )
+            world.applyEntityAdd(proto)
+            broadcast(ServerMessage.WorldUpdate(changes, entityAdds = listOf(proto)))
+        } else if (isFractional) {
             // Fractional block (plate): stacking allowed — cell may already contain a plate
             val existing = world.getBlock(pos.x, pos.y, pos.z)
             if (existing != BlockType.AIR && BlockRegistry.get(existing).heightFraction >= 1.0f) {
@@ -266,6 +368,8 @@ class BlockPlacer(
                         sizeZ = sizeZ,
                         rotation = rotation,
                         colorIndex = colorIndex,
+                        xOffset = xOffset,
+                        zOffset = zOffset,
                     )
                 world.applyEntityAdd(proto)
                 broadcast(ServerMessage.WorldUpdate(changes, entityAdds = listOf(proto)))

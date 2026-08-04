@@ -132,6 +132,8 @@ declare global {
     renderType: "solid" | "leaves" | "cross_sprite" | "liquid" | "slope" | "corner" | "gltf";
     gltfPath?: string;
     hasStuds?: boolean;
+    /** Sub-voxel fractions [x, y, z]; values < 1 mean multiple fit per voxel on that axis. */
+    brickSize?: [number, number, number];
     // Per-element geometry; faces[elemIdx] = McBlockElement.faces for backward compat lookup
     elements: McBlockElement[];
     // Shortcut: faces[elemIdx][faceDir] — same data as elements[elemIdx].faces
@@ -314,7 +316,17 @@ declare global {
     createCrosshair(): void;
     setupDebugCameraKeys(camera: TargetCamera, scene: Scene, bx: number, by: number, bz: number): void;
     // Targeting
-    showTargetOutline(scene: Scene, x: number, y: number, z: number, breakable: boolean): void;
+    showTargetOutline(
+      scene: Scene,
+      x: number,
+      y: number,
+      z: number,
+      breakable: boolean,
+      typeOrd?: number,
+      rotation?: number,
+      xOff?: number,
+      zOff?: number,
+    ): void;
     hideTargetOutline(): void;
     showBreakOverlay(scene: Scene, x: number, y: number, z: number, alpha: number): void;
     hideBreakOverlay(): void;
@@ -326,6 +338,8 @@ declare global {
       typeOrd: number,
       rotation: number,
       colorIdx?: number,
+      xOffset?: number,
+      zOffset?: number,
     ): void;
     hideBlockPreview(): void;
     setPlacementRotation(rotation: number): void;

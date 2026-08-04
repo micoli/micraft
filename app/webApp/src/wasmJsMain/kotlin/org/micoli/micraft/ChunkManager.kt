@@ -426,6 +426,8 @@ class ChunkManager(private val scene: JsAny) {
                 // Multi-cell entity satellite: skip (master emits geometry for whole extent)
                 val entity = entityMap[idx]
                 if (entity != null && entity.masterIdx != idx) continue
+                // Fractional-offset master: skip here, emitted by renderFractionalEntities
+                if (entity != null && (entity.xOffset > 0 || entity.zOffset > 0)) continue
 
                 // state byte: bits 0-1 rotation, bits 2-7 plain color index
                 // faceMat = (ord * 4 + rotation) * 6 + fd; color rides in ao bits 18-23
@@ -499,14 +501,17 @@ class ChunkManager(private val scene: JsAny) {
         return faceCount
     }
 
-    // Second-pass render: emit faces for fractional entities (yOffset > 0) that have no block type.
+    // Second-pass render: emit faces for fractional entities that need sub-voxel offsets.
+    // Handles Y-fractional plates (yOffset > 0) and XZ-fractional arches (xOffset/zOffset > 0).
     private fun renderFractionalEntities(chunk: Chunk): Int {
         val s = WorldConstants.CHUNK_SIZE
         val ox = chunk.pos.cx * s
         val oz = chunk.pos.cz * s
         var faceCount = 0
         for (entity in chunk.entityMasters) {
-            if (entity.yOffset == 0) continue
+            val hasYOffset = entity.yOffset > 0
+            val hasXZOffset = entity.xOffset > 0 || entity.zOffset > 0
+            if (!hasYOffset && !hasXZOffset) continue
             val (mx, my, mz) = Chunk.indexToXYZ(entity.masterIdx)
             val ord = BlockRegistry.wireIndex(entity.type)
             if (ord == 0) continue
@@ -515,7 +520,19 @@ class ChunkManager(private val scene: JsAny) {
             val wx = ox + mx
             val wz2 = oz + mz
             for (fd in 0..5) {
-                jsChunkFaceAppendYOffset(wx, my, wz2, entity.yOffset, t + fd, colorBits)
+                if (hasXZOffset || hasYOffset) {
+                    jsChunkFaceAppendXZOffset(
+                        wx,
+                        my,
+                        wz2,
+                        entity.yOffset,
+                        entity.xOffset,
+                        entity.zOffset,
+                        t + fd,
+                        colorBits)
+                } else {
+                    jsChunkFaceAppendYOffset(wx, my, wz2, entity.yOffset, t + fd, colorBits)
+                }
                 faceCount++
             }
         }
