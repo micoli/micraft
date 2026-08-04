@@ -119,6 +119,7 @@ class RegenProcessor(
                     session.state.stance,
                     session.combatState.attackCooldownUntilMs,
                     session.combatState.attackCooldownsUntilMs,
+                    session.state.godMode,
                 ))
         }
     }

@@ -16,6 +16,7 @@ class GodOnCommand : CommandHandler {
         val lang = session.state.language
         session.state = session.state.copy(godMode = true)
         context.savePlayer(session)
+        session.send(ServerMessage.GodModeUpdate(true))
         session.send(ServerMessage.Notification(context.i18n.t(lang, "god:server:on")))
     }
 }
@@ -30,6 +31,7 @@ class GodOffCommand : CommandHandler {
         val lang = session.state.language
         session.state = session.state.copy(godMode = false)
         context.savePlayer(session)
+        session.send(ServerMessage.GodModeUpdate(false))
         session.send(ServerMessage.Notification(context.i18n.t(lang, "god:server:off")))
     }
 }

@@ -347,7 +347,8 @@ class GameLoopModule {
                                         charData,
                                         derived,
                                         s.state.stance,
-                                        s.combatState.attackCooldownUntilMs))
+                                        s.combatState.attackCooldownUntilMs,
+                                        godMode = s.state.godMode))
                             }
                         }
                 }

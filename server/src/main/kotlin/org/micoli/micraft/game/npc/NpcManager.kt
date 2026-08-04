@@ -586,8 +586,10 @@ class NpcManager(
             onNpcDamagedByNpc(instance, attackerNpcInstance)
         } else if (instance.aggroTarget == null && !instance.hibernating) {
             // A hibernating NPC that keeps sleeping through the hit retaliates against nobody.
+            val attackerSession = getSessions().find { it.id == attackerId }
+            if (attackerSession?.state?.godMode == true) return
             instance.aggroTarget = attackerId
-            val attackerName = getSessions().find { it.id == attackerId }?.state?.name ?: "?"
+            val attackerName = attackerSession?.state?.name ?: "?"
             broadcastCombatLog("[m:${instance.state.name}] targets [p:$attackerName]!")
             if (instance.definition.aggroMode == AggroMode.PASSIVE_COOPERATIVE) {
                 val npcPos = instance.state.pos
@@ -741,6 +743,7 @@ class NpcManager(
                         val inRange =
                             sessions.firstOrNull { session ->
                                 if (session.isDowned) return@firstOrNull false
+                                if (session.state.godMode) return@firstOrNull false
                                 val playerLevel = session.characterData?.level ?: 1
                                 if (playerLevel - instance.instanceLevel > 5)
                                     return@firstOrNull false

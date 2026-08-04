@@ -121,6 +121,7 @@ class SetCommand : CommandHandler {
             globalCooldownRemainingMs =
                 (target.combatState.attackCooldownUntilMs - System.currentTimeMillis())
                     .coerceAtLeast(0),
+            godMode = target.state.godMode,
         )
     }
 }

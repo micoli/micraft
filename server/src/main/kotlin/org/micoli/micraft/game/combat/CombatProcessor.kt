@@ -350,6 +350,7 @@ class CombatProcessor(
                     target.state.stance,
                     target.combatState.attackCooldownUntilMs,
                     target.combatState.attackCooldownsUntilMs,
+                    target.state.godMode,
                 ))
         } else {
             damage = 0
@@ -360,6 +361,7 @@ class CombatProcessor(
                     target.state.stance,
                     target.combatState.attackCooldownUntilMs,
                     target.combatState.attackCooldownsUntilMs,
+                    target.state.godMode,
                 ))
         }
 
@@ -598,6 +600,7 @@ class CombatProcessor(
                             s.state.stance,
                             s.combatState.attackCooldownUntilMs,
                             s.combatState.attackCooldownsUntilMs,
+                            s.state.godMode,
                         ))
                 }
         }
@@ -615,6 +618,7 @@ class CombatProcessor(
                 session.state.stance,
                 session.combatState.attackCooldownUntilMs,
                 session.combatState.attackCooldownsUntilMs,
+                session.state.godMode,
             ))
     }
 
@@ -624,6 +628,7 @@ class CombatProcessor(
         stance: PlayerStance,
         cooldownUntilMs: Long,
         attackCooldownsUntilMs: Map<String, Long> = emptyMap(),
+        godMode: Boolean = false,
     ): ServerMessage.PlayerStatusUpdate {
         val isRage = charData.characterClass.classResource == ClassResource.RAGE
         val now = System.currentTimeMillis()
@@ -642,6 +647,7 @@ class CombatProcessor(
                 attackCooldownsUntilMs
                     .mapValues { (_, until) -> (until - now).coerceAtLeast(0) }
                     .filter { (_, rem) -> rem > 0 },
+            godMode = godMode,
         )
     }
 

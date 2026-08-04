@@ -169,6 +169,7 @@ export type PlayerStatusData = {
   stance: string;
   globalCooldownRemainingMs: number;
   attackCooldownsRemainingMs: Record<string, number>;
+  godMode: boolean;
 };
 
 export type ShortcutSlot =

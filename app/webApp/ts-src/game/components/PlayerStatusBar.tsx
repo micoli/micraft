@@ -4,6 +4,7 @@ import { UiState } from "../UIReducer";
 
 interface Props {
   status: NonNullable<UiState["playerStatus"]>;
+  godMode?: boolean;
   npcProximity?: NpcProximityEntry[];
   layoutStyle?: React.CSSProperties;
 }
@@ -85,7 +86,7 @@ function GcdBar({ remainingMs }: { remainingMs: number }) {
   );
 }
 
-export function PlayerStatusBar({ status, layoutStyle }: Props) {
+export function PlayerStatusBar({ status, godMode, layoutStyle }: Props) {
   const playerName = window.mcState?.playerName ?? "";
   return (
     <div
@@ -94,7 +95,10 @@ export function PlayerStatusBar({ status, layoutStyle }: Props) {
     >
       {playerName && (
         <div className="flex items-center gap-2 w-full">
-          <span className="text-white/80 text-[11px] font-semibold shrink-0 pb-0.5">{playerName}</span>
+          <span className="text-white/80 text-[11px] font-semibold shrink-0 pb-0.5">
+            {godMode && <span className="text-yellow-400 mr-0.5">☢︎</span>}
+            {playerName}
+          </span>
           <div className="flex-1 min-w-0">
             <GcdBar remainingMs={status.globalCooldownRemainingMs} />
           </div>

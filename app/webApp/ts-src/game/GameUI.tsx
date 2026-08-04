@@ -74,6 +74,7 @@ const initial: UiState = {
   questJournalOpen: false,
   questTrackerVisible: false,
   activeEffects: [],
+  godMode: false,
 };
 
 function RouterBridge({
@@ -711,6 +712,7 @@ export function GameUI() {
     window.mc.playerDowned = (playerId: string) => dispatch("player_downed", { playerId });
     window.mc.playerRespawned = (json: string) => dispatch("player_respawned", { data: JSON.parse(json) });
     window.mc.xpGained = (json: string) => dispatch("xp_gained", { data: JSON.parse(json) });
+    window.mc.godModeUpdate = (enabled: boolean) => dispatch("god_mode_update", { enabled });
     window.mc.questSync = (json: string) => {
       try {
         const msg = JSON.parse(json) as { quests: Record<string, QuestProgress> };

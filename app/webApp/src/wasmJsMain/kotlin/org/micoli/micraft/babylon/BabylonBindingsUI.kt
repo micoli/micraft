@@ -194,6 +194,8 @@ fun jsHealthUpdate(json: String): Unit = js("mc.healthUpdate(json)")
 
 fun jsPlayerStatusUpdate(json: String): Unit = js("mc.playerStatusUpdate(json)")
 
+fun jsGodModeUpdate(enabled: Boolean): Unit = js("mc.godModeUpdate(enabled)")
+
 fun jsStatusEffectUpdate(json: String): Unit = js("mc.statusEffectUpdate(json)")
 
 fun jsPlayerDowned(playerId: String): Unit = js("mc.playerDowned(playerId)")

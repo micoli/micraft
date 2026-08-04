@@ -294,7 +294,8 @@ class GameLoop(
                                         derived,
                                         s.state.stance,
                                         s.combatState.attackCooldownUntilMs,
-                                        s.combatState.attackCooldownsUntilMs))
+                                        s.combatState.attackCooldownsUntilMs,
+                                        s.state.godMode))
                             }
                         }
                 }
@@ -498,6 +499,7 @@ class GameLoop(
                             session.state.stance,
                             session.combatState.attackCooldownUntilMs,
                             session.combatState.attackCooldownsUntilMs,
+                            session.state.godMode,
                         ))
                 },
         )
@@ -1137,6 +1139,10 @@ class GameLoop(
                 knownRecipes = saved?.knownRecipes ?: emptySet(),
                 rpgOptOut =
                     if (saved?.characterData != null) false else (saved?.rpgOptOut ?: false),
+                godMode = saved?.godMode ?: false,
+                lightBoostEnabled = saved?.lightBoostEnabled ?: false,
+                zoneLevel = saved?.zoneLevel ?: 0,
+                quests = saved?.quests ?: emptyMap(),
                 email = accountEmail,
                 autoTargetEnabled = saved?.autoTargetEnabled ?: true,
             )
@@ -1191,6 +1197,7 @@ class GameLoop(
                 knownRecipes = session.knownRecipes.toSet(),
             ))
         session.send(buildPreferencesSync(session))
+        if (session.state.godMode) session.send(ServerMessage.GodModeUpdate(true))
         chatService.onPlayerConnect(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         questManager?.sendQuestSync(session)
@@ -1214,7 +1221,8 @@ class GameLoop(
                     derived,
                     session.state.stance,
                     session.combatState.attackCooldownUntilMs,
-                    session.combatState.attackCooldownsUntilMs))
+                    session.combatState.attackCooldownsUntilMs,
+                    session.state.godMode))
             experienceProcessor.sendXpState(session)
         } else if (!session.state.rpgOptOut) {
             session.send(ServerMessage.CharacterCreationRequired)

@@ -413,6 +413,9 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     localController.lightBoostEnabled = msg.enabled
                 })
             put(
+                ServerMessage.GodModeUpdate::class,
+                typedHandler { msg: ServerMessage.GodModeUpdate -> jsGodModeUpdate(msg.enabled) })
+            put(
                 ServerMessage.WorldUpdate::class,
                 typedHandler { msg: ServerMessage.WorldUpdate ->
                     // Collect affected chunk positions for re-enqueue after applying all changes

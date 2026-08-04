@@ -496,6 +496,7 @@ declare global {
     playerDowned(playerId: string): void;
     playerRespawned(json: string): void;
     xpGained(json: string): void;
+    godModeUpdate(enabled: boolean): void;
     questSync(json: string): void;
     questUpdate(json: string): void;
     openQuestJournal(): void;

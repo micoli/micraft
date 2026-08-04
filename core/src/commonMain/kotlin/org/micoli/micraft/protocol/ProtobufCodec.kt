@@ -150,6 +150,7 @@ object ServerMessageCodec {
             serverEntry<ServerMessage.QuestUpdate>(), // 44
             serverEntry<ServerMessage.OpenQuestJournal>(), // 45
             serverEntry<ServerMessage.AoEEffect>(), // 46
+            serverEntry<ServerMessage.GodModeUpdate>(), // 47
         )
 
     fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)

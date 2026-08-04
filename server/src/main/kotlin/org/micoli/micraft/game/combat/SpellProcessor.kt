@@ -109,6 +109,7 @@ class SpellProcessor(
                 session.state.stance,
                 session.combatState.attackCooldownUntilMs,
                 session.combatState.attackCooldownsUntilMs,
+                session.state.godMode,
             ))
     }
 
@@ -233,6 +234,7 @@ class SpellProcessor(
                 session.state.stance,
                 session.combatState.attackCooldownUntilMs,
                 session.combatState.attackCooldownsUntilMs,
+                session.state.godMode,
             ))
     }
 

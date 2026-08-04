@@ -281,6 +281,7 @@ sealed class ServerMessage {
         val attackCooldownsRemainingMs: Map<String, Long> = emptyMap(),
         val currentTokens: Int = 0,
         val maxTokens: Int = 0,
+        val godMode: Boolean = false,
     ) : ServerMessage()
 
     @ProtoId(38)
@@ -331,6 +332,8 @@ sealed class ServerMessage {
         val z: Float,
         val radius: Float,
     ) : ServerMessage()
+
+    @ProtoId(47) @Serializable data class GodModeUpdate(val enabled: Boolean) : ServerMessage()
 }
 
 @Serializable

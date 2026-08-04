@@ -73,6 +73,7 @@ export interface UiState {
   questJournalOpen: boolean;
   questTrackerVisible: boolean;
   activeEffects: ActiveEffect[];
+  godMode: boolean;
 }
 
 const ingameMapRegistry = {
@@ -268,6 +269,10 @@ const gameRegistry = {
   xp_gained: (state: UiState, payload: { data: unknown }) => ({
     ...state,
     xpState: payload.data as UiState["xpState"],
+  }),
+  god_mode_update: (state: UiState, payload: { enabled: boolean }) => ({
+    ...state,
+    godMode: payload.enabled,
   }),
 };
 
