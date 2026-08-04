@@ -37,7 +37,7 @@ if ! $BUILD_JS && ! $BUILD_WASM && ! $BUILD_SERVER; then
     exit 0
 fi
 
-BUILD_WEB=app/webApp/build/web
+BUILD_WEB="$(pwd)/app/webApp/build/web"
 
 # ── 1. JS / CSS ────────────────────────────────────────────────────────────────
 if $BUILD_JS; then

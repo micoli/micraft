@@ -80,14 +80,14 @@ dev-task-restart:
 # Follow with: make build-wasm
 dev-nuke-wasm:
 	$(EXEC) "rm -rf \
-	  /workspace/core/build/classes/kotlin/wasmJs \
-	  /workspace/core/build/kotlin/wasmJs \
-	  /workspace/core/build/kotlin/compileKotlinWasmJs \
-	  /workspace/core/build/klib \
-	  /workspace/app/webApp/build/klib \
-	  /workspace/app/webApp/build/compileSync \
-	  /workspace/app/shared/build/klib \
-	  /workspace/app/shared/build/compileSync"
+	  ./core/build/classes/kotlin/wasmJs \
+	  ./core/build/kotlin/wasmJs \
+	  ./core/build/kotlin/compileKotlinWasmJs \
+	  ./core/build/klib \
+	  ./app/webApp/build/klib \
+	  ./app/webApp/build/compileSync \
+	  ./app/shared/build/klib \
+	  ./app/shared/build/compileSync"
 
 # Nuke WASM caches + full recompile in one shot (proto decode errors / stale output after core changes)
 dev-reset-wasm: dev-nuke-wasm build-wasm
@@ -98,11 +98,11 @@ dev-reset-wasm: dev-nuke-wasm build-wasm
 dev-reset:
 	$(PITCHFORK) stop -l
 	$(EXEC) "rm -rf \
-	  /workspace/core/build \
-	  /workspace/server/build \
-	  /workspace/app/shared/build \
-	  /workspace/app/webApp/build/klib \
-	  /workspace/app/webApp/build/compileSync"
+	  ./core/build \
+	  ./server/build \
+	  ./app/shared/build \
+	  ./app/webApp/build/klib \
+	  ./app/webApp/build/compileSync"
 	$(PITCHFORK) start -l
 
 dev-tui:
@@ -145,7 +145,7 @@ build:
 
 # Force full rebuild: WASM + JS/CSS + server (ignores change detection)
 build-all:
-	$(EXEC) "bash /workspace/scripts/dev-build.sh --force"
+	$(EXEC) "bash ./scripts/dev-build.sh --force"
 
 build-client: build-js build-wasm
 
