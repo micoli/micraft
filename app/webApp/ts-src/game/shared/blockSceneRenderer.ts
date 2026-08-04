@@ -31,15 +31,26 @@ export function setupBlockScene(scene: Scene, ordinal: number, colorHex?: string
   const blockDef = window.mc?.getBlockDef?.(ordinal) as McBlockDef | null;
   const elements = blockDef?.elements ?? [];
 
-  const body = elements[0];
-  const bf = body?.from ?? ([0, 0, 0] as [number, number, number]);
-  const bt = body?.to ?? ([16, 16, 16] as [number, number, number]);
-  const bW = (bt[0] - bf[0]) / 16;
-  const bH = (bt[1] - bf[1]) / 16;
-  const bD = (bt[2] - bf[2]) / 16;
-  const cx = (bf[0] + bt[0]) / 2 / 16;
-  const cy = (bf[1] + bt[1]) / 2 / 16;
-  const cz = (bf[2] + bt[2]) / 2 / 16;
+  let minX = 0,
+    minY = 0,
+    minZ = 0,
+    maxX = 16,
+    maxY = 16,
+    maxZ = 16;
+  if (elements.length > 0) {
+    minX = Math.min(...elements.map((e) => e.from[0]));
+    minY = Math.min(...elements.map((e) => e.from[1]));
+    minZ = Math.min(...elements.map((e) => e.from[2]));
+    maxX = Math.max(...elements.map((e) => e.to[0]));
+    maxY = Math.max(...elements.map((e) => e.to[1]));
+    maxZ = Math.max(...elements.map((e) => e.to[2]));
+  }
+  const bW = (maxX - minX) / 16;
+  const bH = (maxY - minY) / 16;
+  const bD = (maxZ - minZ) / 16;
+  const cx = (minX + maxX) / 2 / 16;
+  const cy = (minY + maxY) / 2 / 16;
+  const cz = (minZ + maxZ) / 2 / 16;
 
   const cam = new B.ArcRotateCamera("cam", -Math.PI * 0.25, Math.PI / 3.5, 2.5, B.Vector3.Zero(), scene);
   cam.radius = Math.max(2.5, Math.max(bW, bH, bD) * 2.2);
