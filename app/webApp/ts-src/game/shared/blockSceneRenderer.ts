@@ -37,6 +37,9 @@ export function setupBlockScene(scene: Scene, ordinal: number, colorHex?: string
     maxX = 16,
     maxY = 16,
     maxZ = 16;
+  let cx = 0.5,
+    cy = 0.5,
+    cz = 0.5;
   if (elements.length > 0) {
     minX = Math.min(...elements.map((e) => e.from[0]));
     minY = Math.min(...elements.map((e) => e.from[1]));
@@ -44,15 +47,17 @@ export function setupBlockScene(scene: Scene, ordinal: number, colorHex?: string
     maxX = Math.max(...elements.map((e) => e.to[0]));
     maxY = Math.max(...elements.map((e) => e.to[1]));
     maxZ = Math.max(...elements.map((e) => e.to[2]));
+    cx = elements.reduce((s, e) => s + (e.from[0] + e.to[0]) / 2, 0) / elements.length / 16;
+    cy = elements.reduce((s, e) => s + (e.from[1] + e.to[1]) / 2, 0) / elements.length / 16;
+    cz = elements.reduce((s, e) => s + (e.from[2] + e.to[2]) / 2, 0) / elements.length / 16;
   }
   const bW = (maxX - minX) / 16;
   const bH = (maxY - minY) / 16;
   const bD = (maxZ - minZ) / 16;
-  const cx = (minX + maxX) / 2 / 16;
-  const cy = (minY + maxY) / 2 / 16;
-  const cz = (minZ + maxZ) / 2 / 16;
 
-  const cam = new B.ArcRotateCamera("cam", -Math.PI * 0.25, Math.PI / 3.5, 2.5, B.Vector3.Zero(), scene);
+  const camAlpha = -Math.PI * 0.25;
+  const camBeta = Math.PI / 4;
+  const cam = new B.ArcRotateCamera("cam", camAlpha, camBeta, 2.5, B.Vector3.Zero(), scene);
   cam.radius = Math.max(2.5, Math.max(bW, bH, bD) * 2.2);
 
   const light = new B.HemisphericLight("light", new B.Vector3(1, 2, 1), scene);

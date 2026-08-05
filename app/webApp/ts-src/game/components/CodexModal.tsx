@@ -2,6 +2,7 @@ import type { Texture } from "@babylonjs/core";
 import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
 import { getFaceTexUrl, plainColorHex } from "../blocks/blockDefs";
 import { Block3DPreview, CssBlockCube, useBlockDefsReady, useBlockPreviews } from "../shared/BlockPreview";
+import { PLAIN_COLORABLE_PREVIEW_HEX } from "../shared/blockPreviewCache";
 import { animDisplayName, animEmoji, animationsFromBbmodel } from "../../lib/animationHelpers";
 import type { AnimationEntry } from "../../lib/animationHelpers";
 import { BbmodelAnimationViewer } from "../../admin/components/BbmodelAnimationViewer";
@@ -15,6 +16,7 @@ interface BlockEntry {
   minimapColor: [number, number, number];
   modelElement: string;
   liquid: boolean;
+  plainColorable?: boolean;
 }
 
 interface ItemEntry {
@@ -245,7 +247,10 @@ function BlockDetail({
     <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 8 }}>
       <div style={{ display: "flex", justifyContent: "center" }}>
         {defsReady ? (
-          <Block3DPreview ordinal={block.ordinal} />
+          <Block3DPreview
+            ordinal={block.ordinal}
+            colorHex={block.plainColorable ? PLAIN_COLORABLE_PREVIEW_HEX : undefined}
+          />
         ) : (
           <div style={{ width: 160, height: 160, background: "#1a1a1a", borderRadius: 6 }} />
         )}

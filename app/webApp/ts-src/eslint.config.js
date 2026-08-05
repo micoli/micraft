@@ -46,6 +46,12 @@ export default tseslint.config(
   },
   prettierConfig,
   {
-    ignores: ["node_modules/**", "storybook-static/**", "../src/wasmJsMain/resources/mc_bindings.js", "../build/**", "app/webApp/build/**"],
+    ignores: [
+      "node_modules/**",
+      "storybook-static/**",
+      "../src/wasmJsMain/resources/mc_bindings.js",
+      "../build/**",
+      "app/webApp/build/**",
+    ],
   },
 );

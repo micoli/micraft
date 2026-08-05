@@ -597,7 +597,7 @@
   "textures": [
     {
       "name": "LEGO_ARCH_4X1",
-      "path": "",
+      "path": "api/models/blocks/LEGO_ARCH_4X1/LEGO_ARCH_4X1.png",
       "folder": "",
       "namespace": "",
       "id": "0",

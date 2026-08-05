@@ -1,12 +1,22 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { getFaceTexUrl } from "../blocks/blockDefs";
-import { subscribe, getCached } from "./blockPreviewCache";
+import { subscribe, getCached, ensureColoredPreview, getColoredCached } from "./blockPreviewCache";
 import { setupBlockScene } from "./blockSceneRenderer";
 
 export function useBlockPreviews(): (ordinal: number) => string | null {
   const [, inc] = useReducer((n: number) => n + 1, 0);
   useEffect(() => subscribe(inc), []);
   return getCached;
+}
+
+export function useColoredBlockPreview(ordinal: number | null, colorHex: string | null): string | null {
+  const [, inc] = useReducer((n: number) => n + 1, 0);
+  useEffect(() => subscribe(inc), []);
+  useEffect(() => {
+    if (ordinal != null && colorHex != null) ensureColoredPreview(ordinal, colorHex);
+  }, [ordinal, colorHex]);
+  if (ordinal == null || colorHex == null) return null;
+  return getColoredCached(ordinal, colorHex);
 }
 
 export function useBlockDefsReady(): boolean {

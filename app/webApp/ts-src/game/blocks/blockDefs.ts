@@ -118,6 +118,7 @@ let _registryBlocks:
       liquid?: boolean;
       hasStuds?: boolean;
       brickSize?: [number, number, number];
+      plainColorable?: boolean;
     }[]
   | null = null;
 
@@ -214,6 +215,10 @@ export function getBlockOrdinalByName(blockName: string): number | null {
 
 export function getRegistryBlockCount(): number {
   return _registryBlocks?.length ?? 0;
+}
+
+export function isPlainColorable(ordinal: number): boolean {
+  return _registryBlocks?.[ordinal]?.plainColorable ?? false;
 }
 
 export function getFaceTexUrl(ordinal: number, faceDir: number): string | null {

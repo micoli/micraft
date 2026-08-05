@@ -1,21 +1,68 @@
 import type { Engine } from "@babylonjs/core";
-import { getRegistryBlockCount } from "../blocks/blockDefs";
+import { getRegistryBlockCount, isPlainColorable } from "../blocks/blockDefs";
 import { setupBlockScene } from "./blockSceneRenderer";
+
+/** Neutral grey used as stand-in for plainColorable blocks in cached previews. */
+export const PLAIN_COLORABLE_PREVIEW_HEX = "A0A0A0";
 
 const PREVIEW_SIZE = 64;
 
 const _cache = new Map<number, string>();
+const _coloredCache = new Map<string, string>();
+const _coloredPending = new Set<string>();
 const _listeners = new Set<() => void>();
 let _canvas: HTMLCanvasElement | null = null;
 let _engine: Engine | null = null;
 let _preloading = false;
 
+// Serialized render queue — prevents concurrent renders on the shared canvas.
+type RenderTask = () => Promise<void>;
+const _renderQueue: RenderTask[] = [];
+let _rendering = false;
+
 function notify() {
   _listeners.forEach((fn) => fn());
 }
 
+async function drainQueue() {
+  if (_rendering) return;
+  _rendering = true;
+  while (_renderQueue.length > 0) {
+    const task = _renderQueue.shift()!;
+    try {
+      await task();
+    } catch (e) {
+      console.warn("blockPreviewCache: render task failed", e);
+    }
+  }
+  _rendering = false;
+}
+
+function enqueue(task: RenderTask) {
+  _renderQueue.push(task);
+  drainQueue();
+}
+
 export function getCached(ordinal: number): string | null {
   return _cache.get(ordinal) ?? null;
+}
+
+export function getColoredCached(ordinal: number, colorHex: string): string | null {
+  return _coloredCache.get(`${ordinal}:${colorHex}`) ?? null;
+}
+
+export function ensureColoredPreview(ordinal: number, colorHex: string): void {
+  const key = `${ordinal}:${colorHex}`;
+  if (_coloredCache.has(key) || _coloredPending.has(key)) return;
+  _coloredPending.add(key);
+  enqueue(async () => {
+    const url = await renderBlockToDataUrl(ordinal, colorHex);
+    _coloredPending.delete(key);
+    if (url) {
+      _coloredCache.set(key, url);
+      notify();
+    }
+  });
 }
 
 export function subscribe(fn: () => void): () => void {
@@ -41,7 +88,7 @@ function ensureEngine(): { canvas: HTMLCanvasElement; engine: Engine } {
   return { canvas: _canvas!, engine: _engine! };
 }
 
-function renderBlockToDataUrl(ordinal: number): Promise<string | null> {
+function renderBlockToDataUrl(ordinal: number, colorHex?: string): Promise<string | null> {
   const B = window.BABYLON;
   if (!B) return Promise.resolve(null);
 
@@ -53,7 +100,7 @@ function renderBlockToDataUrl(ordinal: number): Promise<string | null> {
   const scene = new B.Scene(engine);
   scene.clearColor = new B.Color4(0, 0, 0, 0);
 
-  setupBlockScene(scene, ordinal);
+  setupBlockScene(scene, ordinal, colorHex);
 
   return new Promise<string | null>((resolve) => {
     let stopped = false;
@@ -101,16 +148,26 @@ export async function startPreloading(): Promise<void> {
   });
 
   const count = getRegistryBlockCount();
+  const tasks: Promise<void>[] = [];
   for (let ordinal = 0; ordinal < count; ordinal++) {
     if (_cache.has(ordinal)) continue;
-    try {
-      const url = await renderBlockToDataUrl(ordinal);
-      if (url) {
-        _cache.set(ordinal, url);
-        notify();
-      }
-    } catch (e) {
-      console.warn("blockPreviewCache: failed ordinal", ordinal, e);
-    }
+    const ord = ordinal;
+    const colorHex = isPlainColorable(ord) ? PLAIN_COLORABLE_PREVIEW_HEX : undefined;
+    const p = new Promise<void>((resolve) => {
+      enqueue(async () => {
+        try {
+          const url = await renderBlockToDataUrl(ord, colorHex);
+          if (url) {
+            _cache.set(ord, url);
+            notify();
+          }
+        } catch (e) {
+          console.warn("blockPreviewCache: failed ordinal", ord, e);
+        }
+        resolve();
+      });
+    });
+    tasks.push(p);
   }
+  await Promise.all(tasks);
 }
