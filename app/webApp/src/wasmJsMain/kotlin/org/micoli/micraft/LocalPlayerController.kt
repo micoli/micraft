@@ -117,6 +117,8 @@ class LocalPlayerController(
     private var hudZoneLevel = 0
     var currentGameTicks = 0L
 
+    var maxInteractionDistance: Float = 7f
+
     private var reconcileToleranceXz = DEFAULT_RECONCILE_TOLERANCE_XZ
     private var reconcileToleranceY = DEFAULT_RECONCILE_TOLERANCE_Y
     private var reconcileCountXz = 0
@@ -759,7 +761,7 @@ class LocalPlayerController(
         prevPredZ = predZ
         prevEyeOffset = eyeOffset
 
-        val rayResult = raycastBlock()
+        val rayResult = raycastBlock(maxInteractionDistance)
         val target = rayResult?.target
 
         if (viewMode == ViewMode.THIRD_PERSON) {

@@ -39,6 +39,7 @@ sealed class ServerMessage {
         val reconcileToleranceY: Double = 0.99,
         val chunkTransport: String = "websocket",
         val buildTimestamp: String = "",
+        val maxInteractionDistance: Double = 7.0,
     ) : ServerMessage()
 
     @ProtoId(1) @Serializable data class ShadersUpdate(val enabled: Boolean) : ServerMessage()
@@ -201,6 +202,7 @@ sealed class ServerMessage {
     data class GameConfigSync(
         val reconcileToleranceXz: Double,
         val reconcileToleranceY: Double,
+        val maxInteractionDistance: Double = 7.0,
     ) : ServerMessage()
 
     @ProtoId(30)

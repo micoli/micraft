@@ -37,7 +37,7 @@ game:
   spawnZ: 8.0
   ticksPerDay: 72000
   timeBroadcastTicks: 20
-  maxInteractionDistance: 7.0
+  maxInteractionDistance: 14.0
   debugWorld: false
   reconcileToleranceXz: 0.5
   reconcileToleranceY: 0.99

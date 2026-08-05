@@ -2,6 +2,7 @@ package org.micoli.micraft.di
 
 import java.nio.file.Path
 import org.micoli.micraft.I18nConfig
+import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
 import org.micoli.micraft.game.RECONCILE_TOLERANCE_XZ
 import org.micoli.micraft.game.RECONCILE_TOLERANCE_Y
 import org.micoli.micraft.game.drop.DropConfig
@@ -60,7 +61,8 @@ class ReloadCoordinator(
         if (reloadGameConfig != null) {
             reloadGameConfig.invoke()
             val configSync =
-                ServerMessage.GameConfigSync(RECONCILE_TOLERANCE_XZ, RECONCILE_TOLERANCE_Y)
+                ServerMessage.GameConfigSync(
+                    RECONCILE_TOLERANCE_XZ, RECONCILE_TOLERANCE_Y, MAX_INTERACTION_DISTANCE)
             sessionRegistry.all().forEach { it.send(configSync) }
             lines += i18n.t(lang, "reload:server:game_config")
         }

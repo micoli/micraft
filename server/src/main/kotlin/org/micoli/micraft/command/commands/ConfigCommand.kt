@@ -3,6 +3,9 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
+import org.micoli.micraft.game.RECONCILE_TOLERANCE_XZ
+import org.micoli.micraft.game.RECONCILE_TOLERANCE_Y
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -82,6 +85,11 @@ class ConfigCommand : CommandHandler {
                     session.send(
                         ServerMessage.Notification(
                             i18n.t(lang, "config:server:set_ok", key, value)))
+                    context.broadcast(
+                        ServerMessage.GameConfigSync(
+                            RECONCILE_TOLERANCE_XZ,
+                            RECONCILE_TOLERANCE_Y,
+                            MAX_INTERACTION_DISTANCE))
                 } else {
                     session.send(
                         ServerMessage.Notification(
