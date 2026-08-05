@@ -10,4 +10,7 @@ data class ItemDefinition(
     val bg: String = "",
     /** Palette color name this item places the block in; null = untinted (textured) variant. */
     val plainColor: String? = null,
+    val healthRestore: Int = 0,
+    val manaRestore: Int = 0,
+    val consumable: Boolean = false,
 )

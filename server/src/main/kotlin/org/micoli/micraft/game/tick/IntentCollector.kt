@@ -4,6 +4,7 @@ import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.hasPermission
+import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.protocol.ClientMessage
@@ -18,6 +19,7 @@ class IntentCollector(
     private val onChatSend: suspend (PlayerSession, String, String) -> Unit = { _, _, _ -> },
     private val combatProcessor: CombatProcessor? = null,
     private val spellProcessor: SpellProcessor? = null,
+    private val onConsumeItem: suspend (PlayerSession, ItemType) -> Unit = { _, _ -> },
 ) {
     suspend fun collect(session: PlayerSession): TickInput {
         var dx = 0f
@@ -76,6 +78,12 @@ class IntentCollector(
                                 session.id.take(8),
                                 it.message,
                                 it)
+                        }
+                is ClientMessage.UseItem ->
+                    runCatching { onConsumeItem(session, intent.itemType) }
+                        .onFailure {
+                            log.error(
+                                "consumeItem failed for {}: {}", session.id.take(8), it.message, it)
                         }
                 else -> {}
             }

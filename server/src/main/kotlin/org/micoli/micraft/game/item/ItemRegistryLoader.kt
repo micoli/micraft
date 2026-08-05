@@ -76,6 +76,9 @@ class ItemRegistryLoader(
                         placesBlock = placesBlock,
                         label = entry.label,
                         bg = entry.bg,
+                        healthRestore = entry.healthRestore,
+                        manaRestore = entry.manaRestore,
+                        consumable = entry.healthRestore > 0 || entry.manaRestore > 0,
                     )
             }
         log.info("Item registry loaded: {} item types", result.size)

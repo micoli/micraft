@@ -126,4 +126,6 @@ sealed class ClientMessage {
         val targetY: Float,
         val targetZ: Float,
     ) : ClientMessage()
+
+    @ProtoId(21) @Serializable data class UseItem(val itemType: ItemType) : ClientMessage()
 }

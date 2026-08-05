@@ -8,4 +8,6 @@ data class ItemYamlEntry(
     val placesBlock: String? = null,
     val label: String = "",
     val bg: String = "",
+    val healthRestore: Int = 0,
+    val manaRestore: Int = 0,
 )

@@ -9,7 +9,9 @@
       "buildable": {"type": "boolean"},
       "placesBlock": {"type": ["string", "null"]},
       "label": {"type": "string", "minLength": 1, "maxLength": 4},
-      "bg": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"}
+      "bg": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+      "healthRestore": {"type": "integer", "minimum": 0},
+      "manaRestore": {"type": "integer", "minimum": 0}
     }
   }
 }

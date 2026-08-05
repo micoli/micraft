@@ -290,6 +290,13 @@ class LocalPlayerController(
                     targetY = ty,
                     targetZ = tz,
                 ))
+        } else if (slot is ShortcutSlot.Item) {
+            val def = ItemRegistry.get(slot.itemType)
+            if (def.consumable) {
+                outMessages.trySend(ClientMessage.UseItem(slot.itemType))
+            } else {
+                selectSlot(index)
+            }
         } else {
             selectSlot(index)
             if (slot is ShortcutSlot.Attack) {

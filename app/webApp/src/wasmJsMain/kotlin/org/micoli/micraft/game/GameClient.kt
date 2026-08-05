@@ -644,6 +644,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                             runCatching { BlockType(it) }.getOrNull()
                                         },
                                     plainColor = info.plainColor,
+                                    consumable = info.consumable,
                                 )
                         }
                     ItemRegistry.load(itemDefs)

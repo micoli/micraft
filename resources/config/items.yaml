@@ -131,3 +131,23 @@ LEGO_ARCH_8X2:
   placesBlock: LEGO_ARCH_8X2
   label: A84X
   bg: "#DC9632"
+HEALTH_POTION:
+  buildable: false
+  label: HP
+  bg: "#DC1414"
+  healthRestore: 10
+MANA_POTION:
+  buildable: false
+  label: MP
+  bg: "#1464DC"
+  manaRestore: 10
+HEALTH_POTION_MEDIUM:
+  buildable: false
+  label: HM
+  bg: "#B40000"
+  healthRestore: 20
+MANA_POTION_MEDIUM:
+  buildable: false
+  label: MM
+  bg: "#0032B4"
+  manaRestore: 20

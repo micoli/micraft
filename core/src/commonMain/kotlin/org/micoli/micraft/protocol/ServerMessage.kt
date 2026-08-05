@@ -389,6 +389,7 @@ data class ItemInfo(
     val buildable: Boolean,
     val placesBlock: String? = null,
     val plainColor: String? = null,
+    val consumable: Boolean = false,
 )
 
 @Serializable

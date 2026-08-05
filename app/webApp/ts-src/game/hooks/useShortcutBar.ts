@@ -35,7 +35,7 @@ export function useShortcutBar(
         const keys: string[] = bindings[action] ?? [];
         if (keys.some((k) => matchesBinding(e, k))) {
           const slot = slotsRef.current[i];
-          if (slot?.kind === "attack" || slot?.kind === "macro") {
+          if (slot?.kind === "attack" || slot?.kind === "macro" || slot?.kind === "item") {
             setPressedSlot(i);
             setTimeout(() => setPressedSlot(null), 150);
           }
@@ -184,9 +184,7 @@ export function useShortcutBar(
     setTimeout(() => setPressedSlot(null), 150);
     if (slot.kind === "macro") {
       window.mcRunMacro?.(slot.id);
-    } else if (slot.kind === "attack") {
-      window.mcState?.events?.push(`slot_${slotIdx + 1}`);
-    } else if (slot.kind === "spell") {
+    } else if (slot.kind === "attack" || slot.kind === "spell" || slot.kind === "item") {
       window.mcState?.events?.push(`slot_${slotIdx + 1}`);
     }
   }

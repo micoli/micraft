@@ -236,6 +236,15 @@ light:
     on: "Éclairage des cavernes activé."
     off: "Éclairage des cavernes désactivé."
 
+drink:
+  server:
+    usage: "Usage : /drink <itemType>"
+    unknown: "Objet inconnu : {0}"
+    not_consumable: "'{0}' n'est pas un consommable."
+    no_character: "Vous n'avez pas encore de personnage RPG."
+    not_in_inventory: "Vous n'avez pas de {0} dans votre inventaire."
+    consumed: "{0} utilisé."
+
 quest:
   server:
     accepted: "Quête acceptée : {0}"

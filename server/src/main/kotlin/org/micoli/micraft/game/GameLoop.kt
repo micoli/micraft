@@ -68,6 +68,7 @@ import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.ItemRegistry
+import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
@@ -516,6 +517,7 @@ class GameLoop(
             },
             combatProcessor = combatProcessor,
             spellProcessor = spellProcessor,
+            onConsumeItem = ::handleConsumeItem,
         )
 
     @Volatile private var appScope: Application? = null
@@ -782,6 +784,7 @@ class GameLoop(
                         buildable = def.buildable,
                         placesBlock = def.placesBlock?.id,
                         plainColor = def.plainColor,
+                        consumable = def.healthRestore > 0 || def.manaRestore > 0,
                     )
             }
         val plainColors = PlainColorRegistry.all().map { PlainColorInfo(it.name, it.hex()) }
@@ -928,6 +931,59 @@ class GameLoop(
     }
 
     private fun savePlayer(session: PlayerSession) = playerPersister.save(session)
+
+    private suspend fun handleConsumeItem(session: PlayerSession, itemType: ItemType) {
+        val charData =
+            session.characterData
+                ?: run {
+                    session.send(
+                        ServerMessage.Notification(
+                            i18n.t(session.state.language, "drink:server:no_character")))
+                    return
+                }
+        val qty = session.inventory[itemType] ?: 0
+        if (qty <= 0) {
+            session.send(
+                ServerMessage.Notification(
+                    i18n.t(
+                        session.state.language,
+                        "drink:server:not_in_inventory",
+                        itemType.id.lowercase())))
+            return
+        }
+        val def = ItemRegistry.get(itemType)
+        if (def.healthRestore == 0 && def.manaRestore == 0) {
+            session.send(
+                ServerMessage.Notification(
+                    i18n.t(
+                        session.state.language,
+                        "drink:server:not_consumable",
+                        itemType.id.lowercase())))
+            return
+        }
+        if (qty == 1) session.inventory.remove(itemType) else session.inventory[itemType] = qty - 1
+        val derived = DerivedStatsCalculator.compute(charData, emptyList())
+        val newCharData =
+            charData.copy(
+                currentHp = (charData.currentHp + def.healthRestore).coerceAtMost(derived.maxHp),
+                currentMana =
+                    (charData.currentMana + def.manaRestore).coerceAtMost(derived.maxMana),
+            )
+        session.characterData = newCharData
+        savePlayer(session)
+        session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
+        session.send(
+            combatProcessor.makeStatusUpdate(
+                newCharData,
+                derived,
+                session.state.stance,
+                session.combatState.attackCooldownUntilMs,
+                session.combatState.attackCooldownsUntilMs,
+                session.state.godMode))
+        session.send(
+            ServerMessage.Notification(
+                i18n.t(session.state.language, "drink:server:consumed", itemType.id.lowercase())))
+    }
 
     private suspend fun handleLayoutUpdate(
         session: PlayerSession,

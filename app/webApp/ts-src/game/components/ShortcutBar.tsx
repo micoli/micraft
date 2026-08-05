@@ -115,6 +115,7 @@ export function ShortcutBar({
         const isAttack = slot?.kind === "attack";
         const isMacro = slot?.kind === "macro";
         const isSpell = slot?.kind === "spell";
+        const isConsumableItem = slot?.kind === "item" && (inventory[slot.id] ?? 0) > 0;
         const attackDef = isAttack ? attackMeta[slot!.id] : null;
         const spellDef = isSpell ? spellMeta[slot!.id] : null;
         const itemMeta_ = slot?.kind === "item" ? itemMeta[slot.id] : null;
@@ -132,7 +133,9 @@ export function ShortcutBar({
             onPointerMove={!isHand && slot ? moveSlotDrag : undefined}
             onPointerUp={!isHand && slot ? endSlotDrag : undefined}
             onPointerCancel={!isHand && slot ? endSlotDrag : undefined}
-            onClick={!isHand && (isAttack || isMacro || isSpell) ? () => handleSlotClick(idx) : undefined}
+            onClick={
+              !isHand && (isAttack || isMacro || isSpell || isConsumableItem) ? () => handleSlotClick(idx) : undefined
+            }
             onDragOver={(e) => handleDragOver(e, idx)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, idx)}
@@ -143,7 +146,7 @@ export function ShortcutBar({
               isSelected ? "border-yellow-400/90 shadow-[0_0_6px_rgba(255,215,0,0.5)]" : "border-white/35",
               isHand
                 ? "cursor-default"
-                : isAttack || isMacro || isSpell
+                : isAttack || isMacro || isSpell || isConsumableItem
                   ? "cursor-pointer"
                   : slot
                     ? "cursor-grab"

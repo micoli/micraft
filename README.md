@@ -239,6 +239,7 @@ stateDiagram-v2
 | `/createchat` | `/createchat <channelName>` | Create a new chat channel. | — |
 | `/disconnect` | `/disconnect` | Déconnecte le joueur courant. | — |
 | `/docraft` | `/docraft <recipeId> [count]` | Crafts a recipe. | — |
+| `/drink` | `/drink <itemType>` | Consomme un item consommable de l'inventaire. | — |
 | `/equip` | `/equip <armorName>` | Equip an armor piece. | dynamic |
 | `/explode` | `/explode <radius>` | Destroy all blocks in a sphere around the player. | — |
 | `/give` | `/give <itemType> [N]` | Give items to yourself. | — |

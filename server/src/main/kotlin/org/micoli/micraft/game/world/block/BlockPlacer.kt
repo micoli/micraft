@@ -405,12 +405,14 @@ class BlockPlacer(
             return
         }
         when (content) {
-            is ShortcutSlot.Item ->
-                if (!content.itemType.buildable) {
+            is ShortcutSlot.Item -> {
+                val def = ItemRegistry.get(content.itemType)
+                if (!content.itemType.buildable && !def.consumable) {
                     blockPlacerLog.debug(
-                        "ShortcutBarSet rejected: {} not buildable", content.itemType)
+                        "ShortcutBarSet rejected: {} not buildable or consumable", content.itemType)
                     return
                 }
+            }
             is ShortcutSlot.Attack ->
                 if (!attackRegistry.containsKey(content.attackId)) {
                     blockPlacerLog.debug(
