@@ -95,6 +95,23 @@ tasks.register<JavaExec>("extractKayKitAnimations") {
     workingDir = rootProject.projectDir
 }
 
+tasks.register<JavaExec>("generateCommandsDocs") {
+    group = "documentation"
+    description = "Regenerates the slash commands section in README.md."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.tools.GenerateCommandsDocsKt")
+    workingDir = rootProject.projectDir
+}
+
+tasks.register<JavaExec>("checkCommandsDocs") {
+    group = "verification"
+    description = "Fails if README.md commands section is out of date."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.tools.GenerateCommandsDocsKt")
+    workingDir = rootProject.projectDir
+    args("--check")
+}
+
 group = "org.micoli.micraft"
 
 version = "1.0.0"

@@ -229,56 +229,53 @@ stateDiagram-v2
 
 | Command | Usage | Description | Options / Autocomplete |
 |---------|-------|-------------|------------------------|
-| `/adduser` | `/adduser <email> <password> [displayName]` | Add a local auth user. (admin) | — |
-| `/character` | `/character` | Show your RPG character sheet. | — |
+| `/buff` | `/buff <hp\|mana\|hpregen\|manaregen>` | Apply a temporary buff to yourself. | hp, mana, hpregen, manaregen |
+| `/character` | `/character` | Show your RPG character sheet | — |
 | `/codex` | `/codex` | Opens the codex (blocks, items, bestiary). | — |
-| `/config` | `/config <get\|set> <key> [value]` | Get or set a runtime config value. | — |
-| `/config:reload` | `/config:reload` | Reloads block, NPC, or RBAC definitions from resource files. (admin) | block, npc, rbac |
+| `/config` | `/config <get\|set> <key> [value]` | Get or set a runtime config value. | dynamic |
+| `/config:reload` | `/config:reload` | Reloads block, NPC, or RBAC definitions from resource files. | block, npc, rbac |
 | `/craft` | `/craft` | Opens the crafting window. | — |
+| `/createcharacter` | `/createcharacter <name> <class> <str> <dex> <intel> <wis> <con> <cha>` | Create your RPG character | — |
 | `/createchat` | `/createchat <channelName>` | Create a new chat channel. | — |
-| `/createcharacter` | `/createcharacter` | Create your RPG character (first login). | — |
-| `/disconnect` | `/disconnect` | Disconnects the current player. | — |
-| `/docraft` | `/docraft <recipeId> [count]` | Crafts a recipe directly. | dynamic |
+| `/disconnect` | `/disconnect` | Déconnecte le joueur courant. | — |
+| `/docraft` | `/docraft <recipeId> [count]` | Crafts a recipe. | — |
 | `/equip` | `/equip <armorName>` | Equip an armor piece. | dynamic |
-| `/explode` | `/explode <radius>` | Destroy all blocks in a sphere around the player. (admin) | — |
-| `/give` | `/give <itemType> [N]` | Give items to yourself. (admin) | dynamic |
-| `/god:on` | `/god:on` | Enable god mode (immune to damage). (admin) | — |
-| `/god:off` | `/god:off` | Disable god mode. (admin) | — |
+| `/explode` | `/explode <radius>` | Destroy all blocks in a sphere around the player. | — |
+| `/give` | `/give <itemType> [N]` | Give items to yourself. | — |
+| `/god:off` | `/god:off` | Disable god mode. | — |
+| `/god:on` | `/god:on` | Enable god mode (immune to damage). | — |
 | `/help` | `/help [command]` | Lists available commands. | — |
-| `/join` | `/join <channelName>` | Join a chat channel. | — |
+| `/join` | `/join <channelName>` | Join a chat channel. | dynamic |
 | `/lang` | `/lang [locale]` | Changes your language preference. | — |
 | `/layout` | `/layout <name>` | Switches to a named layout. | — |
 | `/layouts` | `/layouts` | Opens the layout editor. | — |
-| `/learnrecipe` | `/learnrecipe <recipeId>` | Teach a recipe to the player. (admin) | dynamic |
-| `/leave` | `/leave <channelName>` | Leave a chat channel. | — |
-| `/light:on` | `/light:on` | Boosts ambient light underground (cavern lighting override). | — |
+| `/learnrecipe` | `/learnrecipe <recipeId>` | Teach a recipe to the player. | — |
+| `/leave` | `/leave <channelName>` | Leave a chat channel. | dynamic |
 | `/light:off` | `/light:off` | Restores natural cavern darkness. | — |
+| `/light:on` | `/light:on` | Boosts ambient light underground (cavern lighting override). | — |
 | `/map` | `/map` | Toggles the biome map overlay. | — |
 | `/preferences` | `/preferences` | Opens the preferences panel. | — |
-| `/pump` | `/pump` | Remove all connected liquid blocks in sight. (admin) | — |
-| `/quest` | `/quest [list\|accept\|abandon\|status] [id]` | Manage your quests. | — |
-| `/rbac:listgroups` | `/rbac:listgroups` | List all groups and their permissions. (admin) | — |
-| `/rbac:setgroup` | `/rbac:setgroup <email> <group>` | Add a group to a user. (admin) | — |
-| `/rbac:removegroup` | `/rbac:removegroup <email> <group>` | Remove a group from a user. (admin) | — |
+| `/pump` | `/pump` | Remove all connected liquid blocks in sight. | — |
+| `/quest` | `/quest [list\|accept\|abandon\|status] [id]` | Manage your quests. | dynamic |
 | `/refetch` | `/refetch` | Reloads all chunks around the player. | — |
-| `/reload` | `/reload` | Reloads configuration files without restarting the server. (admin) | resources/blocks/*.yaml, biomes.yaml, i18n/*.yaml |
+| `/reload` | `/reload` | Reloads configuration files without restarting the server. | resources/blocks/*.yaml — block properties + drop tables, biomes.yaml — biome definitions, i18n/*.yaml — translations |
 | `/rest` | `/rest` | Take a short rest: restore rage and tokens to maximum. | — |
-| `/resurect` | `/resurect [playerName]` | Resurrect a downed player (self if no name given). | — |
+| `/resurect` | `/resurect [playerName]` | Resurrect a downed player (self if no name given). | dynamic |
 | `/save` | `/save` | Saves the world and player state to disk. | — |
-| `/set` | `/set <hp\|mana> <playerName> <value>` | Set a player stat. (admin) | — |
+| `/set` | `/set <hp\|mana> <playerName> <value>` | Set a player stat. | dynamic |
 | `/shaders` | `/shaders [on\|off]` | Toggles visual shaders (ambient occlusion, directional shading, fog). | on, off |
-| `/skiprpg` | `/skiprpg` | Opt out of the RPG system. | — |
 | `/skin` | `/skin <skinName>` | Changes your player skin. | dynamic |
-| `/spawn` | `/spawn <npc_model> [x y z]` | Spawn an NPC on the solid block you are looking at. (admin) | dynamic |
-| `/talk` | `/talk <playerName>` | Open a private chat with a player. | — |
-| `/time` | `/time [0-23]` | Shows or sets the in-game time. (admin) | dynamic |
-| `/trade` | `/trade <playerName>` | Initiate a trade with another player. | dynamic |
-| `/tradeaccept` | `/tradeaccept <tradeId>` | Accept the current trade offer. | — |
-| `/tradecancel` | `/tradecancel <tradeId>` | Cancel the current trade. | — |
-| `/tradeoffer` | `/tradeoffer <tradeId> <json>` | Update your trade offer (JSON map of itemType→count). | — |
+| `/skiprpg` | `/skiprpg` | Opt out of RPG system | — |
+| `/spawn` | `/spawn <npc_model> [x y z]` | Spawn an NPC of the given model on the solid block you are looking at. (admin) | dynamic |
+| `/talk` | `/talk <playerName>` | Open a private chat with a player. | dynamic |
+| `/time` | `/time [0-23]` | Shows or sets the in-game time. | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 |
+| `/trade` | `/trade <playerName>` | Initiates a trade with another player. | dynamic |
+| `/tradeaccept` | `/tradeaccept <tradeId>` | Accepts the current trade offer. | — |
+| `/tradecancel` | `/tradecancel <tradeId>` | Cancels the current trade. | — |
+| `/tradeoffer` | `/tradeoffer <tradeId> <json>` | Updates your current trade offer. | — |
 | `/undo` | `/undo [N]` | Undo the last N block breaks, restoring blocks and reversing item collection. | — |
 | `/unequip` | `/unequip <armorName>` | Remove an equipped armor piece. | dynamic |
-| `/water` | `/water [x y z]` | Place a water source on the solid block you are looking at (or x y z). (admin) | dynamic |
+| `/water` | `/water [x y z]` | Place a water source on the solid block you are looking at (or x y z). (admin) | — |
 | `/weather` | `/weather [rain\|storm\|snow\|fog\|none]` | Force a weather zone at your position or clear all zones. (admin) | rain, storm, snow, fog, none |
 | `/weather-forecast` | `/weather-forecast` | Shows active weather zones and their location. | — |
 
@@ -286,11 +283,15 @@ stateDiagram-v2
 
 | Command | Usage | Description | Options / Autocomplete |
 |---------|-------|-------------|------------------------|
-| `/goto` | `/goto <playerName\|npcName>` | Teleports you to a player or NPC. | — |
-| `/kick` | `/kick <playerName>` | Kicks a connected player. | — |
+| `/adduser` | `/adduser <email> <password> [displayName] [group1,group2,...]` | Add a local auth user. Usage: /adduser <email> <password> [displayName] [group1,group2,...] | — |
+| `/goto` | `/goto <playerName\|npcName>` | Teleports you to a player or NPC. | dynamic |
+| `/kick` | `/kick <playerName>` | Kicks a connected player. | dynamic |
 | `/npc` | `/npc <spawn\|list\|remove\|tp> [args]` | Manage NPCs in the world. | — |
-| `/summon` | `/summon <playerName>` | Teleports another player to your location. | — |
-| `/teleport` | `/teleport <x> <y> <z>  \|  /teleport <playerName>` | Teleports you to the given coordinates. | — |
+| `/rbac:listgroups` | `/rbac:listgroups` | List all groups and their permissions. | — |
+| `/rbac:removegroup` | `/rbac:removegroup <email> <group1,group2,...>` | Remove groups from a user. | — |
+| `/rbac:setgroup` | `/rbac:setgroup <email> <group1,group2,...>` | Add groups to a user. | — |
+| `/summon` | `/summon <playerName>` | Teleports another player to your location. | dynamic |
+| `/teleport` | `/teleport <x> <y> <z>  \|  /teleport <playerName>` | Teleports you to the given coordinates. | dynamic |
 | `/who` | `/who` | Lists connected players with their position. | — |
 | `/yield` | `/yield <message>` | Broadcasts a message to all connected players. | — |
 
@@ -300,7 +301,8 @@ Commands are discovered at runtime — add a class implementing `CommandHandler`
 
 To regenerate this section from source:
 ```bash
-node scripts/generate_commands_docs.mjs
+make docs
+# or: make dc CMD="./gradlew :server:generateCommandsDocs"
 ```
 
 ---

@@ -200,7 +200,10 @@ prod-logs:
 
 # ── Standard and code analysis ────────────────────────────────────────────────
 
-code-standard: spotless-apply check-configuration ts-code-standard
+code-standard: spotless-apply check-configuration ts-code-standard check-docs
+
+check-docs:
+	$(EXEC) "./gradlew :server:checkCommandsDocs"
 
 ts-code-standard: npm-format ts-typecheck ts-lint
 
@@ -248,7 +251,7 @@ kt-web-test:
 # ── Docs ──────────────────────────────────────────────────────────────────────
 
 docs:
-	$(EXEC) "node scripts/generate_commands_docs.mjs"
+	$(EXEC) "./gradlew :server:generateCommandsDocs"
 
 # ── Help ──────────────────────────────────────────────────────────────────────
 
