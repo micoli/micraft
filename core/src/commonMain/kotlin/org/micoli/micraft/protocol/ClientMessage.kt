@@ -91,6 +91,8 @@ sealed class ClientMessage {
         val fieldOfView: Int = 70,
         val dynamicFogEnabled: Boolean = true,
         val autoTargetEnabled: Boolean = true,
+        val inventorySortA: String = "",
+        val inventorySortB: String = "",
     ) : ClientMessage()
 
     @ProtoId(13) @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()

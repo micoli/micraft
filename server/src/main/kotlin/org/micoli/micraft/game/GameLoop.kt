@@ -619,6 +619,8 @@ class GameLoop(
             defaultKeybindings = defaults,
             dynamicFogEnabled = session.state.dynamicFogEnabled,
             autoTargetEnabled = session.state.autoTargetEnabled,
+            inventorySortA = session.state.inventorySortA,
+            inventorySortB = session.state.inventorySortB,
         )
     }
 
@@ -644,6 +646,8 @@ class GameLoop(
                 fieldOfView = msg.fieldOfView,
                 dynamicFogEnabled = msg.dynamicFogEnabled,
                 autoTargetEnabled = msg.autoTargetEnabled,
+                inventorySortA = msg.inventorySortA,
+                inventorySortB = msg.inventorySortB,
             )
         if (msg.keybindings.isNotEmpty()) {
             persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
@@ -1201,6 +1205,8 @@ class GameLoop(
                 quests = saved?.quests ?: emptyMap(),
                 email = accountEmail,
                 autoTargetEnabled = saved?.autoTargetEnabled ?: true,
+                inventorySortA = saved?.inventorySortA ?: "",
+                inventorySortB = saved?.inventorySortB ?: "",
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =

@@ -35,7 +35,17 @@ export interface UiState {
   activeChannel: string;
   unreadChannels: string[];
   inventory: Record<string, number>;
-  itemMeta: Record<string, { label: string; bg: string }>;
+  itemMeta: Record<
+    string,
+    {
+      label: string;
+      bg: string;
+      healthRestore?: number;
+      manaRestore?: number;
+      consumable?: boolean;
+      plainColor?: string | null;
+    }
+  >;
   attackMeta: Record<string, AttackMeta>;
   spellMeta: Record<string, SpellMeta>;
   hotbarVisible: boolean;
@@ -171,7 +181,7 @@ const preferencesRegistry = {
 };
 
 const loadingRegistry = {
-  item_meta_loaded: (state: UiState, payload: { data: Record<string, { label: string; bg: string }> }) => ({
+  item_meta_loaded: (state: UiState, payload: { data: UiState["itemMeta"] }) => ({
     ...state,
     itemMeta: payload.data,
   }),

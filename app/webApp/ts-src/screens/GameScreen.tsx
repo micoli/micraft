@@ -98,6 +98,16 @@ export function GameScreen() {
     return Object.fromEntries(Object.entries(state.attackMeta).filter(([key]) => unlocked.has(key)));
   }, [state.attackMeta, state.characterSyncData, state.classDefinitions]);
 
+  const setPendingPrefs = (partial: Partial<import("../game/types").PreferencesData>) => {
+    if (!state.preferences) return;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { knownChannels, commands, defaultKeybindings, macroIcons, ...serverFields } = {
+      ...state.preferences,
+      ...partial,
+    };
+    pendingPreferencesUpdateRef.current = JSON.stringify(serverFields);
+  };
+
   const handlePreferencesSave = (payload: {
     subscribedChannels: ChannelSubscription[];
     disabledCommands: string[];
@@ -129,9 +139,13 @@ export function GameScreen() {
       window.mcState.dynamicFogEnabled = payload.dynamicFogEnabled ?? true;
     }
     window.mc.applyFaviconPref?.(payload.animatedFavicon);
-    pendingPreferencesUpdateRef.current = JSON.stringify({
-      ...payload,
-    });
+    setPendingPrefs(payload);
+  };
+
+  const handleInventorySortChange = (sortA: string, sortB: string) => {
+    if (!state.preferences) return;
+    dispatch("preferences_save", { data: { ...state.preferences, inventorySortA: sortA, inventorySortB: sortB } });
+    setPendingPrefs({ inventorySortA: sortA, inventorySortB: sortB });
   };
 
   const handleMacrosSave = (
@@ -139,46 +153,14 @@ export function GameScreen() {
     customCommands: Record<string, string[]>,
     macroIcons: Record<string, string>,
   ) => {
-    const prefs = state.preferences;
-    if (!prefs) return;
-    dispatch("preferences_save", {
-      data: {
-        subscribedChannels: prefs.subscribedChannels,
-        disabledCommands: prefs.disabledCommands,
-        shadersEnabled: prefs.shadersEnabled,
-        dynamicFogEnabled: prefs.dynamicFogEnabled ?? true,
-        animatedFavicon: prefs.animatedFavicon ?? true,
-        chunkDebugVisible: prefs.chunkDebugVisible ?? false,
-        statisticsVisible: prefs.statisticsVisible ?? false,
-        attackPanelVisible: prefs.attackPanelVisible ?? false,
-        autoTargetEnabled: prefs.autoTargetEnabled ?? true,
-        keybindings: prefs.keybindings || {},
-        customCommands,
-        macros,
-        macroIcons,
-        fieldOfView: prefs.fieldOfView,
-      },
-    });
+    if (!state.preferences) return;
+    const partial = { macros, customCommands, macroIcons };
+    dispatch("preferences_save", { data: { ...state.preferences, ...partial } });
     if (window.mcState) {
       window.mcState.macros = macros;
       window.mcState.customCommands = customCommands;
     }
-
-    pendingPreferencesUpdateRef.current = JSON.stringify({
-      subscribedChannels: prefs.subscribedChannels,
-      disabledCommands: prefs.disabledCommands,
-      shadersEnabled: prefs.shadersEnabled,
-      dynamicFogEnabled: prefs.dynamicFogEnabled ?? true,
-      animatedFavicon: prefs.animatedFavicon ?? true,
-      chunkDebugVisible: prefs.chunkDebugVisible ?? false,
-      statisticsVisible: prefs.statisticsVisible ?? false,
-      attackPanelVisible: prefs.attackPanelVisible ?? false,
-      autoTargetEnabled: prefs.autoTargetEnabled ?? true,
-      keybindings: prefs.keybindings || {},
-      customCommands,
-      macros,
-      macroIcons,
-    });
+    setPendingPrefs(partial);
     dispatch("macro_editor_close");
   };
 
@@ -286,6 +268,8 @@ export function GameScreen() {
             itemMeta={state.itemMeta}
             visible={state.hotbarVisible}
             layoutStyle={widgetStyle(activeLayout, "INVENTORY")}
+            preferences={state.preferences}
+            onSortChange={handleInventorySortChange}
           />
           <ServerLog
             logs={state.logs}

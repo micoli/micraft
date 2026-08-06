@@ -191,6 +191,8 @@ sealed class ServerMessage {
         val defaultKeybindings: Map<String, List<String>> = emptyMap(),
         val dynamicFogEnabled: Boolean = true,
         val autoTargetEnabled: Boolean = true,
+        val inventorySortA: String = "",
+        val inventorySortB: String = "",
     ) : ServerMessage()
 
     @ProtoId(25)

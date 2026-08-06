@@ -133,6 +133,18 @@ export function GameUI() {
   const pendingLayoutUpdateRef = useRef<string>("");
   const pendingPreferencesUpdateRef = useRef<string>("");
 
+  const setPendingPrefs = (partial: Partial<import("./types").PreferencesData>) => {
+    const prefs = preferencesRef.current;
+    if (!prefs) return;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { knownChannels, commands, defaultKeybindings, macroIcons, ...serverFields } = {
+      ...prefs,
+      ...partial,
+    };
+    console.log("[prefs/ui] keys sent:", Object.keys(serverFields));
+    pendingPreferencesUpdateRef.current = JSON.stringify(serverFields);
+  };
+
   const pauseMenuOpenRef = useRef(false);
   const preferencesOpenRef = useRef(false);
   const codexOpenRef = useRef(false);
@@ -442,47 +454,11 @@ export function GameUI() {
     window.mc.toggleHealthBar = () => dispatch("healthbar_toggle");
     window.mc.toggleStatistics = () => {
       dispatch("statistics_toggle");
-      const prefs = preferencesRef.current;
-      if (prefs) {
-        const newVisible = !(prefs.statisticsVisible ?? false);
-        pendingPreferencesUpdateRef.current = JSON.stringify({
-          subscribedChannels: prefs.subscribedChannels,
-          disabledCommands: prefs.disabledCommands,
-          shadersEnabled: prefs.shadersEnabled,
-          dynamicFogEnabled: prefs.dynamicFogEnabled ?? true,
-          animatedFavicon: prefs.animatedFavicon ?? true,
-          chunkDebugVisible: prefs.chunkDebugVisible ?? false,
-          statisticsVisible: newVisible,
-          attackPanelVisible: prefs.attackPanelVisible ?? false,
-          autoTargetEnabled: prefs.autoTargetEnabled ?? true,
-          keybindings: prefs.keybindings || {},
-          customCommands: prefs.customCommands || {},
-          macros: prefs.macros || {},
-          fieldOfView: prefs.fieldOfView ?? 70,
-        });
-      }
+      setPendingPrefs({ statisticsVisible: !(preferencesRef.current?.statisticsVisible ?? false) });
     };
     window.mc.toggleAttackPanel = () => {
       dispatch("attack_panel_toggle");
-      const prefs = preferencesRef.current;
-      if (prefs) {
-        const newVisible = !(prefs.attackPanelVisible ?? false);
-        pendingPreferencesUpdateRef.current = JSON.stringify({
-          subscribedChannels: prefs.subscribedChannels,
-          disabledCommands: prefs.disabledCommands,
-          shadersEnabled: prefs.shadersEnabled,
-          dynamicFogEnabled: prefs.dynamicFogEnabled ?? true,
-          animatedFavicon: prefs.animatedFavicon ?? true,
-          chunkDebugVisible: prefs.chunkDebugVisible ?? false,
-          statisticsVisible: prefs.statisticsVisible ?? false,
-          attackPanelVisible: newVisible,
-          autoTargetEnabled: prefs.autoTargetEnabled ?? true,
-          keybindings: prefs.keybindings || {},
-          customCommands: prefs.customCommands || {},
-          macros: prefs.macros || {},
-          fieldOfView: prefs.fieldOfView ?? 70,
-        });
-      }
+      setPendingPrefs({ attackPanelVisible: !(preferencesRef.current?.attackPanelVisible ?? false) });
     };
     window.mc.updateShortcutBar = (json: string) => {
       const raw = JSON.parse(json) as { slots: ({ kind: string; id: string } | null)[]; selected: number };

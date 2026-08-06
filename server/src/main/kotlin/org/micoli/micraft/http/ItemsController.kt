@@ -19,7 +19,15 @@ class ItemsController {
                 val meta =
                     ItemRegistry.keys().associate { type ->
                         val def = ItemRegistry.get(type)
-                        type.id to mapOf("label" to def.label, "bg" to def.bg)
+                        type.id to
+                            buildMap {
+                                put("label", def.label)
+                                put("bg", def.bg)
+                                put("healthRestore", def.healthRestore.toString())
+                                put("manaRestore", def.manaRestore.toString())
+                                put("consumable", def.consumable.toString())
+                                if (def.plainColor != null) put("plainColor", def.plainColor!!)
+                            }
                     }
                 call.respondText(
                     Json.encodeToString(serializer, meta), ContentType.Application.Json)

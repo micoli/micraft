@@ -57,4 +57,6 @@ data class PlayerState(
     val zoneLevel: Int = 0,
     val quests: Map<String, QuestProgress> = emptyMap(),
     val autoTargetEnabled: Boolean = true,
+    val inventorySortA: String = "",
+    val inventorySortB: String = "",
 )
