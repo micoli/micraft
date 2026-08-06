@@ -164,6 +164,7 @@ export function registerKeyboard(): Pick<
         if (b.place_rotate?.some((k) => matchesEvent(k, e))) window.mcState.events.push("place_rotate");
         if (b.combat_target_cycle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_target_cycle");
         if (b.combat_attack?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_attack");
+        if (b.npc_interact?.some((k) => matchesEvent(k, e))) window.mcState.events.push("npc_interact");
         if (b.screenshot?.some((k) => matchesEvent(k, e))) window.mcState.events.push("screenshot");
         if (b.quest_journal?.some((k) => matchesEvent(k, e))) window.mc?.openQuestJournal?.();
         if (b.quest_tracking?.some((k) => matchesEvent(k, e))) window.mc?.toggleQuestTracker?.();

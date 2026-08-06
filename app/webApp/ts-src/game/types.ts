@@ -53,9 +53,17 @@ export interface GameLayout {
   widgets: LayoutWidget[];
 }
 
+export interface ShopItemData {
+  itemType: string;
+  buyPrice: number;
+  sellPrice: number;
+}
+
 export interface NpcDialogData {
   type: string;
   name: string;
+  npcId?: string;
+  shopItems?: ShopItemData[];
 }
 
 export interface CommandInfo {

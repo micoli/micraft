@@ -4,6 +4,7 @@ import { startPreloading } from "../game/shared/blockPreviewCache";
 import { getStoredToken, getLastLang, getAccountEmail, getLastPlayer } from "../lib/authStorage";
 import { GameLayout, ChannelSubscription } from "../game/types";
 import { NpcDialog } from "../game/npc/NpcDialog";
+import { NpcShopDialog } from "../game/npc/NpcShopDialog";
 import { LoadingOverlay } from "../game/overlays/LoadingOverlay";
 import { Preferences } from "../game/components/Preferences";
 import { HUD } from "../game/components/HUD";
@@ -270,6 +271,7 @@ export function GameScreen() {
             layoutStyle={widgetStyle(activeLayout, "INVENTORY")}
             preferences={state.preferences}
             onSortChange={handleInventorySortChange}
+            wallet={state.wallet}
           />
           <ServerLog
             logs={state.logs}
@@ -318,7 +320,25 @@ export function GameScreen() {
             onSave={handleLayoutSave}
             onClose={() => dispatch("layout_editor_hide")}
           />
-          <NpcDialog data={state.npcDialog} onClose={() => dispatch("npc_dialog_close")} />
+          {state.npcDialog?.type === "seller" ? (
+            <NpcShopDialog
+              data={state.npcDialog}
+              wallet={state.wallet}
+              itemMeta={state.itemMeta}
+              inventory={state.inventory}
+              onClose={() => dispatch("npc_dialog_close")}
+              onBuy={(npcId, orders) => {
+                for (const { itemType, qty } of orders)
+                  window.mcState.events.push(`cmd:/npcbuy ${npcId} ${itemType} ${qty}`);
+              }}
+              onSell={(npcId, orders) => {
+                for (const { itemType, qty } of orders)
+                  window.mcState.events.push(`cmd:/npcsell ${npcId} ${itemType} ${qty}`);
+              }}
+            />
+          ) : (
+            <NpcDialog data={state.npcDialog} onClose={() => dispatch("npc_dialog_close")} />
+          )}
           <CodexModal
             open={state.codexOpen}
             onClose={() => {

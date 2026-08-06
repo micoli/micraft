@@ -593,6 +593,10 @@ class LocalPlayerController(
                     npcManager.setHighlightTarget(next)
                     outMessages.trySend(ClientMessage.SetCombatTarget(next, isNpc = true))
                 }
+                event == "npc_interact" -> {
+                    val targetId = currentCombatTargetId ?: return@repeat
+                    outMessages.trySend(ClientMessage.NpcInteract(targetId))
+                }
                 event == "combat_attack" -> {
                     val targetId = currentCombatTargetId ?: return@repeat
                     val slot =

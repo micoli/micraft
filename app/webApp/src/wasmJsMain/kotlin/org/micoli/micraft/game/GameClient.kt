@@ -417,6 +417,9 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 ServerMessage.GodModeUpdate::class,
                 typedHandler { msg: ServerMessage.GodModeUpdate -> jsGodModeUpdate(msg.enabled) })
             put(
+                ServerMessage.WalletUpdate::class,
+                typedHandler { msg: ServerMessage.WalletUpdate -> jsWalletUpdate(msg.copper) })
+            put(
                 ServerMessage.WorldUpdate::class,
                 typedHandler { msg: ServerMessage.WorldUpdate ->
                     // Collect affected chunk positions for re-enqueue after applying all changes

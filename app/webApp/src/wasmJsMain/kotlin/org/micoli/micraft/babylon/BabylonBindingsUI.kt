@@ -213,3 +213,5 @@ fun jsQuestUpdate(json: String): Unit = js("mc.questUpdate(json)")
 fun jsOpenQuestJournal(): Unit = js("mc.openQuestJournal()")
 
 fun jsToggleQuestTracker(): Unit = js("mc.toggleQuestTracker()")
+
+fun jsWalletUpdate(copper: Long): Unit = js("mc.walletUpdate(copper)")

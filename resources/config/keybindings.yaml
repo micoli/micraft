@@ -1,6 +1,7 @@
 combat:
   combat_target_cycle: ["Tab"]
   combat_attack: [KeyR]
+  npc_interact: [KeyX]
   console_toggle: [KeyH]
 
 movement:

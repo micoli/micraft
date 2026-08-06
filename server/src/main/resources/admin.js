@@ -87496,7 +87496,7 @@ ${end.comment}` : end.comment;
       DialogOverlay,
       {
         className: cn(
-          "fixed inset-0 z-[900] bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+          "fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           className
         )
       }
@@ -87541,7 +87541,7 @@ ${end.comment}` : end.comment;
         DialogContent,
         __spreadProps(__spreadValues({
           className: cn(
-            "fixed left-1/2 top-1/2 z-[901] -translate-x-1/2 -translate-y-1/2",
+            "fixed left-1/2 top-1/2 z-[1001] -translate-x-1/2 -translate-y-1/2",
             "min-w-[320px] rounded-lg border border-white/20 bg-black/80 p-6 shadow-2xl",
             "text-white",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",

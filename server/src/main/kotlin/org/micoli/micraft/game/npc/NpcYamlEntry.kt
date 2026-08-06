@@ -30,4 +30,5 @@ data class NpcYamlEntry(
     val animal: AnimalYamlEntry? = null,
     val pack: PackConfig? = null,
     val hibernation: HibernationConfig? = null,
+    val shopItems: List<ShopItemEntry> = emptyList(),
 )

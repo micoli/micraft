@@ -84,6 +84,7 @@ export interface UiState {
   questTrackerVisible: boolean;
   activeEffects: ActiveEffect[];
   godMode: boolean;
+  wallet: number;
 }
 
 const ingameMapRegistry = {
@@ -207,7 +208,11 @@ const loadingRegistry = {
 const componentVisibilityRegistry = {
   disconnect_show: (state: UiState, payload: { message: string }) => ({ ...state, disconnectMsg: payload.message }),
   disconnect_hide: (state: UiState) => ({ ...state, disconnectMsg: null }),
-  npc_dialog_open: (state: UiState, payload: { data: NpcDialogData }) => ({ ...state, npcDialog: payload.data }),
+  npc_dialog_open: (state: UiState, payload: { data: NpcDialogData }) => ({
+    ...state,
+    npcDialog: payload.data,
+    hotbarVisible: payload.data.type === "seller" ? false : state.hotbarVisible,
+  }),
   npc_dialog_close: (state: UiState) => ({ ...state, npcDialog: null }),
   codex_open: (state: UiState) => ({ ...state, codexOpen: true }),
   codex_close: (state: UiState) => ({ ...state, codexOpen: false }),
@@ -283,6 +288,10 @@ const gameRegistry = {
   god_mode_update: (state: UiState, payload: { enabled: boolean }) => ({
     ...state,
     godMode: payload.enabled,
+  }),
+  wallet_update: (state: UiState, payload: { copper: number }) => ({
+    ...state,
+    wallet: payload.copper,
   }),
 };
 

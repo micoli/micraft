@@ -338,6 +338,8 @@ sealed class ServerMessage {
     ) : ServerMessage()
 
     @ProtoId(47) @Serializable data class GodModeUpdate(val enabled: Boolean) : ServerMessage()
+
+    @ProtoId(48) @Serializable data class WalletUpdate(val copper: Long) : ServerMessage()
 }
 
 @Serializable

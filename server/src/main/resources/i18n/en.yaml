@@ -255,3 +255,22 @@ quest:
     completed: "Quest completed: {0}!"
     abandoned: "Quest abandoned: {0}."
     already_done: "Quest already completed (not repeatable)."
+
+give_money:
+  server:
+    usage: "Usage: /give:money <amount> [playerName]"
+    done: "Gave {0} copper to {1}."
+    player_not_found: "Player '{0}' not found."
+
+npc:
+  server:
+    buy_usage: "Usage: /npcbuy <npcId> <itemType> [quantity]"
+    sell_usage: "Usage: /npcsell <npcId> <itemType> [quantity]"
+    unavailable: "NPC system unavailable."
+    not_seller: "That NPC is not a seller."
+    item_not_in_shop: "Item '{0}' is not available in this shop."
+    item_not_sellable: "The seller doesn't buy '{0}'."
+    insufficient_funds: "Not enough currency."
+    not_enough_items: "You don't have enough {0}."
+    buy_done: "Purchased {0}x {1}."
+    sell_done: "Sold {0}x {1}."

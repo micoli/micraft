@@ -49,6 +49,7 @@ private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
         animal = o.animal?.let { animal?.applyOverride(it) ?: it.toEntry() } ?: animal,
         pack = o.pack?.let { pack?.applyOverride(it) ?: it.toConfig() } ?: pack,
         hibernation = o.hibernation ?: hibernation,
+        shopItems = o.shopItems ?: shopItems,
     )
 
 /**
@@ -89,6 +90,7 @@ fun NpcDefinition.applyOverride(o: NpcYamlOverride): NpcDefinition =
             o.animal?.let { animalConfig?.applyOverride(it) ?: it.toEntry() } ?: animalConfig,
         packConfig = o.pack?.let { packConfig?.applyOverride(it) ?: it.toConfig() } ?: packConfig,
         hibernation = o.hibernation ?: hibernation,
+        shopItems = o.shopItems ?: shopItems,
     )
 
 class NpcRegistryLoader(
@@ -180,6 +182,7 @@ class NpcRegistryLoader(
                                     animalConfig = entry.animal,
                                     packConfig = entry.pack,
                                     hibernation = entry.hibernation,
+                                    shopItems = entry.shopItems,
                                 )
                         }
                         .onFailure { e -> npcLog.warn("Skipping entity '{}': {}", key, e.message) }

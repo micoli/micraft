@@ -243,6 +243,7 @@ stateDiagram-v2
 | `/equip` | `/equip <armorName>` | Equip an armor piece. | dynamic |
 | `/explode` | `/explode <radius>` | Destroy all blocks in a sphere around the player. | — |
 | `/give` | `/give <itemType> [N]` | Give items to yourself. | — |
+| `/give:money` | `/give:money <amount> [playerName]` | Give copper to a player (or yourself if name omitted). | — |
 | `/god:off` | `/god:off` | Disable god mode. | — |
 | `/god:on` | `/god:on` | Enable god mode (immune to damage). | — |
 | `/help` | `/help [command]` | Lists available commands. | — |
@@ -255,6 +256,8 @@ stateDiagram-v2
 | `/light:off` | `/light:off` | Restores natural cavern darkness. | — |
 | `/light:on` | `/light:on` | Boosts ambient light underground (cavern lighting override). | — |
 | `/map` | `/map` | Toggles the biome map overlay. | — |
+| `/npcbuy` | `/npcbuy <npcId> <itemType> [quantity]` | Buy an item from a seller NPC. | — |
+| `/npcsell` | `/npcsell <npcId> <itemType> [quantity]` | Sell an item to a seller NPC. | — |
 | `/preferences` | `/preferences` | Opens the preferences panel. | — |
 | `/pump` | `/pump` | Remove all connected liquid blocks in sight. | — |
 | `/quest` | `/quest [list\|accept\|abandon\|status] [id]` | Manage your quests. | dynamic |

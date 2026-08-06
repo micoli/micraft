@@ -255,3 +255,22 @@ quest:
     completed: "Quête accomplie : {0} !"
     abandoned: "Quête abandonnée : {0}."
     already_done: "Quête déjà complétée (non répétable)."
+
+give_money:
+  server:
+    usage: "Usage : /give:money <montant> [nomJoueur]"
+    done: "Donné {0} cuivres à {1}."
+    player_not_found: "Joueur '{0}' introuvable."
+
+npc:
+  server:
+    buy_usage: "Usage : /npcbuy <npcId> <typeItem> [quantité]"
+    sell_usage: "Usage : /npcsell <npcId> <typeItem> [quantité]"
+    unavailable: "Système NPC indisponible."
+    not_seller: "Ce PNJ n'est pas un marchand."
+    item_not_in_shop: "L'item '{0}' n'est pas disponible dans cette boutique."
+    item_not_sellable: "Le marchand n'achète pas '{0}'."
+    insufficient_funds: "Fonds insuffisants."
+    not_enough_items: "Vous n'avez pas assez de {0}."
+    buy_done: "Acheté {0}x {1}."
+    sell_done: "Vendu {0}x {1}."

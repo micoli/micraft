@@ -75,6 +75,7 @@ const initial: UiState = {
   questTrackerVisible: false,
   activeEffects: [],
   godMode: false,
+  wallet: 0,
 };
 
 function RouterBridge({
@@ -563,8 +564,11 @@ export function GameUI() {
     window.mc.hideLayoutEditor = () => dispatch("layout_editor_hide");
 
     window.mcState.dispatch = dispatch as unknown as (action: unknown) => void;
-    window.mc.openNpcDialog = (json: string) =>
-      dispatch("npc_dialog_open", { data: JSON.parse(json) as NpcDialogData });
+    window.mc.openNpcDialog = (json: string) => {
+      const data = JSON.parse(json) as NpcDialogData;
+      if (data.type === "seller") document.exitPointerLock();
+      dispatch("npc_dialog_open", { data });
+    };
 
     window.mc.consumeLayoutUpdate = () => {
       const v = pendingLayoutUpdateRef.current;
@@ -689,6 +693,7 @@ export function GameUI() {
     window.mc.playerRespawned = (json: string) => dispatch("player_respawned", { data: JSON.parse(json) });
     window.mc.xpGained = (json: string) => dispatch("xp_gained", { data: JSON.parse(json) });
     window.mc.godModeUpdate = (enabled: boolean) => dispatch("god_mode_update", { enabled });
+    window.mc.walletUpdate = (copper: number) => dispatch("wallet_update", { copper: Number(copper) });
     window.mc.questSync = (json: string) => {
       try {
         const msg = JSON.parse(json) as { quests: Record<string, QuestProgress> };

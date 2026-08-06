@@ -31,6 +31,7 @@ data class NpcDefinition(
     val animalConfig: AnimalYamlEntry? = null,
     val packConfig: PackConfig? = null,
     val hibernation: HibernationConfig? = null,
+    val shopItems: List<ShopItemEntry> = emptyList(),
 ) {
     fun computeMaxHp(level: Int): Int =
         (hp + (level - minLevel).coerceAtLeast(0) * hp / 10).coerceAtLeast(1)

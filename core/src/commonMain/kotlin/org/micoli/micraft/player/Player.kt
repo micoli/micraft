@@ -59,4 +59,5 @@ data class PlayerState(
     val autoTargetEnabled: Boolean = true,
     val inventorySortA: String = "",
     val inventorySortB: String = "",
+    val wallet: Long = 0L,
 )

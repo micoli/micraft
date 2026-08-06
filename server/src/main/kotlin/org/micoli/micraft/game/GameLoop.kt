@@ -1207,6 +1207,7 @@ class GameLoop(
                 autoTargetEnabled = saved?.autoTargetEnabled ?: true,
                 inventorySortA = saved?.inventorySortA ?: "",
                 inventorySortB = saved?.inventorySortB ?: "",
+                wallet = saved?.wallet ?: 0L,
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =
@@ -1263,6 +1264,7 @@ class GameLoop(
         if (session.state.godMode) session.send(ServerMessage.GodModeUpdate(true))
         chatService.onPlayerConnect(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
+        session.send(ServerMessage.WalletUpdate(session.state.wallet))
         questManager?.sendQuestSync(session)
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBarPages.toPageMap()))
         session.send(ServerMessage.TimeUpdate(gameTicks))

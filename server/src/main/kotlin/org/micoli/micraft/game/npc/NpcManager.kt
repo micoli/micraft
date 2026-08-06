@@ -489,6 +489,12 @@ class NpcManager(
         instance.definition.behavior.onInteract(instance, session, ctx) { msg -> session.send(msg) }
     }
 
+    fun getSellerItems(npcId: String): List<ShopItemEntry>? {
+        val instance = npcs[npcId] ?: return null
+        return if (instance.definition.behaviorKey == "seller") instance.definition.shopItems
+        else null
+    }
+
     suspend fun sendAllTo(session: PlayerSession) {
         log.info("sendAllTo {}: {} NPCs in memory", session.id.take(8), npcs.size)
         val rangesq = tuning.updateRange * tuning.updateRange

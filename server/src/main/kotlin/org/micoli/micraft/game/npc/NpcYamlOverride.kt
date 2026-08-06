@@ -34,4 +34,5 @@ data class NpcYamlOverride(
     val animal: AnimalYamlOverride? = null,
     val pack: PackConfigOverride? = null,
     val hibernation: HibernationConfig? = null,
+    val shopItems: List<ShopItemEntry>? = null,
 )

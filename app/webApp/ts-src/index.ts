@@ -305,6 +305,7 @@ window.mc = {
   playerRespawned: () => {},
   xpGained: () => {},
   godModeUpdate: () => {},
+  walletUpdate: () => {},
   reloadAttackMeta: () => {},
   questSync: () => {},
   questUpdate: () => {},

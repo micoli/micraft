@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "../../primitives/cn";
 import { getItemVisual } from "../blocks/blockDefs";
-import { CssBlockCube, useBlockDefsReady, useBlockPreviews, useColoredBlockPreview } from "../shared/BlockPreview";
+import { ItemIcon } from "../shared/ItemIcon";
 import { useInventory } from "../hooks/useInventory";
 import { PreferencesData } from "../types";
 
@@ -31,56 +31,7 @@ interface Props {
   layoutStyle?: React.CSSProperties;
   preferences?: PreferencesData | null;
   onSortChange?: (sortA: SortKey, sortB: SortKey) => void;
-}
-
-function ItemIcon({
-  itemId,
-  fallbackBg,
-  defsReady,
-  getPreview,
-}: {
-  itemId: string;
-  fallbackBg: string;
-  defsReady: boolean;
-  getPreview: (o: number) => string | null;
-}) {
-  const { ordinal, colorHex } = getItemVisual(itemId);
-  const coloredUrl = useColoredBlockPreview(colorHex != null && ordinal != null ? ordinal : null, colorHex);
-
-  if (ordinal == null) {
-    return (
-      <div
-        className="w-[26px] h-[26px] rounded-sm"
-        style={{
-          background: fallbackBg,
-          boxShadow: "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
-        }}
-      />
-    );
-  }
-
-  if (colorHex != null) {
-    return coloredUrl ? (
-      <img src={coloredUrl} width={34} height={34} style={{ imageRendering: "pixelated", display: "block" }} />
-    ) : (
-      <CssBlockCube ordinal={ordinal} size={22} colorHex={colorHex} />
-    );
-  }
-
-  const cachedUrl = getPreview(ordinal);
-  if (cachedUrl) {
-    return <img src={cachedUrl} width={34} height={34} style={{ imageRendering: "pixelated", display: "block" }} />;
-  }
-  if (defsReady) return <CssBlockCube ordinal={ordinal} size={22} colorHex={null} />;
-  return (
-    <div
-      className="w-[26px] h-[26px] rounded-sm"
-      style={{
-        background: fallbackBg,
-        boxShadow: "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
-      }}
-    />
-  );
+  wallet?: number;
 }
 
 function ItemTooltip({ type, count, meta }: { type: string; count: number; meta: ItemMetaEntry }) {
@@ -146,11 +97,10 @@ function sortItems(
   });
 }
 
-export function Inventory({ inventory, itemMeta, visible, layoutStyle, preferences, onSortChange }: Props) {
+export function Inventory({ inventory, itemMeta, visible, layoutStyle, preferences, onSortChange, wallet }: Props) {
   const { startDrag, moveDrag, endDrag } = useInventory();
-  const defsReady = useBlockDefsReady();
-  const getPreview = useBlockPreviews();
   const [hoveredType, setHoveredType] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
 
   const [localSortA, setLocalSortA] = useState<SortKey>(() => (preferences?.inventorySortA as SortKey) ?? "type");
   const [localSortB, setLocalSortB] = useState<SortKey>(() => (preferences?.inventorySortB as SortKey) ?? "label");
@@ -165,9 +115,11 @@ export function Inventory({ inventory, itemMeta, visible, layoutStyle, preferenc
 
   if (!visible) return null;
 
+  const q = filter.toLowerCase();
   const rawItems = Object.keys(inventory)
     .filter((type) => (inventory[type] ?? 0) > 0 && itemMeta[type] !== undefined)
-    .map((type) => ({ type, count: inventory[type], meta: itemMeta[type] }));
+    .map((type) => ({ type, count: inventory[type], meta: itemMeta[type] }))
+    .filter(({ type, meta }) => !q || meta.label.toLowerCase().includes(q) || type.toLowerCase().includes(q));
 
   const items = sortItems(rawItems, localSortA, localSortB);
 
@@ -191,6 +143,23 @@ export function Inventory({ inventory, itemMeta, visible, layoutStyle, preferenc
       )}
       style={layoutStyle}
     >
+      {/* Wallet */}
+      {wallet !== undefined && wallet > 0 && (
+        <div className="text-[10px] font-mono text-yellow-300 mb-1 text-right">
+          💰 {Math.floor(wallet / 100)}g {Math.floor((wallet % 100) / 10)}s {wallet % 10}c
+        </div>
+      )}
+
+      {/* Filter */}
+      <input
+        type="text"
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+        placeholder="Filtrer…"
+        className="w-full bg-black/60 border border-white/20 text-white/80 font-mono text-[10px] rounded px-1.5 py-0.5 mb-1.5 focus:outline-none focus:border-white/50 placeholder-white/30"
+        onKeyDown={(e) => e.stopPropagation()}
+      />
+
       {/* Sort combos */}
       <div className="flex gap-1 mb-2">
         <select className={selectCls} value={localSortA} onChange={(e) => handleSortA(e.target.value as SortKey)}>
@@ -225,7 +194,7 @@ export function Inventory({ inventory, itemMeta, visible, layoutStyle, preferenc
               onPointerLeave={() => setHoveredType(null)}
               className="w-[52px] h-[52px] bg-black/72 border border-white/30 flex flex-col items-center justify-center relative cursor-grab touch-none"
             >
-              <ItemIcon itemId={type} fallbackBg={meta.bg} defsReady={defsReady} getPreview={getPreview} />
+              <ItemIcon itemId={type} fallbackBg={meta.bg} />
               <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">
                 {meta.label}
               </div>

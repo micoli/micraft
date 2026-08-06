@@ -1,4 +1,4 @@
-behavior: interactionable
+behavior: seller
 width: 0.6
 height: 1.8
 wanderSpeed: 0.0
@@ -7,3 +7,13 @@ spawn:
   autoSpawn: false
   maxPerChunk: 1
   spawnBiomes: []
+shopItems:
+  - itemType: COBBLESTONE
+    buyPrice: 5
+    sellPrice: 2
+  - itemType: DIRT
+    buyPrice: 3
+    sellPrice: 1
+  - itemType: FLINT
+    buyPrice: 8
+    sellPrice: 4
