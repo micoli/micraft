@@ -107,6 +107,37 @@ node scripts/export_skin_presets.mjs ./resources/blockbench-export/.
 First person shows the real player model minus those bones — there is no separate FP arm rig.
 Skins without a yaml fall back to `PlayerConstants` stance eye offsets.
 
+## Player preferences — save/restore
+
+Preferences persist across reconnections via YAML. Full pipeline:
+
+```
+TypeScript setPendingPrefs() → WASM consumePreferencesUpdate()
+  → ClientMessage.PreferencesUpdate → server handlePreferencesUpdate
+  → PlayerState.copy() → savePlayer → YAML
+  → on reconnect: loadPlayerState → PlayerState constructor → buildPreferencesSync
+  → ServerMessage.PreferencesSync → WASM Json.encodeToString → TS preferencesSync event
+```
+
+**Adding a new preference field — checklist:**
+
+1. `core/.../player/Player.kt` `PlayerState` — add field with default
+2. `core/.../protocol/ClientMessage.kt` `PreferencesUpdate` — add field with default
+3. `core/.../protocol/ServerMessage.kt` `PreferencesSync` — add field with default
+4. `server/.../game/GameLoop.kt` `handlePreferencesUpdate` — copy from `msg` into `session.state.copy(...)`
+5. `server/.../game/GameLoop.kt` `buildPreferencesSync` — copy from `session.state` into `PreferencesSync(...)`
+6. **`server/.../game/GameLoop.kt` `onConnect` PlayerState constructor (~line 1171)** — add `myField = saved?.myField ?: default`. **This is the most common omission — forgetting it means the field is never restored on reconnect.**
+7. `app/webApp/ts-src/game/types.ts` `PreferencesData` — add optional field
+8. Call `setPendingPrefs({ myField: value })` in TypeScript to save; read from `preferences.myField`
+
+**Caveats:**
+
+- `Json.encodeToString` (WASM→TS) uses `encodeDefaults = false` → fields equal to their Kotlin default are **omitted** from JSON → TypeScript sees `undefined`. Guard with `if (preferences?.myField)` only if empty/default means "no preference set".
+- `Yaml.default` (server write) uses `encodeDefaults = true` → all fields written, including empty strings.
+- `setPendingPrefs` in `GameScreen.tsx` and `GameUI.tsx` strips client-only keys (`knownChannels`, `commands`, `defaultKeybindings`, `macroIcons`) before sending to server — add any new client-only key to that destructure.
+- Binary protobuf fields are auto-numbered by position (no `@ProtoId`). Never reorder fields in `PreferencesUpdate` or `PreferencesSync` — it breaks the wire protocol between server and WASM.
+- After changing `core` types, run `make dev-reset-wasm` (not just `make build-wasm`) to clear stale WASM output.
+
 ## Code conventions
 
 - Prefer immutable types (`data class`, `value class`) for positions, orientations, network messages.
