@@ -407,6 +407,9 @@
   .z-\[2001\] {
     z-index: 2001;
   }
+  .z-\[9999\] {
+    z-index: 9999;
+  }
   .col-span-2 {
     grid-column: span 2 / span 2;
   }
@@ -856,6 +859,9 @@
   }
   .min-w-\[120px\] {
     min-width: 120px;
+  }
+  .min-w-\[130px\] {
+    min-width: 130px;
   }
   .min-w-\[140px\] {
     min-width: 140px;
@@ -1579,6 +1585,12 @@
     background-color: color-mix(in srgb, #000 85%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-black) 85%, transparent);
+    }
+  }
+  .bg-black\/90 {
+    background-color: color-mix(in srgb, #000 90%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-black) 90%, transparent);
     }
   }
   .bg-black\/92 {
