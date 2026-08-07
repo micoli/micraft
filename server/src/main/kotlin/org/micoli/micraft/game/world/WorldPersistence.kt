@@ -3,7 +3,10 @@ package org.micoli.micraft.game.world
 import com.charleskorn.kaml.Yaml
 import com.charleskorn.kaml.YamlConfiguration
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.FileTime
+import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import kotlin.io.path.*
@@ -32,6 +35,8 @@ class WorldPersistence(val worldDir: Path) {
     private val chunksDir = worldDir.resolve("chunks")
     private val playersDir = worldDir.resolve("players")
     private val metaFile = worldDir.resolve("world.yaml")
+    private val playerLoadedMtime = ConcurrentHashMap<String, FileTime>()
+    private val playerMacrosLoadedMtime = ConcurrentHashMap<String, FileTime>()
 
     init {
         worldDir.createDirectories()
@@ -205,8 +210,18 @@ class WorldPersistence(val worldDir: Path) {
 
     private fun writePlayerFile(name: String, file: PlayerFile) {
         val yamlFile = playersDir.resolve("${name.sanitize()}.yaml")
+        val loadedAt = playerLoadedMtime[name]
+        if (loadedAt != null && yamlFile.exists()) {
+            val currentMtime = Files.getLastModifiedTime(yamlFile)
+            if (currentMtime > loadedAt) {
+                worldPersistenceLog.info(
+                    "Player file {} was externally modified since load — skipping overwrite", name)
+                return
+            }
+        }
         try {
             yamlFile.writeText(Yaml.default.encodeToString(PlayerFile.serializer(), file))
+            playerLoadedMtime[name] = Files.getLastModifiedTime(yamlFile)
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save player {}: {}", name, e.message)
         }
@@ -233,7 +248,13 @@ class WorldPersistence(val worldDir: Path) {
 
     fun loadPlayerFile(name: String): PlayerFile? = loadOrCreatePlayerFile(name)
 
-    fun loadPlayerState(name: String): PlayerState? = loadOrCreatePlayerFile(name)?.state
+    fun loadPlayerState(name: String): PlayerState? {
+        val yamlFile = playersDir.resolve("${name.sanitize()}.yaml")
+        if (yamlFile.exists()) {
+            playerLoadedMtime[name] = Files.getLastModifiedTime(yamlFile)
+        }
+        return loadOrCreatePlayerFile(name)?.state
+    }
 
     fun savePlayerState(name: String, state: PlayerState) {
         val existing = loadOrCreatePlayerFile(name)
@@ -286,6 +307,7 @@ class WorldPersistence(val worldDir: Path) {
     fun loadPlayerMacros(name: String): Map<String, String> {
         val file = playersDir.resolve("${name.sanitize()}-macros.yaml")
         if (!file.exists()) return emptyMap()
+        playerMacrosLoadedMtime[name] = Files.getLastModifiedTime(file)
         return try {
             Yaml.default.decodeFromString(macrosSerializer, file.readText())
         } catch (e: Exception) {
@@ -296,8 +318,19 @@ class WorldPersistence(val worldDir: Path) {
 
     fun savePlayerMacros(name: String, macros: Map<String, String>) {
         val file = playersDir.resolve("${name.sanitize()}-macros.yaml")
+        val loadedAt = playerMacrosLoadedMtime[name]
+        if (loadedAt != null && file.exists()) {
+            val currentMtime = Files.getLastModifiedTime(file)
+            if (currentMtime > loadedAt) {
+                worldPersistenceLog.info(
+                    "Macros file for {} was externally modified since load — skipping overwrite",
+                    name)
+                return
+            }
+        }
         try {
             file.writeText(Yaml.default.encodeToString(macrosSerializer, macros))
+            playerMacrosLoadedMtime[name] = Files.getLastModifiedTime(file)
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save macros for {}: {}", name, e.message)
         }

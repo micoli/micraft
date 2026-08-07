@@ -144,7 +144,6 @@ export function GameUI() {
       ...prefs,
       ...partial,
     };
-    console.log("[prefs/ui] keys sent:", Object.keys(serverFields));
     pendingPreferencesUpdateRef.current = JSON.stringify(serverFields);
   };
 
