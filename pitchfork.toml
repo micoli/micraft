@@ -57,3 +57,9 @@ dir = "app/webApp/ts-src"
 env = { MC_OUT_ADMIN_JS="../build/web/admin.js" }
 depends = ["server"]
 boot_start = false
+
+[daemons.storybook]
+run = "npm run storybook"
+dir = "app/webApp/ts-src"
+ready-port = 6006
+boot_start = false
