@@ -193,6 +193,7 @@ sealed class ServerMessage {
         val autoTargetEnabled: Boolean = true,
         val inventorySortA: String = "",
         val inventorySortB: String = "",
+        val shadowAngleDeg: Int = 1,
     ) : ServerMessage()
 
     @ProtoId(25)

@@ -255,6 +255,7 @@ stateDiagram-v2
 | `/leave` | `/leave <channelName>` | Leave a chat channel. | dynamic |
 | `/light:off` | `/light:off` | Restores natural cavern darkness. | — |
 | `/light:on` | `/light:on` | Boosts ambient light underground (cavern lighting override). | — |
+| `/mail` | `/mail` | Open your mailbox. | — |
 | `/map` | `/map` | Toggles the biome map overlay. | — |
 | `/npcbuy` | `/npcbuy <npcId> <itemType> [quantity]` | Buy an item from a seller NPC. | — |
 | `/npcsell` | `/npcsell <npcId> <itemType> [quantity]` | Sell an item to a seller NPC. | — |

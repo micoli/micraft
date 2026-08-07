@@ -168,6 +168,7 @@ export interface PreferencesData {
   autoTargetEnabled: boolean;
   inventorySortA?: string;
   inventorySortB?: string;
+  shadowAngleDeg?: number;
 }
 
 export type CombatTargetData = {

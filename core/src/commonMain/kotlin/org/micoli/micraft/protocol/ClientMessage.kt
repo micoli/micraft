@@ -93,6 +93,7 @@ sealed class ClientMessage {
         val autoTargetEnabled: Boolean = true,
         val inventorySortA: String = "",
         val inventorySortB: String = "",
+        val shadowAngleDeg: Int = 1,
     ) : ClientMessage()
 
     @ProtoId(13) @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()

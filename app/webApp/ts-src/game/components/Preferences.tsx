@@ -233,6 +233,25 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                   <span>120° (fisheye)</span>
                 </div>
               </div>
+              <div className="flex flex-col gap-1 py-2 border-b border-[#2a2a2a]">
+                <div className="flex justify-between text-sm">
+                  <span>Shadow update threshold</span>
+                  <span className="text-[#aaa]">{pref.localShadowAngleDeg}°</span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={pref.localShadowAngleDeg}
+                  onChange={(e) => pref.setLocalShadowAngleDeg(Number(e.target.value))}
+                  className="w-full accent-[#888]"
+                />
+                <div className="flex justify-between text-xs text-[#666]">
+                  <span>1° (smooth)</span>
+                  <span>10° (perf)</span>
+                </div>
+              </div>
             </>
           )}
 

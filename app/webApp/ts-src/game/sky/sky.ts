@@ -29,6 +29,12 @@ export function registerSky(): Pick<McBindings, "updateSkyTime"> {
   let moon: Mesh | null = null;
   const DIST = 200;
 
+  // Shadow throttle state — only re-render when sun moves ≥1° or snap pos changes
+  let _shadowSnapX = -9999;
+  let _shadowSnapY = -9999;
+  let _shadowSnapZ = -9999;
+  let _shadowAngle = -9999;
+
   return {
     updateSkyTime: (scene: Scene, t: number): void => {
       if (!sun) {
@@ -79,6 +85,49 @@ export function registerSky(): Pick<McBindings, "updateSkyTime"> {
       const hemi = window.mcState.hemiLight;
       if (hemi) hemi.intensity = intensity;
       window.mc?.setAmbient(scene, Math.max(0.08, intensity * caveFactor));
+
+      // Sun shadow: snap camera center to chunk grid, throttle updates to ≥1° sun movement
+      const shadowCam = window.mcState.sunShadowCamera;
+      const shadowRTT = window.mcState.sunShadowRTT;
+      if (shadowCam) {
+        const activeCam = scene.activeCamera;
+        const px = activeCam ? activeCam.position.x : 0;
+        const py = activeCam ? activeCam.position.y : 0;
+        const pz = activeCam ? activeCam.position.z : 0;
+        const CHUNK = 16;
+        const snapX = Math.round(px / CHUNK) * CHUNK;
+        const snapY = Math.round(py / CHUNK) * CHUNK;
+        const snapZ = Math.round(pz / CHUNK) * CHUNK;
+        const CAM_DIST = 300;
+        const snapMoved = snapX !== _shadowSnapX || snapY !== _shadowSnapY || snapZ !== _shadowSnapZ;
+        const thresholdRad = ((window.mcState.shadowAngleDeg ?? 1) * Math.PI) / 180;
+        const angleMoved = Math.abs(sunAngle - _shadowAngle) > thresholdRad;
+        if (snapMoved || angleMoved) {
+          shadowCam.position = new BABYLON.Vector3(
+            snapX + Math.cos(sunAngle) * CAM_DIST,
+            snapY + Math.sin(sunAngle) * CAM_DIST,
+            snapZ,
+          );
+          shadowCam.setTarget(new BABYLON.Vector3(snapX, snapY, snapZ));
+          _shadowSnapX = snapX;
+          _shadowSnapY = snapY;
+          _shadowSnapZ = snapZ;
+          _shadowAngle = sunAngle;
+          if (shadowRTT) shadowRTT.resetRefreshCounter();
+        }
+      }
+      const mats = window.mcState.blockMaterials;
+      if (mats) {
+        // 0 at night, ramps up from horizon (sunHeight=0) to noon (sunHeight=1)
+        // allow slight shadows at dawn/dusk via +0.15 offset, max 0.65 at noon
+        const shadowDarkness = sunHeight <= -0.15 ? 0 : Math.min(0.65, (Math.max(0, sunHeight + 0.15) * 0.65) / 1.15);
+        const sunDirVec = new BABYLON.Vector3(Math.cos(sunAngle), Math.sin(sunAngle), 0);
+        for (const mat of Object.values(mats))
+          if (mat instanceof BABYLON.ShaderMaterial) {
+            mat.setFloat("shadowDarkness", shadowDarkness);
+            mat.setVector3("sunDir", sunDirVec);
+          }
+      }
     },
   };
 }

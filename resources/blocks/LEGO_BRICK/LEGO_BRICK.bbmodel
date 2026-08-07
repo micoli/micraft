@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "format_version": "4.0",
+    "model_format": "free"
+  },
   "resolution": { "width": 16, "height": 16 },
   "textures": [
     {

@@ -60,4 +60,5 @@ data class PlayerState(
     val inventorySortA: String = "",
     val inventorySortB: String = "",
     val wallet: Long = 0L,
+    val shadowAngleDeg: Int = 1,
 )

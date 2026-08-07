@@ -31,6 +31,7 @@ fun main() {
     jsLog("scene created")
 
     jsCreateHemisphericLight("light", scene)
+    jsCreateSunLight(scene)
 
     val camera = jsCreateCamera("camera", 8.0, 10.0, -10.0, scene)
     jsCameraSetTarget(camera, 8.0, 8.0, 8.0)

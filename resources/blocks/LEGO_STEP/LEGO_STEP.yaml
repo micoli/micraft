@@ -1,7 +1,7 @@
 hardness: 1.0
 solid: true
 transparent: false
-minimapColor: [220, 80, 80]
+minimapColor: [220, 50, 50]
 modelElement: ""
 liquid: false
 viscosity: 0

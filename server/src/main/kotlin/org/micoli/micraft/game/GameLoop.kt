@@ -635,6 +635,7 @@ class GameLoop(
             autoTargetEnabled = session.state.autoTargetEnabled,
             inventorySortA = session.state.inventorySortA,
             inventorySortB = session.state.inventorySortB,
+            shadowAngleDeg = session.state.shadowAngleDeg,
         )
     }
 
@@ -662,6 +663,7 @@ class GameLoop(
                 autoTargetEnabled = msg.autoTargetEnabled,
                 inventorySortA = msg.inventorySortA,
                 inventorySortB = msg.inventorySortB,
+                shadowAngleDeg = msg.shadowAngleDeg,
             )
         if (msg.keybindings.isNotEmpty()) {
             persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
@@ -1221,6 +1223,7 @@ class GameLoop(
                 autoTargetEnabled = saved?.autoTargetEnabled ?: true,
                 inventorySortA = saved?.inventorySortA ?: "",
                 inventorySortB = saved?.inventorySortB ?: "",
+                shadowAngleDeg = saved?.shadowAngleDeg ?: 1,
                 wallet = saved?.wallet ?: 0L,
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")

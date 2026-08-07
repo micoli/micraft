@@ -111,6 +111,11 @@ LEGO_BRICK_1X2:
   placesBlock: LEGO_BRICK_1X2
   label: L1X
   bg: "#32DC64"
+LEGO_STEP:
+  buildable: true
+  placesBlock: LEGO_STEP
+  label: STP
+  bg: "#B48034"
 LEGO_PLATE_2X2:
   buildable: true
   placesBlock: LEGO_PLATE_2X2

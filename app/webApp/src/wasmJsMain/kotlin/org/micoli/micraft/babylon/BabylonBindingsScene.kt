@@ -20,6 +20,10 @@ fun jsSetupResize(engine: JsAny): Unit =
 fun jsCreateHemisphericLight(name: String, scene: JsAny): JsAny =
     js("mc.createHemisphericLight(name, scene)")
 
+fun jsCreateSunLight(scene: JsAny): Unit = js("mc.createSunLight(scene)")
+
+fun jsSetShadowAngleDeg(deg: Int): Unit = js("window.mcState.shadowAngleDeg = deg")
+
 fun jsCreateCamera(name: String, x: Double, y: Double, z: Double, scene: JsAny): JsAny =
     js(
         "(function(){ var c = new BABYLON.UniversalCamera(name, new BABYLON.Vector3(x,y,z), scene); c.minZ = 0.05; return c; })()")

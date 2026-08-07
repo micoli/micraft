@@ -765,6 +765,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 typedHandler { msg: ServerMessage.PreferencesSync ->
                     jsCameraSetFov(camera, msg.fieldOfView)
                     localController.autoTargetEnabled = msg.autoTargetEnabled
+                    jsSetShadowAngleDeg(msg.shadowAngleDeg)
                     uiState.setPreferencesSync(
                         Json.encodeToString<ServerMessage.PreferencesSync>(msg))
                 })

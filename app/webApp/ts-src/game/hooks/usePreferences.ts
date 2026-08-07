@@ -14,6 +14,7 @@ export interface SavePayload {
   customCommands: Record<string, string[]>;
   fieldOfView: number;
   autoTargetEnabled: boolean;
+  shadowAngleDeg: number;
 }
 
 export interface CustomCmdEntry {
@@ -126,6 +127,7 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
   const [localAttackPanelVisible, setLocalAttackPanelVisible] = useState(false);
   const [localAutoTarget, setLocalAutoTarget] = useState(true);
   const [localFov, setLocalFov] = useState(70);
+  const [localShadowAngleDeg, setLocalShadowAngleDeg] = useState(1);
   const [localBindings, setLocalBindings] = useState<Record<string, string[]>>({});
   const [localCustomCmds, setLocalCustomCmds] = useState<CustomCmdEntry[]>([]);
   const [recording, setRecording] = useState<{ action: string; index: number } | null>(null);
@@ -152,6 +154,7 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
       setLocalAttackPanelVisible(preferences.attackPanelVisible ?? false);
       setLocalAutoTarget(preferences.autoTargetEnabled ?? true);
       setLocalFov(preferences.fieldOfView ?? 70);
+      setLocalShadowAngleDeg(preferences.shadowAngleDeg ?? 1);
       setLocalBindings(preferences.keybindings ? { ...preferences.keybindings } : {});
       setLocalCustomCmds(Object.entries(preferences.customCommands || {}).map(([text, keys]) => ({ text, keys })));
       setRecording(null);
@@ -348,6 +351,7 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
       keybindings: localBindings,
       customCommands,
       fieldOfView: localFov,
+      shadowAngleDeg: localShadowAngleDeg,
     });
   };
 
@@ -389,6 +393,8 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
     setLocalAutoTarget,
     localFov,
     setLocalFov,
+    localShadowAngleDeg,
+    setLocalShadowAngleDeg,
     localBindings,
     localCustomCmds,
     recording,

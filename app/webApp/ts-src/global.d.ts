@@ -209,6 +209,9 @@ declare global {
     // Scene objects
     engine: InstanceType<typeof BABYLON.Engine> | null;
     hemiLight: InstanceType<typeof BABYLON.HemisphericLight> | null;
+    sunShadowCamera: InstanceType<typeof BABYLON.FreeCamera> | null;
+    sunShadowRTT: InstanceType<typeof BABYLON.RenderTargetTexture> | null;
+    sunShadowDepthMat: InstanceType<typeof BABYLON.ShaderMaterial> | null;
     targetMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     breakMesh: (InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string }) | null;
     ghostMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
@@ -219,6 +222,7 @@ declare global {
     debugCamObserver: Observer<Scene> | null;
     dynamicFogEnabled?: boolean;
     caveFactor?: number;
+    shadowAngleDeg?: number;
     // Codex
     codexBlocks: Array<{
       name: string;
@@ -282,6 +286,7 @@ declare global {
     // Engine / Scene
     createEngine(): Engine;
     createHemisphericLight(name: string, scene: Scene): HemisphericLight;
+    createSunLight(scene: Scene): void;
     createBox(name: string, size: number, scene: Scene): Mesh;
     createSimpleBox(name: string, size: number, scene: Scene): Mesh;
     freezeMesh(mesh: Mesh): void;

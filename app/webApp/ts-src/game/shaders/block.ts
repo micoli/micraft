@@ -7,12 +7,14 @@ attribute vec4 color;
 uniform mat4 worldViewProjection;
 uniform mat4 view;
 uniform mat4 world;
+uniform mat4 lightWVP;
 
 varying vec2 vUv;
 varying vec4 vColor;
 varying float vFogDepth;
 varying vec3 vWorldPos;
 varying vec3 vNormal;
+varying vec4 vShadowCoord;
 
 void main() {
   vec4 worldPos = world * vec4(position, 1.0);
@@ -22,6 +24,7 @@ void main() {
   vFogDepth = (view * worldPos).z;
   vWorldPos = worldPos.xyz;
   vNormal = normalize((world * vec4(normal, 0.0)).xyz);
+  vShadowCoord = lightWVP * vec4(position, 1.0);
 }
 `;
 
@@ -58,12 +61,16 @@ uniform float shadersEnabled;
 uniform float ambient;
 uniform vec3 playerPos;
 uniform float playerLightIntensity;
+uniform sampler2D shadowSampler;
+uniform float shadowDarkness;
+uniform vec3 sunDir;
 
 varying vec2 vUv;
 varying vec4 vColor;
 varying float vFogDepth;
 varying vec3 vWorldPos;
 varying vec3 vNormal;
+varying vec4 vShadowCoord;
 
 void main() {
   vec4 texColor = texture2D(textureSampler, vUv);
@@ -75,6 +82,26 @@ void main() {
   color *= mix(vec3(1.0), vColor.rgb, shadersEnabled);
 
   color *= ambient;
+
+  // Sun shadow — custom RTT stores raw (z_ndc * 0.5 + 0.5) = gl_FragCoord.z
+  float shadowFactor = 1.0;
+  if (shadersEnabled > 0.5 && shadowDarkness > 0.0) {
+    vec2 shadowUV = (vShadowCoord.xy / vShadowCoord.w) * 0.5 + 0.5;
+    float receiverZ = (vShadowCoord.z / vShadowCoord.w) * 0.5 + 0.5;
+    float inRange = step(0.0, shadowUV.x) * step(shadowUV.x, 1.0)
+                  * step(0.0, shadowUV.y) * step(shadowUV.y, 1.0)
+                  * step(0.0, receiverZ) * step(receiverZ, 1.0);
+    // Unpack RG-packed 16-bit depth (hi byte in R, lo byte in G)
+    vec2 depthPacked = texture2D(shadowSampler, shadowUV).rg;
+    float storedDepth = depthPacked.r + depthPacked.g / 255.0;
+    // Slope-scale bias — calibrated for 16-bit packed depth (precision ~0.000015)
+    // 1-block NDC separation ≈ 0.00143 → bias well below that
+    float cosTheta = max(dot(vNormal, sunDir), 0.0);
+    float slopeBias = mix(0.0001, 0.00005, cosTheta);
+    float lit = step(receiverZ, storedDepth + slopeBias);
+    shadowFactor = mix(1.0, mix(1.0 - shadowDarkness, 1.0, lit), inRange);
+  }
+  color *= shadowFactor;
 
   // Player point light (diffuse, quadratic falloff, radius ~18 blocks)
   float dist = length(vWorldPos - playerPos);

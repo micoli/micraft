@@ -1,0 +1,114 @@
+{
+  "meta": {
+    "format_version": "5.0",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "LEGO_STEP",
+  "model_identifier": "",
+  "visible_box": [1, 1, 0],
+  "variable_placeholders": "",
+  "multi_file_ruleset": "",
+  "variable_placeholder_buttons": [],
+  "timeline_setups": [],
+  "unhandled_root_fields": {},
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
+  "elements": [
+    {
+      "name": "body",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "export": true,
+      "scope": 0,
+      "allow_mirror_modeling": true,
+      "from": [6, 0, 0],
+      "to": [16, 8, 16],
+      "autouv": 0,
+      "color": 3,
+      "origin": [0, 0, 0],
+      "faces": {
+        "north": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "east": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "south": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "west": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "up": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "down": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        }
+      },
+      "type": "cube",
+      "uuid": "lego-body"
+    }, {
+      "name": "body",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "export": true,
+      "scope": 0,
+      "allow_mirror_modeling": true,
+      "from": [0, 8, 0],
+      "to": [10, 16, 16],
+      "autouv": 0,
+      "color": 3,
+      "origin": [0, 0, 0],
+      "faces": {
+        "north": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "east": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "south": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "west": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "up": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "down": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        }
+      },
+      "type": "cube",
+      "uuid": "360c2099-e810-6179-bd38-9876d681f1f3"
+    }
+  ],
+  "groups": [],
+  "outliner": ["lego-body", "360c2099-e810-6179-bd38-9876d681f1f3"],
+  "textures": [
+    {
+      "id": 0,
+      "name": "LEGO_STEP",
+      "path": "api/models/blocks/LEGO_STEP/LEGO_STEP.png",
+      "source": ""
+    }
+  ]
+}

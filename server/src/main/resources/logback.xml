@@ -29,6 +29,6 @@
         <appender-ref ref="SIMULATION"/>
     </root>
 
-    <logger name="org.micoli.micraft" level="DEBUG"/>
+    <logger name="org.micoli.micraft" level="INFO"/>
     <logger name="io.ktor" level="INFO"/>
 </configuration>

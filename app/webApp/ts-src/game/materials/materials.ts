@@ -89,8 +89,11 @@ export function registerMaterials(): Pick<
               "ambient",
               "playerLightIntensity",
               "playerPos",
+              "lightWVP",
+              "shadowDarkness",
+              "sunDir",
             ],
-            samplers: ["textureSampler"],
+            samplers: ["textureSampler", "shadowSampler"],
           },
         );
         const tex = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
@@ -103,6 +106,9 @@ export function registerMaterials(): Pick<
         mat.setFloat("ambient", 1.0);
         mat.setFloat("playerLightIntensity", 0.0);
         mat.setVector3("playerPos", new BABYLON.Vector3(0, 0, 0));
+        mat.setMatrix("lightWVP", BABYLON.Matrix.Identity());
+        mat.setFloat("shadowDarkness", 0.0);
+        mat.setVector3("sunDir", new BABYLON.Vector3(0, 1, 0));
         mat.setFloat("fogZoneCx", 0.0);
         mat.setFloat("fogZoneCz", 0.0);
         mat.setFloat("fogZoneRadius", 0.0);
@@ -147,6 +153,13 @@ export function registerMaterials(): Pick<
       waterMat.backFaceCulling = false;
       waterMat.specularColor = new BABYLON.Color3(0.1, 0.1, 0.2);
       mats["water"] = waterMat;
+
+      // Wire shadow RTT if already created
+      const shadowRTT = window.mcState.sunShadowRTT;
+      if (shadowRTT) {
+        for (const mat of Object.values(mats))
+          if (mat instanceof BABYLON.ShaderMaterial) mat.setTexture("shadowSampler", shadowRTT);
+      }
 
       window.mcState.blockMaterials = mats;
       return mats;

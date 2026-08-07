@@ -67,6 +67,9 @@ window.mcState = {
   // Scene
   engine: null,
   hemiLight: null,
+  sunShadowCamera: null,
+  sunShadowRTT: null,
+  sunShadowDepthMat: null,
   targetMesh: null,
   breakMesh: null,
   ghostMesh: null,
@@ -311,6 +314,11 @@ window.mc = {
   questUpdate: () => {},
   openQuestJournal: () => {},
   toggleQuestTracker: () => {},
+  mailSync: () => {},
+  mailReceived: () => {},
+  mailUpdate: () => {},
+  mailDeleted: () => {},
+  openMailbox: () => {},
 } satisfies McBindings;
 
 registerAllPlugins();

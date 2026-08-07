@@ -4,6 +4,7 @@ export function registerEngine(): Pick<
   McBindings,
   | "createEngine"
   | "createHemisphericLight"
+  | "createSunLight"
   | "createBox"
   | "createSimpleBox"
   | "freezeMesh"
@@ -59,6 +60,85 @@ export function registerEngine(): Pick<
       l.groundColor = new BABYLON.Color3(0.4, 0.4, 0.4);
       window.mcState.hemiLight = l;
       return l;
+    },
+
+    createSunLight: (scene: Scene): void => {
+      const ORTHO_SIZE = 52; // ~3.25 chunks of margin either side of 80-block view
+      const CAM_DIST = 300;
+
+      // Orthographic camera looking from sun direction — we control position/target fully
+      const shadowCam = new BABYLON.FreeCamera("shadowCam", new BABYLON.Vector3(0, CAM_DIST, 0), scene);
+      shadowCam.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
+      shadowCam.orthoLeft = -ORTHO_SIZE;
+      shadowCam.orthoRight = ORTHO_SIZE;
+      shadowCam.orthoTop = ORTHO_SIZE;
+      shadowCam.orthoBottom = -ORTHO_SIZE;
+      shadowCam.minZ = 1;
+      shadowCam.maxZ = CAM_DIST * 2 + 100;
+      shadowCam.setTarget(BABYLON.Vector3.Zero());
+      // Remove from scene.cameras and clear activeCamera so the next camera created (player cam) wins
+      const camIdx = scene.cameras.indexOf(shadowCam as unknown as InstanceType<typeof BABYLON.Camera>);
+      if (camIdx >= 0) scene.cameras.splice(camIdx, 1);
+      if ((scene.activeCamera as unknown) === shadowCam) scene.activeCamera = null;
+
+      // Depth shader: stores (z_ndc * 0.5 + 0.5) = gl_FragCoord.z equivalent
+      const depthMat = new BABYLON.ShaderMaterial(
+        "shadowDepthMat",
+        scene,
+        {
+          vertexSource: `
+            precision highp float;
+            attribute vec3 position;
+            uniform mat4 worldViewProjection;
+            varying float vDepth;
+            void main() {
+              gl_Position = worldViewProjection * vec4(position, 1.0);
+              vDepth = gl_Position.z / gl_Position.w * 0.5 + 0.5;
+            }
+          `,
+          fragmentSource: `
+            precision highp float;
+            varying float vDepth;
+            void main() {
+              // Pack depth into RG: 16-bit precision via high+low byte
+              float hi = floor(vDepth * 255.0) / 255.0;
+              float lo = fract(vDepth * 255.0);
+              gl_FragColor = vec4(hi, lo, 0.0, 1.0);
+            }
+          `,
+        },
+        { attributes: ["position"], uniforms: ["worldViewProjection"] },
+      );
+      depthMat.backFaceCulling = true;
+
+      // Custom RTT: renders chunk meshes with depthMat from shadow camera's POV
+      // UNSIGNED_BYTE with RG-packed depth: 16-bit precision (1/65536 per step)
+      // vs 8-bit single channel (1/256). 1-block NDC separation ≈ 0.00143 → 93 steps apart.
+      const shadowRTT = new BABYLON.RenderTargetTexture("shadowRTT", 256, scene, false, true);
+      shadowRTT.activeCamera = shadowCam;
+      shadowRTT.renderList = [];
+      // Only re-render when resetRefreshCounter() is explicitly called (sun ≥1° or snap changed)
+      shadowRTT.refreshRate = 10000;
+
+      // After RTT renders, capture camera's VP matrix (guaranteed fresh)
+      shadowRTT.onAfterRenderObservable.add(() => {
+        const vpMatrix = shadowCam.getTransformationMatrix();
+        const mats = window.mcState.blockMaterials;
+        if (mats)
+          for (const mat of Object.values(mats))
+            if (mat instanceof BABYLON.ShaderMaterial) mat.setMatrix("lightWVP", vpMatrix);
+      });
+
+      scene.customRenderTargets.push(shadowRTT);
+
+      window.mcState.sunShadowCamera = shadowCam;
+      window.mcState.sunShadowRTT = shadowRTT;
+      window.mcState.sunShadowDepthMat = depthMat;
+
+      const mats = window.mcState.blockMaterials;
+      if (mats)
+        for (const mat of Object.values(mats))
+          if (mat instanceof BABYLON.ShaderMaterial) mat.setTexture("shadowSampler", shadowRTT);
     },
 
     // Multi-face box for GRASS (6 SubMeshes → MultiMaterial with per-face texture).

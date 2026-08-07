@@ -332,7 +332,16 @@ let __mcBuf: ChunkBuf | null = null;
 function disposeChunk(key: string): void {
   const meshes = window.mcState.chunks[key];
   if (meshes) {
-    (meshes as InstanceType<typeof BABYLON.AbstractMesh>[]).forEach((m) => m.dispose());
+    const shadowRTT = window.mcState.sunShadowRTT;
+    (meshes as InstanceType<typeof BABYLON.AbstractMesh>[]).forEach((m) => {
+      if (shadowRTT?.renderList) {
+        const idx = shadowRTT.renderList.indexOf(m);
+        if (idx >= 0) shadowRTT.renderList.splice(idx, 1);
+        // Prevent _materialForRendering map from growing unbounded
+        shadowRTT.setMaterialForRendering(m, undefined as unknown as InstanceType<typeof BABYLON.Material>);
+      }
+      m.dispose();
+    });
     delete window.mcState.chunks[key];
   }
 }
@@ -551,6 +560,12 @@ export function registerChunks(): Pick<
         mesh.doNotSyncBoundingInfo = true;
         mesh.refreshBoundingInfo();
         mesh.freezeWorldMatrix();
+        const shadowRTT = window.mcState.sunShadowRTT;
+        const shadowDepthMat = window.mcState.sunShadowDepthMat;
+        if (shadowRTT?.renderList && shadowDepthMat) {
+          shadowRTT.renderList.push(mesh);
+          shadowRTT.setMaterialForRendering(mesh, shadowDepthMat);
+        }
         meshes.push(mesh);
         releaseGroup(g);
       }
