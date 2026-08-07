@@ -487,7 +487,7 @@ class NpcRegistryLoaderTest {
         assertEquals(listOf("goat", "duck"), animal.preyTypes)
         assertEquals(0.10, animal.hungerRatePerDay)
         assertEquals(5, assertNotNull(merged.packConfig).minSizeToEngage)
-        assertEquals(listOf("polar_bear"), merged.packConfig?.hostileTypes)
+        assertEquals(listOf("polar_bear"), merged.packConfig.hostileTypes)
     }
 }
 

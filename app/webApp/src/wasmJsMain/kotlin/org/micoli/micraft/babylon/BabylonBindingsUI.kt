@@ -215,3 +215,15 @@ fun jsOpenQuestJournal(): Unit = js("mc.openQuestJournal()")
 fun jsToggleQuestTracker(): Unit = js("mc.toggleQuestTracker()")
 
 fun jsWalletUpdate(copper: Long): Unit = js("mc.walletUpdate(copper)")
+
+// ── Mail ──────────────────────────────────────────────────────────────────────
+
+fun jsMailSync(json: String): Unit = js("mc.mailSync(json)")
+
+fun jsMailReceived(json: String): Unit = js("mc.mailReceived(json)")
+
+fun jsMailUpdate(json: String): Unit = js("mc.mailUpdate(json)")
+
+fun jsMailDeleted(mailId: String): Unit = js("mc.mailDeleted(mailId)")
+
+fun jsOpenMailbox(): Unit = js("mc.openMailbox()")

@@ -615,7 +615,7 @@ class WorldSimulator(
             if (animal.gestationRemainingDays != null) pregnant[type] = (pregnant[type] ?: 0) + 1
         }
 
-        fun ratios(sums: Map<String, out Number>): Map<String, Double> =
+        fun ratios(sums: Map<String, Number>): Map<String, Double> =
             sums.mapValues { (type, sum) ->
                 val n = alive[type] ?: 0
                 if (n == 0) 0.0 else sum.toDouble() / n

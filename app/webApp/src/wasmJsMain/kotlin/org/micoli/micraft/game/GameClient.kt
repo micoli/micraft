@@ -740,6 +740,27 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     jsSetWeatherZones(Json.encodeToString(msg.zones))
                 })
             put(
+                ServerMessage.MailSync::class,
+                typedHandler { msg: ServerMessage.MailSync ->
+                    jsMailSync(Json.encodeToString(msg))
+                })
+            put(
+                ServerMessage.MailReceived::class,
+                typedHandler { msg: ServerMessage.MailReceived ->
+                    jsMailReceived(Json.encodeToString(msg))
+                })
+            put(
+                ServerMessage.MailUpdate::class,
+                typedHandler { msg: ServerMessage.MailUpdate ->
+                    jsMailUpdate(Json.encodeToString(msg))
+                })
+            put(
+                ServerMessage.MailDeleted::class,
+                typedHandler { msg: ServerMessage.MailDeleted -> jsMailDeleted(msg.mailId) })
+            put(
+                ServerMessage.OpenMailbox::class,
+                typedHandler { _: ServerMessage.OpenMailbox -> jsOpenMailbox() })
+            put(
                 ServerMessage.PreferencesSync::class,
                 typedHandler { msg: ServerMessage.PreferencesSync ->
                     jsCameraSetFov(camera, msg.fieldOfView)

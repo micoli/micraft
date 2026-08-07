@@ -50,7 +50,7 @@ class ShippedEntityConfigTest {
             val growth = def.animalConfig?.growthDays
             assertNotNull(growth, "$type has an adultType but no growthDays: it can never grow up")
             assertTrue(growth > 0.0, "$type has a non-positive growthDays")
-            val lifespan = def.animalConfig?.lifespanDays
+            val lifespan = def.animalConfig.lifespanDays
             if (lifespan != null) {
                 assertTrue(
                     growth < lifespan,

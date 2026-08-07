@@ -152,6 +152,11 @@ object ServerMessageCodec {
             serverEntry<ServerMessage.AoEEffect>(), // 46
             serverEntry<ServerMessage.GodModeUpdate>(), // 47
             serverEntry<ServerMessage.WalletUpdate>(), // 48
+            serverEntry<ServerMessage.MailSync>(), // 49
+            serverEntry<ServerMessage.MailReceived>(), // 50
+            serverEntry<ServerMessage.MailUpdate>(), // 51
+            serverEntry<ServerMessage.MailDeleted>(), // 52
+            serverSingleton(ServerMessage.OpenMailbox), // 53
         )
 
     fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)
@@ -184,6 +189,10 @@ object ClientMessageCodec {
             clientEntry<ClientMessage.UseSpell>(), // 19
             clientEntry<ClientMessage.CastAoeSpell>(), // 20
             clientEntry<ClientMessage.UseItem>(), // 21
+            clientEntry<ClientMessage.SendMail>(), // 22
+            clientEntry<ClientMessage.MarkMailSeen>(), // 23
+            clientEntry<ClientMessage.DeleteMail>(), // 24
+            clientEntry<ClientMessage.ClaimMailAttachments>(), // 25
         )
 
     fun encode(msg: ClientMessage): ByteArray = encodeWith(registry, msg)

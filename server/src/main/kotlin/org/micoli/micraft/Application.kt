@@ -100,6 +100,7 @@ import org.micoli.micraft.http.MetricsController
 import org.micoli.micraft.http.PlayerArmorsController
 import org.micoli.micraft.http.PlayerRpgController
 import org.micoli.micraft.http.PlayerSkinController
+import org.micoli.micraft.http.PlayersController
 import org.micoli.micraft.http.QuestsController
 import org.micoli.micraft.http.ScreenshotController
 import org.micoli.micraft.http.ServerInfoController
@@ -323,6 +324,7 @@ fun Application.module() {
         ArmorsController(dataPath).register(this)
         GameAssetsController().register(this)
         QuestsController(questManager).register(this)
+        PlayersController(gameLoop.getMailManager()).register(this)
         staticFiles("/api/models", File("resources"))
         MapController(gameLoop, tokenStore).register(this)
         MetricsController(gameLoop).register(this)

@@ -613,6 +613,21 @@ class LocalPlayerController(
                     outMessages.trySend(ClientMessage.Command(event.removePrefix("cmd:")))
                 event.startsWith("macro:") ->
                     outMessages.trySend(ClientMessage.RunMacro(event.removePrefix("macro:")))
+                event.startsWith("mail_send:") ->
+                    runCatching {
+                        outMessages.trySend(
+                            Json.decodeFromString<ClientMessage.SendMail>(
+                                event.removePrefix("mail_send:")))
+                    }
+                event.startsWith("mail_seen:") ->
+                    outMessages.trySend(
+                        ClientMessage.MarkMailSeen(event.removePrefix("mail_seen:")))
+                event.startsWith("mail_delete:") ->
+                    outMessages.trySend(
+                        ClientMessage.DeleteMail(event.removePrefix("mail_delete:")))
+                event.startsWith("mail_claim:") ->
+                    outMessages.trySend(
+                        ClientMessage.ClaimMailAttachments(event.removePrefix("mail_claim:")))
                 event.startsWith("attack:") -> {
                     val targetId = currentCombatTargetId ?: return@repeat
                     val rest = event.removePrefix("attack:")

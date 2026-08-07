@@ -7,6 +7,7 @@ import {
   GameLayout,
   HudData,
   LogEntry,
+  MailData,
   NpcDialogData,
   NpcProximityEntry,
   PlayerStatusData,
@@ -85,6 +86,8 @@ export interface UiState {
   activeEffects: ActiveEffect[];
   godMode: boolean;
   wallet: number;
+  mailboxOpen: boolean;
+  mails: MailData[];
 }
 
 const ingameMapRegistry = {
@@ -324,6 +327,24 @@ const globalRegistry = {
     characterSyncData: payload.data,
   }),
 };
+const mailRegistry = {
+  mailbox_open: (state: UiState) => ({ ...state, mailboxOpen: true }),
+  mailbox_close: (state: UiState) => ({ ...state, mailboxOpen: false }),
+  mail_sync: (state: UiState, payload: { mails: MailData[] }) => ({ ...state, mails: payload.mails }),
+  mail_received: (state: UiState, payload: { mail: MailData }) => ({
+    ...state,
+    mails: [payload.mail, ...state.mails],
+  }),
+  mail_update: (state: UiState, payload: { mail: MailData }) => ({
+    ...state,
+    mails: state.mails.map((m) => (m.id === payload.mail.id ? payload.mail : m)),
+  }),
+  mail_deleted: (state: UiState, payload: { mailId: string }) => ({
+    ...state,
+    mails: state.mails.filter((m) => m.id !== payload.mailId),
+  }),
+};
+
 export const actionRegistry = {
   ...componentVisibilityRegistry,
   ...consoleRegistry,
@@ -332,6 +353,7 @@ export const actionRegistry = {
   ...ingameMapRegistry,
   ...layoutEditorRegistry,
   ...loadingRegistry,
+  ...mailRegistry,
   ...preferencesRegistry,
   ...questRegistry,
   ...tradeRegistry,

@@ -340,6 +340,16 @@ sealed class ServerMessage {
     @ProtoId(47) @Serializable data class GodModeUpdate(val enabled: Boolean) : ServerMessage()
 
     @ProtoId(48) @Serializable data class WalletUpdate(val copper: Long) : ServerMessage()
+
+    @ProtoId(49) @Serializable data class MailSync(val mails: List<MailMessage>) : ServerMessage()
+
+    @ProtoId(50) @Serializable data class MailReceived(val mail: MailMessage) : ServerMessage()
+
+    @ProtoId(51) @Serializable data class MailUpdate(val mail: MailMessage) : ServerMessage()
+
+    @ProtoId(52) @Serializable data class MailDeleted(val mailId: String) : ServerMessage()
+
+    @ProtoId(53) @Serializable object OpenMailbox : ServerMessage()
 }
 
 @Serializable

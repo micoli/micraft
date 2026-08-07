@@ -274,3 +274,12 @@ npc:
     not_enough_items: "Vous n'avez pas assez de {0}."
     buy_done: "Acheté {0}x {1}."
     sell_done: "Vendu {0}x {1}."
+
+mail:
+  server:
+    send_success: "Message envoyé à {0}."
+    recipient_not_found: "Joueur '{0}' introuvable."
+    recipient_invalid: "Destinataire invalide."
+    insufficient_items: "Vous n'avez pas assez d'items dans votre inventaire."
+    insufficient_copper: "Pas assez de cuivre dans votre portefeuille."
+    new_mail: "Nouveau message de {0} : {1}"

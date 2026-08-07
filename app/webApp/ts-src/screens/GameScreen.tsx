@@ -34,6 +34,7 @@ import { Statistics } from "../game/components/Statistics";
 import { QuestJournal } from "../game/components/QuestJournal";
 import { QuestTracker } from "../game/components/QuestTracker";
 import { BuffBar } from "../game/components/BuffBar";
+import { MailboxOverlay } from "../game/overlays/MailboxOverlay";
 
 const resumePointerLock = () =>
   (
@@ -432,6 +433,17 @@ export function GameScreen() {
                 },
               },
               {
+                icon: "✉",
+                label:
+                  state.mails.filter((m) => !m.seen).length > 0
+                    ? `Mail (${state.mails.filter((m) => !m.seen).length})`
+                    : "Mail",
+                callback: () => {
+                  dispatch("pause_menu_hide");
+                  dispatch("mailbox_open");
+                },
+              },
+              {
                 icon: "🎭",
                 label: "Character",
                 callback: () => {
@@ -520,6 +532,17 @@ export function GameScreen() {
             visible={state.questTrackerVisible}
             quests={state.quests}
             layoutStyle={widgetStyle(activeLayout, "QUEST_TRACKER")}
+          />
+          <MailboxOverlay
+            open={state.mailboxOpen}
+            mails={state.mails}
+            inventory={state.inventory}
+            itemMeta={state.itemMeta}
+            wallet={state.wallet}
+            onClose={() => {
+              dispatch("mailbox_close");
+              resumePointerLock();
+            }}
           />
         </>
       )}

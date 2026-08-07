@@ -130,4 +130,22 @@ sealed class ClientMessage {
     ) : ClientMessage()
 
     @ProtoId(21) @Serializable data class UseItem(val itemType: ItemType) : ClientMessage()
+
+    @ProtoId(22)
+    @Serializable
+    data class SendMail(
+        val to: String,
+        val subject: String,
+        val body: String,
+        val attachments: Map<ItemType, Int> = emptyMap(),
+        val copperAmount: Long = 0L,
+    ) : ClientMessage()
+
+    @ProtoId(23) @Serializable data class MarkMailSeen(val mailId: String) : ClientMessage()
+
+    @ProtoId(24) @Serializable data class DeleteMail(val mailId: String) : ClientMessage()
+
+    @ProtoId(25)
+    @Serializable
+    data class ClaimMailAttachments(val mailId: String) : ClientMessage()
 }

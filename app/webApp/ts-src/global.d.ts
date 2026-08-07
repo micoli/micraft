@@ -502,6 +502,11 @@ declare global {
     questUpdate(json: string): void;
     openQuestJournal(): void;
     toggleQuestTracker(): void;
+    mailSync(json: string): void;
+    mailReceived(json: string): void;
+    mailUpdate(json: string): void;
+    mailDeleted(mailId: string): void;
+    openMailbox(): void;
     reloadAttackMeta(): void;
     IngameMap(): void;
     dumpStats(): void;

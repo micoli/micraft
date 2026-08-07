@@ -43,6 +43,8 @@ import org.micoli.micraft.game.drop.DropConfig
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
 import org.micoli.micraft.game.macro.MacroContext
 import org.micoli.micraft.game.macro.MacroExecutor
+import org.micoli.micraft.game.mail.MailManager
+import org.micoli.micraft.game.mail.MailPersistence
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcManager
@@ -377,6 +379,16 @@ class GameLoop(
         if (newSkills != null) blockPlacer.reload(newSkills.attacks)
     }
 
+    private val mailManager: MailManager? =
+        persistence?.worldDir?.resolve("players")?.let { playersDir ->
+            MailManager(
+                persistence = MailPersistence(playersDir),
+                sessionRegistry = sessionRegistry,
+                i18n = i18n,
+                savePlayer = playerPersister::save,
+            )
+        }
+
     private val macroExecutor = MacroExecutor()
 
     private var saveTickCounter = 0
@@ -554,6 +566,8 @@ class GameLoop(
     fun getNpcInstances() = npcManager.getAll()
 
     fun getNpcManager() = npcManager
+
+    fun getMailManager() = mailManager
 
     fun getWorldItemCount(): Int = worldItems.itemCount()
 
@@ -1266,6 +1280,7 @@ class GameLoop(
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         session.send(ServerMessage.WalletUpdate(session.state.wallet))
         questManager?.sendQuestSync(session)
+        mailManager?.let { session.send(ServerMessage.MailSync(it.loadForPlayer(playerName))) }
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBarPages.toPageMap()))
         session.send(ServerMessage.TimeUpdate(gameTicks))
         val charData = session.characterData
@@ -1350,6 +1365,14 @@ class GameLoop(
                                         is ClientMessage.RunMacro -> handleRunMacro(session, msg)
                                         is ClientMessage.RunMacroContent ->
                                             handleRunMacroContent(session, msg)
+                                        is ClientMessage.SendMail ->
+                                            mailManager?.handleSendMail(session, msg)
+                                        is ClientMessage.MarkMailSeen ->
+                                            mailManager?.handleMarkSeen(session, msg.mailId)
+                                        is ClientMessage.DeleteMail ->
+                                            mailManager?.handleDelete(session, msg.mailId)
+                                        is ClientMessage.ClaimMailAttachments ->
+                                            mailManager?.handleClaimAttachments(session, msg.mailId)
                                         else -> session.intents.trySend(msg)
                                     }
                                 }

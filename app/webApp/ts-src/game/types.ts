@@ -66,6 +66,19 @@ export interface NpcDialogData {
   shopItems?: ShopItemData[];
 }
 
+export interface MailData {
+  id: string;
+  from: string;
+  to: string;
+  subject: string;
+  body: string;
+  attachments?: Record<string, number>;
+  copperAmount?: number;
+  sentAt: number;
+  seen: boolean;
+  attachmentsClaimed: boolean;
+}
+
 export interface CommandInfo {
   id: string;
   command: string;

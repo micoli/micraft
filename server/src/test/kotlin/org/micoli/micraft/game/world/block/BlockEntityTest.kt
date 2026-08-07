@@ -92,7 +92,7 @@ class BlockEntityTest {
             session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("LEGO_BRICK_2X1")))
         val update = broadcasts.filterIsInstance<ServerMessage.WorldUpdate>().firstOrNull()
         assertFalse(update?.entityAdds.isNullOrEmpty(), "WorldUpdate should contain entityAdds")
-        val proto = update!!.entityAdds.first()
+        val proto = update.entityAdds.first()
         assertEquals(2, proto.sizeX)
         assertEquals(8, proto.worldX)
         assertEquals(7, proto.worldY)
@@ -199,7 +199,7 @@ class BlockEntityTest {
                 .firstOrNull()
         assertFalse(update?.entityAdds.isNullOrEmpty(), "Second plate should add entity")
         assertTrue(
-            update!!.changes.isEmpty(), "Second plate (yOffset=1) should not produce block change")
+            update.changes.isEmpty(), "Second plate (yOffset=1) should not produce block change")
         val offsets = world.getFractionalYOffsetsAt(8, 7, 8)
         assertTrue(1 in offsets, "yOffset=1 should be registered")
     }

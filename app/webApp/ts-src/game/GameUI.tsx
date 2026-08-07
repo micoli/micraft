@@ -76,6 +76,8 @@ const initial: UiState = {
   activeEffects: [],
   godMode: false,
   wallet: 0,
+  mailboxOpen: false,
+  mails: [],
 };
 
 function RouterBridge({
@@ -154,6 +156,7 @@ export function GameUI() {
   const tradeOpenRef = useRef(false);
   const tradeRef = useRef<import("./types").TradeData | null>(null);
   const questJournalOpenRef = useRef(false);
+  const mailboxOpenRef = useRef(false);
   const macroEditorOpenRef = useRef(false);
   const ingameMapOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
@@ -285,6 +288,9 @@ export function GameUI() {
     questJournalOpenRef.current = state.questJournalOpen;
   }, [state.questJournalOpen]);
   useLayoutEffect(() => {
+    mailboxOpenRef.current = state.mailboxOpen;
+  }, [state.mailboxOpen]);
+  useLayoutEffect(() => {
     macroEditorOpenRef.current = state.macroEditorOpen;
   }, [state.macroEditorOpen]);
   useLayoutEffect(() => {
@@ -298,7 +304,8 @@ export function GameUI() {
       state.preferencesOpen ||
       state.pauseMenuOpen ||
       state.macroEditorOpen ||
-      state.questJournalOpen;
+      state.questJournalOpen ||
+      state.mailboxOpen;
     if (anyOpen) {
       overlayWasOpen.current = true;
       document.exitPointerLock();
@@ -314,6 +321,7 @@ export function GameUI() {
     state.pauseMenuOpen,
     state.macroEditorOpen,
     state.questJournalOpen,
+    state.mailboxOpen,
   ]);
 
   useEffect(() => {
@@ -726,6 +734,37 @@ export function GameUI() {
     };
     window.mc.openQuestJournal = () => dispatch("quest_journal_open");
     window.mc.toggleQuestTracker = () => dispatch("quest_tracker_toggle");
+    window.mc.mailSync = (json: string) => {
+      try {
+        const msg = JSON.parse(json) as { mails: import("./types").MailData[] };
+        dispatch("mail_sync", { mails: msg.mails });
+      } catch (e) {
+        console.error("[mail] mailSync parse error:", e, "raw:", json);
+      }
+    };
+    window.mc.mailReceived = (json: string) => {
+      try {
+        const msg = JSON.parse(json) as { mail: import("./types").MailData };
+        dispatch("mail_received", { mail: msg.mail });
+        dispatch("notification", { msg: `✉ New mail from ${msg.mail.from}: ${msg.mail.subject}` });
+      } catch (e) {
+        console.error("[mail] mailReceived parse error:", e, "raw:", json);
+      }
+    };
+    window.mc.mailUpdate = (json: string) => {
+      try {
+        const msg = JSON.parse(json) as { mail: import("./types").MailData };
+        dispatch("mail_update", { mail: msg.mail });
+      } catch (e) {
+        console.error("[mail] mailUpdate parse error:", e, "raw:", json);
+      }
+    };
+    window.mc.mailDeleted = (mailId: string) => {
+      dispatch("mail_deleted", { mailId });
+    };
+    window.mc.openMailbox = () => {
+      dispatch("mailbox_open");
+    };
     window.mc.reloadAttackMeta = () => {
       loadAttackMetaRef.current();
       loadClassDefinitionsRef.current();
@@ -772,6 +811,11 @@ export function GameUI() {
         }
         if (questJournalOpenRef.current) {
           dispatch("quest_journal_close");
+          resumeGame();
+          return;
+        }
+        if (mailboxOpenRef.current) {
+          dispatch("mailbox_close");
           resumeGame();
           return;
         }
