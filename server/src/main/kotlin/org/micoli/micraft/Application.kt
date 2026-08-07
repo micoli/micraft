@@ -366,6 +366,8 @@ fun Application.module() {
             listOf("/", "/auth", "/chars", "/char-create", "/char-rpg-create").forEach { path ->
                 get(path) { call.respondFile(indexFile) }
             }
+            get("/game") { call.respondRedirect("/", permanent = false) }
+            get("/game/") { call.respondRedirect("/", permanent = false) }
             get("/game/{accountEmail}/{charId}") { call.respondFile(indexFile) }
         }
     }
