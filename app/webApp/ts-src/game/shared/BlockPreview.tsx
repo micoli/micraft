@@ -20,11 +20,11 @@ export function useColoredBlockPreview(ordinal: number | null, colorHex: string 
 }
 
 export function useBlockDefsReady(): boolean {
-  const [ready, setReady] = useState(() => !!window.mc.isBlockDefsReady?.());
+  const [ready, setReady] = useState(() => !!window.mc?.isBlockDefsReady?.());
   useEffect(() => {
     if (ready) return;
     const iv = setInterval(() => {
-      if (window.mc.isBlockDefsReady?.()) {
+      if (window.mc?.isBlockDefsReady?.()) {
         setReady(true);
         clearInterval(iv);
       }

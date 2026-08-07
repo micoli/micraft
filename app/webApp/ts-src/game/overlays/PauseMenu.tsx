@@ -24,7 +24,7 @@ export function PauseMenu({ open, onClose, items }: PauseMenuProps) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
-        className="min-w-[220px] p-8 flex flex-col gap-3 z-[2001]"
+        className="min-w-[420px] p-8 flex flex-col gap-3 z-[2001]"
         overlayClassName="z-[2000]"
         onEscapeKeyDown={(e) => e.preventDefault()}
         onKeyDown={(e) => {
@@ -35,18 +35,20 @@ export function PauseMenu({ open, onClose, items }: PauseMenuProps) {
         }}
       >
         <DialogTitle className="text-center font-mono text-xl tracking-[0.25em] mb-2">PAUSE</DialogTitle>
-        {items.map((item, k) => (
-          <Button
-            key={item.label}
-            ref={k === 0 ? firstButton : null}
-            variant={item.variant ?? "secondary"}
-            onClick={item.callback}
-            className="font-mono"
-          >
-            {item.icon ? `${item.icon} ` : ""}
-            {item.label}
-          </Button>
-        ))}
+        <div className="grid grid-cols-2 gap-3">
+          {items.map((item, k) => (
+            <Button
+              key={item.label}
+              ref={k === 0 ? firstButton : null}
+              variant={item.variant ?? "secondary"}
+              onClick={item.callback}
+              className="font-mono"
+            >
+              {item.icon ? `${item.icon} ` : ""}
+              {item.label}
+            </Button>
+          ))}
+        </div>
       </DialogContent>
     </Dialog>
   );
