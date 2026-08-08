@@ -51,6 +51,24 @@ class BlockBreakerTest {
     }
 
     @Test
+    fun handleStart_insideProtectedZone_ignores() {
+        val world = testWorld(Triple(8, 5, 8))
+        val wim = noopWim()
+        val registry = org.micoli.micraft.game.world.instance.InstanceRegistry(null)
+        registry.create(
+            name = "Arena",
+            yMin = 0,
+            yMax = 16,
+            chunks = setOf(org.micoli.micraft.game.world.ChunkPos(0, 0)),
+            ownerName = "Alice",
+        )
+        val breaker = BlockBreaker(world, {}, wim, instanceRegistry = registry)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        breaker.handleStart(session, ClientMessage.BlockBreakStart(BlockPos(8, 5, 8)))
+        assertNull(session.breakTarget)
+    }
+
+    @Test
     fun handleStart_airBlock_ignores() {
         val world = testWorld()
         val breaker = BlockBreaker(world, {}, noopWim())

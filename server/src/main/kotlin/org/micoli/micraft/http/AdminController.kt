@@ -30,13 +30,19 @@ import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcConstants
+import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.PlayerFile
+import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
+import org.micoli.micraft.game.world.instance.InstanceZone
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
+import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
@@ -72,6 +78,31 @@ data class NpcAdminDto(
     val animalStats: BaseStats?,
 )
 
+@Serializable data class InstanceRenameRequest(val name: String)
+
+@Serializable data class InstanceBoundsRequest(val yMin: Int, val yMax: Int)
+
+@Serializable data class InstanceChunksRequest(val chunks: List<ChunkPos>)
+
+@Serializable data class InstanceEnabledRequest(val enabled: Boolean)
+
+@Serializable
+data class InstanceCreateRequest(
+    val name: String,
+    val yMin: Int,
+    val yMax: Int,
+    val chunks: List<ChunkPos>
+)
+
+@Serializable
+data class InstanceBlockDto(
+    val x: Int,
+    val y: Int,
+    val z: Int,
+    val type: String,
+    val state: Byte = 0
+)
+
 @Serializable
 data class WorldStatsDto(
     val name: String,
@@ -82,6 +113,8 @@ data class WorldStatsDto(
     val playerCount: Int,
     val isActive: Boolean,
 )
+
+private const val MAX_STREAMED_BLOCKS = 300_000
 
 private val adminJson = Json {
     encodeDefaults = true
@@ -118,6 +151,13 @@ class AdminController(
     private val worldsDir = Path.of("$dataPath/world")
     private val activeWorldName: String =
         System.getenv("MICRAFT_WORLD_NAME")?.takeIf { it.isNotBlank() } ?: "default_world"
+
+    // Chunks eligible for an instance zone: in-memory (this run) union persisted-to-disk (any
+    // prior run) — WorldState.discoveredChunks() alone misses chunks generated before the last
+    // server restart that no player has revisited yet.
+    private fun generatedChunks(): Set<ChunkPos> =
+        gameLoop.getWorldState().discoveredChunks() +
+            (persistence?.persistedChunkPositions() ?: emptySet())
 
     private suspend fun RoutingContext.requireAdmin(): Boolean {
         tokenStore ?: return true
@@ -579,6 +619,202 @@ class AdminController(
                 call.respondText(
                     Json.encodeToString(ListSerializer(BlockInfo.serializer()), blocks),
                     ContentType.Application.Json)
+            }
+
+            // ── Instances ────────────────────────────────────────────────────
+            get("/api/admin/chunks/discovered") {
+                if (!requireAdmin()) return@get
+                call.respondText(
+                    Json.encodeToString(
+                        ListSerializer(ChunkPos.serializer()), generatedChunks().toList()),
+                    ContentType.Application.Json)
+            }
+
+            get("/api/admin/instances") {
+                if (!requireAdmin()) return@get
+                call.respondText(
+                    Json.encodeToString(
+                        ListSerializer(InstanceZone.serializer()), gameLoop.instances().all()),
+                    ContentType.Application.Json)
+            }
+
+            get("/api/admin/instances/{id}") {
+                if (!requireAdmin()) return@get
+                val id = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                val zone =
+                    gameLoop.instances().get(id) ?: return@get call.respond(HttpStatusCode.NotFound)
+                call.respondText(
+                    Json.encodeToString(InstanceZone.serializer(), zone),
+                    ContentType.Application.Json)
+            }
+
+            post("/api/admin/instances") {
+                if (!requireAdmin()) return@post
+                val body = Json.decodeFromString<InstanceCreateRequest>(call.receiveText())
+                if (body.name.isBlank() || body.chunks.isEmpty() || body.yMin >= body.yMax) {
+                    return@post call.respond(HttpStatusCode.BadRequest, "Invalid zone")
+                }
+                val discovered = generatedChunks()
+                if (body.chunks.any { it !in discovered }) {
+                    return@post call.respond(
+                        HttpStatusCode.BadRequest, "Zone must only cover already-generated chunks")
+                }
+                val zone =
+                    gameLoop
+                        .instances()
+                        .create(
+                            name = body.name,
+                            yMin = body.yMin,
+                            yMax = body.yMax,
+                            chunks = body.chunks.toSet(),
+                            ownerName = "admin")
+                gameLoop.broadcastInstanceZonesSync()
+                call.respondText(
+                    Json.encodeToString(InstanceZone.serializer(), zone),
+                    ContentType.Application.Json)
+            }
+
+            put("/api/admin/instances/{id}") {
+                if (!requireAdmin()) return@put
+                val id = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                val body = Json.decodeFromString<InstanceRenameRequest>(call.receiveText())
+                val zone =
+                    gameLoop.instances().rename(id, body.name)
+                        ?: return@put call.respond(HttpStatusCode.NotFound)
+                gameLoop.broadcastInstanceZonesSync()
+                call.respondText(
+                    Json.encodeToString(InstanceZone.serializer(), zone),
+                    ContentType.Application.Json)
+            }
+
+            put("/api/admin/instances/{id}/bounds") {
+                if (!requireAdmin()) return@put
+                val id = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                val body = Json.decodeFromString<InstanceBoundsRequest>(call.receiveText())
+                if (body.yMin >= body.yMax) {
+                    return@put call.respond(
+                        HttpStatusCode.BadRequest, "yMin must be less than yMax")
+                }
+                val zone =
+                    gameLoop.instances().updateBounds(id, body.yMin, body.yMax)
+                        ?: return@put call.respond(HttpStatusCode.NotFound)
+                gameLoop.broadcastInstanceZonesSync()
+                call.respondText(
+                    Json.encodeToString(InstanceZone.serializer(), zone),
+                    ContentType.Application.Json)
+            }
+
+            put("/api/admin/instances/{id}/enabled") {
+                if (!requireAdmin()) return@put
+                val id = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                val body = Json.decodeFromString<InstanceEnabledRequest>(call.receiveText())
+                val zone =
+                    gameLoop.instances().setEnabled(id, body.enabled)
+                        ?: return@put call.respond(HttpStatusCode.NotFound)
+                gameLoop.broadcastInstanceZonesSync()
+                call.respondText(
+                    Json.encodeToString(InstanceZone.serializer(), zone),
+                    ContentType.Application.Json)
+            }
+
+            put("/api/admin/instances/{id}/chunks") {
+                if (!requireAdmin()) return@put
+                val id = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                val body = Json.decodeFromString<InstanceChunksRequest>(call.receiveText())
+                if (body.chunks.isEmpty()) {
+                    return@put call.respond(
+                        HttpStatusCode.BadRequest, "Zone must have at least one chunk")
+                }
+                val discovered = generatedChunks()
+                if (body.chunks.any { it !in discovered }) {
+                    return@put call.respond(
+                        HttpStatusCode.BadRequest, "Zone must only cover already-generated chunks")
+                }
+                val zone =
+                    gameLoop.instances().updateChunks(id, body.chunks.toSet())
+                        ?: return@put call.respond(HttpStatusCode.NotFound)
+                gameLoop.broadcastInstanceZonesSync()
+                call.respondText(
+                    Json.encodeToString(InstanceZone.serializer(), zone),
+                    ContentType.Application.Json)
+            }
+
+            delete("/api/admin/instances/{id}") {
+                if (!requireAdmin()) return@delete
+                val id =
+                    call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                if (!gameLoop.instances().delete(id)) {
+                    return@delete call.respond(HttpStatusCode.NotFound)
+                }
+                gameLoop.broadcastInstanceZonesSync()
+                call.respond(HttpStatusCode.NoContent)
+            }
+
+            get("/api/admin/instances/{id}/blocks") {
+                if (!requireAdmin()) return@get
+                val id = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                val zone =
+                    gameLoop.instances().get(id) ?: return@get call.respond(HttpStatusCode.NotFound)
+                val world = gameLoop.getWorldState()
+                val cx = call.request.queryParameters["cx"]?.toIntOrNull()
+                val cz = call.request.queryParameters["cz"]?.toIntOrNull()
+                // Streamed as newline-delimited JSON, one block per line. With cx/cz given,
+                // restricted to that single chunk column — the editor loads/unloads chunks as
+                // the camera moves instead of pulling the whole zone at once. Without them,
+                // falls back to the whole-zone Y-layer-major order (a single in-memory
+                // list/JSON string for a large zone previously exhausted the heap). Capped
+                // either way so the browser isn't asked to render more cubes than it reasonably
+                // can.
+                call.respondTextWriter(ContentType.parse("application/x-ndjson")) {
+                    var streamed = 0
+                    var checked = 0
+                    val chunkSize = WorldConstants.CHUNK_SIZE
+                    val columns =
+                        if (cx != null && cz != null) zone.blockColumnsForChunk(chunkSize, cx, cz)
+                        else zone.blockColumnsByLayer(chunkSize)
+                    columns@ for ((x, y, z) in columns) {
+                        if (streamed >= MAX_STREAMED_BLOCKS) break@columns
+                        val type = world.getBlock(x, y, z)
+                        if (type != BlockType.AIR) {
+                            write(
+                                Json.encodeToString(
+                                    InstanceBlockDto.serializer(),
+                                    InstanceBlockDto(
+                                        x = x,
+                                        y = y,
+                                        z = z,
+                                        type = type.id,
+                                        state = world.getBlockState(x, y, z))))
+                            write("\n")
+                            streamed++
+                        }
+                        checked++
+                        // Flushed periodically (rather than per coordinate, which was the
+                        // per-chunk cadence before block iteration went Y-layer-major) so the
+                        // browser starts rendering before the whole zone is scanned.
+                        if (checked % 4096 == 0) flush()
+                    }
+                    flush()
+                }
+            }
+
+            put("/api/admin/instances/{id}/blocks") {
+                if (!requireAdmin()) return@put
+                val id = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                val zone =
+                    gameLoop.instances().get(id) ?: return@put call.respond(HttpStatusCode.NotFound)
+                val body = Json.decodeFromString<InstanceBlockDto>(call.receiveText())
+                if (!zone.contains(body.x, body.y, body.z)) {
+                    return@put call.respond(
+                        HttpStatusCode.BadRequest, "Coordinate outside zone bounds")
+                }
+                val type =
+                    BlockRegistry.all().find { it.id == body.type }
+                        ?: return@put call.respond(HttpStatusCode.BadRequest, "Unknown block type")
+                val change = BlockChange(BlockPos(body.x, body.y, body.z), type, body.state)
+                gameLoop.getWorldState().applyChange(change)
+                gameLoop.broadcastWorldUpdate(listOf(change))
+                call.respond(HttpStatusCode.NoContent)
             }
 
             // ── NPC types ─────────────────────────────────────────────────────

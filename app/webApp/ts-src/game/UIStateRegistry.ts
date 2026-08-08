@@ -6,6 +6,7 @@ import {
   CombatTargetData,
   GameLayout,
   HudData,
+  InstanceZoneData,
   LogEntry,
   MailData,
   NpcDialogData,
@@ -88,6 +89,7 @@ export interface UiState {
   wallet: number;
   mailboxOpen: boolean;
   mails: MailData[];
+  adminZone: InstanceZoneData | null;
 }
 
 const ingameMapRegistry = {
@@ -345,12 +347,20 @@ const mailRegistry = {
   }),
 };
 
+const instanceRegistry = {
+  admin_zone_wireframe: (state: UiState, payload: { zone: InstanceZoneData | null }) => ({
+    ...state,
+    adminZone: payload.zone,
+  }),
+};
+
 export const actionRegistry = {
   ...componentVisibilityRegistry,
   ...consoleRegistry,
   ...gameRegistry,
   ...globalRegistry,
   ...ingameMapRegistry,
+  ...instanceRegistry,
   ...layoutEditorRegistry,
   ...loadingRegistry,
   ...mailRegistry,

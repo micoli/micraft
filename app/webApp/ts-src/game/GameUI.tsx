@@ -78,6 +78,7 @@ const initial: UiState = {
   wallet: 0,
   mailboxOpen: false,
   mails: [],
+  adminZone: null,
 };
 
 function RouterBridge({
@@ -763,6 +764,17 @@ export function GameUI() {
     };
     window.mc.openMailbox = () => {
       dispatch("mailbox_open");
+    };
+    window.mc.adminZoneWireframe = (json: string) => {
+      try {
+        const data = JSON.parse(json) as { zone: import("./types").InstanceZoneData | null };
+        dispatch("admin_zone_wireframe", { zone: data.zone });
+      } catch {
+        /* ignore */
+      }
+    };
+    window.mc.instanceZonesSync = (json: string) => {
+      window.mc.setMinimapZones?.(json);
     };
     window.mc.reloadAttackMeta = () => {
       loadAttackMetaRef.current();

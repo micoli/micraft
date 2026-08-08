@@ -14,6 +14,7 @@ import { WorldsPage } from "./pages/WorldsPage";
 import { GameAssetsPage } from "./pages/GameAssetsPage";
 import { AdministrationPage } from "./pages/AdministrationPage";
 import { WorldSimulatorPage } from "./pages/WorldSimulatorPage";
+import { InstancesPage } from "./pages/InstancesPage";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 function Icon({ d, size = 18 }: { d: string; size?: number }) {
@@ -47,6 +48,7 @@ const ICONS = {
   gameAssets: "M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9",
   administration: "M4 6h16M4 10h16M4 14h8M4 18h8",
   simulator: "M4 4h16v16H4zM8 8v8m8-8v8m-4-6a2 2 0 100 4 2 2 0 000-4z",
+  instances: "M12 2l9 4.5v9L12 20l-9-4.5v-9L12 2zM12 2v18M3 6.5l9 4.5 9-4.5",
 };
 
 const NAV: { path: string; labelKey: TranslationKey; icon: string; exact?: boolean }[] = [
@@ -59,6 +61,7 @@ const NAV: { path: string; labelKey: TranslationKey; icon: string; exact?: boole
   { path: "/admin/worlds", labelKey: "nav.worlds", icon: ICONS.worlds },
   { path: "/admin/game-assets", labelKey: "nav.gameAssets", icon: ICONS.gameAssets },
   { path: "/admin/administration", labelKey: "nav.administration", icon: ICONS.administration },
+  { path: "/admin/instances", labelKey: "nav.instances", icon: ICONS.instances },
   { path: "/admin/world-simulator", labelKey: "nav.worldSimulator", icon: ICONS.simulator },
 ];
 
@@ -72,6 +75,7 @@ const PAGE_LABEL_KEYS: Record<string, TranslationKey> = {
   "/admin/worlds": "page.worlds",
   "/admin/game-assets": "page.gameAssets",
   "/admin/administration": "page.administration",
+  "/admin/instances": "page.instances",
   "/admin/world-simulator": "page.worldSimulator",
 };
 
@@ -204,6 +208,7 @@ export function AdminApp() {
                 <Route path="/admin/worlds" element={<WorldsPage />} />
                 <Route path="/admin/game-assets" element={<GameAssetsPage />} />
                 <Route path="/admin/administration" element={<AdministrationPage />} />
+                <Route path="/admin/instances" element={<InstancesPage />} />
                 <Route path="/admin/world-simulator" element={<WorldSimulatorPage />} />
               </Routes>
             </main>

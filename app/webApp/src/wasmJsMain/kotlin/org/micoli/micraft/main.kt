@@ -24,6 +24,29 @@ val uiState = McUiState()
 fun main() {
     jsLog("main() started")
 
+    if (!jsHasRenderCanvas()) {
+        jsLog("main(): no #renderCanvas — admin chunk-preview mode, skipping full game bootstrap")
+        // The real game flow reads server config to pick PROTOBUF vs JSON message encoding
+        // before ever decoding a ServerMessage (see below) — admin preview needs the same
+        // handshake, otherwise ServerMessageCodec.decode assumes the compiled-in PROTOBUF
+        // default even when the server is actually configured for JSON.
+        CoroutineScope(Dispatchers.Default).launch {
+            val host = jsGetPageHost()
+            val port = jsGetPagePort()
+            runCatching {
+                    val config =
+                        HttpClient(Js).get("http://$host:$port/api/auth/config").bodyAsText()
+                    Json.parseToJsonElement(config)
+                        .jsonObject["messageEncoder"]
+                        ?.jsonPrimitive
+                        ?.content
+                }
+                .getOrNull()
+                ?.let { MessageEncoding.current = MessageEncoding.fromConfigValue(it) }
+        }
+        return
+    }
+
     val engine = jsCreateEngine()
     jsLog("BabylonJS engine created")
 

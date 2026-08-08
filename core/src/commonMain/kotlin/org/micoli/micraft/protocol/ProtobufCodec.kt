@@ -157,6 +157,8 @@ object ServerMessageCodec {
             serverEntry<ServerMessage.MailUpdate>(), // 51
             serverEntry<ServerMessage.MailDeleted>(), // 52
             serverSingleton(ServerMessage.OpenMailbox), // 53
+            serverEntry<ServerMessage.AdminZoneWireframe>(), // 57
+            serverEntry<ServerMessage.InstanceZonesSync>(), // 58
         )
 
     fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)

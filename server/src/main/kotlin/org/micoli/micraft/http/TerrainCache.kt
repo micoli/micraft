@@ -37,11 +37,26 @@ class TerrainCache {
             for (file in
                 cacheDir.toFile().listFiles { f -> f.name.endsWith(".png") } ?: emptyArray()) {
                 val pos = parseChunkPos(file.nameWithoutExtension) ?: continue
+                // Deleted on any read failure — including ImageIO.read returning null for an
+                // unparsable file, which throws nothing — so the recompute pass below (which
+                // skips chunks whose PNG already exists and is up to date) doesn't mistake the
+                // corrupted file for a valid, current cache entry and leave it stuck unrecovered.
                 try {
-                    val img = ImageIO.read(file) ?: continue
+                    val img = ImageIO.read(file)
+                    if (img == null) {
+                        log.warn(
+                            "Failed to read terrain cache PNG {}: unreadable image — deleting for regeneration",
+                            file.name)
+                        file.delete()
+                        continue
+                    }
                     cache[pos] = Pair(imageToColors(img), heights[pos])
                 } catch (e: Exception) {
-                    log.warn("Failed to read terrain cache PNG {}: {}", file.name, e.message)
+                    log.warn(
+                        "Failed to read terrain cache PNG {}: {} — deleting for regeneration",
+                        file.name,
+                        e.message)
+                    file.delete()
                 }
             }
         }

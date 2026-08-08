@@ -761,6 +761,16 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 ServerMessage.OpenMailbox::class,
                 typedHandler { _: ServerMessage.OpenMailbox -> jsOpenMailbox() })
             put(
+                ServerMessage.AdminZoneWireframe::class,
+                typedHandler { msg: ServerMessage.AdminZoneWireframe ->
+                    jsAdminZoneWireframe(Json.encodeToString(msg))
+                })
+            put(
+                ServerMessage.InstanceZonesSync::class,
+                typedHandler { msg: ServerMessage.InstanceZonesSync ->
+                    jsInstanceZonesSync(Json.encodeToString(msg))
+                })
+            put(
                 ServerMessage.PreferencesSync::class,
                 typedHandler { msg: ServerMessage.PreferencesSync ->
                     jsCameraSetFov(camera, msg.fieldOfView)

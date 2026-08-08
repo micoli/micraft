@@ -214,6 +214,7 @@ declare global {
     sunShadowDepthMat: InstanceType<typeof BABYLON.ShaderMaterial> | null;
     targetMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     breakMesh: (InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string }) | null;
+    zoneMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     ghostMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     chunks: Record<string, InstanceType<typeof BABYLON.AbstractMesh>[]>;
     blockMaterials: Record<string, ShaderMaterial | StandardMaterial> | undefined;
@@ -335,6 +336,8 @@ declare global {
     hideTargetOutline(): void;
     showBreakOverlay(scene: Scene, x: number, y: number, z: number, alpha: number): void;
     hideBreakOverlay(): void;
+    showZoneBounds(scene: Scene, yMin: number, yMax: number, chunksJson: string): void;
+    hideZoneBounds(): void;
     showBlockPreview(
       scene: Scene,
       x: number,
@@ -407,6 +410,7 @@ declare global {
     setPlayerOnMinimap(id: string, x: number, z: number, yaw: number): void;
     removePlayerFromMinimap(id: string): void;
     setMinimapWeather(json: string): void;
+    setMinimapZones(json: string): void;
     drawMinimap(playerX: number, playerZ: number, playerYaw: number): void;
     // Utils
     getUrlParam(name: string): string;
@@ -512,6 +516,8 @@ declare global {
     mailUpdate(json: string): void;
     mailDeleted(mailId: string): void;
     openMailbox(): void;
+    adminZoneWireframe(json: string): void;
+    instanceZonesSync(json: string): void;
     reloadAttackMeta(): void;
     IngameMap(): void;
     dumpStats(): void;
@@ -538,6 +544,13 @@ declare global {
     __mcFB?: Int32Array;
     __mcFI?: number;
     BABYLON?: typeof import("@babylonjs/core");
+    // Kotlin/Wasm module (webApp.js) — a Promise resolving to its @JsExport surface. Only
+    // loaded on admin.html (see AdminChunkPreview.kt); the real game page never calls this,
+    // it uses GameClient/ChunkManager directly instead.
+    webApp?: Promise<{
+      mcAdminLoadChunk(scene: unknown, data: Uint8Array, yMin: number, yMax: number): void;
+      mcAdminDisposeChunk(cx: number, cz: number): void;
+    }>;
     [key: string]: unknown;
   }
 }

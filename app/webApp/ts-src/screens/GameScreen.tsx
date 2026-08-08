@@ -67,6 +67,17 @@ export function GameScreen() {
   }, []);
 
   useEffect(() => {
+    const zone = state.adminZone;
+    if (!zone) {
+      window.mc.hideZoneBounds?.();
+      return;
+    }
+    const scene = window.mcState.engine?.scenes?.[0];
+    if (scene) window.mc.showZoneBounds?.(scene, zone.yMin, zone.yMax, JSON.stringify(zone.chunks));
+    return () => window.mc.hideZoneBounds?.();
+  }, [state.adminZone]);
+
+  useEffect(() => {
     if (reconnectAttempted.current || !encodedEmail) return;
     reconnectAttempted.current = true;
     if (loginResultRef.current) return;
@@ -181,7 +192,11 @@ export function GameScreen() {
     <>
       <div
         id="mc-minimap-host"
-        className="border-2 border-white/25 shadow-[0_2px_8px_rgba(0,0,0,0.5)] rounded-md overflow-hidden"
+        className={
+          state.adminZone
+            ? "border-2 border-red-500 shadow-[0_0_10px_rgba(255,0,0,0.6)] rounded-md overflow-hidden"
+            : "border-2 border-white/25 shadow-[0_2px_8px_rgba(0,0,0,0.5)] rounded-md overflow-hidden"
+        }
         style={{
           ...minimapLayoutStyle,
           display: state.disconnectMsg || state.chunkLoading ? "none" : undefined,

@@ -165,6 +165,12 @@ make wasm-watch        # start continuous WASM watcher (opt-in, for heavy WASM i
 make trigger-wasm      # trigger rebuild when wasm-watch is running
 ```
 
+## code-standard
+```
+make code-standard       # full lint on kotlin and typescript
+make quick-code-standard # lint on only modified kotlin and typescript
+```
+
 ## Zone/npc tier per skill level
 Skill level → zone tier mapping for future zone-tiered entities:
 

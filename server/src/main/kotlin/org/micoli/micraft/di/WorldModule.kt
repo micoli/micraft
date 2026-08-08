@@ -14,6 +14,7 @@ import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.biome.BiomeRegistry
 import org.micoli.micraft.game.world.biome.loadBiomeRegistry
 import org.micoli.micraft.game.world.house.loadHouseConfig
+import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.DebugChunkGenerator
@@ -105,4 +106,8 @@ class WorldModule {
         optionalWorldPersistence: OptionalWorldPersistence,
     ): WorldState =
         WorldState(generator = chunkGenerator, persistence = optionalWorldPersistence.value)
+
+    @Single
+    fun instanceRegistry(optionalWorldPersistence: OptionalWorldPersistence): InstanceRegistry =
+        InstanceRegistry(optionalWorldPersistence.value)
 }

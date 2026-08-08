@@ -15,6 +15,7 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
+import org.micoli.micraft.game.world.instance.InstanceZone
 import org.micoli.micraft.player.PlayerState
 import org.slf4j.LoggerFactory
 
@@ -82,6 +83,17 @@ class WorldPersistence(val worldDir: Path) {
             worldPersistenceLog.warn("Failed to load chunk {}: {}", pos, e.message)
             null
         }
+    }
+
+    /**
+     * Chunk positions persisted to disk — unlike [WorldState.discoveredChunks], which only knows
+     * about chunks loaded into memory since the last server start, this also covers chunks
+     * generated in a previous run that haven't been touched (and thus reloaded) since restart.
+     */
+    fun persistedChunkPositions(): Set<ChunkPos> {
+        val files =
+            chunksDir.toFile().listFiles { f -> f.name.endsWith(".mcc.gz") } ?: return emptySet()
+        return files.mapNotNullTo(mutableSetOf()) { parseChunkFileName(it.nameWithoutExtension) }
     }
 
     fun saveChunk(pos: ChunkPos, chunk: Chunk) {
@@ -354,5 +366,37 @@ class WorldPersistence(val worldDir: Path) {
         }
     }
 
+    private val instancesFile = worldDir.resolve("instances.yaml")
+
+    fun loadInstances(): List<InstanceZone> {
+        if (!instancesFile.exists()) return emptyList()
+        return try {
+            Yaml.default.decodeFromString(
+                ListSerializer(InstanceZone.serializer()), instancesFile.readText())
+        } catch (e: Exception) {
+            worldPersistenceLog.warn("Failed to load instances: {}", e.message)
+            emptyList()
+        }
+    }
+
+    fun saveInstances(zones: List<InstanceZone>) {
+        try {
+            instancesFile.writeText(
+                Yaml.default.encodeToString(ListSerializer(InstanceZone.serializer()), zones))
+        } catch (e: IOException) {
+            worldPersistenceLog.warn("Failed to save instances: {}", e.message)
+        }
+    }
+
     private fun String.sanitize() = replace(Regex("[^a-zA-Z0-9_-]"), "_")
+}
+
+/** Parses "{cx}_{cz}" (supports negative values). */
+private fun parseChunkFileName(name: String): ChunkPos? {
+    val base = name.removeSuffix(".mcc")
+    val idx = base.lastIndexOf('_')
+    if (idx <= 0) return null
+    val cx = base.substring(0, idx).toIntOrNull() ?: return null
+    val cz = base.substring(idx + 1).toIntOrNull() ?: return null
+    return ChunkPos(cx, cz)
 }

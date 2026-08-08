@@ -8,6 +8,37 @@ export interface BlockInfoDto {
   liquid: boolean;
 }
 
+export interface ChunkPosDto {
+  cx: number;
+  cz: number;
+}
+
+export interface ChunkTerrainInfoDto {
+  cx: number;
+  cz: number;
+  colors: (string | null)[];
+  avgHeight: number | null;
+}
+
+export interface InstanceZoneDto {
+  id: string;
+  name: string;
+  yMin: number;
+  yMax: number;
+  chunks: ChunkPosDto[];
+  ownerName: string;
+  createdAt: number;
+  enabled: boolean;
+}
+
+export interface InstanceBlockDto {
+  x: number;
+  y: number;
+  z: number;
+  type: string;
+  state: number;
+}
+
 export interface NpcTypeDto {
   bbmodelFile: string;
   behaviorKey: string;
@@ -215,6 +246,35 @@ export const api = {
   },
   blocks: {
     list: () => get("/api/admin/blocks").then((r) => r.json() as Promise<BlockInfoDto[]>),
+  },
+  chunks: {
+    discovered: () => get("/api/admin/chunks/discovered").then((r) => r.json() as Promise<ChunkPosDto[]>),
+  },
+  terrain: {
+    list: () => get("/api/map/terrain").then((r) => r.json() as Promise<ChunkTerrainInfoDto[]>),
+  },
+  instances: {
+    list: () => get("/api/admin/instances").then((r) => r.json() as Promise<InstanceZoneDto[]>),
+    get: (id: string) =>
+      get(`/api/admin/instances/${encodeURIComponent(id)}`).then((r) => r.json() as Promise<InstanceZoneDto>),
+    create: (data: { name: string; yMin: number; yMax: number; chunks: ChunkPosDto[] }) =>
+      post("/api/admin/instances", data).then((r) => r.json() as Promise<InstanceZoneDto>),
+    rename: (id: string, name: string) => put(`/api/admin/instances/${encodeURIComponent(id)}`, { name }),
+    updateBounds: (id: string, yMin: number, yMax: number) =>
+      put(`/api/admin/instances/${encodeURIComponent(id)}/bounds`, { yMin, yMax }).then(
+        (r) => r.json() as Promise<InstanceZoneDto>,
+      ),
+    updateChunks: (id: string, chunks: ChunkPosDto[]) =>
+      put(`/api/admin/instances/${encodeURIComponent(id)}/chunks`, { chunks }).then(
+        (r) => r.json() as Promise<InstanceZoneDto>,
+      ),
+    setEnabled: (id: string, enabled: boolean) =>
+      put(`/api/admin/instances/${encodeURIComponent(id)}/enabled`, { enabled }).then(
+        (r) => r.json() as Promise<InstanceZoneDto>,
+      ),
+    delete: (id: string) => del(`/api/admin/instances/${encodeURIComponent(id)}`),
+    setBlock: (id: string, block: InstanceBlockDto) =>
+      put(`/api/admin/instances/${encodeURIComponent(id)}/blocks`, block),
   },
   npcTypes: {
     list: () => get("/api/admin/npc-types").then((r) => r.json() as Promise<Record<string, NpcTypeDto>>),

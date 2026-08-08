@@ -11,6 +11,7 @@ import { registerKeyboard } from "./game/input/keyboard";
 import { registerMouse } from "./game/input/mouse";
 import { registerCamera } from "./game/camera/camera";
 import { registerTargeting } from "./game/targeting/targeting";
+import { registerZoneBounds } from "./game/targeting/zoneBounds";
 import { registerCombatTargetHighlight } from "./game/targeting/targetHighlight";
 import { registerGhostBlock } from "./game/targeting/ghostBlock";
 import { registerChunks } from "./game/chunks/chunkBuilder";
@@ -72,6 +73,7 @@ window.mcState = {
   sunShadowDepthMat: null,
   targetMesh: null,
   breakMesh: null,
+  zoneMesh: null,
   ghostMesh: null,
   chunks: {},
   blockMaterials: undefined,
@@ -138,6 +140,7 @@ window.mc = {
   ...registerMouse(),
   ...registerCamera(),
   ...registerTargeting(),
+  ...registerZoneBounds(),
   ...registerCombatTargetHighlight(),
   ...registerGhostBlock(),
   ...registerChunks(),
@@ -319,6 +322,8 @@ window.mc = {
   mailUpdate: () => {},
   mailDeleted: () => {},
   openMailbox: () => {},
+  adminZoneWireframe: () => {},
+  instanceZonesSync: () => {},
 } satisfies McBindings;
 
 registerAllPlugins();

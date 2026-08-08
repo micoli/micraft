@@ -214,6 +214,7 @@ fun Application.module() {
             weatherManager = get<WeatherManager>(),
             configRegistry = get<ConfigRegistry>(),
             liquidManager = get<LiquidManager>(),
+            instanceRegistry = get<org.micoli.micraft.game.world.instance.InstanceRegistry>(),
             vegetationConfig = get<VegetationConfig>(),
             vegetationManager = get<VegetationManager>(),
             recipeRegistryLoader = get<RecipeRegistryLoader>(),

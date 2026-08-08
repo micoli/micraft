@@ -47,6 +47,7 @@ import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
+import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
@@ -429,6 +430,7 @@ class GameLoopModule {
         worldItemManager: WorldItemManager,
         liquidManager: LiquidManager,
         gameConfig: GameConfig,
+        instanceRegistry: InstanceRegistry,
     ): BlockBreaker =
         BlockBreaker(
             worldState,
@@ -436,6 +438,7 @@ class GameLoopModule {
             worldItemManager,
             liquidManager,
             bufferSize = gameConfig.blockBreakBufferSize,
+            instanceRegistry = instanceRegistry,
         )
 
     @Single
@@ -445,6 +448,7 @@ class GameLoopModule {
         playerPersister: PlayerPersister,
         vegetationManager: VegetationManager,
         @Named("attacks") attacks: Map<String, AttackDefinition>,
+        instanceRegistry: InstanceRegistry,
     ): BlockPlacer =
         BlockPlacer(
             worldState,
@@ -452,6 +456,7 @@ class GameLoopModule {
             playerPersister::save,
             vegetationManager,
             attacks,
+            instanceRegistry = instanceRegistry,
         )
 
     @Single

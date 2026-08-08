@@ -118,4 +118,46 @@ class WorldPersistenceTest {
         val reloaded = p.loadPlayerMacros("dave")
         assertEquals("/say hello", reloaded["hello"], "External macro edit must not be overwritten")
     }
+
+    @Test
+    fun loadInstances_missingFile_returnsEmptyList() {
+        assertTrue(persistence().loadInstances().isEmpty())
+    }
+
+    @Test
+    fun instancesRoundtrip_saveThenLoad() {
+        val p = persistence()
+        val zone =
+            org.micoli.micraft.game.world.instance.InstanceZone(
+                id = "zone-1",
+                name = "Arena",
+                yMin = -5,
+                yMax = 5,
+                chunks = setOf(ChunkPos(0, 0), ChunkPos(1, 0)),
+                ownerName = "Alice",
+                createdAt = 1000L,
+            )
+        p.saveInstances(listOf(zone))
+        val reloaded = p.loadInstances()
+        assertEquals(1, reloaded.size)
+        assertEquals(zone, reloaded[0])
+    }
+
+    @Test
+    fun persistedChunkPositions_emptyWorld_returnsEmptySet() {
+        assertEquals(emptySet(), persistence().persistedChunkPositions())
+    }
+
+    @Test
+    fun persistedChunkPositions_reflectsSavedChunks_evenAfterANewInstanceLosesMemory() {
+        val p = persistence()
+        val world = WorldState(MapChunkGenerator())
+        p.saveChunk(ChunkPos(3, -2), world.getOrGenerate(ChunkPos(3, -2)))
+        p.saveChunk(ChunkPos(0, 0), world.getOrGenerate(ChunkPos(0, 0)))
+
+        // A fresh WorldPersistence instance (e.g. after a server restart) has no in-memory state,
+        // but must still see chunks a prior run generated and saved to disk.
+        val reopened = WorldPersistence(p.worldDir)
+        assertEquals(setOf(ChunkPos(3, -2), ChunkPos(0, 0)), reopened.persistedChunkPositions())
+    }
 }

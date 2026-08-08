@@ -1326,9 +1326,9 @@
         exports.useState = function(initialState) {
           return resolveDispatcher().useState(initialState);
         };
-        exports.useSyncExternalStore = function(subscribe, getSnapshot, getServerSnapshot) {
+        exports.useSyncExternalStore = function(subscribe2, getSnapshot, getServerSnapshot) {
           return resolveDispatcher().useSyncExternalStore(
-            subscribe,
+            subscribe2,
             getSnapshot,
             getServerSnapshot
           );
@@ -7318,7 +7318,7 @@
           }
           return [newState, dispatch];
         }
-        function mountSyncExternalStore(subscribe, getSnapshot, getServerSnapshot) {
+        function mountSyncExternalStore(subscribe2, getSnapshot, getServerSnapshot) {
           var fiber = currentlyRenderingFiber, hook = mountWorkInProgressHook();
           if (isHydrating) {
             if (void 0 === getServerSnapshot)
@@ -7344,8 +7344,8 @@
           getServerSnapshot = { value: nextSnapshot, getSnapshot };
           hook.queue = getServerSnapshot;
           mountEffect(
-            subscribeToStore.bind(null, fiber, getServerSnapshot, subscribe),
-            [subscribe]
+            subscribeToStore.bind(null, fiber, getServerSnapshot, subscribe2),
+            [subscribe2]
           );
           fiber.flags |= 2048;
           pushSimpleEffect(
@@ -7362,7 +7362,7 @@
           );
           return nextSnapshot;
         }
-        function updateSyncExternalStore(subscribe, getSnapshot, getServerSnapshot) {
+        function updateSyncExternalStore(subscribe2, getSnapshot, getServerSnapshot) {
           var fiber = currentlyRenderingFiber, hook = updateWorkInProgressHook(), isHydrating$jscomp$0 = isHydrating;
           if (isHydrating$jscomp$0) {
             if (void 0 === getServerSnapshot)
@@ -7382,8 +7382,8 @@
           ))
             hook.memoizedState = getServerSnapshot, didReceiveUpdate = true;
           hook = hook.queue;
-          var create4 = subscribeToStore.bind(null, fiber, hook, subscribe);
-          updateEffectImpl(2048, Passive, create4, [subscribe]);
+          var create4 = subscribeToStore.bind(null, fiber, hook, subscribe2);
+          updateEffectImpl(2048, Passive, create4, [subscribe2]);
           if (hook.getSnapshot !== getSnapshot || cachedSnapshot || null !== workInProgressHook && workInProgressHook.memoizedState.tag & HasEffect) {
             fiber.flags |= 2048;
             pushSimpleEffect(
@@ -7417,8 +7417,8 @@
           inst.getSnapshot = getSnapshot;
           checkIfSnapshotChanged(inst) && forceStoreRerender(fiber);
         }
-        function subscribeToStore(fiber, inst, subscribe) {
-          return subscribe(function() {
+        function subscribeToStore(fiber, inst, subscribe2) {
+          return subscribe2(function() {
             checkIfSnapshotChanged(inst) && (startUpdateTimerByLane(2, "updateSyncExternalStore()", fiber), forceStoreRerender(fiber));
           });
         }
@@ -20084,11 +20084,11 @@
             mountHookTypesDev();
             return mountTransition();
           },
-          useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+          useSyncExternalStore: function(subscribe2, getSnapshot, getServerSnapshot) {
             currentHookNameInDev = "useSyncExternalStore";
             mountHookTypesDev();
             return mountSyncExternalStore(
-              subscribe,
+              subscribe2,
               getSnapshot,
               getServerSnapshot
             );
@@ -20214,11 +20214,11 @@
             updateHookTypesDev();
             return mountTransition();
           },
-          useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+          useSyncExternalStore: function(subscribe2, getSnapshot, getServerSnapshot) {
             currentHookNameInDev = "useSyncExternalStore";
             updateHookTypesDev();
             return mountSyncExternalStore(
-              subscribe,
+              subscribe2,
               getSnapshot,
               getServerSnapshot
             );
@@ -20344,11 +20344,11 @@
             updateHookTypesDev();
             return updateTransition();
           },
-          useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+          useSyncExternalStore: function(subscribe2, getSnapshot, getServerSnapshot) {
             currentHookNameInDev = "useSyncExternalStore";
             updateHookTypesDev();
             return updateSyncExternalStore(
-              subscribe,
+              subscribe2,
               getSnapshot,
               getServerSnapshot
             );
@@ -20474,11 +20474,11 @@
             updateHookTypesDev();
             return rerenderTransition();
           },
-          useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+          useSyncExternalStore: function(subscribe2, getSnapshot, getServerSnapshot) {
             currentHookNameInDev = "useSyncExternalStore";
             updateHookTypesDev();
             return updateSyncExternalStore(
-              subscribe,
+              subscribe2,
               getSnapshot,
               getServerSnapshot
             );
@@ -20621,12 +20621,12 @@
             mountHookTypesDev();
             return mountTransition();
           },
-          useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+          useSyncExternalStore: function(subscribe2, getSnapshot, getServerSnapshot) {
             currentHookNameInDev = "useSyncExternalStore";
             warnInvalidHookAccess();
             mountHookTypesDev();
             return mountSyncExternalStore(
-              subscribe,
+              subscribe2,
               getSnapshot,
               getServerSnapshot
             );
@@ -20776,12 +20776,12 @@
             updateHookTypesDev();
             return updateTransition();
           },
-          useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+          useSyncExternalStore: function(subscribe2, getSnapshot, getServerSnapshot) {
             currentHookNameInDev = "useSyncExternalStore";
             warnInvalidHookAccess();
             updateHookTypesDev();
             return updateSyncExternalStore(
-              subscribe,
+              subscribe2,
               getSnapshot,
               getServerSnapshot
             );
@@ -20931,12 +20931,12 @@
             updateHookTypesDev();
             return rerenderTransition();
           },
-          useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+          useSyncExternalStore: function(subscribe2, getSnapshot, getServerSnapshot) {
             currentHookNameInDev = "useSyncExternalStore";
             warnInvalidHookAccess();
             updateHookTypesDev();
             return updateSyncExternalStore(
-              subscribe,
+              subscribe2,
               getSnapshot,
               getServerSnapshot
             );
@@ -25671,7 +25671,7 @@
   var import_client = __toESM(require_client(), 1);
 
   // admin/AdminApp.tsx
-  var import_react22 = __toESM(require_react(), 1);
+  var import_react26 = __toESM(require_react(), 1);
 
   // node_modules/react-router/dist/development/chunk-KS7C4IRE.mjs
   var React = __toESM(require_react(), 1);
@@ -31806,6 +31806,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "nav.worlds": "Worlds",
     "nav.gameAssets": "Game Assets",
     "nav.administration": "Administration",
+    "nav.instances": "Instances",
     "nav.worldSimulator": "World simulator",
     "page.status": "Server Status",
     "page.users": "Users",
@@ -31816,6 +31817,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "page.worlds": "Worlds",
     "page.gameAssets": "Game Assets",
     "page.administration": "Administration",
+    "page.instances": "Instances",
     "page.worldSimulator": "World simulator",
     // ── Shared ──────────────────────────────────────────────────────────────────
     "common.loading": "Loading\u2026",
@@ -32281,6 +32283,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "nav.worlds": "Mondes",
     "nav.gameAssets": "Assets de jeu",
     "nav.administration": "Administration",
+    "nav.instances": "Instances",
     "nav.worldSimulator": "Simulateur de monde",
     "page.status": "\xC9tat du serveur",
     "page.users": "Utilisateurs",
@@ -32291,6 +32294,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "page.worlds": "Mondes",
     "page.gameAssets": "Assets de jeu",
     "page.administration": "Administration",
+    "page.instances": "Instances",
     "page.worldSimulator": "Simulateur de monde",
     // ── Shared ──────────────────────────────────────────────────────────────────
     "common.loading": "Chargement\u2026",
@@ -32894,6 +32898,29 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     },
     blocks: {
       list: () => get("/api/admin/blocks").then((r2) => r2.json())
+    },
+    chunks: {
+      discovered: () => get("/api/admin/chunks/discovered").then((r2) => r2.json())
+    },
+    terrain: {
+      list: () => get("/api/map/terrain").then((r2) => r2.json())
+    },
+    instances: {
+      list: () => get("/api/admin/instances").then((r2) => r2.json()),
+      get: (id2) => get(`/api/admin/instances/${encodeURIComponent(id2)}`).then((r2) => r2.json()),
+      create: (data2) => post("/api/admin/instances", data2).then((r2) => r2.json()),
+      rename: (id2, name2) => put(`/api/admin/instances/${encodeURIComponent(id2)}`, { name: name2 }),
+      updateBounds: (id2, yMin, yMax) => put(`/api/admin/instances/${encodeURIComponent(id2)}/bounds`, { yMin, yMax }).then(
+        (r2) => r2.json()
+      ),
+      updateChunks: (id2, chunks) => put(`/api/admin/instances/${encodeURIComponent(id2)}/chunks`, { chunks }).then(
+        (r2) => r2.json()
+      ),
+      setEnabled: (id2, enabled) => put(`/api/admin/instances/${encodeURIComponent(id2)}/enabled`, { enabled }).then(
+        (r2) => r2.json()
+      ),
+      delete: (id2) => del(`/api/admin/instances/${encodeURIComponent(id2)}`),
+      setBlock: (id2, block2) => put(`/api/admin/instances/${encodeURIComponent(id2)}/blocks`, block2)
     },
     npcTypes: {
       list: () => get("/api/admin/npc-types").then((r2) => r2.json())
@@ -91688,10 +91715,1196 @@ ${end.comment}` : end.comment;
     ] });
   }
 
-  // admin/AdminApp.tsx
+  // admin/pages/InstancesPage.tsx
+  var import_react25 = __toESM(require_react(), 1);
+
+  // admin/pages/InstanceEditorViewport.tsx
+  var import_react23 = __toESM(require_react(), 1);
+
+  // game/shared/BlockPreview.tsx
+  var import_react22 = __toESM(require_react(), 1);
+
+  // game/blocks/blockDefs.ts
+  function getFaceTexUrl(ordinal, faceDir) {
+    var _a6, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+    const def = (_b = (_a6 = window.mc) == null ? void 0 : _a6.getBlockDef) == null ? void 0 : _b.call(_a6, ordinal);
+    if (!((_c = def == null ? void 0 : def.faces) == null ? void 0 : _c.length)) return null;
+    const elem0 = def.faces[0];
+    const face = (_e = (_d = elem0[faceDir]) != null ? _d : elem0.find((f) => f != null)) != null ? _e : null;
+    if (!face) return null;
+    const texName = face.matKey.replace(":biome_tint", "");
+    const texs = (_h = (_g = (_f = window.mc) == null ? void 0 : _f.getBlockTextures) == null ? void 0 : _g.call(_f)) != null ? _h : [];
+    return (_j = (_i = texs.find((t2) => t2.name === texName)) == null ? void 0 : _i.url) != null ? _j : null;
+  }
+
+  // game/shared/blockSceneRenderer.ts
+  function setupBlockScene(scene, ordinal, colorHex) {
+    var _a6, _b, _c, _d, _e, _f, _g, _h;
+    const B = window.BABYLON;
+    const blockDef = (_b = (_a6 = window.mc) == null ? void 0 : _a6.getBlockDef) == null ? void 0 : _b.call(_a6, ordinal);
+    const elements = (_c = blockDef == null ? void 0 : blockDef.elements) != null ? _c : [];
+    let minX = 0, minY = 0, minZ = 0, maxX = 16, maxY = 16, maxZ = 16;
+    let cx = 0.5, cy = 0.5, cz = 0.5;
+    if (elements.length > 0) {
+      minX = Math.min(...elements.map((e) => e.from[0]));
+      minY = Math.min(...elements.map((e) => e.from[1]));
+      minZ = Math.min(...elements.map((e) => e.from[2]));
+      maxX = Math.max(...elements.map((e) => e.to[0]));
+      maxY = Math.max(...elements.map((e) => e.to[1]));
+      maxZ = Math.max(...elements.map((e) => e.to[2]));
+      cx = elements.reduce((s, e) => s + (e.from[0] + e.to[0]) / 2, 0) / elements.length / 16;
+      cy = elements.reduce((s, e) => s + (e.from[1] + e.to[1]) / 2, 0) / elements.length / 16;
+      cz = elements.reduce((s, e) => s + (e.from[2] + e.to[2]) / 2, 0) / elements.length / 16;
+    }
+    const bW = (maxX - minX) / 16;
+    const bH = (maxY - minY) / 16;
+    const bD = (maxZ - minZ) / 16;
+    const camAlpha = -Math.PI * 0.25;
+    const camBeta = Math.PI / 4;
+    const cam = new B.ArcRotateCamera("cam", camAlpha, camBeta, 2.5, B.Vector3.Zero(), scene);
+    cam.radius = Math.max(2.5, Math.max(bW, bH, bD) * 2.2);
+    const light = new B.HemisphericLight("light", new B.Vector3(1, 2, 1), scene);
+    light.intensity = 1;
+    light.groundColor = new B.Color3(0.25, 0.25, 0.25);
+    const root2 = new B.TransformNode("root", scene);
+    const texs = (_f = (_e = (_d = window.mc) == null ? void 0 : _d.getBlockTextures) == null ? void 0 : _e.call(_d)) != null ? _f : [];
+    const matCache = /* @__PURE__ */ new Map();
+    const getUrl = (matKey) => {
+      var _a7, _b2;
+      const name2 = matKey.replace(":biome_tint", "");
+      return (_b2 = (_a7 = texs.find((t2) => t2.name === name2)) == null ? void 0 : _a7.url) != null ? _b2 : null;
+    };
+    const ensureMat = (url, twoSided = false) => {
+      const key2 = twoSided ? url + "_2s" : url;
+      if (!matCache.has(key2)) {
+        const mat = new B.StandardMaterial("m_" + key2, scene);
+        const tex = new B.Texture(url, scene, false, true, B.Texture.NEAREST_SAMPLINGMODE);
+        tex.hasAlpha = true;
+        mat.diffuseTexture = tex;
+        mat.useAlphaFromDiffuseTexture = true;
+        mat.specularColor = new B.Color3(0, 0, 0);
+        mat.backFaceCulling = !twoSided;
+        matCache.set(key2, mat);
+      }
+      return matCache.get(key2);
+    };
+    let plainMat = null;
+    if (colorHex) {
+      const n = parseInt(colorHex, 16);
+      plainMat = new B.StandardMaterial("m_plain_" + colorHex, scene);
+      plainMat.diffuseColor = new B.Color3((n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255);
+      plainMat.specularColor = new B.Color3(0.1, 0.1, 0.1);
+    }
+    const isCrossSprite = (blockDef == null ? void 0 : blockDef.renderType) === "cross_sprite";
+    if (isCrossSprite) {
+      const fi = (_h = (_g = blockDef.faces[0]) == null ? void 0 : _g.find((f) => f != null)) != null ? _h : null;
+      const url = fi ? getUrl(fi.matKey) : null;
+      if (fi && url) {
+        const CROSS_QUADS = [
+          [0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0],
+          [1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0]
+        ];
+        for (let qi = 0; qi < CROSS_QUADS.length; qi++) {
+          const q = CROSS_QUADS[qi];
+          const positions = [
+            q[0] - 0.5,
+            q[1] - 0.5,
+            q[2] - 0.5,
+            q[3] - 0.5,
+            q[4] - 0.5,
+            q[5] - 0.5,
+            q[6] - 0.5,
+            q[7] - 0.5,
+            q[8] - 0.5,
+            q[9] - 0.5,
+            q[10] - 0.5,
+            q[11] - 0.5
+          ];
+          const indices = [0, 1, 2, 0, 2, 3];
+          const normals = [];
+          B.VertexData.ComputeNormals(positions, indices, normals);
+          const vd = new B.VertexData();
+          vd.positions = positions;
+          vd.indices = indices;
+          vd.normals = normals;
+          vd.uvs = fi.uv;
+          const mesh = new B.Mesh(`cross${qi}`, scene);
+          mesh.parent = root2;
+          vd.applyToMesh(mesh);
+          mesh.material = ensureMat(url, true);
+        }
+      }
+      return root2;
+    }
+    for (let ei = 0; ei < elements.length; ei++) {
+      const elem = elements[ei];
+      const f = elem.from, t2 = elem.to;
+      const x0 = f[0] / 16, y0 = f[1] / 16, z0 = f[2] / 16;
+      const x1 = t2[0] / 16, y1 = t2[1] / 16, z1 = t2[2] / 16;
+      const W = x1 - x0, H = y1 - y0, D = z1 - z0;
+      const mx = (x0 + x1) / 2, my = (y0 + y1) / 2, mz = (z0 + z1) / 2;
+      const firstFace = elem.faces.find((fi) => fi != null);
+      const url = firstFace ? getUrl(firstFace.matKey) : null;
+      const mat = plainMat != null ? plainMat : url ? ensureMat(url, false) : null;
+      if (!mat) continue;
+      const box = B.MeshBuilder.CreateBox(`e${ei}`, { width: W, height: H, depth: D }, scene);
+      box.parent = root2;
+      box.position = new B.Vector3(mx - cx, my - cy, mz - cz);
+      box.material = mat;
+    }
+    return root2;
+  }
+
+  // game/shared/BlockPreview.tsx
   var import_jsx_runtime38 = __toESM(require_jsx_runtime(), 1);
-  function Icon2({ d, size = 18 }) {
+  function useBlockDefsReady() {
+    const [ready, setReady] = (0, import_react22.useState)(() => {
+      var _a6, _b;
+      return !!((_b = (_a6 = window.mc) == null ? void 0 : _a6.isBlockDefsReady) == null ? void 0 : _b.call(_a6));
+    });
+    (0, import_react22.useEffect)(() => {
+      if (ready) return;
+      const iv = setInterval(() => {
+        var _a6, _b;
+        if ((_b = (_a6 = window.mc) == null ? void 0 : _a6.isBlockDefsReady) == null ? void 0 : _b.call(_a6)) {
+          setReady(true);
+          clearInterval(iv);
+        }
+      }, 150);
+      return () => clearInterval(iv);
+    }, [ready]);
+    return ready;
+  }
+  function CssBlockCube({
+    ordinal,
+    size,
+    colorHex
+  }) {
+    const S = size;
+    const H = Math.round(S / 2);
+    const topUrl = colorHex ? null : getFaceTexUrl(ordinal, 4);
+    const frontUrl = colorHex ? null : getFaceTexUrl(ordinal, 0);
+    const rightUrl = colorHex ? null : getFaceTexUrl(ordinal, 2);
+    const face = (brightness, transform, texUrl) => ({
+      position: "absolute",
+      width: S,
+      height: S,
+      backgroundImage: texUrl ? `url(${texUrl})` : void 0,
+      backgroundColor: texUrl ? void 0 : colorHex ? `#${colorHex}` : "#666",
+      backgroundSize: "100% 100%",
+      imageRendering: "pixelated",
+      transform,
+      filter: `brightness(${brightness})`
+    });
     return /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+      "div",
+      {
+        style: {
+          width: S * 1.8,
+          height: S * 1.8,
+          perspective: S * 5,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0
+        },
+        children: /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(
+          "div",
+          {
+            style: {
+              position: "relative",
+              width: S,
+              height: S,
+              transformStyle: "preserve-3d",
+              transform: "rotateX(-25deg) rotateY(45deg)"
+            },
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { style: face(1.05, `rotateX(90deg) translateZ(${H}px)`, topUrl) }),
+              /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { style: face(0.78, `translateZ(${H}px)`, frontUrl) }),
+              /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { style: face(0.62, `rotateY(90deg) translateZ(${H}px)`, rightUrl) })
+            ]
+          }
+        )
+      }
+    );
+  }
+  function Block3DPreview({
+    ordinal,
+    size = 160,
+    animate = true,
+    colorHex
+  }) {
+    const canvasRef = (0, import_react22.useRef)(null);
+    (0, import_react22.useEffect)(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const B = window.BABYLON;
+      if (!B) return;
+      const engine = new B.Engine(canvas, true, {
+        preserveDrawingBuffer: true,
+        antialias: true,
+        premultipliedAlpha: false
+      });
+      const scene = new B.Scene(engine);
+      scene.clearColor = new B.Color4(0.08, 0.08, 0.08, 0);
+      const root2 = setupBlockScene(scene, ordinal, colorHex);
+      if (animate) {
+        scene.onBeforeRenderObservable.add(() => {
+          root2.rotation.y += 0.018;
+        });
+        engine.runRenderLoop(() => scene.render());
+      } else {
+        scene.executeWhenReady(() => {
+          scene.render();
+        });
+      }
+      return () => engine.dispose();
+    }, [ordinal, animate, colorHex]);
+    return /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+      "canvas",
+      {
+        ref: canvasRef,
+        width: size,
+        height: size,
+        style: { display: "block", width: size, height: size, borderRadius: animate ? 6 : 0 }
+      }
+    );
+  }
+
+  // admin/pages/InstanceEditorViewport.tsx
+  var import_jsx_runtime39 = __toESM(require_jsx_runtime(), 1);
+  var CHUNK_SIZE = 16;
+  var MAX_VIEW_RADIUS_CHUNKS = 8;
+  var VIEW_RADIUS_UNLOAD_MARGIN = 1;
+  var PICK_EPSILON = 0.01;
+  function rgbToHex([r2, g, b]) {
+    return `#${[r2, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+  }
+  function InstanceEditorViewport({ zone }) {
+    const canvasRef = (0, import_react23.useRef)(null);
+    const [blockDefs, setBlockDefs] = (0, import_react23.useState)([]);
+    const [ordinalByName, setOrdinalByName] = (0, import_react23.useState)(/* @__PURE__ */ new Map());
+    const [selectedType, setSelectedType] = (0, import_react23.useState)(null);
+    const [mode, setMode] = (0, import_react23.useState)("place");
+    const [loadError, setLoadError] = (0, import_react23.useState)(null);
+    const modeRef = (0, import_react23.useRef)(mode);
+    const selectedTypeRef = (0, import_react23.useRef)(selectedType);
+    (0, import_react23.useEffect)(() => {
+      modeRef.current = mode;
+    }, [mode]);
+    (0, import_react23.useEffect)(() => {
+      selectedTypeRef.current = selectedType;
+    }, [selectedType]);
+    const blockDefsReady = useBlockDefsReady();
+    (0, import_react23.useEffect)(() => {
+      api.blocks.list().then((defs) => {
+        var _a6, _b;
+        const withoutAir = defs.filter((b) => b.name !== "AIR");
+        setBlockDefs(withoutAir);
+        setOrdinalByName(new Map(defs.map((b, i) => [b.name, i])));
+        (_b = (_a6 = window.mc).setBlockRegistry) == null ? void 0 : _b.call(_a6, JSON.stringify(defs));
+      }).catch(console.error);
+    }, []);
+    const getOrdinal = (name2) => {
+      var _a6;
+      return (_a6 = ordinalByName.get(name2)) != null ? _a6 : null;
+    };
+    (0, import_react23.useEffect)(() => {
+      setLoadError(null);
+      if (zone.chunks.length === 0) {
+        setLoadError("Zone has no chunks.");
+        return;
+      }
+      if (!window.webApp) {
+        setLoadError("WASM module not loaded (webApp.js missing).");
+        return;
+      }
+      if (!blockDefsReady) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const B = window.BABYLON;
+      if (!B) return;
+      const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
+      const scene = new B.Scene(engine);
+      scene.clearColor = new B.Color4(0.06, 0.06, 0.08, 1);
+      const cxs = zone.chunks.map((c) => c.cx);
+      const czs = zone.chunks.map((c) => c.cz);
+      const minCx = Math.min(...cxs);
+      const maxCx = Math.max(...cxs);
+      const minCz = Math.min(...czs);
+      const maxCz = Math.max(...czs);
+      const centerX = (minCx + maxCx + 1) * CHUNK_SIZE / 2;
+      const centerZ = (minCz + maxCz + 1) * CHUNK_SIZE / 2;
+      const centerY = (zone.yMin + zone.yMax) / 2 + 0.5;
+      const span = Math.max((maxCx - minCx + 1) * CHUNK_SIZE, (maxCz - minCz + 1) * CHUNK_SIZE, zone.yMax - zone.yMin, 4);
+      const camera = new B.ArcRotateCamera(
+        "cam",
+        -Math.PI * 0.35,
+        Math.PI / 3,
+        span * 1.8,
+        new B.Vector3(centerX, centerY, centerZ),
+        scene
+      );
+      camera.attachControl(canvas, true);
+      camera.wheelPrecision = 20;
+      camera.lowerRadiusLimit = 2;
+      camera.panningSensibility = 200;
+      const light = new B.HemisphericLight("light", new B.Vector3(0.5, 1, 0.3), scene);
+      light.intensity = 1;
+      const sun = new B.DirectionalLight("sun", new B.Vector3(-0.3, -1, -0.2), scene);
+      sun.intensity = 0.6;
+      const chunkSet = new Set(zone.chunks.map((c) => `${c.cx},${c.cz}`));
+      const inZone = (x, z) => {
+        const cx = Math.floor(x / CHUNK_SIZE);
+        const cz = Math.floor(z / CHUNK_SIZE);
+        return chunkSet.has(`${cx},${cz}`);
+      };
+      const groundMat = new B.StandardMaterial("zoneGroundMat", scene);
+      groundMat.diffuseColor = new B.Color3(0.2, 0.2, 0.25);
+      groundMat.alpha = 0.35;
+      groundMat.freeze();
+      const groundMeshes = /* @__PURE__ */ new Set();
+      for (const { cx, cz } of zone.chunks) {
+        const g = B.MeshBuilder.CreateGround(`ground-${cx}-${cz}`, { width: CHUNK_SIZE, height: CHUNK_SIZE }, scene);
+        g.position = new B.Vector3(cx * CHUNK_SIZE + CHUNK_SIZE / 2, zone.yMin, cz * CHUNK_SIZE + CHUNK_SIZE / 2);
+        g.material = groundMat;
+        g.freezeWorldMatrix();
+        groundMeshes.add(g);
+      }
+      const chunkKeyOf = (cx, cz) => `${cx},${cz}`;
+      const chunkLoading = /* @__PURE__ */ new Set();
+      const visibleChunks = /* @__PURE__ */ new Set();
+      let disposed = false;
+      async function loadChunk(cx, cz) {
+        const exports = await window.webApp;
+        const res = await fetch(`/api/chunks/${cx}/${cz}`);
+        if (!res.ok) throw new Error(`chunk fetch failed: ${res.status}`);
+        const bytes = new Uint8Array(await res.arrayBuffer());
+        exports.mcAdminLoadChunk(scene, bytes, zone.yMin, zone.yMax);
+        for (const m of scene.meshes) {
+          if (!groundMeshes.has(m)) m.isPickable = true;
+        }
+      }
+      function showChunk(cx, cz) {
+        const key2 = chunkKeyOf(cx, cz);
+        if (visibleChunks.has(key2) || chunkLoading.has(key2)) return;
+        chunkLoading.add(key2);
+        loadChunk(cx, cz).then(() => visibleChunks.add(key2)).catch((e) => {
+          console.error(`Failed to load instance chunk ${key2}, retrying in 2s`, e);
+          if (!disposed) setTimeout(() => showChunk(cx, cz), 2e3);
+        }).finally(() => chunkLoading.delete(key2));
+      }
+      function hideChunk(cx, cz) {
+        const key2 = chunkKeyOf(cx, cz);
+        if (!visibleChunks.has(key2)) return;
+        visibleChunks.delete(key2);
+        window.webApp.then((exports) => exports.mcAdminDisposeChunk(cx, cz)).catch(console.error);
+      }
+      function reloadChunk(cx, cz) {
+        const key2 = chunkKeyOf(cx, cz);
+        if (chunkLoading.has(key2)) return;
+        chunkLoading.add(key2);
+        loadChunk(cx, cz).then(() => visibleChunks.add(key2)).catch((e) => console.error(`Failed to reload instance chunk ${key2}`, e)).finally(() => chunkLoading.delete(key2));
+      }
+      function viewRadiusChunks() {
+        return Math.min(MAX_VIEW_RADIUS_CHUNKS, Math.max(1, Math.ceil(camera.radius / CHUNK_SIZE) + 1));
+      }
+      function updateVisibleChunks() {
+        const radius = viewRadiusChunks();
+        const targetCx = Math.floor(camera.target.x / CHUNK_SIZE);
+        const targetCz = Math.floor(camera.target.z / CHUNK_SIZE);
+        for (const { cx, cz } of zone.chunks) {
+          if (Math.max(Math.abs(cx - targetCx), Math.abs(cz - targetCz)) <= radius) showChunk(cx, cz);
+        }
+        for (const key2 of Array.from(visibleChunks)) {
+          const [cx, cz] = key2.split(",").map(Number);
+          if (Math.max(Math.abs(cx - targetCx), Math.abs(cz - targetCz)) > radius + VIEW_RADIUS_UNLOAD_MARGIN) {
+            hideChunk(cx, cz);
+          }
+        }
+      }
+      updateVisibleChunks();
+      let lastVisibilityCheck = 0;
+      const viewMatrixObserver = camera.onViewMatrixChangedObservable.add(() => {
+        const now = performance.now();
+        if (now - lastVisibilityCheck < 300) return;
+        lastVisibilityCheck = now;
+        updateVisibleChunks();
+      });
+      canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+      let downX = 0;
+      let downY = 0;
+      const CLICK_MOVE_THRESHOLD = 5;
+      const clickObserver = scene.onPointerObservable.add((pointerInfo) => {
+        if (pointerInfo.type === B.PointerEventTypes.POINTERDOWN) {
+          downX = scene.pointerX;
+          downY = scene.pointerY;
+          return;
+        }
+        if (pointerInfo.type !== B.PointerEventTypes.POINTERUP) return;
+        const dx = scene.pointerX - downX;
+        const dy = scene.pointerY - downY;
+        if (dx * dx + dy * dy > CLICK_MOVE_THRESHOLD * CLICK_MOVE_THRESHOLD) return;
+        const pick = scene.pick(scene.pointerX, scene.pointerY);
+        if (!(pick == null ? void 0 : pick.hit) || !pick.pickedMesh || !pick.pickedPoint) return;
+        const normal = pick.getNormal(true);
+        const onGround = groundMeshes.has(pick.pickedMesh);
+        const currentMode = modeRef.current;
+        if (currentMode === "break") {
+          if (onGround || !normal) return;
+          const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
+          const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
+          const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
+          api.instances.setBlock(zone.id, { x: bx, y: by, z: bz, type: "AIR", state: 0 }).then(() => reloadChunk(Math.floor(bx / CHUNK_SIZE), Math.floor(bz / CHUNK_SIZE))).catch(console.error);
+          return;
+        }
+        const type = selectedTypeRef.current;
+        if (!type) return;
+        let tx, ty, tz;
+        if (onGround) {
+          tx = Math.floor(pick.pickedPoint.x);
+          ty = zone.yMin;
+          tz = Math.floor(pick.pickedPoint.z);
+        } else if (normal) {
+          tx = Math.floor(pick.pickedPoint.x + normal.x * PICK_EPSILON);
+          ty = Math.floor(pick.pickedPoint.y + normal.y * PICK_EPSILON);
+          tz = Math.floor(pick.pickedPoint.z + normal.z * PICK_EPSILON);
+        } else {
+          return;
+        }
+        if (ty < zone.yMin || ty > zone.yMax || !inZone(tx, tz)) return;
+        api.instances.setBlock(zone.id, { x: tx, y: ty, z: tz, type, state: 0 }).then(() => reloadChunk(Math.floor(tx / CHUNK_SIZE), Math.floor(tz / CHUNK_SIZE))).catch(console.error);
+      });
+      engine.runRenderLoop(() => scene.render());
+      const onResize = () => engine.resize();
+      window.addEventListener("resize", onResize);
+      return () => {
+        disposed = true;
+        camera.onViewMatrixChangedObservable.remove(viewMatrixObserver);
+        scene.onPointerObservable.remove(clickObserver);
+        window.removeEventListener("resize", onResize);
+        engine.dispose();
+      };
+    }, [zone.id, blockDefsReady]);
+    return /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "flex-1 flex overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "flex-[4] relative", children: loadError ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "w-full h-full flex items-center justify-center text-red-400 text-sm p-6 text-center", children: loadError }) : /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("canvas", { ref: canvasRef, className: "w-full h-full block" }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("aside", { className: "flex-[2] shrink-0 border-l border-[#2E3A4E] overflow-y-auto flex flex-col", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "shrink-0 border-b border-[#2E3A4E] flex flex-col items-center justify-center gap-1 py-3", children: [
+          selectedType && blockDefsReady && getOrdinal(selectedType) !== null ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Block3DPreview, { ordinal: getOrdinal(selectedType), size: 96 }) : /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "h-24 w-24 flex items-center justify-center text-[#8A99AF] text-xs", children: selectedType ? "Loading\u2026" : "No block selected" }),
+          selectedType && /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "text-white text-xs font-medium", children: selectedType.replace(/_/g, " ") })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "flex shrink-0 border-b border-[#2E3A4E]", children: ["place", "break"].map((m) => /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
+          "button",
+          {
+            onClick: () => setMode(m),
+            className: `flex-1 py-2 text-xs font-medium capitalize transition-colors ${mode === m ? "bg-[#3C50E0]/20 text-white" : "text-[#8A99AF] hover:text-white"}`,
+            children: m
+          },
+          m
+        )) }),
+        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "grid grid-cols-3 gap-1 p-2 overflow-y-auto", children: blockDefs.map((b) => /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(
+          "button",
+          {
+            onClick: () => setSelectedType(b.name),
+            title: b.name,
+            className: `flex flex-col items-center gap-1 rounded border-2 p-1 ${selectedType === b.name ? "border-[#3C50E0]" : "border-transparent hover:border-white/20"}`,
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "aspect-square w-full rounded flex items-center justify-center", children: blockDefsReady && getOrdinal(b.name) !== null ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(CssBlockCube, { ordinal: getOrdinal(b.name), size: 22 }) : /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "w-full h-full rounded", style: { background: rgbToHex(b.minimapColor) } }) }),
+              /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "text-[9px] leading-tight text-[#8A99AF] text-center truncate w-full", children: b.name.replace(/_/g, " ") })
+            ]
+          },
+          b.name
+        )) })
+      ] })
+    ] });
+  }
+
+  // admin/pages/InstanceChunkPicker.tsx
+  var import_react24 = __toESM(require_react(), 1);
+  var import_jsx_runtime40 = __toESM(require_jsx_runtime(), 1);
+  var CHUNK_SIZE2 = 16;
+  var BASE_SCALE = 2;
+  var MIN_VIEW_RADIUS_CHUNKS = 12;
+  var MAX_VIEW_RADIUS_CHUNKS2 = 220;
+  var VIEWPORT_PX = 520;
+  var MIN_ZOOM = 0.02;
+  var MAX_ZOOM = 6;
+  function chunkKey(cx, cz) {
+    return `${cx},${cz}`;
+  }
+  function clampZoom(z) {
+    return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+  }
+  function footprintCenter(chunks) {
+    const cxs = chunks.map((c) => c.cx);
+    const czs = chunks.map((c) => c.cz);
+    const midCx = (Math.min(...cxs) + Math.max(...cxs) + 1) / 2;
+    const midCz = (Math.min(...czs) + Math.max(...czs) + 1) / 2;
+    return { x: Math.round(midCx * CHUNK_SIZE2), z: Math.round(midCz * CHUNK_SIZE2) };
+  }
+  function isContiguous(selected) {
+    if (selected.size <= 1) return true;
+    const start = selected.values().next().value;
+    const seen = /* @__PURE__ */ new Set([start]);
+    const stack = [start];
+    while (stack.length > 0) {
+      const key2 = stack.pop();
+      const [cx, cz] = key2.split(",").map(Number);
+      for (const [dx, dz] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1]
+      ]) {
+        const neighborKey = chunkKey(cx + dx, cz + dz);
+        if (selected.has(neighborKey) && !seen.has(neighborKey)) {
+          seen.add(neighborKey);
+          stack.push(neighborKey);
+        }
+      }
+    }
+    return seen.size === selected.size;
+  }
+  function InstanceChunkPicker({
+    editZone,
+    onCancel,
+    onSaved
+  }) {
+    var _a6, _b, _c;
+    const [discovered, setDiscovered] = (0, import_react24.useState)(/* @__PURE__ */ new Set());
+    const [heightByChunk, setHeightByChunk] = (0, import_react24.useState)(/* @__PURE__ */ new Map());
+    const initialCenter = editZone && editZone.chunks.length > 0 ? footprintCenter(editZone.chunks) : { x: 0, z: 0 };
+    const [center, setCenter] = (0, import_react24.useState)(initialCenter);
+    const [centerInput, setCenterInput] = (0, import_react24.useState)({ x: String(initialCenter.x), z: String(initialCenter.z) });
+    const [rasterUrl, setRasterUrl] = (0, import_react24.useState)(null);
+    const [selected, setSelected] = (0, import_react24.useState)(
+      () => {
+        var _a7;
+        return new Set(((_a7 = editZone == null ? void 0 : editZone.chunks) != null ? _a7 : []).map((c) => chunkKey(c.cx, c.cz)));
+      }
+    );
+    const [name2, setName] = (0, import_react24.useState)((_a6 = editZone == null ? void 0 : editZone.name) != null ? _a6 : "");
+    const [yMin, setYMin] = (0, import_react24.useState)((_b = editZone == null ? void 0 : editZone.yMin) != null ? _b : 0);
+    const [yMax, setYMax] = (0, import_react24.useState)((_c = editZone == null ? void 0 : editZone.yMax) != null ? _c : 160);
+    const [error2, setError] = (0, import_react24.useState)(null);
+    const [zoom, setZoom] = (0, import_react24.useState)(1);
+    const [pan, setPan] = (0, import_react24.useState)({ x: 0, y: 0 });
+    const [isPanning, setIsPanning] = (0, import_react24.useState)(false);
+    const [radiusChunks, setRadiusChunks] = (0, import_react24.useState)(MIN_VIEW_RADIUS_CHUNKS);
+    const [worldTruncated, setWorldTruncated] = (0, import_react24.useState)(false);
+    const paintingRef = (0, import_react24.useRef)(null);
+    const panningRef = (0, import_react24.useRef)(
+      null
+    );
+    const viewportRef = (0, import_react24.useRef)(null);
+    (0, import_react24.useEffect)(() => {
+      api.chunks.discovered().then((chunks) => {
+        const set4 = new Set(chunks.map((c) => chunkKey(c.cx, c.cz)));
+        setDiscovered(set4);
+        if (chunks.length === 0) return;
+        if (editZone) {
+          const cxs2 = editZone.chunks.map((c) => c.cx);
+          const czs2 = editZone.chunks.map((c) => c.cz);
+          const neededRadius2 = Math.ceil(Math.max(Math.max(...cxs2) - Math.min(...cxs2), Math.max(...czs2) - Math.min(...czs2)) / 2) + 3;
+          const radius2 = Math.min(Math.max(neededRadius2, MIN_VIEW_RADIUS_CHUNKS), MAX_VIEW_RADIUS_CHUNKS2);
+          setRadiusChunks(radius2);
+          setZoom(clampZoom(VIEWPORT_PX / (radius2 * CHUNK_SIZE2 * 2 * BASE_SCALE)));
+          return;
+        }
+        const cxs = chunks.map((c) => c.cx);
+        const czs = chunks.map((c) => c.cz);
+        const cxMin = Math.min(...cxs);
+        const cxMax = Math.max(...cxs);
+        const czMin = Math.min(...czs);
+        const czMax = Math.max(...czs);
+        const midCx = (cxMin + cxMax) / 2;
+        const midCz = (czMin + czMax) / 2;
+        const neededRadius = Math.ceil(Math.max(cxMax - cxMin, czMax - czMin) / 2) + 1;
+        const radius = Math.min(Math.max(neededRadius, MIN_VIEW_RADIUS_CHUNKS), MAX_VIEW_RADIUS_CHUNKS2);
+        setWorldTruncated(neededRadius > MAX_VIEW_RADIUS_CHUNKS2);
+        setRadiusChunks(radius);
+        const wx = Math.round(midCx) * CHUNK_SIZE2 + CHUNK_SIZE2 / 2;
+        const wz = Math.round(midCz) * CHUNK_SIZE2 + CHUNK_SIZE2 / 2;
+        setCenter({ x: wx, z: wz });
+        setCenterInput({ x: String(wx), z: String(wz) });
+        setPan({ x: 0, y: 0 });
+        setZoom(clampZoom(VIEWPORT_PX / (radius * CHUNK_SIZE2 * 2 * BASE_SCALE)));
+      }).catch(console.error);
+      api.terrain.list().then((infos) => {
+        const map3 = /* @__PURE__ */ new Map();
+        for (const info of infos) {
+          if (info.avgHeight != null) map3.set(chunkKey(info.cx, info.cz), info.avgHeight);
+        }
+        setHeightByChunk(map3);
+      }).catch(console.error);
+    }, []);
+    (0, import_react24.useEffect)(() => {
+      if (editZone || selected.size === 0) return;
+      const heights = Array.from(selected).map((k) => heightByChunk.get(k)).filter((h) => h != null);
+      if (heights.length === 0) return;
+      setYMin(Math.min(...heights) - 5);
+      setYMax(Math.max(...heights) + 20);
+    }, [selected, heightByChunk, editZone]);
+    const radiusBlocks = radiusChunks * CHUNK_SIZE2;
+    const imgSize = radiusBlocks * 2;
+    (0, import_react24.useEffect)(() => {
+      const url = `/api/map/terrain-raster.png?cx=${Math.round(center.x)}&cz=${Math.round(center.z)}&radius=${radiusBlocks}`;
+      setRasterUrl(url);
+    }, [center, radiusBlocks]);
+    const chunkCells = (0, import_react24.useMemo)(() => {
+      const cells2 = [];
+      const cxMin = Math.floor((center.x - radiusBlocks) / CHUNK_SIZE2);
+      const cxMax = Math.floor((center.x + radiusBlocks - 1) / CHUNK_SIZE2);
+      const czMin = Math.floor((center.z - radiusBlocks) / CHUNK_SIZE2);
+      const czMax = Math.floor((center.z + radiusBlocks - 1) / CHUNK_SIZE2);
+      for (let cx = cxMin; cx <= cxMax; cx++) {
+        for (let cz = czMin; cz <= czMax; cz++) {
+          const worldXMin = cx * CHUNK_SIZE2;
+          const worldZMax = cz * CHUNK_SIZE2 + CHUNK_SIZE2;
+          const left = worldXMin - (center.x - radiusBlocks);
+          const top2 = center.z + radiusBlocks - worldZMax;
+          if (left < -CHUNK_SIZE2 || left > imgSize || top2 < -CHUNK_SIZE2 || top2 > imgSize) continue;
+          cells2.push({ cx, cz, left, top: top2 });
+        }
+      }
+      return cells2;
+    }, [center, radiusBlocks, imgSize]);
+    const toggleChunk = (cx, cz, forceAdd) => {
+      const key2 = chunkKey(cx, cz);
+      if (!discovered.has(key2)) return;
+      setSelected((prev) => {
+        const next = new Set(prev);
+        const shouldAdd = forceAdd != null ? forceAdd : !next.has(key2);
+        if (shouldAdd) next.add(key2);
+        else next.delete(key2);
+        return next;
+      });
+    };
+    const panRef = (0, import_react24.useRef)(pan);
+    const zoomRef = (0, import_react24.useRef)(zoom);
+    const centerRef = (0, import_react24.useRef)(center);
+    const radiusBlocksRef = (0, import_react24.useRef)(radiusBlocks);
+    (0, import_react24.useEffect)(() => {
+      panRef.current = pan;
+      zoomRef.current = zoom;
+      centerRef.current = center;
+      radiusBlocksRef.current = radiusBlocks;
+    });
+    (0, import_react24.useEffect)(() => {
+      const stopAll = () => {
+        paintingRef.current = null;
+        if (panningRef.current) {
+          const worldScale = BASE_SCALE * zoomRef.current;
+          const worldPanX = panRef.current.x / worldScale;
+          const worldPanZ = panRef.current.y / worldScale;
+          const threshold = radiusBlocksRef.current * 0.4;
+          if (Math.abs(worldPanX) > threshold || Math.abs(worldPanZ) > threshold) {
+            const c = centerRef.current;
+            setCenter({ x: c.x - worldPanX, z: c.z + worldPanZ });
+            setPan({ x: 0, y: 0 });
+          }
+        }
+        panningRef.current = null;
+        setIsPanning(false);
+      };
+      const onMouseMove = (e) => {
+        const panning = panningRef.current;
+        if (!panning) return;
+        setPan({
+          x: panning.startPan.x + (e.clientX - panning.startMouseX),
+          y: panning.startPan.y + (e.clientY - panning.startMouseY)
+        });
+      };
+      window.addEventListener("mouseup", stopAll);
+      window.addEventListener("mousemove", onMouseMove);
+      return () => {
+        window.removeEventListener("mouseup", stopAll);
+        window.removeEventListener("mousemove", onMouseMove);
+      };
+    }, []);
+    const zoomBy = (factor) => setZoom((z) => clampZoom(z * factor));
+    const recenter = () => {
+      const x = parseInt(centerInput.x, 10);
+      const z = parseInt(centerInput.z, 10);
+      if (Number.isFinite(x) && Number.isFinite(z)) {
+        setCenter({ x, z });
+        setPan({ x: 0, y: 0 });
+      }
+    };
+    const submit = () => {
+      setError(null);
+      if (selected.size === 0) return setError("Select at least one chunk.");
+      if (!isContiguous(selected)) return setError("Selected chunks must be contiguous (no separate groups).");
+      const chunks = Array.from(selected).map((k) => {
+        const [cx, cz] = k.split(",").map(Number);
+        return { cx, cz };
+      });
+      if (editZone) {
+        api.instances.updateChunks(editZone.id, chunks).then(onSaved).catch(() => setError("Failed to update zone chunks."));
+        return;
+      }
+      if (!name2.trim()) return setError("Name is required.");
+      if (yMin >= yMax) return setError("yMin must be less than yMax.");
+      api.instances.create({ name: name2.trim(), yMin, yMax, chunks }).then(onSaved).catch(() => setError("Failed to create zone."));
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("div", { className: "fixed inset-0 z-[1000] bg-black/70 flex items-center justify-center", children: /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("div", { className: "bg-[#151b28] border border-[#2E3A4E] rounded-lg shadow-2xl flex overflow-hidden max-h-[90vh]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)(
+        "div",
+        {
+          ref: viewportRef,
+          className: "relative overflow-hidden bg-black shrink-0 select-none",
+          style: { width: VIEWPORT_PX, height: VIEWPORT_PX, cursor: isPanning ? "grabbing" : "grab" },
+          onContextMenu: (e) => e.preventDefault(),
+          onWheel: (e) => {
+            e.preventDefault();
+            zoomBy(e.deltaY < 0 ? 1.15 : 1 / 1.15);
+          },
+          onMouseDown: (e) => {
+            if (e.button !== 2) return;
+            panningRef.current = { startMouseX: e.clientX, startMouseY: e.clientY, startPan: pan };
+            setIsPanning(true);
+          },
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("div", { className: "absolute right-2 top-2 z-10 flex flex-col gap-1", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+                "button",
+                {
+                  className: "w-6 h-6 flex items-center justify-center bg-black/70 text-white text-sm rounded border border-white/20 hover:bg-black/90",
+                  onClick: () => zoomBy(1.3),
+                  title: "Zoom in",
+                  children: "+"
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+                "button",
+                {
+                  className: "w-6 h-6 flex items-center justify-center bg-black/70 text-white text-sm rounded border border-white/20 hover:bg-black/90",
+                  onClick: () => zoomBy(1 / 1.3),
+                  title: "Zoom out",
+                  children: "\u2212"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)(
+              "div",
+              {
+                className: "absolute",
+                style: {
+                  left: VIEWPORT_PX / 2 + pan.x,
+                  top: VIEWPORT_PX / 2 + pan.y,
+                  width: imgSize * BASE_SCALE,
+                  height: imgSize * BASE_SCALE,
+                  transform: `translate(-50%, -50%) scale(${zoom})`,
+                  transformOrigin: "center center"
+                },
+                children: [
+                  rasterUrl && /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+                    "img",
+                    {
+                      src: rasterUrl,
+                      alt: "",
+                      className: "absolute top-0 left-0",
+                      style: {
+                        width: imgSize * BASE_SCALE,
+                        height: imgSize * BASE_SCALE,
+                        imageRendering: "pixelated"
+                      },
+                      draggable: false
+                    }
+                  ),
+                  chunkCells.map(({ cx, cz, left, top: top2 }) => {
+                    const key2 = chunkKey(cx, cz);
+                    const isDiscovered = discovered.has(key2);
+                    const isSelected = selected.has(key2);
+                    return /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+                      "div",
+                      {
+                        onMouseDown: (e) => {
+                          if (e.button !== 0 || !isDiscovered) return;
+                          const addMode = !isSelected;
+                          paintingRef.current = { addMode };
+                          toggleChunk(cx, cz, addMode);
+                        },
+                        onMouseEnter: () => {
+                          if (!isDiscovered || !paintingRef.current) return;
+                          toggleChunk(cx, cz, paintingRef.current.addMode);
+                        },
+                        className: isDiscovered ? `absolute border ${isSelected ? "bg-red-500/50 border-red-400" : "border-white/10 hover:bg-white/10"}` : "absolute bg-black/60 border border-black/40 cursor-not-allowed",
+                        style: {
+                          left: left * BASE_SCALE,
+                          top: top2 * BASE_SCALE,
+                          width: CHUNK_SIZE2 * BASE_SCALE,
+                          height: CHUNK_SIZE2 * BASE_SCALE
+                        },
+                        title: isDiscovered ? `chunk ${cx},${cz}` : "not generated"
+                      },
+                      key2
+                    );
+                  })
+                ]
+              }
+            )
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("div", { className: "w-72 shrink-0 p-4 flex flex-col gap-3 overflow-y-auto", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("h2", { className: "text-white font-semibold text-sm", children: editZone ? `Edit chunks \u2014 ${editZone.name}` : "New instance zone" }),
+        !editZone && /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)(import_jsx_runtime40.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF]", children: [
+            "Name",
+            /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+              "input",
+              {
+                className: "bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none",
+                value: name2,
+                onChange: (e) => setName(e.target.value)
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("div", { className: "flex gap-2", children: /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF] flex-1", children: [
+            "yMin",
+            /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+              "input",
+              {
+                type: "number",
+                className: "bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none",
+                value: yMin,
+                onChange: (e) => setYMin(parseInt(e.target.value, 10) || 0)
+              }
+            )
+          ] }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("div", { className: "flex gap-2", children: /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF] flex-1", children: [
+            "yMax",
+            /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+              "input",
+              {
+                type: "number",
+                className: "bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none",
+                value: yMax,
+                onChange: (e) => setYMax(parseInt(e.target.value, 10) || 0)
+              }
+            )
+          ] }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("p", { className: "text-[10px] text-[#8A99AF] -mt-2", children: "yMin/yMax must cover the terrain surface height at this location, or the zone won't trigger in-game." })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("div", { className: "flex gap-2 items-end", children: /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF] flex-1", children: [
+          "Center X",
+          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+            "input",
+            {
+              className: "bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none",
+              value: centerInput.x,
+              onChange: (e) => setCenterInput((c) => __spreadProps(__spreadValues({}, c), { x: e.target.value }))
+            }
+          )
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("div", { className: "flex gap-2 items-end", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF] flex-1", children: [
+            "Center Z",
+            /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+              "input",
+              {
+                className: "bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none",
+                value: centerInput.z,
+                onChange: (e) => setCenterInput((c) => __spreadProps(__spreadValues({}, c), { z: e.target.value }))
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+            "button",
+            {
+              className: "text-xs text-[#8A99AF] hover:text-white border border-[#2E3A4E] rounded px-2 py-1",
+              onClick: recenter,
+              children: "Go"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("p", { className: "text-[11px] text-[#8A99AF]", children: "Left click/drag chunks to select. Right-drag to pan, wheel or +/- to zoom. Only already-generated (bright) chunks can be part of a zone \u2014 dimmed chunks are ungenerated." }),
+        worldTruncated && /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("p", { className: "text-[11px] text-amber-400", children: "World is larger than the initial view \u2014 pan (right-drag) past the edge to load more." }),
+        /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("p", { className: "text-[11px] text-white", children: [
+          selected.size,
+          " chunk(s) selected"
+        ] }),
+        error2 && /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("p", { className: "text-xs text-red-400", children: error2 }),
+        /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("div", { className: "flex justify-end gap-2 mt-auto pt-2", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("button", { className: "text-xs text-[#8A99AF] hover:text-white px-3 py-1.5", onClick: onCancel, children: "Cancel" }),
+          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("button", { className: "text-xs bg-[#3C50E0] text-white rounded px-3 py-1.5 hover:bg-[#3345c0]", onClick: submit, children: editZone ? "Save" : "Create" })
+        ] })
+      ] })
+    ] }) });
+  }
+
+  // admin/pages/InstancesPage.tsx
+  var import_jsx_runtime41 = __toESM(require_jsx_runtime(), 1);
+  var CHUNK_SIZE3 = 16;
+  function EmptyDetail2({ message }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#8A99AF] text-sm", children: message });
+  }
+  function chunksFingerprint(chunks) {
+    return chunks.map((c) => `${c.cx},${c.cz}`).sort().join("|");
+  }
+  function teleportCommandFor(zone) {
+    const sumX = zone.chunks.reduce((sum, { cx }) => sum + cx * CHUNK_SIZE3 + CHUNK_SIZE3 / 2, 0);
+    const sumZ = zone.chunks.reduce((sum, { cz }) => sum + cz * CHUNK_SIZE3 + CHUNK_SIZE3 / 2, 0);
+    const x = Math.round(sumX / zone.chunks.length);
+    const z = Math.round(sumZ / zone.chunks.length);
+    const y = Math.round((zone.yMin + zone.yMax) / 2);
+    return `/teleport ${x} ${y} ${z}`;
+  }
+  function CopyTeleportCommand({ zone }) {
+    const [copied, setCopied] = (0, import_react25.useState)(false);
+    const command2 = teleportCommandFor(zone);
+    return /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)(
+      "button",
+      {
+        className: "flex items-center gap-1.5 rounded border border-[#2E3A4E] bg-[#1A222C] px-2 py-1 text-[11px] font-mono text-[#8A99AF] hover:text-white hover:border-[#3C50E0] transition-colors",
+        title: "Copy /teleport command to the instance's centroid",
+        onClick: () => {
+          navigator.clipboard.writeText(command2).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }).catch(console.error);
+        },
+        children: [
+          command2,
+          /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: copied ? "text-emerald-400" : "text-[#8A99AF]", children: copied ? "Copied!" : "Copy" })
+        ]
+      }
+    );
+  }
+  function InstancesPage() {
+    var _a6;
+    const [instances, setInstances] = (0, import_react25.useState)([]);
+    const [selectedId, setSelectedId] = (0, import_react25.useState)(null);
+    const [renaming, setRenaming] = (0, import_react25.useState)(false);
+    const [renameValue, setRenameValue] = (0, import_react25.useState)("");
+    const [editingBounds, setEditingBounds] = (0, import_react25.useState)(false);
+    const [yMinValue, setYMinValue] = (0, import_react25.useState)("0");
+    const [yMaxValue, setYMaxValue] = (0, import_react25.useState)("0");
+    const [boundsError, setBoundsError] = (0, import_react25.useState)(null);
+    const [creating, setCreating] = (0, import_react25.useState)(false);
+    const [editingChunks, setEditingChunks] = (0, import_react25.useState)(false);
+    const reload = (0, import_react25.useCallback)(() => {
+      api.instances.list().then((list2) => setInstances(list2.sort((a, b) => a.name.localeCompare(b.name)))).catch(console.error);
+    }, []);
+    (0, import_react25.useEffect)(() => {
+      reload();
+    }, [reload]);
+    const selected = (_a6 = instances.find((i) => i.id === selectedId)) != null ? _a6 : null;
+    const submitRename = () => {
+      if (!selected || !renameValue.trim()) return;
+      api.instances.rename(selected.id, renameValue.trim()).then(() => {
+        setRenaming(false);
+        reload();
+      }).catch(console.error);
+    };
+    const submitBounds = () => {
+      if (!selected) return;
+      setBoundsError(null);
+      const yMin = parseInt(yMinValue, 10);
+      const yMax = parseInt(yMaxValue, 10);
+      if (!Number.isFinite(yMin) || !Number.isFinite(yMax) || yMin >= yMax) {
+        setBoundsError("yMin must be less than yMax.");
+        return;
+      }
+      api.instances.updateBounds(selected.id, yMin, yMax).then(() => {
+        setEditingBounds(false);
+        reload();
+      }).catch(() => setBoundsError("Failed to update bounds."));
+    };
+    const toggleEnabled = () => {
+      if (!selected) return;
+      api.instances.setEnabled(selected.id, !selected.enabled).then(reload).catch(console.error);
+    };
+    const deleteSelected = () => {
+      if (!selected) return;
+      if (!confirm(`Delete instance zone "${selected.name}"?`)) return;
+      api.instances.delete(selected.id).then(() => {
+        setSelectedId(null);
+        reload();
+      }).catch(console.error);
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "flex h-full overflow-hidden -m-6", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("aside", { className: "w-[14.2857%] shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "px-3 py-2 border-b border-[#2E3A4E] flex items-center justify-between", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: "Instances" }),
+          /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("button", { className: "text-[11px] text-[#3C50E0] hover:underline", onClick: () => setCreating(true), children: "+ New" })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "flex-1 overflow-y-auto py-2", children: [
+          instances.map((zone) => {
+            const isSelected = zone.id === selectedId;
+            return /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)(
+              "button",
+              {
+                onClick: () => {
+                  setSelectedId(zone.id);
+                  setRenaming(false);
+                  setEditingBounds(false);
+                  setEditingChunks(false);
+                },
+                className: `w-full text-left px-3 py-2 text-sm truncate transition-colors flex items-center gap-1.5 ${isSelected ? "bg-[#3C50E0]/20 text-white" : "text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E]"}`,
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+                    "span",
+                    {
+                      className: `h-1.5 w-1.5 shrink-0 rounded-full ${zone.enabled ? "bg-emerald-400" : "bg-[#8A99AF]"}`,
+                      title: zone.enabled ? "Enabled" : "Disabled"
+                    }
+                  ),
+                  /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: `truncate ${zone.enabled ? "" : "opacity-50"}`, children: zone.name })
+                ]
+              },
+              zone.id
+            );
+          }),
+          instances.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("div", { className: "px-3 py-2 text-xs text-[#8A99AF]", children: 'No instance zones yet. Click "+ New" to create one.' })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "w-[85.7143%] flex flex-col overflow-hidden", children: [
+        !selected && /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(EmptyDetail2, { message: "Select an instance zone" }),
+        selected && /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)(import_jsx_runtime41.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("div", { className: "shrink-0 flex items-center justify-between gap-3 px-4 py-2 border-b border-[#2E3A4E]", children: renaming ? /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "flex items-center gap-2 flex-1", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+              "input",
+              {
+                autoFocus: true,
+                className: "bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none",
+                value: renameValue,
+                onChange: (e) => setRenameValue(e.target.value),
+                onKeyDown: (e) => e.key === "Enter" && submitRename()
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("button", { className: "text-xs text-emerald-400 hover:underline", onClick: submitRename, children: "Save" }),
+            /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("button", { className: "text-xs text-[#8A99AF] hover:underline", onClick: () => setRenaming(false), children: "Cancel" })
+          ] }) : /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)(import_jsx_runtime41.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("h2", { className: "text-white font-semibold text-sm", children: selected.name }),
+            /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "flex items-center gap-3", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("span", { className: "text-[11px] text-[#8A99AF] font-mono", children: [
+                selected.chunks.length,
+                " chunk",
+                selected.chunks.length !== 1 ? "s" : ""
+              ] }),
+              editingBounds ? /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "flex items-center gap-1", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: "text-[11px] text-[#8A99AF] font-mono", children: "y[" }),
+                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+                  "input",
+                  {
+                    autoFocus: true,
+                    type: "number",
+                    className: "w-16 bg-[#1A222C] border border-[#2E3A4E] rounded px-1 py-0.5 text-[11px] font-mono text-white outline-none",
+                    value: yMinValue,
+                    onChange: (e) => setYMinValue(e.target.value),
+                    onKeyDown: (e) => e.key === "Enter" && submitBounds()
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: "text-[11px] text-[#8A99AF] font-mono", children: "," }),
+                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    className: "w-16 bg-[#1A222C] border border-[#2E3A4E] rounded px-1 py-0.5 text-[11px] font-mono text-white outline-none",
+                    value: yMaxValue,
+                    onChange: (e) => setYMaxValue(e.target.value),
+                    onKeyDown: (e) => e.key === "Enter" && submitBounds()
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: "text-[11px] text-[#8A99AF] font-mono", children: "]" }),
+                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("button", { className: "text-xs text-emerald-400 hover:underline", onClick: submitBounds, children: "Save" }),
+                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+                  "button",
+                  {
+                    className: "text-xs text-[#8A99AF] hover:underline",
+                    onClick: () => {
+                      setEditingBounds(false);
+                      setBoundsError(null);
+                    },
+                    children: "Cancel"
+                  }
+                ),
+                boundsError && /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: "text-xs text-red-400", children: boundsError })
+              ] }) : /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)(
+                "button",
+                {
+                  className: "text-[11px] text-[#8A99AF] font-mono hover:text-white",
+                  title: "Edit yMin/yMax",
+                  onClick: () => {
+                    setYMinValue(String(selected.yMin));
+                    setYMaxValue(String(selected.yMax));
+                    setBoundsError(null);
+                    setEditingBounds(true);
+                  },
+                  children: [
+                    "y[",
+                    selected.yMin,
+                    ",",
+                    selected.yMax,
+                    "]"
+                  ]
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(CopyTeleportCommand, { zone: selected }),
+              /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+                "button",
+                {
+                  className: `text-xs hover:underline ${selected.enabled ? "text-emerald-400" : "text-[#8A99AF]"}`,
+                  title: selected.enabled ? "Disable this instance zone" : "Enable this instance zone",
+                  onClick: toggleEnabled,
+                  children: selected.enabled ? "Enabled" : "Disabled"
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("button", { className: "text-xs text-[#8A99AF] hover:text-white", onClick: () => setEditingChunks(true), children: "Edit chunks" }),
+              /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+                "button",
+                {
+                  className: "text-xs text-[#8A99AF] hover:text-white",
+                  onClick: () => {
+                    setRenameValue(selected.name);
+                    setRenaming(true);
+                  },
+                  children: "Rename"
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("button", { className: "text-xs text-red-400 hover:text-red-300", onClick: deleteSelected, children: "Delete" })
+            ] })
+          ] }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+            InstanceEditorViewport,
+            {
+              zone: selected
+            },
+            `${selected.id}:${selected.yMin}:${selected.yMax}:${chunksFingerprint(selected.chunks)}`
+          )
+        ] })
+      ] }),
+      creating && /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+        InstanceChunkPicker,
+        {
+          onCancel: () => setCreating(false),
+          onSaved: (zone) => {
+            setCreating(false);
+            reload();
+            setSelectedId(zone.id);
+          }
+        }
+      ),
+      editingChunks && selected && /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+        InstanceChunkPicker,
+        {
+          editZone: selected,
+          onCancel: () => setEditingChunks(false),
+          onSaved: () => {
+            setEditingChunks(false);
+            reload();
+          }
+        }
+      )
+    ] });
+  }
+
+  // admin/AdminApp.tsx
+  var import_jsx_runtime42 = __toESM(require_jsx_runtime(), 1);
+  function Icon2({ d, size = 18 }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(
       "svg",
       {
         width: size,
@@ -91702,7 +92915,7 @@ ${end.comment}` : end.comment;
         strokeWidth: 1.8,
         strokeLinecap: "round",
         strokeLinejoin: "round",
-        children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("path", { d })
+        children: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("path", { d })
       }
     );
   }
@@ -91716,7 +92929,8 @@ ${end.comment}` : end.comment;
     npcs: "M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18",
     gameAssets: "M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9",
     administration: "M4 6h16M4 10h16M4 14h8M4 18h8",
-    simulator: "M4 4h16v16H4zM8 8v8m8-8v8m-4-6a2 2 0 100 4 2 2 0 000-4z"
+    simulator: "M4 4h16v16H4zM8 8v8m8-8v8m-4-6a2 2 0 100 4 2 2 0 000-4z",
+    instances: "M12 2l9 4.5v9L12 20l-9-4.5v-9L12 2zM12 2v18M3 6.5l9 4.5 9-4.5"
   };
   var NAV = [
     { path: "/admin", labelKey: "nav.status", icon: ICONS.status, exact: true },
@@ -91728,6 +92942,7 @@ ${end.comment}` : end.comment;
     { path: "/admin/worlds", labelKey: "nav.worlds", icon: ICONS.worlds },
     { path: "/admin/game-assets", labelKey: "nav.gameAssets", icon: ICONS.gameAssets },
     { path: "/admin/administration", labelKey: "nav.administration", icon: ICONS.administration },
+    { path: "/admin/instances", labelKey: "nav.instances", icon: ICONS.instances },
     { path: "/admin/world-simulator", labelKey: "nav.worldSimulator", icon: ICONS.simulator }
   ];
   var PAGE_LABEL_KEYS = {
@@ -91740,12 +92955,13 @@ ${end.comment}` : end.comment;
     "/admin/worlds": "page.worlds",
     "/admin/game-assets": "page.gameAssets",
     "/admin/administration": "page.administration",
+    "/admin/instances": "page.instances",
     "/admin/world-simulator": "page.worldSimulator"
   };
   function Sidebar({ collapsed, onToggle }) {
     const { pathname } = useLocation();
     const t2 = useT();
-    return /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)(
       "aside",
       {
         className: cn(
@@ -91753,19 +92969,19 @@ ${end.comment}` : end.comment;
           collapsed ? "w-16" : "w-64"
         ),
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { className: cn("h-16 flex items-center border-b border-[#2E3A4E]", collapsed ? "px-3" : "px-6"), children: /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex items-center gap-2.5 overflow-hidden", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { className: "w-8 h-8 shrink-0 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
-            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(import_jsx_runtime38.Fragment, { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
-              /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("div", { className: cn("h-16 flex items-center border-b border-[#2E3A4E]", collapsed ? "px-3" : "px-6"), children: /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { className: "flex items-center gap-2.5 overflow-hidden", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("div", { className: "w-8 h-8 shrink-0 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
+            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)(import_jsx_runtime42.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
+              /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
             ] })
           ] }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("nav", { className: cn("flex-1 py-5 space-y-0.5 overflow-y-auto", collapsed ? "px-2" : "px-4"), children: [
-            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: t2("shell.menu") }),
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("nav", { className: cn("flex-1 py-5 space-y-0.5 overflow-y-auto", collapsed ? "px-2" : "px-4"), children: [
+            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: t2("shell.menu") }),
             NAV.map(({ path, labelKey, icon, exact }) => {
               const active = exact ? pathname === path : pathname.startsWith(path);
               const label = t2(labelKey);
-              return /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(
+              return /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)(
                 Link,
                 {
                   to: path,
@@ -91777,7 +92993,7 @@ ${end.comment}` : end.comment;
                     active ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white"
                   ),
                   children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Icon2, { d: icon, size: 17 }) }),
+                    /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Icon2, { d: icon, size: 17 }) }),
                     !collapsed && label
                   ]
                 },
@@ -91785,8 +93001,8 @@ ${end.comment}` : end.comment;
               );
             })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(LanguageSelector, { collapsed }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(LanguageSelector, { collapsed }),
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)(
             "div",
             {
               className: cn(
@@ -91794,8 +93010,8 @@ ${end.comment}` : end.comment;
                 collapsed ? "px-2 justify-center" : "px-6"
               ),
               children: [
-                !collapsed && /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "flex-1", children: t2("shell.version") }),
-                /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+                !collapsed && /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("span", { className: "flex-1", children: t2("shell.version") }),
+                /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(
                   "button",
                   {
                     type: "button",
@@ -91804,7 +93020,7 @@ ${end.comment}` : end.comment;
                     "aria-label": t2(collapsed ? "shell.expandMenu" : "shell.collapseMenu"),
                     "aria-expanded": !collapsed,
                     className: "flex h-7 w-7 items-center justify-center rounded border border-[#2E3A4E] text-[#C7D2FE] hover:bg-[#3C50E0]/60 hover:text-white",
-                    children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Icon2, { d: collapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7", size: 15 })
+                    children: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Icon2, { d: collapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7", size: 15 })
                   }
                 )
               ]
@@ -91819,47 +93035,48 @@ ${end.comment}` : end.comment;
     const t2 = useT();
     const labelKey = PAGE_LABEL_KEYS[pathname];
     const title = labelKey ? t2(labelKey) : t2("shell.admin");
-    return /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
           t2("shell.admin"),
           " / ",
           title
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
+        /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
+      /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
         t2("shell.serverOnline")
       ] })
     ] });
   }
   function AdminApp() {
-    const [collapsed, setCollapsed] = (0, import_react22.useState)(() => loadSidebarCollapsed());
-    (0, import_react22.useEffect)(() => saveSidebarCollapsed(collapsed), [collapsed]);
-    return /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(I18nProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Sidebar, { collapsed, onToggle: () => setCollapsed((current) => !current) }),
-      /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Header, {}),
-        /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(Routes, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(StatusPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(UsersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(PlayersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/npcs", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(NpcsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(ClassesPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(ConfigEditorPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(WorldsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/game-assets", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(GameAssetsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/administration", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(AdministrationPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Route, { path: "/admin/world-simulator", element: /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(WorldSimulatorPage, {}) })
+    const [collapsed, setCollapsed] = (0, import_react26.useState)(() => loadSidebarCollapsed());
+    (0, import_react26.useEffect)(() => saveSidebarCollapsed(collapsed), [collapsed]);
+    return /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(I18nProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Sidebar, { collapsed, onToggle: () => setCollapsed((current) => !current) }),
+      /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Header, {}),
+        /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)(Routes, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(StatusPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(UsersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(PlayersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/npcs", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(NpcsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(ClassesPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(ConfigEditorPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(WorldsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/game-assets", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(GameAssetsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/administration", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(AdministrationPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/instances", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(InstancesPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/world-simulator", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(WorldSimulatorPage, {}) })
         ] }) })
       ] })
     ] }) }) });
   }
 
   // admin/index.tsx
-  var import_jsx_runtime39 = __toESM(require_jsx_runtime(), 1);
-  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime39.jsx)(AdminApp, {}));
+  var import_jsx_runtime43 = __toESM(require_jsx_runtime(), 1);
+  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime43.jsx)(AdminApp, {}));
 })();
 /*! Bundled license information:
 

@@ -227,3 +227,9 @@ fun jsMailUpdate(json: String): Unit = js("mc.mailUpdate(json)")
 fun jsMailDeleted(mailId: String): Unit = js("mc.mailDeleted(mailId)")
 
 fun jsOpenMailbox(): Unit = js("mc.openMailbox()")
+
+// ── Instance zones ────────────────────────────────────────────────────────────
+
+fun jsAdminZoneWireframe(json: String): Unit = js("mc.adminZoneWireframe(json)")
+
+fun jsInstanceZonesSync(json: String): Unit = js("mc.instanceZonesSync(json)")

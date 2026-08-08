@@ -59,6 +59,15 @@ class WorldState(
         return getOrGenerate(ChunkPos(chunkX, chunkZ)).getBlock(localX, wy, localZ)
     }
 
+    fun getBlockState(wx: Int, wy: Int, wz: Int): Byte {
+        if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return 0
+        val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
+        val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
+        val localX = Math.floorMod(wx, WorldConstants.CHUNK_SIZE)
+        val localZ = Math.floorMod(wz, WorldConstants.CHUNK_SIZE)
+        return getOrGenerate(ChunkPos(chunkX, chunkZ)).getState(localX, wy, localZ)
+    }
+
     /**
      * All chunk positions that have ever been generated or loaded (i.e. discovered by a player).
      */

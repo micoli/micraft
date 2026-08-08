@@ -16,6 +16,7 @@ import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.BlockChange
@@ -33,9 +34,16 @@ class BlockPlacer(
     private val savePlayer: (PlayerSession) -> Unit,
     private val vegetationManager: VegetationManager? = null,
     @Volatile private var attackRegistry: Map<String, AttackDefinition> = emptyMap(),
+    private val instanceRegistry: InstanceRegistry? = null,
 ) {
     suspend fun handlePlace(session: PlayerSession, intent: ClientMessage.BlockPlace) {
         val rawPos = intent.pos
+
+        if (instanceRegistry?.zoneAt(rawPos.x, rawPos.y, rawPos.z) != null) {
+            blockPlacerLog.debug("BlockPlace rejected: pos={} is inside a protected zone", rawPos)
+            return
+        }
+
         val itemType = intent.itemType
 
         val blockType = itemType.placesBlock

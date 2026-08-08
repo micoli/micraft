@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
+import { computeZoneOutlineEdges, mergeIntervals } from "../targeting/zoneOutline";
+
 const MINIMAP_SIZE = 180;
+const MINIMAP_CHUNK_SIZE = 16;
 const ZOOM_RADII = [0, 1, 2, 3]; // chunk radius: 1x1, 3x3 (default), 5x5, 7x7
 
 // RGB base colors per BlockType ordinal — populated from RegistrySync
@@ -37,6 +40,11 @@ let biomeFetching = false;
 let staircasePoints: Array<{ x: number; z: number }> = [];
 let staircasesFetching = false;
 let staircasesFetched = false;
+
+// Instance zone footprint outlines — every zone (whether the player is inside it or not), each
+// drawn as a unified outline (chunks within a zone are always contiguous, so this traces the
+// whole footprint's border rather than one border per chunk)
+let allZones: Array<{ id: string; chunks: { cx: number; cz: number }[] }> = [];
 
 function maybeRefetchTerrain(playerX: number, playerZ: number): void {
   if (terrainFetching) return;
@@ -211,6 +219,7 @@ export function registerMinimap(): Pick<
   | "setPlayerOnMinimap"
   | "removePlayerFromMinimap"
   | "setMinimapWeather"
+  | "setMinimapZones"
   | "setPlacementRotation"
   | "drawMinimap"
 > {
@@ -273,6 +282,15 @@ export function registerMinimap(): Pick<
         weatherZones = JSON.parse(json);
       } catch {
         weatherZones = [];
+      }
+    },
+
+    setMinimapZones: (json: string): void => {
+      try {
+        const data = JSON.parse(json) as { zones?: Array<{ id: string; chunks: { cx: number; cz: number }[] }> };
+        allZones = data.zones ?? [];
+      } catch {
+        allZones = [];
       }
     },
 
@@ -388,6 +406,55 @@ export function registerMinimap(): Pick<
         ctx.lineTo(sx2, sy2);
       }
       ctx.stroke();
+
+      // Instance zone unified outlines — every zone, whether the player is inside it or not.
+      // Merged footprint edges only, no interior chunk seams.
+      if (allZones.length > 0) {
+        const toPx = (wx: number, wz: number) => [
+          (wx - playerX + halfBlocks) * pixPerBlock,
+          (playerZ - wz + halfBlocks) * pixPerBlock, // Z flipped
+        ];
+        ctx.strokeStyle = "rgba(255,200,0,0.9)";
+        ctx.lineWidth = Math.max(1.5, pixPerBlock);
+        ctx.beginPath();
+        for (const zone of allZones) {
+          if (zone.chunks.length === 0) continue;
+          const { northH, southH, eastV, westV } = computeZoneOutlineEdges(zone.chunks, MINIMAP_CHUNK_SIZE);
+          for (const [z, intervals] of northH) {
+            for (const [x0, x1] of mergeIntervals(intervals)) {
+              const [sx1, sy1] = toPx(x0, z + 1);
+              const [sx2, sy2] = toPx(x1 + 1, z + 1);
+              ctx.moveTo(sx1, sy1);
+              ctx.lineTo(sx2, sy2);
+            }
+          }
+          for (const [z, intervals] of southH) {
+            for (const [x0, x1] of mergeIntervals(intervals)) {
+              const [sx1, sy1] = toPx(x0, z);
+              const [sx2, sy2] = toPx(x1 + 1, z);
+              ctx.moveTo(sx1, sy1);
+              ctx.lineTo(sx2, sy2);
+            }
+          }
+          for (const [x, intervals] of eastV) {
+            for (const [z0, z1] of mergeIntervals(intervals)) {
+              const [sx1, sy1] = toPx(x + 1, z0);
+              const [sx2, sy2] = toPx(x + 1, z1 + 1);
+              ctx.moveTo(sx1, sy1);
+              ctx.lineTo(sx2, sy2);
+            }
+          }
+          for (const [x, intervals] of westV) {
+            for (const [z0, z1] of mergeIntervals(intervals)) {
+              const [sx1, sy1] = toPx(x, z0);
+              const [sx2, sy2] = toPx(x, z1 + 1);
+              ctx.moveTo(sx1, sy1);
+              ctx.lineTo(sx2, sy2);
+            }
+          }
+        }
+        ctx.stroke();
+      }
 
       // Precise road raster overlay
       if (roadImg !== null) {

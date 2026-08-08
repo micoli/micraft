@@ -61,6 +61,7 @@ import org.micoli.micraft.game.rpg.ExperienceConfig
 import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.session.NetworkStats
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.session.hasPermission
 import org.micoli.micraft.game.session.toPageMap
 import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.IntentCollector
@@ -80,6 +81,8 @@ import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
+import org.micoli.micraft.game.world.instance.InstanceRegistry
+import org.micoli.micraft.game.world.instance.toProto
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
@@ -97,6 +100,7 @@ import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.plugin.PluginLoader
 import org.micoli.micraft.plugin.TickContext
 import org.micoli.micraft.plugin.TickHandler
+import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
@@ -220,6 +224,7 @@ class GameLoop(
             armorsPath = Path.of("resources/armors"),
             dataArmorsPath = Path.of("data/resources/armors"),
         ),
+    private val instanceRegistry: InstanceRegistry = InstanceRegistry(persistence),
     private val npcConfigLoader: NpcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml")),
     private val npcRegistryLoader: NpcRegistryLoader =
         NpcRegistryLoader(
@@ -341,7 +346,13 @@ class GameLoop(
             maxDistance = tradeConfigLoader.load().maxDistance,
         ),
     private val blockBreaker: BlockBreaker =
-        BlockBreaker(world, sessionRegistry::broadcast, worldItems, liquidManager),
+        BlockBreaker(
+            world,
+            sessionRegistry::broadcast,
+            worldItems,
+            liquidManager,
+            instanceRegistry = instanceRegistry,
+        ),
     private val blockPlacer: BlockPlacer =
         BlockPlacer(
             world,
@@ -349,6 +360,7 @@ class GameLoop(
             playerPersister::save,
             vegetationManager,
             attackRegistry,
+            instanceRegistry = instanceRegistry,
         ),
     private val movementProcessor: MovementProcessor = MovementProcessor(world),
     private val chunkStreamer: ChunkStreamer = ChunkStreamer(world),
@@ -535,6 +547,26 @@ class GameLoop(
     @Volatile private var appScope: Application? = null
 
     fun getPlayerStates(): List<PlayerState> = sessionRegistry.all().map { it.state }
+
+    fun getWorldState(): WorldState = world
+
+    fun instances(): InstanceRegistry = instanceRegistry
+
+    // Pushed to every connected admin whenever the zone list changes, so the minimap's unified
+    // outlines (unlike AdminZoneWireframe, which only covers the zone the player is standing in)
+    // stay in sync without requiring a reconnect.
+    suspend fun broadcastInstanceZonesSync() {
+        val msg = ServerMessage.InstanceZonesSync(instanceRegistry.all().map { it.toProto() })
+        sessionRegistry.all().filter { it.hasPermission("admin") }.forEach { it.send(msg) }
+    }
+
+    // Instance zone blocks live in the same shared WorldState as everywhere else — the admin
+    // block editor bypasses BlockPlacer/BlockBreaker (which reject edits inside protected zones
+    // for normal players), so it must broadcast the WorldUpdate itself for players already
+    // standing near the zone to see the edit without reconnecting.
+    suspend fun broadcastWorldUpdate(changes: List<BlockChange>) {
+        sessionRegistry.broadcast(ServerMessage.WorldUpdate(changes))
+    }
 
     private val playerAdminListeners =
         java.util.concurrent.CopyOnWriteArrayList<suspend (String) -> Unit>()
@@ -1049,6 +1081,15 @@ class GameLoop(
                 session.lastZonePos = Pair(newZoneX, newZoneZ)
                 npcTickPipeline.onZoneCrossed(world, newZoneX, newZoneZ)
             }
+            if (session.hasPermission("admin")) {
+                val pos = session.state.pos
+                val instanceZone =
+                    instanceRegistry.zoneAt(pos.x.toInt(), pos.y.toInt(), pos.z.toInt())
+                if (instanceZone?.id != session.lastInstanceZoneId) {
+                    session.lastInstanceZoneId = instanceZone?.id
+                    session.send(ServerMessage.AdminZoneWireframe(instanceZone?.toProto()))
+                }
+            }
         }
         worldItems.tickCollection(sessionRegistry.all())
         gameTimeService.tick(TICK_SECONDS.toDouble())
@@ -1278,6 +1319,10 @@ class GameLoop(
                 knownRecipes = session.knownRecipes.toSet(),
             ))
         session.send(buildPreferencesSync(session))
+        if (session.hasPermission("admin")) {
+            session.send(
+                ServerMessage.InstanceZonesSync(instanceRegistry.all().map { it.toProto() }))
+        }
         if (session.state.godMode) session.send(ServerMessage.GodModeUpdate(true))
         chatService.onPlayerConnect(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))

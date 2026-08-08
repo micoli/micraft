@@ -26,6 +26,11 @@ fun jsHasUrlParam(name: String): Boolean =
 
 fun jsGetUrlParam(name: String): String = js("mc.getUrlParam(name)")
 
+// admin.html has no #renderCanvas (it hosts its own React-managed canvas) — used to skip the
+// full game bootstrap (engine/scene/login overlay/GameClient) when webApp.js loads there instead
+// of on the real game page, so only the admin chunk-preview exports remain callable.
+fun jsHasRenderCanvas(): Boolean = js("!!document.getElementById('renderCanvas')")
+
 // ── i18n ─────────────────────────────────────────────────────────────────────
 
 fun jsFetchI18n(locale: String): Unit = js("mc.fetchI18n(locale)")

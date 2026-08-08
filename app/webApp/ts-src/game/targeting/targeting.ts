@@ -20,7 +20,7 @@ function cubeLines(h: number): [Vector3, Vector3][] {
 }
 
 // 12 edges of an arbitrary axis-aligned box, expanded by `h` on each side.
-function boxLines(
+export function boxLines(
   x0: number,
   y0: number,
   z0: number,

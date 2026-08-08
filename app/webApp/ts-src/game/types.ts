@@ -79,6 +79,14 @@ export interface MailData {
   attachmentsClaimed: boolean;
 }
 
+export interface InstanceZoneData {
+  id: string;
+  name: string;
+  yMin: number;
+  yMax: number;
+  chunks: { cx: number; cz: number }[];
+}
+
 export interface CommandInfo {
   id: string;
   command: string;

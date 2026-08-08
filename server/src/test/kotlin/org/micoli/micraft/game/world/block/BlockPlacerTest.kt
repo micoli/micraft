@@ -39,6 +39,26 @@ class BlockPlacerTest {
     }
 
     @Test
+    fun place_insideProtectedZone_rejected() = runBlocking {
+        val world = testWorld()
+        val registry = org.micoli.micraft.game.world.instance.InstanceRegistry(null)
+        registry.create(
+            name = "Arena",
+            yMin = 0,
+            yMax = 16,
+            chunks = setOf(org.micoli.micraft.game.world.ChunkPos(0, 0)),
+            ownerName = "Alice",
+        )
+        val placer = BlockPlacer(world, {}, {}, instanceRegistry = registry)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("COBBLESTONE")] = 3
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("COBBLESTONE")))
+        assertEquals(BlockType.AIR, world.getBlock(8, 7, 8))
+        assertEquals(3, session.inventory[ItemType("COBBLESTONE")])
+    }
+
+    @Test
     fun place_valid_decrementsInventory() = runBlocking {
         val world = testWorld()
         val placer = placer(world = world)

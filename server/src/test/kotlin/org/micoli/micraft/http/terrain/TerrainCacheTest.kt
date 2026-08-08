@@ -1,8 +1,10 @@
 package org.micoli.micraft.http.terrain
 
 import java.nio.file.Files
+import java.util.zip.GZIPOutputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.micoli.micraft.game.world.ChunkPos
@@ -73,6 +75,29 @@ class TerrainCacheTest {
         val chunksDir = Files.createTempDirectory("terrain-chunks")
         val cacheDir = Files.createTempDirectory("terrain-cache")
         cache.prewarm(chunksDir, cacheDir)
+    }
+
+    @Test
+    fun prewarm_corruptedCachePng_deletesItAndRecomputesFromChunkFile() {
+        val cache = TerrainCache()
+        val world = testWorld()
+        val chunk = world.getOrGenerate(ChunkPos(0, 0))
+        val chunksDir = Files.createTempDirectory("terrain-chunks")
+        val cacheDir = Files.createTempDirectory("terrain-cache")
+
+        val chunkFile = chunksDir.resolve("0_0.mcc.gz").toFile()
+        GZIPOutputStream(chunkFile.outputStream()).use { it.write(chunk.blocks) }
+
+        val corruptedPng = cacheDir.resolve("0_0.png").toFile()
+        corruptedPng.writeBytes(byteArrayOf(1, 2, 3)) // not a valid PNG
+        // Newer than the chunk file, so without deletion the recompute pass below would treat it
+        // as an up-to-date cache entry and skip regenerating it forever.
+        corruptedPng.setLastModified(chunkFile.lastModified() + 10_000)
+
+        cache.prewarm(chunksDir, cacheDir)
+
+        assertFalse(corruptedPng.exists(), "corrupted PNG should be deleted")
+        assertTrue(cache.cachedJson.contains("\"cx\":0"), "chunk should be recomputed into cache")
     }
 
     @Test

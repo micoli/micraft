@@ -11,6 +11,7 @@ import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.BlockChange
@@ -30,11 +31,17 @@ class BlockBreaker(
     private val worldItems: WorldItemManager,
     private val liquidManager: LiquidManager? = null,
     private val bufferSize: Int = 1000,
+    private val instanceRegistry: InstanceRegistry? = null,
 ) {
     private val blockProgress = LinkedHashMap<BlockPos, BlockBreakEntry>()
 
     fun handleStart(session: PlayerSession, intent: ClientMessage.BlockBreakStart) {
         val rawBp = intent.pos
+        if (instanceRegistry?.zoneAt(rawBp.x, rawBp.y, rawBp.z) != null) {
+            blockBreakerLog.debug(
+                "BlockBreakStart rejected: pos={} is inside a protected zone", rawBp)
+            return
+        }
         val block = world.getBlock(rawBp.x, rawBp.y, rawBp.z)
         val eyeY = session.state.pos.y + session.state.stance.eyeOffset
         val dist =

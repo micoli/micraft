@@ -351,7 +351,27 @@ sealed class ServerMessage {
     @ProtoId(52) @Serializable data class MailDeleted(val mailId: String) : ServerMessage()
 
     @ProtoId(53) @Serializable object OpenMailbox : ServerMessage()
+
+    @ProtoId(57)
+    @Serializable
+    data class AdminZoneWireframe(val zone: InstanceZoneProto?) : ServerMessage()
+
+    // Sent to admins on connect and whenever an instance zone is created/renamed/deleted/resized,
+    // so the minimap can outline every zone regardless of whether the player is standing inside
+    // one — unlike AdminZoneWireframe, which only ever carries the single zone the player is in.
+    @ProtoId(58)
+    @Serializable
+    data class InstanceZonesSync(val zones: List<InstanceZoneProto>) : ServerMessage()
 }
+
+@Serializable
+data class InstanceZoneProto(
+    val id: String,
+    val name: String,
+    val yMin: Int,
+    val yMax: Int,
+    val chunks: List<ChunkPos>,
+)
 
 @Serializable
 data class BlockInfo(

@@ -16,11 +16,14 @@ import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.trade.TradeManager
+import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
 import org.micoli.micraft.game.world.weather.WeatherManager
+import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 
 data class CommandContextClosures(
@@ -60,10 +63,24 @@ class CommandContextModule {
         configRegistry: ConfigRegistry,
         tradeManager: TradeManager,
         questManager: QuestManager,
+        instanceRegistry: InstanceRegistry,
     ): CommandContext {
         val generator = worldState.generator as? ProceduralChunkGenerator
         val cavernPoints = generator?.namedCavernPoints() ?: emptyMap()
         val staircasePoints = generator?.namedStaircasePoints() ?: emptyMap()
+        fun instanceNamedPoints(): Map<String, Vec3> =
+            instanceRegistry.all().associate { zone ->
+                val avgCx = zone.chunks.map { it.cx }.average()
+                val avgCz = zone.chunks.map { it.cz }.average()
+                "instance - ${zone.name}" to
+                    Vec3(
+                        Math.round(avgCx).toInt() * WorldConstants.CHUNK_SIZE +
+                            WorldConstants.CHUNK_SIZE / 2f,
+                        zone.yMin.toFloat(),
+                        Math.round(avgCz).toInt() * WorldConstants.CHUNK_SIZE +
+                            WorldConstants.CHUNK_SIZE / 2f,
+                    )
+            }
         return CommandContext(
             world = worldState,
             persistence = optionalWorldPersistence.value,
@@ -93,7 +110,7 @@ class CommandContextModule {
             armorRegistry = closures.armorRegistry,
             tradeManager = tradeManager,
             questManager = questManager,
-            namedPoints = { cavernPoints + staircasePoints },
+            namedPoints = { cavernPoints + staircasePoints + instanceNamedPoints() },
             applyBuff = closures.applyBuff,
         )
     }
