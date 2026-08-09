@@ -155,6 +155,34 @@ class BlockRegistryLoaderTest {
     }
 
     @Test
+    fun isCubic_defaultsToTrue_andCanBeSetFalse() {
+        val (loader) =
+            loaderWithBlocks(
+                mapOf(
+                    "STONE" to "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n",
+                    "LEGO_SLOPE" to
+                        "hardness: 1\nsolid: true\nisCubic: false\nminimapColor: [180, 50, 50]\n",
+                ))
+        val result = loader.load()
+        assertEquals(true, result[BlockType.STONE]?.isCubic)
+        val slope = result[BlockType("LEGO_SLOPE")]!!
+        assertEquals(true, slope.solid)
+        assertEquals(false, slope.isCubic)
+    }
+
+    @Test
+    fun isCubic_canBeToggledByDataOverride() {
+        val (loader) =
+            loaderWithBlocks(
+                blocks = mapOf("STONE" to "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n"),
+                overrides = mapOf("STONE" to "isCubic: false\n"),
+            )
+        val def = loader.load()[BlockType.STONE]!!
+        assertEquals(false, def.isCubic)
+        assertEquals(true, def.solid)
+    }
+
+    @Test
     fun newFields_explicitValues() {
         val (loader) =
             loaderWithBlocks(

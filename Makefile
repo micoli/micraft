@@ -31,7 +31,8 @@ dev-patch-resource-defaults:
 
 ifeq ($(RUN_MODE),DOCKER)
 dev-up:
-	$(DC_DEV) up --build -d
+	#$(DC_DEV) up --build -d
+	$(DC_DEV) up -d
 dev-down:
 	$(DC_DEV) down
 dev-restart:

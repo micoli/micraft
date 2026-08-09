@@ -30,6 +30,7 @@
     },
     "heightFraction": {"type": "number", "minimum": 0, "maximum": 1},
     "plainColorable": {"type": "boolean"},
+    "isCubic": {"type": "boolean"},
     "drops": {
       "type": "array",
       "items": {

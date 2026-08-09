@@ -5,6 +5,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class BlockDefinition(
     val hardness: Float = 1f,
+    /**
+     * Physics/collision only: true if entities cannot walk through this block. See [isCubic] for
+     * rendering/culling shape.
+     */
     val solid: Boolean = true,
     val transparent: Boolean = false,
     val minimapColor: List<Int> = listOf(128, 128, 128),
@@ -22,4 +26,9 @@ data class BlockDefinition(
     val heightFraction: Float = 1.0f,
     /** When true, the block can be placed in any palette color (see [PlainColorRegistry]). */
     val plainColorable: Boolean = false,
+    /**
+     * True if this block is a full unit cube. Non-cube blocks (arches, slopes, corners, steps) must
+     * set this false so neighbor faces aren't culled and greedy-merge doesn't assume full coverage.
+     */
+    val isCubic: Boolean = true,
 )

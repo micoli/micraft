@@ -22,4 +22,5 @@ data class BlockYamlEntry(
     val brickSize: List<Float> = listOf(1f, 1f, 1f),
     val heightFraction: Float = 1.0f,
     val plainColorable: Boolean = false,
+    val isCubic: Boolean = true,
 )

@@ -1,5 +1,6 @@
 hardness: 1.0
-solid: false
+solid: true
+isCubic: false
 transparent: false
 minimapColor: [220, 80, 80]
 modelElement: ""

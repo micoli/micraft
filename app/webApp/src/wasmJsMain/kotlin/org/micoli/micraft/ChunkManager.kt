@@ -88,9 +88,18 @@ class ChunkManager(private val scene: JsAny) {
     private val liquidByOrd = ByteArray(256)
     private val hasStudsByOrd = ByteArray(256)
     private val isMultiCellByOrd = ByteArray(256)
+    // Full-unit-cube shape flag (BlockDefinition.isCubic) — drives neighbor face culling and
+    // greedy-merge eligibility. Distinct from solidByOrd (physics-only): a block can be solid
+    // (not walkable) but non-cubic (arches, slopes, corners, steps), in which case neighbors
+    // must NOT cull faces against it, and it must always emit its own faces.
+    private val cubicByOrd = ByteArray(256)
+    // Whether a neighbor block fully hides the face touching it: a full cube AND opaque.
+    // Transparent cubes (GLASS, WATER) and AIR must not occlude — AIR is cubic by default
+    // (no shape), so without the transparent check every face touching air would be culled.
+    private val occludesByOrd = ByteArray(256)
     // Eligible for greedy-meshing merge along Z (top/bottom/east/west only — see renderRow):
-    // solid simple-cube blocks only. Excludes studs/slopes (non-cube geometry) and brick/
-    // sub-voxel blocks (isMultiCellByOrd); non-solid blocks (cross-sprite decorations like
+    // solid, cubic, simple-cube blocks only. Excludes studs/non-cube shapes (cubicByOrd) and
+    // brick/sub-voxel blocks (isMultiCellByOrd); non-solid blocks (cross-sprite decorations like
     // FLOWER/WEED) are excluded too since their real geometry isn't a full-cube face.
     private val mergeableByOrd = ByteArray(256)
     private var ordFlagsBuilt = false
@@ -104,6 +113,8 @@ class ChunkManager(private val scene: JsAny) {
             solidByOrd[i] = if (bt.isSolid) 1 else 0
             liquidByOrd[i] = if (bt.isLiquid) 1 else 0
             hasStudsByOrd[i] = if (def.hasStuds) 1 else 0
+            cubicByOrd[i] = if (def.isCubic) 1 else 0
+            occludesByOrd[i] = if (def.isCubic && !def.transparent) 1 else 0
             isMultiCellByOrd[i] =
                 if (def.brickSize.size == 3 &&
                     (def.brickSize[0] > 1 || def.brickSize[1] > 1 || def.brickSize[2] > 1))
@@ -111,6 +122,7 @@ class ChunkManager(private val scene: JsAny) {
                 else 0
             mergeableByOrd[i] =
                 if (solidByOrd[i].toInt() != 0 &&
+                    cubicByOrd[i].toInt() != 0 &&
                     hasStudsByOrd[i].toInt() == 0 &&
                     isMultiCellByOrd[i].toInt() == 0)
                     1
@@ -481,7 +493,7 @@ class ChunkManager(private val scene: JsAny) {
                 val wz2 = oz + z
 
                 val isMaster = entity != null // entity master → bypass culling
-                val bypassCulling = isMaster
+                val bypassCulling = isMaster || cubicByOrd[ord].toInt() == 0
                 val mergeEligible = mergeableByOrd[ord].toInt() != 0 && !bypassCulling
 
                 // top (+Y): use solidByOrd + liquidByOrd to skip redundant BlockType creation
@@ -489,11 +501,9 @@ class ChunkManager(private val scene: JsAny) {
                     if (y >= WorldConstants.WORLD_MAX_Y) 0 else blocks[idx + s].toInt() and 0xFF
                 val liquid = liquidByOrd[ord].toInt() != 0
                 val liquidAbove = liquidByOrd[aboveOrd].toInt() != 0
-                // Blocks with studs or slopes: always emit top face
                 val emitTop =
                     bypassCulling ||
-                        hasStudsByOrd[ord].toInt() != 0 ||
-                        (solidByOrd[aboveOrd].toInt() == 0 && !(liquid && liquidAbove))
+                        (occludesByOrd[aboveOrd].toInt() == 0 && !(liquid && liquidAbove))
                 if (emitTop) {
                     val faceMatV = t + 4
                     val aoV = computeFaceAO(blocks, x, y, z, 4) or colorBits
@@ -534,7 +544,7 @@ class ChunkManager(private val scene: JsAny) {
                 val emitBottom =
                     bypassCulling ||
                         y <= 0 ||
-                        solidByOrd[blocks[idx - s].toInt() and 0xFF].toInt() == 0
+                        occludesByOrd[blocks[idx - s].toInt() and 0xFF].toInt() == 0
                 if (emitBottom) {
                     val faceMatV = t + 5
                     val aoV = computeFaceAO(blocks, x, y, z, 5) or colorBits
@@ -574,7 +584,7 @@ class ChunkManager(private val scene: JsAny) {
                 // south (+Z) — normal is ±Z, not mergeable via Z-adjacency, one quad per block
                 if (bypassCulling ||
                     z == s - 1 ||
-                    solidByOrd[blocks[idx + 1].toInt() and 0xFF].toInt() == 0) {
+                    occludesByOrd[blocks[idx + 1].toInt() and 0xFF].toInt() == 0) {
                     jsChunkFaceAppend(
                         wx, y, wz2, t + 0, computeFaceAO(blocks, x, y, z, 0) or colorBits)
                     faceCount++
@@ -582,7 +592,7 @@ class ChunkManager(private val scene: JsAny) {
                 // north (-Z)
                 if (bypassCulling ||
                     z == 0 ||
-                    solidByOrd[blocks[idx - 1].toInt() and 0xFF].toInt() == 0) {
+                    occludesByOrd[blocks[idx - 1].toInt() and 0xFF].toInt() == 0) {
                     jsChunkFaceAppend(
                         wx, y, wz2, t + 1, computeFaceAO(blocks, x, y, z, 1) or colorBits)
                     faceCount++
@@ -591,7 +601,7 @@ class ChunkManager(private val scene: JsAny) {
                 val emitEast =
                     bypassCulling ||
                         x == s - 1 ||
-                        solidByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0
+                        occludesByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0
                 if (emitEast) {
                     val faceMatV = t + 2
                     val aoV = computeFaceAO(blocks, x, y, z, 2) or colorBits
@@ -632,7 +642,7 @@ class ChunkManager(private val scene: JsAny) {
                 val emitWest =
                     bypassCulling ||
                         x == 0 ||
-                        solidByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0
+                        occludesByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0
                 if (emitWest) {
                     val faceMatV = t + 3
                     val aoV = computeFaceAO(blocks, x, y, z, 3) or colorBits

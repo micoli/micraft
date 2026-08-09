@@ -630,6 +630,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         brickSize = info.brickSize,
                                         heightFraction = info.heightFraction,
                                         plainColorable = info.plainColorable,
+                                        isCubic = info.isCubic,
                                     )
                             }
                             .toMap()

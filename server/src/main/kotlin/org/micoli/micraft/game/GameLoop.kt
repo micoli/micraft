@@ -826,6 +826,7 @@ class GameLoop(
                     brickSize = def.brickSize,
                     heightFraction = def.heightFraction,
                     plainColorable = def.plainColorable,
+                    isCubic = def.isCubic,
                 )
             }
         val items =

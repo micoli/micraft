@@ -390,6 +390,7 @@ data class BlockInfo(
     val brickSize: List<Float> = listOf(1f, 1f, 1f),
     val heightFraction: Float = 1.0f,
     val plainColorable: Boolean = false,
+    val isCubic: Boolean = true,
 )
 
 /** Palette entry; its position in [ServerMessage.RegistrySync.plainColors] is colorIndex - 1. */

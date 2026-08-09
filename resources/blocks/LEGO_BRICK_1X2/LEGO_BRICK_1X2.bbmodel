@@ -1,140 +1,418 @@
 {
-  "resolution": { "width": 16, "height": 16 },
-  "textures": [
-    {
-      "id": 0,
-      "name": "LEGO_BRICK_1X2",
-      "path": "api/models/blocks/LEGO_BRICK_1X2/LEGO_BRICK_1X2.png",
-      "source": ""
-    }
-  ],
+  "meta": {
+    "format_version": "5.0",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "LEGO_BRICK_1X2",
+  "model_identifier": "",
+  "visible_box": [1, 1, 0],
+  "variable_placeholders": "",
+  "multi_file_ruleset": "",
+  "variable_placeholder_buttons": [],
+  "timeline_setups": [],
+  "unhandled_root_fields": {},
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
   "elements": [
     {
-      "uuid": "body",
       "name": "body",
-      "render_type": "solid",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "export": true,
+      "scope": 0,
+      "allow_mirror_modeling": true,
       "from": [0, 0, 0],
       "to": [16, 16, 32],
+      "autouv": 0,
+      "color": 4,
+      "origin": [0, 0, 0],
       "faces": {
-        "south": { "texture": 0, "uv": [0, 0, 16, 16] },
-        "north": { "texture": 0, "uv": [0, 0, 16, 16] },
-        "east":  { "texture": 0, "uv": [0, 0, 16, 16] },
-        "west":  { "texture": 0, "uv": [0, 0, 16, 16] },
-        "up":    { "texture": 0, "uv": [0, 0, 16, 16] },
-        "down":  { "texture": 0, "uv": [0, 0, 16, 16] }
-      }
-    },
-    {
-      "uuid": "stud-0-0-0",
+        "north": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "east": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "south": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "west": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "up": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        },
+        "down": {
+          "uv": [0, 0, 16, 16],
+          "texture": 0
+        }
+      },
+      "type": "cube",
+      "uuid": "body"
+    }, {
       "name": "stud",
-      "render_type": "solid",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "export": true,
+      "scope": 0,
+      "allow_mirror_modeling": true,
       "from": [2, 16, 2],
       "to": [6, 19, 6],
+      "autouv": 0,
+      "color": 1,
+      "origin": [0, 0, 0],
       "faces": {
-        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
-      }
-    },
-    {
-      "uuid": "stud-0-1-0",
+        "north": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "east": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "south": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "west": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "up": {
+          "uv": [0, 0, 4, 4],
+          "texture": 0
+        },
+        "down": {
+          "uv": [0, 0, 1, 1]
+        }
+      },
+      "type": "cube",
+      "uuid": "a2ed093c-04e3-74fa-c772-3c90676b29e7"
+    }, {
       "name": "stud",
-      "render_type": "solid",
-      "from": [10, 16, 2],
-      "to": [14, 19, 6],
-      "faces": {
-        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
-      }
-    },
-    {
-      "uuid": "stud-0-0-1",
-      "name": "stud",
-      "render_type": "solid",
-      "from": [2, 16, 10],
-      "to": [6, 19, 14],
-      "faces": {
-        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
-      }
-    },
-    {
-      "uuid": "stud-0-1-1",
-      "name": "stud",
-      "render_type": "solid",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "export": true,
+      "scope": 0,
+      "allow_mirror_modeling": true,
       "from": [10, 16, 10],
       "to": [14, 19, 14],
+      "autouv": 0,
+      "color": 1,
+      "origin": [8, 0, 8],
       "faces": {
-        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
-      }
-    },
-    {
-      "uuid": "stud-1-0-0",
+        "north": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "east": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "south": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "west": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "up": {
+          "uv": [0, 0, 4, 4],
+          "texture": 0
+        },
+        "down": {
+          "uv": [0, 0, 1, 1]
+        }
+      },
+      "type": "cube",
+      "uuid": "dbae8789-505e-8bc0-c8eb-3a37908835ae"
+    }, {
       "name": "stud",
-      "render_type": "solid",
-      "from": [2, 16, 18],
-      "to": [6, 19, 22],
-      "faces": {
-        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
-      }
-    },
-    {
-      "uuid": "stud-1-1-0",
-      "name": "stud",
-      "render_type": "solid",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "export": true,
+      "scope": 0,
+      "allow_mirror_modeling": true,
       "from": [10, 16, 18],
       "to": [14, 19, 22],
+      "autouv": 0,
+      "color": 1,
+      "origin": [8, 0, 16],
       "faces": {
-        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
-      }
-    },
-    {
-      "uuid": "stud-1-0-1",
+        "north": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "east": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "south": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "west": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "up": {
+          "uv": [0, 0, 4, 4],
+          "texture": 0
+        },
+        "down": {
+          "uv": [0, 0, 1, 1]
+        }
+      },
+      "type": "cube",
+      "uuid": "c79d1ef6-0264-7db5-cb1b-55386c009ab8"
+    }, {
       "name": "stud",
-      "render_type": "solid",
-      "from": [2, 16, 26],
-      "to": [6, 19, 30],
-      "faces": {
-        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
-      }
-    },
-    {
-      "uuid": "stud-1-1-1",
-      "name": "stud",
-      "render_type": "solid",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "export": true,
+      "scope": 0,
+      "allow_mirror_modeling": true,
       "from": [10, 16, 26],
       "to": [14, 19, 30],
+      "autouv": 0,
+      "color": 1,
+      "origin": [8, 0, 24],
       "faces": {
-        "south": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "north": { "texture": 0, "uv": [0, 0, 4, 3] },
-        "east":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "west":  { "texture": 0, "uv": [0, 0, 4, 3] },
-        "up":    { "texture": 0, "uv": [0, 0, 4, 4] }
-      }
+        "north": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "east": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "south": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "west": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "up": {
+          "uv": [0, 0, 4, 4],
+          "texture": 0
+        },
+        "down": {
+          "uv": [0, 0, 1, 1]
+        }
+      },
+      "type": "cube",
+      "uuid": "9fc3fce0-7f60-696d-0b35-0709a62c9d22"
+    }, {
+      "name": "stud",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "export": true,
+      "scope": 0,
+      "allow_mirror_modeling": true,
+      "from": [10, 16, 2],
+      "to": [14, 19, 6],
+      "autouv": 0,
+      "color": 1,
+      "origin": [8, 0, 0],
+      "faces": {
+        "north": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "east": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "south": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "west": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "up": {
+          "uv": [0, 0, 4, 4],
+          "texture": 0
+        },
+        "down": {
+          "uv": [0, 0, 1, 1]
+        }
+      },
+      "type": "cube",
+      "uuid": "e5c32a85-57cf-2405-13e8-da60d3df9784"
+    }, {
+      "name": "stud",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "export": true,
+      "scope": 0,
+      "allow_mirror_modeling": true,
+      "from": [2, 16, 10],
+      "to": [6, 19, 14],
+      "autouv": 0,
+      "color": 1,
+      "origin": [0, 0, 8],
+      "faces": {
+        "north": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "east": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "south": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "west": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "up": {
+          "uv": [0, 0, 4, 4],
+          "texture": 0
+        },
+        "down": {
+          "uv": [0, 0, 1, 1]
+        }
+      },
+      "type": "cube",
+      "uuid": "5a989b21-f9b6-3a09-3530-e13b421ffc85"
+    }, {
+      "name": "stud",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "export": true,
+      "scope": 0,
+      "allow_mirror_modeling": true,
+      "from": [2, 16, 18],
+      "to": [6, 19, 22],
+      "autouv": 0,
+      "color": 1,
+      "origin": [0, 0, 16],
+      "faces": {
+        "north": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "east": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "south": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "west": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "up": {
+          "uv": [0, 0, 4, 4],
+          "texture": 0
+        },
+        "down": {
+          "uv": [0, 0, 1, 1]
+        }
+      },
+      "type": "cube",
+      "uuid": "c4183d4b-32f0-e586-ef3c-0d099549064f"
+    }, {
+      "name": "stud",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "export": true,
+      "scope": 0,
+      "allow_mirror_modeling": true,
+      "from": [2, 16, 26],
+      "to": [6, 19, 30],
+      "autouv": 0,
+      "color": 1,
+      "origin": [0, 0, 24],
+      "faces": {
+        "north": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "east": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "south": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "west": {
+          "uv": [0, 0, 4, 3],
+          "texture": 0
+        },
+        "up": {
+          "uv": [0, 0, 4, 4],
+          "texture": 0
+        },
+        "down": {
+          "uv": [0, 0, 1, 1]
+        }
+      },
+      "type": "cube",
+      "uuid": "b2400dbb-5f70-ae6d-91fd-90b203573d6f"
+    }
+  ],
+  "groups": [],
+  "outliner": ["body", "a2ed093c-04e3-74fa-c772-3c90676b29e7", "b2400dbb-5f70-ae6d-91fd-90b203573d6f", "c4183d4b-32f0-e586-ef3c-0d099549064f", "5a989b21-f9b6-3a09-3530-e13b421ffc85", "e5c32a85-57cf-2405-13e8-da60d3df9784", "dbae8789-505e-8bc0-c8eb-3a37908835ae", "c79d1ef6-0264-7db5-cb1b-55386c009ab8", "9fc3fce0-7f60-696d-0b35-0709a62c9d22"],
+  "textures": [
+    {
+      "name": "LEGO_BRICK_1X2",
+      "folder": "",
+      "namespace": "",
+      "id": "0",
+      "group": "",
+      "scope": 0,
+      "width": 16,
+      "height": 16,
+      "uv_width": 16,
+      "uv_height": 16,
+      "particle": false,
+      "use_as_default": false,
+      "layers_enabled": false,
+      "sync_to_project": "",
+      "file_format": "png",
+      "render_mode": "default",
+      "render_sides": "auto",
+      "wrap_mode": "limited",
+      "pbr_channel": "color",
+      "fps": 7,
+      "frame_time": 1,
+      "frame_order_type": "loop",
+      "frame_order": "",
+      "frame_interpolate": false,
+      "visible": true,
+      "internal": true,
+      "saved": true,
+      "uuid": "3f7c859f-ebb8-4cb4-9022-ecfa8b64a380",
+      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAzklEQVR4AaTTQQqEQBADwMGDP/Dk/3+mXvQFXlyrl5FeQXBYIYQkbVoHpjv+eKZpOrpyPvM8l3VdSytv21aioO/7su97aeVz97fgzcvjOJZhGH6WXAVvNhuGvIyOX8jmU5lhyDkdBdl8KjMMOaejIJtPZYYh53QUZNNBObB7qWHIPh0Fd1OQS+U8yD4dBXdT4CVf4ovkPODTmI4CIpsCGoMcA5/GdBQQ2RTQGOQY+DSmo4CoZr0TdL0b8uzT8quAqGYLR4Ety7IUN6uVFXwAAAD//9mo08YAAAAGSURBVAMA0MN1XDNKaoIAAAAASUVORK5CYII="
     }
   ]
 }
