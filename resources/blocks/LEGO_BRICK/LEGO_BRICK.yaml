@@ -1,5 +1,5 @@
 hardness: 1.0
-solid: true
+solid: false
 transparent: false
 minimapColor: [220, 50, 50]
 modelElement: ""
