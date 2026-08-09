@@ -88,6 +88,11 @@ class ChunkManager(private val scene: JsAny) {
     private val liquidByOrd = ByteArray(256)
     private val hasStudsByOrd = ByteArray(256)
     private val isMultiCellByOrd = ByteArray(256)
+    // Eligible for greedy-meshing merge along Z (top/bottom/east/west only — see renderRow):
+    // solid simple-cube blocks only. Excludes studs/slopes (non-cube geometry) and brick/
+    // sub-voxel blocks (isMultiCellByOrd); non-solid blocks (cross-sprite decorations like
+    // FLOWER/WEED) are excluded too since their real geometry isn't a full-cube face.
+    private val mergeableByOrd = ByteArray(256)
     private var ordFlagsBuilt = false
     private val strideX = (WorldConstants.WORLD_MAX_Y + 1) * WorldConstants.CHUNK_SIZE
 
@@ -104,8 +109,37 @@ class ChunkManager(private val scene: JsAny) {
                     (def.brickSize[0] > 1 || def.brickSize[1] > 1 || def.brickSize[2] > 1))
                     1
                 else 0
+            mergeableByOrd[i] =
+                if (solidByOrd[i].toInt() != 0 &&
+                    hasStudsByOrd[i].toInt() == 0 &&
+                    isMultiCellByOrd[i].toInt() == 0)
+                    1
+                else 0
         }
         ordFlagsBuilt = true
+    }
+
+    // Flushes an in-progress greedy-merge run for direction slot [idx] (0=top,1=bottom,
+    // 2=east,3=west), emitting a single wide face if len>1 or a normal face if len==1.
+    private fun flushMergeRun(
+        idx: Int,
+        active: BooleanArray,
+        startZ: IntArray,
+        len: IntArray,
+        faceMatArr: IntArray,
+        aoArr: IntArray,
+        wx: Int,
+        y: Int,
+        oz: Int,
+    ) {
+        if (!active[idx]) return
+        val wz = oz + startZ[idx]
+        if (len[idx] <= 1) {
+            jsChunkFaceAppend(wx, y, wz, faceMatArr[idx], aoArr[idx])
+        } else {
+            jsChunkFaceAppendRun(wx, y, wz, faceMatArr[idx], aoArr[idx], len[idx])
+        }
+        active[idx] = false
     }
 
     fun setShadersEnabled(enabled: Boolean) {
@@ -416,7 +450,16 @@ class ChunkManager(private val scene: JsAny) {
         val oz = chunk.pos.cz * s
         var faceCount = 0
         val entityMap = chunk.buildEntitiesMap()
+        // Greedy-merge state for top/bottom/east/west faces (indices 0-3), run along Z.
+        // South/north faces lie in the XY plane (normal is ±Z) so they aren't mergeable
+        // via Z-adjacency and are left as one quad per block (see loop-order note above).
+        val mergeActive = BooleanArray(4)
+        val mergeStartZ = IntArray(4)
+        val mergeLen = IntArray(4)
+        val mergeFaceMat = IntArray(4)
+        val mergeAo = IntArray(4)
         for (x in 0 until s) {
+            val wx = ox + x
             for (z in 0 until s) {
                 // Direct ByteArray access — no getBlock(), no registry lookup
                 val idx = x * strideX + y * s + z
@@ -435,11 +478,11 @@ class ChunkManager(private val scene: JsAny) {
                 val rotation = BlockState.rotation(state)
                 val colorBits = BlockState.colorIndex(state) shl COLOR_SHIFT
                 val t = (ord * 4 + rotation) * 6
-                val wx = ox + x
                 val wz2 = oz + z
 
                 val isMaster = entity != null // entity master → bypass culling
                 val bypassCulling = isMaster
+                val mergeEligible = mergeableByOrd[ord].toInt() != 0 && !bypassCulling
 
                 // top (+Y): use solidByOrd + liquidByOrd to skip redundant BlockType creation
                 val aboveOrd =
@@ -452,19 +495,83 @@ class ChunkManager(private val scene: JsAny) {
                         hasStudsByOrd[ord].toInt() != 0 ||
                         (solidByOrd[aboveOrd].toInt() == 0 && !(liquid && liquidAbove))
                 if (emitTop) {
-                    jsChunkFaceAppend(
-                        wx, y, wz2, t + 4, computeFaceAO(blocks, x, y, z, 4) or colorBits)
+                    val faceMatV = t + 4
+                    val aoV = computeFaceAO(blocks, x, y, z, 4) or colorBits
+                    if (mergeEligible) {
+                        if (mergeActive[0] &&
+                            mergeFaceMat[0] == faceMatV &&
+                            mergeAo[0] == aoV &&
+                            mergeStartZ[0] + mergeLen[0] == z) {
+                            mergeLen[0]++
+                        } else {
+                            flushMergeRun(
+                                0,
+                                mergeActive,
+                                mergeStartZ,
+                                mergeLen,
+                                mergeFaceMat,
+                                mergeAo,
+                                wx,
+                                y,
+                                oz)
+                            mergeActive[0] = true
+                            mergeStartZ[0] = z
+                            mergeLen[0] = 1
+                            mergeFaceMat[0] = faceMatV
+                            mergeAo[0] = aoV
+                        }
+                    } else {
+                        flushMergeRun(
+                            0, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
+                        jsChunkFaceAppend(wx, y, wz2, faceMatV, aoV)
+                    }
                     faceCount++
+                } else {
+                    flushMergeRun(
+                        0, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
                 }
                 // bottom (-Y)
-                if (bypassCulling ||
-                    y <= 0 ||
-                    solidByOrd[blocks[idx - s].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFaceAppend(
-                        wx, y, wz2, t + 5, computeFaceAO(blocks, x, y, z, 5) or colorBits)
+                val emitBottom =
+                    bypassCulling ||
+                        y <= 0 ||
+                        solidByOrd[blocks[idx - s].toInt() and 0xFF].toInt() == 0
+                if (emitBottom) {
+                    val faceMatV = t + 5
+                    val aoV = computeFaceAO(blocks, x, y, z, 5) or colorBits
+                    if (mergeEligible) {
+                        if (mergeActive[1] &&
+                            mergeFaceMat[1] == faceMatV &&
+                            mergeAo[1] == aoV &&
+                            mergeStartZ[1] + mergeLen[1] == z) {
+                            mergeLen[1]++
+                        } else {
+                            flushMergeRun(
+                                1,
+                                mergeActive,
+                                mergeStartZ,
+                                mergeLen,
+                                mergeFaceMat,
+                                mergeAo,
+                                wx,
+                                y,
+                                oz)
+                            mergeActive[1] = true
+                            mergeStartZ[1] = z
+                            mergeLen[1] = 1
+                            mergeFaceMat[1] = faceMatV
+                            mergeAo[1] = aoV
+                        }
+                    } else {
+                        flushMergeRun(
+                            1, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
+                        jsChunkFaceAppend(wx, y, wz2, faceMatV, aoV)
+                    }
                     faceCount++
+                } else {
+                    flushMergeRun(
+                        1, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
                 }
-                // south (+Z)
+                // south (+Z) — normal is ±Z, not mergeable via Z-adjacency, one quad per block
                 if (bypassCulling ||
                     z == s - 1 ||
                     solidByOrd[blocks[idx + 1].toInt() and 0xFF].toInt() == 0) {
@@ -481,22 +588,93 @@ class ChunkManager(private val scene: JsAny) {
                     faceCount++
                 }
                 // east (+X)
-                if (bypassCulling ||
-                    x == s - 1 ||
-                    solidByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFaceAppend(
-                        wx, y, wz2, t + 2, computeFaceAO(blocks, x, y, z, 2) or colorBits)
+                val emitEast =
+                    bypassCulling ||
+                        x == s - 1 ||
+                        solidByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0
+                if (emitEast) {
+                    val faceMatV = t + 2
+                    val aoV = computeFaceAO(blocks, x, y, z, 2) or colorBits
+                    if (mergeEligible) {
+                        if (mergeActive[2] &&
+                            mergeFaceMat[2] == faceMatV &&
+                            mergeAo[2] == aoV &&
+                            mergeStartZ[2] + mergeLen[2] == z) {
+                            mergeLen[2]++
+                        } else {
+                            flushMergeRun(
+                                2,
+                                mergeActive,
+                                mergeStartZ,
+                                mergeLen,
+                                mergeFaceMat,
+                                mergeAo,
+                                wx,
+                                y,
+                                oz)
+                            mergeActive[2] = true
+                            mergeStartZ[2] = z
+                            mergeLen[2] = 1
+                            mergeFaceMat[2] = faceMatV
+                            mergeAo[2] = aoV
+                        }
+                    } else {
+                        flushMergeRun(
+                            2, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
+                        jsChunkFaceAppend(wx, y, wz2, faceMatV, aoV)
+                    }
                     faceCount++
+                } else {
+                    flushMergeRun(
+                        2, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
                 }
                 // west (-X)
-                if (bypassCulling ||
-                    x == 0 ||
-                    solidByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFaceAppend(
-                        wx, y, wz2, t + 3, computeFaceAO(blocks, x, y, z, 3) or colorBits)
+                val emitWest =
+                    bypassCulling ||
+                        x == 0 ||
+                        solidByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0
+                if (emitWest) {
+                    val faceMatV = t + 3
+                    val aoV = computeFaceAO(blocks, x, y, z, 3) or colorBits
+                    if (mergeEligible) {
+                        if (mergeActive[3] &&
+                            mergeFaceMat[3] == faceMatV &&
+                            mergeAo[3] == aoV &&
+                            mergeStartZ[3] + mergeLen[3] == z) {
+                            mergeLen[3]++
+                        } else {
+                            flushMergeRun(
+                                3,
+                                mergeActive,
+                                mergeStartZ,
+                                mergeLen,
+                                mergeFaceMat,
+                                mergeAo,
+                                wx,
+                                y,
+                                oz)
+                            mergeActive[3] = true
+                            mergeStartZ[3] = z
+                            mergeLen[3] = 1
+                            mergeFaceMat[3] = faceMatV
+                            mergeAo[3] = aoV
+                        }
+                    } else {
+                        flushMergeRun(
+                            3, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
+                        jsChunkFaceAppend(wx, y, wz2, faceMatV, aoV)
+                    }
                     faceCount++
+                } else {
+                    flushMergeRun(
+                        3, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
                 }
             }
+            // Flush any runs still open at the end of this X column (z reached s-1).
+            flushMergeRun(0, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
+            flushMergeRun(1, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
+            flushMergeRun(2, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
+            flushMergeRun(3, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
         }
         return faceCount
     }

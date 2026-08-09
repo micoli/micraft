@@ -4,7 +4,7 @@
     "model_format": "free",
     "box_uv": false
   },
-  "name": "LEGO_STEP",
+  "name": "LEGO_STEP_BOTTOM",
   "model_identifier": "",
   "visible_box": [1, 1, 0],
   "variable_placeholders": "",
@@ -106,8 +106,8 @@
   "textures": [
     {
       "id": 0,
-      "name": "LEGO_STEP",
-      "path": "api/models/blocks/LEGO_STEP/LEGO_STEP.png",
+      "name": "LEGO_STEP_BOTTOM",
+      "path": "api/models/blocks/LEGO_STEP_BOTTOM/LEGO_STEP_BOTTOM.png",
       "source": ""
     }
   ]

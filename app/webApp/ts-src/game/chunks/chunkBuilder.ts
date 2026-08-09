@@ -308,11 +308,55 @@ function emitCrossSprite(wx: number, wy: number, wz: number, g: FaceGroup, uv: F
   for (const q of CROSS_QUADS) emitQuad(g, wx, wy, wz, q, 0, 1, 0, uv, 0.8, ao);
 }
 
+// --- Greedy-merge stretch (runLen > 1 runs from ChunkManager.renderRow) ---
+// Only ever applied to top/bottom/east/west faces of simple-cube blocks (see
+// mergeableByOrd in Kotlin) — always merged along local Z (index 2 of a vert triple),
+// regardless of which of those 4 directions it is, per vertsFromElement's layout.
+// Rebuilds a stretched copy each call rather than mutating faceTable's cached arrays,
+// which are shared across every unmerged face of that faceMat.
+
+function stretchVertsZ(verts: Float32Array, runLen: number): Float32Array {
+  const r = new Float32Array(12);
+  for (let k = 0; k < 4; k++) {
+    r[k * 3] = verts[k * 3];
+    r[k * 3 + 1] = verts[k * 3 + 1];
+    r[k * 3 + 2] = verts[k * 3 + 2] >= 0.999 ? runLen : verts[k * 3 + 2];
+  }
+  return r;
+}
+
+// Finds the uv axis (u or v) that varies between the "high Z" and "low Z" vertex
+// pairs and scales it by runLen so the texture tiles across the merged run (textures
+// use WRAP address mode by default) instead of stretching.
+function stretchUVZ(uv: Float32Array, verts: Float32Array, runLen: number): Float32Array {
+  const highIdx: number[] = [];
+  const lowIdx: number[] = [];
+  for (let k = 0; k < 4; k++) (verts[k * 3 + 2] >= 0.999 ? highIdx : lowIdx).push(k);
+  const r = new Float32Array(uv);
+  if (highIdx.length !== 2 || lowIdx.length !== 2) return r;
+  for (let axis = 0; axis < 2; axis++) {
+    const h0 = uv[highIdx[0] * 2 + axis];
+    const h1 = uv[highIdx[1] * 2 + axis];
+    const l0 = uv[lowIdx[0] * 2 + axis];
+    const l1 = uv[lowIdx[1] * 2 + axis];
+    if (Math.abs(h0 - h1) < 1e-4 && Math.abs(l0 - l1) < 1e-4 && Math.abs(h0 - l0) > 1e-4) {
+      const newHigh = l0 + (h0 - l0) * runLen;
+      r[highIdx[0] * 2 + axis] = newHigh;
+      r[highIdx[1] * 2 + axis] = newHigh;
+      break;
+    }
+  }
+  return r;
+}
+
 // --- Face buffer (shared with Kotlin via window.__mcFB / window.__mcFI) ---
 // Kotlin writes face data here (jsChunkFaceAppend); chunkEnd processes the whole
 // buffer in one tight loop — eliminates per-face JS function-call overhead.
+// Stride is 6 ints/face — 6th is runLen (blocks merged along Z by greedy meshing
+// in ChunkManager.renderRow; 1 = unmerged, see FACE_STRIDE below).
 
-const FACE_BUF_SLOTS = 600_000; // 5 ints × up to 120k faces per chunk
+const FACE_STRIDE = 6;
+const FACE_BUF_SLOTS = 720_000; // 6 ints × up to 120k faces per chunk
 
 // Y-slab height for sub-chunk mesh splitting. Each material×slab combo becomes its own
 // BabylonJS mesh, giving the engine a tight bounding box per slab for frustum culling.
@@ -464,19 +508,20 @@ export function registerChunks(): Pick<
     // Process a slice of __mcFB into FaceGroups (geometry work only, no GPU upload).
     // cursor: face index (not byte offset); maxFaces: max to process this call.
     // Returns actual faces processed. Call repeatedly until return value < maxFaces
-    // (or until cursor × 5 >= __mcFI) then call chunkEnd for GPU upload.
+    // (or until cursor × FACE_STRIDE >= __mcFI) then call chunkEnd for GPU upload.
     chunkProcessFaces: (cursor: number, maxFaces: number): number => {
       const buf = __mcBuf!;
       const fb = window.__mcFB!;
       const fi = window.__mcFI ?? 0;
-      const startI = cursor * 5;
-      const endI = Math.min(startI + maxFaces * 5, fi);
+      const startI = cursor * FACE_STRIDE;
+      const endI = Math.min(startI + maxFaces * FACE_STRIDE, fi);
       const grp = buf.groups;
-      for (let i = startI; i < endI; i += 5) {
+      for (let i = startI; i < endI; i += FACE_STRIDE) {
         let wx = fb[i],
           wz = fb[i + 2];
         const faceMat = fb[i + 3];
         const aoPacked = fb[i + 4];
+        const runLen = fb[i + 5];
         const ao = aoPacked & 0xffff;
         const yOff = (aoPacked >>> 16) & 0x3;
         const colorIdx = (aoPacked >>> 18) & 0x3f;
@@ -510,6 +555,21 @@ export function registerChunks(): Pick<
           }
           if (info.isCrossSprite) {
             emitCrossSprite(wx, wy, wz, g, info.uv, ao);
+          } else if (runLen > 1) {
+            emitQuad(
+              g,
+              wx,
+              wy,
+              wz,
+              stretchVertsZ(info.verts, runLen),
+              info.normX,
+              info.normY,
+              info.normZ,
+              stretchUVZ(info.uv, info.verts, runLen),
+              info.shade,
+              ao,
+              info.isPlastic,
+            );
           } else {
             emitQuad(
               g,
@@ -528,7 +588,7 @@ export function registerChunks(): Pick<
           }
         }
       }
-      return ((endI - startI) / 5) | 0;
+      return ((endI - startI) / FACE_STRIDE) | 0;
     },
 
     // GPU upload only — call after chunkProcessFaces has consumed all faces.
