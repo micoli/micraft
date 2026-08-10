@@ -72,7 +72,7 @@ export function GameAssetsPage() {
 
   return (
     <div className="flex h-full overflow-hidden -m-6">
-      {/* Sidebar */}
+      {/* SidebarComponent */}
       <aside className="w-72 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden">
         <div className="px-4 py-3 border-b border-[#2E3A4E] text-xs font-semibold uppercase tracking-widest text-[#8A99AF]">
           {t("assets.count", assets.length)}

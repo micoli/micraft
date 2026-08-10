@@ -174,7 +174,7 @@ declare global {
     _lightBoost?: { orb: Mesh; light: PointLight } | null;
   }
 
-  // Served by GET /api/skins/{name}/config — see resources/skins/<name>/<name>.yaml.
+  // Served by GET /api/skins/{name}/configEditor — see resources/skins/<name>/<name>.yaml.
   // `eyes` is in bbmodel pixels (16 px = 1 block), model space, feet at y = 0.
   interface McSkinConfig {
     eyes: { x: number; y: number; z: number };
@@ -380,7 +380,7 @@ declare global {
     setPlayerAlpha(model: McPlayerModel, alpha: number): void;
     setPlayerFirstPerson(model: McPlayerModel, skin: string, enabled: boolean): void;
     disposePlayerModel(model: McPlayerModel): void;
-    // Skin config (eye anchor, first-person hidden bones)
+    // Skin configEditor (eye anchor, first-person hidden bones)
     initSkinConfig(skin: string): void;
     isSkinConfigReady(skin: string): boolean;
     getSkinEyeHeight(skin: string): number;

@@ -315,7 +315,7 @@ export function registerPlayerModel(): Pick<
       });
     },
 
-    // First person shows the player's own body, minus the bones listed in the skin config
+    // First person shows the player's own body, minus the bones listed in the skin configEditor
     // (head + helmet), since the camera sits inside the head. Re-applied every frame so
     // armor pieces attached later are covered too.
     setPlayerFirstPerson: (model: McPlayerModel, skin: string, enabled: boolean): void => {

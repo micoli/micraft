@@ -25671,7 +25671,7 @@
   var import_client = __toESM(require_client(), 1);
 
   // admin/AdminApp.tsx
-  var import_react27 = __toESM(require_react(), 1);
+  var import_react46 = __toESM(require_react(), 1);
 
   // node_modules/react-router/dist/development/chunk-KS7C4IRE.mjs
   var React = __toESM(require_react(), 1);
@@ -28517,3279 +28517,6 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     return matchPath(path.pathname, nextPath) != null || matchPath(path.pathname, currentPath) != null;
   }
 
-  // node_modules/clsx/dist/clsx.mjs
-  function r(e) {
-    var t2, f, n = "";
-    if ("string" == typeof e || "number" == typeof e) n += e;
-    else if ("object" == typeof e) if (Array.isArray(e)) {
-      var o = e.length;
-      for (t2 = 0; t2 < o; t2++) e[t2] && (f = r(e[t2])) && (n && (n += " "), n += f);
-    } else for (f in e) e[f] && (n && (n += " "), n += f);
-    return n;
-  }
-  function clsx() {
-    for (var e, t2, f = 0, n = "", o = arguments.length; f < o; f++) (e = arguments[f]) && (t2 = r(e)) && (n && (n += " "), n += t2);
-    return n;
-  }
-
-  // node_modules/tailwind-merge/dist/bundle-mjs.mjs
-  var concatArrays = (array1, array2) => {
-    const combinedArray = new Array(array1.length + array2.length);
-    for (let i = 0; i < array1.length; i++) {
-      combinedArray[i] = array1[i];
-    }
-    for (let i = 0; i < array2.length; i++) {
-      combinedArray[array1.length + i] = array2[i];
-    }
-    return combinedArray;
-  };
-  var createClassValidatorObject = (classGroupId, validator) => ({
-    classGroupId,
-    validator
-  });
-  var createClassPartObject = (nextPart = /* @__PURE__ */ new Map(), validators = null, classGroupId) => ({
-    nextPart,
-    validators,
-    classGroupId
-  });
-  var CLASS_PART_SEPARATOR = "-";
-  var EMPTY_CONFLICTS = [];
-  var ARBITRARY_PROPERTY_PREFIX = "arbitrary..";
-  var createClassGroupUtils = (config3) => {
-    const classMap = createClassMap(config3);
-    const {
-      conflictingClassGroups,
-      conflictingClassGroupModifiers
-    } = config3;
-    const getClassGroupId = (className) => {
-      if (className.startsWith("[") && className.endsWith("]")) {
-        return getGroupIdForArbitraryProperty(className);
-      }
-      const classParts = className.split(CLASS_PART_SEPARATOR);
-      const startIndex = classParts[0] === "" && classParts.length > 1 ? 1 : 0;
-      return getGroupRecursive(classParts, startIndex, classMap);
-    };
-    const getConflictingClassGroupIds = (classGroupId, hasPostfixModifier) => {
-      if (hasPostfixModifier) {
-        const modifierConflicts = conflictingClassGroupModifiers[classGroupId];
-        const baseConflicts = conflictingClassGroups[classGroupId];
-        if (modifierConflicts) {
-          if (baseConflicts) {
-            return concatArrays(baseConflicts, modifierConflicts);
-          }
-          return modifierConflicts;
-        }
-        return baseConflicts || EMPTY_CONFLICTS;
-      }
-      return conflictingClassGroups[classGroupId] || EMPTY_CONFLICTS;
-    };
-    return {
-      getClassGroupId,
-      getConflictingClassGroupIds
-    };
-  };
-  var getGroupRecursive = (classParts, startIndex, classPartObject) => {
-    const classPathsLength = classParts.length - startIndex;
-    if (classPathsLength === 0) {
-      return classPartObject.classGroupId;
-    }
-    const currentClassPart = classParts[startIndex];
-    const nextClassPartObject = classPartObject.nextPart.get(currentClassPart);
-    if (nextClassPartObject) {
-      const result = getGroupRecursive(classParts, startIndex + 1, nextClassPartObject);
-      if (result) return result;
-    }
-    const validators = classPartObject.validators;
-    if (validators === null) {
-      return void 0;
-    }
-    const classRest = startIndex === 0 ? classParts.join(CLASS_PART_SEPARATOR) : classParts.slice(startIndex).join(CLASS_PART_SEPARATOR);
-    const validatorsLength = validators.length;
-    for (let i = 0; i < validatorsLength; i++) {
-      const validatorObj = validators[i];
-      if (validatorObj.validator(classRest)) {
-        return validatorObj.classGroupId;
-      }
-    }
-    return void 0;
-  };
-  var getGroupIdForArbitraryProperty = (className) => className.slice(1, -1).indexOf(":") === -1 ? void 0 : (() => {
-    const content2 = className.slice(1, -1);
-    const colonIndex = content2.indexOf(":");
-    const property = content2.slice(0, colonIndex);
-    return property ? ARBITRARY_PROPERTY_PREFIX + property : void 0;
-  })();
-  var createClassMap = (config3) => {
-    const {
-      theme: theme2,
-      classGroups
-    } = config3;
-    return processClassGroups(classGroups, theme2);
-  };
-  var processClassGroups = (classGroups, theme2) => {
-    const classMap = createClassPartObject();
-    for (const classGroupId in classGroups) {
-      const group = classGroups[classGroupId];
-      processClassesRecursively(group, classMap, classGroupId, theme2);
-    }
-    return classMap;
-  };
-  var processClassesRecursively = (classGroup, classPartObject, classGroupId, theme2) => {
-    const len = classGroup.length;
-    for (let i = 0; i < len; i++) {
-      const classDefinition = classGroup[i];
-      processClassDefinition(classDefinition, classPartObject, classGroupId, theme2);
-    }
-  };
-  var processClassDefinition = (classDefinition, classPartObject, classGroupId, theme2) => {
-    if (typeof classDefinition === "string") {
-      processStringDefinition(classDefinition, classPartObject, classGroupId);
-      return;
-    }
-    if (typeof classDefinition === "function") {
-      processFunctionDefinition(classDefinition, classPartObject, classGroupId, theme2);
-      return;
-    }
-    processObjectDefinition(classDefinition, classPartObject, classGroupId, theme2);
-  };
-  var processStringDefinition = (classDefinition, classPartObject, classGroupId) => {
-    const classPartObjectToEdit = classDefinition === "" ? classPartObject : getPart(classPartObject, classDefinition);
-    classPartObjectToEdit.classGroupId = classGroupId;
-  };
-  var processFunctionDefinition = (classDefinition, classPartObject, classGroupId, theme2) => {
-    if (isThemeGetter(classDefinition)) {
-      processClassesRecursively(classDefinition(theme2), classPartObject, classGroupId, theme2);
-      return;
-    }
-    if (classPartObject.validators === null) {
-      classPartObject.validators = [];
-    }
-    classPartObject.validators.push(createClassValidatorObject(classGroupId, classDefinition));
-  };
-  var processObjectDefinition = (classDefinition, classPartObject, classGroupId, theme2) => {
-    const entries = Object.entries(classDefinition);
-    const len = entries.length;
-    for (let i = 0; i < len; i++) {
-      const [key2, value] = entries[i];
-      processClassesRecursively(value, getPart(classPartObject, key2), classGroupId, theme2);
-    }
-  };
-  var getPart = (classPartObject, path) => {
-    let current = classPartObject;
-    const parts = path.split(CLASS_PART_SEPARATOR);
-    const len = parts.length;
-    for (let i = 0; i < len; i++) {
-      const part = parts[i];
-      let next = current.nextPart.get(part);
-      if (!next) {
-        next = createClassPartObject();
-        current.nextPart.set(part, next);
-      }
-      current = next;
-    }
-    return current;
-  };
-  var isThemeGetter = (func) => "isThemeGetter" in func && func.isThemeGetter === true;
-  var createLruCache = (maxCacheSize) => {
-    if (maxCacheSize < 1) {
-      return {
-        get: () => void 0,
-        set: () => {
-        }
-      };
-    }
-    let cacheSize = 0;
-    let cache3 = /* @__PURE__ */ Object.create(null);
-    let previousCache = /* @__PURE__ */ Object.create(null);
-    const update = (key2, value) => {
-      cache3[key2] = value;
-      cacheSize++;
-      if (cacheSize > maxCacheSize) {
-        cacheSize = 0;
-        previousCache = cache3;
-        cache3 = /* @__PURE__ */ Object.create(null);
-      }
-    };
-    return {
-      get(key2) {
-        let value = cache3[key2];
-        if (value !== void 0) {
-          return value;
-        }
-        if ((value = previousCache[key2]) !== void 0) {
-          update(key2, value);
-          return value;
-        }
-      },
-      set(key2, value) {
-        if (key2 in cache3) {
-          cache3[key2] = value;
-        } else {
-          update(key2, value);
-        }
-      }
-    };
-  };
-  var IMPORTANT_MODIFIER = "!";
-  var MODIFIER_SEPARATOR = ":";
-  var EMPTY_MODIFIERS = [];
-  var createResultObject = (modifiers2, hasImportantModifier, baseClassName, maybePostfixModifierPosition, isExternal) => ({
-    modifiers: modifiers2,
-    hasImportantModifier,
-    baseClassName,
-    maybePostfixModifierPosition,
-    isExternal
-  });
-  var createParseClassName = (config3) => {
-    const {
-      prefix,
-      experimentalParseClassName
-    } = config3;
-    let parseClassName = (className) => {
-      const modifiers2 = [];
-      let bracketDepth = 0;
-      let parenDepth = 0;
-      let modifierStart = 0;
-      let postfixModifierPosition;
-      const len = className.length;
-      for (let index2 = 0; index2 < len; index2++) {
-        const currentCharacter = className[index2];
-        if (bracketDepth === 0 && parenDepth === 0) {
-          if (currentCharacter === MODIFIER_SEPARATOR) {
-            modifiers2.push(className.slice(modifierStart, index2));
-            modifierStart = index2 + 1;
-            continue;
-          }
-          if (currentCharacter === "/") {
-            postfixModifierPosition = index2;
-            continue;
-          }
-        }
-        if (currentCharacter === "[") bracketDepth++;
-        else if (currentCharacter === "]") bracketDepth--;
-        else if (currentCharacter === "(") parenDepth++;
-        else if (currentCharacter === ")") parenDepth--;
-      }
-      const baseClassNameWithImportantModifier = modifiers2.length === 0 ? className : className.slice(modifierStart);
-      let baseClassName = baseClassNameWithImportantModifier;
-      let hasImportantModifier = false;
-      if (baseClassNameWithImportantModifier.endsWith(IMPORTANT_MODIFIER)) {
-        baseClassName = baseClassNameWithImportantModifier.slice(0, -1);
-        hasImportantModifier = true;
-      } else if (
-        /**
-         * In Tailwind CSS v3 the important modifier was at the start of the base class name. This is still supported for legacy reasons.
-         * @see https://github.com/dcastil/tailwind-merge/issues/513#issuecomment-2614029864
-         */
-        baseClassNameWithImportantModifier.startsWith(IMPORTANT_MODIFIER)
-      ) {
-        baseClassName = baseClassNameWithImportantModifier.slice(1);
-        hasImportantModifier = true;
-      }
-      const maybePostfixModifierPosition = postfixModifierPosition && postfixModifierPosition > modifierStart ? postfixModifierPosition - modifierStart : void 0;
-      return createResultObject(modifiers2, hasImportantModifier, baseClassName, maybePostfixModifierPosition);
-    };
-    if (prefix) {
-      const fullPrefix = prefix + MODIFIER_SEPARATOR;
-      const parseClassNameOriginal = parseClassName;
-      parseClassName = (className) => className.startsWith(fullPrefix) ? parseClassNameOriginal(className.slice(fullPrefix.length)) : createResultObject(EMPTY_MODIFIERS, false, className, void 0, true);
-    }
-    if (experimentalParseClassName) {
-      const parseClassNameOriginal = parseClassName;
-      parseClassName = (className) => experimentalParseClassName({
-        className,
-        parseClassName: parseClassNameOriginal
-      });
-    }
-    return parseClassName;
-  };
-  var createSortModifiers = (config3) => {
-    const modifierWeights = /* @__PURE__ */ new Map();
-    config3.orderSensitiveModifiers.forEach((mod, index2) => {
-      modifierWeights.set(mod, 1e6 + index2);
-    });
-    return (modifiers2) => {
-      const result = [];
-      let currentSegment = [];
-      for (let i = 0; i < modifiers2.length; i++) {
-        const modifier = modifiers2[i];
-        const isArbitrary = modifier[0] === "[";
-        const isOrderSensitive = modifierWeights.has(modifier);
-        if (isArbitrary || isOrderSensitive) {
-          if (currentSegment.length > 0) {
-            currentSegment.sort();
-            result.push(...currentSegment);
-            currentSegment = [];
-          }
-          result.push(modifier);
-        } else {
-          currentSegment.push(modifier);
-        }
-      }
-      if (currentSegment.length > 0) {
-        currentSegment.sort();
-        result.push(...currentSegment);
-      }
-      return result;
-    };
-  };
-  var createConfigUtils = (config3) => __spreadValues({
-    cache: createLruCache(config3.cacheSize),
-    parseClassName: createParseClassName(config3),
-    sortModifiers: createSortModifiers(config3),
-    postfixLookupClassGroupIds: createPostfixLookupClassGroupIds(config3)
-  }, createClassGroupUtils(config3));
-  var createPostfixLookupClassGroupIds = (config3) => {
-    const lookup = /* @__PURE__ */ Object.create(null);
-    const classGroupIds = config3.postfixLookupClassGroups;
-    if (classGroupIds) {
-      for (let i = 0; i < classGroupIds.length; i++) {
-        lookup[classGroupIds[i]] = true;
-      }
-    }
-    return lookup;
-  };
-  var SPLIT_CLASSES_REGEX = /\s+/;
-  var mergeClassList = (classList, configUtils) => {
-    const {
-      parseClassName,
-      getClassGroupId,
-      getConflictingClassGroupIds,
-      sortModifiers,
-      postfixLookupClassGroupIds
-    } = configUtils;
-    const classGroupsInConflict = [];
-    const classNames = classList.trim().split(SPLIT_CLASSES_REGEX);
-    let result = "";
-    for (let index2 = classNames.length - 1; index2 >= 0; index2 -= 1) {
-      const originalClassName = classNames[index2];
-      const {
-        isExternal,
-        modifiers: modifiers2,
-        hasImportantModifier,
-        baseClassName,
-        maybePostfixModifierPosition
-      } = parseClassName(originalClassName);
-      if (isExternal) {
-        result = originalClassName + (result.length > 0 ? " " + result : result);
-        continue;
-      }
-      let hasPostfixModifier = !!maybePostfixModifierPosition;
-      let classGroupId;
-      if (hasPostfixModifier) {
-        const baseClassNameWithoutPostfix = baseClassName.substring(0, maybePostfixModifierPosition);
-        classGroupId = getClassGroupId(baseClassNameWithoutPostfix);
-        const classGroupIdWithPostfix = classGroupId && postfixLookupClassGroupIds[classGroupId] ? getClassGroupId(baseClassName) : void 0;
-        if (classGroupIdWithPostfix && classGroupIdWithPostfix !== classGroupId) {
-          classGroupId = classGroupIdWithPostfix;
-          hasPostfixModifier = false;
-        }
-      } else {
-        classGroupId = getClassGroupId(baseClassName);
-      }
-      if (!classGroupId) {
-        if (!hasPostfixModifier) {
-          result = originalClassName + (result.length > 0 ? " " + result : result);
-          continue;
-        }
-        classGroupId = getClassGroupId(baseClassName);
-        if (!classGroupId) {
-          result = originalClassName + (result.length > 0 ? " " + result : result);
-          continue;
-        }
-        hasPostfixModifier = false;
-      }
-      const variantModifier = modifiers2.length === 0 ? "" : modifiers2.length === 1 ? modifiers2[0] : sortModifiers(modifiers2).join(":");
-      const modifierId = hasImportantModifier ? variantModifier + IMPORTANT_MODIFIER : variantModifier;
-      const classId = modifierId + classGroupId;
-      if (classGroupsInConflict.indexOf(classId) > -1) {
-        continue;
-      }
-      classGroupsInConflict.push(classId);
-      const conflictGroups = getConflictingClassGroupIds(classGroupId, hasPostfixModifier);
-      for (let i = 0; i < conflictGroups.length; ++i) {
-        const group = conflictGroups[i];
-        classGroupsInConflict.push(modifierId + group);
-      }
-      result = originalClassName + (result.length > 0 ? " " + result : result);
-    }
-    return result;
-  };
-  var twJoin = (...classLists) => {
-    let index2 = 0;
-    let argument;
-    let resolvedValue;
-    let string3 = "";
-    while (index2 < classLists.length) {
-      if (argument = classLists[index2++]) {
-        if (resolvedValue = toValue(argument)) {
-          string3 && (string3 += " ");
-          string3 += resolvedValue;
-        }
-      }
-    }
-    return string3;
-  };
-  var toValue = (mix) => {
-    if (typeof mix === "string") {
-      return mix;
-    }
-    let resolvedValue;
-    let string3 = "";
-    for (let k = 0; k < mix.length; k++) {
-      if (mix[k]) {
-        if (resolvedValue = toValue(mix[k])) {
-          string3 && (string3 += " ");
-          string3 += resolvedValue;
-        }
-      }
-    }
-    return string3;
-  };
-  var createTailwindMerge = (createConfigFirst, ...createConfigRest) => {
-    let configUtils;
-    let cacheGet;
-    let cacheSet;
-    let functionToCall;
-    const initTailwindMerge = (classList) => {
-      const config3 = createConfigRest.reduce((previousConfig, createConfigCurrent) => createConfigCurrent(previousConfig), createConfigFirst());
-      configUtils = createConfigUtils(config3);
-      cacheGet = configUtils.cache.get;
-      cacheSet = configUtils.cache.set;
-      functionToCall = tailwindMerge;
-      return tailwindMerge(classList);
-    };
-    const tailwindMerge = (classList) => {
-      const cachedResult = cacheGet(classList);
-      if (cachedResult) {
-        return cachedResult;
-      }
-      const result = mergeClassList(classList, configUtils);
-      cacheSet(classList, result);
-      return result;
-    };
-    functionToCall = initTailwindMerge;
-    return (...args) => functionToCall(twJoin(...args));
-  };
-  var fallbackThemeArr = [];
-  var fromTheme = (key2) => {
-    const themeGetter = (theme2) => theme2[key2] || fallbackThemeArr;
-    themeGetter.isThemeGetter = true;
-    return themeGetter;
-  };
-  var arbitraryValueRegex = /^\[(?:(\w[\w-]*):)?(.+)\]$/i;
-  var arbitraryVariableRegex = /^\((?:(\w[\w-]*):)?(.+)\)$/i;
-  var fractionRegex = /^\d+(?:\.\d+)?\/\d+(?:\.\d+)?$/;
-  var tshirtUnitRegex = /^(\d+(\.\d+)?)?(xs|sm|md|lg|xl)$/;
-  var lengthUnitRegex = /\d+(%|px|r?em|[sdl]?v([hwib]|min|max)|pt|pc|in|cm|mm|cap|ch|ex|r?lh|cq(w|h|i|b|min|max))|\b(calc|min|max|clamp)\(.+\)|^0$/;
-  var colorFunctionRegex = /^(rgba?|hsla?|hwb|(ok)?(lab|lch)|color-mix)\(.+\)$/;
-  var shadowRegex = /^(inset_)?-?((\d+)?\.?(\d+)[a-z]+|0)_-?((\d+)?\.?(\d+)[a-z]+|0)/;
-  var imageRegex = /^(url|image|image-set|cross-fade|element|(repeating-)?(linear|radial|conic)-gradient)\(.+\)$/;
-  var isFraction = (value) => fractionRegex.test(value);
-  var isNumber = (value) => !!value && !Number.isNaN(Number(value));
-  var isInteger = (value) => !!value && Number.isInteger(Number(value));
-  var isPercent = (value) => value.endsWith("%") && isNumber(value.slice(0, -1));
-  var isTshirtSize = (value) => tshirtUnitRegex.test(value);
-  var isAny = () => true;
-  var isLengthOnly = (value) => (
-    // `colorFunctionRegex` check is necessary because color functions can have percentages in them which which would be incorrectly classified as lengths.
-    // For example, `hsl(0 0% 0%)` would be classified as a length without this check.
-    // I could also use lookbehind assertion in `lengthUnitRegex` but that isn't supported widely enough.
-    lengthUnitRegex.test(value) && !colorFunctionRegex.test(value)
-  );
-  var isNever = () => false;
-  var isShadow = (value) => shadowRegex.test(value);
-  var isImage = (value) => imageRegex.test(value);
-  var isAnyNonArbitrary = (value) => !isArbitraryValue(value) && !isArbitraryVariable(value);
-  var isNamedContainerQuery = (value) => value.startsWith("@container") && (value[10] === "/" && value[11] !== void 0 || value[11] === "s" && value[16] !== void 0 && value.startsWith("-size/", 10) || value[11] === "n" && value[18] !== void 0 && value.startsWith("-normal/", 10));
-  var isArbitrarySize = (value) => getIsArbitraryValue(value, isLabelSize, isNever);
-  var isArbitraryValue = (value) => arbitraryValueRegex.test(value);
-  var isArbitraryLength = (value) => getIsArbitraryValue(value, isLabelLength, isLengthOnly);
-  var isArbitraryNumber = (value) => getIsArbitraryValue(value, isLabelNumber, isNumber);
-  var isArbitraryWeight = (value) => getIsArbitraryValue(value, isLabelWeight, isAny);
-  var isArbitraryFamilyName = (value) => getIsArbitraryValue(value, isLabelFamilyName, isNever);
-  var isArbitraryPosition = (value) => getIsArbitraryValue(value, isLabelPosition, isNever);
-  var isArbitraryImage = (value) => getIsArbitraryValue(value, isLabelImage, isImage);
-  var isArbitraryShadow = (value) => getIsArbitraryValue(value, isLabelShadow, isShadow);
-  var isArbitraryVariable = (value) => arbitraryVariableRegex.test(value);
-  var isArbitraryVariableLength = (value) => getIsArbitraryVariable(value, isLabelLength);
-  var isArbitraryVariableFamilyName = (value) => getIsArbitraryVariable(value, isLabelFamilyName);
-  var isArbitraryVariablePosition = (value) => getIsArbitraryVariable(value, isLabelPosition);
-  var isArbitraryVariableSize = (value) => getIsArbitraryVariable(value, isLabelSize);
-  var isArbitraryVariableImage = (value) => getIsArbitraryVariable(value, isLabelImage);
-  var isArbitraryVariableShadow = (value) => getIsArbitraryVariable(value, isLabelShadow, true);
-  var isArbitraryVariableWeight = (value) => getIsArbitraryVariable(value, isLabelWeight, true);
-  var getIsArbitraryValue = (value, testLabel, testValue) => {
-    const result = arbitraryValueRegex.exec(value);
-    if (result) {
-      if (result[1]) {
-        return testLabel(result[1]);
-      }
-      return testValue(result[2]);
-    }
-    return false;
-  };
-  var getIsArbitraryVariable = (value, testLabel, shouldMatchNoLabel = false) => {
-    const result = arbitraryVariableRegex.exec(value);
-    if (result) {
-      if (result[1]) {
-        return testLabel(result[1]);
-      }
-      return shouldMatchNoLabel;
-    }
-    return false;
-  };
-  var isLabelPosition = (label) => label === "position" || label === "percentage";
-  var isLabelImage = (label) => label === "image" || label === "url";
-  var isLabelSize = (label) => label === "length" || label === "size" || label === "bg-size";
-  var isLabelLength = (label) => label === "length";
-  var isLabelNumber = (label) => label === "number";
-  var isLabelFamilyName = (label) => label === "family-name";
-  var isLabelWeight = (label) => label === "number" || label === "weight";
-  var isLabelShadow = (label) => label === "shadow";
-  var getDefaultConfig = () => {
-    const themeColor = fromTheme("color");
-    const themeFont = fromTheme("font");
-    const themeText = fromTheme("text");
-    const themeFontWeight = fromTheme("font-weight");
-    const themeTracking = fromTheme("tracking");
-    const themeLeading = fromTheme("leading");
-    const themeBreakpoint = fromTheme("breakpoint");
-    const themeContainer = fromTheme("container");
-    const themeSpacing = fromTheme("spacing");
-    const themeRadius = fromTheme("radius");
-    const themeShadow = fromTheme("shadow");
-    const themeInsetShadow = fromTheme("inset-shadow");
-    const themeTextShadow = fromTheme("text-shadow");
-    const themeDropShadow = fromTheme("drop-shadow");
-    const themeBlur = fromTheme("blur");
-    const themePerspective = fromTheme("perspective");
-    const themeAspect = fromTheme("aspect");
-    const themeEase = fromTheme("ease");
-    const themeAnimate = fromTheme("animate");
-    const scaleBreak = () => ["auto", "avoid", "all", "avoid-page", "page", "left", "right", "column"];
-    const scalePosition = () => [
-      "center",
-      "top",
-      "bottom",
-      "left",
-      "right",
-      "top-left",
-      // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
-      "left-top",
-      "top-right",
-      // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
-      "right-top",
-      "bottom-right",
-      // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
-      "right-bottom",
-      "bottom-left",
-      // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
-      "left-bottom"
-    ];
-    const scalePositionWithArbitrary = () => [...scalePosition(), isArbitraryVariable, isArbitraryValue];
-    const scaleOverflow = () => ["auto", "hidden", "clip", "visible", "scroll"];
-    const scaleOverscroll = () => ["auto", "contain", "none"];
-    const scaleUnambiguousSpacing = () => [isArbitraryVariable, isArbitraryValue, themeSpacing];
-    const scaleInset = () => [isFraction, "full", "auto", ...scaleUnambiguousSpacing()];
-    const scaleGridTemplateColsRows = () => [isInteger, "none", "subgrid", isArbitraryVariable, isArbitraryValue];
-    const scaleGridColRowStartAndEnd = () => ["auto", {
-      span: ["full", isInteger, isArbitraryVariable, isArbitraryValue]
-    }, isInteger, isArbitraryVariable, isArbitraryValue];
-    const scaleGridColRowStartOrEnd = () => [isInteger, "auto", isArbitraryVariable, isArbitraryValue];
-    const scaleGridAutoColsRows = () => ["auto", "min", "max", "fr", isArbitraryVariable, isArbitraryValue];
-    const scaleAlignPrimaryAxis = () => ["start", "end", "center", "between", "around", "evenly", "stretch", "baseline", "center-safe", "end-safe"];
-    const scaleAlignSecondaryAxis = () => ["start", "end", "center", "stretch", "center-safe", "end-safe"];
-    const scaleMargin = () => ["auto", ...scaleUnambiguousSpacing()];
-    const scaleSizing = () => [isFraction, "auto", "full", "dvw", "dvh", "lvw", "lvh", "svw", "svh", "min", "max", "fit", ...scaleUnambiguousSpacing()];
-    const scaleSizingInline = () => [isFraction, "screen", "full", "dvw", "lvw", "svw", "min", "max", "fit", ...scaleUnambiguousSpacing()];
-    const scaleSizingBlock = () => [isFraction, "screen", "full", "lh", "dvh", "lvh", "svh", "min", "max", "fit", ...scaleUnambiguousSpacing()];
-    const scaleColor = () => [themeColor, isArbitraryVariable, isArbitraryValue];
-    const scaleBgPosition = () => [...scalePosition(), isArbitraryVariablePosition, isArbitraryPosition, {
-      position: [isArbitraryVariable, isArbitraryValue]
-    }];
-    const scaleBgRepeat = () => ["no-repeat", {
-      repeat: ["", "x", "y", "space", "round"]
-    }];
-    const scaleBgSize = () => ["auto", "cover", "contain", isArbitraryVariableSize, isArbitrarySize, {
-      size: [isArbitraryVariable, isArbitraryValue]
-    }];
-    const scaleGradientStopPosition = () => [isPercent, isArbitraryVariableLength, isArbitraryLength];
-    const scaleRadius = () => [
-      // Deprecated since Tailwind CSS v4.0.0
-      "",
-      "none",
-      "full",
-      themeRadius,
-      isArbitraryVariable,
-      isArbitraryValue
-    ];
-    const scaleBorderWidth = () => ["", isNumber, isArbitraryVariableLength, isArbitraryLength];
-    const scaleLineStyle = () => ["solid", "dashed", "dotted", "double"];
-    const scaleBlendMode = () => ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion", "hue", "saturation", "color", "luminosity"];
-    const scaleMaskImagePosition = () => [isNumber, isPercent, isArbitraryVariablePosition, isArbitraryPosition];
-    const scaleBlur = () => [
-      // Deprecated since Tailwind CSS v4.0.0
-      "",
-      "none",
-      themeBlur,
-      isArbitraryVariable,
-      isArbitraryValue
-    ];
-    const scaleRotate = () => ["none", isNumber, isArbitraryVariable, isArbitraryValue];
-    const scaleScale = () => ["none", isNumber, isArbitraryVariable, isArbitraryValue];
-    const scaleSkew = () => [isNumber, isArbitraryVariable, isArbitraryValue];
-    const scaleTranslate = () => [isFraction, "full", ...scaleUnambiguousSpacing()];
-    return {
-      cacheSize: 500,
-      theme: {
-        animate: ["spin", "ping", "pulse", "bounce"],
-        aspect: ["video"],
-        blur: [isTshirtSize],
-        breakpoint: [isTshirtSize],
-        color: [isAny],
-        container: [isTshirtSize],
-        "drop-shadow": [isTshirtSize],
-        ease: ["in", "out", "in-out"],
-        font: [isAnyNonArbitrary],
-        "font-weight": ["thin", "extralight", "light", "normal", "medium", "semibold", "bold", "extrabold", "black"],
-        "inset-shadow": [isTshirtSize],
-        leading: ["none", "tight", "snug", "normal", "relaxed", "loose"],
-        perspective: ["dramatic", "near", "normal", "midrange", "distant", "none"],
-        radius: [isTshirtSize],
-        shadow: [isTshirtSize],
-        spacing: ["px", isNumber],
-        text: [isTshirtSize],
-        "text-shadow": [isTshirtSize],
-        tracking: ["tighter", "tight", "normal", "wide", "wider", "widest"]
-      },
-      classGroups: {
-        // --------------
-        // --- Layout ---
-        // --------------
-        /**
-         * Aspect Ratio
-         * @see https://tailwindcss.com/docs/aspect-ratio
-         */
-        aspect: [{
-          aspect: ["auto", "square", isFraction, isArbitraryValue, isArbitraryVariable, themeAspect]
-        }],
-        /**
-         * Container
-         * @see https://tailwindcss.com/docs/container
-         * @deprecated since Tailwind CSS v4.0.0
-         */
-        container: ["container"],
-        /**
-         * Container Type
-         * @see https://tailwindcss.com/docs/responsive-design#container-queries
-         */
-        "container-type": [{
-          "@container": ["", "normal", "size", isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Container Name
-         * @see https://tailwindcss.com/docs/responsive-design#named-containers
-         */
-        "container-named": [isNamedContainerQuery],
-        /**
-         * Columns
-         * @see https://tailwindcss.com/docs/columns
-         */
-        columns: [{
-          columns: [isNumber, isArbitraryValue, isArbitraryVariable, themeContainer]
-        }],
-        /**
-         * Break After
-         * @see https://tailwindcss.com/docs/break-after
-         */
-        "break-after": [{
-          "break-after": scaleBreak()
-        }],
-        /**
-         * Break Before
-         * @see https://tailwindcss.com/docs/break-before
-         */
-        "break-before": [{
-          "break-before": scaleBreak()
-        }],
-        /**
-         * Break Inside
-         * @see https://tailwindcss.com/docs/break-inside
-         */
-        "break-inside": [{
-          "break-inside": ["auto", "avoid", "avoid-page", "avoid-column"]
-        }],
-        /**
-         * Box Decoration Break
-         * @see https://tailwindcss.com/docs/box-decoration-break
-         */
-        "box-decoration": [{
-          "box-decoration": ["slice", "clone"]
-        }],
-        /**
-         * Box Sizing
-         * @see https://tailwindcss.com/docs/box-sizing
-         */
-        box: [{
-          box: ["border", "content"]
-        }],
-        /**
-         * Display
-         * @see https://tailwindcss.com/docs/display
-         */
-        display: ["block", "inline-block", "inline", "flex", "inline-flex", "table", "inline-table", "table-caption", "table-cell", "table-column", "table-column-group", "table-footer-group", "table-header-group", "table-row-group", "table-row", "flow-root", "grid", "inline-grid", "contents", "list-item", "hidden"],
-        /**
-         * Screen Reader Only
-         * @see https://tailwindcss.com/docs/display#screen-reader-only
-         */
-        sr: ["sr-only", "not-sr-only"],
-        /**
-         * Floats
-         * @see https://tailwindcss.com/docs/float
-         */
-        float: [{
-          float: ["right", "left", "none", "start", "end"]
-        }],
-        /**
-         * Clear
-         * @see https://tailwindcss.com/docs/clear
-         */
-        clear: [{
-          clear: ["left", "right", "both", "none", "start", "end"]
-        }],
-        /**
-         * Isolation
-         * @see https://tailwindcss.com/docs/isolation
-         */
-        isolation: ["isolate", "isolation-auto"],
-        /**
-         * Object Fit
-         * @see https://tailwindcss.com/docs/object-fit
-         */
-        "object-fit": [{
-          object: ["contain", "cover", "fill", "none", "scale-down"]
-        }],
-        /**
-         * Object Position
-         * @see https://tailwindcss.com/docs/object-position
-         */
-        "object-position": [{
-          object: scalePositionWithArbitrary()
-        }],
-        /**
-         * Overflow
-         * @see https://tailwindcss.com/docs/overflow
-         */
-        overflow: [{
-          overflow: scaleOverflow()
-        }],
-        /**
-         * Overflow X
-         * @see https://tailwindcss.com/docs/overflow
-         */
-        "overflow-x": [{
-          "overflow-x": scaleOverflow()
-        }],
-        /**
-         * Overflow Y
-         * @see https://tailwindcss.com/docs/overflow
-         */
-        "overflow-y": [{
-          "overflow-y": scaleOverflow()
-        }],
-        /**
-         * Overscroll Behavior
-         * @see https://tailwindcss.com/docs/overscroll-behavior
-         */
-        overscroll: [{
-          overscroll: scaleOverscroll()
-        }],
-        /**
-         * Overscroll Behavior X
-         * @see https://tailwindcss.com/docs/overscroll-behavior
-         */
-        "overscroll-x": [{
-          "overscroll-x": scaleOverscroll()
-        }],
-        /**
-         * Overscroll Behavior Y
-         * @see https://tailwindcss.com/docs/overscroll-behavior
-         */
-        "overscroll-y": [{
-          "overscroll-y": scaleOverscroll()
-        }],
-        /**
-         * Position
-         * @see https://tailwindcss.com/docs/position
-         */
-        position: ["static", "fixed", "absolute", "relative", "sticky"],
-        /**
-         * Inset
-         * @see https://tailwindcss.com/docs/top-right-bottom-left
-         */
-        inset: [{
-          inset: scaleInset()
-        }],
-        /**
-         * Inset Inline
-         * @see https://tailwindcss.com/docs/top-right-bottom-left
-         */
-        "inset-x": [{
-          "inset-x": scaleInset()
-        }],
-        /**
-         * Inset Block
-         * @see https://tailwindcss.com/docs/top-right-bottom-left
-         */
-        "inset-y": [{
-          "inset-y": scaleInset()
-        }],
-        /**
-         * Inset Inline Start
-         * @see https://tailwindcss.com/docs/top-right-bottom-left
-         * @todo class group will be renamed to `inset-s` in next major release
-         */
-        start: [{
-          "inset-s": scaleInset(),
-          /**
-           * @deprecated since Tailwind CSS v4.2.0 in favor of `inset-s-*` utilities.
-           * @see https://github.com/tailwindlabs/tailwindcss/pull/19613
-           */
-          start: scaleInset()
-        }],
-        /**
-         * Inset Inline End
-         * @see https://tailwindcss.com/docs/top-right-bottom-left
-         * @todo class group will be renamed to `inset-e` in next major release
-         */
-        end: [{
-          "inset-e": scaleInset(),
-          /**
-           * @deprecated since Tailwind CSS v4.2.0 in favor of `inset-e-*` utilities.
-           * @see https://github.com/tailwindlabs/tailwindcss/pull/19613
-           */
-          end: scaleInset()
-        }],
-        /**
-         * Inset Block Start
-         * @see https://tailwindcss.com/docs/top-right-bottom-left
-         */
-        "inset-bs": [{
-          "inset-bs": scaleInset()
-        }],
-        /**
-         * Inset Block End
-         * @see https://tailwindcss.com/docs/top-right-bottom-left
-         */
-        "inset-be": [{
-          "inset-be": scaleInset()
-        }],
-        /**
-         * Top
-         * @see https://tailwindcss.com/docs/top-right-bottom-left
-         */
-        top: [{
-          top: scaleInset()
-        }],
-        /**
-         * Right
-         * @see https://tailwindcss.com/docs/top-right-bottom-left
-         */
-        right: [{
-          right: scaleInset()
-        }],
-        /**
-         * Bottom
-         * @see https://tailwindcss.com/docs/top-right-bottom-left
-         */
-        bottom: [{
-          bottom: scaleInset()
-        }],
-        /**
-         * Left
-         * @see https://tailwindcss.com/docs/top-right-bottom-left
-         */
-        left: [{
-          left: scaleInset()
-        }],
-        /**
-         * Visibility
-         * @see https://tailwindcss.com/docs/visibility
-         */
-        visibility: ["visible", "invisible", "collapse"],
-        /**
-         * Z-Index
-         * @see https://tailwindcss.com/docs/z-index
-         */
-        z: [{
-          z: [isInteger, "auto", isArbitraryVariable, isArbitraryValue]
-        }],
-        // ------------------------
-        // --- Flexbox and Grid ---
-        // ------------------------
-        /**
-         * Flex Basis
-         * @see https://tailwindcss.com/docs/flex-basis
-         */
-        basis: [{
-          basis: [isFraction, "full", "auto", themeContainer, ...scaleUnambiguousSpacing()]
-        }],
-        /**
-         * Flex Direction
-         * @see https://tailwindcss.com/docs/flex-direction
-         */
-        "flex-direction": [{
-          flex: ["row", "row-reverse", "col", "col-reverse"]
-        }],
-        /**
-         * Flex Wrap
-         * @see https://tailwindcss.com/docs/flex-wrap
-         */
-        "flex-wrap": [{
-          flex: ["nowrap", "wrap", "wrap-reverse"]
-        }],
-        /**
-         * Flex
-         * @see https://tailwindcss.com/docs/flex
-         */
-        flex: [{
-          flex: [isNumber, isFraction, "auto", "initial", "none", isArbitraryValue]
-        }],
-        /**
-         * Flex Grow
-         * @see https://tailwindcss.com/docs/flex-grow
-         */
-        grow: [{
-          grow: ["", isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Flex Shrink
-         * @see https://tailwindcss.com/docs/flex-shrink
-         */
-        shrink: [{
-          shrink: ["", isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Order
-         * @see https://tailwindcss.com/docs/order
-         */
-        order: [{
-          order: [isInteger, "first", "last", "none", isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Grid Template Columns
-         * @see https://tailwindcss.com/docs/grid-template-columns
-         */
-        "grid-cols": [{
-          "grid-cols": scaleGridTemplateColsRows()
-        }],
-        /**
-         * Grid Column Start / End
-         * @see https://tailwindcss.com/docs/grid-column
-         */
-        "col-start-end": [{
-          col: scaleGridColRowStartAndEnd()
-        }],
-        /**
-         * Grid Column Start
-         * @see https://tailwindcss.com/docs/grid-column
-         */
-        "col-start": [{
-          "col-start": scaleGridColRowStartOrEnd()
-        }],
-        /**
-         * Grid Column End
-         * @see https://tailwindcss.com/docs/grid-column
-         */
-        "col-end": [{
-          "col-end": scaleGridColRowStartOrEnd()
-        }],
-        /**
-         * Grid Template Rows
-         * @see https://tailwindcss.com/docs/grid-template-rows
-         */
-        "grid-rows": [{
-          "grid-rows": scaleGridTemplateColsRows()
-        }],
-        /**
-         * Grid Row Start / End
-         * @see https://tailwindcss.com/docs/grid-row
-         */
-        "row-start-end": [{
-          row: scaleGridColRowStartAndEnd()
-        }],
-        /**
-         * Grid Row Start
-         * @see https://tailwindcss.com/docs/grid-row
-         */
-        "row-start": [{
-          "row-start": scaleGridColRowStartOrEnd()
-        }],
-        /**
-         * Grid Row End
-         * @see https://tailwindcss.com/docs/grid-row
-         */
-        "row-end": [{
-          "row-end": scaleGridColRowStartOrEnd()
-        }],
-        /**
-         * Grid Auto Flow
-         * @see https://tailwindcss.com/docs/grid-auto-flow
-         */
-        "grid-flow": [{
-          "grid-flow": ["row", "col", "dense", "row-dense", "col-dense"]
-        }],
-        /**
-         * Grid Auto Columns
-         * @see https://tailwindcss.com/docs/grid-auto-columns
-         */
-        "auto-cols": [{
-          "auto-cols": scaleGridAutoColsRows()
-        }],
-        /**
-         * Grid Auto Rows
-         * @see https://tailwindcss.com/docs/grid-auto-rows
-         */
-        "auto-rows": [{
-          "auto-rows": scaleGridAutoColsRows()
-        }],
-        /**
-         * Gap
-         * @see https://tailwindcss.com/docs/gap
-         */
-        gap: [{
-          gap: scaleUnambiguousSpacing()
-        }],
-        /**
-         * Gap X
-         * @see https://tailwindcss.com/docs/gap
-         */
-        "gap-x": [{
-          "gap-x": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Gap Y
-         * @see https://tailwindcss.com/docs/gap
-         */
-        "gap-y": [{
-          "gap-y": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Justify Content
-         * @see https://tailwindcss.com/docs/justify-content
-         */
-        "justify-content": [{
-          justify: [...scaleAlignPrimaryAxis(), "normal"]
-        }],
-        /**
-         * Justify Items
-         * @see https://tailwindcss.com/docs/justify-items
-         */
-        "justify-items": [{
-          "justify-items": [...scaleAlignSecondaryAxis(), "normal"]
-        }],
-        /**
-         * Justify Self
-         * @see https://tailwindcss.com/docs/justify-self
-         */
-        "justify-self": [{
-          "justify-self": ["auto", ...scaleAlignSecondaryAxis()]
-        }],
-        /**
-         * Align Content
-         * @see https://tailwindcss.com/docs/align-content
-         */
-        "align-content": [{
-          content: ["normal", ...scaleAlignPrimaryAxis()]
-        }],
-        /**
-         * Align Items
-         * @see https://tailwindcss.com/docs/align-items
-         */
-        "align-items": [{
-          items: [...scaleAlignSecondaryAxis(), {
-            baseline: ["", "last"]
-          }]
-        }],
-        /**
-         * Align Self
-         * @see https://tailwindcss.com/docs/align-self
-         */
-        "align-self": [{
-          self: ["auto", ...scaleAlignSecondaryAxis(), {
-            baseline: ["", "last"]
-          }]
-        }],
-        /**
-         * Place Content
-         * @see https://tailwindcss.com/docs/place-content
-         */
-        "place-content": [{
-          "place-content": scaleAlignPrimaryAxis()
-        }],
-        /**
-         * Place Items
-         * @see https://tailwindcss.com/docs/place-items
-         */
-        "place-items": [{
-          "place-items": [...scaleAlignSecondaryAxis(), "baseline"]
-        }],
-        /**
-         * Place Self
-         * @see https://tailwindcss.com/docs/place-self
-         */
-        "place-self": [{
-          "place-self": ["auto", ...scaleAlignSecondaryAxis()]
-        }],
-        // Spacing
-        /**
-         * Padding
-         * @see https://tailwindcss.com/docs/padding
-         */
-        p: [{
-          p: scaleUnambiguousSpacing()
-        }],
-        /**
-         * Padding Inline
-         * @see https://tailwindcss.com/docs/padding
-         */
-        px: [{
-          px: scaleUnambiguousSpacing()
-        }],
-        /**
-         * Padding Block
-         * @see https://tailwindcss.com/docs/padding
-         */
-        py: [{
-          py: scaleUnambiguousSpacing()
-        }],
-        /**
-         * Padding Inline Start
-         * @see https://tailwindcss.com/docs/padding
-         */
-        ps: [{
-          ps: scaleUnambiguousSpacing()
-        }],
-        /**
-         * Padding Inline End
-         * @see https://tailwindcss.com/docs/padding
-         */
-        pe: [{
-          pe: scaleUnambiguousSpacing()
-        }],
-        /**
-         * Padding Block Start
-         * @see https://tailwindcss.com/docs/padding
-         */
-        pbs: [{
-          pbs: scaleUnambiguousSpacing()
-        }],
-        /**
-         * Padding Block End
-         * @see https://tailwindcss.com/docs/padding
-         */
-        pbe: [{
-          pbe: scaleUnambiguousSpacing()
-        }],
-        /**
-         * Padding Top
-         * @see https://tailwindcss.com/docs/padding
-         */
-        pt: [{
-          pt: scaleUnambiguousSpacing()
-        }],
-        /**
-         * Padding Right
-         * @see https://tailwindcss.com/docs/padding
-         */
-        pr: [{
-          pr: scaleUnambiguousSpacing()
-        }],
-        /**
-         * Padding Bottom
-         * @see https://tailwindcss.com/docs/padding
-         */
-        pb: [{
-          pb: scaleUnambiguousSpacing()
-        }],
-        /**
-         * Padding Left
-         * @see https://tailwindcss.com/docs/padding
-         */
-        pl: [{
-          pl: scaleUnambiguousSpacing()
-        }],
-        /**
-         * Margin
-         * @see https://tailwindcss.com/docs/margin
-         */
-        m: [{
-          m: scaleMargin()
-        }],
-        /**
-         * Margin Inline
-         * @see https://tailwindcss.com/docs/margin
-         */
-        mx: [{
-          mx: scaleMargin()
-        }],
-        /**
-         * Margin Block
-         * @see https://tailwindcss.com/docs/margin
-         */
-        my: [{
-          my: scaleMargin()
-        }],
-        /**
-         * Margin Inline Start
-         * @see https://tailwindcss.com/docs/margin
-         */
-        ms: [{
-          ms: scaleMargin()
-        }],
-        /**
-         * Margin Inline End
-         * @see https://tailwindcss.com/docs/margin
-         */
-        me: [{
-          me: scaleMargin()
-        }],
-        /**
-         * Margin Block Start
-         * @see https://tailwindcss.com/docs/margin
-         */
-        mbs: [{
-          mbs: scaleMargin()
-        }],
-        /**
-         * Margin Block End
-         * @see https://tailwindcss.com/docs/margin
-         */
-        mbe: [{
-          mbe: scaleMargin()
-        }],
-        /**
-         * Margin Top
-         * @see https://tailwindcss.com/docs/margin
-         */
-        mt: [{
-          mt: scaleMargin()
-        }],
-        /**
-         * Margin Right
-         * @see https://tailwindcss.com/docs/margin
-         */
-        mr: [{
-          mr: scaleMargin()
-        }],
-        /**
-         * Margin Bottom
-         * @see https://tailwindcss.com/docs/margin
-         */
-        mb: [{
-          mb: scaleMargin()
-        }],
-        /**
-         * Margin Left
-         * @see https://tailwindcss.com/docs/margin
-         */
-        ml: [{
-          ml: scaleMargin()
-        }],
-        /**
-         * Space Between X
-         * @see https://tailwindcss.com/docs/margin#adding-space-between-children
-         */
-        "space-x": [{
-          "space-x": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Space Between X Reverse
-         * @see https://tailwindcss.com/docs/margin#adding-space-between-children
-         */
-        "space-x-reverse": ["space-x-reverse"],
-        /**
-         * Space Between Y
-         * @see https://tailwindcss.com/docs/margin#adding-space-between-children
-         */
-        "space-y": [{
-          "space-y": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Space Between Y Reverse
-         * @see https://tailwindcss.com/docs/margin#adding-space-between-children
-         */
-        "space-y-reverse": ["space-y-reverse"],
-        // --------------
-        // --- Sizing ---
-        // --------------
-        /**
-         * Size
-         * @see https://tailwindcss.com/docs/width#setting-both-width-and-height
-         */
-        size: [{
-          size: scaleSizing()
-        }],
-        /**
-         * Inline Size
-         * @see https://tailwindcss.com/docs/width
-         */
-        "inline-size": [{
-          inline: ["auto", ...scaleSizingInline()]
-        }],
-        /**
-         * Min-Inline Size
-         * @see https://tailwindcss.com/docs/min-width
-         */
-        "min-inline-size": [{
-          "min-inline": ["auto", ...scaleSizingInline()]
-        }],
-        /**
-         * Max-Inline Size
-         * @see https://tailwindcss.com/docs/max-width
-         */
-        "max-inline-size": [{
-          "max-inline": ["none", ...scaleSizingInline()]
-        }],
-        /**
-         * Block Size
-         * @see https://tailwindcss.com/docs/height
-         */
-        "block-size": [{
-          block: ["auto", ...scaleSizingBlock()]
-        }],
-        /**
-         * Min-Block Size
-         * @see https://tailwindcss.com/docs/min-height
-         */
-        "min-block-size": [{
-          "min-block": ["auto", ...scaleSizingBlock()]
-        }],
-        /**
-         * Max-Block Size
-         * @see https://tailwindcss.com/docs/max-height
-         */
-        "max-block-size": [{
-          "max-block": ["none", ...scaleSizingBlock()]
-        }],
-        /**
-         * Width
-         * @see https://tailwindcss.com/docs/width
-         */
-        w: [{
-          w: [themeContainer, "screen", ...scaleSizing()]
-        }],
-        /**
-         * Min-Width
-         * @see https://tailwindcss.com/docs/min-width
-         */
-        "min-w": [{
-          "min-w": [
-            themeContainer,
-            "screen",
-            /** Deprecated. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
-            "none",
-            ...scaleSizing()
-          ]
-        }],
-        /**
-         * Max-Width
-         * @see https://tailwindcss.com/docs/max-width
-         */
-        "max-w": [{
-          "max-w": [
-            themeContainer,
-            "screen",
-            "none",
-            /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
-            "prose",
-            /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
-            {
-              screen: [themeBreakpoint]
-            },
-            ...scaleSizing()
-          ]
-        }],
-        /**
-         * Height
-         * @see https://tailwindcss.com/docs/height
-         */
-        h: [{
-          h: ["screen", "lh", ...scaleSizing()]
-        }],
-        /**
-         * Min-Height
-         * @see https://tailwindcss.com/docs/min-height
-         */
-        "min-h": [{
-          "min-h": ["screen", "lh", "none", ...scaleSizing()]
-        }],
-        /**
-         * Max-Height
-         * @see https://tailwindcss.com/docs/max-height
-         */
-        "max-h": [{
-          "max-h": ["screen", "lh", ...scaleSizing()]
-        }],
-        // ------------------
-        // --- Typography ---
-        // ------------------
-        /**
-         * Font Size
-         * @see https://tailwindcss.com/docs/font-size
-         */
-        "font-size": [{
-          text: ["base", themeText, isArbitraryVariableLength, isArbitraryLength]
-        }],
-        /**
-         * Font Smoothing
-         * @see https://tailwindcss.com/docs/font-smoothing
-         */
-        "font-smoothing": ["antialiased", "subpixel-antialiased"],
-        /**
-         * Font Style
-         * @see https://tailwindcss.com/docs/font-style
-         */
-        "font-style": ["italic", "not-italic"],
-        /**
-         * Font Weight
-         * @see https://tailwindcss.com/docs/font-weight
-         */
-        "font-weight": [{
-          font: [themeFontWeight, isArbitraryVariableWeight, isArbitraryWeight]
-        }],
-        /**
-         * Font Stretch
-         * @see https://tailwindcss.com/docs/font-stretch
-         */
-        "font-stretch": [{
-          "font-stretch": ["ultra-condensed", "extra-condensed", "condensed", "semi-condensed", "normal", "semi-expanded", "expanded", "extra-expanded", "ultra-expanded", isPercent, isArbitraryValue]
-        }],
-        /**
-         * Font Family
-         * @see https://tailwindcss.com/docs/font-family
-         */
-        "font-family": [{
-          font: [isArbitraryVariableFamilyName, isArbitraryFamilyName, themeFont]
-        }],
-        /**
-         * Font Feature Settings
-         * @see https://tailwindcss.com/docs/font-feature-settings
-         */
-        "font-features": [{
-          "font-features": [isArbitraryValue]
-        }],
-        /**
-         * Font Variant Numeric
-         * @see https://tailwindcss.com/docs/font-variant-numeric
-         */
-        "fvn-normal": ["normal-nums"],
-        /**
-         * Font Variant Numeric
-         * @see https://tailwindcss.com/docs/font-variant-numeric
-         */
-        "fvn-ordinal": ["ordinal"],
-        /**
-         * Font Variant Numeric
-         * @see https://tailwindcss.com/docs/font-variant-numeric
-         */
-        "fvn-slashed-zero": ["slashed-zero"],
-        /**
-         * Font Variant Numeric
-         * @see https://tailwindcss.com/docs/font-variant-numeric
-         */
-        "fvn-figure": ["lining-nums", "oldstyle-nums"],
-        /**
-         * Font Variant Numeric
-         * @see https://tailwindcss.com/docs/font-variant-numeric
-         */
-        "fvn-spacing": ["proportional-nums", "tabular-nums"],
-        /**
-         * Font Variant Numeric
-         * @see https://tailwindcss.com/docs/font-variant-numeric
-         */
-        "fvn-fraction": ["diagonal-fractions", "stacked-fractions"],
-        /**
-         * Letter Spacing
-         * @see https://tailwindcss.com/docs/letter-spacing
-         */
-        tracking: [{
-          tracking: [themeTracking, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Line Clamp
-         * @see https://tailwindcss.com/docs/line-clamp
-         */
-        "line-clamp": [{
-          "line-clamp": [isNumber, "none", isArbitraryVariable, isArbitraryNumber]
-        }],
-        /**
-         * Line Height
-         * @see https://tailwindcss.com/docs/line-height
-         */
-        leading: [{
-          leading: [
-            /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
-            themeLeading,
-            ...scaleUnambiguousSpacing()
-          ]
-        }],
-        /**
-         * List Style Image
-         * @see https://tailwindcss.com/docs/list-style-image
-         */
-        "list-image": [{
-          "list-image": ["none", isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * List Style Position
-         * @see https://tailwindcss.com/docs/list-style-position
-         */
-        "list-style-position": [{
-          list: ["inside", "outside"]
-        }],
-        /**
-         * List Style Type
-         * @see https://tailwindcss.com/docs/list-style-type
-         */
-        "list-style-type": [{
-          list: ["disc", "decimal", "none", isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Text Alignment
-         * @see https://tailwindcss.com/docs/text-align
-         */
-        "text-alignment": [{
-          text: ["left", "center", "right", "justify", "start", "end"]
-        }],
-        /**
-         * Placeholder Color
-         * @deprecated since Tailwind CSS v3.0.0
-         * @see https://v3.tailwindcss.com/docs/placeholder-color
-         */
-        "placeholder-color": [{
-          placeholder: scaleColor()
-        }],
-        /**
-         * Text Color
-         * @see https://tailwindcss.com/docs/text-color
-         */
-        "text-color": [{
-          text: scaleColor()
-        }],
-        /**
-         * Text Decoration
-         * @see https://tailwindcss.com/docs/text-decoration
-         */
-        "text-decoration": ["underline", "overline", "line-through", "no-underline"],
-        /**
-         * Text Decoration Style
-         * @see https://tailwindcss.com/docs/text-decoration-style
-         */
-        "text-decoration-style": [{
-          decoration: [...scaleLineStyle(), "wavy"]
-        }],
-        /**
-         * Text Decoration Thickness
-         * @see https://tailwindcss.com/docs/text-decoration-thickness
-         */
-        "text-decoration-thickness": [{
-          decoration: [isNumber, "from-font", "auto", isArbitraryVariable, isArbitraryLength]
-        }],
-        /**
-         * Text Decoration Color
-         * @see https://tailwindcss.com/docs/text-decoration-color
-         */
-        "text-decoration-color": [{
-          decoration: scaleColor()
-        }],
-        /**
-         * Text Underline Offset
-         * @see https://tailwindcss.com/docs/text-underline-offset
-         */
-        "underline-offset": [{
-          "underline-offset": [isNumber, "auto", isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Text Transform
-         * @see https://tailwindcss.com/docs/text-transform
-         */
-        "text-transform": ["uppercase", "lowercase", "capitalize", "normal-case"],
-        /**
-         * Text Overflow
-         * @see https://tailwindcss.com/docs/text-overflow
-         */
-        "text-overflow": ["truncate", "text-ellipsis", "text-clip"],
-        /**
-         * Text Wrap
-         * @see https://tailwindcss.com/docs/text-wrap
-         */
-        "text-wrap": [{
-          text: ["wrap", "nowrap", "balance", "pretty"]
-        }],
-        /**
-         * Text Indent
-         * @see https://tailwindcss.com/docs/text-indent
-         */
-        indent: [{
-          indent: scaleUnambiguousSpacing()
-        }],
-        /**
-         * Tab Size
-         * @see https://tailwindcss.com/docs/tab-size
-         */
-        "tab-size": [{
-          tab: [isInteger, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Vertical Alignment
-         * @see https://tailwindcss.com/docs/vertical-align
-         */
-        "vertical-align": [{
-          align: ["baseline", "top", "middle", "bottom", "text-top", "text-bottom", "sub", "super", isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Whitespace
-         * @see https://tailwindcss.com/docs/whitespace
-         */
-        whitespace: [{
-          whitespace: ["normal", "nowrap", "pre", "pre-line", "pre-wrap", "break-spaces"]
-        }],
-        /**
-         * Word Break
-         * @see https://tailwindcss.com/docs/word-break
-         */
-        break: [{
-          break: ["normal", "words", "all", "keep"]
-        }],
-        /**
-         * Overflow Wrap
-         * @see https://tailwindcss.com/docs/overflow-wrap
-         */
-        wrap: [{
-          wrap: ["break-word", "anywhere", "normal"]
-        }],
-        /**
-         * Hyphens
-         * @see https://tailwindcss.com/docs/hyphens
-         */
-        hyphens: [{
-          hyphens: ["none", "manual", "auto"]
-        }],
-        /**
-         * Content
-         * @see https://tailwindcss.com/docs/content
-         */
-        content: [{
-          content: ["none", isArbitraryVariable, isArbitraryValue]
-        }],
-        // -------------------
-        // --- Backgrounds ---
-        // -------------------
-        /**
-         * Background Attachment
-         * @see https://tailwindcss.com/docs/background-attachment
-         */
-        "bg-attachment": [{
-          bg: ["fixed", "local", "scroll"]
-        }],
-        /**
-         * Background Clip
-         * @see https://tailwindcss.com/docs/background-clip
-         */
-        "bg-clip": [{
-          "bg-clip": ["border", "padding", "content", "text"]
-        }],
-        /**
-         * Background Origin
-         * @see https://tailwindcss.com/docs/background-origin
-         */
-        "bg-origin": [{
-          "bg-origin": ["border", "padding", "content"]
-        }],
-        /**
-         * Background Position
-         * @see https://tailwindcss.com/docs/background-position
-         */
-        "bg-position": [{
-          bg: scaleBgPosition()
-        }],
-        /**
-         * Background Repeat
-         * @see https://tailwindcss.com/docs/background-repeat
-         */
-        "bg-repeat": [{
-          bg: scaleBgRepeat()
-        }],
-        /**
-         * Background Size
-         * @see https://tailwindcss.com/docs/background-size
-         */
-        "bg-size": [{
-          bg: scaleBgSize()
-        }],
-        /**
-         * Background Image
-         * @see https://tailwindcss.com/docs/background-image
-         */
-        "bg-image": [{
-          bg: ["none", {
-            linear: [{
-              to: ["t", "tr", "r", "br", "b", "bl", "l", "tl"]
-            }, isInteger, isArbitraryVariable, isArbitraryValue],
-            radial: ["", isArbitraryVariable, isArbitraryValue],
-            conic: [isInteger, isArbitraryVariable, isArbitraryValue]
-          }, isArbitraryVariableImage, isArbitraryImage]
-        }],
-        /**
-         * Background Color
-         * @see https://tailwindcss.com/docs/background-color
-         */
-        "bg-color": [{
-          bg: scaleColor()
-        }],
-        /**
-         * Gradient Color Stops From Position
-         * @see https://tailwindcss.com/docs/gradient-color-stops
-         */
-        "gradient-from-pos": [{
-          from: scaleGradientStopPosition()
-        }],
-        /**
-         * Gradient Color Stops Via Position
-         * @see https://tailwindcss.com/docs/gradient-color-stops
-         */
-        "gradient-via-pos": [{
-          via: scaleGradientStopPosition()
-        }],
-        /**
-         * Gradient Color Stops To Position
-         * @see https://tailwindcss.com/docs/gradient-color-stops
-         */
-        "gradient-to-pos": [{
-          to: scaleGradientStopPosition()
-        }],
-        /**
-         * Gradient Color Stops From
-         * @see https://tailwindcss.com/docs/gradient-color-stops
-         */
-        "gradient-from": [{
-          from: scaleColor()
-        }],
-        /**
-         * Gradient Color Stops Via
-         * @see https://tailwindcss.com/docs/gradient-color-stops
-         */
-        "gradient-via": [{
-          via: scaleColor()
-        }],
-        /**
-         * Gradient Color Stops To
-         * @see https://tailwindcss.com/docs/gradient-color-stops
-         */
-        "gradient-to": [{
-          to: scaleColor()
-        }],
-        // ---------------
-        // --- Borders ---
-        // ---------------
-        /**
-         * Border Radius
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        rounded: [{
-          rounded: scaleRadius()
-        }],
-        /**
-         * Border Radius Start
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-s": [{
-          "rounded-s": scaleRadius()
-        }],
-        /**
-         * Border Radius End
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-e": [{
-          "rounded-e": scaleRadius()
-        }],
-        /**
-         * Border Radius Top
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-t": [{
-          "rounded-t": scaleRadius()
-        }],
-        /**
-         * Border Radius Right
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-r": [{
-          "rounded-r": scaleRadius()
-        }],
-        /**
-         * Border Radius Bottom
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-b": [{
-          "rounded-b": scaleRadius()
-        }],
-        /**
-         * Border Radius Left
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-l": [{
-          "rounded-l": scaleRadius()
-        }],
-        /**
-         * Border Radius Start Start
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-ss": [{
-          "rounded-ss": scaleRadius()
-        }],
-        /**
-         * Border Radius Start End
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-se": [{
-          "rounded-se": scaleRadius()
-        }],
-        /**
-         * Border Radius End End
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-ee": [{
-          "rounded-ee": scaleRadius()
-        }],
-        /**
-         * Border Radius End Start
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-es": [{
-          "rounded-es": scaleRadius()
-        }],
-        /**
-         * Border Radius Top Left
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-tl": [{
-          "rounded-tl": scaleRadius()
-        }],
-        /**
-         * Border Radius Top Right
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-tr": [{
-          "rounded-tr": scaleRadius()
-        }],
-        /**
-         * Border Radius Bottom Right
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-br": [{
-          "rounded-br": scaleRadius()
-        }],
-        /**
-         * Border Radius Bottom Left
-         * @see https://tailwindcss.com/docs/border-radius
-         */
-        "rounded-bl": [{
-          "rounded-bl": scaleRadius()
-        }],
-        /**
-         * Border Width
-         * @see https://tailwindcss.com/docs/border-width
-         */
-        "border-w": [{
-          border: scaleBorderWidth()
-        }],
-        /**
-         * Border Width Inline
-         * @see https://tailwindcss.com/docs/border-width
-         */
-        "border-w-x": [{
-          "border-x": scaleBorderWidth()
-        }],
-        /**
-         * Border Width Block
-         * @see https://tailwindcss.com/docs/border-width
-         */
-        "border-w-y": [{
-          "border-y": scaleBorderWidth()
-        }],
-        /**
-         * Border Width Inline Start
-         * @see https://tailwindcss.com/docs/border-width
-         */
-        "border-w-s": [{
-          "border-s": scaleBorderWidth()
-        }],
-        /**
-         * Border Width Inline End
-         * @see https://tailwindcss.com/docs/border-width
-         */
-        "border-w-e": [{
-          "border-e": scaleBorderWidth()
-        }],
-        /**
-         * Border Width Block Start
-         * @see https://tailwindcss.com/docs/border-width
-         */
-        "border-w-bs": [{
-          "border-bs": scaleBorderWidth()
-        }],
-        /**
-         * Border Width Block End
-         * @see https://tailwindcss.com/docs/border-width
-         */
-        "border-w-be": [{
-          "border-be": scaleBorderWidth()
-        }],
-        /**
-         * Border Width Top
-         * @see https://tailwindcss.com/docs/border-width
-         */
-        "border-w-t": [{
-          "border-t": scaleBorderWidth()
-        }],
-        /**
-         * Border Width Right
-         * @see https://tailwindcss.com/docs/border-width
-         */
-        "border-w-r": [{
-          "border-r": scaleBorderWidth()
-        }],
-        /**
-         * Border Width Bottom
-         * @see https://tailwindcss.com/docs/border-width
-         */
-        "border-w-b": [{
-          "border-b": scaleBorderWidth()
-        }],
-        /**
-         * Border Width Left
-         * @see https://tailwindcss.com/docs/border-width
-         */
-        "border-w-l": [{
-          "border-l": scaleBorderWidth()
-        }],
-        /**
-         * Divide Width X
-         * @see https://tailwindcss.com/docs/border-width#between-children
-         */
-        "divide-x": [{
-          "divide-x": scaleBorderWidth()
-        }],
-        /**
-         * Divide Width X Reverse
-         * @see https://tailwindcss.com/docs/border-width#between-children
-         */
-        "divide-x-reverse": ["divide-x-reverse"],
-        /**
-         * Divide Width Y
-         * @see https://tailwindcss.com/docs/border-width#between-children
-         */
-        "divide-y": [{
-          "divide-y": scaleBorderWidth()
-        }],
-        /**
-         * Divide Width Y Reverse
-         * @see https://tailwindcss.com/docs/border-width#between-children
-         */
-        "divide-y-reverse": ["divide-y-reverse"],
-        /**
-         * Border Style
-         * @see https://tailwindcss.com/docs/border-style
-         */
-        "border-style": [{
-          border: [...scaleLineStyle(), "hidden", "none"]
-        }],
-        /**
-         * Divide Style
-         * @see https://tailwindcss.com/docs/border-style#setting-the-divider-style
-         */
-        "divide-style": [{
-          divide: [...scaleLineStyle(), "hidden", "none"]
-        }],
-        /**
-         * Border Color
-         * @see https://tailwindcss.com/docs/border-color
-         */
-        "border-color": [{
-          border: scaleColor()
-        }],
-        /**
-         * Border Color Inline
-         * @see https://tailwindcss.com/docs/border-color
-         */
-        "border-color-x": [{
-          "border-x": scaleColor()
-        }],
-        /**
-         * Border Color Block
-         * @see https://tailwindcss.com/docs/border-color
-         */
-        "border-color-y": [{
-          "border-y": scaleColor()
-        }],
-        /**
-         * Border Color Inline Start
-         * @see https://tailwindcss.com/docs/border-color
-         */
-        "border-color-s": [{
-          "border-s": scaleColor()
-        }],
-        /**
-         * Border Color Inline End
-         * @see https://tailwindcss.com/docs/border-color
-         */
-        "border-color-e": [{
-          "border-e": scaleColor()
-        }],
-        /**
-         * Border Color Block Start
-         * @see https://tailwindcss.com/docs/border-color
-         */
-        "border-color-bs": [{
-          "border-bs": scaleColor()
-        }],
-        /**
-         * Border Color Block End
-         * @see https://tailwindcss.com/docs/border-color
-         */
-        "border-color-be": [{
-          "border-be": scaleColor()
-        }],
-        /**
-         * Border Color Top
-         * @see https://tailwindcss.com/docs/border-color
-         */
-        "border-color-t": [{
-          "border-t": scaleColor()
-        }],
-        /**
-         * Border Color Right
-         * @see https://tailwindcss.com/docs/border-color
-         */
-        "border-color-r": [{
-          "border-r": scaleColor()
-        }],
-        /**
-         * Border Color Bottom
-         * @see https://tailwindcss.com/docs/border-color
-         */
-        "border-color-b": [{
-          "border-b": scaleColor()
-        }],
-        /**
-         * Border Color Left
-         * @see https://tailwindcss.com/docs/border-color
-         */
-        "border-color-l": [{
-          "border-l": scaleColor()
-        }],
-        /**
-         * Divide Color
-         * @see https://tailwindcss.com/docs/divide-color
-         */
-        "divide-color": [{
-          divide: scaleColor()
-        }],
-        /**
-         * Outline Style
-         * @see https://tailwindcss.com/docs/outline-style
-         */
-        "outline-style": [{
-          outline: [...scaleLineStyle(), "none", "hidden"]
-        }],
-        /**
-         * Outline Offset
-         * @see https://tailwindcss.com/docs/outline-offset
-         */
-        "outline-offset": [{
-          "outline-offset": [isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Outline Width
-         * @see https://tailwindcss.com/docs/outline-width
-         */
-        "outline-w": [{
-          outline: ["", isNumber, isArbitraryVariableLength, isArbitraryLength]
-        }],
-        /**
-         * Outline Color
-         * @see https://tailwindcss.com/docs/outline-color
-         */
-        "outline-color": [{
-          outline: scaleColor()
-        }],
-        // ---------------
-        // --- Effects ---
-        // ---------------
-        /**
-         * Box Shadow
-         * @see https://tailwindcss.com/docs/box-shadow
-         */
-        shadow: [{
-          shadow: [
-            // Deprecated since Tailwind CSS v4.0.0
-            "",
-            "none",
-            themeShadow,
-            isArbitraryVariableShadow,
-            isArbitraryShadow
-          ]
-        }],
-        /**
-         * Box Shadow Color
-         * @see https://tailwindcss.com/docs/box-shadow#setting-the-shadow-color
-         */
-        "shadow-color": [{
-          shadow: scaleColor()
-        }],
-        /**
-         * Inset Box Shadow
-         * @see https://tailwindcss.com/docs/box-shadow#adding-an-inset-shadow
-         */
-        "inset-shadow": [{
-          "inset-shadow": ["none", themeInsetShadow, isArbitraryVariableShadow, isArbitraryShadow]
-        }],
-        /**
-         * Inset Box Shadow Color
-         * @see https://tailwindcss.com/docs/box-shadow#setting-the-inset-shadow-color
-         */
-        "inset-shadow-color": [{
-          "inset-shadow": scaleColor()
-        }],
-        /**
-         * Ring Width
-         * @see https://tailwindcss.com/docs/box-shadow#adding-a-ring
-         */
-        "ring-w": [{
-          ring: scaleBorderWidth()
-        }],
-        /**
-         * Ring Width Inset
-         * @see https://v3.tailwindcss.com/docs/ring-width#inset-rings
-         * @deprecated since Tailwind CSS v4.0.0
-         * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
-         */
-        "ring-w-inset": ["ring-inset"],
-        /**
-         * Ring Color
-         * @see https://tailwindcss.com/docs/box-shadow#setting-the-ring-color
-         */
-        "ring-color": [{
-          ring: scaleColor()
-        }],
-        /**
-         * Ring Offset Width
-         * @see https://v3.tailwindcss.com/docs/ring-offset-width
-         * @deprecated since Tailwind CSS v4.0.0
-         * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
-         */
-        "ring-offset-w": [{
-          "ring-offset": [isNumber, isArbitraryLength]
-        }],
-        /**
-         * Ring Offset Color
-         * @see https://v3.tailwindcss.com/docs/ring-offset-color
-         * @deprecated since Tailwind CSS v4.0.0
-         * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
-         */
-        "ring-offset-color": [{
-          "ring-offset": scaleColor()
-        }],
-        /**
-         * Inset Ring Width
-         * @see https://tailwindcss.com/docs/box-shadow#adding-an-inset-ring
-         */
-        "inset-ring-w": [{
-          "inset-ring": scaleBorderWidth()
-        }],
-        /**
-         * Inset Ring Color
-         * @see https://tailwindcss.com/docs/box-shadow#setting-the-inset-ring-color
-         */
-        "inset-ring-color": [{
-          "inset-ring": scaleColor()
-        }],
-        /**
-         * Text Shadow
-         * @see https://tailwindcss.com/docs/text-shadow
-         */
-        "text-shadow": [{
-          "text-shadow": ["none", themeTextShadow, isArbitraryVariableShadow, isArbitraryShadow]
-        }],
-        /**
-         * Text Shadow Color
-         * @see https://tailwindcss.com/docs/text-shadow#setting-the-shadow-color
-         */
-        "text-shadow-color": [{
-          "text-shadow": scaleColor()
-        }],
-        /**
-         * Opacity
-         * @see https://tailwindcss.com/docs/opacity
-         */
-        opacity: [{
-          opacity: [isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Mix Blend Mode
-         * @see https://tailwindcss.com/docs/mix-blend-mode
-         */
-        "mix-blend": [{
-          "mix-blend": [...scaleBlendMode(), "plus-darker", "plus-lighter"]
-        }],
-        /**
-         * Background Blend Mode
-         * @see https://tailwindcss.com/docs/background-blend-mode
-         */
-        "bg-blend": [{
-          "bg-blend": scaleBlendMode()
-        }],
-        /**
-         * Mask Clip
-         * @see https://tailwindcss.com/docs/mask-clip
-         */
-        "mask-clip": [{
-          "mask-clip": ["border", "padding", "content", "fill", "stroke", "view"]
-        }, "mask-no-clip"],
-        /**
-         * Mask Composite
-         * @see https://tailwindcss.com/docs/mask-composite
-         */
-        "mask-composite": [{
-          mask: ["add", "subtract", "intersect", "exclude"]
-        }],
-        /**
-         * Mask Image
-         * @see https://tailwindcss.com/docs/mask-image
-         */
-        "mask-image-linear-pos": [{
-          "mask-linear": [isNumber]
-        }],
-        "mask-image-linear-from-pos": [{
-          "mask-linear-from": scaleMaskImagePosition()
-        }],
-        "mask-image-linear-to-pos": [{
-          "mask-linear-to": scaleMaskImagePosition()
-        }],
-        "mask-image-linear-from-color": [{
-          "mask-linear-from": scaleColor()
-        }],
-        "mask-image-linear-to-color": [{
-          "mask-linear-to": scaleColor()
-        }],
-        "mask-image-t-from-pos": [{
-          "mask-t-from": scaleMaskImagePosition()
-        }],
-        "mask-image-t-to-pos": [{
-          "mask-t-to": scaleMaskImagePosition()
-        }],
-        "mask-image-t-from-color": [{
-          "mask-t-from": scaleColor()
-        }],
-        "mask-image-t-to-color": [{
-          "mask-t-to": scaleColor()
-        }],
-        "mask-image-r-from-pos": [{
-          "mask-r-from": scaleMaskImagePosition()
-        }],
-        "mask-image-r-to-pos": [{
-          "mask-r-to": scaleMaskImagePosition()
-        }],
-        "mask-image-r-from-color": [{
-          "mask-r-from": scaleColor()
-        }],
-        "mask-image-r-to-color": [{
-          "mask-r-to": scaleColor()
-        }],
-        "mask-image-b-from-pos": [{
-          "mask-b-from": scaleMaskImagePosition()
-        }],
-        "mask-image-b-to-pos": [{
-          "mask-b-to": scaleMaskImagePosition()
-        }],
-        "mask-image-b-from-color": [{
-          "mask-b-from": scaleColor()
-        }],
-        "mask-image-b-to-color": [{
-          "mask-b-to": scaleColor()
-        }],
-        "mask-image-l-from-pos": [{
-          "mask-l-from": scaleMaskImagePosition()
-        }],
-        "mask-image-l-to-pos": [{
-          "mask-l-to": scaleMaskImagePosition()
-        }],
-        "mask-image-l-from-color": [{
-          "mask-l-from": scaleColor()
-        }],
-        "mask-image-l-to-color": [{
-          "mask-l-to": scaleColor()
-        }],
-        "mask-image-x-from-pos": [{
-          "mask-x-from": scaleMaskImagePosition()
-        }],
-        "mask-image-x-to-pos": [{
-          "mask-x-to": scaleMaskImagePosition()
-        }],
-        "mask-image-x-from-color": [{
-          "mask-x-from": scaleColor()
-        }],
-        "mask-image-x-to-color": [{
-          "mask-x-to": scaleColor()
-        }],
-        "mask-image-y-from-pos": [{
-          "mask-y-from": scaleMaskImagePosition()
-        }],
-        "mask-image-y-to-pos": [{
-          "mask-y-to": scaleMaskImagePosition()
-        }],
-        "mask-image-y-from-color": [{
-          "mask-y-from": scaleColor()
-        }],
-        "mask-image-y-to-color": [{
-          "mask-y-to": scaleColor()
-        }],
-        "mask-image-radial": [{
-          "mask-radial": [isArbitraryVariable, isArbitraryValue]
-        }],
-        "mask-image-radial-from-pos": [{
-          "mask-radial-from": scaleMaskImagePosition()
-        }],
-        "mask-image-radial-to-pos": [{
-          "mask-radial-to": scaleMaskImagePosition()
-        }],
-        "mask-image-radial-from-color": [{
-          "mask-radial-from": scaleColor()
-        }],
-        "mask-image-radial-to-color": [{
-          "mask-radial-to": scaleColor()
-        }],
-        "mask-image-radial-shape": [{
-          "mask-radial": ["circle", "ellipse"]
-        }],
-        "mask-image-radial-size": [{
-          "mask-radial": [{
-            closest: ["side", "corner"],
-            farthest: ["side", "corner"]
-          }]
-        }],
-        "mask-image-radial-pos": [{
-          "mask-radial-at": scalePosition()
-        }],
-        "mask-image-conic-pos": [{
-          "mask-conic": [isNumber]
-        }],
-        "mask-image-conic-from-pos": [{
-          "mask-conic-from": scaleMaskImagePosition()
-        }],
-        "mask-image-conic-to-pos": [{
-          "mask-conic-to": scaleMaskImagePosition()
-        }],
-        "mask-image-conic-from-color": [{
-          "mask-conic-from": scaleColor()
-        }],
-        "mask-image-conic-to-color": [{
-          "mask-conic-to": scaleColor()
-        }],
-        /**
-         * Mask Mode
-         * @see https://tailwindcss.com/docs/mask-mode
-         */
-        "mask-mode": [{
-          mask: ["alpha", "luminance", "match"]
-        }],
-        /**
-         * Mask Origin
-         * @see https://tailwindcss.com/docs/mask-origin
-         */
-        "mask-origin": [{
-          "mask-origin": ["border", "padding", "content", "fill", "stroke", "view"]
-        }],
-        /**
-         * Mask Position
-         * @see https://tailwindcss.com/docs/mask-position
-         */
-        "mask-position": [{
-          mask: scaleBgPosition()
-        }],
-        /**
-         * Mask Repeat
-         * @see https://tailwindcss.com/docs/mask-repeat
-         */
-        "mask-repeat": [{
-          mask: scaleBgRepeat()
-        }],
-        /**
-         * Mask Size
-         * @see https://tailwindcss.com/docs/mask-size
-         */
-        "mask-size": [{
-          mask: scaleBgSize()
-        }],
-        /**
-         * Mask Type
-         * @see https://tailwindcss.com/docs/mask-type
-         */
-        "mask-type": [{
-          "mask-type": ["alpha", "luminance"]
-        }],
-        /**
-         * Mask Image
-         * @see https://tailwindcss.com/docs/mask-image
-         */
-        "mask-image": [{
-          mask: ["none", isArbitraryVariable, isArbitraryValue]
-        }],
-        // ---------------
-        // --- Filters ---
-        // ---------------
-        /**
-         * Filter
-         * @see https://tailwindcss.com/docs/filter
-         */
-        filter: [{
-          filter: [
-            // Deprecated since Tailwind CSS v3.0.0
-            "",
-            "none",
-            isArbitraryVariable,
-            isArbitraryValue
-          ]
-        }],
-        /**
-         * Blur
-         * @see https://tailwindcss.com/docs/blur
-         */
-        blur: [{
-          blur: scaleBlur()
-        }],
-        /**
-         * Brightness
-         * @see https://tailwindcss.com/docs/brightness
-         */
-        brightness: [{
-          brightness: [isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Contrast
-         * @see https://tailwindcss.com/docs/contrast
-         */
-        contrast: [{
-          contrast: [isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Drop Shadow
-         * @see https://tailwindcss.com/docs/drop-shadow
-         */
-        "drop-shadow": [{
-          "drop-shadow": [
-            // Deprecated since Tailwind CSS v4.0.0
-            "",
-            "none",
-            themeDropShadow,
-            isArbitraryVariableShadow,
-            isArbitraryShadow
-          ]
-        }],
-        /**
-         * Drop Shadow Color
-         * @see https://tailwindcss.com/docs/filter-drop-shadow#setting-the-shadow-color
-         */
-        "drop-shadow-color": [{
-          "drop-shadow": scaleColor()
-        }],
-        /**
-         * Grayscale
-         * @see https://tailwindcss.com/docs/grayscale
-         */
-        grayscale: [{
-          grayscale: ["", isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Hue Rotate
-         * @see https://tailwindcss.com/docs/hue-rotate
-         */
-        "hue-rotate": [{
-          "hue-rotate": [isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Invert
-         * @see https://tailwindcss.com/docs/invert
-         */
-        invert: [{
-          invert: ["", isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Saturate
-         * @see https://tailwindcss.com/docs/saturate
-         */
-        saturate: [{
-          saturate: [isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Sepia
-         * @see https://tailwindcss.com/docs/sepia
-         */
-        sepia: [{
-          sepia: ["", isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Backdrop Filter
-         * @see https://tailwindcss.com/docs/backdrop-filter
-         */
-        "backdrop-filter": [{
-          "backdrop-filter": [
-            // Deprecated since Tailwind CSS v3.0.0
-            "",
-            "none",
-            isArbitraryVariable,
-            isArbitraryValue
-          ]
-        }],
-        /**
-         * Backdrop Blur
-         * @see https://tailwindcss.com/docs/backdrop-blur
-         */
-        "backdrop-blur": [{
-          "backdrop-blur": scaleBlur()
-        }],
-        /**
-         * Backdrop Brightness
-         * @see https://tailwindcss.com/docs/backdrop-brightness
-         */
-        "backdrop-brightness": [{
-          "backdrop-brightness": [isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Backdrop Contrast
-         * @see https://tailwindcss.com/docs/backdrop-contrast
-         */
-        "backdrop-contrast": [{
-          "backdrop-contrast": [isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Backdrop Grayscale
-         * @see https://tailwindcss.com/docs/backdrop-grayscale
-         */
-        "backdrop-grayscale": [{
-          "backdrop-grayscale": ["", isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Backdrop Hue Rotate
-         * @see https://tailwindcss.com/docs/backdrop-hue-rotate
-         */
-        "backdrop-hue-rotate": [{
-          "backdrop-hue-rotate": [isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Backdrop Invert
-         * @see https://tailwindcss.com/docs/backdrop-invert
-         */
-        "backdrop-invert": [{
-          "backdrop-invert": ["", isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Backdrop Opacity
-         * @see https://tailwindcss.com/docs/backdrop-opacity
-         */
-        "backdrop-opacity": [{
-          "backdrop-opacity": [isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Backdrop Saturate
-         * @see https://tailwindcss.com/docs/backdrop-saturate
-         */
-        "backdrop-saturate": [{
-          "backdrop-saturate": [isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Backdrop Sepia
-         * @see https://tailwindcss.com/docs/backdrop-sepia
-         */
-        "backdrop-sepia": [{
-          "backdrop-sepia": ["", isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        // --------------
-        // --- Tables ---
-        // --------------
-        /**
-         * Border Collapse
-         * @see https://tailwindcss.com/docs/border-collapse
-         */
-        "border-collapse": [{
-          border: ["collapse", "separate"]
-        }],
-        /**
-         * Border Spacing
-         * @see https://tailwindcss.com/docs/border-spacing
-         */
-        "border-spacing": [{
-          "border-spacing": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Border Spacing X
-         * @see https://tailwindcss.com/docs/border-spacing
-         */
-        "border-spacing-x": [{
-          "border-spacing-x": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Border Spacing Y
-         * @see https://tailwindcss.com/docs/border-spacing
-         */
-        "border-spacing-y": [{
-          "border-spacing-y": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Table Layout
-         * @see https://tailwindcss.com/docs/table-layout
-         */
-        "table-layout": [{
-          table: ["auto", "fixed"]
-        }],
-        /**
-         * Caption Side
-         * @see https://tailwindcss.com/docs/caption-side
-         */
-        caption: [{
-          caption: ["top", "bottom"]
-        }],
-        // ---------------------------------
-        // --- Transitions and Animation ---
-        // ---------------------------------
-        /**
-         * Transition Property
-         * @see https://tailwindcss.com/docs/transition-property
-         */
-        transition: [{
-          transition: ["", "all", "colors", "opacity", "shadow", "transform", "none", isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Transition Behavior
-         * @see https://tailwindcss.com/docs/transition-behavior
-         */
-        "transition-behavior": [{
-          transition: ["normal", "discrete"]
-        }],
-        /**
-         * Transition Duration
-         * @see https://tailwindcss.com/docs/transition-duration
-         */
-        duration: [{
-          duration: [isNumber, "initial", isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Transition Timing Function
-         * @see https://tailwindcss.com/docs/transition-timing-function
-         */
-        ease: [{
-          ease: ["linear", "initial", themeEase, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Transition Delay
-         * @see https://tailwindcss.com/docs/transition-delay
-         */
-        delay: [{
-          delay: [isNumber, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Animation
-         * @see https://tailwindcss.com/docs/animation
-         */
-        animate: [{
-          animate: ["none", themeAnimate, isArbitraryVariable, isArbitraryValue]
-        }],
-        // ------------------
-        // --- Transforms ---
-        // ------------------
-        /**
-         * Backface Visibility
-         * @see https://tailwindcss.com/docs/backface-visibility
-         */
-        backface: [{
-          backface: ["hidden", "visible"]
-        }],
-        /**
-         * Perspective
-         * @see https://tailwindcss.com/docs/perspective
-         */
-        perspective: [{
-          perspective: [themePerspective, isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Perspective Origin
-         * @see https://tailwindcss.com/docs/perspective-origin
-         */
-        "perspective-origin": [{
-          "perspective-origin": scalePositionWithArbitrary()
-        }],
-        /**
-         * Rotate
-         * @see https://tailwindcss.com/docs/rotate
-         */
-        rotate: [{
-          rotate: scaleRotate()
-        }],
-        /**
-         * Rotate X
-         * @see https://tailwindcss.com/docs/rotate
-         */
-        "rotate-x": [{
-          "rotate-x": scaleRotate()
-        }],
-        /**
-         * Rotate Y
-         * @see https://tailwindcss.com/docs/rotate
-         */
-        "rotate-y": [{
-          "rotate-y": scaleRotate()
-        }],
-        /**
-         * Rotate Z
-         * @see https://tailwindcss.com/docs/rotate
-         */
-        "rotate-z": [{
-          "rotate-z": scaleRotate()
-        }],
-        /**
-         * Scale
-         * @see https://tailwindcss.com/docs/scale
-         */
-        scale: [{
-          scale: scaleScale()
-        }],
-        /**
-         * Scale X
-         * @see https://tailwindcss.com/docs/scale
-         */
-        "scale-x": [{
-          "scale-x": scaleScale()
-        }],
-        /**
-         * Scale Y
-         * @see https://tailwindcss.com/docs/scale
-         */
-        "scale-y": [{
-          "scale-y": scaleScale()
-        }],
-        /**
-         * Scale Z
-         * @see https://tailwindcss.com/docs/scale
-         */
-        "scale-z": [{
-          "scale-z": scaleScale()
-        }],
-        /**
-         * Scale 3D
-         * @see https://tailwindcss.com/docs/scale
-         */
-        "scale-3d": ["scale-3d"],
-        /**
-         * Skew
-         * @see https://tailwindcss.com/docs/skew
-         */
-        skew: [{
-          skew: scaleSkew()
-        }],
-        /**
-         * Skew X
-         * @see https://tailwindcss.com/docs/skew
-         */
-        "skew-x": [{
-          "skew-x": scaleSkew()
-        }],
-        /**
-         * Skew Y
-         * @see https://tailwindcss.com/docs/skew
-         */
-        "skew-y": [{
-          "skew-y": scaleSkew()
-        }],
-        /**
-         * Transform
-         * @see https://tailwindcss.com/docs/transform
-         */
-        transform: [{
-          transform: [isArbitraryVariable, isArbitraryValue, "", "none", "gpu", "cpu"]
-        }],
-        /**
-         * Transform Origin
-         * @see https://tailwindcss.com/docs/transform-origin
-         */
-        "transform-origin": [{
-          origin: scalePositionWithArbitrary()
-        }],
-        /**
-         * Transform Style
-         * @see https://tailwindcss.com/docs/transform-style
-         */
-        "transform-style": [{
-          transform: ["3d", "flat"]
-        }],
-        /**
-         * Translate
-         * @see https://tailwindcss.com/docs/translate
-         */
-        translate: [{
-          translate: scaleTranslate()
-        }],
-        /**
-         * Translate X
-         * @see https://tailwindcss.com/docs/translate
-         */
-        "translate-x": [{
-          "translate-x": scaleTranslate()
-        }],
-        /**
-         * Translate Y
-         * @see https://tailwindcss.com/docs/translate
-         */
-        "translate-y": [{
-          "translate-y": scaleTranslate()
-        }],
-        /**
-         * Translate Z
-         * @see https://tailwindcss.com/docs/translate
-         */
-        "translate-z": [{
-          "translate-z": scaleTranslate()
-        }],
-        /**
-         * Translate None
-         * @see https://tailwindcss.com/docs/translate
-         */
-        "translate-none": ["translate-none"],
-        /**
-         * Zoom
-         * @see https://tailwindcss.com/docs/zoom
-         */
-        zoom: [{
-          zoom: [isInteger, isArbitraryVariable, isArbitraryValue]
-        }],
-        // ---------------------
-        // --- Interactivity ---
-        // ---------------------
-        /**
-         * Accent Color
-         * @see https://tailwindcss.com/docs/accent-color
-         */
-        accent: [{
-          accent: scaleColor()
-        }],
-        /**
-         * Appearance
-         * @see https://tailwindcss.com/docs/appearance
-         */
-        appearance: [{
-          appearance: ["none", "auto"]
-        }],
-        /**
-         * Caret Color
-         * @see https://tailwindcss.com/docs/just-in-time-mode#caret-color-utilities
-         */
-        "caret-color": [{
-          caret: scaleColor()
-        }],
-        /**
-         * Color Scheme
-         * @see https://tailwindcss.com/docs/color-scheme
-         */
-        "color-scheme": [{
-          scheme: ["normal", "dark", "light", "light-dark", "only-dark", "only-light"]
-        }],
-        /**
-         * Cursor
-         * @see https://tailwindcss.com/docs/cursor
-         */
-        cursor: [{
-          cursor: ["auto", "default", "pointer", "wait", "text", "move", "help", "not-allowed", "none", "context-menu", "progress", "cell", "crosshair", "vertical-text", "alias", "copy", "no-drop", "grab", "grabbing", "all-scroll", "col-resize", "row-resize", "n-resize", "e-resize", "s-resize", "w-resize", "ne-resize", "nw-resize", "se-resize", "sw-resize", "ew-resize", "ns-resize", "nesw-resize", "nwse-resize", "zoom-in", "zoom-out", isArbitraryVariable, isArbitraryValue]
-        }],
-        /**
-         * Field Sizing
-         * @see https://tailwindcss.com/docs/field-sizing
-         */
-        "field-sizing": [{
-          "field-sizing": ["fixed", "content"]
-        }],
-        /**
-         * Pointer Events
-         * @see https://tailwindcss.com/docs/pointer-events
-         */
-        "pointer-events": [{
-          "pointer-events": ["auto", "none"]
-        }],
-        /**
-         * Resize
-         * @see https://tailwindcss.com/docs/resize
-         */
-        resize: [{
-          resize: ["none", "", "y", "x"]
-        }],
-        /**
-         * Scroll Behavior
-         * @see https://tailwindcss.com/docs/scroll-behavior
-         */
-        "scroll-behavior": [{
-          scroll: ["auto", "smooth"]
-        }],
-        /**
-         * Scrollbar Thumb Color
-         * @see https://tailwindcss.com/docs/scrollbar-color
-         */
-        "scrollbar-thumb-color": [{
-          "scrollbar-thumb": scaleColor()
-        }],
-        /**
-         * Scrollbar Track Color
-         * @see https://tailwindcss.com/docs/scrollbar-color
-         */
-        "scrollbar-track-color": [{
-          "scrollbar-track": scaleColor()
-        }],
-        /**
-         * Scrollbar Gutter
-         * @see https://tailwindcss.com/docs/scrollbar-gutter
-         */
-        "scrollbar-gutter": [{
-          "scrollbar-gutter": ["auto", "stable", "both"]
-        }],
-        /**
-         * Scrollbar Width
-         * @see https://tailwindcss.com/docs/scrollbar-width
-         */
-        "scrollbar-w": [{
-          scrollbar: ["auto", "thin", "none"]
-        }],
-        /**
-         * Scroll Margin
-         * @see https://tailwindcss.com/docs/scroll-margin
-         */
-        "scroll-m": [{
-          "scroll-m": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Margin Inline
-         * @see https://tailwindcss.com/docs/scroll-margin
-         */
-        "scroll-mx": [{
-          "scroll-mx": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Margin Block
-         * @see https://tailwindcss.com/docs/scroll-margin
-         */
-        "scroll-my": [{
-          "scroll-my": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Margin Inline Start
-         * @see https://tailwindcss.com/docs/scroll-margin
-         */
-        "scroll-ms": [{
-          "scroll-ms": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Margin Inline End
-         * @see https://tailwindcss.com/docs/scroll-margin
-         */
-        "scroll-me": [{
-          "scroll-me": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Margin Block Start
-         * @see https://tailwindcss.com/docs/scroll-margin
-         */
-        "scroll-mbs": [{
-          "scroll-mbs": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Margin Block End
-         * @see https://tailwindcss.com/docs/scroll-margin
-         */
-        "scroll-mbe": [{
-          "scroll-mbe": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Margin Top
-         * @see https://tailwindcss.com/docs/scroll-margin
-         */
-        "scroll-mt": [{
-          "scroll-mt": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Margin Right
-         * @see https://tailwindcss.com/docs/scroll-margin
-         */
-        "scroll-mr": [{
-          "scroll-mr": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Margin Bottom
-         * @see https://tailwindcss.com/docs/scroll-margin
-         */
-        "scroll-mb": [{
-          "scroll-mb": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Margin Left
-         * @see https://tailwindcss.com/docs/scroll-margin
-         */
-        "scroll-ml": [{
-          "scroll-ml": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Padding
-         * @see https://tailwindcss.com/docs/scroll-padding
-         */
-        "scroll-p": [{
-          "scroll-p": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Padding Inline
-         * @see https://tailwindcss.com/docs/scroll-padding
-         */
-        "scroll-px": [{
-          "scroll-px": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Padding Block
-         * @see https://tailwindcss.com/docs/scroll-padding
-         */
-        "scroll-py": [{
-          "scroll-py": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Padding Inline Start
-         * @see https://tailwindcss.com/docs/scroll-padding
-         */
-        "scroll-ps": [{
-          "scroll-ps": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Padding Inline End
-         * @see https://tailwindcss.com/docs/scroll-padding
-         */
-        "scroll-pe": [{
-          "scroll-pe": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Padding Block Start
-         * @see https://tailwindcss.com/docs/scroll-padding
-         */
-        "scroll-pbs": [{
-          "scroll-pbs": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Padding Block End
-         * @see https://tailwindcss.com/docs/scroll-padding
-         */
-        "scroll-pbe": [{
-          "scroll-pbe": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Padding Top
-         * @see https://tailwindcss.com/docs/scroll-padding
-         */
-        "scroll-pt": [{
-          "scroll-pt": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Padding Right
-         * @see https://tailwindcss.com/docs/scroll-padding
-         */
-        "scroll-pr": [{
-          "scroll-pr": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Padding Bottom
-         * @see https://tailwindcss.com/docs/scroll-padding
-         */
-        "scroll-pb": [{
-          "scroll-pb": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Padding Left
-         * @see https://tailwindcss.com/docs/scroll-padding
-         */
-        "scroll-pl": [{
-          "scroll-pl": scaleUnambiguousSpacing()
-        }],
-        /**
-         * Scroll Snap Align
-         * @see https://tailwindcss.com/docs/scroll-snap-align
-         */
-        "snap-align": [{
-          snap: ["start", "end", "center", "align-none"]
-        }],
-        /**
-         * Scroll Snap Stop
-         * @see https://tailwindcss.com/docs/scroll-snap-stop
-         */
-        "snap-stop": [{
-          snap: ["normal", "always"]
-        }],
-        /**
-         * Scroll Snap Type
-         * @see https://tailwindcss.com/docs/scroll-snap-type
-         */
-        "snap-type": [{
-          snap: ["none", "x", "y", "both"]
-        }],
-        /**
-         * Scroll Snap Type Strictness
-         * @see https://tailwindcss.com/docs/scroll-snap-type
-         */
-        "snap-strictness": [{
-          snap: ["mandatory", "proximity"]
-        }],
-        /**
-         * Touch Action
-         * @see https://tailwindcss.com/docs/touch-action
-         */
-        touch: [{
-          touch: ["auto", "none", "manipulation"]
-        }],
-        /**
-         * Touch Action X
-         * @see https://tailwindcss.com/docs/touch-action
-         */
-        "touch-x": [{
-          "touch-pan": ["x", "left", "right"]
-        }],
-        /**
-         * Touch Action Y
-         * @see https://tailwindcss.com/docs/touch-action
-         */
-        "touch-y": [{
-          "touch-pan": ["y", "up", "down"]
-        }],
-        /**
-         * Touch Action Pinch Zoom
-         * @see https://tailwindcss.com/docs/touch-action
-         */
-        "touch-pz": ["touch-pinch-zoom"],
-        /**
-         * User Select
-         * @see https://tailwindcss.com/docs/user-select
-         */
-        select: [{
-          select: ["none", "text", "all", "auto"]
-        }],
-        /**
-         * Will Change
-         * @see https://tailwindcss.com/docs/will-change
-         */
-        "will-change": [{
-          "will-change": ["auto", "scroll", "contents", "transform", isArbitraryVariable, isArbitraryValue]
-        }],
-        // -----------
-        // --- SVG ---
-        // -----------
-        /**
-         * Fill
-         * @see https://tailwindcss.com/docs/fill
-         */
-        fill: [{
-          fill: ["none", ...scaleColor()]
-        }],
-        /**
-         * Stroke Width
-         * @see https://tailwindcss.com/docs/stroke-width
-         */
-        "stroke-w": [{
-          stroke: [isNumber, isArbitraryVariableLength, isArbitraryLength, isArbitraryNumber]
-        }],
-        /**
-         * Stroke
-         * @see https://tailwindcss.com/docs/stroke
-         */
-        stroke: [{
-          stroke: ["none", ...scaleColor()]
-        }],
-        // ---------------------
-        // --- Accessibility ---
-        // ---------------------
-        /**
-         * Forced Color Adjust
-         * @see https://tailwindcss.com/docs/forced-color-adjust
-         */
-        "forced-color-adjust": [{
-          "forced-color-adjust": ["auto", "none"]
-        }]
-      },
-      conflictingClassGroups: {
-        "container-named": ["container-type"],
-        overflow: ["overflow-x", "overflow-y"],
-        overscroll: ["overscroll-x", "overscroll-y"],
-        inset: ["inset-x", "inset-y", "inset-bs", "inset-be", "start", "end", "top", "right", "bottom", "left"],
-        "inset-x": ["right", "left"],
-        "inset-y": ["top", "bottom"],
-        flex: ["basis", "grow", "shrink"],
-        gap: ["gap-x", "gap-y"],
-        p: ["px", "py", "ps", "pe", "pbs", "pbe", "pt", "pr", "pb", "pl"],
-        px: ["pr", "pl"],
-        py: ["pt", "pb"],
-        m: ["mx", "my", "ms", "me", "mbs", "mbe", "mt", "mr", "mb", "ml"],
-        mx: ["mr", "ml"],
-        my: ["mt", "mb"],
-        size: ["w", "h"],
-        "font-size": ["leading"],
-        "fvn-normal": ["fvn-ordinal", "fvn-slashed-zero", "fvn-figure", "fvn-spacing", "fvn-fraction"],
-        "fvn-ordinal": ["fvn-normal"],
-        "fvn-slashed-zero": ["fvn-normal"],
-        "fvn-figure": ["fvn-normal"],
-        "fvn-spacing": ["fvn-normal"],
-        "fvn-fraction": ["fvn-normal"],
-        "line-clamp": ["display", "overflow"],
-        rounded: ["rounded-s", "rounded-e", "rounded-t", "rounded-r", "rounded-b", "rounded-l", "rounded-ss", "rounded-se", "rounded-ee", "rounded-es", "rounded-tl", "rounded-tr", "rounded-br", "rounded-bl"],
-        "rounded-s": ["rounded-ss", "rounded-es"],
-        "rounded-e": ["rounded-se", "rounded-ee"],
-        "rounded-t": ["rounded-tl", "rounded-tr"],
-        "rounded-r": ["rounded-tr", "rounded-br"],
-        "rounded-b": ["rounded-br", "rounded-bl"],
-        "rounded-l": ["rounded-tl", "rounded-bl"],
-        "border-spacing": ["border-spacing-x", "border-spacing-y"],
-        "border-w": ["border-w-x", "border-w-y", "border-w-s", "border-w-e", "border-w-bs", "border-w-be", "border-w-t", "border-w-r", "border-w-b", "border-w-l"],
-        "border-w-x": ["border-w-r", "border-w-l"],
-        "border-w-y": ["border-w-t", "border-w-b"],
-        "border-color": ["border-color-x", "border-color-y", "border-color-s", "border-color-e", "border-color-bs", "border-color-be", "border-color-t", "border-color-r", "border-color-b", "border-color-l"],
-        "border-color-x": ["border-color-r", "border-color-l"],
-        "border-color-y": ["border-color-t", "border-color-b"],
-        translate: ["translate-x", "translate-y", "translate-none"],
-        "translate-none": ["translate", "translate-x", "translate-y", "translate-z"],
-        "scroll-m": ["scroll-mx", "scroll-my", "scroll-ms", "scroll-me", "scroll-mbs", "scroll-mbe", "scroll-mt", "scroll-mr", "scroll-mb", "scroll-ml"],
-        "scroll-mx": ["scroll-mr", "scroll-ml"],
-        "scroll-my": ["scroll-mt", "scroll-mb"],
-        "scroll-p": ["scroll-px", "scroll-py", "scroll-ps", "scroll-pe", "scroll-pbs", "scroll-pbe", "scroll-pt", "scroll-pr", "scroll-pb", "scroll-pl"],
-        "scroll-px": ["scroll-pr", "scroll-pl"],
-        "scroll-py": ["scroll-pt", "scroll-pb"],
-        touch: ["touch-x", "touch-y", "touch-pz"],
-        "touch-x": ["touch"],
-        "touch-y": ["touch"],
-        "touch-pz": ["touch"]
-      },
-      conflictingClassGroupModifiers: {
-        "font-size": ["leading"]
-      },
-      postfixLookupClassGroups: ["container-type"],
-      orderSensitiveModifiers: ["*", "**", "after", "backdrop", "before", "details-content", "file", "first-letter", "first-line", "marker", "placeholder", "selection"]
-    };
-  };
-  var twMerge = /* @__PURE__ */ createTailwindMerge(getDefaultConfig);
-
-  // primitives/cn.ts
-  function cn(...inputs) {
-    return twMerge(clsx(inputs));
-  }
-
   // admin/i18n/index.tsx
   var import_react = __toESM(require_react(), 1);
 
@@ -31972,7 +28699,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     // ── Config editor ───────────────────────────────────────────────────────────
     "config.files": "Config Files",
     "config.schema": "schema",
-    "config.selectFile": "Select a config file to edit",
+    "config.selectFile": "Select a configEditor file to edit",
     "config.failedToLoad": "Failed to load file",
     // ── Worlds page ─────────────────────────────────────────────────────────────
     "worlds.created": "Created {0}",
@@ -32296,7 +29023,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "page.players": "Joueurs",
     "page.npcs": "NPC",
     "page.classes": "Classes & comp\xE9tences",
-    "page.config": "\xC9diteur de config",
+    "page.config": "\xC9diteur de configEditor",
     "page.worlds": "Mondes",
     "page.gameAssets": "Assets de jeu",
     "page.administration": "Administration",
@@ -32447,9 +29174,9 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     "classes.legendLevel": "= niveau joueur de d\xE9blocage",
     "classes.legendSkill": "= niveau de comp\xE9tence accord\xE9",
     // ── Config editor ───────────────────────────────────────────────────────────
-    "config.files": "Fichiers de config",
+    "config.files": "Fichiers de configEditor",
     "config.schema": "sch\xE9ma",
-    "config.selectFile": "S\xE9lectionner un fichier de config \xE0 modifier",
+    "config.selectFile": "S\xE9lectionner un fichier de configEditor \xE0 modifier",
     "config.failedToLoad": "\xC9chec du chargement du fichier",
     // ── Worlds page ─────────────────────────────────────────────────────────────
     "worlds.created": "Cr\xE9\xE9 le {0}",
@@ -32801,39 +29528,6 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     return (0, import_react.useContext)(I18nContext).t;
   }
 
-  // admin/components/LanguageSelector.tsx
-  var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
-  function LanguageSelector({ collapsed }) {
-    const { locale, setLocale, t: t2 } = useI18n();
-    return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
-      "div",
-      {
-        className: cn(
-          "border-t border-[#2E3A4E] flex items-center gap-2 py-2.5 text-[10px] text-[#8A99AF]",
-          collapsed ? "px-2 justify-center" : "px-6"
-        ),
-        children: [
-          !collapsed && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { htmlFor: "admin-locale", className: "flex-1", children: t2("shell.language") }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
-            "select",
-            {
-              id: "admin-locale",
-              value: locale,
-              title: t2("shell.language"),
-              "aria-label": t2("shell.language"),
-              onChange: (event) => setLocale(event.target.value),
-              className: cn(
-                "rounded border border-[#2E3A4E] bg-[#0E1726] py-1 text-[11px] text-white hover:border-[#3C50E0]",
-                collapsed ? "w-full px-1 text-center" : "px-2"
-              ),
-              children: LOCALES.map((option2) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: option2, children: collapsed ? option2.toUpperCase() : LOCALE_LABELS[option2] }, option2))
-            }
-          )
-        ]
-      }
-    );
-  }
-
   // admin/sidebar.ts
   var SIDEBAR_STORAGE_KEY = "micraft-admin-sidebar-collapsed";
   function loadSidebarCollapsed() {
@@ -32850,7 +29544,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     }
   }
 
-  // admin/pages/ClassesPage.tsx
+  // admin/pages/classes/ClassesPage.tsx
   var import_react2 = __toESM(require_react(), 1);
 
   // admin/api.ts
@@ -32946,7 +29640,26 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
     }
   };
 
-  // admin/pages/ClassesPage.tsx
+  // admin/pages/classes/ProgressionCell.tsx
+  var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
+  function ProgressionCell({ progression }) {
+    if (!progression || progression.length === 0) {
+      return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("td", { className: "border border-[#2E3A4E] px-3 py-2 text-center text-[#2E3A4E]", children: "\u2014" });
+    }
+    return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("td", { className: "border border-[#2E3A4E] px-3 py-2", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "flex flex-col gap-0.5", children: progression.map(({ playerLevel, skillLevel }) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "inline-flex items-center gap-1 text-[11px] font-mono text-[#8A99AF]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "text-[#3C50E0] font-semibold", children: [
+        "Lv",
+        playerLevel
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[#8A99AF]", children: "\u2192" }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "text-emerald-400", children: [
+        "sk",
+        skillLevel
+      ] })
+    ] }, playerLevel)) }) });
+  }
+
+  // admin/pages/classes/ClassesPage.tsx
   var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
   function buildMatrix(classes, allAttacks, allSpells) {
     const classNames = Object.keys(classes).sort();
@@ -32987,22 +29700,6 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
       return a.name.localeCompare(b.name);
     });
     return { skills, classNames };
-  }
-  function ProgressionCell({ progression }) {
-    if (!progression || progression.length === 0) {
-      return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "border border-[#2E3A4E] px-3 py-2 text-center text-[#2E3A4E]", children: "\u2014" });
-    }
-    return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("td", { className: "border border-[#2E3A4E] px-3 py-2", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex flex-col gap-0.5", children: progression.map(({ playerLevel, skillLevel }) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "inline-flex items-center gap-1 text-[11px] font-mono text-[#8A99AF]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-[#3C50E0] font-semibold", children: [
-        "Lv",
-        playerLevel
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[#8A99AF]", children: "\u2192" }),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-emerald-400", children: [
-        "sk",
-        skillLevel
-      ] })
-    ] }, playerLevel)) }) });
   }
   function ClassesPage() {
     const t2 = useT();
@@ -33089,6 +29786,12 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
       ] })
     ] }) });
   }
+
+  // admin/pages/configEditor/ConfigEditorPage.tsx
+  var import_react4 = __toESM(require_react(), 1);
+
+  // admin/pages/configEditor/Editor.tsx
+  var import_react3 = __toESM(require_react(), 1);
 
   // node_modules/@marijn/find-cluster-break/src/index.js
   var rangeFrom = [];
@@ -60270,14 +56973,14 @@ S ::= [ ]*
     BinTrieFlags2[BinTrieFlags2["BRANCH_LENGTH"] = 16256] = "BRANCH_LENGTH";
     BinTrieFlags2[BinTrieFlags2["JUMP_TABLE"] = 127] = "JUMP_TABLE";
   })(BinTrieFlags || (BinTrieFlags = {}));
-  function isNumber2(code2) {
+  function isNumber(code2) {
     return code2 >= CharCodes.ZERO && code2 <= CharCodes.NINE;
   }
   function isHexadecimalCharacter(code2) {
     return code2 >= CharCodes.UPPER_A && code2 <= CharCodes.UPPER_F || code2 >= CharCodes.LOWER_A && code2 <= CharCodes.LOWER_F;
   }
   function isAsciiAlphaNumeric(code2) {
-    return code2 >= CharCodes.UPPER_A && code2 <= CharCodes.UPPER_Z || code2 >= CharCodes.LOWER_A && code2 <= CharCodes.LOWER_Z || isNumber2(code2);
+    return code2 >= CharCodes.UPPER_A && code2 <= CharCodes.UPPER_Z || code2 >= CharCodes.LOWER_A && code2 <= CharCodes.LOWER_Z || isNumber(code2);
   }
   function isEntityInAttributeInvalidEnd(code2) {
     return code2 === CharCodes.EQUALS || isAsciiAlphaNumeric(code2);
@@ -60394,7 +57097,7 @@ S ::= [ ]*
       const startIdx = offset;
       while (offset < str.length) {
         const char = str.charCodeAt(offset);
-        if (isNumber2(char) || isHexadecimalCharacter(char)) {
+        if (isNumber(char) || isHexadecimalCharacter(char)) {
           offset += 1;
         } else {
           this.addToNumericResult(str, startIdx, offset, 16);
@@ -60417,7 +57120,7 @@ S ::= [ ]*
       const startIdx = offset;
       while (offset < str.length) {
         const char = str.charCodeAt(offset);
-        if (isNumber2(char)) {
+        if (isNumber(char)) {
           offset += 1;
         } else {
           this.addToNumericResult(str, startIdx, offset, 10);
@@ -83174,24 +79877,8 @@ ${end.comment}` : end.comment;
     ];
   }
 
-  // admin/pages/ConfigEditorPage.tsx
-  var import_react3 = __toESM(require_react(), 1);
+  // admin/pages/configEditor/Editor.tsx
   var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
-  var SCHEMA_MAP = {
-    "server.yaml": "server.schema.json",
-    "biomes.yaml": "biomes.schema.json",
-    "roads.yaml": "roads.schema.json",
-    "houses.yaml": "houses.schema.json",
-    "keybindings.yaml": "keybindings.schema.json",
-    "items.yaml": "items.schema.json",
-    "recipes.yaml": "recipes.schema.json",
-    "attack.yaml": "attack.schema.json",
-    "classes.yaml": "classes.schema.json",
-    "combat.yaml": "combat.schema.json",
-    "weather.yaml": "weather.schema.json",
-    "auth/users.yaml": "auth-users.schema.json",
-    "auth/groups.yaml": "groups.schema.json"
-  };
   function useEditor(container, content2, schema4, onChange) {
     const viewRef = (0, import_react3.useRef)(null);
     (0, import_react3.useEffect)(() => {
@@ -83234,17 +79921,35 @@ ${end.comment}` : end.comment;
     useEditor(containerRef, content2, schema4, onChange);
     return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { ref: containerRef, className: "flex-1 overflow-auto h-full" });
   }
+
+  // admin/pages/configEditor/ConfigEditorPage.tsx
+  var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
+  var SCHEMA_MAP = {
+    "server.yaml": "server.schema.json",
+    "biomes.yaml": "biomes.schema.json",
+    "roads.yaml": "roads.schema.json",
+    "houses.yaml": "houses.schema.json",
+    "keybindings.yaml": "keybindings.schema.json",
+    "items.yaml": "items.schema.json",
+    "recipes.yaml": "recipes.schema.json",
+    "attack.yaml": "attack.schema.json",
+    "classes.yaml": "classes.schema.json",
+    "combat.yaml": "combat.schema.json",
+    "weather.yaml": "weather.schema.json",
+    "auth/users.yaml": "auth-users.schema.json",
+    "auth/groups.yaml": "groups.schema.json"
+  };
   function ConfigEditorPage() {
     const t2 = useT();
-    const [files, setFiles] = (0, import_react3.useState)([]);
-    const [selected, setSelected] = (0, import_react3.useState)(null);
-    const [content2, setContent] = (0, import_react3.useState)("");
-    const [editedContent, setEditedContent] = (0, import_react3.useState)("");
-    const [schema4, setSchema] = (0, import_react3.useState)(null);
-    const [saving, setSaving] = (0, import_react3.useState)(false);
-    const [saved, setSaved] = (0, import_react3.useState)(false);
-    const [error2, setError] = (0, import_react3.useState)(null);
-    (0, import_react3.useEffect)(() => {
+    const [files, setFiles] = (0, import_react4.useState)([]);
+    const [selected, setSelected] = (0, import_react4.useState)(null);
+    const [content2, setContent] = (0, import_react4.useState)("");
+    const [editedContent, setEditedContent] = (0, import_react4.useState)("");
+    const [schema4, setSchema] = (0, import_react4.useState)(null);
+    const [saving, setSaving] = (0, import_react4.useState)(false);
+    const [saved, setSaved] = (0, import_react4.useState)(false);
+    const [error2, setError] = (0, import_react4.useState)(null);
+    (0, import_react4.useEffect)(() => {
       api.configs.list().then(setFiles);
     }, []);
     const select3 = async (filename) => {
@@ -83279,10 +79984,10 @@ ${end.comment}` : end.comment;
         setSaving(false);
       }
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "h-full flex gap-4", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "w-52 shrink-0 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden self-start", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { className: "px-4 py-3 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] border-b border-[#2E3A4E]", children: t2("config.files") }),
-        files.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { className: "px-4 py-4 text-[#4A5568] text-sm animate-pulse", children: t2("common.loading") }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { children: files.map((f) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "h-full flex gap-4", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "w-52 shrink-0 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden self-start", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "px-4 py-3 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] border-b border-[#2E3A4E]", children: t2("config.files") }),
+        files.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "px-4 py-4 text-[#4A5568] text-sm animate-pulse", children: t2("common.loading") }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { children: files.map((f) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
           "button",
           {
             onClick: () => select3(f),
@@ -83292,15 +79997,15 @@ ${end.comment}` : end.comment;
           f
         )) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "flex-1 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden flex flex-col min-h-[400px]", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex items-center justify-between px-4 py-2.5 border-b border-[#2E3A4E] shrink-0", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex items-center gap-2", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "text-xs font-mono text-[#8A99AF]", children: selected }),
-            SCHEMA_MAP[selected] && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "text-[10px] font-semibold bg-[#3C50E0]/20 text-[#818CF8] border border-[#3C50E0]/30 rounded px-1.5 py-0.5", children: t2("config.schema") })
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "flex-1 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden flex flex-col min-h-[400px]", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center justify-between px-4 py-2.5 border-b border-[#2E3A4E] shrink-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-xs font-mono text-[#8A99AF]", children: selected }),
+            SCHEMA_MAP[selected] && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10px] font-semibold bg-[#3C50E0]/20 text-[#818CF8] border border-[#3C50E0]/30 rounded px-1.5 py-0.5", children: t2("config.schema") })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex items-center gap-3", children: [
-            error2 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "text-red-400 text-xs", children: error2 }),
-            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-3", children: [
+            error2 && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-red-400 text-xs", children: error2 }),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
               "button",
               {
                 onClick: save,
@@ -83311,14 +80016,107 @@ ${end.comment}` : end.comment;
             )
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Editor, { content: content2, schema: schema4, onChange: setEditedContent }, selected)
-      ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#4A5568] text-sm", children: t2("config.selectFile") }) })
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Editor, { content: content2, schema: schema4, onChange: setEditedContent }, selected)
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#4A5568] text-sm", children: t2("config.selectFile") }) })
     ] });
   }
 
-  // admin/pages/NpcsPage.tsx
-  var import_react4 = __toESM(require_react(), 1);
-  var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
+  // admin/pages/npcs/NpcsPage.tsx
+  var import_react6 = __toESM(require_react(), 1);
+
+  // admin/pages/npcs/Detail.tsx
+  var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
+  function Detail({ npc, t: t2 }) {
+    const teleport = `/teleport ${Math.round(npc.x)} ${Math.round(npc.y)} ${Math.round(npc.z)}`;
+    return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "bg-[#0E1726] border-t border-[#2E3A4E] px-6 py-4 grid grid-cols-2 gap-x-8 gap-y-3 text-sm", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1", children: t2("npcs.position") }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("code", { className: "text-xs text-emerald-400 font-mono select-all", children: teleport }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("p", { className: "text-[10px] text-[#8A99AF] mt-0.5", children: t2("npcs.coords", npc.x.toFixed(1), npc.y.toFixed(1), npc.z.toFixed(1), npc.zone) })
+      ] }),
+      npc.skills.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1", children: t2("npcs.skills") }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "flex flex-wrap gap-1", children: npc.skills.map((s) => /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "px-2 py-0.5 rounded bg-[#1C2434] text-[11px] text-[#8A99AF]", children: s }, s)) })
+      ] }),
+      npc.parentIds.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1", children: t2("npcs.parents") }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "flex flex-col gap-0.5", children: npc.parentIds.map((pid) => /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: "text-[11px] font-mono text-[#8A99AF]", children: [
+          pid.slice(0, 8),
+          "\u2026"
+        ] }, pid)) })
+      ] }),
+      npc.ageGameDays != null && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "col-span-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-2", children: t2("npcs.animalState") }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "grid grid-cols-2 gap-x-8 gap-y-1.5", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: t2("npcs.age") }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-xs text-white", children: t2("npcs.gameDays", npc.ageGameDays.toFixed(1)) })
+          ] }),
+          npc.hunger != null && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: t2("npcs.hunger") }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-center gap-1.5 flex-1", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "flex-1 h-1.5 bg-[#2E3A4E] rounded-full overflow-hidden max-w-[80px]", children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+                "div",
+                {
+                  className: `h-full rounded-full ${npc.hunger > 0.6 ? "bg-emerald-500" : npc.hunger > 0.3 ? "bg-yellow-500" : "bg-red-500"}`,
+                  style: { width: `${Math.round(npc.hunger * 100)}%` }
+                }
+              ) }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: "text-[10px] text-[#8A99AF]", children: [
+                Math.round(npc.hunger * 100),
+                "%"
+              ] })
+            ] })
+          ] }),
+          npc.motherLevel != null && npc.motherLevel > 0 && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: t2("npcs.motherLevel") }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-xs text-white", children: npc.motherLevel })
+          ] }),
+          npc.gestationRemainingDays != null && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: t2("npcs.gestation") }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-xs text-amber-400", children: t2("npcs.daysLeft", npc.gestationRemainingDays.toFixed(1)) })
+          ] }),
+          npc.lastReproductionDay != null && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: t2("npcs.lastRepro") }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-xs text-[#8A99AF]", children: t2("npcs.dayValue", npc.lastReproductionDay.toFixed(1)) })
+          ] }),
+          npc.animalStats != null && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "col-span-2 mt-1", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1.5", children: t2("npcs.stats") }),
+            /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "flex flex-wrap gap-x-4 gap-y-1", children: ["str", "dex", "intel", "wis", "con", "cha"].map((k) => /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-center gap-1", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-[10px] uppercase text-[#8A99AF] w-8", children: k }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-xs font-mono text-white", children: npc.animalStats[k] })
+            ] }, k)) })
+          ] })
+        ] })
+      ] })
+    ] });
+  }
+
+  // admin/pages/npcs/Badge.tsx
+  var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
+  function Badge({ label, color }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: `inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${color}`, children: label });
+  }
+
+  // admin/pages/npcs/NpcMiniMap.tsx
+  var import_react5 = __toESM(require_react(), 1);
+  var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
+  var ATTACK_LINE_TTL = 700;
+  function typeColor(type) {
+    let h = 0;
+    for (let i = 0; i < type.length; i++) h = h * 31 + type.charCodeAt(i) & 65535;
+    return `hsl(${h % 360},65%,60%)`;
+  }
+  function arrowPoints(yaw) {
+    const adx = Math.sin(yaw), ady = -Math.cos(yaw);
+    const perpX = -ady, perpY = adx;
+    const len = 9, w = 4;
+    return [
+      `${adx * len},${ady * len}`,
+      `${-adx * len * 0.35 + perpX * w},${-ady * len * 0.35 + perpY * w}`,
+      `${-adx * len * 0.35 - perpX * w},${-ady * len * 0.35 - perpY * w}`
+    ].join(" ");
+  }
   function w2s(wx, wz, cam, W, H) {
     return [(wx - cam.x) * cam.pxPerBlock + W / 2, -(wz - cam.z) * cam.pxPerBlock + H / 2];
   }
@@ -83387,66 +80185,50 @@ ${end.comment}` : end.comment;
     }
     return result;
   }
-  var ATTACK_LINE_TTL = 700;
-  function typeColor(type) {
-    let h = 0;
-    for (let i = 0; i < type.length; i++) h = h * 31 + type.charCodeAt(i) & 65535;
-    return `hsl(${h % 360},65%,60%)`;
-  }
-  function arrowPoints(yaw) {
-    const adx = Math.sin(yaw), ady = -Math.cos(yaw);
-    const perpX = -ady, perpY = adx;
-    const len = 9, w = 4;
-    return [
-      `${adx * len},${ady * len}`,
-      `${-adx * len * 0.35 + perpX * w},${-ady * len * 0.35 + perpY * w}`,
-      `${-adx * len * 0.35 - perpX * w},${-ady * len * 0.35 - perpY * w}`
-    ].join(" ");
-  }
   function NpcMiniMap({
     npcs,
     players,
     selectedId,
     attackLines
   }) {
-    const svgRef = (0, import_react4.useRef)(null);
-    const [camera, setCamera] = (0, import_react4.useState)({ x: 0, z: 0, pxPerBlock: 0.5 });
-    const [dragging, setDragging] = (0, import_react4.useState)(false);
-    const [voronoiCells, setVoronoiCells] = (0, import_react4.useState)([]);
-    const [borderSegs, setBorderSegs] = (0, import_react4.useState)([]);
-    const [now, setNow] = (0, import_react4.useState)(() => Date.now());
-    const dragStart = (0, import_react4.useRef)(null);
-    (0, import_react4.useEffect)(() => {
+    const svgRef = (0, import_react5.useRef)(null);
+    const [camera, setCamera] = (0, import_react5.useState)({ x: 0, z: 0, pxPerBlock: 0.5 });
+    const [dragging, setDragging] = (0, import_react5.useState)(false);
+    const [voronoiCells, setVoronoiCells] = (0, import_react5.useState)([]);
+    const [borderSegs, setBorderSegs] = (0, import_react5.useState)([]);
+    const [now, setNow] = (0, import_react5.useState)(() => Date.now());
+    const dragStart = (0, import_react5.useRef)(null);
+    (0, import_react5.useEffect)(() => {
       if (attackLines.length === 0) return;
       const id2 = setInterval(() => setNow(Date.now()), 40);
       return () => clearInterval(id2);
     }, [attackLines.length]);
-    (0, import_react4.useEffect)(() => {
+    (0, import_react5.useEffect)(() => {
       fetch("/api/map/voronoi?cx=0&cz=0&radius=3200").then((r2) => r2.ok ? r2.json() : []).then(setVoronoiCells).catch(() => {
       });
       fetch("/api/map/voronoi-borders?cx=0&cz=0&radius=3200").then((r2) => r2.ok ? r2.json() : []).then(setBorderSegs).catch(() => {
       });
     }, []);
-    const hasCenteredRef = (0, import_react4.useRef)(false);
-    const npcsMapRef = (0, import_react4.useRef)(npcs);
-    (0, import_react4.useEffect)(() => {
+    const hasCenteredRef = (0, import_react5.useRef)(false);
+    const npcsMapRef = (0, import_react5.useRef)(npcs);
+    (0, import_react5.useEffect)(() => {
       npcsMapRef.current = npcs;
     }, [npcs]);
-    (0, import_react4.useEffect)(() => {
+    (0, import_react5.useEffect)(() => {
       if (hasCenteredRef.current || npcs.length === 0) return;
       hasCenteredRef.current = true;
       const sx = npcs.reduce((a, n) => a + n.x, 0) / npcs.length;
       const sz = npcs.reduce((a, n) => a + n.z, 0) / npcs.length;
       setCamera((c) => __spreadProps(__spreadValues({}, c), { x: sx, z: sz }));
     }, [npcs]);
-    (0, import_react4.useEffect)(() => {
+    (0, import_react5.useEffect)(() => {
       if (!selectedId) return;
       const npc = npcsMapRef.current.find((n) => n.id === selectedId);
       if (!npc) return;
       setCamera((c) => __spreadProps(__spreadValues({}, c), { x: npc.x, z: npc.z }));
     }, [selectedId]);
-    const [svgDims, setSvgDims] = (0, import_react4.useState)([320, 500]);
-    (0, import_react4.useEffect)(() => {
+    const [svgDims, setSvgDims] = (0, import_react5.useState)([320, 500]);
+    (0, import_react5.useEffect)(() => {
       const el2 = svgRef.current;
       if (!el2) return;
       const ro = new ResizeObserver(() => setSvgDims([el2.clientWidth, el2.clientHeight]));
@@ -83477,8 +80259,8 @@ ${end.comment}` : end.comment;
     const ppb = camera.pxPerBlock;
     const worldTransform = `matrix(${ppb},0,0,${-ppb},${W / 2 - camera.x * ppb},${H / 2 + camera.z * ppb})`;
     const voronoiPolygons = buildVoronoiPolygonPaths(borderSegs, voronoiCells);
-    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "relative rounded-xl border border-[#2E3A4E] overflow-hidden bg-[#0E1726]", style: { height: 500 }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "relative rounded-xl border border-[#2E3A4E] overflow-hidden bg-[#0E1726]", style: { height: 500 }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
         "svg",
         {
           ref: svgRef,
@@ -83491,11 +80273,11 @@ ${end.comment}` : end.comment;
           onMouseUp: handleMouseUp,
           onMouseLeave: handleMouseUp,
           children: [
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("g", { transform: worldTransform, children: voronoiPolygons.map((p2, i) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("path", { d: p2.path, fill: p2.color + "28", stroke: p2.color + "90", strokeWidth: 1 / ppb }, i)) }),
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("g", { transform: worldTransform, children: voronoiPolygons.map((p2, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("path", { d: p2.path, fill: p2.color + "28", stroke: p2.color + "90", strokeWidth: 1 / ppb }, i)) }),
             ppb >= 0.3 && voronoiCells.map((cell, i) => {
               const [cx, cy] = w2s(cell.x, cell.z, camera, W, H);
               if (cx < -60 || cx > W + 60 || cy < -20 || cy > H + 20) return null;
-              return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
                 "text",
                 {
                   x: cx,
@@ -83516,18 +80298,18 @@ ${end.comment}` : end.comment;
               if (opacity <= 0) return null;
               const [ax, ay] = w2s(line.ax, line.az, camera, W, H);
               const [bx, by] = w2s(line.bx, line.bz, camera, W, H);
-              return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("g", { strokeOpacity: opacity, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("line", { x1: ax, y1: ay, x2: bx, y2: by, stroke: "#ff4444", strokeWidth: 3, strokeLinecap: "round" }),
-                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("line", { x1: ax, y1: ay, x2: bx, y2: by, stroke: "#ffaaaa", strokeWidth: 1, strokeLinecap: "round" })
+              return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("g", { strokeOpacity: opacity, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("line", { x1: ax, y1: ay, x2: bx, y2: by, stroke: "#ff4444", strokeWidth: 3, strokeLinecap: "round" }),
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("line", { x1: ax, y1: ay, x2: bx, y2: by, stroke: "#ffaaaa", strokeWidth: 1, strokeLinecap: "round" })
               ] }, line.id);
             }),
             npcs.map((npc) => {
               const [nx, ny] = w2s(npc.x, npc.z, camera, W, H);
               const sel = npc.id === selectedId;
               const color = sel ? "#ffcc44" : typeColor(npc.type);
-              return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("g", { transform: `translate(${nx},${ny})`, children: [
-                sel && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("circle", { cx: 0, cy: 0, r: 13, fill: "none", stroke: "#ffcc44", strokeWidth: 1.5, strokeDasharray: "3 2" }),
-                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("g", { transform: `translate(${nx},${ny})`, children: [
+                sel && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("circle", { cx: 0, cy: 0, r: 13, fill: "none", stroke: "#ffcc44", strokeWidth: 1.5, strokeDasharray: "3 2" }),
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
                   "polygon",
                   {
                     points: arrowPoints(npc.yaw),
@@ -83536,7 +80318,7 @@ ${end.comment}` : end.comment;
                     strokeWidth: 0.8
                   }
                 ),
-                sel && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("text", { x: 14, y: 4, fill: "#ffcc44", fontSize: 11, fontFamily: "monospace", fontWeight: "bold", children: npc.name })
+                sel && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("text", { x: 14, y: 4, fill: "#ffcc44", fontSize: 11, fontFamily: "monospace", fontWeight: "bold", children: npc.name })
               ] }, npc.id);
             }),
             players.map((p2) => {
@@ -83545,18 +80327,18 @@ ${end.comment}` : end.comment;
               const yawRad = p2.yaw * Math.PI / 180;
               const tx = Math.sin(yawRad) * (rad + 4);
               const ty = -Math.cos(yawRad) * (rad + 4);
-              return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("g", { transform: `translate(${px},${py})`, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("circle", { cx: 0, cy: 0, r: rad + 3, fill: "rgba(59,130,246,0.18)", stroke: "#3b82f6", strokeWidth: 1 }),
-                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("circle", { cx: 0, cy: 0, r: rad, fill: "#3b82f6", stroke: "#fff", strokeWidth: 1.2 }),
-                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("line", { x1: 0, y1: 0, x2: tx, y2: ty, stroke: "#fff", strokeWidth: 1.5, strokeLinecap: "round" }),
-                /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("text", { x: rad + 6, y: 4, fill: "#93c5fd", fontSize: 11, fontFamily: "monospace", fontWeight: "bold", children: p2.name })
+              return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("g", { transform: `translate(${px},${py})`, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("circle", { cx: 0, cy: 0, r: rad + 3, fill: "rgba(59,130,246,0.18)", stroke: "#3b82f6", strokeWidth: 1 }),
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("circle", { cx: 0, cy: 0, r: rad, fill: "#3b82f6", stroke: "#fff", strokeWidth: 1.2 }),
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("line", { x1: 0, y1: 0, x2: tx, y2: ty, stroke: "#fff", strokeWidth: 1.5, strokeLinecap: "round" }),
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("text", { x: rad + 6, y: 4, fill: "#93c5fd", fontSize: 11, fontFamily: "monospace", fontWeight: "bold", children: p2.name })
               ] }, p2.id);
             })
           ]
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "absolute bottom-2 right-2 flex flex-col gap-1", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "absolute bottom-2 right-2 flex flex-col gap-1", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
           "button",
           {
             onClick: () => zoom(1.5),
@@ -83564,7 +80346,7 @@ ${end.comment}` : end.comment;
             children: "+"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
           "button",
           {
             onClick: () => zoom(1 / 1.5),
@@ -83575,9 +80357,24 @@ ${end.comment}` : end.comment;
       ] })
     ] });
   }
-  function Badge({ label, color }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: `inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${color}`, children: label });
+
+  // admin/pages/npcs/HpBar.tsx
+  var import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
+  function HpBar({ current, max }) {
+    const pct = max > 0 ? Math.round(current / max * 100) : 0;
+    const color = pct > 50 ? "bg-emerald-500" : pct > 25 ? "bg-yellow-500" : "bg-red-500";
+    return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex items-center gap-2 min-w-[80px]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex-1 h-1.5 bg-[#2E3A4E] rounded-full overflow-hidden", children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: `h-full ${color} rounded-full`, style: { width: `${pct}%` } }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "text-[10px] text-[#8A99AF] shrink-0", children: [
+        current,
+        "/",
+        max
+      ] })
+    ] });
   }
+
+  // admin/pages/npcs/NpcsPage.tsx
+  var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
   function tierColor(tier) {
     switch (tier) {
       case "ELITE":
@@ -83600,107 +80397,30 @@ ${end.comment}` : end.comment;
         return "bg-[#1C2434] text-[#8A99AF]";
     }
   }
-  function HpBar({ current, max }) {
-    const pct = max > 0 ? Math.round(current / max * 100) : 0;
-    const color = pct > 50 ? "bg-emerald-500" : pct > 25 ? "bg-yellow-500" : "bg-red-500";
-    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-2 min-w-[80px]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "flex-1 h-1.5 bg-[#2E3A4E] rounded-full overflow-hidden", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: `h-full ${color} rounded-full`, style: { width: `${pct}%` } }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "text-[10px] text-[#8A99AF] shrink-0", children: [
-        current,
-        "/",
-        max
-      ] })
-    ] });
-  }
-  function Detail({ npc, t: t2 }) {
-    const teleport = `/teleport ${Math.round(npc.x)} ${Math.round(npc.y)} ${Math.round(npc.z)}`;
-    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "bg-[#0E1726] border-t border-[#2E3A4E] px-6 py-4 grid grid-cols-2 gap-x-8 gap-y-3 text-sm", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1", children: t2("npcs.position") }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("code", { className: "text-xs text-emerald-400 font-mono select-all", children: teleport }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "text-[10px] text-[#8A99AF] mt-0.5", children: t2("npcs.coords", npc.x.toFixed(1), npc.y.toFixed(1), npc.z.toFixed(1), npc.zone) })
-      ] }),
-      npc.skills.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1", children: t2("npcs.skills") }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "flex flex-wrap gap-1", children: npc.skills.map((s) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "px-2 py-0.5 rounded bg-[#1C2434] text-[11px] text-[#8A99AF]", children: s }, s)) })
-      ] }),
-      npc.parentIds.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1", children: t2("npcs.parents") }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "flex flex-col gap-0.5", children: npc.parentIds.map((pid) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "text-[11px] font-mono text-[#8A99AF]", children: [
-          pid.slice(0, 8),
-          "\u2026"
-        ] }, pid)) })
-      ] }),
-      npc.ageGameDays != null && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "col-span-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-2", children: t2("npcs.animalState") }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "grid grid-cols-2 gap-x-8 gap-y-1.5", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-2", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: t2("npcs.age") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-xs text-white", children: t2("npcs.gameDays", npc.ageGameDays.toFixed(1)) })
-          ] }),
-          npc.hunger != null && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-2", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: t2("npcs.hunger") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-1.5 flex-1", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "flex-1 h-1.5 bg-[#2E3A4E] rounded-full overflow-hidden max-w-[80px]", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
-                "div",
-                {
-                  className: `h-full rounded-full ${npc.hunger > 0.6 ? "bg-emerald-500" : npc.hunger > 0.3 ? "bg-yellow-500" : "bg-red-500"}`,
-                  style: { width: `${Math.round(npc.hunger * 100)}%` }
-                }
-              ) }),
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "text-[10px] text-[#8A99AF]", children: [
-                Math.round(npc.hunger * 100),
-                "%"
-              ] })
-            ] })
-          ] }),
-          npc.motherLevel != null && npc.motherLevel > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-2", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: t2("npcs.motherLevel") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-xs text-white", children: npc.motherLevel })
-          ] }),
-          npc.gestationRemainingDays != null && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-2", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: t2("npcs.gestation") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-xs text-amber-400", children: t2("npcs.daysLeft", npc.gestationRemainingDays.toFixed(1)) })
-          ] }),
-          npc.lastReproductionDay != null && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-2", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10px] text-[#8A99AF] w-24 shrink-0", children: t2("npcs.lastRepro") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-xs text-[#8A99AF]", children: t2("npcs.dayValue", npc.lastReproductionDay.toFixed(1)) })
-          ] }),
-          npc.animalStats != null && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "col-span-2 mt-1", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1.5", children: t2("npcs.stats") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "flex flex-wrap gap-x-4 gap-y-1", children: ["str", "dex", "intel", "wis", "con", "cha"].map((k) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-1", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10px] uppercase text-[#8A99AF] w-8", children: k }),
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-xs font-mono text-white", children: npc.animalStats[k] })
-            ] }, k)) })
-          ] })
-        ] })
-      ] })
-    ] });
-  }
   function NpcsPage() {
     const t2 = useT();
-    const [npcs, setNpcs] = (0, import_react4.useState)(null);
-    const [error2, setError] = (0, import_react4.useState)(null);
-    const [expandedId, setExpandedId] = (0, import_react4.useState)(null);
-    const [filter, setFilter] = (0, import_react4.useState)("");
-    const [filterType, setFilterType] = (0, import_react4.useState)("");
-    const [filterGender, setFilterGender] = (0, import_react4.useState)("");
-    const [filterAggro, setFilterAggro] = (0, import_react4.useState)("");
-    const [filterLevelMin, setFilterLevelMin] = (0, import_react4.useState)("");
-    const [filterLevelMax, setFilterLevelMax] = (0, import_react4.useState)("");
-    const [attackLines, setAttackLines] = (0, import_react4.useState)([]);
-    const [players, setPlayers] = (0, import_react4.useState)([]);
-    const npcsRef = (0, import_react4.useRef)(null);
-    (0, import_react4.useEffect)(() => {
+    const [npcs, setNpcs] = (0, import_react6.useState)(null);
+    const [error2, setError] = (0, import_react6.useState)(null);
+    const [expandedId, setExpandedId] = (0, import_react6.useState)(null);
+    const [filter, setFilter] = (0, import_react6.useState)("");
+    const [filterType, setFilterType] = (0, import_react6.useState)("");
+    const [filterGender, setFilterGender] = (0, import_react6.useState)("");
+    const [filterAggro, setFilterAggro] = (0, import_react6.useState)("");
+    const [filterLevelMin, setFilterLevelMin] = (0, import_react6.useState)("");
+    const [filterLevelMax, setFilterLevelMax] = (0, import_react6.useState)("");
+    const [attackLines, setAttackLines] = (0, import_react6.useState)([]);
+    const [players, setPlayers] = (0, import_react6.useState)([]);
+    const npcsRef = (0, import_react6.useRef)(null);
+    (0, import_react6.useEffect)(() => {
       npcsRef.current = npcs;
     }, [npcs]);
     const load = () => {
       api.npcs.list().then(setNpcs).catch((e) => setError(String(e)));
     };
-    (0, import_react4.useEffect)(() => {
+    (0, import_react6.useEffect)(() => {
       load();
     }, []);
-    (0, import_react4.useEffect)(() => {
+    (0, import_react6.useEffect)(() => {
       const proto = location.protocol === "https:" ? "wss:" : "ws:";
       const ws = new WebSocket(`${proto}//${location.host}/api/admin/ws/npcs`);
       ws.onmessage = (ev) => {
@@ -83818,9 +80538,9 @@ ${end.comment}` : end.comment;
       };
       return () => ws.close();
     }, []);
-    const types2 = (0, import_react4.useMemo)(() => [...new Set((npcs != null ? npcs : []).map((n) => n.type))].sort(), [npcs]);
-    const aggroModes = (0, import_react4.useMemo)(() => [...new Set((npcs != null ? npcs : []).map((n) => n.aggroMode))].sort(), [npcs]);
-    const genders = (0, import_react4.useMemo)(
+    const types2 = (0, import_react6.useMemo)(() => [...new Set((npcs != null ? npcs : []).map((n) => n.type))].sort(), [npcs]);
+    const aggroModes = (0, import_react6.useMemo)(() => [...new Set((npcs != null ? npcs : []).map((n) => n.aggroMode))].sort(), [npcs]);
+    const genders = (0, import_react6.useMemo)(
       () => [...new Set((npcs != null ? npcs : []).map((n) => n.gender).filter(Boolean))].sort(),
       [npcs]
     );
@@ -83847,11 +80567,11 @@ ${end.comment}` : end.comment;
       return true;
     });
     const alive = (npcs != null ? npcs : []).filter((n) => !n.isDead).length;
-    return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex gap-4 items-start", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex-1 min-w-0 space-y-4", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "sticky top-0 z-10 bg-[#111827] pt-1 pb-3 space-y-2", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-3", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex gap-4 items-start", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex-1 min-w-0 space-y-4", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "sticky top-0 z-10 bg-[#111827] pt-1 pb-3 space-y-2", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex items-center gap-3", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
               "input",
               {
                 type: "text",
@@ -83861,7 +80581,7 @@ ${end.comment}` : end.comment;
                 className: "flex-1 max-w-xs bg-[#1C2434] border border-[#2E3A4E] rounded-lg px-3 py-1.5 text-sm text-white placeholder-[#8A99AF] outline-none focus:border-[#3C50E0]"
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
               "button",
               {
                 onClick: load,
@@ -83869,27 +80589,27 @@ ${end.comment}` : end.comment;
                 children: t2("common.refresh")
               }
             ),
-            npcs && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-xs text-[#8A99AF] shrink-0", children: t2("npcs.countSummary", filtered.length, npcs.length, alive) })
+            npcs && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-xs text-[#8A99AF] shrink-0", children: t2("npcs.countSummary", filtered.length, npcs.length, alive) })
           ] }),
-          npcs && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex flex-wrap items-center gap-x-4 gap-y-2", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-1.5", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF]", children: t2("npcs.type") }),
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+          npcs && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex flex-wrap items-center gap-x-4 gap-y-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex items-center gap-1.5", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF]", children: t2("npcs.type") }),
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(
                 "select",
                 {
                   value: filterType,
                   onChange: (e) => setFilterType(e.target.value),
                   className: "bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0]",
                   children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("option", { value: "", children: t2("npcs.all") }),
-                    types2.map((t3) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("option", { value: t3, children: t3 }, t3))
+                    /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("option", { value: "", children: t2("npcs.all") }),
+                    types2.map((t3) => /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("option", { value: t3, children: t3 }, t3))
                   ]
                 }
               )
             ] }),
-            genders.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-1", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5", children: t2("npcs.gender") }),
-              [["", t2("npcs.all")], ...genders.map((g) => [g, g]), ["__NONE__", "\u2014"]].map(([val, label]) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+            genders.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex items-center gap-1", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5", children: t2("npcs.gender") }),
+              [["", t2("npcs.all")], ...genders.map((g) => [g, g]), ["__NONE__", "\u2014"]].map(([val, label]) => /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
                 "button",
                 {
                   onClick: () => setFilterGender(val === filterGender ? "" : val),
@@ -83899,9 +80619,9 @@ ${end.comment}` : end.comment;
                 val
               ))
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-1.5", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF]", children: t2("npcs.levelShort") }),
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex items-center gap-1.5", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF]", children: t2("npcs.levelShort") }),
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
                 "input",
                 {
                   type: "number",
@@ -83912,8 +80632,8 @@ ${end.comment}` : end.comment;
                   className: "w-14 bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0] [appearance:textfield]"
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[#8A99AF] text-xs", children: "\u2013" }),
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-[#8A99AF] text-xs", children: "\u2013" }),
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
                 "input",
                 {
                   type: "number",
@@ -83925,9 +80645,9 @@ ${end.comment}` : end.comment;
                 }
               )
             ] }),
-            aggroModes.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-1", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5", children: t2("npcs.aggro") }),
-              aggroModes.map((a) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+            aggroModes.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex items-center gap-1", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mr-0.5", children: t2("npcs.aggro") }),
+              aggroModes.map((a) => /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
                 "button",
                 {
                   onClick: () => setFilterAggro(a === filterAggro ? "" : a),
@@ -83939,60 +80659,63 @@ ${end.comment}` : end.comment;
             ] })
           ] })
         ] }),
-        error2 && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "text-red-400 text-sm", children: error2 }),
-        !npcs && !error2 && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "text-[#8A99AF] text-sm", children: t2("common.loading") }),
-        npcs && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "rounded-xl overflow-hidden border border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("table", { className: "w-full text-sm border-collapse", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("tr", { className: "bg-[#1C2434] text-[#8A99AF] text-xs uppercase tracking-widest", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.colName") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.type") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.levelShort") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.colXp") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.gender") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.colTier") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.aggro") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.colHp") }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("th", { className: "px-4 py-3" })
+        error2 && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("p", { className: "text-red-400 text-sm", children: error2 }),
+        !npcs && !error2 && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("p", { className: "text-[#8A99AF] text-sm", children: t2("common.loading") }),
+        npcs && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "rounded-xl overflow-hidden border border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("table", { className: "w-full text-sm border-collapse", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("tr", { className: "bg-[#1C2434] text-[#8A99AF] text-xs uppercase tracking-widest", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.colName") }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.type") }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.levelShort") }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.colXp") }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.gender") }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.colTier") }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.aggro") }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("th", { className: "text-left px-4 py-3 font-semibold", children: t2("npcs.colHp") }),
+            /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("th", { className: "px-4 py-3" })
           ] }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("tbody", { children: [
-            filtered.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("td", { colSpan: 9, className: "text-center text-[#8A99AF] py-8", children: t2("npcs.noMatch") }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("tbody", { children: [
+            filtered.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("td", { colSpan: 9, className: "text-center text-[#8A99AF] py-8", children: t2("npcs.noMatch") }) }),
             filtered.map((npc) => {
               var _a6;
               const expanded = expandedId === npc.id;
-              return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
-                /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+              return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(import_jsx_runtime10.Fragment, { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(
                   "tr",
                   {
                     onClick: () => setExpandedId(expanded ? null : npc.id),
                     className: `border-t border-[#2E3A4E] cursor-pointer transition-colors ${npc.isDead ? "opacity-40" : ""} ${expanded ? "bg-[#1C2434]" : "hover:bg-[#1C2434]/60"}`,
                     children: [
-                      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("td", { className: "px-4 py-2.5 font-medium text-white", children: [
-                        npc.isDead && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-red-500 mr-1", children: "\u2715" }),
+                      /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("td", { className: "px-4 py-2.5 font-medium text-white", children: [
+                        npc.isDead && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-red-500 mr-1", children: "\u2715" }),
                         npc.name
                       ] }),
-                      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: npc.type }),
-                      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: npc.level }),
-                      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF] font-mono", children: npc.xp }),
-                      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: (_a6 = npc.gender) != null ? _a6 : "\u2014" }),
-                      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Badge, { label: npc.tier, color: tierColor(npc.tier) }) }),
-                      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Badge, { label: npc.aggroMode, color: aggroColor(npc.aggroMode) }) }),
-                      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(HpBar, { current: npc.currentHp, max: npc.maxHp }) }),
-                      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF] text-right", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-xs", children: expanded ? "\u25B2" : "\u25BC" }) })
+                      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: npc.type }),
+                      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: npc.level }),
+                      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF] font-mono", children: npc.xp }),
+                      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF]", children: (_a6 = npc.gender) != null ? _a6 : "\u2014" }),
+                      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Badge, { label: npc.tier, color: tierColor(npc.tier) }) }),
+                      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Badge, { label: npc.aggroMode, color: aggroColor(npc.aggroMode) }) }),
+                      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("td", { className: "px-4 py-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(HpBar, { current: npc.currentHp, max: npc.maxHp }) }),
+                      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("td", { className: "px-4 py-2.5 text-[#8A99AF] text-right", children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-xs", children: expanded ? "\u25B2" : "\u25BC" }) })
                     ]
                   },
                   npc.id
                 ),
-                expanded && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("tr", { className: "border-t border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("td", { colSpan: 9, className: "p-0", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Detail, { npc, t: t2 }) }) }, npc.id + "-detail")
+                expanded && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("tr", { className: "border-t border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("td", { colSpan: 9, className: "p-0", children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(Detail, { npc, t: t2 }) }) }, npc.id + "-detail")
               ] });
             })
           ] })
         ] }) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "w-80 shrink-0 sticky top-4", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(NpcMiniMap, { npcs: npcs != null ? npcs : [], players, selectedId: expandedId, attackLines }) })
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "w-80 shrink-0 sticky top-4", children: /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(NpcMiniMap, { npcs: npcs != null ? npcs : [], players, selectedId: expandedId, attackLines }) })
     ] });
   }
 
-  // admin/pages/PlayersPage.tsx
-  var import_react5 = __toESM(require_react(), 1);
+  // admin/pages/players/PlayersPage.tsx
+  var import_react11 = __toESM(require_react(), 1);
+
+  // admin/pages/players/PlayerDetail.tsx
+  var import_react10 = __toESM(require_react(), 1);
 
   // node_modules/@radix-ui/react-tabs/dist/index.mjs
   var React28 = __toESM(require_react(), 1);
@@ -84010,7 +80733,7 @@ ${end.comment}` : end.comment;
 
   // node_modules/@radix-ui/react-context/dist/index.mjs
   var React12 = __toESM(require_react(), 1);
-  var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
   function createContextScope(scopeName, createContextScopeDeps = []) {
     let defaultContexts = [];
     function createContext32(rootComponentName, defaultContext) {
@@ -84023,7 +80746,7 @@ ${end.comment}` : end.comment;
         const _a6 = props, { scope, children } = _a6, context = __objRest(_a6, ["scope", "children"]);
         const Context2 = ((_b = scope == null ? void 0 : scope[scopeName]) == null ? void 0 : _b[index2]) || BaseContext;
         const value = React12.useMemo(() => context, Object.values(context));
-        return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Context2.Provider, { value, children });
+        return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Context2.Provider, { value, children });
       };
       Provider.displayName = rootComponentName + "Provider";
       function useContext22(consumerName, scope) {
@@ -84239,9 +80962,9 @@ ${end.comment}` : end.comment;
   var use = React14[" use ".trim().toString()];
 
   // node_modules/@radix-ui/react-collection/dist/index.mjs
-  var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime12 = __toESM(require_jsx_runtime(), 1);
   var React22 = __toESM(require_react(), 1);
-  var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime13 = __toESM(require_jsx_runtime(), 1);
   function createCollection(name2) {
     const PROVIDER_NAME = name2 + "CollectionProvider";
     const [createCollectionContext, createCollectionScope2] = createContextScope(PROVIDER_NAME);
@@ -84253,7 +80976,7 @@ ${end.comment}` : end.comment;
       const { scope, children } = props;
       const ref = React15.useRef(null);
       const itemMap = React15.useRef(/* @__PURE__ */ new Map()).current;
-      return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(CollectionProviderImpl, { scope, itemMap, collectionRef: ref, children });
+      return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(CollectionProviderImpl, { scope, itemMap, collectionRef: ref, children });
     };
     CollectionProvider.displayName = PROVIDER_NAME;
     const COLLECTION_SLOT_NAME = name2 + "CollectionSlot";
@@ -84263,7 +80986,7 @@ ${end.comment}` : end.comment;
         const { scope, children } = props;
         const context = useCollectionContext(COLLECTION_SLOT_NAME, scope);
         const composedRefs = useComposedRefs(forwardedRef, context.collectionRef);
-        return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(CollectionSlotImpl, { ref: composedRefs, children });
+        return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(CollectionSlotImpl, { ref: composedRefs, children });
       }
     );
     CollectionSlot.displayName = COLLECTION_SLOT_NAME;
@@ -84280,7 +81003,7 @@ ${end.comment}` : end.comment;
           context.itemMap.set(ref, __spreadValues({ ref }, itemData));
           return () => void context.itemMap.delete(ref);
         });
-        return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(CollectionItemSlotImpl, __spreadProps(__spreadValues({}, { [ITEM_DATA_ATTR]: "" }), { ref: composedRefs, children }));
+        return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(CollectionItemSlotImpl, __spreadProps(__spreadValues({}, { [ITEM_DATA_ATTR]: "" }), { ref: composedRefs, children }));
       }
     );
     CollectionItemSlot.displayName = ITEM_SLOT_NAME;
@@ -84327,7 +81050,7 @@ ${end.comment}` : end.comment;
   // node_modules/@radix-ui/react-primitive/dist/index.mjs
   var React18 = __toESM(require_react(), 1);
   var ReactDOM = __toESM(require_react_dom(), 1);
-  var import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime14 = __toESM(require_jsx_runtime(), 1);
   var NODES = [
     "a",
     "button",
@@ -84355,7 +81078,7 @@ ${end.comment}` : end.comment;
       if (typeof window !== "undefined") {
         window[Symbol.for("radix-ui")] = true;
       }
-      return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Comp, __spreadProps(__spreadValues({}, primitiveProps), { ref: forwardedRef }));
+      return /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(Comp, __spreadProps(__spreadValues({}, primitiveProps), { ref: forwardedRef }));
     });
     Node2.displayName = `Primitive.${node}`;
     return __spreadProps(__spreadValues({}, primitive), { [node]: Node2 });
@@ -84478,7 +81201,7 @@ ${end.comment}` : end.comment;
 
   // node_modules/@radix-ui/react-direction/dist/index.mjs
   var React24 = __toESM(require_react(), 1);
-  var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime15 = __toESM(require_jsx_runtime(), 1);
   var DirectionContext = React24.createContext(void 0);
   function useDirection(localDir) {
     const globalDir = React24.useContext(DirectionContext);
@@ -84486,7 +81209,7 @@ ${end.comment}` : end.comment;
   }
 
   // node_modules/@radix-ui/react-roving-focus/dist/index.mjs
-  var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime16 = __toESM(require_jsx_runtime(), 1);
   var ENTRY_FOCUS = "rovingFocusGroup.onEntryFocus";
   var EVENT_OPTIONS = { bubbles: false, cancelable: true };
   var GROUP_NAME = "RovingFocusGroup";
@@ -84498,7 +81221,7 @@ ${end.comment}` : end.comment;
   var [RovingFocusProvider, useRovingFocusContext] = createRovingFocusGroupContext(GROUP_NAME);
   var RovingFocusGroup = React25.forwardRef(
     (props, forwardedRef) => {
-      return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Collection2.Provider, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(Collection2.Slot, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(RovingFocusGroupImpl, __spreadProps(__spreadValues({}, props), { ref: forwardedRef })) }) });
+      return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Collection2.Provider, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Collection2.Slot, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(RovingFocusGroupImpl, __spreadProps(__spreadValues({}, props), { ref: forwardedRef })) }) });
     }
   );
   RovingFocusGroup.displayName = GROUP_NAME;
@@ -84545,7 +81268,7 @@ ${end.comment}` : end.comment;
         return () => node.removeEventListener(ENTRY_FOCUS, handleEntryFocus);
       }
     }, [handleEntryFocus]);
-    return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
       RovingFocusProvider,
       {
         scope: __scopeRovingFocusGroup,
@@ -84566,7 +81289,7 @@ ${end.comment}` : end.comment;
           () => setFocusableItemsCount((prevCount) => prevCount - 1),
           []
         ),
-        children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+        children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
           Primitive.div,
           __spreadProps(__spreadValues({
             tabIndex: isTabbingBackOut || focusableItemsCount === 0 ? -1 : 0,
@@ -84629,14 +81352,14 @@ ${end.comment}` : end.comment;
           return () => onFocusableItemRemove();
         }
       }, [focusable, onFocusableItemAdd, onFocusableItemRemove]);
-      return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
         Collection2.ItemSlot,
         {
           scope: __scopeRovingFocusGroup,
           id: id2,
           focusable,
           active,
-          children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+          children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
             Primitive.span,
             __spreadProps(__spreadValues({
               tabIndex: isCurrentTabStop ? 0 : -1,
@@ -84874,7 +81597,7 @@ ${end.comment}` : end.comment;
   }
 
   // node_modules/@radix-ui/react-tabs/dist/index.mjs
-  var import_jsx_runtime12 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime17 = __toESM(require_jsx_runtime(), 1);
   var TABS_NAME = "Tabs";
   var [createTabsContext, createTabsScope] = createContextScope(TABS_NAME, [
     createRovingFocusGroupScope
@@ -84907,7 +81630,7 @@ ${end.comment}` : end.comment;
         defaultProp: defaultValue != null ? defaultValue : "",
         caller: TABS_NAME
       });
-      return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
         TabsProvider,
         {
           scope: __scopeTabs,
@@ -84917,7 +81640,7 @@ ${end.comment}` : end.comment;
           orientation,
           dir: direction,
           activationMode,
-          children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+          children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
             Primitive.div,
             __spreadProps(__spreadValues({
               dir: direction,
@@ -84937,7 +81660,7 @@ ${end.comment}` : end.comment;
       const _a6 = props, { __scopeTabs, loop = true } = _a6, listProps = __objRest(_a6, ["__scopeTabs", "loop"]);
       const context = useTabsContext(TAB_LIST_NAME, __scopeTabs);
       const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeTabs);
-      return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
         Root,
         __spreadProps(__spreadValues({
           asChild: true
@@ -84945,7 +81668,7 @@ ${end.comment}` : end.comment;
           orientation: context.orientation,
           dir: context.dir,
           loop,
-          children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+          children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
             Primitive.div,
             __spreadProps(__spreadValues({
               role: "tablist",
@@ -84968,14 +81691,14 @@ ${end.comment}` : end.comment;
       const triggerId = makeTriggerId(context.baseId, value);
       const contentId = makeContentId(context.baseId, value);
       const isSelected = value === context.value;
-      return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
         Item,
         __spreadProps(__spreadValues({
           asChild: true
         }, rovingFocusGroupScope), {
           focusable: !disabled,
           active: isSelected,
-          children: /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+          children: /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
             Primitive.button,
             __spreadProps(__spreadValues({
               type: "button",
@@ -85024,7 +81747,7 @@ ${end.comment}` : end.comment;
         const rAF = requestAnimationFrame(() => isMountAnimationPreventedRef.current = false);
         return () => cancelAnimationFrame(rAF);
       }, []);
-      return /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Presence, { present: forceMount || isSelected, children: ({ present }) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Presence, { present: forceMount || isSelected, children: ({ present }) => /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(
         Primitive.div,
         __spreadProps(__spreadValues({
           "data-state": isSelected ? "active" : "inactive",
@@ -85056,16 +81779,3289 @@ ${end.comment}` : end.comment;
   var Trigger = TabsTrigger;
   var Content = TabsContent;
 
+  // node_modules/clsx/dist/clsx.mjs
+  function r(e) {
+    var t2, f, n = "";
+    if ("string" == typeof e || "number" == typeof e) n += e;
+    else if ("object" == typeof e) if (Array.isArray(e)) {
+      var o = e.length;
+      for (t2 = 0; t2 < o; t2++) e[t2] && (f = r(e[t2])) && (n && (n += " "), n += f);
+    } else for (f in e) e[f] && (n && (n += " "), n += f);
+    return n;
+  }
+  function clsx() {
+    for (var e, t2, f = 0, n = "", o = arguments.length; f < o; f++) (e = arguments[f]) && (t2 = r(e)) && (n && (n += " "), n += t2);
+    return n;
+  }
+
+  // node_modules/tailwind-merge/dist/bundle-mjs.mjs
+  var concatArrays = (array1, array2) => {
+    const combinedArray = new Array(array1.length + array2.length);
+    for (let i = 0; i < array1.length; i++) {
+      combinedArray[i] = array1[i];
+    }
+    for (let i = 0; i < array2.length; i++) {
+      combinedArray[array1.length + i] = array2[i];
+    }
+    return combinedArray;
+  };
+  var createClassValidatorObject = (classGroupId, validator) => ({
+    classGroupId,
+    validator
+  });
+  var createClassPartObject = (nextPart = /* @__PURE__ */ new Map(), validators = null, classGroupId) => ({
+    nextPart,
+    validators,
+    classGroupId
+  });
+  var CLASS_PART_SEPARATOR = "-";
+  var EMPTY_CONFLICTS = [];
+  var ARBITRARY_PROPERTY_PREFIX = "arbitrary..";
+  var createClassGroupUtils = (config3) => {
+    const classMap = createClassMap(config3);
+    const {
+      conflictingClassGroups,
+      conflictingClassGroupModifiers
+    } = config3;
+    const getClassGroupId = (className) => {
+      if (className.startsWith("[") && className.endsWith("]")) {
+        return getGroupIdForArbitraryProperty(className);
+      }
+      const classParts = className.split(CLASS_PART_SEPARATOR);
+      const startIndex = classParts[0] === "" && classParts.length > 1 ? 1 : 0;
+      return getGroupRecursive(classParts, startIndex, classMap);
+    };
+    const getConflictingClassGroupIds = (classGroupId, hasPostfixModifier) => {
+      if (hasPostfixModifier) {
+        const modifierConflicts = conflictingClassGroupModifiers[classGroupId];
+        const baseConflicts = conflictingClassGroups[classGroupId];
+        if (modifierConflicts) {
+          if (baseConflicts) {
+            return concatArrays(baseConflicts, modifierConflicts);
+          }
+          return modifierConflicts;
+        }
+        return baseConflicts || EMPTY_CONFLICTS;
+      }
+      return conflictingClassGroups[classGroupId] || EMPTY_CONFLICTS;
+    };
+    return {
+      getClassGroupId,
+      getConflictingClassGroupIds
+    };
+  };
+  var getGroupRecursive = (classParts, startIndex, classPartObject) => {
+    const classPathsLength = classParts.length - startIndex;
+    if (classPathsLength === 0) {
+      return classPartObject.classGroupId;
+    }
+    const currentClassPart = classParts[startIndex];
+    const nextClassPartObject = classPartObject.nextPart.get(currentClassPart);
+    if (nextClassPartObject) {
+      const result = getGroupRecursive(classParts, startIndex + 1, nextClassPartObject);
+      if (result) return result;
+    }
+    const validators = classPartObject.validators;
+    if (validators === null) {
+      return void 0;
+    }
+    const classRest = startIndex === 0 ? classParts.join(CLASS_PART_SEPARATOR) : classParts.slice(startIndex).join(CLASS_PART_SEPARATOR);
+    const validatorsLength = validators.length;
+    for (let i = 0; i < validatorsLength; i++) {
+      const validatorObj = validators[i];
+      if (validatorObj.validator(classRest)) {
+        return validatorObj.classGroupId;
+      }
+    }
+    return void 0;
+  };
+  var getGroupIdForArbitraryProperty = (className) => className.slice(1, -1).indexOf(":") === -1 ? void 0 : (() => {
+    const content2 = className.slice(1, -1);
+    const colonIndex = content2.indexOf(":");
+    const property = content2.slice(0, colonIndex);
+    return property ? ARBITRARY_PROPERTY_PREFIX + property : void 0;
+  })();
+  var createClassMap = (config3) => {
+    const {
+      theme: theme2,
+      classGroups
+    } = config3;
+    return processClassGroups(classGroups, theme2);
+  };
+  var processClassGroups = (classGroups, theme2) => {
+    const classMap = createClassPartObject();
+    for (const classGroupId in classGroups) {
+      const group = classGroups[classGroupId];
+      processClassesRecursively(group, classMap, classGroupId, theme2);
+    }
+    return classMap;
+  };
+  var processClassesRecursively = (classGroup, classPartObject, classGroupId, theme2) => {
+    const len = classGroup.length;
+    for (let i = 0; i < len; i++) {
+      const classDefinition = classGroup[i];
+      processClassDefinition(classDefinition, classPartObject, classGroupId, theme2);
+    }
+  };
+  var processClassDefinition = (classDefinition, classPartObject, classGroupId, theme2) => {
+    if (typeof classDefinition === "string") {
+      processStringDefinition(classDefinition, classPartObject, classGroupId);
+      return;
+    }
+    if (typeof classDefinition === "function") {
+      processFunctionDefinition(classDefinition, classPartObject, classGroupId, theme2);
+      return;
+    }
+    processObjectDefinition(classDefinition, classPartObject, classGroupId, theme2);
+  };
+  var processStringDefinition = (classDefinition, classPartObject, classGroupId) => {
+    const classPartObjectToEdit = classDefinition === "" ? classPartObject : getPart(classPartObject, classDefinition);
+    classPartObjectToEdit.classGroupId = classGroupId;
+  };
+  var processFunctionDefinition = (classDefinition, classPartObject, classGroupId, theme2) => {
+    if (isThemeGetter(classDefinition)) {
+      processClassesRecursively(classDefinition(theme2), classPartObject, classGroupId, theme2);
+      return;
+    }
+    if (classPartObject.validators === null) {
+      classPartObject.validators = [];
+    }
+    classPartObject.validators.push(createClassValidatorObject(classGroupId, classDefinition));
+  };
+  var processObjectDefinition = (classDefinition, classPartObject, classGroupId, theme2) => {
+    const entries = Object.entries(classDefinition);
+    const len = entries.length;
+    for (let i = 0; i < len; i++) {
+      const [key2, value] = entries[i];
+      processClassesRecursively(value, getPart(classPartObject, key2), classGroupId, theme2);
+    }
+  };
+  var getPart = (classPartObject, path) => {
+    let current = classPartObject;
+    const parts = path.split(CLASS_PART_SEPARATOR);
+    const len = parts.length;
+    for (let i = 0; i < len; i++) {
+      const part = parts[i];
+      let next = current.nextPart.get(part);
+      if (!next) {
+        next = createClassPartObject();
+        current.nextPart.set(part, next);
+      }
+      current = next;
+    }
+    return current;
+  };
+  var isThemeGetter = (func) => "isThemeGetter" in func && func.isThemeGetter === true;
+  var createLruCache = (maxCacheSize) => {
+    if (maxCacheSize < 1) {
+      return {
+        get: () => void 0,
+        set: () => {
+        }
+      };
+    }
+    let cacheSize = 0;
+    let cache3 = /* @__PURE__ */ Object.create(null);
+    let previousCache = /* @__PURE__ */ Object.create(null);
+    const update = (key2, value) => {
+      cache3[key2] = value;
+      cacheSize++;
+      if (cacheSize > maxCacheSize) {
+        cacheSize = 0;
+        previousCache = cache3;
+        cache3 = /* @__PURE__ */ Object.create(null);
+      }
+    };
+    return {
+      get(key2) {
+        let value = cache3[key2];
+        if (value !== void 0) {
+          return value;
+        }
+        if ((value = previousCache[key2]) !== void 0) {
+          update(key2, value);
+          return value;
+        }
+      },
+      set(key2, value) {
+        if (key2 in cache3) {
+          cache3[key2] = value;
+        } else {
+          update(key2, value);
+        }
+      }
+    };
+  };
+  var IMPORTANT_MODIFIER = "!";
+  var MODIFIER_SEPARATOR = ":";
+  var EMPTY_MODIFIERS = [];
+  var createResultObject = (modifiers2, hasImportantModifier, baseClassName, maybePostfixModifierPosition, isExternal) => ({
+    modifiers: modifiers2,
+    hasImportantModifier,
+    baseClassName,
+    maybePostfixModifierPosition,
+    isExternal
+  });
+  var createParseClassName = (config3) => {
+    const {
+      prefix,
+      experimentalParseClassName
+    } = config3;
+    let parseClassName = (className) => {
+      const modifiers2 = [];
+      let bracketDepth = 0;
+      let parenDepth = 0;
+      let modifierStart = 0;
+      let postfixModifierPosition;
+      const len = className.length;
+      for (let index2 = 0; index2 < len; index2++) {
+        const currentCharacter = className[index2];
+        if (bracketDepth === 0 && parenDepth === 0) {
+          if (currentCharacter === MODIFIER_SEPARATOR) {
+            modifiers2.push(className.slice(modifierStart, index2));
+            modifierStart = index2 + 1;
+            continue;
+          }
+          if (currentCharacter === "/") {
+            postfixModifierPosition = index2;
+            continue;
+          }
+        }
+        if (currentCharacter === "[") bracketDepth++;
+        else if (currentCharacter === "]") bracketDepth--;
+        else if (currentCharacter === "(") parenDepth++;
+        else if (currentCharacter === ")") parenDepth--;
+      }
+      const baseClassNameWithImportantModifier = modifiers2.length === 0 ? className : className.slice(modifierStart);
+      let baseClassName = baseClassNameWithImportantModifier;
+      let hasImportantModifier = false;
+      if (baseClassNameWithImportantModifier.endsWith(IMPORTANT_MODIFIER)) {
+        baseClassName = baseClassNameWithImportantModifier.slice(0, -1);
+        hasImportantModifier = true;
+      } else if (
+        /**
+         * In Tailwind CSS v3 the important modifier was at the start of the base class name. This is still supported for legacy reasons.
+         * @see https://github.com/dcastil/tailwind-merge/issues/513#issuecomment-2614029864
+         */
+        baseClassNameWithImportantModifier.startsWith(IMPORTANT_MODIFIER)
+      ) {
+        baseClassName = baseClassNameWithImportantModifier.slice(1);
+        hasImportantModifier = true;
+      }
+      const maybePostfixModifierPosition = postfixModifierPosition && postfixModifierPosition > modifierStart ? postfixModifierPosition - modifierStart : void 0;
+      return createResultObject(modifiers2, hasImportantModifier, baseClassName, maybePostfixModifierPosition);
+    };
+    if (prefix) {
+      const fullPrefix = prefix + MODIFIER_SEPARATOR;
+      const parseClassNameOriginal = parseClassName;
+      parseClassName = (className) => className.startsWith(fullPrefix) ? parseClassNameOriginal(className.slice(fullPrefix.length)) : createResultObject(EMPTY_MODIFIERS, false, className, void 0, true);
+    }
+    if (experimentalParseClassName) {
+      const parseClassNameOriginal = parseClassName;
+      parseClassName = (className) => experimentalParseClassName({
+        className,
+        parseClassName: parseClassNameOriginal
+      });
+    }
+    return parseClassName;
+  };
+  var createSortModifiers = (config3) => {
+    const modifierWeights = /* @__PURE__ */ new Map();
+    config3.orderSensitiveModifiers.forEach((mod, index2) => {
+      modifierWeights.set(mod, 1e6 + index2);
+    });
+    return (modifiers2) => {
+      const result = [];
+      let currentSegment = [];
+      for (let i = 0; i < modifiers2.length; i++) {
+        const modifier = modifiers2[i];
+        const isArbitrary = modifier[0] === "[";
+        const isOrderSensitive = modifierWeights.has(modifier);
+        if (isArbitrary || isOrderSensitive) {
+          if (currentSegment.length > 0) {
+            currentSegment.sort();
+            result.push(...currentSegment);
+            currentSegment = [];
+          }
+          result.push(modifier);
+        } else {
+          currentSegment.push(modifier);
+        }
+      }
+      if (currentSegment.length > 0) {
+        currentSegment.sort();
+        result.push(...currentSegment);
+      }
+      return result;
+    };
+  };
+  var createConfigUtils = (config3) => __spreadValues({
+    cache: createLruCache(config3.cacheSize),
+    parseClassName: createParseClassName(config3),
+    sortModifiers: createSortModifiers(config3),
+    postfixLookupClassGroupIds: createPostfixLookupClassGroupIds(config3)
+  }, createClassGroupUtils(config3));
+  var createPostfixLookupClassGroupIds = (config3) => {
+    const lookup = /* @__PURE__ */ Object.create(null);
+    const classGroupIds = config3.postfixLookupClassGroups;
+    if (classGroupIds) {
+      for (let i = 0; i < classGroupIds.length; i++) {
+        lookup[classGroupIds[i]] = true;
+      }
+    }
+    return lookup;
+  };
+  var SPLIT_CLASSES_REGEX = /\s+/;
+  var mergeClassList = (classList, configUtils) => {
+    const {
+      parseClassName,
+      getClassGroupId,
+      getConflictingClassGroupIds,
+      sortModifiers,
+      postfixLookupClassGroupIds
+    } = configUtils;
+    const classGroupsInConflict = [];
+    const classNames = classList.trim().split(SPLIT_CLASSES_REGEX);
+    let result = "";
+    for (let index2 = classNames.length - 1; index2 >= 0; index2 -= 1) {
+      const originalClassName = classNames[index2];
+      const {
+        isExternal,
+        modifiers: modifiers2,
+        hasImportantModifier,
+        baseClassName,
+        maybePostfixModifierPosition
+      } = parseClassName(originalClassName);
+      if (isExternal) {
+        result = originalClassName + (result.length > 0 ? " " + result : result);
+        continue;
+      }
+      let hasPostfixModifier = !!maybePostfixModifierPosition;
+      let classGroupId;
+      if (hasPostfixModifier) {
+        const baseClassNameWithoutPostfix = baseClassName.substring(0, maybePostfixModifierPosition);
+        classGroupId = getClassGroupId(baseClassNameWithoutPostfix);
+        const classGroupIdWithPostfix = classGroupId && postfixLookupClassGroupIds[classGroupId] ? getClassGroupId(baseClassName) : void 0;
+        if (classGroupIdWithPostfix && classGroupIdWithPostfix !== classGroupId) {
+          classGroupId = classGroupIdWithPostfix;
+          hasPostfixModifier = false;
+        }
+      } else {
+        classGroupId = getClassGroupId(baseClassName);
+      }
+      if (!classGroupId) {
+        if (!hasPostfixModifier) {
+          result = originalClassName + (result.length > 0 ? " " + result : result);
+          continue;
+        }
+        classGroupId = getClassGroupId(baseClassName);
+        if (!classGroupId) {
+          result = originalClassName + (result.length > 0 ? " " + result : result);
+          continue;
+        }
+        hasPostfixModifier = false;
+      }
+      const variantModifier = modifiers2.length === 0 ? "" : modifiers2.length === 1 ? modifiers2[0] : sortModifiers(modifiers2).join(":");
+      const modifierId = hasImportantModifier ? variantModifier + IMPORTANT_MODIFIER : variantModifier;
+      const classId = modifierId + classGroupId;
+      if (classGroupsInConflict.indexOf(classId) > -1) {
+        continue;
+      }
+      classGroupsInConflict.push(classId);
+      const conflictGroups = getConflictingClassGroupIds(classGroupId, hasPostfixModifier);
+      for (let i = 0; i < conflictGroups.length; ++i) {
+        const group = conflictGroups[i];
+        classGroupsInConflict.push(modifierId + group);
+      }
+      result = originalClassName + (result.length > 0 ? " " + result : result);
+    }
+    return result;
+  };
+  var twJoin = (...classLists) => {
+    let index2 = 0;
+    let argument;
+    let resolvedValue;
+    let string3 = "";
+    while (index2 < classLists.length) {
+      if (argument = classLists[index2++]) {
+        if (resolvedValue = toValue(argument)) {
+          string3 && (string3 += " ");
+          string3 += resolvedValue;
+        }
+      }
+    }
+    return string3;
+  };
+  var toValue = (mix) => {
+    if (typeof mix === "string") {
+      return mix;
+    }
+    let resolvedValue;
+    let string3 = "";
+    for (let k = 0; k < mix.length; k++) {
+      if (mix[k]) {
+        if (resolvedValue = toValue(mix[k])) {
+          string3 && (string3 += " ");
+          string3 += resolvedValue;
+        }
+      }
+    }
+    return string3;
+  };
+  var createTailwindMerge = (createConfigFirst, ...createConfigRest) => {
+    let configUtils;
+    let cacheGet;
+    let cacheSet;
+    let functionToCall;
+    const initTailwindMerge = (classList) => {
+      const config3 = createConfigRest.reduce((previousConfig, createConfigCurrent) => createConfigCurrent(previousConfig), createConfigFirst());
+      configUtils = createConfigUtils(config3);
+      cacheGet = configUtils.cache.get;
+      cacheSet = configUtils.cache.set;
+      functionToCall = tailwindMerge;
+      return tailwindMerge(classList);
+    };
+    const tailwindMerge = (classList) => {
+      const cachedResult = cacheGet(classList);
+      if (cachedResult) {
+        return cachedResult;
+      }
+      const result = mergeClassList(classList, configUtils);
+      cacheSet(classList, result);
+      return result;
+    };
+    functionToCall = initTailwindMerge;
+    return (...args) => functionToCall(twJoin(...args));
+  };
+  var fallbackThemeArr = [];
+  var fromTheme = (key2) => {
+    const themeGetter = (theme2) => theme2[key2] || fallbackThemeArr;
+    themeGetter.isThemeGetter = true;
+    return themeGetter;
+  };
+  var arbitraryValueRegex = /^\[(?:(\w[\w-]*):)?(.+)\]$/i;
+  var arbitraryVariableRegex = /^\((?:(\w[\w-]*):)?(.+)\)$/i;
+  var fractionRegex = /^\d+(?:\.\d+)?\/\d+(?:\.\d+)?$/;
+  var tshirtUnitRegex = /^(\d+(\.\d+)?)?(xs|sm|md|lg|xl)$/;
+  var lengthUnitRegex = /\d+(%|px|r?em|[sdl]?v([hwib]|min|max)|pt|pc|in|cm|mm|cap|ch|ex|r?lh|cq(w|h|i|b|min|max))|\b(calc|min|max|clamp)\(.+\)|^0$/;
+  var colorFunctionRegex = /^(rgba?|hsla?|hwb|(ok)?(lab|lch)|color-mix)\(.+\)$/;
+  var shadowRegex = /^(inset_)?-?((\d+)?\.?(\d+)[a-z]+|0)_-?((\d+)?\.?(\d+)[a-z]+|0)/;
+  var imageRegex = /^(url|image|image-set|cross-fade|element|(repeating-)?(linear|radial|conic)-gradient)\(.+\)$/;
+  var isFraction = (value) => fractionRegex.test(value);
+  var isNumber2 = (value) => !!value && !Number.isNaN(Number(value));
+  var isInteger = (value) => !!value && Number.isInteger(Number(value));
+  var isPercent = (value) => value.endsWith("%") && isNumber2(value.slice(0, -1));
+  var isTshirtSize = (value) => tshirtUnitRegex.test(value);
+  var isAny = () => true;
+  var isLengthOnly = (value) => (
+    // `colorFunctionRegex` check is necessary because color functions can have percentages in them which which would be incorrectly classified as lengths.
+    // For example, `hsl(0 0% 0%)` would be classified as a length without this check.
+    // I could also use lookbehind assertion in `lengthUnitRegex` but that isn't supported widely enough.
+    lengthUnitRegex.test(value) && !colorFunctionRegex.test(value)
+  );
+  var isNever = () => false;
+  var isShadow = (value) => shadowRegex.test(value);
+  var isImage = (value) => imageRegex.test(value);
+  var isAnyNonArbitrary = (value) => !isArbitraryValue(value) && !isArbitraryVariable(value);
+  var isNamedContainerQuery = (value) => value.startsWith("@container") && (value[10] === "/" && value[11] !== void 0 || value[11] === "s" && value[16] !== void 0 && value.startsWith("-size/", 10) || value[11] === "n" && value[18] !== void 0 && value.startsWith("-normal/", 10));
+  var isArbitrarySize = (value) => getIsArbitraryValue(value, isLabelSize, isNever);
+  var isArbitraryValue = (value) => arbitraryValueRegex.test(value);
+  var isArbitraryLength = (value) => getIsArbitraryValue(value, isLabelLength, isLengthOnly);
+  var isArbitraryNumber = (value) => getIsArbitraryValue(value, isLabelNumber, isNumber2);
+  var isArbitraryWeight = (value) => getIsArbitraryValue(value, isLabelWeight, isAny);
+  var isArbitraryFamilyName = (value) => getIsArbitraryValue(value, isLabelFamilyName, isNever);
+  var isArbitraryPosition = (value) => getIsArbitraryValue(value, isLabelPosition, isNever);
+  var isArbitraryImage = (value) => getIsArbitraryValue(value, isLabelImage, isImage);
+  var isArbitraryShadow = (value) => getIsArbitraryValue(value, isLabelShadow, isShadow);
+  var isArbitraryVariable = (value) => arbitraryVariableRegex.test(value);
+  var isArbitraryVariableLength = (value) => getIsArbitraryVariable(value, isLabelLength);
+  var isArbitraryVariableFamilyName = (value) => getIsArbitraryVariable(value, isLabelFamilyName);
+  var isArbitraryVariablePosition = (value) => getIsArbitraryVariable(value, isLabelPosition);
+  var isArbitraryVariableSize = (value) => getIsArbitraryVariable(value, isLabelSize);
+  var isArbitraryVariableImage = (value) => getIsArbitraryVariable(value, isLabelImage);
+  var isArbitraryVariableShadow = (value) => getIsArbitraryVariable(value, isLabelShadow, true);
+  var isArbitraryVariableWeight = (value) => getIsArbitraryVariable(value, isLabelWeight, true);
+  var getIsArbitraryValue = (value, testLabel, testValue) => {
+    const result = arbitraryValueRegex.exec(value);
+    if (result) {
+      if (result[1]) {
+        return testLabel(result[1]);
+      }
+      return testValue(result[2]);
+    }
+    return false;
+  };
+  var getIsArbitraryVariable = (value, testLabel, shouldMatchNoLabel = false) => {
+    const result = arbitraryVariableRegex.exec(value);
+    if (result) {
+      if (result[1]) {
+        return testLabel(result[1]);
+      }
+      return shouldMatchNoLabel;
+    }
+    return false;
+  };
+  var isLabelPosition = (label) => label === "position" || label === "percentage";
+  var isLabelImage = (label) => label === "image" || label === "url";
+  var isLabelSize = (label) => label === "length" || label === "size" || label === "bg-size";
+  var isLabelLength = (label) => label === "length";
+  var isLabelNumber = (label) => label === "number";
+  var isLabelFamilyName = (label) => label === "family-name";
+  var isLabelWeight = (label) => label === "number" || label === "weight";
+  var isLabelShadow = (label) => label === "shadow";
+  var getDefaultConfig = () => {
+    const themeColor = fromTheme("color");
+    const themeFont = fromTheme("font");
+    const themeText = fromTheme("text");
+    const themeFontWeight = fromTheme("font-weight");
+    const themeTracking = fromTheme("tracking");
+    const themeLeading = fromTheme("leading");
+    const themeBreakpoint = fromTheme("breakpoint");
+    const themeContainer = fromTheme("container");
+    const themeSpacing = fromTheme("spacing");
+    const themeRadius = fromTheme("radius");
+    const themeShadow = fromTheme("shadow");
+    const themeInsetShadow = fromTheme("inset-shadow");
+    const themeTextShadow = fromTheme("text-shadow");
+    const themeDropShadow = fromTheme("drop-shadow");
+    const themeBlur = fromTheme("blur");
+    const themePerspective = fromTheme("perspective");
+    const themeAspect = fromTheme("aspect");
+    const themeEase = fromTheme("ease");
+    const themeAnimate = fromTheme("animate");
+    const scaleBreak = () => ["auto", "avoid", "all", "avoid-page", "page", "left", "right", "column"];
+    const scalePosition = () => [
+      "center",
+      "top",
+      "bottom",
+      "left",
+      "right",
+      "top-left",
+      // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
+      "left-top",
+      "top-right",
+      // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
+      "right-top",
+      "bottom-right",
+      // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
+      "right-bottom",
+      "bottom-left",
+      // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
+      "left-bottom"
+    ];
+    const scalePositionWithArbitrary = () => [...scalePosition(), isArbitraryVariable, isArbitraryValue];
+    const scaleOverflow = () => ["auto", "hidden", "clip", "visible", "scroll"];
+    const scaleOverscroll = () => ["auto", "contain", "none"];
+    const scaleUnambiguousSpacing = () => [isArbitraryVariable, isArbitraryValue, themeSpacing];
+    const scaleInset = () => [isFraction, "full", "auto", ...scaleUnambiguousSpacing()];
+    const scaleGridTemplateColsRows = () => [isInteger, "none", "subgrid", isArbitraryVariable, isArbitraryValue];
+    const scaleGridColRowStartAndEnd = () => ["auto", {
+      span: ["full", isInteger, isArbitraryVariable, isArbitraryValue]
+    }, isInteger, isArbitraryVariable, isArbitraryValue];
+    const scaleGridColRowStartOrEnd = () => [isInteger, "auto", isArbitraryVariable, isArbitraryValue];
+    const scaleGridAutoColsRows = () => ["auto", "min", "max", "fr", isArbitraryVariable, isArbitraryValue];
+    const scaleAlignPrimaryAxis = () => ["start", "end", "center", "between", "around", "evenly", "stretch", "baseline", "center-safe", "end-safe"];
+    const scaleAlignSecondaryAxis = () => ["start", "end", "center", "stretch", "center-safe", "end-safe"];
+    const scaleMargin = () => ["auto", ...scaleUnambiguousSpacing()];
+    const scaleSizing = () => [isFraction, "auto", "full", "dvw", "dvh", "lvw", "lvh", "svw", "svh", "min", "max", "fit", ...scaleUnambiguousSpacing()];
+    const scaleSizingInline = () => [isFraction, "screen", "full", "dvw", "lvw", "svw", "min", "max", "fit", ...scaleUnambiguousSpacing()];
+    const scaleSizingBlock = () => [isFraction, "screen", "full", "lh", "dvh", "lvh", "svh", "min", "max", "fit", ...scaleUnambiguousSpacing()];
+    const scaleColor = () => [themeColor, isArbitraryVariable, isArbitraryValue];
+    const scaleBgPosition = () => [...scalePosition(), isArbitraryVariablePosition, isArbitraryPosition, {
+      position: [isArbitraryVariable, isArbitraryValue]
+    }];
+    const scaleBgRepeat = () => ["no-repeat", {
+      repeat: ["", "x", "y", "space", "round"]
+    }];
+    const scaleBgSize = () => ["auto", "cover", "contain", isArbitraryVariableSize, isArbitrarySize, {
+      size: [isArbitraryVariable, isArbitraryValue]
+    }];
+    const scaleGradientStopPosition = () => [isPercent, isArbitraryVariableLength, isArbitraryLength];
+    const scaleRadius = () => [
+      // Deprecated since Tailwind CSS v4.0.0
+      "",
+      "none",
+      "full",
+      themeRadius,
+      isArbitraryVariable,
+      isArbitraryValue
+    ];
+    const scaleBorderWidth = () => ["", isNumber2, isArbitraryVariableLength, isArbitraryLength];
+    const scaleLineStyle = () => ["solid", "dashed", "dotted", "double"];
+    const scaleBlendMode = () => ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion", "hue", "saturation", "color", "luminosity"];
+    const scaleMaskImagePosition = () => [isNumber2, isPercent, isArbitraryVariablePosition, isArbitraryPosition];
+    const scaleBlur = () => [
+      // Deprecated since Tailwind CSS v4.0.0
+      "",
+      "none",
+      themeBlur,
+      isArbitraryVariable,
+      isArbitraryValue
+    ];
+    const scaleRotate = () => ["none", isNumber2, isArbitraryVariable, isArbitraryValue];
+    const scaleScale = () => ["none", isNumber2, isArbitraryVariable, isArbitraryValue];
+    const scaleSkew = () => [isNumber2, isArbitraryVariable, isArbitraryValue];
+    const scaleTranslate = () => [isFraction, "full", ...scaleUnambiguousSpacing()];
+    return {
+      cacheSize: 500,
+      theme: {
+        animate: ["spin", "ping", "pulse", "bounce"],
+        aspect: ["video"],
+        blur: [isTshirtSize],
+        breakpoint: [isTshirtSize],
+        color: [isAny],
+        container: [isTshirtSize],
+        "drop-shadow": [isTshirtSize],
+        ease: ["in", "out", "in-out"],
+        font: [isAnyNonArbitrary],
+        "font-weight": ["thin", "extralight", "light", "normal", "medium", "semibold", "bold", "extrabold", "black"],
+        "inset-shadow": [isTshirtSize],
+        leading: ["none", "tight", "snug", "normal", "relaxed", "loose"],
+        perspective: ["dramatic", "near", "normal", "midrange", "distant", "none"],
+        radius: [isTshirtSize],
+        shadow: [isTshirtSize],
+        spacing: ["px", isNumber2],
+        text: [isTshirtSize],
+        "text-shadow": [isTshirtSize],
+        tracking: ["tighter", "tight", "normal", "wide", "wider", "widest"]
+      },
+      classGroups: {
+        // --------------
+        // --- Layout ---
+        // --------------
+        /**
+         * Aspect Ratio
+         * @see https://tailwindcss.com/docs/aspect-ratio
+         */
+        aspect: [{
+          aspect: ["auto", "square", isFraction, isArbitraryValue, isArbitraryVariable, themeAspect]
+        }],
+        /**
+         * Container
+         * @see https://tailwindcss.com/docs/container
+         * @deprecated since Tailwind CSS v4.0.0
+         */
+        container: ["container"],
+        /**
+         * Container Type
+         * @see https://tailwindcss.com/docs/responsive-design#container-queries
+         */
+        "container-type": [{
+          "@container": ["", "normal", "size", isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Container Name
+         * @see https://tailwindcss.com/docs/responsive-design#named-containers
+         */
+        "container-named": [isNamedContainerQuery],
+        /**
+         * Columns
+         * @see https://tailwindcss.com/docs/columns
+         */
+        columns: [{
+          columns: [isNumber2, isArbitraryValue, isArbitraryVariable, themeContainer]
+        }],
+        /**
+         * Break After
+         * @see https://tailwindcss.com/docs/break-after
+         */
+        "break-after": [{
+          "break-after": scaleBreak()
+        }],
+        /**
+         * Break Before
+         * @see https://tailwindcss.com/docs/break-before
+         */
+        "break-before": [{
+          "break-before": scaleBreak()
+        }],
+        /**
+         * Break Inside
+         * @see https://tailwindcss.com/docs/break-inside
+         */
+        "break-inside": [{
+          "break-inside": ["auto", "avoid", "avoid-page", "avoid-column"]
+        }],
+        /**
+         * Box Decoration Break
+         * @see https://tailwindcss.com/docs/box-decoration-break
+         */
+        "box-decoration": [{
+          "box-decoration": ["slice", "clone"]
+        }],
+        /**
+         * Box Sizing
+         * @see https://tailwindcss.com/docs/box-sizing
+         */
+        box: [{
+          box: ["border", "content"]
+        }],
+        /**
+         * Display
+         * @see https://tailwindcss.com/docs/display
+         */
+        display: ["block", "inline-block", "inline", "flex", "inline-flex", "table", "inline-table", "table-caption", "table-cell", "table-column", "table-column-group", "table-footer-group", "table-header-group", "table-row-group", "table-row", "flow-root", "grid", "inline-grid", "contents", "list-item", "hidden"],
+        /**
+         * Screen Reader Only
+         * @see https://tailwindcss.com/docs/display#screen-reader-only
+         */
+        sr: ["sr-only", "not-sr-only"],
+        /**
+         * Floats
+         * @see https://tailwindcss.com/docs/float
+         */
+        float: [{
+          float: ["right", "left", "none", "start", "end"]
+        }],
+        /**
+         * Clear
+         * @see https://tailwindcss.com/docs/clear
+         */
+        clear: [{
+          clear: ["left", "right", "both", "none", "start", "end"]
+        }],
+        /**
+         * Isolation
+         * @see https://tailwindcss.com/docs/isolation
+         */
+        isolation: ["isolate", "isolation-auto"],
+        /**
+         * Object Fit
+         * @see https://tailwindcss.com/docs/object-fit
+         */
+        "object-fit": [{
+          object: ["contain", "cover", "fill", "none", "scale-down"]
+        }],
+        /**
+         * Object Position
+         * @see https://tailwindcss.com/docs/object-position
+         */
+        "object-position": [{
+          object: scalePositionWithArbitrary()
+        }],
+        /**
+         * Overflow
+         * @see https://tailwindcss.com/docs/overflow
+         */
+        overflow: [{
+          overflow: scaleOverflow()
+        }],
+        /**
+         * Overflow X
+         * @see https://tailwindcss.com/docs/overflow
+         */
+        "overflow-x": [{
+          "overflow-x": scaleOverflow()
+        }],
+        /**
+         * Overflow Y
+         * @see https://tailwindcss.com/docs/overflow
+         */
+        "overflow-y": [{
+          "overflow-y": scaleOverflow()
+        }],
+        /**
+         * Overscroll Behavior
+         * @see https://tailwindcss.com/docs/overscroll-behavior
+         */
+        overscroll: [{
+          overscroll: scaleOverscroll()
+        }],
+        /**
+         * Overscroll Behavior X
+         * @see https://tailwindcss.com/docs/overscroll-behavior
+         */
+        "overscroll-x": [{
+          "overscroll-x": scaleOverscroll()
+        }],
+        /**
+         * Overscroll Behavior Y
+         * @see https://tailwindcss.com/docs/overscroll-behavior
+         */
+        "overscroll-y": [{
+          "overscroll-y": scaleOverscroll()
+        }],
+        /**
+         * Position
+         * @see https://tailwindcss.com/docs/position
+         */
+        position: ["static", "fixed", "absolute", "relative", "sticky"],
+        /**
+         * Inset
+         * @see https://tailwindcss.com/docs/top-right-bottom-left
+         */
+        inset: [{
+          inset: scaleInset()
+        }],
+        /**
+         * Inset Inline
+         * @see https://tailwindcss.com/docs/top-right-bottom-left
+         */
+        "inset-x": [{
+          "inset-x": scaleInset()
+        }],
+        /**
+         * Inset Block
+         * @see https://tailwindcss.com/docs/top-right-bottom-left
+         */
+        "inset-y": [{
+          "inset-y": scaleInset()
+        }],
+        /**
+         * Inset Inline Start
+         * @see https://tailwindcss.com/docs/top-right-bottom-left
+         * @todo class group will be renamed to `inset-s` in next major release
+         */
+        start: [{
+          "inset-s": scaleInset(),
+          /**
+           * @deprecated since Tailwind CSS v4.2.0 in favor of `inset-s-*` utilities.
+           * @see https://github.com/tailwindlabs/tailwindcss/pull/19613
+           */
+          start: scaleInset()
+        }],
+        /**
+         * Inset Inline End
+         * @see https://tailwindcss.com/docs/top-right-bottom-left
+         * @todo class group will be renamed to `inset-e` in next major release
+         */
+        end: [{
+          "inset-e": scaleInset(),
+          /**
+           * @deprecated since Tailwind CSS v4.2.0 in favor of `inset-e-*` utilities.
+           * @see https://github.com/tailwindlabs/tailwindcss/pull/19613
+           */
+          end: scaleInset()
+        }],
+        /**
+         * Inset Block Start
+         * @see https://tailwindcss.com/docs/top-right-bottom-left
+         */
+        "inset-bs": [{
+          "inset-bs": scaleInset()
+        }],
+        /**
+         * Inset Block End
+         * @see https://tailwindcss.com/docs/top-right-bottom-left
+         */
+        "inset-be": [{
+          "inset-be": scaleInset()
+        }],
+        /**
+         * Top
+         * @see https://tailwindcss.com/docs/top-right-bottom-left
+         */
+        top: [{
+          top: scaleInset()
+        }],
+        /**
+         * Right
+         * @see https://tailwindcss.com/docs/top-right-bottom-left
+         */
+        right: [{
+          right: scaleInset()
+        }],
+        /**
+         * Bottom
+         * @see https://tailwindcss.com/docs/top-right-bottom-left
+         */
+        bottom: [{
+          bottom: scaleInset()
+        }],
+        /**
+         * Left
+         * @see https://tailwindcss.com/docs/top-right-bottom-left
+         */
+        left: [{
+          left: scaleInset()
+        }],
+        /**
+         * Visibility
+         * @see https://tailwindcss.com/docs/visibility
+         */
+        visibility: ["visible", "invisible", "collapse"],
+        /**
+         * Z-Index
+         * @see https://tailwindcss.com/docs/z-index
+         */
+        z: [{
+          z: [isInteger, "auto", isArbitraryVariable, isArbitraryValue]
+        }],
+        // ------------------------
+        // --- Flexbox and Grid ---
+        // ------------------------
+        /**
+         * Flex Basis
+         * @see https://tailwindcss.com/docs/flex-basis
+         */
+        basis: [{
+          basis: [isFraction, "full", "auto", themeContainer, ...scaleUnambiguousSpacing()]
+        }],
+        /**
+         * Flex Direction
+         * @see https://tailwindcss.com/docs/flex-direction
+         */
+        "flex-direction": [{
+          flex: ["row", "row-reverse", "col", "col-reverse"]
+        }],
+        /**
+         * Flex Wrap
+         * @see https://tailwindcss.com/docs/flex-wrap
+         */
+        "flex-wrap": [{
+          flex: ["nowrap", "wrap", "wrap-reverse"]
+        }],
+        /**
+         * Flex
+         * @see https://tailwindcss.com/docs/flex
+         */
+        flex: [{
+          flex: [isNumber2, isFraction, "auto", "initial", "none", isArbitraryValue]
+        }],
+        /**
+         * Flex Grow
+         * @see https://tailwindcss.com/docs/flex-grow
+         */
+        grow: [{
+          grow: ["", isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Flex Shrink
+         * @see https://tailwindcss.com/docs/flex-shrink
+         */
+        shrink: [{
+          shrink: ["", isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Order
+         * @see https://tailwindcss.com/docs/order
+         */
+        order: [{
+          order: [isInteger, "first", "last", "none", isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Grid Template Columns
+         * @see https://tailwindcss.com/docs/grid-template-columns
+         */
+        "grid-cols": [{
+          "grid-cols": scaleGridTemplateColsRows()
+        }],
+        /**
+         * Grid Column Start / End
+         * @see https://tailwindcss.com/docs/grid-column
+         */
+        "col-start-end": [{
+          col: scaleGridColRowStartAndEnd()
+        }],
+        /**
+         * Grid Column Start
+         * @see https://tailwindcss.com/docs/grid-column
+         */
+        "col-start": [{
+          "col-start": scaleGridColRowStartOrEnd()
+        }],
+        /**
+         * Grid Column End
+         * @see https://tailwindcss.com/docs/grid-column
+         */
+        "col-end": [{
+          "col-end": scaleGridColRowStartOrEnd()
+        }],
+        /**
+         * Grid Template Rows
+         * @see https://tailwindcss.com/docs/grid-template-rows
+         */
+        "grid-rows": [{
+          "grid-rows": scaleGridTemplateColsRows()
+        }],
+        /**
+         * Grid Row Start / End
+         * @see https://tailwindcss.com/docs/grid-row
+         */
+        "row-start-end": [{
+          row: scaleGridColRowStartAndEnd()
+        }],
+        /**
+         * Grid Row Start
+         * @see https://tailwindcss.com/docs/grid-row
+         */
+        "row-start": [{
+          "row-start": scaleGridColRowStartOrEnd()
+        }],
+        /**
+         * Grid Row End
+         * @see https://tailwindcss.com/docs/grid-row
+         */
+        "row-end": [{
+          "row-end": scaleGridColRowStartOrEnd()
+        }],
+        /**
+         * Grid Auto Flow
+         * @see https://tailwindcss.com/docs/grid-auto-flow
+         */
+        "grid-flow": [{
+          "grid-flow": ["row", "col", "dense", "row-dense", "col-dense"]
+        }],
+        /**
+         * Grid Auto Columns
+         * @see https://tailwindcss.com/docs/grid-auto-columns
+         */
+        "auto-cols": [{
+          "auto-cols": scaleGridAutoColsRows()
+        }],
+        /**
+         * Grid Auto Rows
+         * @see https://tailwindcss.com/docs/grid-auto-rows
+         */
+        "auto-rows": [{
+          "auto-rows": scaleGridAutoColsRows()
+        }],
+        /**
+         * Gap
+         * @see https://tailwindcss.com/docs/gap
+         */
+        gap: [{
+          gap: scaleUnambiguousSpacing()
+        }],
+        /**
+         * Gap X
+         * @see https://tailwindcss.com/docs/gap
+         */
+        "gap-x": [{
+          "gap-x": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Gap Y
+         * @see https://tailwindcss.com/docs/gap
+         */
+        "gap-y": [{
+          "gap-y": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Justify Content
+         * @see https://tailwindcss.com/docs/justify-content
+         */
+        "justify-content": [{
+          justify: [...scaleAlignPrimaryAxis(), "normal"]
+        }],
+        /**
+         * Justify Items
+         * @see https://tailwindcss.com/docs/justify-items
+         */
+        "justify-items": [{
+          "justify-items": [...scaleAlignSecondaryAxis(), "normal"]
+        }],
+        /**
+         * Justify Self
+         * @see https://tailwindcss.com/docs/justify-self
+         */
+        "justify-self": [{
+          "justify-self": ["auto", ...scaleAlignSecondaryAxis()]
+        }],
+        /**
+         * Align Content
+         * @see https://tailwindcss.com/docs/align-content
+         */
+        "align-content": [{
+          content: ["normal", ...scaleAlignPrimaryAxis()]
+        }],
+        /**
+         * Align Items
+         * @see https://tailwindcss.com/docs/align-items
+         */
+        "align-items": [{
+          items: [...scaleAlignSecondaryAxis(), {
+            baseline: ["", "last"]
+          }]
+        }],
+        /**
+         * Align Self
+         * @see https://tailwindcss.com/docs/align-self
+         */
+        "align-self": [{
+          self: ["auto", ...scaleAlignSecondaryAxis(), {
+            baseline: ["", "last"]
+          }]
+        }],
+        /**
+         * Place Content
+         * @see https://tailwindcss.com/docs/place-content
+         */
+        "place-content": [{
+          "place-content": scaleAlignPrimaryAxis()
+        }],
+        /**
+         * Place Items
+         * @see https://tailwindcss.com/docs/place-items
+         */
+        "place-items": [{
+          "place-items": [...scaleAlignSecondaryAxis(), "baseline"]
+        }],
+        /**
+         * Place Self
+         * @see https://tailwindcss.com/docs/place-self
+         */
+        "place-self": [{
+          "place-self": ["auto", ...scaleAlignSecondaryAxis()]
+        }],
+        // Spacing
+        /**
+         * Padding
+         * @see https://tailwindcss.com/docs/padding
+         */
+        p: [{
+          p: scaleUnambiguousSpacing()
+        }],
+        /**
+         * Padding Inline
+         * @see https://tailwindcss.com/docs/padding
+         */
+        px: [{
+          px: scaleUnambiguousSpacing()
+        }],
+        /**
+         * Padding Block
+         * @see https://tailwindcss.com/docs/padding
+         */
+        py: [{
+          py: scaleUnambiguousSpacing()
+        }],
+        /**
+         * Padding Inline Start
+         * @see https://tailwindcss.com/docs/padding
+         */
+        ps: [{
+          ps: scaleUnambiguousSpacing()
+        }],
+        /**
+         * Padding Inline End
+         * @see https://tailwindcss.com/docs/padding
+         */
+        pe: [{
+          pe: scaleUnambiguousSpacing()
+        }],
+        /**
+         * Padding Block Start
+         * @see https://tailwindcss.com/docs/padding
+         */
+        pbs: [{
+          pbs: scaleUnambiguousSpacing()
+        }],
+        /**
+         * Padding Block End
+         * @see https://tailwindcss.com/docs/padding
+         */
+        pbe: [{
+          pbe: scaleUnambiguousSpacing()
+        }],
+        /**
+         * Padding Top
+         * @see https://tailwindcss.com/docs/padding
+         */
+        pt: [{
+          pt: scaleUnambiguousSpacing()
+        }],
+        /**
+         * Padding Right
+         * @see https://tailwindcss.com/docs/padding
+         */
+        pr: [{
+          pr: scaleUnambiguousSpacing()
+        }],
+        /**
+         * Padding Bottom
+         * @see https://tailwindcss.com/docs/padding
+         */
+        pb: [{
+          pb: scaleUnambiguousSpacing()
+        }],
+        /**
+         * Padding Left
+         * @see https://tailwindcss.com/docs/padding
+         */
+        pl: [{
+          pl: scaleUnambiguousSpacing()
+        }],
+        /**
+         * Margin
+         * @see https://tailwindcss.com/docs/margin
+         */
+        m: [{
+          m: scaleMargin()
+        }],
+        /**
+         * Margin Inline
+         * @see https://tailwindcss.com/docs/margin
+         */
+        mx: [{
+          mx: scaleMargin()
+        }],
+        /**
+         * Margin Block
+         * @see https://tailwindcss.com/docs/margin
+         */
+        my: [{
+          my: scaleMargin()
+        }],
+        /**
+         * Margin Inline Start
+         * @see https://tailwindcss.com/docs/margin
+         */
+        ms: [{
+          ms: scaleMargin()
+        }],
+        /**
+         * Margin Inline End
+         * @see https://tailwindcss.com/docs/margin
+         */
+        me: [{
+          me: scaleMargin()
+        }],
+        /**
+         * Margin Block Start
+         * @see https://tailwindcss.com/docs/margin
+         */
+        mbs: [{
+          mbs: scaleMargin()
+        }],
+        /**
+         * Margin Block End
+         * @see https://tailwindcss.com/docs/margin
+         */
+        mbe: [{
+          mbe: scaleMargin()
+        }],
+        /**
+         * Margin Top
+         * @see https://tailwindcss.com/docs/margin
+         */
+        mt: [{
+          mt: scaleMargin()
+        }],
+        /**
+         * Margin Right
+         * @see https://tailwindcss.com/docs/margin
+         */
+        mr: [{
+          mr: scaleMargin()
+        }],
+        /**
+         * Margin Bottom
+         * @see https://tailwindcss.com/docs/margin
+         */
+        mb: [{
+          mb: scaleMargin()
+        }],
+        /**
+         * Margin Left
+         * @see https://tailwindcss.com/docs/margin
+         */
+        ml: [{
+          ml: scaleMargin()
+        }],
+        /**
+         * Space Between X
+         * @see https://tailwindcss.com/docs/margin#adding-space-between-children
+         */
+        "space-x": [{
+          "space-x": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Space Between X Reverse
+         * @see https://tailwindcss.com/docs/margin#adding-space-between-children
+         */
+        "space-x-reverse": ["space-x-reverse"],
+        /**
+         * Space Between Y
+         * @see https://tailwindcss.com/docs/margin#adding-space-between-children
+         */
+        "space-y": [{
+          "space-y": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Space Between Y Reverse
+         * @see https://tailwindcss.com/docs/margin#adding-space-between-children
+         */
+        "space-y-reverse": ["space-y-reverse"],
+        // --------------
+        // --- Sizing ---
+        // --------------
+        /**
+         * Size
+         * @see https://tailwindcss.com/docs/width#setting-both-width-and-height
+         */
+        size: [{
+          size: scaleSizing()
+        }],
+        /**
+         * Inline Size
+         * @see https://tailwindcss.com/docs/width
+         */
+        "inline-size": [{
+          inline: ["auto", ...scaleSizingInline()]
+        }],
+        /**
+         * Min-Inline Size
+         * @see https://tailwindcss.com/docs/min-width
+         */
+        "min-inline-size": [{
+          "min-inline": ["auto", ...scaleSizingInline()]
+        }],
+        /**
+         * Max-Inline Size
+         * @see https://tailwindcss.com/docs/max-width
+         */
+        "max-inline-size": [{
+          "max-inline": ["none", ...scaleSizingInline()]
+        }],
+        /**
+         * Block Size
+         * @see https://tailwindcss.com/docs/height
+         */
+        "block-size": [{
+          block: ["auto", ...scaleSizingBlock()]
+        }],
+        /**
+         * Min-Block Size
+         * @see https://tailwindcss.com/docs/min-height
+         */
+        "min-block-size": [{
+          "min-block": ["auto", ...scaleSizingBlock()]
+        }],
+        /**
+         * Max-Block Size
+         * @see https://tailwindcss.com/docs/max-height
+         */
+        "max-block-size": [{
+          "max-block": ["none", ...scaleSizingBlock()]
+        }],
+        /**
+         * Width
+         * @see https://tailwindcss.com/docs/width
+         */
+        w: [{
+          w: [themeContainer, "screen", ...scaleSizing()]
+        }],
+        /**
+         * Min-Width
+         * @see https://tailwindcss.com/docs/min-width
+         */
+        "min-w": [{
+          "min-w": [
+            themeContainer,
+            "screen",
+            /** Deprecated. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
+            "none",
+            ...scaleSizing()
+          ]
+        }],
+        /**
+         * Max-Width
+         * @see https://tailwindcss.com/docs/max-width
+         */
+        "max-w": [{
+          "max-w": [
+            themeContainer,
+            "screen",
+            "none",
+            /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
+            "prose",
+            /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
+            {
+              screen: [themeBreakpoint]
+            },
+            ...scaleSizing()
+          ]
+        }],
+        /**
+         * Height
+         * @see https://tailwindcss.com/docs/height
+         */
+        h: [{
+          h: ["screen", "lh", ...scaleSizing()]
+        }],
+        /**
+         * Min-Height
+         * @see https://tailwindcss.com/docs/min-height
+         */
+        "min-h": [{
+          "min-h": ["screen", "lh", "none", ...scaleSizing()]
+        }],
+        /**
+         * Max-Height
+         * @see https://tailwindcss.com/docs/max-height
+         */
+        "max-h": [{
+          "max-h": ["screen", "lh", ...scaleSizing()]
+        }],
+        // ------------------
+        // --- Typography ---
+        // ------------------
+        /**
+         * Font Size
+         * @see https://tailwindcss.com/docs/font-size
+         */
+        "font-size": [{
+          text: ["base", themeText, isArbitraryVariableLength, isArbitraryLength]
+        }],
+        /**
+         * Font Smoothing
+         * @see https://tailwindcss.com/docs/font-smoothing
+         */
+        "font-smoothing": ["antialiased", "subpixel-antialiased"],
+        /**
+         * Font Style
+         * @see https://tailwindcss.com/docs/font-style
+         */
+        "font-style": ["italic", "not-italic"],
+        /**
+         * Font Weight
+         * @see https://tailwindcss.com/docs/font-weight
+         */
+        "font-weight": [{
+          font: [themeFontWeight, isArbitraryVariableWeight, isArbitraryWeight]
+        }],
+        /**
+         * Font Stretch
+         * @see https://tailwindcss.com/docs/font-stretch
+         */
+        "font-stretch": [{
+          "font-stretch": ["ultra-condensed", "extra-condensed", "condensed", "semi-condensed", "normal", "semi-expanded", "expanded", "extra-expanded", "ultra-expanded", isPercent, isArbitraryValue]
+        }],
+        /**
+         * Font Family
+         * @see https://tailwindcss.com/docs/font-family
+         */
+        "font-family": [{
+          font: [isArbitraryVariableFamilyName, isArbitraryFamilyName, themeFont]
+        }],
+        /**
+         * Font Feature Settings
+         * @see https://tailwindcss.com/docs/font-feature-settings
+         */
+        "font-features": [{
+          "font-features": [isArbitraryValue]
+        }],
+        /**
+         * Font Variant Numeric
+         * @see https://tailwindcss.com/docs/font-variant-numeric
+         */
+        "fvn-normal": ["normal-nums"],
+        /**
+         * Font Variant Numeric
+         * @see https://tailwindcss.com/docs/font-variant-numeric
+         */
+        "fvn-ordinal": ["ordinal"],
+        /**
+         * Font Variant Numeric
+         * @see https://tailwindcss.com/docs/font-variant-numeric
+         */
+        "fvn-slashed-zero": ["slashed-zero"],
+        /**
+         * Font Variant Numeric
+         * @see https://tailwindcss.com/docs/font-variant-numeric
+         */
+        "fvn-figure": ["lining-nums", "oldstyle-nums"],
+        /**
+         * Font Variant Numeric
+         * @see https://tailwindcss.com/docs/font-variant-numeric
+         */
+        "fvn-spacing": ["proportional-nums", "tabular-nums"],
+        /**
+         * Font Variant Numeric
+         * @see https://tailwindcss.com/docs/font-variant-numeric
+         */
+        "fvn-fraction": ["diagonal-fractions", "stacked-fractions"],
+        /**
+         * Letter Spacing
+         * @see https://tailwindcss.com/docs/letter-spacing
+         */
+        tracking: [{
+          tracking: [themeTracking, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Line Clamp
+         * @see https://tailwindcss.com/docs/line-clamp
+         */
+        "line-clamp": [{
+          "line-clamp": [isNumber2, "none", isArbitraryVariable, isArbitraryNumber]
+        }],
+        /**
+         * Line Height
+         * @see https://tailwindcss.com/docs/line-height
+         */
+        leading: [{
+          leading: [
+            /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
+            themeLeading,
+            ...scaleUnambiguousSpacing()
+          ]
+        }],
+        /**
+         * List Style Image
+         * @see https://tailwindcss.com/docs/list-style-image
+         */
+        "list-image": [{
+          "list-image": ["none", isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * List Style Position
+         * @see https://tailwindcss.com/docs/list-style-position
+         */
+        "list-style-position": [{
+          list: ["inside", "outside"]
+        }],
+        /**
+         * List Style Type
+         * @see https://tailwindcss.com/docs/list-style-type
+         */
+        "list-style-type": [{
+          list: ["disc", "decimal", "none", isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Text Alignment
+         * @see https://tailwindcss.com/docs/text-align
+         */
+        "text-alignment": [{
+          text: ["left", "center", "right", "justify", "start", "end"]
+        }],
+        /**
+         * Placeholder Color
+         * @deprecated since Tailwind CSS v3.0.0
+         * @see https://v3.tailwindcss.com/docs/placeholder-color
+         */
+        "placeholder-color": [{
+          placeholder: scaleColor()
+        }],
+        /**
+         * Text Color
+         * @see https://tailwindcss.com/docs/text-color
+         */
+        "text-color": [{
+          text: scaleColor()
+        }],
+        /**
+         * Text Decoration
+         * @see https://tailwindcss.com/docs/text-decoration
+         */
+        "text-decoration": ["underline", "overline", "line-through", "no-underline"],
+        /**
+         * Text Decoration Style
+         * @see https://tailwindcss.com/docs/text-decoration-style
+         */
+        "text-decoration-style": [{
+          decoration: [...scaleLineStyle(), "wavy"]
+        }],
+        /**
+         * Text Decoration Thickness
+         * @see https://tailwindcss.com/docs/text-decoration-thickness
+         */
+        "text-decoration-thickness": [{
+          decoration: [isNumber2, "from-font", "auto", isArbitraryVariable, isArbitraryLength]
+        }],
+        /**
+         * Text Decoration Color
+         * @see https://tailwindcss.com/docs/text-decoration-color
+         */
+        "text-decoration-color": [{
+          decoration: scaleColor()
+        }],
+        /**
+         * Text Underline Offset
+         * @see https://tailwindcss.com/docs/text-underline-offset
+         */
+        "underline-offset": [{
+          "underline-offset": [isNumber2, "auto", isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Text Transform
+         * @see https://tailwindcss.com/docs/text-transform
+         */
+        "text-transform": ["uppercase", "lowercase", "capitalize", "normal-case"],
+        /**
+         * Text Overflow
+         * @see https://tailwindcss.com/docs/text-overflow
+         */
+        "text-overflow": ["truncate", "text-ellipsis", "text-clip"],
+        /**
+         * Text Wrap
+         * @see https://tailwindcss.com/docs/text-wrap
+         */
+        "text-wrap": [{
+          text: ["wrap", "nowrap", "balance", "pretty"]
+        }],
+        /**
+         * Text Indent
+         * @see https://tailwindcss.com/docs/text-indent
+         */
+        indent: [{
+          indent: scaleUnambiguousSpacing()
+        }],
+        /**
+         * Tab Size
+         * @see https://tailwindcss.com/docs/tab-size
+         */
+        "tab-size": [{
+          tab: [isInteger, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Vertical Alignment
+         * @see https://tailwindcss.com/docs/vertical-align
+         */
+        "vertical-align": [{
+          align: ["baseline", "top", "middle", "bottom", "text-top", "text-bottom", "sub", "super", isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Whitespace
+         * @see https://tailwindcss.com/docs/whitespace
+         */
+        whitespace: [{
+          whitespace: ["normal", "nowrap", "pre", "pre-line", "pre-wrap", "break-spaces"]
+        }],
+        /**
+         * Word Break
+         * @see https://tailwindcss.com/docs/word-break
+         */
+        break: [{
+          break: ["normal", "words", "all", "keep"]
+        }],
+        /**
+         * Overflow Wrap
+         * @see https://tailwindcss.com/docs/overflow-wrap
+         */
+        wrap: [{
+          wrap: ["break-word", "anywhere", "normal"]
+        }],
+        /**
+         * Hyphens
+         * @see https://tailwindcss.com/docs/hyphens
+         */
+        hyphens: [{
+          hyphens: ["none", "manual", "auto"]
+        }],
+        /**
+         * Content
+         * @see https://tailwindcss.com/docs/content
+         */
+        content: [{
+          content: ["none", isArbitraryVariable, isArbitraryValue]
+        }],
+        // -------------------
+        // --- Backgrounds ---
+        // -------------------
+        /**
+         * Background Attachment
+         * @see https://tailwindcss.com/docs/background-attachment
+         */
+        "bg-attachment": [{
+          bg: ["fixed", "local", "scroll"]
+        }],
+        /**
+         * Background Clip
+         * @see https://tailwindcss.com/docs/background-clip
+         */
+        "bg-clip": [{
+          "bg-clip": ["border", "padding", "content", "text"]
+        }],
+        /**
+         * Background Origin
+         * @see https://tailwindcss.com/docs/background-origin
+         */
+        "bg-origin": [{
+          "bg-origin": ["border", "padding", "content"]
+        }],
+        /**
+         * Background Position
+         * @see https://tailwindcss.com/docs/background-position
+         */
+        "bg-position": [{
+          bg: scaleBgPosition()
+        }],
+        /**
+         * Background Repeat
+         * @see https://tailwindcss.com/docs/background-repeat
+         */
+        "bg-repeat": [{
+          bg: scaleBgRepeat()
+        }],
+        /**
+         * Background Size
+         * @see https://tailwindcss.com/docs/background-size
+         */
+        "bg-size": [{
+          bg: scaleBgSize()
+        }],
+        /**
+         * Background Image
+         * @see https://tailwindcss.com/docs/background-image
+         */
+        "bg-image": [{
+          bg: ["none", {
+            linear: [{
+              to: ["t", "tr", "r", "br", "b", "bl", "l", "tl"]
+            }, isInteger, isArbitraryVariable, isArbitraryValue],
+            radial: ["", isArbitraryVariable, isArbitraryValue],
+            conic: [isInteger, isArbitraryVariable, isArbitraryValue]
+          }, isArbitraryVariableImage, isArbitraryImage]
+        }],
+        /**
+         * Background Color
+         * @see https://tailwindcss.com/docs/background-color
+         */
+        "bg-color": [{
+          bg: scaleColor()
+        }],
+        /**
+         * Gradient Color Stops From Position
+         * @see https://tailwindcss.com/docs/gradient-color-stops
+         */
+        "gradient-from-pos": [{
+          from: scaleGradientStopPosition()
+        }],
+        /**
+         * Gradient Color Stops Via Position
+         * @see https://tailwindcss.com/docs/gradient-color-stops
+         */
+        "gradient-via-pos": [{
+          via: scaleGradientStopPosition()
+        }],
+        /**
+         * Gradient Color Stops To Position
+         * @see https://tailwindcss.com/docs/gradient-color-stops
+         */
+        "gradient-to-pos": [{
+          to: scaleGradientStopPosition()
+        }],
+        /**
+         * Gradient Color Stops From
+         * @see https://tailwindcss.com/docs/gradient-color-stops
+         */
+        "gradient-from": [{
+          from: scaleColor()
+        }],
+        /**
+         * Gradient Color Stops Via
+         * @see https://tailwindcss.com/docs/gradient-color-stops
+         */
+        "gradient-via": [{
+          via: scaleColor()
+        }],
+        /**
+         * Gradient Color Stops To
+         * @see https://tailwindcss.com/docs/gradient-color-stops
+         */
+        "gradient-to": [{
+          to: scaleColor()
+        }],
+        // ---------------
+        // --- Borders ---
+        // ---------------
+        /**
+         * Border Radius
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        rounded: [{
+          rounded: scaleRadius()
+        }],
+        /**
+         * Border Radius Start
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-s": [{
+          "rounded-s": scaleRadius()
+        }],
+        /**
+         * Border Radius End
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-e": [{
+          "rounded-e": scaleRadius()
+        }],
+        /**
+         * Border Radius Top
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-t": [{
+          "rounded-t": scaleRadius()
+        }],
+        /**
+         * Border Radius Right
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-r": [{
+          "rounded-r": scaleRadius()
+        }],
+        /**
+         * Border Radius Bottom
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-b": [{
+          "rounded-b": scaleRadius()
+        }],
+        /**
+         * Border Radius Left
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-l": [{
+          "rounded-l": scaleRadius()
+        }],
+        /**
+         * Border Radius Start Start
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-ss": [{
+          "rounded-ss": scaleRadius()
+        }],
+        /**
+         * Border Radius Start End
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-se": [{
+          "rounded-se": scaleRadius()
+        }],
+        /**
+         * Border Radius End End
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-ee": [{
+          "rounded-ee": scaleRadius()
+        }],
+        /**
+         * Border Radius End Start
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-es": [{
+          "rounded-es": scaleRadius()
+        }],
+        /**
+         * Border Radius Top Left
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-tl": [{
+          "rounded-tl": scaleRadius()
+        }],
+        /**
+         * Border Radius Top Right
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-tr": [{
+          "rounded-tr": scaleRadius()
+        }],
+        /**
+         * Border Radius Bottom Right
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-br": [{
+          "rounded-br": scaleRadius()
+        }],
+        /**
+         * Border Radius Bottom Left
+         * @see https://tailwindcss.com/docs/border-radius
+         */
+        "rounded-bl": [{
+          "rounded-bl": scaleRadius()
+        }],
+        /**
+         * Border Width
+         * @see https://tailwindcss.com/docs/border-width
+         */
+        "border-w": [{
+          border: scaleBorderWidth()
+        }],
+        /**
+         * Border Width Inline
+         * @see https://tailwindcss.com/docs/border-width
+         */
+        "border-w-x": [{
+          "border-x": scaleBorderWidth()
+        }],
+        /**
+         * Border Width Block
+         * @see https://tailwindcss.com/docs/border-width
+         */
+        "border-w-y": [{
+          "border-y": scaleBorderWidth()
+        }],
+        /**
+         * Border Width Inline Start
+         * @see https://tailwindcss.com/docs/border-width
+         */
+        "border-w-s": [{
+          "border-s": scaleBorderWidth()
+        }],
+        /**
+         * Border Width Inline End
+         * @see https://tailwindcss.com/docs/border-width
+         */
+        "border-w-e": [{
+          "border-e": scaleBorderWidth()
+        }],
+        /**
+         * Border Width Block Start
+         * @see https://tailwindcss.com/docs/border-width
+         */
+        "border-w-bs": [{
+          "border-bs": scaleBorderWidth()
+        }],
+        /**
+         * Border Width Block End
+         * @see https://tailwindcss.com/docs/border-width
+         */
+        "border-w-be": [{
+          "border-be": scaleBorderWidth()
+        }],
+        /**
+         * Border Width Top
+         * @see https://tailwindcss.com/docs/border-width
+         */
+        "border-w-t": [{
+          "border-t": scaleBorderWidth()
+        }],
+        /**
+         * Border Width Right
+         * @see https://tailwindcss.com/docs/border-width
+         */
+        "border-w-r": [{
+          "border-r": scaleBorderWidth()
+        }],
+        /**
+         * Border Width Bottom
+         * @see https://tailwindcss.com/docs/border-width
+         */
+        "border-w-b": [{
+          "border-b": scaleBorderWidth()
+        }],
+        /**
+         * Border Width Left
+         * @see https://tailwindcss.com/docs/border-width
+         */
+        "border-w-l": [{
+          "border-l": scaleBorderWidth()
+        }],
+        /**
+         * Divide Width X
+         * @see https://tailwindcss.com/docs/border-width#between-children
+         */
+        "divide-x": [{
+          "divide-x": scaleBorderWidth()
+        }],
+        /**
+         * Divide Width X Reverse
+         * @see https://tailwindcss.com/docs/border-width#between-children
+         */
+        "divide-x-reverse": ["divide-x-reverse"],
+        /**
+         * Divide Width Y
+         * @see https://tailwindcss.com/docs/border-width#between-children
+         */
+        "divide-y": [{
+          "divide-y": scaleBorderWidth()
+        }],
+        /**
+         * Divide Width Y Reverse
+         * @see https://tailwindcss.com/docs/border-width#between-children
+         */
+        "divide-y-reverse": ["divide-y-reverse"],
+        /**
+         * Border Style
+         * @see https://tailwindcss.com/docs/border-style
+         */
+        "border-style": [{
+          border: [...scaleLineStyle(), "hidden", "none"]
+        }],
+        /**
+         * Divide Style
+         * @see https://tailwindcss.com/docs/border-style#setting-the-divider-style
+         */
+        "divide-style": [{
+          divide: [...scaleLineStyle(), "hidden", "none"]
+        }],
+        /**
+         * Border Color
+         * @see https://tailwindcss.com/docs/border-color
+         */
+        "border-color": [{
+          border: scaleColor()
+        }],
+        /**
+         * Border Color Inline
+         * @see https://tailwindcss.com/docs/border-color
+         */
+        "border-color-x": [{
+          "border-x": scaleColor()
+        }],
+        /**
+         * Border Color Block
+         * @see https://tailwindcss.com/docs/border-color
+         */
+        "border-color-y": [{
+          "border-y": scaleColor()
+        }],
+        /**
+         * Border Color Inline Start
+         * @see https://tailwindcss.com/docs/border-color
+         */
+        "border-color-s": [{
+          "border-s": scaleColor()
+        }],
+        /**
+         * Border Color Inline End
+         * @see https://tailwindcss.com/docs/border-color
+         */
+        "border-color-e": [{
+          "border-e": scaleColor()
+        }],
+        /**
+         * Border Color Block Start
+         * @see https://tailwindcss.com/docs/border-color
+         */
+        "border-color-bs": [{
+          "border-bs": scaleColor()
+        }],
+        /**
+         * Border Color Block End
+         * @see https://tailwindcss.com/docs/border-color
+         */
+        "border-color-be": [{
+          "border-be": scaleColor()
+        }],
+        /**
+         * Border Color Top
+         * @see https://tailwindcss.com/docs/border-color
+         */
+        "border-color-t": [{
+          "border-t": scaleColor()
+        }],
+        /**
+         * Border Color Right
+         * @see https://tailwindcss.com/docs/border-color
+         */
+        "border-color-r": [{
+          "border-r": scaleColor()
+        }],
+        /**
+         * Border Color Bottom
+         * @see https://tailwindcss.com/docs/border-color
+         */
+        "border-color-b": [{
+          "border-b": scaleColor()
+        }],
+        /**
+         * Border Color Left
+         * @see https://tailwindcss.com/docs/border-color
+         */
+        "border-color-l": [{
+          "border-l": scaleColor()
+        }],
+        /**
+         * Divide Color
+         * @see https://tailwindcss.com/docs/divide-color
+         */
+        "divide-color": [{
+          divide: scaleColor()
+        }],
+        /**
+         * Outline Style
+         * @see https://tailwindcss.com/docs/outline-style
+         */
+        "outline-style": [{
+          outline: [...scaleLineStyle(), "none", "hidden"]
+        }],
+        /**
+         * Outline Offset
+         * @see https://tailwindcss.com/docs/outline-offset
+         */
+        "outline-offset": [{
+          "outline-offset": [isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Outline Width
+         * @see https://tailwindcss.com/docs/outline-width
+         */
+        "outline-w": [{
+          outline: ["", isNumber2, isArbitraryVariableLength, isArbitraryLength]
+        }],
+        /**
+         * Outline Color
+         * @see https://tailwindcss.com/docs/outline-color
+         */
+        "outline-color": [{
+          outline: scaleColor()
+        }],
+        // ---------------
+        // --- Effects ---
+        // ---------------
+        /**
+         * Box Shadow
+         * @see https://tailwindcss.com/docs/box-shadow
+         */
+        shadow: [{
+          shadow: [
+            // Deprecated since Tailwind CSS v4.0.0
+            "",
+            "none",
+            themeShadow,
+            isArbitraryVariableShadow,
+            isArbitraryShadow
+          ]
+        }],
+        /**
+         * Box Shadow Color
+         * @see https://tailwindcss.com/docs/box-shadow#setting-the-shadow-color
+         */
+        "shadow-color": [{
+          shadow: scaleColor()
+        }],
+        /**
+         * Inset Box Shadow
+         * @see https://tailwindcss.com/docs/box-shadow#adding-an-inset-shadow
+         */
+        "inset-shadow": [{
+          "inset-shadow": ["none", themeInsetShadow, isArbitraryVariableShadow, isArbitraryShadow]
+        }],
+        /**
+         * Inset Box Shadow Color
+         * @see https://tailwindcss.com/docs/box-shadow#setting-the-inset-shadow-color
+         */
+        "inset-shadow-color": [{
+          "inset-shadow": scaleColor()
+        }],
+        /**
+         * Ring Width
+         * @see https://tailwindcss.com/docs/box-shadow#adding-a-ring
+         */
+        "ring-w": [{
+          ring: scaleBorderWidth()
+        }],
+        /**
+         * Ring Width Inset
+         * @see https://v3.tailwindcss.com/docs/ring-width#inset-rings
+         * @deprecated since Tailwind CSS v4.0.0
+         * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
+         */
+        "ring-w-inset": ["ring-inset"],
+        /**
+         * Ring Color
+         * @see https://tailwindcss.com/docs/box-shadow#setting-the-ring-color
+         */
+        "ring-color": [{
+          ring: scaleColor()
+        }],
+        /**
+         * Ring Offset Width
+         * @see https://v3.tailwindcss.com/docs/ring-offset-width
+         * @deprecated since Tailwind CSS v4.0.0
+         * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
+         */
+        "ring-offset-w": [{
+          "ring-offset": [isNumber2, isArbitraryLength]
+        }],
+        /**
+         * Ring Offset Color
+         * @see https://v3.tailwindcss.com/docs/ring-offset-color
+         * @deprecated since Tailwind CSS v4.0.0
+         * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
+         */
+        "ring-offset-color": [{
+          "ring-offset": scaleColor()
+        }],
+        /**
+         * Inset Ring Width
+         * @see https://tailwindcss.com/docs/box-shadow#adding-an-inset-ring
+         */
+        "inset-ring-w": [{
+          "inset-ring": scaleBorderWidth()
+        }],
+        /**
+         * Inset Ring Color
+         * @see https://tailwindcss.com/docs/box-shadow#setting-the-inset-ring-color
+         */
+        "inset-ring-color": [{
+          "inset-ring": scaleColor()
+        }],
+        /**
+         * Text Shadow
+         * @see https://tailwindcss.com/docs/text-shadow
+         */
+        "text-shadow": [{
+          "text-shadow": ["none", themeTextShadow, isArbitraryVariableShadow, isArbitraryShadow]
+        }],
+        /**
+         * Text Shadow Color
+         * @see https://tailwindcss.com/docs/text-shadow#setting-the-shadow-color
+         */
+        "text-shadow-color": [{
+          "text-shadow": scaleColor()
+        }],
+        /**
+         * Opacity
+         * @see https://tailwindcss.com/docs/opacity
+         */
+        opacity: [{
+          opacity: [isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Mix Blend Mode
+         * @see https://tailwindcss.com/docs/mix-blend-mode
+         */
+        "mix-blend": [{
+          "mix-blend": [...scaleBlendMode(), "plus-darker", "plus-lighter"]
+        }],
+        /**
+         * Background Blend Mode
+         * @see https://tailwindcss.com/docs/background-blend-mode
+         */
+        "bg-blend": [{
+          "bg-blend": scaleBlendMode()
+        }],
+        /**
+         * Mask Clip
+         * @see https://tailwindcss.com/docs/mask-clip
+         */
+        "mask-clip": [{
+          "mask-clip": ["border", "padding", "content", "fill", "stroke", "view"]
+        }, "mask-no-clip"],
+        /**
+         * Mask Composite
+         * @see https://tailwindcss.com/docs/mask-composite
+         */
+        "mask-composite": [{
+          mask: ["add", "subtract", "intersect", "exclude"]
+        }],
+        /**
+         * Mask Image
+         * @see https://tailwindcss.com/docs/mask-image
+         */
+        "mask-image-linear-pos": [{
+          "mask-linear": [isNumber2]
+        }],
+        "mask-image-linear-from-pos": [{
+          "mask-linear-from": scaleMaskImagePosition()
+        }],
+        "mask-image-linear-to-pos": [{
+          "mask-linear-to": scaleMaskImagePosition()
+        }],
+        "mask-image-linear-from-color": [{
+          "mask-linear-from": scaleColor()
+        }],
+        "mask-image-linear-to-color": [{
+          "mask-linear-to": scaleColor()
+        }],
+        "mask-image-t-from-pos": [{
+          "mask-t-from": scaleMaskImagePosition()
+        }],
+        "mask-image-t-to-pos": [{
+          "mask-t-to": scaleMaskImagePosition()
+        }],
+        "mask-image-t-from-color": [{
+          "mask-t-from": scaleColor()
+        }],
+        "mask-image-t-to-color": [{
+          "mask-t-to": scaleColor()
+        }],
+        "mask-image-r-from-pos": [{
+          "mask-r-from": scaleMaskImagePosition()
+        }],
+        "mask-image-r-to-pos": [{
+          "mask-r-to": scaleMaskImagePosition()
+        }],
+        "mask-image-r-from-color": [{
+          "mask-r-from": scaleColor()
+        }],
+        "mask-image-r-to-color": [{
+          "mask-r-to": scaleColor()
+        }],
+        "mask-image-b-from-pos": [{
+          "mask-b-from": scaleMaskImagePosition()
+        }],
+        "mask-image-b-to-pos": [{
+          "mask-b-to": scaleMaskImagePosition()
+        }],
+        "mask-image-b-from-color": [{
+          "mask-b-from": scaleColor()
+        }],
+        "mask-image-b-to-color": [{
+          "mask-b-to": scaleColor()
+        }],
+        "mask-image-l-from-pos": [{
+          "mask-l-from": scaleMaskImagePosition()
+        }],
+        "mask-image-l-to-pos": [{
+          "mask-l-to": scaleMaskImagePosition()
+        }],
+        "mask-image-l-from-color": [{
+          "mask-l-from": scaleColor()
+        }],
+        "mask-image-l-to-color": [{
+          "mask-l-to": scaleColor()
+        }],
+        "mask-image-x-from-pos": [{
+          "mask-x-from": scaleMaskImagePosition()
+        }],
+        "mask-image-x-to-pos": [{
+          "mask-x-to": scaleMaskImagePosition()
+        }],
+        "mask-image-x-from-color": [{
+          "mask-x-from": scaleColor()
+        }],
+        "mask-image-x-to-color": [{
+          "mask-x-to": scaleColor()
+        }],
+        "mask-image-y-from-pos": [{
+          "mask-y-from": scaleMaskImagePosition()
+        }],
+        "mask-image-y-to-pos": [{
+          "mask-y-to": scaleMaskImagePosition()
+        }],
+        "mask-image-y-from-color": [{
+          "mask-y-from": scaleColor()
+        }],
+        "mask-image-y-to-color": [{
+          "mask-y-to": scaleColor()
+        }],
+        "mask-image-radial": [{
+          "mask-radial": [isArbitraryVariable, isArbitraryValue]
+        }],
+        "mask-image-radial-from-pos": [{
+          "mask-radial-from": scaleMaskImagePosition()
+        }],
+        "mask-image-radial-to-pos": [{
+          "mask-radial-to": scaleMaskImagePosition()
+        }],
+        "mask-image-radial-from-color": [{
+          "mask-radial-from": scaleColor()
+        }],
+        "mask-image-radial-to-color": [{
+          "mask-radial-to": scaleColor()
+        }],
+        "mask-image-radial-shape": [{
+          "mask-radial": ["circle", "ellipse"]
+        }],
+        "mask-image-radial-size": [{
+          "mask-radial": [{
+            closest: ["side", "corner"],
+            farthest: ["side", "corner"]
+          }]
+        }],
+        "mask-image-radial-pos": [{
+          "mask-radial-at": scalePosition()
+        }],
+        "mask-image-conic-pos": [{
+          "mask-conic": [isNumber2]
+        }],
+        "mask-image-conic-from-pos": [{
+          "mask-conic-from": scaleMaskImagePosition()
+        }],
+        "mask-image-conic-to-pos": [{
+          "mask-conic-to": scaleMaskImagePosition()
+        }],
+        "mask-image-conic-from-color": [{
+          "mask-conic-from": scaleColor()
+        }],
+        "mask-image-conic-to-color": [{
+          "mask-conic-to": scaleColor()
+        }],
+        /**
+         * Mask Mode
+         * @see https://tailwindcss.com/docs/mask-mode
+         */
+        "mask-mode": [{
+          mask: ["alpha", "luminance", "match"]
+        }],
+        /**
+         * Mask Origin
+         * @see https://tailwindcss.com/docs/mask-origin
+         */
+        "mask-origin": [{
+          "mask-origin": ["border", "padding", "content", "fill", "stroke", "view"]
+        }],
+        /**
+         * Mask Position
+         * @see https://tailwindcss.com/docs/mask-position
+         */
+        "mask-position": [{
+          mask: scaleBgPosition()
+        }],
+        /**
+         * Mask Repeat
+         * @see https://tailwindcss.com/docs/mask-repeat
+         */
+        "mask-repeat": [{
+          mask: scaleBgRepeat()
+        }],
+        /**
+         * Mask Size
+         * @see https://tailwindcss.com/docs/mask-size
+         */
+        "mask-size": [{
+          mask: scaleBgSize()
+        }],
+        /**
+         * Mask Type
+         * @see https://tailwindcss.com/docs/mask-type
+         */
+        "mask-type": [{
+          "mask-type": ["alpha", "luminance"]
+        }],
+        /**
+         * Mask Image
+         * @see https://tailwindcss.com/docs/mask-image
+         */
+        "mask-image": [{
+          mask: ["none", isArbitraryVariable, isArbitraryValue]
+        }],
+        // ---------------
+        // --- Filters ---
+        // ---------------
+        /**
+         * Filter
+         * @see https://tailwindcss.com/docs/filter
+         */
+        filter: [{
+          filter: [
+            // Deprecated since Tailwind CSS v3.0.0
+            "",
+            "none",
+            isArbitraryVariable,
+            isArbitraryValue
+          ]
+        }],
+        /**
+         * Blur
+         * @see https://tailwindcss.com/docs/blur
+         */
+        blur: [{
+          blur: scaleBlur()
+        }],
+        /**
+         * Brightness
+         * @see https://tailwindcss.com/docs/brightness
+         */
+        brightness: [{
+          brightness: [isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Contrast
+         * @see https://tailwindcss.com/docs/contrast
+         */
+        contrast: [{
+          contrast: [isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Drop Shadow
+         * @see https://tailwindcss.com/docs/drop-shadow
+         */
+        "drop-shadow": [{
+          "drop-shadow": [
+            // Deprecated since Tailwind CSS v4.0.0
+            "",
+            "none",
+            themeDropShadow,
+            isArbitraryVariableShadow,
+            isArbitraryShadow
+          ]
+        }],
+        /**
+         * Drop Shadow Color
+         * @see https://tailwindcss.com/docs/filter-drop-shadow#setting-the-shadow-color
+         */
+        "drop-shadow-color": [{
+          "drop-shadow": scaleColor()
+        }],
+        /**
+         * Grayscale
+         * @see https://tailwindcss.com/docs/grayscale
+         */
+        grayscale: [{
+          grayscale: ["", isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Hue Rotate
+         * @see https://tailwindcss.com/docs/hue-rotate
+         */
+        "hue-rotate": [{
+          "hue-rotate": [isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Invert
+         * @see https://tailwindcss.com/docs/invert
+         */
+        invert: [{
+          invert: ["", isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Saturate
+         * @see https://tailwindcss.com/docs/saturate
+         */
+        saturate: [{
+          saturate: [isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Sepia
+         * @see https://tailwindcss.com/docs/sepia
+         */
+        sepia: [{
+          sepia: ["", isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Backdrop Filter
+         * @see https://tailwindcss.com/docs/backdrop-filter
+         */
+        "backdrop-filter": [{
+          "backdrop-filter": [
+            // Deprecated since Tailwind CSS v3.0.0
+            "",
+            "none",
+            isArbitraryVariable,
+            isArbitraryValue
+          ]
+        }],
+        /**
+         * Backdrop Blur
+         * @see https://tailwindcss.com/docs/backdrop-blur
+         */
+        "backdrop-blur": [{
+          "backdrop-blur": scaleBlur()
+        }],
+        /**
+         * Backdrop Brightness
+         * @see https://tailwindcss.com/docs/backdrop-brightness
+         */
+        "backdrop-brightness": [{
+          "backdrop-brightness": [isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Backdrop Contrast
+         * @see https://tailwindcss.com/docs/backdrop-contrast
+         */
+        "backdrop-contrast": [{
+          "backdrop-contrast": [isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Backdrop Grayscale
+         * @see https://tailwindcss.com/docs/backdrop-grayscale
+         */
+        "backdrop-grayscale": [{
+          "backdrop-grayscale": ["", isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Backdrop Hue Rotate
+         * @see https://tailwindcss.com/docs/backdrop-hue-rotate
+         */
+        "backdrop-hue-rotate": [{
+          "backdrop-hue-rotate": [isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Backdrop Invert
+         * @see https://tailwindcss.com/docs/backdrop-invert
+         */
+        "backdrop-invert": [{
+          "backdrop-invert": ["", isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Backdrop Opacity
+         * @see https://tailwindcss.com/docs/backdrop-opacity
+         */
+        "backdrop-opacity": [{
+          "backdrop-opacity": [isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Backdrop Saturate
+         * @see https://tailwindcss.com/docs/backdrop-saturate
+         */
+        "backdrop-saturate": [{
+          "backdrop-saturate": [isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Backdrop Sepia
+         * @see https://tailwindcss.com/docs/backdrop-sepia
+         */
+        "backdrop-sepia": [{
+          "backdrop-sepia": ["", isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        // --------------
+        // --- Tables ---
+        // --------------
+        /**
+         * Border Collapse
+         * @see https://tailwindcss.com/docs/border-collapse
+         */
+        "border-collapse": [{
+          border: ["collapse", "separate"]
+        }],
+        /**
+         * Border Spacing
+         * @see https://tailwindcss.com/docs/border-spacing
+         */
+        "border-spacing": [{
+          "border-spacing": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Border Spacing X
+         * @see https://tailwindcss.com/docs/border-spacing
+         */
+        "border-spacing-x": [{
+          "border-spacing-x": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Border Spacing Y
+         * @see https://tailwindcss.com/docs/border-spacing
+         */
+        "border-spacing-y": [{
+          "border-spacing-y": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Table Layout
+         * @see https://tailwindcss.com/docs/table-layout
+         */
+        "table-layout": [{
+          table: ["auto", "fixed"]
+        }],
+        /**
+         * Caption Side
+         * @see https://tailwindcss.com/docs/caption-side
+         */
+        caption: [{
+          caption: ["top", "bottom"]
+        }],
+        // ---------------------------------
+        // --- Transitions and Animation ---
+        // ---------------------------------
+        /**
+         * Transition Property
+         * @see https://tailwindcss.com/docs/transition-property
+         */
+        transition: [{
+          transition: ["", "all", "colors", "opacity", "shadow", "transform", "none", isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Transition Behavior
+         * @see https://tailwindcss.com/docs/transition-behavior
+         */
+        "transition-behavior": [{
+          transition: ["normal", "discrete"]
+        }],
+        /**
+         * Transition Duration
+         * @see https://tailwindcss.com/docs/transition-duration
+         */
+        duration: [{
+          duration: [isNumber2, "initial", isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Transition Timing Function
+         * @see https://tailwindcss.com/docs/transition-timing-function
+         */
+        ease: [{
+          ease: ["linear", "initial", themeEase, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Transition Delay
+         * @see https://tailwindcss.com/docs/transition-delay
+         */
+        delay: [{
+          delay: [isNumber2, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Animation
+         * @see https://tailwindcss.com/docs/animation
+         */
+        animate: [{
+          animate: ["none", themeAnimate, isArbitraryVariable, isArbitraryValue]
+        }],
+        // ------------------
+        // --- Transforms ---
+        // ------------------
+        /**
+         * Backface Visibility
+         * @see https://tailwindcss.com/docs/backface-visibility
+         */
+        backface: [{
+          backface: ["hidden", "visible"]
+        }],
+        /**
+         * Perspective
+         * @see https://tailwindcss.com/docs/perspective
+         */
+        perspective: [{
+          perspective: [themePerspective, isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Perspective Origin
+         * @see https://tailwindcss.com/docs/perspective-origin
+         */
+        "perspective-origin": [{
+          "perspective-origin": scalePositionWithArbitrary()
+        }],
+        /**
+         * Rotate
+         * @see https://tailwindcss.com/docs/rotate
+         */
+        rotate: [{
+          rotate: scaleRotate()
+        }],
+        /**
+         * Rotate X
+         * @see https://tailwindcss.com/docs/rotate
+         */
+        "rotate-x": [{
+          "rotate-x": scaleRotate()
+        }],
+        /**
+         * Rotate Y
+         * @see https://tailwindcss.com/docs/rotate
+         */
+        "rotate-y": [{
+          "rotate-y": scaleRotate()
+        }],
+        /**
+         * Rotate Z
+         * @see https://tailwindcss.com/docs/rotate
+         */
+        "rotate-z": [{
+          "rotate-z": scaleRotate()
+        }],
+        /**
+         * Scale
+         * @see https://tailwindcss.com/docs/scale
+         */
+        scale: [{
+          scale: scaleScale()
+        }],
+        /**
+         * Scale X
+         * @see https://tailwindcss.com/docs/scale
+         */
+        "scale-x": [{
+          "scale-x": scaleScale()
+        }],
+        /**
+         * Scale Y
+         * @see https://tailwindcss.com/docs/scale
+         */
+        "scale-y": [{
+          "scale-y": scaleScale()
+        }],
+        /**
+         * Scale Z
+         * @see https://tailwindcss.com/docs/scale
+         */
+        "scale-z": [{
+          "scale-z": scaleScale()
+        }],
+        /**
+         * Scale 3D
+         * @see https://tailwindcss.com/docs/scale
+         */
+        "scale-3d": ["scale-3d"],
+        /**
+         * Skew
+         * @see https://tailwindcss.com/docs/skew
+         */
+        skew: [{
+          skew: scaleSkew()
+        }],
+        /**
+         * Skew X
+         * @see https://tailwindcss.com/docs/skew
+         */
+        "skew-x": [{
+          "skew-x": scaleSkew()
+        }],
+        /**
+         * Skew Y
+         * @see https://tailwindcss.com/docs/skew
+         */
+        "skew-y": [{
+          "skew-y": scaleSkew()
+        }],
+        /**
+         * Transform
+         * @see https://tailwindcss.com/docs/transform
+         */
+        transform: [{
+          transform: [isArbitraryVariable, isArbitraryValue, "", "none", "gpu", "cpu"]
+        }],
+        /**
+         * Transform Origin
+         * @see https://tailwindcss.com/docs/transform-origin
+         */
+        "transform-origin": [{
+          origin: scalePositionWithArbitrary()
+        }],
+        /**
+         * Transform Style
+         * @see https://tailwindcss.com/docs/transform-style
+         */
+        "transform-style": [{
+          transform: ["3d", "flat"]
+        }],
+        /**
+         * Translate
+         * @see https://tailwindcss.com/docs/translate
+         */
+        translate: [{
+          translate: scaleTranslate()
+        }],
+        /**
+         * Translate X
+         * @see https://tailwindcss.com/docs/translate
+         */
+        "translate-x": [{
+          "translate-x": scaleTranslate()
+        }],
+        /**
+         * Translate Y
+         * @see https://tailwindcss.com/docs/translate
+         */
+        "translate-y": [{
+          "translate-y": scaleTranslate()
+        }],
+        /**
+         * Translate Z
+         * @see https://tailwindcss.com/docs/translate
+         */
+        "translate-z": [{
+          "translate-z": scaleTranslate()
+        }],
+        /**
+         * Translate None
+         * @see https://tailwindcss.com/docs/translate
+         */
+        "translate-none": ["translate-none"],
+        /**
+         * Zoom
+         * @see https://tailwindcss.com/docs/zoom
+         */
+        zoom: [{
+          zoom: [isInteger, isArbitraryVariable, isArbitraryValue]
+        }],
+        // ---------------------
+        // --- Interactivity ---
+        // ---------------------
+        /**
+         * Accent Color
+         * @see https://tailwindcss.com/docs/accent-color
+         */
+        accent: [{
+          accent: scaleColor()
+        }],
+        /**
+         * Appearance
+         * @see https://tailwindcss.com/docs/appearance
+         */
+        appearance: [{
+          appearance: ["none", "auto"]
+        }],
+        /**
+         * Caret Color
+         * @see https://tailwindcss.com/docs/just-in-time-mode#caret-color-utilities
+         */
+        "caret-color": [{
+          caret: scaleColor()
+        }],
+        /**
+         * Color Scheme
+         * @see https://tailwindcss.com/docs/color-scheme
+         */
+        "color-scheme": [{
+          scheme: ["normal", "dark", "light", "light-dark", "only-dark", "only-light"]
+        }],
+        /**
+         * Cursor
+         * @see https://tailwindcss.com/docs/cursor
+         */
+        cursor: [{
+          cursor: ["auto", "default", "pointer", "wait", "text", "move", "help", "not-allowed", "none", "context-menu", "progress", "cell", "crosshair", "vertical-text", "alias", "copy", "no-drop", "grab", "grabbing", "all-scroll", "col-resize", "row-resize", "n-resize", "e-resize", "s-resize", "w-resize", "ne-resize", "nw-resize", "se-resize", "sw-resize", "ew-resize", "ns-resize", "nesw-resize", "nwse-resize", "zoom-in", "zoom-out", isArbitraryVariable, isArbitraryValue]
+        }],
+        /**
+         * Field Sizing
+         * @see https://tailwindcss.com/docs/field-sizing
+         */
+        "field-sizing": [{
+          "field-sizing": ["fixed", "content"]
+        }],
+        /**
+         * Pointer Events
+         * @see https://tailwindcss.com/docs/pointer-events
+         */
+        "pointer-events": [{
+          "pointer-events": ["auto", "none"]
+        }],
+        /**
+         * Resize
+         * @see https://tailwindcss.com/docs/resize
+         */
+        resize: [{
+          resize: ["none", "", "y", "x"]
+        }],
+        /**
+         * Scroll Behavior
+         * @see https://tailwindcss.com/docs/scroll-behavior
+         */
+        "scroll-behavior": [{
+          scroll: ["auto", "smooth"]
+        }],
+        /**
+         * Scrollbar Thumb Color
+         * @see https://tailwindcss.com/docs/scrollbar-color
+         */
+        "scrollbar-thumb-color": [{
+          "scrollbar-thumb": scaleColor()
+        }],
+        /**
+         * Scrollbar Track Color
+         * @see https://tailwindcss.com/docs/scrollbar-color
+         */
+        "scrollbar-track-color": [{
+          "scrollbar-track": scaleColor()
+        }],
+        /**
+         * Scrollbar Gutter
+         * @see https://tailwindcss.com/docs/scrollbar-gutter
+         */
+        "scrollbar-gutter": [{
+          "scrollbar-gutter": ["auto", "stable", "both"]
+        }],
+        /**
+         * Scrollbar Width
+         * @see https://tailwindcss.com/docs/scrollbar-width
+         */
+        "scrollbar-w": [{
+          scrollbar: ["auto", "thin", "none"]
+        }],
+        /**
+         * Scroll Margin
+         * @see https://tailwindcss.com/docs/scroll-margin
+         */
+        "scroll-m": [{
+          "scroll-m": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Margin Inline
+         * @see https://tailwindcss.com/docs/scroll-margin
+         */
+        "scroll-mx": [{
+          "scroll-mx": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Margin Block
+         * @see https://tailwindcss.com/docs/scroll-margin
+         */
+        "scroll-my": [{
+          "scroll-my": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Margin Inline Start
+         * @see https://tailwindcss.com/docs/scroll-margin
+         */
+        "scroll-ms": [{
+          "scroll-ms": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Margin Inline End
+         * @see https://tailwindcss.com/docs/scroll-margin
+         */
+        "scroll-me": [{
+          "scroll-me": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Margin Block Start
+         * @see https://tailwindcss.com/docs/scroll-margin
+         */
+        "scroll-mbs": [{
+          "scroll-mbs": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Margin Block End
+         * @see https://tailwindcss.com/docs/scroll-margin
+         */
+        "scroll-mbe": [{
+          "scroll-mbe": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Margin Top
+         * @see https://tailwindcss.com/docs/scroll-margin
+         */
+        "scroll-mt": [{
+          "scroll-mt": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Margin Right
+         * @see https://tailwindcss.com/docs/scroll-margin
+         */
+        "scroll-mr": [{
+          "scroll-mr": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Margin Bottom
+         * @see https://tailwindcss.com/docs/scroll-margin
+         */
+        "scroll-mb": [{
+          "scroll-mb": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Margin Left
+         * @see https://tailwindcss.com/docs/scroll-margin
+         */
+        "scroll-ml": [{
+          "scroll-ml": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Padding
+         * @see https://tailwindcss.com/docs/scroll-padding
+         */
+        "scroll-p": [{
+          "scroll-p": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Padding Inline
+         * @see https://tailwindcss.com/docs/scroll-padding
+         */
+        "scroll-px": [{
+          "scroll-px": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Padding Block
+         * @see https://tailwindcss.com/docs/scroll-padding
+         */
+        "scroll-py": [{
+          "scroll-py": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Padding Inline Start
+         * @see https://tailwindcss.com/docs/scroll-padding
+         */
+        "scroll-ps": [{
+          "scroll-ps": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Padding Inline End
+         * @see https://tailwindcss.com/docs/scroll-padding
+         */
+        "scroll-pe": [{
+          "scroll-pe": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Padding Block Start
+         * @see https://tailwindcss.com/docs/scroll-padding
+         */
+        "scroll-pbs": [{
+          "scroll-pbs": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Padding Block End
+         * @see https://tailwindcss.com/docs/scroll-padding
+         */
+        "scroll-pbe": [{
+          "scroll-pbe": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Padding Top
+         * @see https://tailwindcss.com/docs/scroll-padding
+         */
+        "scroll-pt": [{
+          "scroll-pt": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Padding Right
+         * @see https://tailwindcss.com/docs/scroll-padding
+         */
+        "scroll-pr": [{
+          "scroll-pr": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Padding Bottom
+         * @see https://tailwindcss.com/docs/scroll-padding
+         */
+        "scroll-pb": [{
+          "scroll-pb": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Padding Left
+         * @see https://tailwindcss.com/docs/scroll-padding
+         */
+        "scroll-pl": [{
+          "scroll-pl": scaleUnambiguousSpacing()
+        }],
+        /**
+         * Scroll Snap Align
+         * @see https://tailwindcss.com/docs/scroll-snap-align
+         */
+        "snap-align": [{
+          snap: ["start", "end", "center", "align-none"]
+        }],
+        /**
+         * Scroll Snap Stop
+         * @see https://tailwindcss.com/docs/scroll-snap-stop
+         */
+        "snap-stop": [{
+          snap: ["normal", "always"]
+        }],
+        /**
+         * Scroll Snap Type
+         * @see https://tailwindcss.com/docs/scroll-snap-type
+         */
+        "snap-type": [{
+          snap: ["none", "x", "y", "both"]
+        }],
+        /**
+         * Scroll Snap Type Strictness
+         * @see https://tailwindcss.com/docs/scroll-snap-type
+         */
+        "snap-strictness": [{
+          snap: ["mandatory", "proximity"]
+        }],
+        /**
+         * Touch Action
+         * @see https://tailwindcss.com/docs/touch-action
+         */
+        touch: [{
+          touch: ["auto", "none", "manipulation"]
+        }],
+        /**
+         * Touch Action X
+         * @see https://tailwindcss.com/docs/touch-action
+         */
+        "touch-x": [{
+          "touch-pan": ["x", "left", "right"]
+        }],
+        /**
+         * Touch Action Y
+         * @see https://tailwindcss.com/docs/touch-action
+         */
+        "touch-y": [{
+          "touch-pan": ["y", "up", "down"]
+        }],
+        /**
+         * Touch Action Pinch Zoom
+         * @see https://tailwindcss.com/docs/touch-action
+         */
+        "touch-pz": ["touch-pinch-zoom"],
+        /**
+         * User Select
+         * @see https://tailwindcss.com/docs/user-select
+         */
+        select: [{
+          select: ["none", "text", "all", "auto"]
+        }],
+        /**
+         * Will Change
+         * @see https://tailwindcss.com/docs/will-change
+         */
+        "will-change": [{
+          "will-change": ["auto", "scroll", "contents", "transform", isArbitraryVariable, isArbitraryValue]
+        }],
+        // -----------
+        // --- SVG ---
+        // -----------
+        /**
+         * Fill
+         * @see https://tailwindcss.com/docs/fill
+         */
+        fill: [{
+          fill: ["none", ...scaleColor()]
+        }],
+        /**
+         * Stroke Width
+         * @see https://tailwindcss.com/docs/stroke-width
+         */
+        "stroke-w": [{
+          stroke: [isNumber2, isArbitraryVariableLength, isArbitraryLength, isArbitraryNumber]
+        }],
+        /**
+         * Stroke
+         * @see https://tailwindcss.com/docs/stroke
+         */
+        stroke: [{
+          stroke: ["none", ...scaleColor()]
+        }],
+        // ---------------------
+        // --- Accessibility ---
+        // ---------------------
+        /**
+         * Forced Color Adjust
+         * @see https://tailwindcss.com/docs/forced-color-adjust
+         */
+        "forced-color-adjust": [{
+          "forced-color-adjust": ["auto", "none"]
+        }]
+      },
+      conflictingClassGroups: {
+        "container-named": ["container-type"],
+        overflow: ["overflow-x", "overflow-y"],
+        overscroll: ["overscroll-x", "overscroll-y"],
+        inset: ["inset-x", "inset-y", "inset-bs", "inset-be", "start", "end", "top", "right", "bottom", "left"],
+        "inset-x": ["right", "left"],
+        "inset-y": ["top", "bottom"],
+        flex: ["basis", "grow", "shrink"],
+        gap: ["gap-x", "gap-y"],
+        p: ["px", "py", "ps", "pe", "pbs", "pbe", "pt", "pr", "pb", "pl"],
+        px: ["pr", "pl"],
+        py: ["pt", "pb"],
+        m: ["mx", "my", "ms", "me", "mbs", "mbe", "mt", "mr", "mb", "ml"],
+        mx: ["mr", "ml"],
+        my: ["mt", "mb"],
+        size: ["w", "h"],
+        "font-size": ["leading"],
+        "fvn-normal": ["fvn-ordinal", "fvn-slashed-zero", "fvn-figure", "fvn-spacing", "fvn-fraction"],
+        "fvn-ordinal": ["fvn-normal"],
+        "fvn-slashed-zero": ["fvn-normal"],
+        "fvn-figure": ["fvn-normal"],
+        "fvn-spacing": ["fvn-normal"],
+        "fvn-fraction": ["fvn-normal"],
+        "line-clamp": ["display", "overflow"],
+        rounded: ["rounded-s", "rounded-e", "rounded-t", "rounded-r", "rounded-b", "rounded-l", "rounded-ss", "rounded-se", "rounded-ee", "rounded-es", "rounded-tl", "rounded-tr", "rounded-br", "rounded-bl"],
+        "rounded-s": ["rounded-ss", "rounded-es"],
+        "rounded-e": ["rounded-se", "rounded-ee"],
+        "rounded-t": ["rounded-tl", "rounded-tr"],
+        "rounded-r": ["rounded-tr", "rounded-br"],
+        "rounded-b": ["rounded-br", "rounded-bl"],
+        "rounded-l": ["rounded-tl", "rounded-bl"],
+        "border-spacing": ["border-spacing-x", "border-spacing-y"],
+        "border-w": ["border-w-x", "border-w-y", "border-w-s", "border-w-e", "border-w-bs", "border-w-be", "border-w-t", "border-w-r", "border-w-b", "border-w-l"],
+        "border-w-x": ["border-w-r", "border-w-l"],
+        "border-w-y": ["border-w-t", "border-w-b"],
+        "border-color": ["border-color-x", "border-color-y", "border-color-s", "border-color-e", "border-color-bs", "border-color-be", "border-color-t", "border-color-r", "border-color-b", "border-color-l"],
+        "border-color-x": ["border-color-r", "border-color-l"],
+        "border-color-y": ["border-color-t", "border-color-b"],
+        translate: ["translate-x", "translate-y", "translate-none"],
+        "translate-none": ["translate", "translate-x", "translate-y", "translate-z"],
+        "scroll-m": ["scroll-mx", "scroll-my", "scroll-ms", "scroll-me", "scroll-mbs", "scroll-mbe", "scroll-mt", "scroll-mr", "scroll-mb", "scroll-ml"],
+        "scroll-mx": ["scroll-mr", "scroll-ml"],
+        "scroll-my": ["scroll-mt", "scroll-mb"],
+        "scroll-p": ["scroll-px", "scroll-py", "scroll-ps", "scroll-pe", "scroll-pbs", "scroll-pbe", "scroll-pt", "scroll-pr", "scroll-pb", "scroll-pl"],
+        "scroll-px": ["scroll-pr", "scroll-pl"],
+        "scroll-py": ["scroll-pt", "scroll-pb"],
+        touch: ["touch-x", "touch-y", "touch-pz"],
+        "touch-x": ["touch"],
+        "touch-y": ["touch"],
+        "touch-pz": ["touch"]
+      },
+      conflictingClassGroupModifiers: {
+        "font-size": ["leading"]
+      },
+      postfixLookupClassGroups: ["container-type"],
+      orderSensitiveModifiers: ["*", "**", "after", "backdrop", "before", "details-content", "file", "first-letter", "first-line", "marker", "placeholder", "selection"]
+    };
+  };
+  var twMerge = /* @__PURE__ */ createTailwindMerge(getDefaultConfig);
+
+  // primitives/cn.ts
+  function cn(...inputs) {
+    return twMerge(clsx(inputs));
+  }
+
   // primitives/Tabs.tsx
-  var import_jsx_runtime13 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime18 = __toESM(require_jsx_runtime(), 1);
   var Tabs2 = Root2;
   function TabsList2(_a6) {
     var _b = _a6, { className } = _b, props = __objRest(_b, ["className"]);
-    return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(List, __spreadValues({ className: cn("flex border-b border-white/20 gap-1", className) }, props));
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(List, __spreadValues({ className: cn("flex border-b border-white/20 gap-1", className) }, props));
   }
   function TabsTrigger2(_a6) {
     var _b = _a6, { className } = _b, props = __objRest(_b, ["className"]);
-    return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(
       Trigger,
       __spreadValues({
         className: cn(
@@ -85079,15 +85075,17 @@ ${end.comment}` : end.comment;
   }
   function TabsContent2(_a6) {
     var _b = _a6, { className } = _b, props = __objRest(_b, ["className"]);
-    return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Content, __spreadValues({ className: cn("pt-4", className) }, props));
+    return /* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Content, __spreadValues({ className: cn("pt-4", className) }, props));
   }
 
-  // admin/pages/PlayersPage.tsx
-  var import_jsx_runtime14 = __toESM(require_jsx_runtime(), 1);
-  var CHARACTER_CLASSES = ["WARRIOR", "MAGE", "RANGER", "ROGUE", "CLERIC"];
+  // admin/pages/players/KeybindingsTab.tsx
+  var import_react7 = __toESM(require_react(), 1);
+
+  // admin/pages/players/SaveBtn.tsx
+  var import_jsx_runtime19 = __toESM(require_jsx_runtime(), 1);
   function SaveBtn({ saving, saved, onClick }) {
     const t2 = useT();
-    return /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
       "button",
       {
         onClick,
@@ -85097,19 +85095,109 @@ ${end.comment}` : end.comment;
       }
     );
   }
+
+  // admin/pages/players/KeybindingsTab.tsx
+  var import_jsx_runtime20 = __toESM(require_jsx_runtime(), 1);
+  function KeybindingsTab({
+    file,
+    onSave
+  }) {
+    var _a6;
+    const t2 = useT();
+    const [bindings, setBindings] = (0, import_react7.useState)(__spreadValues({}, file.keybindings));
+    const [filter, setFilter] = (0, import_react7.useState)("");
+    const [saving, setSaving] = (0, import_react7.useState)(false);
+    const [saved, setSaved] = (0, import_react7.useState)(false);
+    const save = async () => {
+      setSaving(true);
+      await onSave(bindings);
+      setSaving(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1500);
+    };
+    const updateKey = (action, idx, value) => setBindings((prev) => __spreadProps(__spreadValues({}, prev), { [action]: prev[action].map((k, i) => i === idx ? value : k) }));
+    const addKey = (action) => setBindings((prev) => {
+      var _a7;
+      return __spreadProps(__spreadValues({}, prev), { [action]: [...(_a7 = prev[action]) != null ? _a7 : [], ""] });
+    });
+    const removeKey = (action, idx) => setBindings((prev) => __spreadProps(__spreadValues({}, prev), { [action]: prev[action].filter((_, i) => i !== idx) }));
+    const q = filter.toLowerCase();
+    const sorted = Object.entries(bindings).filter(([action]) => !q || action.toLowerCase().includes(q)).sort(([a], [b]) => a.localeCompare(b));
+    const groups = {};
+    for (const entry of sorted) {
+      const grp = entry[0].split("_")[0];
+      ((_a6 = groups[grp]) != null ? _a6 : groups[grp] = []).push(entry);
+    }
+    return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "p-5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
+        "input",
+        {
+          type: "text",
+          value: filter,
+          onChange: (e) => setFilter(e.target.value),
+          placeholder: t2("players.filterActions"),
+          className: "w-full mb-4 bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#3C50E0] transition-colors"
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "space-y-0 mb-5 max-h-[48vh] overflow-y-auto", children: Object.entries(groups).map(([grp, entries]) => /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("div", { className: "text-[10px] uppercase tracking-widest font-semibold text-[#4A5568] py-1.5 sticky top-0 bg-[#1A222C]", children: grp }),
+        entries.map(([action, keys2]) => /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex items-start gap-3 py-2 border-b border-[#2E3A4E] last:border-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsx)("span", { className: "text-xs text-[#8A99AF] w-44 shrink-0 pt-1 font-mono", children: action.replace(/_/g, " ") }),
+          /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex flex-wrap gap-1.5 flex-1", children: [
+            keys2.map((k, i) => /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)("div", { className: "flex items-center gap-0.5", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
+                "input",
+                {
+                  value: k,
+                  onChange: (e) => updateKey(action, i, e.target.value),
+                  className: "bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white w-24 focus:outline-none focus:border-[#3C50E0]"
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
+                "button",
+                {
+                  onClick: () => removeKey(action, i),
+                  className: "text-[#4A5568] hover:text-red-400 text-xs px-0.5 transition-colors",
+                  children: "\xD7"
+                }
+              )
+            ] }, i)),
+            /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
+              "button",
+              {
+                onClick: () => addKey(action),
+                className: "text-[#4A5568] hover:text-[#3C50E0] text-xs border border-[#2E3A4E] rounded px-1.5 py-0.5 transition-colors",
+                children: "+"
+              }
+            )
+          ] })
+        ] }, action))
+      ] }, grp)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(SaveBtn, { saving, saved, onClick: save })
+    ] });
+  }
+
+  // admin/pages/players/Field.tsx
+  var import_jsx_runtime21 = __toESM(require_jsx_runtime(), 1);
   function Field({ label, htmlFor, children }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("label", { htmlFor, className: "block text-xs font-medium text-[#8A99AF] mb-1.5", children: label }),
+    return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("label", { htmlFor, className: "block text-xs font-medium text-[#8A99AF] mb-1.5", children: label }),
       children
     ] });
   }
+
+  // admin/pages/players/PreferencesTab.tsx
+  var import_react8 = __toESM(require_react(), 1);
+
+  // admin/pages/players/Toggle.tsx
+  var import_jsx_runtime22 = __toESM(require_jsx_runtime(), 1);
   function Toggle({ value, onChange }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
       "button",
       {
         onClick: () => onChange(!value),
         className: `w-9 h-[14px] rounded-full transition-colors relative shrink-0 overflow-visible ${value ? "bg-[#3C50E0]" : "bg-[#2E3A4E]"}`,
-        children: /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+        children: /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
           "span",
           {
             className: `absolute top-1/2 -translate-y-1/2 left-0 w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-transform ${value ? "translate-x-[20px]" : "translate-x-0.5"}`
@@ -85118,12 +85206,18 @@ ${end.comment}` : end.comment;
       }
     );
   }
+
+  // admin/pages/players/BoolRow.tsx
+  var import_jsx_runtime23 = __toESM(require_jsx_runtime(), 1);
   function BoolRow({ label, value, onChange }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "flex items-center justify-between py-2 border-b border-[#2E3A4E] last:border-0", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: "text-sm text-[#8A99AF]", children: label }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(Toggle, { value, onChange })
+    return /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { className: "flex items-center justify-between py-2 border-b border-[#2E3A4E] last:border-0", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("span", { className: "text-sm text-[#8A99AF]", children: label }),
+      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)(Toggle, { value, onChange })
     ] });
   }
+
+  // admin/pages/players/PreferencesTab.tsx
+  var import_jsx_runtime24 = __toESM(require_jsx_runtime(), 1);
   var KNOWN_LOCALES = ["en", "fr", "de", "es", "ja", "zh", "pt", "ru", "it", "nl"];
   function PreferencesTab({
     file,
@@ -85131,17 +85225,17 @@ ${end.comment}` : end.comment;
   }) {
     const t2 = useT();
     const s = file.state;
-    const [skin, setSkin] = (0, import_react5.useState)(s.skin);
-    const [language2, setLanguage] = (0, import_react5.useState)(s.language);
-    const [fov, setFov] = (0, import_react5.useState)(s.fieldOfView);
-    const [shaders, setShaders] = (0, import_react5.useState)(s.shadersEnabled);
-    const [favicon, setFavicon] = (0, import_react5.useState)(s.animatedFavicon);
-    const [godMode, setGodMode] = (0, import_react5.useState)(s.godMode);
-    const [lightBoost, setLightBoost] = (0, import_react5.useState)(s.lightBoostEnabled);
-    const [saving, setSaving] = (0, import_react5.useState)(false);
-    const [saved, setSaved] = (0, import_react5.useState)(false);
-    const [availableSkins, setAvailableSkins] = (0, import_react5.useState)([]);
-    (0, import_react5.useEffect)(() => {
+    const [skin, setSkin] = (0, import_react8.useState)(s.skin);
+    const [language2, setLanguage] = (0, import_react8.useState)(s.language);
+    const [fov, setFov] = (0, import_react8.useState)(s.fieldOfView);
+    const [shaders, setShaders] = (0, import_react8.useState)(s.shadersEnabled);
+    const [favicon, setFavicon] = (0, import_react8.useState)(s.animatedFavicon);
+    const [godMode, setGodMode] = (0, import_react8.useState)(s.godMode);
+    const [lightBoost, setLightBoost] = (0, import_react8.useState)(s.lightBoostEnabled);
+    const [saving, setSaving] = (0, import_react8.useState)(false);
+    const [saved, setSaved] = (0, import_react8.useState)(false);
+    const [availableSkins, setAvailableSkins] = (0, import_react8.useState)([]);
+    (0, import_react8.useEffect)(() => {
       api.skins.list().then(setAvailableSkins).catch(() => {
       });
     }, []);
@@ -85163,11 +85257,11 @@ ${end.comment}` : end.comment;
       setTimeout(() => setSaved(false), 1500);
     };
     const selectCls = "w-full bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#3C50E0] transition-colors";
-    return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "p-5 space-y-4", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(Field, { label: t2("players.skin"), htmlFor: "skin", children: /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("select", { id: "skin", value: skin, onChange: (e) => setSkin(e.target.value), className: selectCls, children: skinOptions.map((s2) => /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("option", { value: s2, children: s2 }, s2)) }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(Field, { label: t2("players.language"), htmlFor: "lang", children: /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("select", { id: "lang", value: language2, onChange: (e) => setLanguage(e.target.value), className: selectCls, children: langOptions.map((l) => /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("option", { value: l, children: l }, l)) }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)(Field, { label: t2("players.fieldOfView", fov), htmlFor: "fov", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "p-5 space-y-4", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(Field, { label: t2("players.skin"), htmlFor: "skin", children: /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("select", { id: "skin", value: skin, onChange: (e) => setSkin(e.target.value), className: selectCls, children: skinOptions.map((s2) => /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("option", { value: s2, children: s2 }, s2)) }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(Field, { label: t2("players.language"), htmlFor: "lang", children: /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("select", { id: "lang", value: language2, onChange: (e) => setLanguage(e.target.value), className: selectCls, children: langOptions.map((l) => /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("option", { value: l, children: l }, l)) }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)(Field, { label: t2("players.fieldOfView", fov), htmlFor: "fov", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
           "input",
           {
             id: "fov",
@@ -85180,98 +85274,53 @@ ${end.comment}` : end.comment;
             className: "w-full accent-[#3C50E0]"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "flex justify-between text-xs text-[#4A5568] mt-0.5", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { children: "30\xB0" }),
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { children: "120\xB0" })
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex justify-between text-xs text-[#4A5568] mt-0.5", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { children: "30\xB0" }),
+          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { children: "120\xB0" })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "pt-1", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(BoolRow, { label: t2("players.shaders"), value: shaders, onChange: setShaders }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(BoolRow, { label: t2("players.animatedFavicon"), value: favicon, onChange: setFavicon }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(BoolRow, { label: t2("players.godMode"), value: godMode, onChange: setGodMode }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(BoolRow, { label: t2("players.lightBoost"), value: lightBoost, onChange: setLightBoost })
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "pt-1", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(BoolRow, { label: t2("players.shaders"), value: shaders, onChange: setShaders }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(BoolRow, { label: t2("players.animatedFavicon"), value: favicon, onChange: setFavicon }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(BoolRow, { label: t2("players.godMode"), value: godMode, onChange: setGodMode }),
+        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(BoolRow, { label: t2("players.lightBoost"), value: lightBoost, onChange: setLightBoost })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(SaveBtn, { saving, saved, onClick: save })
+      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(SaveBtn, { saving, saved, onClick: save })
     ] });
   }
-  function KeybindingsTab({
-    file,
-    onSave
-  }) {
-    var _a6;
-    const t2 = useT();
-    const [bindings, setBindings] = (0, import_react5.useState)(__spreadValues({}, file.keybindings));
-    const [filter, setFilter] = (0, import_react5.useState)("");
-    const [saving, setSaving] = (0, import_react5.useState)(false);
-    const [saved, setSaved] = (0, import_react5.useState)(false);
-    const save = async () => {
-      setSaving(true);
-      await onSave(bindings);
-      setSaving(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 1500);
-    };
-    const updateKey = (action, idx, value) => setBindings((prev) => __spreadProps(__spreadValues({}, prev), { [action]: prev[action].map((k, i) => i === idx ? value : k) }));
-    const addKey = (action) => setBindings((prev) => {
-      var _a7;
-      return __spreadProps(__spreadValues({}, prev), { [action]: [...(_a7 = prev[action]) != null ? _a7 : [], ""] });
-    });
-    const removeKey = (action, idx) => setBindings((prev) => __spreadProps(__spreadValues({}, prev), { [action]: prev[action].filter((_, i) => i !== idx) }));
-    const q = filter.toLowerCase();
-    const sorted = Object.entries(bindings).filter(([action]) => !q || action.toLowerCase().includes(q)).sort(([a], [b]) => a.localeCompare(b));
-    const groups = {};
-    for (const entry of sorted) {
-      const grp = entry[0].split("_")[0];
-      ((_a6 = groups[grp]) != null ? _a6 : groups[grp] = []).push(entry);
-    }
-    return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "p-5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
-        "input",
-        {
-          type: "text",
-          value: filter,
-          onChange: (e) => setFilter(e.target.value),
-          placeholder: t2("players.filterActions"),
-          className: "w-full mb-4 bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#3C50E0] transition-colors"
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "space-y-0 mb-5 max-h-[48vh] overflow-y-auto", children: Object.entries(groups).map(([grp, entries]) => /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "text-[10px] uppercase tracking-widest font-semibold text-[#4A5568] py-1.5 sticky top-0 bg-[#1A222C]", children: grp }),
-        entries.map(([action, keys2]) => /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "flex items-start gap-3 py-2 border-b border-[#2E3A4E] last:border-0", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: "text-xs text-[#8A99AF] w-44 shrink-0 pt-1 font-mono", children: action.replace(/_/g, " ") }),
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "flex flex-wrap gap-1.5 flex-1", children: [
-            keys2.map((k, i) => /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "flex items-center gap-0.5", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
-                "input",
-                {
-                  value: k,
-                  onChange: (e) => updateKey(action, i, e.target.value),
-                  className: "bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white w-24 focus:outline-none focus:border-[#3C50E0]"
-                }
-              ),
-              /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
-                "button",
-                {
-                  onClick: () => removeKey(action, i),
-                  className: "text-[#4A5568] hover:text-red-400 text-xs px-0.5 transition-colors",
-                  children: "\xD7"
-                }
-              )
-            ] }, i)),
-            /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
-              "button",
-              {
-                onClick: () => addKey(action),
-                className: "text-[#4A5568] hover:text-[#3C50E0] text-xs border border-[#2E3A4E] rounded px-1.5 py-0.5 transition-colors",
-                children: "+"
-              }
-            )
-          ] })
-        ] }, action))
-      ] }, grp)) }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(SaveBtn, { saving, saved, onClick: save })
-    ] });
-  }
+
+  // admin/pages/players/RpgTab.tsx
+  var import_react9 = __toESM(require_react(), 1);
+
+  // admin/pages/players/StatRow.tsx
+  var import_jsx_runtime25 = (
+    // const statRow = (name: keyof typeof stats, label: string) => (
+    __toESM(require_jsx_runtime(), 1)
+  );
+  var StatRow = ({
+    stats,
+    name: name2,
+    label,
+    setStats
+  }) => /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { className: "flex items-center gap-3 py-2 border-b border-[#2E3A4E] last:border-0", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "text-xs text-[#8A99AF] w-24", children: label }),
+    /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
+      "input",
+      {
+        type: "range",
+        min: 1,
+        max: 20,
+        value: stats[name2],
+        onChange: (e) => setStats((p2) => __spreadProps(__spreadValues({}, p2), { [name2]: Number(e.target.value) })),
+        className: "flex-1 accent-[#3C50E0]"
+      }
+    ),
+    /* @__PURE__ */ (0, import_jsx_runtime25.jsx)("span", { className: "text-sm text-[#3C50E0] w-6 text-right tabular-nums font-semibold", children: stats[name2] })
+  ] });
+
+  // admin/pages/players/RpgTab.tsx
+  var import_jsx_runtime26 = __toESM(require_jsx_runtime(), 1);
+  var CHARACTER_CLASSES = ["WARRIOR", "MAGE", "RANGER", "ROGUE", "CLERIC"];
   function computeDerived(s, level) {
     const f = (v) => Math.floor((v - 10) / 2);
     return {
@@ -85289,36 +85338,16 @@ ${end.comment}` : end.comment;
       maxTokens: Math.floor(level / 4) + 1
     };
   }
-  var StatRow = ({
-    stats,
-    name: name2,
-    label,
-    setStats
-  }) => (
-    // const statRow = (name: keyof typeof stats, label: string) => (
-    /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "flex items-center gap-3 py-2 border-b border-[#2E3A4E] last:border-0", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: "text-xs text-[#8A99AF] w-24", children: label }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
-        "input",
-        {
-          type: "range",
-          min: 1,
-          max: 20,
-          value: stats[name2],
-          onChange: (e) => setStats((p2) => __spreadProps(__spreadValues({}, p2), { [name2]: Number(e.target.value) })),
-          className: "flex-1 accent-[#3C50E0]"
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: "text-sm text-[#3C50E0] w-6 text-right tabular-nums font-semibold", children: stats[name2] })
-    ] })
-  );
-  function RpgTab({ file, onSave }) {
+  function RpgTab({
+    file,
+    onSave
+  }) {
     const t2 = useT();
     const cd = file.state.characterData;
-    const [cls, setCls] = (0, import_react5.useState)(cd.characterClass);
-    const [stats, setStats] = (0, import_react5.useState)(__spreadValues({}, cd.baseStats));
-    const [saving, setSaving] = (0, import_react5.useState)(false);
-    const [saved, setSaved] = (0, import_react5.useState)(false);
+    const [cls, setCls] = (0, import_react9.useState)(cd.characterClass);
+    const [stats, setStats] = (0, import_react9.useState)(__spreadValues({}, cd.baseStats));
+    const [saving, setSaving] = (0, import_react9.useState)(false);
+    const [saved, setSaved] = (0, import_react9.useState)(false);
     const save = async () => {
       setSaving(true);
       await onSave(__spreadValues({ characterClass: cls }, stats));
@@ -85327,10 +85356,10 @@ ${end.comment}` : end.comment;
       setTimeout(() => setSaved(false), 1500);
     };
     const derived = computeDerived(stats, cd.level);
-    return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "p-5 space-y-5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: t2("players.class") }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "flex flex-wrap gap-2", children: CHARACTER_CLASSES.map((c) => /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "p-5 space-y-5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: t2("players.class") }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "flex flex-wrap gap-2", children: CHARACTER_CLASSES.map((c) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
           "button",
           {
             onClick: () => setCls(c),
@@ -85340,22 +85369,22 @@ ${end.comment}` : end.comment;
           c
         )) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: t2("players.baseStats") }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(StatRow, { name: "str", label: t2("players.strength"), stats, setStats }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(StatRow, { name: "dex", label: t2("players.dexterity"), stats, setStats }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(StatRow, { name: "intel", label: t2("players.intellect"), stats, setStats }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(StatRow, { name: "wis", label: t2("players.wisdom"), stats, setStats }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(StatRow, { name: "con", label: t2("players.constitution"), stats, setStats }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(StatRow, { name: "cha", label: t2("players.charisma"), stats, setStats })
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: t2("players.baseStats") }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(StatRow, { name: "str", label: t2("players.strength"), stats, setStats }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(StatRow, { name: "dex", label: t2("players.dexterity"), stats, setStats }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(StatRow, { name: "intel", label: t2("players.intellect"), stats, setStats }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(StatRow, { name: "wis", label: t2("players.wisdom"), stats, setStats }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(StatRow, { name: "con", label: t2("players.constitution"), stats, setStats }),
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(StatRow, { name: "cha", label: t2("players.charisma"), stats, setStats })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("p", { className: "text-xs font-medium text-[#8A99AF] mb-2", children: [
           t2("players.derivedStats"),
           " ",
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: "text-[#4A5568] normal-case font-normal", children: t2("players.derivedLevel", cd.level) })
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "text-[#4A5568] normal-case font-normal", children: t2("players.derivedLevel", cd.level) })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "grid grid-cols-2 gap-x-4", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "grid grid-cols-2 gap-x-4", children: [
           [t2("players.maxHp"), derived.maxHp],
           [t2("players.maxMana"), derived.maxMana],
           [t2("players.meleeDmg"), `+${derived.meleeDmg}`],
@@ -85368,27 +85397,30 @@ ${end.comment}` : end.comment;
           [t2("players.hpRegen"), derived.hpRegenPerSec],
           [t2("players.manaRegen"), derived.manaRegenPerSec],
           [t2("players.maxTokens"), derived.maxTokens]
-        ].map(([label, value]) => /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "flex justify-between py-1 border-b border-[#2E3A4E] text-xs", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: "text-[#8A99AF]", children: label }),
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: "text-white tabular-nums font-medium", children: value })
+        ].map(([label, value]) => /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex justify-between py-1 border-b border-[#2E3A4E] text-xs", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "text-[#8A99AF]", children: label }),
+          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "text-white tabular-nums font-medium", children: value })
         ] }, String(label))) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("p", { className: "text-xs text-[#4A5568]", children: t2("players.hpManaSummary", cd.currentHp, derived.maxHp, cd.currentMana, derived.maxMana) }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(SaveBtn, { saving, saved, onClick: save })
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("p", { className: "text-xs text-[#4A5568]", children: t2("players.hpManaSummary", cd.currentHp, derived.maxHp, cd.currentMana, derived.maxMana) }),
+      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(SaveBtn, { saving, saved, onClick: save })
     ] });
   }
+
+  // admin/pages/players/PlayerDetail.tsx
+  var import_jsx_runtime27 = __toESM(require_jsx_runtime(), 1);
   function PlayerDetail({
     name: name2,
     onBack,
     onRenamed
   }) {
     const t2 = useT();
-    const [file, setFile] = (0, import_react5.useState)(null);
-    const [errorKey, setErrorKey] = (0, import_react5.useState)(null);
-    const [renaming, setRenaming] = (0, import_react5.useState)(false);
-    const [newName, setNewName] = (0, import_react5.useState)(name2);
-    const [renameErr, setRenameErr] = (0, import_react5.useState)(null);
-    (0, import_react5.useEffect)(() => {
+    const [file, setFile] = (0, import_react10.useState)(null);
+    const [errorKey, setErrorKey] = (0, import_react10.useState)(null);
+    const [renaming, setRenaming] = (0, import_react10.useState)(false);
+    const [newName, setNewName] = (0, import_react10.useState)(name2);
+    const [renameErr, setRenameErr] = (0, import_react10.useState)(null);
+    (0, import_react10.useEffect)(() => {
       setFile(null);
       setNewName(name2);
       api.players.get(name2).then(setFile).catch(() => setErrorKey("players.failedToLoad"));
@@ -85406,14 +85438,14 @@ ${end.comment}` : end.comment;
       }
       setRenaming(false);
     };
-    if (errorKey) return /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "p-5 text-red-400 text-sm", children: t2(errorKey) });
-    if (!file) return /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "p-5 text-[#8A99AF] text-sm animate-pulse", children: t2("common.loading") });
+    if (errorKey) return /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "p-5 text-red-400 text-sm", children: t2(errorKey) });
+    if (!file) return /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "p-5 text-[#8A99AF] text-sm animate-pulse", children: t2("common.loading") });
     const hasRpg = !!file.state.characterData;
-    return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "flex items-center gap-3 px-5 py-3.5 border-b border-[#2E3A4E]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("button", { onClick: onBack, className: "text-[#4A5568] hover:text-white text-sm transition-colors", children: "\u2190" }),
-        renaming ? /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "flex items-center gap-1.5 flex-1", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "flex items-center gap-3 px-5 py-3.5 border-b border-[#2E3A4E]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("button", { onClick: onBack, className: "text-[#4A5568] hover:text-white text-sm transition-colors", children: "\u2190" }),
+        renaming ? /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "flex items-center gap-1.5 flex-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(
             "input",
             {
               autoFocus: true,
@@ -85429,8 +85461,8 @@ ${end.comment}` : end.comment;
               className: "bg-[#0E1726] border border-[#3C50E0] rounded px-2 py-0.5 text-sm text-white focus:outline-none"
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("button", { onClick: doRename, className: "text-xs text-[#3C50E0] hover:text-white transition-colors", children: "\u2713" }),
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("button", { onClick: doRename, className: "text-xs text-[#3C50E0] hover:text-white transition-colors", children: "\u2713" }),
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(
             "button",
             {
               onClick: () => {
@@ -85441,9 +85473,9 @@ ${end.comment}` : end.comment;
               children: "\u2715"
             }
           )
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)(import_jsx_runtime14.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: "text-sm font-semibold text-white", children: name2 }),
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)(import_jsx_runtime27.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "text-sm font-semibold text-white", children: name2 }),
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(
             "button",
             {
               onClick: () => setRenaming(true),
@@ -85452,9 +85484,9 @@ ${end.comment}` : end.comment;
             }
           )
         ] }),
-        renameErr && /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: "text-xs text-red-400", children: renameErr }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("span", { className: "text-[10px] font-medium bg-[#2E3A4E] text-[#8A99AF] px-2 py-0.5 rounded-full ml-auto", children: hasRpg ? t2("players.rpgClass", file.state.characterData.characterClass) : t2("players.classic") }),
-        file.state.email && /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+        renameErr && /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "text-xs text-red-400", children: renameErr }),
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("span", { className: "text-[10px] font-medium bg-[#2E3A4E] text-[#8A99AF] px-2 py-0.5 rounded-full ml-auto", children: hasRpg ? t2("players.rpgClass", file.state.characterData.characterClass) : t2("players.classic") }),
+        file.state.email && /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(
           Link,
           {
             to: `/admin/users?u=${encodeURIComponent(file.state.email)}`,
@@ -85464,9 +85496,9 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)(Tabs2, { defaultValue: "prefs", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)(TabsList2, { className: "px-5 border-b border-[#2E3A4E] rounded-none bg-transparent gap-1", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)(Tabs2, { defaultValue: "prefs", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)(TabsList2, { className: "px-5 border-b border-[#2E3A4E] rounded-none bg-transparent gap-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(
             TabsTrigger2,
             {
               value: "prefs",
@@ -85474,7 +85506,7 @@ ${end.comment}` : end.comment;
               children: t2("players.tabPreferences")
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(
             TabsTrigger2,
             {
               value: "kb",
@@ -85482,7 +85514,7 @@ ${end.comment}` : end.comment;
               children: t2("players.tabKeybindings")
             }
           ),
-          hasRpg && /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+          hasRpg && /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(
             TabsTrigger2,
             {
               value: "rpg",
@@ -85491,7 +85523,7 @@ ${end.comment}` : end.comment;
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(TabsContent2, { value: "prefs", children: /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(TabsContent2, { value: "prefs", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(
           PreferencesTab,
           {
             file,
@@ -85501,7 +85533,7 @@ ${end.comment}` : end.comment;
             }
           }
         ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(TabsContent2, { value: "kb", children: /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(TabsContent2, { value: "kb", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(
           KeybindingsTab,
           {
             file,
@@ -85511,7 +85543,7 @@ ${end.comment}` : end.comment;
             }
           }
         ) }),
-        hasRpg && /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(TabsContent2, { value: "rpg", children: /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+        hasRpg && /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(TabsContent2, { value: "rpg", children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(
           RpgTab,
           {
             file,
@@ -85524,13 +85556,16 @@ ${end.comment}` : end.comment;
       ] })
     ] });
   }
+
+  // admin/pages/players/PlayersPage.tsx
+  var import_jsx_runtime28 = __toESM(require_jsx_runtime(), 1);
   function PlayersPage() {
     const t2 = useT();
     const [searchParams] = useSearchParams();
-    const [players, setPlayers] = (0, import_react5.useState)([]);
-    const [loading, setLoading] = (0, import_react5.useState)(true);
-    const [selected, setSelected] = (0, import_react5.useState)(searchParams.get("p"));
-    (0, import_react5.useEffect)(() => {
+    const [players, setPlayers] = (0, import_react11.useState)([]);
+    const [loading, setLoading] = (0, import_react11.useState)(true);
+    const [selected, setSelected] = (0, import_react11.useState)(searchParams.get("p"));
+    (0, import_react11.useEffect)(() => {
       api.players.list().then((p2) => {
         setPlayers(p2.sort());
         setLoading(false);
@@ -85540,10 +85575,10 @@ ${end.comment}` : end.comment;
       setPlayers((prev) => prev.map((p2) => p2 === oldName ? newName : p2).sort());
       setSelected(newName);
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "flex gap-4 h-full", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { className: "w-52 shrink-0 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden self-start", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("p", { className: "px-4 py-3 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] border-b border-[#2E3A4E]", children: t2("players.title") }),
-        loading ? /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("p", { className: "px-4 py-4 text-[#8A99AF] text-sm animate-pulse", children: t2("common.loading") }) : players.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("p", { className: "px-4 py-4 text-[#4A5568] text-sm", children: t2("players.none") }) : /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { children: players.map((p2) => /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "flex gap-4 h-full", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "w-52 shrink-0 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden self-start", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("p", { className: "px-4 py-3 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] border-b border-[#2E3A4E]", children: t2("players.title") }),
+        loading ? /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("p", { className: "px-4 py-4 text-[#8A99AF] text-sm animate-pulse", children: t2("common.loading") }) : players.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("p", { className: "px-4 py-4 text-[#4A5568] text-sm", children: t2("players.none") }) : /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("div", { children: players.map((p2) => /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
           "button",
           {
             onClick: () => setSelected(p2),
@@ -85553,7 +85588,7 @@ ${end.comment}` : end.comment;
           p2
         )) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "flex-1 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden self-start min-h-[200px]", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime14.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("div", { className: "flex-1 bg-[#1A222C] border border-[#2E3A4E] rounded-xl overflow-hidden self-start min-h-[200px]", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
         PlayerDetail,
         {
           name: selected,
@@ -85561,20 +85596,72 @@ ${end.comment}` : end.comment;
           onRenamed: (newName) => handleRenamed(selected, newName)
         },
         selected
-      ) : /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "p-6 text-[#4A5568] text-sm", children: t2("players.selectToEdit") }) })
+      ) : /* @__PURE__ */ (0, import_jsx_runtime28.jsx)("div", { className: "p-6 text-[#4A5568] text-sm", children: t2("players.selectToEdit") }) })
     ] });
   }
 
-  // admin/pages/StatusPage.tsx
-  var import_react6 = __toESM(require_react(), 1);
-  var import_jsx_runtime15 = __toESM(require_jsx_runtime(), 1);
-  function kb(bytes) {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / 1048576).toFixed(1)} MB`;
+  // admin/pages/status/StatusPage.tsx
+  var import_react13 = __toESM(require_react(), 1);
+
+  // admin/pages/status/GameTimeSetter.tsx
+  var import_react12 = __toESM(require_react(), 1);
+
+  // admin/pages/status/utils.ts
+  function pad2(n) {
+    return String(n).padStart(2, "0");
   }
+
+  // admin/pages/status/GameTimeSetter.tsx
+  var import_jsx_runtime29 = __toESM(require_jsx_runtime(), 1);
+  function GameTimeSetter({ snap, t: t2 }) {
+    const { h, m } = ticksToTime(snap.gameTicks, snap.ticksPerDay || 72e3);
+    const [time, setTime] = (0, import_react12.useState)(`${pad2(h)}:${pad2(m)}`);
+    const [saving, setSaving] = (0, import_react12.useState)(false);
+    const prevRef = (0, import_react12.useRef)(`${pad2(h)}:${pad2(m)}`);
+    const newHM = ticksToTime(snap.gameTicks, snap.ticksPerDay || 72e3);
+    const newStr = `${pad2(newHM.h)}:${pad2(newHM.m)}`;
+    (0, import_react12.useLayoutEffect)(() => {
+      if (newStr !== prevRef.current) {
+        prevRef.current = newStr;
+        setTime(newStr);
+      }
+    }, [newStr]);
+    const save = async () => {
+      const [hh, mm] = time.split(":").map(Number);
+      if (isNaN(hh) || isNaN(mm)) return;
+      setSaving(true);
+      try {
+        await api.status.setGameTime(hh, mm);
+      } catch (e) {
+      }
+      setSaving(false);
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("div", { className: "flex items-center gap-2 mt-2", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(
+        "input",
+        {
+          type: "time",
+          value: time,
+          onChange: (e) => setTime(e.target.value),
+          className: "bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-2 py-1 text-sm text-white focus:outline-none focus:border-[#3C50E0] transition-colors tabular-nums"
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(
+        "button",
+        {
+          onClick: save,
+          disabled: saving,
+          className: "px-3 py-1 rounded-lg text-xs font-medium bg-[#3C50E0] hover:bg-[#3446c7] text-white transition-colors disabled:opacity-50",
+          children: saving ? "\u2026" : t2("status.set")
+        }
+      )
+    ] });
+  }
+
+  // admin/pages/status/Svg.tsx
+  var import_jsx_runtime30 = __toESM(require_jsx_runtime(), 1);
   function Svg({ d, size = 22 }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
       "svg",
       {
         width: size,
@@ -85585,10 +85672,13 @@ ${end.comment}` : end.comment;
         strokeWidth: 1.8,
         strokeLinecap: "round",
         strokeLinejoin: "round",
-        children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("path", { d })
+        children: /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("path", { d })
       }
     );
   }
+
+  // admin/pages/status/StatCard.tsx
+  var import_jsx_runtime31 = __toESM(require_jsx_runtime(), 1);
   function StatCard({
     label,
     value,
@@ -85596,34 +85686,25 @@ ${end.comment}` : end.comment;
     icon,
     color
   }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "bg-[#1A222C] rounded-xl border border-[#2E3A4E] p-5 flex items-start justify-between", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("p", { className: "text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-1", children: label }),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("p", { className: "text-3xl font-bold text-white tabular-nums leading-none", children: value }),
-        sub && /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("p", { className: "text-xs text-[#8A99AF] mt-1.5", children: sub })
+    return /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "bg-[#1A222C] rounded-xl border border-[#2E3A4E] p-5 flex items-start justify-between", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("p", { className: "text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-1", children: label }),
+        /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("p", { className: "text-3xl font-bold text-white tabular-nums leading-none", children: value }),
+        sub && /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("p", { className: "text-xs text-[#8A99AF] mt-1.5", children: sub })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: `w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${color}`, children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Svg, { d: icon, size: 20 }) })
+      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("div", { className: `w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${color}`, children: /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(Svg, { d: icon, size: 20 }) })
     ] });
   }
-  function Card({ title, children }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "bg-[#1A222C] rounded-xl border border-[#2E3A4E] p-5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("h3", { className: "text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-4", children: title }),
-      children
-    ] });
-  }
-  function Row({ label, value, accent }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "flex justify-between items-center py-1.5 border-b border-[#2E3A4E] last:border-0 text-sm", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { className: "text-[#8A99AF]", children: label }),
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { className: accent ? "text-[#3C50E0] font-semibold" : "text-white tabular-nums", children: value })
-    ] });
-  }
+
+  // admin/pages/status/HeapBar.tsx
+  var import_jsx_runtime32 = __toESM(require_jsx_runtime(), 1);
   function HeapBar({ used, max, label }) {
     const pct = max > 0 ? Math.round(used / max * 100) : 0;
     const color = pct > 85 ? "bg-red-500" : pct > 65 ? "bg-amber-400" : "bg-[#3C50E0]";
-    return /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "flex justify-between text-xs text-[#8A99AF] mb-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { children: label }),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("span", { children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "flex justify-between text-xs text-[#8A99AF] mb-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { children: label }),
+        /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("span", { children: [
           used,
           " MB / ",
           max,
@@ -85632,8 +85713,34 @@ ${end.comment}` : end.comment;
           "%)"
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: "w-full bg-[#2E3A4E] rounded-full h-2", children: /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("div", { className: `h-2 rounded-full transition-all ${color}`, style: { width: `${pct}%` } }) })
+      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("div", { className: "w-full bg-[#2E3A4E] rounded-full h-2", children: /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("div", { className: `h-2 rounded-full transition-all ${color}`, style: { width: `${pct}%` } }) })
     ] });
+  }
+
+  // admin/pages/status/Card.tsx
+  var import_jsx_runtime33 = __toESM(require_jsx_runtime(), 1);
+  function Card({ title, children }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "bg-[#1A222C] rounded-xl border border-[#2E3A4E] p-5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("h3", { className: "text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-4", children: title }),
+      children
+    ] });
+  }
+
+  // admin/pages/status/Row.tsx
+  var import_jsx_runtime34 = __toESM(require_jsx_runtime(), 1);
+  function Row({ label, value, accent }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "flex justify-between items-center py-1.5 border-b border-[#2E3A4E] last:border-0 text-sm", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("span", { className: "text-[#8A99AF]", children: label }),
+      /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("span", { className: accent ? "text-[#3C50E0] font-semibold" : "text-white tabular-nums", children: value })
+    ] });
+  }
+
+  // admin/pages/status/StatusPage.tsx
+  var import_jsx_runtime35 = __toESM(require_jsx_runtime(), 1);
+  function kb(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1048576).toFixed(1)} MB`;
   }
   var I = {
     users: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm8 2l2 2 4-4",
@@ -85651,59 +85758,12 @@ ${end.comment}` : end.comment;
     const m = Math.floor(day * 24 * 60 / ticksPerDay % 60);
     return { h, m };
   }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function GameTimeSetter({ snap, t: t2 }) {
-    const { h, m } = ticksToTime(snap.gameTicks, snap.ticksPerDay || 72e3);
-    const [time, setTime] = (0, import_react6.useState)(`${pad2(h)}:${pad2(m)}`);
-    const [saving, setSaving] = (0, import_react6.useState)(false);
-    const prevRef = (0, import_react6.useRef)(`${pad2(h)}:${pad2(m)}`);
-    const newHM = ticksToTime(snap.gameTicks, snap.ticksPerDay || 72e3);
-    const newStr = `${pad2(newHM.h)}:${pad2(newHM.m)}`;
-    (0, import_react6.useLayoutEffect)(() => {
-      if (newStr !== prevRef.current) {
-        prevRef.current = newStr;
-        setTime(newStr);
-      }
-    }, [newStr]);
-    const save = async () => {
-      const [hh, mm] = time.split(":").map(Number);
-      if (isNaN(hh) || isNaN(mm)) return;
-      setSaving(true);
-      try {
-        await api.status.setGameTime(hh, mm);
-      } catch (e) {
-      }
-      setSaving(false);
-    };
-    return /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "flex items-center gap-2 mt-2", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
-        "input",
-        {
-          type: "time",
-          value: time,
-          onChange: (e) => setTime(e.target.value),
-          className: "bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-2 py-1 text-sm text-white focus:outline-none focus:border-[#3C50E0] transition-colors tabular-nums"
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
-        "button",
-        {
-          onClick: save,
-          disabled: saving,
-          className: "px-3 py-1 rounded-lg text-xs font-medium bg-[#3C50E0] hover:bg-[#3446c7] text-white transition-colors disabled:opacity-50",
-          children: saving ? "\u2026" : t2("status.set")
-        }
-      )
-    ] });
-  }
   function StatusPage() {
     const t2 = useT();
-    const [snap, setSnap] = (0, import_react6.useState)(null);
-    const [restarting, setRestarting] = (0, import_react6.useState)(false);
-    const [errorKey, setErrorKey] = (0, import_react6.useState)(null);
-    (0, import_react6.useEffect)(() => {
+    const [snap, setSnap] = (0, import_react13.useState)(null);
+    const [restarting, setRestarting] = (0, import_react13.useState)(false);
+    const [errorKey, setErrorKey] = (0, import_react13.useState)(null);
+    (0, import_react13.useEffect)(() => {
       let alive = true;
       const poll = async () => {
         try {
@@ -85732,14 +85792,14 @@ ${end.comment}` : end.comment;
       }
       setTimeout(() => setRestarting(false), 4e3);
     };
-    if (errorKey) return /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("p", { className: "text-red-400 text-sm", children: t2(errorKey) });
-    if (!snap) return /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("p", { className: "text-[#8A99AF] text-sm animate-pulse", children: t2("common.loading") });
+    if (errorKey) return /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("p", { className: "text-red-400 text-sm", children: t2(errorKey) });
+    if (!snap) return /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("p", { className: "text-[#8A99AF] text-sm animate-pulse", children: t2("common.loading") });
     const topNpcs = Object.entries(snap.npcByType).sort((a, b) => b[1] - a[1]).slice(0, 6);
     const tpd = snap.ticksPerDay || 72e3;
     const { h, m } = ticksToTime(snap.gameTicks, tpd);
-    return /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "space-y-6", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "grid grid-cols-2 xl:grid-cols-4 gap-4", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "space-y-6", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "grid grid-cols-2 xl:grid-cols-4 gap-4", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
           StatCard,
           {
             label: t2("status.connectedPlayers"),
@@ -85749,7 +85809,7 @@ ${end.comment}` : end.comment;
             color: "bg-blue-500/20 text-blue-400"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
           StatCard,
           {
             label: t2("status.npcsAlive"),
@@ -85759,7 +85819,7 @@ ${end.comment}` : end.comment;
             color: "bg-violet-500/20 text-violet-400"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
           StatCard,
           {
             label: t2("status.loadedChunks"),
@@ -85768,7 +85828,7 @@ ${end.comment}` : end.comment;
             color: "bg-emerald-500/20 text-emerald-400"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
           StatCard,
           {
             label: t2("status.gameTime"),
@@ -85779,40 +85839,40 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "grid grid-cols-1 lg:grid-cols-3 gap-4", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Card, { title: t2("status.npcsByType"), children: topNpcs.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("p", { className: "text-[#8A99AF] text-sm", children: t2("status.noneCapitalised") }) : topNpcs.map(([type, count3]) => /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Row, { label: type, value: count3 }, type)) }),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)(Card, { title: t2("status.world"), children: [
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Row, { label: t2("status.groundItems"), value: snap.worldItems }),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Row, { label: t2("status.activeLiquids"), value: snap.activeLiquids }),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Row, { label: t2("status.pendingLiquidTicks"), value: snap.pendingLiquidTicks }),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Row, { label: t2("status.growingVegetation"), value: snap.activeVegetation }),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "pt-3", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("p", { className: "text-[10px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-1", children: t2("status.setGameTime") }),
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(GameTimeSetter, { snap, t: t2 })
+      /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "grid grid-cols-1 lg:grid-cols-3 gap-4", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(Card, { title: t2("status.npcsByType"), children: topNpcs.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("p", { className: "text-[#8A99AF] text-sm", children: t2("status.noneCapitalised") }) : topNpcs.map(([type, count3]) => /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(Row, { label: type, value: count3 }, type)) }),
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)(Card, { title: t2("status.world"), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(Row, { label: t2("status.groundItems"), value: snap.worldItems }),
+          /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(Row, { label: t2("status.activeLiquids"), value: snap.activeLiquids }),
+          /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(Row, { label: t2("status.pendingLiquidTicks"), value: snap.pendingLiquidTicks }),
+          /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(Row, { label: t2("status.growingVegetation"), value: snap.activeVegetation }),
+          /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "pt-3", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("p", { className: "text-[10px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-1", children: t2("status.setGameTime") }),
+            /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(GameTimeSetter, { snap, t: t2 })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)(Card, { title: t2("status.network"), children: [
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Row, { label: t2("status.received"), value: kb(snap.networkBytesIn) }),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Row, { label: t2("status.sent"), value: kb(snap.networkBytesOut) })
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)(Card, { title: t2("status.network"), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(Row, { label: t2("status.received"), value: kb(snap.networkBytesIn) }),
+          /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(Row, { label: t2("status.sent"), value: kb(snap.networkBytesOut) })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)(Card, { title: t2("status.processor"), children: [
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(HeapBar, { used: snap.heapUsedMb, max: snap.heapMaxMb, label: t2("status.heap") }),
-          /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "mt-3 space-y-0.5", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Row, { label: t2("status.nonHeap"), value: `${snap.nonHeapUsedMb} MB` }),
-            /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Row, { label: t2("status.processors"), value: snap.processors })
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)(Card, { title: t2("status.processor"), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(HeapBar, { used: snap.heapUsedMb, max: snap.heapMaxMb, label: t2("status.heap") }),
+          /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "mt-3 space-y-0.5", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(Row, { label: t2("status.nonHeap"), value: `${snap.nonHeapUsedMb} MB` }),
+            /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(Row, { label: t2("status.processors"), value: snap.processors })
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)("div", { className: "flex items-center justify-between text-[11px] text-[#8A99AF]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsx)("span", { children: t2("status.autoRefresh") }),
-        /* @__PURE__ */ (0, import_jsx_runtime15.jsxs)(
+      /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "flex items-center justify-between text-[11px] text-[#8A99AF]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("span", { children: t2("status.autoRefresh") }),
+        /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)(
           "button",
           {
             onClick: restart,
             disabled: restarting,
             className: "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2E3A4E] hover:bg-[#2E3A4E] text-[#8A99AF] hover:text-white transition-colors disabled:opacity-50",
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime15.jsx)(Svg, { d: I.restart, size: 13 }),
+              /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(Svg, { d: I.restart, size: 13 }),
               restarting ? t2("status.restarting") : t2("status.restartServer")
             ]
           }
@@ -85821,15 +85881,15 @@ ${end.comment}` : end.comment;
     ] });
   }
 
-  // admin/pages/UsersPage.tsx
-  var import_react9 = __toESM(require_react(), 1);
+  // admin/pages/user/UsersPage.tsx
+  var import_react17 = __toESM(require_react(), 1);
 
   // node_modules/@radix-ui/react-dialog/dist/index.mjs
   var React40 = __toESM(require_react(), 1);
 
   // node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs
   var React29 = __toESM(require_react(), 1);
-  var import_jsx_runtime16 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime36 = __toESM(require_jsx_runtime(), 1);
   var DISMISSABLE_LAYER_NAME = "DismissableLayer";
   var CONTEXT_UPDATE = "dismissableLayer.update";
   var POINTER_DOWN_OUTSIDE = "dismissableLayer.pointerDownOutside";
@@ -85961,7 +86021,7 @@ ${end.comment}` : end.comment;
         document.addEventListener(CONTEXT_UPDATE, handleUpdate);
         return () => document.removeEventListener(CONTEXT_UPDATE, handleUpdate);
       }, []);
-      return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
         Primitive.div,
         __spreadProps(__spreadValues({}, layerProps), {
           ref: composedRefs,
@@ -85993,7 +86053,7 @@ ${end.comment}` : end.comment;
         };
       }
     }, [context.branches]);
-    return /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(Primitive.div, __spreadProps(__spreadValues({}, props), { ref: composedRefs }));
+    return /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(Primitive.div, __spreadProps(__spreadValues({}, props), { ref: composedRefs }));
   });
   DismissableLayerBranch.displayName = BRANCH_NAME;
   function useDismissableLayerSurface() {
@@ -86160,7 +86220,7 @@ ${end.comment}` : end.comment;
 
   // node_modules/@radix-ui/react-focus-scope/dist/index.mjs
   var React30 = __toESM(require_react(), 1);
-  var import_jsx_runtime17 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime37 = __toESM(require_jsx_runtime(), 1);
   var AUTOFOCUS_ON_MOUNT = "focusScope.autoFocusOnMount";
   var AUTOFOCUS_ON_UNMOUNT = "focusScope.autoFocusOnUnmount";
   var EVENT_OPTIONS2 = { bubbles: false, cancelable: true };
@@ -86283,7 +86343,7 @@ ${end.comment}` : end.comment;
       },
       [loop, trapped, focusScope.paused]
     );
-    return /* @__PURE__ */ (0, import_jsx_runtime17.jsx)(Primitive.div, __spreadProps(__spreadValues({ tabIndex: -1 }, scopeProps), { ref: composedRefs, onKeyDown: handleKeyDown }));
+    return /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Primitive.div, __spreadProps(__spreadValues({ tabIndex: -1 }, scopeProps), { ref: composedRefs, onKeyDown: handleKeyDown }));
   });
   FocusScope.displayName = FOCUS_SCOPE_NAME;
   function focusFirst2(candidates, { select: select3 = false } = {}) {
@@ -86370,7 +86430,7 @@ ${end.comment}` : end.comment;
   // node_modules/@radix-ui/react-portal/dist/index.mjs
   var React31 = __toESM(require_react(), 1);
   var ReactDOM2 = __toESM(require_react_dom(), 1);
-  var import_jsx_runtime18 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime38 = __toESM(require_jsx_runtime(), 1);
   var PORTAL_NAME = "Portal";
   var Portal = React31.forwardRef((props, forwardedRef) => {
     var _b;
@@ -86378,7 +86438,7 @@ ${end.comment}` : end.comment;
     const [mounted, setMounted] = React31.useState(false);
     useLayoutEffect22(() => setMounted(true), []);
     const container = containerProp || mounted && ((_b = globalThis == null ? void 0 : globalThis.document) == null ? void 0 : _b.body);
-    return container ? ReactDOM2.createPortal(/* @__PURE__ */ (0, import_jsx_runtime18.jsx)(Primitive.div, __spreadProps(__spreadValues({}, portalProps), { ref: forwardedRef })), container) : null;
+    return container ? ReactDOM2.createPortal(/* @__PURE__ */ (0, import_jsx_runtime38.jsx)(Primitive.div, __spreadProps(__spreadValues({}, portalProps), { ref: forwardedRef })), container) : null;
   });
   Portal.displayName = PORTAL_NAME;
 
@@ -86475,9 +86535,9 @@ ${end.comment}` : end.comment;
   }
 
   // node_modules/use-callback-ref/dist/es2015/useRef.js
-  var import_react7 = __toESM(require_react());
+  var import_react14 = __toESM(require_react());
   function useCallbackRef2(initialValue, callback) {
-    var ref = (0, import_react7.useState)(function() {
+    var ref = (0, import_react14.useState)(function() {
       return {
         // value
         value: initialValue,
@@ -87262,7 +87322,7 @@ ${end.comment}` : end.comment;
   };
 
   // node_modules/@radix-ui/react-dialog/dist/index.mjs
-  var import_jsx_runtime19 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime39 = __toESM(require_jsx_runtime(), 1);
   var DIALOG_NAME = "Dialog";
   var [createDialogContext, createDialogScope] = createContextScope(DIALOG_NAME);
   var [DialogProvider, useDialogContext] = createDialogContext(DIALOG_NAME);
@@ -87283,7 +87343,7 @@ ${end.comment}` : end.comment;
       onChange: onOpenChange,
       caller: DIALOG_NAME
     });
-    return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
       DialogProvider,
       {
         scope: __scopeDialog,
@@ -87307,7 +87367,7 @@ ${end.comment}` : end.comment;
       const _a6 = props, { __scopeDialog } = _a6, triggerProps = __objRest(_a6, ["__scopeDialog"]);
       const context = useDialogContext(TRIGGER_NAME2, __scopeDialog);
       const composedTriggerRef = useComposedRefs(forwardedRef, context.triggerRef);
-      return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
         Primitive.button,
         __spreadProps(__spreadValues({
           type: "button",
@@ -87330,7 +87390,7 @@ ${end.comment}` : end.comment;
   var DialogPortal = (props) => {
     const { __scopeDialog, forceMount, children, container } = props;
     const context = useDialogContext(PORTAL_NAME2, __scopeDialog);
-    return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(PortalProvider, { scope: __scopeDialog, forceMount, children: React40.Children.map(children, (child) => /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Portal, { asChild: true, container, children: child }) })) });
+    return /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(PortalProvider, { scope: __scopeDialog, forceMount, children: React40.Children.map(children, (child) => /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Portal, { asChild: true, container, children: child }) })) });
   };
   DialogPortal.displayName = PORTAL_NAME2;
   var OVERLAY_NAME = "DialogOverlay";
@@ -87339,7 +87399,7 @@ ${end.comment}` : end.comment;
       const portalContext = usePortalContext(OVERLAY_NAME, props.__scopeDialog);
       const _a6 = props, { forceMount = portalContext.forceMount } = _a6, overlayProps = __objRest(_a6, ["forceMount"]);
       const context = useDialogContext(OVERLAY_NAME, props.__scopeDialog);
-      return context.modal ? /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(DialogOverlayImpl, __spreadProps(__spreadValues({}, overlayProps), { ref: forwardedRef })) }) : null;
+      return context.modal ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(DialogOverlayImpl, __spreadProps(__spreadValues({}, overlayProps), { ref: forwardedRef })) }) : null;
     }
   );
   DialogOverlay.displayName = OVERLAY_NAME;
@@ -87353,7 +87413,7 @@ ${end.comment}` : end.comment;
       return (
         // Make sure `Content` is scrollable even when it doesn't live inside `RemoveScroll`
         // ie. when `Overlay` and `Content` are siblings
-        /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Combination_default, { as: Slot, allowPinchZoom: true, shards: [context.contentRef], children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Combination_default, { as: Slot, allowPinchZoom: true, shards: [context.contentRef], children: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
           Primitive.div,
           __spreadProps(__spreadValues({
             "data-state": getState(context.open)
@@ -87371,7 +87431,7 @@ ${end.comment}` : end.comment;
       const portalContext = usePortalContext(CONTENT_NAME2, props.__scopeDialog);
       const _a6 = props, { forceMount = portalContext.forceMount } = _a6, contentProps = __objRest(_a6, ["forceMount"]);
       const context = useDialogContext(CONTENT_NAME2, props.__scopeDialog);
-      return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Presence, { present: forceMount || context.open, children: context.modal ? /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(DialogContentModal, __spreadProps(__spreadValues({}, contentProps), { ref: forwardedRef })) : /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(DialogContentNonModal, __spreadProps(__spreadValues({}, contentProps), { ref: forwardedRef })) });
+      return /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Presence, { present: forceMount || context.open, children: context.modal ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(DialogContentModal, __spreadProps(__spreadValues({}, contentProps), { ref: forwardedRef })) : /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(DialogContentNonModal, __spreadProps(__spreadValues({}, contentProps), { ref: forwardedRef })) });
     }
   );
   DialogContent.displayName = CONTENT_NAME2;
@@ -87384,7 +87444,7 @@ ${end.comment}` : end.comment;
         const content2 = contentRef.current;
         if (content2) return hideOthers(content2);
       }, []);
-      return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
         DialogContentImpl,
         __spreadProps(__spreadValues({}, props), {
           ref: composedRefs,
@@ -87414,7 +87474,7 @@ ${end.comment}` : end.comment;
       const context = useDialogContext(CONTENT_NAME2, props.__scopeDialog);
       const hasInteractedOutsideRef = React40.useRef(false);
       const hasPointerDownOutsideRef = React40.useRef(false);
-      return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
         DialogContentImpl,
         __spreadProps(__spreadValues({}, props), {
           ref: forwardedRef,
@@ -87455,7 +87515,7 @@ ${end.comment}` : end.comment;
       const _a6 = props, { __scopeDialog, trapFocus, onOpenAutoFocus, onCloseAutoFocus } = _a6, contentProps = __objRest(_a6, ["__scopeDialog", "trapFocus", "onOpenAutoFocus", "onCloseAutoFocus"]);
       const context = useDialogContext(CONTENT_NAME2, __scopeDialog);
       useFocusGuards();
-      return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(import_jsx_runtime19.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(import_jsx_runtime39.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
         FocusScope,
         {
           asChild: true,
@@ -87463,7 +87523,7 @@ ${end.comment}` : end.comment;
           trapped: trapFocus,
           onMountAutoFocus: onOpenAutoFocus,
           onUnmountAutoFocus: onCloseAutoFocus,
-          children: /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+          children: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
             DismissableLayer,
             __spreadProps(__spreadValues({
               role: "dialog",
@@ -87486,7 +87546,7 @@ ${end.comment}` : end.comment;
     (props, forwardedRef) => {
       const _a6 = props, { __scopeDialog } = _a6, titleProps = __objRest(_a6, ["__scopeDialog"]);
       const context = useDialogContext(TITLE_NAME, __scopeDialog);
-      return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Primitive.h2, __spreadProps(__spreadValues({ id: context.titleId }, titleProps), { ref: forwardedRef }));
+      return /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Primitive.h2, __spreadProps(__spreadValues({ id: context.titleId }, titleProps), { ref: forwardedRef }));
     }
   );
   DialogTitle.displayName = TITLE_NAME;
@@ -87495,7 +87555,7 @@ ${end.comment}` : end.comment;
     (props, forwardedRef) => {
       const _a6 = props, { __scopeDialog } = _a6, descriptionProps = __objRest(_a6, ["__scopeDialog"]);
       const context = useDialogContext(DESCRIPTION_NAME, __scopeDialog);
-      return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(Primitive.p, __spreadProps(__spreadValues({ id: context.descriptionId }, descriptionProps), { ref: forwardedRef }));
+      return /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Primitive.p, __spreadProps(__spreadValues({ id: context.descriptionId }, descriptionProps), { ref: forwardedRef }));
     }
   );
   DialogDescription.displayName = DESCRIPTION_NAME;
@@ -87504,7 +87564,7 @@ ${end.comment}` : end.comment;
     (props, forwardedRef) => {
       const _a6 = props, { __scopeDialog } = _a6, closeProps = __objRest(_a6, ["__scopeDialog"]);
       const context = useDialogContext(CLOSE_NAME, __scopeDialog);
-      return /* @__PURE__ */ (0, import_jsx_runtime19.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
         Primitive.button,
         __spreadProps(__spreadValues({
           type: "button"
@@ -87521,11 +87581,11 @@ ${end.comment}` : end.comment;
   }
 
   // primitives/Dialog.tsx
-  var import_react8 = __toESM(require_react(), 1);
-  var import_jsx_runtime20 = __toESM(require_jsx_runtime(), 1);
+  var import_react15 = __toESM(require_react(), 1);
+  var import_jsx_runtime40 = __toESM(require_jsx_runtime(), 1);
   var Dialog2 = Dialog;
   function DialogOverlay2({ className }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
       DialogOverlay,
       {
         className: cn(
@@ -87537,10 +87597,10 @@ ${end.comment}` : end.comment;
   }
   function DialogContent2(_a6) {
     var _b = _a6, { className, overlayClassName, children, movable = false } = _b, props = __objRest(_b, ["className", "overlayClassName", "children", "movable"]);
-    const [offset, setOffset] = (0, import_react8.useState)({ x: 0, y: 0 });
-    const [isDraggingWindow, setIsDraggingWindow] = (0, import_react8.useState)(false);
-    const dragStart = (0, import_react8.useRef)(null);
-    const onMouseDown = (0, import_react8.useCallback)(
+    const [offset, setOffset] = (0, import_react15.useState)({ x: 0, y: 0 });
+    const [isDraggingWindow, setIsDraggingWindow] = (0, import_react15.useState)(false);
+    const dragStart = (0, import_react15.useRef)(null);
+    const onMouseDown = (0, import_react15.useCallback)(
       (e) => {
         if (!movable) return;
         const target = e.target;
@@ -87568,9 +87628,9 @@ ${end.comment}` : end.comment;
       },
       [movable, offset]
     );
-    return /* @__PURE__ */ (0, import_jsx_runtime20.jsxs)(DialogPortal, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(DialogOverlay2, { className: overlayClassName }),
-      /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)(DialogPortal, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(DialogOverlay2, { className: overlayClassName }),
+      /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
         DialogContent,
         __spreadProps(__spreadValues({
           className: cn(
@@ -87593,11 +87653,11 @@ ${end.comment}` : end.comment;
   }
   function DialogTitle2(_a6) {
     var _b = _a6, { className } = _b, props = __objRest(_b, ["className"]);
-    return /* @__PURE__ */ (0, import_jsx_runtime20.jsx)(DialogTitle, __spreadValues({ className: cn("text-lg font-semibold text-white/90", className) }, props));
+    return /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(DialogTitle, __spreadValues({ className: cn("text-lg font-semibold text-white/90", className) }, props));
   }
 
-  // admin/pages/UsersPage.tsx
-  var import_jsx_runtime21 = __toESM(require_jsx_runtime(), 1);
+  // admin/pages/user/Btn.tsx
+  var import_jsx_runtime41 = __toESM(require_jsx_runtime(), 1);
   function Btn({
     children,
     onClick,
@@ -87609,7 +87669,7 @@ ${end.comment}` : end.comment;
       ghost: "bg-transparent border border-[#2E3A4E] text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white",
       danger: "bg-red-600/10 border border-red-600/30 text-red-400 hover:bg-red-600/20"
     }[variant];
-    return /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
       "button",
       {
         onClick,
@@ -87619,13 +87679,28 @@ ${end.comment}` : end.comment;
       }
     );
   }
+
+  // admin/pages/user/UserForm.tsx
+  var import_react16 = __toESM(require_react(), 1);
+
+  // admin/pages/user/Field.tsx
+  var import_jsx_runtime42 = __toESM(require_jsx_runtime(), 1);
+  function Field2({ label, children }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-1.5", children: label }),
+      children
+    ] });
+  }
+
+  // admin/pages/user/TextInput.tsx
+  var import_jsx_runtime43 = __toESM(require_jsx_runtime(), 1);
   function TextInput({
     value,
     onChange,
     type = "text",
     placeholder
   }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime43.jsx)(
       "input",
       {
         type,
@@ -87636,12 +87711,9 @@ ${end.comment}` : end.comment;
       }
     );
   }
-  function Field2({ label, children }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("p", { className: "text-xs font-medium text-[#8A99AF] mb-1.5", children: label }),
-      children
-    ] });
-  }
+
+  // admin/pages/user/UserForm.tsx
+  var import_jsx_runtime44 = __toESM(require_jsx_runtime(), 1);
   function UserForm({
     initial,
     onSave,
@@ -87650,12 +87722,12 @@ ${end.comment}` : end.comment;
     noauth = false
   }) {
     var _a6, _b, _c;
-    const [email, setEmail] = (0, import_react9.useState)((_a6 = initial.email) != null ? _a6 : "");
-    const [password, setPassword] = (0, import_react9.useState)("");
-    const [displayName, setDisplayName] = (0, import_react9.useState)((_b = initial.displayName) != null ? _b : "");
-    const [groups, setGroups] = (0, import_react9.useState)(((_c = initial.groups) != null ? _c : []).join(", "));
-    const [saving, setSaving] = (0, import_react9.useState)(false);
-    const [error2, setError] = (0, import_react9.useState)(null);
+    const [email, setEmail] = (0, import_react16.useState)((_a6 = initial.email) != null ? _a6 : "");
+    const [password, setPassword] = (0, import_react16.useState)("");
+    const [displayName, setDisplayName] = (0, import_react16.useState)((_b = initial.displayName) != null ? _b : "");
+    const [groups, setGroups] = (0, import_react16.useState)(((_c = initial.groups) != null ? _c : []).join(", "));
+    const [saving, setSaving] = (0, import_react16.useState)(false);
+    const [error2, setError] = (0, import_react16.useState)(null);
     const t2 = useT();
     const save = async () => {
       setSaving(true);
@@ -87674,32 +87746,35 @@ ${end.comment}` : end.comment;
         setSaving(false);
       }
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "space-y-4", children: [
-      isNew && /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Field2, { label: t2("users.email"), children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(TextInput, { value: email, onChange: setEmail, placeholder: t2("users.emailPlaceholder") }) }),
-      isNew && !noauth && /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Field2, { label: t2("users.password"), children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(TextInput, { value: password, onChange: setPassword, type: "password" }) }),
-      !noauth && /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Field2, { label: t2("users.displayName"), children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(TextInput, { value: displayName, onChange: setDisplayName, placeholder: email }) }),
-      !noauth && /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Field2, { label: t2("users.groupsField"), children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(TextInput, { value: groups, onChange: setGroups, placeholder: t2("users.groupsPlaceholder") }) }),
-      error2 && /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("p", { className: "text-red-400 text-xs", children: error2 }),
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex gap-2 justify-end pt-1", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Btn, { variant: "ghost", onClick: onClose, children: t2("common.cancel") }),
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Btn, { onClick: save, disabled: saving, children: saving ? t2("common.saving") : t2("common.save") })
+    return /* @__PURE__ */ (0, import_jsx_runtime44.jsxs)("div", { className: "space-y-4", children: [
+      isNew && /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(Field2, { label: t2("users.email"), children: /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(TextInput, { value: email, onChange: setEmail, placeholder: t2("users.emailPlaceholder") }) }),
+      isNew && !noauth && /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(Field2, { label: t2("users.password"), children: /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(TextInput, { value: password, onChange: setPassword, type: "password" }) }),
+      !noauth && /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(Field2, { label: t2("users.displayName"), children: /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(TextInput, { value: displayName, onChange: setDisplayName, placeholder: email }) }),
+      !noauth && /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(Field2, { label: t2("users.groupsField"), children: /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(TextInput, { value: groups, onChange: setGroups, placeholder: t2("users.groupsPlaceholder") }) }),
+      error2 && /* @__PURE__ */ (0, import_jsx_runtime44.jsx)("p", { className: "text-red-400 text-xs", children: error2 }),
+      /* @__PURE__ */ (0, import_jsx_runtime44.jsxs)("div", { className: "flex gap-2 justify-end pt-1", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(Btn, { variant: "ghost", onClick: onClose, children: t2("common.cancel") }),
+        /* @__PURE__ */ (0, import_jsx_runtime44.jsx)(Btn, { onClick: save, disabled: saving, children: saving ? t2("common.saving") : t2("common.save") })
       ] })
     ] });
   }
+
+  // admin/pages/user/UsersPage.tsx
+  var import_jsx_runtime45 = __toESM(require_jsx_runtime(), 1);
   function UsersPage() {
     const t2 = useT();
     const [searchParams] = useSearchParams();
     const highlightEmail = searchParams.get("u");
-    const highlightRef = (0, import_react9.useRef)(null);
-    const [users, setUsers] = (0, import_react9.useState)([]);
-    const [loading, setLoading] = (0, import_react9.useState)(true);
-    const [unavailable, setUnavailable] = (0, import_react9.useState)(false);
-    const [authProvider, setAuthProvider] = (0, import_react9.useState)("local");
-    const [playersByEmail, setPlayersByEmail] = (0, import_react9.useState)({});
-    const [addOpen, setAddOpen] = (0, import_react9.useState)(false);
-    const [editUser, setEditUser] = (0, import_react9.useState)(null);
-    const [deleteEmail, setDeleteEmail] = (0, import_react9.useState)(null);
-    (0, import_react9.useEffect)(() => {
+    const highlightRef = (0, import_react17.useRef)(null);
+    const [users, setUsers] = (0, import_react17.useState)([]);
+    const [loading, setLoading] = (0, import_react17.useState)(true);
+    const [unavailable, setUnavailable] = (0, import_react17.useState)(false);
+    const [authProvider, setAuthProvider] = (0, import_react17.useState)("local");
+    const [playersByEmail, setPlayersByEmail] = (0, import_react17.useState)({});
+    const [addOpen, setAddOpen] = (0, import_react17.useState)(false);
+    const [editUser, setEditUser] = (0, import_react17.useState)(null);
+    const [deleteEmail, setDeleteEmail] = (0, import_react17.useState)(null);
+    (0, import_react17.useEffect)(() => {
       if (highlightRef.current) highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }, [loading]);
     const refresh = async () => {
@@ -87727,7 +87802,7 @@ ${end.comment}` : end.comment;
         setLoading(false);
       }
     };
-    (0, import_react9.useEffect)(() => {
+    (0, import_react17.useEffect)(() => {
       void refresh();
     }, []);
     const handleAdd = async (u) => {
@@ -87757,24 +87832,24 @@ ${end.comment}` : end.comment;
       await refresh();
     };
     if (unavailable) {
-      return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "rounded-xl border border-[#2E3A4E] bg-[#1A222C] p-6 text-sm text-[#8A99AF]", children: [
+      return /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)("div", { className: "rounded-xl border border-[#2E3A4E] bg-[#1A222C] p-6 text-sm text-[#8A99AF]", children: [
         t2("users.requiresLocalBefore"),
         " ",
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("code", { className: "text-white", children: "auth.provider: local" }),
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("code", { className: "text-white", children: "auth.provider: local" }),
         " ",
         t2("users.requiresLocalBetween"),
         " ",
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("code", { className: "text-white", children: "data/config/server.yaml" }),
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("code", { className: "text-white", children: "data/config/server.yaml" }),
         "."
       ] });
     }
-    return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "space-y-5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex items-center justify-between", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("p", { className: "text-sm text-[#8A99AF]", children: t2(users.length === 1 ? "users.countOne" : "users.countMany", users.length) }),
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Btn, { onClick: () => setAddOpen(true), children: t2("users.add") })
+    return /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)("div", { className: "space-y-5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)("div", { className: "flex items-center justify-between", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("p", { className: "text-sm text-[#8A99AF]", children: t2(users.length === 1 ? "users.countOne" : "users.countMany", users.length) }),
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(Btn, { onClick: () => setAddOpen(true), children: t2("users.add") })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "bg-[#1A222C] rounded-xl border border-[#2E3A4E] overflow-hidden", children: loading ? /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("p", { className: "p-6 text-[#8A99AF] text-sm animate-pulse", children: t2("common.loading") }) : /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("table", { className: "w-full", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("tr", { className: "border-b border-[#2E3A4E]", children: (authProvider === "none" ? [t2("users.email"), t2("users.players"), ""] : [t2("users.email"), t2("users.displayName"), t2("users.groups"), t2("users.players"), ""]).map((h) => /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("div", { className: "bg-[#1A222C] rounded-xl border border-[#2E3A4E] overflow-hidden", children: loading ? /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("p", { className: "p-6 text-[#8A99AF] text-sm animate-pulse", children: t2("common.loading") }) : /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)("table", { className: "w-full", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("thead", { children: /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("tr", { className: "border-b border-[#2E3A4E]", children: (authProvider === "none" ? [t2("users.email"), t2("users.players"), ""] : [t2("users.email"), t2("users.displayName"), t2("users.groups"), t2("users.players"), ""]).map((h) => /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(
           "th",
           {
             className: "px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]",
@@ -87782,8 +87857,8 @@ ${end.comment}` : end.comment;
           },
           h
         )) }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("tbody", { children: [
-          users.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)("tbody", { children: [
+          users.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("tr", { children: /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(
             "td",
             {
               colSpan: authProvider === "none" ? 3 : 5,
@@ -87794,16 +87869,16 @@ ${end.comment}` : end.comment;
           users.map((u) => {
             var _a6;
             const isHighlighted = highlightEmail && u.email.toLowerCase() === highlightEmail.toLowerCase();
-            return /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(
+            return /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)(
               "tr",
               {
                 ref: isHighlighted ? highlightRef : void 0,
                 className: `border-b border-[#2E3A4E] last:border-0 transition-colors ${isHighlighted ? "bg-[#3C50E0]/10 ring-1 ring-inset ring-[#3C50E0]/40" : "hover:bg-[#1F2D3D]"}`,
                 children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("td", { className: "px-5 py-3 text-sm text-[#8A99AF]", children: u.email }),
-                  authProvider !== "none" && /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(import_jsx_runtime21.Fragment, { children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("td", { className: "px-5 py-3 text-sm text-white font-medium", children: u.displayName }),
-                    /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "flex flex-wrap gap-1", children: u.groups.map((g) => /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(
+                  /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("td", { className: "px-5 py-3 text-sm text-[#8A99AF]", children: u.email }),
+                  authProvider !== "none" && /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)(import_jsx_runtime45.Fragment, { children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("td", { className: "px-5 py-3 text-sm text-white font-medium", children: u.displayName }),
+                    /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("div", { className: "flex flex-wrap gap-1", children: u.groups.map((g) => /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(
                       "span",
                       {
                         className: "bg-[#3C50E0]/20 text-[#818CF8] text-[10px] font-medium px-2 py-0.5 rounded-full border border-[#3C50E0]/30",
@@ -87812,7 +87887,7 @@ ${end.comment}` : end.comment;
                       g
                     )) }) })
                   ] }),
-                  /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("div", { className: "flex flex-wrap gap-1", children: ((_a6 = playersByEmail[u.email]) != null ? _a6 : []).map((p2) => /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(
+                  /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("div", { className: "flex flex-wrap gap-1", children: ((_a6 = playersByEmail[u.email]) != null ? _a6 : []).map((p2) => /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(
                     Link,
                     {
                       to: `/admin/players?p=${encodeURIComponent(p2)}`,
@@ -87821,9 +87896,9 @@ ${end.comment}` : end.comment;
                     },
                     p2
                   )) }) }),
-                  /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex gap-2 justify-end", children: [
-                    authProvider !== "none" && /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Btn, { variant: "ghost", onClick: () => setEditUser(u), children: t2("common.edit") }),
-                    /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Btn, { variant: "danger", onClick: () => setDeleteEmail(u.email), children: t2("common.delete") })
+                  /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("td", { className: "px-5 py-3", children: /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)("div", { className: "flex gap-2 justify-end", children: [
+                    authProvider !== "none" && /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(Btn, { variant: "ghost", onClick: () => setEditUser(u), children: t2("common.edit") }),
+                    /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(Btn, { variant: "danger", onClick: () => setDeleteEmail(u.email), children: t2("common.delete") })
                   ] }) })
                 ]
               },
@@ -87832,9 +87907,9 @@ ${end.comment}` : end.comment;
           })
         ] })
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Dialog2, { open: addOpen, onOpenChange: setAddOpen, children: /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(DialogContent2, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(DialogTitle2, { children: t2("users.addTitle") }),
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(Dialog2, { open: addOpen, onOpenChange: setAddOpen, children: /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)(DialogContent2, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(DialogTitle2, { children: t2("users.addTitle") }),
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(
           UserForm,
           {
             initial: {},
@@ -87845,9 +87920,9 @@ ${end.comment}` : end.comment;
           }
         )
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Dialog2, { open: !!editUser, onOpenChange: (o) => !o && setEditUser(null), children: /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(DialogContent2, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(DialogTitle2, { children: t2("users.editTitle") }),
-        editUser && /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(Dialog2, { open: !!editUser, onOpenChange: (o) => !o && setEditUser(null), children: /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)(DialogContent2, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(DialogTitle2, { children: t2("users.editTitle") }),
+        editUser && /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(
           UserForm,
           {
             initial: editUser,
@@ -87857,27 +87932,32 @@ ${end.comment}` : end.comment;
           }
         )
       ] }) }),
-      /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Dialog2, { open: !!deleteEmail, onOpenChange: (o) => !o && setDeleteEmail(null), children: /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)(DialogContent2, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(DialogTitle2, { children: t2("users.deleteTitle") }),
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("p", { className: "text-sm text-[#8A99AF] mb-5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(Dialog2, { open: !!deleteEmail, onOpenChange: (o) => !o && setDeleteEmail(null), children: /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)(DialogContent2, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(DialogTitle2, { children: t2("users.deleteTitle") }),
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)("p", { className: "text-sm text-[#8A99AF] mb-5", children: [
           t2("users.deleteConfirmBefore"),
           " ",
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)("span", { className: "text-white font-medium", children: deleteEmail }),
+          /* @__PURE__ */ (0, import_jsx_runtime45.jsx)("span", { className: "text-white font-medium", children: deleteEmail }),
           t2("users.deleteConfirmAfter")
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime21.jsxs)("div", { className: "flex gap-2 justify-end", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Btn, { variant: "ghost", onClick: () => setDeleteEmail(null), children: t2("common.cancel") }),
-          /* @__PURE__ */ (0, import_jsx_runtime21.jsx)(Btn, { variant: "danger", onClick: handleDelete, children: t2("common.delete") })
+        /* @__PURE__ */ (0, import_jsx_runtime45.jsxs)("div", { className: "flex gap-2 justify-end", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(Btn, { variant: "ghost", onClick: () => setDeleteEmail(null), children: t2("common.cancel") }),
+          /* @__PURE__ */ (0, import_jsx_runtime45.jsx)(Btn, { variant: "danger", onClick: handleDelete, children: t2("common.delete") })
         ] })
       ] }) })
     ] });
   }
 
-  // admin/pages/WorldsPage.tsx
-  var import_react10 = __toESM(require_react(), 1);
-  var import_jsx_runtime22 = __toESM(require_jsx_runtime(), 1);
+  // admin/pages/worlds/WorldsPage.tsx
+  var import_react19 = __toESM(require_react(), 1);
+
+  // admin/pages/worlds/CreateWorldForm.tsx
+  var import_react18 = __toESM(require_react(), 1);
+
+  // admin/pages/worlds/Icon.tsx
+  var import_jsx_runtime46 = __toESM(require_jsx_runtime(), 1);
   function Icon({ d, size = 16 }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime46.jsx)(
       "svg",
       {
         width: size,
@@ -87888,10 +87968,19 @@ ${end.comment}` : end.comment;
         strokeWidth: 1.8,
         strokeLinecap: "round",
         strokeLinejoin: "round",
-        children: /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("path", { d })
+        children: /* @__PURE__ */ (0, import_jsx_runtime46.jsx)("path", { d })
       }
     );
   }
+
+  // admin/pages/worlds/Badge.tsx
+  var import_jsx_runtime47 = __toESM(require_jsx_runtime(), 1);
+  function Badge2({ children, color }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime47.jsx)("span", { className: `inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${color}`, children });
+  }
+
+  // admin/pages/worlds/WorldCard.tsx
+  var import_jsx_runtime48 = __toESM(require_jsx_runtime(), 1);
   var I2 = {
     world: "M3 7l9-4 9 4M3 7v10l9 4m-9-14l9 4m9-4v10l-9 4m0-14v14",
     chunk: "M3 7l9-4 9 4M3 7v10l9 4m-9-14l9 4m9-4v10l-9 4m0-14v14",
@@ -87900,9 +87989,6 @@ ${end.comment}` : end.comment;
     add: "M12 5v14M5 12h14",
     active: "M5 13l4 4L19 7"
   };
-  function Badge2({ children, color }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("span", { className: `inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${color}`, children });
-  }
   function WorldCard({ world, onRefresh: _onRefresh }) {
     const { locale, t: t2 } = useI18n();
     const date = new Date(world.createdAt).toLocaleDateString(locale, {
@@ -87910,58 +87996,61 @@ ${end.comment}` : end.comment;
       month: "short",
       day: "numeric"
     });
-    return /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime48.jsxs)(
       "div",
       {
         className: `bg-[#1A222C] rounded-xl border p-5 transition-colors ${world.isActive ? "border-[#3C50E0]" : "border-[#2E3A4E]"}`,
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "flex items-start justify-between gap-3 mb-4", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "flex items-center gap-2.5 min-w-0", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime48.jsxs)("div", { className: "flex items-start justify-between gap-3 mb-4", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime48.jsxs)("div", { className: "flex items-center gap-2.5 min-w-0", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime48.jsx)(
                 "div",
                 {
                   className: `w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${world.isActive ? "bg-[#3C50E0]/20 text-[#3C50E0]" : "bg-[#2E3A4E] text-[#8A99AF]"}`,
-                  children: /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(Icon, { d: I2.world, size: 18 })
+                  children: /* @__PURE__ */ (0, import_jsx_runtime48.jsx)(Icon, { d: I2.world, size: 18 })
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "min-w-0", children: [
-                /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "text-white font-semibold text-[15px] truncate", children: world.name }),
-                /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "text-[11px] text-[#8A99AF]", children: t2("worlds.created", date) })
+              /* @__PURE__ */ (0, import_jsx_runtime48.jsxs)("div", { className: "min-w-0", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime48.jsx)("p", { className: "text-white font-semibold text-[15px] truncate", children: world.name }),
+                /* @__PURE__ */ (0, import_jsx_runtime48.jsx)("p", { className: "text-[11px] text-[#8A99AF]", children: t2("worlds.created", date) })
               ] })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "flex items-center gap-2 shrink-0", children: [
-              world.isActive && /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)(Badge2, { color: "bg-[#3C50E0]/20 text-[#3C50E0]", children: [
-                /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(Icon, { d: I2.active, size: 10 }),
-                /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("span", { className: "ml-1", children: t2("worlds.active") })
+            /* @__PURE__ */ (0, import_jsx_runtime48.jsxs)("div", { className: "flex items-center gap-2 shrink-0", children: [
+              world.isActive && /* @__PURE__ */ (0, import_jsx_runtime48.jsxs)(Badge2, { color: "bg-[#3C50E0]/20 text-[#3C50E0]", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime48.jsx)(Icon, { d: I2.active, size: 10 }),
+                /* @__PURE__ */ (0, import_jsx_runtime48.jsx)("span", { className: "ml-1", children: t2("worlds.active") })
               ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(Badge2, { color: "bg-[#2E3A4E] text-[#8A99AF]", children: world.generator })
+              /* @__PURE__ */ (0, import_jsx_runtime48.jsx)(Badge2, { color: "bg-[#2E3A4E] text-[#8A99AF]", children: world.generator })
             ] })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "grid grid-cols-3 gap-3 p-3 bg-[#0E1726] rounded-lg", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "text-center", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: t2("worlds.seed") }),
-              /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "text-white font-mono text-sm font-semibold tabular-nums", children: world.seed })
+          /* @__PURE__ */ (0, import_jsx_runtime48.jsxs)("div", { className: "grid grid-cols-3 gap-3 p-3 bg-[#0E1726] rounded-lg", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime48.jsxs)("div", { className: "text-center", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime48.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: t2("worlds.seed") }),
+              /* @__PURE__ */ (0, import_jsx_runtime48.jsx)("p", { className: "text-white font-mono text-sm font-semibold tabular-nums", children: world.seed })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "text-center border-x border-[#2E3A4E]", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: t2("worlds.chunks") }),
-              /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "text-white font-semibold text-sm tabular-nums", children: world.chunkCount.toLocaleString() })
+            /* @__PURE__ */ (0, import_jsx_runtime48.jsxs)("div", { className: "text-center border-x border-[#2E3A4E]", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime48.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: t2("worlds.chunks") }),
+              /* @__PURE__ */ (0, import_jsx_runtime48.jsx)("p", { className: "text-white font-semibold text-sm tabular-nums", children: world.chunkCount.toLocaleString() })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "text-center", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: t2("worlds.players") }),
-              /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "text-white font-semibold text-sm tabular-nums", children: world.playerCount })
+            /* @__PURE__ */ (0, import_jsx_runtime48.jsxs)("div", { className: "text-center", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime48.jsx)("p", { className: "text-[10px] uppercase tracking-widest text-[#8A99AF] mb-1", children: t2("worlds.players") }),
+              /* @__PURE__ */ (0, import_jsx_runtime48.jsx)("p", { className: "text-white font-semibold text-sm tabular-nums", children: world.playerCount })
             ] })
           ] })
         ]
       }
     );
   }
+
+  // admin/pages/worlds/CreateWorldForm.tsx
+  var import_jsx_runtime49 = __toESM(require_jsx_runtime(), 1);
   function CreateWorldForm({ onCreated }) {
     const t2 = useT();
-    const [open, setOpen] = (0, import_react10.useState)(false);
-    const [name2, setName] = (0, import_react10.useState)("");
-    const [seed, setSeed] = (0, import_react10.useState)("");
-    const [saving, setSaving] = (0, import_react10.useState)(false);
-    const [error2, setError] = (0, import_react10.useState)(null);
+    const [open, setOpen] = (0, import_react18.useState)(false);
+    const [name2, setName] = (0, import_react18.useState)("");
+    const [seed, setSeed] = (0, import_react18.useState)("");
+    const [saving, setSaving] = (0, import_react18.useState)(false);
+    const [error2, setError] = (0, import_react18.useState)(null);
     const randomSeed = () => setSeed(String(Math.floor(Math.random() * 2147483647)));
     const submit = async (e) => {
       e.preventDefault();
@@ -87984,24 +88073,24 @@ ${end.comment}` : end.comment;
       }
     };
     if (!open) {
-      return /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)(
+      return /* @__PURE__ */ (0, import_jsx_runtime49.jsxs)(
         "button",
         {
           onClick: () => setOpen(true),
           className: "flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#3C50E0] hover:bg-[#3446c7] text-white text-sm font-medium transition-colors",
           children: [
-            /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(Icon, { d: I2.add, size: 16 }),
+            /* @__PURE__ */ (0, import_jsx_runtime49.jsx)(Icon, { d: I2.add, size: 16 }),
             t2("worlds.create")
           ]
         }
       );
     }
-    return /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "bg-[#1A222C] rounded-xl border border-[#3C50E0] p-5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("h3", { className: "text-white font-semibold text-[15px] mb-4", children: t2("worlds.newWorld") }),
-      /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("form", { onSubmit: submit, className: "space-y-3", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("label", { className: "block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5", children: t2("worlds.name") }),
-          /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime49.jsxs)("div", { className: "bg-[#1A222C] rounded-xl border border-[#3C50E0] p-5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime49.jsx)("h3", { className: "text-white font-semibold text-[15px] mb-4", children: t2("worlds.newWorld") }),
+      /* @__PURE__ */ (0, import_jsx_runtime49.jsxs)("form", { onSubmit: submit, className: "space-y-3", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime49.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime49.jsx)("label", { className: "block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5", children: t2("worlds.name") }),
+          /* @__PURE__ */ (0, import_jsx_runtime49.jsx)(
             "input",
             {
               type: "text",
@@ -88012,10 +88101,10 @@ ${end.comment}` : end.comment;
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("label", { className: "block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5", children: t2("worlds.seed") }),
-          /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "flex gap-2", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime49.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime49.jsx)("label", { className: "block text-[11px] uppercase tracking-widest text-[#8A99AF] mb-1.5", children: t2("worlds.seed") }),
+          /* @__PURE__ */ (0, import_jsx_runtime49.jsxs)("div", { className: "flex gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime49.jsx)(
               "input",
               {
                 type: "number",
@@ -88025,7 +88114,7 @@ ${end.comment}` : end.comment;
                 className: "flex-1 bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-3 py-2 text-sm text-white placeholder-[#4A5568] focus:outline-none focus:border-[#3C50E0] transition-colors font-mono"
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime49.jsx)(
               "button",
               {
                 type: "button",
@@ -88036,9 +88125,9 @@ ${end.comment}` : end.comment;
             )
           ] })
         ] }),
-        error2 && /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "text-red-400 text-xs", children: error2 }),
-        /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "flex gap-2 pt-1", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
+        error2 && /* @__PURE__ */ (0, import_jsx_runtime49.jsx)("p", { className: "text-red-400 text-xs", children: error2 }),
+        /* @__PURE__ */ (0, import_jsx_runtime49.jsxs)("div", { className: "flex gap-2 pt-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime49.jsx)(
             "button",
             {
               type: "submit",
@@ -88047,7 +88136,7 @@ ${end.comment}` : end.comment;
               children: saving ? t2("worlds.creating") : t2("worlds.createShort")
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime49.jsx)(
             "button",
             {
               type: "button",
@@ -88063,11 +88152,14 @@ ${end.comment}` : end.comment;
       ] })
     ] });
   }
+
+  // admin/pages/worlds/WorldsPage.tsx
+  var import_jsx_runtime50 = __toESM(require_jsx_runtime(), 1);
   function WorldsPage() {
     const t2 = useT();
-    const [worlds, setWorlds] = (0, import_react10.useState)(null);
-    const [errorKey, setErrorKey] = (0, import_react10.useState)(null);
-    const load = (0, import_react10.useCallback)(async () => {
+    const [worlds, setWorlds] = (0, import_react19.useState)(null);
+    const [errorKey, setErrorKey] = (0, import_react19.useState)(null);
+    const load = (0, import_react19.useCallback)(async () => {
       try {
         const data2 = await api.worlds.list();
         setWorlds(data2);
@@ -88076,34 +88168,34 @@ ${end.comment}` : end.comment;
         setErrorKey("worlds.failedToLoad");
       }
     }, []);
-    (0, import_react10.useEffect)(() => {
+    (0, import_react19.useEffect)(() => {
       load();
     }, [load]);
-    if (errorKey) return /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "text-red-400 text-sm", children: t2(errorKey) });
-    return /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "space-y-6", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { className: "flex items-center justify-between", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "text-[#8A99AF] text-xs", children: worlds ? t2(worlds.length === 1 ? "worlds.countOne" : "worlds.countMany", worlds.length) : "\u2026" }),
-          /* @__PURE__ */ (0, import_jsx_runtime22.jsxs)("p", { className: "text-[11px] text-[#4A5568] mt-0.5", children: [
+    if (errorKey) return /* @__PURE__ */ (0, import_jsx_runtime50.jsx)("p", { className: "text-red-400 text-sm", children: t2(errorKey) });
+    return /* @__PURE__ */ (0, import_jsx_runtime50.jsxs)("div", { className: "space-y-6", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime50.jsxs)("div", { className: "flex items-center justify-between", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime50.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime50.jsx)("p", { className: "text-[#8A99AF] text-xs", children: worlds ? t2(worlds.length === 1 ? "worlds.countOne" : "worlds.countMany", worlds.length) : "\u2026" }),
+          /* @__PURE__ */ (0, import_jsx_runtime50.jsxs)("p", { className: "text-[11px] text-[#4A5568] mt-0.5", children: [
             t2("worlds.switchHintBefore"),
             " ",
-            /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("code", { className: "font-mono", children: "MICRAFT_WORLD_NAME" }),
+            /* @__PURE__ */ (0, import_jsx_runtime50.jsx)("code", { className: "font-mono", children: "MICRAFT_WORLD_NAME" }),
             " ",
             t2("worlds.switchHintAfter")
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(CreateWorldForm, { onCreated: load })
+        /* @__PURE__ */ (0, import_jsx_runtime50.jsx)(CreateWorldForm, { onCreated: load })
       ] }),
-      worlds === null ? /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "text-[#8A99AF] text-sm animate-pulse", children: t2("common.loading") }) : worlds.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("p", { className: "text-[#8A99AF] text-sm", children: t2("worlds.none") }) : /* @__PURE__ */ (0, import_jsx_runtime22.jsx)("div", { className: "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4", children: worlds.map((w) => /* @__PURE__ */ (0, import_jsx_runtime22.jsx)(WorldCard, { world: w, onRefresh: load }, w.name)) })
+      worlds === null ? /* @__PURE__ */ (0, import_jsx_runtime50.jsx)("p", { className: "text-[#8A99AF] text-sm animate-pulse", children: t2("common.loading") }) : worlds.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime50.jsx)("p", { className: "text-[#8A99AF] text-sm", children: t2("worlds.none") }) : /* @__PURE__ */ (0, import_jsx_runtime50.jsx)("div", { className: "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4", children: worlds.map((w) => /* @__PURE__ */ (0, import_jsx_runtime50.jsx)(WorldCard, { world: w, onRefresh: load }, w.name)) })
     ] });
   }
 
   // admin/pages/GameAssetsPage.tsx
-  var import_react12 = __toESM(require_react(), 1);
+  var import_react21 = __toESM(require_react(), 1);
 
   // admin/components/ModelViewer.tsx
-  var import_react11 = __toESM(require_react(), 1);
-  var import_jsx_runtime23 = __toESM(require_jsx_runtime(), 1);
+  var import_react20 = __toESM(require_react(), 1);
+  var import_jsx_runtime51 = __toESM(require_jsx_runtime(), 1);
   function loadScript(src) {
     return new Promise((resolve, reject) => {
       if (document.querySelector(`script[src="${src}"]`)) {
@@ -88125,12 +88217,12 @@ ${end.comment}` : end.comment;
     }
   }
   function ModelViewer({ url, format: format2 }) {
-    const canvasRef = (0, import_react11.useRef)(null);
-    const [animGroups, setAnimGroups] = (0, import_react11.useState)([]);
-    const [playingIdx, setPlayingIdx] = (0, import_react11.useState)(null);
-    const engineRef = (0, import_react11.useRef)(null);
-    const groupsRef = (0, import_react11.useRef)([]);
-    (0, import_react11.useEffect)(() => {
+    const canvasRef = (0, import_react20.useRef)(null);
+    const [animGroups, setAnimGroups] = (0, import_react20.useState)([]);
+    const [playingIdx, setPlayingIdx] = (0, import_react20.useState)(null);
+    const engineRef = (0, import_react20.useRef)(null);
+    const groupsRef = (0, import_react20.useRef)([]);
+    (0, import_react20.useEffect)(() => {
       if (!url) return;
       if (format2 === "fbx") return;
       const canvas = canvasRef.current;
@@ -88224,14 +88316,14 @@ ${end.comment}` : end.comment;
       }
     };
     if (!url) {
-      return /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#8A99AF] text-sm", children: "Select an asset to preview" });
+      return /* @__PURE__ */ (0, import_jsx_runtime51.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#8A99AF] text-sm", children: "Select an asset to preview" });
     }
     if (format2 === "fbx") {
-      return /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#8A99AF] text-sm", children: "FBX not supported by BabylonJS \u2014 use GLB/GLTF equivalent" });
+      return /* @__PURE__ */ (0, import_jsx_runtime51.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#8A99AF] text-sm", children: "FBX not supported by BabylonJS \u2014 use GLB/GLTF equivalent" });
     }
-    return /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)("div", { className: "flex-1 flex flex-col overflow-hidden", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("canvas", { ref: canvasRef, className: "flex-1 w-full min-h-0 block" }),
-      animGroups.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime23.jsx)("div", { className: "shrink-0 px-4 py-2 border-t border-[#2E3A4E] flex flex-wrap gap-2", children: animGroups.map((name2, i) => /* @__PURE__ */ (0, import_jsx_runtime23.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime51.jsxs)("div", { className: "flex-1 flex flex-col overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime51.jsx)("canvas", { ref: canvasRef, className: "flex-1 w-full min-h-0 block" }),
+      animGroups.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime51.jsx)("div", { className: "shrink-0 px-4 py-2 border-t border-[#2E3A4E] flex flex-wrap gap-2", children: animGroups.map((name2, i) => /* @__PURE__ */ (0, import_jsx_runtime51.jsxs)(
         "button",
         {
           onClick: () => toggleAnim(i),
@@ -88247,7 +88339,7 @@ ${end.comment}` : end.comment;
   }
 
   // admin/pages/GameAssetsPage.tsx
-  var import_jsx_runtime24 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime52 = __toESM(require_jsx_runtime(), 1);
   function buildTree2(assets) {
     const tree = {};
     for (const a of assets) {
@@ -88267,12 +88359,12 @@ ${end.comment}` : end.comment;
   function GameAssetsPage() {
     var _a6;
     const t2 = useT();
-    const [assets, setAssets] = (0, import_react12.useState)([]);
-    const [errorKey, setErrorKey] = (0, import_react12.useState)(null);
-    const [selected, setSelected] = (0, import_react12.useState)(null);
-    const [expandedPacks, setExpandedPacks] = (0, import_react12.useState)(/* @__PURE__ */ new Set());
-    const [expandedFolders, setExpandedFolders] = (0, import_react12.useState)(/* @__PURE__ */ new Set());
-    (0, import_react12.useEffect)(() => {
+    const [assets, setAssets] = (0, import_react21.useState)([]);
+    const [errorKey, setErrorKey] = (0, import_react21.useState)(null);
+    const [selected, setSelected] = (0, import_react21.useState)(null);
+    const [expandedPacks, setExpandedPacks] = (0, import_react21.useState)(/* @__PURE__ */ new Set());
+    const [expandedFolders, setExpandedFolders] = (0, import_react21.useState)(/* @__PURE__ */ new Set());
+    (0, import_react21.useEffect)(() => {
       fetch("/api/game-assets").then((r2) => r2.json()).then((data2) => {
         setAssets(data2);
         if (data2.length > 0) {
@@ -88298,20 +88390,20 @@ ${end.comment}` : end.comment;
         return next;
       });
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex h-full overflow-hidden -m-6", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("aside", { className: "w-72 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "px-4 py-3 border-b border-[#2E3A4E] text-xs font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("assets.count", assets.length) }),
-        /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex-1 overflow-y-auto py-2", children: [
-          errorKey && /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("div", { className: "px-4 py-2 text-red-400 text-xs", children: t2(errorKey) }),
-          Object.entries(tree).map(([pack, folders]) => /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime52.jsxs)("div", { className: "flex h-full overflow-hidden -m-6", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime52.jsxs)("aside", { className: "w-72 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime52.jsx)("div", { className: "px-4 py-3 border-b border-[#2E3A4E] text-xs font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("assets.count", assets.length) }),
+        /* @__PURE__ */ (0, import_jsx_runtime52.jsxs)("div", { className: "flex-1 overflow-y-auto py-2", children: [
+          errorKey && /* @__PURE__ */ (0, import_jsx_runtime52.jsx)("div", { className: "px-4 py-2 text-red-400 text-xs", children: t2(errorKey) }),
+          Object.entries(tree).map(([pack, folders]) => /* @__PURE__ */ (0, import_jsx_runtime52.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime52.jsxs)(
               "button",
               {
                 onClick: () => togglePack(pack),
                 className: "w-full flex items-center gap-2 px-3 py-1.5 text-left text-[11px] font-semibold text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E] uppercase tracking-wide",
                 children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { className: "text-[9px]", children: expandedPacks.has(pack) ? "\u25BC" : "\u25B6" }),
-                  /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { className: "truncate", children: pack.replace(/_/g, " ") })
+                  /* @__PURE__ */ (0, import_jsx_runtime52.jsx)("span", { className: "text-[9px]", children: expandedPacks.has(pack) ? "\u25BC" : "\u25B6" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime52.jsx)("span", { className: "truncate", children: pack.replace(/_/g, " ") })
                 ]
               }
             ),
@@ -88319,29 +88411,29 @@ ${end.comment}` : end.comment;
               var _a7;
               const label = (_a7 = folder.split("/").pop()) != null ? _a7 : folder;
               const key2 = `${pack}/${folder}`;
-              return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { children: [
-                /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)(
+              return /* @__PURE__ */ (0, import_jsx_runtime52.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime52.jsxs)(
                   "button",
                   {
                     onClick: () => toggleFolder(key2),
                     className: "w-full flex items-center gap-2 pl-6 pr-3 py-1 text-left text-[11px] text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E]",
                     children: [
-                      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { className: "text-[9px]", children: expandedFolders.has(key2) ? "\u25BC" : "\u25B6" }),
-                      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { className: "truncate", children: label }),
-                      /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { className: "ml-auto text-[9px] opacity-50", children: items.length })
+                      /* @__PURE__ */ (0, import_jsx_runtime52.jsx)("span", { className: "text-[9px]", children: expandedFolders.has(key2) ? "\u25BC" : "\u25B6" }),
+                      /* @__PURE__ */ (0, import_jsx_runtime52.jsx)("span", { className: "truncate", children: label }),
+                      /* @__PURE__ */ (0, import_jsx_runtime52.jsx)("span", { className: "ml-auto text-[9px] opacity-50", children: items.length })
                     ]
                   }
                 ),
                 expandedFolders.has(key2) && items.map((a) => {
                   var _a8;
-                  return /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)(
+                  return /* @__PURE__ */ (0, import_jsx_runtime52.jsxs)(
                     "button",
                     {
                       onClick: () => setSelected(a),
                       className: `w-full flex items-center gap-2 pl-10 pr-3 py-1 text-left text-xs transition-colors ${(selected == null ? void 0 : selected.path) === a.path ? "bg-[#3C50E0]/20 text-white" : "text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E]"}`,
                       children: [
-                        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { className: "truncate", children: a.name }),
-                        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+                        /* @__PURE__ */ (0, import_jsx_runtime52.jsx)("span", { className: "truncate", children: a.name }),
+                        /* @__PURE__ */ (0, import_jsx_runtime52.jsx)(
                           "span",
                           {
                             className: `ml-auto shrink-0 px-1.5 py-0.5 rounded text-[9px] font-mono ${(_a8 = FORMAT_BADGE[a.format]) != null ? _a8 : "bg-white/10 text-white/50"}`,
@@ -88358,19 +88450,19 @@ ${end.comment}` : end.comment;
           ] }, pack))
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "flex-1 flex flex-col overflow-hidden", children: [
-        selected && /* @__PURE__ */ (0, import_jsx_runtime24.jsxs)("div", { className: "shrink-0 px-4 py-2 border-b border-[#2E3A4E] flex items-center gap-3 text-xs text-[#8A99AF]", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { className: "text-white font-medium", children: selected.name }),
-          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime52.jsxs)("div", { className: "flex-1 flex flex-col overflow-hidden", children: [
+        selected && /* @__PURE__ */ (0, import_jsx_runtime52.jsxs)("div", { className: "shrink-0 px-4 py-2 border-b border-[#2E3A4E] flex items-center gap-3 text-xs text-[#8A99AF]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime52.jsx)("span", { className: "text-white font-medium", children: selected.name }),
+          /* @__PURE__ */ (0, import_jsx_runtime52.jsx)(
             "span",
             {
               className: `px-1.5 py-0.5 rounded font-mono ${(_a6 = FORMAT_BADGE[selected.format]) != null ? _a6 : "bg-white/10 text-white/50"}`,
               children: selected.format
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime24.jsx)("span", { className: "ml-auto opacity-50 font-mono truncate", children: selected.path })
+          /* @__PURE__ */ (0, import_jsx_runtime52.jsx)("span", { className: "ml-auto opacity-50 font-mono truncate", children: selected.path })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime24.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime52.jsx)(
           ModelViewer,
           {
             format: selected == null ? void 0 : selected.format,
@@ -88382,10 +88474,194 @@ ${end.comment}` : end.comment;
   }
 
   // admin/pages/AdministrationPage.tsx
-  var import_react14 = __toESM(require_react(), 1);
+  var import_react28 = __toESM(require_react(), 1);
+
+  // admin/pages/BlocksTab.tsx
+  var import_react22 = __toESM(require_react(), 1);
+
+  // admin/pages/SidebarList.tsx
+  var import_jsx_runtime53 = __toESM(require_jsx_runtime(), 1);
+  function SidebarList({
+    items,
+    selected,
+    getKey,
+    getLabel,
+    onSelect
+  }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime53.jsx)("div", { className: "flex-1 overflow-y-auto py-2", children: items.map((item) => {
+      const key2 = getKey(item);
+      const isSelected = selected ? getKey(selected) === key2 : false;
+      return /* @__PURE__ */ (0, import_jsx_runtime53.jsx)(
+        "button",
+        {
+          onClick: () => onSelect(item),
+          className: `w-full text-left px-4 py-2 text-sm truncate transition-colors ${isSelected ? "bg-[#3C50E0]/20 text-white" : "text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E]"}`,
+          children: getLabel(item)
+        },
+        key2
+      );
+    }) });
+  }
+
+  // admin/PropRow.tsx
+  var import_jsx_runtime54 = __toESM(require_jsx_runtime(), 1);
+  function PropRow({ label, value }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime54.jsxs)("div", { className: "flex justify-between py-2 border-b border-[#2E3A4E] text-sm", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime54.jsx)("span", { className: "text-[#8A99AF]", children: label }),
+      /* @__PURE__ */ (0, import_jsx_runtime54.jsx)("span", { className: "text-white font-mono", children: String(value) })
+    ] });
+  }
+
+  // admin/pages/EmptyDetail.tsx
+  var import_jsx_runtime55 = __toESM(require_jsx_runtime(), 1);
+  function EmptyDetail({ message }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime55.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#8A99AF] text-sm", children: message });
+  }
+
+  // admin/pages/BlocksTab.tsx
+  var import_jsx_runtime56 = __toESM(require_jsx_runtime(), 1);
+  function BlocksTab() {
+    const t2 = useT();
+    const [blocks, setBlocks] = (0, import_react22.useState)([]);
+    const [selected, setSelected] = (0, import_react22.useState)(null);
+    const [filter, setFilter] = (0, import_react22.useState)("");
+    (0, import_react22.useEffect)(() => {
+      api.blocks.list().then((b) => setBlocks(b.filter((x) => x.name !== "AIR"))).catch(console.error);
+    }, []);
+    const filtered = blocks.filter((b) => b.name.toLowerCase().includes(filter.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name));
+    return /* @__PURE__ */ (0, import_jsx_runtime56.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime56.jsxs)("aside", { className: "w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime56.jsx)("div", { className: "px-3 py-2 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime56.jsx)(
+          "input",
+          {
+            className: "w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none",
+            placeholder: t2("administration.filter"),
+            value: filter,
+            onChange: (e) => setFilter(e.target.value)
+          }
+        ) }),
+        /* @__PURE__ */ (0, import_jsx_runtime56.jsx)(
+          SidebarList,
+          {
+            items: filtered,
+            selected,
+            getKey: (b) => b.name,
+            getLabel: (b) => b.name.replace(/_/g, " "),
+            onSelect: setSelected
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime56.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime56.jsxs)("div", { className: "max-w-sm", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime56.jsx)("div", { className: "w-12 h-12 rounded mb-4", style: { background: `rgb(${selected.minimapColor.join(",")})` } }),
+        /* @__PURE__ */ (0, import_jsx_runtime56.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: selected.name.replace(/_/g, " ") }),
+        /* @__PURE__ */ (0, import_jsx_runtime56.jsx)(PropRow, { label: t2("administration.hardness"), value: selected.hardness === -1 ? "\u221E" : selected.hardness }),
+        /* @__PURE__ */ (0, import_jsx_runtime56.jsx)(PropRow, { label: t2("administration.solid"), value: t2(selected.solid ? "common.yes" : "common.no") }),
+        /* @__PURE__ */ (0, import_jsx_runtime56.jsx)(
+          PropRow,
+          {
+            label: t2("administration.transparent"),
+            value: t2(selected.transparent ? "common.yes" : "common.no")
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime56.jsx)(PropRow, { label: t2("administration.liquid"), value: t2(selected.liquid ? "common.yes" : "common.no") }),
+        selected.modelElement && /* @__PURE__ */ (0, import_jsx_runtime56.jsx)(PropRow, { label: t2("administration.model"), value: selected.modelElement })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime56.jsx)(EmptyDetail, { message: t2("administration.selectBlock") }) })
+    ] });
+  }
+
+  // admin/pages/ItemsTab.tsx
+  var import_react23 = __toESM(require_react(), 1);
+  var import_jsx_runtime57 = __toESM(require_jsx_runtime(), 1);
+  function ItemsTab() {
+    const t2 = useT();
+    const [items, setItems] = (0, import_react23.useState)({});
+    const [selected, setSelected] = (0, import_react23.useState)(null);
+    const [filter, setFilter] = (0, import_react23.useState)("");
+    (0, import_react23.useEffect)(() => {
+      api.items.list().then(setItems).catch(console.error);
+    }, []);
+    const entries = Object.entries(items).filter(([name2]) => name2.toLowerCase().includes(filter.toLowerCase())).sort(([a], [b]) => a.localeCompare(b)).map(([name2, dto]) => ({ name: name2, dto }));
+    return /* @__PURE__ */ (0, import_jsx_runtime57.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime57.jsxs)("aside", { className: "w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime57.jsx)("div", { className: "px-3 py-2 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime57.jsx)(
+          "input",
+          {
+            className: "w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none",
+            placeholder: t2("administration.filter"),
+            value: filter,
+            onChange: (e) => setFilter(e.target.value)
+          }
+        ) }),
+        /* @__PURE__ */ (0, import_jsx_runtime57.jsx)(
+          SidebarList,
+          {
+            items: entries,
+            selected,
+            getKey: (e) => e.name,
+            getLabel: (e) => e.name.replace(/_/g, " "),
+            onSelect: setSelected
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime57.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime57.jsxs)("div", { className: "max-w-sm", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime57.jsx)("div", { className: "w-12 h-12 rounded mb-4 bg-[#6a5acd] flex items-center justify-center text-2xl", children: "\u2726" }),
+        /* @__PURE__ */ (0, import_jsx_runtime57.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: selected.name.replace(/_/g, " ") }),
+        /* @__PURE__ */ (0, import_jsx_runtime57.jsx)(
+          PropRow,
+          {
+            label: t2("administration.buildable"),
+            value: t2(selected.dto.buildable ? "common.yes" : "common.no")
+          }
+        ),
+        selected.dto.placesBlock && /* @__PURE__ */ (0, import_jsx_runtime57.jsx)(PropRow, { label: t2("administration.placesBlock"), value: selected.dto.placesBlock })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime57.jsx)(EmptyDetail, { message: t2("administration.selectItem") }) })
+    ] });
+  }
+
+  // admin/pages/BestiaryTab.tsx
+  var import_react25 = __toESM(require_react(), 1);
+
+  // lib/animationHelpers.ts
+  function animDisplayName(fullName) {
+    return fullName.replace("animation.default_player.", "").replace(/_/g, " ");
+  }
+  function animEmoji(fullName) {
+    const n = fullName.replace("animation.default_player.", "").toLowerCase();
+    if (n.startsWith("walking") || n.startsWith("running")) return "\u{1F6B6}";
+    if (n.startsWith("jump")) return "\u{1F998}";
+    if (n.startsWith("idle") || n.startsWith("spawn")) return "\u{1F4A4}";
+    if (n.startsWith("death") || n.startsWith("skeletons_death")) return "\u{1F480}";
+    if (n.startsWith("hit")) return "\u{1F4A5}";
+    if (n.startsWith("melee")) return "\u2694\uFE0F";
+    if (n.startsWith("ranged") || n.startsWith("bow") || n.startsWith("magic")) return "\u{1F3F9}";
+    if (n.startsWith("fishing")) return "\u{1F3A3}";
+    if (n.startsWith("chop") || n.startsWith("dig") || n.startsWith("hammer") || n.startsWith("pickaxe") || n.startsWith("saw"))
+      return "\u26CF\uFE0F";
+    if (n.startsWith("skeletons")) return "\u{1F480}";
+    if (n.startsWith("crawling") || n.startsWith("sneaking")) return "\u{1F92B}";
+    if (n.startsWith("sit") || n.startsWith("lie") || n.startsWith("push") || n.startsWith("cheering") || n.startsWith("waving"))
+      return "\u{1F483}";
+    if (n.startsWith("dodge")) return "\u{1F4A8}";
+    if (n.startsWith("interact") || n.startsWith("pickup") || n.startsWith("use") || n.startsWith("throw") || n.startsWith("work"))
+      return "\u270B";
+    return "\u25B6";
+  }
+  function animationsFromBbmodel(bbmodel) {
+    if (!(bbmodel == null ? void 0 : bbmodel.animations)) return [];
+    return bbmodel.animations.map((anim) => ({
+      fullName: anim.name,
+      length: anim.length,
+      boneCount: Object.values(anim.animators).filter(
+        (a) => {
+          var _a6, _b, _c;
+          return ((_c = (_b = (_a6 = a.keyframes) == null ? void 0 : _a6.filter((k) => k.channel === "rotation")) == null ? void 0 : _b.length) != null ? _c : 0) > 0;
+        }
+      ).length
+    }));
+  }
 
   // admin/components/BbmodelAnimationViewer.tsx
-  var import_react13 = __toESM(require_react(), 1);
+  var import_react24 = __toESM(require_react(), 1);
 
   // game/player/playerModel.ts
   function interpAxis(keyframes, t2, axis) {
@@ -88409,7 +88685,7 @@ ${end.comment}` : end.comment;
   }
 
   // admin/components/BbmodelAnimationViewer.tsx
-  var import_jsx_runtime25 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime58 = __toESM(require_jsx_runtime(), 1);
   function loadScript2(src) {
     return new Promise((resolve, reject) => {
       if (document.querySelector(`script[src="${src}"]`)) {
@@ -88550,14 +88826,14 @@ ${end.comment}` : end.comment;
     width = 200,
     height = 280
   }) {
-    const canvasRef = (0, import_react13.useRef)(null);
-    const overlayRef = (0, import_react13.useRef)(null);
-    const engineRef = (0, import_react13.useRef)(null);
-    const animRef = (0, import_react13.useRef)(animFullName);
-    (0, import_react13.useLayoutEffect)(() => {
+    const canvasRef = (0, import_react24.useRef)(null);
+    const overlayRef = (0, import_react24.useRef)(null);
+    const engineRef = (0, import_react24.useRef)(null);
+    const animRef = (0, import_react24.useRef)(animFullName);
+    (0, import_react24.useLayoutEffect)(() => {
       animRef.current = animFullName;
     });
-    (0, import_react13.useEffect)(() => {
+    (0, import_react24.useEffect)(() => {
       if (!bbmodel) return;
       const canvas = canvasRef.current;
       const overlay = overlayRef.current;
@@ -88678,8 +88954,8 @@ ${end.comment}` : end.comment;
         }
       };
     }, [bbmodel]);
-    return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)("div", { style: { position: "relative", display: "inline-block" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime58.jsxs)("div", { style: { position: "relative", display: "inline-block" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime58.jsx)(
         "canvas",
         {
           ref: canvasRef,
@@ -88688,7 +88964,7 @@ ${end.comment}` : end.comment;
           style: { display: "block", width, height, borderRadius: 6, background: "#0e1726" }
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime58.jsx)(
         "div",
         {
           ref: overlayRef,
@@ -88698,187 +88974,18 @@ ${end.comment}` : end.comment;
     ] });
   }
 
-  // lib/animationHelpers.ts
-  function animDisplayName(fullName) {
-    return fullName.replace("animation.default_player.", "").replace(/_/g, " ");
-  }
-  function animEmoji(fullName) {
-    const n = fullName.replace("animation.default_player.", "").toLowerCase();
-    if (n.startsWith("walking") || n.startsWith("running")) return "\u{1F6B6}";
-    if (n.startsWith("jump")) return "\u{1F998}";
-    if (n.startsWith("idle") || n.startsWith("spawn")) return "\u{1F4A4}";
-    if (n.startsWith("death") || n.startsWith("skeletons_death")) return "\u{1F480}";
-    if (n.startsWith("hit")) return "\u{1F4A5}";
-    if (n.startsWith("melee")) return "\u2694\uFE0F";
-    if (n.startsWith("ranged") || n.startsWith("bow") || n.startsWith("magic")) return "\u{1F3F9}";
-    if (n.startsWith("fishing")) return "\u{1F3A3}";
-    if (n.startsWith("chop") || n.startsWith("dig") || n.startsWith("hammer") || n.startsWith("pickaxe") || n.startsWith("saw"))
-      return "\u26CF\uFE0F";
-    if (n.startsWith("skeletons")) return "\u{1F480}";
-    if (n.startsWith("crawling") || n.startsWith("sneaking")) return "\u{1F92B}";
-    if (n.startsWith("sit") || n.startsWith("lie") || n.startsWith("push") || n.startsWith("cheering") || n.startsWith("waving"))
-      return "\u{1F483}";
-    if (n.startsWith("dodge")) return "\u{1F4A8}";
-    if (n.startsWith("interact") || n.startsWith("pickup") || n.startsWith("use") || n.startsWith("throw") || n.startsWith("work"))
-      return "\u270B";
-    return "\u25B6";
-  }
-  function animationsFromBbmodel(bbmodel) {
-    if (!(bbmodel == null ? void 0 : bbmodel.animations)) return [];
-    return bbmodel.animations.map((anim) => ({
-      fullName: anim.name,
-      length: anim.length,
-      boneCount: Object.values(anim.animators).filter(
-        (a) => {
-          var _a6, _b, _c;
-          return ((_c = (_b = (_a6 = a.keyframes) == null ? void 0 : _a6.filter((k) => k.channel === "rotation")) == null ? void 0 : _b.length) != null ? _c : 0) > 0;
-        }
-      ).length
-    }));
-  }
-
-  // admin/pages/AdministrationPage.tsx
-  var import_jsx_runtime26 = __toESM(require_jsx_runtime(), 1);
-  var TAB_LABEL_KEYS = {
-    blocks: "administration.tabBlocks",
-    items: "administration.tabItems",
-    bestiary: "administration.tabBestiary",
-    skins: "administration.tabSkins",
-    animations: "administration.tabAnimations"
-  };
-  function SidebarList({
-    items,
-    selected,
-    getKey,
-    getLabel,
-    onSelect
-  }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "flex-1 overflow-y-auto py-2", children: items.map((item) => {
-      const key2 = getKey(item);
-      const isSelected = selected ? getKey(selected) === key2 : false;
-      return /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
-        "button",
-        {
-          onClick: () => onSelect(item),
-          className: `w-full text-left px-4 py-2 text-sm truncate transition-colors ${isSelected ? "bg-[#3C50E0]/20 text-white" : "text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E]"}`,
-          children: getLabel(item)
-        },
-        key2
-      );
-    }) });
-  }
-  function EmptyDetail({ message }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#8A99AF] text-sm", children: message });
-  }
-  function PropRow({ label, value }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex justify-between py-2 border-b border-[#2E3A4E] text-sm", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "text-[#8A99AF]", children: label }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("span", { className: "text-white font-mono", children: String(value) })
-    ] });
-  }
-  function BlocksTab() {
-    const t2 = useT();
-    const [blocks, setBlocks] = (0, import_react14.useState)([]);
-    const [selected, setSelected] = (0, import_react14.useState)(null);
-    const [filter, setFilter] = (0, import_react14.useState)("");
-    (0, import_react14.useEffect)(() => {
-      api.blocks.list().then((b) => setBlocks(b.filter((x) => x.name !== "AIR"))).catch(console.error);
-    }, []);
-    const filtered = blocks.filter((b) => b.name.toLowerCase().includes(filter.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name));
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("aside", { className: "w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "px-3 py-2 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
-          "input",
-          {
-            className: "w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none",
-            placeholder: t2("administration.filter"),
-            value: filter,
-            onChange: (e) => setFilter(e.target.value)
-          }
-        ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
-          SidebarList,
-          {
-            items: filtered,
-            selected,
-            getKey: (b) => b.name,
-            getLabel: (b) => b.name.replace(/_/g, " "),
-            onSelect: setSelected
-          }
-        )
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "max-w-sm", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "w-12 h-12 rounded mb-4", style: { background: `rgb(${selected.minimapColor.join(",")})` } }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: selected.name.replace(/_/g, " ") }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.hardness"), value: selected.hardness === -1 ? "\u221E" : selected.hardness }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.solid"), value: t2(selected.solid ? "common.yes" : "common.no") }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
-          PropRow,
-          {
-            label: t2("administration.transparent"),
-            value: t2(selected.transparent ? "common.yes" : "common.no")
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.liquid"), value: t2(selected.liquid ? "common.yes" : "common.no") }),
-        selected.modelElement && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.model"), value: selected.modelElement })
-      ] }) : /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(EmptyDetail, { message: t2("administration.selectBlock") }) })
-    ] });
-  }
-  function ItemsTab() {
-    const t2 = useT();
-    const [items, setItems] = (0, import_react14.useState)({});
-    const [selected, setSelected] = (0, import_react14.useState)(null);
-    const [filter, setFilter] = (0, import_react14.useState)("");
-    (0, import_react14.useEffect)(() => {
-      api.items.list().then(setItems).catch(console.error);
-    }, []);
-    const entries = Object.entries(items).filter(([name2]) => name2.toLowerCase().includes(filter.toLowerCase())).sort(([a], [b]) => a.localeCompare(b)).map(([name2, dto]) => ({ name: name2, dto }));
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("aside", { className: "w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "px-3 py-2 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
-          "input",
-          {
-            className: "w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none",
-            placeholder: t2("administration.filter"),
-            value: filter,
-            onChange: (e) => setFilter(e.target.value)
-          }
-        ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
-          SidebarList,
-          {
-            items: entries,
-            selected,
-            getKey: (e) => e.name,
-            getLabel: (e) => e.name.replace(/_/g, " "),
-            onSelect: setSelected
-          }
-        )
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "max-w-sm", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "w-12 h-12 rounded mb-4 bg-[#6a5acd] flex items-center justify-center text-2xl", children: "\u2726" }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: selected.name.replace(/_/g, " ") }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
-          PropRow,
-          {
-            label: t2("administration.buildable"),
-            value: t2(selected.dto.buildable ? "common.yes" : "common.no")
-          }
-        ),
-        selected.dto.placesBlock && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.placesBlock"), value: selected.dto.placesBlock })
-      ] }) : /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(EmptyDetail, { message: t2("administration.selectItem") }) })
-    ] });
-  }
+  // admin/pages/BestiaryTab.tsx
+  var import_jsx_runtime59 = __toESM(require_jsx_runtime(), 1);
   function BestiaryTab() {
     const t2 = useT();
-    const [types2, setTypes] = (0, import_react14.useState)({});
-    const [selected, setSelected] = (0, import_react14.useState)(null);
-    const [filter, setFilter] = (0, import_react14.useState)("");
-    const [bbmodel, setBbmodel] = (0, import_react14.useState)(null);
-    (0, import_react14.useEffect)(() => {
+    const [types2, setTypes] = (0, import_react25.useState)({});
+    const [selected, setSelected] = (0, import_react25.useState)(null);
+    const [filter, setFilter] = (0, import_react25.useState)("");
+    const [bbmodel, setBbmodel] = (0, import_react25.useState)(null);
+    (0, import_react25.useEffect)(() => {
       api.npcTypes.list().then(setTypes).catch(console.error);
     }, []);
-    (0, import_react14.useEffect)(() => {
+    (0, import_react25.useEffect)(() => {
       if (!selected) {
         setBbmodel(null);
         return;
@@ -88887,15 +88994,15 @@ ${end.comment}` : end.comment;
       api.skins.bbmodel(skinName).then(setBbmodel).catch(() => setBbmodel(null));
     }, [selected]);
     const entries = Object.entries(types2).filter(([name2]) => name2.toLowerCase().includes(filter.toLowerCase())).sort(([a], [b]) => a.localeCompare(b)).map(([name2, dto]) => ({ name: name2, dto }));
-    const [selectedAnim, setSelectedAnim] = (0, import_react14.useState)(null);
-    const anims = (0, import_react14.useMemo)(() => bbmodel ? animationsFromBbmodel(bbmodel) : [], [bbmodel]);
-    (0, import_react14.useEffect)(() => {
+    const [selectedAnim, setSelectedAnim] = (0, import_react25.useState)(null);
+    const anims = (0, import_react25.useMemo)(() => bbmodel ? animationsFromBbmodel(bbmodel) : [], [bbmodel]);
+    (0, import_react25.useEffect)(() => {
       if (anims.length > 0) setSelectedAnim(anims[0].fullName);
       else setSelectedAnim(null);
     }, [anims]);
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("aside", { className: "w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "px-3 py-2 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime59.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime59.jsxs)("aside", { className: "w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime59.jsx)("div", { className: "px-3 py-2 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime59.jsx)(
           "input",
           {
             className: "w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none",
@@ -88904,7 +89011,7 @@ ${end.comment}` : end.comment;
             onChange: (e) => setFilter(e.target.value)
           }
         ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime59.jsx)(
           SidebarList,
           {
             items: entries,
@@ -88915,16 +89022,16 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex gap-6", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(BbmodelAnimationViewer, { bbmodel, animFullName: selectedAnim != null ? selectedAnim : "", width: 360, height: 460 }),
-          anims.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime59.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime59.jsxs)("div", { className: "flex gap-6", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime59.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime59.jsx)(BbmodelAnimationViewer, { bbmodel, animFullName: selectedAnim != null ? selectedAnim : "", width: 360, height: 460 }),
+          anims.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime59.jsx)(
             "select",
             {
               className: "mt-2 w-full bg-[#1A222C] border border-[#2E3A4E] text-[#8A99AF] text-xs rounded px-2 py-1 outline-none",
               value: selectedAnim != null ? selectedAnim : "",
               onChange: (e) => setSelectedAnim(e.target.value),
-              children: anims.map((a) => /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("option", { value: a.fullName, children: [
+              children: anims.map((a) => /* @__PURE__ */ (0, import_jsx_runtime59.jsxs)("option", { value: a.fullName, children: [
                 animEmoji(a.fullName),
                 " ",
                 animDisplayName(a.fullName)
@@ -88932,14 +89039,14 @@ ${end.comment}` : end.comment;
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex-1 min-w-0", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: selected.name }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.behavior"), value: selected.dto.behaviorKey }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.model"), value: selected.dto.bbmodelFile }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.width"), value: selected.dto.width }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.height"), value: selected.dto.height }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.speed"), value: selected.dto.wanderSpeed }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime59.jsxs)("div", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime59.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: selected.name }),
+          /* @__PURE__ */ (0, import_jsx_runtime59.jsx)(PropRow, { label: t2("administration.behavior"), value: selected.dto.behaviorKey }),
+          /* @__PURE__ */ (0, import_jsx_runtime59.jsx)(PropRow, { label: t2("administration.model"), value: selected.dto.bbmodelFile }),
+          /* @__PURE__ */ (0, import_jsx_runtime59.jsx)(PropRow, { label: t2("administration.width"), value: selected.dto.width }),
+          /* @__PURE__ */ (0, import_jsx_runtime59.jsx)(PropRow, { label: t2("administration.height"), value: selected.dto.height }),
+          /* @__PURE__ */ (0, import_jsx_runtime59.jsx)(PropRow, { label: t2("administration.speed"), value: selected.dto.wanderSpeed }),
+          /* @__PURE__ */ (0, import_jsx_runtime59.jsx)(
             PropRow,
             {
               label: t2("administration.autoSpawn"),
@@ -88947,36 +89054,40 @@ ${end.comment}` : end.comment;
             }
           )
         ] })
-      ] }) : /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(EmptyDetail, { message: t2("administration.selectNpcType") }) })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime59.jsx)(EmptyDetail, { message: t2("administration.selectNpcType") }) })
     ] });
   }
+
+  // admin/pages/SkinsTab.tsx
+  var import_react26 = __toESM(require_react(), 1);
+  var import_jsx_runtime60 = __toESM(require_jsx_runtime(), 1);
   function SkinsTab() {
     const t2 = useT();
-    const [skins, setSkins] = (0, import_react14.useState)([]);
-    const [selected, setSelected] = (0, import_react14.useState)(null);
-    const [bbmodel, setBbmodel] = (0, import_react14.useState)(null);
-    const [filter, setFilter] = (0, import_react14.useState)("");
-    const [selectedAnim, setSelectedAnim] = (0, import_react14.useState)(null);
-    (0, import_react14.useEffect)(() => {
+    const [skins, setSkins] = (0, import_react26.useState)([]);
+    const [selected, setSelected] = (0, import_react26.useState)(null);
+    const [bbmodel, setBbmodel] = (0, import_react26.useState)(null);
+    const [filter, setFilter] = (0, import_react26.useState)("");
+    const [selectedAnim, setSelectedAnim] = (0, import_react26.useState)(null);
+    (0, import_react26.useEffect)(() => {
       api.skins.list().then(setSkins).catch(console.error);
     }, []);
-    (0, import_react14.useEffect)(() => {
+    (0, import_react26.useEffect)(() => {
       if (!selected) {
         setBbmodel(null);
         return;
       }
       api.skins.bbmodel(selected).then(setBbmodel).catch(() => setBbmodel(null));
     }, [selected]);
-    const anims = (0, import_react14.useMemo)(() => bbmodel ? animationsFromBbmodel(bbmodel) : [], [bbmodel]);
-    (0, import_react14.useEffect)(() => {
+    const anims = (0, import_react26.useMemo)(() => bbmodel ? animationsFromBbmodel(bbmodel) : [], [bbmodel]);
+    (0, import_react26.useEffect)(() => {
       var _a6, _b, _c;
       const walk = anims.find((a) => a.fullName.toLowerCase().includes("walking"));
       setSelectedAnim((_c = (_b = walk == null ? void 0 : walk.fullName) != null ? _b : (_a6 = anims[0]) == null ? void 0 : _a6.fullName) != null ? _c : null);
     }, [anims]);
     const filtered = skins.filter((s) => s.toLowerCase().includes(filter.toLowerCase())).sort();
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("aside", { className: "w-48 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "px-3 py-2 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime60.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime60.jsxs)("aside", { className: "w-48 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime60.jsx)("div", { className: "px-3 py-2 border-b border-[#2E3A4E]", children: /* @__PURE__ */ (0, import_jsx_runtime60.jsx)(
           "input",
           {
             className: "w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none",
@@ -88985,7 +89096,7 @@ ${end.comment}` : end.comment;
             onChange: (e) => setFilter(e.target.value)
           }
         ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime60.jsx)(
           SidebarList,
           {
             items: filtered,
@@ -88996,16 +89107,16 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex gap-6", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(BbmodelAnimationViewer, { bbmodel, animFullName: selectedAnim != null ? selectedAnim : "", width: 360, height: 460 }),
-          anims.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime60.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selected ? /* @__PURE__ */ (0, import_jsx_runtime60.jsxs)("div", { className: "flex gap-6", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime60.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime60.jsx)(BbmodelAnimationViewer, { bbmodel, animFullName: selectedAnim != null ? selectedAnim : "", width: 360, height: 460 }),
+          anims.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime60.jsx)(
             "select",
             {
               className: "mt-2 w-full bg-[#1A222C] border border-[#2E3A4E] text-[#8A99AF] text-xs rounded px-2 py-1 outline-none",
               value: selectedAnim != null ? selectedAnim : "",
               onChange: (e) => setSelectedAnim(e.target.value),
-              children: anims.map((a) => /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("option", { value: a.fullName, children: [
+              children: anims.map((a) => /* @__PURE__ */ (0, import_jsx_runtime60.jsxs)("option", { value: a.fullName, children: [
                 animEmoji(a.fullName),
                 " ",
                 animDisplayName(a.fullName)
@@ -89013,35 +89124,39 @@ ${end.comment}` : end.comment;
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex-1 min-w-0", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: selected.replace(/_/g, " ") }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.animations"), value: anims.length })
+        /* @__PURE__ */ (0, import_jsx_runtime60.jsxs)("div", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime60.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: selected.replace(/_/g, " ") }),
+          /* @__PURE__ */ (0, import_jsx_runtime60.jsx)(PropRow, { label: t2("administration.animations"), value: anims.length })
         ] })
-      ] }) : /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(EmptyDetail, { message: t2("administration.selectSkin") }) })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime60.jsx)(EmptyDetail, { message: t2("administration.selectSkin") }) })
     ] });
   }
+
+  // admin/pages/AnimationsTab.tsx
+  var import_react27 = __toESM(require_react(), 1);
+  var import_jsx_runtime61 = __toESM(require_jsx_runtime(), 1);
   function AnimationsTab() {
     const t2 = useT();
-    const [skins, setSkins] = (0, import_react14.useState)([]);
-    const [selectedSkin, setSelectedSkin] = (0, import_react14.useState)("articulated");
-    const [bbmodel, setBbmodel] = (0, import_react14.useState)(null);
-    const [selectedAnim, setSelectedAnim] = (0, import_react14.useState)(null);
-    const [filter, setFilter] = (0, import_react14.useState)("");
-    (0, import_react14.useEffect)(() => {
+    const [skins, setSkins] = (0, import_react27.useState)([]);
+    const [selectedSkin, setSelectedSkin] = (0, import_react27.useState)("articulated");
+    const [bbmodel, setBbmodel] = (0, import_react27.useState)(null);
+    const [selectedAnim, setSelectedAnim] = (0, import_react27.useState)(null);
+    const [filter, setFilter] = (0, import_react27.useState)("");
+    (0, import_react27.useEffect)(() => {
       api.skins.list().then(setSkins).catch(console.error);
     }, []);
-    const loadBbmodel = (0, import_react14.useCallback)((skin) => {
+    const loadBbmodel = (0, import_react27.useCallback)((skin) => {
       api.skins.bbmodel(skin).then(setBbmodel).catch(() => setBbmodel(null));
     }, []);
-    (0, import_react14.useEffect)(() => {
+    (0, import_react27.useEffect)(() => {
       loadBbmodel(selectedSkin);
     }, [selectedSkin, loadBbmodel]);
     const anims = bbmodel ? animationsFromBbmodel(bbmodel) : [];
     const filtered = anims.filter((a) => animDisplayName(a.fullName).toLowerCase().includes(filter.toLowerCase()));
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("aside", { className: "w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "px-3 py-2 border-b border-[#2E3A4E] space-y-2", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime61.jsxs)("div", { className: "flex h-full overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime61.jsxs)("aside", { className: "w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime61.jsxs)("div", { className: "px-3 py-2 border-b border-[#2E3A4E] space-y-2", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime61.jsx)(
             "select",
             {
               className: "w-full bg-[#1A222C] border border-[#2E3A4E] text-[#8A99AF] text-xs rounded px-2 py-1 outline-none",
@@ -89050,10 +89165,10 @@ ${end.comment}` : end.comment;
                 setSelectedSkin(e.target.value);
                 setSelectedAnim(null);
               },
-              children: skins.map((s) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("option", { value: s, children: s }, s))
+              children: skins.map((s) => /* @__PURE__ */ (0, import_jsx_runtime61.jsx)("option", { value: s, children: s }, s))
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime61.jsx)(
             "input",
             {
               className: "w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none",
@@ -89063,7 +89178,7 @@ ${end.comment}` : end.comment;
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime61.jsx)(
           SidebarList,
           {
             items: filtered,
@@ -89074,23 +89189,33 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selectedAnim ? /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex gap-6", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(BbmodelAnimationViewer, { bbmodel, animFullName: selectedAnim.fullName, width: 360, height: 460 }),
-        /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex-1 min-w-0", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: animDisplayName(selectedAnim.fullName) }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.skin"), value: selectedSkin }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.duration"), value: `${selectedAnim.length.toFixed(3)} s` }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.animatedBones"), value: selectedAnim.boneCount }),
-          /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(PropRow, { label: t2("administration.fullId"), value: selectedAnim.fullName })
+      /* @__PURE__ */ (0, import_jsx_runtime61.jsx)("div", { className: "flex-1 overflow-auto p-6", children: selectedAnim ? /* @__PURE__ */ (0, import_jsx_runtime61.jsxs)("div", { className: "flex gap-6", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime61.jsx)(BbmodelAnimationViewer, { bbmodel, animFullName: selectedAnim.fullName, width: 360, height: 460 }),
+        /* @__PURE__ */ (0, import_jsx_runtime61.jsxs)("div", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime61.jsx)("h2", { className: "text-white font-semibold text-base mb-4", children: animDisplayName(selectedAnim.fullName) }),
+          /* @__PURE__ */ (0, import_jsx_runtime61.jsx)(PropRow, { label: t2("administration.skin"), value: selectedSkin }),
+          /* @__PURE__ */ (0, import_jsx_runtime61.jsx)(PropRow, { label: t2("administration.duration"), value: `${selectedAnim.length.toFixed(3)} s` }),
+          /* @__PURE__ */ (0, import_jsx_runtime61.jsx)(PropRow, { label: t2("administration.animatedBones"), value: selectedAnim.boneCount }),
+          /* @__PURE__ */ (0, import_jsx_runtime61.jsx)(PropRow, { label: t2("administration.fullId"), value: selectedAnim.fullName })
         ] })
-      ] }) : /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(EmptyDetail, { message: t2("administration.selectAnimation") }) })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime61.jsx)(EmptyDetail, { message: t2("administration.selectAnimation") }) })
     ] });
   }
+
+  // admin/pages/AdministrationPage.tsx
+  var import_jsx_runtime62 = __toESM(require_jsx_runtime(), 1);
+  var TAB_LABEL_KEYS = {
+    blocks: "administration.tabBlocks",
+    items: "administration.tabItems",
+    bestiary: "administration.tabBestiary",
+    skins: "administration.tabSkins",
+    animations: "administration.tabAnimations"
+  };
   function AdministrationPage() {
     const t2 = useT();
-    const [tab, setTab] = (0, import_react14.useState)("blocks");
-    return /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex flex-col h-full overflow-hidden -m-6", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsx)("div", { className: "shrink-0 flex border-b border-[#2E3A4E] px-6 bg-[#1A222C]", children: Object.keys(TAB_LABEL_KEYS).map((key2) => /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(
+    const [tab, setTab] = (0, import_react28.useState)("blocks");
+    return /* @__PURE__ */ (0, import_jsx_runtime62.jsxs)("div", { className: "flex flex-col h-full overflow-hidden -m-6", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime62.jsx)("div", { className: "shrink-0 flex border-b border-[#2E3A4E] px-6 bg-[#1A222C]", children: Object.keys(TAB_LABEL_KEYS).map((key2) => /* @__PURE__ */ (0, import_jsx_runtime62.jsx)(
         "button",
         {
           onClick: () => setTab(key2),
@@ -89099,24 +89224,24 @@ ${end.comment}` : end.comment;
         },
         key2
       )) }),
-      /* @__PURE__ */ (0, import_jsx_runtime26.jsxs)("div", { className: "flex-1 overflow-hidden", children: [
-        tab === "blocks" && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(BlocksTab, {}),
-        tab === "items" && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(ItemsTab, {}),
-        tab === "bestiary" && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(BestiaryTab, {}),
-        tab === "skins" && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(SkinsTab, {}),
-        tab === "animations" && /* @__PURE__ */ (0, import_jsx_runtime26.jsx)(AnimationsTab, {})
+      /* @__PURE__ */ (0, import_jsx_runtime62.jsxs)("div", { className: "flex-1 overflow-hidden", children: [
+        tab === "blocks" && /* @__PURE__ */ (0, import_jsx_runtime62.jsx)(BlocksTab, {}),
+        tab === "items" && /* @__PURE__ */ (0, import_jsx_runtime62.jsx)(ItemsTab, {}),
+        tab === "bestiary" && /* @__PURE__ */ (0, import_jsx_runtime62.jsx)(BestiaryTab, {}),
+        tab === "skins" && /* @__PURE__ */ (0, import_jsx_runtime62.jsx)(SkinsTab, {}),
+        tab === "animations" && /* @__PURE__ */ (0, import_jsx_runtime62.jsx)(AnimationsTab, {})
       ] })
     ] });
   }
 
-  // admin/pages/WorldSimulatorPage.tsx
-  var import_react21 = __toESM(require_react(), 1);
+  // admin/pages/worldSimulator/WorldSimulatorPage.tsx
+  var import_react39 = __toESM(require_react(), 1);
 
   // admin/simulator/ArenaCanvasRenderer.tsx
-  var import_react16 = __toESM(require_react(), 1);
+  var import_react30 = __toESM(require_react(), 1);
 
   // admin/simulator/arenaView.ts
-  var import_react15 = __toESM(require_react(), 1);
+  var import_react29 = __toESM(require_react(), 1);
   var LAYER_STORAGE_KEY = "micraft-simulator-layers-v3";
   var LAYER_KEYS = ["food", "grid", "aggro", "pack", "hunger", "gestation", "names", "players"];
   var LAYER_DEFAULTS = {
@@ -89164,28 +89289,28 @@ ${end.comment}` : end.comment;
     return Math.min(MAX_PPB, Math.max(MIN_PPB, Math.min(width, height) / span));
   }
   function useArenaCamera(arenaHalfSize) {
-    const cameraRef = (0, import_react15.useRef)(INITIAL_CAMERA);
-    const dragRef = (0, import_react15.useRef)(null);
-    const frameRef = (0, import_react15.useRef)(null);
-    const fittedRef = (0, import_react15.useRef)(false);
-    const [size, setSize] = (0, import_react15.useState)({ w: 800, h: 600 });
-    const [element2, setElement] = (0, import_react15.useState)(null);
-    const [camera, setCamera] = (0, import_react15.useState)(INITIAL_CAMERA);
-    const [panning, setPanning] = (0, import_react15.useState)(false);
-    const redraw = (0, import_react15.useCallback)(() => {
+    const cameraRef = (0, import_react29.useRef)(INITIAL_CAMERA);
+    const dragRef = (0, import_react29.useRef)(null);
+    const frameRef = (0, import_react29.useRef)(null);
+    const fittedRef = (0, import_react29.useRef)(false);
+    const [size, setSize] = (0, import_react29.useState)({ w: 800, h: 600 });
+    const [element2, setElement] = (0, import_react29.useState)(null);
+    const [camera, setCamera] = (0, import_react29.useState)(INITIAL_CAMERA);
+    const [panning, setPanning] = (0, import_react29.useState)(false);
+    const redraw = (0, import_react29.useCallback)(() => {
       if (frameRef.current !== null) return;
       frameRef.current = requestAnimationFrame(() => {
         frameRef.current = null;
         setCamera(cameraRef.current);
       });
     }, []);
-    (0, import_react15.useEffect)(
+    (0, import_react29.useEffect)(
       () => () => {
         if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
       },
       []
     );
-    (0, import_react15.useEffect)(() => {
+    (0, import_react29.useEffect)(() => {
       if (!element2) return;
       const measure = () => {
         const rect = element2.getBoundingClientRect();
@@ -89196,11 +89321,11 @@ ${end.comment}` : end.comment;
       observer.observe(element2);
       return () => observer.disconnect();
     }, [element2]);
-    const fitAll = (0, import_react15.useCallback)(() => {
+    const fitAll = (0, import_react29.useCallback)(() => {
       cameraRef.current = { x: 0, z: 0, pxPerBlock: fitScale(size.w, size.h, arenaHalfSize) };
       redraw();
     }, [arenaHalfSize, size.w, size.h, redraw]);
-    (0, import_react15.useEffect)(() => {
+    (0, import_react29.useEffect)(() => {
       if (fittedRef.current || size.w <= 1) return;
       fittedRef.current = true;
       fitAll();
@@ -89208,11 +89333,11 @@ ${end.comment}` : end.comment;
     const cam = camera;
     const ppb = cam.pxPerBlock;
     const { w: W, h: H } = size;
-    const w2s2 = (0, import_react15.useCallback)(
+    const w2s2 = (0, import_react29.useCallback)(
       (wx, wz) => [(wx - cam.x) * ppb + W / 2, -(wz - cam.z) * ppb + H / 2],
       [cam.x, cam.z, ppb, W, H]
     );
-    const onWheel = (0, import_react15.useCallback)(
+    const onWheel = (0, import_react29.useCallback)(
       (e) => {
         e.preventDefault();
         const rect = element2 == null ? void 0 : element2.getBoundingClientRect();
@@ -89232,7 +89357,7 @@ ${end.comment}` : end.comment;
       },
       [element2, W, H, redraw]
     );
-    const zoomBy = (0, import_react15.useCallback)(
+    const zoomBy = (0, import_react29.useCallback)(
       (factor) => {
         const live = cameraRef.current;
         const next = Math.min(MAX_PPB, Math.max(MIN_PPB, live.pxPerBlock * factor));
@@ -89242,12 +89367,12 @@ ${end.comment}` : end.comment;
       },
       [redraw]
     );
-    const onMouseDown = (0, import_react15.useCallback)((e) => {
+    const onMouseDown = (0, import_react29.useCallback)((e) => {
       const live = cameraRef.current;
       dragRef.current = { x: live.x, z: live.z, sx: e.clientX, sy: e.clientY };
       setPanning(true);
     }, []);
-    const onPanMove = (0, import_react15.useCallback)(
+    const onPanMove = (0, import_react29.useCallback)(
       (e) => {
         const drag = dragRef.current;
         if (!drag) return;
@@ -89260,11 +89385,11 @@ ${end.comment}` : end.comment;
       },
       [redraw]
     );
-    const endPan = (0, import_react15.useCallback)(() => {
+    const endPan = (0, import_react29.useCallback)(() => {
       dragRef.current = null;
       setPanning(false);
     }, []);
-    const visibleBounds = (0, import_react15.useMemo)(
+    const visibleBounds = (0, import_react29.useMemo)(
       () => ({
         minX: cam.x - W / (2 * ppb) - VIEWPORT_MARGIN_BLOCKS,
         maxX: cam.x + W / (2 * ppb) + VIEWPORT_MARGIN_BLOCKS,
@@ -89273,7 +89398,7 @@ ${end.comment}` : end.comment;
       }),
       [cam.x, cam.z, ppb, W, H]
     );
-    return (0, import_react15.useMemo)(
+    return (0, import_react29.useMemo)(
       () => ({
         camera,
         width: W,
@@ -89321,23 +89446,23 @@ ${end.comment}` : end.comment;
   }
 
   // admin/simulator/NpcTooltip.tsx
-  var import_jsx_runtime27 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime63 = __toESM(require_jsx_runtime(), 1);
   function NpcTooltip({ hover }) {
     const t2 = useT();
     const { npc, sx, sy } = hover;
-    return /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime63.jsxs)(
       "div",
       {
         className: "pointer-events-none absolute z-10 rounded-md border border-[#2E3A4E] bg-[#1A222C] px-2.5 py-1.5 text-[11px] text-white shadow-lg",
         style: { left: sx + 14, top: sy + 10 },
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "font-semibold", children: npc.name }),
-          /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { className: "text-[#8A99AF]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime63.jsx)("div", { className: "font-semibold", children: npc.name }),
+          /* @__PURE__ */ (0, import_jsx_runtime63.jsxs)("div", { className: "text-[#8A99AF]", children: [
             npc.type,
             " \xB7 ",
             t2("sim.tooltip.level", npc.level)
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime27.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime63.jsxs)("div", { children: [
             npc.currentHp,
             "/",
             npc.maxHp,
@@ -89345,16 +89470,12 @@ ${end.comment}` : end.comment;
             t2("sim.tooltip.hp"),
             npc.gender ? ` \xB7 ${npc.gender === "FEMALE" ? "\u2640" : "\u2642"}` : ""
           ] }),
-          npc.hunger != null && /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "text-[#FACC15]", children: t2("sim.tooltip.satiety", Math.round((1 - npc.hunger) * 100)) }),
-          npc.gestationRemainingDays != null && /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "text-[#E879F9]", children: t2("sim.tooltip.gestation", npc.gestationRemainingDays.toFixed(2)) }),
-          npc.isDead && /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "text-[#EF4444]", children: t2("sim.tooltip.dead") })
+          npc.hunger != null && /* @__PURE__ */ (0, import_jsx_runtime63.jsx)("div", { className: "text-[#FACC15]", children: t2("sim.tooltip.satiety", Math.round((1 - npc.hunger) * 100)) }),
+          npc.gestationRemainingDays != null && /* @__PURE__ */ (0, import_jsx_runtime63.jsx)("div", { className: "text-[#E879F9]", children: t2("sim.tooltip.gestation", npc.gestationRemainingDays.toFixed(2)) }),
+          npc.isDead && /* @__PURE__ */ (0, import_jsx_runtime63.jsx)("div", { className: "text-[#EF4444]", children: t2("sim.tooltip.dead") })
         ]
       }
     );
-  }
-  function ArenaHint({ halfSize, pxPerBlock }) {
-    const t2 = useT();
-    return /* @__PURE__ */ (0, import_jsx_runtime27.jsx)("div", { className: "absolute bottom-2 left-2 rounded bg-[#1A222C]/80 px-2 py-1 text-[10px] text-[#8A99AF]", children: t2("sim.hint", halfSize * 2, halfSize * 2, pxPerBlock.toFixed(1)) });
   }
 
   // admin/simulator/types.ts
@@ -89509,8 +89630,15 @@ ${end.comment}` : end.comment;
     return slot;
   }
 
+  // admin/simulator/ArenaHint.tsx
+  var import_jsx_runtime64 = __toESM(require_jsx_runtime(), 1);
+  function ArenaHint({ halfSize, pxPerBlock }) {
+    const t2 = useT();
+    return /* @__PURE__ */ (0, import_jsx_runtime64.jsx)("div", { className: "absolute bottom-2 left-2 rounded bg-[#1A222C]/80 px-2 py-1 text-[10px] text-[#8A99AF]", children: t2("sim.hint", halfSize * 2, halfSize * 2, pxPerBlock.toFixed(1)) });
+  }
+
   // admin/simulator/ArenaCanvasRenderer.tsx
-  var import_jsx_runtime28 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime65 = __toESM(require_jsx_runtime(), 1);
   var PACK_RING = 6;
   function packColor(packId) {
     let hash = 0;
@@ -89518,10 +89646,10 @@ ${end.comment}` : end.comment;
     return `hsl(${Math.abs(hash) % 360}, 85%, 62%)`;
   }
   function ArenaCanvasRenderer({ arena, food, npcs, players, layers, selectedId, onSelect, view }) {
-    const canvasRef = (0, import_react16.useRef)(null);
-    const [hover, setHover] = (0, import_react16.useState)(null);
+    const canvasRef = (0, import_react30.useRef)(null);
+    const [hover, setHover] = (0, import_react30.useState)(null);
     const { onElement } = view;
-    (0, import_react16.useEffect)(() => onElement(canvasRef.current), [onElement]);
+    (0, import_react30.useEffect)(() => onElement(canvasRef.current), [onElement]);
     const ppb = view.camera.pxPerBlock;
     const half = arena.halfSize;
     const { width: W, height: H } = view;
@@ -89532,7 +89660,7 @@ ${end.comment}` : end.comment;
       if (!rect) return null;
       return [e.clientX - rect.left, e.clientY - rect.top];
     };
-    (0, import_react16.useEffect)(() => {
+    (0, import_react30.useEffect)(() => {
       var _a6, _b;
       const canvas = canvasRef.current;
       if (!canvas || W <= 1 || H <= 1) return;
@@ -89699,8 +89827,8 @@ ${end.comment}` : end.comment;
         }
       }
     }, [arena, food, npcs, players, layers, selectedId, view, ppb, half, W, H]);
-    return /* @__PURE__ */ (0, import_jsx_runtime28.jsxs)("div", { className: "relative h-full w-full", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime65.jsxs)("div", { className: "relative h-full w-full", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime65.jsx)(
         "canvas",
         {
           ref: canvasRef,
@@ -89727,20 +89855,20 @@ ${end.comment}` : end.comment;
           }
         }
       ),
-      hover && /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(NpcTooltip, { hover }),
-      /* @__PURE__ */ (0, import_jsx_runtime28.jsx)(ArenaHint, { halfSize: half, pxPerBlock: ppb })
+      hover && /* @__PURE__ */ (0, import_jsx_runtime65.jsx)(NpcTooltip, { hover }),
+      /* @__PURE__ */ (0, import_jsx_runtime65.jsx)(ArenaHint, { halfSize: half, pxPerBlock: ppb })
     ] });
   }
 
   // admin/simulator/ArenaControls.tsx
-  var import_jsx_runtime29 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime66 = __toESM(require_jsx_runtime(), 1);
   var ZOOM_STEP = 1.4;
   var BUTTON = "flex h-7 w-7 items-center justify-center rounded bg-[#1A222C]/90 text-[13px] text-[#C7D2FE] border border-[#2E3A4E] hover:bg-[#3C50E0]/70 hover:text-white";
   function ArenaControls({ onZoom, onFitAll }) {
     const t2 = useT();
-    return /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("div", { className: "absolute right-2 top-2 z-10 flex flex-col items-end gap-1.5", children: /* @__PURE__ */ (0, import_jsx_runtime29.jsxs)("div", { className: "flex flex-col gap-1", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("button", { type: "button", title: t2("sim.controls.zoomIn"), onClick: () => onZoom(ZOOM_STEP), className: BUTTON, children: "+" }),
-      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime66.jsx)("div", { className: "absolute right-2 top-2 z-10 flex flex-col items-end gap-1.5", children: /* @__PURE__ */ (0, import_jsx_runtime66.jsxs)("div", { className: "flex flex-col gap-1", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime66.jsx)("button", { type: "button", title: t2("sim.controls.zoomIn"), onClick: () => onZoom(ZOOM_STEP), className: BUTTON, children: "+" }),
+      /* @__PURE__ */ (0, import_jsx_runtime66.jsx)(
         "button",
         {
           type: "button",
@@ -89750,22 +89878,22 @@ ${end.comment}` : end.comment;
           children: "\u2212"
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("button", { type: "button", title: t2("sim.controls.fitAll"), onClick: onFitAll, className: BUTTON, children: /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("svg", { viewBox: "0 0 16 16", className: "h-3.5 w-3.5", fill: "none", stroke: "currentColor", strokeWidth: 1.6, children: /* @__PURE__ */ (0, import_jsx_runtime29.jsx)("path", { d: "M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4", strokeLinecap: "round" }) }) })
+      /* @__PURE__ */ (0, import_jsx_runtime66.jsx)("button", { type: "button", title: t2("sim.controls.fitAll"), onClick: onFitAll, className: BUTTON, children: /* @__PURE__ */ (0, import_jsx_runtime66.jsx)("svg", { viewBox: "0 0 16 16", className: "h-3.5 w-3.5", fill: "none", stroke: "currentColor", strokeWidth: 1.6, children: /* @__PURE__ */ (0, import_jsx_runtime66.jsx)("path", { d: "M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4", strokeLinecap: "round" }) }) })
     ] }) });
   }
 
   // admin/simulator/Card.tsx
-  var import_jsx_runtime30 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime67 = __toESM(require_jsx_runtime(), 1);
   function Card2({ title, children, collapsed, onCollapsed, summary }) {
     const foldable2 = collapsed !== void 0 && onCollapsed !== void 0;
     const folded = foldable2 && collapsed;
-    const heading3 = /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)(import_jsx_runtime30.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("span", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: title }),
-      folded && summary && /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("span", { className: "truncate text-[10px] text-[#4A5568]", children: summary }),
-      foldable2 && /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("span", { className: "text-[10px] text-[#8A99AF]", children: folded ? "\u25B8" : "\u25BE" })
+    const heading3 = /* @__PURE__ */ (0, import_jsx_runtime67.jsxs)(import_jsx_runtime67.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime67.jsx)("span", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: title }),
+      folded && summary && /* @__PURE__ */ (0, import_jsx_runtime67.jsx)("span", { className: "truncate text-[10px] text-[#4A5568]", children: summary }),
+      foldable2 && /* @__PURE__ */ (0, import_jsx_runtime67.jsx)("span", { className: "text-[10px] text-[#8A99AF]", children: folded ? "\u25B8" : "\u25BE" })
     ] });
-    return /* @__PURE__ */ (0, import_jsx_runtime30.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
-      foldable2 ? /* @__PURE__ */ (0, import_jsx_runtime30.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime67.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
+      foldable2 ? /* @__PURE__ */ (0, import_jsx_runtime67.jsx)(
         "button",
         {
           type: "button",
@@ -89774,14 +89902,14 @@ ${end.comment}` : end.comment;
           className: "flex w-full items-center gap-2 text-left hover:opacity-80" + (folded ? "" : " mb-2"),
           children: heading3
         }
-      ) : /* @__PURE__ */ (0, import_jsx_runtime30.jsx)("div", { className: "mb-2 flex items-center gap-2", children: heading3 }),
+      ) : /* @__PURE__ */ (0, import_jsx_runtime67.jsx)("div", { className: "mb-2 flex items-center gap-2", children: heading3 }),
       !folded && children
     ] });
   }
 
   // admin/simulator/EventLogPanel.tsx
-  var import_react17 = __toESM(require_react(), 1);
-  var import_jsx_runtime31 = __toESM(require_jsx_runtime(), 1);
+  var import_react31 = __toESM(require_react(), 1);
+  var import_jsx_runtime68 = __toESM(require_jsx_runtime(), 1);
   var FILTER_GROUPS = [
     {
       key: "combat",
@@ -89802,31 +89930,31 @@ ${end.comment}` : end.comment;
     { key: "lifecycle", labelKey: "sim.eventGroup.lifecycle", types: ["SPAWN", "DESPAWN", "AGE_DEATH", "STARVATION"] },
     { key: "system", labelKey: "sim.eventGroup.system", types: ["SYSTEM"] }
   ];
-  var EventLogPanel = (0, import_react17.memo)(function EventLogPanel2({ events, onSelect }) {
+  var EventLogPanel = (0, import_react31.memo)(function EventLogPanel2({ events, onSelect }) {
     var _a6, _b;
     const t2 = useT();
-    const [enabled, setEnabled] = (0, import_react17.useState)(
+    const [enabled, setEnabled] = (0, import_react31.useState)(
       () => FILTER_GROUPS.reduce((acc, g) => __spreadProps(__spreadValues({}, acc), { [g.key]: false }), {})
     );
-    const [npcType, setNpcType] = (0, import_react17.useState)(ALL_NPC_TYPES);
-    const [autoScroll, setAutoScroll] = (0, import_react17.useState)(true);
-    const listRef = (0, import_react17.useRef)(null);
-    const activeTypes = (0, import_react17.useMemo)(() => {
+    const [npcType, setNpcType] = (0, import_react31.useState)(ALL_NPC_TYPES);
+    const [autoScroll, setAutoScroll] = (0, import_react31.useState)(true);
+    const listRef = (0, import_react31.useRef)(null);
+    const activeTypes = (0, import_react31.useMemo)(() => {
       const set4 = /* @__PURE__ */ new Set();
       FILTER_GROUPS.forEach((g) => {
         if (enabled[g.key]) g.types.forEach((type) => set4.add(type));
       });
       return set4;
     }, [enabled]);
-    const npcTypes = (0, import_react17.useMemo)(() => npcTypesInEvents(events), [events]);
-    const visible = (0, import_react17.useMemo)(() => filterEvents(events, activeTypes, npcType, true), [events, activeTypes, npcType]);
+    const npcTypes = (0, import_react31.useMemo)(() => npcTypesInEvents(events), [events]);
+    const visible = (0, import_react31.useMemo)(() => filterEvents(events, activeTypes, npcType, true), [events, activeTypes, npcType]);
     const newestSeq = (_b = (_a6 = visible[0]) == null ? void 0 : _a6.seq) != null ? _b : 0;
-    (0, import_react17.useEffect)(() => {
+    (0, import_react31.useEffect)(() => {
       if (autoScroll && listRef.current) listRef.current.scrollTop = 0;
     }, [newestSeq, autoScroll]);
-    return /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "flex h-full flex-col", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("div", { className: "mb-2 flex flex-wrap items-center gap-1.5", children: [
-        FILTER_GROUPS.map((group) => /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime68.jsxs)("div", { className: "flex h-full flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime68.jsxs)("div", { className: "mb-2 flex flex-wrap items-center gap-1.5", children: [
+        FILTER_GROUPS.map((group) => /* @__PURE__ */ (0, import_jsx_runtime68.jsx)(
           "button",
           {
             type: "button",
@@ -89836,7 +89964,7 @@ ${end.comment}` : end.comment;
           },
           group.key
         )),
-        /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)(
+        /* @__PURE__ */ (0, import_jsx_runtime68.jsxs)(
           "select",
           {
             value: npcType,
@@ -89844,13 +89972,13 @@ ${end.comment}` : end.comment;
             title: t2("sim.eventLog.filterByType"),
             className: "rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-0.5 text-[10px] text-white",
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("option", { value: ALL_NPC_TYPES, children: t2("sim.eventLog.allTypes") }),
-              npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("option", { value: type, children: type }, type))
+              /* @__PURE__ */ (0, import_jsx_runtime68.jsx)("option", { value: ALL_NPC_TYPES, children: t2("sim.eventLog.allTypes") }),
+              npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime68.jsx)("option", { value: type, children: type }, type))
             ]
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("label", { className: "ml-auto flex items-center gap-1.5 text-[10px] text-[#8A99AF]", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime31.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime68.jsxs)("label", { className: "ml-auto flex items-center gap-1.5 text-[10px] text-[#8A99AF]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime68.jsx)(
             "input",
             {
               type: "checkbox",
@@ -89862,27 +89990,27 @@ ${end.comment}` : end.comment;
           t2("sim.eventLog.followLatest")
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)(
+      /* @__PURE__ */ (0, import_jsx_runtime68.jsxs)(
         "div",
         {
           ref: listRef,
           className: "flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-1.5 font-mono text-[11px] leading-relaxed",
           children: [
-            visible.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("p", { className: "p-2 text-[#8A99AF]", children: t2("sim.eventLog.empty") }),
-            visible.map((event) => /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)(
+            visible.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime68.jsx)("p", { className: "p-2 text-[#8A99AF]", children: t2("sim.eventLog.empty") }),
+            visible.map((event) => /* @__PURE__ */ (0, import_jsx_runtime68.jsxs)(
               "div",
               {
                 onClick: () => event.npcId && onSelect(event.npcId),
                 className: "flex gap-2 rounded px-1 py-0.5 " + (event.npcId ? "cursor-pointer hover:bg-[#1A222C]" : ""),
                 children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime31.jsxs)("span", { className: "w-24 shrink-0 text-[#4A5568]", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime68.jsxs)("span", { className: "w-24 shrink-0 text-[#4A5568]", children: [
                     "t",
                     event.tick,
                     " j",
                     event.gameDay.toFixed(2)
                   ] }),
-                  /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "w-24 shrink-0", style: { color: EVENT_COLORS[event.type] }, children: t2(EVENT_LABEL_KEYS[event.type]) }),
-                  /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("span", { className: "text-[#CBD5E1]", children: event.message })
+                  /* @__PURE__ */ (0, import_jsx_runtime68.jsx)("span", { className: "w-24 shrink-0", style: { color: EVENT_COLORS[event.type] }, children: t2(EVENT_LABEL_KEYS[event.type]) }),
+                  /* @__PURE__ */ (0, import_jsx_runtime68.jsx)("span", { className: "text-[#CBD5E1]", children: event.message })
                 ]
               },
               event.seq
@@ -89890,14 +90018,14 @@ ${end.comment}` : end.comment;
           ]
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime31.jsx)("p", { className: "mt-1.5 text-[10px] text-[#8A99AF]", children: t2("sim.eventLog.footer", visible.length, events.length, EVENT_HISTORY) })
+      /* @__PURE__ */ (0, import_jsx_runtime68.jsx)("p", { className: "mt-1.5 text-[10px] text-[#8A99AF]", children: t2("sim.eventLog.footer", visible.length, events.length, EVENT_HISTORY) })
     ] });
   });
 
-  // admin/simulator/MetricsPanel.tsx
-  var import_react18 = __toESM(require_react(), 1);
+  // admin/simulator/metrics/MetricsPanel.tsx
+  var import_react36 = __toESM(require_react(), 1);
 
-  // admin/simulator/metrics.ts
+  // admin/simulator/metrics/metrics.ts
   var METRIC_HISTORY = 240;
   var COUNTER_SERIES = [
     { key: "attacks", labelKey: "sim.counter.attacks", color: "#FB923C" },
@@ -90117,15 +90245,337 @@ ${end.comment}` : end.comment;
       })
     };
   }
+  var BOX_W = 300;
+  var BOX_H = 90;
+  var SEGMENT_GAP = 1.5;
 
-  // admin/simulator/MetricsPanel.tsx
-  var import_jsx_runtime32 = __toESM(require_jsx_runtime(), 1);
+  // admin/simulator/metrics/StackedByType.tsx
+  var import_react33 = __toESM(require_react(), 1);
+
+  // admin/simulator/metrics/ChartFrame.tsx
+  var import_jsx_runtime69 = __toESM(require_jsx_runtime(), 1);
+  function ChartFrame({
+    title,
+    hint,
+    children,
+    legend,
+    aside
+  }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime69.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-2.5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime69.jsxs)("div", { className: "mb-1 flex items-baseline gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime69.jsx)("p", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: title }),
+        /* @__PURE__ */ (0, import_jsx_runtime69.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: hint })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime69.jsxs)("div", { className: "flex items-start gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime69.jsx)("div", { className: "relative min-w-0 flex-1 rounded bg-[#0E1726] p-1.5", children }),
+        aside
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime69.jsx)("div", { className: "mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5", children: legend })
+    ] });
+  }
+
+  // admin/simulator/metrics/PieChart.tsx
+  var import_react32 = __toESM(require_react(), 1);
+  var import_jsx_runtime70 = __toESM(require_jsx_runtime(), 1);
+  var PIE_R = 35;
+  var PIE_CX = 40;
+  var PIE_CY = 45;
+  function PieChart({ keys: keys2, buckets: buckets2, pick }) {
+    const totals = (0, import_react32.useMemo)(() => {
+      var _a6, _b;
+      const map3 = {};
+      for (const bucket of buckets2) {
+        const data2 = pick(bucket);
+        for (const key2 of keys2) map3[key2] = ((_a6 = map3[key2]) != null ? _a6 : 0) + ((_b = data2[key2]) != null ? _b : 0);
+      }
+      return map3;
+    }, [keys2, buckets2, pick]);
+    const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0);
+    if (grandTotal === 0) return null;
+    const slices = keys2.map((key2) => {
+      var _a6;
+      return { key: key2, value: (_a6 = totals[key2]) != null ? _a6 : 0 };
+    }).filter((e) => e.value > 0).reduce((acc, e) => {
+      const prevAngle = acc.length > 0 ? acc[acc.length - 1].end : -Math.PI / 2;
+      const sweep = e.value / grandTotal * 2 * Math.PI;
+      acc.push({ key: e.key, value: e.value, start: prevAngle, end: prevAngle + sweep, sweep });
+      return acc;
+    }, []);
+    return /* @__PURE__ */ (0, import_jsx_runtime70.jsxs)("svg", { viewBox: "0 0 80 90", className: "h-[90px] w-[80px] shrink-0 rounded bg-[#0E1726]", children: [
+      slices.map(({ key: key2, start, end, sweep }) => {
+        if (sweep >= 2 * Math.PI - 1e-3) {
+          return /* @__PURE__ */ (0, import_jsx_runtime70.jsx)("circle", { cx: PIE_CX, cy: PIE_CY, r: PIE_R, fill: npcColor(key2) }, key2);
+        }
+        const x1 = PIE_CX + PIE_R * Math.cos(start);
+        const y1 = PIE_CY + PIE_R * Math.sin(start);
+        const x2 = PIE_CX + PIE_R * Math.cos(end);
+        const y2 = PIE_CY + PIE_R * Math.sin(end);
+        const large = sweep > Math.PI ? 1 : 0;
+        const d = `M ${PIE_CX} ${PIE_CY} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${PIE_R} ${PIE_R} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
+        return /* @__PURE__ */ (0, import_jsx_runtime70.jsx)("path", { d, fill: npcColor(key2) }, key2);
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime70.jsx)("circle", { cx: PIE_CX, cy: PIE_CY, r: PIE_R * 0.45, fill: "#0E1726" }),
+      /* @__PURE__ */ (0, import_jsx_runtime70.jsx)("text", { x: PIE_CX, y: PIE_CY + 3, textAnchor: "middle", fill: "#8A99AF", fontSize: 9, children: grandTotal })
+    ] });
+  }
+
+  // admin/simulator/metrics/LegendDot.tsx
+  var import_jsx_runtime71 = __toESM(require_jsx_runtime(), 1);
+  function LegendDot({ color, label, value }) {
+    const idle = value === 0;
+    return /* @__PURE__ */ (0, import_jsx_runtime71.jsxs)("span", { className: "flex items-center gap-1 text-[10px] text-[#8A99AF]" + (idle ? " opacity-20" : ""), children: [
+      /* @__PURE__ */ (0, import_jsx_runtime71.jsx)("span", { className: "inline-block h-2 w-2 rounded-sm", style: { background: color } }),
+      label,
+      value !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime71.jsx)("span", { className: "text-white", children: value })
+    ] });
+  }
+
+  // admin/simulator/metrics/HoverGuide.tsx
+  var import_jsx_runtime72 = __toESM(require_jsx_runtime(), 1);
+  function HoverGuide({ x, width }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime72.jsx)("rect", { x, y: 0, width: Math.max(width, 0.8), height: BOX_H, fill: "#C7D2FE", opacity: 0.12 });
+  }
+
+  // admin/simulator/metrics/HoverCard.tsx
+  var import_jsx_runtime73 = __toESM(require_jsx_runtime(), 1);
+  function HoverCard({
+    x,
+    y,
+    title,
+    summary,
+    rows,
+    emptyLabel
+  }) {
+    const flip = x > 190;
+    return /* @__PURE__ */ (0, import_jsx_runtime73.jsxs)(
+      "div",
+      {
+        className: "pointer-events-none absolute z-10 min-w-[110px] rounded-md border border-[#2E3A4E] bg-[#1A222C] px-2 py-1.5 text-[10px] shadow-lg",
+        style: { left: flip ? void 0 : x + 12, right: flip ? 8 : void 0, top: y + 8 },
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime73.jsxs)("div", { className: "mb-1 flex items-baseline gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime73.jsx)("span", { className: "font-semibold text-white", children: title }),
+            /* @__PURE__ */ (0, import_jsx_runtime73.jsx)("span", { className: "text-[#8A99AF]", children: summary })
+          ] }),
+          rows.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime73.jsx)("div", { className: "text-[#4A5568]", children: emptyLabel }),
+          rows.map((row) => /* @__PURE__ */ (0, import_jsx_runtime73.jsxs)("div", { className: "flex items-center gap-1.5", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime73.jsx)("span", { className: "inline-block h-2 w-2 shrink-0 rounded-sm", style: { background: row.color } }),
+            /* @__PURE__ */ (0, import_jsx_runtime73.jsx)("span", { className: "flex-1 text-[#8A99AF]", children: row.label }),
+            /* @__PURE__ */ (0, import_jsx_runtime73.jsx)("span", { className: "text-white", children: row.value })
+          ] }, row.label))
+        ]
+      }
+    );
+  }
+
+  // admin/simulator/metrics/StackedByType.tsx
+  var import_jsx_runtime74 = __toESM(require_jsx_runtime(), 1);
+  function StackedByType({
+    title,
+    hint,
+    unit,
+    buckets: buckets2,
+    pick,
+    slots
+  }) {
+    var _a6;
+    const t2 = useT();
+    const dayAbbrev = t2("sim.metrics.dayAbbrev");
+    const keys2 = (0, import_react33.useMemo)(() => stackKeys(buckets2, pick), [buckets2, pick]);
+    const columns = (0, import_react33.useMemo)(() => stackedColumns(buckets2, pick, keys2), [buckets2, pick, keys2]);
+    const top2 = niceMax(maxTotal(columns));
+    const barWidth = BOX_W / (slots != null ? slots : Math.max(1, columns.length));
+    const latest = columns[columns.length - 1];
+    const [hover, setHover] = (0, import_react33.useState)(null);
+    const onMove = (event) => {
+      const box = event.currentTarget.getBoundingClientRect();
+      const index2 = columnAt((event.clientX - box.left) / box.width, slots != null ? slots : columns.length);
+      if (index2 === null) return;
+      setHover({ index: index2, x: event.clientX - box.left, y: event.clientY - box.top });
+    };
+    const hovered = hover ? (_a6 = columns[hover.index]) != null ? _a6 : null : null;
+    return /* @__PURE__ */ (0, import_jsx_runtime74.jsxs)(
+      ChartFrame,
+      {
+        title,
+        hint,
+        aside: keys2.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime74.jsx)(PieChart, { keys: keys2, buckets: buckets2, pick }) : void 0,
+        legend: keys2.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime74.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: t2("sim.metrics.nothingYet") }) : keys2.map((key2) => {
+          var _a7;
+          return /* @__PURE__ */ (0, import_jsx_runtime74.jsx)(
+            LegendDot,
+            {
+              color: npcColor(key2),
+              label: key2,
+              value: latest ? (_a7 = pick(buckets2[buckets2.length - 1])[key2]) != null ? _a7 : 0 : 0
+            },
+            key2
+          );
+        }),
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime74.jsxs)(
+            "svg",
+            {
+              viewBox: `0 0 ${BOX_W} ${BOX_H}`,
+              preserveAspectRatio: "none",
+              className: "h-[90px] w-full",
+              onMouseMove: onMove,
+              onMouseLeave: () => setHover(null),
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime74.jsx)("line", { x1: 0, y1: BOX_H, x2: BOX_W, y2: BOX_H, stroke: "#2E3A4E", strokeWidth: 0.5 }),
+                hover && hovered && /* @__PURE__ */ (0, import_jsx_runtime74.jsx)(HoverGuide, { x: hover.index * barWidth, width: barWidth }),
+                columns.map(
+                  (column, i) => column.segments.map((segment) => {
+                    const height = (segment.to - segment.from) / top2 * BOX_H;
+                    return /* @__PURE__ */ (0, import_jsx_runtime74.jsx)(
+                      "rect",
+                      {
+                        x: i * barWidth,
+                        y: BOX_H - segment.to / top2 * BOX_H,
+                        width: Math.max(barWidth - 0.3, 0.4),
+                        height: height > SEGMENT_GAP * 2 ? height - SEGMENT_GAP : height,
+                        fill: npcColor(segment.key)
+                      },
+                      `${column.index}-${segment.key}`
+                    );
+                  })
+                )
+              ]
+            }
+          ),
+          hover && hovered && /* @__PURE__ */ (0, import_jsx_runtime74.jsx)(
+            HoverCard,
+            {
+              x: hover.x,
+              y: hover.y,
+              title: dayLabel(hovered.startGameDay, dayAbbrev),
+              summary: `${hovered.total} ${unit}`,
+              emptyLabel: t2("sim.metrics.nothing"),
+              rows: tooltipRows(hovered).map((row) => ({
+                label: row.key,
+                color: npcColor(row.key),
+                value: row.value
+              }))
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime74.jsxs)("div", { className: "mt-0.5 flex justify-between text-[9px] text-[#4A5568]", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime74.jsx)("span", { children: columns.length > 0 ? dayLabel(columns[0].startGameDay, dayAbbrev) : "\u2014" }),
+            /* @__PURE__ */ (0, import_jsx_runtime74.jsx)("span", { children: t2("sim.metrics.max", top2) }),
+            /* @__PURE__ */ (0, import_jsx_runtime74.jsx)("span", { children: latest ? dayLabel(latest.startGameDay, dayAbbrev) : "\u2014" })
+          ] })
+        ]
+      }
+    );
+  }
+
+  // admin/simulator/metrics/Counters.tsx
+  var import_react34 = __toESM(require_react(), 1);
+  var import_jsx_runtime75 = __toESM(require_jsx_runtime(), 1);
+  function Counters({ buckets: buckets2, slots }) {
+    var _a6;
+    const t2 = useT();
+    const dayAbbrev = t2("sim.metrics.dayAbbrev");
+    const [hidden, setHidden] = (0, import_react34.useState)(/* @__PURE__ */ new Set());
+    const all2 = (0, import_react34.useMemo)(
+      () => COUNTER_SERIES.map((series) => ({ series, values: counterValues(buckets2, series.key) })),
+      [buckets2]
+    );
+    const lines = all2.filter((line) => !hidden.has(line.series.key));
+    const top2 = niceMax(Math.max(0, ...lines.flatMap((line) => line.values)));
+    const last = buckets2[buckets2.length - 1];
+    const toggle = (key2) => setHidden((current) => {
+      const next = new Set(current);
+      if (next.has(key2)) next.delete(key2);
+      else next.add(key2);
+      return next;
+    });
+    const [hover, setHover] = (0, import_react34.useState)(null);
+    const slotWidth = BOX_W / (slots != null ? slots : Math.max(1, buckets2.length));
+    const onMove = (event) => {
+      const box = event.currentTarget.getBoundingClientRect();
+      const index2 = columnAt((event.clientX - box.left) / box.width, slots != null ? slots : buckets2.length);
+      if (index2 === null) return;
+      setHover({ index: index2, x: event.clientX - box.left, y: event.clientY - box.top });
+    };
+    const hoveredBucket = hover ? (_a6 = buckets2[hover.index]) != null ? _a6 : null : null;
+    const hoveredRows = counterRowsAt(
+      hoveredBucket != null ? hoveredBucket : void 0,
+      lines.map((line) => line.series)
+    );
+    return /* @__PURE__ */ (0, import_jsx_runtime75.jsxs)(
+      ChartFrame,
+      {
+        title: t2("sim.metrics.eventsPerSlice"),
+        hint: t2("sim.metrics.max", top2),
+        legend: COUNTER_SERIES.map((series) => /* @__PURE__ */ (0, import_jsx_runtime75.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: () => toggle(series.key),
+            title: t2(hidden.has(series.key) ? "sim.metrics.show" : "sim.metrics.hide"),
+            className: "cursor-pointer" + (hidden.has(series.key) ? " opacity-30" : ""),
+            children: /* @__PURE__ */ (0, import_jsx_runtime75.jsx)(LegendDot, { color: series.color, label: t2(series.labelKey), value: last ? last[series.key] : 0 })
+          },
+          series.key
+        )),
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime75.jsxs)(
+            "svg",
+            {
+              viewBox: `0 0 ${BOX_W} ${BOX_H}`,
+              preserveAspectRatio: "none",
+              className: "h-[90px] w-full",
+              onMouseMove: onMove,
+              onMouseLeave: () => setHover(null),
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime75.jsx)("line", { x1: 0, y1: BOX_H, x2: BOX_W, y2: BOX_H, stroke: "#2E3A4E", strokeWidth: 0.5 }),
+                hover && hoveredBucket && /* @__PURE__ */ (0, import_jsx_runtime75.jsx)(HoverGuide, { x: hover.index * slotWidth, width: slotWidth }),
+                lines.map((line) => /* @__PURE__ */ (0, import_jsx_runtime75.jsx)(
+                  "polyline",
+                  {
+                    points: linePoints(line.values, BOX_W, BOX_H, top2, slots),
+                    fill: "none",
+                    stroke: line.series.color,
+                    strokeWidth: 1,
+                    vectorEffect: "non-scaling-stroke"
+                  },
+                  line.series.key
+                ))
+              ]
+            }
+          ),
+          hover && hoveredBucket && /* @__PURE__ */ (0, import_jsx_runtime75.jsx)(
+            HoverCard,
+            {
+              x: hover.x,
+              y: hover.y,
+              title: dayLabel(hoveredBucket.startGameDay, dayAbbrev),
+              summary: t2(
+                "sim.metrics.unitEvents",
+                hoveredRows.reduce((sum, row) => sum + row.value, 0)
+              ),
+              emptyLabel: t2("sim.metrics.nothing"),
+              rows: hoveredRows.map((row) => ({
+                label: t2(row.series.labelKey),
+                color: row.series.color,
+                value: row.value
+              }))
+            }
+          )
+        ]
+      }
+    );
+  }
+
+  // admin/simulator/metrics/ExportButton.tsx
+  var import_react35 = __toESM(require_react(), 1);
+  var import_jsx_runtime76 = __toESM(require_jsx_runtime(), 1);
   var COPIED_FEEDBACK_MS = 2e3;
   function ExportButton({ buckets: buckets2, bucketGameDays, config: config3 }) {
     const t2 = useT();
-    const [copied, setCopied] = (0, import_react18.useState)(false);
-    const timerRef = (0, import_react18.useRef)(null);
-    (0, import_react18.useEffect)(
+    const [copied, setCopied] = (0, import_react35.useState)(false);
+    const timerRef = (0, import_react35.useRef)(null);
+    (0, import_react35.useEffect)(
       () => () => {
         if (timerRef.current !== null) window.clearTimeout(timerRef.current);
       },
@@ -90153,7 +90603,7 @@ ${end.comment}` : end.comment;
       }
       clipboard.writeText(json).then(flashCopied, () => download(json));
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime76.jsx)(
       "button",
       {
         type: "button",
@@ -90165,309 +90615,17 @@ ${end.comment}` : end.comment;
       }
     );
   }
-  var BOX_W = 300;
-  var BOX_H = 90;
-  var SEGMENT_GAP = 1.5;
-  function ChartFrame({
-    title,
-    hint,
-    children,
-    legend,
-    aside
-  }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-2.5", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "mb-1 flex items-baseline gap-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("p", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: title }),
-        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: hint })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "flex items-start gap-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("div", { className: "relative min-w-0 flex-1 rounded bg-[#0E1726] p-1.5", children }),
-        aside
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("div", { className: "mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5", children: legend })
-    ] });
-  }
-  function LegendDot({ color, label, value }) {
-    const idle = value === 0;
-    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("span", { className: "flex items-center gap-1 text-[10px] text-[#8A99AF]" + (idle ? " opacity-20" : ""), children: [
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "inline-block h-2 w-2 rounded-sm", style: { background: color } }),
-      label,
-      value !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-white", children: value })
-    ] });
-  }
-  function HoverCard({
-    x,
-    y,
-    title,
-    summary,
-    rows,
-    emptyLabel
-  }) {
-    const flip = x > 190;
-    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)(
-      "div",
-      {
-        className: "pointer-events-none absolute z-10 min-w-[110px] rounded-md border border-[#2E3A4E] bg-[#1A222C] px-2 py-1.5 text-[10px] shadow-lg",
-        style: { left: flip ? void 0 : x + 12, right: flip ? 8 : void 0, top: y + 8 },
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "mb-1 flex items-baseline gap-2", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "font-semibold text-white", children: title }),
-            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-[#8A99AF]", children: summary })
-          ] }),
-          rows.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("div", { className: "text-[#4A5568]", children: emptyLabel }),
-          rows.map((row) => /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "flex items-center gap-1.5", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "inline-block h-2 w-2 shrink-0 rounded-sm", style: { background: row.color } }),
-            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "flex-1 text-[#8A99AF]", children: row.label }),
-            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-white", children: row.value })
-          ] }, row.label))
-        ]
-      }
-    );
-  }
-  function HoverGuide({ x, width }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("rect", { x, y: 0, width: Math.max(width, 0.8), height: BOX_H, fill: "#C7D2FE", opacity: 0.12 });
-  }
-  var PIE_R = 35;
-  var PIE_CX = 40;
-  var PIE_CY = 45;
-  function PieChart({ keys: keys2, buckets: buckets2, pick }) {
-    const totals = (0, import_react18.useMemo)(() => {
-      var _a6, _b;
-      const map3 = {};
-      for (const bucket of buckets2) {
-        const data2 = pick(bucket);
-        for (const key2 of keys2) map3[key2] = ((_a6 = map3[key2]) != null ? _a6 : 0) + ((_b = data2[key2]) != null ? _b : 0);
-      }
-      return map3;
-    }, [keys2, buckets2, pick]);
-    const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0);
-    if (grandTotal === 0) return null;
-    const slices = keys2.map((key2) => {
-      var _a6;
-      return { key: key2, value: (_a6 = totals[key2]) != null ? _a6 : 0 };
-    }).filter((e) => e.value > 0).reduce((acc, e) => {
-      const prevAngle = acc.length > 0 ? acc[acc.length - 1].end : -Math.PI / 2;
-      const sweep = e.value / grandTotal * 2 * Math.PI;
-      acc.push({ key: e.key, value: e.value, start: prevAngle, end: prevAngle + sweep, sweep });
-      return acc;
-    }, []);
-    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("svg", { viewBox: "0 0 80 90", className: "h-[90px] w-[80px] shrink-0 rounded bg-[#0E1726]", children: [
-      slices.map(({ key: key2, start, end, sweep }) => {
-        if (sweep >= 2 * Math.PI - 1e-3) {
-          return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("circle", { cx: PIE_CX, cy: PIE_CY, r: PIE_R, fill: npcColor(key2) }, key2);
-        }
-        const x1 = PIE_CX + PIE_R * Math.cos(start);
-        const y1 = PIE_CY + PIE_R * Math.sin(start);
-        const x2 = PIE_CX + PIE_R * Math.cos(end);
-        const y2 = PIE_CY + PIE_R * Math.sin(end);
-        const large = sweep > Math.PI ? 1 : 0;
-        const d = `M ${PIE_CX} ${PIE_CY} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${PIE_R} ${PIE_R} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
-        return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("path", { d, fill: npcColor(key2) }, key2);
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("circle", { cx: PIE_CX, cy: PIE_CY, r: PIE_R * 0.45, fill: "#0E1726" }),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("text", { x: PIE_CX, y: PIE_CY + 3, textAnchor: "middle", fill: "#8A99AF", fontSize: 9, children: grandTotal })
-    ] });
-  }
-  function StackedByType({
-    title,
-    hint,
-    unit,
-    buckets: buckets2,
-    pick,
-    slots
-  }) {
-    var _a6;
+
+  // admin/simulator/metrics/MetricsPanel.tsx
+  var import_jsx_runtime77 = __toESM(require_jsx_runtime(), 1);
+  var MetricsPanel = (0, import_react36.memo)(function MetricsPanel2({ buckets: buckets2, bucketGameDays, config: config3 }) {
     const t2 = useT();
-    const dayAbbrev = t2("sim.metrics.dayAbbrev");
-    const keys2 = (0, import_react18.useMemo)(() => stackKeys(buckets2, pick), [buckets2, pick]);
-    const columns = (0, import_react18.useMemo)(() => stackedColumns(buckets2, pick, keys2), [buckets2, pick, keys2]);
-    const top2 = niceMax(maxTotal(columns));
-    const barWidth = BOX_W / (slots != null ? slots : Math.max(1, columns.length));
-    const latest = columns[columns.length - 1];
-    const [hover, setHover] = (0, import_react18.useState)(null);
-    const onMove = (event) => {
-      const box = event.currentTarget.getBoundingClientRect();
-      const index2 = columnAt((event.clientX - box.left) / box.width, slots != null ? slots : columns.length);
-      if (index2 === null) return;
-      setHover({ index: index2, x: event.clientX - box.left, y: event.clientY - box.top });
-    };
-    const hovered = hover ? (_a6 = columns[hover.index]) != null ? _a6 : null : null;
-    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)(
-      ChartFrame,
-      {
-        title,
-        hint,
-        aside: keys2.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(PieChart, { keys: keys2, buckets: buckets2, pick }) : void 0,
-        legend: keys2.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: t2("sim.metrics.nothingYet") }) : keys2.map((key2) => {
-          var _a7;
-          return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
-            LegendDot,
-            {
-              color: npcColor(key2),
-              label: key2,
-              value: latest ? (_a7 = pick(buckets2[buckets2.length - 1])[key2]) != null ? _a7 : 0 : 0
-            },
-            key2
-          );
-        }),
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)(
-            "svg",
-            {
-              viewBox: `0 0 ${BOX_W} ${BOX_H}`,
-              preserveAspectRatio: "none",
-              className: "h-[90px] w-full",
-              onMouseMove: onMove,
-              onMouseLeave: () => setHover(null),
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("line", { x1: 0, y1: BOX_H, x2: BOX_W, y2: BOX_H, stroke: "#2E3A4E", strokeWidth: 0.5 }),
-                hover && hovered && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(HoverGuide, { x: hover.index * barWidth, width: barWidth }),
-                columns.map(
-                  (column, i) => column.segments.map((segment) => {
-                    const height = (segment.to - segment.from) / top2 * BOX_H;
-                    return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
-                      "rect",
-                      {
-                        x: i * barWidth,
-                        y: BOX_H - segment.to / top2 * BOX_H,
-                        width: Math.max(barWidth - 0.3, 0.4),
-                        height: height > SEGMENT_GAP * 2 ? height - SEGMENT_GAP : height,
-                        fill: npcColor(segment.key)
-                      },
-                      `${column.index}-${segment.key}`
-                    );
-                  })
-                )
-              ]
-            }
-          ),
-          hover && hovered && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
-            HoverCard,
-            {
-              x: hover.x,
-              y: hover.y,
-              title: dayLabel(hovered.startGameDay, dayAbbrev),
-              summary: `${hovered.total} ${unit}`,
-              emptyLabel: t2("sim.metrics.nothing"),
-              rows: tooltipRows(hovered).map((row) => ({
-                label: row.key,
-                color: npcColor(row.key),
-                value: row.value
-              }))
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "mt-0.5 flex justify-between text-[9px] text-[#4A5568]", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { children: columns.length > 0 ? dayLabel(columns[0].startGameDay, dayAbbrev) : "\u2014" }),
-            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { children: t2("sim.metrics.max", top2) }),
-            /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { children: latest ? dayLabel(latest.startGameDay, dayAbbrev) : "\u2014" })
-          ] })
-        ]
-      }
-    );
-  }
-  function Counters({ buckets: buckets2, slots }) {
-    var _a6;
-    const t2 = useT();
-    const dayAbbrev = t2("sim.metrics.dayAbbrev");
-    const [hidden, setHidden] = (0, import_react18.useState)(/* @__PURE__ */ new Set());
-    const all2 = (0, import_react18.useMemo)(
-      () => COUNTER_SERIES.map((series) => ({ series, values: counterValues(buckets2, series.key) })),
-      [buckets2]
-    );
-    const lines = all2.filter((line) => !hidden.has(line.series.key));
-    const top2 = niceMax(Math.max(0, ...lines.flatMap((line) => line.values)));
-    const last = buckets2[buckets2.length - 1];
-    const toggle = (key2) => setHidden((current) => {
-      const next = new Set(current);
-      if (next.has(key2)) next.delete(key2);
-      else next.add(key2);
-      return next;
-    });
-    const [hover, setHover] = (0, import_react18.useState)(null);
-    const slotWidth = BOX_W / (slots != null ? slots : Math.max(1, buckets2.length));
-    const onMove = (event) => {
-      const box = event.currentTarget.getBoundingClientRect();
-      const index2 = columnAt((event.clientX - box.left) / box.width, slots != null ? slots : buckets2.length);
-      if (index2 === null) return;
-      setHover({ index: index2, x: event.clientX - box.left, y: event.clientY - box.top });
-    };
-    const hoveredBucket = hover ? (_a6 = buckets2[hover.index]) != null ? _a6 : null : null;
-    const hoveredRows = counterRowsAt(
-      hoveredBucket != null ? hoveredBucket : void 0,
-      lines.map((line) => line.series)
-    );
-    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)(
-      ChartFrame,
-      {
-        title: t2("sim.metrics.eventsPerSlice"),
-        hint: t2("sim.metrics.max", top2),
-        legend: COUNTER_SERIES.map((series) => /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
-          "button",
-          {
-            type: "button",
-            onClick: () => toggle(series.key),
-            title: t2(hidden.has(series.key) ? "sim.metrics.show" : "sim.metrics.hide"),
-            className: "cursor-pointer" + (hidden.has(series.key) ? " opacity-30" : ""),
-            children: /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(LegendDot, { color: series.color, label: t2(series.labelKey), value: last ? last[series.key] : 0 })
-          },
-          series.key
-        )),
-        children: [
-          /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)(
-            "svg",
-            {
-              viewBox: `0 0 ${BOX_W} ${BOX_H}`,
-              preserveAspectRatio: "none",
-              className: "h-[90px] w-full",
-              onMouseMove: onMove,
-              onMouseLeave: () => setHover(null),
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("line", { x1: 0, y1: BOX_H, x2: BOX_W, y2: BOX_H, stroke: "#2E3A4E", strokeWidth: 0.5 }),
-                hover && hoveredBucket && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(HoverGuide, { x: hover.index * slotWidth, width: slotWidth }),
-                lines.map((line) => /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
-                  "polyline",
-                  {
-                    points: linePoints(line.values, BOX_W, BOX_H, top2, slots),
-                    fill: "none",
-                    stroke: line.series.color,
-                    strokeWidth: 1,
-                    vectorEffect: "non-scaling-stroke"
-                  },
-                  line.series.key
-                ))
-              ]
-            }
-          ),
-          hover && hoveredBucket && /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
-            HoverCard,
-            {
-              x: hover.x,
-              y: hover.y,
-              title: dayLabel(hoveredBucket.startGameDay, dayAbbrev),
-              summary: t2(
-                "sim.metrics.unitEvents",
-                hoveredRows.reduce((sum, row) => sum + row.value, 0)
-              ),
-              emptyLabel: t2("sim.metrics.nothing"),
-              rows: hoveredRows.map((row) => ({
-                label: t2(row.series.labelKey),
-                color: row.series.color,
-                value: row.value
-              }))
-            }
-          )
-        ]
-      }
-    );
-  }
-  var MetricsPanel = (0, import_react18.memo)(function MetricsPanel2({ buckets: buckets2, bucketGameDays, config: config3 }) {
-    const t2 = useT();
-    const [windowDays, setWindowDays] = (0, import_react18.useState)(DEFAULT_WINDOW_GAME_DAYS);
+    const [windowDays, setWindowDays] = (0, import_react36.useState)(DEFAULT_WINDOW_GAME_DAYS);
     const slots = slotsFor(bucketGameDays, windowDays);
-    const visible = (0, import_react18.useMemo)(() => windowOf(buckets2, slots), [buckets2, slots]);
-    const selector = /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "flex shrink-0 items-center gap-1", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: t2("sim.metrics.window") }),
-      WINDOW_OPTIONS.map((option2) => /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+    const visible = (0, import_react36.useMemo)(() => windowOf(buckets2, slots), [buckets2, slots]);
+    const selector = /* @__PURE__ */ (0, import_jsx_runtime77.jsxs)("div", { className: "flex shrink-0 items-center gap-1", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime77.jsx)("span", { className: "text-[10px] text-[#4A5568]", children: t2("sim.metrics.window") }),
+      WINDOW_OPTIONS.map((option2) => /* @__PURE__ */ (0, import_jsx_runtime77.jsx)(
         "button",
         {
           type: "button",
@@ -90477,16 +90635,16 @@ ${end.comment}` : end.comment;
         },
         option2.days
       )),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("span", { className: "ml-auto text-[10px] text-[#4A5568]", children: t2("sim.metrics.slicesInMemory", buckets2.length) }),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(ExportButton, { buckets: buckets2, bucketGameDays, config: config3 })
+      /* @__PURE__ */ (0, import_jsx_runtime77.jsx)("span", { className: "ml-auto text-[10px] text-[#4A5568]", children: t2("sim.metrics.slicesInMemory", buckets2.length) }),
+      /* @__PURE__ */ (0, import_jsx_runtime77.jsx)(ExportButton, { buckets: buckets2, bucketGameDays, config: config3 })
     ] });
     if (buckets2.length === 0) {
-      return /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.metrics.noData") });
+      return /* @__PURE__ */ (0, import_jsx_runtime77.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.metrics.noData") });
     }
     const hint = t2("sim.metrics.sliceHint", bucketGameDays);
-    return /* @__PURE__ */ (0, import_jsx_runtime32.jsxs)("div", { className: "flex h-full flex-col gap-2 overflow-auto", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime77.jsxs)("div", { className: "flex h-full flex-col gap-2 overflow-auto", children: [
       selector,
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime77.jsx)(
         StackedByType,
         {
           title: t2("sim.metrics.aliveByType"),
@@ -90497,7 +90655,7 @@ ${end.comment}` : end.comment;
           slots
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime77.jsx)(
         StackedByType,
         {
           title: t2("sim.metrics.deathsByType"),
@@ -90508,7 +90666,7 @@ ${end.comment}` : end.comment;
           slots
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime77.jsx)(
         StackedByType,
         {
           title: t2("sim.metrics.deathsByKillerType"),
@@ -90519,7 +90677,7 @@ ${end.comment}` : end.comment;
           slots
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime77.jsx)(
         StackedByType,
         {
           title: t2("sim.metrics.levelUpsByType"),
@@ -90530,7 +90688,7 @@ ${end.comment}` : end.comment;
           slots
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime77.jsx)(
         StackedByType,
         {
           title: t2("sim.metrics.xpLevelUpsByType"),
@@ -90541,22 +90699,22 @@ ${end.comment}` : end.comment;
           slots
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)(Counters, { buckets: visible, slots }),
-      /* @__PURE__ */ (0, import_jsx_runtime32.jsx)("p", { className: "text-[10px] leading-relaxed text-[#4A5568]", children: t2("sim.metrics.footnote") })
+      /* @__PURE__ */ (0, import_jsx_runtime77.jsx)(Counters, { buckets: visible, slots }),
+      /* @__PURE__ */ (0, import_jsx_runtime77.jsx)("p", { className: "text-[10px] leading-relaxed text-[#4A5568]", children: t2("sim.metrics.footnote") })
     ] });
   });
 
   // admin/simulator/SimPlayerPad.tsx
-  var import_jsx_runtime33 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime78 = __toESM(require_jsx_runtime(), 1);
   var KEY = "flex h-5 w-6 items-center justify-center rounded bg-[#2E3A4E] text-[10px] text-[#C7D2FE] hover:bg-[#3C50E0]/60";
   function SimPlayerPad({ players, onInput }) {
     const t2 = useT();
     if (players.length === 0) return null;
-    return /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("div", { className: "flex shrink-0 items-start gap-3 border-l border-[#2E3A4E] pl-3", children: players.map((player) => /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("p", { className: "mb-1 truncate text-[10px] text-[#8A99AF]", title: player.name, children: player.name }),
-      /* @__PURE__ */ (0, import_jsx_runtime33.jsxs)("div", { className: "grid grid-cols-3 gap-0.5", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", {}),
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime78.jsx)("div", { className: "flex shrink-0 items-start gap-3 border-l border-[#2E3A4E] pl-3", children: players.map((player) => /* @__PURE__ */ (0, import_jsx_runtime78.jsxs)("div", { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime78.jsx)("p", { className: "mb-1 truncate text-[10px] text-[#8A99AF]", title: player.name, children: player.name }),
+      /* @__PURE__ */ (0, import_jsx_runtime78.jsxs)("div", { className: "grid grid-cols-3 gap-0.5", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime78.jsx)("span", {}),
+        /* @__PURE__ */ (0, import_jsx_runtime78.jsx)(
           "button",
           {
             type: "button",
@@ -90566,8 +90724,8 @@ ${end.comment}` : end.comment;
             children: "\u2191"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", {}),
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime78.jsx)("span", {}),
+        /* @__PURE__ */ (0, import_jsx_runtime78.jsx)(
           "button",
           {
             type: "button",
@@ -90577,7 +90735,7 @@ ${end.comment}` : end.comment;
             children: "\u2190"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime78.jsx)(
           "button",
           {
             type: "button",
@@ -90587,7 +90745,7 @@ ${end.comment}` : end.comment;
             children: "\u2912"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime78.jsx)(
           "button",
           {
             type: "button",
@@ -90597,8 +90755,8 @@ ${end.comment}` : end.comment;
             children: "\u2192"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", {}),
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime78.jsx)("span", {}),
+        /* @__PURE__ */ (0, import_jsx_runtime78.jsx)(
           "button",
           {
             type: "button",
@@ -90608,20 +90766,20 @@ ${end.comment}` : end.comment;
             children: "\u2193"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime33.jsx)("span", {})
+        /* @__PURE__ */ (0, import_jsx_runtime78.jsx)("span", {})
       ] })
     ] }, player.id)) });
   }
 
   // admin/simulator/SimulationList.tsx
-  var import_jsx_runtime34 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime79 = __toESM(require_jsx_runtime(), 1);
   var ROW_BUTTON = "rounded px-2 py-0.5 text-[10px] text-[#C7D2FE] bg-[#2E3A4E] hover:bg-[#3C50E0]/60";
   function SimulationList({ simulations, attachedId, onAttach, onDetach, onRestart, onClose, onRefresh }) {
     const t2 = useT();
-    return /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("p", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("sim.list.title") }),
-        /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime79.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime79.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime79.jsx)("p", { className: "flex-1 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("sim.list.title") }),
+        /* @__PURE__ */ (0, import_jsx_runtime79.jsx)(
           "button",
           {
             type: "button",
@@ -90631,24 +90789,24 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      simulations.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.list.empty") }),
+      simulations.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime79.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.list.empty") }),
       simulations.map((simulation) => {
         const attached = simulation.id === attachedId;
-        return /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)(
+        return /* @__PURE__ */ (0, import_jsx_runtime79.jsxs)(
           "div",
           {
             className: "mb-1.5 rounded border p-2 last:mb-0 " + (attached ? "border-[#3C50E0] bg-[#3C50E0]/10" : "border-[#2E3A4E] bg-[#0E1726]"),
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "flex items-start gap-2", children: [
-                /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "min-w-0 flex-1", children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("p", { className: "truncate text-[11px] font-medium text-white", title: simulation.name, children: simulation.name }),
-                  /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("p", { className: "text-[10px] text-[#8A99AF]", children: t2(
+              /* @__PURE__ */ (0, import_jsx_runtime79.jsxs)("div", { className: "flex items-start gap-2", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime79.jsxs)("div", { className: "min-w-0 flex-1", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime79.jsx)("p", { className: "truncate text-[11px] font-medium text-white", title: simulation.name, children: simulation.name }),
+                  /* @__PURE__ */ (0, import_jsx_runtime79.jsx)("p", { className: "text-[10px] text-[#8A99AF]", children: t2(
                     "sim.list.stats",
                     `${simulation.npcCount}${simulation.populationCap > 0 ? `/${simulation.populationCap}` : ""}`,
                     simulation.gameDay.toFixed(1),
                     simulation.paused ? t2("sim.timeline.paused") : t2("sim.timeline.tps", Math.round(simulation.realTps))
                   ) }),
-                  /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("p", { className: "text-[10px] text-[#4A5568]", children: t2(
+                  /* @__PURE__ */ (0, import_jsx_runtime79.jsx)("p", { className: "text-[10px] text-[#4A5568]", children: t2(
                     "sim.list.geometry",
                     simulation.halfSize * 2,
                     simulation.halfSize * 2,
@@ -90656,7 +90814,7 @@ ${end.comment}` : end.comment;
                     simulation.id.slice(0, 8)
                   ) })
                 ] }),
-                attached ? /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("span", { className: "shrink-0 rounded bg-[#3C50E0] px-2 py-0.5 text-[10px] text-white", children: t2("sim.list.viewing") }) : /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+                attached ? /* @__PURE__ */ (0, import_jsx_runtime79.jsx)("span", { className: "shrink-0 rounded bg-[#3C50E0] px-2 py-0.5 text-[10px] text-white", children: t2("sim.list.viewing") }) : /* @__PURE__ */ (0, import_jsx_runtime79.jsx)(
                   "button",
                   {
                     type: "button",
@@ -90666,8 +90824,8 @@ ${end.comment}` : end.comment;
                   }
                 )
               ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime34.jsxs)("div", { className: "mt-2 flex flex-wrap gap-1 border-t border-[#2E3A4E] pt-2", children: [
-                /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime79.jsxs)("div", { className: "mt-2 flex flex-wrap gap-1 border-t border-[#2E3A4E] pt-2", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime79.jsx)(
                   "button",
                   {
                     type: "button",
@@ -90677,8 +90835,8 @@ ${end.comment}` : end.comment;
                     children: t2("sim.list.restart")
                   }
                 ),
-                attached && /* @__PURE__ */ (0, import_jsx_runtime34.jsx)("button", { type: "button", title: t2("sim.list.detachTitle"), onClick: onDetach, className: ROW_BUTTON, children: t2("sim.list.detach") }),
-                /* @__PURE__ */ (0, import_jsx_runtime34.jsx)(
+                attached && /* @__PURE__ */ (0, import_jsx_runtime79.jsx)("button", { type: "button", title: t2("sim.list.detachTitle"), onClick: onDetach, className: ROW_BUTTON, children: t2("sim.list.detach") }),
+                /* @__PURE__ */ (0, import_jsx_runtime79.jsx)(
                   "button",
                   {
                     type: "button",
@@ -90698,16 +90856,15 @@ ${end.comment}` : end.comment;
   }
 
   // admin/simulator/RulesEditor.tsx
-  var import_react19 = __toESM(require_react(), 1);
-  var import_jsx_runtime35 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime80 = __toESM(require_jsx_runtime(), 1);
   function TuningEditor({ value, base: base3, onChange, onApply }) {
     const t2 = useT();
     const changed = (key2) => base3 != null && base3[key2] !== value[key2];
     const changedCount = base3 ? TUNING_FIELDS.filter((f) => changed(f.key)).length : 0;
-    return /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "flex h-full flex-col", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: changedCount === 0 ? t2("sim.rules.identical") : t2("sim.rules.overridden", changedCount) }),
-        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime80.jsxs)("div", { className: "flex h-full flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime80.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime80.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: changedCount === 0 ? t2("sim.rules.identical") : t2("sim.rules.overridden", changedCount) }),
+        /* @__PURE__ */ (0, import_jsx_runtime80.jsx)(
           "button",
           {
             type: "button",
@@ -90717,7 +90874,7 @@ ${end.comment}` : end.comment;
             children: t2("sim.rules.resetToLive")
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime80.jsx)(
           "button",
           {
             type: "button",
@@ -90727,12 +90884,12 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("div", { className: "flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-2", children: TUNING_FIELDS.map((field) => /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("label", { className: "flex items-center gap-2 border-b border-[#1A222C] py-1 last:border-0", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("span", { className: "flex-1 text-[11px] " + (changed(field.key) ? "text-[#FACC15]" : "text-[#8A99AF]"), children: [
+      /* @__PURE__ */ (0, import_jsx_runtime80.jsx)("div", { className: "flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-2", children: TUNING_FIELDS.map((field) => /* @__PURE__ */ (0, import_jsx_runtime80.jsxs)("label", { className: "flex items-center gap-2 border-b border-[#1A222C] py-1 last:border-0", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime80.jsxs)("span", { className: "flex-1 text-[11px] " + (changed(field.key) ? "text-[#FACC15]" : "text-[#8A99AF]"), children: [
           t2(field.labelKey),
-          changed(field.key) && base3 && /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("span", { className: "ml-1 text-[10px] text-[#4A5568]", children: t2("sim.rules.liveValue", String(base3[field.key])) })
+          changed(field.key) && base3 && /* @__PURE__ */ (0, import_jsx_runtime80.jsx)("span", { className: "ml-1 text-[10px] text-[#4A5568]", children: t2("sim.rules.liveValue", String(base3[field.key])) })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime80.jsx)(
           "input",
           {
             type: "number",
@@ -90745,96 +90902,9 @@ ${end.comment}` : end.comment;
       ] }, field.key)) })
     ] });
   }
-  var OVERRIDE_TEMPLATE = `{
-  "wolf": {
-    "wanderSpeed": 6.0,
-    "animal": null
-  }
-}`;
-  function OverridesEditor({ npcTypes, onApply }) {
-    const t2 = useT();
-    const container = (0, import_react19.useRef)(null);
-    const viewRef = (0, import_react19.useRef)(null);
-    const [error2, setError] = (0, import_react19.useState)(null);
-    (0, import_react19.useEffect)(() => {
-      if (!container.current) return;
-      const view = new EditorView({
-        doc: "{}",
-        extensions: [
-          basicSetup,
-          EditorView.theme({
-            "&": { height: "100%", background: "#0E1726", color: "#CBD5E1" },
-            ".cm-content": { fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: "12px" },
-            ".cm-gutters": {
-              background: "#0E1726",
-              borderRight: "1px solid #2E3A4E",
-              color: "#4A5568"
-            },
-            ".cm-activeLine": { background: "#1A222C" },
-            ".cm-activeLineGutter": { background: "#1A222C" }
-          })
-        ],
-        parent: container.current
-      });
-      viewRef.current = view;
-      return () => {
-        view.destroy();
-        viewRef.current = null;
-      };
-    }, []);
-    const apply = () => {
-      var _a6, _b;
-      const text3 = (_b = (_a6 = viewRef.current) == null ? void 0 : _a6.state.doc.toString()) != null ? _b : "{}";
-      try {
-        const parsed = JSON.parse(text3);
-        const unknown2 = Object.keys(parsed).filter((k) => !npcTypes.includes(k));
-        if (unknown2.length > 0) {
-          setError(t2("sim.rules.unknownTypes", unknown2.join(", ")));
-          return;
-        }
-        setError(null);
-        onApply(parsed);
-      } catch (e) {
-        setError(t2("sim.rules.invalidJson", e.message));
-      }
-    };
-    const insertTemplate = () => {
-      const view = viewRef.current;
-      if (!view) return;
-      view.dispatch({
-        changes: { from: 0, to: view.state.doc.length, insert: OVERRIDE_TEMPLATE }
-      });
-    };
-    return /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "flex h-full flex-col", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime35.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: t2("sim.rules.overridesHint") }),
-        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
-          "button",
-          {
-            type: "button",
-            onClick: insertTemplate,
-            className: "ml-auto rounded bg-[#2E3A4E] px-2 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60",
-            children: t2("sim.rules.example")
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime35.jsx)(
-          "button",
-          {
-            type: "button",
-            onClick: apply,
-            className: "rounded bg-[#3C50E0] px-2.5 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80",
-            children: t2("sim.rules.apply")
-          }
-        )
-      ] }),
-      error2 && /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("p", { className: "mb-2 rounded border border-red-500/40 bg-red-500/10 px-2 py-1 text-[11px] text-red-300", children: error2 }),
-      /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("div", { ref: container, className: "flex-1 overflow-hidden rounded border border-[#2E3A4E]" }),
-      /* @__PURE__ */ (0, import_jsx_runtime35.jsx)("p", { className: "mt-1.5 text-[10px] text-[#8A99AF]", children: t2("sim.rules.availableTypes", npcTypes.join(", ") || "\u2014") })
-    ] });
-  }
 
   // admin/simulator/Timeline.tsx
-  var import_jsx_runtime36 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime81 = __toESM(require_jsx_runtime(), 1);
   var PRESETS = [
     { label: "\u23F8", tps: 0, titleKey: "sim.timeline.presetPause" },
     { label: "\xD71", tps: 20, titleKey: "sim.timeline.presetRealtime" },
@@ -90845,27 +90915,27 @@ ${end.comment}` : end.comment;
   ];
   function Timeline({ stats, disabled, onSpeed, onStep }) {
     const { locale, t: t2 } = useI18n();
-    return /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "mb-2 flex items-center justify-between", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("sim.timeline.title") }),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("span", { className: "text-[11px] text-[#8A99AF]", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime81.jsxs)("div", { className: "rounded-lg border border-[#2E3A4E] bg-[#1A222C] p-3", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime81.jsxs)("div", { className: "mb-2 flex items-center justify-between", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime81.jsx)("span", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("sim.timeline.title") }),
+        /* @__PURE__ */ (0, import_jsx_runtime81.jsxs)("span", { className: "text-[11px] text-[#8A99AF]", children: [
           t2("sim.timeline.tick"),
           " ",
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "text-white", children: stats.tick.toLocaleString(locale) }),
+          /* @__PURE__ */ (0, import_jsx_runtime81.jsx)("span", { className: "text-white", children: stats.tick.toLocaleString(locale) }),
           " \xB7",
           " ",
           t2("sim.timeline.day"),
           " ",
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "text-white", children: stats.gameDay.toFixed(2) }),
+          /* @__PURE__ */ (0, import_jsx_runtime81.jsx)("span", { className: "text-white", children: stats.gameDay.toFixed(2) }),
           " \xB7",
           " ",
-          /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: stats.paused ? "text-[#FACC15]" : "text-emerald-400", children: stats.paused ? t2("sim.timeline.paused") : t2("sim.timeline.realTps", stats.realTps.toFixed(0)) })
+          /* @__PURE__ */ (0, import_jsx_runtime81.jsx)("span", { className: stats.paused ? "text-[#FACC15]" : "text-emerald-400", children: stats.paused ? t2("sim.timeline.paused") : t2("sim.timeline.realTps", stats.realTps.toFixed(0)) })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("div", { className: "mb-2 flex flex-wrap gap-1.5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime81.jsxs)("div", { className: "mb-2 flex flex-wrap gap-1.5", children: [
         PRESETS.map((preset) => {
           var _a6;
-          return /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+          return /* @__PURE__ */ (0, import_jsx_runtime81.jsx)(
             "button",
             {
               type: "button",
@@ -90878,7 +90948,7 @@ ${end.comment}` : end.comment;
             preset.tps
           );
         }),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime81.jsx)(
           "button",
           {
             type: "button",
@@ -90888,7 +90958,7 @@ ${end.comment}` : end.comment;
             children: t2("sim.timeline.stepOne")
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime81.jsx)(
           "button",
           {
             type: "button",
@@ -90899,9 +90969,9 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime36.jsxs)("label", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "w-20 shrink-0", children: t2("sim.timeline.fineSpeed") }),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime81.jsxs)("label", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime81.jsx)("span", { className: "w-20 shrink-0", children: t2("sim.timeline.fineSpeed") }),
+        /* @__PURE__ */ (0, import_jsx_runtime81.jsx)(
           "input",
           {
             type: "range",
@@ -90914,13 +90984,22 @@ ${end.comment}` : end.comment;
             className: "flex-1 accent-[#3C50E0]"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime36.jsx)("span", { className: "w-24 shrink-0 text-right text-white", children: t2("sim.timeline.tps", stats.configuredTps) })
+        /* @__PURE__ */ (0, import_jsx_runtime81.jsx)("span", { className: "w-24 shrink-0 text-right text-white", children: t2("sim.timeline.tps", stats.configuredTps) })
       ] })
     ] });
   }
 
+  // admin/pages/worldSimulator/Row.tsx
+  var import_jsx_runtime82 = __toESM(require_jsx_runtime(), 1);
+  function Row2({ label, children }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime82.jsxs)("label", { className: "mb-1.5 flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime82.jsx)("span", { className: "flex-1", children: label }),
+      children
+    ] });
+  }
+
   // admin/simulator/useSimulation.ts
-  var import_react20 = __toESM(require_react(), 1);
+  var import_react37 = __toESM(require_react(), 1);
   var EVENT_PUBLISH_INTERVAL_MS = 500;
   var SNAPSHOT_INTERVAL_MS = 50;
   var DEFAULT_BUCKET_GAME_DAYS = 0.25;
@@ -90952,40 +91031,40 @@ ${end.comment}` : end.comment;
     return `${proto}//${window.location.host}/api/admin/ws/simulation${query2}`;
   }
   function useSimulation() {
-    const socketRef = (0, import_react20.useRef)(null);
-    const npcsRef = (0, import_react20.useRef)([]);
-    const playersRef = (0, import_react20.useRef)([]);
-    const statsRef = (0, import_react20.useRef)(EMPTY_STATS);
-    const eventsRef = (0, import_react20.useRef)([]);
-    const arenaRef = (0, import_react20.useRef)(null);
-    const configRef = (0, import_react20.useRef)(null);
-    const runningRef = (0, import_react20.useRef)(false);
-    const truncatedRef = (0, import_react20.useRef)(false);
-    const foodRef = (0, import_react20.useRef)([]);
-    const snapshotDirtyRef = (0, import_react20.useRef)(false);
-    const viewportRef = (0, import_react20.useRef)("");
-    const eventRevisionRef = (0, import_react20.useRef)(0);
-    const [snapshot, setSnapshot] = (0, import_react20.useState)(EMPTY_SNAPSHOT);
-    const [connected, setConnected] = (0, import_react20.useState)(false);
-    const [detail, setDetail] = (0, import_react20.useState)(null);
-    const [defaults3, setDefaults] = (0, import_react20.useState)(null);
-    const [error2, setError] = (0, import_react20.useState)(null);
-    const [events, setEvents] = (0, import_react20.useState)([]);
-    const [metrics, setMetrics] = (0, import_react20.useState)({
+    const socketRef = (0, import_react37.useRef)(null);
+    const npcsRef = (0, import_react37.useRef)([]);
+    const playersRef = (0, import_react37.useRef)([]);
+    const statsRef = (0, import_react37.useRef)(EMPTY_STATS);
+    const eventsRef = (0, import_react37.useRef)([]);
+    const arenaRef = (0, import_react37.useRef)(null);
+    const configRef = (0, import_react37.useRef)(null);
+    const runningRef = (0, import_react37.useRef)(false);
+    const truncatedRef = (0, import_react37.useRef)(false);
+    const foodRef = (0, import_react37.useRef)([]);
+    const snapshotDirtyRef = (0, import_react37.useRef)(false);
+    const viewportRef = (0, import_react37.useRef)("");
+    const eventRevisionRef = (0, import_react37.useRef)(0);
+    const [snapshot, setSnapshot] = (0, import_react37.useState)(EMPTY_SNAPSHOT);
+    const [connected, setConnected] = (0, import_react37.useState)(false);
+    const [detail, setDetail] = (0, import_react37.useState)(null);
+    const [defaults3, setDefaults] = (0, import_react37.useState)(null);
+    const [error2, setError] = (0, import_react37.useState)(null);
+    const [events, setEvents] = (0, import_react37.useState)([]);
+    const [metrics, setMetrics] = (0, import_react37.useState)({
       bucketGameDays: DEFAULT_BUCKET_GAME_DAYS,
       buckets: []
     });
-    const [simulations, setSimulations] = (0, import_react20.useState)([]);
-    const [simulationId, setSimulationId] = (0, import_react20.useState)(null);
+    const [simulations, setSimulations] = (0, import_react37.useState)([]);
+    const [simulationId, setSimulationId] = (0, import_react37.useState)(null);
     const t2 = useT();
-    const tRef = (0, import_react20.useRef)(t2);
-    (0, import_react20.useEffect)(() => {
+    const tRef = (0, import_react37.useRef)(t2);
+    (0, import_react37.useEffect)(() => {
       tRef.current = t2;
     }, [t2]);
-    const publish = (0, import_react20.useCallback)(() => {
+    const publish = (0, import_react37.useCallback)(() => {
       snapshotDirtyRef.current = true;
     }, []);
-    (0, import_react20.useEffect)(() => {
+    (0, import_react37.useEffect)(() => {
       const timer = setInterval(() => {
         if (!snapshotDirtyRef.current) return;
         snapshotDirtyRef.current = false;
@@ -91002,13 +91081,13 @@ ${end.comment}` : end.comment;
       }, SNAPSHOT_INTERVAL_MS);
       return () => clearInterval(timer);
     }, []);
-    const pushEvents = (0, import_react20.useCallback)((incoming) => {
+    const pushEvents = (0, import_react37.useCallback)((incoming) => {
       if (incoming.length === 0) return;
       const merged = eventsRef.current.concat(incoming);
       eventsRef.current = merged.length > EVENT_HISTORY ? merged.slice(merged.length - EVENT_HISTORY) : merged;
       eventRevisionRef.current++;
     }, []);
-    (0, import_react20.useEffect)(() => {
+    (0, import_react37.useEffect)(() => {
       let shownRevision = -1;
       const timer = setInterval(() => {
         if (eventRevisionRef.current === shownRevision) return;
@@ -91017,13 +91096,13 @@ ${end.comment}` : end.comment;
       }, EVENT_PUBLISH_INTERVAL_MS);
       return () => clearInterval(timer);
     }, []);
-    (0, import_react20.useEffect)(() => {
+    (0, import_react37.useEffect)(() => {
       const headers = {};
       const token = sessionStorage.getItem("micraft-auth-token");
       if (token) headers.Authorization = `Bearer ${token}`;
       fetch("/api/admin/simulation/defaults", { headers }).then((r2) => r2.ok ? r2.json() : null).then((d) => d && setDefaults(d)).catch(() => setError(tRef.current("sim.error.defaults")));
     }, []);
-    (0, import_react20.useEffect)(() => {
+    (0, import_react37.useEffect)(() => {
       const socket = new WebSocket(wsUrl());
       socketRef.current = socket;
       socket.onopen = () => setConnected(true);
@@ -91107,7 +91186,7 @@ ${end.comment}` : end.comment;
         socketRef.current = null;
       };
     }, [pushEvents, publish]);
-    const setViewport = (0, import_react20.useCallback)((viewport) => {
+    const setViewport = (0, import_react37.useCallback)((viewport) => {
       const key2 = viewport ? `${Math.round(viewport.minX)},${Math.round(viewport.minZ)},${Math.round(viewport.maxX)},${Math.round(viewport.maxZ)}` : "";
       if (key2 === viewportRef.current) return;
       viewportRef.current = key2;
@@ -91116,7 +91195,7 @@ ${end.comment}` : end.comment;
         socket.send(JSON.stringify({ t: "viewport", viewport }));
       }
     }, []);
-    const send = (0, import_react20.useCallback)((payload) => {
+    const send = (0, import_react37.useCallback)((payload) => {
       const socket = socketRef.current;
       if (!socket || socket.readyState !== WebSocket.OPEN) {
         setError(tRef.current("sim.error.notConnected"));
@@ -91124,7 +91203,7 @@ ${end.comment}` : end.comment;
       }
       socket.send(JSON.stringify(payload));
     }, []);
-    const actions = (0, import_react20.useMemo)(
+    const actions = (0, import_react37.useMemo)(
       () => ({
         init: (config3, name2) => send({ t: "init", config: config3, name: name2 != null ? name2 : "" }),
         // no id = the arena this socket watches, so the panels that only know about "the current one"
@@ -91146,7 +91225,7 @@ ${end.comment}` : end.comment;
       }),
       [send]
     );
-    return (0, import_react20.useMemo)(
+    return (0, import_react37.useMemo)(
       () => __spreadValues({
         connected,
         running: snapshot.running,
@@ -91171,489 +91250,105 @@ ${end.comment}` : end.comment;
     );
   }
 
-  // admin/pages/WorldSimulatorPage.tsx
-  var import_jsx_runtime37 = __toESM(require_jsx_runtime(), 1);
-  var TAB_LABEL_KEYS2 = {
-    charts: "sim.tab.charts",
-    log: "sim.tab.log",
-    npc: "sim.tab.npc",
-    rules: "sim.tab.rules",
-    manager: "sim.tab.manager"
-  };
-  var DEFAULT_ARENA = { halfSize: 100, groundY: 7, wallHeight: 4 };
-  var RUN_LENGTHS = [
-    { days: 30, labelKey: "sim.page.runDays30" },
-    { days: 60, labelKey: "sim.page.runDays60" },
-    { days: 120, labelKey: "sim.page.runDays120" },
-    { days: 0, labelKey: "sim.page.runForever" }
-  ];
-  function baseConfig(tuning) {
-    return __spreadProps(__spreadValues({}, DEFAULT_ARENA), {
-      ticksPerSecond: 200,
-      seed: 42,
-      zoneLevel: 5,
-      maxNpcs: 0,
-      populationCap: DEFAULT_POPULATION_CAP,
-      maxNpcsPerFrame: frameCapFor(DEFAULT_POPULATION_CAP),
-      vegetationDensity: 0.08,
-      gameDayDurationSeconds: 60,
-      maxGameDays: 0,
-      npcTuning: tuning,
-      npcDefinitionOverrides: {},
-      initialSpawns: [],
-      // an identifier the server echoes back, not display copy: it stays put whatever the UI locale is
-      players: [{ name: "observer", x: 0, z: 0 }],
-      autoSpawnEnabled: true
-    });
+  // admin/simulator/OverridesEditor.tsx
+  var import_react38 = __toESM(require_react(), 1);
+  var import_jsx_runtime83 = __toESM(require_jsx_runtime(), 1);
+  var OVERRIDE_TEMPLATE = `{
+  "wolf": {
+    "wanderSpeed": 6.0,
+    "animal": null
   }
-  function Row2({ label, children }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("label", { className: "mb-1.5 flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "flex-1", children: label }),
-      children
-    ] });
-  }
-  var DISABLED = " disabled:cursor-not-allowed disabled:opacity-40";
-  var numberInput = "w-24 rounded border border-[#2E3A4E] bg-[#0E1726] px-2 py-1 text-right text-[11px] text-white" + DISABLED;
-  var smallNumberInput = "w-16 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-0.5 text-right text-[11px] text-white" + DISABLED;
-  function WorldSimulatorPage() {
-    var _a6, _b, _c, _d, _e, _f;
+}`;
+  function OverridesEditor({ npcTypes, onApply }) {
     const t2 = useT();
-    const sim = useSimulation();
-    const [tab, setTab] = (0, import_react21.useState)("charts");
-    const [layers, setLayers] = (0, import_react21.useState)(() => loadLayers());
-    const [selectedId, setSelectedId] = (0, import_react21.useState)(null);
-    const [halfSize, setHalfSize] = (0, import_react21.useState)(DEFAULT_ARENA.halfSize);
-    const [seed, setSeed] = (0, import_react21.useState)(42);
-    const [dayDuration, setDayDuration] = (0, import_react21.useState)(60);
-    const [zoneLevel, setZoneLevel] = (0, import_react21.useState)(5);
-    const [autoSpawn, setAutoSpawn] = (0, import_react21.useState)(true);
-    const [populationCap, setPopulationCap] = (0, import_react21.useState)(DEFAULT_POPULATION_CAP);
-    const [vegetationDensity, setVegetationDensity] = (0, import_react21.useState)(0.08);
-    const [simulationName, setSimulationName] = (0, import_react21.useState)("");
-    const [spawns, setSpawns] = (0, import_react21.useState)([]);
-    const [tuning, setTuning] = (0, import_react21.useState)(null);
-    const [spawnType, setSpawnType] = (0, import_react21.useState)("");
-    const [spawnCount, setSpawnCount] = (0, import_react21.useState)(1);
-    const [liveSpawnType, setLiveSpawnType] = (0, import_react21.useState)("");
-    const [liveSpawnCount, setLiveSpawnCount] = (0, import_react21.useState)(1);
-    const [runDays, setRunDays] = (0, import_react21.useState)(RUN_LENGTHS[0].days);
-    const npcTypes = (_b = (_a6 = sim.defaults) == null ? void 0 : _a6.npcTypes) != null ? _b : [];
-    const locked = sim.simulationId !== null;
-    const [arenaFolded, setArenaFolded] = (0, import_react21.useState)(false);
-    const [spawnsFolded, setSpawnsFolded] = (0, import_react21.useState)(false);
-    (0, import_react21.useEffect)(() => {
-      setArenaFolded(locked);
-      setSpawnsFolded(locked);
-    }, [locked]);
-    (0, import_react21.useEffect)(() => {
-      if (sim.defaults && tuning == null) setTuning(sim.defaults.tuning);
-      if (sim.defaults && sim.defaults.npcTypes.length > 0) {
-        const first = sim.defaults.npcTypes[0];
-        if (spawnType === "") setSpawnType(first);
-        if (liveSpawnType === "") setLiveSpawnType(first);
-      }
-    }, [sim.defaults, tuning, spawnType, liveSpawnType]);
-    const spawnSummary = spawns.length === 0 ? t2("sim.page.spawnSummaryNone") : t2(
-      "sim.page.spawnSummary",
-      spawns.length,
-      spawns.reduce((sum, spawn) => sum + spawn.count, 0)
-    );
-    (0, import_react21.useEffect)(() => saveLayers(layers), [layers]);
-    (0, import_react21.useEffect)(() => {
-      if (sim.detail) setSelectedId(sim.detail.npc.id);
-    }, [sim.detail]);
-    const arena = (_c = sim.arena) != null ? _c : null;
-    const view = useArenaCamera((_d = arena == null ? void 0 : arena.halfSize) != null ? _d : DEFAULT_ARENA.halfSize);
-    const bounds = view.visibleBounds;
-    const { running: simRunning, setViewport } = sim;
-    (0, import_react21.useEffect)(() => {
-      if (!simRunning) return;
-      setViewport(bounds);
-    }, [simRunning, setViewport, bounds]);
-    const { inspect } = sim;
-    const selectNpc = (0, import_react21.useCallback)(
-      (npcId) => {
-        setSelectedId(npcId);
-        setTab("npc");
-        inspect(npcId);
-      },
-      [inspect]
-    );
-    const byType = (0, import_react21.useMemo)(() => {
-      const counts = /* @__PURE__ */ new Map();
-      sim.npcs.forEach((n) => {
-        var _a7;
-        return counts.set(n.type, ((_a7 = counts.get(n.type)) != null ? _a7 : 0) + 1);
-      });
-      return [...counts.entries()].sort((a, b) => b[1] - a[1]);
-    }, [sim.npcs]);
-    const start = () => {
-      if (!tuning) return;
-      sim.init(
-        __spreadProps(__spreadValues({}, baseConfig(tuning)), {
-          halfSize,
-          seed,
-          zoneLevel,
-          gameDayDurationSeconds: dayDuration,
-          maxGameDays: runDays,
-          npcTuning: __spreadProps(__spreadValues({}, tuning), { gameDayDurationSeconds: dayDuration }),
-          initialSpawns: spawns,
-          autoSpawnEnabled: autoSpawn,
-          populationCap,
-          maxNpcsPerFrame: frameCapFor(populationCap),
-          vegetationDensity
-        }),
-        simulationName
-      );
-    };
-    return /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "-m-6 flex h-[calc(100vh-4rem)] flex-col", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex shrink-0 items-center gap-2 border-b border-[#2E3A4E] bg-[#1A222C] px-4 py-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "inline-block h-2 w-2 rounded-full " + (sim.connected ? "bg-emerald-400" : "bg-red-400") }),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: t2(sim.connected ? "sim.page.connected" : "sim.page.disconnected") }),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-          "button",
-          {
-            type: "button",
-            disabled: !sim.running,
-            onClick: () => sim.reloadEntityDefs(),
-            className: "ml-3 rounded bg-[#3C50E0] px-3 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80 disabled:opacity-40",
-            children: t2("sim.page.reloadEntityDefs")
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-          "button",
-          {
-            type: "button",
-            onClick: start,
-            disabled: !sim.connected || !tuning,
-            className: "ml-3 rounded bg-[#3C50E0] px-3 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80 disabled:opacity-40",
-            children: t2("sim.page.start")
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-          "select",
-          {
-            value: runDays,
-            onChange: (e) => setRunDays(Number(e.target.value)),
-            title: t2("sim.page.runLengthTitle"),
-            "aria-label": t2("sim.page.runLengthTitle"),
-            className: "rounded border border-[#2E3A4E] bg-[#0E1726] px-2 py-1 text-[11px] text-white",
-            children: RUN_LENGTHS.map((option2) => /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("option", { value: option2.days, children: t2(option2.labelKey) }, option2.days))
-          }
-        ),
-        sim.error && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "ml-3 text-[11px] text-red-300", children: sim.error }),
-        sim.truncated && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "ml-3 rounded bg-[#FACC15]/15 px-2 py-0.5 text-[11px] text-[#FACC15]", children: t2("sim.page.truncated") }),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("span", { className: "ml-auto text-[11px] text-[#8A99AF]", children: [
-          t2("sim.page.shownNpcs", sim.npcs.length, sim.stats.npcCount),
-          sim.stats.populationCap > 0 ? t2("sim.page.populationCap", sim.stats.populationCap) : "",
-          " \xB7",
-          " ",
-          t2("sim.page.playersAndFood", sim.players.length, sim.stats.foodBlocks),
-          sim.stats.regrowingCells > 0 ? t2("sim.page.regrowing", sim.stats.regrowingCells) : ""
-        ] })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex min-h-0 flex-1", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "w-72 shrink-0 space-y-3 overflow-auto border-r border-[#2E3A4E] p-3", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-            SimulationList,
-            {
-              simulations: sim.simulations,
-              attachedId: sim.simulationId,
-              onAttach: sim.attach,
-              onDetach: sim.detach,
-              onRestart: sim.restart,
-              onClose: sim.stop,
-              onRefresh: sim.refreshSimulations
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)(
-            Card2,
-            {
-              title: t2("sim.page.arena"),
-              collapsed: arenaFolded,
-              onCollapsed: setArenaFolded,
-              summary: t2("sim.page.arenaSummary", halfSize * 2, halfSize * 2, seed, dayDuration),
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.nameOptional"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                  "input",
-                  {
-                    type: "text",
-                    value: simulationName,
-                    onChange: (e) => setSimulationName(e.target.value),
-                    placeholder: t2("sim.page.auto"),
-                    disabled: locked,
-                    className: "w-32 rounded border border-[#2E3A4E] bg-[#0E1726] px-2 py-1 text-[11px] text-white" + DISABLED
-                  }
-                ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.halfSize"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                  "input",
-                  {
-                    type: "number",
-                    step: 10,
-                    min: 10,
-                    value: halfSize,
-                    onChange: (e) => setHalfSize(Number(e.target.value)),
-                    disabled: locked,
-                    className: numberInput
-                  }
-                ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.seed"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                  "input",
-                  {
-                    type: "number",
-                    value: seed,
-                    onChange: (e) => setSeed(Number(e.target.value)),
-                    disabled: locked,
-                    className: numberInput
-                  }
-                ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.dayDuration"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                  "input",
-                  {
-                    type: "number",
-                    step: 5,
-                    min: 1,
-                    value: dayDuration,
-                    onChange: (e) => setDayDuration(Number(e.target.value)),
-                    disabled: locked,
-                    className: numberInput
-                  }
-                ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.zoneLevel"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                  "input",
-                  {
-                    type: "number",
-                    min: 1,
-                    value: zoneLevel,
-                    onChange: (e) => setZoneLevel(Number(e.target.value)),
-                    disabled: locked,
-                    className: numberInput
-                  }
-                ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.populationCapLabel"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                  "input",
-                  {
-                    type: "number",
-                    step: 100,
-                    min: 0,
-                    value: populationCap,
-                    onChange: (e) => setPopulationCap(Number(e.target.value)),
-                    disabled: locked,
-                    className: numberInput
-                  }
-                ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.vegetationDensity"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                  "input",
-                  {
-                    type: "number",
-                    step: 0.01,
-                    min: 0,
-                    max: 1,
-                    value: vegetationDensity,
-                    onChange: (e) => setVegetationDensity(Number(e.target.value)),
-                    disabled: locked,
-                    className: numberInput
-                  }
-                ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2("sim.page.autoSpawner"), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                  "input",
-                  {
-                    type: "checkbox",
-                    checked: autoSpawn,
-                    onChange: (e) => setAutoSpawn(e.target.checked),
-                    disabled: locked,
-                    className: "accent-[#3C50E0]" + DISABLED
-                  }
-                ) }),
-                /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("p", { className: "text-[10px] text-[#4A5568]", children: [
-                  t2("sim.page.capHint"),
-                  " ",
-                  t2(locked ? "sim.page.lockedHint" : "sim.page.unlockedHint")
-                ] })
-              ]
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)(
-            Card2,
-            {
-              title: t2("sim.page.initialPopulation"),
-              collapsed: spawnsFolded,
-              onCollapsed: setSpawnsFolded,
-              summary: spawnSummary,
-              children: [
-                spawns.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("p", { className: "mb-2 text-[11px] text-[#4A5568]", children: t2("sim.page.noSpawns") }),
-                spawns.map((spawn, index2) => /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "mb-1.5 flex items-center gap-1.5", children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "flex-1 text-[11px] text-white", children: spawn.type }),
-                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                    "input",
-                    {
-                      type: "number",
-                      min: 1,
-                      value: spawn.count,
-                      onChange: (e) => setSpawns((s) => s.map((v, i) => i === index2 ? __spreadProps(__spreadValues({}, v), { count: Number(e.target.value) }) : v)),
-                      disabled: locked,
-                      className: smallNumberInput
-                    }
-                  ),
-                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                    "button",
-                    {
-                      type: "button",
-                      disabled: locked,
-                      onClick: () => setSpawns((s) => s.filter((_, i) => i !== index2)),
-                      className: "rounded bg-[#2E3A4E] px-1.5 text-[11px] text-[#8A99AF] hover:text-red-300" + DISABLED,
-                      children: "\xD7"
-                    }
-                  )
-                ] }, `${spawn.type}-${index2}`)),
-                /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "mt-2 flex items-center gap-1.5", children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                    "select",
-                    {
-                      value: spawnType,
-                      onChange: (e) => setSpawnType(e.target.value),
-                      disabled: locked,
-                      className: "flex-1 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-1 text-[11px] text-white" + DISABLED,
-                      children: npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("option", { value: type, children: type }, type))
-                    }
-                  ),
-                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                    "input",
-                    {
-                      type: "number",
-                      min: 1,
-                      value: spawnCount,
-                      onChange: (e) => setSpawnCount(Number(e.target.value)),
-                      disabled: locked,
-                      className: smallNumberInput
-                    }
-                  ),
-                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                    "button",
-                    {
-                      type: "button",
-                      disabled: locked || !spawnType,
-                      onClick: () => setSpawns((s) => [...s, { type: spawnType, count: spawnCount, level: null }]),
-                      className: "rounded bg-[#2E3A4E] px-2 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60" + DISABLED,
-                      children: "+"
-                    }
-                  )
-                ] })
-              ]
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)(Card2, { title: t2("sim.page.instantSpawn"), children: [
-            /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex items-center gap-1.5", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                "select",
-                {
-                  value: liveSpawnType,
-                  onChange: (e) => setLiveSpawnType(e.target.value),
-                  className: "flex-1 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-1 text-[11px] text-white",
-                  children: npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("option", { value: type, children: type }, type))
-                }
-              ),
-              /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-                "input",
-                {
-                  type: "number",
-                  min: 1,
-                  value: liveSpawnCount,
-                  onChange: (e) => setLiveSpawnCount(Number(e.target.value)),
-                  className: "w-16 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-0.5 text-right text-[11px] text-white"
-                }
-              )
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-              "button",
-              {
-                type: "button",
-                disabled: !sim.running || !liveSpawnType,
-                onClick: () => sim.spawn(liveSpawnType, 0, 0, liveSpawnCount, null),
-                className: "mt-2 w-full rounded bg-[#2E3A4E] px-2 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40",
-                children: t2("sim.page.spawnNow")
-              }
-            )
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Card2, { title: t2("sim.page.layers"), children: LAYER_KEYS.map((key2) => /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Row2, { label: t2(LAYER_LABEL_KEYS[key2]), children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-            "input",
-            {
-              type: "checkbox",
-              checked: layers[key2],
-              onChange: (e) => setLayers((s) => __spreadProps(__spreadValues({}, s), { [key2]: e.target.checked })),
-              className: "accent-[#3C50E0]"
-            }
-          ) }, key2)) })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex min-w-0 flex-1 flex-col", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "relative min-h-0 flex-1", children: [
-            arena && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(ArenaControls, { onZoom: view.zoomBy, onFitAll: view.fitAll }),
-            arena ? /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-              ArenaCanvasRenderer,
-              {
-                arena,
-                food: sim.food,
-                npcs: sim.npcs,
-                players: sim.players,
-                layers,
-                selectedId,
-                view,
-                onSelect: selectNpc
-              }
-            ) : /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "flex h-full items-center justify-center text-[12px] text-[#4A5568]", children: t2("sim.page.noSimulation") })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex shrink-0 items-start gap-3 border-t border-[#2E3A4E] p-3", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "min-w-0 flex-1", children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(Timeline, { stats: sim.stats, disabled: !sim.running, onSpeed: sim.setSpeed, onStep: sim.step }) }),
-            /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(SimPlayerPad, { players: sim.players, onInput: sim.playerInput })
-          ] })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex w-[26rem] shrink-0 flex-col border-l border-[#2E3A4E]", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "flex shrink-0 gap-1 border-b border-[#2E3A4E] bg-[#1A222C] px-2 py-1.5", children: Object.keys(TAB_LABEL_KEYS2).map((key2) => /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-            "button",
-            {
-              type: "button",
-              onClick: () => setTab(key2),
-              className: "rounded px-2.5 py-1 text-[11px] font-medium transition-colors " + (tab === key2 ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white"),
-              children: t2(TAB_LABEL_KEYS2[key2])
+    const container = (0, import_react38.useRef)(null);
+    const viewRef = (0, import_react38.useRef)(null);
+    const [error2, setError] = (0, import_react38.useState)(null);
+    (0, import_react38.useEffect)(() => {
+      if (!container.current) return;
+      const view = new EditorView({
+        doc: "{}",
+        extensions: [
+          basicSetup,
+          EditorView.theme({
+            "&": { height: "100%", background: "#0E1726", color: "#CBD5E1" },
+            ".cm-content": { fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: "12px" },
+            ".cm-gutters": {
+              background: "#0E1726",
+              borderRight: "1px solid #2E3A4E",
+              color: "#4A5568"
             },
-            key2
-          )) }),
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "min-h-0 flex-1 overflow-hidden p-3", children: [
-            tab === "charts" && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(MetricsPanel, { buckets: sim.metrics, bucketGameDays: sim.bucketGameDays, config: sim.config }),
-            tab === "log" && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(EventLogPanel, { events: sim.events, onSelect: selectNpc }),
-            tab === "npc" && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(NpcDetailPanel, { sim }),
-            tab === "rules" && tuning && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
-              TuningEditor,
-              {
-                value: tuning,
-                base: (_f = (_e = sim.defaults) == null ? void 0 : _e.tuning) != null ? _f : null,
-                onChange: setTuning,
-                onApply: () => sim.applyTuning(tuning)
-              }
-            ),
-            tab === "manager" && /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex h-full flex-col gap-3", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { children: [
-                /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("p", { className: "mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("sim.page.population") }),
-                byType.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.page.populationEmpty") }),
-                byType.map(([type, count3]) => /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex items-center gap-2 py-0.5 text-[11px]", children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "inline-block h-2.5 w-2.5 rounded-full", style: { background: npcColor(type) } }),
-                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "flex-1 text-white", children: type }),
-                  /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "text-[#8A99AF]", children: count3 })
-                ] }, type))
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "min-h-0 flex-1", children: /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(OverridesEditor, { npcTypes, onApply: sim.applyOverrides }) })
-            ] })
-          ] })
-        ] })
-      ] })
+            ".cm-activeLine": { background: "#1A222C" },
+            ".cm-activeLineGutter": { background: "#1A222C" }
+          })
+        ],
+        parent: container.current
+      });
+      viewRef.current = view;
+      return () => {
+        view.destroy();
+        viewRef.current = null;
+      };
+    }, []);
+    const apply = () => {
+      var _a6, _b;
+      const text3 = (_b = (_a6 = viewRef.current) == null ? void 0 : _a6.state.doc.toString()) != null ? _b : "{}";
+      try {
+        const parsed = JSON.parse(text3);
+        const unknown2 = Object.keys(parsed).filter((k) => !npcTypes.includes(k));
+        if (unknown2.length > 0) {
+          setError(t2("sim.rules.unknownTypes", unknown2.join(", ")));
+          return;
+        }
+        setError(null);
+        onApply(parsed);
+      } catch (e) {
+        setError(t2("sim.rules.invalidJson", e.message));
+      }
+    };
+    const insertTemplate = () => {
+      const view = viewRef.current;
+      if (!view) return;
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: OVERRIDE_TEMPLATE }
+      });
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime83.jsxs)("div", { className: "flex h-full flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime83.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime83.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: t2("sim.rules.overridesHint") }),
+        /* @__PURE__ */ (0, import_jsx_runtime83.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: insertTemplate,
+            className: "ml-auto rounded bg-[#2E3A4E] px-2 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60",
+            children: t2("sim.rules.example")
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime83.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: apply,
+            className: "rounded bg-[#3C50E0] px-2.5 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80",
+            children: t2("sim.rules.apply")
+          }
+        )
+      ] }),
+      error2 && /* @__PURE__ */ (0, import_jsx_runtime83.jsx)("p", { className: "mb-2 rounded border border-red-500/40 bg-red-500/10 px-2 py-1 text-[11px] text-red-300", children: error2 }),
+      /* @__PURE__ */ (0, import_jsx_runtime83.jsx)("div", { ref: container, className: "flex-1 overflow-hidden rounded border border-[#2E3A4E]" }),
+      /* @__PURE__ */ (0, import_jsx_runtime83.jsx)("p", { className: "mt-1.5 text-[10px] text-[#8A99AF]", children: t2("sim.rules.availableTypes", npcTypes.join(", ") || "\u2014") })
     ] });
   }
+
+  // admin/pages/worldSimulator/NpcDetailPanel.tsx
+  var import_jsx_runtime84 = __toESM(require_jsx_runtime(), 1);
   function NpcDetailPanel({ sim }) {
     var _a6, _b, _c, _d, _e, _f, _g, _h;
     const t2 = useT();
     const detail = sim.detail;
     if (!detail) {
-      return /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.detail.hint") });
+      return /* @__PURE__ */ (0, import_jsx_runtime84.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.detail.hint") });
     }
     const npc = detail.npc;
     const rows = [
@@ -91690,11 +91385,11 @@ ${end.comment}` : end.comment;
       [t2("sim.detail.npcTarget"), (_h = (_g = npc.npcTargetId) == null ? void 0 : _g.slice(0, 8)) != null ? _h : "\u2014"],
       [t2("sim.detail.parents"), detail.parentIds.length ? detail.parentIds.map((p2) => p2.slice(0, 8)).join(", ") : "\u2014"]
     ];
-    return /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex h-full flex-col", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "inline-block h-3 w-3 rounded-full", style: { background: npcColor(npc.type) } }),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "flex-1 truncate text-[12px] font-semibold text-white", children: npc.name }),
-        /* @__PURE__ */ (0, import_jsx_runtime37.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime84.jsxs)("div", { className: "flex h-full flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime84.jsxs)("div", { className: "mb-2 flex items-center gap-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime84.jsx)("span", { className: "inline-block h-3 w-3 rounded-full", style: { background: npcColor(npc.type) } }),
+        /* @__PURE__ */ (0, import_jsx_runtime84.jsx)("span", { className: "flex-1 truncate text-[12px] font-semibold text-white", children: npc.name }),
+        /* @__PURE__ */ (0, import_jsx_runtime84.jsx)(
           "button",
           {
             type: "button",
@@ -91704,14 +91399,14 @@ ${end.comment}` : end.comment;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-2", children: [
-        rows.map(([label, value]) => /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "flex gap-2 border-b border-[#1A222C] py-1 text-[11px] last:border-0", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "w-40 shrink-0 text-[#8A99AF]", children: label }),
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("span", { className: "break-all text-white", children: value })
+      /* @__PURE__ */ (0, import_jsx_runtime84.jsxs)("div", { className: "flex-1 overflow-auto rounded border border-[#2E3A4E] bg-[#0E1726] p-2", children: [
+        rows.map(([label, value]) => /* @__PURE__ */ (0, import_jsx_runtime84.jsxs)("div", { className: "flex gap-2 border-b border-[#1A222C] py-1 text-[11px] last:border-0", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime84.jsx)("span", { className: "w-40 shrink-0 text-[#8A99AF]", children: label }),
+          /* @__PURE__ */ (0, import_jsx_runtime84.jsx)("span", { className: "break-all text-white", children: value })
         ] }, label)),
-        detail.baseStats && /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("div", { className: "mt-2 text-[11px]", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("p", { className: "mb-1 text-[#8A99AF]", children: t2("sim.detail.baseStats") }),
-          /* @__PURE__ */ (0, import_jsx_runtime37.jsx)("div", { className: "flex flex-wrap gap-2", children: Object.entries(detail.baseStats).map(([stat, value]) => /* @__PURE__ */ (0, import_jsx_runtime37.jsxs)("span", { className: "rounded bg-[#1A222C] px-1.5 py-0.5 text-white", children: [
+        detail.baseStats && /* @__PURE__ */ (0, import_jsx_runtime84.jsxs)("div", { className: "mt-2 text-[11px]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime84.jsx)("p", { className: "mb-1 text-[#8A99AF]", children: t2("sim.detail.baseStats") }),
+          /* @__PURE__ */ (0, import_jsx_runtime84.jsx)("div", { className: "flex flex-wrap gap-2", children: Object.entries(detail.baseStats).map(([stat, value]) => /* @__PURE__ */ (0, import_jsx_runtime84.jsxs)("span", { className: "rounded bg-[#1A222C] px-1.5 py-0.5 text-white", children: [
             stat,
             " ",
             value
@@ -91721,14 +91416,486 @@ ${end.comment}` : end.comment;
     ] });
   }
 
+  // admin/pages/worldSimulator/WorldSimulatorPage.tsx
+  var import_jsx_runtime85 = __toESM(require_jsx_runtime(), 1);
+  var TAB_LABEL_KEYS2 = {
+    charts: "sim.tab.charts",
+    log: "sim.tab.log",
+    npc: "sim.tab.npc",
+    rules: "sim.tab.rules",
+    manager: "sim.tab.manager"
+  };
+  var DEFAULT_ARENA = { halfSize: 100, groundY: 7, wallHeight: 4 };
+  var RUN_LENGTHS = [
+    { days: 30, labelKey: "sim.page.runDays30" },
+    { days: 60, labelKey: "sim.page.runDays60" },
+    { days: 120, labelKey: "sim.page.runDays120" },
+    { days: 0, labelKey: "sim.page.runForever" }
+  ];
+  function baseConfig(tuning) {
+    return __spreadProps(__spreadValues({}, DEFAULT_ARENA), {
+      ticksPerSecond: 200,
+      seed: 42,
+      zoneLevel: 5,
+      maxNpcs: 0,
+      populationCap: DEFAULT_POPULATION_CAP,
+      maxNpcsPerFrame: frameCapFor(DEFAULT_POPULATION_CAP),
+      vegetationDensity: 0.08,
+      gameDayDurationSeconds: 60,
+      maxGameDays: 0,
+      npcTuning: tuning,
+      npcDefinitionOverrides: {},
+      initialSpawns: [],
+      // an identifier the server echoes back, not display copy: it stays put whatever the UI locale is
+      players: [{ name: "observer", x: 0, z: 0 }],
+      autoSpawnEnabled: true
+    });
+  }
+  var DISABLED = " disabled:cursor-not-allowed disabled:opacity-40";
+  var numberInput = "w-24 rounded border border-[#2E3A4E] bg-[#0E1726] px-2 py-1 text-right text-[11px] text-white" + DISABLED;
+  var smallNumberInput = "w-16 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-0.5 text-right text-[11px] text-white" + DISABLED;
+  function WorldSimulatorPage() {
+    var _a6, _b, _c, _d, _e, _f;
+    const t2 = useT();
+    const sim = useSimulation();
+    const [tab, setTab] = (0, import_react39.useState)("charts");
+    const [layers, setLayers] = (0, import_react39.useState)(() => loadLayers());
+    const [selectedId, setSelectedId] = (0, import_react39.useState)(null);
+    const [halfSize, setHalfSize] = (0, import_react39.useState)(DEFAULT_ARENA.halfSize);
+    const [seed, setSeed] = (0, import_react39.useState)(42);
+    const [dayDuration, setDayDuration] = (0, import_react39.useState)(60);
+    const [zoneLevel, setZoneLevel] = (0, import_react39.useState)(5);
+    const [autoSpawn, setAutoSpawn] = (0, import_react39.useState)(true);
+    const [populationCap, setPopulationCap] = (0, import_react39.useState)(DEFAULT_POPULATION_CAP);
+    const [vegetationDensity, setVegetationDensity] = (0, import_react39.useState)(0.08);
+    const [simulationName, setSimulationName] = (0, import_react39.useState)("");
+    const [spawns, setSpawns] = (0, import_react39.useState)([]);
+    const [tuning, setTuning] = (0, import_react39.useState)(null);
+    const [spawnType, setSpawnType] = (0, import_react39.useState)("");
+    const [spawnCount, setSpawnCount] = (0, import_react39.useState)(1);
+    const [liveSpawnType, setLiveSpawnType] = (0, import_react39.useState)("");
+    const [liveSpawnCount, setLiveSpawnCount] = (0, import_react39.useState)(1);
+    const [runDays, setRunDays] = (0, import_react39.useState)(RUN_LENGTHS[0].days);
+    const npcTypes = (_b = (_a6 = sim.defaults) == null ? void 0 : _a6.npcTypes) != null ? _b : [];
+    const locked = sim.simulationId !== null;
+    const [arenaFolded, setArenaFolded] = (0, import_react39.useState)(false);
+    const [spawnsFolded, setSpawnsFolded] = (0, import_react39.useState)(false);
+    (0, import_react39.useEffect)(() => {
+      setArenaFolded(locked);
+      setSpawnsFolded(locked);
+    }, [locked]);
+    (0, import_react39.useEffect)(() => {
+      if (sim.defaults && tuning == null) setTuning(sim.defaults.tuning);
+      if (sim.defaults && sim.defaults.npcTypes.length > 0) {
+        const first = sim.defaults.npcTypes[0];
+        if (spawnType === "") setSpawnType(first);
+        if (liveSpawnType === "") setLiveSpawnType(first);
+      }
+    }, [sim.defaults, tuning, spawnType, liveSpawnType]);
+    const spawnSummary = spawns.length === 0 ? t2("sim.page.spawnSummaryNone") : t2(
+      "sim.page.spawnSummary",
+      spawns.length,
+      spawns.reduce((sum, spawn) => sum + spawn.count, 0)
+    );
+    (0, import_react39.useEffect)(() => saveLayers(layers), [layers]);
+    (0, import_react39.useEffect)(() => {
+      if (sim.detail) setSelectedId(sim.detail.npc.id);
+    }, [sim.detail]);
+    const arena = (_c = sim.arena) != null ? _c : null;
+    const view = useArenaCamera((_d = arena == null ? void 0 : arena.halfSize) != null ? _d : DEFAULT_ARENA.halfSize);
+    const bounds = view.visibleBounds;
+    const { running: simRunning, setViewport } = sim;
+    (0, import_react39.useEffect)(() => {
+      if (!simRunning) return;
+      setViewport(bounds);
+    }, [simRunning, setViewport, bounds]);
+    const { inspect } = sim;
+    const selectNpc = (0, import_react39.useCallback)(
+      (npcId) => {
+        setSelectedId(npcId);
+        setTab("npc");
+        inspect(npcId);
+      },
+      [inspect]
+    );
+    const byType = (0, import_react39.useMemo)(() => {
+      const counts = /* @__PURE__ */ new Map();
+      sim.npcs.forEach((n) => {
+        var _a7;
+        return counts.set(n.type, ((_a7 = counts.get(n.type)) != null ? _a7 : 0) + 1);
+      });
+      return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+    }, [sim.npcs]);
+    const start = () => {
+      if (!tuning) return;
+      sim.init(
+        __spreadProps(__spreadValues({}, baseConfig(tuning)), {
+          halfSize,
+          seed,
+          zoneLevel,
+          gameDayDurationSeconds: dayDuration,
+          maxGameDays: runDays,
+          npcTuning: __spreadProps(__spreadValues({}, tuning), { gameDayDurationSeconds: dayDuration }),
+          initialSpawns: spawns,
+          autoSpawnEnabled: autoSpawn,
+          populationCap,
+          maxNpcsPerFrame: frameCapFor(populationCap),
+          vegetationDensity
+        }),
+        simulationName
+      );
+    };
+    return /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "-m-6 flex h-[calc(100vh-4rem)] flex-col", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "flex shrink-0 items-center gap-2 border-b border-[#2E3A4E] bg-[#1A222C] px-4 py-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("span", { className: "inline-block h-2 w-2 rounded-full " + (sim.connected ? "bg-emerald-400" : "bg-red-400") }),
+        /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("span", { className: "text-[11px] text-[#8A99AF]", children: t2(sim.connected ? "sim.page.connected" : "sim.page.disconnected") }),
+        /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+          "button",
+          {
+            type: "button",
+            disabled: !sim.running,
+            onClick: () => sim.reloadEntityDefs(),
+            className: "ml-3 rounded bg-[#3C50E0] px-3 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80 disabled:opacity-40",
+            children: t2("sim.page.reloadEntityDefs")
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+          "button",
+          {
+            type: "button",
+            onClick: start,
+            disabled: !sim.connected || !tuning,
+            className: "ml-3 rounded bg-[#3C50E0] px-3 py-1 text-[11px] font-medium text-white hover:bg-[#3C50E0]/80 disabled:opacity-40",
+            children: t2("sim.page.start")
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+          "select",
+          {
+            value: runDays,
+            onChange: (e) => setRunDays(Number(e.target.value)),
+            title: t2("sim.page.runLengthTitle"),
+            "aria-label": t2("sim.page.runLengthTitle"),
+            className: "rounded border border-[#2E3A4E] bg-[#0E1726] px-2 py-1 text-[11px] text-white",
+            children: RUN_LENGTHS.map((option2) => /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("option", { value: option2.days, children: t2(option2.labelKey) }, option2.days))
+          }
+        ),
+        sim.error && /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("span", { className: "ml-3 text-[11px] text-red-300", children: sim.error }),
+        sim.truncated && /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("span", { className: "ml-3 rounded bg-[#FACC15]/15 px-2 py-0.5 text-[11px] text-[#FACC15]", children: t2("sim.page.truncated") }),
+        /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("span", { className: "ml-auto text-[11px] text-[#8A99AF]", children: [
+          t2("sim.page.shownNpcs", sim.npcs.length, sim.stats.npcCount),
+          sim.stats.populationCap > 0 ? t2("sim.page.populationCap", sim.stats.populationCap) : "",
+          " \xB7",
+          " ",
+          t2("sim.page.playersAndFood", sim.players.length, sim.stats.foodBlocks),
+          sim.stats.regrowingCells > 0 ? t2("sim.page.regrowing", sim.stats.regrowingCells) : ""
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "flex min-h-0 flex-1", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "w-72 shrink-0 space-y-3 overflow-auto border-r border-[#2E3A4E] p-3", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+            SimulationList,
+            {
+              simulations: sim.simulations,
+              attachedId: sim.simulationId,
+              onAttach: sim.attach,
+              onDetach: sim.detach,
+              onRestart: sim.restart,
+              onClose: sim.stop,
+              onRefresh: sim.refreshSimulations
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)(
+            Card2,
+            {
+              title: t2("sim.page.arena"),
+              collapsed: arenaFolded,
+              onCollapsed: setArenaFolded,
+              summary: t2("sim.page.arenaSummary", halfSize * 2, halfSize * 2, seed, dayDuration),
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(Row2, { label: t2("sim.page.nameOptional"), children: /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                  "input",
+                  {
+                    type: "text",
+                    value: simulationName,
+                    onChange: (e) => setSimulationName(e.target.value),
+                    placeholder: t2("sim.page.auto"),
+                    disabled: locked,
+                    className: "w-32 rounded border border-[#2E3A4E] bg-[#0E1726] px-2 py-1 text-[11px] text-white" + DISABLED
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(Row2, { label: t2("sim.page.halfSize"), children: /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    step: 10,
+                    min: 10,
+                    value: halfSize,
+                    onChange: (e) => setHalfSize(Number(e.target.value)),
+                    disabled: locked,
+                    className: numberInput
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(Row2, { label: t2("sim.page.seed"), children: /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    value: seed,
+                    onChange: (e) => setSeed(Number(e.target.value)),
+                    disabled: locked,
+                    className: numberInput
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(Row2, { label: t2("sim.page.dayDuration"), children: /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    step: 5,
+                    min: 1,
+                    value: dayDuration,
+                    onChange: (e) => setDayDuration(Number(e.target.value)),
+                    disabled: locked,
+                    className: numberInput
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(Row2, { label: t2("sim.page.zoneLevel"), children: /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    min: 1,
+                    value: zoneLevel,
+                    onChange: (e) => setZoneLevel(Number(e.target.value)),
+                    disabled: locked,
+                    className: numberInput
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(Row2, { label: t2("sim.page.populationCapLabel"), children: /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    step: 100,
+                    min: 0,
+                    value: populationCap,
+                    onChange: (e) => setPopulationCap(Number(e.target.value)),
+                    disabled: locked,
+                    className: numberInput
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(Row2, { label: t2("sim.page.vegetationDensity"), children: /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                  "input",
+                  {
+                    type: "number",
+                    step: 0.01,
+                    min: 0,
+                    max: 1,
+                    value: vegetationDensity,
+                    onChange: (e) => setVegetationDensity(Number(e.target.value)),
+                    disabled: locked,
+                    className: numberInput
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(Row2, { label: t2("sim.page.autoSpawner"), children: /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                  "input",
+                  {
+                    type: "checkbox",
+                    checked: autoSpawn,
+                    onChange: (e) => setAutoSpawn(e.target.checked),
+                    disabled: locked,
+                    className: "accent-[#3C50E0]" + DISABLED
+                  }
+                ) }),
+                /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("p", { className: "text-[10px] text-[#4A5568]", children: [
+                  t2("sim.page.capHint"),
+                  " ",
+                  t2(locked ? "sim.page.lockedHint" : "sim.page.unlockedHint")
+                ] })
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)(
+            Card2,
+            {
+              title: t2("sim.page.initialPopulation"),
+              collapsed: spawnsFolded,
+              onCollapsed: setSpawnsFolded,
+              summary: spawnSummary,
+              children: [
+                spawns.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("p", { className: "mb-2 text-[11px] text-[#4A5568]", children: t2("sim.page.noSpawns") }),
+                spawns.map((spawn, index2) => /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "mb-1.5 flex items-center gap-1.5", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("span", { className: "flex-1 text-[11px] text-white", children: spawn.type }),
+                  /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                    "input",
+                    {
+                      type: "number",
+                      min: 1,
+                      value: spawn.count,
+                      onChange: (e) => setSpawns((s) => s.map((v, i) => i === index2 ? __spreadProps(__spreadValues({}, v), { count: Number(e.target.value) }) : v)),
+                      disabled: locked,
+                      className: smallNumberInput
+                    }
+                  ),
+                  /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                    "button",
+                    {
+                      type: "button",
+                      disabled: locked,
+                      onClick: () => setSpawns((s) => s.filter((_, i) => i !== index2)),
+                      className: "rounded bg-[#2E3A4E] px-1.5 text-[11px] text-[#8A99AF] hover:text-red-300" + DISABLED,
+                      children: "\xD7"
+                    }
+                  )
+                ] }, `${spawn.type}-${index2}`)),
+                /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "mt-2 flex items-center gap-1.5", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                    "select",
+                    {
+                      value: spawnType,
+                      onChange: (e) => setSpawnType(e.target.value),
+                      disabled: locked,
+                      className: "flex-1 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-1 text-[11px] text-white" + DISABLED,
+                      children: npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("option", { value: type, children: type }, type))
+                    }
+                  ),
+                  /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                    "input",
+                    {
+                      type: "number",
+                      min: 1,
+                      value: spawnCount,
+                      onChange: (e) => setSpawnCount(Number(e.target.value)),
+                      disabled: locked,
+                      className: smallNumberInput
+                    }
+                  ),
+                  /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                    "button",
+                    {
+                      type: "button",
+                      disabled: locked || !spawnType,
+                      onClick: () => setSpawns((s) => [...s, { type: spawnType, count: spawnCount, level: null }]),
+                      className: "rounded bg-[#2E3A4E] px-2 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60" + DISABLED,
+                      children: "+"
+                    }
+                  )
+                ] })
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)(Card2, { title: t2("sim.page.instantSpawn"), children: [
+            /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "flex items-center gap-1.5", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                "select",
+                {
+                  value: liveSpawnType,
+                  onChange: (e) => setLiveSpawnType(e.target.value),
+                  className: "flex-1 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-1 text-[11px] text-white",
+                  children: npcTypes.map((type) => /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("option", { value: type, children: type }, type))
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+                "input",
+                {
+                  type: "number",
+                  min: 1,
+                  value: liveSpawnCount,
+                  onChange: (e) => setLiveSpawnCount(Number(e.target.value)),
+                  className: "w-16 rounded border border-[#2E3A4E] bg-[#0E1726] px-1.5 py-0.5 text-right text-[11px] text-white"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+              "button",
+              {
+                type: "button",
+                disabled: !sim.running || !liveSpawnType,
+                onClick: () => sim.spawn(liveSpawnType, 0, 0, liveSpawnCount, null),
+                className: "mt-2 w-full rounded bg-[#2E3A4E] px-2 py-1 text-[11px] text-[#C7D2FE] hover:bg-[#3C50E0]/60 disabled:opacity-40",
+                children: t2("sim.page.spawnNow")
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(Card2, { title: t2("sim.page.layers"), children: LAYER_KEYS.map((key2) => /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(Row2, { label: t2(LAYER_LABEL_KEYS[key2]), children: /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+            "input",
+            {
+              type: "checkbox",
+              checked: layers[key2],
+              onChange: (e) => setLayers((s) => __spreadProps(__spreadValues({}, s), { [key2]: e.target.checked })),
+              className: "accent-[#3C50E0]"
+            }
+          ) }, key2)) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "flex min-w-0 flex-1 flex-col", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "relative min-h-0 flex-1", children: [
+            arena && /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(ArenaControls, { onZoom: view.zoomBy, onFitAll: view.fitAll }),
+            arena ? /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+              ArenaCanvasRenderer,
+              {
+                arena,
+                food: sim.food,
+                npcs: sim.npcs,
+                players: sim.players,
+                layers,
+                selectedId,
+                view,
+                onSelect: selectNpc
+              }
+            ) : /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("div", { className: "flex h-full items-center justify-center text-[12px] text-[#4A5568]", children: t2("sim.page.noSimulation") })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "flex shrink-0 items-start gap-3 border-t border-[#2E3A4E] p-3", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("div", { className: "min-w-0 flex-1", children: /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(Timeline, { stats: sim.stats, disabled: !sim.running, onSpeed: sim.setSpeed, onStep: sim.step }) }),
+            /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(SimPlayerPad, { players: sim.players, onInput: sim.playerInput })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "flex w-[26rem] shrink-0 flex-col border-l border-[#2E3A4E]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("div", { className: "flex shrink-0 gap-1 border-b border-[#2E3A4E] bg-[#1A222C] px-2 py-1.5", children: Object.keys(TAB_LABEL_KEYS2).map((key2) => /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+            "button",
+            {
+              type: "button",
+              onClick: () => setTab(key2),
+              className: "rounded px-2.5 py-1 text-[11px] font-medium transition-colors " + (tab === key2 ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white"),
+              children: t2(TAB_LABEL_KEYS2[key2])
+            },
+            key2
+          )) }),
+          /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "min-h-0 flex-1 overflow-hidden p-3", children: [
+            tab === "charts" && /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(MetricsPanel, { buckets: sim.metrics, bucketGameDays: sim.bucketGameDays, config: sim.config }),
+            tab === "log" && /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(EventLogPanel, { events: sim.events, onSelect: selectNpc }),
+            tab === "npc" && /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(NpcDetailPanel, { sim }),
+            tab === "rules" && tuning && /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(
+              TuningEditor,
+              {
+                value: tuning,
+                base: (_f = (_e = sim.defaults) == null ? void 0 : _e.tuning) != null ? _f : null,
+                onChange: setTuning,
+                onApply: () => sim.applyTuning(tuning)
+              }
+            ),
+            tab === "manager" && /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "flex h-full flex-col gap-3", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("p", { className: "mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: t2("sim.page.population") }),
+                byType.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("p", { className: "text-[11px] text-[#4A5568]", children: t2("sim.page.populationEmpty") }),
+                byType.map(([type, count3]) => /* @__PURE__ */ (0, import_jsx_runtime85.jsxs)("div", { className: "flex items-center gap-2 py-0.5 text-[11px]", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("span", { className: "inline-block h-2.5 w-2.5 rounded-full", style: { background: npcColor(type) } }),
+                  /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("span", { className: "flex-1 text-white", children: type }),
+                  /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("span", { className: "text-[#8A99AF]", children: count3 })
+                ] }, type))
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime85.jsx)("div", { className: "min-h-0 flex-1", children: /* @__PURE__ */ (0, import_jsx_runtime85.jsx)(OverridesEditor, { npcTypes, onApply: sim.applyOverrides }) })
+            ] })
+          ] })
+        ] })
+      ] })
+    ] });
+  }
+
   // admin/pages/instance/InstancesPage.tsx
-  var import_react26 = __toESM(require_react(), 1);
+  var import_react45 = __toESM(require_react(), 1);
 
   // admin/pages/instance/InstanceEditorViewport.tsx
-  var import_react24 = __toESM(require_react(), 1);
+  var import_react42 = __toESM(require_react(), 1);
 
   // game/shared/BlockPreview.tsx
-  var import_react22 = __toESM(require_react(), 1);
+  var import_react40 = __toESM(require_react(), 1);
 
   // game/blocks/blockDefs.ts
   var _plainColors = [];
@@ -91867,13 +92034,13 @@ ${end.comment}` : end.comment;
   }
 
   // game/shared/BlockPreview.tsx
-  var import_jsx_runtime38 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime86 = __toESM(require_jsx_runtime(), 1);
   function useBlockDefsReady() {
-    const [ready, setReady] = (0, import_react22.useState)(() => {
+    const [ready, setReady] = (0, import_react40.useState)(() => {
       var _a6, _b;
       return !!((_b = (_a6 = window.mc) == null ? void 0 : _a6.isBlockDefsReady) == null ? void 0 : _b.call(_a6));
     });
-    (0, import_react22.useEffect)(() => {
+    (0, import_react40.useEffect)(() => {
       if (ready) return;
       const iv = setInterval(() => {
         var _a6, _b;
@@ -91907,7 +92074,7 @@ ${end.comment}` : end.comment;
       transform,
       filter: `brightness(${brightness})`
     });
-    return /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime86.jsx)(
       "div",
       {
         style: {
@@ -91919,7 +92086,7 @@ ${end.comment}` : end.comment;
           justifyContent: "center",
           flexShrink: 0
         },
-        children: /* @__PURE__ */ (0, import_jsx_runtime38.jsxs)(
+        children: /* @__PURE__ */ (0, import_jsx_runtime86.jsxs)(
           "div",
           {
             style: {
@@ -91930,9 +92097,9 @@ ${end.comment}` : end.comment;
               transform: "rotateX(-25deg) rotateY(45deg)"
             },
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { style: face(1.05, `rotateX(90deg) translateZ(${H}px)`, topUrl) }),
-              /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { style: face(0.78, `translateZ(${H}px)`, frontUrl) }),
-              /* @__PURE__ */ (0, import_jsx_runtime38.jsx)("div", { style: face(0.62, `rotateY(90deg) translateZ(${H}px)`, rightUrl) })
+              /* @__PURE__ */ (0, import_jsx_runtime86.jsx)("div", { style: face(1.05, `rotateX(90deg) translateZ(${H}px)`, topUrl) }),
+              /* @__PURE__ */ (0, import_jsx_runtime86.jsx)("div", { style: face(0.78, `translateZ(${H}px)`, frontUrl) }),
+              /* @__PURE__ */ (0, import_jsx_runtime86.jsx)("div", { style: face(0.62, `rotateY(90deg) translateZ(${H}px)`, rightUrl) })
             ]
           }
         )
@@ -91945,8 +92112,8 @@ ${end.comment}` : end.comment;
     animate = true,
     colorHex
   }) {
-    const canvasRef = (0, import_react22.useRef)(null);
-    (0, import_react22.useEffect)(() => {
+    const canvasRef = (0, import_react40.useRef)(null);
+    (0, import_react40.useEffect)(() => {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const B = window.BABYLON;
@@ -91971,7 +92138,7 @@ ${end.comment}` : end.comment;
       }
       return () => engine.dispose();
     }, [ordinal, animate, colorHex]);
-    return /* @__PURE__ */ (0, import_jsx_runtime38.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime86.jsx)(
       "canvas",
       {
         ref: canvasRef,
@@ -91983,7 +92150,7 @@ ${end.comment}` : end.comment;
   }
 
   // admin/hooks/useInstanceShortcutBar.ts
-  var import_react23 = __toESM(require_react(), 1);
+  var import_react41 = __toESM(require_react(), 1);
   var SLOTS_PER_PAGE = 10;
   var DIGIT_CODES = [
     "Digit1",
@@ -92004,12 +92171,12 @@ ${end.comment}` : end.comment;
     onSelectBreak,
     onSelectBlock
   }) {
-    const [pages, setPages] = (0, import_react23.useState)([emptyPage()]);
-    const [currentPage, setCurrentPage] = (0, import_react23.useState)(0);
-    const [selectedSlot, setSelectedSlot] = (0, import_react23.useState)(0);
-    const [dragOver, setDragOver] = (0, import_react23.useState)(null);
-    const pagesRef = (0, import_react23.useRef)(pages);
-    (0, import_react23.useLayoutEffect)(() => {
+    const [pages, setPages] = (0, import_react41.useState)([emptyPage()]);
+    const [currentPage, setCurrentPage] = (0, import_react41.useState)(0);
+    const [selectedSlot, setSelectedSlot] = (0, import_react41.useState)(0);
+    const [dragOver, setDragOver] = (0, import_react41.useState)(null);
+    const pagesRef = (0, import_react41.useRef)(pages);
+    (0, import_react41.useLayoutEffect)(() => {
       pagesRef.current = pages;
     });
     function selectSlot(idx) {
@@ -92029,7 +92196,7 @@ ${end.comment}` : end.comment;
       });
       setCurrentPage(page);
     }
-    (0, import_react23.useEffect)(() => {
+    (0, import_react41.useEffect)(() => {
       function onKeyDown(e) {
         const target = e.target;
         if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
@@ -92448,7 +92615,7 @@ void main() {
   }
 
   // admin/pages/instance/InstanceEditorViewport.tsx
-  var import_jsx_runtime39 = __toESM(require_jsx_runtime(), 1);
+  var import_jsx_runtime87 = __toESM(require_jsx_runtime(), 1);
   var CHUNK_SIZE = 16;
   var MAX_VIEW_RADIUS_CHUNKS = 8;
   var VIEW_RADIUS_UNLOAD_MARGIN = 1;
@@ -92457,26 +92624,26 @@ void main() {
     return `#${[r2, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
   }
   function InstanceEditorViewport({ zone }) {
-    const canvasRef = (0, import_react24.useRef)(null);
-    const paletteRef = (0, import_react24.useRef)(null);
-    const [hoveredBlockName, setHoveredBlockName] = (0, import_react24.useState)(null);
-    const [tooltipAbove, setTooltipAbove] = (0, import_react24.useState)(false);
-    const [blockDefs, setBlockDefs] = (0, import_react24.useState)([]);
-    const [ordinalByName, setOrdinalByName] = (0, import_react24.useState)(/* @__PURE__ */ new Map());
-    const [selectedType, setSelectedType] = (0, import_react24.useState)(null);
-    const [mode, setMode] = (0, import_react24.useState)("place");
-    const [loadError, setLoadError] = (0, import_react24.useState)(null);
-    const [search, setSearch] = (0, import_react24.useState)("");
-    const modeRef = (0, import_react24.useRef)(mode);
-    const selectedTypeRef = (0, import_react24.useRef)(selectedType);
-    const ordinalByNameRef = (0, import_react24.useRef)(ordinalByName);
-    (0, import_react24.useEffect)(() => {
+    const canvasRef = (0, import_react42.useRef)(null);
+    const paletteRef = (0, import_react42.useRef)(null);
+    const [hoveredBlockName, setHoveredBlockName] = (0, import_react42.useState)(null);
+    const [tooltipAbove, setTooltipAbove] = (0, import_react42.useState)(false);
+    const [blockDefs, setBlockDefs] = (0, import_react42.useState)([]);
+    const [ordinalByName, setOrdinalByName] = (0, import_react42.useState)(/* @__PURE__ */ new Map());
+    const [selectedType, setSelectedType] = (0, import_react42.useState)(null);
+    const [mode, setMode] = (0, import_react42.useState)("place");
+    const [loadError, setLoadError] = (0, import_react42.useState)(null);
+    const [search, setSearch] = (0, import_react42.useState)("");
+    const modeRef = (0, import_react42.useRef)(mode);
+    const selectedTypeRef = (0, import_react42.useRef)(selectedType);
+    const ordinalByNameRef = (0, import_react42.useRef)(ordinalByName);
+    (0, import_react42.useEffect)(() => {
       modeRef.current = mode;
     }, [mode]);
-    (0, import_react24.useEffect)(() => {
+    (0, import_react42.useEffect)(() => {
       selectedTypeRef.current = selectedType;
     }, [selectedType]);
-    (0, import_react24.useEffect)(() => {
+    (0, import_react42.useEffect)(() => {
       ordinalByNameRef.current = ordinalByName;
     }, [ordinalByName]);
     const blockDefsReady = useBlockDefsReady();
@@ -92487,8 +92654,8 @@ void main() {
         setSelectedType(blockName);
       }
     });
-    const [modKeys, setModKeys] = (0, import_react24.useState)({ shift: false, meta: false, alt: false, ctrl: false });
-    (0, import_react24.useEffect)(() => {
+    const [modKeys, setModKeys] = (0, import_react42.useState)({ shift: false, meta: false, alt: false, ctrl: false });
+    (0, import_react42.useEffect)(() => {
       const update = (e) => setModKeys({ shift: e.shiftKey, meta: e.metaKey, alt: e.altKey, ctrl: e.ctrlKey });
       const reset = () => setModKeys({ shift: false, meta: false, alt: false, ctrl: false });
       window.addEventListener("keydown", update);
@@ -92501,7 +92668,7 @@ void main() {
       };
     }, []);
     const activeDragMode = modKeys.meta ? "rotate" : modKeys.alt ? "pan" : modKeys.ctrl ? "zoom" : "place";
-    (0, import_react24.useEffect)(() => {
+    (0, import_react42.useEffect)(() => {
       api.blocks.list().then((defs) => {
         var _a6, _b;
         const withoutAir = defs.filter((b) => b.name !== "AIR");
@@ -92514,7 +92681,7 @@ void main() {
       var _a6;
       return (_a6 = ordinalByName.get(name2)) != null ? _a6 : null;
     };
-    (0, import_react24.useEffect)(() => {
+    (0, import_react42.useEffect)(() => {
       setLoadError(null);
       if (zone.chunks.length === 0) {
         setLoadError("Zone has no chunks.");
@@ -92884,38 +93051,38 @@ void main() {
         engine.dispose();
       };
     }, [zone.id, blockDefsReady]);
-    return /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "flex-1 flex overflow-hidden", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "flex-[4] relative", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "absolute top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none z-10", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime87.jsxs)("div", { className: "flex-1 flex overflow-hidden", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime87.jsxs)("div", { className: "flex-[4] relative", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("div", { className: "absolute top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none z-10", children: [
           { key: "place", label: modKeys.shift || mode === "break" ? "Break" : "Place", hint: "\u21E7" },
           { key: "zoom", label: "Zoom", hint: "\u2303" },
           { key: "pan", label: "Pan", hint: "\u2325" },
           { key: "rotate", label: "Rotate", hint: "\u2318" }
-        ].map((m) => /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(
+        ].map((m) => /* @__PURE__ */ (0, import_jsx_runtime87.jsxs)(
           "div",
           {
             className: `px-2 py-1 rounded text-[10px] font-medium transition-colors ${activeDragMode === m.key ? "bg-[#3C50E0] text-white" : "bg-black/50 text-[#8A99AF]"}`,
             children: [
-              m.hint && /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "mr-1 font-mono", children: m.hint }),
+              m.hint && /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("span", { className: "mr-1 font-mono", children: m.hint }),
               m.label
             ]
           },
           m.key
         )) }),
-        loadError ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "w-full h-full flex items-center justify-center text-red-400 text-sm p-6 text-center", children: loadError }) : /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("canvas", { ref: canvasRef, className: "w-full h-full block" })
+        loadError ? /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("div", { className: "w-full h-full flex items-center justify-center text-red-400 text-sm p-6 text-center", children: loadError }) : /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("canvas", { ref: canvasRef, className: "w-full h-full block" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("aside", { className: "flex-[2] shrink-0 border-l border-[#2E3A4E] overflow-y-auto flex flex-col", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "shrink-0 border-b border-[#2E3A4E] flex flex-col items-center justify-center gap-1 py-3", children: [
-          selectedType && blockDefsReady && getOrdinal(selectedType) !== null ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Block3DPreview, { ordinal: getOrdinal(selectedType), size: 96 }) : /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "h-24 w-24 flex items-center justify-center text-[#8A99AF] text-xs", children: selectedType ? "Loading\u2026" : "No block selected" }),
-          selectedType && /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "text-white text-xs font-medium", children: selectedType.replace(/_/g, " ") })
+      /* @__PURE__ */ (0, import_jsx_runtime87.jsxs)("aside", { className: "flex-[2] shrink-0 border-l border-[#2E3A4E] overflow-y-auto flex flex-col", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime87.jsxs)("div", { className: "shrink-0 border-b border-[#2E3A4E] flex flex-col items-center justify-center gap-1 py-3", children: [
+          selectedType && blockDefsReady && getOrdinal(selectedType) !== null ? /* @__PURE__ */ (0, import_jsx_runtime87.jsx)(Block3DPreview, { ordinal: getOrdinal(selectedType), size: 96 }) : /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("div", { className: "h-24 w-24 flex items-center justify-center text-[#8A99AF] text-xs", children: selectedType ? "Loading\u2026" : "No block selected" }),
+          selectedType && /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("span", { className: "text-white text-xs font-medium", children: selectedType.replace(/_/g, " ") })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "shrink-0 border-b border-[#2E3A4E] p-2", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "flex flex-wrap gap-1 justify-center", children: shortcutBar.slots.map((slotBlock, idx) => {
+        /* @__PURE__ */ (0, import_jsx_runtime87.jsxs)("div", { className: "shrink-0 border-b border-[#2E3A4E] p-2", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("div", { className: "flex flex-wrap gap-1 justify-center", children: shortcutBar.slots.map((slotBlock, idx) => {
             const isBreakSlot = idx === 0;
             const isSelected = shortcutBar.selectedSlot === idx;
             const isDropTarget = shortcutBar.dragOver === idx;
             const ordinal = !isBreakSlot && slotBlock ? getOrdinal(slotBlock) : null;
-            return /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(
+            return /* @__PURE__ */ (0, import_jsx_runtime87.jsxs)(
               "div",
               {
                 onClick: () => shortcutBar.selectSlot(idx),
@@ -92926,14 +93093,14 @@ void main() {
                 title: isBreakSlot ? "Break" : slotBlock != null ? slotBlock : void 0,
                 className: `relative w-9 h-9 shrink-0 flex items-center justify-center rounded border-2 cursor-pointer transition-colors ${isDropTarget ? "bg-white/20" : "bg-black/30"} ${isSelected ? "border-[#3C50E0]" : "border-transparent hover:border-white/20"}`,
                 children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "absolute top-0 left-0.5 text-[#8A99AF] font-mono text-[7px]", children: idx === 9 ? "0" : String(idx + 1) }),
-                  isBreakSlot ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "text-sm", children: "\u26CF" }) : slotBlock && blockDefsReady && ordinal !== null ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(CssBlockCube, { ordinal, size: 16 }) : null
+                  /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("div", { className: "absolute top-0 left-0.5 text-[#8A99AF] font-mono text-[7px]", children: idx === 9 ? "0" : String(idx + 1) }),
+                  isBreakSlot ? /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("div", { className: "text-sm", children: "\u26CF" }) : slotBlock && blockDefsReady && ordinal !== null ? /* @__PURE__ */ (0, import_jsx_runtime87.jsx)(CssBlockCube, { ordinal, size: 16 }) : null
                 ]
               },
               idx
             );
           }) }),
-          shortcutBar.pageCount > 1 && /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "flex gap-1 justify-center mt-1.5", children: Array.from({ length: shortcutBar.pageCount }, (_, p2) => /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
+          shortcutBar.pageCount > 1 && /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("div", { className: "flex gap-1 justify-center mt-1.5", children: Array.from({ length: shortcutBar.pageCount }, (_, p2) => /* @__PURE__ */ (0, import_jsx_runtime87.jsx)(
             "button",
             {
               onClick: () => shortcutBar.goToPage(p2),
@@ -92942,7 +93109,7 @@ void main() {
             p2
           )) })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "shrink-0 border-b border-[#2E3A4E] p-2", children: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("div", { className: "shrink-0 border-b border-[#2E3A4E] p-2", children: /* @__PURE__ */ (0, import_jsx_runtime87.jsx)(
           "input",
           {
             type: "text",
@@ -92952,7 +93119,7 @@ void main() {
             className: "w-full rounded bg-black/30 border border-[#2E3A4E] px-2 py-1 text-xs text-white placeholder:text-[#8A99AF] outline-none focus:border-[#3C50E0]"
           }
         ) }),
-        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { ref: paletteRef, className: "flex flex-wrap gap-1 p-2 overflow-y-auto content-start", children: blockDefs.filter((b) => b.name.toLowerCase().includes(search.toLowerCase())).map((b) => /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(
+        /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("div", { ref: paletteRef, className: "flex flex-wrap gap-1 p-2 overflow-y-auto content-start", children: blockDefs.filter((b) => b.name.toLowerCase().includes(search.toLowerCase())).map((b) => /* @__PURE__ */ (0, import_jsx_runtime87.jsxs)(
           "button",
           {
             draggable: true,
@@ -92969,15 +93136,15 @@ void main() {
             onMouseLeave: () => setHoveredBlockName(null),
             className: `relative flex flex-col items-center gap-0.5 rounded border-2 p-1 w-14 ${selectedType === b.name ? "border-[#3C50E0]" : "border-transparent hover:border-white/20"}`,
             children: [
-              blockDefsReady && getOrdinal(b.name) !== null ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(CssBlockCube, { ordinal: getOrdinal(b.name), size: 20 }) : /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "w-5 h-5 rounded", style: { background: rgbToHex(b.minimapColor) } }),
-              /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "text-[9px] leading-tight text-[#8A99AF] text-center truncate w-full", children: b.name.replace(/_/g, " ") }),
-              hoveredBlockName === b.name && /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(
+              blockDefsReady && getOrdinal(b.name) !== null ? /* @__PURE__ */ (0, import_jsx_runtime87.jsx)(CssBlockCube, { ordinal: getOrdinal(b.name), size: 20 }) : /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("div", { className: "w-5 h-5 rounded", style: { background: rgbToHex(b.minimapColor) } }),
+              /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("span", { className: "text-[9px] leading-tight text-[#8A99AF] text-center truncate w-full", children: b.name.replace(/_/g, " ") }),
+              hoveredBlockName === b.name && /* @__PURE__ */ (0, import_jsx_runtime87.jsxs)(
                 "div",
                 {
                   className: `pointer-events-none absolute z-30 left-1/2 -translate-x-1/2 flex flex-col gap-0.5 whitespace-nowrap rounded border border-[#2E3A4E] bg-[#0B1220] px-2 py-1 text-[10px] shadow-lg ${tooltipAbove ? "bottom-full mb-1" : "top-full mt-1"}`,
                   children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "font-semibold text-white", children: b.name.replace(/_/g, " ") }),
-                    /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("span", { className: "text-[#8A99AF]", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime87.jsx)("span", { className: "font-semibold text-white", children: b.name.replace(/_/g, " ") }),
+                    /* @__PURE__ */ (0, import_jsx_runtime87.jsxs)("span", { className: "text-[#8A99AF]", children: [
                       b.hardness < 0 ? "Unbreakable" : `Hardness ${b.hardness}`,
                       " \xB7 ",
                       b.solid ? "Solid" : "Non-solid",
@@ -92996,8 +93163,8 @@ void main() {
   }
 
   // admin/pages/instance/InstanceChunkPicker.tsx
-  var import_react25 = __toESM(require_react(), 1);
-  var import_jsx_runtime40 = __toESM(require_jsx_runtime(), 1);
+  var import_react43 = __toESM(require_react(), 1);
+  var import_jsx_runtime88 = __toESM(require_jsx_runtime(), 1);
   var CHUNK_SIZE2 = 16;
   var BASE_SCALE = 2;
   var MIN_VIEW_RADIUS_CHUNKS = 12;
@@ -93047,33 +93214,33 @@ void main() {
     onSaved
   }) {
     var _a6, _b, _c;
-    const [discovered, setDiscovered] = (0, import_react25.useState)(/* @__PURE__ */ new Set());
-    const [heightByChunk, setHeightByChunk] = (0, import_react25.useState)(/* @__PURE__ */ new Map());
+    const [discovered, setDiscovered] = (0, import_react43.useState)(/* @__PURE__ */ new Set());
+    const [heightByChunk, setHeightByChunk] = (0, import_react43.useState)(/* @__PURE__ */ new Map());
     const initialCenter = editZone && editZone.chunks.length > 0 ? footprintCenter(editZone.chunks) : { x: 0, z: 0 };
-    const [center, setCenter] = (0, import_react25.useState)(initialCenter);
-    const [centerInput, setCenterInput] = (0, import_react25.useState)({ x: String(initialCenter.x), z: String(initialCenter.z) });
-    const [rasterUrl, setRasterUrl] = (0, import_react25.useState)(null);
-    const [selected, setSelected] = (0, import_react25.useState)(
+    const [center, setCenter] = (0, import_react43.useState)(initialCenter);
+    const [centerInput, setCenterInput] = (0, import_react43.useState)({ x: String(initialCenter.x), z: String(initialCenter.z) });
+    const [rasterUrl, setRasterUrl] = (0, import_react43.useState)(null);
+    const [selected, setSelected] = (0, import_react43.useState)(
       () => {
         var _a7;
         return new Set(((_a7 = editZone == null ? void 0 : editZone.chunks) != null ? _a7 : []).map((c) => chunkKey(c.cx, c.cz)));
       }
     );
-    const [name2, setName] = (0, import_react25.useState)((_a6 = editZone == null ? void 0 : editZone.name) != null ? _a6 : "");
-    const [yMin, setYMin] = (0, import_react25.useState)((_b = editZone == null ? void 0 : editZone.yMin) != null ? _b : 0);
-    const [yMax, setYMax] = (0, import_react25.useState)((_c = editZone == null ? void 0 : editZone.yMax) != null ? _c : 160);
-    const [error2, setError] = (0, import_react25.useState)(null);
-    const [zoom, setZoom] = (0, import_react25.useState)(1);
-    const [pan, setPan] = (0, import_react25.useState)({ x: 0, y: 0 });
-    const [isPanning, setIsPanning] = (0, import_react25.useState)(false);
-    const [radiusChunks, setRadiusChunks] = (0, import_react25.useState)(MIN_VIEW_RADIUS_CHUNKS);
-    const [worldTruncated, setWorldTruncated] = (0, import_react25.useState)(false);
-    const paintingRef = (0, import_react25.useRef)(null);
-    const panningRef = (0, import_react25.useRef)(
+    const [name2, setName] = (0, import_react43.useState)((_a6 = editZone == null ? void 0 : editZone.name) != null ? _a6 : "");
+    const [yMin, setYMin] = (0, import_react43.useState)((_b = editZone == null ? void 0 : editZone.yMin) != null ? _b : 0);
+    const [yMax, setYMax] = (0, import_react43.useState)((_c = editZone == null ? void 0 : editZone.yMax) != null ? _c : 160);
+    const [error2, setError] = (0, import_react43.useState)(null);
+    const [zoom, setZoom] = (0, import_react43.useState)(1);
+    const [pan, setPan] = (0, import_react43.useState)({ x: 0, y: 0 });
+    const [isPanning, setIsPanning] = (0, import_react43.useState)(false);
+    const [radiusChunks, setRadiusChunks] = (0, import_react43.useState)(MIN_VIEW_RADIUS_CHUNKS);
+    const [worldTruncated, setWorldTruncated] = (0, import_react43.useState)(false);
+    const paintingRef = (0, import_react43.useRef)(null);
+    const panningRef = (0, import_react43.useRef)(
       null
     );
-    const viewportRef = (0, import_react25.useRef)(null);
-    (0, import_react25.useEffect)(() => {
+    const viewportRef = (0, import_react43.useRef)(null);
+    (0, import_react43.useEffect)(() => {
       api.chunks.discovered().then((chunks) => {
         const set4 = new Set(chunks.map((c) => chunkKey(c.cx, c.cz)));
         setDiscovered(set4);
@@ -93114,7 +93281,7 @@ void main() {
         setHeightByChunk(map3);
       }).catch(console.error);
     }, []);
-    (0, import_react25.useEffect)(() => {
+    (0, import_react43.useEffect)(() => {
       if (editZone || selected.size === 0) return;
       const heights = Array.from(selected).map((k) => heightByChunk.get(k)).filter((h) => h != null);
       if (heights.length === 0) return;
@@ -93123,11 +93290,11 @@ void main() {
     }, [selected, heightByChunk, editZone]);
     const radiusBlocks = radiusChunks * CHUNK_SIZE2;
     const imgSize = radiusBlocks * 2;
-    (0, import_react25.useEffect)(() => {
+    (0, import_react43.useEffect)(() => {
       const url = `/api/map/terrain-raster.png?cx=${Math.round(center.x)}&cz=${Math.round(center.z)}&radius=${radiusBlocks}`;
       setRasterUrl(url);
     }, [center, radiusBlocks]);
-    const chunkCells = (0, import_react25.useMemo)(() => {
+    const chunkCells = (0, import_react43.useMemo)(() => {
       const cells2 = [];
       const cxMin = Math.floor((center.x - radiusBlocks) / CHUNK_SIZE2);
       const cxMax = Math.floor((center.x + radiusBlocks - 1) / CHUNK_SIZE2);
@@ -93156,17 +93323,17 @@ void main() {
         return next;
       });
     };
-    const panRef = (0, import_react25.useRef)(pan);
-    const zoomRef = (0, import_react25.useRef)(zoom);
-    const centerRef = (0, import_react25.useRef)(center);
-    const radiusBlocksRef = (0, import_react25.useRef)(radiusBlocks);
-    (0, import_react25.useEffect)(() => {
+    const panRef = (0, import_react43.useRef)(pan);
+    const zoomRef = (0, import_react43.useRef)(zoom);
+    const centerRef = (0, import_react43.useRef)(center);
+    const radiusBlocksRef = (0, import_react43.useRef)(radiusBlocks);
+    (0, import_react43.useEffect)(() => {
       panRef.current = pan;
       zoomRef.current = zoom;
       centerRef.current = center;
       radiusBlocksRef.current = radiusBlocks;
     });
-    (0, import_react25.useEffect)(() => {
+    (0, import_react43.useEffect)(() => {
       const stopAll = () => {
         paintingRef.current = null;
         if (panningRef.current) {
@@ -93223,8 +93390,8 @@ void main() {
       if (yMin >= yMax) return setError("yMin must be less than yMax.");
       api.instances.create({ name: name2.trim(), yMin, yMax, chunks }).then(onSaved).catch(() => setError("Failed to create zone."));
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("div", { className: "fixed inset-0 z-[1000] bg-black/70 flex items-center justify-center", children: /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("div", { className: "bg-[#151b28] border border-[#2E3A4E] rounded-lg shadow-2xl flex overflow-hidden max-h-[90vh]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime88.jsx)("div", { className: "fixed inset-0 z-[1000] bg-black/70 flex items-center justify-center", children: /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)("div", { className: "bg-[#151b28] border border-[#2E3A4E] rounded-lg shadow-2xl flex overflow-hidden max-h-[90vh]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)(
         "div",
         {
           ref: viewportRef,
@@ -93241,8 +93408,8 @@ void main() {
             setIsPanning(true);
           },
           children: [
-            /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("div", { className: "absolute right-2 top-2 z-10 flex flex-col gap-1", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)("div", { className: "absolute right-2 top-2 z-10 flex flex-col gap-1", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime88.jsx)(
                 "button",
                 {
                   className: "w-6 h-6 flex items-center justify-center bg-black/70 text-white text-sm rounded border border-white/20 hover:bg-black/90",
@@ -93251,7 +93418,7 @@ void main() {
                   children: "+"
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime88.jsx)(
                 "button",
                 {
                   className: "w-6 h-6 flex items-center justify-center bg-black/70 text-white text-sm rounded border border-white/20 hover:bg-black/90",
@@ -93261,7 +93428,7 @@ void main() {
                 }
               )
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)(
+            /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)(
               "div",
               {
                 className: "absolute",
@@ -93274,7 +93441,7 @@ void main() {
                   transformOrigin: "center center"
                 },
                 children: [
-                  rasterUrl && /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+                  rasterUrl && /* @__PURE__ */ (0, import_jsx_runtime88.jsx)(
                     "img",
                     {
                       src: rasterUrl,
@@ -93292,7 +93459,7 @@ void main() {
                     const key2 = chunkKey(cx, cz);
                     const isDiscovered = discovered.has(key2);
                     const isSelected = selected.has(key2);
-                    return /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+                    return /* @__PURE__ */ (0, import_jsx_runtime88.jsx)(
                       "div",
                       {
                         onMouseDown: (e) => {
@@ -93323,12 +93490,12 @@ void main() {
           ]
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("div", { className: "w-72 shrink-0 p-4 flex flex-col gap-3 overflow-y-auto", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("h2", { className: "text-white font-semibold text-sm", children: editZone ? `Edit chunks \u2014 ${editZone.name}` : "New instance zone" }),
-        !editZone && /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)(import_jsx_runtime40.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)("div", { className: "w-72 shrink-0 p-4 flex flex-col gap-3 overflow-y-auto", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime88.jsx)("h2", { className: "text-white font-semibold text-sm", children: editZone ? `Edit chunks \u2014 ${editZone.name}` : "New instance zone" }),
+        !editZone && /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)(import_jsx_runtime88.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF]", children: [
             "Name",
-            /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime88.jsx)(
               "input",
               {
                 className: "bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none",
@@ -93337,9 +93504,9 @@ void main() {
               }
             )
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("div", { className: "flex gap-2", children: /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF] flex-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime88.jsx)("div", { className: "flex gap-2", children: /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF] flex-1", children: [
             "yMin",
-            /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime88.jsx)(
               "input",
               {
                 type: "number",
@@ -93349,9 +93516,9 @@ void main() {
               }
             )
           ] }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("div", { className: "flex gap-2", children: /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF] flex-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime88.jsx)("div", { className: "flex gap-2", children: /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF] flex-1", children: [
             "yMax",
-            /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime88.jsx)(
               "input",
               {
                 type: "number",
@@ -93361,11 +93528,11 @@ void main() {
               }
             )
           ] }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("p", { className: "text-[10px] text-[#8A99AF] -mt-2", children: "yMin/yMax must cover the terrain surface height at this location, or the zone won't trigger in-game." })
+          /* @__PURE__ */ (0, import_jsx_runtime88.jsx)("p", { className: "text-[10px] text-[#8A99AF] -mt-2", children: "yMin/yMax must cover the terrain surface height at this location, or the zone won't trigger in-game." })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("div", { className: "flex gap-2 items-end", children: /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF] flex-1", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime88.jsx)("div", { className: "flex gap-2 items-end", children: /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF] flex-1", children: [
           "Center X",
-          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime88.jsx)(
             "input",
             {
               className: "bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none",
@@ -93374,10 +93541,10 @@ void main() {
             }
           )
         ] }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("div", { className: "flex gap-2 items-end", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF] flex-1", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)("div", { className: "flex gap-2 items-end", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)("label", { className: "flex flex-col gap-1 text-xs text-[#8A99AF] flex-1", children: [
             "Center Z",
-            /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime88.jsx)(
               "input",
               {
                 className: "bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none",
@@ -93386,7 +93553,7 @@ void main() {
               }
             )
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime88.jsx)(
             "button",
             {
               className: "text-xs text-[#8A99AF] hover:text-white border border-[#2E3A4E] rounded px-2 py-1",
@@ -93395,30 +93562,25 @@ void main() {
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("p", { className: "text-[11px] text-[#8A99AF]", children: "Left click/drag chunks to select. Right-drag to pan, wheel or +/- to zoom. Only already-generated (bright) chunks can be part of a zone \u2014 dimmed chunks are ungenerated." }),
-        worldTruncated && /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("p", { className: "text-[11px] text-amber-400", children: "World is larger than the initial view \u2014 pan (right-drag) past the edge to load more." }),
-        /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("p", { className: "text-[11px] text-white", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime88.jsx)("p", { className: "text-[11px] text-[#8A99AF]", children: "Left click/drag chunks to select. Right-drag to pan, wheel or +/- to zoom. Only already-generated (bright) chunks can be part of a zone \u2014 dimmed chunks are ungenerated." }),
+        worldTruncated && /* @__PURE__ */ (0, import_jsx_runtime88.jsx)("p", { className: "text-[11px] text-amber-400", children: "World is larger than the initial view \u2014 pan (right-drag) past the edge to load more." }),
+        /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)("p", { className: "text-[11px] text-white", children: [
           selected.size,
           " chunk(s) selected"
         ] }),
-        error2 && /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("p", { className: "text-xs text-red-400", children: error2 }),
-        /* @__PURE__ */ (0, import_jsx_runtime40.jsxs)("div", { className: "flex justify-end gap-2 mt-auto pt-2", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("button", { className: "text-xs text-[#8A99AF] hover:text-white px-3 py-1.5", onClick: onCancel, children: "Cancel" }),
-          /* @__PURE__ */ (0, import_jsx_runtime40.jsx)("button", { className: "text-xs bg-[#3C50E0] text-white rounded px-3 py-1.5 hover:bg-[#3345c0]", onClick: submit, children: editZone ? "Save" : "Create" })
+        error2 && /* @__PURE__ */ (0, import_jsx_runtime88.jsx)("p", { className: "text-xs text-red-400", children: error2 }),
+        /* @__PURE__ */ (0, import_jsx_runtime88.jsxs)("div", { className: "flex justify-end gap-2 mt-auto pt-2", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime88.jsx)("button", { className: "text-xs text-[#8A99AF] hover:text-white px-3 py-1.5", onClick: onCancel, children: "Cancel" }),
+          /* @__PURE__ */ (0, import_jsx_runtime88.jsx)("button", { className: "text-xs bg-[#3C50E0] text-white rounded px-3 py-1.5 hover:bg-[#3345c0]", onClick: submit, children: editZone ? "Save" : "Create" })
         ] })
       ] })
     ] }) });
   }
 
-  // admin/pages/instance/InstancesPage.tsx
-  var import_jsx_runtime41 = __toESM(require_jsx_runtime(), 1);
+  // admin/pages/instance/CopyTeleportCommand.tsx
+  var import_react44 = __toESM(require_react(), 1);
+  var import_jsx_runtime89 = __toESM(require_jsx_runtime(), 1);
   var CHUNK_SIZE3 = 16;
-  function EmptyDetail2({ message }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#8A99AF] text-sm", children: message });
-  }
-  function chunksFingerprint(chunks) {
-    return chunks.map((c) => `${c.cx},${c.cz}`).sort().join("|");
-  }
   function teleportCommandFor(zone) {
     const sumX = zone.chunks.reduce((sum, { cx }) => sum + cx * CHUNK_SIZE3 + CHUNK_SIZE3 / 2, 0);
     const sumZ = zone.chunks.reduce((sum, { cz }) => sum + cz * CHUNK_SIZE3 + CHUNK_SIZE3 / 2, 0);
@@ -93428,9 +93590,9 @@ void main() {
     return `/teleport ${x} ${y} ${z}`;
   }
   function CopyTeleportCommand({ zone }) {
-    const [copied, setCopied] = (0, import_react26.useState)(false);
+    const [copied, setCopied] = (0, import_react44.useState)(false);
     const command2 = teleportCommandFor(zone);
-    return /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime89.jsxs)(
       "button",
       {
         className: "flex items-center gap-1.5 rounded border border-[#2E3A4E] bg-[#1A222C] px-2 py-1 text-[11px] font-mono text-[#8A99AF] hover:text-white hover:border-[#3C50E0] transition-colors",
@@ -93443,39 +93605,51 @@ void main() {
         },
         children: [
           command2,
-          /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: copied ? "text-emerald-400" : "text-[#8A99AF]", children: copied ? "Copied!" : "Copy" })
+          /* @__PURE__ */ (0, import_jsx_runtime89.jsx)("span", { className: copied ? "text-emerald-400" : "text-[#8A99AF]", children: copied ? "Copied!" : "Copy" })
         ]
       }
     );
+  }
+
+  // admin/pages/instance/EmptyDetail.tsx
+  var import_jsx_runtime90 = __toESM(require_jsx_runtime(), 1);
+  function EmptyDetail2({ message }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime90.jsx)("div", { className: "flex-1 flex items-center justify-center text-[#8A99AF] text-sm", children: message });
+  }
+
+  // admin/pages/instance/InstancesPage.tsx
+  var import_jsx_runtime91 = __toESM(require_jsx_runtime(), 1);
+  function chunksFingerprint(chunks) {
+    return chunks.map((c) => `${c.cx},${c.cz}`).sort().join("|");
   }
   function InstancesPage() {
     var _a6;
     const { id: routeId } = useParams();
     const navigate = useNavigate();
-    const [instances, setInstances] = (0, import_react26.useState)([]);
-    const [selectedId, setSelectedIdState] = (0, import_react26.useState)(routeId != null ? routeId : null);
-    const setSelectedId = (0, import_react26.useCallback)(
+    const [instances, setInstances] = (0, import_react45.useState)([]);
+    const [selectedId, setSelectedIdState] = (0, import_react45.useState)(routeId != null ? routeId : null);
+    const setSelectedId = (0, import_react45.useCallback)(
       (id2) => {
         setSelectedIdState(id2);
         navigate(id2 ? `/admin/instances/${id2}` : "/admin/instances");
       },
       [navigate]
     );
-    const [renaming, setRenaming] = (0, import_react26.useState)(false);
-    const [renameValue, setRenameValue] = (0, import_react26.useState)("");
-    const [editingBounds, setEditingBounds] = (0, import_react26.useState)(false);
-    const [yMinValue, setYMinValue] = (0, import_react26.useState)("0");
-    const [yMaxValue, setYMaxValue] = (0, import_react26.useState)("0");
-    const [boundsError, setBoundsError] = (0, import_react26.useState)(null);
-    const [creating, setCreating] = (0, import_react26.useState)(false);
-    const [editingChunks, setEditingChunks] = (0, import_react26.useState)(false);
-    const reload = (0, import_react26.useCallback)(() => {
+    const [renaming, setRenaming] = (0, import_react45.useState)(false);
+    const [renameValue, setRenameValue] = (0, import_react45.useState)("");
+    const [editingBounds, setEditingBounds] = (0, import_react45.useState)(false);
+    const [yMinValue, setYMinValue] = (0, import_react45.useState)("0");
+    const [yMaxValue, setYMaxValue] = (0, import_react45.useState)("0");
+    const [boundsError, setBoundsError] = (0, import_react45.useState)(null);
+    const [creating, setCreating] = (0, import_react45.useState)(false);
+    const [editingChunks, setEditingChunks] = (0, import_react45.useState)(false);
+    const reload = (0, import_react45.useCallback)(() => {
       api.instances.list().then((list2) => setInstances(list2.sort((a, b) => a.name.localeCompare(b.name)))).catch(console.error);
     }, []);
-    (0, import_react26.useEffect)(() => {
+    (0, import_react45.useEffect)(() => {
       reload();
     }, [reload]);
-    (0, import_react26.useEffect)(() => {
+    (0, import_react45.useEffect)(() => {
       setSelectedIdState(routeId != null ? routeId : null);
     }, [routeId]);
     const selected = (_a6 = instances.find((i) => i.id === selectedId)) != null ? _a6 : null;
@@ -93512,16 +93686,16 @@ void main() {
         reload();
       }).catch(console.error);
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "flex h-full overflow-hidden -m-6", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("aside", { className: "w-[14.2857%] shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "px-3 py-2 border-b border-[#2E3A4E] flex items-center justify-between", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: "Instances" }),
-          /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("button", { className: "text-[11px] text-[#3C50E0] hover:underline", onClick: () => setCreating(true), children: "+ New" })
+    return /* @__PURE__ */ (0, import_jsx_runtime91.jsxs)("div", { className: "flex h-full overflow-hidden -m-6", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime91.jsxs)("aside", { className: "w-[14.2857%] shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime91.jsxs)("div", { className: "px-3 py-2 border-b border-[#2E3A4E] flex items-center justify-between", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("span", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]", children: "Instances" }),
+          /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("button", { className: "text-[11px] text-[#3C50E0] hover:underline", onClick: () => setCreating(true), children: "+ New" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "flex-1 overflow-y-auto py-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime91.jsxs)("div", { className: "flex-1 overflow-y-auto py-2", children: [
           instances.map((zone) => {
             const isSelected = zone.id === selectedId;
-            return /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)(
+            return /* @__PURE__ */ (0, import_jsx_runtime91.jsxs)(
               "button",
               {
                 onClick: () => {
@@ -93532,27 +93706,27 @@ void main() {
                 },
                 className: `w-full text-left px-3 py-2 text-sm truncate transition-colors flex items-center gap-1.5 ${isSelected ? "bg-[#3C50E0]/20 text-white" : "text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E]"}`,
                 children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+                  /* @__PURE__ */ (0, import_jsx_runtime91.jsx)(
                     "span",
                     {
                       className: `h-1.5 w-1.5 shrink-0 rounded-full ${zone.enabled ? "bg-emerald-400" : "bg-[#8A99AF]"}`,
                       title: zone.enabled ? "Enabled" : "Disabled"
                     }
                   ),
-                  /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: `truncate ${zone.enabled ? "" : "opacity-50"}`, children: zone.name })
+                  /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("span", { className: `truncate ${zone.enabled ? "" : "opacity-50"}`, children: zone.name })
                 ]
               },
               zone.id
             );
           }),
-          instances.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("div", { className: "px-3 py-2 text-xs text-[#8A99AF]", children: 'No instance zones yet. Click "+ New" to create one.' })
+          instances.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("div", { className: "px-3 py-2 text-xs text-[#8A99AF]", children: 'No instance zones yet. Click "+ New" to create one.' })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "w-[85.7143%] flex flex-col overflow-hidden", children: [
-        !selected && /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(EmptyDetail2, { message: "Select an instance zone" }),
-        selected && /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)(import_jsx_runtime41.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("div", { className: "shrink-0 flex items-center justify-between gap-3 px-4 py-2 border-b border-[#2E3A4E]", children: renaming ? /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "flex items-center gap-2 flex-1", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime91.jsxs)("div", { className: "w-[85.7143%] flex flex-col overflow-hidden", children: [
+        !selected && /* @__PURE__ */ (0, import_jsx_runtime91.jsx)(EmptyDetail2, { message: "Select an instance zone" }),
+        selected && /* @__PURE__ */ (0, import_jsx_runtime91.jsxs)(import_jsx_runtime91.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("div", { className: "shrink-0 flex items-center justify-between gap-3 px-4 py-2 border-b border-[#2E3A4E]", children: renaming ? /* @__PURE__ */ (0, import_jsx_runtime91.jsxs)("div", { className: "flex items-center gap-2 flex-1", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime91.jsx)(
               "input",
               {
                 autoFocus: true,
@@ -93562,19 +93736,19 @@ void main() {
                 onKeyDown: (e) => e.key === "Enter" && submitRename()
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("button", { className: "text-xs text-emerald-400 hover:underline", onClick: submitRename, children: "Save" }),
-            /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("button", { className: "text-xs text-[#8A99AF] hover:underline", onClick: () => setRenaming(false), children: "Cancel" })
-          ] }) : /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)(import_jsx_runtime41.Fragment, { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("h2", { className: "text-white font-semibold text-sm", children: selected.name }),
-            /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "flex items-center gap-3", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("span", { className: "text-[11px] text-[#8A99AF] font-mono", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("button", { className: "text-xs text-emerald-400 hover:underline", onClick: submitRename, children: "Save" }),
+            /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("button", { className: "text-xs text-[#8A99AF] hover:underline", onClick: () => setRenaming(false), children: "Cancel" })
+          ] }) : /* @__PURE__ */ (0, import_jsx_runtime91.jsxs)(import_jsx_runtime91.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("h2", { className: "text-white font-semibold text-sm", children: selected.name }),
+            /* @__PURE__ */ (0, import_jsx_runtime91.jsxs)("div", { className: "flex items-center gap-3", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime91.jsxs)("span", { className: "text-[11px] text-[#8A99AF] font-mono", children: [
                 selected.chunks.length,
                 " chunk",
                 selected.chunks.length !== 1 ? "s" : ""
               ] }),
-              editingBounds ? /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)("div", { className: "flex items-center gap-1", children: [
-                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: "text-[11px] text-[#8A99AF] font-mono", children: "y[" }),
-                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+              editingBounds ? /* @__PURE__ */ (0, import_jsx_runtime91.jsxs)("div", { className: "flex items-center gap-1", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("span", { className: "text-[11px] text-[#8A99AF] font-mono", children: "y[" }),
+                /* @__PURE__ */ (0, import_jsx_runtime91.jsx)(
                   "input",
                   {
                     autoFocus: true,
@@ -93585,8 +93759,8 @@ void main() {
                     onKeyDown: (e) => e.key === "Enter" && submitBounds()
                   }
                 ),
-                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: "text-[11px] text-[#8A99AF] font-mono", children: "," }),
-                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("span", { className: "text-[11px] text-[#8A99AF] font-mono", children: "," }),
+                /* @__PURE__ */ (0, import_jsx_runtime91.jsx)(
                   "input",
                   {
                     type: "number",
@@ -93596,9 +93770,9 @@ void main() {
                     onKeyDown: (e) => e.key === "Enter" && submitBounds()
                   }
                 ),
-                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: "text-[11px] text-[#8A99AF] font-mono", children: "]" }),
-                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("button", { className: "text-xs text-emerald-400 hover:underline", onClick: submitBounds, children: "Save" }),
-                /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("span", { className: "text-[11px] text-[#8A99AF] font-mono", children: "]" }),
+                /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("button", { className: "text-xs text-emerald-400 hover:underline", onClick: submitBounds, children: "Save" }),
+                /* @__PURE__ */ (0, import_jsx_runtime91.jsx)(
                   "button",
                   {
                     className: "text-xs text-[#8A99AF] hover:underline",
@@ -93609,8 +93783,8 @@ void main() {
                     children: "Cancel"
                   }
                 ),
-                boundsError && /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("span", { className: "text-xs text-red-400", children: boundsError })
-              ] }) : /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)(
+                boundsError && /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("span", { className: "text-xs text-red-400", children: boundsError })
+              ] }) : /* @__PURE__ */ (0, import_jsx_runtime91.jsxs)(
                 "button",
                 {
                   className: "text-[11px] text-[#8A99AF] font-mono hover:text-white",
@@ -93630,8 +93804,8 @@ void main() {
                   ]
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(CopyTeleportCommand, { zone: selected }),
-              /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime91.jsx)(CopyTeleportCommand, { zone: selected }),
+              /* @__PURE__ */ (0, import_jsx_runtime91.jsx)(
                 "button",
                 {
                   className: `text-xs hover:underline ${selected.enabled ? "text-emerald-400" : "text-[#8A99AF]"}`,
@@ -93640,8 +93814,8 @@ void main() {
                   children: selected.enabled ? "Enabled" : "Disabled"
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("button", { className: "text-xs text-[#8A99AF] hover:text-white", onClick: () => setEditingChunks(true), children: "Edit chunks" }),
-              /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("button", { className: "text-xs text-[#8A99AF] hover:text-white", onClick: () => setEditingChunks(true), children: "Edit chunks" }),
+              /* @__PURE__ */ (0, import_jsx_runtime91.jsx)(
                 "button",
                 {
                   className: "text-xs text-[#8A99AF] hover:text-white",
@@ -93652,10 +93826,10 @@ void main() {
                   children: "Rename"
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime41.jsx)("button", { className: "text-xs text-red-400 hover:text-red-300", onClick: deleteSelected, children: "Delete" })
+              /* @__PURE__ */ (0, import_jsx_runtime91.jsx)("button", { className: "text-xs text-red-400 hover:text-red-300", onClick: deleteSelected, children: "Delete" })
             ] })
           ] }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime91.jsx)(
             InstanceEditorViewport,
             {
               zone: selected
@@ -93664,7 +93838,7 @@ void main() {
           )
         ] })
       ] }),
-      creating && /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+      creating && /* @__PURE__ */ (0, import_jsx_runtime91.jsx)(
         InstanceChunkPicker,
         {
           onCancel: () => setCreating(false),
@@ -93675,7 +93849,7 @@ void main() {
           }
         }
       ),
-      editingChunks && selected && /* @__PURE__ */ (0, import_jsx_runtime41.jsx)(
+      editingChunks && selected && /* @__PURE__ */ (0, import_jsx_runtime91.jsx)(
         InstanceChunkPicker,
         {
           editZone: selected,
@@ -93689,24 +93863,7 @@ void main() {
     ] });
   }
 
-  // admin/AdminApp.tsx
-  var import_jsx_runtime42 = __toESM(require_jsx_runtime(), 1);
-  function Icon2({ d, size = 18 }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(
-      "svg",
-      {
-        width: size,
-        height: size,
-        viewBox: "0 0 24 24",
-        fill: "none",
-        stroke: "currentColor",
-        strokeWidth: 1.8,
-        strokeLinecap: "round",
-        strokeLinejoin: "round",
-        children: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("path", { d })
-      }
-    );
-  }
+  // admin/const.ts
   var ICONS = {
     status: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
     users: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm8 2l2 2 4-4",
@@ -93746,10 +93903,89 @@ void main() {
     "/admin/instances": "page.instances",
     "/admin/world-simulator": "page.worldSimulator"
   };
-  function Sidebar({ collapsed, onToggle }) {
+
+  // admin/Header.tsx
+  var import_jsx_runtime92 = __toESM(require_jsx_runtime(), 1);
+  function Header() {
+    var _a6, _b;
     const { pathname } = useLocation();
     const t2 = useT();
-    return /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)(
+    const labelKey = (_b = PAGE_LABEL_KEYS[pathname]) != null ? _b : (_a6 = Object.entries(PAGE_LABEL_KEYS).find(([path]) => path !== "/admin" && pathname.startsWith(path))) == null ? void 0 : _a6[1];
+    const title = labelKey ? t2(labelKey) : t2("shell.admin");
+    return /* @__PURE__ */ (0, import_jsx_runtime92.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime92.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime92.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
+          t2("shell.admin"),
+          " / ",
+          title
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime92.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime92.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime92.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
+        t2("shell.serverOnline")
+      ] })
+    ] });
+  }
+
+  // admin/components/LanguageSelector.tsx
+  var import_jsx_runtime93 = __toESM(require_jsx_runtime(), 1);
+  function LanguageSelector({ collapsed }) {
+    const { locale, setLocale, t: t2 } = useI18n();
+    return /* @__PURE__ */ (0, import_jsx_runtime93.jsxs)(
+      "div",
+      {
+        className: cn(
+          "border-t border-[#2E3A4E] flex items-center gap-2 py-2.5 text-[10px] text-[#8A99AF]",
+          collapsed ? "px-2 justify-center" : "px-6"
+        ),
+        children: [
+          !collapsed && /* @__PURE__ */ (0, import_jsx_runtime93.jsx)("label", { htmlFor: "admin-locale", className: "flex-1", children: t2("shell.language") }),
+          /* @__PURE__ */ (0, import_jsx_runtime93.jsx)(
+            "select",
+            {
+              id: "admin-locale",
+              value: locale,
+              title: t2("shell.language"),
+              "aria-label": t2("shell.language"),
+              onChange: (event) => setLocale(event.target.value),
+              className: cn(
+                "rounded border border-[#2E3A4E] bg-[#0E1726] py-1 text-[11px] text-white hover:border-[#3C50E0]",
+                collapsed ? "w-full px-1 text-center" : "px-2"
+              ),
+              children: LOCALES.map((option2) => /* @__PURE__ */ (0, import_jsx_runtime93.jsx)("option", { value: option2, children: collapsed ? option2.toUpperCase() : LOCALE_LABELS[option2] }, option2))
+            }
+          )
+        ]
+      }
+    );
+  }
+
+  // admin/Icon.tsx
+  var import_jsx_runtime94 = __toESM(require_jsx_runtime(), 1);
+  function Icon2({ d, size = 18 }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime94.jsx)(
+      "svg",
+      {
+        width: size,
+        height: size,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: 1.8,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        children: /* @__PURE__ */ (0, import_jsx_runtime94.jsx)("path", { d })
+      }
+    );
+  }
+
+  // admin/SidebarComponent.tsx
+  var import_jsx_runtime95 = __toESM(require_jsx_runtime(), 1);
+  function SidebarComponent({ collapsed, onToggle }) {
+    const { pathname } = useLocation();
+    const t2 = useT();
+    return /* @__PURE__ */ (0, import_jsx_runtime95.jsxs)(
       "aside",
       {
         className: cn(
@@ -93757,19 +93993,19 @@ void main() {
           collapsed ? "w-16" : "w-64"
         ),
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("div", { className: cn("h-16 flex items-center border-b border-[#2E3A4E]", collapsed ? "px-3" : "px-6"), children: /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { className: "flex items-center gap-2.5 overflow-hidden", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("div", { className: "w-8 h-8 shrink-0 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
-            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)(import_jsx_runtime42.Fragment, { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
-              /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
+          /* @__PURE__ */ (0, import_jsx_runtime95.jsx)("div", { className: cn("h-16 flex items-center border-b border-[#2E3A4E]", collapsed ? "px-3" : "px-6"), children: /* @__PURE__ */ (0, import_jsx_runtime95.jsxs)("div", { className: "flex items-center gap-2.5 overflow-hidden", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime95.jsx)("div", { className: "w-8 h-8 shrink-0 rounded-lg bg-[#3C50E0] flex items-center justify-center text-white text-xs font-bold", children: "MC" }),
+            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime95.jsxs)(import_jsx_runtime95.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime95.jsx)("span", { className: "text-white font-semibold text-[15px] tracking-wide", children: "MicCraft" }),
+              /* @__PURE__ */ (0, import_jsx_runtime95.jsx)("span", { className: "text-[#8A99AF] text-xs font-normal mt-0.5", children: "Admin" })
             ] })
           ] }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("nav", { className: cn("flex-1 py-5 space-y-0.5 overflow-y-auto", collapsed ? "px-2" : "px-4"), children: [
-            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: t2("shell.menu") }),
+          /* @__PURE__ */ (0, import_jsx_runtime95.jsxs)("nav", { className: cn("flex-1 py-5 space-y-0.5 overflow-y-auto", collapsed ? "px-2" : "px-4"), children: [
+            !collapsed && /* @__PURE__ */ (0, import_jsx_runtime95.jsx)("p", { className: "text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] px-3 mb-3", children: t2("shell.menu") }),
             NAV.map(({ path, labelKey, icon, exact }) => {
               const active = exact ? pathname === path : pathname.startsWith(path);
               const label = t2(labelKey);
-              return /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)(
+              return /* @__PURE__ */ (0, import_jsx_runtime95.jsxs)(
                 Link,
                 {
                   to: path,
@@ -93781,7 +94017,7 @@ void main() {
                     active ? "bg-[#3C50E0] text-white" : "text-[#8A99AF] hover:bg-[#2E3A4E] hover:text-white"
                   ),
                   children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Icon2, { d: icon, size: 17 }) }),
+                    /* @__PURE__ */ (0, import_jsx_runtime95.jsx)("span", { className: active ? "text-white" : "text-[#8A99AF]", children: /* @__PURE__ */ (0, import_jsx_runtime95.jsx)(Icon2, { d: icon, size: 17 }) }),
                     !collapsed && label
                   ]
                 },
@@ -93789,8 +94025,8 @@ void main() {
               );
             })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(LanguageSelector, { collapsed }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)(
+          /* @__PURE__ */ (0, import_jsx_runtime95.jsx)(LanguageSelector, { collapsed }),
+          /* @__PURE__ */ (0, import_jsx_runtime95.jsxs)(
             "div",
             {
               className: cn(
@@ -93798,8 +94034,8 @@ void main() {
                 collapsed ? "px-2 justify-center" : "px-6"
               ),
               children: [
-                !collapsed && /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("span", { className: "flex-1", children: t2("shell.version") }),
-                /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(
+                !collapsed && /* @__PURE__ */ (0, import_jsx_runtime95.jsx)("span", { className: "flex-1", children: t2("shell.version") }),
+                /* @__PURE__ */ (0, import_jsx_runtime95.jsx)(
                   "button",
                   {
                     type: "button",
@@ -93808,7 +94044,7 @@ void main() {
                     "aria-label": t2(collapsed ? "shell.expandMenu" : "shell.collapseMenu"),
                     "aria-expanded": !collapsed,
                     className: "flex h-7 w-7 items-center justify-center rounded border border-[#2E3A4E] text-[#C7D2FE] hover:bg-[#3C50E0]/60 hover:text-white",
-                    children: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Icon2, { d: collapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7", size: 15 })
+                    children: /* @__PURE__ */ (0, import_jsx_runtime95.jsx)(Icon2, { d: collapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7", size: 15 })
                   }
                 )
               ]
@@ -93818,55 +94054,37 @@ void main() {
       }
     );
   }
-  function Header() {
-    var _a6, _b;
-    const { pathname } = useLocation();
-    const t2 = useT();
-    const labelKey = (_b = PAGE_LABEL_KEYS[pathname]) != null ? _b : (_a6 = Object.entries(PAGE_LABEL_KEYS).find(([path]) => path !== "/admin" && pathname.startsWith(path))) == null ? void 0 : _a6[1];
-    const title = labelKey ? t2(labelKey) : t2("shell.admin");
-    return /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("p", { className: "text-[11px] text-[#8A99AF]", children: [
-          t2("shell.admin"),
-          " / ",
-          title
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("h1", { className: "text-white font-semibold text-[15px] leading-tight", children: title })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { className: "flex items-center gap-2 text-[11px] text-[#8A99AF]", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("span", { className: "w-2 h-2 rounded-full bg-emerald-400 inline-block" }),
-        t2("shell.serverOnline")
-      ] })
-    ] });
-  }
+
+  // admin/AdminApp.tsx
+  var import_jsx_runtime96 = __toESM(require_jsx_runtime(), 1);
   function AdminApp() {
-    const [collapsed, setCollapsed] = (0, import_react27.useState)(() => loadSidebarCollapsed());
-    (0, import_react27.useEffect)(() => saveSidebarCollapsed(collapsed), [collapsed]);
-    return /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(I18nProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Sidebar, { collapsed, onToggle: () => setCollapsed((current) => !current) }),
-      /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Header, {}),
-        /* @__PURE__ */ (0, import_jsx_runtime42.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)(Routes, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(StatusPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(UsersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(PlayersPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/npcs", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(NpcsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(ClassesPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(ConfigEditorPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(WorldsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/game-assets", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(GameAssetsPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/administration", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(AdministrationPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/instances", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(InstancesPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/instances/:id", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(InstancesPage, {}) }),
-          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/world-simulator", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(WorldSimulatorPage, {}) })
+    const [collapsed, setCollapsed] = (0, import_react46.useState)(() => loadSidebarCollapsed());
+    (0, import_react46.useEffect)(() => saveSidebarCollapsed(collapsed), [collapsed]);
+    return /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(I18nProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime96.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(SidebarComponent, { collapsed, onToggle: () => setCollapsed((current) => !current) }),
+      /* @__PURE__ */ (0, import_jsx_runtime96.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(Header, {}),
+        /* @__PURE__ */ (0, import_jsx_runtime96.jsx)("main", { className: "flex-1 overflow-auto p-6", children: /* @__PURE__ */ (0, import_jsx_runtime96.jsxs)(Routes, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(Route, { path: "/admin", element: /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(StatusPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(Route, { path: "/admin/users", element: /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(UsersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(Route, { path: "/admin/players", element: /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(PlayersPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(Route, { path: "/admin/npcs", element: /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(NpcsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(Route, { path: "/admin/classes", element: /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(ClassesPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(Route, { path: "/admin/config", element: /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(ConfigEditorPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(Route, { path: "/admin/worlds", element: /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(WorldsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(Route, { path: "/admin/game-assets", element: /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(GameAssetsPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(Route, { path: "/admin/administration", element: /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(AdministrationPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(Route, { path: "/admin/instances", element: /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(InstancesPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(Route, { path: "/admin/instances/:id", element: /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(InstancesPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(Route, { path: "/admin/world-simulator", element: /* @__PURE__ */ (0, import_jsx_runtime96.jsx)(WorldSimulatorPage, {}) })
         ] }) })
       ] })
     ] }) }) });
   }
 
   // admin/index.tsx
-  var import_jsx_runtime43 = __toESM(require_jsx_runtime(), 1);
-  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime43.jsx)(AdminApp, {}));
+  var import_jsx_runtime97 = __toESM(require_jsx_runtime(), 1);
+  (0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime97.jsx)(AdminApp, {}));
 })();
 /*! Bundled license information:
 

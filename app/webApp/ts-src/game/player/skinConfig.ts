@@ -1,5 +1,5 @@
 // Per-skin first-person configuration, loaded from resources/skins/<skin>/<skin>.yaml
-// through GET /api/skins/{skin}/config.
+// through GET /api/skins/{skin}/configEditor.
 
 const PX_PER_BLOCK = 16;
 

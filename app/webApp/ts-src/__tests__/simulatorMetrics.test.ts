@@ -18,7 +18,7 @@ import {
   stackedColumns,
   tooltipRows,
   windowOf,
-} from "../admin/simulator/metrics";
+} from "../admin/simulator/metrics/metrics";
 import {
   DEFAULT_POPULATION_CAP,
   MAX_NPCS_PER_FRAME_CEILING,

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../i18n";
-import { mergeBuckets, replaceBuckets } from "./metrics";
+import { mergeBuckets, replaceBuckets } from "./metrics/metrics";
 import {
   EVENT_HISTORY,
   type SimMetricBucket,
@@ -94,7 +94,7 @@ export interface SimulationState {
   init: (config: SimulationConfig, name?: string) => void;
   /** Close an arena for everyone; defaults to the attached one. */
   stop: (simulationId?: string) => void;
-  /** Rebuild an arena from its own config; defaults to the attached one. */
+  /** Rebuild an arena from its own configEditor; defaults to the attached one. */
   restart: (simulationId?: string) => void;
   setSpeed: (ticksPerSecond: number) => void;
   step: (count: number) => void;

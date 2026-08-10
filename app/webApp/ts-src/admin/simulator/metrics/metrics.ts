@@ -1,4 +1,4 @@
-import type { TranslationKey } from "../i18n";
+import type { TranslationKey } from "../../i18n";
 import {
   npcColorSlot,
   type NpcTuning,
@@ -6,7 +6,7 @@ import {
   type SimMetrics,
   type SimSpawn,
   type SimulationConfig,
-} from "./types";
+} from "../types";
 
 /** Same ceiling as the server keeps, so the client never holds more history than exists. */
 export const METRIC_HISTORY = 240;
@@ -477,3 +477,9 @@ export function buildMetricsExport(
     })),
   };
 }
+
+export const BOX_W = 300;
+export const BOX_H = 90;
+
+/** Surface showing between two stacked segments. The box is 90 units tall over 90 px, so this is px. */
+export const SEGMENT_GAP = 1.5;

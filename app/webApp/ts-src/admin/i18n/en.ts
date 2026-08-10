@@ -193,7 +193,7 @@ export const en = {
   // ── Config editor ───────────────────────────────────────────────────────────
   "config.files": "Config Files",
   "config.schema": "schema",
-  "config.selectFile": "Select a config file to edit",
+  "config.selectFile": "Select a configEditor file to edit",
   "config.failedToLoad": "Failed to load file",
 
   // ── Worlds page ─────────────────────────────────────────────────────────────

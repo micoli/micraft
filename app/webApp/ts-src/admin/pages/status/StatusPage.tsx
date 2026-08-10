@@ -1,96 +1,19 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { api, StatusSnapshot } from "../api";
-import { useT, type Translate, type TranslationKey } from "../i18n";
+import { useEffect, useState } from "react";
+import { api, StatusSnapshot } from "../../api";
+import { useT, type TranslationKey } from "../../i18n";
+import { GameTimeSetter } from "./GameTimeSetter";
+import { pad2 } from "./utils";
+import { StatCard } from "./StatCard";
+import { HeapBar } from "./HeapBar";
+import { Card } from "./Card";
+import { Row } from "./Row";
+import { Svg } from "./Svg";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function kb(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1_048_576) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1_048_576).toFixed(1)} MB`;
-}
-
-// ── Icons ─────────────────────────────────────────────────────────────────────
-function Svg({ d, size = 22 }: { d: string; size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d={d} />
-    </svg>
-  );
-}
-
-// ── Stat card ────────────────────────────────────────────────────────────────
-function StatCard({
-  label,
-  value,
-  sub,
-  icon,
-  color,
-}: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  icon: string;
-  color: string; // tailwind bg class
-}) {
-  return (
-    <div className="bg-[#1A222C] rounded-xl border border-[#2E3A4E] p-5 flex items-start justify-between">
-      <div>
-        <p className="text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-1">{label}</p>
-        <p className="text-3xl font-bold text-white tabular-nums leading-none">{value}</p>
-        {sub && <p className="text-xs text-[#8A99AF] mt-1.5">{sub}</p>}
-      </div>
-      <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
-        <Svg d={icon} size={20} />
-      </div>
-    </div>
-  );
-}
-
-// ── Section card ─────────────────────────────────────────────────────────────
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-[#1A222C] rounded-xl border border-[#2E3A4E] p-5">
-      <h3 className="text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-4">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function Row({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
-  return (
-    <div className="flex justify-between items-center py-1.5 border-b border-[#2E3A4E] last:border-0 text-sm">
-      <span className="text-[#8A99AF]">{label}</span>
-      <span className={accent ? "text-[#3C50E0] font-semibold" : "text-white tabular-nums"}>{value}</span>
-    </div>
-  );
-}
-
-// ── Heap bar ──────────────────────────────────────────────────────────────────
-function HeapBar({ used, max, label }: { used: number; max: number; label: string }) {
-  const pct = max > 0 ? Math.round((used / max) * 100) : 0;
-  const color = pct > 85 ? "bg-red-500" : pct > 65 ? "bg-amber-400" : "bg-[#3C50E0]";
-  return (
-    <div>
-      <div className="flex justify-between text-xs text-[#8A99AF] mb-2">
-        <span>{label}</span>
-        <span>
-          {used} MB / {max} MB ({pct}%)
-        </span>
-      </div>
-      <div className="w-full bg-[#2E3A4E] rounded-full h-2">
-        <div className={`h-2 rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  );
 }
 
 // ── Icon paths ────────────────────────────────────────────────────────────────
@@ -106,62 +29,11 @@ const I = {
     "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15",
 };
 
-function ticksToTime(ticks: number, ticksPerDay: number): { h: number; m: number } {
+export function ticksToTime(ticks: number, ticksPerDay: number): { h: number; m: number } {
   const day = ticks % ticksPerDay;
   const h = Math.floor((day * 24) / ticksPerDay);
   const m = Math.floor(((day * 24 * 60) / ticksPerDay) % 60);
   return { h, m };
-}
-
-function pad2(n: number) {
-  return String(n).padStart(2, "0");
-}
-
-// ── Game Time setter ──────────────────────────────────────────────────────────
-function GameTimeSetter({ snap, t }: { snap: StatusSnapshot; t: Translate }) {
-  const { h, m } = ticksToTime(snap.gameTicks, snap.ticksPerDay || 72000);
-  const [time, setTime] = useState(`${pad2(h)}:${pad2(m)}`);
-  const [saving, setSaving] = useState(false);
-  const prevRef = useRef(`${pad2(h)}:${pad2(m)}`);
-
-  const newHM = ticksToTime(snap.gameTicks, snap.ticksPerDay || 72000);
-  const newStr = `${pad2(newHM.h)}:${pad2(newHM.m)}`;
-  useLayoutEffect(() => {
-    if (newStr !== prevRef.current) {
-      prevRef.current = newStr;
-      setTime(newStr);
-    }
-  }, [newStr]);
-
-  const save = async () => {
-    const [hh, mm] = time.split(":").map(Number);
-    if (isNaN(hh) || isNaN(mm)) return;
-    setSaving(true);
-    try {
-      await api.status.setGameTime(hh, mm);
-    } catch {
-      /* empty */
-    }
-    setSaving(false);
-  };
-
-  return (
-    <div className="flex items-center gap-2 mt-2">
-      <input
-        type="time"
-        value={time}
-        onChange={(e) => setTime(e.target.value)}
-        className="bg-[#0E1726] border border-[#2E3A4E] rounded-lg px-2 py-1 text-sm text-white focus:outline-none focus:border-[#3C50E0] transition-colors tabular-nums"
-      />
-      <button
-        onClick={save}
-        disabled={saving}
-        className="px-3 py-1 rounded-lg text-xs font-medium bg-[#3C50E0] hover:bg-[#3446c7] text-white transition-colors disabled:opacity-50"
-      >
-        {saving ? "…" : t("status.set")}
-      </button>
-    </div>
-  );
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────

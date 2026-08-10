@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { FOOD_OPACITY, gridLinesFor, markerRadiusFor, pickNpcAt, type ArenaCamera, type Layers } from "./arenaView";
-import { ArenaHint, NpcTooltip, type HoverTarget } from "./NpcTooltip";
+import { NpcTooltip, type HoverTarget } from "./NpcTooltip";
 import { npcColor, type SimArena, type SimNpc, type SimPlayer } from "./types";
+import { ArenaHint } from "./ArenaHint";
 
 /** Radius of the ring drawn around a pack member, in screen pixels. */
 const PACK_RING = 6;

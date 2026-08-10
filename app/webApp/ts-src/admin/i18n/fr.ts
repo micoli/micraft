@@ -28,7 +28,7 @@ export const fr: Record<TranslationKey, string> = {
   "page.players": "Joueurs",
   "page.npcs": "NPC",
   "page.classes": "Classes & compétences",
-  "page.config": "Éditeur de config",
+  "page.config": "Éditeur de configEditor",
   "page.worlds": "Mondes",
   "page.gameAssets": "Assets de jeu",
   "page.administration": "Administration",
@@ -186,9 +186,9 @@ export const fr: Record<TranslationKey, string> = {
   "classes.legendSkill": "= niveau de compétence accordé",
 
   // ── Config editor ───────────────────────────────────────────────────────────
-  "config.files": "Fichiers de config",
+  "config.files": "Fichiers de configEditor",
   "config.schema": "schéma",
-  "config.selectFile": "Sélectionner un fichier de config à modifier",
+  "config.selectFile": "Sélectionner un fichier de configEditor à modifier",
   "config.failedToLoad": "Échec du chargement du fichier",
 
   // ── Worlds page ─────────────────────────────────────────────────────────────
