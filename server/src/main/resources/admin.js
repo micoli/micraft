@@ -25671,7 +25671,7 @@
   var import_client = __toESM(require_client(), 1);
 
   // admin/AdminApp.tsx
-  var import_react26 = __toESM(require_react(), 1);
+  var import_react27 = __toESM(require_react(), 1);
 
   // node_modules/react-router/dist/development/chunk-KS7C4IRE.mjs
   var React = __toESM(require_react(), 1);
@@ -91716,15 +91716,20 @@ ${end.comment}` : end.comment;
   }
 
   // admin/pages/InstancesPage.tsx
-  var import_react25 = __toESM(require_react(), 1);
+  var import_react26 = __toESM(require_react(), 1);
 
   // admin/pages/InstanceEditorViewport.tsx
-  var import_react23 = __toESM(require_react(), 1);
+  var import_react24 = __toESM(require_react(), 1);
 
   // game/shared/BlockPreview.tsx
   var import_react22 = __toESM(require_react(), 1);
 
   // game/blocks/blockDefs.ts
+  var _plainColors = [];
+  function plainMatKey(colorIdx) {
+    const color = _plainColors[colorIdx - 1];
+    return color ? "plain:" + color.hex : null;
+  }
   function getFaceTexUrl(ordinal, faceDir) {
     var _a6, _b, _c, _d, _e, _f, _g, _h, _i, _j;
     const def = (_b = (_a6 = window.mc) == null ? void 0 : _a6.getBlockDef) == null ? void 0 : _b.call(_a6, ordinal);
@@ -91800,12 +91805,12 @@ ${end.comment}` : end.comment;
       const fi = (_h = (_g = blockDef.faces[0]) == null ? void 0 : _g.find((f) => f != null)) != null ? _h : null;
       const url = fi ? getUrl(fi.matKey) : null;
       if (fi && url) {
-        const CROSS_QUADS = [
+        const CROSS_QUADS2 = [
           [0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0],
           [1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0]
         ];
-        for (let qi = 0; qi < CROSS_QUADS.length; qi++) {
-          const q = CROSS_QUADS[qi];
+        for (let qi = 0; qi < CROSS_QUADS2.length; qi++) {
+          const q = CROSS_QUADS2[qi];
           const positions = [
             q[0] - 0.5,
             q[1] - 0.5,
@@ -91971,6 +91976,471 @@ ${end.comment}` : end.comment;
     );
   }
 
+  // admin/hooks/useInstanceShortcutBar.ts
+  var import_react23 = __toESM(require_react(), 1);
+  var SLOTS_PER_PAGE = 10;
+  var DIGIT_CODES = [
+    "Digit1",
+    "Digit2",
+    "Digit3",
+    "Digit4",
+    "Digit5",
+    "Digit6",
+    "Digit7",
+    "Digit8",
+    "Digit9",
+    "Digit0"
+  ];
+  function emptyPage() {
+    return new Array(SLOTS_PER_PAGE).fill(null);
+  }
+  function useInstanceShortcutBar({
+    onSelectBreak,
+    onSelectBlock
+  }) {
+    const [pages, setPages] = (0, import_react23.useState)([emptyPage()]);
+    const [currentPage, setCurrentPage] = (0, import_react23.useState)(0);
+    const [selectedSlot, setSelectedSlot] = (0, import_react23.useState)(0);
+    const [dragOver, setDragOver] = (0, import_react23.useState)(null);
+    const pagesRef = (0, import_react23.useRef)(pages);
+    (0, import_react23.useLayoutEffect)(() => {
+      pagesRef.current = pages;
+    });
+    function selectSlot(idx) {
+      setSelectedSlot(idx);
+      if (idx === 0) {
+        onSelectBreak();
+        return;
+      }
+      const blockName = pagesRef.current[currentPage][idx];
+      if (blockName) onSelectBlock(blockName);
+    }
+    function goToPage(page) {
+      if (page < 0) return;
+      setPages((prev) => {
+        if (page < prev.length) return prev;
+        return [...prev, ...Array.from({ length: page - prev.length + 1 }, emptyPage)];
+      });
+      setCurrentPage(page);
+    }
+    (0, import_react23.useEffect)(() => {
+      function onKeyDown(e) {
+        const target = e.target;
+        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+        const digitIdx = DIGIT_CODES.indexOf(e.code);
+        if (digitIdx === -1) return;
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          goToPage(digitIdx);
+          return;
+        }
+        selectSlot(digitIdx);
+      }
+      window.addEventListener("keydown", onKeyDown);
+      return () => window.removeEventListener("keydown", onKeyDown);
+    }, [currentPage]);
+    function assignSlot(idx, blockName) {
+      if (idx === 0) return;
+      setPages((prev) => {
+        const next = prev.map((p2) => p2.slice());
+        next[currentPage][idx] = blockName;
+        return next;
+      });
+    }
+    function handleDragOver(e, idx) {
+      if (idx === 0) return;
+      e.preventDefault();
+      setDragOver(idx);
+    }
+    function handleDragLeave() {
+      setDragOver(null);
+    }
+    function handleDrop(e, idx) {
+      if (idx === 0) return;
+      e.preventDefault();
+      setDragOver(null);
+      const blockName = e.dataTransfer.getData("text/plain");
+      if (blockName) assignSlot(idx, blockName);
+    }
+    function handleContextMenu(e, idx) {
+      if (idx === 0) return;
+      e.preventDefault();
+      assignSlot(idx, null);
+    }
+    return {
+      slots: pages[currentPage],
+      pageCount: pages.length,
+      currentPage,
+      selectedSlot,
+      dragOver,
+      selectSlot,
+      goToPage,
+      handleDragOver,
+      handleDragLeave,
+      handleDrop,
+      handleContextMenu
+    };
+  }
+
+  // game/shaders/block.ts
+  var BLOCK_VERT = `
+attribute vec3 position;
+attribute vec3 normal;
+attribute vec2 uv;
+attribute vec4 color;
+
+uniform mat4 worldViewProjection;
+uniform mat4 view;
+uniform mat4 world;
+uniform mat4 lightWVP;
+
+varying vec2 vUv;
+varying vec4 vColor;
+varying float vFogDepth;
+varying vec3 vWorldPos;
+varying vec3 vNormal;
+varying vec4 vShadowCoord;
+
+void main() {
+  vec4 worldPos = world * vec4(position, 1.0);
+  gl_Position = worldViewProjection * vec4(position, 1.0);
+  vUv = uv;
+  vColor = color;
+  vFogDepth = (view * worldPos).z;
+  vWorldPos = worldPos.xyz;
+  vNormal = normalize((world * vec4(normal, 0.0)).xyz);
+  vShadowCoord = lightWVP * vec4(position, 1.0);
+}
+`;
+  var BLOCK_GHOST_FRAG = `
+precision highp float;
+
+uniform sampler2D textureSampler;
+uniform vec3 tint;
+
+varying vec2 vUv;
+varying vec4 vColor;
+
+void main() {
+  vec4 texColor = texture2D(textureSampler, vUv);
+  if (texColor.a < 0.1) discard;
+  gl_FragColor = vec4(texColor.rgb * tint * vColor.rgb, 0.5);
+}
+`;
+
+  // game/materials/whitePixel.ts
+  var WHITE_PIXEL_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP4DwQACfsD/Wj6HMwAAAAASUVORK5CYII=";
+
+  // game/chunks/chunkBuilder.ts
+  var MC_NORMS = [
+    [0, 0, 1],
+    // 0 south
+    [0, 0, -1],
+    // 1 north
+    [1, 0, 0],
+    // 2 east
+    [-1, 0, 0],
+    // 3 west
+    [0, 1, 0],
+    // 4 top
+    [0, -1, 0]
+    // 5 bottom
+  ];
+  var FACE_SHADES = [0.88, 0.88, 0.75, 0.75, 1, 0.65];
+  var ROT_SOURCE = [
+    [0, 1, 2, 3, 4, 5],
+    // rot=0: identity
+    [3, 2, 0, 1, 4, 5],
+    // rot=1 (90° CW)
+    [1, 0, 3, 2, 4, 5],
+    // rot=2 (180°)
+    [2, 3, 1, 0, 4, 5]
+    // rot=3 (270° CW)
+  ];
+  function vertsFromElement(from, to, fd) {
+    const [fx, fy, fz] = from.map((v) => v / 16);
+    const [tx, ty, tz] = to.map((v) => v / 16);
+    switch (fd) {
+      case 0:
+        return new Float32Array([fx, fy, tz, tx, fy, tz, tx, ty, tz, fx, ty, tz]);
+      case 1:
+        return new Float32Array([tx, fy, fz, fx, fy, fz, fx, ty, fz, tx, ty, fz]);
+      case 2:
+        return new Float32Array([tx, fy, tz, tx, fy, fz, tx, ty, fz, tx, ty, tz]);
+      case 3:
+        return new Float32Array([fx, fy, fz, fx, fy, tz, fx, ty, tz, fx, ty, fz]);
+      case 4:
+        return new Float32Array([fx, ty, tz, tx, ty, tz, tx, ty, fz, fx, ty, fz]);
+      default:
+        return new Float32Array([fx, fy, fz, tx, fy, fz, tx, fy, tz, fx, fy, tz]);
+    }
+  }
+  function rotateVerts90CW(v) {
+    const r2 = new Float32Array(12);
+    for (let k = 0; k < 4; k++) {
+      r2[k * 3] = v[k * 3 + 2];
+      r2[k * 3 + 1] = v[k * 3 + 1];
+      r2[k * 3 + 2] = 1 - v[k * 3];
+    }
+    return r2;
+  }
+  function rotateVerts(v, rotation) {
+    let r2 = v;
+    for (let i = 0; i < rotation; i++) r2 = rotateVerts90CW(r2);
+    return r2;
+  }
+  var faceTable = [];
+  var brickFracTable = [];
+  var gltfTypeTable = {};
+  var CROSS_SPRITE_VERTS = new Float32Array([0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1]);
+  function buildFaceTable() {
+    var _a6, _b, _c;
+    faceTable = [];
+    brickFracTable = [];
+    for (let typeOrd = 0; typeOrd < 512; typeOrd++) {
+      const blockDef = window.mc.getBlockDef(typeOrd);
+      if (!blockDef) continue;
+      const bs = (_a6 = blockDef.brickSize) != null ? _a6 : [1, 1, 1];
+      brickFracTable[typeOrd] = [bs[0] < 1 ? bs[0] : bs[0] > 1 ? 0.5 : 0, bs[2] < 1 ? bs[2] : bs[2] > 1 ? 0.5 : 0];
+      if (blockDef.renderType === "gltf") {
+        if (blockDef.gltfPath) gltfTypeTable[typeOrd] = blockDef.gltfPath;
+        continue;
+      }
+      const isCross = blockDef.renderType === "cross_sprite";
+      const isPlastic = blockDef.hasStuds === true;
+      for (let rotation = 0; rotation < 4; rotation++) {
+        for (let fd = 0; fd < 6; fd++) {
+          const faceMat = (typeOrd * 4 + rotation) * 6 + fd;
+          const infos = [];
+          if (isCross) {
+            if (fd === 0 && rotation === 0) {
+              const fi = (_c = (_b = blockDef.faces[0]) == null ? void 0 : _b.find((f) => f != null)) != null ? _c : null;
+              if (fi)
+                infos.push({
+                  matKey: fi.matKey,
+                  uv: new Float32Array(fi.uv),
+                  shade: 0.8,
+                  normX: 0,
+                  normY: 1,
+                  normZ: 0,
+                  verts: CROSS_SPRITE_VERTS,
+                  isCrossSprite: true,
+                  isPlastic
+                });
+            }
+          } else {
+            for (let elemIdx = 0; elemIdx < blockDef.elements.length; elemIdx++) {
+              const elem = blockDef.elements[elemIdx];
+              const srcFd = ROT_SOURCE[rotation][fd];
+              const fi = elem.faces[srcFd];
+              if (!fi) continue;
+              const [nx, ny, nz] = MC_NORMS[fd];
+              const rawVerts = vertsFromElement(elem.from, elem.to, fd);
+              let verts = rotation === 0 ? rawVerts : rotateVerts(rawVerts, rotation);
+              if (rotation > 0 && (bs[0] !== 1 || bs[2] !== 1)) {
+                const sX = bs[0], sZ = bs[2];
+                const cx = rotation === 2 ? sX - 1 : rotation === 3 ? sZ - 1 : 0;
+                const cz = rotation === 1 ? sX - 1 : rotation === 2 ? sZ - 1 : 0;
+                if (cx !== 0 || cz !== 0) {
+                  const cv = new Float32Array(12);
+                  for (let k = 0; k < 4; k++) {
+                    cv[k * 3] = verts[k * 3] + cx;
+                    cv[k * 3 + 1] = verts[k * 3 + 1];
+                    cv[k * 3 + 2] = verts[k * 3 + 2] + cz;
+                  }
+                  verts = cv;
+                }
+              }
+              infos.push({
+                matKey: fi.matKey,
+                uv: new Float32Array(fi.uv),
+                shade: FACE_SHADES[fd],
+                normX: nx,
+                normY: ny,
+                normZ: nz,
+                verts,
+                isCrossSprite: false,
+                isPlastic
+              });
+            }
+          }
+          if (infos.length > 0) faceTable[faceMat] = infos;
+        }
+      }
+    }
+  }
+  var GROUP_MAX_VERTS = 65536;
+  var GROUP_MAX_IDX = Math.ceil(GROUP_MAX_VERTS * 1.5);
+  var groupPool = [];
+  function acquireGroup() {
+    if (groupPool.length > 0) {
+      const g = groupPool.pop();
+      g.v = g.ic = 0;
+      return g;
+    }
+    return {
+      p: new Float32Array(GROUP_MAX_VERTS * 3),
+      n: new Float32Array(GROUP_MAX_VERTS * 3),
+      u: new Float32Array(GROUP_MAX_VERTS * 2),
+      c: new Float32Array(GROUP_MAX_VERTS * 4),
+      i: new Int32Array(GROUP_MAX_IDX),
+      v: 0,
+      ic: 0
+    };
+  }
+  function releaseGroup(g) {
+    if (groupPool.length < 24) groupPool.push(g);
+  }
+  function emitQuad(g, wx, wy, wz, verts, nx, ny, nz, uv, shade, ao, isPlastic = false) {
+    if (g.v + 4 > GROUP_MAX_VERTS) return;
+    const baseV = g.v;
+    let pi = baseV * 3;
+    let ni = baseV * 3;
+    let ui = baseV * 2;
+    let ci = baseV * 4;
+    const alphaFlag = isPlastic ? 2 : 1;
+    for (let k = 0; k < 4; k++) {
+      const vk = k * 3;
+      g.p[pi++] = wx + verts[vk];
+      g.p[pi++] = wy + verts[vk + 1];
+      g.p[pi++] = wz + verts[vk + 2];
+      g.n[ni++] = nx;
+      g.n[ni++] = ny;
+      g.n[ni++] = nz;
+      g.u[ui++] = uv[k * 2];
+      g.u[ui++] = uv[k * 2 + 1];
+      const aoV = ao >> k * 4 & 15;
+      const b = shade * (1 - aoV * (0.5 / 15));
+      g.c[ci++] = b;
+      g.c[ci++] = b;
+      g.c[ci++] = b;
+      g.c[ci++] = alphaFlag;
+    }
+    let ii = g.ic;
+    g.i[ii++] = baseV;
+    g.i[ii++] = baseV + 1;
+    g.i[ii++] = baseV + 2;
+    g.i[ii++] = baseV;
+    g.i[ii++] = baseV + 2;
+    g.i[ii++] = baseV + 3;
+    g.ic = ii;
+    g.v = baseV + 4;
+  }
+  var CROSS_QUADS = [
+    new Float32Array([0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0]),
+    new Float32Array([1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0])
+  ];
+  function emitCrossSprite(wx, wy, wz, g, uv, ao) {
+    for (const q of CROSS_QUADS) emitQuad(g, wx, wy, wz, q, 0, 1, 0, uv, 0.8, ao);
+  }
+  var ghostMatCache = {};
+  function getOrCreateGhostMat(scene, matKey) {
+    var _a6;
+    if (ghostMatCache[matKey]) return ghostMatCache[matKey];
+    let url;
+    let tr2, tg, tb;
+    if (matKey.startsWith("plain:")) {
+      const color = window.mc.getPlainColors().find((c) => "plain:" + c.hex === matKey);
+      if (!color) return null;
+      url = WHITE_PIXEL_URL;
+      [tr2, tg, tb] = [color.r / 255, color.g / 255, color.b / 255];
+    } else {
+      const textures = window.mc.getBlockTextures();
+      const baseName = matKey.replace(":biome_tint", "");
+      const texDef = textures.find((t2) => t2.name === baseName);
+      if (!texDef) return null;
+      url = texDef.url;
+      const isBiomeTint = matKey.endsWith(":biome_tint");
+      [tr2, tg, tb] = isBiomeTint ? [0.47, 0.75, 0.35] : (_a6 = texDef.tint) != null ? _a6 : [1, 1, 1];
+    }
+    const mat = new BABYLON.ShaderMaterial(
+      "ghost_" + matKey,
+      scene,
+      { vertexSource: BLOCK_VERT, fragmentSource: BLOCK_GHOST_FRAG },
+      {
+        attributes: ["position", "normal", "uv", "color"],
+        uniforms: ["worldViewProjection", "tint"],
+        samplers: ["textureSampler"]
+      }
+    );
+    const tex = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
+    mat.setTexture("textureSampler", tex);
+    mat.setVector3("tint", new BABYLON.Vector3(tr2, tg, tb));
+    mat.backFaceCulling = false;
+    mat.needAlphaBlending = () => true;
+    mat.zOffset = -2;
+    mat.zOffsetUnits = -4;
+    ghostMatCache[matKey] = mat;
+    return mat;
+  }
+  function buildBlockPreviewMeshes(scene, typeOrd, rotation, colorIdx = 0) {
+    if (!window.mc.isBlockDefsReady()) {
+      console.warn("[MiCraft] Ghost: block defs not ready yet (typeOrd=" + typeOrd + ")");
+      return [];
+    }
+    if (faceTable.length === 0) {
+      console.warn("[MiCraft] Ghost: faceTable empty \u2014 no chunk rendered yet? (typeOrd=" + typeOrd + ")");
+      buildFaceTable();
+    }
+    const groups = {};
+    const plainKey = colorIdx > 0 ? plainMatKey(colorIdx) : null;
+    for (let fd = 0; fd < 6; fd++) {
+      const faceMat = (typeOrd * 4 + rotation) * 6 + fd;
+      const infos = faceTable[faceMat];
+      if (!infos) continue;
+      for (const info of infos) {
+        const matKey = plainKey != null ? plainKey : info.matKey;
+        if (!groups[matKey]) groups[matKey] = acquireGroup();
+        const g = groups[matKey];
+        if (info.isCrossSprite) {
+          emitCrossSprite(0, 0, 0, g, info.uv, 0);
+        } else {
+          emitQuad(g, 0, 0, 0, info.verts, info.normX, info.normY, info.normZ, info.uv, info.shade, 0, info.isPlastic);
+        }
+      }
+    }
+    const meshes = [];
+    for (const [mk, g] of Object.entries(groups)) {
+      if (g.v === 0) {
+        releaseGroup(g);
+        continue;
+      }
+      const mesh = new BABYLON.Mesh("ghostBlock_" + mk, scene);
+      const vd = new BABYLON.VertexData();
+      vd.positions = g.p.subarray(0, g.v * 3);
+      vd.normals = g.n.subarray(0, g.v * 3);
+      vd.uvs = g.u.subarray(0, g.v * 2);
+      vd.colors = g.c.subarray(0, g.v * 4);
+      vd.indices = g.i.subarray(0, g.ic);
+      vd.applyToMesh(mesh, false);
+      mesh.material = getOrCreateGhostMat(scene, mk);
+      mesh.isPickable = false;
+      meshes.push(mesh);
+      releaseGroup(g);
+    }
+    return meshes;
+  }
+
+  // game/targeting/targeting.ts
+  function boxLines(x0, y0, z0, x1, y1, z1, h = 2e-3) {
+    const V = (x, y, z) => new BABYLON.Vector3(x, y, z);
+    const xa = x0 - h, xb = x1 + h, ya = y0 - h, yb = y1 + h, za = z0 - h, zb = z1 + h;
+    return [
+      [V(xa, ya, za), V(xb, ya, za)],
+      [V(xb, ya, za), V(xb, ya, zb)],
+      [V(xb, ya, zb), V(xa, ya, zb)],
+      [V(xa, ya, zb), V(xa, ya, za)],
+      [V(xa, yb, za), V(xb, yb, za)],
+      [V(xb, yb, za), V(xb, yb, zb)],
+      [V(xb, yb, zb), V(xa, yb, zb)],
+      [V(xa, yb, zb), V(xa, yb, za)],
+      [V(xa, ya, za), V(xa, yb, za)],
+      [V(xb, ya, za), V(xb, yb, za)],
+      [V(xb, ya, zb), V(xb, yb, zb)],
+      [V(xa, ya, zb), V(xa, yb, zb)]
+    ];
+  }
+
   // admin/pages/InstanceEditorViewport.tsx
   var import_jsx_runtime39 = __toESM(require_jsx_runtime(), 1);
   var CHUNK_SIZE = 16;
@@ -91981,22 +92451,51 @@ ${end.comment}` : end.comment;
     return `#${[r2, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
   }
   function InstanceEditorViewport({ zone }) {
-    const canvasRef = (0, import_react23.useRef)(null);
-    const [blockDefs, setBlockDefs] = (0, import_react23.useState)([]);
-    const [ordinalByName, setOrdinalByName] = (0, import_react23.useState)(/* @__PURE__ */ new Map());
-    const [selectedType, setSelectedType] = (0, import_react23.useState)(null);
-    const [mode, setMode] = (0, import_react23.useState)("place");
-    const [loadError, setLoadError] = (0, import_react23.useState)(null);
-    const modeRef = (0, import_react23.useRef)(mode);
-    const selectedTypeRef = (0, import_react23.useRef)(selectedType);
-    (0, import_react23.useEffect)(() => {
+    const canvasRef = (0, import_react24.useRef)(null);
+    const paletteRef = (0, import_react24.useRef)(null);
+    const [hoveredBlockName, setHoveredBlockName] = (0, import_react24.useState)(null);
+    const [tooltipAbove, setTooltipAbove] = (0, import_react24.useState)(false);
+    const [blockDefs, setBlockDefs] = (0, import_react24.useState)([]);
+    const [ordinalByName, setOrdinalByName] = (0, import_react24.useState)(/* @__PURE__ */ new Map());
+    const [selectedType, setSelectedType] = (0, import_react24.useState)(null);
+    const [mode, setMode] = (0, import_react24.useState)("place");
+    const [loadError, setLoadError] = (0, import_react24.useState)(null);
+    const [search, setSearch] = (0, import_react24.useState)("");
+    const modeRef = (0, import_react24.useRef)(mode);
+    const selectedTypeRef = (0, import_react24.useRef)(selectedType);
+    const ordinalByNameRef = (0, import_react24.useRef)(ordinalByName);
+    (0, import_react24.useEffect)(() => {
       modeRef.current = mode;
     }, [mode]);
-    (0, import_react23.useEffect)(() => {
+    (0, import_react24.useEffect)(() => {
       selectedTypeRef.current = selectedType;
     }, [selectedType]);
+    (0, import_react24.useEffect)(() => {
+      ordinalByNameRef.current = ordinalByName;
+    }, [ordinalByName]);
     const blockDefsReady = useBlockDefsReady();
-    (0, import_react23.useEffect)(() => {
+    const shortcutBar = useInstanceShortcutBar({
+      onSelectBreak: () => setMode("break"),
+      onSelectBlock: (blockName) => {
+        setMode("place");
+        setSelectedType(blockName);
+      }
+    });
+    const [modKeys, setModKeys] = (0, import_react24.useState)({ shift: false, meta: false, alt: false, ctrl: false });
+    (0, import_react24.useEffect)(() => {
+      const update = (e) => setModKeys({ shift: e.shiftKey, meta: e.metaKey, alt: e.altKey, ctrl: e.ctrlKey });
+      const reset = () => setModKeys({ shift: false, meta: false, alt: false, ctrl: false });
+      window.addEventListener("keydown", update);
+      window.addEventListener("keyup", update);
+      window.addEventListener("blur", reset);
+      return () => {
+        window.removeEventListener("keydown", update);
+        window.removeEventListener("keyup", update);
+        window.removeEventListener("blur", reset);
+      };
+    }, []);
+    const activeDragMode = modKeys.meta ? "rotate" : modKeys.alt ? "pan" : modKeys.ctrl ? "zoom" : "place";
+    (0, import_react24.useEffect)(() => {
       api.blocks.list().then((defs) => {
         var _a6, _b;
         const withoutAir = defs.filter((b) => b.name !== "AIR");
@@ -92009,7 +92508,7 @@ ${end.comment}` : end.comment;
       var _a6;
       return (_a6 = ordinalByName.get(name2)) != null ? _a6 : null;
     };
-    (0, import_react23.useEffect)(() => {
+    (0, import_react24.useEffect)(() => {
       setLoadError(null);
       if (zone.chunks.length === 0) {
         setLoadError("Zone has no chunks.");
@@ -92046,9 +92545,9 @@ ${end.comment}` : end.comment;
         scene
       );
       camera.attachControl(canvas, true);
+      camera.inputs.removeByType("ArcRotateCameraPointersInput");
       camera.wheelPrecision = 20;
       camera.lowerRadiusLimit = 2;
-      camera.panningSensibility = 200;
       const light = new B.HemisphericLight("light", new B.Vector3(0.5, 1, 0.3), scene);
       light.intensity = 1;
       const sun = new B.DirectionalLight("sun", new B.Vector3(-0.3, -1, -0.2), scene);
@@ -92074,6 +92573,7 @@ ${end.comment}` : end.comment;
       const chunkKeyOf = (cx, cz) => `${cx},${cz}`;
       const chunkLoading = /* @__PURE__ */ new Set();
       const visibleChunks = /* @__PURE__ */ new Set();
+      const overlayMeshes = /* @__PURE__ */ new Set();
       let disposed = false;
       async function loadChunk(cx, cz) {
         const exports = await window.webApp;
@@ -92082,7 +92582,8 @@ ${end.comment}` : end.comment;
         const bytes = new Uint8Array(await res.arrayBuffer());
         exports.mcAdminLoadChunk(scene, bytes, zone.yMin, zone.yMax);
         for (const m of scene.meshes) {
-          if (!groundMeshes.has(m)) m.isPickable = true;
+          const mesh = m;
+          if (!groundMeshes.has(mesh) && !overlayMeshes.has(mesh)) mesh.isPickable = true;
         }
       }
       function showChunk(cx, cz) {
@@ -92134,14 +92635,201 @@ ${end.comment}` : end.comment;
       canvas.addEventListener("contextmenu", (e) => e.preventDefault());
       let downX = 0;
       let downY = 0;
+      let lastX = 0;
+      let lastY = 0;
+      let downShift = false;
+      let dragMode = null;
       const CLICK_MOVE_THRESHOLD = 5;
+      const ROTATE_SENSITIVITY = 5e-3;
+      const PAN_SENSITIVITY = 15e-4;
+      const ZOOM_SENSITIVITY = 0.01;
+      function panCamera(dx, dy) {
+        const m = camera.getWorldMatrix();
+        const right = B.Vector3.TransformNormal(new B.Vector3(1, 0, 0), m).normalize();
+        const up = B.Vector3.TransformNormal(new B.Vector3(0, 1, 0), m).normalize();
+        const scale = camera.radius * PAN_SENSITIVITY;
+        camera.target.addInPlace(right.scale(-dx * scale)).addInPlace(up.scale(dy * scale));
+      }
+      let placementRotation = 0;
+      let ghostMeshes = [];
+      let ghostGeoKey = null;
+      let outlineMesh = null;
+      function disposeGhost() {
+        ghostMeshes.forEach((m) => {
+          overlayMeshes.delete(m);
+          m.dispose();
+        });
+        ghostMeshes = [];
+        ghostGeoKey = null;
+      }
+      function disposeOutline() {
+        if (outlineMesh) overlayMeshes.delete(outlineMesh);
+        outlineMesh == null ? void 0 : outlineMesh.dispose();
+        outlineMesh = null;
+      }
+      let breakMesh = null;
+      let breakMeshKey = null;
+      function disposeBreakOverlay() {
+        if (breakMesh) overlayMeshes.delete(breakMesh);
+        breakMesh == null ? void 0 : breakMesh.dispose();
+        breakMesh = null;
+        breakMeshKey = null;
+      }
+      function showBreakOverlay(x, y, z) {
+        const key2 = `${x},${y},${z}`;
+        if (breakMeshKey === key2) return;
+        disposeBreakOverlay();
+        const box = B.MeshBuilder.CreateBox("breakOverlay", { size: 1 }, scene);
+        box.position = new B.Vector3(x + 0.5, y + 0.5, z + 0.5);
+        const mat = new B.StandardMaterial("breakOverlayMat", scene);
+        mat.diffuseColor = new B.Color3(1, 0, 0);
+        mat.emissiveColor = new B.Color3(1, 0, 0);
+        mat.alpha = 0.3;
+        mat.disableDepthWrite = true;
+        mat.backFaceCulling = false;
+        box.material = mat;
+        box.isPickable = false;
+        box.renderingGroupId = 1;
+        breakMesh = box;
+        breakMeshKey = key2;
+        overlayMeshes.add(box);
+      }
+      function showGhostAndOutline(x, y, z, ordinal) {
+        var _a6;
+        const geoKey = `${ordinal},${placementRotation}`;
+        if (ghostGeoKey !== geoKey) {
+          disposeGhost();
+          ghostMeshes = buildBlockPreviewMeshes(scene, ordinal, placementRotation);
+          ghostGeoKey = geoKey;
+          for (const m of ghostMeshes) {
+            if (m.material) {
+              m.material.zOffset = 0;
+              m.material.zOffsetUnits = 0;
+              m.material.disableDepthWrite = true;
+            }
+            m.renderingGroupId = 1;
+            overlayMeshes.add(m);
+          }
+        }
+        const pos = new B.Vector3(x, y, z);
+        for (const m of ghostMeshes) m.position = pos;
+        const blockDef = window.mc.getBlockDef(ordinal);
+        const bs = (_a6 = blockDef == null ? void 0 : blockDef.brickSize) != null ? _a6 : [1, 1, 1];
+        const rot90 = placementRotation === 1 || placementRotation === 3;
+        const worldSizeX = rot90 ? bs[2] < 1 ? bs[2] : Math.ceil(bs[2]) : bs[0] < 1 ? bs[0] : Math.ceil(bs[0]);
+        const worldSizeY = Math.ceil(bs[1]);
+        const worldSizeZ = rot90 ? bs[0] < 1 ? bs[0] : Math.ceil(bs[0]) : bs[2] < 1 ? bs[2] : Math.ceil(bs[2]);
+        disposeOutline();
+        const ls = B.MeshBuilder.CreateLineSystem(
+          "placeOutline",
+          { lines: boxLines(x, y, z, x + worldSizeX, y + worldSizeY, z + worldSizeZ) },
+          scene
+        );
+        ls.color = new B.Color3(1, 1, 1);
+        ls.isPickable = false;
+        ls.renderingGroupId = 1;
+        outlineMesh = ls;
+        overlayMeshes.add(ls);
+      }
+      function updateHoverPreview(evt) {
+        const effectiveMode = evt.shiftKey ? "break" : modeRef.current;
+        const pick = scene.pick(scene.pointerX, scene.pointerY);
+        if (!(pick == null ? void 0 : pick.hit) || !pick.pickedMesh || !pick.pickedPoint) {
+          disposeGhost();
+          disposeOutline();
+          disposeBreakOverlay();
+          return;
+        }
+        const normal = pick.getNormal(true);
+        const onGround = groundMeshes.has(pick.pickedMesh);
+        if (effectiveMode === "break") {
+          disposeGhost();
+          disposeOutline();
+          if (onGround || !normal) {
+            disposeBreakOverlay();
+            return;
+          }
+          const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
+          const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
+          const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
+          showBreakOverlay(bx, by, bz);
+          return;
+        }
+        disposeBreakOverlay();
+        const type = selectedTypeRef.current;
+        const ordinal = type ? ordinalByNameRef.current.get(type) : void 0;
+        if (ordinal == null) {
+          disposeGhost();
+          disposeOutline();
+          return;
+        }
+        let tx, ty, tz;
+        if (onGround) {
+          tx = Math.floor(pick.pickedPoint.x);
+          ty = zone.yMin;
+          tz = Math.floor(pick.pickedPoint.z);
+        } else if (normal) {
+          tx = Math.floor(pick.pickedPoint.x + normal.x * PICK_EPSILON);
+          ty = Math.floor(pick.pickedPoint.y + normal.y * PICK_EPSILON);
+          tz = Math.floor(pick.pickedPoint.z + normal.z * PICK_EPSILON);
+        } else {
+          disposeGhost();
+          disposeOutline();
+          return;
+        }
+        if (ty < zone.yMin || ty > zone.yMax || !inZone(tx, tz)) {
+          disposeGhost();
+          disposeOutline();
+          return;
+        }
+        showGhostAndOutline(tx, ty, tz, ordinal);
+      }
+      function onKeyDown(e) {
+        const target = e.target;
+        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+        if (e.code !== "KeyR") return;
+        placementRotation = (placementRotation + 1) % 4;
+        ghostGeoKey = null;
+        updateHoverPreview({ shiftKey: e.shiftKey });
+      }
+      window.addEventListener("keydown", onKeyDown);
       const clickObserver = scene.onPointerObservable.add((pointerInfo) => {
+        var _a6;
         if (pointerInfo.type === B.PointerEventTypes.POINTERDOWN) {
-          downX = scene.pointerX;
-          downY = scene.pointerY;
+          const evt = pointerInfo.event;
+          downX = lastX = scene.pointerX;
+          downY = lastY = scene.pointerY;
+          downShift = evt.shiftKey;
+          dragMode = evt.metaKey ? "rotate" : evt.altKey ? "pan" : evt.ctrlKey ? "zoom" : "place";
+          if (dragMode === "rotate") {
+            const pick2 = scene.pick(scene.pointerX, scene.pointerY);
+            if ((pick2 == null ? void 0 : pick2.hit) && pick2.pickedPoint) camera.setTarget(pick2.pickedPoint);
+          }
+          return;
+        }
+        if (pointerInfo.type === B.PointerEventTypes.POINTERMOVE) {
+          if (!dragMode || dragMode === "place") {
+            updateHoverPreview(pointerInfo.event);
+            return;
+          }
+          const dx2 = scene.pointerX - lastX;
+          const dy2 = scene.pointerY - lastY;
+          lastX = scene.pointerX;
+          lastY = scene.pointerY;
+          if (dragMode === "rotate") {
+            camera.alpha -= dx2 * ROTATE_SENSITIVITY;
+            camera.beta = Math.min(Math.PI - 0.01, Math.max(0.01, camera.beta - dy2 * ROTATE_SENSITIVITY));
+          } else if (dragMode === "pan") {
+            panCamera(dx2, dy2);
+          } else if (dragMode === "zoom") {
+            camera.radius = Math.max((_a6 = camera.lowerRadiusLimit) != null ? _a6 : 2, camera.radius + dy2 * camera.radius * ZOOM_SENSITIVITY);
+          }
           return;
         }
         if (pointerInfo.type !== B.PointerEventTypes.POINTERUP) return;
+        const wasPlaceDrag = dragMode === "place";
+        dragMode = null;
+        if (!wasPlaceDrag) return;
         const dx = scene.pointerX - downX;
         const dy = scene.pointerY - downY;
         if (dx * dx + dy * dy > CLICK_MOVE_THRESHOLD * CLICK_MOVE_THRESHOLD) return;
@@ -92149,7 +92837,7 @@ ${end.comment}` : end.comment;
         if (!(pick == null ? void 0 : pick.hit) || !pick.pickedMesh || !pick.pickedPoint) return;
         const normal = pick.getNormal(true);
         const onGround = groundMeshes.has(pick.pickedMesh);
-        const currentMode = modeRef.current;
+        const currentMode = downShift ? "break" : modeRef.current;
         if (currentMode === "break") {
           if (onGround || !normal) return;
           const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
@@ -92173,7 +92861,7 @@ ${end.comment}` : end.comment;
           return;
         }
         if (ty < zone.yMin || ty > zone.yMax || !inZone(tx, tz)) return;
-        api.instances.setBlock(zone.id, { x: tx, y: ty, z: tz, type, state: 0 }).then(() => reloadChunk(Math.floor(tx / CHUNK_SIZE), Math.floor(tz / CHUNK_SIZE))).catch(console.error);
+        api.instances.setBlock(zone.id, { x: tx, y: ty, z: tz, type, state: placementRotation }).then(() => reloadChunk(Math.floor(tx / CHUNK_SIZE), Math.floor(tz / CHUNK_SIZE))).catch(console.error);
       });
       engine.runRenderLoop(() => scene.render());
       const onResize = () => engine.resize();
@@ -92183,34 +92871,116 @@ ${end.comment}` : end.comment;
         camera.onViewMatrixChangedObservable.remove(viewMatrixObserver);
         scene.onPointerObservable.remove(clickObserver);
         window.removeEventListener("resize", onResize);
+        window.removeEventListener("keydown", onKeyDown);
+        disposeGhost();
+        disposeOutline();
+        disposeBreakOverlay();
         engine.dispose();
       };
     }, [zone.id, blockDefsReady]);
     return /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "flex-1 flex overflow-hidden", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "flex-[4] relative", children: loadError ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "w-full h-full flex items-center justify-center text-red-400 text-sm p-6 text-center", children: loadError }) : /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("canvas", { ref: canvasRef, className: "w-full h-full block" }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "flex-[4] relative", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "absolute top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none z-10", children: [
+          { key: "place", label: modKeys.shift || mode === "break" ? "Break" : "Place", hint: "\u21E7" },
+          { key: "zoom", label: "Zoom", hint: "\u2303" },
+          { key: "pan", label: "Pan", hint: "\u2325" },
+          { key: "rotate", label: "Rotate", hint: "\u2318" }
+        ].map((m) => /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(
+          "div",
+          {
+            className: `px-2 py-1 rounded text-[10px] font-medium transition-colors ${activeDragMode === m.key ? "bg-[#3C50E0] text-white" : "bg-black/50 text-[#8A99AF]"}`,
+            children: [
+              m.hint && /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "mr-1 font-mono", children: m.hint }),
+              m.label
+            ]
+          },
+          m.key
+        )) }),
+        loadError ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "w-full h-full flex items-center justify-center text-red-400 text-sm p-6 text-center", children: loadError }) : /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("canvas", { ref: canvasRef, className: "w-full h-full block" })
+      ] }),
       /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("aside", { className: "flex-[2] shrink-0 border-l border-[#2E3A4E] overflow-y-auto flex flex-col", children: [
         /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "shrink-0 border-b border-[#2E3A4E] flex flex-col items-center justify-center gap-1 py-3", children: [
           selectedType && blockDefsReady && getOrdinal(selectedType) !== null ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(Block3DPreview, { ordinal: getOrdinal(selectedType), size: 96 }) : /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "h-24 w-24 flex items-center justify-center text-[#8A99AF] text-xs", children: selectedType ? "Loading\u2026" : "No block selected" }),
           selectedType && /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "text-white text-xs font-medium", children: selectedType.replace(/_/g, " ") })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "flex shrink-0 border-b border-[#2E3A4E]", children: ["place", "break"].map((m) => /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("div", { className: "shrink-0 border-b border-[#2E3A4E] p-2", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "flex flex-wrap gap-1 justify-center", children: shortcutBar.slots.map((slotBlock, idx) => {
+            const isBreakSlot = idx === 0;
+            const isSelected = shortcutBar.selectedSlot === idx;
+            const isDropTarget = shortcutBar.dragOver === idx;
+            const ordinal = !isBreakSlot && slotBlock ? getOrdinal(slotBlock) : null;
+            return /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(
+              "div",
+              {
+                onClick: () => shortcutBar.selectSlot(idx),
+                onDragOver: (e) => shortcutBar.handleDragOver(e, idx),
+                onDragLeave: shortcutBar.handleDragLeave,
+                onDrop: (e) => shortcutBar.handleDrop(e, idx),
+                onContextMenu: (e) => shortcutBar.handleContextMenu(e, idx),
+                title: isBreakSlot ? "Break" : slotBlock != null ? slotBlock : void 0,
+                className: `relative w-9 h-9 shrink-0 flex items-center justify-center rounded border-2 cursor-pointer transition-colors ${isDropTarget ? "bg-white/20" : "bg-black/30"} ${isSelected ? "border-[#3C50E0]" : "border-transparent hover:border-white/20"}`,
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "absolute top-0 left-0.5 text-[#8A99AF] font-mono text-[7px]", children: idx === 9 ? "0" : String(idx + 1) }),
+                  isBreakSlot ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "text-sm", children: "\u26CF" }) : slotBlock && blockDefsReady && ordinal !== null ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(CssBlockCube, { ordinal, size: 16 }) : null
+                ]
+              },
+              idx
+            );
+          }) }),
+          shortcutBar.pageCount > 1 && /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "flex gap-1 justify-center mt-1.5", children: Array.from({ length: shortcutBar.pageCount }, (_, p2) => /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
+            "button",
+            {
+              onClick: () => shortcutBar.goToPage(p2),
+              className: `w-1.5 h-1.5 rounded-full ${p2 === shortcutBar.currentPage ? "bg-[#3C50E0]" : "bg-white/25"}`
+            },
+            p2
+          )) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "shrink-0 border-b border-[#2E3A4E] p-2", children: /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(
+          "input",
+          {
+            type: "text",
+            value: search,
+            onChange: (e) => setSearch(e.target.value),
+            placeholder: "Search blocks\u2026",
+            className: "w-full rounded bg-black/30 border border-[#2E3A4E] px-2 py-1 text-xs text-white placeholder:text-[#8A99AF] outline-none focus:border-[#3C50E0]"
+          }
+        ) }),
+        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { ref: paletteRef, className: "flex flex-wrap gap-1 p-2 overflow-y-auto content-start", children: blockDefs.filter((b) => b.name.toLowerCase().includes(search.toLowerCase())).map((b) => /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(
           "button",
           {
-            onClick: () => setMode(m),
-            className: `flex-1 py-2 text-xs font-medium capitalize transition-colors ${mode === m ? "bg-[#3C50E0]/20 text-white" : "text-[#8A99AF] hover:text-white"}`,
-            children: m
-          },
-          m
-        )) }),
-        /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "grid grid-cols-3 gap-1 p-2 overflow-y-auto", children: blockDefs.map((b) => /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(
-          "button",
-          {
+            draggable: true,
+            onDragStart: (e) => e.dataTransfer.setData("text/plain", b.name),
             onClick: () => setSelectedType(b.name),
-            title: b.name,
-            className: `flex flex-col items-center gap-1 rounded border-2 p-1 ${selectedType === b.name ? "border-[#3C50E0]" : "border-transparent hover:border-white/20"}`,
+            onMouseEnter: (e) => {
+              var _a6;
+              const btnRect = e.currentTarget.getBoundingClientRect();
+              const containerRect = (_a6 = paletteRef.current) == null ? void 0 : _a6.getBoundingClientRect();
+              const spaceBelow = containerRect ? containerRect.bottom - btnRect.bottom : Infinity;
+              setTooltipAbove(spaceBelow < 40);
+              setHoveredBlockName(b.name);
+            },
+            onMouseLeave: () => setHoveredBlockName(null),
+            className: `relative flex flex-col items-center gap-0.5 rounded border-2 p-1 w-14 ${selectedType === b.name ? "border-[#3C50E0]" : "border-transparent hover:border-white/20"}`,
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "aspect-square w-full rounded flex items-center justify-center", children: blockDefsReady && getOrdinal(b.name) !== null ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(CssBlockCube, { ordinal: getOrdinal(b.name), size: 22 }) : /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "w-full h-full rounded", style: { background: rgbToHex(b.minimapColor) } }) }),
-              /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "text-[9px] leading-tight text-[#8A99AF] text-center truncate w-full", children: b.name.replace(/_/g, " ") })
+              blockDefsReady && getOrdinal(b.name) !== null ? /* @__PURE__ */ (0, import_jsx_runtime39.jsx)(CssBlockCube, { ordinal: getOrdinal(b.name), size: 20 }) : /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("div", { className: "w-5 h-5 rounded", style: { background: rgbToHex(b.minimapColor) } }),
+              /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "text-[9px] leading-tight text-[#8A99AF] text-center truncate w-full", children: b.name.replace(/_/g, " ") }),
+              hoveredBlockName === b.name && /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)(
+                "div",
+                {
+                  className: `pointer-events-none absolute z-30 left-1/2 -translate-x-1/2 flex flex-col gap-0.5 whitespace-nowrap rounded border border-[#2E3A4E] bg-[#0B1220] px-2 py-1 text-[10px] shadow-lg ${tooltipAbove ? "bottom-full mb-1" : "top-full mt-1"}`,
+                  children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime39.jsx)("span", { className: "font-semibold text-white", children: b.name.replace(/_/g, " ") }),
+                    /* @__PURE__ */ (0, import_jsx_runtime39.jsxs)("span", { className: "text-[#8A99AF]", children: [
+                      b.hardness < 0 ? "Unbreakable" : `Hardness ${b.hardness}`,
+                      " \xB7 ",
+                      b.solid ? "Solid" : "Non-solid",
+                      b.transparent ? " \xB7 Transparent" : "",
+                      b.liquid ? " \xB7 Liquid" : ""
+                    ] })
+                  ]
+                }
+              )
             ]
           },
           b.name
@@ -92220,7 +92990,7 @@ ${end.comment}` : end.comment;
   }
 
   // admin/pages/InstanceChunkPicker.tsx
-  var import_react24 = __toESM(require_react(), 1);
+  var import_react25 = __toESM(require_react(), 1);
   var import_jsx_runtime40 = __toESM(require_jsx_runtime(), 1);
   var CHUNK_SIZE2 = 16;
   var BASE_SCALE = 2;
@@ -92271,33 +93041,33 @@ ${end.comment}` : end.comment;
     onSaved
   }) {
     var _a6, _b, _c;
-    const [discovered, setDiscovered] = (0, import_react24.useState)(/* @__PURE__ */ new Set());
-    const [heightByChunk, setHeightByChunk] = (0, import_react24.useState)(/* @__PURE__ */ new Map());
+    const [discovered, setDiscovered] = (0, import_react25.useState)(/* @__PURE__ */ new Set());
+    const [heightByChunk, setHeightByChunk] = (0, import_react25.useState)(/* @__PURE__ */ new Map());
     const initialCenter = editZone && editZone.chunks.length > 0 ? footprintCenter(editZone.chunks) : { x: 0, z: 0 };
-    const [center, setCenter] = (0, import_react24.useState)(initialCenter);
-    const [centerInput, setCenterInput] = (0, import_react24.useState)({ x: String(initialCenter.x), z: String(initialCenter.z) });
-    const [rasterUrl, setRasterUrl] = (0, import_react24.useState)(null);
-    const [selected, setSelected] = (0, import_react24.useState)(
+    const [center, setCenter] = (0, import_react25.useState)(initialCenter);
+    const [centerInput, setCenterInput] = (0, import_react25.useState)({ x: String(initialCenter.x), z: String(initialCenter.z) });
+    const [rasterUrl, setRasterUrl] = (0, import_react25.useState)(null);
+    const [selected, setSelected] = (0, import_react25.useState)(
       () => {
         var _a7;
         return new Set(((_a7 = editZone == null ? void 0 : editZone.chunks) != null ? _a7 : []).map((c) => chunkKey(c.cx, c.cz)));
       }
     );
-    const [name2, setName] = (0, import_react24.useState)((_a6 = editZone == null ? void 0 : editZone.name) != null ? _a6 : "");
-    const [yMin, setYMin] = (0, import_react24.useState)((_b = editZone == null ? void 0 : editZone.yMin) != null ? _b : 0);
-    const [yMax, setYMax] = (0, import_react24.useState)((_c = editZone == null ? void 0 : editZone.yMax) != null ? _c : 160);
-    const [error2, setError] = (0, import_react24.useState)(null);
-    const [zoom, setZoom] = (0, import_react24.useState)(1);
-    const [pan, setPan] = (0, import_react24.useState)({ x: 0, y: 0 });
-    const [isPanning, setIsPanning] = (0, import_react24.useState)(false);
-    const [radiusChunks, setRadiusChunks] = (0, import_react24.useState)(MIN_VIEW_RADIUS_CHUNKS);
-    const [worldTruncated, setWorldTruncated] = (0, import_react24.useState)(false);
-    const paintingRef = (0, import_react24.useRef)(null);
-    const panningRef = (0, import_react24.useRef)(
+    const [name2, setName] = (0, import_react25.useState)((_a6 = editZone == null ? void 0 : editZone.name) != null ? _a6 : "");
+    const [yMin, setYMin] = (0, import_react25.useState)((_b = editZone == null ? void 0 : editZone.yMin) != null ? _b : 0);
+    const [yMax, setYMax] = (0, import_react25.useState)((_c = editZone == null ? void 0 : editZone.yMax) != null ? _c : 160);
+    const [error2, setError] = (0, import_react25.useState)(null);
+    const [zoom, setZoom] = (0, import_react25.useState)(1);
+    const [pan, setPan] = (0, import_react25.useState)({ x: 0, y: 0 });
+    const [isPanning, setIsPanning] = (0, import_react25.useState)(false);
+    const [radiusChunks, setRadiusChunks] = (0, import_react25.useState)(MIN_VIEW_RADIUS_CHUNKS);
+    const [worldTruncated, setWorldTruncated] = (0, import_react25.useState)(false);
+    const paintingRef = (0, import_react25.useRef)(null);
+    const panningRef = (0, import_react25.useRef)(
       null
     );
-    const viewportRef = (0, import_react24.useRef)(null);
-    (0, import_react24.useEffect)(() => {
+    const viewportRef = (0, import_react25.useRef)(null);
+    (0, import_react25.useEffect)(() => {
       api.chunks.discovered().then((chunks) => {
         const set4 = new Set(chunks.map((c) => chunkKey(c.cx, c.cz)));
         setDiscovered(set4);
@@ -92338,7 +93108,7 @@ ${end.comment}` : end.comment;
         setHeightByChunk(map3);
       }).catch(console.error);
     }, []);
-    (0, import_react24.useEffect)(() => {
+    (0, import_react25.useEffect)(() => {
       if (editZone || selected.size === 0) return;
       const heights = Array.from(selected).map((k) => heightByChunk.get(k)).filter((h) => h != null);
       if (heights.length === 0) return;
@@ -92347,11 +93117,11 @@ ${end.comment}` : end.comment;
     }, [selected, heightByChunk, editZone]);
     const radiusBlocks = radiusChunks * CHUNK_SIZE2;
     const imgSize = radiusBlocks * 2;
-    (0, import_react24.useEffect)(() => {
+    (0, import_react25.useEffect)(() => {
       const url = `/api/map/terrain-raster.png?cx=${Math.round(center.x)}&cz=${Math.round(center.z)}&radius=${radiusBlocks}`;
       setRasterUrl(url);
     }, [center, radiusBlocks]);
-    const chunkCells = (0, import_react24.useMemo)(() => {
+    const chunkCells = (0, import_react25.useMemo)(() => {
       const cells2 = [];
       const cxMin = Math.floor((center.x - radiusBlocks) / CHUNK_SIZE2);
       const cxMax = Math.floor((center.x + radiusBlocks - 1) / CHUNK_SIZE2);
@@ -92380,17 +93150,17 @@ ${end.comment}` : end.comment;
         return next;
       });
     };
-    const panRef = (0, import_react24.useRef)(pan);
-    const zoomRef = (0, import_react24.useRef)(zoom);
-    const centerRef = (0, import_react24.useRef)(center);
-    const radiusBlocksRef = (0, import_react24.useRef)(radiusBlocks);
-    (0, import_react24.useEffect)(() => {
+    const panRef = (0, import_react25.useRef)(pan);
+    const zoomRef = (0, import_react25.useRef)(zoom);
+    const centerRef = (0, import_react25.useRef)(center);
+    const radiusBlocksRef = (0, import_react25.useRef)(radiusBlocks);
+    (0, import_react25.useEffect)(() => {
       panRef.current = pan;
       zoomRef.current = zoom;
       centerRef.current = center;
       radiusBlocksRef.current = radiusBlocks;
     });
-    (0, import_react24.useEffect)(() => {
+    (0, import_react25.useEffect)(() => {
       const stopAll = () => {
         paintingRef.current = null;
         if (panningRef.current) {
@@ -92652,7 +93422,7 @@ ${end.comment}` : end.comment;
     return `/teleport ${x} ${y} ${z}`;
   }
   function CopyTeleportCommand({ zone }) {
-    const [copied, setCopied] = (0, import_react25.useState)(false);
+    const [copied, setCopied] = (0, import_react26.useState)(false);
     const command2 = teleportCommandFor(zone);
     return /* @__PURE__ */ (0, import_jsx_runtime41.jsxs)(
       "button",
@@ -92674,20 +93444,20 @@ ${end.comment}` : end.comment;
   }
   function InstancesPage() {
     var _a6;
-    const [instances, setInstances] = (0, import_react25.useState)([]);
-    const [selectedId, setSelectedId] = (0, import_react25.useState)(null);
-    const [renaming, setRenaming] = (0, import_react25.useState)(false);
-    const [renameValue, setRenameValue] = (0, import_react25.useState)("");
-    const [editingBounds, setEditingBounds] = (0, import_react25.useState)(false);
-    const [yMinValue, setYMinValue] = (0, import_react25.useState)("0");
-    const [yMaxValue, setYMaxValue] = (0, import_react25.useState)("0");
-    const [boundsError, setBoundsError] = (0, import_react25.useState)(null);
-    const [creating, setCreating] = (0, import_react25.useState)(false);
-    const [editingChunks, setEditingChunks] = (0, import_react25.useState)(false);
-    const reload = (0, import_react25.useCallback)(() => {
+    const [instances, setInstances] = (0, import_react26.useState)([]);
+    const [selectedId, setSelectedId] = (0, import_react26.useState)(null);
+    const [renaming, setRenaming] = (0, import_react26.useState)(false);
+    const [renameValue, setRenameValue] = (0, import_react26.useState)("");
+    const [editingBounds, setEditingBounds] = (0, import_react26.useState)(false);
+    const [yMinValue, setYMinValue] = (0, import_react26.useState)("0");
+    const [yMaxValue, setYMaxValue] = (0, import_react26.useState)("0");
+    const [boundsError, setBoundsError] = (0, import_react26.useState)(null);
+    const [creating, setCreating] = (0, import_react26.useState)(false);
+    const [editingChunks, setEditingChunks] = (0, import_react26.useState)(false);
+    const reload = (0, import_react26.useCallback)(() => {
       api.instances.list().then((list2) => setInstances(list2.sort((a, b) => a.name.localeCompare(b.name)))).catch(console.error);
     }, []);
-    (0, import_react25.useEffect)(() => {
+    (0, import_react26.useEffect)(() => {
       reload();
     }, [reload]);
     const selected = (_a6 = instances.find((i) => i.id === selectedId)) != null ? _a6 : null;
@@ -93051,8 +93821,8 @@ ${end.comment}` : end.comment;
     ] });
   }
   function AdminApp() {
-    const [collapsed, setCollapsed] = (0, import_react26.useState)(() => loadSidebarCollapsed());
-    (0, import_react26.useEffect)(() => saveSidebarCollapsed(collapsed), [collapsed]);
+    const [collapsed, setCollapsed] = (0, import_react27.useState)(() => loadSidebarCollapsed());
+    (0, import_react27.useEffect)(() => saveSidebarCollapsed(collapsed), [collapsed]);
     return /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(I18nProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(BrowserRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { className: "flex h-screen overflow-hidden bg-[#0E1726] text-white font-sans", children: [
       /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Sidebar, { collapsed, onToggle: () => setCollapsed((current) => !current) }),
       /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { className: "flex flex-col flex-1 overflow-hidden", children: [
