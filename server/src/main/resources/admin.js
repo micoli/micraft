@@ -92167,11 +92167,23 @@ ${end.comment}` : end.comment;
   function emptyPage() {
     return new Array(SLOTS_PER_PAGE).fill(null);
   }
+  var STORAGE_KEY = "admin.instanceShortcutBar.pages";
+  function loadStoredPages() {
+    try {
+      const raw2 = localStorage.getItem(STORAGE_KEY);
+      if (!raw2) return [emptyPage()];
+      const parsed = JSON.parse(raw2);
+      if (!Array.isArray(parsed) || parsed.length === 0) return [emptyPage()];
+      return parsed;
+    } catch (e) {
+      return [emptyPage()];
+    }
+  }
   function useInstanceShortcutBar({
     onSelectBreak,
     onSelectBlock
   }) {
-    const [pages, setPages] = (0, import_react41.useState)([emptyPage()]);
+    const [pages, setPages] = (0, import_react41.useState)(loadStoredPages);
     const [currentPage, setCurrentPage] = (0, import_react41.useState)(0);
     const [selectedSlot, setSelectedSlot] = (0, import_react41.useState)(0);
     const [dragOver, setDragOver] = (0, import_react41.useState)(null);
@@ -92179,6 +92191,9 @@ ${end.comment}` : end.comment;
     (0, import_react41.useLayoutEffect)(() => {
       pagesRef.current = pages;
     });
+    (0, import_react41.useEffect)(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pages));
+    }, [pages]);
     function selectSlot(idx) {
       setSelectedSlot(idx);
       if (idx === 0) {
