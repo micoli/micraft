@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { api, type BlockInfoDto, type InstanceZoneDto } from "../api";
-import { Block3DPreview, CssBlockCube, useBlockDefsReady } from "../../game/shared/BlockPreview";
-import { useInstanceShortcutBar } from "../hooks/useInstanceShortcutBar";
-import { buildBlockPreviewMeshes } from "../../game/chunks/chunkBuilder";
-import { boxLines } from "../../game/targeting/targeting";
+import { api, type BlockInfoDto, type InstanceZoneDto } from "../../api";
+import { Block3DPreview, CssBlockCube, useBlockDefsReady } from "../../../game/shared/BlockPreview";
+import { useInstanceShortcutBar } from "../../hooks/useInstanceShortcutBar";
+import { buildBlockPreviewMeshes } from "../../../game/chunks/chunkBuilder";
+import { boxLines } from "../../../game/targeting/targeting";
 
 const CHUNK_SIZE = 16;
 // How far (in chunks) around the camera target to keep block geometry loaded. Scales with

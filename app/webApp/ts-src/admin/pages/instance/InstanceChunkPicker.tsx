@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { api, type ChunkPosDto, type InstanceZoneDto } from "../api";
+import { api, type ChunkPosDto, type InstanceZoneDto } from "../../api";
 
 const CHUNK_SIZE = 16;
 const BASE_SCALE = 2; // CSS px per world block at zoom=1, before the zoom transform

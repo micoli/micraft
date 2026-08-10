@@ -14,7 +14,7 @@ import { WorldsPage } from "./pages/WorldsPage";
 import { GameAssetsPage } from "./pages/GameAssetsPage";
 import { AdministrationPage } from "./pages/AdministrationPage";
 import { WorldSimulatorPage } from "./pages/WorldSimulatorPage";
-import { InstancesPage } from "./pages/InstancesPage";
+import { InstancesPage } from "./pages/instance/InstancesPage";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 function Icon({ d, size = 18 }: { d: string; size?: number }) {
@@ -166,7 +166,9 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
 function Header() {
   const { pathname } = useLocation();
   const t = useT();
-  const labelKey = PAGE_LABEL_KEYS[pathname];
+  const labelKey =
+    PAGE_LABEL_KEYS[pathname] ??
+    Object.entries(PAGE_LABEL_KEYS).find(([path]) => path !== "/admin" && pathname.startsWith(path))?.[1];
   const title = labelKey ? t(labelKey) : t("shell.admin");
   return (
     <header className="h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]">
@@ -209,6 +211,7 @@ export function AdminApp() {
                 <Route path="/admin/game-assets" element={<GameAssetsPage />} />
                 <Route path="/admin/administration" element={<AdministrationPage />} />
                 <Route path="/admin/instances" element={<InstancesPage />} />
+                <Route path="/admin/instances/:id" element={<InstancesPage />} />
                 <Route path="/admin/world-simulator" element={<WorldSimulatorPage />} />
               </Routes>
             </main>

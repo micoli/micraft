@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { api, type InstanceZoneDto } from "../api";
+import { useNavigate, useParams } from "react-router";
+import { api, type InstanceZoneDto } from "../../api";
 import { InstanceEditorViewport } from "./InstanceEditorViewport";
 import { InstanceChunkPicker } from "./InstanceChunkPicker";
 
@@ -50,8 +51,17 @@ function CopyTeleportCommand({ zone }: { zone: InstanceZoneDto }) {
 }
 
 export function InstancesPage() {
+  const { id: routeId } = useParams<{ id?: string }>();
+  const navigate = useNavigate();
   const [instances, setInstances] = useState<InstanceZoneDto[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedIdState] = useState<string | null>(routeId ?? null);
+  const setSelectedId = useCallback(
+    (id: string | null) => {
+      setSelectedIdState(id);
+      navigate(id ? `/admin/instances/${id}` : "/admin/instances");
+    },
+    [navigate],
+  );
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
   const [editingBounds, setEditingBounds] = useState(false);
@@ -71,6 +81,10 @@ export function InstancesPage() {
   useEffect(() => {
     reload();
   }, [reload]);
+
+  useEffect(() => {
+    setSelectedIdState(routeId ?? null);
+  }, [routeId]);
 
   const selected = instances.find((i) => i.id === selectedId) ?? null;
 

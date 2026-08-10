@@ -26580,6 +26580,12 @@
     return navigate;
   }
   var OutletContext = React2.createContext(null);
+  function useParams() {
+    var _a6;
+    let { matches: matches2 } = React2.useContext(RouteContext);
+    let routeMatch = matches2[matches2.length - 1];
+    return (_a6 = routeMatch == null ? void 0 : routeMatch.params) != null ? _a6 : {};
+  }
   function useResolvedPath(to, { relative } = {}) {
     let { matches: matches2 } = React2.useContext(RouteContext);
     let { pathname: locationPathname } = useLocation();
@@ -91715,10 +91721,10 @@ ${end.comment}` : end.comment;
     ] });
   }
 
-  // admin/pages/InstancesPage.tsx
+  // admin/pages/instance/InstancesPage.tsx
   var import_react26 = __toESM(require_react(), 1);
 
-  // admin/pages/InstanceEditorViewport.tsx
+  // admin/pages/instance/InstanceEditorViewport.tsx
   var import_react24 = __toESM(require_react(), 1);
 
   // game/shared/BlockPreview.tsx
@@ -92441,7 +92447,7 @@ void main() {
     ];
   }
 
-  // admin/pages/InstanceEditorViewport.tsx
+  // admin/pages/instance/InstanceEditorViewport.tsx
   var import_jsx_runtime39 = __toESM(require_jsx_runtime(), 1);
   var CHUNK_SIZE = 16;
   var MAX_VIEW_RADIUS_CHUNKS = 8;
@@ -92989,7 +92995,7 @@ void main() {
     ] });
   }
 
-  // admin/pages/InstanceChunkPicker.tsx
+  // admin/pages/instance/InstanceChunkPicker.tsx
   var import_react25 = __toESM(require_react(), 1);
   var import_jsx_runtime40 = __toESM(require_jsx_runtime(), 1);
   var CHUNK_SIZE2 = 16;
@@ -93404,7 +93410,7 @@ void main() {
     ] }) });
   }
 
-  // admin/pages/InstancesPage.tsx
+  // admin/pages/instance/InstancesPage.tsx
   var import_jsx_runtime41 = __toESM(require_jsx_runtime(), 1);
   var CHUNK_SIZE3 = 16;
   function EmptyDetail2({ message }) {
@@ -93444,8 +93450,17 @@ void main() {
   }
   function InstancesPage() {
     var _a6;
+    const { id: routeId } = useParams();
+    const navigate = useNavigate();
     const [instances, setInstances] = (0, import_react26.useState)([]);
-    const [selectedId, setSelectedId] = (0, import_react26.useState)(null);
+    const [selectedId, setSelectedIdState] = (0, import_react26.useState)(routeId != null ? routeId : null);
+    const setSelectedId = (0, import_react26.useCallback)(
+      (id2) => {
+        setSelectedIdState(id2);
+        navigate(id2 ? `/admin/instances/${id2}` : "/admin/instances");
+      },
+      [navigate]
+    );
     const [renaming, setRenaming] = (0, import_react26.useState)(false);
     const [renameValue, setRenameValue] = (0, import_react26.useState)("");
     const [editingBounds, setEditingBounds] = (0, import_react26.useState)(false);
@@ -93460,6 +93475,9 @@ void main() {
     (0, import_react26.useEffect)(() => {
       reload();
     }, [reload]);
+    (0, import_react26.useEffect)(() => {
+      setSelectedIdState(routeId != null ? routeId : null);
+    }, [routeId]);
     const selected = (_a6 = instances.find((i) => i.id === selectedId)) != null ? _a6 : null;
     const submitRename = () => {
       if (!selected || !renameValue.trim()) return;
@@ -93801,9 +93819,10 @@ void main() {
     );
   }
   function Header() {
+    var _a6, _b;
     const { pathname } = useLocation();
     const t2 = useT();
-    const labelKey = PAGE_LABEL_KEYS[pathname];
+    const labelKey = (_b = PAGE_LABEL_KEYS[pathname]) != null ? _b : (_a6 = Object.entries(PAGE_LABEL_KEYS).find(([path]) => path !== "/admin" && pathname.startsWith(path))) == null ? void 0 : _a6[1];
     const title = labelKey ? t2(labelKey) : t2("shell.admin");
     return /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("header", { className: "h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]", children: [
       /* @__PURE__ */ (0, import_jsx_runtime42.jsxs)("div", { children: [
@@ -93838,6 +93857,7 @@ void main() {
           /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/game-assets", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(GameAssetsPage, {}) }),
           /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/administration", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(AdministrationPage, {}) }),
           /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/instances", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(InstancesPage, {}) }),
+          /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/instances/:id", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(InstancesPage, {}) }),
           /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(Route, { path: "/admin/world-simulator", element: /* @__PURE__ */ (0, import_jsx_runtime42.jsx)(WorldSimulatorPage, {}) })
         ] }) })
       ] })
