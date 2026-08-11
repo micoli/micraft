@@ -226,6 +226,20 @@ export function isPlainColorable(ordinal: number): boolean {
   return _registryBlocks?.[ordinal]?.plainColorable ?? false;
 }
 
+/** Normalized (0-1) bounding box of a block's model elements, for proportionate previews. */
+export function getBlockBounds(ordinal: number): { w: number; h: number; d: number } {
+  const def = window.mc?.getBlockDef?.(ordinal) as McBlockDef | null;
+  const elements = def?.elements;
+  if (!elements?.length) return { w: 1, h: 1, d: 1 };
+  const minX = Math.min(...elements.map((e) => e.from[0]));
+  const minY = Math.min(...elements.map((e) => e.from[1]));
+  const minZ = Math.min(...elements.map((e) => e.from[2]));
+  const maxX = Math.max(...elements.map((e) => e.to[0]));
+  const maxY = Math.max(...elements.map((e) => e.to[1]));
+  const maxZ = Math.max(...elements.map((e) => e.to[2]));
+  return { w: (maxX - minX) / 16, h: (maxY - minY) / 16, d: (maxZ - minZ) / 16 };
+}
+
 export function getFaceTexUrl(ordinal: number, faceDir: number): string | null {
   const def = window.mc?.getBlockDef?.(ordinal) as McBlockDef | null;
   if (!def?.faces?.length) return null;

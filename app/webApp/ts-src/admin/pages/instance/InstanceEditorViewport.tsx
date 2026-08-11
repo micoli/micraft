@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { api, type BlockInfoDto, type InstanceZoneDto } from "../../api";
-import { Block3DPreview, CssBlockCube, useBlockDefsReady } from "../../../game/shared/BlockPreview";
+import { Block3DPreview, useBlockDefsReady, useBlockPreviews } from "../../../game/shared/BlockPreview";
+import { InstancePaletteBlock } from "./InstancePaletteBlock";
+import { InstanceShortcutBarSlot } from "./InstanceShortcutBarSlot";
+import { startPreloading } from "../../../game/shared/blockPreviewCache";
 import { useInstanceShortcutBar } from "../../hooks/useInstanceShortcutBar";
 import { buildBlockPreviewMeshes } from "../../../game/chunks/chunkBuilder";
 import { boxLines } from "../../../game/targeting/targeting";
@@ -16,10 +19,6 @@ const VIEW_RADIUS_UNLOAD_MARGIN = 1;
 // Voxel-picking epsilon: nudges the picked point across the hit face along its normal before
 // flooring, so the coordinate resolves to the block on the correct side of the face.
 const PICK_EPSILON = 0.01;
-
-function rgbToHex([r, g, b]: [number, number, number]): string {
-  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
-}
 
 interface StoredCameraState {
   alpha: number;
@@ -93,6 +92,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const paletteRef = useRef<HTMLDivElement>(null);
   const [hoveredBlockName, setHoveredBlockName] = useState<string | null>(null);
   const [tooltipAbove, setTooltipAbove] = useState(false);
+  const [hoveredShortcutSlot, setHoveredShortcutSlot] = useState<number | null>(null);
   const [blockDefs, setBlockDefs] = useState<BlockInfoDto[]>([]);
   // admin.js and mc_bindings.js are separate esbuild bundles: each has its own copy of
   // blockDefs.ts module state, so getBlockOrdinalByName() from that module is always null
@@ -107,6 +107,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const modeRef = useRef(mode);
   const selectedTypeRef = useRef(selectedType);
   const ordinalByNameRef = useRef(ordinalByName);
+  const getPreview = useBlockPreviews();
   // In-memory only (reset on zone remount, like the scene itself) — not persisted, unlike camera/shortcut bar.
   const undoStackRef = useRef<UndoEntry[]>([]);
   const redoStackRef = useRef<UndoEntry[]>([]);
@@ -121,6 +122,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   }
 
   useEffect(() => {
+    startPreloading();
     return () => {
       if (actionErrorTimeout.current) clearTimeout(actionErrorTimeout.current);
     };
@@ -943,45 +945,33 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
           {selectedType && <span className="text-white text-xs font-medium">{selectedType.replace(/_/g, " ")}</span>}
         </div>
         <div className="shrink-0 border-b border-[#2E3A4E] p-2">
-          <div className="flex flex-wrap gap-1 justify-center">
-            {shortcutBar.slots.map((slotBlock, idx) => {
-              const isBreakSlot = idx === 0;
-              const isSelected = shortcutBar.selectedSlot === idx;
-              const isDropTarget = shortcutBar.dragOver === idx;
-              const ordinal = !isBreakSlot && slotBlock ? getOrdinal(slotBlock) : null;
-              return (
-                <div
-                  key={idx}
-                  onClick={() => shortcutBar.selectSlot(idx)}
-                  onDragOver={(e) => shortcutBar.handleDragOver(e, idx)}
-                  onDragLeave={shortcutBar.handleDragLeave}
-                  onDrop={(e) => shortcutBar.handleDrop(e, idx)}
-                  onContextMenu={(e) => shortcutBar.handleContextMenu(e, idx)}
-                  title={isBreakSlot ? "Break" : (slotBlock ?? undefined)}
-                  className={`relative w-9 h-9 shrink-0 flex items-center justify-center rounded border-2 cursor-pointer transition-colors ${
-                    isDropTarget ? "bg-white/20" : "bg-black/30"
-                  } ${isSelected ? "border-[#3C50E0]" : "border-transparent hover:border-white/20"}`}
-                >
-                  <div className="absolute top-0 left-0.5 text-[#8A99AF] font-mono text-[7px]">
-                    {idx === 9 ? "0" : String(idx + 1)}
-                  </div>
-                  {isBreakSlot ? (
-                    <div className="text-sm">⛏</div>
-                  ) : slotBlock && blockDefsReady && ordinal !== null ? (
-                    <CssBlockCube ordinal={ordinal} size={16} />
-                  ) : null}
-                </div>
-              );
-            })}
+          <div className="grid grid-cols-5 gap-1 justify-center">
+            {shortcutBar.slots.map((slotBlock, idx) => (
+              <InstanceShortcutBarSlot
+                key={idx}
+                shortcutBar={shortcutBar}
+                idx={idx}
+                slotBlock={slotBlock}
+                getOrdinal={getOrdinal}
+                blockDefs={blockDefs}
+                getPreview={getPreview}
+                blockDefsReady={blockDefsReady}
+                hovered={hoveredShortcutSlot === idx}
+                onHoverEnter={() => setHoveredShortcutSlot(idx)}
+                onHoverLeave={() => setHoveredShortcutSlot(null)}
+              />
+            ))}
           </div>
           {shortcutBar.pageCount > 1 && (
             <div className="flex gap-1 justify-center mt-1.5">
-              {Array.from({ length: shortcutBar.pageCount }, (_, p) => (
+              {Array.from({ length: shortcutBar.pageCount }, (index, p) => (
                 <button
                   key={p}
                   onClick={() => shortcutBar.goToPage(p)}
-                  className={`w-1.5 h-1.5 rounded-full ${p === shortcutBar.currentPage ? "bg-[#3C50E0]" : "bg-white/25"}`}
-                />
+                  className={`w-4.5 h-6 rounded ${p === shortcutBar.currentPage ? "bg-[#3C50E0]" : "bg-white/25"}`}
+                >
+                  {p + 1}
+                </button>
               ))}
             </div>
           )}
@@ -999,10 +989,15 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
           {blockDefs
             .filter((b) => b.name.toLowerCase().includes(search.toLowerCase()))
             .map((b) => (
-              <button
+              <InstancePaletteBlock
                 key={b.name}
-                draggable
-                onDragStart={(e) => e.dataTransfer.setData("text/plain", b.name)}
+                block={b}
+                ordinal={getOrdinal(b.name)}
+                selected={selectedType === b.name}
+                getPreview={getPreview}
+                blockDefsReady={blockDefsReady}
+                hovered={hoveredBlockName === b.name}
+                tooltipAbove={tooltipAbove}
                 onClick={() => setSelectedType(b.name)}
                 onMouseEnter={(e) => {
                   // Tooltip defaults to below the item; flip it above only when there isn't room
@@ -1015,33 +1010,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
                   setHoveredBlockName(b.name);
                 }}
                 onMouseLeave={() => setHoveredBlockName(null)}
-                className={`relative flex flex-col items-center gap-0.5 rounded border-2 p-1 w-14 ${
-                  selectedType === b.name ? "border-[#3C50E0]" : "border-transparent hover:border-white/20"
-                }`}
-              >
-                {blockDefsReady && getOrdinal(b.name) !== null ? (
-                  <CssBlockCube ordinal={getOrdinal(b.name)!} size={20} />
-                ) : (
-                  <div className="w-5 h-5 rounded" style={{ background: rgbToHex(b.minimapColor) }} />
-                )}
-                <span className="text-[9px] leading-tight text-[#8A99AF] text-center truncate w-full">
-                  {b.name.replace(/_/g, " ")}
-                </span>
-                {hoveredBlockName === b.name && (
-                  <div
-                    className={`pointer-events-none absolute z-30 left-1/2 -translate-x-1/2 flex flex-col gap-0.5 whitespace-nowrap rounded border border-[#2E3A4E] bg-[#0B1220] px-2 py-1 text-[10px] shadow-lg ${
-                      tooltipAbove ? "bottom-full mb-1" : "top-full mt-1"
-                    }`}
-                  >
-                    <span className="font-semibold text-white">{b.name.replace(/_/g, " ")}</span>
-                    <span className="text-[#8A99AF]">
-                      {b.hardness < 0 ? "Unbreakable" : `Hardness ${b.hardness}`} · {b.solid ? "Solid" : "Non-solid"}
-                      {b.transparent ? " · Transparent" : ""}
-                      {b.liquid ? " · Liquid" : ""}
-                    </span>
-                  </div>
-                )}
-              </button>
+              />
             ))}
         </div>
       </aside>

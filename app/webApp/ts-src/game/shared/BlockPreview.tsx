@@ -1,7 +1,10 @@
 import { useEffect, useReducer, useRef, useState } from "react";
-import { getFaceTexUrl } from "../blocks/blockDefs";
-import { subscribe, getCached, ensureColoredPreview, getColoredCached } from "./blockPreviewCache";
+import { getFaceTexUrl, getBlockBounds } from "../blocks/blockDefs";
+import { subscribe, getCached, ensureColoredPreview, getColoredCached, ensurePreview } from "./blockPreviewCache";
 import { setupBlockScene } from "./blockSceneRenderer";
+import { suppressDeprecatedWebglWarnings } from "./webglPatches";
+
+suppressDeprecatedWebglWarnings();
 
 export function useBlockPreviews(): (ordinal: number) => string | null {
   const [, inc] = useReducer((n: number) => n + 1, 0);
@@ -44,17 +47,34 @@ export function CssBlockCube({
   /** "RRGGBB" (no '#'): renders plain color instead of the block texture. */
   colorHex?: string | null;
 }) {
+  // CssBlockCube is a crude 3-face approximation — actively misleading for multi-element models
+  // (e.g. studded LEGO plates). Jump the real preview to the front of the render queue instead of
+  // waiting for the full-registry sweep (startPreloading) to reach this ordinal.
+  useEffect(() => {
+    if (!colorHex) ensurePreview(ordinal);
+  }, [ordinal, colorHex]);
+
   const S = size;
-  const H = Math.round(S / 2);
+  const { w, h, d } = getBlockBounds(ordinal);
+  // Face dimensions in px, proportionate to the block's actual model bounds (not always a full cube).
+  const wPx = S * w,
+    hPx = S * h,
+    dPx = S * d;
 
   const topUrl = colorHex ? null : getFaceTexUrl(ordinal, 4);
   const frontUrl = colorHex ? null : getFaceTexUrl(ordinal, 0);
   const rightUrl = colorHex ? null : getFaceTexUrl(ordinal, 2);
 
-  const face = (brightness: number, transform: string, texUrl: string | null): React.CSSProperties => ({
+  const face = (
+    faceW: number,
+    faceH: number,
+    brightness: number,
+    transform: string,
+    texUrl: string | null,
+  ): React.CSSProperties => ({
     position: "absolute",
-    width: S,
-    height: S,
+    width: faceW,
+    height: faceH,
     backgroundImage: texUrl ? `url(${texUrl})` : undefined,
     backgroundColor: texUrl ? undefined : colorHex ? `#${colorHex}` : "#666",
     backgroundSize: "100% 100%",
@@ -78,15 +98,15 @@ export function CssBlockCube({
       <div
         style={{
           position: "relative",
-          width: S,
-          height: S,
+          width: wPx,
+          height: hPx,
           transformStyle: "preserve-3d",
           transform: "rotateX(-25deg) rotateY(45deg)",
         }}
       >
-        <div style={face(1.05, `rotateX(90deg) translateZ(${H}px)`, topUrl)} />
-        <div style={face(0.78, `translateZ(${H}px)`, frontUrl)} />
-        <div style={face(0.62, `rotateY(90deg) translateZ(${H}px)`, rightUrl)} />
+        <div style={face(wPx, dPx, 1.05, `rotateX(90deg) translateZ(${hPx / 2}px)`, topUrl)} />
+        <div style={face(wPx, hPx, 0.78, `translateZ(${dPx / 2}px)`, frontUrl)} />
+        <div style={face(dPx, hPx, 0.62, `rotateY(90deg) translateZ(${wPx / 2}px)`, rightUrl)} />
       </div>
     </div>
   );

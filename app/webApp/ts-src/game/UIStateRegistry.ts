@@ -7,6 +7,7 @@ import {
   GameLayout,
   HudData,
   InstanceZoneData,
+  ItemMetaEntry,
   LogEntry,
   MailData,
   NpcDialogData,
@@ -37,17 +38,7 @@ export interface UiState {
   activeChannel: string;
   unreadChannels: string[];
   inventory: Record<string, number>;
-  itemMeta: Record<
-    string,
-    {
-      label: string;
-      bg: string;
-      healthRestore?: number;
-      manaRestore?: number;
-      consumable?: boolean;
-      plainColor?: string | null;
-    }
-  >;
+  itemMeta: Record<string, ItemMetaEntry>;
   attackMeta: Record<string, AttackMeta>;
   spellMeta: Record<string, SpellMeta>;
   hotbarVisible: boolean;

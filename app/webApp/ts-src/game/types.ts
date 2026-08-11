@@ -204,6 +204,15 @@ export type PlayerStatusData = {
   godMode: boolean;
 };
 
+export interface ItemMetaEntry {
+  label: string;
+  bg: string;
+  healthRestore?: number;
+  manaRestore?: number;
+  consumable?: boolean;
+  plainColor?: string | null;
+}
+
 export type ShortcutSlot =
   | { kind: "item"; id: string }
   | { kind: "attack"; id: string }

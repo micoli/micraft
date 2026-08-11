@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { cn } from "../../primitives/cn";
 import { getItemVisual } from "../blocks/blockDefs";
 import { ItemIcon } from "../shared/ItemIcon";
+import { ItemTooltip } from "../shared/ItemTooltip";
 import { useInventory } from "../hooks/useInventory";
-import { PreferencesData } from "../types";
+import { ItemMetaEntry, PreferencesData } from "../types";
 
 type SortKey = "count" | "type" | "label" | "extendedName" | "color";
 
@@ -15,15 +16,6 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "count", label: "Nombre" },
 ];
 
-interface ItemMetaEntry {
-  label: string;
-  bg: string;
-  healthRestore?: number;
-  manaRestore?: number;
-  consumable?: boolean;
-  plainColor?: string | null;
-}
-
 interface Props {
   inventory: Record<string, number>;
   itemMeta: Record<string, ItemMetaEntry>;
@@ -32,30 +24,6 @@ interface Props {
   preferences?: PreferencesData | null;
   onSortChange?: (sortA: SortKey, sortB: SortKey) => void;
   wallet?: number;
-}
-
-function ItemTooltip({ type, count, meta }: { type: string; count: number; meta: ItemMetaEntry }) {
-  const { ordinal } = getItemVisual(type);
-  const kind = ordinal != null ? "Block" : meta.consumable ? "Consommable" : "Item";
-  return (
-    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[9999] bg-black/90 border border-white/30 rounded-md px-3 py-2 text-white font-mono text-xs whitespace-nowrap pointer-events-none flex flex-col gap-0.5 min-w-[130px]">
-      <div className="font-bold text-[11px] text-white">{meta.label}</div>
-      <div className="text-white/50 text-[9px] break-all">{type}</div>
-      <div className="text-white/60 text-[10px] mt-0.5">
-        <span className="text-white/40">Type</span> {kind}
-      </div>
-      <div className="text-white/60 text-[10px]">
-        <span className="text-white/40">Qté</span> {count}
-      </div>
-      {(meta.healthRestore ?? 0) > 0 && <div className="text-green-400 text-[10px]">❤ +{meta.healthRestore}</div>}
-      {(meta.manaRestore ?? 0) > 0 && <div className="text-blue-400 text-[10px]">✦ +{meta.manaRestore}</div>}
-      {meta.plainColor && (
-        <div className="text-white/60 text-[10px]">
-          <span className="text-white/40">Couleur</span> {meta.plainColor}
-        </div>
-      )}
-    </div>
-  );
 }
 
 function getItemKind(type: string, meta: ItemMetaEntry): string {

@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { cn } from "../../primitives/cn";
 import { getItemVisual } from "../blocks/blockDefs";
 import { useShortcutBar } from "../hooks/useShortcutBar";
-import { ShortcutSlot, AttackMeta, SpellMeta } from "../types";
+import { ShortcutSlot, AttackMeta, ItemMetaEntry, SpellMeta } from "../types";
 import { UiState } from "../UIReducer";
 import { damageTypeColor, AttackCooldownOverlay } from "./AttackPanel";
 import { CssBlockCube, useBlockDefsReady, useBlockPreviews, useColoredBlockPreview } from "../shared/BlockPreview";
+import { ItemTooltip } from "../shared/ItemTooltip";
 
 function SlotBlockIcon({
   ordinal,
@@ -47,7 +49,7 @@ function SlotBlockIcon({
 
 interface Props {
   inventory: Record<string, number>;
-  itemMeta: Record<string, { label: string; bg: string }>;
+  itemMeta: Record<string, ItemMetaEntry>;
   attackMeta: Record<string, AttackMeta>;
   spellMeta?: Record<string, SpellMeta>;
   slots: (ShortcutSlot | null)[];
@@ -78,6 +80,7 @@ export function ShortcutBar({
 }: Props) {
   const defsReady = useBlockDefsReady();
   const getPreview = useBlockPreviews();
+  const [hoveredSlot, setHoveredSlot] = useState<number | null>(null);
   const {
     dragOver,
     pressedSlot,
@@ -140,6 +143,8 @@ export function ShortcutBar({
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, idx)}
             onContextMenu={(e) => handleContextMenu(e, idx)}
+            onPointerEnter={() => setHoveredSlot(idx)}
+            onPointerLeave={() => setHoveredSlot(null)}
             className={cn(
               "w-[52px] h-[52px] shrink-0 flex flex-col items-center justify-center relative rounded border-2 transition-all touch-none",
               isDropTarget ? "bg-white/20" : "bg-black/72",
@@ -218,6 +223,7 @@ export function ShortcutBar({
                 <div className="absolute bottom-0.5 right-1 font-mono font-bold text-[9px] [text-shadow:1px_1px_0_#000]">
                   {count > 0 ? <span className="text-white">{count}</span> : <span className="text-red-500/80">⊘</span>}
                 </div>
+                {hoveredSlot === idx && <ItemTooltip type={slot!.id} count={count} meta={itemMeta_} />}
               </>
             ) : null}
           </div>

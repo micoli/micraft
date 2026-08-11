@@ -1,6 +1,15 @@
 import type { Engine } from "@babylonjs/core";
-import { getRegistryBlockCount, isPlainColorable } from "../blocks/blockDefs";
+import { isPlainColorable } from "../blocks/blockDefs";
 import { setupBlockScene } from "./blockSceneRenderer";
+
+// blockDefs.ts module state (_registryBlocks) isn't populated in bundles other than the game
+// client's (admin.js has its own copy — see InstanceEditorViewport.tsx comment), so block count
+// is read straight from window.mc instead of getRegistryBlockCount().
+function getBlockCount(): number {
+  let count = 0;
+  while (window.mc?.getBlockDef?.(count)) count++;
+  return count;
+}
 
 /** Neutral grey used as stand-in for plainColorable blocks in cached previews. */
 export const PLAIN_COLORABLE_PREVIEW_HEX = "A0A0A0";
@@ -43,12 +52,40 @@ function enqueue(task: RenderTask) {
   drainQueue();
 }
 
+function enqueueFront(task: RenderTask) {
+  _renderQueue.unshift(task);
+  drainQueue();
+}
+
 export function getCached(ordinal: number): string | null {
   return _cache.get(ordinal) ?? null;
 }
 
 export function getColoredCached(ordinal: number, colorHex: string): string | null {
   return _coloredCache.get(`${ordinal}:${colorHex}`) ?? null;
+}
+
+const _pending = new Set<number>();
+
+/**
+ * Renders a single ordinal's preview ahead of the bulk startPreloading() sweep — used by UI
+ * that shows one specific block right away (shortcut bar, admin palette) instead of waiting for
+ * the sweep to reach it, which can take a while over the full block registry.
+ */
+export function ensurePreview(ordinal: number): void {
+  if (_cache.has(ordinal) || _pending.has(ordinal)) return;
+  _pending.add(ordinal);
+  enqueueFront(async () => {
+    const url = await renderBlockToDataUrl(
+      ordinal,
+      isPlainColorable(ordinal) ? PLAIN_COLORABLE_PREVIEW_HEX : undefined,
+    );
+    _pending.delete(ordinal);
+    if (url) {
+      _cache.set(ordinal, url);
+      notify();
+    }
+  });
 }
 
 export function ensureColoredPreview(ordinal: number, colorHex: string): void {
@@ -147,7 +184,7 @@ export async function startPreloading(): Promise<void> {
     check();
   });
 
-  const count = getRegistryBlockCount();
+  const count = getBlockCount();
   const tasks: Promise<void>[] = [];
   for (let ordinal = 0; ordinal < count; ordinal++) {
     if (_cache.has(ordinal)) continue;
