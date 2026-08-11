@@ -32,6 +32,18 @@ interface StoredCameraState {
 
 const cameraStorageKey = (zoneId: string) => `instanceEditorCamera:${zoneId}`;
 
+// Snapshot of a cell's content right before a place/break overwrote it, so undo can write it back.
+interface UndoEntry {
+  x: number;
+  y: number;
+  z: number;
+  type: string;
+  state: number;
+  xOffset: number;
+  zOffset: number;
+}
+const MAX_UNDO_ENTRIES = 10;
+
 function loadCameraState(zoneId: string): StoredCameraState | null {
   try {
     const raw = localStorage.getItem(cameraStorageKey(zoneId));
@@ -95,6 +107,9 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const modeRef = useRef(mode);
   const selectedTypeRef = useRef(selectedType);
   const ordinalByNameRef = useRef(ordinalByName);
+  // In-memory only (reset on zone remount, like the scene itself) — not persisted, unlike camera/shortcut bar.
+  const undoStackRef = useRef<UndoEntry[]>([]);
+  const redoStackRef = useRef<UndoEntry[]>([]);
   // PUT /blocks resolves normally even on a 4xx (fetch only rejects on network errors), so a
   // rejected placement/break (e.g. slot full, zone disabled, occupied by a different block) would
   // otherwise fail silently — the ghost just vanishes with no feedback. Surfaces the server's
@@ -311,6 +326,60 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         .then(() => visibleChunks.add(key))
         .catch((e) => console.error(`Failed to reload instance chunk ${key}`, e))
         .finally(() => chunkLoading.delete(key));
+    }
+
+    function pushCapped(stack: UndoEntry[], entry: UndoEntry) {
+      stack.push(entry);
+      if (stack.length > MAX_UNDO_ENTRIES) stack.shift();
+    }
+
+    // Called by place/break to record an edit — a fresh edit invalidates any pending redo history.
+    function pushUndo(entry: UndoEntry) {
+      pushCapped(undoStackRef.current, entry);
+      redoStackRef.current = [];
+    }
+
+    function captureBlock(x: number, y: number, z: number, xOffset: number, zOffset: number): UndoEntry {
+      if (!wasmExports) return { x, y, z, type: "AIR", state: 0, xOffset, zOffset };
+      const ordinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, x, y, z);
+      const state = wasmExports.mcAdminGetBlockStateAt(scene, x, y, z) & 0x03;
+      const type = window.mc.getBlockDef(ordinal)?.name ?? "AIR";
+      return { x, y, z, type, state, xOffset, zOffset };
+    }
+
+    function applyEntry(entry: UndoEntry, onSuccess: () => void, failLabel: string) {
+      api.instances
+        .setBlock(zone.id, {
+          x: entry.x,
+          y: entry.y,
+          z: entry.z,
+          type: entry.type,
+          state: entry.state,
+          xOffset: entry.xOffset,
+          zOffset: entry.zOffset,
+        })
+        .then((res) => {
+          if (!res.ok) return res.text().then((msg) => flashActionError(msg || `${failLabel} failed (${res.status})`));
+          onSuccess();
+          return reloadChunk(Math.floor(entry.x / CHUNK_SIZE), Math.floor(entry.z / CHUNK_SIZE));
+        })
+        .catch((e) => flashActionError(String(e)));
+    }
+
+    // Before applying the popped entry, snapshot what's currently there so it can be pushed onto
+    // the opposite stack — that's what lets undo/redo ping-pong back and forth indefinitely.
+    function performUndo() {
+      const entry = undoStackRef.current.pop();
+      if (!entry) return;
+      const redoEntry = captureBlock(entry.x, entry.y, entry.z, entry.xOffset, entry.zOffset);
+      applyEntry(entry, () => pushCapped(redoStackRef.current, redoEntry), "Undo");
+    }
+
+    function performRedo() {
+      const entry = redoStackRef.current.pop();
+      if (!entry) return;
+      const undoEntry = captureBlock(entry.x, entry.y, entry.z, entry.xOffset, entry.zOffset);
+      applyEntry(entry, () => pushCapped(undoStackRef.current, undoEntry), "Redo");
     }
 
     function viewRadiusChunks(): number {
@@ -638,6 +707,14 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     function onKeyDown(e: KeyboardEvent) {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      if (e.code === "KeyU") {
+        performUndo();
+        return;
+      }
+      if (e.code === "KeyY") {
+        performRedo();
+        return;
+      }
       if (e.code !== "KeyR") return;
       placementRotation = (placementRotation + 1) % 4;
       // Force a rebuild at the last known cursor position so the rotation is visible immediately,
@@ -706,6 +783,8 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         // idea as the in-game precise break (LocalPlayerController.kt).
         let breakXOffset = 0;
         let breakZOffset = 0;
+        let prevType = "AIR";
+        let prevState = 0;
         if (wasmExports) {
           const targetOrdinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, bx, by, bz);
           const targetState = wasmExports.mcAdminGetBlockStateAt(scene, bx, by, bz);
@@ -721,6 +800,10 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
             bs[2],
             rotation,
           );
+          prevType = targetDef?.name ?? "AIR";
+          // setBlock's "state" is a rotation (0-3), same as placementRotation elsewhere in this
+          // file — not the full BlockState byte read back here, which also carries unrelated bits.
+          prevState = rotation;
         }
         api.instances
           .setBlock(zone.id, {
@@ -734,6 +817,15 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
           })
           .then((res) => {
             if (!res.ok) return res.text().then((msg) => flashActionError(msg || `Break failed (${res.status})`));
+            pushUndo({
+              x: bx,
+              y: by,
+              z: bz,
+              type: prevType,
+              state: prevState,
+              xOffset: breakXOffset,
+              zOffset: breakZOffset,
+            });
             return reloadChunk(Math.floor(bx / CHUNK_SIZE), Math.floor(bz / CHUNK_SIZE));
           })
           .catch((e) => flashActionError(String(e)));
@@ -766,10 +858,20 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         placeBs[2],
         placementRotation,
       );
+      let prevType = "AIR";
+      let prevState = 0;
+      if (wasmExports) {
+        const prevOrdinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, tx, ty, tz);
+        // setBlock's "state" is a rotation (0-3), same as placementRotation below — not the full
+        // BlockState byte read back here, which also carries unrelated bits (see break branch above).
+        prevState = wasmExports.mcAdminGetBlockStateAt(scene, tx, ty, tz) & 0x03;
+        prevType = window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR";
+      }
       api.instances
         .setBlock(zone.id, { x: tx, y: ty, z: tz, type, state: placementRotation, xOffset, zOffset })
         .then((res) => {
           if (!res.ok) return res.text().then((msg) => flashActionError(msg || `Place failed (${res.status})`));
+          pushUndo({ x: tx, y: ty, z: tz, type: prevType, state: prevState, xOffset, zOffset });
           return reloadChunk(Math.floor(tx / CHUNK_SIZE), Math.floor(tz / CHUNK_SIZE));
         })
         .catch((e) => flashActionError(String(e)));

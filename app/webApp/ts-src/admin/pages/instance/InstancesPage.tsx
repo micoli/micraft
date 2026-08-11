@@ -237,6 +237,7 @@ export function InstancesPage() {
                     <button className="text-xs text-red-400 hover:text-red-300" onClick={deleteSelected}>
                       Delete
                     </button>
+                    <span className="text-[11px] text-[#8A99AF] font-mono">U:undo, Y:redo</span>
                   </div>
                 </>
               )}
