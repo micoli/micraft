@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Panel, FormField } from "../../primitives/Panel";
+import { Panel } from "../../primitives/Panel";
+import { FormField } from "../../primitives/FormField";
 import { Label } from "../../primitives/Label";
 import { Input } from "../../primitives/Input";
 import { Button } from "../../primitives/Button";

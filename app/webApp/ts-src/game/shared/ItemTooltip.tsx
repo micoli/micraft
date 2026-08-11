@@ -1,6 +1,6 @@
 import { getItemVisual } from "../blocks/blockDefs";
 import { ItemMetaEntry } from "../types";
-import { Block3DPreview } from "./BlockPreview";
+import { Block3DPreview } from "./Block3DPreview";
 
 export function ItemTooltip({ type, count, meta }: { type: string; count: number; meta: ItemMetaEntry }) {
   const { ordinal, colorHex } = getItemVisual(type);

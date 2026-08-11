@@ -1,5 +1,5 @@
 import { type BlockInfoDto } from "../../api";
-import { Block3DPreview } from "../../../game/shared/BlockPreview";
+import { Block3DPreview } from "../../../game/shared/Block3DPreview";
 
 export function BlockHoverTooltip({
   block,

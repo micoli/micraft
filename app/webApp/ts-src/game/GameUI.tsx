@@ -1,11 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useReducer, useState, useMemo } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { GameLayout, NpcDialogData, PreferencesData, ChannelSubscription, ShortcutSlot, QuestProgress } from "./types";
 import { UiState, reducer, makeUiDispatch } from "./UIReducer";
 import { GameContext } from "./GameContext";
 import { DisconnectOverlay } from "./overlays/DisconnectOverlay";
 import { defaultLayout } from "./layout/LayoutEngine";
 import { ChunkDebugData } from "./components/ChunkDebug";
+import { RouterBridge } from "./RouterBridge";
 import { AuthScreen } from "../screens/AuthScreen";
 import { CharacterSelectionScreen } from "../screens/CharacterSelectionScreen";
 import {
@@ -80,31 +81,6 @@ const initial: UiState = {
   mails: [],
   adminZone: null,
 };
-
-function RouterBridge({
-  navigateRef,
-  isGameRouteRef,
-}: {
-  navigateRef: React.MutableRefObject<((to: string) => void) | null>;
-  isGameRouteRef: React.MutableRefObject<boolean>;
-}) {
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
-  useEffect(() => {
-    navigateRef.current = navigate;
-  }, [navigate, navigateRef]);
-  useEffect(() => {
-    const isGame = pathname.startsWith("/game/");
-    isGameRouteRef.current = isGame;
-    const vis = isGame ? "visible" : "hidden";
-    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
-    if (canvas) canvas.style.visibility = vis;
-    const minimap = document.getElementById("mc-minimap");
-    if (minimap) (minimap as HTMLElement).style.visibility = vis;
-    if (pathname === "/chars") window.mcState.intentionalDisconnect = true;
-  }, [pathname, isGameRouteRef]);
-  return null;
-}
 
 export function GameUI() {
   const [state, rawDispatch] = useReducer(reducer, initial);

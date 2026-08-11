@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { Dialog, DialogContent, DialogTitle } from "../../../primitives/Dialog";
+import { Dialog } from "../../../primitives/Dialog";
 import { api, UserDto } from "../../api";
 import { useT } from "../../i18n";
 import { Btn } from "./Btn";
 import { UserForm } from "./UserForm";
+import { DialogContent } from "../../../primitives/DialogContent";
+import { DialogTitle } from "../../../primitives/DialogTitle";
 
 export function UsersPage() {
   const t = useT();

@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
+import { Dialog } from "../../primitives/Dialog";
+import { DialogContent } from "../../primitives/DialogContent";
+import { DialogTitle } from "../../primitives/DialogTitle";
 import { Button } from "../../primitives/Button";
 import { QuestProgress, QuestStatus } from "../types";
+import { ObjectiveRow } from "./ObjectiveRow";
 
 type QuestType = "KILL" | "FETCH" | "ESCORT" | "EXPLORE" | "BOSS";
 
@@ -62,23 +65,6 @@ function cooldownRemaining(def: QuestDef, progress: QuestProgress): number {
   if (!def.repeatable || !progress.lastCompletedAt) return 0;
   const elapsed = (Date.now() - progress.lastCompletedAt) / 1000;
   return Math.max(0, def.cooldownSeconds - elapsed);
-}
-
-function ObjectiveRow({ label, current, required }: { label: string; current: number; required: number }) {
-  const pct = Math.min(100, (current / required) * 100);
-  return (
-    <div className="mb-1">
-      <div className="flex justify-between text-xs text-white/70 mb-0.5">
-        <span>{label}</span>
-        <span>
-          {current}/{required}
-        </span>
-      </div>
-      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-        <div className="h-full bg-yellow-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  );
 }
 
 export function QuestJournal({ open, quests, playerLevel, onClose, onCommand }: Props) {

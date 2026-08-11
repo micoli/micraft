@@ -4,7 +4,8 @@ import { KeyboardEvent } from "react";
 import { Input } from "../primitives/Input";
 import { Label } from "../primitives/Label";
 import { Button } from "../primitives/Button";
-import { Panel, FormField } from "../primitives/Panel";
+import { Panel } from "../primitives/Panel";
+import { FormField } from "../primitives/FormField";
 import {
   AuthMode,
   getStoredToken,

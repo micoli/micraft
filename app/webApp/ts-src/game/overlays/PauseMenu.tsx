@@ -1,5 +1,7 @@
 import { useRef, useEffect } from "react";
-import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
+import { Dialog } from "../../primitives/Dialog";
+import { DialogContent } from "../../primitives/DialogContent";
+import { DialogTitle } from "../../primitives/DialogTitle";
 import { Button, ButtonProps } from "../../primitives/Button";
 
 interface PauseMenuItem {

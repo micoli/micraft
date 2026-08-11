@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, type BlockInfoDto, type InstanceZoneDto } from "../../api";
-import { Block3DPreview, useBlockDefsReady, useBlockPreviews } from "../../../game/shared/BlockPreview";
+import { useBlockDefsReady, useBlockPreviews } from "../../../game/shared/BlockPreview";
+import { Block3DPreview } from "../../../game/shared/Block3DPreview";
 import { InstancePaletteBlock } from "./InstancePaletteBlock";
 import { InstanceShortcutBarSlot } from "./InstanceShortcutBarSlot";
 import { startPreloading } from "../../../game/shared/blockPreviewCache";

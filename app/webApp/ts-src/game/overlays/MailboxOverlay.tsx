@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Dialog, DialogContent, DialogTitle } from "../../primitives/Dialog";
+import { Dialog } from "../../primitives/Dialog";
+import { DialogContent } from "../../primitives/DialogContent";
+import { DialogTitle } from "../../primitives/DialogTitle";
 import { Button } from "../../primitives/Button";
 import { Input } from "../../primitives/Input";
 import { ItemIcon } from "../shared/ItemIcon";

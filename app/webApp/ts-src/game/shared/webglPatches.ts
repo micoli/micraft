@@ -17,7 +17,7 @@ export function suppressDeprecatedWebglWarnings(): void {
     const orig = proto.getExtension;
     proto.getExtension = function (this: WebGLRenderingContext, name: string) {
       if (name === "WEBGL_debug_renderer_info") return null;
-      return orig.call(this, name);
-    };
+      return orig.call(this, name as Parameters<typeof orig>[0]);
+    } as typeof orig;
   }
 }

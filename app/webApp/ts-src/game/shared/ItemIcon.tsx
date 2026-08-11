@@ -1,19 +1,11 @@
 import { getItemVisual } from "../blocks/blockDefs";
-import { CssBlockCube, useBlockDefsReady, useBlockPreviews, useColoredBlockPreview } from "./BlockPreview";
+import { CssBlockCube, useBlockDefsReady, useBlockPreviews } from "./BlockPreview";
+import { ColoredIcon } from "./ColoredIcon";
 
 interface Props {
   itemId: string;
   fallbackBg: string;
   size?: number;
-}
-
-function ColoredIcon({ ordinal, colorHex, size }: { ordinal: number; colorHex: string; size: number }) {
-  const url = useColoredBlockPreview(ordinal, colorHex);
-  if (url)
-    return (
-      <img src={url} width={size + 8} height={size + 8} style={{ imageRendering: "pixelated", display: "block" }} />
-    );
-  return <CssBlockCube ordinal={ordinal} size={size - 4} colorHex={colorHex} />;
 }
 
 export function ItemIcon({ itemId, fallbackBg, size = 26 }: Props) {

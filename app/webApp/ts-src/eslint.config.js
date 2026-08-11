@@ -9,7 +9,8 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ["admin/**/*.tsx"],
+    files: ["**/*.tsx"],
+    ignores: ["**/*.stories.tsx"],
     plugins: { react: reactPlugin },
     rules: {
       "react/no-multi-comp": ["error", { ignoreStateless: false }],
