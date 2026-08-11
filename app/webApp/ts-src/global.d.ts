@@ -553,6 +553,7 @@ declare global {
       mcAdminLoadChunk(scene: unknown, data: Uint8Array, yMin: number, yMax: number): void;
       mcAdminDisposeChunk(cx: number, cz: number): void;
       mcAdminGetBlockOrdinalAt(scene: unknown, wx: number, wy: number, wz: number): number;
+      mcAdminGetBlockStateAt(scene: unknown, wx: number, wy: number, wz: number): number;
       mcAdminSetBlockRegistry(json: string): void;
     }>;
     [key: string]: unknown;

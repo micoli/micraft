@@ -405,37 +405,65 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       outlineMesh = null;
     }
 
-    let breakMesh: InstanceType<typeof BABYLON.Mesh> | null = null;
+    let breakMeshes: ReturnType<typeof buildBlockPreviewMeshes> = [];
     let breakMeshKey: string | null = null;
+    // Single shared red translucent material for every break-overlay mesh — kept separate from
+    // getOrCreateGhostMat's cache (chunkBuilder.ts) since that cache is keyed by texture/color
+    // and shared with the green placement ghost; tinting it red here would bleed into placement.
+    let breakMat: InstanceType<typeof BABYLON.StandardMaterial> | null = null;
 
-    function disposeBreakOverlay() {
-      if (breakMesh) overlayMeshes.delete(breakMesh);
-      breakMesh?.dispose();
-      breakMesh = null;
-      breakMeshKey = null;
-    }
-
-    // In break mode the ghost is replaced by a solid red box over the targeted block, instead of
-    // the placement preview — same idea as the in-game break overlay (targeting.ts), but a filled
-    // box rather than a wireframe pulse since there's no mining-progress value to animate here.
-    function showBreakOverlay(x: number, y: number, z: number) {
-      const key = `${x},${y},${z}`;
-      if (breakMeshKey === key) return;
-      disposeBreakOverlay();
-      const box = B!.MeshBuilder.CreateBox("breakOverlay", { size: 1 }, scene);
-      box.position = new B!.Vector3(x + 0.5, y + 0.5, z + 0.5);
+    function getOrCreateBreakMat(): InstanceType<typeof BABYLON.StandardMaterial> {
+      if (breakMat) return breakMat;
       const mat = new B!.StandardMaterial("breakOverlayMat", scene);
       mat.diffuseColor = new B!.Color3(1, 0, 0);
       mat.emissiveColor = new B!.Color3(1, 0, 0);
       mat.alpha = 0.3;
       mat.disableDepthWrite = true;
       mat.backFaceCulling = false;
-      box.material = mat;
-      box.isPickable = false;
-      box.renderingGroupId = 1;
-      breakMesh = box;
+      breakMat = mat;
+      return mat;
+    }
+
+    function disposeBreakOverlay() {
+      breakMeshes.forEach((m) => {
+        overlayMeshes.delete(m);
+        m.dispose();
+      });
+      breakMeshes = [];
+      breakMeshKey = null;
+    }
+
+    // In break mode the ghost is replaced by the targeted block's real mesh tinted red, instead
+    // of the placement preview — mirrors showGhostAndOutline's shape/rotation/sub-slot handling
+    // (same buildBlockPreviewMeshes + brickSize offset math) so the overlay matches classic
+    // blocks, fractional pieces (LEGO_PIECE) and non-cubic footprints (LEGO_ARCH_4X1) alike.
+    function showBreakOverlay(
+      x: number,
+      y: number,
+      z: number,
+      ordinal: number,
+      rotation: number,
+      xOffset = 0,
+      zOffset = 0,
+    ) {
+      const key = `${x},${y},${z},${ordinal},${rotation}`;
+      if (breakMeshKey === key) return;
+      disposeBreakOverlay();
+      const mat = getOrCreateBreakMat();
+      breakMeshes = buildBlockPreviewMeshes(scene, ordinal, rotation);
+      const blockDef = window.mc.getBlockDef(ordinal);
+      const bs = blockDef?.brickSize ?? [1, 1, 1];
+      const fracX = bs[0] < 1 ? bs[0] : bs[0] > 1 ? 0.5 : 0;
+      const fracZ = bs[2] < 1 ? bs[2] : bs[2] > 1 ? 0.5 : 0;
+      const pos = new B!.Vector3(x + xOffset * fracX, y, z + zOffset * fracZ);
+      for (const m of breakMeshes) {
+        m.position = pos;
+        m.material = mat;
+        m.isPickable = false;
+        m.renderingGroupId = 1;
+        overlayMeshes.add(m);
+      }
       breakMeshKey = key;
-      overlayMeshes.add(box);
     }
 
     function showGhostAndOutline(x: number, y: number, z: number, ordinal: number, xOffset = 0, zOffset = 0) {
@@ -544,7 +572,27 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
         const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
         const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
-        showBreakOverlay(bx, by, bz);
+        if (!wasmExports) {
+          disposeBreakOverlay();
+          return;
+        }
+        const targetOrdinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, bx, by, bz);
+        const targetState = wasmExports.mcAdminGetBlockStateAt(scene, bx, by, bz);
+        // Bits 0-1 of the state byte — mirrors BlockState.rotation() (BlockState.kt); duplicated
+        // here since there's no shared code path between Kotlin and this TS admin bundle.
+        const rotation = targetState & 0x03;
+        const targetDef = window.mc.getBlockDef(targetOrdinal);
+        const bs = targetDef?.brickSize ?? [1, 1, 1];
+        const [xOffset, zOffset] = computeSlotOffset(
+          pick.pickedPoint.x,
+          pick.pickedPoint.z,
+          bx,
+          bz,
+          bs[0],
+          bs[2],
+          rotation,
+        );
+        showBreakOverlay(bx, by, bz, targetOrdinal, rotation, xOffset, zOffset);
         return;
       }
       disposeBreakOverlay();
@@ -660,6 +708,8 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         let breakZOffset = 0;
         if (wasmExports) {
           const targetOrdinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, bx, by, bz);
+          const targetState = wasmExports.mcAdminGetBlockStateAt(scene, bx, by, bz);
+          const rotation = targetState & 0x03; // BlockState.rotation() mirror — see updateHoverPreview
           const targetDef = window.mc.getBlockDef(targetOrdinal);
           const bs = targetDef?.brickSize ?? [1, 1, 1];
           [breakXOffset, breakZOffset] = computeSlotOffset(
@@ -669,7 +719,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
             bz,
             bs[0],
             bs[2],
-            0,
+            rotation,
           );
         }
         api.instances

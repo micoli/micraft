@@ -167,9 +167,10 @@ make trigger-wasm      # trigger rebuild when wasm-watch is running
 
 ## code-standard
 ```
+make quick-code-standard # lint on only modified kotlin and typescript since HEAD
 make code-standard       # full lint on kotlin and typescript
-make quick-code-standard # lint on only modified kotlin and typescript
 ```
+do not use `make dc CMD="./gradlew :spotlessApply"` or `make dc CMD="npm run format"` by their own
 
 ## Zone/npc tier per skill level
 Skill level → zone tier mapping for future zone-tiered entities:

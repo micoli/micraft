@@ -126,3 +126,12 @@ fun mcAdminGetBlockOrdinalAt(scene: JsAny, wx: Int, wy: Int, wz: Int): Int {
     val manager = managerFor(scene)
     return BlockRegistry.wireIndex(manager.getBlockAtWorld(wx, wy, wz))
 }
+
+// Exposes the raw state byte (rotation + colorIndex, see BlockState.kt) of the block under the
+// cursor, so the break ghost can render with the same rotation as the actually placed block
+// instead of assuming rotation 0.
+@JsExport
+fun mcAdminGetBlockStateAt(scene: JsAny, wx: Int, wy: Int, wz: Int): Int {
+    val manager = managerFor(scene)
+    return manager.getStateAtWorld(wx, wy, wz).toInt() and 0xFF
+}

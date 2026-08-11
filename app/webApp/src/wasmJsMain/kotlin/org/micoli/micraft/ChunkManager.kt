@@ -284,6 +284,16 @@ class ChunkManager(private val scene: JsAny) {
         return chunk.getBlock(lx, wy, lz)
     }
 
+    fun getStateAtWorld(wx: Int, wy: Int, wz: Int): Byte {
+        if (wy < 0 || wy > WorldConstants.WORLD_MAX_Y) return 0
+        val cx = wx.floorDiv(WorldConstants.CHUNK_SIZE)
+        val cz = wz.floorDiv(WorldConstants.CHUNK_SIZE)
+        val (chunk, _) = chunkData[ChunkPos(cx, cz)] ?: return 0
+        val lx = wx - cx * WorldConstants.CHUNK_SIZE
+        val lz = wz - cz * WorldConstants.CHUNK_SIZE
+        return chunk.getState(lx, wy, lz)
+    }
+
     /**
      * Returns (masterWorldPos, usedSlotCount) if a fractional plate entity covers (wx,wy,wz)
      * (either as master or satellite). Returns null if no fractional entity is at this position.
