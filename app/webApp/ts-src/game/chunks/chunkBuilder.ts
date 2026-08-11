@@ -515,7 +515,6 @@ export function registerChunks(): Pick<
       const fi = window.__mcFI ?? 0;
       const startI = cursor * FACE_STRIDE;
       const endI = Math.min(startI + maxFaces * FACE_STRIDE, fi);
-      // if (cursor === 0) console.warn("[fracDebug] chunkProcessFaces start", { fi, totalFaces: fi / FACE_STRIDE });
       const grp = buf.groups;
       for (let i = startI; i < endI; i += FACE_STRIDE) {
         let wx = fb[i],
@@ -537,10 +536,6 @@ export function registerChunks(): Pick<
           wz += zOff * frac[1];
         }
         const infos = faceTable[faceMat];
-        // if (xOff || zOff || yOff) {
-        //  // TEMP DEBUG — remove once the "offset entities don't render" bug is found
-        //  console.warn("[fracDebug]", { wx, wy, wz, xOff, zOff, yOff, faceMat, hasInfos: !!infos });
-        //}
         if (!infos) {
           const typeOrd = (faceMat / 24) | 0;
           if (gltfTypeTable[typeOrd] !== undefined) {

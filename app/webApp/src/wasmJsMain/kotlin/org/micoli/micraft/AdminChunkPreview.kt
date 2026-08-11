@@ -51,9 +51,7 @@ private fun managerFor(scene: JsAny): ChunkManager {
 // by InstanceEditorViewport.tsx.
 @JsExport
 fun mcAdminSetBlockRegistry(json: String) {
-    // jsWarn("fracDebug mcAdminSetBlockRegistry called, json.length=${json.length}")
     val infos = Json.decodeFromString(ListSerializer(BlockInfo.serializer()), json)
-    // jsWarn("fracDebug mcAdminSetBlockRegistry decoded ${infos.size} infos")
     val defs =
         infos.associate { info ->
             BlockType(info.name) to
@@ -76,9 +74,6 @@ fun mcAdminSetBlockRegistry(json: String) {
                 )
         }
     BlockRegistry.load(defs)
-    // jsWarn(
-    // "fracDebug BlockRegistry.load done, LEGO_PIECE
-    // wireIndex=${BlockRegistry.wireIndex(BlockType("LEGO_PIECE"))}")
 }
 
 @JsExport

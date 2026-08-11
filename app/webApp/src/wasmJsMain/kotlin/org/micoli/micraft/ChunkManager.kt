@@ -704,10 +704,6 @@ class ChunkManager(private val scene: JsAny) {
         for (entity in chunk.entityMasters) {
             val hasYOffset = entity.yOffset > 0
             val hasXZOffset = entity.xOffset > 0 || entity.zOffset > 0
-            // org.micoli.micraft.babylon.jsWarn(
-            //    "fracDebug entity masterIdx=${entity.masterIdx} type=${entity.type}
-            // x=${entity.xOffset} z=${entity.zOffset} y=${entity.yOffset} hasXZ=$hasXZOffset
-            // hasY=$hasYOffset")
             if (!hasYOffset && !hasXZOffset) continue
             val (mx, my, mz) = Chunk.indexToXYZ(entity.masterIdx)
             val ord = BlockRegistry.wireIndex(entity.type)

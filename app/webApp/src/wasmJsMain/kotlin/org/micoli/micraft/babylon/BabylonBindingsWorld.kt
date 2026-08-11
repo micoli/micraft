@@ -79,7 +79,7 @@ fun jsChunkFaceAppendXZOffset(
     ao: Int
 ): Unit =
     js(
-        "{const i=window.__mcFI;const packed=(ao|(yOffset<<16)|(xOffset<<24)|(zOffset<<26));console.warn('[fracDebug] jsChunkFaceAppendXZOffset write', {i, wx, wy, wz, yOffset, xOffset, zOffset, faceMat, ao, packed});window.__mcFB[i]=wx;window.__mcFB[i+1]=wy;window.__mcFB[i+2]=wz;window.__mcFB[i+3]=faceMat;window.__mcFB[i+4]=packed;window.__mcFB[i+5]=1;window.__mcFI=i+6}")
+        "{const i=window.__mcFI;const packed=(ao|(yOffset<<16)|(xOffset<<24)|(zOffset<<26));window.__mcFB[i]=wx;window.__mcFB[i+1]=wy;window.__mcFB[i+2]=wz;window.__mcFB[i+3]=faceMat;window.__mcFB[i+4]=packed;window.__mcFB[i+5]=1;window.__mcFI=i+6}")
 
 // Like jsChunkFaceAppend but for a run of runLen blocks merged along Z (greedy meshing —
 // top/bottom/east/west faces of adjacent same-material, same-AO simple-cube blocks).

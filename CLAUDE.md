@@ -12,15 +12,6 @@ Minecraft client/server clone — **Kotlin Multiplatform**, multiplayer voxel, p
 | `app/desktopApp` | `app/desktopApp/src/main` | Desktop client (JVM) |
 | `app/shared` | `app/shared/src/commonMain` | Shared Compose code desktop/web |
 
-## Key source files
-
-`/key-source-files`
-
-
-## Protocol messages
-
-`/protocol-messages`
-
 ## Domain types
 
 **Block types**: `AIR BEDROCK STONE DIRT GRASS SAND SANDSTONE GRAVEL SNOW OAK_LOG OAK_LEAVES PINE_LOG PINE_LEAVES PINE_LEAVES_SNOW FLOWER WEED`
@@ -42,6 +33,15 @@ Properties (buildable, placesBlock) in `data/config/items.yaml`.
 - **Client-side prediction**: `GameClient` predicts XZ locally ~60 fps, soft-corrects toward server. Y (gravity) always server-authoritative.
 - All simulation logic (AABB physics, chunk gen) in `core` — keeps client prediction and server consistent.
 - **Chunk rendering**: `VertexData` buffers per chunk (~200 draw calls). `WorldUpdate` triggers re-mesh of affected chunk.
+
+## Key source files
+
+`/key-source-files`
+
+
+## Protocol messages
+
+`/protocol-messages`
 
 ## Data directory
 
@@ -80,19 +80,6 @@ Provider selected via `data/config/server.yaml` → `auth.provider` (`none` | `l
 - Every in-game action (except movement) can have slash command; each bindable to key via keybinding
 - Commands with arguments get autocompletion method attached
 
-## Armor system
-
-Armor configs in `resources/armors/<name>/<name>.yaml`. Each defines `wearable` slot flags (`head`, `body`, `rightArm`, `leftArm`, `rightLeg`, `leftLeg`). Loaded by `ArmorRegistryLoader`.
-
-**HTTP routes**:
-| Route | Purpose |
-|-------|---------|
-| `GET /api/armors` | `Map<name, WearableSlots>` — all available armors |
-| `GET /api/player/:name/armors` | currently equipped armor names |
-| `GET /api/player/:name/skin` | `{skin: string}` |
-
-**In-game**: `/equip <name>` / `/unequip <name>`. Client resolves slot conflicts before sending commands.
-**UI**: `Character.tsx` (key `Y`, or Pause → Character). Shared preview: `PlayerModelPreview.tsx`.
 
 ## Entities / animations
 Models use **bbmodel** (Blockbench) format. Example: `resources/skins/player/player.bbmodel`
@@ -107,36 +94,6 @@ node scripts/export_skin_presets.mjs ./resources/blockbench-export/.
 First person shows the real player model minus those bones — there is no separate FP arm rig.
 Skins without a yaml fall back to `PlayerConstants` stance eye offsets.
 
-## Player preferences — save/restore
-
-Preferences persist across reconnections via YAML. Full pipeline:
-
-```
-TypeScript setPendingPrefs() → WASM consumePreferencesUpdate()
-  → ClientMessage.PreferencesUpdate → server handlePreferencesUpdate
-  → PlayerState.copy() → savePlayer → YAML
-  → on reconnect: loadPlayerState → PlayerState constructor → buildPreferencesSync
-  → ServerMessage.PreferencesSync → WASM Json.encodeToString → TS preferencesSync event
-```
-
-**Adding a new preference field — checklist:**
-
-1. `core/.../player/Player.kt` `PlayerState` — add field with default
-2. `core/.../protocol/ClientMessage.kt` `PreferencesUpdate` — add field with default
-3. `core/.../protocol/ServerMessage.kt` `PreferencesSync` — add field with default
-4. `server/.../game/GameLoop.kt` `handlePreferencesUpdate` — copy from `msg` into `session.state.copy(...)`
-5. `server/.../game/GameLoop.kt` `buildPreferencesSync` — copy from `session.state` into `PreferencesSync(...)`
-6. **`server/.../game/GameLoop.kt` `onConnect` PlayerState constructor (~line 1171)** — add `myField = saved?.myField ?: default`. **This is the most common omission — forgetting it means the field is never restored on reconnect.**
-7. `app/webApp/ts-src/game/types.ts` `PreferencesData` — add optional field
-8. Call `setPendingPrefs({ myField: value })` in TypeScript to save; read from `preferences.myField`
-
-**Caveats:**
-
-- `Json.encodeToString` (WASM→TS) uses `encodeDefaults = false` → fields equal to their Kotlin default are **omitted** from JSON → TypeScript sees `undefined`. Guard with `if (preferences?.myField)` only if empty/default means "no preference set".
-- `Yaml.default` (server write) uses `encodeDefaults = true` → all fields written, including empty strings.
-- `setPendingPrefs` in `GameScreen.tsx` and `GameUI.tsx` strips client-only keys (`knownChannels`, `commands`, `defaultKeybindings`, `macroIcons`) before sending to server — add any new client-only key to that destructure.
-- Binary protobuf fields are auto-numbered by position (no `@ProtoId`). Never reorder fields in `PreferencesUpdate` or `PreferencesSync` — it breaks the wire protocol between server and WASM.
-- After changing `core` types, run `make dev-reset-wasm` (not just `make build-wasm`) to clear stale WASM output.
 
 ## Code conventions
 
@@ -171,18 +128,6 @@ make quick-code-standard # lint on only modified kotlin and typescript since HEA
 make code-standard       # full lint on kotlin and typescript
 ```
 do not use `make dc CMD="./gradlew :spotlessApply"` or `make dc CMD="npm run format"` by their own
-
-## Zone/npc tier per skill level
-Skill level → zone tier mapping for future zone-tiered entities:
-
-| skill level | npc/zone level |
-|-------------|----------------|
-| 1 | 1–5            |
-| 2 | 6–10           |
-| 3 | 11–15          |
-| 4 | 16–20          |
-| 5 | 21–25+         |
-
 
 ## JS / CSS build
 
@@ -251,3 +196,28 @@ Translation YAML files in `data/config/i18n/{locale}.yaml`. Key format: `feature
 - `I18nConfig` instantiated in `GameLoop`, reloaded with `/reload`. Language in `PlayerState.language`, changed via `/lang <locale>`.
 
 **Adding new strings**: `/add-i18n`
+
+## Zone/npc tier per skill level
+Skill level → zone tier mapping for future zone-tiered entities:
+
+| skill level | npc/zone level |
+|-------------|----------------|
+| 1 | 1–5            |
+| 2 | 6–10           |
+| 3 | 11–15          |
+| 4 | 16–20          |
+| 5 | 21–25+         |
+
+## Armor system
+
+Armor configs in `resources/armors/<name>/<name>.yaml`. Each defines `wearable` slot flags (`head`, `body`, `rightArm`, `leftArm`, `rightLeg`, `leftLeg`). Loaded by `ArmorRegistryLoader`.
+
+**HTTP routes**:
+| Route | Purpose |
+|-------|---------|
+| `GET /api/armors` | `Map<name, WearableSlots>` — all available armors |
+| `GET /api/player/:name/armors` | currently equipped armor names |
+| `GET /api/player/:name/skin` | `{skin: string}` |
+
+**In-game**: `/equip <name>` / `/unequip <name>`. Client resolves slot conflicts before sending commands.
+**UI**: `Character.tsx` (key `Y`, or Pause → Character). Shared preview: `PlayerModelPreview.tsx`.
