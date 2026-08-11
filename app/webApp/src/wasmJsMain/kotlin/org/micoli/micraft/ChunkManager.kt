@@ -296,7 +296,7 @@ class ChunkManager(private val scene: JsAny) {
         val lx = wx - cx * WorldConstants.CHUNK_SIZE
         val lz = wz - cz * WorldConstants.CHUNK_SIZE
         val idx = Chunk.index(lx, wy, lz)
-        val entity = chunk.buildEntitiesMap()[idx] ?: return null
+        val entity = chunk.buildEntitiesMap()[idx]?.firstOrNull() ?: return null
         if (BlockRegistry.get(entity.type).heightFraction >= 1.0f) return null
         val (mx, my, mz) = Chunk.indexToXYZ(entity.masterIdx)
         val masterWx = cx * WorldConstants.CHUNK_SIZE + mx
@@ -306,22 +306,6 @@ class ChunkManager(private val scene: JsAny) {
                 it.masterIdx == entity.masterIdx && BlockRegistry.get(it.type).heightFraction < 1.0f
             }
         return Pair(BlockPos(masterWx, my, masterWz), usedCount)
-    }
-
-    /**
-     * Computes the effective placement position for a fractional plate, mirroring server redirect:
-     * (a) pos covers a fractional satellite/master with free slots → master (b) pos is AIR and y-1
-     * has a fractional plate with free slots → that plate's master
-     */
-    fun resolveFractionalPlacementPos(pos: BlockPos): BlockPos {
-        val directInfo = getFractionalInfoAt(pos.x, pos.y, pos.z)
-        if (directInfo != null && directInfo.second < 3) return directInfo.first
-        if (getBlockAtWorld(pos.x, pos.y, pos.z) == BlockType.AIR && pos.y > 0) {
-            val belowY = pos.y - 1
-            val belowInfo = getFractionalInfoAt(pos.x, belowY, pos.z)
-            if (belowInfo != null && belowInfo.second < 3) return belowInfo.first
-        }
-        return pos
     }
 
     // Synchronous full re-render (WorldUpdate block changes) — old mesh stays until done
@@ -478,11 +462,22 @@ class ChunkManager(private val scene: JsAny) {
                 val ord = blocks[idx].toInt() and 0xFF
                 if (ord == 0) continue // AIR = wire index 0
 
+                // Several fractional entities (XZ sub-slots / Y stacks) can share one voxel, so
+                // this is a list, not a single entity — e.g. multiple LEGO_PIECE in one cell.
+                val entitiesHere = entityMap[idx]
                 // Multi-cell entity satellite: skip (master emits geometry for whole extent)
-                val entity = entityMap[idx]
-                if (entity != null && entity.masterIdx != idx) continue
-                // Fractional-offset master: skip here, emitted by renderFractionalEntities
-                if (entity != null && (entity.xOffset > 0 || entity.zOffset > 0)) continue
+                val entity = entitiesHere?.firstOrNull { it.masterIdx == idx }
+                if (entitiesHere != null && entity == null) continue
+                // Fractional-offset master: skip here, emitted by renderFractionalEntities —
+                // unless another entity sharing this voxel has zero offset and still needs the
+                // base-array (this) render path.
+                if (entity != null && (entity.xOffset > 0 || entity.zOffset > 0)) {
+                    val zeroOffsetEntity =
+                        entitiesHere.firstOrNull {
+                            it.masterIdx == idx && it.xOffset == 0 && it.zOffset == 0
+                        }
+                    if (zeroOffsetEntity == null) continue
+                }
 
                 // state byte: bits 0-1 rotation, bits 2-7 plain color index
                 // faceMat = (ord * 4 + rotation) * 6 + fd; color rides in ao bits 18-23
@@ -699,6 +694,10 @@ class ChunkManager(private val scene: JsAny) {
         for (entity in chunk.entityMasters) {
             val hasYOffset = entity.yOffset > 0
             val hasXZOffset = entity.xOffset > 0 || entity.zOffset > 0
+            // org.micoli.micraft.babylon.jsWarn(
+            //    "fracDebug entity masterIdx=${entity.masterIdx} type=${entity.type}
+            // x=${entity.xOffset} z=${entity.zOffset} y=${entity.yOffset} hasXZ=$hasXZOffset
+            // hasY=$hasYOffset")
             if (!hasYOffset && !hasXZOffset) continue
             val (mx, my, mz) = Chunk.indexToXYZ(entity.masterIdx)
             val ord = BlockRegistry.wireIndex(entity.type)

@@ -39,7 +39,10 @@ sealed class ClientMessage {
     @Serializable
     data class ChunkUnload(val positions: List<ChunkPos>) : ClientMessage()
 
-    @ProtoId(3) @Serializable data class BlockBreakStart(val pos: BlockPos) : ClientMessage()
+    @ProtoId(3)
+    @Serializable
+    data class BlockBreakStart(val pos: BlockPos, val xOffset: Byte = 0, val zOffset: Byte = 0) :
+        ClientMessage()
 
     @ProtoId(4) @Serializable object BlockBreakStop : ClientMessage()
 

@@ -817,15 +817,18 @@ class LocalPlayerController(
             val isFractionalItem =
                 selectedItem.placesBlock?.let { BlockRegistry.get(it).heightFraction < 1.0f }
                     ?: false
-            // Redirect ghost for fractional plates only on lateral clicks (satellite → master).
-            // Above-stud clicks (rawAdjacent.y > target.y) keep ghost at y+1 so it appears
-            // above the existing plates; the server handles the actual sub-voxel stacking.
+            // Redirect ghost for fractional blocks only on lateral clicks (side of an existing
+            // fractional entity → its own cell, so a second XZ slot or Y stack level can be added
+            // in the SAME voxel instead of pushing into the empty neighbor cell). Above-stud
+            // clicks (rawAdjacent.y > target.y) keep ghost at y+1 so it appears above the existing
+            // plates; the server handles the actual sub-voxel stacking.
             val adjacent =
                 if (isFractionalItem &&
                     rawAdjacent != null &&
                     target != null &&
-                    rawAdjacent.y == target.y)
-                    chunkManager.resolveFractionalPlacementPos(rawAdjacent)
+                    rawAdjacent.y == target.y &&
+                    chunkManager.getFractionalInfoAt(target.x, target.y, target.z) != null)
+                    target
                 else rawAdjacent
 
             val ghostColorIdx =
@@ -858,11 +861,19 @@ class LocalPlayerController(
                 val hitZ = rayResult?.hitZ ?: 0f
                 val fracX = (hitX - adjacent.x).coerceIn(0f, 0.9999f)
                 val fracZ = (hitZ - adjacent.z).coerceIn(0f, 0.9999f)
+                val slotsX =
+                    if (studStepX > 0f) kotlin.math.floor(1f / studStepX).toInt().coerceAtLeast(1)
+                    else 1
+                val slotsZ =
+                    if (studStepZ > 0f) kotlin.math.floor(1f / studStepZ).toInt().coerceAtLeast(1)
+                    else 1
                 ghostXOffset =
-                    if (studStepX > 0f) kotlin.math.floor(fracX / studStepX).toInt().coerceIn(0, 1)
+                    if (studStepX > 0f)
+                        kotlin.math.floor(fracX / studStepX).toInt().coerceIn(0, slotsX - 1)
                     else 0
                 ghostZOffset =
-                    if (studStepZ > 0f) kotlin.math.floor(fracZ / studStepZ).toInt().coerceIn(0, 1)
+                    if (studStepZ > 0f)
+                        kotlin.math.floor(fracZ / studStepZ).toInt().coerceIn(0, slotsZ - 1)
                     else 0
             } else {
                 ghostXOffset = 0
@@ -939,7 +950,49 @@ class LocalPlayerController(
                 if (target != breakTarget) {
                     breakTarget = target
                     jsShowBreakOverlay(scene, target.x, target.y, target.z, 1.0)
-                    outMessages.trySend(ClientMessage.BlockBreakStart(target))
+                    val targetDef =
+                        BlockRegistry.get(
+                            chunkManager.getBlockAtWorld(target.x, target.y, target.z))
+                    val breakStudStepX =
+                        targetDef.brickSize.getOrElse(0) { 1f }.let { if (it < 1.0f) it else 0f }
+                    val breakStudStepZ =
+                        targetDef.brickSize.getOrElse(2) { 1f }.let { if (it < 1.0f) it else 0f }
+                    val breakXOffset: Int
+                    val breakZOffset: Int
+                    if (breakStudStepX > 0f || breakStudStepZ > 0f) {
+                        val hitX = rayResult.hitX
+                        val hitZ = rayResult.hitZ
+                        val fracX = (hitX - target.x).coerceIn(0f, 0.9999f)
+                        val fracZ = (hitZ - target.z).coerceIn(0f, 0.9999f)
+                        val slotsBreakX =
+                            if (breakStudStepX > 0f)
+                                kotlin.math.floor(1f / breakStudStepX).toInt().coerceAtLeast(1)
+                            else 1
+                        val slotsBreakZ =
+                            if (breakStudStepZ > 0f)
+                                kotlin.math.floor(1f / breakStudStepZ).toInt().coerceAtLeast(1)
+                            else 1
+                        breakXOffset =
+                            if (breakStudStepX > 0f)
+                                kotlin.math
+                                    .floor(fracX / breakStudStepX)
+                                    .toInt()
+                                    .coerceIn(0, slotsBreakX - 1)
+                            else 0
+                        breakZOffset =
+                            if (breakStudStepZ > 0f)
+                                kotlin.math
+                                    .floor(fracZ / breakStudStepZ)
+                                    .toInt()
+                                    .coerceIn(0, slotsBreakZ - 1)
+                            else 0
+                    } else {
+                        breakXOffset = 0
+                        breakZOffset = 0
+                    }
+                    outMessages.trySend(
+                        ClientMessage.BlockBreakStart(
+                            target, breakXOffset.toByte(), breakZOffset.toByte()))
                 }
             } else if (breakTarget != null) {
                 breakTarget = null

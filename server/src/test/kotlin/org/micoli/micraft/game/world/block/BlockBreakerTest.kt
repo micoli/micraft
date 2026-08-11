@@ -10,7 +10,9 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.drop.DropConfig
 import org.micoli.micraft.game.session.WorldActionRecord
+import org.micoli.micraft.game.world.BlockDefinition
 import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
@@ -37,6 +39,20 @@ class BlockBreakerTest {
     private fun noopWim(
         broadcasts: MutableList<ServerMessage> = mutableListOf()
     ): WorldItemManager = WorldItemManager(createDropConfig(), { broadcasts.add(it) })
+
+    private fun registerLegoPiece() {
+        BlockRegistry.load(
+            mapOf(
+                BlockType.LEGO_PIECE to
+                    BlockDefinition(
+                        hardness = 1f,
+                        solid = true,
+                        isCubic = false,
+                        replaceable = false,
+                        brickSize = listOf(0.25f, 1f, 0.25f),
+                        heightFraction = 0.333f,
+                    )))
+    }
 
     @Test
     fun handleStart_validBlock_setsBreakTarget() {
@@ -219,5 +235,41 @@ class BlockBreakerTest {
                 it.pos == BlockPos(8, 5, 8)
             }
         assertEquals(1, progressMsg.progress)
+    }
+
+    @Test
+    fun tick_xzYFractional_removesOnlyTargetedSlot() = runBlocking {
+        registerLegoPiece()
+        val world = testWorld()
+        // Slot (0,0): two stacked pieces. Slot (1,0): one piece.
+        BlockPlacer.placeAt(BlockPos(8, 5, 8), BlockType.LEGO_PIECE, 0, 0, 0, 0, world)
+        BlockPlacer.placeAt(BlockPos(8, 5, 8), BlockType.LEGO_PIECE, 0, 0, 0, 0, world)
+        BlockPlacer.placeAt(BlockPos(8, 5, 8), BlockType.LEGO_PIECE, 0, 0, 1, 0, world)
+        val breaker = BlockBreaker(world, {}, noopWim())
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.breakTarget = BlockPos(8, 5, 8)
+        session.breakTargetXOffset = 1
+        session.breakTargetZOffset = 0
+        breaker.tick(session)
+        assertTrue(world.getFractionalYOffsetsAt(8, 5, 8, 1, 0).isEmpty())
+        assertEquals(listOf(0, 1), world.getFractionalYOffsetsAt(8, 5, 8, 0, 0).sorted())
+        assertEquals(BlockType.LEGO_PIECE, world.getBlock(8, 5, 8))
+    }
+
+    @Test
+    fun tick_xzYFractional_removesTopmostOfTargetedSlot() = runBlocking {
+        registerLegoPiece()
+        val world = testWorld()
+        // Slot (0,0): three stacked pieces (yOffset 0,1,2).
+        repeat(3) {
+            BlockPlacer.placeAt(BlockPos(8, 5, 8), BlockType.LEGO_PIECE, 0, 0, 0, 0, world)
+        }
+        val breaker = BlockBreaker(world, {}, noopWim())
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.breakTarget = BlockPos(8, 5, 8)
+        session.breakTargetXOffset = 0
+        session.breakTargetZOffset = 0
+        breaker.tick(session)
+        assertEquals(listOf(0, 1), world.getFractionalYOffsetsAt(8, 5, 8, 0, 0).sorted())
     }
 }

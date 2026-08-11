@@ -202,8 +202,18 @@ class WorldState(
             .maxWithOrNull(compareBy({ it.xOffset }, { it.zOffset }))
     }
 
-    /** Returns yOffsets of all fractional entities whose master is at this world position. */
-    fun getFractionalYOffsetsAt(wx: Int, wy: Int, wz: Int): List<Int> {
+    /**
+     * Returns yOffsets of fractional entities whose master is at this world position, restricted to
+     * the given XZ sub-slot (defaults to 0,0 — the whole-cell slot used by full-footprint plates
+     * like LEGO_PLATE_2X2).
+     */
+    fun getFractionalYOffsetsAt(
+        wx: Int,
+        wy: Int,
+        wz: Int,
+        xOffset: Int = 0,
+        zOffset: Int = 0
+    ): List<Int> {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return emptyList()
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
@@ -214,13 +224,27 @@ class WorldState(
         val masterIdx = Chunk.index(localX, wy, localZ)
         return chunk.entityMasters
             .filter {
-                it.masterIdx == masterIdx && BlockRegistry.get(it.type).heightFraction < 1.0f
+                it.masterIdx == masterIdx &&
+                    BlockRegistry.get(it.type).heightFraction < 1.0f &&
+                    it.xOffset == xOffset &&
+                    it.zOffset == zOffset
             }
             .map { it.yOffset }
     }
 
-    /** Returns the topmost (highest yOffset) fractional entity master at this world position. */
-    fun getTopmostFractionalEntityAt(wx: Int, wy: Int, wz: Int): BlockEntity? {
+    /**
+     * Returns the topmost (highest yOffset) fractional entity master at this world position. If
+     * [xOffset]/[zOffset] are given, restricts to that XZ sub-slot (used to break the exact slot a
+     * player is aiming at for XZ+Y-fractional blocks like LEGO_PIECE); otherwise considers all
+     * slots in the cell (whole-cell plates like LEGO_PLATE_2X2 always store xOffset=zOffset=0).
+     */
+    fun getTopmostFractionalEntityAt(
+        wx: Int,
+        wy: Int,
+        wz: Int,
+        xOffset: Int? = null,
+        zOffset: Int? = null
+    ): BlockEntity? {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return null
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
@@ -231,7 +255,10 @@ class WorldState(
         val masterIdx = Chunk.index(localX, wy, localZ)
         return chunk.entityMasters
             .filter {
-                it.masterIdx == masterIdx && BlockRegistry.get(it.type).heightFraction < 1.0f
+                it.masterIdx == masterIdx &&
+                    BlockRegistry.get(it.type).heightFraction < 1.0f &&
+                    (xOffset == null || it.xOffset == xOffset) &&
+                    (zOffset == null || it.zOffset == zOffset)
             }
             .maxByOrNull { it.yOffset }
     }
@@ -259,7 +286,7 @@ class WorldState(
         val cPos = ChunkPos(chunkX, chunkZ)
         val chunk = chunks[cPos] ?: return null
         val idx = Chunk.index(localX, wy, localZ)
-        val entity = chunk.buildEntitiesMap()[idx] ?: return null
+        val entity = chunk.buildEntitiesMap()[idx]?.firstOrNull() ?: return null
         val (mx, my, mz) = Chunk.indexToXYZ(entity.masterIdx)
         return BlockPos(
             chunkX * WorldConstants.CHUNK_SIZE + mx,

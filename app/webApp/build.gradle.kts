@@ -34,7 +34,7 @@ val tsBuild by
                     "**/*.spec.tsx",
                     "**/*.spec.ts")
             })
-        outputs.file("src/wasmJsMain/resources/mc_bindings.js")
+        outputs.file("build/web/mc_bindings.js")
         commandLine("sh", "-c", "npm install && npm run build")
     }
 

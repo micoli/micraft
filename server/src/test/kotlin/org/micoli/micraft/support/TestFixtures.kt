@@ -153,6 +153,12 @@ private val _itemRegistryInit =
                     placesBlock = BlockType("LEGO_ARCH_4X1"),
                     label = "LA4",
                     bg = "#AA6622"),
+            ItemType("LEGO_PIECE") to
+                ItemDefinition(
+                    buildable = true,
+                    placesBlock = BlockType.LEGO_PIECE,
+                    label = "LPC",
+                    bg = "#B4B450"),
         ))
 
 fun testPlayerState(

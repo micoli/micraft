@@ -136,6 +136,11 @@ LEGO_ARCH_8X2:
   placesBlock: LEGO_ARCH_8X2
   label: A84X
   bg: "#DC9632"
+LEGO_PIECE:
+  buildable: true
+  placesBlock: LEGO_PIECE
+  label: LPC
+  bg: "#B4B450"
 HEALTH_POTION:
   buildable: false
   label: HP

@@ -25,8 +25,8 @@
       "export": true,
       "scope": 0,
       "allow_mirror_modeling": true,
-      "from": [32, 0, 0],
-      "to": [40, 16, 8],
+      "from": [24, 0, 0],
+      "to": [32, 16, 8],
       "autouv": 0,
       "color": 0,
       "origin": [0, 0, 0],
@@ -148,7 +148,7 @@
       "scope": 0,
       "allow_mirror_modeling": true,
       "from": [8, 13, 0],
-      "to": [32, 16, 8],
+      "to": [24, 16, 8],
       "autouv": 0,
       "color": 0,
       "origin": [0, 0, 0],
@@ -188,8 +188,8 @@
       "export": true,
       "scope": 0,
       "allow_mirror_modeling": true,
-      "from": [27, 12, 0],
-      "to": [32, 13, 8],
+      "from": [19, 12, 0],
+      "to": [24, 13, 8],
       "autouv": 0,
       "color": 0,
       "origin": [0, 0, 0],
@@ -229,8 +229,8 @@
       "export": true,
       "scope": 0,
       "allow_mirror_modeling": true,
-      "from": [29, 11, 0],
-      "to": [32, 12, 8],
+      "from": [21, 11, 0],
+      "to": [24, 12, 8],
       "autouv": 0,
       "color": 0,
       "origin": [0, 0, 0],
@@ -270,8 +270,8 @@
       "export": true,
       "scope": 0,
       "allow_mirror_modeling": true,
-      "from": [30, 10, 0],
-      "to": [32, 11, 8],
+      "from": [22, 10, 0],
+      "to": [24, 11, 8],
       "autouv": 0,
       "color": 0,
       "origin": [0, 0, 0],
@@ -478,46 +478,6 @@
       "to": [30, 19, 6],
       "autouv": 0,
       "color": 6,
-      "origin": [24, 0, 0],
-      "faces": {
-        "north": {
-          "uv": [0, 0, 4, 3],
-          "texture": 0
-        },
-        "east": {
-          "uv": [0, 0, 4, 3],
-          "texture": 0
-        },
-        "south": {
-          "uv": [0, 0, 4, 3],
-          "texture": 0
-        },
-        "west": {
-          "uv": [0, 0, 4, 3],
-          "texture": 0
-        },
-        "up": {
-          "uv": [0, 0, 4, 4],
-          "texture": 0
-        },
-        "down": {
-          "uv": [0, 0, 1, 1]
-        }
-      },
-      "type": "cube",
-      "uuid": "fb006c03-6a76-7d9a-14a4-cb7c8cd02b67"
-    }, {
-      "name": "stud_0_A",
-      "box_uv": false,
-      "render_order": "default",
-      "locked": false,
-      "export": true,
-      "scope": 0,
-      "allow_mirror_modeling": true,
-      "from": [34, 16, 2],
-      "to": [38, 19, 6],
-      "autouv": 0,
-      "color": 6,
       "origin": [32, 0, 0],
       "faces": {
         "north": {
@@ -589,7 +549,7 @@
     }
   ],
   "groups": [],
-  "outliner": ["aa000001-0000-0000-0000-000000000001", "c143ba34-8b7d-2d6e-33ea-68b2d990e3f4", "e0f8e861-30f7-b627-9530-8c2bb92b7ced", "ddb899ca-3fc8-7bab-1e16-eb215c94f1bf", "c7afb791-a25e-3572-697b-53f6f0b6dc61", "3c769c38-6da7-3ec0-0734-a2c0916c23f4", "8c19a5c8-b0b5-4e13-1f98-2d7b94aa77a0", "ef6d3bb8-1626-e7cb-fa79-112b190ee238", "61c49a6d-08d5-b99f-700b-39a6abae38a6", "aa000001-0000-0000-0000-000000000014", "14719713-c270-57c3-1ee2-606964bab1e6", "fb006c03-6a76-7d9a-14a4-cb7c8cd02b67", "07524e5d-99ae-3123-4121-645da630e78a", "5a1cb449-4155-33a2-5543-2112569dfe9b"],
+  "outliner": ["aa000001-0000-0000-0000-000000000001", "c143ba34-8b7d-2d6e-33ea-68b2d990e3f4", "e0f8e861-30f7-b627-9530-8c2bb92b7ced", "ddb899ca-3fc8-7bab-1e16-eb215c94f1bf", "c7afb791-a25e-3572-697b-53f6f0b6dc61", "3c769c38-6da7-3ec0-0734-a2c0916c23f4", "8c19a5c8-b0b5-4e13-1f98-2d7b94aa77a0", "ef6d3bb8-1626-e7cb-fa79-112b190ee238", "61c49a6d-08d5-b99f-700b-39a6abae38a6", "aa000001-0000-0000-0000-000000000014", "14719713-c270-57c3-1ee2-606964bab1e6", "07524e5d-99ae-3123-4121-645da630e78a", "5a1cb449-4155-33a2-5543-2112569dfe9b"],
   "textures": [
     {
       "name": "LEGO_ARCH_4X1",

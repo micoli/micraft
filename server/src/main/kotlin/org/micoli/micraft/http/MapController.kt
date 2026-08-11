@@ -83,8 +83,13 @@ class MapController(private val gameLoop: GameLoop, private val tokenStore: Toke
     private val staticDir = System.getenv("MICRAFT_MAP_STATIC_DIR")
 
     private fun readStaticResource(name: String): String {
-        if (staticDir != null) {
-            val f = File(staticDir, name)
+        // map.js/map.css are esbuild/tailwind output written straight into $MICRAFT_WEB_DIST
+        // (app/webApp/build/web) by `make build-map` — read from there (or the explicit
+        // MICRAFT_MAP_STATIC_DIR override) instead of the classpath, which only ever holds a
+        // stale copy nothing regenerates.
+        val dir = staticDir ?: System.getenv("MICRAFT_WEB_DIST")
+        if (dir != null) {
+            val f = File(dir, name)
             if (f.exists()) return f.readText()
         }
         return Thread.currentThread()

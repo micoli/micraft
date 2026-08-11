@@ -194,6 +194,8 @@ make build-map         # rebuild map.js + map.css
 make build-admin       # rebuild admin.js + admin.css
 ```
 
+All these write directly into `app/webApp/build/web/` — the only directory Ktor serves (`staticFiles` off `$MICRAFT_WEB_DIST`). No manual copy/restart/watcher-daemon step is needed for a rebuild to show up in the browser; just hard-refresh.
+
 ## DX — stale cache recovery
 
 | Situation | Command |

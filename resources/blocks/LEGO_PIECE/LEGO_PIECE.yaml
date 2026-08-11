@@ -1,8 +1,8 @@
-hardness: 4.0
+hardness: 1.0
 solid: true
 isCubic: false
 transparent: false
-minimapColor: [50, 100, 220]
+minimapColor: [180, 180, 80]
 modelElement: ""
 liquid: false
 viscosity: 0
@@ -11,6 +11,7 @@ vegetationHost: false
 treeAllowed: false
 minimapVisible: true
 rotatable: true
-hasStuds: true
-brickSize: [4, 2, 1]
+hasStuds: false
+brickSize: [0.25, 0.25, 0.25]
+heightFraction: 0.25
 plainColorable: true

@@ -32,6 +32,7 @@ import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.ItemRegistry
@@ -39,10 +40,11 @@ import org.micoli.micraft.game.world.PlayerFile
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
+import org.micoli.micraft.game.world.block.BlockBreaker
+import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.game.world.instance.InstanceZone
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
-import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
@@ -100,7 +102,9 @@ data class InstanceBlockDto(
     val y: Int,
     val z: Int,
     val type: String,
-    val state: Byte = 0
+    val state: Byte = 0,
+    val xOffset: Byte = 0,
+    val zOffset: Byte = 0
 )
 
 @Serializable
@@ -179,14 +183,11 @@ class AdminController(
             // ── Static assets ────────────────────────────────────────────────
             get("/admin/{...}") { call.respondFile(File("server/src/main/resources/admin.html")) }
             get("/admin") { call.respondFile(File("server/src/main/resources/admin.html")) }
-            get("/admin.js") {
-                val f = File("server/src/main/resources/admin.js")
-                if (f.exists()) call.respondFile(f) else call.respond(HttpStatusCode.NotFound)
-            }
-            get("/admin.css") {
-                val f = File("server/src/main/resources/admin.css")
-                if (f.exists()) call.respondFile(f) else call.respond(HttpStatusCode.NotFound)
-            }
+            // admin.js/admin.css are NOT served here: they're esbuild/tailwind output, written
+            // straight into $MICRAFT_WEB_DIST (app/webApp/build/web) by `make build-admin` — the
+            // generic staticFiles("/", ...) route in Application.kt serves them from there, always
+            // fresh. A dedicated route reading a fixed server/src/main/resources/ copy would
+            // silently go stale the moment that copy stops being regenerated.
 
             // ── Status ───────────────────────────────────────────────────────
             get("/api/admin/status") {
@@ -613,7 +614,12 @@ class AdminController(
                             modelElement = def.modelElement,
                             gltfModel = def.gltfModel,
                             liquid = def.liquid,
+                            rotatable = def.rotatable,
+                            hasStuds = def.hasStuds,
+                            brickSize = def.brickSize,
+                            heightFraction = def.heightFraction,
                             plainColorable = def.plainColorable,
+                            isCubic = def.isCubic,
                         )
                     }
                 call.respondText(
@@ -811,9 +817,36 @@ class AdminController(
                 val type =
                     BlockRegistry.all().find { it.id == body.type }
                         ?: return@put call.respond(HttpStatusCode.BadRequest, "Unknown block type")
-                val change = BlockChange(BlockPos(body.x, body.y, body.z), type, body.state)
-                gameLoop.getWorldState().applyChange(change)
-                gameLoop.broadcastWorldUpdate(listOf(change))
+                val world = gameLoop.getWorldState()
+                val pos = BlockPos(body.x, body.y, body.z)
+                if (type == BlockType.AIR) {
+                    val result =
+                        BlockBreaker.breakAt(
+                            pos,
+                            body.xOffset.toInt() and 0xFF,
+                            body.zOffset.toInt() and 0xFF,
+                            world)
+                    gameLoop.broadcastWorldUpdate(
+                        result.changes,
+                        entityRemoves = result.entityRemoves,
+                        entityRemovesAt = result.entityRemovesAt)
+                } else {
+                    val rotation = BlockState.rotation(body.state)
+                    val colorIndex = BlockState.colorIndex(body.state)
+                    val result =
+                        BlockPlacer.placeAt(
+                            pos,
+                            type,
+                            rotation,
+                            colorIndex,
+                            body.xOffset.toInt() and 0xFF,
+                            body.zOffset.toInt() and 0xFF,
+                            world)
+                    if (result.rejectedReason != null) {
+                        return@put call.respond(HttpStatusCode.BadRequest, result.rejectedReason)
+                    }
+                    gameLoop.broadcastWorldUpdate(result.changes, entityAdds = result.entityAdds)
+                }
                 call.respond(HttpStatusCode.NoContent)
             }
 

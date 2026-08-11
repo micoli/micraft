@@ -44,6 +44,8 @@ open class PlayerSession(
     @Volatile var lastZonePos: Pair<Int, Int>? = null
     @Volatile var lastInstanceZoneId: String? = null
     @Volatile var breakTarget: BlockPos? = null
+    @Volatile var breakTargetXOffset: Int = 0
+    @Volatile var breakTargetZOffset: Int = 0
     val inventory: MutableMap<ItemType, Int> = ConcurrentHashMap()
     val actionHistory: ArrayDeque<WorldActionRecord> = ArrayDeque()
     val shortcutBarPages: Array<MutableList<ShortcutSlot?>> = Array(10) { MutableList(10) { null } }

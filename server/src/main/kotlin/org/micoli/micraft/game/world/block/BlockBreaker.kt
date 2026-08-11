@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.world.block
 
+import kotlin.math.ceil
 import kotlin.math.sqrt
 import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
 import org.micoli.micraft.game.session.PlayerSession
@@ -59,6 +60,8 @@ class BlockBreaker(
             // Resolve satellite → master so blockProgress key is consistent
             val masterPos = world.getEntityMasterWorldPos(rawBp.x, rawBp.y, rawBp.z)
             session.breakTarget = masterPos ?: rawBp
+            session.breakTargetXOffset = intent.xOffset.toInt() and 0xFF
+            session.breakTargetZOffset = intent.zOffset.toInt() and 0xFF
         }
     }
 
@@ -94,7 +97,12 @@ class BlockBreaker(
         val effectivePos = masterPos ?: bt
         val topmostFractional =
             if (masterPos != null)
-                world.getTopmostFractionalEntityAt(masterPos.x, masterPos.y, masterPos.z)
+                world.getTopmostFractionalEntityAt(
+                    masterPos.x,
+                    masterPos.y,
+                    masterPos.z,
+                    session.breakTargetXOffset,
+                    session.breakTargetZOffset)
             else null
         val lastXZFractional =
             if (masterPos != null && topmostFractional == null)
@@ -129,80 +137,102 @@ class BlockBreaker(
         }
         current.ticks++
         if (current.ticks.toFloat() >= block.hardness) {
-            if (masterPos != null) {
-                if (topmostFractional != null) {
-                    // Y-fractional entity (plate): remove only the topmost plate
-                    val spec = EntityRemoveAt(masterPos, topmostFractional.yOffset)
-                    world.applyEntityRemoveAt(spec)
-                    val changes = mutableListOf<BlockChange>()
-                    // If topmost was yOffset=0 AND no more plates remain → clear block type
-                    val remaining =
-                        world.getFractionalYOffsetsAt(masterPos.x, masterPos.y, masterPos.z)
-                    if (topmostFractional.yOffset == 0 && remaining.isEmpty()) {
-                        val c = BlockChange(masterPos, BlockType.AIR)
-                        world.applyChange(c)
-                        changes.add(c)
-                    }
-                    broadcast(ServerMessage.WorldUpdate(changes, entityRemovesAt = listOf(spec)))
-                } else if (lastXZFractional != null) {
-                    // XZ-fractional entity (arch): remove the last-placed slot
-                    val spec =
-                        EntityRemoveAt(
-                            masterPos, 0, lastXZFractional.xOffset, lastXZFractional.zOffset)
-                    world.applyEntityRemoveAt(spec)
-                    val changes = mutableListOf<BlockChange>()
-                    // If no more XZ-fractional entities remain at this position → clear block type
-                    val remaining = world.getXZOffsetsAt(masterPos.x, masterPos.y, masterPos.z)
-                    if (remaining.isEmpty()) {
-                        val entityDef =
-                            BlockRegistry.get(world.getBlock(masterPos.x, masterPos.y, masterPos.z))
-                        val sizeX =
-                            kotlin.math
-                                .ceil(entityDef.brickSize.getOrElse(0) { 1f })
-                                .toInt()
-                                .coerceAtLeast(1)
-                        val sizeY =
-                            kotlin.math
-                                .ceil(entityDef.brickSize.getOrElse(1) { 1f })
-                                .toInt()
-                                .coerceAtLeast(1)
-                        val sizeZ =
-                            kotlin.math
-                                .ceil(entityDef.brickSize.getOrElse(2) { 1f })
-                                .toInt()
-                                .coerceAtLeast(1)
-                        for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in
-                            0 until sizeZ) {
-                            val cp = BlockPos(masterPos.x + dx, masterPos.y + dy, masterPos.z + dz)
-                            val existingBlock = world.getBlock(cp.x, cp.y, cp.z)
-                            if (existingBlock != BlockType.AIR) {
-                                val c = BlockChange(cp, BlockType.AIR)
-                                world.applyChange(c)
-                                changes.add(c)
-                            }
-                        }
-                    }
-                    broadcast(ServerMessage.WorldUpdate(changes, entityRemovesAt = listOf(spec)))
-                } else {
-                    // Regular multi-cell entity: remove entire entity + all cell block types
+            val result = breakAt(bt, session.breakTargetXOffset, session.breakTargetZOffset, world)
+            broadcast(
+                ServerMessage.WorldUpdate(
+                    result.changes,
+                    entityRemoves = result.entityRemoves,
+                    entityRemovesAt = result.entityRemovesAt))
+            activateAdjacentLiquids(bt)
+            val spawned = worldItems.spawnDrops(bt, block, brokenColorIndex)
+            session.actionHistory.addLast(WorldActionRecord.Break(bt, block, spawned))
+            if (session.actionHistory.size > MAX_UNDO_HISTORY) session.actionHistory.removeFirst()
+            session.breakTarget = null
+            blockProgress.remove(bt)
+        } else {
+            session.send(ServerMessage.BlockBreakProgress(bt, current.ticks, block.hardness))
+        }
+    }
+
+    companion object {
+        data class BreakResult(
+            val changes: List<BlockChange>,
+            val entityRemoves: List<BlockPos>,
+            val entityRemovesAt: List<EntityRemoveAt>,
+            val removedBlock: BlockType,
+            val removedColorIndex: Int,
+        )
+
+        /**
+         * Resolves the entity/slot to remove at [pos] (restricted to the given XZ sub-slot for
+         * XZ+Y-fractional blocks like LEGO_PIECE), mutates [world] accordingly and returns what
+         * changed. Shared by the game client's [tick] (hardness/progress tracking happens before
+         * this call) and the admin instance editor (which removes instantly, no progress).
+         */
+        fun breakAt(pos: BlockPos, xOffset: Int, zOffset: Int, world: WorldState): BreakResult {
+            val masterPos = world.getEntityMasterWorldPos(pos.x, pos.y, pos.z)
+            val effectivePos = masterPos ?: pos
+            val topmostFractional =
+                if (masterPos != null)
+                    world.getTopmostFractionalEntityAt(
+                        masterPos.x, masterPos.y, masterPos.z, xOffset, zOffset)
+                else null
+            val lastXZFractional =
+                if (masterPos != null && topmostFractional == null)
+                    world.getLastXZFractionalEntityAt(masterPos.x, masterPos.y, masterPos.z)
+                else null
+            val blockAtPos = world.getBlock(effectivePos.x, effectivePos.y, effectivePos.z)
+            val block =
+                if (blockAtPos == BlockType.AIR && topmostFractional != null) topmostFractional.type
+                else blockAtPos
+            val colorIndex =
+                (topmostFractional ?: lastXZFractional)?.colorIndex
+                    ?: BlockState.colorIndex(
+                        world.getState(effectivePos.x, effectivePos.y, effectivePos.z))
+
+            if (masterPos == null) {
+                val change = BlockChange(pos, BlockType.AIR)
+                world.applyChange(change)
+                return BreakResult(listOf(change), emptyList(), emptyList(), block, colorIndex)
+            }
+
+            if (topmostFractional != null) {
+                // Y-fractional entity (plate): remove only the topmost plate at this XZ slot
+                val spec =
+                    EntityRemoveAt(
+                        masterPos,
+                        topmostFractional.yOffset,
+                        topmostFractional.xOffset,
+                        topmostFractional.zOffset)
+                world.applyEntityRemoveAt(spec)
+                val changes = mutableListOf<BlockChange>()
+                // If topmost was yOffset=0 AND no more plates remain → clear block type
+                val remaining = world.getFractionalYOffsetsAt(masterPos.x, masterPos.y, masterPos.z)
+                if (topmostFractional.yOffset == 0 && remaining.isEmpty()) {
+                    val c = BlockChange(masterPos, BlockType.AIR)
+                    world.applyChange(c)
+                    changes.add(c)
+                }
+                return BreakResult(changes, emptyList(), listOf(spec), block, colorIndex)
+            }
+
+            if (lastXZFractional != null) {
+                // XZ-fractional entity (arch): remove the last-placed slot
+                val spec =
+                    EntityRemoveAt(masterPos, 0, lastXZFractional.xOffset, lastXZFractional.zOffset)
+                world.applyEntityRemoveAt(spec)
+                val changes = mutableListOf<BlockChange>()
+                // If no more XZ-fractional entities remain at this position → clear block type
+                val remaining = world.getXZOffsetsAt(masterPos.x, masterPos.y, masterPos.z)
+                if (remaining.isEmpty()) {
                     val entityDef =
                         BlockRegistry.get(world.getBlock(masterPos.x, masterPos.y, masterPos.z))
                     val sizeX =
-                        kotlin.math
-                            .ceil(entityDef.brickSize.getOrElse(0) { 1f })
-                            .toInt()
-                            .coerceAtLeast(1)
+                        ceil(entityDef.brickSize.getOrElse(0) { 1f }).toInt().coerceAtLeast(1)
                     val sizeY =
-                        kotlin.math
-                            .ceil(entityDef.brickSize.getOrElse(1) { 1f })
-                            .toInt()
-                            .coerceAtLeast(1)
+                        ceil(entityDef.brickSize.getOrElse(1) { 1f }).toInt().coerceAtLeast(1)
                     val sizeZ =
-                        kotlin.math
-                            .ceil(entityDef.brickSize.getOrElse(2) { 1f })
-                            .toInt()
-                            .coerceAtLeast(1)
-                    val changes = mutableListOf<BlockChange>()
+                        ceil(entityDef.brickSize.getOrElse(2) { 1f }).toInt().coerceAtLeast(1)
                     for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
                         val cp = BlockPos(masterPos.x + dx, masterPos.y + dy, masterPos.z + dz)
                         val existingBlock = world.getBlock(cp.x, cp.y, cp.z)
@@ -212,22 +242,27 @@ class BlockBreaker(
                             changes.add(c)
                         }
                     }
-                    world.applyEntityRemove(masterPos)
-                    broadcast(ServerMessage.WorldUpdate(changes, entityRemoves = listOf(masterPos)))
                 }
-            } else {
-                val change = BlockChange(bt, BlockType.AIR)
-                world.applyChange(change)
-                broadcast(ServerMessage.WorldUpdate(listOf(change)))
+                return BreakResult(changes, emptyList(), listOf(spec), block, colorIndex)
             }
-            activateAdjacentLiquids(bt)
-            val spawned = worldItems.spawnDrops(bt, block, brokenColorIndex)
-            session.actionHistory.addLast(WorldActionRecord.Break(bt, block, spawned))
-            if (session.actionHistory.size > MAX_UNDO_HISTORY) session.actionHistory.removeFirst()
-            session.breakTarget = null
-            blockProgress.remove(bt)
-        } else {
-            session.send(ServerMessage.BlockBreakProgress(bt, current.ticks, block.hardness))
+
+            // Regular multi-cell entity: remove entire entity + all cell block types
+            val entityDef = BlockRegistry.get(world.getBlock(masterPos.x, masterPos.y, masterPos.z))
+            val sizeX = ceil(entityDef.brickSize.getOrElse(0) { 1f }).toInt().coerceAtLeast(1)
+            val sizeY = ceil(entityDef.brickSize.getOrElse(1) { 1f }).toInt().coerceAtLeast(1)
+            val sizeZ = ceil(entityDef.brickSize.getOrElse(2) { 1f }).toInt().coerceAtLeast(1)
+            val changes = mutableListOf<BlockChange>()
+            for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
+                val cp = BlockPos(masterPos.x + dx, masterPos.y + dy, masterPos.z + dz)
+                val existingBlock = world.getBlock(cp.x, cp.y, cp.z)
+                if (existingBlock != BlockType.AIR) {
+                    val c = BlockChange(cp, BlockType.AIR)
+                    world.applyChange(c)
+                    changes.add(c)
+                }
+            }
+            world.applyEntityRemove(masterPos)
+            return BreakResult(changes, listOf(masterPos), emptyList(), block, colorIndex)
         }
     }
 }

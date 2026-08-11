@@ -4,9 +4,15 @@ package org.micoli.micraft
 
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.ExperimentalWasmJsInterop
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 import org.micoli.micraft.babylon.jsDisposeChunk
 import org.micoli.micraft.babylon.jsWarn
+import org.micoli.micraft.game.world.BlockDefinition
+import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
+import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
 
@@ -34,6 +40,47 @@ private fun managerFor(scene: JsAny): ChunkManager {
     return previewChunkManager!!
 }
 
+// The admin bundle never connects to the game WebSocket, so it never receives a
+// ServerMessage.RegistrySync — GameClient.kt's BlockRegistry.load(...) call (which populates the
+// WASM-side registry used by renderFractionalEntities' BlockRegistry.wireIndex(entity.type) lookup)
+// never runs. Without it, wireIndex returns 0 for custom blocks like LEGO_PIECE and
+// renderFractionalEntities silently drops every XZ/Y-fractional entity face (the block byte array
+// itself still renders fine since that path reads the wire byte directly, no registry lookup
+// needed — only the fractional overlay silently disappears). Mirrors the mapping in
+// GameClient.kt's RegistrySync handler, fed from the same /api/admin/blocks JSON already fetched
+// by InstanceEditorViewport.tsx.
+@JsExport
+fun mcAdminSetBlockRegistry(json: String) {
+    // jsWarn("fracDebug mcAdminSetBlockRegistry called, json.length=${json.length}")
+    val infos = Json.decodeFromString(ListSerializer(BlockInfo.serializer()), json)
+    // jsWarn("fracDebug mcAdminSetBlockRegistry decoded ${infos.size} infos")
+    val defs =
+        infos.associate { info ->
+            BlockType(info.name) to
+                BlockDefinition(
+                    hardness = info.hardness,
+                    solid = info.solid,
+                    transparent = info.transparent,
+                    minimapColor = info.minimapColor,
+                    modelElement = info.modelElement,
+                    gltfModel = info.gltfModel,
+                    liquid = info.liquid,
+                    viscosity = info.viscosity,
+                    minimapVisible = info.minimapVisible,
+                    rotatable = info.rotatable,
+                    hasStuds = info.hasStuds,
+                    brickSize = info.brickSize,
+                    heightFraction = info.heightFraction,
+                    plainColorable = info.plainColorable,
+                    isCubic = info.isCubic,
+                )
+        }
+    BlockRegistry.load(defs)
+    // jsWarn(
+    // "fracDebug BlockRegistry.load done, LEGO_PIECE
+    // wireIndex=${BlockRegistry.wireIndex(BlockType("LEGO_PIECE"))}")
+}
+
 @JsExport
 fun mcAdminLoadChunk(scene: JsAny, data: JsAny, yMin: Int, yMax: Int) {
     val manager = managerFor(scene)
@@ -52,7 +99,11 @@ fun mcAdminLoadChunk(scene: JsAny, data: JsAny, yMin: Int, yMax: Int) {
     }
     val chunk =
         Chunk.decodeWire(
-            msg.pos, msg.topY, msg.wireBlocks, msg.wireStates.takeIf { it.isNotEmpty() })
+            msg.pos,
+            msg.topY,
+            msg.wireBlocks,
+            msg.wireStates.takeIf { it.isNotEmpty() },
+            msg.entities)
     // /api/chunks/{cx}/{cz} returns the whole world-height column — clip to the zone's
     // [yMin, yMax] bounds so the preview only shows what's actually editable/visible in-zone.
     for (x in 0 until Chunk.SIZE_X) for (z in 0 until Chunk.SIZE_Z) {
@@ -65,4 +116,13 @@ fun mcAdminLoadChunk(scene: JsAny, data: JsAny, yMin: Int, yMax: Int) {
 @JsExport
 fun mcAdminDisposeChunk(cx: Int, cz: Int) {
     jsDisposeChunk("$cx,$cz")
+}
+
+// Lets the admin editor resolve the block type ordinal under the cursor when breaking, so it can
+// look up its brickSize (via window.mc.getBlockDef) and compute the precise XZ sub-slot targeted
+// — the same block-def lookup the ghost preview already uses for placement.
+@JsExport
+fun mcAdminGetBlockOrdinalAt(scene: JsAny, wx: Int, wy: Int, wz: Int): Int {
+    val manager = managerFor(scene)
+    return BlockRegistry.wireIndex(manager.getBlockAtWorld(wx, wy, wz))
 }

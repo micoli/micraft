@@ -35,10 +35,14 @@ data class Chunk(
             return Chunk(pos, blocks, ByteArray(TOTAL))
         }
 
-        /** Reconstruct entity map (all cells → entity) from master list. */
-        fun buildEntitiesMap(masters: List<BlockEntity>): Map<Int, BlockEntity> {
+        /**
+         * Reconstruct entity map (cell → entities occupying it) from master list. A value list
+         * holds more than one entry when several fractional entities (XZ sub-slots and/or Y stacks)
+         * share the same voxel — e.g. multiple LEGO_PIECE instances in one cell.
+         */
+        fun buildEntitiesMap(masters: List<BlockEntity>): Map<Int, List<BlockEntity>> {
             if (masters.isEmpty()) return emptyMap()
-            val map = mutableMapOf<Int, BlockEntity>()
+            val map = mutableMapOf<Int, MutableList<BlockEntity>>()
             for (entity in masters) {
                 val (mx, my, mz) = indexToXYZ(entity.masterIdx)
                 for (dx in 0 until entity.sizeX) for (dy in 0 until entity.sizeY) for (dz in
@@ -46,7 +50,8 @@ data class Chunk(
                     val nx = mx + dx
                     val ny = my + dy
                     val nz = mz + dz
-                    if (nx < SIZE_X && ny < SIZE_Y && nz < SIZE_Z) map[index(nx, ny, nz)] = entity
+                    if (nx < SIZE_X && ny < SIZE_Y && nz < SIZE_Z)
+                        map.getOrPut(index(nx, ny, nz)) { mutableListOf() }.add(entity)
                 }
             }
             return map
@@ -151,7 +156,7 @@ data class Chunk(
                         it.zOffset == zOffset)
                 })
 
-    fun buildEntitiesMap(): Map<Int, BlockEntity> = Companion.buildEntitiesMap(entityMasters)
+    fun buildEntitiesMap(): Map<Int, List<BlockEntity>> = Companion.buildEntitiesMap(entityMasters)
 
     fun isMasterAt(idx: Int): Boolean = entityMasters.any { it.masterIdx == idx }
 

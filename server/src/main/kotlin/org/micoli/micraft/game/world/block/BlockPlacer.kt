@@ -72,7 +72,7 @@ class BlockPlacer(
             return
         }
 
-        val def = blockType.let { BlockRegistry.get(it) }
+        val def = BlockRegistry.get(blockType)
 
         // Color comes from the item definition, never from the client-sent state byte.
         val colorIndex =
@@ -80,323 +80,29 @@ class BlockPlacer(
                 PlainColorRegistry.indexOf(ItemRegistry.get(itemType).plainColor)
             else 0
         val rotation = BlockState.rotation(intent.state)
-        val state = BlockState.pack(rotation, colorIndex)
-
-        val brickSizeX = def.brickSize.getOrElse(0) { 1f }
-        val brickSizeY = def.brickSize.getOrElse(1) { 1f }
-        val brickSizeZ = def.brickSize.getOrElse(2) { 1f }
-
-        // Swap X/Z for 90°/270° rotations
-        val effectiveSizeX = if (rotation % 2 == 0) brickSizeX else brickSizeZ
-        val effectiveSizeZ = if (rotation % 2 == 0) brickSizeZ else brickSizeX
-
-        val sizeX = ceil(effectiveSizeX).toInt().coerceAtLeast(1)
-        val sizeY = ceil(brickSizeY).toInt().coerceAtLeast(1)
-        val sizeZ = ceil(effectiveSizeZ).toInt().coerceAtLeast(1)
-
-        val slotsX = if (effectiveSizeX < 1.0f) floor(1.0f / effectiveSizeX).toInt() else 1
-        val slotsZ = if (effectiveSizeZ < 1.0f) floor(1.0f / effectiveSizeZ).toInt() else 1
-        val isXZFractional = slotsX > 1 || slotsZ > 1
-
-        // Client computes world-space offsets (effectiveFracX already accounts for rotation)
         val xOffset = intent.xOffset.toInt() and 0xFF
         val zOffset = intent.zOffset.toInt() and 0xFF
 
-        val isFractional = def.heightFraction < 1.0f
-
-        // For solid multi-cell entities: redirect placement to master when clicking a satellite top
-        val belowMaster =
-            if (!isFractional) world.getEntityMasterWorldPos(rawPos.x, rawPos.y - 1, rawPos.z)
-            else null
-        val solidPos =
-            if (belowMaster != null &&
-                belowMaster != BlockPos(rawPos.x, rawPos.y - 1, rawPos.z) &&
-                BlockRegistry.get(world.getBlock(belowMaster.x, belowMaster.y, belowMaster.z))
-                    .heightFraction >= 1.0f) {
-                BlockPos(belowMaster.x, rawPos.y, belowMaster.z)
-            } else rawPos
-
-        // For fractional plates: redirect to fractional master for sub-voxel stacking.
-        // Handles two cases:
-        //   (a) pos is a satellite of a fractional entity (click from side) → master
-        //   (b) pos is AIR above a plate stud (click from top) → plate master at y-1
-        val pos =
-            if (isFractional) {
-                val directMaster = world.getEntityMasterWorldPos(solidPos.x, solidPos.y, solidPos.z)
-                when {
-                    directMaster != null -> {
-                        val masterOffsets =
-                            world.getFractionalYOffsetsAt(
-                                directMaster.x, directMaster.y, directMaster.z)
-                        if (masterOffsets.isNotEmpty() && masterOffsets.size < 3) directMaster
-                        else solidPos
-                    }
-                    solidPos.y > 0 &&
-                        world.getBlock(solidPos.x, solidPos.y, solidPos.z) == BlockType.AIR -> {
-                        val belowY = solidPos.y - 1
-                        val directOffsets =
-                            world.getFractionalYOffsetsAt(solidPos.x, belowY, solidPos.z)
-                        when {
-                            directOffsets.isNotEmpty() && directOffsets.size < 3 ->
-                                BlockPos(solidPos.x, belowY, solidPos.z)
-                            else -> {
-                                val satMaster =
-                                    world.getEntityMasterWorldPos(solidPos.x, belowY, solidPos.z)
-                                if (satMaster != null) {
-                                    val masterOffsets =
-                                        world.getFractionalYOffsetsAt(
-                                            satMaster.x, satMaster.y, satMaster.z)
-                                    if (masterOffsets.isNotEmpty() && masterOffsets.size < 3)
-                                        satMaster
-                                    else solidPos
-                                } else solidPos
-                            }
-                        }
-                    }
-                    else -> solidPos
-                }
-            } else solidPos
-
-        if (isXZFractional) {
-            // XZ-fractional block (e.g. arch): multiple fit per voxel along X or Z axis
-            val existing = world.getBlock(pos.x, pos.y, pos.z)
-            // Master cell must be empty or already occupied by the same block type
-            if (existing != BlockType.AIR && existing != blockType) {
-                blockPlacerLog.debug(
-                    "BlockPlace rejected: XZ-frac pos={} has different block {}", pos, existing)
-                return
-            }
-            val usedSlots = world.getXZOffsetsAt(pos.x, pos.y, pos.z)
-            // For sub-voxel axes (slots > 1), validate slot index; for long axes (slots == 1),
-            // xOffset/zOffset is a stud-position (0 = flush, 1 = +0.5 block) — range check skipped
-            if ((slotsX > 1 && xOffset >= slotsX) || (slotsZ > 1 && zOffset >= slotsZ)) {
-                blockPlacerLog.debug(
-                    "BlockPlace rejected: XZ-frac offset {},{} out of slots {},{}",
-                    xOffset,
-                    zOffset,
-                    slotsX,
-                    slotsZ)
-                return
-            }
-            // Collision key normalizes long-axis stud positions to 0 (only one brick per slot pair)
-            val slotKeyX = if (slotsX > 1) xOffset else 0
-            val slotKeyZ = if (slotsZ > 1) zOffset else 0
-            val slotOccupied =
-                usedSlots.any { (storedX, storedZ) ->
-                    (if (slotsX > 1) storedX else 0) == slotKeyX &&
-                        (if (slotsZ > 1) storedZ else 0) == slotKeyZ
-                }
-            if (slotOccupied) {
-                blockPlacerLog.debug(
-                    "BlockPlace rejected: XZ-frac slot {},{} already occupied", slotKeyX, slotKeyZ)
-                return
-            }
-            // Validate satellite cells (full cells spanning integer multiples)
-            if (sizeX > 1 || sizeZ > 1) {
-                for (dx in 0 until sizeX) for (dz in 0 until sizeZ) {
-                    if (dx == 0 && dz == 0) continue
-                    val cx = pos.x + dx
-                    val cz = pos.z + dz
-                    val satBlock = world.getBlock(cx, pos.y, cz)
-                    if (satBlock != BlockType.AIR && satBlock != blockType) {
-                        blockPlacerLog.debug(
-                            "BlockPlace rejected: XZ-frac satellite {},{},{} has block {}",
-                            cx,
-                            pos.y,
-                            cz,
-                            satBlock)
-                        return
-                    }
-                }
-            }
-            val changes = mutableListOf<BlockChange>()
-            val isFirstAtCell = existing == BlockType.AIR
-            if (isFirstAtCell) {
-                val masterChange = BlockChange(pos, blockType, state)
-                world.applyChange(masterChange)
-                changes.add(masterChange)
-                if (sizeX > 1 || sizeZ > 1) {
-                    for (dx in 0 until sizeX) for (dz in 0 until sizeZ) {
-                        if (dx == 0 && dz == 0) continue
-                        val satChange =
-                            BlockChange(BlockPos(pos.x + dx, pos.y, pos.z + dz), blockType, state)
-                        world.applyChange(satChange)
-                        changes.add(satChange)
-                    }
-                }
-            }
-            val proto =
-                BlockEntityProto(
-                    worldX = pos.x,
-                    worldY = pos.y,
-                    worldZ = pos.z,
-                    type = blockType.id,
-                    sizeX = sizeX,
-                    sizeY = sizeY,
-                    sizeZ = sizeZ,
-                    rotation = rotation,
-                    yOffset = 0,
-                    xOffset = xOffset,
-                    zOffset = zOffset,
-                    colorIndex = colorIndex,
-                )
-            world.applyEntityAdd(proto)
-            broadcast(ServerMessage.WorldUpdate(changes, entityAdds = listOf(proto)))
-        } else if (isFractional) {
-            // Fractional block (plate): stacking allowed — cell may already contain a plate
-            val existing = world.getBlock(pos.x, pos.y, pos.z)
-            if (existing != BlockType.AIR && BlockRegistry.get(existing).heightFraction >= 1.0f) {
-                blockPlacerLog.debug(
-                    "BlockPlace rejected: pos={} has solid non-fractional block", pos)
-                return
-            }
-            val usedOffsets = world.getFractionalYOffsetsAt(pos.x, pos.y, pos.z)
-            // If hasEntityAt is true but no fractional masters → non-plate entity/satellite present
-            if (world.hasEntityAt(pos.x, pos.y, pos.z) && usedOffsets.isEmpty()) {
-                blockPlacerLog.debug("BlockPlace rejected: pos={} has non-plate entity", pos)
-                return
-            }
-            val nextOffset = (0..2).firstOrNull { it !in usedOffsets }
-            if (nextOffset == null) {
-                blockPlacerLog.debug("BlockPlace rejected: pos={} plate cell full", pos)
-                return
-            }
-            // Validate satellite cells for multi-cell footprint
-            val isMultiCellFootprint = sizeX > 1 || sizeZ > 1
-            if (isMultiCellFootprint) {
-                for (dx in 0 until sizeX) for (dz in 0 until sizeZ) {
-                    if (dx == 0 && dz == 0) continue
-                    val cx = pos.x + dx
-                    val cz = pos.z + dz
-                    val satBlock = world.getBlock(cx, pos.y, cz)
-                    // Reject if cell has a solid non-fractional block
-                    if (satBlock != BlockType.AIR &&
-                        BlockRegistry.get(satBlock).heightFraction >= 1.0f) {
-                        blockPlacerLog.debug(
-                            "BlockPlace rejected: plate satellite {},{},{} has solid block",
-                            cx,
-                            pos.y,
-                            cz)
-                        return
-                    }
-                    // Reject only if entity at satellite belongs to a DIFFERENT master
-                    val satMasterPos = world.getEntityMasterWorldPos(cx, pos.y, cz)
-                    if (satMasterPos != null && satMasterPos != pos) {
-                        blockPlacerLog.debug(
-                            "BlockPlace rejected: plate satellite {},{},{} has entity from different master",
-                            cx,
-                            pos.y,
-                            cz)
-                        return
-                    }
-                    // If satMasterPos == pos: satellite of our plate at a previous yOffset →
-                    // nextOffset
-                    // not in usedOffsets (already validated above for master cell)
-                }
-            }
-            val proto =
-                BlockEntityProto(
-                    worldX = pos.x,
-                    worldY = pos.y,
-                    worldZ = pos.z,
-                    type = blockType.id,
-                    sizeX = sizeX,
-                    sizeY = 1,
-                    sizeZ = sizeZ,
-                    rotation = rotation,
-                    yOffset = nextOffset,
-                    colorIndex = colorIndex,
-                )
-            val changes = mutableListOf<BlockChange>()
-            if (nextOffset == 0) {
-                // First plate at this cell: set block type so main renderer sees it
-                val change = BlockChange(pos, blockType, state)
-                world.applyChange(change)
-                changes.add(change)
-            }
-            world.applyEntityAdd(proto)
-            broadcast(ServerMessage.WorldUpdate(changes, entityAdds = listOf(proto)))
-        } else {
-            val existing = world.getBlock(pos.x, pos.y, pos.z)
-            if (!existing.isReplaceable) {
-                blockPlacerLog.debug("BlockPlace rejected: pos={} is {}", pos, existing)
-                return
-            }
-            val isMultiCell = sizeX > 1 || sizeY > 1 || sizeZ > 1
-            if (isMultiCell) {
-                for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
-                    if (dx == 0 && dy == 0 && dz == 0) continue
-                    val cx = pos.x + dx
-                    val cy = pos.y + dy
-                    val cz = pos.z + dz
-                    val cellBlock = world.getBlock(cx, cy, cz)
-                    if (!cellBlock.isReplaceable) {
-                        blockPlacerLog.debug(
-                            "BlockPlace rejected: multi-cell pos={},{},{} occupied by {}",
-                            cx,
-                            cy,
-                            cz,
-                            cellBlock)
-                        return
-                    }
-                    if (world.hasEntityAt(cx, cy, cz)) {
-                        blockPlacerLog.debug(
-                            "BlockPlace rejected: multi-cell pos={},{},{} has entity", cx, cy, cz)
-                        return
-                    }
-                }
-            }
-            if (world.hasEntityAt(pos.x, pos.y, pos.z)) {
-                blockPlacerLog.debug("BlockPlace rejected: pos={} has entity", pos)
-                return
-            }
-
-            val changes = mutableListOf<BlockChange>()
-            val masterChange = BlockChange(pos, blockType, state)
-            world.applyChange(masterChange)
-            changes.add(masterChange)
-
-            if (isMultiCell) {
-                // Write block type to satellite cells so raycast can detect them
-                for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
-                    if (dx == 0 && dy == 0 && dz == 0) continue
-                    val satChange =
-                        BlockChange(BlockPos(pos.x + dx, pos.y + dy, pos.z + dz), blockType, state)
-                    world.applyChange(satChange)
-                    changes.add(satChange)
-                }
-                val proto =
-                    BlockEntityProto(
-                        worldX = pos.x,
-                        worldY = pos.y,
-                        worldZ = pos.z,
-                        type = blockType.id,
-                        sizeX = sizeX,
-                        sizeY = sizeY,
-                        sizeZ = sizeZ,
-                        rotation = rotation,
-                        colorIndex = colorIndex,
-                        xOffset = xOffset,
-                        zOffset = zOffset,
-                    )
-                world.applyEntityAdd(proto)
-                broadcast(ServerMessage.WorldUpdate(changes, entityAdds = listOf(proto)))
-            } else {
-                broadcast(ServerMessage.WorldUpdate(changes))
-            }
+        val result = placeAt(rawPos, blockType, rotation, colorIndex, xOffset, zOffset, world)
+        if (result.rejectedReason != null) {
+            blockPlacerLog.debug("BlockPlace rejected: {}", result.rejectedReason)
+            return
         }
-        vegetationManager?.tryActivate(pos, blockType)
+        if (result.changes.isNotEmpty() || result.entityAdds.isNotEmpty()) {
+            broadcast(ServerMessage.WorldUpdate(result.changes, entityAdds = result.entityAdds))
+        }
+        vegetationManager?.tryActivate(result.pos, blockType)
 
         val remaining = count - 1
         if (remaining <= 0) session.inventory.remove(itemType)
         else session.inventory[itemType] = remaining
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
 
-        session.actionHistory.addLast(WorldActionRecord.Place(pos, itemType))
+        session.actionHistory.addLast(WorldActionRecord.Place(result.pos, itemType))
         if (session.actionHistory.size > MAX_ACTION_HISTORY) session.actionHistory.removeFirst()
 
         blockPlacerLog.debug(
-            "BlockPlace: {} placed {} at {}", session.state.name, itemType.placesBlock, pos)
+            "BlockPlace: {} placed {} at {}", session.state.name, itemType.placesBlock, result.pos)
     }
 
     suspend fun handleShortcutBarSet(session: PlayerSession, intent: ClientMessage.ShortcutBarSet) {
@@ -447,5 +153,426 @@ class BlockPlacer(
 
     fun reload(attackRegistry: Map<String, AttackDefinition>) {
         this.attackRegistry = attackRegistry
+    }
+
+    companion object {
+        data class PlaceResult(
+            val pos: BlockPos,
+            val changes: List<BlockChange>,
+            val entityAdds: List<BlockEntityProto>,
+            val rejectedReason: String? = null,
+        )
+
+        /**
+         * Resolves placement (including redirect-to-master for stacking), validates occupancy,
+         * mutates [world] accordingly and returns what changed. Shared by the game client's
+         * [handlePlace] (session/inventory/distance checks happen before this call) and the admin
+         * instance editor (which skips those checks).
+         */
+        fun placeAt(
+            rawPos: BlockPos,
+            blockType: BlockType,
+            rotation: Int,
+            colorIndex: Int,
+            xOffset: Int,
+            zOffset: Int,
+            world: WorldState,
+        ): PlaceResult {
+            val def = BlockRegistry.get(blockType)
+            val state = BlockState.pack(rotation, colorIndex)
+
+            val brickSizeX = def.brickSize.getOrElse(0) { 1f }
+            val brickSizeY = def.brickSize.getOrElse(1) { 1f }
+            val brickSizeZ = def.brickSize.getOrElse(2) { 1f }
+
+            // Swap X/Z for 90°/270° rotations
+            val effectiveSizeX = if (rotation % 2 == 0) brickSizeX else brickSizeZ
+            val effectiveSizeZ = if (rotation % 2 == 0) brickSizeZ else brickSizeX
+
+            val sizeX = ceil(effectiveSizeX).toInt().coerceAtLeast(1)
+            val sizeY = ceil(brickSizeY).toInt().coerceAtLeast(1)
+            val sizeZ = ceil(effectiveSizeZ).toInt().coerceAtLeast(1)
+
+            val slotsX = if (effectiveSizeX < 1.0f) floor(1.0f / effectiveSizeX).toInt() else 1
+            val slotsZ = if (effectiveSizeZ < 1.0f) floor(1.0f / effectiveSizeZ).toInt() else 1
+            val isXZFractional = slotsX > 1 || slotsZ > 1
+
+            // Collision key normalizes long-axis stud positions to 0 (only one brick per slot pair)
+            val slotKeyX = if (slotsX > 1) xOffset else 0
+            val slotKeyZ = if (slotsZ > 1) zOffset else 0
+
+            val isFractional = def.heightFraction < 1.0f
+            // Number of this block that stack within one voxel's height (e.g. heightFraction=0.25
+            // → 4 slots). Independent of brickSize[1], which instead sizes multi-voxel-tall bricks.
+            val maxYSlots =
+                if (isFractional) floor(1.0f / def.heightFraction).toInt().coerceAtLeast(1) else 1
+
+            // For solid multi-cell entities: redirect placement to master when clicking a
+            // satellite top
+            val belowMaster =
+                if (!isFractional) world.getEntityMasterWorldPos(rawPos.x, rawPos.y - 1, rawPos.z)
+                else null
+            val solidPos =
+                if (belowMaster != null &&
+                    belowMaster != BlockPos(rawPos.x, rawPos.y - 1, rawPos.z) &&
+                    BlockRegistry.get(world.getBlock(belowMaster.x, belowMaster.y, belowMaster.z))
+                        .heightFraction >= 1.0f) {
+                    BlockPos(belowMaster.x, rawPos.y, belowMaster.z)
+                } else rawPos
+
+            // For fractional plates: redirect to fractional master for sub-voxel stacking.
+            // Handles two cases:
+            //   (a) pos is a satellite of a fractional entity (click from side) → master
+            //   (b) pos is AIR above a plate stud (click from top) → plate master at y-1
+            val pos =
+                if (isFractional) {
+                    val directMaster =
+                        world.getEntityMasterWorldPos(solidPos.x, solidPos.y, solidPos.z)
+                    when {
+                        directMaster != null -> {
+                            val masterOffsets =
+                                world.getFractionalYOffsetsAt(
+                                    directMaster.x,
+                                    directMaster.y,
+                                    directMaster.z,
+                                    slotKeyX,
+                                    slotKeyZ)
+                            if (masterOffsets.isNotEmpty() && masterOffsets.size < maxYSlots)
+                                directMaster
+                            else solidPos
+                        }
+                        solidPos.y > 0 &&
+                            world.getBlock(solidPos.x, solidPos.y, solidPos.z) == BlockType.AIR -> {
+                            val belowY = solidPos.y - 1
+                            val directOffsets =
+                                world.getFractionalYOffsetsAt(
+                                    solidPos.x, belowY, solidPos.z, slotKeyX, slotKeyZ)
+                            when {
+                                directOffsets.isNotEmpty() && directOffsets.size < maxYSlots ->
+                                    BlockPos(solidPos.x, belowY, solidPos.z)
+                                else -> {
+                                    val satMaster =
+                                        world.getEntityMasterWorldPos(
+                                            solidPos.x, belowY, solidPos.z)
+                                    if (satMaster != null) {
+                                        val masterOffsets =
+                                            world.getFractionalYOffsetsAt(
+                                                satMaster.x,
+                                                satMaster.y,
+                                                satMaster.z,
+                                                slotKeyX,
+                                                slotKeyZ)
+                                        if (masterOffsets.isNotEmpty() &&
+                                            masterOffsets.size < maxYSlots)
+                                            satMaster
+                                        else solidPos
+                                    } else solidPos
+                                }
+                            }
+                        }
+                        else -> solidPos
+                    }
+                } else solidPos
+
+            if (isXZFractional && isFractional) {
+                // XZ-fractional AND Y-stacking block (e.g. LEGO_PIECE): several fit per voxel
+                // along X or Z axis, and each XZ sub-slot independently stacks up to 3 high in Y.
+                val existing = world.getBlock(pos.x, pos.y, pos.z)
+                if (existing != BlockType.AIR && existing != blockType) {
+                    return PlaceResult(
+                        pos,
+                        emptyList(),
+                        emptyList(),
+                        "XZ+Y-frac pos=$pos has different block $existing")
+                }
+                if ((slotsX > 1 && xOffset >= slotsX) || (slotsZ > 1 && zOffset >= slotsZ)) {
+                    return PlaceResult(
+                        pos,
+                        emptyList(),
+                        emptyList(),
+                        "XZ+Y-frac offset $xOffset,$zOffset out of slots $slotsX,$slotsZ")
+                }
+                val usedYInSlot =
+                    world.getFractionalYOffsetsAt(pos.x, pos.y, pos.z, slotKeyX, slotKeyZ)
+                val nextY = (0 until maxYSlots).firstOrNull { it !in usedYInSlot }
+                if (nextY == null) {
+                    return PlaceResult(
+                        pos,
+                        emptyList(),
+                        emptyList(),
+                        "XZ+Y-frac slot $slotKeyX,$slotKeyZ stack full")
+                }
+                if (sizeX > 1 || sizeZ > 1) {
+                    for (dx in 0 until sizeX) for (dz in 0 until sizeZ) {
+                        if (dx == 0 && dz == 0) continue
+                        val cx = pos.x + dx
+                        val cz = pos.z + dz
+                        val satBlock = world.getBlock(cx, pos.y, cz)
+                        if (satBlock != BlockType.AIR && satBlock != blockType) {
+                            return PlaceResult(
+                                pos,
+                                emptyList(),
+                                emptyList(),
+                                "XZ+Y-frac satellite $cx,${pos.y},$cz has block $satBlock")
+                        }
+                    }
+                }
+                val changes = mutableListOf<BlockChange>()
+                val isFirstAtCell = existing == BlockType.AIR
+                if (isFirstAtCell) {
+                    val masterChange = BlockChange(pos, blockType, state)
+                    world.applyChange(masterChange)
+                    changes.add(masterChange)
+                    if (sizeX > 1 || sizeZ > 1) {
+                        for (dx in 0 until sizeX) for (dz in 0 until sizeZ) {
+                            if (dx == 0 && dz == 0) continue
+                            val satChange =
+                                BlockChange(
+                                    BlockPos(pos.x + dx, pos.y, pos.z + dz), blockType, state)
+                            world.applyChange(satChange)
+                            changes.add(satChange)
+                        }
+                    }
+                }
+                val proto =
+                    BlockEntityProto(
+                        worldX = pos.x,
+                        worldY = pos.y,
+                        worldZ = pos.z,
+                        type = blockType.id,
+                        sizeX = sizeX,
+                        sizeY = sizeY,
+                        sizeZ = sizeZ,
+                        rotation = rotation,
+                        yOffset = nextY,
+                        xOffset = slotKeyX,
+                        zOffset = slotKeyZ,
+                        colorIndex = colorIndex,
+                    )
+                world.applyEntityAdd(proto)
+                return PlaceResult(pos, changes, listOf(proto))
+            } else if (isXZFractional) {
+                // XZ-fractional block (e.g. arch): multiple fit per voxel along X or Z axis
+                val existing = world.getBlock(pos.x, pos.y, pos.z)
+                // Master cell must be empty or already occupied by the same block type
+                if (existing != BlockType.AIR && existing != blockType) {
+                    return PlaceResult(
+                        pos,
+                        emptyList(),
+                        emptyList(),
+                        "XZ-frac pos=$pos has different block $existing")
+                }
+                val usedSlots = world.getXZOffsetsAt(pos.x, pos.y, pos.z)
+                // For sub-voxel axes (slots > 1), validate slot index; for long axes (slots == 1),
+                // xOffset/zOffset is a stud-position (0 = flush, 1 = +0.5 block) — range check
+                // skipped
+                if ((slotsX > 1 && xOffset >= slotsX) || (slotsZ > 1 && zOffset >= slotsZ)) {
+                    return PlaceResult(
+                        pos,
+                        emptyList(),
+                        emptyList(),
+                        "XZ-frac offset $xOffset,$zOffset out of slots $slotsX,$slotsZ")
+                }
+                val slotOccupied =
+                    usedSlots.any { (storedX, storedZ) ->
+                        (if (slotsX > 1) storedX else 0) == slotKeyX &&
+                            (if (slotsZ > 1) storedZ else 0) == slotKeyZ
+                    }
+                if (slotOccupied) {
+                    return PlaceResult(
+                        pos,
+                        emptyList(),
+                        emptyList(),
+                        "XZ-frac slot $slotKeyX,$slotKeyZ already occupied")
+                }
+                // Validate satellite cells (full cells spanning integer multiples)
+                if (sizeX > 1 || sizeZ > 1) {
+                    for (dx in 0 until sizeX) for (dz in 0 until sizeZ) {
+                        if (dx == 0 && dz == 0) continue
+                        val cx = pos.x + dx
+                        val cz = pos.z + dz
+                        val satBlock = world.getBlock(cx, pos.y, cz)
+                        if (satBlock != BlockType.AIR && satBlock != blockType) {
+                            return PlaceResult(
+                                pos,
+                                emptyList(),
+                                emptyList(),
+                                "XZ-frac satellite $cx,${pos.y},$cz has block $satBlock")
+                        }
+                    }
+                }
+                val changes = mutableListOf<BlockChange>()
+                val isFirstAtCell = existing == BlockType.AIR
+                if (isFirstAtCell) {
+                    val masterChange = BlockChange(pos, blockType, state)
+                    world.applyChange(masterChange)
+                    changes.add(masterChange)
+                    if (sizeX > 1 || sizeZ > 1) {
+                        for (dx in 0 until sizeX) for (dz in 0 until sizeZ) {
+                            if (dx == 0 && dz == 0) continue
+                            val satChange =
+                                BlockChange(
+                                    BlockPos(pos.x + dx, pos.y, pos.z + dz), blockType, state)
+                            world.applyChange(satChange)
+                            changes.add(satChange)
+                        }
+                    }
+                }
+                val proto =
+                    BlockEntityProto(
+                        worldX = pos.x,
+                        worldY = pos.y,
+                        worldZ = pos.z,
+                        type = blockType.id,
+                        sizeX = sizeX,
+                        sizeY = sizeY,
+                        sizeZ = sizeZ,
+                        rotation = rotation,
+                        yOffset = 0,
+                        xOffset = xOffset,
+                        zOffset = zOffset,
+                        colorIndex = colorIndex,
+                    )
+                world.applyEntityAdd(proto)
+                return PlaceResult(pos, changes, listOf(proto))
+            } else if (isFractional) {
+                // Fractional block (plate): stacking allowed — cell may already contain a plate
+                val existing = world.getBlock(pos.x, pos.y, pos.z)
+                if (existing != BlockType.AIR &&
+                    BlockRegistry.get(existing).heightFraction >= 1.0f) {
+                    return PlaceResult(
+                        pos, emptyList(), emptyList(), "pos=$pos has solid non-fractional block")
+                }
+                val usedOffsets = world.getFractionalYOffsetsAt(pos.x, pos.y, pos.z)
+                // If hasEntityAt is true but no fractional masters → non-plate entity/satellite
+                // present
+                if (world.hasEntityAt(pos.x, pos.y, pos.z) && usedOffsets.isEmpty()) {
+                    return PlaceResult(
+                        pos, emptyList(), emptyList(), "pos=$pos has non-plate entity")
+                }
+                val nextOffset = (0 until maxYSlots).firstOrNull { it !in usedOffsets }
+                if (nextOffset == null) {
+                    return PlaceResult(pos, emptyList(), emptyList(), "pos=$pos plate cell full")
+                }
+                // Validate satellite cells for multi-cell footprint
+                val isMultiCellFootprint = sizeX > 1 || sizeZ > 1
+                if (isMultiCellFootprint) {
+                    for (dx in 0 until sizeX) for (dz in 0 until sizeZ) {
+                        if (dx == 0 && dz == 0) continue
+                        val cx = pos.x + dx
+                        val cz = pos.z + dz
+                        val satBlock = world.getBlock(cx, pos.y, cz)
+                        // Reject if cell has a solid non-fractional block
+                        if (satBlock != BlockType.AIR &&
+                            BlockRegistry.get(satBlock).heightFraction >= 1.0f) {
+                            return PlaceResult(
+                                pos,
+                                emptyList(),
+                                emptyList(),
+                                "plate satellite $cx,${pos.y},$cz has solid block")
+                        }
+                        // Reject only if entity at satellite belongs to a DIFFERENT master
+                        val satMasterPos = world.getEntityMasterWorldPos(cx, pos.y, cz)
+                        if (satMasterPos != null && satMasterPos != pos) {
+                            return PlaceResult(
+                                pos,
+                                emptyList(),
+                                emptyList(),
+                                "plate satellite $cx,${pos.y},$cz has entity from different master")
+                        }
+                        // If satMasterPos == pos: satellite of our plate at a previous yOffset →
+                        // nextOffset not in usedOffsets (already validated above for master cell)
+                    }
+                }
+                val proto =
+                    BlockEntityProto(
+                        worldX = pos.x,
+                        worldY = pos.y,
+                        worldZ = pos.z,
+                        type = blockType.id,
+                        sizeX = sizeX,
+                        sizeY = 1,
+                        sizeZ = sizeZ,
+                        rotation = rotation,
+                        yOffset = nextOffset,
+                        colorIndex = colorIndex,
+                    )
+                val changes = mutableListOf<BlockChange>()
+                if (nextOffset == 0) {
+                    // First plate at this cell: set block type so main renderer sees it
+                    val change = BlockChange(pos, blockType, state)
+                    world.applyChange(change)
+                    changes.add(change)
+                }
+                world.applyEntityAdd(proto)
+                return PlaceResult(pos, changes, listOf(proto))
+            } else {
+                val existing = world.getBlock(pos.x, pos.y, pos.z)
+                if (!existing.isReplaceable) {
+                    return PlaceResult(pos, emptyList(), emptyList(), "pos=$pos is $existing")
+                }
+                val isMultiCell = sizeX > 1 || sizeY > 1 || sizeZ > 1
+                if (isMultiCell) {
+                    for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
+                        if (dx == 0 && dy == 0 && dz == 0) continue
+                        val cx = pos.x + dx
+                        val cy = pos.y + dy
+                        val cz = pos.z + dz
+                        val cellBlock = world.getBlock(cx, cy, cz)
+                        if (!cellBlock.isReplaceable) {
+                            return PlaceResult(
+                                pos,
+                                emptyList(),
+                                emptyList(),
+                                "multi-cell pos=$cx,$cy,$cz occupied by $cellBlock")
+                        }
+                        if (world.hasEntityAt(cx, cy, cz)) {
+                            return PlaceResult(
+                                pos,
+                                emptyList(),
+                                emptyList(),
+                                "multi-cell pos=$cx,$cy,$cz has entity")
+                        }
+                    }
+                }
+                if (world.hasEntityAt(pos.x, pos.y, pos.z)) {
+                    return PlaceResult(pos, emptyList(), emptyList(), "pos=$pos has entity")
+                }
+
+                val changes = mutableListOf<BlockChange>()
+                val masterChange = BlockChange(pos, blockType, state)
+                world.applyChange(masterChange)
+                changes.add(masterChange)
+
+                if (isMultiCell) {
+                    // Write block type to satellite cells so raycast can detect them
+                    for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
+                        if (dx == 0 && dy == 0 && dz == 0) continue
+                        val satChange =
+                            BlockChange(
+                                BlockPos(pos.x + dx, pos.y + dy, pos.z + dz), blockType, state)
+                        world.applyChange(satChange)
+                        changes.add(satChange)
+                    }
+                    val proto =
+                        BlockEntityProto(
+                            worldX = pos.x,
+                            worldY = pos.y,
+                            worldZ = pos.z,
+                            type = blockType.id,
+                            sizeX = sizeX,
+                            sizeY = sizeY,
+                            sizeZ = sizeZ,
+                            rotation = rotation,
+                            colorIndex = colorIndex,
+                            xOffset = xOffset,
+                            zOffset = zOffset,
+                        )
+                    world.applyEntityAdd(proto)
+                    return PlaceResult(pos, changes, listOf(proto))
+                }
+                return PlaceResult(pos, changes, emptyList())
+            }
+        }
     }
 }

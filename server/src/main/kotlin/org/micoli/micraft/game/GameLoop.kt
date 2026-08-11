@@ -564,8 +564,14 @@ class GameLoop(
     // block editor bypasses BlockPlacer/BlockBreaker (which reject edits inside protected zones
     // for normal players), so it must broadcast the WorldUpdate itself for players already
     // standing near the zone to see the edit without reconnecting.
-    suspend fun broadcastWorldUpdate(changes: List<BlockChange>) {
-        sessionRegistry.broadcast(ServerMessage.WorldUpdate(changes))
+    suspend fun broadcastWorldUpdate(
+        changes: List<BlockChange>,
+        entityAdds: List<org.micoli.micraft.protocol.BlockEntityProto> = emptyList(),
+        entityRemoves: List<org.micoli.micraft.game.world.BlockPos> = emptyList(),
+        entityRemovesAt: List<org.micoli.micraft.protocol.EntityRemoveAt> = emptyList(),
+    ) {
+        sessionRegistry.broadcast(
+            ServerMessage.WorldUpdate(changes, entityAdds, entityRemoves, entityRemovesAt))
     }
 
     private val playerAdminListeners =

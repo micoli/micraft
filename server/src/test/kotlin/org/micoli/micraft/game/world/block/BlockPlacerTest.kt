@@ -9,7 +9,9 @@ import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.WorldActionRecord
+import org.micoli.micraft.game.world.BlockDefinition
 import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.WorldState
@@ -20,6 +22,20 @@ import org.micoli.micraft.support.testSession
 import org.micoli.micraft.support.testWorld
 
 class BlockPlacerTest {
+
+    private fun registerLegoPiece() {
+        BlockRegistry.load(
+            mapOf(
+                BlockType.LEGO_PIECE to
+                    BlockDefinition(
+                        hardness = 1f,
+                        solid = true,
+                        isCubic = false,
+                        replaceable = false,
+                        brickSize = listOf(0.25f, 1f, 0.25f),
+                        heightFraction = 0.333f,
+                    )))
+    }
 
     private fun placer(
         broadcasts: MutableList<ServerMessage> = mutableListOf(),
@@ -282,5 +298,82 @@ class BlockPlacerTest {
         assertEquals(2.toByte(), world.getState(8, 7, 8))
         val update = broadcasts.filterIsInstance<ServerMessage.WorldUpdate>().first()
         assertEquals(2.toByte(), update.changes.first().state)
+    }
+
+    @Test
+    fun place_xzYFractional_fourSlotsEachStackedThrice_allSucceed() = runBlocking {
+        registerLegoPiece()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_PIECE")] = 20
+        for (xOff in 0..1) for (zOff in 0..1) for (y in 0..2) {
+            placer.handlePlace(
+                session,
+                ClientMessage.BlockPlace(
+                    BlockPos(8, 7, 8),
+                    ItemType("LEGO_PIECE"),
+                    xOffset = xOff.toByte(),
+                    zOffset = zOff.toByte()))
+        }
+        assertEquals(BlockType.LEGO_PIECE, world.getBlock(8, 7, 8))
+        assertEquals(20 - 12, session.inventory[ItemType("LEGO_PIECE")])
+    }
+
+    @Test
+    fun place_xzYFractional_fourthInSameSlot_rejected() = runBlocking {
+        registerLegoPiece()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_PIECE")] = 10
+        repeat(3) {
+            placer.handlePlace(
+                session,
+                ClientMessage.BlockPlace(
+                    BlockPos(8, 7, 8), ItemType("LEGO_PIECE"), xOffset = 0, zOffset = 0))
+        }
+        val before = session.inventory[ItemType("LEGO_PIECE")]
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_PIECE"), xOffset = 0, zOffset = 0))
+        assertEquals(before, session.inventory[ItemType("LEGO_PIECE")])
+    }
+
+    @Test
+    fun place_xzYFractional_differentSlotIndependentOfFullSlot() = runBlocking {
+        registerLegoPiece()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_PIECE")] = 10
+        repeat(3) {
+            placer.handlePlace(
+                session,
+                ClientMessage.BlockPlace(
+                    BlockPos(8, 7, 8), ItemType("LEGO_PIECE"), xOffset = 0, zOffset = 0))
+        }
+        val before = session.inventory[ItemType("LEGO_PIECE")]!!
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_PIECE"), xOffset = 1, zOffset = 0))
+        assertEquals(before - 1, session.inventory[ItemType("LEGO_PIECE")])
+    }
+
+    @Test
+    fun place_xzYFractional_offsetOutOfRange_rejected() = runBlocking {
+        registerLegoPiece()
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.inventory[ItemType("LEGO_PIECE")] = 5
+        placer.handlePlace(
+            session,
+            ClientMessage.BlockPlace(
+                BlockPos(8, 7, 8), ItemType("LEGO_PIECE"), xOffset = 4, zOffset = 0))
+        assertEquals(5, session.inventory[ItemType("LEGO_PIECE")])
+        assertEquals(BlockType.AIR, world.getBlock(8, 7, 8))
     }
 }

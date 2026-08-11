@@ -6,6 +6,12 @@ export interface BlockInfoDto {
   minimapColor: [number, number, number];
   modelElement: string;
   liquid: boolean;
+  rotatable?: boolean;
+  hasStuds?: boolean;
+  brickSize?: [number, number, number];
+  heightFraction?: number;
+  plainColorable?: boolean;
+  isCubic?: boolean;
 }
 
 export interface ChunkPosDto {
@@ -37,6 +43,8 @@ export interface InstanceBlockDto {
   z: number;
   type: string;
   state: number;
+  xOffset?: number;
+  zOffset?: number;
 }
 
 export interface NpcTypeDto {

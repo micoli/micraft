@@ -21,6 +21,32 @@ function rgbToHex([r, g, b]: [number, number, number]): string {
   return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 }
 
+// XZ sub-voxel slot targeted within cell (tx,tz), mirroring the in-game hover math
+// (LocalPlayerController.kt) so the admin editor's ghost/break-overlay and the resulting
+// api.instances.setBlock call agree on the same slot the player is visually aiming at.
+function computeSlotOffset(
+  pickedX: number,
+  pickedZ: number,
+  tx: number,
+  tz: number,
+  brickSizeX: number,
+  brickSizeZ: number,
+  rotation: number,
+): [number, number] {
+  const effFracX = rotation % 2 === 0 ? brickSizeX : brickSizeZ;
+  const effFracZ = rotation % 2 === 0 ? brickSizeZ : brickSizeX;
+  const studStepX = effFracX < 1 ? effFracX : effFracX > 1 ? 0.5 : 0;
+  const studStepZ = effFracZ < 1 ? effFracZ : effFracZ > 1 ? 0.5 : 0;
+  if (studStepX <= 0 && studStepZ <= 0) return [0, 0];
+  const fracX = Math.min(0.9999, Math.max(0, pickedX - tx));
+  const fracZ = Math.min(0.9999, Math.max(0, pickedZ - tz));
+  const slotsX = studStepX > 0 ? Math.max(1, Math.floor(1 / studStepX)) : 1;
+  const slotsZ = studStepZ > 0 ? Math.max(1, Math.floor(1 / studStepZ)) : 1;
+  const xOffset = studStepX > 0 ? Math.min(slotsX - 1, Math.floor(fracX / studStepX)) : 0;
+  const zOffset = studStepZ > 0 ? Math.min(slotsZ - 1, Math.floor(fracZ / studStepZ)) : 0;
+  return [xOffset, zOffset];
+}
+
 export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const paletteRef = useRef<HTMLDivElement>(null);
@@ -34,10 +60,28 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [mode, setMode] = useState<"place" | "break">("place");
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const actionErrorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [search, setSearch] = useState("");
   const modeRef = useRef(mode);
   const selectedTypeRef = useRef(selectedType);
   const ordinalByNameRef = useRef(ordinalByName);
+  // PUT /blocks resolves normally even on a 4xx (fetch only rejects on network errors), so a
+  // rejected placement/break (e.g. slot full, zone disabled, occupied by a different block) would
+  // otherwise fail silently — the ghost just vanishes with no feedback. Surfaces the server's
+  // rejection reason briefly instead.
+  function flashActionError(message: string) {
+    setActionError(message);
+    if (actionErrorTimeout.current) clearTimeout(actionErrorTimeout.current);
+    actionErrorTimeout.current = setTimeout(() => setActionError(null), 4000);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (actionErrorTimeout.current) clearTimeout(actionErrorTimeout.current);
+    };
+  }, []);
+
   useEffect(() => {
     modeRef.current = mode;
   }, [mode]);
@@ -84,6 +128,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         setBlockDefs(withoutAir);
         setOrdinalByName(new Map(defs.map((b, i) => [b.name, i])));
         window.mc.setBlockRegistry?.(JSON.stringify(defs));
+        window.webApp?.then((exports) => exports.mcAdminSetBlockRegistry(JSON.stringify(defs)));
       })
       .catch(console.error);
   }, []);
@@ -111,6 +156,13 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
     const scene = new B.Scene(engine);
     scene.clearColor = new B.Color4(0.06, 0.06, 0.08, 1);
+
+    // Cached once resolved so hover/click handlers can call mcAdminGetBlockOrdinalAt
+    // synchronously instead of re-awaiting the (already-resolved) module promise every frame.
+    let wasmExports: Awaited<NonNullable<typeof window.webApp>> | null = null;
+    window.webApp!.then((e) => {
+      wasmExports = e;
+    });
 
     const cxs = zone.chunks.map((c) => c.cx);
     const czs = zone.chunks.map((c) => c.cz);
@@ -346,7 +398,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       overlayMeshes.add(box);
     }
 
-    function showGhostAndOutline(x: number, y: number, z: number, ordinal: number) {
+    function showGhostAndOutline(x: number, y: number, z: number, ordinal: number, xOffset = 0, zOffset = 0) {
       const geoKey = `${ordinal},${placementRotation}`;
       if (ghostGeoKey !== geoKey) {
         disposeGhost();
@@ -371,23 +423,29 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
           overlayMeshes.add(m);
         }
       }
-      const pos = new B!.Vector3(x, y, z);
-      for (const m of ghostMeshes) m.position = pos;
-
       // Multi-voxel props (brickSize > 1 on an axis) have a real footprint bigger than one block —
       // a hardcoded 1×1×1 outline would look like a mismatched sliver stuck in the corner of a much
       // bigger ghost mesh. Same rotation-aware sizing as the in-game target outline (targeting.ts).
       const blockDef = window.mc.getBlockDef(ordinal);
       const bs = blockDef?.brickSize ?? [1, 1, 1];
+
+      // Sub-voxel position offset from brickSize fractions, mirroring ghostBlock.ts.
+      const fracX = bs[0] < 1 ? bs[0] : bs[0] > 1 ? 0.5 : 0;
+      const fracZ = bs[2] < 1 ? bs[2] : bs[2] > 1 ? 0.5 : 0;
+      const pos = new B!.Vector3(x + xOffset * fracX, y, z + zOffset * fracZ);
+      for (const m of ghostMeshes) m.position = pos;
+
       const rot90 = placementRotation === 1 || placementRotation === 3;
       const worldSizeX = rot90 ? (bs[2] < 1 ? bs[2] : Math.ceil(bs[2])) : bs[0] < 1 ? bs[0] : Math.ceil(bs[0]);
-      const worldSizeY = Math.ceil(bs[1]);
+      const worldSizeY = bs[1] < 1 ? bs[1] : Math.ceil(bs[1]);
       const worldSizeZ = rot90 ? (bs[0] < 1 ? bs[0] : Math.ceil(bs[0])) : bs[2] < 1 ? bs[2] : Math.ceil(bs[2]);
 
       disposeOutline();
+      const ox = x + xOffset * fracX;
+      const oz = z + zOffset * fracZ;
       const ls = B!.MeshBuilder.CreateLineSystem(
         "placeOutline",
-        { lines: boxLines(x, y, z, x + worldSizeX, y + worldSizeY, z + worldSizeZ) },
+        { lines: boxLines(ox, y, oz, ox + worldSizeX, y + worldSizeY, oz + worldSizeZ) },
         scene,
       );
       ls.color = new B!.Color3(1, 1, 1);
@@ -395,6 +453,30 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       ls.renderingGroupId = 1;
       outlineMesh = ls;
       overlayMeshes.add(ls);
+    }
+
+    // Resolves the cell a placement click should target: normally the empty neighbor cell in the
+    // direction of the clicked face (standard adjacent-placement), but redirected into the
+    // clicked block's OWN cell when that block is an XZ+Y-fractional entity (e.g. LEGO_PIECE) —
+    // otherwise a second piece in a different slot of the same voxel could never be reached, since
+    // the first piece is solid and blocks the ray from ever reaching past it. Mirrors the same
+    // lateral-redirect fix in LocalPlayerController.kt for the real game client.
+    function resolvePlacementCell(
+      pickedPoint: InstanceType<typeof BABYLON.Vector3>,
+      normal: InstanceType<typeof BABYLON.Vector3>,
+    ): [number, number, number] {
+      const adjX = Math.floor(pickedPoint.x + normal.x * PICK_EPSILON);
+      const adjY = Math.floor(pickedPoint.y + normal.y * PICK_EPSILON);
+      const adjZ = Math.floor(pickedPoint.z + normal.z * PICK_EPSILON);
+      const tgtX = Math.floor(pickedPoint.x - normal.x * PICK_EPSILON);
+      const tgtY = Math.floor(pickedPoint.y - normal.y * PICK_EPSILON);
+      const tgtZ = Math.floor(pickedPoint.z - normal.z * PICK_EPSILON);
+      if (adjY === tgtY && wasmExports) {
+        const targetOrdinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, tgtX, tgtY, tgtZ);
+        const targetDef = window.mc.getBlockDef(targetOrdinal);
+        if ((targetDef?.heightFraction ?? 1) < 1) return [tgtX, tgtY, tgtZ];
+      }
+      return [adjX, adjY, adjZ];
     }
 
     // Hover preview: recomputed on every pointer move that isn't an active camera drag, so the
@@ -440,9 +522,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         ty = zone.yMin;
         tz = Math.floor(pick.pickedPoint.z);
       } else if (normal) {
-        tx = Math.floor(pick.pickedPoint.x + normal.x * PICK_EPSILON);
-        ty = Math.floor(pick.pickedPoint.y + normal.y * PICK_EPSILON);
-        tz = Math.floor(pick.pickedPoint.z + normal.z * PICK_EPSILON);
+        [tx, ty, tz] = resolvePlacementCell(pick.pickedPoint, normal);
       } else {
         disposeGhost();
         disposeOutline();
@@ -453,7 +533,18 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         disposeOutline();
         return;
       }
-      showGhostAndOutline(tx, ty, tz, ordinal);
+      const blockDef = window.mc.getBlockDef(ordinal);
+      const bs = blockDef?.brickSize ?? [1, 1, 1];
+      const [xOffset, zOffset] = computeSlotOffset(
+        pick.pickedPoint.x,
+        pick.pickedPoint.z,
+        tx,
+        tz,
+        bs[0],
+        bs[2],
+        placementRotation,
+      );
+      showGhostAndOutline(tx, ty, tz, ordinal, xOffset, zOffset);
     }
 
     function onKeyDown(e: KeyboardEvent) {
@@ -522,10 +613,40 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
         const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
         const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
+        // Resolve the targeted block's own brickSize so the removal hits the exact XZ sub-slot
+        // aimed at (e.g. one LEGO_PIECE among several stacked/slotted in the same cell), same
+        // idea as the in-game precise break (LocalPlayerController.kt).
+        let breakXOffset = 0;
+        let breakZOffset = 0;
+        if (wasmExports) {
+          const targetOrdinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, bx, by, bz);
+          const targetDef = window.mc.getBlockDef(targetOrdinal);
+          const bs = targetDef?.brickSize ?? [1, 1, 1];
+          [breakXOffset, breakZOffset] = computeSlotOffset(
+            pick.pickedPoint.x,
+            pick.pickedPoint.z,
+            bx,
+            bz,
+            bs[0],
+            bs[2],
+            0,
+          );
+        }
         api.instances
-          .setBlock(zone.id, { x: bx, y: by, z: bz, type: "AIR", state: 0 })
-          .then(() => reloadChunk(Math.floor(bx / CHUNK_SIZE), Math.floor(bz / CHUNK_SIZE)))
-          .catch(console.error);
+          .setBlock(zone.id, {
+            x: bx,
+            y: by,
+            z: bz,
+            type: "AIR",
+            state: 0,
+            xOffset: breakXOffset,
+            zOffset: breakZOffset,
+          })
+          .then((res) => {
+            if (!res.ok) return res.text().then((msg) => flashActionError(msg || `Break failed (${res.status})`));
+            return reloadChunk(Math.floor(bx / CHUNK_SIZE), Math.floor(bz / CHUNK_SIZE));
+          })
+          .catch((e) => flashActionError(String(e)));
         return;
       }
 
@@ -538,17 +659,30 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         ty = zone.yMin;
         tz = Math.floor(pick.pickedPoint.z);
       } else if (normal) {
-        tx = Math.floor(pick.pickedPoint.x + normal.x * PICK_EPSILON);
-        ty = Math.floor(pick.pickedPoint.y + normal.y * PICK_EPSILON);
-        tz = Math.floor(pick.pickedPoint.z + normal.z * PICK_EPSILON);
+        [tx, ty, tz] = resolvePlacementCell(pick.pickedPoint, normal);
       } else {
         return;
       }
       if (ty < zone.yMin || ty > zone.yMax || !inZone(tx, tz)) return;
+      const ordinal = ordinalByNameRef.current.get(type);
+      const placeDef = ordinal != null ? window.mc.getBlockDef(ordinal) : undefined;
+      const placeBs = placeDef?.brickSize ?? [1, 1, 1];
+      const [xOffset, zOffset] = computeSlotOffset(
+        pick.pickedPoint.x,
+        pick.pickedPoint.z,
+        tx,
+        tz,
+        placeBs[0],
+        placeBs[2],
+        placementRotation,
+      );
       api.instances
-        .setBlock(zone.id, { x: tx, y: ty, z: tz, type, state: placementRotation })
-        .then(() => reloadChunk(Math.floor(tx / CHUNK_SIZE), Math.floor(tz / CHUNK_SIZE)))
-        .catch(console.error);
+        .setBlock(zone.id, { x: tx, y: ty, z: tz, type, state: placementRotation, xOffset, zOffset })
+        .then((res) => {
+          if (!res.ok) return res.text().then((msg) => flashActionError(msg || `Place failed (${res.status})`));
+          return reloadChunk(Math.floor(tx / CHUNK_SIZE), Math.floor(tz / CHUNK_SIZE));
+        })
+        .catch((e) => flashActionError(String(e)));
     });
 
     engine.runRenderLoop(() => scene.render());
@@ -592,6 +726,11 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
             </div>
           ))}
         </div>
+        {actionError && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 max-w-[80%] px-3 py-1.5 rounded bg-red-900/90 text-red-100 text-xs z-10 pointer-events-none">
+            {actionError}
+          </div>
+        )}
         {loadError ? (
           <div className="w-full h-full flex items-center justify-center text-red-400 text-sm p-6 text-center">
             {loadError}

@@ -118,6 +118,7 @@ let _registryBlocks:
       liquid?: boolean;
       hasStuds?: boolean;
       brickSize?: [number, number, number];
+      heightFraction?: number;
       plainColorable?: boolean;
     }[]
   | null = null;
@@ -145,6 +146,7 @@ export function registerBlockDefs(): Pick<
             elements: [],
             faces: [],
             brickSize: info.brickSize,
+            heightFraction: info.heightFraction,
           };
           return Promise.resolve();
         }
@@ -160,6 +162,7 @@ export function registerBlockDefs(): Pick<
             elements: [liquidElem],
             faces: [liquidFaces],
             brickSize: info.brickSize,
+            heightFraction: info.heightFraction,
           };
           return Promise.resolve();
         }
@@ -170,6 +173,7 @@ export function registerBlockDefs(): Pick<
             const { def, textures } = parseBlockBbmodel(data);
             if (def && info.hasStuds) def.hasStuds = true;
             if (def && info.brickSize) def.brickSize = info.brickSize;
+            if (def && info.heightFraction !== undefined) def.heightFraction = info.heightFraction;
             defs[ordinal] = def;
             for (const t of textures) {
               if (!allTextures.has(t.name)) allTextures.set(t.name, t);
@@ -202,6 +206,7 @@ export function setRegistryBlocks(
     liquid?: boolean;
     hasStuds?: boolean;
     brickSize?: [number, number, number];
+    heightFraction?: number;
   }[],
 ): void {
   _registryBlocks = blocks;

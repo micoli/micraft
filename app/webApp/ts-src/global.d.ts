@@ -134,6 +134,8 @@ declare global {
     hasStuds?: boolean;
     /** Sub-voxel fractions [x, y, z]; values < 1 mean multiple fit per voxel on that axis. */
     brickSize?: [number, number, number];
+    /** < 1 means several of this block stack within one voxel's height (see BlockPlacer.kt). */
+    heightFraction?: number;
     // Per-element geometry; faces[elemIdx] = McBlockElement.faces for backward compat lookup
     elements: McBlockElement[];
     // Shortcut: faces[elemIdx][faceDir] — same data as elements[elemIdx].faces
@@ -550,6 +552,8 @@ declare global {
     webApp?: Promise<{
       mcAdminLoadChunk(scene: unknown, data: Uint8Array, yMin: number, yMax: number): void;
       mcAdminDisposeChunk(cx: number, cz: number): void;
+      mcAdminGetBlockOrdinalAt(scene: unknown, wx: number, wy: number, wz: number): number;
+      mcAdminSetBlockRegistry(json: string): void;
     }>;
     [key: string]: unknown;
   }
