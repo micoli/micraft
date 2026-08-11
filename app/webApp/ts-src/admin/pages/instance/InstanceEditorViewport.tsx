@@ -21,6 +21,35 @@ function rgbToHex([r, g, b]: [number, number, number]): string {
   return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 }
 
+interface StoredCameraState {
+  alpha: number;
+  beta: number;
+  radius: number;
+  targetX: number;
+  targetY: number;
+  targetZ: number;
+}
+
+const cameraStorageKey = (zoneId: string) => `instanceEditorCamera:${zoneId}`;
+
+function loadCameraState(zoneId: string): StoredCameraState | null {
+  try {
+    const raw = localStorage.getItem(cameraStorageKey(zoneId));
+    if (!raw) return null;
+    return JSON.parse(raw) as StoredCameraState;
+  } catch {
+    return null;
+  }
+}
+
+function saveCameraState(zoneId: string, state: StoredCameraState) {
+  try {
+    localStorage.setItem(cameraStorageKey(zoneId), JSON.stringify(state));
+  } catch {
+    // localStorage unavailable (private mode / quota) — camera position just won't persist.
+  }
+}
+
 // XZ sub-voxel slot targeted within cell (tx,tz), mirroring the in-game hover math
 // (LocalPlayerController.kt) so the admin editor's ghost/break-overlay and the resulting
 // api.instances.setBlock call agree on the same slot the player is visually aiming at.
@@ -175,12 +204,15 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     const centerY = (zone.yMin + zone.yMax) / 2 + 0.5;
     const span = Math.max((maxCx - minCx + 1) * CHUNK_SIZE, (maxCz - minCz + 1) * CHUNK_SIZE, zone.yMax - zone.yMin, 4);
 
+    const savedCamera = loadCameraState(zone.id);
     const camera = new B.ArcRotateCamera(
       "cam",
-      -Math.PI * 0.35,
-      Math.PI / 3,
-      span * 1.8,
-      new B.Vector3(centerX, centerY, centerZ),
+      savedCamera?.alpha ?? -Math.PI * 0.35,
+      savedCamera?.beta ?? Math.PI / 3,
+      savedCamera?.radius ?? span * 1.8,
+      savedCamera
+        ? new B.Vector3(savedCamera.targetX, savedCamera.targetY, savedCamera.targetZ)
+        : new B.Vector3(centerX, centerY, centerZ),
       scene,
     );
     camera.attachControl(canvas, true);
@@ -307,6 +339,14 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       if (now - lastVisibilityCheck < 300) return;
       lastVisibilityCheck = now;
       updateVisibleChunks();
+      saveCameraState(zone.id, {
+        alpha: camera.alpha,
+        beta: camera.beta,
+        radius: camera.radius,
+        targetX: camera.target.x,
+        targetY: camera.target.y,
+        targetZ: camera.target.z,
+      });
     });
 
     canvas.addEventListener("contextmenu", (e) => e.preventDefault());
