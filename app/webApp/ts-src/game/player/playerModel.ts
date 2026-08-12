@@ -291,7 +291,7 @@ export function registerPlayerModel(): Pick<
         }
         if (headPivot) {
           const hb = wa["head"];
-          headPivot.rotation.x = headPitch + (hb ? interpAxis(hb.keyframes, tSec, "x") : 0) * DEG;
+          headPivot.rotation.x = -headPitch + (hb ? interpAxis(hb.keyframes, tSec, "x") : 0) * DEG;
           headPivot.rotation.y = (hb ? interpAxis(hb.keyframes, tSec, "y") : 0) * DEG;
         }
       } else {
@@ -299,7 +299,7 @@ export function registerPlayerModel(): Pick<
           if (pn[bname]) pn[bname].node.rotation.x = 0;
         }
         if (headPivot) {
-          headPivot.rotation.x = headPitch;
+          headPivot.rotation.x = -headPitch;
           headPivot.rotation.y = 0;
         }
       }
