@@ -100,7 +100,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const paletteRef = useRef<HTMLDivElement>(null);
   const [hoveredBlockName, setHoveredBlockName] = useState<string | null>(null);
-  const [tooltipAbove, setTooltipAbove] = useState(false);
+  const [hoveredRect, setHoveredRect] = useState<DOMRect | null>(null);
   const [hoveredShortcutSlot, setHoveredShortcutSlot] = useState<number | null>(null);
   const [blockDefs, setBlockDefs] = useState<BlockInfoDto[]>([]);
   // admin.js and mc_bindings.js are separate esbuild bundles: each has its own copy of
@@ -1093,16 +1093,10 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
                 blockDefsReady={blockDefsReady}
                 previewsReady={previewsReady}
                 hovered={hoveredBlockName === b.name}
-                tooltipAbove={tooltipAbove}
+                anchorRect={hoveredBlockName === b.name ? hoveredRect : null}
                 onClick={() => setSelectedType(b.name)}
                 onMouseEnter={(e) => {
-                  // Tooltip defaults to below the item; flip it above only when there isn't room
-                  // below inside the scroll container (i.e. hovering the last row) so it doesn't
-                  // get clipped by the container's overflow-y-auto.
-                  const btnRect = e.currentTarget.getBoundingClientRect();
-                  const containerRect = paletteRef.current?.getBoundingClientRect();
-                  const spaceBelow = containerRect ? containerRect.bottom - btnRect.bottom : Infinity;
-                  setTooltipAbove(spaceBelow < 40);
+                  setHoveredRect(e.currentTarget.getBoundingClientRect());
                   setHoveredBlockName(b.name);
                 }}
                 onMouseLeave={() => setHoveredBlockName(null)}

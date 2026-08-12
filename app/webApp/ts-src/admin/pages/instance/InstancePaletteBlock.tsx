@@ -14,7 +14,7 @@ export function InstancePaletteBlock({
   blockDefsReady,
   previewsReady,
   hovered,
-  tooltipAbove,
+  anchorRect,
   onClick,
   onMouseEnter,
   onMouseLeave,
@@ -26,7 +26,7 @@ export function InstancePaletteBlock({
   blockDefsReady: boolean;
   previewsReady: boolean;
   hovered: boolean;
-  tooltipAbove: boolean;
+  anchorRect: DOMRect | null;
   onClick: () => void;
   onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onMouseLeave: () => void;
@@ -60,8 +60,8 @@ export function InstancePaletteBlock({
       <span className="text-[9px] leading-tight text-[#8A99AF] text-center truncate w-full">
         {block.name.replace(/_/g, " ")}
       </span>
-      {hovered && (
-        <BlockHoverTooltip block={block} ordinal={ordinal} above={tooltipAbove} previewsReady={previewsReady} />
+      {hovered && anchorRect && (
+        <BlockHoverTooltip block={block} ordinal={ordinal} anchorRect={anchorRect} previewsReady={previewsReady} />
       )}
     </button>
   );

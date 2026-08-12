@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { type BlockInfoDto } from "../../api";
 import { type useInstanceShortcutBar } from "./useInstanceShortcutBar";
 import { CssBlockCube } from "../../../game/shared/BlockPreview";
@@ -33,6 +34,7 @@ export function InstanceShortcutBarSlot({
   const isDropTarget = shortcutBar.dragOver === idx;
   const ordinal = !isBreakSlot && slotBlock ? getOrdinal(slotBlock) : null;
   const slotBlockInfo = slotBlock ? blockDefs.find((b) => b.name === slotBlock) : null;
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
   return (
     <div
@@ -41,7 +43,10 @@ export function InstanceShortcutBarSlot({
       onDragLeave={shortcutBar.handleDragLeave}
       onDrop={(e) => shortcutBar.handleDrop(e, idx)}
       onContextMenu={(e) => shortcutBar.handleContextMenu(e, idx)}
-      onMouseEnter={onHoverEnter}
+      onMouseEnter={(e) => {
+        setAnchorRect(e.currentTarget.getBoundingClientRect());
+        onHoverEnter();
+      }}
       onMouseLeave={onHoverLeave}
       title={isBreakSlot ? "Break" : (slotBlock ?? undefined)}
       className={`relative flex flex-col items-center gap-0.5 rounded border-2 p-1 w-14 cursor-pointer transition-colors ${
@@ -69,8 +74,13 @@ export function InstanceShortcutBarSlot({
       <span className="text-[9px] leading-tight text-[#8A99AF] text-center truncate w-full">
         {slotBlockInfo?.name?.replace(/_/g, " ") ?? "-"}
       </span>
-      {hovered && slotBlockInfo && (
-        <BlockHoverTooltip block={slotBlockInfo} ordinal={ordinal} above={false} previewsReady={previewsReady} />
+      {hovered && slotBlockInfo && anchorRect && (
+        <BlockHoverTooltip
+          block={slotBlockInfo}
+          ordinal={ordinal}
+          anchorRect={anchorRect}
+          previewsReady={previewsReady}
+        />
       )}
     </div>
   );
