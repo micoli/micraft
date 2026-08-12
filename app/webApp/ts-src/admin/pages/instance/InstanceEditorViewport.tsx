@@ -901,7 +901,22 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   return (
     <div className="flex-1 flex overflow-hidden">
       <div className="flex-[4] relative">
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none z-10">
+        {actionError && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 max-w-[80%] px-3 py-1.5 rounded bg-red-900/90 text-red-100 text-xs z-10 pointer-events-none">
+            {actionError}
+          </div>
+        )}
+        {loadError ? (
+          <div className="w-full h-full flex items-center justify-center text-red-400 text-sm p-6 text-center">
+            {loadError}
+          </div>
+        ) : (
+          <canvas ref={canvasRef} className="w-full h-full block" />
+        )}
+      </div>
+      <aside className="flex-[2] shrink-0 border-l border-[#2E3A4E] overflow-y-auto flex flex-col">
+        <div className="relative top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none items-center justify-center">
+          {/* dragmode */}
           {(
             [
               { key: "place", label: modKeys.shift || mode === "break" ? "Break" : "Place", hint: "⇧" },
@@ -921,20 +936,6 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
             </div>
           ))}
         </div>
-        {actionError && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 max-w-[80%] px-3 py-1.5 rounded bg-red-900/90 text-red-100 text-xs z-10 pointer-events-none">
-            {actionError}
-          </div>
-        )}
-        {loadError ? (
-          <div className="w-full h-full flex items-center justify-center text-red-400 text-sm p-6 text-center">
-            {loadError}
-          </div>
-        ) : (
-          <canvas ref={canvasRef} className="w-full h-full block" />
-        )}
-      </div>
-      <aside className="flex-[2] shrink-0 border-l border-[#2E3A4E] overflow-y-auto flex flex-col">
         <div className="shrink-0 border-b border-[#2E3A4E] flex flex-col items-center justify-center gap-1 py-3">
           {selectedType && blockDefsReady && getOrdinal(selectedType) !== null ? (
             <Block3DPreview ordinal={getOrdinal(selectedType)!} size={96} />
