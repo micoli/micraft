@@ -8,6 +8,7 @@ import { HeapBar } from "./HeapBar";
 import { Card } from "./Card";
 import { Row } from "./Row";
 import { Svg } from "./Svg";
+import { ICONS } from "../../../primitives/icons";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function kb(bytes: number) {
@@ -15,19 +16,6 @@ function kb(bytes: number) {
   if (bytes < 1_048_576) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1_048_576).toFixed(1)} MB`;
 }
-
-// ── Icon paths ────────────────────────────────────────────────────────────────
-const I = {
-  users: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm8 2l2 2 4-4",
-  npc: "M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18",
-  chunk: "M3 7l9-4 9 4M3 7v10l9 4m-9-14l9 4m9-4v10l-9 4m0-14v14",
-  tick: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
-  net: "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4",
-  cpu: "M9 3H5a2 2 0 00-2 2v4m0 0h18M3 9v10a2 2 0 002 2h4m0 0h6m0 0h4a2 2 0 002-2V9",
-  drop: "M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5zm2.5 4.5c0 .83-.67 1.5-1.5 1.5S14 15.33 14 14.5V12h-1v2.5c0 .83-.67 1.5-1.5 1.5S10 15.33 10 14.5v-5C10 8.67 10.67 8 11.5 8S13 8.67 13 9.5V11h1V9.5C14 8.67 14.67 8 15.5 8S17 8.67 17 9.5v5z",
-  restart:
-    "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15",
-};
 
 export function ticksToTime(ticks: number, ticksPerDay: number): { h: number; m: number } {
   const day = ticks % ticksPerDay;
@@ -92,27 +80,27 @@ export function StatusPage() {
           label={t("status.connectedPlayers")}
           value={snap.connectedPlayers}
           sub={snap.playerNames.join(", ") || t("status.noPlayers")}
-          icon={I.users}
+          icon={ICONS.users}
           color="bg-blue-500/20 text-blue-400"
         />
         <StatCard
           label={t("status.npcsAlive")}
           value={snap.npcTotal}
           sub={t("status.estimated", kb(snap.npcEstBytes))}
-          icon={I.npc}
+          icon={ICONS.npc}
           color="bg-violet-500/20 text-violet-400"
         />
         <StatCard
           label={t("status.loadedChunks")}
           value={snap.loadedChunks}
-          icon={I.chunk}
+          icon={ICONS.chunk}
           color="bg-emerald-500/20 text-emerald-400"
         />
         <StatCard
           label={t("status.gameTime")}
           value={`${pad2(h)}:${pad2(m)}`}
           sub={t("status.tickValue", snap.gameTicks.toLocaleString())}
-          icon={I.tick}
+          icon={ICONS.tick}
           color="bg-amber-500/20 text-amber-400"
         />
       </div>
@@ -166,7 +154,7 @@ export function StatusPage() {
           disabled={restarting}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2E3A4E] hover:bg-[#2E3A4E] text-[#8A99AF] hover:text-white transition-colors disabled:opacity-50"
         >
-          <Svg d={I.restart} size={13} />
+          <Svg d={ICONS.restart} size={13} />
           {restarting ? t("status.restarting") : t("status.restartServer")}
         </button>
       </div>

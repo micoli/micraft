@@ -2,7 +2,7 @@ import { useT } from "../../i18n";
 import { useState } from "react";
 import { api } from "../../api";
 import { Icon } from "../../../primitives/Icon";
-import { I } from "./WorldCard";
+import { ICONS } from "../../../primitives/icons";
 
 export function CreateWorldForm({ onCreated }: { onCreated: () => void }) {
   const t = useT();
@@ -41,7 +41,7 @@ export function CreateWorldForm({ onCreated }: { onCreated: () => void }) {
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#3C50E0] hover:bg-[#3446c7] text-white text-sm font-medium transition-colors"
       >
-        <Icon d={I.add} size={16} />
+        <Icon d={ICONS.add} size={16} />
         {t("worlds.create")}
       </button>
     );
