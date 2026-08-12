@@ -92,6 +92,9 @@ export function registerMaterials(): Pick<
               "lightWVP",
               "shadowDarkness",
               "sunDir",
+              "clipPlaneX",
+              "clipPlaneY",
+              "clipPlaneZ",
             ],
             samplers: ["textureSampler", "shadowSampler"],
           },
@@ -114,6 +117,10 @@ export function registerMaterials(): Pick<
         mat.setFloat("fogZoneRadius", 0.0);
         mat.setFloat("fogZoneStart", 8.0);
         mat.setFloat("fogZoneEnd", 40.0);
+        const inertClip = new BABYLON.Vector4(0, 0, 0, -1);
+        mat.setVector4("clipPlaneX", inertClip);
+        mat.setVector4("clipPlaneY", inertClip);
+        mat.setVector4("clipPlaneZ", inertClip);
         mat.backFaceCulling = false;
         mat.forceDepthWrite = true;
         return mat;

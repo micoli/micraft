@@ -64,6 +64,11 @@ uniform float playerLightIntensity;
 uniform sampler2D shadowSampler;
 uniform float shadowDarkness;
 uniform vec3 sunDir;
+// Editor clip planes (instance editor "coupe" tool): normal.xyz + offset (dot(normal, worldPos) + w > 0
+// discards the fragment). Inert default (0,0,0,-1) set by materials.ts — no-op for the live game.
+uniform vec4 clipPlaneX;
+uniform vec4 clipPlaneY;
+uniform vec4 clipPlaneZ;
 
 varying vec2 vUv;
 varying vec4 vColor;
@@ -73,6 +78,10 @@ varying vec3 vNormal;
 varying vec4 vShadowCoord;
 
 void main() {
+  if (dot(clipPlaneX.xyz, vWorldPos) + clipPlaneX.w > 0.0) discard;
+  if (dot(clipPlaneY.xyz, vWorldPos) + clipPlaneY.w > 0.0) discard;
+  if (dot(clipPlaneZ.xyz, vWorldPos) + clipPlaneZ.w > 0.0) discard;
+
   vec4 texColor = texture2D(textureSampler, vUv);
   if (texColor.a < 0.1) discard;
 

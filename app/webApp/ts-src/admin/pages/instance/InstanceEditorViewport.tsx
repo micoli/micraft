@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api, type BlockInfoDto, type InstanceZoneDto } from "../../api";
 import { useBlockDefsReady, useBlockPreviews } from "../../../game/shared/BlockPreview";
 import { Block3DPreview } from "../../../game/shared/Block3DPreview";
@@ -8,6 +8,9 @@ import { startPreloading } from "../../../game/shared/blockPreviewCache";
 import { useInstanceShortcutBar } from "../../hooks/useInstanceShortcutBar";
 import { buildBlockPreviewMeshes } from "../../../game/chunks/chunkBuilder";
 import { boxLines } from "../../../game/targeting/targeting";
+import { applyClipPlanes, CLIP_AXES, ClipAxis, ClipPlaneState } from "./clipAxis";
+import { ClipAxesInput } from "../../../primitives/clipAxesInput";
+import { dragMode, DragMode } from "../../../primitives/DragMode";
 
 const CHUNK_SIZE = 16;
 // How far (in chunks) around the camera target to keep block geometry loaded. Scales with
@@ -112,6 +115,36 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   // In-memory only (reset on zone remount, like the scene itself) — not persisted, unlike camera/shortcut bar.
   const undoStackRef = useRef<UndoEntry[]>([]);
   const redoStackRef = useRef<UndoEntry[]>([]);
+
+  // Clip-plane bounds derived purely from zone data (no scene dependency) — one range per axis
+  // the position slider can move within.
+  const clipBounds = useMemo(() => {
+    const cxs = zone.chunks.map((c) => c.cx);
+    const czs = zone.chunks.map((c) => c.cz);
+    const minCx = Math.min(...cxs);
+    const maxCx = Math.max(...cxs);
+    const minCz = Math.min(...czs);
+    const maxCz = Math.max(...czs);
+    return {
+      x: [minCx * CHUNK_SIZE, (maxCx + 1) * CHUNK_SIZE] as const,
+      y: [zone.yMin, zone.yMax] as const,
+      z: [minCz * CHUNK_SIZE, (maxCz + 1) * CHUNK_SIZE] as const,
+    };
+  }, [zone]);
+  const [clipPlanes, setClipPlanes] = useState<Record<ClipAxis, ClipPlaneState>>(() => ({
+    x: { enabled: false, flipped: false, pos: (clipBounds.x[0] + clipBounds.x[1]) / 2 },
+    y: { enabled: false, flipped: false, pos: (clipBounds.y[0] + clipBounds.y[1]) / 2 },
+    z: { enabled: false, flipped: false, pos: (clipBounds.z[0] + clipBounds.z[1]) / 2 },
+  }));
+  const clipPlanesRef = useRef(clipPlanes);
+  useEffect(() => {
+    clipPlanesRef.current = clipPlanes;
+  }, [clipPlanes]);
+  // Bridges the scene/overlay-mesh set owned by the main scene-setup effect below to the
+  // clip-plane sync effect and the sidebar handlers, which run outside that effect's closure.
+  const sceneRef = useRef<InstanceType<typeof BABYLON.Scene> | null>(null);
+  const overlayMeshesRef = useRef<Set<InstanceType<typeof BABYLON.Mesh>> | null>(null);
+  const clipMeshesRef = useRef<Partial<Record<ClipAxis, InstanceType<typeof BABYLON.Mesh>>>>({});
   // PUT /blocks resolves normally even on a 4xx (fetch only rejects on network errors), so a
   // rejected placement/break (e.g. slot full, zone disabled, occupied by a different block) would
   // otherwise fail silently — the ghost just vanishes with no feedback. Surfaces the server's
@@ -165,7 +198,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       window.removeEventListener("blur", reset);
     };
   }, []);
-  const activeDragMode = modKeys.meta ? "rotate" : modKeys.alt ? "pan" : modKeys.ctrl ? "zoom" : "place";
+  const activeDragMode: dragMode = modKeys.meta ? "rotate" : modKeys.alt ? "pan" : modKeys.ctrl ? "zoom" : "place";
 
   useEffect(() => {
     api.blocks
@@ -203,6 +236,8 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
     const scene = new B.Scene(engine);
     scene.clearColor = new B.Color4(0.06, 0.06, 0.08, 1);
+    sceneRef.current = scene;
+    clipMeshesRef.current = {};
 
     // Cached once resolved so hover/click handlers can call mcAdminGetBlockOrdinalAt
     // synchronously instead of re-awaiting the (already-resolved) module promise every frame.
@@ -277,6 +312,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     // Ghost/outline overlay meshes must stay unpickable no matter how many chunk (re)loads happen
     // around them (see loadChunk below) — populated by showGhostAndOutline/disposeGhost/disposeOutline.
     const overlayMeshes = new Set<InstanceType<typeof BABYLON.Mesh>>();
+    overlayMeshesRef.current = overlayMeshes;
     let disposed = false;
 
     async function loadChunk(cx: number, cz: number) {
@@ -285,6 +321,9 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       if (!res.ok) throw new Error(`chunk fetch failed: ${res.status}`);
       const bytes = new Uint8Array(await res.arrayBuffer());
       exports.mcAdminLoadChunk(scene, bytes, zone.yMin, zone.yMax);
+      // Block materials are created lazily by ChunkManager.getBlockMaterials() on first chunk mesh —
+      // re-apply the current clip-plane state so freshly created materials pick up an already-toggled plane.
+      applyClipPlanes(B!, scene, clipPlanesRef.current, clipBounds, overlayMeshes, clipMeshesRef.current);
       // chunkBuilder.ts sets isPickable=false on chunk meshes — the live game targets blocks via
       // a custom voxel raycast, not scene.pick(). The editor relies on scene.pick() for place/
       // break, so re-enable picking on whatever meshes this call just (re)built. Every reload (a
@@ -894,9 +933,22 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       disposeOutline();
       disposeBreakOverlay();
       engine.dispose();
+      sceneRef.current = null;
+      overlayMeshesRef.current = null;
+      clipMeshesRef.current = {};
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- zone.id identity is the intended re-mount trigger
   }, [zone.id, blockDefsReady]);
+
+  // Reactive clip-plane sync: runs whenever the sidebar toggles/moves a plane, and again after
+  // scene remount (zone.id/blockDefsReady) so a plane already enabled survives a zone switch.
+  useEffect(() => {
+    const scene = sceneRef.current;
+    const overlayMeshes = overlayMeshesRef.current;
+    const B = window.BABYLON;
+    if (!scene || !overlayMeshes || !B) return;
+    applyClipPlanes(B, scene, clipPlanes, clipBounds, overlayMeshes, clipMeshesRef.current);
+  }, [clipPlanes, clipBounds, zone.id, blockDefsReady]);
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -916,7 +968,6 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       </div>
       <aside className="flex-[2] shrink-0 border-l border-[#2E3A4E] overflow-y-auto flex flex-col">
         <div className="relative top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none items-center justify-center">
-          {/* dragmode */}
           {(
             [
               { key: "place", label: modKeys.shift || mode === "break" ? "Break" : "Place", hint: "⇧" },
@@ -925,26 +976,31 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
               { key: "rotate", label: "Rotate", hint: "⌘" },
             ] as const
           ).map((m) => (
-            <div
-              key={m.key}
-              className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
-                activeDragMode === m.key ? "bg-[#3C50E0] text-white" : "bg-black/50 text-[#8A99AF]"
-              }`}
-            >
-              {m.hint && <span className="mr-1 font-mono">{m.hint}</span>}
-              {m.label}
-            </div>
+            <DragMode key={m.key} m={m} activeDragMode={activeDragMode} />
           ))}
         </div>
-        <div className="shrink-0 border-b border-[#2E3A4E] flex flex-col items-center justify-center gap-1 py-3">
-          {selectedType && blockDefsReady && getOrdinal(selectedType) !== null ? (
-            <Block3DPreview ordinal={getOrdinal(selectedType)!} size={96} />
-          ) : (
-            <div className="h-24 w-24 flex items-center justify-center text-[#8A99AF] text-xs">
-              {selectedType ? "Loading…" : "No block selected"}
-            </div>
-          )}
-          {selectedType && <span className="text-white text-xs font-medium">{selectedType.replace(/_/g, " ")}</span>}
+        <div className="shrink-0 border-b border-[#2E3A4E] flex flex-row items-center gap-3 py-3 px-2">
+          <div className="flex flex-col gap-1 w-2/3 items-center justify-center">
+            {selectedType && blockDefsReady && getOrdinal(selectedType) !== null ? (
+              <Block3DPreview ordinal={getOrdinal(selectedType)!} size={96} />
+            ) : (
+              <div className="h-24 w-24 flex items-center justify-center text-[#8A99AF] text-xs">
+                {selectedType ? "Loading…" : "No block selected"}
+              </div>
+            )}
+            {selectedType && <span className="text-white text-xs font-medium">{selectedType.replace(/_/g, " ")}</span>}
+          </div>
+          <div className="flex flex-col gap-1.5 w-1/3 min-w-0">
+            {CLIP_AXES.map((axis) => (
+              <ClipAxesInput
+                key={axis}
+                axis={axis}
+                clipPlanes={clipPlanes}
+                clipBounds={clipBounds}
+                setClipPlanes={setClipPlanes}
+              />
+            ))}
+          </div>
         </div>
         <div className="shrink-0 border-b border-[#2E3A4E] p-2">
           <div className="grid grid-cols-5 gap-1 justify-center">
