@@ -42,7 +42,7 @@ export function InstanceShortcutBarSlot({
       onMouseEnter={onHoverEnter}
       onMouseLeave={onHoverLeave}
       title={isBreakSlot ? "Break" : (slotBlock ?? undefined)}
-      className={`relative w-9 h-9 shrink-0 flex items-center justify-center rounded border-2 cursor-pointer transition-colors ${
+      className={`relative flex flex-col items-center gap-0.5 rounded border-2 p-1 w-14 cursor-pointer transition-colors ${
         isDropTarget ? "bg-white/20" : "bg-black/30"
       } ${isSelected ? "border-[#3C50E0]" : "border-transparent hover:border-white/20"}`}
     >
@@ -64,6 +64,9 @@ export function InstanceShortcutBarSlot({
           <CssBlockCube ordinal={ordinal} size={16} />
         ) : null
       ) : null}
+      <span className="text-[9px] leading-tight text-[#8A99AF] text-center truncate w-full">
+        {slotBlockInfo?.name?.replace(/_/g, " ") ?? "-"}
+      </span>
       {hovered && slotBlockInfo && <BlockHoverTooltip block={slotBlockInfo} ordinal={ordinal} above={false} />}
     </div>
   );
