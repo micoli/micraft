@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { api, type BlockInfoDto, type InstanceZoneDto } from "../../api";
+import { api, type BlockInfoDto, type InstanceZoneDto, type PlainColorDto } from "../../api";
 import {
   useAllBlockPreviewsReady,
   useBlockDefsReady,
@@ -8,6 +8,7 @@ import {
 } from "../../../game/shared/BlockPreview";
 import { Block3DPreview } from "../../../game/shared/Block3DPreview";
 import { InstancePaletteBlock } from "./InstancePaletteBlock";
+import { InstanceColorPicker } from "./InstanceColorPicker";
 import { InstanceShortcutBarSlot } from "./InstanceShortcutBarSlot";
 import { startPreloading } from "../../../game/shared/blockPreviewCache";
 import { useInstanceShortcutBar } from "./useInstanceShortcutBar";
@@ -70,6 +71,12 @@ function saveCameraState(zoneId: string, state: StoredCameraState) {
   }
 }
 
+// Mirrors BlockState.pack() (BlockState.kt): bits 0-1 rotation, bits 2-7 plain color index
+// (0 = untinted, keeps the block's own texture).
+function packState(rotation: number, colorIndex: number): number {
+  return ((colorIndex & 0x3f) << 2) | (rotation & 0x03);
+}
+
 // XZ sub-voxel slot targeted within cell (tx,tz), mirroring the in-game hover math
 // (LocalPlayerController.kt) so the admin editor's ghost/break-overlay and the resulting
 // api.instances.setBlock call agree on the same slot the player is visually aiming at.
@@ -108,6 +115,9 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   // here. Ordinal is just the block's index in the raw registry array we sent to window.mc.
   const [ordinalByName, setOrdinalByName] = useState<Map<string, number>>(new Map());
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [plainColors, setPlainColors] = useState<PlainColorDto[]>([]);
+  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
+  const selectedColorIndexRef = useRef(selectedColorIndex);
   const [mode, setMode] = useState<"place" | "break">("place");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -179,6 +189,17 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   useEffect(() => {
     ordinalByNameRef.current = ordinalByName;
   }, [ordinalByName]);
+  useEffect(() => {
+    selectedColorIndexRef.current = selectedColorIndex;
+  }, [selectedColorIndex]);
+
+  // Resets any color pick made for a previous block — a color index only makes sense paired with
+  // the plainColorable block it was chosen for.
+  function selectBlockType(name: string) {
+    setMode("place");
+    setSelectedType(name);
+    setSelectedColorIndex(0);
+  }
 
   const blockDefsReady = useBlockDefsReady();
   const previewsReady = useAllBlockPreviewsReady();
@@ -187,10 +208,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const shortcutBar = useInstanceShortcutBar({
     initialPages: zone.shortcutBarPages,
     onSelectBreak: () => setMode("break"),
-    onSelectBlock: (blockName) => {
-      setMode("place");
-      setSelectedType(blockName);
-    },
+    onSelectBlock: (blockName) => selectBlockType(blockName),
   });
 
   // Persists clip-plane and shortcut-bar state onto the zone's own YAML record so it survives
@@ -229,12 +247,15 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const activeDragMode: dragMode = modKeys.meta ? "rotate" : modKeys.alt ? "pan" : modKeys.ctrl ? "zoom" : "place";
 
   useEffect(() => {
-    api.blocks
-      .list()
-      .then((defs) => {
+    Promise.all([api.blocks.list(), api.plainColors.list()])
+      .then(([defs, colors]) => {
         const withoutAir = defs.filter((b) => b.name !== "AIR");
         setBlockDefs(withoutAir);
         setOrdinalByName(new Map(defs.map((b, i) => [b.name, i])));
+        setPlainColors(colors);
+        // Plain-color materials (chunkBuilder.ts's plainMatKey) are built from this palette —
+        // must be loaded before the block registry so the first chunk mesh resolves them.
+        window.mc.setPlainColors?.(JSON.stringify(colors));
         window.mc.setBlockRegistry?.(JSON.stringify(defs));
         window.webApp?.then((exports) => exports.mcAdminSetBlockRegistry(JSON.stringify(defs)));
       })
@@ -412,7 +433,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     function captureBlock(x: number, y: number, z: number, xOffset: number, zOffset: number): UndoEntry {
       if (!wasmExports) return { x, y, z, type: "AIR", state: 0, xOffset, zOffset };
       const ordinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, x, y, z);
-      const state = wasmExports.mcAdminGetBlockStateAt(scene, x, y, z) & 0x03;
+      const state = wasmExports.mcAdminGetBlockStateAt(scene, x, y, z);
       const type = window.mc.getBlockDef(ordinal)?.name ?? "AIR";
       return { x, y, z, type, state, xOffset, zOffset };
     }
@@ -606,10 +627,11 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     }
 
     function showGhostAndOutline(x: number, y: number, z: number, ordinal: number, xOffset = 0, zOffset = 0) {
-      const geoKey = `${ordinal},${placementRotation}`;
+      const colorIdx = selectedColorIndexRef.current;
+      const geoKey = `${ordinal},${placementRotation},${colorIdx}`;
       if (ghostGeoKey !== geoKey) {
         disposeGhost();
-        ghostMeshes = buildBlockPreviewMeshes(scene, ordinal, placementRotation);
+        ghostMeshes = buildBlockPreviewMeshes(scene, ordinal, placementRotation, colorIdx);
         ghostGeoKey = geoKey;
         // The ghost shader (see getOrCreateGhostMat in chunkBuilder.ts) has backFaceCulling=false
         // and a zOffset/zOffsetUnits bias tuned for the in-game FPS-scale render distance. Both
@@ -871,9 +893,8 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
             rotation,
           );
           prevType = targetDef?.name ?? "AIR";
-          // setBlock's "state" is a rotation (0-3), same as placementRotation elsewhere in this
-          // file — not the full BlockState byte read back here, which also carries unrelated bits.
-          prevState = rotation;
+          // Full state byte (rotation + color) so undo restores the exact previous look.
+          prevState = targetState;
         }
         api.instances
           .setBlock(zone.id, {
@@ -932,13 +953,14 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       let prevState = 0;
       if (wasmExports) {
         const prevOrdinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, tx, ty, tz);
-        // setBlock's "state" is a rotation (0-3), same as placementRotation below — not the full
-        // BlockState byte read back here, which also carries unrelated bits (see break branch above).
-        prevState = wasmExports.mcAdminGetBlockStateAt(scene, tx, ty, tz) & 0x03;
+        // Full state byte (rotation + color, see BlockState.kt) so undo restores the exact
+        // previous look, not just its rotation.
+        prevState = wasmExports.mcAdminGetBlockStateAt(scene, tx, ty, tz);
         prevType = window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR";
       }
+      const state = packState(placementRotation, selectedColorIndexRef.current);
       api.instances
-        .setBlock(zone.id, { x: tx, y: ty, z: tz, type, state: placementRotation, xOffset, zOffset })
+        .setBlock(zone.id, { x: tx, y: ty, z: tz, type, state, xOffset, zOffset })
         .then((res) => {
           if (!res.ok) return res.text().then((msg) => flashActionError(msg || `Place failed (${res.status})`));
           pushUndo({ x: tx, y: ty, z: tz, type: prevType, state: prevState, xOffset, zOffset });
@@ -1010,13 +1032,24 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         <div className="shrink-0 border-b border-[#2E3A4E] flex flex-row items-center gap-3 py-3 px-2">
           <div className="flex flex-col gap-1 w-2/3 items-center justify-center">
             {selectedType && blockDefsReady && previewsReady && getOrdinal(selectedType) !== null ? (
-              <Block3DPreview ordinal={getOrdinal(selectedType)!} size={96} />
+              <Block3DPreview
+                ordinal={getOrdinal(selectedType)!}
+                size={96}
+                colorHex={selectedColorIndex > 0 ? plainColors[selectedColorIndex - 1]?.hex : undefined}
+              />
             ) : (
               <div className="h-24 w-24 flex items-center justify-center text-[#8A99AF] text-xs">
                 {selectedType ? "Loading…" : "No block selected"}
               </div>
             )}
             {selectedType && <span className="text-white text-xs font-medium">{selectedType.replace(/_/g, " ")}</span>}
+            {selectedType && blockDefs.find((b) => b.name === selectedType)?.plainColorable && (
+              <InstanceColorPicker
+                colors={plainColors}
+                selectedIndex={selectedColorIndex}
+                onSelect={setSelectedColorIndex}
+              />
+            )}
           </div>
           <div className="flex flex-col gap-1.5 w-1/3 min-w-0">
             {CLIP_AXES.map((axis) => (
@@ -1094,7 +1127,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
                 previewsReady={previewsReady}
                 hovered={hoveredBlockName === b.name}
                 anchorRect={hoveredBlockName === b.name ? hoveredRect : null}
-                onClick={() => setSelectedType(b.name)}
+                onClick={() => selectBlockType(b.name)}
                 onMouseEnter={(e) => {
                   setHoveredRect(e.currentTarget.getBoundingClientRect());
                   setHoveredBlockName(b.name);

@@ -16,6 +16,11 @@ export interface BlockInfoDto {
   isCubic?: boolean;
 }
 
+export interface PlainColorDto {
+  name: string;
+  hex: string;
+}
+
 export interface ChunkPosDto {
   cx: number;
   cz: number;
@@ -258,6 +263,9 @@ export const api = {
   },
   blocks: {
     list: () => get("/api/admin/blocks").then((r) => r.json() as Promise<BlockInfoDto[]>),
+  },
+  plainColors: {
+    list: () => get("/api/admin/plain-colors").then((r) => r.json() as Promise<PlainColorDto[]>),
   },
   chunks: {
     discovered: () => get("/api/admin/chunks/discovered").then((r) => r.json() as Promise<ChunkPosDto[]>),

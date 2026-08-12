@@ -36,6 +36,7 @@ import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.ItemRegistry
+import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.PlayerFile
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldMetadata
@@ -49,6 +50,7 @@ import org.micoli.micraft.player.rpg.CharacterClass
 import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
+import org.micoli.micraft.protocol.PlainColorInfo
 
 @Serializable
 data class UserDto(val email: String, val displayName: String, val groups: List<String>)
@@ -631,6 +633,14 @@ class AdminController(
                     }
                 call.respondText(
                     Json.encodeToString(ListSerializer(BlockInfo.serializer()), blocks),
+                    ContentType.Application.Json)
+            }
+
+            get("/api/admin/plain-colors") {
+                if (!requireAdmin()) return@get
+                val colors = PlainColorRegistry.all().map { PlainColorInfo(it.name, it.hex()) }
+                call.respondText(
+                    Json.encodeToString(ListSerializer(PlainColorInfo.serializer()), colors),
                     ContentType.Application.Json)
             }
 

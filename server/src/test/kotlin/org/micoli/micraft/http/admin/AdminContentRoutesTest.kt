@@ -53,6 +53,15 @@ class AdminContentRoutesTest {
     }
 
     @Test
+    fun `api_admin_plain_colors_returns_200_with_json_array`() = testApplication {
+        application { routing { controller().register(this) } }
+        val r = client.get("/api/admin/plain-colors")
+        assertEquals(HttpStatusCode.OK, r.status)
+        val body = r.bodyAsText()
+        assertTrue(body.startsWith("["), "Expected JSON array, got: ${body.take(40)}")
+    }
+
+    @Test
     fun `api_admin_blocks_requires_auth_when_token_store_enabled`() = testApplication {
         val store = TokenStore(scope)
         application { routing { controller(store).register(this) } }
@@ -65,6 +74,14 @@ class AdminContentRoutesTest {
         val store = TokenStore(scope)
         application { routing { controller(store).register(this) } }
         val r = client.get("/api/admin/npc-types")
+        assertEquals(HttpStatusCode.Unauthorized, r.status)
+    }
+
+    @Test
+    fun `api_admin_plain_colors_requires_auth_when_token_store_enabled`() = testApplication {
+        val store = TokenStore(scope)
+        application { routing { controller(store).register(this) } }
+        val r = client.get("/api/admin/plain-colors")
         assertEquals(HttpStatusCode.Unauthorized, r.status)
     }
 
