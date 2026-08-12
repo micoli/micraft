@@ -1,4 +1,4 @@
-export function HpBar({ current, max }: { current: number; max: number }) {
+export function NpcHPBar({ current, max }: { current: number; max: number }) {
   const pct = max > 0 ? Math.round((current / max) * 100) : 0;
   const color = pct > 50 ? "bg-emerald-500" : pct > 25 ? "bg-yellow-500" : "bg-red-500";
   return (

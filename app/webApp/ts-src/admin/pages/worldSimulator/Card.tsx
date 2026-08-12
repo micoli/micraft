@@ -1,4 +1,4 @@
-interface Props {
+interface CardProps {
   title: string;
   children: React.ReactNode;
   /**
@@ -14,8 +14,7 @@ interface Props {
   summary?: string;
 }
 
-/** Panel of the simulator's left column, optionally foldable. */
-export function Card({ title, children, collapsed, onCollapsed, summary }: Props) {
+export function Card({ title, children, collapsed, onCollapsed, summary }: CardProps) {
   const foldable = collapsed !== undefined && onCollapsed !== undefined;
   const folded = foldable && collapsed;
 

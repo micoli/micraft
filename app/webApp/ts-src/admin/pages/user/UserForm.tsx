@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useT } from "../../i18n";
 import { Field } from "./Field";
 import { TextInput } from "./TextInput";
-import { Btn } from "./Btn";
+import { Button } from "../../../primitives/Button";
 
 export function UserForm({
   initial,
@@ -71,12 +71,12 @@ export function UserForm({
       )}
       {error && <p className="text-red-400 text-xs">{error}</p>}
       <div className="flex gap-2 justify-end pt-1">
-        <Btn variant="ghost" onClick={onClose}>
+        <Button variant="ghost" onClick={onClose}>
           {t("common.cancel")}
-        </Btn>
-        <Btn onClick={save} disabled={saving}>
+        </Button>
+        <Button onClick={save} disabled={saving}>
           {saving ? t("common.saving") : t("common.save")}
-        </Btn>
+        </Button>
       </div>
     </div>
   );

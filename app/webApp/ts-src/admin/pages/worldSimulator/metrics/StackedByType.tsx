@@ -2,7 +2,7 @@ import { SimMetricBucket } from "../types";
 import { BOX_H, BOX_W, maxTotal, SEGMENT_GAP, stackedColumns, stackKeys, TypedPick } from "./metrics";
 import { useMemo, useState } from "react";
 import { columnAt, dayLabel, niceMax, tooltipRows } from "./metrics";
-import { useT } from "../../i18n";
+import { useT } from "../../../i18n";
 import { npcColor } from "../types";
 import { Hover } from "./Hover";
 import { ChartFrame } from "./ChartFrame";

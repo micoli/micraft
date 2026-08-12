@@ -1,9 +1,9 @@
 import { api, PlayerFile } from "../../api";
 import { useT } from "../../i18n";
-import { Field } from "./Field";
+import { Field } from "../../../primitives/Field";
 import { useEffect, useState } from "react";
-import { BoolRow } from "./BoolRow";
-import { SaveBtn } from "./SaveBtn";
+import { BoolRow } from "../../../primitives/BoolRow";
+import { SaveButton } from "../../../primitives/SaveButton";
 
 const KNOWN_LOCALES = ["en", "fr", "de", "es", "ja", "zh", "pt", "ru", "it", "nl"];
 
@@ -98,7 +98,7 @@ export function PreferencesTab({
         <BoolRow label={t("players.godMode")} value={godMode} onChange={setGodMode} />
         <BoolRow label={t("players.lightBoost")} value={lightBoost} onChange={setLightBoost} />
       </div>
-      <SaveBtn saving={saving} saved={saved} onClick={save} />
+      <SaveButton saving={saving} saved={saved} onClick={save} />
     </div>
   );
 }

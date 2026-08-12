@@ -5,7 +5,7 @@ import {
   npcTypesInEvents,
   type SimEvent,
   type SimEventType,
-} from "../admin/simulator/types";
+} from "../admin/pages/worldSimulator/types";
 
 function event(seq: number, type: SimEventType, npcType?: string): SimEvent {
   return { seq, tick: seq, gameDay: 0, type, message: `e${seq}`, npcType };

@@ -8,7 +8,7 @@ import {
   loadLayers,
   markerRadiusFor,
   pickNpcAt,
-} from "../admin/simulator/arenaView";
+} from "../admin/pages/worldSimulator/arenaView";
 
 /** Same projection as useArenaCamera, with an explicit camera. */
 function projector(camX: number, camZ: number, ppb: number, w: number, h: number) {

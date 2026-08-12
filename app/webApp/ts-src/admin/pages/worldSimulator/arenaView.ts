@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { TranslationKey } from "../i18n";
+import type { TranslationKey } from "../../i18n";
 
 // ── Layers ────────────────────────────────────────────────────────────────────
 

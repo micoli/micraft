@@ -1,5 +1,5 @@
 import { type BlockInfoDto } from "../../api";
-import { type useInstanceShortcutBar } from "../../hooks/useInstanceShortcutBar";
+import { type useInstanceShortcutBar } from "./useInstanceShortcutBar";
 import { CssBlockCube } from "../../../game/shared/BlockPreview";
 import { BlockHoverTooltip } from "./BlockHoverTooltip";
 

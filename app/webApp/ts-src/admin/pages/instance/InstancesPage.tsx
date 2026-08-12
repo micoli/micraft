@@ -4,7 +4,7 @@ import { api, type InstanceZoneDto } from "../../api";
 import { InstanceEditorViewport } from "./InstanceEditorViewport";
 import { InstanceChunkPicker } from "./InstanceChunkPicker";
 import { CopyTeleportCommand } from "./CopyTeleportCommand";
-import { EmptyDetail } from "./EmptyDetail";
+import { EmptyDetail } from "../../../primitives/EmptyDetail";
 
 function chunksFingerprint(chunks: InstanceZoneDto["chunks"]): string {
   return chunks

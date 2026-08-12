@@ -1,7 +1,7 @@
 import { BaseStats, PlayerFile } from "../../api";
 import { useT } from "../../i18n";
 import { useState } from "react";
-import { SaveBtn } from "./SaveBtn";
+import { SaveButton } from "../../../primitives/SaveButton";
 import { StatRow } from "./StatRow";
 
 const CHARACTER_CLASSES = ["WARRIOR", "MAGE", "RANGER", "ROGUE", "CLERIC"];
@@ -106,7 +106,7 @@ export function RpgTab({
       <p className="text-xs text-[#4A5568]">
         {t("players.hpManaSummary", cd.currentHp, derived.maxHp, cd.currentMana, derived.maxMana)}
       </p>
-      <SaveBtn saving={saving} saved={saved} onClick={save} />
+      <SaveButton saving={saving} saved={saved} onClick={save} />
     </div>
   );
 }

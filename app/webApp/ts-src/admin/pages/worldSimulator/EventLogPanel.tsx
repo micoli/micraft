@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { useT, type TranslationKey } from "../i18n";
+import { useT, type TranslationKey } from "../../i18n";
 import {
   ALL_NPC_TYPES,
   EVENT_COLORS,

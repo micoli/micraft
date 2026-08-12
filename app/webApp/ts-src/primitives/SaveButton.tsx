@@ -1,6 +1,6 @@
-import { useT } from "../../i18n";
+import { useT } from "../admin/i18n";
 
-export function SaveBtn({ saving, saved, onClick }: { saving: boolean; saved: boolean; onClick: () => void }) {
+export function SaveButton({ saving, saved, onClick }: { saving: boolean; saved: boolean; onClick: () => void }) {
   const t = useT();
   return (
     <button

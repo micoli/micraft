@@ -1,5 +1,5 @@
 import { MetricsPanelProps } from "./MetricsPanel";
-import { useT } from "../../i18n";
+import { useT } from "../../../i18n";
 import { useEffect, useRef, useState } from "react";
 import { buildMetricsExport } from "./metrics";
 

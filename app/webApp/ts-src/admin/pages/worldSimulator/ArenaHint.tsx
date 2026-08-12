@@ -1,4 +1,4 @@
-import { useT } from "../i18n";
+import { useT } from "../../i18n";
 
 /** Bottom-left hint: arena size, scale, and what the mouse does. */
 export function ArenaHint({ halfSize, pxPerBlock }: { halfSize: number; pxPerBlock: number }) {

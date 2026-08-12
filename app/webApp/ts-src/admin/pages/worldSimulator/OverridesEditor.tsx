@@ -1,6 +1,6 @@
 import { basicSetup, EditorView } from "codemirror";
 import { useEffect, useRef, useState } from "react";
-import { useT } from "../i18n";
+import { useT } from "../../i18n";
 
 interface OverridesProps {
   npcTypes: string[];

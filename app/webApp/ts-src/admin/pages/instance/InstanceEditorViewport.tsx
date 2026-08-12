@@ -5,7 +5,7 @@ import { Block3DPreview } from "../../../game/shared/Block3DPreview";
 import { InstancePaletteBlock } from "./InstancePaletteBlock";
 import { InstanceShortcutBarSlot } from "./InstanceShortcutBarSlot";
 import { startPreloading } from "../../../game/shared/blockPreviewCache";
-import { useInstanceShortcutBar } from "../../hooks/useInstanceShortcutBar";
+import { useInstanceShortcutBar } from "./useInstanceShortcutBar";
 import { buildBlockPreviewMeshes } from "../../../game/chunks/chunkBuilder";
 import { boxLines } from "../../../game/targeting/targeting";
 import { applyClipPlanes, CLIP_AXES, ClipAxis, ClipPlaneState } from "./clipAxis";

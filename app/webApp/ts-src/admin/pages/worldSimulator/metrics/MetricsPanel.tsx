@@ -10,7 +10,7 @@ import {
   slotsFor,
   windowOf,
 } from "./metrics";
-import { useT } from "../../i18n";
+import { useT } from "../../../i18n";
 import { type SimMetricBucket, type SimulationConfig } from "../types";
 import { StackedByType } from "./StackedByType";
 import { Counters } from "./Counters";

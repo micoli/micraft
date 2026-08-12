@@ -18,7 +18,7 @@ import {
   stackedColumns,
   tooltipRows,
   windowOf,
-} from "../admin/simulator/metrics/metrics";
+} from "../admin/pages/worldSimulator/metrics/metrics";
 import {
   DEFAULT_POPULATION_CAP,
   MAX_NPCS_PER_FRAME_CEILING,
@@ -27,7 +27,7 @@ import {
   resetNpcColors,
   type SimMetricBucket,
   type SimulationConfig,
-} from "../admin/simulator/types";
+} from "../admin/pages/worldSimulator/types";
 
 function bucket(index: number, over: Partial<SimMetricBucket> = {}): SimMetricBucket {
   return {

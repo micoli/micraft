@@ -1,7 +1,7 @@
 import { useT } from "../../i18n";
 import { useState } from "react";
 import { api } from "../../api";
-import { Icon } from "./Icon";
+import { Icon } from "../../../primitives/Icon";
 import { I } from "./WorldCard";
 
 export function CreateWorldForm({ onCreated }: { onCreated: () => void }) {

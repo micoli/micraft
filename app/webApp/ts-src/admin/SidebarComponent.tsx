@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router";
 import { useT } from "./i18n";
 import { cn } from "../primitives/cn";
 import { LanguageSelector } from "./components/LanguageSelector";
-import { Icon } from "./Icon";
+import { Icon } from "../primitives/Icon";
 import { NAV } from "./const";
 
 export function SidebarComponent({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {

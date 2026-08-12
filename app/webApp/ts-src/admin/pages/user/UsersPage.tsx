@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router";
 import { Dialog } from "../../../primitives/Dialog";
 import { api, UserDto } from "../../api";
 import { useT } from "../../i18n";
-import { Btn } from "./Btn";
+import { Button } from "../../../primitives/Button";
 import { UserForm } from "./UserForm";
 import { DialogContent } from "../../../primitives/DialogContent";
 import { DialogTitle } from "../../../primitives/DialogTitle";
@@ -98,7 +98,7 @@ export function UsersPage() {
         <p className="text-sm text-[#8A99AF]">
           {t(users.length === 1 ? "users.countOne" : "users.countMany", users.length)}
         </p>
-        <Btn onClick={() => setAddOpen(true)}>{t("users.add")}</Btn>
+        <Button onClick={() => setAddOpen(true)}>{t("users.add")}</Button>
       </div>
 
       <div className="bg-[#1A222C] rounded-xl border border-[#2E3A4E] overflow-hidden">
@@ -174,13 +174,13 @@ export function UsersPage() {
                     <td className="px-5 py-3">
                       <div className="flex gap-2 justify-end">
                         {authProvider !== "none" && (
-                          <Btn variant="ghost" onClick={() => setEditUser(u)}>
+                          <Button variant="ghost" onClick={() => setEditUser(u)}>
                             {t("common.edit")}
-                          </Btn>
+                          </Button>
                         )}
-                        <Btn variant="danger" onClick={() => setDeleteEmail(u.email)}>
+                        <Button variant="danger" onClick={() => setDeleteEmail(u.email)}>
                           {t("common.delete")}
-                        </Btn>
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -227,12 +227,12 @@ export function UsersPage() {
             {t("users.deleteConfirmAfter")}
           </p>
           <div className="flex gap-2 justify-end">
-            <Btn variant="ghost" onClick={() => setDeleteEmail(null)}>
+            <Button variant="ghost" onClick={() => setDeleteEmail(null)}>
               {t("common.cancel")}
-            </Btn>
-            <Btn variant="danger" onClick={handleDelete}>
+            </Button>
+            <Button variant="danger" onClick={handleDelete}>
               {t("common.delete")}
-            </Btn>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -1,4 +1,4 @@
-import { useT } from "../i18n";
+import { useT } from "../../i18n";
 import { TUNING_FIELDS, type NpcTuning } from "./types";
 
 // ── NPC manager tunables ──────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useT } from "../i18n";
+import { useT } from "../../i18n";
 import { mergeBuckets, replaceBuckets } from "./metrics/metrics";
 import {
   EVENT_HISTORY,

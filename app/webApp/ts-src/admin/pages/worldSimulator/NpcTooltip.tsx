@@ -1,4 +1,4 @@
-import { useT } from "../i18n";
+import { useT } from "../../i18n";
 import type { SimNpc } from "./types";
 
 export interface HoverTarget {

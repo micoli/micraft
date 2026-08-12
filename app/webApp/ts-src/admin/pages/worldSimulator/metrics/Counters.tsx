@@ -1,5 +1,5 @@
 import type { SimMetricBucket } from "../types";
-import { useT } from "../../i18n";
+import { useT } from "../../../i18n";
 import { useMemo, useState } from "react";
 import {
   BOX_H,

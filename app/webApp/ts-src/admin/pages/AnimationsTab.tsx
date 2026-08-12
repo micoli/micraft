@@ -5,7 +5,7 @@ import { api } from "../api";
 import { BbmodelAnimationViewer } from "../components/BbmodelAnimationViewer";
 import { SidebarList } from "./SidebarList";
 import { PropRow } from "../PropRow";
-import { EmptyDetail } from "./EmptyDetail";
+import { EmptyDetail } from "../../primitives/EmptyDetail";
 
 export function AnimationsTab() {
   const t = useT();

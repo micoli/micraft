@@ -1,22 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArenaCanvasRenderer } from "../../simulator/ArenaCanvasRenderer";
-import { ArenaControls } from "../../simulator/ArenaControls";
-import { Card } from "../../simulator/Card";
+import { ArenaCanvasRenderer } from "./ArenaCanvasRenderer";
+import { ArenaControls } from "./ArenaControls";
+import { Card } from "./Card";
 import { useT, type TranslationKey } from "../../i18n";
-import {
-  LAYER_KEYS,
-  LAYER_LABEL_KEYS,
-  loadLayers,
-  saveLayers,
-  useArenaCamera,
-  type Layers,
-} from "../../simulator/arenaView";
-import { EventLogPanel } from "../../simulator/EventLogPanel";
-import { MetricsPanel } from "../../simulator/metrics/MetricsPanel";
-import { SimPlayerPad } from "../../simulator/SimPlayerPad";
-import { SimulationList } from "../../simulator/SimulationList";
-import { TuningEditor } from "../../simulator/RulesEditor";
-import { Timeline } from "../../simulator/Timeline";
+import { LAYER_KEYS, LAYER_LABEL_KEYS, loadLayers, saveLayers, useArenaCamera, type Layers } from "./arenaView";
+import { EventLogPanel } from "./EventLogPanel";
+import { MetricsPanel } from "./metrics/MetricsPanel";
+import { SimPlayerPad } from "./SimPlayerPad";
+import { SimulationList } from "./SimulationList";
+import { TuningEditor } from "./RulesEditor";
+import { Timeline } from "./Timeline";
 import { Row } from "./Row";
 import {
   DEFAULT_POPULATION_CAP,
@@ -25,9 +18,9 @@ import {
   type NpcTuning,
   type SimSpawn,
   type SimulationConfig,
-} from "../../simulator/types";
-import { useSimulation } from "../../simulator/useSimulation";
-import { OverridesEditor } from "../../simulator/OverridesEditor";
+} from "./types";
+import { useSimulation } from "./useSimulation";
+import { OverridesEditor } from "./OverridesEditor";
 import { NpcDetailPanel } from "./NpcDetailPanel";
 
 type Tab = "charts" | "log" | "npc" | "rules" | "manager";

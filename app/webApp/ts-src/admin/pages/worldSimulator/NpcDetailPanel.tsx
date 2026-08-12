@@ -1,6 +1,6 @@
-import { useSimulation } from "../../simulator/useSimulation";
+import { useSimulation } from "./useSimulation";
 import { Translate, useT } from "../../i18n";
-import { npcColor } from "../../simulator/types";
+import { npcColor } from "./types";
 
 export function NpcDetailPanel({ sim }: { sim: ReturnType<typeof useSimulation> }) {
   const t: Translate = useT();

@@ -1,7 +1,7 @@
 import { PlayerFile } from "../../api";
 import { useT } from "../../i18n";
 import { useState } from "react";
-import { SaveBtn } from "./SaveBtn";
+import { SaveButton } from "../../../primitives/SaveButton";
 
 export function KeybindingsTab({
   file,
@@ -87,7 +87,7 @@ export function KeybindingsTab({
           </div>
         ))}
       </div>
-      <SaveBtn saving={saving} saved={saved} onClick={save} />
+      <SaveButton saving={saving} saved={saved} onClick={save} />
     </div>
   );
 }

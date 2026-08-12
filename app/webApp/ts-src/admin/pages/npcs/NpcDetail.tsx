@@ -1,7 +1,7 @@
 import { NpcAdminDto } from "../../api";
 import type { Translate } from "../../i18n";
 
-export function Detail({ npc, t }: { npc: NpcAdminDto; t: Translate }) {
+export function NpcDetail({ npc, t }: { npc: NpcAdminDto; t: Translate }) {
   const teleport = `/teleport ${Math.round(npc.x)} ${Math.round(npc.y)} ${Math.round(npc.z)}`;
   return (
     <div className="bg-[#0E1726] border-t border-[#2E3A4E] px-6 py-4 grid grid-cols-2 gap-x-8 gap-y-3 text-sm">

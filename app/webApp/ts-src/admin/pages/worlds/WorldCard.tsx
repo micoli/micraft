@@ -1,7 +1,7 @@
 import { WorldStatsDto } from "../../api";
 import { useI18n } from "../../i18n";
-import { Icon } from "./Icon";
-import { Badge } from "./Badge";
+import { Icon } from "../../../primitives/Icon";
+import { Badge } from "../../../primitives/Badge";
 
 export const I = {
   world: "M3 7l9-4 9 4M3 7v10l9 4m-9-14l9 4m9-4v10l-9 4m0-14v14",

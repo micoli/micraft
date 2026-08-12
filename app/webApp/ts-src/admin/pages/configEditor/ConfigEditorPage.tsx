@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Editor } from "./Editor";
+import { Editor } from "../../../primitives/Editor";
 import { api } from "../../api";
 import { useT } from "../../i18n";
 

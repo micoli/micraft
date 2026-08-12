@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, NpcAdminDto } from "../../api";
 import { useT } from "../../i18n";
-import { Detail } from "./Detail";
-import { Badge } from "./Badge";
+import { NpcDetail } from "./NpcDetail";
+import { Badge } from "../../../primitives/Badge";
 import { ATTACK_LINE_TTL, NpcMiniMap } from "./NpcMiniMap";
-import { HpBar } from "./HpBar";
+import { NpcHPBar } from "./NpcHPBar";
 
 export interface PlayerAdminDto {
   id: string;
@@ -383,13 +383,13 @@ export function NpcsPage() {
                         <td className="px-4 py-2.5 text-[#8A99AF] font-mono">{npc.xp}</td>
                         <td className="px-4 py-2.5 text-[#8A99AF]">{npc.gender ?? "—"}</td>
                         <td className="px-4 py-2.5">
-                          <Badge label={npc.tier} color={tierColor(npc.tier)} />
+                          <Badge color={tierColor(npc.tier)}>{npc.tier}</Badge>
                         </td>
                         <td className="px-4 py-2.5">
-                          <Badge label={npc.aggroMode} color={aggroColor(npc.aggroMode)} />
+                          <Badge color={aggroColor(npc.aggroMode)}>{npc.aggroMode}</Badge>
                         </td>
                         <td className="px-4 py-2.5">
-                          <HpBar current={npc.currentHp} max={npc.maxHp} />
+                          <NpcHPBar current={npc.currentHp} max={npc.maxHp} />
                         </td>
                         <td className="px-4 py-2.5 text-[#8A99AF] text-right">
                           <span className="text-xs">{expanded ? "▲" : "▼"}</span>
@@ -398,7 +398,7 @@ export function NpcsPage() {
                       {expanded && (
                         <tr key={npc.id + "-detail"} className="border-t border-[#2E3A4E]">
                           <td colSpan={9} className="p-0">
-                            <Detail npc={npc} t={t} />
+                            <NpcDetail npc={npc} t={t} />
                           </td>
                         </tr>
                       )}

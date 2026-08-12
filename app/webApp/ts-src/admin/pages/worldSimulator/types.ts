@@ -1,7 +1,7 @@
 // Mirrors of the Kotlin @Serializable DTOs in
 // server/src/main/kotlin/org/micoli/micraft/simulation/SimulationProtocol.kt
 
-import type { TranslationKey } from "../i18n";
+import type { TranslationKey } from "../../i18n";
 
 export interface NpcTuning {
   wanderPauseTicksMin: number;

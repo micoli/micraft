@@ -1,4 +1,4 @@
-import { useI18n, type TranslationKey } from "../i18n";
+import { useI18n, type TranslationKey } from "../../i18n";
 import type { SimStats } from "./types";
 
 const PRESETS: { label?: string; labelKey?: TranslationKey; tps: number; titleKey: TranslationKey }[] = [

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { api, ItemDto } from "../api";
 import { SidebarList } from "./SidebarList";
 import { PropRow } from "../PropRow";
-import { EmptyDetail } from "./EmptyDetail";
+import { EmptyDetail } from "../../primitives/EmptyDetail";
 
 export function ItemsTab() {
   const t = useT();

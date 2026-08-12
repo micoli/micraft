@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { api, BlockInfoDto } from "../api";
 import { SidebarList } from "./SidebarList";
 import { PropRow } from "../PropRow";
-import { EmptyDetail } from "./EmptyDetail";
+import { EmptyDetail } from "../../primitives/EmptyDetail";
 
 export function BlocksTab() {
   const t = useT();
