@@ -4,11 +4,11 @@ import { setupBlockScene } from "./blockSceneRenderer";
 
 // blockDefs.ts module state (_registryBlocks) isn't populated in bundles other than the game
 // client's (admin.js has its own copy — see InstanceEditorViewport.tsx comment), so block count
-// is read straight from window.mc instead of getRegistryBlockCount().
+// is read straight from window.mcState.codexBlocks instead of getRegistryBlockCount(). Can't walk
+// getBlockDef(0), getBlockDef(1), ... until the first falsy either — ordinal 0 is always AIR,
+// which getBlockDef() returns null for (skipped in initBlockDefs), so that loop stopped at 0.
 function getBlockCount(): number {
-  let count = 0;
-  while (window.mc?.getBlockDef?.(count)) count++;
-  return count;
+  return window.mcState?.codexBlocks?.length ?? 0;
 }
 
 /** Neutral grey used as stand-in for plainColorable blocks in cached previews. */
@@ -23,6 +23,9 @@ const _listeners = new Set<() => void>();
 let _canvas: HTMLCanvasElement | null = null;
 let _engine: Engine | null = null;
 let _preloading = false;
+let _preloadComplete = false;
+let _preloadTotal = 0;
+let _preloadDone = 0;
 
 // Serialized render queue — prevents concurrent renders on the shared canvas.
 type RenderTask = () => Promise<void>;
@@ -100,6 +103,18 @@ export function ensureColoredPreview(ordinal: number, colorHex: string): void {
       notify();
     }
   });
+}
+
+/** True once the full-registry startPreloading() sweep has rendered every block's preview. */
+export function isPreloadComplete(): boolean {
+  return _preloadComplete;
+}
+
+/** Fraction (0-1) of the startPreloading() sweep completed so far — 1 once done, 0 before it starts. */
+export function getPreloadProgress(): number {
+  if (_preloadComplete) return 1;
+  if (_preloadTotal === 0) return 0;
+  return _preloadDone / _preloadTotal;
 }
 
 export function subscribe(fn: () => void): () => void {
@@ -186,25 +201,29 @@ export async function startPreloading(): Promise<void> {
 
   const count = getBlockCount();
   const tasks: Promise<void>[] = [];
+  _preloadDone = 0;
+  _preloadTotal = 0;
   for (let ordinal = 0; ordinal < count; ordinal++) {
     if (_cache.has(ordinal)) continue;
+    _preloadTotal++;
     const ord = ordinal;
     const colorHex = isPlainColorable(ord) ? PLAIN_COLORABLE_PREVIEW_HEX : undefined;
     const p = new Promise<void>((resolve) => {
       enqueue(async () => {
         try {
           const url = await renderBlockToDataUrl(ord, colorHex);
-          if (url) {
-            _cache.set(ord, url);
-            notify();
-          }
+          if (url) _cache.set(ord, url);
         } catch (e) {
           console.warn("blockPreviewCache: failed ordinal", ord, e);
         }
+        _preloadDone++;
+        notify();
         resolve();
       });
     });
     tasks.push(p);
   }
   await Promise.all(tasks);
+  _preloadComplete = true;
+  notify();
 }

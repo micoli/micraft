@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, type BlockInfoDto, type InstanceZoneDto } from "../../api";
-import { useBlockDefsReady, useBlockPreviews } from "../../../game/shared/BlockPreview";
+import {
+  useAllBlockPreviewsReady,
+  useBlockDefsReady,
+  useBlockPreviews,
+  useBlockPreviewProgress,
+} from "../../../game/shared/BlockPreview";
 import { Block3DPreview } from "../../../game/shared/Block3DPreview";
 import { InstancePaletteBlock } from "./InstancePaletteBlock";
 import { InstanceShortcutBarSlot } from "./InstanceShortcutBarSlot";
@@ -131,11 +136,14 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       z: [minCz * CHUNK_SIZE, (maxCz + 1) * CHUNK_SIZE] as const,
     };
   }, [zone]);
-  const [clipPlanes, setClipPlanes] = useState<Record<ClipAxis, ClipPlaneState>>(() => ({
-    x: { enabled: false, flipped: false, pos: (clipBounds.x[0] + clipBounds.x[1]) / 2 },
-    y: { enabled: false, flipped: false, pos: (clipBounds.y[0] + clipBounds.y[1]) / 2 },
-    z: { enabled: false, flipped: false, pos: (clipBounds.z[0] + clipBounds.z[1]) / 2 },
-  }));
+  const [clipPlanes, setClipPlanes] = useState<Record<ClipAxis, ClipPlaneState>>(() => {
+    const saved = zone.clipPlanes;
+    return {
+      x: saved?.x ?? { enabled: false, flipped: false, pos: (clipBounds.x[0] + clipBounds.x[1]) / 2 },
+      y: saved?.y ?? { enabled: false, flipped: false, pos: (clipBounds.y[0] + clipBounds.y[1]) / 2 },
+      z: saved?.z ?? { enabled: false, flipped: false, pos: (clipBounds.z[0] + clipBounds.z[1]) / 2 },
+    };
+  });
   const clipPlanesRef = useRef(clipPlanes);
   useEffect(() => {
     clipPlanesRef.current = clipPlanes;
@@ -173,14 +181,34 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   }, [ordinalByName]);
 
   const blockDefsReady = useBlockDefsReady();
+  const previewsReady = useAllBlockPreviewsReady();
+  const previewProgress = useBlockPreviewProgress();
 
   const shortcutBar = useInstanceShortcutBar({
+    initialPages: zone.shortcutBarPages,
     onSelectBreak: () => setMode("break"),
     onSelectBlock: (blockName) => {
       setMode("place");
       setSelectedType(blockName);
     },
   });
+
+  // Persists clip-plane and shortcut-bar state onto the zone's own YAML record so it survives
+  // reload/navigation, instead of the old localStorage-per-browser approach. Debounced since the
+  // clip-plane sliders fire on every drag pixel. Skips the very first run (mount reflecting back
+  // what the zone already has) so switching zones or reloading doesn't fire a no-op PUT.
+  const layoutMounted = useRef(false);
+  useEffect(() => {
+    if (!layoutMounted.current) {
+      layoutMounted.current = true;
+      return;
+    }
+    const timeout = setTimeout(() => {
+      api.instances.updateLayout(zone.id, clipPlanes, shortcutBar.pages).catch(console.error);
+    }, 500);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- zone.id intentionally excluded, only its identity matters via the closure
+  }, [clipPlanes, shortcutBar.pages]);
 
   // Tracks which camera-drag modifier is currently held, to highlight the matching badge in the
   // legend overlay — mirrors the shiftKey/metaKey/altKey precedence the pointer handler below uses.
@@ -981,7 +1009,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         </div>
         <div className="shrink-0 border-b border-[#2E3A4E] flex flex-row items-center gap-3 py-3 px-2">
           <div className="flex flex-col gap-1 w-2/3 items-center justify-center">
-            {selectedType && blockDefsReady && getOrdinal(selectedType) !== null ? (
+            {selectedType && blockDefsReady && previewsReady && getOrdinal(selectedType) !== null ? (
               <Block3DPreview ordinal={getOrdinal(selectedType)!} size={96} />
             ) : (
               <div className="h-24 w-24 flex items-center justify-center text-[#8A99AF] text-xs">
@@ -1014,6 +1042,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
                 blockDefs={blockDefs}
                 getPreview={getPreview}
                 blockDefsReady={blockDefsReady}
+                previewsReady={previewsReady}
                 hovered={hoveredShortcutSlot === idx}
                 onHoverEnter={() => setHoveredShortcutSlot(idx)}
                 onHoverLeave={() => setHoveredShortcutSlot(null)}
@@ -1043,6 +1072,14 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
             className="w-full rounded bg-black/30 border border-[#2E3A4E] px-2 py-1 text-xs text-white placeholder:text-[#8A99AF] outline-none focus:border-[#3C50E0]"
           />
         </div>
+        {!previewsReady && (
+          <div className="h-0.5 shrink-0 bg-white/10">
+            <div
+              className="h-full bg-[#3C50E0] transition-[width]"
+              style={{ width: `${Math.round(previewProgress * 100)}%` }}
+            />
+          </div>
+        )}
         <div ref={paletteRef} className="flex flex-wrap gap-1 p-2 overflow-y-auto content-start">
           {blockDefs
             .filter((b) => b.name.toLowerCase().includes(search.toLowerCase()))
@@ -1054,6 +1091,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
                 selected={selectedType === b.name}
                 getPreview={getPreview}
                 blockDefsReady={blockDefsReady}
+                previewsReady={previewsReady}
                 hovered={hoveredBlockName === b.name}
                 tooltipAbove={tooltipAbove}
                 onClick={() => setSelectedType(b.name)}

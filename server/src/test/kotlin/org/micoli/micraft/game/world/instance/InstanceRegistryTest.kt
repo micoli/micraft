@@ -198,4 +198,31 @@ class InstanceRegistryTest {
         val r = registry()
         assertTrue(!r.delete("nope"))
     }
+
+    @Test
+    fun updateLayout_changesClipPlanesAndShortcutBar_keepsChunksAndIndex() {
+        val r = registry()
+        val zone =
+            r.create(
+                name = "Arena",
+                yMin = 0,
+                yMax = 10,
+                chunks = setOf(ChunkPos(0, 0)),
+                ownerName = "Alice",
+            )
+        val clipPlanes =
+            InstanceClipPlanes(x = ClipPlaneAxisState(enabled = true, flipped = true, pos = 3.0))
+        val shortcutBarPages = listOf(listOf(null, "STONE", null))
+        val updated = r.updateLayout(zone.id, clipPlanes, shortcutBarPages)
+        assertEquals(clipPlanes, updated?.clipPlanes)
+        assertEquals(shortcutBarPages, updated?.shortcutBarPages)
+        assertEquals(zone.chunks, updated?.chunks)
+        assertEquals(updated, r.zoneAt(5, 5, 5))
+    }
+
+    @Test
+    fun updateLayout_unknownId_returnsNull() {
+        val r = registry()
+        assertNull(r.updateLayout("nope", InstanceClipPlanes(), emptyList()))
+    }
 }

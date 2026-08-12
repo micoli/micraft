@@ -93,6 +93,21 @@ class InstanceRegistry(private val persistence: WorldPersistence?) {
         return updated
     }
 
+    fun updateLayout(
+        id: String,
+        clipPlanes: InstanceClipPlanes,
+        shortcutBarPages: List<List<String?>>
+    ): InstanceZone? {
+        val existing = zones[id] ?: return null
+        val updated = existing.copy(clipPlanes = clipPlanes, shortcutBarPages = shortcutBarPages)
+        zones[id] = updated
+        // Footprint is unchanged, but byChunk still holds the old object reference — refresh it so
+        // zoneAt() returns the updated zone, same as rename()/setEnabled() do.
+        reindex(existing, updated)
+        persist()
+        return updated
+    }
+
     fun delete(id: String): Boolean {
         val removed = zones.remove(id) ?: return false
         unindex(removed)

@@ -5,10 +5,12 @@ export function BlockHoverTooltip({
   block,
   ordinal,
   above,
+  previewsReady,
 }: {
   block: BlockInfoDto;
   ordinal: number | null;
   above: boolean;
+  previewsReady: boolean;
 }) {
   return (
     <div
@@ -16,7 +18,7 @@ export function BlockHoverTooltip({
         above ? "bottom-full mb-1" : "top-full mt-1"
       }`}
     >
-      {ordinal !== null && <Block3DPreview ordinal={ordinal} size={72} />}
+      {ordinal !== null && previewsReady && <Block3DPreview ordinal={ordinal} size={72} />}
       <span className="font-semibold text-white">{block.name.replace(/_/g, " ")}</span>
       <span className="text-[#8A99AF]">
         {block.hardness < 0 ? "Unbreakable" : `Hardness ${block.hardness}`} · {block.solid ? "Solid" : "Non-solid"}

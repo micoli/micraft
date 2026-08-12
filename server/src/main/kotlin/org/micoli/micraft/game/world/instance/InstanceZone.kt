@@ -8,6 +8,20 @@ import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.protocol.InstanceZoneProto
 
 @Serializable
+data class ClipPlaneAxisState(
+    val enabled: Boolean = false,
+    val flipped: Boolean = false,
+    val pos: Double = 0.0
+)
+
+@Serializable
+data class InstanceClipPlanes(
+    val x: ClipPlaneAxisState = ClipPlaneAxisState(),
+    val y: ClipPlaneAxisState = ClipPlaneAxisState(),
+    val z: ClipPlaneAxisState = ClipPlaneAxisState(),
+)
+
+@Serializable
 data class InstanceZone(
     val id: String,
     val name: String,
@@ -20,6 +34,10 @@ data class InstanceZone(
     // enabled=true (the default) would be omitted from the admin instances list JSON, and the
     // frontend would see `undefined` (falsy) forever, unable to distinguish "true" from "missing".
     @EncodeDefault(ALWAYS) val enabled: Boolean = true,
+    // Admin editor viewport layout, persisted so it survives a page reload/navigation instead of
+    // living in localStorage (which was keyed by zone.id but not shareable across browsers/admins).
+    @EncodeDefault(ALWAYS) val clipPlanes: InstanceClipPlanes = InstanceClipPlanes(),
+    @EncodeDefault(ALWAYS) val shortcutBarPages: List<List<String?>> = emptyList(),
 ) {
     fun contains(x: Int, y: Int, z: Int): Boolean =
         enabled &&

@@ -1,3 +1,5 @@
+import type { ClipAxis, ClipPlaneState } from "./pages/instance/clipAxis";
+
 export interface BlockInfoDto {
   name: string;
   hardness: number;
@@ -35,6 +37,8 @@ export interface InstanceZoneDto {
   ownerName: string;
   createdAt: number;
   enabled: boolean;
+  clipPlanes: Record<ClipAxis, ClipPlaneState>;
+  shortcutBarPages: (string | null)[][];
 }
 
 export interface InstanceBlockDto {
@@ -278,6 +282,10 @@ export const api = {
       ),
     setEnabled: (id: string, enabled: boolean) =>
       put(`/api/admin/instances/${encodeURIComponent(id)}/enabled`, { enabled }).then(
+        (r) => r.json() as Promise<InstanceZoneDto>,
+      ),
+    updateLayout: (id: string, clipPlanes: Record<ClipAxis, ClipPlaneState>, shortcutBarPages: (string | null)[][]) =>
+      put(`/api/admin/instances/${encodeURIComponent(id)}/layout`, { clipPlanes, shortcutBarPages }).then(
         (r) => r.json() as Promise<InstanceZoneDto>,
       ),
     delete: (id: string) => del(`/api/admin/instances/${encodeURIComponent(id)}`),

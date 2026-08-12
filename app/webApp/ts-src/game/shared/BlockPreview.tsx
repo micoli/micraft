@@ -1,6 +1,14 @@
 import { useEffect, useReducer, useState } from "react";
 import { getFaceTexUrl, getBlockBounds } from "../blocks/blockDefs";
-import { subscribe, getCached, ensureColoredPreview, getColoredCached, ensurePreview } from "./blockPreviewCache";
+import {
+  subscribe,
+  getCached,
+  ensureColoredPreview,
+  getColoredCached,
+  ensurePreview,
+  isPreloadComplete,
+  getPreloadProgress,
+} from "./blockPreviewCache";
 import { suppressDeprecatedWebglWarnings } from "./webglPatches";
 
 suppressDeprecatedWebglWarnings();
@@ -9,6 +17,20 @@ export function useBlockPreviews(): (ordinal: number) => string | null {
   const [, inc] = useReducer((n: number) => n + 1, 0);
   useEffect(() => subscribe(inc), []);
   return getCached;
+}
+
+/** True once every block's preview has been rendered by the startPreloading() sweep. */
+export function useAllBlockPreviewsReady(): boolean {
+  const [, inc] = useReducer((n: number) => n + 1, 0);
+  useEffect(() => subscribe(inc), []);
+  return isPreloadComplete();
+}
+
+/** Fraction (0-1) of the startPreloading() sweep completed so far. */
+export function useBlockPreviewProgress(): number {
+  const [, inc] = useReducer((n: number) => n + 1, 0);
+  useEffect(() => subscribe(inc), []);
+  return getPreloadProgress();
 }
 
 export function useColoredBlockPreview(ordinal: number | null, colorHex: string | null): string | null {

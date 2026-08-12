@@ -42,6 +42,7 @@ import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockPlacer
+import org.micoli.micraft.game.world.instance.InstanceClipPlanes
 import org.micoli.micraft.game.world.instance.InstanceZone
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
@@ -87,6 +88,12 @@ data class NpcAdminDto(
 @Serializable data class InstanceChunksRequest(val chunks: List<ChunkPos>)
 
 @Serializable data class InstanceEnabledRequest(val enabled: Boolean)
+
+@Serializable
+data class InstanceLayoutRequest(
+    val clipPlanes: InstanceClipPlanes,
+    val shortcutBarPages: List<List<String?>>
+)
 
 @Serializable
 data class InstanceCreateRequest(
@@ -740,6 +747,18 @@ class AdminController(
                     gameLoop.instances().updateChunks(id, body.chunks.toSet())
                         ?: return@put call.respond(HttpStatusCode.NotFound)
                 gameLoop.broadcastInstanceZonesSync()
+                call.respondText(
+                    Json.encodeToString(InstanceZone.serializer(), zone),
+                    ContentType.Application.Json)
+            }
+
+            put("/api/admin/instances/{id}/layout") {
+                if (!requireAdmin()) return@put
+                val id = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                val body = Json.decodeFromString<InstanceLayoutRequest>(call.receiveText())
+                val zone =
+                    gameLoop.instances().updateLayout(id, body.clipPlanes, body.shortcutBarPages)
+                        ?: return@put call.respond(HttpStatusCode.NotFound)
                 call.respondText(
                     Json.encodeToString(InstanceZone.serializer(), zone),
                     ContentType.Application.Json)

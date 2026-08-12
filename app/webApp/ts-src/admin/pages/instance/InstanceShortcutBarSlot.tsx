@@ -11,6 +11,7 @@ export function InstanceShortcutBarSlot({
   blockDefs,
   getPreview,
   blockDefsReady,
+  previewsReady,
   hovered,
   onHoverEnter,
   onHoverLeave,
@@ -22,6 +23,7 @@ export function InstanceShortcutBarSlot({
   blockDefs: BlockInfoDto[];
   getPreview: (ordinal: number) => string | null;
   blockDefsReady: boolean;
+  previewsReady: boolean;
   hovered: boolean;
   onHoverEnter: () => void;
   onHoverLeave: () => void;
@@ -51,7 +53,7 @@ export function InstanceShortcutBarSlot({
       </div>
       {isBreakSlot ? (
         <div className="text-sm">⛏</div>
-      ) : slotBlock && ordinal !== null ? (
+      ) : slotBlock && ordinal !== null && previewsReady ? (
         getPreview(ordinal) ? (
           <img
             alt=""
@@ -67,7 +69,9 @@ export function InstanceShortcutBarSlot({
       <span className="text-[9px] leading-tight text-[#8A99AF] text-center truncate w-full">
         {slotBlockInfo?.name?.replace(/_/g, " ") ?? "-"}
       </span>
-      {hovered && slotBlockInfo && <BlockHoverTooltip block={slotBlockInfo} ordinal={ordinal} above={false} />}
+      {hovered && slotBlockInfo && (
+        <BlockHoverTooltip block={slotBlockInfo} ordinal={ordinal} above={false} previewsReady={previewsReady} />
+      )}
     </div>
   );
 }

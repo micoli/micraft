@@ -21,28 +21,21 @@ function emptyPage(): InstanceShortcutSlot[] {
   return new Array(SLOTS_PER_PAGE).fill(null);
 }
 
-const STORAGE_KEY = "admin.instanceShortcutBar.pages";
-
-function loadStoredPages(): InstanceShortcutSlot[][] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [emptyPage()];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) return [emptyPage()];
-    return parsed;
-  } catch {
-    return [emptyPage()];
-  }
+function normalizePages(pages: InstanceShortcutSlot[][] | undefined): InstanceShortcutSlot[][] {
+  if (!pages || pages.length === 0) return [emptyPage()];
+  return pages;
 }
 
 export function useInstanceShortcutBar({
+  initialPages,
   onSelectBreak,
   onSelectBlock,
 }: {
+  initialPages?: InstanceShortcutSlot[][];
   onSelectBreak: () => void;
   onSelectBlock: (blockName: string) => void;
 }) {
-  const [pages, setPages] = useState<InstanceShortcutSlot[][]>(loadStoredPages);
+  const [pages, setPages] = useState<InstanceShortcutSlot[][]>(() => normalizePages(initialPages));
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedSlot, setSelectedSlot] = useState(0);
   const [dragOver, setDragOver] = useState<number | null>(null);
@@ -51,10 +44,6 @@ export function useInstanceShortcutBar({
   useLayoutEffect(() => {
     pagesRef.current = pages;
   });
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(pages));
-  }, [pages]);
 
   function selectSlot(idx: number) {
     setSelectedSlot(idx);
@@ -128,6 +117,7 @@ export function useInstanceShortcutBar({
   }
 
   return {
+    pages,
     slots: pages[currentPage],
     pageCount: pages.length,
     currentPage,

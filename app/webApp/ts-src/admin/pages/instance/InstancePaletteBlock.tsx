@@ -12,6 +12,7 @@ export function InstancePaletteBlock({
   selected,
   getPreview,
   blockDefsReady,
+  previewsReady,
   hovered,
   tooltipAbove,
   onClick,
@@ -23,6 +24,7 @@ export function InstancePaletteBlock({
   selected: boolean;
   getPreview: (ordinal: number) => string | null;
   blockDefsReady: boolean;
+  previewsReady: boolean;
   hovered: boolean;
   tooltipAbove: boolean;
   onClick: () => void;
@@ -40,7 +42,9 @@ export function InstancePaletteBlock({
         selected ? "border-[#3C50E0]" : "border-transparent hover:border-white/20"
       }`}
     >
-      {ordinal !== null && getPreview(ordinal) ? (
+      {!previewsReady ? (
+        <div className="w-5 h-5 rounded" style={{ background: rgbToHex(block.minimapColor) }} />
+      ) : ordinal !== null && getPreview(ordinal) ? (
         <img
           alt=""
           src={getPreview(ordinal)!}
@@ -56,7 +60,9 @@ export function InstancePaletteBlock({
       <span className="text-[9px] leading-tight text-[#8A99AF] text-center truncate w-full">
         {block.name.replace(/_/g, " ")}
       </span>
-      {hovered && <BlockHoverTooltip block={block} ordinal={ordinal} above={tooltipAbove} />}
+      {hovered && (
+        <BlockHoverTooltip block={block} ordinal={ordinal} above={tooltipAbove} previewsReady={previewsReady} />
+      )}
     </button>
   );
 }
