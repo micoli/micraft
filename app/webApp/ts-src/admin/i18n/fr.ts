@@ -21,6 +21,7 @@ export const fr: Record<TranslationKey, string> = {
   "nav.gameAssets": "Assets de jeu",
   "nav.administration": "Administration",
   "nav.instances": "Instances",
+  "nav.scenes": "Scènes",
   "nav.worldSimulator": "Simulateur de monde",
 
   "page.status": "État du serveur",
@@ -33,6 +34,7 @@ export const fr: Record<TranslationKey, string> = {
   "page.gameAssets": "Assets de jeu",
   "page.administration": "Administration",
   "page.instances": "Instances",
+  "page.scenes": "Éditeur de scène",
   "page.worldSimulator": "Simulateur de monde",
 
   // ── Shared ──────────────────────────────────────────────────────────────────

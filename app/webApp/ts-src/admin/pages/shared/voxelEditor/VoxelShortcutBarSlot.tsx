@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { type BlockInfoDto } from "../../api";
-import { type useInstanceShortcutBar } from "./useInstanceShortcutBar";
-import { CssBlockCube } from "../../../game/shared/BlockPreview";
+import { type BlockInfoDto } from "../../../api";
+import { type useAdminShortcutBar } from "./useAdminShortcutBar";
+import { CssBlockCube } from "../../../../game/shared/BlockPreview";
 import { BlockHoverTooltip } from "./BlockHoverTooltip";
 
-export function InstanceShortcutBarSlot({
+export function VoxelShortcutBarSlot({
   shortcutBar,
   idx,
   slotBlock,
@@ -17,7 +17,7 @@ export function InstanceShortcutBarSlot({
   onHoverEnter,
   onHoverLeave,
 }: {
-  shortcutBar: ReturnType<typeof useInstanceShortcutBar>;
+  shortcutBar: ReturnType<typeof useAdminShortcutBar>;
   idx: number;
   slotBlock: string | null;
   getOrdinal: (name: string) => number | null;

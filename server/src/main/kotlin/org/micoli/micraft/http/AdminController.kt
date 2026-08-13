@@ -6,6 +6,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -45,6 +47,7 @@ import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.game.world.instance.InstanceClipPlanes
 import org.micoli.micraft.game.world.instance.InstanceZone
+import org.micoli.micraft.game.world.scene.Scene
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 import org.micoli.micraft.protocol.BlockInfo
@@ -115,6 +118,37 @@ data class InstanceBlockDto(
     val xOffset: Byte = 0,
     val zOffset: Byte = 0
 )
+
+@Serializable
+data class SceneDto(
+    val id: String,
+    val name: String,
+    val width: Int,
+    val height: Int,
+    val depth: Int,
+    val ownerName: String,
+    val createdAt: Long,
+)
+
+@Serializable
+data class SceneCreateRequest(val name: String, val width: Int, val height: Int, val depth: Int)
+
+@Serializable data class SceneRenameRequest(val name: String)
+
+@Serializable data class SceneDimensionsRequest(val width: Int, val height: Int, val depth: Int)
+
+@Serializable
+data class SceneBlockDto(val x: Int, val y: Int, val z: Int, val type: String, val state: Byte = 0)
+
+private fun Scene.toDto() =
+    SceneDto(
+        id = id,
+        name = name,
+        width = width,
+        height = height,
+        depth = depth,
+        ownerName = ownerName,
+        createdAt = createdAt)
 
 @Serializable
 data class WorldStatsDto(
@@ -875,6 +909,131 @@ class AdminController(
                         return@put call.respond(HttpStatusCode.BadRequest, result.rejectedReason)
                     }
                     gameLoop.broadcastWorldUpdate(result.changes, entityAdds = result.entityAdds)
+                }
+                call.respond(HttpStatusCode.NoContent)
+            }
+
+            // ── Scenes ───────────────────────────────────────────────────────
+            // A bounded X/Y/Z raw block-structure editor buffer — NOT tied to the live
+            // world/chunks (unlike an instance zone, which carves a region out of the
+            // persistent world). See Scene.kt / SceneRegistry.kt.
+            get("/api/admin/scenes") {
+                if (!requireAdmin()) return@get
+                call.respondText(
+                    adminJson.encodeToString(
+                        ListSerializer(SceneDto.serializer()),
+                        gameLoop.scenes().all().map { it.toDto() }),
+                    ContentType.Application.Json)
+            }
+
+            get("/api/admin/scenes/{id}") {
+                if (!requireAdmin()) return@get
+                val id = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                val scene =
+                    gameLoop.scenes().get(id) ?: return@get call.respond(HttpStatusCode.NotFound)
+                call.respondText(
+                    adminJson.encodeToString(SceneDto.serializer(), scene.toDto()),
+                    ContentType.Application.Json)
+            }
+
+            post("/api/admin/scenes") {
+                if (!requireAdmin()) return@post
+                val body = Json.decodeFromString<SceneCreateRequest>(call.receiveText())
+                if (body.name.isBlank() || body.width <= 0 || body.height <= 0 || body.depth <= 0) {
+                    return@post call.respond(HttpStatusCode.BadRequest, "Invalid scene")
+                }
+                val scene =
+                    gameLoop
+                        .scenes()
+                        .create(
+                            name = body.name,
+                            width = body.width,
+                            height = body.height,
+                            depth = body.depth,
+                            ownerName = "admin")
+                call.respond(
+                    HttpStatusCode.Created,
+                    adminJson.encodeToString(SceneDto.serializer(), scene.toDto()))
+            }
+
+            put("/api/admin/scenes/{id}") {
+                if (!requireAdmin()) return@put
+                val id = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                val body = Json.decodeFromString<SceneRenameRequest>(call.receiveText())
+                val scene =
+                    gameLoop.scenes().rename(id, body.name)
+                        ?: return@put call.respond(HttpStatusCode.NotFound)
+                call.respondText(
+                    adminJson.encodeToString(SceneDto.serializer(), scene.toDto()),
+                    ContentType.Application.Json)
+            }
+
+            put("/api/admin/scenes/{id}/dimensions") {
+                if (!requireAdmin()) return@put
+                val id = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                val body = Json.decodeFromString<SceneDimensionsRequest>(call.receiveText())
+                if (body.width <= 0 || body.height <= 0 || body.depth <= 0) {
+                    return@put call.respond(HttpStatusCode.BadRequest, "Invalid dimensions")
+                }
+                val scene =
+                    gameLoop.scenes().resize(id, body.width, body.height, body.depth)
+                        ?: return@put call.respond(HttpStatusCode.NotFound)
+                call.respondText(
+                    adminJson.encodeToString(SceneDto.serializer(), scene.toDto()),
+                    ContentType.Application.Json)
+            }
+
+            delete("/api/admin/scenes/{id}") {
+                if (!requireAdmin()) return@delete
+                val id =
+                    call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                if (!gameLoop.scenes().delete(id)) {
+                    return@delete call.respond(HttpStatusCode.NotFound)
+                }
+                call.respond(HttpStatusCode.NoContent)
+            }
+
+            // Binary wire format (application/octet-stream), big-endian:
+            //   [4 bytes width][4 bytes height][4 bytes depth][blocks: width*height*depth bytes]
+            //   [states: width*height*depth bytes]
+            // blocks/states use the same wire-index-per-byte convention as chunk buffers
+            // (BlockRegistry.wireIndex/byWireIndex) — 0 is always AIR.
+            get("/api/admin/scenes/{id}/blocks/raw") {
+                if (!requireAdmin()) return@get
+                val id = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                val scene =
+                    gameLoop.scenes().get(id) ?: return@get call.respond(HttpStatusCode.NotFound)
+                val buffer = ByteArrayOutputStream()
+                DataOutputStream(buffer).use { out ->
+                    out.writeInt(scene.width)
+                    out.writeInt(scene.height)
+                    out.writeInt(scene.depth)
+                    out.write(scene.blocks)
+                    out.write(scene.states)
+                }
+                call.respondBytes(buffer.toByteArray(), ContentType.Application.OctetStream)
+            }
+
+            put("/api/admin/scenes/{id}/blocks") {
+                if (!requireAdmin()) return@put
+                val id = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                val body = Json.decodeFromString<SceneBlockDto>(call.receiveText())
+                val type =
+                    BlockRegistry.all().find { it.id == body.type }
+                        ?: return@put call.respond(HttpStatusCode.BadRequest, "Unknown block type")
+                val ok =
+                    gameLoop
+                        .scenes()
+                        .setBlock(
+                            id,
+                            body.x,
+                            body.y,
+                            body.z,
+                            BlockRegistry.wireIndex(type).toByte(),
+                            body.state)
+                if (!ok) {
+                    return@put call.respond(
+                        HttpStatusCode.NotFound, "Scene not found or coordinate out of bounds")
                 }
                 call.respond(HttpStatusCode.NoContent)
             }

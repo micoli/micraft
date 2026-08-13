@@ -1,8 +1,8 @@
-import { type PlainColorDto } from "../../api";
+import { type PlainColorDto } from "../../../api";
 
 // colorIndex 0 = "no color" (block keeps its own texture), matching BlockState.kt's untinted
 // sentinel — colors list index i maps to colorIndex i + 1.
-export function InstanceColorPicker({
+export function VoxelColorPicker({
   colors,
   selectedIndex,
   onSelect,

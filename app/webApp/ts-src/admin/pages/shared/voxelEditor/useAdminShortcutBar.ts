@@ -26,7 +26,7 @@ function normalizePages(pages: InstanceShortcutSlot[][] | undefined): InstanceSh
   return pages;
 }
 
-export function useInstanceShortcutBar({
+export function useAdminShortcutBar({
   initialPages,
   onSelectBreak,
   onSelectBlock,

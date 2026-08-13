@@ -215,6 +215,7 @@ fun Application.module() {
             configRegistry = get<ConfigRegistry>(),
             liquidManager = get<LiquidManager>(),
             instanceRegistry = get<org.micoli.micraft.game.world.instance.InstanceRegistry>(),
+            sceneRegistry = get<org.micoli.micraft.game.world.scene.SceneRegistry>(),
             vegetationConfig = get<VegetationConfig>(),
             vegetationManager = get<VegetationManager>(),
             recipeRegistryLoader = get<RecipeRegistryLoader>(),

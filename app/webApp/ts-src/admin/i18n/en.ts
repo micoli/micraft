@@ -26,6 +26,7 @@ export const en = {
   "nav.gameAssets": "Game Assets",
   "nav.administration": "Administration",
   "nav.instances": "Instances",
+  "nav.scenes": "Scenes",
   "nav.worldSimulator": "World simulator",
 
   "page.status": "Server Status",
@@ -38,6 +39,7 @@ export const en = {
   "page.gameAssets": "Game Assets",
   "page.administration": "Administration",
   "page.instances": "Instances",
+  "page.scenes": "Scene Editor",
   "page.worldSimulator": "World simulator",
 
   // ── Shared ──────────────────────────────────────────────────────────────────

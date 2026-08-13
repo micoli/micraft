@@ -16,6 +16,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
 import org.micoli.micraft.game.world.instance.InstanceZone
+import org.micoli.micraft.game.world.scene.Scene
 import org.micoli.micraft.player.PlayerState
 import org.slf4j.LoggerFactory
 
@@ -35,6 +36,7 @@ private val playerYaml = Yaml(configuration = YamlConfiguration(strictMode = fal
 class WorldPersistence(val worldDir: Path) {
     private val chunksDir = worldDir.resolve("chunks")
     private val playersDir = worldDir.resolve("players")
+    private val scenesDir = worldDir.resolve("scenes")
     private val metaFile = worldDir.resolve("world.yaml")
     private val playerLoadedMtime = ConcurrentHashMap<String, FileTime>()
     private val playerMacrosLoadedMtime = ConcurrentHashMap<String, FileTime>()
@@ -43,6 +45,7 @@ class WorldPersistence(val worldDir: Path) {
         worldDir.createDirectories()
         chunksDir.createDirectories()
         playersDir.createDirectories()
+        scenesDir.createDirectories()
     }
 
     fun loadChunk(pos: ChunkPos): Chunk? {
@@ -385,6 +388,82 @@ class WorldPersistence(val worldDir: Path) {
                 Yaml.default.encodeToString(ListSerializer(InstanceZone.serializer()), zones))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save instances: {}", e.message)
+        }
+    }
+
+    private val scenesFile = worldDir.resolve("scenes.yaml")
+
+    /** Metadata only (see [Scene] doc) — hydrated with [loadSceneBlocks] per entry. */
+    fun loadScenes(): List<Scene> {
+        if (!scenesFile.exists()) return emptyList()
+        val metadata =
+            try {
+                Yaml.default.decodeFromString(
+                    ListSerializer(Scene.serializer()), scenesFile.readText())
+            } catch (e: Exception) {
+                worldPersistenceLog.warn("Failed to load scenes: {}", e.message)
+                return emptyList()
+            }
+        return metadata.map { scene ->
+            val (blocks, states) =
+                loadSceneBlocks(scene.id)
+                    ?: (ByteArray(scene.width * scene.height * scene.depth) to
+                        ByteArray(scene.width * scene.height * scene.depth))
+            scene.copy(blocks = blocks, states = states)
+        }
+    }
+
+    fun saveScenesMetadata(scenes: List<Scene>) {
+        try {
+            scenesFile.writeText(
+                Yaml.default.encodeToString(ListSerializer(Scene.serializer()), scenes))
+        } catch (e: IOException) {
+            worldPersistenceLog.warn("Failed to save scenes: {}", e.message)
+        }
+    }
+
+    fun saveSceneBlocks(id: String, blocks: ByteArray, states: ByteArray) {
+        val blocksFile = scenesDir.resolve("$id.scc.gz")
+        try {
+            GZIPOutputStream(blocksFile.outputStream()).use { it.write(blocks) }
+        } catch (e: IOException) {
+            worldPersistenceLog.warn("Failed to save scene blocks {}: {}", id, e.message)
+        }
+        val statesFile = scenesDir.resolve("$id.scs.gz")
+        try {
+            GZIPOutputStream(statesFile.outputStream()).use { it.write(states) }
+        } catch (e: IOException) {
+            worldPersistenceLog.warn("Failed to save scene states {}: {}", id, e.message)
+        }
+    }
+
+    fun loadSceneBlocks(id: String): Pair<ByteArray, ByteArray>? {
+        val blocksFile = scenesDir.resolve("$id.scc.gz")
+        if (!blocksFile.exists()) return null
+        return try {
+            val blocks = GZIPInputStream(blocksFile.inputStream()).use { it.readBytes() }
+            val statesFile = scenesDir.resolve("$id.scs.gz")
+            val states =
+                if (statesFile.exists())
+                    try {
+                        GZIPInputStream(statesFile.inputStream()).use { it.readBytes() }
+                    } catch (_: IOException) {
+                        ByteArray(blocks.size)
+                    }
+                else ByteArray(blocks.size)
+            blocks to states
+        } catch (e: IOException) {
+            worldPersistenceLog.warn("Failed to load scene blocks {}: {}", id, e.message)
+            null
+        }
+    }
+
+    fun deleteSceneFiles(id: String) {
+        try {
+            scenesDir.resolve("$id.scc.gz").deleteIfExists()
+            scenesDir.resolve("$id.scs.gz").deleteIfExists()
+        } catch (e: IOException) {
+            worldPersistenceLog.warn("Failed to delete scene files {}: {}", id, e.message)
         }
     }
 

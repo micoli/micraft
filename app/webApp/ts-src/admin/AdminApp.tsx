@@ -13,6 +13,7 @@ import { GameAssetsPage } from "./pages/GameAssetsPage";
 import { AdministrationPage } from "./pages/AdministrationPage";
 import { WorldSimulatorPage } from "./pages/worldSimulator/WorldSimulatorPage";
 import { InstancesPage } from "./pages/instance/InstancesPage";
+import { ScenesPage } from "./pages/scene/ScenesPage";
 import { Header } from "./Header";
 import { SidebarComponent } from "./SidebarComponent";
 
@@ -41,6 +42,8 @@ export function AdminApp() {
                 <Route path="/admin/administration" element={<AdministrationPage />} />
                 <Route path="/admin/instances" element={<InstancesPage />} />
                 <Route path="/admin/instances/:id" element={<InstancesPage />} />
+                <Route path="/admin/scenes" element={<ScenesPage />} />
+                <Route path="/admin/scenes/:id" element={<ScenesPage />} />
                 <Route path="/admin/world-simulator" element={<WorldSimulatorPage />} />
               </Routes>
             </main>

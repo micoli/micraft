@@ -85,6 +85,7 @@ import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.instance.toProto
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.game.world.weather.WeatherConfig
@@ -225,6 +226,7 @@ class GameLoop(
             dataArmorsPath = Path.of("data/resources/armors"),
         ),
     private val instanceRegistry: InstanceRegistry = InstanceRegistry(persistence),
+    private val sceneRegistry: SceneRegistry = SceneRegistry(persistence),
     private val npcConfigLoader: NpcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml")),
     private val npcRegistryLoader: NpcRegistryLoader =
         NpcRegistryLoader(
@@ -551,6 +553,8 @@ class GameLoop(
     fun getWorldState(): WorldState = world
 
     fun instances(): InstanceRegistry = instanceRegistry
+
+    fun scenes(): SceneRegistry = sceneRegistry
 
     // Pushed to every connected admin whenever the zone list changes, so the minimap's unified
     // outlines (unlike AdminZoneWireframe, which only covers the zone the player is standing in)

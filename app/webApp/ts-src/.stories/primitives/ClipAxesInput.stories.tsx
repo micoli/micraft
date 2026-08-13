@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { ClipAxesInput } from "../../primitives/clipAxesInput";
-import type { ClipAxis, ClipPlaneState } from "../../admin/pages/instance/clipAxis";
+import type { ClipAxis, ClipPlaneState } from "../../admin/pages/shared/voxelEditor/clipAxis";
 
 const meta: Meta<typeof ClipAxesInput> = {
   title: "Primitives/ClipAxesInput",

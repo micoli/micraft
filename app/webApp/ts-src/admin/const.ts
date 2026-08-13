@@ -12,6 +12,7 @@ export const NAV: { path: string; labelKey: TranslationKey; icon: string; exact?
   { path: "/admin/game-assets", labelKey: "nav.gameAssets", icon: ICONS.gameAssets },
   { path: "/admin/administration", labelKey: "nav.administration", icon: ICONS.administration },
   { path: "/admin/instances", labelKey: "nav.instances", icon: ICONS.instances },
+  { path: "/admin/scenes", labelKey: "nav.scenes", icon: ICONS.scenes },
   { path: "/admin/world-simulator", labelKey: "nav.worldSimulator", icon: ICONS.simulator },
 ];
 
@@ -26,5 +27,6 @@ export const PAGE_LABEL_KEYS: Record<string, TranslationKey> = {
   "/admin/game-assets": "page.gameAssets",
   "/admin/administration": "page.administration",
   "/admin/instances": "page.instances",
+  "/admin/scenes": "page.scenes",
   "/admin/world-simulator": "page.worldSimulator",
 };

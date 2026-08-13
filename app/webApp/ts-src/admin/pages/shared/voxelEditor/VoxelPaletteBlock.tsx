@@ -1,12 +1,12 @@
-import { type BlockInfoDto } from "../../api";
-import { CssBlockCube } from "../../../game/shared/BlockPreview";
+import { type BlockInfoDto } from "../../../api";
+import { CssBlockCube } from "../../../../game/shared/BlockPreview";
 import { BlockHoverTooltip } from "./BlockHoverTooltip";
 
 function rgbToHex([r, g, b]: [number, number, number]): string {
   return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 }
 
-export function InstancePaletteBlock({
+export function VoxelPaletteBlock({
   block,
   ordinal,
   selected,

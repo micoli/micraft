@@ -555,6 +555,21 @@ declare global {
       mcAdminGetBlockOrdinalAt(scene: unknown, wx: number, wy: number, wz: number): number;
       mcAdminGetBlockStateAt(scene: unknown, wx: number, wy: number, wz: number): number;
       mcAdminSetBlockRegistry(json: string): void;
+      // Admin Scene editor (bounded, self-contained X/Y/Z raw block buffer — see
+      // SceneMesher.kt/AdminScenePreview.kt) — mirrors the mcAdmin* chunk-preview surface above
+      // but for a standalone buffer that isn't tied to the live world/chunk grid.
+      mcSceneLoad(
+        scene: unknown,
+        width: number,
+        height: number,
+        depth: number,
+        blocks: Uint8Array,
+        states: Uint8Array,
+      ): void;
+      mcSceneSetBlock(scene: unknown, x: number, y: number, z: number, type: number, state: number): void;
+      mcSceneGetBlockOrdinalAt(x: number, y: number, z: number): number;
+      mcSceneGetBlockStateAt(x: number, y: number, z: number): number;
+      mcSceneDispose(): void;
     }>;
     [key: string]: unknown;
   }

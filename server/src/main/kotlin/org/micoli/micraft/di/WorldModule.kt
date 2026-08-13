@@ -19,6 +19,7 @@ import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerato
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.DebugChunkGenerator
 import org.micoli.micraft.game.world.road.loadRoadConfig
+import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.resourcesConfigDir
 import org.slf4j.LoggerFactory
 
@@ -110,4 +111,8 @@ class WorldModule {
     @Single
     fun instanceRegistry(optionalWorldPersistence: OptionalWorldPersistence): InstanceRegistry =
         InstanceRegistry(optionalWorldPersistence.value)
+
+    @Single
+    fun sceneRegistry(optionalWorldPersistence: OptionalWorldPersistence): SceneRegistry =
+        SceneRegistry(optionalWorldPersistence.value)
 }

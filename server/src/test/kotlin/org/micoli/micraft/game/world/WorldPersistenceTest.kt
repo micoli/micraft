@@ -160,4 +160,82 @@ class WorldPersistenceTest {
         val reopened = WorldPersistence(p.worldDir)
         assertEquals(setOf(ChunkPos(3, -2), ChunkPos(0, 0)), reopened.persistedChunkPositions())
     }
+
+    @Test
+    fun loadScenes_missingFile_returnsEmptyList() {
+        assertTrue(persistence().loadScenes().isEmpty())
+    }
+
+    @Test
+    fun scenesMetadataRoundtrip_saveThenLoad() {
+        val p = persistence()
+        val scene =
+            org.micoli.micraft.game.world.scene.Scene(
+                id = "scene-1",
+                name = "Room",
+                width = 2,
+                height = 2,
+                depth = 2,
+                ownerName = "Alice",
+                createdAt = 1000L,
+            )
+        p.saveScenesMetadata(listOf(scene))
+        val reloaded = p.loadScenes()
+        assertEquals(1, reloaded.size)
+        assertEquals(scene.id, reloaded[0].id)
+        assertEquals(scene.name, reloaded[0].name)
+        assertEquals(scene.width, reloaded[0].width)
+        // Blocks/states aren't in scenes.yaml — with no .scc.gz saved yet, hydration falls back
+        // to air-filled buffers of the right size rather than crashing.
+        assertEquals(2 * 2 * 2, reloaded[0].blocks.size)
+        assertTrue(reloaded[0].blocks.all { it == 0.toByte() })
+    }
+
+    @Test
+    fun sceneBlocksRoundtrip_saveThenLoad() {
+        val p = persistence()
+        val blocks = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8)
+        val states = byteArrayOf(0, 1, 0, 1, 0, 1, 0, 1)
+        p.saveSceneBlocks("scene-1", blocks, states)
+        val loaded = p.loadSceneBlocks("scene-1")
+        assertNotNull(loaded)
+        assertTrue(loaded.first.contentEquals(blocks))
+        assertTrue(loaded.second.contentEquals(states))
+    }
+
+    @Test
+    fun loadSceneBlocks_missing_returnsNull() {
+        assertNull(persistence().loadSceneBlocks("nope"))
+    }
+
+    @Test
+    fun deleteSceneFiles_removesBlockFiles() {
+        val p = persistence()
+        p.saveSceneBlocks("scene-1", byteArrayOf(1), byteArrayOf(0))
+        p.deleteSceneFiles("scene-1")
+        assertNull(p.loadSceneBlocks("scene-1"))
+    }
+
+    @Test
+    fun loadScenes_hydratesBlocksFromSavedSceneBlocks() {
+        val p = persistence()
+        val scene =
+            org.micoli.micraft.game.world.scene.Scene(
+                id = "scene-1",
+                name = "Room",
+                width = 2,
+                height = 1,
+                depth = 1,
+                ownerName = "Alice",
+                createdAt = 1000L,
+            )
+        p.saveScenesMetadata(listOf(scene))
+        p.saveSceneBlocks("scene-1", byteArrayOf(7, 8), byteArrayOf(1, 2))
+
+        val reopened = WorldPersistence(p.worldDir)
+        val reloaded = reopened.loadScenes()
+        assertEquals(1, reloaded.size)
+        assertTrue(reloaded[0].blocks.contentEquals(byteArrayOf(7, 8)))
+        assertTrue(reloaded[0].states.contentEquals(byteArrayOf(1, 2)))
+    }
 }

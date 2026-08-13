@@ -1,4 +1,4 @@
-import { ClipAxis, ClipPlaneState } from "../admin/pages/instance/clipAxis";
+import { ClipAxis, ClipPlaneState } from "../admin/pages/shared/voxelEditor/clipAxis";
 
 interface ClipAxesInputProps {
   axis: ClipAxis;

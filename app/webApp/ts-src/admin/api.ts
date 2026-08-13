@@ -1,4 +1,4 @@
-import type { ClipAxis, ClipPlaneState } from "./pages/instance/clipAxis";
+import type { ClipAxis, ClipPlaneState } from "./pages/shared/voxelEditor/clipAxis";
 
 export interface BlockInfoDto {
   name: string;
@@ -54,6 +54,24 @@ export interface InstanceBlockDto {
   state: number;
   xOffset?: number;
   zOffset?: number;
+}
+
+export interface SceneDto {
+  id: string;
+  name: string;
+  width: number;
+  height: number;
+  depth: number;
+  ownerName: string;
+  createdAt: number;
+}
+
+export interface SceneBlockDto {
+  x: number;
+  y: number;
+  z: number;
+  type: string;
+  state: number;
 }
 
 export interface NpcTypeDto {
@@ -299,6 +317,22 @@ export const api = {
     delete: (id: string) => del(`/api/admin/instances/${encodeURIComponent(id)}`),
     setBlock: (id: string, block: InstanceBlockDto) =>
       put(`/api/admin/instances/${encodeURIComponent(id)}/blocks`, block),
+  },
+  scenes: {
+    list: () => get("/api/admin/scenes").then((r) => r.json() as Promise<SceneDto[]>),
+    get: (id: string) => get(`/api/admin/scenes/${encodeURIComponent(id)}`).then((r) => r.json() as Promise<SceneDto>),
+    create: (name: string, width: number, height: number, depth: number) =>
+      post("/api/admin/scenes", { name, width, height, depth }).then((r) => r.json() as Promise<SceneDto>),
+    rename: (id: string, name: string) => put(`/api/admin/scenes/${encodeURIComponent(id)}`, { name }),
+    resize: (id: string, width: number, height: number, depth: number) =>
+      put(`/api/admin/scenes/${encodeURIComponent(id)}/dimensions`, { width, height, depth }).then(
+        (r) => r.json() as Promise<SceneDto>,
+      ),
+    delete: (id: string) => del(`/api/admin/scenes/${encodeURIComponent(id)}`),
+    // Binary layout: [width:i32be][height:i32be][depth:i32be][blocks: width*height*depth bytes][states: same length]
+    getBlocksRaw: (id: string) =>
+      fetch(`/api/admin/scenes/${encodeURIComponent(id)}/blocks/raw`).then((r) => r.arrayBuffer()),
+    setBlock: (id: string, block: SceneBlockDto) => put(`/api/admin/scenes/${encodeURIComponent(id)}/blocks`, block),
   },
   npcTypes: {
     list: () => get("/api/admin/npc-types").then((r) => r.json() as Promise<Record<string, NpcTypeDto>>),
