@@ -93,6 +93,7 @@ import org.micoli.micraft.http.AutocompleteController
 import org.micoli.micraft.http.BiomesController
 import org.micoli.micraft.http.CharacterController
 import org.micoli.micraft.http.ChunkController
+import org.micoli.micraft.http.DocsController
 import org.micoli.micraft.http.GameAssetsController
 import org.micoli.micraft.http.I18nController
 import org.micoli.micraft.http.ItemsController
@@ -141,7 +142,9 @@ fun Application.module() {
         // The plugin walks the whole routing tree regardless of annotation, so SPA/static
         // pages, websockets (/game, /chunks) and Prometheus/health endpoints (/metrics,
         // /status) must be excluded explicitly rather than by simply not annotating them.
-        pathFilter = { _, segments -> segments.firstOrNull() in setOf("api", "auth") }
+        pathFilter = { _, segments ->
+            segments.firstOrNull() in setOf("api", "auth") && segments != listOf("api", "docs")
+        }
     }
 
     val serverConfig = get<ServerConfig>()
@@ -350,6 +353,7 @@ fun Application.module() {
         staticFiles("/api/models", File("resources"))
         MapController(gameLoop, tokenStore).register(this)
         MetricsController(gameLoop).register(this)
+        DocsController().register(this)
         val adminController =
             AdminController(
                 authProvider as? LocalAuthProvider,

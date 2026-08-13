@@ -9,6 +9,7 @@ server/src/main/resources/admin.js
 server/src/main/resources/admin.css
 server/src/main/resources/map.js
 server/src/main/resources/map.css
+server/src/main/resources/docs.js
 app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/WasmBuildTrigger.kt
 app/webApp/ts-src/buildConfig.ts
 app/webApp/src/wasmJsMain/resources/models/

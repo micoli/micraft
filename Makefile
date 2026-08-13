@@ -176,6 +176,9 @@ build-map:
 build-admin:
 	$(EXEC) "cd app/webApp/ts-src && npm run build:admin && npm run build:admin:css"
 
+build-docs:
+	$(EXEC) "cd app/webApp/ts-src && npm run build:docs"
+
 build-plugin-examples-hello-world:
 	$(EXEC) "./gradlew :plugin-examples:hello-world:shadowJa"
 

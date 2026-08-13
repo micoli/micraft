@@ -19,6 +19,8 @@
     "watch:admin": "esbuild admin/index.tsx --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --outfile=${MC_OUT_ADMIN_JS:-../build/web/admin.js} --watch=forever",
     "build:admin:css": "tailwindcss -i ./styles/main.css -o ${MC_OUT_ADMIN_CSS:-../build/web/admin.css}",
     "watch:admin:css": "tailwindcss -i ./styles/main.css -o ${MC_OUT_ADMIN_CSS:-../build/web/admin.css} --watch=always",
+    "build:docs": "esbuild docs/index.tsx --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --outfile=${MC_OUT_DOCS_JS:-../build/web/docs.js}",
+    "watch:docs": "esbuild docs/index.tsx --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --outfile=${MC_OUT_DOCS_JS:-../build/web/docs.js} --watch=forever",
     "watch:css:sync": "node scripts/watch-css-sync.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -44,9 +46,13 @@
     "clsx": "^2.1.1",
     "codemirror": "^6.0.2",
     "codemirror-json-schema": "^0.8.1",
+    "core-js": "^3.13.1",
+    "mobx": "^6.10.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router": "^7.18.1",
+    "redoc": "^2.5.3",
+    "styled-components": "^6.1.13",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
   },
@@ -90,6 +96,7 @@
     "@swc/core@1.15.43": true,
     "babylonjs@7.48.0": true,
     "babylonjs-loaders@7.48.0": true,
+    "core-js@3.50.0": true,
     "esbuild@0.21.5": true,
     "esbuild@0.25.12": true
   }
