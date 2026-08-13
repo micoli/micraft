@@ -1,5 +1,8 @@
 package org.micoli.micraft
 
+import io.github.smiley4.ktoropenapi.OpenApi
+import io.github.smiley4.ktoropenapi.config.OutputFormat
+import io.github.smiley4.ktoropenapi.openApi
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -125,6 +128,18 @@ val resourcesConfigDir: Path = Path.of("resources/config")
 fun Application.module() {
     install(WebSockets) {}
     install(Koin) { modules(AppModule().module) }
+    install(OpenApi) {
+        info {
+            title = "MicCraft API"
+            version = "1.0.0"
+            description = "Server HTTP API — auth, game entities, admin, map/chunks."
+        }
+        outputFormat = OutputFormat.YAML
+        // The plugin walks the whole routing tree regardless of annotation, so SPA/static
+        // pages, websockets (/game, /chunks) and Prometheus/health endpoints (/metrics,
+        // /status) must be excluded explicitly rather than by simply not annotating them.
+        pathFilter = { _, segments -> segments.firstOrNull() in setOf("api", "auth") }
+    }
 
     val serverConfig = get<ServerConfig>()
     val gameConfig = get<GameConfig>()
@@ -290,6 +305,8 @@ fun Application.module() {
     val npcRegistryLoaderForSim = get<NpcRegistryLoader>()
 
     routing {
+        route("api.yaml") { openApi() }
+
         // MICRAFT_WEB_DIST points directly at the served executable dir
         // (…/kotlin-webpack/wasmJs/developmentExecutable or …/productionExecutable).
         // Legacy fallback: if it points at the module build dir, descend into the dev subdir.

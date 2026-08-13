@@ -112,6 +112,30 @@ tasks.register<JavaExec>("checkCommandsDocs") {
     args("--check")
 }
 
+fun Test.configureOpenApiExport(check: Boolean) {
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    filter { includeTestsMatching("org.micoli.micraft.tools.OpenApiExportTest") }
+    systemProperty("openapi.check", check.toString())
+    systemProperty("projectDir", rootDirPath)
+    environment("MICRAFT_WORLD_NAME", "test_world")
+    outputs.upToDateWhen { false }
+    workingDir = rootProject.projectDir
+}
+
+tasks.register<Test>("exportOpenApi") {
+    description = "Regenerates server/openapi/openapi.yaml and the README.md API Routes section."
+    group = "documentation"
+    configureOpenApiExport(check = false)
+}
+
+tasks.register<Test>("checkOpenApi") {
+    description =
+        "Fails if server/openapi/openapi.yaml or the README.md API Routes section is out of date."
+    group = "verification"
+    configureOpenApiExport(check = true)
+}
+
 group = "org.micoli.micraft"
 
 version = "1.0.0"
@@ -141,6 +165,7 @@ dependencies {
     ksp(libs.koin.ksp.compiler)
     implementation(libs.commons.jexl3)
     implementation(libs.java.jwt)
+    implementation(libs.ktor.openapi)
     testImplementation(libs.ktor.serverTestHost)
     testImplementation(libs.ktor.client.websockets)
     testImplementation(libs.kotlin.testJunit)

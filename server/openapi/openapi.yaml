@@ -1,0 +1,549 @@
+openapi: 3.1.0
+info:
+  title: MicCraft API
+  description: "Server HTTP API — auth, game entities, admin, map/chunks."
+  version: 1.0.0
+externalDocs:
+  url: /
+servers: []
+tags: []
+paths:
+  /api/auth/config:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/assets/manifest:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/assets/reload:
+    post:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/keybindings:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/autocomplete/{commandId}/{argIndex}:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/i18n/{locale}:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/layout/registry:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/items/meta:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/server/info:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/attacks:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/classes:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/spells:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/macros/context:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/biomes:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/player/{id}/skin:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/player/{id}/screenshots:
+    post:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/player/{id}/armors:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/player/{id}/rpg:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/character/create:
+    post:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/character/rpgcreate:
+    post:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/skins:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/skins/{name}/config:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/armors:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/game-assets:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/game-assets/file/{...}:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/quests:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/players/names:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/players/by-email/{email}:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/map/state:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/map/terrain:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/map/voronoi:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/map/houses:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/map/staircases:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/map/roads:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/map/road-raster:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/map/road-raster.png:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/map/terrain-raster.png:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/map/voronoi-borders:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/status:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/restart:
+    post:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/gametime:
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/users:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+    post:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/users/{email}:
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+    delete:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/players:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/players/{name}:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/players/{name}/keybindings:
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/players/{name}/preferences:
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/players/{name}/rename:
+    post:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/players/{name}/rpg:
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/worlds:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+    post:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/configs:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/configs/{...}:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/classes:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/skills:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/npcs:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/blocks:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/plain-colors:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/chunks/discovered:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/instances:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+    post:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/instances/{id}:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+    delete:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/instances/{id}/bounds:
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/instances/{id}/enabled:
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/instances/{id}/chunks:
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/instances/{id}/layout:
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/instances/{id}/blocks:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/scenes:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+    post:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/scenes/{id}:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+    delete:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/scenes/{id}/dimensions:
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/scenes/{id}/layout:
+    put:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/scenes/{id}/blocks/raw:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/npc-types:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/items:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/schemas/{filename}:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/ws/npcs:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/ws/scenes/{id}:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/ws/instances/{id}:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/ws/simulation:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/admin/simulation/defaults:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /api/chunks/{cx}/{cz}:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+  /auth/noauth-login:
+    post:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
+components:
+  schemas: {}
+  examples: {}
+webhooks: {}

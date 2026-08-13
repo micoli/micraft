@@ -9,6 +9,7 @@
 - [Features](#features)
 - [Architecture](#architecture)
 - [Slash Commands](#slash-commands)
+- [API Routes](#api-routes)
 - [Development](#development)
 - [Running the Apps](#running-the-apps)
 - [Running Tests](#running-tests)
@@ -308,6 +309,115 @@ To regenerate this section from source:
 ```bash
 make docs
 # or: make dc CMD="./gradlew :server:generateCommandsDocs"
+```
+
+---
+
+## API Routes
+
+Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/openapi.yaml), browsable at `/api/docs` (Redoc) when the server is running. This table and the YAML spec are both generated from the same `@ktoropenapi`-annotated Ktor routes — never hand-edit either.
+
+<!-- BEGIN_API_ROUTES -->
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/admin/blocks` |  |
+| GET | `/api/admin/chunks/discovered` |  |
+| GET | `/api/admin/classes` |  |
+| GET | `/api/admin/configs` |  |
+| GET | `/api/admin/configs/{...}` |  |
+| PUT | `/api/admin/configs/{...}` |  |
+| PUT | `/api/admin/gametime` |  |
+| GET | `/api/admin/instances` |  |
+| POST | `/api/admin/instances` |  |
+| DELETE | `/api/admin/instances/{id}` |  |
+| GET | `/api/admin/instances/{id}` |  |
+| PUT | `/api/admin/instances/{id}` |  |
+| GET | `/api/admin/instances/{id}/blocks` |  |
+| PUT | `/api/admin/instances/{id}/bounds` |  |
+| PUT | `/api/admin/instances/{id}/chunks` |  |
+| PUT | `/api/admin/instances/{id}/enabled` |  |
+| PUT | `/api/admin/instances/{id}/layout` |  |
+| GET | `/api/admin/items` |  |
+| GET | `/api/admin/npc-types` |  |
+| GET | `/api/admin/npcs` |  |
+| GET | `/api/admin/plain-colors` |  |
+| GET | `/api/admin/players` |  |
+| GET | `/api/admin/players/{name}` |  |
+| PUT | `/api/admin/players/{name}/keybindings` |  |
+| PUT | `/api/admin/players/{name}/preferences` |  |
+| POST | `/api/admin/players/{name}/rename` |  |
+| PUT | `/api/admin/players/{name}/rpg` |  |
+| POST | `/api/admin/restart` |  |
+| GET | `/api/admin/scenes` |  |
+| POST | `/api/admin/scenes` |  |
+| DELETE | `/api/admin/scenes/{id}` |  |
+| GET | `/api/admin/scenes/{id}` |  |
+| PUT | `/api/admin/scenes/{id}` |  |
+| GET | `/api/admin/scenes/{id}/blocks/raw` |  |
+| PUT | `/api/admin/scenes/{id}/dimensions` |  |
+| PUT | `/api/admin/scenes/{id}/layout` |  |
+| GET | `/api/admin/schemas/{filename}` |  |
+| GET | `/api/admin/simulation/defaults` |  |
+| GET | `/api/admin/skills` |  |
+| GET | `/api/admin/status` |  |
+| GET | `/api/admin/users` |  |
+| POST | `/api/admin/users` |  |
+| DELETE | `/api/admin/users/{email}` |  |
+| PUT | `/api/admin/users/{email}` |  |
+| GET | `/api/admin/worlds` |  |
+| POST | `/api/admin/worlds` |  |
+| GET | `/api/admin/ws/instances/{id}` |  |
+| GET | `/api/admin/ws/npcs` |  |
+| GET | `/api/admin/ws/scenes/{id}` |  |
+| GET | `/api/admin/ws/simulation` |  |
+| GET | `/api/armors` |  |
+| GET | `/api/assets/manifest` |  |
+| POST | `/api/assets/reload` |  |
+| GET | `/api/attacks` |  |
+| GET | `/api/auth/config` |  |
+| GET | `/api/autocomplete/{commandId}/{argIndex}` |  |
+| GET | `/api/biomes` |  |
+| POST | `/api/character/create` |  |
+| POST | `/api/character/rpgcreate` |  |
+| GET | `/api/chunks/{cx}/{cz}` |  |
+| GET | `/api/classes` |  |
+| GET | `/api/game-assets` |  |
+| GET | `/api/game-assets/file/{...}` |  |
+| GET | `/api/i18n/{locale}` |  |
+| GET | `/api/items/meta` |  |
+| GET | `/api/keybindings` |  |
+| GET | `/api/layout/registry` |  |
+| GET | `/api/macros/context` |  |
+| GET | `/api/map/houses` |  |
+| GET | `/api/map/road-raster` |  |
+| GET | `/api/map/road-raster.png` |  |
+| GET | `/api/map/roads` |  |
+| GET | `/api/map/staircases` |  |
+| GET | `/api/map/state` |  |
+| GET | `/api/map/terrain` |  |
+| GET | `/api/map/terrain-raster.png` |  |
+| GET | `/api/map/voronoi` |  |
+| GET | `/api/map/voronoi-borders` |  |
+| GET | `/api/player/{id}/armors` |  |
+| GET | `/api/player/{id}/rpg` |  |
+| POST | `/api/player/{id}/screenshots` |  |
+| GET | `/api/player/{id}/skin` |  |
+| PUT | `/api/player/{id}/skin` |  |
+| GET | `/api/players/by-email/{email}` |  |
+| GET | `/api/players/names` |  |
+| GET | `/api/quests` |  |
+| GET | `/api/server/info` |  |
+| GET | `/api/skins` |  |
+| GET | `/api/skins/{name}/config` |  |
+| GET | `/api/spells` |  |
+| POST | `/auth/noauth-login` |  |
+
+<!-- END_API_ROUTES -->
+
+To regenerate from source:
+```bash
+make dc CMD="./gradlew :server:exportOpenApi"
 ```
 
 ---
