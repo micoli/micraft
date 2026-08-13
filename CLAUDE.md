@@ -187,6 +187,8 @@ make shell
 
 JSON Schemas in `data/config/schemas/`. See `/update-schema` for the full mapping table. Update schema in same commit as data class changes.
 
+**Not to be confused with** `server/openapi/openapi.yaml` — the REST API spec (auth/game/admin/map HTTP routes), auto-generated from `io.github.smiley4.ktoropenapi`-annotated Ktor routes, unrelated to the `data/config/schemas/` game-data JSON Schemas above. Never hand-edit it; regenerate with `make dc CMD="./gradlew :server:exportOpenApi"` after adding/changing a route (also regenerates the README.md "API Routes" table). `make check-openapi` (part of `code-standard`) fails CI if either drifts from the annotated routes. Browsable at `/api/docs` (Redoc) when the server is running.
+
 ## i18n (translations)
 
 Translation YAML files in `data/config/i18n/{locale}.yaml`. Key format: `feature:scope:key` (scope = `server` or `client`).

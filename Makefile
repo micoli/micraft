@@ -201,10 +201,13 @@ prod-logs:
 
 # ── Standard and code analysis ────────────────────────────────────────────────
 
-code-standard: spotless-apply check-configuration ts-code-standard check-docs
+code-standard: spotless-apply check-configuration ts-code-standard check-docs check-openapi
 
 check-docs:
 	$(EXEC) "./gradlew :server:checkCommandsDocs"
+
+check-openapi:
+	$(EXEC) "./gradlew :server:checkOpenApi"
 
 ts-code-standard: npm-format ts-typecheck ts-lint
 
