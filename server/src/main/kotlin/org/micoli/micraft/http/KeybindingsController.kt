@@ -1,5 +1,6 @@
 package org.micoli.micraft.http
 
+import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -17,18 +18,31 @@ class KeybindingsController(
 ) {
     fun register(route: Route) =
         route.apply {
-            get("/api/keybindings") {
-                val player = call.request.queryParameters["player"]
-                val bindings =
-                    if (player != null && persistence != null) {
-                        persistence.loadPlayerKeyBindings(player)
-                    } else {
-                        loadKeyBindings(Path.of(dataPath + "/config/keybindings.yaml"))
+            get(
+                "/api/keybindings",
+                {
+                    description =
+                        "Key bindings — a player's saved bindings if ?player= is given and " +
+                            "persistence is available, otherwise the default config"
+                    request {
+                        queryParameter<String>("player") {
+                            description = "Optional player name to load saved bindings for"
+                            required = false
+                        }
                     }
-                val serializer =
-                    MapSerializer(String.serializer(), ListSerializer(String.serializer()))
-                call.respondText(
-                    Json.encodeToString(serializer, bindings), ContentType.Application.Json)
-            }
+                    response { code(HttpStatusCode.OK) { body<Map<String, List<String>>>() } }
+                }) {
+                    val player = call.request.queryParameters["player"]
+                    val bindings =
+                        if (player != null && persistence != null) {
+                            persistence.loadPlayerKeyBindings(player)
+                        } else {
+                            loadKeyBindings(Path.of(dataPath + "/config/keybindings.yaml"))
+                        }
+                    val serializer =
+                        MapSerializer(String.serializer(), ListSerializer(String.serializer()))
+                    call.respondText(
+                        Json.encodeToString(serializer, bindings), ContentType.Application.Json)
+                }
         }
 }

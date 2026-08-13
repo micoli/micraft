@@ -376,7 +376,7 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | POST | `/api/assets/reload` |  |
 | GET | `/api/attacks` | Attack definitions, flattened by "attackId:level" key |
 | GET | `/api/auth/config` |  |
-| GET | `/api/autocomplete/{commandId}/{argIndex}` |  |
+| GET | `/api/autocomplete/{commandId}/{argIndex}` | Autocomplete suggestions for a slash command argument |
 | GET | `/api/biomes` | Grass color per biome id, as [r, g, b] in 0..1 |
 | POST | `/api/character/create` |  |
 | POST | `/api/character/rpgcreate` |  |
@@ -384,11 +384,11 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/classes` | Attack ids accessible per RPG class, keyed by level |
 | GET | `/api/game-assets` | 3D game asset files discovered under resources/game-assets |
 | GET | `/api/game-assets/file/{...}` | Raw asset file bytes (glb/gltf/fbx/textures) |
-| GET | `/api/i18n/{locale}` |  |
+| GET | `/api/i18n/{locale}` | Client-facing translation keys for a locale |
 | GET | `/api/items/meta` | Item metadata (label, background color, consumable flags) by item type id |
-| GET | `/api/keybindings` |  |
+| GET | `/api/keybindings` | Key bindings — a player's saved bindings if ?player= is given and persistence is available, otherwise the default config |
 | GET | `/api/layout/registry` | All widgets registered for the UI layout editor |
-| GET | `/api/macros/context` |  |
+| GET | `/api/macros/context` | Variables available to the macro JEXL evaluation context |
 | GET | `/api/map/houses` |  |
 | GET | `/api/map/road-raster` |  |
 | GET | `/api/map/road-raster.png` |  |
@@ -405,8 +405,8 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/player/{id}/skin` |  |
 | PUT | `/api/player/{id}/skin` |  |
 | GET | `/api/players/by-email/{email}` |  |
-| GET | `/api/players/names` |  |
-| GET | `/api/quests` |  |
+| GET | `/api/players/names` | Names of all known players |
+| GET | `/api/quests` | All quest definitions |
 | GET | `/api/server/info` | Server build timestamp |
 | GET | `/api/skins` | Names of all available player skins |
 | GET | `/api/skins/{name}/config` | Skin config (eye offset, hidden bones) for a named skin |

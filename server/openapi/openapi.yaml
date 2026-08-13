@@ -26,30 +26,6 @@ paths:
       parameters: []
       responses: {}
       deprecated: false
-  /api/keybindings:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/autocomplete/{commandId}/{argIndex}:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/i18n/{locale}:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/macros/context:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
   /api/player/{id}/skin:
     get:
       tags: []
@@ -87,24 +63,6 @@ paths:
       deprecated: false
   /api/character/rpgcreate:
     post:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/quests:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/players/names:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/players/by-email/{email}:
-    get:
       tags: []
       parameters: []
       responses: {}
@@ -465,11 +423,130 @@ paths:
       parameters: []
       responses: {}
       deprecated: false
+  /api/players/by-email/{email}:
+    get:
+      tags: []
+      parameters: []
+      responses: {}
+      deprecated: false
   /auth/noauth-login:
     post:
       tags: []
       parameters: []
       responses: {}
+      deprecated: false
+  /api/keybindings:
+    get:
+      tags: []
+      description: "Key bindings — a player's saved bindings if ?player= is given\
+        \ and persistence is available, otherwise the default config"
+      parameters:
+      - name: player
+        in: query
+        description: Optional player name to load saved bindings for
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+                    title: String
+                  title: List<String>
+                title: "Map<String,List<String>>"
+      deprecated: false
+  /api/autocomplete/{commandId}/{argIndex}:
+    get:
+      tags: []
+      description: Autocomplete suggestions for a slash command argument
+      parameters:
+      - name: commandId
+        in: path
+        description: Slash command id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      - name: argIndex
+        in: path
+        description: Zero-based argument index
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: partial
+        in: query
+        description: Partial text typed so far
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      - name: player
+        in: query
+        description: Requesting player name
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  title: String
+                title: List<String>
+        "400":
+          description: Missing commandId or argIndex
+          headers: {}
+      deprecated: false
+  /api/i18n/{locale}:
+    get:
+      tags: []
+      description: Client-facing translation keys for a locale
+      parameters:
+      - name: locale
+        in: path
+        description: "Locale code, e.g. en/fr"
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                  title: String
+                title: "Map<String,String>"
       deprecated: false
   /api/layout/registry:
     get:
@@ -582,6 +659,22 @@ paths:
                     title: String
                   title: "Map<String,String>"
                 title: "Map<String,Map<String,String>>"
+      deprecated: false
+  /api/macros/context:
+    get:
+      tags: []
+      description: Variables available to the macro JEXL evaluation context
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.game.macro.MacroContextVar"
+                title: List<MacroContextVar>
       deprecated: false
   /api/biomes:
     get:
@@ -709,6 +802,39 @@ paths:
           description: Asset not found
           headers: {}
       deprecated: false
+  /api/quests:
+    get:
+      tags: []
+      description: All quest definitions
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.http.QuestDto"
+                title: List<QuestDto>
+      deprecated: false
+  /api/players/names:
+    get:
+      tags: []
+      description: Names of all known players
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  title: String
+                title: List<String>
+      deprecated: false
 components:
   schemas:
     org.micoli.micraft.ui.WidgetRegistryEntry:
@@ -804,6 +930,26 @@ components:
       - attack
       - level
       title: ClassAttackAccess
+    org.micoli.micraft.game.macro.MacroContextVar:
+      type: object
+      properties:
+        children:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+        name:
+          type: string
+          title: String
+        type:
+          type: string
+          title: String
+      required:
+      - children
+      - name
+      - type
+      title: MacroContextVar
     org.micoli.micraft.game.skin.EyeAnchor:
       type: object
       properties:
@@ -940,5 +1086,110 @@ components:
       - pack
       - path
       title: GameAssetsController.AssetEntry
+    org.micoli.micraft.http.QuestDto:
+      type: object
+      properties:
+        cooldownSeconds:
+          type: integer
+          format: int64
+          title: Long
+        dependsOn:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+        description:
+          type: string
+          title: String
+        id:
+          type: string
+          title: String
+        itemType:
+          type:
+          - "null"
+          - string
+          title: String
+        level:
+          type: integer
+          format: int32
+          title: Int
+        objectives:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.game.quest.KillObjective"
+          title: List<KillObjective>
+        repeatable:
+          type: boolean
+          title: Boolean
+        requiredCount:
+          type: integer
+          format: int32
+          title: Int
+        rewards:
+          $ref: "#/components/schemas/org.micoli.micraft.game.quest.QuestReward"
+        title:
+          type: string
+          title: String
+        type:
+          type: string
+          title: String
+      required:
+      - cooldownSeconds
+      - dependsOn
+      - description
+      - id
+      - level
+      - objectives
+      - repeatable
+      - requiredCount
+      - rewards
+      - title
+      - type
+      title: QuestDto
+    org.micoli.micraft.game.quest.KillObjective:
+      type: object
+      properties:
+        npcType:
+          type: string
+          title: String
+        requiredCount:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - npcType
+      - requiredCount
+      title: KillObjective
+    org.micoli.micraft.game.quest.QuestReward:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.game.quest.RewardItem"
+          title: List<RewardItem>
+        xp:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - items
+      - xp
+      title: QuestReward
+    org.micoli.micraft.game.quest.RewardItem:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: int32
+          title: Int
+        type:
+          type: string
+          title: String
+      required:
+      - count
+      - type
+      title: RewardItem
   examples: {}
 webhooks: {}

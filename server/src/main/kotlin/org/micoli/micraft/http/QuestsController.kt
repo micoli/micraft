@@ -1,5 +1,6 @@
 package org.micoli.micraft.http
 
+import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -28,27 +29,32 @@ data class QuestDto(
 
 class QuestsController(private val questManager: QuestManager) {
     fun register(routing: Route) {
-        routing.get("/api/quests") {
-            val dtos =
-                questManager.getDefinitions().map { (id, def) ->
-                    QuestDto(
-                        id = id,
-                        title = def.title,
-                        description = def.description,
-                        type = def.type.name,
-                        level = def.level,
-                        objectives = def.objectives,
-                        itemType = def.itemType,
-                        requiredCount = def.requiredCount,
-                        rewards = def.rewards,
-                        dependsOn = def.dependsOn,
-                        repeatable = def.repeatable,
-                        cooldownSeconds = def.cooldownSeconds,
-                    )
-                }
-            call.respondText(
-                Json.encodeToString(ListSerializer(QuestDto.serializer()), dtos),
-                ContentType.Application.Json)
-        }
+        routing.get(
+            "/api/quests",
+            {
+                description = "All quest definitions"
+                response { code(HttpStatusCode.OK) { body<List<QuestDto>>() } }
+            }) {
+                val dtos =
+                    questManager.getDefinitions().map { (id, def) ->
+                        QuestDto(
+                            id = id,
+                            title = def.title,
+                            description = def.description,
+                            type = def.type.name,
+                            level = def.level,
+                            objectives = def.objectives,
+                            itemType = def.itemType,
+                            requiredCount = def.requiredCount,
+                            rewards = def.rewards,
+                            dependsOn = def.dependsOn,
+                            repeatable = def.repeatable,
+                            cooldownSeconds = def.cooldownSeconds,
+                        )
+                    }
+                call.respondText(
+                    Json.encodeToString(ListSerializer(QuestDto.serializer()), dtos),
+                    ContentType.Application.Json)
+            }
     }
 }
