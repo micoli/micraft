@@ -1,5 +1,6 @@
 package org.micoli.micraft.http
 
+import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -7,7 +8,6 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
-import io.ktor.server.routing.get
 import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
@@ -75,19 +75,30 @@ class SimulationController(
 
     fun register(route: Route) =
         route.apply {
-            get("/api/admin/simulation/defaults") {
-                if (!requireAdmin()) return@get
-                val payload =
-                    SimulationDefaultsDto(
-                        tuning = NpcConstants.live,
-                        npcTypes = npcTypesProvider(),
-                        liveSimulations = registry.count,
+            get(
+                "/api/admin/simulation/defaults",
+                {
+                    description = "Defaults the world simulator admin UI prefills its editors with"
+                    response {
+                        code(HttpStatusCode.OK) { body<SimulationDefaultsDto>() }
+                        code(HttpStatusCode.Unauthorized) {
+                            description = "Missing or invalid token"
+                        }
+                        code(HttpStatusCode.Forbidden) { description = "Missing admin permission" }
+                    }
+                }) {
+                    if (!requireAdmin()) return@get
+                    val payload =
+                        SimulationDefaultsDto(
+                            tuning = NpcConstants.live,
+                            npcTypes = npcTypesProvider(),
+                            liveSimulations = registry.count,
+                        )
+                    call.respondText(
+                        simJson.encodeToString(SimulationDefaultsDto.serializer(), payload),
+                        ContentType.Application.Json,
                     )
-                call.respondText(
-                    simJson.encodeToString(SimulationDefaultsDto.serializer(), payload),
-                    ContentType.Application.Json,
-                )
-            }
+                }
         }
 
     fun registerWs(route: Route) =

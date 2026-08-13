@@ -26,66 +26,6 @@ paths:
       parameters: []
       responses: {}
       deprecated: false
-  /api/map/state:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/map/terrain:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/map/voronoi:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/map/houses:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/map/staircases:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/map/roads:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/map/road-raster:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/map/road-raster.png:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/map/terrain-raster.png:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/map/voronoi-borders:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
   /api/admin/status:
     get:
       tags: []
@@ -365,18 +305,6 @@ paths:
       responses: {}
       deprecated: false
   /api/admin/ws/simulation:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/admin/simulation/defaults:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/chunks/{cx}/{cz}:
     get:
       tags: []
       parameters: []
@@ -991,6 +919,470 @@ paths:
                   title: String
                 title: List<String>
       deprecated: false
+  /api/map/state:
+    get:
+      tags: []
+      description: "Live players, NPCs and weather zones for the map overlay"
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.MapStateResponse"
+        "401":
+          description: Missing or invalid token
+          headers: {}
+      deprecated: false
+  /api/map/terrain:
+    get:
+      tags: []
+      description: Cached terrain summary JSON for the map overlay
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: string
+                title: String
+        "401":
+          description: Missing or invalid token
+          headers: {}
+      deprecated: false
+  /api/map/voronoi:
+    get:
+      tags: []
+      description: Voronoi biome cells around a point
+      parameters:
+      - name: cx
+        in: query
+        description: Center X (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: cz
+        in: query
+        description: Center Z (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: radius
+        in: query
+        description: Radius in blocks (default 800)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.http.VoronoiCellInfo"
+                title: List<VoronoiCellInfo>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+      deprecated: false
+  /api/map/houses:
+    get:
+      tags: []
+      description: Generated houses within an area
+      parameters:
+      - name: cx
+        in: query
+        description: Center X (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: cz
+        in: query
+        description: Center Z (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: radius
+        in: query
+        description: Radius in blocks (default 800)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.http.HouseMapInfo"
+                title: List<HouseMapInfo>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+      deprecated: false
+  /api/map/staircases:
+    get:
+      tags: []
+      description: Named staircase points for the map overlay
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.http.StaircaseMapInfo"
+                title: List<StaircaseMapInfo>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+      deprecated: false
+  /api/map/roads:
+    get:
+      tags: []
+      description: Road vertex segments within an area
+      parameters:
+      - name: cx
+        in: query
+        description: Center X (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: cz
+        in: query
+        description: Center Z (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: radius
+        in: query
+        description: Radius in blocks (default 800)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.http.RoadSegmentInfo"
+                title: List<RoadSegmentInfo>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+      deprecated: false
+  /api/map/road-raster:
+    get:
+      tags: []
+      description: Per-chunk road bitmask within an area
+      parameters:
+      - name: cx
+        in: query
+        description: Center X (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: cz
+        in: query
+        description: Center Z (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: radius
+        in: query
+        description: Radius in blocks (default 800)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.http.ChunkRoadInfo"
+                title: List<ChunkRoadInfo>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+      deprecated: false
+  /api/map/road-raster.png:
+    get:
+      tags: []
+      description: Rasterized road overlay as a PNG image
+      parameters:
+      - name: cx
+        in: query
+        description: Center X (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: cz
+        in: query
+        description: Center Z (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: radius
+        in: query
+        description: Radius in blocks (default 1200)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      responses:
+        "200":
+          headers: {}
+          content:
+            image/png:
+              schema:
+                type: array
+                items:
+                  type: integer
+                  maximum: 127
+                  minimum: -128
+                  title: Byte
+                title: Array<Byte>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+      deprecated: false
+  /api/map/terrain-raster.png:
+    get:
+      tags: []
+      description: Rasterized terrain overlay as a PNG image
+      parameters:
+      - name: cx
+        in: query
+        description: Center X (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: cz
+        in: query
+        description: Center Z (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: radius
+        in: query
+        description: Radius in blocks (default 400)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      responses:
+        "200":
+          headers: {}
+          content:
+            image/png:
+              schema:
+                type: array
+                items:
+                  type: integer
+                  maximum: 127
+                  minimum: -128
+                  title: Byte
+                title: Array<Byte>
+      deprecated: false
+  /api/map/voronoi-borders:
+    get:
+      tags: []
+      description: Voronoi cell border segments within an area
+      parameters:
+      - name: cx
+        in: query
+        description: Center X (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: cz
+        in: query
+        description: Center Z (default 0)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: radius
+        in: query
+        description: Radius in blocks (default 1500)
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.http.VoronoiBorderSegment"
+                title: List<VoronoiBorderSegment>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+      deprecated: false
+  /api/admin/simulation/defaults:
+    get:
+      tags: []
+      description: Defaults the world simulator admin UI prefills its editors with
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.SimulationDefaultsDto"
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/chunks/{cx}/{cz}:
+    get:
+      tags: []
+      description: "Binary-encoded chunk data (protocol.ServerMessage.ChunkData wire\
+        \ format). Not a JSON API — used by the game client, not by TanStack Query\
+        \ hooks."
+      parameters:
+      - name: cx
+        in: path
+        description: Chunk X coordinate
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: cz
+        in: path
+        description: Chunk Z coordinate
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/octet-stream:
+              schema:
+                type: array
+                items:
+                  type: integer
+                  maximum: 127
+                  minimum: -128
+                  title: Byte
+                title: Array<Byte>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "400":
+          description: Invalid chunk coordinates
+          headers: {}
+      deprecated: false
 components:
   schemas:
     org.micoli.micraft.ui.WidgetRegistryEntry:
@@ -1498,5 +1890,403 @@ components:
       - count
       - type
       title: RewardItem
+    org.micoli.micraft.http.NpcMapInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          title: String
+        name:
+          type: string
+          title: String
+        type:
+          type: string
+          title: String
+        x:
+          type: number
+          format: float
+          title: Float
+        "y":
+          type: number
+          format: float
+          title: Float
+        yaw:
+          type: number
+          format: float
+          title: Float
+        z:
+          type: number
+          format: float
+          title: Float
+      required:
+      - id
+      - name
+      - type
+      - x
+      - "y"
+      - yaw
+      - z
+      title: NpcMapInfo
+    org.micoli.micraft.http.PlayerMapInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          title: String
+        name:
+          type: string
+          title: String
+        x:
+          type: number
+          format: float
+          title: Float
+        "y":
+          type: number
+          format: float
+          title: Float
+        yaw:
+          type: number
+          format: float
+          title: Float
+        z:
+          type: number
+          format: float
+          title: Float
+      required:
+      - id
+      - name
+      - x
+      - "y"
+      - yaw
+      - z
+      title: PlayerMapInfo
+    org.micoli.micraft.game.world.WeatherZoneInfo:
+      type: object
+      properties:
+        cx:
+          type: number
+          format: float
+          title: Float
+        cz:
+          type: number
+          format: float
+          title: Float
+        id:
+          type: string
+          title: String
+        intensity:
+          type: number
+          format: float
+          title: Float
+        radius:
+          type: number
+          format: float
+          title: Float
+        type:
+          type: string
+          title: String
+      required:
+      - cx
+      - cz
+      - id
+      - intensity
+      - radius
+      - type
+      title: WeatherZoneInfo
+    org.micoli.micraft.http.MapStateResponse:
+      type: object
+      properties:
+        gameTicks:
+          type: integer
+          format: int64
+          title: Long
+        npcs:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.http.NpcMapInfo"
+          title: List<NpcMapInfo>
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.http.PlayerMapInfo"
+          title: List<PlayerMapInfo>
+        weatherZones:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.game.world.WeatherZoneInfo"
+          title: List<WeatherZoneInfo>
+      required:
+      - gameTicks
+      - npcs
+      - players
+      - weatherZones
+      title: MapStateResponse
+    org.micoli.micraft.http.VoronoiCellInfo:
+      type: object
+      properties:
+        biome:
+          type: string
+          title: String
+        color:
+          type: string
+          title: String
+        level:
+          type: integer
+          format: int32
+          title: Int
+        name:
+          type: string
+          title: String
+        x:
+          type: integer
+          format: int32
+          title: Int
+        z:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - biome
+      - color
+      - level
+      - name
+      - x
+      - z
+      title: VoronoiCellInfo
+    org.micoli.micraft.http.HouseMapInfo:
+      type: object
+      properties:
+        depth:
+          type: integer
+          format: int32
+          title: Int
+        type:
+          type: string
+          title: String
+        width:
+          type: integer
+          format: int32
+          title: Int
+        x:
+          type: integer
+          format: int32
+          title: Int
+        z:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - depth
+      - type
+      - width
+      - x
+      - z
+      title: HouseMapInfo
+    org.micoli.micraft.http.StaircaseMapInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          title: String
+        x:
+          type: number
+          format: float
+          title: Float
+        z:
+          type: number
+          format: float
+          title: Float
+      required:
+      - name
+      - x
+      - z
+      title: StaircaseMapInfo
+    org.micoli.micraft.http.RoadSegmentInfo:
+      type: object
+      properties:
+        x1:
+          type: number
+          format: float
+          title: Float
+        x2:
+          type: number
+          format: float
+          title: Float
+        z1:
+          type: number
+          format: float
+          title: Float
+        z2:
+          type: number
+          format: float
+          title: Float
+      required:
+      - x1
+      - x2
+      - z1
+      - z2
+      title: RoadSegmentInfo
+    org.micoli.micraft.http.ChunkRoadInfo:
+      type: object
+      properties:
+        cx:
+          type: integer
+          format: int32
+          title: Int
+        cz:
+          type: integer
+          format: int32
+          title: Int
+        mask:
+          type: array
+          items:
+            type: boolean
+            title: Boolean
+          title: List<Boolean>
+      required:
+      - cx
+      - cz
+      - mask
+      title: ChunkRoadInfo
+    org.micoli.micraft.http.VoronoiBorderSegment:
+      type: object
+      properties:
+        x1:
+          type: number
+          format: float
+          title: Float
+        x2:
+          type: number
+          format: float
+          title: Float
+        z1:
+          type: number
+          format: float
+          title: Float
+        z2:
+          type: number
+          format: float
+          title: Float
+      required:
+      - x1
+      - x2
+      - z1
+      - z2
+      title: VoronoiBorderSegment
+    org.micoli.micraft.game.npc.NpcTuning:
+      type: object
+      properties:
+        gameDayDurationSeconds:
+          type: number
+          format: double
+          title: Double
+        interactionRange:
+          type: number
+          format: float
+          title: Float
+        jumpVelocity:
+          type: number
+          format: float
+          title: Float
+        lookAroundChangeTicks:
+          type: integer
+          format: int32
+          title: Int
+        lookAroundSpeed:
+          type: number
+          format: float
+          title: Float
+        maxSpawnAttemptsPerTick:
+          type: integer
+          format: int32
+          title: Int
+        npcVisibilityCheckIntervalTicks:
+          type: integer
+          format: int32
+          title: Int
+        npcZoneSize:
+          type: integer
+          format: int32
+          title: Int
+        updateRange:
+          type: number
+          format: float
+          title: Float
+        wanderDecelTicks:
+          type: integer
+          format: int32
+          title: Int
+        wanderPauseTicksMax:
+          type: integer
+          format: int32
+          title: Int
+        wanderPauseTicksMin:
+          type: integer
+          format: int32
+          title: Int
+        wanderSpeedMultMax:
+          type: number
+          format: float
+          title: Float
+        wanderSpeedMultMin:
+          type: number
+          format: float
+          title: Float
+        wanderStepTicksMax:
+          type: integer
+          format: int32
+          title: Int
+        wanderWaypointCountMax:
+          type: integer
+          format: int32
+          title: Int
+        wanderWaypointCountMin:
+          type: integer
+          format: int32
+          title: Int
+        yawTurnSpeed:
+          type: number
+          format: float
+          title: Float
+      required:
+      - gameDayDurationSeconds
+      - interactionRange
+      - jumpVelocity
+      - lookAroundChangeTicks
+      - lookAroundSpeed
+      - maxSpawnAttemptsPerTick
+      - npcVisibilityCheckIntervalTicks
+      - npcZoneSize
+      - updateRange
+      - wanderDecelTicks
+      - wanderPauseTicksMax
+      - wanderPauseTicksMin
+      - wanderSpeedMultMax
+      - wanderSpeedMultMin
+      - wanderStepTicksMax
+      - wanderWaypointCountMax
+      - wanderWaypointCountMin
+      - yawTurnSpeed
+      title: NpcTuning
+    org.micoli.micraft.http.SimulationDefaultsDto:
+      type: object
+      properties:
+        liveSimulations:
+          type: integer
+          format: int32
+          title: Int
+        npcTypes:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+        tuning:
+          $ref: "#/components/schemas/org.micoli.micraft.game.npc.NpcTuning"
+      required:
+      - liveSimulations
+      - npcTypes
+      - tuning
+      title: SimulationDefaultsDto
   examples: {}
 webhooks: {}

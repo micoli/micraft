@@ -1,5 +1,7 @@
 package org.micoli.micraft.http
 
+import io.github.smiley4.ktoropenapi.config.RouteConfig
+import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -115,233 +117,340 @@ class MapController(private val gameLoop: GameLoop, private val tokenStore: Toke
             return true
         }
 
+        fun RouteConfig.unauthorizedResponse() {
+            response {
+                code(HttpStatusCode.Unauthorized) { description = "Missing or invalid token" }
+            }
+        }
+        fun RouteConfig.areaQueryParams(defaultRadius: Int) {
+            request {
+                queryParameter<Int>("cx") {
+                    description = "Center X (default 0)"
+                    required = false
+                }
+                queryParameter<Int>("cz") {
+                    description = "Center Z (default 0)"
+                    required = false
+                }
+                queryParameter<Int>("radius") {
+                    description = "Radius in blocks (default $defaultRadius)"
+                    required = false
+                }
+            }
+        }
+
         route.apply {
-            get("/api/map/state") {
-                if (!requireMapAuth()) return@get
-                val players =
-                    gameLoop.getPlayerStates().map { s ->
-                        PlayerMapInfo(s.id, s.name, s.pos.x, s.pos.y, s.pos.z, s.orientation.yaw)
-                    }
-                val npcs =
-                    gameLoop.getNpcStates().map { n ->
-                        NpcMapInfo(n.id, n.name, n.type, n.pos.x, n.pos.y, n.pos.z, n.yaw)
-                    }
-                val response =
-                    MapStateResponse(
-                        gameLoop.getGameTicks(), players, npcs, gameLoop.getWeatherZones())
-                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
-                call.respondText(Json.encodeToString(response), ContentType.Application.Json)
-            }
+            get(
+                "/api/map/state",
+                {
+                    description = "Live players, NPCs and weather zones for the map overlay"
+                    response { code(HttpStatusCode.OK) { body<MapStateResponse>() } }
+                    unauthorizedResponse()
+                }) {
+                    if (!requireMapAuth()) return@get
+                    val players =
+                        gameLoop.getPlayerStates().map { s ->
+                            PlayerMapInfo(
+                                s.id, s.name, s.pos.x, s.pos.y, s.pos.z, s.orientation.yaw)
+                        }
+                    val npcs =
+                        gameLoop.getNpcStates().map { n ->
+                            NpcMapInfo(n.id, n.name, n.type, n.pos.x, n.pos.y, n.pos.z, n.yaw)
+                        }
+                    val response =
+                        MapStateResponse(
+                            gameLoop.getGameTicks(), players, npcs, gameLoop.getWeatherZones())
+                    call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+                    call.respondText(Json.encodeToString(response), ContentType.Application.Json)
+                }
 
-            get("/api/map/terrain") {
-                if (!requireMapAuth()) return@get
-                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
-                call.respondText(gameLoop.terrainCache.cachedJson, ContentType.Application.Json)
-            }
-
-            get("/api/map/voronoi") {
-                if (!requireMapAuth()) return@get
-                val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
-                val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
-                val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: (50 * 16)
-                val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
-                val cells =
-                    gen?.voronoi?.cells(cx, cz, radius)?.map { cell ->
-                        val rgb = BlockRegistry.get(cell.biome.surface).minimapColor
-                        val color = "#%02x%02x%02x".format(rgb[0], rgb[1], rgb[2])
-                        VoronoiCellInfo(
-                            cell.seedX, cell.seedZ, cell.biome.id, color, cell.name, cell.level)
-                    } ?: emptyList()
-                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
-                call.respondText(Json.encodeToString(cells), ContentType.Application.Json)
-            }
-
-            get("/api/map/houses") {
-                if (!requireMapAuth()) return@get
-                val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
-                val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
-                val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 800
-                val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
-                val houses =
-                    gen?.houseZones
-                        ?.housesInArea(cx - radius, cz - radius, cx + radius, cz + radius)
-                        ?.map {
-                            HouseMapInfo(it.anchorX, it.anchorZ, it.typeCfg.id, it.width, it.depth)
-                        } ?: emptyList()
-                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
-                call.respondText(Json.encodeToString(houses), ContentType.Application.Json)
-            }
-
-            get("/api/map/staircases") {
-                if (!requireMapAuth()) return@get
-                val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
-                val points =
-                    gen?.namedStaircasePoints()?.map { (name, pos) ->
-                        StaircaseMapInfo(name, pos.x, pos.z)
-                    } ?: emptyList()
-                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
-                call.respondText(Json.encodeToString(points), ContentType.Application.Json)
-            }
-
-            get("/api/map/roads") {
-                if (!requireMapAuth()) return@get
-                val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
-                val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
-                val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 800
-                val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
-                val segments =
-                    gen?.roadVoronoi
-                        ?.roadVertexSegmentsInArea(
-                            cx - radius, cz - radius, cx + radius, cz + radius)
-                        ?.map {
-                            RoadSegmentInfo(
-                                it.x1.toFloat(), it.z1.toFloat(), it.x2.toFloat(), it.z2.toFloat())
-                        } ?: emptyList()
-                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
-                call.respondText(Json.encodeToString(segments), ContentType.Application.Json)
-            }
-
-            get("/api/map/road-raster") {
-                if (!requireMapAuth()) return@get
-                val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
-                val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
-                val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 800
-                val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
-                val roadVoronoi = gen?.roadVoronoi
-                val chunks = mutableListOf<ChunkRoadInfo>()
-                if (roadVoronoi != null) {
-                    val cxMin = Math.floorDiv(cx - radius, 16)
-                    val cxMax = Math.floorDiv(cx + radius, 16)
-                    val czMin = Math.floorDiv(cz - radius, 16)
-                    val czMax = Math.floorDiv(cz + radius, 16)
-                    for (chunkX in cxMin..cxMax) {
-                        for (chunkZ in czMin..czMax) {
-                            val key = chunkX.toLong() shl 32 or (chunkZ.toLong() and 0xFFFFFFFFL)
-                            val mask =
-                                roadRasterCache.getOrPut(key) {
-                                    buildList {
-                                        for (lx in 0 until 16) {
-                                            for (lz in 0 until 16) {
-                                                add(
-                                                    roadVoronoi.isOnRoadAt(
-                                                        chunkX * 16 + lx, chunkZ * 16 + lz))
-                                            }
-                                        }
-                                    }
-                                }
-                            if (mask.any { it }) chunks.add(ChunkRoadInfo(chunkX, chunkZ, mask))
+            get(
+                "/api/map/terrain",
+                {
+                    description = "Cached terrain summary JSON for the map overlay"
+                    response {
+                        code(HttpStatusCode.OK) {
+                            body<String>() { mediaTypes(ContentType.Application.Json) }
                         }
                     }
+                    unauthorizedResponse()
+                }) {
+                    if (!requireMapAuth()) return@get
+                    call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+                    call.respondText(gameLoop.terrainCache.cachedJson, ContentType.Application.Json)
                 }
-                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
-                call.respondText(Json.encodeToString(chunks), ContentType.Application.Json)
-            }
 
-            get("/api/map/road-raster.png") {
-                if (!requireMapAuth()) return@get
-                val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
-                val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
-                val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 1200
-                val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
-                val roadVoronoi = gen?.roadVoronoi
-                val size = radius * 2
-                val img = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
-                if (roadVoronoi != null) {
-                    val roadRGBA = intArrayOf(0xA0, 0xA0, 0xA0, 0xE9)
-                    val roadArgb =
-                        (roadRGBA[3] shl 24) or
-                            (roadRGBA[1] shl 16) or
-                            (roadRGBA[2] shl 8) or
-                            roadRGBA[3]
+            get(
+                "/api/map/voronoi",
+                {
+                    description = "Voronoi biome cells around a point"
+                    areaQueryParams(defaultRadius = 50 * 16)
+                    response { code(HttpStatusCode.OK) { body<List<VoronoiCellInfo>>() } }
+                    unauthorizedResponse()
+                }) {
+                    if (!requireMapAuth()) return@get
+                    val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
+                    val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
+                    val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: (50 * 16)
+                    val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
+                    val cells =
+                        gen?.voronoi?.cells(cx, cz, radius)?.map { cell ->
+                            val rgb = BlockRegistry.get(cell.biome.surface).minimapColor
+                            val color = "#%02x%02x%02x".format(rgb[0], rgb[1], rgb[2])
+                            VoronoiCellInfo(
+                                cell.seedX, cell.seedZ, cell.biome.id, color, cell.name, cell.level)
+                        } ?: emptyList()
+                    call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+                    call.respondText(Json.encodeToString(cells), ContentType.Application.Json)
+                }
+
+            get(
+                "/api/map/houses",
+                {
+                    description = "Generated houses within an area"
+                    areaQueryParams(defaultRadius = 800)
+                    response { code(HttpStatusCode.OK) { body<List<HouseMapInfo>>() } }
+                    unauthorizedResponse()
+                }) {
+                    if (!requireMapAuth()) return@get
+                    val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
+                    val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
+                    val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 800
+                    val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
+                    val houses =
+                        gen?.houseZones
+                            ?.housesInArea(cx - radius, cz - radius, cx + radius, cz + radius)
+                            ?.map {
+                                HouseMapInfo(
+                                    it.anchorX, it.anchorZ, it.typeCfg.id, it.width, it.depth)
+                            } ?: emptyList()
+                    call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+                    call.respondText(Json.encodeToString(houses), ContentType.Application.Json)
+                }
+
+            get(
+                "/api/map/staircases",
+                {
+                    description = "Named staircase points for the map overlay"
+                    response { code(HttpStatusCode.OK) { body<List<StaircaseMapInfo>>() } }
+                    unauthorizedResponse()
+                }) {
+                    if (!requireMapAuth()) return@get
+                    val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
+                    val points =
+                        gen?.namedStaircasePoints()?.map { (name, pos) ->
+                            StaircaseMapInfo(name, pos.x, pos.z)
+                        } ?: emptyList()
+                    call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+                    call.respondText(Json.encodeToString(points), ContentType.Application.Json)
+                }
+
+            get(
+                "/api/map/roads",
+                {
+                    description = "Road vertex segments within an area"
+                    areaQueryParams(defaultRadius = 800)
+                    response { code(HttpStatusCode.OK) { body<List<RoadSegmentInfo>>() } }
+                    unauthorizedResponse()
+                }) {
+                    if (!requireMapAuth()) return@get
+                    val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
+                    val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
+                    val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 800
+                    val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
+                    val segments =
+                        gen?.roadVoronoi
+                            ?.roadVertexSegmentsInArea(
+                                cx - radius, cz - radius, cx + radius, cz + radius)
+                            ?.map {
+                                RoadSegmentInfo(
+                                    it.x1.toFloat(),
+                                    it.z1.toFloat(),
+                                    it.x2.toFloat(),
+                                    it.z2.toFloat())
+                            } ?: emptyList()
+                    call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+                    call.respondText(Json.encodeToString(segments), ContentType.Application.Json)
+                }
+
+            get(
+                "/api/map/road-raster",
+                {
+                    description = "Per-chunk road bitmask within an area"
+                    areaQueryParams(defaultRadius = 800)
+                    response { code(HttpStatusCode.OK) { body<List<ChunkRoadInfo>>() } }
+                    unauthorizedResponse()
+                }) {
+                    if (!requireMapAuth()) return@get
+                    val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
+                    val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
+                    val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 800
+                    val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
+                    val roadVoronoi = gen?.roadVoronoi
+                    val chunks = mutableListOf<ChunkRoadInfo>()
+                    if (roadVoronoi != null) {
+                        val cxMin = Math.floorDiv(cx - radius, 16)
+                        val cxMax = Math.floorDiv(cx + radius, 16)
+                        val czMin = Math.floorDiv(cz - radius, 16)
+                        val czMax = Math.floorDiv(cz + radius, 16)
+                        for (chunkX in cxMin..cxMax) {
+                            for (chunkZ in czMin..czMax) {
+                                val key =
+                                    chunkX.toLong() shl 32 or (chunkZ.toLong() and 0xFFFFFFFFL)
+                                val mask =
+                                    roadRasterCache.getOrPut(key) {
+                                        buildList {
+                                            for (lx in 0 until 16) {
+                                                for (lz in 0 until 16) {
+                                                    add(
+                                                        roadVoronoi.isOnRoadAt(
+                                                            chunkX * 16 + lx, chunkZ * 16 + lz))
+                                                }
+                                            }
+                                        }
+                                    }
+                                if (mask.any { it }) chunks.add(ChunkRoadInfo(chunkX, chunkZ, mask))
+                            }
+                        }
+                    }
+                    call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+                    call.respondText(Json.encodeToString(chunks), ContentType.Application.Json)
+                }
+
+            get(
+                "/api/map/road-raster.png",
+                {
+                    description = "Rasterized road overlay as a PNG image"
+                    areaQueryParams(defaultRadius = 1200)
+                    response {
+                        code(HttpStatusCode.OK) {
+                            body<ByteArray>() { mediaTypes(ContentType.Image.PNG) }
+                        }
+                    }
+                    unauthorizedResponse()
+                }) {
+                    if (!requireMapAuth()) return@get
+                    val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
+                    val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
+                    val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 1200
+                    val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
+                    val roadVoronoi = gen?.roadVoronoi
+                    val size = radius * 2
+                    val img = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
+                    if (roadVoronoi != null) {
+                        val roadRGBA = intArrayOf(0xA0, 0xA0, 0xA0, 0xE9)
+                        val roadArgb =
+                            (roadRGBA[3] shl 24) or
+                                (roadRGBA[1] shl 16) or
+                                (roadRGBA[2] shl 8) or
+                                roadRGBA[3]
+                        val cxMin = Math.floorDiv(cx - radius, 16)
+                        val cxMax = Math.floorDiv(cx + radius, 16)
+                        val czMin = Math.floorDiv(cz - radius, 16)
+                        val czMax = Math.floorDiv(cz + radius, 16)
+                        for (chunkX in cxMin..cxMax) {
+                            for (chunkZ in czMin..czMax) {
+                                val key =
+                                    chunkX.toLong() shl 32 or (chunkZ.toLong() and 0xFFFFFFFFL)
+                                val mask =
+                                    roadRasterCache.getOrPut(key) {
+                                        buildList {
+                                            for (lx in 0 until 16) {
+                                                for (lz in 0 until 16) {
+                                                    add(
+                                                        roadVoronoi.isOnRoadAt(
+                                                            chunkX * 16 + lx, chunkZ * 16 + lz))
+                                                }
+                                            }
+                                        }
+                                    }
+                                for (lx in 0 until 16) {
+                                    for (lz in 0 until 16) {
+                                        if (!mask[lx * 16 + lz]) continue
+                                        val wx = chunkX * 16 + lx
+                                        val wz = chunkZ * 16 + lz
+                                        val px = wx - (cx - radius)
+                                        // flip Z: row 0 = highest wz so canvas Y maps correctly
+                                        val pz = (cz + radius) - wz
+                                        if (px < 0 || px >= size || pz < 0 || pz >= size) continue
+                                        img.setRGB(px, pz, roadArgb)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    val baos = ByteArrayOutputStream()
+                    ImageIO.write(img, "PNG", baos)
+                    call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+                    call.respondBytes(baos.toByteArray(), ContentType.Image.PNG)
+                }
+
+            get(
+                "/api/map/terrain-raster.png",
+                {
+                    description = "Rasterized terrain overlay as a PNG image"
+                    areaQueryParams(defaultRadius = 400)
+                    response {
+                        code(HttpStatusCode.OK) {
+                            body<ByteArray>() { mediaTypes(ContentType.Image.PNG) }
+                        }
+                    }
+                }) {
+                    if (!requireMapAuth()) return@get
+                    val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
+                    val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
+                    val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 400
+                    val size = radius * 2
+                    val img = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
                     val cxMin = Math.floorDiv(cx - radius, 16)
                     val cxMax = Math.floorDiv(cx + radius, 16)
                     val czMin = Math.floorDiv(cz - radius, 16)
                     val czMax = Math.floorDiv(cz + radius, 16)
                     for (chunkX in cxMin..cxMax) {
                         for (chunkZ in czMin..czMax) {
-                            val key = chunkX.toLong() shl 32 or (chunkZ.toLong() and 0xFFFFFFFFL)
-                            val mask =
-                                roadRasterCache.getOrPut(key) {
-                                    buildList {
-                                        for (lx in 0 until 16) {
-                                            for (lz in 0 until 16) {
-                                                add(
-                                                    roadVoronoi.isOnRoadAt(
-                                                        chunkX * 16 + lx, chunkZ * 16 + lz))
-                                            }
-                                        }
-                                    }
-                                }
+                            val chunkImg =
+                                gameLoop.terrainCache.getChunkImage(ChunkPos(chunkX, chunkZ))
+                                    ?: continue
                             for (lx in 0 until 16) {
                                 for (lz in 0 until 16) {
-                                    if (!mask[lx * 16 + lz]) continue
                                     val wx = chunkX * 16 + lx
                                     val wz = chunkZ * 16 + lz
                                     val px = wx - (cx - radius)
-                                    // flip Z: row 0 = highest wz so canvas Y maps correctly
-                                    val pz = (cz + radius) - wz
+                                    val pz = (cz + radius) - wz // Z flipped: row 0 = highest wz
                                     if (px < 0 || px >= size || pz < 0 || pz >= size) continue
-                                    img.setRGB(px, pz, roadArgb)
+                                    val argb = chunkImg.getRGB(lx, lz)
+                                    if ((argb ushr 24) == 0) continue
+                                    img.setRGB(px, pz, argb)
                                 }
                             }
                         }
                     }
+                    val baos = ByteArrayOutputStream()
+                    ImageIO.write(img, "PNG", baos)
+                    call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+                    call.respondBytes(baos.toByteArray(), ContentType.Image.PNG)
                 }
-                val baos = ByteArrayOutputStream()
-                ImageIO.write(img, "PNG", baos)
-                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
-                call.respondBytes(baos.toByteArray(), ContentType.Image.PNG)
-            }
 
-            get("/api/map/terrain-raster.png") {
-                if (!requireMapAuth()) return@get
-                val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
-                val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
-                val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 400
-                val size = radius * 2
-                val img = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
-                val cxMin = Math.floorDiv(cx - radius, 16)
-                val cxMax = Math.floorDiv(cx + radius, 16)
-                val czMin = Math.floorDiv(cz - radius, 16)
-                val czMax = Math.floorDiv(cz + radius, 16)
-                for (chunkX in cxMin..cxMax) {
-                    for (chunkZ in czMin..czMax) {
-                        val chunkImg =
-                            gameLoop.terrainCache.getChunkImage(ChunkPos(chunkX, chunkZ))
-                                ?: continue
-                        for (lx in 0 until 16) {
-                            for (lz in 0 until 16) {
-                                val wx = chunkX * 16 + lx
-                                val wz = chunkZ * 16 + lz
-                                val px = wx - (cx - radius)
-                                val pz = (cz + radius) - wz // Z flipped: row 0 = highest wz
-                                if (px < 0 || px >= size || pz < 0 || pz >= size) continue
-                                val argb = chunkImg.getRGB(lx, lz)
-                                if ((argb ushr 24) == 0) continue
-                                img.setRGB(px, pz, argb)
-                            }
-                        }
-                    }
+            get(
+                "/api/map/voronoi-borders",
+                {
+                    description = "Voronoi cell border segments within an area"
+                    areaQueryParams(defaultRadius = 1500)
+                    response { code(HttpStatusCode.OK) { body<List<VoronoiBorderSegment>>() } }
+                    unauthorizedResponse()
+                }) {
+                    if (!requireMapAuth()) return@get
+                    val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
+                    val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
+                    val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 1500
+                    val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
+                    val edges =
+                        gen?.voronoi?.computeBorderEdges(cx, cz, radius)?.map {
+                            VoronoiBorderSegment(it.x1, it.z1, it.x2, it.z2)
+                        } ?: emptyList()
+                    call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+                    call.respondText(Json.encodeToString(edges), ContentType.Application.Json)
                 }
-                val baos = ByteArrayOutputStream()
-                ImageIO.write(img, "PNG", baos)
-                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
-                call.respondBytes(baos.toByteArray(), ContentType.Image.PNG)
-            }
-
-            get("/api/map/voronoi-borders") {
-                if (!requireMapAuth()) return@get
-                val cx = call.request.queryParameters["cx"]?.toIntOrNull() ?: 0
-                val cz = call.request.queryParameters["cz"]?.toIntOrNull() ?: 0
-                val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: 1500
-                val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
-                val edges =
-                    gen?.voronoi?.computeBorderEdges(cx, cz, radius)?.map {
-                        VoronoiBorderSegment(it.x1, it.z1, it.x2, it.z2)
-                    } ?: emptyList()
-                call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
-                call.respondText(Json.encodeToString(edges), ContentType.Application.Json)
-            }
 
             get("/map") {
                 if (staticDir != null)

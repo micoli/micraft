@@ -1,5 +1,6 @@
 package org.micoli.micraft.http
 
+import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -20,37 +21,58 @@ class ChunkController(
 
     fun register(route: Route) =
         route.apply {
-            get("/api/chunks/{cx}/{cz}") {
-                if (tokenStore != null) {
-                    val header = call.request.headers[HttpHeaders.Authorization]
-                    val token = header?.removePrefix("Bearer ")?.trim()
-                    if (token == null || tokenStore.validate(token) == null) {
-                        call.respond(HttpStatusCode.Unauthorized)
-                        return@get
+            get(
+                "/api/chunks/{cx}/{cz}",
+                {
+                    description =
+                        "Binary-encoded chunk data (protocol.ServerMessage.ChunkData wire format)." +
+                            " Not a JSON API — used by the game client, not by TanStack Query hooks."
+                    request {
+                        pathParameter<Int>("cx") { description = "Chunk X coordinate" }
+                        pathParameter<Int>("cz") { description = "Chunk Z coordinate" }
                     }
+                    response {
+                        code(HttpStatusCode.OK) {
+                            body<ByteArray>() { mediaTypes(ContentType.Application.OctetStream) }
+                        }
+                        code(HttpStatusCode.Unauthorized) {
+                            description = "Missing or invalid token"
+                        }
+                        code(HttpStatusCode.BadRequest) {
+                            description = "Invalid chunk coordinates"
+                        }
+                    }
+                }) {
+                    if (tokenStore != null) {
+                        val header = call.request.headers[HttpHeaders.Authorization]
+                        val token = header?.removePrefix("Bearer ")?.trim()
+                        if (token == null || tokenStore.validate(token) == null) {
+                            call.respond(HttpStatusCode.Unauthorized)
+                            return@get
+                        }
+                    }
+                    val cx =
+                        call.parameters["cx"]?.toIntOrNull()
+                            ?: run {
+                                call.respond(HttpStatusCode.BadRequest)
+                                return@get
+                            }
+                    val cz =
+                        call.parameters["cz"]?.toIntOrNull()
+                            ?: run {
+                                call.respond(HttpStatusCode.BadRequest)
+                                return@get
+                            }
+                    val chunk = withContext(dispatcher) { world.getOrGenerate(ChunkPos(cx, cz)) }
+                    val msg =
+                        ServerMessage.ChunkData(
+                            chunk.pos,
+                            chunk.topY(),
+                            chunk.encodeWire(),
+                            chunk.encodeWireStates() ?: ByteArray(0),
+                            world.chunkEntityProtos(chunk.pos))
+                    call.respondBytes(
+                        ServerMessageCodec.encode(msg), ContentType.Application.OctetStream)
                 }
-                val cx =
-                    call.parameters["cx"]?.toIntOrNull()
-                        ?: run {
-                            call.respond(HttpStatusCode.BadRequest)
-                            return@get
-                        }
-                val cz =
-                    call.parameters["cz"]?.toIntOrNull()
-                        ?: run {
-                            call.respond(HttpStatusCode.BadRequest)
-                            return@get
-                        }
-                val chunk = withContext(dispatcher) { world.getOrGenerate(ChunkPos(cx, cz)) }
-                val msg =
-                    ServerMessage.ChunkData(
-                        chunk.pos,
-                        chunk.topY(),
-                        chunk.encodeWire(),
-                        chunk.encodeWireStates() ?: ByteArray(0),
-                        world.chunkEntityProtos(chunk.pos))
-                call.respondBytes(
-                    ServerMessageCodec.encode(msg), ContentType.Application.OctetStream)
-            }
         }
 }

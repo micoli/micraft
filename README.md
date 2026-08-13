@@ -358,7 +358,7 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | PUT | `/api/admin/scenes/{id}/dimensions` |  |
 | PUT | `/api/admin/scenes/{id}/layout` |  |
 | GET | `/api/admin/schemas/{filename}` |  |
-| GET | `/api/admin/simulation/defaults` |  |
+| GET | `/api/admin/simulation/defaults` | Defaults the world simulator admin UI prefills its editors with |
 | GET | `/api/admin/skills` |  |
 | GET | `/api/admin/status` |  |
 | GET | `/api/admin/users` |  |
@@ -380,7 +380,7 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/biomes` | Grass color per biome id, as [r, g, b] in 0..1 |
 | POST | `/api/character/create` | Create a new (non-RPG) character |
 | POST | `/api/character/rpgcreate` | Create a new RPG character (point-buy base stats + class) |
-| GET | `/api/chunks/{cx}/{cz}` |  |
+| GET | `/api/chunks/{cx}/{cz}` | Binary-encoded chunk data (protocol.ServerMessage.ChunkData wire format). Not a JSON API — used by the game client, not by TanStack Query hooks. |
 | GET | `/api/classes` | Attack ids accessible per RPG class, keyed by level |
 | GET | `/api/game-assets` | 3D game asset files discovered under resources/game-assets |
 | GET | `/api/game-assets/file/{...}` | Raw asset file bytes (glb/gltf/fbx/textures) |
@@ -389,16 +389,16 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/keybindings` | Key bindings — a player's saved bindings if ?player= is given and persistence is available, otherwise the default config |
 | GET | `/api/layout/registry` | All widgets registered for the UI layout editor |
 | GET | `/api/macros/context` | Variables available to the macro JEXL evaluation context |
-| GET | `/api/map/houses` |  |
-| GET | `/api/map/road-raster` |  |
-| GET | `/api/map/road-raster.png` |  |
-| GET | `/api/map/roads` |  |
-| GET | `/api/map/staircases` |  |
-| GET | `/api/map/state` |  |
-| GET | `/api/map/terrain` |  |
-| GET | `/api/map/terrain-raster.png` |  |
-| GET | `/api/map/voronoi` |  |
-| GET | `/api/map/voronoi-borders` |  |
+| GET | `/api/map/houses` | Generated houses within an area |
+| GET | `/api/map/road-raster` | Per-chunk road bitmask within an area |
+| GET | `/api/map/road-raster.png` | Rasterized road overlay as a PNG image |
+| GET | `/api/map/roads` | Road vertex segments within an area |
+| GET | `/api/map/staircases` | Named staircase points for the map overlay |
+| GET | `/api/map/state` | Live players, NPCs and weather zones for the map overlay |
+| GET | `/api/map/terrain` | Cached terrain summary JSON for the map overlay |
+| GET | `/api/map/terrain-raster.png` | Rasterized terrain overlay as a PNG image |
+| GET | `/api/map/voronoi` | Voronoi biome cells around a point |
+| GET | `/api/map/voronoi-borders` | Voronoi cell border segments within an area |
 | GET | `/api/player/{id}/armors` | Armor names currently equipped by a player |
 | GET | `/api/player/{id}/rpg` | A player's RPG character class |
 | POST | `/api/player/{id}/screenshots` | Upload a player screenshot (base64 PNG, optionally as a data: URI) |
