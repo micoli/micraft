@@ -2,7 +2,7 @@ import { useT } from "../../i18n";
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
-import { api } from "../../api";
+import { postApiAdminWorlds } from "../../../generated/api/requests";
 import { Icon } from "../../../primitives/Icon";
 import { ICONS } from "../../../primitives/icons";
 
@@ -23,9 +23,11 @@ export function CreateWorldForm({ onCreated }: { onCreated: () => void }) {
     onSubmit: async ({ value }) => {
       setError(null);
       const seedNum = value.seed === "" ? 42 : Number(value.seed);
-      const r = await api.worlds.create(value.name.trim(), seedNum);
-      if (r.status === 409) return setError(t("worlds.alreadyExists"));
-      if (!r.ok) return setError(t("worlds.serverError"));
+      const { error: reqError, response } = await postApiAdminWorlds({
+        body: { name: value.name.trim(), seed: seedNum },
+      });
+      if (response?.status === 409) return setError(t("worlds.alreadyExists"));
+      if (reqError) return setError(t("worlds.serverError"));
       form.reset();
       setOpen(false);
       onCreated();

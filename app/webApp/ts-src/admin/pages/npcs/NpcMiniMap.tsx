@@ -1,4 +1,4 @@
-import { NpcAdminDto } from "../../api";
+import { NpcAdminDto } from "../../apiTypes";
 import { useEffect, useRef, useState } from "react";
 import type { VoronoiCellInfo } from "../../../map/types";
 import { AttackLine, PlayerAdminDto } from "./NpcsPage";

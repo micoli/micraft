@@ -1,7 +1,7 @@
 import { useT } from "../i18n";
 import { useCallback, useEffect, useState } from "react";
 import { AnimationEntry, animationsFromBbmodel, animDisplayName, animEmoji } from "../../lib/animationHelpers";
-import { api } from "../api";
+import { getApiSkins } from "../../generated/api/requests";
 import { BbmodelAnimationViewer } from "../components/BbmodelAnimationViewer";
 import { SidebarList } from "./SidebarList";
 import { PropRow } from "../PropRow";
@@ -16,12 +16,15 @@ export function AnimationsTab() {
   const [filter, setFilter] = useState("");
 
   useEffect(() => {
-    api.skins.list().then(setSkins).catch(console.error);
+    getApiSkins({ throwOnError: true })
+      .then((r) => setSkins(r.data))
+      .catch(console.error);
   }, []);
 
   const loadBbmodel = useCallback((skin: string) => {
-    api.skins
-      .bbmodel(skin)
+    // Not an OpenAPI route (staticFiles mount) — kept as a manual fetch.
+    fetch(`/api/models/skins/${encodeURIComponent(skin)}/${encodeURIComponent(skin)}.bbmodel`)
+      .then((r) => r.json() as Promise<BbModel>)
       .then(setBbmodel)
       .catch(() => setBbmodel(null));
   }, []);

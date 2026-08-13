@@ -1,4 +1,5 @@
-import { api, StatusSnapshot } from "../../api";
+import { putApiAdminGametime } from "../../../generated/api/requests";
+import type { StatusSnapshot } from "../../apiTypes";
 import type { Translate } from "../../i18n";
 import { useLayoutEffect, useRef, useState } from "react";
 import { ticksToTime } from "./StatusPage";
@@ -24,7 +25,7 @@ export function GameTimeSetter({ snap, t }: { snap: StatusSnapshot; t: Translate
     if (isNaN(hh) || isNaN(mm)) return;
     setSaving(true);
     try {
-      await api.status.setGameTime(hh, mm);
+      await putApiAdminGametime({ body: { hour: hh, minute: mm } });
     } catch {
       /* empty */
     }

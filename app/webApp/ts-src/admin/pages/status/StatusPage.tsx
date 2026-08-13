@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { api, StatusSnapshot } from "../../api";
+import { useState } from "react";
+import { postApiAdminRestart } from "../../../generated/api/requests";
+import { useGetApiAdminStatus } from "../../../generated/api/queries";
 import { useT, type TranslationKey } from "../../i18n";
 import { GameTimeSetter } from "./GameTimeSetter";
 import { pad2 } from "./utils";
@@ -27,36 +28,15 @@ export function ticksToTime(ticks: number, ticksPerDay: number): { h: number; m:
 // ── Page ─────────────────────────────────────────────────────────────────────
 export function StatusPage() {
   const t = useT();
-  const [snap, setSnap] = useState<StatusSnapshot | null>(null);
   const [restarting, setRestarting] = useState(false);
-  const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    const poll = async () => {
-      try {
-        const s = await api.status.get();
-        if (alive) {
-          setSnap(s);
-          setErrorKey(null);
-        }
-      } catch {
-        if (alive) setErrorKey("status.unreachable");
-      }
-    };
-    poll();
-    const id = setInterval(poll, 5000);
-    return () => {
-      alive = false;
-      clearInterval(id);
-    };
-  }, []);
+  const { data: snap, isError } = useGetApiAdminStatus({}, undefined, { refetchInterval: 5000 });
+  const errorKey: TranslationKey | null = isError ? "status.unreachable" : null;
 
   const restart = async () => {
     if (!confirm(t("status.confirmRestart"))) return;
     setRestarting(true);
     try {
-      await api.status.restart();
+      await postApiAdminRestart();
     } catch {
       /* empty */
     }

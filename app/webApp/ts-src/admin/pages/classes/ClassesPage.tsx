@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { api, ClassDefinitionEntry } from "../../api";
+import { getApiAdminClasses, getApiAdminSkills } from "../../../generated/api/requests";
+import { ClassDefinitionEntry } from "../../apiTypes";
 import { useT, type TranslationKey } from "../../i18n";
 import { ProgressionCell } from "./ProgressionCell";
 
@@ -78,10 +79,10 @@ export function ClassesPage() {
   const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
 
   useEffect(() => {
-    Promise.all([api.classes.get(), api.classes.skills()])
+    Promise.all([getApiAdminClasses({ throwOnError: true }), getApiAdminSkills({ throwOnError: true })])
       .then(([c, s]) => {
-        setClasses(c);
-        setAllSkills(s);
+        setClasses(c.data);
+        setAllSkills(s.data);
       })
       .catch(() => setErrorKey("classes.failedToLoad"));
   }, []);

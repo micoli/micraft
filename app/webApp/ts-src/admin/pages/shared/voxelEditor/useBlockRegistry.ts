@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { api, type BlockInfoDto, type PlainColorDto } from "../../../api";
+import { getApiAdminBlocks, getApiAdminPlainColors } from "../../../../generated/api/requests";
+import type { BlockInfoDto, PlainColorDto } from "../../../apiTypes";
 
 // Loads the block/plain-color registries once and pushes them into both the game-bundle globals
 // (window.mc) and the WASM admin preview module — shared by the Instance and Scene editors, which
@@ -11,7 +12,10 @@ export function useBlockRegistry() {
   const [plainColors, setPlainColors] = useState<PlainColorDto[]>([]);
 
   useEffect(() => {
-    Promise.all([api.blocks.list(), api.plainColors.list()])
+    Promise.all([
+      getApiAdminBlocks({ throwOnError: true }).then((r) => r.data),
+      getApiAdminPlainColors({ throwOnError: true }).then((r) => r.data),
+    ])
       .then(([defs, colors]) => {
         const withoutAir = defs.filter((b) => b.name !== "AIR");
         setBlockDefs(withoutAir);

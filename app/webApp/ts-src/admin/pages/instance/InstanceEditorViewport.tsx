@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { api, type InstanceZoneDto } from "../../api";
+import { putApiAdminInstancesByIdLayout } from "../../../generated/api/requests";
+import type { InstanceZoneDto } from "../../apiTypes";
 import {
   useAllBlockPreviewsReady,
   useBlockDefsReady,
@@ -21,7 +22,7 @@ import { useActionError } from "../shared/voxelEditor/useActionError";
 import { makeUndoRedoController, type UndoEntryBase } from "../shared/voxelEditor/undoRedoStack";
 import { VoxelEditorSidebar } from "../shared/voxelEditor/VoxelEditorSidebar";
 import { connectEditSocket } from "../shared/voxelEditor/editSocket";
-import type { InstanceBlockDto } from "../../api";
+import type { InstanceBlockDto } from "../../apiTypes";
 
 const CHUNK_SIZE = 16;
 // How far (in chunks) around the camera target to keep block geometry loaded. Scales with
@@ -170,7 +171,13 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       return;
     }
     const timeout = setTimeout(() => {
-      api.instances.updateLayout(zone.id, clipPlanes, shortcutBar.pages).catch(console.error);
+      putApiAdminInstancesByIdLayout({
+        path: { id: zone.id },
+        // shortcutBarPages entries may be null (empty slot) — the generated schema doesn't
+        // preserve nested-array element nullability, but the wire format does.
+        body: { clipPlanes, shortcutBarPages: shortcutBar.pages as string[][] },
+        throwOnError: true,
+      }).catch(console.error);
     }, 500);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- zone.id intentionally excluded, only its identity matters via the closure

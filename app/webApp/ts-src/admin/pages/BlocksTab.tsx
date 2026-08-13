@@ -1,6 +1,7 @@
 import { useT } from "../i18n";
 import { useEffect, useState } from "react";
-import { api, BlockInfoDto } from "../api";
+import { getApiAdminBlocks } from "../../generated/api/requests";
+import { BlockInfoDto } from "../apiTypes";
 import { SidebarList } from "./SidebarList";
 import { PropRow } from "../PropRow";
 import { EmptyDetail } from "../../primitives/EmptyDetail";
@@ -12,9 +13,8 @@ export function BlocksTab() {
   const [filter, setFilter] = useState("");
 
   useEffect(() => {
-    api.blocks
-      .list()
-      .then((b) => setBlocks(b.filter((x) => x.name !== "AIR")))
+    getApiAdminBlocks({ throwOnError: true })
+      .then((r) => setBlocks(r.data.filter((x) => x.name !== "AIR")))
       .catch(console.error);
   }, []);
 

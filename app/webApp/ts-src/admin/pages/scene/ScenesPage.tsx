@@ -2,7 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
-import { api, type SceneDto } from "../../api";
+import {
+  getApiAdminScenes,
+  postApiAdminScenes,
+  putApiAdminScenesById,
+  putApiAdminScenesByIdDimensions,
+  deleteApiAdminScenesById,
+} from "../../../generated/api/requests";
+import type { SceneDto } from "../../apiTypes";
 import { SceneEditorViewport } from "./SceneEditorViewport";
 import { EmptyDetail } from "../../../primitives/EmptyDetail";
 
@@ -43,9 +50,8 @@ export function ScenesPage() {
   }, [listCollapsed]);
 
   const reload = useCallback(() => {
-    api.scenes
-      .list()
-      .then((list) => setScenes(list.sort((a, b) => a.name.localeCompare(b.name))))
+    getApiAdminScenes({ throwOnError: true })
+      .then((r) => setScenes(r.data.sort((a, b) => a.name.localeCompare(b.name))))
       .catch(console.error);
   }, []);
 
@@ -65,7 +71,11 @@ export function ScenesPage() {
       if (!selected) return;
       setRenameSubmitError(null);
       try {
-        await api.scenes.rename(selected.id, value.name.trim());
+        await putApiAdminScenesById({
+          path: { id: selected.id },
+          body: { name: value.name.trim() },
+          throwOnError: true,
+        });
         setRenaming(false);
         reload();
       } catch {
@@ -80,12 +90,15 @@ export function ScenesPage() {
       if (!selected) return;
       setResizeSubmitError(null);
       try {
-        await api.scenes.resize(
-          selected.id,
-          parseInt(value.width, 10),
-          parseInt(value.height, 10),
-          parseInt(value.depth, 10),
-        );
+        await putApiAdminScenesByIdDimensions({
+          path: { id: selected.id },
+          body: {
+            width: parseInt(value.width, 10),
+            height: parseInt(value.height, 10),
+            depth: parseInt(value.depth, 10),
+          },
+          throwOnError: true,
+        });
         setResizing(false);
         reload();
       } catch {
@@ -99,12 +112,15 @@ export function ScenesPage() {
     onSubmit: async ({ value }) => {
       setCreateSubmitError(null);
       try {
-        const scene = await api.scenes.create(
-          value.name.trim(),
-          parseInt(value.width, 10),
-          parseInt(value.height, 10),
-          parseInt(value.depth, 10),
-        );
+        const { data: scene } = await postApiAdminScenes({
+          body: {
+            name: value.name.trim(),
+            width: parseInt(value.width, 10),
+            height: parseInt(value.height, 10),
+            depth: parseInt(value.depth, 10),
+          },
+          throwOnError: true,
+        });
         setCreating(false);
         createForm.reset();
         reload();
@@ -118,8 +134,7 @@ export function ScenesPage() {
   const deleteSelected = () => {
     if (!selected) return;
     if (!confirm(`Delete scene "${selected.name}"?`)) return;
-    api.scenes
-      .delete(selected.id)
+    deleteApiAdminScenesById({ path: { id: selected.id }, throwOnError: true })
       .then(() => {
         setSelectedId(null);
         reload();

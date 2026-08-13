@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
-import { api } from "../../api";
+import { getApiAdminPlayers } from "../../../generated/api/requests";
 import { useT } from "../../i18n";
 import { PlayerDetail } from "./PlayerDetail";
 
@@ -12,8 +12,8 @@ export function PlayersPage() {
   const [selected, setSelected] = useState<string | null>(searchParams.get("p"));
 
   useEffect(() => {
-    api.players.list().then((p) => {
-      setPlayers(p.sort());
+    getApiAdminPlayers({ throwOnError: true }).then((r) => {
+      setPlayers(r.data.sort());
       setLoading(false);
     });
   }, []);

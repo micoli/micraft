@@ -1,6 +1,7 @@
 import { useT } from "../i18n";
 import { useEffect, useState } from "react";
-import { api, ItemDto } from "../api";
+import { getApiAdminItems } from "../../generated/api/requests";
+import { ItemDto } from "../apiTypes";
 import { SidebarList } from "./SidebarList";
 import { PropRow } from "../PropRow";
 import { EmptyDetail } from "../../primitives/EmptyDetail";
@@ -12,7 +13,9 @@ export function ItemsTab() {
   const [filter, setFilter] = useState("");
 
   useEffect(() => {
-    api.items.list().then(setItems).catch(console.error);
+    getApiAdminItems({ throwOnError: true })
+      .then((r) => setItems(r.data))
+      .catch(console.error);
   }, []);
 
   const entries = Object.entries(items)

@@ -1,4 +1,4 @@
-import { UserDto } from "../../api";
+import { UserDto } from "../../apiTypes";
 import { useState } from "react";
 import { useT } from "../../i18n";
 import { useForm } from "@tanstack/react-form";

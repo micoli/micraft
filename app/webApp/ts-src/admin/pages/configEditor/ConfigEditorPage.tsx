@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Editor } from "../../../primitives/Editor";
-import { api } from "../../api";
+import { getApiAdminConfigs, getApiAdminSchemasByFilename } from "../../../generated/api/requests";
 import { useT } from "../../i18n";
 
 const SCHEMA_MAP: Record<string, string> = {
@@ -31,7 +31,7 @@ export function ConfigEditorPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.configs.list().then(setFiles);
+    getApiAdminConfigs({ throwOnError: true }).then((r) => setFiles(r.data));
   }, []);
 
   const select = async (filename: string) => {
@@ -39,7 +39,12 @@ export function ConfigEditorPage() {
     setSchema(null);
     setError(null);
     try {
-      const text = await api.configs.get(filename);
+      // {filename...} is a Ktor tail parameter (can contain "/", e.g. auth/users.yaml) — the
+      // generated client's path serializer encodeURIComponents every segment, which would
+      // break that. Kept as a manual fetch.
+      const r = await fetch(`/api/admin/configs/${filename}`);
+      if (!r.ok) throw new Error();
+      const text = await r.text();
       setContent(text);
       setEditedContent(text);
     } catch {
@@ -47,9 +52,10 @@ export function ConfigEditorPage() {
     }
     const schemaFile = SCHEMA_MAP[filename];
     if (schemaFile) {
-      api.configs
-        .schema(schemaFile)
-        .then(setSchema)
+      getApiAdminSchemasByFilename({ path: { filename: schemaFile }, throwOnError: true })
+        // Server sends Content-Type: application/json, so the generated client auto-parses the
+        // body despite the OpenAPI type annotation saying `string` (it documents an opaque blob).
+        .then((r) => setSchema(r.data as unknown as object))
         .catch(() => {});
     }
   };
@@ -59,7 +65,11 @@ export function ConfigEditorPage() {
     setSaving(true);
     setError(null);
     try {
-      const r = await api.configs.save(selected, editedContent);
+      const r = await fetch(`/api/admin/configs/${selected}`, {
+        method: "PUT",
+        headers: { "Content-Type": "text/plain" },
+        body: editedContent,
+      });
       if (!r.ok) throw new Error(t("common.serverError", r.status));
       setSaved(true);
       setTimeout(() => setSaved(false), 1500);

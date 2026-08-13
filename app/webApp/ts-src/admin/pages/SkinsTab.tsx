@@ -1,6 +1,6 @@
 import { useT } from "../i18n";
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../api";
+import { getApiSkins } from "../../generated/api/requests";
 import { animationsFromBbmodel, animDisplayName, animEmoji } from "../../lib/animationHelpers";
 import { BbmodelAnimationViewer } from "../components/BbmodelAnimationViewer";
 import { SidebarList } from "./SidebarList";
@@ -16,7 +16,9 @@ export function SkinsTab() {
   const [selectedAnim, setSelectedAnim] = useState<string | null>(null);
 
   useEffect(() => {
-    api.skins.list().then(setSkins).catch(console.error);
+    getApiSkins({ throwOnError: true })
+      .then((r) => setSkins(r.data))
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -24,8 +26,9 @@ export function SkinsTab() {
       setBbmodel(null);
       return;
     }
-    api.skins
-      .bbmodel(selected)
+    // Not an OpenAPI route (staticFiles mount) — kept as a manual fetch.
+    fetch(`/api/models/skins/${encodeURIComponent(selected)}/${encodeURIComponent(selected)}.bbmodel`)
+      .then((r) => r.json() as Promise<BbModel>)
       .then(setBbmodel)
       .catch(() => setBbmodel(null));
   }, [selected]);

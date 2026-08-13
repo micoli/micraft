@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { api, NpcAdminDto } from "../../api";
+import { getApiAdminNpcs } from "../../../generated/api/requests";
+import { NpcAdminDto } from "../../apiTypes";
 import { useT } from "../../i18n";
 import { NpcDetail } from "./NpcDetail";
 import { Badge } from "../../../primitives/Badge";
@@ -66,9 +67,8 @@ export function NpcsPage() {
   }, [npcs]);
 
   const load = () => {
-    api.npcs
-      .list()
-      .then(setNpcs)
+    getApiAdminNpcs({ throwOnError: true })
+      .then((r) => setNpcs(r.data))
       .catch((e) => setError(String(e)));
   };
 

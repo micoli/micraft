@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type BlockInfoDto } from "../../../api";
+import { type BlockInfoDto } from "../../../apiTypes";
 import { type useAdminShortcutBar } from "./useAdminShortcutBar";
 import { CssBlockCube } from "../../../../game/shared/BlockPreview";
 import { BlockHoverTooltip } from "./BlockHoverTooltip";

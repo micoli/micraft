@@ -1,6 +1,13 @@
 import { type TranslationKey, useT } from "../../i18n";
 import { useEffect, useState } from "react";
-import { api, PlayerFile } from "../../api";
+import {
+  getApiAdminPlayersByName,
+  postApiAdminPlayersByNameRename,
+  putApiAdminPlayersByNamePreferences,
+  putApiAdminPlayersByNameKeybindings,
+  putApiAdminPlayersByNameRpg,
+} from "../../../generated/api/requests";
+import { PlayerFile } from "../../apiTypes";
 import { Link } from "react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../primitives/Tabs";
 import { KeybindingsTab } from "./KeybindingsTab";
@@ -26,9 +33,8 @@ export function PlayerDetail({
   useEffect(() => {
     setFile(null);
     setNewName(name);
-    api.players
-      .get(name)
-      .then(setFile)
+    getApiAdminPlayersByName({ path: { name }, throwOnError: true })
+      .then((r) => setFile(r.data))
       .catch(() => setErrorKey("players.failedToLoad"));
   }, [name]);
 
@@ -37,8 +43,11 @@ export function PlayerDetail({
       setRenaming(false);
       return;
     }
-    const r = await api.players.rename(name, newName);
-    if (r.ok) {
+    const { error } = await postApiAdminPlayersByNameRename({
+      path: { name },
+      body: { newName },
+    });
+    if (!error) {
       onRenamed(newName);
     } else {
       setRenameErr(t("players.renameFailed"));
@@ -137,8 +146,8 @@ export function PlayerDetail({
           <PreferencesTab
             file={file}
             onSave={async (prefs) => {
-              const r = await api.players.savePreferences(name, prefs);
-              if (!r.ok) throw new Error(t("common.saveFailed"));
+              const { error } = await putApiAdminPlayersByNamePreferences({ path: { name }, body: prefs });
+              if (error) throw new Error(t("common.saveFailed"));
             }}
           />
         </TabsContent>
@@ -146,8 +155,8 @@ export function PlayerDetail({
           <KeybindingsTab
             file={file}
             onSave={async (kb) => {
-              const r = await api.players.saveKeybindings(name, kb);
-              if (!r.ok) throw new Error(t("common.saveFailed"));
+              const { error } = await putApiAdminPlayersByNameKeybindings({ path: { name }, body: kb });
+              if (error) throw new Error(t("common.saveFailed"));
             }}
           />
         </TabsContent>
@@ -156,8 +165,8 @@ export function PlayerDetail({
             <RpgTab
               file={file}
               onSave={async (rpg) => {
-                const r = await api.players.saveRpg(name, rpg as Parameters<typeof api.players.saveRpg>[1]);
-                if (!r.ok) throw new Error(t("common.saveFailed"));
+                const { error } = await putApiAdminPlayersByNameRpg({ path: { name }, body: rpg });
+                if (error) throw new Error(t("common.saveFailed"));
               }}
             />
           </TabsContent>

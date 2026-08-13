@@ -1,10 +1,10 @@
-import { BaseStats, PlayerFile } from "../../api";
+import { BaseStats, PlayerFile } from "../../apiTypes";
 import { useT } from "../../i18n";
 import { useState } from "react";
 import { SaveButton } from "../../../primitives/SaveButton";
 import { StatRow } from "./StatRow";
 
-const CHARACTER_CLASSES = ["WARRIOR", "MAGE", "RANGER", "ROGUE", "CLERIC"];
+const CHARACTER_CLASSES = ["WARRIOR", "MAGE", "RANGER", "ROGUE", "CLERIC"] as const;
 function computeDerived(s: BaseStats, level: number) {
   const f = (v: number) => Math.floor((v - 10) / 2);
   return {

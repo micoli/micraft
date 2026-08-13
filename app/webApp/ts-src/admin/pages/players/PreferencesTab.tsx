@@ -1,4 +1,5 @@
-import { api, PlayerFile } from "../../api";
+import { getApiSkins } from "../../../generated/api/requests";
+import { PlayerFile } from "../../apiTypes";
 import { useT } from "../../i18n";
 import { Field } from "../../../primitives/Field";
 import { useEffect, useState } from "react";
@@ -28,9 +29,8 @@ export function PreferencesTab({
   const [availableSkins, setAvailableSkins] = useState<string[]>([]);
 
   useEffect(() => {
-    api.skins
-      .list()
-      .then(setAvailableSkins)
+    getApiSkins({ throwOnError: true })
+      .then((r) => setAvailableSkins(r.data))
       .catch(() => {});
   }, []);
 

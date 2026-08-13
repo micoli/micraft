@@ -1,6 +1,7 @@
 import { useT } from "../i18n";
 import { useEffect, useMemo, useState } from "react";
-import { api, NpcTypeDto } from "../api";
+import { getApiAdminNpcTypes } from "../../generated/api/requests";
+import { NpcTypeDto } from "../apiTypes";
 import { animationsFromBbmodel, animDisplayName, animEmoji } from "../../lib/animationHelpers";
 import { BbmodelAnimationViewer } from "../components/BbmodelAnimationViewer";
 import { SidebarList } from "./SidebarList";
@@ -15,7 +16,9 @@ export function BestiaryTab() {
   const [bbmodel, setBbmodel] = useState<BbModel | null>(null);
 
   useEffect(() => {
-    api.npcTypes.list().then(setTypes).catch(console.error);
+    getApiAdminNpcTypes({ throwOnError: true })
+      .then((r) => setTypes(r.data))
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -24,8 +27,9 @@ export function BestiaryTab() {
       return;
     }
     const skinName = selected.dto.bbmodelFile.replace(".bbmodel", "");
-    api.skins
-      .bbmodel(skinName)
+    // Not an OpenAPI route (staticFiles mount) — kept as a manual fetch.
+    fetch(`/api/models/skins/${encodeURIComponent(skinName)}/${encodeURIComponent(skinName)}.bbmodel`)
+      .then((r) => r.json() as Promise<BbModel>)
       .then(setBbmodel)
       .catch(() => setBbmodel(null));
   }, [selected]);

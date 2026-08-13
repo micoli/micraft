@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
-import { api, type ChunkPosDto, type InstanceZoneDto } from "../../api";
+import {
+  getApiAdminChunksDiscovered,
+  getApiMapTerrain,
+  postApiAdminInstances,
+  putApiAdminInstancesByIdChunks,
+} from "../../../generated/api/requests";
+import type { ChunkPosDto, ChunkTerrainInfoDto, InstanceZoneDto } from "../../apiTypes";
 
 const CHUNK_SIZE = 16;
 const BASE_SCALE = 2; // CSS px per world block at zoom=1, before the zoom transform
@@ -96,16 +102,18 @@ export function InstanceChunkPicker({
         const [cx, cz] = k.split(",").map(Number);
         return { cx, cz };
       });
-      api.instances
-        .create({ name: value.name.trim(), yMin: value.yMin, yMax: value.yMax, chunks })
-        .then(onSaved)
+      postApiAdminInstances({
+        body: { name: value.name.trim(), yMin: value.yMin, yMax: value.yMax, chunks },
+        throwOnError: true,
+      })
+        .then((r) => onSaved(r.data))
         .catch(() => setError("Failed to create zone."));
     },
   });
 
   useEffect(() => {
-    api.chunks
-      .discovered()
+    getApiAdminChunksDiscovered({ throwOnError: true })
+      .then((r) => r.data)
       .then((chunks: ChunkPosDto[]) => {
         const set = new Set(chunks.map((c) => chunkKey(c.cx, c.cz)));
         setDiscovered(set);
@@ -144,8 +152,10 @@ export function InstanceChunkPicker({
         setZoom(clampZoom(VIEWPORT_PX / (radius * CHUNK_SIZE * 2 * BASE_SCALE)));
       })
       .catch(console.error);
-    api.terrain
-      .list()
+    getApiMapTerrain({ throwOnError: true })
+      // Server sends Content-Type: application/json, so the generated client auto-parses the
+      // body despite the OpenAPI type annotation saying `string` (it documents an opaque blob).
+      .then((r) => r.data as unknown as ChunkTerrainInfoDto[])
       .then((infos) => {
         const map = new Map<string, number>();
         for (const info of infos) {
@@ -279,9 +289,12 @@ export function InstanceChunkPicker({
         const [cx, cz] = k.split(",").map(Number);
         return { cx, cz };
       });
-      api.instances
-        .updateChunks(editZone.id, chunks)
-        .then(onSaved)
+      putApiAdminInstancesByIdChunks({
+        path: { id: editZone.id },
+        body: { chunks },
+        throwOnError: true,
+      })
+        .then((r) => onSaved(r.data))
         .catch(() => setError("Failed to update zone chunks."));
       return;
     }

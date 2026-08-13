@@ -1,4 +1,4 @@
-import { NpcAdminDto } from "../../api";
+import { NpcAdminDto } from "../../apiTypes";
 import type { Translate } from "../../i18n";
 
 export function NpcDetail({ npc, t }: { npc: NpcAdminDto; t: Translate }) {

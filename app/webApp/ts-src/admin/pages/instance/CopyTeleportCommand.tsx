@@ -1,4 +1,4 @@
-import type { InstanceZoneDto } from "../../api";
+import type { InstanceZoneDto } from "../../apiTypes";
 import { useState } from "react";
 
 const CHUNK_SIZE = 16;

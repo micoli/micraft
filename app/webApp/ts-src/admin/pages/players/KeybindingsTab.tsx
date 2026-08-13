@@ -1,4 +1,4 @@
-import { PlayerFile } from "../../api";
+import { PlayerFile } from "../../apiTypes";
 import { useT } from "../../i18n";
 import { useState } from "react";
 import { SaveButton } from "../../../primitives/SaveButton";

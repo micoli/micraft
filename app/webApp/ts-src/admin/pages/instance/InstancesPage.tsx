@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
-import { api, type InstanceZoneDto } from "../../api";
+import {
+  getApiAdminInstances,
+  putApiAdminInstancesById,
+  putApiAdminInstancesByIdBounds,
+  putApiAdminInstancesByIdEnabled,
+  deleteApiAdminInstancesById,
+} from "../../../generated/api/requests";
+import type { InstanceZoneDto } from "../../apiTypes";
 import { InstanceEditorViewport } from "./InstanceEditorViewport";
 import { InstanceChunkPicker } from "./InstanceChunkPicker";
 import { CopyTeleportCommand } from "./CopyTeleportCommand";
@@ -42,9 +49,8 @@ export function InstancesPage() {
   }, [listCollapsed]);
 
   const reload = useCallback(() => {
-    api.instances
-      .list()
-      .then((list) => setInstances(list.sort((a, b) => a.name.localeCompare(b.name))))
+    getApiAdminInstances({ throwOnError: true })
+      .then((r) => setInstances((r.data ?? []).sort((a, b) => a.name.localeCompare(b.name))))
       .catch(console.error);
   }, []);
 
@@ -60,8 +66,11 @@ export function InstancesPage() {
 
   const submitRename = () => {
     if (!selected || !renameValue.trim()) return;
-    api.instances
-      .rename(selected.id, renameValue.trim())
+    putApiAdminInstancesById({
+      path: { id: selected.id },
+      body: { name: renameValue.trim() },
+      throwOnError: true,
+    })
       .then(() => {
         setRenaming(false);
         reload();
@@ -78,8 +87,11 @@ export function InstancesPage() {
       setBoundsError("yMin must be less than yMax.");
       return;
     }
-    api.instances
-      .updateBounds(selected.id, yMin, yMax)
+    putApiAdminInstancesByIdBounds({
+      path: { id: selected.id },
+      body: { yMin, yMax },
+      throwOnError: true,
+    })
       .then(() => {
         setEditingBounds(false);
         reload();
@@ -89,14 +101,19 @@ export function InstancesPage() {
 
   const toggleEnabled = () => {
     if (!selected) return;
-    api.instances.setEnabled(selected.id, !selected.enabled).then(reload).catch(console.error);
+    putApiAdminInstancesByIdEnabled({
+      path: { id: selected.id },
+      body: { enabled: !selected.enabled },
+      throwOnError: true,
+    })
+      .then(reload)
+      .catch(console.error);
   };
 
   const deleteSelected = () => {
     if (!selected) return;
     if (!confirm(`Delete instance zone "${selected.name}"?`)) return;
-    api.instances
-      .delete(selected.id)
+    deleteApiAdminInstancesById({ path: { id: selected.id }, throwOnError: true })
       .then(() => {
         setSelectedId(null);
         reload();

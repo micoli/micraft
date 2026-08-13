@@ -1,27 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
-import { api, WorldStatsDto } from "../../api";
+import { useGetApiAdminWorlds } from "../../../generated/api/queries";
 import { useT, type TranslationKey } from "../../i18n";
 import { CreateWorldForm } from "./CreateWorldForm";
 import { WorldCard } from "./WorldCard";
 
 export function WorldsPage() {
   const t = useT();
-  const [worlds, setWorlds] = useState<WorldStatsDto[] | null>(null);
-  const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
-
-  const load = useCallback(async () => {
-    try {
-      const data = await api.worlds.list();
-      setWorlds(data);
-      setErrorKey(null);
-    } catch {
-      setErrorKey("worlds.failedToLoad");
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data: worlds, isError, refetch } = useGetApiAdminWorlds();
+  const errorKey: TranslationKey | null = isError ? "worlds.failedToLoad" : null;
+  const load = () => void refetch();
 
   if (errorKey) return <p className="text-red-400 text-sm">{t(errorKey)}</p>;
 
@@ -40,7 +26,7 @@ export function WorldsPage() {
         <CreateWorldForm onCreated={load} />
       </div>
 
-      {worlds === null ? (
+      {worlds === undefined ? (
         <p className="text-[#8A99AF] text-sm animate-pulse">{t("common.loading")}</p>
       ) : worlds.length === 0 ? (
         <p className="text-[#8A99AF] text-sm">{t("worlds.none")}</p>

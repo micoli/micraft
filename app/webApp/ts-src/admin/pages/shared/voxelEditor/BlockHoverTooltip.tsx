@@ -1,4 +1,4 @@
-import { type BlockInfoDto } from "../../../api";
+import { type BlockInfoDto } from "../../../apiTypes";
 import { Block3DPreview } from "../../../../game/shared/Block3DPreview";
 
 export function BlockHoverTooltip({

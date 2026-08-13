@@ -1,8 +1,8 @@
-import { type BlockInfoDto } from "../../../api";
+import { type BlockInfoDto } from "../../../apiTypes";
 import { CssBlockCube } from "../../../../game/shared/BlockPreview";
 import { BlockHoverTooltip } from "./BlockHoverTooltip";
 
-function rgbToHex([r, g, b]: [number, number, number]): string {
+function rgbToHex([r, g, b]: number[]): string {
   return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 }
 

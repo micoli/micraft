@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { Dialog } from "../../../primitives/Dialog";
-import { api, UserDto } from "../../api";
+import {
+  getApiAuthConfig,
+  getApiAdminUsers,
+  getApiPlayersByEmailByEmail,
+  postApiAdminUsers,
+  putApiAdminUsersByEmail,
+  deleteApiAdminUsersByEmail,
+} from "../../../generated/api/requests";
+import { UserDto } from "../../apiTypes";
 import { useT } from "../../i18n";
 import { Button } from "../../../primitives/Button";
 import { UserForm } from "./UserForm";
@@ -29,19 +37,18 @@ export function UsersPage() {
   const refresh = async () => {
     setLoading(true);
     try {
-      const [configR, usersR] = await Promise.all([fetch("/api/auth/config"), fetch("/api/admin/users")]);
-      const config = (await configR.json()) as { provider: string };
-      setAuthProvider(config.provider ?? "local");
-      if (usersR.status === 503) {
+      const [configR, usersR] = await Promise.all([getApiAuthConfig(), getApiAdminUsers()]);
+      setAuthProvider(configR.data?.provider ?? "local");
+      if (usersR.response?.status === 503) {
         setUnavailable(true);
         return;
       }
-      const loadedUsers = (await usersR.json()) as UserDto[];
+      const loadedUsers = usersR.data ?? [];
       setUsers(loadedUsers);
       const entries = await Promise.all(
         loadedUsers.map(async (u) => {
-          const r = await fetch(`/api/players/by-email/${encodeURIComponent(u.email)}`);
-          const players = r.ok ? ((await r.json()) as { name: string }[]) : [];
+          const r = await getApiPlayersByEmailByEmail({ path: { email: u.email } });
+          const players = r.data ?? [];
           return [u.email, players.map((p) => p.name)] as const;
         }),
       );
@@ -56,29 +63,26 @@ export function UsersPage() {
   }, []);
 
   const handleAdd = async (u: UserDto & { password?: string }) => {
-    const r = await api.users.create({
-      email: u.email,
-      password: u.password ?? "",
-      displayName: u.displayName,
-      groups: u.groups,
+    const { response } = await postApiAdminUsers({
+      body: { email: u.email, password: u.password ?? "", displayName: u.displayName, groups: u.groups },
     });
-    if (!r.ok) throw new Error(t("common.serverError", r.status));
+    if (!response?.ok) throw new Error(t("common.serverError", response?.status ?? 0));
     await refresh();
   };
 
   const handleEdit = async (u: UserDto) => {
     if (!editUser) return;
-    const r = await api.users.update(editUser.email, {
-      displayName: u.displayName,
-      groups: u.groups,
+    const { response } = await putApiAdminUsersByEmail({
+      path: { email: editUser.email },
+      body: { displayName: u.displayName, groups: u.groups },
     });
-    if (!r.ok) throw new Error(t("common.serverError", r.status));
+    if (!response?.ok) throw new Error(t("common.serverError", response?.status ?? 0));
     await refresh();
   };
 
   const handleDelete = async () => {
     if (!deleteEmail) return;
-    await api.users.delete(deleteEmail);
+    await deleteApiAdminUsersByEmail({ path: { email: deleteEmail } });
     setDeleteEmail(null);
     await refresh();
   };

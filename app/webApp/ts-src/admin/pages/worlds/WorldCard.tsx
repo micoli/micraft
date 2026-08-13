@@ -1,4 +1,4 @@
-import { WorldStatsDto } from "../../api";
+import { WorldStatsDto } from "../../apiTypes";
 import { useI18n } from "../../i18n";
 import { Icon } from "../../../primitives/Icon";
 import { ICONS } from "../../../primitives/icons";

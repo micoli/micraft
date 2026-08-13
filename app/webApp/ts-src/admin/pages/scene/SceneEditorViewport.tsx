@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { api, type SceneDto } from "../../api";
+import { putApiAdminScenesByIdLayout } from "../../../generated/api/requests";
+import type { SceneDto } from "../../apiTypes";
 import {
   useAllBlockPreviewsReady,
   useBlockDefsReady,
@@ -21,7 +22,7 @@ import { useActionError } from "../shared/voxelEditor/useActionError";
 import { makeUndoRedoController, type UndoEntryBase } from "../shared/voxelEditor/undoRedoStack";
 import { VoxelEditorSidebar } from "../shared/voxelEditor/VoxelEditorSidebar";
 import { connectEditSocket, type BlockEditSocket } from "../shared/voxelEditor/editSocket";
-import type { SceneBlockDto } from "../../api";
+import type { SceneBlockDto } from "../../apiTypes";
 
 // Voxel-picking epsilon: nudges the picked point across the hit face along its normal before
 // flooring, so the coordinate resolves to the block on the correct side of the face — same
@@ -144,7 +145,11 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       return;
     }
     const timeout = setTimeout(() => {
-      api.scenes.updateLayout(scene.id, shortcutBar.pages).catch(console.error);
+      putApiAdminScenesByIdLayout({
+        path: { id: scene.id },
+        body: { shortcutBarPages: shortcutBar.pages as string[][] },
+        throwOnError: true,
+      }).catch(console.error);
     }, 500);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- scene.id intentionally excluded, only its identity matters via the closure
@@ -312,7 +317,10 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
 
     async function loadScene() {
       const exports = await window.webApp!;
-      const buf = await api.scenes.getBlocksRaw(scene.id);
+      // Binary payload (application/octet-stream) — not a JSON API, kept as a manual fetch.
+      const buf = await fetch(`/api/admin/scenes/${encodeURIComponent(scene.id)}/blocks/raw`).then((r) =>
+        r.arrayBuffer(),
+      );
       const { width, height, depth, blocks, states } = parseSceneRaw(buf);
       exports.mcSceneLoad(babylonScene, width, height, depth, blocks, states);
       applyClipPlanes(B!, babylonScene, clipPlanesRef.current, clipBounds, overlayMeshes, clipMeshesRef.current);

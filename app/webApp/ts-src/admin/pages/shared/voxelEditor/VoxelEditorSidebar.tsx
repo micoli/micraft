@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
-import { type BlockInfoDto, type PlainColorDto } from "../../../api";
+import { type BlockInfoDto, type PlainColorDto } from "../../../apiTypes";
 import { Block3DPreview } from "../../../../game/shared/Block3DPreview";
 import { VoxelPaletteBlock } from "./VoxelPaletteBlock";
 import { VoxelColorPicker } from "./VoxelColorPicker";

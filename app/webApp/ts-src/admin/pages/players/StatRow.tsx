@@ -1,4 +1,4 @@
-import { BaseStats } from "../../api";
+import { BaseStats } from "../../apiTypes";
 import { Dispatch, SetStateAction } from "react";
 
 export const StatRow = ({
