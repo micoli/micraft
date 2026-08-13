@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useForm, useStore } from "@tanstack/react-form";
 import { Button } from "../../primitives/Button";
 import { cn } from "../../primitives/cn";
 
@@ -65,10 +66,25 @@ interface FormProps {
 }
 
 export function CharacterCreationForm({ required, onSubmit, onCancel }: FormProps) {
-  const [name, setName] = useState("");
-  const [selectedClass, setSelectedClass] = useState("WARRIOR");
-  const [allocation, setAllocation] = useState<BaseStats>({ str: 8, dex: 8, intel: 8, wis: 8, con: 8, cha: 8 });
   const [error, setError] = useState("");
+
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      selectedClass: "WARRIOR",
+      allocation: { str: 8, dex: 8, intel: 8, wis: 8, con: 8, cha: 8 } as BaseStats,
+    },
+    onSubmit: ({ value }) => {
+      const { str, dex, intel, wis, con, cha } = value.allocation;
+      onSubmit(
+        `/createcharacter ${value.name.trim()} ${value.selectedClass} ${str} ${dex} ${intel} ${wis} ${con} ${cha}`,
+      );
+    },
+  });
+
+  const name = useStore(form.store, (s) => s.values.name);
+  const selectedClass = useStore(form.store, (s) => s.values.selectedClass);
+  const allocation = useStore(form.store, (s) => s.values.allocation);
 
   const classDef = CLASSES[selectedClass];
   const finalStats = useMemo<BaseStats>(() => {
@@ -93,10 +109,11 @@ export function CharacterCreationForm({ required, onSubmit, onCancel }: FormProp
 
   function setStat(key: StatKey, value: number) {
     const clamped = Math.max(STAT_MIN, Math.min(STAT_MAX, value));
-    const next = { ...allocation, [key]: clamped };
+    const current = form.getFieldValue("allocation");
+    const next = { ...current, [key]: clamped };
     const nextSpent = (Object.keys(next) as StatKey[]).reduce((a, k) => a + (POINT_BUY_COST[next[k]] ?? 9), 0);
     if (nextSpent <= BUDGET) {
-      setAllocation(next);
+      form.setFieldValue("allocation", next);
       setError("");
     } else {
       setError("Not enough points.");
@@ -105,8 +122,7 @@ export function CharacterCreationForm({ required, onSubmit, onCancel }: FormProp
 
   function handleSubmit() {
     if (!canSubmit) return;
-    const { str, dex, intel, wis, con, cha } = allocation;
-    onSubmit(`/createcharacter ${name.trim()} ${selectedClass} ${str} ${dex} ${intel} ${wis} ${con} ${cha}`);
+    form.handleSubmit();
   }
 
   return (
@@ -116,16 +132,21 @@ export function CharacterCreationForm({ required, onSubmit, onCancel }: FormProp
         {/* Name */}
         <div>
           <div className="text-white/50 text-xs mb-1 tracking-widest">NAME</div>
-          <input
-            className={cn(
-              "w-full bg-black/40 border rounded px-3 py-2 text-sm text-white outline-none focus:border-blue-500 transition-colors",
-              nameValid || name === "" ? "border-white/20" : "border-red-500/60",
+          <form.Field name="name">
+            {(field) => (
+              <input
+                className={cn(
+                  "w-full bg-black/40 border rounded px-3 py-2 text-sm text-white outline-none focus:border-blue-500 transition-colors",
+                  nameValid || field.state.value === "" ? "border-white/20" : "border-red-500/60",
+                )}
+                placeholder="3–24 characters"
+                value={field.state.value}
+                maxLength={24}
+                onChange={(e) => field.handleChange(e.target.value)}
+                onBlur={field.handleBlur}
+              />
             )}
-            placeholder="3–24 characters"
-            value={name}
-            maxLength={24}
-            onChange={(e) => setName(e.target.value)}
-          />
+          </form.Field>
         </div>
 
         {/* Class */}
@@ -135,7 +156,7 @@ export function CharacterCreationForm({ required, onSubmit, onCancel }: FormProp
             {Object.entries(CLASSES).map(([key, cls]) => (
               <button
                 key={key}
-                onClick={() => setSelectedClass(key)}
+                onClick={() => form.setFieldValue("selectedClass", key)}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded border text-left transition-colors",
                   selectedClass === key

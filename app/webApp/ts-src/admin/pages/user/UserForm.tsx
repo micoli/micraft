@@ -1,6 +1,7 @@
 import { UserDto } from "../../api";
 import { useState } from "react";
 import { useT } from "../../i18n";
+import { useForm } from "@tanstack/react-form";
 import { Field } from "./Field";
 import { TextInput } from "./TextInput";
 import { Button } from "../../../primitives/Button";
@@ -18,66 +19,117 @@ export function UserForm({
   isNew: boolean;
   noauth?: boolean;
 }) {
-  const [email, setEmail] = useState(initial.email ?? "");
-  const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState(initial.displayName ?? "");
-  const [groups, setGroups] = useState((initial.groups ?? []).join(", "));
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const t = useT();
+  const [error, setError] = useState<string | null>(null);
 
-  const save = async () => {
-    setSaving(true);
-    setError(null);
-    try {
-      await onSave({
-        email,
-        displayName: displayName || email,
-        groups: groups
-          .split(",")
-          .map((g) => g.trim())
-          .filter(Boolean),
-        password: isNew ? password : undefined,
-      });
-      onClose();
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : t("common.error"));
-    } finally {
-      setSaving(false);
-    }
-  };
+  const form = useForm({
+    defaultValues: {
+      email: initial.email ?? "",
+      password: "",
+      displayName: initial.displayName ?? "",
+      groups: (initial.groups ?? []).join(", "),
+    },
+    onSubmit: async ({ value }) => {
+      setError(null);
+      try {
+        await onSave({
+          email: value.email,
+          displayName: value.displayName || value.email,
+          groups: value.groups
+            .split(",")
+            .map((g) => g.trim())
+            .filter(Boolean),
+          password: isNew ? value.password : undefined,
+        });
+        onClose();
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : t("common.error"));
+      }
+    },
+  });
 
   return (
-    <div className="space-y-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        form.handleSubmit();
+      }}
+      className="space-y-4"
+    >
       {isNew && (
         <Field label={t("users.email")}>
-          <TextInput value={email} onChange={setEmail} placeholder={t("users.emailPlaceholder")} />
+          <form.Field name="email">
+            {(field) => (
+              <TextInput
+                value={field.state.value}
+                onChange={field.handleChange}
+                onBlur={field.handleBlur}
+                placeholder={t("users.emailPlaceholder")}
+              />
+            )}
+          </form.Field>
         </Field>
       )}
       {isNew && !noauth && (
         <Field label={t("users.password")}>
-          <TextInput value={password} onChange={setPassword} type="password" />
+          <form.Field name="password">
+            {(field) => (
+              <TextInput
+                value={field.state.value}
+                onChange={field.handleChange}
+                onBlur={field.handleBlur}
+                type="password"
+              />
+            )}
+          </form.Field>
         </Field>
       )}
       {!noauth && (
         <Field label={t("users.displayName")}>
-          <TextInput value={displayName} onChange={setDisplayName} placeholder={email} />
+          <form.Field name="displayName">
+            {(field) => (
+              <form.Subscribe selector={(state) => state.values.email}>
+                {(email) => (
+                  <TextInput
+                    value={field.state.value}
+                    onChange={field.handleChange}
+                    onBlur={field.handleBlur}
+                    placeholder={email}
+                  />
+                )}
+              </form.Subscribe>
+            )}
+          </form.Field>
         </Field>
       )}
       {!noauth && (
         <Field label={t("users.groupsField")}>
-          <TextInput value={groups} onChange={setGroups} placeholder={t("users.groupsPlaceholder")} />
+          <form.Field name="groups">
+            {(field) => (
+              <TextInput
+                value={field.state.value}
+                onChange={field.handleChange}
+                onBlur={field.handleBlur}
+                placeholder={t("users.groupsPlaceholder")}
+              />
+            )}
+          </form.Field>
         </Field>
       )}
       {error && <p className="text-red-400 text-xs">{error}</p>}
       <div className="flex gap-2 justify-end pt-1">
-        <Button variant="ghost" onClick={onClose}>
+        <Button variant="ghost" onClick={onClose} type="button">
           {t("common.cancel")}
         </Button>
-        <Button onClick={save} disabled={saving}>
-          {saving ? t("common.saving") : t("common.save")}
-        </Button>
+        <form.Subscribe selector={(state) => state.isSubmitting}>
+          {(isSubmitting) => (
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? t("common.saving") : t("common.save")}
+            </Button>
+          )}
+        </form.Subscribe>
       </div>
-    </div>
+    </form>
   );
 }

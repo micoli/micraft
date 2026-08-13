@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { KeyboardEvent } from "react";
+import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
 import { Input } from "../primitives/Input";
 import { Label } from "../primitives/Label";
 import { Button } from "../primitives/Button";
@@ -26,18 +28,87 @@ const SUPPORTED_LANGS: { code: string; label: string }[] = [
   { code: "fr", label: "Français" },
 ];
 
+const noneEmailSchema = z
+  .string()
+  .refine((v) => v === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "Please enter a valid email address.");
+
 export function AuthScreen() {
   const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<AuthMode>("loading");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
-  const [lang, setLang] = useState(getLastLang());
   const [serverReady, setServerReady] = useState(false);
 
   const usernameInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  const localForm = useForm({
+    defaultValues: { username: "", password: "" },
+    onSubmit: async ({ value }) => {
+      const user = value.username.trim();
+      if (!user || !value.password) return;
+      setAuthLoading(true);
+      setAuthError("");
+      try {
+        const r = await fetch("/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user, password: value.password }),
+        });
+        if (!r.ok) {
+          setAuthError("Invalid email or password.");
+          setAuthLoading(false);
+          passwordInputRef.current?.focus();
+          return;
+        }
+        const data: { token: string; displayName: string; email?: string } = await r.json();
+        storeToken(data.token);
+        storeDisplayName(data.displayName || user);
+        saveAccountEmail(data.email || user);
+        saveLastUser(data.displayName || user);
+        setAuthLoading(false);
+        navigate("/chars");
+      } catch {
+        setAuthError("Connection error. Is the server running?");
+        setAuthLoading(false);
+      }
+    },
+  });
+
+  const noneForm = useForm({
+    defaultValues: { username: "", lang: getLastLang() },
+    onSubmit: async ({ value }) => {
+      const trimmed = value.username.trim();
+      if (!trimmed) return;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+        setAuthError("Please enter a valid email address.");
+        return;
+      }
+      setAuthLoading(true);
+      setAuthError("");
+      try {
+        const r = await fetch("/auth/noauth-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: trimmed }),
+        });
+        if (!r.ok) {
+          setAuthError("Invalid email address.");
+          setAuthLoading(false);
+          return;
+        }
+      } catch {
+        setAuthError("Connection error. Is the server running?");
+        setAuthLoading(false);
+        return;
+      }
+      saveLastUser(trimmed);
+      saveAccountEmail(trimmed);
+      saveLastLang(value.lang);
+      setAuthLoading(false);
+      navigate("/chars");
+    },
+  });
 
   useEffect(() => {
     fetch("/api/auth/config")
@@ -125,71 +196,9 @@ export function AuthScreen() {
     }
   }, [authMode]);
 
-  async function doLocalLogin() {
-    const user = username.trim();
-    if (!user || !password) return;
-    setAuthLoading(true);
-    setAuthError("");
-    try {
-      const r = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user, password }),
-      });
-      if (!r.ok) {
-        setAuthError("Invalid email or password.");
-        setAuthLoading(false);
-        passwordInputRef.current?.focus();
-        return;
-      }
-      const data: { token: string; displayName: string; email?: string } = await r.json();
-      storeToken(data.token);
-      storeDisplayName(data.displayName || user);
-      saveAccountEmail(data.email || user);
-      saveLastUser(data.displayName || user);
-      setAuthLoading(false);
-      navigate("/chars");
-    } catch {
-      setAuthError("Connection error. Is the server running?");
-      setAuthLoading(false);
-    }
-  }
-
   function doOAuthLogin() {
     const returnUrl = window.location.origin + window.location.pathname;
     window.location.href = `/auth/oauth/start?returnUrl=${encodeURIComponent(returnUrl)}`;
-  }
-
-  async function handleNoneContinue() {
-    const trimmed = username.trim();
-    if (!trimmed) return;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setAuthError("Please enter a valid email address.");
-      return;
-    }
-    setAuthLoading(true);
-    setAuthError("");
-    try {
-      const r = await fetch("/auth/noauth-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmed }),
-      });
-      if (!r.ok) {
-        setAuthError("Invalid email address.");
-        setAuthLoading(false);
-        return;
-      }
-    } catch {
-      setAuthError("Connection error. Is the server running?");
-      setAuthLoading(false);
-      return;
-    }
-    saveLastUser(trimmed);
-    saveAccountEmail(trimmed);
-    saveLastLang(lang);
-    setAuthLoading(false);
-    navigate("/chars");
   }
 
   return (
@@ -215,44 +224,55 @@ export function AuthScreen() {
         )}
 
         {authMode === "local" && (
-          <div className="space-y-5">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              localForm.handleSubmit();
+            }}
+            className="space-y-5"
+          >
             <FormField>
               <Label>Email</Label>
-              <Input
-                ref={usernameInputRef}
-                type="email"
-                placeholder="your@email.com"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                  if (e.key === "Enter") passwordInputRef.current?.focus();
-                }}
-              />
+              <localForm.Field name="username">
+                {(field) => (
+                  <Input
+                    ref={usernameInputRef}
+                    type="email"
+                    placeholder="your@email.com"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        passwordInputRef.current?.focus();
+                      }
+                    }}
+                  />
+                )}
+              </localForm.Field>
             </FormField>
             <FormField>
               <Label>Password</Label>
-              <Input
-                ref={passwordInputRef}
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                  if (e.key === "Enter") void doLocalLogin();
-                }}
-              />
+              <localForm.Field name="password">
+                {(field) => (
+                  <Input
+                    ref={passwordInputRef}
+                    type="password"
+                    placeholder="••••••••"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                  />
+                )}
+              </localForm.Field>
             </FormField>
             {authError && <div className="text-red-400 text-sm">{authError}</div>}
-            <Button
-              variant="blue"
-              size="lg"
-              className="w-full"
-              onClick={() => void doLocalLogin()}
-              disabled={authLoading}
-            >
+            <Button variant="blue" size="lg" className="w-full" type="submit" disabled={authLoading}>
               {authLoading ? "Logging in…" : "Login"}
             </Button>
-          </div>
+          </form>
         )}
 
         {authMode === "oauth" && (
@@ -268,48 +288,65 @@ export function AuthScreen() {
         )}
 
         {authMode === "none" && (
-          <div className="space-y-5">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              noneForm.handleSubmit();
+            }}
+            className="space-y-5"
+          >
             <FormField>
               <Label>Email</Label>
-              <Input
-                ref={usernameInputRef}
-                type="email"
-                placeholder="your@email.com"
-                value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  setAuthError("");
-                }}
-                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                  if (e.key === "Enter" && username.trim()) void handleNoneContinue();
-                }}
-              />
+              <noneForm.Field name="username" validators={{ onChange: noneEmailSchema }}>
+                {(field) => (
+                  <Input
+                    ref={usernameInputRef}
+                    type="email"
+                    placeholder="your@email.com"
+                    value={field.state.value}
+                    onChange={(e) => {
+                      field.handleChange(e.target.value);
+                      setAuthError("");
+                    }}
+                    onBlur={field.handleBlur}
+                  />
+                )}
+              </noneForm.Field>
             </FormField>
             <FormField>
               <Label>Language</Label>
-              <select
-                value={lang}
-                onChange={(e) => setLang(e.target.value)}
-                className="w-full bg-[#111] border border-[#444] rounded px-3 py-2 text-sm text-white cursor-pointer"
-              >
-                {SUPPORTED_LANGS.map((l) => (
-                  <option key={l.code} value={l.code}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
+              <noneForm.Field name="lang">
+                {(field) => (
+                  <select
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    className="w-full bg-[#111] border border-[#444] rounded px-3 py-2 text-sm text-white cursor-pointer"
+                  >
+                    {SUPPORTED_LANGS.map((l) => (
+                      <option key={l.code} value={l.code}>
+                        {l.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </noneForm.Field>
             </FormField>
             {authError && <div className="text-red-400 text-sm">{authError}</div>}
-            <Button
-              variant="blue"
-              size="lg"
-              className="w-full"
-              onClick={() => void handleNoneContinue()}
-              disabled={!username.trim() || authLoading}
-            >
-              {authLoading ? "Connecting…" : "Continue"}
-            </Button>
-          </div>
+            <noneForm.Subscribe selector={(state) => state.values.username}>
+              {(username) => (
+                <Button
+                  variant="blue"
+                  size="lg"
+                  className="w-full"
+                  type="submit"
+                  disabled={!username.trim() || authLoading}
+                >
+                  {authLoading ? "Connecting…" : "Continue"}
+                </Button>
+              )}
+            </noneForm.Subscribe>
+          </form>
         )}
       </Panel>
     </div>

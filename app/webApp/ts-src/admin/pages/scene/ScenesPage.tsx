@@ -1,10 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
+import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
 import { api, type SceneDto } from "../../api";
 import { SceneEditorViewport } from "./SceneEditorViewport";
 import { EmptyDetail } from "../../../primitives/EmptyDetail";
 
 const LIST_COLLAPSED_STORAGE_KEY = "adminScenesListCollapsed";
+
+const nameSchema = z.string().trim().min(1, "Name is required.");
+const dimensionSchema = z.string().refine((v) => {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) && n > 0;
+}, "Width/height/depth must be positive integers.");
 
 // Mirrors InstancesPage.tsx's master/detail layout, but a Scene is a bounded, self-contained
 // X/Y/Z raw block buffer (see SceneMesher.kt) — not tied to the live world/chunk grid — so
@@ -23,18 +31,11 @@ export function ScenesPage() {
     [navigate],
   );
   const [renaming, setRenaming] = useState(false);
-  const [renameValue, setRenameValue] = useState("");
+  const [renameSubmitError, setRenameSubmitError] = useState<string | null>(null);
   const [resizing, setResizing] = useState(false);
-  const [widthValue, setWidthValue] = useState("16");
-  const [heightValue, setHeightValue] = useState("16");
-  const [depthValue, setDepthValue] = useState("16");
-  const [resizeError, setResizeError] = useState<string | null>(null);
+  const [resizeSubmitError, setResizeSubmitError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const [createName, setCreateName] = useState("");
-  const [createWidth, setCreateWidth] = useState("16");
-  const [createHeight, setCreateHeight] = useState("16");
-  const [createDepth, setCreateDepth] = useState("16");
-  const [createError, setCreateError] = useState<string | null>(null);
+  const [createSubmitError, setCreateSubmitError] = useState<string | null>(null);
   const [listCollapsed, setListCollapsed] = useState(() => localStorage.getItem(LIST_COLLAPSED_STORAGE_KEY) === "1");
 
   useEffect(() => {
@@ -58,35 +59,61 @@ export function ScenesPage() {
 
   const selected = scenes.find((s) => s.id === selectedId) ?? null;
 
-  const submitRename = () => {
-    if (!selected || !renameValue.trim()) return;
-    api.scenes
-      .rename(selected.id, renameValue.trim())
-      .then(() => {
+  const renameForm = useForm({
+    defaultValues: { name: "" },
+    onSubmit: async ({ value }) => {
+      if (!selected) return;
+      setRenameSubmitError(null);
+      try {
+        await api.scenes.rename(selected.id, value.name.trim());
         setRenaming(false);
         reload();
-      })
-      .catch(console.error);
-  };
+      } catch {
+        setRenameSubmitError("Failed to rename.");
+      }
+    },
+  });
 
-  const submitResize = () => {
-    if (!selected) return;
-    setResizeError(null);
-    const width = parseInt(widthValue, 10);
-    const height = parseInt(heightValue, 10);
-    const depth = parseInt(depthValue, 10);
-    if (![width, height, depth].every((v) => Number.isFinite(v) && v > 0)) {
-      setResizeError("Width/height/depth must be positive integers.");
-      return;
-    }
-    api.scenes
-      .resize(selected.id, width, height, depth)
-      .then(() => {
+  const resizeForm = useForm({
+    defaultValues: { width: "16", height: "16", depth: "16" },
+    onSubmit: async ({ value }) => {
+      if (!selected) return;
+      setResizeSubmitError(null);
+      try {
+        await api.scenes.resize(
+          selected.id,
+          parseInt(value.width, 10),
+          parseInt(value.height, 10),
+          parseInt(value.depth, 10),
+        );
         setResizing(false);
         reload();
-      })
-      .catch(() => setResizeError("Failed to resize."));
-  };
+      } catch {
+        setResizeSubmitError("Failed to resize.");
+      }
+    },
+  });
+
+  const createForm = useForm({
+    defaultValues: { name: "", width: "16", height: "16", depth: "16" },
+    onSubmit: async ({ value }) => {
+      setCreateSubmitError(null);
+      try {
+        const scene = await api.scenes.create(
+          value.name.trim(),
+          parseInt(value.width, 10),
+          parseInt(value.height, 10),
+          parseInt(value.depth, 10),
+        );
+        setCreating(false);
+        createForm.reset();
+        reload();
+        setSelectedId(scene.id);
+      } catch {
+        setCreateSubmitError("Failed to create scene.");
+      }
+    },
+  });
 
   const deleteSelected = () => {
     if (!selected) return;
@@ -98,31 +125,6 @@ export function ScenesPage() {
         reload();
       })
       .catch(console.error);
-  };
-
-  const submitCreate = () => {
-    setCreateError(null);
-    const name = createName.trim();
-    const width = parseInt(createWidth, 10);
-    const height = parseInt(createHeight, 10);
-    const depth = parseInt(createDepth, 10);
-    if (!name) {
-      setCreateError("Name is required.");
-      return;
-    }
-    if (![width, height, depth].every((v) => Number.isFinite(v) && v > 0)) {
-      setCreateError("Width/height/depth must be positive integers.");
-      return;
-    }
-    api.scenes
-      .create(name, width, height, depth)
-      .then((scene) => {
-        setCreating(false);
-        setCreateName("");
-        reload();
-        setSelectedId(scene.id);
-      })
-      .catch(() => setCreateError("Failed to create scene."));
   };
 
   return (
@@ -141,7 +143,7 @@ export function ScenesPage() {
               <button
                 className="text-[11px] text-[#3C50E0] hover:underline"
                 onClick={() => {
-                  setCreateError(null);
+                  setCreateSubmitError(null);
                   setCreating(true);
                 }}
               >
@@ -195,77 +197,115 @@ export function ScenesPage() {
           <>
             <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-2 border-b border-[#2E3A4E]">
               {renaming ? (
-                <div className="flex items-center gap-2 flex-1">
-                  <input
-                    autoFocus
-                    className="bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
-                    value={renameValue}
-                    onChange={(e) => setRenameValue(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && submitRename()}
-                  />
-                  <button className="text-xs text-emerald-400 hover:underline" onClick={submitRename}>
+                <form
+                  className="flex items-center gap-2 flex-1"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    renameForm.handleSubmit();
+                  }}
+                >
+                  <renameForm.Field name="name" validators={{ onChange: nameSchema }}>
+                    {(field) => (
+                      <input
+                        autoFocus
+                        className="bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                      />
+                    )}
+                  </renameForm.Field>
+                  <button type="submit" className="text-xs text-emerald-400 hover:underline">
                     Save
                   </button>
-                  <button className="text-xs text-[#8A99AF] hover:underline" onClick={() => setRenaming(false)}>
+                  <button
+                    type="button"
+                    className="text-xs text-[#8A99AF] hover:underline"
+                    onClick={() => setRenaming(false)}
+                  >
                     Cancel
                   </button>
-                </div>
+                  {renameSubmitError && <span className="text-xs text-red-400">{renameSubmitError}</span>}
+                </form>
               ) : (
                 <>
                   <h2 className="text-white font-semibold text-sm">{selected.name}</h2>
                   <div className="flex items-center gap-3">
                     {resizing ? (
-                      <div className="flex items-center gap-1">
-                        <input
-                          autoFocus
-                          type="number"
-                          min={1}
-                          className="w-14 bg-[#1A222C] border border-[#2E3A4E] rounded px-1 py-0.5 text-[11px] font-mono text-white outline-none"
-                          value={widthValue}
-                          onChange={(e) => setWidthValue(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && submitResize()}
-                        />
+                      <form
+                        className="flex items-center gap-1"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          resizeForm.handleSubmit();
+                        }}
+                      >
+                        <resizeForm.Field name="width" validators={{ onChange: dimensionSchema }}>
+                          {(field) => (
+                            <input
+                              autoFocus
+                              type="number"
+                              min={1}
+                              className="w-14 bg-[#1A222C] border border-[#2E3A4E] rounded px-1 py-0.5 text-[11px] font-mono text-white outline-none"
+                              value={field.state.value}
+                              onChange={(e) => field.handleChange(e.target.value)}
+                              onBlur={field.handleBlur}
+                            />
+                          )}
+                        </resizeForm.Field>
                         <span className="text-[11px] text-[#8A99AF] font-mono">×</span>
-                        <input
-                          type="number"
-                          min={1}
-                          className="w-14 bg-[#1A222C] border border-[#2E3A4E] rounded px-1 py-0.5 text-[11px] font-mono text-white outline-none"
-                          value={heightValue}
-                          onChange={(e) => setHeightValue(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && submitResize()}
-                        />
+                        <resizeForm.Field name="height" validators={{ onChange: dimensionSchema }}>
+                          {(field) => (
+                            <input
+                              type="number"
+                              min={1}
+                              className="w-14 bg-[#1A222C] border border-[#2E3A4E] rounded px-1 py-0.5 text-[11px] font-mono text-white outline-none"
+                              value={field.state.value}
+                              onChange={(e) => field.handleChange(e.target.value)}
+                              onBlur={field.handleBlur}
+                            />
+                          )}
+                        </resizeForm.Field>
                         <span className="text-[11px] text-[#8A99AF] font-mono">×</span>
-                        <input
-                          type="number"
-                          min={1}
-                          className="w-14 bg-[#1A222C] border border-[#2E3A4E] rounded px-1 py-0.5 text-[11px] font-mono text-white outline-none"
-                          value={depthValue}
-                          onChange={(e) => setDepthValue(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && submitResize()}
-                        />
-                        <button className="text-xs text-emerald-400 hover:underline" onClick={submitResize}>
+                        <resizeForm.Field name="depth" validators={{ onChange: dimensionSchema }}>
+                          {(field) => (
+                            <input
+                              type="number"
+                              min={1}
+                              className="w-14 bg-[#1A222C] border border-[#2E3A4E] rounded px-1 py-0.5 text-[11px] font-mono text-white outline-none"
+                              value={field.state.value}
+                              onChange={(e) => field.handleChange(e.target.value)}
+                              onBlur={field.handleBlur}
+                            />
+                          )}
+                        </resizeForm.Field>
+                        <button type="submit" className="text-xs text-emerald-400 hover:underline">
                           Save
                         </button>
                         <button
+                          type="button"
                           className="text-xs text-[#8A99AF] hover:underline"
                           onClick={() => {
                             setResizing(false);
-                            setResizeError(null);
+                            setResizeSubmitError(null);
                           }}
                         >
                           Cancel
                         </button>
-                        {resizeError && <span className="text-xs text-red-400">{resizeError}</span>}
-                      </div>
+                        {resizeSubmitError && <span className="text-xs text-red-400">{resizeSubmitError}</span>}
+                      </form>
                     ) : (
                       <button
                         className="text-[11px] text-[#8A99AF] font-mono hover:text-white"
                         title="Resize (overlapping region preserved, rest becomes air)"
                         onClick={() => {
-                          setWidthValue(String(selected.width));
-                          setHeightValue(String(selected.height));
-                          setDepthValue(String(selected.depth));
-                          setResizeError(null);
+                          resizeForm.reset({
+                            width: String(selected.width),
+                            height: String(selected.height),
+                            depth: String(selected.depth),
+                          });
+                          setResizeSubmitError(null);
                           setResizing(true);
                         }}
                       >
@@ -275,7 +315,8 @@ export function ScenesPage() {
                     <button
                       className="text-xs text-[#8A99AF] hover:text-white"
                       onClick={() => {
-                        setRenameValue(selected.name);
+                        renameForm.reset({ name: selected.name });
+                        setRenameSubmitError(null);
                         setRenaming(true);
                       }}
                     >
@@ -299,63 +340,91 @@ export function ScenesPage() {
 
       {creating && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-[#1C2434] border border-[#2E3A4E] rounded-lg p-4 w-80 flex flex-col gap-3">
+          <form
+            className="bg-[#1C2434] border border-[#2E3A4E] rounded-lg p-4 w-80 flex flex-col gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              createForm.handleSubmit();
+            }}
+          >
             <h3 className="text-white text-sm font-semibold">New scene</h3>
-            <label className="flex flex-col gap-1 text-xs text-[#8A99AF]">
-              Name
-              <input
-                autoFocus
-                className="bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
-                value={createName}
-                onChange={(e) => setCreateName(e.target.value)}
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
-              Width
-              <input
-                type="number"
-                min={1}
-                className="bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
-                value={createWidth}
-                onChange={(e) => setCreateWidth(e.target.value)}
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
-              Height
-              <input
-                type="number"
-                min={1}
-                className="bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
-                value={createHeight}
-                onChange={(e) => setCreateHeight(e.target.value)}
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
-              Depth
-              <input
-                type="number"
-                min={1}
-                className="bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
-                value={createDepth}
-                onChange={(e) => setCreateDepth(e.target.value)}
-              />
-            </label>
-            {createError && <span className="text-xs text-red-400">{createError}</span>}
+            <createForm.Field name="name" validators={{ onChange: nameSchema }}>
+              {(field) => (
+                <label className="flex flex-col gap-1 text-xs text-[#8A99AF]">
+                  Name
+                  <input
+                    autoFocus
+                    className="bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                  />
+                </label>
+              )}
+            </createForm.Field>
+            <createForm.Field name="width" validators={{ onChange: dimensionSchema }}>
+              {(field) => (
+                <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
+                  Width
+                  <input
+                    type="number"
+                    min={1}
+                    className="bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                  />
+                </label>
+              )}
+            </createForm.Field>
+            <createForm.Field name="height" validators={{ onChange: dimensionSchema }}>
+              {(field) => (
+                <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
+                  Height
+                  <input
+                    type="number"
+                    min={1}
+                    className="bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                  />
+                </label>
+              )}
+            </createForm.Field>
+            <createForm.Field name="depth" validators={{ onChange: dimensionSchema }}>
+              {(field) => (
+                <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
+                  Depth
+                  <input
+                    type="number"
+                    min={1}
+                    className="bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                  />
+                </label>
+              )}
+            </createForm.Field>
+            {createSubmitError && <span className="text-xs text-red-400">{createSubmitError}</span>}
             <div className="flex justify-end gap-2 mt-1">
               <button
+                type="button"
                 className="text-xs text-[#8A99AF] hover:text-white px-3 py-1.5"
                 onClick={() => setCreating(false)}
               >
                 Cancel
               </button>
               <button
+                type="submit"
                 className="text-xs bg-[#3C50E0] text-white rounded px-3 py-1.5 hover:bg-[#3C50E0]/80"
-                onClick={submitCreate}
               >
                 Create
               </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
     </div>

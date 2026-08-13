@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
 import { api, type ChunkPosDto, type InstanceZoneDto } from "../../api";
 
 const CHUNK_SIZE = 16;
@@ -8,6 +10,8 @@ const MAX_VIEW_RADIUS_CHUNKS = 220; // cap so the raster PNG stays a sane size
 const VIEWPORT_PX = 520; // fixed on-screen size of the picker viewport
 const MIN_ZOOM = 0.02;
 const MAX_ZOOM = 6;
+
+const nameSchema = z.string().trim().min(1, "Name is required.");
 
 function chunkKey(cx: number, cz: number): string {
   return `${cx},${cz}`;
@@ -69,9 +73,6 @@ export function InstanceChunkPicker({
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set((editZone?.chunks ?? []).map((c) => chunkKey(c.cx, c.cz))),
   );
-  const [name, setName] = useState(editZone?.name ?? "");
-  const [yMin, setYMin] = useState(editZone?.yMin ?? 0);
-  const [yMax, setYMax] = useState(editZone?.yMax ?? 160);
   const [error, setError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -83,6 +84,24 @@ export function InstanceChunkPicker({
     null,
   );
   const viewportRef = useRef<HTMLDivElement>(null);
+
+  const createForm = useForm({
+    defaultValues: {
+      name: editZone?.name ?? "",
+      yMin: editZone?.yMin ?? 0,
+      yMax: editZone?.yMax ?? 160,
+    },
+    onSubmit: async ({ value }) => {
+      const chunks = Array.from(selected).map((k) => {
+        const [cx, cz] = k.split(",").map(Number);
+        return { cx, cz };
+      });
+      api.instances
+        .create({ name: value.name.trim(), yMin: value.yMin, yMax: value.yMax, chunks })
+        .then(onSaved)
+        .catch(() => setError("Failed to create zone."));
+    },
+  });
 
   useEffect(() => {
     api.chunks
@@ -148,8 +167,9 @@ export function InstanceChunkPicker({
       .map((k) => heightByChunk.get(k))
       .filter((h): h is number => h != null);
     if (heights.length === 0) return;
-    setYMin(Math.min(...heights) - 5);
-    setYMax(Math.max(...heights) + 20);
+    createForm.setFieldValue("yMin", Math.min(...heights) - 5);
+    createForm.setFieldValue("yMax", Math.max(...heights) + 20);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- createForm identity is stable across renders
   }, [selected, heightByChunk, editZone]);
 
   const radiusBlocks = radiusChunks * CHUNK_SIZE;
@@ -254,23 +274,18 @@ export function InstanceChunkPicker({
     setError(null);
     if (selected.size === 0) return setError("Select at least one chunk.");
     if (!isContiguous(selected)) return setError("Selected chunks must be contiguous (no separate groups).");
-    const chunks = Array.from(selected).map((k) => {
-      const [cx, cz] = k.split(",").map(Number);
-      return { cx, cz };
-    });
     if (editZone) {
+      const chunks = Array.from(selected).map((k) => {
+        const [cx, cz] = k.split(",").map(Number);
+        return { cx, cz };
+      });
       api.instances
         .updateChunks(editZone.id, chunks)
         .then(onSaved)
         .catch(() => setError("Failed to update zone chunks."));
       return;
     }
-    if (!name.trim()) return setError("Name is required.");
-    if (yMin >= yMax) return setError("yMin must be less than yMax.");
-    api.instances
-      .create({ name: name.trim(), yMin, yMax, chunks })
-      .then(onSaved)
-      .catch(() => setError("Failed to create zone."));
+    createForm.handleSubmit();
   };
 
   return (
@@ -372,35 +387,64 @@ export function InstanceChunkPicker({
           </h2>
           {!editZone && (
             <>
-              <label className="flex flex-col gap-1 text-xs text-[#8A99AF]">
-                Name
-                <input
-                  className="bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </label>
+              <createForm.Field name="name" validators={{ onChange: nameSchema }}>
+                {(field) => (
+                  <label className="flex flex-col gap-1 text-xs text-[#8A99AF]">
+                    Name
+                    <input
+                      className="bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                  </label>
+                )}
+              </createForm.Field>
               <div className="flex gap-2">
-                <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
-                  yMin
-                  <input
-                    type="number"
-                    className="bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
-                    value={yMin}
-                    onChange={(e) => setYMin(parseInt(e.target.value, 10) || 0)}
-                  />
-                </label>
+                <createForm.Field
+                  name="yMin"
+                  validators={{
+                    onChangeListenTo: ["yMax"],
+                    onChange: ({ value, fieldApi }) =>
+                      value >= fieldApi.form.getFieldValue("yMax") ? "yMin must be less than yMax." : undefined,
+                  }}
+                >
+                  {(field) => (
+                    <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
+                      yMin
+                      <input
+                        type="number"
+                        className="bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(parseInt(e.target.value, 10) || 0)}
+                        onBlur={field.handleBlur}
+                      />
+                    </label>
+                  )}
+                </createForm.Field>
               </div>
               <div className="flex gap-2">
-                <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
-                  yMax
-                  <input
-                    type="number"
-                    className="bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
-                    value={yMax}
-                    onChange={(e) => setYMax(parseInt(e.target.value, 10) || 0)}
-                  />
-                </label>
+                <createForm.Field
+                  name="yMax"
+                  validators={{
+                    onChangeListenTo: ["yMin"],
+                    onChange: ({ value, fieldApi }) =>
+                      value <= fieldApi.form.getFieldValue("yMin") ? "yMin must be less than yMax." : undefined,
+                  }}
+                >
+                  {(field) => (
+                    <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
+                      yMax
+                      <input
+                        type="number"
+                        className="bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(parseInt(e.target.value, 10) || 0)}
+                        onBlur={field.handleBlur}
+                      />
+                    </label>
+                  )}
+                </createForm.Field>
               </div>
               <p className="text-[10px] text-[#8A99AF] -mt-2">
                 yMin/yMax must cover the terrain surface height at this location, or the zone won&apos;t trigger

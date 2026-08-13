@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useForm } from "@tanstack/react-form";
 import { Dialog } from "../../primitives/Dialog";
 import { DialogContent } from "../../primitives/DialogContent";
 import { DialogTitle } from "../../primitives/DialogTitle";
@@ -50,17 +51,40 @@ export function MailboxOverlay({ open, mails, inventory, itemMeta, wallet = 0, o
   const [playerNames, setPlayerNames] = useState<string[]>([]);
   const [claimedIds, setClaimedIds] = useState<Set<string>>(new Set());
 
-  // Compose state
-  const [to, setTo] = useState("");
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
+  // Compose state — attachments/suggestions stay outside the form: attachments are populated by
+  // pointer drag-drop from the inventory panel, not typed input, and suggestions are a derived
+  // autocomplete list, not submitted field data.
   const [attachments, setAttachments] = useState<AttachmentSlot[]>([]);
-  const [copperAmount, setCopperAmount] = useState(0);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestionIdx, setSuggestionIdx] = useState(-1);
   const [invFilter, setInvFilter] = useState("");
   const toRef = useRef<HTMLInputElement>(null);
+
+  const composeForm = useForm({
+    defaultValues: { to: "", subject: "", body: "", copperAmount: 0 },
+    onSubmit: ({ value }) => {
+      const toTrimmed = value.to.trim();
+      if (!toTrimmed || !value.subject.trim()) return;
+      const attachMap: Record<string, number> = {};
+      for (const a of attachments) {
+        if (a.itemType && a.count > 0) {
+          attachMap[a.itemType] = (attachMap[a.itemType] ?? 0) + a.count;
+        }
+      }
+      sendEvent(
+        "mail_send",
+        JSON.stringify({
+          to: toTrimmed,
+          subject: value.subject.trim(),
+          body: value.body,
+          attachments: attachMap,
+          copperAmount: value.copperAmount,
+        }),
+      );
+      setView("inbox");
+    },
+  });
 
   useEffect(() => {
     if (open && view === "compose" && playerNames.length === 0) {
@@ -85,30 +109,11 @@ export function MailboxOverlay({ open, mails, inventory, itemMeta, wallet = 0, o
   }
 
   function openCompose() {
-    setTo("");
-    setSubject("");
-    setBody("");
+    composeForm.reset();
     setAttachments([]);
-    setCopperAmount(0);
     setInvFilter("");
     setView("compose");
     setTimeout(() => toRef.current?.focus(), 50);
-  }
-
-  function handleSend() {
-    const toTrimmed = to.trim();
-    if (!toTrimmed || !subject.trim()) return;
-    const attachMap: Record<string, number> = {};
-    for (const a of attachments) {
-      if (a.itemType && a.count > 0) {
-        attachMap[a.itemType] = (attachMap[a.itemType] ?? 0) + a.count;
-      }
-    }
-    sendEvent(
-      "mail_send",
-      JSON.stringify({ to: toTrimmed, subject: subject.trim(), body, attachments: attachMap, copperAmount }),
-    );
-    setView("inbox");
   }
 
   function handleDelete(mail: MailData) {
@@ -122,8 +127,7 @@ export function MailboxOverlay({ open, mails, inventory, itemMeta, wallet = 0, o
     setClaimedIds((prev) => new Set(prev).add(mail.id));
   }
 
-  function handleToInput(val: string) {
-    setTo(val);
+  function updateSuggestions(val: string) {
     setSuggestionIdx(-1);
     if (val.length >= 1) {
       const filtered = playerNames.filter((n) => n.toLowerCase().includes(val.toLowerCase()));
@@ -135,7 +139,7 @@ export function MailboxOverlay({ open, mails, inventory, itemMeta, wallet = 0, o
   }
 
   function pickSuggestion(name: string) {
-    setTo(name);
+    composeForm.setFieldValue("to", name);
     setShowSuggestions(false);
     setSuggestionIdx(-1);
   }
@@ -360,17 +364,29 @@ export function MailboxOverlay({ open, mails, inventory, itemMeta, wallet = 0, o
             {/* Left: compose form */}
             <div className="flex-1 flex flex-col overflow-hidden p-5 gap-3 min-w-0">
               <div className="relative">
-                <Input
-                  ref={toRef}
-                  placeholder="To (player name)"
-                  value={to}
-                  onChange={(e) => handleToInput(e.target.value)}
-                  onKeyDown={handleToKeyDown}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                  onFocus={() => to.length >= 1 && suggestions.length > 0 && setShowSuggestions(true)}
-                  className="font-mono text-sm"
-                  autoComplete="off"
-                />
+                <composeForm.Field name="to">
+                  {(field) => (
+                    <Input
+                      ref={toRef}
+                      placeholder="To (player name)"
+                      value={field.state.value}
+                      onChange={(e) => {
+                        field.handleChange(e.target.value);
+                        updateSuggestions(e.target.value);
+                      }}
+                      onKeyDown={handleToKeyDown}
+                      onBlur={() => {
+                        field.handleBlur();
+                        setTimeout(() => setShowSuggestions(false), 150);
+                      }}
+                      onFocus={() =>
+                        field.state.value.length >= 1 && suggestions.length > 0 && setShowSuggestions(true)
+                      }
+                      className="font-mono text-sm"
+                      autoComplete="off"
+                    />
+                  )}
+                </composeForm.Field>
                 {showSuggestions && (
                   <div className="absolute top-full left-0 right-0 z-10 bg-black/90 border border-white/20 rounded mt-1 max-h-40 overflow-y-auto">
                     {suggestions.map((name, i) => (
@@ -386,20 +402,30 @@ export function MailboxOverlay({ open, mails, inventory, itemMeta, wallet = 0, o
                   </div>
                 )}
               </div>
-              <Input
-                placeholder="Subject"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                maxLength={120}
-                className="font-mono text-sm"
-              />
-              <textarea
-                placeholder="Message…"
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                maxLength={4000}
-                className="flex-1 bg-[#111] border border-[#555] rounded text-[#eee] font-mono text-sm p-3 outline-none focus:border-[#888] resize-none min-h-[120px]"
-              />
+              <composeForm.Field name="subject">
+                {(field) => (
+                  <Input
+                    placeholder="Subject"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    maxLength={120}
+                    className="font-mono text-sm"
+                  />
+                )}
+              </composeForm.Field>
+              <composeForm.Field name="body">
+                {(field) => (
+                  <textarea
+                    placeholder="Message…"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    maxLength={4000}
+                    className="flex-1 bg-[#111] border border-[#555] rounded text-[#eee] font-mono text-sm p-3 outline-none focus:border-[#888] resize-none min-h-[120px]"
+                  />
+                )}
+              </composeForm.Field>
               {/* Attachment slots */}
               <div>
                 <div className="text-xs text-white/40 font-mono mb-2">
@@ -447,33 +473,46 @@ export function MailboxOverlay({ open, mails, inventory, itemMeta, wallet = 0, o
               {/* Copper */}
               <div className="flex items-center gap-2">
                 <span className="text-xs text-white/40 font-mono">💰 Copper</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={wallet}
-                  value={copperAmount || ""}
-                  placeholder="0"
-                  onChange={(e) => setCopperAmount(Math.max(0, Math.min(wallet, parseInt(e.target.value) || 0)))}
-                  className="w-24 bg-black/40 border border-white/20 text-white/80 font-mono text-xs rounded px-2 py-1 text-center focus:outline-none focus:border-white/50"
-                  onKeyDown={(e) => e.stopPropagation()}
-                />
-                {copperAmount > 0 && (
-                  <span className="text-xs text-yellow-300 font-mono">{formatCopper(copperAmount)}</span>
-                )}
+                <composeForm.Field name="copperAmount">
+                  {(field) => (
+                    <input
+                      type="number"
+                      min={0}
+                      max={wallet}
+                      value={field.state.value || ""}
+                      placeholder="0"
+                      onChange={(e) => field.handleChange(Math.max(0, Math.min(wallet, parseInt(e.target.value) || 0)))}
+                      onBlur={field.handleBlur}
+                      className="w-24 bg-black/40 border border-white/20 text-white/80 font-mono text-xs rounded px-2 py-1 text-center focus:outline-none focus:border-white/50"
+                      onKeyDown={(e) => e.stopPropagation()}
+                    />
+                  )}
+                </composeForm.Field>
+                <composeForm.Subscribe selector={(state) => state.values.copperAmount}>
+                  {(copperAmount) =>
+                    copperAmount > 0 && (
+                      <span className="text-xs text-yellow-300 font-mono">{formatCopper(copperAmount)}</span>
+                    )
+                  }
+                </composeForm.Subscribe>
                 <span className="text-xs text-white/30 font-mono ml-auto">Disponible : {formatCopper(wallet)}</span>
               </div>
               <div className="flex justify-end gap-2 pt-1">
                 <Button variant="ghost" className="text-xs font-mono" onClick={() => setView("inbox")}>
                   Cancel
                 </Button>
-                <Button
-                  variant="primary"
-                  className="text-xs font-mono"
-                  onClick={handleSend}
-                  disabled={!to.trim() || !subject.trim()}
-                >
-                  Send ✈
-                </Button>
+                <composeForm.Subscribe selector={(state) => [state.values.to, state.values.subject] as const}>
+                  {([to, subject]) => (
+                    <Button
+                      variant="primary"
+                      className="text-xs font-mono"
+                      onClick={() => composeForm.handleSubmit()}
+                      disabled={!to.trim() || !subject.trim()}
+                    >
+                      Send ✈
+                    </Button>
+                  )}
+                </composeForm.Subscribe>
               </div>
             </div>
             {/* Right: player inventory */}

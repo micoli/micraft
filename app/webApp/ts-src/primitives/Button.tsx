@@ -8,6 +8,7 @@ export interface ButtonProps {
   size?: "sm" | "md" | "lg";
   className?: string;
   title?: string;
+  type?: "button" | "submit";
 }
 
 const VARIANT_CLASSES: Record<NonNullable<ButtonProps["variant"]>, string> = {
@@ -26,10 +27,11 @@ const SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ children, onClick, disabled, variant = "primary", size = "md", className = "", title }, ref) => {
+  ({ children, onClick, disabled, variant = "primary", size = "md", className = "", title, type = "button" }, ref) => {
     return (
       <button
         ref={ref}
+        type={type}
         onClick={onClick}
         disabled={disabled}
         title={title}
