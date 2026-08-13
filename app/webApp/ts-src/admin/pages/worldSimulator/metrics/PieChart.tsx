@@ -1,10 +1,14 @@
 import { npcColor, SimMetricBucket } from "../types";
 import type { TypedPick } from "./metrics";
 import { useMemo } from "react";
+import { defineChart } from "@tanstack/charts";
+import { pie, polar, radialArc } from "@tanstack/charts/polar";
+import { Chart } from "@tanstack/charts/react";
 
-const PIE_R = 35;
-const PIE_CX = 40;
-const PIE_CY = 45;
+interface PieSlice {
+  key: string;
+  value: number;
+}
 
 /** Donut-style pie showing totals by type over the visible window. */
 export function PieChart({ keys, buckets, pick }: { keys: string[]; buckets: SimMetricBucket[]; pick: TypedPick }) {
@@ -17,37 +21,41 @@ export function PieChart({ keys, buckets, pick }: { keys: string[]; buckets: Sim
     return map;
   }, [keys, buckets, pick]);
 
-  const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0);
-  if (grandTotal === 0) return null;
+  const slices: PieSlice[] = keys.map((key) => ({ key, value: totals[key] ?? 0 })).filter((entry) => entry.value > 0);
+  const grandTotal = slices.reduce((sum, entry) => sum + entry.value, 0);
 
-  const slices = keys
-    .map((key) => ({ key, value: totals[key] ?? 0 }))
-    .filter((e) => e.value > 0)
-    .reduce<{ key: string; value: number; start: number; end: number; sweep: number }[]>((acc, e) => {
-      const prevAngle = acc.length > 0 ? acc[acc.length - 1].end : -Math.PI / 2;
-      const sweep = (e.value / grandTotal) * 2 * Math.PI;
-      acc.push({ key: e.key, value: e.value, start: prevAngle, end: prevAngle + sweep, sweep });
-      return acc;
-    }, []);
+  const definition = useMemo(() => {
+    if (slices.length === 0) return null;
+    const pieData = pie(slices, { value: "value" });
+    return defineChart({
+      marks: [
+        polar({
+          inset: 2,
+          marks: [
+            radialArc(pieData, {
+              key: (slice) => slice.key,
+              fill: (slice) => npcColor(slice.key),
+              innerRadius: 16,
+              outerRadius: 35,
+            }),
+          ],
+        }),
+      ],
+      guides: false,
+      x: null,
+      y: null,
+      keyboard: false,
+    });
+  }, [slices]);
+
+  if (grandTotal === 0 || definition === null) return null;
 
   return (
-    <svg viewBox="0 0 80 90" className="h-[90px] w-[80px] shrink-0 rounded bg-[#0E1726]">
-      {slices.map(({ key, start, end, sweep }) => {
-        if (sweep >= 2 * Math.PI - 0.001) {
-          return <circle key={key} cx={PIE_CX} cy={PIE_CY} r={PIE_R} fill={npcColor(key)} />;
-        }
-        const x1 = PIE_CX + PIE_R * Math.cos(start);
-        const y1 = PIE_CY + PIE_R * Math.sin(start);
-        const x2 = PIE_CX + PIE_R * Math.cos(end);
-        const y2 = PIE_CY + PIE_R * Math.sin(end);
-        const large = sweep > Math.PI ? 1 : 0;
-        const d = `M ${PIE_CX} ${PIE_CY} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${PIE_R} ${PIE_R} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
-        return <path key={key} d={d} fill={npcColor(key)} />;
-      })}
-      <circle cx={PIE_CX} cy={PIE_CY} r={PIE_R * 0.45} fill="#0E1726" />
-      <text x={PIE_CX} y={PIE_CY + 3} textAnchor="middle" fill="#8A99AF" fontSize={9}>
+    <div className="relative h-[90px] w-[80px] shrink-0 overflow-hidden rounded bg-[#0E1726]">
+      <Chart definition={definition} height={90} width={80} ariaLabel="Totals by type" />
+      <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[9px] text-[#8A99AF]">
         {grandTotal}
-      </text>
-    </svg>
+      </span>
+    </div>
   );
 }

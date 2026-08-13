@@ -1,15 +1,22 @@
 import { SimMetricBucket } from "../types";
-import { BOX_H, BOX_W, maxTotal, SEGMENT_GAP, stackedColumns, stackKeys, TypedPick } from "./metrics";
-import { useMemo, useState } from "react";
-import { columnAt, dayLabel, niceMax, tooltipRows } from "./metrics";
+import { dayLabel, maxTotal, niceMax, slotIndexOf, stackedColumns, stackKeys, TypedPick } from "./metrics";
+import { useMemo } from "react";
 import { useT } from "../../../i18n";
 import { npcColor } from "../types";
-import { Hover } from "./Hover";
 import { ChartFrame } from "./ChartFrame";
 import { PieChart } from "./PieChart";
 import { LegendDot } from "./LegendDot";
-import { HoverGuide } from "./HoverGuide";
-import { HoverCard } from "./HoverCard";
+import { barY, defineChart, stack } from "@tanstack/charts";
+import { scaleBand } from "@tanstack/charts/scales/band";
+import { scaleLinear } from "@tanstack/charts/scales/linear";
+import { tooltip } from "@tanstack/charts/tooltip";
+import { Chart } from "@tanstack/charts/react";
+
+interface StackRow {
+  slot: number;
+  key: string;
+  value: number;
+}
 
 /** Stacked bars per NPC type — one column per time slice. */
 export function StackedByType({
@@ -35,26 +42,62 @@ export function StackedByType({
   const keys = useMemo(() => stackKeys(buckets, pick), [buckets, pick]);
   const columns = useMemo(() => stackedColumns(buckets, pick, keys), [buckets, pick, keys]);
   const top = niceMax(maxTotal(columns));
-  // Width comes from the window's slot count, not from how many buckets exist: that is what makes the
-  // chart slide left as it fills rather than squeezing every bar thinner over time.
-  const barWidth = BOX_W / (slots ?? Math.max(1, columns.length));
+  const slotCount = slots ?? Math.max(1, columns.length);
+  const slotIndex = useMemo(() => slotIndexOf(buckets, slots), [buckets, slots]);
+  // maps each slot back to the game day it covers, so the axis and tooltip can read a day rather
+  // than a raw column index — the slot grid is a rendering device, not something a reader should see
+  const dayBySlot = useMemo(() => {
+    const map = new Map<number, number>();
+    columns.forEach((column, i) => map.set(slotIndex[i], column.startGameDay));
+    return map;
+  }, [columns, slotIndex]);
   const latest = columns[columns.length - 1];
-  const [hover, setHover] = useState<Hover | null>(null);
 
-  // A bar can be well under a pixel wide with 240 buckets, so hovering is resolved from the pointer's
-  // position across the whole chart rather than per-rect: every x lands on a column, with no gaps
-  // between bars where the card would flicker off.
-  const onMove = (event: React.MouseEvent<SVGSVGElement>) => {
-    const box = event.currentTarget.getBoundingClientRect();
-    // resolved against the slot grid, so the empty right side of a partly-filled window reports
-    // nothing instead of clamping onto the last bar several days away
-    const index = columnAt((event.clientX - box.left) / box.width, slots ?? columns.length);
-    if (index === null) return;
-    setHover({ index, x: event.clientX - box.left, y: event.clientY - box.top });
-  };
+  const rows = useMemo<StackRow[]>(
+    () =>
+      columns.flatMap((column, i) =>
+        column.segments.map((segment) => ({
+          slot: slotIndex[i],
+          key: segment.key,
+          value: segment.to - segment.from,
+        })),
+      ),
+    [columns, slotIndex],
+  );
 
-  // the list shrinks as old buckets are dropped, so a held index can fall off the end
-  const hovered = hover ? (columns[hover.index] ?? null) : null;
+  const definition = useMemo(() => {
+    const domain = Array.from({ length: slotCount }, (_, i) => i);
+    return defineChart({
+      marks: [
+        barY(rows, {
+          x: "slot",
+          y: "value",
+          z: "key",
+          color: "key",
+          layout: stack({ order: keys }),
+          inset: 0.5,
+        }),
+      ],
+      x: {
+        scale: () => scaleBand<number>().domain(domain).padding(0.1),
+        axis: {
+          ticks: {
+            format: (value: number) => {
+              const day = dayBySlot.get(value);
+              return day === undefined ? "" : dayLabel(day, dayAbbrev);
+            },
+          },
+        },
+      },
+      y: {
+        scale: () => scaleLinear().domain([0, top]),
+        grid: true,
+      },
+      color: { domain: keys, range: keys.map((key) => npcColor(key)) },
+      focus: "group-x",
+      tooltip,
+    });
+  }, [rows, keys, top, slotCount, dayBySlot, dayAbbrev]);
 
   return (
     <ChartFrame
@@ -76,50 +119,18 @@ export function StackedByType({
         )
       }
     >
-      <svg
-        viewBox={`0 0 ${BOX_W} ${BOX_H}`}
-        preserveAspectRatio="none"
-        className="h-[90px] w-full"
-        onMouseMove={onMove}
-        onMouseLeave={() => setHover(null)}
-      >
-        <line x1={0} y1={BOX_H} x2={BOX_W} y2={BOX_H} stroke="#2E3A4E" strokeWidth={0.5} />
-        {hover && hovered && <HoverGuide x={hover.index * barWidth} width={barWidth} />}
-        {columns.map((column, i) =>
-          column.segments.map((segment) => {
-            const height = ((segment.to - segment.from) / top) * BOX_H;
-            return (
-              <rect
-                key={`${column.index}-${segment.key}`}
-                x={i * barWidth}
-                y={BOX_H - (segment.to / top) * BOX_H}
-                width={Math.max(barWidth - 0.3, 0.4)}
-                // a sliver of the surface between segments, so the boundary reads even when two
-                // neighbours are close in colour — but never at the price of hiding a thin segment
-                height={height > SEGMENT_GAP * 2 ? height - SEGMENT_GAP : height}
-                fill={npcColor(segment.key)}
-              />
-            );
-          }),
-        )}
-      </svg>
-      {hover && hovered && (
-        <HoverCard
-          x={hover.x}
-          y={hover.y}
-          title={dayLabel(hovered.startGameDay, dayAbbrev)}
-          summary={`${hovered.total} ${unit}`}
-          emptyLabel={t("sim.metrics.nothing")}
-          rows={tooltipRows(hovered).map((row) => ({
-            label: row.key,
-            color: npcColor(row.key),
-            value: row.value,
-          }))}
-        />
+      {columns.length === 0 ? (
+        <div className="flex h-[90px] items-center justify-center text-[10px] text-[#4A5568]">
+          {t("sim.metrics.nothingYet")}
+        </div>
+      ) : (
+        <Chart definition={definition} height={90} ariaLabel={title} />
       )}
       <div className="mt-0.5 flex justify-between text-[9px] text-[#4A5568]">
         <span>{columns.length > 0 ? dayLabel(columns[0].startGameDay, dayAbbrev) : "—"}</span>
-        <span>{t("sim.metrics.max", top)}</span>
+        <span>
+          {t("sim.metrics.max", top)} {unit}
+        </span>
         <span>{latest ? dayLabel(latest.startGameDay, dayAbbrev) : "—"}</span>
       </div>
     </ChartFrame>

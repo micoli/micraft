@@ -1,22 +1,17 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  COUNTER_SERIES,
   buildMetricsExport,
-  columnAt,
-  counterRowsAt,
-  counterValues,
   dayLabel,
-  linePoints,
   maxTotal,
   mergeBuckets,
   niceMax,
   pickAlive,
   pickDeaths,
   replaceBuckets,
+  slotIndexOf,
   slotsFor,
   stackKeys,
   stackedColumns,
-  tooltipRows,
   windowOf,
 } from "../admin/pages/worldSimulator/metrics/metrics";
 import {
@@ -173,25 +168,6 @@ describe("maxTotal / niceMax", () => {
   });
 });
 
-describe("counterValues / linePoints", () => {
-  it("extracts one counter across the series", () => {
-    expect(counterValues([bucket(1, { attacks: 2 }), bucket(2, { attacks: 5 })], "attacks")).toEqual([2, 5]);
-  });
-
-  it("maps values into the box with y flipped", () => {
-    expect(linePoints([0, 10], 100, 50, 10)).toBe("0,50 100,0");
-  });
-
-  it("draws a single value as a flat segment", () => {
-    // a one-point polyline renders nothing at all
-    expect(linePoints([5], 100, 50, 10)).toBe("0,25 100,25");
-  });
-
-  it("returns nothing for an empty series", () => {
-    expect(linePoints([], 100, 50, 10)).toBe("");
-  });
-});
-
 describe("slotsFor / windowOf", () => {
   it("splits a 10-day window into one slot per bucket", () => {
     expect(slotsFor(0.25, 10)).toBe(40);
@@ -225,18 +201,17 @@ describe("slotsFor / windowOf", () => {
   });
 });
 
-describe("linePoints on a slot grid", () => {
-  it("spaces points by the window's slots, not by how many exist", () => {
-    // 5 slots over 100 px = one point every 25 px, so a half-filled window stops mid-box
-    expect(linePoints([0, 0, 0], 100, 10, 1, 5)).toBe("0,10 25,10 50,10");
+describe("slotIndexOf", () => {
+  it("right-aligns buckets against a wider slot grid, so a partly-filled window slides in from the right", () => {
+    expect(slotIndexOf([bucket(1), bucket(2)], 5)).toEqual([3, 4]);
   });
 
-  it("still spans the box when the window covers the whole history", () => {
-    expect(linePoints([0, 0, 0], 100, 10, 1, null)).toBe("0,10 50,10 100,10");
+  it("fills every slot once the window is full", () => {
+    expect(slotIndexOf([bucket(1), bucket(2), bucket(3)], 3)).toEqual([0, 1, 2]);
   });
 
-  it("draws one value as a short segment rather than across the window", () => {
-    expect(linePoints([1], 100, 10, 1, 5)).toBe("0,0 25,0");
+  it("indexes from zero when showing the whole retained history", () => {
+    expect(slotIndexOf([bucket(1), bucket(2)], null)).toEqual([0, 1]);
   });
 });
 
@@ -254,76 +229,6 @@ describe("frameCapFor", () => {
     // 0 means "no population cap"; sending unlimited NPCs per frame is what floods the socket
     expect(frameCapFor(0)).toBe(MAX_NPCS_PER_FRAME_CEILING);
     expect(frameCapFor(-1)).toBe(MAX_NPCS_PER_FRAME_CEILING);
-  });
-});
-
-describe("columnAt", () => {
-  it("maps a fraction of the width to a column", () => {
-    expect(columnAt(0, 4)).toBe(0);
-    expect(columnAt(0.3, 4)).toBe(1);
-    expect(columnAt(0.99, 4)).toBe(3);
-  });
-
-  it("clamps just past either edge instead of losing the hover", () => {
-    // a pointer one pixel past the last bar should still describe that bar
-    expect(columnAt(1, 4)).toBe(3);
-    expect(columnAt(1.4, 4)).toBe(3);
-    expect(columnAt(-0.1, 4)).toBe(0);
-  });
-
-  it("has nothing to point at in an empty chart", () => {
-    expect(columnAt(0.5, 0)).toBeNull();
-  });
-});
-
-describe("tooltipRows", () => {
-  it("lists the stack items, biggest first", () => {
-    const column = stackedColumns([bucket(1, { aliveByType: { goat: 2, wolf: 9, duck: 5 } })], pickAlive, [
-      "goat",
-      "wolf",
-      "duck",
-    ])[0];
-    expect(tooltipRows(column)).toEqual([
-      { key: "wolf", value: 9 },
-      { key: "duck", value: 5 },
-      { key: "goat", value: 2 },
-    ]);
-  });
-
-  it("breaks ties by name so rows cannot swap between renders", () => {
-    const column = stackedColumns([bucket(1, { aliveByType: { wolf: 3, goat: 3 } })], pickAlive, ["wolf", "goat"])[0];
-    expect(tooltipRows(column).map((r) => r.key)).toEqual(["goat", "wolf"]);
-  });
-
-  it("is empty for a column where nothing happened", () => {
-    expect(tooltipRows(stackedColumns([bucket(1)], pickDeaths, ["goat"])[0])).toEqual([]);
-  });
-});
-
-describe("counterRowsAt", () => {
-  const series = COUNTER_SERIES.filter((s) => s.key === "attacks" || s.key === "births" || s.key === "fed");
-
-  it("lists the counters of a slice, biggest first", () => {
-    const rows = counterRowsAt(bucket(1, { attacks: 3, births: 7, fed: 1 }), series);
-    expect(rows.map((r) => [r.series.key, r.value])).toEqual([
-      ["births", 7],
-      ["attacks", 3],
-      ["fed", 1],
-    ]);
-  });
-
-  it("drops the counters at zero", () => {
-    const rows = counterRowsAt(bucket(1, { attacks: 2 }), series);
-    expect(rows.map((r) => r.series.key)).toEqual(["attacks"]);
-  });
-
-  it("only reports the series it was given, so the card matches the drawn lines", () => {
-    const rows = counterRowsAt(bucket(1, { attacks: 2, gestations: 9 }), series);
-    expect(rows.map((r) => r.series.key)).toEqual(["attacks"]);
-  });
-
-  it("has nothing to show off the end of the series", () => {
-    expect(counterRowsAt(undefined, series)).toEqual([]);
   });
 });
 

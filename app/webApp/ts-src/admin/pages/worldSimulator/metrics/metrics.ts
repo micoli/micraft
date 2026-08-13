@@ -178,81 +178,16 @@ export function niceMax(value: number): number {
   return 10 * magnitude;
 }
 
-/** Values of one counter across the series. */
-export function counterValues(buckets: readonly SimMetricBucket[], key: CounterSeries["key"]): number[] {
-  return buckets.map((bucket) => bucket[key]);
-}
-
 /**
- * Polyline points for [values] inside a [width]×[height] box, y flipped for SVG. A single value is
- * drawn as a flat segment across the box — a one-point polyline would render nothing.
- *
- * [slots] is the window's column count: passing it puts the points on the same grid as the stacked
- * bars, so a partly-filled window draws a line that stops mid-box instead of one stretched across it
- * — and the three charts stay readable against each other.
+ * Right-aligned slot index of each bucket against a [slots]-wide grid — column 0 is the oldest slot
+ * in the window. A fixed-width domain built from these indices is what makes the chart slide: a new
+ * slot appears at the right edge as the oldest leaves on the left, instead of every column shrinking
+ * as the window fills.
  */
-export function linePoints(
-  values: readonly number[],
-  width: number,
-  height: number,
-  max: number,
-  slots: number | null = null,
-): string {
-  if (values.length === 0) return "";
-  const scale = (value: number) => height - (value / max) * height;
-  const columns = slots ?? values.length;
-  if (columns <= 1) return `0,${scale(values[0])} ${width},${scale(values[0])}`;
-  const step = width / (columns - 1);
-  if (values.length === 1) return `0,${scale(values[0])} ${step},${scale(values[0])}`;
-  return values.map((value, i) => `${i * step},${scale(value)}`).join(" ");
-}
-
-/**
- * Which column the pointer is over, given its position as a 0..1 fraction of the chart width.
- *
- * Works off a fraction rather than pixels because the chart scales its viewBox to the panel: the
- * caller measures the rendered box, and this stays independent of how wide it ended up. Out-of-range
- * fractions clamp to the end columns instead of returning nothing — a pointer one pixel past the
- * last bar should still describe that bar.
- */
-export function columnAt(fraction: number, count: number): number | null {
-  if (count <= 0) return null;
-  const index = Math.floor(fraction * count);
-  return Math.min(count - 1, Math.max(0, index));
-}
-
-export interface TooltipRow {
-  key: string;
-  value: number;
-}
-
-/**
- * Stack items of one column, biggest first, zeroes dropped — what the hover card lists. The stack is
- * drawn bottom-up in [keys] order, but a reader wants the dominant type first, and a row of zeroes
- * would push the interesting ones off the card.
- */
-export function tooltipRows(column: StackedColumn): TooltipRow[] {
-  return column.segments
-    .map((segment) => ({ key: segment.key, value: segment.to - segment.from }))
-    .sort((a, b) => b.value - a.value || a.key.localeCompare(b.key));
-}
-
-/**
- * Counter series of one bucket, biggest first, zeroes dropped — the line chart's hover card. Same
- * rule as [tooltipRows]: a card padded with zeroes pushes the rows that matter out of sight.
- */
-export function counterRowsAt(
-  bucket: SimMetricBucket | undefined,
-  series: readonly CounterSeries[],
-): { series: CounterSeries; value: number }[] {
-  if (!bucket) return [];
-  return (
-    series
-      .map((entry) => ({ series: entry, value: bucket[entry.key] }))
-      .filter((row) => row.value > 0)
-      // ties broken on the key, not the rendered label: the order must not change with the locale
-      .sort((a, b) => b.value - a.value || a.series.key.localeCompare(b.series.key))
-  );
+export function slotIndexOf(buckets: readonly SimMetricBucket[], slots: number | null): number[] {
+  const width = slots ?? buckets.length;
+  const offset = width - buckets.length;
+  return buckets.map((_, i) => offset + i);
 }
 
 /**
@@ -477,9 +412,3 @@ export function buildMetricsExport(
     })),
   };
 }
-
-export const BOX_W = 300;
-export const BOX_H = 90;
-
-/** Surface showing between two stacked segments. The box is 90 units tall over 90 px, so this is px. */
-export const SEGMENT_GAP = 1.5;
