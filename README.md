@@ -19,6 +19,12 @@
 
 ## Features
 
+### URLs
+ - [Main game **/**](http://127.0.0.1:8080/)
+ - [Map **/map**](http://127.0.0.1:8080/map)
+ - [Administration **/admin/**](http://127.0.0.1:8080/admin/)
+ - [API doc **/api/docs**](http://127.0.0.1:8080/api/docs)
+
 ### World & Terrain
 
 - **Procedural generation** — Perlin noise terrain, Voronoi roads, vegetation, houses (rectangular and circular temple)
