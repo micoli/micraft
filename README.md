@@ -375,7 +375,7 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/assets/manifest` |  |
 | POST | `/api/assets/reload` |  |
 | GET | `/api/attacks` | Attack definitions, flattened by "attackId:level" key |
-| GET | `/api/auth/config` |  |
+| GET | `/api/auth/config` | Active auth provider, used by the client to pick the right login UI |
 | GET | `/api/autocomplete/{commandId}/{argIndex}` | Autocomplete suggestions for a slash command argument |
 | GET | `/api/biomes` | Grass color per biome id, as [r, g, b] in 0..1 |
 | POST | `/api/character/create` | Create a new (non-RPG) character |
@@ -404,14 +404,14 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | POST | `/api/player/{id}/screenshots` | Upload a player screenshot (base64 PNG, optionally as a data: URI) |
 | GET | `/api/player/{id}/skin` | A player's current skin |
 | PUT | `/api/player/{id}/skin` | Change a player's skin |
-| GET | `/api/players/by-email/{email}` |  |
+| GET | `/api/players/by-email/{email}` | Player characters (name + id) linked to an account email |
 | GET | `/api/players/names` | Names of all known players |
 | GET | `/api/quests` | All quest definitions |
 | GET | `/api/server/info` | Server build timestamp |
 | GET | `/api/skins` | Names of all available player skins |
 | GET | `/api/skins/{name}/config` | Skin config (eye offset, hidden bones) for a named skin |
 | GET | `/api/spells` | Spell definitions, keyed by spell id |
-| POST | `/auth/noauth-login` |  |
+| POST | `/auth/noauth-login` | Create/reuse an account by email when auth is disabled (auth.provider=none) |
 
 <!-- END_API_ROUTES -->
 

@@ -11,8 +11,38 @@ paths:
   /api/auth/config:
     get:
       tags: []
+      description: "Active auth provider, used by the client to pick the right login\
+        \ UI"
       parameters: []
-      responses: {}
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.auth.AuthConfigResponse"
+      deprecated: false
+  /auth/noauth-login:
+    post:
+      tags: []
+      description: Create/reuse an account by email when auth is disabled (auth.provider=none)
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.auth.NoAuthLoginRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.auth.NoAuthLoginResponse"
+        "400":
+          description: Missing or invalid email
+          headers: {}
       deprecated: false
   /api/assets/manifest:
     get:
@@ -306,18 +336,6 @@ paths:
       deprecated: false
   /api/admin/ws/simulation:
     get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/players/by-email/{email}:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /auth/noauth-login:
-    post:
       tags: []
       parameters: []
       responses: {}
@@ -1383,8 +1401,67 @@ paths:
           description: Invalid chunk coordinates
           headers: {}
       deprecated: false
+  /api/players/by-email/{email}:
+    get:
+      tags: []
+      description: Player characters (name + id) linked to an account email
+      parameters:
+      - name: email
+        in: path
+        description: Account email
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.PlayerByEmailEntry"
+                title: List<PlayerByEmailEntry>
+        "400":
+          description: Missing email
+          headers: {}
+      deprecated: false
 components:
   schemas:
+    org.micoli.micraft.auth.AuthConfigResponse:
+      type: object
+      properties:
+        messageEncoder:
+          type: string
+          title: String
+        provider:
+          type: string
+          title: String
+      required:
+      - messageEncoder
+      - provider
+      title: AuthConfigResponse
+    org.micoli.micraft.auth.NoAuthLoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          title: String
+      required:
+      - email
+      title: NoAuthLoginRequest
+    org.micoli.micraft.auth.NoAuthLoginResponse:
+      type: object
+      properties:
+        email:
+          type: string
+          title: String
+      required:
+      - email
+      title: NoAuthLoginResponse
     org.micoli.micraft.ui.WidgetRegistryEntry:
       type: object
       properties:
@@ -2288,5 +2365,18 @@ components:
       - npcTypes
       - tuning
       title: SimulationDefaultsDto
+    org.micoli.micraft.PlayerByEmailEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          title: String
+        name:
+          type: string
+          title: String
+      required:
+      - id
+      - name
+      title: PlayerByEmailEntry
   examples: {}
 webhooks: {}

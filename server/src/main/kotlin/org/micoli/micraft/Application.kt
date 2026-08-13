@@ -2,6 +2,7 @@ package org.micoli.micraft
 
 import io.github.smiley4.ktoropenapi.OpenApi
 import io.github.smiley4.ktoropenapi.config.OutputFormat
+import io.github.smiley4.ktoropenapi.get
 import io.github.smiley4.ktoropenapi.openApi
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -120,6 +121,8 @@ fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
         .start(wait = true)
 }
+
+@kotlinx.serialization.Serializable data class PlayerByEmailEntry(val name: String, val id: String)
 
 val dataPath = "data"
 val configDir: Path = Path.of("$dataPath/config")
@@ -369,16 +372,25 @@ fun Application.module() {
         simulationController.register(this)
         simulationController.registerWs(this)
         ChunkController(world, tokenStore, serverConfig.chunks.httpWorkers).register(this)
-        get("/api/players/by-email/{email}") {
-            val email =
-                call.parameters["email"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val players = persistence?.listPlayersByEmail(email) ?: emptyList()
-            val json =
-                players.joinToString(",", "[", "]") {
-                    """{"name":"${it.name.replace("\"", "\\\"")}","id":"${it.id}"}"""
+        get(
+            "/api/players/by-email/{email}",
+            {
+                description = "Player characters (name + id) linked to an account email"
+                request { pathParameter<String>("email") { description = "Account email" } }
+                response {
+                    code(HttpStatusCode.OK) { body<List<PlayerByEmailEntry>>() }
+                    code(HttpStatusCode.BadRequest) { description = "Missing email" }
                 }
-            call.respondText(json, ContentType.Application.Json)
-        }
+            }) {
+                val email =
+                    call.parameters["email"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                val players = persistence?.listPlayersByEmail(email) ?: emptyList()
+                val json =
+                    players.joinToString(",", "[", "]") {
+                        """{"name":"${it.name.replace("\"", "\\\"")}","id":"${it.id}"}"""
+                    }
+                call.respondText(json, ContentType.Application.Json)
+            }
         webSocket("/game") { gameLoop.onConnect(this) }
         webSocket("/chunks") { gameLoop.onChunkConnect(this) }
         servedDir?.let { dir ->

@@ -193,6 +193,9 @@ data class StatusSnapshot(
     val ticksPerDay: Long,
 )
 
+// Not OpenAPI-documented: Prometheus text format and an HTML dashboard, neither a JSON API.
+// The Application.kt pathFilter (segments not under /api or /auth) already excludes these from
+// the exported spec regardless of which routing DSL is used here.
 class MetricsController(private val gameLoop: GameLoop) {
     fun register(route: Route) =
         route.apply {
