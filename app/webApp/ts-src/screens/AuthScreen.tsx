@@ -8,6 +8,7 @@ import { Label } from "../primitives/Label";
 import { Button } from "../primitives/Button";
 import { Panel } from "../primitives/Panel";
 import { FormField } from "../primitives/FormField";
+import { getApiAuthConfig, postAuthNoauthLogin } from "../generated/api/requests";
 import {
   AuthMode,
   getStoredToken,
@@ -50,6 +51,9 @@ export function AuthScreen() {
       setAuthLoading(true);
       setAuthError("");
       try {
+        // /auth/login is only registered when auth.provider is local/oauth — not in the
+        // default (none) config the committed openapi.yaml is generated against, so it has
+        // no generated client function. Kept as a manual fetch.
         const r = await fetch("/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -87,12 +91,8 @@ export function AuthScreen() {
       setAuthLoading(true);
       setAuthError("");
       try {
-        const r = await fetch("/auth/noauth-login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: trimmed }),
-        });
-        if (!r.ok) {
+        const { error } = await postAuthNoauthLogin({ body: { email: trimmed } });
+        if (error) {
           setAuthError("Invalid email address.");
           setAuthLoading(false);
           return;
@@ -111,10 +111,9 @@ export function AuthScreen() {
   });
 
   useEffect(() => {
-    fetch("/api/auth/config")
-      .then((r) => r.json())
-      .then((d: { provider: string }) => {
-        setAuthMode((d.provider as AuthMode) || "none");
+    getApiAuthConfig()
+      .then(({ data }) => {
+        setAuthMode((data?.provider as AuthMode) || "none");
         setServerReady(true);
       })
       .catch(() => {
@@ -152,6 +151,8 @@ export function AuthScreen() {
       if (savedName) {
         navigate("/chars");
       } else {
+        // /auth/me is only registered when a token store exists (local/oauth) — same
+        // generated-client gap as /auth/login above.
         fetch("/auth/me", { headers: { Authorization: `Bearer ${saved}` } })
           .then((r) => (r.ok ? r.json() : null))
           .then((d: { displayName: string; email?: string } | null) => {
