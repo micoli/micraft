@@ -1,5 +1,6 @@
 // Per-skin first-person configuration, loaded from resources/skins/<skin>/<skin>.yaml
 // through GET /api/skins/{skin}/configEditor.
+import { getApiSkinsByNameConfig } from "../../generated/api/requests";
 
 const PX_PER_BLOCK = 16;
 
@@ -10,8 +11,8 @@ export function registerSkinConfig(): Pick<McBindings, "initSkinConfig" | "isSki
     initSkinConfig: (skin: string): void => {
       if (skin in window.mcState.skinConfigs || pending.has(skin)) return;
       pending.add(skin);
-      fetch(`/api/skins/${encodeURIComponent(skin)}/config`)
-        .then((r) => (r.ok ? (r.json() as Promise<McSkinConfig>) : null))
+      getApiSkinsByNameConfig({ path: { name: skin } })
+        .then((r) => (r.data as unknown as McSkinConfig | undefined) ?? null)
         .then((cfg) => {
           // null = skin without yaml; cached so the caller stops retrying and falls back
           // to the stance eye offset.

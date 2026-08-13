@@ -1,3 +1,5 @@
+import { getApiAssetsManifest } from "../generated/api/requests";
+
 export function registerAutoUpdate(): void {
   let bootSig: string | null = null;
   let hadSession = false;
@@ -34,7 +36,7 @@ export function registerAutoUpdate(): void {
         }
         // Had an active session — server restarted; probe until it's back then reload
         const probe = (): void => {
-          fetch("/api/assets/manifest")
+          getApiAssetsManifest()
             .then(() => window.location.reload())
             .catch(() => setTimeout(probe, 2000));
         };

@@ -81,6 +81,7 @@ export function registerNpcModel(): Pick<
 
       Promise.all(
         entries.map(([type, file]) =>
+          // /api/models is a staticFiles mount (Application.kt), not an OpenAPI route.
           fetch(`/api/models/entities/${file}/${file}.bbmodel`)
             .then((r) => r.json())
             .then((data: BbModel) => {

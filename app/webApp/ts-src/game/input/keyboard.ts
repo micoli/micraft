@@ -86,6 +86,8 @@ export function registerKeyboard(): Pick<
 > {
   return {
     loadBindings: (host: string, port: number, player: string): void => {
+      // Explicit host:port (passed in from Kotlin/Wasm) rather than same-origin — the generated
+      // client has no per-call baseUrl override wired up, so this stays a manual fetch.
       const url = player
         ? `http://${host}:${port}/api/keybindings?player=${encodeURIComponent(player)}`
         : `http://${host}:${port}/api/keybindings`;

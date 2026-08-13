@@ -12,6 +12,7 @@ const FACES = [
 
 const FRAME_INTERVAL_MS = 1000;
 
+// Fetches a block texture image, not a JSON API route — kept as a manual fetch.
 async function toObjectUrl(url: string): Promise<string> {
   const res = await fetch(url);
   const blob = await res.blob();

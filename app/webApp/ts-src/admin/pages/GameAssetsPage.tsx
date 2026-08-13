@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiGameAssets } from "../../generated/api/requests";
 import { ModelViewer } from "../components/ModelViewer";
 import { useT, type TranslationKey } from "../i18n";
 
@@ -38,9 +39,9 @@ export function GameAssetsPage() {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    fetch("/api/game-assets")
-      .then((r) => r.json())
-      .then((data: AssetEntry[]) => {
+    getApiGameAssets({ throwOnError: true })
+      .then((r) => r.data as unknown as AssetEntry[])
+      .then((data) => {
         setAssets(data);
         if (data.length > 0) {
           const packs = [...new Set(data.map((a) => a.pack))];

@@ -22,6 +22,7 @@ export function registerArmorOverlay(): Pick<
   return {
     initArmorModel: (name: string): void => {
       if (window.mcState.armorBbmodels[name]) return;
+      // /api/models is a staticFiles mount (Application.kt), not an OpenAPI route.
       fetch(`/api/models/armors/${name}/${name}.bbmodel`)
         .then((r) => r.json())
         .then((data: BbModel) => {

@@ -1,3 +1,5 @@
+import { getApiAutocompleteByCommandIdByArgIndex } from "../../generated/api/requests";
+
 function registerCompleter(cmd: string, fn: (partial: string) => string[] | Promise<string[]>): void {
   window.mcState.commandCompleters[cmd] = fn;
   if (!window.mcState.knownCommands.includes(cmd)) window.mcState.knownCommands.push(cmd);
@@ -15,11 +17,11 @@ function registerServerCompleters(commands: Array<{ id: string; command: string;
         const currentPartial = endsWithSpace ? "" : (tokens[tokens.length - 1] ?? "");
         const player = window.mcState.playerName ?? "";
         try {
-          const r = await fetch(
-            `/api/autocomplete/${cmd.id}/${argIndex}?partial=${encodeURIComponent(currentPartial)}&player=${encodeURIComponent(player)}`,
-          );
-          if (!r.ok) return [];
-          return (await r.json()) as string[];
+          const { data } = await getApiAutocompleteByCommandIdByArgIndex({
+            path: { commandId: cmd.id, argIndex },
+            query: { partial: currentPartial, player },
+          });
+          return data ?? [];
         } catch {
           return [];
         }

@@ -1,5 +1,6 @@
 import { NpcAdminDto } from "../../apiTypes";
 import { useEffect, useRef, useState } from "react";
+import { getApiMapVoronoi, getApiMapVoronoiBorders } from "../../../generated/api/requests";
 import type { VoronoiCellInfo } from "../../../map/types";
 import { AttackLine, PlayerAdminDto } from "./NpcsPage";
 export const ATTACK_LINE_TTL = 700;
@@ -146,13 +147,13 @@ export function NpcMiniMap({
   }, [attackLines.length]);
 
   useEffect(() => {
-    fetch("/api/map/voronoi?cx=0&cz=0&radius=3200")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setVoronoiCells)
+    getApiMapVoronoi({ query: { cx: 0, cz: 0, radius: 3200 } })
+      .then((r) => r.data as unknown as VoronoiCellInfo[])
+      .then((data) => setVoronoiCells(data ?? []))
       .catch(() => {});
-    fetch("/api/map/voronoi-borders?cx=0&cz=0&radius=3200")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setBorderSegs)
+    getApiMapVoronoiBorders({ query: { cx: 0, cz: 0, radius: 3200 } })
+      .then((r) => r.data)
+      .then((data) => setBorderSegs(data ?? []))
       .catch(() => {});
   }, []);
 

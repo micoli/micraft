@@ -167,6 +167,7 @@ export function registerBlockDefs(): Pick<
           return Promise.resolve();
         }
         const fileName = info.modelElement || info.name;
+        // /api/models is a staticFiles mount (Application.kt), not an OpenAPI route.
         return fetch(`/api/models/blocks/${fileName}/${fileName}.bbmodel`)
           .then((r) => r.json())
           .then((data: BlocksBbModel) => {

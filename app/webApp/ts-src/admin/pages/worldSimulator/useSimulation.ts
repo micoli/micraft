@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getApiAdminSimulationDefaults } from "../../../generated/api/requests";
 import { useT } from "../../i18n";
 import { mergeBuckets, replaceBuckets } from "./metrics/metrics";
 import {
@@ -219,12 +220,10 @@ export function useSimulation(): SimulationState {
   }, []);
 
   useEffect(() => {
-    const headers: Record<string, string> = {};
-    const token = sessionStorage.getItem("micraft-auth-token");
-    if (token) headers.Authorization = `Bearer ${token}`;
-    fetch("/api/admin/simulation/defaults", { headers })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && setDefaults(d as SimulationDefaults))
+    // Auth header is injected globally by lib/apiClient.ts's request interceptor.
+    getApiAdminSimulationDefaults()
+      .then((r) => r.data)
+      .then((d) => d && setDefaults(d as unknown as SimulationDefaults))
       .catch(() => setError(tRef.current("sim.error.defaults")));
   }, []);
 

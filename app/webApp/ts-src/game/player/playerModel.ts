@@ -244,6 +244,7 @@ export function registerPlayerModel(): Pick<
   return {
     initPlayerModel: (skin: string): void => {
       if (window.mcState.playerBbmodels[skin]) return;
+      // /api/models is a staticFiles mount (Application.kt), not an OpenAPI route.
       fetch(`/api/models/skins/${skin}/${skin}.bbmodel`)
         .then((r) => r.json())
         .then((data: BbModel) => {

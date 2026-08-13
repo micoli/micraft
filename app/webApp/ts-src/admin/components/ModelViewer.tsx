@@ -76,7 +76,8 @@ export function ModelViewer({ url, format }: Props) {
 
         const loadPromise =
           ext === ".glb"
-            ? fetch(url)
+            ? // Binary 3D asset (application/octet-stream) — not a JSON API, kept as a manual fetch.
+              fetch(url)
                 .then((r) => {
                   if (!r.ok) throw new Error(`HTTP ${r.status}`);
                   return r.arrayBuffer();

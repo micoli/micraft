@@ -29,6 +29,13 @@ import { createElement } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { configureApiClient } from "./lib/apiClient";
 import { queryClient } from "./lib/queryClient";
+import {
+  getApiServerInfo,
+  getApiBiomes,
+  getApiI18nByLocale,
+  getApiLayoutRegistry,
+  getApiAssetsManifest,
+} from "./generated/api/requests";
 
 configureApiClient();
 import { GameUI } from "./game/GameUI";
@@ -37,10 +44,10 @@ import { initFaviconAnimator, setFaviconAnimated } from "./favicon/faviconAnimat
 import { MC_BUILD_TIMESTAMP } from "./buildConfig";
 
 window.mcBuildInfo = { mcBindings: MC_BUILD_TIMESTAMP, webApp: "", wasm: "", server: "" };
-fetch("/api/server/info")
-  .then((r) => r.json())
+getApiServerInfo()
+  .then((r) => r.data)
   .then((d) => {
-    window.mcBuildInfo.server = d.buildTimestamp ?? "";
+    window.mcBuildInfo.server = d?.buildTimestamp ?? "";
   })
   .catch(() => {});
 console.log("[debug] build " + MC_BUILD_TIMESTAMP + " (mc_bindings)");
@@ -204,10 +211,9 @@ window.mc = {
   // ── Biome colors ─────────────────────────────────────────────────────────────
 
   fetchBiomeColors: () => {
-    fetch("/api/biomes")
-      .then((r) => r.json())
-      .then((data: Record<string, [number, number, number]>) => {
-        _biomeColors = data;
+    getApiBiomes({ throwOnError: true })
+      .then((r) => {
+        _biomeColors = r.data as unknown as Record<string, [number, number, number]>;
       })
       .catch(() => {});
   },
@@ -220,10 +226,9 @@ window.mc = {
   // ── i18n ──────────────────────────────────────────────────────────────────────
 
   fetchI18n: (locale: string) => {
-    fetch(`/api/i18n/${locale}`)
-      .then((r) => r.json())
-      .then((data: Record<string, string>) => {
-        _i18nTable = data;
+    getApiI18nByLocale({ path: { locale }, throwOnError: true })
+      .then((r) => {
+        _i18nTable = r.data;
         window.mcState.i18nLocale = locale;
       })
       .catch(() => {});
@@ -338,8 +343,8 @@ async function mountUI() {
   const uiRoot = document.getElementById("mc-ui");
   if (!uiRoot) return;
   try {
-    const resp = await fetch("/api/layout/registry");
-    setWidgetRegistry(await resp.json());
+    const { data } = await getApiLayoutRegistry({ throwOnError: true });
+    setWidgetRegistry(data);
   } catch {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     return mountUI();
@@ -352,7 +357,7 @@ window.addEventListener("unhandledrejection", (event) => {
   const err = event.reason;
   if (!(err instanceof TypeError) || !/WebAssembly/i.test(err.message)) return;
   const probe = (): void => {
-    fetch("/api/assets/manifest")
+    getApiAssetsManifest()
       .then(() => window.location.reload())
       .catch(() => setTimeout(probe, 2000));
   };
