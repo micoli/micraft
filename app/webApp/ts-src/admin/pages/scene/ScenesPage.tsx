@@ -4,6 +4,8 @@ import { api, type SceneDto } from "../../api";
 import { SceneEditorViewport } from "./SceneEditorViewport";
 import { EmptyDetail } from "../../../primitives/EmptyDetail";
 
+const LIST_COLLAPSED_STORAGE_KEY = "adminScenesListCollapsed";
+
 // Mirrors InstancesPage.tsx's master/detail layout, but a Scene is a bounded, self-contained
 // X/Y/Z raw block buffer (see SceneMesher.kt) — not tied to the live world/chunk grid — so
 // creation is a trivial name+width/height/depth form instead of InstanceChunkPicker's
@@ -33,6 +35,11 @@ export function ScenesPage() {
   const [createHeight, setCreateHeight] = useState("16");
   const [createDepth, setCreateDepth] = useState("16");
   const [createError, setCreateError] = useState<string | null>(null);
+  const [listCollapsed, setListCollapsed] = useState(() => localStorage.getItem(LIST_COLLAPSED_STORAGE_KEY) === "1");
+
+  useEffect(() => {
+    localStorage.setItem(LIST_COLLAPSED_STORAGE_KEY, listCollapsed ? "1" : "0");
+  }, [listCollapsed]);
 
   const reload = useCallback(() => {
     api.scenes
@@ -120,50 +127,69 @@ export function ScenesPage() {
 
   return (
     <div className="flex h-full overflow-hidden -m-6">
-      <aside className="w-[14.2857%] shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden">
+      <aside
+        className={`${listCollapsed ? "w-8" : "w-56"} shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden transition-[width]`}
+        // The viewport canvas resizes via flexbox as this aside's width transitions, but Babylon
+        // only recomputes its render size on a window "resize" event — fire one once the CSS
+        // width transition settles (same fix as VoxelEditorSidebar's drag handle).
+        onTransitionEnd={() => window.dispatchEvent(new Event("resize"))}
+      >
         <div className="px-3 py-2 border-b border-[#2E3A4E] flex items-center justify-between">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]">Scenes</span>
+          {!listCollapsed && (
+            <>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]">Scenes</span>
+              <button
+                className="text-[11px] text-[#3C50E0] hover:underline"
+                onClick={() => {
+                  setCreateError(null);
+                  setCreating(true);
+                }}
+              >
+                + New
+              </button>
+            </>
+          )}
           <button
-            className="text-[11px] text-[#3C50E0] hover:underline"
-            onClick={() => {
-              setCreateError(null);
-              setCreating(true);
-            }}
+            className="text-[#8A99AF] hover:text-white text-xs shrink-0"
+            title={listCollapsed ? "Expand scene list" : "Collapse scene list"}
+            onClick={() => setListCollapsed((c) => !c)}
           >
-            + New
+            {listCollapsed ? "»" : "«"}
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto py-2">
-          {scenes.map((scene) => {
-            const isSelected = scene.id === selectedId;
-            return (
-              <button
-                key={scene.id}
-                onClick={() => {
-                  setSelectedId(scene.id);
-                  setRenaming(false);
-                  setResizing(false);
-                }}
-                className={`w-full text-left px-3 py-2 text-sm truncate transition-colors flex flex-col gap-0.5 ${
-                  isSelected ? "bg-[#3C50E0]/20 text-white" : "text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E]"
-                }`}
-              >
-                <span className="truncate">{scene.name}</span>
-                <span className="text-[10px] font-mono text-[#8A99AF]">
-                  {scene.width}×{scene.height}×{scene.depth}
-                </span>
-              </button>
-            );
-          })}
-          {scenes.length === 0 && (
-            <div className="px-3 py-2 text-xs text-[#8A99AF]">
-              No scenes yet. Click &quot;+ New&quot; to create one.
-            </div>
-          )}
-        </div>
+        {!listCollapsed && (
+          <div className="flex-1 overflow-y-auto py-2">
+            {scenes.map((scene) => {
+              const isSelected = scene.id === selectedId;
+              return (
+                <button
+                  key={scene.id}
+                  onClick={() => {
+                    setSelectedId(scene.id);
+                    setRenaming(false);
+                    setResizing(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-sm truncate transition-colors flex flex-col gap-0.5 ${
+                    isSelected ? "bg-[#3C50E0]/20 text-white" : "text-[#8A99AF] hover:text-white hover:bg-[#2E3A4E]"
+                  }`}
+                >
+                  <span className="truncate">{scene.name}</span>
+                  <span className="text-[10px] font-mono text-[#8A99AF]">
+                    {scene.width}×{scene.height}×{scene.depth}
+                  </span>
+                </button>
+              );
+            })}
+            {scenes.length === 0 && (
+              <div className="px-3 py-2 text-xs text-[#8A99AF]">
+                No scenes yet. Click &quot;+ New&quot; to create one.
+              </div>
+            )}
+          </div>
+        )}
       </aside>
 
-      <div className="w-[85.7143%] flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {!selected && <EmptyDetail message="Select a scene" />}
         {selected && (
           <>
