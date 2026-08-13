@@ -208,13 +208,16 @@ prod-logs:
 
 # ── Standard and code analysis ────────────────────────────────────────────────
 
-code-standard: spotless-apply check-configuration ts-code-standard check-docs check-openapi
+code-standard: spotless-apply ts-code-standard check-docs check-configuration check-openapi check-schemas
 
 check-docs:
 	$(EXEC) "./gradlew :server:checkCommandsDocs"
 
 check-openapi:
 	$(EXEC) "./gradlew :server:checkOpenApi"
+
+check-schemas:
+	$(EXEC) "./gradlew :server:checkJsonSchemas"
 
 ts-code-standard: npm-format ts-typecheck ts-lint
 
@@ -263,6 +266,9 @@ kt-web-test:
 
 docs:
 	$(EXEC) "./gradlew :server:generateCommandsDocs"
+
+gen-schemas:
+	$(EXEC) "./gradlew :server:generateJsonSchemas"
 
 # ── Help ──────────────────────────────────────────────────────────────────────
 

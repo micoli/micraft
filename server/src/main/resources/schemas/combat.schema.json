@@ -3,9 +3,17 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "maxCombatRange": {"type": "number", "minimum": 0},
-    "downingRollIntervalMs": {"type": "integer", "minimum": 0},
-    "maxRage": {"type": "integer", "minimum": 0},
-    "npcMaxAttackRange": {"type": "number", "minimum": 0}
+    "maxCombatRange": {
+      "type": "number"
+    },
+    "npcMaxAttackRange": {
+      "type": "number"
+    },
+    "downingRollIntervalMs": {
+      "type": "integer"
+    },
+    "maxRage": {
+      "type": "integer"
+    }
   }
 }

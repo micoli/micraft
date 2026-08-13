@@ -3,6 +3,7 @@ package org.micoli.micraft.game.world.biome
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.vegetation.VegetationType
+import org.micoli.micraft.schema.JsonSchemaRoot
 
 @Serializable
 data class BiomeZone(
@@ -60,6 +61,7 @@ data class BiomeDefinition(
 }
 
 @Serializable
+@JsonSchemaRoot(file = "biomes.schema.json")
 data class BiomeConfig(
     val biomes: List<BiomeDefinition>,
     val voronoiCellSize: Int = 256,

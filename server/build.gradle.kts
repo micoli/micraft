@@ -112,6 +112,23 @@ tasks.register<JavaExec>("checkCommandsDocs") {
     args("--check")
 }
 
+tasks.register<JavaExec>("generateJsonSchemas") {
+    group = "documentation"
+    description = "Regenerates server/src/main/resources/schemas/*.schema.json from annotated DTOs."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.tools.GenerateJsonSchemasKt")
+    workingDir = rootProject.projectDir
+}
+
+tasks.register<JavaExec>("checkJsonSchemas") {
+    group = "verification"
+    description = "Fails if any *.schema.json is out of date with its annotated DTO."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.tools.GenerateJsonSchemasKt")
+    workingDir = rootProject.projectDir
+    args("--check")
+}
+
 fun Test.configureOpenApiExport(check: Boolean) {
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath

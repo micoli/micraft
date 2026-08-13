@@ -7,10 +7,14 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["email"],
+        "required": [
+          "email"
+        ],
         "additionalProperties": false,
         "properties": {
-          "email": {"type": "string"}
+          "email": {
+            "type": "string"
+          }
         }
       }
     }

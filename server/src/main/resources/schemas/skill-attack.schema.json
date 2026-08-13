@@ -5,29 +5,56 @@
   "properties": {
     "damageType": {
       "type": "string",
-      "enum": ["PHYSICAL", "FIRE", "POISON", "MAGIC", "LIGHTNING", "NECROTIC"]
+      "enum": [
+        "PHYSICAL",
+        "FIRE",
+        "POISON",
+        "MAGIC",
+        "LIGHTNING",
+        "NECROTIC"
+      ]
     },
-    "enabled": {"type": "boolean"},
+    "enabled": {
+      "type": "boolean"
+    },
     "levels": {
       "type": "object",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "power": {"type": "integer", "minimum": 0},
-          "cooldownMs": {"type": "integer", "minimum": 0},
-          "manaCost": {"type": "integer", "minimum": 0},
-          "rageCost": {"type": "integer", "minimum": 0},
-          "rangeOverride": {"type": ["number", "null"], "minimum": 0},
-          "weaponDice": {"type": "string", "pattern": "^[0-9]+d[0-9]+$"},
+          "power": {
+            "type": "integer"
+          },
+          "cooldownMs": {
+            "type": "integer"
+          },
+          "manaCost": {
+            "type": "integer"
+          },
+          "rageCost": {
+            "type": "integer"
+          },
+          "rangeOverride": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "weaponDice": {
+            "type": "string"
+          },
           "statusEffect": {
-            "type": ["string", "null"],
-            "enum": ["Poisoned", "Burning", "Paralyzed", "Stunned", "Blessed", "Cursed", "Frozen", "FrozenInTime", "Pyre", null]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "durationSec": {
-            "type": ["number", "null"],
-            "minimum": 0,
-            "description": "Override duration in seconds for the status effect (defaults to the effect's built-in duration if omitted)"
+            "type": [
+              "number",
+              "null"
+            ]
           }
         }
       }

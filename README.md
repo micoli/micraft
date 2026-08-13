@@ -529,7 +529,7 @@ make dc CMD="./gradlew test"                   # all targets
 3. Run `make code-standard` before opening a PR
 4. Server-side changes (`server/src/main/`) require a new or updated test in `server/src/test/`
 5. New user-visible strings must be added to **both** `data/i18n/en.yaml` and `data/i18n/fr.yaml`
-6. Update the relevant JSON Schema in `data/schemas/` when modifying YAML-backed data classes
+6. Update the relevant JSON Schema in `server/src/main/resources/schemas/` when modifying YAML-backed data classes — classes annotated `@JsonSchemaRoot` regenerate automatically via `make gen-schemas` (checked by `make check-schemas`, part of `make code-standard`); the 3 schemas with no dedicated DTO (`i18n`, `keybindings`, `plain_colors`) stay hand-written
 
 ---
 

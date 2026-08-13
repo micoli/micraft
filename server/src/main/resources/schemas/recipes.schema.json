@@ -3,15 +3,29 @@
   "type": "object",
   "additionalProperties": {
     "type": "object",
-    "required": ["giveType", "giveId", "items"],
     "additionalProperties": false,
     "properties": {
-      "giveType": {"type": "string", "enum": ["item", "block", "armor"]},
-      "giveId": {"type": "string", "minLength": 1},
-      "giveAmount": {"type": "integer", "minimum": 1},
+      "giveType": {
+        "type": "string",
+        "enum": [
+          "item",
+          "block",
+          "armor"
+        ]
+      },
+      "giveId": {
+        "type": "string",
+        "minLength": 1
+      },
+      "giveAmount": {
+        "type": "integer"
+      },
       "items": {
         "type": "array",
-        "items": {"type": "string", "pattern": "^[A-Z_]+\\*[0-9]+$|^[A-Z_]+$"},
+        "items": {
+          "type": "string",
+          "pattern": "^[A-Z_]+\\*[0-9]+$|^[A-Z_]+$"
+        },
         "minItems": 1
       }
     }

@@ -1,37 +1,75 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
+  "required": [
+    "biomes"
+  ],
+  "additionalProperties": false,
   "properties": {
-    "voronoiCellSize": { "type": "integer", "minimum": 1 },
-    "voronoiBlendRadius": { "type": "integer", "minimum": 0 },
     "biomes": {
       "type": "array",
       "items": {
         "type": "object",
+        "required": [
+          "id",
+          "zones",
+          "surface",
+          "subsurface"
+        ],
+        "additionalProperties": false,
         "properties": {
-          "id": { "type": "string" },
+          "id": {
+            "type": "string"
+          },
           "zones": {
             "type": "array",
             "items": {
               "type": "object",
+              "required": [
+                "moistureMin",
+                "moistureMax"
+              ],
+              "additionalProperties": false,
               "properties": {
-                "moistureMin": { "type": "number" },
-                "moistureMax": { "type": "number" },
-                "altitudeMin": { "type": "integer" },
-                "altitudeMax": { "type": "integer" }
+                "moistureMin": {
+                  "type": "number"
+                },
+                "moistureMax": {
+                  "type": "number"
+                },
+                "altitudeMin": {
+                  "type": "integer"
+                },
+                "altitudeMax": {
+                  "type": "integer"
+                }
               }
             }
           },
-          "surface": { "type": "string" },
-          "subsurface": { "type": "string" },
-          "subsurfaceDepth": { "type": "integer", "minimum": 0 },
+          "surface": {
+            "type": "string"
+          },
+          "subsurface": {
+            "type": "string"
+          },
+          "subsurfaceDepth": {
+            "type": "integer"
+          },
           "fillers": {
             "type": "array",
             "items": {
               "type": "object",
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false,
               "properties": {
-                "type": { "type": "string" },
-                "density": { "type": "number", "minimum": 0 }
+                "type": {
+                  "type": "string"
+                },
+                "density": {
+                  "type": "number"
+                }
               }
             }
           },
@@ -39,41 +77,100 @@
             "type": "array",
             "items": {
               "type": "object",
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false,
               "properties": {
-                "type": { "type": "string" },
-                "density": { "type": "number", "minimum": 0, "maximum": 1 }
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "oak_tree",
+                    "pine_tree",
+                    "pine_tree_snow",
+                    "flower",
+                    "weed"
+                  ]
+                },
+                "density": {
+                  "type": "number"
+                }
               }
             }
           },
-          "elevationMin": { "type": "integer" },
-          "elevationMax": { "type": "integer" },
+          "elevationMin": {
+            "type": "integer"
+          },
+          "elevationMax": {
+            "type": "integer"
+          },
           "grassColor": {
-            "type": "array",
-            "items": { "type": "number" },
-            "minItems": 3,
-            "maxItems": 3
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            ]
           },
-          "waterSourceRate": { "type": "number", "minimum": 0, "maximum": 1 },
+          "waterSourceRate": {
+            "type": "number"
+          },
           "caverns": {
-            "type": "object",
-            "properties": {
-              "cavernMinHeight": { "type": "integer", "minimum": 0 },
-              "cavernMaxHeight": { "type": "integer", "minimum": 0 },
-              "stalactitesPresent": { "type": "boolean" },
-              "stalagmitesPresent": { "type": "boolean" },
-              "numberPerVoronoi": { "type": "integer", "minimum": 1 },
-              "cavernMinRadius": { "type": "integer", "minimum": 1 },
-              "cavernMaxRadius": { "type": "integer", "minimum": 1 },
-              "wallBlock": { "type": "string" },
-              "staircaseEnabled": { "type": "boolean" }
-            },
-            "additionalProperties": false
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "cavernMinHeight": {
+                    "type": "integer"
+                  },
+                  "cavernMaxHeight": {
+                    "type": "integer"
+                  },
+                  "stalactitesPresent": {
+                    "type": "boolean"
+                  },
+                  "stalagmitesPresent": {
+                    "type": "boolean"
+                  },
+                  "wallBlock": {
+                    "type": "string"
+                  },
+                  "numberPerVoronoi": {
+                    "type": "integer"
+                  },
+                  "cavernMinRadius": {
+                    "type": "integer"
+                  },
+                  "cavernMaxRadius": {
+                    "type": "integer"
+                  },
+                  "staircaseEnabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            ]
           },
-          "maxNpcs": { "type": "integer", "minimum": 0 }
-        },
-        "additionalProperties": false
+          "maxNpcs": {
+            "type": "integer"
+          }
+        }
       }
+    },
+    "voronoiCellSize": {
+      "type": "integer"
+    },
+    "voronoiBlendRadius": {
+      "type": "integer"
     }
-  },
-  "additionalProperties": false
+  }
 }

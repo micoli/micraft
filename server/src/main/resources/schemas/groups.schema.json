@@ -3,23 +3,31 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "defaultGroups": {
-      "type": "array",
-      "items": {"type": "string"}
-    },
     "groups": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "additionalProperties": false,
         "properties": {
-          "name": {"type": "string"},
+          "name": {
+            "type": "string"
+          },
           "permissions": {
             "type": "array",
-            "items": {"type": "string"}
+            "items": {
+              "type": "string"
+            }
           }
         }
+      }
+    },
+    "defaultGroups": {
+      "type": "array",
+      "items": {
+        "type": "string"
       }
     }
   }

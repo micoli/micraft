@@ -1,107 +1,456 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "required": ["state"],
+  "required": [
+    "state"
+  ],
   "additionalProperties": false,
   "properties": {
     "state": {
       "type": "object",
-      "required": ["id", "name", "pos", "orientation"],
+      "required": [
+        "id",
+        "name",
+        "pos",
+        "orientation"
+      ],
+      "additionalProperties": true,
       "properties": {
-        "id": {"type": "string"},
-        "name": {"type": "string"},
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
         "pos": {
           "type": "object",
-          "required": ["x", "y", "z"],
+          "required": [
+            "x",
+            "y",
+            "z"
+          ],
+          "additionalProperties": false,
           "properties": {
-            "x": {"type": "number"},
-            "y": {"type": "number"},
-            "z": {"type": "number"}
-          },
-          "additionalProperties": false
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          }
         },
         "orientation": {
           "type": "object",
-          "required": ["yaw", "pitch"],
+          "required": [
+            "yaw",
+            "pitch"
+          ],
+          "additionalProperties": false,
           "properties": {
-            "yaw": {"type": "number"},
-            "pitch": {"type": "number"}
-          },
-          "additionalProperties": false
+            "yaw": {
+              "type": "number"
+            },
+            "pitch": {
+              "type": "number"
+            }
+          }
         },
-        "stance": {"type": "string", "enum": ["STANDING", "SNEAKING", "CRAWLING"]},
-        "flying": {"type": "boolean"},
-        "speedMultiplier": {"type": "number"},
-        "biome": {"type": "string"},
+        "stance": {
+          "type": "string",
+          "enum": [
+            "STANDING",
+            "SNEAKING",
+            "CRAWLING"
+          ]
+        },
+        "flying": {
+          "type": "boolean"
+        },
+        "speedMultiplier": {
+          "type": "number"
+        },
+        "biome": {
+          "type": "string"
+        },
         "inventory": {
           "type": "object",
-          "additionalProperties": {"type": "integer"}
+          "additionalProperties": {
+            "type": "integer"
+          }
         },
-        "language": {"type": "string"},
-        "shadersEnabled": {"type": "boolean"},
+        "language": {
+          "type": "string"
+        },
+        "shadersEnabled": {
+          "type": "boolean"
+        },
         "shortcutBar": {
           "type": "array",
           "items": {
             "oneOf": [
-              {"type": "null"},
-              {"type": "object", "properties": {"type": {"type": "string"}}, "additionalProperties": true}
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": true
+              }
             ]
+          }
+        },
+        "shortcutBarPages": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              ]
+            }
           }
         },
         "layouts": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["name", "widgets"],
+            "required": [
+              "name",
+              "widgets"
+            ],
+            "additionalProperties": false,
             "properties": {
-              "name": {"type": "string"},
-              "widgets": {"type": "array", "items": {"type": "object"}}
+              "name": {
+                "type": "string"
+              },
+              "widgets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "x",
+                    "y",
+                    "w",
+                    "h"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "MINIMAP",
+                        "HUD",
+                        "SHORTCUT_BAR",
+                        "CHAT_HISTORY",
+                        "INPUT_BOX",
+                        "INVENTORY",
+                        "CHUNK_DEBUG",
+                        "INGAME_MAP",
+                        "ATTACK_PANEL",
+                        "PLAYER_STATUS",
+                        "COMBAT_TARGET",
+                        "XP_BAR",
+                        "AGGRO_INDICATORS",
+                        "STATISTICS",
+                        "QUEST_TRACKER",
+                        "BUFF_BAR"
+                      ]
+                    },
+                    "x": {
+                      "type": "integer"
+                    },
+                    "y": {
+                      "type": "integer"
+                    },
+                    "w": {
+                      "type": "integer"
+                    },
+                    "h": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
             }
           }
         },
-        "activeLayout": {"type": "string"},
+        "activeLayout": {
+          "type": "string"
+        },
         "subscribedChannels": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["name"],
+            "required": [
+              "name"
+            ],
+            "additionalProperties": false,
             "properties": {
-              "name": {"type": "string"},
-              "autoFocus": {"type": "boolean"}
+              "name": {
+                "type": "string"
+              },
+              "autoFocus": {
+                "type": "boolean"
+              }
             }
           }
         },
         "disabledCommands": {
           "type": "array",
-          "items": {"type": "string"}
+          "items": {
+            "type": "string"
+          }
         },
-        "viewMode": {"type": "string", "enum": ["FIRST_PERSON", "FIRST_PERSON_NO_ARMS", "THIRD_PERSON"]},
-        "skin": {"type": "string"},
-        "armors": {"type": "array", "items": {"type": "string"}},
-        "animatedFavicon": {"type": "boolean"},
-        "chunkDebugVisible": {"type": "boolean"},
-        "statisticsVisible": {"type": "boolean"},
-        "fieldOfView": {"type": "integer", "minimum": 1, "maximum": 180},
-        "knownRecipes": {"type": "array", "items": {"type": "string"}},
-        "characterData": {"type": ["object", "null"]},
-        "rpgOptOut": {"type": "boolean"},
-        "godMode": {"type": "boolean"},
-        "lightBoostEnabled": {"type": "boolean"},
-        "email": {"type": "string"}
+        "viewMode": {
+          "type": "string"
+        },
+        "skin": {
+          "type": "string"
+        },
+        "armors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "animatedFavicon": {
+          "type": "boolean"
+        },
+        "chunkDebugVisible": {
+          "type": "boolean"
+        },
+        "statisticsVisible": {
+          "type": "boolean"
+        },
+        "attackPanelVisible": {
+          "type": "boolean"
+        },
+        "dynamicFogEnabled": {
+          "type": "boolean"
+        },
+        "fieldOfView": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 180
+        },
+        "knownRecipes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "characterData": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "id",
+                "name",
+                "characterClass",
+                "baseStats",
+                "currentHp",
+                "currentMana"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "characterClass": {
+                  "type": "string",
+                  "enum": [
+                    "WARRIOR",
+                    "MAGE",
+                    "RANGER",
+                    "ROGUE",
+                    "CLERIC"
+                  ]
+                },
+                "level": {
+                  "type": "integer"
+                },
+                "xp": {
+                  "type": "integer"
+                },
+                "baseStats": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "str": {
+                      "type": "integer"
+                    },
+                    "dex": {
+                      "type": "integer"
+                    },
+                    "intel": {
+                      "type": "integer"
+                    },
+                    "wis": {
+                      "type": "integer"
+                    },
+                    "con": {
+                      "type": "integer"
+                    },
+                    "cha": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "currentHp": {
+                  "type": "integer"
+                },
+                "currentMana": {
+                  "type": "integer"
+                },
+                "currentRage": {
+                  "type": "integer"
+                },
+                "currentTokens": {
+                  "type": "integer"
+                },
+                "restPoint": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "x",
+                      "y",
+                      "z"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "rpgOptOut": {
+          "type": "boolean"
+        },
+        "godMode": {
+          "type": "boolean"
+        },
+        "lightBoostEnabled": {
+          "type": "boolean"
+        },
+        "email": {
+          "type": "string"
+        },
+        "zoneLevel": {
+          "type": "integer"
+        },
+        "quests": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "TODO",
+                  "IN_PROGRESS",
+                  "ABANDONED",
+                  "COMPLETED",
+                  "FAILED"
+                ]
+              },
+              "progress": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              },
+              "acceptedAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "completedAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "lastCompletedAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "autoTargetEnabled": {
+          "type": "boolean"
+        },
+        "inventorySortA": {
+          "type": "string"
+        },
+        "inventorySortB": {
+          "type": "string"
+        },
+        "wallet": {
+          "type": "integer"
+        },
+        "shadowAngleDeg": {
+          "type": "integer"
+        }
       }
     },
     "keybindings": {
       "type": "object",
       "additionalProperties": {
         "type": "array",
-        "items": {"type": "string"}
+        "items": {
+          "type": "string"
+        }
       }
     },
     "customCommands": {
       "type": "object",
       "additionalProperties": {
         "type": "array",
-        "items": {"type": "string"}
+        "items": {
+          "type": "string"
+        }
       }
     }
   }

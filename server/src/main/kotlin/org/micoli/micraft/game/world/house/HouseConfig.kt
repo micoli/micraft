@@ -2,6 +2,7 @@ package org.micoli.micraft.game.world.house
 
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.schema.JsonSchemaRoot
 
 @Serializable
 data class HouseTypeConfig(
@@ -33,6 +34,7 @@ data class HouseBiomeConfig(
 }
 
 @Serializable
+@JsonSchemaRoot(file = "houses.schema.json")
 data class HouseConfig(
     val enabled: Boolean = true,
     val gridCellSize: Int = 48,

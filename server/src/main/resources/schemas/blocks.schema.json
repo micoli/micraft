@@ -3,47 +3,103 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "hardness": {"type": "number"},
-    "solid": {"type": "boolean"},
-    "transparent": {"type": "boolean"},
+    "hardness": {
+      "type": "number"
+    },
+    "solid": {
+      "type": "boolean"
+    },
+    "transparent": {
+      "type": "boolean"
+    },
     "minimapColor": {
       "type": "array",
-      "items": {"type": "integer", "minimum": 0, "maximum": 255},
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+      },
       "minItems": 3,
       "maxItems": 3
     },
-    "modelElement": {"type": "string"},
-    "gltfModel": {"type": "string"},
-    "liquid": {"type": "boolean"},
-    "viscosity": {"type": "integer", "minimum": 0},
-    "replaceable": {"type": "boolean"},
-    "vegetationHost": {"type": "boolean"},
-    "treeAllowed": {"type": "boolean"},
-    "minimapVisible": {"type": "boolean"},
-    "rotatable": {"type": "boolean"},
-    "hasStuds": {"type": "boolean"},
-    "brickSize": {
-      "type": "array",
-      "items": {"type": "number", "exclusiveMinimum": 0},
-      "minItems": 2,
-      "maxItems": 3
+    "modelElement": {
+      "type": "string"
     },
-    "heightFraction": {"type": "number", "minimum": 0, "maximum": 1},
-    "plainColorable": {"type": "boolean"},
-    "isCubic": {"type": "boolean"},
+    "gltfModel": {
+      "type": "string"
+    },
+    "liquid": {
+      "type": "boolean"
+    },
+    "viscosity": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "replaceable": {
+      "type": "boolean"
+    },
+    "vegetationHost": {
+      "type": "boolean"
+    },
+    "treeAllowed": {
+      "type": "boolean"
+    },
+    "minimapVisible": {
+      "type": "boolean"
+    },
     "drops": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["item"],
+        "required": [
+          "item"
+        ],
         "additionalProperties": false,
         "properties": {
-          "item": {"type": "string"},
-          "dropRate": {"type": "integer", "minimum": 0, "maximum": 100},
-          "minCount": {"type": "integer", "minimum": 0},
-          "maxCount": {"type": "integer", "minimum": 0}
+          "item": {
+            "type": "string"
+          },
+          "dropRate": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "minCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxCount": {
+            "type": "integer",
+            "minimum": 0
+          }
         }
       }
+    },
+    "rotatable": {
+      "type": "boolean"
+    },
+    "hasStuds": {
+      "type": "boolean"
+    },
+    "brickSize": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      },
+      "minItems": 2,
+      "maxItems": 3
+    },
+    "heightFraction": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "plainColorable": {
+      "type": "boolean"
+    },
+    "isCubic": {
+      "type": "boolean"
     }
   }
 }

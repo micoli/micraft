@@ -4,8 +4,10 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.schema.JsonSchemaOpen
 
 @Serializable
+@JsonSchemaOpen
 @OptIn(ExperimentalSerializationApi::class)
 data class CharacterData(
     @EncodeDefault val id: String,

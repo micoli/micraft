@@ -14,12 +14,14 @@ import org.micoli.micraft.config.isYamlEffectivelyEmpty
 import org.micoli.micraft.config.mergeConfig
 import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.yamlConfigSection
+import org.micoli.micraft.schema.JsonSchemaRoot
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("GroupConfig")
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
+@JsonSchemaRoot(file = "groups.schema.json")
 data class GroupsConfig(
     @EncodeDefault(ALWAYS) val groups: List<GroupEntry> = emptyList(),
     @EncodeDefault(ALWAYS) val defaultGroups: List<String> = listOf("player"),

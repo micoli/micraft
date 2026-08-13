@@ -3,14 +3,36 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "type": {"type": "string", "enum": ["TOKEN_RAGE_CONSUME", "NECROTIC_AOE"]},
-    "enabled": {"type": "boolean"},
-    "rageGain": {"type": "integer", "minimum": 0},
-    "tokenCost": {"type": "integer", "minimum": 0},
-    "manaCost": {"type": "integer", "minimum": 0},
-    "rageCost": {"type": "integer", "minimum": 0},
-    "cooldownMs": {"type": "integer", "minimum": 0},
-    "aoeRadius": {"type": "number", "minimum": 0},
-    "maxRange": {"type": "number", "minimum": 0}
+    "type": {
+      "type": "string",
+      "enum": [
+        "TOKEN_RAGE_CONSUME",
+        "NECROTIC_AOE"
+      ]
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "rageGain": {
+      "type": "integer"
+    },
+    "tokenCost": {
+      "type": "integer"
+    },
+    "manaCost": {
+      "type": "integer"
+    },
+    "rageCost": {
+      "type": "integer"
+    },
+    "cooldownMs": {
+      "type": "integer"
+    },
+    "aoeRadius": {
+      "type": "number"
+    },
+    "maxRange": {
+      "type": "number"
+    }
   }
 }

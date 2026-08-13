@@ -1,26 +1,51 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "required": ["enabled"],
   "additionalProperties": false,
   "properties": {
-    "enabled": {"type": "boolean"},
+    "enabled": {
+      "type": "boolean"
+    },
     "weatherTypes": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["type", "biomes", "enabled"],
+        "required": [
+          "type",
+          "biomes"
+        ],
         "additionalProperties": false,
         "properties": {
-          "type": {"type": "string"},
-          "biomes": {"type": "array", "items": {"type": "string"}},
-          "enabled": {"type": "boolean"},
-          "spawnRatePerBiomeTick": {"type": "number", "minimum": 0},
-          "minDurationTicks": {"type": "integer", "minimum": 0},
-          "maxDurationTicks": {"type": "integer", "minimum": 0},
-          "minRadius": {"type": "number", "minimum": 0},
-          "maxRadius": {"type": "number", "minimum": 0},
-          "driftSpeed": {"type": "number", "minimum": 0}
+          "type": {
+            "type": "string"
+          },
+          "biomes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "spawnRatePerBiomeTick": {
+            "type": "number"
+          },
+          "minDurationTicks": {
+            "type": "integer"
+          },
+          "maxDurationTicks": {
+            "type": "integer"
+          },
+          "minRadius": {
+            "type": "number"
+          },
+          "maxRadius": {
+            "type": "number"
+          },
+          "driftSpeed": {
+            "type": "number"
+          }
         }
       }
     }

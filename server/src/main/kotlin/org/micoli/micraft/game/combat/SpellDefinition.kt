@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.combat
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.schema.JsonSchemaRoot
 
 enum class SpellType {
     TOKEN_RAGE_CONSUME,
@@ -8,6 +9,7 @@ enum class SpellType {
 }
 
 @Serializable
+@JsonSchemaRoot(file = "skill-spell.schema.json")
 data class SpellDefinition(
     val type: SpellType = SpellType.TOKEN_RAGE_CONSUME,
     val enabled: Boolean = true,

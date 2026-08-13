@@ -1,96 +1,193 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "required": ["world", "player", "auth", "game"],
   "additionalProperties": false,
   "properties": {
+    "world": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "worldMinY": {
+          "type": "integer"
+        },
+        "worldMaxY": {
+          "type": "integer"
+        },
+        "chunkSize": {
+          "type": "integer"
+        },
+        "viewRadius": {
+          "type": "integer"
+        },
+        "forwardViewRadius": {
+          "type": "integer"
+        },
+        "waterLevel": {
+          "type": "integer"
+        }
+      }
+    },
+    "player": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "heightStanding": {
+          "type": "number"
+        },
+        "heightSneaking": {
+          "type": "number"
+        },
+        "heightCrawling": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        },
+        "eyeOffsetStanding": {
+          "type": "number"
+        },
+        "eyeOffsetSneaking": {
+          "type": "number"
+        },
+        "eyeOffsetCrawling": {
+          "type": "number"
+        },
+        "speedStanding": {
+          "type": "number"
+        },
+        "speedSneaking": {
+          "type": "number"
+        },
+        "speedCrawling": {
+          "type": "number"
+        }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "local": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "usersFile": {
+              "type": "string"
+            },
+            "groupsFile": {
+              "type": "string"
+            }
+          }
+        },
+        "oauth": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "clientId": {
+                  "type": "string"
+                },
+                "clientSecret": {
+                  "type": "string"
+                },
+                "redirectUri": {
+                  "type": "string"
+                },
+                "scopes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
     "chunks": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "transport": {"type": "string", "enum": ["websocket", "http"]},
-        "httpWorkers": {"type": "integer", "minimum": 1}
+        "transport": {
+          "type": "string"
+        },
+        "httpWorkers": {
+          "type": "integer"
+        }
       }
     },
     "network": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "messageEncoder": {"type": "string", "enum": ["json", "protobuf"]}
-      }
-    },
-    "world": {
-      "type": "object",
-      "required": ["worldMinY", "worldMaxY", "chunkSize", "viewRadius", "forwardViewRadius", "waterLevel"],
-      "additionalProperties": false,
-      "properties": {
-        "worldMinY": {"type": "integer"},
-        "worldMaxY": {"type": "integer"},
-        "chunkSize": {"type": "integer", "minimum": 1},
-        "viewRadius": {"type": "integer", "minimum": 1},
-        "forwardViewRadius": {"type": "integer", "minimum": 1},
-        "waterLevel": {"type": "integer"}
-      }
-    },
-    "player": {
-      "type": "object",
-      "required": ["heightStanding", "heightSneaking", "heightCrawling", "width", "eyeOffsetStanding", "eyeOffsetSneaking", "eyeOffsetCrawling", "speedStanding", "speedSneaking", "speedCrawling"],
-      "additionalProperties": false,
-      "properties": {
-        "heightStanding": {"type": "number", "exclusiveMinimum": 0},
-        "heightSneaking": {"type": "number", "exclusiveMinimum": 0},
-        "heightCrawling": {"type": "number", "exclusiveMinimum": 0},
-        "width": {"type": "number", "exclusiveMinimum": 0},
-        "eyeOffsetStanding": {"type": "number", "exclusiveMinimum": 0},
-        "eyeOffsetSneaking": {"type": "number", "exclusiveMinimum": 0},
-        "eyeOffsetCrawling": {"type": "number", "exclusiveMinimum": 0},
-        "speedStanding": {"type": "number", "exclusiveMinimum": 0},
-        "speedSneaking": {"type": "number", "exclusiveMinimum": 0},
-        "speedCrawling": {"type": "number", "exclusiveMinimum": 0}
-      }
-    },
-    "auth": {
-      "type": "object",
-      "required": ["provider"],
-      "additionalProperties": false,
-      "properties": {
-        "provider": {"type": "string", "enum": ["none", "local", "oauth"]},
-        "local": {
-          "oneOf": [
-            {"type": "null"},
-            {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "usersFile": {"type": "string"},
-                "groupsFile": {"type": "string"}
-              }
-            }
-          ]
-        },
-        "oauth": {"type": ["object", "null"]}
+        "messageEncoder": {
+          "type": "string"
+        }
       }
     },
     "game": {
       "type": "object",
-      "required": ["tickMs", "gravity", "jumpSpeed", "flyVerticalSpeed", "saveIntervalSeconds", "spawnX", "spawnY", "spawnZ", "ticksPerDay", "timeBroadcastTicks", "maxInteractionDistance", "debugWorld", "reconcileToleranceXz", "reconcileToleranceY", "worldSeed"],
       "additionalProperties": false,
       "properties": {
-        "tickMs": {"type": "integer", "minimum": 1},
-        "gravity": {"type": "number"},
-        "jumpSpeed": {"type": "number"},
-        "flyVerticalSpeed": {"type": "number"},
-        "saveIntervalSeconds": {"type": "integer", "minimum": 1},
-        "spawnX": {"type": "number"},
-        "spawnY": {"type": "number"},
-        "spawnZ": {"type": "number"},
-        "ticksPerDay": {"type": "integer", "minimum": 1},
-        "timeBroadcastTicks": {"type": "integer", "minimum": 1},
-        "maxInteractionDistance": {"type": "number", "exclusiveMinimum": 0},
-        "debugWorld": {"type": "boolean"},
-        "reconcileToleranceXz": {"type": "number", "exclusiveMinimum": 0},
-        "reconcileToleranceY": {"type": "number", "exclusiveMinimum": 0},
-        "worldSeed": {"type": "integer"}
+        "tickMs": {
+          "type": "integer"
+        },
+        "gravity": {
+          "type": "number"
+        },
+        "jumpSpeed": {
+          "type": "number"
+        },
+        "flyVerticalSpeed": {
+          "type": "number"
+        },
+        "saveIntervalSeconds": {
+          "type": "integer"
+        },
+        "spawnX": {
+          "type": "number"
+        },
+        "spawnY": {
+          "type": "number"
+        },
+        "spawnZ": {
+          "type": "number"
+        },
+        "ticksPerDay": {
+          "type": "integer"
+        },
+        "timeBroadcastTicks": {
+          "type": "integer"
+        },
+        "maxInteractionDistance": {
+          "type": "number"
+        },
+        "debugWorld": {
+          "type": "boolean"
+        },
+        "reconcileToleranceXz": {
+          "type": "number"
+        },
+        "reconcileToleranceY": {
+          "type": "number"
+        },
+        "blockBreakBufferSize": {
+          "type": "integer"
+        },
+        "worldSeed": {
+          "type": "integer"
+        }
       }
     }
   }

@@ -1,29 +1,65 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "required": ["enabled"],
   "additionalProperties": false,
   "properties": {
-    "enabled": {"type": "boolean"},
-    "vegetationAllowedOnRoad": {"type": "boolean"},
-    "minVegetationDistanceFromRoad": {"type": "integer", "minimum": 0},
-    "voronoiCellSize": {"type": "integer", "minimum": 1},
-    "displacementScale": {"type": "number"},
-    "displacementFrequency": {"type": "number"},
-    "defaultRoad": {"$ref": "#/$defs/roadConfig"},
-    "biomes": {
+    "enabled": {
+      "type": "boolean"
+    },
+    "vegetationAllowedOnRoad": {
+      "type": "boolean"
+    },
+    "minVegetationDistanceFromRoad": {
+      "type": "integer"
+    },
+    "voronoiCellSize": {
+      "type": "integer"
+    },
+    "displacementScale": {
+      "type": "number"
+    },
+    "displacementFrequency": {
+      "type": "number"
+    },
+    "defaultRoad": {
       "type": "object",
-      "additionalProperties": {"$ref": "#/$defs/roadConfig"}
-    }
-  },
-  "$defs": {
-    "roadConfig": {
-      "type": "object",
+      "required": [
+        "width",
+        "surface"
+      ],
       "additionalProperties": false,
       "properties": {
-        "width": {"type": "integer", "minimum": 1},
-        "surface": {"type": "string"},
-        "roadProbability": {"type": "number", "minimum": 0, "maximum": 1}
+        "width": {
+          "type": "integer"
+        },
+        "surface": {
+          "type": "string"
+        },
+        "roadProbability": {
+          "type": "number"
+        }
+      }
+    },
+    "biomes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "width",
+          "surface"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "width": {
+            "type": "integer"
+          },
+          "surface": {
+            "type": "string"
+          },
+          "roadProbability": {
+            "type": "number"
+          }
+        }
       }
     }
   }

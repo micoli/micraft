@@ -3,8 +3,10 @@ package org.micoli.micraft.combat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.schema.JsonSchemaOpaque
 
 @Serializable
+@JsonSchemaOpaque
 sealed class ShortcutSlot {
     @Serializable @SerialName("Item") data class Item(val itemType: ItemType) : ShortcutSlot()
 

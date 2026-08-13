@@ -17,6 +17,7 @@ import org.micoli.micraft.config.yamlConfigSection
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.protocol.MessageEncoding
+import org.micoli.micraft.schema.JsonSchemaRoot
 import org.slf4j.LoggerFactory
 
 private val serverConfigLog = LoggerFactory.getLogger("ServerConfigLoader")
@@ -87,6 +88,7 @@ data class NetworkSection(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
+@JsonSchemaRoot(file = "server.schema.json")
 data class ServerConfig(
     @EncodeDefault(ALWAYS) val world: WorldSection = WorldSection(),
     @EncodeDefault(ALWAYS) val player: PlayerSection = PlayerSection(),

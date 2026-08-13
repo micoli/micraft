@@ -7,13 +7,19 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "regenIntervalMs": {"type": "integer", "minimum": 100},
+        "regenIntervalMs": {
+          "type": "integer"
+        },
         "default": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "hpFormula": {"type": "string"},
-            "manaFormula": {"type": "string"}
+            "hpFormula": {
+              "type": "string"
+            },
+            "manaFormula": {
+              "type": "string"
+            }
           }
         }
       }
@@ -24,16 +30,40 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "strBonus": {"type": "integer"},
-          "dexBonus": {"type": "integer"},
-          "intelBonus": {"type": "integer"},
-          "wisBonus": {"type": "integer"},
-          "conBonus": {"type": "integer"},
-          "chaBonus": {"type": "integer"},
-          "classResource": {"type": "string", "enum": ["MANA", "RAGE"]},
-          "hpFormula": {"type": "string"},
-          "manaFormula": {"type": "string"},
-          "rageFormula": {"type": "string"},
+          "strBonus": {
+            "type": "integer"
+          },
+          "dexBonus": {
+            "type": "integer"
+          },
+          "intelBonus": {
+            "type": "integer"
+          },
+          "wisBonus": {
+            "type": "integer"
+          },
+          "conBonus": {
+            "type": "integer"
+          },
+          "chaBonus": {
+            "type": "integer"
+          },
+          "classResource": {
+            "type": "string",
+            "enum": [
+              "MANA",
+              "RAGE"
+            ]
+          },
+          "hpFormula": {
+            "type": "string"
+          },
+          "manaFormula": {
+            "type": "string"
+          },
+          "rageFormula": {
+            "type": "string"
+          },
           "levels": {
             "type": "object",
             "additionalProperties": {
@@ -44,17 +74,26 @@
                   "type": "array",
                   "items": {
                     "type": "object",
+                    "required": [
+                      "attack",
+                      "level"
+                    ],
                     "additionalProperties": false,
-                    "required": ["attack", "level"],
                     "properties": {
-                      "attack": {"type": "string"},
-                      "level": {"type": "integer", "minimum": 1}
+                      "attack": {
+                        "type": "string"
+                      },
+                      "level": {
+                        "type": "integer"
+                      }
                     }
                   }
                 },
                 "spells": {
                   "type": "array",
-                  "items": {"type": "string"}
+                  "items": {
+                    "type": "string"
+                  }
                 }
               }
             }

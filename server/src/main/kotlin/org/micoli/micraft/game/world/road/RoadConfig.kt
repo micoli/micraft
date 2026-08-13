@@ -2,6 +2,7 @@ package org.micoli.micraft.game.world.road
 
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.schema.JsonSchemaRoot
 
 @Serializable
 data class RoadBiomeConfig(
@@ -11,6 +12,7 @@ data class RoadBiomeConfig(
 )
 
 @Serializable
+@JsonSchemaRoot(file = "roads.schema.json")
 data class RoadConfig(
     val enabled: Boolean = true,
     val vegetationAllowedOnRoad: Boolean = false,

@@ -5,6 +5,8 @@ import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.quest.QuestProgress
+import org.micoli.micraft.schema.JsonSchemaConstraint
+import org.micoli.micraft.schema.JsonSchemaOpen
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.ui.defaultLayout
 
@@ -17,6 +19,7 @@ import org.micoli.micraft.ui.defaultLayout
 fun List<ChannelSubscription>.hasChannel(name: String): Boolean = any { it.name == name }
 
 @Serializable
+@JsonSchemaOpen
 data class PlayerState(
     val id: String,
     val name: String,
@@ -47,7 +50,7 @@ data class PlayerState(
     val statisticsVisible: Boolean = false,
     val attackPanelVisible: Boolean = true,
     val dynamicFogEnabled: Boolean = true,
-    val fieldOfView: Int = 70,
+    @JsonSchemaConstraint(minimum = 1.0, maximum = 180.0) val fieldOfView: Int = 70,
     val knownRecipes: Set<String> = emptySet(),
     val characterData: CharacterData? = null,
     val rpgOptOut: Boolean = true,

@@ -7,15 +7,26 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["email", "passwordHash"],
+        "required": [
+          "email",
+          "passwordHash"
+        ],
         "additionalProperties": false,
         "properties": {
-          "email": {"type": "string"},
-          "passwordHash": {"type": "string"},
-          "displayName": {"type": "string"},
+          "email": {
+            "type": "string"
+          },
+          "passwordHash": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
           "groups": {
             "type": "array",
-            "items": {"type": "string"}
+            "items": {
+              "type": "string"
+            }
           }
         }
       }

@@ -7,10 +7,13 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.schema.JsonSchemaRoot
 
 @Serializable data class NoAuthAccount(val email: String)
 
-@Serializable data class NoAuthAccountsConfig(val accounts: List<NoAuthAccount> = emptyList())
+@Serializable
+@JsonSchemaRoot(file = "noauth-accounts.schema.json")
+data class NoAuthAccountsConfig(val accounts: List<NoAuthAccount> = emptyList())
 
 class NoAuthAccountStore(private val file: Path) {
     private fun load(): NoAuthAccountsConfig =
