@@ -21,6 +21,7 @@
     "watch:admin:css": "tailwindcss -i ./styles/main.css -o ${MC_OUT_ADMIN_CSS:-../build/web/admin.css} --watch=always",
     "build:docs": "esbuild docs/index.tsx --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --outfile=${MC_OUT_DOCS_JS:-../build/web/docs.js}",
     "watch:docs": "esbuild docs/index.tsx --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --outfile=${MC_OUT_DOCS_JS:-../build/web/docs.js} --watch=forever",
+    "gen:api": "openapi-rq -i ../../../server/openapi/openapi.yaml -o ./generated/api --client @hey-api/client-fetch --format prettier",
     "watch:css:sync": "node scripts/watch-css-sync.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -37,6 +38,7 @@
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lang-yaml": "^6.1.3",
+    "@hey-api/client-fetch": "^0.13.1",
     "@radix-ui/react-dialog": "^1.1.18",
     "@radix-ui/react-tabs": "^1.1.16",
     "@radix-ui/react-tooltip": "^1.2.11",
@@ -58,6 +60,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@7nohe/openapi-react-query-codegen": "^3.0.2",
     "@babylonjs/core": "7.48.0",
     "@eslint/js": "^9.0.0",
     "@storybook/addon-essentials": "^8.6.12",

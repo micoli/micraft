@@ -27,7 +27,10 @@ import { registerAoeEffect } from "./game/effects/aoeEffect";
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { configureApiClient } from "./lib/apiClient";
 import { queryClient } from "./lib/queryClient";
+
+configureApiClient();
 import { GameUI } from "./game/GameUI";
 import { setWidgetRegistry } from "./game/layout/LayoutEngine";
 import { initFaviconAnimator, setFaviconAnimated } from "./favicon/faviconAnimator";

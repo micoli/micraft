@@ -60,6 +60,7 @@ export default tseslint.config(
       "../src/wasmJsMain/resources/mc_bindings.js",
       "../build/**",
       "app/webApp/build/**",
+      "generated/**",
     ],
   },
 );

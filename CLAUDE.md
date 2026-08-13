@@ -182,6 +182,7 @@ make shell
 - Every server-side change (`server/src/main/`) needs new or updated test in `server/src/test/`. Run `make dc CMD="./gradlew :server:test"` before committing.
 - Before any commit use `make dc CMD="./gradlew :spotlessApply"` and `make dc CMD="npm run format"` (ts-src working dir handled by Makefile target).
 - never update mc_bindings.js, it's a generated JS-side BabylonJS binding glue, you should rather update source files.
+- never edit `app/webApp/ts-src/generated/api/**` by hand — TanStack Query hooks/types generated from `server/openapi/openapi.yaml` via `make gen-api` (or `npm run gen:api`). Committed like mc_bindings.js, regenerate after changing a server route.
 
 ## Schema maintenance
 

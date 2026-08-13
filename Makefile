@@ -179,6 +179,10 @@ build-admin:
 build-docs:
 	$(EXEC) "cd app/webApp/ts-src && npm run build:docs"
 
+gen-api:
+	$(EXEC) "./gradlew :server:exportOpenApi"
+	$(EXEC) "cd app/webApp/ts-src && npm run gen:api"
+
 build-plugin-examples-hello-world:
 	$(EXEC) "./gradlew :plugin-examples:hello-world:shadowJa"
 
