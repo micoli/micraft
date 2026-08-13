@@ -197,21 +197,93 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     // Scene is exactly one contiguous buffer, not a chunk grid. Centered under [0,width)x[0,depth)
     // to match the block placement convention (block (x,y,z) spans [x,x+1)x[y,y+1)x[z,z+1)).
     const groundMat = new B.StandardMaterial("sceneGroundMat", babylonScene);
-    // One grid-line square per texture tile, repeated width x depth times so each cell lines up
-    // with exactly one voxel — a plain wireframe-style reference grid rather than a filled checker.
+    // Single non-repeated texture spanning the whole ground (not tiled) so marks can be aligned
+    // to the volume center rather than to each tile independently: fine line every cell, brighter
+    // every 5 cells, brightest every 10 cells, counted outward from the center of the floor.
     const gridPx = 32;
-    const gridTex = new B.DynamicTexture("sceneGroundGrid", { width: gridPx, height: gridPx }, babylonScene, false);
+    const texW = scene.width * gridPx;
+    const texH = scene.depth * gridPx;
+    const gridTex = new B.DynamicTexture("sceneGroundGrid", { width: texW, height: texH }, babylonScene, false);
     const gridCtx = gridTex.getContext() as CanvasRenderingContext2D;
     gridCtx.fillStyle = "#26262e";
-    gridCtx.fillRect(0, 0, gridPx, gridPx);
-    gridCtx.strokeStyle = "#5a5a66";
-    gridCtx.lineWidth = 1;
-    gridCtx.strokeRect(0.5, 0.5, gridPx - 1, gridPx - 1);
+    gridCtx.fillRect(0, 0, texW, texH);
+    const cx = scene.width / 2;
+    const cz = scene.depth / 2;
+    function drawGridLines(count: number, cellPx: number, center: number, size: number, vertical: boolean) {
+      for (let i = 0; i <= count; i++) {
+        const offset = i - center;
+        const isTen = Math.round(offset) % 10 === 0;
+        const isFive = Math.round(offset) % 5 === 0;
+        gridCtx.strokeStyle = isTen ? "#c9c9d6" : isFive ? "#8a8a99" : "#5a5a66";
+        gridCtx.lineWidth = isTen ? 3 : isFive ? 2 : 1;
+        const pos = i * cellPx;
+        gridCtx.beginPath();
+        if (vertical) {
+          gridCtx.moveTo(pos, 0);
+          gridCtx.lineTo(pos, size);
+        } else {
+          gridCtx.moveTo(0, pos);
+          gridCtx.lineTo(size, pos);
+        }
+        gridCtx.stroke();
+      }
+    }
+    drawGridLines(scene.width, gridPx, cx, texH, true);
+    drawGridLines(scene.depth, gridPx, cz, texW, false);
+    // Numeric labels at every 10-cell intersection across the whole floor (not just the ones
+    // crossing the center), so distances stay readable from any part of the grid.
+    // Colors match the viewport axes gizmo (axesGizmo.ts) so X/Z labels read as the same axis.
+    const xAxisColor = "#e5484d";
+    const zAxisColor = "#3d63dd";
+    const labelFontPx = Math.floor(gridPx * 0.6);
+    gridCtx.font = `bold ${labelFontPx}px monospace`;
+    gridCtx.textBaseline = "top";
+    gridCtx.lineWidth = 3;
+    gridCtx.strokeStyle = "#000000";
+    for (let i = 0; i <= scene.width; i++) {
+      if (Math.round(i - cx) % 10 !== 0) continue;
+      for (let j = 0; j <= scene.depth; j++) {
+        if (Math.round(j - cz) % 10 !== 0) continue;
+        const xLabel = `${Math.round(i - cx)}`;
+        const zLabel = `${Math.round(j - cz)}`;
+        const ty = j * gridPx + 4;
+        gridCtx.textAlign = "right";
+        gridCtx.fillStyle = zAxisColor;
+        gridCtx.strokeText(zLabel, i * gridPx - 4, ty);
+        gridCtx.fillText(zLabel, i * gridPx - 4, ty);
+        gridCtx.textAlign = "left";
+        gridCtx.fillStyle = xAxisColor;
+        gridCtx.strokeText(xLabel, i * gridPx + 4, ty);
+        gridCtx.fillText(xLabel, i * gridPx + 4, ty);
+      }
+    }
+    // Smaller labels at every 5-cell intersection (skipping the ones already labeled above at
+    // every 10, to avoid drawing on top of them), same axis colors.
+    const fiveLabelFontPx = Math.floor(gridPx * 0.35);
+    gridCtx.font = `bold ${fiveLabelFontPx}px monospace`;
+    gridCtx.lineWidth = 2;
+    gridCtx.strokeStyle = "#000000";
+    for (let i = 0; i <= scene.width; i++) {
+      const ox = Math.round(i - cx);
+      if (ox % 5 !== 0) continue;
+      for (let j = 0; j <= scene.depth; j++) {
+        const oz = Math.round(j - cz);
+        if (oz % 5 !== 0) continue;
+        if (ox % 10 === 0 && oz % 10 === 0) continue;
+        const ty = j * gridPx + 4;
+        gridCtx.textAlign = "right";
+        gridCtx.fillStyle = zAxisColor;
+        gridCtx.strokeText(`${oz}`, i * gridPx - 4, ty);
+        gridCtx.fillText(`${oz}`, i * gridPx - 4, ty);
+        gridCtx.textAlign = "left";
+        gridCtx.fillStyle = xAxisColor;
+        gridCtx.strokeText(`${ox}`, i * gridPx + 4, ty);
+        gridCtx.fillText(`${ox}`, i * gridPx + 4, ty);
+      }
+    }
     gridTex.update();
-    gridTex.wrapU = B.Texture.WRAP_ADDRESSMODE;
-    gridTex.wrapV = B.Texture.WRAP_ADDRESSMODE;
-    gridTex.uScale = scene.width;
-    gridTex.vScale = scene.depth;
+    gridTex.wrapU = B.Texture.CLAMP_ADDRESSMODE;
+    gridTex.wrapV = B.Texture.CLAMP_ADDRESSMODE;
     groundMat.diffuseTexture = gridTex;
     groundMat.specularColor = B.Color3.Black();
     groundMat.alpha = 0.35;
