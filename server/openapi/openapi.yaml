@@ -44,49 +44,7 @@ paths:
       parameters: []
       responses: {}
       deprecated: false
-  /api/layout/registry:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/items/meta:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/server/info:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/attacks:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/classes:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/spells:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
   /api/macros/context:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/biomes:
     get:
       tags: []
       parameters: []
@@ -129,36 +87,6 @@ paths:
       deprecated: false
   /api/character/rpgcreate:
     post:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/skins:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/skins/{name}/config:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/armors:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/game-assets:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/game-assets/file/{...}:
-    get:
       tags: []
       parameters: []
       responses: {}
@@ -543,7 +471,474 @@ paths:
       parameters: []
       responses: {}
       deprecated: false
+  /api/layout/registry:
+    get:
+      tags: []
+      description: All widgets registered for the UI layout editor
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.ui.WidgetRegistryEntry"
+                title: List<WidgetRegistryEntry>
+      deprecated: false
+  /api/items/meta:
+    get:
+      tags: []
+      description: "Item metadata (label, background color, consumable flags) by item\
+        \ type id"
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  additionalProperties:
+                    type: string
+                    title: String
+                  title: "Map<String,String>"
+                title: "Map<String,Map<String,String>>"
+      deprecated: false
+  /api/server/info:
+    get:
+      tags: []
+      description: Server build timestamp
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.ServerInfo"
+      deprecated: false
+  /api/attacks:
+    get:
+      tags: []
+      description: "Attack definitions, flattened by \"attackId:level\" key"
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  additionalProperties:
+                    type: string
+                    title: String
+                  title: "Map<String,String>"
+                title: "Map<String,Map<String,String>>"
+      deprecated: false
+  /api/classes:
+    get:
+      tags: []
+      description: "Attack ids accessible per RPG class, keyed by level"
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  additionalProperties:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/org.micoli.micraft.game.classes.ClassAttackAccess"
+                    title: List<ClassAttackAccess>
+                  title: "Map<String,List<ClassAttackAccess>>"
+                title: "Map<String,Map<String,List<ClassAttackAccess>>>"
+      deprecated: false
+  /api/spells:
+    get:
+      tags: []
+      description: "Spell definitions, keyed by spell id"
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  additionalProperties:
+                    type: string
+                    title: String
+                  title: "Map<String,String>"
+                title: "Map<String,Map<String,String>>"
+      deprecated: false
+  /api/biomes:
+    get:
+      tags: []
+      description: "Grass color per biome id, as [r, g, b] in 0..1"
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: number
+                    format: double
+                    title: Double
+                  title: List<Double>
+                title: "Map<String,List<Double>>"
+      deprecated: false
+  /api/skins:
+    get:
+      tags: []
+      description: Names of all available player skins
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  title: String
+                title: List<String>
+      deprecated: false
+  /api/skins/{name}/config:
+    get:
+      tags: []
+      description: "Skin config (eye offset, hidden bones) for a named skin"
+      parameters:
+      - name: name
+        in: path
+        description: Skin name
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.game.skin.SkinDefinition"
+        "404":
+          description: Skin not found
+          headers: {}
+      deprecated: false
+  /api/armors:
+    get:
+      tags: []
+      description: List all armor definitions
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: "#/components/schemas/org.micoli.micraft.game.armor.ArmorDefinition"
+                title: "Map<String,ArmorDefinition>"
+      deprecated: false
+  /api/game-assets:
+    get:
+      tags: []
+      description: 3D game asset files discovered under resources/game-assets
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.http.GameAssetsController.AssetEntry"
+                title: List<GameAssetsController.AssetEntry>
+      deprecated: false
+  /api/game-assets/file/{...}:
+    get:
+      tags: []
+      description: Raw asset file bytes (glb/gltf/fbx/textures)
+      parameters:
+      - name: path
+        in: path
+        description: Relative asset path
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/octet-stream:
+              schema:
+                type: array
+                items:
+                  type: integer
+                  maximum: 127
+                  minimum: -128
+                  title: Byte
+                title: Array<Byte>
+        "404":
+          description: Asset not found
+          headers: {}
+      deprecated: false
 components:
-  schemas: {}
+  schemas:
+    org.micoli.micraft.ui.WidgetRegistryEntry:
+      type: object
+      properties:
+        editorColor:
+          type: string
+          title: String
+        editorLabel:
+          type: string
+          title: String
+        flow:
+          type: boolean
+          title: Boolean
+        h:
+          type: integer
+          format: int32
+          title: Int
+        minH:
+          type: integer
+          format: int32
+          title: Int
+        minW:
+          type: integer
+          format: int32
+          title: Int
+        type:
+          $ref: "#/components/schemas/org.micoli.micraft.ui.WidgetType"
+        w:
+          type: integer
+          format: int32
+          title: Int
+        x:
+          type: integer
+          format: int32
+          title: Int
+        "y":
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - editorColor
+      - editorLabel
+      - flow
+      - h
+      - minH
+      - minW
+      - type
+      - w
+      - x
+      - "y"
+      title: WidgetRegistryEntry
+    org.micoli.micraft.ui.WidgetType:
+      type: string
+      enum:
+      - MINIMAP
+      - HUD
+      - SHORTCUT_BAR
+      - CHAT_HISTORY
+      - INPUT_BOX
+      - INVENTORY
+      - CHUNK_DEBUG
+      - INGAME_MAP
+      - ATTACK_PANEL
+      - PLAYER_STATUS
+      - COMBAT_TARGET
+      - XP_BAR
+      - AGGRO_INDICATORS
+      - STATISTICS
+      - QUEST_TRACKER
+      - BUFF_BAR
+      title: WidgetType
+    org.micoli.micraft.http.ServerInfo:
+      type: object
+      properties:
+        buildTimestamp:
+          type: string
+          title: String
+      required:
+      - buildTimestamp
+      title: ServerInfo
+    org.micoli.micraft.game.classes.ClassAttackAccess:
+      type: object
+      properties:
+        attack:
+          type: string
+          title: String
+        level:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - attack
+      - level
+      title: ClassAttackAccess
+    org.micoli.micraft.game.skin.EyeAnchor:
+      type: object
+      properties:
+        x:
+          type: number
+          format: float
+          title: Float
+        "y":
+          type: number
+          format: float
+          title: Float
+        z:
+          type: number
+          format: float
+          title: Float
+      required:
+      - x
+      - "y"
+      - z
+      title: EyeAnchor
+    org.micoli.micraft.game.skin.SkinDefinition:
+      type: object
+      properties:
+        eyes:
+          $ref: "#/components/schemas/org.micoli.micraft.game.skin.EyeAnchor"
+        firstPersonHiddenBones:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+      required:
+      - eyes
+      - firstPersonHiddenBones
+      title: SkinDefinition
+    org.micoli.micraft.game.armor.ArmorDefinition:
+      type: object
+      properties:
+        statBonus:
+          $ref: "#/components/schemas/org.micoli.micraft.game.rpg.StatBonus"
+        wearable:
+          $ref: "#/components/schemas/org.micoli.micraft.game.armor.WearableSlots"
+      required:
+      - statBonus
+      - wearable
+      title: ArmorDefinition
+    org.micoli.micraft.game.rpg.StatBonus:
+      type: object
+      properties:
+        acBonus:
+          type: integer
+          format: int32
+          title: Int
+        cha:
+          type: integer
+          format: int32
+          title: Int
+        con:
+          type: integer
+          format: int32
+          title: Int
+        dex:
+          type: integer
+          format: int32
+          title: Int
+        intel:
+          type: integer
+          format: int32
+          title: Int
+        str:
+          type: integer
+          format: int32
+          title: Int
+        wis:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - acBonus
+      - cha
+      - con
+      - dex
+      - intel
+      - str
+      - wis
+      title: StatBonus
+    org.micoli.micraft.game.armor.WearableSlots:
+      type: object
+      properties:
+        body:
+          type: boolean
+          title: Boolean
+        head:
+          type: boolean
+          title: Boolean
+        leftArm:
+          type: boolean
+          title: Boolean
+        leftLeg:
+          type: boolean
+          title: Boolean
+        rightArm:
+          type: boolean
+          title: Boolean
+        rightLeg:
+          type: boolean
+          title: Boolean
+      required:
+      - body
+      - head
+      - leftArm
+      - leftLeg
+      - rightArm
+      - rightLeg
+      title: WearableSlots
+    org.micoli.micraft.http.GameAssetsController.AssetEntry:
+      type: object
+      properties:
+        format:
+          type: string
+          title: String
+        name:
+          type: string
+          title: String
+        pack:
+          type: string
+          title: String
+        path:
+          type: string
+          title: String
+      required:
+      - format
+      - name
+      - pack
+      - path
+      title: GameAssetsController.AssetEntry
   examples: {}
 webhooks: {}

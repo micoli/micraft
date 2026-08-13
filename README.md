@@ -371,23 +371,23 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/admin/ws/npcs` |  |
 | GET | `/api/admin/ws/scenes/{id}` |  |
 | GET | `/api/admin/ws/simulation` |  |
-| GET | `/api/armors` |  |
+| GET | `/api/armors` | List all armor definitions |
 | GET | `/api/assets/manifest` |  |
 | POST | `/api/assets/reload` |  |
-| GET | `/api/attacks` |  |
+| GET | `/api/attacks` | Attack definitions, flattened by "attackId:level" key |
 | GET | `/api/auth/config` |  |
 | GET | `/api/autocomplete/{commandId}/{argIndex}` |  |
-| GET | `/api/biomes` |  |
+| GET | `/api/biomes` | Grass color per biome id, as [r, g, b] in 0..1 |
 | POST | `/api/character/create` |  |
 | POST | `/api/character/rpgcreate` |  |
 | GET | `/api/chunks/{cx}/{cz}` |  |
-| GET | `/api/classes` |  |
-| GET | `/api/game-assets` |  |
-| GET | `/api/game-assets/file/{...}` |  |
+| GET | `/api/classes` | Attack ids accessible per RPG class, keyed by level |
+| GET | `/api/game-assets` | 3D game asset files discovered under resources/game-assets |
+| GET | `/api/game-assets/file/{...}` | Raw asset file bytes (glb/gltf/fbx/textures) |
 | GET | `/api/i18n/{locale}` |  |
-| GET | `/api/items/meta` |  |
+| GET | `/api/items/meta` | Item metadata (label, background color, consumable flags) by item type id |
 | GET | `/api/keybindings` |  |
-| GET | `/api/layout/registry` |  |
+| GET | `/api/layout/registry` | All widgets registered for the UI layout editor |
 | GET | `/api/macros/context` |  |
 | GET | `/api/map/houses` |  |
 | GET | `/api/map/road-raster` |  |
@@ -407,10 +407,10 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/players/by-email/{email}` |  |
 | GET | `/api/players/names` |  |
 | GET | `/api/quests` |  |
-| GET | `/api/server/info` |  |
-| GET | `/api/skins` |  |
-| GET | `/api/skins/{name}/config` |  |
-| GET | `/api/spells` |  |
+| GET | `/api/server/info` | Server build timestamp |
+| GET | `/api/skins` | Names of all available player skins |
+| GET | `/api/skins/{name}/config` | Skin config (eye offset, hidden bones) for a named skin |
+| GET | `/api/spells` | Spell definitions, keyed by spell id |
 | POST | `/auth/noauth-login` |  |
 
 <!-- END_API_ROUTES -->

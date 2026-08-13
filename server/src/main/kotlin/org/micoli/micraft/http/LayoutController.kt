@@ -1,5 +1,6 @@
 package org.micoli.micraft.http
 
+import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -11,11 +12,16 @@ import org.micoli.micraft.ui.WidgetRegistryEntry
 class LayoutController {
     fun register(route: Route) =
         route.apply {
-            get("/api/layout/registry") {
-                call.respondText(
-                    Json.encodeToString(
-                        ListSerializer(WidgetRegistryEntry.serializer()), WIDGET_REGISTRY),
-                    ContentType.Application.Json)
-            }
+            get(
+                "/api/layout/registry",
+                {
+                    description = "All widgets registered for the UI layout editor"
+                    response { code(HttpStatusCode.OK) { body<List<WidgetRegistryEntry>>() } }
+                }) {
+                    call.respondText(
+                        Json.encodeToString(
+                            ListSerializer(WidgetRegistryEntry.serializer()), WIDGET_REGISTRY),
+                        ContentType.Application.Json)
+                }
         }
 }

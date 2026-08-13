@@ -1,5 +1,6 @@
 package org.micoli.micraft.http
 
+import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -12,12 +13,17 @@ import org.micoli.micraft.SERVER_BUILD_TIMESTAMP
 class ServerInfoController {
     fun register(route: Route) =
         route.apply {
-            get("/api/server/info") {
-                call.respondText(
-                    Json.encodeToString(
-                        ServerInfo.serializer(), ServerInfo(SERVER_BUILD_TIMESTAMP)),
-                    ContentType.Application.Json,
-                )
-            }
+            get(
+                "/api/server/info",
+                {
+                    description = "Server build timestamp"
+                    response { code(HttpStatusCode.OK) { body<ServerInfo>() } }
+                }) {
+                    call.respondText(
+                        Json.encodeToString(
+                            ServerInfo.serializer(), ServerInfo(SERVER_BUILD_TIMESTAMP)),
+                        ContentType.Application.Json,
+                    )
+                }
         }
 }
