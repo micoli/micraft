@@ -378,8 +378,8 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/auth/config` |  |
 | GET | `/api/autocomplete/{commandId}/{argIndex}` | Autocomplete suggestions for a slash command argument |
 | GET | `/api/biomes` | Grass color per biome id, as [r, g, b] in 0..1 |
-| POST | `/api/character/create` |  |
-| POST | `/api/character/rpgcreate` |  |
+| POST | `/api/character/create` | Create a new (non-RPG) character |
+| POST | `/api/character/rpgcreate` | Create a new RPG character (point-buy base stats + class) |
 | GET | `/api/chunks/{cx}/{cz}` |  |
 | GET | `/api/classes` | Attack ids accessible per RPG class, keyed by level |
 | GET | `/api/game-assets` | 3D game asset files discovered under resources/game-assets |
@@ -399,11 +399,11 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/map/terrain-raster.png` |  |
 | GET | `/api/map/voronoi` |  |
 | GET | `/api/map/voronoi-borders` |  |
-| GET | `/api/player/{id}/armors` |  |
-| GET | `/api/player/{id}/rpg` |  |
-| POST | `/api/player/{id}/screenshots` |  |
-| GET | `/api/player/{id}/skin` |  |
-| PUT | `/api/player/{id}/skin` |  |
+| GET | `/api/player/{id}/armors` | Armor names currently equipped by a player |
+| GET | `/api/player/{id}/rpg` | A player's RPG character class |
+| POST | `/api/player/{id}/screenshots` | Upload a player screenshot (base64 PNG, optionally as a data: URI) |
+| GET | `/api/player/{id}/skin` | A player's current skin |
+| PUT | `/api/player/{id}/skin` | Change a player's skin |
 | GET | `/api/players/by-email/{email}` |  |
 | GET | `/api/players/names` | Names of all known players |
 | GET | `/api/quests` | All quest definitions |

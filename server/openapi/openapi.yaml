@@ -26,47 +26,6 @@ paths:
       parameters: []
       responses: {}
       deprecated: false
-  /api/player/{id}/skin:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-    put:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/player/{id}/screenshots:
-    post:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/player/{id}/armors:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/player/{id}/rpg:
-    get:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/character/create:
-    post:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
-  /api/character/rpgcreate:
-    post:
-      tags: []
-      parameters: []
-      responses: {}
-      deprecated: false
   /api/map/state:
     get:
       tags: []
@@ -697,6 +656,203 @@ paths:
                   title: List<Double>
                 title: "Map<String,List<Double>>"
       deprecated: false
+  /api/player/{id}/skin:
+    get:
+      tags: []
+      description: A player's current skin
+      parameters:
+      - name: id
+        in: path
+        description: Player id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.PlayerSkinResponse"
+        "404":
+          description: Player not found
+          headers: {}
+      deprecated: false
+    put:
+      tags: []
+      description: Change a player's skin
+      parameters:
+      - name: id
+        in: path
+        description: Player id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.SetPlayerSkinRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.PlayerSkinResponse"
+        "400":
+          description: Invalid or unknown skin
+          headers: {}
+        "404":
+          description: Player not found
+          headers: {}
+        "503":
+          description: No persistence backend
+          headers: {}
+      deprecated: false
+  /api/player/{id}/screenshots:
+    post:
+      tags: []
+      description: "Upload a player screenshot (base64 PNG, optionally as a data:\
+        \ URI)"
+      parameters:
+      - name: id
+        in: path
+        description: Player id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.UploadScreenshotRequest"
+        required: false
+      responses:
+        "201":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.UploadScreenshotResponse"
+        "400":
+          description: Invalid body or base64 data
+          headers: {}
+      deprecated: false
+  /api/player/{id}/armors:
+    get:
+      tags: []
+      description: Armor names currently equipped by a player
+      parameters:
+      - name: id
+        in: path
+        description: Player id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  title: String
+                title: List<String>
+      deprecated: false
+  /api/player/{id}/rpg:
+    get:
+      tags: []
+      description: A player's RPG character class
+      parameters:
+      - name: id
+        in: path
+        description: Player id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.PlayerRpgResponse"
+        "404":
+          description: Player or RPG character not found
+          headers: {}
+      deprecated: false
+  /api/character/create:
+    post:
+      tags: []
+      description: Create a new (non-RPG) character
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.CreateCharacterRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.CreateCharacterResponse"
+        "400":
+          description: Invalid or missing fields
+          headers: {}
+        "503":
+          description: No persistence backend
+          headers: {}
+      deprecated: false
+  /api/character/rpgcreate:
+    post:
+      tags: []
+      description: Create a new RPG character (point-buy base stats + class)
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.CreateRpgCharacterRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.CreateRpgCharacterResponse"
+        "400":
+          description: Invalid fields or stat budget
+          headers: {}
+        "409":
+          description: RPG character already exists
+          headers: {}
+        "503":
+          description: No persistence backend
+          headers: {}
+      deprecated: false
   /api/skins:
     get:
       tags: []
@@ -950,6 +1106,157 @@ components:
       - name
       - type
       title: MacroContextVar
+    org.micoli.micraft.http.PlayerSkinResponse:
+      type: object
+      properties:
+        skin:
+          type: string
+          title: String
+      required:
+      - skin
+      title: PlayerSkinResponse
+    org.micoli.micraft.http.SetPlayerSkinRequest:
+      type: object
+      properties:
+        skin:
+          type: string
+          title: String
+      required:
+      - skin
+      title: SetPlayerSkinRequest
+    org.micoli.micraft.http.UploadScreenshotRequest:
+      type: object
+      properties:
+        imageData:
+          type: string
+          title: String
+      required:
+      - imageData
+      title: UploadScreenshotRequest
+    org.micoli.micraft.http.UploadScreenshotResponse:
+      type: object
+      properties:
+        filename:
+          type: string
+          title: String
+      required:
+      - filename
+      title: UploadScreenshotResponse
+    org.micoli.micraft.http.PlayerRpgResponse:
+      type: object
+      properties:
+        characterClass:
+          type: string
+          title: String
+      required:
+      - characterClass
+      title: PlayerRpgResponse
+    org.micoli.micraft.http.CreateCharacterRequest:
+      type: object
+      properties:
+        email:
+          type:
+          - "null"
+          - string
+          title: String
+        playerName:
+          type: string
+          title: String
+        skin:
+          type:
+          - "null"
+          - string
+          title: String
+      required:
+      - playerName
+      title: CreateCharacterRequest
+    org.micoli.micraft.http.CreateCharacterResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          title: String
+        playerName:
+          type: string
+          title: String
+        skin:
+          type: string
+          title: String
+      required:
+      - id
+      - playerName
+      - skin
+      title: CreateCharacterResponse
+    org.micoli.micraft.http.CreateRpgCharacterRequest:
+      type: object
+      properties:
+        cha:
+          type: integer
+          format: int32
+          title: Int
+        characterClass:
+          type: string
+          title: String
+        con:
+          type: integer
+          format: int32
+          title: Int
+        dex:
+          type: integer
+          format: int32
+          title: Int
+        email:
+          type:
+          - "null"
+          - string
+          title: String
+        intel:
+          type: integer
+          format: int32
+          title: Int
+        playerName:
+          type: string
+          title: String
+        skin:
+          type:
+          - "null"
+          - string
+          title: String
+        str:
+          type: integer
+          format: int32
+          title: Int
+        wis:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - cha
+      - characterClass
+      - con
+      - dex
+      - intel
+      - playerName
+      - str
+      - wis
+      title: CreateRpgCharacterRequest
+    org.micoli.micraft.http.CreateRpgCharacterResponse:
+      type: object
+      properties:
+        characterClass:
+          type: string
+          title: String
+        id:
+          type: string
+          title: String
+        playerName:
+          type: string
+          title: String
+      required:
+      - characterClass
+      - id
+      - playerName
+      title: CreateRpgCharacterResponse
     org.micoli.micraft.game.skin.EyeAnchor:
       type: object
       properties:

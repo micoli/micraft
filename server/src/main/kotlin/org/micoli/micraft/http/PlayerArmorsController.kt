@@ -1,5 +1,6 @@
 package org.micoli.micraft.http
 
+import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -11,12 +12,19 @@ import org.micoli.micraft.game.world.WorldPersistence
 class PlayerArmorsController(private val persistence: WorldPersistence?) {
     fun register(route: Route) =
         route.apply {
-            get("/api/player/{id}/armors") {
-                val id = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-                val armors = persistence?.loadPlayerStateById(id)?.armors ?: emptyList()
-                call.respondText(
-                    Json.encodeToString(ListSerializer(String.serializer()), armors),
-                    ContentType.Application.Json)
-            }
+            get(
+                "/api/player/{id}/armors",
+                {
+                    description = "Armor names currently equipped by a player"
+                    request { pathParameter<String>("id") { description = "Player id" } }
+                    response { code(HttpStatusCode.OK) { body<List<String>>() } }
+                }) {
+                    val id =
+                        call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                    val armors = persistence?.loadPlayerStateById(id)?.armors ?: emptyList()
+                    call.respondText(
+                        Json.encodeToString(ListSerializer(String.serializer()), armors),
+                        ContentType.Application.Json)
+                }
         }
 }
