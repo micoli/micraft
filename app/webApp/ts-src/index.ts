@@ -26,6 +26,8 @@ import { registerScreenshot } from "./game/screenshot/screenshot";
 import { registerAoeEffect } from "./game/effects/aoeEffect";
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
 import { GameUI } from "./game/GameUI";
 import { setWidgetRegistry } from "./game/layout/LayoutEngine";
 import { initFaviconAnimator, setFaviconAnimated } from "./favicon/faviconAnimator";
@@ -339,7 +341,7 @@ async function mountUI() {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     return mountUI();
   }
-  createRoot(uiRoot).render(createElement(GameUI));
+  createRoot(uiRoot).render(createElement(QueryClientProvider, { client: queryClient }, createElement(GameUI)));
 }
 mountUI();
 
