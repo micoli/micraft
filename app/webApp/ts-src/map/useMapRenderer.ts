@@ -1,4 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  getApiMapState,
+  getApiMapTerrain,
+  getApiMapVoronoi,
+  getApiMapVoronoiBorders,
+  getApiMapHouses,
+  getApiMapRoadRasterPng,
+  getApiMapStaircases,
+} from "../generated/api/requests";
 import type {
   Camera,
   ChunkTerrainInfo,
@@ -316,9 +325,9 @@ export function useMapRenderer(svgRef: React.RefObject<SVGSVGElement | null>): M
 
     async function pollState() {
       try {
-        const r = await fetch("/api/map/state");
-        if (r.ok) {
-          const data: MapApiState = await r.json();
+        const r = await getApiMapState();
+        if (r.data) {
+          const data = r.data as unknown as MapApiState;
           apiStateRef.current = data;
           setApiState(data);
           scheduleUpdate();
@@ -331,9 +340,10 @@ export function useMapRenderer(svgRef: React.RefObject<SVGSVGElement | null>): M
 
     async function pollTerrain() {
       try {
-        const r = await fetch("/api/map/terrain");
-        if (r.ok) {
-          terrainData.current = await r.json();
+        const r = await getApiMapTerrain();
+        if (r.data) {
+          // Documented as an opaque JSON string, but the client auto-parses application/json.
+          terrainData.current = r.data as unknown as ChunkTerrainInfo[];
           setContourPath(computeContourPath(terrainData.current));
           if (!autoFitDone.current && terrainData.current.length > 0) {
             autoFitDone.current = true;
@@ -351,8 +361,8 @@ export function useMapRenderer(svgRef: React.RefObject<SVGSVGElement | null>): M
 
     async function fetchVoronoi() {
       try {
-        const r = await fetch("/api/map/voronoi?cx=0&cz=0&radius=3200");
-        if (r.ok) setVoronoiCells(await r.json());
+        const r = await getApiMapVoronoi({ query: { cx: 0, cz: 0, radius: 3200 } });
+        if (r.data) setVoronoiCells(r.data as unknown as VoronoiCellInfo[]);
       } catch {
         /* non-critical */
       }
@@ -365,8 +375,8 @@ export function useMapRenderer(svgRef: React.RefObject<SVGSVGElement | null>): M
       if (!isNaN(x) && Math.hypot(cx - x, cz - z) < 300) return;
       biomeFetchCenter.current = { x: cx, z: cz };
       try {
-        const r = await fetch(`/api/map/voronoi-borders?cx=${cx}&cz=${cz}&radius=2000`);
-        if (r.ok) setBiomeBorderPath(computeBiomeBorderPath(await r.json()));
+        const r = await getApiMapVoronoiBorders({ query: { cx, cz, radius: 2000 } });
+        if (r.data) setBiomeBorderPath(computeBiomeBorderPath(r.data));
       } catch {
         /* non-critical */
       }
@@ -379,8 +389,8 @@ export function useMapRenderer(svgRef: React.RefObject<SVGSVGElement | null>): M
       if (!isNaN(x) && Math.hypot(cx - x, cz - z) < 300) return;
       housesFetchCenter.current = { x: cx, z: cz };
       try {
-        const r = await fetch(`/api/map/houses?cx=${cx}&cz=${cz}&radius=1200`);
-        if (r.ok) setHouses(await r.json());
+        const r = await getApiMapHouses({ query: { cx, cz, radius: 1200 } });
+        if (r.data) setHouses(r.data);
       } catch {
         /* non-critical */
       }
@@ -396,9 +406,12 @@ export function useMapRenderer(svgRef: React.RefObject<SVGSVGElement | null>): M
       const radius = 1200;
       roadsFetching.current = true;
       try {
-        const r = await fetch(`/api/map/road-raster.png?cx=${cx}&cz=${cz}&radius=${radius}`);
-        if (r.ok) {
-          const blob = await r.blob();
+        const r = await getApiMapRoadRasterPng({ query: { cx, cz, radius } });
+        if (r.data) {
+          // Response type is `number[]` because the OpenAPI schema generator represents Kotlin
+          // ByteArray as a JSON array-of-int, but the client parses it as a Blob at runtime based
+          // on the actual image/png Content-Type header.
+          const blob = r.data as unknown as Blob;
           const url = URL.createObjectURL(blob);
           if (roadObjUrl.current) URL.revokeObjectURL(roadObjUrl.current);
           roadObjUrl.current = url;
@@ -416,8 +429,8 @@ export function useMapRenderer(svgRef: React.RefObject<SVGSVGElement | null>): M
       if (staircasesFetched.current) return;
       staircasesFetched.current = true;
       try {
-        const r = await fetch("/api/map/staircases");
-        if (r.ok) setStaircases(await r.json());
+        const r = await getApiMapStaircases();
+        if (r.data) setStaircases(r.data as unknown as StaircaseMapInfo[]);
       } catch {
         staircasesFetched.current = false;
       }

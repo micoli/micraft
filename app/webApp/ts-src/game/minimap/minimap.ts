@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
+import {
+  getApiMapTerrainRasterPng,
+  getApiMapStaircases,
+  getApiMapRoadRasterPng,
+  getApiMapVoronoiBorders,
+} from "../../generated/api/requests";
 import { computeZoneOutlineEdges, mergeIntervals } from "../targeting/zoneOutline";
 
 const MINIMAP_SIZE = 180;
@@ -56,9 +62,9 @@ function maybeRefetchTerrain(playerX: number, playerZ: number): void {
   terrainFetching = true;
   const cx = Math.round(playerX);
   const cz = Math.round(playerZ);
-  fetch(`/api/map/terrain-raster.png?cx=${cx}&cz=${cz}&radius=${radius}`)
+  getApiMapTerrainRasterPng({ query: { cx, cz, radius } })
     .then((r) => {
-      if (r.ok) return r.blob();
+      if (r.data) return r.data;
       terrainFetchCenter.x = NaN;
     })
     .then((blob) => {
@@ -92,10 +98,8 @@ function maybeRefetchTerrain(playerX: number, playerZ: number): void {
 function maybeRefetchStaircases(): void {
   if (staircasesFetching || staircasesFetched) return;
   staircasesFetching = true;
-  fetch("/api/map/staircases")
-    .then((r) => {
-      if (r.ok) return r.json();
-    })
+  getApiMapStaircases()
+    .then((r) => r.data)
     .then((data) => {
       if (data) {
         staircasePoints = data;
@@ -118,9 +122,9 @@ function maybeRefetchRoads(playerX: number, playerZ: number): void {
   roadsFetching = true;
   const cx = Math.round(playerX),
     cz = Math.round(playerZ);
-  fetch(`/api/map/road-raster.png?cx=${cx}&cz=${cz}&radius=${radius}`)
+  getApiMapRoadRasterPng({ query: { cx, cz, radius } })
     .then((r) => {
-      if (r.ok) return r.blob();
+      if (r.data) return r.data;
       roadsFetchCenter.x = NaN;
     })
     .then((blob) => {
@@ -157,9 +161,9 @@ function maybeRefetchBiomeBorders(playerX: number, playerZ: number): void {
   biomeFetching = true;
   const cx = Math.round(playerX),
     cz = Math.round(playerZ);
-  fetch(`/api/map/voronoi-borders?cx=${cx}&cz=${cz}&radius=800`)
+  getApiMapVoronoiBorders({ query: { cx, cz, radius: 800 } })
     .then((r) => {
-      if (r.ok) return r.json();
+      if (r.data) return r.data;
       biomeFetchCenter.x = NaN;
     })
     .then((data) => {

@@ -1,4 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useCallback, useState } from "react";
+import {
+  getApiMapStaircases,
+  getApiMapState,
+  getApiMapVoronoi,
+  getApiMapRoadRasterPng,
+  getApiMapVoronoiBorders,
+} from "../../generated/api/requests";
 
 interface VoronoiCell {
   x: number;
@@ -490,9 +497,9 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
     const cx = Math.round(playerX);
     const cz = Math.round(playerZ);
 
-    fetch("/api/map/staircases")
-      .then((r) => r.json())
-      .then((data: StaircaseMapInfo[]) => {
+    getApiMapStaircases({ throwOnError: true })
+      .then((r) => r.data as unknown as StaircaseMapInfo[])
+      .then((data) => {
         staircasesRef.current = data;
         const { x: fcx, z: fcz } = fetchCenterRef.current;
         const L = layersRef.current;
@@ -515,9 +522,9 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
       })
       .catch(() => {});
 
-    fetch("/api/map/state")
-      .then((r) => r.json())
-      .then((data: { weatherZones?: WeatherZoneInfo[] }) => {
+    getApiMapState({ throwOnError: true })
+      .then((r) => r.data as unknown as { weatherZones?: WeatherZoneInfo[] })
+      .then((data) => {
         weatherZonesRef.current = data.weatherZones ?? [];
         const { x: fcx, z: fcz } = fetchCenterRef.current;
         const L = layersRef.current;
@@ -540,9 +547,9 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
       })
       .catch(() => {});
 
-    fetch(`/api/map/voronoi?cx=${cx}&cz=${cz}&radius=${RADIUS * 2}`)
-      .then((r) => r.json())
-      .then((data: VoronoiCell[]) => {
+    getApiMapVoronoi({ query: { cx, cz, radius: RADIUS * 2 }, throwOnError: true })
+      .then((r) => r.data as unknown as VoronoiCell[])
+      .then((data) => {
         cellsRef.current = data;
         const { x: fcx, z: fcz } = fetchCenterRef.current;
         const { x: px2, z: pz2 } = panRef.current;
@@ -554,8 +561,11 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
       })
       .catch(() => {});
 
-    const roadFetch = fetch(`/api/map/road-raster.png?cx=${cx}&cz=${cz}&radius=${RADIUS * 2}`)
-      .then((r) => r.blob())
+    const roadFetch = getApiMapRoadRasterPng({ query: { cx, cz, radius: RADIUS * 2 }, throwOnError: true })
+      // Response type is `number[]` because the OpenAPI schema generator represents Kotlin
+      // ByteArray as a JSON array-of-int, but the client parses it as a Blob at runtime based on
+      // the actual image/png Content-Type header.
+      .then((r) => r.data as unknown as Blob)
       .then(
         (blob) =>
           new Promise<HTMLImageElement>((resolve, reject) => {
@@ -574,7 +584,9 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
       );
 
     Promise.all([
-      fetch(`/api/map/voronoi-borders?cx=${cx}&cz=${cz}&radius=${RADIUS * 2}`).then((r) => r.json()),
+      getApiMapVoronoiBorders({ query: { cx, cz, radius: RADIUS * 2 }, throwOnError: true }).then(
+        (r) => r.data as unknown as BiomeBorderSegment[],
+      ),
       roadFetch,
     ])
       .then(([borders, roadImg]: [BiomeBorderSegment[], HTMLImageElement]) => {
