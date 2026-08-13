@@ -316,8 +316,6 @@ export const api = {
         (r) => r.json() as Promise<InstanceZoneDto>,
       ),
     delete: (id: string) => del(`/api/admin/instances/${encodeURIComponent(id)}`),
-    setBlock: (id: string, block: InstanceBlockDto) =>
-      put(`/api/admin/instances/${encodeURIComponent(id)}/blocks`, block),
   },
   scenes: {
     list: () => get("/api/admin/scenes").then((r) => r.json() as Promise<SceneDto[]>),
@@ -337,7 +335,6 @@ export const api = {
     // Binary layout: [width:i32be][height:i32be][depth:i32be][blocks: width*height*depth bytes][states: same length]
     getBlocksRaw: (id: string) =>
       fetch(`/api/admin/scenes/${encodeURIComponent(id)}/blocks/raw`).then((r) => r.arrayBuffer()),
-    setBlock: (id: string, block: SceneBlockDto) => put(`/api/admin/scenes/${encodeURIComponent(id)}/blocks`, block),
   },
   npcTypes: {
     list: () => get("/api/admin/npc-types").then((r) => r.json() as Promise<Record<string, NpcTypeDto>>),

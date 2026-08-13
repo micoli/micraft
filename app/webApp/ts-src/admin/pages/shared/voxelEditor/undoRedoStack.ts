@@ -19,12 +19,14 @@ export function pushCapped<T>(stack: T[], entry: T) {
 // content onto the undo stack (and clears redo); undo pops it, re-applies it, and captures the
 // cell's current content onto the redo stack before doing so, so undo/redo can ping-pong back and
 // forth indefinitely. `captureBlock`/`applyEntry` are supplied by the caller since what "apply"
-// means differs (instance: PUT + chunk reload; scene: PUT + direct WASM remesh).
+// means differs (instance: edit socket send + chunk reload; scene: edit socket send + direct WASM
+// remesh). Both apply optimistically (send is fire-and-forget) — a server-side rejection surfaces
+// asynchronously via the edit socket's onError, not through this call.
 export function makeUndoRedoController<T extends UndoEntryBase>(
   undoStackRef: MutableRefObject<T[]>,
   redoStackRef: MutableRefObject<T[]>,
   captureBlock: (at: T) => T,
-  applyEntry: (entry: T, onSuccess: () => void, failLabel: string) => void,
+  applyEntry: (entry: T, onSuccess: () => void) => void,
 ) {
   function pushUndo(entry: T) {
     pushCapped(undoStackRef.current, entry);
@@ -35,14 +37,14 @@ export function makeUndoRedoController<T extends UndoEntryBase>(
     const entry = undoStackRef.current.pop();
     if (!entry) return;
     const redoEntry = captureBlock(entry);
-    applyEntry(entry, () => pushCapped(redoStackRef.current, redoEntry), "Undo");
+    applyEntry(entry, () => pushCapped(redoStackRef.current, redoEntry));
   }
 
   function performRedo() {
     const entry = redoStackRef.current.pop();
     if (!entry) return;
     const undoEntry = captureBlock(entry);
-    applyEntry(entry, () => pushCapped(undoStackRef.current, undoEntry), "Redo");
+    applyEntry(entry, () => pushCapped(undoStackRef.current, undoEntry));
   }
 
   return { pushUndo, performUndo, performRedo };

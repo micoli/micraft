@@ -20,6 +20,8 @@ import { useModifierDragMode } from "../shared/voxelEditor/useModifierDragMode";
 import { useActionError } from "../shared/voxelEditor/useActionError";
 import { makeUndoRedoController, type UndoEntryBase } from "../shared/voxelEditor/undoRedoStack";
 import { VoxelEditorSidebar } from "../shared/voxelEditor/VoxelEditorSidebar";
+import { connectEditSocket, type BlockEditSocket } from "../shared/voxelEditor/editSocket";
+import type { SceneBlockDto } from "../../api";
 
 // Voxel-picking epsilon: nudges the picked point across the hit face along its normal before
 // flooring, so the coordinate resolves to the block on the correct side of the face — same
@@ -303,7 +305,11 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     let disposed = false;
 
     // Whole-volume load: fetch the raw binary buffer once and mesh it in one call — no
-    // chunk-streaming equivalent, since a Scene is always small enough to load in full.
+    // chunk-streaming equivalent, since a Scene is always small enough to load in full. The live
+    // edit socket only opens once this initial bulk load has succeeded, so a broadcast edit from
+    // another editor never lands on a buffer that isn't meshed yet.
+    let editSocket: BlockEditSocket<SceneBlockDto> | null = null;
+
     async function loadScene() {
       const exports = await window.webApp!;
       const buf = await api.scenes.getBlocksRaw(scene.id);
@@ -314,6 +320,16 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         const mesh = m as InstanceType<typeof BABYLON.Mesh>;
         if (!groundMeshes.has(mesh) && !overlayMeshes.has(mesh)) mesh.isPickable = true;
       }
+      if (disposed) return;
+      editSocket = connectEditSocket<SceneBlockDto>(
+        "scenes",
+        scene.id,
+        (edit) => {
+          const ordinal = ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
+          if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
+        },
+        (message) => flashActionError(message),
+      );
     }
 
     loadScene().catch((e) => {
@@ -342,19 +358,15 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       }
     }
 
-    // Applies an edit both server-side (persisted) and locally via the WASM mesher (instant
-    // visual feedback) — mirrors InstanceEditorViewport's applyEntry, minus the chunk reload
-    // (mcSceneSetBlock re-meshes the whole buffer synchronously, no fetch round-trip needed).
-    function applyEntry(entry: UndoEntry, onSuccess: () => void, failLabel: string) {
+    // Applies an edit both server-side (via the live edit socket, the only write path) and
+    // locally via the WASM mesher (instant, optimistic — no round-trip wait). Mirrors
+    // InstanceEditorViewport's applyEntry, minus the chunk reload (mcSceneSetBlock re-meshes the
+    // whole buffer synchronously).
+    function applyEntry(entry: UndoEntry, onSuccess: () => void) {
       const ordinal = ordinalByNameRef.current.get(entry.type) ?? (entry.type === "AIR" ? 0 : null);
-      api.scenes
-        .setBlock(scene.id, { x: entry.x, y: entry.y, z: entry.z, type: entry.type, state: entry.state })
-        .then((res) => {
-          if (!res.ok) return res.text().then((msg) => flashActionError(msg || `${failLabel} failed (${res.status})`));
-          onSuccess();
-          if (ordinal != null) exportsSetBlock(entry.x, entry.y, entry.z, ordinal, entry.state);
-        })
-        .catch((e) => flashActionError(String(e)));
+      editSocket?.send({ x: entry.x, y: entry.y, z: entry.z, type: entry.type, state: entry.state });
+      onSuccess();
+      if (ordinal != null) exportsSetBlock(entry.x, entry.y, entry.z, ordinal, entry.state);
     }
 
     const { pushUndo, performUndo, performRedo } = makeUndoRedoController<UndoEntry>(
@@ -477,14 +489,9 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
             prevState = wasmExports.mcSceneGetBlockStateAt(bx, by, bz);
             prevType = window.mc.getBlockDef(targetOrdinal)?.name ?? "AIR";
           }
-          api.scenes
-            .setBlock(scene.id, { x: bx, y: by, z: bz, type: "AIR", state: 0 })
-            .then((res) => {
-              if (!res.ok) return res.text().then((msg) => flashActionError(msg || `Break failed (${res.status})`));
-              pushUndo({ x: bx, y: by, z: bz, type: prevType, state: prevState });
-              exportsSetBlock(bx, by, bz, 0, 0);
-            })
-            .catch((e) => flashActionError(String(e)));
+          editSocket?.send({ x: bx, y: by, z: bz, type: "AIR", state: 0 });
+          pushUndo({ x: bx, y: by, z: bz, type: prevType, state: prevState });
+          exportsSetBlock(bx, by, bz, 0, 0);
           return;
         }
 
@@ -511,14 +518,9 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
           prevType = window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR";
         }
         const state = packState(overlay.getPlacementRotation(), selectedColorIndexRef.current);
-        api.scenes
-          .setBlock(scene.id, { x: tx, y: ty, z: tz, type, state })
-          .then((res) => {
-            if (!res.ok) return res.text().then((msg) => flashActionError(msg || `Place failed (${res.status})`));
-            pushUndo({ x: tx, y: ty, z: tz, type: prevType, state: prevState });
-            exportsSetBlock(tx, ty, tz, ordinal, state);
-          })
-          .catch((e) => flashActionError(String(e)));
+        editSocket?.send({ x: tx, y: ty, z: tz, type, state });
+        pushUndo({ x: tx, y: ty, z: tz, type: prevType, state: prevState });
+        exportsSetBlock(tx, ty, tz, ordinal, state);
       },
     });
 
@@ -552,6 +554,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKeyDown);
       overlay.disposeAll();
+      editSocket?.close();
       window.webApp?.then((exports) => exports.mcSceneDispose()).catch(() => {});
       axesGizmo.dispose();
       engine.dispose();

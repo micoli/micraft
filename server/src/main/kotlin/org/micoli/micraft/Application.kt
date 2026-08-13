@@ -340,6 +340,7 @@ fun Application.module() {
                 tokenStore)
         adminController.register(this)
         adminController.registerAdminWs(this)
+        adminController.registerEditWs(this)
         Runtime.getRuntime().addShutdownHook(Thread { simulationRegistry.stopAll() })
         val simulationController =
             SimulationController(

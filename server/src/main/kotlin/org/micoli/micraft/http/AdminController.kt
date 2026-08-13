@@ -225,6 +225,202 @@ class AdminController(
         return true
     }
 
+    // ── Collaborative block-edit WS (scenes/instances) ──────────────────────
+    // Keyed by "scene:$id" / "instance:$id". Each listener pushes the JSON-encoded applied edit
+    // to one connected admin editor socket; broadcastEdit excludes the socket that sent it (it
+    // already applied the edit optimistically, no round-trip needed).
+    private val editListeners =
+        java.util.concurrent.ConcurrentHashMap<String, MutableSet<suspend (String) -> Unit>>()
+
+    private fun addEditListener(key: String, listener: suspend (String) -> Unit) {
+        editListeners
+            .computeIfAbsent(key) { java.util.concurrent.ConcurrentHashMap.newKeySet() }
+            .add(listener)
+    }
+
+    private fun removeEditListener(key: String, listener: suspend (String) -> Unit) {
+        editListeners[key]?.remove(listener)
+    }
+
+    private suspend fun broadcastEdit(
+        key: String,
+        json: String,
+        excluding: suspend (String) -> Unit
+    ) {
+        editListeners[key]?.forEach { listener ->
+            if (listener !== excluding) {
+                try {
+                    listener(json)
+                } catch (_: Exception) {}
+            }
+        }
+    }
+
+    private sealed class EditResult<out T> {
+        data class Applied<T>(val dto: T) : EditResult<T>()
+
+        data class Failed(val message: String) : EditResult<Nothing>()
+    }
+
+    /**
+     * Shared by the WS scene-edit handler (only writer for scene blocks). Mirrors the previous `PUT
+     * /api/admin/scenes/{id}/blocks` handler body.
+     */
+    private fun applySceneBlockEdit(id: String, dto: SceneBlockDto): EditResult<SceneBlockDto> {
+        val type =
+            BlockRegistry.all().find { it.id == dto.type }
+                ?: return EditResult.Failed("Unknown block type")
+        val ok =
+            gameLoop
+                .scenes()
+                .setBlock(
+                    id, dto.x, dto.y, dto.z, BlockRegistry.wireIndex(type).toByte(), dto.state)
+        if (!ok) return EditResult.Failed("Scene not found or coordinate out of bounds")
+        return EditResult.Applied(dto)
+    }
+
+    /**
+     * Shared by the WS instance-edit handler (only writer for instance blocks). Mirrors the
+     * previous `PUT /api/admin/instances/{id}/blocks` handler body, including the in-game broadcast
+     * to connected players via [GameLoop.broadcastWorldUpdate].
+     */
+    private suspend fun applyInstanceBlockEdit(
+        id: String,
+        dto: InstanceBlockDto
+    ): EditResult<InstanceBlockDto> {
+        val zone = gameLoop.instances().get(id) ?: return EditResult.Failed("Instance not found")
+        if (!zone.contains(dto.x, dto.y, dto.z)) {
+            return EditResult.Failed("Coordinate outside zone bounds")
+        }
+        val type =
+            BlockRegistry.all().find { it.id == dto.type }
+                ?: return EditResult.Failed("Unknown block type")
+        val world = gameLoop.getWorldState()
+        val pos = BlockPos(dto.x, dto.y, dto.z)
+        if (type == BlockType.AIR) {
+            val result =
+                BlockBreaker.breakAt(
+                    pos, dto.xOffset.toInt() and 0xFF, dto.zOffset.toInt() and 0xFF, world)
+            gameLoop.broadcastWorldUpdate(
+                result.changes,
+                entityRemoves = result.entityRemoves,
+                entityRemovesAt = result.entityRemovesAt)
+        } else {
+            val rotation = BlockState.rotation(dto.state)
+            val colorIndex = BlockState.colorIndex(dto.state)
+            val result =
+                BlockPlacer.placeAt(
+                    pos,
+                    type,
+                    rotation,
+                    colorIndex,
+                    dto.xOffset.toInt() and 0xFF,
+                    dto.zOffset.toInt() and 0xFF,
+                    world)
+            if (result.rejectedReason != null) return EditResult.Failed(result.rejectedReason)
+            gameLoop.broadcastWorldUpdate(result.changes, entityAdds = result.entityAdds)
+        }
+        return EditResult.Applied(dto)
+    }
+
+    private suspend fun DefaultWebSocketServerSession.authorizeAdminWs(): Boolean {
+        if (tokenStore == null) return true
+        val token = call.request.queryParameters["token"]
+        val auth = token?.let { tokenStore.validate(it) }
+        if (auth == null || ("*" !in auth.permissions && "admin" !in auth.permissions)) {
+            close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Unauthorized"))
+            return false
+        }
+        return true
+    }
+
+    fun registerEditWs(route: Route) =
+        route.apply {
+            webSocket("/api/admin/ws/scenes/{id}") {
+                if (!authorizeAdminWs()) return@webSocket
+                val id =
+                    call.parameters["id"]
+                        ?: return@webSocket close(
+                            CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Missing id"))
+                if (gameLoop.scenes().get(id) == null) {
+                    return@webSocket close(
+                        CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Not found"))
+                }
+                val key = "scene:$id"
+                val listener: suspend (String) -> Unit = { json ->
+                    try {
+                        send(json)
+                    } catch (_: Exception) {}
+                }
+                addEditListener(key, listener)
+                try {
+                    for (frame in incoming) {
+                        if (frame !is Frame.Text) continue
+                        val dto =
+                            try {
+                                Json.decodeFromString<SceneBlockDto>(frame.readText())
+                            } catch (e: Exception) {
+                                send("""{"type":"error","message":"Invalid block edit"}""")
+                                continue
+                            }
+                        when (val result = applySceneBlockEdit(id, dto)) {
+                            is EditResult.Applied ->
+                                broadcastEdit(
+                                    key,
+                                    adminJson.encodeToString(SceneBlockDto.serializer(), dto),
+                                    listener)
+                            is EditResult.Failed ->
+                                send("""{"type":"error","message":${"\"${result.message}\""}}""")
+                        }
+                    }
+                } finally {
+                    removeEditListener(key, listener)
+                }
+            }
+
+            webSocket("/api/admin/ws/instances/{id}") {
+                if (!authorizeAdminWs()) return@webSocket
+                val id =
+                    call.parameters["id"]
+                        ?: return@webSocket close(
+                            CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Missing id"))
+                if (gameLoop.instances().get(id) == null) {
+                    return@webSocket close(
+                        CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Not found"))
+                }
+                val key = "instance:$id"
+                val listener: suspend (String) -> Unit = { json ->
+                    try {
+                        send(json)
+                    } catch (_: Exception) {}
+                }
+                addEditListener(key, listener)
+                try {
+                    for (frame in incoming) {
+                        if (frame !is Frame.Text) continue
+                        val dto =
+                            try {
+                                Json.decodeFromString<InstanceBlockDto>(frame.readText())
+                            } catch (e: Exception) {
+                                send("""{"type":"error","message":"Invalid block edit"}""")
+                                continue
+                            }
+                        when (val result = applyInstanceBlockEdit(id, dto)) {
+                            is EditResult.Applied ->
+                                broadcastEdit(
+                                    key,
+                                    adminJson.encodeToString(InstanceBlockDto.serializer(), dto),
+                                    listener)
+                            is EditResult.Failed ->
+                                send("""{"type":"error","message":${"\"${result.message}\""}}""")
+                        }
+                    }
+                } finally {
+                    removeEditListener(key, listener)
+                }
+            }
+        }
+
     fun register(route: Route) =
         route.apply {
             // ── Static assets ────────────────────────────────────────────────
@@ -871,52 +1067,6 @@ class AdminController(
                 }
             }
 
-            put("/api/admin/instances/{id}/blocks") {
-                if (!requireAdmin()) return@put
-                val id = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
-                val zone =
-                    gameLoop.instances().get(id) ?: return@put call.respond(HttpStatusCode.NotFound)
-                val body = Json.decodeFromString<InstanceBlockDto>(call.receiveText())
-                if (!zone.contains(body.x, body.y, body.z)) {
-                    return@put call.respond(
-                        HttpStatusCode.BadRequest, "Coordinate outside zone bounds")
-                }
-                val type =
-                    BlockRegistry.all().find { it.id == body.type }
-                        ?: return@put call.respond(HttpStatusCode.BadRequest, "Unknown block type")
-                val world = gameLoop.getWorldState()
-                val pos = BlockPos(body.x, body.y, body.z)
-                if (type == BlockType.AIR) {
-                    val result =
-                        BlockBreaker.breakAt(
-                            pos,
-                            body.xOffset.toInt() and 0xFF,
-                            body.zOffset.toInt() and 0xFF,
-                            world)
-                    gameLoop.broadcastWorldUpdate(
-                        result.changes,
-                        entityRemoves = result.entityRemoves,
-                        entityRemovesAt = result.entityRemovesAt)
-                } else {
-                    val rotation = BlockState.rotation(body.state)
-                    val colorIndex = BlockState.colorIndex(body.state)
-                    val result =
-                        BlockPlacer.placeAt(
-                            pos,
-                            type,
-                            rotation,
-                            colorIndex,
-                            body.xOffset.toInt() and 0xFF,
-                            body.zOffset.toInt() and 0xFF,
-                            world)
-                    if (result.rejectedReason != null) {
-                        return@put call.respond(HttpStatusCode.BadRequest, result.rejectedReason)
-                    }
-                    gameLoop.broadcastWorldUpdate(result.changes, entityAdds = result.entityAdds)
-                }
-                call.respond(HttpStatusCode.NoContent)
-            }
-
             // ── Scenes ───────────────────────────────────────────────────────
             // A bounded X/Y/Z raw block-structure editor buffer — NOT tied to the live
             // world/chunks (unlike an instance zone, which carves a region out of the
@@ -1028,30 +1178,6 @@ class AdminController(
                     out.write(scene.states)
                 }
                 call.respondBytes(buffer.toByteArray(), ContentType.Application.OctetStream)
-            }
-
-            put("/api/admin/scenes/{id}/blocks") {
-                if (!requireAdmin()) return@put
-                val id = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
-                val body = Json.decodeFromString<SceneBlockDto>(call.receiveText())
-                val type =
-                    BlockRegistry.all().find { it.id == body.type }
-                        ?: return@put call.respond(HttpStatusCode.BadRequest, "Unknown block type")
-                val ok =
-                    gameLoop
-                        .scenes()
-                        .setBlock(
-                            id,
-                            body.x,
-                            body.y,
-                            body.z,
-                            BlockRegistry.wireIndex(type).toByte(),
-                            body.state)
-                if (!ok) {
-                    return@put call.respond(
-                        HttpStatusCode.NotFound, "Scene not found or coordinate out of bounds")
-                }
-                call.respond(HttpStatusCode.NoContent)
             }
 
             // ── NPC types ─────────────────────────────────────────────────────

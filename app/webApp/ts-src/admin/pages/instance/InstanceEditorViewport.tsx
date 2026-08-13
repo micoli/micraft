@@ -20,6 +20,8 @@ import { useModifierDragMode } from "../shared/voxelEditor/useModifierDragMode";
 import { useActionError } from "../shared/voxelEditor/useActionError";
 import { makeUndoRedoController, type UndoEntryBase } from "../shared/voxelEditor/undoRedoStack";
 import { VoxelEditorSidebar } from "../shared/voxelEditor/VoxelEditorSidebar";
+import { connectEditSocket } from "../shared/voxelEditor/editSocket";
+import type { InstanceBlockDto } from "../../api";
 
 const CHUNK_SIZE = 16;
 // How far (in chunks) around the camera target to keep block geometry loaded. Scales with
@@ -318,6 +320,22 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         .finally(() => chunkLoading.delete(key));
     }
 
+    // Live edit socket: the only write path for instance block edits (see AdminController
+    // .registerEditWs — the old PUT .../blocks REST endpoint was removed). Opened alongside chunk
+    // streaming rather than after some "initial load" milestone, since instance geometry loads
+    // continuously per-chunk as the camera moves; a broadcast edit for a chunk not currently
+    // visible is simply ignored — it'll be up to date whenever that chunk streams in next.
+    const editSocket = connectEditSocket<InstanceBlockDto>(
+      "instances",
+      zone.id,
+      (edit) => {
+        const cx = Math.floor(edit.x / CHUNK_SIZE);
+        const cz = Math.floor(edit.z / CHUNK_SIZE);
+        if (visibleChunks.has(chunkKeyOf(cx, cz))) reloadChunk(cx, cz);
+      },
+      (message) => flashActionError(message),
+    );
+
     function captureBlock(at: UndoEntry): UndoEntry {
       if (!wasmExports)
         return { x: at.x, y: at.y, z: at.z, type: "AIR", state: 0, xOffset: at.xOffset, zOffset: at.zOffset };
@@ -327,23 +345,18 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       return { x: at.x, y: at.y, z: at.z, type, state, xOffset: at.xOffset, zOffset: at.zOffset };
     }
 
-    function applyEntry(entry: UndoEntry, onSuccess: () => void, failLabel: string) {
-      api.instances
-        .setBlock(zone.id, {
-          x: entry.x,
-          y: entry.y,
-          z: entry.z,
-          type: entry.type,
-          state: entry.state,
-          xOffset: entry.xOffset,
-          zOffset: entry.zOffset,
-        })
-        .then((res) => {
-          if (!res.ok) return res.text().then((msg) => flashActionError(msg || `${failLabel} failed (${res.status})`));
-          onSuccess();
-          return reloadChunk(Math.floor(entry.x / CHUNK_SIZE), Math.floor(entry.z / CHUNK_SIZE));
-        })
-        .catch((e) => flashActionError(String(e)));
+    function applyEntry(entry: UndoEntry, onSuccess: () => void) {
+      editSocket.send({
+        x: entry.x,
+        y: entry.y,
+        z: entry.z,
+        type: entry.type,
+        state: entry.state,
+        xOffset: entry.xOffset,
+        zOffset: entry.zOffset,
+      });
+      onSuccess();
+      reloadChunk(Math.floor(entry.x / CHUNK_SIZE), Math.floor(entry.z / CHUNK_SIZE));
     }
 
     const { pushUndo, performUndo, performRedo } = makeUndoRedoController<UndoEntry>(
@@ -559,30 +572,25 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
             // Full state byte (rotation + color) so undo restores the exact previous look.
             prevState = targetState;
           }
-          api.instances
-            .setBlock(zone.id, {
-              x: bx,
-              y: by,
-              z: bz,
-              type: "AIR",
-              state: 0,
-              xOffset: breakXOffset,
-              zOffset: breakZOffset,
-            })
-            .then((res) => {
-              if (!res.ok) return res.text().then((msg) => flashActionError(msg || `Break failed (${res.status})`));
-              pushUndo({
-                x: bx,
-                y: by,
-                z: bz,
-                type: prevType,
-                state: prevState,
-                xOffset: breakXOffset,
-                zOffset: breakZOffset,
-              });
-              return reloadChunk(Math.floor(bx / CHUNK_SIZE), Math.floor(bz / CHUNK_SIZE));
-            })
-            .catch((e) => flashActionError(String(e)));
+          editSocket.send({
+            x: bx,
+            y: by,
+            z: bz,
+            type: "AIR",
+            state: 0,
+            xOffset: breakXOffset,
+            zOffset: breakZOffset,
+          });
+          pushUndo({
+            x: bx,
+            y: by,
+            z: bz,
+            type: prevType,
+            state: prevState,
+            xOffset: breakXOffset,
+            zOffset: breakZOffset,
+          });
+          reloadChunk(Math.floor(bx / CHUNK_SIZE), Math.floor(bz / CHUNK_SIZE));
           return;
         }
 
@@ -622,14 +630,9 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
           prevType = window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR";
         }
         const state = packState(overlay.getPlacementRotation(), selectedColorIndexRef.current);
-        api.instances
-          .setBlock(zone.id, { x: tx, y: ty, z: tz, type, state, xOffset, zOffset })
-          .then((res) => {
-            if (!res.ok) return res.text().then((msg) => flashActionError(msg || `Place failed (${res.status})`));
-            pushUndo({ x: tx, y: ty, z: tz, type: prevType, state: prevState, xOffset, zOffset });
-            return reloadChunk(Math.floor(tx / CHUNK_SIZE), Math.floor(tz / CHUNK_SIZE));
-          })
-          .catch((e) => flashActionError(String(e)));
+        editSocket.send({ x: tx, y: ty, z: tz, type, state, xOffset, zOffset });
+        pushUndo({ x: tx, y: ty, z: tz, type: prevType, state: prevState, xOffset, zOffset });
+        reloadChunk(Math.floor(tx / CHUNK_SIZE), Math.floor(tz / CHUNK_SIZE));
       },
     });
 
@@ -648,6 +651,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKeyDown);
       overlay.disposeAll();
+      editSocket.close();
       axesGizmo.dispose();
       engine.dispose();
       sceneRef.current = null;
