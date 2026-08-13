@@ -321,52 +321,52 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/admin/blocks` |  |
-| GET | `/api/admin/chunks/discovered` |  |
-| GET | `/api/admin/classes` |  |
-| GET | `/api/admin/configs` |  |
-| GET | `/api/admin/configs/{...}` |  |
-| PUT | `/api/admin/configs/{...}` |  |
-| PUT | `/api/admin/gametime` |  |
-| GET | `/api/admin/instances` |  |
-| POST | `/api/admin/instances` |  |
-| DELETE | `/api/admin/instances/{id}` |  |
-| GET | `/api/admin/instances/{id}` |  |
-| PUT | `/api/admin/instances/{id}` |  |
-| GET | `/api/admin/instances/{id}/blocks` |  |
-| PUT | `/api/admin/instances/{id}/bounds` |  |
-| PUT | `/api/admin/instances/{id}/chunks` |  |
-| PUT | `/api/admin/instances/{id}/enabled` |  |
-| PUT | `/api/admin/instances/{id}/layout` |  |
-| GET | `/api/admin/items` |  |
-| GET | `/api/admin/npc-types` |  |
-| GET | `/api/admin/npcs` |  |
-| GET | `/api/admin/plain-colors` |  |
-| GET | `/api/admin/players` |  |
-| GET | `/api/admin/players/{name}` |  |
-| PUT | `/api/admin/players/{name}/keybindings` |  |
-| PUT | `/api/admin/players/{name}/preferences` |  |
-| POST | `/api/admin/players/{name}/rename` |  |
-| PUT | `/api/admin/players/{name}/rpg` |  |
-| POST | `/api/admin/restart` |  |
-| GET | `/api/admin/scenes` |  |
-| POST | `/api/admin/scenes` |  |
-| DELETE | `/api/admin/scenes/{id}` |  |
-| GET | `/api/admin/scenes/{id}` |  |
-| PUT | `/api/admin/scenes/{id}` |  |
-| GET | `/api/admin/scenes/{id}/blocks/raw` |  |
-| PUT | `/api/admin/scenes/{id}/dimensions` |  |
-| PUT | `/api/admin/scenes/{id}/layout` |  |
-| GET | `/api/admin/schemas/{filename}` |  |
+| GET | `/api/admin/blocks` | All registered block definitions |
+| GET | `/api/admin/chunks/discovered` | All chunk coordinates generated so far (in-memory ∪ persisted) |
+| GET | `/api/admin/classes` | RPG class definitions, keyed by class name |
+| GET | `/api/admin/configs` | Names of all whitelisted editable YAML config files |
+| GET | `/api/admin/configs/{...}` | Raw YAML content of a whitelisted config file |
+| PUT | `/api/admin/configs/{...}` | Overwrite a whitelisted config file's raw YAML content |
+| PUT | `/api/admin/gametime` | Set the in-game time of day |
+| GET | `/api/admin/instances` | All instance zones |
+| POST | `/api/admin/instances` | Create an instance zone covering already-generated chunks |
+| DELETE | `/api/admin/instances/{id}` | Delete an instance zone |
+| GET | `/api/admin/instances/{id}` | A single instance zone |
+| PUT | `/api/admin/instances/{id}` | Rename an instance zone |
+| GET | `/api/admin/instances/{id}/blocks` | Non-air blocks in an instance zone, streamed as newline-delimited JSON (application/x-ndjson, one InstanceBlockDto per line), capped at 300000 |
+| PUT | `/api/admin/instances/{id}/bounds` | Update an instance zone's Y bounds |
+| PUT | `/api/admin/instances/{id}/chunks` | Update the set of chunks covered by an instance zone |
+| PUT | `/api/admin/instances/{id}/enabled` | Enable/disable an instance zone |
+| PUT | `/api/admin/instances/{id}/layout` | Update an instance zone's clip planes and shortcut bar layout |
+| GET | `/api/admin/items` | Item definitions, keyed by item type id |
+| GET | `/api/admin/npc-types` | NPC type definitions (codex info), keyed by type id |
+| GET | `/api/admin/npcs` | Live NPC instances with full animal/combat state |
+| GET | `/api/admin/plain-colors` | All registered plain paint colors |
+| GET | `/api/admin/players` | All player names |
+| GET | `/api/admin/players/{name}` | Full player file (state, keybindings, RPG data) |
+| PUT | `/api/admin/players/{name}/keybindings` | Overwrite a player's saved key bindings |
+| PUT | `/api/admin/players/{name}/preferences` | Partially update a player's preferences (only given fields change) |
+| POST | `/api/admin/players/{name}/rename` | Rename a player |
+| PUT | `/api/admin/players/{name}/rpg` | Partially update a player's RPG class/base stats |
+| POST | `/api/admin/restart` | Touch run.lock to trigger a pitchfork server restart |
+| GET | `/api/admin/scenes` | All scenes (bounded off-world block-structure buffers) |
+| POST | `/api/admin/scenes` | Create a scene |
+| DELETE | `/api/admin/scenes/{id}` | Delete a scene |
+| GET | `/api/admin/scenes/{id}` | A single scene's metadata |
+| PUT | `/api/admin/scenes/{id}` | Rename a scene |
+| GET | `/api/admin/scenes/{id}/blocks/raw` | Scene block/state buffers as a binary blob: 3×4-byte big-endian dimensions (width,height,depth) followed by the blocks byte array then the states byte array (wire-index-per-byte, 0 = AIR) |
+| PUT | `/api/admin/scenes/{id}/dimensions` | Resize a scene |
+| PUT | `/api/admin/scenes/{id}/layout` | Update a scene's shortcut bar layout |
+| GET | `/api/admin/schemas/{filename}` | A JSON Schema file (data/config/schemas/*.schema.json) for the config editor |
 | GET | `/api/admin/simulation/defaults` | Defaults the world simulator admin UI prefills its editors with |
-| GET | `/api/admin/skills` |  |
-| GET | `/api/admin/status` |  |
-| GET | `/api/admin/users` |  |
-| POST | `/api/admin/users` |  |
-| DELETE | `/api/admin/users/{email}` |  |
-| PUT | `/api/admin/users/{email}` |  |
-| GET | `/api/admin/worlds` |  |
-| POST | `/api/admin/worlds` |  |
+| GET | `/api/admin/skills` | All attack and spell ids |
+| GET | `/api/admin/status` | Server status snapshot (TPS, players, chunks, heap, CPU) |
+| GET | `/api/admin/users` | All local/no-auth accounts |
+| POST | `/api/admin/users` | Create a local/no-auth user account |
+| DELETE | `/api/admin/users/{email}` | Delete a user account |
+| PUT | `/api/admin/users/{email}` | Update a local user's display name/groups |
+| GET | `/api/admin/worlds` | All worlds on disk, with stats |
+| POST | `/api/admin/worlds` | Create a new world |
 | GET | `/api/admin/ws/instances/{id}` |  |
 | GET | `/api/admin/ws/npcs` |  |
 | GET | `/api/admin/ws/scenes/{id}` |  |
