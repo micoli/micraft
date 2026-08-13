@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiQuests } from "../../generated/api/requests";
 import { Dialog } from "../../primitives/Dialog";
 import { DialogContent } from "../../primitives/DialogContent";
 import { DialogTitle } from "../../primitives/DialogTitle";
@@ -75,11 +76,10 @@ export function QuestJournal({ open, quests, playerLevel, onClose, onCommand }: 
 
   useEffect(() => {
     if (!open) return;
-    fetch("/api/quests")
-      .then((r) => r.json())
-      .then((arr: QuestDef[]) => {
+    getApiQuests({ throwOnError: true })
+      .then((r) => {
         const map: Record<string, QuestDef> = {};
-        for (const q of arr) map[q.id] = q;
+        for (const q of r.data as unknown as QuestDef[]) map[q.id] = q;
         setDefinitions(map);
       })
       .catch(() => {});

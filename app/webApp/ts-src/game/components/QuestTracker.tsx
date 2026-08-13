@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getApiQuests } from "../../generated/api/requests";
 import { QuestProgress } from "../types";
 
 type KillObjective = { npcType: string; requiredCount: number };
@@ -21,11 +22,10 @@ export function QuestTracker({ visible, quests, layoutStyle }: Props) {
   const [definitions, setDefinitions] = useState<Record<string, QuestDef>>({});
 
   useEffect(() => {
-    fetch("/api/quests")
-      .then((r) => r.json())
-      .then((arr: QuestDef[]) => {
+    getApiQuests({ throwOnError: true })
+      .then((r) => {
         const map: Record<string, QuestDef> = {};
-        for (const q of arr) map[q.id] = q;
+        for (const q of r.data as unknown as QuestDef[]) map[q.id] = q;
         setDefinitions(map);
       })
       .catch(() => {});

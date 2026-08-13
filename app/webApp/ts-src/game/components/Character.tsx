@@ -1,4 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { getApiArmors, getApiPlayerByIdArmors, getApiPlayerByIdSkin } from "../../generated/api/requests";
 import { PlayerModelPreview } from "../shared/PlayerModelPreview";
 import { Dialog } from "../../primitives/Dialog";
 import { DialogContent } from "../../primitives/DialogContent";
@@ -78,17 +79,17 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
     if (!open) return;
     const playerId = window.mcState?.playerId || "";
     Promise.all([
-      fetch("/api/armors").then((r) => r.json()),
-      fetch(`/api/player/${encodeURIComponent(playerId)}/armors`)
-        .then((r) => r.json())
+      getApiArmors({ throwOnError: true }).then((r) => r.data),
+      getApiPlayerByIdArmors({ path: { id: playerId }, throwOnError: true })
+        .then((r) => r.data)
         .catch(() => []),
-      fetch(`/api/player/${encodeURIComponent(playerId)}/skin`)
-        .then((r) => r.json())
+      getApiPlayerByIdSkin({ path: { id: playerId }, throwOnError: true })
+        .then((r) => r.data)
         .catch(() => ({ skin: "player" })),
     ]).then(([armors, equippedArmors, skinData]) => {
-      setAvailable(armors as Record<string, ArmorDefinition>);
+      setAvailable(armors as unknown as Record<string, ArmorDefinition>);
       setEquipped(Array.isArray(equippedArmors) ? equippedArmors : []);
-      setSkin((skinData as { skin: string }).skin ?? "player");
+      setSkin(skinData.skin ?? "player");
     });
   }, [open]);
 

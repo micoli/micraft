@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getApiSkins } from "../../generated/api/requests";
 import { useBlockDefsReady, useBlockPreviews } from "../shared/BlockPreview";
 import { animDisplayName, animationsFromBbmodel } from "../../lib/animationHelpers";
 import type { AnimationEntry } from "../../lib/animationHelpers";
@@ -65,9 +66,8 @@ export function CodexModal({ open, onClose }: Props) {
   const getPreview = useBlockPreviews();
 
   const fetchSkins = useCallback(() => {
-    fetch("/api/skins")
-      .then((r) => r.json())
-      .then((data: string[]) => setAllSkins(data))
+    getApiSkins({ throwOnError: true })
+      .then((r) => setAllSkins(r.data))
       .catch(() => {});
   }, []);
 

@@ -6,6 +6,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { syntaxHighlighting, HighlightStyle } from "@codemirror/language";
 import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
 import type { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+import { getApiMacrosContext } from "../../generated/api/requests";
 import { tags } from "@lezer/highlight";
 import type { CommandInfo } from "../types";
 
@@ -71,10 +72,9 @@ export function JexlEditor({ value, onChange, commands, attackKeys }: JexlEditor
   }, [attackKeys]);
 
   useEffect(() => {
-    fetch("/api/macros/context")
-      .then((r) => r.json())
-      .then((data: MacroContextVar[]) => {
-        contextVarsRef.current = data;
+    getApiMacrosContext({ throwOnError: true })
+      .then((r) => {
+        contextVarsRef.current = r.data as unknown as MacroContextVar[];
       })
       .catch(() => {});
   }, []);

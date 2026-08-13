@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { KeyboardEvent } from "react";
+import {
+  getApiAuthConfig,
+  getApiPlayersByEmailByEmail,
+  getApiPlayerByIdSkin,
+  getApiPlayerByIdRpg,
+  getApiPlayerByIdArmors,
+} from "../generated/api/requests";
 import { PlayerModelPreview } from "../game/shared/PlayerModelPreview";
 import { Button } from "../primitives/Button";
 import { Panel } from "../primitives/Panel";
@@ -48,10 +55,9 @@ export function CharacterSelectionScreen() {
   const playButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    fetch("/api/auth/config")
-      .then((r) => r.json())
-      .then((d: { provider: string }) => {
-        setAuthMode((d.provider as AuthMode) || "none");
+    getApiAuthConfig()
+      .then(({ data }) => {
+        setAuthMode((data?.provider as AuthMode) || "none");
         setServerReady(true);
       })
       .catch(() => {
@@ -70,9 +76,7 @@ export function CharacterSelectionScreen() {
     async function loadChars() {
       // Try server-authoritative list first
       try {
-        const serverChars: PlayerEntry[] = await fetch(`/api/players/by-email/${encodeURIComponent(accountKey)}`).then(
-          (r) => (r.ok ? r.json() : null),
-        );
+        const { data: serverChars } = await getApiPlayersByEmailByEmail({ path: { email: accountKey } });
         if (Array.isArray(serverChars) && serverChars.length > 0) {
           playerChars = serverChars;
           const updated = getUsers();
@@ -86,8 +90,8 @@ export function CharacterSelectionScreen() {
       if (playerChars.length > 0) {
         const results = await Promise.all(
           playerChars.map((char) =>
-            fetch(`/api/player/${encodeURIComponent(char.id)}/skin`)
-              .then((r) => (r.ok ? char : null))
+            getApiPlayerByIdSkin({ path: { id: char.id } })
+              .then((r) => (r.response?.ok ? char : null))
               .catch(() => char),
           ),
         );
@@ -107,9 +111,8 @@ export function CharacterSelectionScreen() {
 
       const classEntries = await Promise.all(
         playerChars.map((char) =>
-          fetch(`/api/player/${encodeURIComponent(char.id)}/rpg`)
-            .then((r) => (r.ok ? r.json() : null))
-            .then((d: { characterClass: string } | null) => [char.name, d?.characterClass ?? null] as const)
+          getApiPlayerByIdRpg({ path: { id: char.id } })
+            .then(({ data }) => [char.name, data?.characterClass ?? null] as const)
             .catch(() => [char.name, null] as const),
         ),
       );
@@ -123,16 +126,15 @@ export function CharacterSelectionScreen() {
     if (!selected) return;
     const selectedChar = chars.find((c) => c.name === selected);
     if (!selectedChar?.id) return;
-    const enc = encodeURIComponent(selectedChar.id);
     Promise.all([
-      fetch(`/api/player/${enc}/skin`)
-        .then((r) => r.json())
+      getApiPlayerByIdSkin({ path: { id: selectedChar.id } })
+        .then((r) => r.data)
         .catch(() => ({ skin: "player" })),
-      fetch(`/api/player/${enc}/armors`)
-        .then((r) => r.json())
+      getApiPlayerByIdArmors({ path: { id: selectedChar.id } })
+        .then((r) => r.data)
         .catch(() => []),
     ]).then(([skinData, armors]) => {
-      setPreviewSkin(skinData.skin ?? "player");
+      setPreviewSkin(skinData?.skin ?? "player");
       setPreviewArmors(Array.isArray(armors) ? armors : []);
     });
   }, [selected, chars]);

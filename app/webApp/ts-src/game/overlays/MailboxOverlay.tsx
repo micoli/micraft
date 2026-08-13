@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
+import { getApiPlayersNames } from "../../generated/api/requests";
 import { Dialog } from "../../primitives/Dialog";
 import { DialogContent } from "../../primitives/DialogContent";
 import { DialogTitle } from "../../primitives/DialogTitle";
@@ -88,9 +89,8 @@ export function MailboxOverlay({ open, mails, inventory, itemMeta, wallet = 0, o
 
   useEffect(() => {
     if (open && view === "compose" && playerNames.length === 0) {
-      fetch("/api/players/names")
-        .then((r) => r.json())
-        .then((names: string[]) => setPlayerNames(names))
+      getApiPlayersNames({ throwOnError: true })
+        .then((r) => setPlayerNames(r.data))
         .catch(() => {});
     }
   }, [open, view, playerNames.length]);

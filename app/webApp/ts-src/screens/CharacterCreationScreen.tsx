@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import { useForm, useStore } from "@tanstack/react-form";
 import { z } from "zod";
+import { postApiCharacterCreate } from "../generated/api/requests";
 import { PlayerModelPreview } from "../game/shared/PlayerModelPreview";
 import { Button } from "../primitives/Button";
 import { Input } from "../primitives/Input";
@@ -38,18 +39,14 @@ export function CharacterCreationScreen() {
       setCreateSubmitError("");
       setLoading(true);
       try {
-        const r = await fetch("/api/character/create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ playerName: name, skin: value.skin, email: accountKey }),
+        const { data, response } = await postApiCharacterCreate({
+          body: { playerName: name, skin: value.skin, email: accountKey },
         });
-        if (!r.ok) {
-          const text = await r.text().catch(() => "");
-          setCreateSubmitError(text || "Creation failed.");
+        if (!response?.ok || !data) {
+          setCreateSubmitError("Creation failed.");
           createNameInputRef.current?.focus();
           return;
         }
-        const data = (await r.json()) as { id: string };
         const users = getUsers();
         if (!users[accountKey]) users[accountKey] = [];
         users[accountKey].push({ name, id: data.id });

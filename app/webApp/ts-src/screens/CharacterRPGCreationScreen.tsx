@@ -4,6 +4,7 @@ import { Button } from "../primitives/Button";
 import { Panel } from "../primitives/Panel";
 import { cn } from "../primitives/cn";
 import { getUsers, saveUsers, getLastUser, getAccountEmail } from "../lib/authStorage";
+import { postApiCharacterRpgcreate } from "../generated/api/requests";
 
 const NAME_DATA = {
   first_start: [
@@ -360,10 +361,8 @@ export function CharacterRPGCreationScreen() {
     const trimmed = name.trim();
     setLoading(true);
     try {
-      const r = await fetch("/api/character/rpgcreate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { data, response } = await postApiCharacterRpgcreate({
+        body: {
           playerName: trimmed,
           skin: "player",
           characterClass: selectedClass,
@@ -374,15 +373,13 @@ export function CharacterRPGCreationScreen() {
           con: allocation.con,
           cha: allocation.cha,
           email: accountKey,
-        }),
+        },
       });
-      if (!r.ok) {
-        const text = await r.text().catch(() => "");
-        setError(text || "Creation failed.");
+      if (!response?.ok || !data) {
+        setError("Creation failed.");
         setLoading(false);
         return;
       }
-      const data = (await r.json()) as { id: string };
       const users = getUsers();
       if (!users[accountKey]) users[accountKey] = [];
       if (!users[accountKey].some((c) => c.name === trimmed)) users[accountKey].push({ name: trimmed, id: data.id });

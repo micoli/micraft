@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useReducer, useState, useMemo } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import { getApiItemsMeta, getApiAttacks, getApiClasses, getApiSpells, getApiQuests } from "../generated/api/requests";
 import { GameLayout, NpcDialogData, PreferencesData, ChannelSubscription, ShortcutSlot, QuestProgress } from "./types";
 import { UiState, reducer, makeUiDispatch } from "./UIReducer";
 import { GameContext } from "./GameContext";
@@ -143,8 +144,8 @@ export function GameUI() {
   useEffect(() => {
     let cancelled = false;
     const load = () =>
-      fetch("/api/items/meta")
-        .then((r) => r.json())
+      getApiItemsMeta({ throwOnError: true })
+        .then((r) => r.data as unknown as Record<string, import("./types").ItemMetaEntry>)
         .then((data) => {
           if (!cancelled) dispatch("item_meta_loaded", { data });
         })
@@ -163,9 +164,9 @@ export function GameUI() {
   useEffect(() => {
     let cancelled = false;
     const load = () =>
-      fetch("/api/attacks")
-        .then((r) => r.json())
-        .then((raw: Record<string, Record<string, string>>) => {
+      getApiAttacks({ throwOnError: true })
+        .then((r) => r.data as unknown as Record<string, Record<string, string>>)
+        .then((raw) => {
           if (cancelled) return;
           const data = Object.fromEntries(
             Object.entries(raw).map(([k, v]) => [
@@ -197,8 +198,8 @@ export function GameUI() {
   useEffect(() => {
     let cancelled = false;
     const load = () =>
-      fetch("/api/classes")
-        .then((r) => r.json())
+      getApiClasses({ throwOnError: true })
+        .then((r) => r.data)
         .then((data) => {
           if (!cancelled) dispatch("class_definitions_loaded", { data });
         })
@@ -212,9 +213,9 @@ export function GameUI() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/spells")
-      .then((r) => r.json())
-      .then((raw: Record<string, Record<string, string>>) => {
+    getApiSpells({ throwOnError: true })
+      .then((r) => r.data as unknown as Record<string, Record<string, string>>)
+      .then((raw) => {
         if (cancelled) return;
         const data = Object.fromEntries(
           Object.entries(raw).map(([k, v]) => [
@@ -683,11 +684,10 @@ export function GameUI() {
         const msg = JSON.parse(json) as { quests: Record<string, QuestProgress> };
         dispatch("quest_sync", { quests: msg.quests });
         if (Object.keys(questDefsRef.current).length === 0) {
-          fetch("/api/quests")
-            .then((r) => r.json())
-            .then((arr: { id: string; title: string }[]) => {
+          getApiQuests({ throwOnError: true })
+            .then((r) => {
               const map: Record<string, { title: string }> = {};
-              for (const q of arr) map[q.id] = { title: q.title };
+              for (const q of r.data as unknown as { id: string; title: string }[]) map[q.id] = { title: q.title };
               questDefsRef.current = map;
             })
             .catch(() => {});
