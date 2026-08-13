@@ -6,7 +6,7 @@ import {
   getApiMapRoadRasterPng,
   getApiMapVoronoiBorders,
 } from "../../generated/api/requests";
-import { computeZoneOutlineEdges, mergeIntervals } from "../targeting/zoneOutline";
+import { computeZoneOutlineEdges, mergeIntervals } from "./targeting/zoneOutline";
 
 const MINIMAP_SIZE = 180;
 const MINIMAP_CHUNK_SIZE = 16;

@@ -1,5 +1,5 @@
 import type { Scene, ShaderMaterial, StandardMaterial } from "@babylonjs/core";
-import { BLOCK_VERT, BLOCK_FRAG } from "../shaders/block";
+import { BLOCK_VERT, BLOCK_FRAG } from "../block";
 import { WHITE_PIXEL_URL } from "./whitePixel";
 
 export function registerMaterials(): Pick<

@@ -1,5 +1,5 @@
 import type { Scene } from "@babylonjs/core";
-import { interpAxis } from "../player/playerModel";
+import { interpAxis } from "../lib/player/playerModel";
 
 interface NpcBbmodels {
   [type: string]: BbModel;

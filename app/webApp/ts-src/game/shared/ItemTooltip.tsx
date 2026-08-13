@@ -1,4 +1,4 @@
-import { getItemVisual } from "../blocks/blockDefs";
+import { getItemVisual } from "../lib/blockDefs";
 import { ItemMetaEntry } from "../types";
 import { Block3DPreview } from "./Block3DPreview";
 

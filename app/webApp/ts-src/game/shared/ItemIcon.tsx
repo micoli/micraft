@@ -1,4 +1,4 @@
-import { getItemVisual } from "../blocks/blockDefs";
+import { getItemVisual } from "../lib/blockDefs";
 import { CssBlockCube, useBlockDefsReady, useBlockPreviews } from "./BlockPreview";
 import { ColoredIcon } from "./ColoredIcon";
 

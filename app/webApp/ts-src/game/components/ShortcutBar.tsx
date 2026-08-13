@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { cn } from "../../primitives/cn";
-import { getItemVisual } from "../blocks/blockDefs";
+import { getItemVisual } from "../lib/blockDefs";
 import { useShortcutBar } from "../hooks/useShortcutBar";
 import { ShortcutSlot, AttackMeta, ItemMetaEntry, SpellMeta } from "../types";
 import { UiState } from "../UIReducer";

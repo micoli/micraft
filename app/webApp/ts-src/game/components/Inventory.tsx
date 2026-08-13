@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { cn } from "../../primitives/cn";
-import { getItemVisual } from "../blocks/blockDefs";
+import { getItemVisual } from "../lib/blockDefs";
 import { ItemIcon } from "../shared/ItemIcon";
 import { ItemTooltip } from "../shared/ItemTooltip";
 import { useInventory } from "../hooks/useInventory";

@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState } from "react";
-import { getFaceTexUrl, getBlockBounds } from "../blocks/blockDefs";
+import { getFaceTexUrl, getBlockBounds } from "../lib/blockDefs";
 import {
   subscribe,
   getCached,

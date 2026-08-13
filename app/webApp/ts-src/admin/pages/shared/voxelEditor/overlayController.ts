@@ -1,5 +1,5 @@
-import { buildBlockPreviewMeshes } from "../../../../game/chunks/chunkBuilder";
-import { boxLines } from "../../../../game/targeting/targeting";
+import { buildBlockPreviewMeshes } from "../../../../game/lib/chunkBuilder";
+import { boxLines } from "../../../../game/lib/targeting/targeting";
 
 // Placement ghost, target outline, and break overlay — mirrors the in-game preview (ghostBlock.ts /
 // targeting.ts) but driven by scene.pick() hover instead of a first-person raycast. Shared by the

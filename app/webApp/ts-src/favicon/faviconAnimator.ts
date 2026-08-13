@@ -1,5 +1,5 @@
 import type { StandardMaterial } from "@babylonjs/core";
-import { getFaceTexUrl } from "../game/blocks/blockDefs";
+import { getFaceTexUrl } from "../game/lib/blockDefs";
 
 const FACES = [
   { dir: 0, x: 0, y: 0, z: 0.5, rx: 0, ry: Math.PI },

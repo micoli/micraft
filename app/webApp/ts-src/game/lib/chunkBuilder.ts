@@ -7,9 +7,9 @@ import type {
   AbstractMesh,
   TransformNode,
 } from "@babylonjs/core";
-import { BLOCK_VERT, BLOCK_GHOST_FRAG } from "../shaders/block";
-import { plainMatKey } from "../blocks/blockDefs";
-import { WHITE_PIXEL_URL } from "../materials/whitePixel";
+import { BLOCK_VERT, BLOCK_GHOST_FRAG } from "./block";
+import { plainMatKey } from "./blockDefs";
+import { WHITE_PIXEL_URL } from "./materials/whitePixel";
 
 const MC_NORMS = [
   [0, 0, 1], // 0 south

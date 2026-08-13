@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, KeyboardEvent, MutableRefObject } from "react";
-import { matchesEvent } from "../input/keyboard";
+import { matchesEvent } from "../lib/input/keyboard";
 
 interface ConsoleState {
   history: string[];

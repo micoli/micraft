@@ -1,4 +1,4 @@
-import { plainColorHex } from "../blocks/blockDefs";
+import { plainColorHex } from "../lib/blockDefs";
 import { Block3DPreview } from "../shared/Block3DPreview";
 import type { BlockEntry, ItemEntry } from "./CodexModal";
 

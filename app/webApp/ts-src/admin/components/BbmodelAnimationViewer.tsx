@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { interpAxis } from "../../game/player/playerModel";
+import { interpAxis } from "../../game/lib/player/playerModel";
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {

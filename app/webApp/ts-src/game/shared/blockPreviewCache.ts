@@ -1,5 +1,5 @@
 import type { Engine } from "@babylonjs/core";
-import { isPlainColorable } from "../blocks/blockDefs";
+import { isPlainColorable } from "../lib/blockDefs";
 import { setupBlockScene } from "./blockSceneRenderer";
 
 // blockDefs.ts module state (_registryBlocks) isn't populated in bundles other than the game

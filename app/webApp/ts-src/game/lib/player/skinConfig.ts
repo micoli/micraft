@@ -1,6 +1,6 @@
 // Per-skin first-person configuration, loaded from resources/skins/<skin>/<skin>.yaml
 // through GET /api/skins/{skin}/configEditor.
-import { getApiSkinsByNameConfig } from "../../generated/api/requests";
+import { getApiSkinsByNameConfig } from "../../../generated/api/requests";
 
 const PX_PER_BLOCK = 16;
 

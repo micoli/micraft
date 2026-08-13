@@ -1,5 +1,5 @@
 import type { Mesh, Scene } from "@babylonjs/core";
-import { buildBlockPreviewMeshes } from "../chunks/chunkBuilder";
+import { buildBlockPreviewMeshes } from "../chunkBuilder";
 
 type GhostAnchor = Mesh & { _gpos?: string; _gGeoKey?: string; _gMeshes?: Mesh[] };
 

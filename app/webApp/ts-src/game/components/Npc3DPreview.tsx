@@ -1,6 +1,6 @@
 import type { Texture } from "@babylonjs/core";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { getFaceTexUrl } from "../blocks/blockDefs";
+import { getFaceTexUrl } from "../lib/blockDefs";
 import type { NpcEntry } from "./CodexModal";
 
 function useNpcModelsReady(): boolean {
