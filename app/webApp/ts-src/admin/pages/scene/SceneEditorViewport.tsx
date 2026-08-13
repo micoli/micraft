@@ -8,6 +8,7 @@ import {
 } from "../../../game/shared/BlockPreview";
 import { startPreloading } from "../../../game/shared/blockPreviewCache";
 import { useAdminShortcutBar } from "../shared/voxelEditor/useAdminShortcutBar";
+import { createAxesGizmo } from "../shared/voxelEditor/axesGizmo";
 import { applyClipPlanes, ClipAxis, ClipPlaneState } from "../shared/voxelEditor/clipAxis";
 import { packState } from "../shared/voxelEditor/blockState";
 import { saveCameraState } from "../shared/voxelEditor/cameraStorage";
@@ -125,9 +126,27 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
   const previewProgress = useBlockPreviewProgress();
 
   const shortcutBar = useAdminShortcutBar({
+    initialPages: scene.shortcutBarPages,
     onSelectBreak: () => setMode("break"),
     onSelectBlock: (blockName) => selectBlockType(blockName),
   });
+
+  // Persists shortcut-bar state onto the scene's own YAML record so it survives reload/navigation
+  // — same rationale as InstanceEditorViewport's layout persistence. Skips the very first run
+  // (mount reflecting back what the scene already has) so switching scenes or reloading doesn't
+  // fire a no-op PUT.
+  const layoutMounted = useRef(false);
+  useEffect(() => {
+    if (!layoutMounted.current) {
+      layoutMounted.current = true;
+      return;
+    }
+    const timeout = setTimeout(() => {
+      api.scenes.updateLayout(scene.id, shortcutBar.pages).catch(console.error);
+    }, 500);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- scene.id intentionally excluded, only its identity matters via the closure
+  }, [shortcutBar.pages]);
 
   const { modKeys, activeDragMode } = useModifierDragMode();
 
@@ -196,6 +215,9 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     groundMat.diffuseTexture = gridTex;
     groundMat.specularColor = B.Color3.Black();
     groundMat.alpha = 0.35;
+    // Camera can orbit below y=0 (e.g. panning under the volume) — without this the grid, being
+    // single-sided by default, disappears since its backface faces the camera from underneath.
+    groundMat.backFaceCulling = false;
     groundMat.freeze();
     const ground = B.MeshBuilder.CreateGround("floor", { width: scene.width, height: scene.depth }, babylonScene);
     ground.position = new B.Vector3(scene.width / 2, 0, scene.depth / 2);
@@ -428,7 +450,11 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       },
     });
 
-    engine.runRenderLoop(() => babylonScene.render());
+    const axesGizmo = createAxesGizmo(B, engine, camera);
+    engine.runRenderLoop(() => {
+      babylonScene.render();
+      axesGizmo.render();
+    });
     const onResize = () => engine.resize();
     window.addEventListener("resize", onResize);
 
@@ -455,6 +481,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       window.removeEventListener("keydown", onKeyDown);
       overlay.disposeAll();
       window.webApp?.then((exports) => exports.mcSceneDispose()).catch(() => {});
+      axesGizmo.dispose();
       engine.dispose();
       sceneRef.current = null;
       overlayMeshesRef.current = null;

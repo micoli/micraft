@@ -74,6 +74,14 @@ class SceneRegistry(private val persistence: WorldPersistence?) {
         return updated
     }
 
+    fun updateLayout(id: String, shortcutBarPages: List<List<String?>>): Scene? {
+        val existing = scenes[id] ?: return null
+        val updated = existing.copy(shortcutBarPages = shortcutBarPages)
+        scenes[id] = updated
+        persistMetadata()
+        return updated
+    }
+
     fun setBlock(id: String, x: Int, y: Int, z: Int, type: Byte, state: Byte): Boolean {
         val scene = scenes[id] ?: return false
         if (!scene.contains(x, y, z)) return false

@@ -56,21 +56,23 @@ export function VoxelShortcutBarSlot({
       <div className="absolute top-0 left-0.5 text-[#8A99AF] font-mono text-[7px]">
         {idx === 9 ? "0" : String(idx + 1)}
       </div>
-      {isBreakSlot ? (
-        <div className="text-sm">⛏</div>
-      ) : slotBlock && ordinal !== null && previewsReady ? (
-        getPreview(ordinal) ? (
-          <img
-            alt=""
-            src={getPreview(ordinal)!}
-            width={16}
-            height={16}
-            style={{ imageRendering: "pixelated", display: "block" }}
-          />
-        ) : blockDefsReady ? (
-          <CssBlockCube ordinal={ordinal} size={16} />
-        ) : null
-      ) : null}
+      <div className="h-4 w-4 flex items-center justify-center shrink-0">
+        {isBreakSlot ? (
+          <div className="text-sm leading-none">⛏</div>
+        ) : slotBlock && ordinal !== null && previewsReady ? (
+          getPreview(ordinal) ? (
+            <img
+              alt=""
+              src={getPreview(ordinal)!}
+              width={16}
+              height={16}
+              style={{ imageRendering: "pixelated", display: "block" }}
+            />
+          ) : blockDefsReady ? (
+            <CssBlockCube ordinal={ordinal} size={16} />
+          ) : null
+        ) : null}
+      </div>
       <span className="text-[9px] leading-tight text-[#8A99AF] text-center truncate w-full">
         {slotBlockInfo?.name?.replace(/_/g, " ") ?? "-"}
       </span>

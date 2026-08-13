@@ -12,6 +12,7 @@ import { applyClipPlanes, ClipAxis, ClipPlaneState } from "../shared/voxelEditor
 import { packState } from "../shared/voxelEditor/blockState";
 import { saveCameraState } from "../shared/voxelEditor/cameraStorage";
 import { createOrbitCamera, setupBasicLighting } from "../shared/voxelEditor/orbitCamera";
+import { createAxesGizmo } from "../shared/voxelEditor/axesGizmo";
 import { setupOrbitPointerController } from "../shared/voxelEditor/orbitPointerController";
 import { createOverlayController } from "../shared/voxelEditor/overlayController";
 import { useBlockRegistry } from "../shared/voxelEditor/useBlockRegistry";
@@ -632,7 +633,11 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       },
     });
 
-    engine.runRenderLoop(() => scene.render());
+    const axesGizmo = createAxesGizmo(B, engine, camera);
+    engine.runRenderLoop(() => {
+      scene.render();
+      axesGizmo.render();
+    });
     const onResize = () => engine.resize();
     window.addEventListener("resize", onResize);
 
@@ -643,6 +648,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKeyDown);
       overlay.disposeAll();
+      axesGizmo.dispose();
       engine.dispose();
       sceneRef.current = null;
       overlayMeshesRef.current = null;

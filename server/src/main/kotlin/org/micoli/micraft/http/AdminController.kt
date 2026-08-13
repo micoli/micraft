@@ -128,6 +128,7 @@ data class SceneDto(
     val depth: Int,
     val ownerName: String,
     val createdAt: Long,
+    val shortcutBarPages: List<List<String?>>,
 )
 
 @Serializable
@@ -136,6 +137,8 @@ data class SceneCreateRequest(val name: String, val width: Int, val height: Int,
 @Serializable data class SceneRenameRequest(val name: String)
 
 @Serializable data class SceneDimensionsRequest(val width: Int, val height: Int, val depth: Int)
+
+@Serializable data class SceneLayoutRequest(val shortcutBarPages: List<List<String?>>)
 
 @Serializable
 data class SceneBlockDto(val x: Int, val y: Int, val z: Int, val type: String, val state: Byte = 0)
@@ -148,7 +151,8 @@ private fun Scene.toDto() =
         height = height,
         depth = depth,
         ownerName = ownerName,
-        createdAt = createdAt)
+        createdAt = createdAt,
+        shortcutBarPages = shortcutBarPages)
 
 @Serializable
 data class WorldStatsDto(
@@ -977,6 +981,18 @@ class AdminController(
                 }
                 val scene =
                     gameLoop.scenes().resize(id, body.width, body.height, body.depth)
+                        ?: return@put call.respond(HttpStatusCode.NotFound)
+                call.respondText(
+                    adminJson.encodeToString(SceneDto.serializer(), scene.toDto()),
+                    ContentType.Application.Json)
+            }
+
+            put("/api/admin/scenes/{id}/layout") {
+                if (!requireAdmin()) return@put
+                val id = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                val body = Json.decodeFromString<SceneLayoutRequest>(call.receiveText())
+                val scene =
+                    gameLoop.scenes().updateLayout(id, body.shortcutBarPages)
                         ?: return@put call.respond(HttpStatusCode.NotFound)
                 call.respondText(
                     adminJson.encodeToString(SceneDto.serializer(), scene.toDto()),

@@ -64,6 +64,7 @@ export interface SceneDto {
   depth: number;
   ownerName: string;
   createdAt: number;
+  shortcutBarPages: (string | null)[][];
 }
 
 export interface SceneBlockDto {
@@ -329,6 +330,10 @@ export const api = {
         (r) => r.json() as Promise<SceneDto>,
       ),
     delete: (id: string) => del(`/api/admin/scenes/${encodeURIComponent(id)}`),
+    updateLayout: (id: string, shortcutBarPages: (string | null)[][]) =>
+      put(`/api/admin/scenes/${encodeURIComponent(id)}/layout`, { shortcutBarPages }).then(
+        (r) => r.json() as Promise<SceneDto>,
+      ),
     // Binary layout: [width:i32be][height:i32be][depth:i32be][blocks: width*height*depth bytes][states: same length]
     getBlocksRaw: (id: string) =>
       fetch(`/api/admin/scenes/${encodeURIComponent(id)}/blocks/raw`).then((r) => r.arrayBuffer()),

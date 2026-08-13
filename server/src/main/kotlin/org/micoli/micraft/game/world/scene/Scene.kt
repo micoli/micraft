@@ -1,5 +1,7 @@
 package org.micoli.micraft.game.world.scene
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -20,6 +22,9 @@ data class Scene(
     val depth: Int,
     val ownerName: String,
     val createdAt: Long,
+    // Admin editor shortcut bar, persisted so it survives a page reload/navigation — same
+    // rationale as InstanceZone.shortcutBarPages.
+    @EncodeDefault(ALWAYS) val shortcutBarPages: List<List<String?>> = emptyList(),
     @Transient val blocks: ByteArray = ByteArray(0),
     @Transient val states: ByteArray = ByteArray(0),
 ) {
@@ -49,6 +54,7 @@ data class Scene(
             depth == other.depth &&
             ownerName == other.ownerName &&
             createdAt == other.createdAt &&
+            shortcutBarPages == other.shortcutBarPages &&
             blocks.contentEquals(other.blocks) &&
             states.contentEquals(other.states)
     }
@@ -61,6 +67,7 @@ data class Scene(
         result = 31 * result + depth
         result = 31 * result + ownerName.hashCode()
         result = 31 * result + createdAt.hashCode()
+        result = 31 * result + shortcutBarPages.hashCode()
         result = 31 * result + blocks.contentHashCode()
         result = 31 * result + states.contentHashCode()
         return result

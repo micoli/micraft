@@ -1,4 +1,4 @@
-import type { Dispatch, RefObject, SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { type BlockInfoDto, type PlainColorDto } from "../../../api";
 import { Block3DPreview } from "../../../../game/shared/Block3DPreview";
 import { VoxelPaletteBlock } from "./VoxelPaletteBlock";
@@ -8,6 +8,20 @@ import { type useAdminShortcutBar } from "./useAdminShortcutBar";
 import { CLIP_AXES, ClipAxis, ClipPlaneState } from "./clipAxis";
 import { ClipAxesInput } from "../../../../primitives/clipAxesInput";
 import { dragMode, DragMode } from "../../../../primitives/DragMode";
+
+const SIDEBAR_WIDTH_STORAGE_KEY = "voxelEditorSidebarWidth";
+const SIDEBAR_MIN_WIDTH = 220;
+const SIDEBAR_MAX_WIDTH = 640;
+const SIDEBAR_DEFAULT_WIDTH = 320;
+
+function clampSidebarWidth(width: number): number {
+  return Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, width));
+}
+
+function loadSidebarWidth(): number {
+  const stored = Number(localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY));
+  return Number.isFinite(stored) && stored > 0 ? clampSidebarWidth(stored) : SIDEBAR_DEFAULT_WIDTH;
+}
 
 // Right-hand editor panel: drag-mode legend, selected-block preview + clip-plane sliders,
 // shortcut bar, search, and the block palette. Shared verbatim by the Instance and Scene editors —
@@ -69,8 +83,52 @@ export function VoxelEditorSidebar({
   selectBlockType: (name: string) => void;
   paletteRef?: RefObject<HTMLDivElement | null>;
 }) {
+  const [width, setWidth] = useState(loadSidebarWidth);
+  const resizeStateRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(width));
+  }, [width]);
+
+  useEffect(() => {
+    function onMouseMove(e: MouseEvent) {
+      const state = resizeStateRef.current;
+      if (!state) return;
+      // Handle sits on the left edge — dragging left (negative clientX delta) widens the panel.
+      setWidth(clampSidebarWidth(state.startWidth + (state.startX - e.clientX)));
+    }
+    function onMouseUp() {
+      if (!resizeStateRef.current) return;
+      resizeStateRef.current = null;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      // The canvas's CSS size already tracks the sidebar width live via flexbox, but Babylon only
+      // recomputes its internal render size/aspect ratio on a window "resize" event — dispatch one
+      // so the viewport (and the gizmo, which reads engine.getRenderWidth/Height) picks up the new
+      // canvas dimensions once the drag settles, instead of staying stretched to the old aspect.
+      window.dispatchEvent(new Event("resize"));
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
+
+  function handleResizeStart(e: React.MouseEvent) {
+    e.preventDefault();
+    resizeStateRef.current = { startX: e.clientX, startWidth: width };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }
+
   return (
-    <aside className="flex-[2] shrink-0 border-l border-[#2E3A4E] overflow-y-auto flex flex-col">
+    <aside className="relative shrink-0 border-l border-[#2E3A4E] overflow-y-auto flex flex-col" style={{ width }}>
+      <div
+        onMouseDown={handleResizeStart}
+        className="absolute left-0 top-0 bottom-0 w-1.5 -translate-x-1/2 cursor-col-resize z-10 hover:bg-[#3C50E0]/50"
+      />
       <div className="relative top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none items-center justify-center">
         {(
           [
