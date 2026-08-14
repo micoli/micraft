@@ -5,6 +5,7 @@ import { z } from "zod";
 import {
   getApiAdminScenes,
   postApiAdminScenes,
+  postApiAdminScenesByIdDuplicate,
   putApiAdminScenesById,
   putApiAdminScenesByIdDimensions,
   deleteApiAdminScenesById,
@@ -138,6 +139,16 @@ export function ScenesPage() {
       .then(() => {
         setSelectedId(null);
         reload();
+      })
+      .catch(console.error);
+  };
+
+  const duplicateSelected = () => {
+    if (!selected) return;
+    postApiAdminScenesByIdDuplicate({ path: { id: selected.id }, throwOnError: true })
+      .then(({ data: scene }) => {
+        reload();
+        setSelectedId(scene.id);
       })
       .catch(console.error);
   };
@@ -336,6 +347,9 @@ export function ScenesPage() {
                       }}
                     >
                       Rename
+                    </button>
+                    <button className="text-xs text-[#8A99AF] hover:text-white" onClick={duplicateSelected}>
+                      Duplicate
                     </button>
                     <button className="text-xs text-red-400 hover:text-red-300" onClick={deleteSelected}>
                       Delete

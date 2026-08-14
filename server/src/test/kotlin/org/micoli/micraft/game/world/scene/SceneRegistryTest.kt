@@ -104,6 +104,26 @@ class SceneRegistryTest {
     }
 
     @Test
+    fun duplicate_copiesBlocksIntoNewIndependentScene() {
+        val r = registry()
+        val scene = r.create(name = "Room", width = 2, height = 2, depth = 2, ownerName = "Alice")
+        r.setBlock(scene.id, 0, 0, 0, type = 5, state = 1)
+        val copy = r.duplicate(scene.id)
+        assertEquals("Room copy", copy?.name)
+        assertEquals(scene.width, copy?.width)
+        assertEquals(5.toByte(), copy?.blockAt(0, 0, 0))
+        assertTrue(copy?.id != scene.id)
+
+        r.setBlock(scene.id, 1, 1, 1, type = 9, state = 0)
+        assertEquals(0.toByte(), copy?.blockAt(1, 1, 1))
+    }
+
+    @Test
+    fun duplicate_unknownId_returnsNull() {
+        assertNull(registry().duplicate("nope"))
+    }
+
+    @Test
     fun delete_removesScene() {
         val r = registry()
         val scene = r.create(name = "Room", width = 1, height = 1, depth = 1, ownerName = "Alice")

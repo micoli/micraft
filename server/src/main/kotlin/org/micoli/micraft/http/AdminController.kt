@@ -1734,6 +1734,28 @@ class AdminController(
                         adminJson.encodeToString(SceneDto.serializer(), scene.toDto()))
                 }
 
+            post(
+                "/api/admin/scenes/{id}/duplicate",
+                {
+                    description = "Duplicate a scene (copies name, dimensions, and blocks)"
+                    request { pathParameter<String>("id") { description = "Scene id" } }
+                    response {
+                        code(HttpStatusCode.Created) { body<SceneDto>() }
+                        code(HttpStatusCode.NotFound) { description = "Scene not found" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    val id =
+                        call.parameters["id"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val scene =
+                        gameLoop.scenes().duplicate(id)
+                            ?: return@post call.respond(HttpStatusCode.NotFound)
+                    call.respond(
+                        HttpStatusCode.Created,
+                        adminJson.encodeToString(SceneDto.serializer(), scene.toDto()))
+                }
+
             put(
                 "/api/admin/scenes/{id}",
                 {

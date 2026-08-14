@@ -35,6 +35,22 @@ class SceneRegistry(private val persistence: WorldPersistence?) {
         return scene
     }
 
+    fun duplicate(id: String): Scene? {
+        val existing = scenes[id] ?: return null
+        val copy =
+            existing.copy(
+                id = UUID.randomUUID().toString(),
+                name = "${existing.name} copy",
+                createdAt = System.currentTimeMillis(),
+                blocks = existing.blocks.copyOf(),
+                states = existing.states.copyOf(),
+            )
+        scenes[copy.id] = copy
+        persistMetadata()
+        persistBlocks(copy)
+        return copy
+    }
+
     fun rename(id: String, name: String): Scene? {
         val existing = scenes[id] ?: return null
         val updated = existing.copy(name = name)

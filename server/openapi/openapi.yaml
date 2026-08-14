@@ -2219,6 +2219,37 @@ paths:
           description: Missing admin permission
           headers: {}
       deprecated: false
+  /api/admin/scenes/{id}/duplicate:
+    post:
+      tags: []
+      description: "Duplicate a scene (copies name, dimensions, and blocks)"
+      parameters:
+      - name: id
+        in: path
+        description: Scene id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "201":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.SceneDto"
+        "404":
+          description: Scene not found
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
   /api/admin/scenes/{id}/dimensions:
     put:
       tags: []

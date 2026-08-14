@@ -4482,6 +4482,41 @@ export type PutApiAdminScenesByIdResponses = {
 
 export type PutApiAdminScenesByIdResponse = PutApiAdminScenesByIdResponses[keyof PutApiAdminScenesByIdResponses];
 
+export type PostApiAdminScenesByIdDuplicateData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Scene id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/scenes/{id}/duplicate';
+};
+
+export type PostApiAdminScenesByIdDuplicateErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Scene not found
+     */
+    404: unknown;
+};
+
+export type PostApiAdminScenesByIdDuplicateResponses = {
+    201: OrgMicoliMicraftHttpSceneDto;
+};
+
+export type PostApiAdminScenesByIdDuplicateResponse = PostApiAdminScenesByIdDuplicateResponses[keyof PostApiAdminScenesByIdDuplicateResponses];
+
 export type PutApiAdminScenesByIdDimensionsData = {
     body?: OrgMicoliMicraftHttpSceneDimensionsRequest;
     path: {
