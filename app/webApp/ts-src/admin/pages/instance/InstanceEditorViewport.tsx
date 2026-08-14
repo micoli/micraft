@@ -123,9 +123,10 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   } | null>(null);
   const [clipboardCount, setClipboardCount] = useState<number | null>(null);
   // Paste-in-progress state: pasteOriginRef is the live drag position (moved directly by the
-  // gizmo's drag callback, not via React state — only isPasting needs to be reactive, for the
-  // sidebar's Paste/Confirm/Cancel button states).
+  // gizmo's drag callback), mirrored into pasteOrigin React state so the sidebar's X/Y/Z inputs
+  // stay in sync with drag moves and vice versa.
   const pasteOriginRef = useRef<PasteOrigin | null>(null);
+  const [pasteOrigin, setPasteOrigin] = useState<PasteOrigin | null>(null);
   const [isPasting, setIsPasting] = useState(false);
   const isPastingRef = useRef(false);
   const pasteGizmoRef = useRef<ReturnType<typeof createPasteGizmo> | null>(null);
@@ -140,12 +141,14 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     cancel: () => void;
     rotate: (dir: -1 | 1) => void;
     flip: (axis: "x" | "y" | "z") => void;
+    move: (origin: PasteOrigin) => void;
   }>({
     start: () => {},
     confirm: () => {},
     cancel: () => {},
     rotate: () => {},
     flip: () => {},
+    move: () => {},
   });
   // Local (per-browser-tab, not persisted) list of remembered selections — click a row to restore
   // it as the active selection, capped at MAX_SAVED_SELECTIONS with oldest dropped once full.
@@ -298,6 +301,12 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
 
   function flipPaste(axis: "x" | "y" | "z") {
     pasteActionsRef.current.flip(axis);
+  }
+
+  function movePasteOrigin(field: "x" | "y" | "z", value: number) {
+    const origin = pasteOriginRef.current;
+    if (!origin || !Number.isFinite(value)) return;
+    pasteActionsRef.current.move({ ...origin, [field]: value });
   }
 
   function addSelectionToMemory() {
@@ -521,6 +530,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     }
     const pasteGizmo = createPasteGizmo(B, scene, (origin) => {
       pasteOriginRef.current = origin;
+      setPasteOrigin(origin);
       renderPastePreview(origin);
     });
     pasteGizmoRef.current = pasteGizmo;
@@ -535,6 +545,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         const cz = box ? Math.floor(box.minZ) : Math.floor((clipBounds.z[0] + clipBounds.z[1]) / 2);
         const origin: PasteOrigin = { x: cx, y: cy, z: cz };
         pasteOriginRef.current = origin;
+        setPasteOrigin(origin);
         isPastingRef.current = true;
         setIsPasting(true);
         pasteTransformRef.current = IDENTITY_PASTE_TRANSFORM;
@@ -543,6 +554,13 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         // fight for visual attention at the same spot. Selection state itself is untouched, so
         // it reappears once paste ends (see cancel below).
         selectionGizmo.setSelection(null);
+        pasteGizmo.setOrigin(origin);
+        renderPastePreview(origin);
+      },
+      move: (origin) => {
+        if (!pasteOriginRef.current) return;
+        pasteOriginRef.current = origin;
+        setPasteOrigin(origin);
         pasteGizmo.setOrigin(origin);
         renderPastePreview(origin);
       },
@@ -598,6 +616,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         disposePastePreview();
         pasteGizmo.setOrigin(null);
         pasteOriginRef.current = null;
+        setPasteOrigin(null);
         isPastingRef.current = false;
         setIsPasting(false);
         selectionGizmo.setSelection(selectionRef.current);
@@ -1181,6 +1200,8 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         onRotatePaste={rotatePaste}
         onFlipPaste={flipPaste}
         pasteTransform={pasteTransform}
+        pasteOrigin={pasteOrigin}
+        onMovePasteOrigin={movePasteOrigin}
         savedSelections={savedSelections}
         onAddSelectionToMemory={addSelectionToMemory}
         onSelectSavedSelection={selectSavedSelection}

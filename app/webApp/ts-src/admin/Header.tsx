@@ -1,13 +1,13 @@
 import { useLocation } from "react-router";
 import { useT } from "./i18n";
-import { PAGE_LABEL_KEYS } from "./const";
+import { NAV } from "./const";
 
 export function Header() {
   const { pathname } = useLocation();
   const t = useT();
   const labelKey =
-    PAGE_LABEL_KEYS[pathname] ??
-    Object.entries(PAGE_LABEL_KEYS).find(([path]) => path !== "/admin" && pathname.startsWith(path))?.[1];
+    NAV.find((item) => item.path === pathname)?.pageLabelKey ??
+    NAV.find((item) => item.path !== "/admin" && pathname.startsWith(item.path))?.pageLabelKey;
   const title = labelKey ? t(labelKey) : t("shell.admin");
   return (
     <header className="h-16 shrink-0 flex items-center justify-between px-6 bg-[#1A222C] border-b border-[#2E3A4E]">

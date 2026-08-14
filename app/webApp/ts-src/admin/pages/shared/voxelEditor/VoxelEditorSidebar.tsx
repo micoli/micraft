@@ -1,50 +1,27 @@
 import { useEffect, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { type BlockInfoDto, type PlainColorDto } from "../../../apiTypes";
 import { Block3DPreview } from "../../../../game/shared/Block3DPreview";
-import { CssBlockCube } from "../../../../game/shared/BlockPreview";
 import { VoxelPaletteBlock } from "./VoxelPaletteBlock";
 import { VoxelColorPicker } from "./VoxelColorPicker";
 import { VoxelShortcutBarSlot } from "./VoxelShortcutBarSlot";
 import { type useAdminShortcutBar } from "./useAdminShortcutBar";
-import { CLIP_AXES, ClipAxis, ClipPlaneState } from "./clipAxis";
-import { ClipAxesInput } from "../../../../primitives/clipAxesInput";
+import { ClipAxis, ClipPlaneState } from "./clipAxis";
 import { dragMode, DragMode } from "../../../../primitives/DragMode";
 import { type SelectionBox, type SelectionShape, type SelectionSnap } from "./selectionGizmo";
-import { RESIZE_STEPS } from "./selectionVoxels";
 import { type PasteTransform } from "./pasteTransform";
-
-const SELECTION_SHAPES: { key: SelectionShape; label: string }[] = [
-  { key: "box", label: "Box" },
-  { key: "sphere", label: "Sphere" },
-  { key: "spheroid", label: "Spheroid" },
-  { key: "cylinder", label: "Cylinder" },
-];
-
-const SELECTION_SNAPS: { key: SelectionSnap; label: string }[] = [
-  { key: "none", label: "None" },
-  { key: "voxel", label: "Voxel" },
-  { key: "half", label: "½" },
-  { key: "quarter", label: "¼" },
-];
-
-// Label for a saved-selection list row: shape name + rounded voxel dimensions (the box may have
-// fractional bounds from the gizmo's quarter-voxel drag snap).
-function formatSavedSelectionLabel(shape: SelectionShape, box: SelectionBox): string {
-  const dx = Math.round(box.maxX - box.minX);
-  const dy = Math.round(box.maxY - box.minY);
-  const dz = Math.round(box.maxZ - box.minZ);
-  return `${shape} ${dx}×${dy}×${dz}`;
-}
-
-// Trims to 2 decimals (enough for the gizmo's finest quarter-voxel snap) and drops trailing zeros
-// — an integer coordinate reads as "4", not "4.00".
-function formatNum(n: number): string {
-  return Number(n.toFixed(2)).toString();
-}
+import { type PasteOrigin } from "./pasteGizmo";
+import { VoxelSelectionFloatingPanel } from "./VoxelSelectionFloatingPanel";
+import { VoxelClipPlanesFloatingPanel } from "./VoxelClipPlanesFloatingPanel";
 
 // Editable fields of the position/size widget — min* is the box's min corner (position), size* is
 // its extent along that axis (max* is derived: min* + size*, so editing size never moves the box).
 export type SelectionField = "minX" | "minY" | "minZ" | "sizeX" | "sizeY" | "sizeZ";
+
+const CLIP_PLANES_VISIBLE_STORAGE_KEY = "voxelEditorClipPlanesVisible";
+
+function loadClipPlanesVisible(): boolean {
+  return localStorage.getItem(CLIP_PLANES_VISIBLE_STORAGE_KEY) !== "false";
+}
 
 const SIDEBAR_WIDTH_STORAGE_KEY = "voxelEditorSidebarWidth";
 const SIDEBAR_MIN_WIDTH = 220;
@@ -94,6 +71,8 @@ export function VoxelEditorSidebar({
   onRotatePaste,
   onFlipPaste,
   pasteTransform,
+  pasteOrigin,
+  onMovePasteOrigin,
   savedSelections,
   onAddSelectionToMemory,
   onSelectSavedSelection,
@@ -154,6 +133,8 @@ export function VoxelEditorSidebar({
   onRotatePaste: (dir: -1 | 1) => void;
   onFlipPaste: (axis: "x" | "y" | "z") => void;
   pasteTransform: PasteTransform;
+  pasteOrigin: PasteOrigin | null;
+  onMovePasteOrigin: (field: "x" | "y" | "z", value: number) => void;
   savedSelections: { shape: SelectionShape; box: SelectionBox }[];
   onAddSelectionToMemory: () => void;
   onSelectSavedSelection: (index: number) => void;
@@ -185,7 +166,12 @@ export function VoxelEditorSidebar({
   paletteRef?: RefObject<HTMLDivElement | null>;
 }) {
   const [width, setWidth] = useState(loadSidebarWidth);
+  const [showClipPlanes, setShowClipPlanes] = useState(loadClipPlanesVisible);
   const resizeStateRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem(CLIP_PLANES_VISIBLE_STORAGE_KEY, String(showClipPlanes));
+  }, [showClipPlanes]);
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(width));
@@ -260,297 +246,61 @@ export function VoxelEditorSidebar({
         >
           Select
         </button>
+        <button
+          onClick={() => setShowClipPlanes((v) => !v)}
+          className={`px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto ${
+            showClipPlanes ? "bg-[#3C50E0] text-white" : "bg-black/50 text-[#8A99AF]"
+          }`}
+        >
+          Clip Pane
+        </button>
       </div>
       {mode === "select" && (
-        <div className="relative top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none items-center justify-center mt-1">
-          {SELECTION_SHAPES.map((s) => (
-            <button
-              key={s.key}
-              onClick={() => onSelectShape(s.key)}
-              className={`px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto ${
-                selectionShape === s.key ? "bg-[#3C50E0] text-white" : "bg-black/50 text-[#8A99AF]"
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+        <VoxelSelectionFloatingPanel
+          selectionShape={selectionShape}
+          onSelectShape={onSelectShape}
+          selectionSnap={selectionSnap}
+          onSelectSnap={onSelectSnap}
+          hasSelection={hasSelection}
+          selection={selection}
+          onSelectionFieldChange={onSelectionFieldChange}
+          resizeStep={resizeStep}
+          onSelectResizeStep={onSelectResizeStep}
+          onExpandSelection={onExpandSelection}
+          onContractSelection={onContractSelection}
+          patternBlocks={patternBlocks}
+          activePatternSlot={activePatternSlot}
+          onSelectPatternSlot={onSelectPatternSlot}
+          onClearPatternSlot={onClearPatternSlot}
+          onFill={onFill}
+          onShell={onShell}
+          onCut={onCut}
+          onCopy={onCopy}
+          clipboardCount={clipboardCount}
+          onPaste={onPaste}
+          isPasting={isPasting}
+          onConfirmPaste={onConfirmPaste}
+          onCancelPaste={onCancelPaste}
+          onRotatePaste={onRotatePaste}
+          onFlipPaste={onFlipPaste}
+          pasteTransform={pasteTransform}
+          pasteOrigin={pasteOrigin}
+          onMovePasteOrigin={onMovePasteOrigin}
+          savedSelections={savedSelections}
+          onAddSelectionToMemory={onAddSelectionToMemory}
+          onSelectSavedSelection={onSelectSavedSelection}
+          onRemoveSavedSelection={onRemoveSavedSelection}
+          getOrdinal={getOrdinal}
+          previewsReady={previewsReady}
+          blockDefsReady={blockDefsReady}
+          getPreview={getPreview}
+        />
       )}
-      {mode === "select" && (
-        <div className="relative top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none items-center justify-center mt-1">
-          {SELECTION_SNAPS.map((s) => (
-            <button
-              key={s.key}
-              onClick={() => onSelectSnap(s.key)}
-              className={`px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto ${
-                selectionSnap === s.key ? "bg-[#3C50E0] text-white" : "bg-black/50 text-[#8A99AF]"
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-      )}
-      {mode === "select" && (
-        <div className="relative top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none items-center justify-center mt-1">
-          <button
-            onClick={onContractSelection}
-            disabled={!hasSelection}
-            title="Contract selection"
-            className="px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
-          >
-            −
-          </button>
-          {RESIZE_STEPS.map((s) => (
-            <button
-              key={s.key}
-              onClick={() => onSelectResizeStep(s.key)}
-              className={`px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto ${
-                resizeStep === s.key ? "bg-[#3C50E0] text-white" : "bg-black/50 text-[#8A99AF]"
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-          <button
-            onClick={onExpandSelection}
-            disabled={!hasSelection}
-            title="Expand selection"
-            className="px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
-          >
-            +
-          </button>
-        </div>
-      )}
-      {mode === "select" && selection && (
-        <div className="relative top-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 mt-1">
-          <div className="flex items-center gap-1 pointer-events-auto">
-            <span className="text-[9px] text-[#8A99AF] w-8">Pos</span>
-            {(["minX", "minY", "minZ"] as const).map((field) => (
-              <input
-                key={field}
-                type="number"
-                step={0.25}
-                value={formatNum(selection[field])}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  if (Number.isFinite(v)) onSelectionFieldChange(field, v);
-                }}
-                className="w-12 rounded bg-black/50 border border-[#2E3A4E] px-1 py-0.5 text-[9px] text-white font-mono outline-none focus:border-[#3C50E0]"
-              />
-            ))}
-          </div>
-          <div className="flex items-center gap-1 pointer-events-auto">
-            <span className="text-[9px] text-[#8A99AF] w-8">Size</span>
-            {(
-              [
-                ["sizeX", selection.maxX - selection.minX],
-                ["sizeY", selection.maxY - selection.minY],
-                ["sizeZ", selection.maxZ - selection.minZ],
-              ] as const
-            ).map(([field, size]) => (
-              <input
-                key={field}
-                type="number"
-                step={0.25}
-                min={0.25}
-                value={formatNum(size)}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  if (Number.isFinite(v)) onSelectionFieldChange(field, v);
-                }}
-                className="w-12 rounded bg-black/50 border border-[#2E3A4E] px-1 py-0.5 text-[9px] text-white font-mono outline-none focus:border-[#3C50E0]"
-              />
-            ))}
-          </div>
-        </div>
-      )}
-      {mode === "select" && (
-        <div className="relative top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none items-center justify-center mt-1">
-          {([0, 1] as const).map((slot) => {
-            const name = patternBlocks[slot];
-            const ordinal = name ? getOrdinal(name) : null;
-            return (
-              <div
-                key={slot}
-                onClick={() => onSelectPatternSlot(slot)}
-                title={name ?? (slot === 0 ? "Pattern block A" : "Pattern block B (optional)")}
-                className={`pointer-events-auto flex items-center gap-1 rounded px-1.5 py-1 cursor-pointer border-2 ${
-                  activePatternSlot === slot ? "border-[#3C50E0]" : "border-transparent"
-                } bg-black/50`}
-              >
-                <span className="text-[9px] font-medium text-[#8A99AF]">{slot === 0 ? "A" : "B"}</span>
-                <div className="h-4 w-4 flex items-center justify-center shrink-0">
-                  {name && ordinal !== null && previewsReady ? (
-                    getPreview(ordinal) ? (
-                      <img
-                        alt=""
-                        src={getPreview(ordinal)!}
-                        width={16}
-                        height={16}
-                        style={{ imageRendering: "pixelated", display: "block" }}
-                      />
-                    ) : blockDefsReady ? (
-                      <CssBlockCube ordinal={ordinal} size={16} />
-                    ) : null
-                  ) : (
-                    <div className="h-3 w-3 rounded-sm border border-dashed border-[#8A99AF]" />
-                  )}
-                </div>
-                {name && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClearPatternSlot(slot);
-                    }}
-                    className="text-[#8A99AF] hover:text-white text-[10px] leading-none"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {mode === "select" && (
-        <div className="relative top-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none mt-1">
-          <div className="flex gap-1.5 items-center justify-center">
-            <button
-              onClick={onFill}
-              disabled={!hasSelection || !patternBlocks[0]}
-              className="px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
-            >
-              Fill
-            </button>
-            <button
-              onClick={onShell}
-              disabled={!hasSelection || !patternBlocks[0]}
-              className="px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
-            >
-              Shell
-            </button>
-            <button
-              onClick={onCut}
-              disabled={!hasSelection}
-              className="px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
-            >
-              Cut
-            </button>
-            <button
-              onClick={onCopy}
-              disabled={!hasSelection}
-              className="px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
-            >
-              Copy
-            </button>
-            <button
-              onClick={onPaste}
-              disabled={!clipboardCount}
-              className={`px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto disabled:opacity-40 ${
-                isPasting
-                  ? "bg-[#3C50E0] text-white"
-                  : "bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white"
-              }`}
-            >
-              Paste
-            </button>
-          </div>
-          {clipboardCount !== null && (
-            <span className="text-[9px] text-[#8A99AF] pointer-events-none">Clipboard: {clipboardCount} blocks</span>
-          )}
-          {isPasting && (
-            <>
-              <div className="flex gap-1.5 items-center justify-center pointer-events-auto">
-                <button
-                  onClick={() => onRotatePaste(-1)}
-                  title="Rotate -90°"
-                  className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors bg-black/50 text-[#8A99AF] hover:bg-[#3C50E0] hover:text-white"
-                >
-                  ⟲ -90°
-                </button>
-                <button
-                  onClick={() => onRotatePaste(1)}
-                  title="Rotate +90°"
-                  className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors bg-black/50 text-[#8A99AF] hover:bg-[#3C50E0] hover:text-white"
-                >
-                  ⟳ +90°
-                </button>
-                {(["x", "y", "z"] as const).map((axis) => (
-                  <button
-                    key={axis}
-                    onClick={() => onFlipPaste(axis)}
-                    title={`Flip ${axis.toUpperCase()}`}
-                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
-                      pasteTransform[axis === "x" ? "flipX" : axis === "y" ? "flipY" : "flipZ"]
-                        ? "bg-[#3C50E0] text-white"
-                        : "bg-black/50 text-[#8A99AF] hover:bg-[#3C50E0] hover:text-white"
-                    }`}
-                  >
-                    Flip {axis.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-1.5 items-center justify-center pointer-events-auto">
-                <button
-                  onClick={onConfirmPaste}
-                  className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors bg-black/50 text-[#8A99AF] hover:bg-[#3C50E0] hover:text-white"
-                >
-                  Confirm (Enter)
-                </button>
-                <button
-                  onClick={onCancelPaste}
-                  className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors bg-black/50 text-[#8A99AF] hover:bg-[#3C50E0] hover:text-white"
-                >
-                  Cancel (Esc)
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-      {mode === "select" && (
-        <div className="shrink-0 border-b border-[#2E3A4E] p-2 flex flex-col gap-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[9px] text-[#8A99AF] font-medium">
-              Saved selections ({savedSelections.length}/10)
-            </span>
-            <button
-              onClick={onAddSelectionToMemory}
-              disabled={!hasSelection}
-              className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
-            >
-              + Add selection to memory
-            </button>
-          </div>
-          {savedSelections.length > 0 && (
-            <div className="flex flex-col gap-0.5">
-              {savedSelections.map((entry, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => onSelectSavedSelection(idx)}
-                  className="flex items-center justify-between rounded px-1.5 py-1 bg-black/30 hover:bg-black/50 cursor-pointer"
-                >
-                  <span className="text-[10px] text-[#8A99AF] truncate">
-                    {formatSavedSelectionLabel(entry.shape, entry.box)}
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveSavedSelection(idx);
-                    }}
-                    className="text-[#8A99AF] hover:text-white text-[10px] leading-none shrink-0 ml-1"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      {showClipPlanes && (
+        <VoxelClipPlanesFloatingPanel clipPlanes={clipPlanes} clipBounds={clipBounds} setClipPlanes={setClipPlanes} />
       )}
       <div className="shrink-0 border-b border-[#2E3A4E] flex flex-row items-center gap-3 py-3 px-2">
-        <div className="flex flex-col gap-1 w-2/3 items-center justify-center">
+        <div className="flex flex-col gap-1 w-full items-center justify-center">
           {selectedType && blockDefsReady && previewsReady && getOrdinal(selectedType) !== null ? (
             <Block3DPreview
               ordinal={getOrdinal(selectedType)!}
@@ -570,17 +320,6 @@ export function VoxelEditorSidebar({
               onSelect={setSelectedColorIndex}
             />
           )}
-        </div>
-        <div className="flex flex-col gap-1.5 w-1/3 min-w-0">
-          {CLIP_AXES.map((axis) => (
-            <ClipAxesInput
-              key={axis}
-              axis={axis}
-              clipPlanes={clipPlanes}
-              clipBounds={clipBounds}
-              setClipPlanes={setClipPlanes}
-            />
-          ))}
         </div>
       </div>
       <div className="shrink-0 border-b border-[#2E3A4E] p-2">

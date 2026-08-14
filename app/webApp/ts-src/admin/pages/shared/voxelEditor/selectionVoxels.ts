@@ -1,4 +1,5 @@
 import { type SelectionBounds, type SelectionBox, type SelectionShape } from "./selectionGizmo";
+import { ICONS } from "../../../../primitives/icons";
 
 // Two-block pattern for Fill/Shell: a solid block (`b` unset), or a 3D checkerboard alternation of
 // two blocks by (x+y+z) parity when `b` is set.
@@ -21,9 +22,9 @@ export const MAX_SELECTION_OP_VOXELS = 20000;
 // Expand/contract step units offered by the sidebar's resize buttons — same granularity as the
 // gizmo's grid-snap preview (SelectionSnap: voxel/half/quarter).
 export const RESIZE_STEPS = [
-  { key: 1, label: "1" },
-  { key: 0.5, label: "½" },
-  { key: 0.25, label: "¼" },
+  { key: 1, label: "1", icon: ICONS.snapVoxel },
+  { key: 0.5, label: "½", icon: ICONS.snapHalf },
+  { key: 0.25, label: "¼", icon: ICONS.snapQuarter },
 ] as const;
 
 // Smallest allowed extent on any axis — same floor as the gizmo's own drag handles (MIN_EXTENT in
