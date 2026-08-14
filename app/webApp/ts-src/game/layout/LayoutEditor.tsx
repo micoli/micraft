@@ -91,13 +91,12 @@ export function LayoutEditor({ open, layouts, activeLayout, onSave, onClose }: P
             x: Math.max(0, Math.min(48 - w.w, startX + dx)),
             y: Math.max(0, Math.min(48 - w.h, startY + dy)),
           };
-        } else {
-          return {
-            ...w,
-            w: Math.max(min.w, Math.min(48 - w.x, startW + dx)),
-            h: Math.max(min.h, Math.min(48 - w.y, startH + dy)),
-          };
         }
+        return {
+          ...w,
+          w: Math.max(min.w, Math.min(48 - w.x, startW + dx)),
+          h: Math.max(min.h, Math.min(48 - w.y, startH + dy)),
+        };
       }),
     );
   };

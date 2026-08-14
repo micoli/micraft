@@ -3,7 +3,6 @@ import { type BlockInfoDto, type PlainColorDto } from "../../../apiTypes";
 import { Block3DPreview } from "../../../../game/shared/Block3DPreview";
 import { VoxelPaletteBlock } from "./VoxelPaletteBlock";
 import { VoxelColorPicker } from "./VoxelColorPicker";
-import { VoxelShortcutBarSlot } from "./VoxelShortcutBarSlot";
 import { type useAdminShortcutBar } from "./useAdminShortcutBar";
 import { ClipAxis, ClipPlaneState } from "./clipAxis";
 import { dragMode, DragMode } from "../../../../primitives/DragMode";
@@ -12,10 +11,50 @@ import { type PasteTransform } from "./pasteTransform";
 import { type PasteOrigin } from "./pasteGizmo";
 import { VoxelSelectionFloatingPanel } from "./VoxelSelectionFloatingPanel";
 import { VoxelClipPlanesFloatingPanel } from "./VoxelClipPlanesFloatingPanel";
+import { ShortcutBarIcons } from "./ShortcutBarIcons";
+import { ShortcutBarPageSelector } from "./ShortcutBarPageSelector";
 
-// Editable fields of the position/size widget — min* is the box's min corner (position), size* is
-// its extent along that axis (max* is derived: min* + size*, so editing size never moves the box).
 export type SelectionField = "minX" | "minY" | "minZ" | "sizeX" | "sizeY" | "sizeZ";
+
+export interface SelectionPanelProps {
+  selectionShape: SelectionShape;
+  onSelectShape: (shape: SelectionShape) => void;
+  selectionSnap: SelectionSnap;
+  onSelectSnap: (snap: SelectionSnap) => void;
+  hasSelection: boolean;
+  selection: SelectionBox | null;
+  onSelectionFieldChange: (field: SelectionField, value: number) => void;
+  resizeStep: number;
+  onSelectResizeStep: (step: number) => void;
+  onExpandSelection: () => void;
+  onContractSelection: () => void;
+  patternBlocks: [string | null, string | null];
+  activePatternSlot: 0 | 1;
+  onSelectPatternSlot: (slot: 0 | 1) => void;
+  onClearPatternSlot: (slot: 0 | 1) => void;
+  onFill: () => void;
+  onShell: () => void;
+  onCut: () => void;
+  onCopy: () => void;
+  clipboardCount: number | null;
+  onPaste: () => void;
+  isPasting: boolean;
+  onConfirmPaste: () => void;
+  onCancelPaste: () => void;
+  onRotatePaste: (dir: -1 | 1) => void;
+  onFlipPaste: (axis: "x" | "y" | "z") => void;
+  pasteTransform: PasteTransform;
+  pasteOrigin: PasteOrigin | null;
+  onMovePasteOrigin: (field: "x" | "y" | "z", value: number) => void;
+  savedSelections: { shape: SelectionShape; box: SelectionBox }[];
+  onAddSelectionToMemory: () => void;
+  onSelectSavedSelection: (index: number) => void;
+  onRemoveSavedSelection: (index: number) => void;
+  getOrdinal: (name: string) => number | null;
+  previewsReady: boolean;
+  blockDefsReady: boolean;
+  getPreview: (ordinal: number) => string | null;
+}
 
 const CLIP_PLANES_VISIBLE_STORAGE_KEY = "voxelEditorClipPlanesVisible";
 
@@ -37,8 +76,6 @@ function loadSidebarWidth(): number {
   return Number.isFinite(stored) && stored > 0 ? clampSidebarWidth(stored) : SIDEBAR_DEFAULT_WIDTH;
 }
 
-// Right-hand editor panel: drag-mode legend, selected-block preview + clip-plane sliders,
-// shortcut bar, search, and the block palette. Shared verbatim by the Instance and Scene editors —
 // this is pure presentation over props, no volume-specific (chunk vs scene buffer) logic.
 export function VoxelEditorSidebar({
   modKeys,
@@ -102,49 +139,15 @@ export function VoxelEditorSidebar({
   setHoveredRect,
   selectBlockType,
   paletteRef,
-}: {
+}: SelectionPanelProps & {
   modKeys: { shift: boolean; meta: boolean; alt: boolean; ctrl: boolean };
   mode: "place" | "break" | "select";
   onToggleSelect: () => void;
-  selectionShape: SelectionShape;
-  onSelectShape: (shape: SelectionShape) => void;
-  selectionSnap: SelectionSnap;
-  onSelectSnap: (snap: SelectionSnap) => void;
-  hasSelection: boolean;
-  selection: SelectionBox | null;
-  onSelectionFieldChange: (field: SelectionField, value: number) => void;
-  resizeStep: number;
-  onSelectResizeStep: (step: number) => void;
-  onExpandSelection: () => void;
-  onContractSelection: () => void;
-  patternBlocks: [string | null, string | null];
-  activePatternSlot: 0 | 1;
-  onSelectPatternSlot: (slot: 0 | 1) => void;
-  onClearPatternSlot: (slot: 0 | 1) => void;
-  onFill: () => void;
-  onShell: () => void;
-  onCut: () => void;
-  onCopy: () => void;
-  clipboardCount: number | null;
-  onPaste: () => void;
-  isPasting: boolean;
-  onConfirmPaste: () => void;
-  onCancelPaste: () => void;
-  onRotatePaste: (dir: -1 | 1) => void;
-  onFlipPaste: (axis: "x" | "y" | "z") => void;
-  pasteTransform: PasteTransform;
-  pasteOrigin: PasteOrigin | null;
-  onMovePasteOrigin: (field: "x" | "y" | "z", value: number) => void;
-  savedSelections: { shape: SelectionShape; box: SelectionBox }[];
-  onAddSelectionToMemory: () => void;
-  onSelectSavedSelection: (index: number) => void;
-  onRemoveSavedSelection: (index: number) => void;
   activeDragMode: dragMode;
   selectedType: string | null;
   blockDefsReady: boolean;
   previewsReady: boolean;
   previewProgress: number;
-  getOrdinal: (name: string) => number | null;
   blockDefs: BlockInfoDto[];
   plainColors: PlainColorDto[];
   selectedColorIndex: number;
@@ -155,7 +158,6 @@ export function VoxelEditorSidebar({
   shortcutBar: ReturnType<typeof useAdminShortcutBar>;
   hoveredShortcutSlot: number | null;
   setHoveredShortcutSlot: (idx: number | null) => void;
-  getPreview: (ordinal: number) => string | null;
   search: string;
   setSearch: (value: string) => void;
   hoveredBlockName: string | null;
@@ -323,37 +325,17 @@ export function VoxelEditorSidebar({
         </div>
       </div>
       <div className="shrink-0 border-b border-[#2E3A4E] p-2">
-        <div className="grid grid-cols-5 gap-1 justify-center">
-          {shortcutBar.slots.map((slotBlock, idx) => (
-            <VoxelShortcutBarSlot
-              key={idx}
-              shortcutBar={shortcutBar}
-              idx={idx}
-              slotBlock={slotBlock}
-              getOrdinal={getOrdinal}
-              blockDefs={blockDefs}
-              getPreview={getPreview}
-              blockDefsReady={blockDefsReady}
-              previewsReady={previewsReady}
-              hovered={hoveredShortcutSlot === idx}
-              onHoverEnter={() => setHoveredShortcutSlot(idx)}
-              onHoverLeave={() => setHoveredShortcutSlot(null)}
-            />
-          ))}
-        </div>
-        {shortcutBar.pageCount > 1 && (
-          <div className="flex gap-1 justify-center mt-1.5">
-            {Array.from({ length: shortcutBar.pageCount }, (index, p) => (
-              <button
-                key={p}
-                onClick={() => shortcutBar.goToPage(p)}
-                className={`w-4.5 h-6 rounded ${p === shortcutBar.currentPage ? "bg-[#3C50E0]" : "bg-white/25"}`}
-              >
-                {p + 1}
-              </button>
-            ))}
-          </div>
-        )}
+        <ShortcutBarIcons
+          shortcutBar={shortcutBar}
+          getOrdinal={getOrdinal}
+          blockDefs={blockDefs}
+          getPreview={getPreview}
+          blockDefsReady={blockDefsReady}
+          previewsReady={previewsReady}
+          hoveredShortcutSlot={hoveredShortcutSlot}
+          setHoveredShortcutSlot={setHoveredShortcutSlot}
+        />
+        {shortcutBar.pageCount > 1 && <ShortcutBarPageSelector shortcutBar={shortcutBar} />}
       </div>
       <div className="shrink-0 border-b border-[#2E3A4E] p-2">
         <input

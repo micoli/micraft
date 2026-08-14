@@ -4,9 +4,7 @@ import { Icon } from "../../../../primitives/Icon";
 import { ICONS } from "../../../../primitives/icons";
 import { type SelectionBox, type SelectionShape, type SelectionSnap } from "./selectionGizmo";
 import { RESIZE_STEPS } from "./selectionVoxels";
-import { type PasteTransform } from "./pasteTransform";
-import { type PasteOrigin } from "./pasteGizmo";
-import { type SelectionField } from "./VoxelEditorSidebar";
+import { type SelectionPanelProps } from "./VoxelEditorSidebar";
 
 const SELECTION_SHAPES: { key: SelectionShape; label: string; icon: string }[] = [
   { key: "box", label: "Box", icon: ICONS.shapeBox },
@@ -98,45 +96,7 @@ export function VoxelSelectionFloatingPanel({
   previewsReady,
   blockDefsReady,
   getPreview,
-}: {
-  selectionShape: SelectionShape;
-  onSelectShape: (shape: SelectionShape) => void;
-  selectionSnap: SelectionSnap;
-  onSelectSnap: (snap: SelectionSnap) => void;
-  hasSelection: boolean;
-  selection: SelectionBox | null;
-  onSelectionFieldChange: (field: SelectionField, value: number) => void;
-  resizeStep: number;
-  onSelectResizeStep: (step: number) => void;
-  onExpandSelection: () => void;
-  onContractSelection: () => void;
-  patternBlocks: [string | null, string | null];
-  activePatternSlot: 0 | 1;
-  onSelectPatternSlot: (slot: 0 | 1) => void;
-  onClearPatternSlot: (slot: 0 | 1) => void;
-  onFill: () => void;
-  onShell: () => void;
-  onCut: () => void;
-  onCopy: () => void;
-  clipboardCount: number | null;
-  onPaste: () => void;
-  isPasting: boolean;
-  onConfirmPaste: () => void;
-  onCancelPaste: () => void;
-  onRotatePaste: (dir: -1 | 1) => void;
-  onFlipPaste: (axis: "x" | "y" | "z") => void;
-  pasteTransform: PasteTransform;
-  pasteOrigin: PasteOrigin | null;
-  onMovePasteOrigin: (field: "x" | "y" | "z", value: number) => void;
-  savedSelections: { shape: SelectionShape; box: SelectionBox }[];
-  onAddSelectionToMemory: () => void;
-  onSelectSavedSelection: (index: number) => void;
-  onRemoveSavedSelection: (index: number) => void;
-  getOrdinal: (name: string) => number | null;
-  previewsReady: boolean;
-  blockDefsReady: boolean;
-  getPreview: (ordinal: number) => string | null;
-}) {
+}: SelectionPanelProps) {
   const [pos, setPos] = useState(loadPanelPos);
   const dragStateRef = useRef<{ startX: number; startY: number; startTop: number; startLeft: number } | null>(null);
 
