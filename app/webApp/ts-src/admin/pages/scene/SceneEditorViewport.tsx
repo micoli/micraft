@@ -16,6 +16,7 @@ import { saveCameraState } from "../shared/voxelEditor/cameraStorage";
 import { createOrbitCamera, setupBasicLighting } from "../shared/voxelEditor/orbitCamera";
 import { setupOrbitPointerController } from "../shared/voxelEditor/orbitPointerController";
 import { createOverlayController } from "../shared/voxelEditor/overlayController";
+import { createSelectionGizmo, type SelectionBox } from "../shared/voxelEditor/selectionGizmo";
 import { useBlockRegistry } from "../shared/voxelEditor/useBlockRegistry";
 import { useModifierDragMode } from "../shared/voxelEditor/useModifierDragMode";
 import { useActionError } from "../shared/voxelEditor/useActionError";
@@ -67,7 +68,9 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
   const selectedColorIndexRef = useRef(selectedColorIndex);
-  const [mode, setMode] = useState<"place" | "break">("place");
+  const [mode, setMode] = useState<"place" | "break" | "select">("place");
+  const [selection, setSelection] = useState<SelectionBox | null>(null);
+  const selectionRef = useRef<SelectionBox | null>(selection);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { actionError, flashActionError } = useActionError();
   const [search, setSearch] = useState("");
@@ -100,6 +103,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
   const sceneRef = useRef<InstanceType<typeof BABYLON.Scene> | null>(null);
   const overlayMeshesRef = useRef<Set<InstanceType<typeof BABYLON.Mesh>> | null>(null);
   const clipMeshesRef = useRef<Partial<Record<ClipAxis, InstanceType<typeof BABYLON.Mesh>>>>({});
+  const selectionGizmoRef = useRef<ReturnType<typeof createSelectionGizmo> | null>(null);
 
   useEffect(() => {
     startPreloading();
@@ -107,7 +111,12 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
 
   useEffect(() => {
     modeRef.current = mode;
+    if (mode !== "select") setSelection(null);
   }, [mode]);
+
+  function toggleSelectMode() {
+    setMode((m) => (m === "select" ? "place" : "select"));
+  }
   useEffect(() => {
     selectedTypeRef.current = selectedType;
   }, [selectedType]);
@@ -307,6 +316,8 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     const overlayMeshes = new Set<InstanceType<typeof BABYLON.Mesh>>();
     overlayMeshesRef.current = overlayMeshes;
     const overlay = createOverlayController(B, babylonScene, overlayMeshes);
+    const selectionGizmo = createSelectionGizmo(B, babylonScene, clipBounds, (box) => setSelection(box));
+    selectionGizmoRef.current = selectionGizmo;
     let disposed = false;
 
     // Whole-volume load: fetch the raw binary buffer once and mesh it in one call — no
@@ -399,6 +410,10 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     }
 
     function updateHoverPreview(evt: PointerEvent) {
+      if (modeRef.current === "select") {
+        overlay.disposeAll();
+        return;
+      }
       const effectiveMode = evt.shiftKey ? "break" : modeRef.current;
       const pick = babylonScene.pick(babylonScene.pointerX, babylonScene.pointerY);
       if (!pick?.hit || !pick.pickedMesh || !pick.pickedPoint) {
@@ -481,8 +496,32 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       canvas,
       getMode: () => modeRef.current,
       onHoverMove: updateHoverPreview,
-      onClick: ({ pick, normal, mode: currentMode }) => {
+      onClick: ({ pick, normal, mode: currentMode, shiftKey }) => {
         const onGround = groundMeshes.has(pick.pickedMesh as InstanceType<typeof BABYLON.Mesh>);
+
+        if (currentMode === "select") {
+          if (onGround || !normal || !pick.pickedPoint) return;
+          const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
+          const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
+          const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
+          if (!inBounds(bx, by, bz)) return;
+          const prev = selectionRef.current;
+          // Shift-click extends the existing selection to include the clicked block instead of
+          // replacing it — only when a selection already exists; otherwise it's a plain new pick.
+          if (shiftKey && prev) {
+            setSelection({
+              minX: Math.min(prev.minX, bx),
+              minY: Math.min(prev.minY, by),
+              minZ: Math.min(prev.minZ, bz),
+              maxX: Math.max(prev.maxX, bx + 1),
+              maxY: Math.max(prev.maxY, by + 1),
+              maxZ: Math.max(prev.maxZ, bz + 1),
+            });
+          } else {
+            setSelection({ minX: bx, minY: by, minZ: bz, maxX: bx + 1, maxY: by + 1, maxZ: bz + 1 });
+          }
+          return;
+        }
 
         if (currentMode === "break") {
           if (onGround || !normal || !pick.pickedPoint) return;
@@ -562,12 +601,14 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKeyDown);
       overlay.disposeAll();
+      selectionGizmo.dispose();
       editSocket?.close();
       window.webApp?.then((exports) => exports.mcSceneDispose()).catch(() => {});
       axesGizmo.dispose();
       engine.dispose();
       sceneRef.current = null;
       overlayMeshesRef.current = null;
+      selectionGizmoRef.current = null;
       clipMeshesRef.current = {};
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- scene.id identity is the intended re-mount trigger
@@ -580,6 +621,13 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     if (!babylonScene || !overlayMeshes || !B) return;
     applyClipPlanes(B, babylonScene, clipPlanes, clipBounds, overlayMeshes, clipMeshesRef.current);
   }, [clipPlanes, clipBounds, scene.id, blockDefsReady]);
+
+  // Mirrors the selection state into the gizmo — null both when no selection was made yet and
+  // whenever the editor leaves select mode (see the mode effect above, which clears `selection`).
+  useEffect(() => {
+    selectionRef.current = selection;
+    selectionGizmoRef.current?.setSelection(selection);
+  }, [selection]);
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -600,6 +648,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       <VoxelEditorSidebar
         modKeys={modKeys}
         mode={mode}
+        onToggleSelect={toggleSelectMode}
         activeDragMode={activeDragMode}
         selectedType={selectedType}
         blockDefsReady={blockDefsReady}

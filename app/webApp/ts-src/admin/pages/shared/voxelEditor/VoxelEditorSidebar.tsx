@@ -29,6 +29,7 @@ function loadSidebarWidth(): number {
 export function VoxelEditorSidebar({
   modKeys,
   mode,
+  onToggleSelect,
   activeDragMode,
   selectedType,
   blockDefsReady,
@@ -56,7 +57,8 @@ export function VoxelEditorSidebar({
   paletteRef,
 }: {
   modKeys: { shift: boolean; meta: boolean; alt: boolean; ctrl: boolean };
-  mode: "place" | "break";
+  mode: "place" | "break" | "select";
+  onToggleSelect: () => void;
   activeDragMode: dragMode;
   selectedType: string | null;
   blockDefsReady: boolean;
@@ -140,6 +142,14 @@ export function VoxelEditorSidebar({
         ).map((m) => (
           <DragMode key={m.key} m={m} activeDragMode={activeDragMode} />
         ))}
+        <button
+          onClick={onToggleSelect}
+          className={`px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto ${
+            mode === "select" ? "bg-[#3C50E0] text-white" : "bg-black/50 text-[#8A99AF]"
+          }`}
+        >
+          Select
+        </button>
       </div>
       <div className="shrink-0 border-b border-[#2E3A4E] flex flex-row items-center gap-3 py-3 px-2">
         <div className="flex flex-col gap-1 w-2/3 items-center justify-center">

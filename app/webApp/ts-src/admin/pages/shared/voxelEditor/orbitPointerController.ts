@@ -6,20 +6,23 @@
 // place/break (picking must happen on POINTERUP so a drag-start doesn't fire it early — a move
 // threshold distinguishes an actual click from the start of a drag), Cmd/Meta = rotate, Option/Alt
 // = pan, Ctrl = zoom. Shift held during that click breaks instead of placing, overriding the
-// persistent place/break mode for just that click. Shared by the Instance and Scene editors — only
-// the actual hit resolution (bounds-check, API call, ghost/overlay update) differs between them,
-// supplied here via callbacks.
+// persistent place/break mode for just that click (select mode ignores this override — there,
+// shift instead extends the selection to the clicked block, handled by the caller via the
+// shiftKey passed to onClick). Shared by the Instance and Scene editors — only the actual hit
+// resolution (bounds-check, API call, ghost/overlay update) differs between them, supplied here
+// via callbacks.
 export interface OrbitPointerControllerOptions {
   B: typeof BABYLON;
   scene: InstanceType<typeof BABYLON.Scene>;
   camera: InstanceType<typeof BABYLON.ArcRotateCamera>;
   canvas: HTMLCanvasElement;
-  getMode: () => "place" | "break";
+  getMode: () => "place" | "break" | "select";
   onHoverMove: (evt: PointerEvent) => void;
   onClick: (ctx: {
     pick: NonNullable<ReturnType<InstanceType<typeof BABYLON.Scene>["pick"]>>;
     normal: InstanceType<typeof BABYLON.Vector3> | null;
-    mode: "place" | "break";
+    mode: "place" | "break" | "select";
+    shiftKey: boolean;
   }) => void;
 }
 
@@ -94,8 +97,11 @@ export function setupOrbitPointerController(opts: OrbitPointerControllerOptions)
     const pick = scene.pick(scene.pointerX, scene.pointerY);
     if (!pick?.hit || !pick.pickedMesh || !pick.pickedPoint) return;
     const normal = pick.getNormal(true);
-    const mode = downShift ? "break" : getMode();
-    onClick({ pick, normal, mode });
+    const baseMode = getMode();
+    // Shift-to-break only makes sense as a place/break override; in select mode shift instead
+    // extends the selection to the clicked block, handled by the caller via shiftKey.
+    const mode = baseMode !== "select" && downShift ? "break" : baseMode;
+    onClick({ pick, normal, mode, shiftKey: downShift });
   });
 
   return () => {
