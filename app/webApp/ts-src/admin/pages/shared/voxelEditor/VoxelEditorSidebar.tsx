@@ -140,7 +140,18 @@ export function VoxelEditorSidebar({
             { key: "rotate", label: "Rotate", hint: "⌘" },
           ] as const
         ).map((m) => (
-          <DragMode key={m.key} m={m} activeDragMode={activeDragMode} />
+          <DragMode
+            key={m.key}
+            m={m}
+            // Select mode has no place/break behavior — clicks pick voxels for selection instead —
+            // so the "Place/Break" chip must not read active alongside the "Select" chip below,
+            // even though activeDragMode defaults to "place" whenever no camera modifier is held.
+            activeDragMode={mode === "select" && activeDragMode === "place" ? null : activeDragMode}
+            // Clicking "Place/Break" while in select mode leaves select, mirroring onToggleSelect's
+            // own select<->place toggle. Only wired for the "place" chip — zoom/pan/rotate are
+            // camera-modifier indicators with no mode of their own to switch to.
+            onClick={m.key === "place" && mode === "select" ? onToggleSelect : undefined}
+          />
         ))}
         <button
           onClick={onToggleSelect}
