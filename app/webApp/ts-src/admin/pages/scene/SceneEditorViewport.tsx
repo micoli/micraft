@@ -26,7 +26,7 @@ import { useBlockRegistry } from "../shared/voxelEditor/useBlockRegistry";
 import { useModifierDragMode } from "../shared/voxelEditor/useModifierDragMode";
 import { useActionError } from "../shared/voxelEditor/useActionError";
 import { makeUndoRedoController, type UndoEntryBase, type UndoGroup } from "../shared/voxelEditor/undoRedoStack";
-import { VoxelEditorSidebar } from "../shared/voxelEditor/VoxelEditorSidebar";
+import { VoxelEditorSidebar, type SelectionField } from "../shared/voxelEditor/VoxelEditorSidebar";
 import { connectEditSocket, type BlockEditSocket } from "../shared/voxelEditor/editSocket";
 import {
   computeSelectionVoxels,
@@ -156,8 +156,16 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       setSelection(null);
       setSelectionShape("box");
       setSelectionSnap("none");
+    } else {
+      // Seeds select mode with a live starting point (a bare toggle previously left the gizmo
+      // hidden until the user made a manual pick) — a single voxel centered on the scene's
+      // barycenter, i.e. the midpoint of clipBounds along each axis.
+      const cx = Math.floor((clipBounds.x[0] + clipBounds.x[1]) / 2);
+      const cy = Math.floor((clipBounds.y[0] + clipBounds.y[1]) / 2);
+      const cz = Math.floor((clipBounds.z[0] + clipBounds.z[1]) / 2);
+      setSelection({ minX: cx, minY: cy, minZ: cz, maxX: cx + 1, maxY: cy + 1, maxZ: cz + 1 });
     }
-  }, [mode]);
+  }, [mode, clipBounds]);
 
   useEffect(() => {
     selectionShapeRef.current = selectionShape;
@@ -246,6 +254,36 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     const box = selectionRef.current;
     if (!box) return;
     setSelection(resizeSelectionBox(box, selectionShapeRef.current, clipBounds, -resizeStep));
+  }
+
+  // Direct edit of the position/size widget. minX/minY/minZ move the box's min corner (size
+  // unchanged); sizeX/sizeY/sizeZ resize from that same min corner (position unchanged) — max* is
+  // always derived, never edited directly.
+  function setSelectionField(field: SelectionField, value: number) {
+    const box = selectionRef.current;
+    if (!box) return;
+    let next: SelectionBox;
+    switch (field) {
+      case "minX":
+        next = { ...box, minX: value, maxX: value + (box.maxX - box.minX) };
+        break;
+      case "minY":
+        next = { ...box, minY: value, maxY: value + (box.maxY - box.minY) };
+        break;
+      case "minZ":
+        next = { ...box, minZ: value, maxZ: value + (box.maxZ - box.minZ) };
+        break;
+      case "sizeX":
+        next = { ...box, maxX: box.minX + Math.max(0.25, value) };
+        break;
+      case "sizeY":
+        next = { ...box, maxY: box.minY + Math.max(0.25, value) };
+        break;
+      case "sizeZ":
+        next = { ...box, maxZ: box.minZ + Math.max(0.25, value) };
+        break;
+    }
+    setSelection(next);
   }
 
   const blockDefsReady = useBlockDefsReady();
@@ -840,6 +878,8 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         selectionSnap={selectionSnap}
         onSelectSnap={setSelectionSnap}
         hasSelection={selection !== null}
+        selection={selection}
+        onSelectionFieldChange={setSelectionField}
         patternBlocks={patternBlocks}
         activePatternSlot={activePatternSlot}
         onSelectPatternSlot={setActivePatternSlot}

@@ -35,6 +35,16 @@ function formatSavedSelectionLabel(shape: SelectionShape, box: SelectionBox): st
   return `${shape} ${dx}×${dy}×${dz}`;
 }
 
+// Trims to 2 decimals (enough for the gizmo's finest quarter-voxel snap) and drops trailing zeros
+// — an integer coordinate reads as "4", not "4.00".
+function formatNum(n: number): string {
+  return Number(n.toFixed(2)).toString();
+}
+
+// Editable fields of the position/size widget — min* is the box's min corner (position), size* is
+// its extent along that axis (max* is derived: min* + size*, so editing size never moves the box).
+export type SelectionField = "minX" | "minY" | "minZ" | "sizeX" | "sizeY" | "sizeZ";
+
 const SIDEBAR_WIDTH_STORAGE_KEY = "voxelEditorSidebarWidth";
 const SIDEBAR_MIN_WIDTH = 220;
 const SIDEBAR_MAX_WIDTH = 640;
@@ -61,6 +71,8 @@ export function VoxelEditorSidebar({
   selectionSnap,
   onSelectSnap,
   hasSelection,
+  selection,
+  onSelectionFieldChange,
   resizeStep,
   onSelectResizeStep,
   onExpandSelection,
@@ -111,6 +123,8 @@ export function VoxelEditorSidebar({
   selectionSnap: SelectionSnap;
   onSelectSnap: (snap: SelectionSnap) => void;
   hasSelection: boolean;
+  selection: SelectionBox | null;
+  onSelectionFieldChange: (field: SelectionField, value: number) => void;
   resizeStep: number;
   onSelectResizeStep: (step: number) => void;
   onExpandSelection: () => void;
@@ -289,6 +303,49 @@ export function VoxelEditorSidebar({
           >
             +
           </button>
+        </div>
+      )}
+      {mode === "select" && selection && (
+        <div className="relative top-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 mt-1">
+          <div className="flex items-center gap-1 pointer-events-auto">
+            <span className="text-[9px] text-[#8A99AF] w-8">Pos</span>
+            {(["minX", "minY", "minZ"] as const).map((field) => (
+              <input
+                key={field}
+                type="number"
+                step={0.25}
+                value={formatNum(selection[field])}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  if (Number.isFinite(v)) onSelectionFieldChange(field, v);
+                }}
+                className="w-12 rounded bg-black/50 border border-[#2E3A4E] px-1 py-0.5 text-[9px] text-white font-mono outline-none focus:border-[#3C50E0]"
+              />
+            ))}
+          </div>
+          <div className="flex items-center gap-1 pointer-events-auto">
+            <span className="text-[9px] text-[#8A99AF] w-8">Size</span>
+            {(
+              [
+                ["sizeX", selection.maxX - selection.minX],
+                ["sizeY", selection.maxY - selection.minY],
+                ["sizeZ", selection.maxZ - selection.minZ],
+              ] as const
+            ).map(([field, size]) => (
+              <input
+                key={field}
+                type="number"
+                step={0.25}
+                min={0.25}
+                value={formatNum(size)}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  if (Number.isFinite(v)) onSelectionFieldChange(field, v);
+                }}
+                className="w-12 rounded bg-black/50 border border-[#2E3A4E] px-1 py-0.5 text-[9px] text-white font-mono outline-none focus:border-[#3C50E0]"
+              />
+            ))}
+          </div>
         </div>
       )}
       {mode === "select" && (
