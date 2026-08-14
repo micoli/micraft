@@ -2,6 +2,7 @@ package org.micoli.micraft.game.npc
 
 import org.micoli.micraft.game.npc.animal.AnimalYamlEntry
 import org.micoli.micraft.game.npc.pack.PackConfig
+import org.micoli.micraft.game.world.block.DropEntry
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 
@@ -32,6 +33,7 @@ data class NpcDefinition(
     val packConfig: PackConfig? = null,
     val hibernation: HibernationConfig? = null,
     val shopItems: List<ShopItemEntry> = emptyList(),
+    val loot: List<DropEntry> = emptyList(),
 ) {
     fun computeMaxHp(level: Int): Int =
         (hp + (level - minLevel).coerceAtLeast(0) * hp / 10).coerceAtLeast(1)

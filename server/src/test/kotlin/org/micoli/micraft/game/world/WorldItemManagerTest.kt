@@ -10,6 +10,7 @@ import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.drop.DropConfig
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
+import org.micoli.micraft.game.world.block.DropEntry
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testSession
@@ -79,6 +80,37 @@ class WorldItemManagerTest {
         val wim = WorldItemManager(emptyDropConfig(), { broadcasts.add(it) })
         wim.despawnItem("nonexistent-id")
         assertTrue(broadcasts.isEmpty())
+    }
+
+    @Test
+    fun spawnNpcLoot_emptyTable_noBroadcast() = runBlocking {
+        val broadcasts = mutableListOf<ServerMessage>()
+        val wim = WorldItemManager(emptyDropConfig(), { broadcasts.add(it) })
+        val spawned = wim.spawnNpcLoot(Vec3(1f, 2f, 3f), emptyList())
+        assertTrue(spawned.isEmpty())
+        assertTrue(broadcasts.isEmpty())
+    }
+
+    @Test
+    fun spawnNpcLoot_guaranteedDrop_spawnsAtNpcPosition() = runBlocking {
+        val broadcasts = mutableListOf<ServerMessage>()
+        val wim = WorldItemManager(emptyDropConfig(), { broadcasts.add(it) })
+        val loot = listOf(DropEntry(ItemType("FLINT"), dropRate = 100, minCount = 2, maxCount = 2))
+        val spawned = wim.spawnNpcLoot(Vec3(1f, 2f, 3f), loot)
+        assertEquals(1, spawned.size)
+        assertEquals(ItemType("FLINT"), spawned[0].type)
+        assertEquals(2, spawned[0].count)
+        assertEquals(Vec3(1f, 2f, 3f), spawned[0].pos)
+        assertTrue(wim.hasItem(spawned[0].id))
+        assertTrue(broadcasts.any { it is ServerMessage.ItemsSpawned })
+    }
+
+    @Test
+    fun spawnNpcLoot_zeroPercentDrop_noneSpawned() = runBlocking {
+        val wim = WorldItemManager(emptyDropConfig(), {})
+        val loot = listOf(DropEntry(ItemType("FLINT"), dropRate = 0))
+        val spawned = wim.spawnNpcLoot(Vec3(0f, 0f, 0f), loot)
+        assertTrue(spawned.isEmpty())
     }
 
     @Test

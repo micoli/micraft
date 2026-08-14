@@ -189,17 +189,20 @@ class GameLoopModule {
         sessionRegistry: SessionRegistry,
         experienceProcessor: ExperienceProcessor,
         questManager: QuestManager,
+        worldItemManager: WorldItemManager,
     ): NpcSubsystemHooks =
         NpcSubsystemHooks(
             broadcast = sessionRegistry::broadcast,
             broadcastWorldUpdate = sessionRegistry::broadcast,
             getSessions = sessionRegistry::all,
-            // XP and quest credit only for a death someone actually caused: an animal that a player
-            // wounded and then outlived must not pay out when it dies of old age or starvation.
+            // XP, quest credit and loot only for a death someone actually caused: an animal that a
+            // player wounded and then outlived must not pay out when it dies of old age or
+            // starvation.
             onNpcKilled = { npc, cause, _ ->
                 if (cause == NpcDeathCause.KILLED) {
                     experienceProcessor.onNpcKilled(npc)
                     questManager.onNpcKilled(npc)
+                    worldItemManager.spawnNpcLoot(npc.state.pos, npc.definition.loot)
                 }
             },
             broadcastCombatLog = { msg ->

@@ -40,13 +40,8 @@ class DropConfig(private val blockRegistryLoader: BlockRegistryLoader) {
             if (colorIndex > 0 && BlockRegistry.get(blockType).plainColorable)
                 PlainColorRegistry.byIndex(colorIndex)?.name?.uppercase()
             else null
-        return entries.mapNotNull { entry ->
-            if (Random.nextInt(100) < entry.dropRate) {
-                val count =
-                    if (entry.minCount == entry.maxCount) entry.minCount
-                    else entry.minCount + Random.nextInt(entry.maxCount - entry.minCount + 1)
-                colorVariant(entry.item, colorSuffix) to count
-            } else null
+        return rollDropEntries(entries).map { (item, count) ->
+            colorVariant(item, colorSuffix) to count
         }
     }
 
@@ -56,3 +51,14 @@ class DropConfig(private val blockRegistryLoader: BlockRegistryLoader) {
         return if (ItemRegistry.keys().contains(variant)) variant else item
     }
 }
+
+/** Percentage-chance roll shared by block drops and NPC loot tables. */
+fun rollDropEntries(entries: List<DropEntry>): List<Pair<ItemType, Int>> =
+    entries.mapNotNull { entry ->
+        if (Random.nextInt(100) < entry.dropRate) {
+            val count =
+                if (entry.minCount == entry.maxCount) entry.minCount
+                else entry.minCount + Random.nextInt(entry.maxCount - entry.minCount + 1)
+            entry.item to count
+        } else null
+    }

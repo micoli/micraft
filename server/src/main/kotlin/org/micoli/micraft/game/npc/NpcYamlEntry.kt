@@ -3,6 +3,7 @@ package org.micoli.micraft.game.npc
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.game.npc.animal.AnimalYamlEntry
 import org.micoli.micraft.game.npc.pack.PackConfig
+import org.micoli.micraft.game.world.block.DropEntry
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 
@@ -31,4 +32,5 @@ data class NpcYamlEntry(
     val pack: PackConfig? = null,
     val hibernation: HibernationConfig? = null,
     val shopItems: List<ShopItemEntry> = emptyList(),
+    val loot: List<DropEntry> = emptyList(),
 )

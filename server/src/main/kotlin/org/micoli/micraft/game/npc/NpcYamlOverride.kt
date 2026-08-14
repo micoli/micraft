@@ -3,6 +3,7 @@ package org.micoli.micraft.game.npc
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.game.npc.animal.AnimalYamlOverride
 import org.micoli.micraft.game.npc.pack.PackConfigOverride
+import org.micoli.micraft.game.world.block.DropEntry
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 
@@ -35,4 +36,5 @@ data class NpcYamlOverride(
     val pack: PackConfigOverride? = null,
     val hibernation: HibernationConfig? = null,
     val shopItems: List<ShopItemEntry>? = null,
+    val loot: List<DropEntry>? = null,
 )

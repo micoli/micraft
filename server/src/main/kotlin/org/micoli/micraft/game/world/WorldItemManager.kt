@@ -4,7 +4,9 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.game.drop.DropConfig
+import org.micoli.micraft.game.drop.rollDropEntries
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.world.block.DropEntry
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
@@ -40,6 +42,29 @@ class WorldItemManager(
                         blockPos.x,
                         blockPos.y,
                         blockPos.z)
+                }
+            }
+        broadcast(ServerMessage.ItemsSpawned(spawned))
+        return spawned
+    }
+
+    /**
+     * Rolls a per-NPC loot table (see [DropEntry]) and spawns items at the NPC's death position.
+     */
+    suspend fun spawnNpcLoot(pos: Vec3, loot: List<DropEntry>): List<WorldItem> {
+        val drops = rollDropEntries(loot)
+        if (drops.isEmpty()) return emptyList()
+        val spawned =
+            drops.map { (itemType, count) ->
+                WorldItem(UUID.randomUUID().toString(), pos, itemType, count).also {
+                    items[it.id] = it
+                    worldItemManagerLog.info(
+                        "NPC loot spawned: {}x {} at ({},{},{})",
+                        count,
+                        itemType,
+                        pos.x,
+                        pos.y,
+                        pos.z)
                 }
             }
         broadcast(ServerMessage.ItemsSpawned(spawned))
