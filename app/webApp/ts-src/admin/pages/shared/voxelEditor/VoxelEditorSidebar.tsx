@@ -8,6 +8,14 @@ import { type useAdminShortcutBar } from "./useAdminShortcutBar";
 import { CLIP_AXES, ClipAxis, ClipPlaneState } from "./clipAxis";
 import { ClipAxesInput } from "../../../../primitives/clipAxesInput";
 import { dragMode, DragMode } from "../../../../primitives/DragMode";
+import { type SelectionShape } from "./selectionGizmo";
+
+const SELECTION_SHAPES: { key: SelectionShape; label: string }[] = [
+  { key: "box", label: "Box" },
+  { key: "sphere", label: "Sphere" },
+  { key: "spheroid", label: "Spheroid" },
+  { key: "cylinder", label: "Cylinder" },
+];
 
 const SIDEBAR_WIDTH_STORAGE_KEY = "voxelEditorSidebarWidth";
 const SIDEBAR_MIN_WIDTH = 220;
@@ -30,6 +38,8 @@ export function VoxelEditorSidebar({
   modKeys,
   mode,
   onToggleSelect,
+  selectionShape,
+  onSelectShape,
   activeDragMode,
   selectedType,
   blockDefsReady,
@@ -59,6 +69,8 @@ export function VoxelEditorSidebar({
   modKeys: { shift: boolean; meta: boolean; alt: boolean; ctrl: boolean };
   mode: "place" | "break" | "select";
   onToggleSelect: () => void;
+  selectionShape: SelectionShape;
+  onSelectShape: (shape: SelectionShape) => void;
   activeDragMode: dragMode;
   selectedType: string | null;
   blockDefsReady: boolean;
@@ -162,6 +174,21 @@ export function VoxelEditorSidebar({
           Select
         </button>
       </div>
+      {mode === "select" && (
+        <div className="relative top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none items-center justify-center mt-1">
+          {SELECTION_SHAPES.map((s) => (
+            <button
+              key={s.key}
+              onClick={() => onSelectShape(s.key)}
+              className={`px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto ${
+                selectionShape === s.key ? "bg-[#3C50E0] text-white" : "bg-black/50 text-[#8A99AF]"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="shrink-0 border-b border-[#2E3A4E] flex flex-row items-center gap-3 py-3 px-2">
         <div className="flex flex-col gap-1 w-2/3 items-center justify-center">
           {selectedType && blockDefsReady && previewsReady && getOrdinal(selectedType) !== null ? (

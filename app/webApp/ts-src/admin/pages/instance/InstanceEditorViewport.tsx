@@ -16,7 +16,7 @@ import { createOrbitCamera, setupBasicLighting } from "../shared/voxelEditor/orb
 import { createAxesGizmo } from "../shared/voxelEditor/axesGizmo";
 import { setupOrbitPointerController } from "../shared/voxelEditor/orbitPointerController";
 import { createOverlayController } from "../shared/voxelEditor/overlayController";
-import { createSelectionGizmo, type SelectionBox } from "../shared/voxelEditor/selectionGizmo";
+import { createSelectionGizmo, type SelectionBox, type SelectionShape } from "../shared/voxelEditor/selectionGizmo";
 import { useBlockRegistry } from "../shared/voxelEditor/useBlockRegistry";
 import { useModifierDragMode } from "../shared/voxelEditor/useModifierDragMode";
 import { useActionError } from "../shared/voxelEditor/useActionError";
@@ -84,6 +84,8 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const [mode, setMode] = useState<"place" | "break" | "select">("place");
   const [selection, setSelection] = useState<SelectionBox | null>(null);
   const selectionRef = useRef<SelectionBox | null>(selection);
+  const [selectionShape, setSelectionShape] = useState<SelectionShape>("box");
+  const selectionShapeRef = useRef(selectionShape);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { actionError, flashActionError } = useActionError();
   const [search, setSearch] = useState("");
@@ -134,8 +136,16 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
 
   useEffect(() => {
     modeRef.current = mode;
-    if (mode !== "select") setSelection(null);
+    if (mode !== "select") {
+      setSelection(null);
+      setSelectionShape("box");
+    }
   }, [mode]);
+
+  useEffect(() => {
+    selectionShapeRef.current = selectionShape;
+    selectionGizmoRef.current?.setShape(selectionShape);
+  }, [selectionShape]);
 
   function toggleSelectMode() {
     setMode((m) => (m === "select" ? "place" : "select"));
@@ -280,6 +290,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     overlayMeshesRef.current = overlayMeshes;
     const overlay = createOverlayController(B, scene, overlayMeshes);
     const selectionGizmo = createSelectionGizmo(B, scene, clipBounds, (box) => setSelection(box));
+    selectionGizmo.setShape(selectionShapeRef.current);
     selectionGizmoRef.current = selectionGizmo;
     let disposed = false;
 
@@ -745,6 +756,8 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         modKeys={modKeys}
         mode={mode}
         onToggleSelect={toggleSelectMode}
+        selectionShape={selectionShape}
+        onSelectShape={setSelectionShape}
         activeDragMode={activeDragMode}
         selectedType={selectedType}
         blockDefsReady={blockDefsReady}

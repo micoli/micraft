@@ -16,7 +16,7 @@ import { saveCameraState } from "../shared/voxelEditor/cameraStorage";
 import { createOrbitCamera, setupBasicLighting } from "../shared/voxelEditor/orbitCamera";
 import { setupOrbitPointerController } from "../shared/voxelEditor/orbitPointerController";
 import { createOverlayController } from "../shared/voxelEditor/overlayController";
-import { createSelectionGizmo, type SelectionBox } from "../shared/voxelEditor/selectionGizmo";
+import { createSelectionGizmo, type SelectionBox, type SelectionShape } from "../shared/voxelEditor/selectionGizmo";
 import { useBlockRegistry } from "../shared/voxelEditor/useBlockRegistry";
 import { useModifierDragMode } from "../shared/voxelEditor/useModifierDragMode";
 import { useActionError } from "../shared/voxelEditor/useActionError";
@@ -71,6 +71,8 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
   const [mode, setMode] = useState<"place" | "break" | "select">("place");
   const [selection, setSelection] = useState<SelectionBox | null>(null);
   const selectionRef = useRef<SelectionBox | null>(selection);
+  const [selectionShape, setSelectionShape] = useState<SelectionShape>("box");
+  const selectionShapeRef = useRef(selectionShape);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { actionError, flashActionError } = useActionError();
   const [search, setSearch] = useState("");
@@ -111,8 +113,16 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
 
   useEffect(() => {
     modeRef.current = mode;
-    if (mode !== "select") setSelection(null);
+    if (mode !== "select") {
+      setSelection(null);
+      setSelectionShape("box");
+    }
   }, [mode]);
+
+  useEffect(() => {
+    selectionShapeRef.current = selectionShape;
+    selectionGizmoRef.current?.setShape(selectionShape);
+  }, [selectionShape]);
 
   function toggleSelectMode() {
     setMode((m) => (m === "select" ? "place" : "select"));
@@ -317,6 +327,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     overlayMeshesRef.current = overlayMeshes;
     const overlay = createOverlayController(B, babylonScene, overlayMeshes);
     const selectionGizmo = createSelectionGizmo(B, babylonScene, clipBounds, (box) => setSelection(box));
+    selectionGizmo.setShape(selectionShapeRef.current);
     selectionGizmoRef.current = selectionGizmo;
     let disposed = false;
 
@@ -649,6 +660,8 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         modKeys={modKeys}
         mode={mode}
         onToggleSelect={toggleSelectMode}
+        selectionShape={selectionShape}
+        onSelectShape={setSelectionShape}
         activeDragMode={activeDragMode}
         selectedType={selectedType}
         blockDefsReady={blockDefsReady}
