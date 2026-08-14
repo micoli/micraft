@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { type BlockInfoDto, type PlainColorDto } from "../../../apiTypes";
 import { Block3DPreview } from "../../../../game/shared/Block3DPreview";
+import { CssBlockCube } from "../../../../game/shared/BlockPreview";
 import { VoxelPaletteBlock } from "./VoxelPaletteBlock";
 import { VoxelColorPicker } from "./VoxelColorPicker";
 import { VoxelShortcutBarSlot } from "./VoxelShortcutBarSlot";
@@ -49,6 +50,15 @@ export function VoxelEditorSidebar({
   onSelectShape,
   selectionSnap,
   onSelectSnap,
+  hasSelection,
+  patternBlocks,
+  activePatternSlot,
+  onSelectPatternSlot,
+  onClearPatternSlot,
+  onFill,
+  onShell,
+  onCut,
+  clipboardCount,
   activeDragMode,
   selectedType,
   blockDefsReady,
@@ -82,6 +92,15 @@ export function VoxelEditorSidebar({
   onSelectShape: (shape: SelectionShape) => void;
   selectionSnap: SelectionSnap;
   onSelectSnap: (snap: SelectionSnap) => void;
+  hasSelection: boolean;
+  patternBlocks: [string | null, string | null];
+  activePatternSlot: 0 | 1;
+  onSelectPatternSlot: (slot: 0 | 1) => void;
+  onClearPatternSlot: (slot: 0 | 1) => void;
+  onFill: () => void;
+  onShell: () => void;
+  onCut: () => void;
+  clipboardCount: number | null;
   activeDragMode: dragMode;
   selectedType: string | null;
   blockDefsReady: boolean;
@@ -213,6 +232,84 @@ export function VoxelEditorSidebar({
               {s.label}
             </button>
           ))}
+        </div>
+      )}
+      {mode === "select" && (
+        <div className="relative top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none items-center justify-center mt-1">
+          {([0, 1] as const).map((slot) => {
+            const name = patternBlocks[slot];
+            const ordinal = name ? getOrdinal(name) : null;
+            return (
+              <div
+                key={slot}
+                onClick={() => onSelectPatternSlot(slot)}
+                title={name ?? (slot === 0 ? "Pattern block A" : "Pattern block B (optional)")}
+                className={`pointer-events-auto flex items-center gap-1 rounded px-1.5 py-1 cursor-pointer border-2 ${
+                  activePatternSlot === slot ? "border-[#3C50E0]" : "border-transparent"
+                } bg-black/50`}
+              >
+                <span className="text-[9px] font-medium text-[#8A99AF]">{slot === 0 ? "A" : "B"}</span>
+                <div className="h-4 w-4 flex items-center justify-center shrink-0">
+                  {name && ordinal !== null && previewsReady ? (
+                    getPreview(ordinal) ? (
+                      <img
+                        alt=""
+                        src={getPreview(ordinal)!}
+                        width={16}
+                        height={16}
+                        style={{ imageRendering: "pixelated", display: "block" }}
+                      />
+                    ) : blockDefsReady ? (
+                      <CssBlockCube ordinal={ordinal} size={16} />
+                    ) : null
+                  ) : (
+                    <div className="h-3 w-3 rounded-sm border border-dashed border-[#8A99AF]" />
+                  )}
+                </div>
+                {name && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClearPatternSlot(slot);
+                    }}
+                    className="text-[#8A99AF] hover:text-white text-[10px] leading-none"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {mode === "select" && (
+        <div className="relative top-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none mt-1">
+          <div className="flex gap-1.5 items-center justify-center">
+            <button
+              onClick={onFill}
+              disabled={!hasSelection || !patternBlocks[0]}
+              className="px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
+            >
+              Fill
+            </button>
+            <button
+              onClick={onShell}
+              disabled={!hasSelection || !patternBlocks[0]}
+              className="px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
+            >
+              Shell
+            </button>
+            <button
+              onClick={onCut}
+              disabled={!hasSelection}
+              className="px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
+            >
+              Cut
+            </button>
+          </div>
+          {clipboardCount !== null && (
+            <span className="text-[9px] text-[#8A99AF] pointer-events-none">Clipboard: {clipboardCount} blocks</span>
+          )}
         </div>
       )}
       <div className="shrink-0 border-b border-[#2E3A4E] flex flex-row items-center gap-3 py-3 px-2">

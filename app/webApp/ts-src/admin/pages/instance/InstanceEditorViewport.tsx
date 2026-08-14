@@ -25,9 +25,15 @@ import {
 import { useBlockRegistry } from "../shared/voxelEditor/useBlockRegistry";
 import { useModifierDragMode } from "../shared/voxelEditor/useModifierDragMode";
 import { useActionError } from "../shared/voxelEditor/useActionError";
-import { makeUndoRedoController, type UndoEntryBase } from "../shared/voxelEditor/undoRedoStack";
+import { makeUndoRedoController, type UndoEntryBase, type UndoGroup } from "../shared/voxelEditor/undoRedoStack";
 import { VoxelEditorSidebar } from "../shared/voxelEditor/VoxelEditorSidebar";
 import { connectEditSocket } from "../shared/voxelEditor/editSocket";
+import {
+  computeSelectionVoxels,
+  resolvePatternBlock,
+  MAX_SELECTION_OP_VOXELS,
+  type Pattern,
+} from "../shared/voxelEditor/selectionVoxels";
 import type { InstanceBlockDto } from "../../apiTypes";
 
 const CHUNK_SIZE = 16;
@@ -93,6 +99,18 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const selectionShapeRef = useRef(selectionShape);
   const [selectionSnap, setSelectionSnap] = useState<SelectionSnap>("none");
   const selectionSnapRef = useRef(selectionSnap);
+  // Fill/Shell pattern (block A, optional block B for a checkerboard alternation) and which slot a
+  // palette click assigns to while in select mode — see selectBlockType below.
+  const [patternBlocks, setPatternBlocks] = useState<[string | null, string | null]>([null, null]);
+  const patternBlocksRef = useRef(patternBlocks);
+  const [activePatternSlot, setActivePatternSlot] = useState<0 | 1>(0);
+  const activePatternSlotRef = useRef(activePatternSlot);
+  // Internal clipboard for Cut — relative to the cut selection's min corner. In-memory only, no
+  // paste yet. clipboardCount is just the sidebar's "Clipboard: N blocks" display.
+  const clipboardRef = useRef<{
+    entries: { relX: number; relY: number; relZ: number; type: string; state: number }[];
+  } | null>(null);
+  const [clipboardCount, setClipboardCount] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { actionError, flashActionError } = useActionError();
   const [search, setSearch] = useState("");
@@ -100,8 +118,11 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const selectedTypeRef = useRef(selectedType);
   const ordinalByNameRef = useRef(ordinalByName);
   // In-memory only (reset on zone remount, like the scene itself) — not persisted, unlike camera/shortcut bar.
-  const undoStackRef = useRef<UndoEntry[]>([]);
-  const redoStackRef = useRef<UndoEntry[]>([]);
+  // Each stack slot is a GROUP of entries (see undoRedoStack.ts) — a single place/break is a group
+  // of one, a Fill/Shell/Cut is a group of every voxel it touched.
+  const undoStackRef = useRef<UndoGroup<UndoEntry>[]>([]);
+  const redoStackRef = useRef<UndoGroup<UndoEntry>[]>([]);
+  const runSelectionOpRef = useRef<(kind: "fill" | "shell" | "cut") => void>(() => {});
 
   // Clip-plane bounds derived purely from zone data (no scene dependency) — one range per axis
   // the position slider can move within.
@@ -159,6 +180,12 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     selectionSnapRef.current = selectionSnap;
     selectionGizmoRef.current?.setSnap(selectionSnap);
   }, [selectionSnap]);
+  useEffect(() => {
+    patternBlocksRef.current = patternBlocks;
+  }, [patternBlocks]);
+  useEffect(() => {
+    activePatternSlotRef.current = activePatternSlot;
+  }, [activePatternSlot]);
 
   function toggleSelectMode() {
     setMode((m) => (m === "select" ? "place" : "select"));
@@ -174,11 +201,32 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   }, [selectedColorIndex]);
 
   // Resets any color pick made for a previous block — a color index only makes sense paired with
-  // the plainColorable block it was chosen for.
+  // the plainColorable block it was chosen for. In select mode, a palette click assigns the
+  // Fill/Shell pattern slot instead of switching to place mode.
   function selectBlockType(name: string) {
+    if (modeRef.current === "select") {
+      setPatternBlocks((prev) => {
+        const next: [string | null, string | null] = [...prev];
+        next[activePatternSlotRef.current] = name;
+        return next;
+      });
+      return;
+    }
     setMode("place");
     setSelectedType(name);
     setSelectedColorIndex(0);
+  }
+
+  function clearPatternSlot(slot: 0 | 1) {
+    setPatternBlocks((prev) => {
+      const next: [string | null, string | null] = [...prev];
+      next[slot] = null;
+      return next;
+    });
+  }
+
+  function runSelectionOp(kind: "fill" | "shell" | "cut") {
+    runSelectionOpRef.current(kind);
   }
 
   const blockDefsReady = useBlockDefsReady();
@@ -377,6 +425,20 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         if (visibleChunks.has(chunkKeyOf(cx, cz))) reloadChunk(cx, cz);
       },
       (message) => flashActionError(message),
+      // A batch broadcast from another admin tab (e.g. its own Fill/Shell/Cut) — dedupe touched
+      // chunks so each one only remeshes once, instead of replaying the single-edit handler above
+      // per voxel.
+      (edits) => {
+        const chunks = new Set<string>();
+        for (const edit of edits) {
+          const key = chunkKeyOf(Math.floor(edit.x / CHUNK_SIZE), Math.floor(edit.z / CHUNK_SIZE));
+          if (visibleChunks.has(key)) chunks.add(key);
+        }
+        for (const key of chunks) {
+          const [cx, cz] = key.split(",").map(Number);
+          reloadChunk(cx, cz);
+        }
+      },
     );
 
     function captureBlock(at: UndoEntry): UndoEntry {
@@ -408,6 +470,62 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       captureBlock,
       applyEntry,
     );
+
+    // Fill/Shell/Cut on the current selection — one WS batch frame (editSocket.sendBatch) instead
+    // of N individual sends, one undo-stack group instead of N slots, one reloadChunk per touched
+    // chunk instead of per voxel. See selectionVoxels.ts for the voxel enumeration/cap.
+    runSelectionOpRef.current = (kind: "fill" | "shell" | "cut") => {
+      const box = selectionRef.current;
+      if (!box) return;
+      if (kind !== "cut" && !patternBlocksRef.current[0]) return;
+      const voxels = computeSelectionVoxels(box, selectionShapeRef.current, kind === "cut" ? "fill" : kind);
+      if (!voxels) {
+        flashActionError(`Selection too large (max ${MAX_SELECTION_OP_VOXELS} voxels)`);
+        return;
+      }
+      const valid = voxels.filter((v) => v.y >= zone.yMin && v.y <= zone.yMax && inZone(v.x, v.z));
+      if (valid.length === 0) return;
+
+      const pattern: Pattern = { a: patternBlocksRef.current[0] ?? "AIR", b: patternBlocksRef.current[1] ?? undefined };
+      const originX = Math.floor(box.minX);
+      const originY = Math.floor(box.minY);
+      const originZ = Math.floor(box.minZ);
+      const edits: InstanceBlockDto[] = [];
+      const undoGroup: UndoEntry[] = [];
+      const clipEntries: { relX: number; relY: number; relZ: number; type: string; state: number }[] = [];
+      const touchedChunks = new Set<string>();
+
+      for (const v of valid) {
+        const prevOrdinal = wasmExports ? wasmExports.mcAdminGetBlockOrdinalAt(scene, v.x, v.y, v.z) : 0;
+        const prevState = wasmExports ? wasmExports.mcAdminGetBlockStateAt(scene, v.x, v.y, v.z) : 0;
+        const prevType = wasmExports ? (window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR") : "AIR";
+        undoGroup.push({ x: v.x, y: v.y, z: v.z, type: prevType, state: prevState, xOffset: 0, zOffset: 0 });
+
+        const type = kind === "cut" ? "AIR" : resolvePatternBlock(pattern, v.x, v.y, v.z);
+        if (kind === "cut") {
+          clipEntries.push({
+            relX: v.x - originX,
+            relY: v.y - originY,
+            relZ: v.z - originZ,
+            type: prevType,
+            state: prevState,
+          });
+        }
+        edits.push({ x: v.x, y: v.y, z: v.z, type, state: 0, xOffset: 0, zOffset: 0 });
+        touchedChunks.add(chunkKeyOf(Math.floor(v.x / CHUNK_SIZE), Math.floor(v.z / CHUNK_SIZE)));
+      }
+
+      editSocket.sendBatch(edits);
+      pushUndo(undoGroup);
+      for (const key of touchedChunks) {
+        const [cx, cz] = key.split(",").map(Number);
+        reloadChunk(cx, cz);
+      }
+      if (kind === "cut") {
+        clipboardRef.current = { entries: clipEntries };
+        setClipboardCount(clipEntries.length);
+      }
+    };
 
     function viewRadiusChunks(): number {
       return Math.min(MAX_VIEW_RADIUS_CHUNKS, Math.max(1, Math.ceil(camera.radius / CHUNK_SIZE) + 1));
@@ -774,6 +892,15 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         onSelectShape={setSelectionShape}
         selectionSnap={selectionSnap}
         onSelectSnap={setSelectionSnap}
+        hasSelection={selection !== null}
+        patternBlocks={patternBlocks}
+        activePatternSlot={activePatternSlot}
+        onSelectPatternSlot={setActivePatternSlot}
+        onClearPatternSlot={clearPatternSlot}
+        onFill={() => runSelectionOp("fill")}
+        onShell={() => runSelectionOp("shell")}
+        onCut={() => runSelectionOp("cut")}
+        clipboardCount={clipboardCount}
         activeDragMode={activeDragMode}
         selectedType={selectedType}
         blockDefsReady={blockDefsReady}

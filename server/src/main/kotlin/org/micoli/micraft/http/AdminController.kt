@@ -56,7 +56,10 @@ import org.micoli.micraft.game.world.instance.InstanceZone
 import org.micoli.micraft.game.world.scene.Scene
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
+import org.micoli.micraft.protocol.BlockChange
+import org.micoli.micraft.protocol.BlockEntityProto
 import org.micoli.micraft.protocol.BlockInfo
+import org.micoli.micraft.protocol.EntityRemoveAt
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.PlainColorInfo
@@ -125,6 +128,13 @@ data class InstanceBlockDto(
     val zOffset: Byte = 0
 )
 
+// Batch envelope for the collaborative edit WS — lets a bulk selection edit (fill/shell/cut in the
+// admin voxel editor) apply as one frame with one broadcast, instead of one WS round-trip and one
+// broadcast per voxel. Distinguished from a bare InstanceBlockDto/SceneBlockDto frame purely by the
+// required "edits" field (decoding a bare single-edit frame as the batch DTO fails since it has no
+// "edits" key — see registerEditWs).
+@Serializable data class InstanceBlockBatchDto(val edits: List<InstanceBlockDto>)
+
 @Serializable
 data class SceneDto(
     val id: String,
@@ -148,6 +158,9 @@ data class SceneCreateRequest(val name: String, val width: Int, val height: Int,
 
 @Serializable
 data class SceneBlockDto(val x: Int, val y: Int, val z: Int, val type: String, val state: Byte = 0)
+
+// See InstanceBlockBatchDto for the rationale — same envelope shape, scene variant.
+@Serializable data class SceneBlockBatchDto(val edits: List<SceneBlockDto>)
 
 private fun Scene.toDto() =
     SceneDto(
@@ -313,6 +326,18 @@ class AdminController(
         data class Failed(val message: String) : EditResult<Nothing>()
     }
 
+    // What a single instance edit changed, still unbroadcast — split out from
+    // applyInstanceBlockEdit so a batch of edits (see InstanceBlockBatchDto) can accumulate every
+    // DTO's changes/entityAdds/entityRemoves and fire ONE GameLoop.broadcastWorldUpdate for the
+    // whole batch instead of one per voxel.
+    private data class InstanceEditOutcome(
+        val dto: InstanceBlockDto,
+        val changes: List<BlockChange>,
+        val entityAdds: List<BlockEntityProto> = emptyList(),
+        val entityRemoves: List<BlockPos> = emptyList(),
+        val entityRemovesAt: List<EntityRemoveAt> = emptyList(),
+    )
+
     /**
      * Shared by the WS scene-edit handler (only writer for scene blocks). Mirrors the previous `PUT
      * /api/admin/scenes/{id}/blocks` handler body.
@@ -332,13 +357,15 @@ class AdminController(
 
     /**
      * Shared by the WS instance-edit handler (only writer for instance blocks). Mirrors the
-     * previous `PUT /api/admin/instances/{id}/blocks` handler body, including the in-game broadcast
-     * to connected players via [GameLoop.broadcastWorldUpdate].
+     * previous `PUT /api/admin/instances/{id}/blocks` handler body — mutates [WorldState] and
+     * returns what changed, but does NOT broadcast: the caller (single-edit or batch path in
+     * registerEditWs) decides how many outcomes to fold into one [GameLoop.broadcastWorldUpdate]
+     * call.
      */
-    private suspend fun applyInstanceBlockEdit(
+    private fun applyInstanceBlockEdit(
         id: String,
         dto: InstanceBlockDto
-    ): EditResult<InstanceBlockDto> {
+    ): EditResult<InstanceEditOutcome> {
         val zone = gameLoop.instances().get(id) ?: return EditResult.Failed("Instance not found")
         if (!zone.contains(dto.x, dto.y, dto.z)) {
             return EditResult.Failed("Coordinate outside zone bounds")
@@ -352,26 +379,27 @@ class AdminController(
             val result =
                 BlockBreaker.breakAt(
                     pos, dto.xOffset.toInt() and 0xFF, dto.zOffset.toInt() and 0xFF, world)
-            gameLoop.broadcastWorldUpdate(
-                result.changes,
-                entityRemoves = result.entityRemoves,
-                entityRemovesAt = result.entityRemovesAt)
-        } else {
-            val rotation = BlockState.rotation(dto.state)
-            val colorIndex = BlockState.colorIndex(dto.state)
-            val result =
-                BlockPlacer.placeAt(
-                    pos,
-                    type,
-                    rotation,
-                    colorIndex,
-                    dto.xOffset.toInt() and 0xFF,
-                    dto.zOffset.toInt() and 0xFF,
-                    world)
-            if (result.rejectedReason != null) return EditResult.Failed(result.rejectedReason)
-            gameLoop.broadcastWorldUpdate(result.changes, entityAdds = result.entityAdds)
+            return EditResult.Applied(
+                InstanceEditOutcome(
+                    dto,
+                    changes = result.changes,
+                    entityRemoves = result.entityRemoves,
+                    entityRemovesAt = result.entityRemovesAt))
         }
-        return EditResult.Applied(dto)
+        val rotation = BlockState.rotation(dto.state)
+        val colorIndex = BlockState.colorIndex(dto.state)
+        val result =
+            BlockPlacer.placeAt(
+                pos,
+                type,
+                rotation,
+                colorIndex,
+                dto.xOffset.toInt() and 0xFF,
+                dto.zOffset.toInt() and 0xFF,
+                world)
+        if (result.rejectedReason != null) return EditResult.Failed(result.rejectedReason)
+        return EditResult.Applied(
+            InstanceEditOutcome(dto, changes = result.changes, entityAdds = result.entityAdds))
     }
 
     private suspend fun DefaultWebSocketServerSession.authorizeAdminWs(): Boolean {
@@ -407,9 +435,35 @@ class AdminController(
                 try {
                     for (frame in incoming) {
                         if (frame !is Frame.Text) continue
+                        val text = frame.readText()
+                        // Batch envelope (fill/shell/cut selection edits) is tried first — it
+                        // reliably fails to decode a bare single-edit frame, since "edits" has no
+                        // default and is absent there. See SceneBlockBatchDto.
+                        val batch =
+                            runCatching { Json.decodeFromString<SceneBlockBatchDto>(text) }
+                                .getOrNull()
+                        if (batch != null) {
+                            val applied = mutableListOf<SceneBlockDto>()
+                            for (dto in batch.edits) {
+                                if (applySceneBlockEdit(id, dto) is EditResult.Applied)
+                                    applied += dto
+                            }
+                            if (applied.isNotEmpty()) {
+                                broadcastEdit(
+                                    key,
+                                    adminJson.encodeToString(
+                                        SceneBlockBatchDto.serializer(),
+                                        SceneBlockBatchDto(applied)),
+                                    listener)
+                            } else {
+                                send(
+                                    """{"type":"error","message":"Batch rejected: no valid edits"}""")
+                            }
+                            continue
+                        }
                         val dto =
                             try {
-                                Json.decodeFromString<SceneBlockDto>(frame.readText())
+                                Json.decodeFromString<SceneBlockDto>(text)
                             } catch (e: Exception) {
                                 send("""{"type":"error","message":"Invalid block edit"}""")
                                 continue
@@ -449,19 +503,65 @@ class AdminController(
                 try {
                     for (frame in incoming) {
                         if (frame !is Frame.Text) continue
+                        val text = frame.readText()
+                        // Batch envelope — see the scene route above for the decode-fallback
+                        // rationale.
+                        val batch =
+                            runCatching { Json.decodeFromString<InstanceBlockBatchDto>(text) }
+                                .getOrNull()
+                        if (batch != null) {
+                            val applied = mutableListOf<InstanceBlockDto>()
+                            val changes = mutableListOf<BlockChange>()
+                            val entityAdds = mutableListOf<BlockEntityProto>()
+                            val entityRemoves = mutableListOf<BlockPos>()
+                            val entityRemovesAt = mutableListOf<EntityRemoveAt>()
+                            for (dto in batch.edits) {
+                                val result = applyInstanceBlockEdit(id, dto)
+                                if (result is EditResult.Applied) {
+                                    applied += dto
+                                    changes += result.dto.changes
+                                    entityAdds += result.dto.entityAdds
+                                    entityRemoves += result.dto.entityRemoves
+                                    entityRemovesAt += result.dto.entityRemovesAt
+                                }
+                            }
+                            if (applied.isNotEmpty()) {
+                                gameLoop.broadcastWorldUpdate(
+                                    changes,
+                                    entityAdds = entityAdds,
+                                    entityRemoves = entityRemoves,
+                                    entityRemovesAt = entityRemovesAt)
+                                broadcastEdit(
+                                    key,
+                                    adminJson.encodeToString(
+                                        InstanceBlockBatchDto.serializer(),
+                                        InstanceBlockBatchDto(applied)),
+                                    listener)
+                            } else {
+                                send(
+                                    """{"type":"error","message":"Batch rejected: no valid edits"}""")
+                            }
+                            continue
+                        }
                         val dto =
                             try {
-                                Json.decodeFromString<InstanceBlockDto>(frame.readText())
+                                Json.decodeFromString<InstanceBlockDto>(text)
                             } catch (e: Exception) {
                                 send("""{"type":"error","message":"Invalid block edit"}""")
                                 continue
                             }
                         when (val result = applyInstanceBlockEdit(id, dto)) {
-                            is EditResult.Applied ->
+                            is EditResult.Applied -> {
+                                gameLoop.broadcastWorldUpdate(
+                                    result.dto.changes,
+                                    entityAdds = result.dto.entityAdds,
+                                    entityRemoves = result.dto.entityRemoves,
+                                    entityRemovesAt = result.dto.entityRemovesAt)
                                 broadcastEdit(
                                     key,
                                     adminJson.encodeToString(InstanceBlockDto.serializer(), dto),
                                     listener)
+                            }
                             is EditResult.Failed ->
                                 send("""{"type":"error","message":${"\"${result.message}\""}}""")
                         }
