@@ -22,6 +22,13 @@ import {
   type SelectionShape,
   type SelectionSnap,
 } from "../shared/voxelEditor/selectionGizmo";
+import { createPasteGizmo, type PasteOrigin } from "../shared/voxelEditor/pasteGizmo";
+import {
+  applyPasteTransform,
+  IDENTITY_PASTE_TRANSFORM,
+  type PasteTransform,
+} from "../shared/voxelEditor/pasteTransform";
+import { buildBlockPreviewMeshes } from "../../../game/lib/chunkBuilder";
 import { useBlockRegistry } from "../shared/voxelEditor/useBlockRegistry";
 import { useModifierDragMode } from "../shared/voxelEditor/useModifierDragMode";
 import { useActionError } from "../shared/voxelEditor/useActionError";
@@ -103,6 +110,31 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     entries: { relX: number; relY: number; relZ: number; type: string; state: number }[];
   } | null>(null);
   const [clipboardCount, setClipboardCount] = useState<number | null>(null);
+  // Paste-in-progress state — see InstanceEditorViewport.tsx's identical block for the rationale
+  // (pasteOriginRef/isPastingRef are refs so the drag callback and onKeyDown closures always read
+  // the live value; isPasting stays as React state only for the sidebar's button styling).
+  const pasteOriginRef = useRef<PasteOrigin | null>(null);
+  const [isPasting, setIsPasting] = useState(false);
+  const isPastingRef = useRef(false);
+  const pasteGizmoRef = useRef<ReturnType<typeof createPasteGizmo> | null>(null);
+  const pastePreviewMeshesRef = useRef<ReturnType<typeof buildBlockPreviewMeshes>>([]);
+  // Rotate/flip applied to the clipboard before Confirm — reactive (not just a ref) so the
+  // sidebar's Flip X/Y/Z buttons can show which axes are active.
+  const [pasteTransform, setPasteTransform] = useState<PasteTransform>(IDENTITY_PASTE_TRANSFORM);
+  const pasteTransformRef = useRef(pasteTransform);
+  const pasteActionsRef = useRef<{
+    start: () => void;
+    confirm: () => void;
+    cancel: () => void;
+    rotate: (dir: -1 | 1) => void;
+    flip: (axis: "x" | "y" | "z") => void;
+  }>({
+    start: () => {},
+    confirm: () => {},
+    cancel: () => {},
+    rotate: () => {},
+    flip: () => {},
+  });
   // Local (per-browser-tab, not persisted) list of remembered selections — click a row to restore
   // it as the active selection, capped at MAX_SAVED_SELECTIONS with oldest dropped once full.
   const [savedSelections, setSavedSelections] = useState<{ shape: SelectionShape; box: SelectionBox }[]>([]);
@@ -120,7 +152,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
   // of one, a Fill/Shell/Cut is a group of every voxel it touched.
   const undoStackRef = useRef<UndoGroup<UndoEntry>[]>([]);
   const redoStackRef = useRef<UndoGroup<UndoEntry>[]>([]);
-  const runSelectionOpRef = useRef<(kind: "fill" | "shell" | "cut") => void>(() => {});
+  const runSelectionOpRef = useRef<(kind: "fill" | "shell" | "cut" | "copy") => void>(() => {});
 
   const clipBounds = useMemo(
     () => ({
@@ -156,6 +188,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       setSelection(null);
       setSelectionShape("box");
       setSelectionSnap("none");
+      pasteActionsRef.current.cancel();
     } else {
       // Seeds select mode with a live starting point (a bare toggle previously left the gizmo
       // hidden until the user made a manual pick) — a single voxel centered on the scene's
@@ -220,8 +253,28 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     });
   }
 
-  function runSelectionOp(kind: "fill" | "shell" | "cut") {
+  function runSelectionOp(kind: "fill" | "shell" | "cut" | "copy") {
     runSelectionOpRef.current(kind);
+  }
+
+  function startPaste() {
+    pasteActionsRef.current.start();
+  }
+
+  function confirmPaste() {
+    pasteActionsRef.current.confirm();
+  }
+
+  function cancelPaste() {
+    pasteActionsRef.current.cancel();
+  }
+
+  function rotatePaste(dir: -1 | 1) {
+    pasteActionsRef.current.rotate(dir);
+  }
+
+  function flipPaste(axis: "x" | "y" | "z") {
+    pasteActionsRef.current.flip(axis);
   }
 
   function addSelectionToMemory() {
@@ -479,6 +532,116 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     selectionGizmo.setShape(selectionShapeRef.current);
     selectionGizmo.setSnap(selectionSnapRef.current);
     selectionGizmoRef.current = selectionGizmo;
+
+    // Paste preview — see InstanceEditorViewport.tsx's identical block for the buildBlockPreviewMeshes
+    // usage and depth-bias rationale.
+    function disposePastePreview() {
+      for (const m of pastePreviewMeshesRef.current) m.dispose();
+      pastePreviewMeshesRef.current = [];
+    }
+    function renderPastePreview(origin: PasteOrigin) {
+      disposePastePreview();
+      const entries = applyPasteTransform(clipboardRef.current?.entries ?? [], pasteTransformRef.current);
+      const meshes: ReturnType<typeof buildBlockPreviewMeshes> = [];
+      for (const entry of entries) {
+        const ordinal = ordinalByNameRef.current.get(entry.type);
+        if (ordinal == null) continue;
+        for (const mesh of buildBlockPreviewMeshes(babylonScene, ordinal, 0)) {
+          mesh.position = new B!.Vector3(origin.x + entry.relX, origin.y + entry.relY, origin.z + entry.relZ);
+          mesh.isPickable = false;
+          if (mesh.material) {
+            mesh.material.zOffset = 0;
+            mesh.material.zOffsetUnits = 0;
+            mesh.material.disableDepthWrite = true;
+          }
+          mesh.renderingGroupId = 1;
+          meshes.push(mesh);
+        }
+      }
+      pastePreviewMeshesRef.current = meshes;
+    }
+    const pasteGizmo = createPasteGizmo(B, babylonScene, (origin) => {
+      pasteOriginRef.current = origin;
+      renderPastePreview(origin);
+    });
+    pasteGizmoRef.current = pasteGizmo;
+
+    pasteActionsRef.current = {
+      start: () => {
+        const entries = clipboardRef.current?.entries;
+        if (!entries || entries.length === 0) return;
+        const box = selectionRef.current;
+        const cx = box ? Math.floor(box.minX) : Math.floor((clipBounds.x[0] + clipBounds.x[1]) / 2);
+        const cy = box ? Math.floor(box.minY) : Math.floor((clipBounds.y[0] + clipBounds.y[1]) / 2);
+        const cz = box ? Math.floor(box.minZ) : Math.floor((clipBounds.z[0] + clipBounds.z[1]) / 2);
+        const origin: PasteOrigin = { x: cx, y: cy, z: cz };
+        pasteOriginRef.current = origin;
+        isPastingRef.current = true;
+        setIsPasting(true);
+        pasteTransformRef.current = IDENTITY_PASTE_TRANSFORM;
+        setPasteTransform(IDENTITY_PASTE_TRANSFORM);
+        // Hides the selection wireframe while the paste gizmo is active — see
+        // InstanceEditorViewport.tsx's identical call for the rationale.
+        selectionGizmo.setSelection(null);
+        pasteGizmo.setOrigin(origin);
+        renderPastePreview(origin);
+      },
+      rotate: (dir) => {
+        if (!pasteOriginRef.current) return;
+        const rotation = (((pasteTransformRef.current.rotation + dir) % 4) + 4) % 4;
+        const next: PasteTransform = { ...pasteTransformRef.current, rotation: rotation as 0 | 1 | 2 | 3 };
+        pasteTransformRef.current = next;
+        setPasteTransform(next);
+        renderPastePreview(pasteOriginRef.current);
+      },
+      flip: (axis) => {
+        if (!pasteOriginRef.current) return;
+        const key: "flipX" | "flipY" | "flipZ" = axis === "x" ? "flipX" : axis === "y" ? "flipY" : "flipZ";
+        const next: PasteTransform = { ...pasteTransformRef.current, [key]: !pasteTransformRef.current[key] };
+        pasteTransformRef.current = next;
+        setPasteTransform(next);
+        renderPastePreview(pasteOriginRef.current);
+      },
+      confirm: () => {
+        const origin = pasteOriginRef.current;
+        const entries = applyPasteTransform(clipboardRef.current?.entries ?? [], pasteTransformRef.current);
+        if (!origin || entries.length === 0) {
+          pasteActionsRef.current.cancel();
+          return;
+        }
+        const edits: SceneBlockDto[] = [];
+        const undoGroup: UndoEntry[] = [];
+        for (const entry of entries) {
+          const x = origin.x + entry.relX;
+          const y = origin.y + entry.relY;
+          const z = origin.z + entry.relZ;
+          if (!inBounds(x, y, z)) continue;
+          const prevOrdinal = wasmExports ? wasmExports.mcSceneGetBlockOrdinalAt(x, y, z) : 0;
+          const prevState = wasmExports ? wasmExports.mcSceneGetBlockStateAt(x, y, z) : 0;
+          const prevType = wasmExports ? (window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR") : "AIR";
+          undoGroup.push({ x, y, z, type: prevType, state: prevState });
+          edits.push({ x, y, z, type: entry.type, state: entry.state });
+        }
+        if (edits.length > 0) {
+          editSocket?.sendBatch(edits);
+          pushUndo(undoGroup);
+          for (const edit of edits) {
+            const ordinal = ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
+            if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
+          }
+        }
+        pasteActionsRef.current.cancel();
+      },
+      cancel: () => {
+        disposePastePreview();
+        pasteGizmo.setOrigin(null);
+        pasteOriginRef.current = null;
+        isPastingRef.current = false;
+        setIsPasting(false);
+        selectionGizmo.setSelection(selectionRef.current);
+      },
+    };
+
     let disposed = false;
 
     // Whole-volume load: fetch the raw binary buffer once and mesh it in one call — no
@@ -568,11 +731,12 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     // Fill/Shell/Cut on the current selection — one WS batch frame (editSocket.sendBatch) instead
     // of N individual sends, one undo-stack group instead of N slots. See selectionVoxels.ts for
     // the voxel enumeration/cap.
-    runSelectionOpRef.current = (kind: "fill" | "shell" | "cut") => {
+    runSelectionOpRef.current = (kind: "fill" | "shell" | "cut" | "copy") => {
       const box = selectionRef.current;
       if (!box) return;
-      if (kind !== "cut" && !patternBlocksRef.current[0]) return;
-      const voxels = computeSelectionVoxels(box, selectionShapeRef.current, kind === "cut" ? "fill" : kind);
+      if (kind !== "cut" && kind !== "copy" && !patternBlocksRef.current[0]) return;
+      const shapeMode = kind === "cut" || kind === "copy" ? "fill" : kind;
+      const voxels = computeSelectionVoxels(box, selectionShapeRef.current, shapeMode);
       if (!voxels) {
         flashActionError(`Selection too large (max ${MAX_SELECTION_OP_VOXELS} voxels)`);
         return;
@@ -592,10 +756,8 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         const prevOrdinal = wasmExports ? wasmExports.mcSceneGetBlockOrdinalAt(v.x, v.y, v.z) : 0;
         const prevState = wasmExports ? wasmExports.mcSceneGetBlockStateAt(v.x, v.y, v.z) : 0;
         const prevType = wasmExports ? (window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR") : "AIR";
-        undoGroup.push({ x: v.x, y: v.y, z: v.z, type: prevType, state: prevState });
 
-        const type = kind === "cut" ? "AIR" : resolvePatternBlock(pattern, v.x, v.y, v.z);
-        if (kind === "cut") {
+        if (kind === "cut" || kind === "copy") {
           clipEntries.push({
             relX: v.x - originX,
             relY: v.y - originY,
@@ -604,16 +766,23 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
             state: prevState,
           });
         }
+        // Copy is read-only — no edit, no undo entry, geometry stays untouched.
+        if (kind === "copy") continue;
+
+        undoGroup.push({ x: v.x, y: v.y, z: v.z, type: prevType, state: prevState });
+        const type = kind === "cut" ? "AIR" : resolvePatternBlock(pattern, v.x, v.y, v.z);
         edits.push({ x: v.x, y: v.y, z: v.z, type, state: 0 });
       }
 
-      editSocket?.sendBatch(edits);
-      pushUndo(undoGroup);
-      for (const edit of edits) {
-        const ordinal = ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
-        if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
+      if (kind !== "copy") {
+        editSocket?.sendBatch(edits);
+        pushUndo(undoGroup);
+        for (const edit of edits) {
+          const ordinal = ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
+          if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
+        }
       }
-      if (kind === "cut") {
+      if (kind === "cut" || kind === "copy") {
         clipboardRef.current = { entries: clipEntries };
         setClipboardCount(clipEntries.length);
       }
@@ -699,6 +868,16 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     function onKeyDown(e: KeyboardEvent) {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      if (isPastingRef.current) {
+        if (e.code === "Enter" || e.code === "NumpadEnter") {
+          pasteActionsRef.current.confirm();
+          return;
+        }
+        if (e.code === "Escape") {
+          pasteActionsRef.current.cancel();
+          return;
+        }
+      }
       if (e.code === "KeyU") {
         performUndo();
         return;
@@ -826,6 +1005,8 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       window.removeEventListener("keydown", onKeyDown);
       overlay.disposeAll();
       selectionGizmo.dispose();
+      disposePastePreview();
+      pasteGizmo.dispose();
       editSocket?.close();
       window.webApp?.then((exports) => exports.mcSceneDispose()).catch(() => {});
       axesGizmo.dispose();
@@ -833,6 +1014,8 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       sceneRef.current = null;
       overlayMeshesRef.current = null;
       selectionGizmoRef.current = null;
+      pasteGizmoRef.current = null;
+      pastePreviewMeshesRef.current = [];
       clipMeshesRef.current = {};
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- scene.id identity is the intended re-mount trigger
@@ -887,7 +1070,15 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         onFill={() => runSelectionOp("fill")}
         onShell={() => runSelectionOp("shell")}
         onCut={() => runSelectionOp("cut")}
+        onCopy={() => runSelectionOp("copy")}
         clipboardCount={clipboardCount}
+        onPaste={startPaste}
+        isPasting={isPasting}
+        onConfirmPaste={confirmPaste}
+        onCancelPaste={cancelPaste}
+        onRotatePaste={rotatePaste}
+        onFlipPaste={flipPaste}
+        pasteTransform={pasteTransform}
         savedSelections={savedSelections}
         onAddSelectionToMemory={addSelectionToMemory}
         onSelectSavedSelection={selectSavedSelection}

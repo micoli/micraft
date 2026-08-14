@@ -11,6 +11,7 @@ import { ClipAxesInput } from "../../../../primitives/clipAxesInput";
 import { dragMode, DragMode } from "../../../../primitives/DragMode";
 import { type SelectionBox, type SelectionShape, type SelectionSnap } from "./selectionGizmo";
 import { RESIZE_STEPS } from "./selectionVoxels";
+import { type PasteTransform } from "./pasteTransform";
 
 const SELECTION_SHAPES: { key: SelectionShape; label: string }[] = [
   { key: "box", label: "Box" },
@@ -84,7 +85,15 @@ export function VoxelEditorSidebar({
   onFill,
   onShell,
   onCut,
+  onCopy,
   clipboardCount,
+  onPaste,
+  isPasting,
+  onConfirmPaste,
+  onCancelPaste,
+  onRotatePaste,
+  onFlipPaste,
+  pasteTransform,
   savedSelections,
   onAddSelectionToMemory,
   onSelectSavedSelection,
@@ -136,7 +145,15 @@ export function VoxelEditorSidebar({
   onFill: () => void;
   onShell: () => void;
   onCut: () => void;
+  onCopy: () => void;
   clipboardCount: number | null;
+  onPaste: () => void;
+  isPasting: boolean;
+  onConfirmPaste: () => void;
+  onCancelPaste: () => void;
+  onRotatePaste: (dir: -1 | 1) => void;
+  onFlipPaste: (axis: "x" | "y" | "z") => void;
+  pasteTransform: PasteTransform;
   savedSelections: { shape: SelectionShape; box: SelectionBox }[];
   onAddSelectionToMemory: () => void;
   onSelectSavedSelection: (index: number) => void;
@@ -420,9 +437,75 @@ export function VoxelEditorSidebar({
             >
               Cut
             </button>
+            <button
+              onClick={onCopy}
+              disabled={!hasSelection}
+              className="px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
+            >
+              Copy
+            </button>
+            <button
+              onClick={onPaste}
+              disabled={!clipboardCount}
+              className={`px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto disabled:opacity-40 ${
+                isPasting
+                  ? "bg-[#3C50E0] text-white"
+                  : "bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white"
+              }`}
+            >
+              Paste
+            </button>
           </div>
           {clipboardCount !== null && (
             <span className="text-[9px] text-[#8A99AF] pointer-events-none">Clipboard: {clipboardCount} blocks</span>
+          )}
+          {isPasting && (
+            <>
+              <div className="flex gap-1.5 items-center justify-center pointer-events-auto">
+                <button
+                  onClick={() => onRotatePaste(-1)}
+                  title="Rotate -90°"
+                  className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors bg-black/50 text-[#8A99AF] hover:bg-[#3C50E0] hover:text-white"
+                >
+                  ⟲ -90°
+                </button>
+                <button
+                  onClick={() => onRotatePaste(1)}
+                  title="Rotate +90°"
+                  className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors bg-black/50 text-[#8A99AF] hover:bg-[#3C50E0] hover:text-white"
+                >
+                  ⟳ +90°
+                </button>
+                {(["x", "y", "z"] as const).map((axis) => (
+                  <button
+                    key={axis}
+                    onClick={() => onFlipPaste(axis)}
+                    title={`Flip ${axis.toUpperCase()}`}
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                      pasteTransform[axis === "x" ? "flipX" : axis === "y" ? "flipY" : "flipZ"]
+                        ? "bg-[#3C50E0] text-white"
+                        : "bg-black/50 text-[#8A99AF] hover:bg-[#3C50E0] hover:text-white"
+                    }`}
+                  >
+                    Flip {axis.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-1.5 items-center justify-center pointer-events-auto">
+                <button
+                  onClick={onConfirmPaste}
+                  className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors bg-black/50 text-[#8A99AF] hover:bg-[#3C50E0] hover:text-white"
+                >
+                  Confirm (Enter)
+                </button>
+                <button
+                  onClick={onCancelPaste}
+                  className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors bg-black/50 text-[#8A99AF] hover:bg-[#3C50E0] hover:text-white"
+                >
+                  Cancel (Esc)
+                </button>
+              </div>
+            </>
           )}
         </div>
       )}

@@ -22,6 +22,13 @@ import {
   type SelectionShape,
   type SelectionSnap,
 } from "../shared/voxelEditor/selectionGizmo";
+import { createPasteGizmo, type PasteOrigin } from "../shared/voxelEditor/pasteGizmo";
+import {
+  applyPasteTransform,
+  IDENTITY_PASTE_TRANSFORM,
+  type PasteTransform,
+} from "../shared/voxelEditor/pasteTransform";
+import { buildBlockPreviewMeshes } from "../../../game/lib/chunkBuilder";
 import { useBlockRegistry } from "../shared/voxelEditor/useBlockRegistry";
 import { useModifierDragMode } from "../shared/voxelEditor/useModifierDragMode";
 import { useActionError } from "../shared/voxelEditor/useActionError";
@@ -115,6 +122,31 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     entries: { relX: number; relY: number; relZ: number; type: string; state: number }[];
   } | null>(null);
   const [clipboardCount, setClipboardCount] = useState<number | null>(null);
+  // Paste-in-progress state: pasteOriginRef is the live drag position (moved directly by the
+  // gizmo's drag callback, not via React state — only isPasting needs to be reactive, for the
+  // sidebar's Paste/Confirm/Cancel button states).
+  const pasteOriginRef = useRef<PasteOrigin | null>(null);
+  const [isPasting, setIsPasting] = useState(false);
+  const isPastingRef = useRef(false);
+  const pasteGizmoRef = useRef<ReturnType<typeof createPasteGizmo> | null>(null);
+  const pastePreviewMeshesRef = useRef<ReturnType<typeof buildBlockPreviewMeshes>>([]);
+  // Rotate/flip applied to the clipboard before Confirm — reactive (not just a ref) so the
+  // sidebar's Flip X/Y/Z buttons can show which axes are active.
+  const [pasteTransform, setPasteTransform] = useState<PasteTransform>(IDENTITY_PASTE_TRANSFORM);
+  const pasteTransformRef = useRef(pasteTransform);
+  const pasteActionsRef = useRef<{
+    start: () => void;
+    confirm: () => void;
+    cancel: () => void;
+    rotate: (dir: -1 | 1) => void;
+    flip: (axis: "x" | "y" | "z") => void;
+  }>({
+    start: () => {},
+    confirm: () => {},
+    cancel: () => {},
+    rotate: () => {},
+    flip: () => {},
+  });
   // Local (per-browser-tab, not persisted) list of remembered selections — click a row to restore
   // it as the active selection, capped at MAX_SAVED_SELECTIONS with oldest dropped once full.
   const [savedSelections, setSavedSelections] = useState<{ shape: SelectionShape; box: SelectionBox }[]>([]);
@@ -132,7 +164,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   // of one, a Fill/Shell/Cut is a group of every voxel it touched.
   const undoStackRef = useRef<UndoGroup<UndoEntry>[]>([]);
   const redoStackRef = useRef<UndoGroup<UndoEntry>[]>([]);
-  const runSelectionOpRef = useRef<(kind: "fill" | "shell" | "cut") => void>(() => {});
+  const runSelectionOpRef = useRef<(kind: "fill" | "shell" | "cut" | "copy") => void>(() => {});
 
   // Clip-plane bounds derived purely from zone data (no scene dependency) — one range per axis
   // the position slider can move within.
@@ -178,6 +210,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       setSelection(null);
       setSelectionShape("box");
       setSelectionSnap("none");
+      pasteActionsRef.current.cancel();
     } else {
       // Seeds select mode with a live starting point (a bare toggle previously left the gizmo
       // hidden until the user made a manual pick) — a single voxel centered on the zone's
@@ -243,8 +276,28 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     });
   }
 
-  function runSelectionOp(kind: "fill" | "shell" | "cut") {
+  function runSelectionOp(kind: "fill" | "shell" | "cut" | "copy") {
     runSelectionOpRef.current(kind);
+  }
+
+  function startPaste() {
+    pasteActionsRef.current.start();
+  }
+
+  function confirmPaste() {
+    pasteActionsRef.current.confirm();
+  }
+
+  function cancelPaste() {
+    pasteActionsRef.current.cancel();
+  }
+
+  function rotatePaste(dir: -1 | 1) {
+    pasteActionsRef.current.rotate(dir);
+  }
+
+  function flipPaste(axis: "x" | "y" | "z") {
+    pasteActionsRef.current.flip(axis);
   }
 
   function addSelectionToMemory() {
@@ -434,6 +487,123 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     selectionGizmo.setShape(selectionShapeRef.current);
     selectionGizmo.setSnap(selectionSnapRef.current);
     selectionGizmoRef.current = selectionGizmo;
+
+    // Paste preview: one buildBlockPreviewMeshes call per clipboard entry (each call renders a
+    // single voxel at local origin — see chunkBuilder.ts), positioned at pasteOrigin + rel and
+    // left at the ghost shader's built-in 0.5 alpha (BLOCK_GHOST_FRAG in game/lib/block.ts).
+    function disposePastePreview() {
+      for (const m of pastePreviewMeshesRef.current) m.dispose();
+      pastePreviewMeshesRef.current = [];
+    }
+    function renderPastePreview(origin: PasteOrigin) {
+      disposePastePreview();
+      const entries = applyPasteTransform(clipboardRef.current?.entries ?? [], pasteTransformRef.current);
+      const meshes: ReturnType<typeof buildBlockPreviewMeshes> = [];
+      for (const entry of entries) {
+        const ordinal = ordinalByNameRef.current.get(entry.type);
+        if (ordinal == null) continue;
+        for (const mesh of buildBlockPreviewMeshes(scene, ordinal, 0)) {
+          mesh.position = new B!.Vector3(origin.x + entry.relX, origin.y + entry.relY, origin.z + entry.relZ);
+          mesh.isPickable = false;
+          // Same depth-bias neutralization as overlayController.ts's showGhostAndOutline — the
+          // ghost shader's zOffset bias is tuned for FPS-scale render distance and misbehaves at
+          // this editor's much larger orbit-camera distances (see that file's comment).
+          if (mesh.material) {
+            mesh.material.zOffset = 0;
+            mesh.material.zOffsetUnits = 0;
+            mesh.material.disableDepthWrite = true;
+          }
+          mesh.renderingGroupId = 1;
+          meshes.push(mesh);
+        }
+      }
+      pastePreviewMeshesRef.current = meshes;
+    }
+    const pasteGizmo = createPasteGizmo(B, scene, (origin) => {
+      pasteOriginRef.current = origin;
+      renderPastePreview(origin);
+    });
+    pasteGizmoRef.current = pasteGizmo;
+
+    pasteActionsRef.current = {
+      start: () => {
+        const entries = clipboardRef.current?.entries;
+        if (!entries || entries.length === 0) return;
+        const box = selectionRef.current;
+        const cx = box ? Math.floor(box.minX) : Math.floor((clipBounds.x[0] + clipBounds.x[1]) / 2);
+        const cy = box ? Math.floor(box.minY) : Math.floor((clipBounds.y[0] + clipBounds.y[1]) / 2);
+        const cz = box ? Math.floor(box.minZ) : Math.floor((clipBounds.z[0] + clipBounds.z[1]) / 2);
+        const origin: PasteOrigin = { x: cx, y: cy, z: cz };
+        pasteOriginRef.current = origin;
+        isPastingRef.current = true;
+        setIsPasting(true);
+        pasteTransformRef.current = IDENTITY_PASTE_TRANSFORM;
+        setPasteTransform(IDENTITY_PASTE_TRANSFORM);
+        // Hides the selection wireframe while the paste gizmo is active — the two overlap and
+        // fight for visual attention at the same spot. Selection state itself is untouched, so
+        // it reappears once paste ends (see cancel below).
+        selectionGizmo.setSelection(null);
+        pasteGizmo.setOrigin(origin);
+        renderPastePreview(origin);
+      },
+      rotate: (dir) => {
+        if (!pasteOriginRef.current) return;
+        const rotation = (((pasteTransformRef.current.rotation + dir) % 4) + 4) % 4;
+        const next: PasteTransform = { ...pasteTransformRef.current, rotation: rotation as 0 | 1 | 2 | 3 };
+        pasteTransformRef.current = next;
+        setPasteTransform(next);
+        renderPastePreview(pasteOriginRef.current);
+      },
+      flip: (axis) => {
+        if (!pasteOriginRef.current) return;
+        const key: "flipX" | "flipY" | "flipZ" = axis === "x" ? "flipX" : axis === "y" ? "flipY" : "flipZ";
+        const next: PasteTransform = { ...pasteTransformRef.current, [key]: !pasteTransformRef.current[key] };
+        pasteTransformRef.current = next;
+        setPasteTransform(next);
+        renderPastePreview(pasteOriginRef.current);
+      },
+      confirm: () => {
+        const origin = pasteOriginRef.current;
+        const entries = applyPasteTransform(clipboardRef.current?.entries ?? [], pasteTransformRef.current);
+        if (!origin || entries.length === 0) {
+          pasteActionsRef.current.cancel();
+          return;
+        }
+        const edits: InstanceBlockDto[] = [];
+        const undoGroup: UndoEntry[] = [];
+        const touchedChunks = new Set<string>();
+        for (const entry of entries) {
+          const x = origin.x + entry.relX;
+          const y = origin.y + entry.relY;
+          const z = origin.z + entry.relZ;
+          if (y < zone.yMin || y > zone.yMax || !inZone(x, z)) continue;
+          const prevOrdinal = wasmExports ? wasmExports.mcAdminGetBlockOrdinalAt(scene, x, y, z) : 0;
+          const prevState = wasmExports ? wasmExports.mcAdminGetBlockStateAt(scene, x, y, z) : 0;
+          const prevType = wasmExports ? (window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR") : "AIR";
+          undoGroup.push({ x, y, z, type: prevType, state: prevState, xOffset: 0, zOffset: 0 });
+          edits.push({ x, y, z, type: entry.type, state: entry.state, xOffset: 0, zOffset: 0 });
+          touchedChunks.add(chunkKeyOf(Math.floor(x / CHUNK_SIZE), Math.floor(z / CHUNK_SIZE)));
+        }
+        if (edits.length > 0) {
+          editSocket.sendBatch(edits);
+          pushUndo(undoGroup);
+          for (const key of touchedChunks) {
+            const [ccx, ccz] = key.split(",").map(Number);
+            reloadChunk(ccx, ccz);
+          }
+        }
+        pasteActionsRef.current.cancel();
+      },
+      cancel: () => {
+        disposePastePreview();
+        pasteGizmo.setOrigin(null);
+        pasteOriginRef.current = null;
+        isPastingRef.current = false;
+        setIsPasting(false);
+        selectionGizmo.setSelection(selectionRef.current);
+      },
+    };
+
     let disposed = false;
 
     async function loadChunk(cx: number, cz: number) {
@@ -554,11 +724,12 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     // Fill/Shell/Cut on the current selection — one WS batch frame (editSocket.sendBatch) instead
     // of N individual sends, one undo-stack group instead of N slots, one reloadChunk per touched
     // chunk instead of per voxel. See selectionVoxels.ts for the voxel enumeration/cap.
-    runSelectionOpRef.current = (kind: "fill" | "shell" | "cut") => {
+    runSelectionOpRef.current = (kind: "fill" | "shell" | "cut" | "copy") => {
       const box = selectionRef.current;
       if (!box) return;
-      if (kind !== "cut" && !patternBlocksRef.current[0]) return;
-      const voxels = computeSelectionVoxels(box, selectionShapeRef.current, kind === "cut" ? "fill" : kind);
+      if (kind !== "cut" && kind !== "copy" && !patternBlocksRef.current[0]) return;
+      const shapeMode = kind === "cut" || kind === "copy" ? "fill" : kind;
+      const voxels = computeSelectionVoxels(box, selectionShapeRef.current, shapeMode);
       if (!voxels) {
         flashActionError(`Selection too large (max ${MAX_SELECTION_OP_VOXELS} voxels)`);
         return;
@@ -579,10 +750,8 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         const prevOrdinal = wasmExports ? wasmExports.mcAdminGetBlockOrdinalAt(scene, v.x, v.y, v.z) : 0;
         const prevState = wasmExports ? wasmExports.mcAdminGetBlockStateAt(scene, v.x, v.y, v.z) : 0;
         const prevType = wasmExports ? (window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR") : "AIR";
-        undoGroup.push({ x: v.x, y: v.y, z: v.z, type: prevType, state: prevState, xOffset: 0, zOffset: 0 });
 
-        const type = kind === "cut" ? "AIR" : resolvePatternBlock(pattern, v.x, v.y, v.z);
-        if (kind === "cut") {
+        if (kind === "cut" || kind === "copy") {
           clipEntries.push({
             relX: v.x - originX,
             relY: v.y - originY,
@@ -591,17 +760,24 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
             state: prevState,
           });
         }
+        // Copy is read-only — no edit, no undo entry, geometry stays untouched.
+        if (kind === "copy") continue;
+
+        undoGroup.push({ x: v.x, y: v.y, z: v.z, type: prevType, state: prevState, xOffset: 0, zOffset: 0 });
+        const type = kind === "cut" ? "AIR" : resolvePatternBlock(pattern, v.x, v.y, v.z);
         edits.push({ x: v.x, y: v.y, z: v.z, type, state: 0, xOffset: 0, zOffset: 0 });
         touchedChunks.add(chunkKeyOf(Math.floor(v.x / CHUNK_SIZE), Math.floor(v.z / CHUNK_SIZE)));
       }
 
-      editSocket.sendBatch(edits);
-      pushUndo(undoGroup);
-      for (const key of touchedChunks) {
-        const [cx, cz] = key.split(",").map(Number);
-        reloadChunk(cx, cz);
+      if (kind !== "copy") {
+        editSocket.sendBatch(edits);
+        pushUndo(undoGroup);
+        for (const key of touchedChunks) {
+          const [cx, cz] = key.split(",").map(Number);
+          reloadChunk(cx, cz);
+        }
       }
-      if (kind === "cut") {
+      if (kind === "cut" || kind === "copy") {
         clipboardRef.current = { entries: clipEntries };
         setClipboardCount(clipEntries.length);
       }
@@ -760,6 +936,16 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     function onKeyDown(e: KeyboardEvent) {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      if (isPastingRef.current) {
+        if (e.code === "Enter" || e.code === "NumpadEnter") {
+          pasteActionsRef.current.confirm();
+          return;
+        }
+        if (e.code === "Escape") {
+          pasteActionsRef.current.cancel();
+          return;
+        }
+      }
       if (e.code === "KeyU") {
         performUndo();
         return;
@@ -920,12 +1106,16 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       window.removeEventListener("keydown", onKeyDown);
       overlay.disposeAll();
       selectionGizmo.dispose();
+      disposePastePreview();
+      pasteGizmo.dispose();
       editSocket.close();
       axesGizmo.dispose();
       engine.dispose();
       sceneRef.current = null;
       overlayMeshesRef.current = null;
       selectionGizmoRef.current = null;
+      pasteGizmoRef.current = null;
+      pastePreviewMeshesRef.current = [];
       clipMeshesRef.current = {};
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- zone.id identity is the intended re-mount trigger
@@ -982,7 +1172,15 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         onFill={() => runSelectionOp("fill")}
         onShell={() => runSelectionOp("shell")}
         onCut={() => runSelectionOp("cut")}
+        onCopy={() => runSelectionOp("copy")}
         clipboardCount={clipboardCount}
+        onPaste={startPaste}
+        isPasting={isPasting}
+        onConfirmPaste={confirmPaste}
+        onCancelPaste={cancelPaste}
+        onRotatePaste={rotatePaste}
+        onFlipPaste={flipPaste}
+        pasteTransform={pasteTransform}
         savedSelections={savedSelections}
         onAddSelectionToMemory={addSelectionToMemory}
         onSelectSavedSelection={selectSavedSelection}
