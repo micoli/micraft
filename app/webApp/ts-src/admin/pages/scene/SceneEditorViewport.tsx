@@ -16,7 +16,12 @@ import { saveCameraState } from "../shared/voxelEditor/cameraStorage";
 import { createOrbitCamera, setupBasicLighting } from "../shared/voxelEditor/orbitCamera";
 import { setupOrbitPointerController } from "../shared/voxelEditor/orbitPointerController";
 import { createOverlayController } from "../shared/voxelEditor/overlayController";
-import { createSelectionGizmo, type SelectionBox, type SelectionShape } from "../shared/voxelEditor/selectionGizmo";
+import {
+  createSelectionGizmo,
+  type SelectionBox,
+  type SelectionShape,
+  type SelectionSnap,
+} from "../shared/voxelEditor/selectionGizmo";
 import { useBlockRegistry } from "../shared/voxelEditor/useBlockRegistry";
 import { useModifierDragMode } from "../shared/voxelEditor/useModifierDragMode";
 import { useActionError } from "../shared/voxelEditor/useActionError";
@@ -73,6 +78,8 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
   const selectionRef = useRef<SelectionBox | null>(selection);
   const [selectionShape, setSelectionShape] = useState<SelectionShape>("box");
   const selectionShapeRef = useRef(selectionShape);
+  const [selectionSnap, setSelectionSnap] = useState<SelectionSnap>("none");
+  const selectionSnapRef = useRef(selectionSnap);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { actionError, flashActionError } = useActionError();
   const [search, setSearch] = useState("");
@@ -116,6 +123,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     if (mode !== "select") {
       setSelection(null);
       setSelectionShape("box");
+      setSelectionSnap("none");
     }
   }, [mode]);
 
@@ -123,6 +131,11 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     selectionShapeRef.current = selectionShape;
     selectionGizmoRef.current?.setShape(selectionShape);
   }, [selectionShape]);
+
+  useEffect(() => {
+    selectionSnapRef.current = selectionSnap;
+    selectionGizmoRef.current?.setSnap(selectionSnap);
+  }, [selectionSnap]);
 
   function toggleSelectMode() {
     setMode((m) => (m === "select" ? "place" : "select"));
@@ -326,8 +339,15 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     const overlayMeshes = new Set<InstanceType<typeof BABYLON.Mesh>>();
     overlayMeshesRef.current = overlayMeshes;
     const overlay = createOverlayController(B, babylonScene, overlayMeshes);
-    const selectionGizmo = createSelectionGizmo(B, babylonScene, clipBounds, (box) => setSelection(box));
+    const selectionGizmo = createSelectionGizmo(
+      B,
+      babylonScene,
+      clipBounds,
+      (box) => setSelection(box),
+      flashActionError,
+    );
     selectionGizmo.setShape(selectionShapeRef.current);
+    selectionGizmo.setSnap(selectionSnapRef.current);
     selectionGizmoRef.current = selectionGizmo;
     let disposed = false;
 
@@ -662,6 +682,8 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         onToggleSelect={toggleSelectMode}
         selectionShape={selectionShape}
         onSelectShape={setSelectionShape}
+        selectionSnap={selectionSnap}
+        onSelectSnap={setSelectionSnap}
         activeDragMode={activeDragMode}
         selectedType={selectedType}
         blockDefsReady={blockDefsReady}

@@ -23,6 +23,12 @@ export interface SelectionBounds {
 
 export type SelectionShape = "box" | "sphere" | "spheroid" | "cylinder";
 
+// Grid-snapped voxel preview drawn inside the shape ("none" = no preview, just the wireframe).
+export type SelectionSnap = "none" | "voxel" | "half" | "quarter";
+const SNAP_STEP: Record<Exclude<SelectionSnap, "none">, number> = { voxel: 1, half: 0.5, quarter: 0.25 };
+const MAX_PREVIEW_CELLS = 2_000_000;
+const MAX_PREVIEW_EDGES = 2_000_000;
+
 // Same per-axis colors as axesGizmo.ts (X/Y/Z = red/green/blue) — kept as a separate literal here
 // rather than importing, since axesGizmo.ts doesn't export its AXES table.
 const AXIS_HEX = { x: "#e5484d", y: "#46a758", z: "#3d63dd" };
@@ -101,6 +107,7 @@ export function createSelectionGizmo(
   scene: InstanceType<typeof BABYLON.Scene>,
   bounds: SelectionBounds,
   onSelectionChange: (box: SelectionBox) => void,
+  onPreviewTooLarge?: (message: string) => void,
 ) {
   const utilityLayer = new B.UtilityLayerRenderer(scene);
   const gizmoScene = utilityLayer.utilityLayerScene;
@@ -108,6 +115,7 @@ export function createSelectionGizmo(
 
   let current: SelectionBox | null = null;
   let shape: SelectionShape = "box";
+  let snap: SelectionSnap = "none";
   let outlineMeshes: InstanceType<typeof BABYLON.LinesMesh>[] = [];
   let axisLines: InstanceType<typeof BABYLON.LinesMesh> | null = null;
   const handles: {
@@ -163,16 +171,6 @@ export function createSelectionGizmo(
     const currentRadius = (box.maxX - box.minX) / 2;
     const r = Math.max(MIN_EXTENT, currentRadius + voxelDelta);
     return { minX: cx - r, maxX: cx + r, minY: cy - r, maxY: cy + r, minZ: cz - r, maxZ: cz + r };
-  }
-
-  function axisMat(hex: string): InstanceType<typeof BABYLON.StandardMaterial> {
-    const mat = new B.StandardMaterial(`selectionGizmoMat${hex}`, gizmoScene);
-    const color = B.Color3.FromHexString(hex);
-    mat.diffuseColor = color;
-    mat.emissiveColor = color;
-    mat.specularColor = B.Color3.Black();
-    mat.disableLighting = true;
-    return mat;
   }
 
   // Lit material (uses the utility layer's shared gizmo light) so handle plate faces shade darker
@@ -281,6 +279,150 @@ export function createSelectionGizmo(
     corners.push({ spec, mesh });
   }
 
+  // Grid-snap voxel preview: solid purple outline of the voxelized surface of the shape at the
+  // chosen step (which grid cells fall inside the shape, then only the faces exposed to an
+  // outside/excluded neighbor) — the outer silhouette stair-stepped to the grid, not a filled
+  // block of cubes.
+  let snapMeshes: InstanceType<typeof BABYLON.LinesMesh>[] = [];
+  const SNAP_PREVIEW_COLOR = B.Color3.FromHexString("#a855f7");
+  const SNAP_PREVIEW_ALPHA = 0.1;
+
+  function insideShape(
+    cx: number,
+    cy: number,
+    cz: number,
+    rx: number,
+    ry: number,
+    rz: number,
+    x: number,
+    y: number,
+    z: number,
+  ): boolean {
+    if (shape === "box") return true;
+    if (shape === "cylinder") {
+      const dx = (x - cx) / rx;
+      const dz = (z - cz) / rz;
+      return dx * dx + dz * dz <= 1;
+    }
+    const dx = (x - cx) / rx;
+    const dy = (y - cy) / ry;
+    const dz = (z - cz) / rz;
+    return dx * dx + dy * dy + dz * dz <= 1;
+  }
+
+  // Edges (as point pairs) of the exposed face of cell (ix,iy,iz) facing `axis`/`sign` — corner
+  // coordinates come straight from the grid indices, no shape math needed here.
+  function faceEdges(
+    box: SelectionBox,
+    step: number,
+    ix: number,
+    iy: number,
+    iz: number,
+    axis: Axis,
+    sign: 1 | -1,
+  ): [InstanceType<typeof BABYLON.Vector3>, InstanceType<typeof BABYLON.Vector3>][] {
+    const corner = (di: number, dj: number, dk: number) =>
+      new B.Vector3(box.minX + (ix + di) * step, box.minY + (iy + dj) * step, box.minZ + (iz + dk) * step);
+    let p00, p10, p11, p01;
+    if (axis === "x") {
+      const i = sign === 1 ? 1 : 0;
+      [p00, p10, p11, p01] = [corner(i, 0, 0), corner(i, 1, 0), corner(i, 1, 1), corner(i, 0, 1)];
+    } else if (axis === "y") {
+      const j = sign === 1 ? 1 : 0;
+      [p00, p10, p11, p01] = [corner(0, j, 0), corner(1, j, 0), corner(1, j, 1), corner(0, j, 1)];
+    } else {
+      const k = sign === 1 ? 1 : 0;
+      [p00, p10, p11, p01] = [corner(0, 0, k), corner(1, 0, k), corner(1, 1, k), corner(0, 1, k)];
+    }
+    return [
+      [p00, p10],
+      [p10, p11],
+      [p11, p01],
+      [p01, p00],
+    ];
+  }
+
+  // Bailing out (returning null) rather than truncating avoids showing a partial/misleading
+  // silhouette for shapes too large for this resolution — same policy as the old cell cap.
+  function buildSnapEdges(
+    box: SelectionBox,
+    step: number,
+  ): [InstanceType<typeof BABYLON.Vector3>, InstanceType<typeof BABYLON.Vector3>][] | null {
+    const cx = (box.minX + box.maxX) / 2;
+    const cy = (box.minY + box.maxY) / 2;
+    const cz = (box.minZ + box.maxZ) / 2;
+    const rx = box.maxX - cx;
+    const ry = box.maxY - cy;
+    const rz = box.maxZ - cz;
+    const nx = Math.max(1, Math.round((box.maxX - box.minX) / step));
+    const ny = Math.max(1, Math.round((box.maxY - box.minY) / step));
+    const nz = Math.max(1, Math.round((box.maxZ - box.minZ) / step));
+    if (nx * ny * nz > MAX_PREVIEW_CELLS) {
+      onPreviewTooLarge?.("Selection too large to preview at this snap resolution");
+      return null;
+    }
+
+    const inside = new Uint8Array(nx * ny * nz);
+    const at = (ix: number, iy: number, iz: number) => (ix * ny + iy) * nz + iz;
+    for (let ix = 0; ix < nx; ix++) {
+      const x = box.minX + (ix + 0.5) * step;
+      for (let iy = 0; iy < ny; iy++) {
+        const y = box.minY + (iy + 0.5) * step;
+        for (let iz = 0; iz < nz; iz++) {
+          const z = box.minZ + (iz + 0.5) * step;
+          inside[at(ix, iy, iz)] = insideShape(cx, cy, cz, rx, ry, rz, x, y, z) ? 1 : 0;
+        }
+      }
+    }
+
+    const NEIGHBORS: [Axis, 1 | -1, number, number, number][] = [
+      ["x", 1, 1, 0, 0],
+      ["x", -1, -1, 0, 0],
+      ["y", 1, 0, 1, 0],
+      ["y", -1, 0, -1, 0],
+      ["z", 1, 0, 0, 1],
+      ["z", -1, 0, 0, -1],
+    ];
+    const edges: [InstanceType<typeof BABYLON.Vector3>, InstanceType<typeof BABYLON.Vector3>][] = [];
+    for (let ix = 0; ix < nx; ix++) {
+      for (let iy = 0; iy < ny; iy++) {
+        for (let iz = 0; iz < nz; iz++) {
+          if (!inside[at(ix, iy, iz)]) continue;
+          for (const [axis, sign, dx, dy, dz] of NEIGHBORS) {
+            const nix = ix + dx;
+            const niy = iy + dy;
+            const niz = iz + dz;
+            const neighborInside =
+              nix >= 0 && nix < nx && niy >= 0 && niy < ny && niz >= 0 && niz < nz && inside[at(nix, niy, niz)];
+            if (neighborInside) continue;
+            edges.push(...faceEdges(box, step, ix, iy, iz, axis, sign));
+            if (edges.length > MAX_PREVIEW_EDGES) {
+              onPreviewTooLarge?.("Selection too large to preview at this snap resolution");
+              return null;
+            }
+          }
+        }
+      }
+    }
+    return edges;
+  }
+
+  function renderSnapPreview(box: SelectionBox) {
+    for (const mesh of snapMeshes) mesh.dispose();
+    snapMeshes = [];
+    if (snap === "none") return;
+    const edges = buildSnapEdges(box, SNAP_STEP[snap]);
+    if (!edges || edges.length === 0) return;
+    // A single LineSystem batching every edge, rather than one mesh per edge (as the dashed-line
+    // box outline does) — with edge counts in the thousands at fine snap resolutions, per-edge
+    // meshes would be far more expensive than this one draw call.
+    const mesh = B.MeshBuilder.CreateLineSystem("selectionSnapPreview", { lines: edges }, gizmoScene);
+    mesh.color = SNAP_PREVIEW_COLOR;
+    mesh.alpha = SNAP_PREVIEW_ALPHA;
+    mesh.isPickable = false;
+    snapMeshes = [mesh];
+  }
+
   function sameBox(a: SelectionBox, b: SelectionBox): boolean {
     return (
       a.minX === b.minX &&
@@ -297,6 +439,8 @@ export function createSelectionGizmo(
     outlineMeshes = [];
     axisLines?.dispose();
     axisLines = null;
+    for (const mesh of snapMeshes) mesh.dispose();
+    snapMeshes = [];
   }
 
   function ring(points: InstanceType<typeof BABYLON.Vector3>[]): InstanceType<typeof BABYLON.LinesMesh> {
@@ -388,6 +532,12 @@ export function createSelectionGizmo(
     if (current) render(current);
   }
 
+  function setSnap(next: SelectionSnap) {
+    if (snap === next) return;
+    snap = next;
+    if (current) renderSnapPreview(current);
+  }
+
   function render(box: SelectionBox) {
     const cx = (box.minX + box.maxX) / 2;
     const cy = (box.minY + box.maxY) / 2;
@@ -475,6 +625,8 @@ export function createSelectionGizmo(
       const z = (spec.sz === 1 ? box.maxZ : box.minZ) + CORNER_OFFSET * spec.sz;
       mesh.position = new B.Vector3(x, y, z);
     }
+
+    renderSnapPreview(box);
   }
 
   function dispose() {
@@ -492,6 +644,7 @@ export function createSelectionGizmo(
   return {
     setSelection,
     setShape,
+    setSnap,
     dispose,
   };
 }

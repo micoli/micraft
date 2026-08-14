@@ -8,13 +8,20 @@ import { type useAdminShortcutBar } from "./useAdminShortcutBar";
 import { CLIP_AXES, ClipAxis, ClipPlaneState } from "./clipAxis";
 import { ClipAxesInput } from "../../../../primitives/clipAxesInput";
 import { dragMode, DragMode } from "../../../../primitives/DragMode";
-import { type SelectionShape } from "./selectionGizmo";
+import { type SelectionShape, type SelectionSnap } from "./selectionGizmo";
 
 const SELECTION_SHAPES: { key: SelectionShape; label: string }[] = [
   { key: "box", label: "Box" },
   { key: "sphere", label: "Sphere" },
   { key: "spheroid", label: "Spheroid" },
   { key: "cylinder", label: "Cylinder" },
+];
+
+const SELECTION_SNAPS: { key: SelectionSnap; label: string }[] = [
+  { key: "none", label: "None" },
+  { key: "voxel", label: "Voxel" },
+  { key: "half", label: "½" },
+  { key: "quarter", label: "¼" },
 ];
 
 const SIDEBAR_WIDTH_STORAGE_KEY = "voxelEditorSidebarWidth";
@@ -40,6 +47,8 @@ export function VoxelEditorSidebar({
   onToggleSelect,
   selectionShape,
   onSelectShape,
+  selectionSnap,
+  onSelectSnap,
   activeDragMode,
   selectedType,
   blockDefsReady,
@@ -71,6 +80,8 @@ export function VoxelEditorSidebar({
   onToggleSelect: () => void;
   selectionShape: SelectionShape;
   onSelectShape: (shape: SelectionShape) => void;
+  selectionSnap: SelectionSnap;
+  onSelectSnap: (snap: SelectionSnap) => void;
   activeDragMode: dragMode;
   selectedType: string | null;
   blockDefsReady: boolean;
@@ -182,6 +193,21 @@ export function VoxelEditorSidebar({
               onClick={() => onSelectShape(s.key)}
               className={`px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto ${
                 selectionShape === s.key ? "bg-[#3C50E0] text-white" : "bg-black/50 text-[#8A99AF]"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {mode === "select" && (
+        <div className="relative top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none items-center justify-center mt-1">
+          {SELECTION_SNAPS.map((s) => (
+            <button
+              key={s.key}
+              onClick={() => onSelectSnap(s.key)}
+              className={`px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto ${
+                selectionSnap === s.key ? "bg-[#3C50E0] text-white" : "bg-black/50 text-[#8A99AF]"
               }`}
             >
               {s.label}
