@@ -60,11 +60,17 @@ export function setupOrbitPointerController(opts: OrbitPointerControllerOptions)
       dragMode = evt.metaKey ? "rotate" : evt.altKey ? "pan" : evt.ctrlKey ? "zoom" : "place";
       // Re-pivot the orbit around whatever was under the cursor at the start of the rotation drag,
       // instead of always orbiting around the current (possibly stale, panned-away-from)
-      // camera.target. setTarget() recomputes alpha/beta/radius from the camera's current position
-      // so the view doesn't jump — only the pivot point changes.
+      // camera.target. Re-projected onto the current view ray AT THE CAMERA'S CURRENT RADIUS
+      // (rather than using the raw, possibly much nearer/farther pick.pickedPoint directly) so
+      // setTarget()'s rebuilt radius comes out unchanged — using the raw pick distance let a
+      // grazing-angle pick far out on the ground plane balloon the radius, which then turned the
+      // very next small mouse move into a huge swing that read as a pan instead of a rotate.
       if (dragMode === "rotate") {
         const pick = scene.pick(scene.pointerX, scene.pointerY);
-        if (pick?.hit && pick.pickedPoint) camera.setTarget(pick.pickedPoint);
+        if (pick?.hit && pick.pickedPoint) {
+          const direction = pick.pickedPoint.subtract(camera.position).normalize();
+          camera.setTarget(camera.position.add(direction.scale(camera.radius)));
+        }
       }
       return;
     }
