@@ -31,6 +31,7 @@ import { connectEditSocket } from "../shared/voxelEditor/editSocket";
 import {
   computeSelectionVoxels,
   resolvePatternBlock,
+  resizeSelectionBox,
   MAX_SELECTION_OP_VOXELS,
   type Pattern,
 } from "../shared/voxelEditor/selectionVoxels";
@@ -41,6 +42,9 @@ const CHUNK_SIZE = 16;
 // zoom (camera.radius) so zooming out pulls in more chunks, capped so a huge zone can't force
 // thousands of simultaneous chunk fetches.
 const MAX_VIEW_RADIUS_CHUNKS = 8;
+// Saved-selection memory list cap (select mode) — same idea as MAX_UNDO_ENTRIES, a fixed-size
+// local buffer with oldest entries dropped once full.
+const MAX_SAVED_SELECTIONS = 10;
 // Hysteresis margin: a chunk is only unloaded once it's this far past the load radius, so
 // camera jitter right at the boundary doesn't thrash fetch/hide every frame.
 const VIEW_RADIUS_UNLOAD_MARGIN = 1;
@@ -111,6 +115,12 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     entries: { relX: number; relY: number; relZ: number; type: string; state: number }[];
   } | null>(null);
   const [clipboardCount, setClipboardCount] = useState<number | null>(null);
+  // Local (per-browser-tab, not persisted) list of remembered selections — click a row to restore
+  // it as the active selection, capped at MAX_SAVED_SELECTIONS with oldest dropped once full.
+  const [savedSelections, setSavedSelections] = useState<{ shape: SelectionShape; box: SelectionBox }[]>([]);
+  // Step used by the sidebar's expand/contract selection buttons — voxel/half/quarter, same
+  // granularity as RESIZE_STEPS.
+  const [resizeStep, setResizeStep] = useState<number>(1);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { actionError, flashActionError } = useActionError();
   const [search, setSearch] = useState("");
@@ -227,6 +237,38 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
 
   function runSelectionOp(kind: "fill" | "shell" | "cut") {
     runSelectionOpRef.current(kind);
+  }
+
+  function addSelectionToMemory() {
+    const box = selectionRef.current;
+    if (!box) return;
+    setSavedSelections((prev) => {
+      const next = [...prev, { shape: selectionShapeRef.current, box }];
+      return next.length > MAX_SAVED_SELECTIONS ? next.slice(next.length - MAX_SAVED_SELECTIONS) : next;
+    });
+  }
+
+  function selectSavedSelection(index: number) {
+    const entry = savedSelections[index];
+    if (!entry) return;
+    setSelectionShape(entry.shape);
+    setSelection(entry.box);
+  }
+
+  function removeSavedSelection(index: number) {
+    setSavedSelections((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function expandSelection() {
+    const box = selectionRef.current;
+    if (!box) return;
+    setSelection(resizeSelectionBox(box, selectionShapeRef.current, clipBounds, resizeStep));
+  }
+
+  function contractSelection() {
+    const box = selectionRef.current;
+    if (!box) return;
+    setSelection(resizeSelectionBox(box, selectionShapeRef.current, clipBounds, -resizeStep));
   }
 
   const blockDefsReady = useBlockDefsReady();
@@ -901,6 +943,14 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         onShell={() => runSelectionOp("shell")}
         onCut={() => runSelectionOp("cut")}
         clipboardCount={clipboardCount}
+        savedSelections={savedSelections}
+        onAddSelectionToMemory={addSelectionToMemory}
+        onSelectSavedSelection={selectSavedSelection}
+        onRemoveSavedSelection={removeSavedSelection}
+        resizeStep={resizeStep}
+        onSelectResizeStep={setResizeStep}
+        onExpandSelection={expandSelection}
+        onContractSelection={contractSelection}
         activeDragMode={activeDragMode}
         selectedType={selectedType}
         blockDefsReady={blockDefsReady}

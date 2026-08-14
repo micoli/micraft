@@ -33,6 +33,20 @@ const MAX_PREVIEW_EDGES = 2_000_000;
 // rather than importing, since axesGizmo.ts doesn't export its AXES table.
 const AXIS_HEX = { x: "#e5484d", y: "#46a758", z: "#3d63dd" };
 const HANDLE_OFFSET = 0.35;
+// setCustomMesh reparents a handle mesh directly under the gizmo's root, skipping AxisDragGizmo's
+// own child transform (_gizmoMesh) that bakes in a 1/3 scale-down on the stock arrow mesh — a mesh
+// sized in ordinary world units reads roughly 3x too large there, so both the resize and move
+// handles' plates are sized down to compensate. Thin along the drag axis, wide on the other two so
+// a plate reads as flat against the face rather than a floating cube.
+const PLATE_WIDE = (1 / 3) * 0.05;
+const PLATE_THIN = (1 / 8) * 0.05;
+function plateDimsForAxis(axis: Axis): { width: number; height: number; depth: number } {
+  return axis === "x"
+    ? { width: PLATE_THIN, height: PLATE_WIDE, depth: PLATE_WIDE }
+    : axis === "y"
+      ? { width: PLATE_WIDE, height: PLATE_THIN, depth: PLATE_WIDE }
+      : { width: PLATE_WIDE, height: PLATE_WIDE, depth: PLATE_THIN };
+}
 const AXIS_LINE_HALF_LENGTH = 64;
 // Handle drag snaps to quarter-voxel increments rather than whole voxels — finer selections (e.g.
 // around sub-voxel LEGO_PIECE slots) are common enough to be worth the extra precision.
@@ -76,6 +90,13 @@ for (const sx of [1, -1] as const)
   for (const sy of [1, -1] as const) for (const sz of [1, -1] as const) CORNERS.push({ sx, sy, sz });
 const CORNER_SIZE = 0.15;
 const CORNER_OFFSET = 0.06;
+// Move gizmo: small cube at the selection's centroid + 6 translate handles sitting just outside
+// its faces (flat plates, same dimensions as the resize handles — see PLATE_WIDE/PLATE_THIN at
+// their definition site). Fixed offset from the centroid (not scaled to the box, unlike the resize
+// handles sitting on the box's own faces) so it stays reachable at any selection size.
+const CENTER_CUBE_SIZE = 0.2;
+const MOVE_HANDLE_OFFSET = CENTER_CUBE_SIZE / 2 + 0.05;
+const MOVE_HANDLE_COLOR = "#cccccc";
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, v));
@@ -129,6 +150,13 @@ export function createSelectionGizmo(
     mesh: InstanceType<typeof BABYLON.Mesh>;
   }[] = [];
   let cornersActive = false;
+  const moveHandles: {
+    spec: HandleSpec;
+    anchor: InstanceType<typeof BABYLON.TransformNode>;
+    gizmo: InstanceType<typeof BABYLON.AxisDragGizmo>;
+    attached: boolean;
+  }[] = [];
+  let centerCube: InstanceType<typeof BABYLON.Mesh> | null = null;
 
   // clampToBounds is false for spheroid/cylinder (like sphere's applySymmetricDelta, these are
   // pure selection markers, not directly bound to editable voxel content) — only box stays
@@ -164,6 +192,54 @@ export function createSelectionGizmo(
   // any one axis (e.g. Y against the ground) would force that axis's half-extent below the other
   // two, breaking the sphere into an ellipsoid. A sphere selection is allowed to extend past the
   // zone edges (e.g. partway under the ground) rather than deform to stay inside them.
+  // Shifts the box uniformly along one axis by voxelDelta, keeping its size fixed — used by the
+  // move gizmo. clampToBounds (box shape only, same convention as applyAxisDelta) slides the whole
+  // box back inside bounds rather than clipping it, so its size never changes from a move.
+  function translateAxis(box: SelectionBox, axis: Axis, voxelDelta: number, clampToBounds: boolean): SelectionBox {
+    const next = { ...box };
+    if (axis === "x") {
+      next.minX += voxelDelta;
+      next.maxX += voxelDelta;
+    } else if (axis === "y") {
+      next.minY += voxelDelta;
+      next.maxY += voxelDelta;
+    } else {
+      next.minZ += voxelDelta;
+      next.maxZ += voxelDelta;
+    }
+    if (!clampToBounds) return next;
+    const [lo, hi] = bounds[axis];
+    if (axis === "x") {
+      const size = next.maxX - next.minX;
+      if (next.minX < lo) {
+        next.minX = lo;
+        next.maxX = lo + size;
+      } else if (next.maxX > hi) {
+        next.maxX = hi;
+        next.minX = hi - size;
+      }
+    } else if (axis === "y") {
+      const size = next.maxY - next.minY;
+      if (next.minY < lo) {
+        next.minY = lo;
+        next.maxY = lo + size;
+      } else if (next.maxY > hi) {
+        next.maxY = hi;
+        next.minY = hi - size;
+      }
+    } else {
+      const size = next.maxZ - next.minZ;
+      if (next.minZ < lo) {
+        next.minZ = lo;
+        next.maxZ = lo + size;
+      } else if (next.maxZ > hi) {
+        next.maxZ = hi;
+        next.minZ = hi - size;
+      }
+    }
+    return next;
+  }
+
   function applySymmetricDelta(box: SelectionBox, voxelDelta: number): SelectionBox {
     const cx = (box.minX + box.maxX) / 2;
     const cy = (box.minY + box.maxY) / 2;
@@ -196,21 +272,13 @@ export function createSelectionGizmo(
     // Swap the default arrow mesh for a flat rectangular plate lying against the selection face
     // (Blockbench-style handle) while keeping AxisDragGizmo's drag mechanics/on-screen sizing —
     // setCustomMesh reparents it directly under the gizmo's root, which the gizmo keeps positioned
-    // at the attached anchor and scaled for a constant screen size every frame. The stock arrow
-    // mesh sits under an extra child transform (_gizmoMesh) with its own 1/3 scale-down baked in
-    // (AxisDragGizmo internals) that a mesh parented straight onto root — as setCustomMesh does —
-    // never gets, so dimensions using the arrow's own coordinate scale (~0.3 units) read roughly 3x
-    // too large; sized down to compensate. Thin along the drag axis, wide on the other two so the
-    // plate reads as flat against the face rather than a floating cube.
-    const PLATE_WIDE = (1 / 3) * 0.05;
-    const PLATE_THIN = (1 / 8) * 0.05;
-    const plateDims =
-      spec.axis === "x"
-        ? { width: PLATE_THIN, height: PLATE_WIDE, depth: PLATE_WIDE }
-        : spec.axis === "y"
-          ? { width: PLATE_WIDE, height: PLATE_THIN, depth: PLATE_WIDE }
-          : { width: PLATE_WIDE, height: PLATE_WIDE, depth: PLATE_THIN };
-    const handleBox = B.MeshBuilder.CreateBox(`selectionHandle${spec.axis}${spec.sign}`, plateDims, gizmoScene);
+    // at the attached anchor and scaled for a constant screen size every frame. See
+    // plateDimsForAxis's doc comment for why the dims are scaled down.
+    const handleBox = B.MeshBuilder.CreateBox(
+      `selectionHandle${spec.axis}${spec.sign}`,
+      plateDimsForAxis(spec.axis),
+      gizmoScene,
+    );
     handleBox.material = handleMat(AXIS_HEX[spec.axis]);
     gizmo.setCustomMesh(handleBox);
     let dragStart: SelectionBox | null = null;
@@ -233,6 +301,24 @@ export function createSelectionGizmo(
           : applyAxisDelta(dragStart, spec.axis, spec.sign, voxelDelta, shape === "box");
       if (current && sameBox(current, next)) return;
       onSelectionChange(next);
+    });
+    // Forces a resync to the authoritative box the instant the drag ends: the last onDragObservable
+    // event before release is often filtered out by the sameBox check above (the raw pointer delta
+    // rounds to the same quarter-voxel step as the previous event), leaving whichever visual
+    // position Babylon's gizmo drag left the handle mesh at — this re-renders from `current`
+    // unconditionally so the handle always ends up exactly back on the box, not wherever the
+    // pointer happened to release.
+    gizmo.dragBehavior.onDragEndObservable.add(() => {
+      dragStart = null;
+      // disposeVisuals first — render() only reassigns outlineMeshes/axisLines to new meshes, it
+      // never disposes what was there before (every other call site disposes right before calling
+      // it — setSelection, setShape); skipping that here left the previous outline/rings/axis-lines
+      // mesh orphaned in the scene on every drag release, visible as stacked leftover selection
+      // wireframes.
+      if (current) {
+        disposeVisuals();
+        render(current);
+      }
     });
     handles.push({ spec, anchor, gizmo, attached: false });
   }
@@ -276,8 +362,77 @@ export function createSelectionGizmo(
       if (current && sameBox(current, next)) return;
       onSelectionChange(next);
     });
+    // See the resize handle loop above for why this resync is needed at drag end.
+    behavior.onDragEndObservable.add(() => {
+      dragStart = null;
+      // disposeVisuals first — render() only reassigns outlineMeshes/axisLines to new meshes, it
+      // never disposes what was there before (every other call site disposes right before calling
+      // it — setSelection, setShape); skipping that here left the previous outline/rings/axis-lines
+      // mesh orphaned in the scene on every drag release, visible as stacked leftover selection
+      // wireframes.
+      if (current) {
+        disposeVisuals();
+        render(current);
+      }
+    });
     corners.push({ spec, mesh });
   }
+
+  // Move gizmo: 6 handles at a fixed offset from the selection's centroid (reusing the same 6
+  // axis/sign specs as the resize handles, purely for visual symmetry — either handle on an axis
+  // does the same thing) that translate the whole box along one axis by the drag distance, size
+  // unchanged. Always active for every shape (unlike the resize handles, which restrict to one
+  // handle for "sphere") since moving is meaningful regardless of shape. Colored per-axis (red/
+  // green/blue), same as the resize handles on that axis, so a handle's color always tells you
+  // which axis it drags regardless of which gizmo (resize vs move) it belongs to.
+  const moveAxisMat = { x: handleMat(AXIS_HEX.x), y: handleMat(AXIS_HEX.y), z: handleMat(AXIS_HEX.z) };
+  for (const spec of HANDLES) {
+    const anchor = new B.TransformNode(`selectionMoveHandleAnchor${spec.axis}${spec.sign}`, gizmoScene);
+    const dragAxis =
+      spec.axis === "x" ? new B.Vector3(1, 0, 0) : spec.axis === "y" ? new B.Vector3(0, 1, 0) : new B.Vector3(0, 0, 1);
+    const gizmo = new B.AxisDragGizmo(dragAxis, B.Color3.FromHexString(AXIS_HEX[spec.axis]), utilityLayer);
+    gizmo.updateGizmoRotationToMatchAttachedMesh = false;
+    gizmo.dragBehavior.moveAttached = false;
+    const handleMesh = B.MeshBuilder.CreateBox(
+      `selectionMoveHandle${spec.axis}${spec.sign}`,
+      plateDimsForAxis(spec.axis),
+      gizmoScene,
+    );
+    handleMesh.material = moveAxisMat[spec.axis];
+    gizmo.setCustomMesh(handleMesh);
+    let dragStart: SelectionBox | null = null;
+    let dragTotal = 0;
+    gizmo.dragBehavior.onDragStartObservable.add(() => {
+      dragStart = current;
+      dragTotal = 0;
+    });
+    gizmo.dragBehavior.onDragObservable.add((event) => {
+      if (!dragStart) return;
+      dragTotal += event.dragDistance;
+      const voxelDelta = Math.round(dragTotal * QUARTER_STEPS_PER_VOXEL) / QUARTER_STEPS_PER_VOXEL;
+      const next = translateAxis(dragStart, spec.axis, voxelDelta, shape === "box");
+      if (current && sameBox(current, next)) return;
+      onSelectionChange(next);
+    });
+    // See the resize handle loop above for why this resync is needed at drag end.
+    gizmo.dragBehavior.onDragEndObservable.add(() => {
+      dragStart = null;
+      // disposeVisuals first — render() only reassigns outlineMeshes/axisLines to new meshes, it
+      // never disposes what was there before (every other call site disposes right before calling
+      // it — setSelection, setShape); skipping that here left the previous outline/rings/axis-lines
+      // mesh orphaned in the scene on every drag release, visible as stacked leftover selection
+      // wireframes.
+      if (current) {
+        disposeVisuals();
+        render(current);
+      }
+    });
+    moveHandles.push({ spec, anchor, gizmo, attached: false });
+  }
+  centerCube = B.MeshBuilder.CreateBox("selectionCenterCube", { size: CENTER_CUBE_SIZE }, gizmoScene);
+  centerCube.material = handleMat(MOVE_HANDLE_COLOR);
+  centerCube.isPickable = false;
+  centerCube.setEnabled(false);
 
   // Grid-snap voxel preview: solid purple outline of the voxelized surface of the shape at the
   // chosen step (which grid cells fall inside the shape, then only the faces exposed to an
@@ -514,6 +669,13 @@ export function createSelectionGizmo(
       for (const { mesh } of corners) mesh.setEnabled(wantCorners);
       cornersActive = wantCorners;
     }
+    for (const h of moveHandles) {
+      if (show !== h.attached) {
+        h.gizmo.attachedNode = show ? h.anchor : null;
+        h.attached = show;
+      }
+    }
+    centerCube?.setEnabled(show);
   }
 
   function setSelection(box: SelectionBox | null) {
@@ -626,6 +788,17 @@ export function createSelectionGizmo(
       mesh.position = new B.Vector3(x, y, z);
     }
 
+    centerCube!.position = new B.Vector3(cx, cy, cz);
+    for (const { spec, anchor } of moveHandles) {
+      const offset = MOVE_HANDLE_OFFSET * spec.sign;
+      anchor.position =
+        spec.axis === "x"
+          ? new B.Vector3(cx + offset, cy, cz)
+          : spec.axis === "y"
+            ? new B.Vector3(cx, cy + offset, cz)
+            : new B.Vector3(cx, cy, cz + offset);
+    }
+
     renderSnapPreview(box);
   }
 
@@ -638,6 +811,13 @@ export function createSelectionGizmo(
     handles.length = 0;
     for (const { mesh } of corners) mesh.dispose();
     corners.length = 0;
+    for (const { gizmo, anchor } of moveHandles) {
+      gizmo.dispose();
+      anchor.dispose();
+    }
+    moveHandles.length = 0;
+    centerCube?.dispose();
+    centerCube = null;
     utilityLayer.dispose();
   }
 

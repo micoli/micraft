@@ -9,7 +9,8 @@ import { type useAdminShortcutBar } from "./useAdminShortcutBar";
 import { CLIP_AXES, ClipAxis, ClipPlaneState } from "./clipAxis";
 import { ClipAxesInput } from "../../../../primitives/clipAxesInput";
 import { dragMode, DragMode } from "../../../../primitives/DragMode";
-import { type SelectionShape, type SelectionSnap } from "./selectionGizmo";
+import { type SelectionBox, type SelectionShape, type SelectionSnap } from "./selectionGizmo";
+import { RESIZE_STEPS } from "./selectionVoxels";
 
 const SELECTION_SHAPES: { key: SelectionShape; label: string }[] = [
   { key: "box", label: "Box" },
@@ -24,6 +25,15 @@ const SELECTION_SNAPS: { key: SelectionSnap; label: string }[] = [
   { key: "half", label: "½" },
   { key: "quarter", label: "¼" },
 ];
+
+// Label for a saved-selection list row: shape name + rounded voxel dimensions (the box may have
+// fractional bounds from the gizmo's quarter-voxel drag snap).
+function formatSavedSelectionLabel(shape: SelectionShape, box: SelectionBox): string {
+  const dx = Math.round(box.maxX - box.minX);
+  const dy = Math.round(box.maxY - box.minY);
+  const dz = Math.round(box.maxZ - box.minZ);
+  return `${shape} ${dx}×${dy}×${dz}`;
+}
 
 const SIDEBAR_WIDTH_STORAGE_KEY = "voxelEditorSidebarWidth";
 const SIDEBAR_MIN_WIDTH = 220;
@@ -51,6 +61,10 @@ export function VoxelEditorSidebar({
   selectionSnap,
   onSelectSnap,
   hasSelection,
+  resizeStep,
+  onSelectResizeStep,
+  onExpandSelection,
+  onContractSelection,
   patternBlocks,
   activePatternSlot,
   onSelectPatternSlot,
@@ -59,6 +73,10 @@ export function VoxelEditorSidebar({
   onShell,
   onCut,
   clipboardCount,
+  savedSelections,
+  onAddSelectionToMemory,
+  onSelectSavedSelection,
+  onRemoveSavedSelection,
   activeDragMode,
   selectedType,
   blockDefsReady,
@@ -93,6 +111,10 @@ export function VoxelEditorSidebar({
   selectionSnap: SelectionSnap;
   onSelectSnap: (snap: SelectionSnap) => void;
   hasSelection: boolean;
+  resizeStep: number;
+  onSelectResizeStep: (step: number) => void;
+  onExpandSelection: () => void;
+  onContractSelection: () => void;
   patternBlocks: [string | null, string | null];
   activePatternSlot: 0 | 1;
   onSelectPatternSlot: (slot: 0 | 1) => void;
@@ -101,6 +123,10 @@ export function VoxelEditorSidebar({
   onShell: () => void;
   onCut: () => void;
   clipboardCount: number | null;
+  savedSelections: { shape: SelectionShape; box: SelectionBox }[];
+  onAddSelectionToMemory: () => void;
+  onSelectSavedSelection: (index: number) => void;
+  onRemoveSavedSelection: (index: number) => void;
   activeDragMode: dragMode;
   selectedType: string | null;
   blockDefsReady: boolean;
@@ -236,6 +262,37 @@ export function VoxelEditorSidebar({
       )}
       {mode === "select" && (
         <div className="relative top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none items-center justify-center mt-1">
+          <button
+            onClick={onContractSelection}
+            disabled={!hasSelection}
+            title="Contract selection"
+            className="px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
+          >
+            −
+          </button>
+          {RESIZE_STEPS.map((s) => (
+            <button
+              key={s.key}
+              onClick={() => onSelectResizeStep(s.key)}
+              className={`px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto ${
+                resizeStep === s.key ? "bg-[#3C50E0] text-white" : "bg-black/50 text-[#8A99AF]"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+          <button
+            onClick={onExpandSelection}
+            disabled={!hasSelection}
+            title="Expand selection"
+            className="px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
+          >
+            +
+          </button>
+        </div>
+      )}
+      {mode === "select" && (
+        <div className="relative top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none items-center justify-center mt-1">
           {([0, 1] as const).map((slot) => {
             const name = patternBlocks[slot];
             const ordinal = name ? getOrdinal(name) : null;
@@ -309,6 +366,46 @@ export function VoxelEditorSidebar({
           </div>
           {clipboardCount !== null && (
             <span className="text-[9px] text-[#8A99AF] pointer-events-none">Clipboard: {clipboardCount} blocks</span>
+          )}
+        </div>
+      )}
+      {mode === "select" && (
+        <div className="shrink-0 border-b border-[#2E3A4E] p-2 flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] text-[#8A99AF] font-medium">
+              Saved selections ({savedSelections.length}/10)
+            </span>
+            <button
+              onClick={onAddSelectionToMemory}
+              disabled={!hasSelection}
+              className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors bg-black/50 text-[#8A99AF] enabled:hover:bg-[#3C50E0] enabled:hover:text-white disabled:opacity-40"
+            >
+              + Add selection to memory
+            </button>
+          </div>
+          {savedSelections.length > 0 && (
+            <div className="flex flex-col gap-0.5">
+              {savedSelections.map((entry, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => onSelectSavedSelection(idx)}
+                  className="flex items-center justify-between rounded px-1.5 py-1 bg-black/30 hover:bg-black/50 cursor-pointer"
+                >
+                  <span className="text-[10px] text-[#8A99AF] truncate">
+                    {formatSavedSelectionLabel(entry.shape, entry.box)}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveSavedSelection(idx);
+                    }}
+                    className="text-[#8A99AF] hover:text-white text-[10px] leading-none shrink-0 ml-1"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}

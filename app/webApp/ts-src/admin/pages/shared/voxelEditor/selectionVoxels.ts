@@ -1,4 +1,4 @@
-import { type SelectionBox, type SelectionShape } from "./selectionGizmo";
+import { type SelectionBounds, type SelectionBox, type SelectionShape } from "./selectionGizmo";
 
 // Two-block pattern for Fill/Shell: a solid block (`b` unset), or a 3D checkerboard alternation of
 // two blocks by (x+y+z) parity when `b` is set.
@@ -17,6 +17,50 @@ export function resolvePatternBlock(pattern: Pattern, x: number, y: number, z: n
 // instances, WASM setBlock for scenes). Well below the gizmo's own preview cap (2,000,000 cells),
 // which only does rendering, not network sends or remeshing.
 export const MAX_SELECTION_OP_VOXELS = 20000;
+
+// Expand/contract step units offered by the sidebar's resize buttons — same granularity as the
+// gizmo's grid-snap preview (SelectionSnap: voxel/half/quarter).
+export const RESIZE_STEPS = [
+  { key: 1, label: "1" },
+  { key: 0.5, label: "½" },
+  { key: 0.25, label: "¼" },
+] as const;
+
+// Smallest allowed extent on any axis — same floor as the gizmo's own drag handles (MIN_EXTENT in
+// selectionGizmo.ts), so a repeated contract can't collapse or invert the box.
+const MIN_SELECTION_EXTENT = 0.25;
+
+// Grows (positive delta) or shrinks (negative delta) the box uniformly on all 6 faces by `delta`
+// voxels. Clamped to `bounds` only for "box" — sphere/spheroid/cylinder stay unclamped, mirroring
+// the gizmo's own handle-drag convention (see selectionGizmo.ts's applyAxisDelta/
+// applySymmetricDelta doc comments): those shapes are pure markers, not directly bound to editable
+// voxel content, so a resize is allowed to push them past the zone edges.
+export function resizeSelectionBox(
+  box: SelectionBox,
+  shape: SelectionShape,
+  bounds: SelectionBounds,
+  delta: number,
+): SelectionBox {
+  const clampToBounds = shape === "box";
+  function axis(min: number, max: number, lo: number, hi: number): [number, number] {
+    let nextMin = min - delta;
+    let nextMax = max + delta;
+    if (nextMax - nextMin < MIN_SELECTION_EXTENT) {
+      const center = (min + max) / 2;
+      nextMin = center - MIN_SELECTION_EXTENT / 2;
+      nextMax = center + MIN_SELECTION_EXTENT / 2;
+    }
+    if (clampToBounds) {
+      nextMin = Math.max(lo, nextMin);
+      nextMax = Math.min(hi, nextMax);
+    }
+    return [nextMin, nextMax];
+  }
+  const [minX, maxX] = axis(box.minX, box.maxX, bounds.x[0], bounds.x[1]);
+  const [minY, maxY] = axis(box.minY, box.maxY, bounds.y[0], bounds.y[1]);
+  const [minZ, maxZ] = axis(box.minZ, box.maxZ, bounds.z[0], bounds.z[1]);
+  return { minX, minY, minZ, maxX, maxY, maxZ };
+}
 
 // Same ellipsoid/cylinder membership test as selectionGizmo.ts's insideShape — duplicated rather
 // than exported since that module stays Babylon-rendering-only.
