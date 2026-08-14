@@ -299,7 +299,7 @@ export function VoxelEditorSidebar({
           />
         </div>
       )}
-      <div ref={paletteRef} className="flex flex-wrap gap-1 p-2 overflow-y-auto content-start">
+      <div ref={paletteRef} className="flex flex-wrap gap-1 p-2 overflow-y-auto content-start justify-between">
         {blockDefs
           .filter((b) => b.name.toLowerCase().includes(search.toLowerCase()))
           .map((b) => (
