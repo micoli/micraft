@@ -223,6 +223,7 @@ declare global {
     renderPipeline: unknown;
     camState: { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number; t: number } | null;
     debugCamObserver: Observer<Scene> | null;
+    editMode?: "game" | "creative";
     dynamicFogEnabled?: boolean;
     caveFactor?: number;
     shadowAngleDeg?: number;
@@ -508,6 +509,7 @@ declare global {
     playerRespawned(json: string): void;
     xpGained(json: string): void;
     godModeUpdate(enabled: boolean): void;
+    editModeUpdate(mode: "game" | "creative"): void;
     walletUpdate(copper: number): void;
     questSync(json: string): void;
     questUpdate(json: string): void;

@@ -58,6 +58,7 @@ fun jsDisableCameraKeyboard(camera: JsAny): Unit =
       c.inertia = 0;
       var canvas = document.getElementById('renderCanvas');
       canvas.addEventListener('click', function() {
+        if (window.mcState.editMode === 'creative') return;
         if (!document.pointerLockElement) canvas.requestPointerLock();
       });
       document.addEventListener('pointermove', function(e) {

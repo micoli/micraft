@@ -366,6 +366,13 @@
         "godMode": {
           "type": "boolean"
         },
+        "editMode": {
+          "type": "string",
+          "enum": [
+            "GAME",
+            "CREATIVE"
+          ]
+        },
         "lightBoostEnabled": {
           "type": "boolean"
         },

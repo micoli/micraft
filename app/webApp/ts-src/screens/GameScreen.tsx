@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useRef } from "react";
+import { useMemo, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { startPreloading } from "../game/shared/blockPreviewCache";
 import { getStoredToken, getLastLang, getAccountEmail, getLastPlayer } from "../lib/authStorage";
@@ -35,13 +35,17 @@ import { QuestJournal } from "../game/components/QuestJournal";
 import { QuestTracker } from "../game/components/QuestTracker";
 import { BuffBar } from "../game/components/BuffBar";
 import { MailboxOverlay } from "../game/overlays/MailboxOverlay";
+import { CreativeBlockPanel } from "../game/components/CreativeBlockPanel";
+import { setCreativeSelectedItem } from "../game/lib/creativeMode";
 
-const resumePointerLock = () =>
+const resumePointerLock = () => {
+  if (window.mcState.editMode === "creative") return;
   (
     (
       document.getElementById("renderCanvas") as HTMLCanvasElement | null
     )?.requestPointerLock() as unknown as Promise<void>
   )?.catch(() => {});
+};
 
 export function GameScreen() {
   const {
@@ -61,6 +65,7 @@ export function GameScreen() {
   const { accountEmail: encodedEmail } = useParams<{ accountEmail: string; charId: string }>();
   const navigate = useNavigate();
   const reconnectAttempted = useRef(false);
+  const [creativeSelectedItem, setCreativeSelectedItemState] = useState<string | null>(null);
 
   useEffect(() => {
     startPreloading();
@@ -301,6 +306,14 @@ export function GameScreen() {
             }}
             layoutStyle={widgetStyle(activeLayout, "CHAT_HISTORY")}
           />
+          <CreativeBlockPanel
+            visible={state.editMode === "creative"}
+            selectedItem={creativeSelectedItem}
+            onSelectItem={(item) => {
+              setCreativeSelectedItemState(item);
+              setCreativeSelectedItem(item);
+            }}
+          />
           <Notifications notif={state.notif?.msg ? state.notif : null} />
           {state.healthBarVisible && state.playerStatus && (
             <PlayerStatusBar
@@ -424,11 +437,7 @@ export function GameScreen() {
             open={state.pauseMenuOpen}
             onClose={() => {
               dispatch("pause_menu_hide");
-              (
-                (
-                  document.getElementById("renderCanvas") as HTMLCanvasElement | null
-                )?.requestPointerLock() as unknown as Promise<void>
-              )?.catch?.(() => {});
+              resumePointerLock();
             }}
             items={[
               {

@@ -226,6 +226,12 @@ god:
     on: "Mode dieu activé. Vous êtes immunisé aux dégâts."
     off: "Mode dieu désactivé."
 
+mode:
+  server:
+    game: "Passage en mode jeu."
+    creative: "Passage en mode créatif. Blocs illimités, caméra libre."
+    usage: "Usage : /mode <game|creative>"
+
 explode:
   server:
     usage: "Utilisation : /explode <rayon>"

@@ -264,6 +264,7 @@ stateDiagram-v2
 | `/light:on` | `/light:on` | Boosts ambient light underground (cavern lighting override). | — |
 | `/mail` | `/mail` | Open your mailbox. | — |
 | `/map` | `/map` | Toggles the biome map overlay. | — |
+| `/mode` | `/mode <game\|creative>` | Switch between normal game mode and creative edit mode. (admin) | game, creative |
 | `/npcbuy` | `/npcbuy <npcId> <itemType> [quantity]` | Buy an item from a seller NPC. | — |
 | `/npcsell` | `/npcsell <npcId> <itemType> [quantity]` | Sell an item to a seller NPC. | — |
 | `/preferences` | `/preferences` | Opens the preferences panel. | — |

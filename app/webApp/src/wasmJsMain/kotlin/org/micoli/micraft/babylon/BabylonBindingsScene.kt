@@ -10,7 +10,7 @@ fun jsCreateScene(engine: JsAny): JsAny = js("new BABYLON.Scene(engine)")
 
 fun jsEngineRunRenderLoop(engine: JsAny, scene: JsAny): Unit =
     js(
-        "{ var _lr=0; engine.runRenderLoop(function(){ var now=Date.now(); if(now-_lr<14) return; _lr=now; var s=window.mcState.camState; if(s&&scene.activeCamera){var a=Math.min(1,(now-s.t)/16);scene.activeCamera.position.x=s.x0+(s.x1-s.x0)*a;scene.activeCamera.position.y=s.y0+(s.y1-s.y0)*a;scene.activeCamera.position.z=s.z0+(s.z1-s.z0)*a;} scene.render(); }); }")
+        "{ var _lr=0; engine.runRenderLoop(function(){ var now=Date.now(); if(now-_lr<14) return; _lr=now; var s=window.mcState.camState; if(s&&scene.activeCamera&&window.mcState.editMode!=='creative'){var a=Math.min(1,(now-s.t)/16);scene.activeCamera.position.x=s.x0+(s.x1-s.x0)*a;scene.activeCamera.position.y=s.y0+(s.y1-s.y0)*a;scene.activeCamera.position.z=s.z0+(s.z1-s.z0)*a;} scene.render(); }); }")
 
 fun jsSetupResize(engine: JsAny): Unit =
     js("window.addEventListener('resize', function(){ engine.resize(); })")

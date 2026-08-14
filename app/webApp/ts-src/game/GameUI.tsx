@@ -22,6 +22,7 @@ import {
 import { CharacterCreationScreen } from "../screens/CharacterCreationScreen";
 import { CharacterRPGCreationScreen } from "../screens/CharacterRPGCreationScreen";
 import { GameScreen } from "../screens/GameScreen";
+import { enterCreativeMode, exitCreativeMode } from "./lib/creativeMode";
 
 const initial: UiState = {
   hud: null,
@@ -77,6 +78,7 @@ const initial: UiState = {
   questTrackerVisible: false,
   activeEffects: [],
   godMode: false,
+  editMode: "game",
   wallet: 0,
   mailboxOpen: false,
   mails: [],
@@ -678,6 +680,16 @@ export function GameUI() {
     window.mc.playerRespawned = (json: string) => dispatch("player_respawned", { data: JSON.parse(json) });
     window.mc.xpGained = (json: string) => dispatch("xp_gained", { data: JSON.parse(json) });
     window.mc.godModeUpdate = (enabled: boolean) => dispatch("god_mode_update", { enabled });
+    window.mc.editModeUpdate = (mode: "game" | "creative") => {
+      window.mcState.editMode = mode;
+      try {
+        if (mode === "creative") enterCreativeMode();
+        else exitCreativeMode();
+      } catch (e) {
+        console.error("editModeUpdate: camera swap failed", e);
+      }
+      dispatch("edit_mode_update", { mode });
+    };
     window.mc.walletUpdate = (copper: number) => dispatch("wallet_update", { copper: Number(copper) });
     window.mc.questSync = (json: string) => {
       try {

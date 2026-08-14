@@ -93,6 +93,7 @@ import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.ChannelSubscription
+import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
@@ -1335,6 +1336,9 @@ class GameLoop(
                 ServerMessage.InstanceZonesSync(instanceRegistry.all().map { it.toProto() }))
         }
         if (session.state.godMode) session.send(ServerMessage.GodModeUpdate(true))
+        if (session.state.editMode == EditMode.CREATIVE) {
+            session.send(ServerMessage.EditModeUpdate(session.state.editMode))
+        }
         chatService.onPlayerConnect(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         session.send(ServerMessage.WalletUpdate(session.state.wallet))
@@ -1432,6 +1436,11 @@ class GameLoop(
                                             mailManager?.handleDelete(session, msg.mailId)
                                         is ClientMessage.ClaimMailAttachments ->
                                             mailManager?.handleClaimAttachments(session, msg.mailId)
+                                        is ClientMessage.CreativeCameraFocus -> {
+                                            if (session.state.editMode == EditMode.CREATIVE) {
+                                                session.creativeFocusPos = msg.x to msg.z
+                                            }
+                                        }
                                         else -> session.intents.trySend(msg)
                                     }
                                 }

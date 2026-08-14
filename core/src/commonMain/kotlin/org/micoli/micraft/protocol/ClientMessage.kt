@@ -152,4 +152,10 @@ sealed class ClientMessage {
     @ProtoId(25)
     @Serializable
     data class ClaimMailAttachments(val mailId: String) : ClientMessage()
+
+    // Sent periodically by the client while in creative mode so the server streams chunks
+    // around the free orbit camera instead of the (stationary) player position.
+    @ProtoId(26)
+    @Serializable
+    data class CreativeCameraFocus(val x: Float, val z: Float) : ClientMessage()
 }

@@ -39,11 +39,13 @@ class ChunkStreamer(private val world: WorldState) {
     }
 
     fun checkAndRequest(session: PlayerSession) {
-        updateVelocity(session)
+        val focus = session.creativeFocusPos
+        val (fx, fz) = focus ?: (session.state.pos.x to session.state.pos.z)
+        if (focus == null) updateVelocity(session)
         val newCp =
             ChunkPos(
-                Math.floorDiv(session.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE),
-                Math.floorDiv(session.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE),
+                Math.floorDiv(fx.toInt(), WorldConstants.CHUNK_SIZE),
+                Math.floorDiv(fz.toInt(), WorldConstants.CHUNK_SIZE),
             )
         val posChanged = newCp != session.lastChunkPos
         if (!posChanged && session.inFlightChunks.size >= MAX_IN_FLIGHT) return
@@ -101,6 +103,12 @@ class ChunkStreamer(private val world: WorldState) {
     }
 
     private fun predictedCenter(session: PlayerSession): Pair<Int, Int> {
+        val focus = session.creativeFocusPos
+        if (focus != null) {
+            val (fx, fz) = focus
+            return Math.floorDiv(fx.toInt(), WorldConstants.CHUNK_SIZE) to
+                Math.floorDiv(fz.toInt(), WorldConstants.CHUNK_SIZE)
+        }
         val pos = session.state.pos
         val (vx, vz) = smoothedVelocities[session.id] ?: (0f to 0f)
         val predX = pos.x + vx * LOOKAHEAD_TICKS

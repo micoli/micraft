@@ -14,6 +14,7 @@ import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
+import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.ClientMessage
@@ -53,9 +54,10 @@ class BlockBreaker(
                             (rawBp.z + 0.5f - session.state.pos.z))
                     .toDouble())
         val hasEntity = world.hasEntityAt(rawBp.x, rawBp.y, rawBp.z)
+        val creative = session.state.editMode == EditMode.CREATIVE
         blockBreakerLog.debug(
             "BlockBreakStart pos={} block={} dist={}", rawBp, block, "%.2f".format(dist))
-        if (dist <= MAX_INTERACTION_DISTANCE &&
+        if ((creative || dist <= MAX_INTERACTION_DISTANCE) &&
             (hasEntity || (block.hardness > 0f && block.hardness != Float.MAX_VALUE))) {
             // Resolve satellite → master so blockProgress key is consistent
             val masterPos = world.getEntityMasterWorldPos(rawBp.x, rawBp.y, rawBp.z)
@@ -136,7 +138,8 @@ class BlockBreaker(
             current = entry
         }
         current.ticks++
-        if (current.ticks.toFloat() >= block.hardness) {
+        val instantBreak = session.state.editMode == EditMode.CREATIVE
+        if (instantBreak || current.ticks.toFloat() >= block.hardness) {
             val result = breakAt(bt, session.breakTargetXOffset, session.breakTargetZOffset, world)
             broadcast(
                 ServerMessage.WorldUpdate(

@@ -10,6 +10,7 @@ import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ItemRegistry
+import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldConstants
@@ -645,6 +646,36 @@ class LocalPlayerController(
                 event.startsWith("spell:") -> {
                     val spellId = event.removePrefix("spell:")
                     outMessages.trySend(ClientMessage.UseSpell(spellId = spellId))
+                }
+                event.startsWith("creative_place:") -> {
+                    val parts = event.removePrefix("creative_place:").split(",")
+                    val x = parts.getOrNull(0)?.toIntOrNull()
+                    val y = parts.getOrNull(1)?.toIntOrNull()
+                    val z = parts.getOrNull(2)?.toIntOrNull()
+                    val itemId = parts.getOrNull(3)
+                    val rotation = parts.getOrNull(4)?.toIntOrNull() ?: 0
+                    if (x != null && y != null && z != null && !itemId.isNullOrEmpty()) {
+                        outMessages.trySend(
+                            ClientMessage.BlockPlace(
+                                BlockPos(x, y, z), ItemType(itemId), rotation.toByte()))
+                    }
+                }
+                event.startsWith("creative_focus:") -> {
+                    val parts = event.removePrefix("creative_focus:").split(",")
+                    val x = parts.getOrNull(0)?.toFloatOrNull()
+                    val z = parts.getOrNull(1)?.toFloatOrNull()
+                    if (x != null && z != null) {
+                        outMessages.trySend(ClientMessage.CreativeCameraFocus(x, z))
+                    }
+                }
+                event.startsWith("creative_break:") -> {
+                    val parts = event.removePrefix("creative_break:").split(",")
+                    val x = parts.getOrNull(0)?.toIntOrNull()
+                    val y = parts.getOrNull(1)?.toIntOrNull()
+                    val z = parts.getOrNull(2)?.toIntOrNull()
+                    if (x != null && y != null && z != null) {
+                        outMessages.trySend(ClientMessage.BlockBreakStart(BlockPos(x, y, z)))
+                    }
                 }
             }
         }

@@ -12,6 +12,7 @@ import org.micoli.micraft.game.world.WeatherZoneInfo
 import org.micoli.micraft.game.world.WorldItem
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.ChannelSubscription
+import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
@@ -339,6 +340,8 @@ sealed class ServerMessage {
     ) : ServerMessage()
 
     @ProtoId(47) @Serializable data class GodModeUpdate(val enabled: Boolean) : ServerMessage()
+
+    @ProtoId(59) @Serializable data class EditModeUpdate(val mode: EditMode) : ServerMessage()
 
     @ProtoId(48) @Serializable data class WalletUpdate(val copper: Long) : ServerMessage()
 

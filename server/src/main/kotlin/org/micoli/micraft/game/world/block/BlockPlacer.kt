@@ -18,6 +18,7 @@ import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationManager
+import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.BlockEntityProto
@@ -52,8 +53,9 @@ class BlockPlacer(
             return
         }
 
+        val creative = session.state.editMode == EditMode.CREATIVE
         val count = session.inventory[itemType] ?: 0
-        if (count <= 0) {
+        if (!creative && count <= 0) {
             blockPlacerLog.debug("BlockPlace rejected: no {} in inventory", itemType)
             return
         }
@@ -66,7 +68,7 @@ class BlockPlacer(
                         (rawPos.z + 0.5f - session.state.pos.z) *
                             (rawPos.z + 0.5f - session.state.pos.z))
                     .toDouble())
-        if (dist > MAX_INTERACTION_DISTANCE) {
+        if (!creative && dist > MAX_INTERACTION_DISTANCE) {
             blockPlacerLog.debug(
                 "BlockPlace rejected: dist={} > {}", "%.2f".format(dist), MAX_INTERACTION_DISTANCE)
             return
@@ -93,10 +95,12 @@ class BlockPlacer(
         }
         vegetationManager?.tryActivate(result.pos, blockType)
 
-        val remaining = count - 1
-        if (remaining <= 0) session.inventory.remove(itemType)
-        else session.inventory[itemType] = remaining
-        session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
+        if (!creative) {
+            val remaining = count - 1
+            if (remaining <= 0) session.inventory.remove(itemType)
+            else session.inventory[itemType] = remaining
+            session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
+        }
 
         session.actionHistory.addLast(WorldActionRecord.Place(result.pos, itemType))
         if (session.actionHistory.size > MAX_ACTION_HISTORY) session.actionHistory.removeFirst()

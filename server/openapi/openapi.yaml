@@ -3587,6 +3587,8 @@ components:
         dynamicFogEnabled:
           type: boolean
           title: Boolean
+        editMode:
+          $ref: "#/components/schemas/org.micoli.micraft.player.EditMode"
         email:
           type: string
           title: String
@@ -3707,6 +3709,7 @@ components:
       - chunkDebugVisible
       - disabledCommands
       - dynamicFogEnabled
+      - editMode
       - email
       - fieldOfView
       - flying
@@ -3900,6 +3903,12 @@ components:
       - "y"
       - z
       title: Vec3
+    org.micoli.micraft.player.EditMode:
+      type: string
+      enum:
+      - GAME
+      - CREATIVE
+      title: EditMode
     org.micoli.micraft.ui.GameLayout:
       type: object
       properties:

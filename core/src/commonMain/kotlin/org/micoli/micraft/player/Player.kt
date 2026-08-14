@@ -55,6 +55,7 @@ data class PlayerState(
     val characterData: CharacterData? = null,
     val rpgOptOut: Boolean = true,
     val godMode: Boolean = false,
+    val editMode: EditMode = EditMode.GAME,
     val lightBoostEnabled: Boolean = false,
     val email: String = "",
     val zoneLevel: Int = 0,

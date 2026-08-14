@@ -77,6 +77,7 @@ export interface UiState {
   questTrackerVisible: boolean;
   activeEffects: ActiveEffect[];
   godMode: boolean;
+  editMode: "game" | "creative";
   wallet: number;
   mailboxOpen: boolean;
   mails: MailData[];
@@ -284,6 +285,10 @@ const gameRegistry = {
   god_mode_update: (state: UiState, payload: { enabled: boolean }) => ({
     ...state,
     godMode: payload.enabled,
+  }),
+  edit_mode_update: (state: UiState, payload: { mode: "game" | "creative" }) => ({
+    ...state,
+    editMode: payload.mode,
   }),
   wallet_update: (state: UiState, payload: { copper: number }) => ({
     ...state,

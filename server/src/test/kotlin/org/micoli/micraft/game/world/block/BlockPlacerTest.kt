@@ -15,6 +15,7 @@ import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
@@ -52,6 +53,30 @@ class BlockPlacerTest {
         placer.handlePlace(
             session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("COBBLESTONE")))
         assertEquals(BlockType.STONE, world.getBlock(8, 7, 8))
+    }
+
+    @Test
+    fun place_creative_placesWithoutInventory() = runBlocking {
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.state = session.state.copy(editMode = EditMode.CREATIVE)
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("COBBLESTONE")))
+        assertEquals(BlockType.STONE, world.getBlock(8, 7, 8))
+    }
+
+    @Test
+    fun place_creative_doesNotMutateInventory() = runBlocking {
+        val world = testWorld()
+        val placer = placer(world = world)
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.state = session.state.copy(editMode = EditMode.CREATIVE)
+        session.inventory[ItemType("COBBLESTONE")] = 1
+        placer.handlePlace(
+            session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), ItemType("COBBLESTONE")))
+        assertEquals(1, session.inventory[ItemType("COBBLESTONE")])
+        assertTrue(session.sent.none { it is ServerMessage.InventoryUpdate })
     }
 
     @Test

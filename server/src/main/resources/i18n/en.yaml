@@ -226,6 +226,12 @@ god:
     on: "God mode enabled. You are immune to damage."
     off: "God mode disabled."
 
+mode:
+  server:
+    game: "Switched to game mode."
+    creative: "Switched to creative mode. Unlimited blocks, free camera."
+    usage: "Usage: /mode <game|creative>"
+
 explode:
   server:
     usage: "Usage: /explode <radius>"

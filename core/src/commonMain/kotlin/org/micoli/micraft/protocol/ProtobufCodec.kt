@@ -159,6 +159,7 @@ object ServerMessageCodec {
             serverSingleton(ServerMessage.OpenMailbox), // 53
             serverEntry<ServerMessage.AdminZoneWireframe>(), // 57
             serverEntry<ServerMessage.InstanceZonesSync>(), // 58
+            serverEntry<ServerMessage.EditModeUpdate>(), // 59
         )
 
     fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)
@@ -195,6 +196,7 @@ object ClientMessageCodec {
             clientEntry<ClientMessage.MarkMailSeen>(), // 23
             clientEntry<ClientMessage.DeleteMail>(), // 24
             clientEntry<ClientMessage.ClaimMailAttachments>(), // 25
+            clientEntry<ClientMessage.CreativeCameraFocus>(), // 26
         )
 
     fun encode(msg: ClientMessage): ByteArray = encodeWith(registry, msg)

@@ -41,6 +41,7 @@ open class PlayerSession(
     val loadedChunks: MutableSet<ChunkPos> = Collections.newSetFromMap(ConcurrentHashMap())
     val inFlightChunks: MutableSet<ChunkPos> = Collections.newSetFromMap(ConcurrentHashMap())
     @Volatile var lastChunkPos: ChunkPos? = null
+    @Volatile var creativeFocusPos: Pair<Float, Float>? = null
     @Volatile var lastZonePos: Pair<Int, Int>? = null
     @Volatile var lastInstanceZoneId: String? = null
     @Volatile var breakTarget: BlockPos? = null
