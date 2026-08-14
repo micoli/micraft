@@ -150,6 +150,6 @@ export const ComposeWithInventory: Story = {
     const body = within(document.body);
     const newBtn = body.getByText(/\+ New/i);
     newBtn.click();
-    await expect(body.getByText(/Inventaire/i)).toBeVisible();
+    await expect(await body.findByText(/Inventaire/i)).toBeVisible();
   },
 };
