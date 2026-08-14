@@ -219,27 +219,16 @@ export function VoxelEditorSidebar({
         className="absolute left-0 top-0 bottom-0 w-1.5 -translate-x-1/2 cursor-col-resize z-10 hover:bg-[#3C50E0]/50"
       />
       <div className="relative top-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none items-center justify-center">
-        {(
-          [
-            { key: "place", label: modKeys.shift || mode === "break" ? "Break" : "Place", hint: "⇧" },
-            { key: "zoom", label: "Zoom", hint: "⌃" },
-            { key: "pan", label: "Pan", hint: "⌥" },
-            { key: "rotate", label: "Rotate", hint: "⌘" },
-          ] as const
-        ).map((m) => (
-          <DragMode
-            key={m.key}
-            m={m}
-            // Select mode has no place/break behavior — clicks pick voxels for selection instead —
-            // so the "Place/Break" chip must not read active alongside the "Select" chip below,
-            // even though activeDragMode defaults to "place" whenever no camera modifier is held.
-            activeDragMode={mode === "select" && activeDragMode === "place" ? null : activeDragMode}
-            // Clicking "Place/Break" while in select mode leaves select, mirroring onToggleSelect's
-            // own select<->place toggle. Only wired for the "place" chip — zoom/pan/rotate are
-            // camera-modifier indicators with no mode of their own to switch to.
-            onClick={m.key === "place" && mode === "select" ? onToggleSelect : undefined}
-          />
-        ))}
+        <DragMode
+          m={{ key: "place", label: modKeys.shift || mode === "break" ? "Break" : "Place", hint: "⇧" }}
+          // Select mode has no place/break behavior — clicks pick voxels for selection instead —
+          // so the "Place/Break" chip must not read active alongside the "Select" chip below,
+          // even though activeDragMode defaults to "place" whenever no camera modifier is held.
+          activeDragMode={mode === "select" && activeDragMode === "place" ? null : activeDragMode}
+          // Clicking "Place/Break" while in select mode leaves select, mirroring onToggleSelect's
+          // own select<->place toggle.
+          onClick={mode === "select" ? onToggleSelect : undefined}
+        />
         <button
           onClick={onToggleSelect}
           className={`px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto ${

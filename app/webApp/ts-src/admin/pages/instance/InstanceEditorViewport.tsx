@@ -34,6 +34,7 @@ import { useModifierDragMode } from "../shared/voxelEditor/useModifierDragMode";
 import { useActionError } from "../shared/voxelEditor/useActionError";
 import { makeUndoRedoController, type UndoEntryBase, type UndoGroup } from "../shared/voxelEditor/undoRedoStack";
 import { VoxelEditorSidebar, type SelectionField } from "../shared/voxelEditor/VoxelEditorSidebar";
+import { ViewportCameraHud } from "../shared/voxelEditor/ViewportCameraHud";
 import { connectEditSocket } from "../shared/voxelEditor/editSocket";
 import {
   computeSelectionVoxels,
@@ -1160,6 +1161,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   return (
     <div className="flex-1 flex overflow-hidden">
       <div className="flex-[4] relative">
+        <ViewportCameraHud activeDragMode={activeDragMode} />
         {actionError && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 max-w-[80%] px-3 py-1.5 rounded bg-red-900/90 text-red-100 text-xs z-10 pointer-events-none">
             {actionError}
