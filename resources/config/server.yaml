@@ -5,6 +5,7 @@ world:
   viewRadius: 3
   forwardViewRadius: 7
   waterLevel: 65
+  impostorSkirtDepth: 12
 player:
   heightStanding: 1.8
   heightSneaking: 1.5
@@ -25,7 +26,7 @@ chunks:
   transport: websocket
   httpWorkers: 4
 network:
-  messageEncoder: json
+  messageEncoder: protobuf
 game:
   tickMs: 50
   gravity: -20.0

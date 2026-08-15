@@ -130,16 +130,33 @@ class SceneMesher(
     // Port of ChunkManager.renderRow, minus the BlockEntity/fractional-plate handling (Scene has
     // no entity system) and with the chunk-local `s` bound split into independent width/depth,
     // and WorldConstants.WORLD_MAX_Y replaced by the passed-in height. Loop-order/greedy-merge
-    // logic (top/bottom/east/west merge runs along Z; south/north stay one quad per block) is
+    // logic (east/west merge runs along Z; south/north merge runs along X, one slot per Z since
+    // X is the outer loop; top/bottom get a full 2D rectangle merge — see emitGreedyRects) is
     // otherwise identical.
     private fun renderRow(y: Int): Int {
         val hasStates = states.isNotEmpty()
         var faceCount = 0
-        val mergeActive = BooleanArray(4)
-        val mergeStartZ = IntArray(4)
-        val mergeLen = IntArray(4)
-        val mergeFaceMat = IntArray(4)
-        val mergeAo = IntArray(4)
+        val mergeActive = BooleanArray(2)
+        val mergeStartZ = IntArray(2)
+        val mergeLen = IntArray(2)
+        val mergeFaceMat = IntArray(2)
+        val mergeAo = IntArray(2)
+        val mergeActiveS = BooleanArray(depth)
+        val mergeStartXS = IntArray(depth)
+        val mergeLenS = IntArray(depth)
+        val mergeFaceMatS = IntArray(depth)
+        val mergeAoS = IntArray(depth)
+        val mergeActiveN = BooleanArray(depth)
+        val mergeStartXN = IntArray(depth)
+        val mergeLenN = IntArray(depth)
+        val mergeFaceMatN = IntArray(depth)
+        val mergeAoN = IntArray(depth)
+        val topActive = BooleanArray(width * depth)
+        val topFaceMat = IntArray(width * depth)
+        val topAo = IntArray(width * depth)
+        val botActive = BooleanArray(width * depth)
+        val botFaceMat = IntArray(width * depth)
+        val botAo = IntArray(width * depth)
         for (x in 0 until width) {
             val wx = x
             for (z in 0 until depth) {
@@ -167,6 +184,120 @@ class SceneMesher(
                     val faceMatV = t + 4
                     val aoV = computeFaceAO(x, y, z, 4) or colorBits
                     if (mergeEligible) {
+                        val mi = x * depth + z
+                        topActive[mi] = true
+                        topFaceMat[mi] = faceMatV
+                        topAo[mi] = aoV
+                    } else {
+                        jsChunkFaceAppend(wx, y, wz2, faceMatV, aoV)
+                    }
+                    faceCount++
+                }
+                // bottom (-Y)
+                val emitBottom =
+                    bypassCulling ||
+                        y <= 0 ||
+                        occludesByOrd[blocks[idx - depth].toInt() and 0xFF].toInt() == 0
+                if (emitBottom) {
+                    val faceMatV = t + 5
+                    val aoV = computeFaceAO(x, y, z, 5) or colorBits
+                    if (mergeEligible) {
+                        val mi = x * depth + z
+                        botActive[mi] = true
+                        botFaceMat[mi] = faceMatV
+                        botAo[mi] = aoV
+                    } else {
+                        jsChunkFaceAppend(wx, y, wz2, faceMatV, aoV)
+                    }
+                    faceCount++
+                }
+                // south (+Z) — not mergeable along Z (own fixed depth), mergeable along X
+                val emitSouth =
+                    bypassCulling ||
+                        z == depth - 1 ||
+                        occludesByOrd[blocks[idx + 1].toInt() and 0xFF].toInt() == 0
+                if (emitSouth) {
+                    val faceMatV = t + 0
+                    val aoV = computeFaceAO(x, y, z, 0) or colorBits
+                    if (mergeEligible) {
+                        if (mergeActiveS[z] &&
+                            mergeFaceMatS[z] == faceMatV &&
+                            mergeAoS[z] == aoV &&
+                            mergeStartXS[z] + mergeLenS[z] == x) {
+                            mergeLenS[z]++
+                        } else {
+                            flushMergeRunX(
+                                z,
+                                mergeActiveS,
+                                mergeStartXS,
+                                mergeLenS,
+                                mergeFaceMatS,
+                                mergeAoS,
+                                y)
+                            mergeActiveS[z] = true
+                            mergeStartXS[z] = x
+                            mergeLenS[z] = 1
+                            mergeFaceMatS[z] = faceMatV
+                            mergeAoS[z] = aoV
+                        }
+                    } else {
+                        flushMergeRunX(
+                            z, mergeActiveS, mergeStartXS, mergeLenS, mergeFaceMatS, mergeAoS, y)
+                        jsChunkFaceAppend(wx, y, wz2, faceMatV, aoV)
+                    }
+                    faceCount++
+                } else {
+                    flushMergeRunX(
+                        z, mergeActiveS, mergeStartXS, mergeLenS, mergeFaceMatS, mergeAoS, y)
+                }
+                // north (-Z)
+                val emitNorth =
+                    bypassCulling ||
+                        z == 0 ||
+                        occludesByOrd[blocks[idx - 1].toInt() and 0xFF].toInt() == 0
+                if (emitNorth) {
+                    val faceMatV = t + 1
+                    val aoV = computeFaceAO(x, y, z, 1) or colorBits
+                    if (mergeEligible) {
+                        if (mergeActiveN[z] &&
+                            mergeFaceMatN[z] == faceMatV &&
+                            mergeAoN[z] == aoV &&
+                            mergeStartXN[z] + mergeLenN[z] == x) {
+                            mergeLenN[z]++
+                        } else {
+                            flushMergeRunX(
+                                z,
+                                mergeActiveN,
+                                mergeStartXN,
+                                mergeLenN,
+                                mergeFaceMatN,
+                                mergeAoN,
+                                y)
+                            mergeActiveN[z] = true
+                            mergeStartXN[z] = x
+                            mergeLenN[z] = 1
+                            mergeFaceMatN[z] = faceMatV
+                            mergeAoN[z] = aoV
+                        }
+                    } else {
+                        flushMergeRunX(
+                            z, mergeActiveN, mergeStartXN, mergeLenN, mergeFaceMatN, mergeAoN, y)
+                        jsChunkFaceAppend(wx, y, wz2, faceMatV, aoV)
+                    }
+                    faceCount++
+                } else {
+                    flushMergeRunX(
+                        z, mergeActiveN, mergeStartXN, mergeLenN, mergeFaceMatN, mergeAoN, y)
+                }
+                // east (+X)
+                val emitEast =
+                    bypassCulling ||
+                        x == width - 1 ||
+                        occludesByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0
+                if (emitEast) {
+                    val faceMatV = t + 2
+                    val aoV = computeFaceAO(x, y, z, 2) or colorBits
+                    if (mergeEligible) {
                         if (mergeActive[0] &&
                             mergeFaceMat[0] == faceMatV &&
                             mergeAo[0] == aoV &&
@@ -191,14 +322,14 @@ class SceneMesher(
                     flushMergeRun(
                         0, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y)
                 }
-                // bottom (-Y)
-                val emitBottom =
+                // west (-X)
+                val emitWest =
                     bypassCulling ||
-                        y <= 0 ||
-                        occludesByOrd[blocks[idx - depth].toInt() and 0xFF].toInt() == 0
-                if (emitBottom) {
-                    val faceMatV = t + 5
-                    val aoV = computeFaceAO(x, y, z, 5) or colorBits
+                        x == 0 ||
+                        occludesByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0
+                if (emitWest) {
+                    val faceMatV = t + 3
+                    val aoV = computeFaceAO(x, y, z, 3) or colorBits
                     if (mergeEligible) {
                         if (mergeActive[1] &&
                             mergeFaceMat[1] == faceMatV &&
@@ -224,93 +355,64 @@ class SceneMesher(
                     flushMergeRun(
                         1, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y)
                 }
-                // south (+Z) — not mergeable via Z-adjacency, one quad per block
-                if (bypassCulling ||
-                    z == depth - 1 ||
-                    occludesByOrd[blocks[idx + 1].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFaceAppend(wx, y, wz2, t + 0, computeFaceAO(x, y, z, 0) or colorBits)
-                    faceCount++
-                }
-                // north (-Z)
-                if (bypassCulling ||
-                    z == 0 ||
-                    occludesByOrd[blocks[idx - 1].toInt() and 0xFF].toInt() == 0) {
-                    jsChunkFaceAppend(wx, y, wz2, t + 1, computeFaceAO(x, y, z, 1) or colorBits)
-                    faceCount++
-                }
-                // east (+X)
-                val emitEast =
-                    bypassCulling ||
-                        x == width - 1 ||
-                        occludesByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0
-                if (emitEast) {
-                    val faceMatV = t + 2
-                    val aoV = computeFaceAO(x, y, z, 2) or colorBits
-                    if (mergeEligible) {
-                        if (mergeActive[2] &&
-                            mergeFaceMat[2] == faceMatV &&
-                            mergeAo[2] == aoV &&
-                            mergeStartZ[2] + mergeLen[2] == z) {
-                            mergeLen[2]++
-                        } else {
-                            flushMergeRun(
-                                2, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y)
-                            mergeActive[2] = true
-                            mergeStartZ[2] = z
-                            mergeLen[2] = 1
-                            mergeFaceMat[2] = faceMatV
-                            mergeAo[2] = aoV
-                        }
-                    } else {
-                        flushMergeRun(
-                            2, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y)
-                        jsChunkFaceAppend(wx, y, wz2, faceMatV, aoV)
-                    }
-                    faceCount++
-                } else {
-                    flushMergeRun(
-                        2, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y)
-                }
-                // west (-X)
-                val emitWest =
-                    bypassCulling ||
-                        x == 0 ||
-                        occludesByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0
-                if (emitWest) {
-                    val faceMatV = t + 3
-                    val aoV = computeFaceAO(x, y, z, 3) or colorBits
-                    if (mergeEligible) {
-                        if (mergeActive[3] &&
-                            mergeFaceMat[3] == faceMatV &&
-                            mergeAo[3] == aoV &&
-                            mergeStartZ[3] + mergeLen[3] == z) {
-                            mergeLen[3]++
-                        } else {
-                            flushMergeRun(
-                                3, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y)
-                            mergeActive[3] = true
-                            mergeStartZ[3] = z
-                            mergeLen[3] = 1
-                            mergeFaceMat[3] = faceMatV
-                            mergeAo[3] = aoV
-                        }
-                    } else {
-                        flushMergeRun(
-                            3, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y)
-                        jsChunkFaceAppend(wx, y, wz2, faceMatV, aoV)
-                    }
-                    faceCount++
-                } else {
-                    flushMergeRun(
-                        3, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y)
-                }
             }
             flushMergeRun(0, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y)
             flushMergeRun(1, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y)
-            flushMergeRun(2, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y)
-            flushMergeRun(3, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y)
         }
+        for (z in 0 until depth) {
+            flushMergeRunX(z, mergeActiveS, mergeStartXS, mergeLenS, mergeFaceMatS, mergeAoS, y)
+            flushMergeRunX(z, mergeActiveN, mergeStartXN, mergeLenN, mergeFaceMatN, mergeAoN, y)
+        }
+        emitGreedyRects(topActive, topFaceMat, topAo, width, depth, y)
+        emitGreedyRects(botActive, botFaceMat, botAo, width, depth, y)
         return faceCount
+    }
+
+    // Port of ChunkManager.emitGreedyRects — see there for the algorithm note. Scene buffers
+    // aren't necessarily square (width != depth), so the mask is width×depth, not s×s.
+    private fun emitGreedyRects(
+        active: BooleanArray,
+        faceMatArr: IntArray,
+        aoArr: IntArray,
+        width: Int,
+        depth: Int,
+        y: Int,
+    ) {
+        val visited = BooleanArray(width * depth)
+        for (z in 0 until depth) {
+            for (x in 0 until width) {
+                val i = x * depth + z
+                if (!active[i] || visited[i]) continue
+                val fm = faceMatArr[i]
+                val ao = aoArr[i]
+                var w = 1
+                while (x + w < width) {
+                    val j = (x + w) * depth + z
+                    if (!active[j] || visited[j] || faceMatArr[j] != fm || aoArr[j] != ao) break
+                    w++
+                }
+                var h = 1
+                rows@ while (z + h < depth) {
+                    for (dx in 0 until w) {
+                        val j = (x + dx) * depth + (z + h)
+                        if (!active[j] || visited[j] || faceMatArr[j] != fm || aoArr[j] != ao) {
+                            break@rows
+                        }
+                    }
+                    h++
+                }
+                for (dz in 0 until h) {
+                    for (dx in 0 until w) {
+                        visited[(x + dx) * depth + (z + dz)] = true
+                    }
+                }
+                if (w == 1 && h == 1) {
+                    jsChunkFaceAppend(x, y, z, fm, ao)
+                } else {
+                    jsChunkFaceAppendRun2D(x, y, z, fm, ao, w, h)
+                }
+            }
+        }
     }
 
     private fun flushMergeRun(
@@ -328,9 +430,30 @@ class SceneMesher(
         if (len[idx] <= 1) {
             jsChunkFaceAppend(wx, y, wz, faceMatArr[idx], aoArr[idx])
         } else {
-            jsChunkFaceAppendRun(wx, y, wz, faceMatArr[idx], aoArr[idx], len[idx])
+            jsChunkFaceAppendRunZ(wx, y, wz, faceMatArr[idx], aoArr[idx], len[idx])
         }
         active[idx] = false
+    }
+
+    // Flushes a south/north X-run — see ChunkManager.flushMergeRunX (one slot per Z, since X is
+    // the outer loop here too).
+    private fun flushMergeRunX(
+        z: Int,
+        active: BooleanArray,
+        startX: IntArray,
+        len: IntArray,
+        faceMatArr: IntArray,
+        aoArr: IntArray,
+        y: Int,
+    ) {
+        if (!active[z]) return
+        val wx = startX[z]
+        if (len[z] <= 1) {
+            jsChunkFaceAppend(wx, y, z, faceMatArr[z], aoArr[z])
+        } else {
+            jsChunkFaceAppendRunX(wx, y, z, faceMatArr[z], aoArr[z], len[z])
+        }
+        active[z] = false
     }
 
     // Port of ChunkManager.computeFaceAO — x bound is width, z bound is depth (chunk version uses

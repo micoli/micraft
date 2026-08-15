@@ -31,6 +31,8 @@ data class WorldSection(
     @EncodeDefault(ALWAYS) val viewRadius: Int = 3,
     @EncodeDefault(ALWAYS) val forwardViewRadius: Int = 7,
     @EncodeDefault(ALWAYS) val waterLevel: Int = 65,
+    /** See WorldConstants.IMPOSTOR_SKIRT_DEPTH. */
+    @EncodeDefault(ALWAYS) val impostorSkirtDepth: Int = 12,
 )
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -135,6 +137,7 @@ fun applyServerConfig(config: ServerConfig) {
         WorldConstants.VIEW_RADIUS = viewRadius
         WorldConstants.FORWARD_VIEW_RADIUS = forwardViewRadius
         WorldConstants.WATER_LEVEL = waterLevel
+        WorldConstants.IMPOSTOR_SKIRT_DEPTH = impostorSkirtDepth
     }
     with(config.player) {
         PlayerConstants.HEIGHT_STANDING = heightStanding

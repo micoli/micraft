@@ -44,6 +44,19 @@ void main() {
 }
 `;
 
+// Flat unlit vertex-color quad — used for far-chunk impostor meshes (see chunkBuilder.ts's
+// buildChunkImpostorMesh): no texture, vColor carries the actual final RGB directly (unlike
+// BLOCK_FRAG/BLOCK_GHOST_FRAG where vColor is an AO brightness scalar multiplied into a tint).
+export const IMPOSTOR_FRAG = `
+precision highp float;
+
+varying vec4 vColor;
+
+void main() {
+  gl_FragColor = vec4(vColor.rgb, 1.0);
+}
+`;
+
 export const BLOCK_FRAG = `
 precision highp float;
 

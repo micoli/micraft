@@ -24,6 +24,9 @@
         },
         "waterLevel": {
           "type": "integer"
+        },
+        "impostorSkirtDepth": {
+          "type": "integer"
         }
       }
     },

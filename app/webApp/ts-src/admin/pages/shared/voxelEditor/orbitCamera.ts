@@ -18,6 +18,7 @@ export function createOrbitCamera(
   cameraStorageKey: string,
   center: { x: number; y: number; z: number },
   span: number,
+  keepSavedTarget = true,
 ): InstanceType<typeof BABYLON.ArcRotateCamera> {
   const savedCamera = loadCameraState(cameraStorageKey);
   const camera = new B.ArcRotateCamera(
@@ -25,7 +26,7 @@ export function createOrbitCamera(
     savedCamera?.alpha ?? -Math.PI * 0.35,
     savedCamera?.beta ?? Math.PI / 3,
     savedCamera?.radius ?? span * 1.8,
-    savedCamera
+    savedCamera && keepSavedTarget
       ? new B.Vector3(savedCamera.targetX, savedCamera.targetY, savedCamera.targetZ)
       : new B.Vector3(center.x, center.y, center.z),
     scene,

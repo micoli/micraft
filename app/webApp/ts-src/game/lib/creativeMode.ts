@@ -36,7 +36,7 @@ export function enterCreativeMode(): void {
 
   const camState = window.mcState.camState;
   const center = camState ? { x: camState.x1, y: camState.y1, z: camState.z1 } : { x: 8, y: 10, z: 8 };
-  orbitCamera = createOrbitCamera(BABYLON, scene, canvas, cameraStorageKey(), center, 10);
+  orbitCamera = createOrbitCamera(BABYLON, scene, canvas, cameraStorageKey(), center, 10, false);
   scene.activeCamera = orbitCamera;
 
   let lastSave = 0;

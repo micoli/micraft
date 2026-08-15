@@ -115,12 +115,20 @@ class BlockRegistryLoader(
 
     fun load(): Map<BlockType, BlockDefinition> {
         val result =
-            toBlockTypes(generateFromResources()).mapValues { (_, entry) ->
+            toBlockTypes(generateFromResources()).mapValues { (type, entry) ->
+                val (topColor, sideColor) =
+                    BlockFaceColorSampler.sample(
+                        resourcesBlocksPath,
+                        entry.modelElement.ifBlank { type.id },
+                        entry.minimapColor,
+                    )
                 BlockDefinition(
                     hardness = entry.hardness,
                     solid = entry.solid,
                     transparent = entry.transparent,
                     minimapColor = entry.minimapColor,
+                    topColor = topColor,
+                    sideColor = sideColor,
                     modelElement = entry.modelElement,
                     gltfModel = entry.gltfModel,
                     liquid = entry.liquid,

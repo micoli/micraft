@@ -11,6 +11,13 @@ object WorldConstants {
         get() = FORWARD_VIEW_RADIUS
 
     var WATER_LEVEL = 65
+
+    /**
+     * Fixed depth (blocks) each far-chunk impostor column's perimeter walls extend below its own
+     * top height — see buildChunkImpostorMesh (chunkBuilder.ts). Guarantees a fully skirted,
+     * gap-free silhouette from any nearby angle without needing per-neighbor height comparisons.
+     */
+    var IMPOSTOR_SKIRT_DEPTH = 12
 }
 
 object PlayerConstants {

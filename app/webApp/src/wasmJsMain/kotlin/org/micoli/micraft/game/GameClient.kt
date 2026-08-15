@@ -517,6 +517,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         httpChunkFetcher?.trigger(currentPlayerCx, currentPlayerCz, currentYaw)
                         localController.updateFromServer(s) { cx, cz ->
                             chunkManager.unloadDistantChunks(cx, cz)
+                            chunkManager.upgradeNearImpostors(cx, cz)
                         }
                     } else {
                         remotePlayerManager.updateFromServer(s)
@@ -625,6 +626,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         solid = info.solid,
                                         transparent = info.transparent,
                                         minimapColor = info.minimapColor,
+                                        topColor = info.topColor,
+                                        sideColor = info.sideColor,
                                         modelElement = info.modelElement,
                                         gltfModel = info.gltfModel,
                                         liquid = info.liquid,
@@ -657,6 +660,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                 )
                         }
                     ItemRegistry.load(itemDefs)
+                    WorldConstants.IMPOSTOR_SKIRT_DEPTH = msg.impostorSkirtDepth
+                    jsSetImpostorSkirtDepth(msg.impostorSkirtDepth)
                     jsSetPlainColors(Json.encodeToString(msg.plainColors))
                     jsSetBlockRegistry(Json.encodeToString(msg.blocks))
                     jsSetItemRegistry(Json.encodeToString(msg.items))

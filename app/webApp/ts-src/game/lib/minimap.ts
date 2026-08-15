@@ -14,6 +14,10 @@ const ZOOM_RADII = [0, 1, 2, 3]; // chunk radius: 1x1, 3x3 (default), 5x5, 7x7
 
 // RGB base colors per BlockType ordinal — populated from RegistrySync
 let minimapColors: [number, number, number][] = [];
+// Mean top/side texture colors per BlockType ordinal — precomputed server-side
+// (BlockFaceColorSampler), used by chunkBuilder.ts's far-chunk impostor mesh.
+let topColors: [number, number, number][] = [];
+let sideColors: [number, number, number][] = [];
 
 let zoomIndex = 1;
 const chunkSurfaces: Record<string, { topY: number[]; topBlock: number[] }> = {};
@@ -207,8 +211,34 @@ const WEATHER_LABELS: Record<string, string> = {
   FOG: "🌫",
 };
 
-export function setMinimapColors(blocks: { minimapColor: [number, number, number] }[]): void {
+export function setMinimapColors(
+  blocks: {
+    minimapColor: [number, number, number];
+    topColor?: [number, number, number];
+    sideColor?: [number, number, number];
+  }[],
+): void {
   minimapColors = blocks.map((b) => b.minimapColor ?? [128, 128, 128]);
+  topColors = blocks.map((b) => b.topColor ?? b.minimapColor ?? [128, 128, 128]);
+  sideColors = blocks.map((b) => b.sideColor ?? b.topColor ?? b.minimapColor ?? [128, 128, 128]);
+}
+
+// Exposed for chunkBuilder.ts's far-chunk impostor mesh — reuses the exact per-column surface
+// data and palette already pushed here for the minimap, instead of re-deriving it.
+export function getChunkSurface(cx: number, cz: number): { topY: number[]; topBlock: number[] } | undefined {
+  return chunkSurfaces[`${cx},${cz}`];
+}
+
+export function getMinimapColorRGB(ord: number): [number, number, number] {
+  return minimapColors[ord] ?? [128, 128, 128];
+}
+
+export function getTopColorRGB(ord: number): [number, number, number] {
+  return topColors[ord] ?? getMinimapColorRGB(ord);
+}
+
+export function getSideColorRGB(ord: number): [number, number, number] {
+  return sideColors[ord] ?? getMinimapColorRGB(ord);
 }
 
 export function registerMinimap(): Pick<

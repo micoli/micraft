@@ -161,6 +161,8 @@ sealed class ServerMessage {
         val npcDefinitions: Map<String, NpcCodexInfo> = emptyMap(),
         val npcWalkBones: Map<String, Map<String, String>> = emptyMap(),
         val plainColors: List<PlainColorInfo> = emptyList(),
+        /** See WorldConstants.IMPOSTOR_SKIRT_DEPTH. */
+        val impostorSkirtDepth: Int = 12,
     ) : ServerMessage()
 
     @ProtoId(20) @Serializable data class NpcSpawned(val npc: NpcState) : ServerMessage()
@@ -341,7 +343,7 @@ sealed class ServerMessage {
 
     @ProtoId(47) @Serializable data class GodModeUpdate(val enabled: Boolean) : ServerMessage()
 
-    @ProtoId(59) @Serializable data class EditModeUpdate(val mode: EditMode) : ServerMessage()
+    @ProtoId(56) @Serializable data class EditModeUpdate(val mode: EditMode) : ServerMessage()
 
     @ProtoId(48) @Serializable data class WalletUpdate(val copper: Long) : ServerMessage()
 
@@ -355,14 +357,14 @@ sealed class ServerMessage {
 
     @ProtoId(53) @Serializable object OpenMailbox : ServerMessage()
 
-    @ProtoId(57)
+    @ProtoId(54)
     @Serializable
     data class AdminZoneWireframe(val zone: InstanceZoneProto?) : ServerMessage()
 
     // Sent to admins on connect and whenever an instance zone is created/renamed/deleted/resized,
     // so the minimap can outline every zone regardless of whether the player is standing inside
     // one — unlike AdminZoneWireframe, which only ever carries the single zone the player is in.
-    @ProtoId(58)
+    @ProtoId(55)
     @Serializable
     data class InstanceZonesSync(val zones: List<InstanceZoneProto>) : ServerMessage()
 }
@@ -394,6 +396,8 @@ data class BlockInfo(
     val heightFraction: Float = 1.0f,
     val plainColorable: Boolean = false,
     val isCubic: Boolean = true,
+    val topColor: List<Int> = minimapColor,
+    val sideColor: List<Int> = minimapColor,
 )
 
 /** Palette entry; its position in [ServerMessage.RegistrySync.plainColors] is colorIndex - 1. */

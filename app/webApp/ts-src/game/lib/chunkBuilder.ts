@@ -7,9 +7,10 @@ import type {
   AbstractMesh,
   TransformNode,
 } from "@babylonjs/core";
-import { BLOCK_VERT, BLOCK_GHOST_FRAG } from "./block";
+import { BLOCK_VERT, BLOCK_GHOST_FRAG, IMPOSTOR_FRAG } from "./block";
 import { plainMatKey } from "./blockDefs";
 import { WHITE_PIXEL_URL } from "./materials/whitePixel";
+import { getChunkSurface, getTopColorRGB, getSideColorRGB } from "./minimap";
 
 const MC_NORMS = [
   [0, 0, 1], // 0 south
@@ -20,6 +21,12 @@ const MC_NORMS = [
   [0, -1, 0], // 5 bottom
 ];
 const FACE_SHADES = [0.88, 0.88, 0.75, 0.75, 1.0, 0.65];
+
+// Decorations (flowers/weeds/trees GLTF instances) are only spawned for chunks within this
+// radius of the viewer — cheap way to cut draw calls at VIEW_RADIUS=2 without touching terrain,
+// which stays fully meshed. Terrain chunks farther out keep their blocks, just no foliage on top.
+const DECORATION_RADIUS_CHUNKS = 1;
+const CHUNK_SIZE_BLOCKS = 16;
 
 // For rotation r (CW quarters), which SOURCE face provides the texture for display face fd?
 // Horizontal faces 0=south,1=north,2=east,3=west rotate; top/bottom stay.
@@ -309,40 +316,39 @@ function emitCrossSprite(wx: number, wy: number, wz: number, g: FaceGroup, uv: F
 }
 
 // --- Greedy-merge stretch (runLen > 1 runs from ChunkManager.renderRow) ---
-// Only ever applied to top/bottom/east/west faces of simple-cube blocks (see
-// mergeableByOrd in Kotlin) — always merged along local Z (index 2 of a vert triple),
-// regardless of which of those 4 directions it is, per vertsFromElement's layout.
-// Rebuilds a stretched copy each call rather than mutating faceTable's cached arrays,
-// which are shared across every unmerged face of that faceMat.
+// Applied to simple-cube blocks (see mergeableByOrd in Kotlin), stretched along one local
+// vert axis: top/bottom/east/west merge along world Z (local vert index 2, per
+// vertsFromElement's layout), south/north merge along world X (local vert index 0) since Z is
+// their fixed face-normal depth instead. Rebuilds a stretched copy each call rather than
+// mutating faceTable's cached arrays, which are shared across every unmerged face of that
+// faceMat.
 
-function stretchVertsZ(verts: Float32Array, runLen: number): Float32Array {
-  const r = new Float32Array(12);
+function stretchVertsAxis(verts: Float32Array, runLen: number, axis: number): Float32Array {
+  const r = new Float32Array(verts);
   for (let k = 0; k < 4; k++) {
-    r[k * 3] = verts[k * 3];
-    r[k * 3 + 1] = verts[k * 3 + 1];
-    r[k * 3 + 2] = verts[k * 3 + 2] >= 0.999 ? runLen : verts[k * 3 + 2];
+    if (verts[k * 3 + axis] >= 0.999) r[k * 3 + axis] = runLen;
   }
   return r;
 }
 
-// Finds the uv axis (u or v) that varies between the "high Z" and "low Z" vertex
-// pairs and scales it by runLen so the texture tiles across the merged run (textures
-// use WRAP address mode by default) instead of stretching.
-function stretchUVZ(uv: Float32Array, verts: Float32Array, runLen: number): Float32Array {
+// Finds the uv axis (u or v) that varies between the "high" and "low" vertex pairs along
+// `axis` and scales it by runLen so the texture tiles across the merged run (textures use
+// WRAP address mode by default) instead of stretching.
+function stretchUVAxis(uv: Float32Array, verts: Float32Array, runLen: number, axis: number): Float32Array {
   const highIdx: number[] = [];
   const lowIdx: number[] = [];
-  for (let k = 0; k < 4; k++) (verts[k * 3 + 2] >= 0.999 ? highIdx : lowIdx).push(k);
+  for (let k = 0; k < 4; k++) (verts[k * 3 + axis] >= 0.999 ? highIdx : lowIdx).push(k);
   const r = new Float32Array(uv);
   if (highIdx.length !== 2 || lowIdx.length !== 2) return r;
-  for (let axis = 0; axis < 2; axis++) {
-    const h0 = uv[highIdx[0] * 2 + axis];
-    const h1 = uv[highIdx[1] * 2 + axis];
-    const l0 = uv[lowIdx[0] * 2 + axis];
-    const l1 = uv[lowIdx[1] * 2 + axis];
+  for (let uvAxis = 0; uvAxis < 2; uvAxis++) {
+    const h0 = uv[highIdx[0] * 2 + uvAxis];
+    const h1 = uv[highIdx[1] * 2 + uvAxis];
+    const l0 = uv[lowIdx[0] * 2 + uvAxis];
+    const l1 = uv[lowIdx[1] * 2 + uvAxis];
     if (Math.abs(h0 - h1) < 1e-4 && Math.abs(l0 - l1) < 1e-4 && Math.abs(h0 - l0) > 1e-4) {
       const newHigh = l0 + (h0 - l0) * runLen;
-      r[highIdx[0] * 2 + axis] = newHigh;
-      r[highIdx[1] * 2 + axis] = newHigh;
+      r[highIdx[0] * 2 + uvAxis] = newHigh;
+      r[highIdx[1] * 2 + uvAxis] = newHigh;
       break;
     }
   }
@@ -352,11 +358,13 @@ function stretchUVZ(uv: Float32Array, verts: Float32Array, runLen: number): Floa
 // --- Face buffer (shared with Kotlin via window.__mcFB / window.__mcFI) ---
 // Kotlin writes face data here (jsChunkFaceAppend); chunkEnd processes the whole
 // buffer in one tight loop — eliminates per-face JS function-call overhead.
-// Stride is 6 ints/face — 6th is runLen (blocks merged along Z by greedy meshing
-// in ChunkManager.renderRow; 1 = unmerged, see FACE_STRIDE below).
+// Stride is 7 ints/face — 6th is runLenX, 7th is runLenZ (greedy-merge run lengths from
+// ChunkManager.renderRow along local X and/or Z; 1 = unmerged along that axis). Only top/bottom
+// faces ever have both > 1 (full 2D rectangle merge); east/west only stretch Z, south/north
+// only stretch X — see the stretchAxis selection in chunkProcessFaces below.
 
-const FACE_STRIDE = 6;
-const FACE_BUF_SLOTS = 720_000; // 6 ints × up to 120k faces per chunk
+const FACE_STRIDE = 7;
+const FACE_BUF_SLOTS = 840_000; // 7 ints × up to 120k faces per chunk
 
 // Y-slab height for sub-chunk mesh splitting. Each material×slab combo becomes its own
 // BabylonJS mesh, giving the engine a tight bounding box per slab for frustum culling.
@@ -432,6 +440,153 @@ function getOrCreateGhostMat(scene: Scene, matKey: string): ShaderMaterial | nul
   return mat;
 }
 
+let impostorMat: ShaderMaterial | null = null;
+
+function getImpostorMaterial(scene: Scene): ShaderMaterial {
+  if (impostorMat) return impostorMat;
+  impostorMat = new BABYLON.ShaderMaterial(
+    "chunkImpostorMat",
+    scene,
+    { vertexSource: BLOCK_VERT, fragmentSource: IMPOSTOR_FRAG },
+    { attributes: ["position", "normal", "uv", "color"], uniforms: ["worldViewProjection"] },
+  );
+  impostorMat.backFaceCulling = true;
+  return impostorMat;
+}
+
+// Server-configured depth (world.impostorSkirtDepth in server.yaml, see
+// WorldConstants.IMPOSTOR_SKIRT_DEPTH) each impostor rectangle's perimeter walls extend below
+// its own top — see buildChunkImpostorMesh. Set once via RegistrySync at connect.
+let impostorSkirtDepth = 12;
+
+// Cheap stand-in for a chunk far from the viewer: a flat-shaded, vertex-colored mesh — one quad
+// per merged (topY, topBlock) run for tops (greedily rectangle-merged, same sweep as
+// ChunkManager.emitGreedyRects), plus a 4-sided perimeter wall skirt on EVERY rectangle,
+// unconditionally extending impostorSkirtDepth blocks below its own top. Colors come from
+// getTopColorRGB / getSideColorRGB — mean texture colors precomputed server-side
+// (BlockFaceColorSampler) and pushed alongside minimapColor via RegistrySync.
+//
+// Earlier attempts walled only the height DIFFERENCE between neighboring columns (including
+// across chunk borders, and a separate canopy-support-pillar pass) — each variant kept producing
+// disconnected floating patches somewhere in the merge/stitch logic that wasn't worth chasing
+// further for a mesh that's explicitly not meant to hold up to close inspection. An
+// unconditional fixed-depth skirt per rectangle needs no neighbor data (same chunk or across a
+// border) and can't have a gap by construction — the tradeoff is some redundant wall geometry
+// where two adjacent rectangles are already the same height.
+//
+// Built from the canopy-inclusive surface (getChunkSurface — topmost visible block, including
+// tree leaves): now that every rectangle gets its own unconditional, self-contained skirt (no
+// neighbor data needed), there's no structural reason left to flatten canopy into the ground —
+// tree columns render at their real (elevated) height and get walled down to
+// impostorSkirtDepth below themselves, same as any other column. An earlier version built
+// height from a ground-only surface specifically to dodge canopy, back when walls still depended
+// on neighbor height comparisons; that dependency is gone, so this is safe now.
+// Registered under the same window.mcState.chunks[key] as a full chunk mesh, so the existing
+// disposeChunk/unload path doesn't need to know which kind it's disposing.
+export function buildChunkImpostorMesh(scene: Scene, cx: number, cz: number): void {
+  const key = `${cx},${cz}`;
+  window.mc.disposeChunk(key);
+  const surface = getChunkSurface(cx, cz);
+  if (!surface) {
+    console.warn(`[impostor] no surface data for chunk ${key} — leaving it unmeshed`);
+    return;
+  }
+  const { topY, topBlock } = surface;
+  const s = 16;
+  const visited = new Uint8Array(s * s);
+  const positions: number[] = [];
+  const normals: number[] = [];
+  const uvs: number[] = [];
+  const colors: number[] = [];
+  const indices: number[] = [];
+  const ox = cx * s;
+  const oz = cz * s;
+  let airColumns = 0;
+  for (let z = 0; z < s; z++) {
+    for (let x = 0; x < s; x++) {
+      const i = x * s + z;
+      if (visited[i]) continue;
+      const ord = topBlock[i];
+      if (ord === 0) {
+        visited[i] = 1;
+        airColumns++;
+        continue; // no visible block found for this column (e.g. void/cave opening)
+      }
+      const ty = topY[i];
+      let w = 1;
+      while (x + w < s) {
+        const j = (x + w) * s + z;
+        if (visited[j] || topBlock[j] !== ord || topY[j] !== ty) break;
+        w++;
+      }
+      let h = 1;
+      rows: while (z + h < s) {
+        for (let dx = 0; dx < w; dx++) {
+          const j = (x + dx) * s + (z + h);
+          if (visited[j] || topBlock[j] !== ord || topY[j] !== ty) break rows;
+        }
+        h++;
+      }
+      for (let dz = 0; dz < h; dz++) {
+        for (let dx = 0; dx < w; dx++) visited[(x + dx) * s + (z + dz)] = 1;
+      }
+      const [r, g, b] = getTopColorRGB(ord);
+      const wx0 = ox + x,
+        wx1 = ox + x + w;
+      const wz0 = oz + z,
+        wz1 = oz + z + h;
+      const wy = ty + 1;
+      const base = positions.length / 3;
+      // Same 4-corner order as vertsFromElement's fd=4 (top) case, just stretched to w×h.
+      positions.push(wx0, wy, wz1, wx1, wy, wz1, wx1, wy, wz0, wx0, wy, wz0);
+      for (let k = 0; k < 4; k++) {
+        normals.push(0, 1, 0);
+        uvs.push(0, 0);
+        colors.push(r / 255, g / 255, b / 255, 1);
+      }
+      indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+
+      // Unconditional skirt: 4 perimeter walls down to ty - impostorSkirtDepth, regardless of
+      // neighbors — see the function-level comment for why.
+      const [sr, sg, sb] = getSideColorRGB(ord);
+      const emitSkirtQuad = (verts: number[], nx: number, ny: number, nz: number) => {
+        const skirtBase = positions.length / 3;
+        positions.push(...verts);
+        for (let k = 0; k < 4; k++) {
+          normals.push(nx, ny, nz);
+          uvs.push(0, 0);
+          colors.push(sr / 255, sg / 255, sb / 255, 1);
+        }
+        indices.push(skirtBase, skirtBase + 1, skirtBase + 2, skirtBase, skirtBase + 2, skirtBase + 3);
+      };
+      const yBot = wy - impostorSkirtDepth;
+      emitSkirtQuad([wx1, yBot, wz1, wx1, yBot, wz0, wx1, wy, wz0, wx1, wy, wz1], 1, 0, 0); // east
+      emitSkirtQuad([wx0, yBot, wz0, wx0, yBot, wz1, wx0, wy, wz1, wx0, wy, wz0], -1, 0, 0); // west
+      emitSkirtQuad([wx0, yBot, wz1, wx1, yBot, wz1, wx1, wy, wz1, wx0, wy, wz1], 0, 0, 1); // south
+      emitSkirtQuad([wx1, yBot, wz0, wx0, yBot, wz0, wx0, wy, wz0, wx1, wy, wz0], 0, 0, -1); // north
+    }
+  }
+
+  if (positions.length === 0) {
+    console.warn(`[impostor] chunk ${key}: 0 quads built (airColumns=${airColumns}/${s * s}) — nothing to show`);
+    return;
+  }
+  const mesh = new BABYLON.Mesh(`impostor_${key}`, scene);
+  const vd = new BABYLON.VertexData();
+  vd.positions = positions;
+  vd.normals = normals;
+  vd.uvs = uvs;
+  vd.colors = colors;
+  vd.indices = indices;
+  vd.applyToMesh(mesh, false);
+  mesh.material = getImpostorMaterial(scene);
+  mesh.isPickable = false;
+  mesh.doNotSyncBoundingInfo = true;
+  mesh.refreshBoundingInfo();
+  mesh.freezeWorldMatrix();
+  window.mcState.chunks[key] = [mesh];
+}
+
 export function buildBlockPreviewMeshes(scene: Scene, typeOrd: number, rotation: number, colorIdx = 0): Mesh[] {
   if (!window.mc.isBlockDefsReady()) {
     console.warn("[MiCraft] Ghost: block defs not ready yet (typeOrd=" + typeOrd + ")");
@@ -485,12 +640,26 @@ export function buildBlockPreviewMeshes(scene: Scene, typeOrd: number, rotation:
 
 export function registerChunks(): Pick<
   McBindings,
-  "disposeChunk" | "chunkBegin" | "chunkFace" | "chunkProcessFaces" | "chunkEnd"
+  | "disposeChunk"
+  | "chunkBegin"
+  | "chunkFace"
+  | "chunkProcessFaces"
+  | "chunkEnd"
+  | "buildChunkImpostor"
+  | "setImpostorSkirtDepth"
 > {
   window.mcState.chunks = {};
 
   return {
     disposeChunk,
+
+    buildChunkImpostor: (scene: Scene, cx: number, cz: number): void => {
+      buildChunkImpostorMesh(scene, cx, cz);
+    },
+
+    setImpostorSkirtDepth: (depth: number): void => {
+      impostorSkirtDepth = depth;
+    },
 
     chunkBegin: (cx: number, cz: number): void => {
       if (faceTable.length === 0) buildFaceTable();
@@ -521,7 +690,8 @@ export function registerChunks(): Pick<
           wz = fb[i + 2];
         const faceMat = fb[i + 3];
         const aoPacked = fb[i + 4];
-        const runLen = fb[i + 5];
+        const runLenX = fb[i + 5];
+        const runLenZ = fb[i + 6];
         const ao = aoPacked & 0xffff;
         const yOff = (aoPacked >>> 16) & 0x3;
         const colorIdx = (aoPacked >>> 18) & 0x3f;
@@ -555,21 +725,23 @@ export function registerChunks(): Pick<
           }
           if (info.isCrossSprite) {
             emitCrossSprite(wx, wy, wz, g, info.uv, ao);
-          } else if (runLen > 1) {
-            emitQuad(
-              g,
-              wx,
-              wy,
-              wz,
-              stretchVertsZ(info.verts, runLen),
-              info.normX,
-              info.normY,
-              info.normZ,
-              stretchUVZ(info.uv, info.verts, runLen),
-              info.shade,
-              ao,
-              info.isPlastic,
-            );
+          } else if (runLenX > 1 || runLenZ > 1) {
+            // Stretch each axis independently — south/north only ever set runLenX, east/west
+            // only runLenZ, top/bottom can have both (full 2D rectangle merge). UV high/low
+            // detection always uses the ORIGINAL info.verts: stretching one axis doesn't change
+            // a vertex's high/low position on the other axis, so it's safe to detect against the
+            // unstretched verts even after already stretching the first axis.
+            let verts = info.verts;
+            let uv = info.uv;
+            if (runLenX > 1) {
+              verts = stretchVertsAxis(verts, runLenX, 0);
+              uv = stretchUVAxis(uv, info.verts, runLenX, 0);
+            }
+            if (runLenZ > 1) {
+              verts = stretchVertsAxis(verts, runLenZ, 2);
+              uv = stretchUVAxis(uv, info.verts, runLenZ, 2);
+            }
+            emitQuad(g, wx, wy, wz, verts, info.normX, info.normY, info.normZ, uv, info.shade, ao, info.isPlastic);
           } else {
             emitQuad(
               g,
@@ -632,7 +804,15 @@ export function registerChunks(): Pick<
       window.mcState.chunks[buf.key] = meshes;
 
       const gltfEntries = Object.entries(buf.gltfPositions);
-      if (gltfEntries.length > 0) {
+      const camPos = scene.activeCamera?.position;
+      const [chunkCx, chunkCz] = buf.key.split(",").map(Number);
+      const withinDecorationRadius =
+        !camPos ||
+        Math.max(
+          Math.abs(chunkCx - Math.floor(camPos.x / CHUNK_SIZE_BLOCKS)),
+          Math.abs(chunkCz - Math.floor(camPos.z / CHUNK_SIZE_BLOCKS)),
+        ) <= DECORATION_RADIUS_CHUNKS;
+      if (gltfEntries.length > 0 && withinDecorationRadius) {
         const chunkKey = buf.key;
         (async () => {
           for (const [typeOrdStr, posSet] of gltfEntries) {

@@ -12,6 +12,16 @@ data class BlockDefinition(
     val solid: Boolean = true,
     val transparent: Boolean = false,
     val minimapColor: List<Int> = listOf(128, 128, 128),
+    /**
+     * Mean RGB of the block's top-face texture — precomputed server-side, see
+     * BlockFaceColorSampler.
+     */
+    val topColor: List<Int> = minimapColor,
+    /**
+     * Mean RGB of the block's side-face texture — precomputed server-side, see
+     * BlockFaceColorSampler.
+     */
+    val sideColor: List<Int> = minimapColor,
     val modelElement: String = "",
     val gltfModel: String = "",
     val liquid: Boolean = false,

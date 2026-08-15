@@ -838,6 +838,8 @@ class GameLoop(
                     heightFraction = def.heightFraction,
                     plainColorable = def.plainColorable,
                     isCubic = def.isCubic,
+                    topColor = def.topColor,
+                    sideColor = def.sideColor,
                 )
             }
         val items =
@@ -874,7 +876,13 @@ class GameLoop(
                 .filter { it.value.walkBoneAliases.isNotEmpty() }
                 .mapValues { it.value.walkBoneAliases }
         return ServerMessage.RegistrySync(
-            blocks, items, npcs, npcDefinitions, npcWalkBones, plainColors)
+            blocks,
+            items,
+            npcs,
+            npcDefinitions,
+            npcWalkBones,
+            plainColors,
+            WorldConstants.IMPOSTOR_SKIRT_DEPTH)
     }
 
     private val reloadCoordinator =

@@ -232,6 +232,8 @@ declare global {
       name: string;
       modelElement: string;
       minimapColor: [number, number, number];
+      topColor: [number, number, number];
+      sideColor: [number, number, number];
       hardness: number;
       solid: boolean;
       transparent: boolean;
@@ -360,6 +362,8 @@ declare global {
     chunkProcessFaces(cursor: number, maxFaces: number): number;
     chunkEnd(scene: Scene, materials: Record<string, ShaderMaterial | StandardMaterial>): void;
     disposeChunk(key: string): void;
+    buildChunkImpostor(scene: Scene, cx: number, cz: number): void;
+    setImpostorSkirtDepth(depth: number): void;
     // Player model
     initPlayerModel(skin: string): void;
     isPlayerBbmodelReady(skin: string): boolean;
