@@ -24,10 +24,14 @@ export interface OrbitPointerControllerOptions {
     mode: "place" | "break" | "select";
     shiftKey: boolean;
   }) => void;
+  // Creative in-game mode only: holding the button in "break" mode keeps breaking whatever block
+  // is under the cursor, like the survival mining hold. Off by default — the admin Instance/Scene
+  // editors keep one-click-one-block for placement precision.
+  continuousBreak?: boolean;
 }
 
 export function setupOrbitPointerController(opts: OrbitPointerControllerOptions): () => void {
-  const { B, scene, camera, canvas, getMode, onHoverMove, onClick } = opts;
+  const { B, scene, camera, canvas, getMode, onHoverMove, onClick, continuousBreak } = opts;
 
   const preventContextMenu = (e: Event) => e.preventDefault();
   canvas.addEventListener("contextmenu", preventContextMenu);
@@ -42,6 +46,21 @@ export function setupOrbitPointerController(opts: OrbitPointerControllerOptions)
   const ROTATE_SENSITIVITY = 0.005;
   const PAN_SENSITIVITY = 0.0015;
   const ZOOM_SENSITIVITY = 0.01;
+  const BREAK_REPEAT_MS = 150;
+
+  let breakRepeatId: ReturnType<typeof setInterval> | null = null;
+  function stopBreakRepeat() {
+    if (breakRepeatId !== null) {
+      clearInterval(breakRepeatId);
+      breakRepeatId = null;
+    }
+  }
+  function tryContinuousBreak() {
+    const pick = scene.pick(scene.pointerX, scene.pointerY);
+    if (!pick?.hit || !pick.pickedMesh || !pick.pickedPoint) return;
+    const normal = pick.getNormal(true);
+    onClick({ pick, normal, mode: "break", shiftKey: downShift });
+  }
 
   function panCamera(dx: number, dy: number) {
     const m = camera.getWorldMatrix();
@@ -71,6 +90,13 @@ export function setupOrbitPointerController(opts: OrbitPointerControllerOptions)
           const direction = pick.pickedPoint.subtract(camera.position).normalize();
           camera.setTarget(camera.position.add(direction.scale(camera.radius)));
         }
+      } else if (dragMode === "place" && continuousBreak) {
+        const baseMode = getMode();
+        const mode = baseMode !== "select" && downShift ? "break" : baseMode;
+        if (mode === "break") {
+          tryContinuousBreak();
+          breakRepeatId = setInterval(tryContinuousBreak, BREAK_REPEAT_MS);
+        }
       }
       return;
     }
@@ -96,6 +122,11 @@ export function setupOrbitPointerController(opts: OrbitPointerControllerOptions)
     if (pointerInfo.type !== B.PointerEventTypes.POINTERUP) return;
     const wasPlaceDrag = dragMode === "place";
     dragMode = null;
+    if (breakRepeatId !== null) {
+      // Continuous break already fired on this press; don't double-fire on release.
+      stopBreakRepeat();
+      return;
+    }
     if (!wasPlaceDrag) return;
     const dx = scene.pointerX - downX;
     const dy = scene.pointerY - downY;
@@ -111,6 +142,7 @@ export function setupOrbitPointerController(opts: OrbitPointerControllerOptions)
   });
 
   return () => {
+    stopBreakRepeat();
     scene.onPointerObservable.remove(clickObserver);
     canvas.removeEventListener("contextmenu", preventContextMenu);
   };

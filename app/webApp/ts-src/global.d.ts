@@ -193,7 +193,7 @@ declare global {
     lastSpaceTime: number;
     lastKeyPress: { code: string; key: string; time: number } | null;
     mouseLeft: boolean;
-    lastMouseMove: number;
+    mouseDownAt: number;
     bindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
     macros: Record<string, string>;
@@ -225,6 +225,7 @@ declare global {
     debugCamObserver: Observer<Scene> | null;
     editMode?: "game" | "creative";
     dynamicFogEnabled?: boolean;
+    continuousBreak: boolean;
     caveFactor?: number;
     shadowAngleDeg?: number;
     // Codex
@@ -315,6 +316,7 @@ declare global {
     isActionDown(action: string): boolean;
     consumeEvents(): string[];
     isBreaking(): boolean;
+    isMouseDown(): boolean;
     // Camera
     getCameraPositionX(camera: Camera): number;
     getCameraPositionY(camera: Camera): number;

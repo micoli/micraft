@@ -94,6 +94,9 @@ class LocalPlayerController(
 
     var currentCombatTargetId: String? = null
     var autoTargetEnabled: Boolean = true
+    var continuousBreak: Boolean = false
+    private var breakArmed = true
+    private var wasMouseDown = false
     private var breakTarget: BlockPos? = null
     private var hoverTarget: BlockPos? = null
     var selectedSlot: Int = 0
@@ -837,6 +840,9 @@ class LocalPlayerController(
             }
         }
 
+        val mouseDownNow = jsIsMouseDown()
+        if (mouseDownNow && !wasMouseDown) breakArmed = true
+        wasMouseDown = mouseDownNow
         val isBreaking = jsIsBreaking()
         val selectedSlotContent =
             if (selectedSlot > 0) shortcutBarPages[currentPage][selectedSlot] else null
@@ -978,7 +984,8 @@ class LocalPlayerController(
                 jsHideBlockPreview()
             }
             if (isBreaking && target != null) {
-                if (target != breakTarget) {
+                if (target != breakTarget && (continuousBreak || breakArmed)) {
+                    breakArmed = false
                     breakTarget = target
                     jsShowBreakOverlay(scene, target.x, target.y, target.z, 1.0)
                     val targetDef =

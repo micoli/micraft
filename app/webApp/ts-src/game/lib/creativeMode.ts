@@ -63,6 +63,7 @@ export function enterCreativeMode(): void {
     canvas,
     getMode: () => (selectedItem ? "place" : "break"),
     onHoverMove: () => {},
+    continuousBreak: window.mcState.continuousBreak,
     onClick: ({ pick, normal, mode }) => {
       const hit = pick.pickedPoint;
       if (!hit) return;

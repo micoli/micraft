@@ -181,6 +181,7 @@ export interface PreferencesData {
   overrideForwardViewRadius?: number | null;
   overrideUseImpostor?: boolean | null;
   overrideImpostorRadiusChunks?: number | null;
+  continuousBreak: boolean;
 }
 
 export type CombatTargetData = {

@@ -101,6 +101,7 @@ sealed class ClientMessage {
         val overrideForwardViewRadius: Int? = null,
         val overrideUseImpostor: Boolean? = null,
         val overrideImpostorRadiusChunks: Int? = null,
+        val continuousBreak: Boolean = false,
     ) : ClientMessage()
 
     @ProtoId(13) @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()

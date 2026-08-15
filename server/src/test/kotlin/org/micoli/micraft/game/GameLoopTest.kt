@@ -102,6 +102,36 @@ class GameLoopTest {
     }
 
     @Test
+    fun preferencesUpdate_continuousBreak_roundTripsThroughSync() = runTest {
+        val gameLoop = GameLoop(testWorld())
+        val socket = FakeWebSocketSession()
+        val connect = ClientMessage.Connect(playerName = "Bob", userName = "bob@example.com")
+        val prefsUpdate =
+            ClientMessage.PreferencesUpdate(
+                subscribedChannels = emptyList(),
+                disabledCommands = emptySet(),
+                shadersEnabled = true,
+                continuousBreak = true)
+        socket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        socket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(prefsUpdate)))
+        socket.incomingChannel.close()
+
+        gameLoop.onConnect(socket)
+
+        val received = mutableListOf<ServerMessage>()
+        var frame = socket.outgoingChannel.tryReceive().getOrNull()
+        while (frame != null) {
+            received.add(ServerMessageCodec.decode((frame as Frame.Binary).readBytes()))
+            frame = socket.outgoingChannel.tryReceive().getOrNull()
+        }
+
+        val syncs = received.filterIsInstance<ServerMessage.PreferencesSync>()
+        assertTrue(syncs.isNotEmpty())
+        assertEquals(false, syncs.first().continuousBreak)
+        assertEquals(true, syncs.last().continuousBreak)
+    }
+
+    @Test
     fun autocomplete_unknownCommandId_returnsEmptyList() = runTest {
         val gameLoop = GameLoop(testWorld())
         val result = gameLoop.autocomplete(UUID.randomUUID().toString(), 0, "", "Alice")

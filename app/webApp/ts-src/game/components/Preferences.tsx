@@ -21,6 +21,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "chat", label: "Chat" },
   { id: "commands", label: "Commands" },
   { id: "graphics", label: "Graphics" },
+  { id: "game", label: "Game" },
   { id: "debug", label: "Debug" },
   { id: "keybindings", label: "Keybindings" },
 ];
@@ -280,6 +281,24 @@ export function Preferences({ open, preferences, initialTab, onSave, onClose }: 
                   className="disabled:opacity-40"
                 />
               </div>
+            </>
+          )}
+
+          {/* Game tab */}
+          {pref.tab === "game" && (
+            <>
+              {[
+                {
+                  state: pref.localContinuousBreak,
+                  setter: pref.setLocalContinuousBreak,
+                  label: "Continuous block breaking (hold to mine multiple blocks)",
+                },
+              ].map(({ state, setter, label }) => (
+                <div key={label} className="flex items-center gap-2 py-1.5 border-b border-[#2a2a2a]">
+                  <input type="checkbox" checked={state} onChange={(e) => setter(e.target.checked)} />
+                  <span>{label}</span>
+                </div>
+              ))}
             </>
           )}
 

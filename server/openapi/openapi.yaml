@@ -3577,6 +3577,9 @@ components:
         chunkDebugVisible:
           type: boolean
           title: Boolean
+        continuousBreak:
+          type: boolean
+          title: Boolean
         disabledCommands:
           type: array
           items:
@@ -3641,6 +3644,29 @@ components:
           title: String
         orientation:
           $ref: "#/components/schemas/org.micoli.micraft.player.Orientation"
+        overrideForwardViewRadius:
+          type:
+          - "null"
+          - integer
+          format: int32
+          title: Int
+        overrideImpostorRadiusChunks:
+          type:
+          - "null"
+          - integer
+          format: int32
+          title: Int
+        overrideUseImpostor:
+          type:
+          - "null"
+          - boolean
+          title: Boolean
+        overrideViewRadius:
+          type:
+          - "null"
+          - integer
+          format: int32
+          title: Int
         pos:
           $ref: "#/components/schemas/org.micoli.micraft.player.Vec3"
         quests:
@@ -3707,6 +3733,7 @@ components:
       - autoTargetEnabled
       - biome
       - chunkDebugVisible
+      - continuousBreak
       - disabledCommands
       - dynamicFogEnabled
       - editMode

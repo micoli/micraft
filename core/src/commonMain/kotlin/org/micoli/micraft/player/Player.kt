@@ -69,4 +69,5 @@ data class PlayerState(
     val overrideForwardViewRadius: Int? = null,
     val overrideUseImpostor: Boolean? = null,
     val overrideImpostorRadiusChunks: Int? = null,
+    val continuousBreak: Boolean = false,
 )

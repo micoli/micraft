@@ -19,6 +19,7 @@ export interface SavePayload {
   overrideForwardViewRadius: number | null;
   overrideUseImpostor: boolean | null;
   overrideImpostorRadiusChunks: number | null;
+  continuousBreak: boolean;
 }
 
 export interface CustomCmdEntry {
@@ -113,7 +114,7 @@ function captureKey(e: KeyboardEvent): string {
   return mods.length ? `${mods.join("+")}+${e.code}` : e.code;
 }
 
-export type Tab = "chat" | "commands" | "graphics" | "debug" | "keybindings";
+export type Tab = "chat" | "commands" | "graphics" | "game" | "debug" | "keybindings";
 
 interface UsePreferencesParams {
   open: boolean;
@@ -135,6 +136,7 @@ export function usePreferences({ open, preferences, initialTab, onSave, onClose:
   const [localStatisticsVisible, setLocalStatisticsVisible] = useState(false);
   const [localAttackPanelVisible, setLocalAttackPanelVisible] = useState(false);
   const [localAutoTarget, setLocalAutoTarget] = useState(true);
+  const [localContinuousBreak, setLocalContinuousBreak] = useState(false);
   const [localFov, setLocalFov] = useState(70);
   const [localShadowAngleDeg, setLocalShadowAngleDeg] = useState(1);
   const [localOverrideViewRadius, setLocalOverrideViewRadius] = useState<number | null>(null);
@@ -166,6 +168,7 @@ export function usePreferences({ open, preferences, initialTab, onSave, onClose:
       setLocalStatisticsVisible(preferences.statisticsVisible ?? false);
       setLocalAttackPanelVisible(preferences.attackPanelVisible ?? false);
       setLocalAutoTarget(preferences.autoTargetEnabled ?? true);
+      setLocalContinuousBreak(preferences.continuousBreak ?? false);
       setLocalFov(preferences.fieldOfView ?? 70);
       setLocalShadowAngleDeg(preferences.shadowAngleDeg ?? 1);
       setLocalOverrideViewRadius(preferences.overrideViewRadius ?? null);
@@ -365,6 +368,7 @@ export function usePreferences({ open, preferences, initialTab, onSave, onClose:
       statisticsVisible: localStatisticsVisible,
       attackPanelVisible: localAttackPanelVisible,
       autoTargetEnabled: localAutoTarget,
+      continuousBreak: localContinuousBreak,
       keybindings: localBindings,
       customCommands,
       fieldOfView: localFov,
@@ -412,6 +416,8 @@ export function usePreferences({ open, preferences, initialTab, onSave, onClose:
     setLocalAttackPanelVisible,
     localAutoTarget,
     setLocalAutoTarget,
+    localContinuousBreak,
+    setLocalContinuousBreak,
     localFov,
     setLocalFov,
     localShadowAngleDeg,

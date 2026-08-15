@@ -683,6 +683,7 @@ class GameLoop(
             overrideForwardViewRadius = session.state.overrideForwardViewRadius,
             overrideUseImpostor = session.state.overrideUseImpostor,
             overrideImpostorRadiusChunks = session.state.overrideImpostorRadiusChunks,
+            continuousBreak = session.state.continuousBreak,
         )
     }
 
@@ -715,6 +716,7 @@ class GameLoop(
                 overrideForwardViewRadius = msg.overrideForwardViewRadius,
                 overrideUseImpostor = msg.overrideUseImpostor,
                 overrideImpostorRadiusChunks = msg.overrideImpostorRadiusChunks,
+                continuousBreak = msg.continuousBreak,
             )
         if (msg.keybindings.isNotEmpty()) {
             persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
@@ -1298,6 +1300,7 @@ class GameLoop(
                 overrideForwardViewRadius = saved?.overrideForwardViewRadius,
                 overrideUseImpostor = saved?.overrideUseImpostor,
                 overrideImpostorRadiusChunks = saved?.overrideImpostorRadiusChunks,
+                continuousBreak = saved?.continuousBreak ?: false,
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =

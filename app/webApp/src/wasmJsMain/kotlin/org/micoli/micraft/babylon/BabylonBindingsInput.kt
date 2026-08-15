@@ -10,6 +10,10 @@ fun jsSetupMouse(): Unit = js("mc.setupMouse()")
 
 fun jsIsBreaking(): Boolean = js("mc.isBreaking()")
 
+fun jsIsMouseDown(): Boolean = js("mc.isMouseDown()")
+
+fun jsSetContinuousBreak(active: Boolean): Unit = js("window.mcState.continuousBreak = active")
+
 fun jsCreateCrosshair(): Unit = js("mc.createCrosshair()")
 
 fun jsIsKeyDown(code: String): Boolean = js("!!window.mcState.keys[code]")

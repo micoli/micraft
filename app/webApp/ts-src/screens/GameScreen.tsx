@@ -136,6 +136,7 @@ export function GameScreen() {
     statisticsVisible: boolean;
     attackPanelVisible: boolean;
     autoTargetEnabled: boolean;
+    continuousBreak: boolean;
     keybindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
     fieldOfView?: number;
@@ -149,6 +150,7 @@ export function GameScreen() {
         macroIcons: state.preferences?.macroIcons,
         attackPanelVisible: payload.attackPanelVisible,
         autoTargetEnabled: payload.autoTargetEnabled,
+        continuousBreak: payload.continuousBreak,
       },
     });
     if (window.mcState) {
