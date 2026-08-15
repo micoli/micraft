@@ -679,6 +679,10 @@ class GameLoop(
             inventorySortA = session.state.inventorySortA,
             inventorySortB = session.state.inventorySortB,
             shadowAngleDeg = session.state.shadowAngleDeg,
+            overrideViewRadius = session.state.overrideViewRadius,
+            overrideForwardViewRadius = session.state.overrideForwardViewRadius,
+            overrideUseImpostor = session.state.overrideUseImpostor,
+            overrideImpostorRadiusChunks = session.state.overrideImpostorRadiusChunks,
         )
     }
 
@@ -707,6 +711,10 @@ class GameLoop(
                 inventorySortA = msg.inventorySortA,
                 inventorySortB = msg.inventorySortB,
                 shadowAngleDeg = msg.shadowAngleDeg,
+                overrideViewRadius = msg.overrideViewRadius,
+                overrideForwardViewRadius = msg.overrideForwardViewRadius,
+                overrideUseImpostor = msg.overrideUseImpostor,
+                overrideImpostorRadiusChunks = msg.overrideImpostorRadiusChunks,
             )
         if (msg.keybindings.isNotEmpty()) {
             persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
@@ -1286,6 +1294,10 @@ class GameLoop(
                 inventorySortB = saved?.inventorySortB ?: "",
                 shadowAngleDeg = saved?.shadowAngleDeg ?: 1,
                 wallet = saved?.wallet ?: 0L,
+                overrideViewRadius = saved?.overrideViewRadius,
+                overrideForwardViewRadius = saved?.overrideForwardViewRadius,
+                overrideUseImpostor = saved?.overrideUseImpostor,
+                overrideImpostorRadiusChunks = saved?.overrideImpostorRadiusChunks,
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =

@@ -15,6 +15,10 @@ export interface SavePayload {
   fieldOfView: number;
   autoTargetEnabled: boolean;
   shadowAngleDeg: number;
+  overrideViewRadius: number | null;
+  overrideForwardViewRadius: number | null;
+  overrideUseImpostor: boolean | null;
+  overrideImpostorRadiusChunks: number | null;
 }
 
 export interface CustomCmdEntry {
@@ -105,7 +109,7 @@ function captureKey(e: KeyboardEvent): string {
   return mods.length ? `${mods.join("+")}+${e.code}` : e.code;
 }
 
-export type Tab = "chat" | "commands" | "graphics" | "keybindings";
+export type Tab = "chat" | "commands" | "graphics" | "debug" | "keybindings";
 
 interface UsePreferencesParams {
   open: boolean;
@@ -128,6 +132,10 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
   const [localAutoTarget, setLocalAutoTarget] = useState(true);
   const [localFov, setLocalFov] = useState(70);
   const [localShadowAngleDeg, setLocalShadowAngleDeg] = useState(1);
+  const [localOverrideViewRadius, setLocalOverrideViewRadius] = useState<number | null>(null);
+  const [localOverrideForwardViewRadius, setLocalOverrideForwardViewRadius] = useState<number | null>(null);
+  const [localOverrideUseImpostor, setLocalOverrideUseImpostor] = useState<boolean | null>(null);
+  const [localOverrideImpostorRadiusChunks, setLocalOverrideImpostorRadiusChunks] = useState<number | null>(null);
   const [localBindings, setLocalBindings] = useState<Record<string, string[]>>({});
   const [localCustomCmds, setLocalCustomCmds] = useState<CustomCmdEntry[]>([]);
   const [recording, setRecording] = useState<{ action: string; index: number } | null>(null);
@@ -155,6 +163,10 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
       setLocalAutoTarget(preferences.autoTargetEnabled ?? true);
       setLocalFov(preferences.fieldOfView ?? 70);
       setLocalShadowAngleDeg(preferences.shadowAngleDeg ?? 1);
+      setLocalOverrideViewRadius(preferences.overrideViewRadius ?? null);
+      setLocalOverrideForwardViewRadius(preferences.overrideForwardViewRadius ?? null);
+      setLocalOverrideUseImpostor(preferences.overrideUseImpostor ?? null);
+      setLocalOverrideImpostorRadiusChunks(preferences.overrideImpostorRadiusChunks ?? null);
       setLocalBindings(preferences.keybindings ? { ...preferences.keybindings } : {});
       setLocalCustomCmds(Object.entries(preferences.customCommands || {}).map(([text, keys]) => ({ text, keys })));
       setRecording(null);
@@ -352,6 +364,10 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
       customCommands,
       fieldOfView: localFov,
       shadowAngleDeg: localShadowAngleDeg,
+      overrideViewRadius: localOverrideViewRadius,
+      overrideForwardViewRadius: localOverrideForwardViewRadius,
+      overrideUseImpostor: localOverrideUseImpostor,
+      overrideImpostorRadiusChunks: localOverrideImpostorRadiusChunks,
     });
   };
 
@@ -395,6 +411,14 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
     setLocalFov,
     localShadowAngleDeg,
     setLocalShadowAngleDeg,
+    localOverrideViewRadius,
+    setLocalOverrideViewRadius,
+    localOverrideForwardViewRadius,
+    setLocalOverrideForwardViewRadius,
+    localOverrideUseImpostor,
+    setLocalOverrideUseImpostor,
+    localOverrideImpostorRadiusChunks,
+    setLocalOverrideImpostorRadiusChunks,
     localBindings,
     localCustomCmds,
     recording,

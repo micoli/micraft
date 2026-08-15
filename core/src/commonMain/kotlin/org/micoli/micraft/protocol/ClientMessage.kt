@@ -97,6 +97,10 @@ sealed class ClientMessage {
         val inventorySortA: String = "",
         val inventorySortB: String = "",
         val shadowAngleDeg: Int = 1,
+        val overrideViewRadius: Int? = null,
+        val overrideForwardViewRadius: Int? = null,
+        val overrideUseImpostor: Boolean? = null,
+        val overrideImpostorRadiusChunks: Int? = null,
     ) : ClientMessage()
 
     @ProtoId(13) @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()

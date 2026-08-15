@@ -60,13 +60,9 @@ private val AO_NEIGHBORS: Array<Array<Array<IntArray>>> =
 // Faces processed per Phase-2 budget slice. At ~200–400ns/face this targets ~1–2ms/slice.
 private const val FACE_SLICE_SIZE = 5_000
 
-// Master switch for the far-chunk impostor system below — OFF by default. It gave a real FPS win
-// (12-21 -> 37 in creative) but has an unresolved bug: with it on, new chunks stop appearing as
-// you move (in both creative AND normal game mode), download/mesh counters stall at 0, and
-// nothing catches up even standing still — root cause not yet found (not a silently-empty mesh,
-// logs confirm builds succeed; not the HTTP chunk transport either, this server uses websocket).
-// Flip to true only for further debugging with console access.
-private const val USE_IMPOSTOR = true
+// Master switch for the far-chunk impostor system below. Default true — overridable per-player
+// via graphics preferences (see ChunkManager.useImpostor).
+private const val DEFAULT_USE_IMPOSTOR = true
 
 // Chebyshev chunk distance from the viewer (see jsGetActiveCameraChunkX/Z) within which a chunk
 // gets full block geometry; beyond it, a cheap flat impostor (buildChunkImpostorMesh) instead.
@@ -74,7 +70,9 @@ private const val USE_IMPOSTOR = true
 // geometry cost on the outer rings, which is most of a 15×15 candidate area by cell count.
 // Decided once when a chunk is first meshed — a chunk doesn't get upgraded/downgraded later if
 // the viewer moves closer/farther without the chunk itself unloading and reloading.
-private const val IMPOSTOR_RADIUS_CHUNKS = 3
+// Default 3 — overridable per-player via graphics preferences (see
+// ChunkManager.impostorRadiusChunks).
+private const val DEFAULT_IMPOSTOR_RADIUS_CHUNKS = 3
 
 // Plain color index rides in bits 18-23 of the ao int (bits 0-15 = AO, 16-17 = yOffset).
 private const val COLOR_SHIFT = 18
@@ -90,6 +88,9 @@ private data class ChunkRender(
 )
 
 class ChunkManager(private val scene: JsAny) {
+    var useImpostor: Boolean = DEFAULT_USE_IMPOSTOR
+    var impostorRadiusChunks: Int = DEFAULT_IMPOSTOR_RADIUS_CHUNKS
+
     val loadedChunks = mutableSetOf<ChunkPos>()
 
     // Chunks currently meshed as a flat impostor rather than full geometry — see
@@ -259,12 +260,12 @@ class ChunkManager(private val scene: JsAny) {
                 }
                 val (chunk, topY) = pendingChunks.removeAt(0)
                 chunkData[chunk.pos] = Pair(chunk, topY)
-                if (USE_IMPOSTOR) {
+                if (useImpostor) {
                     val viewerCx = jsGetActiveCameraChunkX(scene)
                     val viewerCz = jsGetActiveCameraChunkZ(scene)
                     val viewerDist =
                         maxOf(abs(chunk.pos.cx - viewerCx), abs(chunk.pos.cz - viewerCz))
-                    if (viewerDist > IMPOSTOR_RADIUS_CHUNKS) {
+                    if (viewerDist > impostorRadiusChunks) {
                         pushMinimapChunk(chunk, topY)
                         jsBuildChunkImpostor(scene, chunk.pos.cx, chunk.pos.cz)
                         loadedChunks.add(chunk.pos)
@@ -436,10 +437,10 @@ class ChunkManager(private val scene: JsAny) {
     // first mesh (see USE_IMPOSTOR comment), so without this, chunks meshed as impostors while
     // far away stay impostors even after the player walks back into their radius.
     fun upgradeNearImpostors(playerCx: Int, playerCz: Int) {
-        if (!USE_IMPOSTOR || impostorChunks.isEmpty()) return
+        if (!useImpostor || impostorChunks.isEmpty()) return
         val toUpgrade =
             impostorChunks.filter { cp ->
-                maxOf(abs(cp.cx - playerCx), abs(cp.cz - playerCz)) <= IMPOSTOR_RADIUS_CHUNKS
+                maxOf(abs(cp.cx - playerCx), abs(cp.cz - playerCz)) <= impostorRadiusChunks
             }
         toUpgrade.forEach { cp ->
             val (chunk, topY) = chunkData[cp] ?: return@forEach

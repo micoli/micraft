@@ -177,6 +177,10 @@ export interface PreferencesData {
   inventorySortA?: string;
   inventorySortB?: string;
   shadowAngleDeg?: number;
+  overrideViewRadius?: number | null;
+  overrideForwardViewRadius?: number | null;
+  overrideUseImpostor?: boolean | null;
+  overrideImpostorRadiusChunks?: number | null;
 }
 
 export type CombatTargetData = {

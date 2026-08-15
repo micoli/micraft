@@ -197,6 +197,10 @@ sealed class ServerMessage {
         val inventorySortA: String = "",
         val inventorySortB: String = "",
         val shadowAngleDeg: Int = 1,
+        val overrideViewRadius: Int? = null,
+        val overrideForwardViewRadius: Int? = null,
+        val overrideUseImpostor: Boolean? = null,
+        val overrideImpostorRadiusChunks: Int? = null,
     ) : ServerMessage()
 
     @ProtoId(25)

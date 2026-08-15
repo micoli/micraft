@@ -36,6 +36,12 @@ private const val SKY_R = 0.53
 private const val SKY_G = 0.81
 private const val SKY_B = 0.98
 
+// Compiled-in client defaults, restored when a graphics-preference override is cleared.
+private const val DEFAULT_VIEW_RADIUS = 3
+private const val DEFAULT_FORWARD_VIEW_RADIUS = 7
+private const val DEFAULT_USE_IMPOSTOR = true
+private const val DEFAULT_IMPOSTOR_RADIUS_CHUNKS = 3
+
 class GameClient
 @OptIn(ExperimentalWasmJsInterop::class)
 constructor(private val scene: JsAny, private val camera: JsAny, private val uiState: McUiState) {
@@ -787,6 +793,12 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     jsCameraSetFov(camera, msg.fieldOfView)
                     localController.autoTargetEnabled = msg.autoTargetEnabled
                     jsSetShadowAngleDeg(msg.shadowAngleDeg)
+                    WorldConstants.VIEW_RADIUS = msg.overrideViewRadius ?: DEFAULT_VIEW_RADIUS
+                    WorldConstants.FORWARD_VIEW_RADIUS =
+                        msg.overrideForwardViewRadius ?: DEFAULT_FORWARD_VIEW_RADIUS
+                    chunkManager.useImpostor = msg.overrideUseImpostor ?: DEFAULT_USE_IMPOSTOR
+                    chunkManager.impostorRadiusChunks =
+                        msg.overrideImpostorRadiusChunks ?: DEFAULT_IMPOSTOR_RADIUS_CHUNKS
                     uiState.setPreferencesSync(
                         Json.encodeToString<ServerMessage.PreferencesSync>(msg))
                 })

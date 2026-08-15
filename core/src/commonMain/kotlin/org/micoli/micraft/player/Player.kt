@@ -65,4 +65,8 @@ data class PlayerState(
     val inventorySortB: String = "",
     val wallet: Long = 0L,
     val shadowAngleDeg: Int = 1,
+    val overrideViewRadius: Int? = null,
+    val overrideForwardViewRadius: Int? = null,
+    val overrideUseImpostor: Boolean? = null,
+    val overrideImpostorRadiusChunks: Int? = null,
 )

@@ -66,13 +66,17 @@ class ChunkStreamer(private val world: WorldState) {
                 world.chunkEntityProtos(chunk.pos)))
     }
 
+    private fun forwardViewRadius(session: PlayerSession): Int =
+        session.state.overrideForwardViewRadius ?: WorldConstants.FORWARD_VIEW_RADIUS
+
     fun requestAround(session: PlayerSession, cx: Int, cz: Int) {
         val yaw = session.state.orientation.yaw.toDouble()
-        val offsets = buildOffsets(yaw, cx, cz)
+        val radius = forwardViewRadius(session)
+        val offsets = buildOffsets(yaw, cx, cz, radius)
         val pending = pendingPools.getOrPut(session.id) { ConcurrentHashMap.newKeySet() }
         val primaryAllCovered =
             offsets.none { (dx, dz) ->
-                chunkScore(dx, dz, yaw) < 4000.0 &&
+                chunkScore(dx, dz, yaw, radius) < 4000.0 &&
                     run {
                         val cp = ChunkPos(cx + dx, cz + dz)
                         !session.loadedChunks.contains(cp) &&
@@ -83,7 +87,7 @@ class ChunkStreamer(private val world: WorldState) {
         for ((dx, dz) in offsets) {
             val cp = ChunkPos(cx + dx, cz + dz)
             if (session.loadedChunks.contains(cp) || session.inFlightChunks.contains(cp)) continue
-            if (!primaryAllCovered && chunkScore(dx, dz, yaw) >= 4000.0) continue
+            if (!primaryAllCovered && chunkScore(dx, dz, yaw, radius) >= 4000.0) continue
             pending.add(cp)
         }
         drainPending(session)
@@ -126,9 +130,10 @@ class ChunkStreamer(private val world: WorldState) {
 
         val (pcx, pcz) = predictedCenter(session)
         val yaw = session.state.orientation.yaw.toDouble()
+        val radius = forwardViewRadius(session)
 
         val candidates =
-            pending.sortedBy { cp -> chunkScore(cp.cx - pcx, cp.cz - pcz, yaw) }.take(slots)
+            pending.sortedBy { cp -> chunkScore(cp.cx - pcx, cp.cz - pcz, yaw, radius) }.take(slots)
 
         val pool = readyPools.getOrPut(session.id) { ConcurrentHashMap() }
         for (cp in candidates) {
@@ -148,10 +153,11 @@ class ChunkStreamer(private val world: WorldState) {
 
         val (pcx, pcz) = predictedCenter(session)
         val yaw = session.state.orientation.yaw.toDouble()
+        val radius = forwardViewRadius(session)
 
         val candidates =
             pool.keys
-                .sortedBy { cp -> chunkScore(cp.cx - pcx, cp.cz - pcz, yaw) }
+                .sortedBy { cp -> chunkScore(cp.cx - pcx, cp.cz - pcz, yaw, radius) }
                 .take(MAX_DELIVER_PER_TICK)
 
         var delivered = 0
@@ -179,7 +185,7 @@ class ChunkStreamer(private val world: WorldState) {
         }
     }
 
-    private fun chunkScore(dx: Int, dz: Int, yaw: Double): Double {
+    private fun chunkScore(dx: Int, dz: Int, yaw: Double, forwardRadius: Int): Double {
         val dist = sqrt((dx * dx + dz * dz).toDouble())
         if (dist == 0.0) return -1.0
         if (dist <= sqrt(2.0) + 0.01) return 1000.0 + dist
@@ -187,7 +193,7 @@ class ChunkStreamer(private val world: WorldState) {
         val fwdZ = -cos(yaw)
         val dot = (dx * fwdX + dz * fwdZ) / dist
         val angleDeg = Math.toDegrees(acos(dot.coerceIn(-1.0, 1.0)))
-        val halfR = WorldConstants.FORWARD_VIEW_RADIUS / 2.0
+        val halfR = forwardRadius / 2.0
         return when {
             dist <= halfR && angleDeg < 60.0 -> 2000.0 + dist
             dist > halfR -> 3000.0 + dist
@@ -195,10 +201,15 @@ class ChunkStreamer(private val world: WorldState) {
         }
     }
 
-    private fun buildOffsets(yaw: Double, cx: Int, cz: Int): List<Pair<Int, Int>> {
-        val fwdR = WorldConstants.FORWARD_VIEW_RADIUS
+    private fun buildOffsets(
+        yaw: Double,
+        cx: Int,
+        cz: Int,
+        forwardRadius: Int
+    ): List<Pair<Int, Int>> {
+        val fwdR = forwardRadius
         return (-fwdR..fwdR)
             .flatMap { dx -> (-fwdR..fwdR).map { dz -> dx to dz } }
-            .sortedBy { (dx, dz) -> chunkScore(dx, dz, yaw) }
+            .sortedBy { (dx, dz) -> chunkScore(dx, dz, yaw, forwardRadius) }
     }
 }

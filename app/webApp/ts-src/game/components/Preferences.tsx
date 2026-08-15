@@ -20,6 +20,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "chat", label: "Chat" },
   { id: "commands", label: "Commands" },
   { id: "graphics", label: "Graphics" },
+  { id: "debug", label: "Debug" },
   { id: "keybindings", label: "Keybindings" },
 ];
 
@@ -34,7 +35,8 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
         movable
-        className="min-w-[520px] max-w-[560px] max-h-[80vh] flex flex-col font-mono p-5"
+        className="min-w-[520px] max-w-[560px] max-h-[80vh] flex flex-col font-mono p-5 z-[3001]"
+        overlayClassName="z-[3000]"
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         {/* Key recording overlay */}
@@ -163,11 +165,6 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                   setter: pref.setLocalAutoTarget,
                   label: "Auto-target nearest aggro mob (when no target selected)",
                 },
-                {
-                  state: pref.localChunkDebugVisible,
-                  setter: pref.setLocalChunkDebugVisible,
-                  label: "Chunk debug overlay (streaming status grid)",
-                },
               ].map(({ state, setter, label }) => (
                 <div key={label} className="flex items-center gap-2 py-1.5 border-b border-[#2a2a2a]">
                   <input type="checkbox" checked={state} onChange={(e) => setter(e.target.checked)} />
@@ -211,6 +208,81 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
                   <span>1° (smooth)</span>
                   <span>10° (perf)</span>
                 </div>
+              </div>
+
+              <div className="pt-2 text-[11px] text-[#888] uppercase tracking-wide">Rendering overrides</div>
+              {[
+                {
+                  value: pref.localOverrideViewRadius,
+                  setter: pref.setLocalOverrideViewRadius,
+                  label: "View radius",
+                  fallback: 3,
+                  min: 1,
+                  max: 16,
+                },
+                {
+                  value: pref.localOverrideForwardViewRadius,
+                  setter: pref.setLocalOverrideForwardViewRadius,
+                  label: "Forward view radius",
+                  fallback: 7,
+                  min: 1,
+                  max: 16,
+                },
+                {
+                  value: pref.localOverrideImpostorRadiusChunks,
+                  setter: pref.setLocalOverrideImpostorRadiusChunks,
+                  label: "Impostor radius (chunks)",
+                  fallback: 3,
+                  min: 0,
+                  max: 16,
+                },
+              ].map(({ value, setter, label, fallback, min, max }) => (
+                <div key={label} className="flex items-center gap-2 py-1.5 border-b border-[#2a2a2a]">
+                  <input
+                    type="checkbox"
+                    checked={value !== null}
+                    onChange={(e) => setter(e.target.checked ? fallback : null)}
+                  />
+                  <span className="flex-1">{label}</span>
+                  <input
+                    type="number"
+                    min={min}
+                    max={max}
+                    disabled={value === null}
+                    value={value ?? fallback}
+                    onChange={(e) => setter(Number(e.target.value))}
+                    className="w-16 bg-[#2a2a2a] border border-[#555] rounded-sm text-[#eee] px-1.5 py-0.5 text-xs font-mono outline-none disabled:opacity-40"
+                  />
+                </div>
+              ))}
+              <div className="flex items-center gap-2 py-1.5 border-b border-[#2a2a2a]">
+                <input
+                  type="checkbox"
+                  checked={pref.localOverrideUseImpostor !== null}
+                  onChange={(e) => pref.setLocalOverrideUseImpostor(e.target.checked ? true : null)}
+                />
+                <span className="flex-1">Far-chunk impostors</span>
+                <input
+                  type="checkbox"
+                  disabled={pref.localOverrideUseImpostor === null}
+                  checked={pref.localOverrideUseImpostor ?? true}
+                  onChange={(e) => pref.setLocalOverrideUseImpostor(e.target.checked)}
+                  className="disabled:opacity-40"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Debug tab */}
+          {pref.tab === "debug" && (
+            <>
+              <div className="flex items-center gap-2 py-1.5 border-b border-[#2a2a2a]">
+                <input
+                  type="checkbox"
+                  checked={pref.localChunkDebugVisible}
+                  onChange={(e) => pref.setLocalChunkDebugVisible(e.target.checked)}
+                />
+                <span>Chunk debug overlay (streaming status grid)</span>
               </div>
             </>
           )}
