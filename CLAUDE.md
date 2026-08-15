@@ -101,77 +101,25 @@ Skins without a yaml fall back to `PlayerConstants` stance eye offsets.
 - Centralise constants in `core` (`WorldConstants`, `PlayerConstants`). Never duplicate between client and server.
 - All packages under `org.micoli.micraft.*`
 
-## Server restart
+## Makefile
 
-After every server-side code change:
-```bash
-make dev-restart-server
-```
-Pitchfork watchdog rebuilds and restarts Ktor. Web client reconnects automatically. **Never ask user to restart manually — always use `make dev-restart-server`.**
+`make help` lists every target, grouped, self-documented (each rule has an inline `## description`) — check it before assuming a command doesn't exist. Key targets by task:
 
-## WASM build
+- **After any server-side code change**: `make dev-restart-server` (never ask the user to restart manually)
+- **After any WASM/Kotlin client change**: `make build` (detect changes, rebuild JS→WASM→server, restart, browser auto-reloads); `make build-all` forces a full rebuild; `make build-wasm` is WASM-only
+- **Lint before commit**: `make quick-code-standard` (modified files only) or `make code-standard` (full) — never call `make dc CMD="./gradlew :spotlessApply"` / `npm run format` standalone
+- **Stale cache / proto errors**: `make dev-reset-wasm` → `make dev-reset` (~2 min) → `make dev-nuke` (nuclear), in escalating order
+- **Anything else in-container**: `make dc CMD="..."`, or `make shell` for a bash shell
 
-No watcher auto-starts. Use `make build` for all dev rebuilds.
-
-```bash
-make build             # detect changes → rebuild in order → restart → browser auto-reloads
-make build-all         # force full rebuild (WASM + JS/CSS + server)
-make build-wasm        # one-shot WASM-only recompile
-make dev-reset-wasm    # proto decode errors / stale output after core type changes
-make wasm-watch        # start continuous WASM watcher (opt-in, for heavy WASM iteration)
-make trigger-wasm      # trigger rebuild when wasm-watch is running
-```
-
-## code-standard
-```
-make quick-code-standard # lint on only modified kotlin and typescript since HEAD
-make code-standard       # full lint on kotlin and typescript
-```
-do not use `make dc CMD="./gradlew :spotlessApply"` or `make dc CMD="npm run format"` by their own
-
-## JS / CSS build
-
-No watchers auto-start. Use `make build` for the full build, or targeted commands:
-
-```bash
-make build             # preferred: detect changes + rebuild + restart + browser reload
-make build-js          # one-shot mc_bindings rebuild only (also copies babylon.js)
-make build-map         # rebuild map.js + map.css
-make build-admin       # rebuild admin.js + admin.css
-```
-
-All these write directly into `app/webApp/build/web/` — the only directory Ktor serves (`staticFiles` off `$MICRAFT_WEB_DIST`). No manual copy/restart/watcher-daemon step is needed for a rebuild to show up in the browser; just hard-refresh.
-
-## DX — stale cache recovery
-
-| Situation | Command |
-|---|---|
-| WASM stale / proto errors | `make dev-reset-wasm` |
-| Everything weird | `make dev-reset` (stop all → clear caches → restart, ~2 min) |
-| Nuclear | `make dev-nuke` (destroy all volumes + full restart) |
+Rebuild outputs write directly into `app/webApp/build/web/` (the only dir Ktor serves) — a browser hard-refresh is always enough, no manual copy step.
 
 ## Docker execution
 
-**All build/test/lint/run commands execute inside dev container — never directly on host.**
-
-Dev container must be running (`make dev-up` in separate terminal, or detached).
-
-```bash
-# Run any command inside the container
-make dc CMD="./gradlew :server:test"
-make dc CMD="./gradlew :spotlessApply"
-make dc CMD="npm run format"          # runs in /workspace/app/webApp/ts-src
-
-# Open a shell
-make shell
-```
-
-`rtk` runs on host as hook proxy — wraps `docker compose exec` automatically. Do not add `rtk` inside container command; hook injects it at host level.
+**All build/test/lint/run commands execute inside the dev container — never directly on host.** Dev container must be running (`make dev-up`). `rtk` runs on host as a hook proxy wrapping `docker compose exec` automatically — never add `rtk` inside a `make dc CMD="..."` string.
 
 ## Rules
 
-- **Never run `./gradlew`, `npm`, `node`, or `gradle` directly on host.** Use `make dc CMD="..."`.
-- Always prefer `./gradlew` (never `gradle` directly).
+- **Never run `./gradlew`, `npm`, `node`, or `gradle` directly on host.** Use `make dc CMD="..."` (prefer `./gradlew`, never bare `gradle`).
 - Always view files in docker instance, not on host filesystem
 - Use `rtk` before verbose host-level commands (git diff, git status, find). For in-container commands via `make dc`, rtk applied automatically by hook.
 - Never run unfiltered `find`, `grep`, `ls -R`, `git diff`, or `gradlew test` without `rtk`.
