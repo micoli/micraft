@@ -138,7 +138,9 @@ function buildFaceTable(): void {
   for (let typeOrd = 0; typeOrd < 512; typeOrd++) {
     const blockDef = window.mc.getBlockDef(typeOrd);
     if (!blockDef) continue;
-    const bs = blockDef.brickSize ?? [1, 1, 1];
+    // brickSize is in half-voxel units (2 = 1 full voxel) — divide by 2 to get old-style
+    // voxel-fraction values (1 = 1 full voxel) used throughout this function.
+    const bs = (blockDef.brickSize ?? [2, 2, 2]).map((v) => v / 2) as [number, number, number];
     brickFracTable[typeOrd] = [bs[0] < 1 ? bs[0] : bs[0] > 1 ? 0.5 : 0, bs[2] < 1 ? bs[2] : bs[2] > 1 ? 0.5 : 0];
     if (blockDef.renderType === "gltf") {
       if (blockDef.gltfPath) gltfTypeTable[typeOrd] = blockDef.gltfPath;
@@ -709,8 +711,13 @@ export function registerChunks(): Pick<
         if (xOff || zOff) {
           const typeOrd = (faceMat / 24) | 0;
           const frac = brickFracTable[typeOrd] ?? [1, 1];
-          wx += xOff * frac[0];
-          wz += zOff * frac[1];
+          // faceMat = (typeOrd*4 + rotation)*6 + fd — recover rotation to swap X/Z fracs for
+          // 90°/270°, matching BlockPlacer.kt's effectiveSizeX/Z axis swap (the xOff/zOff slot
+          // indices are already world-space, computed against the rotation-swapped grid).
+          const rotation = (((faceMat / 6) | 0) % 4) as 0 | 1 | 2 | 3;
+          const [fracX, fracZ] = rotation % 2 === 0 ? frac : [frac[1], frac[0]];
+          wx += xOff * fracX;
+          wz += zOff * fracZ;
         }
         const infos = faceTable[faceMat];
         if (!infos) {

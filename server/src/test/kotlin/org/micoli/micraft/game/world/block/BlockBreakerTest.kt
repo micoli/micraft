@@ -49,8 +49,7 @@ class BlockBreakerTest {
                         solid = true,
                         isCubic = false,
                         replaceable = false,
-                        brickSize = listOf(0.25f, 1f, 0.25f),
-                        heightFraction = 0.333f,
+                        brickSize = listOf(0.5f, 0.666f, 0.5f),
                     )))
     }
 

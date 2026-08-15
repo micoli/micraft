@@ -32,8 +32,12 @@ data class BlockDefinition(
     val minimapVisible: Boolean = true,
     val rotatable: Boolean = false,
     val hasStuds: Boolean = false,
-    val brickSize: List<Float> = listOf(1f, 1f, 1f),
-    val heightFraction: Float = 1.0f,
+    /**
+     * Brick footprint in half-voxel units: `2f` = 1 full voxel, `1f` = 1/2 voxel, `0.5f` = 1/4
+     * voxel. Always 3 elements (X, Y, Z). Y also drives sub-voxel Y-stacking (e.g. a plate with
+     * brickSize[1]=0.5 stacks 4-high within one voxel) — there is no separate height field.
+     */
+    val brickSize: List<Float> = listOf(2f, 2f, 2f),
     /** When true, the block can be placed in any palette color (see [PlainColorRegistry]). */
     val plainColorable: Boolean = false,
     /**

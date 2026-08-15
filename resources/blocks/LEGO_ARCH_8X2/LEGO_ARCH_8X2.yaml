@@ -12,5 +12,5 @@ treeAllowed: false
 minimapVisible: true
 rotatable: true
 hasStuds: true
-brickSize: [4, 2, 1]
+brickSize: [8, 4, 2]
 plainColorable: true

@@ -52,7 +52,8 @@ class BlockEntityTest {
                         hardness = 1f,
                         solid = true,
                         replaceable = false,
-                        brickSize = listOf(2f, 1f, 1f),
+                        // Half-voxel units: 2 voxels wide × 1 voxel tall × 1 voxel deep.
+                        brickSize = listOf(4f, 2f, 2f),
                     ),
                 BlockType("LEGO_BRICK") to BlockDefinition(hardness = 1f, solid = true),
                 BlockType("LEGO_PLATE_2X2") to
@@ -60,8 +61,8 @@ class BlockEntityTest {
                         hardness = 1f,
                         solid = true,
                         replaceable = false,
-                        brickSize = listOf(2f, 1f, 2f),
-                        heightFraction = 0.333f,
+                        // Y=0.666 (~2/3) stacks 3 high within one voxel (was heightFraction=0.333).
+                        brickSize = listOf(4f, 0.666f, 4f),
                     ),
             ))
     }
@@ -370,7 +371,7 @@ class BlockEntityTest {
                         hardness = 1f,
                         solid = false,
                         replaceable = false,
-                        brickSize = listOf(2f, 1f, 0.5f),
+                        brickSize = listOf(4f, 2f, 1f),
                     ),
             ))
     }

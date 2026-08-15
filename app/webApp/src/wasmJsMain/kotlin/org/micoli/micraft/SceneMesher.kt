@@ -53,7 +53,7 @@ class SceneMesher(
             occludesByOrd[i] = if (def.isCubic && !def.transparent) 1 else 0
             isMultiCellByOrd[i] =
                 if (def.brickSize.size == 3 &&
-                    (def.brickSize[0] > 1 || def.brickSize[1] > 1 || def.brickSize[2] > 1))
+                    (def.brickSize[0] > 2 || def.brickSize[1] > 2 || def.brickSize[2] > 2))
                     1
                 else 0
             mergeableByOrd[i] =

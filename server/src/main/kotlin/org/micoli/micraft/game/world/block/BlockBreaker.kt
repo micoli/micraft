@@ -231,11 +231,11 @@ class BlockBreaker(
                     val entityDef =
                         BlockRegistry.get(world.getBlock(masterPos.x, masterPos.y, masterPos.z))
                     val sizeX =
-                        ceil(entityDef.brickSize.getOrElse(0) { 1f }).toInt().coerceAtLeast(1)
+                        ceil(entityDef.brickSize.getOrElse(0) { 2f } / 2f).toInt().coerceAtLeast(1)
                     val sizeY =
-                        ceil(entityDef.brickSize.getOrElse(1) { 1f }).toInt().coerceAtLeast(1)
+                        ceil(entityDef.brickSize.getOrElse(1) { 2f } / 2f).toInt().coerceAtLeast(1)
                     val sizeZ =
-                        ceil(entityDef.brickSize.getOrElse(2) { 1f }).toInt().coerceAtLeast(1)
+                        ceil(entityDef.brickSize.getOrElse(2) { 2f } / 2f).toInt().coerceAtLeast(1)
                     for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
                         val cp = BlockPos(masterPos.x + dx, masterPos.y + dy, masterPos.z + dz)
                         val existingBlock = world.getBlock(cp.x, cp.y, cp.z)
@@ -251,9 +251,9 @@ class BlockBreaker(
 
             // Regular multi-cell entity: remove entire entity + all cell block types
             val entityDef = BlockRegistry.get(world.getBlock(masterPos.x, masterPos.y, masterPos.z))
-            val sizeX = ceil(entityDef.brickSize.getOrElse(0) { 1f }).toInt().coerceAtLeast(1)
-            val sizeY = ceil(entityDef.brickSize.getOrElse(1) { 1f }).toInt().coerceAtLeast(1)
-            val sizeZ = ceil(entityDef.brickSize.getOrElse(2) { 1f }).toInt().coerceAtLeast(1)
+            val sizeX = ceil(entityDef.brickSize.getOrElse(0) { 2f } / 2f).toInt().coerceAtLeast(1)
+            val sizeY = ceil(entityDef.brickSize.getOrElse(1) { 2f } / 2f).toInt().coerceAtLeast(1)
+            val sizeZ = ceil(entityDef.brickSize.getOrElse(2) { 2f } / 2f).toInt().coerceAtLeast(1)
             val changes = mutableListOf<BlockChange>()
             for (dx in 0 until sizeX) for (dy in 0 until sizeY) for (dz in 0 until sizeZ) {
                 val cp = BlockPos(masterPos.x + dx, masterPos.y + dy, masterPos.z + dz)

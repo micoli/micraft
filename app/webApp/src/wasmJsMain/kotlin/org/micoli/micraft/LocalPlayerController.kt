@@ -8,6 +8,7 @@ import org.micoli.micraft.game.NetworkStats
 import org.micoli.micraft.game.NpcManager
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
@@ -852,8 +853,7 @@ class LocalPlayerController(
         if (isPlaceMode) {
             val rawAdjacent = rayResult?.adjacent
             val isFractionalItem =
-                selectedItem.placesBlock?.let { BlockRegistry.get(it).heightFraction < 1.0f }
-                    ?: false
+                selectedItem.placesBlock?.let { BlockRegistry.get(it).brickSize[1] < 2.0f } ?: false
             // Redirect ghost for fractional blocks only on lateral clicks (side of an existing
             // fractional entity → its own cell, so a second XZ slot or Y stack level can be added
             // in the SAME voxel instead of pushing into the empty neighbor cell). Above-stud
@@ -873,24 +873,35 @@ class LocalPlayerController(
                     PlainColorRegistry.indexOf(ItemRegistry.get(selectedItem).plainColor)
                 else 0
 
-            // Compute XZ sub-voxel slot from hit position within adjacent voxel
+            // Compute XZ sub-voxel slot from hit position within adjacent voxel. brickSize is in
+            // half-voxel units (2f = 1 full voxel) — divide by 2 to get a 0..1 voxel fraction.
             val blockDef = selectedItem.placesBlock?.let { BlockRegistry.get(it) }
-            val brickSizeX = blockDef?.brickSize?.getOrElse(0) { 1f } ?: 1f
-            val brickSizeZ = blockDef?.brickSize?.getOrElse(2) { 1f } ?: 1f
-            val effectiveFracX = if (placementRotation % 2 == 0) brickSizeX else brickSizeZ
-            val effectiveFracZ = if (placementRotation % 2 == 0) brickSizeZ else brickSizeX
+            val brickSizeX = blockDef?.brickSize?.getOrElse(0) { 2f } ?: 2f
+            val brickSizeZ = blockDef?.brickSize?.getOrElse(2) { 2f } ?: 2f
+            val effectiveFracX = (if (placementRotation % 2 == 0) brickSizeX else brickSizeZ) / 2f
+            val effectiveFracZ = (if (placementRotation % 2 == 0) brickSizeZ else brickSizeX) / 2f
+            // Fine-snap: even a full-voxel item (studStep would otherwise be 0, collapsing onto
+            // the coarse grid) must snap onto the 1/4-voxel grid when it lands next to an
+            // already-offset lego neighbor — mirrors BlockPlacer.placeAt's neighborForcesFineSnap.
+            val neighborForcesFineSnap =
+                effectiveFracX >= 1.0f &&
+                    effectiveFracZ >= 1.0f &&
+                    adjacent != null &&
+                    chunkManager.hasMisalignedNeighborAt(adjacent.x, adjacent.y, adjacent.z)
             val ghostXOffset: Int
             val ghostZOffset: Int
             val studStepX =
                 when {
                     effectiveFracX < 1.0f -> effectiveFracX
                     effectiveFracX > 1.0f -> 0.5f // multi-voxel LEGO: 1-stud (0.5-block) precision
+                    neighborForcesFineSnap -> 0.25f // forced 1/4-voxel snap next to offset neighbor
                     else -> 0f
                 }
             val studStepZ =
                 when {
                     effectiveFracZ < 1.0f -> effectiveFracZ
                     effectiveFracZ > 1.0f -> 0.5f
+                    neighborForcesFineSnap -> 0.25f
                     else -> 0f
                 }
             if (adjacent != null && (studStepX > 0f || studStepZ > 0f)) {
@@ -946,7 +957,7 @@ class LocalPlayerController(
                     )
                     // Show placement wireframe at adjacent+offset (arch-shaped, not 1×1 target
                     // cube)
-                    if (blockDef?.brickSize?.let { bs -> bs[0] != 1f || bs[2] != 1f } == true) {
+                    if (blockDef?.brickSize?.let { bs -> bs[0] != 2f || bs[2] != 2f } == true) {
                         jsShowTargetOutline(
                             scene,
                             adjacent.x,
@@ -987,14 +998,20 @@ class LocalPlayerController(
                 if (target != breakTarget && (continuousBreak || breakArmed)) {
                     breakArmed = false
                     breakTarget = target
-                    jsShowBreakOverlay(scene, target.x, target.y, target.z, 1.0)
-                    val targetDef =
-                        BlockRegistry.get(
-                            chunkManager.getBlockAtWorld(target.x, target.y, target.z))
+                    val targetType = chunkManager.getBlockAtWorld(target.x, target.y, target.z)
+                    val targetDef = BlockRegistry.get(targetType)
+                    val targetOrd = BlockRegistry.wireIndex(targetType)
+                    val targetRotation =
+                        BlockState.rotation(
+                            chunkManager.getStateAtWorld(target.x, target.y, target.z))
                     val breakStudStepX =
-                        targetDef.brickSize.getOrElse(0) { 1f }.let { if (it < 1.0f) it else 0f }
+                        (targetDef.brickSize.getOrElse(0) { 2f } / 2f).let {
+                            if (it < 1.0f) it else 0f
+                        }
                     val breakStudStepZ =
-                        targetDef.brickSize.getOrElse(2) { 1f }.let { if (it < 1.0f) it else 0f }
+                        (targetDef.brickSize.getOrElse(2) { 2f } / 2f).let {
+                            if (it < 1.0f) it else 0f
+                        }
                     val breakXOffset: Int
                     val breakZOffset: Int
                     if (breakStudStepX > 0f || breakStudStepZ > 0f) {
@@ -1028,6 +1045,18 @@ class LocalPlayerController(
                         breakXOffset = 0
                         breakZOffset = 0
                     }
+                    // Footprint-aware outline (mirrors showTargetOutline) so breaking a multi-cell
+                    // or offset lego entity highlights its real extent, not just the pointed cell.
+                    jsShowBreakOverlay(
+                        scene,
+                        target.x,
+                        target.y,
+                        target.z,
+                        1.0,
+                        targetOrd,
+                        targetRotation,
+                        breakXOffset,
+                        breakZOffset)
                     outMessages.trySend(
                         ClientMessage.BlockBreakStart(
                             target, breakXOffset.toByte(), breakZOffset.toByte()))

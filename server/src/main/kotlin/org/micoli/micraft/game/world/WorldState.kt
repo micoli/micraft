@@ -181,8 +181,20 @@ class WorldState(
 
     private fun isXZFractional(type: BlockType): Boolean {
         val def = BlockRegistry.get(type)
-        return def.brickSize.getOrElse(0) { 1f } < 1.0f || def.brickSize.getOrElse(2) { 1f } < 1.0f
+        return def.brickSize.getOrElse(0) { 2f } < 2.0f || def.brickSize.getOrElse(2) { 2f } < 2.0f
     }
+
+    /**
+     * True if this cell or one of its 4 orthogonal XZ neighbors (same Y) already hosts an
+     * XZ-fractional entity — either off the full grid (nonzero xOffset/zOffset) or of a
+     * fractional-footprint block type. Used to force a new placement (lego or classic) onto the
+     * finer sub-voxel grid so it doesn't silently collapse onto the coarse grid next to an
+     * already-offset lego structure. See [getXZOffsetsAt].
+     */
+    fun hasMisalignedNeighbor(wx: Int, wy: Int, wz: Int): Boolean =
+        listOf(0 to 0, 1 to 0, -1 to 0, 0 to 1, 0 to -1).any { (dx, dz) ->
+            getXZOffsetsAt(wx + dx, wy, wz + dz).isNotEmpty()
+        }
 
     /**
      * Returns the last-placed XZ-fractional entity at this world position (highest
@@ -225,7 +237,7 @@ class WorldState(
         return chunk.entityMasters
             .filter {
                 it.masterIdx == masterIdx &&
-                    BlockRegistry.get(it.type).heightFraction < 1.0f &&
+                    BlockRegistry.get(it.type).brickSize[1] < 2.0f &&
                     it.xOffset == xOffset &&
                     it.zOffset == zOffset
             }
@@ -256,7 +268,7 @@ class WorldState(
         return chunk.entityMasters
             .filter {
                 it.masterIdx == masterIdx &&
-                    BlockRegistry.get(it.type).heightFraction < 1.0f &&
+                    BlockRegistry.get(it.type).brickSize[1] < 2.0f &&
                     (xOffset == null || it.xOffset == xOffset) &&
                     (zOffset == null || it.zOffset == zOffset)
             }

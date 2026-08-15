@@ -33,8 +33,24 @@ class BlockPlacerTest {
                         solid = true,
                         isCubic = false,
                         replaceable = false,
-                        brickSize = listOf(0.25f, 1f, 0.25f),
-                        heightFraction = 0.333f,
+                        // Half-voxel units: 0.5 = 1/4 voxel XZ footprint; Y=0.666 (~2/3) stacks 3
+                        // high within one voxel (formerly heightFraction=0.333).
+                        brickSize = listOf(0.5f, 0.666f, 0.5f),
+                    )))
+    }
+
+    private fun registerLegoBrick2x1() {
+        BlockRegistry.load(
+            mapOf(
+                BlockType.LEGO_BRICK_2X1 to
+                    BlockDefinition(
+                        hardness = 1f,
+                        solid = false,
+                        replaceable = false,
+                        rotatable = true,
+                        hasStuds = true,
+                        // 2 voxels wide × 1 voxel tall × 1 voxel deep, in half-voxel units.
+                        brickSize = listOf(4f, 2f, 2f),
                     )))
     }
 
@@ -400,5 +416,57 @@ class BlockPlacerTest {
                 BlockPos(8, 7, 8), ItemType("LEGO_PIECE"), xOffset = 4, zOffset = 0))
         assertEquals(5, session.inventory[ItemType("LEGO_PIECE")])
         assertEquals(BlockType.AIR, world.getBlock(8, 7, 8))
+    }
+
+    @Test
+    fun placeAt_classicBlock_noMisalignedNeighbor_noEntityCreated() {
+        registerLegoPiece()
+        val world = testWorld()
+        // Plain classic block placement, no lego neighbor around → stays a simple full-cell
+        // placement (no BlockEntityProto), same as before the fine-snap feature existed.
+        val result = BlockPlacer.placeAt(BlockPos(8, 7, 8), BlockType.STONE, 0, 0, 0, 0, world)
+        assertEquals(BlockType.STONE, world.getBlock(8, 7, 8))
+        assertTrue(result.entityAdds.isEmpty())
+    }
+
+    @Test
+    fun placeAt_classicBlock_nextToMisalignedLegoNeighbor_forcesFineSnapEntity() {
+        registerLegoPiece()
+        val world = testWorld()
+        // Misaligned LEGO_PIECE (off the full grid: xOffset=1) at (8,7,8).
+        BlockPlacer.placeAt(BlockPos(8, 7, 8), BlockType.LEGO_PIECE, 0, 0, 1, 0, world)
+        assertTrue(world.hasMisalignedNeighbor(9, 7, 8))
+
+        // Classic block placed in the orthogonally adjacent cell must snap onto the fine grid
+        // instead of silently becoming a plain full-cell block.
+        val result = BlockPlacer.placeAt(BlockPos(9, 7, 8), BlockType.STONE, 0, 0, 2, 0, world)
+        assertEquals(BlockType.STONE, world.getBlock(9, 7, 8))
+        assertTrue(result.entityAdds.isNotEmpty())
+        assertEquals(2, result.entityAdds.first().xOffset)
+    }
+
+    @Test
+    fun placeAt_classicBlock_awayFromMisalignedNeighbor_notFlaggedMisaligned() {
+        registerLegoPiece()
+        val world = testWorld()
+        BlockPlacer.placeAt(BlockPos(8, 7, 8), BlockType.LEGO_PIECE, 0, 0, 1, 0, world)
+        // Far enough away (not orthogonally adjacent) to not be considered misaligned.
+        assertTrue(!world.hasMisalignedNeighbor(20, 7, 20))
+        val result = BlockPlacer.placeAt(BlockPos(20, 7, 20), BlockType.STONE, 0, 0, 0, 0, world)
+        assertTrue(result.entityAdds.isEmpty())
+    }
+
+    @Test
+    fun placeAt_legoBrick2x1_newHalfVoxelUnit_occupiesTwoCellsAlongX() {
+        registerLegoBrick2x1()
+        val world = testWorld()
+        val result =
+            BlockPlacer.placeAt(BlockPos(8, 7, 8), BlockType.LEGO_BRICK_2X1, 0, 0, 0, 0, world)
+        assertEquals(BlockType.LEGO_BRICK_2X1, world.getBlock(8, 7, 8))
+        // brickSize=[4,2,2] half-voxel units → 2 full voxels wide along X, 1 along Y/Z.
+        assertEquals(BlockType.LEGO_BRICK_2X1, world.getBlock(9, 7, 8))
+        assertEquals(1, result.entityAdds.size)
+        assertEquals(2, result.entityAdds.first().sizeX)
+        assertEquals(1, result.entityAdds.first().sizeZ)
     }
 }

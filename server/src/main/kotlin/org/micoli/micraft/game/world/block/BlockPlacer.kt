@@ -185,31 +185,44 @@ class BlockPlacer(
             val def = BlockRegistry.get(blockType)
             val state = BlockState.pack(rotation, colorIndex)
 
-            val brickSizeX = def.brickSize.getOrElse(0) { 1f }
-            val brickSizeY = def.brickSize.getOrElse(1) { 1f }
-            val brickSizeZ = def.brickSize.getOrElse(2) { 1f }
+            // brickSize is expressed in half-voxel units: 2f = 1 full voxel.
+            val brickSizeX = def.brickSize.getOrElse(0) { 2f }
+            val brickSizeY = def.brickSize.getOrElse(1) { 2f }
+            val brickSizeZ = def.brickSize.getOrElse(2) { 2f }
 
             // Swap X/Z for 90°/270° rotations
             val effectiveSizeX = if (rotation % 2 == 0) brickSizeX else brickSizeZ
             val effectiveSizeZ = if (rotation % 2 == 0) brickSizeZ else brickSizeX
 
-            val sizeX = ceil(effectiveSizeX).toInt().coerceAtLeast(1)
-            val sizeY = ceil(brickSizeY).toInt().coerceAtLeast(1)
-            val sizeZ = ceil(effectiveSizeZ).toInt().coerceAtLeast(1)
+            val sizeX = ceil(effectiveSizeX / 2.0f).toInt().coerceAtLeast(1)
+            val sizeY = ceil(brickSizeY / 2.0f).toInt().coerceAtLeast(1)
+            val sizeZ = ceil(effectiveSizeZ / 2.0f).toInt().coerceAtLeast(1)
 
-            val slotsX = if (effectiveSizeX < 1.0f) floor(1.0f / effectiveSizeX).toInt() else 1
-            val slotsZ = if (effectiveSizeZ < 1.0f) floor(1.0f / effectiveSizeZ).toInt() else 1
-            val isXZFractional = slotsX > 1 || slotsZ > 1
+            val gridSlotsX = if (effectiveSizeX < 2.0f) floor(2.0f / effectiveSizeX).toInt() else 1
+            val gridSlotsZ = if (effectiveSizeZ < 2.0f) floor(2.0f / effectiveSizeZ).toInt() else 1
+            val isXZFractionalBlock = gridSlotsX > 1 || gridSlotsZ > 1
+
+            // Fine-snap: force the finer 1/4-voxel (4-slot) grid — even for a block whose own
+            // brickSize would otherwise sit on the full grid (1 slot) — when a misaligned lego
+            // neighbor is already present at the target cell or an adjacent cell, so the new
+            // placement doesn't silently collapse onto the coarse grid next to an offset structure.
+            val neighborForcesFineSnap =
+                !isXZFractionalBlock && world.hasMisalignedNeighbor(rawPos.x, rawPos.y, rawPos.z)
+            val slotsX =
+                if (isXZFractionalBlock) gridSlotsX else if (neighborForcesFineSnap) 4 else 1
+            val slotsZ =
+                if (isXZFractionalBlock) gridSlotsZ else if (neighborForcesFineSnap) 4 else 1
+            val isXZFractional = isXZFractionalBlock || neighborForcesFineSnap
 
             // Collision key normalizes long-axis stud positions to 0 (only one brick per slot pair)
             val slotKeyX = if (slotsX > 1) xOffset else 0
             val slotKeyZ = if (slotsZ > 1) zOffset else 0
 
-            val isFractional = def.heightFraction < 1.0f
-            // Number of this block that stack within one voxel's height (e.g. heightFraction=0.25
-            // → 4 slots). Independent of brickSize[1], which instead sizes multi-voxel-tall bricks.
+            val isFractional = brickSizeY < 2.0f
+            // Number of this block that stack within one voxel's height (e.g. brickSize[1]=0.5
+            // → 4 slots).
             val maxYSlots =
-                if (isFractional) floor(1.0f / def.heightFraction).toInt().coerceAtLeast(1) else 1
+                if (isFractional) floor(2.0f / brickSizeY).toInt().coerceAtLeast(1) else 1
 
             // For solid multi-cell entities: redirect placement to master when clicking a
             // satellite top
@@ -220,7 +233,7 @@ class BlockPlacer(
                 if (belowMaster != null &&
                     belowMaster != BlockPos(rawPos.x, rawPos.y - 1, rawPos.z) &&
                     BlockRegistry.get(world.getBlock(belowMaster.x, belowMaster.y, belowMaster.z))
-                        .heightFraction >= 1.0f) {
+                        .brickSize[1] >= 2.0f) {
                     BlockPos(belowMaster.x, rawPos.y, belowMaster.z)
                 } else rawPos
 
@@ -442,8 +455,7 @@ class BlockPlacer(
             } else if (isFractional) {
                 // Fractional block (plate): stacking allowed — cell may already contain a plate
                 val existing = world.getBlock(pos.x, pos.y, pos.z)
-                if (existing != BlockType.AIR &&
-                    BlockRegistry.get(existing).heightFraction >= 1.0f) {
+                if (existing != BlockType.AIR && BlockRegistry.get(existing).brickSize[1] >= 2.0f) {
                     return PlaceResult(
                         pos, emptyList(), emptyList(), "pos=$pos has solid non-fractional block")
                 }
@@ -468,7 +480,7 @@ class BlockPlacer(
                         val satBlock = world.getBlock(cx, pos.y, cz)
                         // Reject if cell has a solid non-fractional block
                         if (satBlock != BlockType.AIR &&
-                            BlockRegistry.get(satBlock).heightFraction >= 1.0f) {
+                            BlockRegistry.get(satBlock).brickSize[1] >= 2.0f) {
                             return PlaceResult(
                                 pos,
                                 emptyList(),

@@ -71,6 +71,7 @@ interface UndoEntry extends UndoEntryBase {
 // XZ sub-voxel slot targeted within cell (tx,tz), mirroring the in-game hover math
 // (LocalPlayerController.kt) so the admin editor's ghost/break-overlay and the resulting
 // api.instances.setBlock call agree on the same slot the player is visually aiming at.
+// brickSizeX/Z are in half-voxel units (2 = 1 full voxel), same as BlockDefinition.brickSize.
 function computeSlotOffset(
   pickedX: number,
   pickedZ: number,
@@ -80,8 +81,8 @@ function computeSlotOffset(
   brickSizeZ: number,
   rotation: number,
 ): [number, number] {
-  const effFracX = rotation % 2 === 0 ? brickSizeX : brickSizeZ;
-  const effFracZ = rotation % 2 === 0 ? brickSizeZ : brickSizeX;
+  const effFracX = (rotation % 2 === 0 ? brickSizeX : brickSizeZ) / 2;
+  const effFracZ = (rotation % 2 === 0 ? brickSizeZ : brickSizeX) / 2;
   const studStepX = effFracX < 1 ? effFracX : effFracX > 1 ? 0.5 : 0;
   const studStepZ = effFracZ < 1 ? effFracZ : effFracZ > 1 ? 0.5 : 0;
   if (studStepX <= 0 && studStepZ <= 0) return [0, 0];
@@ -858,7 +859,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       if (adjY === tgtY && wasmExports) {
         const targetOrdinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, tgtX, tgtY, tgtZ);
         const targetDef = window.mc.getBlockDef(targetOrdinal);
-        if ((targetDef?.heightFraction ?? 1) < 1) return [tgtX, tgtY, tgtZ];
+        if ((targetDef?.brickSize?.[1] ?? 2) < 2) return [tgtX, tgtY, tgtZ];
       }
       return [adjX, adjY, adjZ];
     }
@@ -900,7 +901,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         // here since there's no shared code path between Kotlin and this TS admin bundle.
         const rotation = targetState & 0x03;
         const targetDef = window.mc.getBlockDef(targetOrdinal);
-        const bs = targetDef?.brickSize ?? [1, 1, 1];
+        const bs = targetDef?.brickSize ?? [2, 2, 2];
         const [xOffset, zOffset] = computeSlotOffset(
           pick.pickedPoint.x,
           pick.pickedPoint.z,
@@ -940,7 +941,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         return;
       }
       const blockDef = window.mc.getBlockDef(ordinal);
-      const bs = blockDef?.brickSize ?? [1, 1, 1];
+      const bs = blockDef?.brickSize ?? [2, 2, 2];
       const [xOffset, zOffset] = computeSlotOffset(
         pick.pickedPoint.x,
         pick.pickedPoint.z,
@@ -1032,7 +1033,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
             const targetState = wasmExports.mcAdminGetBlockStateAt(scene, bx, by, bz);
             const rotation = targetState & 0x03; // BlockState.rotation() mirror — see updateHoverPreview
             const targetDef = window.mc.getBlockDef(targetOrdinal);
-            const bs = targetDef?.brickSize ?? [1, 1, 1];
+            const bs = targetDef?.brickSize ?? [2, 2, 2];
             [breakXOffset, breakZOffset] = computeSlotOffset(
               pick.pickedPoint.x,
               pick.pickedPoint.z,
@@ -1084,7 +1085,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         if (ty < zone.yMin || ty > zone.yMax || !inZone(tx, tz)) return;
         const ordinal = ordinalByNameRef.current.get(type);
         const placeDef = ordinal != null ? window.mc.getBlockDef(ordinal) : undefined;
-        const placeBs = placeDef?.brickSize ?? [1, 1, 1];
+        const placeBs = placeDef?.brickSize ?? [2, 2, 2];
         const [xOffset, zOffset] = computeSlotOffset(
           pick.pickedPoint.x,
           pick.pickedPoint.z,

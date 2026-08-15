@@ -140,7 +140,6 @@ class BlockRegistryLoader(
                     rotatable = entry.rotatable,
                     hasStuds = entry.hasStuds,
                     brickSize = entry.brickSize,
-                    heightFraction = entry.heightFraction,
                     plainColorable = entry.plainColorable,
                     isCubic = entry.isCubic,
                 )

@@ -140,7 +140,7 @@ class ChunkManager(private val scene: JsAny) {
             occludesByOrd[i] = if (def.isCubic && !def.transparent) 1 else 0
             isMultiCellByOrd[i] =
                 if (def.brickSize.size == 3 &&
-                    (def.brickSize[0] > 1 || def.brickSize[1] > 1 || def.brickSize[2] > 1))
+                    (def.brickSize[0] > 2 || def.brickSize[1] > 2 || def.brickSize[2] > 2))
                     1
                 else 0
             mergeableByOrd[i] =
@@ -369,15 +369,43 @@ class ChunkManager(private val scene: JsAny) {
         val lz = wz - cz * WorldConstants.CHUNK_SIZE
         val idx = Chunk.index(lx, wy, lz)
         val entity = chunk.buildEntitiesMap()[idx]?.firstOrNull() ?: return null
-        if (BlockRegistry.get(entity.type).heightFraction >= 1.0f) return null
+        if (BlockRegistry.get(entity.type).brickSize[1] >= 2.0f) return null
         val (mx, my, mz) = Chunk.indexToXYZ(entity.masterIdx)
         val masterWx = cx * WorldConstants.CHUNK_SIZE + mx
         val masterWz = cz * WorldConstants.CHUNK_SIZE + mz
         val usedCount =
             chunk.entityMasters.count {
-                it.masterIdx == entity.masterIdx && BlockRegistry.get(it.type).heightFraction < 1.0f
+                it.masterIdx == entity.masterIdx && BlockRegistry.get(it.type).brickSize[1] < 2.0f
             }
         return Pair(BlockPos(masterWx, my, masterWz), usedCount)
+    }
+
+    /**
+     * True if this cell or one of its 4 orthogonal XZ neighbors (same Y) already hosts an
+     * XZ-fractional entity — mirrors
+     * [org.micoli.micraft.game.world.WorldState.hasMisalignedNeighbor] server-side so the placement
+     * ghost forces the same fine-grid snap the server will validate.
+     */
+    fun hasMisalignedNeighborAt(wx: Int, wy: Int, wz: Int): Boolean =
+        listOf(0 to 0, 1 to 0, -1 to 0, 0 to 1, 0 to -1).any { (dx, dz) ->
+            cellHasXZFractionalEntity(wx + dx, wy, wz + dz)
+        }
+
+    private fun cellHasXZFractionalEntity(wx: Int, wy: Int, wz: Int): Boolean {
+        if (wy < 0 || wy > WorldConstants.WORLD_MAX_Y) return false
+        val cx = wx.floorDiv(WorldConstants.CHUNK_SIZE)
+        val cz = wz.floorDiv(WorldConstants.CHUNK_SIZE)
+        val (chunk, _) = chunkData[ChunkPos(cx, cz)] ?: return false
+        val lx = wx - cx * WorldConstants.CHUNK_SIZE
+        val lz = wz - cz * WorldConstants.CHUNK_SIZE
+        val masterIdx = Chunk.index(lx, wy, lz)
+        return chunk.entityMasters.any {
+            it.masterIdx == masterIdx &&
+                (it.xOffset > 0 ||
+                    it.zOffset > 0 ||
+                    BlockRegistry.get(it.type).brickSize[0] < 2.0f ||
+                    BlockRegistry.get(it.type).brickSize[2] < 2.0f)
+        }
     }
 
     // Synchronous full re-render (WorldUpdate block changes) — old mesh stays until done

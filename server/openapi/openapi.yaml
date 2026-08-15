@@ -4522,10 +4522,6 @@ components:
         hasStuds:
           type: boolean
           title: Boolean
-        heightFraction:
-          type: number
-          format: float
-          title: Float
         isCubic:
           type: boolean
           title: Boolean
@@ -4583,7 +4579,6 @@ components:
       - gltfModel
       - hardness
       - hasStuds
-      - heightFraction
       - isCubic
       - liquid
       - minimapColor

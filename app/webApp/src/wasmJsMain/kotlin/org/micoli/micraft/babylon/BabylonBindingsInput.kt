@@ -89,8 +89,17 @@ fun jsShowTargetOutline(
 
 fun jsHideTargetOutline(): Unit = js("mc.hideTargetOutline()")
 
-fun jsShowBreakOverlay(scene: JsAny, x: Int, y: Int, z: Int, progress: Double): Unit =
-    js("mc.showBreakOverlay(scene, x, y, z, progress)")
+fun jsShowBreakOverlay(
+    scene: JsAny,
+    x: Int,
+    y: Int,
+    z: Int,
+    progress: Double,
+    typeOrd: Int = -1,
+    rotation: Int = 0,
+    xOff: Int = 0,
+    zOff: Int = 0
+): Unit = js("mc.showBreakOverlay(scene, x, y, z, progress, typeOrd, rotation, xOff, zOff)")
 
 fun jsHideBreakOverlay(): Unit = js("mc.hideBreakOverlay()")
 

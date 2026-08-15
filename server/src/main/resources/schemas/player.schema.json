@@ -439,6 +439,33 @@
         },
         "shadowAngleDeg": {
           "type": "integer"
+        },
+        "overrideViewRadius": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "overrideForwardViewRadius": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "overrideUseImpostor": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "overrideImpostorRadiusChunks": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "continuousBreak": {
+          "type": "boolean"
         }
       }
     },

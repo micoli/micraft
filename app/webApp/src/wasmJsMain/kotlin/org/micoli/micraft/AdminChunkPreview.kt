@@ -68,7 +68,6 @@ fun mcAdminSetBlockRegistry(json: String) {
                     rotatable = info.rotatable,
                     hasStuds = info.hasStuds,
                     brickSize = info.brickSize,
-                    heightFraction = info.heightFraction,
                     plainColorable = info.plainColorable,
                     isCubic = info.isCubic,
                 )

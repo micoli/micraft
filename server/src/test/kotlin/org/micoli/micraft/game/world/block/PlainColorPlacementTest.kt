@@ -50,13 +50,12 @@ class PlainColorPlacementTest {
                     brick to BlockDefinition(hardness = 1f, plainColorable = true),
                     brick2x1 to
                         BlockDefinition(
-                            hardness = 1f, plainColorable = true, brickSize = listOf(2f, 1f, 1f)),
+                            hardness = 1f, plainColorable = true, brickSize = listOf(4f, 2f, 2f)),
                     plate to
                         BlockDefinition(
                             hardness = 1f,
                             plainColorable = true,
-                            brickSize = listOf(2f, 1f, 2f),
-                            heightFraction = 0.333f),
+                            brickSize = listOf(4f, 0.666f, 4f)),
                 ))
         ItemRegistry.load(
             savedItems +

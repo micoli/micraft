@@ -32,9 +32,10 @@ export function registerGhostBlock(): Pick<McBindings, "showBlockPreview" | "hid
       const geoKey = `${typeOrd},${rotation},${colorIdx}`;
       const existing = window.mcState.ghostMesh as GhostAnchor | null;
 
-      // Compute sub-voxel position offset from brickSize fractions
+      // Compute sub-voxel position offset from brickSize fractions. brickSize is in half-voxel
+      // units (2 = 1 full voxel) — divide by 2 for the 0..1 voxel fraction used below.
       const blockDef = window.mc.getBlockDef(typeOrd);
-      const bs = blockDef?.brickSize ?? [1, 1, 1];
+      const bs = (blockDef?.brickSize ?? [2, 2, 2]).map((v) => v / 2);
       // Offsets are world-space (client already accounts for rotation in effectiveFracX/Z)
       const fracX = bs[0] < 1 ? bs[0] : bs[0] > 1 ? 0.5 : 0;
       const fracZ = bs[2] < 1 ? bs[2] : bs[2] > 1 ? 0.5 : 0;

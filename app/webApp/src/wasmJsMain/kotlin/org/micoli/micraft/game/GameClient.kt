@@ -642,7 +642,6 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         rotatable = info.rotatable,
                                         hasStuds = info.hasStuds,
                                         brickSize = info.brickSize,
-                                        heightFraction = info.heightFraction,
                                         plainColorable = info.plainColorable,
                                         isCubic = info.isCubic,
                                     )

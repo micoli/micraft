@@ -85,15 +85,10 @@
       "type": "array",
       "items": {
         "type": "number",
-        "exclusiveMinimum": 0
+        "minimum": 0.5
       },
-      "minItems": 2,
+      "minItems": 3,
       "maxItems": 3
-    },
-    "heightFraction": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 1
     },
     "plainColorable": {
       "type": "boolean"

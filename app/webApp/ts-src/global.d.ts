@@ -132,10 +132,11 @@ declare global {
     renderType: "solid" | "leaves" | "cross_sprite" | "liquid" | "slope" | "corner" | "gltf";
     gltfPath?: string;
     hasStuds?: boolean;
-    /** Sub-voxel fractions [x, y, z]; values < 1 mean multiple fit per voxel on that axis. */
+    /**
+     * Half-voxel units [x, y, z]: 2 = 1 full voxel, values < 2 mean multiple fit per voxel on
+     * that axis. Y also drives sub-voxel Y-stacking (see BlockPlacer.kt) — no separate height field.
+     */
     brickSize?: [number, number, number];
-    /** < 1 means several of this block stack within one voxel's height (see BlockPlacer.kt). */
-    heightFraction?: number;
     // Per-element geometry; faces[elemIdx] = McBlockElement.faces for backward compat lookup
     elements: McBlockElement[];
     // Shortcut: faces[elemIdx][faceDir] — same data as elements[elemIdx].faces
@@ -341,7 +342,17 @@ declare global {
       zOff?: number,
     ): void;
     hideTargetOutline(): void;
-    showBreakOverlay(scene: Scene, x: number, y: number, z: number, alpha: number): void;
+    showBreakOverlay(
+      scene: Scene,
+      x: number,
+      y: number,
+      z: number,
+      alpha: number,
+      typeOrd?: number,
+      rotation?: number,
+      xOff?: number,
+      zOff?: number,
+    ): void;
     hideBreakOverlay(): void;
     showZoneBounds(scene: Scene, yMin: number, yMax: number, chunksJson: string): void;
     hideZoneBounds(): void;

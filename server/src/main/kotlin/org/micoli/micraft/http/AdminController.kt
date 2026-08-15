@@ -1285,7 +1285,6 @@ class AdminController(
                                 rotatable = def.rotatable,
                                 hasStuds = def.hasStuds,
                                 brickSize = def.brickSize,
-                                heightFraction = def.heightFraction,
                                 plainColorable = def.plainColorable,
                                 isCubic = def.isCubic,
                             )

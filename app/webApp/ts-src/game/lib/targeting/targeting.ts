@@ -52,6 +52,41 @@ export function boxLines(
   ];
 }
 
+// Resolves the world-space outline (lines + mesh position) for a block's real footprint: a
+// classic 1×1×1 cube centred on its cell, or — for multi-cell/fractional (lego) blocks — a box
+// spanning the block's rotated brickSize footprint anchored at its placement offset. Shared by
+// the hover outline (showTargetOutline) and the break overlay (showBreakOverlay) so casser un
+// bloc lego décalé surligne la même empreinte que celle prévisualisée au survol.
+function footprintLines(
+  blockDef: McBlockDef | null,
+  x: number,
+  y: number,
+  z: number,
+  rotation: number,
+  xOff: number,
+  zOff: number,
+): { lines: [Vector3, Vector3][]; meshPos: InstanceType<typeof BABYLON.Vector3> } {
+  // brickSize is in half-voxel units (2 = 1 full voxel) — divide by 2 for the voxel-fraction /
+  // voxel-count semantics used below.
+  const bs = blockDef?.brickSize?.map((v) => v / 2);
+  if (bs && (bs[0] !== 1 || bs[2] !== 1)) {
+    const rot90 = rotation === 1 || rotation === 3;
+    // Offsets are world-space — no axis swap needed here
+    const fracX = bs[0] < 1 ? bs[0] : bs[0] > 1 ? 0.5 : 0;
+    const fracZ = bs[2] < 1 ? bs[2] : bs[2] > 1 ? 0.5 : 0;
+    const worldSizeX = rot90 ? (bs[2] < 1 ? bs[2] : Math.ceil(bs[2])) : bs[0] < 1 ? bs[0] : Math.ceil(bs[0]);
+    const worldSizeY = Math.ceil(bs[1]);
+    const worldSizeZ = rot90 ? (bs[0] < 1 ? bs[0] : Math.ceil(bs[0])) : bs[2] < 1 ? bs[2] : Math.ceil(bs[2]);
+    const offsetX = xOff * fracX;
+    const offsetZ = zOff * fracZ;
+    return {
+      lines: boxLines(x + offsetX, y, z + offsetZ, x + offsetX + worldSizeX, y + worldSizeY, z + offsetZ + worldSizeZ),
+      meshPos: BABYLON.Vector3.Zero(),
+    };
+  }
+  return { lines: cubeLines(0.502), meshPos: new BABYLON.Vector3(x + 0.5, y + 0.5, z + 0.5) };
+}
+
 export function registerTargeting(): Pick<
   McBindings,
   "showTargetOutline" | "hideTargetOutline" | "showBreakOverlay" | "hideBreakOverlay"
@@ -72,33 +107,8 @@ export function registerTargeting(): Pick<
         window.mcState.targetMesh.dispose();
         window.mcState.targetMesh = null;
       }
-      let lines: [Vector3, Vector3][];
-      let meshPos: InstanceType<typeof BABYLON.Vector3>;
       const blockDef = typeOrd >= 0 ? window.mc.getBlockDef(typeOrd) : null;
-      const bs = blockDef?.brickSize;
-      if (bs && (bs[0] !== 1 || bs[2] !== 1)) {
-        const rot90 = rotation === 1 || rotation === 3;
-        // Offsets are world-space — no axis swap needed here
-        const fracX = bs[0] < 1 ? bs[0] : bs[0] > 1 ? 0.5 : 0;
-        const fracZ = bs[2] < 1 ? bs[2] : bs[2] > 1 ? 0.5 : 0;
-        const worldSizeX = rot90 ? (bs[2] < 1 ? bs[2] : Math.ceil(bs[2])) : bs[0] < 1 ? bs[0] : Math.ceil(bs[0]);
-        const worldSizeY = Math.ceil(bs[1]);
-        const worldSizeZ = rot90 ? (bs[0] < 1 ? bs[0] : Math.ceil(bs[0])) : bs[2] < 1 ? bs[2] : Math.ceil(bs[2]);
-        const offsetX = xOff * fracX;
-        const offsetZ = zOff * fracZ;
-        lines = boxLines(
-          x + offsetX,
-          y,
-          z + offsetZ,
-          x + offsetX + worldSizeX,
-          y + worldSizeY,
-          z + offsetZ + worldSizeZ,
-        );
-        meshPos = BABYLON.Vector3.Zero();
-      } else {
-        lines = cubeLines(0.502);
-        meshPos = new BABYLON.Vector3(x + 0.5, y + 0.5, z + 0.5);
-      }
+      const { lines, meshPos } = footprintLines(blockDef, x, y, z, rotation, xOff, zOff);
       const ls = BABYLON.MeshBuilder.CreateLineSystem("targetOutline", { lines }, scene) as LinesMesh;
       ls.position = meshPos;
       ls.color = breakable ? new BABYLON.Color3(0, 0, 0) : new BABYLON.Color3(0.55, 0.55, 0.55);
@@ -113,12 +123,26 @@ export function registerTargeting(): Pick<
       }
     },
 
-    showBreakOverlay: (scene: Scene, x: number, y: number, z: number, alpha: number): void => {
-      const bpos = `${x},${y},${z}`;
+    showBreakOverlay: (
+      scene: Scene,
+      x: number,
+      y: number,
+      z: number,
+      alpha: number,
+      typeOrd = -1,
+      rotation = 0,
+      xOff = 0,
+      zOff = 0,
+    ): void => {
+      const bpos = `${x},${y},${z},${typeOrd},${rotation},${xOff},${zOff}`;
       if (!window.mcState.breakMesh || window.mcState.breakMesh._bpos !== bpos) {
         if (window.mcState.breakMesh) window.mcState.breakMesh.dispose();
-        const ls = BABYLON.MeshBuilder.CreateLineSystem("breakOverlay", { lines: cubeLines(0.51) }, scene) as LinesMesh;
-        ls.position = new BABYLON.Vector3(x + 0.5, y + 0.5, z + 0.5);
+        const blockDef = typeOrd >= 0 ? window.mc.getBlockDef(typeOrd) : null;
+        // Footprint-aware outline: englobes the real extent of a multi-cell/offset lego entity
+        // instead of always drawing a fixed 1×1×1 cube — mirrors showTargetOutline's hover shape.
+        const { lines, meshPos } = footprintLines(blockDef, x, y, z, rotation, xOff, zOff);
+        const ls = BABYLON.MeshBuilder.CreateLineSystem("breakOverlay", { lines }, scene) as LinesMesh;
+        ls.position = meshPos;
         ls.color = new BABYLON.Color3(0, 0, 0);
         ls.isPickable = false;
         window.mcState.breakMesh = ls as InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string };

@@ -23,9 +23,9 @@ data class BlockYamlEntry(
     val drops: List<DropEntry> = emptyList(),
     val rotatable: Boolean = false,
     val hasStuds: Boolean = false,
-    @JsonSchemaConstraint(minItems = 2, maxItems = 3, itemExclusiveMinimum = 0.0)
-    val brickSize: List<Float> = listOf(1f, 1f, 1f),
-    @JsonSchemaConstraint(minimum = 0.0, maximum = 1.0) val heightFraction: Float = 1.0f,
+    /** Half-voxel units: 2 = 1 full voxel, 1 = 1/2 voxel, 0.5 = 1/4 voxel. Always [X, Y, Z]. */
+    @JsonSchemaConstraint(minItems = 3, maxItems = 3, itemMinimum = 0.5)
+    val brickSize: List<Float> = listOf(2f, 2f, 2f),
     val plainColorable: Boolean = false,
     val isCubic: Boolean = true,
 )

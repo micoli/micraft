@@ -83,7 +83,9 @@ export function createOverlayController(
     const mat = getOrCreateBreakMat();
     breakMeshes = buildBlockPreviewMeshes(scene, ordinal, rotation);
     const blockDef = window.mc.getBlockDef(ordinal);
-    const bs = blockDef?.brickSize ?? [1, 1, 1];
+    // brickSize is in half-voxel units (2 = 1 full voxel) — divide by 2 for the 0..1 voxel
+    // fraction used below.
+    const bs = (blockDef?.brickSize ?? [2, 2, 2]).map((v) => v / 2);
     const fracX = bs[0] < 1 ? bs[0] : bs[0] > 1 ? 0.5 : 0;
     const fracZ = bs[2] < 1 ? bs[2] : bs[2] > 1 ? 0.5 : 0;
     const pos = new B.Vector3(x + xOffset * fracX, y, z + zOffset * fracZ);
@@ -132,7 +134,9 @@ export function createOverlayController(
     // hardcoded 1x1x1 outline would look like a mismatched sliver stuck in the corner of a much
     // bigger ghost mesh. Same rotation-aware sizing as the in-game target outline (targeting.ts).
     const blockDef = window.mc.getBlockDef(ordinal);
-    const bs = blockDef?.brickSize ?? [1, 1, 1];
+    // brickSize is in half-voxel units (2 = 1 full voxel) — divide by 2 for the 0..1 voxel
+    // fraction / voxel-count semantics used below.
+    const bs = (blockDef?.brickSize ?? [2, 2, 2]).map((v) => v / 2);
 
     const fracX = bs[0] < 1 ? bs[0] : bs[0] > 1 ? 0.5 : 0;
     const fracZ = bs[2] < 1 ? bs[2] : bs[2] > 1 ? 0.5 : 0;
