@@ -15,9 +15,7 @@ import io.ktor.websocket.*
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.attribute.FileTime
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -615,14 +613,12 @@ class AdminController(
             post(
                 "/api/admin/restart",
                 {
-                    description = "Touch run.lock to trigger a pitchfork server restart"
+                    description = "Trigger a pitchfork server restart"
                     response { code(HttpStatusCode.NoContent) {} }
                     requireAdminDocs()
                 }) {
                     if (!requireAdmin()) return@post
-                    val lock = Path.of("run.lock")
-                    if (!lock.exists()) Files.createFile(lock)
-                    Files.setLastModifiedTime(lock, FileTime.fromMillis(System.currentTimeMillis()))
+                    ProcessBuilder("pitchfork", "restart", "server").inheritIO().start()
                     call.respond(HttpStatusCode.NoContent)
                 }
 

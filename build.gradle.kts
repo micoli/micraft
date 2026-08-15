@@ -18,7 +18,6 @@ plugins {
  */
 fun startDevMode(rootDir: java.io.File, debugWorld: Boolean, watch: Boolean) {
     val gradle = "${rootDir}/gradlew"
-    val lockFile = rootDir.resolve("run.lock")
     val serverBin = rootDir.resolve("server/build/install/server/bin/server")
     // Single served dir that webpack never cleans. dev → build/web (assembled by
     // copyResourcesToWebDist + esbuild/tailwind watchers); prod → productionExecutable.
@@ -180,41 +179,12 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean, watch: Boolean) {
                 watchers.forEach { killTree(it) }
             })
 
-    // Watch run.lock: on modification rebuild + restart the server (the client stays fresh via the
-    // live watchers in dev). Debug mode is preserved across restarts.
-    val watchThread = Thread {
-        var lastModified = if (lockFile.exists()) lockFile.lastModified() else 0L
-        while (!Thread.currentThread().isInterrupted) {
-            try {
-                Thread.sleep(500)
-            } catch (_: InterruptedException) {
-                break
-            }
-            if (lockFile.exists()) {
-                val modified = lockFile.lastModified()
-                if (modified != lastModified) {
-                    lastModified = modified
-                    println("⚠\uFE0F=====================================⚠\uFE0F")
-                    println(
-                        "[dev] run.lock modified — rebuilding… (${java.time.LocalTime.now().let { "%02d:%02d:%02d".format(it.hour, it.minute, it.second) }})")
-                    println("⚠\uFE0F=====================================⚠\uFE0F")
-                    killTree(serverRef.get())
-                    runGradle(":server:installDist")
-                    serverRef.set(startServer())
-                }
-            }
-        }
-    }
-    watchThread.isDaemon = true
-    watchThread.start()
-
     try {
         if (watch) watchers.first().waitFor() else java.util.concurrent.CountDownLatch(1).await()
     } catch (_: InterruptedException) {
         // shutdown
     } finally {
         killTree(serverRef.get())
-        watchThread.interrupt()
     }
 }
 
@@ -227,8 +197,8 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean, watch: Boolean) {
  * - esbuild/tailwind --watch — rebuild the TS bundle + CSS straight into the served dir
  *
  * Any client change updates the served dir; the server's asset-hash poll pushes a version over /ws
- * and the service worker refreshes. Touching run.lock rebuilds + restarts the server only. Ctrl+C
- * stops everything.
+ * and the service worker refreshes. Ctrl+C stops everything; re-run the task to rebuild + restart
+ * the server.
  */
 tasks.register("dev") {
     group = "micraft"
@@ -242,7 +212,7 @@ tasks.register("dev") {
  * ./gradlew prod
  *
  * Builds optimized bundles (production wasm, esbuild --minify, tailwind --minify) into the served
- * production dir and starts the server — no watchers. run.lock still restarts the server.
+ * production dir and starts the server — no watchers, no live restart.
  */
 tasks.register("prod") {
     group = "micraft"
@@ -260,8 +230,7 @@ tasks.register("prod") {
  * - Player spawns at (8, 1, 14) in fly mode, facing the block
  *
  * Then open: http://localhost:8080/?debug&bx=8&by=2&bz=8 Keys 1-6 orbit the camera around each face
- * of the block. Escape releases the camera lock. run.lock still works to restart the server (debug
- * mode is preserved).
+ * of the block. Escape releases the camera lock.
  */
 tasks.register("devDebug") {
     group = "micraft"

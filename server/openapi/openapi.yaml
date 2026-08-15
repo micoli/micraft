@@ -1097,7 +1097,7 @@ paths:
   /api/admin/restart:
     post:
       tags: []
-      description: Touch run.lock to trigger a pitchfork server restart
+      description: Trigger a pitchfork server restart
       parameters: []
       responses:
         "204":
@@ -4527,9 +4527,23 @@ components:
         rotatable:
           type: boolean
           title: Boolean
+        sideColor:
+          type: array
+          items:
+            type: integer
+            format: int32
+            title: Int
+          title: List<Int>
         solid:
           type: boolean
           title: Boolean
+        topColor:
+          type: array
+          items:
+            type: integer
+            format: int32
+            title: Int
+          title: List<Int>
         transparent:
           type: boolean
           title: Boolean
@@ -4551,7 +4565,9 @@ components:
       - name
       - plainColorable
       - rotatable
+      - sideColor
       - solid
+      - topColor
       - transparent
       - viscosity
       title: BlockInfo

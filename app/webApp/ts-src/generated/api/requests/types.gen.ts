@@ -943,6 +943,7 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      * Boolean
      */
     dynamicFogEnabled: boolean;
+    editMode: OrgMicoliMicraftPlayerEditMode;
     /**
      * String
      */
@@ -1185,6 +1186,11 @@ export type OrgMicoliMicraftPlayerVec3 = {
      */
     z: number;
 };
+
+/**
+ * EditMode
+ */
+export type OrgMicoliMicraftPlayerEditMode = 'GAME' | 'CREATIVE';
 
 /**
  * GameLayout
@@ -1718,9 +1724,17 @@ export type OrgMicoliMicraftProtocolBlockInfo = {
      */
     rotatable: boolean;
     /**
+     * List<Int>
+     */
+    sideColor: Array<number>;
+    /**
      * Boolean
      */
     solid: boolean;
+    /**
+     * List<Int>
+     */
+    topColor: Array<number>;
     /**
      * Boolean
      */

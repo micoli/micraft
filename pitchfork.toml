@@ -12,11 +12,6 @@ ready-port = 8080
 retry = true
 boot_start = true
 
-[daemons.run-lock]
-run = "pitchfork restart server"
-dir = "."
-watch = ["run.lock"]
-
 [daemons.wasm]
 run = "./gradlew :app:webApp:copyResourcesToWebDist --continuous --console=plain --no-build-cache"
 dir = "."

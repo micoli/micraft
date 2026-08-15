@@ -1419,6 +1419,9 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             type: 'boolean',
             title: 'Boolean'
         },
+        editMode: {
+            $ref: '#/components/schemas/org.micoli.micraft.player.EditMode'
+        },
         email: {
             type: 'string',
             title: 'String'
@@ -1577,6 +1580,7 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         'chunkDebugVisible',
         'disabledCommands',
         'dynamicFogEnabled',
+        'editMode',
         'email',
         'fieldOfView',
         'flying',
@@ -1820,6 +1824,15 @@ export const org_micoli_micraft_player_Vec3Schema = {
         'z'
     ],
     title: 'Vec3'
+} as const;
+
+export const org_micoli_micraft_player_EditModeSchema = {
+    type: 'string',
+    enum: [
+        'GAME',
+        'CREATIVE'
+    ],
+    title: 'EditMode'
 } as const;
 
 export const org_micoli_micraft_ui_GameLayoutSchema = {
@@ -2677,9 +2690,27 @@ export const org_micoli_micraft_protocol_BlockInfoSchema = {
             type: 'boolean',
             title: 'Boolean'
         },
+        sideColor: {
+            type: 'array',
+            items: {
+                type: 'integer',
+                format: 'int32',
+                title: 'Int'
+            },
+            title: 'List<Int>'
+        },
         solid: {
             type: 'boolean',
             title: 'Boolean'
+        },
+        topColor: {
+            type: 'array',
+            items: {
+                type: 'integer',
+                format: 'int32',
+                title: 'Int'
+            },
+            title: 'List<Int>'
         },
         transparent: {
             type: 'boolean',
@@ -2705,7 +2736,9 @@ export const org_micoli_micraft_protocol_BlockInfoSchema = {
         'name',
         'plainColorable',
         'rotatable',
+        'sideColor',
         'solid',
+        'topColor',
         'transparent',
         'viscosity'
     ],

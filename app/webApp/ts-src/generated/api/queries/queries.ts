@@ -260,7 +260,7 @@ export const usePostApiCharacterCreate = <TData = Common.PostApiCharacterCreateM
  */
 export const usePostApiCharacterRpgcreate = <TData = Common.PostApiCharacterRpgcreateMutationResult, TError = unknown, TQueryKey extends Array<unknown> = unknown[], TContext = unknown>(mutationKey?: TQueryKey, options?: Omit<UseMutationOptions<TData, TError, Options<PostApiCharacterRpgcreateData, true>, TContext>, "mutationKey" | "mutationFn">) => useMutation<TData, TError, Options<PostApiCharacterRpgcreateData, true>, TContext>({ mutationKey: Common.UsePostApiCharacterRpgcreateKeyFn(mutationKey), mutationFn: clientOptions => postApiCharacterRpgcreate({ ...clientOptions, throwOnError: true }) as unknown as Promise<TData>, ...options });
 /**
- * Touch run.lock to trigger a pitchfork server restart
+ * Trigger a pitchfork server restart
  */
 export const usePostApiAdminRestart = <TData = Common.PostApiAdminRestartMutationResult, TError = unknown, TQueryKey extends Array<unknown> = unknown[], TContext = unknown>(mutationKey?: TQueryKey, options?: Omit<UseMutationOptions<TData, TError, Options<PostApiAdminRestartData, true>, TContext>, "mutationKey" | "mutationFn">) => useMutation<TData, TError, Options<PostApiAdminRestartData, true>, TContext>({ mutationKey: Common.UsePostApiAdminRestartKeyFn(mutationKey), mutationFn: clientOptions => postApiAdminRestart({ ...clientOptions, throwOnError: true }) as unknown as Promise<TData>, ...options });
 /**

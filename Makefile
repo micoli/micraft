@@ -110,7 +110,7 @@ dev-tui:
 	$(PITCHFORK_IT) tui
 
 dev-logs:
-	@while true; do $(PITCHFORK_IT) logs server run\-lock wasm mc_bindings css css\-sync map admin --tail 2>&1 | scripts/colorlog.pl; sleep 2; echo "===================="; done
+	@while true; do $(PITCHFORK_IT) logs server wasm mc_bindings css css\-sync map admin --tail 2>&1 | scripts/colorlog.pl; sleep 2; echo "===================="; done
 
 # Run any command inside the dev container: make dc CMD="./gradlew :server:test"
 ifeq ($(RUN_MODE),DOCKER)
@@ -279,7 +279,7 @@ help:
 	@echo "  make dev-up               build + start container (pitchfork starts all daemons)"
 	@echo "  make dev-down             stop"
 	@echo "  make dev-restart          full restart (down + up)"
-	@echo "  make dev-restart-server   rebuild + restart Ktor only (replaces: touch run.lock)"
+	@echo "  make dev-restart-server   rebuild + restart Ktor only"
 	@echo "  make dev-task-stop        stop all pitchfork daemons (keeps container alive)"
 	@echo "  make dev-task-start       start all pitchfork daemons"
 	@echo "  make dev-task-restart     restart all pitchfork daemons"

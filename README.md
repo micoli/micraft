@@ -355,7 +355,7 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | PUT | `/api/admin/players/{name}/preferences` | Partially update a player's preferences (only given fields change) |
 | POST | `/api/admin/players/{name}/rename` | Rename a player |
 | PUT | `/api/admin/players/{name}/rpg` | Partially update a player's RPG class/base stats |
-| POST | `/api/admin/restart` | Touch run.lock to trigger a pitchfork server restart |
+| POST | `/api/admin/restart` | Trigger a pitchfork server restart |
 | GET | `/api/admin/scenes` | All scenes (bounded off-world block-structure buffers) |
 | POST | `/api/admin/scenes` | Create a scene |
 | DELETE | `/api/admin/scenes/{id}` | Delete a scene |

@@ -256,7 +256,7 @@ export const getApiMapVoronoiBorders = <ThrowOnError extends boolean = false>(op
 export const getApiAdminStatus = <ThrowOnError extends boolean = false>(options?: Options<GetApiAdminStatusData, ThrowOnError>): RequestResult<GetApiAdminStatusResponses, GetApiAdminStatusErrors, ThrowOnError> => (options?.client ?? client).get<GetApiAdminStatusResponses, GetApiAdminStatusErrors, ThrowOnError>({ url: '/api/admin/status', ...options });
 
 /**
- * Touch run.lock to trigger a pitchfork server restart
+ * Trigger a pitchfork server restart
  */
 export const postApiAdminRestart = <ThrowOnError extends boolean = false>(options?: Options<PostApiAdminRestartData, ThrowOnError>): RequestResult<PostApiAdminRestartResponses, PostApiAdminRestartErrors, ThrowOnError> => (options?.client ?? client).post<PostApiAdminRestartResponses, PostApiAdminRestartErrors, ThrowOnError>({ url: '/api/admin/restart', ...options });
 
