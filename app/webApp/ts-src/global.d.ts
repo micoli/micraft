@@ -498,7 +498,7 @@ declare global {
     consumePreferencesUpdate(): string;
     setPendingRunMacroScript(script: string): void;
     consumeRunMacroScript(): string;
-    showPreferences(): void;
+    showPreferences(tab?: string): void;
     openCodex(): void;
     openCraft(): void;
     recipeSync(json: string): void;

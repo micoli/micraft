@@ -56,6 +56,10 @@ const ACTION_GROUPS: Record<string, string[]> = {
     "layout_editor",
     "health_bar",
     "screenshot",
+    "preferences",
+    "preferences_keybindings",
+    "preferences_debug",
+    "preferences_graphics",
   ],
   hotbar: [
     "slot_1",
@@ -114,12 +118,13 @@ export type Tab = "chat" | "commands" | "graphics" | "debug" | "keybindings";
 interface UsePreferencesParams {
   open: boolean;
   preferences: PreferencesData | null;
+  initialTab?: Tab;
   onSave: (payload: SavePayload) => void;
   onClose: () => void;
 }
 
-export function usePreferences({ open, preferences, onSave, onClose: _onClose }: UsePreferencesParams) {
-  const [tab, setTab] = useState<Tab>("chat");
+export function usePreferences({ open, preferences, initialTab, onSave, onClose: _onClose }: UsePreferencesParams) {
+  const [tab, setTab] = useState<Tab>(initialTab ?? "chat");
   const [localSubscribed, setLocalSubscribed] = useState<Set<string>>(new Set());
   const [localAutoFocus, setLocalAutoFocus] = useState<Set<string>>(new Set());
   const [localDisabled, setLocalDisabled] = useState<Set<string>>(new Set());
@@ -173,7 +178,7 @@ export function usePreferences({ open, preferences, onSave, onClose: _onClose }:
       setWaitingDoubleTap(false);
       pendingKeyRef.current = null;
       if (doubleTapTimerRef.current) clearTimeout(doubleTapTimerRef.current);
-      setTab("chat");
+      setTab(initialTab ?? "chat");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional init-on-open; re-running on preferences change would discard in-progress edits
   }, [open]);

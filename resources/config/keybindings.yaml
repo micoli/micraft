@@ -23,6 +23,10 @@ flight:
   speed_down: [KeyO]
 
 ui:
+  preferences: ["Cmd+Shift+Comma", "Ctrl+Shift+Comma"]
+  preferences_keybindings: ["Cmd+Shift+KeyK", "Ctrl+Shift+KeyK"]
+  preferences_debug: ["Cmd+Shift+KeyD", "Ctrl+Shift+KeyD"]
+  preferences_graphics: ["Cmd+Shift+KeyG", "Ctrl+Shift+KeyG"]
   console_toggle: [KeyH]
   view_toggle: [KeyF]
   statistics_toggle: [KeyN]

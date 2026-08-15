@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { getApiItemsMeta, getApiAttacks, getApiClasses, getApiSpells, getApiQuests } from "../generated/api/requests";
 import { GameLayout, NpcDialogData, PreferencesData, ChannelSubscription, ShortcutSlot, QuestProgress } from "./types";
 import { UiState, reducer, makeUiDispatch } from "./UIReducer";
+import { Tab } from "./hooks/usePreferences";
 import { GameContext } from "./GameContext";
 import { DisconnectOverlay } from "./overlays/DisconnectOverlay";
 import { defaultLayout } from "./layout/LayoutEngine";
@@ -60,6 +61,7 @@ const initial: UiState = {
   craftRecipes: {},
   craftKnownRecipes: [],
   preferencesOpen: false,
+  preferencesTab: "chat",
   preferences: null,
   pauseMenuOpen: false,
   macroEditorOpen: false,
@@ -610,7 +612,7 @@ export function GameUI() {
       return v;
     };
 
-    window.mc.showPreferences = () => dispatch("preferences_show");
+    window.mc.showPreferences = (tab) => dispatch("preferences_show", tab ? { tab: tab as Tab } : undefined);
     window.mc.openCodex = () => dispatch("codex_open");
     window.mc.openCraft = () => dispatch("craft_open");
     window.mc.recipeSync = (json: string) => {

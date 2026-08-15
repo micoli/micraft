@@ -427,6 +427,7 @@ export function GameScreen() {
           <Preferences
             open={state.preferencesOpen}
             preferences={state.preferences}
+            initialTab={state.preferencesTab}
             onSave={handlePreferencesSave}
             onClose={() => {
               dispatch("preferences_hide");
@@ -504,7 +505,7 @@ export function GameScreen() {
                 label: "Preferences",
                 callback: () => {
                   dispatch("pause_menu_hide");
-                  dispatch("preferences_show");
+                  dispatch("preferences_show", undefined);
                 },
               },
               {

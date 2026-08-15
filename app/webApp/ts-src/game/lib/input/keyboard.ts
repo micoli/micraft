@@ -158,6 +158,9 @@ export function registerKeyboard(): Pick<
         if (b.statistics_toggle?.some((k) => matchesEvent(k, e))) window.mc?.toggleStatistics?.();
         if (b.attack_panel_toggle?.some((k) => matchesEvent(k, e))) window.mc?.toggleAttackPanel?.();
         if (b.preferences?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.();
+        if (b.preferences_keybindings?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.("keybindings");
+        if (b.preferences_debug?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.("debug");
+        if (b.preferences_graphics?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.("graphics");
         if (b.minimap_zoom_in?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomIn?.();
         if (b.minimap_zoom_out?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomOut?.();
         if (b.ingame_map?.some((k) => matchesEvent(k, e))) window.mc?.IngameMap?.();

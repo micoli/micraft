@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { PreferencesData } from "../types";
 import { Dialog } from "../../primitives/Dialog";
 import { DialogContent } from "../../primitives/DialogContent";
@@ -12,6 +12,7 @@ import { AddKeyBtn } from "./AddKeyBtn";
 interface Props {
   open: boolean;
   preferences: PreferencesData | null;
+  initialTab?: Tab;
   onSave: (payload: SavePayload) => void;
   onClose: () => void;
 }
@@ -24,10 +25,11 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "keybindings", label: "Keybindings" },
 ];
 
-export function Preferences({ open, preferences, onSave, onClose }: Props) {
-  const pref = usePreferences({ open, preferences, onSave, onClose });
+export function Preferences({ open, preferences, initialTab, onSave, onClose }: Props) {
+  const pref = usePreferences({ open, preferences, initialTab, onSave, onClose });
   const [kbSearch, setKbSearch] = useState("");
   const [cmdSearch, setCmdSearch] = useState("");
+  const tabRefs = useRef<Partial<Record<Tab, HTMLButtonElement>>>({});
 
   if (!open || !preferences) return null;
 
@@ -38,6 +40,10 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
         className="min-w-[520px] max-w-[560px] max-h-[80vh] flex flex-col font-mono p-5 z-[3001]"
         overlayClassName="z-[3000]"
         onEscapeKeyDown={(e) => e.preventDefault()}
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          tabRefs.current[pref.tab]?.focus();
+        }}
       >
         {/* Key recording overlay */}
         {pref.recording && (
@@ -64,6 +70,10 @@ export function Preferences({ open, preferences, onSave, onClose }: Props) {
           {TABS.map(({ id, label }) => (
             <button
               key={id}
+              ref={(el) => {
+                if (el) tabRefs.current[id] = el;
+                else delete tabRefs.current[id];
+              }}
               className={cn(
                 "rounded border px-3 py-1 text-sm cursor-pointer font-mono transition-colors",
                 pref.tab === id

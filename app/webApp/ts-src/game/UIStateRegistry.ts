@@ -21,6 +21,7 @@ import {
   SpellMeta,
   TradeData,
 } from "./types";
+import { Tab } from "./hooks/usePreferences";
 
 export interface ActiveEffect {
   name: string;
@@ -59,6 +60,7 @@ export interface UiState {
   craftRecipes: Record<string, RecipeDefinition>;
   craftKnownRecipes: string[];
   preferencesOpen: boolean;
+  preferencesTab: Tab;
   preferences: PreferencesData | null;
   pauseMenuOpen: boolean;
   macroEditorOpen: boolean;
@@ -169,7 +171,11 @@ const layoutEditorRegistry = {
 
 const preferencesRegistry = {
   preferences_sync: (state: UiState, payload: { data: PreferencesData }) => ({ ...state, preferences: payload.data }),
-  preferences_show: (state: UiState) => ({ ...state, preferencesOpen: true }),
+  preferences_show: (state: UiState, payload?: { tab?: Tab }) => ({
+    ...state,
+    preferencesOpen: true,
+    preferencesTab: payload?.tab ?? "chat",
+  }),
   preferences_hide: (state: UiState) => ({ ...state, preferencesOpen: false }),
   preferences_save: (state: UiState, payload: { data: PreferencesSaveData }) => ({
     ...state,
