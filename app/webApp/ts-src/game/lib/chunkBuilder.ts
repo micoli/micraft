@@ -448,9 +448,16 @@ function getImpostorMaterial(scene: Scene): ShaderMaterial {
     "chunkImpostorMat",
     scene,
     { vertexSource: BLOCK_VERT, fragmentSource: IMPOSTOR_FRAG },
-    { attributes: ["position", "normal", "uv", "color"], uniforms: ["worldViewProjection"] },
+    { attributes: ["position", "normal", "uv", "color"], uniforms: ["worldViewProjection", "ambient"] },
   );
   impostorMat.backFaceCulling = true;
+  impostorMat.setFloat("ambient", 1.0);
+  // Registered alongside the textured block materials so sky.ts's per-tick setAmbient sweep
+  // (day/night cycle) keeps this in sync too — otherwise the impostor's mean texture color
+  // renders unlit at full brightness, reading lighter than the shaded, ambient-multiplied real
+  // geometry it fades into at IMPOSTOR_RADIUS_CHUNKS.
+  const mats = window.mcState.blockMaterials;
+  if (mats) mats["chunkImpostorMat"] = impostorMat;
   return impostorMat;
 }
 

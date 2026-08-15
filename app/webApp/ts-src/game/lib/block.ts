@@ -50,10 +50,12 @@ void main() {
 export const IMPOSTOR_FRAG = `
 precision highp float;
 
+uniform float ambient;
+
 varying vec4 vColor;
 
 void main() {
-  gl_FragColor = vec4(vColor.rgb, 1.0);
+  gl_FragColor = vec4(vColor.rgb * ambient, 1.0);
 }
 `;
 
