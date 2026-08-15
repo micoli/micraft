@@ -573,6 +573,7 @@ declare global {
       mcAdminDisposeChunk(cx: number, cz: number): void;
       mcAdminGetBlockOrdinalAt(scene: unknown, wx: number, wy: number, wz: number): number;
       mcAdminGetBlockStateAt(scene: unknown, wx: number, wy: number, wz: number): number;
+      mcAdminGetUsedXZOffsetAt(scene: unknown, wx: number, wy: number, wz: number): number;
       mcAdminSetBlockRegistry(json: string): void;
       // Admin Scene editor (bounded, self-contained X/Y/Z raw block buffer — see
       // SceneMesher.kt/AdminScenePreview.kt) — mirrors the mcAdmin* chunk-preview surface above

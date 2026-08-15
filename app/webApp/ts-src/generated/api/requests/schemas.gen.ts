@@ -1406,6 +1406,10 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             type: 'boolean',
             title: 'Boolean'
         },
+        continuousBreak: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
         disabledCommands: {
             type: 'array',
             items: {
@@ -1490,6 +1494,37 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         },
         orientation: {
             $ref: '#/components/schemas/org.micoli.micraft.player.Orientation'
+        },
+        overrideForwardViewRadius: {
+            type: [
+                'null',
+                'integer'
+            ],
+            format: 'int32',
+            title: 'Int'
+        },
+        overrideImpostorRadiusChunks: {
+            type: [
+                'null',
+                'integer'
+            ],
+            format: 'int32',
+            title: 'Int'
+        },
+        overrideUseImpostor: {
+            type: [
+                'null',
+                'boolean'
+            ],
+            title: 'Boolean'
+        },
+        overrideViewRadius: {
+            type: [
+                'null',
+                'integer'
+            ],
+            format: 'int32',
+            title: 'Int'
         },
         pos: {
             $ref: '#/components/schemas/org.micoli.micraft.player.Vec3'
@@ -1578,6 +1613,7 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         'autoTargetEnabled',
         'biome',
         'chunkDebugVisible',
+        'continuousBreak',
         'disabledCommands',
         'dynamicFogEnabled',
         'editMode',
@@ -2648,11 +2684,6 @@ export const org_micoli_micraft_protocol_BlockInfoSchema = {
             type: 'boolean',
             title: 'Boolean'
         },
-        heightFraction: {
-            type: 'number',
-            format: 'float',
-            title: 'Float'
-        },
         isCubic: {
             type: 'boolean',
             title: 'Boolean'
@@ -2727,7 +2758,6 @@ export const org_micoli_micraft_protocol_BlockInfoSchema = {
         'gltfModel',
         'hardness',
         'hasStuds',
-        'heightFraction',
         'isCubic',
         'liquid',
         'minimapColor',

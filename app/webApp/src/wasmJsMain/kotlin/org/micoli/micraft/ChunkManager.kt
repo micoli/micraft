@@ -381,6 +381,26 @@ class ChunkManager(private val scene: JsAny) {
     }
 
     /**
+     * XZ sub-slots already occupied by XZ-fractional entities mastered at this cell. Used by the
+     * placement ghost to snap the axis aligned with a clicked lateral face's normal — which carries
+     * no positional information from the raycast hit point — to an existing neighbor instead of
+     * collapsing to the face boundary value.
+     */
+    fun getUsedXZOffsetsAt(wx: Int, wy: Int, wz: Int): Set<Pair<Int, Int>> {
+        if (wy < 0 || wy > WorldConstants.WORLD_MAX_Y) return emptySet()
+        val cx = wx.floorDiv(WorldConstants.CHUNK_SIZE)
+        val cz = wz.floorDiv(WorldConstants.CHUNK_SIZE)
+        val (chunk, _) = chunkData[ChunkPos(cx, cz)] ?: return emptySet()
+        val lx = wx - cx * WorldConstants.CHUNK_SIZE
+        val lz = wz - cz * WorldConstants.CHUNK_SIZE
+        val idx = Chunk.index(lx, wy, lz)
+        return chunk.entityMasters
+            .filter { it.masterIdx == idx }
+            .map { it.xOffset to it.zOffset }
+            .toSet()
+    }
+
+    /**
      * True if this cell or one of its 4 orthogonal XZ neighbors (same Y) already hosts an
      * XZ-fractional entity — mirrors
      * [org.micoli.micraft.game.world.WorldState.hasMisalignedNeighbor] server-side so the placement

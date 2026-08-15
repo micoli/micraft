@@ -129,3 +129,14 @@ fun mcAdminGetBlockStateAt(scene: JsAny, wx: Int, wy: Int, wz: Int): Int {
     val manager = managerFor(scene)
     return manager.getStateAtWorld(wx, wy, wz).toInt() and 0xFF
 }
+
+// Packs the first XZ-fractional slot already occupied at this cell as x*4+z, or -1 if none.
+// Mirrors the in-game ghost/break-overlay fix (LocalPlayerController.kt): a lateral face's
+// normal axis carries no positional info in the pick point, so that axis must snap to an
+// existing neighbor's slot instead of the meaningless face-boundary value.
+@JsExport
+fun mcAdminGetUsedXZOffsetAt(scene: JsAny, wx: Int, wy: Int, wz: Int): Int {
+    val manager = managerFor(scene)
+    val slot = manager.getUsedXZOffsetsAt(wx, wy, wz).firstOrNull() ?: return -1
+    return slot.first * 4 + slot.second
+}

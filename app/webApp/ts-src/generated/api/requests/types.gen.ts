@@ -936,6 +936,10 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      */
     chunkDebugVisible: boolean;
     /**
+     * Boolean
+     */
+    continuousBreak: boolean;
+    /**
      * Set<String>
      */
     disabledCommands: Array<string>;
@@ -999,6 +1003,22 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      */
     name: string;
     orientation: OrgMicoliMicraftPlayerOrientation;
+    /**
+     * Int
+     */
+    overrideForwardViewRadius?: null | number;
+    /**
+     * Int
+     */
+    overrideImpostorRadiusChunks?: null | number;
+    /**
+     * Boolean
+     */
+    overrideUseImpostor?: null | boolean;
+    /**
+     * Int
+     */
+    overrideViewRadius?: null | number;
     pos: OrgMicoliMicraftPlayerVec3;
     /**
      * Map<String,QuestProgress>
@@ -1687,10 +1707,6 @@ export type OrgMicoliMicraftProtocolBlockInfo = {
      * Boolean
      */
     hasStuds: boolean;
-    /**
-     * Float
-     */
-    heightFraction: number;
     /**
      * Boolean
      */

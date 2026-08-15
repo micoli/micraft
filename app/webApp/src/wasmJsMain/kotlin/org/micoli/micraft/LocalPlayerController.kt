@@ -915,12 +915,27 @@ class LocalPlayerController(
                 val slotsZ =
                     if (studStepZ > 0f) kotlin.math.floor(1f / studStepZ).toInt().coerceAtLeast(1)
                     else 1
+                // A lateral face's normal axis carries no positional info in the raycast hit
+                // point (it's pinned to the face boundary, see raycastBlock's bx!=prevBx /
+                // bz!=prevBz cases) — hit-derived frac on that axis is meaningless. Snap it to an
+                // already-placed neighbor's slot in the target cell instead of the degenerate
+                // face-boundary value.
+                val xAxisDegenerate =
+                    target != null && rawAdjacent != null && target.x != rawAdjacent.x
+                val zAxisDegenerate =
+                    target != null && rawAdjacent != null && target.z != rawAdjacent.z
+                val usedSlots =
+                    if (xAxisDegenerate || zAxisDegenerate)
+                        chunkManager.getUsedXZOffsetsAt(adjacent.x, adjacent.y, adjacent.z)
+                    else emptySet()
                 ghostXOffset =
-                    if (studStepX > 0f)
+                    if (xAxisDegenerate) usedSlots.firstOrNull()?.first ?: 0
+                    else if (studStepX > 0f)
                         kotlin.math.floor(fracX / studStepX).toInt().coerceIn(0, slotsX - 1)
                     else 0
                 ghostZOffset =
-                    if (studStepZ > 0f)
+                    if (zAxisDegenerate) usedSlots.firstOrNull()?.second ?: 0
+                    else if (studStepZ > 0f)
                         kotlin.math.floor(fracZ / studStepZ).toInt().coerceIn(0, slotsZ - 1)
                     else 0
             } else {
@@ -1027,15 +1042,25 @@ class LocalPlayerController(
                             if (breakStudStepZ > 0f)
                                 kotlin.math.floor(1f / breakStudStepZ).toInt().coerceAtLeast(1)
                             else 1
+                        // Same degenerate-axis issue as the placement ghost (see above): the
+                        // clicked face's normal axis carries no positional info in the hit point.
+                        val breakXDegenerate = rayResult.adjacent.x != target.x
+                        val breakZDegenerate = rayResult.adjacent.z != target.z
+                        val breakUsedSlots =
+                            if (breakXDegenerate || breakZDegenerate)
+                                chunkManager.getUsedXZOffsetsAt(target.x, target.y, target.z)
+                            else emptySet()
                         breakXOffset =
-                            if (breakStudStepX > 0f)
+                            if (breakXDegenerate) breakUsedSlots.firstOrNull()?.first ?: 0
+                            else if (breakStudStepX > 0f)
                                 kotlin.math
                                     .floor(fracX / breakStudStepX)
                                     .toInt()
                                     .coerceIn(0, slotsBreakX - 1)
                             else 0
                         breakZOffset =
-                            if (breakStudStepZ > 0f)
+                            if (breakZDegenerate) breakUsedSlots.firstOrNull()?.second ?: 0
+                            else if (breakStudStepZ > 0f)
                                 kotlin.math
                                     .floor(fracZ / breakStudStepZ)
                                     .toInt()

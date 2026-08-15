@@ -80,6 +80,13 @@ function computeSlotOffset(
   brickSizeX: number,
   brickSizeZ: number,
   rotation: number,
+  // A lateral face's normal axis carries no positional info in the pick point (Babylon's
+  // scene.pick pins it to the face boundary, same as the game's raycastBlock) — that axis must
+  // snap to an already-placed neighbor's slot instead of the meaningless boundary value. Mirrors
+  // LocalPlayerController.kt's xAxisDegenerate/zAxisDegenerate fix.
+  degenerateX = false,
+  degenerateZ = false,
+  usedSlot: [number, number] | null = null,
 ): [number, number] {
   const effFracX = (rotation % 2 === 0 ? brickSizeX : brickSizeZ) / 2;
   const effFracZ = (rotation % 2 === 0 ? brickSizeZ : brickSizeX) / 2;
@@ -90,8 +97,16 @@ function computeSlotOffset(
   const fracZ = Math.min(0.9999, Math.max(0, pickedZ - tz));
   const slotsX = studStepX > 0 ? Math.max(1, Math.floor(1 / studStepX)) : 1;
   const slotsZ = studStepZ > 0 ? Math.max(1, Math.floor(1 / studStepZ)) : 1;
-  const xOffset = studStepX > 0 ? Math.min(slotsX - 1, Math.floor(fracX / studStepX)) : 0;
-  const zOffset = studStepZ > 0 ? Math.min(slotsZ - 1, Math.floor(fracZ / studStepZ)) : 0;
+  const xOffset = degenerateX
+    ? (usedSlot?.[0] ?? 0)
+    : studStepX > 0
+      ? Math.min(slotsX - 1, Math.floor(fracX / studStepX))
+      : 0;
+  const zOffset = degenerateZ
+    ? (usedSlot?.[1] ?? 0)
+    : studStepZ > 0
+      ? Math.min(slotsZ - 1, Math.floor(fracZ / studStepZ))
+      : 0;
   return [xOffset, zOffset];
 }
 
@@ -840,6 +855,14 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       });
     });
 
+    // Decodes mcAdminGetUsedXZOffsetAt's packed x*4+z return (-1 = none) into a slot pair — see
+    // computeSlotOffset's degenerateX/degenerateZ params.
+    function usedSlotAt(wx: number, wy: number, wz: number): [number, number] | null {
+      if (!wasmExports) return null;
+      const packed = wasmExports.mcAdminGetUsedXZOffsetAt(scene, wx, wy, wz);
+      return packed < 0 ? null : [Math.floor(packed / 4), packed % 4];
+    }
+
     // Resolves the cell a placement click should target: normally the empty neighbor cell in the
     // direction of the clicked face (standard adjacent-placement), but redirected into the
     // clicked block's OWN cell when that block is an XZ+Y-fractional entity (e.g. LEGO_PIECE) —
@@ -910,6 +933,9 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
           bs[0],
           bs[2],
           rotation,
+          normal.x !== 0,
+          normal.z !== 0,
+          usedSlotAt(bx, by, bz),
         );
         overlay.showBreakOverlay(bx, by, bz, targetOrdinal, rotation, xOffset, zOffset);
         return;
@@ -950,6 +976,9 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         bs[0],
         bs[2],
         overlay.getPlacementRotation(),
+        !onGround && !!normal && normal.x !== 0,
+        !onGround && !!normal && normal.z !== 0,
+        usedSlotAt(tx, ty, tz),
       );
       overlay.showGhostAndOutline(tx, ty, tz, ordinal, selectedColorIndexRef.current, xOffset, zOffset);
     }
@@ -1042,6 +1071,9 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
               bs[0],
               bs[2],
               rotation,
+              normal.x !== 0,
+              normal.z !== 0,
+              usedSlotAt(bx, by, bz),
             );
             prevType = targetDef?.name ?? "AIR";
             // Full state byte (rotation + color) so undo restores the exact previous look.
@@ -1094,6 +1126,9 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
           placeBs[0],
           placeBs[2],
           overlay.getPlacementRotation(),
+          !onGround && !!normal && normal.x !== 0,
+          !onGround && !!normal && normal.z !== 0,
+          usedSlotAt(tx, ty, tz),
         );
         let prevType = "AIR";
         let prevState = 0;
