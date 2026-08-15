@@ -2,6 +2,7 @@ package org.micoli.micraft.game.world
 
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
+import org.micoli.micraft.game.world.block.BlockStore
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.BlockChange
@@ -12,7 +13,7 @@ import org.slf4j.LoggerFactory
 class WorldState(
     @Volatile var generator: ChunkGenerator,
     val persistence: WorldPersistence? = null,
-) {
+) : BlockStore {
     private val chunks = ConcurrentHashMap<ChunkPos, Chunk>()
     private val dirtyChunks: MutableSet<ChunkPos> = Collections.newSetFromMap(ConcurrentHashMap())
     private val log = LoggerFactory.getLogger("WorldState")
@@ -50,7 +51,7 @@ class WorldState(
         return getBlock(pos.x.toInt(), pos.y.toInt(), pos.z.toInt())
     }
 
-    fun getBlock(wx: Int, wy: Int, wz: Int): BlockType {
+    override fun getBlock(wx: Int, wy: Int, wz: Int): BlockType {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return BlockType.AIR
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
@@ -91,7 +92,7 @@ class WorldState(
         return chunks[ChunkPos(chunkX, chunkZ)]?.getBlock(localX, wy, localZ) ?: BlockType.AIR
     }
 
-    fun getState(wx: Int, wy: Int, wz: Int): Byte {
+    override fun getState(wx: Int, wy: Int, wz: Int): Byte {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return 0
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
@@ -100,7 +101,7 @@ class WorldState(
         return chunks[ChunkPos(chunkX, chunkZ)]?.getState(localX, wy, localZ) ?: 0
     }
 
-    fun hasEntityAt(wx: Int, wy: Int, wz: Int): Boolean {
+    override fun hasEntityAt(wx: Int, wy: Int, wz: Int): Boolean {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return false
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
@@ -113,7 +114,7 @@ class WorldState(
     fun isSolidOrOccupied(wx: Int, wy: Int, wz: Int): Boolean =
         getBlock(wx, wy, wz).isSolid || hasEntityAt(wx, wy, wz)
 
-    fun applyChange(change: BlockChange) {
+    override fun applyChange(change: BlockChange) {
         val chunkX = Math.floorDiv(change.pos.x, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(change.pos.z, WorldConstants.CHUNK_SIZE)
         val localX = Math.floorMod(change.pos.x, WorldConstants.CHUNK_SIZE)
@@ -124,7 +125,7 @@ class WorldState(
         dirtyChunks.add(pos)
     }
 
-    fun applyEntityAdd(proto: BlockEntityProto) {
+    override fun applyEntityAdd(proto: BlockEntityProto) {
         val chunkX = Math.floorDiv(proto.worldX, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(proto.worldZ, WorldConstants.CHUNK_SIZE)
         val localX = Math.floorMod(proto.worldX, WorldConstants.CHUNK_SIZE)
@@ -149,7 +150,7 @@ class WorldState(
         dirtyChunks.add(cPos)
     }
 
-    fun applyEntityRemove(worldMasterPos: BlockPos) {
+    override fun applyEntityRemove(worldMasterPos: BlockPos) {
         val chunkX = Math.floorDiv(worldMasterPos.x, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(worldMasterPos.z, WorldConstants.CHUNK_SIZE)
         val localX = Math.floorMod(worldMasterPos.x, WorldConstants.CHUNK_SIZE)
@@ -162,7 +163,7 @@ class WorldState(
     }
 
     /** Returns (xOffset, zOffset) pairs of all XZ-fractional entities at this world position. */
-    fun getXZOffsetsAt(wx: Int, wy: Int, wz: Int): List<Pair<Int, Int>> {
+    override fun getXZOffsetsAt(wx: Int, wy: Int, wz: Int): List<Pair<Int, Int>> {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return emptyList()
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
@@ -191,7 +192,7 @@ class WorldState(
      * finer sub-voxel grid so it doesn't silently collapse onto the coarse grid next to an
      * already-offset lego structure. See [getXZOffsetsAt].
      */
-    fun hasMisalignedNeighbor(wx: Int, wy: Int, wz: Int): Boolean =
+    override fun hasMisalignedNeighbor(wx: Int, wy: Int, wz: Int): Boolean =
         listOf(0 to 0, 1 to 0, -1 to 0, 0 to 1, 0 to -1).any { (dx, dz) ->
             getXZOffsetsAt(wx + dx, wy, wz + dz).isNotEmpty()
         }
@@ -200,7 +201,7 @@ class WorldState(
      * Returns the last-placed XZ-fractional entity at this world position (highest
      * xOffset/zOffset).
      */
-    fun getLastXZFractionalEntityAt(wx: Int, wy: Int, wz: Int): BlockEntity? {
+    override fun getLastXZFractionalEntityAt(wx: Int, wy: Int, wz: Int): BlockEntity? {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return null
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
@@ -219,12 +220,12 @@ class WorldState(
      * the given XZ sub-slot (defaults to 0,0 — the whole-cell slot used by full-footprint plates
      * like LEGO_PLATE_2X2).
      */
-    fun getFractionalYOffsetsAt(
+    override fun getFractionalYOffsetsAt(
         wx: Int,
         wy: Int,
         wz: Int,
-        xOffset: Int = 0,
-        zOffset: Int = 0
+        xOffset: Int,
+        zOffset: Int
     ): List<Int> {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return emptyList()
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
@@ -250,12 +251,12 @@ class WorldState(
      * player is aiming at for XZ+Y-fractional blocks like LEGO_PIECE); otherwise considers all
      * slots in the cell (whole-cell plates like LEGO_PLATE_2X2 always store xOffset=zOffset=0).
      */
-    fun getTopmostFractionalEntityAt(
+    override fun getTopmostFractionalEntityAt(
         wx: Int,
         wy: Int,
         wz: Int,
-        xOffset: Int? = null,
-        zOffset: Int? = null
+        xOffset: Int?,
+        zOffset: Int?
     ): BlockEntity? {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return null
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
@@ -276,7 +277,7 @@ class WorldState(
     }
 
     /** Removes the specific fractional entity (by masterIdx + yOffset) from its chunk. */
-    fun applyEntityRemoveAt(spec: EntityRemoveAt) {
+    override fun applyEntityRemoveAt(spec: EntityRemoveAt) {
         val chunkX = Math.floorDiv(spec.pos.x, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(spec.pos.z, WorldConstants.CHUNK_SIZE)
         val localX = Math.floorMod(spec.pos.x, WorldConstants.CHUNK_SIZE)
@@ -289,7 +290,7 @@ class WorldState(
     }
 
     /** Returns world-coordinate BlockPos of master entity at given world position, or null. */
-    fun getEntityMasterWorldPos(wx: Int, wy: Int, wz: Int): BlockPos? {
+    override fun getEntityMasterWorldPos(wx: Int, wy: Int, wz: Int): BlockPos? {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return null
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)

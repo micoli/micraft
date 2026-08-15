@@ -140,7 +140,7 @@ class BlockBreaker(
         current.ticks++
         val instantBreak = session.state.editMode == EditMode.CREATIVE
         if (instantBreak || current.ticks.toFloat() >= block.hardness) {
-            val result = breakAt(bt, session.breakTargetXOffset, session.breakTargetZOffset, world)
+            val result = removeAt(bt, session.breakTargetXOffset, session.breakTargetZOffset, world)
             broadcast(
                 ServerMessage.WorldUpdate(
                     result.changes,
@@ -158,7 +158,7 @@ class BlockBreaker(
     }
 
     companion object {
-        data class BreakResult(
+        data class RemoveResult(
             val changes: List<BlockChange>,
             val entityRemoves: List<BlockPos>,
             val entityRemovesAt: List<EntityRemoveAt>,
@@ -169,10 +169,12 @@ class BlockBreaker(
         /**
          * Resolves the entity/slot to remove at [pos] (restricted to the given XZ sub-slot for
          * XZ+Y-fractional blocks like LEGO_PIECE), mutates [world] accordingly and returns what
-         * changed. Shared by the game client's [tick] (hardness/progress tracking happens before
-         * this call) and the admin instance editor (which removes instantly, no progress).
+         * changed. Pure slot-resolution + removal — no side effects (item drops, protected zones,
+         * session state). Shared by the game client's [tick] (hardness/progress tracking + item
+         * drop happen around this call) and the admin instance/scene editors (which remove
+         * instantly, no progress).
          */
-        fun breakAt(pos: BlockPos, xOffset: Int, zOffset: Int, world: WorldState): BreakResult {
+        fun removeAt(pos: BlockPos, xOffset: Int, zOffset: Int, world: BlockStore): RemoveResult {
             val masterPos = world.getEntityMasterWorldPos(pos.x, pos.y, pos.z)
             val effectivePos = masterPos ?: pos
             val topmostFractional =
@@ -196,7 +198,7 @@ class BlockBreaker(
             if (masterPos == null) {
                 val change = BlockChange(pos, BlockType.AIR)
                 world.applyChange(change)
-                return BreakResult(listOf(change), emptyList(), emptyList(), block, colorIndex)
+                return RemoveResult(listOf(change), emptyList(), emptyList(), block, colorIndex)
             }
 
             if (topmostFractional != null) {
@@ -216,7 +218,7 @@ class BlockBreaker(
                     world.applyChange(c)
                     changes.add(c)
                 }
-                return BreakResult(changes, emptyList(), listOf(spec), block, colorIndex)
+                return RemoveResult(changes, emptyList(), listOf(spec), block, colorIndex)
             }
 
             if (lastXZFractional != null) {
@@ -246,7 +248,7 @@ class BlockBreaker(
                         }
                     }
                 }
-                return BreakResult(changes, emptyList(), listOf(spec), block, colorIndex)
+                return RemoveResult(changes, emptyList(), listOf(spec), block, colorIndex)
             }
 
             // Regular multi-cell entity: remove entire entity + all cell block types
@@ -265,7 +267,7 @@ class BlockBreaker(
                 }
             }
             world.applyEntityRemove(masterPos)
-            return BreakResult(changes, listOf(masterPos), emptyList(), block, colorIndex)
+            return RemoveResult(changes, listOf(masterPos), emptyList(), block, colorIndex)
         }
     }
 }

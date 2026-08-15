@@ -44,11 +44,12 @@ import {
   type Pattern,
 } from "../shared/voxelEditor/selectionVoxels";
 import type { SceneBlockDto } from "../../apiTypes";
-
-// Voxel-picking epsilon: nudges the picked point across the hit face along its normal before
-// flooring, so the coordinate resolves to the block on the correct side of the face — same
-// technique as InstanceEditorViewport.tsx.
-const PICK_EPSILON = 0.01;
+import {
+  computeSlotOffset,
+  resolvePlacementCell,
+  usedSlotAt,
+  PICK_EPSILON,
+} from "../shared/voxelEditor/fractionalPlacement";
 
 // Saved-selection memory list cap (select mode) — same idea as MAX_UNDO_ENTRIES, a fixed-size
 // local buffer with oldest entries dropped once full.
@@ -57,9 +58,13 @@ const MAX_SAVED_SELECTIONS = 10;
 const cameraStorageKey = (sceneId: string) => `sceneEditorCamera:${sceneId}`;
 
 // Snapshot of a cell's content right before a place/break overwrote it, so undo can write it
-// back. Unlike InstanceEditorViewport's UndoEntry, no xOffset/zOffset — the Scene HTTP contract
-// (PUT .../blocks) only has x/y/z/type/state, no sub-voxel slot fields.
-type UndoEntry = UndoEntryBase;
+// back. xOffset/zOffset mirror InstanceEditorViewport's UndoEntry, now that Scene supports
+// fractional/lego entities too (see BlockPlacer.placeAt/BlockBreaker.removeAt via
+// ScenePlacementTarget).
+interface UndoEntry extends UndoEntryBase {
+  xOffset: number;
+  zOffset: number;
+}
 
 // Parses GET /api/admin/scenes/{id}/blocks/raw's binary layout: 3 big-endian Int32 header fields
 // (width, height, depth) followed by two equal-length byte arrays (blocks, then states), flat
@@ -639,8 +644,8 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
           const prevOrdinal = wasmExports ? wasmExports.mcSceneGetBlockOrdinalAt(x, y, z) : 0;
           const prevState = wasmExports ? wasmExports.mcSceneGetBlockStateAt(x, y, z) : 0;
           const prevType = wasmExports ? (window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR") : "AIR";
-          undoGroup.push({ x, y, z, type: prevType, state: prevState });
-          edits.push({ x, y, z, type: entry.type, state: entry.state });
+          undoGroup.push({ x, y, z, type: prevType, state: prevState, xOffset: 0, zOffset: 0 });
+          edits.push({ x, y, z, type: entry.type, state: entry.state, xOffset: 0, zOffset: 0 });
         }
         if (edits.length > 0) {
           editSocket?.sendBatch(edits);
@@ -649,6 +654,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
             const ordinal = ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
             if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
           }
+          reloadEntities();
         }
         pasteActionsRef.current.cancel();
       },
@@ -685,12 +691,18 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         if (!groundMeshes.has(mesh) && !overlayMeshes.has(mesh)) mesh.isPickable = true;
       }
       if (disposed) return;
+      // Fractional/lego entities (see Scene.entities) aren't carried by the blocks/raw binary
+      // blob above — loaded separately so LEGO_PIECE etc. render with their correct sub-voxel
+      // geometry from the start, not just as a plain cube.
+      await reloadEntities();
+      if (disposed) return;
       editSocket = connectEditSocket<SceneBlockDto>(
         "scenes",
         scene.id,
         (edit) => {
           const ordinal = ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
           if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
+          reloadEntities();
         },
         (message) => flashActionError(message),
         // A batch broadcast from another admin tab (e.g. its own Fill/Shell/Cut). No batch variant
@@ -701,6 +713,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
             const ordinal = ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
             if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
           }
+          reloadEntities();
         },
       );
     }
@@ -711,11 +724,12 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     });
 
     function captureBlock(at: UndoEntry): UndoEntry {
-      if (!wasmExports) return { x: at.x, y: at.y, z: at.z, type: "AIR", state: 0 };
+      if (!wasmExports)
+        return { x: at.x, y: at.y, z: at.z, type: "AIR", state: 0, xOffset: at.xOffset, zOffset: at.zOffset };
       const ordinal = wasmExports.mcSceneGetBlockOrdinalAt(at.x, at.y, at.z);
       const state = wasmExports.mcSceneGetBlockStateAt(at.x, at.y, at.z);
       const type = window.mc.getBlockDef(ordinal)?.name ?? "AIR";
-      return { x: at.x, y: at.y, z: at.z, type, state };
+      return { x: at.x, y: at.y, z: at.z, type, state, xOffset: at.xOffset, zOffset: at.zOffset };
     }
 
     function exportsSetBlock(x: number, y: number, z: number, ordinal: number, state: number) {
@@ -737,9 +751,18 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     // whole buffer synchronously).
     function applyEntry(entry: UndoEntry, onSuccess: () => void) {
       const ordinal = ordinalByNameRef.current.get(entry.type) ?? (entry.type === "AIR" ? 0 : null);
-      editSocket?.send({ x: entry.x, y: entry.y, z: entry.z, type: entry.type, state: entry.state });
+      editSocket?.send({
+        x: entry.x,
+        y: entry.y,
+        z: entry.z,
+        type: entry.type,
+        state: entry.state,
+        xOffset: entry.xOffset,
+        zOffset: entry.zOffset,
+      });
       onSuccess();
       if (ordinal != null) exportsSetBlock(entry.x, entry.y, entry.z, ordinal, entry.state);
+      reloadEntities();
     }
 
     const { pushUndo, performUndo, performRedo } = makeUndoRedoController<UndoEntry>(
@@ -790,9 +813,9 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         // Copy is read-only — no edit, no undo entry, geometry stays untouched.
         if (kind === "copy") continue;
 
-        undoGroup.push({ x: v.x, y: v.y, z: v.z, type: prevType, state: prevState });
+        undoGroup.push({ x: v.x, y: v.y, z: v.z, type: prevType, state: prevState, xOffset: 0, zOffset: 0 });
         const type = kind === "cut" ? "AIR" : resolvePatternBlock(pattern, v.x, v.y, v.z);
-        edits.push({ x: v.x, y: v.y, z: v.z, type, state: 0 });
+        edits.push({ x: v.x, y: v.y, z: v.z, type, state: 0, xOffset: 0, zOffset: 0 });
       }
 
       if (kind !== "copy") {
@@ -802,6 +825,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
           const ordinal = ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
           if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
         }
+        reloadEntities();
       }
       if (kind === "cut" || kind === "copy") {
         clipboardRef.current = { entries: clipEntries };
@@ -809,18 +833,51 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       }
     };
 
-    // Resolves the cell a placement click should target: the empty neighbor cell in the direction
-    // of the clicked face — simpler than InstanceEditorViewport's resolvePlacementCell since Scene
-    // has no fractional-entity system to redirect into the clicked block's own cell for.
-    function resolvePlacementCell(
+    // Thin wrappers binding the shared fractionalPlacement.ts helpers to this editor's wasm
+    // exports (mcSceneGetUsedXZOffsetAt/mcSceneGetBlockOrdinalAt) — see that module for the
+    // actual slot/redirect logic (shared with InstanceEditorViewport.tsx).
+    function usedSlotAtLocal(wx: number, wy: number, wz: number): [number, number] | null {
+      if (!wasmExports) return null;
+      return usedSlotAt((x, y, z) => wasmExports!.mcSceneGetUsedXZOffsetAt(x, y, z), wx, wy, wz);
+    }
+
+    function resolvePlacementCellLocal(
       pickedPoint: InstanceType<typeof BABYLON.Vector3>,
       normal: InstanceType<typeof BABYLON.Vector3>,
     ): [number, number, number] {
-      return [
-        Math.floor(pickedPoint.x + normal.x * PICK_EPSILON),
-        Math.floor(pickedPoint.y + normal.y * PICK_EPSILON),
-        Math.floor(pickedPoint.z + normal.z * PICK_EPSILON),
-      ];
+      if (!wasmExports) {
+        return [
+          Math.floor(pickedPoint.x + normal.x * PICK_EPSILON),
+          Math.floor(pickedPoint.y + normal.y * PICK_EPSILON),
+          Math.floor(pickedPoint.z + normal.z * PICK_EPSILON),
+        ];
+      }
+      return resolvePlacementCell(
+        pickedPoint,
+        normal,
+        (x, y, z) => wasmExports!.mcSceneGetBlockOrdinalAt(x, y, z),
+        (ordinal) => window.mc.getBlockDef(ordinal),
+      );
+    }
+
+    // Refetches the scene's fractional/lego entity list (GET .../entities) and re-meshes — the
+    // server (BlockPlacer.placeAt/BlockBreaker.removeAt via ScenePlacementTarget) is the only
+    // source of truth for slot/offset resolution, so this is called after every edit that could
+    // touch entities, mirroring InstanceEditorViewport's reloadChunk (which re-fetches the whole
+    // chunk, entities included, from the server after every edit).
+    async function reloadEntities() {
+      if (!wasmExports || disposed) return;
+      const json = await fetch(`/api/admin/scenes/${encodeURIComponent(scene.id)}/entities`).then((r) => r.text());
+      if (disposed) return;
+      wasmExports.mcSceneLoadEntities(babylonScene, json);
+      // mcSceneLoadEntities re-meshes the buffer, and chunkBuilder.ts defaults every new mesh to
+      // isPickable=false — without re-enabling it here, the whole terrain goes unpickable after
+      // every load/edit (this runs on scene load and after every edit). Mirrors exportsSetBlock's
+      // re-enable loop.
+      for (const m of babylonScene.meshes) {
+        const mesh = m as InstanceType<typeof BABYLON.Mesh>;
+        if (!groundMeshes.has(mesh) && !overlayMeshes.has(mesh)) mesh.isPickable = true;
+      }
     }
 
     function updateHoverPreview(evt: PointerEvent) {
@@ -854,7 +911,21 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         const targetOrdinal = wasmExports.mcSceneGetBlockOrdinalAt(bx, by, bz);
         const targetState = wasmExports.mcSceneGetBlockStateAt(bx, by, bz);
         const rotation = targetState & 0x03;
-        overlay.showBreakOverlay(bx, by, bz, targetOrdinal, rotation);
+        const targetDef = window.mc.getBlockDef(targetOrdinal);
+        const bs = targetDef?.brickSize ?? [2, 2, 2];
+        const [bXOffset, bZOffset] = computeSlotOffset(
+          pick.pickedPoint.x,
+          pick.pickedPoint.z,
+          bx,
+          bz,
+          bs[0],
+          bs[2],
+          rotation,
+          normal.x !== 0,
+          normal.z !== 0,
+          usedSlotAtLocal(bx, by, bz),
+        );
+        overlay.showBreakOverlay(bx, by, bz, targetOrdinal, rotation, bXOffset, bZOffset);
         return;
       }
       overlay.disposeBreakOverlay();
@@ -872,7 +943,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         ty = 0;
         tz = Math.floor(pick.pickedPoint.z);
       } else if (normal) {
-        [tx, ty, tz] = resolvePlacementCell(pick.pickedPoint, normal);
+        [tx, ty, tz] = resolvePlacementCellLocal(pick.pickedPoint, normal);
       } else {
         overlay.disposeGhost();
         overlay.disposeOutline();
@@ -883,7 +954,21 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         overlay.disposeOutline();
         return;
       }
-      overlay.showGhostAndOutline(tx, ty, tz, ordinal, selectedColorIndexRef.current);
+      const blockDef = window.mc.getBlockDef(ordinal);
+      const bs = blockDef?.brickSize ?? [2, 2, 2];
+      const [xOffset, zOffset] = computeSlotOffset(
+        pick.pickedPoint.x,
+        pick.pickedPoint.z,
+        tx,
+        tz,
+        bs[0],
+        bs[2],
+        overlay.getPlacementRotation(),
+        !onGround && !!normal && normal.x !== 0,
+        !onGround && !!normal && normal.z !== 0,
+        usedSlotAtLocal(tx, ty, tz),
+      );
+      overlay.showGhostAndOutline(tx, ty, tz, ordinal, selectedColorIndexRef.current, xOffset, zOffset);
     }
 
     function onKeyDown(e: KeyboardEvent) {
@@ -953,16 +1038,54 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
           const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
           const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
           if (!inBounds(bx, by, bz)) return;
+          // Resolve the targeted block's own brickSize so the removal hits the exact XZ sub-slot
+          // aimed at (e.g. one LEGO_PIECE among several stacked/slotted in the same cell) — see
+          // fractionalPlacement.ts / BlockBreaker.removeAt.
+          let breakXOffset = 0;
+          let breakZOffset = 0;
           let prevType = "AIR";
           let prevState = 0;
           if (wasmExports) {
             const targetOrdinal = wasmExports.mcSceneGetBlockOrdinalAt(bx, by, bz);
-            prevState = wasmExports.mcSceneGetBlockStateAt(bx, by, bz);
-            prevType = window.mc.getBlockDef(targetOrdinal)?.name ?? "AIR";
+            const targetState = wasmExports.mcSceneGetBlockStateAt(bx, by, bz);
+            const rotation = targetState & 0x03;
+            const targetDef = window.mc.getBlockDef(targetOrdinal);
+            const bs = targetDef?.brickSize ?? [2, 2, 2];
+            [breakXOffset, breakZOffset] = computeSlotOffset(
+              pick.pickedPoint.x,
+              pick.pickedPoint.z,
+              bx,
+              bz,
+              bs[0],
+              bs[2],
+              rotation,
+              normal.x !== 0,
+              normal.z !== 0,
+              usedSlotAtLocal(bx, by, bz),
+            );
+            prevType = targetDef?.name ?? "AIR";
+            prevState = targetState;
           }
-          editSocket?.send({ x: bx, y: by, z: bz, type: "AIR", state: 0 });
-          pushUndo({ x: bx, y: by, z: bz, type: prevType, state: prevState });
+          editSocket?.send({
+            x: bx,
+            y: by,
+            z: bz,
+            type: "AIR",
+            state: 0,
+            xOffset: breakXOffset,
+            zOffset: breakZOffset,
+          });
+          pushUndo({
+            x: bx,
+            y: by,
+            z: bz,
+            type: prevType,
+            state: prevState,
+            xOffset: breakXOffset,
+            zOffset: breakZOffset,
+          });
           exportsSetBlock(bx, by, bz, 0, 0);
+          reloadEntities();
           return;
         }
 
@@ -974,13 +1097,27 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
           ty = 0;
           tz = Math.floor(pick.pickedPoint.z);
         } else if (normal) {
-          [tx, ty, tz] = resolvePlacementCell(pick.pickedPoint, normal);
+          [tx, ty, tz] = resolvePlacementCellLocal(pick.pickedPoint, normal);
         } else {
           return;
         }
         if (!inBounds(tx, ty, tz)) return;
         const ordinal = ordinalByNameRef.current.get(type);
         if (ordinal == null) return;
+        const placeDef = window.mc.getBlockDef(ordinal);
+        const placeBs = placeDef?.brickSize ?? [2, 2, 2];
+        const [xOffset, zOffset] = computeSlotOffset(
+          pick.pickedPoint.x,
+          pick.pickedPoint.z,
+          tx,
+          tz,
+          placeBs[0],
+          placeBs[2],
+          overlay.getPlacementRotation(),
+          !onGround && !!normal && normal.x !== 0,
+          !onGround && !!normal && normal.z !== 0,
+          usedSlotAtLocal(tx, ty, tz),
+        );
         let prevType = "AIR";
         let prevState = 0;
         if (wasmExports) {
@@ -989,9 +1126,10 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
           prevType = window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR";
         }
         const state = packState(overlay.getPlacementRotation(), selectedColorIndexRef.current);
-        editSocket?.send({ x: tx, y: ty, z: tz, type, state });
-        pushUndo({ x: tx, y: ty, z: tz, type: prevType, state: prevState });
+        editSocket?.send({ x: tx, y: ty, z: tz, type, state, xOffset, zOffset });
+        pushUndo({ x: tx, y: ty, z: tz, type: prevType, state: prevState, xOffset, zOffset });
         exportsSetBlock(tx, ty, tz, ordinal, state);
+        reloadEntities();
       },
     });
 

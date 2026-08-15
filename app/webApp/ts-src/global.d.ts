@@ -589,6 +589,12 @@ declare global {
       mcSceneSetBlock(scene: unknown, x: number, y: number, z: number, type: number, state: number): void;
       mcSceneGetBlockOrdinalAt(x: number, y: number, z: number): number;
       mcSceneGetBlockStateAt(x: number, y: number, z: number): number;
+      // Replaces the fractional/lego entity list (see Scene.entities / BlockEntityProto) from a
+      // JSON-encoded List<BlockEntityProto> and re-meshes — called on scene load (GET
+      // /api/admin/scenes/{id}/entities) and again after any fractional place/break edit.
+      mcSceneLoadEntities(scene: unknown, entitiesJson: string): void;
+      // Mirrors mcAdminGetUsedXZOffsetAt for the Scene editor's axis-degenerate placement fix.
+      mcSceneGetUsedXZOffsetAt(x: number, y: number, z: number): number;
       mcSceneDispose(): void;
     }>;
     [key: string]: unknown;

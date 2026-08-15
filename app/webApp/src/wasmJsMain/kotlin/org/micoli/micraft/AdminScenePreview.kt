@@ -4,6 +4,11 @@ package org.micoli.micraft
 
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.ExperimentalWasmJsInterop
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
+import org.micoli.micraft.game.world.BlockEntity
+import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.protocol.BlockEntityProto
 
 // Lets the admin Scene editor (a bounded, self-contained X/Y/Z raw block buffer, NOT tied to the
 // live world/chunk grid — see SceneMesher.kt) render its whole volume with the exact same
@@ -61,6 +66,44 @@ fun mcSceneGetBlockOrdinalAt(x: Int, y: Int, z: Int): Int =
 
 @JsExport
 fun mcSceneGetBlockStateAt(x: Int, y: Int, z: Int): Int = previewMesher?.getState(x, y, z) ?: 0
+
+// Replaces the whole fractional-entity list (LEGO_PIECE etc., see BlockEntity/Scene.entities) and
+// re-meshes — called once on scene load (GET /api/admin/scenes/{id}/entities) and again after any
+// fractional place/break edit, since the server (the only source of truth for slot/offset
+// resolution — see BlockPlacer.placeAt/BlockBreaker.removeAt) is the one computing the updated
+// list; simpler and less error-prone than diffing individual adds/removes on the client.
+@JsExport
+fun mcSceneLoadEntities(scene: JsAny, entitiesJson: String) {
+    val mesher = previewMesher ?: return
+    val protos = Json.decodeFromString(ListSerializer(BlockEntityProto.serializer()), entitiesJson)
+    val entities =
+        protos.map { proto ->
+            BlockEntity(
+                masterIdx = mesher.index(proto.worldX, proto.worldY, proto.worldZ),
+                type = BlockType(proto.type),
+                sizeX = proto.sizeX,
+                sizeY = proto.sizeY,
+                sizeZ = proto.sizeZ,
+                rotation = proto.rotation,
+                yOffset = proto.yOffset,
+                xOffset = proto.xOffset,
+                zOffset = proto.zOffset,
+                colorIndex = proto.colorIndex,
+            )
+        }
+    mesher.setEntities(entities)
+    previewScene = scene
+    mesher.render(scene)
+}
+
+// Mirrors mcAdminGetUsedXZOffsetAt (AdminChunkPreview.kt) for the Scene editor — packs the first
+// XZ-fractional slot already occupied at this cell as x*4+z, or -1 if none.
+@JsExport
+fun mcSceneGetUsedXZOffsetAt(x: Int, y: Int, z: Int): Int {
+    val mesher = previewMesher ?: return -1
+    val slot = mesher.getUsedXZOffsetsAt(x, y, z).firstOrNull() ?: return -1
+    return slot.first * 4 + slot.second
+}
 
 @JsExport
 fun mcSceneDispose() {

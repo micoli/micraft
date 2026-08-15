@@ -2366,6 +2366,42 @@ paths:
           description: Missing admin permission
           headers: {}
       deprecated: false
+  /api/admin/scenes/{id}/entities:
+    get:
+      tags: []
+      description: "Fractional (lego/plate/arch) block entities placed in this scene\
+        \ — not carried by the blocks/raw binary blob, so the client loads them separately\
+        \ on scene open"
+      parameters:
+      - name: id
+        in: path
+        description: Scene id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.protocol.BlockEntityProto"
+                title: List<BlockEntityProto>
+        "404":
+          description: Scene not found
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
   /api/admin/npc-types:
     get:
       tags: []
@@ -4953,6 +4989,70 @@ components:
       required:
       - shortcutBarPages
       title: SceneLayoutRequest
+    org.micoli.micraft.protocol.BlockEntityProto:
+      type: object
+      properties:
+        colorIndex:
+          type: integer
+          format: int32
+          title: Int
+        rotation:
+          type: integer
+          format: int32
+          title: Int
+        sizeX:
+          type: integer
+          format: int32
+          title: Int
+        sizeY:
+          type: integer
+          format: int32
+          title: Int
+        sizeZ:
+          type: integer
+          format: int32
+          title: Int
+        type:
+          type: string
+          title: String
+        worldX:
+          type: integer
+          format: int32
+          title: Int
+        worldY:
+          type: integer
+          format: int32
+          title: Int
+        worldZ:
+          type: integer
+          format: int32
+          title: Int
+        xOffset:
+          type: integer
+          format: int32
+          title: Int
+        yOffset:
+          type: integer
+          format: int32
+          title: Int
+        zOffset:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - colorIndex
+      - rotation
+      - sizeX
+      - sizeY
+      - sizeZ
+      - type
+      - worldX
+      - worldY
+      - worldZ
+      - xOffset
+      - yOffset
+      - zOffset
+      title: BlockEntityProto
     org.micoli.micraft.protocol.NpcCodexInfo:
       type: object
       properties:

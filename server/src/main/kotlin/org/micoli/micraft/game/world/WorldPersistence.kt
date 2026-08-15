@@ -409,7 +409,10 @@ class WorldPersistence(val worldDir: Path) {
                 loadSceneBlocks(scene.id)
                     ?: (ByteArray(scene.width * scene.height * scene.depth) to
                         ByteArray(scene.width * scene.height * scene.depth))
-            scene.copy(blocks = blocks, states = states)
+            scene.copy(
+                blocks = blocks,
+                states = states,
+                entities = loadSceneEntities(scene.id).toMutableList())
         }
     }
 
@@ -462,8 +465,41 @@ class WorldPersistence(val worldDir: Path) {
         try {
             scenesDir.resolve("$id.scc.gz").deleteIfExists()
             scenesDir.resolve("$id.scs.gz").deleteIfExists()
+            scenesDir.resolve("$id.sce.gz").deleteIfExists()
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to delete scene files {}: {}", id, e.message)
+        }
+    }
+
+    /** Mirrors chunk entity persistence (`.mce.gz`) — see [saveChunk]/[loadChunk]. */
+    fun saveSceneEntities(id: String, entities: List<BlockEntity>) {
+        val file = scenesDir.resolve("$id.sce.gz")
+        if (entities.isEmpty()) {
+            try {
+                file.deleteIfExists()
+            } catch (e: IOException) {
+                worldPersistenceLog.warn("Failed to delete scene entities {}: {}", id, e.message)
+            }
+            return
+        }
+        try {
+            val json = entityJson.encodeToString(ListSerializer(BlockEntity.serializer()), entities)
+            GZIPOutputStream(file.outputStream()).use { it.write(json.toByteArray(Charsets.UTF_8)) }
+        } catch (e: IOException) {
+            worldPersistenceLog.warn("Failed to save scene entities {}: {}", id, e.message)
+        }
+    }
+
+    fun loadSceneEntities(id: String): List<BlockEntity> {
+        val file = scenesDir.resolve("$id.sce.gz")
+        if (!file.exists()) return emptyList()
+        return try {
+            val text = GZIPInputStream(file.inputStream()).use { it.readBytes() }
+            entityJson.decodeFromString(
+                ListSerializer(BlockEntity.serializer()), text.toString(Charsets.UTF_8))
+        } catch (e: Exception) {
+            worldPersistenceLog.warn("Failed to load scene entities {}: {}", id, e.message)
+            emptyList()
         }
     }
 

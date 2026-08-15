@@ -2069,6 +2069,60 @@ export type OrgMicoliMicraftHttpSceneLayoutRequest = {
 };
 
 /**
+ * BlockEntityProto
+ */
+export type OrgMicoliMicraftProtocolBlockEntityProto = {
+    /**
+     * Int
+     */
+    colorIndex: number;
+    /**
+     * Int
+     */
+    rotation: number;
+    /**
+     * Int
+     */
+    sizeX: number;
+    /**
+     * Int
+     */
+    sizeY: number;
+    /**
+     * Int
+     */
+    sizeZ: number;
+    /**
+     * String
+     */
+    type: string;
+    /**
+     * Int
+     */
+    worldX: number;
+    /**
+     * Int
+     */
+    worldY: number;
+    /**
+     * Int
+     */
+    worldZ: number;
+    /**
+     * Int
+     */
+    xOffset: number;
+    /**
+     * Int
+     */
+    yOffset: number;
+    /**
+     * Int
+     */
+    zOffset: number;
+};
+
+/**
  * NpcCodexInfo
  */
 export type OrgMicoliMicraftProtocolNpcCodexInfo = {
@@ -4658,6 +4712,44 @@ export type GetApiAdminScenesByIdBlocksRawResponses = {
 };
 
 export type GetApiAdminScenesByIdBlocksRawResponse = GetApiAdminScenesByIdBlocksRawResponses[keyof GetApiAdminScenesByIdBlocksRawResponses];
+
+export type GetApiAdminScenesByIdEntitiesData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Scene id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/scenes/{id}/entities';
+};
+
+export type GetApiAdminScenesByIdEntitiesErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Scene not found
+     */
+    404: unknown;
+};
+
+export type GetApiAdminScenesByIdEntitiesResponses = {
+    /**
+     * List<BlockEntityProto>
+     */
+    200: Array<OrgMicoliMicraftProtocolBlockEntityProto>;
+};
+
+export type GetApiAdminScenesByIdEntitiesResponse = GetApiAdminScenesByIdEntitiesResponses[keyof GetApiAdminScenesByIdEntitiesResponses];
 
 export type GetApiAdminNpcTypesData = {
     body?: never;

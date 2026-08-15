@@ -364,6 +364,7 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/admin/scenes/{id}/blocks/raw` | Scene block/state buffers as a binary blob: 3×4-byte big-endian dimensions (width,height,depth) followed by the blocks byte array then the states byte array (wire-index-per-byte, 0 = AIR) |
 | PUT | `/api/admin/scenes/{id}/dimensions` | Resize a scene |
 | POST | `/api/admin/scenes/{id}/duplicate` | Duplicate a scene (copies name, dimensions, and blocks) |
+| GET | `/api/admin/scenes/{id}/entities` | Fractional (lego/plate/arch) block entities placed in this scene — not carried by the blocks/raw binary blob, so the client loads them separately on scene open |
 | PUT | `/api/admin/scenes/{id}/layout` | Update a scene's shortcut bar layout |
 | GET | `/api/admin/schemas/{filename}` | A JSON Schema file (data/config/schemas/*.schema.json) for the config editor |
 | GET | `/api/admin/simulation/defaults` | Defaults the world simulator admin UI prefills its editors with |

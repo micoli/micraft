@@ -1,6 +1,7 @@
 package org.micoli.micraft
 
 import org.micoli.micraft.babylon.*
+import org.micoli.micraft.game.world.BlockEntity
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockState
 
@@ -13,10 +14,10 @@ import org.micoli.micraft.game.world.BlockState
 // blocks either — that's handled by the live game re-meshing both chunks on a cross-boundary
 // edit, which the standalone Scene buffer has no equivalent of and doesn't need).
 //
-// Unlike Chunk, a Scene has no BlockEntity/fractional-plate system (LEGO_PIECE-style sub-voxel
-// stacking) — the admin HTTP contract only supports whole-cell block+state writes — so this is a
-// straight port of the base-array face-culling/greedy-merge path only, with the
-// renderFractionalEntities second pass dropped entirely.
+// Scene entities (LEGO_PIECE-style fractional/lego blocks) mirror Chunk.entityMasters — see
+// [entities]/[setEntities] and renderFractionalEntities below, ported from ChunkManager's
+// equivalent second pass. Unlike Chunk, indices are computed via this class's own width/height/
+// depth-bounded index()/idxToXYZ() instead of the fixed 16x1025x16 chunk convention.
 //
 // Whole-volume mesh: keyed under a single fixed "chunk" slot (0,0) in the JS-side chunk map
 // (mc.chunkBegin/chunkEnd), since a Scene is exactly one contiguous mesh, never streamed/paged.
@@ -28,6 +29,7 @@ class SceneMesher(
     var states: ByteArray,
 ) {
     private var blockMaterials: JsAny? = null
+    private var entities: List<BlockEntity> = emptyList()
 
     private val solidByOrd = ByteArray(256)
     private val liquidByOrd = ByteArray(256)
@@ -69,8 +71,46 @@ class SceneMesher(
 
     fun index(x: Int, y: Int, z: Int): Int = x * strideX + y * depth + z
 
+    fun idxToXYZ(idx: Int): Triple<Int, Int, Int> {
+        val x = idx / strideX
+        val rem = idx % strideX
+        val y = rem / depth
+        val z = rem % depth
+        return Triple(x, y, z)
+    }
+
     fun inBounds(x: Int, y: Int, z: Int): Boolean =
         x in 0 until width && y in 0 until height && z in 0 until depth
+
+    fun setEntities(newEntities: List<BlockEntity>) {
+        entities = newEntities
+    }
+
+    // Mirrors Chunk.buildEntitiesMap (cell -> entities occupying it).
+    private fun buildEntitiesMap(masters: List<BlockEntity>): Map<Int, List<BlockEntity>> {
+        if (masters.isEmpty()) return emptyMap()
+        val map = mutableMapOf<Int, MutableList<BlockEntity>>()
+        for (entity in masters) {
+            val (mx, my, mz) = idxToXYZ(entity.masterIdx)
+            for (dx in 0 until entity.sizeX) for (dy in 0 until entity.sizeY) for (dz in
+                0 until entity.sizeZ) {
+                val nx = mx + dx
+                val ny = my + dy
+                val nz = mz + dz
+                if (inBounds(nx, ny, nz))
+                    map.getOrPut(index(nx, ny, nz)) { mutableListOf() }.add(entity)
+            }
+        }
+        return map
+    }
+
+    // Mirrors ChunkManager.getUsedXZOffsetsAt — used by mcSceneGetUsedXZOffsetAt (axis-degenerate
+    // fix on lateral-face clicks, see AdminChunkPreview.kt's mcAdminGetUsedXZOffsetAt).
+    fun getUsedXZOffsetsAt(wx: Int, wy: Int, wz: Int): Set<Pair<Int, Int>> {
+        if (!inBounds(wx, wy, wz)) return emptySet()
+        val idx = index(wx, wy, wz)
+        return entities.filter { it.masterIdx == idx }.map { it.xOffset to it.zOffset }.toSet()
+    }
 
     fun getBlockOrdinal(x: Int, y: Int, z: Int): Int {
         if (!inBounds(x, y, z)) return 0
@@ -110,7 +150,9 @@ class SceneMesher(
         val mats = getBlockMaterials(scene) ?: return
         buildOrdFlags()
         jsChunkBegin(0, 0)
-        for (y in 0 until height) renderRow(y)
+        val entityMap = buildEntitiesMap(entities)
+        for (y in 0 until height) renderRow(y, entityMap)
+        renderFractionalEntities()
         val faceCount = jsGetFaceCount()
         var cursor = 0
         while (cursor < faceCount) cursor += jsChunkProcessFaces(cursor, 20_000)
@@ -133,7 +175,7 @@ class SceneMesher(
     // logic (east/west merge runs along Z; south/north merge runs along X, one slot per Z since
     // X is the outer loop; top/bottom get a full 2D rectangle merge — see emitGreedyRects) is
     // otherwise identical.
-    private fun renderRow(y: Int): Int {
+    private fun renderRow(y: Int, entityMap: Map<Int, List<BlockEntity>>): Int {
         val hasStates = states.isNotEmpty()
         var faceCount = 0
         val mergeActive = BooleanArray(2)
@@ -164,13 +206,31 @@ class SceneMesher(
                 val ord = blocks[idx].toInt() and 0xFF
                 if (ord == 0) continue // AIR = wire index 0
 
+                // Several fractional entities (XZ sub-slots / Y stacks) can share one voxel — see
+                // ChunkManager.renderRow's identical skip logic.
+                val entitiesHere = entityMap[idx]
+                // Multi-cell entity satellite: skip (master emits geometry for whole extent)
+                val entity = entitiesHere?.firstOrNull { it.masterIdx == idx }
+                if (entitiesHere != null && entity == null) continue
+                // Fractional-offset master: skip here, emitted by renderFractionalEntities —
+                // unless another entity sharing this voxel has zero offset and still needs the
+                // base-array (this) render path.
+                if (entity != null && (entity.xOffset > 0 || entity.zOffset > 0)) {
+                    val zeroOffsetEntity =
+                        entitiesHere.firstOrNull {
+                            it.masterIdx == idx && it.xOffset == 0 && it.zOffset == 0
+                        }
+                    if (zeroOffsetEntity == null) continue
+                }
+
                 val state = if (hasStates) states[idx] else 0
                 val rotation = BlockState.rotation(state)
                 val colorBits = BlockState.colorIndex(state) shl colorShift
                 val t = (ord * 4 + rotation) * 6
                 val wz2 = z
 
-                val bypassCulling = cubicByOrd[ord].toInt() == 0
+                val isMaster = entity != null
+                val bypassCulling = isMaster || cubicByOrd[ord].toInt() == 0
                 val mergeEligible = mergeableByOrd[ord].toInt() != 0 && !bypassCulling
 
                 // top (+Y)
@@ -365,6 +425,39 @@ class SceneMesher(
         }
         emitGreedyRects(topActive, topFaceMat, topAo, width, depth, y)
         emitGreedyRects(botActive, botFaceMat, botAo, width, depth, y)
+        return faceCount
+    }
+
+    // Port of ChunkManager.renderFractionalEntities — see there for the algorithm note. No
+    // chunk-position offset needed: a Scene's local (x,y,z) is already its "world" position.
+    private fun renderFractionalEntities(): Int {
+        var faceCount = 0
+        for (entity in entities) {
+            val hasYOffset = entity.yOffset > 0
+            val hasXZOffset = entity.xOffset > 0 || entity.zOffset > 0
+            if (!hasYOffset && !hasXZOffset) continue
+            val (mx, my, mz) = idxToXYZ(entity.masterIdx)
+            val ord = BlockRegistry.wireIndex(entity.type)
+            if (ord == 0) continue
+            val t = (ord * 4 + entity.rotation) * 6
+            val colorBits = entity.colorIndex shl colorShift
+            for (fd in 0..5) {
+                if (hasXZOffset || hasYOffset) {
+                    jsChunkFaceAppendXZOffset(
+                        mx,
+                        my,
+                        mz,
+                        entity.yOffset,
+                        entity.xOffset,
+                        entity.zOffset,
+                        t + fd,
+                        colorBits)
+                } else {
+                    jsChunkFaceAppendYOffset(mx, my, mz, entity.yOffset, t + fd, colorBits)
+                }
+                faceCount++
+            }
+        }
         return faceCount
     }
 

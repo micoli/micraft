@@ -155,10 +155,37 @@ data class SceneCreateRequest(val name: String, val width: Int, val height: Int,
 @Serializable data class SceneLayoutRequest(val shortcutBarPages: List<List<String?>>)
 
 @Serializable
-data class SceneBlockDto(val x: Int, val y: Int, val z: Int, val type: String, val state: Byte = 0)
+data class SceneBlockDto(
+    val x: Int,
+    val y: Int,
+    val z: Int,
+    val type: String,
+    val state: Byte = 0,
+    val xOffset: Byte = 0,
+    val zOffset: Byte = 0,
+)
 
 // See InstanceBlockBatchDto for the rationale — same envelope shape, scene variant.
 @Serializable data class SceneBlockBatchDto(val edits: List<SceneBlockDto>)
+
+private fun Scene.toEntityProtos(): List<BlockEntityProto> =
+    entities.map { e ->
+        val (mx, my, mz) = idxToXYZ(e.masterIdx)
+        BlockEntityProto(
+            worldX = mx,
+            worldY = my,
+            worldZ = mz,
+            type = e.type.id,
+            sizeX = e.sizeX,
+            sizeY = e.sizeY,
+            sizeZ = e.sizeZ,
+            rotation = e.rotation,
+            yOffset = e.yOffset,
+            xOffset = e.xOffset,
+            zOffset = e.zOffset,
+            colorIndex = e.colorIndex,
+        )
+    }
 
 private fun Scene.toDto() =
     SceneDto(
@@ -344,6 +371,33 @@ class AdminController(
         val type =
             BlockRegistry.all().find { it.id == dto.type }
                 ?: return EditResult.Failed("Unknown block type")
+        val xOffset = dto.xOffset.toInt() and 0xFF
+        val zOffset = dto.zOffset.toInt() and 0xFF
+        if (type == BlockType.AIR) {
+            // AIR always routes through breakBlock — removeAt resolves whichever slot/entity is
+            // targeted (or falls back to a plain block clear when there's no entity there).
+            val result =
+                gameLoop.scenes().breakBlock(id, dto.x, dto.y, dto.z, xOffset, zOffset)
+                    ?: return EditResult.Failed("Scene not found or coordinate out of bounds")
+            return EditResult.Applied(dto)
+        }
+        val def = BlockRegistry.get(type)
+        val isFractional =
+            def.brickSize.getOrElse(0) { 2f } < 2.0f ||
+                def.brickSize.getOrElse(1) { 2f } < 2.0f ||
+                def.brickSize.getOrElse(2) { 2f } < 2.0f
+        if (isFractional) {
+            val rotation = BlockState.rotation(dto.state)
+            val colorIndex = BlockState.colorIndex(dto.state)
+            val result =
+                gameLoop
+                    .scenes()
+                    .placeBlock(
+                        id, dto.x, dto.y, dto.z, type, rotation, colorIndex, xOffset, zOffset)
+                    ?: return EditResult.Failed("Scene not found or coordinate out of bounds")
+            if (result.rejectedReason != null) return EditResult.Failed(result.rejectedReason)
+            return EditResult.Applied(dto)
+        }
         val ok =
             gameLoop
                 .scenes()
@@ -375,7 +429,7 @@ class AdminController(
         val pos = BlockPos(dto.x, dto.y, dto.z)
         if (type == BlockType.AIR) {
             val result =
-                BlockBreaker.breakAt(
+                BlockBreaker.removeAt(
                     pos, dto.xOffset.toInt() and 0xFF, dto.zOffset.toInt() and 0xFF, world)
             return EditResult.Applied(
                 InstanceEditOutcome(
@@ -1890,6 +1944,32 @@ class AdminController(
                         out.write(scene.states)
                     }
                     call.respondBytes(buffer.toByteArray(), ContentType.Application.OctetStream)
+                }
+
+            get(
+                "/api/admin/scenes/{id}/entities",
+                {
+                    description =
+                        "Fractional (lego/plate/arch) block entities placed in this scene — " +
+                            "not carried by the blocks/raw binary blob, so the client loads them " +
+                            "separately on scene open"
+                    request { pathParameter<String>("id") { description = "Scene id" } }
+                    response {
+                        code(HttpStatusCode.OK) { body<List<BlockEntityProto>>() }
+                        code(HttpStatusCode.NotFound) { description = "Scene not found" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    val id =
+                        call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                    val scene =
+                        gameLoop.scenes().get(id)
+                            ?: return@get call.respond(HttpStatusCode.NotFound)
+                    call.respondText(
+                        adminJson.encodeToString(
+                            ListSerializer(BlockEntityProto.serializer()), scene.toEntityProtos()),
+                        ContentType.Application.Json)
                 }
 
             // ── NPC types ─────────────────────────────────────────────────────

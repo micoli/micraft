@@ -180,7 +180,7 @@ class BlockPlacer(
             colorIndex: Int,
             xOffset: Int,
             zOffset: Int,
-            world: WorldState,
+            world: BlockStore,
         ): PlaceResult {
             val def = BlockRegistry.get(blockType)
             val state = BlockState.pack(rotation, colorIndex)

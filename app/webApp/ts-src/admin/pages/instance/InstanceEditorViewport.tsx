@@ -44,6 +44,12 @@ import {
   type Pattern,
 } from "../shared/voxelEditor/selectionVoxels";
 import type { InstanceBlockDto } from "../../apiTypes";
+import {
+  computeSlotOffset,
+  resolvePlacementCell,
+  usedSlotAt,
+  PICK_EPSILON,
+} from "../shared/voxelEditor/fractionalPlacement";
 
 const CHUNK_SIZE = 16;
 // How far (in chunks) around the camera target to keep block geometry loaded. Scales with
@@ -56,9 +62,6 @@ const MAX_SAVED_SELECTIONS = 10;
 // Hysteresis margin: a chunk is only unloaded once it's this far past the load radius, so
 // camera jitter right at the boundary doesn't thrash fetch/hide every frame.
 const VIEW_RADIUS_UNLOAD_MARGIN = 1;
-// Voxel-picking epsilon: nudges the picked point across the hit face along its normal before
-// flooring, so the coordinate resolves to the block on the correct side of the face.
-const PICK_EPSILON = 0.01;
 
 const cameraStorageKey = (zoneId: string) => `instanceEditorCamera:${zoneId}`;
 
@@ -66,48 +69,6 @@ const cameraStorageKey = (zoneId: string) => `instanceEditorCamera:${zoneId}`;
 interface UndoEntry extends UndoEntryBase {
   xOffset: number;
   zOffset: number;
-}
-
-// XZ sub-voxel slot targeted within cell (tx,tz), mirroring the in-game hover math
-// (LocalPlayerController.kt) so the admin editor's ghost/break-overlay and the resulting
-// api.instances.setBlock call agree on the same slot the player is visually aiming at.
-// brickSizeX/Z are in half-voxel units (2 = 1 full voxel), same as BlockDefinition.brickSize.
-function computeSlotOffset(
-  pickedX: number,
-  pickedZ: number,
-  tx: number,
-  tz: number,
-  brickSizeX: number,
-  brickSizeZ: number,
-  rotation: number,
-  // A lateral face's normal axis carries no positional info in the pick point (Babylon's
-  // scene.pick pins it to the face boundary, same as the game's raycastBlock) — that axis must
-  // snap to an already-placed neighbor's slot instead of the meaningless boundary value. Mirrors
-  // LocalPlayerController.kt's xAxisDegenerate/zAxisDegenerate fix.
-  degenerateX = false,
-  degenerateZ = false,
-  usedSlot: [number, number] | null = null,
-): [number, number] {
-  const effFracX = (rotation % 2 === 0 ? brickSizeX : brickSizeZ) / 2;
-  const effFracZ = (rotation % 2 === 0 ? brickSizeZ : brickSizeX) / 2;
-  const studStepX = effFracX < 1 ? effFracX : effFracX > 1 ? 0.5 : 0;
-  const studStepZ = effFracZ < 1 ? effFracZ : effFracZ > 1 ? 0.5 : 0;
-  if (studStepX <= 0 && studStepZ <= 0) return [0, 0];
-  const fracX = Math.min(0.9999, Math.max(0, pickedX - tx));
-  const fracZ = Math.min(0.9999, Math.max(0, pickedZ - tz));
-  const slotsX = studStepX > 0 ? Math.max(1, Math.floor(1 / studStepX)) : 1;
-  const slotsZ = studStepZ > 0 ? Math.max(1, Math.floor(1 / studStepZ)) : 1;
-  const xOffset = degenerateX
-    ? (usedSlot?.[0] ?? 0)
-    : studStepX > 0
-      ? Math.min(slotsX - 1, Math.floor(fracX / studStepX))
-      : 0;
-  const zOffset = degenerateZ
-    ? (usedSlot?.[1] ?? 0)
-    : studStepZ > 0
-      ? Math.min(slotsZ - 1, Math.floor(fracZ / studStepZ))
-      : 0;
-  return [xOffset, zOffset];
 }
 
 export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
@@ -855,36 +816,31 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       });
     });
 
-    // Decodes mcAdminGetUsedXZOffsetAt's packed x*4+z return (-1 = none) into a slot pair — see
-    // computeSlotOffset's degenerateX/degenerateZ params.
-    function usedSlotAt(wx: number, wy: number, wz: number): [number, number] | null {
+    // Thin wrappers binding the shared fractionalPlacement.ts helpers to this editor's wasm
+    // exports (mcAdminGetUsedXZOffsetAt/mcAdminGetBlockOrdinalAt) and JS scene handle — see that
+    // module for the actual slot/redirect logic (shared with SceneEditorViewport.tsx).
+    function usedSlotAtLocal(wx: number, wy: number, wz: number): [number, number] | null {
       if (!wasmExports) return null;
-      const packed = wasmExports.mcAdminGetUsedXZOffsetAt(scene, wx, wy, wz);
-      return packed < 0 ? null : [Math.floor(packed / 4), packed % 4];
+      return usedSlotAt((x, y, z) => wasmExports!.mcAdminGetUsedXZOffsetAt(scene, x, y, z), wx, wy, wz);
     }
 
-    // Resolves the cell a placement click should target: normally the empty neighbor cell in the
-    // direction of the clicked face (standard adjacent-placement), but redirected into the
-    // clicked block's OWN cell when that block is an XZ+Y-fractional entity (e.g. LEGO_PIECE) —
-    // otherwise a second piece in a different slot of the same voxel could never be reached, since
-    // the first piece is solid and blocks the ray from ever reaching past it. Mirrors the same
-    // lateral-redirect fix in LocalPlayerController.kt for the real game client.
-    function resolvePlacementCell(
+    function resolvePlacementCellLocal(
       pickedPoint: InstanceType<typeof BABYLON.Vector3>,
       normal: InstanceType<typeof BABYLON.Vector3>,
     ): [number, number, number] {
-      const adjX = Math.floor(pickedPoint.x + normal.x * PICK_EPSILON);
-      const adjY = Math.floor(pickedPoint.y + normal.y * PICK_EPSILON);
-      const adjZ = Math.floor(pickedPoint.z + normal.z * PICK_EPSILON);
-      const tgtX = Math.floor(pickedPoint.x - normal.x * PICK_EPSILON);
-      const tgtY = Math.floor(pickedPoint.y - normal.y * PICK_EPSILON);
-      const tgtZ = Math.floor(pickedPoint.z - normal.z * PICK_EPSILON);
-      if (adjY === tgtY && wasmExports) {
-        const targetOrdinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, tgtX, tgtY, tgtZ);
-        const targetDef = window.mc.getBlockDef(targetOrdinal);
-        if ((targetDef?.brickSize?.[1] ?? 2) < 2) return [tgtX, tgtY, tgtZ];
+      if (!wasmExports) {
+        return [
+          Math.floor(pickedPoint.x + normal.x * PICK_EPSILON),
+          Math.floor(pickedPoint.y + normal.y * PICK_EPSILON),
+          Math.floor(pickedPoint.z + normal.z * PICK_EPSILON),
+        ];
       }
-      return [adjX, adjY, adjZ];
+      return resolvePlacementCell(
+        pickedPoint,
+        normal,
+        (x, y, z) => wasmExports!.mcAdminGetBlockOrdinalAt(scene, x, y, z),
+        (ordinal) => window.mc.getBlockDef(ordinal),
+      );
     }
 
     // Hover preview: recomputed on every pointer move that isn't an active camera drag, so the
@@ -935,7 +891,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
           rotation,
           normal.x !== 0,
           normal.z !== 0,
-          usedSlotAt(bx, by, bz),
+          usedSlotAtLocal(bx, by, bz),
         );
         overlay.showBreakOverlay(bx, by, bz, targetOrdinal, rotation, xOffset, zOffset);
         return;
@@ -955,7 +911,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         ty = zone.yMin;
         tz = Math.floor(pick.pickedPoint.z);
       } else if (normal) {
-        [tx, ty, tz] = resolvePlacementCell(pick.pickedPoint, normal);
+        [tx, ty, tz] = resolvePlacementCellLocal(pick.pickedPoint, normal);
       } else {
         overlay.disposeGhost();
         overlay.disposeOutline();
@@ -978,7 +934,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         overlay.getPlacementRotation(),
         !onGround && !!normal && normal.x !== 0,
         !onGround && !!normal && normal.z !== 0,
-        usedSlotAt(tx, ty, tz),
+        usedSlotAtLocal(tx, ty, tz),
       );
       overlay.showGhostAndOutline(tx, ty, tz, ordinal, selectedColorIndexRef.current, xOffset, zOffset);
     }
@@ -1073,7 +1029,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
               rotation,
               normal.x !== 0,
               normal.z !== 0,
-              usedSlotAt(bx, by, bz),
+              usedSlotAtLocal(bx, by, bz),
             );
             prevType = targetDef?.name ?? "AIR";
             // Full state byte (rotation + color) so undo restores the exact previous look.
@@ -1110,7 +1066,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
           ty = zone.yMin;
           tz = Math.floor(pick.pickedPoint.z);
         } else if (normal) {
-          [tx, ty, tz] = resolvePlacementCell(pick.pickedPoint, normal);
+          [tx, ty, tz] = resolvePlacementCellLocal(pick.pickedPoint, normal);
         } else {
           return;
         }
@@ -1128,7 +1084,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
           overlay.getPlacementRotation(),
           !onGround && !!normal && normal.x !== 0,
           !onGround && !!normal && normal.z !== 0,
-          usedSlotAt(tx, ty, tz),
+          usedSlotAtLocal(tx, ty, tz),
         );
         let prevType = "AIR";
         let prevState = 0;

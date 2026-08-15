@@ -3269,6 +3269,86 @@ export const org_micoli_micraft_http_SceneLayoutRequestSchema = {
     title: 'SceneLayoutRequest'
 } as const;
 
+export const org_micoli_micraft_protocol_BlockEntityProtoSchema = {
+    type: 'object',
+    properties: {
+        colorIndex: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        rotation: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        sizeX: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        sizeY: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        sizeZ: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        type: {
+            type: 'string',
+            title: 'String'
+        },
+        worldX: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        worldY: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        worldZ: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        xOffset: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        yOffset: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        zOffset: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        }
+    },
+    required: [
+        'colorIndex',
+        'rotation',
+        'sizeX',
+        'sizeY',
+        'sizeZ',
+        'type',
+        'worldX',
+        'worldY',
+        'worldZ',
+        'xOffset',
+        'yOffset',
+        'zOffset'
+    ],
+    title: 'BlockEntityProto'
+} as const;
+
 export const org_micoli_micraft_protocol_NpcCodexInfoSchema = {
     type: 'object',
     properties: {

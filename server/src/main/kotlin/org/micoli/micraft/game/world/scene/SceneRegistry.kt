@@ -3,7 +3,11 @@ package org.micoli.micraft.game.world.scene
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.min
+import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldPersistence
+import org.micoli.micraft.game.world.block.BlockBreaker
+import org.micoli.micraft.game.world.block.BlockPlacer
 
 class SceneRegistry(private val persistence: WorldPersistence?) {
     private val scenes = ConcurrentHashMap<String, Scene>()
@@ -44,10 +48,14 @@ class SceneRegistry(private val persistence: WorldPersistence?) {
                 createdAt = System.currentTimeMillis(),
                 blocks = existing.blocks.copyOf(),
                 states = existing.states.copyOf(),
+                // Scene.copy() shallow-copies entities (same MutableList reference by default) —
+                // must deep-copy so mutating the duplicate's entities never touches the original.
+                entities = existing.entities.toMutableList(),
             )
         scenes[copy.id] = copy
         persistMetadata()
         persistBlocks(copy)
+        persistEntities(copy)
         return copy
     }
 
@@ -77,16 +85,27 @@ class SceneRegistry(private val persistence: WorldPersistence?) {
                 }
             }
         }
+        // Scene.idx depends on height/depth, so masterIdx must be remapped to the new dimensions —
+        // entities whose master cell falls outside the new bounds are dropped (their footprint is
+        // no longer meaningful).
+        val newEntities =
+            existing.entities.mapNotNull { entity ->
+                val (mx, my, mz) = existing.idxToXYZ(entity.masterIdx)
+                if (mx >= cw || my >= ch || mz >= cd) null
+                else entity.copy(masterIdx = mx * height * depth + my * depth + mz)
+            }
         val updated =
             existing.copy(
                 width = width,
                 height = height,
                 depth = depth,
                 blocks = newBlocks,
-                states = newStates)
+                states = newStates,
+                entities = newEntities.toMutableList())
         scenes[id] = updated
         persistMetadata()
         persistBlocks(updated)
+        persistEntities(updated)
         return updated
     }
 
@@ -106,6 +125,54 @@ class SceneRegistry(private val persistence: WorldPersistence?) {
         return true
     }
 
+    /**
+     * Places a (possibly fractional/lego) block via [BlockPlacer.placeAt], targeting this scene's
+     * bounded buffer through [ScenePlacementTarget]. Returns null if the scene doesn't exist.
+     */
+    fun placeBlock(
+        id: String,
+        x: Int,
+        y: Int,
+        z: Int,
+        blockType: BlockType,
+        rotation: Int,
+        colorIndex: Int,
+        xOffset: Int,
+        zOffset: Int,
+    ): BlockPlacer.Companion.PlaceResult? {
+        val scene = scenes[id] ?: return null
+        val target = ScenePlacementTarget(scene)
+        val result =
+            BlockPlacer.placeAt(
+                BlockPos(x, y, z), blockType, rotation, colorIndex, xOffset, zOffset, target)
+        if (result.rejectedReason == null &&
+            (result.changes.isNotEmpty() || result.entityAdds.isNotEmpty())) {
+            persistBlocks(scene)
+            persistEntities(scene)
+        }
+        return result
+    }
+
+    /**
+     * Removes the block/entity slot at (x,y,z) (restricted to the given XZ sub-slot for
+     * XZ+Y-fractional blocks) via [BlockBreaker.removeAt]. Returns null if the scene doesn't exist.
+     */
+    fun breakBlock(
+        id: String,
+        x: Int,
+        y: Int,
+        z: Int,
+        xOffset: Int,
+        zOffset: Int,
+    ): BlockBreaker.Companion.RemoveResult? {
+        val scene = scenes[id] ?: return null
+        val target = ScenePlacementTarget(scene)
+        val result = BlockBreaker.removeAt(BlockPos(x, y, z), xOffset, zOffset, target)
+        persistBlocks(scene)
+        persistEntities(scene)
+        return result
+    }
+
     fun delete(id: String): Boolean {
         val removed = scenes.remove(id) ?: return false
         persistMetadata()
@@ -119,5 +186,9 @@ class SceneRegistry(private val persistence: WorldPersistence?) {
 
     private fun persistBlocks(scene: Scene) {
         persistence?.saveSceneBlocks(scene.id, scene.blocks, scene.states)
+    }
+
+    private fun persistEntities(scene: Scene) {
+        persistence?.saveSceneEntities(scene.id, scene.entities)
     }
 }
