@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.world
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.game.world.rail.Direction
 
 @Serializable
 data class BlockDefinition(
@@ -45,4 +46,13 @@ data class BlockDefinition(
      * set this false so neighbor faces aren't culled and greedy-merge doesn't assume full coverage.
      */
     val isCubic: Boolean = true,
+    /**
+     * Track-network connection points, in the block's own unrotated (rotation=0) frame — one entry
+     * per cardinal side (NORTH, SOUTH, EAST, WEST) the block connects through to a grid-adjacent
+     * neighbor. Empty for non-rail blocks. A 2-entry list is a through segment (e.g. a straight or
+     * curve piece); 3+ entries mark a junction (e.g. a Y-split). At runtime a placement's actual
+     * connection directions are these values rotated by the block's stored rotation (0..3, 90°
+     * steps) — see [org.micoli.micraft.game.world.BlockState.rotation].
+     */
+    val connections: List<Direction> = emptyList(),
 )

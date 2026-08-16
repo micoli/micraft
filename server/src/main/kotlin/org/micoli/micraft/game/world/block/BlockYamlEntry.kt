@@ -28,4 +28,10 @@ data class BlockYamlEntry(
     val brickSize: List<Float> = listOf(2f, 2f, 2f),
     val plainColorable: Boolean = false,
     val isCubic: Boolean = true,
+    /**
+     * Track-network connection points in the block's unrotated frame — see
+     * [org.micoli.micraft.game.world.BlockDefinition.connections].
+     */
+    @JsonSchemaConstraint(itemPattern = "^(NORTH|SOUTH|EAST|WEST)$")
+    val connections: List<String> = emptyList(),
 )

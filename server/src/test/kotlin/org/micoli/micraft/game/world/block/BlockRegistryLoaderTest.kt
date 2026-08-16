@@ -11,6 +11,7 @@ import kotlin.test.assertTrue
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.game.world.rail.Direction
 
 class BlockRegistryLoaderTest {
 
@@ -168,6 +169,49 @@ class BlockRegistryLoaderTest {
         val slope = result[BlockType("LEGO_SLOPE")]!!
         assertEquals(true, slope.solid)
         assertEquals(false, slope.isCubic)
+    }
+
+    @Test
+    fun rotatable_defaultsToFalse_andCanBeSetTrue() {
+        val (loader) =
+            loaderWithBlocks(
+                mapOf(
+                    "STONE" to "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n",
+                    "RAIL_STRAIGHT" to
+                        "hardness: 1\nsolid: true\nisCubic: false\nrotatable: true\nminimapColor: [110, 110, 120]\n",
+                ))
+        val result = loader.load()
+        assertEquals(false, result[BlockType.STONE]?.rotatable)
+        val rail = result[BlockType("RAIL_STRAIGHT")]!!
+        assertEquals(true, rail.rotatable)
+        assertEquals(false, rail.isCubic)
+    }
+
+    @Test
+    fun connections_defaultsToEmpty_andCanBeSet() {
+        val (loader) =
+            loaderWithBlocks(
+                mapOf(
+                    "STONE" to "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n",
+                    "RAIL_STRAIGHT" to
+                        "hardness: 1\nsolid: true\nisCubic: false\nrotatable: true\nminimapColor: [110, 110, 120]\nconnections: [NORTH, SOUTH]\n",
+                ))
+        val result = loader.load()
+        assertEquals(emptyList(), result[BlockType.STONE]?.connections)
+        assertEquals(
+            listOf(Direction.NORTH, Direction.SOUTH),
+            result[BlockType("RAIL_STRAIGHT")]?.connections)
+    }
+
+    @Test
+    fun connections_canBeSetByDataOverride() {
+        val (loader) =
+            loaderWithBlocks(
+                blocks = mapOf("STONE" to "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n"),
+                overrides = mapOf("STONE" to "connections: [EAST, WEST]\n"),
+            )
+        assertEquals(
+            listOf(Direction.EAST, Direction.WEST), loader.load()[BlockType.STONE]?.connections)
     }
 
     @Test

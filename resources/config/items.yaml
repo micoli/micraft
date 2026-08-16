@@ -161,3 +161,33 @@ MANA_POTION_MEDIUM:
   label: MM
   bg: "#0032B4"
   manaRestore: 20
+RAIL_STRAIGHT:
+  buildable: true
+  placesBlock: RAIL_STRAIGHT
+  label: RST
+  bg: "#6E6E78"
+RAIL_CURVE_90:
+  buildable: true
+  placesBlock: RAIL_CURVE_90
+  label: RC9
+  bg: "#6E6E78"
+RAIL_CURVE_60:
+  buildable: true
+  placesBlock: RAIL_CURVE_60
+  label: RC6
+  bg: "#6E6E78"
+RAIL_SLOPE_45:
+  buildable: true
+  placesBlock: RAIL_SLOPE_45
+  label: RS4
+  bg: "#6E6E78"
+RAIL_SLOPE_22:
+  buildable: true
+  placesBlock: RAIL_SLOPE_22
+  label: RS2
+  bg: "#6E6E78"
+RAIL_Y_SPLIT_90:
+  buildable: true
+  placesBlock: RAIL_Y_SPLIT_90
+  label: RYS
+  bg: "#6E6E78"

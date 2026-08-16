@@ -95,6 +95,13 @@
     },
     "isCubic": {
       "type": "boolean"
+    },
+    "connections": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(NORTH|SOUTH|EAST|WEST)$"
+      }
     }
   }
 }

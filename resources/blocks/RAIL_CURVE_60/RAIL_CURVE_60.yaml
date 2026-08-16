@@ -1,0 +1,18 @@
+hardness: 1.0
+solid: true
+isCubic: false
+transparent: false
+minimapColor: [110, 110, 120]
+modelElement: ""
+liquid: false
+viscosity: 0
+replaceable: false
+vegetationHost: false
+treeAllowed: false
+minimapVisible: true
+rotatable: true
+hasStuds: false
+plainColorable: false
+# Grid-adjacent neighbors are always 90° apart regardless of the model's visual curvature — the
+# 60° angle is cosmetic (see specs/vehicule_analysis.md §1.2), topology matches RAIL_CURVE_90.
+connections: [NORTH, EAST]
