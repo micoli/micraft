@@ -53,6 +53,7 @@ sealed class ServerMessage {
         val wireBlocks: ByteArray,
         val wireStates: ByteArray = ByteArray(0),
         val entities: List<BlockEntityProto> = emptyList(),
+        val wireExtraStates: ByteArray = ByteArray(0),
     ) : ServerMessage() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -64,6 +65,7 @@ sealed class ServerMessage {
             if (pos != other.pos) return false
             if (!wireBlocks.contentEquals(other.wireBlocks)) return false
             if (!wireStates.contentEquals(other.wireStates)) return false
+            if (!wireExtraStates.contentEquals(other.wireExtraStates)) return false
             if (entities != other.entities) return false
 
             return true
@@ -74,6 +76,7 @@ sealed class ServerMessage {
             result = 31 * result + pos.hashCode()
             result = 31 * result + wireBlocks.contentHashCode()
             result = 31 * result + wireStates.contentHashCode()
+            result = 31 * result + wireExtraStates.contentHashCode()
             result = 31 * result + entities.hashCode()
             return result
         }
@@ -449,7 +452,13 @@ data class NpcCodexInfo(
     val autoSpawn: Boolean,
 )
 
-@Serializable data class BlockChange(val pos: BlockPos, val type: BlockType, val state: Byte = 0)
+@Serializable
+data class BlockChange(
+    val pos: BlockPos,
+    val type: BlockType,
+    val state: Byte = 0,
+    val extraState: Byte = 0,
+)
 
 @Serializable
 data class CommandInfo(

@@ -121,7 +121,9 @@ class WorldState(
         val localZ = Math.floorMod(change.pos.z, WorldConstants.CHUNK_SIZE)
         val pos = ChunkPos(chunkX, chunkZ)
         val chunk = getOrGenerate(pos)
-        chunks[pos] = chunk.withBlock(localX, change.pos.y, localZ, change.type, change.state)
+        chunks[pos] =
+            chunk.withBlock(
+                localX, change.pos.y, localZ, change.type, change.state, change.extraState)
         dirtyChunks.add(pos)
     }
 

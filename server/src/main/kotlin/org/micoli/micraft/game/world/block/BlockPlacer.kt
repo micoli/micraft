@@ -85,7 +85,9 @@ class BlockPlacer(
         val xOffset = intent.xOffset.toInt() and 0xFF
         val zOffset = intent.zOffset.toInt() and 0xFF
 
-        val result = placeAt(rawPos, blockType, rotation, colorIndex, xOffset, zOffset, world)
+        val result =
+            placeAt(
+                rawPos, blockType, rotation, colorIndex, xOffset, zOffset, world, intent.extraState)
         if (result.rejectedReason != null) {
             blockPlacerLog.debug("BlockPlace rejected: {}", result.rejectedReason)
             return
@@ -181,6 +183,7 @@ class BlockPlacer(
             xOffset: Int,
             zOffset: Int,
             world: BlockStore,
+            extraState: Byte = 0,
         ): PlaceResult {
             val def = BlockRegistry.get(blockType)
             val state = BlockState.pack(rotation, colorIndex)
@@ -337,7 +340,7 @@ class BlockPlacer(
                 val changes = mutableListOf<BlockChange>()
                 val isFirstAtCell = existing == BlockType.AIR
                 if (isFirstAtCell) {
-                    val masterChange = BlockChange(pos, blockType, state)
+                    val masterChange = BlockChange(pos, blockType, state, extraState)
                     world.applyChange(masterChange)
                     changes.add(masterChange)
                     if (sizeX > 1 || sizeZ > 1) {
@@ -345,7 +348,10 @@ class BlockPlacer(
                             if (dx == 0 && dz == 0) continue
                             val satChange =
                                 BlockChange(
-                                    BlockPos(pos.x + dx, pos.y, pos.z + dz), blockType, state)
+                                    BlockPos(pos.x + dx, pos.y, pos.z + dz),
+                                    blockType,
+                                    state,
+                                    extraState)
                             world.applyChange(satChange)
                             changes.add(satChange)
                         }
@@ -421,7 +427,7 @@ class BlockPlacer(
                 val changes = mutableListOf<BlockChange>()
                 val isFirstAtCell = existing == BlockType.AIR
                 if (isFirstAtCell) {
-                    val masterChange = BlockChange(pos, blockType, state)
+                    val masterChange = BlockChange(pos, blockType, state, extraState)
                     world.applyChange(masterChange)
                     changes.add(masterChange)
                     if (sizeX > 1 || sizeZ > 1) {
@@ -429,7 +435,10 @@ class BlockPlacer(
                             if (dx == 0 && dz == 0) continue
                             val satChange =
                                 BlockChange(
-                                    BlockPos(pos.x + dx, pos.y, pos.z + dz), blockType, state)
+                                    BlockPos(pos.x + dx, pos.y, pos.z + dz),
+                                    blockType,
+                                    state,
+                                    extraState)
                             world.applyChange(satChange)
                             changes.add(satChange)
                         }
@@ -516,7 +525,7 @@ class BlockPlacer(
                 val changes = mutableListOf<BlockChange>()
                 if (nextOffset == 0) {
                     // First plate at this cell: set block type so main renderer sees it
-                    val change = BlockChange(pos, blockType, state)
+                    val change = BlockChange(pos, blockType, state, extraState)
                     world.applyChange(change)
                     changes.add(change)
                 }
@@ -556,7 +565,7 @@ class BlockPlacer(
                 }
 
                 val changes = mutableListOf<BlockChange>()
-                val masterChange = BlockChange(pos, blockType, state)
+                val masterChange = BlockChange(pos, blockType, state, extraState)
                 world.applyChange(masterChange)
                 changes.add(masterChange)
 
@@ -566,7 +575,10 @@ class BlockPlacer(
                         if (dx == 0 && dy == 0 && dz == 0) continue
                         val satChange =
                             BlockChange(
-                                BlockPos(pos.x + dx, pos.y + dy, pos.z + dz), blockType, state)
+                                BlockPos(pos.x + dx, pos.y + dy, pos.z + dz),
+                                blockType,
+                                state,
+                                extraState)
                         world.applyChange(satChange)
                         changes.add(satChange)
                     }

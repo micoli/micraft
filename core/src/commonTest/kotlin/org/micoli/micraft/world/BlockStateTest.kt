@@ -47,4 +47,23 @@ class BlockStateTest {
         assertEquals(3, BlockState.rotation(recolored))
         assertEquals(12, BlockState.colorIndex(recolored))
     }
+
+    @Test
+    fun packExtra_roundTripsFullByteRange() {
+        for (extra in 0..255) {
+            assertEquals(extra, BlockState.extra(BlockState.packExtra(extra)), "extra $extra")
+        }
+    }
+
+    @Test
+    fun defaultExtraState_isZero() {
+        assertEquals(0, BlockState.extra(0))
+    }
+
+    @Test
+    fun extra_isReadableFromNegativeByte() {
+        // extra 255 sets bit 7 → the byte is negative; the shift/mask must not sign-extend
+        val extraState = BlockState.packExtra(255)
+        assertEquals(255, BlockState.extra(extraState))
+    }
 }

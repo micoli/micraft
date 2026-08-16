@@ -2,6 +2,7 @@ package org.micoli.micraft.game.world
 
 import java.nio.file.Files
 import java.nio.file.attribute.FileTime
+import kotlin.io.path.outputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -30,6 +31,33 @@ class WorldPersistenceTest {
         assertNotNull(loaded)
         assertEquals(ChunkPos(3, -2), loaded.pos)
         assertTrue(loaded.blocks.contentEquals(chunk.blocks))
+    }
+
+    @Test
+    fun chunkRoundtrip_persistsExtraStates() {
+        val p = persistence()
+        val world = WorldState(MapChunkGenerator())
+        val chunk = world.getOrGenerate(ChunkPos(3, -2))
+        val withExtra = chunk.withBlock(0, 0, 0, chunk.getBlock(0, 0, 0), extraState = 9)
+        p.saveChunk(ChunkPos(3, -2), withExtra)
+        val loaded = p.loadChunk(ChunkPos(3, -2))
+        assertNotNull(loaded)
+        assertEquals(9, loaded.getExtraState(0, 0, 0).toInt())
+    }
+
+    @Test
+    fun loadChunk_corruptExtraStatesFile_fallsBackToZeroed() {
+        val p = persistence()
+        val world = WorldState(MapChunkGenerator())
+        val chunk = world.getOrGenerate(ChunkPos(3, -2))
+        p.saveChunk(ChunkPos(3, -2), chunk)
+        val extraStatesFile = p.worldDir.resolve("chunks/3_-2.mcx.gz")
+        java.util.zip.GZIPOutputStream(extraStatesFile.outputStream()).use {
+            it.write(byteArrayOf(1, 2, 3))
+        }
+        val loaded = p.loadChunk(ChunkPos(3, -2))
+        assertNotNull(loaded)
+        assertEquals(0, loaded.getExtraState(0, 0, 0).toInt())
     }
 
     @Test
@@ -196,11 +224,13 @@ class WorldPersistenceTest {
         val p = persistence()
         val blocks = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8)
         val states = byteArrayOf(0, 1, 0, 1, 0, 1, 0, 1)
-        p.saveSceneBlocks("scene-1", blocks, states)
+        val extraStates = byteArrayOf(0, 0, 1, 0, 0, 0, 1, 0)
+        p.saveSceneBlocks("scene-1", blocks, states, extraStates)
         val loaded = p.loadSceneBlocks("scene-1")
         assertNotNull(loaded)
         assertTrue(loaded.first.contentEquals(blocks))
         assertTrue(loaded.second.contentEquals(states))
+        assertTrue(loaded.third.contentEquals(extraStates))
     }
 
     @Test
@@ -211,7 +241,7 @@ class WorldPersistenceTest {
     @Test
     fun deleteSceneFiles_removesBlockFiles() {
         val p = persistence()
-        p.saveSceneBlocks("scene-1", byteArrayOf(1), byteArrayOf(0))
+        p.saveSceneBlocks("scene-1", byteArrayOf(1), byteArrayOf(0), byteArrayOf(0))
         p.deleteSceneFiles("scene-1")
         assertNull(p.loadSceneBlocks("scene-1"))
     }
@@ -230,7 +260,7 @@ class WorldPersistenceTest {
                 createdAt = 1000L,
             )
         p.saveScenesMetadata(listOf(scene))
-        p.saveSceneBlocks("scene-1", byteArrayOf(7, 8), byteArrayOf(1, 2))
+        p.saveSceneBlocks("scene-1", byteArrayOf(7, 8), byteArrayOf(1, 2), byteArrayOf(0, 0))
 
         val reopened = WorldPersistence(p.worldDir)
         val reloaded = reopened.loadScenes()

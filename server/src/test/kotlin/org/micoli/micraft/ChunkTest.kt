@@ -77,4 +77,28 @@ class ChunkTest {
         val b = Chunk.empty(ChunkPos(0, 0))
         assertEquals(a, b)
     }
+
+    @Test
+    fun withBlock_returnsNewChunkWithUpdatedExtraState_leavesOriginalUnchanged() {
+        val original = Chunk.empty(ChunkPos(0, 0))
+        val updated = original.withBlock(1, 2, 3, BlockType.STONE, extraState = 5)
+        assertEquals(0, original.getExtraState(1, 2, 3).toInt())
+        assertEquals(5, updated.getExtraState(1, 2, 3).toInt())
+    }
+
+    @Test
+    fun encodeWireExtraStates_thenDecodeWire_roundTrips() {
+        var original =
+            Chunk.build(ChunkPos(1, -1)) { _, y, _ ->
+                if (y == 0) BlockType.STONE else BlockType.AIR
+            }
+        original = original.withBlock(0, 0, 0, BlockType.STONE, extraState = 7)
+        val wire = original.encodeWire()
+        val wireStates = original.encodeWireStates()
+        val wireExtraStates = original.encodeWireExtraStates()
+        val decoded =
+            Chunk.decodeWire(original.pos, original.topY(), wire, wireStates, wireExtraStates)
+        assertEquals(7, decoded.getExtraState(0, 0, 0).toInt())
+        assertEquals(original, decoded)
+    }
 }

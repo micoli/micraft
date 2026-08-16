@@ -1,100 +1,107 @@
-# Rails et véhicules — analyse
+# Rails and vehicles — analysis
 
-## Contexte
+## Context
 
-Ajout de blocs `rail` orientables/statefull, formant des `segment`s (ligne ouverte) ou `loop`s (boucle fermée), et d'un item `vehicule` posable qui avance dessus à VITESSE constante, changeant de direction en bout de segment, ou tournant indéfiniment sur une loop.
+Adding orientable/stateful `rail` blocks, forming `segment`s (open line) or `loop`s (closed loop), and a placeable `vehicle` item that moves along them at a constant SPEED, changing direction at the end of a segment, or turning indefinitely on a loop.
 
-## État actuel du code (rappel)
+## Current state of the code (recap)
 
-- **BlockDefinition** (`core/.../game/world/BlockDefinition.kt`) : props statiques par `BlockType` — `hardness`, `solid`, `isCubic`, `brickSize`, `rotatable`, `modelElement`. Chargé depuis `resources/blocks/<NAME>/<NAME>.yaml` (+ override `data/resources/blocks/<name>/<name>.yaml`).
-- **BlockState** (`core/.../game/world/BlockState.kt`) : **1 byte par bloc** — bits 0-1 = rotation cardinale (0..3), bits 2-7 = index couleur palette (0-63). Pas de state arbitraire multi-valeurs aujourd'hui.
-- **Rotation existante** : 4 orientations à 90° seulement, gérée à la pose (`LocalPlayerController.kt`, `BlockPlacer.kt`), rendue via `SceneMesher.kt` qui indexe les meshes en `(ord*4 + rotation)*6` — donc jusqu'à 4 variantes de mesh par forme. Exemple non-cubique orienté existant : `LEGO_SLOPE`, `LEGO_CORNER`, `LEGO_STEP_*`.
-- **Aucun bloc stateful** (type porte ouverte/fermée) n'existe dans le repo — le byte `BlockState` est déjà saturé par rotation+couleur.
-- **ItemDefinition** (`resources/config/items.yaml`) : `placesBlock: BlockType?` — un item pose un bloc, point. Aucun précédent d'item qui spawn une entité mobile.
-- **NPC** (`server/.../game/npc/`) : pipeline serveur autoritaire mature — `NpcBehavior.tick(instance, world, ctx)`, `NpcPhysics`, `AabbCollider`, `NpcTickPipeline`, `NpcSpawner`. `RandomMovableNpcBehavior` fait du wander avec machine à états (Pausing/Moving/Decel). Bon squelette réutilisable pour un mouvement contraint sur trajectoire, mais rien d'existant pour suivre un rail.
+- **BlockDefinition** (`core/.../game/world/BlockDefinition.kt`): static per-`BlockType` properties — `hardness`, `solid`, `isCubic`, `brickSize`, `rotatable`, `modelElement`. Loaded from `resources/blocks/<NAME>/<NAME>.yaml` (+ override `data/resources/blocks/<name>/<name>.yaml`).
+- **BlockState** (`core/.../game/world/BlockState.kt`): **1 byte per block** — bits 0-1 = cardinal rotation (0..3), bits 2-7 = palette color index (0-63). No arbitrary multi-value state today.
+- **Existing rotation**: only 4 orientations at 90°, handled at placement time (`LocalPlayerController.kt`, `BlockPlacer.kt`), rendered via `SceneMesher.kt` which indexes meshes as `(ord*4 + rotation)*6` — so up to 4 mesh variants per shape. Existing non-cubic oriented example: `LEGO_SLOPE`, `LEGO_CORNER`, `LEGO_STEP_*`.
+- **No stateful block** (e.g. open/closed door type) exists in the repo — the `BlockState` byte is already saturated by rotation+color.
+- **ItemDefinition** (`resources/config/items.yaml`): `placesBlock: BlockType?` — an item places a block, period. No precedent for an item that spawns a mobile entity.
+- **NPC** (`server/.../game/npc/`): mature server-authoritative pipeline — `NpcBehavior.tick(instance, world, ctx)`, `NpcPhysics`, `AabbCollider`, `NpcTickPipeline`, `NpcSpawner`. `RandomMovableNpcBehavior` wanders via a state machine (Pausing/Moving/Decel). A good reusable skeleton for constrained movement along a trajectory, but nothing existing for following a rail.
 
-## 1. Blocs rail
+## 1. Rail blocks
 
-### 1.1 Types de bloc à créer
+### 1.1 Block types to create
 
-| BlockType | Géométrie | Rotatable | Remarque |
+| BlockType | Geometry | Rotatable | Notes |
 |---|---|---|---|
-| `RAIL_STRAIGHT` | droit, horizontal | oui (4×90°) | segment de base |
-| `RAIL_CURVE_90` | courbe 90° horizontale | oui (4×90°) | |
-| `RAIL_CURVE_45` | courbe 45° horizontale | oui (4×90°) | |
-| `RAIL_CURVE_60` | courbe 60° horizontale | oui (4×90°) | |
-| `RAIL_SLOPE_45` | droit incliné 45° | oui (4×90°) | pente — géométrie non-cubique façon `LEGO_SLOPE`, sens montée/descente porté par l'angle du modèle, pas par un bit d'état |
-| `RAIL_SLOPE_22` | droit incliné 22.5° | oui (4×90°) | idem, sens montée/descente porté par l'angle du modèle |
-| `RAIL_Y_SPLIT` | Y : 1 entrée, 2 sorties (45°/45°) | oui (4×90°) | **stateful** : `state1` = sortie branche 1 active, `state2` = sortie branche 2 active |
+| `RAIL_STRAIGHT` | straight, horizontal | yes (4×90°) | base segment |
+| `RAIL_CURVE_90` | 90° horizontal curve | yes (4×90°) | |
+| `RAIL_CURVE_60` | 60° horizontal curve | yes (4×90°) | |
+| `RAIL_SLOPE_45` | straight, 45° incline | yes (4×90°) | slope — non-cubic geometry like `LEGO_SLOPE`, up/down direction carried by the model's angle, not by a state bit |
+| `RAIL_SLOPE_22` | straight, 22.5° incline | yes (4×90°) | same, up/down direction carried by the model's angle |
+| `RAIL_Y_SPLIT_90` | Y-junction: 1 entry, 2 exits at 90° from each other | yes (4×90°) | **stateful**: active branch selected by 1 state bit, toggled by player right-click via the generic `BlockInteract` mechanism (§1.5) |
 
-### 1.2 Impact rotation/angles
+`RAIL_CURVE_45` was considered but dropped from scope — `RAIL_CURVE_90` and `RAIL_CURVE_60` are sufficient for v1.
 
-`BlockState` code la rotation sur 2 bits (4 valeurs) — **suffisant tel quel**, aucune extension nécessaire. Tous les rails (y compris les courbes 45°/60°/22.5°) restent sur le modèle de rotation existant à 4×90° : l'angle fin (45° vs 60° vs 22.5°) est porté par le `BlockType` lui-même (donc par le modèle 3D/`modelElement`), pas par le state. `RAIL_CURVE_45` et `RAIL_CURVE_60` sont deux types de bloc distincts, chacun rotatable sur les 4 orientations cardinales standard — comme `LEGO_SLOPE`/`LEGO_CORNER` déjà. Idem pour les pentes : le sens montée/descente est une propriété du modèle (le `modelElement` incliné pointe déjà dans un sens), pas un bit de state supplémentaire.
+### 1.2 Rotation/angle impact
 
-### 1.3 Bloc stateful (`RAIL_Y_SPLIT`)
+`BlockState` codes rotation on 2 bits (4 values) — **sufficient as-is, no extension needed for rotation**. All rails (including the 60°/22.5° curves/slopes) stay on the existing 4×90° rotation model: the fine angle (60° vs 22.5°, etc.) is carried by the `BlockType` itself (i.e. by the 3D model/`modelElement`), not by the state. `RAIL_CURVE_90` and `RAIL_CURVE_60` are two distinct block types, each rotatable across the 4 standard cardinal orientations — same as `LEGO_SLOPE`/`LEGO_CORNER` already. Same for slopes: the up/down direction is a property of the model (the inclined `modelElement` already points a given way), not an extra state bit.
 
-Premier bloc du jeu à avoir un état fonctionnel au-delà de rotation+couleur. Le byte `BlockState` actuel (2 bits rotation + 6 bits couleur) n'a plus de bit libre pour porter `state1`/`state2`.
+### 1.3 Stateful block (`RAIL_Y_SPLIT_90`)
 
-Options :
-- **Sacrifier des bits de couleur** sur ce type de bloc seulement (ex: 1 bit couleur en moins, ou palette réduite à 32 pour les rails) — pas d'impact réseau, mais incohérent bloc à bloc.
-- **Étendre `BlockState` à 2 bytes** — propre et extensible (utile pour de futurs blocs stateful : portes, leviers, etc.), mais impacte : format chunk persistant (`WorldPersistence.kt`), protocole réseau (wire format bloc), `SceneMesher.kt` (lecture du state), `BlockBreaker`/`BlockPlacer`. Migration de sauvegarde à prévoir (chunks existants en 1 byte).
+First block in the game to have functional state beyond rotation+color. The current `BlockState` byte (2 bits rotation + 6 bits color) has no free bit left to carry the active-branch flag.
 
-Recommandation : **étendre `BlockState` à 2 bytes** — la dette d'un hack "1 bit volé" se paiera au premier bloc stateful suivant (portes, leviers, etc. sont des extensions naturelles). Prévoir une commande admin ou une migration automatique au chargement de chunk pour les mondes existants (`WorldPersistence.kt`).
+**Decision: extend `BlockState` from 1 to 2 bytes.** Byte 0 keeps its current meaning unchanged (rotation + color). Byte 1 is a generic "extra state" byte — `BlockState` itself stays agnostic about what byte 1 means (same as it's agnostic about what the color palette means today); interpretation of byte-1 bits lives in per-block-type logic. For `RAIL_Y_SPLIT_90`, bit 0 of byte 1 = active branch (0 = branch A, 1 = branch B). Bits 1-7 of byte 1 are reserved for future stateful blocks (doors, levers, etc.) — this is the extensibility payoff of choosing a generic byte over stealing a color bit.
 
-Sémantique `RAIL_Y_SPLIT` : le state contrôle quelle branche de sortie est active pour le passage d'un véhicule — bascule via interaction joueur (clic droit) ou commande, comme un aiguillage. `state1`/`state2` = un seul bit suffit en réalité (2 valeurs) ; nommage `state1`/`state2` de la demande = 2 valeurs mutuellement exclusives d'un même champ, pas 2 bits indépendants.
+Since the project is not yet published, **no save-format migration is needed**: the format changes directly, and existing local test-world saves (`data/world/default_world/{terrain_cache,chunks,scenes}/*`) are simply deleted rather than migrated. This removes what would otherwise be the highest-risk part of the change (legacy-format detection/versioning).
 
-### 1.4 Segment vs loop — notion serveur, pas bloc
+Semantics of `RAIL_Y_SPLIT_90`: the state controls which output branch is active for vehicle passage — toggled via player interaction (right-click) or command, like a switch. Only 1 bit is needed (2 mutually exclusive values), even though the original request phrased it as "state1/state2".
 
-`segment` et `loop` ne sont **pas** des propriétés de bloc individuel mais une propriété **dérivée** de la topologie du réseau de rails, calculée côté serveur :
+### 1.4 Segment vs loop — a server-side notion, not a block property
 
-- Un `segment` = chaîne de blocs rail connectés dont les deux extrémités ne se reconnectent pas entre elles (bouts "ouverts", ou terminaison sur un bloc non-rail).
-- Une `loop` = chaîne de blocs rail connectés qui se referme sur elle-même (le voisin "sortie" du dernier bloc est le premier bloc).
+`segment` and `loop` are **not** individual block properties but a property **derived** from the topology of the rail network, computed server-side:
 
-Détection : parcours de graphe (BFS/DFS) à partir de chaque bloc rail modifié (pose/casse), en suivant les connexions "entrée/sortie" déduites de la rotation + du type de bloc (ex: `RAIL_STRAIGHT` a 2 connexions opposées selon sa rotation ; `RAIL_Y_SPLIT` a 1 entrée + 2 sorties possibles selon son state). Résultat mis en cache par région/chunk et invalidé sur `BlockBreaker`/`BlockPlacer` touchant un bloc rail — nouveau composant serveur, ex. `RailNetworkRegistry` (miroir de `SceneRegistry`/`BlockRegistry` en pattern).
+- A `segment` = a chain of connected rail blocks whose two ends do not reconnect to each other (either "open" ends, or termination on a non-rail block).
+- A `loop` = a chain of connected rail blocks that closes back on itself (the "exit" neighbor of the last block is the first block).
 
-## 2. Item véhicule
+Detection: graph traversal (BFS/DFS) starting from each modified rail block (placed/broken), following "entry/exit" connections derived from rotation + block type (e.g. `RAIL_STRAIGHT` has 2 opposite connections depending on its rotation; `RAIL_Y_SPLIT_90` has 1 entry + 2 possible exits depending on its state). Both branches of a `RAIL_Y_SPLIT_90` always exist as graph edges for topology purposes; only the currently-active one is used by vehicle traversal — this avoids re-running a full network BFS on every switch toggle. Result cached per region/chunk and invalidated on `BlockBreaker`/`BlockPlacer` touching a rail block — new server component, e.g. `RailNetworkRegistry` (mirrors the `SceneRegistry`/`BlockRegistry` pattern).
+
+### 1.5 Block interaction mechanism
+
+No existing mechanism lets a player interact with a placed block beyond breaking/placing (`BlockBreaker`/`BlockPlacer` cover left-click-break and place only). A new, **generic** interaction mechanism is introduced: `ClientMessage.BlockInteract(pos)` sent on right-click against a targeted block, handled server-side by a new `BlockInteractor` (mirrors `BlockPlacer`/`BlockBreaker`'s shape: protected-zone + max-distance validation), dispatching by block type. For v1 this only handles `RAIL_Y_SPLIT_90` (flips the active-branch bit), but the mechanism itself is block-type-agnostic and reusable for future stateful blocks (doors, levers) without protocol changes.
+
+## 2. Vehicle item
 
 ### 2.1 Placement
 
-Aucun précédent d'item spawnant une entité (`ItemDefinition.placesBlock` ne pose qu'un bloc). Approche retenue : **entité pure** — nouveau champ `ItemDefinition.spawnsEntity: EntityType?` (à côté de `placesBlock`), posé sur un bloc rail valide seulement (validation serveur : la position ciblée doit être un `RAIL_*`). Le véhicule est une entité serveur-autoritaire distincte du monde voxel, comme un NPC — cohérent avec le pipeline NPC existant.
+No precedent for an item spawning an entity (`ItemDefinition.placesBlock` only places a block). Approach: **pure entity** — new field `ItemDefinition.spawnsEntity: EntityType?` (alongside `placesBlock`), where `EntityType` is a new enum (one entry per spawnable vehicle type, e.g. `CART`) — following the same pattern as `BlockType`/`ItemType`: enum for compile-time identity, properties loaded from YAML (`VehicleDefinition`). The vehicle is a server-authoritative entity distinct from the voxel world, like an NPC — consistent with the existing NPC pipeline.
 
-Placement via slash command dédiée : `/vehicule:add <vehiculeName>` — récupère le bloc visé par le joueur (raycast, comme la pose de bloc), valide que c'est un `RAIL_*`, spawn l'entité véhicule dessus. Le sens de parcours initial du véhicule est déterminé par l'angle entre l'orientation du joueur et celle du rail visé (le joueur regardant "avec" ou "contre" le sens du rail détermine la direction de départ).
+Placement is **exclusively** via a dedicated slash command: `/vehicule:add <vehiculeName>` — resolves the block targeted by the player (raycast, like block placement), validates it's a `RAIL_*` block, spawns the vehicle entity on it. Item-consumption-based placement (right-click with the item in hand, like `placesBlock`) was considered and explicitly **rejected for v1** — it would add inventory-management surface not required by the feature, and the command-only path matches simpler, more testable server-side validation. The initial direction of travel is determined by the angle between the player's facing direction and the targeted rail's orientation (the player looking "with" or "against" the rail's direction determines the starting direction) — this is a new computation; no existing auto-orient-at-placement mechanism exists to reuse.
 
-### 2.2 Comportement serveur (`VehicleBehavior`)
+### 2.2 Server behavior (`VehicleBehavior`)
 
-Nouveau `VehicleBehavior : NpcBehavior`-like (ou interface sœur si le véhicule n'a pas besoin de toutes les features NPC — santé, IA de combat, etc.) :
+New `VehicleBehavior` — a *sibling* interface to `NpcBehavior`, not a subtype of it (there is no shared Entity/Movable abstraction between Player and NPC in the current codebase, so this is necessarily net-new, not a plug-in to something generic):
 
-- État : position sur le réseau de rails = (bloc rail courant, progression 0..1 le long du bloc, direction de parcours).
-- `tick()` : avance de `VITESSE * deltaTime` le long du rail courant.
-  - Sur `segment` : en bout de segment (dernier bloc, pas de connexion sortante dans le sens courant), inverse la direction de parcours (fait demi-tour) — cf. exigence "change de direction".
-  - Sur `loop` : à la fin d'un bloc, passe systématiquement au suivant dans la boucle, sans jamais s'arrêter — avance "indéfiniment".
-  - Sur `RAIL_Y_SPLIT` : la sortie prise dépend du `state` courant du bloc (aiguillage) au moment du passage.
-- Réutilise `AabbCollider`/`NpcPhysics` pour la hauteur Y (pentes `RAIL_SLOPE_*`), mais le déplacement XZ est **contraint au rail** (pas de physique libre comme un NPC qui wander) — donc pas de collision latérale à calculer, juste suivre la courbe géométrique du bloc courant (interpolation le long de la forme du modelElement : droite, arc 45°/60°/90°, pente).
-- Position/orientation répliquées au client via un message réseau dédié (nouveau `ServerMessage.VehicleUpdate` ou extension du pattern `PlayerUpdate`), à fréquence tick serveur, avec interpolation client comme pour les autres entités.
+- State: position on the rail network = (current rail block, progress 0..1 along the block, direction of travel).
+- `tick()`: advances by `SPEED * deltaTime` along the current rail.
+  - On a `segment`: at the end of the segment (last block, no outgoing connection in the current direction), reverses the direction of travel (U-turn) — per the "changes direction" requirement.
+  - On a `loop`: at the end of a block, always moves to the next one in the loop, never stopping — advances "indefinitely".
+  - On `RAIL_Y_SPLIT_90`: the exit taken depends on the block's current state (switch) at the moment of passage.
+- Reuses `AabbCollider`/`NpcPhysics` for Y height (slopes `RAIL_SLOPE_*`) only — **not** `NpcPhysics.applyGravity` and **not** `RandomMovableNpcBehavior`'s free XZ movement/waypoint logic, since XZ displacement is **constrained to the rail** (no free physics like a wandering NPC) — so no lateral collision to compute, just following the current block's geometric curve (interpolation along the shape of the `modelElement`: straight, 60°/90° arc, or slope).
+- Position/orientation replicated to the client via a dedicated network message (new `ServerMessage.VehicleSpawned`/`VehicleUpdate`/`VehicleDespawned`, with its own `VehicleState` — not reusing `NpcState`, since hp/aggro/xp/animalData fields don't apply), at server tick frequency, with client-side interpolation like other entities.
 
-### 2.3 Détection de segment/loop pour le comportement
+### 2.3 Segment/loop detection for behavior
 
-`VehicleBehavior` interroge le `RailNetworkRegistry` (§1.4) à chaque changement de bloc rail pour savoir si son bloc courant appartient à un `segment` (→ gérer les demi-tours en bout) ou une `loop` (→ jamais de demi-tour). Pas besoin que le véhicule recalcule la topologie lui-même.
+`VehicleBehavior` queries `RailNetworkRegistry` (§1.4) on each rail-block change to know whether its current block belongs to a `segment` (→ handle U-turns at the ends) or a `loop` (→ never U-turn). The vehicle does not need to recompute the topology itself.
 
-## 3. Rendu client
+## 3. Client rendering
 
-- Rails non-stateful (`RAIL_STRAIGHT`, `RAIL_CURVE_*`, `RAIL_SLOPE_*`) : mesh statique par `(BlockType, rotation)`, pattern identique à `LEGO_SLOPE`/`LEGO_CORNER` dans `SceneMesher.kt` — pas de changement d'architecture, juste ajout de modèles + réutilisation de l'indexage `(ord*4 + rotation)*6` existant, sans extension.
-- `RAIL_Y_SPLIT` : mesh dépend en plus du `state` (aiguillage visuel gauche/droite) — `SceneMesher` doit lire le 2ᵉ byte de state (§1.3) pour choisir la variante.
-- Véhicule : entité rendue comme un NPC/joueur (modèle bbmodel ou primitive), interpolée en continu entre updates serveur — pas de mesh de chunk, rendu séparé du voxel world (comme `AdminScenePreview`/entités actuelles).
+- Non-stateful rails (`RAIL_STRAIGHT`, `RAIL_CURVE_*`, `RAIL_SLOPE_*`): static mesh per `(BlockType, rotation)`, identical pattern to `LEGO_SLOPE`/`LEGO_CORNER` in `SceneMesher.kt` — no architecture change, just adding models + reusing the existing `(ord*4 + rotation)*6` indexing, unextended.
+- `RAIL_Y_SPLIT_90`: mesh additionally depends on `state` (visual left/right switch) — `SceneMesher` must read byte 1 of state (§1.3) to pick the variant; the `(ord*4+rotation)*6` indexing formula grows a per-block-type model-state axis, defaulting to a single state for every other block type so existing mesh ids are unaffected.
+- Vehicle: entity rendered like an NPC/player (bbmodel or primitive model), continuously interpolated between server updates — not a chunk mesh, rendered separately from the voxel world (like `AdminScenePreview`/current entities).
 
-## 4. Résumé des impacts / risques
+## 4. Summary of impacts / risks
 
-| Zone | Impact | Risque |
+| Area | Impact | Risk |
 |---|---|---|
-| `BlockState` (1→2 bytes) | Format chunk persistant + protocole réseau + migration mondes existants | Moyen-élevé — touche tout le pipeline bloc |
-| `RailNetworkRegistry` (nouveau) | Détection segment/loop, invalidation sur pose/casse | Moyen — nouveau composant, logique de graphe |
-| `VehicleBehavior` + entité véhicule (nouveau) | Nouveau protocole réseau (`VehicleUpdate`), tick serveur, interpolation client | Élevé — nouveau type d'entité de bout en bout |
-| `ItemDefinition.spawnsEntity` (nouveau) | Item → entité au lieu d'item → bloc | Faible-moyen — extension localisée |
-| Modèles 3D rails (bbmodel/gltf) | Assets à produire pour chaque forme × rotation | Hors code, mais volume de travail non négligeable (7 types × jusqu'à 8 rotations) |
+| `BlockState` (1→2 bytes) | Persistent chunk format + network protocol + mesher/vertex-packing plumbing | Medium — touches the whole block pipeline, but no migration needed (pre-publish project, old saves simply deleted) |
+| `RailNetworkRegistry` (new) | Segment/loop detection, invalidation on place/break | Medium — new component, graph logic |
+| `BlockInteractor` + `BlockInteract` message (new) | Generic right-click interaction mechanism | Low-medium — new protocol message + handler, but small/self-contained |
+| `VehicleBehavior` + vehicle entity (new) | New network protocol (`VehicleSpawned`/`Update`/`Despawned`), server tick, client interpolation | High — new entity kind end-to-end |
+| `ItemDefinition.spawnsEntity: EntityType?` (new) | Item → entity instead of item → block | Low-medium — localized extension, plus a new `EntityType` enum |
+| Rail 3D models (bbmodel/gltf) | Assets to produce for each shape × rotation | Out of code scope, but non-trivial volume of work (6 types × up to 4 rotations) |
 
-## 5. Décisions v1
+## 5. v1 decisions
 
-1. **VITESSE** : par-item véhicule — champ dans `ItemDefinition` (ou définition dédiée type `VehicleDefinition`), pas de constante globale. Permet plusieurs types de véhicules à vitesses différentes sans refonte.
-2. **Joueur à bord** : non — v1 purement automatique/décoratif. Le joueur pose le véhicule, pose/oriente les rails, bascule les aiguillages, mais ne monte pas dessus. Pas de contrôle caméra/input à gérer. Extensible plus tard (hors scope v1).
-3. **Collision véhicule-véhicule** : ignorée en v1 — les véhicules se traversent, pas de détection de proximité entre véhicules à chaque tick.
-4. **`RAIL_Y_SPLIT`** : bascule manuelle uniquement — le `state` ne change que sur interaction joueur (clic droit) ou commande slash, comme un levier. Pas d'alternance automatique en v1.
+1. **SPEED**: per-vehicle-item — a field on `VehicleDefinition`, not a global constant. Allows multiple vehicle types at different speeds without rework.
+2. **Player riding**: no — v1 is purely automatic/decorative. The player places the vehicle, places/orients rails, toggles switches, but does not ride it. No camera/input control to handle. Extensible later (out of scope for v1).
+3. **Vehicle-vehicle collision**: ignored in v1 — vehicles pass through each other, no proximity detection between vehicles each tick.
+4. **`RAIL_Y_SPLIT_90`**: manual toggle only — the state only changes on player interaction (right-click via the generic `BlockInteract` mechanism, §1.5) or slash command, like a switch. No automatic alternation in v1.
+5. **`RAIL_CURVE_45`**: dropped from scope — only `RAIL_CURVE_90` and `RAIL_CURVE_60` are implemented.
+6. **Save migration**: none — the project is not yet published, so `BlockState`'s 1→2 byte format change is applied directly and existing local test-world saves are deleted rather than migrated.
+7. **Vehicle placement entry point**: `/vehicule:add <name>` slash command only — no item-consumption-by-click path, to avoid inventory-management scope creep in v1.

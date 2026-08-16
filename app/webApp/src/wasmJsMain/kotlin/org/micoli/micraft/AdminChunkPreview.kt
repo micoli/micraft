@@ -4,14 +4,20 @@ package org.micoli.micraft
 
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.ExperimentalWasmJsInterop
+import kotlin.math.atan2
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.babylon.jsDisposeChunk
 import org.micoli.micraft.babylon.jsWarn
 import org.micoli.micraft.game.world.BlockDefinition
+import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
+import org.micoli.micraft.game.world.WorldConstants
+import org.micoli.micraft.game.world.rail.Direction
+import org.micoli.micraft.game.world.rail.RailConnection
 import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
@@ -70,6 +76,7 @@ fun mcAdminSetBlockRegistry(json: String) {
                     brickSize = info.brickSize,
                     plainColorable = info.plainColorable,
                     isCubic = info.isCubic,
+                    connections = info.connections.map { Direction.valueOf(it) },
                 )
         }
     BlockRegistry.load(defs)
@@ -97,6 +104,7 @@ fun mcAdminLoadChunk(scene: JsAny, data: JsAny, yMin: Int, yMax: Int) {
             msg.topY,
             msg.wireBlocks,
             msg.wireStates.takeIf { it.isNotEmpty() },
+            msg.wireExtraStates.takeIf { it.isNotEmpty() },
             msg.entities)
     // /api/chunks/{cx}/{cz} returns the whole world-height column — clip to the zone's
     // [yMin, yMax] bounds so the preview only shows what's actually editable/visible in-zone.
@@ -139,4 +147,133 @@ fun mcAdminGetUsedXZOffsetAt(scene: JsAny, wx: Int, wy: Int, wz: Int): Int {
     val manager = managerFor(scene)
     val slot = manager.getUsedXZOffsetsAt(wx, wy, wz).firstOrNull() ?: return -1
     return slot.first * 4 + slot.second
+}
+
+// Exposes the switch/junction extra-state byte (see BlockState.extra, RailConnection.active) of
+// the block under the cursor — needed so the editor's rail circuit test (below) picks the same
+// branch a placed switch was toggled to, instead of always assuming branch 0.
+@JsExport
+fun mcAdminGetExtraStateAt(scene: JsAny, wx: Int, wy: Int, wz: Int): Int {
+    val manager = managerFor(scene)
+    return manager.getExtraStateAtWorld(wx, wy, wz).toInt() and 0xFF
+}
+
+// ── Rail circuit test (editor-only, no server round-trip) ──────────────────────────────────
+// A single in-memory "test cart" the admin instance editor can drop on a rail block and watch
+// travel the network, to visually confirm switches/loops/dead-ends behave as intended before
+// leaving the editor. Ports VehicleBehavior.kt's tick logic (server/game/vehicle) against
+// ChunkManager instead of WorldState, since the editor has neither a WorldState nor a spawned
+// VehicleInstance/VehicleRegistry entry to drive it — a fixed test speed stands in for a real
+// vehicle's per-type speed. RailConnection itself (core, commonMain) is reused as-is.
+private const val RAIL_TEST_SPEED = 3f // blocks/second — editor test only, no vehicle type context
+
+// Half the cart mesh's height (railTestCart.ts's CART_SIZE / 2) — the reported pose sits the cart
+// on top of the rail block's surface rather than centered inside it.
+private const val CART_HALF_HEIGHT = 0.3f
+private var railTestPos: BlockPos? = null
+private var railTestDir: Direction = Direction.NORTH
+private var railTestProgress: Float = 0f
+
+// Starts (or restarts) the test cart at (wx,wy,wz), returning 0 (no-op) if that cell isn't a
+// rail block or exposes no usable connection to travel along, 1 on success.
+@JsExport
+fun mcAdminRailTestStart(scene: JsAny, wx: Int, wy: Int, wz: Int): Int {
+    val manager = managerFor(scene)
+    val type = manager.getBlockAtWorld(wx, wy, wz)
+    if (!RailConnection.isRail(type)) return 0
+    val state = manager.getStateAtWorld(wx, wy, wz)
+    val extra = manager.getExtraStateAtWorld(wx, wy, wz)
+    val dir = RailConnection.active(type, state, extra).firstOrNull() ?: return 0
+    railTestPos = BlockPos(wx, wy, wz)
+    railTestDir = dir
+    railTestProgress = 0f
+    return 1
+}
+
+// Lists every switch/junction rail block in currently loaded chunks, so the editor can overlay a
+// clickable marker on each and let the user cycle its branch while a rail test is running. CSV
+// rows "x,y,z,branchCount,currentBranch" separated by ';' — one wasm→JS string call per rail-test
+// toggle instead of a typed-array round trip, since junction counts are small (editor scale).
+@JsExport
+fun mcAdminListJunctions(scene: JsAny): String {
+    val manager = managerFor(scene)
+    val sb = StringBuilder()
+    for ((pos, chunkAndTopY) in manager.chunkData) {
+        val (chunk, topY) = chunkAndTopY
+        val baseX = pos.cx * WorldConstants.CHUNK_SIZE
+        val baseZ = pos.cz * WorldConstants.CHUNK_SIZE
+        for (lx in 0 until WorldConstants.CHUNK_SIZE) {
+            for (lz in 0 until WorldConstants.CHUNK_SIZE) {
+                for (y in 0..topY) {
+                    val type = chunk.getBlock(lx, y, lz)
+                    if (!RailConnection.isJunction(type)) continue
+                    val branches = RailConnection.branchCount(type)
+                    val current =
+                        BlockState.extra(chunk.getExtraState(lx, y, lz)).coerceIn(0, branches - 1)
+                    if (sb.isNotEmpty()) sb.append(';')
+                    sb.append(baseX + lx)
+                        .append(',')
+                        .append(y)
+                        .append(',')
+                        .append(baseZ + lz)
+                        .append(',')
+                        .append(branches)
+                        .append(',')
+                        .append(current)
+                }
+            }
+        }
+    }
+    return sb.toString()
+}
+
+@JsExport
+fun mcAdminRailTestStop() {
+    railTestPos = null
+}
+
+// Advances the test cart by [deltaSeconds] and returns its new pose as "x,y,z,yaw" (empty string
+// if no test is running) — a plain CSV string rather than JSON, parsed once per frame on the TS
+// side, since only 4 floats travel the JS-interop boundary each call.
+@JsExport
+fun mcAdminRailTestTick(scene: JsAny, deltaSeconds: Float): String {
+    val manager = managerFor(scene)
+    if (railTestPos == null) return ""
+    railTestProgress += RAIL_TEST_SPEED * deltaSeconds
+    while (railTestProgress >= 1f) {
+        railTestProgress -= 1f
+        advanceRailTest(manager)
+    }
+    val current = railTestPos ?: return ""
+    val dir = railTestDir
+    val t = railTestProgress
+    val x = current.x + 0.5f + dir.dx * t
+    val y = current.y + 1f + CART_HALF_HEIGHT
+    val z = current.z + 0.5f + dir.dz * t
+    val yaw = atan2(dir.dx.toDouble(), dir.dz.toDouble()).toFloat()
+    return "$x,$y,$z,$yaw"
+}
+
+// Mirrors VehicleBehavior.advanceOneBlock — reversal at a dead end and indefinite traversal on a
+// loop both fall out of this same local connectivity check, see that file's doc comment.
+private fun advanceRailTest(manager: ChunkManager) {
+    val current = railTestPos ?: return
+    val exitDir = railTestDir
+    val nextPos = BlockPos(current.x + exitDir.dx, current.y, current.z + exitDir.dz)
+    val nextType = manager.getBlockAtWorld(nextPos.x, nextPos.y, nextPos.z)
+    val arrivalDir = exitDir.opposite
+    if (!RailConnection.isRail(nextType)) {
+        railTestDir = arrivalDir
+        return
+    }
+    val nextState = manager.getStateAtWorld(nextPos.x, nextPos.y, nextPos.z)
+    val nextExtra = manager.getExtraStateAtWorld(nextPos.x, nextPos.y, nextPos.z)
+    val nextActive = RailConnection.active(nextType, nextState, nextExtra)
+    if (arrivalDir !in nextActive) {
+        railTestDir = arrivalDir
+        return
+    }
+    val forward = (nextActive - arrivalDir).firstOrNull()
+    railTestPos = nextPos
+    railTestDir = forward ?: arrivalDir
 }

@@ -70,7 +70,8 @@ class ChunkController(
                             chunk.topY(),
                             chunk.encodeWire(),
                             chunk.encodeWireStates() ?: ByteArray(0),
-                            world.chunkEntityProtos(chunk.pos))
+                            world.chunkEntityProtos(chunk.pos),
+                            chunk.encodeWireExtraStates() ?: ByteArray(0))
                     call.respondBytes(
                         ServerMessageCodec.encode(msg), ContentType.Application.OctetStream)
                 }

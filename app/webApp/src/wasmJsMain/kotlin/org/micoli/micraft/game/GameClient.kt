@@ -176,7 +176,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         msg.pos,
                                         msg.topY,
                                         msg.wireBlocks,
-                                        msg.wireStates.takeIf { it.isNotEmpty() }),
+                                        msg.wireStates.takeIf { it.isNotEmpty() },
+                                        msg.wireExtraStates.takeIf { it.isNotEmpty() }),
                                     msg.topY)
                             }
                         }
@@ -406,6 +407,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                             msg.topY,
                             msg.wireBlocks,
                             msg.wireStates.takeIf { it.isNotEmpty() },
+                            msg.wireExtraStates.takeIf { it.isNotEmpty() },
                             msg.entities),
                         msg.topY)
                 })
@@ -445,7 +447,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         val lx = change.pos.x - cx * WorldConstants.CHUNK_SIZE
                         val lz = change.pos.z - cz * WorldConstants.CHUNK_SIZE
                         val updated =
-                            existing.withBlock(lx, change.pos.y, lz, change.type, change.state)
+                            existing.withBlock(
+                                lx, change.pos.y, lz, change.type, change.state, change.extraState)
                         val newTopY =
                             if (change.type != BlockType.AIR) maxOf(existingTopY, change.pos.y)
                             else existingTopY

@@ -65,7 +65,33 @@ class WorldPersistence(val worldDir: Path) {
             val states =
                 if (statesFile.exists())
                     try {
-                        GZIPInputStream(statesFile.inputStream()).use { it.readBytes() }
+                        val bytes = GZIPInputStream(statesFile.inputStream()).use { it.readBytes() }
+                        if (bytes.size != Chunk.TOTAL) {
+                            worldPersistenceLog.warn(
+                                "Corrupt states file for {}: expected {} bytes, got {}",
+                                pos,
+                                Chunk.TOTAL,
+                                bytes.size)
+                            ByteArray(Chunk.TOTAL)
+                        } else bytes
+                    } catch (_: IOException) {
+                        ByteArray(Chunk.TOTAL)
+                    }
+                else ByteArray(Chunk.TOTAL)
+            val extraStatesFile = chunksDir.resolve("${pos.cx}_${pos.cz}.mcx.gz")
+            val extraStates =
+                if (extraStatesFile.exists())
+                    try {
+                        val bytes =
+                            GZIPInputStream(extraStatesFile.inputStream()).use { it.readBytes() }
+                        if (bytes.size != Chunk.TOTAL) {
+                            worldPersistenceLog.warn(
+                                "Corrupt extra-states file for {}: expected {} bytes, got {}",
+                                pos,
+                                Chunk.TOTAL,
+                                bytes.size)
+                            ByteArray(Chunk.TOTAL)
+                        } else bytes
                     } catch (_: IOException) {
                         ByteArray(Chunk.TOTAL)
                     }
@@ -81,7 +107,7 @@ class WorldPersistence(val worldDir: Path) {
                         emptyList()
                     }
                 else emptyList()
-            Chunk(pos, bytes, states, entityMasters)
+            Chunk(pos, bytes, states, extraStates, entityMasters)
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to load chunk {}: {}", pos, e.message)
             null
@@ -112,6 +138,14 @@ class WorldPersistence(val worldDir: Path) {
                 GZIPOutputStream(statesFile.outputStream()).use { it.write(chunk.states) }
             } catch (e: IOException) {
                 worldPersistenceLog.warn("Failed to save chunk states {}: {}", pos, e.message)
+            }
+        }
+        if (chunk.extraStates.isNotEmpty() && chunk.extraStates.any { it != 0.toByte() }) {
+            val extraStatesFile = chunksDir.resolve("${pos.cx}_${pos.cz}.mcx.gz")
+            try {
+                GZIPOutputStream(extraStatesFile.outputStream()).use { it.write(chunk.extraStates) }
+            } catch (e: IOException) {
+                worldPersistenceLog.warn("Failed to save chunk extra states {}: {}", pos, e.message)
             }
         }
         if (chunk.entityMasters.isNotEmpty()) {
@@ -405,13 +439,16 @@ class WorldPersistence(val worldDir: Path) {
                 return emptyList()
             }
         return metadata.map { scene ->
-            val (blocks, states) =
+            val (blocks, states, extraStates) =
                 loadSceneBlocks(scene.id)
-                    ?: (ByteArray(scene.width * scene.height * scene.depth) to
+                    ?: Triple(
+                        ByteArray(scene.width * scene.height * scene.depth),
+                        ByteArray(scene.width * scene.height * scene.depth),
                         ByteArray(scene.width * scene.height * scene.depth))
             scene.copy(
                 blocks = blocks,
                 states = states,
+                extraStates = extraStates,
                 entities = loadSceneEntities(scene.id).toMutableList())
         }
     }
@@ -425,7 +462,7 @@ class WorldPersistence(val worldDir: Path) {
         }
     }
 
-    fun saveSceneBlocks(id: String, blocks: ByteArray, states: ByteArray) {
+    fun saveSceneBlocks(id: String, blocks: ByteArray, states: ByteArray, extraStates: ByteArray) {
         val blocksFile = scenesDir.resolve("$id.scc.gz")
         try {
             GZIPOutputStream(blocksFile.outputStream()).use { it.write(blocks) }
@@ -438,9 +475,15 @@ class WorldPersistence(val worldDir: Path) {
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save scene states {}: {}", id, e.message)
         }
+        val extraStatesFile = scenesDir.resolve("$id.sco.gz")
+        try {
+            GZIPOutputStream(extraStatesFile.outputStream()).use { it.write(extraStates) }
+        } catch (e: IOException) {
+            worldPersistenceLog.warn("Failed to save scene extra states {}: {}", id, e.message)
+        }
     }
 
-    fun loadSceneBlocks(id: String): Pair<ByteArray, ByteArray>? {
+    fun loadSceneBlocks(id: String): Triple<ByteArray, ByteArray, ByteArray>? {
         val blocksFile = scenesDir.resolve("$id.scc.gz")
         if (!blocksFile.exists()) return null
         return try {
@@ -454,7 +497,16 @@ class WorldPersistence(val worldDir: Path) {
                         ByteArray(blocks.size)
                     }
                 else ByteArray(blocks.size)
-            blocks to states
+            val extraStatesFile = scenesDir.resolve("$id.sco.gz")
+            val extraStates =
+                if (extraStatesFile.exists())
+                    try {
+                        GZIPInputStream(extraStatesFile.inputStream()).use { it.readBytes() }
+                    } catch (_: IOException) {
+                        ByteArray(blocks.size)
+                    }
+                else ByteArray(blocks.size)
+            Triple(blocks, states, extraStates)
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to load scene blocks {}: {}", id, e.message)
             null
@@ -465,6 +517,7 @@ class WorldPersistence(val worldDir: Path) {
         try {
             scenesDir.resolve("$id.scc.gz").deleteIfExists()
             scenesDir.resolve("$id.scs.gz").deleteIfExists()
+            scenesDir.resolve("$id.sco.gz").deleteIfExists()
             scenesDir.resolve("$id.sce.gz").deleteIfExists()
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to delete scene files {}: {}", id, e.message)

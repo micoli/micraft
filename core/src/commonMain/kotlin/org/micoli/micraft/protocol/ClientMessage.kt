@@ -55,7 +55,8 @@ sealed class ClientMessage {
         val itemType: ItemType,
         val state: Byte = 0,
         val xOffset: Byte = 0,
-        val zOffset: Byte = 0
+        val zOffset: Byte = 0,
+        val extraState: Byte = 0,
     ) : ClientMessage()
 
     @ProtoId(7)

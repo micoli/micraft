@@ -7,6 +7,7 @@ data class Chunk(
     val pos: ChunkPos,
     val blocks: ByteArray,
     val states: ByteArray = ByteArray(0),
+    val extraStates: ByteArray = ByteArray(0),
     val entityMasters: List<BlockEntity> = emptyList(),
 ) {
     companion object {
@@ -26,13 +27,13 @@ data class Chunk(
             return Triple(x, y, z)
         }
 
-        fun empty(pos: ChunkPos) = Chunk(pos, ByteArray(TOTAL), ByteArray(TOTAL))
+        fun empty(pos: ChunkPos) = Chunk(pos, ByteArray(TOTAL), ByteArray(TOTAL), ByteArray(TOTAL))
 
         fun build(pos: ChunkPos, filler: (x: Int, y: Int, z: Int) -> BlockType): Chunk {
             val blocks = ByteArray(TOTAL)
             for (x in 0 until SIZE_X) for (y in 0 until SIZE_Y) for (z in 0 until SIZE_Z) blocks[
                 index(x, y, z)] = BlockRegistry.wireIndex(filler(x, y, z)).toByte()
-            return Chunk(pos, blocks, ByteArray(TOTAL))
+            return Chunk(pos, blocks, ByteArray(TOTAL), ByteArray(TOTAL))
         }
 
         /**
@@ -63,15 +64,19 @@ data class Chunk(
             topY: Int,
             wire: ByteArray,
             wireStates: ByteArray? = null,
+            wireExtraStates: ByteArray? = null,
             entityProtos: List<org.micoli.micraft.protocol.BlockEntityProto> = emptyList(),
         ): Chunk {
             val blocks = ByteArray(TOTAL) // AIR = 0 by default
             val states = ByteArray(TOTAL)
+            val extraStates = ByteArray(TOTAL)
             for (y in 0..topY) for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) {
                 val wi = y * SIZE_X * SIZE_Z + x * SIZE_Z + z
                 blocks[index(x, y, z)] = wire[wi]
                 if (wireStates != null && wi < wireStates.size)
                     states[index(x, y, z)] = wireStates[wi]
+                if (wireExtraStates != null && wi < wireExtraStates.size)
+                    extraStates[index(x, y, z)] = wireExtraStates[wi]
             }
             val masters =
                 entityProtos.map { proto ->
@@ -92,7 +97,7 @@ data class Chunk(
                         colorIndex = proto.colorIndex,
                     )
                 }
-            return Chunk(pos, blocks, states, masters)
+            return Chunk(pos, blocks, states, extraStates, masters)
         }
     }
 
@@ -101,6 +106,9 @@ data class Chunk(
 
     fun getState(x: Int, y: Int, z: Int): Byte =
         if (states.isNotEmpty()) states[index(x, y, z)] else 0
+
+    fun getExtraState(x: Int, y: Int, z: Int): Byte =
+        if (extraStates.isNotEmpty()) extraStates[index(x, y, z)] else 0
 
     /** Highest Y level containing any non-AIR block. */
     fun topY(): Int {
@@ -133,12 +141,32 @@ data class Chunk(
         return wire
     }
 
-    fun withBlock(x: Int, y: Int, z: Int, type: BlockType, state: Byte = 0): Chunk {
+    /** Encode extra states in y-major order, only y=0..topY. Returns null if all zero. */
+    fun encodeWireExtraStates(): ByteArray? {
+        if (extraStates.isEmpty() || extraStates.all { it == 0.toByte() }) return null
+        val top = topY()
+        val wire = ByteArray((top + 1) * SIZE_X * SIZE_Z)
+        for (y in 0..top) for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) wire[
+            y * SIZE_X * SIZE_Z + x * SIZE_Z + z] = extraStates[index(x, y, z)]
+        return wire
+    }
+
+    fun withBlock(
+        x: Int,
+        y: Int,
+        z: Int,
+        type: BlockType,
+        state: Byte = 0,
+        extraState: Byte = 0
+    ): Chunk {
         val newBlocks = blocks.copyOf()
         val newStates = if (states.isNotEmpty()) states.copyOf() else ByteArray(TOTAL)
+        val newExtraStates =
+            if (extraStates.isNotEmpty()) extraStates.copyOf() else ByteArray(TOTAL)
         newBlocks[index(x, y, z)] = BlockRegistry.wireIndex(type).toByte()
         newStates[index(x, y, z)] = state
-        return copy(blocks = newBlocks, states = newStates)
+        newExtraStates[index(x, y, z)] = extraState
+        return copy(blocks = newBlocks, states = newStates, extraStates = newExtraStates)
     }
 
     fun addEntity(entity: BlockEntity): Chunk = copy(entityMasters = entityMasters + entity)
@@ -166,12 +194,14 @@ data class Chunk(
         return pos == other.pos &&
             blocks.contentEquals(other.blocks) &&
             states.contentEquals(other.states) &&
+            extraStates.contentEquals(other.extraStates) &&
             entityMasters == other.entityMasters
     }
 
     override fun hashCode(): Int {
         var result =
             31 * (31 * pos.hashCode() + blocks.contentHashCode()) + states.contentHashCode()
+        result = 31 * result + extraStates.contentHashCode()
         result = 31 * result + entityMasters.hashCode()
         return result
     }
