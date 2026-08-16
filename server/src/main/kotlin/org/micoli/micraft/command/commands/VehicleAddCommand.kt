@@ -7,16 +7,18 @@ import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.rail.Direction
 import org.micoli.micraft.game.world.rail.RailConnection
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.vehicle.VehicleRegistry
 
 /**
- * `/vehicule:add <vehiculeName>` — spawns a vehicle on the rail block the player is standing on
- * (analysis §2.1 called for a raycast-resolved look target like block placement, but there is no
- * server-side raycast anywhere in this codebase — block place/break trust the client-computed
- * position instead. Reusing "the block under the player's feet" needs no new client wiring and no
- * unverifiable trigonometry).
+ * `/vehicule:add <vehiculeName> [x y z]` — spawns a vehicle on the rail block the player is looking
+ * at. There is no server-side raycast anywhere in this codebase — like block place/break, the
+ * client resolves the look target and appends it to the command (see `enrichCommand` in
+ * LocalPlayerController). The trailing coordinates are omitted when typed manually or dispatched
+ * without a hover target, in which case the block under the player's feet is used instead.
  */
 class VehicleAddCommand : CommandHandler {
     override val id: UUID = UUID.fromString("6b2b6a34-6d8b-4b0b-9a6a-6a2f9a2b6f3a")
@@ -30,7 +32,8 @@ class VehicleAddCommand : CommandHandler {
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
         val i18n = context.i18n
-        val typeName = args.trim()
+        val parts = args.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+        val typeName = parts.getOrNull(0) ?: ""
 
         if (typeName.isBlank()) {
             val available = VehicleRegistry.keys().joinToString(", ") { it.id.lowercase() }
@@ -48,11 +51,19 @@ class VehicleAddCommand : CommandHandler {
             return
         }
 
+        val targeted =
+            if (parts.size == 4) {
+                val x = parts[1].toIntOrNull()
+                val y = parts[2].toIntOrNull()
+                val z = parts[3].toIntOrNull()
+                if (x != null && y != null && z != null) BlockPos(x, y, z) else null
+            } else null
         val pos =
-            BlockPos(
-                session.state.pos.x.toInt(),
-                (session.state.pos.y - 0.1f).toInt(),
-                session.state.pos.z.toInt())
+            targeted
+                ?: BlockPos(
+                    session.state.pos.x.toInt(),
+                    (session.state.pos.y - 0.1f).toInt(),
+                    session.state.pos.z.toInt())
 
         val vehicleManager = context.vehicleManager
         if (vehicleManager == null) {
@@ -74,28 +85,20 @@ class VehicleAddCommand : CommandHandler {
 
     companion object {
         /**
-         * +1/-1 — whichever of the rail's two directions best matches the player's facing (yaw in
-         * degrees, best-effort convention: 0 = -Z/north, increasing clockwise). Direction.entries
-         * order gives the first (index 0) declared connection direction as index 0 of the rail's
-         * connection set — that direction maps to +1, its opposite to -1. Purely a starting-facing
-         * nicety: a vehicle reaching a dead end always reverses (see analysis §2.2), so getting
-         * this "wrong" only affects which way it goes first, never whether it works.
+         * Whichever of the rail's declared connection directions best matches the player's facing
+         * (yaw in degrees, best-effort convention: 0 = -Z/north, increasing clockwise — see
+         * [org.micoli.micraft.game.world.rail.Direction]). Purely a starting-facing nicety: a
+         * vehicle reaching a dead end always reverses (see analysis §2.2), so getting this "wrong"
+         * only affects which way it goes first, never whether it works.
          */
-        fun initialDirectionFrom(
-            yawDegrees: Float,
-            pos: BlockPos,
-            world: org.micoli.micraft.game.world.WorldState,
-        ): Int {
+        fun initialDirectionFrom(yawDegrees: Float, pos: BlockPos, world: WorldState): Direction {
             val blockType = world.getBlock(pos.x, pos.y, pos.z)
             val state = world.getBlockState(pos.x, pos.y, pos.z)
             val connections = RailConnection.all(blockType, state).toList()
-            if (connections.size < 2) return 1
             val yawRad = Math.toRadians(yawDegrees.toDouble())
             val facingX = -sin(yawRad)
             val facingZ = -cos(yawRad)
-            val forward = connections[0]
-            val dot = forward.dx * facingX + forward.dz * facingZ
-            return if (dot >= 0) 1 else -1
+            return connections.maxByOrNull { it.dx * facingX + it.dz * facingZ } ?: Direction.NORTH
         }
     }
 }

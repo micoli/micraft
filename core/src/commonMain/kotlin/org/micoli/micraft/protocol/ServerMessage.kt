@@ -164,6 +164,8 @@ sealed class ServerMessage {
         val npcs: Map<String, String> = emptyMap(),
         val npcDefinitions: Map<String, NpcCodexInfo> = emptyMap(),
         val npcWalkBones: Map<String, Map<String, String>> = emptyMap(),
+        val vehicles: Map<String, String> = emptyMap(),
+        val vehicleDefinitions: Map<String, VehicleCodexInfo> = emptyMap(),
         val plainColors: List<PlainColorInfo> = emptyList(),
         /** See WorldConstants.IMPOSTOR_SKIRT_DEPTH. */
         val impostorSkirtDepth: Int = 12,
@@ -380,6 +382,12 @@ sealed class ServerMessage {
     @ProtoId(57)
     @Serializable
     data class VehicleSpawned(val vehicle: VehicleState) : ServerMessage()
+
+    @ProtoId(58)
+    @Serializable
+    data class VehicleUpdate(val vehicle: VehicleState) : ServerMessage()
+
+    @ProtoId(59) @Serializable data class VehicleDespawned(val id: String) : ServerMessage()
 }
 
 @Serializable
@@ -410,6 +418,7 @@ data class BlockInfo(
     val isCubic: Boolean = true,
     val topColor: List<Int> = minimapColor,
     val sideColor: List<Int> = minimapColor,
+    val connections: List<String> = emptyList(),
 )
 
 /** Palette entry; its position in [ServerMessage.RegistrySync.plainColors] is colorIndex - 1. */
@@ -455,6 +464,14 @@ data class NpcCodexInfo(
     val height: Float,
     val wanderSpeed: Float,
     val autoSpawn: Boolean,
+)
+
+@Serializable
+data class VehicleCodexInfo(
+    val bbmodelFile: String,
+    val width: Float,
+    val height: Float,
+    val speed: Float,
 )
 
 @Serializable

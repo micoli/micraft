@@ -171,4 +171,7 @@ sealed class ClientMessage {
      * switch, but reusable for future stateful blocks (doors, levers).
      */
     @ProtoId(27) @Serializable data class BlockInteract(val pos: BlockPos) : ClientMessage()
+
+    /** Right-click a spawned vehicle to toggle it between moving and stopped. */
+    @ProtoId(28) @Serializable data class VehicleInteract(val vehicleId: String) : ClientMessage()
 }

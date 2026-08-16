@@ -13,6 +13,7 @@ import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.player.rpg.ClassResource
@@ -62,6 +63,7 @@ class CombatProcessor(
     @Volatile private var armorRegistry: Map<String, ArmorDefinition>,
     @Volatile private var classRegistry: Map<String, ClassDefinitionEntry>,
     private val npcManager: NpcManager,
+    private val vehicleManager: VehicleManager = VehicleManager { _ -> },
     private val getSessions: () -> Collection<PlayerSession>,
     private val broadcastCombatLog: suspend (String) -> Unit,
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit,
@@ -660,7 +662,21 @@ class CombatProcessor(
         return if (session.combatState.targetIsNpc) {
             val npc =
                 npcManager.getInstance(targetId)
-                    ?: return ServerMessage.CombatTargetUpdate(targetId, "Unknown", 0, 0)
+                    ?: run {
+                        val vehicle = vehicleManager.get(targetId)
+                        return if (vehicle != null) {
+                            val dist =
+                                distance3(
+                                    pos.x,
+                                    pos.y,
+                                    pos.z,
+                                    vehicle.pos.x,
+                                    vehicle.pos.y,
+                                    vehicle.pos.z)
+                            ServerMessage.CombatTargetUpdate(
+                                targetId, vehicle.type.id, 0, 0, distance = dist)
+                        } else ServerMessage.CombatTargetUpdate(targetId, "Unknown", 0, 0)
+                    }
             val dist =
                 distance3(pos.x, pos.y, pos.z, npc.state.pos.x, npc.state.pos.y, npc.state.pos.z)
             ServerMessage.CombatTargetUpdate(

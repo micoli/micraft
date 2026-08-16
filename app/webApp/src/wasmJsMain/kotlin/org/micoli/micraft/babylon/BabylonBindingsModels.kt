@@ -106,6 +106,23 @@ fun jsSetNpcDead(scene: JsAny, model: JsAny): Unit =
 
 fun jsOpenNpcDialog(json: String): Unit = js("mc.openNpcDialog(json)")
 
+// ── Vehicle models ───────────────────────────────────────────────────────────
+// Mirrors the NPC model bindings above, minus walk-bone animation/highlighting (a rail vehicle
+// never walks, aggros, or dies) — see VehicleManager.kt (game/) for the Kotlin side.
+
+fun jsInitVehicleModels(vehicleTypesJson: String): Unit =
+    js("mc.initVehicleModels(vehicleTypesJson)")
+
+fun jsIsVehicleModelsReady(): Boolean = js("mc.isVehicleModelsReady()")
+
+fun jsCreateVehicleModel(scene: JsAny, vehicleType: String): JsAny? =
+    js("mc.createVehicleModel(scene, vehicleType)")
+
+fun jsSetVehicleTransform(model: JsAny, x: Double, y: Double, z: Double, yaw: Float): Unit =
+    js("mc.setVehicleTransform(model, x, y, z, yaw)")
+
+fun jsDisposeVehicleModel(model: JsAny): Unit = js("mc.disposeVehicleModel(model)")
+
 // ── First person ──────────────────────────────────────────────────────────────
 
 fun jsSetPlayerFirstPerson(model: JsAny, skin: String, enabled: Boolean): Unit =

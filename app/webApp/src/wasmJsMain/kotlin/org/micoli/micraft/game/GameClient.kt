@@ -25,6 +25,7 @@ import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.PlainColor
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldConstants
+import org.micoli.micraft.game.world.rail.Direction
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.ServerMessage
@@ -50,6 +51,13 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private val chunkManager = ChunkManager(scene)
     private val remotePlayerManager = RemotePlayerManager(scene)
     private val npcManager = NpcManager(scene) { localPlayerId }
+    private val vehicleManager = VehicleManager(scene)
+
+    init {
+        npcManager.registerExternalTargets(
+            { vehicleManager.positionsMap() }, { vehicleManager.modelsMap() })
+    }
+
     private var currentPlayerName = ""
     private val localController =
         LocalPlayerController(
@@ -64,6 +72,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             playerName = { currentPlayerName },
             playerId = { localPlayerId ?: "" },
             npcManager = npcManager,
+            isVehicleTarget = { id -> id in vehicleManager.modelsMap() },
         )
 
     init {
@@ -137,6 +146,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 npcManager.playerZ = localController.predZ
                 npcManager.playerYaw = currentYaw.toDouble()
                 npcManager.tick()
+                vehicleManager.tick()
                 remotePlayerManager.tick()
             }
         }
@@ -575,6 +585,11 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             put(ServerMessage.NpcDespawned::class, npcManager)
             put(ServerMessage.NpcInteractResult::class, npcManager)
 
+            // Vehicle — single handler object registered for all vehicle message types
+            put(ServerMessage.VehicleSpawned::class, vehicleManager)
+            put(ServerMessage.VehicleUpdate::class, vehicleManager)
+            put(ServerMessage.VehicleDespawned::class, vehicleManager)
+
             // UI / notifications
             put(
                 ServerMessage.Notification::class,
@@ -647,6 +662,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         brickSize = info.brickSize,
                                         plainColorable = info.plainColorable,
                                         isCubic = info.isCubic,
+                                        connections =
+                                            info.connections.map { Direction.valueOf(it) },
                                     )
                             }
                             .toMap()
@@ -678,6 +695,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         jsInitNpcWalkBones(Json.encodeToString(msg.npcWalkBones))
                     if (msg.npcDefinitions.isNotEmpty())
                         jsSetNpcDefinitions(Json.encodeToString(msg.npcDefinitions))
+                    if (msg.vehicles.isNotEmpty())
+                        jsInitVehicleModels(Json.encodeToString(msg.vehicles))
+                    if (msg.vehicleDefinitions.isNotEmpty())
+                        jsSetVehicleDefinitions(Json.encodeToString(msg.vehicleDefinitions))
                     jsReloadAttackMeta()
                 })
 

@@ -13,6 +13,7 @@ import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.EntityType
+import org.micoli.micraft.game.world.rail.Direction
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testWorld
@@ -40,7 +41,7 @@ class VehicleManagerTest {
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections = listOf("NORTH", "SOUTH"))))
+                            connections = listOf(Direction.NORTH, Direction.SOUTH))))
         VehicleRegistry.load(savedVehicles + mapOf(cart to VehicleDefinition(speed = 2f)))
     }
 
@@ -57,7 +58,7 @@ class VehicleManagerTest {
         val broadcasts = mutableListOf<ServerMessage>()
         val manager = VehicleManager({ broadcasts.add(it) })
 
-        val spawned = manager.spawnVehicle(cart, BlockPos(8, 7, 8), world)
+        val spawned = manager.spawnVehicle(cart, BlockPos(8, 7, 8), world, Direction.SOUTH)
 
         assertNotNull(spawned)
         assertEquals(cart, spawned.type)
@@ -74,7 +75,7 @@ class VehicleManagerTest {
         val broadcasts = mutableListOf<ServerMessage>()
         val manager = VehicleManager({ broadcasts.add(it) })
 
-        val spawned = manager.spawnVehicle(cart, BlockPos(8, 7, 8), world)
+        val spawned = manager.spawnVehicle(cart, BlockPos(8, 7, 8), world, Direction.SOUTH)
 
         assertNull(spawned)
         assertEquals(emptyList(), manager.getAll().toList())
@@ -87,7 +88,9 @@ class VehicleManagerTest {
         world.applyChange(BlockChange(BlockPos(8, 7, 8), rail))
         val manager = VehicleManager({})
 
-        val spawned = manager.spawnVehicle(EntityType("NOT_A_VEHICLE"), BlockPos(8, 7, 8), world)
+        val spawned =
+            manager.spawnVehicle(
+                EntityType("NOT_A_VEHICLE"), BlockPos(8, 7, 8), world, Direction.SOUTH)
 
         assertNull(spawned)
     }
@@ -96,10 +99,12 @@ class VehicleManagerTest {
     fun initialDirectionFrom_picksTheDirectionClosestToPlayerFacing() {
         val world = testWorld()
         world.applyChange(BlockChange(BlockPos(8, 7, 8), rail)) // connections rotated: NORTH, SOUTH
-        // Facing -Z (north, per the documented yaw=0 convention) should pick the NORTH-aligned
-        // direction (index 0 of RailConnection.all for rotation 0).
+        // Facing -Z (north, per the documented yaw=0 convention) should pick NORTH, and the
+        // opposite facing should pick the opposite direction, SOUTH.
         val facingNorth = VehicleAddCommand.initialDirectionFrom(0f, BlockPos(8, 7, 8), world)
         val facingSouth = VehicleAddCommand.initialDirectionFrom(180f, BlockPos(8, 7, 8), world)
-        assertEquals(-facingNorth, facingSouth, "opposite facing picks the opposite direction")
+        assertEquals(Direction.NORTH, facingNorth)
+        assertEquals(Direction.SOUTH, facingSouth)
+        assertEquals(facingNorth.opposite, facingSouth)
     }
 }

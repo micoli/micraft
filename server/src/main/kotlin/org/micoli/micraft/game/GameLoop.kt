@@ -69,6 +69,7 @@ import org.micoli.micraft.game.tick.MovementProcessor
 import org.micoli.micraft.game.trade.TradeConfigLoader
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
+import org.micoli.micraft.game.vehicle.VehicleTickPipeline
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.ItemRegistry
@@ -114,8 +115,10 @@ import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.PlainColorInfo
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.protocol.VehicleCodexInfo
 import org.micoli.micraft.ui.defaultLayout
 import org.micoli.micraft.ui.validateLayouts
+import org.micoli.micraft.vehicle.VehicleRegistry
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("GameLoop")
@@ -232,6 +235,7 @@ class GameLoop(
     private val instanceRegistry: InstanceRegistry = InstanceRegistry(persistence),
     private val railNetworkRegistry: RailNetworkRegistry = RailNetworkRegistry(world),
     private val vehicleManager: VehicleManager = VehicleManager(sessionRegistry::broadcast),
+    private val vehicleTickPipeline: VehicleTickPipeline = VehicleTickPipeline(vehicleManager),
     private val blockInteractor: BlockInteractor =
         BlockInteractor(
             world,
@@ -282,6 +286,7 @@ class GameLoop(
             armorRegistry = armorRegistryLoader.load(),
             classRegistry = classesData.classes,
             npcManager = npcManager,
+            vehicleManager = vehicleManager,
             getSessions = sessionRegistry::all,
             broadcastCombatLog = { msg ->
                 val chatMsg =
@@ -568,6 +573,8 @@ class GameLoop(
     fun getPlayerStates(): List<PlayerState> = sessionRegistry.all().map { it.state }
 
     fun getWorldState(): WorldState = world
+
+    fun railNetworkRegistry(): RailNetworkRegistry = railNetworkRegistry
 
     fun instances(): InstanceRegistry = instanceRegistry
 
@@ -865,6 +872,7 @@ class GameLoop(
                     isCubic = def.isCubic,
                     topColor = def.topColor,
                     sideColor = def.sideColor,
+                    connections = def.connections.map { it.name },
                 )
             }
         val items =
@@ -900,12 +908,29 @@ class GameLoop(
                 .getDefinitions()
                 .filter { it.value.walkBoneAliases.isNotEmpty() }
                 .mapValues { it.value.walkBoneAliases }
+        val vehicles =
+            VehicleRegistry.keys().associate { type ->
+                type.id to VehicleRegistry.get(type)!!.bbmodelFile
+            }
+        val vehicleDefinitions =
+            VehicleRegistry.keys().associate { type ->
+                val def = VehicleRegistry.get(type)!!
+                type.id to
+                    VehicleCodexInfo(
+                        bbmodelFile = def.bbmodelFile,
+                        width = def.width,
+                        height = def.height,
+                        speed = def.speed,
+                    )
+            }
         return ServerMessage.RegistrySync(
             blocks,
             items,
             npcs,
             npcDefinitions,
             npcWalkBones,
+            vehicles,
+            vehicleDefinitions,
             plainColors,
             WorldConstants.IMPOSTOR_SKIRT_DEPTH)
     }
@@ -971,6 +996,9 @@ class GameLoop(
         val npcSavePath =
             persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
         npcManager.load(npcSavePath)
+        val vehicleSavePath =
+            persistence?.worldDir?.resolve("vehicles.yaml") ?: Path.of("data/config/vehicles.yaml")
+        vehicleManager.load(vehicleSavePath)
         persistence?.let {
             GameTimePersistence.load(it.worldDir.resolve("game_time.yaml"), gameTimeService)
         }
@@ -984,6 +1012,9 @@ class GameLoop(
         app.launch {
             val npcSavePath =
                 persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
+            val vehicleSavePath =
+                persistence?.worldDir?.resolve("vehicles.yaml")
+                    ?: Path.of("data/config/vehicles.yaml")
             while (isActive) {
                 delay(TICK_MS)
                 runCatching { tick() }.onFailure { log.error("tick error: {}", it.message, it) }
@@ -993,6 +1024,7 @@ class GameLoop(
                     flushWorld()
                     worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
                     npcManager.save(npcSavePath)
+                    vehicleManager.save(vehicleSavePath)
                     persistence?.let {
                         GameTimePersistence.save(
                             it.worldDir.resolve("game_time.yaml"), gameTimeService)
@@ -1020,6 +1052,9 @@ class GameLoop(
         val npcSavePath =
             persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
         npcManager.save(npcSavePath)
+        val vehicleSavePath =
+            persistence?.worldDir?.resolve("vehicles.yaml") ?: Path.of("data/config/vehicles.yaml")
+        vehicleManager.save(vehicleSavePath)
         persistence?.let {
             GameTimePersistence.save(it.worldDir.resolve("game_time.yaml"), gameTimeService)
         }
@@ -1139,6 +1174,7 @@ class GameLoop(
         worldItems.tickCollection(sessionRegistry.all())
         gameTimeService.tick(TICK_SECONDS.toDouble())
         npcTickPipeline.tick(world, sessionRegistry.all(), combatProcessor)
+        vehicleTickPipeline.tick(world, sessionRegistry.all())
         // In the tick, not in a wall-clock coroutine of its own: driving the slow lane from a
         // separate 5 s loop raced the main tick and gave the same arena a different spawn rate
         // depending on whether the live server or the simulator was running it.
@@ -1427,6 +1463,7 @@ class GameLoop(
                 other.send(ServerMessage.PlayerUpdate(state))
             }
         npcManager.sendAllTo(session)
+        vehicleManager.sendAllTo(session)
         sessionRegistry[id] = session
         broadcastPlayerAdmin(
             """{"type":"playerJoined","id":"$id","name":${playerName.toPlayerAdminJson()},"x":${spawn.x},"y":${spawn.y},"z":${spawn.z},"yaw":0.0}""")
@@ -1463,6 +1500,8 @@ class GameLoop(
                                         }
                                         is ClientMessage.NpcInteract ->
                                             npcManager.handleInteract(session, msg.npcId)
+                                        is ClientMessage.VehicleInteract ->
+                                            vehicleManager.handleInteract(msg.vehicleId)
                                         is ClientMessage.RunMacro -> handleRunMacro(session, msg)
                                         is ClientMessage.RunMacroContent ->
                                             handleRunMacroContent(session, msg)

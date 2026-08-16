@@ -24,6 +24,21 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
     private val aggroNpcIds = mutableSetOf<String>()
     private val deadNpcIds = mutableSetOf<String>()
 
+    // Lets a sibling manager (currently VehicleManager) offer its entities as tab-cycle/interact
+    // targets alongside NPCs, without NpcManager knowing that manager's concrete type.
+    private var externalPositions: () -> Map<String, Vec3> = { emptyMap() }
+    @OptIn(ExperimentalWasmJsInterop::class)
+    private var externalModels: () -> Map<String, JsAny> = { emptyMap() }
+
+    @OptIn(ExperimentalWasmJsInterop::class)
+    fun registerExternalTargets(
+        positions: () -> Map<String, Vec3>,
+        models: () -> Map<String, JsAny>
+    ) {
+        externalPositions = positions
+        externalModels = models
+    }
+
     var playerX = 0.0
     var playerZ = 0.0
     var playerYaw = 0.0
@@ -241,10 +256,10 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
 
     @OptIn(ExperimentalWasmJsInterop::class)
     fun setHighlightTarget(id: String?) {
-        val prevModel = highlightedNpcId?.let { npcModels[it] }
+        val prevModel = highlightedNpcId?.let { npcModels[it] ?: externalModels()[it] }
         if (prevModel != null) jsHighlightNpcModel(scene, prevModel, false)
         highlightedNpcId = id
-        val nextModel = id?.let { npcModels[it] }
+        val nextModel = id?.let { npcModels[it] ?: externalModels()[it] }
         if (nextModel != null) jsHighlightNpcModel(scene, nextModel, true)
     }
 
@@ -260,11 +275,14 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
         val fwdX = sin(playerYaw)
         val fwdZ = cos(playerYaw)
         val renderTime = nowMs() - INTERP_DELAY_MS
-        val sorted =
+        val candidates: List<Pair<String, Vec3>> =
             npcBuffers.entries
                 .filter { (id, _) -> id !in deadNpcIds }
-                .filter { (_, buf) ->
-                    val (pos, _, _) = interpolate(buf, renderTime)
+                .map { (id, buf) -> id to interpolate(buf, renderTime).pos } +
+                externalPositions().entries.map { (id, pos) -> id to pos }
+        val sorted =
+            candidates
+                .filter { (_, pos) ->
                     val dx = pos.x.toDouble() - playerX
                     val dy = pos.y.toDouble() - playerY
                     val dz = pos.z.toDouble() - playerZ
@@ -274,14 +292,13 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
                     if (dist2D < 0.001) return@filter true
                     (dx * fwdX + dz * fwdZ) / dist2D >= halfConeCos
                 }
-                .sortedBy { (_, buf) ->
-                    val (pos, _, _) = interpolate(buf, renderTime)
+                .sortedBy { (_, pos) ->
                     val dx = pos.x.toDouble() - playerX
                     val dy = pos.y.toDouble() - playerY
                     val dz = pos.z.toDouble() - playerZ
                     dx * dx + dy * dy + dz * dz
                 }
-                .map { it.key }
+                .map { it.first }
         if (sorted.isEmpty()) return null
         if (currentId == null) return sorted.first()
         val idx = sorted.indexOf(currentId)
@@ -313,9 +330,10 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
         playerY: Double,
         playerZ: Double
     ): Double? {
-        val buf = npcBuffers[npcId] ?: return null
-        val renderTime = nowMs() - INTERP_DELAY_MS
-        val (pos, _, _) = interpolate(buf, renderTime)
+        val buf = npcBuffers[npcId]
+        val pos =
+            if (buf != null) interpolate(buf, nowMs() - INTERP_DELAY_MS).pos
+            else externalPositions()[npcId] ?: return null
         val dx = pos.x.toDouble() - playerX
         val dy = pos.y.toDouble() - playerY
         val dz = pos.z.toDouble() - playerZ

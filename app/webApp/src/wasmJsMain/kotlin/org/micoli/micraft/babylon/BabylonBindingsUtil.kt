@@ -51,6 +51,8 @@ fun jsSetPlainColors(json: String): Unit = js("mc.setPlainColors(json)")
 
 fun jsSetNpcDefinitions(json: String): Unit = js("mc.setNpcDefinitions(json)")
 
+fun jsSetVehicleDefinitions(json: String): Unit = js("mc.setVehicleDefinitions(json)")
+
 fun jsReloadAttackMeta(): Unit = js("mc.reloadAttackMeta()")
 
 // ── LocalStorage ─────────────────────────────────────────────────────────────

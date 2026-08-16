@@ -160,6 +160,9 @@ object ServerMessageCodec {
             serverEntry<ServerMessage.AdminZoneWireframe>(), // 54
             serverEntry<ServerMessage.InstanceZonesSync>(), // 55
             serverEntry<ServerMessage.EditModeUpdate>(), // 56
+            serverEntry<ServerMessage.VehicleSpawned>(), // 57
+            serverEntry<ServerMessage.VehicleUpdate>(), // 58
+            serverEntry<ServerMessage.VehicleDespawned>(), // 59
         )
 
     fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)
@@ -197,6 +200,7 @@ object ClientMessageCodec {
             clientEntry<ClientMessage.DeleteMail>(), // 24
             clientEntry<ClientMessage.ClaimMailAttachments>(), // 25
             clientEntry<ClientMessage.CreativeCameraFocus>(), // 26
+            clientEntry<ClientMessage.VehicleInteract>(), // 28
         )
 
     fun encode(msg: ClientMessage): ByteArray = encodeWith(registry, msg)
