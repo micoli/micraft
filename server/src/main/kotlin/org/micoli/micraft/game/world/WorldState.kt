@@ -101,6 +101,15 @@ class WorldState(
         return chunks[ChunkPos(chunkX, chunkZ)]?.getState(localX, wy, localZ) ?: 0
     }
 
+    fun getExtraState(wx: Int, wy: Int, wz: Int): Byte {
+        if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return 0
+        val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
+        val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
+        val localX = Math.floorMod(wx, WorldConstants.CHUNK_SIZE)
+        val localZ = Math.floorMod(wz, WorldConstants.CHUNK_SIZE)
+        return chunks[ChunkPos(chunkX, chunkZ)]?.getExtraState(localX, wy, localZ) ?: 0
+    }
+
     override fun hasEntityAt(wx: Int, wy: Int, wz: Int): Boolean {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return false
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)

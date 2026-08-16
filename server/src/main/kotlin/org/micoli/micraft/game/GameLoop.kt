@@ -85,6 +85,7 @@ import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.instance.toProto
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
@@ -227,6 +228,7 @@ class GameLoop(
             dataArmorsPath = Path.of("data/resources/armors"),
         ),
     private val instanceRegistry: InstanceRegistry = InstanceRegistry(persistence),
+    private val railNetworkRegistry: RailNetworkRegistry = RailNetworkRegistry(world),
     private val sceneRegistry: SceneRegistry = SceneRegistry(persistence),
     private val npcConfigLoader: NpcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml")),
     private val npcRegistryLoader: NpcRegistryLoader =
@@ -355,6 +357,7 @@ class GameLoop(
             worldItems,
             liquidManager,
             instanceRegistry = instanceRegistry,
+            railNetworkRegistry = railNetworkRegistry,
         ),
     private val blockPlacer: BlockPlacer =
         BlockPlacer(
@@ -364,6 +367,7 @@ class GameLoop(
             vegetationManager,
             attackRegistry,
             instanceRegistry = instanceRegistry,
+            railNetworkRegistry = railNetworkRegistry,
         ),
     private val movementProcessor: MovementProcessor = MovementProcessor(world),
     private val chunkStreamer: ChunkStreamer = ChunkStreamer(world),

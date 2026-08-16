@@ -17,6 +17,7 @@ import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.instance.InstanceRegistry
+import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.eyeOffset
@@ -36,6 +37,7 @@ class BlockPlacer(
     private val vegetationManager: VegetationManager? = null,
     @Volatile private var attackRegistry: Map<String, AttackDefinition> = emptyMap(),
     private val instanceRegistry: InstanceRegistry? = null,
+    private val railNetworkRegistry: RailNetworkRegistry? = null,
 ) {
     suspend fun handlePlace(session: PlayerSession, intent: ClientMessage.BlockPlace) {
         val rawPos = intent.pos
@@ -95,6 +97,7 @@ class BlockPlacer(
         if (result.changes.isNotEmpty() || result.entityAdds.isNotEmpty()) {
             broadcast(ServerMessage.WorldUpdate(result.changes, entityAdds = result.entityAdds))
         }
+        result.changes.forEach { railNetworkRegistry?.invalidate(it.pos) }
         vegetationManager?.tryActivate(result.pos, blockType)
 
         if (!creative) {

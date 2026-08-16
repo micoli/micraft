@@ -49,6 +49,7 @@ import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
+import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.game.world.weather.WeatherConfig
@@ -427,6 +428,10 @@ class GameLoopModule {
         )
 
     @Single
+    fun railNetworkRegistry(worldState: WorldState): RailNetworkRegistry =
+        RailNetworkRegistry(worldState)
+
+    @Single
     fun blockBreaker(
         worldState: WorldState,
         sessionRegistry: SessionRegistry,
@@ -434,6 +439,7 @@ class GameLoopModule {
         liquidManager: LiquidManager,
         gameConfig: GameConfig,
         instanceRegistry: InstanceRegistry,
+        railNetworkRegistry: RailNetworkRegistry,
     ): BlockBreaker =
         BlockBreaker(
             worldState,
@@ -442,6 +448,7 @@ class GameLoopModule {
             liquidManager,
             bufferSize = gameConfig.blockBreakBufferSize,
             instanceRegistry = instanceRegistry,
+            railNetworkRegistry = railNetworkRegistry,
         )
 
     @Single
@@ -452,6 +459,7 @@ class GameLoopModule {
         vegetationManager: VegetationManager,
         @Named("attacks") attacks: Map<String, AttackDefinition>,
         instanceRegistry: InstanceRegistry,
+        railNetworkRegistry: RailNetworkRegistry,
     ): BlockPlacer =
         BlockPlacer(
             worldState,
@@ -460,6 +468,7 @@ class GameLoopModule {
             vegetationManager,
             attacks,
             instanceRegistry = instanceRegistry,
+            railNetworkRegistry = railNetworkRegistry,
         )
 
     @Single

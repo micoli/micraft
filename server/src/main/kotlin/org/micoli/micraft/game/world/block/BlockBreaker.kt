@@ -14,6 +14,7 @@ import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
+import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.BlockChange
@@ -34,6 +35,7 @@ class BlockBreaker(
     private val liquidManager: LiquidManager? = null,
     private val bufferSize: Int = 1000,
     private val instanceRegistry: InstanceRegistry? = null,
+    private val railNetworkRegistry: RailNetworkRegistry? = null,
 ) {
     private val blockProgress = LinkedHashMap<BlockPos, BlockBreakEntry>()
 
@@ -146,6 +148,7 @@ class BlockBreaker(
                     result.changes,
                     entityRemoves = result.entityRemoves,
                     entityRemovesAt = result.entityRemovesAt))
+            result.changes.forEach { railNetworkRegistry?.invalidate(it.pos) }
             activateAdjacentLiquids(bt)
             val spawned = worldItems.spawnDrops(bt, block, brokenColorIndex)
             session.actionHistory.addLast(WorldActionRecord.Break(bt, block, spawned))
