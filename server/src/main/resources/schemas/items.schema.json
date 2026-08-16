@@ -28,6 +28,12 @@
       },
       "manaRestore": {
         "type": "integer"
+      },
+      "spawnsEntity": {
+        "type": [
+          "string",
+          "null"
+        ]
       }
     }
   }

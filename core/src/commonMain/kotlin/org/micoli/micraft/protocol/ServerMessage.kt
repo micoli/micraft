@@ -22,6 +22,7 @@ import org.micoli.micraft.player.rpg.DerivedStats
 import org.micoli.micraft.quest.QuestProgress
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.ui.defaultLayout
+import org.micoli.micraft.vehicle.VehicleState
 
 @Serializable
 sealed class ServerMessage {
@@ -375,6 +376,10 @@ sealed class ServerMessage {
     @ProtoId(55)
     @Serializable
     data class InstanceZonesSync(val zones: List<InstanceZoneProto>) : ServerMessage()
+
+    @ProtoId(57)
+    @Serializable
+    data class VehicleSpawned(val vehicle: VehicleState) : ServerMessage()
 }
 
 @Serializable

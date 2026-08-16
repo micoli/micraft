@@ -16,6 +16,7 @@ import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.trade.TradeManager
+import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
@@ -64,6 +65,7 @@ class CommandContextModule {
         tradeManager: TradeManager,
         questManager: QuestManager,
         instanceRegistry: InstanceRegistry,
+        vehicleManager: VehicleManager,
     ): CommandContext {
         val generator = worldState.generator as? ProceduralChunkGenerator
         val cavernPoints = generator?.namedCavernPoints() ?: emptyMap()
@@ -112,6 +114,7 @@ class CommandContextModule {
             questManager = questManager,
             namedPoints = { cavernPoints + staircasePoints + instanceNamedPoints() },
             applyBuff = closures.applyBuff,
+            vehicleManager = vehicleManager,
         )
     }
 }

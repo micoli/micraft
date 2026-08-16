@@ -94,6 +94,13 @@ give:
     done: "{0}x {1} accordé(s)."
     unknown: "Objet inconnu : {0}. Disponibles : {1}"
     usage: "Usage : /give <itemType> [N]. Disponibles : {0}"
+vehicule_add:
+  server:
+    done: "Véhicule créé : {0}."
+    unknown: "Véhicule inconnu : {0}. Disponibles : {1}"
+    usage: "Usage : /vehicule:add <vehiculeName>. Disponibles : {0}"
+    not_a_rail: "Vous n'êtes pas sur un bloc rail."
+    unavailable: "Les véhicules ne sont pas disponibles pour le moment."
 craft:
   server:
     done: "{0}x {1} fabriqué(s)."

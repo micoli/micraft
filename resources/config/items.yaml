@@ -191,3 +191,8 @@ RAIL_Y_SPLIT_90:
   placesBlock: RAIL_Y_SPLIT_90
   label: RYS
   bg: "#6E6E78"
+VEHICLE_CART:
+  buildable: false
+  spawnsEntity: CART
+  label: CRT
+  bg: "#8B5A2B"

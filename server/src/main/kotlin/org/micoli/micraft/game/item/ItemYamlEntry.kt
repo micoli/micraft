@@ -14,4 +14,5 @@ data class ItemYamlEntry(
     @JsonSchemaConstraint(pattern = "^#[0-9A-Fa-f]{6}$") val bg: String = "",
     val healthRestore: Int = 0,
     val manaRestore: Int = 0,
+    val spawnsEntity: String? = null,
 )

@@ -68,6 +68,8 @@ import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.MovementProcessor
 import org.micoli.micraft.game.trade.TradeConfigLoader
 import org.micoli.micraft.game.trade.TradeManager
+import org.micoli.micraft.game.vehicle.VehicleManager
+import org.micoli.micraft.game.vehicle.VehicleRegistryLoader
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.biome.BiomeRegistry
@@ -156,6 +158,7 @@ fun Application.module() {
     val blockRegistryLoader = get<BlockRegistryLoader>()
     val itemRegistryLoader = get<ItemRegistryLoader>()
     val plainColorRegistryLoader = get<PlainColorRegistryLoader>()
+    val vehicleRegistryLoader = get<VehicleRegistryLoader>()
 
     val biomeFile = Path.of(dataPath + "/config/biomes.yaml")
     val biomeResourcesFile = resourcesConfigDir.resolve("biomes.yaml")
@@ -177,7 +180,11 @@ fun Application.module() {
         } else null
 
     val reloadRegistries: () -> Unit = {
-        loadRegistries(blockRegistryLoader, itemRegistryLoader, plainColorRegistryLoader)
+        loadRegistries(
+            blockRegistryLoader,
+            itemRegistryLoader,
+            plainColorRegistryLoader,
+            vehicleRegistryLoader)
     }
 
     val reloadGameConfigLambda: () -> Unit = {
@@ -246,6 +253,7 @@ fun Application.module() {
             npcSubsystemFactory = get<NpcSubsystemFactory>(),
             npcManager = get<NpcManager>(),
             npcSpawner = get<NpcSpawner>(),
+            vehicleManager = get<VehicleManager>(),
             combatConfig = get<CombatConfigData>(),
             attackRegistry = get(named("attacks")),
             spellRegistry = get(named("spells")),

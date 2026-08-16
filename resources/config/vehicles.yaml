@@ -1,0 +1,5 @@
+CART:
+  bbmodelFile: CART
+  width: 0.8
+  height: 0.8
+  speed: 2.0

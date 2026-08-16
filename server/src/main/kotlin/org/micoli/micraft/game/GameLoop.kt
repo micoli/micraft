@@ -68,6 +68,7 @@ import org.micoli.micraft.game.tick.IntentCollector
 import org.micoli.micraft.game.tick.MovementProcessor
 import org.micoli.micraft.game.trade.TradeConfigLoader
 import org.micoli.micraft.game.trade.TradeManager
+import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.ItemRegistry
@@ -230,6 +231,7 @@ class GameLoop(
         ),
     private val instanceRegistry: InstanceRegistry = InstanceRegistry(persistence),
     private val railNetworkRegistry: RailNetworkRegistry = RailNetworkRegistry(world),
+    private val vehicleManager: VehicleManager = VehicleManager(sessionRegistry::broadcast),
     private val blockInteractor: BlockInteractor =
         BlockInteractor(
             world,
@@ -505,6 +507,7 @@ class GameLoop(
             savePlayer = closures.savePlayer,
             worldItems = worldItems,
             npcManager = npcManager,
+            vehicleManager = vehicleManager,
             getGameTime = closures.getGameTime,
             setGameTime = closures.setGameTime,
             refetchChunks = closures.refetchChunks,

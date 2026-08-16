@@ -12,6 +12,7 @@ import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.trade.TradeManager
+import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.WorldState
@@ -32,6 +33,7 @@ data class CommandContext(
     val savePlayer: (PlayerSession) -> Unit = {},
     val worldItems: WorldItemManager? = null,
     val npcManager: NpcManager? = null,
+    val vehicleManager: VehicleManager? = null,
     val getGameTime: () -> Long = { 0L },
     val setGameTime: (Long) -> Unit = {},
     val refetchChunks: (suspend (PlayerSession) -> Unit)? = null,

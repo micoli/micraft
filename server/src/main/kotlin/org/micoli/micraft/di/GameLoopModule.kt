@@ -42,6 +42,7 @@ import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.MovementProcessor
 import org.micoli.micraft.game.trade.TradeConfigLoader
 import org.micoli.micraft.game.trade.TradeManager
+import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.block.BlockBreaker
@@ -292,6 +293,7 @@ class GameLoopModule {
         @Named("attacks") attacks: Map<String, AttackDefinition>,
         classesConfigData: ClassesConfigData,
         npcManager: NpcManager,
+        vehicleManager: VehicleManager,
         sessionRegistry: SessionRegistry,
         chatService: ChatService,
         i18nConfig: I18nConfig,
@@ -305,6 +307,7 @@ class GameLoopModule {
             armorRegistry = armorRegistry,
             classRegistry = classesConfigData.classes,
             npcManager = npcManager,
+            vehicleManager = vehicleManager,
             getSessions = sessionRegistry::all,
             broadcastCombatLog = { msg ->
                 val chatMsg =
@@ -431,6 +434,10 @@ class GameLoopModule {
     @Single
     fun railNetworkRegistry(worldState: WorldState): RailNetworkRegistry =
         RailNetworkRegistry(worldState)
+
+    @Single
+    fun vehicleManager(sessionRegistry: SessionRegistry): VehicleManager =
+        VehicleManager(sessionRegistry::broadcast)
 
     @Single
     fun blockInteractor(
