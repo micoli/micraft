@@ -79,6 +79,7 @@ import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.block.BlockBreaker
+import org.micoli.micraft.game.world.block.BlockInteractor
 import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
 import org.micoli.micraft.game.world.instance.InstanceRegistry
@@ -229,6 +230,13 @@ class GameLoop(
         ),
     private val instanceRegistry: InstanceRegistry = InstanceRegistry(persistence),
     private val railNetworkRegistry: RailNetworkRegistry = RailNetworkRegistry(world),
+    private val blockInteractor: BlockInteractor =
+        BlockInteractor(
+            world,
+            sessionRegistry::broadcast,
+            instanceRegistry = instanceRegistry,
+            railNetworkRegistry = railNetworkRegistry,
+        ),
     private val sceneRegistry: SceneRegistry = SceneRegistry(persistence),
     private val npcConfigLoader: NpcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml")),
     private val npcRegistryLoader: NpcRegistryLoader =
@@ -543,6 +551,7 @@ class GameLoop(
             blockBreaker,
             blockPlacer,
             ::handleCommand,
+            blockInteractor = blockInteractor,
             onChatSend = { session, channel, text ->
                 chatService.routeMessage(session, channel, text)
             },

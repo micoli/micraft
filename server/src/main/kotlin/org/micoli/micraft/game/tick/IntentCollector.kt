@@ -6,6 +6,7 @@ import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.hasPermission
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.block.BlockBreaker
+import org.micoli.micraft.game.world.block.BlockInteractor
 import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.protocol.ClientMessage
 import org.slf4j.LoggerFactory
@@ -16,6 +17,7 @@ class IntentCollector(
     private val blockBreaker: BlockBreaker,
     private val blockPlacer: BlockPlacer,
     private val onCommand: suspend (PlayerSession, String) -> Unit,
+    private val blockInteractor: BlockInteractor? = null,
     private val onChatSend: suspend (PlayerSession, String, String) -> Unit = { _, _, _ -> },
     private val combatProcessor: CombatProcessor? = null,
     private val spellProcessor: SpellProcessor? = null,
@@ -59,6 +61,9 @@ class IntentCollector(
                     if (session.hasPermission("action.place"))
                         blockPlacer.handlePlace(session, intent)
                 is ClientMessage.ShortcutBarSet -> blockPlacer.handleShortcutBarSet(session, intent)
+                is ClientMessage.BlockInteract ->
+                    if (session.hasPermission("action.place"))
+                        blockInteractor?.handleInteract(session, intent)
                 is ClientMessage.Command -> onCommand(session, intent.text)
                 is ClientMessage.ChatSend -> onChatSend(session, intent.channel, intent.text)
                 is ClientMessage.SetCombatTarget ->

@@ -17,12 +17,16 @@ object RailConnection {
     fun isJunction(blockType: BlockType): Boolean =
         BlockRegistry.get(blockType).connections.size > 2
 
+    /** Number of switchable branches beyond the fixed entry — 0 for a non-junction piece. */
+    fun branchCount(blockType: BlockType): Int =
+        (BlockRegistry.get(blockType).connections.size - 1).coerceAtLeast(0)
+
     /** Every connection this placement exposes (rotated), regardless of switch state. */
     fun all(blockType: BlockType, state: Byte): Set<Direction> {
         val def = BlockRegistry.get(blockType)
         if (def.connections.isEmpty()) return emptySet()
         val rotation = BlockState.rotation(state)
-        return def.connections.mapTo(linkedSetOf()) { Direction.valueOf(it).rotatedBy(rotation) }
+        return def.connections.mapTo(linkedSetOf()) { it.rotatedBy(rotation) }
     }
 
     /**
@@ -38,7 +42,7 @@ object RailConnection {
         val def = BlockRegistry.get(blockType)
         if (def.connections.isEmpty()) return emptySet()
         val rotation = BlockState.rotation(state)
-        val rotated = def.connections.map { Direction.valueOf(it).rotatedBy(rotation) }
+        val rotated = def.connections.map { it.rotatedBy(rotation) }
         if (rotated.size <= 2) return rotated.toSet()
         val branches = rotated.drop(1)
         val branchIndex = BlockState.extra(extraState).coerceIn(0, branches.size - 1)

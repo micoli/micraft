@@ -164,4 +164,11 @@ sealed class ClientMessage {
     @ProtoId(26)
     @Serializable
     data class CreativeCameraFocus(val x: Float, val z: Float) : ClientMessage()
+
+    /**
+     * Right-click interaction with a placed block (as opposed to breaking or placing it) — generic
+     * mechanism, dispatched server-side by block type. First consumer: toggling a RAIL_Y_SPLIT_90
+     * switch, but reusable for future stateful blocks (doors, levers).
+     */
+    @ProtoId(27) @Serializable data class BlockInteract(val pos: BlockPos) : ClientMessage()
 }

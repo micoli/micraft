@@ -47,6 +47,7 @@ ui:
 
 building:
   place_rotate: [KeyR]
+  block_interact: [KeyC]
 
 hotbar:
   slot_1: [Digit1]

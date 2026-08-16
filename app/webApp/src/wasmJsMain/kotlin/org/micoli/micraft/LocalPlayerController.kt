@@ -64,6 +64,7 @@ class LocalPlayerController(
     private val playerName: () -> String,
     private val playerId: () -> String,
     private val npcManager: NpcManager,
+    private val isVehicleTarget: (String) -> Boolean = { false },
 ) {
     var predX = 0.0
     var predY = 0.0
@@ -87,6 +88,7 @@ class LocalPlayerController(
     var lastPlayerCz = Int.MIN_VALUE
     private var viewMode: ViewMode = ViewMode.FIRST_PERSON
     var pendingFlyToggle = false
+    private var pendingBlockInteract = false
     var autoAdvance = false
     var lastSentIntent: ClientMessage.MoveIntent? = null
     var disconnectRequested = false
@@ -568,6 +570,7 @@ class LocalPlayerController(
                 event == "screenshot" -> jsTakeScreenshot(scene, camera, playerId())
                 event == "undo" -> outMessages.trySend(ClientMessage.Command("/undo 1"))
                 event == "fly_toggle" -> pendingFlyToggle = true
+                event == "block_interact" -> pendingBlockInteract = true
                 event == "auto_forward" -> autoAdvance = !autoAdvance
                 event == "place_rotate" -> placementRotation = (placementRotation + 1) % 4
                 event == "slot_1" -> activateSlot(0)
@@ -600,7 +603,9 @@ class LocalPlayerController(
                 }
                 event == "npc_interact" -> {
                     val targetId = currentCombatTargetId ?: return@repeat
-                    outMessages.trySend(ClientMessage.NpcInteract(targetId))
+                    outMessages.trySend(
+                        if (isVehicleTarget(targetId)) ClientMessage.VehicleInteract(targetId)
+                        else ClientMessage.NpcInteract(targetId))
                 }
                 event == "combat_attack" -> {
                     val targetId = currentCombatTargetId ?: return@repeat
@@ -825,6 +830,11 @@ class LocalPlayerController(
 
         val rayResult = raycastBlock(maxInteractionDistance)
         val target = rayResult?.target
+
+        if (pendingBlockInteract) {
+            pendingBlockInteract = false
+            target?.let { outMessages.trySend(ClientMessage.BlockInteract(it)) }
+        }
 
         if (viewMode == ViewMode.THIRD_PERSON) {
             localPlayerModel?.let { jsSetPlayerAlpha(it, if (target != null) 0.35 else 1.0) }
@@ -1454,6 +1464,10 @@ class LocalPlayerController(
         if (parts.size == 2 && parts[0] == "/spawn") {
             val t = hoverTarget ?: return cmd
             return "/spawn ${parts[1]} ${t.x} ${t.y + 1} ${t.z}"
+        }
+        if (parts.size == 2 && parts[0] == "/vehicule:add") {
+            val t = hoverTarget ?: return cmd
+            return "/vehicule:add ${parts[1]} ${t.x} ${t.y} ${t.z}"
         }
         if (parts.size != 1) return cmd
         return when (parts[0]) {

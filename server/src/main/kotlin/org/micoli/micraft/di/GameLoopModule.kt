@@ -45,6 +45,7 @@ import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.block.BlockBreaker
+import org.micoli.micraft.game.world.block.BlockInteractor
 import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
 import org.micoli.micraft.game.world.instance.InstanceRegistry
@@ -430,6 +431,20 @@ class GameLoopModule {
     @Single
     fun railNetworkRegistry(worldState: WorldState): RailNetworkRegistry =
         RailNetworkRegistry(worldState)
+
+    @Single
+    fun blockInteractor(
+        worldState: WorldState,
+        sessionRegistry: SessionRegistry,
+        instanceRegistry: InstanceRegistry,
+        railNetworkRegistry: RailNetworkRegistry,
+    ): BlockInteractor =
+        BlockInteractor(
+            worldState,
+            sessionRegistry::broadcast,
+            instanceRegistry = instanceRegistry,
+            railNetworkRegistry = railNetworkRegistry,
+        )
 
     @Single
     fun blockBreaker(

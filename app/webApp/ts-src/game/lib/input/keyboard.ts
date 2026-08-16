@@ -167,6 +167,7 @@ export function registerKeyboard(): Pick<
         if (b.fly_toggle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("fly_toggle");
         if (b.auto_forward?.some((k) => matchesEvent(k, e))) window.mcState.events.push("auto_forward");
         if (b.place_rotate?.some((k) => matchesEvent(k, e))) window.mcState.events.push("place_rotate");
+        if (b.block_interact?.some((k) => matchesEvent(k, e))) window.mcState.events.push("block_interact");
         if (b.combat_target_cycle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_target_cycle");
         if (b.combat_attack?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_attack");
         if (b.npc_interact?.some((k) => matchesEvent(k, e))) window.mcState.events.push("npc_interact");

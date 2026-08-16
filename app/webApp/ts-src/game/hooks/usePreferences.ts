@@ -42,6 +42,7 @@ const ACTION_GROUPS: Record<string, string[]> = {
     "auto_forward",
   ],
   combat: ["combat_target_cycle", "npc_interact"],
+  building: ["place_rotate", "block_interact"],
   flight: ["fly_toggle", "ascend", "descend", "speed_up", "speed_down"],
   ui: [
     "view_toggle",
