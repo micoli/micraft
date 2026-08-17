@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { PreferencesData, CommandInfo, ChannelSubscription } from "../types";
 
+// Mirrors the compiled-in client defaults in GameClient.kt (DEFAULT_FORWARD_VIEW_RADIUS,
+// DEFAULT_IMPOSTOR_RADIUS_CHUNKS) — used to compute effective values for coherence clamping
+// when a field isn't overridden (null).
+const DEFAULT_FORWARD_VIEW_RADIUS = 7;
+const DEFAULT_IMPOSTOR_RADIUS_CHUNKS = 5;
+
 export interface SavePayload {
   subscribedChannels: ChannelSubscription[];
   disabledCommands: string[];
@@ -19,6 +25,7 @@ export interface SavePayload {
   overrideForwardViewRadius: number | null;
   overrideUseImpostor: boolean | null;
   overrideImpostorRadiusChunks: number | null;
+  overrideImpostorFovBonusChunks: number | null;
   continuousBreak: boolean;
 }
 
@@ -123,9 +130,17 @@ interface UsePreferencesParams {
   initialTab?: Tab;
   onSave: (payload: SavePayload) => void;
   onClose: () => void;
+  onLiveOverride?: (partial: Partial<PreferencesData>) => void;
 }
 
-export function usePreferences({ open, preferences, initialTab, onSave, onClose: _onClose }: UsePreferencesParams) {
+export function usePreferences({
+  open,
+  preferences,
+  initialTab,
+  onSave,
+  onClose: _onClose,
+  onLiveOverride,
+}: UsePreferencesParams) {
   const [tab, setTab] = useState<Tab>(initialTab ?? "chat");
   const [localSubscribed, setLocalSubscribed] = useState<Set<string>>(new Set());
   const [localAutoFocus, setLocalAutoFocus] = useState<Set<string>>(new Set());
@@ -141,9 +156,77 @@ export function usePreferences({ open, preferences, initialTab, onSave, onClose:
   const [localFov, setLocalFov] = useState(70);
   const [localShadowAngleDeg, setLocalShadowAngleDeg] = useState(1);
   const [localOverrideViewRadius, setLocalOverrideViewRadius] = useState<number | null>(null);
-  const [localOverrideForwardViewRadius, setLocalOverrideForwardViewRadius] = useState<number | null>(null);
+  const [localOverrideForwardViewRadius, setLocalOverrideForwardViewRadiusRaw] = useState<number | null>(null);
   const [localOverrideUseImpostor, setLocalOverrideUseImpostor] = useState<boolean | null>(null);
-  const [localOverrideImpostorRadiusChunks, setLocalOverrideImpostorRadiusChunks] = useState<number | null>(null);
+  const [localOverrideImpostorRadiusChunks, setLocalOverrideImpostorRadiusChunksRaw] = useState<number | null>(null);
+  const [localOverrideImpostorFovBonusChunks, setLocalOverrideImpostorFovBonusChunksRaw] = useState<number | null>(
+    null,
+  );
+
+  // Keep forward/impostor-radius/FOV-bonus overrides coherent with each other: impostorRadius
+  // <= forward, and impostorRadius + fovBonus <= forward (mirrors ChunkManager.kt's
+  // effectiveImpostorRadius, which only ever needs distances up to forward view radius).
+  const setLocalOverrideForwardViewRadius = (v: number | null) => {
+    setLocalOverrideForwardViewRadiusRaw(v);
+    if (v === null) return;
+    if (localOverrideImpostorRadiusChunks !== null && localOverrideImpostorRadiusChunks > v) {
+      setLocalOverrideImpostorRadiusChunksRaw(v);
+    }
+    const cappedImpostor = Math.min(localOverrideImpostorRadiusChunks ?? DEFAULT_IMPOSTOR_RADIUS_CHUNKS, v);
+    if (localOverrideImpostorFovBonusChunks !== null && cappedImpostor + localOverrideImpostorFovBonusChunks > v) {
+      setLocalOverrideImpostorFovBonusChunksRaw(Math.max(0, v - cappedImpostor));
+    }
+  };
+
+  const setLocalOverrideImpostorRadiusChunks = (v: number | null) => {
+    const forward = localOverrideForwardViewRadius ?? DEFAULT_FORWARD_VIEW_RADIUS;
+    const clamped = v === null ? null : Math.min(v, forward);
+    setLocalOverrideImpostorRadiusChunksRaw(clamped);
+    if (
+      clamped !== null &&
+      localOverrideImpostorFovBonusChunks !== null &&
+      clamped + localOverrideImpostorFovBonusChunks > forward
+    ) {
+      setLocalOverrideImpostorFovBonusChunksRaw(Math.max(0, forward - clamped));
+    }
+  };
+
+  const setLocalOverrideImpostorFovBonusChunks = (v: number | null) => {
+    const forward = localOverrideForwardViewRadius ?? DEFAULT_FORWARD_VIEW_RADIUS;
+    const impostorRadius = localOverrideImpostorRadiusChunks ?? DEFAULT_IMPOSTOR_RADIUS_CHUNKS;
+    const clamped = v === null ? null : Math.min(v, Math.max(0, forward - impostorRadius));
+    setLocalOverrideImpostorFovBonusChunksRaw(clamped);
+  };
+  // Push chunk-render overrides to the server as soon as they diverge from what's already
+  // applied (debounced), instead of only on Save — lets the live full/impostor chunk counters
+  // in the Graphics tab reflect a slider change without needing to save-and-close first.
+  useEffect(() => {
+    if (!open || !preferences) return;
+    const changed =
+      localOverrideForwardViewRadius !== (preferences.overrideForwardViewRadius ?? null) ||
+      localOverrideImpostorRadiusChunks !== (preferences.overrideImpostorRadiusChunks ?? null) ||
+      localOverrideImpostorFovBonusChunks !== (preferences.overrideImpostorFovBonusChunks ?? null) ||
+      localOverrideUseImpostor !== (preferences.overrideUseImpostor ?? null);
+    if (!changed) return;
+    const handle = setTimeout(() => {
+      onLiveOverride?.({
+        overrideForwardViewRadius: localOverrideForwardViewRadius,
+        overrideImpostorRadiusChunks: localOverrideImpostorRadiusChunks,
+        overrideImpostorFovBonusChunks: localOverrideImpostorFovBonusChunks,
+        overrideUseImpostor: localOverrideUseImpostor,
+      });
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [
+    open,
+    preferences,
+    localOverrideForwardViewRadius,
+    localOverrideImpostorRadiusChunks,
+    localOverrideImpostorFovBonusChunks,
+    localOverrideUseImpostor,
+    onLiveOverride,
+  ]);
+
   const [localBindings, setLocalBindings] = useState<Record<string, string[]>>({});
   const [localCustomCmds, setLocalCustomCmds] = useState<CustomCmdEntry[]>([]);
   const [recording, setRecording] = useState<{ action: string; index: number } | null>(null);
@@ -173,9 +256,12 @@ export function usePreferences({ open, preferences, initialTab, onSave, onClose:
       setLocalFov(preferences.fieldOfView ?? 70);
       setLocalShadowAngleDeg(preferences.shadowAngleDeg ?? 1);
       setLocalOverrideViewRadius(preferences.overrideViewRadius ?? null);
-      setLocalOverrideForwardViewRadius(preferences.overrideForwardViewRadius ?? null);
+      // Raw setters here: the saved combination is already coherent, and the wrapped
+      // setters below would clamp against stale state from earlier in this same batch.
+      setLocalOverrideForwardViewRadiusRaw(preferences.overrideForwardViewRadius ?? null);
       setLocalOverrideUseImpostor(preferences.overrideUseImpostor ?? null);
-      setLocalOverrideImpostorRadiusChunks(preferences.overrideImpostorRadiusChunks ?? null);
+      setLocalOverrideImpostorRadiusChunksRaw(preferences.overrideImpostorRadiusChunks ?? null);
+      setLocalOverrideImpostorFovBonusChunksRaw(preferences.overrideImpostorFovBonusChunks ?? null);
       setLocalBindings(preferences.keybindings ? { ...preferences.keybindings } : {});
       setLocalCustomCmds(Object.entries(preferences.customCommands || {}).map(([text, keys]) => ({ text, keys })));
       setRecording(null);
@@ -378,6 +464,7 @@ export function usePreferences({ open, preferences, initialTab, onSave, onClose:
       overrideForwardViewRadius: localOverrideForwardViewRadius,
       overrideUseImpostor: localOverrideUseImpostor,
       overrideImpostorRadiusChunks: localOverrideImpostorRadiusChunks,
+      overrideImpostorFovBonusChunks: localOverrideImpostorFovBonusChunks,
     });
   };
 
@@ -431,6 +518,8 @@ export function usePreferences({ open, preferences, initialTab, onSave, onClose:
     setLocalOverrideUseImpostor,
     localOverrideImpostorRadiusChunks,
     setLocalOverrideImpostorRadiusChunks,
+    localOverrideImpostorFovBonusChunks,
+    setLocalOverrideImpostorFovBonusChunks,
     localBindings,
     localCustomCmds,
     recording,

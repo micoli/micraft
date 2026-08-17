@@ -1172,6 +1172,8 @@ class LocalPlayerController(
                 jitterMax,
                 chunkDownloading,
                 chunkMeshing,
+                chunkManager.fullMeshedChunkCount,
+                chunkManager.impostorChunkCount,
                 hudWeather,
                 hudZoneLevel,
             )
@@ -1200,6 +1202,8 @@ class LocalPlayerController(
                     tickJitterMaxMs = jitterMax,
                     chunkDownloading = chunkDownloading,
                     chunkMeshing = chunkMeshing,
+                    fullMeshedChunks = chunkManager.fullMeshedChunkCount,
+                    impostorMeshedChunks = chunkManager.impostorChunkCount,
                     weather = hudWeather,
                     zoneLevel = hudZoneLevel,
                 )

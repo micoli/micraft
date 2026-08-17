@@ -28,6 +28,8 @@ export interface HudData {
   tickJitterMaxMs: number;
   chunkDownloading: number;
   chunkMeshing: number;
+  fullMeshedChunks: number;
+  impostorMeshedChunks: number;
   zoneLevel: number;
 }
 
@@ -181,6 +183,7 @@ export interface PreferencesData {
   overrideForwardViewRadius?: number | null;
   overrideUseImpostor?: boolean | null;
   overrideImpostorRadiusChunks?: number | null;
+  overrideImpostorFovBonusChunks?: number | null;
   continuousBreak: boolean;
 }
 

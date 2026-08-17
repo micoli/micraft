@@ -430,6 +430,9 @@ export function GameScreen() {
             open={state.preferencesOpen}
             preferences={state.preferences}
             initialTab={state.preferencesTab}
+            fullMeshedChunks={state.hud?.fullMeshedChunks ?? 0}
+            impostorMeshedChunks={state.hud?.impostorMeshedChunks ?? 0}
+            onLiveOverride={setPendingPrefs}
             onSave={handlePreferencesSave}
             onClose={() => {
               dispatch("preferences_hide");

@@ -388,6 +388,8 @@ export function GameUI() {
       tickJitterMaxMs: number,
       chunkDownloading: number,
       chunkMeshing: number,
+      fullMeshedChunks: number,
+      impostorMeshedChunks: number,
       weather: string,
       zoneLevel: number,
     ) => {
@@ -420,6 +422,8 @@ export function GameUI() {
           tickJitterMaxMs,
           chunkDownloading,
           chunkMeshing,
+          fullMeshedChunks,
+          impostorMeshedChunks,
           weather,
           zoneLevel,
         },

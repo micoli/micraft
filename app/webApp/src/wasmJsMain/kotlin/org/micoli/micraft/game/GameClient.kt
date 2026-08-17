@@ -41,7 +41,8 @@ private const val SKY_B = 0.98
 private const val DEFAULT_VIEW_RADIUS = 3
 private const val DEFAULT_FORWARD_VIEW_RADIUS = 7
 private const val DEFAULT_USE_IMPOSTOR = true
-private const val DEFAULT_IMPOSTOR_RADIUS_CHUNKS = 3
+private const val DEFAULT_IMPOSTOR_RADIUS_CHUNKS = 5
+private const val DEFAULT_IMPOSTOR_FOV_BONUS_CHUNKS = 2
 
 class GameClient
 @OptIn(ExperimentalWasmJsInterop::class)
@@ -536,7 +537,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         httpChunkFetcher?.trigger(currentPlayerCx, currentPlayerCz, currentYaw)
                         localController.updateFromServer(s) { cx, cz ->
                             chunkManager.unloadDistantChunks(cx, cz)
-                            chunkManager.upgradeNearImpostors(cx, cz)
+                            chunkManager.reevaluateImpostors(cx, cz, currentYaw.toDouble())
                         }
                     } else {
                         remotePlayerManager.updateFromServer(s)
@@ -824,6 +825,14 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     chunkManager.useImpostor = msg.overrideUseImpostor ?: DEFAULT_USE_IMPOSTOR
                     chunkManager.impostorRadiusChunks =
                         msg.overrideImpostorRadiusChunks ?: DEFAULT_IMPOSTOR_RADIUS_CHUNKS
+                    chunkManager.impostorFovBonusChunks =
+                        msg.overrideImpostorFovBonusChunks ?: DEFAULT_IMPOSTOR_FOV_BONUS_CHUNKS
+                    // Apply the new radii/impostor settings right away instead of waiting for
+                    // the player to cross a chunk boundary (see onChunkChanged above).
+                    chunkManager.unloadDistantChunks(currentPlayerCx, currentPlayerCz)
+                    chunkManager.reevaluateImpostors(
+                        currentPlayerCx, currentPlayerCz, currentYaw.toDouble())
+                    httpChunkFetcher?.trigger(currentPlayerCx, currentPlayerCz, currentYaw)
                     uiState.setPreferencesSync(
                         Json.encodeToString<ServerMessage.PreferencesSync>(msg))
                 })

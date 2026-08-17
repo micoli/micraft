@@ -481,6 +481,8 @@ declare global {
       tickJitterMaxMs: number,
       chunkDownloading: number,
       chunkMeshing: number,
+      fullMeshedChunks: number,
+      impostorMeshedChunks: number,
       weather: string,
       zoneLevel: number,
     ): void;

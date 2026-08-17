@@ -29,6 +29,8 @@ data class HudData(
     val tickJitterMaxMs: Double = 0.0,
     val chunkDownloading: Int = 0,
     val chunkMeshing: Int = 0,
+    val fullMeshedChunks: Int = 0,
+    val impostorMeshedChunks: Int = 0,
     val weather: String = "",
     val zoneLevel: Int = 0,
 )

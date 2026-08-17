@@ -68,11 +68,17 @@ private const val DEFAULT_USE_IMPOSTOR = true
 // gets full block geometry; beyond it, a cheap flat impostor (buildChunkImpostorMesh) instead.
 // FORWARD_VIEW_RADIUS is 7, so this still leaves a generous full-detail radius while cutting
 // geometry cost on the outer rings, which is most of a 15×15 candidate area by cell count.
-// Decided once when a chunk is first meshed — a chunk doesn't get upgraded/downgraded later if
-// the viewer moves closer/farther without the chunk itself unloading and reloading.
-// Default 3 — overridable per-player via graphics preferences (see
+// Re-evaluated on every player chunk-change and graphics-preference update — see
+// reevaluateImpostors().
+// Default 5 — overridable per-player via graphics preferences (see
 // ChunkManager.impostorRadiusChunks).
-private const val DEFAULT_IMPOSTOR_RADIUS_CHUNKS = 3
+private const val DEFAULT_IMPOSTOR_RADIUS_CHUNKS = 5
+
+// Extra radius (chunks) granted to candidates inside the ~60° forward FOV cone (see
+// inFovCone) on top of impostorRadiusChunks — chunks the player is actually looking at keep
+// full geometry all the way out to the loaded-chunk edge, while peripheral/rear chunks still
+// switch to impostor at the base radius. Sized so base + bonus reaches FORWARD_VIEW_RADIUS.
+private const val DEFAULT_IMPOSTOR_FOV_BONUS_CHUNKS = 2
 
 // Plain color index rides in bits 18-23 of the ao int (bits 0-15 = AO, 16-17 = yOffset).
 private const val COLOR_SHIFT = 18
@@ -90,14 +96,22 @@ private data class ChunkRender(
 class ChunkManager(private val scene: JsAny) {
     var useImpostor: Boolean = DEFAULT_USE_IMPOSTOR
     var impostorRadiusChunks: Int = DEFAULT_IMPOSTOR_RADIUS_CHUNKS
+    var impostorFovBonusChunks: Int = DEFAULT_IMPOSTOR_FOV_BONUS_CHUNKS
 
     val loadedChunks = mutableSetOf<ChunkPos>()
 
     // Chunks currently meshed as a flat impostor rather than full geometry — see
-    // IMPOSTOR_RADIUS_CHUNKS. Tracked so upgradeNearImpostors() can promote them to full
-    // detail once the viewer gets close enough, since the impostor/full choice is otherwise
-    // only made once, at first mesh (see USE_IMPOSTOR comment above).
+    // IMPOSTOR_RADIUS_CHUNKS. Tracked so reevaluateImpostors() can promote/demote them
+    // between impostor and full detail as the viewer moves or graphics prefs change, since
+    // the impostor/full choice is otherwise only made once, at first mesh (see
+    // USE_IMPOSTOR comment above).
     private val impostorChunks = mutableSetOf<ChunkPos>()
+    val impostorChunkCount: Int
+        get() = impostorChunks.size
+
+    val fullMeshedChunkCount: Int
+        get() = loadedChunks.size - impostorChunks.size
+
     val chunkData = mutableMapOf<ChunkPos, Pair<Chunk, Int>>()
     private val pendingChunks = mutableListOf<Pair<Chunk, Int>>()
     private var pendingChunksDirty = false
@@ -263,9 +277,10 @@ class ChunkManager(private val scene: JsAny) {
                 if (useImpostor) {
                     val viewerCx = jsGetActiveCameraChunkX(scene)
                     val viewerCz = jsGetActiveCameraChunkZ(scene)
-                    val viewerDist =
-                        maxOf(abs(chunk.pos.cx - viewerCx), abs(chunk.pos.cz - viewerCz))
-                    if (viewerDist > impostorRadiusChunks) {
+                    val dx = chunk.pos.cx - viewerCx
+                    val dz = chunk.pos.cz - viewerCz
+                    val viewerDist = maxOf(abs(dx), abs(dz))
+                    if (viewerDist > effectiveImpostorRadius(dx, dz, yaw)) {
                         pushMinimapChunk(chunk, topY)
                         jsBuildChunkImpostor(scene, chunk.pos.cx, chunk.pos.cz)
                         loadedChunks.add(chunk.pos)
@@ -312,10 +327,7 @@ class ChunkManager(private val scene: JsAny) {
         val dist = sqrt((dx * dx + dz * dz).toDouble())
         if (dist == 0.0) return 0.0
         if (dist <= sqrt(2.0) + 0.01) return 1000.0 + dist
-        val fwdX = sin(yaw)
-        val fwdZ = cos(yaw)
-        val dot = (dx * fwdX + dz * fwdZ) / dist
-        val angleDeg = acos(dot.coerceIn(-1.0, 1.0)) * (180.0 / PI)
+        val angleDeg = angleFromForwardDeg(dx, dz, dist, yaw)
         val halfR = WorldConstants.CLIENT_VIEW_RADIUS / 2.0
         return when {
             angleDeg < 60.0 -> 1500.0 + dist
@@ -324,6 +336,29 @@ class ChunkManager(private val scene: JsAny) {
             else -> 4000.0 + dist
         }
     }
+
+    // Angle in degrees between (dx, dz) and the forward direction implied by yaw. Shared by
+    // meshScore, inFovCone, and allFovChunksMeshed so the "forward cone" definition stays
+    // consistent everywhere it's used.
+    private fun angleFromForwardDeg(dx: Int, dz: Int, dist: Double, yaw: Double): Double {
+        val fwdX = sin(yaw)
+        val fwdZ = cos(yaw)
+        val dot = (dx * fwdX + dz * fwdZ) / dist
+        return acos(dot.coerceIn(-1.0, 1.0)) * (180.0 / PI)
+    }
+
+    // Whether (dx, dz) falls inside the ~60° forward FOV cone around yaw — used to widen the
+    // impostor radius for chunks the player is actually looking at (see
+    // DEFAULT_IMPOSTOR_FOV_BONUS_CHUNKS).
+    private fun inFovCone(dx: Int, dz: Int, yaw: Double): Boolean {
+        if (dx == 0 && dz == 0) return true
+        val dist = sqrt((dx * dx + dz * dz).toDouble())
+        return angleFromForwardDeg(dx, dz, dist, yaw) < 60.0
+    }
+
+    private fun effectiveImpostorRadius(dx: Int, dz: Int, yaw: Double): Int =
+        if (inFovCone(dx, dz, yaw)) impostorRadiusChunks + impostorFovBonusChunks
+        else impostorRadiusChunks
 
     fun drainOneMinimapPush() {
         val (chunk, topY) = pendingMinimapPushes.removeFirstOrNull() ?: return
@@ -490,20 +525,41 @@ class ChunkManager(private val scene: JsAny) {
         pendingUnloads.addAll(toUnload)
     }
 
-    // Re-enqueues impostor-meshed chunks that are now within IMPOSTOR_RADIUS_CHUNKS of the
-    // viewer for a full-detail re-render — the impostor/full choice is otherwise frozen at
-    // first mesh (see USE_IMPOSTOR comment), so without this, chunks meshed as impostors while
-    // far away stay impostors even after the player walks back into their radius.
-    fun upgradeNearImpostors(playerCx: Int, playerCz: Int) {
-        if (!useImpostor || impostorChunks.isEmpty()) return
-        val toUpgrade =
-            impostorChunks.filter { cp ->
-                maxOf(abs(cp.cx - playerCx), abs(cp.cz - playerCz)) <= impostorRadiusChunks
+    // Re-evaluates the impostor/full choice for every currently loaded chunk against the
+    // live useImpostor/impostorRadiusChunks/impostorFovBonusChunks settings — the initial
+    // choice is otherwise frozen at first mesh (see USE_IMPOSTOR comment), so without this,
+    // chunks stay on whichever side they were first meshed on even after the viewer moves
+    // closer/farther or a graphics preference changes. Called both on player chunk-change and
+    // right after applying a PreferencesSync, so radius/toggle changes take effect immediately.
+    fun reevaluateImpostors(playerCx: Int, playerCz: Int, yaw: Double) {
+        if (!useImpostor) {
+            if (impostorChunks.isEmpty()) return
+            impostorChunks.toList().forEach { cp ->
+                val (chunk, topY) = chunkData[cp] ?: return@forEach
+                enqueueChunk(chunk, topY)
             }
-        toUpgrade.forEach { cp ->
-            val (chunk, topY) = chunkData[cp] ?: return@forEach
-            enqueueChunk(chunk, topY)
+            return
         }
+        impostorChunks
+            .filter { cp ->
+                val dx = cp.cx - playerCx
+                val dz = cp.cz - playerCz
+                maxOf(abs(dx), abs(dz)) <= effectiveImpostorRadius(dx, dz, yaw)
+            }
+            .forEach { cp ->
+                val (chunk, topY) = chunkData[cp] ?: return@forEach
+                enqueueChunk(chunk, topY)
+            }
+        (loadedChunks - impostorChunks)
+            .filter { cp ->
+                val dx = cp.cx - playerCx
+                val dz = cp.cz - playerCz
+                maxOf(abs(dx), abs(dz)) > effectiveImpostorRadius(dx, dz, yaw)
+            }
+            .forEach { cp ->
+                jsBuildChunkImpostor(scene, cp.cx, cp.cz)
+                impostorChunks.add(cp)
+            }
     }
 
     fun isDownloaded(pos: ChunkPos): Boolean =

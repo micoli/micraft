@@ -3696,6 +3696,12 @@ components:
           - integer
           format: int32
           title: Int
+        overrideImpostorFovBonusChunks:
+          type:
+          - "null"
+          - integer
+          format: int32
+          title: Int
         overrideImpostorRadiusChunks:
           type:
           - "null"

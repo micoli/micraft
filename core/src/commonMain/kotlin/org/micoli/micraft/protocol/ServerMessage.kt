@@ -207,6 +207,7 @@ sealed class ServerMessage {
         val overrideForwardViewRadius: Int? = null,
         val overrideUseImpostor: Boolean? = null,
         val overrideImpostorRadiusChunks: Int? = null,
+        val overrideImpostorFovBonusChunks: Int? = null,
         val continuousBreak: Boolean = false,
     ) : ServerMessage()
 
