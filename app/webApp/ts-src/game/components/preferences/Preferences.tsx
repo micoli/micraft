@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
-import { PreferencesData } from "../types";
-import { Dialog } from "../../primitives/Dialog";
-import { DialogContent } from "../../primitives/DialogContent";
-import { DialogTitle } from "../../primitives/DialogTitle";
-import { Button } from "../../primitives/Button";
-import { cn } from "../../primitives/cn";
-import { usePreferences, SavePayload, Tab } from "../hooks/usePreferences";
+import { PreferencesData } from "../../types";
+import { Dialog } from "../../../primitives/Dialog";
+import { DialogContent } from "../../../primitives/DialogContent";
+import { DialogTitle } from "../../../primitives/DialogTitle";
+import { Button } from "../../../primitives/Button";
+import { cn } from "../../../primitives/cn";
+import { usePreferences, SavePayload, Tab } from "../../hooks/usePreferences";
 import { KeyBadge } from "./KeyBadge";
 import { AddKeyBtn } from "./AddKeyBtn";
 

@@ -1,4 +1,4 @@
-import { cn } from "../../primitives/cn";
+import { cn } from "../../../primitives/cn";
 
 export function KeyBadge({
   label,

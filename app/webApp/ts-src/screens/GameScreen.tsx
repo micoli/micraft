@@ -6,7 +6,7 @@ import { GameLayout, ChannelSubscription } from "../game/types";
 import { NpcDialog } from "../game/npc/NpcDialog";
 import { NpcShopDialog } from "../game/npc/NpcShopDialog";
 import { LoadingOverlay } from "../game/overlays/LoadingOverlay";
-import { Preferences } from "../game/components/Preferences";
+import { Preferences } from "../game/components/preferences/Preferences";
 import { HUD } from "../game/components/HUD";
 import { Inventory } from "../game/components/Inventory";
 import { ShortcutBar } from "../game/components/ShortcutBar";
