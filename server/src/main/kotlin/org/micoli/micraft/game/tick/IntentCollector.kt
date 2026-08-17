@@ -35,6 +35,7 @@ class IntentCollector(
         var speedUpRequested = false
         var speedDownRequested = false
         var receivedMove = false
+        var seq = session.lastProcessedSeq
 
         while (true) {
             val intent = session.intents.tryReceive().getOrNull() ?: break
@@ -47,6 +48,7 @@ class IntentCollector(
                     yaw = intent.yaw
                     pitch = intent.pitch
                     stance = intent.stance
+                    seq = intent.seq
                     if (intent.jump) jumpRequested = true
                     if (intent.flyToggle && session.hasPermission("action.fly"))
                         flyToggleRequested = true
@@ -98,6 +100,7 @@ class IntentCollector(
             session.lastMoveDx = dx
             session.lastMoveDz = dz
             session.lastMoveDy = dy
+            session.lastProcessedSeq = seq
         } else {
             dx = session.lastMoveDx
             dz = session.lastMoveDz

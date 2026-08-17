@@ -27,6 +27,10 @@ import org.micoli.micraft.ui.McUiState
 
 private const val PRED_DT = 16.0 / 1000.0
 private const val SNAP_THRESHOLD = 0.5
+// Base (speedMult=1) distance beyond which XZ reconciliation hard-snaps instead of smoothly
+// lerping — scaled by localSpeedMult at the call site so it stays proportionally far above
+// movingToleranceXz regardless of speed.
+private const val HARD_SNAP_DISTANCE_XZ = 5.0
 private const val FLY_VERTICAL_SPEED = 8f
 private const val DEFAULT_RECONCILE_TOLERANCE_XZ = 0.5
 private const val DEFAULT_RECONCILE_TOLERANCE_Y = 0.99
@@ -73,6 +77,18 @@ class LocalPlayerController(
     var serverX = 0.0
     var serverY = 0.0
     var serverZ = 0.0
+    // Reconciliation target for the XZ correction in tick() — usually serverX/serverZ
+    // corrected by replaying still-unconfirmed sent intents (see updateFromServer), so it
+    // doesn't lag behind by a full RTT+tick like the raw server snapshot would.
+    private var reconcileTargetX = 0.0
+    private var reconcileTargetZ = 0.0
+
+    // (seq, predX, predZ) at the moment each MoveIntent was sent — used to diff the
+    // now-confirmed server position against what the client predicted at that same instant,
+    // instead of against its current (much further along) prediction.
+    private data class SentIntentSnapshot(val seq: Long, val predX: Double, val predZ: Double)
+
+    private val sentIntentHistory = ArrayDeque<SentIntentSnapshot>()
     var hasPrediction = false
     private var prevPredX = 0.0
     private var prevPredY = 0.0
@@ -203,7 +219,11 @@ class LocalPlayerController(
         viewMode = ViewMode.entries.firstOrNull { it.name == mode } ?: ViewMode.FIRST_PERSON
     }
 
-    fun updateFromServer(state: PlayerState, onChunkChanged: (Int, Int) -> Unit) {
+    fun updateFromServer(
+        state: PlayerState,
+        lastProcessedSeq: Long,
+        onChunkChanged: (Int, Int) -> Unit
+    ) {
         localFlying = state.flying
         localStance = state.stance
         localSpeedMult = state.speedMultiplier
@@ -234,10 +254,26 @@ class LocalPlayerController(
             prevPredZ = serverZ
             prevEyeOffset = cameraEyeOffset()
             hasPrediction = true
+            reconcileTargetX = serverX
+            reconcileTargetZ = serverZ
+            sentIntentHistory.clear()
             jsSetCameraRotationY(camera, state.orientation.yaw.toDouble())
             jsSetCameraRotationX(camera, state.orientation.pitch.toDouble())
         } else {
             totalServerUpdates++
+            // Diff serverX/Z against what the client predicted at the same instant the
+            // now-confirmed intent was sent (not the current, further-along prediction) — the
+            // resulting error reflects genuine prediction divergence, not network latency, so
+            // it can be applied as a correction to the CURRENT prediction without lagging.
+            val snapshot = sentIntentHistory.lastOrNull { it.seq <= lastProcessedSeq }
+            sentIntentHistory.removeAll { it.seq <= lastProcessedSeq }
+            if (snapshot != null) {
+                reconcileTargetX = predX + (serverX - snapshot.predX)
+                reconcileTargetZ = predZ + (serverZ - snapshot.predZ)
+            } else {
+                reconcileTargetX = serverX
+                reconcileTargetZ = serverZ
+            }
             val diffY = serverY - predY
             val absY = kotlin.math.abs(diffY)
             when {
@@ -531,18 +567,23 @@ class LocalPlayerController(
             }
         }
 
-        val diffX = serverX - predX
-        val diffZ = serverZ - predZ
+        val diffX = reconcileTargetX - predX
+        val diffZ = reconcileTargetZ - predZ
         val distXZ = kotlin.math.sqrt(diffX * diffX + diffZ * diffZ)
-        val movingToleranceXz = reconcileToleranceXz * localSpeedMult.coerceAtLeast(1f).toDouble()
+        val speedMultClamped = localSpeedMult.coerceAtLeast(1f).toDouble()
+        val movingToleranceXz = reconcileToleranceXz * speedMultClamped
+        // Scales with speed like movingToleranceXz above — a fixed absolute distance here would
+        // sit only ~2x movingToleranceXz at high speed multipliers, so ordinary prediction
+        // jitter would repeatedly cross it and teleport the player, reading as speed pulsing.
+        val hardSnapThresholdXz = HARD_SNAP_DISTANCE_XZ * speedMultClamped
         when {
             distXZ > SNAP_THRESHOLD && !isMovingXZ -> {
-                predX = serverX
-                predZ = serverZ
+                predX = reconcileTargetX
+                predZ = reconcileTargetZ
             }
-            distXZ > 5.0 -> {
-                predX = serverX
-                predZ = serverZ
+            distXZ > hardSnapThresholdXz -> {
+                predX = reconcileTargetX
+                predZ = reconcileTargetZ
             }
             !isMovingXZ && distXZ > reconcileToleranceXz -> {
                 predX += diffX * 0.3
@@ -1249,6 +1290,14 @@ class LocalPlayerController(
         jsSetPlayerLight(scene, lightX, lightY, lightZ, lightIntensity)
     }
 
+    // Snapshots the current prediction under `seq` right after that intent is actually sent —
+    // see the reconciliation lookup in updateFromServer. Capped so a stalled connection can't
+    // grow this unboundedly.
+    fun recordSentIntent(seq: Long) {
+        sentIntentHistory.addLast(SentIntentSnapshot(seq, predX, predZ))
+        while (sentIntentHistory.size > 100) sentIntentHistory.removeFirst()
+    }
+
     fun buildMoveIntent(): ClientMessage.MoveIntent {
         val fwdX = jsGetCameraForwardX(camera).toFloat()
         val fwdZ = jsGetCameraForwardZ(camera).toFloat()
@@ -1343,6 +1392,9 @@ class LocalPlayerController(
         serverX = 0.0
         serverY = 0.0
         serverZ = 0.0
+        reconcileTargetX = 0.0
+        reconcileTargetZ = 0.0
+        sentIntentHistory.clear()
         lastPlayerCx = Int.MIN_VALUE
         lastPlayerCz = Int.MIN_VALUE
         pendingFlyToggle = false

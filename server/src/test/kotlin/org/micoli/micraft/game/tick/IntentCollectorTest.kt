@@ -101,4 +101,28 @@ class IntentCollectorTest {
             assertEquals(0.5f, tick.dz)
             assertTrue(tick.jumpRequested)
         }
+
+    @Test
+    fun moveIntent_updatesSessionLastProcessedSeq() =
+        runBlocking<Unit> {
+            val collector = makeCollector()
+            val session = testSession()
+            session.intents.send(
+                ClientMessage.MoveIntent(dx = 1f, dz = 0f, yaw = 0f, pitch = 0f, seq = 42))
+            collector.collect(session)
+            assertEquals(42L, session.lastProcessedSeq)
+        }
+
+    @Test
+    fun noMoveIntent_leavesLastProcessedSeqUnchanged() =
+        runBlocking<Unit> {
+            val collector = makeCollector()
+            val session = testSession()
+            session.intents.send(
+                ClientMessage.MoveIntent(dx = 1f, dz = 0f, yaw = 0f, pitch = 0f, seq = 42))
+            collector.collect(session)
+            session.intents.send(ClientMessage.Command("/foo"))
+            collector.collect(session)
+            assertEquals(42L, session.lastProcessedSeq)
+        }
 }

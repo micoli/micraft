@@ -60,6 +60,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     }
 
     private var currentPlayerName = ""
+    private var nextIntentSeq = 0L
     private val localController =
         LocalPlayerController(
             scene = scene,
@@ -246,7 +247,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         !intent.speedDown
                                 if (!idle || intent != localController.lastSentIntent) {
                                     localController.lastSentIntent = intent
-                                    val intentBytes = ClientMessageCodec.encode(intent)
+                                    val seq = ++nextIntentSeq
+                                    val sentIntent = intent.copy(seq = seq)
+                                    localController.recordSentIntent(seq)
+                                    val intentBytes = ClientMessageCodec.encode(sentIntent)
                                     send(Frame.Binary(true, intentBytes))
                                     networkStats.bytesOut += intentBytes.size
                                 }
@@ -535,7 +539,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         currentPlayerCz = s.pos.z.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
                         currentYaw = s.orientation.yaw
                         httpChunkFetcher?.trigger(currentPlayerCx, currentPlayerCz, currentYaw)
-                        localController.updateFromServer(s) { cx, cz ->
+                        localController.updateFromServer(s, msg.lastProcessedSeq) { cx, cz ->
                             chunkManager.unloadDistantChunks(cx, cz)
                             chunkManager.reevaluateImpostors(cx, cz, currentYaw.toDouble())
                         }

@@ -33,6 +33,10 @@ sealed class ClientMessage {
         val flyToggle: Boolean = false,
         val speedUp: Boolean = false,
         val speedDown: Boolean = false,
+        // Monotonically increasing per-client counter, echoed back as
+        // ServerMessage.PlayerUpdate.lastProcessedSeq once applied — lets the client replay only
+        // its still-unconfirmed movement instead of reconciling against a stale position.
+        val seq: Long = 0,
     ) : ClientMessage()
 
     @ProtoId(2)

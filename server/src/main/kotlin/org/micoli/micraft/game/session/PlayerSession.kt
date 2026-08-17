@@ -64,6 +64,11 @@ open class PlayerSession(
     @Volatile var lastMoveDz: Float = 0f
     @Volatile var lastMoveDy: Float = 0f
 
+    // Seq of the last MoveIntent actually applied — echoed back in PlayerUpdate so the client
+    // can replay only its still-unconfirmed inputs instead of reconciling against a stale
+    // position (see LocalPlayerController.updateFromServer).
+    @Volatile var lastProcessedSeq: Long = 0L
+
     @Volatile var chunkSocket: DefaultWebSocketSession? = null
 
     open suspend fun send(msg: ServerMessage) {

@@ -1141,7 +1141,7 @@ class GameLoop(
             val newState = movementProcessor.process(session, input)
             if (newState != session.state) {
                 session.state = newState
-                val update = ServerMessage.PlayerUpdate(newState)
+                val update = ServerMessage.PlayerUpdate(newState, session.lastProcessedSeq)
                 sessionRegistry.all().forEach { it.send(update) }
                 broadcastPlayerAdmin(
                     """{"type":"playerMoved","id":"${session.id}","name":${newState.name.toPlayerAdminJson()},"x":${newState.pos.x},"y":${newState.pos.y},"z":${newState.pos.z},"yaw":${newState.orientation.yaw}}""")

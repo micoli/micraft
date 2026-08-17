@@ -83,7 +83,10 @@ sealed class ServerMessage {
         }
     }
 
-    @ProtoId(3) @Serializable data class PlayerUpdate(val state: PlayerState) : ServerMessage()
+    @ProtoId(3)
+    @Serializable
+    data class PlayerUpdate(val state: PlayerState, val lastProcessedSeq: Long = 0) :
+        ServerMessage()
 
     @ProtoId(4)
     @Serializable
