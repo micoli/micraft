@@ -1438,7 +1438,8 @@ class AdminController(
                                 brickSize = def.brickSize,
                                 plainColorable = def.plainColorable,
                                 isCubic = def.isCubic,
-                                connections = def.connections.map { it.name },
+                                connections =
+                                    def.connections.map { group -> group.map { it.toString() } },
                             )
                         }
                     call.respondText(

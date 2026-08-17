@@ -4567,9 +4567,12 @@ components:
         connections:
           type: array
           items:
-            type: string
-            title: String
-          title: List<String>
+            type: array
+            items:
+              type: string
+              title: String
+            title: List<String>
+          title: List<List<String>>
         gltfModel:
           type: string
           title: String

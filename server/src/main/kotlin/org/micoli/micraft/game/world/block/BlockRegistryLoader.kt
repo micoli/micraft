@@ -15,7 +15,7 @@ import org.micoli.micraft.config.validateYamlConfig
 import org.micoli.micraft.config.yamlOverrideSection
 import org.micoli.micraft.game.world.BlockDefinition
 import org.micoli.micraft.game.world.BlockType
-import org.micoli.micraft.game.world.rail.Direction
+import org.micoli.micraft.game.world.rail.RailConnectionPoint
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("BlockRegistryLoader")
@@ -143,7 +143,10 @@ class BlockRegistryLoader(
                     brickSize = entry.brickSize,
                     plainColorable = entry.plainColorable,
                     isCubic = entry.isCubic,
-                    connections = entry.connections.map { Direction.valueOf(it) },
+                    connections =
+                        entry.connections.map { group ->
+                            group.map { RailConnectionPoint.parse(it) }
+                        },
                 )
             }
         log.info("Block registry loaded: {} block types", result.size)

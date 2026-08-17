@@ -2,9 +2,9 @@ package org.micoli.micraft.game.vehicle
 
 import kotlin.math.atan2
 import org.micoli.micraft.game.TICK_SECONDS
-import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.rail.RailConnection
+import org.micoli.micraft.game.world.rail.RailTraversal
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.vehicle.VehicleRegistry
 
@@ -21,9 +21,10 @@ import org.micoli.micraft.vehicle.VehicleRegistry
  *
  * XZ position is linearly interpolated between block centers — curves are approximated as straight
  * chords rather than following the model's actual curve geometry (unverifiable without a live
- * render to compare against). Y is pinned to the current block's Y — slopes advance without a
- * smooth climb/descent (RailNetworkRegistry's neighbor lookup is also same-Y-only, see its doc).
- * Both are acceptable v1 gaps: connectivity and direction logic are correct regardless.
+ * render to compare against). Y is `railBlockPos.y` (each block's real placed floor —
+ * [RailTraversal.connectingNeighbor] already steps this to a neighbor built one grid level up/down
+ * through a slope) plus [RailTraversal.localHeight]'s smooth within-block ease along the current
+ * block's own declared surface.
  */
 object VehicleBehavior {
     fun tick(instance: VehicleInstance, world: WorldState): Boolean {
@@ -34,41 +35,45 @@ object VehicleBehavior {
             instance.progress -= 1f
             advanceOneBlock(instance, world)
         }
-        updatePose(instance)
+        updatePose(instance, world)
         return true
     }
 
     private fun advanceOneBlock(instance: VehicleInstance, world: WorldState) {
         val currentPos = instance.railBlockPos
         val exitDir = instance.travelDirection
-        val nextPos = BlockPos(currentPos.x + exitDir.dx, currentPos.y, currentPos.z + exitDir.dz)
-        val nextType = world.getBlock(nextPos.x, nextPos.y, nextPos.z)
-        val arrivalDir = exitDir.opposite
-        if (!RailConnection.isRail(nextType)) {
-            instance.travelDirection = arrivalDir
+        val nextPos = RailTraversal.connectingNeighbor(world, currentPos, exitDir)
+        if (nextPos == null) {
+            // See RailConnection.preferredContinuation: a straight/crossing piece reverses back the
+            // way it came, a curve turns onto its only other connection — never a direction the
+            // piece doesn't actually connect through (which would bounce forever).
+            val currentType = world.getBlock(currentPos.x, currentPos.y, currentPos.z)
+            val currentState = world.getBlockState(currentPos.x, currentPos.y, currentPos.z)
+            val currentExtra = world.getExtraState(currentPos.x, currentPos.y, currentPos.z)
+            val currentActive = RailConnection.activeGroups(currentType, currentState, currentExtra)
+            instance.travelDirection =
+                RailConnection.preferredContinuation(currentActive, exitDir) ?: exitDir.opposite
             return
         }
+        val nextType = world.getBlock(nextPos.x, nextPos.y, nextPos.z)
         val nextState = world.getBlockState(nextPos.x, nextPos.y, nextPos.z)
         val nextExtra = world.getExtraState(nextPos.x, nextPos.y, nextPos.z)
-        val nextActive = RailConnection.active(nextType, nextState, nextExtra)
-        if (arrivalDir !in nextActive) {
-            // Neighbor cell is a rail block but not oriented to connect back — dead end in place.
-            instance.travelDirection = arrivalDir
-            return
-        }
-        val forward = (nextActive - arrivalDir).firstOrNull()
+        val nextActive = RailConnection.activeGroups(nextType, nextState, nextExtra)
+        val arrivalDir = exitDir.opposite
+        val forward = RailConnection.preferredContinuation(nextActive, arrivalDir)
         instance.railBlockPos = nextPos
         instance.travelDirection = forward ?: arrivalDir
     }
 
-    private fun updatePose(instance: VehicleInstance) {
+    private fun updatePose(instance: VehicleInstance, world: WorldState) {
         val current = instance.railBlockPos
         val dir = instance.travelDirection
         val t = instance.progress
+        val height = RailTraversal.localHeight(world, current, dir.opposite, dir, t)
         instance.pos =
             Vec3(
                 current.x + 0.5f + dir.dx * t,
-                current.y + 1f,
+                current.y + 1f + height,
                 current.z + 0.5f + dir.dz * t,
             )
         instance.yaw = atan2(dir.dx.toDouble(), dir.dz.toDouble()).toFloat()

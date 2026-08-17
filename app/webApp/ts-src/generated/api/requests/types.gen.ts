@@ -1010,6 +1010,10 @@ export type OrgMicoliMicraftPlayerPlayerState = {
     /**
      * Int
      */
+    overrideImpostorFovBonusChunks?: null | number;
+    /**
+     * Int
+     */
     overrideImpostorRadiusChunks?: null | number;
     /**
      * Boolean
@@ -1696,9 +1700,9 @@ export type OrgMicoliMicraftProtocolBlockInfo = {
      */
     brickSize: Array<number>;
     /**
-     * List<String>
+     * List<List<String>>
      */
-    connections: Array<string>;
+    connections: Array<Array<string>>;
     /**
      * String
      */
@@ -4101,6 +4105,10 @@ export type PostApiAdminInstancesErrors = {
      * Missing admin permission
      */
     403: unknown;
+    /**
+     * Zone overlaps an existing instance zone
+     */
+    409: unknown;
 };
 
 export type PostApiAdminInstancesResponses = {
@@ -4245,6 +4253,10 @@ export type PutApiAdminInstancesByIdBoundsErrors = {
      * Instance not found
      */
     404: unknown;
+    /**
+     * Zone overlaps an existing instance zone
+     */
+    409: unknown;
 };
 
 export type PutApiAdminInstancesByIdBoundsResponses = {
@@ -4319,6 +4331,10 @@ export type PutApiAdminInstancesByIdChunksErrors = {
      * Instance not found
      */
     404: unknown;
+    /**
+     * Zone overlaps an existing instance zone
+     */
+    409: unknown;
 };
 
 export type PutApiAdminInstancesByIdChunksResponses = {

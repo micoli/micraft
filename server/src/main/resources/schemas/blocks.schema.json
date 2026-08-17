@@ -99,8 +99,10 @@
     "connections": {
       "type": "array",
       "items": {
-        "type": "string",
-        "pattern": "^(NORTH|SOUTH|EAST|WEST)$"
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
       }
     }
   }

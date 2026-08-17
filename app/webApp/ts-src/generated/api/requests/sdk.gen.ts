@@ -595,7 +595,7 @@ export const putApiAdminScenesByIdLayout = <ThrowOnError extends boolean = false
 });
 
 /**
- * Scene block/state buffers as a binary blob: 3×4-byte big-endian dimensions (width,height,depth) followed by the blocks byte array then the states byte array (wire-index-per-byte, 0 = AIR)
+ * Scene block/state/extraState buffers as a binary blob: 3×4-byte big-endian dimensions (width,height,depth) followed by the blocks byte array, then the states byte array, then the extraStates byte array (wire-index-per-byte, 0 = AIR)
  */
 export const getApiAdminScenesByIdBlocksRaw = <ThrowOnError extends boolean = false>(options: Options<GetApiAdminScenesByIdBlocksRawData, ThrowOnError>): RequestResult<GetApiAdminScenesByIdBlocksRawResponses, GetApiAdminScenesByIdBlocksRawErrors, ThrowOnError> => (options.client ?? client).get<GetApiAdminScenesByIdBlocksRawResponses, GetApiAdminScenesByIdBlocksRawErrors, ThrowOnError>({ url: '/api/admin/scenes/{id}/blocks/raw', ...options });
 

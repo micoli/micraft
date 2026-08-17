@@ -888,7 +888,7 @@ class GameLoop(
                     isCubic = def.isCubic,
                     topColor = def.topColor,
                     sideColor = def.sideColor,
-                    connections = def.connections.map { it.name },
+                    connections = def.connections.map { group -> group.map { it.toString() } },
                 )
             }
         val items =

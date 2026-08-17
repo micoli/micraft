@@ -30,6 +30,7 @@ class RailBlockPlacementTest {
             BlockType.RAIL_SLOPE_45,
             BlockType.RAIL_SLOPE_22,
             BlockType.RAIL_Y_SPLIT_90,
+            BlockType.RAIL_CROSS,
         )
 
     private lateinit var savedBlocks: Map<BlockType, BlockDefinition>

@@ -464,6 +464,12 @@
             "null"
           ]
         },
+        "overrideImpostorFovBonusChunks": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "continuousBreak": {
           "type": "boolean"
         }

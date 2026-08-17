@@ -22,5 +22,5 @@ data class BlockYamlOverride(
     val brickSize: List<Float>? = null,
     val plainColorable: Boolean? = null,
     val isCubic: Boolean? = null,
-    val connections: List<String>? = null,
+    val connections: List<List<String>>? = null,
 )

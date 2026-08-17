@@ -5,7 +5,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertNull
 import org.micoli.micraft.game.world.BlockDefinition
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
@@ -15,11 +14,17 @@ import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.support.testWorld
 
+private fun rc(direction: Direction, dy: Float = 0f) = RailConnectionPoint(direction, dy)
+
+private fun grp(vararg points: RailConnectionPoint) = points.toList()
+
 class RailNetworkRegistryTest {
 
     private val straight = BlockType("RAIL_STRAIGHT")
     private val curve90 = BlockType("RAIL_CURVE_90")
     private val ySplit = BlockType("RAIL_Y_SPLIT_90")
+    private val slope = BlockType("RAIL_SLOPE_45")
+    private val cross = BlockType("RAIL_CROSS")
 
     private lateinit var savedBlocks: Map<BlockType, BlockDefinition>
 
@@ -37,19 +42,39 @@ class RailNetworkRegistryTest {
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections = listOf(Direction.NORTH, Direction.SOUTH)),
+                            connections = listOf(grp(rc(Direction.NORTH), rc(Direction.SOUTH)))),
                     curve90 to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections = listOf(Direction.NORTH, Direction.EAST)),
+                            connections = listOf(grp(rc(Direction.NORTH), rc(Direction.EAST)))),
                     ySplit to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections = listOf(Direction.SOUTH, Direction.NORTH, Direction.EAST)),
+                            connections =
+                                listOf(
+                                    grp(rc(Direction.SOUTH), rc(Direction.NORTH)),
+                                    grp(rc(Direction.SOUTH), rc(Direction.EAST)))),
+                    slope to
+                        BlockDefinition(
+                            solid = true,
+                            isCubic = false,
+                            rotatable = true,
+                            // South neighbor of a slope sits one grid level up.
+                            connections =
+                                listOf(grp(rc(Direction.NORTH), rc(Direction.SOUTH, 1f)))),
+                    cross to
+                        BlockDefinition(
+                            solid = true,
+                            isCubic = false,
+                            rotatable = true,
+                            connections =
+                                listOf(
+                                    grp(rc(Direction.NORTH), rc(Direction.SOUTH)),
+                                    grp(rc(Direction.EAST), rc(Direction.WEST)))),
                 ))
     }
 
@@ -65,10 +90,11 @@ class RailNetworkRegistryTest {
         type: BlockType,
         rotation: Int,
         extra: Int = 0,
+        y: Int = 7,
     ) {
         world.applyChange(
             BlockChange(
-                BlockPos(x, 7, z), type, BlockState.pack(rotation, 0), BlockState.packExtra(extra)))
+                BlockPos(x, y, z), type, BlockState.pack(rotation, 0), BlockState.packExtra(extra)))
     }
 
     private fun rotationConnecting(base: List<String>, want: Set<Direction>): Int =
@@ -80,7 +106,7 @@ class RailNetworkRegistryTest {
         for (z in 0..4) place(world, 8, z, straight, 0)
         val registry = RailNetworkRegistry(world)
 
-        val topology = registry.topologyAt(BlockPos(8, 7, 2))
+        val topology = registry.topologyAt(BlockPos(8, 7, 2)).single()
 
         assertIs<RailTopology.Segment>(topology)
         assertEquals(5, topology.positions.size)
@@ -100,9 +126,10 @@ class RailNetworkRegistryTest {
         world.applyChange(BlockChange(BlockPos(8, 7, 2), BlockType.AIR))
         registry.invalidate(BlockPos(8, 7, 2))
 
-        assertNull(registry.topologyAt(BlockPos(8, 7, 2)), "broken cell is no longer a rail")
-        val left = registry.topologyAt(BlockPos(8, 7, 0))
-        val right = registry.topologyAt(BlockPos(8, 7, 4))
+        assertEquals(
+            emptyList(), registry.topologyAt(BlockPos(8, 7, 2)), "broken cell is no longer a rail")
+        val left = registry.topologyAt(BlockPos(8, 7, 0)).single()
+        val right = registry.topologyAt(BlockPos(8, 7, 4)).single()
         assertIs<RailTopology.Segment>(left)
         assertIs<RailTopology.Segment>(right)
         assertEquals(2, left.positions.size)
@@ -148,7 +175,7 @@ class RailNetworkRegistryTest {
         placeRing(world)
         val registry = RailNetworkRegistry(world)
 
-        val topology = registry.topologyAt(BlockPos(8, 7, 8))
+        val topology = registry.topologyAt(BlockPos(8, 7, 8)).single()
 
         assertIs<RailTopology.Loop>(topology)
         assertEquals(4, topology.positions.size)
@@ -159,7 +186,7 @@ class RailNetworkRegistryTest {
         val world = testWorld()
         placeRing(world, includeLast = false)
         val registry = RailNetworkRegistry(world)
-        val before = registry.topologyAt(BlockPos(8, 7, 8))
+        val before = registry.topologyAt(BlockPos(8, 7, 8)).single()
         assertIs<RailTopology.Segment>(before, "3 curves alone form an open chain, not a loop")
 
         place(
@@ -172,7 +199,7 @@ class RailNetworkRegistryTest {
         registry.invalidate(BlockPos(9, 7, 9))
         registry.invalidate(BlockPos(8, 7, 8))
 
-        val after = registry.topologyAt(BlockPos(8, 7, 8))
+        val after = registry.topologyAt(BlockPos(8, 7, 8)).single()
         assertIs<RailTopology.Loop>(after)
         assertEquals(4, after.positions.size)
     }
@@ -187,11 +214,11 @@ class RailNetworkRegistryTest {
 
         val registry = RailNetworkRegistry(world)
 
-        val active = registry.topologyAt(BlockPos(8, 7, 8))
+        val active = registry.topologyAt(BlockPos(8, 7, 8)).single()
         assertIs<RailTopology.Segment>(active)
         assertEquals(3, active.positions.size, "entry + split + active north branch")
 
-        val inactive = registry.topologyAt(BlockPos(9, 7, 8))
+        val inactive = registry.topologyAt(BlockPos(9, 7, 8)).single()
         assertIs<RailTopology.Segment>(inactive)
         assertEquals(1, inactive.positions.size, "east branch not part of the active path")
 
@@ -200,7 +227,7 @@ class RailNetworkRegistryTest {
             BlockChange(BlockPos(8, 7, 8), ySplit, BlockState.pack(0, 0), BlockState.packExtra(1)))
         registry.invalidate(BlockPos(8, 7, 8))
 
-        val afterToggle = registry.topologyAt(BlockPos(8, 7, 8))
+        val afterToggle = registry.topologyAt(BlockPos(8, 7, 8)).single()
         assertIs<RailTopology.Segment>(afterToggle)
         assertEquals(3, afterToggle.positions.size)
         assertEquals(
@@ -208,8 +235,67 @@ class RailNetworkRegistryTest {
             afterToggle.positions.toSet(),
             "now runs entry -> split -> east branch")
 
-        val northBranchNowOrphan = registry.topologyAt(BlockPos(8, 7, 7))
+        val northBranchNowOrphan = registry.topologyAt(BlockPos(8, 7, 7)).single()
         assertIs<RailTopology.Segment>(northBranchNowOrphan)
         assertEquals(1, northBranchNowOrphan.positions.size)
+    }
+
+    @Test
+    fun slopeToNeighborOneLevelUp_bridgesTheTopologyAcrossTheYChange() {
+        val world = testWorld()
+        place(world, 8, 0, straight, 0, y = 7) // lower run
+        place(world, 8, 1, slope, 0, y = 7) // slope's SOUTH neighbor sits one level up
+        place(world, 8, 2, straight, 0, y = 8) // upper run
+        val registry = RailNetworkRegistry(world)
+
+        val topology = registry.topologyAt(BlockPos(8, 7, 1)).single()
+
+        assertIs<RailTopology.Segment>(topology)
+        assertEquals(
+            setOf(BlockPos(8, 7, 0), BlockPos(8, 7, 1), BlockPos(8, 8, 2)),
+            topology.positions.toSet(),
+            "same segment across the Y change through the slope")
+    }
+
+    @Test
+    fun crossing_hasTwoIndependentTopologiesForItsTwoThroughPairs() {
+        val world = testWorld()
+        // A 4-way crossing at (8,8) with a straight leg on each side.
+        place(world, 8, 7, straight, 0) // north leg
+        place(world, 8, 9, straight, 0) // south leg
+        place(world, 7, 8, straight, 1) // west leg (rotation 1 -> WEST/EAST)
+        place(world, 9, 8, straight, 1) // east leg
+        place(world, 8, 8, cross, 0)
+        val registry = RailNetworkRegistry(world)
+
+        val topologies = registry.topologyAt(BlockPos(8, 7, 8))
+
+        assertEquals(2, topologies.size, "one component per through-pair")
+        val ns = topologies.first { BlockPos(8, 7, 7) in it.positions }
+        val ew = topologies.first { BlockPos(7, 7, 8) in it.positions }
+        assertIs<RailTopology.Segment>(ns)
+        assertEquals(
+            setOf(BlockPos(8, 7, 7), BlockPos(8, 7, 8), BlockPos(8, 7, 9)), ns.positions.toSet())
+        assertIs<RailTopology.Segment>(ew)
+        assertEquals(
+            setOf(BlockPos(7, 7, 8), BlockPos(8, 7, 8), BlockPos(9, 7, 8)), ew.positions.toSet())
+    }
+
+    @Test
+    fun crossing_midWalk_isPassedStraightThrough_notTurnedOnto() {
+        val world = testWorld()
+        // Straight run north-south passing straight through a crossing at (8,8) — its east/west
+        // legs are dead ends (nothing placed), which must not truncate the north-south walk.
+        place(world, 8, 7, straight, 0)
+        place(world, 8, 8, cross, 0)
+        place(world, 8, 9, straight, 0)
+        val registry = RailNetworkRegistry(world)
+
+        val topology = registry.topologyAt(BlockPos(8, 7, 7)).single()
+
+        assertIs<RailTopology.Segment>(topology)
+        assertEquals(
+            setOf(BlockPos(8, 7, 7), BlockPos(8, 7, 8), BlockPos(8, 7, 9)),
+            topology.positions.toSet())
     }
 }

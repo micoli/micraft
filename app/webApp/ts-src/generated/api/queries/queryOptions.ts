@@ -211,7 +211,7 @@ export const getApiAdminScenesOptions = (clientOptions: Options<GetApiAdminScene
  */
 export const getApiAdminScenesByIdOptions = (clientOptions: Options<GetApiAdminScenesByIdData, true>, queryKey?: Array<unknown>) => queryOptions({ queryKey: Common.UseGetApiAdminScenesByIdKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiAdminScenesById({ ...clientOptions, signal, throwOnError: true }).then(response => response.data) });
 /**
- * Scene block/state buffers as a binary blob: 3×4-byte big-endian dimensions (width,height,depth) followed by the blocks byte array then the states byte array (wire-index-per-byte, 0 = AIR)
+ * Scene block/state/extraState buffers as a binary blob: 3×4-byte big-endian dimensions (width,height,depth) followed by the blocks byte array, then the states byte array, then the extraStates byte array (wire-index-per-byte, 0 = AIR)
  */
 export const getApiAdminScenesByIdBlocksRawOptions = (clientOptions: Options<GetApiAdminScenesByIdBlocksRawData, true>, queryKey?: Array<unknown>) => queryOptions({ queryKey: Common.UseGetApiAdminScenesByIdBlocksRawKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiAdminScenesByIdBlocksRaw({ ...clientOptions, signal, throwOnError: true }).then(response => response.data) });
 /**

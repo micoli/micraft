@@ -32,6 +32,7 @@ import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.rail.Direction
+import org.micoli.micraft.game.world.rail.RailConnectionPoint
 import org.micoli.micraft.http.AdminController
 import org.micoli.micraft.support.testWorld
 
@@ -56,7 +57,13 @@ class AdminEditWsTest {
                             isCubic = false,
                             rotatable = true,
                             connections =
-                                listOf(Direction.SOUTH, Direction.NORTH, Direction.EAST))))
+                                listOf(
+                                    listOf(
+                                        RailConnectionPoint(Direction.SOUTH),
+                                        RailConnectionPoint(Direction.NORTH)),
+                                    listOf(
+                                        RailConnectionPoint(Direction.SOUTH),
+                                        RailConnectionPoint(Direction.EAST))))))
     }
 
     @AfterTest

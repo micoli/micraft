@@ -18,6 +18,9 @@ import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.rail.Direction
 import org.micoli.micraft.game.world.rail.RailConnection
+import org.micoli.micraft.game.world.rail.RailConnectionPoint
+import org.micoli.micraft.game.world.rail.RailTraversal
+import org.micoli.micraft.game.world.rail.RailWorldView
 import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
@@ -76,7 +79,10 @@ fun mcAdminSetBlockRegistry(json: String) {
                     brickSize = info.brickSize,
                     plainColorable = info.plainColorable,
                     isCubic = info.isCubic,
-                    connections = info.connections.map { Direction.valueOf(it) },
+                    connections =
+                        info.connections.map { group ->
+                            group.map { RailConnectionPoint.parse(it) }
+                        },
                 )
         }
     BlockRegistry.load(defs)
@@ -247,11 +253,23 @@ fun mcAdminRailTestTick(scene: JsAny, deltaSeconds: Float): String {
     val current = railTestPos ?: return ""
     val dir = railTestDir
     val t = railTestProgress
+    val height =
+        RailTraversal.localHeight(ChunkManagerRailView(manager), current, dir.opposite, dir, t)
     val x = current.x + 0.5f + dir.dx * t
-    val y = current.y + 1f + CART_HALF_HEIGHT
+    val y = current.y + 1f + height + CART_HALF_HEIGHT
     val z = current.z + 0.5f + dir.dz * t
     val yaw = atan2(dir.dx.toDouble(), dir.dz.toDouble()).toFloat()
     return "$x,$y,$z,$yaw"
+}
+
+// Adapts ChunkManager to the world-agnostic RailTraversal shared with the server (VehicleBehavior,
+// RailNetworkRegistry) and the scene editor's own rail test (AdminScenePreview.kt).
+private class ChunkManagerRailView(private val manager: ChunkManager) : RailWorldView {
+    override fun getBlock(wx: Int, wy: Int, wz: Int) = manager.getBlockAtWorld(wx, wy, wz)
+
+    override fun getBlockState(wx: Int, wy: Int, wz: Int) = manager.getStateAtWorld(wx, wy, wz)
+
+    override fun getExtraState(wx: Int, wy: Int, wz: Int) = manager.getExtraStateAtWorld(wx, wy, wz)
 }
 
 // Mirrors VehicleBehavior.advanceOneBlock — reversal at a dead end and indefinite traversal on a
@@ -259,21 +277,25 @@ fun mcAdminRailTestTick(scene: JsAny, deltaSeconds: Float): String {
 private fun advanceRailTest(manager: ChunkManager) {
     val current = railTestPos ?: return
     val exitDir = railTestDir
-    val nextPos = BlockPos(current.x + exitDir.dx, current.y, current.z + exitDir.dz)
-    val nextType = manager.getBlockAtWorld(nextPos.x, nextPos.y, nextPos.z)
     val arrivalDir = exitDir.opposite
-    if (!RailConnection.isRail(nextType)) {
-        railTestDir = arrivalDir
+    val view = ChunkManagerRailView(manager)
+    val nextPos = RailTraversal.connectingNeighbor(view, current, exitDir)
+    if (nextPos == null) {
+        // See RailConnection.preferredContinuation: a straight/crossing piece reverses back the way
+        // it came, a curve turns onto its only other connection — never a direction the piece
+        // doesn't actually connect through (which would bounce forever).
+        val currentType = manager.getBlockAtWorld(current.x, current.y, current.z)
+        val currentState = manager.getStateAtWorld(current.x, current.y, current.z)
+        val currentExtra = manager.getExtraStateAtWorld(current.x, current.y, current.z)
+        val currentActive = RailConnection.activeGroups(currentType, currentState, currentExtra)
+        railTestDir = RailConnection.preferredContinuation(currentActive, exitDir) ?: arrivalDir
         return
     }
+    val nextType = manager.getBlockAtWorld(nextPos.x, nextPos.y, nextPos.z)
     val nextState = manager.getStateAtWorld(nextPos.x, nextPos.y, nextPos.z)
     val nextExtra = manager.getExtraStateAtWorld(nextPos.x, nextPos.y, nextPos.z)
-    val nextActive = RailConnection.active(nextType, nextState, nextExtra)
-    if (arrivalDir !in nextActive) {
-        railTestDir = arrivalDir
-        return
-    }
-    val forward = (nextActive - arrivalDir).firstOrNull()
+    val nextActive = RailConnection.activeGroups(nextType, nextState, nextExtra)
+    val forward = RailConnection.preferredContinuation(nextActive, arrivalDir)
     railTestPos = nextPos
     railTestDir = forward ?: arrivalDir
 }

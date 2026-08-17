@@ -25,7 +25,7 @@ import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.PlainColor
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldConstants
-import org.micoli.micraft.game.world.rail.Direction
+import org.micoli.micraft.game.world.rail.RailConnectionPoint
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.ServerMessage
@@ -668,7 +668,9 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         plainColorable = info.plainColorable,
                                         isCubic = info.isCubic,
                                         connections =
-                                            info.connections.map { Direction.valueOf(it) },
+                                            info.connections.map { group ->
+                                                group.map { RailConnectionPoint.parse(it) }
+                                            },
                                     )
                             }
                             .toMap()

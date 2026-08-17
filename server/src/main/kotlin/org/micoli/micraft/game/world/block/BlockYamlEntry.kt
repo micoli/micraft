@@ -29,9 +29,8 @@ data class BlockYamlEntry(
     val plainColorable: Boolean = false,
     val isCubic: Boolean = true,
     /**
-     * Track-network connection points in the block's unrotated frame — see
+     * Track-network connection groups in the block's unrotated frame — see
      * [org.micoli.micraft.game.world.BlockDefinition.connections].
      */
-    @JsonSchemaConstraint(itemPattern = "^(NORTH|SOUTH|EAST|WEST)$")
-    val connections: List<String> = emptyList(),
+    val connections: List<List<String>> = emptyList(),
 )

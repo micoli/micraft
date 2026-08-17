@@ -13,6 +13,4 @@ minimapVisible: true
 rotatable: true
 hasStuds: false
 plainColorable: false
-# Grid-adjacent neighbors are always 90° apart regardless of the model's visual curvature — the
-# 60° angle is cosmetic (see specs/vehicule_analysis.md §1.2), topology matches RAIL_CURVE_90.
-connections: [NORTH, EAST]
+connections: [[NORTH, SOUTH], [EAST, WEST]]

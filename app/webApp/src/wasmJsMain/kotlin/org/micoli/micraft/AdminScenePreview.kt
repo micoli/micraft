@@ -8,11 +8,14 @@ import kotlin.math.atan2
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.world.BlockEntity
+import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.rail.Direction
 import org.micoli.micraft.game.world.rail.RailConnection
+import org.micoli.micraft.game.world.rail.RailTraversal
+import org.micoli.micraft.game.world.rail.RailWorldView
 import org.micoli.micraft.protocol.BlockEntityProto
 
 // Lets the admin Scene editor (a bounded, self-contained X/Y/Z raw block buffer, NOT tied to the
@@ -219,38 +222,55 @@ fun mcSceneRailTestTick(deltaSeconds: Float): String {
     if (!railTestActive) return ""
     val dir = railTestDir
     val t = railTestProgress
+    val here = BlockPos(railTestX, railTestY, railTestZ)
+    val height = RailTraversal.localHeight(SceneMesherRailView(mesher), here, dir.opposite, dir, t)
     val px = railTestX + 0.5f + dir.dx * t
-    val py = railTestY + 1f + CART_HALF_HEIGHT
+    val py = railTestY + 1f + height + CART_HALF_HEIGHT
     val pz = railTestZ + 0.5f + dir.dz * t
     val yaw = atan2(dir.dx.toDouble(), dir.dz.toDouble()).toFloat()
     return "$px,$py,$pz,$yaw"
+}
+
+// Adapts SceneMesher to the world-agnostic RailTraversal shared with the server (VehicleBehavior,
+// RailNetworkRegistry) and the live chunk preview's own rail test (AdminChunkPreview.kt).
+// SceneMesher's getBlockOrdinal/getState/getExtraState already return the buffer's "nothing here"
+// defaults for out-of-bounds coordinates, so no separate bounds check is needed here.
+private class SceneMesherRailView(private val mesher: SceneMesher) : RailWorldView {
+    override fun getBlock(wx: Int, wy: Int, wz: Int) = sceneBlockTypeAt(mesher, wx, wy, wz)
+
+    override fun getBlockState(wx: Int, wy: Int, wz: Int) = mesher.getState(wx, wy, wz).toByte()
+
+    override fun getExtraState(wx: Int, wy: Int, wz: Int) =
+        mesher.getExtraState(wx, wy, wz).toByte()
 }
 
 // Mirrors advanceRailTest (AdminChunkPreview.kt) — see VehicleBehavior.advanceOneBlock for the
 // underlying reversal/loop logic this ports.
 private fun advanceSceneRailTest(mesher: SceneMesher) {
     val exitDir = railTestDir
-    val nextX = railTestX + exitDir.dx
-    val nextY = railTestY
-    val nextZ = railTestZ + exitDir.dz
-    if (!mesher.inBounds(nextX, nextY, nextZ)) {
-        railTestActive = false
-        return
-    }
-    val nextType = sceneBlockTypeAt(mesher, nextX, nextY, nextZ)
     val arrivalDir = exitDir.opposite
-    if (!RailConnection.isRail(nextType)) {
-        railTestDir = arrivalDir
+    val here = BlockPos(railTestX, railTestY, railTestZ)
+    val view = SceneMesherRailView(mesher)
+    val next = RailTraversal.connectingNeighbor(view, here, exitDir)
+    if (next == null) {
+        // See RailConnection.preferredContinuation: a straight/crossing piece reverses back the way
+        // it came, a curve turns onto its only other connection — never a direction the piece
+        // doesn't actually connect through (which would bounce forever).
+        val currentType = sceneBlockTypeAt(mesher, railTestX, railTestY, railTestZ)
+        val currentState = mesher.getState(railTestX, railTestY, railTestZ)
+        val currentExtra = mesher.getExtraState(railTestX, railTestY, railTestZ)
+        val currentActive =
+            RailConnection.activeGroups(currentType, currentState.toByte(), currentExtra.toByte())
+        railTestDir = RailConnection.preferredContinuation(currentActive, exitDir) ?: arrivalDir
         return
     }
+    val (nextX, nextY, nextZ) = next
+    val nextType = sceneBlockTypeAt(mesher, nextX, nextY, nextZ)
     val nextState = mesher.getState(nextX, nextY, nextZ)
     val nextExtraState = mesher.getExtraState(nextX, nextY, nextZ)
-    val nextActive = RailConnection.active(nextType, nextState.toByte(), nextExtraState.toByte())
-    if (arrivalDir !in nextActive) {
-        railTestDir = arrivalDir
-        return
-    }
-    val forward = (nextActive - arrivalDir).firstOrNull()
+    val nextActive =
+        RailConnection.activeGroups(nextType, nextState.toByte(), nextExtraState.toByte())
+    val forward = RailConnection.preferredContinuation(nextActive, arrivalDir)
     railTestX = nextX
     railTestY = nextY
     railTestZ = nextZ

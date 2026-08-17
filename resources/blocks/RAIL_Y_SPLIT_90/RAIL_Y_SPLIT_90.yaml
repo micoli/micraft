@@ -13,8 +13,9 @@ minimapVisible: true
 rotatable: true
 hasStuds: false
 plainColorable: false
-# Junction: fixed entry (SOUTH) + two switchable exits 90° apart (NORTH, EAST) — see
-# specs/vehicule_analysis.md §1.3. Which exit is active at runtime is carried by the block state's
-# extra byte (BlockState.extra), not by this list — both exits are always present here so the
-# rail-network graph sees the full junction shape regardless of the switch's current position.
-connections: [WEST, NORTH, EAST]
+# Junction: fixed entry (WEST, shared by both groups) + two switchable exits 90° apart (NORTH,
+# EAST) — see specs/vehicule_analysis.md §1.3. Which group is active at runtime is carried by the
+# block state's extra byte (BlockState.extra) as an index into this list, not by the list itself —
+# both groups are always declared here so the rail-network graph sees the full junction shape
+# regardless of the switch's current position.
+connections: [[WEST, NORTH], [WEST, EAST]]

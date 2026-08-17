@@ -12,6 +12,7 @@ import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.rail.Direction
+import org.micoli.micraft.game.world.rail.RailConnectionPoint
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.rail.RailTopology
 import org.micoli.micraft.player.Vec3
@@ -39,13 +40,24 @@ class BlockInteractorTest {
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections = listOf(Direction.SOUTH, Direction.NORTH, Direction.EAST)),
+                            connections =
+                                listOf(
+                                    listOf(
+                                        RailConnectionPoint(Direction.SOUTH),
+                                        RailConnectionPoint(Direction.NORTH)),
+                                    listOf(
+                                        RailConnectionPoint(Direction.SOUTH),
+                                        RailConnectionPoint(Direction.EAST)))),
                     straight to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections = listOf(Direction.NORTH, Direction.SOUTH)),
+                            connections =
+                                listOf(
+                                    listOf(
+                                        RailConnectionPoint(Direction.NORTH),
+                                        RailConnectionPoint(Direction.SOUTH)))),
                 ))
     }
 
@@ -128,14 +140,14 @@ class BlockInteractorTest {
             org.micoli.micraft.protocol.BlockChange(BlockPos(8, 7, 7), straight)) // branch0 leg
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         val registry = RailNetworkRegistry(world)
-        val before = registry.topologyAt(pos)
+        val before = registry.topologyAt(pos).single()
         assertIs<RailTopology.Segment>(before)
         assertEquals(3, before.positions.size, "entry + split + active north branch")
 
         val interactor = BlockInteractor(world, {}, railNetworkRegistry = registry)
         interactor.handleInteract(session, ClientMessage.BlockInteract(pos))
 
-        val after = registry.topologyAt(pos)
+        val after = registry.topologyAt(pos).single()
         assertIs<RailTopology.Segment>(after)
         assertEquals(
             2,

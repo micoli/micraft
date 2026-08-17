@@ -1503,6 +1503,14 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             format: 'int32',
             title: 'Int'
         },
+        overrideImpostorFovBonusChunks: {
+            type: [
+                'null',
+                'integer'
+            ],
+            format: 'int32',
+            title: 'Int'
+        },
         overrideImpostorRadiusChunks: {
             type: [
                 'null',
@@ -2674,10 +2682,14 @@ export const org_micoli_micraft_protocol_BlockInfoSchema = {
         connections: {
             type: 'array',
             items: {
-                type: 'string',
-                title: 'String'
+                type: 'array',
+                items: {
+                    type: 'string',
+                    title: 'String'
+                },
+                title: 'List<String>'
             },
-            title: 'List<String>'
+            title: 'List<List<String>>'
         },
         gltfModel: {
             type: 'string',

@@ -4,6 +4,7 @@ import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import org.micoli.micraft.game.world.block.BlockStore
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.game.world.rail.RailWorldView
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.BlockEntityProto
@@ -13,7 +14,7 @@ import org.slf4j.LoggerFactory
 class WorldState(
     @Volatile var generator: ChunkGenerator,
     val persistence: WorldPersistence? = null,
-) : BlockStore {
+) : BlockStore, RailWorldView {
     private val chunks = ConcurrentHashMap<ChunkPos, Chunk>()
     private val dirtyChunks: MutableSet<ChunkPos> = Collections.newSetFromMap(ConcurrentHashMap())
     private val log = LoggerFactory.getLogger("WorldState")
@@ -60,7 +61,7 @@ class WorldState(
         return getOrGenerate(ChunkPos(chunkX, chunkZ)).getBlock(localX, wy, localZ)
     }
 
-    fun getBlockState(wx: Int, wy: Int, wz: Int): Byte {
+    override fun getBlockState(wx: Int, wy: Int, wz: Int): Byte {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return 0
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
@@ -101,7 +102,7 @@ class WorldState(
         return chunks[ChunkPos(chunkX, chunkZ)]?.getState(localX, wy, localZ) ?: 0
     }
 
-    fun getExtraState(wx: Int, wy: Int, wz: Int): Byte {
+    override fun getExtraState(wx: Int, wy: Int, wz: Int): Byte {
         if (wy < WorldConstants.WORLD_MIN_Y || wy > WorldConstants.WORLD_MAX_Y) return 0
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)

@@ -13,4 +13,4 @@ minimapVisible: true
 rotatable: true
 hasStuds: false
 plainColorable: false
-connections: [NORTH, EAST]
+connections: [[NORTH, EAST]]

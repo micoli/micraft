@@ -12,6 +12,7 @@ import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.rail.Direction
+import org.micoli.micraft.game.world.rail.RailConnectionPoint
 
 class BlockRegistryLoaderTest {
 
@@ -194,12 +195,13 @@ class BlockRegistryLoaderTest {
                 mapOf(
                     "STONE" to "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n",
                     "RAIL_STRAIGHT" to
-                        "hardness: 1\nsolid: true\nisCubic: false\nrotatable: true\nminimapColor: [110, 110, 120]\nconnections: [NORTH, SOUTH]\n",
+                        "hardness: 1\nsolid: true\nisCubic: false\nrotatable: true\nminimapColor: [110, 110, 120]\nconnections: [[NORTH, SOUTH]]\n",
                 ))
         val result = loader.load()
         assertEquals(emptyList(), result[BlockType.STONE]?.connections)
         assertEquals(
-            listOf(Direction.NORTH, Direction.SOUTH),
+            listOf(
+                listOf(RailConnectionPoint(Direction.NORTH), RailConnectionPoint(Direction.SOUTH))),
             result[BlockType("RAIL_STRAIGHT")]?.connections)
     }
 
@@ -208,10 +210,12 @@ class BlockRegistryLoaderTest {
         val (loader) =
             loaderWithBlocks(
                 blocks = mapOf("STONE" to "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n"),
-                overrides = mapOf("STONE" to "connections: [EAST, WEST]\n"),
+                overrides = mapOf("STONE" to "connections: [[EAST, WEST]]\n"),
             )
         assertEquals(
-            listOf(Direction.EAST, Direction.WEST), loader.load()[BlockType.STONE]?.connections)
+            listOf(
+                listOf(RailConnectionPoint(Direction.EAST), RailConnectionPoint(Direction.WEST))),
+            loader.load()[BlockType.STONE]?.connections)
     }
 
     @Test

@@ -211,7 +211,7 @@ export const ensureUseGetApiAdminScenesData = (queryClient: QueryClient, clientO
  */
 export const ensureUseGetApiAdminScenesByIdData = (queryClient: QueryClient, clientOptions: Options<GetApiAdminScenesByIdData, true>, options?: Omit<EnsureQueryDataOptions<Common.GetApiAdminScenesByIdDefaultResponse>, "queryKey" | "queryFn">) => queryClient.ensureQueryData({ queryKey: Common.UseGetApiAdminScenesByIdKeyFn(clientOptions), queryFn: ({ signal }) => getApiAdminScenesById({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**
- * Scene block/state buffers as a binary blob: 3×4-byte big-endian dimensions (width,height,depth) followed by the blocks byte array then the states byte array (wire-index-per-byte, 0 = AIR)
+ * Scene block/state/extraState buffers as a binary blob: 3×4-byte big-endian dimensions (width,height,depth) followed by the blocks byte array, then the states byte array, then the extraStates byte array (wire-index-per-byte, 0 = AIR)
  */
 export const ensureUseGetApiAdminScenesByIdBlocksRawData = (queryClient: QueryClient, clientOptions: Options<GetApiAdminScenesByIdBlocksRawData, true>, options?: Omit<EnsureQueryDataOptions<Common.GetApiAdminScenesByIdBlocksRawDefaultResponse>, "queryKey" | "queryFn">) => queryClient.ensureQueryData({ queryKey: Common.UseGetApiAdminScenesByIdBlocksRawKeyFn(clientOptions), queryFn: ({ signal }) => getApiAdminScenesByIdBlocksRaw({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**

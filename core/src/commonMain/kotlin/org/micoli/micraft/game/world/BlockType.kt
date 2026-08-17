@@ -64,6 +64,7 @@ value class BlockType(val id: String) {
         val RAIL_SLOPE_45 = BlockType("RAIL_SLOPE_45")
         val RAIL_SLOPE_22 = BlockType("RAIL_SLOPE_22")
         val RAIL_Y_SPLIT_90 = BlockType("RAIL_Y_SPLIT_90")
+        val RAIL_CROSS = BlockType("RAIL_CROSS")
     }
 
     override fun toString(): String = id

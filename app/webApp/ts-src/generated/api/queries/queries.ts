@@ -211,7 +211,7 @@ export const useGetApiAdminScenes = <TData = Common.GetApiAdminScenesDefaultResp
  */
 export const useGetApiAdminScenesById = <TData = Common.GetApiAdminScenesByIdDefaultResponse, TError = unknown, TQueryKey extends Array<unknown> = unknown[]>(clientOptions: Options<GetApiAdminScenesByIdData, true>, queryKey?: TQueryKey, options?: Omit<UseQueryOptions<TData, TError>, "queryKey" | "queryFn">) => useQuery<TData, TError>({ queryKey: Common.UseGetApiAdminScenesByIdKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiAdminScenesById({ ...clientOptions, signal, throwOnError: true }).then(response => response.data as TData) as TData, ...options });
 /**
- * Scene block/state buffers as a binary blob: 3×4-byte big-endian dimensions (width,height,depth) followed by the blocks byte array then the states byte array (wire-index-per-byte, 0 = AIR)
+ * Scene block/state/extraState buffers as a binary blob: 3×4-byte big-endian dimensions (width,height,depth) followed by the blocks byte array, then the states byte array, then the extraStates byte array (wire-index-per-byte, 0 = AIR)
  */
 export const useGetApiAdminScenesByIdBlocksRaw = <TData = Common.GetApiAdminScenesByIdBlocksRawDefaultResponse, TError = unknown, TQueryKey extends Array<unknown> = unknown[]>(clientOptions: Options<GetApiAdminScenesByIdBlocksRawData, true>, queryKey?: TQueryKey, options?: Omit<UseQueryOptions<TData, TError>, "queryKey" | "queryFn">) => useQuery<TData, TError>({ queryKey: Common.UseGetApiAdminScenesByIdBlocksRawKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiAdminScenesByIdBlocksRaw({ ...clientOptions, signal, throwOnError: true }).then(response => response.data as TData) as TData, ...options });
 /**

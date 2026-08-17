@@ -13,16 +13,23 @@ import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.EntityType
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.rail.Direction
+import org.micoli.micraft.game.world.rail.RailConnectionPoint
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.support.testWorld
 import org.micoli.micraft.vehicle.VehicleDefinition
 import org.micoli.micraft.vehicle.VehicleRegistry
+
+private fun rc(direction: Direction, dy: Float = 0f) = RailConnectionPoint(direction, dy)
+
+private fun grp(vararg points: RailConnectionPoint) = points.toList()
 
 class VehicleBehaviorTest {
 
     private val straight = BlockType("RAIL_STRAIGHT")
     private val curve90 = BlockType("RAIL_CURVE_90")
     private val ySplit = BlockType("RAIL_Y_SPLIT_90")
+    private val slope = BlockType("RAIL_SLOPE_45")
+    private val cross = BlockType("RAIL_CROSS")
     private val cart = EntityType("CART")
 
     private lateinit var savedBlocks: Map<BlockType, BlockDefinition>
@@ -41,19 +48,39 @@ class VehicleBehaviorTest {
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections = listOf(Direction.NORTH, Direction.SOUTH)),
+                            connections = listOf(grp(rc(Direction.NORTH), rc(Direction.SOUTH)))),
                     curve90 to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections = listOf(Direction.NORTH, Direction.EAST)),
+                            connections = listOf(grp(rc(Direction.NORTH), rc(Direction.EAST)))),
                     ySplit to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections = listOf(Direction.SOUTH, Direction.NORTH, Direction.EAST)),
+                            connections =
+                                listOf(
+                                    grp(rc(Direction.SOUTH), rc(Direction.NORTH)),
+                                    grp(rc(Direction.SOUTH), rc(Direction.EAST)))),
+                    slope to
+                        BlockDefinition(
+                            solid = true,
+                            isCubic = false,
+                            rotatable = true,
+                            // South neighbor of a slope sits one grid level up.
+                            connections =
+                                listOf(grp(rc(Direction.NORTH), rc(Direction.SOUTH, 1f)))),
+                    cross to
+                        BlockDefinition(
+                            solid = true,
+                            isCubic = false,
+                            rotatable = true,
+                            connections =
+                                listOf(
+                                    grp(rc(Direction.NORTH), rc(Direction.SOUTH)),
+                                    grp(rc(Direction.EAST), rc(Direction.WEST)))),
                 ))
         // Exactly one full block per tick regardless of the live TICK_MS (other test classes
         // mutate that global and don't always reset it) — makes "N ticks to cross a block" exact.
@@ -73,11 +100,12 @@ class VehicleBehaviorTest {
         z: Int,
         type: BlockType,
         rotation: Int,
-        extra: Int = 0
+        extra: Int = 0,
+        y: Int = 7,
     ) {
         world.applyChange(
             BlockChange(
-                BlockPos(x, 7, z), type, BlockState.pack(rotation, 0), BlockState.packExtra(extra)))
+                BlockPos(x, y, z), type, BlockState.pack(rotation, 0), BlockState.packExtra(extra)))
     }
 
     private fun tick(instance: VehicleInstance, world: WorldState, times: Int = 1) {
@@ -169,5 +197,190 @@ class VehicleBehaviorTest {
 
         tick(instance, world) // split -> east branch
         assertEquals(BlockPos(9, 7, 8), instance.railBlockPos)
+    }
+
+    @Test
+    fun onASlope_climbsSmoothlyToTheNeighborOneLevelUp() {
+        val world = testWorld()
+        place(world, 8, 7, straight, 0, y = 7) // lower run
+        place(world, 8, 8, slope, 0, y = 7) // bridges up to the z=9 run at y=8
+        place(world, 8, 9, straight, 0, y = 8) // upper run
+
+        // Half a block per tick, so crossing the slope cell takes 2 ticks and progress=0.5 is
+        // observable mid-crossing (the default 1-block/tick speed never leaves a mid-block state).
+        VehicleRegistry.load(
+            savedVehicles + mapOf(cart to VehicleDefinition(speed = 0.5f / TICK_SECONDS)))
+
+        val instance =
+            VehicleInstance(
+                    id = "v1",
+                    type = cart,
+                    railBlockPos = BlockPos(8, 7, 7),
+                    travelDirection = Direction.SOUTH)
+                .apply { moving = true }
+
+        tick(instance, world, 2) // straight -> slope, still y=7
+        assertEquals(BlockPos(8, 7, 8), instance.railBlockPos)
+        assertEquals(8f, instance.pos.y, "on the slope cell, pose lands on its own floor")
+
+        tick(instance, world) // mid-slope: progress interpolates toward y=8 upper run
+        assertEquals(8.5f, instance.pos.y, "climbing halfway through the slope")
+        assertEquals(0.5f, instance.progress)
+
+        tick(instance, world) // finish crossing the slope -> upper run at y=8
+        assertEquals(BlockPos(8, 8, 9), instance.railBlockPos, "reached the upper run one level up")
+        assertEquals(9f, instance.pos.y)
+    }
+
+    @Test
+    fun onASlopeAtAnApparentDeadEnd_connectsToTheNeighborBuiltOneLevelUp_insteadOfBouncing() {
+        val world = testWorld()
+        // rotation 3: NORTH->EAST(dy0), SOUTH->WEST(dy1) — exiting WEST expects a neighbor one
+        // level up. Nothing sits at the same-Y (20,1,12): a same-Y-only search would wrongly treat
+        // this as a dead end and bounce instead of finding the block actually built at y=2.
+        place(world, 21, 12, slope, 3, y = 1)
+        place(world, 20, 12, straight, 1, y = 2)
+        place(world, 22, 12, straight, 1, y = 1)
+
+        val instance =
+            VehicleInstance(
+                    id = "v1",
+                    type = cart,
+                    railBlockPos = BlockPos(22, 1, 12),
+                    travelDirection = Direction.WEST)
+                .apply { moving = true }
+
+        tick(instance, world) // 22 -> slope@21, still y=1
+        assertEquals(BlockPos(21, 1, 12), instance.railBlockPos)
+
+        tick(instance, world) // slope@21 -> 20, stepping up to y=2 instead of bouncing
+        assertEquals(
+            BlockPos(20, 2, 12),
+            instance.railBlockPos,
+            "climbed onto the neighbor built one level up instead of bouncing")
+    }
+
+    @Test
+    fun approachingASlopeFromItsFlatHighNeighbor_findsItOneLevelDown_insteadOfBouncing() {
+        val world = testWorld()
+        // Same layout as above, but the vehicle starts on the flat, dy=0-declared neighbor at the
+        // slope's high side instead of on the slope itself — that flat piece has no idea a slope
+        // sits one level below it, so finding the connection relies entirely on the slope's own
+        // reverse-facing point declaring the jump (the fallback ±1 search), not on anything the
+        // flat piece itself knows.
+        place(world, 21, 12, slope, 3, y = 1)
+        place(world, 20, 12, straight, 1, y = 2)
+        place(world, 22, 12, straight, 1, y = 1)
+
+        val instance =
+            VehicleInstance(
+                    id = "v1",
+                    type = cart,
+                    railBlockPos = BlockPos(20, 2, 12),
+                    travelDirection = Direction.EAST)
+                .apply { moving = true }
+
+        tick(instance, world) // 20 (flat, y=2) -> slope@21, stepping down to y=1
+        assertEquals(
+            BlockPos(21, 1, 12),
+            instance.railBlockPos,
+            "found the slope one level down instead of bouncing at an apparent dead end")
+    }
+
+    @Test
+    fun onAStraightAtWorldFloor_deadEnding_theFallbackYSearchDoesNotCrossTheWorldBoundary() {
+        val world = testWorld()
+        // The ±1 fallback search in RailTraversal.connectingNeighbor must not try y=-1 at the
+        // world floor — BlockPos throws on an out-of-range Y instead of just finding no neighbor.
+        place(world, 8, 6, straight, 0, y = 0)
+
+        val instance =
+            VehicleInstance(
+                    id = "v1",
+                    type = cart,
+                    railBlockPos = BlockPos(8, 0, 6),
+                    travelDirection = Direction.SOUTH)
+                .apply { moving = true }
+
+        tick(instance, world) // no neighbor in any direction — must reverse in place, not throw
+        assertEquals(BlockPos(8, 0, 6), instance.railBlockPos)
+        assertEquals(Direction.NORTH, instance.travelDirection)
+    }
+
+    @Test
+    fun onACurveAtADeadEnd_backtracksTheWayItCameIn_insteadOfBouncingForever() {
+        val world = testWorld()
+        // curve90 connects NORTH/EAST (unrotated) — perpendicular, not opposite. Only the NORTH
+        // side has a neighbor; EAST is a dead end.
+        place(world, 8, 7, straight, 0) // north of the curve — the only way in or out
+        place(world, 8, 8, curve90, 0) // connects NORTH (to the straight) and EAST (dead end)
+
+        val instance =
+            VehicleInstance(
+                    id = "v1",
+                    type = cart,
+                    railBlockPos = BlockPos(8, 7, 7),
+                    travelDirection = Direction.SOUTH)
+                .apply { moving = true }
+
+        tick(instance, world) // straight -> curve; arrival sets travelDirection to EAST (the turn)
+        assertEquals(BlockPos(8, 7, 8), instance.railBlockPos)
+        assertEquals(Direction.EAST, instance.travelDirection)
+
+        tick(instance, world) // EAST is a dead end — must reverse to NORTH (the way it came in),
+        // not WEST (exitDir.opposite), which isn't one of the curve's own connections at all.
+        assertEquals(BlockPos(8, 7, 8), instance.railBlockPos, "still on the curve, didn't move")
+        assertEquals(Direction.NORTH, instance.travelDirection)
+
+        tick(instance, world) // curve -> straight, back the way it came
+        assertEquals(BlockPos(8, 7, 7), instance.railBlockPos)
+    }
+
+    @Test
+    fun onACrossing_goesStraightThrough_neverTurnsOntoTheOtherPair() {
+        val world = testWorld()
+        place(world, 8, 7, straight, 0) // north leg
+        place(world, 8, 9, straight, 0) // south leg
+        place(world, 7, 8, straight, 1) // west leg
+        place(world, 9, 8, straight, 1) // east leg
+        place(world, 8, 8, cross, 0)
+
+        val instance =
+            VehicleInstance(
+                    id = "v1",
+                    type = cart,
+                    railBlockPos = BlockPos(8, 7, 7),
+                    travelDirection = Direction.SOUTH)
+                .apply { moving = true }
+
+        tick(instance, world) // north leg -> crossing
+        assertEquals(BlockPos(8, 7, 8), instance.railBlockPos)
+        assertEquals(Direction.SOUTH, instance.travelDirection, "kept going straight, not turning")
+
+        tick(instance, world) // crossing -> south leg
+        assertEquals(BlockPos(8, 7, 9), instance.railBlockPos)
+    }
+
+    @Test
+    fun onACrossingAtADeadEnd_reversesStraightBack_insteadOfTurningOntoTheOtherPair() {
+        val world = testWorld()
+        // Only the north leg exists — east/south/west are all dead ends.
+        place(world, 8, 7, straight, 0)
+        place(world, 8, 8, cross, 0)
+
+        val instance =
+            VehicleInstance(
+                    id = "v1",
+                    type = cart,
+                    railBlockPos = BlockPos(8, 7, 7),
+                    travelDirection = Direction.SOUTH)
+                .apply { moving = true }
+
+        tick(instance, world) // north leg -> crossing
+        assertEquals(BlockPos(8, 7, 8), instance.railBlockPos)
+
+        tick(instance, world) // south is a dead end — must reverse straight back to NORTH
+        assertEquals(BlockPos(8, 7, 8), instance.railBlockPos, "still on the crossing, didn't move")
+        assertEquals(Direction.NORTH, instance.travelDirection)
     }
 }
