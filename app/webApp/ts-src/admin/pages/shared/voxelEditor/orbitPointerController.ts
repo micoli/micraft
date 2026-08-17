@@ -77,15 +77,20 @@ export function setupOrbitPointerController(opts: OrbitPointerControllerOptions)
       downY = lastY = scene.pointerY;
       downShift = evt.shiftKey;
       dragMode = evt.metaKey ? "rotate" : evt.altKey ? "pan" : evt.ctrlKey ? "zoom" : "place";
-      // Re-pivot the orbit around whatever was under the cursor at the start of the rotation drag,
-      // instead of always orbiting around the current (possibly stale, panned-away-from)
-      // camera.target. Re-projected onto the current view ray AT THE CAMERA'S CURRENT RADIUS
-      // (rather than using the raw, possibly much nearer/farther pick.pickedPoint directly) so
-      // setTarget()'s rebuilt radius comes out unchanged — using the raw pick distance let a
-      // grazing-angle pick far out on the ground plane balloon the radius, which then turned the
-      // very next small mouse move into a huge swing that read as a pan instead of a rotate.
+      // Re-pivot the orbit around whatever is under the SCREEN CENTER at the start of the
+      // rotation drag (not the cursor — a corner-of-screen drag start shouldn't put an off-center
+      // point at the pivot), instead of always orbiting around the current (possibly stale,
+      // panned-away-from) camera.target. Re-projected onto the current view ray AT THE CAMERA'S
+      // CURRENT RADIUS (rather than using the raw, possibly much nearer/farther pick.pickedPoint
+      // directly) so setTarget()'s rebuilt radius comes out unchanged — using the raw pick
+      // distance let a grazing-angle pick far out on the ground plane balloon the radius, which
+      // then turned the very next small mouse move into a huge swing that read as a pan instead
+      // of a rotate.
       if (dragMode === "rotate") {
-        const pick = scene.pick(scene.pointerX, scene.pointerY);
+        const engine = scene.getEngine();
+        const cx = engine.getRenderWidth() / 2;
+        const cy = engine.getRenderHeight() / 2;
+        const pick = scene.pick(cx, cy);
         if (pick?.hit && pick.pickedPoint) {
           const direction = pick.pickedPoint.subtract(camera.position).normalize();
           camera.setTarget(camera.position.add(direction.scale(camera.radius)));
