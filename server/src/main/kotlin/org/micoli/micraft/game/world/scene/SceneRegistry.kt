@@ -4,10 +4,13 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.min
 import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockPlacer
+import org.micoli.micraft.game.world.rail.RailConnection
 
 class SceneRegistry(private val persistence: WorldPersistence?) {
     private val scenes = ConcurrentHashMap<String, Scene>()
@@ -32,6 +35,7 @@ class SceneRegistry(private val persistence: WorldPersistence?) {
                 createdAt = System.currentTimeMillis(),
                 blocks = ByteArray(width * height * depth),
                 states = ByteArray(width * height * depth),
+                extraStates = ByteArray(width * height * depth),
             )
         scenes[scene.id] = scene
         persistMetadata()
@@ -48,6 +52,7 @@ class SceneRegistry(private val persistence: WorldPersistence?) {
                 createdAt = System.currentTimeMillis(),
                 blocks = existing.blocks.copyOf(),
                 states = existing.states.copyOf(),
+                extraStates = existing.extraStates.copyOf(),
                 // Scene.copy() shallow-copies entities (same MutableList reference by default) —
                 // must deep-copy so mutating the duplicate's entities never touches the original.
                 entities = existing.entities.toMutableList(),
@@ -72,6 +77,7 @@ class SceneRegistry(private val persistence: WorldPersistence?) {
         val existing = scenes[id] ?: return null
         val newBlocks = ByteArray(width * height * depth)
         val newStates = ByteArray(width * height * depth)
+        val newExtraStates = ByteArray(width * height * depth)
         val cw = min(existing.width, width)
         val ch = min(existing.height, height)
         val cd = min(existing.depth, depth)
@@ -82,6 +88,7 @@ class SceneRegistry(private val persistence: WorldPersistence?) {
                     val oldIdx = existing.idx(x, y, z)
                     newBlocks[newIdx] = existing.blocks[oldIdx]
                     newStates[newIdx] = existing.states[oldIdx]
+                    newExtraStates[newIdx] = existing.extraStateAt(x, y, z)
                 }
             }
         }
@@ -101,6 +108,7 @@ class SceneRegistry(private val persistence: WorldPersistence?) {
                 depth = depth,
                 blocks = newBlocks,
                 states = newStates,
+                extraStates = newExtraStates,
                 entities = newEntities.toMutableList())
         scenes[id] = updated
         persistMetadata()
@@ -173,6 +181,33 @@ class SceneRegistry(private val persistence: WorldPersistence?) {
         return result
     }
 
+    sealed class SwitchToggleResult {
+        data class Applied(val extraState: Byte) : SwitchToggleResult()
+
+        data class Rejected(val reason: String) : SwitchToggleResult()
+    }
+
+    // Cycles a switch/junction rail block's active branch — mirrors BlockInteractor.handleInteract
+    // (Instance/live-world path) for a Scene's bounded buffer, called by the Scene editor's
+    // rail-test
+    // switch overlay.
+    fun toggleSwitch(id: String, x: Int, y: Int, z: Int): SwitchToggleResult {
+        val scene = scenes[id] ?: return SwitchToggleResult.Rejected("Scene not found")
+        if (!scene.contains(x, y, z)) {
+            return SwitchToggleResult.Rejected("Coordinate outside scene bounds")
+        }
+        val type = BlockRegistry.byWireIndex(scene.blockAt(x, y, z).toInt() and 0xFF)
+        if (!RailConnection.isJunction(type)) {
+            return SwitchToggleResult.Rejected("Not a switch block")
+        }
+        val branches = RailConnection.branchCount(type)
+        val nextBranch = (BlockState.extra(scene.extraStateAt(x, y, z)) + 1) % branches
+        val nextExtraState = BlockState.packExtra(nextBranch)
+        scene.setExtraState(x, y, z, nextExtraState)
+        persistBlocks(scene)
+        return SwitchToggleResult.Applied(nextExtraState)
+    }
+
     fun delete(id: String): Boolean {
         val removed = scenes.remove(id) ?: return false
         persistMetadata()
@@ -185,7 +220,7 @@ class SceneRegistry(private val persistence: WorldPersistence?) {
     }
 
     private fun persistBlocks(scene: Scene) {
-        persistence?.saveSceneBlocks(scene.id, scene.blocks, scene.states)
+        persistence?.saveSceneBlocks(scene.id, scene.blocks, scene.states, scene.extraStates)
     }
 
     private fun persistEntities(scene: Scene) {

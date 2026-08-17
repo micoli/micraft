@@ -6,11 +6,13 @@ import type { AnimationEntry } from "../../lib/animationHelpers";
 import { BlockCard } from "./BlockCard";
 import { ItemCard } from "./ItemCard";
 import { NpcCard } from "./NpcCard";
+import { VehicleCard } from "./VehicleCard";
 import { SkinCard } from "./SkinCard";
 import { AnimationCard } from "./AnimationCard";
 import { BlockDetail } from "./BlockDetail";
 import { ItemDetail } from "./ItemDetail";
 import { NpcDetail } from "./NpcDetail";
+import { VehicleDetail } from "./VehicleDetail";
 import { SkinDetail } from "./SkinDetail";
 import { AnimationDetail } from "./AnimationDetail";
 
@@ -43,11 +45,20 @@ export interface NpcEntry {
   autoSpawn: boolean;
 }
 
-type CodexTab = "bestiary" | "blocks" | "items" | "skins" | "animations";
+export interface VehicleEntry {
+  type: string;
+  bbmodelFile: string;
+  width: number;
+  height: number;
+  speed: number;
+}
+
+type CodexTab = "bestiary" | "vehicles" | "blocks" | "items" | "skins" | "animations";
 type Selection =
   | { kind: "block"; ordinal: number }
   | { kind: "item"; name: string }
   | { kind: "npc"; npcType: string }
+  | { kind: "vehicle"; vehicleType: string }
   | { kind: "skin"; name: string }
   | { kind: "animation"; fullName: string };
 
@@ -90,6 +101,10 @@ export function CodexModal({ open, onClose }: Props) {
     .map(([type, info]: [string, unknown]) => ({ type, ...(info as Omit<NpcEntry, "type">) }))
     .sort((a: NpcEntry, b: NpcEntry) => a.type.localeCompare(b.type));
 
+  const allVehicles: VehicleEntry[] = Object.entries(window.mcState.codexVehicles ?? {})
+    .map(([type, info]: [string, unknown]) => ({ type, ...(info as Omit<VehicleEntry, "type">) }))
+    .sort((a: VehicleEntry, b: VehicleEntry) => a.type.localeCompare(b.type));
+
   const allAnimations: AnimationEntry[] = useMemo(() => {
     if (!open) return [];
     const bbmodel = window.mcState?.playerBbmodels?.[selectedAnimSkin];
@@ -99,36 +114,43 @@ export function CodexModal({ open, onClose }: Props) {
   const filteredBlocks = allBlocks.filter((b) => b.name.toLowerCase().includes(filter.toLowerCase()));
   const filteredItems = allItems.filter((it) => it.name.toLowerCase().includes(filter.toLowerCase()));
   const filteredNpcs = allNpcs.filter((n) => n.type.toLowerCase().includes(filter.toLowerCase()));
+  const filteredVehicles = allVehicles.filter((v) => v.type.toLowerCase().includes(filter.toLowerCase()));
   const filteredSkins = allSkins.filter((s) => s.toLowerCase().includes(filter.toLowerCase()));
   const filteredAnimations = allAnimations.filter((a) =>
     animDisplayName(a.fullName).toLowerCase().includes(filter.toLowerCase()),
   );
 
-  const currentList: (BlockEntry | ItemEntry | NpcEntry | string | AnimationEntry)[] =
+  const currentList: (BlockEntry | ItemEntry | NpcEntry | VehicleEntry | string | AnimationEntry)[] =
     tab === "bestiary"
       ? filteredNpcs
-      : tab === "blocks"
-        ? filteredBlocks
-        : tab === "items"
-          ? filteredItems
-          : tab === "skins"
-            ? filteredSkins
-            : filteredAnimations;
+      : tab === "vehicles"
+        ? filteredVehicles
+        : tab === "blocks"
+          ? filteredBlocks
+          : tab === "items"
+            ? filteredItems
+            : tab === "skins"
+              ? filteredSkins
+              : filteredAnimations;
 
   const currentIdx =
     selection === null
       ? -1
       : tab === "bestiary"
         ? filteredNpcs.findIndex((n) => n.type === (selection as { kind: "npc"; npcType: string }).npcType)
-        : tab === "blocks"
-          ? filteredBlocks.findIndex((b) => b.ordinal === (selection as { kind: "block"; ordinal: number }).ordinal)
-          : tab === "items"
-            ? filteredItems.findIndex((it) => it.name === (selection as { kind: "item"; name: string }).name)
-            : tab === "skins"
-              ? filteredSkins.findIndex((s) => s === (selection as { kind: "skin"; name: string }).name)
-              : filteredAnimations.findIndex(
-                  (a) => a.fullName === (selection as { kind: "animation"; fullName: string }).fullName,
-                );
+        : tab === "vehicles"
+          ? filteredVehicles.findIndex(
+              (v) => v.type === (selection as { kind: "vehicle"; vehicleType: string }).vehicleType,
+            )
+          : tab === "blocks"
+            ? filteredBlocks.findIndex((b) => b.ordinal === (selection as { kind: "block"; ordinal: number }).ordinal)
+            : tab === "items"
+              ? filteredItems.findIndex((it) => it.name === (selection as { kind: "item"; name: string }).name)
+              : tab === "skins"
+                ? filteredSkins.findIndex((s) => s === (selection as { kind: "skin"; name: string }).name)
+                : filteredAnimations.findIndex(
+                    (a) => a.fullName === (selection as { kind: "animation"; fullName: string }).fullName,
+                  );
 
   useEffect(() => {
     if (!open) return;
@@ -137,6 +159,7 @@ export function CodexModal({ open, onClose }: Props) {
       if (idx < 0 || idx >= currentList.length) return;
       const item = currentList[idx];
       if (tab === "bestiary") setSelection({ kind: "npc", npcType: (item as NpcEntry).type });
+      else if (tab === "vehicles") setSelection({ kind: "vehicle", vehicleType: (item as VehicleEntry).type });
       else if (tab === "blocks") setSelection({ kind: "block", ordinal: (item as BlockEntry).ordinal });
       else if (tab === "items") setSelection({ kind: "item", name: (item as ItemEntry).name });
       else if (tab === "skins") setSelection({ kind: "skin", name: item as string });
@@ -152,7 +175,7 @@ export function CodexModal({ open, onClose }: Props) {
       if ((e.target as HTMLElement)?.tagName === "INPUT") return;
       e.preventDefault();
 
-      const cardWidth = tab === "bestiary" || tab === "skins" ? 98 : 88;
+      const cardWidth = tab === "bestiary" || tab === "vehicles" || tab === "skins" ? 98 : 88;
       const cols = gridRef.current ? Math.max(1, Math.floor(gridRef.current.clientWidth / cardWidth)) : 4;
 
       if (currentIdx === -1) {
@@ -180,13 +203,15 @@ export function CodexModal({ open, onClose }: Props) {
     const key =
       tab === "bestiary"
         ? (item as NpcEntry).type
-        : tab === "blocks"
-          ? (item as BlockEntry).ordinal
-          : tab === "items"
-            ? (item as ItemEntry).name
-            : tab === "animations"
-              ? (item as AnimationEntry).fullName
-              : (item as string);
+        : tab === "vehicles"
+          ? (item as VehicleEntry).type
+          : tab === "blocks"
+            ? (item as BlockEntry).ordinal
+            : tab === "items"
+              ? (item as ItemEntry).name
+              : tab === "animations"
+                ? (item as AnimationEntry).fullName
+                : (item as string);
     itemRefsMap.current.get(key)?.scrollIntoView({ block: "nearest" });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- currentList derives from state already captured by currentIdx/tab
   }, [open, currentIdx, tab]);
@@ -195,6 +220,7 @@ export function CodexModal({ open, onClose }: Props) {
 
   const TAB_LABEL: Record<CodexTab, string> = {
     bestiary: `Bestiaire (${allNpcs.length})`,
+    vehicles: `Véhicules (${allVehicles.length})`,
     blocks: `Blocs (${allBlocks.length})`,
     items: `Items (${allItems.length})`,
     skins: `Skins (${allSkins.length})`,
@@ -298,7 +324,7 @@ export function CodexModal({ open, onClose }: Props) {
         </div>
 
         <div style={tabBar}>
-          {(["bestiary", "blocks", "items", "skins", "animations"] as CodexTab[]).map((t) => (
+          {(["bestiary", "vehicles", "blocks", "items", "skins", "animations"] as CodexTab[]).map((t) => (
             <button
               key={t}
               style={{
@@ -383,6 +409,18 @@ export function CodexModal({ open, onClose }: Props) {
                     onClick={() => setSelection({ kind: "npc", npcType: npc.type })}
                   />
                 ))}
+              {tab === "vehicles" &&
+                filteredVehicles.map((vehicle) => (
+                  <VehicleCard
+                    key={vehicle.type}
+                    ref={(el) => {
+                      itemRefsMap.current.set(vehicle.type, el);
+                    }}
+                    vehicle={vehicle}
+                    selected={selection?.kind === "vehicle" && selection.vehicleType === vehicle.type}
+                    onClick={() => setSelection({ kind: "vehicle", vehicleType: vehicle.type })}
+                  />
+                ))}
               {tab === "blocks" &&
                 filteredBlocks.map((block) => (
                   <BlockCard
@@ -462,6 +500,11 @@ export function CodexModal({ open, onClose }: Props) {
               (() => {
                 const npc = allNpcs.find((n) => n.type === selection.npcType);
                 return npc ? <NpcDetail npc={npc} /> : null;
+              })()}
+            {selection?.kind === "vehicle" &&
+              (() => {
+                const vehicle = allVehicles.find((v) => v.type === selection.vehicleType);
+                return vehicle ? <VehicleDetail vehicle={vehicle} /> : null;
               })()}
             {selection?.kind === "skin" && <SkinDetail name={selection.name} />}
             {selection?.kind === "animation" &&

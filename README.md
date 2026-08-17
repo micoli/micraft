@@ -288,6 +288,7 @@ stateDiagram-v2
 | `/tradeoffer` | `/tradeoffer <tradeId> <json>` | Updates your current trade offer. | — |
 | `/undo` | `/undo [N]` | Undo the last N block breaks, restoring blocks and reversing item collection. | — |
 | `/unequip` | `/unequip <armorName>` | Remove an equipped armor piece. | dynamic |
+| `/vehicule:add` | `/vehicule:add <vehiculeName>` | Spawn a vehicle on the rail block you're standing on. | — |
 | `/water` | `/water [x y z]` | Place a water source on the solid block you are looking at (or x y z). (admin) | — |
 | `/weather` | `/weather [rain\|storm\|snow\|fog\|none]` | Force a weather zone at your position or clear all zones. (admin) | rain, storm, snow, fog, none |
 | `/weather-forecast` | `/weather-forecast` | Shows active weather zones and their location. | — |
@@ -361,7 +362,7 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | DELETE | `/api/admin/scenes/{id}` | Delete a scene |
 | GET | `/api/admin/scenes/{id}` | A single scene's metadata |
 | PUT | `/api/admin/scenes/{id}` | Rename a scene |
-| GET | `/api/admin/scenes/{id}/blocks/raw` | Scene block/state buffers as a binary blob: 3×4-byte big-endian dimensions (width,height,depth) followed by the blocks byte array then the states byte array (wire-index-per-byte, 0 = AIR) |
+| GET | `/api/admin/scenes/{id}/blocks/raw` | Scene block/state/extraState buffers as a binary blob: 3×4-byte big-endian dimensions (width,height,depth) followed by the blocks byte array, then the states byte array, then the extraStates byte array (wire-index-per-byte, 0 = AIR) |
 | PUT | `/api/admin/scenes/{id}/dimensions` | Resize a scene |
 | POST | `/api/admin/scenes/{id}/duplicate` | Duplicate a scene (copies name, dimensions, and blocks) |
 | GET | `/api/admin/scenes/{id}/entities` | Fractional (lego/plate/arch) block entities placed in this scene — not carried by the blocks/raw binary blob, so the client loads them separately on scene open |

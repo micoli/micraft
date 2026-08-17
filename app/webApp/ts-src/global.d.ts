@@ -205,6 +205,8 @@ declare global {
     npcWalkBones: Record<string, Record<string, string>>;
     armorBbmodels: Record<string, BbModel>;
     npcModelsReady: boolean;
+    vehicleBbmodels: Record<string, BbModel>;
+    vehicleModelsReady: boolean;
     skinConfigs: Record<string, McSkinConfig | null>;
     skinMatCache: Record<string, import("@babylonjs/core").StandardMaterial>;
     skinUV: (face: BbModelFace | undefined, W: number, H: number) => Vector4;
@@ -244,6 +246,7 @@ declare global {
     }>;
     codexItems: Record<string, unknown>;
     codexNpcs: Record<string, unknown>;
+    codexVehicles: Record<string, unknown>;
     // i18n / locale
     i18nLocale: string;
     // Minimap overlay
@@ -287,6 +290,7 @@ declare global {
     setItemRegistry(json: string): void;
     setPlainColors(json: string): void;
     setNpcDefinitions(json: string): void;
+    setVehicleDefinitions(json: string): void;
     // Materials
     createTextureMaterial(name: string, url: string, scene: Scene): StandardMaterial;
     createLeavesMaterial(name: string, url: string, scene: Scene, r?: number, g?: number, b?: number): StandardMaterial;
@@ -419,6 +423,12 @@ declare global {
     setNpcScale(model: McPlayerModel, scale: number): void;
     disposeNpcModel(model: McPlayerModel): void;
     openNpcDialog(json: string): void;
+    // Vehicle
+    initVehicleModels(vehicleTypesJson: string): void;
+    isVehicleModelsReady(): boolean;
+    createVehicleModel(scene: Scene, vehicleType: string): McPlayerModel | null;
+    setVehicleTransform(model: McPlayerModel, x: number, y: number, z: number, yaw: number): void;
+    disposeVehicleModel(model: McPlayerModel): void;
     // Minimap
     createMinimap(): void;
     setMinimapChunk(cx: number, cz: number, topYJson: string, topBlockJson: string): void;
@@ -574,7 +584,17 @@ declare global {
       mcAdminGetBlockOrdinalAt(scene: unknown, wx: number, wy: number, wz: number): number;
       mcAdminGetBlockStateAt(scene: unknown, wx: number, wy: number, wz: number): number;
       mcAdminGetUsedXZOffsetAt(scene: unknown, wx: number, wy: number, wz: number): number;
+      mcAdminGetExtraStateAt(scene: unknown, wx: number, wy: number, wz: number): number;
       mcAdminSetBlockRegistry(json: string): void;
+      // Editor-only rail circuit test cart — see AdminChunkPreview.kt's mcAdminRailTest* trio.
+      // Start returns 1 on success (the cell is a rail block with a usable connection) or 0.
+      // Tick returns "x,y,z,yaw" CSV (empty string if no test is running).
+      mcAdminRailTestStart(scene: unknown, wx: number, wy: number, wz: number): number;
+      mcAdminRailTestStop(): void;
+      mcAdminRailTestTick(scene: unknown, deltaSeconds: number): string;
+      // Junctions in currently loaded chunks — "x,y,z,branchCount,currentBranch" rows joined by
+      // ';', for the rail-test switch overlay (see railSwitchMarkers.ts).
+      mcAdminListJunctions(scene: unknown): string;
       // Admin Scene editor (bounded, self-contained X/Y/Z raw block buffer — see
       // SceneMesher.kt/AdminScenePreview.kt) — mirrors the mcAdmin* chunk-preview surface above
       // but for a standalone buffer that isn't tied to the live world/chunk grid.
@@ -585,10 +605,17 @@ declare global {
         depth: number,
         blocks: Uint8Array,
         states: Uint8Array,
+        extraStates: Uint8Array,
       ): void;
       mcSceneSetBlock(scene: unknown, x: number, y: number, z: number, type: number, state: number): void;
+      // Sets one cell's switch/junction branch byte without a full remesh — see
+      // AdminScenePreview.kt's mcSceneSetExtraState.
+      mcSceneSetExtraState(x: number, y: number, z: number, extraState: number): void;
       mcSceneGetBlockOrdinalAt(x: number, y: number, z: number): number;
       mcSceneGetBlockStateAt(x: number, y: number, z: number): number;
+      // Junctions in the scene buffer — "x,y,z,branchCount,currentBranch" rows joined by ';', for
+      // the rail-test switch overlay (see railSwitchMarkers.ts).
+      mcSceneListJunctions(): string;
       // Replaces the fractional/lego entity list (see Scene.entities / BlockEntityProto) from a
       // JSON-encoded List<BlockEntityProto> and re-meshes — called on scene load (GET
       // /api/admin/scenes/{id}/entities) and again after any fractional place/break edit.
@@ -596,6 +623,10 @@ declare global {
       // Mirrors mcAdminGetUsedXZOffsetAt for the Scene editor's axis-degenerate placement fix.
       mcSceneGetUsedXZOffsetAt(x: number, y: number, z: number): number;
       mcSceneDispose(): void;
+      // Editor-only rail circuit test cart — see AdminScenePreview.kt's mcSceneRailTest* trio.
+      mcSceneRailTestStart(x: number, y: number, z: number): number;
+      mcSceneRailTestStop(): void;
+      mcSceneRailTestTick(deltaSeconds: number): string;
     }>;
     [key: string]: unknown;
   }

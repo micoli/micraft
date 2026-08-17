@@ -4,10 +4,15 @@ package org.micoli.micraft
 
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.ExperimentalWasmJsInterop
+import kotlin.math.atan2
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.world.BlockEntity
+import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.rail.Direction
+import org.micoli.micraft.game.world.rail.RailConnection
 import org.micoli.micraft.protocol.BlockEntityProto
 
 // Lets the admin Scene editor (a bounded, self-contained X/Y/Z raw block buffer, NOT tied to the
@@ -37,14 +42,23 @@ private fun toByteArray(data: JsAny): ByteArray {
 // each, flat index = x*height*depth + y*depth + z (same convention as Chunk.index, generalized —
 // see SceneEditorViewport.tsx's binary-layout parsing of GET /api/admin/scenes/{id}/blocks/raw).
 @JsExport
-fun mcSceneLoad(scene: JsAny, width: Int, height: Int, depth: Int, blocks: JsAny, states: JsAny) {
+fun mcSceneLoad(
+    scene: JsAny,
+    width: Int,
+    height: Int,
+    depth: Int,
+    blocks: JsAny,
+    states: JsAny,
+    extraStates: JsAny,
+) {
     val blocksArr = toByteArray(blocks)
     val statesArr = toByteArray(states)
+    val extraStatesArr = toByteArray(extraStates)
     if (previewScene !== scene || previewMesher == null) {
         previewScene = scene
-        previewMesher = SceneMesher(width, height, depth, blocksArr, statesArr)
+        previewMesher = SceneMesher(width, height, depth, blocksArr, statesArr, extraStatesArr)
     } else {
-        previewMesher!!.replaceBuffers(width, height, depth, blocksArr, statesArr)
+        previewMesher!!.replaceBuffers(width, height, depth, blocksArr, statesArr, extraStatesArr)
     }
     previewMesher!!.render(scene)
 }
@@ -110,4 +124,135 @@ fun mcSceneDispose() {
     previewMesher?.dispose()
     previewMesher = null
     previewScene = null
+}
+
+// Sets the extra-state byte for one cell without a full remesh (mesh geometry never depends on
+// extraState) — called after a switch toggle round-trips through the server (see
+// SceneRegistry.toggleSwitch) so the local buffer reflects the new branch immediately.
+@JsExport
+fun mcSceneSetExtraState(x: Int, y: Int, z: Int, extraState: Int) {
+    previewMesher?.setExtraState(x, y, z, extraState)
+}
+
+// Mirrors mcAdminListJunctions (AdminChunkPreview.kt) for the Scene editor's bounded buffer — CSV
+// rows "x,y,z,branchCount,currentBranch" separated by ';', for the rail-test switch overlay.
+@JsExport
+fun mcSceneListJunctions(): String {
+    val mesher = previewMesher ?: return ""
+    val sb = StringBuilder()
+    for (x in 0 until mesher.width) {
+        for (y in 0 until mesher.height) {
+            for (z in 0 until mesher.depth) {
+                val type = sceneBlockTypeAt(mesher, x, y, z)
+                if (!RailConnection.isJunction(type)) continue
+                val branches = RailConnection.branchCount(type)
+                val current =
+                    BlockState.extra(mesher.getExtraState(x, y, z).toByte())
+                        .coerceIn(0, branches - 1)
+                if (sb.isNotEmpty()) sb.append(';')
+                sb.append(x)
+                    .append(',')
+                    .append(y)
+                    .append(',')
+                    .append(z)
+                    .append(',')
+                    .append(branches)
+                    .append(',')
+                    .append(current)
+            }
+        }
+    }
+    return sb.toString()
+}
+
+// ── Rail circuit test (editor-only, no server round-trip) ──────────────────────────────────
+// Mirrors AdminChunkPreview.kt's mcAdminRailTest* trio for the Scene editor's standalone buffer.
+// Reads the real per-cell extra-state (branch selection) from the mesher's buffer, kept in sync
+// with the server by mcSceneSetExtraState above.
+private const val RAIL_TEST_SPEED = 3f // blocks/second — editor test only, no vehicle type context
+
+// Half the cart mesh's height (railTestCart.ts's CART_SIZE / 2) — the reported pose sits the cart
+// on top of the rail block's surface rather than centered inside it.
+private const val CART_HALF_HEIGHT = 0.3f
+private var railTestX = 0
+private var railTestY = 0
+private var railTestZ = 0
+private var railTestActive = false
+private var railTestDir: Direction = Direction.NORTH
+private var railTestProgress: Float = 0f
+
+private fun sceneBlockTypeAt(mesher: SceneMesher, x: Int, y: Int, z: Int): BlockType =
+    BlockRegistry.byWireIndex(mesher.getBlockOrdinal(x, y, z))
+
+@JsExport
+fun mcSceneRailTestStart(x: Int, y: Int, z: Int): Int {
+    val mesher = previewMesher ?: return 0
+    val type = sceneBlockTypeAt(mesher, x, y, z)
+    if (!RailConnection.isRail(type)) return 0
+    val state = mesher.getState(x, y, z)
+    val extraState = mesher.getExtraState(x, y, z)
+    val dir =
+        RailConnection.active(type, state.toByte(), extraState.toByte()).firstOrNull() ?: return 0
+    railTestX = x
+    railTestY = y
+    railTestZ = z
+    railTestDir = dir
+    railTestProgress = 0f
+    railTestActive = true
+    return 1
+}
+
+@JsExport
+fun mcSceneRailTestStop() {
+    railTestActive = false
+}
+
+@JsExport
+fun mcSceneRailTestTick(deltaSeconds: Float): String {
+    val mesher = previewMesher ?: return ""
+    if (!railTestActive) return ""
+    railTestProgress += RAIL_TEST_SPEED * deltaSeconds
+    while (railTestProgress >= 1f) {
+        railTestProgress -= 1f
+        advanceSceneRailTest(mesher)
+    }
+    if (!railTestActive) return ""
+    val dir = railTestDir
+    val t = railTestProgress
+    val px = railTestX + 0.5f + dir.dx * t
+    val py = railTestY + 1f + CART_HALF_HEIGHT
+    val pz = railTestZ + 0.5f + dir.dz * t
+    val yaw = atan2(dir.dx.toDouble(), dir.dz.toDouble()).toFloat()
+    return "$px,$py,$pz,$yaw"
+}
+
+// Mirrors advanceRailTest (AdminChunkPreview.kt) — see VehicleBehavior.advanceOneBlock for the
+// underlying reversal/loop logic this ports.
+private fun advanceSceneRailTest(mesher: SceneMesher) {
+    val exitDir = railTestDir
+    val nextX = railTestX + exitDir.dx
+    val nextY = railTestY
+    val nextZ = railTestZ + exitDir.dz
+    if (!mesher.inBounds(nextX, nextY, nextZ)) {
+        railTestActive = false
+        return
+    }
+    val nextType = sceneBlockTypeAt(mesher, nextX, nextY, nextZ)
+    val arrivalDir = exitDir.opposite
+    if (!RailConnection.isRail(nextType)) {
+        railTestDir = arrivalDir
+        return
+    }
+    val nextState = mesher.getState(nextX, nextY, nextZ)
+    val nextExtraState = mesher.getExtraState(nextX, nextY, nextZ)
+    val nextActive = RailConnection.active(nextType, nextState.toByte(), nextExtraState.toByte())
+    if (arrivalDir !in nextActive) {
+        railTestDir = arrivalDir
+        return
+    }
+    val forward = (nextActive - arrivalDir).firstOrNull()
+    railTestX = nextX
+    railTestY = nextY
+    railTestZ = nextZ
+    railTestDir = forward ?: arrivalDir
 }

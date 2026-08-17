@@ -23,6 +23,12 @@ import {
   type SelectionSnap,
 } from "../shared/voxelEditor/selectionGizmo";
 import { createPasteGizmo, type PasteOrigin } from "../shared/voxelEditor/pasteGizmo";
+import { createRailTestCart, type RailTestCart } from "../shared/voxelEditor/railTestCart";
+import {
+  createRailSwitchMarkers,
+  type RailJunction,
+  type RailSwitchMarkers,
+} from "../shared/voxelEditor/railSwitchMarkers";
 import {
   applyPasteTransform,
   IDENTITY_PASTE_TRANSFORM,
@@ -137,6 +143,39 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const { actionError, flashActionError } = useActionError();
   const [search, setSearch] = useState("");
+  // Rail circuit test cart (see railTestCart.ts) — "picking" means the next viewport click on a
+  // rail block starts the test; "running" means the cart is currently traveling the network.
+  // Independent of place/break/select mode, so testRailStateRef only gates the pointer
+  // controller's click-interception path, not modeRef's own place/break/select dispatch.
+  const [testRailState, setTestRailState] = useState<"idle" | "picking" | "running">("idle");
+  const testRailStateRef = useRef(testRailState);
+  const railTestCartRef = useRef<RailTestCart | null>(null);
+  // Switch/junction overlay markers (see railSwitchMarkers.ts) — shown for the whole "picking"/
+  // "running" duration of a rail test, refreshed after every reload so a toggled branch's label
+  // reflects the persisted state. refreshJunctionsRef is set from inside the scene-setup effect
+  // (it needs wasmExports/scene, both local to that effect) so this function-scoped
+  // toggleTestRail can still trigger it.
+  const railSwitchMarkersRef = useRef<RailSwitchMarkers | null>(null);
+  const refreshJunctionsRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    testRailStateRef.current = testRailState;
+  }, [testRailState]);
+  function toggleTestRail() {
+    if (testRailStateRef.current === "running") {
+      railTestCartRef.current?.stop();
+      railSwitchMarkersRef.current?.clear();
+      setTestRailState("idle");
+      return;
+    }
+    setTestRailState((s) => {
+      if (s === "picking") {
+        railSwitchMarkersRef.current?.clear();
+        return "idle";
+      }
+      refreshJunctionsRef.current();
+      return "picking";
+    });
+  }
   const modeRef = useRef(mode);
   const selectedTypeRef = useRef(selectedType);
   const ordinalByNameRef = useRef(ordinalByName);
@@ -513,6 +552,30 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     });
     pasteGizmoRef.current = pasteGizmo;
 
+    const railTestCart = createRailTestCart(
+      B,
+      scene,
+      (wx, wy, wz) => (wasmExports ? wasmExports.mcAdminRailTestStart(scene, wx, wy, wz) : 0),
+      (deltaSeconds) => (wasmExports ? wasmExports.mcAdminRailTestTick(scene, deltaSeconds) : ""),
+      () => wasmExports?.mcAdminRailTestStop(),
+    );
+    railTestCartRef.current = railTestCart;
+
+    const railSwitchMarkers = createRailSwitchMarkers(B, scene);
+    railSwitchMarkersRef.current = railSwitchMarkers;
+    function refreshJunctions() {
+      if (!wasmExports) return;
+      const csv = wasmExports.mcAdminListJunctions(scene);
+      const junctions: RailJunction[] = csv
+        ? csv.split(";").map((row) => {
+            const [wx, wy, wz, branchCount, currentBranch] = row.split(",").map(Number);
+            return { wx, wy, wz, branchCount, currentBranch };
+          })
+        : [];
+      railSwitchMarkers.update(junctions);
+    }
+    refreshJunctionsRef.current = refreshJunctions;
+
     pasteActionsRef.current = {
       start: () => {
         const entries = clipboardRef.current?.entries;
@@ -653,7 +716,12 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       if (chunkLoading.has(key)) return;
       chunkLoading.add(key);
       loadChunk(cx, cz)
-        .then(() => visibleChunks.add(key))
+        .then(() => {
+          visibleChunks.add(key);
+          // A switch toggle re-lands here through the same edit path as any other block change —
+          // refresh the overlay labels so a just-toggled branch shows its new state.
+          if (testRailStateRef.current !== "idle") refreshJunctions();
+        })
         .catch((e) => console.error(`Failed to reload instance chunk ${key}`, e))
         .finally(() => chunkLoading.delete(key));
     }
@@ -847,7 +915,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     // ghost/outline (place mode) or the red break overlay (break mode) track the cursor before a
     // click, exactly like moving the mouse in-game moves the block-placement preview.
     function updateHoverPreview(evt: PointerEvent) {
-      if (modeRef.current === "select") {
+      if (modeRef.current === "select" || testRailStateRef.current === "picking") {
         overlay.disposeAll();
         return;
       }
@@ -952,6 +1020,12 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
           return;
         }
       }
+      if (e.code === "Escape" && testRailStateRef.current !== "idle") {
+        railTestCartRef.current?.stop();
+        railSwitchMarkersRef.current?.clear();
+        setTestRailState("idle");
+        return;
+      }
       if (e.code === "KeyU") {
         performUndo();
         return;
@@ -977,6 +1051,28 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       onHoverMove: updateHoverPreview,
       onClick: ({ pick, normal, mode: currentMode, shiftKey }) => {
         const onGround = groundMeshes.has(pick.pickedMesh as InstanceType<typeof BABYLON.Mesh>);
+
+        if (testRailStateRef.current !== "idle") {
+          const junction = railSwitchMarkers.hitTest(pick.pickedMesh as InstanceType<typeof BABYLON.Mesh> | null);
+          if (junction) {
+            editSocket.sendRaw({ x: junction.wx, y: junction.wy, z: junction.wz });
+            reloadChunk(Math.floor(junction.wx / CHUNK_SIZE), Math.floor(junction.wz / CHUNK_SIZE));
+            return;
+          }
+        }
+
+        if (testRailStateRef.current === "picking") {
+          if (onGround || !normal || !pick.pickedPoint) return;
+          const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
+          const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
+          const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
+          if (railTestCartRef.current?.start(bx, by, bz)) {
+            setTestRailState("running");
+          } else {
+            flashActionError("Not a rail block");
+          }
+          return;
+        }
 
         if (currentMode === "select") {
           if (onGround || !normal || !pick.pickedPoint) return;
@@ -1120,6 +1216,10 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       selectionGizmo.dispose();
       disposePastePreview();
       pasteGizmo.dispose();
+      railTestCart.dispose();
+      railTestCartRef.current = null;
+      railSwitchMarkers.dispose();
+      railSwitchMarkersRef.current = null;
       editSocket.close();
       axesGizmo.dispose();
       engine.dispose();
@@ -1229,6 +1329,8 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         setHoveredRect={setHoveredRect}
         selectBlockType={selectBlockType}
         paletteRef={paletteRef}
+        testRailState={testRailState}
+        onToggleTestRail={toggleTestRail}
       />
     </div>
   );

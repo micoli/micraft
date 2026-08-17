@@ -17,6 +17,8 @@ import io.ktor.server.websocket.WebSockets
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import io.ktor.websocket.send
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -25,12 +27,42 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.game.GameLoop
+import org.micoli.micraft.game.world.BlockDefinition
 import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.rail.Direction
 import org.micoli.micraft.http.AdminController
 import org.micoli.micraft.support.testWorld
 
 class AdminEditWsTest {
+
+    // The default test registry (see TestFixtures.testWorld) has no rail block types — inject
+    // just enough of RAIL_Y_SPLIT_90 (a junction, mirrors the real resources/blocks yaml — see
+    // BlockInteractorTest for the same pattern) for the switch-toggle tests below.
+    private val ySplit = BlockType("RAIL_Y_SPLIT_90")
+    private lateinit var savedBlocks: Map<BlockType, BlockDefinition>
+
+    @BeforeTest
+    fun setUpRegistry() {
+        testWorld() // warm up TestFixtures static init before snapshotting the registry
+        savedBlocks = BlockRegistry.all().associateWith { BlockRegistry.get(it) }
+        BlockRegistry.load(
+            savedBlocks +
+                mapOf(
+                    ySplit to
+                        BlockDefinition(
+                            solid = true,
+                            isCubic = false,
+                            rotatable = true,
+                            connections =
+                                listOf(Direction.SOUTH, Direction.NORTH, Direction.EAST))))
+    }
+
+    @AfterTest
+    fun tearDownRegistry() {
+        BlockRegistry.load(savedBlocks)
+    }
 
     private fun gameLoop(vararg solid: Triple<Int, Int, Int>) = GameLoop(testWorld(*solid))
 
@@ -349,6 +381,152 @@ class AdminEditWsTest {
         }
 
         assertEquals(BlockType.STONE, loop.getWorldState().getBlock(1, 5, 1))
+    }
+
+    @Test
+    fun `instance switch toggle cycles the branch and broadcasts a WorldUpdate`() =
+        testApplication {
+            val loop = gameLoop(Triple(0, 0, 0))
+            application {
+                install(WebSockets)
+                routing {
+                    controller(loop).register(this)
+                    controller(loop).registerEditWs(this)
+                }
+            }
+            val restClient = createClient {}
+            val instanceId =
+                jsonId(
+                    restClient
+                        .post("/api/admin/instances") {
+                            contentType(ContentType.Application.Json)
+                            setBody(
+                                """{"name":"Test","yMin":0,"yMax":10,"chunks":[{"cx":0,"cz":0}]}""")
+                        }
+                        .bodyAsText())
+
+            val wsClient = createClient { install(ClientWebSockets) }
+            withTimeout(5000) {
+                wsClient.webSocket("/api/admin/ws/instances/$instanceId") {
+                    val editorA = this
+                    wsClient.webSocket("/api/admin/ws/instances/$instanceId") {
+                        val editorB = this
+                        editorA.send("""{"x":2,"y":5,"z":2,"type":"RAIL_Y_SPLIT_90","state":0}""")
+                        editorB.incoming.receive() // wait for the placement's own broadcast
+
+                        editorA.send("""{"x":2,"y":5,"z":2}""")
+                        val broadcast = editorB.incoming.receive()
+                        assertTrue(broadcast is Frame.Text)
+                        assertTrue(broadcast.readText().contains("\"x\":2"))
+                    }
+                }
+            }
+
+            assertEquals(1, BlockState.extra(loop.getWorldState().getExtraState(2, 5, 2)))
+        }
+
+    @Test
+    fun `instance switch toggle on a non-junction block is rejected`() = testApplication {
+        val loop = gameLoop(Triple(0, 0, 0))
+        application {
+            install(WebSockets)
+            routing {
+                controller(loop).register(this)
+                controller(loop).registerEditWs(this)
+            }
+        }
+        val restClient = createClient {}
+        val instanceId =
+            jsonId(
+                restClient
+                    .post("/api/admin/instances") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""{"name":"Test","yMin":0,"yMax":10,"chunks":[{"cx":0,"cz":0}]}""")
+                    }
+                    .bodyAsText())
+
+        val wsClient = createClient { install(ClientWebSockets) }
+        withTimeout(5000) {
+            wsClient.webSocket("/api/admin/ws/instances/$instanceId") {
+                // (2,5,2) is still AIR — no junction to toggle.
+                send("""{"x":2,"y":5,"z":2}""")
+                val reply = incoming.receive()
+                assertTrue(reply is Frame.Text)
+                assertTrue(reply.readText().contains("\"type\":\"error\""))
+            }
+        }
+    }
+
+    @Test
+    fun `scene switch toggle cycles the branch and broadcasts`() = testApplication {
+        val loop = gameLoop()
+        application {
+            install(WebSockets)
+            routing {
+                controller(loop).register(this)
+                controller(loop).registerEditWs(this)
+            }
+        }
+        val restClient = createClient {}
+        val sceneId =
+            jsonId(
+                restClient
+                    .post("/api/admin/scenes") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""{"name":"Test","width":4,"height":4,"depth":4}""")
+                    }
+                    .bodyAsText())
+
+        val wsClient = createClient { install(ClientWebSockets) }
+        withTimeout(5000) {
+            wsClient.webSocket("/api/admin/ws/scenes/$sceneId") {
+                val editorA = this
+                wsClient.webSocket("/api/admin/ws/scenes/$sceneId") {
+                    val editorB = this
+                    editorA.send("""{"x":1,"y":1,"z":1,"type":"RAIL_Y_SPLIT_90","state":0}""")
+                    editorB.incoming.receive() // wait for the placement's own broadcast
+
+                    editorA.send("""{"x":1,"y":1,"z":1}""")
+                    val broadcast = editorB.incoming.receive()
+                    assertTrue(broadcast is Frame.Text)
+                    assertTrue(broadcast.readText().contains("\"x\":1"))
+                }
+            }
+        }
+
+        assertEquals(1, BlockState.extra(loop.scenes().get(sceneId)!!.extraStateAt(1, 1, 1)))
+    }
+
+    @Test
+    fun `scene switch toggle on a non-junction block is rejected`() = testApplication {
+        val loop = gameLoop()
+        application {
+            install(WebSockets)
+            routing {
+                controller(loop).register(this)
+                controller(loop).registerEditWs(this)
+            }
+        }
+        val restClient = createClient {}
+        val sceneId =
+            jsonId(
+                restClient
+                    .post("/api/admin/scenes") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""{"name":"Test","width":4,"height":4,"depth":4}""")
+                    }
+                    .bodyAsText())
+
+        val wsClient = createClient { install(ClientWebSockets) }
+        withTimeout(5000) {
+            wsClient.webSocket("/api/admin/ws/scenes/$sceneId") {
+                // (1,1,1) is still AIR — no junction to toggle.
+                send("""{"x":1,"y":1,"z":1}""")
+                val reply = incoming.receive()
+                assertTrue(reply is Frame.Text)
+                assertTrue(reply.readText().contains("\"type\":\"error\""))
+            }
+        }
     }
 
     @Test

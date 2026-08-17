@@ -51,6 +51,7 @@ import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.game.world.instance.InstanceClipPlanes
 import org.micoli.micraft.game.world.instance.InstanceZone
+import org.micoli.micraft.game.world.rail.RailConnection
 import org.micoli.micraft.game.world.scene.Scene
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
@@ -133,6 +134,12 @@ data class InstanceBlockDto(
 // "edits" key — see registerEditWs).
 @Serializable data class InstanceBlockBatchDto(val edits: List<InstanceBlockDto>)
 
+// Cycles a switch/junction rail block's active branch — sent by the Instance editor's rail-test
+// mode instead of a full InstanceBlockDto edit (which would re-place the block and reset its
+// state). Decoded via a strict Json (no unknown keys), so it never accidentally matches a normal
+// edit frame (which carries extra "type"/"state" fields) — see registerEditWs.
+@Serializable data class InstanceSwitchToggleDto(val x: Int, val y: Int, val z: Int)
+
 @Serializable
 data class SceneDto(
     val id: String,
@@ -167,6 +174,10 @@ data class SceneBlockDto(
 
 // See InstanceBlockBatchDto for the rationale — same envelope shape, scene variant.
 @Serializable data class SceneBlockBatchDto(val edits: List<SceneBlockDto>)
+
+// Cycles a switch/junction rail block's active branch in a Scene — mirrors
+// InstanceSwitchToggleDto for the Scene editor's bounded buffer (see SceneRegistry.toggleSwitch).
+@Serializable data class SceneSwitchToggleDto(val x: Int, val y: Int, val z: Int)
 
 private fun Scene.toEntityProtos(): List<BlockEntityProto> =
     entities.map { e ->
@@ -407,6 +418,17 @@ class AdminController(
         return EditResult.Applied(dto)
     }
 
+    private fun applySceneSwitchToggle(
+        id: String,
+        dto: SceneSwitchToggleDto
+    ): EditResult<SceneSwitchToggleDto> =
+        when (val result = gameLoop.scenes().toggleSwitch(id, dto.x, dto.y, dto.z)) {
+            is org.micoli.micraft.game.world.scene.SceneRegistry.SwitchToggleResult.Applied ->
+                EditResult.Applied(dto)
+            is org.micoli.micraft.game.world.scene.SceneRegistry.SwitchToggleResult.Rejected ->
+                EditResult.Failed(result.reason)
+        }
+
     /**
      * Shared by the WS instance-edit handler (only writer for instance blocks). Mirrors the
      * previous `PUT /api/admin/instances/{id}/blocks` handler body — mutates [WorldState] and
@@ -452,6 +474,38 @@ class AdminController(
         if (result.rejectedReason != null) return EditResult.Failed(result.rejectedReason)
         return EditResult.Applied(
             InstanceEditOutcome(dto, changes = result.changes, entityAdds = result.entityAdds))
+    }
+
+    // Mirrors BlockInteractor.handleInteract's branch-cycling (no player/distance check — the
+    // admin editor isn't a placed player), so rail-test mode can flip a switch without a full
+    // place/break round-trip that would reset it to branch 0.
+    private class InstanceSwitchToggleOutcome(
+        val dto: InstanceSwitchToggleDto,
+        val change: BlockChange
+    )
+
+    private fun applyInstanceSwitchToggle(
+        id: String,
+        dto: InstanceSwitchToggleDto
+    ): EditResult<InstanceSwitchToggleOutcome> {
+        val zone = gameLoop.instances().get(id) ?: return EditResult.Failed("Instance not found")
+        if (!zone.contains(dto.x, dto.y, dto.z)) {
+            return EditResult.Failed("Coordinate outside zone bounds")
+        }
+        val world = gameLoop.getWorldState()
+        val pos = BlockPos(dto.x, dto.y, dto.z)
+        val blockType = world.getBlock(dto.x, dto.y, dto.z)
+        if (!RailConnection.isJunction(blockType)) {
+            return EditResult.Failed("Not a switch block")
+        }
+        val state = world.getBlockState(dto.x, dto.y, dto.z)
+        val branches = RailConnection.branchCount(blockType)
+        val extraState = world.getExtraState(dto.x, dto.y, dto.z)
+        val nextBranch = (BlockState.extra(extraState) + 1) % branches
+        val change = BlockChange(pos, blockType, state, BlockState.packExtra(nextBranch))
+        world.applyChange(change)
+        gameLoop.railNetworkRegistry().invalidate(pos)
+        return EditResult.Applied(InstanceSwitchToggleOutcome(dto, change))
     }
 
     private suspend fun DefaultWebSocketServerSession.authorizeAdminWs(): Boolean {
@@ -510,6 +564,26 @@ class AdminController(
                             } else {
                                 send(
                                     """{"type":"error","message":"Batch rejected: no valid edits"}""")
+                            }
+                            continue
+                        }
+                        // Switch toggle (rail-test mode) — see the Instance route below for why a
+                        // strict decode attempt here is safe against a normal edit frame's extra
+                        // "type"/"state" keys.
+                        val toggle =
+                            runCatching { Json.decodeFromString<SceneSwitchToggleDto>(text) }
+                                .getOrNull()
+                        if (toggle != null) {
+                            when (val result = applySceneSwitchToggle(id, toggle)) {
+                                is EditResult.Applied ->
+                                    broadcastEdit(
+                                        key,
+                                        adminJson.encodeToString(
+                                            SceneSwitchToggleDto.serializer(), toggle),
+                                        listener)
+                                is EditResult.Failed ->
+                                    send(
+                                        """{"type":"error","message":${"\"${result.message}\""}}""")
                             }
                             continue
                         }
@@ -592,6 +666,29 @@ class AdminController(
                             } else {
                                 send(
                                     """{"type":"error","message":"Batch rejected: no valid edits"}""")
+                            }
+                            continue
+                        }
+                        // Switch toggle (rail-test mode) — tried before the generic single-edit
+                        // decode below since InstanceBlockDto has no default for "type" and would
+                        // reject a bare {x,y,z} toggle frame anyway, but a strict decode here
+                        // rejects a normal edit frame's extra "type"/"state" keys just as cleanly.
+                        val toggle =
+                            runCatching { Json.decodeFromString<InstanceSwitchToggleDto>(text) }
+                                .getOrNull()
+                        if (toggle != null) {
+                            when (val result = applyInstanceSwitchToggle(id, toggle)) {
+                                is EditResult.Applied -> {
+                                    gameLoop.broadcastWorldUpdate(listOf(result.dto.change))
+                                    broadcastEdit(
+                                        key,
+                                        adminJson.encodeToString(
+                                            InstanceSwitchToggleDto.serializer(), toggle),
+                                        listener)
+                                }
+                                is EditResult.Failed ->
+                                    send(
+                                        """{"type":"error","message":${"\"${result.message}\""}}""")
                             }
                             continue
                         }
@@ -1341,6 +1438,7 @@ class AdminController(
                                 brickSize = def.brickSize,
                                 plainColorable = def.plainColorable,
                                 isCubic = def.isCubic,
+                                connections = def.connections.map { it.name },
                             )
                         }
                     call.respondText(
@@ -1910,16 +2008,19 @@ class AdminController(
 
             // Binary wire format (application/octet-stream), big-endian:
             //   [4 bytes width][4 bytes height][4 bytes depth][blocks: width*height*depth bytes]
-            //   [states: width*height*depth bytes]
+            //   [states: width*height*depth bytes][extraStates: width*height*depth bytes]
             // blocks/states use the same wire-index-per-byte convention as chunk buffers
-            // (BlockRegistry.wireIndex/byWireIndex) — 0 is always AIR.
+            // (BlockRegistry.wireIndex/byWireIndex) — 0 is always AIR. extraStates is the
+            // switch/junction active-branch byte (see BlockState.extra), appended after states —
+            // older clients that don't know about it simply never read past statesEnd.
             get(
                 "/api/admin/scenes/{id}/blocks/raw",
                 {
                     description =
-                        "Scene block/state buffers as a binary blob: 3×4-byte big-endian " +
-                            "dimensions (width,height,depth) followed by the blocks byte array then " +
-                            "the states byte array (wire-index-per-byte, 0 = AIR)"
+                        "Scene block/state/extraState buffers as a binary blob: 3×4-byte " +
+                            "big-endian dimensions (width,height,depth) followed by the blocks byte " +
+                            "array, then the states byte array, then the extraStates byte array " +
+                            "(wire-index-per-byte, 0 = AIR)"
                     request { pathParameter<String>("id") { description = "Scene id" } }
                     response {
                         code(HttpStatusCode.OK) {
@@ -1942,6 +2043,7 @@ class AdminController(
                         out.writeInt(scene.depth)
                         out.write(scene.blocks)
                         out.write(scene.states)
+                        out.write(scene.extraStates)
                     }
                     call.respondBytes(buffer.toByteArray(), ContentType.Application.OctetStream)
                 }

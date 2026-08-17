@@ -12,6 +12,10 @@ export interface BlockEditSocket<T> {
   // list, instead of N round-trips. Used by bulk selection edits (fill/shell/cut in the voxel
   // editor); AdminController.registerEditWs decodes it before falling back to a single `T`.
   sendBatch: (edits: T[]) => void;
+  // Sends an arbitrary JSON payload rather than a `T` edit — used for out-of-band frames the
+  // server decodes with its own DTO (e.g. a rail switch toggle, see InstanceSwitchToggleDto)
+  // instead of a full block edit.
+  sendRaw: (payload: unknown) => void;
   close: () => void;
 }
 
@@ -56,6 +60,9 @@ export function connectEditSocket<T>(
     },
     sendBatch: (edits: T[]) => {
       if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ edits }));
+    },
+    sendRaw: (payload: unknown) => {
+      if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(payload));
     },
     close: () => socket.close(),
   };

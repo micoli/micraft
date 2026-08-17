@@ -1696,6 +1696,10 @@ export type OrgMicoliMicraftProtocolBlockInfo = {
      */
     brickSize: Array<number>;
     /**
+     * List<String>
+     */
+    connections: Array<string>;
+    /**
      * String
      */
     gltfModel: string;

@@ -19,6 +19,7 @@ import { registerPlayerModel } from "./game/lib/player/playerModel";
 import { registerSkinConfig } from "./game/lib/player/skinConfig";
 import { registerArmorOverlay } from "./game/lib/player/armorOverlay";
 import { registerNpcModel } from "./game/npc/npcModel";
+import { registerVehicleModel } from "./game/vehicle/vehicleModel";
 import { registerMinimap, setMinimapColors } from "./game/lib/minimap";
 import { registerSky } from "./game/lib/sky";
 import { registerWeather } from "./game/lib/weather";
@@ -74,6 +75,8 @@ window.mcState = {
   npcWalkBones: {},
   armorBbmodels: {},
   npcModelsReady: false,
+  vehicleBbmodels: {},
+  vehicleModelsReady: false,
   skinConfigs: {},
   skinMatCache: {},
   skinUV: () => undefined as unknown as Vector4,
@@ -97,6 +100,7 @@ window.mcState = {
   codexBlocks: [],
   codexItems: {},
   codexNpcs: {},
+  codexVehicles: {},
   // i18n
   i18nLocale: "en",
   // Minimap
@@ -161,6 +165,7 @@ window.mc = {
   ...registerSkinConfig(),
   ...registerArmorOverlay(),
   ...registerNpcModel(),
+  ...registerVehicleModel(),
   ...registerMinimap(),
   ...registerSky(),
   ...registerWeather(),
@@ -207,6 +212,10 @@ window.mc = {
 
   setNpcDefinitions: (json: string) => {
     window.mcState.codexNpcs = JSON.parse(json);
+  },
+
+  setVehicleDefinitions: (json: string) => {
+    window.mcState.codexVehicles = JSON.parse(json);
   },
 
   // ── Biome colors ─────────────────────────────────────────────────────────────

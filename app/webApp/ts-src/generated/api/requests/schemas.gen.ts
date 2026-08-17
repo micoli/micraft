@@ -2671,6 +2671,14 @@ export const org_micoli_micraft_protocol_BlockInfoSchema = {
             },
             title: 'List<Float>'
         },
+        connections: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        },
         gltfModel: {
             type: 'string',
             title: 'String'
@@ -2755,6 +2763,7 @@ export const org_micoli_micraft_protocol_BlockInfoSchema = {
     },
     required: [
         'brickSize',
+        'connections',
         'gltfModel',
         'hardness',
         'hasStuds',

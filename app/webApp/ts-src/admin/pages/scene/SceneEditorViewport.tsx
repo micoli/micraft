@@ -23,6 +23,12 @@ import {
   type SelectionSnap,
 } from "../shared/voxelEditor/selectionGizmo";
 import { createPasteGizmo, type PasteOrigin } from "../shared/voxelEditor/pasteGizmo";
+import { createRailTestCart, type RailTestCart } from "../shared/voxelEditor/railTestCart";
+import {
+  createRailSwitchMarkers,
+  type RailJunction,
+  type RailSwitchMarkers,
+} from "../shared/voxelEditor/railSwitchMarkers";
 import {
   applyPasteTransform,
   IDENTITY_PASTE_TRANSFORM,
@@ -75,6 +81,7 @@ function parseSceneRaw(buf: ArrayBuffer): {
   depth: number;
   blocks: Uint8Array;
   states: Uint8Array;
+  extraStates: Uint8Array;
 } {
   const view = new DataView(buf);
   const width = view.getInt32(0, false);
@@ -83,9 +90,11 @@ function parseSceneRaw(buf: ArrayBuffer): {
   const cellCount = width * height * depth;
   const blocksStart = 12;
   const statesStart = blocksStart + cellCount;
+  const extraStatesStart = statesStart + cellCount;
   const blocks = new Uint8Array(buf, blocksStart, cellCount);
   const states = new Uint8Array(buf, statesStart, cellCount);
-  return { width, height, depth, blocks, states };
+  const extraStates = new Uint8Array(buf, extraStatesStart, cellCount);
+  return { width, height, depth, blocks, states, extraStates };
 }
 
 export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
@@ -154,6 +163,34 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const { actionError, flashActionError } = useActionError();
   const [search, setSearch] = useState("");
+  // Rail circuit test cart — see InstanceEditorViewport.tsx's identical block for the rationale.
+  const [testRailState, setTestRailState] = useState<"idle" | "picking" | "running">("idle");
+  const testRailStateRef = useRef(testRailState);
+  const railTestCartRef = useRef<RailTestCart | null>(null);
+  // Switch/junction overlay markers — see InstanceEditorViewport.tsx's identical block for the
+  // rationale (refreshJunctionsRef is set from inside the scene-setup effect, which owns
+  // wasmExports/babylonScene).
+  const railSwitchMarkersRef = useRef<RailSwitchMarkers | null>(null);
+  const refreshJunctionsRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    testRailStateRef.current = testRailState;
+  }, [testRailState]);
+  function toggleTestRail() {
+    if (testRailStateRef.current === "running") {
+      railTestCartRef.current?.stop();
+      railSwitchMarkersRef.current?.clear();
+      setTestRailState("idle");
+      return;
+    }
+    setTestRailState((s) => {
+      if (s === "picking") {
+        railSwitchMarkersRef.current?.clear();
+        return "idle";
+      }
+      refreshJunctionsRef.current();
+      return "picking";
+    });
+  }
   const modeRef = useRef(mode);
   const selectedTypeRef = useRef(selectedType);
   const ordinalByNameRef = useRef(ordinalByName);
@@ -583,6 +620,32 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     });
     pasteGizmoRef.current = pasteGizmo;
 
+    // mcScene* rail-test exports operate on the mesher singleton, no scene param — see
+    // AdminScenePreview.kt's mcSceneRailTest* trio.
+    const railTestCart = createRailTestCart(
+      B,
+      babylonScene,
+      (wx, wy, wz) => (wasmExports ? wasmExports.mcSceneRailTestStart(wx, wy, wz) : 0),
+      (deltaSeconds) => (wasmExports ? wasmExports.mcSceneRailTestTick(deltaSeconds) : ""),
+      () => wasmExports?.mcSceneRailTestStop(),
+    );
+    railTestCartRef.current = railTestCart;
+
+    const railSwitchMarkers = createRailSwitchMarkers(B, babylonScene);
+    railSwitchMarkersRef.current = railSwitchMarkers;
+    function refreshJunctions() {
+      if (!wasmExports) return;
+      const csv = wasmExports.mcSceneListJunctions();
+      const junctions: RailJunction[] = csv
+        ? csv.split(";").map((row) => {
+            const [wx, wy, wz, branchCount, currentBranch] = row.split(",").map(Number);
+            return { wx, wy, wz, branchCount, currentBranch };
+          })
+        : [];
+      railSwitchMarkers.update(junctions);
+    }
+    refreshJunctionsRef.current = refreshJunctions;
+
     pasteActionsRef.current = {
       start: () => {
         const entries = clipboardRef.current?.entries;
@@ -683,8 +746,8 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       const buf = await fetch(`/api/admin/scenes/${encodeURIComponent(scene.id)}/blocks/raw`).then((r) =>
         r.arrayBuffer(),
       );
-      const { width, height, depth, blocks, states } = parseSceneRaw(buf);
-      exports.mcSceneLoad(babylonScene, width, height, depth, blocks, states);
+      const { width, height, depth, blocks, states, extraStates } = parseSceneRaw(buf);
+      exports.mcSceneLoad(babylonScene, width, height, depth, blocks, states, extraStates);
       applyClipPlanes(B!, babylonScene, clipPlanesRef.current, clipBounds, overlayMeshes, clipMeshesRef.current);
       for (const m of babylonScene.meshes) {
         const mesh = m as InstanceType<typeof BABYLON.Mesh>;
@@ -881,7 +944,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     }
 
     function updateHoverPreview(evt: PointerEvent) {
-      if (modeRef.current === "select") {
+      if (modeRef.current === "select" || testRailStateRef.current === "picking") {
         overlay.disposeAll();
         return;
       }
@@ -984,6 +1047,12 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
           return;
         }
       }
+      if (e.code === "Escape" && testRailStateRef.current !== "idle") {
+        railTestCartRef.current?.stop();
+        railSwitchMarkersRef.current?.clear();
+        setTestRailState("idle");
+        return;
+      }
       if (e.code === "KeyU") {
         performUndo();
         return;
@@ -1007,6 +1076,35 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       onHoverMove: updateHoverPreview,
       onClick: ({ pick, normal, mode: currentMode, shiftKey }) => {
         const onGround = groundMeshes.has(pick.pickedMesh as InstanceType<typeof BABYLON.Mesh>);
+
+        if (testRailStateRef.current !== "idle") {
+          const junction = railSwitchMarkers.hitTest(pick.pickedMesh as InstanceType<typeof BABYLON.Mesh> | null);
+          if (junction) {
+            editSocket?.sendRaw({ x: junction.wx, y: junction.wy, z: junction.wz });
+            wasmExports?.mcSceneSetExtraState(
+              junction.wx,
+              junction.wy,
+              junction.wz,
+              (junction.currentBranch + 1) % junction.branchCount,
+            );
+            refreshJunctions();
+            return;
+          }
+        }
+
+        if (testRailStateRef.current === "picking") {
+          if (onGround || !normal || !pick.pickedPoint) return;
+          const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
+          const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
+          const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
+          if (!inBounds(bx, by, bz)) return;
+          if (railTestCartRef.current?.start(bx, by, bz)) {
+            setTestRailState("running");
+          } else {
+            flashActionError("Not a rail block");
+          }
+          return;
+        }
 
         if (currentMode === "select") {
           if (onGround || !normal || !pick.pickedPoint) return;
@@ -1166,6 +1264,10 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       selectionGizmo.dispose();
       disposePastePreview();
       pasteGizmo.dispose();
+      railTestCart.dispose();
+      railTestCartRef.current = null;
+      railSwitchMarkers.dispose();
+      railSwitchMarkersRef.current = null;
       editSocket?.close();
       window.webApp?.then((exports) => exports.mcSceneDispose()).catch(() => {});
       axesGizmo.dispose();
@@ -1273,6 +1375,8 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         setHoveredBlockName={setHoveredBlockName}
         setHoveredRect={setHoveredRect}
         selectBlockType={selectBlockType}
+        testRailState={testRailState}
+        onToggleTestRail={toggleTestRail}
       />
     </div>
   );

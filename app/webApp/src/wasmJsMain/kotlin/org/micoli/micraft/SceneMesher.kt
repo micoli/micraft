@@ -27,6 +27,7 @@ class SceneMesher(
     var depth: Int,
     var blocks: ByteArray,
     var states: ByteArray,
+    var extraStates: ByteArray,
 ) {
     private var blockMaterials: JsAny? = null
     private var entities: List<BlockEntity> = emptyList()
@@ -122,18 +123,36 @@ class SceneMesher(
         return states[index(x, y, z)].toInt() and 0xFF
     }
 
+    fun getExtraState(x: Int, y: Int, z: Int): Int {
+        if (!inBounds(x, y, z)) return 0
+        return extraStates[index(x, y, z)].toInt() and 0xFF
+    }
+
     fun setBlock(x: Int, y: Int, z: Int, ordinal: Int, state: Int) {
         if (!inBounds(x, y, z)) return
         blocks[index(x, y, z)] = ordinal.toByte()
         states[index(x, y, z)] = state.toByte()
     }
 
-    fun replaceBuffers(width: Int, height: Int, depth: Int, blocks: ByteArray, states: ByteArray) {
+    fun setExtraState(x: Int, y: Int, z: Int, extraState: Int) {
+        if (!inBounds(x, y, z)) return
+        extraStates[index(x, y, z)] = extraState.toByte()
+    }
+
+    fun replaceBuffers(
+        width: Int,
+        height: Int,
+        depth: Int,
+        blocks: ByteArray,
+        states: ByteArray,
+        extraStates: ByteArray,
+    ) {
         this.width = width
         this.height = height
         this.depth = depth
         this.blocks = blocks
         this.states = states
+        this.extraStates = extraStates
     }
 
     private fun getBlockMaterials(scene: JsAny): JsAny? {

@@ -28,6 +28,12 @@ data class Scene(
     @EncodeDefault(ALWAYS) val shortcutBarPages: List<List<String?>> = emptyList(),
     @Transient val blocks: ByteArray = ByteArray(0),
     @Transient val states: ByteArray = ByteArray(0),
+    // Switch/junction active-branch byte (see BlockState.extra, RailConnection.active) — mirrors
+    // Chunk.extraStates. Persisted separately (scenes/{id}.sco.gz) like blocks/states; missing on
+    // disk (scenes saved before this field existed) reads back as all-zero, same fallback
+    // WorldPersistence
+    // already uses for a missing .scs.gz states file.
+    @Transient val extraStates: ByteArray = ByteArray(0),
     // Fractional/lego block entities (mirrors Chunk.entityMasters) — excluded from the
     // YAML-serialized metadata and persisted separately (scenes/{id}.sce.gz), same rationale as
     // blocks/states above. A Scene's bounded volume is small enough that ScenePlacementTarget can
@@ -53,10 +59,18 @@ data class Scene(
 
     fun stateAt(x: Int, y: Int, z: Int): Byte = if (states.isNotEmpty()) states[idx(x, y, z)] else 0
 
+    fun extraStateAt(x: Int, y: Int, z: Int): Byte =
+        if (extraStates.isNotEmpty()) extraStates[idx(x, y, z)] else 0
+
     /** Mutates the backing buffers in place — callers are responsible for persisting after. */
     fun setBlock(x: Int, y: Int, z: Int, type: Byte, state: Byte) {
         blocks[idx(x, y, z)] = type
         states[idx(x, y, z)] = state
+    }
+
+    /** Mutates the extra-state buffer in place — callers are responsible for persisting after. */
+    fun setExtraState(x: Int, y: Int, z: Int, extraState: Byte) {
+        extraStates[idx(x, y, z)] = extraState
     }
 
     override fun equals(other: Any?): Boolean {
@@ -72,6 +86,7 @@ data class Scene(
             shortcutBarPages == other.shortcutBarPages &&
             blocks.contentEquals(other.blocks) &&
             states.contentEquals(other.states) &&
+            extraStates.contentEquals(other.extraStates) &&
             entities == other.entities
     }
 
@@ -86,6 +101,7 @@ data class Scene(
         result = 31 * result + shortcutBarPages.hashCode()
         result = 31 * result + blocks.contentHashCode()
         result = 31 * result + states.contentHashCode()
+        result = 31 * result + extraStates.contentHashCode()
         result = 31 * result + entities.hashCode()
         return result
     }

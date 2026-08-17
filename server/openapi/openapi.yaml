@@ -2330,9 +2330,10 @@ paths:
   /api/admin/scenes/{id}/blocks/raw:
     get:
       tags: []
-      description: "Scene block/state buffers as a binary blob: 3×4-byte big-endian\
-        \ dimensions (width,height,depth) followed by the blocks byte array then the\
-        \ states byte array (wire-index-per-byte, 0 = AIR)"
+      description: "Scene block/state/extraState buffers as a binary blob: 3×4-byte\
+        \ big-endian dimensions (width,height,depth) followed by the blocks byte array,\
+        \ then the states byte array, then the extraStates byte array (wire-index-per-byte,\
+        \ 0 = AIR)"
       parameters:
       - name: id
         in: path
@@ -4548,6 +4549,12 @@ components:
             format: float
             title: Float
           title: List<Float>
+        connections:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
         gltfModel:
           type: string
           title: String
@@ -4612,6 +4619,7 @@ components:
           title: Int
       required:
       - brickSize
+      - connections
       - gltfModel
       - hardness
       - hasStuds

@@ -200,6 +200,7 @@ object ClientMessageCodec {
             clientEntry<ClientMessage.DeleteMail>(), // 24
             clientEntry<ClientMessage.ClaimMailAttachments>(), // 25
             clientEntry<ClientMessage.CreativeCameraFocus>(), // 26
+            clientEntry<ClientMessage.BlockInteract>(), // 27
             clientEntry<ClientMessage.VehicleInteract>(), // 28
         )
 

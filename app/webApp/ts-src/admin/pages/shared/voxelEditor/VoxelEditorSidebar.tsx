@@ -139,6 +139,8 @@ export function VoxelEditorSidebar({
   setHoveredRect,
   selectBlockType,
   paletteRef,
+  testRailState,
+  onToggleTestRail,
 }: SelectionPanelProps & {
   modKeys: { shift: boolean; meta: boolean; alt: boolean; ctrl: boolean };
   mode: "place" | "break" | "select";
@@ -166,6 +168,8 @@ export function VoxelEditorSidebar({
   setHoveredRect: (rect: DOMRect | null) => void;
   selectBlockType: (name: string) => void;
   paletteRef?: RefObject<HTMLDivElement | null>;
+  testRailState: "idle" | "picking" | "running";
+  onToggleTestRail: () => void;
 }) {
   const [width, setWidth] = useState(loadSidebarWidth);
   const [showClipPlanes, setShowClipPlanes] = useState(loadClipPlanesVisible);
@@ -244,6 +248,19 @@ export function VoxelEditorSidebar({
           }`}
         >
           Clip Pane
+        </button>
+        <button
+          onClick={onToggleTestRail}
+          title={testRailState === "picking" ? "Click a rail block to start the test" : undefined}
+          className={`px-2 py-1 rounded text-[10px] font-medium transition-colors pointer-events-auto ${
+            testRailState === "running"
+              ? "bg-orange-600 text-white"
+              : testRailState === "picking"
+                ? "bg-[#3C50E0] text-white"
+                : "bg-black/50 text-[#8A99AF]"
+          }`}
+        >
+          {testRailState === "running" ? "Stop Test" : testRailState === "picking" ? "Pick Rail…" : "Test Rail"}
         </button>
       </div>
       {mode === "select" && (

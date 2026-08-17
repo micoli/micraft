@@ -46,6 +46,7 @@ import org.micoli.micraft.game.npc.pack.PackEventType
 import org.micoli.micraft.game.rpg.ExperienceConfigData
 import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.tick.MovementProcessor
+import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
@@ -214,6 +215,9 @@ class WorldSimulator(
 
     private val npcSpawner = npcSubsystemFactory.npcSpawner
 
+    // No rail vehicles in the simulated world — combat processor only needs it for target lookups.
+    private val vehicleManager = VehicleManager { _ -> }
+
     private val combatProcessor =
         CombatProcessor(
             config = deps.combatConfig,
@@ -221,6 +225,7 @@ class WorldSimulator(
             armorRegistry = deps.armorRegistry,
             classRegistry = deps.classRegistry,
             npcManager = npcManager,
+            vehicleManager = vehicleManager,
             getSessions = { sessions.toList() },
             broadcastCombatLog = { text -> logCombatLine(text) },
             subscribeToChannel = { _, _ -> },
