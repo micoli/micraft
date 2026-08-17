@@ -1771,6 +1771,9 @@ paths:
         "400":
           description: "Invalid zone, or chunks not yet generated"
           headers: {}
+        "409":
+          description: Zone overlaps an existing instance zone
+          headers: {}
         "401":
           description: Missing or invalid token
           headers: {}
@@ -1904,6 +1907,9 @@ paths:
         "404":
           description: Instance not found
           headers: {}
+        "409":
+          description: Zone overlaps an existing instance zone
+          headers: {}
         "401":
           description: Missing or invalid token
           headers: {}
@@ -1980,6 +1986,9 @@ paths:
           headers: {}
         "404":
           description: Instance not found
+          headers: {}
+        "409":
+          description: Zone overlaps an existing instance zone
           headers: {}
         "401":
           description: Missing or invalid token

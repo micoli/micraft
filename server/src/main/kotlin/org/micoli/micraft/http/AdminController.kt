@@ -1521,6 +1521,9 @@ class AdminController(
                         code(HttpStatusCode.BadRequest) {
                             description = "Invalid zone, or chunks not yet generated"
                         }
+                        code(HttpStatusCode.Conflict) {
+                            description = "Zone overlaps an existing instance zone"
+                        }
                     }
                     requireAdminDocs()
                 }) {
@@ -1534,6 +1537,9 @@ class AdminController(
                         return@post call.respond(
                             HttpStatusCode.BadRequest,
                             "Zone must only cover already-generated chunks")
+                    }
+                    if (gameLoop.instances().overlaps(body.chunks.toSet(), body.yMin, body.yMax)) {
+                        return@post call.respond(HttpStatusCode.Conflict)
                     }
                     val zone =
                         gameLoop
@@ -1591,6 +1597,9 @@ class AdminController(
                             description = "yMin must be less than yMax"
                         }
                         code(HttpStatusCode.NotFound) { description = "Instance not found" }
+                        code(HttpStatusCode.Conflict) {
+                            description = "Zone overlaps an existing instance zone"
+                        }
                     }
                     requireAdminDocs()
                 }) {
@@ -1601,6 +1610,14 @@ class AdminController(
                     if (body.yMin >= body.yMax) {
                         return@put call.respond(
                             HttpStatusCode.BadRequest, "yMin must be less than yMax")
+                    }
+                    val existing =
+                        gameLoop.instances().get(id)
+                            ?: return@put call.respond(HttpStatusCode.NotFound)
+                    if (gameLoop
+                        .instances()
+                        .overlaps(existing.chunks, body.yMin, body.yMax, excludeId = id)) {
+                        return@put call.respond(HttpStatusCode.Conflict)
                     }
                     val zone =
                         gameLoop.instances().updateBounds(id, body.yMin, body.yMax)
@@ -1652,6 +1669,9 @@ class AdminController(
                             description = "Empty chunk set, or chunks not yet generated"
                         }
                         code(HttpStatusCode.NotFound) { description = "Instance not found" }
+                        code(HttpStatusCode.Conflict) {
+                            description = "Zone overlaps an existing instance zone"
+                        }
                     }
                     requireAdminDocs()
                 }) {
@@ -1668,6 +1688,15 @@ class AdminController(
                         return@put call.respond(
                             HttpStatusCode.BadRequest,
                             "Zone must only cover already-generated chunks")
+                    }
+                    val existing =
+                        gameLoop.instances().get(id)
+                            ?: return@put call.respond(HttpStatusCode.NotFound)
+                    if (gameLoop
+                        .instances()
+                        .overlaps(
+                            body.chunks.toSet(), existing.yMin, existing.yMax, excludeId = id)) {
+                        return@put call.respond(HttpStatusCode.Conflict)
                     }
                     val zone =
                         gameLoop.instances().updateChunks(id, body.chunks.toSet())

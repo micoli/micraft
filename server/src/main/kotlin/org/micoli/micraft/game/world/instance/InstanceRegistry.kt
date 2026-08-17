@@ -35,6 +35,16 @@ class InstanceRegistry(private val persistence: WorldPersistence?) {
         return byChunk[chunkPos]?.firstOrNull { it.enabled && y in it.yMin..it.yMax }
     }
 
+    // True if [chunks]/[yMin]/[yMax] would share a chunk column and a Y range with any existing
+    // zone other than [excludeId] — used to reject overlapping create/updateBounds/updateChunks
+    // requests before they hit the registry.
+    fun overlaps(chunks: Set<ChunkPos>, yMin: Int, yMax: Int, excludeId: String? = null): Boolean =
+        chunks.any { chunk ->
+            byChunk[chunk]?.any { zone ->
+                zone.id != excludeId && yMin <= zone.yMax && yMax >= zone.yMin
+            } ?: false
+        }
+
     fun create(
         name: String,
         yMin: Int,

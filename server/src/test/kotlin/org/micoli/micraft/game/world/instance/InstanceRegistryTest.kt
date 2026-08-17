@@ -225,4 +225,57 @@ class InstanceRegistryTest {
         val r = registry()
         assertNull(r.updateLayout("nope", InstanceClipPlanes(), emptyList()))
     }
+
+    @Test
+    fun overlaps_sameChunkOverlappingYRange_returnsTrue() {
+        val r = registry()
+        r.create(
+            name = "Arena",
+            yMin = 0,
+            yMax = 10,
+            chunks = setOf(ChunkPos(0, 0)),
+            ownerName = "Alice",
+        )
+        assertTrue(r.overlaps(setOf(ChunkPos(0, 0)), 5, 15))
+    }
+
+    @Test
+    fun overlaps_sameChunkDisjointYRange_returnsFalse() {
+        val r = registry()
+        r.create(
+            name = "Arena",
+            yMin = 0,
+            yMax = 10,
+            chunks = setOf(ChunkPos(0, 0)),
+            ownerName = "Alice",
+        )
+        assertTrue(!r.overlaps(setOf(ChunkPos(0, 0)), 11, 20))
+    }
+
+    @Test
+    fun overlaps_differentChunk_returnsFalse() {
+        val r = registry()
+        r.create(
+            name = "Arena",
+            yMin = 0,
+            yMax = 10,
+            chunks = setOf(ChunkPos(0, 0)),
+            ownerName = "Alice",
+        )
+        assertTrue(!r.overlaps(setOf(ChunkPos(1, 0)), 0, 10))
+    }
+
+    @Test
+    fun overlaps_excludingOwnId_returnsFalse() {
+        val r = registry()
+        val zone =
+            r.create(
+                name = "Arena",
+                yMin = 0,
+                yMax = 10,
+                chunks = setOf(ChunkPos(0, 0)),
+                ownerName = "Alice",
+            )
+        assertTrue(!r.overlaps(setOf(ChunkPos(0, 0)), 0, 10, excludeId = zone.id))
+    }
 }
