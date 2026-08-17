@@ -72,6 +72,19 @@ class AdminEditWsTest {
     private suspend fun jsonId(body: String): String =
         Json.parseToJsonElement(body).jsonObject["id"]!!.jsonPrimitive.content
 
+    // The server only registers a socket's edit listener right before it starts reading incoming
+    // frames, so a freshly-opened second socket can lose the race against a message another
+    // socket sends immediately after connecting — its listener isn't registered yet, so it never
+    // sees the broadcast and the test hangs until timeout. Round-tripping a throwaway message to
+    // self first forces a wait until this socket has reached that point (the reply is sent
+    // directly, not broadcast), which guarantees its listener is registered before the caller
+    // triggers the real edit.
+    private suspend fun io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
+        .awaitListenerReady() {
+        send("not json")
+        incoming.receive()
+    }
+
     @Test
     fun `scene block edit persists and broadcasts to other editors but not the sender`() =
         testApplication {
@@ -99,6 +112,7 @@ class AdminEditWsTest {
                     val editorA = this
                     wsClient.webSocket("/api/admin/ws/scenes/$sceneId") {
                         val editorB = this
+                        awaitListenerReady()
                         editorA.send("""{"x":1,"y":2,"z":3,"type":"STONE","state":0}""")
                         val broadcast = editorB.incoming.receive()
                         assertTrue(broadcast is Frame.Text)
@@ -174,6 +188,7 @@ class AdminEditWsTest {
                     val editorA = this
                     wsClient.webSocket("/api/admin/ws/instances/$instanceId") {
                         val editorB = this
+                        awaitListenerReady()
                         editorA.send("""{"x":2,"y":5,"z":2,"type":"STONE","state":0}""")
                         val broadcast = editorB.incoming.receive()
                         assertTrue(broadcast is Frame.Text)
@@ -211,6 +226,7 @@ class AdminEditWsTest {
                 val editorA = this
                 wsClient.webSocket("/api/admin/ws/scenes/$sceneId") {
                     val editorB = this
+                    awaitListenerReady()
                     editorA.send(
                         """{"edits":[{"x":1,"y":1,"z":1,"type":"STONE","state":0},{"x":2,"y":1,"z":1,"type":"DIRT","state":0}]}""")
                     val broadcast = editorB.incoming.receive()
@@ -259,6 +275,7 @@ class AdminEditWsTest {
                 // processed server-side before asserting — a batch with at least one applied edit
                 // sends no ack to the sender itself, only a broadcast to OTHER listeners.
                 wsClient.webSocket("/api/admin/ws/scenes/$sceneId") {
+                    awaitListenerReady()
                     editorA.send(
                         """{"edits":[{"x":1,"y":1,"z":1,"type":"STONE","state":0},{"x":2,"y":1,"z":1,"type":"NOT_A_BLOCK","state":0}]}""")
                     incoming.receive()
@@ -328,6 +345,7 @@ class AdminEditWsTest {
                 val editorA = this
                 wsClient.webSocket("/api/admin/ws/instances/$instanceId") {
                     val editorB = this
+                    awaitListenerReady()
                     editorA.send(
                         """{"edits":[
                             |{"x":1,"y":5,"z":1,"type":"STONE","state":0},
@@ -373,6 +391,7 @@ class AdminEditWsTest {
                 // See the scene equivalent test above for why a second listener is needed here —
                 // just to wait for server-side processing before asserting.
                 wsClient.webSocket("/api/admin/ws/instances/$instanceId") {
+                    awaitListenerReady()
                     editorA.send(
                         """{"edits":[{"x":1,"y":5,"z":1,"type":"STONE","state":0},{"x":999,"y":5,"z":999,"type":"DIRT","state":0}]}""")
                     incoming.receive()
@@ -411,6 +430,7 @@ class AdminEditWsTest {
                     val editorA = this
                     wsClient.webSocket("/api/admin/ws/instances/$instanceId") {
                         val editorB = this
+                        awaitListenerReady()
                         editorA.send("""{"x":2,"y":5,"z":2,"type":"RAIL_Y_SPLIT_90","state":0}""")
                         editorB.incoming.receive() // wait for the placement's own broadcast
 
@@ -483,6 +503,7 @@ class AdminEditWsTest {
                 val editorA = this
                 wsClient.webSocket("/api/admin/ws/scenes/$sceneId") {
                     val editorB = this
+                    awaitListenerReady()
                     editorA.send("""{"x":1,"y":1,"z":1,"type":"RAIL_Y_SPLIT_90","state":0}""")
                     editorB.incoming.receive() // wait for the placement's own broadcast
 
