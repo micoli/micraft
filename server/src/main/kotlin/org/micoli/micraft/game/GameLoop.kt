@@ -648,8 +648,22 @@ class GameLoop(
     fun getActiveVegetationCount(): Int = vegetationManager.activeBlockCount()
 
     private fun flushWorld() {
-        world.flushDirty()
         launchTerrainRebuild()
+        saveWorldState()
+    }
+
+    private fun saveWorldState() {
+        world.flushDirty()
+        val npcSavePath =
+            persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
+        npcManager.save(npcSavePath)
+        val vehicleSavePath =
+            persistence?.worldDir?.resolve("vehicles.yaml") ?: Path.of("data/config/vehicles.yaml")
+        vehicleManager.save(vehicleSavePath)
+        persistence?.let {
+            GameTimePersistence.save(it.worldDir.resolve("game_time.yaml"), gameTimeService)
+        }
+        vegetationManager.save()
     }
 
     private fun launchTerrainRebuild() {
@@ -1010,11 +1024,6 @@ class GameLoop(
             )
         }
         app.launch {
-            val npcSavePath =
-                persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
-            val vehicleSavePath =
-                persistence?.worldDir?.resolve("vehicles.yaml")
-                    ?: Path.of("data/config/vehicles.yaml")
             while (isActive) {
                 delay(TICK_MS)
                 runCatching { tick() }.onFailure { log.error("tick error: {}", it.message, it) }
@@ -1023,12 +1032,6 @@ class GameLoop(
                     saveTickCounter = 0
                     flushWorld()
                     worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
-                    npcManager.save(npcSavePath)
-                    vehicleManager.save(vehicleSavePath)
-                    persistence?.let {
-                        GameTimePersistence.save(
-                            it.worldDir.resolve("game_time.yaml"), gameTimeService)
-                    }
                 }
             }
         }
@@ -1049,16 +1052,7 @@ class GameLoop(
         rebuildTerrainSync()
         worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
         sessionRegistry.all().forEach { session -> savePlayer(session) }
-        val npcSavePath =
-            persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
-        npcManager.save(npcSavePath)
-        val vehicleSavePath =
-            persistence?.worldDir?.resolve("vehicles.yaml") ?: Path.of("data/config/vehicles.yaml")
-        vehicleManager.save(vehicleSavePath)
-        persistence?.let {
-            GameTimePersistence.save(it.worldDir.resolve("game_time.yaml"), gameTimeService)
-        }
-        vegetationManager.save()
+        saveWorldState()
         log.info("World saved on shutdown")
     }
 
