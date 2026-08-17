@@ -158,12 +158,25 @@ export function CodexModal({ open, onClose }: Props) {
     const selectIdx = (idx: number) => {
       if (idx < 0 || idx >= currentList.length) return;
       const item = currentList[idx];
-      if (tab === "bestiary") setSelection({ kind: "npc", npcType: (item as NpcEntry).type });
-      else if (tab === "vehicles") setSelection({ kind: "vehicle", vehicleType: (item as VehicleEntry).type });
-      else if (tab === "blocks") setSelection({ kind: "block", ordinal: (item as BlockEntry).ordinal });
-      else if (tab === "items") setSelection({ kind: "item", name: (item as ItemEntry).name });
-      else if (tab === "skins") setSelection({ kind: "skin", name: item as string });
-      else setSelection({ kind: "animation", fullName: (item as AnimationEntry).fullName });
+      switch (tab) {
+        case "bestiary":
+          setSelection({ kind: "npc", npcType: (item as NpcEntry).type });
+          break;
+        case "vehicles":
+          setSelection({ kind: "vehicle", vehicleType: (item as VehicleEntry).type });
+          break;
+        case "blocks":
+          setSelection({ kind: "block", ordinal: (item as BlockEntry).ordinal });
+          break;
+        case "items":
+          setSelection({ kind: "item", name: (item as ItemEntry).name });
+          break;
+        case "skins":
+          setSelection({ kind: "skin", name: item as string });
+          break;
+        default:
+          setSelection({ kind: "animation", fullName: (item as AnimationEntry).fullName });
+      }
     };
 
     const handler = (e: KeyboardEvent) => {
@@ -200,18 +213,26 @@ export function CodexModal({ open, onClose }: Props) {
     if (!open || currentIdx < 0) return;
     const item = currentList[currentIdx];
     if (!item) return;
-    const key =
-      tab === "bestiary"
-        ? (item as NpcEntry).type
-        : tab === "vehicles"
-          ? (item as VehicleEntry).type
-          : tab === "blocks"
-            ? (item as BlockEntry).ordinal
-            : tab === "items"
-              ? (item as ItemEntry).name
-              : tab === "animations"
-                ? (item as AnimationEntry).fullName
-                : (item as string);
+    let key: string | number;
+    switch (tab) {
+      case "bestiary":
+        key = (item as NpcEntry).type;
+        break;
+      case "vehicles":
+        key = (item as VehicleEntry).type;
+        break;
+      case "blocks":
+        key = (item as BlockEntry).ordinal;
+        break;
+      case "items":
+        key = (item as ItemEntry).name;
+        break;
+      case "animations":
+        key = (item as AnimationEntry).fullName;
+        break;
+      default:
+        key = item as string;
+    }
     itemRefsMap.current.get(key)?.scrollIntoView({ block: "nearest" });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- currentList derives from state already captured by currentIdx/tab
   }, [open, currentIdx, tab]);
