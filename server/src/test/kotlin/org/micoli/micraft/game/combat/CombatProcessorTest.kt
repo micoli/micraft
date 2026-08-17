@@ -335,9 +335,11 @@ class CombatProcessorTest {
      */
     @Test
     fun `handleNpcAttack scales damage by the attacker's condition`() = runBlocking {
-        suspend fun damageDealtWith(multiplier: Float): Int {
+        // A single attack's 1-in-20 crit chance can make one multiplier's non-crit hit equal
+        // another's crit hit, so average over many attacks instead of comparing one roll each.
+        suspend fun totalDamageDealtWith(multiplier: Float, attempts: Int): Int {
             val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
-            target.characterData = testChar("b", "Bob", hp = 500)
+            target.characterData = testChar("b", "Bob", hp = 1_000_000)
             val flatAttack =
                 AttackDefinition(
                     damageType = DamageType.PHYSICAL,
@@ -349,7 +351,7 @@ class CombatProcessorTest {
                                     // multiplier
                                     power = 100,
                                     weaponDice = "1d1",
-                                    cooldownMs = 1000)))
+                                    cooldownMs = 0)))
             val proc =
                 buildProcessor(
                     sessions = { listOf(target) },
@@ -357,15 +359,14 @@ class CombatProcessorTest {
                 )
             val npc = fakeNpc().also { it.damageMultiplier = multiplier }
 
-            proc.handleNpcAttack(npc, target)
+            repeat(attempts) { proc.handleNpcAttack(npc, target) }
 
-            return 500 - target.characterData!!.currentHp
+            return 1_000_000 - target.characterData!!.currentHp
         }
 
-        val healthy = damageDealtWith(1f)
-        val starving = damageDealtWith(0.5f)
+        val healthy = totalDamageDealtWith(1f, attempts = 200)
+        val starving = totalDamageDealtWith(0.5f, attempts = 200)
         assertTrue(healthy > 0, "the baseline must actually land")
-        // crits double the roll, so compare loosely rather than pinning an exact figure
         assertTrue(
             starving < healthy, "a starving attacker must hit for less: $starving vs $healthy")
     }
