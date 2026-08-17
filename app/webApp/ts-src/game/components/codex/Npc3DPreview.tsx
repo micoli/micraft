@@ -1,14 +1,14 @@
 import type { Texture } from "@babylonjs/core";
-import { useEffect, useRef, useState } from "react";
-import { getFaceTexUrl } from "../lib/blockDefs";
-import type { VehicleEntry } from "./CodexModal";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { getFaceTexUrl } from "../../lib/blockDefs";
+import type { NpcEntry } from "./CodexModal";
 
-function useVehicleModelsReady(): boolean {
-  const [ready, setReady] = useState(() => !!window.mc.isVehicleModelsReady?.());
+function useNpcModelsReady(): boolean {
+  const [ready, setReady] = useState(() => !!window.mc.isNpcModelsReady?.());
   useEffect(() => {
     if (ready) return;
     const iv = setInterval(() => {
-      if (window.mc.isVehicleModelsReady?.()) {
+      if (window.mc.isNpcModelsReady?.()) {
         setReady(true);
         clearInterval(iv);
       }
@@ -18,11 +18,14 @@ function useVehicleModelsReady(): boolean {
   return ready;
 }
 
-// Fork of Npc3DPreview.tsx for vehicles: same rotating-turntable-on-a-grass-slab preview, minus
-// the walk/static toggle (a rail vehicle has no walk animation).
-export function Vehicle3DPreview({ vehicle }: { vehicle: VehicleEntry }) {
+export function Npc3DPreview({ npc }: { npc: NpcEntry }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const ready = useVehicleModelsReady();
+  const ready = useNpcModelsReady();
+  const [walking, setWalking] = useState(false);
+  const walkingRef = useRef(walking);
+  useLayoutEffect(() => {
+    walkingRef.current = walking;
+  });
 
   useEffect(() => {
     if (!ready) return;
@@ -35,8 +38,8 @@ export function Vehicle3DPreview({ vehicle }: { vehicle: VehicleEntry }) {
     const scene = new B.Scene(engine);
     scene.clearColor = new B.Color4(0.08, 0.08, 0.08, 0);
 
-    const midY = vehicle.height / 2;
-    const initialRadius = Math.max(2.5, vehicle.height * 2.0);
+    const midY = npc.height / 2;
+    const initialRadius = Math.max(2.5, npc.height * 2.0);
     const camera = new B.ArcRotateCamera(
       "cam",
       -Math.PI * 0.3,
@@ -56,7 +59,7 @@ export function Vehicle3DPreview({ vehicle }: { vehicle: VehicleEntry }) {
     light.intensity = 1.1;
     light.groundColor = new B.Color3(0.2, 0.2, 0.2);
 
-    const model: McPlayerModel | null = window.mc.createVehicleModel?.(scene, vehicle.type) ?? null;
+    const model: McPlayerModel | null = window.mc.createNpcModel?.(scene, npc.type) ?? null;
 
     const pivot = new B.TransformNode("pivot", scene);
     if (model) model.root.parent = pivot;
@@ -97,24 +100,57 @@ export function Vehicle3DPreview({ vehicle }: { vehicle: VehicleEntry }) {
     scene.onBeforeRenderObservable.add(() => {
       angle += 0.015;
       pivot.rotation.y = angle;
-      if (model) window.mc.setVehicleTransform?.(model, 0, 0, 0, 0);
+      if (model) window.mc.setNpcTransform?.(model, 0, 0, 0, 0, walkingRef.current);
     });
 
     engine.runRenderLoop(() => scene.render());
 
     return () => {
       canvas.removeEventListener("wheel", onWheel);
-      if (model) window.mc.disposeVehicleModel?.(model);
+      if (model) window.mc.disposeNpcModel?.(model);
       engine.dispose();
     };
-  }, [ready, vehicle.type, vehicle.height]);
+  }, [ready, npc.type, npc.height]);
+
+  const btnBase: React.CSSProperties = {
+    flex: 1,
+    fontFamily: "monospace",
+    fontSize: 11,
+    padding: "3px 0",
+    borderRadius: 4,
+    border: "1px solid",
+    cursor: "pointer",
+    transition: "background 0.15s, color 0.15s",
+  };
+  const btnActive: React.CSSProperties = {
+    ...btnBase,
+    background: "rgba(122,172,122,0.18)",
+    borderColor: "rgba(122,172,122,0.55)",
+    color: "#7aac7a",
+  };
+  const btnInactive: React.CSSProperties = {
+    ...btnBase,
+    background: "rgba(0,0,0,0.2)",
+    borderColor: "rgba(255,255,255,0.15)",
+    color: "rgba(255,255,255,0.4)",
+  };
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={160}
-      height={200}
-      style={{ display: "block", width: 160, height: 200, borderRadius: 6, background: "#111" }}
-    />
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+      <canvas
+        ref={canvasRef}
+        width={160}
+        height={200}
+        style={{ display: "block", width: 160, height: 200, borderRadius: 6, background: "#111" }}
+      />
+      <div style={{ display: "flex", gap: 4, width: 160 }}>
+        <button style={walking ? btnInactive : btnActive} onClick={() => setWalking(false)}>
+          Statique
+        </button>
+        <button style={walking ? btnActive : btnInactive} onClick={() => setWalking(true)}>
+          Marche
+        </button>
+      </div>
+    </div>
   );
 }

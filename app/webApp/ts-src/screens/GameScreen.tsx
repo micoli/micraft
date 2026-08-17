@@ -17,7 +17,7 @@ import { PauseMenu } from "../game/overlays/PauseMenu";
 import { MacroEditor } from "../game/overlays/MacroEditor";
 import { LayoutEditor } from "../game/layout/LayoutEditor";
 import { getWidget, resolveActiveLayout, widgetStyle, WIDGET_REGISTRY } from "../game/layout/LayoutEngine";
-import { CodexModal } from "../game/components/CodexModal";
+import { CodexModal } from "../game/components/codex/CodexModal";
 import { ChunkDebug } from "../game/components/ChunkDebug";
 import { Character } from "../game/components/Character";
 import { IngameMap } from "../game/components/IngameMap";

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { useBlockDefsReady, useBlockPreviews } from "../shared/BlockPreview";
-import { ItemCard } from "./ItemCard";
-import type { BlockEntry, ItemEntry } from "./CodexModal";
+import { CssBlockCube, useBlockDefsReady, useBlockPreviews } from "../shared/BlockPreview";
+import { CodexCard } from "./codex/CodexCard";
+import type { BlockEntry, ItemEntry } from "./codex/CodexModal";
 
 const PANEL_POS_STORAGE_KEY = "gameCreativePanelPos";
 const PANEL_DEFAULT_POS = { top: 48, left: 16 };
@@ -91,17 +91,53 @@ export function CreativeBlockPanel({ visible, selectedItem, onSelectItem }: Prop
         <span className="text-[9px] text-[#8A99AF] font-medium">Creative — blocks</span>
       </div>
       <div className="flex flex-wrap gap-1 p-2 overflow-y-auto max-h-[70vh] justify-center">
-        {items.map((item) => (
-          <ItemCard
-            key={item.name}
-            item={item}
-            blocks={blocks}
-            selected={selectedItem === item.name}
-            defsReady={defsReady}
-            getPreview={getPreview}
-            onClick={() => onSelectItem(item.name)}
-          />
-        ))}
+        {items.map((item) => {
+          const linkedBlock = item.placesBlock ? blocks.find((b) => b.name === item.placesBlock) : null;
+          const preview = linkedBlock ? getPreview(linkedBlock.ordinal) : null;
+          return (
+            <CodexCard
+              key={item.name}
+              selected={selectedItem === item.name}
+              onClick={() => onSelectItem(item.name)}
+              title={item.name}
+              label={item.name.replace(/_/g, " ")}
+              width={80}
+              padding="6px 4px"
+              gap={2}
+              labelFontSize={10}
+              thumbnail={
+                preview ? (
+                  <img
+                    alt="preview"
+                    src={preview}
+                    width={48}
+                    height={48}
+                    style={{ imageRendering: "pixelated", display: "block" }}
+                  />
+                ) : linkedBlock && defsReady ? (
+                  <CssBlockCube ordinal={linkedBlock.ordinal} size={36} />
+                ) : (
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 4,
+                      background: linkedBlock
+                        ? `rgb(${linkedBlock.minimapColor[0]},${linkedBlock.minimapColor[1]},${linkedBlock.minimapColor[2]})`
+                        : "#6a5acd",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 18,
+                    }}
+                  >
+                    {!linkedBlock ? "✦" : ""}
+                  </div>
+                )
+              }
+            />
+          );
+        })}
       </div>
     </div>
   );
