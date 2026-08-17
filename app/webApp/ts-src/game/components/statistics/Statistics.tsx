@@ -1,5 +1,5 @@
-import { HudData } from "../types";
-import { cn } from "../../primitives/cn";
+import { HudData } from "../../types";
+import { cn } from "../../../primitives/cn";
 import { StatisticsRow } from "./StatisticsRow";
 
 export function Statistics({ data, layoutStyle }: { data: HudData | null; layoutStyle?: React.CSSProperties }) {

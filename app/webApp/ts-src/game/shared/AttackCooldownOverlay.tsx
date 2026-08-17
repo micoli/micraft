@@ -1,7 +1,7 @@
 import { AttackMeta, SpellMeta } from "../types";
 import { UiState } from "../UIReducer";
 import { useCooldownDisplay } from "../hooks/useCooldownDisplay";
-import { hasEnoughResources } from "./AttackPanel";
+import { hasEnoughResources } from "../components/AttackPanel";
 
 export function AttackCooldownOverlay({
   id,

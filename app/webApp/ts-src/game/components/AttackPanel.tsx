@@ -2,7 +2,7 @@ import { cn } from "../../primitives/cn";
 import { AttackMeta, SpellMeta } from "../types";
 import { UiState } from "../UIReducer";
 import { useAttackDrag } from "../hooks/useAttackDrag";
-import { AttackCooldownOverlay } from "./AttackCooldownOverlay";
+import { AttackCooldownOverlay } from "../shared/AttackCooldownOverlay";
 
 export function damageTypeColor(damageType: string): string {
   switch (damageType) {

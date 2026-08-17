@@ -1,4 +1,4 @@
-import { UiState } from "../UIReducer";
+import { UiState } from "../../UIReducer";
 import { HpBar } from "./HpBar";
 
 interface Props {

@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Dialog } from "../../primitives/Dialog";
-import { DialogContent } from "../../primitives/DialogContent";
-import { DialogTitle } from "../../primitives/DialogTitle";
-import { Button } from "../../primitives/Button";
+import { Dialog } from "../../../primitives/Dialog";
+import { DialogContent } from "../../../primitives/DialogContent";
+import { DialogTitle } from "../../../primitives/DialogTitle";
+import { Button } from "../../../primitives/Button";
 import { ItemSlot } from "./ItemSlot";
 
 interface Props {

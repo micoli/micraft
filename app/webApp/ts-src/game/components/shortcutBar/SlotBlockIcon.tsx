@@ -1,4 +1,4 @@
-import { CssBlockCube, useColoredBlockPreview } from "../shared/BlockPreview";
+import { CssBlockCube, useColoredBlockPreview } from "../../shared/BlockPreview";
 
 export function SlotBlockIcon({
   ordinal,

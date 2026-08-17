@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActiveEffect } from "../UIStateRegistry";
+import { ActiveEffect } from "../../UIStateRegistry";
 
 const BUFF_LABELS: Record<string, string> = {
   HpBoost: "❤️+20",

@@ -1,4 +1,4 @@
-import { cn } from "../primitives/cn";
+import { cn } from "../../primitives/cn";
 
 export function WalkingToggle({ walking, onChange }: { walking: boolean; onChange: (v: boolean) => void }) {
   return (

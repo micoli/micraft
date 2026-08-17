@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActiveEffect } from "../UIStateRegistry";
+import { ActiveEffect } from "../../UIStateRegistry";
 import { BuffBadge } from "./BuffBadge";
 
 interface Props {

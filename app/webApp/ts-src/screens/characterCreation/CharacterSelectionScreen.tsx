@@ -7,12 +7,12 @@ import {
   getApiPlayerByIdSkin,
   getApiPlayerByIdRpg,
   getApiPlayerByIdArmors,
-} from "../generated/api/requests";
-import { PlayerModelPreview } from "../game/shared/PlayerModelPreview";
-import { Button } from "../primitives/Button";
-import { Panel } from "../primitives/Panel";
-import { cn } from "../primitives/cn";
-import { useGameContext } from "../game/GameContext";
+} from "../../generated/api/requests";
+import { PlayerModelPreview } from "../../game/shared/PlayerModelPreview";
+import { Button } from "../../primitives/Button";
+import { Panel } from "../../primitives/Panel";
+import { cn } from "../../primitives/cn";
+import { useGameContext } from "../../game/GameContext";
 import {
   getUsers,
   saveUsers,
@@ -28,7 +28,7 @@ import {
   getAccountEmail,
   AuthMode,
   PlayerEntry,
-} from "../lib/authStorage";
+} from "../../lib/authStorage";
 import { WalkingToggle } from "./WalkingToggle";
 
 const SUPPORTED_LANGS: { code: string; label: string }[] = [

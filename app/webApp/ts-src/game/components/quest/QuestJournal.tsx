@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { getApiQuests } from "../../generated/api/requests";
-import { Dialog } from "../../primitives/Dialog";
-import { DialogContent } from "../../primitives/DialogContent";
-import { DialogTitle } from "../../primitives/DialogTitle";
-import { Button } from "../../primitives/Button";
-import { QuestProgress, QuestStatus } from "../types";
+import { getApiQuests } from "../../../generated/api/requests";
+import { Dialog } from "../../../primitives/Dialog";
+import { DialogContent } from "../../../primitives/DialogContent";
+import { DialogTitle } from "../../../primitives/DialogTitle";
+import { Button } from "../../../primitives/Button";
+import { QuestProgress, QuestStatus } from "../../types";
 import { ObjectiveRow } from "./ObjectiveRow";
 
 type QuestType = "KILL" | "FETCH" | "ESCORT" | "EXPLORE" | "BOSS";

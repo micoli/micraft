@@ -1,6 +1,6 @@
-import { AttackMeta, SpellMeta } from "../types";
-import { damageTypeColor } from "./AttackPanel";
-import { useAttackDrag } from "../hooks/useAttackDrag";
+import { AttackMeta, SpellMeta } from "../../types";
+import { damageTypeColor } from "../AttackPanel";
+import { useAttackDrag } from "../../hooks/useAttackDrag";
 
 export function AttacksTab({
   attackMeta,

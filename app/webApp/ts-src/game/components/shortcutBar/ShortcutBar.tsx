@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { cn } from "../../primitives/cn";
-import { getItemVisual } from "../lib/blockDefs";
-import { useShortcutBar } from "../hooks/useShortcutBar";
-import { ShortcutSlot, AttackMeta, ItemMetaEntry, SpellMeta } from "../types";
-import { UiState } from "../UIReducer";
-import { damageTypeColor } from "./AttackPanel";
-import { AttackCooldownOverlay } from "./AttackCooldownOverlay";
-import { useBlockDefsReady, useBlockPreviews } from "../shared/BlockPreview";
-import { ItemTooltip } from "../shared/ItemTooltip";
+import { cn } from "../../../primitives/cn";
+import { getItemVisual } from "../../lib/blockDefs";
+import { useShortcutBar } from "../../hooks/useShortcutBar";
+import { ShortcutSlot, AttackMeta, ItemMetaEntry, SpellMeta } from "../../types";
+import { UiState } from "../../UIReducer";
+import { damageTypeColor } from "../AttackPanel";
+import { AttackCooldownOverlay } from "../../shared/AttackCooldownOverlay";
+import { useBlockDefsReady, useBlockPreviews } from "../../shared/BlockPreview";
+import { ItemTooltip } from "../../shared/ItemTooltip";
 import { SlotBlockIcon } from "./SlotBlockIcon";
 
 interface Props {

@@ -10,7 +10,7 @@ import { defaultLayout } from "./layout/LayoutEngine";
 import { ChunkDebugData } from "./components/ChunkDebug";
 import { RouterBridge } from "./RouterBridge";
 import { AuthScreen } from "../screens/AuthScreen";
-import { CharacterSelectionScreen } from "../screens/CharacterSelectionScreen";
+import { CharacterSelectionScreen } from "../screens/characterCreation/CharacterSelectionScreen";
 import {
   getLastUser,
   getLastPlayer,

@@ -1,5 +1,5 @@
-import { NpcProximityEntry } from "../types";
-import { UiState } from "../UIReducer";
+import { NpcProximityEntry } from "../../types";
+import { UiState } from "../../UIReducer";
 import { Bar } from "./Bar";
 import { GcdBar } from "./GcdBar";
 

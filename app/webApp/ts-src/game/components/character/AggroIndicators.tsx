@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { NpcProximityEntry } from "../types";
+import { NpcProximityEntry } from "../../types";
 
 interface Props {
   npcProximity?: NpcProximityEntry[];

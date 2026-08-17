@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { getApiQuests } from "../../generated/api/requests";
-import { QuestProgress } from "../types";
+import { getApiQuests } from "../../../generated/api/requests";
+import { QuestProgress } from "../../types";
 
 type KillObjective = { npcType: string; requiredCount: number };
 type QuestDef = {

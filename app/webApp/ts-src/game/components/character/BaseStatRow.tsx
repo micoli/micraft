@@ -1,4 +1,4 @@
-import { cn } from "../../primitives/cn";
+import { cn } from "../../../primitives/cn";
 
 export function BaseStatRow({ label, base, effective }: { label: string; base: number; effective: number }) {
   const bonus = effective - base;

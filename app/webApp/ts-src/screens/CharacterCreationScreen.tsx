@@ -10,7 +10,7 @@ import { Label } from "../primitives/Label";
 import { Panel } from "../primitives/Panel";
 import { FormField } from "../primitives/FormField";
 import { getUsers, saveUsers, getLastUser, getAccountEmail } from "../lib/authStorage";
-import { WalkingToggle } from "./WalkingToggle";
+import { WalkingToggle } from "./characterCreation/WalkingToggle";
 
 const SKINS = ["player", "askin"];
 

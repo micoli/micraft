@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { RefObject } from "react";
 import { CodexCard } from "./CodexCard";
 import { EmojiThumbnail } from "./EmojiThumbnail";
-import { SkinModelPreview } from "../SkinModelPreview";
+import { SkinModelPreview } from "./SkinModelPreview";
 import { CodexDetailLayout } from "./CodexDetailLayout";
 import { filterInputStyle, filterWrapperStyle, gridStyle } from "./codexListStyles";
 

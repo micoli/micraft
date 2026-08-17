@@ -1,4 +1,4 @@
-import { CharacterSyncData } from "../types";
+import { CharacterSyncData } from "../../types";
 import { StatRow } from "./StatRow";
 import { BaseStatRow } from "./BaseStatRow";
 

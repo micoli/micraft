@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { HUD } from "../../game/components/HUD";
+import { HUD } from "../../game/components/hud/HUD";
 import type { HudData } from "../../game/types";
 
 const meta: Meta<typeof HUD> = {
