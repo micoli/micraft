@@ -12,7 +12,7 @@ import { plainMatKey } from "./blockDefs";
 import { WHITE_PIXEL_URL } from "./materials/whitePixel";
 import { getChunkSurface, getTopColorRGB, getSideColorRGB } from "./minimap";
 
-const MC_NORMS = [
+export const MC_NORMS = [
   [0, 0, 1], // 0 south
   [0, 0, -1], // 1 north
   [1, 0, 0], // 2 east
@@ -39,7 +39,11 @@ const ROT_SOURCE: number[][] = [
 ];
 
 // Compute 4 vertices for face fd of a bbmodel element defined by from/to (0-16 coords → 0-1).
-function vertsFromElement(from: [number, number, number], to: [number, number, number], fd: number): Float32Array {
+export function vertsFromElement(
+  from: [number, number, number],
+  to: [number, number, number],
+  fd: number,
+): Float32Array {
   const [fx, fy, fz] = from.map((v) => v / 16) as [number, number, number];
   const [tx, ty, tz] = to.map((v) => v / 16) as [number, number, number];
   switch (fd) {

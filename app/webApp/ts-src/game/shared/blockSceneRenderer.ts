@@ -1,4 +1,5 @@
 import type { Scene, StandardMaterial, TransformNode } from "@babylonjs/core";
+import { MC_NORMS, vertsFromElement } from "../lib/chunkBuilder";
 
 export const SLOPE_VERTS: (number[] | null)[] = [
   [0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1],
@@ -140,31 +141,34 @@ export function setupBlockScene(scene: Scene, ordinal: number, colorHex?: string
     return root;
   }
 
+  const QUAD_INDICES = [0, 1, 2, 0, 2, 3];
+
   for (let ei = 0; ei < elements.length; ei++) {
     const elem = elements[ei];
-    const f = elem.from,
-      t = elem.to;
-    const x0 = f[0] / 16,
-      y0 = f[1] / 16,
-      z0 = f[2] / 16;
-    const x1 = t[0] / 16,
-      y1 = t[1] / 16,
-      z1 = t[2] / 16;
-    const W = x1 - x0,
-      H = y1 - y0,
-      D = z1 - z0;
-    const mx = (x0 + x1) / 2,
-      my = (y0 + y1) / 2,
-      mz = (z0 + z1) / 2;
+    for (let fd = 0; fd < 6; fd++) {
+      const fi = elem.faces[fd];
+      if (!fi) continue;
+      const mat = plainMat ?? (getUrl(fi.matKey) ? ensureMat(getUrl(fi.matKey)!, true) : null);
+      if (!mat) continue;
 
-    const firstFace = elem.faces.find((fi) => fi != null);
-    const url = firstFace ? getUrl(firstFace.matKey) : null;
-    const mat = plainMat ?? (url ? ensureMat(url, false) : null);
-    if (!mat) continue;
-    const box = B.MeshBuilder.CreateBox(`e${ei}`, { width: W, height: H, depth: D }, scene);
-    box.parent = root;
-    box.position = new B.Vector3(mx - cx, my - cy, mz - cz);
-    box.material = mat;
+      const verts = vertsFromElement(elem.from, elem.to, fd);
+      const positions: number[] = [];
+      for (let k = 0; k < 4; k++) {
+        positions.push(verts[k * 3] - cx, verts[k * 3 + 1] - cy, verts[k * 3 + 2] - cz);
+      }
+      const [nx, ny, nz] = MC_NORMS[fd];
+      const normals: number[] = [nx, ny, nz, nx, ny, nz, nx, ny, nz, nx, ny, nz];
+
+      const vd = new B.VertexData();
+      vd.positions = positions;
+      vd.indices = QUAD_INDICES;
+      vd.normals = normals;
+      vd.uvs = fi.uv;
+      const quad = new B.Mesh(`e${ei}f${fd}`, scene);
+      quad.parent = root;
+      vd.applyToMesh(quad);
+      quad.material = mat;
+    }
   }
 
   return root;
