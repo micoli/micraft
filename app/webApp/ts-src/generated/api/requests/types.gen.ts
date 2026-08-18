@@ -1700,10 +1700,6 @@ export type OrgMicoliMicraftProtocolBlockInfo = {
      */
     brickSize: Array<number>;
     /**
-     * List<List<String>>
-     */
-    connections: Array<Array<string>>;
-    /**
      * String
      */
     gltfModel: string;
@@ -1743,6 +1739,7 @@ export type OrgMicoliMicraftProtocolBlockInfo = {
      * Boolean
      */
     plainColorable: boolean;
+    rail?: null | OrgMicoliMicraftProtocolRailInfo;
     /**
      * Boolean
      */
@@ -1767,6 +1764,20 @@ export type OrgMicoliMicraftProtocolBlockInfo = {
      * Int
      */
     viscosity: number;
+};
+
+/**
+ * RailInfo
+ */
+export type OrgMicoliMicraftProtocolRailInfo = {
+    /**
+     * List<List<String>>
+     */
+    connections: Array<Array<string>>;
+    /**
+     * Float
+     */
+    height: number;
 };
 
 /**

@@ -15,6 +15,7 @@ import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.EntityType
 import org.micoli.micraft.game.world.rail.Direction
 import org.micoli.micraft.game.world.rail.RailConnectionPoint
+import org.micoli.micraft.game.world.rail.RailDefinition
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testWorld
@@ -42,11 +43,13 @@ class VehicleManagerTest {
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections =
-                                listOf(
-                                    listOf(
-                                        RailConnectionPoint(Direction.NORTH),
-                                        RailConnectionPoint(Direction.SOUTH))))))
+                            rail =
+                                RailDefinition(
+                                    connections =
+                                        listOf(
+                                            listOf(
+                                                RailConnectionPoint(Direction.NORTH),
+                                                RailConnectionPoint(Direction.SOUTH)))))))
         VehicleRegistry.load(savedVehicles + mapOf(cart to VehicleDefinition(speed = 2f)))
     }
 

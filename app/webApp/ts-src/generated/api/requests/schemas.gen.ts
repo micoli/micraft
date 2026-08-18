@@ -2679,18 +2679,6 @@ export const org_micoli_micraft_protocol_BlockInfoSchema = {
             },
             title: 'List<Float>'
         },
-        connections: {
-            type: 'array',
-            items: {
-                type: 'array',
-                items: {
-                    type: 'string',
-                    title: 'String'
-                },
-                title: 'List<String>'
-            },
-            title: 'List<List<String>>'
-        },
         gltfModel: {
             type: 'string',
             title: 'String'
@@ -2737,6 +2725,16 @@ export const org_micoli_micraft_protocol_BlockInfoSchema = {
             type: 'boolean',
             title: 'Boolean'
         },
+        rail: {
+            oneOf: [
+                {
+                    type: 'null'
+                },
+                {
+                    $ref: '#/components/schemas/org.micoli.micraft.protocol.RailInfo'
+                }
+            ]
+        },
         rotatable: {
             type: 'boolean',
             title: 'Boolean'
@@ -2775,7 +2773,6 @@ export const org_micoli_micraft_protocol_BlockInfoSchema = {
     },
     required: [
         'brickSize',
-        'connections',
         'gltfModel',
         'hardness',
         'hasStuds',
@@ -2794,6 +2791,34 @@ export const org_micoli_micraft_protocol_BlockInfoSchema = {
         'viscosity'
     ],
     title: 'BlockInfo'
+} as const;
+
+export const org_micoli_micraft_protocol_RailInfoSchema = {
+    type: 'object',
+    properties: {
+        connections: {
+            type: 'array',
+            items: {
+                type: 'array',
+                items: {
+                    type: 'string',
+                    title: 'String'
+                },
+                title: 'List<String>'
+            },
+            title: 'List<List<String>>'
+        },
+        height: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        }
+    },
+    required: [
+        'connections',
+        'height'
+    ],
+    title: 'RailInfo'
 } as const;
 
 export const org_micoli_micraft_protocol_PlainColorInfoSchema = {

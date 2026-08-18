@@ -6,18 +6,21 @@ import org.micoli.micraft.game.world.BlockType
 
 /**
  * Resolves a placed block's rail connection groups from its declarative
- * `BlockDefinition.connections` (unrotated frame) plus its stored rotation. Reusable by both
+ * `BlockDefinition.rail.connections` (unrotated frame) plus its stored rotation. Reusable by both
  * topology detection ([org.micoli.micraft.game.world.rail]) and vehicle traversal.
  */
 object RailConnection {
-    fun isRail(blockType: BlockType): Boolean =
-        BlockRegistry.get(blockType).connections.isNotEmpty()
+    fun isRail(blockType: BlockType): Boolean = BlockRegistry.get(blockType).rail != null
+
+    /**
+     * Voxel height a vehicle rides at above this rail block's floor — see [RailDefinition.height].
+     */
+    fun railHeight(blockType: BlockType): Float = BlockRegistry.get(blockType).rail?.height ?: 1f
 
     private fun rotatedGroups(blockType: BlockType, state: Byte): List<List<RailConnectionPoint>> {
         val rotation = BlockState.rotation(state)
-        return BlockRegistry.get(blockType).connections.map { group ->
-            group.map { it.rotatedBy(rotation) }
-        }
+        val connections = BlockRegistry.get(blockType).rail?.connections ?: emptyList()
+        return connections.map { group -> group.map { it.rotatedBy(rotation) } }
     }
 
     /**
@@ -38,13 +41,13 @@ object RailConnection {
 
     /** True for a switch/junction piece with more than one candidate exit beyond a shared entry. */
     fun isJunction(blockType: BlockType): Boolean {
-        val groups = BlockRegistry.get(blockType).connections
+        val groups = BlockRegistry.get(blockType).rail?.connections ?: emptyList()
         return groups.size > 1 && !groupsAreDisjoint(groups)
     }
 
     /** Number of switchable branches — 0 for a non-junction piece. */
     fun branchCount(blockType: BlockType): Int =
-        if (isJunction(blockType)) BlockRegistry.get(blockType).connections.size else 0
+        if (isJunction(blockType)) BlockRegistry.get(blockType).rail!!.connections.size else 0
 
     /** Every connection group this placement exposes (rotated), regardless of switch state. */
     fun allGroups(blockType: BlockType, state: Byte): List<List<RailConnectionPoint>> =
@@ -95,8 +98,8 @@ object RailConnection {
      * other member's direction — correct for a straight piece, a curve's perpendicular turn, a
      * switch's pruned branch, and each independent pair of a crossing alike, since a crossing's
      * pairs never share a direction (unlike the flattened direction set, which can't tell which
-     * pair [arrivalDir] came from and would risk matching it to an unrelated pair's direction). Null
-     * if [arrivalDir] isn't part of any active group (a true dead end).
+     * pair [arrivalDir] came from and would risk matching it to an unrelated pair's direction).
+     * Null if [arrivalDir] isn't part of any active group (a true dead end).
      */
     fun preferredContinuation(
         groups: List<List<RailConnectionPoint>>,

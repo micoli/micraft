@@ -223,9 +223,11 @@ fun mcSceneRailTestTick(deltaSeconds: Float): String {
     val dir = railTestDir
     val t = railTestProgress
     val here = BlockPos(railTestX, railTestY, railTestZ)
-    val height = RailTraversal.localHeight(SceneMesherRailView(mesher), here, dir.opposite, dir, t)
+    val railView = SceneMesherRailView(mesher)
+    val height = RailTraversal.localHeight(railView, here, dir.opposite, dir, t)
+    val base = RailTraversal.baseHeight(railView, here)
     val px = railTestX + 0.5f + dir.dx * t
-    val py = railTestY + 1f + height + CART_HALF_HEIGHT
+    val py = railTestY + base + height + CART_HALF_HEIGHT
     val pz = railTestZ + 0.5f + dir.dz * t
     val yaw = atan2(dir.dx.toDouble(), dir.dz.toDouble()).toFloat()
     return "$px,$py,$pz,$yaw"

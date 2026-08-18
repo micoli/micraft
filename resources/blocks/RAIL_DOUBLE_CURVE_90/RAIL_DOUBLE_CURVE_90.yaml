@@ -13,4 +13,5 @@ minimapVisible: true
 rotatable: true
 hasStuds: false
 plainColorable: false
-connections: [[NORTH, EAST],[SOUTH, WEST]]
+rail:
+  connections: [[NORTH, EAST],[SOUTH, WEST]]

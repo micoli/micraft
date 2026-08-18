@@ -14,4 +14,4 @@ rotatable: true
 hasStuds: false
 plainColorable: false
 rail:
-  connections: [[NORTH, SOUTH], [EAST, WEST]]
+  connections: [[SOUTH, NORTH_EAST], [SOUTH, NORTH_WEST]]

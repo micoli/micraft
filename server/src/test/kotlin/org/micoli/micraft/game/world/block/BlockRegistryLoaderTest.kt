@@ -195,14 +195,14 @@ class BlockRegistryLoaderTest {
                 mapOf(
                     "STONE" to "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n",
                     "RAIL_STRAIGHT" to
-                        "hardness: 1\nsolid: true\nisCubic: false\nrotatable: true\nminimapColor: [110, 110, 120]\nconnections: [[NORTH, SOUTH]]\n",
+                        "hardness: 1\nsolid: true\nisCubic: false\nrotatable: true\nminimapColor: [110, 110, 120]\nrail:\n  connections: [[NORTH, SOUTH]]\n",
                 ))
         val result = loader.load()
-        assertEquals(emptyList(), result[BlockType.STONE]?.connections)
+        assertEquals(null, result[BlockType.STONE]?.rail)
         assertEquals(
             listOf(
                 listOf(RailConnectionPoint(Direction.NORTH), RailConnectionPoint(Direction.SOUTH))),
-            result[BlockType("RAIL_STRAIGHT")]?.connections)
+            result[BlockType("RAIL_STRAIGHT")]?.rail?.connections)
     }
 
     @Test
@@ -210,12 +210,12 @@ class BlockRegistryLoaderTest {
         val (loader) =
             loaderWithBlocks(
                 blocks = mapOf("STONE" to "hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n"),
-                overrides = mapOf("STONE" to "connections: [[EAST, WEST]]\n"),
+                overrides = mapOf("STONE" to "rail:\n  connections: [[EAST, WEST]]\n"),
             )
         assertEquals(
             listOf(
                 listOf(RailConnectionPoint(Direction.EAST), RailConnectionPoint(Direction.WEST))),
-            loader.load()[BlockType.STONE]?.connections)
+            loader.load()[BlockType.STONE]?.rail?.connections)
     }
 
     @Test

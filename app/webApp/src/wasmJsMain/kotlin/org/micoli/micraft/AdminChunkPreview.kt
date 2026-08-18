@@ -19,6 +19,7 @@ import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.rail.Direction
 import org.micoli.micraft.game.world.rail.RailConnection
 import org.micoli.micraft.game.world.rail.RailConnectionPoint
+import org.micoli.micraft.game.world.rail.RailDefinition
 import org.micoli.micraft.game.world.rail.RailTraversal
 import org.micoli.micraft.game.world.rail.RailWorldView
 import org.micoli.micraft.protocol.BlockInfo
@@ -79,9 +80,15 @@ fun mcAdminSetBlockRegistry(json: String) {
                     brickSize = info.brickSize,
                     plainColorable = info.plainColorable,
                     isCubic = info.isCubic,
-                    connections =
-                        info.connections.map { group ->
-                            group.map { RailConnectionPoint.parse(it) }
+                    rail =
+                        info.rail?.let { rail ->
+                            RailDefinition(
+                                connections =
+                                    rail.connections.map { group ->
+                                        group.map { RailConnectionPoint.parse(it) }
+                                    },
+                                height = rail.height,
+                            )
                         },
                 )
         }
@@ -253,10 +260,11 @@ fun mcAdminRailTestTick(scene: JsAny, deltaSeconds: Float): String {
     val current = railTestPos ?: return ""
     val dir = railTestDir
     val t = railTestProgress
-    val height =
-        RailTraversal.localHeight(ChunkManagerRailView(manager), current, dir.opposite, dir, t)
+    val railView = ChunkManagerRailView(manager)
+    val height = RailTraversal.localHeight(railView, current, dir.opposite, dir, t)
+    val base = RailTraversal.baseHeight(railView, current)
     val x = current.x + 0.5f + dir.dx * t
-    val y = current.y + 1f + height + CART_HALF_HEIGHT
+    val y = current.y + base + height + CART_HALF_HEIGHT
     val z = current.z + 0.5f + dir.dz * t
     val yaw = atan2(dir.dx.toDouble(), dir.dz.toDouble()).toFloat()
     return "$x,$y,$z,$yaw"

@@ -422,8 +422,12 @@ data class BlockInfo(
     val isCubic: Boolean = true,
     val topColor: List<Int> = minimapColor,
     val sideColor: List<Int> = minimapColor,
-    val connections: List<List<String>> = emptyList(),
+    val rail: RailInfo? = null,
 )
+
+/** Wire form of [org.micoli.micraft.game.world.rail.RailDefinition]. */
+@Serializable
+data class RailInfo(val connections: List<List<String>> = emptyList(), val height: Float = 1f)
 
 /** Palette entry; its position in [ServerMessage.RegistrySync.plainColors] is colorIndex - 1. */
 @Serializable data class PlainColorInfo(val name: String, val hex: String)

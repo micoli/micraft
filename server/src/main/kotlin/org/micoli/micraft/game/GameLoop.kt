@@ -114,6 +114,7 @@ import org.micoli.micraft.protocol.CommandInfo
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.PlainColorInfo
+import org.micoli.micraft.protocol.RailInfo
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.VehicleCodexInfo
 import org.micoli.micraft.ui.defaultLayout
@@ -888,7 +889,14 @@ class GameLoop(
                     isCubic = def.isCubic,
                     topColor = def.topColor,
                     sideColor = def.sideColor,
-                    connections = def.connections.map { group -> group.map { it.toString() } },
+                    rail =
+                        def.rail?.let { rail ->
+                            RailInfo(
+                                connections =
+                                    rail.connections.map { group -> group.map { it.toString() } },
+                                height = rail.height,
+                            )
+                        },
                 )
             }
         val items =

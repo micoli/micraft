@@ -35,11 +35,12 @@ class RailNetworkRegistry(private val world: WorldState) {
     }
 
     /**
-     * Drops cached topology for [pos], its 4 grid neighbors, and — since a cached [RailTopology] is
-     * shared by every position it covers — every other position that was part of any of the same
-     * (now possibly split/merged) cached component(s) at [pos] or a neighbor. Call after any change
-     * (place, break, switch toggle) that could affect what [pos] or its neighbors connect to. The
-     * next [topologyAt] query for any position touched recomputes it.
+     * Drops cached topology for [pos], its 8 grid neighbors (cardinal and diagonal — a diagonal
+     * connection is as valid as a cardinal one, see [Direction]), and — since a cached
+     * [RailTopology] is shared by every position it covers — every other position that was part of
+     * any of the same (now possibly split/merged) cached component(s) at [pos] or a neighbor. Call
+     * after any change (place, break, switch toggle) that could affect what [pos] or its neighbors
+     * connect to. The next [topologyAt] query for any position touched recomputes it.
      */
     fun invalidate(pos: BlockPos) {
         dropComponent(pos)

@@ -14,12 +14,13 @@ import org.micoli.micraft.game.world.EntityType
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.rail.Direction
 import org.micoli.micraft.game.world.rail.RailConnectionPoint
+import org.micoli.micraft.game.world.rail.RailDefinition
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.support.testWorld
 import org.micoli.micraft.vehicle.VehicleDefinition
 import org.micoli.micraft.vehicle.VehicleRegistry
 
-private fun rc(direction: Direction, dy: Float = 0f) = RailConnectionPoint(direction, dy)
+private fun rc(direction: Direction, dy: Float = 1f) = RailConnectionPoint(direction, dy)
 
 private fun grp(vararg points: RailConnectionPoint) = points.toList()
 
@@ -48,39 +49,51 @@ class VehicleBehaviorTest {
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections = listOf(grp(rc(Direction.NORTH), rc(Direction.SOUTH)))),
+                            rail =
+                                RailDefinition(
+                                    connections =
+                                        listOf(grp(rc(Direction.NORTH), rc(Direction.SOUTH))))),
                     curve90 to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections = listOf(grp(rc(Direction.NORTH), rc(Direction.EAST)))),
+                            rail =
+                                RailDefinition(
+                                    connections =
+                                        listOf(grp(rc(Direction.NORTH), rc(Direction.EAST))))),
                     ySplit to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections =
-                                listOf(
-                                    grp(rc(Direction.SOUTH), rc(Direction.NORTH)),
-                                    grp(rc(Direction.SOUTH), rc(Direction.EAST)))),
+                            rail =
+                                RailDefinition(
+                                    connections =
+                                        listOf(
+                                            grp(rc(Direction.SOUTH), rc(Direction.NORTH)),
+                                            grp(rc(Direction.SOUTH), rc(Direction.EAST))))),
                     slope to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
                             // South neighbor of a slope sits one grid level up.
-                            connections =
-                                listOf(grp(rc(Direction.NORTH), rc(Direction.SOUTH, 1f)))),
+                            rail =
+                                RailDefinition(
+                                    connections =
+                                        listOf(grp(rc(Direction.NORTH), rc(Direction.SOUTH, 2f))))),
                     cross to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections =
-                                listOf(
-                                    grp(rc(Direction.NORTH), rc(Direction.SOUTH)),
-                                    grp(rc(Direction.EAST), rc(Direction.WEST)))),
+                            rail =
+                                RailDefinition(
+                                    connections =
+                                        listOf(
+                                            grp(rc(Direction.NORTH), rc(Direction.SOUTH)),
+                                            grp(rc(Direction.EAST), rc(Direction.WEST))))),
                 ))
         // Exactly one full block per tick regardless of the live TICK_MS (other test classes
         // mutate that global and don't always reset it) — makes "N ticks to cross a block" exact.

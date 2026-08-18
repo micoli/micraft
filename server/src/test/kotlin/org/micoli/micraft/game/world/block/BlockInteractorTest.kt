@@ -13,6 +13,7 @@ import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.rail.Direction
 import org.micoli.micraft.game.world.rail.RailConnectionPoint
+import org.micoli.micraft.game.world.rail.RailDefinition
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.rail.RailTopology
 import org.micoli.micraft.player.Vec3
@@ -40,24 +41,28 @@ class BlockInteractorTest {
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections =
-                                listOf(
-                                    listOf(
-                                        RailConnectionPoint(Direction.SOUTH),
-                                        RailConnectionPoint(Direction.NORTH)),
-                                    listOf(
-                                        RailConnectionPoint(Direction.SOUTH),
-                                        RailConnectionPoint(Direction.EAST)))),
+                            rail =
+                                RailDefinition(
+                                    connections =
+                                        listOf(
+                                            listOf(
+                                                RailConnectionPoint(Direction.SOUTH),
+                                                RailConnectionPoint(Direction.NORTH)),
+                                            listOf(
+                                                RailConnectionPoint(Direction.SOUTH),
+                                                RailConnectionPoint(Direction.EAST))))),
                     straight to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections =
-                                listOf(
-                                    listOf(
-                                        RailConnectionPoint(Direction.NORTH),
-                                        RailConnectionPoint(Direction.SOUTH)))),
+                            rail =
+                                RailDefinition(
+                                    connections =
+                                        listOf(
+                                            listOf(
+                                                RailConnectionPoint(Direction.NORTH),
+                                                RailConnectionPoint(Direction.SOUTH))))),
                 ))
     }
 

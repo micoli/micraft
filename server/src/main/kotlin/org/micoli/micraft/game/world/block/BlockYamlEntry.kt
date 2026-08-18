@@ -28,9 +28,16 @@ data class BlockYamlEntry(
     val brickSize: List<Float> = listOf(2f, 2f, 2f),
     val plainColorable: Boolean = false,
     val isCubic: Boolean = true,
-    /**
-     * Track-network connection groups in the block's unrotated frame — see
-     * [org.micoli.micraft.game.world.BlockDefinition.connections].
-     */
+    /** Rail-network declaration — see [RailYamlEntry]. Omitted for a non-rail block. */
+    val rail: RailYamlEntry? = null,
+)
+
+/**
+ * YAML form of [org.micoli.micraft.game.world.rail.RailDefinition] — connection groups as compact
+ * strings (see [org.micoli.micraft.game.world.rail.RailConnectionPoint.parse]).
+ */
+@Serializable
+data class RailYamlEntry(
     val connections: List<List<String>> = emptyList(),
+    @JsonSchemaConstraint(minimum = 0.0) val height: Float = 1f,
 )

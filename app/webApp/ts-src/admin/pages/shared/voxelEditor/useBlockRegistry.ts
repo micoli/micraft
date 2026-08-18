@@ -9,6 +9,9 @@ import type { BlockInfoDto, PlainColorDto } from "../../../apiTypes";
 export function useBlockRegistry() {
   const [blockDefs, setBlockDefs] = useState<BlockInfoDto[]>([]);
   const [ordinalByName, setOrdinalByName] = useState<Map<string, number>>(new Map());
+  // Ordinal-indexed block type names — NOT the same as window.mc.getBlockDef(ordinal)?.name, which
+  // is the first bbmodel cube's own (often copy-pasted, unrelated) name, an authoring artifact.
+  const [nameByOrdinal, setNameByOrdinal] = useState<string[]>([]);
   const [plainColors, setPlainColors] = useState<PlainColorDto[]>([]);
 
   useEffect(() => {
@@ -20,6 +23,7 @@ export function useBlockRegistry() {
         const withoutAir = defs.filter((b) => b.name !== "AIR");
         setBlockDefs(withoutAir);
         setOrdinalByName(new Map(defs.map((b, i) => [b.name, i])));
+        setNameByOrdinal(defs.map((b) => b.name));
         setPlainColors(colors);
         // Plain-color materials (chunkBuilder.ts's plainMatKey) are built from this palette —
         // must be loaded before the block registry so the first mesh resolves them.
@@ -32,5 +36,5 @@ export function useBlockRegistry() {
 
   const getOrdinal = (name: string): number | null => ordinalByName.get(name) ?? null;
 
-  return { blockDefs, ordinalByName, plainColors, getOrdinal };
+  return { blockDefs, ordinalByName, nameByOrdinal, plainColors, getOrdinal };
 }

@@ -26,6 +26,7 @@ import org.micoli.micraft.game.world.PlainColor
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.rail.RailConnectionPoint
+import org.micoli.micraft.game.world.rail.RailDefinition
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.ServerMessage
@@ -667,9 +668,17 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         brickSize = info.brickSize,
                                         plainColorable = info.plainColorable,
                                         isCubic = info.isCubic,
-                                        connections =
-                                            info.connections.map { group ->
-                                                group.map { RailConnectionPoint.parse(it) }
+                                        rail =
+                                            info.rail?.let { rail ->
+                                                RailDefinition(
+                                                    connections =
+                                                        rail.connections.map { group ->
+                                                            group.map {
+                                                                RailConnectionPoint.parse(it)
+                                                            }
+                                                        },
+                                                    height = rail.height,
+                                                )
                                             },
                                     )
                             }

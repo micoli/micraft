@@ -14,7 +14,7 @@ import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.support.testWorld
 
-private fun rc(direction: Direction, dy: Float = 0f) = RailConnectionPoint(direction, dy)
+private fun rc(direction: Direction, dy: Float = 1f) = RailConnectionPoint(direction, dy)
 
 private fun grp(vararg points: RailConnectionPoint) = points.toList()
 
@@ -42,39 +42,51 @@ class RailNetworkRegistryTest {
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections = listOf(grp(rc(Direction.NORTH), rc(Direction.SOUTH)))),
+                            rail =
+                                RailDefinition(
+                                    connections =
+                                        listOf(grp(rc(Direction.NORTH), rc(Direction.SOUTH))))),
                     curve90 to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections = listOf(grp(rc(Direction.NORTH), rc(Direction.EAST)))),
+                            rail =
+                                RailDefinition(
+                                    connections =
+                                        listOf(grp(rc(Direction.NORTH), rc(Direction.EAST))))),
                     ySplit to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections =
-                                listOf(
-                                    grp(rc(Direction.SOUTH), rc(Direction.NORTH)),
-                                    grp(rc(Direction.SOUTH), rc(Direction.EAST)))),
+                            rail =
+                                RailDefinition(
+                                    connections =
+                                        listOf(
+                                            grp(rc(Direction.SOUTH), rc(Direction.NORTH)),
+                                            grp(rc(Direction.SOUTH), rc(Direction.EAST))))),
                     slope to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
                             // South neighbor of a slope sits one grid level up.
-                            connections =
-                                listOf(grp(rc(Direction.NORTH), rc(Direction.SOUTH, 1f)))),
+                            rail =
+                                RailDefinition(
+                                    connections =
+                                        listOf(grp(rc(Direction.NORTH), rc(Direction.SOUTH, 2f))))),
                     cross to
                         BlockDefinition(
                             solid = true,
                             isCubic = false,
                             rotatable = true,
-                            connections =
-                                listOf(
-                                    grp(rc(Direction.NORTH), rc(Direction.SOUTH)),
-                                    grp(rc(Direction.EAST), rc(Direction.WEST)))),
+                            rail =
+                                RailDefinition(
+                                    connections =
+                                        listOf(
+                                            grp(rc(Direction.NORTH), rc(Direction.SOUTH)),
+                                            grp(rc(Direction.EAST), rc(Direction.WEST))))),
                 ))
     }
 

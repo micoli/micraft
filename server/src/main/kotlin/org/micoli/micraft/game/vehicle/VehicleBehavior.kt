@@ -70,10 +70,11 @@ object VehicleBehavior {
         val dir = instance.travelDirection
         val t = instance.progress
         val height = RailTraversal.localHeight(world, current, dir.opposite, dir, t)
+        val base = RailTraversal.baseHeight(world, current)
         instance.pos =
             Vec3(
                 current.x + 0.5f + dir.dx * t,
-                current.y + 1f + height,
+                current.y + base + height,
                 current.z + 0.5f + dir.dz * t,
             )
         instance.yaw = atan2(dir.dx.toDouble(), dir.dz.toDouble()).toFloat()

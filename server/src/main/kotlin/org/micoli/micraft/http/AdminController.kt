@@ -62,6 +62,7 @@ import org.micoli.micraft.protocol.EntityRemoveAt
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.PlainColorInfo
+import org.micoli.micraft.protocol.RailInfo
 
 @Serializable
 data class UserDto(val email: String, val displayName: String, val groups: List<String>)
@@ -1438,8 +1439,16 @@ class AdminController(
                                 brickSize = def.brickSize,
                                 plainColorable = def.plainColorable,
                                 isCubic = def.isCubic,
-                                connections =
-                                    def.connections.map { group -> group.map { it.toString() } },
+                                rail =
+                                    def.rail?.let { rail ->
+                                        RailInfo(
+                                            connections =
+                                                rail.connections.map { group ->
+                                                    group.map { it.toString() }
+                                                },
+                                            height = rail.height,
+                                        )
+                                    },
                             )
                         }
                     call.respondText(

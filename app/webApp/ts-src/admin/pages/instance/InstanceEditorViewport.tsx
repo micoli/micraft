@@ -83,7 +83,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const [hoveredBlockName, setHoveredBlockName] = useState<string | null>(null);
   const [hoveredRect, setHoveredRect] = useState<DOMRect | null>(null);
   const [hoveredShortcutSlot, setHoveredShortcutSlot] = useState<number | null>(null);
-  const { blockDefs, ordinalByName, plainColors, getOrdinal } = useBlockRegistry();
+  const { blockDefs, ordinalByName, nameByOrdinal, plainColors, getOrdinal } = useBlockRegistry();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
   const selectedColorIndexRef = useRef(selectedColorIndex);
@@ -179,6 +179,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const modeRef = useRef(mode);
   const selectedTypeRef = useRef(selectedType);
   const ordinalByNameRef = useRef(ordinalByName);
+  const nameByOrdinalRef = useRef(nameByOrdinal);
   // In-memory only (reset on zone remount, like the scene itself) — not persisted, unlike camera/shortcut bar.
   // Each stack slot is a GROUP of entries (see undoRedoStack.ts) — a single place/break is a group
   // of one, a Fill/Shell/Cut is a group of every voxel it touched.
@@ -267,6 +268,9 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   useEffect(() => {
     ordinalByNameRef.current = ordinalByName;
   }, [ordinalByName]);
+  useEffect(() => {
+    nameByOrdinalRef.current = nameByOrdinal;
+  }, [nameByOrdinal]);
   useEffect(() => {
     selectedColorIndexRef.current = selectedColorIndex;
   }, [selectedColorIndex]);
@@ -638,7 +642,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
           if (y < zone.yMin || y > zone.yMax || !inZone(x, z)) continue;
           const prevOrdinal = wasmExports ? wasmExports.mcAdminGetBlockOrdinalAt(scene, x, y, z) : 0;
           const prevState = wasmExports ? wasmExports.mcAdminGetBlockStateAt(scene, x, y, z) : 0;
-          const prevType = wasmExports ? (window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR") : "AIR";
+          const prevType = wasmExports ? (nameByOrdinalRef.current[prevOrdinal] ?? "AIR") : "AIR";
           undoGroup.push({ x, y, z, type: prevType, state: prevState, xOffset: 0, zOffset: 0 });
           edits.push({ x, y, z, type: entry.type, state: entry.state, xOffset: 0, zOffset: 0 });
           touchedChunks.add(chunkKeyOf(Math.floor(x / CHUNK_SIZE), Math.floor(z / CHUNK_SIZE)));
@@ -756,12 +760,33 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       },
     );
 
+    // Debug helper (KeyV): logs every non-air block in the current selection as JSON — blocktype,
+    // position, rotation (bits 0-1 of the state byte, mirrors BlockState.rotation() in Kotlin).
+    function dumpSelectionToConsole() {
+      const box = selectionRef.current;
+      if (!box || !wasmExports) return;
+      const voxels = computeSelectionVoxels(box, selectionShapeRef.current, "fill");
+      if (!voxels) {
+        flashActionError(`Selection too large (max ${MAX_SELECTION_OP_VOXELS} voxels)`);
+        return;
+      }
+      const blocks = voxels
+        .map(({ x, y, z }) => {
+          const ordinal = wasmExports!.mcAdminGetBlockOrdinalAt(scene, x, y, z);
+          const state = wasmExports!.mcAdminGetBlockStateAt(scene, x, y, z);
+          const type = nameByOrdinalRef.current[ordinal] ?? "AIR";
+          return { type, x, y, z, rotation: state & 0x03 };
+        })
+        .filter((b) => b.type !== "AIR");
+      console.log(JSON.stringify(blocks, null, 2));
+    }
+
     function captureBlock(at: UndoEntry): UndoEntry {
       if (!wasmExports)
         return { x: at.x, y: at.y, z: at.z, type: "AIR", state: 0, xOffset: at.xOffset, zOffset: at.zOffset };
       const ordinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, at.x, at.y, at.z);
       const state = wasmExports.mcAdminGetBlockStateAt(scene, at.x, at.y, at.z);
-      const type = window.mc.getBlockDef(ordinal)?.name ?? "AIR";
+      const type = nameByOrdinalRef.current[ordinal] ?? "AIR";
       return { x: at.x, y: at.y, z: at.z, type, state, xOffset: at.xOffset, zOffset: at.zOffset };
     }
 
@@ -814,7 +839,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       for (const v of valid) {
         const prevOrdinal = wasmExports ? wasmExports.mcAdminGetBlockOrdinalAt(scene, v.x, v.y, v.z) : 0;
         const prevState = wasmExports ? wasmExports.mcAdminGetBlockStateAt(scene, v.x, v.y, v.z) : 0;
-        const prevType = wasmExports ? (window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR") : "AIR";
+        const prevType = wasmExports ? (nameByOrdinalRef.current[prevOrdinal] ?? "AIR") : "AIR";
 
         if (kind === "cut" || kind === "copy") {
           clipEntries.push({
@@ -1034,6 +1059,14 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         performRedo();
         return;
       }
+      if (e.code === "KeyT") {
+        toggleTestRail();
+        return;
+      }
+      if (e.code === "KeyV") {
+        dumpSelectionToConsole();
+        return;
+      }
       if (e.code !== "KeyR") return;
       overlay.rotatePlacement();
       // Force a rebuild at the last known cursor position so the rotation is visible immediately,
@@ -1189,7 +1222,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
           // Full state byte (rotation + color, see BlockState.kt) so undo restores the exact
           // previous look, not just its rotation.
           prevState = wasmExports.mcAdminGetBlockStateAt(scene, tx, ty, tz);
-          prevType = window.mc.getBlockDef(prevOrdinal)?.name ?? "AIR";
+          prevType = nameByOrdinalRef.current[prevOrdinal] ?? "AIR";
         }
         const state = packState(overlay.getPlacementRotation(), selectedColorIndexRef.current);
         editSocket.send({ x: tx, y: ty, z: tz, type, state, xOffset, zOffset });

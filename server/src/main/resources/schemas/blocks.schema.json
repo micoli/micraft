@@ -96,14 +96,31 @@
     "isCubic": {
       "type": "boolean"
     },
-    "connections": {
-      "type": "array",
-      "items": {
-        "type": "array",
-        "items": {
-          "type": "string"
+    "rail": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "connections": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
         }
-      }
+      ]
     }
   }
 }

@@ -13,8 +13,8 @@ object RailTraversal {
      * Neighbor of [from] through [dir] whose active connection points back. Same-Y first (the
      * common case); if [from]'s own point for [dir] declares a Y jump ([RailConnectionPoint.gridDy]
      * — leaving a slope), or a candidate one level up/down declares one on its own point facing
-     * back (approaching a slope from its flat, dy=0-declared side), that jump is followed too. A
-     * flat piece's own dy is always 0, so it never "knows" a slope sits one level up — only one
+     * back (approaching a slope from its flat, dy=1-declared side), that jump is followed too. A
+     * flat piece's own gridDy is always 0, so it never "knows" a slope sits one level up — only one
      * side of the pair needs to declare the jump for the link to count, or a flat run adjacent to
      * unrelated stacked rails could never reach the slope above it. Null if [from] has no active
      * connection through [dir], or no candidate connects back.
@@ -39,19 +39,26 @@ object RailTraversal {
                 RailConnection.activePoints(nType, nState, nExtra).firstOrNull {
                     it.direction == dir.opposite
                 } ?: continue
-            if (dy == 0 || fromPoint.dy != 0f || nPoint.dy != 0f) return n
+            if (dy == 0 || fromPoint.gridDy != 0 || nPoint.gridDy != 0) return n
         }
         return null
     }
 
     /**
-     * Vehicle Y offset (relative to [pos]'s own floor) while crossing [pos] from [entryDir] to
-     * [exitDir], at [t] (0 = just arrived, 1 = about to leave) — interpolates between [pos]'s own
-     * declared surface height at the entry edge and at the exit edge. A flat piece keeps this at 0
-     * throughout; a slope eases from its low edge to its high edge. Purely local to [pos] — no
-     * memory needed across blocks, since [connectingNeighbor] already places the next block at the
-     * correct grid Y for continuity. `0` for either edge not declared (shouldn't happen for an
-     * active connection, but keeps this total).
+     * Voxel height a vehicle rides at above [pos]'s own floor — see [RailConnection.railHeight].
+     */
+    fun baseHeight(world: RailWorldView, pos: BlockPos): Float =
+        RailConnection.railHeight(world.getBlock(pos.x, pos.y, pos.z))
+
+    /**
+     * Vehicle Y offset (relative to [pos]'s own floor, and to [baseHeight]'s ride height) while
+     * crossing [pos] from [entryDir] to [exitDir], at [t] (0 = just arrived, 1 = about to leave) —
+     * interpolates between [pos]'s own declared surface height at the entry edge and at the exit
+     * edge, offset back down by the flat default of `1` since that default is already folded into
+     * [baseHeight]. A flat piece keeps this at 0 throughout; a slope eases from its low edge to its
+     * high edge. Purely local to [pos] — no memory needed across blocks, since [connectingNeighbor]
+     * already places the next block at the correct grid Y for continuity. `1` for either edge not
+     * declared (shouldn't happen for an active connection, but keeps this total).
      */
     fun localHeight(
         world: RailWorldView,
@@ -64,8 +71,8 @@ object RailTraversal {
         val state = world.getBlockState(pos.x, pos.y, pos.z)
         val extra = world.getExtraState(pos.x, pos.y, pos.z)
         val points = RailConnection.activePoints(type, state, extra)
-        val entryDy = points.firstOrNull { it.direction == entryDir }?.dy ?: 0f
-        val exitDy = points.firstOrNull { it.direction == exitDir }?.dy ?: 0f
-        return entryDy + (exitDy - entryDy) * t
+        val entryDy = points.firstOrNull { it.direction == entryDir }?.dy ?: 1f
+        val exitDy = points.firstOrNull { it.direction == exitDir }?.dy ?: 1f
+        return entryDy + (exitDy - entryDy) * t - 1f
     }
 }
