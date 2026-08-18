@@ -47,6 +47,8 @@ private fun BlockYamlEntry.applyOverride(o: BlockYamlOverride): BlockYamlEntry {
 class BlockRegistryLoader(
     private val resourcesBlocksPath: Path,
     private val dataBlocksPath: Path,
+    private val blockIdRegistryLoader: BlockIdRegistryLoader =
+        BlockIdRegistryLoader(Path.of("data/config/block_ids.yaml")),
 ) {
     private fun generateFromResources(): Map<String, BlockYamlEntry> {
         val map = mutableMapOf<String, BlockYamlEntry>()
@@ -166,6 +168,24 @@ class BlockRegistryLoader(
                 entry.drops.takeIf { it.isNotEmpty() }?.let { blockType to it }
             }
             .toMap()
+
+    /**
+     * The stable block-name -> wire-id assignment (see [BlockIdRegistryLoader]), sorted by id, for
+     * [org.micoli.micraft.game.world.BlockRegistry.load]. Only called from production
+     * bootstrap/reload — tests that just want [BlockDefinition]s should stick to [load].
+     */
+    fun wireOrder(): List<BlockType> {
+        val discovered =
+            resourcesBlocksPath
+                .listDirectoryEntries()
+                .filter { it.isDirectory() }
+                .map { it.fileName.toString() }
+        return blockIdRegistryLoader
+            .load(discovered.toSet())
+            .entries
+            .sortedBy { it.value }
+            .map { BlockType(it.key) }
+    }
 
     fun reload(): Map<BlockType, BlockDefinition> = load()
 }

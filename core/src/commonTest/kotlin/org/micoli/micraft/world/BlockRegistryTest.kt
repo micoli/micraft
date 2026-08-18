@@ -75,4 +75,25 @@ class BlockRegistryTest {
         assertNotEquals(-1f, BlockType.BEDROCK.hardness)
         assertEquals(Float.MAX_VALUE, BlockType.BEDROCK.hardness)
     }
+
+    @Test
+    fun load_withWireOrder_assignsIdsByGivenOrder() {
+        val a = BlockType("ZZZ_LAST")
+        val b = BlockType("AAA_FIRST")
+        BlockRegistry.load(
+            mapOf(a to BlockDefinition(), b to BlockDefinition()), wireOrder = listOf(a, b))
+        assertEquals(1, BlockRegistry.wireIndex(a))
+        assertEquals(2, BlockRegistry.wireIndex(b))
+    }
+
+    @Test
+    fun load_withWireOrder_unlistedTypeStillGetsASlot() {
+        val known = BlockType("KNOWN_IN_ORDER")
+        val orphan = BlockType("MISSING_FROM_ORDER")
+        BlockRegistry.load(
+            mapOf(known to BlockDefinition(), orphan to BlockDefinition()),
+            wireOrder = listOf(known))
+        assertTrue(BlockRegistry.all().contains(orphan))
+        assertEquals(orphan, BlockRegistry.byWireIndex(BlockRegistry.wireIndex(orphan)))
+    }
 }

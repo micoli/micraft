@@ -92,7 +92,7 @@ fun mcAdminSetBlockRegistry(json: String) {
                         },
                 )
         }
-    BlockRegistry.load(defs)
+    BlockRegistry.load(defs, infos.map { BlockType(it.name) })
 }
 
 @JsExport

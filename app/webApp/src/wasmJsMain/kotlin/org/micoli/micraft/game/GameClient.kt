@@ -685,7 +685,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                             .toMap()
                     PlainColorRegistry.load(
                         msg.plainColors.mapNotNull { PlainColor.fromHex(it.name, it.hex) })
-                    BlockRegistry.load(blockDefs)
+                    BlockRegistry.load(blockDefs, msg.blocks.map { BlockType(it.name) })
                     chunkManager.repushAllToMinimap()
                     val itemDefs =
                         msg.items.entries.associate { (key, info) ->

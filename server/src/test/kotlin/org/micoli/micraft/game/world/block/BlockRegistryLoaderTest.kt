@@ -378,6 +378,50 @@ class BlockRegistryLoaderTest {
     }
 
     @Test
+    fun wireOrder_newBlock_appendedAfterExisting_doesNotShiftOthers() {
+        val blockIdsDataFile = createTempDirectory("block_ids_data").resolve("block_ids.yaml")
+        val blockIdsResourcesFile =
+            createTempDirectory("block_ids_resources").resolve("block_ids.yaml")
+        blockIdsResourcesFile.writeText("blocks:\n  AIR: 0\n")
+        val idLoader = BlockIdRegistryLoader(blockIdsDataFile, blockIdsResourcesFile)
+
+        val resourcesDir1 = createTempDirectory("resources_blocks")
+        listOf("STONE", "DIRT").forEach { name ->
+            val blockDir = resourcesDir1.resolve(name)
+            blockDir.toFile().mkdir()
+            blockDir
+                .resolve("$name.yaml")
+                .writeText("hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n")
+        }
+        val firstOrder =
+            BlockRegistryLoader(
+                    resourcesDir1,
+                    createTempDirectory("data_blocks"),
+                    blockIdRegistryLoader = idLoader)
+                .wireOrder()
+        val stoneId = firstOrder.indexOf(BlockType.STONE)
+        val dirtId = firstOrder.indexOf(BlockType.DIRT)
+
+        val resourcesDir2 = createTempDirectory("resources_blocks")
+        listOf("STONE", "DIRT", "AAA_NEW").forEach { name ->
+            val blockDir = resourcesDir2.resolve(name)
+            blockDir.toFile().mkdir()
+            blockDir
+                .resolve("$name.yaml")
+                .writeText("hardness: 5\nsolid: true\nminimapColor: [0, 0, 0]\n")
+        }
+        val secondOrder =
+            BlockRegistryLoader(
+                    resourcesDir2,
+                    createTempDirectory("data_blocks"),
+                    blockIdRegistryLoader = idLoader)
+                .wireOrder()
+        assertEquals(stoneId, secondOrder.indexOf(BlockType.STONE))
+        assertEquals(dirtId, secondOrder.indexOf(BlockType.DIRT))
+        assertTrue(secondOrder.contains(BlockType("AAA_NEW")))
+    }
+
+    @Test
     fun drops_writeback_missingFieldAppendedAsComment() {
         val (loader, dataDir) =
             loaderWithBlocks(

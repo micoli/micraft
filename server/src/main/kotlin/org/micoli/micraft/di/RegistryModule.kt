@@ -11,6 +11,7 @@ import org.micoli.micraft.game.vehicle.VehicleRegistryLoader
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.PlainColorRegistry
+import org.micoli.micraft.game.world.block.BlockIdRegistryLoader
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
 import org.micoli.micraft.vehicle.VehicleRegistry
 
@@ -27,7 +28,7 @@ fun loadRegistries(
 ) {
     PlainColorRegistry.load(plainColorRegistryLoader.load())
     val blocks = blockRegistryLoader.load()
-    BlockRegistry.load(blocks)
+    BlockRegistry.load(blocks, blockRegistryLoader.wireOrder())
     ItemRegistry.load(
         expandPlainColorItems(itemRegistryLoader.load(), blocks, PlainColorRegistry.all()))
     VehicleRegistry.load(vehicleRegistryLoader.load())
@@ -40,6 +41,8 @@ class RegistryModule {
         BlockRegistryLoader(
             resourcesBlocksPath = Path.of("resources/blocks"),
             dataBlocksPath = Path.of("$dataPath/resources/blocks"),
+            blockIdRegistryLoader =
+                BlockIdRegistryLoader(Path.of("$dataPath/config/block_ids.yaml")),
         )
 
     @Single

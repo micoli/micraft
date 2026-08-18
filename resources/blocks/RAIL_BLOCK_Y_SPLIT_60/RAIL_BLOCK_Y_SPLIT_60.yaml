@@ -14,5 +14,4 @@ rotatable: true
 hasStuds: false
 plainColorable: false
 rail:
-  connections: [[NORTH, SOUTH]]
-  height: 0.0625
+  connections: [[SOUTH, NORTH_EAST], [SOUTH, NORTH_WEST]]

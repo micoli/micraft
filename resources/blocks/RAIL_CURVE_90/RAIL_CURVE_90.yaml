@@ -15,3 +15,4 @@ hasStuds: false
 plainColorable: false
 rail:
   connections: [[NORTH, EAST]]
+  height: 0.0625

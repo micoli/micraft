@@ -124,20 +124,36 @@ object BlockRegistry {
     private val defs: MutableMap<BlockType, BlockDefinition> = defaults.toMutableMap()
 
     init {
-        rebuildWireIds(defs.keys)
+        rebuildWireIds(defs.keys.toList())
     }
 
     fun load(incoming: Map<BlockType, BlockDefinition>) {
         defs.clear()
         defs.putAll(defaults)
         defs.putAll(incoming)
-        rebuildWireIds(defs.keys)
+        rebuildWireIds(defs.keys.toList())
     }
 
-    private fun rebuildWireIds(keys: Set<BlockType>) {
+    /**
+     * [wireOrder] is the persisted, append-only block-name -> id assignment (see
+     * `BlockIdRegistryLoader`), sorted by id. Any type in [incoming] missing from it still gets a
+     * slot appended at the end as a safety net, but that should not happen in practice since the
+     * loader always includes every discovered block name in the ledger it hands back.
+     */
+    fun load(incoming: Map<BlockType, BlockDefinition>, wireOrder: List<BlockType>) {
+        defs.clear()
+        defs.putAll(defaults)
+        defs.putAll(incoming)
+        rebuildWireIds(wireOrder)
+    }
+
+    private fun rebuildWireIds(order: List<BlockType>) {
         wireIds.clear()
         byWireId.clear()
-        val ordered = listOf(BlockType.AIR) + (keys - BlockType.AIR)
+        val ordered = LinkedHashSet<BlockType>()
+        ordered.add(BlockType.AIR)
+        ordered.addAll(order)
+        ordered.addAll(defs.keys)
         ordered.forEachIndexed { idx, type ->
             wireIds[type] = idx
             byWireId.add(type)
