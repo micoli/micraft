@@ -19,7 +19,7 @@ function parseBlockBbmodel(bbmodel: BlocksBbModel): { def: McBlockDef | null; te
 
   const textures: McBlockTextureDef[] = bbmodel.textures.map((t) => ({
     name: t.name,
-    url: "/" + t.path,
+    url: t.path ? "/" + t.path : t.source,
     hasAlpha: t.mc_alpha === true,
     tint: t.mc_tint,
     biomeTint: false,

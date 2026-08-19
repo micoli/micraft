@@ -102,7 +102,7 @@ declare global {
   interface BlocksBbModelTexture {
     id: number;
     name: string;
-    path: string;
+    path?: string;
     source: string;
     mc_alpha?: boolean;
     mc_tint?: [number, number, number];
