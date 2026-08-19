@@ -50,6 +50,9 @@ export function VoxelPaletteBlock({
           src={getPreview(ordinal)!}
           width={20}
           height={20}
+          draggable={false}
+          // Firefox (unlike Chrome) picks a nested draggable <img> as its own native drag source
+          // instead of bubbling to the parent button, hijacking dragstart before block.name is set.
           style={{ imageRendering: "pixelated", display: "block" }}
         />
       ) : blockDefsReady && ordinal !== null ? (

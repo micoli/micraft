@@ -30,6 +30,7 @@ export function ShortcutBarIcons({
       dragOver: number | null;
       selectSlot: (idx: number) => void;
       goToPage: (page: number) => void;
+      handleDragEnter: (e: React.DragEvent, idx: number) => void;
       handleDragOver: (e: React.DragEvent, idx: number) => void;
       handleDragLeave: () => void;
       handleDrop: (e: React.DragEvent, idx: number) => void;

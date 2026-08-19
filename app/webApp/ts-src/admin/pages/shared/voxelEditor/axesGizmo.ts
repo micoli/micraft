@@ -349,6 +349,11 @@ export function createAxesGizmo(
   }
 
   function onWindowPointerDown(evt: PointerEvent) {
+    // Cheap reject before the coordinate math below: canvas.getBoundingClientRect() vs
+    // engine.getRenderWidth()/Height() can transiently disagree (e.g. Firefox resize-timing),
+    // which without this guard could make inGizmoRect() false-positive for clicks anywhere in the
+    // page (like a palette block far outside the canvas) and preventDefault() their native drag.
+    if (evt.target !== canvas) return;
     const px = pixelFromEvent(evt);
     if (!px || !inGizmoRect(px.x, px.y)) return;
     evt.preventDefault();

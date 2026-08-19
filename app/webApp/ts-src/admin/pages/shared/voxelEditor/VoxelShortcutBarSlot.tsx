@@ -39,6 +39,7 @@ export function VoxelShortcutBarSlot({
   return (
     <div
       onClick={() => shortcutBar.selectSlot(idx)}
+      onDragEnter={(e) => shortcutBar.handleDragEnter(e, idx)}
       onDragOver={(e) => shortcutBar.handleDragOver(e, idx)}
       onDragLeave={shortcutBar.handleDragLeave}
       onDrop={(e) => shortcutBar.handleDrop(e, idx)}

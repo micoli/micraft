@@ -92,6 +92,14 @@ export function useAdminShortcutBar({
     });
   }
 
+  function handleDragEnter(e: React.DragEvent, idx: number) {
+    if (idx === 0) return;
+    // Firefox only treats a target as a valid drop zone once dragenter's default is
+    // prevented, unlike Chrome where preventDefault on dragover alone is enough.
+    e.preventDefault();
+    setDragOver(idx);
+  }
+
   function handleDragOver(e: React.DragEvent, idx: number) {
     if (idx === 0) return;
     e.preventDefault();
@@ -125,6 +133,7 @@ export function useAdminShortcutBar({
     dragOver,
     selectSlot,
     goToPage,
+    handleDragEnter,
     handleDragOver,
     handleDragLeave,
     handleDrop,
