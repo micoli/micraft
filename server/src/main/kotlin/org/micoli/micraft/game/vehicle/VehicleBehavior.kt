@@ -31,7 +31,8 @@ import org.micoli.micraft.vehicle.VehicleRegistry
  * instead of cutting a straight diagonal across the block. Y is `railBlockPos.y` (each block's real
  * placed floor — [RailTraversal.connectingNeighbor] already steps this to a neighbor built one grid
  * level up/down through a slope) plus [RailTraversal.localHeight]'s smooth within-block ease along
- * the current block's own declared surface.
+ * the current block's own declared surface. Pitch ([RailTraversal.localPitch]) tilts the vehicle to
+ * match that same surface — 0 on flat pieces, constant across a slope block.
  */
 object VehicleBehavior {
     fun tick(instance: VehicleInstance, world: WorldState): Boolean {
@@ -91,6 +92,7 @@ object VehicleBehavior {
         val (x, z) = tracePosition(current.x + 0.5f, current.z + 0.5f, entryDir, dir, t)
         instance.pos = Vec3(x, current.y + base + height, z)
         instance.yaw = traceYaw(entryDir, dir, t)
+        instance.pitch = RailTraversal.localPitch(world, current, entryDir, dir)
     }
 
     /**

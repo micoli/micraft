@@ -427,7 +427,7 @@ declare global {
     initVehicleModels(vehicleTypesJson: string): void;
     isVehicleModelsReady(): boolean;
     createVehicleModel(scene: Scene, vehicleType: string): McPlayerModel | null;
-    setVehicleTransform(model: McPlayerModel, x: number, y: number, z: number, yaw: number): void;
+    setVehicleTransform(model: McPlayerModel, x: number, y: number, z: number, yaw: number, pitch: number): void;
     disposeVehicleModel(model: McPlayerModel): void;
     // Minimap
     createMinimap(): void;

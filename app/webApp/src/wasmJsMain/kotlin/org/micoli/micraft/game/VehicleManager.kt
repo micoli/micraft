@@ -16,6 +16,7 @@ class VehicleManager(private val scene: JsAny) : ServerMessageHandler {
     private val vehicleTypes = mutableMapOf<String, String>()
     private val vehicleBuffers = mutableMapOf<String, ArrayDeque<PosSnapshot>>()
     private val vehicleRenderedYaw = mutableMapOf<String, Float>()
+    private val vehicleRenderedPitch = mutableMapOf<String, Float>()
     private val pendingVehicles = mutableListOf<VehicleState>()
 
     private val clock = TimeSource.Monotonic
@@ -23,9 +24,9 @@ class VehicleManager(private val scene: JsAny) : ServerMessageHandler {
 
     private fun nowMs(): Long = startMark.elapsedNow().inWholeMilliseconds
 
-    private class PosSnapshot(val pos: Vec3, val yaw: Float, val timeMs: Long)
+    private class PosSnapshot(val pos: Vec3, val yaw: Float, val pitch: Float, val timeMs: Long)
 
-    private data class InterpResult(val pos: Vec3, val yaw: Float)
+    private data class InterpResult(val pos: Vec3, val yaw: Float, val pitch: Float)
 
     override fun handle(msg: ServerMessage) =
         when (msg) {
@@ -61,6 +62,7 @@ class VehicleManager(private val scene: JsAny) : ServerMessageHandler {
         vehicleModels.remove(id)?.let(::jsDisposeVehicleModel)
         vehicleBuffers.remove(id)
         vehicleRenderedYaw.remove(id)
+        vehicleRenderedPitch.remove(id)
     }
 
     fun tick() {
@@ -73,12 +75,20 @@ class VehicleManager(private val scene: JsAny) : ServerMessageHandler {
         val renderTime = nowMs() - INTERP_DELAY_MS
         for ((id, buf) in vehicleBuffers) {
             val model = vehicleModels[id] ?: continue
-            val (pos, yaw) = interpolate(buf, renderTime)
+            val (pos, yaw, pitch) = interpolate(buf, renderTime)
             val prevYaw = vehicleRenderedYaw[id] ?: yaw
             val renderedYaw = lerpAngle(prevYaw, yaw, 0.2f)
             vehicleRenderedYaw[id] = renderedYaw
+            val prevPitch = vehicleRenderedPitch[id] ?: pitch
+            val renderedPitch = lerp(prevPitch, pitch, 0.2f)
+            vehicleRenderedPitch[id] = renderedPitch
             jsSetVehicleTransform(
-                model, pos.x.toDouble(), pos.y.toDouble(), pos.z.toDouble(), renderedYaw)
+                model,
+                pos.x.toDouble(),
+                pos.y.toDouble(),
+                pos.z.toDouble(),
+                renderedYaw,
+                renderedPitch)
         }
     }
 
@@ -95,6 +105,7 @@ class VehicleManager(private val scene: JsAny) : ServerMessageHandler {
         vehicleTypes.clear()
         vehicleBuffers.clear()
         vehicleRenderedYaw.clear()
+        vehicleRenderedPitch.clear()
         pendingVehicles.clear()
     }
 
@@ -107,19 +118,19 @@ class VehicleManager(private val scene: JsAny) : ServerMessageHandler {
 
     private fun pushSnapshot(vehicle: VehicleState) {
         val buf = vehicleBuffers.getOrPut(vehicle.id) { ArrayDeque() }
-        buf.addLast(PosSnapshot(vehicle.pos, vehicle.yaw, nowMs()))
+        buf.addLast(PosSnapshot(vehicle.pos, vehicle.yaw, vehicle.pitch, nowMs()))
         while (buf.size > MAX_BUFFER) buf.removeFirst()
     }
 
     private fun interpolate(buf: ArrayDeque<PosSnapshot>, renderTime: Long): InterpResult {
-        if (buf.isEmpty()) return InterpResult(Vec3(0f, 0f, 0f), 0f)
+        if (buf.isEmpty()) return InterpResult(Vec3(0f, 0f, 0f), 0f, 0f)
         if (buf.size == 1 || renderTime <= buf.first().timeMs) {
             val s = buf.first()
-            return InterpResult(s.pos, s.yaw)
+            return InterpResult(s.pos, s.yaw, s.pitch)
         }
         if (renderTime >= buf.last().timeMs) {
             val s = buf.last()
-            return InterpResult(s.pos, s.yaw)
+            return InterpResult(s.pos, s.yaw, s.pitch)
         }
         val nextIdx = buf.indexOfFirst { it.timeMs >= renderTime }
         val prev = buf[nextIdx - 1]
@@ -139,6 +150,7 @@ class VehicleManager(private val scene: JsAny) : ServerMessageHandler {
                     lerp(prev.pos.z, next.pos.z, t),
                 ),
             yaw = yaw,
+            pitch = lerp(prev.pitch, next.pitch, t),
         )
     }
 

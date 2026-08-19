@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.vehicle
 
+import kotlin.math.atan2
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -232,17 +233,25 @@ class VehicleBehaviorTest {
                     travelDirection = Direction.SOUTH)
                 .apply { moving = true }
 
+        val slopePitch = atan2(1.0, 1.0).toFloat() // dy rises 1 -> 2 over the block's unit run
+
         tick(instance, world, 2) // straight -> slope, still y=7
         assertEquals(BlockPos(8, 7, 8), instance.railBlockPos)
         assertEquals(8f, instance.pos.y, "on the slope cell, pose lands on its own floor")
+        assertEquals(
+            slopePitch,
+            instance.pitch,
+            "tilted nose-up entering the slope, matching its 1-in-1 rise")
 
         tick(instance, world) // mid-slope: progress interpolates toward y=8 upper run
         assertEquals(8.5f, instance.pos.y, "climbing halfway through the slope")
         assertEquals(0.5f, instance.progress)
+        assertEquals(slopePitch, instance.pitch, "pitch stays constant across the slope cell")
 
         tick(instance, world) // finish crossing the slope -> upper run at y=8
         assertEquals(BlockPos(8, 8, 9), instance.railBlockPos, "reached the upper run one level up")
         assertEquals(9f, instance.pos.y)
+        assertEquals(0f, instance.pitch, "level again on the flat upper run")
     }
 
     @Test

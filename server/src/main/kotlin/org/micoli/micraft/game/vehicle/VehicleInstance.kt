@@ -21,6 +21,7 @@ class VehicleInstance(
     var progress: Float = 0f
     var pos: Vec3 = Vec3(railBlockPos.x + 0.5f, railBlockPos.y + 1f, railBlockPos.z + 0.5f)
     var yaw: Float = 0f
+    var pitch: Float = 0f
     var moving: Boolean = false
 
     fun toState(): VehicleState =
@@ -29,6 +30,7 @@ class VehicleInstance(
             vehicleType = type,
             pos = pos,
             yaw = yaw,
+            pitch = pitch,
             railBlockPos = railBlockPos,
             progress = progress,
             direction = travelDirection.ordinal,

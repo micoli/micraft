@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.world.rail
 
+import kotlin.math.atan2
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.WorldConstants
 
@@ -74,5 +75,27 @@ object RailTraversal {
         val entryDy = points.firstOrNull { it.direction == entryDir }?.dy ?: 1f
         val exitDy = points.firstOrNull { it.direction == exitDir }?.dy ?: 1f
         return entryDy + (exitDy - entryDy) * t - 1f
+    }
+
+    /**
+     * Pitch (radians, positive = nose up in the direction of travel) a vehicle should tilt while
+     * crossing [pos] from [entryDir] to [exitDir] — constant across the block since [localHeight]
+     * eases linearly, so this is just that slope's rise (`exitDy - entryDy`) over the unit run
+     * between two adjacent edges. `0` for any flat piece (straight, curve, switch — both edges
+     * declare `dy = 1`); ±45° for [RailConnectionPoint]'s documented slope edges (`0`/`1`).
+     */
+    fun localPitch(
+        world: RailWorldView,
+        pos: BlockPos,
+        entryDir: Direction,
+        exitDir: Direction
+    ): Float {
+        val type = world.getBlock(pos.x, pos.y, pos.z)
+        val state = world.getBlockState(pos.x, pos.y, pos.z)
+        val extra = world.getExtraState(pos.x, pos.y, pos.z)
+        val points = RailConnection.activePoints(type, state, extra)
+        val entryDy = points.firstOrNull { it.direction == entryDir }?.dy ?: 1f
+        val exitDy = points.firstOrNull { it.direction == exitDir }?.dy ?: 1f
+        return atan2((exitDy - entryDy).toDouble(), 1.0).toFloat()
     }
 }

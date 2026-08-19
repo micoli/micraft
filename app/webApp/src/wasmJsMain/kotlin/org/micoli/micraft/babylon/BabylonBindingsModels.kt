@@ -118,8 +118,14 @@ fun jsIsVehicleModelsReady(): Boolean = js("mc.isVehicleModelsReady()")
 fun jsCreateVehicleModel(scene: JsAny, vehicleType: String): JsAny? =
     js("mc.createVehicleModel(scene, vehicleType)")
 
-fun jsSetVehicleTransform(model: JsAny, x: Double, y: Double, z: Double, yaw: Float): Unit =
-    js("mc.setVehicleTransform(model, x, y, z, yaw)")
+fun jsSetVehicleTransform(
+    model: JsAny,
+    x: Double,
+    y: Double,
+    z: Double,
+    yaw: Float,
+    pitch: Float
+): Unit = js("mc.setVehicleTransform(model, x, y, z, yaw, pitch)")
 
 fun jsDisposeVehicleModel(model: JsAny): Unit = js("mc.disposeVehicleModel(model)")
 

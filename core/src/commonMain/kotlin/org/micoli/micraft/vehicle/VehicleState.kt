@@ -15,6 +15,7 @@ data class VehicleState(
     val vehicleType: EntityType,
     val pos: Vec3,
     val yaw: Float,
+    val pitch: Float = 0f,
     val railBlockPos: BlockPos,
     val progress: Float = 0f,
     val direction: Int = 1,

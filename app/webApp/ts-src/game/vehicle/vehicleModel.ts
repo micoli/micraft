@@ -57,11 +57,14 @@ export function registerVehicleModel(): Pick<
       return window.mc.createPlayerModelFromBbmodel(bbmodel, scene, `vehicle_${vehicleType}`, {});
     },
 
-    setVehicleTransform: (model: McPlayerModel, x: number, y: number, z: number, yaw: number): void => {
+    setVehicleTransform: (model: McPlayerModel, x: number, y: number, z: number, yaw: number, pitch: number): void => {
       model.root.position.x = x;
       model.root.position.y = y;
       model.root.position.z = z;
+      // Babylon's default Euler order (YXZ) applies rotation.y before rotation.x, so pitch tilts
+      // around the vehicle's own already-yawed forward axis instead of the world X axis.
       model.root.rotation.y = yaw;
+      model.root.rotation.x = pitch;
     },
 
     disposeVehicleModel: (model: McPlayerModel): void => {
