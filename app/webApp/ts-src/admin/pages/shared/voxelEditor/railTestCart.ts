@@ -63,10 +63,14 @@ export function createRailTestCart(
       disposeMesh();
       return;
     }
-    const [x, y, z, yaw] = pose.split(",").map(Number);
+    const [x, y, z, yaw, pitch] = pose.split(",").map(Number);
     const m = ensureMesh();
     m.position.set(x, y, z);
+    // Babylon's default Euler order (YXZ) applies rotation.y before rotation.x, so pitch tilts
+    // around the cart's own already-yawed forward axis instead of the world X axis — same
+    // convention as vehicleModel.ts's setVehicleTransform.
     m.rotation.y = yaw;
+    m.rotation.x = pitch;
   });
 
   return {

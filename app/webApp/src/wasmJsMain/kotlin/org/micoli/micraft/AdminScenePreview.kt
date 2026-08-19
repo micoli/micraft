@@ -225,12 +225,13 @@ fun mcSceneRailTestTick(deltaSeconds: Float): String {
     val here = BlockPos(railTestX, railTestY, railTestZ)
     val railView = SceneMesherRailView(mesher)
     val height = RailTraversal.localHeight(railView, here, dir.opposite, dir, t)
+    val pitch = RailTraversal.localPitch(railView, here, dir.opposite, dir)
     val base = RailTraversal.baseHeight(railView, here)
     val px = railTestX + 0.5f + dir.dx * t
     val py = railTestY + base + height + CART_HALF_HEIGHT
     val pz = railTestZ + 0.5f + dir.dz * t
     val yaw = atan2(dir.dx.toDouble(), dir.dz.toDouble()).toFloat()
-    return "$px,$py,$pz,$yaw"
+    return "$px,$py,$pz,$yaw,$pitch"
 }
 
 // Adapts SceneMesher to the world-agnostic RailTraversal shared with the server (VehicleBehavior,

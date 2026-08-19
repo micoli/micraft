@@ -245,9 +245,9 @@ fun mcAdminRailTestStop() {
     railTestPos = null
 }
 
-// Advances the test cart by [deltaSeconds] and returns its new pose as "x,y,z,yaw" (empty string
-// if no test is running) — a plain CSV string rather than JSON, parsed once per frame on the TS
-// side, since only 4 floats travel the JS-interop boundary each call.
+// Advances the test cart by [deltaSeconds] and returns its new pose as "x,y,z,yaw,pitch" (empty
+// string if no test is running) — a plain CSV string rather than JSON, parsed once per frame on
+// the TS side, since only 5 floats travel the JS-interop boundary each call.
 @JsExport
 fun mcAdminRailTestTick(scene: JsAny, deltaSeconds: Float): String {
     val manager = managerFor(scene)
@@ -262,12 +262,13 @@ fun mcAdminRailTestTick(scene: JsAny, deltaSeconds: Float): String {
     val t = railTestProgress
     val railView = ChunkManagerRailView(manager)
     val height = RailTraversal.localHeight(railView, current, dir.opposite, dir, t)
+    val pitch = RailTraversal.localPitch(railView, current, dir.opposite, dir)
     val base = RailTraversal.baseHeight(railView, current)
     val x = current.x + 0.5f + dir.dx * t
     val y = current.y + base + height + CART_HALF_HEIGHT
     val z = current.z + 0.5f + dir.dz * t
     val yaw = atan2(dir.dx.toDouble(), dir.dz.toDouble()).toFloat()
-    return "$x,$y,$z,$yaw"
+    return "$x,$y,$z,$yaw,$pitch"
 }
 
 // Adapts ChunkManager to the world-agnostic RailTraversal shared with the server (VehicleBehavior,
