@@ -541,7 +541,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       for (const entry of entries) {
         const ordinal = ordinalByNameRef.current.get(entry.type);
         if (ordinal == null) continue;
-        for (const mesh of buildBlockPreviewMeshes(scene, ordinal, 0)) {
+        for (const mesh of buildBlockPreviewMeshes(scene, ordinal, entry.state & 0x03)) {
           mesh.position = new B!.Vector3(origin.x + entry.relX, origin.y + entry.relY, origin.z + entry.relZ);
           mesh.isPickable = false;
           // Same depth-bias neutralization as overlayController.ts's showGhostAndOutline — the

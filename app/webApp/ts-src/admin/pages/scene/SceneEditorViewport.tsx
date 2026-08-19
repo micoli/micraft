@@ -612,7 +612,7 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       for (const entry of entries) {
         const ordinal = ordinalByNameRef.current.get(entry.type);
         if (ordinal == null) continue;
-        for (const mesh of buildBlockPreviewMeshes(babylonScene, ordinal, 0)) {
+        for (const mesh of buildBlockPreviewMeshes(babylonScene, ordinal, entry.state & 0x03)) {
           mesh.position = new B!.Vector3(origin.x + entry.relX, origin.y + entry.relY, origin.z + entry.relZ);
           mesh.isPickable = false;
           if (mesh.material) {
