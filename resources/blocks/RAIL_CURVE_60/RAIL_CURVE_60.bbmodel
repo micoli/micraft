@@ -4,7 +4,7 @@
     "model_format": "free",
     "box_uv": true
   },
-  "name": "RAIL_Y_SPLIT_60",
+  "name": "RAIL_CURVE_60",
   "model_identifier": "",
   "visible_box": [1, 1, 0],
   "variable_placeholders": "",
@@ -59,48 +59,6 @@
       },
       "type": "cube",
       "uuid": "bb000007-0000-0000-0000-000000000007"
-    }, {
-      "name": "GRAVEL",
-      "box_uv": true,
-      "render_order": "default",
-      "locked": false,
-      "export": true,
-      "scope": 0,
-      "allow_mirror_modeling": true,
-      "from": [7, 0, 7],
-      "to": [9, 2, 16],
-      "autouv": 0,
-      "color": 6,
-      "origin": [0, 0, 0],
-      "uv_offset": [21, 23],
-      "faces": {
-        "north": {
-          "uv": [30, 32, 32, 34],
-          "texture": 0
-        },
-        "east": {
-          "uv": [21, 32, 30, 34],
-          "texture": 0
-        },
-        "south": {
-          "uv": [41, 32, 43, 34],
-          "texture": 0
-        },
-        "west": {
-          "uv": [32, 32, 41, 34],
-          "texture": 0
-        },
-        "up": {
-          "uv": [32, 32, 30, 23],
-          "texture": 0
-        },
-        "down": {
-          "uv": [34, 23, 32, 32],
-          "texture": 0
-        }
-      },
-      "type": "cube",
-      "uuid": "14d8d7d2-43d2-7118-445d-818bc6d1194e"
     }, {
       "name": "GRAVEL",
       "box_uv": true,
@@ -320,34 +278,34 @@
       "scope": 0,
       "allow_mirror_modeling": true,
       "from": [8, 0, 6],
-      "to": [10, 2, 7],
+      "to": [10, 2, 8],
       "autouv": 0,
       "color": 6,
       "origin": [0, 0, 0],
-      "uv_offset": [21, 31],
+      "uv_offset": [20, 30],
       "faces": {
         "north": {
           "uv": [22, 32, 24, 34],
           "texture": 0
         },
         "east": {
-          "uv": [21, 32, 22, 34],
+          "uv": [20, 32, 22, 34],
           "texture": 0
         },
         "south": {
-          "uv": [25, 32, 27, 34],
+          "uv": [26, 32, 28, 34],
           "texture": 0
         },
         "west": {
-          "uv": [24, 32, 25, 34],
+          "uv": [24, 32, 26, 34],
           "texture": 0
         },
         "up": {
-          "uv": [24, 32, 22, 31],
+          "uv": [24, 32, 22, 30],
           "texture": 0
         },
         "down": {
-          "uv": [26, 31, 24, 32],
+          "uv": [26, 30, 24, 32],
           "texture": 0
         }
       },
@@ -362,34 +320,34 @@
       "scope": 0,
       "allow_mirror_modeling": true,
       "from": [6, 0, 6],
-      "to": [8, 2, 7],
+      "to": [8, 2, 8],
       "autouv": 0,
       "color": 6,
       "origin": [0, 0, 0],
-      "uv_offset": [21, 31],
+      "uv_offset": [20, 30],
       "faces": {
         "north": {
           "uv": [22, 32, 24, 34],
           "texture": 0
         },
         "east": {
-          "uv": [21, 32, 22, 34],
+          "uv": [20, 32, 22, 34],
           "texture": 0
         },
         "south": {
-          "uv": [25, 32, 27, 34],
+          "uv": [26, 32, 28, 34],
           "texture": 0
         },
         "west": {
-          "uv": [24, 32, 25, 34],
+          "uv": [24, 32, 26, 34],
           "texture": 0
         },
         "up": {
-          "uv": [24, 32, 22, 31],
+          "uv": [24, 32, 22, 30],
           "texture": 0
         },
         "down": {
-          "uv": [26, 31, 24, 32],
+          "uv": [26, 30, 24, 32],
           "texture": 0
         }
       },
@@ -650,11 +608,11 @@
     }
   ],
   "groups": [],
-  "outliner": ["bb000007-0000-0000-0000-000000000007", "429be6f6-6340-d2d1-8555-8984d3a2c739", "c7aea577-c720-f17c-b74a-0d917948b333", "e05b171d-4bdb-deae-7762-72eb806771c3", "f71c2095-bfc9-3150-7d38-1eeb6b94483b", "30ba9fac-7adc-2e3c-14c5-4d5fb1f1ff9c", "eeea8741-7e48-af02-6ea3-323738940788", "1ba73059-9fce-38cf-64a3-26c85b6cb4f4", "89b0dd10-9a1a-d887-f9d9-66cfcc906a06", "4f2de2aa-a019-b21c-6391-fe2d6c675e4b", "42095a67-271f-5237-a2da-b7bf499f7a28", "61c6f6a0-ca60-b3a2-8a77-3eee0ff14ecc", "cbd1da0a-c517-d568-a19f-afbeaa83e6fd", "ee64fc34-8a73-1b10-86b4-f4c2551fc5a5", "14d8d7d2-43d2-7118-445d-818bc6d1194e"],
+  "outliner": ["bb000007-0000-0000-0000-000000000007", "429be6f6-6340-d2d1-8555-8984d3a2c739", "c7aea577-c720-f17c-b74a-0d917948b333", "e05b171d-4bdb-deae-7762-72eb806771c3", "f71c2095-bfc9-3150-7d38-1eeb6b94483b", "30ba9fac-7adc-2e3c-14c5-4d5fb1f1ff9c", "eeea8741-7e48-af02-6ea3-323738940788", "1ba73059-9fce-38cf-64a3-26c85b6cb4f4", "89b0dd10-9a1a-d887-f9d9-66cfcc906a06", "4f2de2aa-a019-b21c-6391-fe2d6c675e4b", "42095a67-271f-5237-a2da-b7bf499f7a28", "61c6f6a0-ca60-b3a2-8a77-3eee0ff14ecc", "cbd1da0a-c517-d568-a19f-afbeaa83e6fd", "ee64fc34-8a73-1b10-86b4-f4c2551fc5a5"],
   "textures": [
     {
-      "name": "RAIL_Y_SPLIT_60.png",
-      "relative_path": "./RAIL_Y_SPLIT_60.png",
+      "name": "RAIL_CURVE_60.png",
+      "relative_path": "RAIL_CURVE_60.png",
       "folder": "",
       "namespace": "",
       "id": "170",
