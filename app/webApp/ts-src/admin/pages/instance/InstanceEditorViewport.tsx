@@ -42,6 +42,7 @@ import { makeUndoRedoController, type UndoEntryBase, type UndoGroup } from "../s
 import { VoxelEditorSidebar, type SelectionField } from "../shared/voxelEditor/VoxelEditorSidebar";
 import { ViewportCameraHud } from "../shared/voxelEditor/ViewportCameraHud";
 import { HoveredVoxelNameHud } from "../shared/voxelEditor/HoveredVoxelNameHud";
+import { TestRailButton } from "../shared/voxelEditor/TestRailButton";
 import { connectEditSocket } from "../shared/voxelEditor/editSocket";
 import {
   computeSelectionVoxels,
@@ -175,6 +176,9 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         return "idle";
       }
       refreshJunctionsRef.current();
+      // Break is the natural companion tool while a rail test is active — it removes/inspects
+      // track without a block type armed to accidentally place over the circuit being tested.
+      shortcutBarRef.current.selectSlot(0);
       return "picking";
     });
   }
@@ -1345,6 +1349,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       <div className="flex-[4] relative">
         <ViewportCameraHud activeDragMode={activeDragMode} />
         <HoveredVoxelNameHud name={hoveredVoxelName} />
+        <TestRailButton testRailState={testRailState} onToggle={toggleTestRail} />
         {actionError && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 max-w-[80%] px-3 py-1.5 rounded bg-red-900/90 text-red-100 text-xs z-10 pointer-events-none">
             {actionError}
@@ -1420,8 +1425,6 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
         setHoveredRect={setHoveredRect}
         selectBlockType={selectBlockType}
         paletteRef={paletteRef}
-        testRailState={testRailState}
-        onToggleTestRail={toggleTestRail}
       />
     </div>
   );
