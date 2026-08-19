@@ -1,0 +1,18 @@
+hardness: 1.0
+solid: true
+isCubic: false
+transparent: false
+minimapColor: [110, 110, 120]
+modelElement: ""
+liquid: false
+viscosity: 0
+replaceable: false
+vegetationHost: false
+treeAllowed: false
+minimapVisible: true
+rotatable: true
+hasStuds: false
+plainColorable: false
+rail:
+  connections: [[SOUTH, NORTH_EAST]]
+  height: 0.0625
