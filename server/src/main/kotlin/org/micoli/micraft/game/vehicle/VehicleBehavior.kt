@@ -1,8 +1,13 @@
 package org.micoli.micraft.game.vehicle
 
+import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 import org.micoli.micraft.game.TICK_SECONDS
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.rail.Direction
 import org.micoli.micraft.game.world.rail.RailConnection
 import org.micoli.micraft.game.world.rail.RailTraversal
 import org.micoli.micraft.player.Vec3
@@ -19,12 +24,14 @@ import org.micoli.micraft.vehicle.VehicleRegistry
  * never presents a dead end by construction (see `RailNetworkRegistry`), so there is no separate
  * "is this a loop" branch here; the registry itself isn't even consulted at tick time.
  *
- * XZ position is linearly interpolated between block centers — curves are approximated as straight
- * chords rather than following the model's actual curve geometry (unverifiable without a live
- * render to compare against). Y is `railBlockPos.y` (each block's real placed floor —
- * [RailTraversal.connectingNeighbor] already steps this to a neighbor built one grid level up/down
- * through a slope) plus [RailTraversal.localHeight]'s smooth within-block ease along the current
- * block's own declared surface.
+ * XZ position is anchored to each block's entry/exit *edges* (see [tracePosition]), not its center
+ * — a straight/slope piece's edge-to-edge chord traces the exact same line a center-to-center chord
+ * would (just re-parametrized, invisible to the renderer), while a 90° cardinal curve instead
+ * follows a quarter-circle tangent to both connected edges, matching the model's curved rail
+ * instead of cutting a straight diagonal across the block. Y is `railBlockPos.y` (each block's real
+ * placed floor — [RailTraversal.connectingNeighbor] already steps this to a neighbor built one grid
+ * level up/down through a slope) plus [RailTraversal.localHeight]'s smooth within-block ease along
+ * the current block's own declared surface.
  */
 object VehicleBehavior {
     fun tick(instance: VehicleInstance, world: WorldState): Boolean {
@@ -69,14 +76,83 @@ object VehicleBehavior {
         val current = instance.railBlockPos
         val dir = instance.travelDirection
         val t = instance.progress
-        val height = RailTraversal.localHeight(world, current, dir.opposite, dir, t)
+        val type = world.getBlock(current.x, current.y, current.z)
+        val state = world.getBlockState(current.x, current.y, current.z)
+        val extra = world.getExtraState(current.x, current.y, current.z)
+        // The other member of whichever connection group `dir` (the exit) belongs to — correct
+        // for a straight/slope piece (its only other point is always the opposite direction) and,
+        // unlike the old `dir.opposite` guess, also correct for a curve (whose entry point is
+        // perpendicular to its exit, not opposite it).
+        val entryDir =
+            RailConnection.preferredContinuation(
+                RailConnection.activeGroups(type, state, extra), dir) ?: dir.opposite
+        val height = RailTraversal.localHeight(world, current, entryDir, dir, t)
         val base = RailTraversal.baseHeight(world, current)
-        instance.pos =
-            Vec3(
-                current.x + 0.5f + dir.dx * t,
-                current.y + base + height,
-                current.z + 0.5f + dir.dz * t,
-            )
-        instance.yaw = atan2(dir.dx.toDouble(), dir.dz.toDouble()).toFloat()
+        val (x, z) = tracePosition(current.x + 0.5f, current.z + 0.5f, entryDir, dir, t)
+        instance.pos = Vec3(x, current.y + base + height, z)
+        instance.yaw = traceYaw(entryDir, dir, t)
     }
+
+    /**
+     * XZ position at [t] (0 = just entered this block through [entryDir]'s edge, 1 = about to leave
+     * through [exitDir]'s edge) tracing this block's own rail geometry, block-centered at ([cx],
+     * [cz]).
+     *
+     * Straight-through pieces (including slopes, whose Y jump is handled separately) get a straight
+     * chord between the entry and exit edge midpoints — spatially identical to the old
+     * center-to-center chord for a chain of same-axis pieces (same line, just re-anchored half a
+     * block earlier/later), which is what lets the curve case below meet its straight neighbors
+     * exactly at the shared block face.
+     *
+     * A 90° cardinal curve (entry and exit on perpendicular axes) instead follows a quarter-circle
+     * of radius 0.5 centered on the block corner shared by both connected edges — tangent to the
+     * entry edge's straight approach at t=0 and to the exit edge's straight departure at t=1, so it
+     * meets its straight neighbors smoothly on both ends instead of cutting a diagonal chord across
+     * the block. Diagonal/45°-adjacent connections (not both cardinal, or not exactly
+     * perpendicular) fall back to the same straight chord as before — arcs aren't modeled for those
+     * yet.
+     */
+    private fun tracePosition(
+        cx: Float,
+        cz: Float,
+        entryDir: Direction,
+        exitDir: Direction,
+        t: Float
+    ): Pair<Float, Float> {
+        val cardinal =
+            abs(entryDir.dx) + abs(entryDir.dz) == 1 && abs(exitDir.dx) + abs(exitDir.dz) == 1
+        val perpendicular = entryDir.dx * exitDir.dx + entryDir.dz * exitDir.dz == 0
+        if (!cardinal || !perpendicular) {
+            return (cx + exitDir.dx * (t - 0.5f)) to (cz + exitDir.dz * (t - 0.5f))
+        }
+        val ox = cx + (entryDir.dx + exitDir.dx) * 0.5f
+        val oz = cz + (entryDir.dz + exitDir.dz) * 0.5f
+        // Direction.rotatedBy is a 90° CW step; whichever sign of it turns the exit direction back
+        // onto the entry direction is this curve's turn sign, giving the right sweep direction for
+        // either mirrored variant of the same curve piece.
+        val turnCw = exitDir.rotatedBy(1) == entryDir
+        val theta = (if (turnCw) -1f else 1f) * (PI.toFloat() / 2f) * t
+        val cosT = cos(theta.toDouble()).toFloat()
+        val sinT = sin(theta.toDouble()).toFloat()
+        // Radius vector at t=0 (pointing from the corner back to the entry edge's midpoint).
+        val rx0 = -exitDir.dx * 0.5f
+        val rz0 = -exitDir.dz * 0.5f
+        val rx = rx0 * cosT - rz0 * sinT
+        val rz = rx0 * sinT + rz0 * cosT
+        return (ox + rx) to (oz + rz)
+    }
+
+    /** Yaw at [t], turning smoothly from [entryDir]'s heading to [exitDir]'s over the block. */
+    private fun traceYaw(entryDir: Direction, exitDir: Direction, t: Float): Float {
+        val startYaw = headingYaw(entryDir.opposite)
+        val endYaw = headingYaw(exitDir)
+        var delta = endYaw - startYaw
+        val twoPi = (2 * PI).toFloat()
+        while (delta > PI) delta -= twoPi
+        while (delta < -PI) delta += twoPi
+        return startYaw + delta * t
+    }
+
+    private fun headingYaw(dir: Direction): Float =
+        atan2(dir.dx.toDouble(), dir.dz.toDouble()).toFloat()
 }
