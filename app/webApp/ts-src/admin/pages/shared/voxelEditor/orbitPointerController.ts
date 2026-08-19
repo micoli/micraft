@@ -24,6 +24,10 @@ export interface OrbitPointerControllerOptions {
     mode: "place" | "break" | "select";
     shiftKey: boolean;
   }) => void;
+  // Ctrl is claimed by the zoom-drag modifier at POINTERDOWN, so a Ctrl+click never reaches
+  // onClick (dragMode stays "zoom", not "place") — this fires instead, on POINTERUP, whenever
+  // that zoom press moved less than the click threshold (a held-still Ctrl+click, not a drag).
+  onCtrlClick?: (pick: NonNullable<ReturnType<InstanceType<typeof BABYLON.Scene>["pick"]>>) => void;
   // Creative in-game mode only: holding the button in "break" mode keeps breaking whatever block
   // is under the cursor, like the survival mining hold. Off by default — the admin Instance/Scene
   // editors keep one-click-one-block for placement precision.
@@ -31,7 +35,7 @@ export interface OrbitPointerControllerOptions {
 }
 
 export function setupOrbitPointerController(opts: OrbitPointerControllerOptions): () => void {
-  const { B, scene, camera, canvas, getMode, onHoverMove, onClick, continuousBreak } = opts;
+  const { B, scene, camera, canvas, getMode, onHoverMove, onClick, onCtrlClick, continuousBreak } = opts;
 
   const preventContextMenu = (e: Event) => e.preventDefault();
   canvas.addEventListener("contextmenu", preventContextMenu);
@@ -41,6 +45,7 @@ export function setupOrbitPointerController(opts: OrbitPointerControllerOptions)
   let lastX = 0;
   let lastY = 0;
   let downShift = false;
+  let downCtrl = false;
   let dragMode: "rotate" | "pan" | "zoom" | "place" | null = null;
   const CLICK_MOVE_THRESHOLD = 5;
   const ROTATE_SENSITIVITY = 0.005;
@@ -76,6 +81,7 @@ export function setupOrbitPointerController(opts: OrbitPointerControllerOptions)
       downX = lastX = scene.pointerX;
       downY = lastY = scene.pointerY;
       downShift = evt.shiftKey;
+      downCtrl = evt.ctrlKey;
       dragMode = evt.metaKey ? "rotate" : evt.altKey ? "pan" : evt.ctrlKey ? "zoom" : "place";
       // Re-pivot the orbit around whatever is under the SCREEN CENTER at the start of the
       // rotation drag (not the cursor — a corner-of-screen drag start shouldn't put an off-center
@@ -126,10 +132,20 @@ export function setupOrbitPointerController(opts: OrbitPointerControllerOptions)
     }
     if (pointerInfo.type !== B.PointerEventTypes.POINTERUP) return;
     const wasPlaceDrag = dragMode === "place";
+    const wasCtrlClick = dragMode === "zoom" && downCtrl;
     dragMode = null;
     if (breakRepeatId !== null) {
       // Continuous break already fired on this press; don't double-fire on release.
       stopBreakRepeat();
+      return;
+    }
+    if (wasCtrlClick) {
+      const dx = scene.pointerX - downX;
+      const dy = scene.pointerY - downY;
+      if (dx * dx + dy * dy > CLICK_MOVE_THRESHOLD * CLICK_MOVE_THRESHOLD) return;
+      const pick = scene.pick(scene.pointerX, scene.pointerY);
+      if (!pick?.hit || !pick.pickedMesh || !pick.pickedPoint) return;
+      onCtrlClick?.(pick);
       return;
     }
     if (!wasPlaceDrag) return;

@@ -41,6 +41,7 @@ import { useActionError } from "../shared/voxelEditor/useActionError";
 import { makeUndoRedoController, type UndoEntryBase, type UndoGroup } from "../shared/voxelEditor/undoRedoStack";
 import { VoxelEditorSidebar, type SelectionField } from "../shared/voxelEditor/VoxelEditorSidebar";
 import { ViewportCameraHud } from "../shared/voxelEditor/ViewportCameraHud";
+import { HoveredVoxelNameHud } from "../shared/voxelEditor/HoveredVoxelNameHud";
 import { connectEditSocket } from "../shared/voxelEditor/editSocket";
 import {
   computeSelectionVoxels,
@@ -83,6 +84,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
   const [hoveredBlockName, setHoveredBlockName] = useState<string | null>(null);
   const [hoveredRect, setHoveredRect] = useState<DOMRect | null>(null);
   const [hoveredShortcutSlot, setHoveredShortcutSlot] = useState<number | null>(null);
+  const [hoveredVoxelName, setHoveredVoxelName] = useState<string | null>(null);
   const { blockDefs, ordinalByName, nameByOrdinal, plainColors, getOrdinal } = useBlockRegistry();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
@@ -401,6 +403,13 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     initialPages: zone.shortcutBarPages,
     onSelectBreak: () => setMode("break"),
     onSelectBlock: (blockName) => selectBlockType(blockName),
+  });
+  // The pointer-controller mount effect below only re-runs on [zone.id, blockDefsReady] — a ref
+  // keeps its Ctrl+click handler reading the live slots/currentPage instead of the stale ones
+  // captured at mount, same rationale as selectedTypeRef/ordinalByNameRef above.
+  const shortcutBarRef = useRef(shortcutBar);
+  useEffect(() => {
+    shortcutBarRef.current = shortcutBar;
   });
 
   // Persists clip-plane and shortcut-bar state onto the zone's own YAML record so it survives
@@ -939,19 +948,49 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     // Hover preview: recomputed on every pointer move that isn't an active camera drag, so the
     // ghost/outline (place mode) or the red break overlay (break mode) track the cursor before a
     // click, exactly like moving the mouse in-game moves the block-placement preview.
+    // Block name shown top-right whenever a voxel is under the cursor — independent of edit mode,
+    // so it also updates while in select mode or mid-rail-test-picking (unlike the ghost/break
+    // overlay below, which those modes suppress).
+    function updateHoveredVoxelName(
+      pick: ReturnType<typeof scene.pick>,
+      normal: InstanceType<typeof BABYLON.Vector3> | null,
+      onGround: boolean,
+    ) {
+      if (!pick?.hit || !pick.pickedPoint || onGround || !normal || !wasmExports) {
+        setHoveredVoxelName(null);
+        return;
+      }
+      const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
+      const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
+      const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
+      if (by < zone.yMin || by > zone.yMax || !inZone(bx, bz)) {
+        setHoveredVoxelName(null);
+        return;
+      }
+      const ordinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, bx, by, bz);
+      const name = nameByOrdinalRef.current[ordinal];
+      setHoveredVoxelName(name && name !== "AIR" ? name : null);
+    }
+
     function updateHoverPreview(evt: PointerEvent) {
+      const hoverPick = scene.pick(scene.pointerX, scene.pointerY);
+      const hoverNormal = hoverPick?.hit ? hoverPick.getNormal(true) : null;
+      const hoverOnGround =
+        !!hoverPick?.pickedMesh && groundMeshes.has(hoverPick.pickedMesh as InstanceType<typeof BABYLON.Mesh>);
+      updateHoveredVoxelName(hoverPick, hoverNormal, hoverOnGround);
+
       if (modeRef.current === "select" || testRailStateRef.current === "picking") {
         overlay.disposeAll();
         return;
       }
       const effectiveMode = evt.shiftKey ? "break" : modeRef.current;
-      const pick = scene.pick(scene.pointerX, scene.pointerY);
+      const pick = hoverPick;
       if (!pick?.hit || !pick.pickedMesh || !pick.pickedPoint) {
         overlay.disposeAll();
         return;
       }
-      const normal = pick.getNormal(true);
-      const onGround = groundMeshes.has(pick.pickedMesh as InstanceType<typeof BABYLON.Mesh>);
+      const normal = hoverNormal;
+      const onGround = hoverOnGround;
 
       if (effectiveMode === "break") {
         overlay.disposeGhost();
@@ -1082,6 +1121,24 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       canvas,
       getMode: () => modeRef.current,
       onHoverMove: updateHoverPreview,
+      onCtrlClick: (pick) => {
+        const normal = pick.getNormal(true);
+        const onGround = groundMeshes.has(pick.pickedMesh as InstanceType<typeof BABYLON.Mesh>);
+        if (onGround || !normal || !pick.pickedPoint || !wasmExports) return;
+        const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
+        const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
+        const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
+        if (by < zone.yMin || by > zone.yMax || !inZone(bx, bz)) return;
+        const ordinal = wasmExports.mcAdminGetBlockOrdinalAt(scene, bx, by, bz);
+        const name = nameByOrdinalRef.current[ordinal];
+        if (!name || name === "AIR") return;
+        const slotIdx = shortcutBarRef.current.slots.findIndex((s) => s === name);
+        if (slotIdx !== -1) {
+          shortcutBarRef.current.selectSlot(slotIdx);
+        } else {
+          selectBlockType(name);
+        }
+      },
       onClick: ({ pick, normal, mode: currentMode, shiftKey }) => {
         const onGround = groundMeshes.has(pick.pickedMesh as InstanceType<typeof BABYLON.Mesh>);
 
@@ -1287,6 +1344,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
     <div className="flex-1 flex overflow-hidden">
       <div className="flex-[4] relative">
         <ViewportCameraHud activeDragMode={activeDragMode} />
+        <HoveredVoxelNameHud name={hoveredVoxelName} />
         {actionError && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 max-w-[80%] px-3 py-1.5 rounded bg-red-900/90 text-red-100 text-xs z-10 pointer-events-none">
             {actionError}
