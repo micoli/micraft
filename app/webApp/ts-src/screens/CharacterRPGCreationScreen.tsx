@@ -364,7 +364,7 @@ export function CharacterRPGCreationScreen() {
       const { data, response } = await postApiCharacterRpgcreate({
         body: {
           playerName: trimmed,
-          skin: "player",
+          skin: "articulated",
           characterClass: selectedClass,
           str: allocation.str,
           dex: allocation.dex,

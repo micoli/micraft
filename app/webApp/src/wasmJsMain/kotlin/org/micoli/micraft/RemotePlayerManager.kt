@@ -1,6 +1,9 @@
 package org.micoli.micraft
 
+import kotlin.math.cos
+import kotlin.math.sin
 import org.micoli.micraft.babylon.*
+import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 
 private const val PRED_DT = 16.0 / 1000.0
@@ -21,6 +24,8 @@ class RemotePlayerManager(private val scene: JsAny) {
     private val playerArmorsAttached = mutableMapOf<String, List<String>>()
     private val playerLightBoost = mutableMapOf<String, Boolean>()
     private val playerLightBoostApplied = mutableMapOf<String, Boolean>()
+    private val playerStances = mutableMapOf<String, PlayerStance>()
+    private val playerFlying = mutableMapOf<String, Boolean>()
 
     fun updateFromServer(state: PlayerState) {
         playerNames[state.id] = state.name
@@ -45,6 +50,8 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerTargetPitch[state.id] = state.orientation.pitch
         playerLerpT[state.id] = 0.0
         playerLightBoost[state.id] = state.lightBoostEnabled
+        playerStances[state.id] = state.stance
+        playerFlying[state.id] = state.flying
     }
 
     fun remove(id: String) {
@@ -64,11 +71,13 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerLerpT.remove(id)
         playerLightBoost.remove(id)
         playerLightBoostApplied.remove(id)
+        playerStances.remove(id)
+        playerFlying.remove(id)
     }
 
     fun tick() {
         for (id in playerTargetPos.keys.toList()) {
-            val skin = playerSkins[id] ?: "player"
+            val skin = playerSkins[id] ?: "articulated"
             if (!jsIsPlayerBbmodelReady(skin)) continue
             val cur = playerCurrentPos[id] ?: continue
             val tgt = playerTargetPos[id] ?: continue
@@ -83,12 +92,38 @@ class RemotePlayerManager(private val scene: JsAny) {
             val pitch = playerTargetPitch[id] ?: 0f
             val model = playerModels.getOrPut(id) { jsCreatePlayerModelNow(scene, skin) }
             val prev = playerPrevPos[id]
-            val walking =
-                prev != null &&
-                    (kotlin.math.abs(x - prev.first) > 0.001 ||
-                        kotlin.math.abs(z - prev.third) > 0.001)
+            val moveX = if (prev != null) x - prev.first else 0.0
+            val moveZ = if (prev != null) z - prev.third else 0.0
+            val moving = kotlin.math.abs(moveX) > 0.001 || kotlin.math.abs(moveZ) > 0.001
             playerPrevPos[id] = Triple(x, y, z)
-            jsSetPlayerTransform(model, x, y, z, yaw, pitch, walking)
+
+            val stance = playerStances[id] ?: PlayerStance.STANDING
+            val flying = playerFlying[id] ?: false
+            val animClip =
+                when {
+                    flying -> "jump_idle"
+                    stance == PlayerStance.CRAWLING -> "crawling"
+                    stance == PlayerStance.SNEAKING -> "sneaking"
+                    !moving -> "idle"
+                    else -> {
+                        // Forward/right basis matching the same yaw convention as the local
+                        // player's
+                        // camera-forward vector (LocalPlayerController.kt): fwd = (sin(yaw),
+                        // cos(yaw)).
+                        val fwdX = sin(yaw.toDouble())
+                        val fwdZ = cos(yaw.toDouble())
+                        val rightX = fwdZ
+                        val rightZ = -fwdX
+                        val forwardDot = moveX * fwdX + moveZ * fwdZ
+                        val lateralDot = moveX * rightX + moveZ * rightZ
+                        if (kotlin.math.abs(forwardDot) >= kotlin.math.abs(lateralDot)) {
+                            if (forwardDot >= 0) "walking_forward" else "walking_backward"
+                        } else {
+                            if (lateralDot >= 0) "strafe_right" else "strafe_left"
+                        }
+                    }
+                }
+            jsSetPlayerTransform(model, x, y, z, yaw, pitch, animClip)
             jsSetPlayerOnMinimap(id, x.toFloat(), z.toFloat(), yaw)
 
             val wanted = playerArmors[id] ?: emptyList()
@@ -126,6 +161,8 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerArmorsAttached.clear()
         playerLightBoost.clear()
         playerLightBoostApplied.clear()
+        playerStances.clear()
+        playerFlying.clear()
         jsSetConnectedPlayers("[]")
     }
 

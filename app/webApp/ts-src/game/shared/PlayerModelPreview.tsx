@@ -87,7 +87,8 @@ export function PlayerModelPreview({
     let angle = 0;
     scene.onBeforeRenderObservable.add(() => {
       angle += 0.015;
-      if (model) window.mc.setPlayerTransform?.(model, 0, 0, 0, angle, 0, walkingRef.current);
+      if (model)
+        window.mc.setPlayerTransform?.(model, 0, 0, 0, angle, 0, walkingRef.current ? "walking_forward" : "idle");
     });
 
     engine.runRenderLoop(() => scene.render());

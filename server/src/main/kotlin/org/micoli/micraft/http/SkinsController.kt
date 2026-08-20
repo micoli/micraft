@@ -41,8 +41,8 @@ class SkinsController(private val dataPath: String = "data") {
                         if (name.isBlank() || name.contains('/') || name.contains("..")) null
                         else
                             SkinRegistryLoader(
-                                    Path.of("resources/skins"),
-                                    Path.of("$dataPath/resources/skins"))
+                                    Path.of("resources/models"),
+                                    Path.of("$dataPath/resources/models"))
                                 .load(name)
                     if (definition == null) {
                         call.respond(HttpStatusCode.NotFound)

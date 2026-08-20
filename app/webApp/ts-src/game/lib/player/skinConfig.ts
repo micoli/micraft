@@ -1,4 +1,4 @@
-// Per-skin first-person configuration, loaded from resources/skins/<skin>/<skin>.yaml
+// Per-skin first-person configuration, loaded from resources/models/<skin>/<skin>.yaml
 // through GET /api/skins/{skin}/configEditor.
 import { getApiSkinsByNameConfig } from "../../../generated/api/requests";
 

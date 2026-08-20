@@ -64,7 +64,7 @@ export function CodexModal({ open, onClose }: Props) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [filter, setFilter] = useState("");
   const [allSkins, setAllSkins] = useState<string[]>([]);
-  const [selectedAnimSkin, setSelectedAnimSkin] = useState("player");
+  const [selectedAnimSkin, setSelectedAnimSkin] = useState("articulated");
   const defsReady = useBlockDefsReady();
   const getPreview = useBlockPreviews();
 

@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(SkinCommand::class.java)
 
-private val skinsRoot = Path.of("resources/skins")
+private val skinsRoot = Path.of("resources/models")
 
 fun availablePlayerSkins(): List<String> =
     runCatching {
@@ -26,7 +26,15 @@ fun availablePlayerSkins(): List<String> =
                 .map { it.name }
                 .sorted()
         }
-        .getOrDefault(listOf("player"))
+        .getOrDefault(listOf("articulated"))
+
+/**
+ * Coerces a stored/requested skin name to a currently-available one, falling back to "articulated".
+ */
+fun resolveSkin(skin: String?): String {
+    val available = availablePlayerSkins()
+    return if (skin != null && skin in available) skin else available.firstOrNull() ?: "articulated"
+}
 
 class SkinCommand : CommandHandler {
     override val id: UUID = UUID.fromString("a7f3e2d1-4b5c-4e6f-8a9b-0c1d2e3f4a5b")

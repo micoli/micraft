@@ -97,7 +97,7 @@ class LocalPlayerController(
     var localFlying = false
     var localStance = PlayerStance.STANDING
     var localSpeedMult = 1f
-    var localSkin = "player"
+    var localSkin = "articulated"
     var localArmors: List<String> = emptyList()
     var localArmorsAttached: List<String> = emptyList()
     var lastPlayerCx = Int.MIN_VALUE
@@ -204,7 +204,7 @@ class LocalPlayerController(
 
     /**
      * Height of the camera above the feet. Uses the skin's eye anchor
-     * (`resources/skins/<skin>/<skin>.yaml`) when the skin declares one — the camera then sits at
+     * (`resources/models/<skin>/<skin>.yaml`) when the skin declares one — the camera then sits at
      * the middle of the head, at eye level — scaled by the stance so sneaking and crawling still
      * lower the view. Falls back to the stance eye offset for skins without a yaml.
      */
@@ -471,6 +471,21 @@ class LocalPlayerController(
                 !localFlying && jsIsActionDown("sneak") -> PlayerStance.SNEAKING
                 else -> PlayerStance.STANDING
             }
+
+        // Priority: flying > crawling > sneaking > backward > forward > strafe > idle.
+        val animClip =
+            when {
+                localFlying -> "jump_idle"
+                stance == PlayerStance.CRAWLING -> "crawling"
+                stance == PlayerStance.SNEAKING -> "sneaking"
+                !isMovingXZ -> "idle"
+                jsIsActionDown("backward") -> "walking_backward"
+                jsIsActionDown("forward") || autoAdvance -> "walking_forward"
+                jsIsActionDown("strafe_left") -> "strafe_left"
+                jsIsActionDown("strafe_right") -> "strafe_right"
+                else -> "walking_forward"
+            }
+
         val speed = stance.speed * localSpeedMult * actualDt.toFloat()
         val solid = { bx: Int, by: Int, bz: Int ->
             chunkManager.getBlockAtWorld(bx, by, bz).isSolid
@@ -840,7 +855,7 @@ class LocalPlayerController(
             jsCameraSetPosition(camera, camX, camY, camZ)
             localPlayerModel?.let {
                 jsSetPlayerTransform(
-                    it, predX, predY, predZ, yaw.toFloat(), pitch.toFloat(), isMovingXZ)
+                    it, predX, predY, predZ, yaw.toFloat(), pitch.toFloat(), animClip)
                 jsSetPlayerFirstPerson(it, localSkin, false)
                 jsSetPlayerVisible(it, true)
             }
@@ -858,7 +873,7 @@ class LocalPlayerController(
             localPlayerModel?.let {
                 if (showBody) {
                     jsSetPlayerTransform(
-                        it, predX, predY, predZ, yaw.toFloat(), pitch.toFloat(), isMovingXZ)
+                        it, predX, predY, predZ, yaw.toFloat(), pitch.toFloat(), animClip)
                     jsSetPlayerFirstPerson(it, localSkin, true)
                 }
                 jsSetPlayerVisible(it, showBody)

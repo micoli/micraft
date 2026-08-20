@@ -131,7 +131,7 @@ export function registerNpcModel(): Pick<
       const pn = model.pivotNodes;
       if (!pn) return;
       const DEG = Math.PI / 180;
-      const wa = model.walkAnim ?? {};
+      const wa = model.animations?.walking_forward ?? {};
 
       const PROC_AMP = 30;
       const PROC_PHASE: Record<string, number> = { rightArm: 0, leftArm: Math.PI, rightLeg: Math.PI, leftLeg: 0 };

@@ -80,14 +80,14 @@ class CharacterController(private val persistence: WorldPersistence?) {
                             ?: return@post call.respond(HttpStatusCode.BadRequest)
                     val skin =
                         Regex(""""skin"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1)
-                            ?: "player"
+                            ?: "articulated"
                     val email =
                         Regex(""""email"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1) ?: ""
                     if (playerName.length !in 3..24)
                         return@post call.respond(HttpStatusCode.BadRequest)
                     val available = availablePlayerSkins()
                     val safeSkin =
-                        if (skin in available) skin else available.firstOrNull() ?: "player"
+                        if (skin in available) skin else available.firstOrNull() ?: "articulated"
                     val p =
                         persistence ?: return@post call.respond(HttpStatusCode.ServiceUnavailable)
                     val existing = p.loadPlayerState(playerName)
@@ -135,7 +135,7 @@ class CharacterController(private val persistence: WorldPersistence?) {
                         return@post call.respond(HttpStatusCode.BadRequest)
                     val skin =
                         Regex(""""skin"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1)
-                            ?: "player"
+                            ?: "articulated"
                     val email =
                         Regex(""""email"\s*:\s*"([^"]+)"""").find(body)?.groupValues?.get(1) ?: ""
                     val characterClassStr =
@@ -212,7 +212,7 @@ class CharacterController(private val persistence: WorldPersistence?) {
                         prelimChar.copy(currentHp = derived.maxHp, currentMana = derived.maxMana)
                     val available = availablePlayerSkins()
                     val safeSkin =
-                        if (skin in available) skin else available.firstOrNull() ?: "player"
+                        if (skin in available) skin else available.firstOrNull() ?: "articulated"
                     val base =
                         existing?.copy(skin = safeSkin, characterData = character)
                             ?: PlayerState(

@@ -17,8 +17,8 @@ private fun SkinDefinition.applyOverride(o: SkinYamlOverride) =
     )
 
 /**
- * Loads `resources/skins/<name>/<name>.yaml`, optionally overridden by
- * `data/resources/skins/<name>/<name>.yaml`. Skins without a yaml are simply absent from the
+ * Loads `resources/models/<name>/<name>.yaml`, optionally overridden by
+ * `data/resources/models/<name>/<name>.yaml`. Skins without a yaml are simply absent from the
  * registry — the client then falls back to the stance eye offset.
  */
 class SkinRegistryLoader(

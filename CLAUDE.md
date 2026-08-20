@@ -82,13 +82,13 @@ Provider selected via `data/config/server.yaml` → `auth.provider` (`none` | `l
 
 
 ## Entities / animations
-Models use **bbmodel** (Blockbench) format. Example: `resources/skins/player/player.bbmodel`
+Models use **bbmodel** (Blockbench) format. Example: `resources/models/articulated/articulated.bbmodel`
 
 ```
 node scripts/export_skin_presets.mjs ./resources/blockbench-export/.
 ```
 
-**Skin config**: optional `resources/skins/<name>/<name>.yaml` (overridable in `data/resources/skins/<name>/<name>.yaml`), served by `GET /api/skins/{name}/config`.
+**Skin config**: optional `resources/models/<name>/<name>.yaml` (overridable in `data/resources/models/<name>/<name>.yaml`), served by `GET /api/skins/{name}/config`.
 `eyes: {x,y,z}` = first-person camera anchor in bbmodel pixels (16 px = 1 block, feet at y=0);
 `firstPersonHiddenBones` = bones hidden (subtree included) while in first person.
 First person shows the real player model minus those bones — there is no separate FP arm rig.

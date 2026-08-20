@@ -12,7 +12,7 @@ import { FormField } from "../primitives/FormField";
 import { getUsers, saveUsers, getLastUser, getAccountEmail } from "../lib/authStorage";
 import { WalkingToggle } from "./characterCreation/WalkingToggle";
 
-const SKINS = ["player", "askin"];
+const SKINS = ["articulated"];
 
 export function CharacterCreationScreen() {
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ export function CharacterCreationScreen() {
     .refine((v) => !existing.some((c) => c.name === v), "Name already taken.");
 
   const form = useForm({
-    defaultValues: { name: "", skin: "player" },
+    defaultValues: { name: "", skin: "articulated" },
     onSubmit: async ({ value }) => {
       const name = value.name.trim();
       setCreateSubmitError("");

@@ -162,7 +162,7 @@ private val BBMODEL_JSON = Json {
     prettyPrintIndent = "  "
 }
 
-// bbmodel bone name → UUID for player.bbmodel and askin.bbmodel (8 bones)
+// base 8-bone rig shared by articulated.bbmodel (before its extra articulation pivots)
 private val PLAYER_BONE_UUIDS =
     mapOf(
         "root" to "da541ef9-8630-9ad8-3679-0e7f2a04101f",
@@ -194,9 +194,7 @@ private val GLB_DIR =
     "resources/game-assets/KayKit_Character_Animations_1.1/Animations/gltf/Rig_Medium"
 private val BBMODEL_FILES =
     listOf(
-        "resources/skins/articulated/articulated.bbmodel" to ARTICULATED_BONE_UUIDS,
-        "resources/skins/player/player.bbmodel" to PLAYER_BONE_UUIDS,
-        "resources/skins/askin/askin.bbmodel" to PLAYER_BONE_UUIDS,
+        "resources/models/articulated/articulated.bbmodel" to ARTICULATED_BONE_UUIDS,
     )
 
 // ── GLB binary parsing ─────────────────────────────────────────────────────────

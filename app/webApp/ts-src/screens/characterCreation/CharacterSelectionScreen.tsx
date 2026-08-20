@@ -47,7 +47,7 @@ export function CharacterSelectionScreen() {
   const [chars, setChars] = useState<PlayerEntry[]>([]);
   const [charClasses, setCharClasses] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState("");
-  const [previewSkin, setPreviewSkin] = useState("player");
+  const [previewSkin, setPreviewSkin] = useState("articulated");
   const [previewArmors, setPreviewArmors] = useState<string[]>([]);
   const [previewWalking, setPreviewWalking] = useState(true);
   const [serverReady, setServerReady] = useState(false);
@@ -129,12 +129,12 @@ export function CharacterSelectionScreen() {
     Promise.all([
       getApiPlayerByIdSkin({ path: { id: selectedChar.id } })
         .then((r) => r.data)
-        .catch(() => ({ skin: "player" })),
+        .catch(() => ({ skin: "articulated" })),
       getApiPlayerByIdArmors({ path: { id: selectedChar.id } })
         .then((r) => r.data)
         .catch(() => []),
     ]).then(([skinData, armors]) => {
-      setPreviewSkin(skinData?.skin ?? "player");
+      setPreviewSkin(skinData?.skin ?? "articulated");
       setPreviewArmors(Array.isArray(armors) ? armors : []);
     });
   }, [selected, chars]);

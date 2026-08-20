@@ -18,8 +18,8 @@ fun jsSetPlayerTransform(
     z: Double,
     yaw: Float,
     pitch: Float,
-    isWalking: Boolean
-): Unit = js("mc.setPlayerTransform(model, x, y, z, yaw, pitch, isWalking)")
+    clip: String
+): Unit = js("mc.setPlayerTransform(model, x, y, z, yaw, pitch, clip)")
 
 fun jsSetPlayerVisible(model: JsAny, visible: Boolean): Unit =
     js("mc.setPlayerVisible(model, visible)")

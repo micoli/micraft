@@ -22,7 +22,7 @@ class CharacterApiTest {
         val r =
             client.post("/api/character/create") {
                 contentType(ContentType.Application.Json)
-                setBody("""{"playerName":"TestHero","skin":"player"}""")
+                setBody("""{"playerName":"TestHero","skin":"articulated"}""")
             }
         assertEquals(HttpStatusCode.OK, r.status)
         val json = Json.parseToJsonElement(r.bodyAsText()).jsonObject
@@ -35,7 +35,7 @@ class CharacterApiTest {
         val r =
             client.post("/api/character/create") {
                 contentType(ContentType.Application.Json)
-                setBody("""{"playerName":"ab","skin":"player"}""")
+                setBody("""{"playerName":"ab","skin":"articulated"}""")
             }
         assertEquals(HttpStatusCode.BadRequest, r.status)
     }
@@ -47,7 +47,7 @@ class CharacterApiTest {
             client.post("/api/character/rpgcreate") {
                 contentType(ContentType.Application.Json)
                 setBody(
-                    """{"playerName":"RpgHero","skin":"player","characterClass":"WARRIOR",
+                    """{"playerName":"RpgHero","skin":"articulated","characterClass":"WARRIOR",
                 |"str":14,"dex":8,"intel":8,"wis":8,"con":12,"cha":8}"""
                         .trimMargin())
             }
@@ -64,7 +64,7 @@ class CharacterApiTest {
             client.post("/api/character/rpgcreate") {
                 contentType(ContentType.Application.Json)
                 setBody(
-                    """{"playerName":"OverBudget","skin":"player","characterClass":"WARRIOR",
+                    """{"playerName":"OverBudget","skin":"articulated","characterClass":"WARRIOR",
                 |"str":15,"dex":15,"intel":15,"wis":15,"con":15,"cha":15}"""
                         .trimMargin())
             }
@@ -75,7 +75,7 @@ class CharacterApiTest {
     fun testCreateRpgCharacterDuplicateReturnsConflict() = testApplication {
         application { module() }
         val body =
-            """{"playerName":"DupeHero","skin":"player","characterClass":"MAGE",
+            """{"playerName":"DupeHero","skin":"articulated","characterClass":"MAGE",
             |"str":8,"dex":8,"intel":14,"wis":12,"con":8,"cha":8}"""
                 .trimMargin()
         val first =
@@ -99,7 +99,7 @@ class CharacterApiTest {
             client.post("/api/character/rpgcreate") {
                 contentType(ContentType.Application.Json)
                 setBody(
-                    """{"playerName":"BadClass","skin":"player","characterClass":"DRUID",
+                    """{"playerName":"BadClass","skin":"articulated","characterClass":"DRUID",
                 |"str":8,"dex":8,"intel":8,"wis":8,"con":8,"cha":8}"""
                         .trimMargin())
             }

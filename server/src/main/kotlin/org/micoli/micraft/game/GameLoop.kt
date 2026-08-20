@@ -20,6 +20,7 @@ import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.command.Plugin
+import org.micoli.micraft.command.commands.resolveSkin
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.di.CommandContextClosures
 import org.micoli.micraft.di.PlayerPersister
@@ -1330,7 +1331,7 @@ class GameLoop(
                             ChannelSubscription("game")),
                 disabledCommands = saved?.disabledCommands ?: emptySet(),
                 viewMode = saved?.viewMode ?: "FIRST_PERSON",
-                skin = saved?.skin ?: "player",
+                skin = resolveSkin(saved?.skin),
                 armors = saved?.armors ?: emptyList(),
                 animatedFavicon = saved?.animatedFavicon ?: true,
                 chunkDebugVisible = saved?.chunkDebugVisible ?: false,

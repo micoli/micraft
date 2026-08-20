@@ -43,7 +43,7 @@ data class PlayerState(
             ChannelSubscription("game")),
     val disabledCommands: Set<String> = emptySet(),
     val viewMode: String = "FIRST_PERSON",
-    val skin: String = "player",
+    val skin: String = "articulated",
     val armors: List<String> = emptyList(),
     val animatedFavicon: Boolean = false,
     val chunkDebugVisible: Boolean = false,

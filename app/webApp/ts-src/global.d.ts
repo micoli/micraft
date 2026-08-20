@@ -161,6 +161,16 @@ declare global {
     b: number;
   }
 
+  type PlayerAnimClip =
+    | "idle"
+    | "walking_forward"
+    | "walking_backward"
+    | "sneaking"
+    | "crawling"
+    | "jump_idle"
+    | "strafe_left"
+    | "strafe_right";
+
   interface McPlayerModel {
     root: InstanceType<typeof BABYLON.TransformNode>;
     headNode: InstanceType<typeof BABYLON.TransformNode> | null;
@@ -171,13 +181,13 @@ declare global {
         origin: [number, number, number];
       }
     >;
-    walkAnim: Record<string, { keyframes: BbModelKeyframe[]; length: number }>;
+    animations: Partial<Record<PlayerAnimClip, Record<string, { keyframes: BbModelKeyframe[]; length: number }>>>;
     equippedArmors: Record<string, InstanceType<typeof BABYLON.AbstractMesh>[]>;
     _forwardOffset?: number;
     _lightBoost?: { orb: Mesh; light: PointLight } | null;
   }
 
-  // Served by GET /api/skins/{name}/configEditor — see resources/skins/<name>/<name>.yaml.
+  // Served by GET /api/skins/{name}/configEditor — see resources/models/<name>/<name>.yaml.
   // `eyes` is in bbmodel pixels (16 px = 1 block), model space, feet at y = 0.
   interface McSkinConfig {
     eyes: { x: number; y: number; z: number };
@@ -398,7 +408,7 @@ declare global {
       z: number,
       yaw: number,
       headPitch: number,
-      isWalking: boolean,
+      clip: PlayerAnimClip,
     ): void;
     setPlayerVisible(model: McPlayerModel, visible: boolean): void;
     setPlayerAlpha(model: McPlayerModel, alpha: number): void;

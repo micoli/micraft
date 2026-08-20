@@ -108,8 +108,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         jsOptimizeScene(scene)
         jsSetupFog(scene, SKY_R, SKY_G, SKY_B)
         jsSetupRenderPipeline(scene, camera)
-        jsInitPlayerModel("player")
-        jsInitSkinConfig("player")
+        jsInitPlayerModel("articulated")
+        jsInitSkinConfig("articulated")
         jsInitBlockDefs()
     }
 

@@ -68,7 +68,7 @@ interface Props {
 export function Character({ open, onClose, onCommand, characterSyncData, attackMeta = {}, spellMeta = {} }: Props) {
   const [available, setAvailable] = useState<Record<string, ArmorDefinition>>({});
   const [equipped, setEquipped] = useState<string[]>([]);
-  const [skin, setSkin] = useState("player");
+  const [skin, setSkin] = useState("articulated");
   const [walking, setWalking] = useState(true);
   const closeRef = useRef(onClose);
   useLayoutEffect(() => {
@@ -85,11 +85,11 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
         .catch(() => []),
       getApiPlayerByIdSkin({ path: { id: playerId }, throwOnError: true })
         .then((r) => r.data)
-        .catch(() => ({ skin: "player" })),
+        .catch(() => ({ skin: "articulated" })),
     ]).then(([armors, equippedArmors, skinData]) => {
       setAvailable(armors as unknown as Record<string, ArmorDefinition>);
       setEquipped(Array.isArray(equippedArmors) ? equippedArmors : []);
-      setSkin(skinData.skin ?? "player");
+      setSkin(skinData.skin ?? "articulated");
     });
   }, [open]);
 
