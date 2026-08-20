@@ -1,78 +1,27 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { putApiAdminScenesByIdLayout } from "../../../generated/api/requests";
-import type { SceneDto } from "../../apiTypes";
-import {
-  useAllBlockPreviewsReady,
-  useBlockDefsReady,
-  useBlockPreviewProgress,
-  useBlockPreviews,
-} from "../../../game/shared/BlockPreview";
-import { startPreloading } from "../../../game/shared/blockPreviewCache";
-import { useAdminShortcutBar } from "../shared/voxelEditor/useAdminShortcutBar";
+import type { SceneDto, SceneBlockDto } from "../../apiTypes";
+import { useVoxelEditorViewport } from "../shared/voxelEditor/useVoxelEditorViewport";
+import { createVoxelEditorSceneController } from "../shared/voxelEditor/voxelEditorSceneController";
+import type { VoxelVolumeAdapter } from "../shared/voxelEditor/voxelVolumeAdapter";
 import { createAxesGizmo } from "../shared/voxelEditor/axesGizmo";
-import { applyClipPlanes, ClipAxis, ClipPlaneState } from "../shared/voxelEditor/clipAxis";
-import { packState } from "../shared/voxelEditor/blockState";
+import { applyClipPlanes } from "../shared/voxelEditor/clipAxis";
 import { saveCameraState } from "../shared/voxelEditor/cameraStorage";
 import { createOrbitCamera, setupBasicLighting } from "../shared/voxelEditor/orbitCamera";
 import { setupOrbitPointerController } from "../shared/voxelEditor/orbitPointerController";
 import { createOverlayController } from "../shared/voxelEditor/overlayController";
-import {
-  createSelectionGizmo,
-  type SelectionBox,
-  type SelectionShape,
-  type SelectionSnap,
-} from "../shared/voxelEditor/selectionGizmo";
+import { createSelectionGizmo } from "../shared/voxelEditor/selectionGizmo";
 import { createPasteGizmo, type PasteOrigin } from "../shared/voxelEditor/pasteGizmo";
-import { createRailTestCart, type RailTestCart } from "../shared/voxelEditor/railTestCart";
-import {
-  createRailSwitchMarkers,
-  type RailJunction,
-  type RailSwitchMarkers,
-} from "../shared/voxelEditor/railSwitchMarkers";
-import {
-  applyPasteTransform,
-  IDENTITY_PASTE_TRANSFORM,
-  type PasteTransform,
-} from "../shared/voxelEditor/pasteTransform";
-import { buildBlockPreviewMeshes } from "../../../game/lib/chunkBuilder";
-import { useBlockRegistry } from "../shared/voxelEditor/useBlockRegistry";
-import { useModifierDragMode } from "../shared/voxelEditor/useModifierDragMode";
-import { useActionError } from "../shared/voxelEditor/useActionError";
-import { makeUndoRedoController, type UndoEntryBase, type UndoGroup } from "../shared/voxelEditor/undoRedoStack";
-import { VoxelEditorSidebar, type SelectionField } from "../shared/voxelEditor/VoxelEditorSidebar";
+import { createRailTestCart } from "../shared/voxelEditor/railTestCart";
+import { createRailSwitchMarkers, type RailJunction } from "../shared/voxelEditor/railSwitchMarkers";
+import { VoxelEditorSidebar } from "../shared/voxelEditor/VoxelEditorSidebar";
 import { ViewportCameraHud } from "../shared/voxelEditor/ViewportCameraHud";
 import { HoveredVoxelNameHud } from "../shared/voxelEditor/HoveredVoxelNameHud";
 import { TestRailButton } from "../shared/voxelEditor/TestRailButton";
 import { connectEditSocket, type BlockEditSocket } from "../shared/voxelEditor/editSocket";
-import {
-  computeSelectionVoxels,
-  resolvePatternBlock,
-  resizeSelectionBox,
-  MAX_SELECTION_OP_VOXELS,
-  type Pattern,
-} from "../shared/voxelEditor/selectionVoxels";
-import type { SceneBlockDto } from "../../apiTypes";
-import {
-  computeSlotOffset,
-  resolvePlacementCell,
-  usedSlotAt,
-  PICK_EPSILON,
-} from "../shared/voxelEditor/fractionalPlacement";
-
-// Saved-selection memory list cap (select mode) — same idea as MAX_UNDO_ENTRIES, a fixed-size
-// local buffer with oldest entries dropped once full.
-const MAX_SAVED_SELECTIONS = 10;
+import { usedSlotAt } from "../shared/voxelEditor/fractionalPlacement";
 
 const cameraStorageKey = (sceneId: string) => `sceneEditorCamera:${sceneId}`;
-
-// Snapshot of a cell's content right before a place/break overwrote it, so undo can write it
-// back. xOffset/zOffset mirror InstanceEditorViewport's UndoEntry, now that Scene supports
-// fractional/lego entities too (see BlockPlacer.placeAt/BlockBreaker.removeAt via
-// ScenePlacementTarget).
-interface UndoEntry extends UndoEntryBase {
-  xOffset: number;
-  zOffset: number;
-}
 
 // Parses GET /api/admin/scenes/{id}/blocks/raw's binary layout: 3 big-endian Int32 header fields
 // (width, height, depth) followed by two equal-length byte arrays (blocks, then states), flat
@@ -101,112 +50,6 @@ function parseSceneRaw(buf: ArrayBuffer): {
 
 export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [hoveredBlockName, setHoveredBlockName] = useState<string | null>(null);
-  const [hoveredRect, setHoveredRect] = useState<DOMRect | null>(null);
-  const [hoveredShortcutSlot, setHoveredShortcutSlot] = useState<number | null>(null);
-  const [hoveredVoxelName, setHoveredVoxelName] = useState<string | null>(null);
-  const { blockDefs, ordinalByName, nameByOrdinal, plainColors, getOrdinal } = useBlockRegistry();
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
-  const selectedColorIndexRef = useRef(selectedColorIndex);
-  const [mode, setMode] = useState<"place" | "break" | "select">("place");
-  const [selection, setSelection] = useState<SelectionBox | null>(null);
-  const selectionRef = useRef<SelectionBox | null>(selection);
-  const [selectionShape, setSelectionShape] = useState<SelectionShape>("box");
-  const selectionShapeRef = useRef(selectionShape);
-  const [selectionSnap, setSelectionSnap] = useState<SelectionSnap>("none");
-  const selectionSnapRef = useRef(selectionSnap);
-  // Fill/Shell pattern (block A, optional block B for a checkerboard alternation) and which slot a
-  // palette click assigns to while in select mode — see selectBlockType below.
-  const [patternBlocks, setPatternBlocks] = useState<[string | null, string | null]>([null, null]);
-  const patternBlocksRef = useRef(patternBlocks);
-  const [activePatternSlot, setActivePatternSlot] = useState<0 | 1>(0);
-  const activePatternSlotRef = useRef(activePatternSlot);
-  // Internal clipboard for Cut — relative to the cut selection's min corner. In-memory only, no
-  // paste yet. clipboardCount is just the sidebar's "Clipboard: N blocks" display.
-  const clipboardRef = useRef<{
-    entries: { relX: number; relY: number; relZ: number; type: string; state: number }[];
-  } | null>(null);
-  const [clipboardCount, setClipboardCount] = useState<number | null>(null);
-  // Paste-in-progress state — see InstanceEditorViewport.tsx's identical block for the rationale
-  // (pasteOriginRef/isPastingRef are refs so the drag callback and onKeyDown closures always read
-  // the live value; pasteOrigin/isPasting stay as React state too so the sidebar's X/Y/Z inputs
-  // and button styling can reactively track them).
-  const pasteOriginRef = useRef<PasteOrigin | null>(null);
-  const [pasteOrigin, setPasteOrigin] = useState<PasteOrigin | null>(null);
-  const [isPasting, setIsPasting] = useState(false);
-  const isPastingRef = useRef(false);
-  const pasteGizmoRef = useRef<ReturnType<typeof createPasteGizmo> | null>(null);
-  const pastePreviewMeshesRef = useRef<ReturnType<typeof buildBlockPreviewMeshes>>([]);
-  // Rotate/flip applied to the clipboard before Confirm — reactive (not just a ref) so the
-  // sidebar's Flip X/Y/Z buttons can show which axes are active.
-  const [pasteTransform, setPasteTransform] = useState<PasteTransform>(IDENTITY_PASTE_TRANSFORM);
-  const pasteTransformRef = useRef(pasteTransform);
-  const pasteActionsRef = useRef<{
-    start: () => void;
-    confirm: () => void;
-    cancel: () => void;
-    rotate: (dir: -1 | 1) => void;
-    flip: (axis: "x" | "y" | "z") => void;
-    move: (origin: PasteOrigin) => void;
-  }>({
-    start: () => {},
-    confirm: () => {},
-    cancel: () => {},
-    rotate: () => {},
-    flip: () => {},
-    move: () => {},
-  });
-  // Local (per-browser-tab, not persisted) list of remembered selections — click a row to restore
-  // it as the active selection, capped at MAX_SAVED_SELECTIONS with oldest dropped once full.
-  const [savedSelections, setSavedSelections] = useState<{ shape: SelectionShape; box: SelectionBox }[]>([]);
-  // Step used by the sidebar's expand/contract selection buttons — voxel/half/quarter, same
-  // granularity as RESIZE_STEPS.
-  const [resizeStep, setResizeStep] = useState<number>(1);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const { actionError, flashActionError } = useActionError();
-  const [search, setSearch] = useState("");
-  // Rail circuit test cart — see InstanceEditorViewport.tsx's identical block for the rationale.
-  const [testRailState, setTestRailState] = useState<"idle" | "picking" | "running">("idle");
-  const testRailStateRef = useRef(testRailState);
-  const railTestCartRef = useRef<RailTestCart | null>(null);
-  // Switch/junction overlay markers — see InstanceEditorViewport.tsx's identical block for the
-  // rationale (refreshJunctionsRef is set from inside the scene-setup effect, which owns
-  // wasmExports/babylonScene).
-  const railSwitchMarkersRef = useRef<RailSwitchMarkers | null>(null);
-  const refreshJunctionsRef = useRef<() => void>(() => {});
-  useEffect(() => {
-    testRailStateRef.current = testRailState;
-  }, [testRailState]);
-  function toggleTestRail() {
-    if (testRailStateRef.current === "running") {
-      railTestCartRef.current?.stop();
-      railSwitchMarkersRef.current?.clear();
-      setTestRailState("idle");
-      return;
-    }
-    setTestRailState((s) => {
-      if (s === "picking") {
-        railSwitchMarkersRef.current?.clear();
-        return "idle";
-      }
-      refreshJunctionsRef.current();
-      // Break is the natural companion tool while a rail test is active — it removes/inspects
-      // track without a block type armed to accidentally place over the circuit being tested.
-      shortcutBarRef.current.selectSlot(0);
-      return "picking";
-    });
-  }
-  const modeRef = useRef(mode);
-  const selectedTypeRef = useRef(selectedType);
-  const ordinalByNameRef = useRef(ordinalByName);
-  const nameByOrdinalRef = useRef(nameByOrdinal);
-  const getPreview = useBlockPreviews();
-  // Each stack slot is a GROUP of entries (see undoRedoStack.ts) — a single place/break is a group
-  // of one, a Fill/Shell/Cut is a group of every voxel it touched.
-  const undoStackRef = useRef<UndoGroup<UndoEntry>[]>([]);
-  const redoStackRef = useRef<UndoGroup<UndoEntry>[]>([]);
-  const runSelectionOpRef = useRef<(kind: "fill" | "shell" | "cut" | "copy") => void>(() => {});
 
   const clipBounds = useMemo(
     () => ({
@@ -216,208 +59,28 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     }),
     [scene.width, scene.height, scene.depth],
   );
-  // Not persisted server-side — the Scene HTTP contract has no layout/clipPlanes endpoint
-  // (unlike InstanceZoneDto.clipPlanes), so this resets on remount like the geometry itself.
-  const [clipPlanes, setClipPlanes] = useState<Record<ClipAxis, ClipPlaneState>>(() => ({
-    x: { enabled: false, flipped: false, pos: (clipBounds.x[0] + clipBounds.x[1]) / 2 },
-    y: { enabled: false, flipped: false, pos: (clipBounds.y[0] + clipBounds.y[1]) / 2 },
-    z: { enabled: false, flipped: false, pos: (clipBounds.z[0] + clipBounds.z[1]) / 2 },
-  }));
-  const clipPlanesRef = useRef(clipPlanes);
-  useEffect(() => {
-    clipPlanesRef.current = clipPlanes;
-  }, [clipPlanes]);
-  const sceneRef = useRef<InstanceType<typeof BABYLON.Scene> | null>(null);
-  const overlayMeshesRef = useRef<Set<InstanceType<typeof BABYLON.Mesh>> | null>(null);
-  const clipMeshesRef = useRef<Partial<Record<ClipAxis, InstanceType<typeof BABYLON.Mesh>>>>({});
-  const selectionGizmoRef = useRef<ReturnType<typeof createSelectionGizmo> | null>(null);
 
-  useEffect(() => {
-    startPreloading();
-  }, []);
+  // Not persisted server-side — the Scene HTTP contract has no layout/clipPlanes endpoint (unlike
+  // InstanceZoneDto.clipPlanes), so this resets on remount like the geometry itself.
+  const initialClipPlanes = useMemo(
+    () => ({
+      x: { enabled: false, flipped: false, pos: (clipBounds.x[0] + clipBounds.x[1]) / 2 },
+      y: { enabled: false, flipped: false, pos: (clipBounds.y[0] + clipBounds.y[1]) / 2 },
+      z: { enabled: false, flipped: false, pos: (clipBounds.z[0] + clipBounds.z[1]) / 2 },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only the seed matters, this feeds a useState initializer
+    [],
+  );
 
-  useEffect(() => {
-    modeRef.current = mode;
-    if (mode !== "select") {
-      setSelection(null);
-      setSelectionShape("box");
-      setSelectionSnap("none");
-      pasteActionsRef.current.cancel();
-    } else {
-      // Seeds select mode with a live starting point (a bare toggle previously left the gizmo
-      // hidden until the user made a manual pick) — a single voxel centered on the scene's
-      // barycenter, i.e. the midpoint of clipBounds along each axis.
-      const cx = Math.floor((clipBounds.x[0] + clipBounds.x[1]) / 2);
-      const cy = Math.floor((clipBounds.y[0] + clipBounds.y[1]) / 2);
-      const cz = Math.floor((clipBounds.z[0] + clipBounds.z[1]) / 2);
-      setSelection({ minX: cx, minY: cy, minZ: cz, maxX: cx + 1, maxY: cy + 1, maxZ: cz + 1 });
-    }
-  }, [mode, clipBounds]);
-
-  useEffect(() => {
-    selectionShapeRef.current = selectionShape;
-    selectionGizmoRef.current?.setShape(selectionShape);
-  }, [selectionShape]);
-
-  useEffect(() => {
-    selectionSnapRef.current = selectionSnap;
-    selectionGizmoRef.current?.setSnap(selectionSnap);
-  }, [selectionSnap]);
-  useEffect(() => {
-    patternBlocksRef.current = patternBlocks;
-  }, [patternBlocks]);
-  useEffect(() => {
-    activePatternSlotRef.current = activePatternSlot;
-  }, [activePatternSlot]);
-
-  function toggleSelectMode() {
-    setMode((m) => (m === "select" ? "place" : "select"));
-  }
-  useEffect(() => {
-    selectedTypeRef.current = selectedType;
-  }, [selectedType]);
-  useEffect(() => {
-    ordinalByNameRef.current = ordinalByName;
-  }, [ordinalByName]);
-  useEffect(() => {
-    nameByOrdinalRef.current = nameByOrdinal;
-  }, [nameByOrdinal]);
-  useEffect(() => {
-    selectedColorIndexRef.current = selectedColorIndex;
-  }, [selectedColorIndex]);
-
-  // In select mode, a palette click assigns the Fill/Shell pattern slot instead of switching to
-  // place mode — see InstanceEditorViewport's selectBlockType for the same behavior.
-  function selectBlockType(name: string) {
-    if (modeRef.current === "select") {
-      setPatternBlocks((prev) => {
-        const next: [string | null, string | null] = [...prev];
-        next[activePatternSlotRef.current] = name;
-        return next;
-      });
-      return;
-    }
-    setMode("place");
-    setSelectedType(name);
-    setSelectedColorIndex(0);
-  }
-
-  function clearPatternSlot(slot: 0 | 1) {
-    setPatternBlocks((prev) => {
-      const next: [string | null, string | null] = [...prev];
-      next[slot] = null;
-      return next;
-    });
-  }
-
-  function runSelectionOp(kind: "fill" | "shell" | "cut" | "copy") {
-    runSelectionOpRef.current(kind);
-  }
-
-  function startPaste() {
-    pasteActionsRef.current.start();
-  }
-
-  function confirmPaste() {
-    pasteActionsRef.current.confirm();
-  }
-
-  function cancelPaste() {
-    pasteActionsRef.current.cancel();
-  }
-
-  function rotatePaste(dir: -1 | 1) {
-    pasteActionsRef.current.rotate(dir);
-  }
-
-  function flipPaste(axis: "x" | "y" | "z") {
-    pasteActionsRef.current.flip(axis);
-  }
-
-  function movePasteOrigin(field: "x" | "y" | "z", value: number) {
-    const origin = pasteOriginRef.current;
-    if (!origin || !Number.isFinite(value)) return;
-    pasteActionsRef.current.move({ ...origin, [field]: value });
-  }
-
-  function addSelectionToMemory() {
-    const box = selectionRef.current;
-    if (!box) return;
-    setSavedSelections((prev) => {
-      const next = [...prev, { shape: selectionShapeRef.current, box }];
-      return next.length > MAX_SAVED_SELECTIONS ? next.slice(next.length - MAX_SAVED_SELECTIONS) : next;
-    });
-  }
-
-  function selectSavedSelection(index: number) {
-    const entry = savedSelections[index];
-    if (!entry) return;
-    setSelectionShape(entry.shape);
-    setSelection(entry.box);
-  }
-
-  function removeSavedSelection(index: number) {
-    setSavedSelections((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function expandSelection() {
-    const box = selectionRef.current;
-    if (!box) return;
-    setSelection(resizeSelectionBox(box, selectionShapeRef.current, clipBounds, resizeStep));
-  }
-
-  function contractSelection() {
-    const box = selectionRef.current;
-    if (!box) return;
-    setSelection(resizeSelectionBox(box, selectionShapeRef.current, clipBounds, -resizeStep));
-  }
-
-  // Direct edit of the position/size widget. minX/minY/minZ move the box's min corner (size
-  // unchanged); sizeX/sizeY/sizeZ resize from that same min corner (position unchanged) — max* is
-  // always derived, never edited directly.
-  function setSelectionField(field: SelectionField, value: number) {
-    const box = selectionRef.current;
-    if (!box) return;
-    let next: SelectionBox;
-    switch (field) {
-      case "minX":
-        next = { ...box, minX: value, maxX: value + (box.maxX - box.minX) };
-        break;
-      case "minY":
-        next = { ...box, minY: value, maxY: value + (box.maxY - box.minY) };
-        break;
-      case "minZ":
-        next = { ...box, minZ: value, maxZ: value + (box.maxZ - box.minZ) };
-        break;
-      case "sizeX":
-        next = { ...box, maxX: box.minX + Math.max(0.25, value) };
-        break;
-      case "sizeY":
-        next = { ...box, maxY: box.minY + Math.max(0.25, value) };
-        break;
-      case "sizeZ":
-        next = { ...box, maxZ: box.minZ + Math.max(0.25, value) };
-        break;
-    }
-    setSelection(next);
-  }
-
-  const blockDefsReady = useBlockDefsReady();
-  const previewsReady = useAllBlockPreviewsReady();
-  const previewProgress = useBlockPreviewProgress();
-
-  const shortcutBar = useAdminShortcutBar({
-    initialPages: scene.shortcutBarPages,
-    onSelectBreak: () => setMode("break"),
-    onSelectBlock: (blockName) => selectBlockType(blockName),
+  const v = useVoxelEditorViewport({
+    volumeId: scene.id,
+    clipBounds,
+    initialClipPlanes,
+    initialShortcutBarPages: scene.shortcutBarPages,
   });
-  // The pointer-controller mount effect below only re-runs on [scene.id, blockDefsReady] — a ref
-  // keeps its Ctrl+click handler reading the live slots/currentPage instead of the stale ones
-  // captured at mount, same rationale as selectedTypeRef/ordinalByNameRef above.
-  const shortcutBarRef = useRef(shortcutBar);
-  useEffect(() => {
-    shortcutBarRef.current = shortcutBar;
-  });
+
+  const inBounds = (x: number, y: number, z: number) =>
+    x >= 0 && x < scene.width && y >= 0 && y < scene.height && z >= 0 && z < scene.depth;
 
   // Persists shortcut-bar state onto the scene's own YAML record so it survives reload/navigation
   // — same rationale as InstanceEditorViewport's layout persistence. Skips the very first run
@@ -432,27 +95,22 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     const timeout = setTimeout(() => {
       putApiAdminScenesByIdLayout({
         path: { id: scene.id },
-        body: { shortcutBarPages: shortcutBar.pages as string[][] },
+        body: { shortcutBarPages: v.shortcutBar.pages as string[][] },
         throwOnError: true,
       }).catch(console.error);
     }, 500);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- scene.id intentionally excluded, only its identity matters via the closure
-  }, [shortcutBar.pages]);
-
-  const { modKeys, activeDragMode } = useModifierDragMode();
-
-  const inBounds = (x: number, y: number, z: number) =>
-    x >= 0 && x < scene.width && y >= 0 && y < scene.height && z >= 0 && z < scene.depth;
+  }, [v.shortcutBar.pages]);
 
   useEffect(() => {
-    setLoadError(null);
+    v.setLoadError(null);
     if (!window.webApp) {
-      setLoadError("WASM module not loaded (webApp.js missing).");
+      v.setLoadError("WASM module not loaded (webApp.js missing).");
       return;
     }
     // SceneMesher silently no-ops until block defs are ready (mirrors ChunkManager's behavior).
-    if (!blockDefsReady) return;
+    if (!v.blockDefsReady) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const B = window.BABYLON;
@@ -461,8 +119,8 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
     const babylonScene = new B.Scene(engine);
     babylonScene.clearColor = new B.Color4(0.06, 0.06, 0.08, 1);
-    sceneRef.current = babylonScene;
-    clipMeshesRef.current = {};
+    v.setScene(babylonScene);
+    v.setClipMeshes({});
 
     let wasmExports: Awaited<NonNullable<typeof window.webApp>> | null = null;
     window.webApp!.then((e) => {
@@ -590,52 +248,26 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     const groundMeshes = new Set<InstanceType<typeof BABYLON.Mesh>>([ground]);
 
     const overlayMeshes = new Set<InstanceType<typeof BABYLON.Mesh>>();
-    overlayMeshesRef.current = overlayMeshes;
+    v.setOverlayMeshes(overlayMeshes);
     const overlay = createOverlayController(B, babylonScene, overlayMeshes);
     const selectionGizmo = createSelectionGizmo(
       B,
       babylonScene,
       clipBounds,
-      (box) => setSelection(box),
-      flashActionError,
+      (box) => v.setSelection(box),
+      v.flashActionError,
     );
-    selectionGizmo.setShape(selectionShapeRef.current);
-    selectionGizmo.setSnap(selectionSnapRef.current);
-    selectionGizmoRef.current = selectionGizmo;
+    selectionGizmo.setShape(v.selectionShapeRef.current);
+    selectionGizmo.setSnap(v.selectionSnapRef.current);
+    v.setSelectionGizmoInstance(selectionGizmo);
 
-    // Paste preview — see InstanceEditorViewport.tsx's identical block for the buildBlockPreviewMeshes
-    // usage and depth-bias rationale.
-    function disposePastePreview() {
-      for (const m of pastePreviewMeshesRef.current) m.dispose();
-      pastePreviewMeshesRef.current = [];
-    }
-    function renderPastePreview(origin: PasteOrigin) {
-      disposePastePreview();
-      const entries = applyPasteTransform(clipboardRef.current?.entries ?? [], pasteTransformRef.current);
-      const meshes: ReturnType<typeof buildBlockPreviewMeshes> = [];
-      for (const entry of entries) {
-        const ordinal = ordinalByNameRef.current.get(entry.type);
-        if (ordinal == null) continue;
-        for (const mesh of buildBlockPreviewMeshes(babylonScene, ordinal, entry.state & 0x03)) {
-          mesh.position = new B!.Vector3(origin.x + entry.relX, origin.y + entry.relY, origin.z + entry.relZ);
-          mesh.isPickable = false;
-          if (mesh.material) {
-            mesh.material.zOffset = 0;
-            mesh.material.zOffsetUnits = 0;
-            mesh.material.disableDepthWrite = true;
-          }
-          mesh.renderingGroupId = 1;
-          meshes.push(mesh);
-        }
-      }
-      pastePreviewMeshesRef.current = meshes;
-    }
-    const pasteGizmo = createPasteGizmo(B, babylonScene, (origin) => {
-      pasteOriginRef.current = origin;
-      setPasteOrigin(origin);
-      renderPastePreview(origin);
-    });
-    pasteGizmoRef.current = pasteGizmo;
+    // The paste gizmo's own drag callback needs the controller's renderPastePreview, but the
+    // controller itself needs `pasteGizmo` already built (to wire pasteActions.start/move/cancel)
+    // — this indirection breaks that circular dependency, rebound to the real handler right after
+    // the controller is created below.
+    let onPasteGizmoDrag: (origin: PasteOrigin) => void = () => {};
+    const pasteGizmo = createPasteGizmo(B, babylonScene, (origin) => onPasteGizmoDrag(origin));
+    v.setPasteGizmoInstance(pasteGizmo);
 
     // mcScene* rail-test exports operate on the mesher singleton, no scene param — see
     // AdminScenePreview.kt's mcSceneRailTest* trio.
@@ -646,10 +278,10 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       (deltaSeconds) => (wasmExports ? wasmExports.mcSceneRailTestTick(deltaSeconds) : ""),
       () => wasmExports?.mcSceneRailTestStop(),
     );
-    railTestCartRef.current = railTestCart;
+    v.setRailTestCartInstance(railTestCart);
 
     const railSwitchMarkers = createRailSwitchMarkers(B, babylonScene);
-    railSwitchMarkersRef.current = railSwitchMarkers;
+    v.setRailSwitchMarkersInstance(railSwitchMarkers);
     function refreshJunctions() {
       if (!wasmExports) return;
       const csv = wasmExports.mcSceneListJunctions();
@@ -661,177 +293,9 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         : [];
       railSwitchMarkers.update(junctions);
     }
-    refreshJunctionsRef.current = refreshJunctions;
-
-    pasteActionsRef.current = {
-      start: () => {
-        const entries = clipboardRef.current?.entries;
-        if (!entries || entries.length === 0) return;
-        const box = selectionRef.current;
-        const cx = box ? Math.floor(box.minX) : Math.floor((clipBounds.x[0] + clipBounds.x[1]) / 2);
-        const cy = box ? Math.floor(box.minY) : Math.floor((clipBounds.y[0] + clipBounds.y[1]) / 2);
-        const cz = box ? Math.floor(box.minZ) : Math.floor((clipBounds.z[0] + clipBounds.z[1]) / 2);
-        const origin: PasteOrigin = { x: cx, y: cy, z: cz };
-        pasteOriginRef.current = origin;
-        setPasteOrigin(origin);
-        isPastingRef.current = true;
-        setIsPasting(true);
-        pasteTransformRef.current = IDENTITY_PASTE_TRANSFORM;
-        setPasteTransform(IDENTITY_PASTE_TRANSFORM);
-        // Hides the selection wireframe while the paste gizmo is active — see
-        // InstanceEditorViewport.tsx's identical call for the rationale.
-        selectionGizmo.setSelection(null);
-        pasteGizmo.setOrigin(origin);
-        renderPastePreview(origin);
-      },
-      move: (origin) => {
-        if (!pasteOriginRef.current) return;
-        pasteOriginRef.current = origin;
-        setPasteOrigin(origin);
-        pasteGizmo.setOrigin(origin);
-        renderPastePreview(origin);
-      },
-      rotate: (dir) => {
-        if (!pasteOriginRef.current) return;
-        const rotation = (((pasteTransformRef.current.rotation + dir) % 4) + 4) % 4;
-        const next: PasteTransform = { ...pasteTransformRef.current, rotation: rotation as 0 | 1 | 2 | 3 };
-        pasteTransformRef.current = next;
-        setPasteTransform(next);
-        renderPastePreview(pasteOriginRef.current);
-      },
-      flip: (axis) => {
-        if (!pasteOriginRef.current) return;
-        const key: "flipX" | "flipY" | "flipZ" = axis === "x" ? "flipX" : axis === "y" ? "flipY" : "flipZ";
-        const next: PasteTransform = { ...pasteTransformRef.current, [key]: !pasteTransformRef.current[key] };
-        pasteTransformRef.current = next;
-        setPasteTransform(next);
-        renderPastePreview(pasteOriginRef.current);
-      },
-      confirm: () => {
-        const origin = pasteOriginRef.current;
-        const entries = applyPasteTransform(clipboardRef.current?.entries ?? [], pasteTransformRef.current);
-        if (!origin || entries.length === 0) {
-          pasteActionsRef.current.cancel();
-          return;
-        }
-        const edits: SceneBlockDto[] = [];
-        const undoGroup: UndoEntry[] = [];
-        for (const entry of entries) {
-          const x = origin.x + entry.relX;
-          const y = origin.y + entry.relY;
-          const z = origin.z + entry.relZ;
-          if (!inBounds(x, y, z)) continue;
-          const prevOrdinal = wasmExports ? wasmExports.mcSceneGetBlockOrdinalAt(x, y, z) : 0;
-          const prevState = wasmExports ? wasmExports.mcSceneGetBlockStateAt(x, y, z) : 0;
-          const prevType = wasmExports ? (nameByOrdinalRef.current[prevOrdinal] ?? "AIR") : "AIR";
-          undoGroup.push({ x, y, z, type: prevType, state: prevState, xOffset: 0, zOffset: 0 });
-          edits.push({ x, y, z, type: entry.type, state: entry.state, xOffset: 0, zOffset: 0 });
-        }
-        if (edits.length > 0) {
-          editSocket?.sendBatch(edits);
-          pushUndo(undoGroup);
-          for (const edit of edits) {
-            const ordinal = ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
-            if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
-          }
-          reloadEntities();
-        }
-        pasteActionsRef.current.cancel();
-      },
-      cancel: () => {
-        disposePastePreview();
-        pasteGizmo.setOrigin(null);
-        pasteOriginRef.current = null;
-        setPasteOrigin(null);
-        isPastingRef.current = false;
-        setIsPasting(false);
-        selectionGizmo.setSelection(selectionRef.current);
-      },
-    };
+    v.setRefreshJunctionsImpl(refreshJunctions);
 
     let disposed = false;
-
-    // Whole-volume load: fetch the raw binary buffer once and mesh it in one call — no
-    // chunk-streaming equivalent, since a Scene is always small enough to load in full. The live
-    // edit socket only opens once this initial bulk load has succeeded, so a broadcast edit from
-    // another editor never lands on a buffer that isn't meshed yet.
-    let editSocket: BlockEditSocket<SceneBlockDto> | null = null;
-
-    async function loadScene() {
-      const exports = await window.webApp!;
-      // Binary payload (application/octet-stream) — not a JSON API, kept as a manual fetch.
-      const buf = await fetch(`/api/admin/scenes/${encodeURIComponent(scene.id)}/blocks/raw`).then((r) =>
-        r.arrayBuffer(),
-      );
-      const { width, height, depth, blocks, states, extraStates } = parseSceneRaw(buf);
-      exports.mcSceneLoad(babylonScene, width, height, depth, blocks, states, extraStates);
-      applyClipPlanes(B!, babylonScene, clipPlanesRef.current, clipBounds, overlayMeshes, clipMeshesRef.current);
-      for (const m of babylonScene.meshes) {
-        const mesh = m as InstanceType<typeof BABYLON.Mesh>;
-        if (!groundMeshes.has(mesh) && !overlayMeshes.has(mesh)) mesh.isPickable = true;
-      }
-      if (disposed) return;
-      // Fractional/lego entities (see Scene.entities) aren't carried by the blocks/raw binary
-      // blob above — loaded separately so LEGO_PIECE etc. render with their correct sub-voxel
-      // geometry from the start, not just as a plain cube.
-      await reloadEntities();
-      if (disposed) return;
-      editSocket = connectEditSocket<SceneBlockDto>(
-        "scenes",
-        scene.id,
-        (edit) => {
-          const ordinal = ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
-          if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
-          reloadEntities();
-        },
-        (message) => flashActionError(message),
-        // A batch broadcast from another admin tab (e.g. its own Fill/Shell/Cut). No batch variant
-        // of mcSceneSetBlock exists — each voxel still remeshes the whole buffer individually, a
-        // known cost bounded by MAX_SELECTION_OP_VOXELS.
-        (edits) => {
-          for (const edit of edits) {
-            const ordinal = ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
-            if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
-          }
-          reloadEntities();
-        },
-      );
-    }
-
-    loadScene().catch((e) => {
-      console.error("Failed to load scene", e);
-      if (!disposed) setLoadError(String(e));
-    });
-
-    // Debug helper (KeyV): logs every non-air block in the current selection as JSON — blocktype,
-    // position, rotation (bits 0-1 of the state byte, mirrors BlockState.rotation() in Kotlin).
-    function dumpSelectionToConsole() {
-      const box = selectionRef.current;
-      if (!box || !wasmExports) return;
-      const voxels = computeSelectionVoxels(box, selectionShapeRef.current, "fill");
-      if (!voxels) {
-        flashActionError(`Selection too large (max ${MAX_SELECTION_OP_VOXELS} voxels)`);
-        return;
-      }
-      const blocks = voxels
-        .map(({ x, y, z }) => {
-          const ordinal = wasmExports!.mcSceneGetBlockOrdinalAt(x, y, z);
-          const state = wasmExports!.mcSceneGetBlockStateAt(x, y, z);
-          const type = nameByOrdinalRef.current[ordinal] ?? "AIR";
-          return { type, x, y, z, rotation: state & 0x03 };
-        })
-        .filter((b) => b.type !== "AIR");
-      console.log(JSON.stringify(blocks, null, 2));
-    }
-
-    function captureBlock(at: UndoEntry): UndoEntry {
-      if (!wasmExports)
-        return { x: at.x, y: at.y, z: at.z, type: "AIR", state: 0, xOffset: at.xOffset, zOffset: at.zOffset };
-      const ordinal = wasmExports.mcSceneGetBlockOrdinalAt(at.x, at.y, at.z);
-      const state = wasmExports.mcSceneGetBlockStateAt(at.x, at.y, at.z);
-      const type = nameByOrdinalRef.current[ordinal] ?? "AIR";
-      return { x: at.x, y: at.y, z: at.z, type, state, xOffset: at.xOffset, zOffset: at.zOffset };
-    }
 
     function exportsSetBlock(x: number, y: number, z: number, ordinal: number, state: number) {
       if (!wasmExports) return;
@@ -844,121 +308,6 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
         const mesh = m as InstanceType<typeof BABYLON.Mesh>;
         if (!groundMeshes.has(mesh) && !overlayMeshes.has(mesh)) mesh.isPickable = true;
       }
-    }
-
-    // Applies an edit both server-side (via the live edit socket, the only write path) and
-    // locally via the WASM mesher (instant, optimistic — no round-trip wait). Mirrors
-    // InstanceEditorViewport's applyEntry, minus the chunk reload (mcSceneSetBlock re-meshes the
-    // whole buffer synchronously).
-    function applyEntry(entry: UndoEntry, onSuccess: () => void) {
-      const ordinal = ordinalByNameRef.current.get(entry.type) ?? (entry.type === "AIR" ? 0 : null);
-      editSocket?.send({
-        x: entry.x,
-        y: entry.y,
-        z: entry.z,
-        type: entry.type,
-        state: entry.state,
-        xOffset: entry.xOffset,
-        zOffset: entry.zOffset,
-      });
-      onSuccess();
-      if (ordinal != null) exportsSetBlock(entry.x, entry.y, entry.z, ordinal, entry.state);
-      reloadEntities();
-    }
-
-    const { pushUndo, performUndo, performRedo } = makeUndoRedoController<UndoEntry>(
-      undoStackRef,
-      redoStackRef,
-      captureBlock,
-      applyEntry,
-    );
-
-    // Fill/Shell/Cut on the current selection — one WS batch frame (editSocket.sendBatch) instead
-    // of N individual sends, one undo-stack group instead of N slots. See selectionVoxels.ts for
-    // the voxel enumeration/cap.
-    runSelectionOpRef.current = (kind: "fill" | "shell" | "cut" | "copy") => {
-      const box = selectionRef.current;
-      if (!box) return;
-      if (kind !== "cut" && kind !== "copy" && !patternBlocksRef.current[0]) return;
-      const shapeMode = kind === "cut" || kind === "copy" ? "fill" : kind;
-      const voxels = computeSelectionVoxels(box, selectionShapeRef.current, shapeMode);
-      if (!voxels) {
-        flashActionError(`Selection too large (max ${MAX_SELECTION_OP_VOXELS} voxels)`);
-        return;
-      }
-      const valid = voxels.filter((v) => inBounds(v.x, v.y, v.z));
-      if (valid.length === 0) return;
-
-      const pattern: Pattern = { a: patternBlocksRef.current[0] ?? "AIR", b: patternBlocksRef.current[1] ?? undefined };
-      const originX = Math.floor(box.minX);
-      const originY = Math.floor(box.minY);
-      const originZ = Math.floor(box.minZ);
-      const edits: SceneBlockDto[] = [];
-      const undoGroup: UndoEntry[] = [];
-      const clipEntries: { relX: number; relY: number; relZ: number; type: string; state: number }[] = [];
-
-      for (const v of valid) {
-        const prevOrdinal = wasmExports ? wasmExports.mcSceneGetBlockOrdinalAt(v.x, v.y, v.z) : 0;
-        const prevState = wasmExports ? wasmExports.mcSceneGetBlockStateAt(v.x, v.y, v.z) : 0;
-        const prevType = wasmExports ? (nameByOrdinalRef.current[prevOrdinal] ?? "AIR") : "AIR";
-
-        if (kind === "cut" || kind === "copy") {
-          clipEntries.push({
-            relX: v.x - originX,
-            relY: v.y - originY,
-            relZ: v.z - originZ,
-            type: prevType,
-            state: prevState,
-          });
-        }
-        // Copy is read-only — no edit, no undo entry, geometry stays untouched.
-        if (kind === "copy") continue;
-
-        undoGroup.push({ x: v.x, y: v.y, z: v.z, type: prevType, state: prevState, xOffset: 0, zOffset: 0 });
-        const type = kind === "cut" ? "AIR" : resolvePatternBlock(pattern, v.x, v.y, v.z);
-        edits.push({ x: v.x, y: v.y, z: v.z, type, state: 0, xOffset: 0, zOffset: 0 });
-      }
-
-      if (kind !== "copy") {
-        editSocket?.sendBatch(edits);
-        pushUndo(undoGroup);
-        for (const edit of edits) {
-          const ordinal = ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
-          if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
-        }
-        reloadEntities();
-      }
-      if (kind === "cut" || kind === "copy") {
-        clipboardRef.current = { entries: clipEntries };
-        setClipboardCount(clipEntries.length);
-      }
-    };
-
-    // Thin wrappers binding the shared fractionalPlacement.ts helpers to this editor's wasm
-    // exports (mcSceneGetUsedXZOffsetAt/mcSceneGetBlockOrdinalAt) — see that module for the
-    // actual slot/redirect logic (shared with InstanceEditorViewport.tsx).
-    function usedSlotAtLocal(wx: number, wy: number, wz: number): [number, number] | null {
-      if (!wasmExports) return null;
-      return usedSlotAt((x, y, z) => wasmExports!.mcSceneGetUsedXZOffsetAt(x, y, z), wx, wy, wz);
-    }
-
-    function resolvePlacementCellLocal(
-      pickedPoint: InstanceType<typeof BABYLON.Vector3>,
-      normal: InstanceType<typeof BABYLON.Vector3>,
-    ): [number, number, number] {
-      if (!wasmExports) {
-        return [
-          Math.floor(pickedPoint.x + normal.x * PICK_EPSILON),
-          Math.floor(pickedPoint.y + normal.y * PICK_EPSILON),
-          Math.floor(pickedPoint.z + normal.z * PICK_EPSILON),
-        ];
-      }
-      return resolvePlacementCell(
-        pickedPoint,
-        normal,
-        (x, y, z) => wasmExports!.mcSceneGetBlockOrdinalAt(x, y, z),
-        (ordinal) => window.mc.getBlockDef(ordinal),
-      );
     }
 
     // Refetches the scene's fractional/lego entity list (GET .../entities) and re-meshes — the
@@ -981,348 +330,146 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       }
     }
 
-    // Block name shown top-right whenever a voxel is under the cursor — independent of edit mode,
-    // so it also updates while in select mode or mid-rail-test-picking (unlike the ghost/break
-    // overlay below, which those modes suppress).
-    function updateHoveredVoxelName(
-      pick: ReturnType<typeof babylonScene.pick>,
-      normal: InstanceType<typeof BABYLON.Vector3> | null,
-      onGround: boolean,
-    ) {
-      if (!pick?.hit || !pick.pickedPoint || onGround || !normal || !wasmExports) {
-        setHoveredVoxelName(null);
-        return;
-      }
-      const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
-      const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
-      const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
-      if (!inBounds(bx, by, bz)) {
-        setHoveredVoxelName(null);
-        return;
-      }
-      const ordinal = wasmExports.mcSceneGetBlockOrdinalAt(bx, by, bz);
-      const name = nameByOrdinalRef.current[ordinal];
-      setHoveredVoxelName(name && name !== "AIR" ? name : null);
-    }
+    // Whole-volume load: fetch the raw binary buffer once and mesh it in one call — no
+    // chunk-streaming equivalent, since a Scene is always small enough to load in full. The live
+    // edit socket only opens once this initial bulk load has succeeded, so a broadcast edit from
+    // another editor never lands on a buffer that isn't meshed yet.
+    let editSocket: BlockEditSocket<SceneBlockDto> | null = null;
 
-    function updateHoverPreview(evt: PointerEvent) {
-      const hoverPick = babylonScene.pick(babylonScene.pointerX, babylonScene.pointerY);
-      const hoverNormal = hoverPick?.hit ? hoverPick.getNormal(true) : null;
-      const hoverOnGround =
-        !!hoverPick?.pickedMesh && groundMeshes.has(hoverPick.pickedMesh as InstanceType<typeof BABYLON.Mesh>);
-      updateHoveredVoxelName(hoverPick, hoverNormal, hoverOnGround);
-
-      if (modeRef.current === "select" || testRailStateRef.current === "picking") {
-        overlay.disposeAll();
-        return;
-      }
-      const effectiveMode = evt.shiftKey ? "break" : modeRef.current;
-      const pick = hoverPick;
-      if (!pick?.hit || !pick.pickedMesh || !pick.pickedPoint) {
-        overlay.disposeAll();
-        return;
-      }
-      const normal = hoverNormal;
-      const onGround = hoverOnGround;
-
-      if (effectiveMode === "break") {
-        overlay.disposeGhost();
-        overlay.disposeOutline();
-        if (onGround || !normal || !wasmExports) {
-          overlay.disposeBreakOverlay();
-          return;
-        }
-        const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
-        const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
-        const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
-        if (!inBounds(bx, by, bz)) {
-          overlay.disposeBreakOverlay();
-          return;
-        }
-        const targetOrdinal = wasmExports.mcSceneGetBlockOrdinalAt(bx, by, bz);
-        const targetState = wasmExports.mcSceneGetBlockStateAt(bx, by, bz);
-        const rotation = targetState & 0x03;
-        const targetDef = window.mc.getBlockDef(targetOrdinal);
-        const bs = targetDef?.brickSize ?? [2, 2, 2];
-        const [bXOffset, bZOffset] = computeSlotOffset(
-          pick.pickedPoint.x,
-          pick.pickedPoint.z,
-          bx,
-          bz,
-          bs[0],
-          bs[2],
-          rotation,
-          normal.x !== 0,
-          normal.z !== 0,
-          usedSlotAtLocal(bx, by, bz),
-        );
-        overlay.showBreakOverlay(bx, by, bz, targetOrdinal, rotation, bXOffset, bZOffset);
-        return;
-      }
-      overlay.disposeBreakOverlay();
-
-      const type = selectedTypeRef.current;
-      const ordinal = type ? ordinalByNameRef.current.get(type) : undefined;
-      if (ordinal == null) {
-        overlay.disposeGhost();
-        overlay.disposeOutline();
-        return;
-      }
-      let tx: number, ty: number, tz: number;
-      if (onGround) {
-        tx = Math.floor(pick.pickedPoint.x);
-        ty = 0;
-        tz = Math.floor(pick.pickedPoint.z);
-      } else if (normal) {
-        [tx, ty, tz] = resolvePlacementCellLocal(pick.pickedPoint, normal);
-      } else {
-        overlay.disposeGhost();
-        overlay.disposeOutline();
-        return;
-      }
-      if (!inBounds(tx, ty, tz)) {
-        overlay.disposeGhost();
-        overlay.disposeOutline();
-        return;
-      }
-      const blockDef = window.mc.getBlockDef(ordinal);
-      const bs = blockDef?.brickSize ?? [2, 2, 2];
-      const [xOffset, zOffset] = computeSlotOffset(
-        pick.pickedPoint.x,
-        pick.pickedPoint.z,
-        tx,
-        tz,
-        bs[0],
-        bs[2],
-        overlay.getPlacementRotation(),
-        !onGround && !!normal && normal.x !== 0,
-        !onGround && !!normal && normal.z !== 0,
-        usedSlotAtLocal(tx, ty, tz),
+    async function loadScene() {
+      const exports = await window.webApp!;
+      // Binary payload (application/octet-stream) — not a JSON API, kept as a manual fetch.
+      const buf = await fetch(`/api/admin/scenes/${encodeURIComponent(scene.id)}/blocks/raw`).then((r) =>
+        r.arrayBuffer(),
       );
-      overlay.showGhostAndOutline(tx, ty, tz, ordinal, selectedColorIndexRef.current, xOffset, zOffset);
+      const { width, height, depth, blocks, states, extraStates } = parseSceneRaw(buf);
+      exports.mcSceneLoad(babylonScene, width, height, depth, blocks, states, extraStates);
+      applyClipPlanes(B!, babylonScene, v.clipPlanesRef.current, clipBounds, overlayMeshes, v.clipMeshesRef.current);
+      for (const m of babylonScene.meshes) {
+        const mesh = m as InstanceType<typeof BABYLON.Mesh>;
+        if (!groundMeshes.has(mesh) && !overlayMeshes.has(mesh)) mesh.isPickable = true;
+      }
+      if (disposed) return;
+      // Fractional/lego entities (see Scene.entities) aren't carried by the blocks/raw binary
+      // blob above — loaded separately so LEGO_PIECE etc. render with their correct sub-voxel
+      // geometry from the start, not just as a plain cube.
+      await reloadEntities();
+      if (disposed) return;
+      editSocket = connectEditSocket<SceneBlockDto>(
+        "scenes",
+        scene.id,
+        (edit) => {
+          const ordinal = v.ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
+          if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
+          reloadEntities();
+        },
+        (message) => v.flashActionError(message),
+        // A batch broadcast from another admin tab (e.g. its own Fill/Shell/Cut). No batch variant
+        // of mcSceneSetBlock exists — each voxel still remeshes the whole buffer individually, a
+        // known cost bounded by MAX_SELECTION_OP_VOXELS.
+        (edits) => {
+          for (const edit of edits) {
+            const ordinal = v.ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
+            if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
+          }
+          reloadEntities();
+        },
+      );
     }
 
-    function onKeyDown(e: KeyboardEvent) {
-      const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
-      if (isPastingRef.current) {
-        if (e.code === "Enter" || e.code === "NumpadEnter") {
-          pasteActionsRef.current.confirm();
-          return;
-        }
-        if (e.code === "Escape") {
-          pasteActionsRef.current.cancel();
-          return;
-        }
-      }
-      if (e.code === "Escape" && testRailStateRef.current !== "idle") {
-        railTestCartRef.current?.stop();
-        railSwitchMarkersRef.current?.clear();
-        setTestRailState("idle");
-        return;
-      }
-      if (e.code === "KeyU") {
-        performUndo();
-        return;
-      }
-      if (e.code === "KeyY") {
-        performRedo();
-        return;
-      }
-      if (e.code === "KeyT") {
-        toggleTestRail();
-        return;
-      }
-      if (e.code === "KeyV") {
-        dumpSelectionToConsole();
-        return;
-      }
-      if (e.code !== "KeyR") return;
-      overlay.rotatePlacement();
-      updateHoverPreview({ shiftKey: e.shiftKey } as PointerEvent);
-    }
-    window.addEventListener("keydown", onKeyDown);
+    loadScene().catch((e) => {
+      console.error("Failed to load scene", e);
+      if (!disposed) v.setLoadError(String(e));
+    });
+
+    // Bridges this editor's buffer/wasm specifics to the shared handler logic in
+    // voxelEditorSceneController.ts — see voxelVolumeAdapter.ts for what each method means.
+    const adapter: VoxelVolumeAdapter<SceneBlockDto> = {
+      isReady: () => !!wasmExports,
+      inBounds,
+      getBlockOrdinalAt: (x, y, z) => (wasmExports ? wasmExports.mcSceneGetBlockOrdinalAt(x, y, z) : 0),
+      getBlockStateAt: (x, y, z) => (wasmExports ? wasmExports.mcSceneGetBlockStateAt(x, y, z) : 0),
+      getUsedXZOffsetAt: (x, y, z) =>
+        wasmExports ? usedSlotAt((wx, wy, wz) => wasmExports!.mcSceneGetUsedXZOffsetAt(wx, wy, wz), x, y, z) : null,
+      getEditSocket: () => editSocket,
+      applyLocal: (edit) => {
+        const ordinal = v.ordinalByNameRef.current.get(edit.type) ?? (edit.type === "AIR" ? 0 : null);
+        if (ordinal != null) exportsSetBlock(edit.x, edit.y, edit.z, ordinal, edit.state);
+      },
+      afterEdit: () => {
+        reloadEntities();
+      },
+      afterRailSwitchToggle: (junction) => {
+        wasmExports?.mcSceneSetExtraState(
+          junction.wx,
+          junction.wy,
+          junction.wz,
+          (junction.currentBranch + 1) % junction.branchCount,
+        );
+        refreshJunctions();
+      },
+      railPickInBounds: inBounds,
+    };
+
+    const controller = createVoxelEditorSceneController({
+      B,
+      scene: babylonScene,
+      overlay,
+      groundMeshes,
+      selectionGizmo,
+      pasteGizmo,
+      railSwitchMarkers,
+      clipBounds,
+      adapter,
+      makeEdit: (fields) => fields as SceneBlockDto,
+      selectionRef: v.selectionRef,
+      selectionShapeRef: v.selectionShapeRef,
+      patternBlocksRef: v.patternBlocksRef,
+      clipboardRef: v.clipboardRef,
+      pasteOriginRef: v.pasteOriginRef,
+      pasteTransformRef: v.pasteTransformRef,
+      isPastingRef: v.isPastingRef,
+      ordinalByNameRef: v.ordinalByNameRef,
+      nameByOrdinalRef: v.nameByOrdinalRef,
+      selectedTypeRef: v.selectedTypeRef,
+      selectedColorIndexRef: v.selectedColorIndexRef,
+      modeRef: v.modeRef,
+      testRailStateRef: v.testRailStateRef,
+      railTestCartRef: v.railTestCartRef,
+      undoStackRef: v.undoStackRef,
+      redoStackRef: v.redoStackRef,
+      pastePreviewMeshesRef: v.pastePreviewMeshesRef,
+      setSelection: v.setSelection,
+      setPasteOrigin: v.setPasteOrigin,
+      setIsPasting: v.setIsPasting,
+      setPasteTransform: v.setPasteTransform,
+      setClipboardCount: v.setClipboardCount,
+      setTestRailState: v.setTestRailState,
+      setHoveredVoxelName: v.setHoveredVoxelName,
+      flashActionError: v.flashActionError,
+      shortcutBarRef: v.shortcutBarRef,
+      selectBlockType: v.selectBlockType,
+      toggleTestRail: v.toggleTestRail,
+    });
+    v.setPasteActionsImpl(controller.pasteActions);
+    v.setRunSelectionOpImpl(controller.runSelectionOp);
+    onPasteGizmoDrag = (origin) => {
+      v.setPasteOriginRefValue(origin);
+      v.setPasteOrigin(origin);
+      controller.renderPastePreview(origin);
+    };
+
+    window.addEventListener("keydown", controller.onKeyDown);
 
     const disposePointerController = setupOrbitPointerController({
       B,
       scene: babylonScene,
       camera,
       canvas,
-      getMode: () => modeRef.current,
-      onHoverMove: updateHoverPreview,
-      onCtrlClick: (pick) => {
-        const normal = pick.getNormal(true);
-        const onGround = groundMeshes.has(pick.pickedMesh as InstanceType<typeof BABYLON.Mesh>);
-        if (onGround || !normal || !pick.pickedPoint || !wasmExports) return;
-        const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
-        const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
-        const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
-        if (!inBounds(bx, by, bz)) return;
-        const ordinal = wasmExports.mcSceneGetBlockOrdinalAt(bx, by, bz);
-        const name = nameByOrdinalRef.current[ordinal];
-        if (!name || name === "AIR") return;
-        const slotIdx = shortcutBarRef.current.slots.findIndex((s) => s === name);
-        if (slotIdx !== -1) {
-          shortcutBarRef.current.selectSlot(slotIdx);
-        } else {
-          selectBlockType(name);
-        }
-      },
-      onClick: ({ pick, normal, mode: currentMode, shiftKey }) => {
-        const onGround = groundMeshes.has(pick.pickedMesh as InstanceType<typeof BABYLON.Mesh>);
-
-        if (testRailStateRef.current !== "idle") {
-          const junction = railSwitchMarkers.hitTest(pick.pickedMesh as InstanceType<typeof BABYLON.Mesh> | null);
-          if (junction) {
-            editSocket?.sendRaw({ x: junction.wx, y: junction.wy, z: junction.wz });
-            wasmExports?.mcSceneSetExtraState(
-              junction.wx,
-              junction.wy,
-              junction.wz,
-              (junction.currentBranch + 1) % junction.branchCount,
-            );
-            refreshJunctions();
-            return;
-          }
-        }
-
-        if (testRailStateRef.current === "picking") {
-          if (onGround || !normal || !pick.pickedPoint) return;
-          const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
-          const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
-          const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
-          if (!inBounds(bx, by, bz)) return;
-          if (railTestCartRef.current?.start(bx, by, bz)) {
-            setTestRailState("running");
-          } else {
-            flashActionError("Not a rail block");
-          }
-          return;
-        }
-
-        if (currentMode === "select") {
-          if (onGround || !normal || !pick.pickedPoint) return;
-          const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
-          const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
-          const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
-          if (!inBounds(bx, by, bz)) return;
-          const prev = selectionRef.current;
-          // Shift-click extends the existing selection to include the clicked block instead of
-          // replacing it — only when a selection already exists; otherwise it's a plain new pick.
-          if (shiftKey && prev) {
-            setSelection({
-              minX: Math.min(prev.minX, bx),
-              minY: Math.min(prev.minY, by),
-              minZ: Math.min(prev.minZ, bz),
-              maxX: Math.max(prev.maxX, bx + 1),
-              maxY: Math.max(prev.maxY, by + 1),
-              maxZ: Math.max(prev.maxZ, bz + 1),
-            });
-          } else {
-            setSelection({ minX: bx, minY: by, minZ: bz, maxX: bx + 1, maxY: by + 1, maxZ: bz + 1 });
-          }
-          return;
-        }
-
-        if (currentMode === "break") {
-          if (onGround || !normal || !pick.pickedPoint) return;
-          const bx = Math.floor(pick.pickedPoint.x - normal.x * PICK_EPSILON);
-          const by = Math.floor(pick.pickedPoint.y - normal.y * PICK_EPSILON);
-          const bz = Math.floor(pick.pickedPoint.z - normal.z * PICK_EPSILON);
-          if (!inBounds(bx, by, bz)) return;
-          // Resolve the targeted block's own brickSize so the removal hits the exact XZ sub-slot
-          // aimed at (e.g. one LEGO_PIECE among several stacked/slotted in the same cell) — see
-          // fractionalPlacement.ts / BlockBreaker.removeAt.
-          let breakXOffset = 0;
-          let breakZOffset = 0;
-          let prevType = "AIR";
-          let prevState = 0;
-          if (wasmExports) {
-            const targetOrdinal = wasmExports.mcSceneGetBlockOrdinalAt(bx, by, bz);
-            const targetState = wasmExports.mcSceneGetBlockStateAt(bx, by, bz);
-            const rotation = targetState & 0x03;
-            const targetDef = window.mc.getBlockDef(targetOrdinal);
-            const bs = targetDef?.brickSize ?? [2, 2, 2];
-            [breakXOffset, breakZOffset] = computeSlotOffset(
-              pick.pickedPoint.x,
-              pick.pickedPoint.z,
-              bx,
-              bz,
-              bs[0],
-              bs[2],
-              rotation,
-              normal.x !== 0,
-              normal.z !== 0,
-              usedSlotAtLocal(bx, by, bz),
-            );
-            prevType = targetDef?.name ?? "AIR";
-            prevState = targetState;
-          }
-          editSocket?.send({
-            x: bx,
-            y: by,
-            z: bz,
-            type: "AIR",
-            state: 0,
-            xOffset: breakXOffset,
-            zOffset: breakZOffset,
-          });
-          pushUndo({
-            x: bx,
-            y: by,
-            z: bz,
-            type: prevType,
-            state: prevState,
-            xOffset: breakXOffset,
-            zOffset: breakZOffset,
-          });
-          exportsSetBlock(bx, by, bz, 0, 0);
-          reloadEntities();
-          return;
-        }
-
-        const type = selectedTypeRef.current;
-        if (!type || !pick.pickedPoint) return;
-        let tx: number, ty: number, tz: number;
-        if (onGround) {
-          tx = Math.floor(pick.pickedPoint.x);
-          ty = 0;
-          tz = Math.floor(pick.pickedPoint.z);
-        } else if (normal) {
-          [tx, ty, tz] = resolvePlacementCellLocal(pick.pickedPoint, normal);
-        } else {
-          return;
-        }
-        if (!inBounds(tx, ty, tz)) return;
-        const ordinal = ordinalByNameRef.current.get(type);
-        if (ordinal == null) return;
-        const placeDef = window.mc.getBlockDef(ordinal);
-        const placeBs = placeDef?.brickSize ?? [2, 2, 2];
-        const [xOffset, zOffset] = computeSlotOffset(
-          pick.pickedPoint.x,
-          pick.pickedPoint.z,
-          tx,
-          tz,
-          placeBs[0],
-          placeBs[2],
-          overlay.getPlacementRotation(),
-          !onGround && !!normal && normal.x !== 0,
-          !onGround && !!normal && normal.z !== 0,
-          usedSlotAtLocal(tx, ty, tz),
-        );
-        let prevType = "AIR";
-        let prevState = 0;
-        if (wasmExports) {
-          const prevOrdinal = wasmExports.mcSceneGetBlockOrdinalAt(tx, ty, tz);
-          prevState = wasmExports.mcSceneGetBlockStateAt(tx, ty, tz);
-          prevType = nameByOrdinalRef.current[prevOrdinal] ?? "AIR";
-        }
-        const state = packState(overlay.getPlacementRotation(), selectedColorIndexRef.current);
-        editSocket?.send({ x: tx, y: ty, z: tz, type, state, xOffset, zOffset });
-        pushUndo({ x: tx, y: ty, z: tz, type: prevType, state: prevState, xOffset, zOffset });
-        exportsSetBlock(tx, ty, tz, ordinal, state);
-        reloadEntities();
-      },
+      getMode: () => v.modeRef.current,
+      onHoverMove: controller.updateHoverPreview,
+      onCtrlClick: controller.onCtrlClick,
+      onClick: controller.onClick,
     });
 
     const axesGizmo = createAxesGizmo(B, engine, camera);
@@ -1353,124 +500,108 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
       camera.onViewMatrixChangedObservable.remove(viewMatrixObserver);
       disposePointerController();
       window.removeEventListener("resize", onResize);
-      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keydown", controller.onKeyDown);
       overlay.disposeAll();
       selectionGizmo.dispose();
-      disposePastePreview();
+      controller.disposePastePreview();
       pasteGizmo.dispose();
       railTestCart.dispose();
-      railTestCartRef.current = null;
+      v.setRailTestCartInstance(null);
       railSwitchMarkers.dispose();
-      railSwitchMarkersRef.current = null;
+      v.setRailSwitchMarkersInstance(null);
       editSocket?.close();
       window.webApp?.then((exports) => exports.mcSceneDispose()).catch(() => {});
       axesGizmo.dispose();
       engine.dispose();
-      sceneRef.current = null;
-      overlayMeshesRef.current = null;
-      selectionGizmoRef.current = null;
-      pasteGizmoRef.current = null;
-      pastePreviewMeshesRef.current = [];
-      clipMeshesRef.current = {};
+      v.setScene(null);
+      v.setOverlayMeshes(null);
+      v.setSelectionGizmoInstance(null);
+      v.setPasteGizmoInstance(null);
+      v.setClipMeshes({});
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- scene.id identity is the intended re-mount trigger
-  }, [scene.id, blockDefsReady]);
-
-  useEffect(() => {
-    const babylonScene = sceneRef.current;
-    const overlayMeshes = overlayMeshesRef.current;
-    const B = window.BABYLON;
-    if (!babylonScene || !overlayMeshes || !B) return;
-    applyClipPlanes(B, babylonScene, clipPlanes, clipBounds, overlayMeshes, clipMeshesRef.current);
-  }, [clipPlanes, clipBounds, scene.id, blockDefsReady]);
-
-  // Mirrors the selection state into the gizmo — null both when no selection was made yet and
-  // whenever the editor leaves select mode (see the mode effect above, which clears `selection`).
-  useEffect(() => {
-    selectionRef.current = selection;
-    selectionGizmoRef.current?.setSelection(selection);
-  }, [selection]);
+  }, [scene.id, v.blockDefsReady]);
 
   return (
     <div className="flex-1 flex overflow-hidden">
       <div className="flex-[4] relative">
-        <ViewportCameraHud activeDragMode={activeDragMode} />
-        <HoveredVoxelNameHud name={hoveredVoxelName} />
-        <TestRailButton testRailState={testRailState} onToggle={toggleTestRail} />
-        {actionError && (
+        <ViewportCameraHud activeDragMode={v.activeDragMode} />
+        <HoveredVoxelNameHud name={v.hoveredVoxelName} />
+        <TestRailButton testRailState={v.testRailState} onToggle={v.toggleTestRail} />
+        {v.actionError && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 max-w-[80%] px-3 py-1.5 rounded bg-red-900/90 text-red-100 text-xs z-10 pointer-events-none">
-            {actionError}
+            {v.actionError}
           </div>
         )}
-        {loadError ? (
+        {v.loadError ? (
           <div className="w-full h-full flex items-center justify-center text-red-400 text-sm p-6 text-center">
-            {loadError}
+            {v.loadError}
           </div>
         ) : (
           <canvas ref={canvasRef} className="w-full h-full block" />
         )}
       </div>
       <VoxelEditorSidebar
-        modKeys={modKeys}
-        mode={mode}
-        onToggleSelect={toggleSelectMode}
-        selectionShape={selectionShape}
-        onSelectShape={setSelectionShape}
-        selectionSnap={selectionSnap}
-        onSelectSnap={setSelectionSnap}
-        hasSelection={selection !== null}
-        selection={selection}
-        onSelectionFieldChange={setSelectionField}
-        patternBlocks={patternBlocks}
-        activePatternSlot={activePatternSlot}
-        onSelectPatternSlot={setActivePatternSlot}
-        onClearPatternSlot={clearPatternSlot}
-        onFill={() => runSelectionOp("fill")}
-        onShell={() => runSelectionOp("shell")}
-        onCut={() => runSelectionOp("cut")}
-        onCopy={() => runSelectionOp("copy")}
-        clipboardCount={clipboardCount}
-        onPaste={startPaste}
-        isPasting={isPasting}
-        onConfirmPaste={confirmPaste}
-        onCancelPaste={cancelPaste}
-        onRotatePaste={rotatePaste}
-        onFlipPaste={flipPaste}
-        pasteTransform={pasteTransform}
-        pasteOrigin={pasteOrigin}
-        onMovePasteOrigin={movePasteOrigin}
-        savedSelections={savedSelections}
-        onAddSelectionToMemory={addSelectionToMemory}
-        onSelectSavedSelection={selectSavedSelection}
-        onRemoveSavedSelection={removeSavedSelection}
-        resizeStep={resizeStep}
-        onSelectResizeStep={setResizeStep}
-        onExpandSelection={expandSelection}
-        onContractSelection={contractSelection}
-        activeDragMode={activeDragMode}
-        selectedType={selectedType}
-        blockDefsReady={blockDefsReady}
-        previewsReady={previewsReady}
-        previewProgress={previewProgress}
-        getOrdinal={getOrdinal}
-        blockDefs={blockDefs}
-        plainColors={plainColors}
-        selectedColorIndex={selectedColorIndex}
-        setSelectedColorIndex={setSelectedColorIndex}
-        clipPlanes={clipPlanes}
+        modKeys={v.modKeys}
+        mode={v.mode}
+        onToggleSelect={v.toggleSelectMode}
+        selectionShape={v.selectionShape}
+        onSelectShape={v.setSelectionShape}
+        selectionSnap={v.selectionSnap}
+        onSelectSnap={v.setSelectionSnap}
+        hasSelection={v.selection !== null}
+        selection={v.selection}
+        onSelectionFieldChange={v.setSelectionField}
+        patternBlocks={v.patternBlocks}
+        activePatternSlot={v.activePatternSlot}
+        onSelectPatternSlot={v.setActivePatternSlot}
+        onClearPatternSlot={v.clearPatternSlot}
+        onFill={() => v.runSelectionOp("fill")}
+        onShell={() => v.runSelectionOp("shell")}
+        onCut={() => v.runSelectionOp("cut")}
+        onCopy={() => v.runSelectionOp("copy")}
+        clipboardCount={v.clipboardCount}
+        onPaste={v.startPaste}
+        isPasting={v.isPasting}
+        onConfirmPaste={v.confirmPaste}
+        onCancelPaste={v.cancelPaste}
+        onRotatePaste={v.rotatePaste}
+        onFlipPaste={v.flipPaste}
+        pasteTransform={v.pasteTransform}
+        pasteOrigin={v.pasteOrigin}
+        onMovePasteOrigin={v.movePasteOrigin}
+        savedSelections={v.savedSelections}
+        onAddSelectionToMemory={v.addSelectionToMemory}
+        onSelectSavedSelection={v.selectSavedSelection}
+        onRemoveSavedSelection={v.removeSavedSelection}
+        resizeStep={v.resizeStep}
+        onSelectResizeStep={v.setResizeStep}
+        onExpandSelection={v.expandSelection}
+        onContractSelection={v.contractSelection}
+        activeDragMode={v.activeDragMode}
+        selectedType={v.selectedType}
+        blockDefsReady={v.blockDefsReady}
+        previewsReady={v.previewsReady}
+        previewProgress={v.previewProgress}
+        getOrdinal={v.getOrdinal}
+        blockDefs={v.blockDefs}
+        plainColors={v.plainColors}
+        selectedColorIndex={v.selectedColorIndex}
+        setSelectedColorIndex={v.setSelectedColorIndex}
+        clipPlanes={v.clipPlanes}
         clipBounds={clipBounds}
-        setClipPlanes={setClipPlanes}
-        shortcutBar={shortcutBar}
-        hoveredShortcutSlot={hoveredShortcutSlot}
-        setHoveredShortcutSlot={setHoveredShortcutSlot}
-        getPreview={getPreview}
-        search={search}
-        setSearch={setSearch}
-        hoveredBlockName={hoveredBlockName}
-        hoveredRect={hoveredRect}
-        setHoveredBlockName={setHoveredBlockName}
-        setHoveredRect={setHoveredRect}
-        selectBlockType={selectBlockType}
+        setClipPlanes={v.setClipPlanes}
+        shortcutBar={v.shortcutBar}
+        hoveredShortcutSlot={v.hoveredShortcutSlot}
+        setHoveredShortcutSlot={v.setHoveredShortcutSlot}
+        getPreview={v.getPreview}
+        search={v.search}
+        setSearch={v.setSearch}
+        hoveredBlockName={v.hoveredBlockName}
+        hoveredRect={v.hoveredRect}
+        setHoveredBlockName={v.setHoveredBlockName}
+        setHoveredRect={v.setHoveredRect}
+        selectBlockType={v.selectBlockType}
       />
     </div>
   );
