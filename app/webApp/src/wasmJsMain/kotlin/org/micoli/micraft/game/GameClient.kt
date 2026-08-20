@@ -157,12 +157,16 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         scope.launch {
             while (isActive) {
                 delay(16)
-                chunkManager.drainPendingChunks(
-                    playerCx = currentPlayerCx,
-                    playerCz = currentPlayerCz,
-                    yaw = currentYaw.toDouble(),
-                    budgetMs = if (isInitialLoading) 4.0 else 2.0,
-                )
+                if (localController.hasPrediction) {
+                    // Skip meshing until the real server position lands — otherwise chunks near
+                    // spawn get judged against the 0,0 placeholder and wrongly meshed as impostors.
+                    chunkManager.drainPendingChunks(
+                        playerCx = currentPlayerCx,
+                        playerCz = currentPlayerCz,
+                        yaw = currentYaw.toDouble(),
+                        budgetMs = if (isInitialLoading) 4.0 else 2.0,
+                    )
+                }
                 chunkManager.drainOneMinimapPush()
             }
         }
