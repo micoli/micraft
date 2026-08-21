@@ -282,6 +282,7 @@ class GameAssetsController {
 
                     if (!objFile.exists()) {
                         cacheDir.mkdirs()
+                        File(cacheDir, "source.name").writeText(file.nameWithoutExtension)
                         val scriptFile = File(cacheDir, "convert.py")
                         scriptFile.writeText(
                             """
@@ -289,6 +290,52 @@ class GameAssetsController {
                             out = sys.argv[sys.argv.index("--") + 1]
                             selected_names = sys.argv[sys.argv.index("--") + 2:]
                             out_dir = os.path.dirname(out)
+
+                            # Materials with a flat (unlinked) base color have no image to export,
+                            # so map_Kd stays absent from the mtl and the color is lost downstream.
+                            # Bake a tiny solid-color image per such material and wire it into the
+                            # shader so the obj/mtl export (and ObjToBbmodel) sees a real texture.
+                            def color_input(node_tree):
+                                for n in node_tree.nodes:
+                                    if n.type == 'BSDF_PRINCIPLED':
+                                        inp = n.inputs.get('Base Color')
+                                        if inp:
+                                            return inp
+                                for n in node_tree.nodes:
+                                    if n.type in ('BSDF_DIFFUSE', 'BSDF_GLOSSY'):
+                                        inp = n.inputs.get('Color')
+                                        if inp:
+                                            return inp
+                                return None
+
+                            for mat in bpy.data.materials:
+                                if not mat:
+                                    continue
+                                legacy_color = list(mat.diffuse_color)[:4]
+                                if not mat.use_nodes:
+                                    mat.use_nodes = True
+                                if not mat.node_tree:
+                                    continue
+                                inp = color_input(mat.node_tree)
+                                if inp is None or inp.is_linked:
+                                    continue
+                                img = bpy.data.images.new('bake_' + mat.name, width=4, height=4, alpha=True)
+                                img.pixels = legacy_color * (4 * 4)
+                                tex_node = mat.node_tree.nodes.new('ShaderNodeTexImage')
+                                tex_node.image = img
+                                mat.node_tree.links.new(tex_node.outputs['Color'], inp)
+
+                            for obj in bpy.data.objects:
+                                if obj.type != 'MESH' or obj.data.uv_layers or not obj.data.polygons:
+                                    continue
+                                bpy.context.view_layer.objects.active = obj
+                                obj.select_set(True)
+                                bpy.ops.object.mode_set(mode='EDIT')
+                                bpy.ops.mesh.select_all(action='SELECT')
+                                bpy.ops.uv.smart_project()
+                                bpy.ops.object.mode_set(mode='OBJECT')
+                                obj.select_set(False)
+
                             # Save every image (packed or external) as a plain file next to the obj,
                             # under the name path_mode='STRIP' will reference in the mtl, so the
                             # texture is always resolvable regardless of how the .blend stored it.
@@ -379,14 +426,17 @@ class GameAssetsController {
                         return@get call.respond(HttpStatusCode.NotFound)
                     }
 
-                    val bbmodelFile =
-                        File(objFile.parentFile, "${objFile.nameWithoutExtension}.bbmodel")
+                    val sourceNameFile = File(objFile.parentFile, "source.name")
+                    val bbmodelName =
+                        sourceNameFile.takeIf { it.exists() }?.readText()?.trim()?.ifEmpty { null }
+                            ?: objFile.nameWithoutExtension
+                    val bbmodelFile = File(objFile.parentFile, "$bbmodelName.bbmodel")
                     if (!bbmodelFile.exists()) {
                         val mtlFile =
                             File(objFile.parentFile, "${objFile.nameWithoutExtension}.mtl")
                         val bbmodel =
                             ObjToBbmodel.convert(
-                                objName = objFile.nameWithoutExtension,
+                                objName = bbmodelName,
                                 objContent = objFile.readText(),
                                 mtlContent = mtlFile.takeIf { it.exists() }?.readText(),
                                 resolveTexture = { textureName ->

@@ -29,6 +29,7 @@ export function BlendModelViewer({ path }: Props) {
   const [exportError, setExportError] = useState<string | null>(null);
   const [clearingCache, setClearingCache] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [autoApply, setAutoApply] = useState(false);
 
   useEffect(() => {
     setSceneTree(null);
@@ -86,16 +87,17 @@ export function BlendModelViewer({ path }: Props) {
     setSelected((prev) => {
       const next = new Set(prev);
       objectNames.forEach((name) => (checked ? next.add(name) : next.delete(name)));
+      if (autoApply) refreshPreview(next);
       return next;
     });
   }
 
-  function refreshPreview() {
+  function refreshPreview(objectNames: Set<string> = selected) {
     setRefreshing(true);
     setBbmodelUrl(null);
     setExportError(null);
     const relPath = toRelPath(path);
-    const url = toBlendApiUrl("blend-preview", relPath) + "?objects=" + encodeURIComponent([...selected].join(","));
+    const url = toBlendApiUrl("blend-preview", relPath) + "?objects=" + encodeURIComponent([...objectNames].join(","));
     fetch(url)
       .then(async (r) => {
         if (!r.ok) throw new Error((await r.text()) || `HTTP ${r.status}`);
@@ -170,13 +172,24 @@ export function BlendModelViewer({ path }: Props) {
         <div className="w-56 shrink-0 border-l border-[#2E3A4E] flex flex-col overflow-hidden">
           <div className="shrink-0 px-3 py-2 border-b border-[#2E3A4E] flex items-center justify-between">
             <span className="text-xs text-[#8A99AF]">Scène</span>
-            <button
-              onClick={refreshPreview}
-              disabled={refreshing || selected.size === 0}
-              className="px-2 py-0.5 rounded text-[11px] font-mono border border-[#2E3A4E] text-[#8A99AF] hover:border-[#3C50E0] hover:text-white disabled:opacity-50"
-            >
-              {refreshing ? "…" : "Appliquer"}
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => refreshPreview()}
+                disabled={refreshing || selected.size === 0}
+                className="px-2 py-0.5 rounded text-[11px] font-mono border border-[#2E3A4E] text-[#8A99AF] hover:border-[#3C50E0] hover:text-white disabled:opacity-50"
+              >
+                {refreshing ? "…" : "Appliquer"}
+              </button>
+              <label className="flex items-center gap-1 text-[11px] text-[#8A99AF] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autoApply}
+                  onChange={(e) => setAutoApply(e.target.checked)}
+                  className="accent-[#3C50E0]"
+                />
+                Auto
+              </label>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto px-3 py-2">
             <BlendSceneTree node={sceneTree} selected={selected} onToggle={toggleObjects} />
