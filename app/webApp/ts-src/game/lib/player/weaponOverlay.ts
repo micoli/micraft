@@ -1,4 +1,5 @@
-import type { Mesh, Scene } from "@babylonjs/core";
+import type { Scene } from "@babylonjs/core";
+import { buildMeshElement, buildTextureMaterials, isMeshElement, resolveTextureDims } from "./bbmodelMesh";
 
 // A weapon/tool bbmodel has exactly one element named "handle" — no bone mapping needed,
 // it is always parented to the rightItem/leftItem pivot of the hand it's equipped in.
@@ -6,23 +7,7 @@ const HANDLE_ELEMENT_NAME = "handle";
 
 const WEAPON_SCALE = 1 / 16;
 
-// Mesh-type bbmodel element (e.g. exported from OBJ) — no `from`/`to`, geometry is an arbitrary
-// vertex/face graph instead of a box. Kept local rather than widened into the shared
-// `BbModelElement` type since that type is also used for block models, which are cube-only.
-interface BbModelMeshElement {
-  uuid: string;
-  name: string;
-  type: "mesh";
-  visibility?: boolean;
-  vertices: Record<string, [number, number, number]>;
-  faces: Record<string, { vertices: string[]; uv: Record<string, [number, number]>; texture: number | null }>;
-}
-
 type WeaponElement = BbModelElement | BbModelMeshElement;
-
-function isMeshElement(el: WeaponElement): el is BbModelMeshElement {
-  return "vertices" in el && "faces" in el && typeof (el as BbModelMeshElement).vertices === "object";
-}
 
 // The handle's own cuboid is the reference every other element (and the yaml `rotate`) is
 // positioned/pivoted around, so re-centering or reshaping a weapon in Blockbench only means
@@ -44,55 +29,6 @@ function elementCenter(el: WeaponElement): [number, number, number] {
   const [fx, fy, fz] = el.from;
   const [tx, ty, tz] = el.to;
   return [(fx + tx) / 2, (fy + ty) / 2, (fz + tz) / 2];
-}
-
-// Builds a triangulated mesh from a bbmodel mesh element. Each face's vertices get their own
-// position/uv entries (rather than sharing indices across faces) since UV differs per face-corner.
-function buildMeshElement(
-  name: string,
-  el: BbModelMeshElement,
-  scene: Scene,
-  center: [number, number, number],
-  W: number,
-  H: number,
-): Mesh {
-  const positions: number[] = [];
-  const uvs: number[] = [];
-  const indices: number[] = [];
-  let vertexCount = 0;
-
-  for (const face of Object.values(el.faces)) {
-    const corners = face.vertices;
-    if (corners.length < 3) continue;
-    const base = vertexCount;
-    for (const vid of corners) {
-      const p = el.vertices[vid];
-      if (!p) continue;
-      positions.push(
-        (p[0] - center[0]) * WEAPON_SCALE,
-        (p[1] - center[1]) * WEAPON_SCALE,
-        (p[2] - center[2]) * WEAPON_SCALE,
-      );
-      const uv = face.uv[vid] ?? [0, 0];
-      uvs.push(uv[0] / W, 1 - uv[1] / H);
-      vertexCount++;
-    }
-    for (let i = 1; i < corners.length - 1; i++) {
-      indices.push(base, base + i, base + i + 1);
-    }
-  }
-
-  const mesh = new BABYLON.Mesh(name, scene);
-  const vertexData = new BABYLON.VertexData();
-  vertexData.positions = positions;
-  vertexData.uvs = uvs;
-  vertexData.indices = indices;
-  const normals: number[] = [];
-  BABYLON.VertexData.ComputeNormals(positions, indices, normals);
-  vertexData.normals = normals;
-  vertexData.applyToMesh(mesh);
-  mesh.isPickable = false;
-  return mesh;
 }
 
 function fetchHandItemModel(name: string): Promise<BbModel> {
@@ -166,19 +102,9 @@ export function registerWeaponOverlay(): Pick<
       const H = bbmodel.resolution.height;
       if (!scene.__mcSceneId) scene.__mcSceneId = Math.random().toString(36).slice(2);
       const cacheKey = `weapon_${itemName}_${scene.__mcSceneId}`;
-      if (bbmodel.textures?.length > 0 && !window.mcState.skinMatCache[cacheKey]) {
-        const texDef = bbmodel.textures[0];
-        const tex = new BABYLON.Texture(texDef.source, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
-        tex.hasAlpha = true;
-        tex.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
-        tex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
-        const mat = new BABYLON.StandardMaterial(`weaponMat_${itemName}`, scene);
-        mat.diffuseTexture = tex;
-        mat.specularColor = new BABYLON.Color3(0, 0, 0);
-        mat.useAlphaFromDiffuseTexture = true;
-        window.mcState.skinMatCache[cacheKey] = mat;
-      }
-      const mat = window.mcState.skinMatCache[cacheKey];
+      const materials = buildTextureMaterials(bbmodel, scene, cacheKey, true);
+      const mat = materials[0] ?? null;
+      const textureDims = resolveTextureDims(bbmodel);
 
       // Anchor: sits at the hand's barycenter, rotated per the item's `rotate` yaml property
       // (degrees, see WeaponDefinition/ToolDefinition). Every element of the bbmodel — including
@@ -202,8 +128,14 @@ export function registerWeaponOverlay(): Pick<
 
         if (isMeshElement(el)) {
           if (Object.keys(el.vertices).length === 0) continue;
-          const mesh = buildMeshElement(`weapon_${itemName}_${el.name}`, el, scene, [hcx, hcy, hcz], W, H);
-          mesh.material = mat;
+          const mesh = buildMeshElement(
+            `weapon_${itemName}_${el.name}`,
+            el,
+            scene,
+            [hcx, hcy, hcz],
+            materials,
+            textureDims,
+          );
           mesh.parent = anchor;
           continue;
         }

@@ -2,6 +2,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { interpAxis } from "../../game/lib/player/playerModel";
+import { buildMeshElement, isMeshElement, resolveTextureDims } from "../../game/lib/player/bbmodelMesh";
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -68,17 +69,20 @@ function buildModel(
   const W = bbmodel.resolution.width;
   const H = bbmodel.resolution.height;
 
-  let mat: any = null;
-  if (bbmodel.textures?.length > 0) {
-    const src = bbmodel.textures[0].source;
-    const tex = new B.Texture(src, scene, true, true, B.Texture.NEAREST_SAMPLINGMODE);
+  // One material per texture (rather than the shared/cached `buildTextureMaterials` helper) —
+  // this viewer builds a fresh scene per mount, so there's nothing to reuse across calls.
+  const materials: any[] = (bbmodel.textures ?? []).map((texDef, i) => {
+    const tex = new B.Texture(texDef.source, scene, true, true, B.Texture.NEAREST_SAMPLINGMODE);
     tex.hasAlpha = false;
     tex.wrapU = B.Texture.CLAMP_ADDRESSMODE;
     tex.wrapV = B.Texture.CLAMP_ADDRESSMODE;
-    mat = new B.StandardMaterial("skinMat", scene);
-    mat.diffuseTexture = tex;
-    mat.specularColor = new B.Color3(0, 0, 0);
-  }
+    const texMat = new B.StandardMaterial(`skinMat_${i}`, scene);
+    texMat.diffuseTexture = tex;
+    texMat.specularColor = new B.Color3(0, 0, 0);
+    return texMat;
+  });
+  const mat: any = materials[0] ?? null;
+  const textureDims = resolveTextureDims(bbmodel);
 
   const groupMap: Record<string, any> = {};
   bbmodel.groups.forEach((g: any) => {
@@ -125,7 +129,18 @@ function buildModel(
     );
   });
 
-  for (const el of bbmodel.elements) {
+  for (const el of bbmodel.elements as unknown as (BbModelElement | BbModelMeshElement)[]) {
+    if (el.visibility === false) continue;
+
+    if (isMeshElement(el)) {
+      if (Object.keys(el.vertices).length === 0) continue;
+      const meshEl = buildMeshElement(el.name, el, scene, [0, 0, 0], materials, textureDims);
+      const groupUuid = elToGroupUuid[el.uuid];
+      const pg = groupUuid ? allGroupNodes[groupUuid] : null;
+      meshEl.parent = pg ? pg.node : root;
+      continue;
+    }
+
     const [fx, fy, fz] = el.from,
       [tx, ty, tz] = el.to;
     if (Math.abs(tx - fx) < 0.001 || Math.abs(ty - fy) < 0.001 || Math.abs(tz - fz) < 0.001) continue;

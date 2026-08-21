@@ -46,6 +46,24 @@ declare global {
     };
   }
 
+  // Arbitrary-geometry element (e.g. exported from OBJ via ObjToBbmodel) — no `from`/`to`, each
+  // face carries its own vertex list, per-vertex UV, and an index into `BbModel.textures` (a
+  // single mesh can reference several distinct textures, one per material it was exported with).
+  interface BbModelMeshFace {
+    vertices: string[];
+    uv: Record<string, [number, number]>;
+    texture: number | null;
+  }
+
+  interface BbModelMeshElement {
+    uuid: string;
+    name: string;
+    type: "mesh";
+    visibility?: boolean;
+    vertices: Record<string, [number, number, number]>;
+    faces: Record<string, BbModelMeshFace>;
+  }
+
   interface BbModelGroup {
     uuid: string;
     name: string;
@@ -70,7 +88,7 @@ declare global {
     elements: BbModelElement[];
     groups: BbModelGroup[];
     outliner: Array<string | { uuid: string; children: Array<string | unknown> }>;
-    textures: Array<{ source: string; uuid?: string; name?: string }>;
+    textures: Array<{ source: string; uuid?: string; name?: string; width?: number; height?: number }>;
     animations?: BbModelAnimation[];
   }
 
