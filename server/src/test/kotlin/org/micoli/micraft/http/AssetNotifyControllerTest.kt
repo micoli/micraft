@@ -28,7 +28,7 @@ class AssetNotifyControllerTest {
         val wsClient = createClient { install(io.ktor.client.plugins.websocket.WebSockets) }
         wsClient.webSocket("/ws") {
             // Trigger the forced-reload broadcast once the socket is connected.
-            launch { client.post("/api/assets/reload") }
+            val postJob = launch { client.post("/api/assets/reload") }
             var received: String? = null
             for (frame in incoming) {
                 if (frame is Frame.Text) {
@@ -39,6 +39,7 @@ class AssetNotifyControllerTest {
                     }
                 }
             }
+            postJob.join()
             assertTrue(received != null && received.contains("\"type\":\"reload\""))
         }
     }
