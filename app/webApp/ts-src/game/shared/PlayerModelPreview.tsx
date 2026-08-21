@@ -30,6 +30,7 @@ export function useArmorModelsReady(armors: string[]): boolean {
       setReady(true);
       return;
     }
+    setReady(false);
     const iv = setInterval(() => {
       if (check()) {
         setReady(true);
@@ -56,6 +57,7 @@ export function useWeaponModelsReady(items: (string | null | undefined)[]): bool
       setReady(true);
       return;
     }
+    setReady(false);
     const iv = setInterval(() => {
       if (check()) {
         setReady(true);
