@@ -111,6 +111,7 @@ export const en = {
   // ── Players page ────────────────────────────────────────────────────────────
   "players.title": "Players",
   "players.none": "No players",
+  "players.filter": "Filter players…",
   "players.selectToEdit": "Select a player to edit",
   "players.failedToLoad": "Failed to load",
   "players.renameFailed": "Rename failed",

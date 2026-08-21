@@ -106,6 +106,7 @@ export const fr: Record<TranslationKey, string> = {
   // ── Players page ────────────────────────────────────────────────────────────
   "players.title": "Joueurs",
   "players.none": "Aucun joueur",
+  "players.filter": "Filtrer les joueurs…",
   "players.selectToEdit": "Sélectionner un joueur à modifier",
   "players.failedToLoad": "Échec du chargement",
   "players.renameFailed": "Échec du renommage",

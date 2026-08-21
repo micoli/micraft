@@ -167,7 +167,7 @@ export function UsersPage() {
                         {(playersByEmail[u.email] ?? []).map((p) => (
                           <Link
                             key={p}
-                            to={`/admin/players?p=${encodeURIComponent(p)}`}
+                            to={`/admin/players/${encodeURIComponent(p)}`}
                             className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-green-950/40 border-green-700/40 text-green-400 hover:text-white hover:border-green-500 transition-colors"
                           >
                             {p}

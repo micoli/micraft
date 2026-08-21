@@ -279,13 +279,17 @@ class WorldPersistence(val worldDir: Path) {
     fun listPlayers(): List<String> =
         playersDir
             .toFile()
-            .listFiles { f -> f.extension == "yaml" && !f.name.contains("-") }
+            .listFiles { f ->
+                f.extension == "yaml" && !f.name.contains("-") && !f.name.endsWith("_mailbox.yaml")
+            }
             ?.map { it.nameWithoutExtension } ?: emptyList()
 
     fun listPlayersByEmail(email: String): List<PlayerState> =
         playersDir
             .toFile()
-            .listFiles { f -> f.extension == "yaml" && !f.name.contains("-") }
+            .listFiles { f ->
+                f.extension == "yaml" && !f.name.contains("-") && !f.name.endsWith("_mailbox.yaml")
+            }
             ?.mapNotNull { f ->
                 try {
                     loadPlayerFileFromYaml(f.toPath())?.state

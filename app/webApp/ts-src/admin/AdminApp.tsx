@@ -34,6 +34,7 @@ export function AdminApp() {
                 <Route path="/admin" element={<StatusPage />} />
                 <Route path="/admin/users" element={<UsersPage />} />
                 <Route path="/admin/players" element={<PlayersPage />} />
+                <Route path="/admin/players/:playerName" element={<PlayersPage />} />
                 <Route path="/admin/npcs" element={<NpcsPage />} />
                 <Route path="/admin/classes" element={<ClassesPage />} />
                 <Route path="/admin/config" element={<ConfigEditorPage />} />
