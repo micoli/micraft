@@ -119,8 +119,10 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
     });
   }, [open]);
 
+  const sortedWeapons = Object.keys(weapons).sort();
+  const sortedTools = Object.keys(tools).sort();
   const handItems = { ...weapons, ...tools };
-  const sortedHandItems = Object.keys(handItems).sort();
+  const sortedHandItems = [...sortedWeapons, ...sortedTools];
 
   function setHand(hand: "right" | "left", name: string) {
     const key = hand === "right" ? "rightHandItem" : "leftHandItem";
@@ -237,11 +239,24 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
                             onChange={(e) => setHand(hand, e.target.value)}
                           >
                             <option value="">(empty)</option>
-                            {sortedHandItems.map((name) => (
-                              <option key={name} value={name}>
-                                {name} — {handItems[name].category}
-                              </option>
-                            ))}
+                            {sortedWeapons.length > 0 && (
+                              <optgroup label="Weapons">
+                                {sortedWeapons.map((name) => (
+                                  <option key={name} value={name}>
+                                    {name} — {handItems[name].category}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            )}
+                            {sortedTools.length > 0 && (
+                              <optgroup label="Tools">
+                                {sortedTools.map((name) => (
+                                  <option key={name} value={name}>
+                                    {name} — {handItems[name].category}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            )}
                           </select>
                         </div>
                       );

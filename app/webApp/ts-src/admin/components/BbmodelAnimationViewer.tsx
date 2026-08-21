@@ -60,6 +60,7 @@ function buildModel(
 ): {
   root: any;
   pivotNodes: Record<string, { node: any; origin: [number, number, number] }>;
+  equippedWeapons: { LEFT: any; RIGHT: any };
 } {
   const SCALE = 1 / 16;
   const DEG = Math.PI / 180;
@@ -153,7 +154,7 @@ function buildModel(
     }
   }
 
-  return { root, pivotNodes };
+  return { root, pivotNodes, equippedWeapons: { LEFT: null, RIGHT: null } };
 }
 
 const DEG = Math.PI / 180;
@@ -161,11 +162,15 @@ const DEG = Math.PI / 180;
 export function BbmodelAnimationViewer({
   bbmodel,
   animFullName,
+  rightHandItem = null,
+  leftHandItem = null,
   width = 200,
   height = 280,
 }: {
   bbmodel: BbModel | null;
   animFullName: string;
+  rightHandItem?: string | null;
+  leftHandItem?: string | null;
   width?: number;
   height?: number;
 }) {
@@ -209,6 +214,8 @@ export function BbmodelAnimationViewer({
         light.groundColor = new B.Color3(0.2, 0.2, 0.2);
 
         const model = buildModel(B, bbmodel, scene);
+        if (rightHandItem) window.mc.attachWeapon?.(model as unknown as McPlayerModel, rightHandItem, scene, "RIGHT");
+        if (leftHandItem) window.mc.attachWeapon?.(model as unknown as McPlayerModel, leftHandItem, scene, "LEFT");
 
         const uuidToName: Record<string, string> = {};
         bbmodel.groups.forEach((g: any) => {
@@ -324,7 +331,7 @@ export function BbmodelAnimationViewer({
         engineRef.current = null;
       }
     };
-  }, [bbmodel]);
+  }, [bbmodel, rightHandItem, leftHandItem]);
 
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
