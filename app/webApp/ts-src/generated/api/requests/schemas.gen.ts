@@ -722,6 +722,68 @@ export const org_micoli_micraft_http_GameAssetsController_AssetEntrySchema = {
     title: 'GameAssetsController.AssetEntry'
 } as const;
 
+export const org_micoli_micraft_http_GameAssetsController_BlendSceneNodeSchema = {
+    type: 'object',
+    properties: {
+        children: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.http.GameAssetsController.BlendSceneNode'
+            },
+            title: 'List<GameAssetsController.BlendSceneNode>'
+        },
+        name: {
+            type: 'string',
+            title: 'String'
+        },
+        objType: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        type: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'children',
+        'name',
+        'type'
+    ],
+    title: 'GameAssetsController.BlendSceneNode'
+} as const;
+
+export const org_micoli_micraft_http_GameAssetsController_BlendPreviewResponseSchema = {
+    type: 'object',
+    properties: {
+        path: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'path'
+    ],
+    title: 'GameAssetsController.BlendPreviewResponse'
+} as const;
+
+export const org_micoli_micraft_http_GameAssetsController_BbmodelExportResponseSchema = {
+    type: 'object',
+    properties: {
+        path: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'path'
+    ],
+    title: 'GameAssetsController.BbmodelExportResponse'
+} as const;
+
 export const org_micoli_micraft_http_QuestDtoSchema = {
     type: 'object',
     properties: {

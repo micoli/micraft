@@ -466,6 +466,48 @@ export type OrgMicoliMicraftHttpGameAssetsControllerAssetEntry = {
 };
 
 /**
+ * GameAssetsController.BlendSceneNode
+ */
+export type OrgMicoliMicraftHttpGameAssetsControllerBlendSceneNode = {
+    /**
+     * List<GameAssetsController.BlendSceneNode>
+     */
+    children: Array<OrgMicoliMicraftHttpGameAssetsControllerBlendSceneNode>;
+    /**
+     * String
+     */
+    name: string;
+    /**
+     * String
+     */
+    objType?: null | string;
+    /**
+     * String
+     */
+    type: string;
+};
+
+/**
+ * GameAssetsController.BlendPreviewResponse
+ */
+export type OrgMicoliMicraftHttpGameAssetsControllerBlendPreviewResponse = {
+    /**
+     * String
+     */
+    path: string;
+};
+
+/**
+ * GameAssetsController.BbmodelExportResponse
+ */
+export type OrgMicoliMicraftHttpGameAssetsControllerBbmodelExportResponse = {
+    /**
+     * String
+     */
+    path: string;
+};
+
+/**
  * QuestDto
  */
 export type OrgMicoliMicraftHttpQuestDto = {
@@ -3043,6 +3085,129 @@ export type GetApiGameAssetsFileByResponses = {
 };
 
 export type GetApiGameAssetsFileByResponse = GetApiGameAssetsFileByResponses[keyof GetApiGameAssetsFileByResponses];
+
+export type GetApiGameAssetsBlendSceneByData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Relative path to a .blend asset
+         */
+        path: string;
+    };
+    query?: never;
+    url: '/api/game-assets/blend-scene/{...}';
+};
+
+export type GetApiGameAssetsBlendSceneByErrors = {
+    /**
+     * Asset not found
+     */
+    404: unknown;
+    /**
+     * Blender scene read failed
+     */
+    500: unknown;
+};
+
+export type GetApiGameAssetsBlendSceneByResponses = {
+    200: OrgMicoliMicraftHttpGameAssetsControllerBlendSceneNode;
+};
+
+export type GetApiGameAssetsBlendSceneByResponse = GetApiGameAssetsBlendSceneByResponses[keyof GetApiGameAssetsBlendSceneByResponses];
+
+export type DeleteApiGameAssetsBlendCacheByData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Relative path to a .blend asset
+         */
+        path: string;
+    };
+    query?: never;
+    url: '/api/game-assets/blend-cache/{...}';
+};
+
+export type DeleteApiGameAssetsBlendCacheByErrors = {
+    /**
+     * Asset not found
+     */
+    404: unknown;
+};
+
+export type DeleteApiGameAssetsBlendCacheByResponses = {
+    204: void;
+};
+
+export type DeleteApiGameAssetsBlendCacheByResponse = DeleteApiGameAssetsBlendCacheByResponses[keyof DeleteApiGameAssetsBlendCacheByResponses];
+
+export type GetApiGameAssetsBlendPreviewByData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Relative path to a .blend asset
+         */
+        path: string;
+    };
+    query?: {
+        /**
+         * String
+         *
+         * Comma-separated object names to export; omit to export the whole scene
+         */
+        objects?: string;
+    };
+    url: '/api/game-assets/blend-preview/{...}';
+};
+
+export type GetApiGameAssetsBlendPreviewByErrors = {
+    /**
+     * Asset not found
+     */
+    404: unknown;
+    /**
+     * Blender conversion failed
+     */
+    500: unknown;
+};
+
+export type GetApiGameAssetsBlendPreviewByResponses = {
+    200: OrgMicoliMicraftHttpGameAssetsControllerBlendPreviewResponse;
+};
+
+export type GetApiGameAssetsBlendPreviewByResponse = GetApiGameAssetsBlendPreviewByResponses[keyof GetApiGameAssetsBlendPreviewByResponses];
+
+export type GetApiGameAssetsBbmodelExportByData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Relative path to a .obj asset
+         */
+        path: string;
+    };
+    query?: never;
+    url: '/api/game-assets/bbmodel-export/{...}';
+};
+
+export type GetApiGameAssetsBbmodelExportByErrors = {
+    /**
+     * Asset not found
+     */
+    404: unknown;
+};
+
+export type GetApiGameAssetsBbmodelExportByResponses = {
+    200: OrgMicoliMicraftHttpGameAssetsControllerBbmodelExportResponse;
+};
+
+export type GetApiGameAssetsBbmodelExportByResponse = GetApiGameAssetsBbmodelExportByResponses[keyof GetApiGameAssetsBbmodelExportByResponses];
 
 export type GetApiQuestsData = {
     body?: never;

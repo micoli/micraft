@@ -1,8 +1,99 @@
-import type { Scene } from "@babylonjs/core";
+import type { Mesh, Scene } from "@babylonjs/core";
 
 // A weapon/tool bbmodel has exactly one element named "handle" — no bone mapping needed,
 // it is always parented to the rightItem/leftItem pivot of the hand it's equipped in.
 const HANDLE_ELEMENT_NAME = "handle";
+
+const WEAPON_SCALE = 1 / 16;
+
+// Mesh-type bbmodel element (e.g. exported from OBJ) — no `from`/`to`, geometry is an arbitrary
+// vertex/face graph instead of a box. Kept local rather than widened into the shared
+// `BbModelElement` type since that type is also used for block models, which are cube-only.
+interface BbModelMeshElement {
+  uuid: string;
+  name: string;
+  type: "mesh";
+  visibility?: boolean;
+  vertices: Record<string, [number, number, number]>;
+  faces: Record<string, { vertices: string[]; uv: Record<string, [number, number]>; texture: number | null }>;
+}
+
+type WeaponElement = BbModelElement | BbModelMeshElement;
+
+function isMeshElement(el: WeaponElement): el is BbModelMeshElement {
+  return "vertices" in el && "faces" in el && typeof (el as BbModelMeshElement).vertices === "object";
+}
+
+// The handle's own cuboid is the reference every other element (and the yaml `rotate`) is
+// positioned/pivoted around, so re-centering or reshaping a weapon in Blockbench only means
+// moving its "handle" cube — nothing else in the model needs to change.
+function elementCenter(el: WeaponElement): [number, number, number] {
+  if (isMeshElement(el)) {
+    const points = Object.values(el.vertices);
+    if (points.length === 0) return [0, 0, 0];
+    const min: [number, number, number] = [Infinity, Infinity, Infinity];
+    const max: [number, number, number] = [-Infinity, -Infinity, -Infinity];
+    for (const p of points) {
+      for (let i = 0; i < 3; i++) {
+        if (p[i] < min[i]) min[i] = p[i];
+        if (p[i] > max[i]) max[i] = p[i];
+      }
+    }
+    return [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2, (min[2] + max[2]) / 2];
+  }
+  const [fx, fy, fz] = el.from;
+  const [tx, ty, tz] = el.to;
+  return [(fx + tx) / 2, (fy + ty) / 2, (fz + tz) / 2];
+}
+
+// Builds a triangulated mesh from a bbmodel mesh element. Each face's vertices get their own
+// position/uv entries (rather than sharing indices across faces) since UV differs per face-corner.
+function buildMeshElement(
+  name: string,
+  el: BbModelMeshElement,
+  scene: Scene,
+  center: [number, number, number],
+  W: number,
+  H: number,
+): Mesh {
+  const positions: number[] = [];
+  const uvs: number[] = [];
+  const indices: number[] = [];
+  let vertexCount = 0;
+
+  for (const face of Object.values(el.faces)) {
+    const corners = face.vertices;
+    if (corners.length < 3) continue;
+    const base = vertexCount;
+    for (const vid of corners) {
+      const p = el.vertices[vid];
+      if (!p) continue;
+      positions.push(
+        (p[0] - center[0]) * WEAPON_SCALE,
+        (p[1] - center[1]) * WEAPON_SCALE,
+        (p[2] - center[2]) * WEAPON_SCALE,
+      );
+      const uv = face.uv[vid] ?? [0, 0];
+      uvs.push(uv[0] / W, 1 - uv[1] / H);
+      vertexCount++;
+    }
+    for (let i = 1; i < corners.length - 1; i++) {
+      indices.push(base, base + i, base + i + 1);
+    }
+  }
+
+  const mesh = new BABYLON.Mesh(name, scene);
+  const vertexData = new BABYLON.VertexData();
+  vertexData.positions = positions;
+  vertexData.uvs = uvs;
+  vertexData.indices = indices;
+  const normals: number[] = [];
+  BABYLON.VertexData.ComputeNormals(positions, indices, normals);
+  vertexData.normals = normals;
+  vertexData.applyToMesh(mesh);
+  mesh.isPickable = false;
+  return mesh;
+}
 
 function fetchHandItemModel(name: string): Promise<BbModel> {
   return fetch(`/api/models/weapons/${name}/${name}.bbmodel`).then((r) => {
@@ -60,7 +151,8 @@ export function registerWeaponOverlay(): Pick<
       const bbmodel = window.mcState?.weaponBbmodels?.[itemName];
       if (!bbmodel) return;
 
-      const handleEl = bbmodel.elements.find((el) => el.name === HANDLE_ELEMENT_NAME);
+      const elements = bbmodel.elements as unknown as WeaponElement[];
+      const handleEl = elements.find((el) => el.name === HANDLE_ELEMENT_NAME);
       if (!handleEl) {
         console.error(`[MiCraft] Hand item model ${itemName} has no "${HANDLE_ELEMENT_NAME}" element`);
         return;
@@ -72,8 +164,6 @@ export function registerWeaponOverlay(): Pick<
 
       const W = bbmodel.resolution.width;
       const H = bbmodel.resolution.height;
-      const SCALE = 1 / 16;
-
       if (!scene.__mcSceneId) scene.__mcSceneId = Math.random().toString(36).slice(2);
       const cacheKey = `weapon_${itemName}_${scene.__mcSceneId}`;
       if (bbmodel.textures?.length > 0 && !window.mcState.skinMatCache[cacheKey]) {
@@ -92,8 +182,10 @@ export function registerWeaponOverlay(): Pick<
 
       // Anchor: sits at the hand's barycenter, rotated per the item's `rotate` yaml property
       // (degrees, see WeaponDefinition/ToolDefinition). Every element of the bbmodel — including
-      // "handle" itself — is rendered relative to the handle's own center, so the whole
-      // weapon/tool shape follows the anchor, not just the handle placeholder.
+      // "handle" itself — is rendered relative to the handle's own cuboid center, so the whole
+      // weapon/tool shape follows the anchor, and the yaml `rotate` pivots around the handle.
+      // Repositioning or reshaping a model in Blockbench is then just a matter of moving the
+      // "handle" cube — no other element needs touching.
       const anchor = new BABYLON.TransformNode(`weapon_${itemName}_${hand}_anchor`, scene);
       anchor.parent = pg.node;
       anchor.position = BABYLON.Vector3.Zero();
@@ -103,14 +195,19 @@ export function registerWeaponOverlay(): Pick<
       // be `undefined` here — coalesce each one individually rather than the whole object.
       anchor.rotation = new BABYLON.Vector3((rotate?.x ?? 0) * DEG, (rotate?.y ?? 0) * DEG, (rotate?.z ?? 0) * DEG);
 
-      const [hfx, hfy, hfz] = handleEl.from;
-      const [htx, hty, htz] = handleEl.to;
-      const hcx = (hfx + htx) / 2;
-      const hcy = (hfy + hty) / 2;
-      const hcz = (hfz + htz) / 2;
+      const [hcx, hcy, hcz] = elementCenter(handleEl);
 
-      for (const el of bbmodel.elements) {
+      for (const el of elements) {
         if (el.visibility === false) continue;
+
+        if (isMeshElement(el)) {
+          if (Object.keys(el.vertices).length === 0) continue;
+          const mesh = buildMeshElement(`weapon_${itemName}_${el.name}`, el, scene, [hcx, hcy, hcz], W, H);
+          mesh.material = mat;
+          mesh.parent = anchor;
+          continue;
+        }
+
         const [fx, fy, fz] = el.from;
         const [tx, ty, tz] = el.to;
         if (Math.abs(tx - fx) < 0.001 || Math.abs(ty - fy) < 0.001 || Math.abs(tz - fz) < 0.001) continue;
@@ -118,9 +215,9 @@ export function registerWeaponOverlay(): Pick<
         const mesh = BABYLON.MeshBuilder.CreateBox(
           `weapon_${itemName}_${el.name}`,
           {
-            width: Math.abs(tx - fx) * SCALE,
-            height: Math.abs(ty - fy) * SCALE,
-            depth: Math.abs(tz - fz) * SCALE,
+            width: Math.abs(tx - fx) * WEAPON_SCALE,
+            height: Math.abs(ty - fy) * WEAPON_SCALE,
+            depth: Math.abs(tz - fz) * WEAPON_SCALE,
             faceUV: window.mcState.skinFaceUV(el, W, H),
           },
           scene,
@@ -132,7 +229,11 @@ export function registerWeaponOverlay(): Pick<
         const cx = (fx + tx) / 2;
         const cy = (fy + ty) / 2;
         const cz = (fz + tz) / 2;
-        mesh.position = new BABYLON.Vector3((cx - hcx) * SCALE, (cy - hcy) * SCALE, (cz - hcz) * SCALE);
+        mesh.position = new BABYLON.Vector3(
+          (cx - hcx) * WEAPON_SCALE,
+          (cy - hcy) * WEAPON_SCALE,
+          (cz - hcz) * WEAPON_SCALE,
+        );
       }
 
       model.equippedWeapons[hand] = anchor;

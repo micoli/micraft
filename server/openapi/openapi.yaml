@@ -698,6 +698,57 @@ paths:
           description: Asset not found
           headers: {}
       deprecated: false
+  /api/game-assets/blend-scene/{...}:
+    get:
+      tags: []
+      description: Reads a .blend file's collection/object tree via headless Blender
+        (cached)
+      parameters:
+      - name: path
+        in: path
+        description: Relative path to a .blend asset
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.GameAssetsController.BlendSceneNode"
+        "404":
+          description: Asset not found
+          headers: {}
+        "500":
+          description: Blender scene read failed
+          headers: {}
+      deprecated: false
+  /api/game-assets/blend-cache/{...}:
+    delete:
+      tags: []
+      description: Clears the cached Blender conversion (scene tree + all OBJ/bbmodel
+        exports) for a .blend file
+      parameters:
+      - name: path
+        in: path
+        description: Relative path to a .blend asset
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "204":
+          headers: {}
+        "404":
+          description: Asset not found
+          headers: {}
+      deprecated: false
   /api/game-assets/blend-preview/{...}:
     get:
       tags: []
@@ -708,6 +759,16 @@ paths:
         in: path
         description: Relative path to a .blend asset
         required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      - name: objects
+        in: query
+        description: Comma-separated object names to export; omit to export the whole
+          scene
+        required: false
         deprecated: false
         explode: false
         schema:
@@ -725,6 +786,33 @@ paths:
           headers: {}
         "500":
           description: Blender conversion failed
+          headers: {}
+      deprecated: false
+  /api/game-assets/bbmodel-export/{...}:
+    get:
+      tags: []
+      description: Converts an OBJ/MTL mesh into a Blockbench-compatible mesh .bbmodel
+        (cached). The generated mesh elements are not rendered by the admin viewer
+        — open the result in Blockbench to edit it.
+      parameters:
+      - name: path
+        in: path
+        description: Relative path to a .obj asset
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.GameAssetsController.BbmodelExportResponse"
+        "404":
+          description: Asset not found
           headers: {}
       deprecated: false
   /api/quests:
@@ -3189,6 +3277,30 @@ components:
       - pack
       - path
       title: GameAssetsController.AssetEntry
+    org.micoli.micraft.http.GameAssetsController.BlendSceneNode:
+      type: object
+      properties:
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.http.GameAssetsController.BlendSceneNode"
+          title: List<GameAssetsController.BlendSceneNode>
+        name:
+          type: string
+          title: String
+        objType:
+          type:
+          - "null"
+          - string
+          title: String
+        type:
+          type: string
+          title: String
+      required:
+      - children
+      - name
+      - type
+      title: GameAssetsController.BlendSceneNode
     org.micoli.micraft.http.GameAssetsController.BlendPreviewResponse:
       type: object
       properties:
@@ -3198,6 +3310,15 @@ components:
       required:
       - path
       title: GameAssetsController.BlendPreviewResponse
+    org.micoli.micraft.http.GameAssetsController.BbmodelExportResponse:
+      type: object
+      properties:
+        path:
+          type: string
+          title: String
+      required:
+      - path
+      title: GameAssetsController.BbmodelExportResponse
     org.micoli.micraft.http.QuestDto:
       type: object
       properties:

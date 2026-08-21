@@ -26,8 +26,8 @@ export function CodexPage() {
   }
   const activeTab = tab as AdminTab;
 
-  const selectItem = (key: string | null) =>
-    navigate(key ? `/admin/codex/${activeTab}/${encodeURIComponent(key)}` : `/admin/codex/${activeTab}`);
+  const selectItem = (key: string | null, options?: { replace?: boolean }) =>
+    navigate(key ? `/admin/codex/${activeTab}/${encodeURIComponent(key)}` : `/admin/codex/${activeTab}`, options);
 
   return (
     <div className="flex flex-col h-full overflow-hidden -m-6">

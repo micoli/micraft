@@ -7,32 +7,62 @@ import { useWeaponModelsReady } from "../../../game/shared/PlayerModelPreview";
 import { SidebarList } from "../SidebarList";
 import { PropRow } from "../../PropRow";
 import { EmptyDetail } from "../../../primitives/EmptyDetail";
+import { RotateSliders } from "./RotateSliders";
 
-type HandItemDefinition = { category: string };
+type Rotation = { x: number; y: number; z: number };
+type HandItemDefinition = { category: string; rotate?: Rotation };
+const ZERO_ROTATION: Rotation = { x: 0, y: 0, z: 0 };
 
 type ModelsTabProps = {
   selectedKey: string | null;
-  onSelectKey: (key: string | null) => void;
+  onSelectKey: (key: string | null, options?: { replace?: boolean }) => void;
 };
+
+const DEFAULT_ZOOM = 3.0;
+const DEFAULT_ANGLE = 0;
 
 function parseSelectedKey(key: string | null): {
   skin: string;
   animFullName: string | null;
   rightHandItem: string | null;
   leftHandItem: string | null;
+  paused: boolean;
+  zoom: number | undefined;
+  angle: number | undefined;
 } {
-  if (!key) return { skin: "articulated", animFullName: null, rightHandItem: null, leftHandItem: null };
-  const [skin, animFullName, right, left] = key.split(":");
+  if (!key) {
+    return {
+      skin: "articulated",
+      animFullName: null,
+      rightHandItem: null,
+      leftHandItem: null,
+      paused: false,
+      zoom: undefined,
+      angle: undefined,
+    };
+  }
+  const [skin, animFullName, right, left, paused, zoom, angle] = key.split(":");
   return {
     skin,
     animFullName: animFullName ?? null,
     rightHandItem: right || null,
     leftHandItem: left || null,
+    paused: paused === "1",
+    zoom: zoom ? parseFloat(zoom) : undefined,
+    angle: angle ? parseFloat(angle) : undefined,
   };
 }
 
-function buildKey(skin: string, animFullName: string, rightHandItem: string | null, leftHandItem: string | null) {
-  return `${skin}:${animFullName}:${rightHandItem ?? ""}:${leftHandItem ?? ""}`;
+function buildKey(
+  skin: string,
+  animFullName: string,
+  rightHandItem: string | null,
+  leftHandItem: string | null,
+  paused: boolean,
+  zoom: number,
+  angle: number,
+) {
+  return `${skin}:${animFullName}:${rightHandItem ?? ""}:${leftHandItem ?? ""}:${paused ? "1" : "0"}:${zoom.toFixed(3)}:${angle.toFixed(3)}`;
 }
 
 export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
@@ -42,6 +72,9 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
     animFullName: initialAnimFullName,
     rightHandItem: initialRightHandItem,
     leftHandItem: initialLeftHandItem,
+    paused: initialPaused,
+    zoom: initialZoom,
+    angle: initialAngle,
   } = parseSelectedKey(selectedKey);
   const [skins, setSkins] = useState<string[]>([]);
   const [selectedSkin, setSelectedSkin] = useState(initialSkin);
@@ -52,6 +85,11 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
   const [tools, setTools] = useState<Record<string, HandItemDefinition>>({});
   const [rightHandItem, setRightHandItem] = useState<string | null>(initialRightHandItem);
   const [leftHandItem, setLeftHandItem] = useState<string | null>(initialLeftHandItem);
+  const [rightRotateOverride, setRightRotateOverride] = useState<Rotation | null>(null);
+  const [leftRotateOverride, setLeftRotateOverride] = useState<Rotation | null>(null);
+  const [paused, setPaused] = useState(initialPaused);
+  const [zoom, setZoom] = useState(initialZoom ?? DEFAULT_ZOOM);
+  const [angle, setAngle] = useState(initialAngle ?? DEFAULT_ANGLE);
   const handsReady = useWeaponModelsReady([rightHandItem, leftHandItem]);
 
   useEffect(() => {
@@ -92,10 +130,15 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
     if (match) setSelectedAnim(match);
   }, [anims, initialAnimFullName, selectedAnim]);
 
-  const selectAnim = (anim: AnimationEntry | null) => {
-    setSelectedAnim(anim);
-    onSelectKey(anim ? buildKey(selectedSkin, anim.fullName, rightHandItem, leftHandItem) : null);
-  };
+  const selectAnim = useCallback(
+    (anim: AnimationEntry | null) => {
+      setSelectedAnim(anim);
+      onSelectKey(
+        anim ? buildKey(selectedSkin, anim.fullName, rightHandItem, leftHandItem, paused, zoom, angle) : null,
+      );
+    },
+    [selectedSkin, rightHandItem, leftHandItem, paused, zoom, angle, onSelectKey],
+  );
 
   const hasAutoSelected = useRef(false);
   useEffect(() => {
@@ -109,8 +152,37 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
     const left = hand === "left" ? name : leftHandItem;
     setRightHandItem(right);
     setLeftHandItem(left);
-    if (selectedAnim) onSelectKey(buildKey(selectedSkin, selectedAnim.fullName, right, left));
+    if (hand === "right") setRightRotateOverride(null);
+    else setLeftRotateOverride(null);
+    if (selectedAnim) onSelectKey(buildKey(selectedSkin, selectedAnim.fullName, right, left, paused, zoom, angle));
   };
+
+  const togglePause = () => {
+    const next = !paused;
+    setPaused(next);
+    if (selectedAnim) {
+      onSelectKey(buildKey(selectedSkin, selectedAnim.fullName, rightHandItem, leftHandItem, next, zoom, angle));
+    }
+  };
+
+  // Wrapped in a ref so the viewer can hold a stable callback identity across renders while
+  // always persisting the latest skin/anim/hand/paused state alongside the new camera values.
+  const onCameraChangeRef = useRef<(zoom: number, angle: number) => void>(() => {});
+  useEffect(() => {
+    onCameraChangeRef.current = (newZoom, newAngle) => {
+      setZoom(newZoom);
+      setAngle(newAngle);
+      if (selectedAnim) {
+        onSelectKey(
+          buildKey(selectedSkin, selectedAnim.fullName, rightHandItem, leftHandItem, paused, newZoom, newAngle),
+          { replace: true },
+        );
+      }
+    };
+  });
+  const handleCameraChange = useCallback((z: number, a: number) => onCameraChangeRef.current(z, a), []);
+
+  const baseRotate = (name: string | null): Rotation => (name && handItems[name]?.rotate) || ZERO_ROTATION;
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -148,14 +220,29 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
       <div className="flex-1 overflow-auto p-6">
         {selectedAnim ? (
           <div className="flex gap-6">
-            <BbmodelAnimationViewer
-              bbmodel={bbmodel}
-              animFullName={selectedAnim.fullName}
-              rightHandItem={handsReady ? rightHandItem : null}
-              leftHandItem={handsReady ? leftHandItem : null}
-              width={360}
-              height={460}
-            />
+            <div className="flex flex-col items-center gap-2">
+              <BbmodelAnimationViewer
+                bbmodel={bbmodel}
+                animFullName={selectedAnim.fullName}
+                paused={paused}
+                initialZoom={initialZoom ?? DEFAULT_ZOOM}
+                initialAngle={initialAngle}
+                onCameraChange={handleCameraChange}
+                rightHandItem={handsReady ? rightHandItem : null}
+                leftHandItem={handsReady ? leftHandItem : null}
+                rightHandRotate={handsReady ? rightRotateOverride : null}
+                leftHandRotate={handsReady ? leftRotateOverride : null}
+                width={360}
+                height={460}
+              />
+              <button
+                type="button"
+                onClick={togglePause}
+                className="px-3 py-1 rounded text-xs font-mono border border-[#2E3A4E] text-[#8A99AF] hover:border-[#3C50E0] hover:text-white"
+              >
+                {paused ? "▶ Play" : "⏸ Pause"}
+              </button>
+            </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-white font-semibold text-base mb-4">{animDisplayName(selectedAnim.fullName)}</h2>
               <PropRow label={t("administration.skin")} value={selectedSkin} />
@@ -167,37 +254,60 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
                   <div className="text-xs text-[#8A99AF] mb-2 tracking-widest">HANDS</div>
                   {(
                     [
-                      { hand: "right" as const, value: rightHandItem },
-                      { hand: "left" as const, value: leftHandItem },
+                      {
+                        hand: "right" as const,
+                        value: rightHandItem,
+                        override: rightRotateOverride,
+                        setOverride: setRightRotateOverride,
+                      },
+                      {
+                        hand: "left" as const,
+                        value: leftHandItem,
+                        override: leftRotateOverride,
+                        setOverride: setLeftRotateOverride,
+                      },
                     ] as const
-                  ).map(({ hand, value }) => (
-                    <div key={hand} className="flex items-center gap-2 mb-2">
-                      <span className="text-xs text-[#8A99AF] w-16 capitalize">{hand} hand</span>
-                      <select
-                        className="flex-1 bg-[#1A222C] border border-[#2E3A4E] rounded text-xs px-2 py-1 text-white"
-                        value={value ?? ""}
-                        onChange={(e) => setHand(hand, e.target.value || null)}
-                      >
-                        <option value="">(empty)</option>
-                        {sortedWeapons.length > 0 && (
-                          <optgroup label="Weapons">
-                            {sortedWeapons.map((name) => (
-                              <option key={name} value={name}>
-                                {name} — {handItems[name].category}
-                              </option>
-                            ))}
-                          </optgroup>
-                        )}
-                        {sortedTools.length > 0 && (
-                          <optgroup label="Tools">
-                            {sortedTools.map((name) => (
-                              <option key={name} value={name}>
-                                {name} — {handItems[name].category}
-                              </option>
-                            ))}
-                          </optgroup>
-                        )}
-                      </select>
+                  ).map(({ hand, value, override, setOverride }) => (
+                    <div key={hand} className="mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-[#8A99AF] w-16 capitalize">{hand} hand</span>
+                        <select
+                          className="flex-1 bg-[#1A222C] border border-[#2E3A4E] rounded text-xs px-2 py-1 text-white"
+                          value={value ?? ""}
+                          onChange={(e) => setHand(hand, e.target.value || null)}
+                        >
+                          <option value="">(empty)</option>
+                          {sortedWeapons.length > 0 && (
+                            <optgroup label="Weapons">
+                              {sortedWeapons.map((name) => (
+                                <option key={name} value={name}>
+                                  {name} — {handItems[name].category}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                          {sortedTools.length > 0 && (
+                            <optgroup label="Tools">
+                              {sortedTools.map((name) => (
+                                <option key={name} value={name}>
+                                  {name} — {handItems[name].category}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                        </select>
+                      </div>
+                      {value && (
+                        <RotateSliders
+                          label={hand}
+                          value={override ?? baseRotate(value)}
+                          overridden={override !== null}
+                          onChange={(axis, axisValue) =>
+                            setOverride({ ...(override ?? baseRotate(value)), [axis]: axisValue })
+                          }
+                          onReset={() => setOverride(null)}
+                        />
+                      )}
                     </div>
                   ))}
                 </div>

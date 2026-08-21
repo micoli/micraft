@@ -164,18 +164,35 @@ const MAX_RADIUS = 8.0;
 const WHEEL_ZOOM_STEP = 0.06;
 const BUTTON_ZOOM_STEP = 0.3;
 
+type RotateOverride = { x: number; y: number; z: number } | null;
+
 export function BbmodelAnimationViewer({
   bbmodel,
   animFullName,
+  paused = false,
+  initialZoom,
+  initialAngle,
+  onCameraChange,
   rightHandItem = null,
   leftHandItem = null,
+  rightHandRotate = null,
+  leftHandRotate = null,
   width = 200,
   height = 280,
 }: {
   bbmodel: BbModel | null;
   animFullName: string;
+  paused?: boolean;
+  // Camera radius (zoom) and model spin angle (radians) to restore on mount.
+  initialZoom?: number;
+  initialAngle?: number;
+  // Fired after a user interaction changes zoom and/or angle, so the caller can persist it.
+  onCameraChange?: (zoom: number, angle: number) => void;
   rightHandItem?: string | null;
   leftHandItem?: string | null;
+  // Overrides the equipment's yaml-configured `rotate` for this preview only.
+  rightHandRotate?: RotateOverride;
+  leftHandRotate?: RotateOverride;
   width?: number;
   height?: number;
 }) {
@@ -183,17 +200,33 @@ export function BbmodelAnimationViewer({
   const overlayRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<any>(null);
   const cameraRef = useRef<any>(null);
+  const angleRef = useRef(initialAngle ?? 0);
   const animRef = useRef(animFullName);
+  const pausedRef = useRef(paused);
+  // The playhead is real-time (Date.now()) based rather than accumulated per-frame, so pausing
+  // needs to freeze a captured time rather than merely skip advancing it.
+  const frozenTSecRef = useRef<number | null>(null);
+  // Wrapped so the effect below can hold a stable reference while always calling the latest prop.
+  const onCameraChangeRef = useRef(onCameraChange);
+  useLayoutEffect(() => {
+    onCameraChangeRef.current = onCameraChange;
+  }, [onCameraChange]);
 
   const zoomBy = (delta: number) => {
     const camera = cameraRef.current;
     if (!camera) return;
     camera.radius = Math.min(MAX_RADIUS, Math.max(MIN_RADIUS, camera.radius + delta));
+    onCameraChangeRef.current?.(camera.radius, angleRef.current);
   };
 
   useLayoutEffect(() => {
     animRef.current = animFullName;
-  });
+    frozenTSecRef.current = null;
+  }, [animFullName]);
+
+  useLayoutEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
 
   useEffect(() => {
     if (!bbmodel) return;
@@ -216,7 +249,7 @@ export function BbmodelAnimationViewer({
           "cam",
           -Math.PI * 0.25,
           Math.PI / 3.2,
-          3.0,
+          initialZoom ?? 3.0,
           new B.Vector3(0, 0.9, 0),
           scene,
         );
@@ -227,20 +260,27 @@ export function BbmodelAnimationViewer({
         light.groundColor = new B.Color3(0.2, 0.2, 0.2);
 
         const model = buildModel(B, bbmodel, scene);
-        if (rightHandItem) window.mc.attachWeapon?.(model as unknown as McPlayerModel, rightHandItem, scene, "RIGHT");
-        if (leftHandItem) window.mc.attachWeapon?.(model as unknown as McPlayerModel, leftHandItem, scene, "LEFT");
+        if (rightHandItem) {
+          if (rightHandRotate) window.mcState.weaponRotations[rightHandItem] = rightHandRotate;
+          window.mc.attachWeapon?.(model as unknown as McPlayerModel, rightHandItem, scene, "RIGHT");
+        }
+        if (leftHandItem) {
+          if (leftHandRotate) window.mcState.weaponRotations[leftHandItem] = leftHandRotate;
+          window.mc.attachWeapon?.(model as unknown as McPlayerModel, leftHandItem, scene, "LEFT");
+        }
 
         const uuidToName: Record<string, string> = {};
         bbmodel.groups.forEach((g: any) => {
           uuidToName[g.uuid] = g.name;
         });
 
-        let angle = 0,
-          autoRotate = true,
+        let angle = angleRef.current,
+          autoRotate = initialAngle === undefined,
           lastInteraction = 0;
         let isDragging = false,
           dragStartX = 0,
           dragStartAngle = 0;
+        let wheelDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
         const onMouseDown = (e: MouseEvent) => {
           isDragging = true;
@@ -256,6 +296,7 @@ export function BbmodelAnimationViewer({
           lastInteraction = Date.now();
         };
         const onMouseUp = () => {
+          if (isDragging) onCameraChangeRef.current?.(camera.radius, angle);
           isDragging = false;
           lastInteraction = Date.now();
           overlay.style.cursor = "grab";
@@ -265,6 +306,10 @@ export function BbmodelAnimationViewer({
           lastInteraction = Date.now();
           autoRotate = false;
           zoomBy(Math.sign(e.deltaY) * WHEEL_ZOOM_STEP);
+          if (wheelDebounceTimer) clearTimeout(wheelDebounceTimer);
+          wheelDebounceTimer = setTimeout(() => {
+            onCameraChangeRef.current?.(camera.radius, angle);
+          }, 250);
         };
         overlay.addEventListener("mousedown", onMouseDown);
         overlay.addEventListener("mousemove", onMouseMove);
@@ -278,6 +323,7 @@ export function BbmodelAnimationViewer({
           overlay.removeEventListener("mouseup", onMouseUp);
           overlay.removeEventListener("mouseleave", onMouseUp);
           overlay.removeEventListener("wheel", onWheel);
+          if (wheelDebounceTimer) clearTimeout(wheelDebounceTimer);
         };
 
         function eulerXYZToQuat(rx: number, ry: number, rz: number): any {
@@ -296,9 +342,10 @@ export function BbmodelAnimationViewer({
         }
 
         scene.onBeforeRenderObservable.add(() => {
-          if (autoRotate) angle += 0.015;
-          else if (Date.now() - lastInteraction > 30000) autoRotate = true;
+          if (autoRotate && !pausedRef.current) angle += 0.015;
+          else if (!pausedRef.current && Date.now() - lastInteraction > 30000) autoRotate = true;
           model.root.rotation.y = angle;
+          angleRef.current = angle;
 
           for (const boneName of Object.keys(model.pivotNodes)) {
             const entry = model.pivotNodes[boneName];
@@ -312,7 +359,16 @@ export function BbmodelAnimationViewer({
           if (!animDef) return;
 
           const length = animDef.length || 1;
-          const tSec = ((Date.now() % (length * 1000)) / (length * 1000)) * length;
+          let tSec: number;
+          if (pausedRef.current) {
+            if (frozenTSecRef.current === null) {
+              frozenTSecRef.current = ((Date.now() % (length * 1000)) / (length * 1000)) * length;
+            }
+            tSec = frozenTSecRef.current;
+          } else {
+            frozenTSecRef.current = null;
+            tSec = ((Date.now() % (length * 1000)) / (length * 1000)) * length;
+          }
 
           for (const [uuid, animator] of Object.entries(animDef.animators) as [string, any][]) {
             const boneName = uuidToName[uuid];
@@ -353,7 +409,11 @@ export function BbmodelAnimationViewer({
         engineRef.current = null;
       }
     };
-  }, [bbmodel, rightHandItem, leftHandItem]);
+    // initialZoom/initialAngle intentionally excluded — they only seed the camera at mount;
+    // including them would rebuild (and visibly reset/jump) the scene on every camera-change
+    // persist round-trip, since that round-trip changes the URL these props are derived from.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bbmodel, rightHandItem, leftHandItem, rightHandRotate, leftHandRotate]);
 
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
