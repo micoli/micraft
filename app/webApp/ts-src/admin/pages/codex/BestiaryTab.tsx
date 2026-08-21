@@ -1,12 +1,12 @@
-import { useT } from "../i18n";
-import { useEffect, useMemo, useState } from "react";
-import { getApiAdminNpcTypes } from "../../generated/api/requests";
-import { NpcTypeDto } from "../apiTypes";
-import { animationsFromBbmodel, animDisplayName, animEmoji } from "../../lib/animationHelpers";
-import { BbmodelAnimationViewer } from "../components/BbmodelAnimationViewer";
-import { SidebarList } from "./SidebarList";
-import { PropRow } from "../PropRow";
-import { EmptyDetail } from "../../primitives/EmptyDetail";
+import { useT } from "../../i18n";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getApiAdminNpcTypes } from "../../../generated/api/requests";
+import { NpcTypeDto } from "../../apiTypes";
+import { animationsFromBbmodel, animDisplayName, animEmoji } from "../../../lib/animationHelpers";
+import { BbmodelAnimationViewer } from "../../components/BbmodelAnimationViewer";
+import { SidebarList } from "../SidebarList";
+import { PropRow } from "../../PropRow";
+import { EmptyDetail } from "../../../primitives/EmptyDetail";
 
 type BestiaryTabProps = {
   selectedKey: string | null;
@@ -47,6 +47,13 @@ export function BestiaryTab({ selectedKey, onSelectKey }: BestiaryTabProps) {
     .filter(([name]) => name.toLowerCase().includes(filter.toLowerCase()))
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([name, dto]) => ({ name, dto }));
+
+  const hasAutoSelected = useRef(false);
+  useEffect(() => {
+    if (hasAutoSelected.current || selectedKey || entries.length === 0) return;
+    hasAutoSelected.current = true;
+    onSelectKey(entries[0].name);
+  }, [entries, selectedKey, onSelectKey]);
 
   const [selectedAnim, setSelectedAnim] = useState<string | null>(null);
   const anims = useMemo(() => (bbmodel ? animationsFromBbmodel(bbmodel) : []), [bbmodel]);

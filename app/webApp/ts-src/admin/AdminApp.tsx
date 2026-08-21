@@ -10,7 +10,7 @@ import { StatusPage } from "./pages/status/StatusPage";
 import { UsersPage } from "./pages/user/UsersPage";
 import { WorldsPage } from "./pages/worlds/WorldsPage";
 import { GameAssetsViewerPage } from "./pages/GameAssetsViewerPage";
-import { AdministrationPage } from "./pages/AdministrationPage";
+import { CodexPage } from "./pages/codex/CodexPage";
 import { WorldSimulatorPage } from "./pages/worldSimulator/WorldSimulatorPage";
 import { InstancesPage } from "./pages/instance/InstancesPage";
 import { ScenesPage } from "./pages/scene/ScenesPage";
@@ -39,9 +39,9 @@ export function AdminApp() {
                 <Route path="/admin/config" element={<ConfigEditorPage />} />
                 <Route path="/admin/worlds" element={<WorldsPage />} />
                 <Route path="/admin/game-assets" element={<GameAssetsViewerPage />} />
-                <Route path="/admin/administration" element={<AdministrationPage />} />
-                <Route path="/admin/administration/:tab" element={<AdministrationPage />} />
-                <Route path="/admin/administration/:tab/:itemKey" element={<AdministrationPage />} />
+                <Route path="/admin/codex" element={<CodexPage />} />
+                <Route path="/admin/codex/:tab" element={<CodexPage />} />
+                <Route path="/admin/codex/:tab/:itemKey" element={<CodexPage />} />
                 <Route path="/admin/instances" element={<InstancesPage />} />
                 <Route path="/admin/instances/:id" element={<InstancesPage />} />
                 <Route path="/admin/scenes" element={<ScenesPage />} />

@@ -1,10 +1,13 @@
-import { useT } from "../i18n";
-import { useEffect, useState } from "react";
-import { getApiAdminItems } from "../../generated/api/requests";
-import { ItemDto } from "../apiTypes";
-import { SidebarList } from "./SidebarList";
-import { PropRow } from "../PropRow";
-import { EmptyDetail } from "../../primitives/EmptyDetail";
+import { useT } from "../../i18n";
+import { useEffect, useRef, useState } from "react";
+import { getApiAdminItems } from "../../../generated/api/requests";
+import { ItemDto } from "../../apiTypes";
+import { SidebarList } from "../SidebarList";
+import { PropRow } from "../../PropRow";
+import { EmptyDetail } from "../../../primitives/EmptyDetail";
+import { Block3DPreview } from "../../../game/shared/Block3DPreview";
+import { useBlockDefsReady } from "../../../game/shared/BlockPreview";
+import { useBlockRegistry } from "../shared/voxelEditor/useBlockRegistry";
 
 type ItemsTabProps = {
   selectedKey: string | null;
@@ -15,6 +18,8 @@ export function ItemsTab({ selectedKey, onSelectKey }: ItemsTabProps) {
   const t = useT();
   const [items, setItems] = useState<Record<string, ItemDto>>({});
   const [filter, setFilter] = useState("");
+  const { getOrdinal } = useBlockRegistry();
+  const defsReady = useBlockDefsReady();
 
   useEffect(() => {
     getApiAdminItems({ throwOnError: true })
@@ -28,6 +33,13 @@ export function ItemsTab({ selectedKey, onSelectKey }: ItemsTabProps) {
     .map(([name, dto]) => ({ name, dto }));
 
   const selected = selectedKey && items[selectedKey] ? { name: selectedKey, dto: items[selectedKey] } : null;
+
+  const hasAutoSelected = useRef(false);
+  useEffect(() => {
+    if (hasAutoSelected.current || selectedKey || entries.length === 0) return;
+    hasAutoSelected.current = true;
+    onSelectKey(entries[0].name);
+  }, [entries, selectedKey, onSelectKey]);
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -51,7 +63,11 @@ export function ItemsTab({ selectedKey, onSelectKey }: ItemsTabProps) {
       <div className="flex-1 overflow-auto p-6">
         {selected ? (
           <div className="max-w-sm">
-            <div className="w-12 h-12 rounded mb-4 bg-[#6a5acd] flex items-center justify-center text-2xl">✦</div>
+            {selected.dto.placesBlock && defsReady && getOrdinal(selected.dto.placesBlock) !== null ? (
+              <Block3DPreview ordinal={getOrdinal(selected.dto.placesBlock)!} size={240} />
+            ) : (
+              <div className="w-12 h-12 rounded mb-4 bg-[#6a5acd] flex items-center justify-center text-2xl">✦</div>
+            )}
             <h2 className="text-white font-semibold text-base mb-4">{selected.name.replace(/_/g, " ")}</h2>
             <PropRow
               label={t("administration.buildable")}

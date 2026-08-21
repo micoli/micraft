@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { CSSProperties } from "react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { interpAxis } from "../../game/lib/player/playerModel";
 
@@ -158,6 +159,10 @@ function buildModel(
 }
 
 const DEG = Math.PI / 180;
+const MIN_RADIUS = 1.0;
+const MAX_RADIUS = 8.0;
+const WHEEL_ZOOM_STEP = 0.06;
+const BUTTON_ZOOM_STEP = 0.3;
 
 export function BbmodelAnimationViewer({
   bbmodel,
@@ -177,7 +182,14 @@ export function BbmodelAnimationViewer({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<any>(null);
+  const cameraRef = useRef<any>(null);
   const animRef = useRef(animFullName);
+
+  const zoomBy = (delta: number) => {
+    const camera = cameraRef.current;
+    if (!camera) return;
+    camera.radius = Math.min(MAX_RADIUS, Math.max(MIN_RADIUS, camera.radius + delta));
+  };
 
   useLayoutEffect(() => {
     animRef.current = animFullName;
@@ -209,6 +221,7 @@ export function BbmodelAnimationViewer({
           scene,
         );
         camera.inputs.clear();
+        cameraRef.current = camera;
         const light = new B.HemisphericLight("light", new B.Vector3(1, 2, 0.5), scene);
         light.intensity = 1.1;
         light.groundColor = new B.Color3(0.2, 0.2, 0.2);
@@ -247,16 +260,24 @@ export function BbmodelAnimationViewer({
           lastInteraction = Date.now();
           overlay.style.cursor = "grab";
         };
+        const onWheel = (e: WheelEvent) => {
+          e.preventDefault();
+          lastInteraction = Date.now();
+          autoRotate = false;
+          zoomBy(Math.sign(e.deltaY) * WHEEL_ZOOM_STEP);
+        };
         overlay.addEventListener("mousedown", onMouseDown);
         overlay.addEventListener("mousemove", onMouseMove);
         overlay.addEventListener("mouseup", onMouseUp);
         overlay.addEventListener("mouseleave", onMouseUp);
+        overlay.addEventListener("wheel", onWheel, { passive: false });
 
         removeListeners = () => {
           overlay.removeEventListener("mousedown", onMouseDown);
           overlay.removeEventListener("mousemove", onMouseMove);
           overlay.removeEventListener("mouseup", onMouseUp);
           overlay.removeEventListener("mouseleave", onMouseUp);
+          overlay.removeEventListener("wheel", onWheel);
         };
 
         function eulerXYZToQuat(rx: number, ry: number, rz: number): any {
@@ -326,6 +347,7 @@ export function BbmodelAnimationViewer({
     return () => {
       disposed = true;
       removeListeners?.();
+      cameraRef.current = null;
       if (engineRef.current) {
         engineRef.current.dispose();
         engineRef.current = null;
@@ -345,6 +367,28 @@ export function BbmodelAnimationViewer({
         ref={overlayRef}
         style={{ position: "absolute", inset: 0, cursor: "grab", userSelect: "none", borderRadius: 6 }}
       />
+      <div style={{ position: "absolute", top: 6, right: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+        <button type="button" onClick={() => zoomBy(-BUTTON_ZOOM_STEP)} style={zoomButtonStyle} aria-label="Zoom in">
+          +
+        </button>
+        <button type="button" onClick={() => zoomBy(BUTTON_ZOOM_STEP)} style={zoomButtonStyle} aria-label="Zoom out">
+          −
+        </button>
+      </div>
     </div>
   );
 }
+
+const zoomButtonStyle: CSSProperties = {
+  width: 22,
+  height: 22,
+  lineHeight: "20px",
+  padding: 0,
+  fontSize: 14,
+  fontFamily: "monospace",
+  color: "#ddd",
+  background: "rgba(20, 26, 38, 0.75)",
+  border: "1px solid #3a3a3a",
+  borderRadius: 4,
+  cursor: "pointer",
+};

@@ -288,10 +288,12 @@ stateDiagram-v2
 | `/tradeoffer` | `/tradeoffer <tradeId> <json>` | Updates your current trade offer. | — |
 | `/undo` | `/undo [N]` | Undo the last N block breaks, restoring blocks and reversing item collection. | — |
 | `/unequip` | `/unequip <armorName>` | Remove an equipped armor piece. | dynamic |
+| `/unwield` | `/unwield <hand>` | Empty a hand slot. | dynamic |
 | `/vehicule:add` | `/vehicule:add <vehiculeName>` | Spawn a vehicle on the rail block you're standing on. | — |
 | `/water` | `/water [x y z]` | Place a water source on the solid block you are looking at (or x y z). (admin) | — |
 | `/weather` | `/weather [rain\|storm\|snow\|fog\|none]` | Force a weather zone at your position or clear all zones. (admin) | rain, storm, snow, fog, none |
 | `/weather-forecast` | `/weather-forecast` | Shows active weather zones and their location. | — |
+| `/wield` | `/wield <name> [hand]` | Wield a weapon or tool in a hand. | dynamic |
 
 ### Plugin commands
 

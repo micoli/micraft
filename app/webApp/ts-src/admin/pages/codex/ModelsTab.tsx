@@ -1,12 +1,12 @@
-import { useT } from "../i18n";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { AnimationEntry, animationsFromBbmodel, animDisplayName, animEmoji } from "../../lib/animationHelpers";
-import { getApiSkins, getApiWeapons, getApiTools } from "../../generated/api/requests";
-import { BbmodelAnimationViewer } from "../components/BbmodelAnimationViewer";
-import { useWeaponModelsReady } from "../../game/shared/PlayerModelPreview";
-import { SidebarList } from "./SidebarList";
-import { PropRow } from "../PropRow";
-import { EmptyDetail } from "../../primitives/EmptyDetail";
+import { useT } from "../../i18n";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimationEntry, animationsFromBbmodel, animDisplayName, animEmoji } from "../../../lib/animationHelpers";
+import { getApiSkins, getApiWeapons, getApiTools } from "../../../generated/api/requests";
+import { BbmodelAnimationViewer } from "../../components/BbmodelAnimationViewer";
+import { useWeaponModelsReady } from "../../../game/shared/PlayerModelPreview";
+import { SidebarList } from "../SidebarList";
+import { PropRow } from "../../PropRow";
+import { EmptyDetail } from "../../../primitives/EmptyDetail";
 
 type HandItemDefinition = { category: string };
 
@@ -96,6 +96,13 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
     setSelectedAnim(anim);
     onSelectKey(anim ? buildKey(selectedSkin, anim.fullName, rightHandItem, leftHandItem) : null);
   };
+
+  const hasAutoSelected = useRef(false);
+  useEffect(() => {
+    if (hasAutoSelected.current || initialAnimFullName || selectedAnim || filtered.length === 0) return;
+    hasAutoSelected.current = true;
+    selectAnim(filtered[0]);
+  }, [filtered, initialAnimFullName, selectedAnim, selectAnim]);
 
   const setHand = (hand: "right" | "left", name: string | null) => {
     const right = hand === "right" ? name : rightHandItem;
