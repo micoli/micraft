@@ -15,6 +15,8 @@ export const en = {
   "shell.collapseMenu": "Collapse menu",
   "shell.serverOnline": "Server online",
   "shell.language": "Language",
+  "shell.closeTab": "Close tab",
+  "shell.refreshTab": "Refresh tab",
 
   "nav.status": "Status",
   "nav.users": "Users",

@@ -10,6 +10,8 @@ export const fr: Record<TranslationKey, string> = {
   "shell.collapseMenu": "Replier le menu",
   "shell.serverOnline": "Serveur en ligne",
   "shell.language": "Langue",
+  "shell.closeTab": "Fermer l'onglet",
+  "shell.refreshTab": "Rafraîchir l'onglet",
 
   "nav.status": "État",
   "nav.users": "Utilisateurs",

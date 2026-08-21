@@ -32,13 +32,15 @@ export const ROUTES = [
   { path: "/admin/scenes/:id", page: <ScenesPage /> },
   { path: "/admin/world-simulator", page: <WorldSimulatorPage /> },
 ];
-export const NAV: {
+export interface NavItem {
   path: string;
   labelKey: TranslationKey;
   pageLabelKey: TranslationKey;
   icon: string;
   exact?: boolean;
-}[] = [
+}
+
+export const NAV: NavItem[] = [
   { path: "/admin", labelKey: "nav.status", pageLabelKey: "page.status", icon: ICONS.status, exact: true },
   { path: "/admin/worlds", labelKey: "nav.worlds", pageLabelKey: "page.worlds", icon: ICONS.worlds },
   { path: "/admin/users", labelKey: "nav.users", pageLabelKey: "page.users", icon: ICONS.users },
@@ -67,3 +69,11 @@ export const NAV: {
     icon: ICONS.gameAssets,
   },
 ];
+
+/** Nav item a pathname belongs to — a tab's identity is this, not the raw (param-bearing) pathname. */
+export function resolveNavItem(pathname: string): NavItem | undefined {
+  return (
+    NAV.find((item) => item.path === pathname) ??
+    NAV.find((item) => item.path !== "/admin" && pathname.startsWith(item.path))
+  );
+}

@@ -4,9 +4,11 @@ import { cn } from "../primitives/cn";
 import { LanguageSelector } from "./components/LanguageSelector";
 import { Icon } from "../primitives/Icon";
 import { NAV } from "./const";
+import { useTabs } from "./TabsContext";
 
 export function SidebarComponent({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const { pathname } = useLocation();
+  const { activateTab } = useTabs();
   const t = useT();
   return (
     <aside
@@ -44,6 +46,11 @@ export function SidebarComponent({ collapsed, onToggle }: { collapsed: boolean; 
             <Link
               key={path}
               to={path}
+              onClick={(event) => {
+                // reopening an already-open tab must land back where it was, not reset to its base path
+                event.preventDefault();
+                activateTab(path);
+              }}
               // the label is the only thing that goes away, so it becomes the tooltip: a column of
               // unlabelled icons is otherwise a memory test
               title={collapsed ? label : undefined}
