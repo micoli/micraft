@@ -1,5 +1,5 @@
 import { useT } from "../i18n";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimationEntry, animationsFromBbmodel, animDisplayName, animEmoji } from "../../lib/animationHelpers";
 import { getApiSkins } from "../../generated/api/requests";
 import { BbmodelAnimationViewer } from "../components/BbmodelAnimationViewer";
@@ -7,10 +7,23 @@ import { SidebarList } from "./SidebarList";
 import { PropRow } from "../PropRow";
 import { EmptyDetail } from "../../primitives/EmptyDetail";
 
-export function AnimationsTab() {
+type ModelsTabProps = {
+  selectedKey: string | null;
+  onSelectKey: (key: string | null) => void;
+};
+
+function parseSelectedKey(key: string | null): { skin: string; animFullName: string | null } {
+  if (!key) return { skin: "articulated", animFullName: null };
+  const separatorIndex = key.indexOf(":");
+  if (separatorIndex === -1) return { skin: key, animFullName: null };
+  return { skin: key.slice(0, separatorIndex), animFullName: key.slice(separatorIndex + 1) };
+}
+
+export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
   const t = useT();
+  const { skin: initialSkin, animFullName: initialAnimFullName } = parseSelectedKey(selectedKey);
   const [skins, setSkins] = useState<string[]>([]);
-  const [selectedSkin, setSelectedSkin] = useState("articulated");
+  const [selectedSkin, setSelectedSkin] = useState(initialSkin);
   const [bbmodel, setBbmodel] = useState<BbModel | null>(null);
   const [selectedAnim, setSelectedAnim] = useState<AnimationEntry | null>(null);
   const [filter, setFilter] = useState("");
@@ -33,8 +46,19 @@ export function AnimationsTab() {
     loadBbmodel(selectedSkin);
   }, [selectedSkin, loadBbmodel]);
 
-  const anims = bbmodel ? animationsFromBbmodel(bbmodel) : [];
+  const anims = useMemo(() => (bbmodel ? animationsFromBbmodel(bbmodel) : []), [bbmodel]);
   const filtered = anims.filter((a) => animDisplayName(a.fullName).toLowerCase().includes(filter.toLowerCase()));
+
+  useEffect(() => {
+    if (!initialAnimFullName || selectedAnim) return;
+    const match = anims.find((a) => a.fullName === initialAnimFullName);
+    if (match) setSelectedAnim(match);
+  }, [anims, initialAnimFullName, selectedAnim]);
+
+  const selectAnim = (anim: AnimationEntry | null) => {
+    setSelectedAnim(anim);
+    onSelectKey(anim ? `${selectedSkin}:${anim.fullName}` : null);
+  };
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -45,7 +69,7 @@ export function AnimationsTab() {
             value={selectedSkin}
             onChange={(e) => {
               setSelectedSkin(e.target.value);
-              setSelectedAnim(null);
+              selectAnim(null);
             }}
           >
             {skins.map((s) => (
@@ -66,7 +90,7 @@ export function AnimationsTab() {
           selected={selectedAnim}
           getKey={(a) => a.fullName}
           getLabel={(a) => `${animEmoji(a.fullName)} ${animDisplayName(a.fullName)}`}
-          onSelect={setSelectedAnim}
+          onSelect={selectAnim}
         />
       </aside>
       <div className="flex-1 overflow-auto p-6">

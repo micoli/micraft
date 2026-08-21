@@ -6,10 +6,14 @@ import { SidebarList } from "./SidebarList";
 import { PropRow } from "../PropRow";
 import { EmptyDetail } from "../../primitives/EmptyDetail";
 
-export function BlocksTab() {
+type BlocksTabProps = {
+  selectedKey: string | null;
+  onSelectKey: (key: string | null) => void;
+};
+
+export function BlocksTab({ selectedKey, onSelectKey }: BlocksTabProps) {
   const t = useT();
   const [blocks, setBlocks] = useState<BlockInfoDto[]>([]);
-  const [selected, setSelected] = useState<BlockInfoDto | null>(null);
   const [filter, setFilter] = useState("");
 
   useEffect(() => {
@@ -21,6 +25,8 @@ export function BlocksTab() {
   const filtered = blocks
     .filter((b) => b.name.toLowerCase().includes(filter.toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name));
+
+  const selected = blocks.find((b) => b.name === selectedKey) ?? null;
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -38,7 +44,7 @@ export function BlocksTab() {
           selected={selected}
           getKey={(b) => b.name}
           getLabel={(b) => b.name.replace(/_/g, " ")}
-          onSelect={setSelected}
+          onSelect={(b) => onSelectKey(b.name)}
         />
       </aside>
       <div className="flex-1 overflow-auto p-6">

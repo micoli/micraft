@@ -6,10 +6,14 @@ import { SidebarList } from "./SidebarList";
 import { PropRow } from "../PropRow";
 import { EmptyDetail } from "../../primitives/EmptyDetail";
 
-export function ItemsTab() {
+type ItemsTabProps = {
+  selectedKey: string | null;
+  onSelectKey: (key: string | null) => void;
+};
+
+export function ItemsTab({ selectedKey, onSelectKey }: ItemsTabProps) {
   const t = useT();
   const [items, setItems] = useState<Record<string, ItemDto>>({});
-  const [selected, setSelected] = useState<{ name: string; dto: ItemDto } | null>(null);
   const [filter, setFilter] = useState("");
 
   useEffect(() => {
@@ -22,6 +26,8 @@ export function ItemsTab() {
     .filter(([name]) => name.toLowerCase().includes(filter.toLowerCase()))
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([name, dto]) => ({ name, dto }));
+
+  const selected = selectedKey && items[selectedKey] ? { name: selectedKey, dto: items[selectedKey] } : null;
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -39,7 +45,7 @@ export function ItemsTab() {
           selected={selected}
           getKey={(e) => e.name}
           getLabel={(e) => e.name.replace(/_/g, " ")}
-          onSelect={setSelected}
+          onSelect={(e) => onSelectKey(e.name)}
         />
       </aside>
       <div className="flex-1 overflow-auto p-6">

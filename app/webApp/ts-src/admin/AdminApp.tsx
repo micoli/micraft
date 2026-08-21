@@ -40,6 +40,8 @@ export function AdminApp() {
                 <Route path="/admin/worlds" element={<WorldsPage />} />
                 <Route path="/admin/game-assets" element={<GameAssetsPage />} />
                 <Route path="/admin/administration" element={<AdministrationPage />} />
+                <Route path="/admin/administration/:tab" element={<AdministrationPage />} />
+                <Route path="/admin/administration/:tab/:itemKey" element={<AdministrationPage />} />
                 <Route path="/admin/instances" element={<InstancesPage />} />
                 <Route path="/admin/instances/:id" element={<InstancesPage />} />
                 <Route path="/admin/scenes" element={<ScenesPage />} />

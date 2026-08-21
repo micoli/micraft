@@ -8,12 +8,21 @@ import { SidebarList } from "./SidebarList";
 import { PropRow } from "../PropRow";
 import { EmptyDetail } from "../../primitives/EmptyDetail";
 
-export function BestiaryTab() {
+type BestiaryTabProps = {
+  selectedKey: string | null;
+  onSelectKey: (key: string | null) => void;
+};
+
+export function BestiaryTab({ selectedKey, onSelectKey }: BestiaryTabProps) {
   const t = useT();
   const [types, setTypes] = useState<Record<string, NpcTypeDto>>({});
-  const [selected, setSelected] = useState<{ name: string; dto: NpcTypeDto } | null>(null);
   const [filter, setFilter] = useState("");
   const [bbmodel, setBbmodel] = useState<BbModel | null>(null);
+
+  const selected = useMemo(
+    () => (selectedKey && types[selectedKey] ? { name: selectedKey, dto: types[selectedKey] } : null),
+    [selectedKey, types],
+  );
 
   useEffect(() => {
     getApiAdminNpcTypes({ throwOnError: true })
@@ -63,7 +72,7 @@ export function BestiaryTab() {
           selected={selected}
           getKey={(e) => e.name}
           getLabel={(e) => e.name}
-          onSelect={setSelected}
+          onSelect={(e) => onSelectKey(e.name)}
         />
       </aside>
       <div className="flex-1 overflow-auto p-6">
