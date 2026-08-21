@@ -23,7 +23,7 @@ export const en = {
   "nav.classes": "Classes",
   "nav.config": "Config",
   "nav.worlds": "Worlds",
-  "nav.gameAssets": "Game Assets",
+  "nav.gameAssets": "Game Assets viewer",
   "nav.administration": "Administration",
   "nav.instances": "Instances",
   "nav.scenes": "Scenes",

@@ -9,7 +9,7 @@ import { PlayersPage } from "./pages/players/PlayersPage";
 import { StatusPage } from "./pages/status/StatusPage";
 import { UsersPage } from "./pages/user/UsersPage";
 import { WorldsPage } from "./pages/worlds/WorldsPage";
-import { GameAssetsPage } from "./pages/GameAssetsPage";
+import { GameAssetsViewerPage } from "./pages/GameAssetsViewerPage";
 import { AdministrationPage } from "./pages/AdministrationPage";
 import { WorldSimulatorPage } from "./pages/worldSimulator/WorldSimulatorPage";
 import { InstancesPage } from "./pages/instance/InstancesPage";
@@ -38,7 +38,7 @@ export function AdminApp() {
                 <Route path="/admin/classes" element={<ClassesPage />} />
                 <Route path="/admin/config" element={<ConfigEditorPage />} />
                 <Route path="/admin/worlds" element={<WorldsPage />} />
-                <Route path="/admin/game-assets" element={<GameAssetsPage />} />
+                <Route path="/admin/game-assets" element={<GameAssetsViewerPage />} />
                 <Route path="/admin/administration" element={<AdministrationPage />} />
                 <Route path="/admin/administration/:tab" element={<AdministrationPage />} />
                 <Route path="/admin/administration/:tab/:itemKey" element={<AdministrationPage />} />

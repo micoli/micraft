@@ -16,12 +16,6 @@ export const NAV: {
   { path: "/admin/config", labelKey: "nav.config", pageLabelKey: "page.config", icon: ICONS.config },
   { path: "/admin/worlds", labelKey: "nav.worlds", pageLabelKey: "page.worlds", icon: ICONS.worlds },
   {
-    path: "/admin/game-assets",
-    labelKey: "nav.gameAssets",
-    pageLabelKey: "page.gameAssets",
-    icon: ICONS.gameAssets,
-  },
-  {
     path: "/admin/administration",
     labelKey: "nav.administration",
     pageLabelKey: "page.administration",
@@ -34,5 +28,11 @@ export const NAV: {
     labelKey: "nav.worldSimulator",
     pageLabelKey: "page.worldSimulator",
     icon: ICONS.simulator,
+  },
+  {
+    path: "/admin/game-assets",
+    labelKey: "nav.gameAssets",
+    pageLabelKey: "page.gameAssets",
+    icon: ICONS.gameAssets,
   },
 ];

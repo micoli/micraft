@@ -11,7 +11,7 @@ class GameAssetsController {
     @Serializable
     data class AssetEntry(val pack: String, val name: String, val path: String, val format: String)
 
-    private val extensions = setOf("glb", "gltf", "fbx")
+    private val extensions = setOf("glb", "gltf", "fbx", "bbmodel")
     private val root = File("resources/game-assets")
 
     private val contentTypeByExt =
@@ -19,6 +19,7 @@ class GameAssetsController {
             "glb" to ContentType("model", "gltf-binary"),
             "gltf" to ContentType("model", "gltf+json"),
             "fbx" to ContentType.Application.OctetStream,
+            "bbmodel" to ContentType.Application.Json,
             "png" to ContentType.Image.PNG,
             "jpg" to ContentType.Image.JPEG,
             "jpeg" to ContentType.Image.JPEG,

@@ -18,7 +18,7 @@ export const fr: Record<TranslationKey, string> = {
   "nav.classes": "Classes",
   "nav.config": "Config",
   "nav.worlds": "Mondes",
-  "nav.gameAssets": "Assets de jeu",
+  "nav.gameAssets": "Visualisateur d'assets de jeu",
   "nav.administration": "Administration",
   "nav.instances": "Instances",
   "nav.scenes": "Scènes",

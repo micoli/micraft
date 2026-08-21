@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
+import { BbmodelAssetViewer } from "./BbmodelAssetViewer";
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -31,12 +32,13 @@ export function ModelViewer({ url, format }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [animGroups, setAnimGroups] = useState<string[]>([]);
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
+  const [animFilter, setAnimFilter] = useState("");
   const engineRef = useRef<any>(null);
   const groupsRef = useRef<any[]>([]);
 
   useEffect(() => {
     if (!url) return;
-    if (format === "fbx") return;
+    if (format === "fbx" || format === "bbmodel") return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -129,6 +131,7 @@ export function ModelViewer({ url, format }: Props) {
       groupsRef.current = [];
       setAnimGroups([]);
       setPlayingIdx(null);
+      setAnimFilter("");
       if (engineRef.current) {
         engineRef.current.dispose();
         engineRef.current = null;
@@ -163,25 +166,40 @@ export function ModelViewer({ url, format }: Props) {
     );
   }
 
+  if (format === "bbmodel") {
+    return <BbmodelAssetViewer url={url} />;
+  }
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <canvas ref={canvasRef} className="flex-1 w-full min-h-0 block" />
       {animGroups.length > 0 && (
-        <div className="shrink-0 px-4 py-2 border-t border-[#2E3A4E] flex flex-wrap gap-2">
-          {animGroups.map((name, i) => (
-            <button
-              key={i}
-              onClick={() => toggleAnim(i)}
-              className={`px-3 py-1 rounded text-xs font-mono border transition-colors ${
-                playingIdx === i
-                  ? "bg-[#3C50E0] border-[#3C50E0] text-white"
-                  : "bg-[#1A222C] border-[#2E3A4E] text-[#8A99AF] hover:border-[#3C50E0] hover:text-white"
-              }`}
-            >
-              {playingIdx === i ? "■ " : "▶ "}
-              {name}
-            </button>
-          ))}
+        <div className="shrink-0 border-t border-[#2E3A4E]">
+          <input
+            className="w-full bg-[#1A222C] border-b border-[#2E3A4E] px-4 py-1.5 text-xs text-white placeholder-[#8A99AF] outline-none"
+            placeholder="Filter animations…"
+            value={animFilter}
+            onChange={(e) => setAnimFilter(e.target.value)}
+          />
+          <div className="px-4 py-2 flex flex-wrap gap-2 max-h-[150px] overflow-y-auto">
+            {animGroups
+              .map((name, i) => ({ name, i }))
+              .filter(({ name }) => name.toLowerCase().includes(animFilter.toLowerCase()))
+              .map(({ name, i }) => (
+                <button
+                  key={i}
+                  onClick={() => toggleAnim(i)}
+                  className={`px-3 py-1 rounded text-xs font-mono border transition-colors ${
+                    playingIdx === i
+                      ? "bg-[#3C50E0] border-[#3C50E0] text-white"
+                      : "bg-[#1A222C] border-[#2E3A4E] text-[#8A99AF] hover:border-[#3C50E0] hover:text-white"
+                  }`}
+                >
+                  {playingIdx === i ? "■ " : "▶ "}
+                  {name}
+                </button>
+              ))}
+          </div>
         </div>
       )}
     </div>
