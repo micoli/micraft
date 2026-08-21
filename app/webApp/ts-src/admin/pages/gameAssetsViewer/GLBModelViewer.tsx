@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
-import { BbmodelAssetViewer } from "./BbmodelAssetViewer";
+import { BBModelViewer } from "./BBModelViewer";
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -28,7 +28,7 @@ interface Props {
   format?: string;
 }
 
-export function ModelViewer({ url, format }: Props) {
+export function GLBModelViewer({ url }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [animGroups, setAnimGroups] = useState<string[]>([]);
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
@@ -38,7 +38,6 @@ export function ModelViewer({ url, format }: Props) {
 
   useEffect(() => {
     if (!url) return;
-    if (format === "fbx" || format === "bbmodel") return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -53,7 +52,7 @@ export function ModelViewer({ url, format }: Props) {
         const scene = new B.Scene(engine);
         scene.clearColor = new B.Color4(0.08, 0.08, 0.1, 1);
 
-        const camera = new B.ArcRotateCamera("cam", -Math.PI / 2, Math.PI / 3, 4, B.Vector3.Zero(), scene);
+        const camera = new B.ArcRotateCamera("cam", Math.PI / 2, Math.PI / 3, 4, B.Vector3.Zero(), scene);
         camera.attachControl(canvas, true);
         camera.lowerRadiusLimit = 0.5;
 
@@ -137,7 +136,7 @@ export function ModelViewer({ url, format }: Props) {
         engineRef.current = null;
       }
     };
-  }, [url, format]);
+  }, [url]);
 
   const toggleAnim = (idx: number) => {
     const groups = groupsRef.current;
@@ -156,18 +155,6 @@ export function ModelViewer({ url, format }: Props) {
     return (
       <div className="flex-1 flex items-center justify-center text-[#8A99AF] text-sm">Select an asset to preview</div>
     );
-  }
-
-  if (format === "fbx") {
-    return (
-      <div className="flex-1 flex items-center justify-center text-[#8A99AF] text-sm">
-        FBX not supported by BabylonJS — use GLB/GLTF equivalent
-      </div>
-    );
-  }
-
-  if (format === "bbmodel") {
-    return <BbmodelAssetViewer url={url} />;
   }
 
   return (

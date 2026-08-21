@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { BbmodelAnimationViewer } from "./BbmodelAnimationViewer";
-import { animationsFromBbmodel, animDisplayName } from "../../lib/animationHelpers";
+import { BbmodelAnimationViewer } from "../../components/BbmodelAnimationViewer";
+import { animationsFromBbmodel, animDisplayName } from "../../../lib/animationHelpers";
 
 interface Props {
   url: string;
 }
 
-export function BbmodelAssetViewer({ url }: Props) {
+export function BBModelViewer({ url }: Props) {
   const [bbmodel, setBbmodel] = useState<BbModel | null>(null);
   const [selectedAnim, setSelectedAnim] = useState<string | null>(null);
   const [animFilter, setAnimFilter] = useState("");

@@ -15,9 +15,11 @@ export function AdminShell({ collapsed, onToggle }: { collapsed: boolean; onTogg
         <TabBar />
         <main className="flex-1 overflow-auto p-6">
           {/* one subtree per open tab, kept mounted (hidden, not unmounted) so switching tabs
-              doesn't reinstantiate the page — only the explicit "refresh" button does, via the key */}
+              doesn't reinstantiate the page — only the explicit "refresh" button does, via the key.
+              h-full: pages relying on a sized ancestor (e.g. GameAssetsViewerPage) need this
+              wrapper to pass main's height through rather than collapsing to auto. */}
           {tabs.map((tab) => (
-            <div key={tab.path} hidden={tab.path !== activeTab?.path}>
+            <div key={tab.path} hidden={tab.path !== activeTab?.path} className="h-full">
               <Routes location={{ pathname: tab.lastPath }} key={`${tab.path}-${tab.refreshNonce}`}>
                 {ROUTES.map(({ path, page }) => (
                   <Route key={path} path={path} element={page} />
