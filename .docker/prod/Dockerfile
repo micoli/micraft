@@ -19,6 +19,10 @@ RUN --mount=type=cache,target=/root/.gradle \
 # ── Stage 2: server runtime ────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jre-jammy AS server
 
+RUN apt-get update && \
+    apt-get install -y blender && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY --from=builder /workspace/server/build/install/server ./server
 

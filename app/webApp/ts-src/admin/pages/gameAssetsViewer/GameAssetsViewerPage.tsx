@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { getApiGameAssets } from "../../../generated/api/requests";
 import { GLBModelViewer } from "./GLBModelViewer";
 import { useT, type TranslationKey } from "../../i18n";
-import {BBModelViewer} from "./BBModelViewer";
+import { BBModelViewer } from "./BBModelViewer";
+import { BlendModelViewer } from "./BlendModelViewer";
 
 interface AssetEntry {
   pack: string;
@@ -30,15 +31,18 @@ const FORMAT_BADGE: Record<string, string> = {
   gltf: "bg-blue-500/20 text-blue-400",
   fbx: "bg-orange-500/20 text-orange-400",
   bbmodel: "bg-purple-500/20 text-purple-400",
+  blend: "bg-amber-500/20 text-amber-400",
 };
 
 function getAssetUrl(selected: AssetEntry) {
-  return "/api/game-assets/file/" +
-      selected.path
-          .replace(/^game-assets\//, "")
-          .split("/")
-          .map(encodeURIComponent)
-          .join("/");
+  return (
+    "/api/game-assets/file/" +
+    selected.path
+      .replace(/^game-assets\//, "")
+      .split("/")
+      .map(encodeURIComponent)
+      .join("/")
+  );
 }
 
 export function GameAssetsViewerPage() {
@@ -154,8 +158,9 @@ export function GameAssetsViewerPage() {
             <span className="ml-auto opacity-50 font-mono truncate">{selected.path}</span>
           </div>
         )}
-        { selected && ["bbmodel"].includes(selected.format)  &&  <BBModelViewer url={getAssetUrl(selected)} />}
-        { selected && ["glb","gltf"].includes(selected.format) &&  <GLBModelViewer url={getAssetUrl(selected)} />}
+        {selected && ["bbmodel"].includes(selected.format) && <BBModelViewer url={getAssetUrl(selected)} />}
+        {selected && ["glb", "gltf"].includes(selected.format) && <GLBModelViewer url={getAssetUrl(selected)} />}
+        {selected && ["blend"].includes(selected.format) && <BlendModelViewer path={selected.path} />}
       </div>
     </div>
   );

@@ -5,13 +5,17 @@ import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.io.File
+import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
 import kotlinx.serialization.Serializable
 
 class GameAssetsController {
     @Serializable
     data class AssetEntry(val pack: String, val name: String, val path: String, val format: String)
 
-    private val extensions = setOf("glb", "gltf", "fbx", "bbmodel")
+    @Serializable data class BlendPreviewResponse(val path: String)
+
+    private val extensions = setOf("glb", "gltf", "fbx", "bbmodel", "blend")
     private val root = File("resources/game-assets")
 
     private val contentTypeByExt =
@@ -20,6 +24,9 @@ class GameAssetsController {
             "gltf" to ContentType("model", "gltf+json"),
             "fbx" to ContentType.Application.OctetStream,
             "bbmodel" to ContentType.Application.Json,
+            "blend" to ContentType.Application.OctetStream,
+            "obj" to ContentType.Text.Plain,
+            "mtl" to ContentType.Text.Plain,
             "png" to ContentType.Image.PNG,
             "jpg" to ContentType.Image.JPEG,
             "jpeg" to ContentType.Image.JPEG,
@@ -101,6 +108,82 @@ class GameAssetsController {
                         contentTypeByExt[file.extension.lowercase()]
                             ?: ContentType.Application.OctetStream
                     call.respondBytes(file.readBytes(), ct)
+                }
+
+            get(
+                "/api/game-assets/blend-preview/{path...}",
+                {
+                    description =
+                        "Converts a .blend file to OBJ/MTL via headless Blender (cached) and returns the OBJ asset path"
+                    request {
+                        pathParameter<String>("path") {
+                            description = "Relative path to a .blend asset"
+                        }
+                    }
+                    response {
+                        code(HttpStatusCode.OK) { body<BlendPreviewResponse>() }
+                        code(HttpStatusCode.NotFound) { description = "Asset not found" }
+                        code(HttpStatusCode.InternalServerError) {
+                            description = "Blender conversion failed"
+                        }
+                    }
+                }) {
+                    val relPath =
+                        call.parameters.getAll("path")?.joinToString("/")
+                            ?: return@get call.respond(HttpStatusCode.BadRequest)
+                    val file = File("resources/game-assets/$relPath")
+                    if (!file.exists() ||
+                        !file.canonicalPath.startsWith(root.canonicalPath) ||
+                        file.extension.lowercase() != "blend") {
+                        return@get call.respond(HttpStatusCode.NotFound)
+                    }
+
+                    val hash =
+                        MessageDigest.getInstance("SHA-256")
+                            .digest(relPath.toByteArray())
+                            .joinToString("") { "%02x".format(it) }
+                            .take(16)
+                    val cacheDir = File(root, ".cache/blend-obj/$hash")
+                    val objFile = File(cacheDir, "model.obj")
+
+                    if (!objFile.exists()) {
+                        cacheDir.mkdirs()
+                        val scriptFile = File(cacheDir, "convert.py")
+                        scriptFile.writeText(
+                            """
+                            import bpy, sys
+                            out = sys.argv[sys.argv.index("--") + 1]
+                            try:
+                                bpy.ops.wm.obj_export(filepath=out, export_materials=True)
+                            except AttributeError:
+                                bpy.ops.export_scene.obj(filepath=out, use_materials=True)
+                            """
+                                .trimIndent())
+
+                        val process =
+                            ProcessBuilder(
+                                    "blender",
+                                    "-b",
+                                    file.absolutePath,
+                                    "--python",
+                                    scriptFile.absolutePath,
+                                    "--",
+                                    objFile.absolutePath)
+                                .redirectErrorStream(true)
+                                .start()
+                        val output = process.inputStream.bufferedReader().readText()
+                        val exited = process.waitFor(60, TimeUnit.SECONDS)
+                        if (!exited) process.destroyForcibly()
+                        if (!exited || process.exitValue() != 0 || !objFile.exists()) {
+                            cacheDir.deleteRecursively()
+                            return@get call.respond(
+                                HttpStatusCode.InternalServerError, output.takeLast(2000))
+                        }
+                    }
+
+                    val objRelPath = objFile.relativeTo(root).path.replace("\\", "/")
+                    call.respondText(
+                        """{"path":${objRelPath.toJson()}}""", ContentType.Application.Json)
                 }
         }
 

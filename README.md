@@ -395,6 +395,7 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/chunks/{cx}/{cz}` | Binary-encoded chunk data (protocol.ServerMessage.ChunkData wire format). Not a JSON API — used by the game client, not by TanStack Query hooks. |
 | GET | `/api/classes` | Attack ids accessible per RPG class, keyed by level |
 | GET | `/api/game-assets` | 3D game asset files discovered under resources/game-assets |
+| GET | `/api/game-assets/blend-preview/{...}` | Converts a .blend file to OBJ/MTL via headless Blender (cached) and returns the OBJ asset path |
 | GET | `/api/game-assets/file/{...}` | Raw asset file bytes (glb/gltf/fbx/textures) |
 | GET | `/api/i18n/{locale}` | Client-facing translation keys for a locale |
 | GET | `/api/items/meta` | Item metadata (label, background color, consumable flags) by item type id |
