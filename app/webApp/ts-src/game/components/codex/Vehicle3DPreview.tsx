@@ -97,7 +97,7 @@ export function Vehicle3DPreview({ vehicle }: { vehicle: VehicleEntry }) {
     scene.onBeforeRenderObservable.add(() => {
       angle += 0.015;
       pivot.rotation.y = angle;
-      if (model) window.mc.setVehicleTransform?.(model, 0, 0, 0, 0);
+      if (model) window.mc.setVehicleTransform?.(model, 0, 0, 0, 0, 0);
     });
 
     engine.runRenderLoop(() => scene.render());
