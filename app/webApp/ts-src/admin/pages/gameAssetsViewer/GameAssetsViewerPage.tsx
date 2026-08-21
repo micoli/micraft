@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { getApiGameAssets } from "../../generated/api/requests";
-import { ModelViewer } from "../components/ModelViewer";
-import { useT, type TranslationKey } from "../i18n";
+import { getApiGameAssets } from "../../../generated/api/requests";
+import { ModelViewer } from "../../components/ModelViewer";
+import { useT, type TranslationKey } from "../../i18n";
 
 interface AssetEntry {
   pack: string;
