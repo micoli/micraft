@@ -1,0 +1,5 @@
+category: AXE
+breakSpeedMultiplier: 2.0
+rotate: { x: 270, y: 0, z: 0 }
+# Credits
+#  https://github.com/FrenchKrab/mc-blockbench-models/blob/master/tools/er_warhammer_pickaxe.bbmodel
