@@ -42,15 +42,45 @@ export function useArmorModelsReady(armors: string[]): boolean {
   return ready;
 }
 
+export function useWeaponModelsReady(items: (string | null | undefined)[]): boolean {
+  const names = items.filter((n): n is string => !!n);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (names.length === 0) {
+      setReady(true);
+      return;
+    }
+    names.forEach((n) => window.mc.initWeaponModel?.(n));
+    const check = () => names.every((n) => window.mc.isWeaponModelReady?.(n));
+    if (check()) {
+      setReady(true);
+      return;
+    }
+    const iv = setInterval(() => {
+      if (check()) {
+        setReady(true);
+        clearInterval(iv);
+      }
+    }, 150);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- names.join(",") is intentional: stable string key for array identity
+  }, [names.join(",")]);
+  return ready;
+}
+
 export function PlayerModelPreview({
   skin,
   armors,
+  rightHandItem,
+  leftHandItem,
   walking,
   width = 160,
   height = 220,
 }: {
   skin: string;
   armors: string[];
+  rightHandItem?: string | null;
+  leftHandItem?: string | null;
   walking: boolean;
   width?: number;
   height?: number;
@@ -58,7 +88,14 @@ export function PlayerModelPreview({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const skinReady = usePlayerModelReady(skin);
   const armorsReady = useArmorModelsReady(armors);
-  const ready = skinReady && armorsReady;
+  const weaponsReady = useWeaponModelsReady([rightHandItem, leftHandItem]);
+  const ready = skinReady && armorsReady && weaponsReady;
+  const rightHandItemRef = useRef(rightHandItem);
+  const leftHandItemRef = useRef(leftHandItem);
+  useLayoutEffect(() => {
+    rightHandItemRef.current = rightHandItem;
+    leftHandItemRef.current = leftHandItem;
+  });
   const walkingRef = useRef(walking);
   useLayoutEffect(() => {
     walkingRef.current = walking;
@@ -82,7 +119,11 @@ export function PlayerModelPreview({
     light.groundColor = new B.Color3(0.2, 0.2, 0.2);
 
     const model = window.mc.createPlayerModelNow?.(scene, skin) ?? null;
-    if (model) armors.forEach((a) => window.mc.attachArmor?.(model, a, scene));
+    if (model) {
+      armors.forEach((a) => window.mc.attachArmor?.(model, a, scene));
+      if (rightHandItemRef.current) window.mc.attachWeapon?.(model, rightHandItemRef.current, scene, "RIGHT");
+      if (leftHandItemRef.current) window.mc.attachWeapon?.(model, leftHandItemRef.current, scene, "LEFT");
+    }
 
     let angle = 0;
     scene.onBeforeRenderObservable.add(() => {

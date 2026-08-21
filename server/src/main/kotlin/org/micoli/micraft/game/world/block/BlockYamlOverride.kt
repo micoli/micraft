@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.world.block
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.game.world.EquipmentCategory
 
 @Serializable
 data class BlockYamlOverride(
@@ -23,4 +24,5 @@ data class BlockYamlOverride(
     val plainColorable: Boolean? = null,
     val isCubic: Boolean? = null,
     val rail: RailYamlEntry? = null,
+    val requiredEquipment: EquipmentCategory? = null,
 )

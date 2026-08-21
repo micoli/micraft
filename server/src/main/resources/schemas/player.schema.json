@@ -472,6 +472,25 @@
         },
         "continuousBreak": {
           "type": "boolean"
+        },
+        "dominantHand": {
+          "type": "string",
+          "enum": [
+            "LEFT",
+            "RIGHT"
+          ]
+        },
+        "rightHandItem": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "leftHandItem": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     },

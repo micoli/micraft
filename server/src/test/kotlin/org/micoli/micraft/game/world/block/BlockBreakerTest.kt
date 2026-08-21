@@ -271,4 +271,43 @@ class BlockBreakerTest {
         breaker.tick(session)
         assertEquals(listOf(0, 1), world.getFractionalYOffsetsAt(8, 5, 8, 0, 0).sorted())
     }
+
+    private fun registerAxeRequiredBlock(): BlockType {
+        val type = BlockType("TEST_LOG")
+        BlockRegistry.load(
+            mapOf(
+                type to
+                    BlockDefinition(
+                        hardness = 1f,
+                        solid = true,
+                        requiredEquipment = org.micoli.micraft.game.world.EquipmentCategory.AXE,
+                    )))
+        return type
+    }
+
+    @Test
+    fun handleStart_requiredEquipmentMissing_ignores() {
+        val type = registerAxeRequiredBlock()
+        val world = WorldState(MapChunkGenerator(mapOf(Triple(8, 5, 8) to type)))
+        val breaker = BlockBreaker(world, {}, noopWim())
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        breaker.handleStart(session, ClientMessage.BlockBreakStart(BlockPos(8, 5, 8)))
+        assertNull(session.breakTarget)
+    }
+
+    @Test
+    fun handleStart_requiredEquipmentInEitherHand_setsBreakTarget() {
+        val type = registerAxeRequiredBlock()
+        val world = WorldState(MapChunkGenerator(mapOf(Triple(8, 5, 8) to type)))
+        val toolRegistry =
+            mapOf(
+                "iron_axe" to
+                    org.micoli.micraft.game.equipment.ToolDefinition(
+                        category = org.micoli.micraft.game.world.EquipmentCategory.AXE))
+        val breaker = BlockBreaker(world, {}, noopWim(), toolRegistry = { toolRegistry })
+        val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
+        session.state = session.state.copy(leftHandItem = "iron_axe")
+        breaker.handleStart(session, ClientMessage.BlockBreakStart(BlockPos(8, 5, 8)))
+        assertNotNull(session.breakTarget)
+    }
 }

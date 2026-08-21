@@ -27,6 +27,7 @@ export interface SavePayload {
   overrideImpostorRadiusChunks: number | null;
   overrideImpostorFovBonusChunks: number | null;
   continuousBreak: boolean;
+  dominantHand: "LEFT" | "RIGHT";
 }
 
 export interface CustomCmdEntry {
@@ -153,6 +154,7 @@ export function usePreferences({
   const [localAttackPanelVisible, setLocalAttackPanelVisible] = useState(false);
   const [localAutoTarget, setLocalAutoTarget] = useState(true);
   const [localContinuousBreak, setLocalContinuousBreak] = useState(false);
+  const [localDominantHand, setLocalDominantHand] = useState<"LEFT" | "RIGHT">("RIGHT");
   const [localFov, setLocalFov] = useState(70);
   const [localShadowAngleDeg, setLocalShadowAngleDeg] = useState(1);
   const [localOverrideViewRadius, setLocalOverrideViewRadius] = useState<number | null>(null);
@@ -253,6 +255,7 @@ export function usePreferences({
       setLocalAttackPanelVisible(preferences.attackPanelVisible ?? false);
       setLocalAutoTarget(preferences.autoTargetEnabled ?? true);
       setLocalContinuousBreak(preferences.continuousBreak ?? false);
+      setLocalDominantHand(preferences.dominantHand ?? "RIGHT");
       setLocalFov(preferences.fieldOfView ?? 70);
       setLocalShadowAngleDeg(preferences.shadowAngleDeg ?? 1);
       setLocalOverrideViewRadius(preferences.overrideViewRadius ?? null);
@@ -456,6 +459,7 @@ export function usePreferences({
       attackPanelVisible: localAttackPanelVisible,
       autoTargetEnabled: localAutoTarget,
       continuousBreak: localContinuousBreak,
+      dominantHand: localDominantHand,
       keybindings: localBindings,
       customCommands,
       fieldOfView: localFov,
@@ -506,6 +510,8 @@ export function usePreferences({
     setLocalAutoTarget,
     localContinuousBreak,
     setLocalContinuousBreak,
+    localDominantHand,
+    setLocalDominantHand,
     localFov,
     setLocalFov,
     localShadowAngleDeg,

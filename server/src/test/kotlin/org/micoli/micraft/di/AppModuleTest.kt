@@ -28,6 +28,10 @@ class AppModuleTest {
                         reloadNpcs = null,
                         reloadRbac = null,
                         armorRegistry = { emptyMap() },
+                        weaponRegistry = { emptyMap() },
+                        toolRegistry = { emptyMap() },
+                        weaponCategories = { emptyMap() },
+                        toolCategories = { emptyMap() },
                         applyBuff = { _, _, _ -> },
                     )
                 }

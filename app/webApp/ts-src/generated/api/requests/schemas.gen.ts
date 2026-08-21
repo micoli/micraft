@@ -252,6 +252,42 @@ export const org_micoli_micraft_http_UploadScreenshotResponseSchema = {
     title: 'UploadScreenshotResponse'
 } as const;
 
+export const org_micoli_micraft_player_HandSchema = {
+    type: 'string',
+    enum: [
+        'LEFT',
+        'RIGHT'
+    ],
+    title: 'Hand'
+} as const;
+
+export const org_micoli_micraft_http_PlayerHandsSchema = {
+    type: 'object',
+    properties: {
+        dominantHand: {
+            $ref: '#/components/schemas/org.micoli.micraft.player.Hand'
+        },
+        leftHandItem: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        rightHandItem: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        }
+    },
+    required: [
+        'dominantHand'
+    ],
+    title: 'PlayerHands'
+} as const;
+
 export const org_micoli_micraft_http_PlayerRpgResponseSchema = {
     type: 'object',
     properties: {
@@ -565,6 +601,96 @@ export const org_micoli_micraft_game_armor_WearableSlotsSchema = {
         'rightLeg'
     ],
     title: 'WearableSlots'
+} as const;
+
+export const org_micoli_micraft_game_equipment_WeaponDefinitionSchema = {
+    type: 'object',
+    properties: {
+        category: {
+            $ref: '#/components/schemas/org.micoli.micraft.game.world.EquipmentCategory'
+        },
+        rotate: {
+            $ref: '#/components/schemas/org.micoli.micraft.game.equipment.Rotation'
+        },
+        statBonus: {
+            $ref: '#/components/schemas/org.micoli.micraft.game.rpg.StatBonus'
+        }
+    },
+    required: [
+        'category',
+        'rotate',
+        'statBonus'
+    ],
+    title: 'WeaponDefinition'
+} as const;
+
+export const org_micoli_micraft_game_world_EquipmentCategorySchema = {
+    type: 'string',
+    enum: [
+        'SWORD',
+        'LONGSWORD',
+        'DAGGER',
+        'LONG_DAGGER',
+        'DUAL',
+        'STAFF',
+        'AXE',
+        'DOUBLE_AXE',
+        'CLUB',
+        'BOW',
+        'CROSSBOW',
+        'HAMMER'
+    ],
+    title: 'EquipmentCategory'
+} as const;
+
+export const org_micoli_micraft_game_equipment_RotationSchema = {
+    type: 'object',
+    properties: {
+        x: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        y: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        z: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        }
+    },
+    required: [
+        'x',
+        'y',
+        'z'
+    ],
+    title: 'Rotation'
+} as const;
+
+export const org_micoli_micraft_game_equipment_ToolDefinitionSchema = {
+    type: 'object',
+    properties: {
+        breakSpeedMultiplier: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        category: {
+            $ref: '#/components/schemas/org.micoli.micraft.game.world.EquipmentCategory'
+        },
+        rotate: {
+            $ref: '#/components/schemas/org.micoli.micraft.game.equipment.Rotation'
+        }
+    },
+    required: [
+        'breakSpeedMultiplier',
+        'category',
+        'rotate'
+    ],
+    title: 'ToolDefinition'
 } as const;
 
 export const org_micoli_micraft_http_GameAssetsController_AssetEntrySchema = {
@@ -1419,6 +1545,9 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             title: 'Set<String>',
             uniqueItems: true
         },
+        dominantHand: {
+            $ref: '#/components/schemas/org.micoli.micraft.player.Hand'
+        },
         dynamicFogEnabled: {
             type: 'boolean',
             title: 'Boolean'
@@ -1484,6 +1613,13 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             },
             title: 'List<GameLayout>'
         },
+        leftHandItem: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
         lightBoostEnabled: {
             type: 'boolean',
             title: 'Boolean'
@@ -1543,6 +1679,13 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
                 $ref: '#/components/schemas/org.micoli.micraft.quest.QuestProgress'
             },
             title: 'Map<String,QuestProgress>'
+        },
+        rightHandItem: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
         },
         rpgOptOut: {
             type: 'boolean',
@@ -1623,6 +1766,7 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         'chunkDebugVisible',
         'continuousBreak',
         'disabledCommands',
+        'dominantHand',
         'dynamicFogEnabled',
         'editMode',
         'email',

@@ -23,7 +23,7 @@ export function AnimationsTab() {
 
   const loadBbmodel = useCallback((skin: string) => {
     // Not an OpenAPI route (staticFiles mount) — kept as a manual fetch.
-    fetch(`/api/models/skins/${encodeURIComponent(skin)}/${encodeURIComponent(skin)}.bbmodel`)
+    fetch(`/api/models/models/${encodeURIComponent(skin)}/${encodeURIComponent(skin)}.bbmodel`)
       .then((r) => r.json() as Promise<BbModel>)
       .then(setBbmodel)
       .catch(() => setBbmodel(null));

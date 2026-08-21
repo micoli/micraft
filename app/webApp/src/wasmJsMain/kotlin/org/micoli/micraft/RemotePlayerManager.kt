@@ -22,6 +22,10 @@ class RemotePlayerManager(private val scene: JsAny) {
     private val playerSkins = mutableMapOf<String, String>()
     private val playerArmors = mutableMapOf<String, List<String>>()
     private val playerArmorsAttached = mutableMapOf<String, List<String>>()
+    private val playerRightHandItem = mutableMapOf<String, String?>()
+    private val playerLeftHandItem = mutableMapOf<String, String?>()
+    private val playerRightHandAttached = mutableMapOf<String, String?>()
+    private val playerLeftHandAttached = mutableMapOf<String, String?>()
     private val playerLightBoost = mutableMapOf<String, Boolean>()
     private val playerLightBoostApplied = mutableMapOf<String, Boolean>()
     private val playerStances = mutableMapOf<String, PlayerStance>()
@@ -35,10 +39,20 @@ class RemotePlayerManager(private val scene: JsAny) {
             jsInitPlayerModel(state.skin)
             playerModels.remove(state.id)?.let(::jsDisposePlayerModel)
             playerArmorsAttached[state.id] = emptyList()
+            playerRightHandAttached[state.id] = null
+            playerLeftHandAttached[state.id] = null
         }
         if (playerArmors[state.id] != state.armors) {
             playerArmors[state.id] = state.armors
             state.armors.forEach { jsInitArmorModel(it) }
+        }
+        if (playerRightHandItem[state.id] != state.rightHandItem) {
+            playerRightHandItem[state.id] = state.rightHandItem
+            state.rightHandItem?.let { jsInitWeaponModel(it) }
+        }
+        if (playerLeftHandItem[state.id] != state.leftHandItem) {
+            playerLeftHandItem[state.id] = state.leftHandItem
+            state.leftHandItem?.let { jsInitWeaponModel(it) }
         }
         val nx = state.pos.x.toDouble()
         val ny = state.pos.y.toDouble()
@@ -59,6 +73,10 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerSkins.remove(id)
         playerArmors.remove(id)
         playerArmorsAttached.remove(id)
+        playerRightHandItem.remove(id)
+        playerLeftHandItem.remove(id)
+        playerRightHandAttached.remove(id)
+        playerLeftHandAttached.remove(id)
         updateAutocomplete()
         playerModels.remove(id)?.let(::jsDisposePlayerModel)
         jsRemovePlayerFromMinimap(id)
@@ -136,6 +154,25 @@ class RemotePlayerManager(private val scene: JsAny) {
                 playerArmorsAttached[id] = attached - toAttach.toSet() + readyToAttach
             }
 
+            val wantedRight = playerRightHandItem[id]
+            if (playerRightHandAttached[id] != wantedRight) {
+                playerRightHandAttached[id]?.let { jsDetachWeapon(model, "RIGHT") }
+                playerRightHandAttached[id] = null
+                if (wantedRight != null && jsIsWeaponModelReady(wantedRight)) {
+                    jsAttachWeapon(model, wantedRight, scene, "RIGHT")
+                    playerRightHandAttached[id] = wantedRight
+                }
+            }
+            val wantedLeft = playerLeftHandItem[id]
+            if (playerLeftHandAttached[id] != wantedLeft) {
+                playerLeftHandAttached[id]?.let { jsDetachWeapon(model, "LEFT") }
+                playerLeftHandAttached[id] = null
+                if (wantedLeft != null && jsIsWeaponModelReady(wantedLeft)) {
+                    jsAttachWeapon(model, wantedLeft, scene, "LEFT")
+                    playerLeftHandAttached[id] = wantedLeft
+                }
+            }
+
             val lightBoost = playerLightBoost[id] ?: false
             if (lightBoost != (playerLightBoostApplied[id] ?: false)) {
                 jsSetRemotePlayerLight(model, scene, lightBoost)
@@ -159,6 +196,10 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerSkins.clear()
         playerArmors.clear()
         playerArmorsAttached.clear()
+        playerRightHandItem.clear()
+        playerLeftHandItem.clear()
+        playerRightHandAttached.clear()
+        playerLeftHandAttached.clear()
         playerLightBoost.clear()
         playerLightBoostApplied.clear()
         playerStances.clear()

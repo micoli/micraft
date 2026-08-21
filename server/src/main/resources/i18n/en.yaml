@@ -174,6 +174,19 @@ unequip:
     usage: "Usage: /unequip <armorName>"
     not_wearing: "You are not wearing {0}."
     unequipped: "Unequipped {0}."
+wield:
+  server:
+    usage: "Usage: /wield <name> [hand]"
+    unknown: "Unknown weapon or tool: {0}. Available: {1}"
+    wrong_class: "Your class cannot wield {0}."
+    wrong_hand: "{0} can only be wielded in your dominant hand."
+    hands_full: "Both hands are full."
+    wielded: "Wielded {0}."
+unwield:
+  server:
+    usage: "Usage: /unwield <hand>"
+    empty: "That hand is already empty."
+    unwielded: "Unwielded {0}."
 trade:
   server:
     usage: "Usage: /trade <playerName>"

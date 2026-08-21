@@ -1,0 +1,33 @@
+SWORD:
+  allowedClasses: [WARRIOR, RANGER, CLERIC]
+  mainHandOnly: false
+LONGSWORD:
+  allowedClasses: [WARRIOR, RANGER]
+  mainHandOnly: true
+DAGGER:
+  allowedClasses: [WARRIOR, MAGE, RANGER, CLERIC]
+  mainHandOnly: false
+LONG_DAGGER:
+  allowedClasses: [WARRIOR, MAGE, RANGER]
+  mainHandOnly: true
+DUAL:
+  allowedClasses: [RANGER]
+  mainHandOnly: false
+STAFF:
+  allowedClasses: [CLERIC]
+  mainHandOnly: true
+AXE:
+  allowedClasses: [WARRIOR, RANGER]
+  mainHandOnly: false
+DOUBLE_AXE:
+  allowedClasses: [WARRIOR]
+  mainHandOnly: true
+CLUB:
+  allowedClasses: [WARRIOR, RANGER]
+  mainHandOnly: false
+BOW:
+  allowedClasses: [RANGER]
+  mainHandOnly: true
+CROSSBOW:
+  allowedClasses: [RANGER]
+  mainHandOnly: true

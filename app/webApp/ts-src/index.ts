@@ -18,6 +18,7 @@ import { registerChunks } from "./game/lib/chunkBuilder";
 import { registerPlayerModel } from "./game/lib/player/playerModel";
 import { registerSkinConfig } from "./game/lib/player/skinConfig";
 import { registerArmorOverlay } from "./game/lib/player/armorOverlay";
+import { registerWeaponOverlay } from "./game/lib/player/weaponOverlay";
 import { registerNpcModel } from "./game/npc/npcModel";
 import { registerVehicleModel } from "./game/vehicle/vehicleModel";
 import { registerMinimap, setMinimapColors } from "./game/lib/minimap";
@@ -74,6 +75,8 @@ window.mcState = {
   npcBbmodels: {},
   npcWalkBones: {},
   armorBbmodels: {},
+  weaponBbmodels: {},
+  weaponRotations: {},
   npcModelsReady: false,
   vehicleBbmodels: {},
   vehicleModelsReady: false,
@@ -164,6 +167,7 @@ window.mc = {
   ...registerPlayerModel(),
   ...registerSkinConfig(),
   ...registerArmorOverlay(),
+  ...registerWeaponOverlay(),
   ...registerNpcModel(),
   ...registerVehicleModel(),
   ...registerMinimap(),

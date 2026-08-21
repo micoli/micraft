@@ -156,6 +156,7 @@ class BlockRegistryLoader(
                                 height = rail.height,
                             )
                         },
+                    requiredEquipment = entry.requiredEquipment,
                 )
             }
         log.info("Block registry loaded: {} block types", result.size)

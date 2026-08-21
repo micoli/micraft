@@ -343,6 +343,16 @@ export function Preferences({
                   <span>{label}</span>
                 </div>
               ))}
+              <div className="flex items-center gap-2 py-1.5 border-b border-[#2a2a2a]">
+                <span className="flex-1">Dominant hand</span>
+                <select
+                  value={pref.localDominantHand}
+                  onChange={(e) => pref.setLocalDominantHand(e.target.value as "LEFT" | "RIGHT")}
+                >
+                  <option value="RIGHT">Right-handed</option>
+                  <option value="LEFT">Left-handed</option>
+                </select>
+              </div>
             </>
           )}
 

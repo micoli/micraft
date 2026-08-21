@@ -100,6 +100,10 @@ class LocalPlayerController(
     var localSkin = "articulated"
     var localArmors: List<String> = emptyList()
     var localArmorsAttached: List<String> = emptyList()
+    var localRightHandItem: String? = null
+    var localLeftHandItem: String? = null
+    var localRightHandAttached: String? = null
+    var localLeftHandAttached: String? = null
     var lastPlayerCx = Int.MIN_VALUE
     var lastPlayerCz = Int.MIN_VALUE
     private var viewMode: ViewMode = ViewMode.FIRST_PERSON
@@ -234,10 +238,20 @@ class LocalPlayerController(
             localPlayerModel?.let { jsDisposePlayerModel(it) }
             localPlayerModel = null
             localArmorsAttached = emptyList()
+            localRightHandAttached = null
+            localLeftHandAttached = null
         }
         if (state.armors != localArmors) {
             localArmors = state.armors
             localArmors.forEach { jsInitArmorModel(it) }
+        }
+        if (state.rightHandItem != localRightHandItem) {
+            localRightHandItem = state.rightHandItem
+            localRightHandItem?.let { jsInitWeaponModel(it) }
+        }
+        if (state.leftHandItem != localLeftHandItem) {
+            localLeftHandItem = state.leftHandItem
+            localLeftHandItem?.let { jsInitWeaponModel(it) }
         }
 
         serverX = state.pos.x.toDouble()
@@ -839,6 +853,26 @@ class LocalPlayerController(
                 val readyToAttach = toAttach.filter { jsIsArmorModelReady(it) }
                 readyToAttach.forEach { jsAttachArmor(model, it, scene) }
                 localArmorsAttached = localArmorsAttached - toAttach.toSet() + readyToAttach
+            }
+            if (localRightHandAttached != localRightHandItem) {
+                localRightHandAttached?.let { jsDetachWeapon(model, "RIGHT") }
+                localRightHandAttached = null
+                localRightHandItem?.let {
+                    if (jsIsWeaponModelReady(it)) {
+                        jsAttachWeapon(model, it, scene, "RIGHT")
+                        localRightHandAttached = it
+                    }
+                }
+            }
+            if (localLeftHandAttached != localLeftHandItem) {
+                localLeftHandAttached?.let { jsDetachWeapon(model, "LEFT") }
+                localLeftHandAttached = null
+                localLeftHandItem?.let {
+                    if (jsIsWeaponModelReady(it)) {
+                        jsAttachWeapon(model, it, scene, "LEFT")
+                        localLeftHandAttached = it
+                    }
+                }
             }
         }
 

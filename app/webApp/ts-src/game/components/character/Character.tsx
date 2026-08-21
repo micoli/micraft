@@ -1,5 +1,12 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
-import { getApiArmors, getApiPlayerByIdArmors, getApiPlayerByIdSkin } from "../../../generated/api/requests";
+import {
+  getApiArmors,
+  getApiPlayerByIdArmors,
+  getApiPlayerByIdSkin,
+  getApiWeapons,
+  getApiTools,
+  getApiPlayerByIdHands,
+} from "../../../generated/api/requests";
 import { PlayerModelPreview } from "../../shared/PlayerModelPreview";
 import { Dialog } from "../../../primitives/Dialog";
 import { DialogContent } from "../../../primitives/DialogContent";
@@ -8,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../../primitives/Ta
 import { Button } from "../../../primitives/Button";
 import { cn } from "../../../primitives/cn";
 import { CharacterSyncData, AttackMeta, SpellMeta } from "../../types";
+import type { GetApiPlayerByIdHandsResponse } from "../../../generated/api/requests";
 import { CharacterStatsPanel } from "./CharacterStatsPanel";
 import { ArmorBonusLine } from "./ArmorBonusLine";
 import { AttacksTab } from "./AttacksTab";
@@ -56,6 +64,9 @@ function slotsOverlap(a: ArmorSlots | undefined, b: ArmorSlots | undefined): boo
   );
 }
 
+type HandItemDefinition = { category: string };
+type PlayerHands = GetApiPlayerByIdHandsResponse;
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -70,6 +81,9 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
   const [equipped, setEquipped] = useState<string[]>([]);
   const [skin, setSkin] = useState("articulated");
   const [walking, setWalking] = useState(true);
+  const [weapons, setWeapons] = useState<Record<string, HandItemDefinition>>({});
+  const [tools, setTools] = useState<Record<string, HandItemDefinition>>({});
+  const [hands, setHands] = useState<PlayerHands>({ dominantHand: "RIGHT", rightHandItem: null, leftHandItem: null });
   const closeRef = useRef(onClose);
   useLayoutEffect(() => {
     closeRef.current = onClose;
@@ -86,12 +100,38 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
       getApiPlayerByIdSkin({ path: { id: playerId }, throwOnError: true })
         .then((r) => r.data)
         .catch(() => ({ skin: "articulated" })),
-    ]).then(([armors, equippedArmors, skinData]) => {
+      getApiWeapons({ throwOnError: true })
+        .then((r) => r.data)
+        .catch(() => ({})),
+      getApiTools({ throwOnError: true })
+        .then((r) => r.data)
+        .catch(() => ({})),
+      getApiPlayerByIdHands({ path: { id: playerId }, throwOnError: true })
+        .then((r) => r.data)
+        .catch(() => ({ dominantHand: "RIGHT" as const, rightHandItem: null, leftHandItem: null })),
+    ]).then(([armors, equippedArmors, skinData, weaponDefs, toolDefs, handsData]) => {
       setAvailable(armors as unknown as Record<string, ArmorDefinition>);
       setEquipped(Array.isArray(equippedArmors) ? equippedArmors : []);
       setSkin(skinData.skin ?? "articulated");
+      setWeapons(weaponDefs as Record<string, HandItemDefinition>);
+      setTools(toolDefs as Record<string, HandItemDefinition>);
+      setHands(handsData as PlayerHands);
     });
   }, [open]);
+
+  const handItems = { ...weapons, ...tools };
+  const sortedHandItems = Object.keys(handItems).sort();
+
+  function setHand(hand: "right" | "left", name: string) {
+    const key = hand === "right" ? "rightHandItem" : "leftHandItem";
+    if (name === "") {
+      onCommand(`/unwield ${hand}`);
+      setHands((prev) => ({ ...prev, [key]: null }));
+    } else {
+      onCommand(`/wield ${name} ${hand}`);
+      setHands((prev) => ({ ...prev, [key]: name }));
+    }
+  }
 
   function toggleArmor(name: string) {
     if (equipped.includes(name)) {
@@ -183,6 +223,32 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
                   );
                 })}
 
+                {sortedHandItems.length > 0 && (
+                  <div className="mt-6 pt-4 border-t border-white/10">
+                    <div className="text-xs text-white/50 mb-2 tracking-widest">HANDS</div>
+                    {(["right", "left"] as const).map((hand) => {
+                      const current = hand === "right" ? hands.rightHandItem : hands.leftHandItem;
+                      return (
+                        <div key={hand} className="flex items-center gap-2 mb-2">
+                          <span className="text-xs text-white/60 w-16 capitalize">{hand} hand</span>
+                          <select
+                            className="flex-1 bg-black/40 border border-white/15 rounded text-xs px-2 py-1 text-white/80"
+                            value={current ?? ""}
+                            onChange={(e) => setHand(hand, e.target.value)}
+                          >
+                            <option value="">(empty)</option>
+                            {sortedHandItems.map((name) => (
+                              <option key={name} value={name}>
+                                {name} — {handItems[name].category}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
                 <Button variant="ghost" onClick={onClose} className="mt-6 w-full font-mono text-xs text-white/50">
                   Close
                 </Button>
@@ -190,7 +256,14 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
 
               {/* Model preview */}
               <div className="flex flex-col items-center gap-2">
-                <PlayerModelPreview key={skin + equipped.join(",")} skin={skin} armors={equipped} walking={walking} />
+                <PlayerModelPreview
+                  key={skin + equipped.join(",") + hands.rightHandItem + hands.leftHandItem}
+                  skin={skin}
+                  armors={equipped}
+                  rightHandItem={hands.rightHandItem}
+                  leftHandItem={hands.leftHandItem}
+                  walking={walking}
+                />
                 <div className="flex gap-1 w-40">
                   <button
                     onClick={() => setWalking(false)}

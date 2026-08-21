@@ -6,6 +6,7 @@ import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.player.ChannelSubscription
+import org.micoli.micraft.player.Hand
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.ui.GameLayout
 
@@ -108,6 +109,7 @@ sealed class ClientMessage {
         val overrideImpostorRadiusChunks: Int? = null,
         val overrideImpostorFovBonusChunks: Int? = null,
         val continuousBreak: Boolean = false,
+        val dominantHand: Hand = Hand.RIGHT,
     ) : ClientMessage()
 
     @ProtoId(13) @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()

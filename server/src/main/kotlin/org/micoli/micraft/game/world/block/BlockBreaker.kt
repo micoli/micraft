@@ -3,6 +3,8 @@ package org.micoli.micraft.game.world.block
 import kotlin.math.ceil
 import kotlin.math.sqrt
 import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
+import org.micoli.micraft.game.equipment.ToolDefinition
+import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.WorldActionRecord
 import org.micoli.micraft.game.world.BlockPos
@@ -36,8 +38,19 @@ class BlockBreaker(
     private val bufferSize: Int = 1000,
     private val instanceRegistry: InstanceRegistry? = null,
     private val railNetworkRegistry: RailNetworkRegistry? = null,
+    private val weaponRegistry: () -> Map<String, WeaponDefinition> = { emptyMap() },
+    private val toolRegistry: () -> Map<String, ToolDefinition> = { emptyMap() },
 ) {
     private val blockProgress = LinkedHashMap<BlockPos, BlockBreakEntry>()
+
+    private fun hasRequiredEquipment(session: PlayerSession, block: BlockType): Boolean {
+        val required = BlockRegistry.get(block).requiredEquipment ?: return true
+        val weapons = weaponRegistry()
+        val tools = toolRegistry()
+        return listOfNotNull(session.state.rightHandItem, session.state.leftHandItem).any { name ->
+            weapons[name]?.category == required || tools[name]?.category == required
+        }
+    }
 
     fun handleStart(session: PlayerSession, intent: ClientMessage.BlockBreakStart) {
         val rawBp = intent.pos
@@ -60,7 +73,8 @@ class BlockBreaker(
         blockBreakerLog.debug(
             "BlockBreakStart pos={} block={} dist={}", rawBp, block, "%.2f".format(dist))
         if ((creative || dist <= MAX_INTERACTION_DISTANCE) &&
-            (hasEntity || (block.hardness > 0f && block.hardness != Float.MAX_VALUE))) {
+            (hasEntity || (block.hardness > 0f && block.hardness != Float.MAX_VALUE)) &&
+            hasRequiredEquipment(session, block)) {
             // Resolve satellite → master so blockProgress key is consistent
             val masterPos = world.getEntityMasterWorldPos(rawBp.x, rawBp.y, rawBp.z)
             session.breakTarget = masterPos ?: rawBp

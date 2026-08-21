@@ -105,6 +105,7 @@ import org.micoli.micraft.http.MacrosController
 import org.micoli.micraft.http.MapController
 import org.micoli.micraft.http.MetricsController
 import org.micoli.micraft.http.PlayerArmorsController
+import org.micoli.micraft.http.PlayerHandsController
 import org.micoli.micraft.http.PlayerRpgController
 import org.micoli.micraft.http.PlayerSkinController
 import org.micoli.micraft.http.PlayersController
@@ -114,6 +115,8 @@ import org.micoli.micraft.http.ServerInfoController
 import org.micoli.micraft.http.SimulationController
 import org.micoli.micraft.http.SkinsController
 import org.micoli.micraft.http.TerrainCache
+import org.micoli.micraft.http.ToolsController
+import org.micoli.micraft.http.WeaponsController
 import org.micoli.micraft.simulation.SimulationDeps
 import org.micoli.micraft.simulation.SimulationRegistry
 import org.slf4j.LoggerFactory
@@ -350,11 +353,14 @@ fun Application.module() {
         BiomesController(biomeRegistry).register(this)
         PlayerSkinController(persistence).register(this)
         ScreenshotController(dataPath).register(this)
-        PlayerArmorsController(persistence).register(this)
+        PlayerArmorsController(persistence, sessionRegistry).register(this)
+        PlayerHandsController(persistence, sessionRegistry).register(this)
         PlayerRpgController(persistence).register(this)
         CharacterController(persistence).register(this)
         SkinsController(dataPath).register(this)
         ArmorsController(dataPath).register(this)
+        WeaponsController(dataPath).register(this)
+        ToolsController(dataPath).register(this)
         GameAssetsController().register(this)
         QuestsController(questManager).register(this)
         PlayersController(gameLoop.getMailManager()).register(this)

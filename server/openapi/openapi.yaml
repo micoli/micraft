@@ -461,6 +461,28 @@ paths:
                   title: String
                 title: List<String>
       deprecated: false
+  /api/player/{id}/hands:
+    get:
+      tags: []
+      description: Wielded weapon/tool names and dominant hand for a player
+      parameters:
+      - name: id
+        in: path
+        description: Player id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.PlayerHands"
+      deprecated: false
   /api/player/{id}/rpg:
     get:
       tags: []
@@ -596,6 +618,38 @@ paths:
                 additionalProperties:
                   $ref: "#/components/schemas/org.micoli.micraft.game.armor.ArmorDefinition"
                 title: "Map<String,ArmorDefinition>"
+      deprecated: false
+  /api/weapons:
+    get:
+      tags: []
+      description: List all weapon definitions
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: "#/components/schemas/org.micoli.micraft.game.equipment.WeaponDefinition"
+                title: "Map<String,WeaponDefinition>"
+      deprecated: false
+  /api/tools:
+    get:
+      tags: []
+      description: List all tool definitions
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: "#/components/schemas/org.micoli.micraft.game.equipment.ToolDefinition"
+                title: "Map<String,ToolDefinition>"
       deprecated: false
   /api/game-assets:
     get:
@@ -2765,6 +2819,30 @@ components:
       required:
       - filename
       title: UploadScreenshotResponse
+    org.micoli.micraft.player.Hand:
+      type: string
+      enum:
+      - LEFT
+      - RIGHT
+      title: Hand
+    org.micoli.micraft.http.PlayerHands:
+      type: object
+      properties:
+        dominantHand:
+          $ref: "#/components/schemas/org.micoli.micraft.player.Hand"
+        leftHandItem:
+          type:
+          - "null"
+          - string
+          title: String
+        rightHandItem:
+          type:
+          - "null"
+          - string
+          title: String
+      required:
+      - dominantHand
+      title: PlayerHands
     org.micoli.micraft.http.PlayerRpgResponse:
       type: object
       properties:
@@ -2995,6 +3073,72 @@ components:
       - rightArm
       - rightLeg
       title: WearableSlots
+    org.micoli.micraft.game.equipment.WeaponDefinition:
+      type: object
+      properties:
+        category:
+          $ref: "#/components/schemas/org.micoli.micraft.game.world.EquipmentCategory"
+        rotate:
+          $ref: "#/components/schemas/org.micoli.micraft.game.equipment.Rotation"
+        statBonus:
+          $ref: "#/components/schemas/org.micoli.micraft.game.rpg.StatBonus"
+      required:
+      - category
+      - rotate
+      - statBonus
+      title: WeaponDefinition
+    org.micoli.micraft.game.world.EquipmentCategory:
+      type: string
+      enum:
+      - SWORD
+      - LONGSWORD
+      - DAGGER
+      - LONG_DAGGER
+      - DUAL
+      - STAFF
+      - AXE
+      - DOUBLE_AXE
+      - CLUB
+      - BOW
+      - CROSSBOW
+      - HAMMER
+      title: EquipmentCategory
+    org.micoli.micraft.game.equipment.Rotation:
+      type: object
+      properties:
+        x:
+          type: number
+          format: float
+          title: Float
+        "y":
+          type: number
+          format: float
+          title: Float
+        z:
+          type: number
+          format: float
+          title: Float
+      required:
+      - x
+      - "y"
+      - z
+      title: Rotation
+    org.micoli.micraft.game.equipment.ToolDefinition:
+      type: object
+      properties:
+        breakSpeedMultiplier:
+          type: number
+          format: float
+          title: Float
+        category:
+          $ref: "#/components/schemas/org.micoli.micraft.game.world.EquipmentCategory"
+        rotate:
+          $ref: "#/components/schemas/org.micoli.micraft.game.equipment.Rotation"
+      required:
+      - breakSpeedMultiplier
+      - category
+      - rotate
+      title: ToolDefinition
     org.micoli.micraft.http.GameAssetsController.AssetEntry:
       type: object
       properties:
@@ -3633,6 +3777,8 @@ components:
             title: String
           title: Set<String>
           uniqueItems: true
+        dominantHand:
+          $ref: "#/components/schemas/org.micoli.micraft.player.Hand"
         dynamicFogEnabled:
           type: boolean
           title: Boolean
@@ -3682,6 +3828,11 @@ components:
           items:
             $ref: "#/components/schemas/org.micoli.micraft.ui.GameLayout"
           title: List<GameLayout>
+        leftHandItem:
+          type:
+          - "null"
+          - string
+          title: String
         lightBoostEnabled:
           type: boolean
           title: Boolean
@@ -3726,6 +3877,11 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/org.micoli.micraft.quest.QuestProgress"
           title: "Map<String,QuestProgress>"
+        rightHandItem:
+          type:
+          - "null"
+          - string
+          title: String
         rpgOptOut:
           type: boolean
           title: Boolean
@@ -3787,6 +3943,7 @@ components:
       - chunkDebugVisible
       - continuousBreak
       - disabledCommands
+      - dominantHand
       - dynamicFogEnabled
       - editMode
       - email

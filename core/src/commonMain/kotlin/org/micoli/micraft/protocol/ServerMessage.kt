@@ -13,6 +13,7 @@ import org.micoli.micraft.game.world.WorldItem
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.ChannelSubscription
 import org.micoli.micraft.player.EditMode
+import org.micoli.micraft.player.Hand
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
@@ -212,6 +213,7 @@ sealed class ServerMessage {
         val overrideImpostorRadiusChunks: Int? = null,
         val overrideImpostorFovBonusChunks: Int? = null,
         val continuousBreak: Boolean = false,
+        val dominantHand: Hand = Hand.RIGHT,
     ) : ServerMessage()
 
     @ProtoId(25)

@@ -8,11 +8,16 @@ import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.equipment.ToolCategoryDefinition
+import org.micoli.micraft.game.equipment.ToolDefinition
+import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
+import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
+import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.WorldState
@@ -49,6 +54,10 @@ data class CommandContext(
     val reloadNpcs: (suspend () -> Unit)? = null,
     val reloadRbac: (() -> Unit)? = null,
     val armorRegistry: () -> Map<String, ArmorDefinition> = { emptyMap() },
+    val weaponRegistry: () -> Map<String, WeaponDefinition> = { emptyMap() },
+    val toolRegistry: () -> Map<String, ToolDefinition> = { emptyMap() },
+    val weaponCategories: () -> Map<EquipmentCategory, WeaponCategoryDefinition> = { emptyMap() },
+    val toolCategories: () -> Map<EquipmentCategory, ToolCategoryDefinition> = { emptyMap() },
     val tradeManager: TradeManager? = null,
     val clearAccumulators: ((String) -> Unit)? = null,
     val sendStatusUpdate: (suspend (PlayerSession) -> Unit)? = null,

@@ -23,6 +23,14 @@ import org.micoli.micraft.game.combat.SpellDefinition
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
+import org.micoli.micraft.game.equipment.ToolCategoryDefinition
+import org.micoli.micraft.game.equipment.ToolCategoryRegistryLoader
+import org.micoli.micraft.game.equipment.ToolDefinition
+import org.micoli.micraft.game.equipment.ToolRegistryLoader
+import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
+import org.micoli.micraft.game.equipment.WeaponCategoryRegistryLoader
+import org.micoli.micraft.game.equipment.WeaponDefinition
+import org.micoli.micraft.game.equipment.WeaponRegistryLoader
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcManager
@@ -43,6 +51,7 @@ import org.micoli.micraft.game.tick.MovementProcessor
 import org.micoli.micraft.game.trade.TradeConfigLoader
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
+import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.block.BlockBreaker
@@ -172,6 +181,46 @@ class GameLoopModule {
     @Single
     fun armorRegistry(armorRegistryLoader: ArmorRegistryLoader): Map<String, ArmorDefinition> =
         armorRegistryLoader.load()
+
+    @Single
+    fun weaponRegistryLoader(): WeaponRegistryLoader =
+        WeaponRegistryLoader(
+            weaponsPath = Path.of("resources/weapons"),
+            dataWeaponsPath = Path.of("data/resources/weapons"),
+        )
+
+    @Single
+    fun weaponRegistry(weaponRegistryLoader: WeaponRegistryLoader): Map<String, WeaponDefinition> =
+        weaponRegistryLoader.load()
+
+    @Single
+    fun toolRegistryLoader(): ToolRegistryLoader =
+        ToolRegistryLoader(
+            toolsPath = Path.of("resources/tools"),
+            dataToolsPath = Path.of("data/resources/tools"),
+        )
+
+    @Single
+    fun toolRegistry(toolRegistryLoader: ToolRegistryLoader): Map<String, ToolDefinition> =
+        toolRegistryLoader.load()
+
+    @Single
+    fun weaponCategoryRegistryLoader(): WeaponCategoryRegistryLoader =
+        WeaponCategoryRegistryLoader(Path.of("data/config/weapons.yaml"))
+
+    @Single
+    fun weaponCategories(
+        weaponCategoryRegistryLoader: WeaponCategoryRegistryLoader
+    ): Map<EquipmentCategory, WeaponCategoryDefinition> = weaponCategoryRegistryLoader.load()
+
+    @Single
+    fun toolCategoryRegistryLoader(): ToolCategoryRegistryLoader =
+        ToolCategoryRegistryLoader(Path.of("data/config/tools.yaml"))
+
+    @Single
+    fun toolCategories(
+        toolCategoryRegistryLoader: ToolCategoryRegistryLoader
+    ): Map<EquipmentCategory, ToolCategoryDefinition> = toolCategoryRegistryLoader.load()
 
     @Single
     fun npcConfigLoader(): NpcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml"))
@@ -462,6 +511,8 @@ class GameLoopModule {
         gameConfig: GameConfig,
         instanceRegistry: InstanceRegistry,
         railNetworkRegistry: RailNetworkRegistry,
+        weaponRegistry: Map<String, WeaponDefinition>,
+        toolRegistry: Map<String, ToolDefinition>,
     ): BlockBreaker =
         BlockBreaker(
             worldState,
@@ -471,6 +522,8 @@ class GameLoopModule {
             bufferSize = gameConfig.blockBreakBufferSize,
             instanceRegistry = instanceRegistry,
             railNetworkRegistry = railNetworkRegistry,
+            weaponRegistry = { weaponRegistry },
+            toolRegistry = { toolRegistry },
         )
 
     @Single

@@ -137,6 +137,7 @@ export function GameScreen() {
     attackPanelVisible: boolean;
     autoTargetEnabled: boolean;
     continuousBreak: boolean;
+    dominantHand: "LEFT" | "RIGHT";
     keybindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
     fieldOfView?: number;
@@ -151,6 +152,7 @@ export function GameScreen() {
         attackPanelVisible: payload.attackPanelVisible,
         autoTargetEnabled: payload.autoTargetEnabled,
         continuousBreak: payload.continuousBreak,
+        dominantHand: payload.dominantHand,
       },
     });
     if (window.mcState) {

@@ -185,6 +185,7 @@ export interface PreferencesData {
   overrideImpostorRadiusChunks?: number | null;
   overrideImpostorFovBonusChunks?: number | null;
   continuousBreak: boolean;
+  dominantHand: "LEFT" | "RIGHT";
 }
 
 export type CombatTargetData = {

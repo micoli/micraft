@@ -121,6 +121,30 @@
           }
         }
       ]
+    },
+    "requiredEquipment": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "SWORD",
+            "LONGSWORD",
+            "DAGGER",
+            "LONG_DAGGER",
+            "DUAL",
+            "STAFF",
+            "AXE",
+            "DOUBLE_AXE",
+            "CLUB",
+            "BOW",
+            "CROSSBOW",
+            "HAMMER"
+          ]
+        }
+      ]
     }
   }
 }

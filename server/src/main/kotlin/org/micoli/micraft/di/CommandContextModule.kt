@@ -12,11 +12,16 @@ import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.equipment.ToolCategoryDefinition
+import org.micoli.micraft.game.equipment.ToolDefinition
+import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
+import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
+import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
@@ -42,6 +47,10 @@ data class CommandContextClosures(
     val reloadNpcs: (suspend () -> Unit)?,
     val reloadRbac: (() -> Unit)?,
     val armorRegistry: () -> Map<String, ArmorDefinition>,
+    val weaponRegistry: () -> Map<String, WeaponDefinition>,
+    val toolRegistry: () -> Map<String, ToolDefinition>,
+    val weaponCategories: () -> Map<EquipmentCategory, WeaponCategoryDefinition>,
+    val toolCategories: () -> Map<EquipmentCategory, ToolCategoryDefinition>,
     val applyBuff: suspend (PlayerSession, StatusEffect, Float) -> Unit,
 )
 
@@ -110,6 +119,10 @@ class CommandContextModule {
             reloadNpcs = closures.reloadNpcs,
             reloadRbac = closures.reloadRbac,
             armorRegistry = closures.armorRegistry,
+            weaponRegistry = closures.weaponRegistry,
+            toolRegistry = closures.toolRegistry,
+            weaponCategories = closures.weaponCategories,
+            toolCategories = closures.toolCategories,
             tradeManager = tradeManager,
             questManager = questManager,
             namedPoints = { cavernPoints + staircasePoints + instanceNamedPoints() },

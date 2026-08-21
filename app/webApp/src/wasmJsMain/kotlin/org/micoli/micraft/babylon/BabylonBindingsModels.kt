@@ -154,5 +154,18 @@ fun jsDetachArmor(model: JsAny, armorName: String): Unit = js("mc.detachArmor(mo
 
 fun jsDetachAllArmors(model: JsAny): Unit = js("mc.detachAllArmors(model)")
 
+// ── Weapon / tool overlay (hand item) ────────────────────────────────────────
+
+fun jsInitWeaponModel(name: String): Unit = js("mc.initWeaponModel(name)")
+
+fun jsIsWeaponModelReady(name: String): Boolean = js("mc.isWeaponModelReady(name)")
+
+fun jsAttachWeapon(model: JsAny, itemName: String, scene: JsAny, hand: String): Unit =
+    js("mc.attachWeapon(model, itemName, scene, hand)")
+
+fun jsDetachWeapon(model: JsAny, hand: String): Unit = js("mc.detachWeapon(model, hand)")
+
+fun jsDetachAllWeapons(model: JsAny): Unit = js("mc.detachAllWeapons(model)")
+
 fun jsSetRemotePlayerLight(model: JsAny, scene: JsAny, enabled: Boolean): Unit =
     js("mc.setRemotePlayerLight(model, scene, enabled)")

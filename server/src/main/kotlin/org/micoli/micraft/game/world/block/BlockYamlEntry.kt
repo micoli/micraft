@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.world.block
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.schema.JsonSchemaConstraint
 import org.micoli.micraft.schema.JsonSchemaRoot
 
@@ -30,6 +31,8 @@ data class BlockYamlEntry(
     val isCubic: Boolean = true,
     /** Rail-network declaration — see [RailYamlEntry]. Omitted for a non-rail block. */
     val rail: RailYamlEntry? = null,
+    /** Weapon/tool category required to break this block. Omitted = breakable bare-handed. */
+    val requiredEquipment: EquipmentCategory? = null,
 )
 
 /**

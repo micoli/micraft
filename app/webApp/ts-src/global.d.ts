@@ -183,6 +183,7 @@ declare global {
     >;
     animations: Partial<Record<PlayerAnimClip, Record<string, { keyframes: BbModelKeyframe[]; length: number }>>>;
     equippedArmors: Record<string, InstanceType<typeof BABYLON.AbstractMesh>[]>;
+    equippedWeapons: Record<"LEFT" | "RIGHT", InstanceType<typeof BABYLON.TransformNode> | null>;
     _forwardOffset?: number;
     _lightBoost?: { orb: Mesh; light: PointLight } | null;
   }
@@ -214,6 +215,8 @@ declare global {
     npcBbmodels: Record<string, BbModel>;
     npcWalkBones: Record<string, Record<string, string>>;
     armorBbmodels: Record<string, BbModel>;
+    weaponBbmodels: Record<string, BbModel>;
+    weaponRotations: Record<string, { x: number; y: number; z: number }>;
     npcModelsReady: boolean;
     vehicleBbmodels: Record<string, BbModel>;
     vehicleModelsReady: boolean;
@@ -424,6 +427,12 @@ declare global {
     attachArmor(model: McPlayerModel, armorName: string, scene: Scene): void;
     detachArmor(model: McPlayerModel, armorName: string): void;
     detachAllArmors(model: McPlayerModel): void;
+    // Weapon / tool overlay (hand item)
+    initWeaponModel(name: string): void;
+    isWeaponModelReady(name: string): boolean;
+    attachWeapon(model: McPlayerModel, itemName: string, scene: Scene, hand: "LEFT" | "RIGHT"): void;
+    detachWeapon(model: McPlayerModel, hand: "LEFT" | "RIGHT"): void;
+    detachAllWeapons(model: McPlayerModel): void;
     // NPC
     initNpcModels(npcTypesJson: string): void;
     initNpcWalkBones(json: string): void;

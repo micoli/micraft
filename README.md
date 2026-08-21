@@ -410,6 +410,7 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/map/voronoi` | Voronoi biome cells around a point |
 | GET | `/api/map/voronoi-borders` | Voronoi cell border segments within an area |
 | GET | `/api/player/{id}/armors` | Armor names currently equipped by a player |
+| GET | `/api/player/{id}/hands` | Wielded weapon/tool names and dominant hand for a player |
 | GET | `/api/player/{id}/rpg` | A player's RPG character class |
 | POST | `/api/player/{id}/screenshots` | Upload a player screenshot (base64 PNG, optionally as a data: URI) |
 | GET | `/api/player/{id}/skin` | A player's current skin |
@@ -421,6 +422,8 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/skins` | Names of all available player skins |
 | GET | `/api/skins/{name}/config` | Skin config (eye offset, hidden bones) for a named skin |
 | GET | `/api/spells` | Spell definitions, keyed by spell id |
+| GET | `/api/tools` | List all tool definitions |
+| GET | `/api/weapons` | List all weapon definitions |
 | POST | `/auth/noauth-login` | Create/reuse an account by email when auth is disabled (auth.provider=none) |
 
 <!-- END_API_ROUTES -->

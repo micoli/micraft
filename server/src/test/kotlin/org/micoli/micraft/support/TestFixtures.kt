@@ -10,11 +10,16 @@ import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.equipment.ToolCategoryDefinition
+import org.micoli.micraft.game.equipment.ToolDefinition
+import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
+import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.ItemDefinition
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
@@ -264,6 +269,10 @@ fun testContext(
     chatChannelManager: ChatChannelManager? = null,
     weatherManager: WeatherManager? = null,
     armorRegistry: () -> Map<String, ArmorDefinition> = { emptyMap() },
+    weaponRegistry: () -> Map<String, WeaponDefinition> = { emptyMap() },
+    toolRegistry: () -> Map<String, ToolDefinition> = { emptyMap() },
+    weaponCategories: () -> Map<EquipmentCategory, WeaponCategoryDefinition> = { emptyMap() },
+    toolCategories: () -> Map<EquipmentCategory, ToolCategoryDefinition> = { emptyMap() },
     namedPoints: () -> Map<String, Vec3> = { emptyMap() },
 ) =
     CommandContext(
@@ -291,6 +300,10 @@ fun testContext(
         chatChannelManager = chatChannelManager,
         weatherManager = weatherManager,
         armorRegistry = armorRegistry,
+        weaponRegistry = weaponRegistry,
+        toolRegistry = toolRegistry,
+        weaponCategories = weaponCategories,
+        toolCategories = toolCategories,
         namedPoints = namedPoints,
     )
 

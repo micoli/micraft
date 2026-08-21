@@ -48,4 +48,6 @@ data class BlockDefinition(
     val isCubic: Boolean = true,
     /** Rail-network declaration — see [RailDefinition]. `null` for a non-rail block. */
     val rail: RailDefinition? = null,
+    /** Weapon/tool category required to break this block. `null` = breakable bare-handed. */
+    val requiredEquipment: EquipmentCategory? = null,
 )

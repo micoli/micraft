@@ -28,7 +28,7 @@ export function BestiaryTab() {
     }
     const skinName = selected.dto.bbmodelFile.replace(".bbmodel", "");
     // Not an OpenAPI route (staticFiles mount) — kept as a manual fetch.
-    fetch(`/api/models/skins/${encodeURIComponent(skinName)}/${encodeURIComponent(skinName)}.bbmodel`)
+    fetch(`/api/models/entities/${encodeURIComponent(skinName)}/${encodeURIComponent(skinName)}.bbmodel`)
       .then((r) => r.json() as Promise<BbModel>)
       .then(setBbmodel)
       .catch(() => setBbmodel(null));

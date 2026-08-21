@@ -169,6 +169,26 @@ export type OrgMicoliMicraftHttpUploadScreenshotResponse = {
 };
 
 /**
+ * Hand
+ */
+export type OrgMicoliMicraftPlayerHand = 'LEFT' | 'RIGHT';
+
+/**
+ * PlayerHands
+ */
+export type OrgMicoliMicraftHttpPlayerHands = {
+    dominantHand: OrgMicoliMicraftPlayerHand;
+    /**
+     * String
+     */
+    leftHandItem?: null | string;
+    /**
+     * String
+     */
+    rightHandItem?: null | string;
+};
+
+/**
  * PlayerRpgResponse
  */
 export type OrgMicoliMicraftHttpPlayerRpgResponse = {
@@ -377,6 +397,50 @@ export type OrgMicoliMicraftGameArmorWearableSlots = {
      * Boolean
      */
     rightLeg: boolean;
+};
+
+/**
+ * WeaponDefinition
+ */
+export type OrgMicoliMicraftGameEquipmentWeaponDefinition = {
+    category: OrgMicoliMicraftGameWorldEquipmentCategory;
+    rotate: OrgMicoliMicraftGameEquipmentRotation;
+    statBonus: OrgMicoliMicraftGameRpgStatBonus;
+};
+
+/**
+ * EquipmentCategory
+ */
+export type OrgMicoliMicraftGameWorldEquipmentCategory = 'SWORD' | 'LONGSWORD' | 'DAGGER' | 'LONG_DAGGER' | 'DUAL' | 'STAFF' | 'AXE' | 'DOUBLE_AXE' | 'CLUB' | 'BOW' | 'CROSSBOW' | 'HAMMER';
+
+/**
+ * Rotation
+ */
+export type OrgMicoliMicraftGameEquipmentRotation = {
+    /**
+     * Float
+     */
+    x: number;
+    /**
+     * Float
+     */
+    y: number;
+    /**
+     * Float
+     */
+    z: number;
+};
+
+/**
+ * ToolDefinition
+ */
+export type OrgMicoliMicraftGameEquipmentToolDefinition = {
+    /**
+     * Float
+     */
+    breakSpeedMultiplier: number;
+    category: OrgMicoliMicraftGameWorldEquipmentCategory;
+    rotate: OrgMicoliMicraftGameEquipmentRotation;
 };
 
 /**
@@ -943,6 +1007,7 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      * Set<String>
      */
     disabledCommands: Array<string>;
+    dominantHand: OrgMicoliMicraftPlayerHand;
     /**
      * Boolean
      */
@@ -995,6 +1060,10 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      */
     layouts: Array<OrgMicoliMicraftUiGameLayout>;
     /**
+     * String
+     */
+    leftHandItem?: null | string;
+    /**
      * Boolean
      */
     lightBoostEnabled: boolean;
@@ -1030,6 +1099,10 @@ export type OrgMicoliMicraftPlayerPlayerState = {
     quests: {
         [key: string]: OrgMicoliMicraftQuestQuestProgress;
     };
+    /**
+     * String
+     */
+    rightHandItem?: null | string;
     /**
      * Boolean
      */
@@ -2729,6 +2802,26 @@ export type GetApiPlayerByIdArmorsResponses = {
 
 export type GetApiPlayerByIdArmorsResponse = GetApiPlayerByIdArmorsResponses[keyof GetApiPlayerByIdArmorsResponses];
 
+export type GetApiPlayerByIdHandsData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Player id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/player/{id}/hands';
+};
+
+export type GetApiPlayerByIdHandsResponses = {
+    200: OrgMicoliMicraftHttpPlayerHands;
+};
+
+export type GetApiPlayerByIdHandsResponse = GetApiPlayerByIdHandsResponses[keyof GetApiPlayerByIdHandsResponses];
+
 export type GetApiPlayerByIdRpgData = {
     body?: never;
     path: {
@@ -2868,6 +2961,42 @@ export type GetApiArmorsResponses = {
 };
 
 export type GetApiArmorsResponse = GetApiArmorsResponses[keyof GetApiArmorsResponses];
+
+export type GetApiWeaponsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/weapons';
+};
+
+export type GetApiWeaponsResponses = {
+    /**
+     * Map<String,WeaponDefinition>
+     */
+    200: {
+        [key: string]: OrgMicoliMicraftGameEquipmentWeaponDefinition;
+    };
+};
+
+export type GetApiWeaponsResponse = GetApiWeaponsResponses[keyof GetApiWeaponsResponses];
+
+export type GetApiToolsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/tools';
+};
+
+export type GetApiToolsResponses = {
+    /**
+     * Map<String,ToolDefinition>
+     */
+    200: {
+        [key: string]: OrgMicoliMicraftGameEquipmentToolDefinition;
+    };
+};
+
+export type GetApiToolsResponse = GetApiToolsResponses[keyof GetApiToolsResponses];
 
 export type GetApiGameAssetsData = {
     body?: never;

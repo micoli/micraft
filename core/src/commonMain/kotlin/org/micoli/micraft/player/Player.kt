@@ -71,4 +71,7 @@ data class PlayerState(
     val overrideImpostorRadiusChunks: Int? = null,
     val overrideImpostorFovBonusChunks: Int? = null,
     val continuousBreak: Boolean = false,
+    val dominantHand: Hand = Hand.RIGHT,
+    val rightHandItem: String? = null,
+    val leftHandItem: String? = null,
 )

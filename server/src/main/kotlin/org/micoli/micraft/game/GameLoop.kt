@@ -41,6 +41,14 @@ import org.micoli.micraft.game.combat.SpellDefinition
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
+import org.micoli.micraft.game.equipment.ToolCategoryDefinition
+import org.micoli.micraft.game.equipment.ToolCategoryRegistryLoader
+import org.micoli.micraft.game.equipment.ToolDefinition
+import org.micoli.micraft.game.equipment.ToolRegistryLoader
+import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
+import org.micoli.micraft.game.equipment.WeaponCategoryRegistryLoader
+import org.micoli.micraft.game.equipment.WeaponDefinition
+import org.micoli.micraft.game.equipment.WeaponRegistryLoader
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
 import org.micoli.micraft.game.macro.MacroContext
 import org.micoli.micraft.game.macro.MacroExecutor
@@ -73,6 +81,7 @@ import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.vehicle.VehicleTickPipeline
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.PlainColorRegistry
@@ -99,6 +108,7 @@ import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.ChannelSubscription
 import org.micoli.micraft.player.EditMode
+import org.micoli.micraft.player.Hand
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
@@ -234,7 +244,27 @@ class GameLoop(
             armorsPath = Path.of("resources/armors"),
             dataArmorsPath = Path.of("data/resources/armors"),
         ),
+    private val weaponRegistryLoader: WeaponRegistryLoader =
+        WeaponRegistryLoader(
+            weaponsPath = Path.of("resources/weapons"),
+            dataWeaponsPath = Path.of("data/resources/weapons"),
+        ),
+    private val toolRegistryLoader: ToolRegistryLoader =
+        ToolRegistryLoader(
+            toolsPath = Path.of("resources/tools"),
+            dataToolsPath = Path.of("data/resources/tools"),
+        ),
+    private val weaponCategoryRegistryLoader: WeaponCategoryRegistryLoader =
+        WeaponCategoryRegistryLoader(Path.of("data/config/weapons.yaml")),
+    private val toolCategoryRegistryLoader: ToolCategoryRegistryLoader =
+        ToolCategoryRegistryLoader(Path.of("data/config/tools.yaml")),
     private val instanceRegistry: InstanceRegistry = InstanceRegistry(persistence),
+    private var weaponRegistry: Map<String, WeaponDefinition> = weaponRegistryLoader.load(),
+    private var toolRegistry: Map<String, ToolDefinition> = toolRegistryLoader.load(),
+    private var weaponCategories: Map<EquipmentCategory, WeaponCategoryDefinition> =
+        weaponCategoryRegistryLoader.load(),
+    private var toolCategories: Map<EquipmentCategory, ToolCategoryDefinition> =
+        toolCategoryRegistryLoader.load(),
     private val railNetworkRegistry: RailNetworkRegistry = RailNetworkRegistry(world),
     private val vehicleManager: VehicleManager = VehicleManager(sessionRegistry::broadcast),
     private val vehicleTickPipeline: VehicleTickPipeline = VehicleTickPipeline(vehicleManager),
@@ -375,6 +405,8 @@ class GameLoop(
             liquidManager,
             instanceRegistry = instanceRegistry,
             railNetworkRegistry = railNetworkRegistry,
+            weaponRegistry = { weaponRegistry },
+            toolRegistry = { toolRegistry },
         ),
     private val blockPlacer: BlockPlacer =
         BlockPlacer(
@@ -495,6 +527,10 @@ class GameLoop(
             reloadNpcs = { npcManager.reloadDefinitions(npcRegistryLoader.reload()) },
             reloadRbac = reloadRbac,
             armorRegistry = { armorRegistry },
+            weaponRegistry = { weaponRegistry },
+            toolRegistry = { toolRegistry },
+            weaponCategories = { weaponCategories },
+            toolCategories = { toolCategories },
             applyBuff = { session, effect, durationSec ->
                 combatProcessor.applyStatusEffectTo(
                     session, effect, durationSec, System.currentTimeMillis())
@@ -530,6 +566,10 @@ class GameLoop(
             reloadNpcs = closures.reloadNpcs,
             reloadRbac = closures.reloadRbac,
             armorRegistry = closures.armorRegistry,
+            weaponRegistry = closures.weaponRegistry,
+            toolRegistry = closures.toolRegistry,
+            weaponCategories = closures.weaponCategories,
+            toolCategories = closures.toolCategories,
             tradeManager = tradeManager,
             questManager = questManager,
             clearAccumulators = regenProcessor::clearAccumulators,
@@ -724,6 +764,7 @@ class GameLoop(
             overrideImpostorRadiusChunks = session.state.overrideImpostorRadiusChunks,
             overrideImpostorFovBonusChunks = session.state.overrideImpostorFovBonusChunks,
             continuousBreak = session.state.continuousBreak,
+            dominantHand = session.state.dominantHand,
         )
     }
 
@@ -758,6 +799,7 @@ class GameLoop(
                 overrideImpostorRadiusChunks = msg.overrideImpostorRadiusChunks,
                 overrideImpostorFovBonusChunks = msg.overrideImpostorFovBonusChunks,
                 continuousBreak = msg.continuousBreak,
+                dominantHand = msg.dominantHand,
             )
         if (msg.keybindings.isNotEmpty()) {
             persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
@@ -1358,6 +1400,9 @@ class GameLoop(
                 overrideImpostorRadiusChunks = saved?.overrideImpostorRadiusChunks,
                 overrideImpostorFovBonusChunks = saved?.overrideImpostorFovBonusChunks,
                 continuousBreak = saved?.continuousBreak ?: false,
+                dominantHand = saved?.dominantHand ?: Hand.RIGHT,
+                rightHandItem = saved?.rightHandItem,
+                leftHandItem = saved?.leftHandItem,
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =

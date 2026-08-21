@@ -27,7 +27,7 @@ export function SkinsTab() {
       return;
     }
     // Not an OpenAPI route (staticFiles mount) — kept as a manual fetch.
-    fetch(`/api/models/skins/${encodeURIComponent(selected)}/${encodeURIComponent(selected)}.bbmodel`)
+    fetch(`/api/models/models/${encodeURIComponent(selected)}/${encodeURIComponent(selected)}.bbmodel`)
       .then((r) => r.json() as Promise<BbModel>)
       .then(setBbmodel)
       .catch(() => setBbmodel(null));

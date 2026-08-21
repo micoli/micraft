@@ -298,6 +298,7 @@ export function registerPlayerModel(): Pick<
       pivotNodes,
       animations: extractPlayerAnimations(bbmodel, [...ANIM_GROUPS, "head"]),
       equippedArmors: {},
+      equippedWeapons: { LEFT: null, RIGHT: null },
     };
   }
 
