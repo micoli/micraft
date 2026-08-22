@@ -1,8 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { CSSProperties } from "react";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { interpAxis } from "../../game/lib/player/playerModel";
-import { buildMeshElement, isMeshElement, resolveTextureDims } from "../../game/lib/player/bbmodelMesh";
+import {
+  applyElementPivot,
+  buildMeshElement,
+  isMeshElement,
+  resolveTextureDims,
+} from "../../game/lib/player/bbmodelMesh";
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -55,10 +60,54 @@ function skinFaceUV(B: any, el: any, W: number, H: number): any[] {
   ];
 }
 
+// Absolute-space corner/vertex points of one element (mesh or cuboid), used to locate the
+// standalone item's "handle" element and to compute the barycenter of all its elements.
+function elementPoints(el: BbModelElement | BbModelMeshElement): Array<[number, number, number]> {
+  if (isMeshElement(el)) {
+    return Object.values(el.vertices).map((raw) => applyElementPivot(raw, el.origin, el.rotation));
+  }
+  const [fx, fy, fz] = el.from,
+    [tx, ty, tz] = el.to;
+  const points: Array<[number, number, number]> = [];
+  for (const x of [fx, tx]) for (const y of [fy, ty]) for (const z of [fz, tz]) points.push([x, y, z]);
+  return points;
+}
+
+function elementBounds(
+  points: Array<[number, number, number]>,
+): { min: [number, number, number]; max: [number, number, number] } | null {
+  if (points.length === 0) return null;
+  const min: [number, number, number] = [Infinity, Infinity, Infinity];
+  const max: [number, number, number] = [-Infinity, -Infinity, -Infinity];
+  for (const p of points) {
+    for (let i = 0; i < 3; i++) {
+      if (p[i] < min[i]) min[i] = p[i];
+      if (p[i] > max[i]) max[i] = p[i];
+    }
+  }
+  return { min, max };
+}
+
+// Quaternion for a Blockbench element's own `rotation` (degrees), composed to match THREE.js's
+// "ZYX" Euler order: apply Z first, then Y, then X — built from single-axis primitives (each
+// individually unambiguous) rather than a hand-rolled matrix, to avoid any convention mismatch.
+function blockbenchRotationQuat(B: any, rotation: [number, number, number]): any {
+  const DEG = Math.PI / 180;
+  const [rx, ry, rz] = rotation;
+  const qz = B.Quaternion.RotationAxis(B.Axis.Z, rz * DEG);
+  const qy = B.Quaternion.RotationAxis(B.Axis.Y, ry * DEG);
+  const qx = B.Quaternion.RotationAxis(B.Axis.X, rx * DEG);
+  return qx.multiply(qy).multiply(qz);
+}
+
 function buildModel(
   B: any,
   bbmodel: BbModel,
   scene: any,
+  // Weapon/tool codex preview: no bone rig, so orient the model by its own geometry instead —
+  // "handle" element's longest axis aligned to world Y, camera orbiting the barycenter of all
+  // elements (rather than the player-skin default eye-height target).
+  standaloneItem = false,
 ): {
   root: any;
   pivotNodes: Record<string, { node: any; origin: [number, number, number] }>;
@@ -79,6 +128,9 @@ function buildModel(
     const texMat = new B.StandardMaterial(`skinMat_${i}`, scene);
     texMat.diffuseTexture = tex;
     texMat.specularColor = new B.Color3(0, 0, 0);
+    // Mesh-type elements (arbitrary geometry, e.g. Blender exports) aren't guaranteed
+    // consistent triangle winding — backface culling would invisibly drop some of their faces.
+    texMat.backFaceCulling = false;
     return texMat;
   });
   const mat: any = materials[0] ?? null;
@@ -107,9 +159,50 @@ function buildModel(
   const pivotNodes: Record<string, { node: any; origin: [number, number, number] }> = {};
   const allGroupNodes: Record<string, { node: any; origin: [number, number, number] }> = {};
 
+  // Top-level elements/groups normally parent straight to `root`; a standalone item preview
+  // instead parents them under `centerNode` (translated so the elements' barycenter sits at the
+  // origin) inside `alignNode` (rotated so the handle stands vertical).
+  let topParent = root;
+  if (standaloneItem) {
+    const elements = bbmodel.elements as unknown as (BbModelElement | BbModelMeshElement)[];
+    const centers: [number, number, number][] = [];
+    let handleRotation: [number, number, number] | null = null;
+    for (const el of elements) {
+      if (el.visibility === false) continue;
+      const b = elementBounds(elementPoints(el));
+      if (!b) continue;
+      centers.push([(b.min[0] + b.max[0]) / 2, (b.min[1] + b.max[1]) / 2, (b.min[2] + b.max[2]) / 2]);
+      if (el.name === "handle" && isMeshElement(el) && el.rotation) handleRotation = el.rotation;
+    }
+    const barycenter: [number, number, number] = centers.length
+      ? [
+          centers.reduce((s, c) => s + c[0], 0) / centers.length,
+          centers.reduce((s, c) => s + c[1], 0) / centers.length,
+          centers.reduce((s, c) => s + c[2], 0) / centers.length,
+        ]
+      : [0, 0, 0];
+
+    // Undo exactly the rotation Blockbench stored on the "handle" element, rather than deriving
+    // orientation from its (possibly stale/disconnected) vertex positions — the handle is always
+    // authored with its grip axis along local Y, so inverting its own `rotation` reliably restores
+    // that vertical rest pose regardless of whether its absolute placement in the file is trustworthy.
+    let rotationQuat = B.Quaternion.Identity();
+    if (handleRotation && (handleRotation[0] !== 0 || handleRotation[1] !== 0 || handleRotation[2] !== 0)) {
+      rotationQuat = B.Quaternion.Inverse(blockbenchRotationQuat(B, handleRotation));
+    }
+
+    const alignNode = new B.TransformNode("itemAlign", scene);
+    alignNode.parent = root;
+    alignNode.rotationQuaternion = rotationQuat;
+    const centerNode = new B.TransformNode("itemCenter", scene);
+    centerNode.parent = alignNode;
+    centerNode.position = new B.Vector3(-barycenter[0] * SCALE, -barycenter[1] * SCALE, -barycenter[2] * SCALE);
+    topParent = centerNode;
+  }
+
   bbmodel.groups.forEach((g: any) => {
     const node = new B.TransformNode(`grp_${g.name}`, scene);
-    node.parent = root;
+    node.parent = topParent;
     node.position = new B.Vector3(g.origin[0] * SCALE, g.origin[1] * SCALE, g.origin[2] * SCALE);
     if (g.rotation) node.rotation = new B.Vector3(g.rotation[0] * DEG, g.rotation[1] * DEG, g.rotation[2] * DEG);
     allGroupNodes[g.uuid] = { node, origin: g.origin };
@@ -137,7 +230,7 @@ function buildModel(
       const meshEl = buildMeshElement(el.name, el, scene, [0, 0, 0], materials, textureDims);
       const groupUuid = elToGroupUuid[el.uuid];
       const pg = groupUuid ? allGroupNodes[groupUuid] : null;
-      meshEl.parent = pg ? pg.node : root;
+      meshEl.parent = pg ? pg.node : topParent;
       continue;
     }
 
@@ -165,7 +258,7 @@ function buildModel(
       mesh.parent = pg.node;
       mesh.position = new B.Vector3(cx - pg.origin[0] * SCALE, cy - pg.origin[1] * SCALE, cz - pg.origin[2] * SCALE);
     } else {
-      mesh.parent = root;
+      mesh.parent = topParent;
       mesh.position = new B.Vector3(cx, cy, cz);
     }
   }
@@ -178,6 +271,8 @@ const MIN_RADIUS = 1.0;
 const MAX_RADIUS = 8.0;
 const WHEEL_ZOOM_STEP = 0.06;
 const BUTTON_ZOOM_STEP = 0.3;
+const MIN_DIM = 100;
+const MAX_DIM = 900;
 
 type RotateOverride = { x: number; y: number; z: number } | null;
 
@@ -192,6 +287,7 @@ export function BbmodelAnimationViewer({
   leftHandItem = null,
   rightHandRotate = null,
   leftHandRotate = null,
+  standaloneItem = false,
   width = 200,
   height = 280,
 }: {
@@ -208,6 +304,9 @@ export function BbmodelAnimationViewer({
   // Overrides the equipment's yaml-configured `rotate` for this preview only.
   rightHandRotate?: RotateOverride;
   leftHandRotate?: RotateOverride;
+  // A standalone weapon/tool preview (no player skin, no bone rig): orients the model by its own
+  // "handle" element instead of a fixed player-eye-height camera target.
+  standaloneItem?: boolean;
   width?: number;
   height?: number;
 }) {
@@ -215,6 +314,44 @@ export function BbmodelAnimationViewer({
   const overlayRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<any>(null);
   const cameraRef = useRef<any>(null);
+  // User-driven resize via the bottom-right handle overrides the width/height props; reset
+  // whenever the caller passes new props (e.g. switching to a differently-shaped preview).
+  const [size, setSize] = useState({ width, height });
+  useEffect(() => {
+    setSize({ width, height });
+  }, [width, height]);
+  const aspectRef = useRef(width / height);
+  useEffect(() => {
+    aspectRef.current = width / height;
+  }, [width, height]);
+  const resizeStartRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
+
+  const onResizePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    resizeStartRef.current = { x: e.clientX, y: e.clientY, width: size.width, height: size.height };
+  };
+  const onResizePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const start = resizeStartRef.current;
+    if (!start) return;
+    const delta = Math.max(e.clientX - start.x, e.clientY - start.y);
+    let nextWidth = Math.min(MAX_DIM, Math.max(MIN_DIM, start.width + delta));
+    let nextHeight = nextWidth / aspectRef.current;
+    if (nextHeight < MIN_DIM || nextHeight > MAX_DIM) {
+      nextHeight = Math.min(MAX_DIM, Math.max(MIN_DIM, nextHeight));
+      nextWidth = nextHeight * aspectRef.current;
+    }
+    setSize({ width: nextWidth, height: nextHeight });
+  };
+  const onResizePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    resizeStartRef.current = null;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  };
+
+  useEffect(() => {
+    engineRef.current?.resize();
+  }, [size.width, size.height]);
   const angleRef = useRef(initialAngle ?? 0);
   const animRef = useRef(animFullName);
   const pausedRef = useRef(paused);
@@ -265,7 +402,7 @@ export function BbmodelAnimationViewer({
           -Math.PI * 0.25,
           Math.PI / 3.2,
           initialZoom ?? 3.0,
-          new B.Vector3(0, 0.9, 0),
+          new B.Vector3(0, standaloneItem ? 0 : 0.9, 0),
           scene,
         );
         camera.inputs.clear();
@@ -274,7 +411,7 @@ export function BbmodelAnimationViewer({
         light.intensity = 1.1;
         light.groundColor = new B.Color3(0.2, 0.2, 0.2);
 
-        const model = buildModel(B, bbmodel, scene);
+        const model = buildModel(B, bbmodel, scene, standaloneItem);
         if (rightHandItem) {
           if (rightHandRotate) window.mcState.weaponRotations[rightHandItem] = rightHandRotate;
           window.mc.attachWeapon?.(model as unknown as McPlayerModel, rightHandItem, scene, "RIGHT");
@@ -294,13 +431,18 @@ export function BbmodelAnimationViewer({
           lastInteraction = 0;
         let isDragging = false,
           dragStartX = 0,
-          dragStartAngle = 0;
+          dragStartY = 0,
+          dragStartAngle = 0,
+          dragStartHeight = 0,
+          heightOffset = 0;
         let wheelDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
         const onMouseDown = (e: MouseEvent) => {
           isDragging = true;
           dragStartX = e.clientX;
+          dragStartY = e.clientY;
           dragStartAngle = angle;
+          dragStartHeight = heightOffset;
           lastInteraction = Date.now();
           autoRotate = false;
           overlay.style.cursor = "grabbing";
@@ -308,6 +450,9 @@ export function BbmodelAnimationViewer({
         const onMouseMove = (e: MouseEvent) => {
           if (!isDragging) return;
           angle = dragStartAngle - (e.clientX - dragStartX) * 0.02;
+          // Dragging up moves the model up (screen Y decreases while moving up).
+          heightOffset = dragStartHeight - (e.clientY - dragStartY) * 0.02;
+          model.root.position.y = heightOffset;
           lastInteraction = Date.now();
         };
         const onMouseUp = () => {
@@ -428,15 +573,15 @@ export function BbmodelAnimationViewer({
     // including them would rebuild (and visibly reset/jump) the scene on every camera-change
     // persist round-trip, since that round-trip changes the URL these props are derived from.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bbmodel, rightHandItem, leftHandItem, rightHandRotate, leftHandRotate]);
+  }, [bbmodel, rightHandItem, leftHandItem, rightHandRotate, leftHandRotate, standaloneItem]);
 
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
       <canvas
         ref={canvasRef}
-        width={width * 2}
-        height={height * 2}
-        style={{ display: "block", width, height, borderRadius: 6, background: "#0e1726" }}
+        width={size.width * 2}
+        height={size.height * 2}
+        style={{ display: "block", width: size.width, height: size.height, borderRadius: 6, background: "#0e1726" }}
       />
       <div
         ref={overlayRef}
@@ -450,6 +595,13 @@ export function BbmodelAnimationViewer({
           −
         </button>
       </div>
+      <div
+        onPointerDown={onResizePointerDown}
+        onPointerMove={onResizePointerMove}
+        onPointerUp={onResizePointerUp}
+        style={resizeHandleStyle}
+        aria-label="Resize preview"
+      />
     </div>
   );
 }
@@ -466,4 +618,16 @@ const zoomButtonStyle: CSSProperties = {
   border: "1px solid #3a3a3a",
   borderRadius: 4,
   cursor: "pointer",
+};
+
+const resizeHandleStyle: CSSProperties = {
+  position: "absolute",
+  bottom: 2,
+  right: 2,
+  width: 14,
+  height: 14,
+  cursor: "nwse-resize",
+  touchAction: "none",
+  backgroundImage:
+    "linear-gradient(135deg, transparent 0%, transparent 45%, #888 45%, #888 55%, transparent 55%, transparent 65%, #888 65%, #888 75%, transparent 75%)",
 };

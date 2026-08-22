@@ -3,6 +3,49 @@ import type { Material, Mesh, Scene } from "@babylonjs/core";
 // bbmodel coordinates are in Blockbench pixel units, 16px = 1 block.
 const BBMODEL_SCALE = 1 / 16;
 
+// 3x3 rotation matrix (row-major, [row][col] flattened) matching Blockbench/THREE.js's Euler
+// composition — THREE's default `Format.euler_order` is "ZYX" (Matrix4.makeRotationFromEuler,
+// ZYX branch), which is NOT the same axis-composition order as Babylon's
+// Quaternion.RotationYawPitchRoll (Y-X-Z). The two only agree when a single axis is non-zero; a
+// compound rotation (e.g. [90, 90, 0]) needs the matching order to land where Blockbench puts it.
+export function eulerZYXMatrix(rotation: [number, number, number]): number[] {
+  const DEG = Math.PI / 180;
+  const [rx, ry, rz] = rotation;
+  const a = Math.cos(rx * DEG),
+    b = Math.sin(rx * DEG);
+  const c = Math.cos(ry * DEG),
+    d = Math.sin(ry * DEG);
+  const e = Math.cos(rz * DEG),
+    f = Math.sin(rz * DEG);
+  // prettier-ignore
+  return [
+    c * e,           b * e * d - a * f, a * e * d + b * f,
+    c * f,           b * f * d + a * e, a * f * d - b * e,
+    -d,              b * c,             a * c,
+  ];
+}
+
+function applyMatrix3(m: number[], p: [number, number, number]): [number, number, number] {
+  const [x, y, z] = p;
+  return [m[0] * x + m[1] * y + m[2] * z, m[3] * x + m[4] * y + m[5] * z, m[6] * x + m[7] * y + m[8] * z];
+}
+
+// A mesh element's vertices are authored local to its own `origin` (Blockbench's per-element
+// pivot) — this bakes them to absolute bbmodel space, rotating around that pivot first when the
+// non-destructive rotate tool was used (e.g. a crossguard duplicated and rotated from one arm).
+export function applyElementPivot(
+  p: [number, number, number],
+  origin: [number, number, number] | undefined,
+  rotation: [number, number, number] | undefined,
+): [number, number, number] {
+  const [ox, oy, oz] = origin ?? [0, 0, 0];
+  if (!rotation || (rotation[0] === 0 && rotation[1] === 0 && rotation[2] === 0)) {
+    return [p[0] + ox, p[1] + oy, p[2] + oz];
+  }
+  const rotated = applyMatrix3(eulerZYXMatrix(rotation), p);
+  return [rotated[0] + ox, rotated[1] + oy, rotated[2] + oz];
+}
+
 export function isMeshElement(el: BbModelElement | BbModelMeshElement): el is BbModelMeshElement {
   return "vertices" in el && "faces" in el && typeof (el as BbModelMeshElement).vertices === "object";
 }
@@ -35,6 +78,9 @@ export function buildTextureMaterials(
       mat.diffuseTexture = tex;
       mat.specularColor = new BABYLON.Color3(0, 0, 0);
       if (hasAlpha) mat.useAlphaFromDiffuseTexture = true;
+      // Mesh-type elements (arbitrary geometry, e.g. Blender exports) aren't guaranteed
+      // consistent triangle winding — backface culling would invisibly drop some of their faces.
+      mat.backFaceCulling = false;
       window.mcState.skinMatCache[cacheKey] = mat;
     }
     return window.mcState.skinMatCache[cacheKey];
@@ -74,8 +120,9 @@ export function buildMeshElement(
       if (corners.length < 3) continue;
       const base = vertexCount;
       for (const vid of corners) {
-        const p = el.vertices[vid];
-        if (!p) continue;
+        const raw = el.vertices[vid];
+        if (!raw) continue;
+        const p = applyElementPivot(raw, el.origin, el.rotation);
         positions.push(
           (p[0] - center[0]) * BBMODEL_SCALE,
           (p[1] - center[1]) * BBMODEL_SCALE,

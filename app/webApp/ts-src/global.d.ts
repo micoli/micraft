@@ -60,6 +60,10 @@ declare global {
     name: string;
     type: "mesh";
     visibility?: boolean;
+    // Pivot for Blockbench's non-destructive per-element rotate tool — vertices stay in their
+    // original authored positions, rotated around `origin` by `rotation` (degrees) at render time.
+    origin?: [number, number, number];
+    rotation?: [number, number, number];
     vertices: Record<string, [number, number, number]>;
     faces: Record<string, BbModelMeshFace>;
   }
