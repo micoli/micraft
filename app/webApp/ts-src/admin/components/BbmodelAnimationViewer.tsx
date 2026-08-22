@@ -120,19 +120,37 @@ function buildModel(
 
   // One material per texture (rather than the shared/cached `buildTextureMaterials` helper) —
   // this viewer builds a fresh scene per mount, so there's nothing to reuse across calls.
-  const materials: any[] = (bbmodel.textures ?? []).map((texDef, i) => {
-    const tex = new B.Texture(texDef.source, scene, true, true, B.Texture.NEAREST_SAMPLINGMODE);
-    tex.hasAlpha = false;
-    tex.wrapU = B.Texture.CLAMP_ADDRESSMODE;
-    tex.wrapV = B.Texture.CLAMP_ADDRESSMODE;
-    const texMat = new B.StandardMaterial(`skinMat_${i}`, scene);
-    texMat.diffuseTexture = tex;
-    texMat.specularColor = new B.Color3(0, 0, 0);
-    // Mesh-type elements (arbitrary geometry, e.g. Blender exports) aren't guaranteed
-    // consistent triangle winding — backface culling would invisibly drop some of their faces.
-    texMat.backFaceCulling = false;
-    return texMat;
-  });
+  const textureDefs = bbmodel.textures ?? [];
+  const materials: any[] =
+    textureDefs.length === 0
+      ? [
+          // Untextured import (e.g. a bare mesh never baked/UV-mapped) — fall back to a flat
+          // gray material instead of leaving mesh.material null (Babylon's stark-white default).
+          (() => {
+            const fallbackMat = new B.StandardMaterial("skinMat_fallback", scene);
+            fallbackMat.diffuseColor = new B.Color3(0.5, 0.5, 0.5);
+            fallbackMat.specularColor = new B.Color3(0, 0, 0);
+            fallbackMat.backFaceCulling = false;
+            fallbackMat.twoSidedLighting = true;
+            return fallbackMat;
+          })(),
+        ]
+      : textureDefs.map((texDef, i) => {
+          const tex = new B.Texture(texDef.source, scene, true, true, B.Texture.NEAREST_SAMPLINGMODE);
+          tex.hasAlpha = false;
+          tex.wrapU = B.Texture.CLAMP_ADDRESSMODE;
+          tex.wrapV = B.Texture.CLAMP_ADDRESSMODE;
+          const texMat = new B.StandardMaterial(`skinMat_${i}`, scene);
+          texMat.diffuseTexture = tex;
+          texMat.specularColor = new B.Color3(0, 0, 0);
+          // Mesh-type elements (arbitrary geometry, e.g. Blender exports) aren't guaranteed
+          // consistent triangle winding — backface culling would invisibly drop some of their faces.
+          texMat.backFaceCulling = false;
+          // Without this, back faces are lit using the front-facing normal, so thin geometry
+          // (blades, bowstrings) looks wrongly shaded from the far side instead of just visible.
+          texMat.twoSidedLighting = true;
+          return texMat;
+        });
   const mat: any = materials[0] ?? null;
   const textureDims = resolveTextureDims(bbmodel);
 

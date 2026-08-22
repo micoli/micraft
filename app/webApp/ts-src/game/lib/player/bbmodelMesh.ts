@@ -67,6 +67,20 @@ export function buildTextureMaterials(
   cachePrefix: string,
   hasAlpha: boolean,
 ): Material[] {
+  if (bbmodel.textures.length === 0) {
+    // Untextured import (e.g. a bare Blockbench mesh never baked/UV-mapped) — fall back to a
+    // flat gray material instead of leaving mesh.material null (Babylon's stark-white default).
+    const cacheKey = `${cachePrefix}_fallback`;
+    if (!window.mcState.skinMatCache[cacheKey]) {
+      const mat = new BABYLON.StandardMaterial(`${cachePrefix}Mat_fallback`, scene);
+      mat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+      mat.specularColor = new BABYLON.Color3(0, 0, 0);
+      mat.backFaceCulling = false;
+      mat.twoSidedLighting = true;
+      window.mcState.skinMatCache[cacheKey] = mat;
+    }
+    return [window.mcState.skinMatCache[cacheKey]];
+  }
   return bbmodel.textures.map((texDef, i) => {
     const cacheKey = `${cachePrefix}_${i}`;
     if (!window.mcState.skinMatCache[cacheKey]) {
@@ -81,6 +95,9 @@ export function buildTextureMaterials(
       // Mesh-type elements (arbitrary geometry, e.g. Blender exports) aren't guaranteed
       // consistent triangle winding — backface culling would invisibly drop some of their faces.
       mat.backFaceCulling = false;
+      // Without this, back faces are lit using the front-facing normal, so thin geometry
+      // (blades, bowstrings) looks wrongly shaded from the far side instead of just visible.
+      mat.twoSidedLighting = true;
       window.mcState.skinMatCache[cacheKey] = mat;
     }
     return window.mcState.skinMatCache[cacheKey];
