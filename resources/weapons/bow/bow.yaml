@@ -1,0 +1,5 @@
+category: BOW
+statBonus: { str: 1 }
+rotate: { x: -135, y: 90, z: -53 }
+#credit:
+# tweedie https://blendswap.com/blend/6112
