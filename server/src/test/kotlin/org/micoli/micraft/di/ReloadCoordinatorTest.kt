@@ -29,6 +29,7 @@ class ReloadCoordinatorTest {
         reloadGameConfig: (() -> Unit)? = null,
         reloadRbac: (() -> Unit)? = null,
         reloadArmorRegistry: (() -> Unit)? = null,
+        reloadEquipmentCategories: (() -> Unit)? = null,
         reloadRecipeRegistry: (() -> Unit)? = null,
         sessionRegistry: SessionRegistry = SessionRegistry(),
     ): ReloadCoordinator {
@@ -55,6 +56,7 @@ class ReloadCoordinatorTest {
                     emptyData.resolve("vegetation-save.json")),
             reloadRbac = reloadRbac,
             reloadArmorRegistry = reloadArmorRegistry,
+            reloadEquipmentCategories = reloadEquipmentCategories,
             reloadRecipeRegistry = reloadRecipeRegistry,
         )
     }
@@ -153,6 +155,21 @@ class ReloadCoordinatorTest {
         val coordinator = buildCoordinator(reloadArmorRegistry = { invoked = true })
         coordinator.reload("en")
         assertTrue(invoked)
+    }
+
+    @Test
+    fun reload_invokesReloadEquipmentCategoriesWhenProvided() = runBlocking {
+        var invoked = false
+        val coordinator = buildCoordinator(reloadEquipmentCategories = { invoked = true })
+        coordinator.reload("en")
+        assertTrue(invoked)
+    }
+
+    @Test
+    fun reload_withoutReloadEquipmentCategories_doesNotInvokeHook() = runBlocking {
+        val coordinator = buildCoordinator(reloadEquipmentCategories = null)
+        val summary = coordinator.reload("en")
+        assertTrue(summary.isNotEmpty())
     }
 
     @Test

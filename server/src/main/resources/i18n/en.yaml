@@ -28,6 +28,7 @@ reload:
     weather: "Weather: {0} types"
     vegetation: "Vegetation: {0} chains"
     armor: "Armor registry reloaded"
+    equipment_categories: "Weapon/tool category rules reloaded"
     recipes: "Recipe registry reloaded"
     rbac: "RBAC groups reloaded"
     combat_systems: "Combat/skills/classes/XP reloaded"

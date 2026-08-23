@@ -1064,6 +1064,10 @@ class GameLoop(
                     toolRegistry)
                 statusEffectProcessor.reload(freshArmor, weaponRegistry, toolRegistry)
             },
+            reloadEquipmentCategories = {
+                weaponCategories = weaponCategoryRegistryLoader.load()
+                toolCategories = toolCategoryRegistryLoader.load()
+            },
             reloadRecipeRegistry = { RecipeRegistry.load(recipeRegistryLoader.load()) },
             reloadCombatSystems =
                 if (combatConfigLoader != null ||

@@ -41,6 +41,7 @@ class ReloadCoordinator(
     private val questRegistryLoader: QuestRegistryLoader? = null,
     private val reloadRbac: (() -> Unit)? = null,
     private val reloadArmorRegistry: (() -> Unit)? = null,
+    private val reloadEquipmentCategories: (() -> Unit)? = null,
     private val reloadRecipeRegistry: (() -> Unit)? = null,
     private val reloadCombatSystems: (() -> Unit)? = null,
 ) {
@@ -81,6 +82,10 @@ class ReloadCoordinator(
         if (reloadArmorRegistry != null) {
             reloadArmorRegistry.invoke()
             lines += i18n.t(lang, "reload:server:armor")
+        }
+        if (reloadEquipmentCategories != null) {
+            reloadEquipmentCategories.invoke()
+            lines += i18n.t(lang, "reload:server:equipment_categories")
         }
         if (reloadRecipeRegistry != null) {
             reloadRecipeRegistry.invoke()

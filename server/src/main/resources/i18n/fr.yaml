@@ -28,6 +28,7 @@ reload:
     weather: "Météo : {0} types"
     vegetation: "Végétation : {0} chaînes"
     armor: "Registre armures rechargé"
+    equipment_categories: "Règles de catégories d'armes/outils rechargées"
     recipes: "Registre recettes rechargé"
     rbac: "Groupes RBAC rechargés"
     combat_systems: "Combat/compétences/classes/XP rechargés"

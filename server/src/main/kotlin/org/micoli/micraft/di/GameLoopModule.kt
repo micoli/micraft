@@ -173,10 +173,10 @@ class GameLoopModule {
     /**
      * Armour definitions as the combat maths sees them.
      *
-     * These were `emptyMap()` in every processor, so equipping armour changed a player's appearance
-     * and nothing else — the registry was loaded and then ignored. Read once at wiring time, which
-     * means `/reload` does not reach the combat maths; that is unchanged from before, where nothing
-     * reached it at all.
+     * This snapshot is only used to wire up the other `@Single`s below at DI startup — `GameLoop`
+     * keeps its own live `armorRegistry` var, refreshed by `/reload` via the `reloadArmorRegistry`
+     * closure (see `GameLoop.kt`), which is what commands/combat actually read after the first
+     * reload.
      */
     @Single
     fun armorRegistry(armorRegistryLoader: ArmorRegistryLoader): Map<String, ArmorDefinition> =
