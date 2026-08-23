@@ -209,7 +209,6 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
             <div className="flex gap-9 items-start">
               {/* Armor list */}
               <div className="flex-1 min-w-[240px]">
-                {sortedArmors.length === 0 && <div className="text-white/30 text-xs">No armor available.</div>}
                 {sortedArmors.map((name) => {
                   const armorDef = available[name];
                   const isEquipped = equipped.includes(name);
