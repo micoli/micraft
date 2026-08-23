@@ -32,6 +32,12 @@ export function EquipmentTab({
   const [ownedArmors, setOwnedArmors] = useState<string[]>(file.state.ownedArmors ?? []);
   const [ownedWeapons, setOwnedWeapons] = useState<string[]>(file.state.ownedWeapons ?? []);
   const [ownedTools, setOwnedTools] = useState<string[]>(file.state.ownedTools ?? []);
+  // Names shown in each toggle list — fixed at load (plus anything granted via /give below),
+  // independent of the toggle selection, so unchecking an item grays it out instead of
+  // removing its row from the list.
+  const [armorNames, setArmorNames] = useState<string[]>(file.state.ownedArmors ?? []);
+  const [weaponNames, setWeaponNames] = useState<string[]>(file.state.ownedWeapons ?? []);
+  const [toolNames, setToolNames] = useState<string[]>(file.state.ownedTools ?? []);
   const [worn, setWorn] = useState<string[]>(file.state.armors ?? []);
   const [rightHandItem, setRightHandItem] = useState(file.state.rightHandItem ?? "");
   const [leftHandItem, setLeftHandItem] = useState(file.state.leftHandItem ?? "");
@@ -84,9 +90,18 @@ export function EquipmentTab({
     try {
       await onGive(name, giveCount);
       setGiveMsg(t("players.giveDone"));
-      if (name in armorDefs && !ownedArmors.includes(name)) setOwnedArmors((p) => [...p, name]);
-      if (name in weaponDefs && !ownedWeapons.includes(name)) setOwnedWeapons((p) => [...p, name]);
-      if (name in toolDefs && !ownedTools.includes(name)) setOwnedTools((p) => [...p, name]);
+      if (name in armorDefs && !ownedArmors.includes(name)) {
+        setOwnedArmors((p) => [...p, name]);
+        setArmorNames((p) => (p.includes(name) ? p : [...p, name]));
+      }
+      if (name in weaponDefs && !ownedWeapons.includes(name)) {
+        setOwnedWeapons((p) => [...p, name]);
+        setWeaponNames((p) => (p.includes(name) ? p : [...p, name]));
+      }
+      if (name in toolDefs && !ownedTools.includes(name)) {
+        setOwnedTools((p) => [...p, name]);
+        setToolNames((p) => (p.includes(name) ? p : [...p, name]));
+      }
       setGiveName("");
     } catch {
       setGiveMsg(t("players.giveFailed"));
@@ -135,7 +150,7 @@ export function EquipmentTab({
 
       <EquipmentToggleList
         title={t("players.ownedArmors")}
-        names={[...ownedArmors].sort()}
+        names={[...armorNames].sort()}
         selected={ownedArmors}
         onToggle={(n) => toggle(ownedArmors, setOwnedArmors, n)}
       />
@@ -147,13 +162,13 @@ export function EquipmentTab({
       />
       <EquipmentToggleList
         title={t("players.ownedWeapons")}
-        names={[...ownedWeapons].sort()}
+        names={[...weaponNames].sort()}
         selected={ownedWeapons}
         onToggle={(n) => toggle(ownedWeapons, setOwnedWeapons, n)}
       />
       <EquipmentToggleList
         title={t("players.ownedTools")}
-        names={[...ownedTools].sort()}
+        names={[...toolNames].sort()}
         selected={ownedTools}
         onToggle={(n) => toggle(ownedTools, setOwnedTools, n)}
       />
