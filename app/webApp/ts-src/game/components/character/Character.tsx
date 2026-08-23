@@ -101,6 +101,7 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
     weapons: [],
     tools: [],
   });
+  const [loading, setLoading] = useState(true);
   const closeRef = useRef(onClose);
   useLayoutEffect(() => {
     closeRef.current = onClose;
@@ -108,6 +109,7 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
 
   useEffect(() => {
     if (!open) return;
+    setLoading(true);
     const playerId = window.mcState?.playerId || "";
     Promise.all([
       getApiArmors({ throwOnError: true }).then((r) => r.data),
@@ -137,6 +139,7 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
       setTools(toolDefs as Record<string, HandItemDefinition>);
       setHands(handsData as PlayerHands);
       setOwned(ownedData as { armors: string[]; weapons: string[]; tools: string[] });
+      setLoading(false);
     });
   }, [open]);
 
@@ -206,121 +209,125 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
           )}
 
           <TabsContent value="equipment">
-            <div className="flex gap-9 items-start">
-              {/* Armor list */}
-              <div className="flex-1 min-w-[240px]">
-                {sortedArmors.map((name) => {
-                  const armorDef = available[name];
-                  const isEquipped = equipped.includes(name);
-                  return (
-                    <div
-                      key={name}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-3 mb-2.5 rounded border",
-                        isEquipped ? "bg-green-950/60 border-green-700/60" : "bg-black/40 border-white/15",
-                      )}
-                    >
-                      <div className="flex-1">
-                        <div className={cn("text-xs mb-1.5", isEquipped ? "text-green-400" : "text-white/80")}>
-                          {name}
-                        </div>
-                        {armorDef && <ArmorBonusLine bonus={armorDef.statBonus} wearable={armorDef.wearable} />}
-                      </div>
-                      <Button
-                        variant={isEquipped ? "ghost" : "secondary"}
-                        size="sm"
-                        onClick={() => toggleArmor(name)}
+            {loading ? (
+              <div className="text-xs text-white/50 py-6 text-center">Loading...</div>
+            ) : (
+              <div className="flex gap-9 items-start">
+                {/* Armor list */}
+                <div className="flex-1 min-w-[240px]">
+                  {sortedArmors.map((name) => {
+                    const armorDef = available[name];
+                    const isEquipped = equipped.includes(name);
+                    return (
+                      <div
+                        key={name}
                         className={cn(
-                          "font-mono text-xs whitespace-nowrap",
-                          isEquipped && "text-green-400 hover:text-red-400",
+                          "flex items-center gap-3 px-3 py-3 mb-2.5 rounded border",
+                          isEquipped ? "bg-green-950/60 border-green-700/60" : "bg-black/40 border-white/15",
                         )}
                       >
-                        {isEquipped ? "Unequip" : "Equip"}
-                      </Button>
-                    </div>
-                  );
-                })}
-
-                {sortedHandItems.length > 0 && (
-                  <div className="mt-6 pt-4 border-t border-white/10">
-                    <div className="text-xs text-white/50 mb-2 tracking-widest">HANDS</div>
-                    {(["right", "left"] as const).map((hand) => {
-                      const current = hand === "right" ? hands.rightHandItem : hands.leftHandItem;
-                      return (
-                        <div key={hand} className="flex items-center gap-2 mb-2">
-                          <span className="text-xs text-white/60 w-16 capitalize">{hand} hand</span>
-                          <select
-                            className="flex-1 bg-black/40 border border-white/15 rounded text-xs px-2 py-1 text-white/80"
-                            value={current ?? ""}
-                            onChange={(e) => setHand(hand, e.target.value)}
-                          >
-                            <option value="">(empty)</option>
-                            {sortedWeapons.length > 0 && (
-                              <optgroup label="Weapons">
-                                {sortedWeapons.map((name) => (
-                                  <option key={name} value={name}>
-                                    {name} — {handItems[name].category}
-                                  </option>
-                                ))}
-                              </optgroup>
-                            )}
-                            {sortedTools.length > 0 && (
-                              <optgroup label="Tools">
-                                {sortedTools.map((name) => (
-                                  <option key={name} value={name}>
-                                    {name} — {handItems[name].category}
-                                  </option>
-                                ))}
-                              </optgroup>
-                            )}
-                          </select>
+                        <div className="flex-1">
+                          <div className={cn("text-xs mb-1.5", isEquipped ? "text-green-400" : "text-white/80")}>
+                            {name}
+                          </div>
+                          {armorDef && <ArmorBonusLine bonus={armorDef.statBonus} wearable={armorDef.wearable} />}
                         </div>
-                      );
-                    })}
+                        <Button
+                          variant={isEquipped ? "ghost" : "secondary"}
+                          size="sm"
+                          onClick={() => toggleArmor(name)}
+                          className={cn(
+                            "font-mono text-xs whitespace-nowrap",
+                            isEquipped && "text-green-400 hover:text-red-400",
+                          )}
+                        >
+                          {isEquipped ? "Unequip" : "Equip"}
+                        </Button>
+                      </div>
+                    );
+                  })}
+
+                  {sortedHandItems.length > 0 && (
+                    <div className="mt-6 pt-4 border-t border-white/10">
+                      <div className="text-xs text-white/50 mb-2 tracking-widest">HANDS</div>
+                      {(["right", "left"] as const).map((hand) => {
+                        const current = hand === "right" ? hands.rightHandItem : hands.leftHandItem;
+                        return (
+                          <div key={hand} className="flex items-center gap-2 mb-2">
+                            <span className="text-xs text-white/60 w-16 capitalize">{hand} hand</span>
+                            <select
+                              className="flex-1 bg-black/40 border border-white/15 rounded text-xs px-2 py-1 text-white/80"
+                              value={current ?? ""}
+                              onChange={(e) => setHand(hand, e.target.value)}
+                            >
+                              <option value="">(empty)</option>
+                              {sortedWeapons.length > 0 && (
+                                <optgroup label="Weapons">
+                                  {sortedWeapons.map((name) => (
+                                    <option key={name} value={name}>
+                                      {name} — {handItems[name].category}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )}
+                              {sortedTools.length > 0 && (
+                                <optgroup label="Tools">
+                                  {sortedTools.map((name) => (
+                                    <option key={name} value={name}>
+                                      {name} — {handItems[name].category}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )}
+                            </select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <Button variant="ghost" onClick={onClose} className="mt-6 w-full font-mono text-xs text-white/50">
+                    Close
+                  </Button>
+                </div>
+
+                {/* Model preview */}
+                <div className="flex flex-col items-center gap-2">
+                  <PlayerModelPreview
+                    key={skin + equipped.join(",") + hands.rightHandItem + hands.leftHandItem}
+                    skin={skin}
+                    armors={equipped}
+                    rightHandItem={hands.rightHandItem}
+                    leftHandItem={hands.leftHandItem}
+                    walking={walking}
+                  />
+                  <div className="flex gap-1 w-40">
+                    <button
+                      onClick={() => setWalking(false)}
+                      className={cn(
+                        "flex-1 font-mono text-[11px] py-1 rounded border transition-colors",
+                        !walking
+                          ? "bg-green-950/60 border-green-700/60 text-green-400"
+                          : "bg-black/20 border-white/15 text-white/40",
+                      )}
+                    >
+                      Statique
+                    </button>
+                    <button
+                      onClick={() => setWalking(true)}
+                      className={cn(
+                        "flex-1 font-mono text-[11px] py-1 rounded border transition-colors",
+                        walking
+                          ? "bg-green-950/60 border-green-700/60 text-green-400"
+                          : "bg-black/20 border-white/15 text-white/40",
+                      )}
+                    >
+                      Marche
+                    </button>
                   </div>
-                )}
-
-                <Button variant="ghost" onClick={onClose} className="mt-6 w-full font-mono text-xs text-white/50">
-                  Close
-                </Button>
-              </div>
-
-              {/* Model preview */}
-              <div className="flex flex-col items-center gap-2">
-                <PlayerModelPreview
-                  key={skin + equipped.join(",") + hands.rightHandItem + hands.leftHandItem}
-                  skin={skin}
-                  armors={equipped}
-                  rightHandItem={hands.rightHandItem}
-                  leftHandItem={hands.leftHandItem}
-                  walking={walking}
-                />
-                <div className="flex gap-1 w-40">
-                  <button
-                    onClick={() => setWalking(false)}
-                    className={cn(
-                      "flex-1 font-mono text-[11px] py-1 rounded border transition-colors",
-                      !walking
-                        ? "bg-green-950/60 border-green-700/60 text-green-400"
-                        : "bg-black/20 border-white/15 text-white/40",
-                    )}
-                  >
-                    Statique
-                  </button>
-                  <button
-                    onClick={() => setWalking(true)}
-                    className={cn(
-                      "flex-1 font-mono text-[11px] py-1 rounded border transition-colors",
-                      walking
-                        ? "bg-green-950/60 border-green-700/60 text-green-400"
-                        : "bg-black/20 border-white/15 text-white/40",
-                    )}
-                  >
-                    Marche
-                  </button>
                 </div>
               </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="attacks">
