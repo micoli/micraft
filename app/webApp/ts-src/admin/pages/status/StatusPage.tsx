@@ -50,7 +50,7 @@ export function StatusPage() {
     setReloadMsg(null);
     try {
       const { data, error } = await postApiAdminReload();
-      if (error) throw new Error();
+      if (error || !data) throw new Error();
       setReloadMsg(t("status.reloadDone", data.result));
     } catch {
       setReloadMsg(t("status.reloadFailed"));
