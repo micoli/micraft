@@ -831,6 +831,16 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     jsInstanceZonesSync(Json.encodeToString(msg))
                 })
             put(
+                ServerMessage.ScenesSync::class,
+                typedHandler { msg: ServerMessage.ScenesSync ->
+                    jsScenesSync(Json.encodeToString(msg))
+                })
+            put(
+                ServerMessage.ScenePreviewData::class,
+                typedHandler { msg: ServerMessage.ScenePreviewData ->
+                    jsScenePreviewData(Json.encodeToString(msg))
+                })
+            put(
                 ServerMessage.PreferencesSync::class,
                 typedHandler { msg: ServerMessage.PreferencesSync ->
                     jsCameraSetFov(camera, msg.fieldOfView)

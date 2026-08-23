@@ -806,7 +806,10 @@ export function registerChunks(): Pick<
         vd.indices = g.i.subarray(0, g.ic);
         vd.applyToMesh(mesh, false);
         mesh.material = materials[matKey] ?? null;
-        mesh.isPickable = false;
+        // Pickable so creative mode's orbit-camera mouse targeting (scene.pick(), unlike the FPS
+        // mode's own voxel-grid raycast) can hit real terrain — cost only materializes when
+        // scene.pick() actually runs, which happens only in creative mode.
+        mesh.isPickable = true;
         mesh.doNotSyncBoundingInfo = true;
         mesh.refreshBoundingInfo();
         mesh.freezeWorldMatrix();

@@ -28,6 +28,7 @@ import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
+import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
@@ -75,6 +76,7 @@ class CommandContextModule {
         questManager: QuestManager,
         instanceRegistry: InstanceRegistry,
         vehicleManager: VehicleManager,
+        sceneRegistry: SceneRegistry,
     ): CommandContext {
         val generator = worldState.generator as? ProceduralChunkGenerator
         val cavernPoints = generator?.namedCavernPoints() ?: emptyMap()
@@ -128,6 +130,7 @@ class CommandContextModule {
             namedPoints = { cavernPoints + staircasePoints + instanceNamedPoints() },
             applyBuff = closures.applyBuff,
             vehicleManager = vehicleManager,
+            scenes = sceneRegistry,
         )
     }
 }

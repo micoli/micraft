@@ -48,6 +48,8 @@ ui:
 building:
   place_rotate: [KeyR]
   block_interact: [KeyC]
+  scene_confirm: [Enter]
+  scene_cancel: [Escape]
 
 hotbar:
   slot_1: [Digit1]

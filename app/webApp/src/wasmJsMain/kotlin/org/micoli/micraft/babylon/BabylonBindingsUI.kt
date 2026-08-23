@@ -237,3 +237,9 @@ fun jsOpenMailbox(): Unit = js("mc.openMailbox()")
 fun jsAdminZoneWireframe(json: String): Unit = js("mc.adminZoneWireframe(json)")
 
 fun jsInstanceZonesSync(json: String): Unit = js("mc.instanceZonesSync(json)")
+
+// ── Scenes ─────────────────────────────────────────────────────────────────────
+
+fun jsScenesSync(json: String): Unit = js("mc.scenesSync(json)")
+
+fun jsScenePreviewData(json: String): Unit = js("mc.scenePreviewData(json)")

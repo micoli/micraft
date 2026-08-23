@@ -181,4 +181,11 @@ sealed class ClientMessage {
 
     /** Right-click a spawned vehicle to toggle it between moving and stopped. */
     @ProtoId(28) @Serializable data class VehicleInteract(val vehicleId: String) : ClientMessage()
+
+    /**
+     * Selecting a scene in the creative-mode "Scene" tab requests its blocks for the ghost preview.
+     */
+    @ProtoId(29)
+    @Serializable
+    data class RequestScenePreview(val sceneId: String) : ClientMessage()
 }

@@ -163,6 +163,8 @@ object ServerMessageCodec {
             serverEntry<ServerMessage.VehicleSpawned>(), // 57
             serverEntry<ServerMessage.VehicleUpdate>(), // 58
             serverEntry<ServerMessage.VehicleDespawned>(), // 59
+            serverEntry<ServerMessage.ScenesSync>(), // 60
+            serverEntry<ServerMessage.ScenePreviewData>(), // 61
         )
 
     fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)
@@ -202,6 +204,7 @@ object ClientMessageCodec {
             clientEntry<ClientMessage.CreativeCameraFocus>(), // 26
             clientEntry<ClientMessage.BlockInteract>(), // 27
             clientEntry<ClientMessage.VehicleInteract>(), // 28
+            clientEntry<ClientMessage.RequestScenePreview>(), // 29
         )
 
     fun encode(msg: ClientMessage): ByteArray = encodeWith(registry, msg)

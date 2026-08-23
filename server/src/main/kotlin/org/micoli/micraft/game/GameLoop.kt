@@ -101,6 +101,7 @@ import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.sanitizePlayerName
+import org.micoli.micraft.game.world.scene.ScenePlacer
 import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
@@ -128,6 +129,7 @@ import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.PlainColorInfo
 import org.micoli.micraft.protocol.RailInfo
+import org.micoli.micraft.protocol.SceneSummaryProto
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.VehicleCodexInfo
 import org.micoli.micraft.ui.defaultLayout
@@ -572,6 +574,7 @@ class GameLoop(
             worldItems = worldItems,
             npcManager = npcManager,
             vehicleManager = vehicleManager,
+            scenes = sceneRegistry,
             getGameTime = closures.getGameTime,
             setGameTime = closures.setGameTime,
             refetchChunks = closures.refetchChunks,
@@ -1517,6 +1520,11 @@ class GameLoop(
         if (session.hasPermission("admin")) {
             session.send(
                 ServerMessage.InstanceZonesSync(instanceRegistry.all().map { it.toProto() }))
+            session.send(
+                ServerMessage.ScenesSync(
+                    sceneRegistry.all().map {
+                        SceneSummaryProto(it.id, it.name, it.width, it.height, it.depth)
+                    }))
         }
         if (session.state.godMode) session.send(ServerMessage.GodModeUpdate(true))
         if (session.state.editMode == EditMode.CREATIVE) {
@@ -1609,6 +1617,21 @@ class GameLoop(
                                             npcManager.handleInteract(session, msg.npcId)
                                         is ClientMessage.VehicleInteract ->
                                             vehicleManager.handleInteract(msg.vehicleId)
+                                        is ClientMessage.RequestScenePreview -> {
+                                            if (session.hasPermission("admin")) {
+                                                sceneRegistry.get(msg.sceneId)?.let { scene ->
+                                                    session.send(
+                                                        ServerMessage.ScenePreviewData(
+                                                            scene.id,
+                                                            scene.width,
+                                                            scene.height,
+                                                            scene.depth,
+                                                            ScenePlacer.previewOccupancy(scene),
+                                                            scene.states,
+                                                        ))
+                                                }
+                                            }
+                                        }
                                         is ClientMessage.RunMacro -> handleRunMacro(session, msg)
                                         is ClientMessage.RunMacroContent ->
                                             handleRunMacroContent(session, msg)

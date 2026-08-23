@@ -36,7 +36,7 @@ import { QuestTracker } from "../game/components/quest/QuestTracker";
 import { BuffBar } from "../game/components/buffs/BuffBar";
 import { MailboxOverlay } from "../game/overlays/MailboxOverlay";
 import { CreativeBlockPanel } from "../game/components/CreativeBlockPanel";
-import { setCreativeSelectedItem } from "../game/lib/creativeMode";
+import { setCreativeSelectedItem, setCreativeSelectedScene } from "../game/lib/creativeMode";
 
 const resumePointerLock = () => {
   if (window.mcState.editMode === "creative") return;
@@ -66,6 +66,7 @@ export function GameScreen() {
   const navigate = useNavigate();
   const reconnectAttempted = useRef(false);
   const [creativeSelectedItem, setCreativeSelectedItemState] = useState<string | null>(null);
+  const [creativeSelectedSceneId, setCreativeSelectedSceneIdState] = useState<string | null>(null);
 
   useEffect(() => {
     startPreloading();
@@ -316,6 +317,13 @@ export function GameScreen() {
             onSelectItem={(item) => {
               setCreativeSelectedItemState(item);
               setCreativeSelectedItem(item);
+              setCreativeSelectedSceneIdState(null);
+            }}
+            selectedSceneId={creativeSelectedSceneId}
+            onSelectScene={(scene) => {
+              setCreativeSelectedSceneIdState(scene ? scene.id : null);
+              setCreativeSelectedScene(scene);
+              if (scene) setCreativeSelectedItemState(null);
             }}
           />
           <Notifications notif={state.notif?.msg ? state.notif : null} />

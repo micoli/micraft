@@ -166,8 +166,19 @@ export function registerKeyboard(): Pick<
         if (b.ingame_map?.some((k) => matchesEvent(k, e))) window.mc?.IngameMap?.();
         if (b.fly_toggle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("fly_toggle");
         if (b.auto_forward?.some((k) => matchesEvent(k, e))) window.mcState.events.push("auto_forward");
-        if (b.place_rotate?.some((k) => matchesEvent(k, e))) window.mcState.events.push("place_rotate");
+        if (b.place_rotate?.some((k) => matchesEvent(k, e))) {
+          // While a scene ghost is active, R rotates the scene preview instead of the FPS
+          // hotbar placement ghost — these two placement modes are mutually exclusive.
+          if (window.mcState.sceneGhostActive) window.mc?.sceneRotate?.();
+          else window.mcState.events.push("place_rotate");
+        }
         if (b.block_interact?.some((k) => matchesEvent(k, e))) window.mcState.events.push("block_interact");
+        if (b.scene_confirm?.some((k) => matchesEvent(k, e)) && window.mcState.sceneGhostActive) {
+          window.mc?.sceneConfirm?.();
+        }
+        if (b.scene_cancel?.some((k) => matchesEvent(k, e)) && window.mcState.sceneGhostActive) {
+          window.mc?.sceneCancel?.();
+        }
         if (b.combat_target_cycle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_target_cycle");
         if (b.combat_attack?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_attack");
         if (b.npc_interact?.some((k) => matchesEvent(k, e))) window.mcState.events.push("npc_interact");

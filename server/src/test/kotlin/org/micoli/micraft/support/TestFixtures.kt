@@ -27,6 +27,7 @@ import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.liquid.LiquidManager
+import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.game.world.weather.WeatherConfig
 import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.player.Orientation
@@ -274,6 +275,7 @@ fun testContext(
     weaponCategories: () -> Map<EquipmentCategory, WeaponCategoryDefinition> = { emptyMap() },
     toolCategories: () -> Map<EquipmentCategory, ToolCategoryDefinition> = { emptyMap() },
     namedPoints: () -> Map<String, Vec3> = { emptyMap() },
+    scenes: SceneRegistry? = null,
 ) =
     CommandContext(
         world = world,
@@ -305,6 +307,7 @@ fun testContext(
         weaponCategories = weaponCategories,
         toolCategories = toolCategories,
         namedPoints = namedPoints,
+        scenes = scenes,
     )
 
 fun testWeatherManager() = WeatherManager(WeatherConfig())

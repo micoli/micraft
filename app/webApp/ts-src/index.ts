@@ -94,6 +94,9 @@ window.mcState = {
   breakMesh: null,
   zoneMesh: null,
   ghostMesh: null,
+  sceneGhostMesh: null,
+  sceneGhostActive: false,
+  scenes: [],
   chunks: {},
   blockMaterials: undefined,
   renderPipeline: null,
@@ -349,6 +352,8 @@ window.mc = {
   openMailbox: () => {},
   adminZoneWireframe: () => {},
   instanceZonesSync: () => {},
+  scenesSync: () => {},
+  scenePreviewData: () => {},
 } satisfies McBindings;
 
 registerAllPlugins();

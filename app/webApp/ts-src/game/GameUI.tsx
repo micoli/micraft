@@ -23,7 +23,14 @@ import {
 import { CharacterCreationScreen } from "../screens/CharacterCreationScreen";
 import { CharacterRPGCreationScreen } from "../screens/CharacterRPGCreationScreen";
 import { GameScreen } from "../screens/GameScreen";
-import { enterCreativeMode, exitCreativeMode } from "./lib/creativeMode";
+import {
+  enterCreativeMode,
+  exitCreativeMode,
+  setScenePreviewCells,
+  sceneRotate,
+  sceneConfirm,
+  sceneCancel,
+} from "./lib/creativeMode";
 
 const initial: UiState = {
   hud: null,
@@ -770,6 +777,43 @@ export function GameUI() {
     window.mc.instanceZonesSync = (json: string) => {
       window.mc.setMinimapZones?.(json);
     };
+    window.mc.scenesSync = (json: string) => {
+      try {
+        const data = JSON.parse(json) as {
+          scenes: Array<{ id: string; name: string; width: number; height: number; depth: number }>;
+        };
+        window.mcState.scenes = data.scenes ?? [];
+      } catch (e) {
+        console.error("[scene] scenesSync parse error:", e, "raw:", json);
+      }
+    };
+    window.mc.scenePreviewData = (json: string) => {
+      try {
+        const data = JSON.parse(json) as {
+          sceneId: string;
+          width: number;
+          height: number;
+          depth: number;
+          blocks: number[];
+        };
+        const yz = data.height * data.depth;
+        const cells: { x: number; y: number; z: number }[] = [];
+        for (let idx = 0; idx < data.blocks.length; idx++) {
+          if (data.blocks[idx] === 0) continue; // AIR
+          const x = Math.floor(idx / yz);
+          const rem = idx % yz;
+          const y = Math.floor(rem / data.depth);
+          const z = rem % data.depth;
+          cells.push({ x, y, z });
+        }
+        setScenePreviewCells(data.sceneId, cells);
+      } catch (e) {
+        console.error("[scene] scenePreviewData parse error:", e, "raw:", json);
+      }
+    };
+    window.mc.sceneRotate = () => sceneRotate();
+    window.mc.sceneConfirm = () => sceneConfirm();
+    window.mc.sceneCancel = () => sceneCancel();
     window.mc.reloadAttackMeta = () => {
       loadAttackMetaRef.current();
       loadClassDefinitionsRef.current();

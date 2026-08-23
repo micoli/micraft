@@ -756,6 +756,10 @@ class LocalPlayerController(
                         outMessages.trySend(ClientMessage.BlockBreakStart(BlockPos(x, y, z)))
                     }
                 }
+                event.startsWith("scene_preview_request:") ->
+                    outMessages.trySend(
+                        ClientMessage.RequestScenePreview(
+                            event.removePrefix("scene_preview_request:")))
             }
         }
 

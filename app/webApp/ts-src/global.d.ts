@@ -256,6 +256,9 @@ declare global {
     breakMesh: (InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string }) | null;
     zoneMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     ghostMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
+    sceneGhostMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
+    sceneGhostActive: boolean;
+    scenes: Array<{ id: string; name: string; width: number; height: number; depth: number }>;
     chunks: Record<string, InstanceType<typeof BABYLON.AbstractMesh>[]>;
     blockMaterials: Record<string, ShaderMaterial | StandardMaterial> | undefined;
     renderPipeline: unknown;
@@ -592,6 +595,11 @@ declare global {
     openMailbox(): void;
     adminZoneWireframe(json: string): void;
     instanceZonesSync(json: string): void;
+    scenesSync(json: string): void;
+    scenePreviewData(json: string): void;
+    sceneRotate?(): void;
+    sceneConfirm?(): void;
+    sceneCancel?(): void;
     reloadAttackMeta(): void;
     IngameMap(): void;
     dumpStats(): void;

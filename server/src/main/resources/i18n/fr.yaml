@@ -103,6 +103,12 @@ vehicule_add:
     usage: "Usage : /vehicule:add <vehiculeName>. Disponibles : {0}"
     not_a_rail: "Vous n'êtes pas sur un bloc rail."
     unavailable: "Les véhicules ne sont pas disponibles pour le moment."
+scene_place:
+  server:
+    done: "Scène placée : {0}."
+    unknown: "Scène inconnue : {0}."
+    usage: "Usage : /scene:place <sceneId> <rotation:0-3> <x> <y> <z>"
+    unavailable: "Les scènes ne sont pas disponibles pour le moment."
 craft:
   server:
     done: "{0}x {1} fabriqué(s)."

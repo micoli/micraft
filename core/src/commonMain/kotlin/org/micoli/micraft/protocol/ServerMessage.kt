@@ -394,7 +394,34 @@ sealed class ServerMessage {
     data class VehicleUpdate(val vehicle: VehicleState) : ServerMessage()
 
     @ProtoId(59) @Serializable data class VehicleDespawned(val id: String) : ServerMessage()
+
+    // Sent to admins on connect so the creative-mode "Scene" tab can list placeable scenes.
+    @ProtoId(60)
+    @Serializable
+    data class ScenesSync(val scenes: List<SceneSummaryProto>) : ServerMessage()
+
+    // Non-air blocks/states of a scene, sent on demand when a player selects it in the
+    // creative-mode "Scene" tab, to build the local ghost preview mesh.
+    @ProtoId(61)
+    @Serializable
+    data class ScenePreviewData(
+        val sceneId: String,
+        val width: Int,
+        val height: Int,
+        val depth: Int,
+        val blocks: ByteArray,
+        val states: ByteArray,
+    ) : ServerMessage()
 }
+
+@Serializable
+data class SceneSummaryProto(
+    val id: String,
+    val name: String,
+    val width: Int,
+    val height: Int,
+    val depth: Int
+)
 
 @Serializable
 data class InstanceZoneProto(

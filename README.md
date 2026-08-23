@@ -275,6 +275,7 @@ stateDiagram-v2
 | `/rest` | `/rest` | Take a short rest: restore rage and tokens to maximum. | — |
 | `/resurect` | `/resurect [playerName]` | Resurrect a downed player (self if no name given). | dynamic |
 | `/save` | `/save` | Saves the world and player state to disk. | — |
+| `/scene:place` | `/scene:place <sceneId> <rotation:0-3> <x> <y> <z>` | Stamp a scene into the live world at the given position. | — |
 | `/set` | `/set <hp\|mana> <playerName> <value>` | Set a player stat. | dynamic |
 | `/shaders` | `/shaders [on\|off]` | Toggles visual shaders (ambient occlusion, directional shading, fog). | on, off |
 | `/skin` | `/skin <skinName>` | Changes your player skin. | dynamic |
