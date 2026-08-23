@@ -17,6 +17,7 @@ private fun ToolYamlEntry.applyOverride(o: ToolYamlOverride) =
     copy(
         category = o.category ?: category,
         breakSpeedMultiplier = o.breakSpeedMultiplier ?: breakSpeedMultiplier,
+        statBonus = o.statBonus ?: statBonus,
         rotate = o.rotate ?: rotate)
 
 class ToolRegistryLoader(
@@ -83,6 +84,7 @@ class ToolRegistryLoader(
                                 ToolDefinition(
                                     category = merged.category,
                                     breakSpeedMultiplier = merged.breakSpeedMultiplier,
+                                    statBonus = merged.statBonus,
                                     rotate = merged.rotate)
                         }
                 }

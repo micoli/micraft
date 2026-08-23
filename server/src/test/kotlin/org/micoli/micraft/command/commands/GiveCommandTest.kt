@@ -4,11 +4,23 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.game.armor.ArmorDefinition
+import org.micoli.micraft.game.armor.WearableSlots
+import org.micoli.micraft.game.equipment.ToolDefinition
+import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
+
+private val ARMORS = mapOf("iron_helmet" to ArmorDefinition(wearable = WearableSlots(head = true)))
+private val WEAPONS = mapOf("iron_sword" to WeaponDefinition(category = EquipmentCategory.SWORD))
+private val TOOLS = mapOf("iron_axe" to ToolDefinition(category = EquipmentCategory.AXE))
+
+private fun equipmentContext() =
+    testContext(armorRegistry = { ARMORS }, weaponRegistry = { WEAPONS }, toolRegistry = { TOOLS })
 
 class GiveCommandTest {
     private val cmd = GiveCommand()
@@ -93,5 +105,52 @@ class GiveCommandTest {
         val session = testSession()
         cmd.execute(session, "SANDSTONE 2", testContext())
         assertEquals(2, session.inventory[ItemType("SANDSTONE")])
+    }
+
+    @Test
+    fun giveArmor_addsToOwnedArmors() = runBlocking {
+        val session = testSession()
+        cmd.execute(session, "iron_helmet", equipmentContext())
+        assertTrue("iron_helmet" in session.state.ownedArmors)
+    }
+
+    @Test
+    fun giveWeapon_addsToOwnedWeapons() = runBlocking {
+        val session = testSession()
+        cmd.execute(session, "iron_sword", equipmentContext())
+        assertTrue("iron_sword" in session.state.ownedWeapons)
+    }
+
+    @Test
+    fun giveTool_addsToOwnedTools() = runBlocking {
+        val session = testSession()
+        cmd.execute(session, "iron_axe", equipmentContext())
+        assertTrue("iron_axe" in session.state.ownedTools)
+    }
+
+    @Test
+    fun giveEquipment_alreadyOwned_sendsAlready() = runBlocking {
+        val session = testSession()
+        session.state = session.state.copy(ownedArmors = listOf("iron_helmet"))
+        cmd.execute(session, "iron_helmet", equipmentContext())
+        val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
+        assertTrue(notifs.any { it.message.contains("iron_helmet") })
+        assertEquals(1, session.state.ownedArmors.size)
+    }
+
+    @Test
+    fun giveEquipment_callsSavePlayer() = runBlocking {
+        val saved = mutableListOf<PlayerSession>()
+        val session = testSession()
+        cmd.execute(session, "iron_helmet", equipmentContext())
+        cmd.execute(
+            session,
+            "iron_sword",
+            testContext(
+                armorRegistry = { ARMORS },
+                weaponRegistry = { WEAPONS },
+                toolRegistry = { TOOLS },
+                savePlayer = { saved.add(it) }))
+        assertEquals(1, saved.size)
     }
 }

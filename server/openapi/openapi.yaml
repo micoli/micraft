@@ -483,6 +483,28 @@ paths:
               schema:
                 $ref: "#/components/schemas/org.micoli.micraft.http.PlayerHands"
       deprecated: false
+  /api/player/{id}/owned:
+    get:
+      tags: []
+      description: Armor/weapon/tool names owned by a player
+      parameters:
+      - name: id
+        in: path
+        description: Player id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.PlayerOwnedEquipment"
+      deprecated: false
   /api/player/{id}/rpg:
     get:
       tags: []
@@ -2960,6 +2982,32 @@ components:
       required:
       - dominantHand
       title: PlayerHands
+    org.micoli.micraft.http.PlayerOwnedEquipment:
+      type: object
+      properties:
+        armors:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+        tools:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+        weapons:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+      required:
+      - armors
+      - tools
+      - weapons
+      title: PlayerOwnedEquipment
     org.micoli.micraft.http.PlayerRpgResponse:
       type: object
       properties:
@@ -3287,10 +3335,13 @@ components:
           $ref: "#/components/schemas/org.micoli.micraft.game.world.EquipmentCategory"
         rotate:
           $ref: "#/components/schemas/org.micoli.micraft.game.equipment.Rotation"
+        statBonus:
+          $ref: "#/components/schemas/org.micoli.micraft.game.rpg.StatBonus"
       required:
       - breakSpeedMultiplier
       - category
       - rotate
+      - statBonus
       title: ToolDefinition
     org.micoli.micraft.http.GameAssetsController.AssetEntry:
       type: object
@@ -4065,6 +4116,24 @@ components:
           - integer
           format: int32
           title: Int
+        ownedArmors:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+        ownedTools:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+        ownedWeapons:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
         pos:
           $ref: "#/components/schemas/org.micoli.micraft.player.Vec3"
         quests:
@@ -4155,6 +4224,9 @@ components:
       - lightBoostEnabled
       - name
       - orientation
+      - ownedArmors
+      - ownedTools
+      - ownedWeapons
       - pos
       - quests
       - rpgOptOut

@@ -339,6 +339,8 @@ class GameLoopModule {
     fun combatProcessor(
         combatConfigData: CombatConfigData,
         armorRegistry: Map<String, ArmorDefinition>,
+        weaponRegistry: Map<String, WeaponDefinition>,
+        toolRegistry: Map<String, ToolDefinition>,
         @Named("attacks") attacks: Map<String, AttackDefinition>,
         classesConfigData: ClassesConfigData,
         npcManager: NpcManager,
@@ -354,6 +356,8 @@ class GameLoopModule {
             config = combatConfigData,
             attackRegistry = attacks,
             armorRegistry = armorRegistry,
+            weaponRegistry = weaponRegistry,
+            toolRegistry = toolRegistry,
             classRegistry = classesConfigData.classes,
             npcManager = npcManager,
             vehicleManager = vehicleManager,
@@ -380,6 +384,8 @@ class GameLoopModule {
     @Single
     fun statusEffectProcessor(
         armorRegistry: Map<String, ArmorDefinition>,
+        weaponRegistry: Map<String, WeaponDefinition>,
+        toolRegistry: Map<String, ToolDefinition>,
         worldState: WorldState,
         sessionRegistry: SessionRegistry,
         combatProcessor: CombatProcessor,
@@ -387,6 +393,8 @@ class GameLoopModule {
     ): StatusEffectProcessor =
         StatusEffectProcessor(
             armorRegistry = armorRegistry,
+            weaponRegistry = weaponRegistry,
+            toolRegistry = toolRegistry,
             world = worldState,
             broadcastHealthUpdate = { id, isNpc, hp, maxHp ->
                 sessionRegistry.all().forEach {
@@ -431,6 +439,8 @@ class GameLoopModule {
     @Single
     fun regenProcessor(
         armorRegistry: Map<String, ArmorDefinition>,
+        weaponRegistry: Map<String, WeaponDefinition>,
+        toolRegistry: Map<String, ToolDefinition>,
         classesConfigData: ClassesConfigData,
         combatConfigData: CombatConfigData,
         combatProcessor: CombatProcessor,
@@ -439,12 +449,16 @@ class GameLoopModule {
             config = classesConfigData,
             maxRage = combatConfigData.maxRage,
             armorRegistry = armorRegistry,
+            weaponRegistry = weaponRegistry,
+            toolRegistry = toolRegistry,
             combatProcessor = combatProcessor,
         )
 
     @Single
     fun spellProcessor(
         armorRegistry: Map<String, ArmorDefinition>,
+        weaponRegistry: Map<String, WeaponDefinition>,
+        toolRegistry: Map<String, ToolDefinition>,
         @Named("spells") spells: Map<String, SpellDefinition>,
         classesConfigData: ClassesConfigData,
         combatConfigData: CombatConfigData,
@@ -456,6 +470,8 @@ class GameLoopModule {
             spellRegistry = spells,
             classRegistry = classesConfigData.classes,
             armorRegistry = armorRegistry,
+            weaponRegistry = weaponRegistry,
+            toolRegistry = toolRegistry,
             combatConfig = combatConfigData,
             combatProcessor = combatProcessor,
             getSessions = sessionRegistry::all,

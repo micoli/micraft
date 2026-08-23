@@ -5,6 +5,7 @@ import org.micoli.micraft.combat.CombatState
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -58,7 +59,9 @@ class ResurectCommand : CommandHandler {
                     return
                 }
 
-        val armors = target.state.armors.mapNotNull { context.armorRegistry()[it]?.statBonus }
+        val armors =
+            target.state.equipmentBonuses(
+                context.armorRegistry(), context.weaponRegistry(), context.toolRegistry())
         val derived = DerivedStatsCalculator.compute(charData, armors)
         val newHp = derived.maxHp
         val newMana = derived.maxMana

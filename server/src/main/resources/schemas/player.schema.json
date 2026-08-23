@@ -232,6 +232,24 @@
             "type": "string"
           }
         },
+        "ownedArmors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ownedWeapons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ownedTools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "animatedFavicon": {
           "type": "boolean"
         },

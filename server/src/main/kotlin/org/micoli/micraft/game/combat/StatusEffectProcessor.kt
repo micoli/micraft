@@ -2,6 +2,8 @@ package org.micoli.micraft.game.combat
 
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.armor.ArmorDefinition
+import org.micoli.micraft.game.equipment.ToolDefinition
+import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldState
@@ -12,6 +14,8 @@ private val log = LoggerFactory.getLogger("StatusEffectProcessor")
 
 class StatusEffectProcessor(
     @Volatile private var armorRegistry: Map<String, ArmorDefinition>,
+    @Volatile private var weaponRegistry: Map<String, WeaponDefinition> = emptyMap(),
+    @Volatile private var toolRegistry: Map<String, ToolDefinition> = emptyMap(),
     private val world: WorldState,
     private val broadcastHealthUpdate: suspend (String, Boolean, Int, Int) -> Unit,
     private val broadcastCombatLog: suspend (String) -> Unit,
@@ -64,7 +68,9 @@ class StatusEffectProcessor(
                 continue
             }
             val activeEffectNames = effects.map { it.effect::class.simpleName ?: "" }.toSet()
-            val derived = session.computeDerived(armorRegistry, charData, activeEffectNames)
+            val derived =
+                session.computeDerived(
+                    armorRegistry, charData, activeEffectNames, weaponRegistry, toolRegistry)
             val pending = (pendingDotDamage[session.id] ?: 0f) - hpDelta
             val intDamage = pending.toInt()
             pendingDotDamage[session.id] = pending - intDamage
@@ -85,7 +91,13 @@ class StatusEffectProcessor(
     private fun isDamageApplicable(hpDelta: Float, session: PlayerSession): Boolean =
         hpDelta != 0f && !(hpDelta < 0 && session.state.godMode)
 
-    fun reload(armorRegistry: Map<String, ArmorDefinition>) {
+    fun reload(
+        armorRegistry: Map<String, ArmorDefinition>,
+        weaponRegistry: Map<String, WeaponDefinition> = this.weaponRegistry,
+        toolRegistry: Map<String, ToolDefinition> = this.toolRegistry,
+    ) {
         this.armorRegistry = armorRegistry
+        this.weaponRegistry = weaponRegistry
+        this.toolRegistry = toolRegistry
     }
 }

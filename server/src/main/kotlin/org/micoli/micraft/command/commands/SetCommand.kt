@@ -4,6 +4,7 @@ import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.player.rpg.ClassResource
 import org.micoli.micraft.player.rpg.DerivedStats
@@ -73,7 +74,9 @@ class SetCommand : CommandHandler {
                     return
                 }
 
-        val armors = target.state.armors.mapNotNull { context.armorRegistry()[it]?.statBonus }
+        val armors =
+            target.state.equipmentBonuses(
+                context.armorRegistry(), context.weaponRegistry(), context.toolRegistry())
         val derived = DerivedStatsCalculator.compute(charData, armors)
         val isRage = charData.characterClass.classResource == ClassResource.RAGE
 

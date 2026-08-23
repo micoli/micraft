@@ -30,9 +30,9 @@ class WieldCommand : CommandHandler {
     ): List<String> =
         when (argIndex) {
             0 ->
-                (context.weaponRegistry().keys + context.toolRegistry().keys).filter {
-                    it.contains(partial, ignoreCase = true)
-                }
+                ((session?.state?.ownedWeapons ?: emptyList()) +
+                        (session?.state?.ownedTools ?: emptyList()))
+                    .filter { it.contains(partial, ignoreCase = true) }
             1 -> listOf("left", "right").filter { it.contains(partial, ignoreCase = true) }
             else -> emptyList()
         }
@@ -56,6 +56,14 @@ class WieldCommand : CommandHandler {
                     .sorted()
                     .joinToString(", ")
             session.send(Notification(i18n.t(lang, "wield:server:unknown", name, available)))
+            return
+        }
+
+        val owned =
+            if (weaponDef != null) name in session.state.ownedWeapons
+            else name in session.state.ownedTools
+        if (!owned) {
+            session.send(Notification(i18n.t(lang, "wield:server:not_owned", name)))
             return
         }
 

@@ -4,6 +4,7 @@ import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -21,14 +22,8 @@ class RestCommand : CommandHandler {
                 }
 
         val armors =
-            context
-                .armorRegistry()
-                .mapNotNull { (_, def) -> def.statBonus }
-                .let {
-                    session.state.armors.mapNotNull { name ->
-                        context.armorRegistry()[name]?.statBonus
-                    }
-                }
+            session.state.equipmentBonuses(
+                context.armorRegistry(), context.weaponRegistry(), context.toolRegistry())
         val derived = DerivedStatsCalculator.compute(charData, armors)
 
         val restored =

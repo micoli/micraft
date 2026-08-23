@@ -6,6 +6,7 @@ import {
   getApiWeapons,
   getApiTools,
   getApiPlayerByIdHands,
+  getApiPlayerByIdOwned,
 } from "../../../generated/api/requests";
 import { PlayerModelPreview } from "../../shared/PlayerModelPreview";
 import { Dialog } from "../../../primitives/Dialog";
@@ -95,6 +96,11 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
   const [weapons, setWeapons] = useState<Record<string, HandItemDefinition>>({});
   const [tools, setTools] = useState<Record<string, HandItemDefinition>>({});
   const [hands, setHands] = useState<PlayerHands>({ dominantHand: "RIGHT", rightHandItem: null, leftHandItem: null });
+  const [owned, setOwned] = useState<{ armors: string[]; weapons: string[]; tools: string[] }>({
+    armors: [],
+    weapons: [],
+    tools: [],
+  });
   const closeRef = useRef(onClose);
   useLayoutEffect(() => {
     closeRef.current = onClose;
@@ -120,18 +126,26 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
       getApiPlayerByIdHands({ path: { id: playerId }, throwOnError: true })
         .then((r) => r.data)
         .catch(() => ({ dominantHand: "RIGHT" as const, rightHandItem: null, leftHandItem: null })),
-    ]).then(([armors, equippedArmors, skinData, weaponDefs, toolDefs, handsData]) => {
+      getApiPlayerByIdOwned({ path: { id: playerId }, throwOnError: true })
+        .then((r) => r.data)
+        .catch(() => ({ armors: [], weapons: [], tools: [] })),
+    ]).then(([armors, equippedArmors, skinData, weaponDefs, toolDefs, handsData, ownedData]) => {
       setAvailable(armors as unknown as Record<string, ArmorDefinition>);
       setEquipped(Array.isArray(equippedArmors) ? equippedArmors : []);
       setSkin(skinData.skin ?? "articulated");
       setWeapons(weaponDefs as Record<string, HandItemDefinition>);
       setTools(toolDefs as Record<string, HandItemDefinition>);
       setHands(handsData as PlayerHands);
+      setOwned(ownedData as { armors: string[]; weapons: string[]; tools: string[] });
     });
   }, [open]);
 
-  const sortedWeapons = Object.keys(weapons).sort();
-  const sortedTools = Object.keys(tools).sort();
+  const sortedWeapons = Object.keys(weapons)
+    .filter((name) => owned.weapons.includes(name))
+    .sort();
+  const sortedTools = Object.keys(tools)
+    .filter((name) => owned.tools.includes(name))
+    .sort();
   const handItems = { ...weapons, ...tools };
   const sortedHandItems = [...sortedWeapons, ...sortedTools];
 
@@ -159,7 +173,9 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
     }
   }
 
-  const sortedArmors = Object.keys(available).sort();
+  const sortedArmors = Object.keys(available)
+    .filter((name) => owned.armors.includes(name))
+    .sort();
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>

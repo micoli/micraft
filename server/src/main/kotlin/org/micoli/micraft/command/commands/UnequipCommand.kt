@@ -4,6 +4,7 @@ import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessage.Notification
@@ -47,7 +48,9 @@ class UnequipCommand : CommandHandler {
         context.broadcast(PlayerUpdate(session.state))
         context.savePlayer(session)
         session.characterData?.let { char ->
-            val bonuses = session.state.armors.mapNotNull { context.armorRegistry()[it]?.statBonus }
+            val bonuses =
+                session.state.equipmentBonuses(
+                    context.armorRegistry(), context.weaponRegistry(), context.toolRegistry())
             session.send(
                 ServerMessage.CharacterSync(
                     char,

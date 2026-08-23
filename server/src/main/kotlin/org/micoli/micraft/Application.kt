@@ -106,6 +106,7 @@ import org.micoli.micraft.http.MapController
 import org.micoli.micraft.http.MetricsController
 import org.micoli.micraft.http.PlayerArmorsController
 import org.micoli.micraft.http.PlayerHandsController
+import org.micoli.micraft.http.PlayerOwnedController
 import org.micoli.micraft.http.PlayerRpgController
 import org.micoli.micraft.http.PlayerSkinController
 import org.micoli.micraft.http.PlayersController
@@ -312,6 +313,8 @@ fun Application.module() {
             attackRegistry = simulationAttackRegistry,
             armorRegistry = armorRegistryLoader.load(),
             classRegistry = gameLoop.classRegistry,
+            weaponRegistry = get(),
+            toolRegistry = get(),
             i18n = simulationI18n,
             vegetationConfig = simulationVegetationConfig,
             experienceConfig = simulationExperienceConfig,
@@ -355,6 +358,7 @@ fun Application.module() {
         ScreenshotController(dataPath).register(this)
         PlayerArmorsController(persistence, sessionRegistry).register(this)
         PlayerHandsController(persistence, sessionRegistry).register(this)
+        PlayerOwnedController(persistence, sessionRegistry).register(this)
         PlayerRpgController(persistence).register(this)
         CharacterController(persistence).register(this)
         SkinsController(dataPath).register(this)

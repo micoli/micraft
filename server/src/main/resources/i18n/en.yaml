@@ -94,6 +94,7 @@ give:
     done: "Given {0}x {1}."
     unknown: "Unknown item: {0}. Available: {1}"
     usage: "Usage: /give <itemType> [N]. Available: {0}"
+    already: "You already own {0}."
 vehicule_add:
   server:
     done: "Vehicle spawned: {0}."
@@ -169,6 +170,7 @@ equip:
     already: "Already wearing {0}."
     overlap: "Slot conflict: {0} is already covered by {1}."
     equipped: "Equipped {0}."
+    not_owned: "You do not own {0}."
 unequip:
   server:
     usage: "Usage: /unequip <armorName>"
@@ -182,6 +184,7 @@ wield:
     wrong_hand: "{0} can only be wielded in your dominant hand."
     hands_full: "Both hands are full."
     wielded: "Wielded {0}."
+    not_owned: "You do not own {0}."
 unwield:
   server:
     usage: "Usage: /unwield <hand>"

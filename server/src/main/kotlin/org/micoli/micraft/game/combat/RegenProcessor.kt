@@ -4,7 +4,10 @@ import org.apache.commons.jexl3.JexlBuilder
 import org.apache.commons.jexl3.MapContext
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.classes.ClassesConfigData
+import org.micoli.micraft.game.equipment.ToolDefinition
+import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.player.rpg.ClassResource
 import org.slf4j.LoggerFactory
@@ -15,6 +18,8 @@ class RegenProcessor(
     @Volatile private var config: ClassesConfigData,
     @Volatile private var maxRage: Int,
     @Volatile private var armorRegistry: Map<String, ArmorDefinition>,
+    @Volatile private var weaponRegistry: Map<String, WeaponDefinition> = emptyMap(),
+    @Volatile private var toolRegistry: Map<String, ToolDefinition> = emptyMap(),
     private val combatProcessor: CombatProcessor,
     private val nowMs: () -> Long = System::currentTimeMillis,
 ) {
@@ -35,7 +40,7 @@ class RegenProcessor(
             val charData = session.characterData ?: continue
             if (session.isDowned) continue
 
-            val armors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
+            val armors = session.state.equipmentBonuses(armorRegistry, weaponRegistry, toolRegistry)
             val classDef = config.classes[charData.characterClass.name]
             val hpFormula = classDef?.hpFormula ?: config.regen.default.hpFormula
             val manaFormula = classDef?.manaFormula ?: config.regen.default.manaFormula
@@ -140,10 +145,14 @@ class RegenProcessor(
     fun reload(
         config: ClassesConfigData,
         maxRage: Int,
-        armorRegistry: Map<String, ArmorDefinition>
+        armorRegistry: Map<String, ArmorDefinition>,
+        weaponRegistry: Map<String, WeaponDefinition> = this.weaponRegistry,
+        toolRegistry: Map<String, ToolDefinition> = this.toolRegistry,
     ) {
         this.config = config
         this.maxRage = maxRage
         this.armorRegistry = armorRegistry
+        this.weaponRegistry = weaponRegistry
+        this.toolRegistry = toolRegistry
     }
 }

@@ -94,6 +94,7 @@ give:
     done: "{0}x {1} accordé(s)."
     unknown: "Objet inconnu : {0}. Disponibles : {1}"
     usage: "Usage : /give <itemType> [N]. Disponibles : {0}"
+    already: "Vous possédez déjà {0}."
 vehicule_add:
   server:
     done: "Véhicule créé : {0}."
@@ -169,6 +170,7 @@ equip:
     already: "Vous portez déjà {0}."
     overlap: "Conflit de slot : {0} est déjà couvert par {1}."
     equipped: "{0} équipé."
+    not_owned: "Vous ne possédez pas {0}."
 unequip:
   server:
     usage: "Usage : /unequip <nomArmure>"
@@ -182,6 +184,7 @@ wield:
     wrong_hand: "{0} ne peut être manié que dans votre main dominante."
     hands_full: "Les deux mains sont occupées."
     wielded: "{0} en main."
+    not_owned: "Vous ne possédez pas {0}."
 unwield:
   server:
     usage: "Usage : /unwield <main>"

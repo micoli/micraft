@@ -41,9 +41,19 @@ class EquipCommandTest {
     }
 
     @Test
+    fun notOwned_sendsNotOwned() = runBlocking {
+        val session = testSession()
+        cmd.execute(session, "iron_helmet", testContext(armorRegistry = { TEST_ARMORS }))
+        val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
+        assertTrue(notifs.any { it.message.contains("iron_helmet") })
+        assertTrue("iron_helmet" !in session.state.armors)
+    }
+
+    @Test
     fun alreadyWearing_sendsAlready() = runBlocking {
         val session = testSession()
-        session.state = session.state.copy(armors = listOf("iron_helmet"))
+        session.state =
+            session.state.copy(armors = listOf("iron_helmet"), ownedArmors = listOf("iron_helmet"))
         cmd.execute(session, "iron_helmet", testContext(armorRegistry = { TEST_ARMORS }))
         val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
         assertTrue(
@@ -57,7 +67,9 @@ class EquipCommandTest {
     @Test
     fun slotConflict_sendsOverlap() = runBlocking {
         val session = testSession()
-        session.state = session.state.copy(armors = listOf("iron_helmet"))
+        session.state =
+            session.state.copy(
+                armors = listOf("iron_helmet"), ownedArmors = listOf("iron_helmet", "steel_helmet"))
         cmd.execute(session, "steel_helmet", testContext(armorRegistry = { TEST_ARMORS }))
         val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
         assertTrue(
@@ -72,6 +84,7 @@ class EquipCommandTest {
     @Test
     fun success_addsArmorToState() = runBlocking {
         val session = testSession()
+        session.state = session.state.copy(ownedArmors = listOf("iron_helmet"))
         val saved = mutableListOf<PlayerSession>()
         cmd.execute(
             session,
@@ -83,6 +96,7 @@ class EquipCommandTest {
     @Test
     fun success_callsSavePlayer() = runBlocking {
         val session = testSession()
+        session.state = session.state.copy(ownedArmors = listOf("iron_helmet"))
         val saved = mutableListOf<PlayerSession>()
         cmd.execute(
             session,
@@ -94,6 +108,7 @@ class EquipCommandTest {
     @Test
     fun success_broadcastsPlayerUpdate() = runBlocking {
         val session = testSession()
+        session.state = session.state.copy(ownedArmors = listOf("iron_helmet"))
         val broadcasts = mutableListOf<ServerMessage>()
         cmd.execute(
             session,

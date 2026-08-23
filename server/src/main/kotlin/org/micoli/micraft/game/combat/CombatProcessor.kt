@@ -10,6 +10,8 @@ import org.micoli.micraft.combat.DamageType
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
+import org.micoli.micraft.game.equipment.ToolDefinition
+import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.session.PlayerSession
@@ -61,6 +63,8 @@ class CombatProcessor(
     @Volatile private var config: CombatConfigData,
     @Volatile private var attackRegistry: Map<String, AttackDefinition>,
     @Volatile private var armorRegistry: Map<String, ArmorDefinition>,
+    @Volatile private var weaponRegistry: Map<String, WeaponDefinition> = emptyMap(),
+    @Volatile private var toolRegistry: Map<String, ToolDefinition> = emptyMap(),
     @Volatile private var classRegistry: Map<String, ClassDefinitionEntry>,
     private val npcManager: NpcManager,
     private val vehicleManager: VehicleManager = VehicleManager { _ -> },
@@ -165,8 +169,18 @@ class CombatProcessor(
         }
         val targetChar = target.characterData ?: return
 
-        val myDerived = session.computeDerived(armorRegistry, charData)
-        val theirDerived = target.computeDerived(armorRegistry, targetChar)
+        val myDerived =
+            session.computeDerived(
+                armorRegistry,
+                charData,
+                weaponRegistry = weaponRegistry,
+                toolRegistry = toolRegistry)
+        val theirDerived =
+            target.computeDerived(
+                armorRegistry,
+                targetChar,
+                weaponRegistry = weaponRegistry,
+                toolRegistry = toolRegistry)
 
         if (!deductResource(session, charData, levelDef)) {
             session.send(ServerMessage.Notification("Not enough resources"))
@@ -229,7 +243,12 @@ class CombatProcessor(
             return
         }
 
-        val myDerived = session.computeDerived(armorRegistry, charData)
+        val myDerived =
+            session.computeDerived(
+                armorRegistry,
+                charData,
+                weaponRegistry = weaponRegistry,
+                toolRegistry = toolRegistry)
 
         if (!deductResource(session, charData, levelDef)) {
             session.send(ServerMessage.Notification("Not enough resources"))
@@ -318,7 +337,12 @@ class CombatProcessor(
         npc.attackCooldownsUntilMs["${slot.attackId}:${slot.level}"] = now + levelDef.cooldownMs
 
         val targetChar = target.characterData ?: return
-        val theirDerived = target.computeDerived(armorRegistry, targetChar)
+        val theirDerived =
+            target.computeDerived(
+                armorRegistry,
+                targetChar,
+                weaponRegistry = weaponRegistry,
+                toolRegistry = toolRegistry)
 
         val npcModifier = levelDef.power
         val roll = Random.nextInt(1, 21)
@@ -458,7 +482,12 @@ class CombatProcessor(
         val updated = charData.copy(currentHp = 1)
         session.characterData = updated
         session.combatState = session.combatState.copy(downingSuccesses = 0, downingFailures = 0)
-        val derived = session.computeDerived(armorRegistry, updated)
+        val derived =
+            session.computeDerived(
+                armorRegistry,
+                updated,
+                weaponRegistry = weaponRegistry,
+                toolRegistry = toolRegistry)
         broadcastHealthUpdate(session.id, false, 1, derived.maxHp)
         broadcastCombatLog("[p:${charData.name}] stabilizes.")
         session.send(ServerMessage.Notification("You have stabilized!"))
@@ -466,7 +495,12 @@ class CombatProcessor(
 
     private suspend fun triggerDeath(session: PlayerSession) {
         val charData = session.characterData ?: return
-        val derived = session.computeDerived(armorRegistry, charData)
+        val derived =
+            session.computeDerived(
+                armorRegistry,
+                charData,
+                weaponRegistry = weaponRegistry,
+                toolRegistry = toolRegistry)
         val newHp = (derived.maxHp / 2).coerceAtLeast(1)
         val newMana = (derived.maxMana / 2).coerceAtLeast(0)
         val xpLoss = (charData.xp * 0.1).toInt()
@@ -570,7 +604,13 @@ class CombatProcessor(
         if (effect is StatusEffect.HpBoost || effect is StatusEffect.ManaBoost) {
             val effectNames =
                 target.combatState.activeEffects.map { it.effect::class.simpleName ?: "" }.toSet()
-            val derived = target.computeDerived(armorRegistry, charData, effectNames)
+            val derived =
+                target.computeDerived(
+                    armorRegistry,
+                    charData,
+                    effectNames,
+                    weaponRegistry = weaponRegistry,
+                    toolRegistry = toolRegistry)
             val updated =
                 if (effect is StatusEffect.HpBoost) charData.copy(currentHp = derived.maxHp)
                 else charData.copy(currentMana = derived.maxMana)
@@ -594,7 +634,12 @@ class CombatProcessor(
                 .find { it.id == entityId }
                 ?.let { s ->
                     val charData = s.characterData ?: return@let
-                    val derived = s.computeDerived(armorRegistry, charData)
+                    val derived =
+                        s.computeDerived(
+                            armorRegistry,
+                            charData,
+                            weaponRegistry = weaponRegistry,
+                            toolRegistry = toolRegistry)
                     s.send(
                         makeStatusUpdate(
                             charData,
@@ -691,7 +736,14 @@ class CombatProcessor(
                 getSessions().find { it.id == targetId }
                     ?: return ServerMessage.CombatTargetUpdate(targetId, "Unknown", 0, 0)
             val targetChar = targetSession.characterData
-            val derived = targetChar?.let { targetSession.computeDerived(armorRegistry, it) }
+            val derived =
+                targetChar?.let {
+                    targetSession.computeDerived(
+                        armorRegistry,
+                        it,
+                        weaponRegistry = weaponRegistry,
+                        toolRegistry = toolRegistry)
+                }
             val tot = buildTargetOfTarget(targetSession)
             val tPos = targetSession.state.pos
             val dist = distance3(pos.x, pos.y, pos.z, tPos.x, tPos.y, tPos.z)
@@ -714,7 +766,12 @@ class CombatProcessor(
         } else {
             val totSession = getSessions().find { it.id == totId } ?: return null
             val totChar = totSession.characterData ?: return null
-            val derived = totSession.computeDerived(armorRegistry, totChar)
+            val derived =
+                totSession.computeDerived(
+                    armorRegistry,
+                    totChar,
+                    weaponRegistry = weaponRegistry,
+                    toolRegistry = toolRegistry)
             ServerMessage.TargetRef(totId, totChar.name, totChar.currentHp, derived.maxHp)
         }
     }
@@ -730,10 +787,14 @@ class CombatProcessor(
         attackRegistry: Map<String, AttackDefinition>,
         armorRegistry: Map<String, ArmorDefinition>,
         classRegistry: Map<String, ClassDefinitionEntry>,
+        weaponRegistry: Map<String, WeaponDefinition> = this.weaponRegistry,
+        toolRegistry: Map<String, ToolDefinition> = this.toolRegistry,
     ) {
         this.config = config
         this.attackRegistry = attackRegistry
         this.armorRegistry = armorRegistry
         this.classRegistry = classRegistry
+        this.weaponRegistry = weaponRegistry
+        this.toolRegistry = toolRegistry
     }
 }

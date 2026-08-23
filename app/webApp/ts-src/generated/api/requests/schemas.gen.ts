@@ -288,6 +288,42 @@ export const org_micoli_micraft_http_PlayerHandsSchema = {
     title: 'PlayerHands'
 } as const;
 
+export const org_micoli_micraft_http_PlayerOwnedEquipmentSchema = {
+    type: 'object',
+    properties: {
+        armors: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        },
+        tools: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        },
+        weapons: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        }
+    },
+    required: [
+        'armors',
+        'tools',
+        'weapons'
+    ],
+    title: 'PlayerOwnedEquipment'
+} as const;
+
 export const org_micoli_micraft_http_PlayerRpgResponseSchema = {
     type: 'object',
     properties: {
@@ -1777,6 +1813,30 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             format: 'int32',
             title: 'Int'
         },
+        ownedArmors: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        },
+        ownedTools: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        },
+        ownedWeapons: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        },
         pos: {
             $ref: '#/components/schemas/org.micoli.micraft.player.Vec3'
         },
@@ -1890,6 +1950,9 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         'lightBoostEnabled',
         'name',
         'orientation',
+        'ownedArmors',
+        'ownedTools',
+        'ownedWeapons',
         'pos',
         'quests',
         'rpgOptOut',

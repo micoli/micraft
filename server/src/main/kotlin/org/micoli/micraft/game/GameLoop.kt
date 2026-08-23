@@ -68,6 +68,7 @@ import org.micoli.micraft.game.recipe.RecipeRegistryLoader
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.ExperienceConfig
 import org.micoli.micraft.game.rpg.ExperienceProcessor
+import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.NetworkStats
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.hasPermission
@@ -316,6 +317,8 @@ class GameLoop(
             config = combatConfig,
             attackRegistry = attackRegistry,
             armorRegistry = armorRegistryLoader.load(),
+            weaponRegistry = weaponRegistry,
+            toolRegistry = toolRegistry,
             classRegistry = classesData.classes,
             npcManager = npcManager,
             vehicleManager = vehicleManager,
@@ -335,6 +338,8 @@ class GameLoop(
     private val statusEffectProcessor: StatusEffectProcessor =
         StatusEffectProcessor(
             armorRegistry = armorRegistryLoader.load(),
+            weaponRegistry = weaponRegistry,
+            toolRegistry = toolRegistry,
             world = world,
             broadcastHealthUpdate = { id, isNpc, hp, maxHp ->
                 sessionRegistry.all().forEach {
@@ -376,6 +381,8 @@ class GameLoop(
             config = ClassesConfig().data,
             maxRage = combatConfig.maxRage,
             armorRegistry = armorRegistryLoader.load(),
+            weaponRegistry = weaponRegistry,
+            toolRegistry = toolRegistry,
             combatProcessor = combatProcessor,
         ),
     private val spellProcessor: SpellProcessor =
@@ -383,6 +390,8 @@ class GameLoop(
             spellRegistry = spellRegistry,
             classRegistry = classesData.classes,
             armorRegistry = armorRegistryLoader.load(),
+            weaponRegistry = weaponRegistry,
+            toolRegistry = toolRegistry,
             combatConfig = combatConfig,
             combatProcessor = combatProcessor,
             getSessions = sessionRegistry::all,
@@ -438,11 +447,22 @@ class GameLoop(
         val newExperience = experienceConfigLoader?.reload()
         val freshArmor = armorRegistry
         combatProcessor.reload(
-            newCombat, newSkills?.attacks ?: attackRegistry, freshArmor, newClasses.classes)
-        regenProcessor.reload(newClasses, newCombat.maxRage, freshArmor)
+            newCombat,
+            newSkills?.attacks ?: attackRegistry,
+            freshArmor,
+            newClasses.classes,
+            weaponRegistry,
+            toolRegistry)
+        regenProcessor.reload(
+            newClasses, newCombat.maxRage, freshArmor, weaponRegistry, toolRegistry)
         spellProcessor.reload(
-            newSkills?.spells ?: spellRegistry, newClasses.classes, freshArmor, newCombat)
-        statusEffectProcessor.reload(freshArmor)
+            newSkills?.spells ?: spellRegistry,
+            newClasses.classes,
+            freshArmor,
+            newCombat,
+            weaponRegistry,
+            toolRegistry)
+        statusEffectProcessor.reload(freshArmor, weaponRegistry, toolRegistry)
         if (newExperience != null) experienceProcessor.reload(newExperience)
         if (newSkills != null) blockPlacer.reload(newSkills.attacks)
     }
@@ -576,7 +596,8 @@ class GameLoop(
             applyBuff = closures.applyBuff,
             sendStatusUpdate = sendStatusUpdate@{ session ->
                     val charData = session.characterData ?: return@sendStatusUpdate
-                    val armors = session.state.armors.mapNotNull { armorRegistry[it]?.statBonus }
+                    val armors =
+                        session.state.equipmentBonuses(armorRegistry, weaponRegistry, toolRegistry)
                     val effectNames =
                         session.combatState.activeEffects
                             .map { it.effect::class.simpleName ?: "" }
@@ -1022,12 +1043,26 @@ class GameLoop(
             reloadRbac = reloadRbac,
             reloadArmorRegistry = {
                 armorRegistry = armorRegistryLoader.load()
+                weaponRegistry = weaponRegistryLoader.load()
+                toolRegistry = toolRegistryLoader.load()
                 val freshArmor = armorRegistry
                 combatProcessor.reload(
-                    combatConfig, attackRegistry, freshArmor, classesData.classes)
-                regenProcessor.reload(classesData, combatConfig.maxRage, freshArmor)
-                spellProcessor.reload(spellRegistry, classesData.classes, freshArmor, combatConfig)
-                statusEffectProcessor.reload(freshArmor)
+                    combatConfig,
+                    attackRegistry,
+                    freshArmor,
+                    classesData.classes,
+                    weaponRegistry,
+                    toolRegistry)
+                regenProcessor.reload(
+                    classesData, combatConfig.maxRage, freshArmor, weaponRegistry, toolRegistry)
+                spellProcessor.reload(
+                    spellRegistry,
+                    classesData.classes,
+                    freshArmor,
+                    combatConfig,
+                    weaponRegistry,
+                    toolRegistry)
+                statusEffectProcessor.reload(freshArmor, weaponRegistry, toolRegistry)
             },
             reloadRecipeRegistry = { RecipeRegistry.load(recipeRegistryLoader.load()) },
             reloadCombatSystems =
@@ -1473,16 +1508,14 @@ class GameLoop(
         session.send(ServerMessage.TimeUpdate(gameTicks))
         val charData = session.characterData
         if (charData != null) {
-            val derived =
-                DerivedStatsCalculator.compute(
-                    charData, session.state.armors.mapNotNull { armorRegistry[it]?.statBonus })
+            val bonuses =
+                session.state.equipmentBonuses(armorRegistry, weaponRegistry, toolRegistry)
+            val derived = DerivedStatsCalculator.compute(charData, bonuses)
             session.send(
                 ServerMessage.CharacterSync(
                     charData,
                     derived,
-                    DerivedStatsCalculator.effectiveBaseStats(
-                        charData,
-                        session.state.armors.mapNotNull { armorRegistry[it]?.statBonus })))
+                    DerivedStatsCalculator.effectiveBaseStats(charData, bonuses)))
             session.send(
                 combatProcessor.makeStatusUpdate(
                     charData,

@@ -189,6 +189,24 @@ export type OrgMicoliMicraftHttpPlayerHands = {
 };
 
 /**
+ * PlayerOwnedEquipment
+ */
+export type OrgMicoliMicraftHttpPlayerOwnedEquipment = {
+    /**
+     * List<String>
+     */
+    armors: Array<string>;
+    /**
+     * List<String>
+     */
+    tools: Array<string>;
+    /**
+     * List<String>
+     */
+    weapons: Array<string>;
+};
+
+/**
  * PlayerRpgResponse
  */
 export type OrgMicoliMicraftHttpPlayerRpgResponse = {
@@ -1170,6 +1188,18 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      * Int
      */
     overrideViewRadius?: null | number;
+    /**
+     * List<String>
+     */
+    ownedArmors: Array<string>;
+    /**
+     * List<String>
+     */
+    ownedTools: Array<string>;
+    /**
+     * List<String>
+     */
+    ownedWeapons: Array<string>;
     pos: OrgMicoliMicraftPlayerVec3;
     /**
      * Map<String,QuestProgress>
@@ -2899,6 +2929,26 @@ export type GetApiPlayerByIdHandsResponses = {
 };
 
 export type GetApiPlayerByIdHandsResponse = GetApiPlayerByIdHandsResponses[keyof GetApiPlayerByIdHandsResponses];
+
+export type GetApiPlayerByIdOwnedData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Player id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/player/{id}/owned';
+};
+
+export type GetApiPlayerByIdOwnedResponses = {
+    200: OrgMicoliMicraftHttpPlayerOwnedEquipment;
+};
+
+export type GetApiPlayerByIdOwnedResponse = GetApiPlayerByIdOwnedResponses[keyof GetApiPlayerByIdOwnedResponses];
 
 export type GetApiPlayerByIdRpgData = {
     body?: never;

@@ -28,6 +28,8 @@ import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.SpellDefinition
+import org.micoli.micraft.game.equipment.ToolDefinition
+import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.npc.FantasyNameGenerator
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
@@ -75,6 +77,8 @@ class SimulationDeps(
     val attackRegistry: Map<String, AttackDefinition>,
     val armorRegistry: Map<String, ArmorDefinition>,
     val classRegistry: Map<String, ClassDefinitionEntry>,
+    val weaponRegistry: Map<String, WeaponDefinition> = emptyMap(),
+    val toolRegistry: Map<String, ToolDefinition> = emptyMap(),
     val i18n: I18nConfig,
     val vegetationConfig: VegetationConfig,
     /** Needed for NPC kill XP, without which no NPC ever gains a level. */
@@ -223,6 +227,8 @@ class WorldSimulator(
             config = deps.combatConfig,
             attackRegistry = deps.attackRegistry,
             armorRegistry = deps.armorRegistry,
+            weaponRegistry = deps.weaponRegistry,
+            toolRegistry = deps.toolRegistry,
             classRegistry = deps.classRegistry,
             npcManager = npcManager,
             vehicleManager = vehicleManager,

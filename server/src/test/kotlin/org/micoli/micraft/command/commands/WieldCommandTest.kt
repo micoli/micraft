@@ -64,6 +64,24 @@ class WieldCommandTest {
     }
 
     @Test
+    fun notOwned_refused() = runBlocking {
+        val session = testSession()
+        session.characterData = charData(CharacterClass.WARRIOR)
+        cmd.execute(
+            session,
+            "iron_sword",
+            testContext(
+                weaponRegistry = { WEAPONS },
+                toolRegistry = { TOOLS },
+                weaponCategories = { WEAPON_CATEGORIES },
+                toolCategories = { TOOL_CATEGORIES }))
+        assertNull(session.state.rightHandItem)
+        assertNull(session.state.leftHandItem)
+        val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
+        assertTrue(notifs.any { it.message.contains("iron_sword") })
+    }
+
+    @Test
     fun wrongClass_refused() = runBlocking {
         val session = testSession()
         session.characterData = charData(CharacterClass.MAGE)
@@ -83,6 +101,7 @@ class WieldCommandTest {
     fun tool_noClassRestriction_succeedsForAnyClass() = runBlocking {
         val session = testSession()
         session.characterData = charData(CharacterClass.MAGE)
+        session.state = session.state.copy(ownedTools = listOf("iron_axe"))
         cmd.execute(
             session,
             "iron_axe",
@@ -98,6 +117,7 @@ class WieldCommandTest {
     fun defaultHand_isOffHand_whenDominantIsRight() = runBlocking {
         val session = testSession()
         session.characterData = charData(CharacterClass.WARRIOR)
+        session.state = session.state.copy(ownedWeapons = listOf("iron_sword"))
         cmd.execute(
             session,
             "iron_sword",
@@ -131,7 +151,8 @@ class WieldCommandTest {
     @Test
     fun mainHandOnly_dominantHand_succeeds() = runBlocking {
         val session = testSession()
-        session.state = session.state.copy(dominantHand = Hand.RIGHT)
+        session.state =
+            session.state.copy(dominantHand = Hand.RIGHT, ownedWeapons = listOf("holy_staff"))
         session.characterData = charData(CharacterClass.CLERIC)
         cmd.execute(
             session,
@@ -149,6 +170,7 @@ class WieldCommandTest {
     fun success_callsSavePlayerAndBroadcasts() = runBlocking {
         val session = testSession()
         session.characterData = charData(CharacterClass.WARRIOR)
+        session.state = session.state.copy(ownedWeapons = listOf("iron_sword"))
         var saved = 0
         val broadcasts = mutableListOf<ServerMessage>()
         cmd.execute(

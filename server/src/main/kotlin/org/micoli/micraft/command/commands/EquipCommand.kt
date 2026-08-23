@@ -4,6 +4,7 @@ import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessage.Notification
@@ -23,7 +24,9 @@ class EquipCommand : CommandHandler {
         context: CommandContext,
     ): List<String> =
         if (argIndex == 0)
-            context.armorRegistry().keys.filter { it.contains(partial, ignoreCase = true) }
+            (session?.state?.ownedArmors ?: emptyList()).filter {
+                it.contains(partial, ignoreCase = true)
+            }
         else emptyList()
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
@@ -41,6 +44,11 @@ class EquipCommand : CommandHandler {
         if (armorDef == null) {
             val available = context.armorRegistry().keys.sorted().joinToString(", ")
             session.send(Notification(i18n.t(lang, "equip:server:unknown", name, available)))
+            return
+        }
+
+        if (name !in session.state.ownedArmors) {
+            session.send(Notification(i18n.t(lang, "equip:server:not_owned", name)))
             return
         }
 
@@ -62,7 +70,9 @@ class EquipCommand : CommandHandler {
         context.broadcast(PlayerUpdate(session.state))
         context.savePlayer(session)
         session.characterData?.let { char ->
-            val bonuses = session.state.armors.mapNotNull { context.armorRegistry()[it]?.statBonus }
+            val bonuses =
+                session.state.equipmentBonuses(
+                    context.armorRegistry(), context.weaponRegistry(), context.toolRegistry())
             session.send(
                 ServerMessage.CharacterSync(
                     char,
