@@ -516,6 +516,11 @@ class ChunkManager(private val scene: JsAny) {
             }
         if (toUnload.isEmpty()) return
         toUnload.forEach { cp ->
+            // Cancel any pending/in-flight render for this chunk — otherwise it finishes
+            // later, builds a mesh, and adds it to the scene after it's already dropped
+            // from loadedChunks, orphaning it forever (never revisited by future unloads).
+            pendingChunks.removeAll { (c, _) -> c.pos == cp }
+            if (activeRender?.chunk?.pos == cp) activeRender = null
             jsDisposeChunk("${cp.cx},${cp.cz}")
             jsClearMinimapChunk(cp.cx, cp.cz)
             loadedChunks.remove(cp)
