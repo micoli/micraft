@@ -1357,8 +1357,6 @@ class GameLoop(
     }
 
     suspend fun onConnect(socket: DefaultWebSocketSession) {
-        val id = UUID.randomUUID().toString()
-
         val connectMsg =
             runCatching {
                     val firstFrame = socket.incoming.receive()
@@ -1398,6 +1396,7 @@ class GameLoop(
             }
 
         val saved = persistence?.loadPlayerState(playerName)
+        val id = saved?.id ?: UUID.randomUUID().toString()
         if (saved != null &&
             saved.email.isNotEmpty() &&
             !saved.email.equals(accountEmail, ignoreCase = true)) {

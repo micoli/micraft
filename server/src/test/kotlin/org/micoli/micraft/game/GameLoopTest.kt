@@ -2,6 +2,7 @@ package org.micoli.micraft.game
 
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readBytes
+import java.nio.file.Files
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,6 +13,7 @@ import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.command.Plugin
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.ServerMessage
@@ -129,6 +131,36 @@ class GameLoopTest {
         assertTrue(syncs.isNotEmpty())
         assertEquals(false, syncs.first().continuousBreak)
         assertEquals(true, syncs.last().continuousBreak)
+    }
+
+    @Test
+    fun onConnect_reusesPersistedPlayerIdAcrossReconnects() = runTest {
+        val persistence = WorldPersistence(Files.createTempDirectory("gameloop-reconnect-test"))
+        val gameLoop = GameLoop(testWorld(), persistence)
+
+        val firstSocket = FakeWebSocketSession()
+        val connect = ClientMessage.Connect(playerName = "Carol", userName = "carol@example.com")
+        firstSocket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        firstSocket.incomingChannel.close()
+        gameLoop.onConnect(firstSocket)
+        val firstWelcome =
+            generateSequence { firstSocket.outgoingChannel.tryReceive().getOrNull() }
+                .map { ServerMessageCodec.decode((it as Frame.Binary).readBytes()) }
+                .filterIsInstance<ServerMessage.Welcome>()
+                .first()
+
+        val secondSocket = FakeWebSocketSession()
+        secondSocket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        secondSocket.incomingChannel.close()
+        gameLoop.onConnect(secondSocket)
+        val secondWelcome =
+            generateSequence { secondSocket.outgoingChannel.tryReceive().getOrNull() }
+                .map { ServerMessageCodec.decode((it as Frame.Binary).readBytes()) }
+                .filterIsInstance<ServerMessage.Welcome>()
+                .first()
+
+        assertEquals(firstWelcome.playerId, secondWelcome.playerId)
+        assertEquals(persistence.loadPlayerStateById(firstWelcome.playerId)?.name, "Carol")
     }
 
     @Test
