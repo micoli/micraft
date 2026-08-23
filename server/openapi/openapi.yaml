@@ -1302,6 +1302,26 @@ paths:
           description: Missing admin permission
           headers: {}
       deprecated: false
+  /api/admin/reload:
+    post:
+      tags: []
+      description: Reload configuration files without restarting the server — same
+        behavior as the in-game /reload command
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.ReloadResultDto"
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
   /api/admin/gametime:
     put:
       tags: []
@@ -1645,6 +1665,82 @@ paths:
           headers: {}
         "400":
           description: Player has no RPG character
+          headers: {}
+        "503":
+          description: No persistence backend
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/players/{name}/equipment:
+    put:
+      tags: []
+      description: Partially update a player's owned/equipped armor and wielded hand
+        items
+      parameters:
+      - name: name
+        in: path
+        description: Player name
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.UpdatePlayerEquipmentRequest"
+        required: false
+      responses:
+        "204":
+          headers: {}
+        "404":
+          description: Player not found
+          headers: {}
+        "503":
+          description: No persistence backend
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/players/{name}/give:
+    post:
+      tags: []
+      description: "Give an inventory item, or grant ownership of an armor/weapon/tool"
+      parameters:
+      - name: name
+        in: path
+        description: Player name
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.GivePlayerItemRequest"
+        required: false
+      responses:
+        "204":
+          headers: {}
+        "404":
+          description: "Player, or item/armor/weapon/tool name, not found"
+          headers: {}
+        "400":
+          description: Missing name
           headers: {}
         "503":
           description: No persistence backend
@@ -3904,6 +4000,15 @@ components:
       - vegetationEstBytes
       - worldItems
       title: StatusSnapshot
+    org.micoli.micraft.http.ReloadResultDto:
+      type: object
+      properties:
+        result:
+          type: string
+          title: String
+      required:
+      - result
+      title: ReloadResultDto
     org.micoli.micraft.http.SetGameTimeRequest:
       type: object
       properties:
@@ -4703,6 +4808,72 @@ components:
           format: int32
           title: Int
       title: UpdatePlayerRpgRequest
+    org.micoli.micraft.http.UpdatePlayerEquipmentRequest:
+      type: object
+      properties:
+        armors:
+          type:
+          - "null"
+          - array
+          items:
+            type: string
+            title: String
+          title: List<String>
+        dominantHand:
+          type:
+          - "null"
+          - string
+          title: String
+        leftHandItem:
+          type:
+          - "null"
+          - string
+          title: String
+        ownedArmors:
+          type:
+          - "null"
+          - array
+          items:
+            type: string
+            title: String
+          title: List<String>
+        ownedTools:
+          type:
+          - "null"
+          - array
+          items:
+            type: string
+            title: String
+          title: List<String>
+        ownedWeapons:
+          type:
+          - "null"
+          - array
+          items:
+            type: string
+            title: String
+          title: List<String>
+        rightHandItem:
+          type:
+          - "null"
+          - string
+          title: String
+      title: UpdatePlayerEquipmentRequest
+    org.micoli.micraft.http.GivePlayerItemRequest:
+      type: object
+      properties:
+        count:
+          type:
+          - "null"
+          - integer
+          format: int32
+          title: Int
+        name:
+          type: string
+          title: String
+      required:
+      - name
+      title: GivePlayerItemRequest
     org.micoli.micraft.http.WorldStatsDto:
       type: object
       properties:

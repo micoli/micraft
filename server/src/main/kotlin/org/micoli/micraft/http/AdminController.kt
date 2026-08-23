@@ -53,6 +53,7 @@ import org.micoli.micraft.game.world.instance.InstanceClipPlanes
 import org.micoli.micraft.game.world.instance.InstanceZone
 import org.micoli.micraft.game.world.rail.RailConnection
 import org.micoli.micraft.game.world.scene.Scene
+import org.micoli.micraft.player.Hand
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 import org.micoli.micraft.protocol.BlockChange
@@ -212,6 +213,8 @@ private fun Scene.toDto() =
 
 @Serializable private data class SetGameTimeRequest(val hour: Int, val minute: Int = 0)
 
+@Serializable private data class ReloadResultDto(val result: String)
+
 @Serializable
 private data class CreateUserRequest(
     val email: String,
@@ -249,6 +252,19 @@ private data class UpdatePlayerRpgRequest(
     val con: Int? = null,
     val cha: Int? = null,
 )
+
+@Serializable
+private data class UpdatePlayerEquipmentRequest(
+    val ownedArmors: List<String>? = null,
+    val ownedWeapons: List<String>? = null,
+    val ownedTools: List<String>? = null,
+    val armors: List<String>? = null,
+    val rightHandItem: String? = null,
+    val leftHandItem: String? = null,
+    val dominantHand: String? = null,
+)
+
+@Serializable private data class GivePlayerItemRequest(val name: String, val count: Int? = null)
 
 @Serializable private data class CreateWorldRequest(val name: String, val seed: Long = 42L)
 
@@ -300,6 +316,25 @@ class AdminController(
     private val tokenStore: TokenStore? = null,
 ) {
     private val configDir = Path.of("$dataPath/config")
+
+    // Loaded fresh per call rather than borrowed from `gameLoop` — its own copies only populate
+    // once `GameLoop.start()` runs, which a bare-bones test setup never calls.
+    private fun armorRegistry() =
+        org.micoli.micraft.game.armor
+            .ArmorRegistryLoader(Path.of("resources/armors"), Path.of("$dataPath/resources/armors"))
+            .load()
+
+    private fun weaponRegistry() =
+        org.micoli.micraft.game.equipment
+            .WeaponRegistryLoader(
+                Path.of("resources/weapons"), Path.of("$dataPath/resources/weapons"))
+            .load()
+
+    private fun toolRegistry() =
+        org.micoli.micraft.game.equipment
+            .ToolRegistryLoader(Path.of("resources/tools"), Path.of("$dataPath/resources/tools"))
+            .load()
+
     private val worldsDir = Path.of("$dataPath/world")
     private val activeWorldName: String =
         System.getenv("MICRAFT_WORLD_NAME")?.takeIf { it.isNotBlank() } ?: "default_world"
@@ -774,6 +809,22 @@ class AdminController(
                     call.respond(HttpStatusCode.NoContent)
                 }
 
+            post(
+                "/api/admin/reload",
+                {
+                    description =
+                        "Reload configuration files without restarting the server — same " +
+                            "behavior as the in-game /reload command"
+                    response { code(HttpStatusCode.OK) { body<ReloadResultDto>() } }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    val result = gameLoop.reload("en")
+                    call.respondText(
+                        adminJson.encodeToString(ReloadResultDto.serializer(), ReloadResultDto(result)),
+                        ContentType.Application.Json)
+                }
+
             put(
                 "/api/admin/gametime",
                 {
@@ -1156,6 +1207,140 @@ class AdminController(
                                 ),
                         )
                     p.savePlayerState(name, existing.state.copy(characterData = updatedCd))
+                    call.respond(HttpStatusCode.NoContent)
+                }
+
+            put(
+                "/api/admin/players/{name}/equipment",
+                {
+                    description =
+                        "Partially update a player's owned/equipped armor and wielded hand items"
+                    request {
+                        pathParameter<String>("name") { description = "Player name" }
+                        body<UpdatePlayerEquipmentRequest>()
+                    }
+                    response {
+                        code(HttpStatusCode.NoContent) {}
+                        code(HttpStatusCode.NotFound) { description = "Player not found" }
+                        code(HttpStatusCode.ServiceUnavailable) {
+                            description = "No persistence backend"
+                        }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@put
+                    val p =
+                        persistence ?: return@put call.respond(HttpStatusCode.ServiceUnavailable)
+                    val name =
+                        call.parameters["name"]
+                            ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    val existing =
+                        p.loadPlayerFile(name) ?: return@put call.respond(HttpStatusCode.NotFound)
+                    val body =
+                        runCatching { Json.parseToJsonElement(call.receiveText()).jsonObject }
+                            .getOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    fun strList(key: String) =
+                        body[key]?.jsonArray?.map { it.jsonPrimitive.content }
+                    fun handItem(key: String, current: String?) =
+                        if (key in body) body[key]?.jsonPrimitive?.content?.ifBlank { null }
+                        else current
+                    val updated =
+                        existing.state.copy(
+                            ownedArmors = strList("ownedArmors") ?: existing.state.ownedArmors,
+                            ownedWeapons = strList("ownedWeapons") ?: existing.state.ownedWeapons,
+                            ownedTools = strList("ownedTools") ?: existing.state.ownedTools,
+                            armors = strList("armors") ?: existing.state.armors,
+                            rightHandItem = handItem("rightHandItem", existing.state.rightHandItem),
+                            leftHandItem = handItem("leftHandItem", existing.state.leftHandItem),
+                            dominantHand =
+                                body["dominantHand"]?.jsonPrimitive?.content?.let {
+                                    runCatching { Hand.valueOf(it) }.getOrNull()
+                                } ?: existing.state.dominantHand,
+                        )
+                    p.savePlayerState(name, updated)
+                    call.respond(HttpStatusCode.NoContent)
+                }
+
+            post(
+                "/api/admin/players/{name}/give",
+                {
+                    description =
+                        "Give an inventory item, or grant ownership of an armor/weapon/tool"
+                    request {
+                        pathParameter<String>("name") { description = "Player name" }
+                        body<GivePlayerItemRequest>()
+                    }
+                    response {
+                        code(HttpStatusCode.NoContent) {}
+                        code(HttpStatusCode.NotFound) {
+                            description = "Player, or item/armor/weapon/tool name, not found"
+                        }
+                        code(HttpStatusCode.BadRequest) { description = "Missing name" }
+                        code(HttpStatusCode.ServiceUnavailable) {
+                            description = "No persistence backend"
+                        }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    val p =
+                        persistence ?: return@post call.respond(HttpStatusCode.ServiceUnavailable)
+                    val name =
+                        call.parameters["name"]
+                            ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val existing =
+                        p.loadPlayerFile(name) ?: return@post call.respond(HttpStatusCode.NotFound)
+                    val body =
+                        runCatching { Json.parseToJsonElement(call.receiveText()).jsonObject }
+                            .getOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val itemName =
+                        body["name"]?.jsonPrimitive?.content?.trim().orEmpty().ifBlank {
+                            return@post call.respond(HttpStatusCode.BadRequest)
+                        }
+                    val count =
+                        body["count"]?.jsonPrimitive?.content?.toIntOrNull()?.coerceAtLeast(1) ?: 1
+
+                    val itemType =
+                        ItemRegistry.keys().firstOrNull { it.id.equals(itemName, true) }
+                            ?: run {
+                                val blockType = BlockType(itemName.uppercase())
+                                ItemRegistry.keys().firstOrNull {
+                                    ItemRegistry.get(it).placesBlock == blockType
+                                }
+                            }
+                    if (itemType != null) {
+                        val updatedInventory = existing.state.inventory.toMutableMap()
+                        updatedInventory.merge(itemType, count, Int::plus)
+                        p.savePlayerState(name, existing.state.copy(inventory = updatedInventory))
+                        return@post call.respond(HttpStatusCode.NoContent)
+                    }
+
+                    val armorRegistry = armorRegistry()
+                    val weaponRegistry = weaponRegistry()
+                    val toolRegistry = toolRegistry()
+                    val equipmentName =
+                        (armorRegistry.keys + weaponRegistry.keys + toolRegistry.keys).firstOrNull {
+                            it.equals(itemName, ignoreCase = true)
+                        } ?: return@post call.respond(HttpStatusCode.NotFound)
+
+                    if (equipmentName in existing.state.ownedArmors ||
+                        equipmentName in existing.state.ownedWeapons ||
+                        equipmentName in existing.state.ownedTools) {
+                        return@post call.respond(HttpStatusCode.NoContent)
+                    }
+                    val updatedState =
+                        when {
+                            equipmentName in armorRegistry ->
+                                existing.state.copy(
+                                    ownedArmors = existing.state.ownedArmors + equipmentName)
+                            equipmentName in weaponRegistry ->
+                                existing.state.copy(
+                                    ownedWeapons = existing.state.ownedWeapons + equipmentName)
+                            else ->
+                                existing.state.copy(
+                                    ownedTools = existing.state.ownedTools + equipmentName)
+                        }
+                    p.savePlayerState(name, updatedState)
                     call.respond(HttpStatusCode.NoContent)
                 }
 

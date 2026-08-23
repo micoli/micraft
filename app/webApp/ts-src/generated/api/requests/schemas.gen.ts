@@ -764,12 +764,16 @@ export const org_micoli_micraft_game_equipment_ToolDefinitionSchema = {
         },
         rotate: {
             $ref: '#/components/schemas/org.micoli.micraft.game.equipment.Rotation'
+        },
+        statBonus: {
+            $ref: '#/components/schemas/org.micoli.micraft.game.rpg.StatBonus'
         }
     },
     required: [
         'breakSpeedMultiplier',
         'category',
-        'rotate'
+        'rotate',
+        'statBonus'
     ],
     title: 'ToolDefinition'
 } as const;
@@ -1517,6 +1521,20 @@ export const org_micoli_micraft_http_StatusSnapshotSchema = {
         'worldItems'
     ],
     title: 'StatusSnapshot'
+} as const;
+
+export const org_micoli_micraft_http_ReloadResultDtoSchema = {
+    type: 'object',
+    properties: {
+        result: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'result'
+    ],
+    title: 'ReloadResultDto'
 } as const;
 
 export const org_micoli_micraft_http_SetGameTimeRequestSchema = {
@@ -2611,6 +2629,100 @@ export const org_micoli_micraft_http_UpdatePlayerRpgRequestSchema = {
         }
     },
     title: 'UpdatePlayerRpgRequest'
+} as const;
+
+export const org_micoli_micraft_http_UpdatePlayerEquipmentRequestSchema = {
+    type: 'object',
+    properties: {
+        armors: {
+            type: [
+                'null',
+                'array'
+            ],
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        },
+        dominantHand: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        leftHandItem: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        ownedArmors: {
+            type: [
+                'null',
+                'array'
+            ],
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        },
+        ownedTools: {
+            type: [
+                'null',
+                'array'
+            ],
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        },
+        ownedWeapons: {
+            type: [
+                'null',
+                'array'
+            ],
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        },
+        rightHandItem: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        }
+    },
+    title: 'UpdatePlayerEquipmentRequest'
+} as const;
+
+export const org_micoli_micraft_http_GivePlayerItemRequestSchema = {
+    type: 'object',
+    properties: {
+        count: {
+            type: [
+                'null',
+                'integer'
+            ],
+            format: 'int32',
+            title: 'Int'
+        },
+        name: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'name'
+    ],
+    title: 'GivePlayerItemRequest'
 } as const;
 
 export const org_micoli_micraft_http_WorldStatsDtoSchema = {

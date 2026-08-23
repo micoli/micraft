@@ -1074,7 +1074,7 @@ class GameLoop(
                 else null,
         )
 
-    private suspend fun reload(lang: String): String = reloadCoordinator.reload(lang)
+    suspend fun reload(lang: String): String = reloadCoordinator.reload(lang)
 
     fun start(app: Application) {
         appScope = app

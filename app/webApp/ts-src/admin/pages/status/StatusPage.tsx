@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { postApiAdminRestart } from "../../../generated/api/requests";
+import { postApiAdminRestart, postApiAdminReload } from "../../../generated/api/requests";
 import { useGetApiAdminStatus } from "../../../generated/api/queries";
 import { useT, type TranslationKey } from "../../i18n";
 import { GameTimeSetter } from "./GameTimeSetter";
@@ -29,6 +29,8 @@ export function ticksToTime(ticks: number, ticksPerDay: number): { h: number; m:
 export function StatusPage() {
   const t = useT();
   const [restarting, setRestarting] = useState(false);
+  const [reloading, setReloading] = useState(false);
+  const [reloadMsg, setReloadMsg] = useState<string | null>(null);
   const { data: snap, isError } = useGetApiAdminStatus({}, undefined, { refetchInterval: 5000 });
   const errorKey: TranslationKey | null = isError ? "status.unreachable" : null;
 
@@ -41,6 +43,19 @@ export function StatusPage() {
       /* empty */
     }
     setTimeout(() => setRestarting(false), 4000);
+  };
+
+  const reload = async () => {
+    setReloading(true);
+    setReloadMsg(null);
+    try {
+      const { data, error } = await postApiAdminReload();
+      if (error) throw new Error();
+      setReloadMsg(t("status.reloadDone", data.result));
+    } catch {
+      setReloadMsg(t("status.reloadFailed"));
+    }
+    setReloading(false);
   };
 
   if (errorKey) return <p className="text-red-400 text-sm">{t(errorKey)}</p>;
@@ -128,15 +143,28 @@ export function StatusPage() {
 
       {/* Footer row */}
       <div className="flex items-center justify-between text-[11px] text-[#8A99AF]">
-        <span>{t("status.autoRefresh")}</span>
-        <button
-          onClick={restart}
-          disabled={restarting}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2E3A4E] hover:bg-[#2E3A4E] text-[#8A99AF] hover:text-white transition-colors disabled:opacity-50"
-        >
-          <Svg d={ICONS.restart} size={13} />
-          {restarting ? t("status.restarting") : t("status.restartServer")}
-        </button>
+        <span>
+          {t("status.autoRefresh")}
+          {reloadMsg && <span className="ml-3">{reloadMsg}</span>}
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={reload}
+            disabled={reloading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2E3A4E] hover:bg-[#2E3A4E] text-[#8A99AF] hover:text-white transition-colors disabled:opacity-50"
+          >
+            <Svg d={ICONS.restart} size={13} />
+            {reloading ? t("status.reloading") : t("status.reloadConfig")}
+          </button>
+          <button
+            onClick={restart}
+            disabled={restarting}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2E3A4E] hover:bg-[#2E3A4E] text-[#8A99AF] hover:text-white transition-colors disabled:opacity-50"
+          >
+            <Svg d={ICONS.restart} size={13} />
+            {restarting ? t("status.restarting") : t("status.restartServer")}
+          </button>
+        </div>
       </div>
     </div>
   );

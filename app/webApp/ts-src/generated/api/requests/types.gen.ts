@@ -495,6 +495,7 @@ export type OrgMicoliMicraftGameEquipmentToolDefinition = {
     breakSpeedMultiplier: number;
     category: OrgMicoliMicraftGameWorldEquipmentCategory;
     rotate: OrgMicoliMicraftGameEquipmentRotation;
+    statBonus: OrgMicoliMicraftGameRpgStatBonus;
 };
 
 /**
@@ -992,6 +993,16 @@ export type OrgMicoliMicraftHttpStatusSnapshot = {
      * Int
      */
     worldItems: number;
+};
+
+/**
+ * ReloadResultDto
+ */
+export type OrgMicoliMicraftHttpReloadResultDto = {
+    /**
+     * String
+     */
+    result: string;
 };
 
 /**
@@ -1641,6 +1652,54 @@ export type OrgMicoliMicraftHttpUpdatePlayerRpgRequest = {
      * Int
      */
     wis?: null | number;
+};
+
+/**
+ * UpdatePlayerEquipmentRequest
+ */
+export type OrgMicoliMicraftHttpUpdatePlayerEquipmentRequest = {
+    /**
+     * List<String>
+     */
+    armors?: null | Array<string>;
+    /**
+     * String
+     */
+    dominantHand?: null | string;
+    /**
+     * String
+     */
+    leftHandItem?: null | string;
+    /**
+     * List<String>
+     */
+    ownedArmors?: null | Array<string>;
+    /**
+     * List<String>
+     */
+    ownedTools?: null | Array<string>;
+    /**
+     * List<String>
+     */
+    ownedWeapons?: null | Array<string>;
+    /**
+     * String
+     */
+    rightHandItem?: null | string;
+};
+
+/**
+ * GivePlayerItemRequest
+ */
+export type OrgMicoliMicraftHttpGivePlayerItemRequest = {
+    /**
+     * Int
+     */
+    count?: null | number;
+    /**
+     * String
+     */
+    name: string;
 };
 
 /**
@@ -3728,6 +3787,30 @@ export type PostApiAdminRestartResponses = {
 
 export type PostApiAdminRestartResponse = PostApiAdminRestartResponses[keyof PostApiAdminRestartResponses];
 
+export type PostApiAdminReloadData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/reload';
+};
+
+export type PostApiAdminReloadErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PostApiAdminReloadResponses = {
+    200: OrgMicoliMicraftHttpReloadResultDto;
+};
+
+export type PostApiAdminReloadResponse = PostApiAdminReloadResponses[keyof PostApiAdminReloadResponses];
+
 export type PutApiAdminGametimeData = {
     body?: OrgMicoliMicraftHttpSetGameTimeRequest;
     path?: never;
@@ -4129,6 +4212,88 @@ export type PutApiAdminPlayersByNameRpgResponses = {
 };
 
 export type PutApiAdminPlayersByNameRpgResponse = PutApiAdminPlayersByNameRpgResponses[keyof PutApiAdminPlayersByNameRpgResponses];
+
+export type PutApiAdminPlayersByNameEquipmentData = {
+    body?: OrgMicoliMicraftHttpUpdatePlayerEquipmentRequest;
+    path: {
+        /**
+         * String
+         *
+         * Player name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/api/admin/players/{name}/equipment';
+};
+
+export type PutApiAdminPlayersByNameEquipmentErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Player not found
+     */
+    404: unknown;
+    /**
+     * No persistence backend
+     */
+    503: unknown;
+};
+
+export type PutApiAdminPlayersByNameEquipmentResponses = {
+    204: void;
+};
+
+export type PutApiAdminPlayersByNameEquipmentResponse = PutApiAdminPlayersByNameEquipmentResponses[keyof PutApiAdminPlayersByNameEquipmentResponses];
+
+export type PostApiAdminPlayersByNameGiveData = {
+    body?: OrgMicoliMicraftHttpGivePlayerItemRequest;
+    path: {
+        /**
+         * String
+         *
+         * Player name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/api/admin/players/{name}/give';
+};
+
+export type PostApiAdminPlayersByNameGiveErrors = {
+    /**
+     * Missing name
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Player, or item/armor/weapon/tool name, not found
+     */
+    404: unknown;
+    /**
+     * No persistence backend
+     */
+    503: unknown;
+};
+
+export type PostApiAdminPlayersByNameGiveResponses = {
+    204: void;
+};
+
+export type PostApiAdminPlayersByNameGiveResponse = PostApiAdminPlayersByNameGiveResponses[keyof PostApiAdminPlayersByNameGiveResponses];
 
 export type GetApiAdminWorldsData = {
     body?: never;

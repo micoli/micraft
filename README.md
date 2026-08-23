@@ -354,10 +354,13 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/admin/plain-colors` | All registered plain paint colors |
 | GET | `/api/admin/players` | All player names |
 | GET | `/api/admin/players/{name}` | Full player file (state, keybindings, RPG data) |
+| PUT | `/api/admin/players/{name}/equipment` | Partially update a player's owned/equipped armor and wielded hand items |
+| POST | `/api/admin/players/{name}/give` | Give an inventory item, or grant ownership of an armor/weapon/tool |
 | PUT | `/api/admin/players/{name}/keybindings` | Overwrite a player's saved key bindings |
 | PUT | `/api/admin/players/{name}/preferences` | Partially update a player's preferences (only given fields change) |
 | POST | `/api/admin/players/{name}/rename` | Rename a player |
 | PUT | `/api/admin/players/{name}/rpg` | Partially update a player's RPG class/base stats |
+| POST | `/api/admin/reload` | Reload configuration files without restarting the server — same behavior as the in-game /reload command |
 | POST | `/api/admin/restart` | Trigger a pitchfork server restart |
 | GET | `/api/admin/scenes` | All scenes (bounded off-world block-structure buffers) |
 | POST | `/api/admin/scenes` | Create a scene |
