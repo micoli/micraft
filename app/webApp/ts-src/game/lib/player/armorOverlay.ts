@@ -10,12 +10,11 @@ import {
 
 type ArmorElement = BbModelElement | BbModelMeshElement;
 
-// Normalize armor bone name to player pivot key.
-// "Right Arm" → "rightarm" → "rightArm"
+// Fallback alias table for armor bbmodels whose group names don't match the body
+// rig 1:1 (e.g. a single unsplit arm/leg mesh, or a differently-named legacy rig).
+// Armor bbmodels exported from the same rig as articulated.bbmodel share bone names
+// directly with model.pivotNodes and never consult this table.
 const ARMOR_TO_PIVOT: Record<string, string | null> = {
-  head: "head",
-  body: null, // no animated pivot — parent to model.root
-  cape: "cape",
   // Whole-limb bones — kept for armor bbmodels with a single unsplit arm/leg mesh.
   rightarm: "rightArm",
   leftarm: "leftArm",
@@ -101,7 +100,12 @@ export function registerArmorOverlay(): Pick<
           const objectNode = node as { uuid: string; children?: BbModel["outliner"] };
           const g = groupMap[objectNode.uuid];
           const normalized = g ? normalizeBoneName(g.name) : null;
-          const next = normalized && normalized in ARMOR_TO_PIVOT ? ARMOR_TO_PIVOT[normalized] : pivotKey;
+          let next = pivotKey;
+          if (g && g.name in model.pivotNodes) {
+            next = g.name; // rig shares bone names with the body model — use directly
+          } else if (normalized && normalized in ARMOR_TO_PIVOT) {
+            next = ARMOR_TO_PIVOT[normalized];
+          }
           const isHidden = groupHidden || g?.visibility === false;
           walkOutliner(objectNode.children ?? [], next, isHidden);
         }
