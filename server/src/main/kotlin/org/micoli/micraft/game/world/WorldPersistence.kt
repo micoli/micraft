@@ -33,6 +33,14 @@ private val keybindingsJson = Json { ignoreUnknownKeys = true }
 
 private val playerYaml = Yaml(configuration = YamlConfiguration(strictMode = false))
 
+/**
+ * Filesystem-safe player name, as used for on-disk player file names — and as the identifier admin
+ * HTTP routes and `listPlayers()` deal in, since a player's real display name (`state.name`) may
+ * contain characters unsafe for a filename (spaces, etc). Anything matching a live player by
+ * admin-supplied name must sanitize the live `state.name` the same way before comparing.
+ */
+fun sanitizePlayerName(name: String): String = name.replace(Regex("[^a-zA-Z0-9_-]"), "_")
+
 class WorldPersistence(val worldDir: Path) {
     private val chunksDir = worldDir.resolve("chunks")
     private val playersDir = worldDir.resolve("players")
@@ -560,7 +568,7 @@ class WorldPersistence(val worldDir: Path) {
         }
     }
 
-    private fun String.sanitize() = replace(Regex("[^a-zA-Z0-9_-]"), "_")
+    private fun String.sanitize() = sanitizePlayerName(this)
 }
 
 /** Parses "{cx}_{cz}" (supports negative values). */

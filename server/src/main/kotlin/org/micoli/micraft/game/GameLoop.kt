@@ -100,6 +100,7 @@ import org.micoli.micraft.game.world.instance.toProto
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
+import org.micoli.micraft.game.world.sanitizePlayerName
 import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
@@ -634,6 +635,22 @@ class GameLoop(
     @Volatile private var appScope: Application? = null
 
     fun getPlayerStates(): List<PlayerState> = sessionRegistry.all().map { it.state }
+
+    /** Live session for a connected player, looked up by display name — null if offline. */
+    fun findSession(name: String): PlayerSession? =
+        sessionRegistry.all().find {
+            sanitizePlayerName(it.state.name).equals(name, ignoreCase = true)
+        }
+
+    /**
+     * Persists a live session correctly — folds session-only fields (inventory, characterData,
+     * shortcutBarPages, knownRecipes) into [PlayerState] before writing, unlike a bare
+     * `persistence.savePlayerState` which would clobber them with a stale snapshot.
+     */
+    fun savePlayerSession(session: PlayerSession) = playerPersister.save(session)
+
+    suspend fun broadcastPlayerUpdate(session: PlayerSession) =
+        sessionRegistry.broadcast(ServerMessage.PlayerUpdate(session.state))
 
     fun getWorldState(): WorldState = world
 
