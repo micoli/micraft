@@ -18,6 +18,7 @@ export const ROUTES = [
   { path: "/admin/users", page: <UsersPage /> },
   { path: "/admin/players", page: <PlayersPage /> },
   { path: "/admin/players/:playerName", page: <PlayersPage /> },
+  { path: "/admin/players/:playerName/:tab", page: <PlayersPage /> },
   { path: "/admin/npcs", page: <NpcsPage /> },
   { path: "/admin/classes", page: <ClassesPage /> },
   { path: "/admin/config", page: <ConfigEditorPage /> },

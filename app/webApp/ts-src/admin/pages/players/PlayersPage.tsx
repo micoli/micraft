@@ -10,7 +10,7 @@ const LIST_COLLAPSED_STORAGE_KEY = "adminPlayersListCollapsed";
 export function PlayersPage() {
   const t = useT();
   const navigate = useNavigate();
-  const { playerName } = useParams();
+  const { playerName, tab } = useParams();
   const [searchParams] = useSearchParams();
   const [players, setPlayers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +32,7 @@ export function PlayersPage() {
 
   const handleRenamed = (oldName: string, newName: string) => {
     setPlayers((prev) => prev.map((p) => (p === oldName ? newName : p)).sort());
-    navigate(`/admin/players/${encodeURIComponent(newName)}`);
+    navigate(`/admin/players/${encodeURIComponent(newName)}${tab ? `/${tab}` : ""}`);
   };
 
   return (
@@ -90,12 +90,16 @@ export function PlayersPage() {
         )}
       </aside>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-y-auto">
         {!selected && <EmptyDetail message={t("players.selectToEdit")} />}
         {selected && (
           <PlayerDetail
             key={selected}
             name={selected}
+            activeTab={tab}
+            onTabChange={(next) =>
+              navigate(`/admin/players/${encodeURIComponent(selected)}/${next}`, { replace: true })
+            }
             onBack={() => navigate("/admin/players")}
             onRenamed={(newName) => handleRenamed(selected, newName)}
           />

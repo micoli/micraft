@@ -177,6 +177,7 @@ export const en = {
   "players.inventoryEmpty": "Inventory is empty",
   "players.itemColumn": "Item",
   "players.countColumn": "Count",
+  "players.includesEquipmentBonus": "(includes equipment bonus)",
 
   // ── NPCs page ───────────────────────────────────────────────────────────────
   "npcs.searchPlaceholder": "Name, type or zone…",

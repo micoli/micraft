@@ -1,5 +1,5 @@
 import { type TranslationKey, useT } from "../../i18n";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   getApiAdminPlayersByName,
   postApiAdminPlayersByNameRename,
@@ -18,12 +18,18 @@ import { RpgTab } from "./RpgTab";
 import { EquipmentTab } from "./EquipmentTab";
 import { InventoryTab } from "./InventoryTab";
 
+const DEFAULT_TAB = "prefs";
+
 export function PlayerDetail({
   name,
+  activeTab,
+  onTabChange,
   onBack,
   onRenamed,
 }: {
   name: string;
+  activeTab?: string;
+  onTabChange: (tab: string) => void;
   onBack: () => void;
   onRenamed: (newName: string) => void;
 }) {
@@ -34,13 +40,42 @@ export function PlayerDetail({
   const [newName, setNewName] = useState(name);
   const [renameErr, setRenameErr] = useState<string | null>(null);
 
+  const refresh = useCallback(
+    () =>
+      getApiAdminPlayersByName({ path: { name }, throwOnError: true })
+        .then((r) => setFile(r.data))
+        .catch(() => setErrorKey("players.failedToLoad")),
+    [name],
+  );
+
   useEffect(() => {
     setFile(null);
     setNewName(name);
-    getApiAdminPlayersByName({ path: { name }, throwOnError: true })
-      .then((r) => setFile(r.data))
-      .catch(() => setErrorKey("players.failedToLoad"));
-  }, [name]);
+    refresh();
+  }, [name, refresh]);
+
+  const hasRpg = !!file?.state.characterData;
+  const validTabs = ["prefs", "kb", "inventory", ...(hasRpg ? ["rpg"] : ["equipment"])];
+  const tab = activeTab && validTabs.includes(activeTab) ? activeTab : DEFAULT_TAB;
+
+  useEffect(() => {
+    if (file && activeTab !== tab) onTabChange(tab);
+  }, [file, tab, activeTab, onTabChange]);
+
+  const saveEquipment = async (equipment: Parameters<typeof putApiAdminPlayersByNameEquipment>[0]["body"]) => {
+    const { error } = await putApiAdminPlayersByNameEquipment({ path: { name }, body: equipment });
+    if (error) throw new Error(t("common.saveFailed"));
+    await refresh();
+  };
+
+  const giveItem = async (itemName: string, count: number) => {
+    const { error } = await postApiAdminPlayersByNameGive({
+      path: { name },
+      body: { name: itemName, count },
+    });
+    if (error) throw new Error(t("players.giveFailed"));
+    await refresh();
+  };
 
   const doRename = async () => {
     if (!newName || newName === name) {
@@ -61,8 +96,6 @@ export function PlayerDetail({
 
   if (errorKey) return <div className="p-5 text-red-400 text-sm">{t(errorKey)}</div>;
   if (!file) return <div className="p-5 text-[#8A99AF] text-sm animate-pulse">{t("common.loading")}</div>;
-
-  const hasRpg = !!file.state.characterData;
 
   return (
     <div>
@@ -123,7 +156,7 @@ export function PlayerDetail({
           </Link>
         )}
       </div>
-      <Tabs defaultValue="prefs">
+      <Tabs value={tab} onValueChange={onTabChange}>
         <TabsList className="px-5 border-b border-[#2E3A4E] rounded-none bg-transparent gap-1">
           <TabsTrigger
             value="prefs"
@@ -137,12 +170,14 @@ export function PlayerDetail({
           >
             {t("players.tabKeybindings")}
           </TabsTrigger>
-          <TabsTrigger
-            value="equipment"
-            className="text-xs data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-[#3C50E0] rounded-none pb-2 px-1 text-[#8A99AF] transition-colors"
-          >
-            {t("players.tabEquipment")}
-          </TabsTrigger>
+          {!hasRpg && (
+            <TabsTrigger
+              value="equipment"
+              className="text-xs data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-[#3C50E0] rounded-none pb-2 px-1 text-[#8A99AF] transition-colors"
+            >
+              {t("players.tabEquipment")}
+            </TabsTrigger>
+          )}
           <TabsTrigger
             value="inventory"
             className="text-xs data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-[#3C50E0] rounded-none pb-2 px-1 text-[#8A99AF] transition-colors"
@@ -176,22 +211,11 @@ export function PlayerDetail({
             }}
           />
         </TabsContent>
-        <TabsContent value="equipment">
-          <EquipmentTab
-            file={file}
-            onSave={async (equipment) => {
-              const { error } = await putApiAdminPlayersByNameEquipment({ path: { name }, body: equipment });
-              if (error) throw new Error(t("common.saveFailed"));
-            }}
-            onGive={async (itemName, count) => {
-              const { error } = await postApiAdminPlayersByNameGive({
-                path: { name },
-                body: { name: itemName, count },
-              });
-              if (error) throw new Error(t("players.giveFailed"));
-            }}
-          />
-        </TabsContent>
+        {!hasRpg && (
+          <TabsContent value="equipment">
+            <EquipmentTab file={file} onSave={saveEquipment} onGive={giveItem} />
+          </TabsContent>
+        )}
         <TabsContent value="inventory">
           <InventoryTab file={file} />
         </TabsContent>
@@ -203,6 +227,8 @@ export function PlayerDetail({
                 const { error } = await putApiAdminPlayersByNameRpg({ path: { name }, body: rpg });
                 if (error) throw new Error(t("common.saveFailed"));
               }}
+              onSaveEquipment={saveEquipment}
+              onGive={giveItem}
             />
           </TabsContent>
         )}

@@ -172,6 +172,7 @@ export const fr: Record<TranslationKey, string> = {
   "players.inventoryEmpty": "Inventaire vide",
   "players.itemColumn": "Objet",
   "players.countColumn": "Quantité",
+  "players.includesEquipmentBonus": "(inclut le bonus d'équipement)",
 
   // ── NPCs page ───────────────────────────────────────────────────────────────
   "npcs.searchPlaceholder": "Nom, type ou zone…",
