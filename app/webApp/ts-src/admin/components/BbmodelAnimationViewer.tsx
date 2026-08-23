@@ -5,6 +5,8 @@ import { interpAxis } from "../../game/lib/player/playerModel";
 import {
   applyElementPivot,
   buildMeshElement,
+  fixBoxSideFaceUV,
+  fixBoxTopBottomFaceUV,
   isMeshElement,
   resolveTextureDims,
 } from "../../game/lib/player/bbmodelMesh";
@@ -33,6 +35,23 @@ function skinUV(B: any, face: any, W: number, H: number): any {
   return new B.Vector4(Math.min(x0, x1) / W, 1 - Math.max(y0, y1) / H, Math.max(x0, x1) / W, 1 - Math.min(y0, y1) / H);
 }
 
+// Same rect as skinUV but with both axes reversed — south's hand-authored per-face rect renders
+// 180° rotated relative to every other face unless corrected here (see playerModel.ts's skinUVFlipped
+// for the full explanation; confirmed empirically against Blockbench with colored marker textures).
+function skinUVFlipped(B: any, face: any, W: number, H: number): any {
+  if (!face?.uv) return new B.Vector4(0, 0, 0, 0);
+  const [x0, y0, x1, y1] = face.uv;
+  return new B.Vector4(Math.max(x0, x1) / W, 1 - Math.min(y0, y1) / H, Math.min(x0, x1) / W, 1 - Math.max(y0, y1) / H);
+}
+
+// BabylonJS's default north/south face UV (unlike east/west and up/down, not patched per-vertex
+// — see fixBoxSideFaceUV/fixBoxTopBottomFaceUV) also runs its u axis backwards; swapping
+// uMin/uMax here mirrors it back the right way round. Verified against Blockbench with colored
+// marker textures (body's front-facing dots landed on the wrong side without this).
+function mirrorU(B: any, rect: any): any {
+  return new B.Vector4(rect.z, rect.y, rect.x, rect.w);
+}
+
 function skinFaceUV(B: any, el: any, W: number, H: number): any[] {
   const faces = el.faces;
   if (el.box_uv && el.uv_offset) {
@@ -42,8 +61,8 @@ function skinFaceUV(B: any, el: any, W: number, H: number): any[] {
     const [u, v] = el.uv_offset;
     const fake = (x0: number, y0: number, x1: number, y1: number) => ({ uv: [x0, y0, x1, y1] });
     return [
-      skinUV(B, fake(u + 2 * bd + bw, v + bd, u + 2 * bd + 2 * bw, v + bd + bh), W, H),
-      skinUV(B, fake(u + bd, v + bd, u + bd + bw, v + bd + bh), W, H),
+      mirrorU(B, skinUV(B, fake(u + 2 * bd + bw, v + bd, u + 2 * bd + 2 * bw, v + bd + bh), W, H)),
+      mirrorU(B, skinUV(B, fake(u + bd, v + bd, u + bd + bw, v + bd + bh), W, H)),
       skinUV(B, fake(u, v + bd, u + bd, v + bd + bh), W, H),
       skinUV(B, fake(u + bd + bw, v + bd, u + 2 * bd + bw, v + bd + bh), W, H),
       skinUV(B, fake(u + bd, v, u + bd + bw, v + bd), W, H),
@@ -51,8 +70,8 @@ function skinFaceUV(B: any, el: any, W: number, H: number): any[] {
     ];
   }
   return [
-    skinUV(B, faces?.south, W, H),
-    skinUV(B, faces?.north, W, H),
+    mirrorU(B, skinUVFlipped(B, faces?.south, W, H)),
+    mirrorU(B, skinUV(B, faces?.north, W, H)),
     skinUV(B, faces?.east, W, H),
     skinUV(B, faces?.west, W, H),
     skinUV(B, faces?.up, W, H),
@@ -112,6 +131,7 @@ function buildModel(
   root: any;
   pivotNodes: Record<string, { node: any; origin: [number, number, number] }>;
   equippedWeapons: { LEFT: any; RIGHT: any };
+  equippedArmors: Record<string, any>;
 } {
   const SCALE = 1 / 16;
   const DEG = Math.PI / 180;
@@ -255,16 +275,19 @@ function buildModel(
     const [fx, fy, fz] = el.from,
       [tx, ty, tz] = el.to;
     if (Math.abs(tx - fx) < 0.001 || Math.abs(ty - fy) < 0.001 || Math.abs(tz - fz) < 0.001) continue;
+    const faceUVs = skinFaceUV(B, el, W, H);
     const mesh = B.MeshBuilder.CreateBox(
       el.name,
       {
         width: Math.abs(tx - fx) * SCALE,
         height: Math.abs(ty - fy) * SCALE,
         depth: Math.abs(tz - fz) * SCALE,
-        faceUV: skinFaceUV(B, el, W, H),
+        faceUV: faceUVs,
       },
       scene,
     );
+    fixBoxSideFaceUV(mesh, faceUVs[2], faceUVs[3]);
+    fixBoxTopBottomFaceUV(mesh, faceUVs[4], faceUVs[5]);
     if (mat) mesh.material = mat;
     mesh.isPickable = false;
     const cx = ((fx + tx) / 2) * SCALE,
@@ -281,7 +304,7 @@ function buildModel(
     }
   }
 
-  return { root, pivotNodes, equippedWeapons: { LEFT: null, RIGHT: null } };
+  return { root, pivotNodes, equippedWeapons: { LEFT: null, RIGHT: null }, equippedArmors: {} };
 }
 
 const DEG = Math.PI / 180;
@@ -293,6 +316,14 @@ const MIN_DIM = 100;
 const MAX_DIM = 900;
 
 type RotateOverride = { x: number; y: number; z: number } | null;
+type OrthoView = "T" | "B" | "N" | "S" | "E" | "W";
+// Model yaw (radians) that faces each cardinal side toward the camera, 90° apart.
+const ORTHO_YAW: Record<"N" | "E" | "S" | "W", number> = {
+  N: 0,
+  E: Math.PI / 2,
+  S: Math.PI,
+  W: -Math.PI / 2,
+};
 
 export function BbmodelAnimationViewer({
   bbmodel,
@@ -305,6 +336,7 @@ export function BbmodelAnimationViewer({
   leftHandItem = null,
   rightHandRotate = null,
   leftHandRotate = null,
+  armors = [],
   standaloneItem = false,
   width = 200,
   height = 280,
@@ -322,6 +354,7 @@ export function BbmodelAnimationViewer({
   // Overrides the equipment's yaml-configured `rotate` for this preview only.
   rightHandRotate?: RotateOverride;
   leftHandRotate?: RotateOverride;
+  armors?: string[];
   // A standalone weapon/tool preview (no player skin, no bone rig): orients the model by its own
   // "handle" element instead of a fixed player-eye-height camera target.
   standaloneItem?: boolean;
@@ -332,6 +365,9 @@ export function BbmodelAnimationViewer({
   const overlayRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<any>(null);
   const cameraRef = useRef<any>(null);
+  // Set inside the scene effect below; lets the ortho-view buttons drive the camera/model yaw
+  // from outside the closure that owns `angle`/`autoRotate`.
+  const setOrthoViewRef = useRef<((view: OrthoView) => void) | null>(null);
   // User-driven resize via the bottom-right handle overrides the width/height props; reset
   // whenever the caller passes new props (e.g. switching to a differently-shaped preview).
   const [size, setSize] = useState({ width, height });
@@ -438,6 +474,7 @@ export function BbmodelAnimationViewer({
           if (leftHandRotate) window.mcState.weaponRotations[leftHandItem] = leftHandRotate;
           window.mc.attachWeapon?.(model as unknown as McPlayerModel, leftHandItem, scene, "LEFT");
         }
+        armors.forEach((a) => window.mc.attachArmor?.(model as unknown as McPlayerModel, a, scene));
 
         const uuidToName: Record<string, string> = {};
         bbmodel.groups.forEach((g: any) => {
@@ -564,6 +601,22 @@ export function BbmodelAnimationViewer({
           }
         });
 
+        setOrthoViewRef.current = (view: OrthoView) => {
+          autoRotate = false;
+          lastInteraction = Date.now();
+          if (view === "T") {
+            camera.beta = 0.0001;
+          } else if (view === "B") {
+            camera.beta = Math.PI - 0.0001;
+          } else {
+            camera.beta = Math.PI / 2;
+            angle = ORTHO_YAW[view];
+            model.root.rotation.y = angle;
+            angleRef.current = angle;
+          }
+          onCameraChangeRef.current?.(camera.radius, angle);
+        };
+
         engine.runRenderLoop(() => scene.render());
         engineRef.current = engine;
 
@@ -582,6 +635,7 @@ export function BbmodelAnimationViewer({
       disposed = true;
       removeListeners?.();
       cameraRef.current = null;
+      setOrthoViewRef.current = null;
       if (engineRef.current) {
         engineRef.current.dispose();
         engineRef.current = null;
@@ -591,7 +645,7 @@ export function BbmodelAnimationViewer({
     // including them would rebuild (and visibly reset/jump) the scene on every camera-change
     // persist round-trip, since that round-trip changes the URL these props are derived from.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bbmodel, rightHandItem, leftHandItem, rightHandRotate, leftHandRotate, standaloneItem]);
+  }, [bbmodel, rightHandItem, leftHandItem, rightHandRotate, leftHandRotate, standaloneItem, armors.join(",")]);
 
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
@@ -620,6 +674,19 @@ export function BbmodelAnimationViewer({
         style={resizeHandleStyle}
         aria-label="Resize preview"
       />
+      <div style={{ position: "absolute", bottom: 6, left: 6, display: "flex", flexWrap: "wrap", gap: 4, width: 48 }}>
+        {(["T", "N", "S", "B", "W", "E"] as OrthoView[]).map((view) => (
+          <button
+            key={view}
+            type="button"
+            onClick={() => setOrthoViewRef.current?.(view)}
+            style={zoomButtonStyle}
+            aria-label={`View from ${view}`}
+          >
+            {view}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

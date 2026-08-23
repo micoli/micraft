@@ -1,4 +1,4 @@
-import type { Material, Mesh, Scene } from "@babylonjs/core";
+import type { Material, Mesh, Scene, Vector4 } from "@babylonjs/core";
 
 // bbmodel coordinates are in Blockbench pixel units, 16px = 1 block.
 const BBMODEL_SCALE = 1 / 16;
@@ -91,7 +91,16 @@ export function buildTextureMaterials(
       const mat = new BABYLON.StandardMaterial(`${cachePrefix}Mat_${i}`, scene);
       mat.diffuseTexture = tex;
       mat.specularColor = new BABYLON.Color3(0, 0, 0);
-      if (hasAlpha) mat.useAlphaFromDiffuseTexture = true;
+      if (hasAlpha) {
+        // Armor/skin textures are binary alpha (fully opaque or fully transparent, no soft
+        // edges) — alpha-test keeps depth-write on, so nearby overlapping thin elements (e.g.
+        // helmet horns) occlude each other correctly instead of blending through like alpha-blend
+        // would (blend disables depth-write, so overlapping alpha-flagged meshes render see-through
+        // regardless of their own pixel opacity).
+        mat.useAlphaFromDiffuseTexture = true;
+        mat.transparencyMode = BABYLON.Material.MATERIAL_ALPHATEST;
+        mat.alphaCutOff = 0.5;
+      }
       // Mesh-type elements (arbitrary geometry, e.g. Blender exports) aren't guaranteed
       // consistent triangle winding — backface culling would invisibly drop some of their faces.
       mat.backFaceCulling = false;
@@ -180,4 +189,64 @@ export function buildMeshElement(
   });
   mesh.material = multiMat;
   return mesh;
+}
+
+// BabylonJS's CreateBox ties the east(+X)/west(-X) side faces' UV assignment to the wrong local
+// axis internally: their "u" ends up driven by the vertical (Y) position and "v" by the z-side,
+// the opposite of south/north/top/bottom. This isn't fixable via the `faceUV` Vector4 passed to
+// CreateBox — those two faces' vertices share UV parameters pairwise in a way that makes the
+// correct per-corner assignment mathematically unreachable through that single rect. Instead,
+// patch the UV buffer directly, per-vertex, after creation — using each vertex's own normal/position
+// to identify which corner it is, so this doesn't depend on CreateBox's internal vertex ordering.
+export function fixBoxSideFaceUV(mesh: Mesh, eastRect: Vector4, westRect: Vector4): void {
+  const positions = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+  const normals = mesh.getVerticesData(BABYLON.VertexBuffer.NormalKind);
+  const uvs = mesh.getVerticesData(BABYLON.VertexBuffer.UVKind);
+  if (!positions || !normals || !uvs) return;
+  const vertexCount = positions.length / 3;
+  for (let i = 0; i < vertexCount; i++) {
+    const nx = normals[i * 3];
+    if (Math.abs(nx) < 0.5) continue; // not an east/west face vertex
+    // west's rect content belongs on the -X side, east's on +X — matching the rig's own bone
+    // positions (leftArm is at negative X, rightArm at positive X; confirmed from the bbmodel's
+    // group origins), the only ground truth independent of which way a viewer navigates the camera.
+    const isEast = nx > 0;
+    const rect = isEast ? eastRect : westRect;
+    const y = positions[i * 3 + 1];
+    const z = positions[i * 3 + 2];
+    // Viewing a face from outside (normal pointing at the viewer), screen-right on the east face
+    // is world -Z (north) and screen-right on the west face is world +Z (south) — right-hand rule
+    // on each face's own outward normal/up pair. u increases toward screen-right, so east maps
+    // z<0 to max-u and west maps z>=0 to max-u.
+    const zPositive = isEast ? z < 0 : z >= 0;
+    uvs[i * 2] = zPositive ? rect.z : rect.x;
+    uvs[i * 2 + 1] = y >= 0 ? rect.w : rect.y;
+  }
+  mesh.setVerticesData(BABYLON.VertexBuffer.UVKind, uvs);
+}
+
+// BabylonJS's CreateBox has the same wrong-axis problem on the top/bottom faces as it does on
+// east/west (see fixBoxSideFaceUV above): u ends up driven by Z and v by X instead of u by X and
+// v by Z. Patched the same way — per-vertex, from real position/normal. Both axes empirically
+// verified against Blockbench (colored marker textures): top's u decreases with +X and its v
+// decreases with +Z; down's u is mirrored on X (matching a camera looking up from underneath).
+export function fixBoxTopBottomFaceUV(mesh: Mesh, upRect: Vector4, downRect: Vector4): void {
+  const positions = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+  const normals = mesh.getVerticesData(BABYLON.VertexBuffer.NormalKind);
+  const uvs = mesh.getVerticesData(BABYLON.VertexBuffer.UVKind);
+  if (!positions || !normals || !uvs) return;
+  const vertexCount = positions.length / 3;
+  for (let i = 0; i < vertexCount; i++) {
+    const ny = normals[i * 3 + 1];
+    if (Math.abs(ny) < 0.5) continue; // not a top/bottom face vertex
+    const isUp = ny > 0;
+    const rect = isUp ? upRect : downRect;
+    const x = positions[i * 3];
+    const z = positions[i * 3 + 2];
+    //const xPositive = isUp ? x >= 0 : x < 0;
+    const xPositive = isUp ? x < 0 : x >= 0;
+    uvs[i * 2] = xPositive ? rect.z : rect.x;
+    uvs[i * 2 + 1] = z < 0 ? rect.y : rect.w;
+  }
+  mesh.setVerticesData(BABYLON.VertexBuffer.UVKind, uvs);
 }

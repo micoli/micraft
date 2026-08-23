@@ -59,6 +59,30 @@ class ArmorRegistryLoaderTest {
     }
 
     @Test
+    fun validYaml_loadsSegmentedLimbAndCapeSlots() {
+        val (loader) =
+            loaderWithArmors(
+                mapOf(
+                    "cloak" to
+                        """
+                        wearable:
+                          cape: true
+                          rightBiceps: true
+                          leftFoot: true
+                        """
+                            .trimIndent()))
+        val defs = loader.load()
+        val cloak = defs["cloak"]
+        assertNotNull(cloak)
+        assertTrue(cloak.wearable.cape)
+        assertTrue(cloak.wearable.rightBiceps)
+        assertTrue(cloak.wearable.leftFoot)
+        assertFalse(cloak.wearable.rightForearm)
+        assertFalse(cloak.wearable.rightHand)
+        assertFalse(cloak.wearable.leftThigh)
+    }
+
+    @Test
     fun noOverrideFile_usesResourceDefaults() {
         val (loader) =
             loaderWithArmors(

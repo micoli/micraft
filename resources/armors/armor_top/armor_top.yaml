@@ -1,10 +1,19 @@
 wearable:
   head: true
   body: true
-  rightArm: true
-  leftArm: true
-  rightLeg: false
-  leftLeg: false
+  cape: false
+  rightBiceps: true
+  rightForearm: true
+  rightHand: true
+  leftBiceps: true
+  leftForearm: true
+  leftHand: true
+  rightThigh: false
+  rightCalf: false
+  rightFoot: false
+  leftThigh: false
+  leftCalf: false
+  leftFoot: false
 statBonus:
   str: 2
   con: 1

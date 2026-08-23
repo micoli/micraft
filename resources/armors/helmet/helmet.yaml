@@ -1,5 +1,5 @@
 wearable:
-  head: false
+  head: true
   body: false
   cape: false
   rightBiceps: false
@@ -8,9 +8,12 @@ wearable:
   leftBiceps: false
   leftForearm: false
   leftHand: false
-  rightThigh: true
-  rightCalf: true
-  rightFoot: true
-  leftThigh: true
-  leftCalf: true
-  leftFoot: true
+  rightThigh: false
+  rightCalf: false
+  rightFoot: false
+  leftThigh: false
+  leftCalf: false
+  leftFoot: false
+statBonus:
+  str: 2
+  con: 1

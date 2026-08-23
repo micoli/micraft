@@ -1,9 +1,10 @@
 import { useT } from "../../i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimationEntry, animationsFromBbmodel, animDisplayName, animEmoji } from "../../../lib/animationHelpers";
-import { getApiSkins, getApiWeapons, getApiTools } from "../../../generated/api/requests";
+import { getApiSkins, getApiWeapons, getApiTools, getApiArmors } from "../../../generated/api/requests";
+import type { OrgMicoliMicraftGameArmorWearableSlots } from "../../../generated/api/requests";
 import { BbmodelAnimationViewer } from "../../components/BbmodelAnimationViewer";
-import { useWeaponModelsReady } from "../../../game/shared/PlayerModelPreview";
+import { useWeaponModelsReady, useArmorModelsReady } from "../../../game/shared/PlayerModelPreview";
 import { SidebarList } from "../SidebarList";
 import { PropRow } from "../../PropRow";
 import { EmptyDetail } from "../../../primitives/EmptyDetail";
@@ -12,6 +13,17 @@ import { RotateSliders } from "./RotateSliders";
 type Rotation = { x: number; y: number; z: number };
 type HandItemDefinition = { category: string; rotate?: Rotation };
 const ZERO_ROTATION: Rotation = { x: 0, y: 0, z: 0 };
+
+type WearableSlots = OrgMicoliMicraftGameArmorWearableSlots;
+type ArmorDefinition = { wearable: WearableSlots; statBonus?: unknown };
+
+function activeSlots(wearable: WearableSlots): string[] {
+  return (Object.keys(wearable) as (keyof WearableSlots)[]).filter((k) => wearable[k]);
+}
+
+function armorsOverlap(a: WearableSlots, b: WearableSlots): boolean {
+  return activeSlots(a).some((k) => b[k as keyof WearableSlots]);
+}
 
 type ModelsTabProps = {
   selectedKey: string | null;
@@ -29,6 +41,7 @@ function parseSelectedKey(key: string | null): {
   paused: boolean;
   zoom: number | undefined;
   angle: number | undefined;
+  armors: string[];
 } {
   if (!key) {
     return {
@@ -39,9 +52,10 @@ function parseSelectedKey(key: string | null): {
       paused: false,
       zoom: undefined,
       angle: undefined,
+      armors: [],
     };
   }
-  const [skin, animFullName, right, left, paused, zoom, angle] = key.split(":");
+  const [skin, animFullName, right, left, paused, zoom, angle, armors] = key.split(":");
   return {
     skin,
     animFullName: animFullName ?? null,
@@ -50,6 +64,7 @@ function parseSelectedKey(key: string | null): {
     paused: paused === "1",
     zoom: zoom ? parseFloat(zoom) : undefined,
     angle: angle ? parseFloat(angle) : undefined,
+    armors: armors ? armors.split(",").filter(Boolean) : [],
   };
 }
 
@@ -61,8 +76,9 @@ function buildKey(
   paused: boolean,
   zoom: number,
   angle: number,
+  armors: string[],
 ) {
-  return `${skin}:${animFullName}:${rightHandItem ?? ""}:${leftHandItem ?? ""}:${paused ? "1" : "0"}:${zoom.toFixed(3)}:${angle.toFixed(3)}`;
+  return `${skin}:${animFullName}:${rightHandItem ?? ""}:${leftHandItem ?? ""}:${paused ? "1" : "0"}:${zoom.toFixed(3)}:${angle.toFixed(3)}:${armors.join(",")}`;
 }
 
 export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
@@ -75,6 +91,7 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
     paused: initialPaused,
     zoom: initialZoom,
     angle: initialAngle,
+    armors: initialArmors,
   } = parseSelectedKey(selectedKey);
   const [skins, setSkins] = useState<string[]>([]);
   const [selectedSkin, setSelectedSkin] = useState(initialSkin);
@@ -83,14 +100,17 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
   const [filter, setFilter] = useState("");
   const [weapons, setWeapons] = useState<Record<string, HandItemDefinition>>({});
   const [tools, setTools] = useState<Record<string, HandItemDefinition>>({});
+  const [armorDefs, setArmorDefs] = useState<Record<string, ArmorDefinition>>({});
   const [rightHandItem, setRightHandItem] = useState<string | null>(initialRightHandItem);
   const [leftHandItem, setLeftHandItem] = useState<string | null>(initialLeftHandItem);
   const [rightRotateOverride, setRightRotateOverride] = useState<Rotation | null>(null);
   const [leftRotateOverride, setLeftRotateOverride] = useState<Rotation | null>(null);
+  const [equippedArmors, setEquippedArmors] = useState<string[]>(initialArmors);
   const [paused, setPaused] = useState(initialPaused);
   const [zoom, setZoom] = useState(initialZoom ?? DEFAULT_ZOOM);
   const [angle, setAngle] = useState(initialAngle ?? DEFAULT_ANGLE);
   const handsReady = useWeaponModelsReady([rightHandItem, leftHandItem]);
+  const armorsReady = useArmorModelsReady(equippedArmors);
 
   useEffect(() => {
     getApiSkins({ throwOnError: true })
@@ -102,12 +122,16 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
     getApiTools({ throwOnError: true })
       .then((r) => setTools(r.data as Record<string, HandItemDefinition>))
       .catch(console.error);
+    getApiArmors({ throwOnError: true })
+      .then((r) => setArmorDefs(r.data as unknown as Record<string, ArmorDefinition>))
+      .catch(console.error);
   }, []);
 
   const sortedWeapons = Object.keys(weapons).sort();
   const sortedTools = Object.keys(tools).sort();
   const handItems = { ...weapons, ...tools };
   const sortedHandItems = [...sortedWeapons, ...sortedTools];
+  const sortedArmors = Object.keys(armorDefs).sort();
 
   const loadBbmodel = useCallback((skin: string) => {
     // Not an OpenAPI route (staticFiles mount) — kept as a manual fetch.
@@ -134,10 +158,12 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
     (anim: AnimationEntry | null) => {
       setSelectedAnim(anim);
       onSelectKey(
-        anim ? buildKey(selectedSkin, anim.fullName, rightHandItem, leftHandItem, paused, zoom, angle) : null,
+        anim
+          ? buildKey(selectedSkin, anim.fullName, rightHandItem, leftHandItem, paused, zoom, angle, equippedArmors)
+          : null,
       );
     },
-    [selectedSkin, rightHandItem, leftHandItem, paused, zoom, angle, onSelectKey],
+    [selectedSkin, rightHandItem, leftHandItem, paused, zoom, angle, equippedArmors, onSelectKey],
   );
 
   const hasAutoSelected = useRef(false);
@@ -154,14 +180,43 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
     setLeftHandItem(left);
     if (hand === "right") setRightRotateOverride(null);
     else setLeftRotateOverride(null);
-    if (selectedAnim) onSelectKey(buildKey(selectedSkin, selectedAnim.fullName, right, left, paused, zoom, angle));
+    if (selectedAnim) {
+      onSelectKey(buildKey(selectedSkin, selectedAnim.fullName, right, left, paused, zoom, angle, equippedArmors));
+    }
   };
 
   const togglePause = () => {
     const next = !paused;
     setPaused(next);
     if (selectedAnim) {
-      onSelectKey(buildKey(selectedSkin, selectedAnim.fullName, rightHandItem, leftHandItem, next, zoom, angle));
+      onSelectKey(
+        buildKey(selectedSkin, selectedAnim.fullName, rightHandItem, leftHandItem, next, zoom, angle, equippedArmors),
+      );
+    }
+  };
+
+  // An armor is disabled (can't be equipped) if it shares a wearable slot with an already-equipped
+  // one — mirrors the player-facing conflict rule in Character.tsx's toggleArmor.
+  const conflictingArmor = (name: string): string | null => {
+    const def = armorDefs[name];
+    if (!def) return null;
+    for (const eq of equippedArmors) {
+      if (eq === name) continue;
+      const eqDef = armorDefs[eq];
+      if (eqDef && armorsOverlap(def.wearable, eqDef.wearable)) return eq;
+    }
+    return null;
+  };
+
+  const toggleArmor = (name: string) => {
+    const isEquipped = equippedArmors.includes(name);
+    if (!isEquipped && conflictingArmor(name)) return;
+    const next = isEquipped ? equippedArmors.filter((a) => a !== name) : [...equippedArmors, name];
+    setEquippedArmors(next);
+    if (selectedAnim) {
+      onSelectKey(
+        buildKey(selectedSkin, selectedAnim.fullName, rightHandItem, leftHandItem, paused, zoom, angle, next),
+      );
     }
   };
 
@@ -174,7 +229,16 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
       setAngle(newAngle);
       if (selectedAnim) {
         onSelectKey(
-          buildKey(selectedSkin, selectedAnim.fullName, rightHandItem, leftHandItem, paused, newZoom, newAngle),
+          buildKey(
+            selectedSkin,
+            selectedAnim.fullName,
+            rightHandItem,
+            leftHandItem,
+            paused,
+            newZoom,
+            newAngle,
+            equippedArmors,
+          ),
           { replace: true },
         );
       }
@@ -232,6 +296,7 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
                 leftHandItem={handsReady ? leftHandItem : null}
                 rightHandRotate={handsReady ? rightRotateOverride : null}
                 leftHandRotate={handsReady ? leftRotateOverride : null}
+                armors={armorsReady ? equippedArmors : []}
                 width={360}
                 height={460}
               />
@@ -310,6 +375,32 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+              {sortedArmors.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-[#2E3A4E]">
+                  <div className="text-xs text-[#8A99AF] mb-2 tracking-widest">WEARABLES</div>
+                  {sortedArmors.map((name) => {
+                    const isEquipped = equippedArmors.includes(name);
+                    const conflict = !isEquipped ? conflictingArmor(name) : null;
+                    const slots = armorDefs[name] ? activeSlots(armorDefs[name].wearable) : [];
+                    return (
+                      <label
+                        key={name}
+                        title={conflict ? `Conflicts with ${conflict}` : slots.join(", ")}
+                        className={`flex items-center gap-2 mb-1.5 text-xs ${conflict ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isEquipped}
+                          disabled={!!conflict}
+                          onChange={() => toggleArmor(name)}
+                        />
+                        <span className={isEquipped ? "text-white" : "text-[#8A99AF]"}>{name}</span>
+                        {slots.length > 0 && <span className="text-[10px] text-[#5A6A80]">({slots.join(", ")})</span>}
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </div>

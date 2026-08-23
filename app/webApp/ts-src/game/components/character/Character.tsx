@@ -23,10 +23,19 @@ import { AttacksTab } from "./AttacksTab";
 interface ArmorSlots {
   head: boolean;
   body: boolean;
-  rightArm: boolean;
-  leftArm: boolean;
-  rightLeg: boolean;
-  leftLeg: boolean;
+  cape: boolean;
+  rightBiceps: boolean;
+  rightForearm: boolean;
+  rightHand: boolean;
+  leftBiceps: boolean;
+  leftForearm: boolean;
+  leftHand: boolean;
+  rightThigh: boolean;
+  rightCalf: boolean;
+  rightFoot: boolean;
+  leftThigh: boolean;
+  leftCalf: boolean;
+  leftFoot: boolean;
 }
 
 export interface ArmorStatBonus {
@@ -46,22 +55,24 @@ interface ArmorDefinition {
 const SLOT_LABELS: { key: keyof ArmorSlots; label: string }[] = [
   { key: "head", label: "HEAD" },
   { key: "body", label: "BODY" },
-  { key: "rightArm", label: "R.ARM" },
-  { key: "leftArm", label: "L.ARM" },
-  { key: "rightLeg", label: "R.LEG" },
-  { key: "leftLeg", label: "L.LEG" },
+  { key: "cape", label: "CAPE" },
+  { key: "rightBiceps", label: "R.BICEPS" },
+  { key: "rightForearm", label: "R.FOREARM" },
+  { key: "rightHand", label: "R.HAND" },
+  { key: "leftBiceps", label: "L.BICEPS" },
+  { key: "leftForearm", label: "L.FOREARM" },
+  { key: "leftHand", label: "L.HAND" },
+  { key: "rightThigh", label: "R.THIGH" },
+  { key: "rightCalf", label: "R.CALF" },
+  { key: "rightFoot", label: "R.FOOT" },
+  { key: "leftThigh", label: "L.THIGH" },
+  { key: "leftCalf", label: "L.CALF" },
+  { key: "leftFoot", label: "L.FOOT" },
 ];
 
 function slotsOverlap(a: ArmorSlots | undefined, b: ArmorSlots | undefined): boolean {
   if (!a || !b) return false;
-  return (
-    (a.head && b.head) ||
-    (a.body && b.body) ||
-    (a.rightArm && b.rightArm) ||
-    (a.leftArm && b.leftArm) ||
-    (a.rightLeg && b.rightLeg) ||
-    (a.leftLeg && b.leftLeg)
-  );
+  return SLOT_LABELS.some(({ key }) => a[key] && b[key]);
 }
 
 type HandItemDefinition = { category: string };

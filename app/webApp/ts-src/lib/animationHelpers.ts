@@ -4,12 +4,16 @@ export interface AnimationEntry {
   boneCount: number;
 }
 
+// Synthetic entry (not present in any bbmodel) applying no transformation to any joint.
+export const STILL_ANIM_NAME = "still";
+
 export function animDisplayName(fullName: string): string {
   return fullName.replace("animation.default_player.", "").replace(/_/g, " ");
 }
 
 export function animEmoji(fullName: string): string {
   const n = fullName.replace("animation.default_player.", "").toLowerCase();
+  if (n === STILL_ANIM_NAME) return "🧍";
   if (n.startsWith("walking") || n.startsWith("running")) return "🚶";
   if (n.startsWith("jump")) return "🦘";
   if (n.startsWith("idle") || n.startsWith("spawn")) return "💤";
@@ -49,12 +53,16 @@ export function animEmoji(fullName: string): string {
 }
 
 export function animationsFromBbmodel(bbmodel: BbModel): AnimationEntry[] {
-  if (!bbmodel?.animations) return [];
-  return bbmodel.animations.map((anim) => ({
-    fullName: anim.name,
-    length: anim.length,
-    boneCount: Object.values(anim.animators).filter(
-      (a) => (a.keyframes?.filter((k) => k.channel === "rotation")?.length ?? 0) > 0,
-    ).length,
-  }));
+  const still: AnimationEntry = { fullName: STILL_ANIM_NAME, length: 1, boneCount: 0 };
+  if (!bbmodel?.animations) return [still];
+  return [
+    still,
+    ...bbmodel.animations.map((anim) => ({
+      fullName: anim.name,
+      length: anim.length,
+      boneCount: Object.values(anim.animators).filter(
+        (a) => (a.keyframes?.filter((k) => k.channel === "rotation")?.length ?? 0) > 0,
+      ).length,
+    })),
+  ];
 }

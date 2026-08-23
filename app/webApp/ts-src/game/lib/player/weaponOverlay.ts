@@ -1,5 +1,12 @@
 import type { Scene } from "@babylonjs/core";
-import { buildMeshElement, buildTextureMaterials, isMeshElement, resolveTextureDims } from "./bbmodelMesh";
+import {
+  buildMeshElement,
+  buildTextureMaterials,
+  fixBoxSideFaceUV,
+  fixBoxTopBottomFaceUV,
+  isMeshElement,
+  resolveTextureDims,
+} from "./bbmodelMesh";
 
 // A weapon/tool bbmodel has exactly one element named "handle" — no bone mapping needed,
 // it is always parented to the rightItem/leftItem pivot of the hand it's equipped in.
@@ -144,16 +151,19 @@ export function registerWeaponOverlay(): Pick<
         const [tx, ty, tz] = el.to;
         if (Math.abs(tx - fx) < 0.001 || Math.abs(ty - fy) < 0.001 || Math.abs(tz - fz) < 0.001) continue;
 
+        const faceUVs = window.mcState.skinFaceUV(el, W, H);
         const mesh = BABYLON.MeshBuilder.CreateBox(
           `weapon_${itemName}_${el.name}`,
           {
             width: Math.abs(tx - fx) * WEAPON_SCALE,
             height: Math.abs(ty - fy) * WEAPON_SCALE,
             depth: Math.abs(tz - fz) * WEAPON_SCALE,
-            faceUV: window.mcState.skinFaceUV(el, W, H),
+            faceUV: faceUVs,
           },
           scene,
         );
+        fixBoxSideFaceUV(mesh, faceUVs[2], faceUVs[3]);
+        fixBoxTopBottomFaceUV(mesh, faceUVs[4], faceUVs[5]);
         mesh.material = mat;
         mesh.isPickable = false;
         mesh.parent = anchor;

@@ -571,34 +571,79 @@ export const org_micoli_micraft_game_armor_WearableSlotsSchema = {
             type: 'boolean',
             title: 'Boolean'
         },
+        cape: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
         head: {
             type: 'boolean',
             title: 'Boolean'
         },
-        leftArm: {
+        leftBiceps: {
             type: 'boolean',
             title: 'Boolean'
         },
-        leftLeg: {
+        leftCalf: {
             type: 'boolean',
             title: 'Boolean'
         },
-        rightArm: {
+        leftFoot: {
             type: 'boolean',
             title: 'Boolean'
         },
-        rightLeg: {
+        leftForearm: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        leftHand: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        leftThigh: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        rightBiceps: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        rightCalf: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        rightFoot: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        rightForearm: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        rightHand: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        rightThigh: {
             type: 'boolean',
             title: 'Boolean'
         }
     },
     required: [
         'body',
+        'cape',
         'head',
-        'leftArm',
-        'leftLeg',
-        'rightArm',
-        'rightLeg'
+        'leftBiceps',
+        'leftCalf',
+        'leftFoot',
+        'leftForearm',
+        'leftHand',
+        'leftThigh',
+        'rightBiceps',
+        'rightCalf',
+        'rightFoot',
+        'rightForearm',
+        'rightHand',
+        'rightThigh'
     ],
     title: 'WearableSlots'
 } as const;

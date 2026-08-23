@@ -1,4 +1,5 @@
 import type { Scene, Vector4 } from "@babylonjs/core";
+import { fixBoxSideFaceUV, fixBoxTopBottomFaceUV } from "./bbmodelMesh";
 
 // Linear interpolation between two bbmodel keyframes. `t` is clip-relative time in SECONDS, on the
 // same scale as `keyframe.time` and the animation `length` — not a normalised 0..1 phase.
@@ -35,6 +36,30 @@ function skinUV(face: BbModelFace | undefined, W: number, H: number): Vector4 {
   );
 }
 
+// Same rect as skinUV but with both axes reversed (uMax/vMax first, uMin/vMin last) — south's
+// hand-authored per-face rect (manual branch only; the box_uv+uv_offset auto-atlas branch below is
+// unaffected and already verified correct) renders 180° rotated relative to every other face
+// unless corrected here. Confirmed empirically: front (north-data) is correct, back (south-data)
+// wasn't, despite both faces sharing the identical non-rotated U~X/V~Y vertex layout.
+function skinUVFlipped(face: BbModelFace | undefined, W: number, H: number): Vector4 {
+  if (!face?.uv) return new BABYLON.Vector4(0, 0, 0, 0);
+  const [x0, y0, x1, y1] = face.uv;
+  return new BABYLON.Vector4(
+    Math.max(x0, x1) / W,
+    1 - Math.min(y0, y1) / H,
+    Math.min(x0, x1) / W,
+    1 - Math.max(y0, y1) / H,
+  );
+}
+
+// BabylonJS's default north/south face UV (unlike east/west and up/down, not patched
+// per-vertex — see fixBoxSideFaceUV/fixBoxTopBottomFaceUV) also runs its u axis backwards;
+// swapping uMin/uMax here mirrors it back the right way round. Verified against Blockbench with
+// colored marker textures (body's front-facing dots landed on the wrong side without this).
+function mirrorU(rect: Vector4): Vector4 {
+  return new BABYLON.Vector4(rect.z, rect.y, rect.x, rect.w);
+}
+
 // BabylonJS CreateBox face order: 0=front(+Z/south), 1=back(-Z/north),
 // 2=right(+X/east), 3=left(-X/west), 4=top(+Y), 5=bottom(-Y)
 function skinFaceUV(el: BbModelElement, W: number, H: number): Vector4[] {
@@ -46,8 +71,8 @@ function skinFaceUV(el: BbModelElement, W: number, H: number): Vector4[] {
     const [u, v] = el.uv_offset;
     const fakeUV = (x0: number, y0: number, x1: number, y1: number): BbModelFace => ({ uv: [x0, y0, x1, y1] });
     return [
-      skinUV(fakeUV(u + 2 * bd + bw, v + bd, u + 2 * bd + 2 * bw, v + bd + bh), W, H), // south
-      skinUV(fakeUV(u + bd, v + bd, u + bd + bw, v + bd + bh), W, H), // north
+      mirrorU(skinUV(fakeUV(u + 2 * bd + bw, v + bd, u + 2 * bd + 2 * bw, v + bd + bh), W, H)), // south
+      mirrorU(skinUV(fakeUV(u + bd, v + bd, u + bd + bw, v + bd + bh), W, H)), // north
       skinUV(fakeUV(u, v + bd, u + bd, v + bd + bh), W, H), // east
       skinUV(fakeUV(u + bd + bw, v + bd, u + 2 * bd + bw, v + bd + bh), W, H), // west
       skinUV(fakeUV(u + bd, v, u + bd + bw, v + bd), W, H), // up
@@ -55,8 +80,8 @@ function skinFaceUV(el: BbModelElement, W: number, H: number): Vector4[] {
     ];
   }
   return [
-    skinUV(faces.south, W, H),
-    skinUV(faces.north, W, H),
+    mirrorU(skinUVFlipped(faces.south, W, H)),
+    mirrorU(skinUV(faces.north, W, H)),
     skinUV(faces.east, W, H),
     skinUV(faces.west, W, H),
     skinUV(faces.up, W, H),
@@ -261,16 +286,19 @@ export function registerPlayerModel(): Pick<
       const [fx, fy, fz] = el.from,
         [tx, ty, tz] = el.to;
       if (Math.abs(tx - fx) < 0.001 || Math.abs(ty - fy) < 0.001 || Math.abs(tz - fz) < 0.001) continue;
+      const faceUVs = skinFaceUV(el, W, H);
       const mesh = BABYLON.MeshBuilder.CreateBox(
         el.name,
         {
           width: Math.abs(tx - fx) * SCALE,
           height: Math.abs(ty - fy) * SCALE,
           depth: Math.abs(tz - fz) * SCALE,
-          faceUV: skinFaceUV(el, W, H),
+          faceUV: faceUVs,
         },
         scene,
       );
+      fixBoxSideFaceUV(mesh, faceUVs[2], faceUVs[3]);
+      fixBoxTopBottomFaceUV(mesh, faceUVs[4], faceUVs[5]);
       mesh.material = mat;
       mesh.isPickable = false;
 

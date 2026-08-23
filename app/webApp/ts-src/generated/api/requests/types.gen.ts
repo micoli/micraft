@@ -380,23 +380,59 @@ export type OrgMicoliMicraftGameArmorWearableSlots = {
     /**
      * Boolean
      */
+    cape: boolean;
+    /**
+     * Boolean
+     */
     head: boolean;
     /**
      * Boolean
      */
-    leftArm: boolean;
+    leftBiceps: boolean;
     /**
      * Boolean
      */
-    leftLeg: boolean;
+    leftCalf: boolean;
     /**
      * Boolean
      */
-    rightArm: boolean;
+    leftFoot: boolean;
     /**
      * Boolean
      */
-    rightLeg: boolean;
+    leftForearm: boolean;
+    /**
+     * Boolean
+     */
+    leftHand: boolean;
+    /**
+     * Boolean
+     */
+    leftThigh: boolean;
+    /**
+     * Boolean
+     */
+    rightBiceps: boolean;
+    /**
+     * Boolean
+     */
+    rightCalf: boolean;
+    /**
+     * Boolean
+     */
+    rightFoot: boolean;
+    /**
+     * Boolean
+     */
+    rightForearm: boolean;
+    /**
+     * Boolean
+     */
+    rightHand: boolean;
+    /**
+     * Boolean
+     */
+    rightThigh: boolean;
 };
 
 /**

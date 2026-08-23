@@ -1,7 +1,16 @@
 wearable:
   head: true
   body: true
-  rightArm: true
-  leftArm: true
-  rightLeg: true
-  leftLeg: true
+  cape: false
+  rightBiceps: true
+  rightForearm: true
+  rightHand: true
+  leftBiceps: true
+  leftForearm: true
+  leftHand: true
+  rightThigh: true
+  rightCalf: true
+  rightFoot: true
+  leftThigh: true
+  leftCalf: true
+  leftFoot: true
