@@ -9,6 +9,7 @@ import { SidebarList } from "../SidebarList";
 import { PropRow } from "../../PropRow";
 import { EmptyDetail } from "../../../primitives/EmptyDetail";
 import { RotateSliders } from "./RotateSliders";
+import { ArmorSlotsDiagram } from "../../../game/components/character/ArmorSlotsDiagram";
 
 type Rotation = { x: number; y: number; z: number };
 type HandItemDefinition = { category: string; rotate?: Rotation };
@@ -397,7 +398,7 @@ export function ModelsTab({ selectedKey, onSelectKey }: ModelsTabProps) {
                           onChange={() => toggleArmor(name)}
                         />
                         <span className={isEquipped ? "text-white" : "text-[#8A99AF]"}>{name}</span>
-                        {slots.length > 0 && <span className="text-[10px] text-[#5A6A80]">({slots.join(", ")})</span>}
+                        <ArmorSlotsDiagram wearable={armorDefs[name]?.wearable} />
                       </label>
                     );
                   })}

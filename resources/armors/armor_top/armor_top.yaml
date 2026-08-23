@@ -1,7 +1,7 @@
 wearable:
   head: true
   body: true
-  cape: false
+  cape: true
   rightBiceps: true
   rightForearm: true
   rightHand: true
@@ -16,4 +16,4 @@ wearable:
   leftFoot: false
 statBonus:
   str: 2
-  con: 1
+  con: 5

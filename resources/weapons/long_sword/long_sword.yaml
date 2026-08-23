@@ -1,5 +1,5 @@
 category: LONGSWORD
-statBonus: { str: 1 }
+statBonus: { str: 5 }
 rotate: { x: -180, y: 90, z: 0 }
 #credit:
 # tweedie https://blendswap.com/blend/6112

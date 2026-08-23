@@ -1,7 +1,7 @@
 wearable:
   head: true
   body: true
-  cape: false
+  cape: true
   rightBiceps: true
   rightForearm: true
   rightHand: true

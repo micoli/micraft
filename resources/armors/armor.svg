@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150" width="100" height="150">
+  <g fill="white" stroke="black" stroke-width="1">
+    <rect id="head" x="25" y="0" width="50" height="50"/>
+
+    <path id="cape" d="M 25 50 L 50 125 L 100 125 L 75 50 M 25 50"/>
+
+    <rect id="leftBiceps" x="0" y="50" width="25" height="20"/>
+    <rect id="leftForearm" x="0" y="70" width="25" height="20"/>
+    <rect id="leftHand" x="0" y="90" width="25" height="10"/>
+
+    <rect id="body" x="25" y="50" width="50" height="50"/>
+
+    <rect id="rightBiceps" x="75" y="50" width="25" height="20"/>
+    <rect id="rightForearm" x="75" y="70" width="25" height="20"/>
+    <rect id="rightHand" x="75" y="90" width="25" height="10"/>
+
+    <rect id="leftThigh" x="25" y="100" width="25" height="20"/>
+    <rect id="leftCalf" x="25" y="120" width="25" height="20"/>
+    <rect id="leftFoot" x="25" y="140" width="25" height="10"/>
+
+    <rect id="rightThigh" x="50" y="100" width="25" height="20"/>
+    <rect id="rightCalf" x="50" y="120" width="25" height="20"/>
+    <rect id="rightFoot" x="50" y="140" width="25" height="10"/>
+  </g>
+</svg>

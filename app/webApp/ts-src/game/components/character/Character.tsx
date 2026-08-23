@@ -20,7 +20,7 @@ import { CharacterStatsPanel } from "./CharacterStatsPanel";
 import { ArmorBonusLine } from "./ArmorBonusLine";
 import { AttacksTab } from "./AttacksTab";
 
-interface ArmorSlots {
+export interface ArmorSlots {
   head: boolean;
   body: boolean;
   cape: boolean;
@@ -208,18 +208,8 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
                       <div className="flex-1">
                         <div className={cn("text-xs mb-1.5", isEquipped ? "text-green-400" : "text-white/80")}>
                           {name}
-                          {armorDef && <ArmorBonusLine bonus={armorDef.statBonus} />}
                         </div>
-                        <div className="flex gap-1 flex-wrap">
-                          {SLOT_LABELS.filter((s) => armorDef?.wearable[s.key]).map((s) => (
-                            <span
-                              key={s.key}
-                              className="text-[9px] px-1 py-px bg-blue-950/60 border border-blue-700/40 rounded-sm text-blue-300"
-                            >
-                              {s.label}
-                            </span>
-                          ))}
-                        </div>
+                        {armorDef && <ArmorBonusLine bonus={armorDef.statBonus} wearable={armorDef.wearable} />}
                       </div>
                       <Button
                         variant={isEquipped ? "ghost" : "secondary"}
