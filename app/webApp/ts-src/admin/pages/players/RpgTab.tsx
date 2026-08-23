@@ -1,5 +1,5 @@
 import { BaseStats, PlayerFile } from "../../apiTypes";
-import { useT } from "../../i18n";
+import { useT, type Translate } from "../../i18n";
 import { useEffect, useState } from "react";
 import { SaveButton } from "../../../primitives/SaveButton";
 import { StatRow } from "./StatRow";
@@ -44,14 +44,71 @@ function computeDerived(s: BaseStats, level: number, acBonus: number) {
     meleeDmg: f(s.str),
     rangedDmg: f(s.dex),
     spellDmg: f(s.intel),
-    critChancePct: (5 + s.dex * 0.2).toFixed(1),
-    dodgePct: Math.min(s.dex * 2.5, 75).toFixed(1),
-    magicResistPct: Math.max((s.wis - 10) * 2, 0).toFixed(1),
+    critChancePct: 5 + s.dex * 0.2,
+    dodgePct: Math.min(s.dex * 2.5, 75),
+    magicResistPct: Math.max((s.wis - 10) * 2, 0),
     armorClass: 10 + f(s.dex) + acBonus,
-    hpRegenPerSec: (s.con / 10).toFixed(2),
-    manaRegenPerSec: (s.wis / 20).toFixed(2),
+    hpRegenPerSec: s.con / 10,
+    manaRegenPerSec: s.wis / 20,
     maxTokens: Math.floor(level / 4) + 1,
   };
+}
+
+type DerivedStats = ReturnType<typeof computeDerived>;
+
+function derivedRows(base: DerivedStats, total: DerivedStats, t: Translate) {
+  const rows: [string, number, string][] = [
+    [t("players.maxHp"), 0, ""],
+    [t("players.maxMana"), 0, ""],
+    [t("players.meleeDmg"), 0, ""],
+    [t("players.rangedDmg"), 0, ""],
+    [t("players.spellDmg"), 0, ""],
+    [t("players.critChance"), 0, "%"],
+    [t("players.dodge"), 0, "%"],
+    [t("players.magicResist"), 0, "%"],
+    [t("players.armorClass"), 0, ""],
+    [t("players.hpRegen"), 0, ""],
+    [t("players.manaRegen"), 0, ""],
+    [t("players.maxTokens"), 0, ""],
+  ];
+  const keys: (keyof DerivedStats)[] = [
+    "maxHp",
+    "maxMana",
+    "meleeDmg",
+    "rangedDmg",
+    "spellDmg",
+    "critChancePct",
+    "dodgePct",
+    "magicResistPct",
+    "armorClass",
+    "hpRegenPerSec",
+    "manaRegenPerSec",
+    "maxTokens",
+  ];
+  const decimals: Record<string, number> = {
+    critChancePct: 1,
+    dodgePct: 1,
+    magicResistPct: 1,
+    hpRegenPerSec: 2,
+    manaRegenPerSec: 2,
+  };
+  const signed = new Set(["meleeDmg", "rangedDmg", "spellDmg"]);
+  return rows.map(([label, , suffix], i) => {
+    const key = keys[i];
+    const d = decimals[key] ?? 0;
+    const baseVal = base[key];
+    const totalVal = total[key];
+    const bonusVal = Number((totalVal - baseVal).toFixed(d));
+    const fmt = (v: number) => v.toFixed(d) + suffix;
+    const prefix = signed.has(key) ? "+" : "";
+    return {
+      label,
+      base: prefix + fmt(baseVal),
+      bonus: bonusVal,
+      bonusFmt: (bonusVal >= 0 ? "+" : "") + fmt(bonusVal),
+      total: prefix + fmt(totalVal),
+    };
+  });
 }
 
 export function RpgTab({
@@ -108,8 +165,10 @@ export function RpgTab({
     cha: stats.cha + armorBonus.cha + weaponBonus.cha + toolBonus.cha,
   };
   const acBonus = armorBonus.acBonus + weaponBonus.acBonus + toolBonus.acBonus;
+  const baseDerived = computeDerived(stats, cd.level, 0);
   const derived = computeDerived(effectiveStats, cd.level, acBonus);
   const hasEquipmentBonus = JSON.stringify(effectiveStats) !== JSON.stringify(stats) || acBonus !== 0;
+  const rows = derivedRows(baseDerived, derived, t);
 
   return (
     <div className="p-5 space-y-5">
@@ -149,23 +208,17 @@ export function RpgTab({
           )}
         </p>
         <div className="grid grid-cols-2 gap-x-4">
-          {[
-            [t("players.maxHp"), derived.maxHp],
-            [t("players.maxMana"), derived.maxMana],
-            [t("players.meleeDmg"), `+${derived.meleeDmg}`],
-            [t("players.rangedDmg"), `+${derived.rangedDmg}`],
-            [t("players.spellDmg"), `+${derived.spellDmg}`],
-            [t("players.critChance"), `${derived.critChancePct}%`],
-            [t("players.dodge"), `${derived.dodgePct}%`],
-            [t("players.magicResist"), `${derived.magicResistPct}%`],
-            [t("players.armorClass"), derived.armorClass],
-            [t("players.hpRegen"), derived.hpRegenPerSec],
-            [t("players.manaRegen"), derived.manaRegenPerSec],
-            [t("players.maxTokens"), derived.maxTokens],
-          ].map(([label, value]) => (
-            <div key={String(label)} className="flex justify-between py-1 border-b border-[#2E3A4E] text-xs">
-              <span className="text-[#8A99AF]">{label}</span>
-              <span className="text-white tabular-nums font-medium">{value}</span>
+          {rows.map((r) => (
+            <div key={r.label} className="flex justify-between py-1 border-b border-[#2E3A4E] text-xs">
+              <span className="text-[#8A99AF]">{r.label}</span>
+              {hasEquipmentBonus && r.bonus !== 0 ? (
+                <span className="tabular-nums font-medium">
+                  <span className="text-[#8A99AF]">{r.base}</span> <span className="text-[#818CF8]">{r.bonusFmt}</span>{" "}
+                  <span className="text-white">= {r.total}</span>
+                </span>
+              ) : (
+                <span className="text-white tabular-nums font-medium">{r.total}</span>
+              )}
             </div>
           ))}
         </div>
