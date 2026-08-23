@@ -164,6 +164,35 @@ class GameLoopTest {
     }
 
     @Test
+    fun onConnect_preservesOwnedEquipmentAcrossReconnects() = runTest {
+        val persistence = WorldPersistence(Files.createTempDirectory("gameloop-owned-test"))
+        persistence.savePlayerState(
+            "Dave",
+            org.micoli.micraft.player.PlayerState(
+                id = UUID.randomUUID().toString(),
+                name = "Dave",
+                pos = org.micoli.micraft.player.Vec3(0f, 0f, 0f),
+                orientation = org.micoli.micraft.player.Orientation(0f, 0f),
+                ownedArmors = listOf("iron_armor"),
+                ownedWeapons = listOf("iron_sword"),
+                ownedTools = listOf("iron_pickaxe"),
+            ),
+        )
+        val gameLoop = GameLoop(testWorld(), persistence)
+        val socket = FakeWebSocketSession()
+        val connect = ClientMessage.Connect(playerName = "Dave", userName = "dave@example.com")
+        socket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        socket.incomingChannel.close()
+
+        gameLoop.onConnect(socket)
+
+        val reloaded = persistence.loadPlayerState("Dave")
+        assertEquals(listOf("iron_armor"), reloaded?.ownedArmors)
+        assertEquals(listOf("iron_sword"), reloaded?.ownedWeapons)
+        assertEquals(listOf("iron_pickaxe"), reloaded?.ownedTools)
+    }
+
+    @Test
     fun autocomplete_unknownCommandId_returnsEmptyList() = runTest {
         val gameLoop = GameLoop(testWorld())
         val result = gameLoop.autocomplete(UUID.randomUUID().toString(), 0, "", "Alice")
