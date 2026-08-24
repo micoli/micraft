@@ -99,7 +99,7 @@ class LiquidManagerTest {
 
     @Test
     fun water_does_not_spread_beyond_max_flow_distance() {
-        // WATER at y=5 with distance already at MAX (7), STONE floor
+        // WATER at y=5 with distance already at MAX (40), STONE floor
         val world =
             worldWith(
                 pos(8, 5, 8) to BlockType.WATER,
@@ -107,12 +107,12 @@ class LiquidManagerTest {
                 pos(7, 4, 8) to BlockType.STONE,
             )
         val manager = LiquidManager(world)
-        manager.activate(BlockPos(8, 5, 8), 7) // already at max distance
+        manager.activate(BlockPos(8, 5, 8), 40) // already at max distance
 
         val messages = mutableListOf<ServerMessage>()
         runTicks(manager, 1) { messages.add(it) }
 
-        // Should NOT spread horizontally (distance = 7 = MAX)
+        // Should NOT spread horizontally (distance = 40 = MAX)
         assertEquals(BlockType.AIR, world.getBlock(7, 5, 8))
         assertEquals(BlockType.AIR, world.getBlock(9, 5, 8))
     }

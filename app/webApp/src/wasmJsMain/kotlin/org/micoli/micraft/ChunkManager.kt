@@ -799,10 +799,12 @@ class ChunkManager(private val scene: JsAny) {
                     faceCount++
                 }
                 // bottom (-Y)
+                val belowOrd = if (y <= 0) 0 else blocks[idx - s].toInt() and 0xFF
                 val emitBottom =
                     bypassCulling ||
                         y <= 0 ||
-                        occludesByOrd[blocks[idx - s].toInt() and 0xFF].toInt() == 0
+                        (occludesByOrd[belowOrd].toInt() == 0 &&
+                            !(liquid && liquidByOrd[belowOrd].toInt() != 0))
                 if (emitBottom) {
                     val faceMatV = t + 5
                     val aoV = computeFaceAO(blocks, x, y, z, 5) or colorBits
@@ -819,10 +821,12 @@ class ChunkManager(private val scene: JsAny) {
                 // south (+Z) — normal is ±Z, so not mergeable along Z (that's this face's own
                 // fixed depth), but mergeable along X: consecutive x at the same z/y form one
                 // contiguous wall segment. Run tracked per-z since x is the outer loop.
+                val southOrd = if (z == s - 1) 0 else blocks[idx + 1].toInt() and 0xFF
                 val emitSouth =
                     bypassCulling ||
                         z == s - 1 ||
-                        occludesByOrd[blocks[idx + 1].toInt() and 0xFF].toInt() == 0
+                        (occludesByOrd[southOrd].toInt() == 0 &&
+                            !(liquid && liquidByOrd[southOrd].toInt() != 0))
                 if (emitSouth) {
                     val faceMatV = t + 0
                     val aoV = computeFaceAO(blocks, x, y, z, 0) or colorBits
@@ -876,10 +880,12 @@ class ChunkManager(private val scene: JsAny) {
                         oz)
                 }
                 // north (-Z)
+                val northOrd = if (z == 0) 0 else blocks[idx - 1].toInt() and 0xFF
                 val emitNorth =
                     bypassCulling ||
                         z == 0 ||
-                        occludesByOrd[blocks[idx - 1].toInt() and 0xFF].toInt() == 0
+                        (occludesByOrd[northOrd].toInt() == 0 &&
+                            !(liquid && liquidByOrd[northOrd].toInt() != 0))
                 if (emitNorth) {
                     val faceMatV = t + 1
                     val aoV = computeFaceAO(blocks, x, y, z, 1) or colorBits
@@ -933,10 +939,12 @@ class ChunkManager(private val scene: JsAny) {
                         oz)
                 }
                 // east (+X)
+                val eastOrd = if (x == s - 1) 0 else blocks[idx + strideX].toInt() and 0xFF
                 val emitEast =
                     bypassCulling ||
                         x == s - 1 ||
-                        occludesByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0
+                        (occludesByOrd[eastOrd].toInt() == 0 &&
+                            !(liquid && liquidByOrd[eastOrd].toInt() != 0))
                 if (emitEast) {
                     val faceMatV = t + 2
                     val aoV = computeFaceAO(blocks, x, y, z, 2) or colorBits
@@ -974,10 +982,12 @@ class ChunkManager(private val scene: JsAny) {
                         0, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
                 }
                 // west (-X)
+                val westOrd = if (x == 0) 0 else blocks[idx - strideX].toInt() and 0xFF
                 val emitWest =
                     bypassCulling ||
                         x == 0 ||
-                        occludesByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0
+                        (occludesByOrd[westOrd].toInt() == 0 &&
+                            !(liquid && liquidByOrd[westOrd].toInt() != 0))
                 if (emitWest) {
                     val faceMatV = t + 3
                     val aoV = computeFaceAO(blocks, x, y, z, 3) or colorBits
