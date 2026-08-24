@@ -45,6 +45,11 @@ class AssetNotifyController(private val manifestController: AssetManifestControl
             webSocket("/ws") {
                 val id = UUID.randomUUID().toString()
                 sessions[id] = this
+                // Sent unconditionally (unlike the version frame below, which needs a resolvable
+                // asset dir) so callers have a registration-confirmed signal to wait on before
+                // triggering a reload — otherwise a POST /api/assets/reload racing this
+                // registration can broadcast before this session is in `sessions` and be missed.
+                runCatching { send("""{"type":"ready"}""") }
                 runCatching {
                     manifestController.signature()?.let { sig ->
                         send("""{"type":"version","data":"$sig"}""")
