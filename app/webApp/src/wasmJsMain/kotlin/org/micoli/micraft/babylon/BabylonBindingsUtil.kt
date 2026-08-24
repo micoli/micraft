@@ -25,6 +25,14 @@ fun jsNow(): Double = js("Date.now()")
 // of just showing it as small. Use this for short-duration perf timing instead of jsNow().
 fun jsPerfNow(): Double = js("performance.now()")
 
+// Master switch for the FPS/frame-time instrumentation added for the chunk-mesh/render
+// perf investigation (rolling HUD timing stats, the spike ring buffer, render-loop timing) —
+// off by default (`window.mcState.perfInstrumentationEnabled` is unset, so this reads false).
+// Enable from the browser console with `window.mcState.perfInstrumentationEnabled = true` when
+// diagnosing an FPS complaint; see specs/fps_performance_improvment.md.
+fun jsIsPerfInstrumentationEnabled(): Boolean =
+    js("window.mcState.perfInstrumentationEnabled === true")
+
 fun jsReload(): Unit = js("mc.reload()")
 
 fun jsHasUrlParam(name: String): Boolean =

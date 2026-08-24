@@ -13,9 +13,14 @@ fun jsCreateScene(engine: JsAny): JsAny = js("new BABYLON.Scene(engine)")
 // below), added after mesh/GPU-upload/physics/interaction timing left most of the observed
 // frame-time budget unaccounted for: that missing time is spent here, between tick() calls,
 // not inside any Kotlin logic.
+//
+// The performance.now() pair + accumulation only runs when
+// window.mcState.perfInstrumentationEnabled is set (see jsIsPerfInstrumentationEnabled) — this
+// is the highest-frequency instrumentation added (every frame, not every 10-tick block), so it's
+// gated off by default rather than just gating what LocalPlayerController does with the result.
 fun jsEngineRunRenderLoop(engine: JsAny, scene: JsAny): Unit =
     js(
-        "{ var _lr=0; engine.runRenderLoop(function(){ var now=Date.now(); if(now-_lr<14) return; _lr=now; var s=window.mcState.camState; if(s&&scene.activeCamera&&window.mcState.editMode!=='creative'){var a=Math.min(1,(now-s.t)/16);scene.activeCamera.position.x=s.x0+(s.x1-s.x0)*a;scene.activeCamera.position.y=s.y0+(s.y1-s.y0)*a;scene.activeCamera.position.z=s.z0+(s.z1-s.z0)*a;} var _rt0=performance.now(); scene.render(); var _rms=performance.now()-_rt0; window.mcState.renderMsAccum=(window.mcState.renderMsAccum||0)+_rms; window.mcState.renderFrameCount=(window.mcState.renderFrameCount||0)+1; window.mcState.renderMsMax=Math.max(window.mcState.renderMsMax||0,_rms); }); }")
+        "{ var _lr=0; engine.runRenderLoop(function(){ var now=Date.now(); if(now-_lr<14) return; _lr=now; var s=window.mcState.camState; if(s&&scene.activeCamera&&window.mcState.editMode!=='creative'){var a=Math.min(1,(now-s.t)/16);scene.activeCamera.position.x=s.x0+(s.x1-s.x0)*a;scene.activeCamera.position.y=s.y0+(s.y1-s.y0)*a;scene.activeCamera.position.z=s.z0+(s.z1-s.z0)*a;} if(window.mcState.perfInstrumentationEnabled===true){ var _rt0=performance.now(); scene.render(); var _rms=performance.now()-_rt0; window.mcState.renderMsAccum=(window.mcState.renderMsAccum||0)+_rms; window.mcState.renderFrameCount=(window.mcState.renderFrameCount||0)+1; window.mcState.renderMsMax=Math.max(window.mcState.renderMsMax||0,_rms); } else { scene.render(); } }); }")
 
 fun jsGetRenderMsAccum(): Double = js("window.mcState.renderMsAccum || 0")
 

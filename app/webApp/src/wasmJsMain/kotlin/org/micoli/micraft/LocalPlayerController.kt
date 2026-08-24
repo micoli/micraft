@@ -1335,11 +1335,13 @@ class LocalPlayerController(
             currentKbIn = networkStats.bytesIn / 1024.0 / sec
             currentKbOut = networkStats.bytesOut / 1024.0 / sec
             fpsSamples.addCapped(now, currentFps.toDouble())
-            val wsDecodeMsAvg =
-                if (networkStats.chunkDecodeCount > 0)
-                    networkStats.chunkDecodeMsAccum / networkStats.chunkDecodeCount
-                else 0.0
-            wsDecodeMsSamples.addCapped(now, wsDecodeMsAvg)
+            if (jsIsPerfInstrumentationEnabled()) {
+                val wsDecodeMsAvg =
+                    if (networkStats.chunkDecodeCount > 0)
+                        networkStats.chunkDecodeMsAccum / networkStats.chunkDecodeCount
+                    else 0.0
+                wsDecodeMsSamples.addCapped(now, wsDecodeMsAvg)
+            }
             networkStats.chunkDecodeMsAccum = 0.0
             networkStats.chunkDecodeCount = 0
             fpsFrameCount = 0
@@ -1350,16 +1352,20 @@ class LocalPlayerController(
 
         // Per-tick mesh/GPU timing sampled straight from ChunkManager's last drainPendingChunks()
         // call (see ChunkManager.kt) — same rolling-window pattern as
-        // tickIntervals/jitterSnapshots.
-        val meshDrainMsThisTick = chunkManager.lastFaceScanMs + chunkManager.lastFaceProcessMs
-        val gpuUploadMsThisTick = chunkManager.lastGpuUploadMs
-        meshDrainMsSamples.addCapped(now, meshDrainMsThisTick)
-        gpuUploadMsSamples.addCapped(now, gpuUploadMsThisTick)
-        blockMeshDrainMsSum += meshDrainMsThisTick
-        blockGpuUploadMsSum += gpuUploadMsThisTick
-        blockFacesProcessedSum += chunkManager.lastFacesProcessedThisDrain
-        otherTickMsSamples.addCapped(now, otherTickMs)
-        blockOtherTickMsSum += otherTickMs
+        // tickIntervals/jitterSnapshots. Gated by the perf-instrumentation master switch (see
+        // jsIsPerfInstrumentationEnabled) — off by default, enable via
+        // `window.mcState.perfInstrumentationEnabled = true` in the console.
+        if (jsIsPerfInstrumentationEnabled()) {
+            val meshDrainMsThisTick = chunkManager.lastFaceScanMs + chunkManager.lastFaceProcessMs
+            val gpuUploadMsThisTick = chunkManager.lastGpuUploadMs
+            meshDrainMsSamples.addCapped(now, meshDrainMsThisTick)
+            gpuUploadMsSamples.addCapped(now, gpuUploadMsThisTick)
+            blockMeshDrainMsSum += meshDrainMsThisTick
+            blockGpuUploadMsSum += gpuUploadMsThisTick
+            blockFacesProcessedSum += chunkManager.lastFacesProcessedThisDrain
+            otherTickMsSamples.addCapped(now, otherTickMs)
+            blockOtherTickMsSum += otherTickMs
+        }
 
         val auxT0 = jsNow()
         val normalizedTime =
@@ -1394,50 +1400,72 @@ class LocalPlayerController(
             val fpsMax = if (fpsSamples.isEmpty()) 0 else fpsSamples.maxOf { it.value }.toInt()
             val reconcileXz = reconcileStats(xzDistances, clientTickTimestamps.size)
             val reconcileY = reconcileStats(yDistances, serverUpdateTimestamps.size)
-            val meshDrainMsAvg =
-                (meshDrainMsSamples.sumOf { it.value } / meshDrainMsSamples.size).takeIf {
-                    it.isFinite()
-                } ?: 0.0
-            val meshDrainMsMin =
-                if (meshDrainMsSamples.isEmpty()) 0.0 else meshDrainMsSamples.minOf { it.value }
-            val meshDrainMsMax =
-                if (meshDrainMsSamples.isEmpty()) 0.0 else meshDrainMsSamples.maxOf { it.value }
-            val gpuUploadMsAvg =
-                (gpuUploadMsSamples.sumOf { it.value } / gpuUploadMsSamples.size).takeIf {
-                    it.isFinite()
-                } ?: 0.0
-            val gpuUploadMsMin =
-                if (gpuUploadMsSamples.isEmpty()) 0.0 else gpuUploadMsSamples.minOf { it.value }
-            val gpuUploadMsMax =
-                if (gpuUploadMsSamples.isEmpty()) 0.0 else gpuUploadMsSamples.maxOf { it.value }
-            val wsDecodeMsAvg =
-                if (wsDecodeMsSamples.isEmpty()) 0.0
-                else wsDecodeMsSamples.sumOf { it.value } / wsDecodeMsSamples.size
+            // Everything below (rolling-window avg/min/max, the spike ring buffer, mesh-count
+            // queries) is gated by the perf-instrumentation master switch — off by default, see
+            // jsIsPerfInstrumentationEnabled. When disabled, the HUD's extra timing fields just
+            // read 0.0 rather than the real (unsampled) values.
+            val meshDrainMsAvg: Double
+            val meshDrainMsMin: Double
+            val meshDrainMsMax: Double
+            val gpuUploadMsAvg: Double
+            val gpuUploadMsMin: Double
+            val gpuUploadMsMax: Double
+            val wsDecodeMsAvg: Double
+            if (jsIsPerfInstrumentationEnabled()) {
+                meshDrainMsAvg =
+                    (meshDrainMsSamples.sumOf { it.value } / meshDrainMsSamples.size).takeIf {
+                        it.isFinite()
+                    } ?: 0.0
+                meshDrainMsMin =
+                    if (meshDrainMsSamples.isEmpty()) 0.0 else meshDrainMsSamples.minOf { it.value }
+                meshDrainMsMax =
+                    if (meshDrainMsSamples.isEmpty()) 0.0 else meshDrainMsSamples.maxOf { it.value }
+                gpuUploadMsAvg =
+                    (gpuUploadMsSamples.sumOf { it.value } / gpuUploadMsSamples.size).takeIf {
+                        it.isFinite()
+                    } ?: 0.0
+                gpuUploadMsMin =
+                    if (gpuUploadMsSamples.isEmpty()) 0.0 else gpuUploadMsSamples.minOf { it.value }
+                gpuUploadMsMax =
+                    if (gpuUploadMsSamples.isEmpty()) 0.0 else gpuUploadMsSamples.maxOf { it.value }
+                wsDecodeMsAvg =
+                    if (wsDecodeMsSamples.isEmpty()) 0.0
+                    else wsDecodeMsSamples.sumOf { it.value } / wsDecodeMsSamples.size
 
-            val renderMsSum = jsGetRenderMsAccum()
-            val renderFrameCount = jsGetRenderFrameCount()
-            val renderMsMaxThisBlock = jsGetRenderMsMax()
-            jsResetRenderStats()
-            frameSpikeBuffer.pushCapped(
-                FrameSnapshot(
-                    ts = now,
-                    blockMs = now - lastHudBlockTs,
-                    meshDrainMs = blockMeshDrainMsSum,
-                    gpuUploadMs = blockGpuUploadMsSum,
-                    facesProcessed = blockFacesProcessedSum,
-                    bytesIn = networkStats.bytesIn,
-                    physicsMs = blockPhysicsMsSum,
-                    interactionMs = blockInteractionMsSum,
-                    auxMs = blockAuxMsSum,
-                    wsDecodeMs = wsDecodeMsAvg,
-                    renderMs = renderMsSum,
-                    renderFrames = renderFrameCount,
-                    renderMsMax = renderMsMaxThisBlock,
-                    totalMeshes = jsGetTotalMeshCount(scene),
-                    activeMeshes = jsGetActiveMeshCount(scene),
-                    otherTickMs = blockOtherTickMsSum,
-                ))
-            if (blockTickMaxMs > jsGetSpikeThresholdMs(DEFAULT_SPIKE_THRESHOLD_MS)) logFrameSpike()
+                val renderMsSum = jsGetRenderMsAccum()
+                val renderFrameCount = jsGetRenderFrameCount()
+                val renderMsMaxThisBlock = jsGetRenderMsMax()
+                jsResetRenderStats()
+                frameSpikeBuffer.pushCapped(
+                    FrameSnapshot(
+                        ts = now,
+                        blockMs = now - lastHudBlockTs,
+                        meshDrainMs = blockMeshDrainMsSum,
+                        gpuUploadMs = blockGpuUploadMsSum,
+                        facesProcessed = blockFacesProcessedSum,
+                        bytesIn = networkStats.bytesIn,
+                        physicsMs = blockPhysicsMsSum,
+                        interactionMs = blockInteractionMsSum,
+                        auxMs = blockAuxMsSum,
+                        wsDecodeMs = wsDecodeMsAvg,
+                        renderMs = renderMsSum,
+                        renderFrames = renderFrameCount,
+                        renderMsMax = renderMsMaxThisBlock,
+                        totalMeshes = jsGetTotalMeshCount(scene),
+                        activeMeshes = jsGetActiveMeshCount(scene),
+                        otherTickMs = blockOtherTickMsSum,
+                    ))
+                if (blockTickMaxMs > jsGetSpikeThresholdMs(DEFAULT_SPIKE_THRESHOLD_MS))
+                    logFrameSpike()
+            } else {
+                meshDrainMsAvg = 0.0
+                meshDrainMsMin = 0.0
+                meshDrainMsMax = 0.0
+                gpuUploadMsAvg = 0.0
+                gpuUploadMsMin = 0.0
+                gpuUploadMsMax = 0.0
+                wsDecodeMsAvg = 0.0
+            }
             lastHudBlockTs = now
             blockMeshDrainMsSum = 0.0
             blockGpuUploadMsSum = 0.0
