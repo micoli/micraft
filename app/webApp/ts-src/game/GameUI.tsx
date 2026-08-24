@@ -461,6 +461,10 @@ export function GameUI() {
       dispatch("statistics_toggle");
       setPendingPrefs({ statisticsVisible: !(preferencesRef.current?.statisticsVisible ?? false) });
     };
+    window.mc.toggleChunkDebug = () => {
+      dispatch("chunk_debug_toggle");
+      setPendingPrefs({ chunkDebugVisible: !(preferencesRef.current?.chunkDebugVisible ?? false) });
+    };
     window.mc.toggleAttackPanel = () => {
       dispatch("attack_panel_toggle");
       setPendingPrefs({ attackPanelVisible: !(preferencesRef.current?.attackPanelVisible ?? false) });

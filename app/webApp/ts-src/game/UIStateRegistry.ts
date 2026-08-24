@@ -235,6 +235,12 @@ const componentVisibilityRegistry = {
       ? { ...state.preferences, statisticsVisible: !(state.preferences.statisticsVisible ?? false) }
       : state.preferences,
   }),
+  chunk_debug_toggle: (state: UiState) => ({
+    ...state,
+    preferences: state.preferences
+      ? { ...state.preferences, chunkDebugVisible: !(state.preferences.chunkDebugVisible ?? false) }
+      : state.preferences,
+  }),
   attack_panel_toggle: (state: UiState) => ({
     ...state,
     preferences: state.preferences

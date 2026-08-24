@@ -44,6 +44,7 @@ ui:
   screenshot: [KeyJ]
   quest_journal: ["Alt+KeyQ"]
   quest_tracking: [KeyT]
+  chunk_debug_toggle: ["Ctrl+KeyN"]
 
 building:
   place_rotate: [KeyR]

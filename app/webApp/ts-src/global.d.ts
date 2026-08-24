@@ -541,6 +541,7 @@ declare global {
     toggleHealthBar(): void;
     toggleStatistics(): void;
     toggleAttackPanel?(): void;
+    toggleChunkDebug?(): void;
     updateShortcutBar(json: string): void;
     setSelectedSlot(slot: number): void;
     consumeSlotUpdate(): string;

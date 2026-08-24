@@ -281,6 +281,7 @@ window.mc = {
   toggleHotbar: () => {},
   toggleHealthBar: () => {},
   toggleStatistics: () => {},
+  toggleChunkDebug: () => {},
   updateShortcutBar: () => {},
   setSelectedSlot: () => {},
   consumeSlotUpdate: () => "",

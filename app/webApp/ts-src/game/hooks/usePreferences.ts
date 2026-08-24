@@ -55,6 +55,7 @@ const ACTION_GROUPS: Record<string, string[]> = {
   ui: [
     "view_toggle",
     "statistics_toggle",
+    "chunk_debug_toggle",
     "console_toggle",
     "inventory",
     "character",
