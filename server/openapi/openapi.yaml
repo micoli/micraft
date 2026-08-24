@@ -3890,6 +3890,39 @@ components:
       - z1
       - z2
       title: VoronoiBorderSegment
+    org.micoli.micraft.http.GcStat:
+      type: object
+      properties:
+        collectionCount:
+          type: integer
+          format: int64
+          title: Long
+        collectionTimeMs:
+          type: integer
+          format: int64
+          title: Long
+        name:
+          type: string
+          title: String
+      required:
+      - collectionCount
+      - collectionTimeMs
+      - name
+      title: GcStat
+    org.micoli.micraft.game.tick.TickPhaseStat:
+      type: object
+      properties:
+        avgMs:
+          type: number
+          format: double
+          title: Double
+        name:
+          type: string
+          title: String
+      required:
+      - avgMs
+      - name
+      title: TickPhaseStat
     org.micoli.micraft.http.StatusSnapshot:
       type: object
       properties:
@@ -3901,6 +3934,10 @@ components:
           type: integer
           format: int32
           title: Int
+        avgTickDurationMs:
+          type: number
+          format: double
+          title: Double
         connectedPlayers:
           type: integer
           format: int32
@@ -3909,6 +3946,11 @@ components:
           type: integer
           format: int64
           title: Long
+        gcStats:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.http.GcStat"
+          title: List<GcStat>
         heapMaxMb:
           type: integer
           format: int64
@@ -3952,6 +3994,10 @@ components:
           type: integer
           format: int32
           title: Int
+        peakThreadCount:
+          type: integer
+          format: int32
+          title: Int
         pendingLiquidTicks:
           type: integer
           format: int32
@@ -3962,11 +4008,36 @@ components:
             type: string
             title: String
           title: List<String>
+        processCpuLoadPct:
+          type: number
+          format: double
+          title: Double
         processors:
           type: integer
           format: int32
           title: Int
+        systemCpuLoadPct:
+          type: number
+          format: double
+          title: Double
+        threadCount:
+          type: integer
+          format: int32
+          title: Int
+        tickBudgetMs:
+          type: integer
+          format: int64
+          title: Long
+        tickProfile:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.game.tick.TickPhaseStat"
+          title: List<TickPhaseStat>
         ticksPerDay:
+          type: integer
+          format: int64
+          title: Long
+        uptimeMs:
           type: integer
           format: int64
           title: Long
@@ -3981,8 +4052,10 @@ components:
       required:
       - activeLiquids
       - activeVegetation
+      - avgTickDurationMs
       - connectedPlayers
       - gameTicks
+      - gcStats
       - heapMaxMb
       - heapUsedMb
       - liquidEstBytes
@@ -3993,10 +4066,17 @@ components:
       - npcByType
       - npcEstBytes
       - npcTotal
+      - peakThreadCount
       - pendingLiquidTicks
       - playerNames
+      - processCpuLoadPct
       - processors
+      - systemCpuLoadPct
+      - threadCount
+      - tickBudgetMs
+      - tickProfile
       - ticksPerDay
+      - uptimeMs
       - vegetationEstBytes
       - worldItems
       title: StatusSnapshot

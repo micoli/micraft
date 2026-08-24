@@ -908,6 +908,38 @@ export type OrgMicoliMicraftHttpVoronoiBorderSegment = {
 };
 
 /**
+ * GcStat
+ */
+export type OrgMicoliMicraftHttpGcStat = {
+    /**
+     * Long
+     */
+    collectionCount: number;
+    /**
+     * Long
+     */
+    collectionTimeMs: number;
+    /**
+     * String
+     */
+    name: string;
+};
+
+/**
+ * TickPhaseStat
+ */
+export type OrgMicoliMicraftGameTickTickPhaseStat = {
+    /**
+     * Double
+     */
+    avgMs: number;
+    /**
+     * String
+     */
+    name: string;
+};
+
+/**
  * StatusSnapshot
  */
 export type OrgMicoliMicraftHttpStatusSnapshot = {
@@ -920,6 +952,10 @@ export type OrgMicoliMicraftHttpStatusSnapshot = {
      */
     activeVegetation: number;
     /**
+     * Double
+     */
+    avgTickDurationMs: number;
+    /**
      * Int
      */
     connectedPlayers: number;
@@ -927,6 +963,10 @@ export type OrgMicoliMicraftHttpStatusSnapshot = {
      * Long
      */
     gameTicks: number;
+    /**
+     * List<GcStat>
+     */
+    gcStats: Array<OrgMicoliMicraftHttpGcStat>;
     /**
      * Long
      */
@@ -972,19 +1012,47 @@ export type OrgMicoliMicraftHttpStatusSnapshot = {
     /**
      * Int
      */
+    peakThreadCount: number;
+    /**
+     * Int
+     */
     pendingLiquidTicks: number;
     /**
      * List<String>
      */
     playerNames: Array<string>;
     /**
+     * Double
+     */
+    processCpuLoadPct: number;
+    /**
      * Int
      */
     processors: number;
     /**
+     * Double
+     */
+    systemCpuLoadPct: number;
+    /**
+     * Int
+     */
+    threadCount: number;
+    /**
+     * Long
+     */
+    tickBudgetMs: number;
+    /**
+     * List<TickPhaseStat>
+     */
+    tickProfile: Array<OrgMicoliMicraftGameTickTickPhaseStat>;
+    /**
      * Long
      */
     ticksPerDay: number;
+    /**
+     * Long
+     */
+    uptimeMs: number;
     /**
      * Long
      */

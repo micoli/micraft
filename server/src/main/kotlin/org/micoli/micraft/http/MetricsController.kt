@@ -1,5 +1,6 @@
 package org.micoli.micraft.http
 
+import com.sun.management.OperatingSystemMXBean
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -7,6 +8,8 @@ import java.lang.management.ManagementFactory
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
+import org.micoli.micraft.game.TICK_MS
+import org.micoli.micraft.game.tick.TickPhaseStat
 
 // Rough per-entry sizes for working-set estimates (no JAMM/JOL available):
 // BlockPos = 3 Int + obj header ≈ 28 B; ConcurrentHashMap node ≈ 56 B.
@@ -34,6 +37,8 @@ fun buildPrometheusMetrics(gameLoop: GameLoop): String {
     val heapUsed = memMx.heapMemoryUsage.used
     val heapMax = memMx.heapMemoryUsage.max
     val nonHeapUsed = memMx.nonHeapMemoryUsage.used
+    val osMx = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
+    val threadMx = ManagementFactory.getThreadMXBean()
 
     val npcStates = gameLoop.getNpcStates()
     val npcByType = npcStates.groupingBy { it.type }.eachCount()
@@ -130,6 +135,39 @@ fun buildPrometheusMetrics(gameLoop: GameLoop): String {
                 "jvm_processors",
                 "Available processor count",
                 Runtime.getRuntime().availableProcessors()))
+        append(
+            gauge(
+                "jvm_process_cpu_load_ratio",
+                "Process CPU load, 0.0-1.0",
+                osMx.processCpuLoad.coerceAtLeast(0.0)))
+        append(
+            gauge(
+                "jvm_system_cpu_load_ratio",
+                "System CPU load, 0.0-1.0",
+                osMx.cpuLoad.coerceAtLeast(0.0)))
+        append(gauge("jvm_thread_count", "Live JVM thread count", threadMx.threadCount))
+        append(gauge("jvm_thread_peak_count", "Peak JVM thread count", threadMx.peakThreadCount))
+        append(
+            "# HELP jvm_gc_collection_count_total GC collection count by collector\n# TYPE jvm_gc_collection_count_total counter\n")
+        append(
+            "# HELP jvm_gc_collection_time_ms_total GC collection time (ms) by collector\n# TYPE jvm_gc_collection_time_ms_total counter\n")
+        ManagementFactory.getGarbageCollectorMXBeans().forEach { gc ->
+            append("""jvm_gc_collection_count_total{gc="${gc.name}"} ${gc.collectionCount}""")
+                .append('\n')
+            append("""jvm_gc_collection_time_ms_total{gc="${gc.name}"} ${gc.collectionTime}""")
+                .append('\n')
+        }
+
+        // Per-subsystem tick CPU breakdown (EMA, ms/tick)
+        val tickProfile = gameLoop.getTickProfile()
+        if (tickProfile.isNotEmpty()) {
+            append(
+                "# HELP micraft_tick_phase_avg_ms Per-subsystem tick duration, EMA in ms\n# TYPE micraft_tick_phase_avg_ms gauge\n")
+            tickProfile.forEach { p ->
+                append("""micraft_tick_phase_avg_ms{phase="${p.name}"} ${p.avgMs}""").append('\n')
+            }
+        }
+        append(gauge("micraft_tick_budget_ms", "Configured tick period (ms)", TICK_MS))
     }
 }
 
@@ -138,6 +176,17 @@ fun buildStatusSnapshot(gameLoop: GameLoop): StatusSnapshot {
     val heapUsed = memMx.heapMemoryUsage.used
     val heapMax = memMx.heapMemoryUsage.max
     val nonHeapUsed = memMx.nonHeapMemoryUsage.used
+
+    val osMx = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
+    val threadMx = ManagementFactory.getThreadMXBean()
+    val gcStats =
+        ManagementFactory.getGarbageCollectorMXBeans().map {
+            GcStat(
+                name = it.name,
+                collectionCount = it.collectionCount,
+                collectionTimeMs = it.collectionTime)
+        }
+    val runtimeMx = ManagementFactory.getRuntimeMXBean()
 
     val npcStates = gameLoop.getNpcStates()
     val activeLiquids = gameLoop.getActiveLiquidCount()
@@ -166,6 +215,15 @@ fun buildStatusSnapshot(gameLoop: GameLoop): StatusSnapshot {
         nonHeapUsedMb = nonHeapUsed / 1_048_576,
         processors = Runtime.getRuntime().availableProcessors(),
         ticksPerDay = TICKS_PER_DAY,
+        processCpuLoadPct = (osMx.processCpuLoad * 100).coerceAtLeast(0.0),
+        systemCpuLoadPct = (osMx.cpuLoad * 100).coerceAtLeast(0.0),
+        threadCount = threadMx.threadCount,
+        peakThreadCount = threadMx.peakThreadCount,
+        uptimeMs = runtimeMx.uptime,
+        gcStats = gcStats,
+        tickProfile = gameLoop.getTickProfile().filter { it.name != "total" },
+        avgTickDurationMs = gameLoop.getTickProfile().find { it.name == "total" }?.avgMs ?: 0.0,
+        tickBudgetMs = TICK_MS,
     )
 }
 
@@ -191,7 +249,19 @@ data class StatusSnapshot(
     val nonHeapUsedMb: Long,
     val processors: Int,
     val ticksPerDay: Long,
+    val processCpuLoadPct: Double,
+    val systemCpuLoadPct: Double,
+    val threadCount: Int,
+    val peakThreadCount: Int,
+    val uptimeMs: Long,
+    val gcStats: List<GcStat>,
+    val tickProfile: List<TickPhaseStat>,
+    val avgTickDurationMs: Double,
+    val tickBudgetMs: Long,
 )
+
+@Serializable
+data class GcStat(val name: String, val collectionCount: Long, val collectionTimeMs: Long)
 
 // Not OpenAPI-documented: Prometheus text format and an HTML dashboard, neither a JSON API.
 // The Application.kt pathFilter (segments not under /api or /auth) already excludes these from
@@ -300,6 +370,21 @@ private fun buildStatusHtml(s: StatusSnapshot): String {
     <div class="bar-wrap"><div class="bar" style="width:${heapPct}%"></div></div>
     <div class="row"><span>Non-heap</span><span class="val">${s.nonHeapUsedMb} MB</span></div>
     <div class="row"><span>Processors</span><span class="val">${s.processors}</span></div>
+  </div>
+
+  <div class="card">
+    <h2>CPU &amp; Threads</h2>
+    <div class="row"><span>Process CPU</span><span class="val">${"%.1f".format(s.processCpuLoadPct)}%</span></div>
+    <div class="row"><span>System CPU</span><span class="val">${"%.1f".format(s.systemCpuLoadPct)}%</span></div>
+    <div class="row"><span>Threads</span><span class="val">${s.threadCount} (peak ${s.peakThreadCount})</span></div>
+    <div class="row"><span>Uptime</span><span class="val">${s.uptimeMs / 60000} min</span></div>
+    <table style="margin-top:8px">${s.gcStats.joinToString("") { g -> "<tr><td>${esc(g.name)}</td><td>${g.collectionCount} / ${g.collectionTimeMs}ms</td></tr>" }}</table>
+  </div>
+
+  <div class="card">
+    <h2>Tick Breakdown (ms/tick, EMA)</h2>
+    <div class="row"><span>Total tick duration</span><span class="val">${"%.2f".format(s.avgTickDurationMs)} ms / ${s.tickBudgetMs} ms budget</span></div>
+    <table style="margin-top:8px">${s.tickProfile.joinToString("") { p -> "<tr><td>${esc(p.name)}</td><td>${"%.2f".format(p.avgMs)}</td></tr>" }}</table>
   </div>
 
 </div>

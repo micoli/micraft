@@ -1387,6 +1387,52 @@ export const org_micoli_micraft_http_VoronoiBorderSegmentSchema = {
     title: 'VoronoiBorderSegment'
 } as const;
 
+export const org_micoli_micraft_http_GcStatSchema = {
+    type: 'object',
+    properties: {
+        collectionCount: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        collectionTimeMs: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        name: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'collectionCount',
+        'collectionTimeMs',
+        'name'
+    ],
+    title: 'GcStat'
+} as const;
+
+export const org_micoli_micraft_game_tick_TickPhaseStatSchema = {
+    type: 'object',
+    properties: {
+        avgMs: {
+            type: 'number',
+            format: 'double',
+            title: 'Double'
+        },
+        name: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'avgMs',
+        'name'
+    ],
+    title: 'TickPhaseStat'
+} as const;
+
 export const org_micoli_micraft_http_StatusSnapshotSchema = {
     type: 'object',
     properties: {
@@ -1400,6 +1446,11 @@ export const org_micoli_micraft_http_StatusSnapshotSchema = {
             format: 'int32',
             title: 'Int'
         },
+        avgTickDurationMs: {
+            type: 'number',
+            format: 'double',
+            title: 'Double'
+        },
         connectedPlayers: {
             type: 'integer',
             format: 'int32',
@@ -1409,6 +1460,13 @@ export const org_micoli_micraft_http_StatusSnapshotSchema = {
             type: 'integer',
             format: 'int64',
             title: 'Long'
+        },
+        gcStats: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.http.GcStat'
+            },
+            title: 'List<GcStat>'
         },
         heapMaxMb: {
             type: 'integer',
@@ -1464,6 +1522,11 @@ export const org_micoli_micraft_http_StatusSnapshotSchema = {
             format: 'int32',
             title: 'Int'
         },
+        peakThreadCount: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
         pendingLiquidTicks: {
             type: 'integer',
             format: 'int32',
@@ -1477,12 +1540,44 @@ export const org_micoli_micraft_http_StatusSnapshotSchema = {
             },
             title: 'List<String>'
         },
+        processCpuLoadPct: {
+            type: 'number',
+            format: 'double',
+            title: 'Double'
+        },
         processors: {
             type: 'integer',
             format: 'int32',
             title: 'Int'
         },
+        systemCpuLoadPct: {
+            type: 'number',
+            format: 'double',
+            title: 'Double'
+        },
+        threadCount: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        tickBudgetMs: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        tickProfile: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.game.tick.TickPhaseStat'
+            },
+            title: 'List<TickPhaseStat>'
+        },
         ticksPerDay: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        uptimeMs: {
             type: 'integer',
             format: 'int64',
             title: 'Long'
@@ -1501,8 +1596,10 @@ export const org_micoli_micraft_http_StatusSnapshotSchema = {
     required: [
         'activeLiquids',
         'activeVegetation',
+        'avgTickDurationMs',
         'connectedPlayers',
         'gameTicks',
+        'gcStats',
         'heapMaxMb',
         'heapUsedMb',
         'liquidEstBytes',
@@ -1513,10 +1610,17 @@ export const org_micoli_micraft_http_StatusSnapshotSchema = {
         'npcByType',
         'npcEstBytes',
         'npcTotal',
+        'peakThreadCount',
         'pendingLiquidTicks',
         'playerNames',
+        'processCpuLoadPct',
         'processors',
+        'systemCpuLoadPct',
+        'threadCount',
+        'tickBudgetMs',
+        'tickProfile',
         'ticksPerDay',
+        'uptimeMs',
         'vegetationEstBytes',
         'worldItems'
     ],

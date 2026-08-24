@@ -1,4 +1,4 @@
-export function Svg({ d, size = 22 }: { d: string; size?: number }) {
+export function Svg({ d, size = 22, className }: { d: string; size?: number; className?: string }) {
   return (
     <svg
       width={size}
@@ -9,6 +9,7 @@ export function Svg({ d, size = 22 }: { d: string; size?: number }) {
       strokeWidth={1.8}
       strokeLinecap="round"
       strokeLinejoin="round"
+      className={className}
     >
       <path d={d} />
     </svg>

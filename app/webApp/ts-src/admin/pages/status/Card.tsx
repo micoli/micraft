@@ -1,7 +1,7 @@
 // ── Section card ─────────────────────────────────────────────────────────────
-export function Card({ title, children }: { title: string; children: React.ReactNode }) {
+export function Card({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className="bg-[#1A222C] rounded-xl border border-[#2E3A4E] p-5">
+    <div className={"bg-[#1A222C] rounded-xl border border-[#2E3A4E] p-5" + (className ? ` ${className}` : "")}>
       <h3 className="text-[11px] uppercase tracking-widest font-semibold text-[#8A99AF] mb-4">{title}</h3>
       {children}
     </div>

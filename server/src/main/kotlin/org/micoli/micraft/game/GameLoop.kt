@@ -76,6 +76,7 @@ import org.micoli.micraft.game.session.toPageMap
 import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.IntentCollector
 import org.micoli.micraft.game.tick.MovementProcessor
+import org.micoli.micraft.game.tick.TickProfiler
 import org.micoli.micraft.game.trade.TradeConfigLoader
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
@@ -513,6 +514,10 @@ class GameLoop(
     private var armorRegistry: Map<String, ArmorDefinition> = emptyMap()
     private var targetDistanceTickCounter = 0
     private var npcLifecycleTickCounter = 0
+
+    private val tickProfiler = TickProfiler()
+
+    fun getTickProfile() = tickProfiler.snapshot()
 
     private val commandContextClosures =
         CommandContextClosures(
@@ -1236,7 +1241,9 @@ class GameLoop(
         savePlayer(session)
     }
 
-    private suspend fun tick() {
+    private suspend fun tick(): Unit = tickProfiler.measure("total") { tickBody() }
+
+    private suspend fun tickBody() {
         gameTicks++
         timeBroadcastCounter++
         if (timeBroadcastCounter >= TIME_BROADCAST_TICKS) {
@@ -1245,56 +1252,68 @@ class GameLoop(
             sessionRegistry.all().forEach { it.send(timeMsg) }
         }
 
-        sessionRegistry.all().forEach { session ->
-            val input = intentCollector.collect(session)
-            blockBreaker.tick(session)
-            val newState = movementProcessor.process(session, input)
-            if (newState != session.state) {
-                session.state = newState
-                val update = ServerMessage.PlayerUpdate(newState, session.lastProcessedSeq)
-                sessionRegistry.all().forEach { it.send(update) }
-                broadcastPlayerAdmin(
-                    """{"type":"playerMoved","id":"${session.id}","name":${newState.name.toPlayerAdminJson()},"x":${newState.pos.x},"y":${newState.pos.y},"z":${newState.pos.z},"yaw":${newState.orientation.yaw}}""")
-            }
-            if (session.chunkMode == "websocket") {
-                chunkStreamer.checkAndRequest(session)
-                chunkStreamer.deliverReady(session)
-            }
-            val (newZoneX, newZoneZ) =
-                npcTickPipeline.zoneOf(session.state.pos.x, session.state.pos.z)
-            val lastZone = session.lastZonePos
-            if (lastZone == null || lastZone.first != newZoneX || lastZone.second != newZoneZ) {
-                session.lastZonePos = Pair(newZoneX, newZoneZ)
-                npcTickPipeline.onZoneCrossed(world, newZoneX, newZoneZ)
-            }
-            if (session.hasPermission("admin")) {
-                val pos = session.state.pos
-                val instanceZone =
-                    instanceRegistry.zoneAt(pos.x.toInt(), pos.y.toInt(), pos.z.toInt())
-                if (instanceZone?.id != session.lastInstanceZoneId) {
-                    session.lastInstanceZoneId = instanceZone?.id
-                    session.send(ServerMessage.AdminZoneWireframe(instanceZone?.toProto()))
+        tickProfiler.measure("players") {
+            sessionRegistry.all().forEach { session ->
+                val input = intentCollector.collect(session)
+                blockBreaker.tick(session)
+                val newState = movementProcessor.process(session, input)
+                if (newState != session.state) {
+                    session.state = newState
+                    val update = ServerMessage.PlayerUpdate(newState, session.lastProcessedSeq)
+                    sessionRegistry.all().forEach { it.send(update) }
+                    broadcastPlayerAdmin(
+                        """{"type":"playerMoved","id":"${session.id}","name":${newState.name.toPlayerAdminJson()},"x":${newState.pos.x},"y":${newState.pos.y},"z":${newState.pos.z},"yaw":${newState.orientation.yaw}}""")
+                }
+                if (session.chunkMode == "websocket") {
+                    chunkStreamer.checkAndRequest(session)
+                    chunkStreamer.deliverReady(session)
+                }
+                val (newZoneX, newZoneZ) =
+                    npcTickPipeline.zoneOf(session.state.pos.x, session.state.pos.z)
+                val lastZone = session.lastZonePos
+                if (lastZone == null || lastZone.first != newZoneX || lastZone.second != newZoneZ) {
+                    session.lastZonePos = Pair(newZoneX, newZoneZ)
+                    npcTickPipeline.onZoneCrossed(world, newZoneX, newZoneZ)
+                }
+                if (session.hasPermission("admin")) {
+                    val pos = session.state.pos
+                    val instanceZone =
+                        instanceRegistry.zoneAt(pos.x.toInt(), pos.y.toInt(), pos.z.toInt())
+                    if (instanceZone?.id != session.lastInstanceZoneId) {
+                        session.lastInstanceZoneId = instanceZone?.id
+                        session.send(ServerMessage.AdminZoneWireframe(instanceZone?.toProto()))
+                    }
                 }
             }
         }
-        worldItems.tickCollection(sessionRegistry.all())
+        tickProfiler.measure("worldItems") { worldItems.tickCollection(sessionRegistry.all()) }
         gameTimeService.tick(TICK_SECONDS.toDouble())
-        npcTickPipeline.tick(world, sessionRegistry.all(), combatProcessor)
-        vehicleTickPipeline.tick(world, sessionRegistry.all())
+        tickProfiler.measure("npc") {
+            npcTickPipeline.tick(world, sessionRegistry.all(), combatProcessor)
+        }
+        tickProfiler.measure("vehicles") { vehicleTickPipeline.tick(world, sessionRegistry.all()) }
         // In the tick, not in a wall-clock coroutine of its own: driving the slow lane from a
         // separate 5 s loop raced the main tick and gave the same arena a different spawn rate
         // depending on whether the live server or the simulator was running it.
         npcLifecycleTickCounter++
         if (npcLifecycleTickCounter >= NpcSubsystemFactory.LIFECYCLE_INTERVAL_TICKS) {
             npcLifecycleTickCounter = 0
-            runCatching { npcTickPipeline.lifecycle(world, sessionRegistry.all()) }
-                .onFailure { log.error("npc lifecycle error: {}", it.message, it) }
+            tickProfiler.measure("npcLifecycle") {
+                runCatching { npcTickPipeline.lifecycle(world, sessionRegistry.all()) }
+                    .onFailure { log.error("npc lifecycle error: {}", it.message, it) }
+            }
         }
-        statusEffectProcessor.tick(sessionRegistry.all())
-        regenProcessor.tick(sessionRegistry.all())
-        weatherManager.tick(world) { msg -> sessionRegistry.all().forEach { it.send(msg) } }
-        liquidManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
-        vegetationManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
+        tickProfiler.measure("statusEffects") { statusEffectProcessor.tick(sessionRegistry.all()) }
+        tickProfiler.measure("regen") { regenProcessor.tick(sessionRegistry.all()) }
+        tickProfiler.measure("weather") {
+            weatherManager.tick(world) { msg -> sessionRegistry.all().forEach { it.send(msg) } }
+        }
+        tickProfiler.measure("liquid") {
+            liquidManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
+        }
+        tickProfiler.measure("vegetation") {
+            vegetationManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
+        }
         targetDistanceTickCounter++
         if (targetDistanceTickCounter >= TARGET_DISTANCE_REFRESH_TICKS) {
             targetDistanceTickCounter = 0
@@ -1312,11 +1331,13 @@ class GameLoop(
                     world = world,
                     commandContext = commandContext,
                 )
-            pluginTickHandlers.forEach { handler ->
-                runCatching { handler.tick(ctx) }
-                    .onFailure {
-                        log.error("TickHandler {} error: {}", handler.name, it.message, it)
-                    }
+            tickProfiler.measure("plugins") {
+                pluginTickHandlers.forEach { handler ->
+                    runCatching { handler.tick(ctx) }
+                        .onFailure {
+                            log.error("TickHandler {} error: {}", handler.name, it.message, it)
+                        }
+                }
             }
         }
     }

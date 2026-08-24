@@ -61,4 +61,24 @@ class MetricsRoutesTest {
         val metrics = buildPrometheusMetrics(gameLoop)
         assertTrue(metrics.contains("micraft_npc_total 0"))
     }
+
+    @Test
+    fun buildStatusSnapshot_includesCpuAndTickBreakdown() {
+        val gameLoop = GameLoop(testWorld())
+        val snapshot = buildStatusSnapshot(gameLoop)
+        assertTrue(snapshot.processCpuLoadPct >= 0.0)
+        assertTrue(snapshot.systemCpuLoadPct >= 0.0)
+        assertTrue(snapshot.threadCount > 0)
+        assertTrue(snapshot.gcStats.isNotEmpty())
+        assertTrue(snapshot.tickProfile.isEmpty())
+        assertEquals(0.0, snapshot.avgTickDurationMs)
+        assertTrue(snapshot.tickBudgetMs > 0)
+    }
+
+    @Test
+    fun buildStatusSnapshot_tickProfileNeverIncludesTotalPhase() {
+        val gameLoop = GameLoop(testWorld())
+        val snapshot = buildStatusSnapshot(gameLoop)
+        assertTrue(snapshot.tickProfile.none { it.name == "total" })
+    }
 }
