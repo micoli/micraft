@@ -117,7 +117,10 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
       >
         {Array.from({ length: side }, (_, zi) =>
           Array.from({ length: side }, (_, xi) => {
-            const dx = radius - xi;
+            // Right=+X (east), top=+Z — matches minimap.ts terrain raster and the yaw arrow
+            // below (dx=sin(yaw), dz=-cos(yaw)), so a chunk east of the player renders right
+            // of the player cell, not left.
+            const dx = xi - radius;
             const dz = radius - zi;
             const cx = playerCx + dx;
             const cz = playerCz + dz;
@@ -129,7 +132,7 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
                 title={`${cx},${cz} ${state}`}
                 style={{
                   position: "relative",
-                  background: STATE_COLOR[state],
+                  backgroundColor: STATE_COLOR[state],
                   backgroundImage: state === "impostor" ? HACHURE_PATTERN : undefined,
                   opacity: isPlayer ? 1 : 0.75,
                   borderRadius: 1,
@@ -165,7 +168,7 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
               style={{
                 width: 8,
                 height: 8,
-                background: STATE_COLOR[s],
+                backgroundColor: STATE_COLOR[s],
                 backgroundImage: s === "impostor" ? HACHURE_PATTERN : undefined,
                 display: "inline-block",
                 borderRadius: 1,
