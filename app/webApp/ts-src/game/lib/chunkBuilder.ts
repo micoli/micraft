@@ -381,10 +381,14 @@ const FACE_STRIDE = 7;
 const FACE_BUF_SLOTS = 840_000; // 7 ints × up to 120k faces per chunk
 
 // Y-slab height for sub-chunk mesh splitting. Each material×slab combo becomes its own
-// BabylonJS mesh, giving the engine a tight bounding box per slab for frustum culling.
-// With SLAB_HEIGHT=16, a world of topY≈128 produces 8 slabs — only the 2-3 slabs in the
-// camera frustum are rendered, saving 60-70% of vertex work for underground/angled views.
-const SLAB_HEIGHT = 16;
+// BabylonJS mesh, giving the engine a tight bounding box per slab for frustum culling — but each
+// one is also a separate draw call. FPS-drop instrumentation (see LocalPlayerController's spike
+// ring buffer) measured ~1000-1300 active meshes/frame at SLAB_HEIGHT=16 with render() itself
+// (not chunk meshing) the dominant per-frame cost — draw-call count, not vertex throughput, was
+// the actual bottleneck. Doubled from 16 to halve slab (and so draw-call) count in exchange for
+// coarser per-slab culling granularity; revisit with the same instrumentation before tuning
+// further in either direction.
+const SLAB_HEIGHT = 32;
 
 // --- Chunk state ---
 
