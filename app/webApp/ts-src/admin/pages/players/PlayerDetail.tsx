@@ -217,7 +217,7 @@ export function PlayerDetail({
           </TabsContent>
         )}
         <TabsContent value="inventory">
-          <InventoryTab file={file} />
+          <InventoryTab file={file} onGive={giveItem} />
         </TabsContent>
         {hasRpg && (
           <TabsContent value="rpg">

@@ -162,6 +162,7 @@ export const en = {
   "players.tabInventory": "Inventory",
   "players.give": "Give",
   "players.giveNamePlaceholder": "Item, armor, weapon or tool name",
+  "players.giveInventoryNamePlaceholder": "Item or block name",
   "players.giveCount": "Count",
   "players.giveButton": "Give",
   "players.giveDone": "Given",

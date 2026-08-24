@@ -157,6 +157,7 @@ export const fr: Record<TranslationKey, string> = {
   "players.tabInventory": "Inventaire",
   "players.give": "Donner",
   "players.giveNamePlaceholder": "Nom d'objet, armure, arme ou outil",
+  "players.giveInventoryNamePlaceholder": "Nom d'objet ou de bloc",
   "players.giveCount": "Quantité",
   "players.giveButton": "Donner",
   "players.giveDone": "Donné",

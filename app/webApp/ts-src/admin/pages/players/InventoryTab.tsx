@@ -1,12 +1,37 @@
+import { useEffect, useState } from "react";
 import { PlayerFile } from "../../apiTypes";
 import { useT } from "../../i18n";
+import { getApiAdminItems, getApiAdminBlocks } from "../../../generated/api/requests";
+import { GiveItemForm } from "./GiveItemForm";
 
-export function InventoryTab({ file }: { file: PlayerFile }) {
+export function InventoryTab({
+  file,
+  onGive,
+}: {
+  file: PlayerFile;
+  onGive: (name: string, count: number) => Promise<void>;
+}) {
   const t = useT();
   const entries = Object.entries(file.state.inventory).sort(([a], [b]) => a.localeCompare(b));
 
+  const [giveNames, setGiveNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      getApiAdminItems({ throwOnError: true }).then((r) => Object.keys(r.data)),
+      getApiAdminBlocks({ throwOnError: true }).then((r) => r.data.map((b) => b.name)),
+    ]).then(([items, blocks]) => setGiveNames([...items, ...blocks]));
+  }, []);
+
   return (
-    <div className="p-5">
+    <div className="p-5 space-y-5">
+      <GiveItemForm
+        names={giveNames}
+        placeholder={t("players.giveInventoryNamePlaceholder")}
+        datalistId="inventory-give-names"
+        onGive={onGive}
+      />
+
       {entries.length === 0 ? (
         <p className="text-xs text-[#4A5568]">{t("players.inventoryEmpty")}</p>
       ) : (

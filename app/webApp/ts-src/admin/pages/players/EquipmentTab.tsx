@@ -4,6 +4,7 @@ import { useT } from "../../i18n";
 import { SaveButton } from "../../../primitives/SaveButton";
 import { getApiArmors, getApiWeapons, getApiTools } from "../../../generated/api/requests";
 import { EquipmentToggleList } from "./EquipmentToggleList";
+import { GiveItemForm } from "./GiveItemForm";
 
 export interface EquipmentPayload {
   ownedArmors: string[];
@@ -46,11 +47,6 @@ export function EquipmentTab({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const [giveName, setGiveName] = useState("");
-  const [giveCount, setGiveCount] = useState(1);
-  const [giving, setGiving] = useState(false);
-  const [giveMsg, setGiveMsg] = useState<string | null>(null);
-
   useEffect(() => {
     Promise.all([
       getApiArmors({ throwOnError: true }).then((r) => r.data),
@@ -82,31 +78,19 @@ export function EquipmentTab({
     setTimeout(() => setSaved(false), 1500);
   };
 
-  const give = async () => {
-    const name = giveName.trim();
-    if (!name) return;
-    setGiving(true);
-    setGiveMsg(null);
-    try {
-      await onGive(name, giveCount);
-      setGiveMsg(t("players.giveDone"));
-      if (name in armorDefs && !ownedArmors.includes(name)) {
-        setOwnedArmors((p) => [...p, name]);
-        setArmorNames((p) => (p.includes(name) ? p : [...p, name]));
-      }
-      if (name in weaponDefs && !ownedWeapons.includes(name)) {
-        setOwnedWeapons((p) => [...p, name]);
-        setWeaponNames((p) => (p.includes(name) ? p : [...p, name]));
-      }
-      if (name in toolDefs && !ownedTools.includes(name)) {
-        setOwnedTools((p) => [...p, name]);
-        setToolNames((p) => (p.includes(name) ? p : [...p, name]));
-      }
-      setGiveName("");
-    } catch {
-      setGiveMsg(t("players.giveFailed"));
+  const onGiven = (name: string) => {
+    if (name in armorDefs && !ownedArmors.includes(name)) {
+      setOwnedArmors((p) => [...p, name]);
+      setArmorNames((p) => (p.includes(name) ? p : [...p, name]));
     }
-    setGiving(false);
+    if (name in weaponDefs && !ownedWeapons.includes(name)) {
+      setOwnedWeapons((p) => [...p, name]);
+      setWeaponNames((p) => (p.includes(name) ? p : [...p, name]));
+    }
+    if (name in toolDefs && !ownedTools.includes(name)) {
+      setOwnedTools((p) => [...p, name]);
+      setToolNames((p) => (p.includes(name) ? p : [...p, name]));
+    }
   };
 
   const handOptions = ["", ...ownedWeapons, ...ownedTools];
@@ -114,39 +98,13 @@ export function EquipmentTab({
 
   return (
     <div className="p-5 space-y-5">
-      <div>
-        <p className="text-xs font-medium text-[#8A99AF] mb-2">{t("players.give")}</p>
-        <div className="flex gap-2 items-center">
-          <input
-            value={giveName}
-            onChange={(e) => setGiveName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && give()}
-            placeholder={t("players.giveNamePlaceholder")}
-            list="equipment-give-names"
-            className="flex-1 bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-[#3C50E0]"
-          />
-          <datalist id="equipment-give-names">
-            {giveNames.map((n) => (
-              <option key={n} value={n} />
-            ))}
-          </datalist>
-          <input
-            type="number"
-            min={1}
-            value={giveCount}
-            onChange={(e) => setGiveCount(Math.max(1, Number(e.target.value) || 1))}
-            className="w-16 bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-[#3C50E0]"
-          />
-          <button
-            onClick={give}
-            disabled={giving || !giveName.trim()}
-            className="px-3 py-1 rounded-lg text-xs font-medium bg-[#3C50E0] hover:bg-[#3446c7] text-white transition-colors disabled:opacity-50"
-          >
-            {t("players.giveButton")}
-          </button>
-        </div>
-        {giveMsg && <p className="text-xs text-[#8A99AF] mt-1">{giveMsg}</p>}
-      </div>
+      <GiveItemForm
+        names={giveNames}
+        placeholder={t("players.giveNamePlaceholder")}
+        datalistId="equipment-give-names"
+        onGive={onGive}
+        onGiven={onGiven}
+      />
 
       <EquipmentToggleList
         title={t("players.ownedArmors")}
