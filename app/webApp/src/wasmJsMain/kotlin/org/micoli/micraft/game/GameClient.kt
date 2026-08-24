@@ -202,11 +202,11 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                             if (frame !is Frame.Binary) continue
                             val data = frame.readBytes()
                             networkStats.bytesIn += data.size
-                            val decodeT0 = jsNow()
+                            val decodeT0 = jsPerfNow()
                             val msg =
                                 runCatching { ServerMessageCodec.decode(data) }.getOrNull()
                                     ?: continue
-                            networkStats.chunkDecodeMsAccum += jsNow() - decodeT0
+                            networkStats.chunkDecodeMsAccum += jsPerfNow() - decodeT0
                             networkStats.chunkDecodeCount++
                             if (msg is ServerMessage.ChunkData) {
                                 chunkManager.enqueueChunk(

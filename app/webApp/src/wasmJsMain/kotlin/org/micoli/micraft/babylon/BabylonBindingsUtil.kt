@@ -19,6 +19,12 @@ fun jsGetPagePort(): Int =
 
 fun jsNow(): Double = js("Date.now()")
 
+// Sub-millisecond, monotonic clock — Date.now() is integer-millisecond resolution, too coarse
+// for operations that routinely finish in well under 1ms (e.g. a single protobuf chunk-message
+// decode): most before/after deltas read as exactly 0 with jsNow(), hiding the real cost instead
+// of just showing it as small. Use this for short-duration perf timing instead of jsNow().
+fun jsPerfNow(): Double = js("performance.now()")
+
 fun jsReload(): Unit = js("mc.reload()")
 
 fun jsHasUrlParam(name: String): Boolean =
