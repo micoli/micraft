@@ -385,10 +385,11 @@ const FACE_BUF_SLOTS = 840_000; // 7 ints × up to 120k faces per chunk
 // one is also a separate draw call. FPS-drop instrumentation (see LocalPlayerController's spike
 // ring buffer) measured ~1000-1300 active meshes/frame at SLAB_HEIGHT=16 with render() itself
 // (not chunk meshing) the dominant per-frame cost — draw-call count, not vertex throughput, was
-// the actual bottleneck. Doubled from 16 to halve slab (and so draw-call) count in exchange for
-// coarser per-slab culling granularity; revisit with the same instrumentation before tuning
-// further in either direction.
-const SLAB_HEIGHT = 32;
+// the actual bottleneck. 16→32 cut totalMeshes ~25% and renderMs ~40-50% (activeMeshes barely
+// moved — most of the win came from less per-mesh bookkeeping over the *total* mesh set, not
+// fewer post-cull draw calls); 32→64 pushes further in the same direction. Revisit with the same
+// instrumentation before tuning further.
+const SLAB_HEIGHT = 64;
 
 // --- Chunk state ---
 
