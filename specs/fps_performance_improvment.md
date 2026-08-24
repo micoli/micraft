@@ -20,6 +20,7 @@ b744dffc fix(client): reset chunk-mesh timing stats on drainPendingChunks' idle 
 28dacc41 fix(client): use performance.now() for chunk-decode timing, not Date.now()
 4b5c967f perf(client): time npc/vehicle/remote-player ticks, close the blockMs gap
 9f8f3f40 perf(client): render ChunkDebug grid on canvas instead of 225 DOM nodes
+a37b0476 perf(client): gate FPS instrumentation behind a master switch, off by default
 ```
 
 ## Instrumentation built (still live in the client)
