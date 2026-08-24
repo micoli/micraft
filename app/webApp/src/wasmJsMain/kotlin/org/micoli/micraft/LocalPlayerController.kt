@@ -565,7 +565,7 @@ class LocalPlayerController(
                 predZ = vpos.z.toDouble()
             }
             predVy = 0.0
-            animClip = "idle"
+            animClip = "sitting"
         } else {
             var dx = 0f
             var dz = 0f

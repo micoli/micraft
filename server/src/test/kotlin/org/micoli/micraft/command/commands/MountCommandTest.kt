@@ -87,14 +87,18 @@ class MountCommandTest {
         val vehicleId = spawnedVehicleId(manager)
         val session = testSession()
         session.combatState = CombatState(targetId = vehicleId)
+        val broadcasts = mutableListOf<ServerMessage>()
 
-        mount.execute(session, "", testContext(vehicleManager = manager))
+        mount.execute(
+            session, "", testContext(vehicleManager = manager, broadcast = { broadcasts.add(it) }))
 
         assertEquals(vehicleId, session.mountedVehicleId)
         assertEquals(session.id, manager.get(vehicleId)?.riderSessionId)
         assertEquals(
             vehicleId,
             session.sent.filterIsInstance<ServerMessage.MountUpdate>().single().vehicleId)
+        assertTrue(session.state.mounted)
+        assertTrue(broadcasts.filterIsInstance<ServerMessage.PlayerUpdate>().single().state.mounted)
     }
 
     @Test
@@ -103,13 +107,18 @@ class MountCommandTest {
         val vehicleId = spawnedVehicleId(manager)
         val session = testSession()
         session.combatState = CombatState(targetId = vehicleId)
-        mount.execute(session, "", testContext(vehicleManager = manager))
+        val broadcasts = mutableListOf<ServerMessage>()
+        mount.execute(
+            session, "", testContext(vehicleManager = manager, broadcast = { broadcasts.add(it) }))
 
-        mount.execute(session, "", testContext(vehicleManager = manager))
+        mount.execute(
+            session, "", testContext(vehicleManager = manager, broadcast = { broadcasts.add(it) }))
 
         assertNull(session.mountedVehicleId)
         assertNull(manager.get(vehicleId)?.riderSessionId)
         assertNull(session.sent.filterIsInstance<ServerMessage.MountUpdate>().last().vehicleId)
+        assertTrue(!session.state.mounted)
+        assertTrue(!broadcasts.filterIsInstance<ServerMessage.PlayerUpdate>().last().state.mounted)
     }
 
     @Test
