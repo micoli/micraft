@@ -84,6 +84,8 @@ private data class FrameSnapshot(
     val renderMs: Double,
     val renderFrames: Int,
     val renderMsMax: Double,
+    val totalMeshes: Int,
+    val activeMeshes: Int,
 )
 
 private data class RaycastResult(
@@ -241,7 +243,8 @@ class LocalPlayerController(
                     "\"bytesIn\":${s.bytesIn},\"physicsMs\":${s.physicsMs}," +
                     "\"interactionMs\":${s.interactionMs},\"auxMs\":${s.auxMs}," +
                     "\"wsDecodeMs\":${s.wsDecodeMs},\"renderMs\":${s.renderMs}," +
-                    "\"renderFrames\":${s.renderFrames},\"renderMsMax\":${s.renderMsMax}}"
+                    "\"renderFrames\":${s.renderFrames},\"renderMsMax\":${s.renderMsMax}," +
+                    "\"totalMeshes\":${s.totalMeshes},\"activeMeshes\":${s.activeMeshes}}"
             }
         jsLogSpike(json)
     }
@@ -1416,6 +1419,8 @@ class LocalPlayerController(
                     renderMs = renderMsSum,
                     renderFrames = renderFrameCount,
                     renderMsMax = renderMsMaxThisBlock,
+                    totalMeshes = jsGetTotalMeshCount(scene),
+                    activeMeshes = jsGetActiveMeshCount(scene),
                 ))
             if (blockTickMaxMs > jsGetSpikeThresholdMs(DEFAULT_SPIKE_THRESHOLD_MS)) logFrameSpike()
             lastHudBlockTs = now

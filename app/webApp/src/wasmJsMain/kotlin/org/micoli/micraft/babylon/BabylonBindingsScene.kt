@@ -27,6 +27,14 @@ fun jsResetRenderStats(): Unit =
     js(
         "{ window.mcState.renderMsAccum=0; window.mcState.renderFrameCount=0; window.mcState.renderMsMax=0; }")
 
+// Cheap proxy for draw-call count — one mesh is ~one draw call for chunk geometry (the multi-face
+// createBox variant is the one exception, 6 draw calls, but that's used for a handful of
+// non-terrain block types, not the bulk of the scene). Sampled once per HUD tick-block (not per
+// frame) since scene.getActiveMeshes() walks the frustum-culled list.
+fun jsGetTotalMeshCount(scene: JsAny): Int = js("scene.meshes.length")
+
+fun jsGetActiveMeshCount(scene: JsAny): Int = js("scene.getActiveMeshes().length")
+
 fun jsSetupResize(engine: JsAny): Unit =
     js("window.addEventListener('resize', function(){ engine.resize(); })")
 
