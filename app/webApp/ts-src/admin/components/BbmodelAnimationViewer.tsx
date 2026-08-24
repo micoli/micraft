@@ -10,6 +10,7 @@ import {
   isMeshElement,
   resolveTextureDims,
 } from "../../game/lib/player/bbmodelMesh";
+import { ORTHO_YAW, OrthoView, OrthoViewButton } from "./OrthoViewButton";
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -316,14 +317,6 @@ const MIN_DIM = 100;
 const MAX_DIM = 900;
 
 type RotateOverride = { x: number; y: number; z: number } | null;
-type OrthoView = "T" | "B" | "N" | "S" | "E" | "W";
-// Model yaw (radians) that faces each cardinal side toward the camera, 90° apart.
-const ORTHO_YAW: Record<"N" | "E" | "S" | "W", number> = {
-  N: 0,
-  E: Math.PI / 2,
-  S: Math.PI,
-  W: -Math.PI / 2,
-};
 
 export function BbmodelAnimationViewer({
   bbmodel,
@@ -604,16 +597,10 @@ export function BbmodelAnimationViewer({
         setOrthoViewRef.current = (view: OrthoView) => {
           autoRotate = false;
           lastInteraction = Date.now();
-          if (view === "T") {
-            camera.beta = 0.0001;
-          } else if (view === "B") {
-            camera.beta = Math.PI - 0.0001;
-          } else {
-            camera.beta = Math.PI / 2;
-            angle = ORTHO_YAW[view];
-            model.root.rotation.y = angle;
-            angleRef.current = angle;
-          }
+          camera.alpha = -Math.PI / 2;
+          [angle, camera.beta] = ORTHO_YAW[view];
+          model.root.rotation.y = angle;
+          angleRef.current = angle;
           onCameraChangeRef.current?.(camera.radius, angle);
         };
 
@@ -674,18 +661,36 @@ export function BbmodelAnimationViewer({
         style={resizeHandleStyle}
         aria-label="Resize preview"
       />
-      <div style={{ position: "absolute", bottom: 6, left: 6, display: "flex", flexWrap: "wrap", gap: 4, width: 48 }}>
-        {(["T", "N", "S", "B", "W", "E"] as OrthoView[]).map((view) => (
-          <button
-            key={view}
-            type="button"
-            onClick={() => setOrthoViewRef.current?.(view)}
-            style={zoomButtonStyle}
-            aria-label={`View from ${view}`}
-          >
-            {view}
-          </button>
-        ))}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 6,
+          left: 6,
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 4,
+          width: 48,
+        }}
+      >
+        <div>
+          <OrthoViewButton view={"T"} setOrthoViewRef={setOrthoViewRef} />
+        </div>
+        <div>
+          <OrthoViewButton view={"N"} setOrthoViewRef={setOrthoViewRef} />
+        </div>
+        <div>
+          <OrthoViewButton view={"B"} setOrthoViewRef={setOrthoViewRef} />
+        </div>
+
+        <div>
+          <OrthoViewButton view={"W"} setOrthoViewRef={setOrthoViewRef} />
+        </div>
+        <div>
+          <OrthoViewButton view={"S"} setOrthoViewRef={setOrthoViewRef} />
+        </div>
+        <div>
+          <OrthoViewButton view={"E"} setOrthoViewRef={setOrthoViewRef} />
+        </div>
       </div>
     </div>
   );
