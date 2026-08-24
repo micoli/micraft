@@ -273,10 +273,12 @@ class SceneMesher(
                     faceCount++
                 }
                 // bottom (-Y)
+                val belowOrd = if (y <= 0) 0 else blocks[idx - depth].toInt() and 0xFF
                 val emitBottom =
                     bypassCulling ||
                         y <= 0 ||
-                        occludesByOrd[blocks[idx - depth].toInt() and 0xFF].toInt() == 0
+                        (occludesByOrd[belowOrd].toInt() == 0 &&
+                            !(liquid && liquidByOrd[belowOrd].toInt() != 0))
                 if (emitBottom) {
                     val faceMatV = t + 5
                     val aoV = computeFaceAO(x, y, z, 5) or colorBits
@@ -291,10 +293,12 @@ class SceneMesher(
                     faceCount++
                 }
                 // south (+Z) — not mergeable along Z (own fixed depth), mergeable along X
+                val southOrd = if (z == depth - 1) 0 else blocks[idx + 1].toInt() and 0xFF
                 val emitSouth =
                     bypassCulling ||
                         z == depth - 1 ||
-                        occludesByOrd[blocks[idx + 1].toInt() and 0xFF].toInt() == 0
+                        (occludesByOrd[southOrd].toInt() == 0 &&
+                            !(liquid && liquidByOrd[southOrd].toInt() != 0))
                 if (emitSouth) {
                     val faceMatV = t + 0
                     val aoV = computeFaceAO(x, y, z, 0) or colorBits
@@ -330,10 +334,12 @@ class SceneMesher(
                         z, mergeActiveS, mergeStartXS, mergeLenS, mergeFaceMatS, mergeAoS, y)
                 }
                 // north (-Z)
+                val northOrd = if (z == 0) 0 else blocks[idx - 1].toInt() and 0xFF
                 val emitNorth =
                     bypassCulling ||
                         z == 0 ||
-                        occludesByOrd[blocks[idx - 1].toInt() and 0xFF].toInt() == 0
+                        (occludesByOrd[northOrd].toInt() == 0 &&
+                            !(liquid && liquidByOrd[northOrd].toInt() != 0))
                 if (emitNorth) {
                     val faceMatV = t + 1
                     val aoV = computeFaceAO(x, y, z, 1) or colorBits
@@ -369,10 +375,12 @@ class SceneMesher(
                         z, mergeActiveN, mergeStartXN, mergeLenN, mergeFaceMatN, mergeAoN, y)
                 }
                 // east (+X)
+                val eastOrd = if (x == width - 1) 0 else blocks[idx + strideX].toInt() and 0xFF
                 val emitEast =
                     bypassCulling ||
                         x == width - 1 ||
-                        occludesByOrd[blocks[idx + strideX].toInt() and 0xFF].toInt() == 0
+                        (occludesByOrd[eastOrd].toInt() == 0 &&
+                            !(liquid && liquidByOrd[eastOrd].toInt() != 0))
                 if (emitEast) {
                     val faceMatV = t + 2
                     val aoV = computeFaceAO(x, y, z, 2) or colorBits
@@ -402,10 +410,12 @@ class SceneMesher(
                         0, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y)
                 }
                 // west (-X)
+                val westOrd = if (x == 0) 0 else blocks[idx - strideX].toInt() and 0xFF
                 val emitWest =
                     bypassCulling ||
                         x == 0 ||
-                        occludesByOrd[blocks[idx - strideX].toInt() and 0xFF].toInt() == 0
+                        (occludesByOrd[westOrd].toInt() == 0 &&
+                            !(liquid && liquidByOrd[westOrd].toInt() != 0))
                 if (emitWest) {
                     val faceMatV = t + 3
                     val aoV = computeFaceAO(x, y, z, 3) or colorBits

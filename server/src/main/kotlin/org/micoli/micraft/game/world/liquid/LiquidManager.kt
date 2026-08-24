@@ -10,7 +10,7 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(LiquidManager::class.java)
-private const val MAX_FLOW_DISTANCE = 7
+private const val MAX_FLOW_DISTANCE = 40
 
 class LiquidManager(private val world: WorldState) {
     private val activeLiquids: MutableSet<BlockPos> = ConcurrentHashMap.newKeySet()
