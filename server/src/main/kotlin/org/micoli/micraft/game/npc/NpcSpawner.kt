@@ -26,6 +26,9 @@ class NpcSpawner {
         // One pass for every type, then kept up to date locally: the per-type quotas below would
         // otherwise rescan the whole NPC map for each type on each chunk attempt.
         val counts = npcManager.countsByType().toMutableMap()
+        // Same idea for per-chunk/per-zone density: without this, countByTypeInChunk/countInZone
+        // would each rescan the whole NPC map for every candidate chunk of every type.
+        val density = npcManager.spawnDensitySnapshot()
 
         for ((type, def) in definitions) {
             val spawn = def.spawn
@@ -43,7 +46,7 @@ class NpcSpawner {
             for (chunkPos in chunkList) {
                 if (attempts >= ctx.tuning.maxSpawnAttemptsPerTick) break
                 if (!canSpawn()) return
-                if (npcManager.countByTypeInChunk(type, chunkPos) >= spawn.maxPerChunk) continue
+                if (density.countByTypeInChunk(type, chunkPos) >= spawn.maxPerChunk) continue
 
                 val wx =
                     chunkPos.cx * WorldConstants.CHUNK_SIZE +
@@ -55,11 +58,9 @@ class NpcSpawner {
                 val biomeDef = world.biomeDefinitionAt(wx, wz)
                 if (spawn.spawnBiomes.isNotEmpty() && biomeDef?.id !in spawn.spawnBiomes) continue
 
+                val zk = npcManager.zoneKey(wx.toFloat(), wz.toFloat())
                 val maxNpcs = biomeDef?.maxNpcs ?: 0
-                if (maxNpcs > 0) {
-                    val zk = npcManager.zoneKey(wx.toFloat(), wz.toFloat())
-                    if (npcManager.countInZone(zk) >= maxNpcs) continue
-                }
+                if (maxNpcs > 0 && density.countInZone(zk) >= maxNpcs) continue
 
                 val surfaceY = findSurfaceY(world, wx, wz) ?: continue
                 val spawnPos = Vec3(wx + 0.5f, surfaceY.toFloat(), wz + 0.5f)
@@ -84,6 +85,7 @@ class NpcSpawner {
                     "${type.lowercase().replaceFirstChar { it.uppercase() }.replace('_',' ')} - ${FantasyNameGenerator.generate(type)}"
                 // the animal record comes with the spawn now — see NpcManager.spawnNpc
                 npcManager.spawnNpc(name, type, spawnPos, instanceLevel)
+                density.recordSpawn(chunkPos, type, zk)
                 val nowAlive = (counts[type] ?: 0) + 1
                 counts[type] = nowAlive
                 log.debug("Auto-spawned {} at ({},{},{})", type, wx, surfaceY, wz)

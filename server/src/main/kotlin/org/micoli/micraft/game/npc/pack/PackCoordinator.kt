@@ -43,9 +43,17 @@ class PackCoordinator(
     }
 
     suspend fun tick(now: Long = System.currentTimeMillis()) {
+        if (packs.isEmpty() &&
+            pendingRetaliations.isEmpty() &&
+            npcManager.getAll().none { !it.isDead && it.definition.packConfig != null })
+            return
         val alive = npcManager.getAll().filter { !it.isDead }.sortedBy { it.state.id }
+        // Grouped once per tick: nearestHostile only ever wants candidates of an ally's hostile
+        // types, so scanning the full alive list per caller would rescan animals that can never
+        // match.
+        val byType = alive.groupBy { it.state.type }
         drainRetaliations(alive, now)
-        detect(alive, now)
+        detect(alive, byType, now)
         updatePacks(now)
     }
 
@@ -67,14 +75,18 @@ class PackCoordinator(
      * into first — otherwise which wolf leads (and therefore who ends up in the pack) would depend
      * on UUID ordering rather than on where the animals actually stand.
      */
-    private suspend fun detect(alive: List<NpcInstance>, now: Long) {
+    private suspend fun detect(
+        alive: List<NpcInstance>,
+        byType: Map<String, List<NpcInstance>>,
+        now: Long,
+    ) {
         val callers =
             alive
                 .mapNotNull { instance ->
                     val config = instance.definition.packConfig ?: return@mapNotNull null
                     if (config.hostileTypes.isEmpty()) return@mapNotNull null
                     if (isSilenced(instance, config, now)) return@mapNotNull null
-                    val target = nearestHostile(instance, config, alive) ?: return@mapNotNull null
+                    val target = nearestHostile(instance, config, byType) ?: return@mapNotNull null
                     Triple(instance, target, distSq(instance, target))
                 }
                 .sortedWith(compareBy({ it.third }, { it.first.state.id }))
@@ -101,14 +113,15 @@ class PackCoordinator(
     private fun nearestHostile(
         instance: NpcInstance,
         config: PackConfig,
-        alive: List<NpcInstance>,
+        byType: Map<String, List<NpcInstance>>,
     ): NpcInstance? {
         val radius = detectionRadius(instance)
         val radiusSq = radius * radius
-        return alive
+        return config.hostileTypes
+            .asSequence()
+            .flatMap { byType[it].orEmpty() }
             .filter { candidate ->
-                candidate.state.type in config.hostileTypes &&
-                    candidate.state.id != instance.state.id &&
+                candidate.state.id != instance.state.id &&
                     Math.abs(candidate.state.pos.y - instance.state.pos.y) <= 5f &&
                     distSq(candidate, instance) <= radiusSq
             }

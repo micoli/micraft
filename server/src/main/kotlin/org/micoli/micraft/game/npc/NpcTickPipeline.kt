@@ -99,15 +99,28 @@ class NpcTickPipeline(
         }
     }
 
+    /**
+     * Chunks worth considering for spawning: within [ctx.tuning.npcZoneSize] of some player.
+     *
+     * Walks a fixed box per session and keeps only chunks actually discovered, rather than
+     * filtering [WorldState.discoveredChunks] — that set only grows over a server's lifetime, so
+     * scanning all of it here got slower the longer the world had been explored, independent of how
+     * many chunks were actually near a player right now.
+     */
     private fun nearChunks(world: WorldState, sessions: Collection<PlayerSession>): List<ChunkPos> {
         if (sessions.isEmpty()) return emptyList()
         val halfZone = ctx.tuning.npcZoneSize / WorldConstants.CHUNK_SIZE
-        return world.discoveredChunks().filter { cp ->
-            sessions.any { s ->
-                val pcx = Math.floorDiv(s.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE)
-                val pcz = Math.floorDiv(s.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE)
-                Math.abs(cp.cx - pcx) <= halfZone && Math.abs(cp.cz - pcz) <= halfZone
+        val result = LinkedHashSet<ChunkPos>()
+        for (s in sessions) {
+            val pcx = Math.floorDiv(s.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE)
+            val pcz = Math.floorDiv(s.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE)
+            for (dx in -halfZone..halfZone) {
+                for (dz in -halfZone..halfZone) {
+                    val cp = ChunkPos(pcx + dx, pcz + dz)
+                    if (world.getChunkIfDiscovered(cp) != null) result.add(cp)
+                }
             }
         }
+        return result.toList()
     }
 }

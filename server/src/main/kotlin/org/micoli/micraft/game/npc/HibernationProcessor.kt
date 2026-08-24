@@ -14,7 +14,7 @@ class HibernationProcessor(
 ) {
     fun tick() {
         val day = gameDay()
-        for (instance in npcManager.getAll().toList()) {
+        for (instance in npcManager.getAll()) {
             val config = instance.definition.hibernation ?: continue
             if (instance.isDead) {
                 instance.hibernating = false

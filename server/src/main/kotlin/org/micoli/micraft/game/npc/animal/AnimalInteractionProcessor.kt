@@ -61,7 +61,7 @@ class AnimalInteractionProcessor(
         val currentDay = gameTimeService.currentGameDay
         val now = System.currentTimeMillis()
 
-        for (instance in npcManager.getAll().toList()) {
+        for (instance in npcManager.getAll()) {
             if (instance.isDead) continue
             val animal = instance.animalData ?: continue
             val config = instance.definition.animalConfig ?: continue

@@ -550,6 +550,44 @@ class NpcManager(
         }
     }
 
+    /**
+     * One-pass chunk/zone population snapshot for the spawner, which otherwise calls
+     * [countByTypeInChunk] and [countInZone] once per candidate chunk per type — each a full rescan
+     * of [npcs]. Built once per [NpcSpawner.trySpawn] invocation and kept up to date locally as new
+     * NPCs are placed during that same pass.
+     */
+    class SpawnDensitySnapshot(
+        val perChunkType: MutableMap<ChunkPos, MutableMap<String, Int>>,
+        val perZone: MutableMap<String, Int>,
+    ) {
+        fun countByTypeInChunk(type: String, chunkPos: ChunkPos): Int =
+            perChunkType[chunkPos]?.get(type) ?: 0
+
+        fun countInZone(zoneKey: String): Int = perZone[zoneKey] ?: 0
+
+        fun recordSpawn(chunkPos: ChunkPos, type: String, zoneKey: String) {
+            perChunkType.getOrPut(chunkPos) { HashMap() }.merge(type, 1, Int::plus)
+            perZone.merge(zoneKey, 1, Int::plus)
+        }
+    }
+
+    fun spawnDensitySnapshot(): SpawnDensitySnapshot {
+        val perChunkType = HashMap<ChunkPos, MutableMap<String, Int>>()
+        val perZone = HashMap<String, Int>()
+        for (instance in npcs.values) {
+            if (instance.isDead) continue
+            val pos = instance.state.pos
+            val chunkPos =
+                ChunkPos(
+                    Math.floorDiv(pos.x.toInt(), WorldConstants.CHUNK_SIZE),
+                    Math.floorDiv(pos.z.toInt(), WorldConstants.CHUNK_SIZE),
+                )
+            perChunkType.getOrPut(chunkPos) { HashMap() }.merge(instance.state.type, 1, Int::plus)
+            perZone.merge(zoneKey(pos.x, pos.z), 1, Int::plus)
+        }
+        return SpawnDensitySnapshot(perChunkType, perZone)
+    }
+
     fun findByNameOrId(query: String): NpcInstance? =
         npcs[query] ?: npcs.values.firstOrNull { it.state.name.equals(query, ignoreCase = true) }
 
@@ -666,7 +704,7 @@ class NpcManager(
         val now = System.currentTimeMillis()
         val dtSec = (now - lastEffectTickMs) / 1000f
         lastEffectTickMs = now
-        for (instance in npcs.values.toList()) {
+        for (instance in npcs.values) {
             if (instance.isDead) continue
             val effects = instance.activeEffects
             if (effects.isEmpty()) continue
