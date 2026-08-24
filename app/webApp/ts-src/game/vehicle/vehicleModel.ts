@@ -61,10 +61,12 @@ export function registerVehicleModel(): Pick<
       model.root.position.x = x;
       model.root.position.y = y;
       model.root.position.z = z;
-      // Babylon's default Euler order (YXZ) applies rotation.y before rotation.x, so pitch tilts
-      // around the vehicle's own already-yawed forward axis instead of the world X axis.
-      model.root.rotation.y = yaw;
-      model.root.rotation.x = pitch;
+      // CART.bbmodel's nose faces its local +X axis, not +Z like headingYaw/localPitch assume,
+      // so yaw needs a +90° offset and pitch must rotate around local Z (the model's lateral
+      // axis) instead of X (its nose axis, which would roll the cart instead of tilting it).
+      model.root.rotation.y = yaw + Math.PI / 2;
+      model.root.rotation.x = 0;
+      model.root.rotation.z = -pitch;
     },
 
     disposeVehicleModel: (model: McPlayerModel): void => {

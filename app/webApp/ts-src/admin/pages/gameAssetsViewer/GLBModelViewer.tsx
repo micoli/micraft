@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
-import { BBModelViewer } from "./BBModelViewer";
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
