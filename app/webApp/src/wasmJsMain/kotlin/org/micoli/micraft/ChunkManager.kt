@@ -279,7 +279,17 @@ class ChunkManager(private val scene: JsAny) {
     ) {
         val mats = getBlockMaterials() ?: return
         buildOrdFlags()
-        if (pendingChunks.isEmpty() && activeRender == null) return
+        if (pendingChunks.isEmpty() && activeRender == null) {
+            // Idle steady-state (nothing to mesh) — zero the per-call timing stats instead of
+            // leaving them at whatever they were on the last call that actually did work, or
+            // LocalPlayerController's spike ring buffer keeps sampling stale, frozen values
+            // (e.g. a fixed gpuUploadMs/facesProcessed from the last real chunk upload) forever.
+            lastFaceScanMs = 0.0
+            lastFaceProcessMs = 0.0
+            lastGpuUploadMs = 0.0
+            lastFacesProcessedThisDrain = 0
+            return
+        }
         val deadline = jsNow() + budgetMs
         var faceScanMs = 0.0
         var faceProcessMs = 0.0
