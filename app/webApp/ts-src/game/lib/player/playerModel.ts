@@ -140,6 +140,7 @@ const CLIP_NAME_MAP: Record<Exclude<PlayerAnimClip, "idle">, string> = {
   jump_idle: "jump_idle",
   strafe_left: "running_strafe_left",
   strafe_right: "running_strafe_right",
+  sitting: "sit_chair_idle",
 };
 
 function extractNamedAnim(

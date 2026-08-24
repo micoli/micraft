@@ -191,7 +191,8 @@ declare global {
     | "crawling"
     | "jump_idle"
     | "strafe_left"
-    | "strafe_right";
+    | "strafe_right"
+    | "sitting";
 
   interface McPlayerModel {
     root: InstanceType<typeof BABYLON.TransformNode>;

@@ -25,7 +25,9 @@ class MountCommand : CommandHandler {
         if (session.mountedVehicleId != null) {
             vehicleManager.dismount(session)
             session.mountedVehicleId = null
+            session.state = session.state.copy(mounted = false)
             session.send(ServerMessage.MountUpdate(null))
+            context.broadcast(ServerMessage.PlayerUpdate(session.state))
             session.send(ServerMessage.Notification(i18n.t(lang, "mount:server:dismounted")))
             return
         }
@@ -43,7 +45,9 @@ class MountCommand : CommandHandler {
         }
 
         session.mountedVehicleId = vehicle.id
+        session.state = session.state.copy(mounted = true)
         session.send(ServerMessage.MountUpdate(vehicle.id))
+        context.broadcast(ServerMessage.PlayerUpdate(session.state))
         session.send(ServerMessage.Notification(i18n.t(lang, "mount:server:mounted")))
     }
 }

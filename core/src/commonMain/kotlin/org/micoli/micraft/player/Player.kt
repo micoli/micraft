@@ -77,4 +77,5 @@ data class PlayerState(
     val dominantHand: Hand = Hand.RIGHT,
     val rightHandItem: String? = null,
     val leftHandItem: String? = null,
+    val mounted: Boolean = false,
 )

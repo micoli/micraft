@@ -30,6 +30,7 @@ class RemotePlayerManager(private val scene: JsAny) {
     private val playerLightBoostApplied = mutableMapOf<String, Boolean>()
     private val playerStances = mutableMapOf<String, PlayerStance>()
     private val playerFlying = mutableMapOf<String, Boolean>()
+    private val playerMounted = mutableMapOf<String, Boolean>()
 
     fun updateFromServer(state: PlayerState) {
         playerNames[state.id] = state.name
@@ -66,6 +67,7 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerLightBoost[state.id] = state.lightBoostEnabled
         playerStances[state.id] = state.stance
         playerFlying[state.id] = state.flying
+        playerMounted[state.id] = state.mounted
     }
 
     fun remove(id: String) {
@@ -91,6 +93,7 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerLightBoostApplied.remove(id)
         playerStances.remove(id)
         playerFlying.remove(id)
+        playerMounted.remove(id)
     }
 
     fun tick() {
@@ -117,8 +120,10 @@ class RemotePlayerManager(private val scene: JsAny) {
 
             val stance = playerStances[id] ?: PlayerStance.STANDING
             val flying = playerFlying[id] ?: false
+            val mounted = playerMounted[id] ?: false
             val animClip =
                 when {
+                    mounted -> "sitting"
                     flying -> "jump_idle"
                     stance == PlayerStance.CRAWLING -> "crawling"
                     stance == PlayerStance.SNEAKING -> "sneaking"
@@ -204,6 +209,7 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerLightBoostApplied.clear()
         playerStances.clear()
         playerFlying.clear()
+        playerMounted.clear()
         jsSetConnectedPlayers("[]")
     }
 

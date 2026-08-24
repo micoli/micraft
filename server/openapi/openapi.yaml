@@ -4344,6 +4344,9 @@ components:
         lightBoostEnabled:
           type: boolean
           title: Boolean
+        mounted:
+          type: boolean
+          title: Boolean
         name:
           type: string
           title: String
@@ -4484,6 +4487,7 @@ components:
       - language
       - layouts
       - lightBoostEnabled
+      - mounted
       - name
       - orientation
       - ownedArmors
