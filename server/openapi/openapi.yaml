@@ -3948,6 +3948,19 @@ components:
       - z1
       - z2
       title: VoronoiBorderSegment
+    org.micoli.micraft.http.AssetBuildTimestamp:
+      type: object
+      properties:
+        name:
+          type: string
+          title: String
+        timestamp:
+          type: string
+          title: String
+      required:
+      - name
+      - timestamp
+      title: AssetBuildTimestamp
     org.micoli.micraft.http.GcStat:
       type: object
       properties:
@@ -3996,6 +4009,11 @@ components:
           type: number
           format: double
           title: Double
+        buildTimestamps:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.http.AssetBuildTimestamp"
+          title: List<AssetBuildTimestamp>
         connectedPlayers:
           type: integer
           format: int32
@@ -4111,6 +4129,7 @@ components:
       - activeLiquids
       - activeVegetation
       - avgTickDurationMs
+      - buildTimestamps
       - connectedPlayers
       - gameTicks
       - gcStats

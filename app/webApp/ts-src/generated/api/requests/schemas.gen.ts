@@ -1433,6 +1433,25 @@ export const org_micoli_micraft_http_VoronoiBorderSegmentSchema = {
     title: 'VoronoiBorderSegment'
 } as const;
 
+export const org_micoli_micraft_http_AssetBuildTimestampSchema = {
+    type: 'object',
+    properties: {
+        name: {
+            type: 'string',
+            title: 'String'
+        },
+        timestamp: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'name',
+        'timestamp'
+    ],
+    title: 'AssetBuildTimestamp'
+} as const;
+
 export const org_micoli_micraft_http_GcStatSchema = {
     type: 'object',
     properties: {
@@ -1496,6 +1515,13 @@ export const org_micoli_micraft_http_StatusSnapshotSchema = {
             type: 'number',
             format: 'double',
             title: 'Double'
+        },
+        buildTimestamps: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.http.AssetBuildTimestamp'
+            },
+            title: 'List<AssetBuildTimestamp>'
         },
         connectedPlayers: {
             type: 'integer',
@@ -1643,6 +1669,7 @@ export const org_micoli_micraft_http_StatusSnapshotSchema = {
         'activeLiquids',
         'activeVegetation',
         'avgTickDurationMs',
+        'buildTimestamps',
         'connectedPlayers',
         'gameTicks',
         'gcStats',

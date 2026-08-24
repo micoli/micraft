@@ -937,6 +937,20 @@ export type OrgMicoliMicraftHttpVoronoiBorderSegment = {
 };
 
 /**
+ * AssetBuildTimestamp
+ */
+export type OrgMicoliMicraftHttpAssetBuildTimestamp = {
+    /**
+     * String
+     */
+    name: string;
+    /**
+     * String
+     */
+    timestamp: string;
+};
+
+/**
  * GcStat
  */
 export type OrgMicoliMicraftHttpGcStat = {
@@ -984,6 +998,10 @@ export type OrgMicoliMicraftHttpStatusSnapshot = {
      * Double
      */
     avgTickDurationMs: number;
+    /**
+     * List<AssetBuildTimestamp>
+     */
+    buildTimestamps: Array<OrgMicoliMicraftHttpAssetBuildTimestamp>;
     /**
      * Int
      */

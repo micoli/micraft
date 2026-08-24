@@ -92,6 +92,7 @@ export const fr: Record<TranslationKey, string> = {
   "status.tickDurationValue": "{0} ms / {1} ms budget",
   "status.gc": "Garbage collection",
   "status.gcCountTime": "{0} passages / {1} ms",
+  "status.buildTimestamps": "Horodatages de build",
   "status.autoRefresh": "Rafraîchissement toutes les 5 s",
   "status.refresh": "Rafraîchir",
   "status.restartServer": "Redémarrer le serveur",
