@@ -4,8 +4,13 @@ import com.sun.management.OperatingSystemMXBean
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import java.io.File
 import java.lang.management.ManagementFactory
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.SERVER_BUILD_TIMESTAMP
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
 import org.micoli.micraft.game.TICK_MS
@@ -171,6 +176,22 @@ fun buildPrometheusMetrics(gameLoop: GameLoop): String {
     }
 }
 
+// Static JS bundles (mc_bindings.js, chunk-mesh-worker.js) are esbuild output with no embedded
+// build id — the file's mtime on the dir Ktor serves ("/") is the build timestamp, mirroring
+// SERVER_BUILD_TIMESTAMP's format so admin can compare them at a glance.
+private fun webAssetBuildTimestamp(fileName: String): String {
+    val webBuildDir = System.getenv("MICRAFT_WEB_DIST") ?: return "unknown"
+    val base = File(webBuildDir)
+    val served =
+        if (File(base, "index.html").exists()) base
+        else File(base, "kotlin-webpack/wasmJs/developmentExecutable")
+    val file = File(served, fileName)
+    if (!file.exists()) return "unknown"
+    return DateTimeFormatter.ofPattern("yyyyMMdd-HH.mm.ss")
+        .withZone(ZoneOffset.UTC)
+        .format(Instant.ofEpochMilli(file.lastModified()))
+}
+
 fun buildStatusSnapshot(gameLoop: GameLoop): StatusSnapshot {
     val memMx = ManagementFactory.getMemoryMXBean()
     val heapUsed = memMx.heapMemoryUsage.used
@@ -224,6 +245,12 @@ fun buildStatusSnapshot(gameLoop: GameLoop): StatusSnapshot {
         tickProfile = gameLoop.getTickProfile().filter { it.name != "total" },
         avgTickDurationMs = gameLoop.getTickProfile().find { it.name == "total" }?.avgMs ?: 0.0,
         tickBudgetMs = TICK_MS,
+        buildTimestamps =
+            listOf(
+                AssetBuildTimestamp("server", SERVER_BUILD_TIMESTAMP),
+                AssetBuildTimestamp("mcBindings", webAssetBuildTimestamp("mc_bindings.js")),
+                AssetBuildTimestamp("chunkWorker", webAssetBuildTimestamp("chunk-mesh-worker.js")),
+            ),
     )
 }
 
@@ -258,10 +285,13 @@ data class StatusSnapshot(
     val tickProfile: List<TickPhaseStat>,
     val avgTickDurationMs: Double,
     val tickBudgetMs: Long,
+    val buildTimestamps: List<AssetBuildTimestamp>,
 )
 
 @Serializable
 data class GcStat(val name: String, val collectionCount: Long, val collectionTimeMs: Long)
+
+@Serializable data class AssetBuildTimestamp(val name: String, val timestamp: String)
 
 // Not OpenAPI-documented: Prometheus text format and an HTML dashboard, neither a JSON API.
 // The Application.kt pathFilter (segments not under /api or /auth) already excludes these from

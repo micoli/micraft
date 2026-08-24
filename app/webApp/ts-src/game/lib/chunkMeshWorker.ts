@@ -12,12 +12,18 @@
 // tsconfig's lib list is ["ES2020","DOM"] (no "webworker") to avoid retyping `self` project-wide,
 // so the worker global is accessed through this narrow local cast instead.
 import { plainMatKey } from "./blockDefs";
+import { MC_BUILD_TIMESTAMP } from "../../buildConfig";
 
 interface WorkerScope {
   postMessage(message: unknown, transfer?: Transferable[]): void;
   onmessage: ((ev: MessageEvent) => void) | null;
 }
 const ctx = self as unknown as WorkerScope;
+
+// Reported once at script load so the pool (chunkWorkerPool.ts) can tell whether this worker
+// instance is actually running the build it was spawned for — a browser can keep serving a
+// cached copy of chunk-mesh-worker.js despite the cache-busting ?v= query param.
+ctx.postMessage({ type: "ready", buildTimestamp: MC_BUILD_TIMESTAMP });
 
 const MC_NORMS = [
   [0, 0, 1], // 0 south

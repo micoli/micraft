@@ -97,6 +97,7 @@ export const en = {
   "status.tickDurationValue": "{0} ms / {1} ms budget",
   "status.gc": "Garbage collection",
   "status.gcCountTime": "{0} runs / {1} ms",
+  "status.buildTimestamps": "Build timestamps",
   "status.autoRefresh": "Auto-refreshes every 5 s",
   "status.refresh": "Refresh",
   "status.restartServer": "Restart server",

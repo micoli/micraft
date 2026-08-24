@@ -81,4 +81,13 @@ class MetricsRoutesTest {
         val snapshot = buildStatusSnapshot(gameLoop)
         assertTrue(snapshot.tickProfile.none { it.name == "total" })
     }
+
+    @Test
+    fun buildStatusSnapshot_includesBuildTimestampsForServerAndWebAssets() {
+        val gameLoop = GameLoop(testWorld())
+        val snapshot = buildStatusSnapshot(gameLoop)
+        val names = snapshot.buildTimestamps.map { it.name }
+        assertEquals(listOf("server", "mcBindings", "chunkWorker"), names)
+        assertTrue(snapshot.buildTimestamps.all { it.timestamp.isNotBlank() })
+    }
 }

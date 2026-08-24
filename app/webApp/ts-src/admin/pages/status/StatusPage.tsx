@@ -166,6 +166,13 @@ export function StatusPage() {
             ))
           )}
         </Card>
+
+        {/* Build timestamps */}
+        <Card title={t("status.buildTimestamps")}>
+          {snap.buildTimestamps.map((b) => (
+            <Row key={b.name} label={b.name} value={b.timestamp} />
+          ))}
+        </Card>
       </div>
 
       {/* CPU breakdown row */}

@@ -1,6 +1,7 @@
 import { HudData } from "../../types";
 import { cn } from "../../../primitives/cn";
 import { StatisticsRow } from "./StatisticsRow";
+import { getChunkWorkerBuildTimestamps } from "../../lib/chunkWorkerPool";
 
 export function Statistics({ data, layoutStyle }: { data: HudData | null; layoutStyle?: React.CSSProperties }) {
   if (!data) return null;
@@ -35,6 +36,7 @@ export function Statistics({ data, layoutStyle }: { data: HudData | null; layout
   } = data;
 
   const bi = window.mcBuildInfo ?? { mcBindings: "?", webApp: "?", wasm: "?", server: "?" };
+  const chunkWorkerBuilds = Array.from(new Set(getChunkWorkerBuildTimestamps())).join(", ") || "?";
   return (
     <div
       className={cn(
@@ -67,6 +69,7 @@ export function Statistics({ data, layoutStyle }: { data: HudData | null; layout
       <StatisticsRow label={"webApp"} value={bi.webApp || "?"} />
       <StatisticsRow label={"wasm"} value={bi.wasm || "?"} />
       <StatisticsRow label={"server"} value={bi.server || "?"} />
+      <StatisticsRow label={"chunkWorker"} value={chunkWorkerBuilds} />
     </div>
   );
 }

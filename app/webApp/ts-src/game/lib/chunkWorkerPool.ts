@@ -29,12 +29,24 @@ interface MeshResultMessage {
   gltf: WorkerGltfEntry[];
 }
 
+interface ReadyMessage {
+  type: "ready";
+  buildTimestamp: string;
+}
+
+type WorkerMessage = MeshResultMessage | ReadyMessage;
+
 // Bounded like HttpChunkFetcher's MAX_CONCURRENT — one in-flight mesh job per worker at a time.
 const POOL_SIZE = Math.max(1, Math.min((navigator.hardwareConcurrency || 4) - 1, 4));
 
 const workers: Worker[] = [];
 let nextWorker = 0;
 const resultsByKey: Map<string, MeshResultMessage> = new Map();
+const workerBuildTimestamps: string[] = [];
+
+export function getChunkWorkerBuildTimestamps(): string[] {
+  return workerBuildTimestamps;
+}
 
 function workerScriptUrl(): string {
   const v = window.mcBuildInfo.mcBindings ?? "";
@@ -55,8 +67,10 @@ function ensurePool(): Worker[] {
   const url = workerScriptUrl();
   for (let i = 0; i < POOL_SIZE; i++) {
     const worker = new Worker(url);
-    worker.onmessage = (ev: MessageEvent<MeshResultMessage>) => {
+    const workerIndex = workers.length;
+    worker.onmessage = (ev: MessageEvent<WorkerMessage>) => {
       if (ev.data.type === "meshResult") resultsByKey.set(ev.data.key, ev.data);
+      else if (ev.data.type === "ready") workerBuildTimestamps[workerIndex] = ev.data.buildTimestamp;
     };
     sendBlockDefs(worker);
     workers.push(worker);
