@@ -14,6 +14,8 @@ data class HudData(
     val stance: String = "STANDING",
     val speed: Double = 1.0,
     val fps: Int = 0,
+    val fpsMin: Int = 0,
+    val fpsMax: Int = 0,
     val kbIn: Double = 0.0,
     val kbOut: Double = 0.0,
     val biome: String = "",

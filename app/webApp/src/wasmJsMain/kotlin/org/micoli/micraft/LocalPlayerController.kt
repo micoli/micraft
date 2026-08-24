@@ -34,8 +34,7 @@ private const val HARD_SNAP_DISTANCE_XZ = 5.0
 private const val FLY_VERTICAL_SPEED = 8f
 private const val DEFAULT_RECONCILE_TOLERANCE_XZ = 0.5
 private const val DEFAULT_RECONCILE_TOLERANCE_Y = 0.99
-private const val STATS_WINDOW = 1000
-private const val JITTER_SNAPSHOT_WINDOW = 1000
+private const val STATS_WINDOW_MS = 20_000.0
 private const val CLIENT_GRAVITY = -20.0
 private const val CLIENT_JUMP_SPEED = 8.5
 private const val TICKS_PER_DAY_CLIENT = 72_000L
@@ -48,6 +47,10 @@ private enum class ViewMode {
 
     fun next(): ViewMode = entries[(ordinal + 1) % entries.size]
 }
+
+// Stats window uses wall-clock time rather than a fixed sample count so it stays a
+// consistent ~20s regardless of frame rate or reconcile-event frequency.
+private data class TimedValue(val ts: Double, val value: Double)
 
 private data class RaycastResult(
     val target: BlockPos,
@@ -148,12 +151,14 @@ class LocalPlayerController(
 
     private var reconcileToleranceXz = DEFAULT_RECONCILE_TOLERANCE_XZ
     private var reconcileToleranceY = DEFAULT_RECONCILE_TOLERANCE_Y
-    private var reconcileCountXz = 0
-    private var reconcileCountY = 0
     private var totalClientTicks = 0
     private var totalServerUpdates = 0
-    private val xzDistances = ArrayDeque<Double>()
-    private val yDistances = ArrayDeque<Double>()
+    private val xzDistances = ArrayDeque<TimedValue>()
+    private val yDistances = ArrayDeque<TimedValue>()
+    // Windowed opportunity counts (denominators) for reconcileXz/Y — must share the same
+    // 20s window as xzDistances/yDistances (the numerators), or the percentage drifts.
+    private val clientTickTimestamps = ArrayDeque<Double>()
+    private val serverUpdateTimestamps = ArrayDeque<Double>()
 
     private var fpsFrameCount = 0
     private var fpsWindowStart = jsNow()
@@ -162,8 +167,9 @@ class LocalPlayerController(
     private var currentKbIn = 0.0
     private var currentKbOut = 0.0
     private var lastTickMs = 0.0
-    private val tickIntervals = ArrayDeque<Double>()
-    private val jitterSnapshots = ArrayDeque<Double>()
+    private val tickIntervals = ArrayDeque<TimedValue>()
+    private val jitterSnapshots = ArrayDeque<TimedValue>()
+    private val fpsSamples = ArrayDeque<TimedValue>()
     var chunkDownloading = 0
     var chunkMeshing = 0
 
@@ -172,20 +178,20 @@ class LocalPlayerController(
         reconcileToleranceY = y
     }
 
-    private fun ArrayDeque<Double>.addCapped(value: Double) {
-        addLast(value)
-        if (size > STATS_WINDOW) removeFirst()
+    private fun ArrayDeque<TimedValue>.addCapped(now: Double, value: Double) {
+        addLast(TimedValue(now, value))
+        while (isNotEmpty() && now - first().ts > STATS_WINDOW_MS) removeFirst()
     }
 
-    private fun ArrayDeque<Double>.tickJitter(): Double {
+    private fun ArrayDeque<Double>.addTimestamp(now: Double) {
+        addLast(now)
+        while (isNotEmpty() && now - first() > STATS_WINDOW_MS) removeFirst()
+    }
+
+    private fun ArrayDeque<TimedValue>.tickJitter(): Double {
         if (size < 2) return 0.0
-        val mean = average()
-        return kotlin.math.sqrt(sumOf { (it - mean) * (it - mean) } / size)
-    }
-
-    private fun ArrayDeque<Double>.addJitterSnapshot(value: Double) {
-        addLast(value)
-        if (size > JITTER_SNAPSHOT_WINDOW) removeFirst()
+        val mean = sumOf { it.value } / size
+        return kotlin.math.sqrt(sumOf { (it.value - mean) * (it.value - mean) } / size)
     }
 
     private fun Double.r3(): String {
@@ -194,14 +200,15 @@ class LocalPlayerController(
         return if (dot < 0) "$v.000" else v.padEnd(dot + 4, '0').take(dot + 4)
     }
 
-    private fun reconcileStats(distances: ArrayDeque<Double>, count: Int, total: Int): String {
+    private fun reconcileStats(distances: ArrayDeque<TimedValue>, total: Int): String {
+        val count = distances.size
         val pct = if (total > 0) count * 100 / total else 0
         if (distances.isEmpty()) return "$count/$total ($pct%)"
         var sum = 0.0
-        for (d in distances) sum += d
+        for (d in distances) sum += d.value
         val avg = sum / distances.size
         var sumSq = 0.0
-        for (d in distances) sumSq += (d - avg) * (d - avg)
+        for (d in distances) sumSq += (d.value - avg) * (d.value - avg)
         val std = kotlin.math.sqrt(sumSq / distances.size)
         return "$count/$total ($pct%) avg=${avg.r3()} ±${std.r3()}"
     }
@@ -275,6 +282,7 @@ class LocalPlayerController(
             jsSetCameraRotationX(camera, state.orientation.pitch.toDouble())
         } else {
             totalServerUpdates++
+            serverUpdateTimestamps.addTimestamp(jsNow())
             // Diff serverX/Z against what the client predicted at the same instant the
             // now-confirmed intent was sent (not the current, further-along prediction) — the
             // resulting error reflects genuine prediction divergence, not network latency, so
@@ -297,8 +305,7 @@ class LocalPlayerController(
                 }
                 absY > reconcileToleranceY -> {
                     predY += diffY * 0.2
-                    reconcileCountY++
-                    yDistances.addCapped(absY)
+                    yDistances.addCapped(jsNow(), absY)
                 }
             }
         }
@@ -417,10 +424,11 @@ class LocalPlayerController(
         }
         totalClientTicks++
         val nowMs = jsNow()
+        clientTickTimestamps.addTimestamp(nowMs)
         val actualDt =
             if (lastTickMs == 0.0) PRED_DT
             else ((nowMs - lastTickMs) / 1000.0).coerceIn(0.008, 0.05)
-        if (lastTickMs != 0.0) tickIntervals.addCapped(nowMs - lastTickMs)
+        if (lastTickMs != 0.0) tickIntervals.addCapped(nowMs, nowMs - lastTickMs)
         lastTickMs = nowMs
         val consoleInput = jsConsumeConsoleInput()
         if (consoleInput.isNotEmpty()) {
@@ -621,14 +629,12 @@ class LocalPlayerController(
             !isMovingXZ && distXZ > reconcileToleranceXz -> {
                 predX += diffX * 0.3
                 predZ += diffZ * 0.3
-                reconcileCountXz++
-                xzDistances.addCapped(distXZ)
+                xzDistances.addCapped(jsNow(), distXZ)
             }
             isMovingXZ && distXZ > movingToleranceXz -> {
                 predX += diffX * 0.15
                 predZ += diffZ * 0.15
-                reconcileCountXz++
-                xzDistances.addCapped(distXZ)
+                xzDistances.addCapped(jsNow(), distXZ)
             }
         }
 
@@ -1215,6 +1221,7 @@ class LocalPlayerController(
             currentFps = (fpsFrameCount / sec).toInt()
             currentKbIn = networkStats.bytesIn / 1024.0 / sec
             currentKbOut = networkStats.bytesOut / 1024.0 / sec
+            fpsSamples.addCapped(now, currentFps.toDouble())
             fpsFrameCount = 0
             networkStats.bytesIn = 0
             networkStats.bytesOut = 0
@@ -1232,20 +1239,26 @@ class LocalPlayerController(
 
         val toDeg = 180.0 / kotlin.math.PI
         val tickJitter = tickIntervals.tickJitter()
-        jitterSnapshots.addJitterSnapshot(tickJitter)
+        jitterSnapshots.addCapped(now, tickJitter)
         hudTickCounter++
         if (hudTickCounter >= 10) {
             hudTickCounter = 0
             val targetBlockName =
                 target?.let { chunkManager.getBlockAtWorld(it.x, it.y, it.z).id } ?: ""
             val gameTimeDisplay = ticksToHHMM(currentGameTicks)
-            val tickAvg = tickIntervals.average().takeIf { it.isFinite() } ?: 0.0
-            val tickMin = if (tickIntervals.isEmpty()) 0.0 else tickIntervals.min()
-            val tickMax = if (tickIntervals.isEmpty()) 0.0 else tickIntervals.max()
-            val jitterMin = if (jitterSnapshots.isEmpty()) 0.0 else jitterSnapshots.min()
-            val jitterMax = if (jitterSnapshots.isEmpty()) 0.0 else jitterSnapshots.max()
-            val reconcileXz = reconcileStats(xzDistances, reconcileCountXz, totalClientTicks)
-            val reconcileY = reconcileStats(yDistances, reconcileCountY, totalServerUpdates)
+            val tickAvg =
+                (tickIntervals.sumOf { it.value } / tickIntervals.size).takeIf { it.isFinite() }
+                    ?: 0.0
+            val tickMin = if (tickIntervals.isEmpty()) 0.0 else tickIntervals.minOf { it.value }
+            val tickMax = if (tickIntervals.isEmpty()) 0.0 else tickIntervals.maxOf { it.value }
+            val jitterMin =
+                if (jitterSnapshots.isEmpty()) 0.0 else jitterSnapshots.minOf { it.value }
+            val jitterMax =
+                if (jitterSnapshots.isEmpty()) 0.0 else jitterSnapshots.maxOf { it.value }
+            val fpsMin = if (fpsSamples.isEmpty()) 0 else fpsSamples.minOf { it.value }.toInt()
+            val fpsMax = if (fpsSamples.isEmpty()) 0 else fpsSamples.maxOf { it.value }.toInt()
+            val reconcileXz = reconcileStats(xzDistances, clientTickTimestamps.size)
+            val reconcileY = reconcileStats(yDistances, serverUpdateTimestamps.size)
             jsUpdateHUD(
                 hudX,
                 hudY,
@@ -1255,6 +1268,8 @@ class LocalPlayerController(
                 hudStance,
                 hudSpeed,
                 currentFps,
+                fpsMin,
+                fpsMax,
                 currentKbIn,
                 currentKbOut,
                 hudBiome,
@@ -1285,6 +1300,8 @@ class LocalPlayerController(
                     stance = hudStance,
                     speed = hudSpeed,
                     fps = currentFps,
+                    fpsMin = fpsMin,
+                    fpsMax = fpsMax,
                     kbIn = currentKbIn,
                     kbOut = currentKbOut,
                     biome = hudBiome,

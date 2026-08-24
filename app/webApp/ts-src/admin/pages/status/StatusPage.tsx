@@ -153,10 +153,23 @@ export function StatusPage() {
             <Row label={t("status.threads")} value={`${snap.threadCount} (peak ${snap.peakThreadCount})`} />
           </div>
         </Card>
+        <Card title={t("status.gc")}>
+          {snap.gcStats.length === 0 ? (
+            <p className="text-[#8A99AF] text-sm">{t("status.noneCapitalised")}</p>
+          ) : (
+            snap.gcStats.map((g) => (
+              <Row
+                key={g.name}
+                label={g.name}
+                value={t("status.gcCountTime", g.collectionCount.toString(), g.collectionTimeMs.toString())}
+              />
+            ))
+          )}
+        </Card>
       </div>
 
       {/* CPU breakdown row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card title={t("status.tickBreakdown")} className="lg:col-span-2">
           <div className="flex flex-col lg:flex-row gap-4 items-stretch">
             <div className="lg:w-56 shrink-0" ref={indicatorsRef}>
@@ -179,20 +192,6 @@ export function StatusPage() {
               <TickChart phases={snap.tickProfile} budgetMs={snap.tickBudgetMs} chartHeight={chartHeight} />
             </div>
           </div>
-        </Card>
-
-        <Card title={t("status.gc")}>
-          {snap.gcStats.length === 0 ? (
-            <p className="text-[#8A99AF] text-sm">{t("status.noneCapitalised")}</p>
-          ) : (
-            snap.gcStats.map((g) => (
-              <Row
-                key={g.name}
-                label={g.name}
-                value={t("status.gcCountTime", g.collectionCount.toString(), g.collectionTimeMs.toString())}
-              />
-            ))
-          )}
         </Card>
       </div>
 

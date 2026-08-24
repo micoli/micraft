@@ -11,6 +11,8 @@ export function Statistics({ data, layoutStyle }: { data: HudData | null; layout
     yaw,
     pitch,
     fps,
+    fpsMin,
+    fpsMax,
     kbIn,
     kbOut,
     reconcileXzStats,
@@ -36,14 +38,14 @@ export function Statistics({ data, layoutStyle }: { data: HudData | null; layout
     >
       <StatisticsRow label={"X/Z/Y"} value={`${x.toFixed(1)}, ${z.toFixed(1)}, ${y.toFixed(1)}`} />
       <StatisticsRow label={"Orientation"} value={`Y:${yaw.toFixed(1)}°, P:${pitch.toFixed(1)}°`} />
-      <StatisticsRow label={"FPS"} value={fps} />
+      <StatisticsRow label={"FPS"} value={`${fpsMin}↔${fpsMax} cur:${fps}`} />
       <StatisticsRow
         label={"Tick"}
         value={`${tickDtMinMs.toFixed(1)}↔${tickDtMaxMs.toFixed(1)}ms avg:${tickDtMs.toFixed(1)}ms`}
       />
       <StatisticsRow
         label={"Jitr"}
-        value={`${tickJitterMinMs.toFixed(1)}↔${tickJitterMaxMs.toFixed(1)}ms cur:${tickJitterMs.toFixed(1)}ms`}
+        value={`${tickJitterMs.toFixed(1)}ms ${tickJitterMinMs.toFixed(1)}↔${tickJitterMaxMs.toFixed(1)}ms`}
       />
       <StatisticsRow label={"Chunks"} value={`DL:${chunkDownloading} mesh:${chunkMeshing}`} />
       <StatisticsRow label={"Net"} value={`↓ ${kbIn.toFixed(1)} KB/s  ↑ ${kbOut.toFixed(1)} KB/s`} />

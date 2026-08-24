@@ -13,6 +13,8 @@ export interface HudData {
   weather: string;
   speed: number;
   fps: number;
+  fpsMin: number;
+  fpsMax: number;
   kbIn: number;
   kbOut: number;
   biome: string;
