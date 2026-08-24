@@ -36,6 +36,16 @@ private const val FLY_VERTICAL_SPEED = 8f
 private const val DEFAULT_RECONCILE_TOLERANCE_XZ = 0.5
 private const val DEFAULT_RECONCILE_TOLERANCE_Y = 0.99
 private const val STATS_WINDOW_MS = 20_000.0
+// Ring buffer of recent per-HUD-tick-block subsystem-timing snapshots, flushed to the browser
+// console when a block's frame time exceeds SPIKE_THRESHOLD_MS — lets the user grab a timeline
+// of what was happening (mesh/GPU/network ms, faces, bytes) right when FPS dropped, without
+// having to eyeball the HUD counters live.
+private const val SPIKE_RING_SIZE = 300
+// Default only — live-tunable from the browser console via
+// `window.mcState.spikeThresholdMs = 200` (see jsGetSpikeThresholdMs), since the default 50ms
+// was firing too often to be useful while investigating a known-slow session.
+private const val DEFAULT_SPIKE_THRESHOLD_MS = 50.0
+private const val SPIKE_LOG_ENTRIES = 20
 private const val CLIENT_GRAVITY = -20.0
 private const val CLIENT_JUMP_SPEED = 8.5
 private const val TICKS_PER_DAY_CLIENT = 72_000L
@@ -52,6 +62,29 @@ private enum class ViewMode {
 // Stats window uses wall-clock time rather than a fixed sample count so it stays a
 // consistent ~20s regardless of frame rate or reconcile-event frequency.
 private data class TimedValue(val ts: Double, val value: Double)
+
+// One entry per HUD-tick-block (every 10 ticks) — primitives only, no per-frame allocation.
+// physicsMs/interactionMs/auxMs are coarse-grained tick() subsystem timings (movement+collision,
+// events+raycast+break/place+npc targeting, sky/weather/minimap) added in etape 1.5 after the
+// first spike samples showed meshDrainMs+gpuUploadMs (~110ms) didn't explain blockMs (~300ms) —
+// see conversation: the bottleneck wasn't the chunk pipeline, so this widens the search to the
+// rest of tick(). wsDecodeMs is a snapshot of the running (not-yet-reset) chunk-decode average,
+// since that only resets once per second while this pushes every ~10 ticks.
+private data class FrameSnapshot(
+    val ts: Double,
+    val blockMs: Double,
+    val meshDrainMs: Double,
+    val gpuUploadMs: Double,
+    val facesProcessed: Int,
+    val bytesIn: Int,
+    val physicsMs: Double,
+    val interactionMs: Double,
+    val auxMs: Double,
+    val wsDecodeMs: Double,
+    val renderMs: Double,
+    val renderFrames: Int,
+    val renderMsMax: Double,
+)
 
 private data class RaycastResult(
     val target: BlockPos,
@@ -176,6 +209,42 @@ class LocalPlayerController(
     private val fpsSamples = ArrayDeque<TimedValue>()
     var chunkDownloading = 0
     var chunkMeshing = 0
+
+    private val meshDrainMsSamples = ArrayDeque<TimedValue>()
+    private val gpuUploadMsSamples = ArrayDeque<TimedValue>()
+    private val wsDecodeMsSamples = ArrayDeque<TimedValue>()
+    private var lastHudBlockTs = jsNow()
+    private var blockMeshDrainMsSum = 0.0
+    private var blockGpuUploadMsSum = 0.0
+    private var blockFacesProcessedSum = 0
+    private var blockTickMaxMs = 0.0
+    private var blockPhysicsMsSum = 0.0
+    private var blockInteractionMsSum = 0.0
+    private var blockAuxMsSum = 0.0
+    private val frameSpikeBuffer = ArrayDeque<FrameSnapshot>()
+
+    private fun ArrayDeque<FrameSnapshot>.pushCapped(snapshot: FrameSnapshot) {
+        addLast(snapshot)
+        while (size > SPIKE_RING_SIZE) removeFirst()
+    }
+
+    // Flushes the last SPIKE_LOG_ENTRIES ring-buffer entries to the browser console — only
+    // called when a HUD tick-block's worst single tick exceeds SPIKE_THRESHOLD_MS, so this is
+    // rarely on the hot path. Manual string building (not kotlinx.serialization) to avoid
+    // reflection overhead on a path that must stay cheap even though it's rare.
+    private fun logFrameSpike() {
+        val entries = frameSpikeBuffer.takeLast(SPIKE_LOG_ENTRIES)
+        val json =
+            entries.joinToString(",", prefix = "[", postfix = "]") { s ->
+                "{\"ts\":${s.ts},\"blockMs\":${s.blockMs},\"meshDrainMs\":${s.meshDrainMs}," +
+                    "\"gpuUploadMs\":${s.gpuUploadMs},\"facesProcessed\":${s.facesProcessed}," +
+                    "\"bytesIn\":${s.bytesIn},\"physicsMs\":${s.physicsMs}," +
+                    "\"interactionMs\":${s.interactionMs},\"auxMs\":${s.auxMs}," +
+                    "\"wsDecodeMs\":${s.wsDecodeMs},\"renderMs\":${s.renderMs}," +
+                    "\"renderFrames\":${s.renderFrames},\"renderMsMax\":${s.renderMsMax}}"
+            }
+        jsLogSpike(json)
+    }
 
     fun setReconcileTolerances(xz: Double, y: Double) {
         reconcileToleranceXz = xz
@@ -432,7 +501,11 @@ class LocalPlayerController(
         val actualDt =
             if (lastTickMs == 0.0) PRED_DT
             else ((nowMs - lastTickMs) / 1000.0).coerceIn(0.008, 0.05)
-        if (lastTickMs != 0.0) tickIntervals.addCapped(nowMs, nowMs - lastTickMs)
+        if (lastTickMs != 0.0) {
+            val tickIntervalMs = nowMs - lastTickMs
+            tickIntervals.addCapped(nowMs, tickIntervalMs)
+            blockTickMaxMs = maxOf(blockTickMaxMs, tickIntervalMs)
+        }
         lastTickMs = nowMs
         val consoleInput = jsConsumeConsoleInput()
         if (consoleInput.isNotEmpty()) {
@@ -453,6 +526,7 @@ class LocalPlayerController(
         }
         if (jsIsConsoleInputFocused()) return
 
+        val physicsT0 = jsNow()
         val fwdX = jsGetCameraForwardX(camera).toFloat()
         val fwdZ = jsGetCameraForwardZ(camera).toFloat()
         val rightX = fwdZ
@@ -658,6 +732,8 @@ class LocalPlayerController(
             }
         }
 
+        blockPhysicsMsSum += jsNow() - physicsT0
+        val interactionT0 = jsNow()
         val events = jsConsumeEvents()
         repeat(jsEventsLength(events)) { i ->
             val event = jsEventsGet(events, i)
@@ -1234,6 +1310,7 @@ class LocalPlayerController(
             jsSetPlacementRotation(newMinimapRot)
         }
 
+        blockInteractionMsSum += jsNow() - interactionT0
         fpsFrameCount++
         val now = jsNow()
         val elapsed = now - fpsWindowStart
@@ -1243,12 +1320,31 @@ class LocalPlayerController(
             currentKbIn = networkStats.bytesIn / 1024.0 / sec
             currentKbOut = networkStats.bytesOut / 1024.0 / sec
             fpsSamples.addCapped(now, currentFps.toDouble())
+            val wsDecodeMsAvg =
+                if (networkStats.chunkDecodeCount > 0)
+                    networkStats.chunkDecodeMsAccum / networkStats.chunkDecodeCount
+                else 0.0
+            wsDecodeMsSamples.addCapped(now, wsDecodeMsAvg)
+            networkStats.chunkDecodeMsAccum = 0.0
+            networkStats.chunkDecodeCount = 0
             fpsFrameCount = 0
             networkStats.bytesIn = 0
             networkStats.bytesOut = 0
             fpsWindowStart = now
         }
 
+        // Per-tick mesh/GPU timing sampled straight from ChunkManager's last drainPendingChunks()
+        // call (see ChunkManager.kt) — same rolling-window pattern as
+        // tickIntervals/jitterSnapshots.
+        val meshDrainMsThisTick = chunkManager.lastFaceScanMs + chunkManager.lastFaceProcessMs
+        val gpuUploadMsThisTick = chunkManager.lastGpuUploadMs
+        meshDrainMsSamples.addCapped(now, meshDrainMsThisTick)
+        gpuUploadMsSamples.addCapped(now, gpuUploadMsThisTick)
+        blockMeshDrainMsSum += meshDrainMsThisTick
+        blockGpuUploadMsSum += gpuUploadMsThisTick
+        blockFacesProcessedSum += chunkManager.lastFacesProcessedThisDrain
+
+        val auxT0 = jsNow()
         val normalizedTime =
             (currentGameTicks % TICKS_PER_DAY_CLIENT).toDouble() / TICKS_PER_DAY_CLIENT
         jsUpdateSkyTime(scene, normalizedTime)
@@ -1257,6 +1353,7 @@ class LocalPlayerController(
         updateCaveLighting()
 
         jsDrawMinimap(predX, predZ, yaw)
+        blockAuxMsSum += jsNow() - auxT0
 
         val toDeg = 180.0 / kotlin.math.PI
         val tickJitter = tickIntervals.tickJitter()
@@ -1280,6 +1377,56 @@ class LocalPlayerController(
             val fpsMax = if (fpsSamples.isEmpty()) 0 else fpsSamples.maxOf { it.value }.toInt()
             val reconcileXz = reconcileStats(xzDistances, clientTickTimestamps.size)
             val reconcileY = reconcileStats(yDistances, serverUpdateTimestamps.size)
+            val meshDrainMsAvg =
+                (meshDrainMsSamples.sumOf { it.value } / meshDrainMsSamples.size).takeIf {
+                    it.isFinite()
+                } ?: 0.0
+            val meshDrainMsMin =
+                if (meshDrainMsSamples.isEmpty()) 0.0 else meshDrainMsSamples.minOf { it.value }
+            val meshDrainMsMax =
+                if (meshDrainMsSamples.isEmpty()) 0.0 else meshDrainMsSamples.maxOf { it.value }
+            val gpuUploadMsAvg =
+                (gpuUploadMsSamples.sumOf { it.value } / gpuUploadMsSamples.size).takeIf {
+                    it.isFinite()
+                } ?: 0.0
+            val gpuUploadMsMin =
+                if (gpuUploadMsSamples.isEmpty()) 0.0 else gpuUploadMsSamples.minOf { it.value }
+            val gpuUploadMsMax =
+                if (gpuUploadMsSamples.isEmpty()) 0.0 else gpuUploadMsSamples.maxOf { it.value }
+            val wsDecodeMsAvg =
+                if (wsDecodeMsSamples.isEmpty()) 0.0
+                else wsDecodeMsSamples.sumOf { it.value } / wsDecodeMsSamples.size
+
+            val renderMsSum = jsGetRenderMsAccum()
+            val renderFrameCount = jsGetRenderFrameCount()
+            val renderMsMaxThisBlock = jsGetRenderMsMax()
+            jsResetRenderStats()
+            frameSpikeBuffer.pushCapped(
+                FrameSnapshot(
+                    ts = now,
+                    blockMs = now - lastHudBlockTs,
+                    meshDrainMs = blockMeshDrainMsSum,
+                    gpuUploadMs = blockGpuUploadMsSum,
+                    facesProcessed = blockFacesProcessedSum,
+                    bytesIn = networkStats.bytesIn,
+                    physicsMs = blockPhysicsMsSum,
+                    interactionMs = blockInteractionMsSum,
+                    auxMs = blockAuxMsSum,
+                    wsDecodeMs = wsDecodeMsAvg,
+                    renderMs = renderMsSum,
+                    renderFrames = renderFrameCount,
+                    renderMsMax = renderMsMaxThisBlock,
+                ))
+            if (blockTickMaxMs > jsGetSpikeThresholdMs(DEFAULT_SPIKE_THRESHOLD_MS)) logFrameSpike()
+            lastHudBlockTs = now
+            blockMeshDrainMsSum = 0.0
+            blockGpuUploadMsSum = 0.0
+            blockFacesProcessedSum = 0
+            blockTickMaxMs = 0.0
+            blockPhysicsMsSum = 0.0
+            blockInteractionMsSum = 0.0
+            blockAuxMsSum = 0.0
+
             jsUpdateHUD(
                 hudX,
                 hudY,
@@ -1310,6 +1457,13 @@ class LocalPlayerController(
                 chunkManager.impostorChunkCount,
                 hudWeather,
                 hudZoneLevel,
+                meshDrainMsAvg,
+                meshDrainMsMin,
+                meshDrainMsMax,
+                gpuUploadMsAvg,
+                gpuUploadMsMin,
+                gpuUploadMsMax,
+                wsDecodeMsAvg,
             )
             uiState.hud =
                 HudData(
@@ -1342,6 +1496,13 @@ class LocalPlayerController(
                     impostorMeshedChunks = chunkManager.impostorChunkCount,
                     weather = hudWeather,
                     zoneLevel = hudZoneLevel,
+                    meshDrainMsAvg = meshDrainMsAvg,
+                    meshDrainMsMin = meshDrainMsMin,
+                    meshDrainMsMax = meshDrainMsMax,
+                    gpuUploadMsAvg = gpuUploadMsAvg,
+                    gpuUploadMsMin = gpuUploadMsMin,
+                    gpuUploadMsMax = gpuUploadMsMax,
+                    wsDecodeMsAvg = wsDecodeMsAvg,
                 )
             val debugCx = hudX.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
             val debugCz = hudZ.toInt().floorDiv(WorldConstants.CHUNK_SIZE)

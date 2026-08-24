@@ -531,6 +531,13 @@ declare global {
       impostorMeshedChunks: number,
       weather: string,
       zoneLevel: number,
+      meshDrainMsAvg: number,
+      meshDrainMsMin: number,
+      meshDrainMsMax: number,
+      gpuUploadMsAvg: number,
+      gpuUploadMsMin: number,
+      gpuUploadMsMax: number,
+      wsDecodeMsAvg: number,
     ): void;
     showNotification(msg: string): void;
     addServerLog(channel: string, msg: string): void;

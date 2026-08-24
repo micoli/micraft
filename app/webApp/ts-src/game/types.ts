@@ -33,6 +33,13 @@ export interface HudData {
   fullMeshedChunks: number;
   impostorMeshedChunks: number;
   zoneLevel: number;
+  meshDrainMsAvg: number;
+  meshDrainMsMin: number;
+  meshDrainMsMax: number;
+  gpuUploadMsAvg: number;
+  gpuUploadMsMin: number;
+  gpuUploadMsMax: number;
+  wsDecodeMsAvg: number;
 }
 
 export interface LogEntry {

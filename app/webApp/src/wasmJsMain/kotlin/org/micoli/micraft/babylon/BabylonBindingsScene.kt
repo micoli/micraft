@@ -8,9 +8,24 @@ fun jsCreateEngine(): JsAny = js("mc.createEngine()")
 
 fun jsCreateScene(engine: JsAny): JsAny = js("new BABYLON.Scene(engine)")
 
+// Times each scene.render() call (the actual GPU draw submit) into window.mcState — read/reset
+// by LocalPlayerController's spike ring buffer (see jsGetRenderMsAccum/jsResetRenderStats
+// below), added after mesh/GPU-upload/physics/interaction timing left most of the observed
+// frame-time budget unaccounted for: that missing time is spent here, between tick() calls,
+// not inside any Kotlin logic.
 fun jsEngineRunRenderLoop(engine: JsAny, scene: JsAny): Unit =
     js(
-        "{ var _lr=0; engine.runRenderLoop(function(){ var now=Date.now(); if(now-_lr<14) return; _lr=now; var s=window.mcState.camState; if(s&&scene.activeCamera&&window.mcState.editMode!=='creative'){var a=Math.min(1,(now-s.t)/16);scene.activeCamera.position.x=s.x0+(s.x1-s.x0)*a;scene.activeCamera.position.y=s.y0+(s.y1-s.y0)*a;scene.activeCamera.position.z=s.z0+(s.z1-s.z0)*a;} scene.render(); }); }")
+        "{ var _lr=0; engine.runRenderLoop(function(){ var now=Date.now(); if(now-_lr<14) return; _lr=now; var s=window.mcState.camState; if(s&&scene.activeCamera&&window.mcState.editMode!=='creative'){var a=Math.min(1,(now-s.t)/16);scene.activeCamera.position.x=s.x0+(s.x1-s.x0)*a;scene.activeCamera.position.y=s.y0+(s.y1-s.y0)*a;scene.activeCamera.position.z=s.z0+(s.z1-s.z0)*a;} var _rt0=performance.now(); scene.render(); var _rms=performance.now()-_rt0; window.mcState.renderMsAccum=(window.mcState.renderMsAccum||0)+_rms; window.mcState.renderFrameCount=(window.mcState.renderFrameCount||0)+1; window.mcState.renderMsMax=Math.max(window.mcState.renderMsMax||0,_rms); }); }")
+
+fun jsGetRenderMsAccum(): Double = js("window.mcState.renderMsAccum || 0")
+
+fun jsGetRenderFrameCount(): Int = js("window.mcState.renderFrameCount || 0")
+
+fun jsGetRenderMsMax(): Double = js("window.mcState.renderMsMax || 0")
+
+fun jsResetRenderStats(): Unit =
+    js(
+        "{ window.mcState.renderMsAccum=0; window.mcState.renderFrameCount=0; window.mcState.renderMsMax=0; }")
 
 fun jsSetupResize(engine: JsAny): Unit =
     js("window.addEventListener('resize', function(){ engine.resize(); })")

@@ -25,6 +25,13 @@ export function Statistics({ data, layoutStyle }: { data: HudData | null; layout
     tickJitterMaxMs,
     chunkDownloading,
     chunkMeshing,
+    meshDrainMsAvg,
+    meshDrainMsMin,
+    meshDrainMsMax,
+    gpuUploadMsAvg,
+    gpuUploadMsMin,
+    gpuUploadMsMax,
+    wsDecodeMsAvg,
   } = data;
 
   const bi = window.mcBuildInfo ?? { mcBindings: "?", webApp: "?", wasm: "?", server: "?" };
@@ -48,6 +55,11 @@ export function Statistics({ data, layoutStyle }: { data: HudData | null; layout
         value={`${tickJitterMs.toFixed(1)}ms ${tickJitterMinMs.toFixed(1)}↔${tickJitterMaxMs.toFixed(1)}ms`}
       />
       <StatisticsRow label={"Chunks"} value={`DL:${chunkDownloading} mesh:${chunkMeshing}`} />
+      <StatisticsRow
+        label={"Mesh"}
+        value={`${meshDrainMsMin.toFixed(1)}↔${meshDrainMsMax.toFixed(1)}ms avg:${meshDrainMsAvg.toFixed(1)}ms gpu:${gpuUploadMsMin.toFixed(1)}↔${gpuUploadMsMax.toFixed(1)}ms avg:${gpuUploadMsAvg.toFixed(1)}ms`}
+      />
+      <StatisticsRow label={"Net decode"} value={`avg:${wsDecodeMsAvg.toFixed(2)}ms`} />
       <StatisticsRow label={"Net"} value={`↓ ${kbIn.toFixed(1)} KB/s  ↑ ${kbOut.toFixed(1)} KB/s`} />
       <StatisticsRow label={"Rec XZ"} value={reconcileXzStats} />
       <StatisticsRow label={"Rec  Y"} value={reconcileYStats} />

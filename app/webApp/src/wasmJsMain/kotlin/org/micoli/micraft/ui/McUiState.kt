@@ -35,6 +35,13 @@ data class HudData(
     val impostorMeshedChunks: Int = 0,
     val weather: String = "",
     val zoneLevel: Int = 0,
+    val meshDrainMsAvg: Double = 0.0,
+    val meshDrainMsMin: Double = 0.0,
+    val meshDrainMsMax: Double = 0.0,
+    val gpuUploadMsAvg: Double = 0.0,
+    val gpuUploadMsMin: Double = 0.0,
+    val gpuUploadMsMax: Double = 0.0,
+    val wsDecodeMsAvg: Double = 0.0,
 )
 
 class McUiState {

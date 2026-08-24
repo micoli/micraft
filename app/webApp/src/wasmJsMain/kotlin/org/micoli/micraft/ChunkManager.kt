@@ -236,6 +236,21 @@ class ChunkManager(private val scene: JsAny) {
     val pendingRenderCount: Int
         get() = pendingChunks.size + if (activeRender != null) 1 else 0
 
+    // Per-subsystem timing from the most recent drainPendingChunks() call — read by
+    // LocalPlayerController into its rolling HUD stats window. Reset every call, not
+    // accumulated, since drainPendingChunks already runs every ~16ms (see GameClient).
+    var lastFaceScanMs: Double = 0.0
+        private set
+
+    var lastFaceProcessMs: Double = 0.0
+        private set
+
+    var lastGpuUploadMs: Double = 0.0
+        private set
+
+    var lastFacesProcessedThisDrain: Int = 0
+        private set
+
     private val pendingMinimapPushes = ArrayDeque<Pair<Chunk, Int>>()
 
     fun enqueueChunk(chunk: Chunk, topY: Int) {
@@ -259,6 +274,10 @@ class ChunkManager(private val scene: JsAny) {
         buildOrdFlags()
         if (pendingChunks.isEmpty() && activeRender == null) return
         val deadline = jsNow() + budgetMs
+        var faceScanMs = 0.0
+        var faceProcessMs = 0.0
+        var gpuUploadMs = 0.0
+        var facesProcessedThisCall = 0
 
         while (true) {
             val ar = activeRender
@@ -298,22 +317,29 @@ class ChunkManager(private val scene: JsAny) {
                 ar.faceCount < 0 -> {
                     // Phase 1: scan rows — fill __mcFB via jsChunkFaceAppend
                     if (jsNow() >= deadline) break
+                    val t0 = jsNow()
                     ar.faces += renderRow(ar.chunk, ar.topY, ar.nextY)
                     ar.nextY++
                     if (ar.nextY > ar.topY) {
                         ar.faces += renderFractionalEntities(ar.chunk)
                         ar.faceCount = jsGetFaceCount()
                     }
+                    faceScanMs += jsNow() - t0
                 }
                 ar.faceProcessingCursor < ar.faceCount -> {
                     // Phase 2: process face buffer in budget slices (geometry only, no GPU)
                     if (jsNow() >= deadline) break
+                    val t0 = jsNow()
                     val processed = jsChunkProcessFaces(ar.faceProcessingCursor, FACE_SLICE_SIZE)
+                    faceProcessMs += jsNow() - t0
+                    facesProcessedThisCall += processed
                     ar.faceProcessingCursor += processed
                 }
                 else -> {
                     // Phase 3: GPU upload — always execute when face processing is done
+                    val t0 = jsNow()
                     jsChunkEnd(scene, mats)
+                    gpuUploadMs += jsNow() - t0
                     loadedChunks.add(ar.chunk.pos)
                     pendingMinimapPushes.addLast(Pair(ar.chunk, ar.topY))
                     activeRender = null
@@ -321,6 +347,10 @@ class ChunkManager(private val scene: JsAny) {
                 }
             }
         }
+        lastFaceScanMs = faceScanMs
+        lastFaceProcessMs = faceProcessMs
+        lastGpuUploadMs = gpuUploadMs
+        lastFacesProcessedThisDrain = facesProcessedThisCall
     }
 
     private fun meshScore(dx: Int, dz: Int, yaw: Double): Double {

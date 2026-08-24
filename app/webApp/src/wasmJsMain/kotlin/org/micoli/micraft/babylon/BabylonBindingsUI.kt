@@ -96,9 +96,28 @@ fun jsUpdateHUD(
     impostorMeshedChunks: Int,
     weather: String,
     zoneLevel: Int,
+    meshDrainMsAvg: Double,
+    meshDrainMsMin: Double,
+    meshDrainMsMax: Double,
+    gpuUploadMsAvg: Double,
+    gpuUploadMsMin: Double,
+    gpuUploadMsMax: Double,
+    wsDecodeMsAvg: Double,
 ): Unit =
     js(
-        "mc.updateHUD(x, y, z, yaw, pitch, stance, speed, fps, fpsMin, fpsMax, kbIn, kbOut, biome, targetBlock, gameTime, reconcileXzStats, reconcileYStats, tickDtMs, tickJitterMs, tickDtMinMs, tickDtMaxMs, tickJitterMinMs, tickJitterMaxMs, chunkDownloading, chunkMeshing, fullMeshedChunks, impostorMeshedChunks, weather, zoneLevel)")
+        "mc.updateHUD(x, y, z, yaw, pitch, stance, speed, fps, fpsMin, fpsMax, kbIn, kbOut, biome, targetBlock, gameTime, reconcileXzStats, reconcileYStats, tickDtMs, tickJitterMs, tickDtMinMs, tickDtMaxMs, tickJitterMinMs, tickJitterMaxMs, chunkDownloading, chunkMeshing, fullMeshedChunks, impostorMeshedChunks, weather, zoneLevel, meshDrainMsAvg, meshDrainMsMin, meshDrainMsMax, gpuUploadMsAvg, gpuUploadMsMin, gpuUploadMsMax, wsDecodeMsAvg)")
+
+// Logs a captured frame-spike ring-buffer snapshot to the browser console — only invoked when
+// a frame exceeds the spike threshold (see jsGetSpikeThresholdMs below), so its cost is
+// irrelevant.
+fun jsLogSpike(json: String): Unit = js("console.warn('[fps-spike]', JSON.parse(json))")
+
+// Spike threshold, live-tunable from the browser console via
+// `window.mcState.spikeThresholdMs = 200` — falls back to the DEFAULT_SPIKE_THRESHOLD_MS
+// constant (see LocalPlayerController) when unset. Read fresh every HUD tick-block, so changes
+// take effect immediately without a reload.
+fun jsGetSpikeThresholdMs(defaultMs: Double): Double =
+    js("window.mcState.spikeThresholdMs ?? defaultMs")
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 

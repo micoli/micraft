@@ -401,6 +401,13 @@ export function GameUI() {
       impostorMeshedChunks: number,
       weather: string,
       zoneLevel: number,
+      meshDrainMsAvg: number,
+      meshDrainMsMin: number,
+      meshDrainMsMax: number,
+      gpuUploadMsAvg: number,
+      gpuUploadMsMin: number,
+      gpuUploadMsMax: number,
+      wsDecodeMsAvg: number,
     ) => {
       window.mcState.minimapY = y;
       window.mcState.minimapGameTime = gameTime;
@@ -437,6 +444,13 @@ export function GameUI() {
           impostorMeshedChunks,
           weather,
           zoneLevel,
+          meshDrainMsAvg,
+          meshDrainMsMin,
+          meshDrainMsMax,
+          gpuUploadMsAvg,
+          gpuUploadMsMin,
+          gpuUploadMsMax,
+          wsDecodeMsAvg,
         },
       });
     };
