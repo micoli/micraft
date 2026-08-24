@@ -632,6 +632,7 @@ class ChunkManager(private val scene: JsAny) {
                 val pos = ChunkPos(cx, cz)
                 val state =
                     when {
+                        impostorChunks.contains(pos) -> "impostor"
                         loadedChunks.contains(pos) -> "loaded"
                         pos == activePos || pendingSet.contains(pos) -> "loading"
                         else -> "missing"

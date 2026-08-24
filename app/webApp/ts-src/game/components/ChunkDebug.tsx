@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from "react";
 interface ChunkEntry {
   cx: number;
   cz: number;
-  state: "loaded" | "loading" | "missing";
+  state: "loaded" | "loading" | "missing" | "impostor";
 }
 
 export interface ChunkDebugData {
@@ -20,7 +20,11 @@ const STATE_COLOR: Record<string, string> = {
   loaded: "#22c55e",
   loading: "#f97316",
   missing: "#ef4444",
+  impostor: "#22c55e",
 };
+
+const HACHURE_PATTERN =
+  "repeating-linear-gradient(45deg, rgba(0,0,0,0.45) 0px, rgba(0,0,0,0.45) 1px, transparent 1px, transparent 3px)";
 
 interface Props {
   data: ChunkDebugData | null;
@@ -126,6 +130,7 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
                 style={{
                   position: "relative",
                   background: STATE_COLOR[state],
+                  backgroundImage: state === "impostor" ? HACHURE_PATTERN : undefined,
                   opacity: isPlayer ? 1 : 0.75,
                   borderRadius: 1,
                   outline: isPlayer ? "1px solid #fff" : undefined,
@@ -154,10 +159,17 @@ export function ChunkDebug({ data, layoutStyle }: Props) {
           flexShrink: 0,
         }}
       >
-        {(["loaded", "loading", "missing"] as const).map((s) => (
+        {(["loaded", "impostor", "loading", "missing"] as const).map((s) => (
           <span key={s} style={{ display: "flex", alignItems: "center", gap: 2, font: "8px monospace", color: "#ccc" }}>
             <span
-              style={{ width: 8, height: 8, background: STATE_COLOR[s], display: "inline-block", borderRadius: 1 }}
+              style={{
+                width: 8,
+                height: 8,
+                background: STATE_COLOR[s],
+                backgroundImage: s === "impostor" ? HACHURE_PATTERN : undefined,
+                display: "inline-block",
+                borderRadius: 1,
+              }}
             />
             {s}
           </span>
