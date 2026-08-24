@@ -90,7 +90,11 @@ private data class ChunkRender(
     val t0: Double = jsNow(),
     var faces: Int = 0,
     var faceCount: Int = -1, // set when rows finish; -1 = rows still in progress
-    var faceProcessingCursor: Int = 0,
+    // Face-processing geometry work moved off the main thread (see jsRequestChunkMesh) — once
+    // faceCount is set, the job is submitted once (awaitingWorker=true) and drainPendingChunks
+    // just polls jsIsChunkMeshReady on later calls until the worker's result is ready for GPU
+    // upload, instead of slicing jsChunkProcessFaces synchronously here.
+    var awaitingWorker: Boolean = false,
 )
 
 class ChunkManager(private val scene: JsAny) {
@@ -256,7 +260,10 @@ class ChunkManager(private val scene: JsAny) {
     fun enqueueChunk(chunk: Chunk, topY: Int) {
         val pos = chunk.pos
         if (activeRender?.chunk?.pos == pos) {
-            // Abort in-progress render; jsChunkBegin on next drain will release the JS buffer
+            // Abort in-progress render; jsChunkBegin on next drain will release the JS buffer.
+            // Also drop any worker mesh result in flight for this position so a later render of
+            // the same chunk doesn't pick up a stale one (see jsRequestChunkMesh).
+            jsDiscardChunkMeshResult(pos.cx, pos.cz)
             activeRender = null
         }
         pendingChunks.removeAll { (c, _) -> c.pos == pos }
@@ -326,20 +333,25 @@ class ChunkManager(private val scene: JsAny) {
                     }
                     faceScanMs += jsNow() - t0
                 }
-                ar.faceProcessingCursor < ar.faceCount -> {
-                    // Phase 2: process face buffer in budget slices (geometry only, no GPU)
-                    if (jsNow() >= deadline) break
+                !ar.awaitingWorker -> {
+                    // Phase 2: hand the face buffer off to the mesh-worker pool (geometry work
+                    // no longer happens on this thread — see jsRequestChunkMesh) and yield;
+                    // come back on a later drain call to check readiness.
                     val t0 = jsNow()
-                    val processed = jsChunkProcessFaces(ar.faceProcessingCursor, FACE_SLICE_SIZE)
+                    jsRequestChunkMesh(ar.chunk.pos.cx, ar.chunk.pos.cz)
                     faceProcessMs += jsNow() - t0
-                    facesProcessedThisCall += processed
-                    ar.faceProcessingCursor += processed
+                    ar.awaitingWorker = true
+                    break
+                }
+                !jsIsChunkMeshReady(ar.chunk.pos.cx, ar.chunk.pos.cz) -> {
+                    break // worker still crunching this chunk's geometry
                 }
                 else -> {
-                    // Phase 3: GPU upload — always execute when face processing is done
+                    // Phase 3: GPU upload — worker result is ready
                     val t0 = jsNow()
-                    jsChunkEnd(scene, mats)
+                    jsChunkEndFromWorker(scene, mats, ar.chunk.pos.cx, ar.chunk.pos.cz)
                     gpuUploadMs += jsNow() - t0
+                    facesProcessedThisCall += ar.faceCount
                     loadedChunks.add(ar.chunk.pos)
                     pendingMinimapPushes.addLast(Pair(ar.chunk, ar.topY))
                     activeRender = null
@@ -550,7 +562,10 @@ class ChunkManager(private val scene: JsAny) {
             // later, builds a mesh, and adds it to the scene after it's already dropped
             // from loadedChunks, orphaning it forever (never revisited by future unloads).
             pendingChunks.removeAll { (c, _) -> c.pos == cp }
-            if (activeRender?.chunk?.pos == cp) activeRender = null
+            if (activeRender?.chunk?.pos == cp) {
+                jsDiscardChunkMeshResult(cp.cx, cp.cz)
+                activeRender = null
+            }
             jsDisposeChunk("${cp.cx},${cp.cz}")
             jsClearMinimapChunk(cp.cx, cp.cz)
             loadedChunks.remove(cp)

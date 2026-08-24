@@ -11,6 +11,14 @@ import { BLOCK_VERT, BLOCK_GHOST_FRAG, IMPOSTOR_FRAG } from "./block";
 import { plainMatKey } from "./blockDefs";
 import { WHITE_PIXEL_URL } from "./materials/whitePixel";
 import { getChunkSurface, getTopColorRGB, getSideColorRGB } from "./minimap";
+import {
+  requestChunkMesh as poolRequestChunkMesh,
+  isChunkMeshReady as poolIsChunkMeshReady,
+  consumeChunkMeshResult,
+  discardChunkMeshResult as poolDiscardChunkMeshResult,
+  WorkerFaceGroup,
+  WorkerGltfEntry,
+} from "./chunkWorkerPool";
 
 export const MC_NORMS = [
   [0, 0, 1], // 0 south
@@ -658,6 +666,10 @@ export function registerChunks(): Pick<
   | "chunkFace"
   | "chunkProcessFaces"
   | "chunkEnd"
+  | "requestChunkMesh"
+  | "isChunkMeshReady"
+  | "discardChunkMeshResult"
+  | "chunkEndFromWorker"
   | "buildChunkImpostor"
   | "setImpostorSkirtDepth"
 > {
@@ -779,6 +791,95 @@ export function registerChunks(): Pick<
         }
       }
       return ((endI - startI) / FACE_STRIDE) | 0;
+    },
+
+    // Off-main-thread path (see chunkMeshWorker.ts / chunkWorkerPool.ts). Copies the current
+    // __mcFB face buffer (filled by Kotlin's Phase 1 row scan) into a dedicated, transferable
+    // Int32Array and hands it to the worker pool — the geometry-building work chunkProcessFaces
+    // used to do synchronously here now happens off the main thread. __mcBuf is cleared since
+    // this chunk no longer needs the main-thread groups map chunkProcessFaces/chunkEnd use.
+    requestChunkMesh: (cx: number, cz: number): void => {
+      const key = `${cx},${cz}`;
+      const fi = window.__mcFI ?? 0;
+      const faceCount = (fi / FACE_STRIDE) | 0;
+      const faceBuf = window.__mcFB!.slice(0, fi);
+      __mcBuf = null;
+      poolRequestChunkMesh(key, faceBuf, faceCount);
+    },
+
+    isChunkMeshReady: (cx: number, cz: number): boolean => poolIsChunkMeshReady(`${cx},${cz}`),
+
+    discardChunkMeshResult: (cx: number, cz: number): void => {
+      poolDiscardChunkMeshResult(`${cx},${cz}`);
+    },
+
+    // GPU upload for a worker-computed mesh result — mirrors chunkEnd's mesh-building loop
+    // (materials, shadow RTT registration, GLTF decoration instancing) but sources groups from
+    // the worker pool instead of the module-global __mcBuf.
+    chunkEndFromWorker: (scene: Scene, materials: Record<string, Material>, cx: number, cz: number): void => {
+      const key = `${cx},${cz}`;
+      const result = consumeChunkMeshResult(key);
+      if (!result) return; // not ready — caller should have polled isChunkMeshReady first
+
+      disposeChunk(key);
+
+      const meshes: Mesh[] = [];
+      for (const g of result.groups as WorkerFaceGroup[]) {
+        const matKey = g.key.slice(0, g.key.lastIndexOf("|"));
+        const mesh = new BABYLON.Mesh(`ck${key}${g.key}`, scene);
+        const vd = new BABYLON.VertexData();
+        vd.positions = g.p;
+        vd.normals = g.n;
+        vd.uvs = g.u;
+        vd.colors = g.c;
+        vd.indices = g.i;
+        vd.applyToMesh(mesh, false);
+        mesh.material = materials[matKey] ?? null;
+        mesh.isPickable = true;
+        mesh.doNotSyncBoundingInfo = true;
+        mesh.refreshBoundingInfo();
+        mesh.freezeWorldMatrix();
+        const shadowRTT = window.mcState.sunShadowRTT;
+        const shadowDepthMat = window.mcState.sunShadowDepthMat;
+        if (shadowRTT?.renderList && shadowDepthMat) {
+          shadowRTT.renderList.push(mesh);
+          shadowRTT.setMaterialForRendering(mesh, shadowDepthMat);
+        }
+        meshes.push(mesh);
+      }
+      window.mcState.chunks[key] = meshes;
+
+      const gltfEntries = result.gltf as WorkerGltfEntry[];
+      const camPos = scene.activeCamera?.position;
+      const withinDecorationRadius =
+        !camPos ||
+        Math.max(
+          Math.abs(cx - Math.floor(camPos.x / CHUNK_SIZE_BLOCKS)),
+          Math.abs(cz - Math.floor(camPos.z / CHUNK_SIZE_BLOCKS)),
+        ) <= DECORATION_RADIUS_CHUNKS;
+      if (gltfEntries.length > 0 && withinDecorationRadius) {
+        (async () => {
+          for (const { typeOrd, posKeys } of gltfEntries) {
+            const gltfPath = gltfTypeTable[typeOrd];
+            if (!gltfPath) continue;
+            const sources = await loadGltfSources(gltfPath, scene);
+            if (!window.mcState.chunks[key]) continue; // chunk disposed during async load
+            const instances: InstanceType<typeof BABYLON.AbstractMesh>[] = [];
+            for (const posKey of posKeys) {
+              const [wx, wy, wz] = posKey.split(",").map(Number);
+              for (const src of sources) {
+                const inst = src.createInstance(`gltfi_${key}_${posKey}`);
+                inst.position.set(wx, wy, wz + 1);
+                inst.scaling.setAll(0.8);
+                inst.isPickable = false;
+                instances.push(inst);
+              }
+            }
+            const existing = window.mcState.chunks[key] as InstanceType<typeof BABYLON.AbstractMesh>[];
+            window.mcState.chunks[key] = [...existing, ...instances];
+          }
+        })();
+      }
     },
 
     // GPU upload only — call after chunkProcessFaces has consumed all faces.

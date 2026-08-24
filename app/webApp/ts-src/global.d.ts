@@ -416,6 +416,18 @@ declare global {
     chunkFace(wx: number, wy: number, wz: number, faceMat: number, ao: number): void;
     chunkProcessFaces(cursor: number, maxFaces: number): number;
     chunkEnd(scene: Scene, materials: Record<string, ShaderMaterial | StandardMaterial>): void;
+    // Off-main-thread chunk geometry (see chunkMeshWorker.ts / chunkWorkerPool.ts). Kotlin submits
+    // a job after Phase 1 (row scan) instead of calling chunkProcessFaces synchronously, polls
+    // isChunkMeshReady, then calls chunkEndFromWorker for the GPU upload once ready.
+    requestChunkMesh(cx: number, cz: number): void;
+    isChunkMeshReady(cx: number, cz: number): boolean;
+    chunkEndFromWorker(
+      scene: Scene,
+      materials: Record<string, ShaderMaterial | StandardMaterial>,
+      cx: number,
+      cz: number,
+    ): void;
+    discardChunkMeshResult(cx: number, cz: number): void;
     disposeChunk(key: string): void;
     buildChunkImpostor(scene: Scene, cx: number, cz: number): void;
     setImpostorSkirtDepth(depth: number): void;

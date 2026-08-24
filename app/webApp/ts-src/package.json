@@ -15,6 +15,8 @@
     "watch:map": "esbuild map/index.tsx --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --outfile=${MC_OUT_MAP_JS:-../build/web/map.js} --watch=forever",
     "build:map:css": "tailwindcss -i ./styles/main.css -o ${MC_OUT_MAP_CSS:-../build/web/map.css}",
     "watch:map:css": "tailwindcss -i ./styles/main.css -o ${MC_OUT_MAP_CSS:-../build/web/map.css} --watch=always",
+    "build:chunkWorker": "esbuild game/lib/chunkMeshWorker.ts --bundle --platform=browser --target=es2017 --format=iife --outfile=${MC_OUT_CHUNK_WORKER_JS:-../build/web/chunk-mesh-worker.js}",
+    "watch:chunkWorker": "esbuild game/lib/chunkMeshWorker.ts --bundle --platform=browser --target=es2017 --format=iife --outfile=${MC_OUT_CHUNK_WORKER_JS:-../build/web/chunk-mesh-worker.js} --watch=forever",
     "build:admin": "esbuild admin/index.tsx --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --outfile=${MC_OUT_ADMIN_JS:-../build/web/admin.js}",
     "watch:admin": "esbuild admin/index.tsx --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --outfile=${MC_OUT_ADMIN_JS:-../build/web/admin.js} --watch=forever",
     "build:admin:css": "tailwindcss -i ./styles/main.css -o ${MC_OUT_ADMIN_CSS:-../build/web/admin.css}",

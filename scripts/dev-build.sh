@@ -45,6 +45,7 @@ if $BUILD_JS; then
     cd app/webApp/ts-src
 
     MC_OUT_JS="$BUILD_WEB/mc_bindings.js" npm run build
+    MC_OUT_CHUNK_WORKER_JS="$BUILD_WEB/chunk-mesh-worker.js" npm run build:chunkWorker
     MC_OUT_CSS="$BUILD_WEB/main.css" npm run build:css
     # Single Tailwind compile then copy — same result as css-sync watcher
     cp "$BUILD_WEB/main.css" "$BUILD_WEB/map.css"

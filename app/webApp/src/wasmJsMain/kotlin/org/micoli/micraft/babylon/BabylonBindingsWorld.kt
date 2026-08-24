@@ -117,6 +117,22 @@ fun jsGetFaceCount(): Int = js("(window.__mcFI / 7) | 0")
 
 fun jsChunkEnd(scene: JsAny, materials: JsAny): Unit = js("mc.chunkEnd(scene, materials)")
 
+// ── Off-main-thread chunk mesh (see chunkMeshWorker.ts / chunkWorkerPool.ts) ───────────────────
+// Submits the __mcFB face buffer accumulated by Phase 1 (renderRow) to the worker pool instead of
+// processing it synchronously via jsChunkProcessFaces — see ChunkManager.drainPendingChunks.
+
+fun jsRequestChunkMesh(cx: Int, cz: Int): Unit = js("mc.requestChunkMesh(cx, cz)")
+
+fun jsIsChunkMeshReady(cx: Int, cz: Int): Boolean = js("mc.isChunkMeshReady(cx, cz)")
+
+fun jsChunkEndFromWorker(scene: JsAny, materials: JsAny, cx: Int, cz: Int): Unit =
+    js("mc.chunkEndFromWorker(scene, materials, cx, cz)")
+
+// Drops a not-yet-consumed worker result — call when a chunk render is aborted (re-enqueued or
+// unloaded) before its worker job's result was picked up, so a later mesh of the same chunk
+// position doesn't accidentally apply a stale result.
+fun jsDiscardChunkMeshResult(cx: Int, cz: Int): Unit = js("mc.discardChunkMeshResult(cx, cz)")
+
 fun jsDisposeChunk(key: String): Unit = js("mc.disposeChunk(key)")
 
 // Cheap flat-colored stand-in mesh for a chunk far from the viewer — see
