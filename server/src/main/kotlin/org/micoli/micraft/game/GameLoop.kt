@@ -1141,8 +1141,11 @@ class GameLoop(
             )
         }
         app.launch {
+            var nextTickAt = System.currentTimeMillis() + TICK_MS
             while (isActive) {
-                delay(TICK_MS)
+                val waitMs = nextTickAt - System.currentTimeMillis()
+                if (waitMs > 0) delay(waitMs)
+                nextTickAt = nextTickDeadline(System.currentTimeMillis(), nextTickAt, TICK_MS)
                 runCatching { tick() }.onFailure { log.error("tick error: {}", it.message, it) }
                 saveTickCounter++
                 if (saveTickCounter >= SAVE_INTERVAL_TICKS) {
