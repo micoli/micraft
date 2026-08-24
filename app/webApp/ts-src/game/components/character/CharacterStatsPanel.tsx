@@ -1,6 +1,7 @@
 import { CharacterSyncData } from "../../types";
 import { StatRow } from "./StatRow";
 import { BaseStatRow } from "./BaseStatRow";
+import { DerivedStatRow } from "./DerivedStatRow";
 
 const CLASS_LABELS: Record<string, string> = {
   WARRIOR: "Warrior",
@@ -43,8 +44,8 @@ export function CharacterStatsPanel({ data }: { data: CharacterSyncData }) {
         <StatRow label="Initiative" value={d.initiative >= 0 ? `+${d.initiative}` : `${d.initiative}`} />
 
         <div className="text-blue-300 text-xs font-mono mt-5 mb-3 tracking-widest">REGEN</div>
-        <StatRow label="HP/s" value={d.hpRegenPerSec.toFixed(1)} />
-        <StatRow label="Mana/s" value={d.manaRegenPerSec.toFixed(1)} />
+        <DerivedStatRow label="HP/s" base={c.baseStats.con / 10} effective={d.hpRegenPerSec} decimals={1} />
+        <DerivedStatRow label="Mana/s" base={c.baseStats.wis / 20} effective={d.manaRegenPerSec} decimals={1} />
       </div>
     </div>
   );

@@ -5,6 +5,14 @@ import { SaveButton } from "../../../primitives/SaveButton";
 import { getApiArmors, getApiWeapons, getApiTools } from "../../../generated/api/requests";
 import { EquipmentToggleList } from "./EquipmentToggleList";
 import { GiveItemForm } from "./GiveItemForm";
+import { ArmorBonusLine } from "../../../game/components/character/ArmorBonusLine";
+import { cn } from "../../../primitives/cn";
+import { slotsOverlap, type ArmorSlots, type ArmorStatBonus } from "../../../game/components/character/Character";
+
+interface ArmorDefinition {
+  wearable: ArmorSlots;
+  statBonus: ArmorStatBonus;
+}
 
 export interface EquipmentPayload {
   ownedArmors: string[];
@@ -26,7 +34,7 @@ export function EquipmentTab({
   onGive: (name: string, count: number) => Promise<void>;
 }) {
   const t = useT();
-  const [armorDefs, setArmorDefs] = useState<Record<string, unknown>>({});
+  const [armorDefs, setArmorDefs] = useState<Record<string, ArmorDefinition>>({});
   const [weaponDefs, setWeaponDefs] = useState<Record<string, unknown>>({});
   const [toolDefs, setToolDefs] = useState<Record<string, unknown>>({});
 
@@ -53,7 +61,7 @@ export function EquipmentTab({
       getApiWeapons({ throwOnError: true }).then((r) => r.data),
       getApiTools({ throwOnError: true }).then((r) => r.data),
     ]).then(([a, w, tl]) => {
-      setArmorDefs(a as Record<string, unknown>);
+      setArmorDefs(a as Record<string, ArmorDefinition>);
       setWeaponDefs(w as Record<string, unknown>);
       setToolDefs(tl as Record<string, unknown>);
     });
@@ -61,6 +69,16 @@ export function EquipmentTab({
 
   const toggle = (list: string[], setList: (v: string[]) => void, name: string) =>
     setList(list.includes(name) ? list.filter((n) => n !== name) : [...list, name]);
+
+  const toggleWorn = (name: string) => {
+    if (worn.includes(name)) {
+      setWorn((prev) => prev.filter((a) => a !== name));
+      return;
+    }
+    const slots = armorDefs[name]?.wearable;
+    const conflicting = worn.filter((a) => slotsOverlap(armorDefs[a]?.wearable, slots));
+    setWorn((prev) => prev.filter((a) => !conflicting.includes(a)).concat(name));
+  };
 
   const save = async () => {
     setSaving(true);
@@ -97,7 +115,7 @@ export function EquipmentTab({
   const giveNames = [...Object.keys(armorDefs), ...Object.keys(weaponDefs), ...Object.keys(toolDefs)];
 
   return (
-    <div className="p-5 space-y-5">
+    <div>
       <GiveItemForm
         names={giveNames}
         placeholder={t("players.giveNamePlaceholder")}
@@ -112,12 +130,44 @@ export function EquipmentTab({
         selected={ownedArmors}
         onToggle={(n) => toggle(ownedArmors, setOwnedArmors, n)}
       />
-      <EquipmentToggleList
-        title={t("players.wornArmors")}
-        names={[...ownedArmors].sort()}
-        selected={worn}
-        onToggle={(n) => toggle(worn, setWorn, n)}
-      />
+      <div>
+        <p className="text-xs font-medium text-[#8A99AF] mb-2">{t("players.wornArmors")}</p>
+        {ownedArmors.length === 0 ? (
+          <p className="text-xs text-[#4A5568]">—</p>
+        ) : (
+          <div className="space-y-2">
+            {[...ownedArmors].sort().map((name) => {
+              const armorDef = armorDefs[name];
+              const isWorn = worn.includes(name);
+              return (
+                <div
+                  key={name}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded border",
+                    isWorn ? "bg-green-950/40 border-green-700/50" : "bg-[#0E1726] border-[#2E3A4E]",
+                  )}
+                >
+                  <div className="flex-1">
+                    <div className={cn("text-xs mb-1", isWorn ? "text-green-400" : "text-[#8A99AF]")}>{name}</div>
+                    {armorDef && <ArmorBonusLine bonus={armorDef.statBonus} wearable={armorDef.wearable} />}
+                  </div>
+                  <button
+                    onClick={() => toggleWorn(name)}
+                    className={cn(
+                      "px-2 py-1 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap",
+                      isWorn
+                        ? "border-[#2E3A4E] text-[#8A99AF] hover:border-red-500/50 hover:text-red-400"
+                        : "bg-[#3C50E0]/20 border-[#3C50E0] text-[#818CF8]",
+                    )}
+                  >
+                    {isWorn ? t("players.unequip") : t("players.equip")}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
       <EquipmentToggleList
         title={t("players.ownedWeapons")}
         names={[...weaponNames].sort()}

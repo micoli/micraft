@@ -1,10 +1,12 @@
 import { BaseStats, PlayerFile } from "../../apiTypes";
-import { useT, type Translate } from "../../i18n";
+import { useT } from "../../i18n";
 import { useEffect, useState } from "react";
 import { SaveButton } from "../../../primitives/SaveButton";
 import { StatRow } from "./StatRow";
 import { getApiArmors, getApiWeapons, getApiTools } from "../../../generated/api/requests";
 import { EquipmentTab, type EquipmentPayload } from "./EquipmentTab";
+import { CharacterStatsPanel } from "../../../game/components/character/CharacterStatsPanel";
+import type { CharacterSyncData, DerivedStats } from "../../../game/types";
 
 const CHARACTER_CLASSES = ["WARRIOR", "MAGE", "RANGER", "ROGUE", "CLERIC"] as const;
 
@@ -36,7 +38,7 @@ function sumBonus(defs: Record<string, EquipmentDef>, names: (string | null | un
   }, ZERO_BONUS);
 }
 
-function computeDerived(s: BaseStats, level: number, acBonus: number) {
+function computeDerived(s: BaseStats, level: number): DerivedStats {
   const f = (v: number) => Math.floor((v - 10) / 2);
   return {
     maxHp: Math.max(1, Math.floor(f(s.con) * level + 10)),
@@ -45,70 +47,13 @@ function computeDerived(s: BaseStats, level: number, acBonus: number) {
     rangedDmg: f(s.dex),
     spellDmg: f(s.intel),
     critChancePct: 5 + s.dex * 0.2,
+    critDmgMult: 2,
     dodgePct: Math.min(s.dex * 2.5, 75),
     magicResistPct: Math.max((s.wis - 10) * 2, 0),
-    armorClass: 10 + f(s.dex) + acBonus,
+    initiative: f(s.dex),
     hpRegenPerSec: s.con / 10,
     manaRegenPerSec: s.wis / 20,
-    maxTokens: Math.floor(level / 4) + 1,
   };
-}
-
-type DerivedStats = ReturnType<typeof computeDerived>;
-
-function derivedRows(base: DerivedStats, total: DerivedStats, t: Translate) {
-  const rows: [string, number, string][] = [
-    [t("players.maxHp"), 0, ""],
-    [t("players.maxMana"), 0, ""],
-    [t("players.meleeDmg"), 0, ""],
-    [t("players.rangedDmg"), 0, ""],
-    [t("players.spellDmg"), 0, ""],
-    [t("players.critChance"), 0, "%"],
-    [t("players.dodge"), 0, "%"],
-    [t("players.magicResist"), 0, "%"],
-    [t("players.armorClass"), 0, ""],
-    [t("players.hpRegen"), 0, ""],
-    [t("players.manaRegen"), 0, ""],
-    [t("players.maxTokens"), 0, ""],
-  ];
-  const keys: (keyof DerivedStats)[] = [
-    "maxHp",
-    "maxMana",
-    "meleeDmg",
-    "rangedDmg",
-    "spellDmg",
-    "critChancePct",
-    "dodgePct",
-    "magicResistPct",
-    "armorClass",
-    "hpRegenPerSec",
-    "manaRegenPerSec",
-    "maxTokens",
-  ];
-  const decimals: Record<string, number> = {
-    critChancePct: 1,
-    dodgePct: 1,
-    magicResistPct: 1,
-    hpRegenPerSec: 2,
-    manaRegenPerSec: 2,
-  };
-  const signed = new Set(["meleeDmg", "rangedDmg", "spellDmg"]);
-  return rows.map(([label, , suffix], i) => {
-    const key = keys[i];
-    const d = decimals[key] ?? 0;
-    const baseVal = base[key];
-    const totalVal = total[key];
-    const bonusVal = Number((totalVal - baseVal).toFixed(d));
-    const fmt = (v: number) => v.toFixed(d) + suffix;
-    const prefix = signed.has(key) ? "+" : "";
-    return {
-      label,
-      base: prefix + fmt(baseVal),
-      bonus: bonusVal,
-      bonusFmt: (bonusVal >= 0 ? "+" : "") + fmt(bonusVal),
-      total: prefix + fmt(totalVal),
-    };
-  });
 }
 
 export function RpgTab({
@@ -128,6 +73,7 @@ export function RpgTab({
   const [stats, setStats] = useState({ ...cd.baseStats });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [armorDefs, setArmorDefs] = useState<Record<string, EquipmentDef>>({});
   const [weaponDefs, setWeaponDefs] = useState<Record<string, EquipmentDef>>({});
   const [toolDefs, setToolDefs] = useState<Record<string, EquipmentDef>>({});
@@ -164,11 +110,21 @@ export function RpgTab({
     con: stats.con + armorBonus.con + weaponBonus.con + toolBonus.con,
     cha: stats.cha + armorBonus.cha + weaponBonus.cha + toolBonus.cha,
   };
-  const acBonus = armorBonus.acBonus + weaponBonus.acBonus + toolBonus.acBonus;
-  const baseDerived = computeDerived(stats, cd.level, 0);
-  const derived = computeDerived(effectiveStats, cd.level, acBonus);
-  const hasEquipmentBonus = JSON.stringify(effectiveStats) !== JSON.stringify(stats) || acBonus !== 0;
-  const rows = derivedRows(baseDerived, derived, t);
+  const derived = computeDerived(effectiveStats, cd.level);
+  const characterSyncData: CharacterSyncData = {
+    character: {
+      id: cd.id,
+      name: cd.name,
+      characterClass: cls,
+      level: cd.level,
+      xp: cd.xp,
+      baseStats: stats,
+      currentHp: cd.currentHp,
+      currentMana: cd.currentMana,
+    },
+    derived,
+    effectiveBaseStats: effectiveStats,
+  };
 
   return (
     <div className="p-5 space-y-5">
@@ -191,42 +147,65 @@ export function RpgTab({
         </div>
       </div>
       <div>
-        <p className="text-xs font-medium text-[#8A99AF] mb-2">{t("players.baseStats")}</p>
-        <StatRow name="str" label={t("players.strength")} stats={stats} setStats={setStats} />
-        <StatRow name="dex" label={t("players.dexterity")} stats={stats} setStats={setStats} />
-        <StatRow name="intel" label={t("players.intellect")} stats={stats} setStats={setStats} />
-        <StatRow name="wis" label={t("players.wisdom")} stats={stats} setStats={setStats} />
-        <StatRow name="con" label={t("players.constitution")} stats={stats} setStats={setStats} />
-        <StatRow name="cha" label={t("players.charisma")} stats={stats} setStats={setStats} />
+        <CharacterStatsPanel data={characterSyncData} />
       </div>
       <div>
-        <p className="text-xs font-medium text-[#8A99AF] mb-2">
-          {t("players.derivedStats")}{" "}
-          <span className="text-[#4A5568] normal-case font-normal">{t("players.derivedLevel", cd.level)}</span>
-          {hasEquipmentBonus && (
-            <span className="text-[#818CF8] normal-case font-normal ml-1">{t("players.includesEquipmentBonus")}</span>
-          )}
-        </p>
-        <div className="grid grid-cols-2 gap-x-4">
-          {rows.map((r) => (
-            <div key={r.label} className="flex justify-between py-1 border-b border-[#2E3A4E] text-xs">
-              <span className="text-[#8A99AF]">{r.label}</span>
-              {hasEquipmentBonus && r.bonus !== 0 ? (
-                <span className="tabular-nums font-medium">
-                  <span className="text-[#8A99AF]">{r.base}</span> <span className="text-[#818CF8]">{r.bonusFmt}</span>{" "}
-                  <span className="text-white">= {r.total}</span>
-                </span>
-              ) : (
-                <span className="text-white tabular-nums font-medium">{r.total}</span>
-              )}
+        <button
+          onClick={() => setEditOpen((o) => !o)}
+          className="text-xs font-medium text-[#8A99AF] mb-2 hover:text-white transition-colors"
+        >
+          {editOpen ? "▾" : "▸"} {t("players.baseStatsEdit")}
+        </button>
+        {editOpen && (
+          <>
+            <div className="grid grid-cols-2 gap-x-4">
+              <StatRow
+                name="str"
+                label={t("players.strength")}
+                stats={stats}
+                setStats={setStats}
+                bonus={effectiveStats.str - stats.str}
+              />
+              <StatRow
+                name="dex"
+                label={t("players.dexterity")}
+                stats={stats}
+                setStats={setStats}
+                bonus={effectiveStats.dex - stats.dex}
+              />
+              <StatRow
+                name="intel"
+                label={t("players.intellect")}
+                stats={stats}
+                setStats={setStats}
+                bonus={effectiveStats.intel - stats.intel}
+              />
+              <StatRow
+                name="wis"
+                label={t("players.wisdom")}
+                stats={stats}
+                setStats={setStats}
+                bonus={effectiveStats.wis - stats.wis}
+              />
+              <StatRow
+                name="con"
+                label={t("players.constitution")}
+                stats={stats}
+                setStats={setStats}
+                bonus={effectiveStats.con - stats.con}
+              />
+              <StatRow
+                name="cha"
+                label={t("players.charisma")}
+                stats={stats}
+                setStats={setStats}
+                bonus={effectiveStats.cha - stats.cha}
+              />
             </div>
-          ))}
-        </div>
+            <SaveButton saving={saving} saved={saved} onClick={save} />
+          </>
+        )}
       </div>
-      <p className="text-xs text-[#4A5568]">
-        {t("players.hpManaSummary", cd.currentHp, derived.maxHp, cd.currentMana, derived.maxMana)}
-      </p>
-      <SaveButton saving={saving} saved={saved} onClick={save} />
       <div className="pt-5 border-t border-[#2E3A4E]">
         <EquipmentTab file={file} onSave={onSaveEquipment} onGive={onGive} />
       </div>

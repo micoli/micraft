@@ -71,7 +71,7 @@ const SLOT_LABELS: { key: keyof ArmorSlots; label: string }[] = [
   { key: "leftFoot", label: "L.FOOT" },
 ];
 
-function slotsOverlap(a: ArmorSlots | undefined, b: ArmorSlots | undefined): boolean {
+export function slotsOverlap(a: ArmorSlots | undefined, b: ArmorSlots | undefined): boolean {
   if (!a || !b) return false;
   return SLOT_LABELS.some(({ key }) => a[key] && b[key]);
 }
