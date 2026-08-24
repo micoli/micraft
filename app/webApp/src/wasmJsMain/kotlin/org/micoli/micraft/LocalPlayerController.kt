@@ -600,7 +600,11 @@ class LocalPlayerController(
         val diffZ = reconcileTargetZ - predZ
         val distXZ = kotlin.math.sqrt(diffX * diffX + diffZ * diffZ)
         val speedMultClamped = localSpeedMult.coerceAtLeast(1f).toDouble()
-        val movingToleranceXz = reconcileToleranceXz * speedMultClamped
+        // Flying has no collision-driven divergence and covers ground fast, so the same
+        // tolerance as ground movement fires the soft-correction every frame during a long
+        // straight flight, reading as a repeated speed drag — widen it while flying.
+        val movingToleranceXz =
+            reconcileToleranceXz * speedMultClamped * (if (localFlying) 3.0 else 1.0)
         // Scales with speed like movingToleranceXz above — a fixed absolute distance here would
         // sit only ~2x movingToleranceXz at high speed multipliers, so ordinary prediction
         // jitter would repeatedly cross it and teleport the player, reading as speed pulsing.
