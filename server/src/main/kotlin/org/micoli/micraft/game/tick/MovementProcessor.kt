@@ -25,6 +25,14 @@ class MovementProcessor(private val world: WorldState) {
 
     fun process(session: PlayerSession, input: TickInput): PlayerState {
         val old = session.state
+
+        // Riding a vehicle: translation is driven by VehicleManager.tick() instead, but the
+        // camera's yaw/pitch keeps flowing through every tick so look stays free while mounted.
+        if (session.mountedVehicleId != null) {
+            session.vy = 0f
+            return old.copy(orientation = Orientation(input.yaw, input.pitch))
+        }
+
         val w = PlayerConstants.WIDTH
         val solid = { bx: Int, by: Int, bz: Int -> world.isSolidOrOccupied(bx, by, bz) }
         val rawPos = old.pos

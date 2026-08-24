@@ -1688,6 +1688,7 @@ class GameLoop(
             sessionRegistry.remove(id)
             chunkStreamer.cleanupSession(id)
             npcManager.clearPlayer(id)
+            vehicleManager.clearRider(id)
             npcTickPipeline.onPlayerDisconnected(sessionRegistry.all())
             tradeManager.onPlayerDisconnect(id)
             savePlayer(session)

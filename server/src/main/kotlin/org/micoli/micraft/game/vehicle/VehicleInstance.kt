@@ -24,6 +24,9 @@ class VehicleInstance(
     var pitch: Float = 0f
     var moving: Boolean = false
 
+    /** Server-only runtime linkage — never serialized (a vehicle never reloads with a rider). */
+    var riderSessionId: String? = null
+
     fun toState(): VehicleState =
         VehicleState(
             id = id,

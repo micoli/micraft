@@ -265,6 +265,7 @@ stateDiagram-v2
 | `/mail` | `/mail` | Open your mailbox. | — |
 | `/map` | `/map` | Toggles the biome map overlay. | — |
 | `/mode` | `/mode <game\|creative>` | Switch between normal game mode and creative edit mode. (admin) | game, creative |
+| `/mount` | `/mount` | Mount or dismount the vehicle you're targeting. | — |
 | `/npcbuy` | `/npcbuy <npcId> <itemType> [quantity]` | Buy an item from a seller NPC. | — |
 | `/npcsell` | `/npcsell <npcId> <itemType> [quantity]` | Sell an item to a seller NPC. | — |
 | `/preferences` | `/preferences` | Opens the preferences panel. | — |
@@ -434,6 +435,7 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/skins/{name}/config` | Skin config (eye offset, hidden bones) for a named skin |
 | GET | `/api/spells` | Spell definitions, keyed by spell id |
 | GET | `/api/tools` | List all tool definitions |
+| GET | `/api/vehicles/{name}/config` | Vehicle model config (speed, seat offset) for a named vehicle |
 | GET | `/api/weapons` | List all weapon definitions |
 | POST | `/auth/noauth-login` | Create/reuse an account by email when auth is disabled (auth.provider=none) |
 

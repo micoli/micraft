@@ -625,6 +625,31 @@ paths:
           description: Skin not found
           headers: {}
       deprecated: false
+  /api/vehicles/{name}/config:
+    get:
+      tags: []
+      description: "Vehicle model config (speed, seat offset) for a named vehicle"
+      parameters:
+      - name: name
+        in: path
+        description: Vehicle model name
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.game.vehicle.VehicleModelDefinition"
+        "404":
+          description: Vehicle model not found
+          headers: {}
+      deprecated: false
   /api/armors:
     get:
       tags: []
@@ -3254,6 +3279,39 @@ components:
       - eyes
       - firstPersonHiddenBones
       title: SkinDefinition
+    org.micoli.micraft.game.vehicle.SeatOffset:
+      type: object
+      properties:
+        x:
+          type: number
+          format: float
+          title: Float
+        "y":
+          type: number
+          format: float
+          title: Float
+        z:
+          type: number
+          format: float
+          title: Float
+      required:
+      - x
+      - "y"
+      - z
+      title: SeatOffset
+    org.micoli.micraft.game.vehicle.VehicleModelDefinition:
+      type: object
+      properties:
+        seatOffset:
+          $ref: "#/components/schemas/org.micoli.micraft.game.vehicle.SeatOffset"
+        speed:
+          type: number
+          format: float
+          title: Float
+      required:
+      - seatOffset
+      - speed
+      title: VehicleModelDefinition
     org.micoli.micraft.game.armor.ArmorDefinition:
       type: object
       properties:

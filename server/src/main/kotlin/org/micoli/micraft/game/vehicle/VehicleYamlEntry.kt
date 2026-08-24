@@ -11,5 +11,4 @@ data class VehicleYamlEntry(
     val bbmodelFile: String = "",
     @JsonSchemaConstraint(exclusiveMinimum = 0.0) val width: Float = 0.8f,
     @JsonSchemaConstraint(exclusiveMinimum = 0.0) val height: Float = 0.8f,
-    @JsonSchemaConstraint(exclusiveMinimum = 0.0) val speed: Float = 2f,
 )

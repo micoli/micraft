@@ -15,6 +15,7 @@ import org.micoli.micraft.game.world.EntityType
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.rail.Direction
 import org.micoli.micraft.game.world.rail.RailConnection
+import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.vehicle.VehicleRegistry
 import org.micoli.micraft.vehicle.VehicleState
@@ -76,6 +77,22 @@ class VehicleManager(private val broadcast: suspend (ServerMessage) -> Unit) {
         broadcast(ServerMessage.VehicleUpdate(instance.toState()))
     }
 
+    /** Mounts [session] into vehicle [vehicleId]; false if unknown or already occupied. */
+    fun mount(vehicleId: String, session: PlayerSession): Boolean {
+        val instance = vehicles[vehicleId] ?: return false
+        if (instance.riderSessionId != null) return false
+        instance.riderSessionId = session.id
+        return true
+    }
+
+    /** Clears [session] as rider from whichever vehicle it's mounted in, if any. */
+    fun dismount(session: PlayerSession) = clearRider(session.id)
+
+    /** Clears [sessionId] as rider from whichever vehicle it's mounted in, if any. */
+    fun clearRider(sessionId: String) {
+        vehicles.values.firstOrNull { it.riderSessionId == sessionId }?.riderSessionId = null
+    }
+
     /** Replays every currently-spawned vehicle to a newly-connected session. */
     suspend fun sendAllTo(session: PlayerSession) {
         log.info("sendAllTo {}: {} vehicles in memory", session.id.take(8), vehicles.size)
@@ -129,13 +146,41 @@ class VehicleManager(private val broadcast: suspend (ServerMessage) -> Unit) {
     suspend fun tick(world: WorldState, sessions: Collection<PlayerSession>) {
         val rangeSq = UPDATE_RANGE * UPDATE_RANGE
         for (instance in vehicles.values) {
-            if (!VehicleBehavior.tick(instance, world)) continue
-            val state = instance.toState()
-            for (session in sessions) {
-                val dx = session.state.pos.x - state.pos.x
-                val dz = session.state.pos.z - state.pos.z
-                if (dx * dx + dz * dz <= rangeSq) session.send(ServerMessage.VehicleUpdate(state))
+            val moved = VehicleBehavior.tick(instance, world)
+            if (moved) {
+                val state = instance.toState()
+                for (session in sessions) {
+                    val dx = session.state.pos.x - state.pos.x
+                    val dz = session.state.pos.z - state.pos.z
+                    if (dx * dx + dz * dz <= rangeSq)
+                        session.send(ServerMessage.VehicleUpdate(state))
+                }
             }
+            syncRider(instance, sessions)
         }
+    }
+
+    /**
+     * Keeps the rider's position glued to the vehicle every tick (even when stopped — otherwise a
+     * stationary vehicle would let its rider fall through gravity, since [MovementProcessor] fully
+     * short-circuits physics while mounted). Orientation is left untouched — riders keep free look.
+     */
+    private suspend fun syncRider(instance: VehicleInstance, sessions: Collection<PlayerSession>) {
+        val riderId = instance.riderSessionId ?: return
+        val riderSession = sessions.firstOrNull { it.id == riderId }
+        if (riderSession == null || riderSession.mountedVehicleId != instance.id) {
+            instance.riderSessionId = null
+            return
+        }
+        val seatOffset = VehicleRegistry.get(instance.type)?.seatOffset ?: Vec3(0f, 0f, 0f)
+        riderSession.state =
+            riderSession.state.copy(
+                pos =
+                    Vec3(
+                        instance.pos.x + seatOffset.x,
+                        instance.pos.y + seatOffset.y,
+                        instance.pos.z + seatOffset.z,
+                    ))
+        broadcast(ServerMessage.PlayerUpdate(riderSession.state, riderSession.lastProcessedSeq))
     }
 }

@@ -182,7 +182,12 @@ export function registerKeyboard(): Pick<
         }
         if (b.combat_target_cycle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_target_cycle");
         if (b.combat_attack?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_attack");
-        if (b.npc_interact?.some((k) => matchesEvent(k, e))) window.mcState.events.push("npc_interact");
+        // vehicle_mount (Ctrl+KeyX) checked first: npc_interact's bare KeyX binding otherwise
+        // matches regardless of held modifiers (see matchesEvent), which would double-fire both.
+        const vehicleMountMatched = b.vehicle_mount?.some((k) => matchesEvent(k, e)) ?? false;
+        if (vehicleMountMatched) window.mcState.events.push("vehicle_mount");
+        if (!vehicleMountMatched && b.npc_interact?.some((k) => matchesEvent(k, e)))
+          window.mcState.events.push("npc_interact");
         if (b.screenshot?.some((k) => matchesEvent(k, e))) window.mcState.events.push("screenshot");
         if (b.quest_journal?.some((k) => matchesEvent(k, e))) window.mc?.openQuestJournal?.();
         if (b.quest_tracking?.some((k) => matchesEvent(k, e))) window.mc?.toggleQuestTracker?.();

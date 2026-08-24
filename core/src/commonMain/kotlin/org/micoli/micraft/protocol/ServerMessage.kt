@@ -395,6 +395,9 @@ sealed class ServerMessage {
 
     @ProtoId(59) @Serializable data class VehicleDespawned(val id: String) : ServerMessage()
 
+    /** Sent to the mounting/dismounting player only — `null` on dismount. */
+    @ProtoId(62) @Serializable data class MountUpdate(val vehicleId: String?) : ServerMessage()
+
     // Sent to admins on connect so the creative-mode "Scene" tab can list placeable scenes.
     @ProtoId(60)
     @Serializable

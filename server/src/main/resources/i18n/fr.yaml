@@ -256,6 +256,13 @@ god:
     on: "Mode dieu activé. Vous êtes immunisé aux dégâts."
     off: "Mode dieu désactivé."
 
+mount:
+  server:
+    mounted: "Vous montez dans le véhicule."
+    dismounted: "Vous descendez du véhicule."
+    no_target: "Aucun véhicule ciblé — ciblez-en un d'abord (X)."
+    occupied: "Ce véhicule est déjà occupé."
+
 mode:
   server:
     game: "Passage en mode jeu."

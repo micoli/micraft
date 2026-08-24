@@ -82,6 +82,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             playerId = { localPlayerId ?: "" },
             npcManager = npcManager,
             isVehicleTarget = { id -> id in vehicleManager.modelsMap() },
+            vehiclePositionOf = { id -> vehicleManager.positionsMap()[id] },
         )
 
     init {
@@ -461,6 +462,12 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             put(
                 ServerMessage.GodModeUpdate::class,
                 typedHandler { msg: ServerMessage.GodModeUpdate -> jsGodModeUpdate(msg.enabled) })
+            put(
+                ServerMessage.MountUpdate::class,
+                typedHandler { msg: ServerMessage.MountUpdate ->
+                    localController.isMounted = msg.vehicleId != null
+                    localController.mountedVehicleId = msg.vehicleId
+                })
             put(
                 ServerMessage.EditModeUpdate::class,
                 typedHandler { msg: ServerMessage.EditModeUpdate ->

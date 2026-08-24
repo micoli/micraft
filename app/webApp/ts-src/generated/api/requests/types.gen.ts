@@ -346,6 +346,35 @@ export type OrgMicoliMicraftGameSkinSkinDefinition = {
 };
 
 /**
+ * SeatOffset
+ */
+export type OrgMicoliMicraftGameVehicleSeatOffset = {
+    /**
+     * Float
+     */
+    x: number;
+    /**
+     * Float
+     */
+    y: number;
+    /**
+     * Float
+     */
+    z: number;
+};
+
+/**
+ * VehicleModelDefinition
+ */
+export type OrgMicoliMicraftGameVehicleVehicleModelDefinition = {
+    seatOffset: OrgMicoliMicraftGameVehicleSeatOffset;
+    /**
+     * Float
+     */
+    speed: number;
+};
+
+/**
  * ArmorDefinition
  */
 export type OrgMicoliMicraftGameArmorArmorDefinition = {
@@ -3198,6 +3227,33 @@ export type GetApiSkinsByNameConfigResponses = {
 };
 
 export type GetApiSkinsByNameConfigResponse = GetApiSkinsByNameConfigResponses[keyof GetApiSkinsByNameConfigResponses];
+
+export type GetApiVehiclesByNameConfigData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Vehicle model name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/api/vehicles/{name}/config';
+};
+
+export type GetApiVehiclesByNameConfigErrors = {
+    /**
+     * Vehicle model not found
+     */
+    404: unknown;
+};
+
+export type GetApiVehiclesByNameConfigResponses = {
+    200: OrgMicoliMicraftGameVehicleVehicleModelDefinition;
+};
+
+export type GetApiVehiclesByNameConfigResponse = GetApiVehiclesByNameConfigResponses[keyof GetApiVehiclesByNameConfigResponses];
 
 export type GetApiArmorsData = {
     body?: never;

@@ -2,6 +2,7 @@ combat:
   combat_target_cycle: ["Tab"]
   combat_attack: [KeyR]
   npc_interact: [KeyX]
+  vehicle_mount: ["Ctrl+KeyX"]
   console_toggle: [KeyH]
 
 movement:

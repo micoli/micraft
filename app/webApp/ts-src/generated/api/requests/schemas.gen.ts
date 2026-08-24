@@ -532,6 +532,52 @@ export const org_micoli_micraft_game_skin_SkinDefinitionSchema = {
     title: 'SkinDefinition'
 } as const;
 
+export const org_micoli_micraft_game_vehicle_SeatOffsetSchema = {
+    type: 'object',
+    properties: {
+        x: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        y: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        z: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        }
+    },
+    required: [
+        'x',
+        'y',
+        'z'
+    ],
+    title: 'SeatOffset'
+} as const;
+
+export const org_micoli_micraft_game_vehicle_VehicleModelDefinitionSchema = {
+    type: 'object',
+    properties: {
+        seatOffset: {
+            $ref: '#/components/schemas/org.micoli.micraft.game.vehicle.SeatOffset'
+        },
+        speed: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        }
+    },
+    required: [
+        'seatOffset',
+        'speed'
+    ],
+    title: 'VehicleModelDefinition'
+} as const;
+
 export const org_micoli_micraft_game_armor_ArmorDefinitionSchema = {
     type: 'object',
     properties: {

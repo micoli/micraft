@@ -15,6 +15,7 @@ import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.validateYamlConfig
 import org.micoli.micraft.config.yamlMapSection
 import org.micoli.micraft.game.world.EntityType
+import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.vehicle.VehicleDefinition
 import org.slf4j.LoggerFactory
 
@@ -26,7 +27,10 @@ private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), VehicleYam
 class VehicleRegistryLoader(
     private val path: Path,
     private val resourcesPath: Path = Path.of("resources/config/vehicles.yaml"),
+    private val modelsPath: Path = Path.of("resources/vehicles"),
+    private val dataModelsPath: Path = Path.of("data/resources/vehicles"),
 ) {
+    private val modelLoader = VehicleModelRegistryLoader(modelsPath, dataModelsPath)
     private val default: Map<String, VehicleYamlEntry> =
         Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, resourcesPath.readText())
 
@@ -69,12 +73,15 @@ class VehicleRegistryLoader(
         val raw = mergedEntries(node)
         val result =
             raw.entries.associate { (key, entry) ->
+                val model = modelLoader.load(entry.bbmodelFile) ?: VehicleModelDefinition()
                 EntityType(key) to
                     VehicleDefinition(
                         bbmodelFile = entry.bbmodelFile,
                         width = entry.width,
                         height = entry.height,
-                        speed = entry.speed,
+                        speed = model.speed,
+                        seatOffset =
+                            Vec3(model.seatOffset.x, model.seatOffset.y, model.seatOffset.z),
                     )
             }
         log.info("Vehicle registry loaded: {} vehicle types", result.size)

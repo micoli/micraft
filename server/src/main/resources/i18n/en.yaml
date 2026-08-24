@@ -256,6 +256,13 @@ god:
     on: "God mode enabled. You are immune to damage."
     off: "God mode disabled."
 
+mount:
+  server:
+    mounted: "You mount the vehicle."
+    dismounted: "You dismount."
+    no_target: "No vehicle targeted — target one first (X)."
+    occupied: "That vehicle is already occupied."
+
 mode:
   server:
     game: "Switched to game mode."

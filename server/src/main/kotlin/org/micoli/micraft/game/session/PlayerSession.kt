@@ -64,6 +64,10 @@ open class PlayerSession(
     @Volatile var lastMoveDz: Float = 0f
     @Volatile var lastMoveDy: Float = 0f
 
+    // Transient (not persisted) — id of the vehicle currently being ridden, if any. Cleared on
+    // disconnect/reconnect; reset by VehicleManager if the vehicle disappears while mounted.
+    @Volatile var mountedVehicleId: String? = null
+
     // Seq of the last MoveIntent actually applied — echoed back in PlayerUpdate so the client
     // can replay only its still-unconfirmed inputs instead of reconciling against a stale
     // position (see LocalPlayerController.updateFromServer).

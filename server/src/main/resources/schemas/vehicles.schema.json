@@ -15,10 +15,6 @@
       "height": {
         "type": "number",
         "exclusiveMinimum": 0
-      },
-      "speed": {
-        "type": "number",
-        "exclusiveMinimum": 0
       }
     }
   }

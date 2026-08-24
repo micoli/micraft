@@ -220,4 +220,21 @@ class MovementProcessorTest {
         assertTrue(
             result.pos.y > 10f, "Player too high to snap to slope at y=5, got ${result.pos.y}")
     }
+
+    @Test
+    fun mounted_ignoresMovementInput_butAppliesOrientation() {
+        val world = testWorld(Triple(8, 4, 8))
+        val processor = MovementProcessor(world)
+        val session = testSession(pos = Vec3(8.5f, 5f, 8.5f))
+        session.mountedVehicleId = "cart-1"
+
+        val result =
+            processor.process(
+                session, noInput(dx = 1f, dz = 1f, jump = true, yaw = 1.5f, pitch = 0.4f))
+
+        assertEquals(8.5f, result.pos.x, 0.01f)
+        assertEquals(8.5f, result.pos.z, 0.01f)
+        assertEquals(1.5f, result.orientation.yaw)
+        assertEquals(0.4f, result.orientation.pitch)
+    }
 }

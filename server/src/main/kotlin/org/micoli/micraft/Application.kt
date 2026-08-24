@@ -117,6 +117,7 @@ import org.micoli.micraft.http.SimulationController
 import org.micoli.micraft.http.SkinsController
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.http.ToolsController
+import org.micoli.micraft.http.VehiclesController
 import org.micoli.micraft.http.WeaponsController
 import org.micoli.micraft.simulation.SimulationDeps
 import org.micoli.micraft.simulation.SimulationRegistry
@@ -362,6 +363,7 @@ fun Application.module() {
         PlayerRpgController(persistence).register(this)
         CharacterController(persistence).register(this)
         SkinsController(dataPath).register(this)
+        VehiclesController(dataPath).register(this)
         ArmorsController(dataPath).register(this)
         WeaponsController(dataPath).register(this)
         ToolsController(dataPath).register(this)

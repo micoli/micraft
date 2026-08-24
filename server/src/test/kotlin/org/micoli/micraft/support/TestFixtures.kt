@@ -17,6 +17,7 @@ import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.trade.TradeManager
+import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.EquipmentCategory
@@ -276,6 +277,7 @@ fun testContext(
     toolCategories: () -> Map<EquipmentCategory, ToolCategoryDefinition> = { emptyMap() },
     namedPoints: () -> Map<String, Vec3> = { emptyMap() },
     scenes: SceneRegistry? = null,
+    vehicleManager: VehicleManager? = null,
 ) =
     CommandContext(
         world = world,
@@ -308,6 +310,7 @@ fun testContext(
         toolCategories = toolCategories,
         namedPoints = namedPoints,
         scenes = scenes,
+        vehicleManager = vehicleManager,
     )
 
 fun testWeatherManager() = WeatherManager(WeatherConfig())

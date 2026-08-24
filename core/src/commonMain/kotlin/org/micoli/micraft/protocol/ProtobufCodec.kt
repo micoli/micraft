@@ -165,6 +165,7 @@ object ServerMessageCodec {
             serverEntry<ServerMessage.VehicleDespawned>(), // 59
             serverEntry<ServerMessage.ScenesSync>(), // 60
             serverEntry<ServerMessage.ScenePreviewData>(), // 61
+            serverEntry<ServerMessage.MountUpdate>(), // 62
         )
 
     fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)

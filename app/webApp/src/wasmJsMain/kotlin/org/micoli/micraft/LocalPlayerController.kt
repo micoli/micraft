@@ -18,6 +18,7 @@ import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.physics.AabbCollider
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
+import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.player.height
 import org.micoli.micraft.player.speed
@@ -72,7 +73,10 @@ class LocalPlayerController(
     private val playerId: () -> String,
     private val npcManager: NpcManager,
     private val isVehicleTarget: (String) -> Boolean = { false },
+    private val vehiclePositionOf: (String) -> Vec3? = { null },
 ) {
+    var isMounted: Boolean = false
+    var mountedVehicleId: String? = null
     var predX = 0.0
     var predY = 0.0
     var predZ = 0.0
@@ -460,181 +464,197 @@ class LocalPlayerController(
 
         if (jsIsActionDown("backward")) autoAdvance = false
 
-        var dx = 0f
-        var dz = 0f
-        if (jsIsActionDown("forward") || autoAdvance) {
-            dx += fwdX
-            dz += fwdZ
-        }
-        if (jsIsActionDown("backward")) {
-            dx -= fwdX
-            dz -= fwdZ
-        }
-        if (jsIsActionDown("strafe_right")) {
-            dx += rightX
-            dz += rightZ
-        }
-        if (jsIsActionDown("strafe_left")) {
-            dx -= rightX
-            dz -= rightZ
-        }
-
-        val isMovingXZ = dx != 0f || dz != 0f
-
-        val len = kotlin.math.sqrt((dx * dx + dz * dz).toDouble()).toFloat()
-        if (len > 1f) {
-            dx /= len
-            dz /= len
-        }
-
-        val stance =
-            when {
-                !localFlying && jsIsActionDown("crawl") -> PlayerStance.CRAWLING
-                !localFlying && jsIsActionDown("sneak") -> PlayerStance.SNEAKING
-                else -> PlayerStance.STANDING
+        val animClip: String
+        if (isMounted) {
+            // Riding: translation is entirely server-driven (VehicleManager.tick() writes
+            // the rider's PlayerState.pos every tick) — snap straight to the vehicle's
+            // interpolated position instead of running WASD prediction/reconciliation, which
+            // would otherwise fight the server's authoritative pos with visible lag/jitter.
+            mountedVehicleId?.let(vehiclePositionOf)?.let { vpos ->
+                predX = vpos.x.toDouble()
+                predY = vpos.y.toDouble()
+                predZ = vpos.z.toDouble()
+            }
+            predVy = 0.0
+            animClip = "idle"
+        } else {
+            var dx = 0f
+            var dz = 0f
+            if (jsIsActionDown("forward") || autoAdvance) {
+                dx += fwdX
+                dz += fwdZ
+            }
+            if (jsIsActionDown("backward")) {
+                dx -= fwdX
+                dz -= fwdZ
+            }
+            if (jsIsActionDown("strafe_right")) {
+                dx += rightX
+                dz += rightZ
+            }
+            if (jsIsActionDown("strafe_left")) {
+                dx -= rightX
+                dz -= rightZ
             }
 
-        // Priority: flying > crawling > sneaking > backward > forward > strafe > idle.
-        val animClip =
-            when {
-                localFlying -> "jump_idle"
-                stance == PlayerStance.CRAWLING -> "crawling"
-                stance == PlayerStance.SNEAKING -> "sneaking"
-                !isMovingXZ -> "idle"
-                jsIsActionDown("backward") -> "walking_backward"
-                jsIsActionDown("forward") || autoAdvance -> "walking_forward"
-                jsIsActionDown("strafe_left") -> "strafe_left"
-                jsIsActionDown("strafe_right") -> "strafe_right"
-                else -> "walking_forward"
+            val isMovingXZ = dx != 0f || dz != 0f
+
+            val len = kotlin.math.sqrt((dx * dx + dz * dz).toDouble()).toFloat()
+            if (len > 1f) {
+                dx /= len
+                dz /= len
             }
 
-        val speed = stance.speed * localSpeedMult * actualDt.toFloat()
-        val solid = { bx: Int, by: Int, bz: Int ->
-            chunkManager.getBlockAtWorld(bx, by, bz).isSolid
-        }
-        val h = stance.height
-        val startX = predX
-        val startZ = predZ
-        val midDx =
-            AabbCollider.resolveX(
-                solid,
-                startX.toFloat(),
-                predY.toFloat(),
-                startZ.toFloat(),
-                PlayerConstants.WIDTH,
-                h,
-                dx * speed)
-        val midX = startX + midDx
-        val resolvedDz =
-            AabbCollider.resolveZ(
-                solid,
-                midX.toFloat(),
-                predY.toFloat(),
-                startZ.toFloat(),
-                PlayerConstants.WIDTH,
-                h,
-                dz * speed)
-        predZ = startZ + resolvedDz
-        val resolvedDx =
-            AabbCollider.resolveX(
-                solid,
-                startX.toFloat(),
-                predY.toFloat(),
-                predZ.toFloat(),
-                PlayerConstants.WIDTH,
-                h,
-                dx * speed)
-        predX = startX + resolvedDx
+            val stance =
+                when {
+                    !localFlying && jsIsActionDown("crawl") -> PlayerStance.CRAWLING
+                    !localFlying && jsIsActionDown("sneak") -> PlayerStance.SNEAKING
+                    else -> PlayerStance.STANDING
+                }
 
-        if (autoAdvance && (dx != 0f || dz != 0f)) {
-            val intendedSq = (dx * speed) * (dx * speed) + (dz * speed) * (dz * speed)
-            val resolvedSq = resolvedDx * resolvedDx + resolvedDz * resolvedDz
-            if (resolvedSq < intendedSq * 0.01f) autoAdvance = false
-        }
+            // Priority: flying > crawling > sneaking > backward > forward > strafe > idle.
+            animClip =
+                when {
+                    localFlying -> "jump_idle"
+                    stance == PlayerStance.CRAWLING -> "crawling"
+                    stance == PlayerStance.SNEAKING -> "sneaking"
+                    !isMovingXZ -> "idle"
+                    jsIsActionDown("backward") -> "walking_backward"
+                    jsIsActionDown("forward") || autoAdvance -> "walking_forward"
+                    jsIsActionDown("strafe_left") -> "strafe_left"
+                    jsIsActionDown("strafe_right") -> "strafe_right"
+                    else -> "walking_forward"
+                }
 
-        if (localFlying) {
-            val fwdY = jsGetCameraForwardY(camera).toFloat()
-            var dy = 0f
-            if (jsIsActionDown("ascend")) dy = 1f
-            else if (jsIsActionDown("descend")) dy = -1f
-            else {
-                if (jsIsActionDown("forward") || autoAdvance) dy += fwdY
-                if (jsIsActionDown("backward")) dy -= fwdY
+            val speed = stance.speed * localSpeedMult * actualDt.toFloat()
+            val solid = { bx: Int, by: Int, bz: Int ->
+                chunkManager.getBlockAtWorld(bx, by, bz).isSolid
             }
-            val flyDy = (dy * FLY_VERTICAL_SPEED * localSpeedMult * actualDt).toFloat()
-            val resolvedFlyDy =
-                AabbCollider.resolveY(
+            val h = stance.height
+            val startX = predX
+            val startZ = predZ
+            val midDx =
+                AabbCollider.resolveX(
                     solid,
-                    predX.toFloat(),
+                    startX.toFloat(),
+                    predY.toFloat(),
+                    startZ.toFloat(),
+                    PlayerConstants.WIDTH,
+                    h,
+                    dx * speed)
+            val midX = startX + midDx
+            val resolvedDz =
+                AabbCollider.resolveZ(
+                    solid,
+                    midX.toFloat(),
+                    predY.toFloat(),
+                    startZ.toFloat(),
+                    PlayerConstants.WIDTH,
+                    h,
+                    dz * speed)
+            predZ = startZ + resolvedDz
+            val resolvedDx =
+                AabbCollider.resolveX(
+                    solid,
+                    startX.toFloat(),
                     predY.toFloat(),
                     predZ.toFloat(),
                     PlayerConstants.WIDTH,
                     h,
-                    flyDy)
-            predY = (predY + resolvedFlyDy).coerceIn(0.0, WorldConstants.WORLD_MAX_Y.toDouble())
-            predVy = 0.0
-        } else {
-            val solid2 = { bx: Int, by: Int, bz: Int ->
-                chunkManager.getBlockAtWorld(bx, by, bz).isSolid
+                    dx * speed)
+            predX = startX + resolvedDx
+
+            if (autoAdvance && (dx != 0f || dz != 0f)) {
+                val intendedSq = (dx * speed) * (dx * speed) + (dz * speed) * (dz * speed)
+                val resolvedSq = resolvedDx * resolvedDx + resolvedDz * resolvedDz
+                if (resolvedSq < intendedSq * 0.01f) autoAdvance = false
             }
-            val h2 = localStance.height
-            val grounded =
-                AabbCollider.isGrounded(
-                    solid2,
-                    predX.toFloat(),
-                    predY.toFloat(),
-                    predZ.toFloat(),
-                    PlayerConstants.WIDTH)
-            if (grounded && predVy <= 0.0) {
-                predVy = if (jsIsActionDown("ascend")) CLIENT_JUMP_SPEED else 0.0
-            } else {
-                predVy += CLIENT_GRAVITY * actualDt
-                val dy = (predVy * actualDt).toFloat()
-                val resolvedDy =
+
+            if (localFlying) {
+                val fwdY = jsGetCameraForwardY(camera).toFloat()
+                var dy = 0f
+                if (jsIsActionDown("ascend")) dy = 1f
+                else if (jsIsActionDown("descend")) dy = -1f
+                else {
+                    if (jsIsActionDown("forward") || autoAdvance) dy += fwdY
+                    if (jsIsActionDown("backward")) dy -= fwdY
+                }
+                val flyDy = (dy * FLY_VERTICAL_SPEED * localSpeedMult * actualDt).toFloat()
+                val resolvedFlyDy =
                     AabbCollider.resolveY(
-                        solid2,
+                        solid,
                         predX.toFloat(),
                         predY.toFloat(),
                         predZ.toFloat(),
                         PlayerConstants.WIDTH,
-                        h2,
-                        dy)
-                if (resolvedDy != dy) predVy = 0.0
-                predY = (predY + resolvedDy).coerceAtLeast(0.0)
+                        h,
+                        flyDy)
+                predY = (predY + resolvedFlyDy).coerceIn(0.0, WorldConstants.WORLD_MAX_Y.toDouble())
+                predVy = 0.0
+            } else {
+                val solid2 = { bx: Int, by: Int, bz: Int ->
+                    chunkManager.getBlockAtWorld(bx, by, bz).isSolid
+                }
+                val h2 = localStance.height
+                val grounded =
+                    AabbCollider.isGrounded(
+                        solid2,
+                        predX.toFloat(),
+                        predY.toFloat(),
+                        predZ.toFloat(),
+                        PlayerConstants.WIDTH)
+                if (grounded && predVy <= 0.0) {
+                    predVy = if (jsIsActionDown("ascend")) CLIENT_JUMP_SPEED else 0.0
+                } else {
+                    predVy += CLIENT_GRAVITY * actualDt
+                    val dy = (predVy * actualDt).toFloat()
+                    val resolvedDy =
+                        AabbCollider.resolveY(
+                            solid2,
+                            predX.toFloat(),
+                            predY.toFloat(),
+                            predZ.toFloat(),
+                            PlayerConstants.WIDTH,
+                            h2,
+                            dy)
+                    if (resolvedDy != dy) predVy = 0.0
+                    predY = (predY + resolvedDy).coerceAtLeast(0.0)
+                }
             }
-        }
 
-        val diffX = reconcileTargetX - predX
-        val diffZ = reconcileTargetZ - predZ
-        val distXZ = kotlin.math.sqrt(diffX * diffX + diffZ * diffZ)
-        val speedMultClamped = localSpeedMult.coerceAtLeast(1f).toDouble()
-        // Flying has no collision-driven divergence and covers ground fast, so the same
-        // tolerance as ground movement fires the soft-correction every frame during a long
-        // straight flight, reading as a repeated speed drag — widen it while flying.
-        val movingToleranceXz =
-            reconcileToleranceXz * speedMultClamped * (if (localFlying) 3.0 else 1.0)
-        // Scales with speed like movingToleranceXz above — a fixed absolute distance here would
-        // sit only ~2x movingToleranceXz at high speed multipliers, so ordinary prediction
-        // jitter would repeatedly cross it and teleport the player, reading as speed pulsing.
-        val hardSnapThresholdXz = HARD_SNAP_DISTANCE_XZ * speedMultClamped
-        when {
-            distXZ > SNAP_THRESHOLD && !isMovingXZ -> {
-                predX = reconcileTargetX
-                predZ = reconcileTargetZ
-            }
-            distXZ > hardSnapThresholdXz -> {
-                predX = reconcileTargetX
-                predZ = reconcileTargetZ
-            }
-            !isMovingXZ && distXZ > reconcileToleranceXz -> {
-                predX += diffX * 0.3
-                predZ += diffZ * 0.3
-                xzDistances.addCapped(jsNow(), distXZ)
-            }
-            isMovingXZ && distXZ > movingToleranceXz -> {
-                predX += diffX * 0.15
-                predZ += diffZ * 0.15
-                xzDistances.addCapped(jsNow(), distXZ)
+            val diffX = reconcileTargetX - predX
+            val diffZ = reconcileTargetZ - predZ
+            val distXZ = kotlin.math.sqrt(diffX * diffX + diffZ * diffZ)
+            val speedMultClamped = localSpeedMult.coerceAtLeast(1f).toDouble()
+            // Flying has no collision-driven divergence and covers ground fast, so the same
+            // tolerance as ground movement fires the soft-correction every frame during a long
+            // straight flight, reading as a repeated speed drag — widen it while flying.
+            val movingToleranceXz =
+                reconcileToleranceXz * speedMultClamped * (if (localFlying) 3.0 else 1.0)
+            // Scales with speed like movingToleranceXz above — a fixed absolute distance here
+            // would sit only ~2x movingToleranceXz at high speed multipliers, so ordinary
+            // prediction jitter would repeatedly cross it and teleport the player, reading as
+            // speed pulsing.
+            val hardSnapThresholdXz = HARD_SNAP_DISTANCE_XZ * speedMultClamped
+            when {
+                distXZ > SNAP_THRESHOLD && !isMovingXZ -> {
+                    predX = reconcileTargetX
+                    predZ = reconcileTargetZ
+                }
+                distXZ > hardSnapThresholdXz -> {
+                    predX = reconcileTargetX
+                    predZ = reconcileTargetZ
+                }
+                !isMovingXZ && distXZ > reconcileToleranceXz -> {
+                    predX += diffX * 0.3
+                    predZ += diffZ * 0.3
+                    xzDistances.addCapped(jsNow(), distXZ)
+                }
+                isMovingXZ && distXZ > movingToleranceXz -> {
+                    predX += diffX * 0.15
+                    predZ += diffZ * 0.15
+                    xzDistances.addCapped(jsNow(), distXZ)
+                }
             }
         }
 
@@ -687,6 +707,7 @@ class LocalPlayerController(
                         if (isVehicleTarget(targetId)) ClientMessage.VehicleInteract(targetId)
                         else ClientMessage.NpcInteract(targetId))
                 }
+                event == "vehicle_mount" -> outMessages.trySend(ClientMessage.Command("/mount"))
                 event == "combat_attack" -> {
                     val targetId = currentCombatTargetId ?: return@repeat
                     val slot =
@@ -1403,6 +1424,13 @@ class LocalPlayerController(
             dz /= len
         }
 
+        // Mounted: translation is server-driven regardless (see MovementProcessor), zeroing
+        // here purely avoids the local prediction jittering against the vehicle-glued position.
+        if (isMounted) {
+            dx = 0f
+            dz = 0f
+        }
+
         val flyToggle = pendingFlyToggle.also { pendingFlyToggle = false }
         val speedUp = jsIsActionDown("speed_up")
         val speedDown = jsIsActionDown("speed_down")
@@ -1445,7 +1473,7 @@ class LocalPlayerController(
                 yaw = jsGetCameraRotationY(camera).toFloat(),
                 pitch = jsGetCameraRotationX(camera).toFloat(),
                 stance = stance,
-                jump = jsIsActionDown("ascend"),
+                jump = !isMounted && jsIsActionDown("ascend"),
                 flyToggle = flyToggle,
                 speedUp = speedUp,
                 speedDown = speedDown,
