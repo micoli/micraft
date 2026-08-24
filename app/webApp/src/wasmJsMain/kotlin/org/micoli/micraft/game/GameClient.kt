@@ -4,6 +4,7 @@ import io.ktor.client.*
 import io.ktor.client.engine.js.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.websocket.*
+import kotlin.math.abs
 import kotlin.reflect.KClass
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -44,6 +45,11 @@ private const val DEFAULT_FORWARD_VIEW_RADIUS = 7
 private const val DEFAULT_USE_IMPOSTOR = true
 private const val DEFAULT_IMPOSTOR_RADIUS_CHUNKS = 5
 private const val DEFAULT_IMPOSTOR_FOV_BONUS_CHUNKS = 2
+
+// Minimum camera yaw delta (radians, ~3°) before impostor promotion/demotion is re-evaluated
+// off a look-direction change alone — keeps reevaluateImpostors() off the hot per-frame path
+// while still tracking mouse-look rotation, not just chunk-boundary crossings.
+private const val IMPOSTOR_YAW_REEVAL_THRESHOLD = 0.05
 
 class GameClient
 @OptIn(ExperimentalWasmJsInterop::class)
@@ -96,6 +102,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private var currentPlayerCx = 0
     private var currentPlayerCz = 0
     private var currentYaw = 0f
+    private var lastImpostorReevalYaw = 0f
     private var isInitialLoading = false
     private val expectedChunkCount
         get() = (2 * WorldConstants.CLIENT_VIEW_RADIUS + 1).let { it * it }
@@ -133,6 +140,16 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     localController.chunkDownloading = httpChunkFetcher?.inFlightCount ?: 0
                     localController.chunkMeshing = chunkManager.pendingRenderCount
                     localController.tick()
+                    // Mouse-look rotation alone never crosses a chunk boundary, so it wouldn't
+                    // otherwise trigger reevaluateImpostors() — poll the live camera yaw here so
+                    // turning in place still promotes/demotes chunks entering/leaving the FOV
+                    // cone bonus (see DEFAULT_IMPOSTOR_FOV_BONUS_CHUNKS).
+                    val liveYaw = jsGetCameraRotationY(camera).toFloat()
+                    if (abs(liveYaw - lastImpostorReevalYaw) > IMPOSTOR_YAW_REEVAL_THRESHOLD) {
+                        lastImpostorReevalYaw = liveYaw
+                        chunkManager.reevaluateImpostors(
+                            currentPlayerCx, currentPlayerCz, liveYaw.toDouble())
+                    }
                 }
                 if (isInitialLoading) {
                     val meshed = chunkManager.loadedChunks.size
