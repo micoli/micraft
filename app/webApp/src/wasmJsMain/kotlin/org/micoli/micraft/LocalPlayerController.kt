@@ -86,6 +86,7 @@ private data class FrameSnapshot(
     val renderMsMax: Double,
     val totalMeshes: Int,
     val activeMeshes: Int,
+    val otherTickMs: Double,
 )
 
 private data class RaycastResult(
@@ -212,6 +213,14 @@ class LocalPlayerController(
     var chunkDownloading = 0
     var chunkMeshing = 0
 
+    // npcManager.tick()/vehicleManager.tick()/remotePlayerManager.tick() run in GameClient's
+    // loop right after localController.tick() returns, inside the same 16ms iteration —
+    // wall-clock (blockMs) includes them but no per-subsystem timer did, leaving a gap between
+    // blockMs and the sum of physicsMs/interactionMs/auxMs/meshDrainMs/gpuUploadMs/renderMs.
+    // GameClient sets this each loop iteration (see GameClient.kt); sampled into the rolling
+    // window/spike buffer the same way chunkManager.lastFaceScanMs etc are.
+    var otherTickMs: Double = 0.0
+
     private val meshDrainMsSamples = ArrayDeque<TimedValue>()
     private val gpuUploadMsSamples = ArrayDeque<TimedValue>()
     private val wsDecodeMsSamples = ArrayDeque<TimedValue>()
@@ -223,6 +232,8 @@ class LocalPlayerController(
     private var blockPhysicsMsSum = 0.0
     private var blockInteractionMsSum = 0.0
     private var blockAuxMsSum = 0.0
+    private val otherTickMsSamples = ArrayDeque<TimedValue>()
+    private var blockOtherTickMsSum = 0.0
     private val frameSpikeBuffer = ArrayDeque<FrameSnapshot>()
 
     private fun ArrayDeque<FrameSnapshot>.pushCapped(snapshot: FrameSnapshot) {
@@ -244,7 +255,8 @@ class LocalPlayerController(
                     "\"interactionMs\":${s.interactionMs},\"auxMs\":${s.auxMs}," +
                     "\"wsDecodeMs\":${s.wsDecodeMs},\"renderMs\":${s.renderMs}," +
                     "\"renderFrames\":${s.renderFrames},\"renderMsMax\":${s.renderMsMax}," +
-                    "\"totalMeshes\":${s.totalMeshes},\"activeMeshes\":${s.activeMeshes}}"
+                    "\"totalMeshes\":${s.totalMeshes},\"activeMeshes\":${s.activeMeshes}," +
+                    "\"otherTickMs\":${s.otherTickMs}}"
             }
         jsLogSpike(json)
     }
@@ -1346,6 +1358,8 @@ class LocalPlayerController(
         blockMeshDrainMsSum += meshDrainMsThisTick
         blockGpuUploadMsSum += gpuUploadMsThisTick
         blockFacesProcessedSum += chunkManager.lastFacesProcessedThisDrain
+        otherTickMsSamples.addCapped(now, otherTickMs)
+        blockOtherTickMsSum += otherTickMs
 
         val auxT0 = jsNow()
         val normalizedTime =
@@ -1421,6 +1435,7 @@ class LocalPlayerController(
                     renderMsMax = renderMsMaxThisBlock,
                     totalMeshes = jsGetTotalMeshCount(scene),
                     activeMeshes = jsGetActiveMeshCount(scene),
+                    otherTickMs = blockOtherTickMsSum,
                 ))
             if (blockTickMaxMs > jsGetSpikeThresholdMs(DEFAULT_SPIKE_THRESHOLD_MS)) logFrameSpike()
             lastHudBlockTs = now
@@ -1431,6 +1446,7 @@ class LocalPlayerController(
             blockPhysicsMsSum = 0.0
             blockInteractionMsSum = 0.0
             blockAuxMsSum = 0.0
+            blockOtherTickMsSum = 0.0
 
             jsUpdateHUD(
                 hudX,

@@ -163,12 +163,14 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         uiState.chunkLoadingProgress = null
                     }
                 }
+                val otherT0 = jsNow()
                 npcManager.playerX = localController.predX
                 npcManager.playerZ = localController.predZ
                 npcManager.playerYaw = currentYaw.toDouble()
                 npcManager.tick()
                 vehicleManager.tick()
                 remotePlayerManager.tick()
+                localController.otherTickMs = jsNow() - otherT0
             }
         }
 
