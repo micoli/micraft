@@ -188,6 +188,10 @@ export function registerKeyboard(): Pick<
         if (vehicleMountMatched) window.mcState.events.push("vehicle_mount");
         if (!vehicleMountMatched && b.npc_interact?.some((k) => matchesEvent(k, e)))
           window.mcState.events.push("npc_interact");
+        if (b.siege_weapon_rotate?.some((k) => matchesEvent(k, e))) window.mcState.events.push("siege_weapon_rotate");
+        if (b.siege_weapon_pitch?.some((k) => matchesEvent(k, e))) window.mcState.events.push("siege_weapon_pitch");
+        if (b.siege_weapon_power?.some((k) => matchesEvent(k, e))) window.mcState.events.push("siege_weapon_power");
+        if (b.siege_weapon_fire?.some((k) => matchesEvent(k, e))) window.mcState.events.push("siege_weapon_fire");
         if (b.screenshot?.some((k) => matchesEvent(k, e))) window.mcState.events.push("screenshot");
         if (b.quest_journal?.some((k) => matchesEvent(k, e))) window.mc?.openQuestJournal?.();
         if (b.quest_tracking?.some((k) => matchesEvent(k, e))) window.mc?.toggleQuestTracker?.();

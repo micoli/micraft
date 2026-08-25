@@ -110,6 +110,13 @@ class LocalPlayerController(
     private val npcManager: NpcManager,
     private val isVehicleTarget: (String) -> Boolean = { false },
     private val vehiclePositionOf: (String) -> Vec3? = { null },
+    private val isPlaceableTarget: (String) -> Boolean = { false },
+    private val siegeWeaponPitchStepOf: (String) -> Int? = { null },
+    private val siegeWeaponPowerStepOf: (String) -> Int? = { null },
+    // Reproduces server SiegeWeaponManager.computeMuzzleAndVelocity for the not-yet-fired
+    // trajectory preview (Phase D) — returns null when the placeableId isn't a linked siege
+    // weapon or its definition isn't known yet.
+    private val siegeWeaponMuzzleAndVelocityOf: (String) -> Pair<Vec3, Vec3>? = { null },
 ) {
     var isMounted: Boolean = false
     var mountedVehicleId: String? = null
@@ -505,6 +512,30 @@ class LocalPlayerController(
         }
     }
 
+    // Phase D: continuous predicted-trajectory preview while a siege weapon is targeted, before
+    // firing — recomputed from live state every frame (rather than only on pitch/power/rotation
+    // change events) since SiegeWeaponUpdate/PlaceableUpdate already keep the underlying managers
+    // current; this stays in sync for free.
+    private fun updateSiegeTrajectoryPreview() {
+        val targetId = currentCombatTargetId
+        val muzzleAndVelocity =
+            targetId?.takeIf(isPlaceableTarget)?.let(siegeWeaponMuzzleAndVelocityOf)
+        if (muzzleAndVelocity == null) {
+            jsHideTrajectoryPreview()
+            return
+        }
+        val (muzzle, velocity) = muzzleAndVelocity
+        jsShowTrajectoryPreview(
+            scene,
+            muzzle.x.toDouble(),
+            muzzle.y.toDouble(),
+            muzzle.z.toDouble(),
+            velocity.x.toDouble(),
+            velocity.y.toDouble(),
+            velocity.z.toDouble(),
+            CLIENT_GRAVITY)
+    }
+
     fun tick() {
         if (totalClientTicks == 0) {
             jsConsoleLog("[debug] build $BUILD_TIMESTAMP (wasm)")
@@ -796,9 +827,35 @@ class LocalPlayerController(
                     val targetId = currentCombatTargetId ?: return@repeat
                     outMessages.trySend(
                         if (isVehicleTarget(targetId)) ClientMessage.VehicleInteract(targetId)
+                        else if (isPlaceableTarget(targetId))
+                            ClientMessage.PlaceableInteract(targetId)
                         else ClientMessage.NpcInteract(targetId))
                 }
                 event == "vehicle_mount" -> outMessages.trySend(ClientMessage.Command("/mount"))
+                event == "siege_weapon_rotate" -> {
+                    val targetId = currentCombatTargetId ?: return@repeat
+                    if (isPlaceableTarget(targetId))
+                        outMessages.trySend(ClientMessage.PlaceableRotate(targetId))
+                }
+                event == "siege_weapon_pitch" -> {
+                    val targetId = currentCombatTargetId ?: return@repeat
+                    if (isPlaceableTarget(targetId)) {
+                        val next = (siegeWeaponPitchStepOf(targetId) ?: 0) + 1
+                        outMessages.trySend(ClientMessage.SiegeWeaponSetPitch(targetId, next))
+                    }
+                }
+                event == "siege_weapon_power" -> {
+                    val targetId = currentCombatTargetId ?: return@repeat
+                    if (isPlaceableTarget(targetId)) {
+                        val next = (siegeWeaponPowerStepOf(targetId) ?: 0) + 1
+                        outMessages.trySend(ClientMessage.SiegeWeaponSetPower(targetId, next))
+                    }
+                }
+                event == "siege_weapon_fire" -> {
+                    val targetId = currentCombatTargetId ?: return@repeat
+                    if (isPlaceableTarget(targetId))
+                        outMessages.trySend(ClientMessage.SiegeWeaponFire(targetId))
+                }
                 event == "combat_attack" -> {
                     val targetId = currentCombatTargetId ?: return@repeat
                     val slot =
@@ -904,6 +961,8 @@ class LocalPlayerController(
                 outMessages.trySend(ClientMessage.SetCombatTarget(nearest, isNpc = true))
             }
         }
+
+        updateSiegeTrajectoryPreview()
 
         val layoutUpdateJson = jsConsumeLayoutUpdate()
         if (layoutUpdateJson.isNotEmpty()) {

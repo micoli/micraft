@@ -103,6 +103,21 @@ fun jsShowBreakOverlay(
 
 fun jsHideBreakOverlay(): Unit = js("mc.hideBreakOverlay()")
 
+fun jsShowTrajectoryPreview(
+    scene: JsAny,
+    originX: Double,
+    originY: Double,
+    originZ: Double,
+    velocityX: Double,
+    velocityY: Double,
+    velocityZ: Double,
+    gravity: Double
+): Unit =
+    js(
+        "mc.showTrajectoryPreview(scene, originX, originY, originZ, velocityX, velocityY, velocityZ, gravity)")
+
+fun jsHideTrajectoryPreview(): Unit = js("mc.hideTrajectoryPreview()")
+
 fun jsShowBlockPreview(
     scene: JsAny,
     x: Int,

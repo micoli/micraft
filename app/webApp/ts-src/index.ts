@@ -11,6 +11,7 @@ import { registerKeyboard } from "./game/lib/input/keyboard";
 import { registerMouse } from "./game/lib/input/mouse";
 import { registerCamera } from "./game/lib/camera";
 import { registerTargeting } from "./game/lib/targeting/targeting";
+import { registerSiegeTrajectory } from "./game/lib/siegeTrajectory";
 import { registerZoneBounds } from "./game/lib/targeting/zoneBounds";
 import { registerCombatTargetHighlight } from "./game/lib/targeting/targetHighlight";
 import { registerGhostBlock } from "./game/lib/targeting/ghostBlock";
@@ -21,6 +22,8 @@ import { registerArmorOverlay } from "./game/lib/player/armorOverlay";
 import { registerWeaponOverlay } from "./game/lib/player/weaponOverlay";
 import { registerNpcModel } from "./game/npc/npcModel";
 import { registerVehicleModel } from "./game/vehicle/vehicleModel";
+import { registerPlaceableModel } from "./game/placeable/placeableModel";
+import { registerSiegeProjectileModel } from "./game/placeable/siegeProjectileModel";
 import { registerMinimap, setMinimapColors } from "./game/lib/minimap";
 import { registerSky } from "./game/lib/sky";
 import { registerWeather } from "./game/lib/weather";
@@ -80,6 +83,10 @@ window.mcState = {
   npcModelsReady: false,
   vehicleBbmodels: {},
   vehicleModelsReady: false,
+  placeableBbmodels: {},
+  placeableModelsReady: false,
+  siegeProjectileBbmodels: {},
+  siegeProjectileModelsReady: false,
   skinConfigs: {},
   skinMatCache: {},
   skinUV: () => undefined as unknown as Vector4,
@@ -92,6 +99,7 @@ window.mcState = {
   sunShadowDepthMat: null,
   targetMesh: null,
   breakMesh: null,
+  trajectoryMesh: null,
   zoneMesh: null,
   ghostMesh: null,
   sceneGhostMesh: null,
@@ -163,6 +171,7 @@ window.mc = {
   ...registerMouse(),
   ...registerCamera(),
   ...registerTargeting(),
+  ...registerSiegeTrajectory(),
   ...registerZoneBounds(),
   ...registerCombatTargetHighlight(),
   ...registerGhostBlock(),
@@ -173,6 +182,8 @@ window.mc = {
   ...registerWeaponOverlay(),
   ...registerNpcModel(),
   ...registerVehicleModel(),
+  ...registerPlaceableModel(),
+  ...registerSiegeProjectileModel(),
   ...registerMinimap(),
   ...registerSky(),
   ...registerWeather(),

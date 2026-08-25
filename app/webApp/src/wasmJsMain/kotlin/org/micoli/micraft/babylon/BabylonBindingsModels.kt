@@ -129,6 +129,44 @@ fun jsSetVehicleTransform(
 
 fun jsDisposeVehicleModel(model: JsAny): Unit = js("mc.disposeVehicleModel(model)")
 
+// ── Placeable models ─────────────────────────────────────────────────────────
+// Mirrors the vehicle model bindings above for free-standing placed objects (siege weapons in
+// Phase A, generic furniture-like objects later) — see PlaceableManager.kt (game/) for the Kotlin
+// side. A placeable never moves once spawned, so there's no interpolation, only rotationStep.
+
+fun jsInitPlaceableModels(placeableTypesJson: String): Unit =
+    js("mc.initPlaceableModels(placeableTypesJson)")
+
+fun jsIsPlaceableModelsReady(): Boolean = js("mc.isPlaceableModelsReady()")
+
+fun jsCreatePlaceableModel(scene: JsAny, placeableType: String): JsAny? =
+    js("mc.createPlaceableModel(scene, placeableType)")
+
+fun jsSetPlaceableTransform(
+    model: JsAny,
+    x: Double,
+    y: Double,
+    z: Double,
+    rotationStep: Int
+): Unit = js("mc.setPlaceableTransform(model, x, y, z, rotationStep)")
+
+fun jsDisposePlaceableModel(model: JsAny): Unit = js("mc.disposePlaceableModel(model)")
+
+// ── Siege projectile ────────────────────────────────────────────────────────────
+
+fun jsInitSiegeProjectileModels(projectileTypesJson: String): Unit =
+    js("mc.initSiegeProjectileModels(projectileTypesJson)")
+
+fun jsIsSiegeProjectileModelsReady(): Boolean = js("mc.isSiegeProjectileModelsReady()")
+
+fun jsCreateSiegeProjectileModel(scene: JsAny, projectileType: String): JsAny? =
+    js("mc.createSiegeProjectileModel(scene, projectileType)")
+
+fun jsSetSiegeProjectileTransform(model: JsAny, x: Double, y: Double, z: Double): Unit =
+    js("mc.setSiegeProjectileTransform(model, x, y, z)")
+
+fun jsDisposeSiegeProjectileModel(model: JsAny): Unit = js("mc.disposeSiegeProjectileModel(model)")
+
 // ── First person ──────────────────────────────────────────────────────────────
 
 fun jsSetPlayerFirstPerson(model: JsAny, skin: String, enabled: Boolean): Unit =
