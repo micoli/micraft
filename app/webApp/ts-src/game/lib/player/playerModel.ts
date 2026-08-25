@@ -284,6 +284,7 @@ export function registerPlayerModel(): Pick<
     });
 
     for (const el of bbmodel.elements) {
+      if (!el.from || !el.to) continue; // mesh-type elements aren't supported by this renderer
       const [fx, fy, fz] = el.from,
         [tx, ty, tz] = el.to;
       if (Math.abs(tx - fx) < 0.001 || Math.abs(ty - fy) < 0.001 || Math.abs(tz - fz) < 0.001) continue;
