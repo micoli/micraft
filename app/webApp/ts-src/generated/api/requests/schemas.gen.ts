@@ -824,6 +824,117 @@ export const org_micoli_micraft_game_equipment_ToolDefinitionSchema = {
     title: 'ToolDefinition'
 } as const;
 
+export const org_micoli_micraft_placeable_siege_SiegeWeaponDefinitionSchema = {
+    type: 'object',
+    properties: {
+        ammoItem: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'ItemType'
+        },
+        bbmodelFile: {
+            type: 'string',
+            title: 'String'
+        },
+        cooldownMs: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        height: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        impactDamage: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        impactRadius: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        launchPitchDeg: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        launchPower: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        muzzleOffset: {
+            $ref: '#/components/schemas/org.micoli.micraft.player.Vec3'
+        },
+        pitchStepRange: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        powerStepRange: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        projectileType: {
+            type: 'string',
+            title: 'String'
+        },
+        width: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        }
+    },
+    required: [
+        'bbmodelFile',
+        'cooldownMs',
+        'height',
+        'impactDamage',
+        'impactRadius',
+        'launchPitchDeg',
+        'launchPower',
+        'muzzleOffset',
+        'pitchStepRange',
+        'powerStepRange',
+        'projectileType',
+        'width'
+    ],
+    title: 'SiegeWeaponDefinition'
+} as const;
+
+export const org_micoli_micraft_player_Vec3Schema = {
+    type: 'object',
+    properties: {
+        x: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        y: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        z: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        }
+    },
+    required: [
+        'x',
+        'y',
+        'z'
+    ],
+    title: 'Vec3'
+} as const;
+
 export const org_micoli_micraft_http_GameAssetsController_AssetEntrySchema = {
     type: 'object',
     properties: {
@@ -1962,6 +2073,10 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             type: 'boolean',
             title: 'Boolean'
         },
+        mounted: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
         name: {
             type: 'string',
             title: 'String'
@@ -2143,6 +2258,7 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         'language',
         'layouts',
         'lightBoostEnabled',
+        'mounted',
         'name',
         'orientation',
         'ownedArmors',
@@ -2350,33 +2466,6 @@ export const org_micoli_micraft_player_rpg_CombatantDataSchema = {
         'xp'
     ],
     title: 'CombatantData'
-} as const;
-
-export const org_micoli_micraft_player_Vec3Schema = {
-    type: 'object',
-    properties: {
-        x: {
-            type: 'number',
-            format: 'float',
-            title: 'Float'
-        },
-        y: {
-            type: 'number',
-            format: 'float',
-            title: 'Float'
-        },
-        z: {
-            type: 'number',
-            format: 'float',
-            title: 'Float'
-        }
-    },
-    required: [
-        'x',
-        'y',
-        'z'
-    ],
-    title: 'Vec3'
 } as const;
 
 export const org_micoli_micraft_player_EditModeSchema = {
