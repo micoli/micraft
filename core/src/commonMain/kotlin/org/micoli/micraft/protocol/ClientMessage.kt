@@ -188,4 +188,26 @@ sealed class ClientMessage {
     @ProtoId(29)
     @Serializable
     data class RequestScenePreview(val sceneId: String) : ClientMessage()
+
+    /** Generic placeable interaction (X-key) — despawns it and returns its item to inventory. */
+    @ProtoId(30) @Serializable data class PlaceableInteract(val id: String) : ClientMessage()
+
+    /** Generic placeable rotation (R-key) — advances `rotationStep` by one 30° step, wraps 11→0. */
+    @ProtoId(31) @Serializable data class PlaceableRotate(val id: String) : ClientMessage()
+
+    /** Siege-specific: set the targeted weapon's pitch step (absolute, clamped server-side). */
+    @ProtoId(32)
+    @Serializable
+    data class SiegeWeaponSetPitch(val id: String, val value: Int) : ClientMessage()
+
+    /** Siege-specific: set the targeted weapon's power step (absolute, clamped server-side). */
+    @ProtoId(33)
+    @Serializable
+    data class SiegeWeaponSetPower(val id: String, val value: Int) : ClientMessage()
+
+    /**
+     * Siege-specific: fire the targeted weapon. [weaponId] is the linked placeable's id, same
+     * convention as [PlaceableRotate]/[SiegeWeaponSetPitch]/[SiegeWeaponSetPower].
+     */
+    @ProtoId(34) @Serializable data class SiegeWeaponFire(val weaponId: String) : ClientMessage()
 }
