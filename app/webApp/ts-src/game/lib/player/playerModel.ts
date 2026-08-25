@@ -1,5 +1,12 @@
-import type { Scene, Vector4 } from "@babylonjs/core";
-import { fixBoxSideFaceUV, fixBoxTopBottomFaceUV } from "./bbmodelMesh";
+import type { Scene } from "@babylonjs/core";
+import {
+  buildGroupHierarchy,
+  buildTextureMaterials,
+  placeElements,
+  resolveTextureDims,
+  skinFaceUV,
+  skinUV,
+} from "./bbmodelMesh";
 
 // Linear interpolation between two bbmodel keyframes. `t` is clip-relative time in SECONDS, on the
 // same scale as `keyframe.time` and the animation `length` — not a normalised 0..1 phase.
@@ -21,72 +28,6 @@ export function interpAxis(keyframes: BbModelKeyframe[], t: number, axis: string
   const v0 = parseFloat(String(prev.data_points[0][axis] ?? 0));
   const v1 = parseFloat(String(next.data_points[0][axis] ?? 0));
   return v0 + (v1 - v0) * f;
-}
-
-// Pixel coords [x0,y0,x1,y1] → BabylonJS Vector4(uMin,vMin,uMax,vMax).
-// BabylonJS loads textures with invertY so pixel y=0 maps to v=1.
-function skinUV(face: BbModelFace | undefined, W: number, H: number): Vector4 {
-  if (!face?.uv) return new BABYLON.Vector4(0, 0, 0, 0);
-  const [x0, y0, x1, y1] = face.uv;
-  return new BABYLON.Vector4(
-    Math.min(x0, x1) / W,
-    1 - Math.max(y0, y1) / H,
-    Math.max(x0, x1) / W,
-    1 - Math.min(y0, y1) / H,
-  );
-}
-
-// Same rect as skinUV but with both axes reversed (uMax/vMax first, uMin/vMin last) — south's
-// hand-authored per-face rect (manual branch only; the box_uv+uv_offset auto-atlas branch below is
-// unaffected and already verified correct) renders 180° rotated relative to every other face
-// unless corrected here. Confirmed empirically: front (north-data) is correct, back (south-data)
-// wasn't, despite both faces sharing the identical non-rotated U~X/V~Y vertex layout.
-function skinUVFlipped(face: BbModelFace | undefined, W: number, H: number): Vector4 {
-  if (!face?.uv) return new BABYLON.Vector4(0, 0, 0, 0);
-  const [x0, y0, x1, y1] = face.uv;
-  return new BABYLON.Vector4(
-    Math.max(x0, x1) / W,
-    1 - Math.min(y0, y1) / H,
-    Math.min(x0, x1) / W,
-    1 - Math.max(y0, y1) / H,
-  );
-}
-
-// BabylonJS's default north/south face UV (unlike east/west and up/down, not patched
-// per-vertex — see fixBoxSideFaceUV/fixBoxTopBottomFaceUV) also runs its u axis backwards;
-// swapping uMin/uMax here mirrors it back the right way round. Verified against Blockbench with
-// colored marker textures (body's front-facing dots landed on the wrong side without this).
-function mirrorU(rect: Vector4): Vector4 {
-  return new BABYLON.Vector4(rect.z, rect.y, rect.x, rect.w);
-}
-
-// BabylonJS CreateBox face order: 0=front(+Z/south), 1=back(-Z/north),
-// 2=right(+X/east), 3=left(-X/west), 4=top(+Y), 5=bottom(-Y)
-function skinFaceUV(el: BbModelElement, W: number, H: number): Vector4[] {
-  const faces = el.faces;
-  if (el.box_uv && el.uv_offset) {
-    const bw = Math.round(Math.abs(el.to[0] - el.from[0]));
-    const bh = Math.round(Math.abs(el.to[1] - el.from[1]));
-    const bd = Math.round(Math.abs(el.to[2] - el.from[2]));
-    const [u, v] = el.uv_offset;
-    const fakeUV = (x0: number, y0: number, x1: number, y1: number): BbModelFace => ({ uv: [x0, y0, x1, y1] });
-    return [
-      mirrorU(skinUV(fakeUV(u + 2 * bd + bw, v + bd, u + 2 * bd + 2 * bw, v + bd + bh), W, H)), // south
-      mirrorU(skinUV(fakeUV(u + bd, v + bd, u + bd + bw, v + bd + bh), W, H)), // north
-      skinUV(fakeUV(u, v + bd, u + bd, v + bd + bh), W, H), // east
-      skinUV(fakeUV(u + bd + bw, v + bd, u + 2 * bd + bw, v + bd + bh), W, H), // west
-      skinUV(fakeUV(u + bd, v, u + bd + bw, v + bd), W, H), // up
-      skinUV(fakeUV(u + bd + bw, v, u + bd + 2 * bw, v + bd), W, H), // down
-    ];
-  }
-  return [
-    mirrorU(skinUVFlipped(faces.south, W, H)),
-    mirrorU(skinUV(faces.north, W, H)),
-    skinUV(faces.east, W, H),
-    skinUV(faces.west, W, H),
-    skinUV(faces.up, W, H),
-    skinUV(faces.down, W, H),
-  ];
 }
 
 const ANIM_GROUPS = [
@@ -203,124 +144,11 @@ export function registerPlayerModel(): Pick<
   ): McPlayerModel {
     if (!scene.__mcSceneId) scene.__mcSceneId = Math.random().toString(36).slice(2);
     const cacheKey = `${scene.__mcSceneId}_${skin}`;
-    if (bbmodel.textures?.length > 0 && !window.mcState.skinMatCache[cacheKey]) {
-      const texDef = bbmodel.textures[0];
-      const src = texDef.source;
-      const tex = new BABYLON.Texture(src, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
-      tex.hasAlpha = false;
-      tex.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
-      tex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
-      const mat = new BABYLON.StandardMaterial(`skinMat_${skin}`, scene);
-      mat.diffuseTexture = tex;
-      mat.specularColor = new BABYLON.Color3(0, 0, 0);
-      window.mcState.skinMatCache[cacheKey] = mat;
-    }
-    const mat = window.mcState.skinMatCache[cacheKey];
-    const W = bbmodel.resolution.width;
-    const H = bbmodel.resolution.height;
-    const SCALE = 1 / 16;
-
-    const groupMap: Record<string, BbModelGroup> = {};
-    bbmodel.groups.forEach((g) => {
-      groupMap[g.uuid] = g;
-    });
-
-    // Map each element UUID to its direct parent group UUID, and each group UUID to its parent group UUID
-    const elToGroupUuid: Record<string, string | null> = {};
-    const groupToParentGroupUuid: Record<string, string | null> = {};
-    function walkOutliner(nodes: BbModel["outliner"], parentGroupUuid: string | null): void {
-      if (!nodes) return;
-      for (const node of nodes) {
-        if (typeof node === "string") {
-          elToGroupUuid[node] = parentGroupUuid;
-          continue;
-        }
-        const groupNode = node as { uuid: string; children?: BbModel["outliner"] };
-        groupToParentGroupUuid[groupNode.uuid] = parentGroupUuid;
-        walkOutliner(groupNode.children ?? [], groupNode.uuid);
-      }
-    }
-    walkOutliner(bbmodel.outliner, null);
-
+    const materials = buildTextureMaterials(bbmodel, scene, cacheKey, false);
+    const textureDims = resolveTextureDims(bbmodel);
     const root = new BABYLON.TransformNode("playerRoot", scene);
-    const pivotNodes: McPlayerModel["pivotNodes"] = {};
-    const DEG = Math.PI / 180;
-
-    const reverseAliases: Record<string, string> = {};
-    if (boneAliases) {
-      for (const [role, actual] of Object.entries(boneAliases)) reverseAliases[actual] = role;
-    }
-
-    // Create a TransformNode for every group (applying its base rotation); parent to root initially
-    const allGroupNodes: Record<
-      string,
-      { node: InstanceType<typeof BABYLON.TransformNode>; origin: [number, number, number] }
-    > = {};
-    bbmodel.groups.forEach((g) => {
-      const node = new BABYLON.TransformNode(`grp_${g.name}`, scene);
-      node.parent = root;
-      node.position = new BABYLON.Vector3(g.origin[0] * SCALE, g.origin[1] * SCALE, g.origin[2] * SCALE);
-      if (g.rotation)
-        node.rotation = new BABYLON.Vector3(g.rotation[0] * DEG, g.rotation[1] * DEG, g.rotation[2] * DEG);
-      allGroupNodes[g.uuid] = { node, origin: g.origin };
-      // Register every group so animations can drive any bone
-      pivotNodes[g.name] = { node, origin: g.origin };
-      const aliasName = reverseAliases[g.name];
-      if (aliasName) pivotNodes[aliasName] = { node, origin: g.origin };
-    });
-
-    // Re-parent groups to match the outliner hierarchy (enables child bones to follow parent rotations)
-    bbmodel.groups.forEach((g) => {
-      const parentGroupUuid = groupToParentGroupUuid[g.uuid];
-      if (!parentGroupUuid || !allGroupNodes[parentGroupUuid]) return;
-      const child = allGroupNodes[g.uuid];
-      const parent = allGroupNodes[parentGroupUuid];
-      child.node.parent = parent.node;
-      child.node.position = new BABYLON.Vector3(
-        (g.origin[0] - parent.origin[0]) * SCALE,
-        (g.origin[1] - parent.origin[1]) * SCALE,
-        (g.origin[2] - parent.origin[2]) * SCALE,
-      );
-    });
-
-    for (const el of bbmodel.elements) {
-      if (!el.from || !el.to) continue; // mesh-type elements aren't supported by this renderer
-      const [fx, fy, fz] = el.from,
-        [tx, ty, tz] = el.to;
-      if (Math.abs(tx - fx) < 0.001 || Math.abs(ty - fy) < 0.001 || Math.abs(tz - fz) < 0.001) continue;
-      const faceUVs = skinFaceUV(el, W, H);
-      const mesh = BABYLON.MeshBuilder.CreateBox(
-        el.name,
-        {
-          width: Math.abs(tx - fx) * SCALE,
-          height: Math.abs(ty - fy) * SCALE,
-          depth: Math.abs(tz - fz) * SCALE,
-          faceUV: faceUVs,
-        },
-        scene,
-      );
-      fixBoxSideFaceUV(mesh, faceUVs[2], faceUVs[3]);
-      fixBoxTopBottomFaceUV(mesh, faceUVs[4], faceUVs[5]);
-      mesh.material = mat;
-      mesh.isPickable = false;
-
-      const cx = ((fx + tx) / 2) * SCALE,
-        cy = ((fy + ty) / 2) * SCALE,
-        cz = ((fz + tz) / 2) * SCALE;
-      const groupUuid = elToGroupUuid[el.uuid];
-      const pg = groupUuid ? allGroupNodes[groupUuid] : null;
-      if (pg) {
-        mesh.parent = pg.node;
-        mesh.position = new BABYLON.Vector3(
-          cx - pg.origin[0] * SCALE,
-          cy - pg.origin[1] * SCALE,
-          cz - pg.origin[2] * SCALE,
-        );
-      } else {
-        mesh.parent = root;
-        mesh.position = new BABYLON.Vector3(cx, cy, cz);
-      }
-    }
+    const { pivotNodes, allGroupNodes, elToGroupUuid } = buildGroupHierarchy(bbmodel, scene, root, boneAliases);
+    placeElements(bbmodel, scene, { elToGroupUuid, allGroupNodes }, root, materials, textureDims);
 
     return {
       root,

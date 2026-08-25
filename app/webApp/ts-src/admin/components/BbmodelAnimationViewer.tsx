@@ -4,10 +4,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { interpAxis } from "../../game/lib/player/playerModel";
 import {
   applyElementPivot,
-  buildMeshElement,
-  fixBoxSideFaceUV,
-  fixBoxTopBottomFaceUV,
+  buildGroupHierarchy,
   isMeshElement,
+  placeElements,
   resolveTextureDims,
 } from "../../game/lib/player/bbmodelMesh";
 import { ORTHO_YAW, OrthoView, OrthoViewButton } from "./OrthoViewButton";
@@ -28,56 +27,6 @@ function loadScript(src: string): Promise<void> {
 
 async function ensureBabylon(): Promise<void> {
   if (!(window as any).BABYLON) await loadScript("/babylon.js");
-}
-
-function skinUV(B: any, face: any, W: number, H: number): any {
-  if (!face?.uv) return new B.Vector4(0, 0, 0, 0);
-  const [x0, y0, x1, y1] = face.uv;
-  return new B.Vector4(Math.min(x0, x1) / W, 1 - Math.max(y0, y1) / H, Math.max(x0, x1) / W, 1 - Math.min(y0, y1) / H);
-}
-
-// Same rect as skinUV but with both axes reversed — south's hand-authored per-face rect renders
-// 180° rotated relative to every other face unless corrected here (see playerModel.ts's skinUVFlipped
-// for the full explanation; confirmed empirically against Blockbench with colored marker textures).
-function skinUVFlipped(B: any, face: any, W: number, H: number): any {
-  if (!face?.uv) return new B.Vector4(0, 0, 0, 0);
-  const [x0, y0, x1, y1] = face.uv;
-  return new B.Vector4(Math.max(x0, x1) / W, 1 - Math.min(y0, y1) / H, Math.min(x0, x1) / W, 1 - Math.max(y0, y1) / H);
-}
-
-// BabylonJS's default north/south face UV (unlike east/west and up/down, not patched per-vertex
-// — see fixBoxSideFaceUV/fixBoxTopBottomFaceUV) also runs its u axis backwards; swapping
-// uMin/uMax here mirrors it back the right way round. Verified against Blockbench with colored
-// marker textures (body's front-facing dots landed on the wrong side without this).
-function mirrorU(B: any, rect: any): any {
-  return new B.Vector4(rect.z, rect.y, rect.x, rect.w);
-}
-
-function skinFaceUV(B: any, el: any, W: number, H: number): any[] {
-  const faces = el.faces;
-  if (el.box_uv && el.uv_offset) {
-    const bw = Math.round(Math.abs(el.to[0] - el.from[0]));
-    const bh = Math.round(Math.abs(el.to[1] - el.from[1]));
-    const bd = Math.round(Math.abs(el.to[2] - el.from[2]));
-    const [u, v] = el.uv_offset;
-    const fake = (x0: number, y0: number, x1: number, y1: number) => ({ uv: [x0, y0, x1, y1] });
-    return [
-      mirrorU(B, skinUV(B, fake(u + 2 * bd + bw, v + bd, u + 2 * bd + 2 * bw, v + bd + bh), W, H)),
-      mirrorU(B, skinUV(B, fake(u + bd, v + bd, u + bd + bw, v + bd + bh), W, H)),
-      skinUV(B, fake(u, v + bd, u + bd, v + bd + bh), W, H),
-      skinUV(B, fake(u + bd + bw, v + bd, u + 2 * bd + bw, v + bd + bh), W, H),
-      skinUV(B, fake(u + bd, v, u + bd + bw, v + bd), W, H),
-      skinUV(B, fake(u + bd + bw, v, u + bd + 2 * bw, v + bd), W, H),
-    ];
-  }
-  return [
-    mirrorU(B, skinUVFlipped(B, faces?.south, W, H)),
-    mirrorU(B, skinUV(B, faces?.north, W, H)),
-    skinUV(B, faces?.east, W, H),
-    skinUV(B, faces?.west, W, H),
-    skinUV(B, faces?.up, W, H),
-    skinUV(B, faces?.down, W, H),
-  ];
 }
 
 // Absolute-space corner/vertex points of one element (mesh or cuboid), used to locate the
@@ -135,9 +84,6 @@ function buildModel(
   equippedArmors: Record<string, any>;
 } {
   const SCALE = 1 / 16;
-  const DEG = Math.PI / 180;
-  const W = bbmodel.resolution.width;
-  const H = bbmodel.resolution.height;
 
   // One material per texture (rather than the shared/cached `buildTextureMaterials` helper) —
   // this viewer builds a fresh scene per mount, so there's nothing to reuse across calls.
@@ -172,31 +118,9 @@ function buildModel(
           texMat.twoSidedLighting = true;
           return texMat;
         });
-  const mat: any = materials[0] ?? null;
   const textureDims = resolveTextureDims(bbmodel);
 
-  const groupMap: Record<string, any> = {};
-  bbmodel.groups.forEach((g: any) => {
-    groupMap[g.uuid] = g;
-  });
-
-  const elToGroupUuid: Record<string, string | null> = {};
-  const groupToParentGroupUuid: Record<string, string | null> = {};
-  function walkOutliner(nodes: any[], parentUuid: string | null) {
-    for (const node of nodes) {
-      if (typeof node === "string") {
-        elToGroupUuid[node] = parentUuid;
-        continue;
-      }
-      groupToParentGroupUuid[node.uuid] = parentUuid;
-      walkOutliner(node.children ?? [], node.uuid);
-    }
-  }
-  walkOutliner(bbmodel.outliner ?? [], null);
-
   const root = new B.TransformNode("playerRoot", scene);
-  const pivotNodes: Record<string, { node: any; origin: [number, number, number] }> = {};
-  const allGroupNodes: Record<string, { node: any; origin: [number, number, number] }> = {};
 
   // Top-level elements/groups normally parent straight to `root`; a standalone item preview
   // instead parents them under `centerNode` (translated so the elements' barycenter sits at the
@@ -239,71 +163,8 @@ function buildModel(
     topParent = centerNode;
   }
 
-  bbmodel.groups.forEach((g: any) => {
-    const node = new B.TransformNode(`grp_${g.name}`, scene);
-    node.parent = topParent;
-    node.position = new B.Vector3(g.origin[0] * SCALE, g.origin[1] * SCALE, g.origin[2] * SCALE);
-    if (g.rotation) node.rotation = new B.Vector3(g.rotation[0] * DEG, g.rotation[1] * DEG, g.rotation[2] * DEG);
-    allGroupNodes[g.uuid] = { node, origin: g.origin };
-    pivotNodes[g.name] = { node, origin: g.origin };
-  });
-
-  bbmodel.groups.forEach((g: any) => {
-    const parentUuid = groupToParentGroupUuid[g.uuid];
-    if (!parentUuid || !allGroupNodes[parentUuid]) return;
-    const child = allGroupNodes[g.uuid];
-    const parent = allGroupNodes[parentUuid];
-    child.node.parent = parent.node;
-    child.node.position = new B.Vector3(
-      (g.origin[0] - parent.origin[0]) * SCALE,
-      (g.origin[1] - parent.origin[1]) * SCALE,
-      (g.origin[2] - parent.origin[2]) * SCALE,
-    );
-  });
-
-  for (const el of bbmodel.elements as unknown as (BbModelElement | BbModelMeshElement)[]) {
-    if (el.visibility === false) continue;
-
-    if (isMeshElement(el)) {
-      if (Object.keys(el.vertices).length === 0) continue;
-      const meshEl = buildMeshElement(el.name, el, scene, [0, 0, 0], materials, textureDims);
-      const groupUuid = elToGroupUuid[el.uuid];
-      const pg = groupUuid ? allGroupNodes[groupUuid] : null;
-      meshEl.parent = pg ? pg.node : topParent;
-      continue;
-    }
-
-    const [fx, fy, fz] = el.from,
-      [tx, ty, tz] = el.to;
-    if (Math.abs(tx - fx) < 0.001 || Math.abs(ty - fy) < 0.001 || Math.abs(tz - fz) < 0.001) continue;
-    const faceUVs = skinFaceUV(B, el, W, H);
-    const mesh = B.MeshBuilder.CreateBox(
-      el.name,
-      {
-        width: Math.abs(tx - fx) * SCALE,
-        height: Math.abs(ty - fy) * SCALE,
-        depth: Math.abs(tz - fz) * SCALE,
-        faceUV: faceUVs,
-      },
-      scene,
-    );
-    fixBoxSideFaceUV(mesh, faceUVs[2], faceUVs[3]);
-    fixBoxTopBottomFaceUV(mesh, faceUVs[4], faceUVs[5]);
-    if (mat) mesh.material = mat;
-    mesh.isPickable = false;
-    const cx = ((fx + tx) / 2) * SCALE,
-      cy = ((fy + ty) / 2) * SCALE,
-      cz = ((fz + tz) / 2) * SCALE;
-    const groupUuid = elToGroupUuid[el.uuid];
-    const pg = groupUuid ? allGroupNodes[groupUuid] : null;
-    if (pg) {
-      mesh.parent = pg.node;
-      mesh.position = new B.Vector3(cx - pg.origin[0] * SCALE, cy - pg.origin[1] * SCALE, cz - pg.origin[2] * SCALE);
-    } else {
-      mesh.parent = topParent;
-      mesh.position = new B.Vector3(cx, cy, cz);
-    }
-  }
+  const { pivotNodes, allGroupNodes, elToGroupUuid } = buildGroupHierarchy(bbmodel, scene, topParent);
+  placeElements(bbmodel, scene, { elToGroupUuid, allGroupNodes }, topParent, materials, textureDims);
 
   return { root, pivotNodes, equippedWeapons: { LEFT: null, RIGHT: null }, equippedArmors: {} };
 }
