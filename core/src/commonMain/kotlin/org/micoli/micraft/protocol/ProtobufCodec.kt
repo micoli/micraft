@@ -166,6 +166,14 @@ object ServerMessageCodec {
             serverEntry<ServerMessage.ScenesSync>(), // 60
             serverEntry<ServerMessage.ScenePreviewData>(), // 61
             serverEntry<ServerMessage.MountUpdate>(), // 62
+            serverEntry<ServerMessage.PlaceableSpawned>(), // 63
+            serverEntry<ServerMessage.PlaceableUpdate>(), // 64
+            serverEntry<ServerMessage.PlaceableDespawned>(), // 65
+            serverEntry<ServerMessage.SiegeWeaponUpdate>(), // 66
+            serverEntry<ServerMessage.SiegeWeaponFired>(), // 67
+            serverEntry<ServerMessage.SiegeProjectileSpawned>(), // 68
+            serverEntry<ServerMessage.SiegeProjectileUpdate>(), // 69
+            serverEntry<ServerMessage.SiegeProjectileImpact>(), // 70
         )
 
     fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)
@@ -206,6 +214,11 @@ object ClientMessageCodec {
             clientEntry<ClientMessage.BlockInteract>(), // 27
             clientEntry<ClientMessage.VehicleInteract>(), // 28
             clientEntry<ClientMessage.RequestScenePreview>(), // 29
+            clientEntry<ClientMessage.PlaceableInteract>(), // 30
+            clientEntry<ClientMessage.PlaceableRotate>(), // 31
+            clientEntry<ClientMessage.SiegeWeaponSetPitch>(), // 32
+            clientEntry<ClientMessage.SiegeWeaponSetPower>(), // 33
+            clientEntry<ClientMessage.SiegeWeaponFire>(), // 34
         )
 
     fun encode(msg: ClientMessage): ByteArray = encodeWith(registry, msg)

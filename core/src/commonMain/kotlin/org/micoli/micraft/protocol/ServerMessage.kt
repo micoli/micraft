@@ -11,6 +11,9 @@ import org.micoli.micraft.game.world.RecipeDefinition
 import org.micoli.micraft.game.world.WeatherZoneInfo
 import org.micoli.micraft.game.world.WorldItem
 import org.micoli.micraft.npc.NpcState
+import org.micoli.micraft.placeable.PlaceableState
+import org.micoli.micraft.placeable.siege.SiegeProjectileState
+import org.micoli.micraft.placeable.siege.SiegeWeaponState
 import org.micoli.micraft.player.ChannelSubscription
 import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.Hand
@@ -173,6 +176,11 @@ sealed class ServerMessage {
         val plainColors: List<PlainColorInfo> = emptyList(),
         /** See WorldConstants.IMPOSTOR_SKIRT_DEPTH. */
         val impostorSkirtDepth: Int = 12,
+        val placeables: Map<String, String> = emptyMap(),
+        val placeableDefinitions: Map<String, PlaceableCodexInfo> = emptyMap(),
+        val siegeProjectiles: Map<String, String> = emptyMap(),
+        val siegeProjectileDefinitions: Map<String, SiegeProjectileCodexInfo> = emptyMap(),
+        val siegeWeaponDefinitions: Map<String, SiegeWeaponCodexInfo> = emptyMap(),
     ) : ServerMessage()
 
     @ProtoId(20) @Serializable data class NpcSpawned(val npc: NpcState) : ServerMessage()
@@ -415,6 +423,45 @@ sealed class ServerMessage {
         val blocks: ByteArray,
         val states: ByteArray,
     ) : ServerMessage()
+
+    @ProtoId(63)
+    @Serializable
+    data class PlaceableSpawned(val state: PlaceableState) : ServerMessage()
+
+    @ProtoId(64)
+    @Serializable
+    data class PlaceableUpdate(val state: PlaceableState) : ServerMessage()
+
+    @ProtoId(65) @Serializable data class PlaceableDespawned(val id: String) : ServerMessage()
+
+    @ProtoId(66)
+    @Serializable
+    data class SiegeWeaponUpdate(val state: SiegeWeaponState) : ServerMessage()
+
+    /**
+     * Phase B placeholder for a successful fire — carries the computed muzzle position/launch
+     * velocity so the event is visible/testable end-to-end before Phase C's real projectile system
+     * exists. Superseded by [SiegeProjectileSpawned] (Phase C), kept only as a lightweight "shot
+     * fired" notice — [org.micoli.micraft.game.placeable.siege.SiegeWeaponManager.fire] still
+     * broadcasts it alongside the real projectile spawn.
+     */
+    @ProtoId(67)
+    @Serializable
+    data class SiegeWeaponFired(val weaponId: String, val muzzle: Vec3, val velocity: Vec3) :
+        ServerMessage()
+
+    @ProtoId(68)
+    @Serializable
+    data class SiegeProjectileSpawned(val projectile: SiegeProjectileState) : ServerMessage()
+
+    @ProtoId(69)
+    @Serializable
+    data class SiegeProjectileUpdate(val projectile: SiegeProjectileState) : ServerMessage()
+
+    @ProtoId(70)
+    @Serializable
+    data class SiegeProjectileImpact(val x: Float, val y: Float, val z: Float, val radius: Float) :
+        ServerMessage()
 }
 
 @Serializable
@@ -512,6 +559,33 @@ data class VehicleCodexInfo(
     val width: Float,
     val height: Float,
     val speed: Float,
+)
+
+@Serializable
+data class PlaceableCodexInfo(
+    val bbmodelFile: String,
+    val width: Float,
+    val height: Float,
+)
+
+@Serializable
+data class SiegeProjectileCodexInfo(
+    val bbmodelFile: String,
+    val radius: Float,
+)
+
+/**
+ * Launch-math stats a siege weapon type needs client-side to render Phase D's trajectory preview —
+ * mirrors the subset of [org.micoli.micraft.placeable.siege.SiegeWeaponDefinition] consumed by
+ * `SiegeWeaponManager.computeMuzzleAndVelocity` (server). Keyed by [EntityType] id in
+ * [RegistrySync.siegeWeaponDefinitions], same key as [RegistrySync.placeableDefinitions] since a
+ * siege weapon always composes with a placeable of the same type.
+ */
+@Serializable
+data class SiegeWeaponCodexInfo(
+    val muzzleOffset: Vec3,
+    val launchPower: Float,
+    val launchPitchDeg: Float,
 )
 
 @Serializable
