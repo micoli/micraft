@@ -11,6 +11,12 @@ import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponRegistryLoader
 import org.micoli.micraft.placeable.siege.SiegeWeaponDefinition
 
+// encodeDefaults=true — most weapons don't override every stat (e.g. CATAPULT leaves
+// launchPitchDeg/impactRadius/pitchStepRange/powerStepRange at their YAML defaults), and the
+// default Json instance omits properties equal to their default value, which the admin codex's
+// siege weapons tab then rendered as "undefined".
+private val json = Json { encodeDefaults = true }
+
 class SiegeWeaponsController(private val dataPath: String) {
     fun register(route: Route) =
         route.apply {
@@ -29,7 +35,7 @@ class SiegeWeaponsController(private val dataPath: String) {
                             .load()
                             .mapKeys { it.key.id }
                     call.respondText(
-                        Json.encodeToString(
+                        json.encodeToString(
                             MapSerializer(String.serializer(), SiegeWeaponDefinition.serializer()),
                             weapons),
                         ContentType.Application.Json)

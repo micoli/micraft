@@ -1,4 +1,4 @@
-import type { Material, Mesh, Scene, Vector4 } from "@babylonjs/core";
+import type { Material, Mesh, Scene, TransformNode, Vector4 } from "@babylonjs/core";
 
 // bbmodel coordinates are in Blockbench pixel units, 16px = 1 block.
 const BBMODEL_SCALE = 1 / 16;
@@ -48,6 +48,214 @@ export function applyElementPivot(
 
 export function isMeshElement(el: BbModelElement | BbModelMeshElement): el is BbModelMeshElement {
   return "vertices" in el && "faces" in el && typeof (el as BbModelMeshElement).vertices === "object";
+}
+
+// Pixel coords [x0,y0,x1,y1] → BabylonJS Vector4(uMin,vMin,uMax,vMax).
+// BabylonJS loads textures with invertY so pixel y=0 maps to v=1.
+export function skinUV(face: BbModelFace | undefined, W: number, H: number): Vector4 {
+  if (!face?.uv) return new BABYLON.Vector4(0, 0, 0, 0);
+  const [x0, y0, x1, y1] = face.uv;
+  return new BABYLON.Vector4(
+    Math.min(x0, x1) / W,
+    1 - Math.max(y0, y1) / H,
+    Math.max(x0, x1) / W,
+    1 - Math.min(y0, y1) / H,
+  );
+}
+
+// Same rect as skinUV but with both axes reversed (uMax/vMax first, uMin/vMin last) — south's
+// hand-authored per-face rect (manual branch only; the box_uv+uv_offset auto-atlas branch below is
+// unaffected and already verified correct) renders 180° rotated relative to every other face
+// unless corrected here. Confirmed empirically: front (north-data) is correct, back (south-data)
+// wasn't, despite both faces sharing the identical non-rotated U~X/V~Y vertex layout.
+function skinUVFlipped(face: BbModelFace | undefined, W: number, H: number): Vector4 {
+  if (!face?.uv) return new BABYLON.Vector4(0, 0, 0, 0);
+  const [x0, y0, x1, y1] = face.uv;
+  return new BABYLON.Vector4(
+    Math.max(x0, x1) / W,
+    1 - Math.min(y0, y1) / H,
+    Math.min(x0, x1) / W,
+    1 - Math.max(y0, y1) / H,
+  );
+}
+
+// BabylonJS's default north/south face UV (unlike east/west and up/down, not patched
+// per-vertex — see fixBoxSideFaceUV/fixBoxTopBottomFaceUV) also runs its u axis backwards;
+// swapping uMin/uMax here mirrors it back the right way round. Verified against Blockbench with
+// colored marker textures (body's front-facing dots landed on the wrong side without this).
+function mirrorU(rect: Vector4): Vector4 {
+  return new BABYLON.Vector4(rect.z, rect.y, rect.x, rect.w);
+}
+
+// BabylonJS CreateBox face order: 0=front(+Z/south), 1=back(-Z/north),
+// 2=right(+X/east), 3=left(-X/west), 4=top(+Y), 5=bottom(-Y)
+export function skinFaceUV(el: BbModelElement, W: number, H: number): Vector4[] {
+  const faces = el.faces;
+  if (el.box_uv && el.uv_offset) {
+    const bw = Math.round(Math.abs(el.to[0] - el.from[0]));
+    const bh = Math.round(Math.abs(el.to[1] - el.from[1]));
+    const bd = Math.round(Math.abs(el.to[2] - el.from[2]));
+    const [u, v] = el.uv_offset;
+    const fakeUV = (x0: number, y0: number, x1: number, y1: number): BbModelFace => ({ uv: [x0, y0, x1, y1] });
+    return [
+      mirrorU(skinUV(fakeUV(u + 2 * bd + bw, v + bd, u + 2 * bd + 2 * bw, v + bd + bh), W, H)), // south
+      mirrorU(skinUV(fakeUV(u + bd, v + bd, u + bd + bw, v + bd + bh), W, H)), // north
+      skinUV(fakeUV(u, v + bd, u + bd, v + bd + bh), W, H), // east
+      skinUV(fakeUV(u + bd + bw, v + bd, u + 2 * bd + bw, v + bd + bh), W, H), // west
+      skinUV(fakeUV(u + bd, v, u + bd + bw, v + bd), W, H), // up
+      skinUV(fakeUV(u + bd + bw, v, u + bd + 2 * bw, v + bd), W, H), // down
+    ];
+  }
+  return [
+    mirrorU(skinUVFlipped(faces.south, W, H)),
+    mirrorU(skinUV(faces.north, W, H)),
+    skinUV(faces.east, W, H),
+    skinUV(faces.west, W, H),
+    skinUV(faces.up, W, H),
+    skinUV(faces.down, W, H),
+  ];
+}
+
+export interface RigGroupNode {
+  node: TransformNode;
+  origin: [number, number, number];
+}
+
+export interface RigGroupHierarchy {
+  pivotNodes: Record<string, RigGroupNode>;
+  allGroupNodes: Record<string, RigGroupNode>;
+  elToGroupUuid: Record<string, string | null>;
+}
+
+// Walks `outliner` to map elements/groups to their parent group, creates one TransformNode per
+// bbmodel group (nested per the outliner tree, positioned relative to its parent), and registers
+// pivotNodes for animation. Top-level groups parent to `topParent` — the in-game player/weapon
+// renderer passes `root` itself; the admin codex preview passes a rotated/recentered node instead
+// (see BbmodelAnimationViewer's standaloneItem alignment) while still using `root` for lifecycle.
+export function buildGroupHierarchy(
+  bbmodel: BbModel,
+  scene: Scene,
+  topParent: TransformNode,
+  boneAliases?: Record<string, string>,
+): RigGroupHierarchy {
+  const SCALE = BBMODEL_SCALE;
+  const DEG = Math.PI / 180;
+
+  const elToGroupUuid: Record<string, string | null> = {};
+  const groupToParentGroupUuid: Record<string, string | null> = {};
+  function walkOutliner(nodes: BbModel["outliner"], parentGroupUuid: string | null): void {
+    if (!nodes) return;
+    for (const node of nodes) {
+      if (typeof node === "string") {
+        elToGroupUuid[node] = parentGroupUuid;
+        continue;
+      }
+      const groupNode = node as { uuid: string; children?: BbModel["outliner"] };
+      groupToParentGroupUuid[groupNode.uuid] = parentGroupUuid;
+      walkOutliner(groupNode.children ?? [], groupNode.uuid);
+    }
+  }
+  walkOutliner(bbmodel.outliner, null);
+
+  const pivotNodes: Record<string, RigGroupNode> = {};
+  const allGroupNodes: Record<string, RigGroupNode> = {};
+
+  const reverseAliases: Record<string, string> = {};
+  if (boneAliases) {
+    for (const [role, actual] of Object.entries(boneAliases)) reverseAliases[actual] = role;
+  }
+
+  bbmodel.groups.forEach((g) => {
+    const node = new BABYLON.TransformNode(`grp_${g.name}`, scene);
+    node.parent = topParent;
+    node.position = new BABYLON.Vector3(g.origin[0] * SCALE, g.origin[1] * SCALE, g.origin[2] * SCALE);
+    if (g.rotation) node.rotation = new BABYLON.Vector3(g.rotation[0] * DEG, g.rotation[1] * DEG, g.rotation[2] * DEG);
+    allGroupNodes[g.uuid] = { node, origin: g.origin };
+    pivotNodes[g.name] = { node, origin: g.origin };
+    const aliasName = reverseAliases[g.name];
+    if (aliasName) pivotNodes[aliasName] = { node, origin: g.origin };
+  });
+
+  bbmodel.groups.forEach((g) => {
+    const parentGroupUuid = groupToParentGroupUuid[g.uuid];
+    if (!parentGroupUuid || !allGroupNodes[parentGroupUuid]) return;
+    const child = allGroupNodes[g.uuid];
+    const parent = allGroupNodes[parentGroupUuid];
+    child.node.parent = parent.node;
+    child.node.position = new BABYLON.Vector3(
+      (g.origin[0] - parent.origin[0]) * SCALE,
+      (g.origin[1] - parent.origin[1]) * SCALE,
+      (g.origin[2] - parent.origin[2]) * SCALE,
+    );
+  });
+
+  return { pivotNodes, allGroupNodes, elToGroupUuid };
+}
+
+// Places every visible bbmodel element (cuboid or mesh) onto the group hierarchy built by
+// buildGroupHierarchy — parented to its owning group when it has one, `topParent` otherwise.
+// Shared by the in-game player/weapon renderer and the admin codex preview.
+export function placeElements(
+  bbmodel: BbModel,
+  scene: Scene,
+  hierarchy: Pick<RigGroupHierarchy, "elToGroupUuid" | "allGroupNodes">,
+  topParent: TransformNode,
+  materials: Material[],
+  textureDims: Array<{ width: number; height: number }>,
+): void {
+  const SCALE = BBMODEL_SCALE;
+  const W = bbmodel.resolution.width;
+  const H = bbmodel.resolution.height;
+  const mat = materials[0] ?? null;
+  const { elToGroupUuid, allGroupNodes } = hierarchy;
+
+  for (const el of bbmodel.elements as unknown as (BbModelElement | BbModelMeshElement)[]) {
+    if (el.visibility === false) continue;
+    const groupUuid = elToGroupUuid[el.uuid];
+    const pg = groupUuid ? allGroupNodes[groupUuid] : null;
+
+    if (isMeshElement(el)) {
+      if (Object.keys(el.vertices).length === 0) continue;
+      const meshEl = buildMeshElement(el.name, el, scene, pg ? pg.origin : [0, 0, 0], materials, textureDims);
+      meshEl.parent = pg ? pg.node : topParent;
+      meshEl.isPickable = false;
+      continue;
+    }
+
+    if (!el.from || !el.to) continue;
+    const [fx, fy, fz] = el.from,
+      [tx, ty, tz] = el.to;
+    if (Math.abs(tx - fx) < 0.001 || Math.abs(ty - fy) < 0.001 || Math.abs(tz - fz) < 0.001) continue;
+    const faceUVs = skinFaceUV(el, W, H);
+    const mesh = BABYLON.MeshBuilder.CreateBox(
+      el.name,
+      {
+        width: Math.abs(tx - fx) * SCALE,
+        height: Math.abs(ty - fy) * SCALE,
+        depth: Math.abs(tz - fz) * SCALE,
+        faceUV: faceUVs,
+      },
+      scene,
+    );
+    fixBoxSideFaceUV(mesh, faceUVs[2], faceUVs[3]);
+    fixBoxTopBottomFaceUV(mesh, faceUVs[4], faceUVs[5]);
+    if (mat) mesh.material = mat;
+    mesh.isPickable = false;
+    const cx = ((fx + tx) / 2) * SCALE,
+      cy = ((fy + ty) / 2) * SCALE,
+      cz = ((fz + tz) / 2) * SCALE;
+    if (pg) {
+      mesh.parent = pg.node;
+      mesh.position = new BABYLON.Vector3(
+        cx - pg.origin[0] * SCALE,
+        cy - pg.origin[1] * SCALE,
+        cz - pg.origin[2] * SCALE,
+      );
+    } else {
+      mesh.parent = topParent;
+      mesh.position = new BABYLON.Vector3(cx, cy, cz);
+    }
+  }
 }
 
 // A texture without explicit width/height falls back to the model's shared resolution (the case
