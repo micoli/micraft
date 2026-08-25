@@ -806,4 +806,42 @@ class CombatProcessorTest {
 
         assertFalse(called)
     }
+
+    // ── applyDirectDamage (guaranteed-hit path, e.g. siege projectile impact) ──
+
+    @Test
+    fun `applyDirectDamage reduces HP and broadcasts health update`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob")
+        target.characterData = testChar("b", "Bob", hp = 20)
+
+        buildProcessor(sessions = { listOf(target) }).applyDirectDamage(target, 7, "Catapult")
+
+        assertEquals(13, target.characterData!!.currentHp)
+        val updates = target.sent.filterIsInstance<ServerMessage.HealthUpdate>()
+        assertTrue(updates.any { it.entityId == "b" && it.currentHp == 13 })
+    }
+
+    @Test
+    fun `applyDirectDamage respects god mode`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob")
+        target.characterData = testChar("b", "Bob", hp = 20)
+        target.state = target.state.copy(godMode = true)
+
+        buildProcessor(sessions = { listOf(target) }).applyDirectDamage(target, 7, "Catapult")
+
+        assertEquals(20, target.characterData!!.currentHp)
+        assertTrue(target.sent.filterIsInstance<ServerMessage.HealthUpdate>().isEmpty())
+    }
+
+    @Test
+    fun `applyDirectDamage triggers player downed at zero HP`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob")
+        target.characterData = testChar("b", "Bob", hp = 5)
+
+        buildProcessor(sessions = { listOf(target) }).applyDirectDamage(target, 100, "Catapult")
+
+        assertEquals(0, target.characterData!!.currentHp)
+        assertTrue(target.isDowned)
+        assertTrue(target.sent.filterIsInstance<ServerMessage.PlayerDowned>().isNotEmpty())
+    }
 }

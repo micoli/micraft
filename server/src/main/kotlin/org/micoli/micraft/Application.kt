@@ -57,6 +57,11 @@ import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
+import org.micoli.micraft.game.placeable.PlaceableManager
+import org.micoli.micraft.game.placeable.siege.SiegeProjectileManager
+import org.micoli.micraft.game.placeable.siege.SiegeProjectileRegistryLoader
+import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
+import org.micoli.micraft.game.placeable.siege.SiegeWeaponRegistryLoader
 import org.micoli.micraft.game.plaincolor.PlainColorRegistryLoader
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
@@ -164,6 +169,8 @@ fun Application.module() {
     val itemRegistryLoader = get<ItemRegistryLoader>()
     val plainColorRegistryLoader = get<PlainColorRegistryLoader>()
     val vehicleRegistryLoader = get<VehicleRegistryLoader>()
+    val siegeWeaponRegistryLoader = get<SiegeWeaponRegistryLoader>()
+    val siegeProjectileRegistryLoader = get<SiegeProjectileRegistryLoader>()
 
     val biomeFile = Path.of(dataPath + "/config/biomes.yaml")
     val biomeResourcesFile = resourcesConfigDir.resolve("biomes.yaml")
@@ -189,7 +196,9 @@ fun Application.module() {
             blockRegistryLoader,
             itemRegistryLoader,
             plainColorRegistryLoader,
-            vehicleRegistryLoader)
+            vehicleRegistryLoader,
+            siegeWeaponRegistryLoader,
+            siegeProjectileRegistryLoader)
     }
 
     val reloadGameConfigLambda: () -> Unit = {
@@ -259,6 +268,9 @@ fun Application.module() {
             npcManager = get<NpcManager>(),
             npcSpawner = get<NpcSpawner>(),
             vehicleManager = get<VehicleManager>(),
+            placeableManager = get<PlaceableManager>(),
+            siegeWeaponManager = get<SiegeWeaponManager>(),
+            siegeProjectileManager = get<SiegeProjectileManager>(),
             combatConfig = get<CombatConfigData>(),
             attackRegistry = get(named("attacks")),
             spellRegistry = get(named("spells")),

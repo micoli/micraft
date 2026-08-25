@@ -38,6 +38,9 @@ import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.npc.NpcSubsystemHooks
+import org.micoli.micraft.game.placeable.PlaceableManager
+import org.micoli.micraft.game.placeable.siege.SiegeProjectileManager
+import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
@@ -345,6 +348,7 @@ class GameLoopModule {
         classesConfigData: ClassesConfigData,
         npcManager: NpcManager,
         vehicleManager: VehicleManager,
+        placeableManager: PlaceableManager,
         sessionRegistry: SessionRegistry,
         chatService: ChatService,
         i18nConfig: I18nConfig,
@@ -361,6 +365,7 @@ class GameLoopModule {
             classRegistry = classesConfigData.classes,
             npcManager = npcManager,
             vehicleManager = vehicleManager,
+            placeableManager = placeableManager,
             getSessions = sessionRegistry::all,
             broadcastCombatLog = { msg ->
                 val chatMsg =
@@ -505,6 +510,18 @@ class GameLoopModule {
         VehicleManager(sessionRegistry::broadcast)
 
     @Single
+    fun placeableManager(sessionRegistry: SessionRegistry): PlaceableManager =
+        PlaceableManager(sessionRegistry::broadcast)
+
+    @Single
+    fun siegeWeaponManager(sessionRegistry: SessionRegistry): SiegeWeaponManager =
+        SiegeWeaponManager(sessionRegistry::broadcast)
+
+    @Single
+    fun siegeProjectileManager(sessionRegistry: SessionRegistry): SiegeProjectileManager =
+        SiegeProjectileManager(sessionRegistry::broadcast)
+
+    @Single
     fun blockInteractor(
         worldState: WorldState,
         sessionRegistry: SessionRegistry,
@@ -551,6 +568,8 @@ class GameLoopModule {
         @Named("attacks") attacks: Map<String, AttackDefinition>,
         instanceRegistry: InstanceRegistry,
         railNetworkRegistry: RailNetworkRegistry,
+        placeableManager: PlaceableManager,
+        siegeWeaponManager: SiegeWeaponManager,
     ): BlockPlacer =
         BlockPlacer(
             worldState,
@@ -560,6 +579,8 @@ class GameLoopModule {
             attacks,
             instanceRegistry = instanceRegistry,
             railNetworkRegistry = railNetworkRegistry,
+            placeableManager = placeableManager,
+            siegeWeaponManager = siegeWeaponManager,
         )
 
     @Single

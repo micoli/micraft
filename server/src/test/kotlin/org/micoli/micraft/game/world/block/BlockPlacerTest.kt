@@ -7,14 +7,20 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.combat.ShortcutSlot
+import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.WorldActionRecord
 import org.micoli.micraft.game.world.BlockDefinition
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.EntityType
+import org.micoli.micraft.game.world.ItemDefinition
+import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.placeable.siege.SiegeWeaponDefinition
+import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
 import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ClientMessage
@@ -468,5 +474,38 @@ class BlockPlacerTest {
         assertEquals(1, result.entityAdds.size)
         assertEquals(2, result.entityAdds.first().sizeX)
         assertEquals(1, result.entityAdds.first().sizeZ)
+    }
+
+    @Test
+    fun handlePlace_spawnsEntity_spawnsPlaceableInsteadOfBlock() = runBlocking {
+        val entityType = EntityType("TEST_CATAPULT")
+        val itemType = ItemType("TEST_SIEGE_ITEM")
+        val savedItems = ItemRegistry.keys().associateWith { ItemRegistry.get(it) }
+        val savedSiegeWeapons =
+            SiegeWeaponRegistry.keys().associateWith { SiegeWeaponRegistry.get(it)!! }
+        try {
+            ItemRegistry.load(
+                savedItems + mapOf(itemType to ItemDefinition(spawnsEntity = entityType)))
+            SiegeWeaponRegistry.load(
+                savedSiegeWeapons + mapOf(entityType to SiegeWeaponDefinition()))
+
+            val world = testWorld(Triple(8, 6, 8))
+            val broadcasts = mutableListOf<ServerMessage>()
+            val placeableManager = PlaceableManager({ broadcasts.add(it) })
+            val placer =
+                BlockPlacer(world, { broadcasts.add(it) }, {}, placeableManager = placeableManager)
+            val session = testSession(pos = Vec3(8.5f, 7f, 8.5f))
+            session.inventory[itemType] = 1
+
+            placer.handlePlace(session, ClientMessage.BlockPlace(BlockPos(8, 7, 8), itemType))
+
+            assertEquals(BlockType.AIR, world.getBlock(8, 7, 8))
+            assertEquals(1, placeableManager.getAll().size)
+            assertTrue(broadcasts.any { it is ServerMessage.PlaceableSpawned })
+            assertTrue(session.inventory[itemType] == null || session.inventory[itemType] == 0)
+        } finally {
+            ItemRegistry.load(savedItems)
+            SiegeWeaponRegistry.load(savedSiegeWeapons)
+        }
     }
 }

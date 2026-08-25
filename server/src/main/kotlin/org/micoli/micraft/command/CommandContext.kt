@@ -13,6 +13,8 @@ import org.micoli.micraft.game.equipment.ToolDefinition
 import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
 import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.placeable.PlaceableManager
+import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.trade.TradeManager
@@ -40,6 +42,8 @@ data class CommandContext(
     val worldItems: WorldItemManager? = null,
     val npcManager: NpcManager? = null,
     val vehicleManager: VehicleManager? = null,
+    val placeableManager: PlaceableManager? = null,
+    val siegeWeaponManager: SiegeWeaponManager? = null,
     val getGameTime: () -> Long = { 0L },
     val setGameTime: (Long) -> Unit = {},
     val refetchChunks: (suspend (PlayerSession) -> Unit)? = null,

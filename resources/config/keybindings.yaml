@@ -4,6 +4,10 @@ combat:
   npc_interact: [KeyX]
   vehicle_mount: ["Ctrl+KeyX"]
   console_toggle: [KeyH]
+  siege_weapon_rotate: [KeyR]
+  siege_weapon_pitch: ["Alt+KeyR"]
+  siege_weapon_power: ["Ctrl+KeyR"]
+  siege_weapon_fire: [KeyZ]
 
 movement:
   forward: [KeyW, ArrowUp]

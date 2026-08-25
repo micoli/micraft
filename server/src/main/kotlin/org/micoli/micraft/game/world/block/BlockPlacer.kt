@@ -6,6 +6,8 @@ import kotlin.math.sqrt
 import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
+import org.micoli.micraft.game.placeable.PlaceableManager
+import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.WorldActionRecord
 import org.micoli.micraft.game.session.toPageMap
@@ -13,12 +15,15 @@ import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.EntityType
 import org.micoli.micraft.game.world.ItemRegistry
+import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationManager
+import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
 import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.BlockChange
@@ -38,7 +43,68 @@ class BlockPlacer(
     @Volatile private var attackRegistry: Map<String, AttackDefinition> = emptyMap(),
     private val instanceRegistry: InstanceRegistry? = null,
     private val railNetworkRegistry: RailNetworkRegistry? = null,
+    private val placeableManager: PlaceableManager? = null,
+    private val siegeWeaponManager: SiegeWeaponManager? = null,
 ) {
+    /**
+     * `spawnsEntity` items delegate to [PlaceableManager] instead of placing a block — ground
+     * validity (solid, non-liquid, non-rail) is checked by [PlaceableManager.spawn] itself. If the
+     * spawned type is also a siege weapon, [SiegeWeaponManager] links its own instance right after.
+     */
+    private suspend fun handleSpawnPlaceable(
+        session: PlayerSession,
+        rawPos: BlockPos,
+        itemType: ItemType,
+        entityType: EntityType,
+    ) {
+        val manager = placeableManager
+        if (manager == null) {
+            blockPlacerLog.debug("BlockPlace(spawnsEntity) rejected: no PlaceableManager wired")
+            return
+        }
+
+        val creative = session.state.editMode == EditMode.CREATIVE
+        val count = session.inventory[itemType] ?: 0
+        if (!creative && count <= 0) {
+            blockPlacerLog.debug("BlockPlace(spawnsEntity) rejected: no {} in inventory", itemType)
+            return
+        }
+
+        val eyeY = session.state.pos.y + session.state.stance.eyeOffset
+        val dist =
+            sqrt(
+                ((rawPos.x + 0.5f - session.state.pos.x) * (rawPos.x + 0.5f - session.state.pos.x) +
+                        (rawPos.y + 0.5f - eyeY) * (rawPos.y + 0.5f - eyeY) +
+                        (rawPos.z + 0.5f - session.state.pos.z) *
+                            (rawPos.z + 0.5f - session.state.pos.z))
+                    .toDouble())
+        if (!creative && dist > MAX_INTERACTION_DISTANCE) {
+            blockPlacerLog.debug(
+                "BlockPlace(spawnsEntity) rejected: dist={} > {}",
+                "%.2f".format(dist),
+                MAX_INTERACTION_DISTANCE)
+            return
+        }
+
+        val spawned = manager.spawn(entityType, rawPos, world)
+        if (spawned == null) {
+            blockPlacerLog.debug("BlockPlace(spawnsEntity) rejected: invalid ground at {}", rawPos)
+            return
+        }
+
+        siegeWeaponManager?.spawnFor(spawned)
+
+        if (!creative) {
+            val remaining = count - 1
+            if (remaining <= 0) session.inventory.remove(itemType)
+            else session.inventory[itemType] = remaining
+            session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
+        }
+
+        blockPlacerLog.debug(
+            "BlockPlace(spawnsEntity): {} spawned {} at {}", session.state.name, entityType, rawPos)
+    }
+
     suspend fun handlePlace(session: PlayerSession, intent: ClientMessage.BlockPlace) {
         val rawPos = intent.pos
 
@@ -48,6 +114,12 @@ class BlockPlacer(
         }
 
         val itemType = intent.itemType
+
+        val spawnedEntityType = ItemRegistry.get(itemType).spawnsEntity
+        if (spawnedEntityType != null && SiegeWeaponRegistry.get(spawnedEntityType) != null) {
+            handleSpawnPlaceable(session, rawPos, itemType, spawnedEntityType)
+            return
+        }
 
         val blockType = itemType.placesBlock
         if (!itemType.buildable || blockType == null) {

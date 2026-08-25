@@ -263,6 +263,13 @@ mount:
     no_target: "Aucun véhicule ciblé — ciblez-en un d'abord (X)."
     occupied: "Ce véhicule est déjà occupé."
 
+siege_weapon:
+  server:
+    usage: "Usage : /siege_weapon <rotation|pitch|power> <valeur>"
+    no_target: "Aucune arme de siège ciblée — ciblez-en une d'abord (Tab)."
+    invalid_value: "Valeur invalide : %s"
+    done: "%s réglé à %s."
+
 mode:
   server:
     game: "Passage en mode jeu."

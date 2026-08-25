@@ -509,6 +509,9 @@
             "string",
             "null"
           ]
+        },
+        "mounted": {
+          "type": "boolean"
         }
       }
     },
