@@ -49,7 +49,15 @@ const ACTION_GROUPS: Record<string, string[]> = {
     "crawl",
     "auto_forward",
   ],
-  combat: ["combat_target_cycle", "npc_interact", "vehicle_mount"],
+  combat: [
+    "combat_target_cycle",
+    "npc_interact",
+    "vehicle_mount",
+    "siege_weapon_rotate",
+    "siege_weapon_pitch",
+    "siege_weapon_power",
+    "siege_weapon_fire",
+  ],
   building: ["place_rotate", "block_interact", "scene_confirm", "scene_cancel"],
   flight: ["fly_toggle", "ascend", "descend", "speed_up", "speed_down"],
   ui: [

@@ -243,6 +243,10 @@ declare global {
     npcModelsReady: boolean;
     vehicleBbmodels: Record<string, BbModel>;
     vehicleModelsReady: boolean;
+    placeableBbmodels: Record<string, BbModel>;
+    placeableModelsReady: boolean;
+    siegeProjectileBbmodels: Record<string, BbModel>;
+    siegeProjectileModelsReady: boolean;
     skinConfigs: Record<string, McSkinConfig | null>;
     skinMatCache: Record<string, import("@babylonjs/core").StandardMaterial>;
     skinUV: (face: BbModelFace | undefined, W: number, H: number) => Vector4;
@@ -255,6 +259,7 @@ declare global {
     sunShadowDepthMat: InstanceType<typeof BABYLON.ShaderMaterial> | null;
     targetMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     breakMesh: (InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string }) | null;
+    trajectoryMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     zoneMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     ghostMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     sceneGhostMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
@@ -397,6 +402,17 @@ declare global {
       zOff?: number,
     ): void;
     hideBreakOverlay(): void;
+    showTrajectoryPreview(
+      scene: Scene,
+      originX: number,
+      originY: number,
+      originZ: number,
+      velocityX: number,
+      velocityY: number,
+      velocityZ: number,
+      gravity: number,
+    ): void;
+    hideTrajectoryPreview(): void;
     showZoneBounds(scene: Scene, yMin: number, yMax: number, chunksJson: string): void;
     hideZoneBounds(): void;
     showBlockPreview(
@@ -486,6 +502,18 @@ declare global {
     createVehicleModel(scene: Scene, vehicleType: string): McPlayerModel | null;
     setVehicleTransform(model: McPlayerModel, x: number, y: number, z: number, yaw: number, pitch: number): void;
     disposeVehicleModel(model: McPlayerModel): void;
+    // Placeable
+    initPlaceableModels(placeableTypesJson: string): void;
+    isPlaceableModelsReady(): boolean;
+    createPlaceableModel(scene: Scene, placeableType: string): McPlayerModel | null;
+    setPlaceableTransform(model: McPlayerModel, x: number, y: number, z: number, rotationStep: number): void;
+    disposePlaceableModel(model: McPlayerModel): void;
+    // Siege projectile
+    initSiegeProjectileModels(projectileTypesJson: string): void;
+    isSiegeProjectileModelsReady(): boolean;
+    createSiegeProjectileModel(scene: Scene, projectileType: string): McPlayerModel | null;
+    setSiegeProjectileTransform(model: McPlayerModel, x: number, y: number, z: number): void;
+    disposeSiegeProjectileModel(model: McPlayerModel): void;
     // Minimap
     createMinimap(): void;
     setMinimapChunk(cx: number, cz: number, topYJson: string, topBlockJson: string): void;

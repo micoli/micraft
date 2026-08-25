@@ -28,10 +28,12 @@ import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.rail.RailConnectionPoint
 import org.micoli.micraft.game.world.rail.RailDefinition
+import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
+import org.micoli.micraft.protocol.SiegeWeaponCodexInfo
 import org.micoli.micraft.ui.LayoutSyncPayload
 import org.micoli.micraft.ui.McUiState
 
@@ -60,10 +62,34 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private val remotePlayerManager = RemotePlayerManager(scene)
     private val npcManager = NpcManager(scene) { localPlayerId }
     private val vehicleManager = VehicleManager(scene)
+    private val placeableManager = PlaceableManager(scene)
+    private val siegeWeaponManager = SiegeWeaponManager()
+    private val siegeProjectileManager = SiegeProjectileManager(scene)
+    // Populated from ServerMessage.RegistrySync.siegeWeaponDefinitions — launch-math stats keyed
+    // by placeableType id (a siege weapon always composes with a placeable of the same type).
+    private var siegeWeaponDefs: Map<String, SiegeWeaponCodexInfo> = emptyMap()
+
+    private fun siegeWeaponMuzzleAndVelocity(placeableId: String): Pair<Vec3, Vec3>? {
+        val type = placeableManager.getType(placeableId) ?: return null
+        val def = siegeWeaponDefs[type] ?: return null
+        val pos = placeableManager.getPosition(placeableId) ?: return null
+        val rotationStep = placeableManager.getRotationStep(placeableId) ?: 0
+        val weapon = siegeWeaponManager.getByPlaceableId(placeableId) ?: return null
+        return SiegeTrajectoryMath.computeMuzzleAndVelocity(
+            placeablePos = pos,
+            rotationStep = rotationStep,
+            muzzleOffset = def.muzzleOffset,
+            launchPitchDeg = def.launchPitchDeg,
+            pitchStep = weapon.pitchStep,
+            launchPower = def.launchPower,
+            powerStep = weapon.powerStep,
+        )
+    }
 
     init {
         npcManager.registerExternalTargets(
-            { vehicleManager.positionsMap() }, { vehicleManager.modelsMap() })
+            { vehicleManager.positionsMap() + placeableManager.positionsMap() },
+            { vehicleManager.modelsMap() + placeableManager.modelsMap() })
     }
 
     private var currentPlayerName = ""
@@ -83,6 +109,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             npcManager = npcManager,
             isVehicleTarget = { id -> id in vehicleManager.modelsMap() },
             vehiclePositionOf = { id -> vehicleManager.positionsMap()[id] },
+            isPlaceableTarget = { id -> id in placeableManager.modelsMap() },
+            siegeWeaponPitchStepOf = { id -> siegeWeaponManager.getByPlaceableId(id)?.pitchStep },
+            siegeWeaponPowerStepOf = { id -> siegeWeaponManager.getByPlaceableId(id)?.powerStep },
+            siegeWeaponMuzzleAndVelocityOf = ::siegeWeaponMuzzleAndVelocity,
         )
 
     init {
@@ -169,6 +199,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 npcManager.playerYaw = currentYaw.toDouble()
                 npcManager.tick()
                 vehicleManager.tick()
+                placeableManager.tick()
+                siegeProjectileManager.tick()
                 remotePlayerManager.tick()
                 localController.otherTickMs = jsNow() - otherT0
             }
@@ -629,6 +661,15 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             put(ServerMessage.VehicleUpdate::class, vehicleManager)
             put(ServerMessage.VehicleDespawned::class, vehicleManager)
 
+            // Placeable — single handler object registered for all placeable message types
+            put(ServerMessage.PlaceableSpawned::class, placeableManager)
+            put(ServerMessage.PlaceableUpdate::class, placeableManager)
+            put(ServerMessage.PlaceableDespawned::class, placeableManager)
+            put(ServerMessage.SiegeWeaponUpdate::class, siegeWeaponManager)
+            put(ServerMessage.SiegeProjectileSpawned::class, siegeProjectileManager)
+            put(ServerMessage.SiegeProjectileUpdate::class, siegeProjectileManager)
+            put(ServerMessage.SiegeProjectileImpact::class, siegeProjectileManager)
+
             // UI / notifications
             put(
                 ServerMessage.Notification::class,
@@ -748,6 +789,12 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         jsInitVehicleModels(Json.encodeToString(msg.vehicles))
                     if (msg.vehicleDefinitions.isNotEmpty())
                         jsSetVehicleDefinitions(Json.encodeToString(msg.vehicleDefinitions))
+                    if (msg.placeables.isNotEmpty())
+                        jsInitPlaceableModels(Json.encodeToString(msg.placeables))
+                    if (msg.siegeProjectiles.isNotEmpty())
+                        jsInitSiegeProjectileModels(Json.encodeToString(msg.siegeProjectiles))
+                    if (msg.siegeWeaponDefinitions.isNotEmpty())
+                        siegeWeaponDefs = msg.siegeWeaponDefinitions
                     jsReloadAttackMeta()
                 })
 
