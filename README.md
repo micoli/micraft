@@ -279,6 +279,7 @@ stateDiagram-v2
 | `/scene:place` | `/scene:place <sceneId> <rotation:0-3> <x> <y> <z>` | Stamp a scene into the live world at the given position. | — |
 | `/set` | `/set <hp\|mana> <playerName> <value>` | Set a player stat. | dynamic |
 | `/shaders` | `/shaders [on\|off]` | Toggles visual shaders (ambient occlusion, directional shading, fog). | on, off |
+| `/siege_weapon` | `/siege_weapon <rotation\|pitch\|power> <value>` | Set the targeted siege weapon's rotation, pitch, or power. | dynamic |
 | `/skin` | `/skin <skinName>` | Changes your player skin. | dynamic |
 | `/skiprpg` | `/skiprpg` | Opt out of RPG system | — |
 | `/spawn` | `/spawn <npc_model> [x y z]` | Spawn an NPC of the given model on the solid block you are looking at. (admin) | dynamic |
@@ -431,6 +432,7 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | GET | `/api/players/names` | Names of all known players |
 | GET | `/api/quests` | All quest definitions |
 | GET | `/api/server/info` | Server build timestamp |
+| GET | `/api/siege-weapons` | List all siege weapon definitions |
 | GET | `/api/skins` | Names of all available player skins |
 | GET | `/api/skins/{name}/config` | Skin config (eye offset, hidden bones) for a named skin |
 | GET | `/api/spells` | Spell definitions, keyed by spell id |

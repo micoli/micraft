@@ -528,6 +528,79 @@ export type OrgMicoliMicraftGameEquipmentToolDefinition = {
 };
 
 /**
+ * SiegeWeaponDefinition
+ */
+export type OrgMicoliMicraftPlaceableSiegeSiegeWeaponDefinition = {
+    /**
+     * ItemType
+     */
+    ammoItem?: null | string;
+    /**
+     * String
+     */
+    bbmodelFile: string;
+    /**
+     * Long
+     */
+    cooldownMs: number;
+    /**
+     * Float
+     */
+    height: number;
+    /**
+     * Int
+     */
+    impactDamage: number;
+    /**
+     * Float
+     */
+    impactRadius: number;
+    /**
+     * Float
+     */
+    launchPitchDeg: number;
+    /**
+     * Float
+     */
+    launchPower: number;
+    muzzleOffset: OrgMicoliMicraftPlayerVec3;
+    /**
+     * Int
+     */
+    pitchStepRange: number;
+    /**
+     * Int
+     */
+    powerStepRange: number;
+    /**
+     * String
+     */
+    projectileType: string;
+    /**
+     * Float
+     */
+    width: number;
+};
+
+/**
+ * Vec3
+ */
+export type OrgMicoliMicraftPlayerVec3 = {
+    /**
+     * Float
+     */
+    x: number;
+    /**
+     * Float
+     */
+    y: number;
+    /**
+     * Float
+     */
+    z: number;
+};
+
+/**
  * GameAssetsController.AssetEntry
  */
 export type OrgMicoliMicraftHttpGameAssetsControllerAssetEntry = {
@@ -1290,6 +1363,10 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      */
     lightBoostEnabled: boolean;
     /**
+     * Boolean
+     */
+    mounted: boolean;
+    /**
      * String
      */
     name: string;
@@ -1498,24 +1575,6 @@ export type OrgMicoliMicraftPlayerRpgCombatantData = {
      * Int
      */
     xp: number;
-};
-
-/**
- * Vec3
- */
-export type OrgMicoliMicraftPlayerVec3 = {
-    /**
-     * Float
-     */
-    x: number;
-    /**
-     * Float
-     */
-    y: number;
-    /**
-     * Float
-     */
-    z: number;
 };
 
 /**
@@ -3326,6 +3385,24 @@ export type GetApiToolsResponses = {
 };
 
 export type GetApiToolsResponse = GetApiToolsResponses[keyof GetApiToolsResponses];
+
+export type GetApiSiegeWeaponsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/siege-weapons';
+};
+
+export type GetApiSiegeWeaponsResponses = {
+    /**
+     * Map<String,SiegeWeaponDefinition>
+     */
+    200: {
+        [key: string]: OrgMicoliMicraftPlaceableSiegeSiegeWeaponDefinition;
+    };
+};
+
+export type GetApiSiegeWeaponsResponse = GetApiSiegeWeaponsResponses[keyof GetApiSiegeWeaponsResponses];
 
 export type GetApiGameAssetsData = {
     body?: never;

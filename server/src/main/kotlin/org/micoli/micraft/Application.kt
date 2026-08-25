@@ -118,6 +118,7 @@ import org.micoli.micraft.http.PlayersController
 import org.micoli.micraft.http.QuestsController
 import org.micoli.micraft.http.ScreenshotController
 import org.micoli.micraft.http.ServerInfoController
+import org.micoli.micraft.http.SiegeWeaponsController
 import org.micoli.micraft.http.SimulationController
 import org.micoli.micraft.http.SkinsController
 import org.micoli.micraft.http.TerrainCache
@@ -379,6 +380,7 @@ fun Application.module() {
         ArmorsController(dataPath).register(this)
         WeaponsController(dataPath).register(this)
         ToolsController(dataPath).register(this)
+        SiegeWeaponsController(dataPath).register(this)
         GameAssetsController().register(this)
         QuestsController(questManager).register(this)
         PlayersController(gameLoop.getMailManager()).register(this)

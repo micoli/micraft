@@ -698,6 +698,22 @@ paths:
                   $ref: "#/components/schemas/org.micoli.micraft.game.equipment.ToolDefinition"
                 title: "Map<String,ToolDefinition>"
       deprecated: false
+  /api/siege-weapons:
+    get:
+      tags: []
+      description: List all siege weapon definitions
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: "#/components/schemas/org.micoli.micraft.placeable.siege.SiegeWeaponDefinition"
+                title: "Map<String,SiegeWeaponDefinition>"
+      deprecated: false
   /api/game-assets:
     get:
       tags: []
@@ -3497,6 +3513,92 @@ components:
       - rotate
       - statBonus
       title: ToolDefinition
+    org.micoli.micraft.placeable.siege.SiegeWeaponDefinition:
+      type: object
+      properties:
+        ammoItem:
+          type:
+          - "null"
+          - string
+          title: ItemType
+        bbmodelFile:
+          type: string
+          title: String
+        cooldownMs:
+          type: integer
+          format: int64
+          title: Long
+        height:
+          type: number
+          format: float
+          title: Float
+        impactDamage:
+          type: integer
+          format: int32
+          title: Int
+        impactRadius:
+          type: number
+          format: float
+          title: Float
+        launchPitchDeg:
+          type: number
+          format: float
+          title: Float
+        launchPower:
+          type: number
+          format: float
+          title: Float
+        muzzleOffset:
+          $ref: "#/components/schemas/org.micoli.micraft.player.Vec3"
+        pitchStepRange:
+          type: integer
+          format: int32
+          title: Int
+        powerStepRange:
+          type: integer
+          format: int32
+          title: Int
+        projectileType:
+          type: string
+          title: String
+        width:
+          type: number
+          format: float
+          title: Float
+      required:
+      - bbmodelFile
+      - cooldownMs
+      - height
+      - impactDamage
+      - impactRadius
+      - launchPitchDeg
+      - launchPower
+      - muzzleOffset
+      - pitchStepRange
+      - powerStepRange
+      - projectileType
+      - width
+      title: SiegeWeaponDefinition
+    org.micoli.micraft.player.Vec3:
+      type: object
+      properties:
+        x:
+          type: number
+          format: float
+          title: Float
+        "y":
+          type: number
+          format: float
+          title: Float
+        z:
+          type: number
+          format: float
+          title: Float
+      required:
+      - x
+      - "y"
+      - z
+      title: Vec3
     org.micoli.micraft.http.GameAssetsController.AssetEntry:
       type: object
       properties:
@@ -4652,26 +4754,6 @@ components:
       - level
       - xp
       title: CombatantData
-    org.micoli.micraft.player.Vec3:
-      type: object
-      properties:
-        x:
-          type: number
-          format: float
-          title: Float
-        "y":
-          type: number
-          format: float
-          title: Float
-        z:
-          type: number
-          format: float
-          title: Float
-      required:
-      - x
-      - "y"
-      - z
-      title: Vec3
     org.micoli.micraft.player.EditMode:
       type: string
       enum:
